@@ -1,0 +1,5 @@
+/*
+ * Base layout is handled by the <a-progress> web component (display: block).
+ * This module is reserved for conditional styles driven by JSX logic.
+ * And in this case we usually start with .container style
+ */

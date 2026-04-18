@@ -1,0 +1,61 @@
+a-progress {
+  container-type: inline-size;
+  padding: 4px 8px;
+  min-height: 8px;
+  background: hsla(300, 10%, 96%, 1);
+  border: 0px solid hsla(300, 6%, 87%, 1);
+  border-radius: 0;
+  --progress-indicator-bg: hsla(300, 7%, 92%, 1);
+  --progress-indicator-edge: linear-gradient(90deg, hsla(300, 6%, 87%, 0) 0%, hsla(300, 6%, 87%, 1) 100%);
+  --progress-label-color: var(--fg-1);
+}
+
+.dark a-progress {
+  background: hsla(278, 8%, 9%, 1);
+  border-color: hsla(278, 8%, 23%, 1);
+  --progress-indicator-bg: hsla(278, 8%, 15%, 1);
+  --progress-indicator-edge: linear-gradient(90deg, hsla(278, 8%, 23%, 0) 0%, hsla(278, 8%, 23%, 1) 100%);
+}
+
+a-progress[tone="info"] {
+  background: #E7F4FF;
+  border-color: #B8DCF6;
+  --progress-indicator-bg: #DBEDFA;
+  --progress-indicator-edge: linear-gradient(90deg, hsla(205, 79%, 85%, 0) 0%, hsla(205, 79%, 85%, 1) 100%);
+  --progress-label-color: var(--fg-1-blue);
+}
+
+.dark a-progress[tone="info"] {
+  background: #021A2D;
+  border-color: #062F4C;
+  --progress-indicator-bg: #05253F;
+  --progress-indicator-edge: linear-gradient(90deg, hsla(207, 85%, 16%, 0) 0%, hsla(207, 85%, 16%, 1) 100%);
+}
+
+a-progress-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 1ch;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'ss02', 'ss05';
+  letter-spacing: 0.03em;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+a-progress-number {
+  flex-shrink: 0;
+  color: var(--progress-label-color);
+}
+
+a-progress-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--fg-2);
+}
+
+a-progress-hint {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--fg-3);
+}

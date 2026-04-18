@@ -20,46 +20,28 @@ The tiers are decoupled — JSX wrappers emit `<a-*>` tags but never import elem
 
 ## Build & dev
 
-Anta has its own `tsconfig.json` — standalone, not extending the notebook's config. Uses `jsx: "react-jsx"` with `jsxImportSource: "anta"` (automatic transform — no explicit `h` import needed in component files).
+Anta has its own `tsconfig.json` in `src/` — standalone. Uses `jsx: "react-jsx"` with `jsxImportSource: "anta"` (automatic transform — no explicit `h` import needed in component files).
 
-Anta is **pre-built** to `dist/` before the notebook builds. The `dist/` directory contains both `.js` (from esbuild with automatic JSX transform) and `.d.ts` (from tsc). The notebook consumes only pre-built output, never anta source `.tsx` files.
+Pre-built to `dist/` (at repo root). The `dist/` directory contains both `.js` (from esbuild with automatic JSX transform) and `.d.ts` (from tsc).
 
 ```sh
-# Type check anta in isolation
-cd notebook/anta && npx tsc --noEmit -p tsconfig.json
+# Type check
+pnpm run typecheck
 
-# Pre-build anta (JS + declarations)
-cd notebook && ./node_modules/.bin/esbuild \
-  anta/components/Progress.tsx anta/index.ts anta/jsx-runtime.ts \
-  anta/general_types.ts anta/anta_helpers.ts \
-  anta/elements/index.ts anta/elements/a-progress.ts \
-  --outdir=anta/dist --outbase=anta \
+# Build (JS + declarations)
+pnpm run build
+
+# Or manually:
+pnpm exec esbuild \
+  src/components/Progress.tsx src/index.ts src/jsx-runtime.ts \
+  src/general_types.ts src/anta_helpers.ts \
+  src/elements/index.ts src/elements/a-progress.ts \
+  --outdir=dist --outbase=src \
   --jsx=automatic --jsx-import-source=anta \
   --format=esm --target=ES2022 \
   --loader:.module.css=local-css --loader:.css=global-css
-cd notebook/anta && npx tsc -p tsconfig.json
-
-# Type check the notebook
-cd notebook && npx tsc --noEmit
+pnpm exec tsc -p src/tsconfig.json
 ```
-
-### How the notebook sees anta
-
-The notebook's tsconfig uses classic JSX (`jsxFactory: "h"`) — it **cannot** compile anta's `.tsx` files. Instead:
-
-- Both tsc and esbuild path aliases point to `anta/dist/` (pre-built JS + declarations)
-- The `"anta/*"` wildcard alias in tsconfigs is restricted to `anta/elements/*` only (pure `.ts`, no JSX)
-- `anta/elements/` contains pure `.ts` files and can be imported directly
-- In the Nix build (`default.nix`), `anta_declarations` generates `.d.ts` files, and `notebook_source_with_anta` layers them into the source tree — excluding `components/`, `index.ts`, and `jsx-runtime.ts` from the tsc source
-- The tsc watch command generates declarations once before starting
-
-### Config files that reference anta
-
-- `tsconfig.base.json` — `"anta"` path alias + excludes
-- `tsconfig.node.json` — has its own `paths` that **overrides** the base (anta aliases must be added there separately)
-- `esbuild.json` / `esbuild.node.json` — `"anta"` and `"anta/*"` aliases for bundling
-- `.eslintrc.js` — anta in `ignorePatterns`
-- `.gitignore` — `notebook/anta/dist`
 
 ## Design references
 
@@ -85,4 +67,4 @@ When naming components, props, CSS variables, internal class names, or suggestin
 5. Create `components/{Name}.module.css` — scoped styles for wrapper layout
 6. Add to `index.ts` — re-export the component
 7. Add `a-{name}` to `JSX.IntrinsicElements` in `types.d.ts`
-8. Regenerate declarations: `cd notebook/anta && npx tsc -p tsconfig.json`
+8. Regenerate declarations: `pnpm run build:types`

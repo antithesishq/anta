@@ -1,0 +1,102 @@
+---
+interface Props {
+  title?: string
+  frontmatter?: { title?: string }
+}
+
+const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — Anta</title>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <a class="logo" href="/">Anta</a>
+        <nav>
+          <ul>
+            <li><a href="/">Overview</a></li>
+          </ul>
+          <h4>Components</h4>
+          <ul>
+            <li><a href="/components/progress/">Progress</a></li>
+          </ul>
+        </nav>
+      </aside>
+      <main class="content">
+        <slot />
+      </main>
+    </div>
+
+    <script>
+      import 'anta/elements'
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  @import '../styles/base.css';
+</style>
+
+<style>
+  .layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: #f7f5f2;
+    border-right: 1px solid #e5e5e5;
+    padding: 24px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .logo {
+    display: block;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 32px;
+    letter-spacing: -0.02em;
+  }
+
+  nav h4 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    margin: 24px 0 8px;
+  }
+
+  nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  nav li a {
+    display: block;
+    padding: 4px 0;
+    color: #6c7278;
+    font-size: 0.9rem;
+  }
+
+  nav li a:hover {
+    color: #1a1c1e;
+    text-decoration: none;
+  }
+
+  .content {
+    flex: 1;
+    max-width: 720px;
+    padding: 48px 32px;
+  }
+</style>

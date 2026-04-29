@@ -36,5 +36,11 @@
   "dependencies": {
     "classnames": "^2.5.0",
     "react": "^19.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
   }
 }

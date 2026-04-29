@@ -57,7 +57,7 @@ export class AProgressElement extends HTMLElement {
   update() {
     const value = Number(this.getAttribute('value') ?? 0)
     const max = Number(this.getAttribute('max') ?? 100)
-    const percent = max > 0 ? Math.min(100, (value / max) * 100) : 0
+    const percent = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0
     this.indicator.style.setProperty('--_percent', `${percent}%`)
   }
 }

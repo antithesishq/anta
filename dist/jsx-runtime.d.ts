@@ -1,9 +1,12 @@
 import React from 'react';
-type JsxFunction = (type: any, props: any, key?: any) => any;
-declare let _Fragment: any;
-export declare function configure(jsx: JsxFunction, Fragment?: any): void;
-export declare function jsx(type: any, props: any, key?: any): any;
-export declare function jsxs(type: any, props: any, key?: any): any;
+type ComponentType = string | Function | symbol;
+type JsxFunction = {
+    h(type: ComponentType, props: Record<string, unknown> | null, ...children: unknown[]): unknown;
+}['h'];
+declare let _Fragment: ComponentType;
+export declare function configure(jsx: JsxFunction, Fragment?: ComponentType): void;
+export declare function jsx(type: ComponentType, props: Record<string, unknown> | null, key?: string | number): unknown;
+export declare function jsxs(type: ComponentType, props: Record<string, unknown> | null, key?: string | number): unknown;
 export { _Fragment as Fragment };
 import type { AProgressAttributes, BaseAttributes } from './general_types';
 export declare namespace JSX {

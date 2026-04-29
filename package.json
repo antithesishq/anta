@@ -2,23 +2,17 @@
   "name": "anta",
   "version": "0.1.0",
   "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": ["dist"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./jsx-runtime": {
-      "types": "./dist/jsx-runtime.d.ts",
-      "default": "./dist/jsx-runtime.js"
-    },
-    "./elements": {
-      "types": "./dist/elements/index.d.ts",
-      "default": "./dist/elements/index.js"
-    },
-    "./elements/*": {
-      "types": "./dist/elements/*.d.ts",
-      "default": "./dist/elements/*.js"
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*"
     }
   },
   "scripts": {

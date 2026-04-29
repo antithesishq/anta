@@ -1,5 +1,5 @@
 {
-  "name": "anta",
+  "name": "@antadesign/anta",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -10,6 +10,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./elements": {
+      "types": "./dist/elements/index.d.ts",
+      "default": "./dist/elements/index.js"
+    },
     "./*": {
       "types": "./dist/*.d.ts",
       "default": "./dist/*"
@@ -17,7 +21,7 @@
   },
   "scripts": {
     "build": "pnpm run build:js && pnpm run build:types",
-    "build:js": "esbuild src/components/Progress.tsx src/index.ts src/jsx-runtime.ts src/general_types.ts src/anta_helpers.ts src/elements/index.ts src/elements/a-progress.ts --outdir=dist --outbase=src --jsx=automatic --jsx-import-source=anta --format=esm --target=ES2022 --loader:.module.css=local-css --loader:.css=global-css",
+    "build:js": "esbuild src/components/Progress.tsx src/index.ts src/jsx-runtime.ts src/general_types.ts src/anta_helpers.ts src/elements/index.ts src/elements/a-progress.ts --outdir=dist --outbase=src --jsx=automatic --jsx-import-source=@antadesign/anta --format=esm --target=ES2022 --loader:.module.css=local-css --loader:.css=global-css",
     "build:types": "tsc -p src/tsconfig.json",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "clean": "rm -rf dist"

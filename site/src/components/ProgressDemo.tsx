@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'preact/hooks'
-import { Progress } from 'anta'
+import { Progress } from '@antadesign/anta'
 
 export default function ProgressDemo() {
   const [value, setValue] = useState(40)
   const [animated, setAnimated] = useState(0)
 
   useEffect(() => {
-    import('anta/elements')
+    import('@antadesign/anta/elements')
   }, [])
 
   useEffect(() => {

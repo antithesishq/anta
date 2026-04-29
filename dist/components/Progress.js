@@ -1,4 +1,4 @@
-import { jsx, jsxs } from "anta/jsx-runtime";
+import { jsx, jsxs } from "@antadesign/anta/jsx-runtime";
 import { hasChildren } from "../anta_helpers";
 const Progress = ({ value, max = 100, tone, label, hint, className, children, ...rest }) => {
   const percent = max > 0 ? Math.round(Math.min(100, Math.max(0, value / max * 100))) : 0;

@@ -24,3 +24,5 @@ jobs:
             echo "dist/ is out of date — rebuild locally and commit"
             exit 1
           }
+      - name: Build site
+        run: pnpm --filter anta-site build

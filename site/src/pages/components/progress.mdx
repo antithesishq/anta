@@ -3,6 +3,7 @@ layout: ../../layouts/DocsLayout.astro
 title: Progress
 ---
 import ProgressDemo from '../../components/ProgressDemo'
+import PropsTable from '../../components/PropsTable.astro'
 
 # Progress
 
@@ -11,13 +12,7 @@ A progress indicator for displaying task completion. Consists of a track
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `value` | `number` | — | Current progress value (required) |
-| `max` | `number` | `100` | Maximum value |
-| `tone` | `'info'` | — | Color variant |
-| `label` | `string` | — | Text label |
-| `hint` | `string` | — | Right-aligned hint text |
+<PropsTable component="Progress" />
 
 ## Examples
 

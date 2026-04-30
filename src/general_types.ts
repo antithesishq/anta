@@ -16,5 +16,5 @@ export interface BaseAttributes {
 export interface AProgressAttributes extends BaseAttributes {
   value?: number | string
   max?: number | string
-  tone?: 'info'
+  tone?: 'neutral' | 'info'
 }

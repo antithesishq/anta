@@ -1,24 +1,24 @@
-import cn from "classnames"
-import css from "./Progress.module.css"
 import type { BaseProps } from "../general_types"
 import { hasChildren } from "../anta_helpers"
 
 interface ProgressProps extends BaseProps {
+  /** Current progress. Negative values are clamped to 0. */
   value: number
+  /** Upper bound of the range. Defaults to 100. Negative values are clamped to 0. */
   max?: number
-  tone?: 'info'
+  tone?: 'neutral' | 'info'
   label?: string
   hint?: string
 }
 
 export const Progress = ({ value, max = 100, tone, label, hint, className, children, ...rest }: ProgressProps) => {
-  const percent = max > 0 ? Math.round(Math.min(100, (value / max) * 100)) : 0
+  const percent = max > 0 ? Math.round(Math.min(100, Math.max(0, (value / max) * 100))) : 0
   return (
     <a-progress
       value={value}
       max={max}
       tone={tone}
-      class={cn(css.container, className)}
+      class={className}
       {...rest}
     >
       {hasChildren(children) ? children : (

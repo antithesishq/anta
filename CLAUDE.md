@@ -20,28 +20,46 @@ The tiers are decoupled — JSX wrappers emit `<a-*>` tags but never import elem
 
 ## Build & dev
 
-Anta has its own `tsconfig.json` in `src/` — standalone. Uses `jsx: "react-jsx"` with `jsxImportSource: "anta"` (automatic transform — no explicit `h` import needed in component files).
+Anta has its own `tsconfig.json` — standalone, not extending the notebook's config. Uses `jsx: "react-jsx"` with `jsxImportSource: "anta"` (automatic transform — no explicit `h` import needed in component files).
 
-Pre-built to `dist/` (at repo root). The `dist/` directory contains both `.js` (from esbuild with automatic JSX transform) and `.d.ts` (from tsc).
+Anta is **pre-built** to `dist/` before the notebook builds. The `dist/` directory contains both `.js` (from esbuild with automatic JSX transform) and `.d.ts` (from tsc). The notebook consumes only pre-built output, never anta source `.tsx` files.
 
 ```sh
-# Type check
-pnpm run typecheck
+# Type check anta in isolation
+cd notebook/anta && npx tsc --noEmit -p tsconfig.json
 
-# Build (JS + declarations)
-pnpm run build
-
-# Or manually:
-pnpm exec esbuild \
-  src/components/Progress.tsx src/index.ts src/jsx-runtime.ts \
-  src/general_types.ts src/anta_helpers.ts \
-  src/elements/index.ts src/elements/a-progress.ts \
-  --outdir=dist --outbase=src \
+# Pre-build anta (JS + declarations)
+cd notebook && ./node_modules/.bin/esbuild \
+  anta/components/Progress.tsx anta/index.ts anta/jsx-runtime.ts \
+  anta/general_types.ts anta/anta_helpers.ts \
+  anta/elements/index.ts anta/elements/a-progress.ts \
+  --outdir=anta/dist --outbase=anta \
   --jsx=automatic --jsx-import-source=anta \
   --format=esm --target=ES2022 \
   --loader:.module.css=local-css --loader:.css=global-css
-pnpm exec tsc -p src/tsconfig.json
+cd notebook/anta && npx tsc -p tsconfig.json
+
+# Type check the notebook
+cd notebook && npx tsc --noEmit
 ```
+
+### How the notebook sees anta
+
+The notebook's tsconfig uses classic JSX (`jsxFactory: "h"`) — it **cannot** compile anta's `.tsx` files. Instead:
+
+- Both tsc and esbuild path aliases point to `anta/dist/` (pre-built JS + declarations)
+- The `"anta/*"` wildcard alias in tsconfigs is restricted to `anta/elements/*` only (pure `.ts`, no JSX)
+- `anta/elements/` contains pure `.ts` files and can be imported directly
+- In the Nix build (`default.nix`), `anta_declarations` generates `.d.ts` files, and `notebook_source_with_anta` layers them into the source tree — excluding `components/`, `index.ts`, and `jsx-runtime.ts` from the tsc source
+- The tsc watch command generates declarations once before starting
+
+### Config files that reference anta
+
+- `tsconfig.base.json` — `"anta"` path alias + excludes
+- `tsconfig.node.json` — has its own `paths` that **overrides** the base (anta aliases must be added there separately)
+- `esbuild.json` / `esbuild.node.json` — `"anta"` and `"anta/*"` aliases for bundling
+- `.eslintrc.js` — anta in `ignorePatterns`
+- `.gitignore` — `notebook/anta/dist`
 
 ## Design references
 
@@ -51,8 +69,10 @@ When naming components, props, CSS variables, internal class names, or suggestin
 
 - **Declarative DOM** — The fundamental principle: no visible attributes or inline styles are set on the host element from JS. Only shadow-internal elements may be styled from `attributeChangedCallback`. This ensures the DOM stays in sync with the worker thread caller.
 - **Shadow DOM pattern** — Web components use shadow DOM. The external CSS file (`a-{name}.css`) styles the host element with direct CSS properties and handles light/dark mode via `.dark` ancestor. The shadow DOM `<style>` (inline in the constructor) declares only structural defaults on `:host` (display, position, overflow) — visual properties like background, border, and border-radius are set externally and override `:host` via normal specificity.
-- **CSS variables only for shadow internals** — Use `--{component}-*` variables only when external CSS needs to style elements inside shadow DOM (e.g. `--progress-indicator-bg` for the indicator background). Do not create variables that mirror host-level properties 1:1 — set those directly in the external CSS. For example, `padding`, `background`, `border`, `container-type` go directly on the element selector in the external CSS, not through a CSS variable. Reserve variables for values that must cross the shadow DOM boundary.
+- **CSS variables for variant values** — Use `--{component}-*` variables for any property that changes across variants (tone, dark mode). This includes host-level properties like `background` and `border-color` — define them as variables so variant blocks only contain variable assignments. In the base rule, declare all variables first, then leave an empty line before regular properties that consume them.
+- **CSS variables for shadow internals** — Also use `--{component}-*` variables when external CSS needs to style elements inside shadow DOM (e.g. `--progress-indicator-bg`). Use `--_` prefix for shadow-internal-only variables set from JS (e.g. `--_percent`).
 - **Dark mode** — Use `.dark` ancestor class in the external CSS: `.dark a-progress { background: #021A2D; }`.
+- **Default variant in union types** — When a prop like `tone` has a default/neutral value, include it explicitly in the type union (e.g. `tone?: 'neutral' | 'info'`). The JSX wrapper passes it through to the web component as-is — no need to map the default value to `undefined`. The CSS simply has no attribute selector for the default variant, so the base element styles apply naturally. Only non-default variants get `[attr="value"]` rules in CSS.
 - **CSS modules only on JSX wrappers**, plain CSS for web components. Use `.container` as the top-level class in CSS modules (not `.wrapper`).
 - **Types** — Use React global types (e.g. `React.CSSProperties` for `style` props) without importing React. These work in both React and Preact contexts. Anta components must be compatible with both.
 - **Auto-registration** — `elements/index.ts` auto-registers all custom elements when imported in a browser context. Individual `register_a_*()` functions are also exported for fine-grained control.
@@ -67,4 +87,4 @@ When naming components, props, CSS variables, internal class names, or suggestin
 5. Create `components/{Name}.module.css` — scoped styles for wrapper layout
 6. Add to `index.ts` — re-export the component
 7. Add `a-{name}` to `JSX.IntrinsicElements` in `types.d.ts`
-8. Regenerate declarations: `pnpm run build:types`
+8. Regenerate declarations: `cd notebook/anta && npx tsc -p tsconfig.json`

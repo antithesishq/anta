@@ -1,8 +1,10 @@
 {
-  "name": "anta",
-  "version": "0.1.0",
+  "name": "@antadesign/anta",
+  "version": "0.1.1-dev.1",
   "type": "module",
-  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,11 +21,16 @@
     "./elements/*": {
       "types": "./dist/elements/*.d.ts",
       "default": "./dist/elements/*.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*"
     }
   },
   "scripts": {
-    "build": "pnpm run build:js && pnpm run build:types",
-    "build:js": "esbuild src/components/Progress.tsx src/index.ts src/jsx-runtime.ts src/general_types.ts src/anta_helpers.ts src/elements/index.ts src/elements/a-progress.ts --outdir=dist --outbase=src --jsx=automatic --jsx-import-source=anta --format=esm --target=ES2022 --loader:.module.css=local-css --loader:.css=global-css",
+    "build": "pnpm run build:js && pnpm run build:css && pnpm run build:types",
+    "build:css": "cp src/elements/a-progress.css dist/elements/ && cp src/components/Progress.module.css dist/components/",
+    "build:js": "esbuild src/components/Progress.tsx src/index.ts src/jsx-runtime.ts src/general_types.ts src/anta_helpers.ts src/elements/index.ts src/elements/a-progress.ts --outdir=dist --outbase=src --jsx=automatic --jsx-import-source=@antadesign/anta --format=esm --target=ES2022 --loader:.module.css=local-css --loader:.css=global-css",
     "build:types": "tsc -p src/tsconfig.json",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "clean": "rm -rf dist"
@@ -34,7 +41,15 @@
     "typescript": "^5.7.0"
   },
   "dependencies": {
-    "classnames": "^2.5.0",
-    "react": "^19.0.0"
+    "clsx": "^2.1.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
   }
 }

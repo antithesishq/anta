@@ -1,29 +1,33 @@
 import React from 'react'
 
-type JsxFunction = (type: any, props: any, key?: any) => any
+type ComponentType = string | Function | symbol
 
-let _jsx: JsxFunction = React.createElement
-let _Fragment: any = React.Fragment
+type JsxFunction = {
+  h(type: ComponentType, props: Record<string, unknown> | null, ...children: unknown[]): unknown
+}['h']
 
-export function configure(jsx: JsxFunction, Fragment?: any) {
+let _jsx: JsxFunction = React.createElement as JsxFunction
+let _Fragment: ComponentType = React.Fragment as ComponentType
+
+export function configure(jsx: JsxFunction, Fragment?: ComponentType) {
   _jsx = jsx
   if (Fragment !== undefined) _Fragment = Fragment
 }
 
-export function jsx(type: any, props: any, key?: any): any {
+export function jsx(type: ComponentType, props: Record<string, unknown> | null, key?: string | number): unknown {
   const { children, ...rest } = props ?? {}
-  const p = key !== undefined ? { ...rest, key } : rest
+  const p: Record<string, unknown> = key !== undefined ? { ...rest, key } : rest
   if (children !== undefined) {
     return _jsx(type, p, children)
   }
   return _jsx(type, p)
 }
 
-export function jsxs(type: any, props: any, key?: any): any {
+export function jsxs(type: ComponentType, props: Record<string, unknown> | null, key?: string | number): unknown {
   const { children, ...rest } = props ?? {}
-  const p = key !== undefined ? { ...rest, key } : rest
+  const p: Record<string, unknown> = key !== undefined ? { ...rest, key } : rest
   if (children !== undefined) {
-    return _jsx(type, p, ...children)
+    return _jsx(type, p, ...(children as unknown[]))
   }
   return _jsx(type, p)
 }

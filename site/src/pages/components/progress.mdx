@@ -1,0 +1,54 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Progress
+---
+import ProgressDemo from '../../components/ProgressDemo'
+
+# Progress
+
+A progress indicator for displaying task completion. Consists of a track
+(background bar), an indicator (filled portion), and an optional label area.
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `value` | `number` | — | Current progress value (required) |
+| `max` | `number` | `100` | Maximum value |
+| `tone` | `'info'` | — | Color variant |
+| `label` | `string` | — | Text label |
+| `hint` | `string` | — | Right-aligned hint text |
+
+## Examples
+
+### Basic
+
+```tsx
+<Progress value={60} />
+```
+
+### With label and hint
+
+```tsx
+<Progress value={42} label="Uploading files..." hint="3 of 7" />
+```
+
+### Info tone
+
+```tsx
+<Progress value={75} tone="info" label="Processing" />
+```
+
+## Interactive demo
+
+<ProgressDemo client:load />
+
+## Component tokens
+
+Progress uses these CSS custom properties for theming:
+
+| Token | Description |
+|-------|-------------|
+| `--progress-indicator-bg` | Indicator bar fill color |
+| `--progress-indicator-edge` | Gradient fade at the indicator's leading edge |
+| `--progress-label-color` | Color for the percentage number |

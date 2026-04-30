@@ -12,6 +12,8 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeMathjax from 'rehype-mathjax';
 
 export default defineConfig({
+  site: 'https://antithesishq.github.io',
+  base: '/anta',
   integrations: [
     preact({ compat: true }),
     astroExpressiveCode({

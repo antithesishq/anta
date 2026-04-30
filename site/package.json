@@ -3,8 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "docs:api": "typedoc --json src/api.json --entryPoints ../src/index.ts --tsconfig ../src/tsconfig.json",
+    "docs:pages": "node scripts/gen-pages.mjs",
+    "docs": "pnpm run docs:api && pnpm run docs:pages",
+    "dev": "pnpm run docs && astro dev",
+    "build": "pnpm run docs && astro build",
     "preview": "astro preview"
   },
   "dependencies": {
@@ -25,6 +28,7 @@
     "sharp": "0.34.5"
   },
   "devDependencies": {
+    "typedoc": "0.28.19",
     "pixelmatch": "7.1.1",
     "playwright": "1.59.1",
     "pngjs": "7.0.0"

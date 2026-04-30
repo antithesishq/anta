@@ -9,6 +9,20 @@ type JsxFunction = {
 let _jsx: JsxFunction = React.createElement as JsxFunction
 let _Fragment: ComponentType = React.Fragment as ComponentType
 
+/**
+ * Swap the underlying JSX factory used by all anta components.
+ *
+ * Not needed for React or Preact-with-compat — those work automatically.
+ * Call this before rendering any anta components when using Preact without
+ * compat aliasing, or a custom JSX runtime.
+ *
+ * @example Preact without compat
+ * ```ts
+ * import { configure } from '@antadesign/anta'
+ * import { h, Fragment } from 'preact'
+ * configure(h, Fragment)
+ * ```
+ */
 export function configure(jsx: JsxFunction, Fragment?: ComponentType) {
   _jsx = jsx
   if (Fragment !== undefined) _Fragment = Fragment

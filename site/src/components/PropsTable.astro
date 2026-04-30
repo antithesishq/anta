@@ -1,0 +1,102 @@
+---
+import api from '../api.json'
+
+interface Props {
+  component: string
+}
+
+const { component } = Astro.props
+
+// Find the component's props interface (e.g., "Progress" → "ProgressProps")
+const propsName = `${component}Props`
+const iface = (api as any).children?.find((c: any) => c.name === propsName)
+
+function renderType(type: any): string {
+  if (!type) return '—'
+  switch (type.type) {
+    case 'intrinsic':
+      return type.name
+    case 'literal':
+      return typeof type.value === 'string' ? `'${type.value}'` : String(type.value)
+    case 'union':
+      return type.types.map(renderType).join(' | ')
+    case 'reference':
+      if (type.name) return type.name
+      return '—'
+    case 'array':
+      return `${renderType(type.elementType)}[]`
+    default:
+      return type.name || '—'
+  }
+}
+
+function renderComment(comment: any): string {
+  if (!comment?.summary) return ''
+  return comment.summary
+    .map((part: any) => {
+      if (part.kind === 'code') return part.text
+      return part.text
+    })
+    .join('')
+}
+
+const props = iface?.children
+  ?.filter((p: any) => !p.inheritedFrom)
+  ?.sort((a: any, b: any) => {
+    // Required props first, then alphabetical
+    const aOpt = a.flags?.isOptional ? 1 : 0
+    const bOpt = b.flags?.isOptional ? 1 : 0
+    if (aOpt !== bOpt) return aOpt - bOpt
+    return a.name.localeCompare(b.name)
+  }) ?? []
+
+const inherited = iface?.children
+  ?.filter((p: any) => p.inheritedFrom) ?? []
+---
+
+{props.length > 0 && (
+  <table>
+    <thead>
+      <tr>
+        <th>Prop</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {props.map((p: any) => (
+        <tr>
+          <td>
+            <code>{p.name}{p.flags?.isOptional ? '?' : ''}</code>
+          </td>
+          <td><code>{renderType(p.type)}</code></td>
+          <td>{renderComment(p.comment)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+)}
+
+{inherited.length > 0 && (
+  <details>
+    <summary>Inherited props ({inherited.map((p: any) => p.name).join(', ')})</summary>
+    <table>
+      <thead>
+        <tr>
+          <th>Prop</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {inherited.map((p: any) => (
+          <tr>
+            <td><code>{p.name}?</code></td>
+            <td><code>{renderType(p.type)}</code></td>
+            <td>{renderComment(p.comment)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </details>
+)}

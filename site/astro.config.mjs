@@ -12,6 +12,7 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeMathjax from 'rehype-mathjax';
 
 export default defineConfig({
+  site: 'https://antadesign.dev',
   integrations: [
     preact({ compat: true }),
     astroExpressiveCode({

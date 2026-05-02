@@ -1,4 +1,7 @@
 ---
+import '@antadesign/anta/anta_global_tokens.css'
+import '../styles/base.css'
+
 interface Props {
   title?: string
   frontmatter?: { title?: string }
@@ -14,9 +17,18 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
     <title>{title} — Anta</title>
   </head>
   <body>
+    <header class="topbar">
+      <span class="topbar-title">Anta design system</span>
+      <button class="menu-toggle" aria-label="Open menu" type="button">
+        <span class="menu-label">MENU</span>
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
     <div class="layout">
       <aside class="sidebar">
-        <a class="logo" href="/">Anta</a>
+        <span class="logo">Anta</span>
         <nav>
           <ul>
             <li><a href="/">Overview</a></li>
@@ -31,16 +43,40 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
         <slot />
       </main>
     </div>
+    <div class="backdrop" aria-hidden="true"></div>
+
+    <script>
+      const backdrop = document.querySelector('.backdrop')
+      const setMenu = (open: boolean) => {
+        document.body.dataset.menuOpen = open ? 'true' : 'false'
+      }
+      const toggleMenu = () => setMenu(document.body.dataset.menuOpen !== 'true')
+      document.querySelectorAll('.menu-toggle, .topbar-title').forEach((el) => {
+        el.addEventListener('click', toggleMenu)
+      })
+      backdrop?.addEventListener('click', () => setMenu(false))
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setMenu(false)
+      })
+    </script>
 
     <script>
       import '@antadesign/anta/elements'
+
+      document.addEventListener('click', (e) => {
+        const code = (e.target as HTMLElement)?.closest?.('code')
+        if (!code) return
+        if (code.parentElement?.tagName === 'PRE') return
+        const text = code.textContent ?? ''
+        if (!text) return
+        navigator.clipboard.writeText(text).then(() => {
+          code.addEventListener('animationend', () => delete code.dataset.copied, { once: true })
+          code.dataset.copied = text
+        }).catch(() => {})
+      })
     </script>
   </body>
 </html>
-
-<style is:global>
-  @import '../styles/base.css';
-</style>
 
 <style>
   .layout {
@@ -51,13 +87,19 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
   .sidebar {
     width: 240px;
     flex-shrink: 0;
-    background: #f7f5f2;
-    border-right: 1px solid #e5e5e5;
+    background: color-mix(in oklch, var(--bg-section) 50%, var(--bg-base));
+    border-right: 1px solid var(--border-1);
     padding: 24px;
     position: sticky;
     top: 0;
     height: 100vh;
     overflow-y: auto;
+    transition: background 200ms ease-out;
+  }
+
+  .sidebar:hover,
+  .sidebar:focus-within {
+    background: var(--bg-section);
   }
 
   .logo {
@@ -97,6 +139,85 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
   .content {
     flex: 1;
     max-width: 720px;
-    padding: 48px 32px;
+    padding: 32px;
+  }
+
+  .topbar { display: none; }
+  .backdrop { display: none; }
+
+  @media (max-width: 900px) {
+    .logo { display: none; }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100dvh;
+      transform: translateX(100%);
+      transition: transform 250ms ease-out, background 200ms ease-out;
+      z-index: 20;
+    }
+
+    .backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: color-mix(in oklch, var(--text-1) 30%, transparent);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 250ms ease-out;
+      z-index: 15;
+    }
+
+    body[data-menu-open="true"] .sidebar {
+      transform: translateX(0);
+    }
+
+    body[data-menu-open="true"] .backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 44px;
+      padding: 0 10px 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg-section);
+      border-bottom: 1px solid var(--border-1);
+    }
+
+    .menu-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      height: 28px;
+      padding: 0 6px;
+      background: transparent;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .menu-toggle:hover { background: var(--bg-spot); }
+
+    .menu-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-2);
+    }
+
+    .topbar-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
   }
 </style>

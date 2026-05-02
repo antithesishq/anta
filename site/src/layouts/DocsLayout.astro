@@ -15,6 +15,7 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} — Anta</title>
+    <link rel="icon" type="image/svg+xml" href="/anta-favicon.svg" />
   </head>
   <body>
     <header class="topbar">
@@ -28,10 +29,14 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
     </header>
     <div class="layout">
       <aside class="sidebar">
-        <span class="logo">Anta</span>
+        <span class="logo">
+          <img src="/anta-logo.svg" alt="" width="32" height="32" />
+          Anta
+        </span>
         <nav>
           <ul>
             <li><a href="/">Overview</a></li>
+            <li><a href="/colors/">Colors</a></li>
           </ul>
           <h4>Components</h4>
           <ul>
@@ -64,14 +69,14 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
       import '@antadesign/anta/elements'
 
       document.addEventListener('click', (e) => {
-        const code = (e.target as HTMLElement)?.closest?.('code')
-        if (!code) return
-        if (code.parentElement?.tagName === 'PRE') return
-        const text = code.textContent ?? ''
+        const target = (e.target as HTMLElement)?.closest?.('code, .copyable') as HTMLElement | null
+        if (!target) return
+        if (target.tagName === 'CODE' && target.parentElement?.tagName === 'PRE') return
+        const text = target.textContent ?? ''
         if (!text) return
         navigator.clipboard.writeText(text).then(() => {
-          code.addEventListener('animationend', () => delete code.dataset.copied, { once: true })
-          code.dataset.copied = text
+          target.addEventListener('animationend', () => delete target.dataset.copied, { once: true })
+          target.dataset.copied = text
         }).catch(() => {})
       })
     </script>
@@ -103,11 +108,19 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
   }
 
   .logo {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-weight: 700;
     font-size: 1.2rem;
     margin-bottom: 32px;
     letter-spacing: -0.02em;
+  }
+
+  .logo img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
   }
 
   nav h4 {

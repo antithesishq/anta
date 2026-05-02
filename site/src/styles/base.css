@@ -100,20 +100,28 @@ pre code { background: none; padding: 0; }
 :not(pre) > code:hover { box-shadow: 0 1px 5px color-mix(in oklch, var(--border-5) 50%, transparent); }
 :not(pre) > code:active { box-shadow: none; }
 
-:not(pre) > code[data-copied]::after {
+.copyable {
+  cursor: copy;
+  position: relative;
+}
+
+[data-copied]::after {
   content: attr(data-copied);
   position: absolute;
-  top: -0.5px;
-  left: -0.5px;
+  top: 0;
+  left: 0;
   z-index: -1;
   pointer-events: none;
   white-space: nowrap;
 
-  color: var(--text-2-info);
-  background: var(--bg-section);
-  border: 0.5px solid var(--border-2);
-  padding: 3px 3px 2px;
-  border-radius: 3px;
+  /* Clone the source's box decoration so the toast looks like an
+     exact copy of whatever element it's animating from. Color and
+     font are inherited automatically; background/border/padding/
+     border-radius need the explicit `inherit` keyword. */
+  background: inherit;
+  border: inherit;
+  padding: inherit;
+  border-radius: inherit;
 
   animation: copy-toast 500ms ease-out forwards;
 }

@@ -232,8 +232,7 @@ function Swatch({ kind, token, hex }: { kind: Kind; token: string; hex: string }
         </div>
       )}
       <span class={`${s.tokenName} copyable`}>{token}</span>
-      <span class={s.hex}>{hex}</span>
-      <span class={s.oklch}>{hexToOklch(hex)}</span>
+      <span class={s.hex} title={hexToOklch(hex)}>{hex}</span>
     </div>
   )
 }

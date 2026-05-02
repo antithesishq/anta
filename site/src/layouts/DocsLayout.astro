@@ -16,6 +16,15 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} — Anta</title>
     <link rel="icon" type="image/svg+xml" href="/anta-favicon.svg" />
+    <script is:inline>
+      // Toggle anta's `.dark` ancestor class based on the OS-level
+      // prefers-color-scheme. Runs blocking in <head> before body paints,
+      // so there's no flash. Listens for changes during the session too.
+      const mql = matchMedia('(prefers-color-scheme: dark)')
+      const apply = (m) => document.documentElement.classList.toggle('dark', m)
+      apply(mql.matches)
+      mql.addEventListener('change', (e) => apply(e.matches))
+    </script>
   </head>
   <body>
     <header class="topbar">

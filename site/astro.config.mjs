@@ -62,6 +62,7 @@ export default defineConfig({
           editorActiveTabBackground: 'var(--bg-section)',
           terminalBackground: 'var(--bg-section)',
           terminalTitlebarBackground: 'var(--bg-pane)',
+          terminalTitlebarBorderBottomColor: 'var(--border-1)',
         },
       },
     }),

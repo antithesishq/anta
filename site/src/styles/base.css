@@ -83,7 +83,7 @@ pre, figure, hr, .expressive-code { margin: 0 0 1.5em; }
 code {
   font-family: var(--monospace);
   font-size: 0.9em;
-  color: var(--text-2-info);
+  color: inherit;
   background: var(--bg-section);
   border: 0.5px solid var(--border-2);
   padding: 3px 3px 2px;

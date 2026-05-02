@@ -1,5 +1,6 @@
 node_modules/
 .claude/
+.playwright-mcp/
 site/dist/
 site/.astro/
 site/src/api.json

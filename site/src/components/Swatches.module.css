@@ -23,7 +23,7 @@
   font-size: 0.85rem;
   line-height: 1.2;
   color: var(--text-3);
-  padding: 4px 12px;
+  padding: 4px 8px 5px;
   border-radius: 4px;
   cursor: pointer;
   transition: background 150ms ease-out, color 150ms ease-out;
@@ -64,6 +64,8 @@
 .themeRow {
   border-radius: 8px;
   padding: 24px 30px;
+  overflow-x: auto;
+  min-width: 0;
 }
 
 .themeRowLight {
@@ -88,8 +90,14 @@
 
 .swatchGrid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(132px, 1fr));
   gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .themeRow {
+    padding: 16px;
+  }
 }
 
 .swatch {
@@ -181,6 +189,7 @@
 
 .exampleScroll {
   overflow-x: auto;
+  min-width: 0;
 }
 
 .bgExampleSvg {

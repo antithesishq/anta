@@ -19,7 +19,10 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
   </head>
   <body>
     <header class="topbar">
-      <span class="topbar-title">Anta design system</span>
+      <span class="topbar-title">
+        <img class="topbar-logo" src="/anta-logo.svg" alt="" width="32" height="32" />
+        Anta design system
+      </span>
       <button class="menu-toggle" aria-label="Open menu" type="button">
         <span class="menu-label">MENU</span>
         <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
@@ -151,7 +154,8 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
 
   .content {
     flex: 1;
-    max-width: 720px;
+    min-width: 0;
+    max-width: 900px;
     padding: 32px;
   }
 
@@ -160,6 +164,10 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
 
   @media (max-width: 900px) {
     .logo { display: none; }
+
+    .content {
+      padding-inline: 16px;
+    }
 
     .sidebar {
       position: fixed;
@@ -196,7 +204,7 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
       align-items: center;
       gap: 8px;
       height: 44px;
-      padding: 0 10px 0 32px;
+      padding: 0 10px;
       position: sticky;
       top: 0;
       z-index: 10;
@@ -228,9 +236,18 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
     }
 
     .topbar-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-weight: 600;
       font-size: 0.95rem;
       cursor: pointer;
+    }
+
+    .topbar-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
     }
   }
 </style>

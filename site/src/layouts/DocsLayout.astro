@@ -45,16 +45,17 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
           <img src="/anta-logo.svg" alt="" width="32" height="32" />
           Anta
         </span>
-        <nav>
-          <ul>
-            <li><a href="/">Overview</a></li>
-            <li><a href="/colors/">Colors</a></li>
-          </ul>
-          <h4>Components</h4>
-          <ul>
-            <li><a href="/components/progress/">Progress</a></li>
-          </ul>
-        </nav>
+        <menu>
+          <li><a href="/">Overview</a></li>
+          <li><a href="/colors/">Colors</a></li>
+          <li><a href="/credits/">Credits</a></li>
+        </menu>
+        <h4>Components</h4>
+        <menu>
+          <li><a href="/components/progress/">Progress</a></li>
+          <li><a href="/components/text/">Text</a></li>
+          <li><a href="/components/icon/">Icon</a></li>
+        </menu>
       </aside>
       <main class="content">
         <slot />
@@ -123,10 +124,11 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 700;
+    font-weight: 550;
     font-size: 1.2rem;
     margin-bottom: 32px;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.05ch;
+    color: var(--text-1-brand);
   }
 
   .logo img {
@@ -135,7 +137,7 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
     border-radius: 8px;
   }
 
-  nav h4 {
+  .sidebar h4 {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -143,20 +145,17 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
     margin: 24px 0 8px;
   }
 
-  nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  nav li a {
+  /* Anta's global stylesheet already strips list-style, padding, and
+     margin from `<menu>` and its items, so the sidebar only has to
+     style its links. */
+  .sidebar menu li a {
     display: block;
     padding: 4px 0;
     color: #6c7278;
     font-size: 0.9rem;
+    text-decoration: none;
   }
-
-  nav li a:hover {
+  .sidebar menu li a:hover {
     color: #1a1c1e;
     text-decoration: none;
   }
@@ -248,8 +247,10 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
       display: flex;
       align-items: center;
       gap: 8px;
-      font-weight: 600;
+      font-weight: 550;
       font-size: 0.95rem;
+      letter-spacing: 0.05ch;
+      color: var(--text-1-brand);
       cursor: pointer;
     }
 

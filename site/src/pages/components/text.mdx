@@ -1,0 +1,157 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Text
+---
+import TextDemo from '../../components/TextDemo'
+import TruncateDemo from '../../components/TruncateDemo'
+import ExpandableDemo from '../../components/ExpandableDemo'
+import PropsTable from '../../components/PropsTable.astro'
+
+# Text
+
+A block-level text container that scopes the color hierarchy of its
+contents. Use `priority` to dial the emphasis from `primary` (most
+prominent, `--text-1`) down to `quinary` (least prominent, `--text-5`),
+and `tone` to apply a tinted palette (`brand`, `success`, `critical`,
+`warning`, `info`). Pass `inline` to render as `inline-block` for use
+in the middle of other text.
+
+`Text` also owns Anta's prose-link styling. Links nested inside
+`<Text>` are styled by the design system — there are no per-page
+overrides to maintain.
+
+## Props
+
+<PropsTable component="Text" />
+
+## Examples
+
+### Priority
+
+```tsx
+<Text priority="primary">Primary emphasis</Text>
+<Text priority="secondary">Secondary emphasis</Text>
+<Text priority="tertiary">Tertiary emphasis</Text>
+<Text priority="quaternary">Quaternary emphasis</Text>
+<Text priority="quinary">Quinary emphasis</Text>
+```
+
+### Tinted
+
+```tsx
+<Text tone="info" priority="secondary">Informational note</Text>
+<Text tone="critical">Something broke</Text>
+<Text tone="success" priority="tertiary">Saved</Text>
+```
+
+### Inline
+
+```tsx
+<p>
+  This paragraph has a <Text inline tone="info">tinted phrase</Text>{' '}
+  in the middle.
+</p>
+```
+
+### Truncate
+
+```tsx
+{/* Single line */}
+<Text truncate>
+  This very long sentence will be cut off with an ellipsis…
+</Text>
+
+{/* Multi-line — pass the line count */}
+<Text truncate={3}>
+  Long paragraph that wraps across many lines but stops at three…
+</Text>
+```
+
+<TruncateDemo client:load />
+
+`truncate` accepts either `true` (or `1`) for a single-line ellipsis or
+any integer ≥ 2 for multi-line clamping. Both modes use
+`-webkit-line-clamp` inside `display: -webkit-box`. Despite the
+`-webkit-` prefix, every major browser supports it (Firefox 68+,
+Chrome, Safari, Edge). The host gets `min-width: 0` so truncation
+works correctly inside flex and grid containers.
+
+### Expandable
+
+```tsx
+<Text truncate expandable>…</Text>
+<Text truncate={3} expandable>…</Text>
+```
+
+Pair `expandable` with `truncate` to let the user reveal the full
+text. Single-line truncation gets a horizontal fade on the right edge;
+multi-line gets a vertical fade over the last line. A chevron-down
+hint appears in the bottom-right corner on hover or keyboard focus —
+clicking the chevron or focusing the element and pressing Enter
+expands the text and the clamp is removed. The element is exposed as
+`role="button"` with `aria-expanded` while collapsed; once expanded
+it reverts to plain text.
+
+<ExpandableDemo client:load />
+
+### Links inside
+
+```tsx
+<Text priority="primary">
+  Read the <a href="#">full guide</a> to get started.
+</Text>
+
+<Text priority="tertiary">
+  Footnote with a <a href="#">muted link</a> that brightens on hover.
+</Text>
+```
+
+## Link behavior
+
+Links inside `<Text>` follow a priority-aware hierarchy that keeps
+emphasis consistent with the surrounding text:
+
+| Priority      | Link color (default)              | Link color (hover)            |
+|---------------|-----------------------------------|-------------------------------|
+| `primary`     | `--link-color` (brand blue)       | `--link-color-hover`          |
+| `secondary`   | `--link-color`                    | `--link-color-hover`          |
+| `tertiary`    | `currentColor` (= `--text-3`)     | `--text-2`                    |
+| `quaternary`  | `currentColor` (= `--text-4`)     | `--text-3`                    |
+| `quinary`     | `currentColor` (= `--text-5`)     | `--text-4`                    |
+
+The underline is a 0.5px hairline at 75% alpha by default and bumps to
+1px / 100% alpha on hover. On `:active` it returns to the 0.5px / 75%
+resting state.
+
+For tinted text (`tone="brand|success|critical|warning|info"`) links
+are **always** muted regardless of priority — they take `currentColor`
+and step up to the next-stronger level of the same tint on hover. At
+`priority="primary"` there is no level above, so hovering only brings
+the underline to full alpha.
+
+## Interactive demo
+
+<TextDemo client:load />
+
+## Component tokens
+
+`Text` derives its colors from the global token system. Every variable
+below has a light and dark mode value defined in
+`anta_global_tokens.css`.
+
+| Token                       | Description                                     |
+|-----------------------------|-------------------------------------------------|
+| `--text-1` … `--text-5`     | Neutral text levels (most → least prominent)    |
+| `--text-1-{tone}` … `--text-5-{tone}` | Tinted text levels for each `tone` value |
+| `--link-color`              | Default prose-link color (priorities 1 & 2)     |
+| `--link-color-hover`        | Hover prose-link color (priorities 1 & 2)       |
+
+`<a-text>` itself exposes four internal variables that carry the
+resolved values into its descendant link rule:
+
+| Token                          | Description                                  |
+|--------------------------------|----------------------------------------------|
+| `--text-color`                 | Resolved text color for the priority/tone    |
+| `--text-link-color`            | Color used by `a-text a` at rest             |
+| `--text-link-hover`            | Color used by `a-text a:hover`               |
+| `--text-link-underline-alpha`  | Alpha applied to the underline (50% / 100%)  |

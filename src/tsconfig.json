@@ -13,6 +13,7 @@
     "outDir": "../dist",
     "baseUrl": ".",
     "paths": {
+      "@antadesign/anta": ["./index.ts"],
       "@antadesign/anta/*": ["./*"]
     }
   },

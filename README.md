@@ -4,28 +4,26 @@
 
 The Antithesis SaaS has an unusual architecture: most of its UI code runs inside a Worker thread, driven by a custom reactive engine that powers Antithesis notebooks. To keep state in sync between the Worker and the UI thread, Anta's web components must be **fully declarative** — they never mutate their own attributes (any internal state changes happen inside Shadow DOM, invisible to the outer document). A self-mutating attribute would break the Worker↔UI sync.
 
-This constraint shapes the architecture: the web components carry the core styling and the occasional browser-API call (e.g. `getBoundingClientRect()`) without imposing a framework. The React/Preact wrappers exist for dynamic state and conditional rendering — most components are stateless and driven entirely by attributes.
+This constraint shapes the architecture: the web components carry the core styling and the occasional browser-API call (e.g. `getBoundingClientRect()`) without imposing a framework. Majority of web components are stateless. The React/Preact wrappers exist for dynamic state and conditional rendering.
 
-## Install
+## Installation
 
-```sh
-npm install @antadesign/anta
-```
+`@antadesign/anta` is an NPM package, so you can `npm install @antadesign/anta` or do that with `pnpm` / `bun`.
 
-## Quick start
+Since Anta is in active development we suggest using the latest dev version: `"@antadesign/anta": "dev"` in your `package.json`. For production builds we suggest pinning to a stable version from npm.
+
+### Usage
 
 ```tsx
 import { Progress } from '@antadesign/anta'
 import '@antadesign/anta/elements'  // registers <a-progress> custom element
 
-<Progress value={60} />
-<Progress value={42} label="Uploading files..." hint="3 of 7" />
-<Progress value={75} tone="info" label="Processing" />
+<Progress value={42} label="uploaded.." hint="3 of 7" />
 ```
 
 ## Registering elements
 
-The JSX wrappers render `<a-progress>` and other custom elements. The custom elements themselves must be registered with the browser **before** they appear in the DOM, and registration only works where `HTMLElement` exists — i.e. the UI thread of a real browser. **Node.js (SSR) and Worker threads don't have `HTMLElement`**, so the import will throw if it runs there.
+The JSX wrappers (React components) as `Progress` render custom DOM elements as `<a-progress>`. The custom elements themselves must be registered with the browser **before** they appear in the DOM, and registration only works where `HTMLElement` exists — i.e. the UI thread of a real browser. **Node.js (SSR) and Worker threads don't have `HTMLElement`**, so the import is harmless in those environments: it does nothing — registration is skipped silently and the class uses a stand-in base instead of crashing — though it might extend your worker's bundle size a bit.
 
 ```ts
 import '@antadesign/anta/elements'  // auto-registers all elements
@@ -96,9 +94,9 @@ Add the `dark` class to any ancestor element:
 </div>
 ```
 
-## Typography
+## Fonts
 
-Anta is designed with a customized version of [TT Interphases Pro](https://typetype.org/fonts/tt-interphases-pro) in mind, but it doesn't ship any font binaries. Components reference families through the `--sans-serif` and `--monospace` CSS variables and fall back to native system stacks when no font is registered.
+Anta is designed with a customized version of <a href="https://typetype.org/fonts/tt-interphases-pro" target="_blank" rel="noopener noreferrer">TT Interphases Pro</a> in mind, but it doesn't ship any font binaries. Components reference families through the `--sans-serif` and `--monospace` CSS variables and fall back to native system stacks when no font is registered.
 
 Anta sets `font-size: 15px` on `:root` (so `1rem = 15px`), intentionally diverging from the browser default of 16px to match Antithesis's information-dense layouts. This is applied via `@antadesign/anta/anta_global_tokens.css`:
 

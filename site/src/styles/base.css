@@ -42,18 +42,25 @@ h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
 :root {
   --sans-serif: "Antithesis sans", sans-serif;
   --monospace: "Antithesis mono", "Roboto Mono", monospace;
+  /* Distance from the top of the viewport to use when scrolling an
+     anchor target into view (e.g. clicking a heading link). On
+     desktop a small breathing room; on mobile, enough to clear the
+     sticky topbar (height set in the @media block at the bottom). */
+  --scroll-padding-top: 1em;
 }
 
 /* Document defaults */
 html {
   color: var(--text-2);
   background: var(--bg-base);
+  scroll-padding-top: var(--scroll-padding-top);
 }
 
 html, body { font-family: var(--sans-serif); }
 
-a { color: inherit; text-decoration: none; }
-a:hover { text-decoration: underline; }
+/* Anta's global stylesheet provides the `a` defaults (color, underline,
+   thickness, hover bump). Sidebar nav and header anchors below are the
+   only places that need to override the global to opt out. */
 
 summary { cursor: pointer; }
 
@@ -64,16 +71,22 @@ h2 { font-size: 1.35rem; }
 h3 { font-size: 1.1rem; }
 h2, h3, h4, h5, h6 { color: var(--text-2); }
 
-.header-anchor:hover {
+/* Header anchor links wrap headings; opt them out of the global prose
+   link styling so headings keep their own color and aren't underlined
+   by default. Hover and active share the same dotted-underline state
+   so the underline doesn't jump when the user clicks. */
+.header-anchor,
+.header-anchor:link,
+.header-anchor:visited {
+  color: inherit;
+  text-decoration: none;
+}
+.header-anchor:hover,
+.header-anchor:active {
   text-decoration: underline;
   text-decoration-style: dotted;
-  text-decoration-color: color-mix(in oklch, currentColor 50%, transparent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-
-.header-anchor:active {
   text-decoration-color: color-mix(in oklch, currentColor 75%, transparent);
+  text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
 
@@ -110,14 +123,17 @@ pre code { background: none; padding: 0; }
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
   z-index: -1;
   pointer-events: none;
   white-space: nowrap;
 
   /* Clone the source's box decoration so the toast looks like an
-     exact copy of whatever element it's animating from. Color and
-     font are inherited automatically; background/border/padding/
-     border-radius need the explicit `inherit` keyword. */
+     exact copy of whatever element it's animating from. Color, font,
+     and text-align are inherited automatically; background/border/
+     padding/border-radius need the explicit `inherit` keyword.
+     `right: 0` stretches the toast to the source's full width so its
+     text aligns the same way the source's content does. */
   background: inherit;
   border: inherit;
   padding: inherit;
@@ -150,4 +166,93 @@ th {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* Shared demo-island styles. Used by component demos (IconDemo,
+   TruncateDemo, ExpandableDemo, TextDemo). */
+
+.demoStack    { display: flex; flex-direction: column; gap: 32px; }
+.demoSection  { display: flex; flex-direction: column; gap: 12px; }
+.demoRow      { display: flex; flex-direction: column; gap: 4px; }
+
+.demoLabel {
+  font-size: 0.75rem;
+  font-family: var(--monospace);
+  color: var(--text-4);
+}
+.demoLabel.upper {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.demoBox {
+  max-width: 320px;
+  border: 1px dashed var(--border-2);
+  padding: 8px;
+}
+
+.demoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.demoCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 8px 8px 4px;
+  /* Cell font-size is what the click-to-copy toast (`::after`) picks
+     up. Font family stays the inherited sans-serif. */
+  font-size: 0.75rem;
+  /* Cell color drives the icon color (via currentColor on a-icon).
+     The label inside has its own --text-4 color, more muted than the
+     icon. The toast `::after` inherits the cell color too — overridden
+     below so the animating ghost matches the label, not the icon. */
+  color: var(--text-2);
+}
+.demoCell .demoLabel {
+  /* Override `.demoLabel`'s default mono font for the icon gallery —
+     icon names read better in sans. Disable wrapping; the grid's
+     min cell width is sized to fit the longest shape name. */
+  font-family: var(--sans-serif);
+  white-space: nowrap;
+}
+.demoCell[data-copied]::after {
+  color: var(--text-4);
+  /* The label sits at the bottom of the cell (the icon is on top); pin
+     the toast there so it flies up from the label's actual position.
+     Width and centering inherit from the cell. */
+  top: auto;
+  bottom: 4px;
+}
+
+.iconFilter {
+  width: 100%;
+  padding: 8px 12px;
+  margin: 8px 0 16px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text-1);
+  background: var(--bg-section);
+  border: 1px solid var(--border-4);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 150ms ease-out;
+}
+.iconFilter:focus {
+  border-color: var(--border-5);
+}
+
+/* On mobile the sticky topbar is 44px tall, so anchor-scrolls need to
+   account for it — otherwise the target heading lands underneath the
+   topbar. The number is duplicated in DocsLayout.astro's `.topbar`
+   height; keep them in sync. */
+@media (max-width: 900px) {
+  :root {
+    --scroll-padding-top: calc(44px + 1em);
+  }
 }

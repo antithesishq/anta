@@ -55,6 +55,8 @@ export default defineConfig({
         borderWidth: '1px',
         borderColor: 'var(--border-1)',
         codeBackground: 'var(--bg-section)',
+        codePaddingBlock: '0.75rem',
+        codePaddingInline: '1rem',
         frames: {
           frameBoxShadowCssValue: 'none',
           editorBackground: 'var(--bg-section)',

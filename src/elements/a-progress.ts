@@ -1,4 +1,6 @@
-export class AProgressElement extends HTMLElement {
+import { HTMLElementBase } from '../anta_helpers'
+
+export class AProgressElement extends HTMLElementBase {
   static observedAttributes = ['value', 'max', 'tone']
   indicator: HTMLDivElement
 
@@ -63,6 +65,7 @@ export class AProgressElement extends HTMLElement {
 }
 
 export function register_a_progress() {
+  if (typeof customElements === 'undefined') return
   if (!customElements.get('a-progress')) {
     customElements.define('a-progress', AProgressElement)
   }

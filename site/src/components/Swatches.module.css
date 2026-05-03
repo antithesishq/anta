@@ -36,7 +36,7 @@
 .toneTabActive {
   background: var(--bg-section);
   color: var(--text-1);
-  box-shadow: 0 0 2px color-mix(in oklch, var(--border-5) 30%, transparent);
+  box-shadow: 0 0 2px var(--border-3);
 }
 
 .block {

@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": ["dist", "NOTICES.md"],
+  "packageManager": "pnpm@8.13.1",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

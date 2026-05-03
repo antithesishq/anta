@@ -92,6 +92,41 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
           target.dataset.copied = text
         }).catch(() => {})
       })
+
+      // Anchor-based "scroll preservation" for tone-tab navigation.
+      // When the user clicks a link tagged `data-preserve-scroll`, find
+      // the heading representing the section they're currently reading
+      // and append its id as a hash to the destination URL. The browser
+      // then scrolls to that anchor on the next page (with
+      // `--scroll-padding-top` accounting for the topbar), so the user
+      // lands at the same section across tones.
+      //
+      // "Reading" is defined as the last heading in DOM order whose top
+      // is at or above 40 % of viewport height. That captures both
+      // "scrolled past" headings and headings that are currently
+      // visible in the upper portion of the screen — which is what the
+      // user would expect when they've moved beyond the previous
+      // section even if the new heading isn't pinned to the very top.
+      function topmostPassedHeadingId(): string | null {
+        const fold = Math.max(80, window.innerHeight * 0.4)
+        const headings = document.querySelectorAll<HTMLElement>('main :is(h1, h2, h3)[id]')
+        let last: string | null = null
+        for (const h of headings) {
+          if (h.getBoundingClientRect().top <= fold) last = h.id
+        }
+        return last
+      }
+      document.addEventListener('click', (e) => {
+        const link = (e.target as HTMLElement)?.closest?.('a[data-preserve-scroll]') as HTMLAnchorElement | null
+        if (!link) return
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || (e as MouseEvent).button !== 0) return
+        const id = topmostPassedHeadingId()
+        if (!id) return  // user is above all headings — let normal nav happen, lands at page top
+        e.preventDefault()
+        const url = new URL(link.href, window.location.href)
+        url.hash = id
+        window.location.assign(url.toString())
+      })
     </script>
   </body>
 </html>
@@ -141,7 +176,7 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #9ca3af;
+    color: var(--text-4);
     margin: 24px 0 8px;
   }
 
@@ -151,12 +186,12 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
   .sidebar menu li a {
     display: block;
     padding: 4px 0;
-    color: #6c7278;
+    color: var(--text-3);
     font-size: 0.9rem;
     text-decoration: none;
   }
   .sidebar menu li a:hover {
-    color: #1a1c1e;
+    color: var(--text-1);
     text-decoration: none;
   }
 

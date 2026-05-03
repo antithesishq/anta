@@ -47,6 +47,7 @@ function regenDocsOnChange() {
 
 export default defineConfig({
   site: 'https://antadesign.dev',
+  devToolbar: { enabled: false },
   integrations: [
     preact({ compat: true }),
     astroExpressiveCode({

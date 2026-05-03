@@ -1,7 +1,6 @@
-import { useState } from 'preact/hooks'
 import s from './Swatches.module.css'
 import bgExampleSvg from './bg-example.svg?raw'
-import borderExampleSvg from './border-example.svg?raw'
+import AccessibilityMatrix from './AccessibilityMatrix'
 
 type Tone = 'neutral' | 'brand' | 'info' | 'success' | 'critical' | 'warning'
 type Kind = 'bg' | 'text' | 'border'
@@ -238,7 +237,9 @@ function Swatch({ kind, token, hex }: { kind: Kind; token: string; hex: string }
 }
 
 function ThemeRow({ mode, kind, rows }: { mode: 'light' | 'dark'; kind: Kind; rows: TokenRow[] }) {
-  const className = mode === 'dark' ? `${s.themeRow} ${s.themeRowDark} dark` : `${s.themeRow} ${s.themeRowLight}`
+  const className = mode === 'dark'
+    ? `${s.themeRow} ${s.themeRowDark} dark`
+    : `${s.themeRow} ${s.themeRowLight} light`
   return (
     <div class={className}>
       <div class={s.themeLabel}>
@@ -299,33 +300,41 @@ function BorderDescription() {
 
 // Background mockup — the exact Figma SVG, with hex colors substituted for our
 // token CSS variables so it flips with light/dark mode and stays in sync with
-// the design system. The SVG lives in bg-example.svg and is imported as raw
-// markup so the var() references resolve from :root.
-function BackgroundExample() {
+// the design system. For tinted tones, the wrapper remaps neutral var() names
+// to the tinted equivalents so the same SVG renders the tinted palette.
+function BackgroundExample({ tone }: { tone: Tone }) {
+  const style: Record<string, string> = {}
+  if (tone !== 'neutral') {
+    style['--bg-base']  = `var(--bg-base-${tone})`
+    style['--bg-pane']  = `var(--bg-pane-${tone})`
+    style['--bg-block'] = `var(--bg-block-${tone})`
+    style['--bg-spot']  = `var(--bg-spot-${tone})`
+    style['--border-1'] = `var(--border-1-${tone})`
+    style['--border-2'] = `var(--border-2-${tone})`
+    style['--text-1']   = `var(--text-1-${tone})`
+  }
   return (
-    <div class={s.exampleScroll}>
-      <div class={s.bgExampleSvg} dangerouslySetInnerHTML={{ __html: bgExampleSvg }} />
-    </div>
-  )
-}
-
-// Border mockup — exact Figma SVG with hex colors substituted for our token
-// CSS variables. Inlined as raw markup so var() resolves from :root.
-function BorderExample() {
-  return (
-    <div class={s.exampleScroll}>
-      <div class={s.bgExampleSvg} dangerouslySetInnerHTML={{ __html: borderExampleSvg }} />
-    </div>
+    <>
+      <h3 id="background-illustration" class={s.exampleHeading}>
+        <a href="#background-illustration" class="header-anchor muted">Illustration</a>
+      </h3>
+      <div class={s.exampleScroll}>
+        <div class={s.bgExampleSvg} style={style} dangerouslySetInnerHTML={{ __html: bgExampleSvg }} />
+      </div>
+    </>
   )
 }
 
 function ColorBlock({ kind, tone }: { kind: Kind; tone: Tone }) {
   const rows = TOKENS[kind][tone]
   if (!rows || rows.length === 0) return null
+  const id = TITLES[kind].toLowerCase()
   return (
     <section class={s.block}>
       <div class={s.blockHeading}>
-        <h2>{TITLES[kind]}</h2>
+        <h2 id={id}>
+          <a href={`#${id}`} class="header-anchor muted">{TITLES[kind]}</a>
+        </h2>
         <p>{INTROS[kind]}</p>
       </div>
       <div class={s.themeRows}>
@@ -335,39 +344,42 @@ function ColorBlock({ kind, tone }: { kind: Kind; tone: Tone }) {
       {kind === 'bg' && <BackgroundDescription />}
       {kind === 'text' && <TextDescription />}
       {kind === 'border' && <BorderDescription />}
-      {kind === 'bg' && tone === 'neutral' && <BackgroundExample />}
-      {kind === 'border' && tone === 'neutral' && <BorderExample />}
+      {kind === 'bg' && <BackgroundExample tone={tone} />}
     </section>
   )
 }
 
-function ToneTabs({ value, onChange }: { value: Tone; onChange: (t: Tone) => void }) {
+function toneHref(t: Tone): string {
+  return t === 'neutral' ? '/colors/' : `/colors/${t}/`
+}
+
+function ToneTabs({ value }: { value: Tone }) {
   return (
     <div class={s.toneTabs} role="tablist">
       {TONES.map((t) => (
-        <button
+        <a
           key={t.id}
-          type="button"
+          href={toneHref(t.id)}
           role="tab"
           aria-selected={t.id === value}
+          data-preserve-scroll
           class={t.id === value ? `${s.toneTab} ${s.toneTabActive}` : s.toneTab}
-          onClick={() => onChange(t.id)}
         >
           {t.label}
-        </button>
+        </a>
       ))}
     </div>
   )
 }
 
-export function ColorsPage() {
-  const [tone, setTone] = useState<Tone>('neutral')
+export function ColorsPage({ tone = 'neutral' }: { tone?: Tone }) {
   return (
     <div class={s.page}>
-      <ToneTabs value={tone} onChange={setTone} />
+      <ToneTabs value={tone} />
       <ColorBlock kind="bg" tone={tone} />
       <ColorBlock kind="text" tone={tone} />
       <ColorBlock kind="border" tone={tone} />
+      <AccessibilityMatrix tone={tone} />
     </div>
   )
 }

@@ -25,6 +25,13 @@ function renderType(type: any): string {
       return '—'
     case 'array':
       return `${renderType(type.elementType)}[]`
+    case 'typeOperator':
+      // Surface known canonical aliases by name rather than inlining.
+      // The IconShape type is `keyof IconShapes` — show it as `IconShape`.
+      if (type.operator === 'keyof' && type.target?.name === 'IconShapes') {
+        return 'IconShape'
+      }
+      return `${type.operator} ${renderType(type.target)}`
     default:
       return type.name || '—'
   }

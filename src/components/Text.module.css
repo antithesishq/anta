@@ -1,0 +1,6 @@
+/*
+ * All Text layout — including truncation, the expandable fade mask,
+ * and the chevron button — lives in the <a-text> web component's
+ * shadow DOM. This module is reserved for any future JSX-driven
+ * conditional styles.
+ */

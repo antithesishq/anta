@@ -1,54 +1,150 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* Reset */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+html, body {
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+img, picture, video, canvas, svg { display: block; max-width: 100%; }
+input, button, textarea, select { font: inherit; }
+p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
+p { text-wrap: pretty; }
+h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
+
+/* Brand fonts (temporary Uploadcare hosting) */
+@font-face {
+  font-family: "Antithesis sans";
+  src: url("https://ucarecdn.com/af38fa86-199f-44f5-82d2-3ea2a690dd6c/") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-optical-sizing: auto;
+  font-display: block;
+}
+@font-face {
+  font-family: "Antithesis mono";
+  src: url("https://ucarecdn.com/61bd3320-3787-4a92-887e-a5ff7bd6e051/") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  text-rendering: optimizeLegibility;
+  font-display: block;
+}
+@font-face {
+  font-family: "Antithesis mono";
+  src: url("https://ucarecdn.com/03e90df9-d945-4837-b177-cdc408e94bb4/") format("woff2");
+  font-style: italic;
+  font-weight: 400 700;
+  text-rendering: optimizeLegibility;
+  font-display: block;
 }
 
+/* Brand variable overrides */
+:root {
+  --sans-serif: "Antithesis sans", sans-serif;
+  --monospace: "Antithesis mono", "Roboto Mono", monospace;
+  /* Distance from the top of the viewport to use when scrolling an
+     anchor target into view (e.g. clicking a heading link). On
+     desktop a small breathing room; on mobile, enough to clear the
+     sticky topbar (height set in the @media block at the bottom). */
+  --scroll-padding-top: 1em;
+}
+
+/* Document defaults */
 html {
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
-  color: #1a1c1e;
-  background: #ffffff;
+  color: var(--text-2);
+  background: var(--bg-base);
+  scroll-padding-top: var(--scroll-padding-top);
 }
 
-body {
-  margin: 0;
-}
+html, body { font-family: var(--sans-serif); }
 
-a {
+/* Anta's global stylesheet provides the `a` defaults (color, underline,
+   thickness, hover bump). Sidebar nav and header anchors below are the
+   only places that need to override the global to opt out. */
+
+summary { cursor: pointer; }
+
+h1, h2, h3, h4, h5, h6 { margin: 1em 0 0.5em; line-height: 1.3; }
+:is(h1, h2, h3, h4, h5, h6):first-child { margin-top: 0; }
+h1 { font-size: 1.75rem; color: var(--text-1); }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.1rem; }
+h2, h3, h4, h5, h6 { color: var(--text-2); }
+
+/* Header anchor links wrap headings; opt them out of the global prose
+   link styling so headings keep their own color and aren't underlined
+   by default. Hover and active share the same dotted-underline state
+   so the underline doesn't jump when the user clicks. */
+.header-anchor,
+.header-anchor:link,
+.header-anchor:visited {
   color: inherit;
   text-decoration: none;
 }
-
-a:hover {
+.header-anchor:hover,
+.header-anchor:active {
   text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in oklch, currentColor 75%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
-h1, h2, h3, h4 {
-  margin: 0 0 16px;
-  line-height: 1.3;
-}
-
-h1 { font-size: 1.75rem; }
-h2 { font-size: 1.35rem; }
-h3 { font-size: 1.1rem; }
-
-p {
-  margin: 0 0 16px;
-}
+p, ul, ol, blockquote, dl { margin: 0 0 1em; }
+pre, figure, hr, .expressive-code { margin: 0 0 1.5em; }
 
 code {
-  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
+  font-family: var(--monospace);
   font-size: 0.9em;
-  background: #f7f5f2;
-  padding: 2px 5px;
+  color: inherit;
+  background: var(--bg-section);
+  border: 0.5px solid var(--border-2);
+  padding: 3px 3px 2px;
   border-radius: 3px;
 }
 
-pre code {
-  background: none;
-  padding: 0;
+pre code { background: none; padding: 0; }
+
+:not(pre) > code {
+  cursor: copy;
+  transition: box-shadow 150ms ease-out;
+  position: relative;
+}
+:not(pre) > code:hover { box-shadow: 0 1px 5px color-mix(in oklch, var(--border-5) 50%, transparent); }
+:not(pre) > code:active { box-shadow: none; }
+
+.copyable {
+  cursor: copy;
+  position: relative;
+}
+
+[data-copied]::after {
+  content: attr(data-copied);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  pointer-events: none;
+  white-space: nowrap;
+
+  /* Clone the source's box decoration so the toast looks like an
+     exact copy of whatever element it's animating from. Color, font,
+     and text-align are inherited automatically; background/border/
+     padding/border-radius need the explicit `inherit` keyword.
+     `right: 0` stretches the toast to the source's full width so its
+     text aligns the same way the source's content does. */
+  background: inherit;
+  border: inherit;
+  padding: inherit;
+  border-radius: inherit;
+
+  animation: copy-toast 500ms ease-out forwards;
+}
+
+@keyframes copy-toast {
+  0%   { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(0, -24px); }
 }
 
 table {
@@ -61,7 +157,7 @@ table {
 th, td {
   text-align: left;
   padding: 8px 16px;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--border-1);
 }
 
 th {
@@ -70,4 +166,93 @@ th {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* Shared demo-island styles. Used by component demos (IconDemo,
+   TruncateDemo, ExpandableDemo, TextDemo). */
+
+.demoStack    { display: flex; flex-direction: column; gap: 32px; }
+.demoSection  { display: flex; flex-direction: column; gap: 12px; }
+.demoRow      { display: flex; flex-direction: column; gap: 4px; }
+
+.demoLabel {
+  font-size: 0.75rem;
+  font-family: var(--monospace);
+  color: var(--text-4);
+}
+.demoLabel.upper {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.demoBox {
+  max-width: 320px;
+  border: 1px dashed var(--border-2);
+  padding: 8px;
+}
+
+.demoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.demoCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 8px 8px 4px;
+  /* Cell font-size is what the click-to-copy toast (`::after`) picks
+     up. Font family stays the inherited sans-serif. */
+  font-size: 0.75rem;
+  /* Cell color drives the icon color (via currentColor on a-icon).
+     The label inside has its own --text-4 color, more muted than the
+     icon. The toast `::after` inherits the cell color too — overridden
+     below so the animating ghost matches the label, not the icon. */
+  color: var(--text-2);
+}
+.demoCell .demoLabel {
+  /* Override `.demoLabel`'s default mono font for the icon gallery —
+     icon names read better in sans. Disable wrapping; the grid's
+     min cell width is sized to fit the longest shape name. */
+  font-family: var(--sans-serif);
+  white-space: nowrap;
+}
+.demoCell[data-copied]::after {
+  color: var(--text-4);
+  /* The label sits at the bottom of the cell (the icon is on top); pin
+     the toast there so it flies up from the label's actual position.
+     Width and centering inherit from the cell. */
+  top: auto;
+  bottom: 4px;
+}
+
+.iconFilter {
+  width: 100%;
+  padding: 8px 12px;
+  margin: 8px 0 16px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text-1);
+  background: var(--bg-section);
+  border: 1px solid var(--border-4);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 150ms ease-out;
+}
+.iconFilter:focus {
+  border-color: var(--border-5);
+}
+
+/* On mobile the sticky topbar is 44px tall, so anchor-scrolls need to
+   account for it — otherwise the target heading lands underneath the
+   topbar. The number is duplicated in DocsLayout.astro's `.topbar`
+   height; keep them in sync. */
+@media (max-width: 900px) {
+  :root {
+    --scroll-padding-top: calc(44px + 1em);
+  }
 }

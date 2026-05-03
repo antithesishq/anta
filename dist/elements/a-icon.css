@@ -1,0 +1,16 @@
+a-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: var(--icon-size, 16px);
+  height: var(--icon-size, 16px);
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask-image: var(--icon);
+          mask-image: var(--icon);
+  -webkit-mask-position: center;
+          mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+          mask-size: contain;
+}

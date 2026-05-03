@@ -103,6 +103,24 @@ cd site && pnpm run build    # Static build
 
 When naming components, props, CSS variables, internal class names, or suggesting patterns, reference established design systems: Material Design, shadcn/ui, Carbon Design System, and Shopify Polaris Web Components. Prefer terminology and conventions already used by these libraries over inventing new ones.
 
+## Working with Figma
+
+See `FIGMA.md` for rules when extracting tokens, components, or styles from the Anta Figma library. Key rule: **always read the full variable list directly from the collection** — don't infer the token set from `get_variable_defs` on a sample node, because tokens that aren't placed on the queried node won't appear, and you'll silently miss values.
+
+## Color manipulation
+
+**To tune the alpha of any color (variable, `currentColor`, hex, etc.), always use `color-mix(in oklch, <color> <percent>%, transparent)`**. Mixing in `oklch` keeps the perceived hue/lightness stable, while the percent maps directly to the desired alpha (e.g. `50%` → 0.5 alpha). This is the standard pattern in Anta — do not reach for `rgba(...)`, hex-with-alpha (`#rrggbbaa`), or `opacity` on the parent when only the alpha of one color needs to change.
+
+```css
+/* underline at half-strength of the link's color */
+text-decoration-color: color-mix(in oklch, currentColor 50%, transparent);
+
+/* token at 80% alpha */
+border-color: color-mix(in oklch, var(--border-2) 80%, transparent);
+```
+
+The same rule applies anywhere we lighten/darken/desaturate a color: prefer `color-mix(in oklch, <color> <p>%, <other-color>)` so all interpolation happens in a perceptually-uniform space.
+
 ## Conventions
 
 - **Declarative DOM** — No visible attributes or inline styles are set on the host element from JS. Only shadow-internal elements may be styled from `attributeChangedCallback`.

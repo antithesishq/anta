@@ -1,4 +1,7 @@
 ---
+import '@antadesign/anta/anta_global_tokens.css'
+import '../styles/base.css'
+
 interface Props {
   title?: string
   frontmatter?: { title?: string }
@@ -12,35 +15,121 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} — Anta</title>
+    <link rel="icon" type="image/svg+xml" href="/anta-favicon.svg" />
+    <script is:inline>
+      // Toggle anta's `.dark` ancestor class based on the OS-level
+      // prefers-color-scheme. Runs blocking in <head> before body paints,
+      // so there's no flash. Listens for changes during the session too.
+      const mql = matchMedia('(prefers-color-scheme: dark)')
+      const apply = (m) => document.documentElement.classList.toggle('dark', m)
+      apply(mql.matches)
+      mql.addEventListener('change', (e) => apply(e.matches))
+    </script>
   </head>
   <body>
+    <header class="topbar">
+      <span class="topbar-title">
+        <img class="topbar-logo" src="/anta-logo.svg" alt="" width="32" height="32" />
+        Anta design system
+      </span>
+      <button class="menu-toggle" aria-label="Open menu" type="button">
+        <span class="menu-label">MENU</span>
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
     <div class="layout">
       <aside class="sidebar">
-        <a class="logo" href="/">Anta</a>
-        <nav>
-          <ul>
-            <li><a href="/">Overview</a></li>
-          </ul>
-          <h4>Components</h4>
-          <ul>
-            <li><a href="/components/progress/">Progress</a></li>
-          </ul>
-        </nav>
+        <span class="logo">
+          <img src="/anta-logo.svg" alt="" width="32" height="32" />
+          Anta
+        </span>
+        <menu>
+          <li><a href="/">Overview</a></li>
+          <li><a href="/colors/">Colors</a></li>
+          <li><a href="/credits/">Credits</a></li>
+        </menu>
+        <h4>Components</h4>
+        <menu>
+          <li><a href="/components/progress/">Progress</a></li>
+          <li><a href="/components/text/">Text</a></li>
+          <li><a href="/components/icon/">Icon</a></li>
+        </menu>
       </aside>
       <main class="content">
         <slot />
       </main>
     </div>
+    <div class="backdrop" aria-hidden="true"></div>
+
+    <script>
+      const backdrop = document.querySelector('.backdrop')
+      const setMenu = (open: boolean) => {
+        document.body.dataset.menuOpen = open ? 'true' : 'false'
+      }
+      const toggleMenu = () => setMenu(document.body.dataset.menuOpen !== 'true')
+      document.querySelectorAll('.menu-toggle, .topbar-title').forEach((el) => {
+        el.addEventListener('click', toggleMenu)
+      })
+      backdrop?.addEventListener('click', () => setMenu(false))
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setMenu(false)
+      })
+    </script>
 
     <script>
       import '@antadesign/anta/elements'
+
+      document.addEventListener('click', (e) => {
+        const target = (e.target as HTMLElement)?.closest?.('code, .copyable') as HTMLElement | null
+        if (!target) return
+        if (target.tagName === 'CODE' && target.parentElement?.tagName === 'PRE') return
+        const text = target.textContent ?? ''
+        if (!text) return
+        navigator.clipboard.writeText(text).then(() => {
+          target.addEventListener('animationend', () => delete target.dataset.copied, { once: true })
+          target.dataset.copied = text
+        }).catch(() => {})
+      })
+
+      // Anchor-based "scroll preservation" for tone-tab navigation.
+      // When the user clicks a link tagged `data-preserve-scroll`, find
+      // the heading representing the section they're currently reading
+      // and append its id as a hash to the destination URL. The browser
+      // then scrolls to that anchor on the next page (with
+      // `--scroll-padding-top` accounting for the topbar), so the user
+      // lands at the same section across tones.
+      //
+      // "Reading" is defined as the last heading in DOM order whose top
+      // is at or above 40 % of viewport height. That captures both
+      // "scrolled past" headings and headings that are currently
+      // visible in the upper portion of the screen — which is what the
+      // user would expect when they've moved beyond the previous
+      // section even if the new heading isn't pinned to the very top.
+      function topmostPassedHeadingId(): string | null {
+        const fold = Math.max(80, window.innerHeight * 0.4)
+        const headings = document.querySelectorAll<HTMLElement>('main :is(h1, h2, h3)[id]')
+        let last: string | null = null
+        for (const h of headings) {
+          if (h.getBoundingClientRect().top <= fold) last = h.id
+        }
+        return last
+      }
+      document.addEventListener('click', (e) => {
+        const link = (e.target as HTMLElement)?.closest?.('a[data-preserve-scroll]') as HTMLAnchorElement | null
+        if (!link) return
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || (e as MouseEvent).button !== 0) return
+        const id = topmostPassedHeadingId()
+        if (!id) return  // user is above all headings — let normal nav happen, lands at page top
+        e.preventDefault()
+        const url = new URL(link.href, window.location.href)
+        url.hash = id
+        window.location.assign(url.toString())
+      })
     </script>
   </body>
 </html>
-
-<style is:global>
-  @import '../styles/base.css';
-</style>
 
 <style>
   .layout {
@@ -51,52 +140,159 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
   .sidebar {
     width: 240px;
     flex-shrink: 0;
-    background: #f7f5f2;
-    border-right: 1px solid #e5e5e5;
+    background: color-mix(in oklch, var(--bg-section) 50%, var(--bg-base));
+    border-right: 1px solid var(--border-1);
     padding: 24px;
     position: sticky;
     top: 0;
     height: 100vh;
     overflow-y: auto;
+    transition: background 200ms ease-out;
+  }
+
+  .sidebar:hover,
+  .sidebar:focus-within {
+    background: var(--bg-section);
   }
 
   .logo {
-    display: block;
-    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 550;
     font-size: 1.2rem;
     margin-bottom: 32px;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.05ch;
+    color: var(--text-1-brand);
   }
 
-  nav h4 {
+  .logo img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  .sidebar h4 {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #9ca3af;
+    color: var(--text-4);
     margin: 24px 0 8px;
   }
 
-  nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  nav li a {
+  /* Anta's global stylesheet already strips list-style, padding, and
+     margin from `<menu>` and its items, so the sidebar only has to
+     style its links. */
+  .sidebar menu li a {
     display: block;
     padding: 4px 0;
-    color: #6c7278;
+    color: var(--text-3);
     font-size: 0.9rem;
+    text-decoration: none;
   }
-
-  nav li a:hover {
-    color: #1a1c1e;
+  .sidebar menu li a:hover {
+    color: var(--text-1);
     text-decoration: none;
   }
 
   .content {
     flex: 1;
-    max-width: 720px;
-    padding: 48px 32px;
+    min-width: 0;
+    max-width: 900px;
+    padding: 32px;
+  }
+
+  .topbar { display: none; }
+  .backdrop { display: none; }
+
+  @media (max-width: 900px) {
+    .logo { display: none; }
+
+    .content {
+      padding-inline: 16px;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100dvh;
+      transform: translateX(100%);
+      transition: transform 250ms ease-out, background 200ms ease-out;
+      z-index: 20;
+    }
+
+    .backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: color-mix(in oklch, var(--text-1) 30%, transparent);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 250ms ease-out;
+      z-index: 15;
+    }
+
+    body[data-menu-open="true"] .sidebar {
+      transform: translateX(0);
+    }
+
+    body[data-menu-open="true"] .backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 44px;
+      padding: 0 10px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg-section);
+      border-bottom: 1px solid var(--border-1);
+    }
+
+    .menu-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      height: 28px;
+      padding: 0 6px;
+      background: transparent;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .menu-toggle:hover { background: var(--bg-spot); }
+
+    .menu-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-2);
+    }
+
+    .topbar-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 550;
+      font-size: 0.95rem;
+      letter-spacing: 0.05ch;
+      color: var(--text-1-brand);
+      cursor: pointer;
+    }
+
+    .topbar-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+    }
   }
 </style>

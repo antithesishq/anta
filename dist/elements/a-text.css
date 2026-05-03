@@ -1,0 +1,75 @@
+a-text {
+  --text-color: var(--text-1);
+  --text-link-color: var(--link-color);
+  --text-link-hover: var(--link-color-hover);
+
+  display: block;
+  color: var(--text-color);
+}
+
+a-text[inline] {
+  display: inline-block;
+}
+
+/* Truncation, the expandable mask, the chevron button, and the
+   expanded-state toggle live in shadow DOM — see
+   src/elements/a-text.ts. The one external concern is `min-width: 0`:
+   the host needs it to shrink inside flex/grid parents so the inner
+   clamp can actually clip content. */
+a-text[truncate] {
+  min-width: 0;
+}
+
+/* Neutral priority overrides. Levels 1 & 2 keep the brand link color;
+   levels 3-5 mute the link to currentColor and step the hover up by one
+   level (3→2, 4→3, 5→4). */
+a-text[priority="secondary"]  { --text-color: var(--text-2); }
+a-text[priority="tertiary"]   { --text-color: var(--text-3); --text-link-color: currentColor; --text-link-hover: var(--text-2); }
+a-text[priority="quaternary"] { --text-color: var(--text-4); --text-link-color: currentColor; --text-link-hover: var(--text-3); }
+a-text[priority="quinary"]    { --text-color: var(--text-5); --text-link-color: currentColor; --text-link-hover: var(--text-4); }
+
+/* Tinted — text color uses --text-{N}-{tone} tokens; links are always
+   muted (currentColor) and hover steps up one level of the same tint.
+   Level 1 has no level above; hover keeps the color, only the underline
+   alpha changes. */
+a-text[tone="brand"]                              { --text-color: var(--text-1-brand); --text-link-color: currentColor; --text-link-hover: var(--text-1-brand); }
+a-text[tone="brand"][priority="secondary"]        { --text-color: var(--text-2-brand); --text-link-hover: var(--text-1-brand); }
+a-text[tone="brand"][priority="tertiary"]         { --text-color: var(--text-3-brand); --text-link-hover: var(--text-2-brand); }
+a-text[tone="brand"][priority="quaternary"]       { --text-color: var(--text-4-brand); --text-link-hover: var(--text-3-brand); }
+a-text[tone="brand"][priority="quinary"]          { --text-color: var(--text-5-brand); --text-link-hover: var(--text-4-brand); }
+
+a-text[tone="success"]                            { --text-color: var(--text-1-success); --text-link-color: currentColor; --text-link-hover: var(--text-1-success); }
+a-text[tone="success"][priority="secondary"]      { --text-color: var(--text-2-success); --text-link-hover: var(--text-1-success); }
+a-text[tone="success"][priority="tertiary"]       { --text-color: var(--text-3-success); --text-link-hover: var(--text-2-success); }
+a-text[tone="success"][priority="quaternary"]     { --text-color: var(--text-4-success); --text-link-hover: var(--text-3-success); }
+a-text[tone="success"][priority="quinary"]        { --text-color: var(--text-5-success); --text-link-hover: var(--text-4-success); }
+
+a-text[tone="critical"]                           { --text-color: var(--text-1-critical); --text-link-color: currentColor; --text-link-hover: var(--text-1-critical); }
+a-text[tone="critical"][priority="secondary"]     { --text-color: var(--text-2-critical); --text-link-hover: var(--text-1-critical); }
+a-text[tone="critical"][priority="tertiary"]      { --text-color: var(--text-3-critical); --text-link-hover: var(--text-2-critical); }
+a-text[tone="critical"][priority="quaternary"]    { --text-color: var(--text-4-critical); --text-link-hover: var(--text-3-critical); }
+a-text[tone="critical"][priority="quinary"]       { --text-color: var(--text-5-critical); --text-link-hover: var(--text-4-critical); }
+
+a-text[tone="warning"]                            { --text-color: var(--text-1-warning); --text-link-color: currentColor; --text-link-hover: var(--text-1-warning); }
+a-text[tone="warning"][priority="secondary"]      { --text-color: var(--text-2-warning); --text-link-hover: var(--text-1-warning); }
+a-text[tone="warning"][priority="tertiary"]       { --text-color: var(--text-3-warning); --text-link-hover: var(--text-2-warning); }
+a-text[tone="warning"][priority="quaternary"]     { --text-color: var(--text-4-warning); --text-link-hover: var(--text-3-warning); }
+a-text[tone="warning"][priority="quinary"]        { --text-color: var(--text-5-warning); --text-link-hover: var(--text-4-warning); }
+
+a-text[tone="info"]                               { --text-color: var(--text-1-info); --text-link-color: currentColor; --text-link-hover: var(--text-1-info); }
+a-text[tone="info"][priority="secondary"]         { --text-color: var(--text-2-info); --text-link-hover: var(--text-1-info); }
+a-text[tone="info"][priority="tertiary"]          { --text-color: var(--text-3-info); --text-link-hover: var(--text-2-info); }
+a-text[tone="info"][priority="quaternary"]        { --text-color: var(--text-4-info); --text-link-hover: var(--text-3-info); }
+a-text[tone="info"][priority="quinary"]           { --text-color: var(--text-5-info); --text-link-hover: var(--text-4-info); }
+
+/* Link colors layered on top of anta's global `a` defaults — only
+   overriding what the priority/tone cascade dictates (color and the
+   one-step-up hover color). Underline / thickness / offset / alpha
+   are inherited from the global rule in anta_global_tokens.css.
+   On hover the underline color is repeated so it tracks the priority
+   color rather than the global --link-color-hover. */
+a-text a, a-text a:link, a-text a:visited { color: var(--text-link-color); }
+a-text a:hover {
+  color: var(--text-link-hover);
+  text-decoration-color: var(--text-link-hover);
+}

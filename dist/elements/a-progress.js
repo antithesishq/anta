@@ -1,4 +1,5 @@
-class AProgressElement extends HTMLElement {
+import { HTMLElementBase } from "../anta_helpers";
+class AProgressElement extends HTMLElementBase {
   static observedAttributes = ["value", "max", "tone"];
   indicator;
   constructor() {
@@ -54,6 +55,7 @@ class AProgressElement extends HTMLElement {
   }
 }
 function register_a_progress() {
+  if (typeof customElements === "undefined") return;
   if (!customElements.get("a-progress")) {
     customElements.define("a-progress", AProgressElement);
   }

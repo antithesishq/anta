@@ -1,0 +1,112 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Icon
+---
+import IconDemo from '../../components/IconDemo'
+import PropsTable from '../../components/PropsTable.astro'
+
+# Icon
+
+Inline-block icon rendered via CSS `mask-image`. Color follows
+`currentColor`, default size is 16×16, and the only required prop is
+`shape`. The set of valid shapes is the union of Anta's built-ins plus
+any custom icons you generate yourself.
+
+> In practice you'll rarely reach for `<Icon>` directly. Most Anta
+> components that need an icon expose an `icon` prop that's typed
+> against `IconShape` — autocomplete and type-checking work the same
+> way without the wrapping element. Use `<Icon>` when you need a
+> standalone icon outside of any other component.
+
+## Props
+
+<PropsTable component="Icon" />
+
+## Built-in shapes
+
+<IconDemo client:load />
+
+## Sizing and color
+
+Pass `size` (a number, in pixels) to control width and height
+together. Default is `16`. Color always follows `currentColor`.
+
+```tsx
+<Icon shape="chevron-down" />                                  {/* 16×16, current color */}
+<Icon shape="check" size={24} />                               {/* 24×24 */}
+<Text tone="critical"><Icon shape="warning-triangle" /></Text> {/* tinted */}
+```
+
+Internally, `size` is applied as the `--icon-size` CSS custom property
+on the rendered `<a-icon>`. The base CSS rule reads it as
+`width: var(--icon-size, 16px); height: var(--icon-size, 16px)`. That
+means consumer CSS (or a parent's variable cascade) can drive icon
+size too — useful for sizing whole regions of UI at once:
+
+```css
+.toolbar { --icon-size: 18px; }
+```
+
+## Adding your own icons
+
+Anta ships a generator script at `dist/generate-icons.mjs`. Drop your
+SVGs in a folder, point the script at it, and it emits a CSS file plus
+a TypeScript declaration that augments Anta's `IconShapes` interface —
+your shapes become valid `<Icon shape="…" />` values automatically,
+with autocomplete.
+
+```sh
+node ./node_modules/@antadesign/anta/dist/generate-icons.mjs \
+  --input ./svgs \
+  --output ./src/icons \
+  --name my-icons
+```
+
+`--input` and `--output` are arbitrary paths in your project — pick
+whatever fits your layout. The example above writes
+`./src/icons/my-icons.css` and `./src/icons/my-icons.d.ts`. Import
+the CSS once at runtime; the `.d.ts` only needs to be in your
+TypeScript include path (the same `tsconfig.json` `include` that
+already covers your other source files), nothing else.
+
+```ts
+import './icons/my-icons.css'   // runtime: registers shape rules on <a-icon>
+```
+
+You can now use `<Icon shape="my-shape" />` with full type safety.
+
+### SVG conventions
+
+The generator strips `width=` and `height=` from the root `<svg>` so
+size is fully under the host element's CSS. For best results:
+
+- Use `viewBox="0 0 16 16"` (or any square viewBox).
+- Use `stroke="currentColor"` (or `fill="currentColor"`) — the icon is
+  recolored via CSS `background-color: currentColor` masked through the
+  SVG's alpha. Black/colored fills work too, but only the alpha
+  matters; the shape is always rendered in the current text color.
+- Single-color icons only. Multi-color SVGs collapse to one color
+  because the entire shape is masked through `currentColor`.
+
+### Conflicting shape names
+
+If a generated shape has the same name as one of Anta's built-ins
+(e.g. `chevron-down`), the generator prints a warning. At runtime, the
+CSS file imported **last** wins — so importing your generated CSS
+after `@antadesign/anta/elements` overrides the matching built-ins.
+TypeScript silently merges the duplicate keys; both names remain valid
+at the type level.
+
+### Programmatic use
+
+```ts
+import { generate } from '@antadesign/anta/generate-icons.mjs'
+
+await generate({
+  input:  './svgs',
+  output: './src/icons',
+  name:   'my-icons',
+})
+```
+
+Useful for wiring icon generation into a build script.

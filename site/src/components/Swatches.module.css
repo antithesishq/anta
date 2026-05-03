@@ -1,0 +1,459 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  /* Approximate height of the sticky `.toneTabs` strip: 4 px padding +
+     0.5 px borders + ~24 px button content. Anchor scrolls below add
+     1.5× this on top of html's --scroll-padding-top so the target
+     heading lands below the tabs instead of behind them. */
+  --tabs-height: 32px;
+}
+
+/* Apply the offset to any anchor-targetable heading inside the page so
+   tone-tab navigation lands below the sticky tabs. */
+.page :is(h1, h2, h3)[id] {
+  scroll-margin-top: calc(var(--tabs-height) * 1.5);
+}
+
+.toneTabs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 4px;
+  border: 0.5px solid var(--border-2);
+  background: var(--bg-pane);
+  padding: 4px;
+  border-radius: 6px;
+  align-self: flex-start;
+  /* Cap at parent width so the tabs scroll horizontally instead of
+     wrapping or pushing the page wider when there are too many tones
+     for the viewport. */
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  position: sticky;
+  top: var(--scroll-padding-top, 0);
+  z-index: 5;
+}
+
+/* The tabs are anchor links (per-tone navigation) but should read as
+   tabs — strip every facet of the global `<a>` styling in every state.
+   The selectors below cover :link / :visited / :hover / :focus / :active
+   so no global rule can sneak underline, link-color, or thickness changes
+   back in. Tab colors are managed below by `:hover` and the `.toneTabActive`
+   class. */
+.toneTab,
+.toneTab:link,
+.toneTab:visited,
+.toneTab:hover,
+.toneTab:focus,
+.toneTab:active {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  color: var(--text-3);
+  padding: 4px 8px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  text-decoration-line: none;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 0;
+  text-underline-offset: 0;
+  transition: background 150ms ease-out, color 150ms ease-out;
+}
+
+.toneTab:hover,
+.toneTab:focus {
+  color: var(--text-2);
+}
+
+/* The selector list mirrors `.toneTab`'s anchor-pseudo coverage so the
+   active state's specificity matches at every link state. Without
+   `:link` / `:visited` here, the base group's `.toneTab:link` (0,2,0)
+   would beat `.toneTabActive` (0,1,0) and the active tab would render
+   with the inactive color and background. */
+.toneTabActive,
+.toneTabActive:link,
+.toneTabActive:visited,
+.toneTabActive:hover,
+.toneTabActive:focus,
+.toneTabActive:active {
+  background: var(--bg-section);
+  color: var(--text-1);
+  box-shadow: 0 0 2px var(--border-3);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.blockHeading h2 {
+  margin: 0 0 8px;
+}
+
+.blockHeading p {
+  margin: 0;
+  color: var(--text-2);
+  max-width: 720px;
+}
+
+.themeRows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.themeRow {
+  border-radius: 8px;
+  padding-block: 24px;
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.themeRowLight {
+  background: var(--bg-block);
+}
+
+.themeRowDark {
+  background: var(--bg-block);
+}
+
+.themeLabel {
+  position: sticky;
+  left: 50%;
+  transform: translateX(-50%);
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+  margin-bottom: 16px;
+}
+
+.swatchGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(132px, 1fr));
+  gap: 12px;
+  padding-inline: 30px;
+  min-width: max-content;
+}
+
+@media (max-width: 900px) {
+  .themeRow {
+    padding-block: 16px;
+  }
+  .swatchGrid {
+    padding-inline: 16px;
+  }
+}
+
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-section);
+  border: 0.5px solid var(--border-2);
+  border-radius: 6px;
+  min-width: 0;
+}
+
+.bgPreview {
+  height: 56px;
+  border-radius: 4px;
+  border: 0.5px solid var(--border-2);
+}
+
+.textPreview {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--monospace);
+  font-size: 1.6rem;
+  font-weight: 600;
+  background: var(--bg-pane);
+  border-radius: 4px;
+}
+
+.borderPreview {
+  position: relative;
+  height: 56px;
+  border-radius: 4px;
+  background: var(--bg-section);
+  border: 1px solid var(--border-2);
+}
+
+.borderCorner {
+  position: absolute;
+  top: 40%;
+  left: 30%;
+  right: 0;
+  bottom: 0;
+  border-top: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  border-top-left-radius: 9px;
+}
+
+.tokenName {
+  font-family: var(--monospace);
+  font-size: 0.85rem;
+  color: var(--text-1);
+  align-self: flex-start;
+}
+
+.hex {
+  font-family: var(--monospace);
+  font-size: 0.75rem;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+}
+
+.description {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 720px;
+}
+
+.description p {
+  margin: 0;
+  color: var(--text-2);
+}
+
+.description code {
+  /* keep flat in this context — the surrounding paragraph drives the color */
+  color: inherit;
+}
+
+.exampleScroll {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.bgExampleSvg {
+  min-width: 715px;
+  display: block;
+}
+
+.bgExampleSvg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Reserve the illustration's aspect ratio on the wrapper so the
+   browser knows the height before the SVG paints — prevents the rest
+   of the page from shifting when content below the illustration
+   hydrates. The 715:431 ratio matches the SVG's intrinsic viewBox. */
+.bgExampleSvg {
+  aspect-ratio: 715 / 431;
+}
+
+.exampleHeading {
+  /* Anchor target inside .page already has scroll-margin-top, so
+     anchor jumps to "#background-illustration" land below the sticky
+     tone tabs naturally. */
+  margin: 0 0 12px;
+}
+
+.borderExample {
+  display: flex;
+  min-width: 660px;
+  gap: 16px;
+}
+
+.borderExampleCard {
+  flex: 1;
+  height: 140px;
+  border-radius: 6px;
+  background: var(--bg-section);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--monospace);
+  font-size: 0.8rem;
+  color: var(--text-3);
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* ─── Accessibility matrix ───────────────────────────────────────────── */
+
+.a11yControls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.a11yControlRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.a11ySegment {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-pane);
+  border: 0.5px solid var(--border-2);
+  border-radius: 6px;
+  /* Cap each segment at the parent control-row's width so a long
+     condition list scrolls horizontally instead of pushing the page
+     wider than the content column. */
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.a11ySegmentLabel {
+  font-size: 0.75rem;
+  color: var(--text-4);
+  padding: 0 6px 0 4px;
+}
+.a11ySegBtn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  color: var(--text-3);
+  padding: 4px 8px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 150ms ease-out, color 150ms ease-out;
+}
+.a11ySegBtn:hover { color: var(--text-2); }
+.a11ySegBtnActive,
+.a11ySegBtnActive:hover,
+.a11ySegBtnActive:focus {
+  background: var(--bg-section);
+  color: var(--text-1);
+  box-shadow: 0 0 2px var(--border-3);
+}
+
+.a11yScroll {
+  overflow-x: auto;
+  min-width: 0;
+}
+.a11yMatrix {
+  display: grid;
+  gap: 4px;
+  min-width: max-content;
+}
+/* Vision simulation: cells inherit `--cell-filter` and `--cell-mask`
+   from the matrix so a single inline-style change on the matrix
+   updates every cell uniformly. Headers stay outside the filter so
+   labels remain crisp regardless of the chosen condition. */
+.a11yHeadCell {
+  font-size: 0.7rem;
+  font-family: var(--monospace);
+  color: var(--text-4);
+  padding: 4px 8px;
+  line-height: 1.3;
+}
+.a11yHeadSuffix {
+  /* Just a line-break wrapper; no color/opacity change so the suffix
+     reads identical to the base name. */
+}
+.a11yRowHead {
+  text-align: right;
+}
+.a11yCorner {
+  /* empty top-left cell */
+}
+.a11yCell {
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 122px;
+  filter: var(--cell-filter, none);
+  -webkit-mask-image: var(--cell-mask, none);
+          mask-image: var(--cell-mask, none);
+}
+
+.a11ySample {
+  /* Fixed line-height so the cell stays the same height across the
+     13–17 px font-size range — only the text inside changes weight. */
+  line-height: 20px;
+  /* Macular blind-spot mask + diplopia ghost-shadow target the sample
+     text rather than the whole cell — the user's "fixation" in this
+     demo is the sample, so that's where central-vision conditions and
+     double-vision read most clearly. */
+  -webkit-mask-image: var(--sample-mask, none);
+          mask-image: var(--sample-mask, none);
+  text-shadow: var(--sample-shadow, none);
+}
+.a11yFooter {
+  /* Pinned to the bottom of the cell; metrics stack on the left,
+     AA / AAA marks stack in a column on the right. */
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 8px;
+}
+.a11yMetricsCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+}
+.a11yMarksCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  line-height: 1.2;
+}
+.a11yLine {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+.a11yLabel {
+  /* Static labels always render in --text-3 regardless of the cell's
+     dynamic text color, so they read consistently across cells. */
+  color: var(--text-3);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+}
+.a11yValue {
+  font-size: 0.7rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+.a11yMark {
+  /* The AA / AAA word stays in the cell's standard label color so it
+     reads alongside the WCAG/APCA labels; only the check / cross
+     itself signals pass / fail. */
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  cursor: help;
+  white-space: nowrap;
+}
+.a11yMarkIcon {
+  font-size: 0.95rem;
+  line-height: 0.7;
+  vertical-align: -1px;
+}
+.a11yPass { color: oklch(0.55 0.16 145); }
+.a11yFail { color: oklch(0.55 0.20 25); }

@@ -1,0 +1,73 @@
+---
+interface Props {
+  current: 'all' | 'dev' | 'main'
+}
+const { current } = Astro.props
+
+const tabs: { id: Props['current']; href: string; label: string }[] = [
+  { id: 'all',  href: '/changelog/',      label: 'All updates' },
+  { id: 'dev',  href: '/changelog/dev/',  label: 'Dev releases' },
+  { id: 'main', href: '/changelog/main/', label: 'Main releases' },
+]
+---
+
+<div class="changelog-tabs" role="tablist">
+  {tabs.map((t) => (
+    <a
+      href={t.href}
+      role="tab"
+      aria-selected={t.id === current}
+      class:list={['changelog-tab', { 'changelog-tab--active': t.id === current }]}
+    >
+      {t.label}
+    </a>
+  ))}
+</div>
+
+<style is:global>
+  .changelog-tabs {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 4px;
+    border: 0.5px solid var(--border-2);
+    background: var(--bg-pane);
+    padding: 4px;
+    border-radius: 6px;
+    margin: 0 0 24px;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .changelog-tab,
+  .changelog-tab:link,
+  .changelog-tab:visited,
+  .changelog-tab:hover,
+  .changelog-tab:focus,
+  .changelog-tab:active {
+    font-size: 0.85rem;
+    line-height: 1.2;
+    color: var(--text-3);
+    padding: 4px 8px 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    text-decoration-line: none;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 0;
+    text-underline-offset: 0;
+    transition: background 150ms ease-out, color 150ms ease-out;
+  }
+  .changelog-tab:hover,
+  .changelog-tab:focus { color: var(--text-2); }
+  .changelog-tab--active,
+  .changelog-tab--active:link,
+  .changelog-tab--active:visited,
+  .changelog-tab--active:hover,
+  .changelog-tab--active:focus,
+  .changelog-tab--active:active {
+    background: var(--bg-section);
+    color: var(--text-1);
+    box-shadow: 0 0 2px var(--border-3);
+  }
+</style>

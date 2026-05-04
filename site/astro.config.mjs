@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 function regenDocsOnChange() {
   const siteDir = fileURLToPath(new URL('.', import.meta.url));
   const readme = fileURLToPath(new URL('../README.md', import.meta.url));
+  const changelog = fileURLToPath(new URL('../CHANGELOG.md', import.meta.url));
   const srcDir = fileURLToPath(new URL('../src/', import.meta.url));
 
   const run = (script, label, logger) => {
@@ -32,10 +33,10 @@ function regenDocsOnChange() {
     name: 'anta:regen-docs',
     hooks: {
       'astro:server:setup': ({ server, logger }) => {
-        server.watcher.add([readme, `${srcDir}**/*.ts`, `${srcDir}**/*.tsx`]);
+        server.watcher.add([readme, changelog, `${srcDir}**/*.ts`, `${srcDir}**/*.tsx`]);
         server.watcher.on('change', (file) => {
-          if (file === readme) {
-            debounce(pagesRef, () => run('docs:pages', 'README.md changed', logger));
+          if (file === readme || file === changelog) {
+            debounce(pagesRef, () => run('docs:pages', `${file === readme ? 'README.md' : 'CHANGELOG.md'} changed`, logger));
           } else if (file.startsWith(srcDir) && /\.(ts|tsx)$/.test(file)) {
             debounce(apiRef, () => run('docs:api', 'JSDoc source changed', logger));
           }

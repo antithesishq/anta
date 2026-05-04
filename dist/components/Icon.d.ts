@@ -7,6 +7,12 @@ export interface IconProps extends BaseProps {
     shape: IconShape;
     /** Width and height in pixels. Defaults to `16`. */
     size?: number;
+    /** Accessible name for the icon. When set, the wrapper exposes
+     *  `role="img"` and `aria-label={label}` so screen readers announce
+     *  the icon. When omitted (the default), the icon is treated as
+     *  decorative — `aria-hidden="true"` is applied so it doesn't add
+     *  noise alongside neighbouring text. */
+    label?: string;
 }
 /**
  * Renders an `<a-icon>` web component. Color follows `currentColor`;
@@ -16,12 +22,19 @@ export interface IconProps extends BaseProps {
  * to register the underlying custom element and load the icon
  * stylesheets.
  *
- * @example
+ * @example Decorative icon paired with text — no label needed
  * ```tsx
- * import { Icon } from '@antadesign/anta'
+ * <button>
+ *   <Icon shape="trash" />
+ *   Delete
+ * </button>
+ * ```
  *
- * <Icon shape="chevron-down" />
- * <Icon shape="check" size={24} />
+ * @example Meaningful icon-only control — pass a label
+ * ```tsx
+ * <button aria-label="Delete">
+ *   <Icon shape="trash" label="Delete" />
+ * </button>
  * ```
  */
-export declare const Icon: ({ shape, size, className, style, ...rest }: IconProps) => any;
+export declare const Icon: ({ shape, size, label, className, style, ...rest }: IconProps) => any;

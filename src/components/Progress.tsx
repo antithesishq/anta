@@ -43,11 +43,22 @@ export interface ProgressProps extends BaseProps {
  */
 export const Progress = ({ value, max = 100, tone, label, hint, className, children, ...rest }: ProgressProps) => {
   const percent = max > 0 ? Math.round(Math.min(100, Math.max(0, (value / max) * 100))) : 0
+  // ARIA wiring is added here in the wrapper, not in the web component
+  // (see CLAUDE.md "ARIA goes in JSX wrappers"). The aria-label echoes
+  // every visible piece — label text, percentage, and hint — so screen
+  // readers announce what sighted users see, in one phrase. The role
+  // and aria-value* attributes are still set independently for tooling
+  // that prefers them.
+  const ariaLabel = [label, `${percent}%`, hint].filter(Boolean).join(' · ') || undefined
   return (
     <a-progress
       value={value}
       max={max}
       tone={tone}
+      role="progressbar"
+      aria-valuenow={value}
+      aria-valuemax={max}
+      aria-label={ariaLabel}
       class={className}
       {...rest}
     >

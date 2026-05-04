@@ -93,22 +93,23 @@ function apcaLc(textRgb: [number, number, number], bgRgb: [number, number, numbe
 }
 
 // ─── Thresholds & recommendations ─────────────────────────────────────────
-// WCAG: large = ≥18pt regular OR ≥14pt bold. Anta's 13–17px range is all
-// "small" by WCAG; only 18px+ bold qualifies as large.
-function wcagLarge(sizePx: number, bold: boolean): boolean {
+// WCAG: large = ≥18pt regular OR ≥14pt bold. WCAG defines "bold" as
+// ≥700, so only `weight === 'strong'` (600) we treat as bold here too —
+// medium (500) is too light to qualify per the spec.
+function wcagLarge(sizePx: number, weight: Weight): boolean {
   // 18pt = 24px regular; 14pt = 18.66px bold
-  return bold ? sizePx >= 18.66 : sizePx >= 24
+  const isBold = weight === 'strong'
+  return isBold ? sizePx >= 18.66 : sizePx >= 24
 }
 function wcagAA(ratio: number, large: boolean) { return ratio >= (large ? 3 : 4.5) }
 function wcagAAA(ratio: number, large: boolean) { return ratio >= (large ? 4.5 : 7) }
 
 // APCA Lookup: simplified body-text recommendations from the public APCA
-// readability tables. Keys are font-size-px buckets; values are the
-// minimum |Lc| recommended for body text at that size. Bold gets a softer
-// requirement (roughly one font-size column lighter).
-function apcaMin(sizePx: number, bold: boolean): number {
-  // From the W3 working draft "minimum font size for Lc" table, transposed.
-  // Ranges are approximate; the actual table uses Lc-then-size lookup.
+// readability tables. Bold gets a softer requirement (roughly one
+// font-size column lighter). Medium is treated like regular for
+// thresholding even though APCA's full table has more nuance.
+function apcaMin(sizePx: number, weight: Weight): number {
+  const bold = weight === 'strong'
   if (sizePx >= 24) return bold ? 30 : 45
   if (sizePx >= 18) return bold ? 45 : 60
   if (sizePx >= 16) return bold ? 60 : 75
@@ -211,12 +212,31 @@ const TEXT: Record<Tone, { name: string; light: string; dark: string }[]> = {
   ],
 }
 
-const SIZES = [13, 14, 15, 16, 17] as const
+const SIZES = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const
 type Size = (typeof SIZES)[number]
+
+type Weight = 'regular' | 'medium' | 'strong'
+const WEIGHTS: { id: Weight; label: string }[] = [
+  { id: 'regular', label: 'Regular' },
+  { id: 'medium',  label: 'Medium'  },
+  { id: 'strong',  label: 'Strong'  },
+]
+function weightCss(w: Weight): number | 'inherit' {
+  return w === 'medium' ? 500 : w === 'strong' ? 600 : 'inherit'
+}
+
+const TONES: { id: Tone; label: string }[] = [
+  { id: 'neutral',  label: 'Neutral'  },
+  { id: 'brand',    label: 'Brand'    },
+  { id: 'info',     label: 'Info'     },
+  { id: 'success',  label: 'Success'  },
+  { id: 'critical', label: 'Critical' },
+  { id: 'warning',  label: 'Warning'  },
+]
 
 type CVD = 'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia'
 const CVDS: { id: CVD; label: string }[] = [
-  { id: 'normal',        label: 'Regular' },
+  { id: 'normal',        label: 'Normal' },
   { id: 'protanopia',    label: 'Protanopia' },
   { id: 'deuteranopia',  label: 'Deuteranopia' },
   { id: 'tritanopia',    label: 'Tritanopia' },
@@ -233,7 +253,7 @@ type Condition =
   | 'diplopia'
   | 'light-sensitivity'
 const CONDITIONS: { id: Condition; label: string }[] = [
-  { id: 'none',              label: 'None' },
+  { id: 'none',              label: 'Normal' },
   { id: 'low-vision',        label: 'Low vision' },
   { id: 'cataracts',         label: 'Cataracts' },
   { id: 'tunnel-vision',     label: 'Tunnel vision' },
@@ -243,13 +263,18 @@ const CONDITIONS: { id: Condition; label: string }[] = [
   { id: 'light-sensitivity', label: 'Light sensitivity' },
 ]
 
-function buildFilter(cvd: CVD, condition: Condition): string {
+function buildFilter(cvd: CVD, condition: Condition, dark: boolean): string {
   const parts: string[] = []
   if (cvd !== 'normal') parts.push(`url(#a11y-${cvd})`)
   if (condition === 'low-vision') parts.push('blur(1.4px)')
   else if (condition === 'cataracts') parts.push('blur(1px) saturate(0.5) brightness(1.05)')
   else if (condition === 'astigmatism') parts.push('url(#a11y-astigmatism)')
-  else if (condition === 'light-sensitivity') parts.push('brightness(1.4) contrast(1.15)')
+  // Light-sensitivity uses a tiny brightness lift in dark mode (where
+  // the cells are dark and need a perceptual boost). In light mode
+  // the cells are already near-white, the lift would just over-bake
+  // the page, and the user wants the HDR PNG to be the *only* effect
+  // on display — easier to verify HDR rendering in isolation.
+  else if (condition === 'light-sensitivity' && dark) parts.push('brightness(1.05)')
   return parts.length ? parts.join(' ') : 'none'
 }
 // Tunnel vision is a whole-field-of-view effect → mask the cell.
@@ -267,14 +292,50 @@ function buildSampleMask(condition: Condition): string {
     ? 'radial-gradient(circle at center, transparent 30%, black 65%)'
     : 'none'
 }
-function buildSampleShadow(condition: Condition): string {
+function buildSampleFilter(condition: Condition, dark: boolean): string {
+  // Dark-mode photophobia: lift the sample text a touch brighter
+  // than its base token, on top of the cell-wide brightness(1.05).
+  // Light text against a dark cell + small extra brightness reads
+  // as a glyph that's "shining harder than the rest of the page" —
+  // the perceptual analogue of an HDR pop without HDR rendering.
+  if (condition === 'light-sensitivity' && dark) return 'brightness(1.18)'
+  return 'none'
+}
+function buildSampleShadow(condition: Condition, dark: boolean): string {
   // ~30 px horizontal + 5 px upward separation reads as two clearly
   // distinct images — characteristic of moderate-to-severe diplopia
   // with a slight vertical eye-misalignment. 50 % alpha keeps the
   // ghost secondary so the primary glyph is still the dominant read.
-  return condition === 'diplopia'
-    ? '30px -5px 0 color-mix(in oklch, currentColor 50%, transparent)'
-    : 'none'
+  if (condition === 'diplopia') {
+    return '30px -5px 0 color-mix(in oklch, currentColor 50%, transparent)'
+  }
+  // Photophobia, dark mode only: light glyph halates outward in its
+  // own bright color. In light mode the visual is carried by the
+  // sample-overlay pseudo (see buildSampleOverlay), which smudges
+  // the dark glyph edges with white instead of glowing.
+  if (condition === 'light-sensitivity' && dark) {
+    return '0 0 6px currentColor, 0 0 2px currentColor'
+  }
+  return 'none'
+}
+function buildCellDynamicRange(condition: Condition, dark: boolean): string {
+  // Opt the glow layer out of HDR tone-mapping only when we paint
+  // HDR content — i.e. when the cell-glow is the static HDR image.
+  return condition === 'light-sensitivity' && !dark ? 'no-limit' : 'standard'
+}
+// Photophobia HDR overlay — light mode only. Each bg tier has its
+// own HDR PNG at a tuned PQ peak (generated by
+// `site/scripts/generate-hdr-white.mjs`): `bg-section` at 10 000
+// nits down to `bg-spot` at 150 nits. In dark mode the wash would
+// dominate; that mode uses brightness + text glow instead.
+function cellGlowUrl(bgName: string, condition: Condition, dark: boolean): string {
+  if (condition !== 'light-sensitivity' || dark) return 'none'
+  if (bgName.startsWith('bg-section')) return 'url("/hdr-white-section.png")'
+  if (bgName.startsWith('bg-base'))    return 'url("/hdr-white-base.png")'
+  if (bgName.startsWith('bg-pane'))    return 'url("/hdr-white-pane.png")'
+  if (bgName.startsWith('bg-block'))   return 'url("/hdr-white-block.png")'
+  if (bgName.startsWith('bg-spot'))    return 'url("/hdr-white-spot.png")'
+  return 'none'
 }
 
 // Approximate prevalence by region. These are rough public-health
@@ -388,11 +449,29 @@ function tooltip(id: string): string | undefined {
 }
 
 // Render a token name; for tinted tones, split the trailing `-tone`
-// suffix onto its own line so the matrix headers stay narrow.
+// suffix onto its own line so the matrix headers stay narrow. The
+// neutral tone renders an empty second line so header height stays
+// constant when the user switches between tones (no layout jump).
 function HeaderName({ name, tone }: { name: string; tone: Tone }) {
-  if (tone === 'neutral') return <>{name}</>
+  if (tone === 'neutral') {
+    return (
+      <>
+        {name}
+        <br />
+        <span class={s.a11yHeadSuffix}>&nbsp;</span>
+      </>
+    )
+  }
   const suffix = `-${tone}`
-  if (!name.endsWith(suffix)) return <>{name}</>
+  if (!name.endsWith(suffix)) {
+    return (
+      <>
+        {name}
+        <br />
+        <span class={s.a11yHeadSuffix}>&nbsp;</span>
+      </>
+    )
+  }
   return (
     <>
       {name.slice(0, -suffix.length)}
@@ -421,9 +500,12 @@ interface CellProps {
   bgName: string
   bgColor: string
   size: Size
-  bold: boolean
+  weight: Weight
+  capital: boolean
+  condition: Condition
+  dark: boolean
 }
-function Cell({ textName, textColor, bgName, bgColor, size, bold }: CellProps) {
+function Cell({ textName, textColor, bgName, bgColor, size, weight, capital, condition, dark }: CellProps) {
   const result = useMemo(() => {
     const eff = effectiveOver(textColor, bgColor)
     const bg = rgbOf(bgColor)
@@ -432,25 +514,40 @@ function Cell({ textName, textColor, bgName, bgColor, size, bold }: CellProps) {
     return { ratio, lc }
   }, [textColor, bgColor])
 
-  const large = wcagLarge(size, bold)
+  const large = wcagLarge(size, weight)
   const sizeLabel = large ? 'large' : 'normal'
   const aa = wcagAA(result.ratio, large)
   const aaa = wcagAAA(result.ratio, large)
   const aaMin = large ? 3 : 4.5
   const aaaMin = large ? 4.5 : 7
-  const apcaPass = Math.abs(result.lc) >= apcaMin(size, bold)
-  const apcaThreshold = apcaMin(size, bold)
-  const fontWeight = bold ? 600 : 'inherit'
+  const apcaPass = Math.abs(result.lc) >= apcaMin(size, weight)
+  const apcaThreshold = apcaMin(size, weight)
 
   const wcagTitle = `${textName} on ${bgName} · WCAG 2 ratio ${result.ratio.toFixed(2)}:1
 AA  ${sizeLabel} ≥ ${aaMin}:1 — ${aa ? 'pass' : 'fail'}
 AAA ${sizeLabel} ≥ ${aaaMin}:1 — ${aaa ? 'pass' : 'fail'}`
   const apcaTitle = `${textName} on ${bgName} · APCA Lc ${result.lc.toFixed(1)}
-Body text at ${size}px ${bold ? 'bold' : 'regular'} ≥ ${apcaThreshold} — ${apcaPass ? 'pass' : 'fail'}`
+Body text at ${size}px ${weight} ≥ ${apcaThreshold} — ${apcaPass ? 'pass' : 'fail'}`
 
   return (
-    <div class={s.a11yCell} style={{ background: bgColor, color: textColor }}>
-      <div class={s.a11ySample} style={{ fontSize: `${size}px`, fontWeight }}>Aa Bb 12</div>
+    <div
+      class={s.a11yCell}
+      style={{
+        background: bgColor,
+        color: textColor,
+        ['--cell-glow' as string]: cellGlowUrl(bgName, condition, dark),
+      }}
+    >
+      <div
+        class={s.a11ySample}
+        style={{
+          fontSize: `${size}px`,
+          fontWeight: weightCss(weight),
+          textTransform: capital ? 'uppercase' : 'none',
+        }}
+      >
+        Aa Bb Cc 123
+      </div>
       <div class={s.a11yFooter}>
         <div class={s.a11yMetricsCol}>
           <div class={s.a11yLine}>
@@ -475,72 +572,92 @@ Body text at ${size}px ${bold ? 'bold' : 'regular'} ≥ ${apcaThreshold} — ${a
   )
 }
 
-// Persisted session keys for the accessibility matrix's state, so the
-// user's chosen size / weight / vision settings carry across tone-tab
-// navigations.
-const STORE_KEY = 'anta-a11y-state'
-type StoredState = { size: Size; bold: boolean; cvd: CVD; condition: Condition }
-function loadStored(): Partial<StoredState> {
-  if (typeof sessionStorage === 'undefined') return {}
-  try {
-    const raw = sessionStorage.getItem(STORE_KEY)
-    if (!raw) return {}
-    return JSON.parse(raw) as Partial<StoredState>
-  } catch { return {} }
+// URL state — every selection (tone, size, weight, capital, CVD,
+// condition) is reflected as a query param so the URL is shareable.
+// Defaults are omitted from the URL to keep it short.
+type State = {
+  tone: Tone
+  size: Size
+  weight: Weight
+  capital: boolean
+  cvd: CVD
+  condition: Condition
 }
-function saveStored(s: StoredState) {
-  if (typeof sessionStorage === 'undefined') return
-  try { sessionStorage.setItem(STORE_KEY, JSON.stringify(s)) } catch {}
+const DEFAULTS: State = {
+  tone: 'neutral', size: 15, weight: 'regular', capital: false, cvd: 'normal', condition: 'none',
+}
+const SIZES_SET: Set<number> = new Set(SIZES)
+const WEIGHTS_SET: Set<string> = new Set(WEIGHTS.map((w) => w.id))
+const TONES_SET: Set<string> = new Set(TONES.map((t) => t.id))
+const CVDS_SET: Set<string> = new Set(CVDS.map((c) => c.id))
+const CONDITIONS_SET: Set<string> = new Set(CONDITIONS.map((c) => c.id))
+
+function readUrlState(): State {
+  if (typeof window === 'undefined') return { ...DEFAULTS }
+  const p = new URLSearchParams(window.location.search)
+  const sizeRaw = parseInt(p.get('size') ?? '', 10)
+  return {
+    tone:      TONES_SET.has(p.get('tone') ?? '')           ? (p.get('tone') as Tone)           : DEFAULTS.tone,
+    size:      SIZES_SET.has(sizeRaw)                       ? (sizeRaw as Size)                 : DEFAULTS.size,
+    weight:    WEIGHTS_SET.has(p.get('weight') ?? '')       ? (p.get('weight') as Weight)       : DEFAULTS.weight,
+    capital:   p.get('capital') === '1',
+    cvd:       CVDS_SET.has(p.get('cvd') ?? '')             ? (p.get('cvd') as CVD)             : DEFAULTS.cvd,
+    condition: CONDITIONS_SET.has(p.get('condition') ?? '') ? (p.get('condition') as Condition) : DEFAULTS.condition,
+  }
+}
+function writeUrlState(state: State) {
+  if (typeof window === 'undefined') return
+  const url = new URL(window.location.href)
+  const set = (key: string, value: string, defaultValue: string) => {
+    if (value === defaultValue) url.searchParams.delete(key)
+    else url.searchParams.set(key, value)
+  }
+  set('tone',      state.tone,                     DEFAULTS.tone)
+  set('size',      String(state.size),             String(DEFAULTS.size))
+  set('weight',    state.weight,                   DEFAULTS.weight)
+  set('capital',   state.capital ? '1' : '0',      '0')
+  set('cvd',       state.cvd,                      DEFAULTS.cvd)
+  set('condition', state.condition,                DEFAULTS.condition)
+  window.history.replaceState({}, '', url.toString())
 }
 
-export default function AccessibilityMatrix({ tone }: { tone: Tone }) {
+export default function AccessibilityMatrix() {
   // Gate the whole island behind a hydration flag — the cells reach for
   // a `<canvas>` during render to resolve oklch/alpha colors to sRGB,
   // and that's not available during SSR.
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  // Once the matrix mounts (and its `<h2 id="accessibility">` enters
-  // the DOM), if the current URL points at an anchor that's now
-  // resolvable, scroll to it. Without this, navigating to
-  // `/colors/<tone>/#accessibility` from a tone-tab click lands at the
-  // top of the new page because the anchor element didn't exist yet
-  // when the browser ran its initial scroll-to-anchor pass.
-  useEffect(() => {
-    if (!mounted || typeof window === 'undefined') return
-    if (!window.location.hash) return
-    const el = document.querySelector(window.location.hash)
-    if (el) el.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior })
-  }, [mounted])
-
   const dark = useDarkObserver()
   const mode: Mode = dark ? 'dark' : 'light'
-  const [size, setSize] = useState<Size>(15)
-  const [bold, setBold] = useState<boolean>(false)
-  const [cvd, setCvd] = useState<CVD>('normal')
-  const [condition, setCondition] = useState<Condition>('none')
+  const [tone, setTone] = useState<Tone>(DEFAULTS.tone)
+  const [size, setSize] = useState<Size>(DEFAULTS.size)
+  const [weight, setWeight] = useState<Weight>(DEFAULTS.weight)
+  const [capital, setCapital] = useState<boolean>(DEFAULTS.capital)
+  const [cvd, setCvd] = useState<CVD>(DEFAULTS.cvd)
+  const [condition, setCondition] = useState<Condition>(DEFAULTS.condition)
 
-  // On hydration, restore the user's last-selected matrix settings from
-  // sessionStorage so they carry across tone-tab navigations.
+  // On hydration, restore state from the URL query string. The URL is
+  // the single source of truth, so the page is fully shareable.
   useEffect(() => {
     if (!mounted) return
-    const s = loadStored()
-    if (s.size !== undefined) setSize(s.size)
-    if (s.bold !== undefined) setBold(s.bold)
-    if (s.cvd !== undefined) setCvd(s.cvd)
-    if (s.condition !== undefined) setCondition(s.condition)
+    const s = readUrlState()
+    setTone(s.tone); setSize(s.size); setWeight(s.weight); setCapital(s.capital)
+    setCvd(s.cvd); setCondition(s.condition)
   }, [mounted])
 
-  // Persist whenever any selection changes.
+  // Sync state → URL whenever any selection changes.
   useEffect(() => {
     if (!mounted) return
-    saveStored({ size, bold, cvd, condition })
-  }, [mounted, size, bold, cvd, condition])
+    writeUrlState({ tone, size, weight, capital, cvd, condition })
+  }, [mounted, tone, size, weight, capital, cvd, condition])
 
-  const cellFilter = buildFilter(cvd, condition)
+  const cellFilter = buildFilter(cvd, condition, dark)
   const cellMask = buildCellMask(condition)
+  const cellDynamicRange = buildCellDynamicRange(condition, dark)
   const sampleMask = buildSampleMask(condition)
-  const sampleShadow = buildSampleShadow(condition)
+  const sampleShadow = buildSampleShadow(condition, dark)
+  const sampleFilter = buildSampleFilter(condition, dark)
 
   const bgs = BG[tone]
   const texts = TEXT[tone]
@@ -570,15 +687,28 @@ export default function AccessibilityMatrix({ tone }: { tone: Tone }) {
       </svg>
 
       <div class={s.blockHeading}>
-        <h2 id="accessibility">
-          <a href="#accessibility" class="header-anchor muted">Accessibility</a>
-        </h2>
         <p>
-          Contrast for every text level on every background, in the current theme. Both the WCAG 2 ratio and the APCA Lc value are properties of the color pair — they don't change with font size or weight. What changes with size and weight is the <em>threshold</em> applied: WCAG only relaxes its threshold once text is at least 24 px regular or 18.66 px bold (so all 13–17 px sizes here are evaluated as "small"), while APCA shifts its body-text minimum at every size step. Transparent text is composited over the background before measurement, so the numbers reflect what's painted.
+          Contrast for every text level on every background, in the current theme. Both the WCAG 2 ratio and the APCA Lc value are properties of the color pair — they don't change with font size or weight. What changes is the <em>threshold</em> applied: WCAG only relaxes to "large text" thresholds at ≥24 px regular or ≥18.66 px bold; APCA shifts its body-text minimum at every size step. Transparent text is composited over the background before measurement, so the numbers reflect what's painted.
         </p>
       </div>
 
       <div class={s.a11yControls}>
+        <div class={s.a11yControlRow}>
+          <div class={s.a11ySegment} role="tablist" aria-label="Tone">
+            {TONES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={t.id === tone}
+                class={t.id === tone ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
+                onClick={() => setTone(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div class={s.a11yControlRow}>
           <div class={s.a11ySegment} role="radiogroup" aria-label="Font size">
             {SIZES.map((p) => (
@@ -595,23 +725,37 @@ export default function AccessibilityMatrix({ tone }: { tone: Tone }) {
             ))}
           </div>
           <div class={s.a11ySegment} role="radiogroup" aria-label="Weight">
+            {WEIGHTS.map((w) => (
+              <button
+                key={w.id}
+                type="button"
+                role="radio"
+                aria-checked={w.id === weight}
+                class={w.id === weight ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
+                onClick={() => setWeight(w.id)}
+              >
+                {w.label}
+              </button>
+            ))}
+          </div>
+          <div class={s.a11ySegment} role="radiogroup" aria-label="Letter case">
             <button
               type="button"
               role="radio"
-              aria-checked={!bold}
-              class={!bold ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
-              onClick={() => setBold(false)}
+              aria-checked={!capital}
+              class={!capital ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
+              onClick={() => setCapital(false)}
             >
-              Regular
+              Sentence
             </button>
             <button
               type="button"
               role="radio"
-              aria-checked={bold}
-              class={bold ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
-              onClick={() => setBold(true)}
+              aria-checked={capital}
+              class={capital ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
+              onClick={() => setCapital(true)}
             >
-              Strong
+              Capital
             </button>
           </div>
         </div>
@@ -631,6 +775,8 @@ export default function AccessibilityMatrix({ tone }: { tone: Tone }) {
               </button>
             ))}
           </div>
+        </div>
+        <div class={s.a11yControlRow}>
           <div class={s.a11ySegment} role="radiogroup" aria-label="Vision condition">
             {CONDITIONS.map((c) => (
               <button
@@ -656,8 +802,10 @@ export default function AccessibilityMatrix({ tone }: { tone: Tone }) {
             gridTemplateColumns: `max-content repeat(${texts.length}, 122px)`,
             ['--cell-filter' as string]: cellFilter,
             ['--cell-mask' as string]: cellMask,
+            ['--cell-dynamic-range' as string]: cellDynamicRange,
             ['--sample-mask' as string]: sampleMask,
             ['--sample-shadow' as string]: sampleShadow,
+            ['--sample-filter' as string]: sampleFilter,
           }}
         >
           <div class={`${s.a11yCorner} ${s.a11yHeadCell}`} />
@@ -679,7 +827,10 @@ export default function AccessibilityMatrix({ tone }: { tone: Tone }) {
                   bgName={b.name}
                   bgColor={b[mode]}
                   size={size}
-                  bold={bold}
+                  weight={weight}
+                  capital={capital}
+                  condition={condition}
+                  dark={dark}
                 />
               ))}
             </>

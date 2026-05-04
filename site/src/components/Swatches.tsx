@@ -1,6 +1,5 @@
 import s from './Swatches.module.css'
 import bgExampleSvg from './bg-example.svg?raw'
-import AccessibilityMatrix from './AccessibilityMatrix'
 
 type Tone = 'neutral' | 'brand' | 'info' | 'success' | 'critical' | 'warning'
 type Kind = 'bg' | 'text' | 'border'
@@ -379,7 +378,6 @@ export function ColorsPage({ tone = 'neutral' }: { tone?: Tone }) {
       <ColorBlock kind="bg" tone={tone} />
       <ColorBlock kind="text" tone={tone} />
       <ColorBlock kind="border" tone={tone} />
-      <AccessibilityMatrix tone={tone} />
     </div>
   )
 }

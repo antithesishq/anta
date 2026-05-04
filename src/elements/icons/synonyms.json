@@ -1,4 +1,9 @@
 {
+  "swatch-book": ["palette", "color", "swatch", "paint", "design"],
+  "hat-glasses": ["accessibility", "vision", "disguise", "person"],
+  "heart-handshake": ["credits", "thanks", "agreement", "deal", "partnership"],
+  "hourglass": ["progress", "time", "wait", "loading", "timer"],
+  "text-initial": ["text", "typography", "letter", "a"],
   "chevron-down": ["arrow", "expand", "open", "down"],
   "chevron-up": ["arrow", "collapse", "close", "up"],
   "chevron-left": ["arrow", "back", "previous"],

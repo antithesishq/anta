@@ -31,7 +31,7 @@ The simulator above makes it easy to check a candidate combination across the mo
 
 ## Truncated text and screen readers
 
-When `Text` is `truncate`d *without* `expandable`, the hidden portion is also hidden from the accessibility tree — the visible ellipsis is what AT reads, exactly like sighted users see. This is intentional: the content the user *can* see is what gets read. If the truncated content matters, set `expandable` too — the chevron is keyboard-discoverable, focus-visible, and Enter/click reveals the rest.
+When `Text` is `truncated` *without* `expandable`, the hidden portion is also hidden from the accessibility tree — the visible ellipsis is what AT reads, exactly like sighted users see. This is intentional: the content the user *can* see is what gets read. If the truncated content matters, set `expandable` too — the chevron is keyboard-discoverable, focus-visible, and Enter/click reveals the rest.
 
 ## ARIA lives in JSX wrappers, not in web components
 

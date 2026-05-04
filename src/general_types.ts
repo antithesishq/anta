@@ -40,6 +40,16 @@ export interface AProgressAttributes extends BaseAttributes {
   max?: number | string
   /** Color variant. `'neutral'` is the default gray; `'info'` is blue. */
   tone?: 'neutral' | 'info'
+  /** ARIA role — the JSX wrapper sets this to `'progressbar'`. */
+  role?: string
+  /** ARIA value-now (current). */
+  'aria-valuenow'?: number | string
+  /** ARIA value-max. */
+  'aria-valuemax'?: number | string
+  /** ARIA value-min (defaults to 0). */
+  'aria-valuemin'?: number | string
+  /** ARIA accessible name. */
+  'aria-label'?: string
 }
 
 /**
@@ -75,4 +85,10 @@ export interface ATextAttributes extends BaseAttributes {
 export interface AIconAttributes extends BaseAttributes {
   /** Which icon to render. */
   shape?: string
+  /** ARIA role — the JSX wrapper sets `'img'` when a label is provided. */
+  role?: string
+  /** ARIA accessible name when the icon carries meaning. */
+  'aria-label'?: string
+  /** Hides decorative icons from screen readers. */
+  'aria-hidden'?: 'true' | 'false' | boolean
 }

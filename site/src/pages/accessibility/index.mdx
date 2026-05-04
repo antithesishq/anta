@@ -1,0 +1,40 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Accessibility
+---
+
+import AccessibilityMatrix from '../../components/AccessibilityMatrix'
+
+# Accessibility
+
+A few pieces of guidance for designers and engineers using Anta.
+
+## Colors
+
+The matrix below renders every text level on every background for the selected tone, in the current theme. Each cell shows the WCAG 2 contrast ratio (with AA / AAA pass marks for the chosen size and weight) and the APCA Lc value. The toggles change rendering only — the underlying ratios are properties of the color pair and don't shift with size or weight; what shifts is the threshold used for pass/fail. The vision tabs apply CVD or other-condition simulations via SVG filters and CSS masks; numbers reflect normal-vision math.
+
+<AccessibilityMatrix client:load />
+
+## Color is not a unique communication channel
+
+Communicating something with just a color is an accessibility problem — the message is lost under color blindness, low contrast, low brightness, monochrome printing, sun glare, and OS dark/light flips.
+
+Anta's `tone` prop on `Progress` and `Text` (and tinted backgrounds, borders, etc.) is a **secondary** signal. Pair it with words and, when possible, with shape distinctions (icons that are visually distinct, not just colored differently — e.g. checkmark vs. cross, not green-circle vs. red-circle).
+
+The simulator above makes it easy to check a candidate combination across the most common color-vision deficiencies and a handful of other vision conditions.
+
+## Low-priority text and contrast
+
+`Text` priorities `quaternary` (`text-4`) and `quinary` (`text-5`) sit at intentionally muted contrast — they're designed for non-essential metadata: timestamps, captions, helper hints, secondary counters. At small sizes (13–15 px) they may not pass WCAG AA against some background levels and tones. Use the matrix above to verify combinations before relying on these priorities for content that has to be readable.
+
+`text-1` and `text-2` are the primary-content priorities; reach for them whenever the content matters.
+
+## Truncated text and screen readers
+
+When `Text` is `truncate`d *without* `expandable`, the hidden portion is also hidden from the accessibility tree — the visible ellipsis is what AT reads, exactly like sighted users see. This is intentional: the content the user *can* see is what gets read. If the truncated content matters, set `expandable` too — the chevron is keyboard-discoverable, focus-visible, and Enter/click reveals the rest.
+
+## ARIA lives in JSX wrappers, not in web components
+
+Anta's web components (`<a-progress>`, `<a-text>`, `<a-icon>`, …) are **pure declarative DOM**. They never set ARIA attributes from JS — no `setAttribute` from constructors or `attributeChangedCallback`. ARIA wiring (`role`, `aria-label`, `aria-valuenow`, etc.) is layered on by the JSX wrappers (`Progress`, `Icon`, `Text`) as ordinary attribute pass-through. If you write the elements by hand instead of via the wrappers, you're responsible for the ARIA bits — the elements stay DOM-clean either way.
+
+This means consumers in other reactive engines (Worker-driven UIs, plain HTML, hand-rolled JSX) get web components that don't fight their state model, while React/Preact users get accessible defaults out of the box from the wrappers.

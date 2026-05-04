@@ -78,6 +78,12 @@ npm publish --access public --tag dev  # Publish prerelease under "dev" tag
 
 Each version string is immutable on npm — always bump before publishing.
 
+## Changelog
+
+`CHANGELOG.md` at the repo root documents changes to **the `@antadesign/anta` package only** — code shipped to npm consumers (anything under `src/` and `dist/`, plus root files in the published tarball). The docs site under `site/` is its own thing and **does not** belong in the changelog. New site pages, component-docs polish, demos, layout tweaks — all of that ships only on `antadesign.dev` and isn't a consumer-facing change.
+
+When in doubt: would a consumer who installs this version see this change in their app? If no, leave it out of `CHANGELOG.md`. Use commit messages and PR descriptions for the docs-site narrative.
+
 ## Documentation site
 
 The `site/` folder is the anta design system documentation website, built as a pnpm workspace member.
@@ -123,7 +129,9 @@ The same rule applies anywhere we lighten/darken/desaturate a color: prefer `col
 
 ## Conventions
 
-- **Declarative DOM** — No visible attributes or inline styles are set on the host element from JS. Only shadow-internal elements may be styled from `attributeChangedCallback`.
+- **Declarative DOM** — Web components are pure declarative. **No element class — neither the constructor nor `attributeChangedCallback` nor any handler — may call `setAttribute`, mutate `className`, set inline `style`, or otherwise change anything on the host element that's visible in the DOM tree.** The host's attributes and inline styles must come from the JSX wrapper (or from the consumer writing `<a-…>` directly). Only shadow-internal elements may be mutated from JS.
+- **ARIA goes in JSX wrappers, not web components.** All `role`, `aria-*`, `tabindex`, etc., are added by `src/components/<Name>.tsx` as attribute pass-through, never by `AXxxElement.constructor`. This keeps the web component re-renderable from any reactive engine without state churning the DOM, and keeps the elements usable in non-React/Preact contexts where the consumer adds ARIA themselves. The single exception is when the wrapper passes a value through (e.g. `aria-valuenow={value}`); the wrapper is a thin JSX→DOM bridge and that's its job.
+- **Don't add new web components without a strong reason.** Each one occupies a global tag name. Prefer adding props to existing elements before introducing a new tag.
 - **Shadow DOM pattern** — Web components use shadow DOM. The external CSS file (`a-{name}.css`) styles the host element and handles light/dark mode via `.dark` ancestor. The shadow DOM `<style>` declares only structural defaults on `:host`.
 - **CSS variables for variant values** — Use `--{component}-*` variables for any property that changes across variants (tone, dark mode). In the base rule, declare all variables first, then leave an empty line before regular properties.
 - **CSS variables for shadow internals** — Use `--_` prefix for shadow-internal-only variables set from JS (e.g. `--_percent`).

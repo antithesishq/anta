@@ -1,6 +1,7 @@
 ---
 import '@antadesign/anta/anta_global_tokens.css'
 import '../styles/base.css'
+import { Icon } from '@antadesign/anta'
 
 interface Props {
   title?: string
@@ -8,6 +9,11 @@ interface Props {
 }
 
 const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
+const isCurrent = (href: string) => {
+  const h = href.replace(/\/+$/, '') || '/'
+  return h === path
+}
 ---
 
 <html lang="en">
@@ -46,15 +52,17 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
           Anta
         </span>
         <menu>
-          <li><a href="/">Overview</a></li>
-          <li><a href="/colors/">Colors</a></li>
-          <li><a href="/credits/">Credits</a></li>
+          <li><a href="/" aria-current={isCurrent('/') ? 'page' : undefined}><Icon shape="info" size={18} /> Overview</a></li>
+          <li><a href="/colors/" aria-current={isCurrent('/colors/') ? 'page' : undefined}><Icon shape="swatch-book" size={18} /> Colors</a></li>
+          <li><a href="/accessibility/" aria-current={isCurrent('/accessibility/') ? 'page' : undefined}><Icon shape="hat-glasses" size={18} /> Accessibility</a></li>
+          <li><a href="/changelog/" aria-current={isCurrent('/changelog/') ? 'page' : undefined}><Icon shape="scroll-text" size={18} /> Changelog</a></li>
+          <li><a href="/credits/" aria-current={isCurrent('/credits/') ? 'page' : undefined}><Icon shape="heart-handshake" size={18} /> Credits</a></li>
         </menu>
         <h4>Components</h4>
         <menu>
-          <li><a href="/components/progress/">Progress</a></li>
-          <li><a href="/components/text/">Text</a></li>
-          <li><a href="/components/icon/">Icon</a></li>
+          <li><a href="/components/progress/" aria-current={isCurrent('/components/progress/') ? 'page' : undefined}><Icon shape="hourglass" size={18} /> Progress</a></li>
+          <li><a href="/components/text/" aria-current={isCurrent('/components/text/') ? 'page' : undefined}><Icon shape="text-initial" size={18} /> Text</a></li>
+          <li><a href="/components/icon/" aria-current={isCurrent('/components/icon/') ? 'page' : undefined}><Icon shape="bug" size={18} /> Icon</a></li>
         </menu>
       </aside>
       <main class="content">
@@ -173,10 +181,10 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
   }
 
   .sidebar h4 {
-    font-size: 0.75rem;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--text-4);
+    color: var(--text-4-brand);
     margin: 24px 0 8px;
   }
 
@@ -184,15 +192,35 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
      margin from `<menu>` and its items, so the sidebar only has to
      style its links. */
   .sidebar menu li a {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 0.75ch;
     padding: 4px 0;
     color: var(--text-3);
-    font-size: 0.9rem;
+    font-size: 14px;
+    font-weight: 450;
+    letter-spacing: 0.03ch;
     text-decoration: none;
+    transition: color 160ms ease-out;
   }
-  .sidebar menu li a:hover {
+  .sidebar menu li a > a-icon {
+    color: var(--text-4-brand);
+    flex-shrink: 0;
+    transition: color 160ms ease-out;
+  }
+  .sidebar menu li a > .icon-spacer {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  .sidebar menu li a:hover,
+  .sidebar menu li a[aria-current="page"] {
     color: var(--text-1);
     text-decoration: none;
+  }
+  .sidebar menu li a:hover > a-icon,
+  .sidebar menu li a[aria-current="page"] > a-icon {
+    color: var(--text-1-brand);
   }
 
   .content {

@@ -43,10 +43,13 @@ export const ICON_SHAPES = [
   'folder-tree',
   'github-logo',
   'gitlab-logo',
+  'hat-glasses',
+  'heart-handshake',
   'help-disk',
   'history-tree',
   'history',
   'home',
+  'hourglass',
   'info',
   'jira-logo',
   'linear-logo',
@@ -73,7 +76,9 @@ export const ICON_SHAPES = [
   'search',
   'send',
   'sparkles',
+  'swatch-book',
   'text-highlight',
+  'text-initial',
   'timer',
   'trash',
   'trello-logo',
@@ -85,6 +90,11 @@ export const ICON_SHAPES = [
 ] as const
 
 export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
+  'swatch-book': ['palette', 'color', 'swatch', 'paint', 'design'],
+  'hat-glasses': ['accessibility', 'vision', 'disguise', 'person'],
+  'heart-handshake': ['credits', 'thanks', 'agreement', 'deal', 'partnership'],
+  'hourglass': ['progress', 'time', 'wait', 'loading', 'timer'],
+  'text-initial': ['text', 'typography', 'letter', 'a'],
   'chevron-down': ['arrow', 'expand', 'open', 'down'],
   'chevron-up': ['arrow', 'collapse', 'close', 'up'],
   'chevron-left': ['arrow', 'back', 'previous'],
@@ -211,10 +221,13 @@ declare module '@antadesign/anta' {
     'folder-tree': true
     'github-logo': true
     'gitlab-logo': true
+    'hat-glasses': true
+    'heart-handshake': true
     'help-disk': true
     'history-tree': true
     'history': true
     'home': true
+    'hourglass': true
     'info': true
     'jira-logo': true
     'linear-logo': true
@@ -241,7 +254,9 @@ declare module '@antadesign/anta' {
     'search': true
     'send': true
     'sparkles': true
+    'swatch-book': true
     'text-highlight': true
+    'text-initial': true
     'timer': true
     'trash': true
     'trello-logo': true

@@ -375,6 +375,8 @@
   /* empty top-left cell */
 }
 .a11yCell {
+  position: relative;
+  isolation: isolate;
   border-radius: 6px;
   padding: 8px 10px;
   display: flex;
@@ -385,11 +387,35 @@
   -webkit-mask-image: var(--cell-mask, none);
           mask-image: var(--cell-mask, none);
 }
+/* Photophobia glow layer. Rendered as a separate compositor layer
+   with its own `dynamic-range-limit: no-limit`, so the Rec.2100 PQ
+   whites paint at HDR peak luminance on capable displays (Apple
+   XDR, OLED phones in Chrome). `mix-blend-mode: screen` lifts the
+   underlying cell colors instead of covering them, and the
+   `z-index: -1` inside the isolated stacking context places the
+   layer between the cell background and its text content. */
+.a11yCell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--cell-glow, none) center / 100% 100% no-repeat;
+  dynamic-range-limit: var(--cell-dynamic-range, standard);
+  /* `lighten` only contributes where the overlay is brighter than
+     the cell beneath: on HDR displays the HDR pixels above SDR peak
+     win and shine; on SDR the overlay tone-maps below the cell bg
+     and the bg pixel wins, so cells never get darker. */
+  mix-blend-mode: lighten;
+}
 
 .a11ySample {
   /* Fixed line-height so the cell stays the same height across the
      13–17 px font-size range — only the text inside changes weight. */
   line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
   /* Macular blind-spot mask + diplopia ghost-shadow target the sample
      text rather than the whole cell — the user's "fixation" in this
      demo is the sample, so that's where central-vision conditions and
@@ -397,6 +423,7 @@
   -webkit-mask-image: var(--sample-mask, none);
           mask-image: var(--sample-mask, none);
   text-shadow: var(--sample-shadow, none);
+  filter: var(--sample-filter, none);
 }
 .a11yFooter {
   /* Pinned to the bottom of the cell; metrics stack on the left,

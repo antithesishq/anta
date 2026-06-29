@@ -5,6 +5,7 @@ import { nativeStateChange } from "../anta_helpers"
 import { Button } from "./Button"
 import { Menu } from "./Menu"
 import { MenuItem } from "./MenuItem"
+import { Tooltip } from "./Tooltip"
 import { buildMonth, clampDate, parseISODate } from "../calendar-core"
 import type { BaseProps } from "../general_types"
 
@@ -279,6 +280,7 @@ export const Calendar = ({
               data-outside={d.outside ? "" : undefined}
             >
               {d.day}
+              {d.today && <Tooltip>Today</Tooltip>}
             </Button>
           )
         })}

@@ -104,16 +104,17 @@
   a-calendar a-button[data-part="day-cell"]:focus-visible {
     outline-offset: 0;
   }
-  /* (Today is rendered as a secondary Button by the wrapper — no extra ring.) */
+  /* Today (a secondary Button) reads bolder so it stands out. */
+  a-calendar a-button[data-part="day-cell"][data-today]:not([selected]) {
+    font-weight: 600;
+  }
 
   /* Adjacent-month spill-over days read quieter. */
   a-calendar a-button[data-part="day-cell"][data-outside]:not([selected]) {
     opacity: 0.5;
   }
 
-  .anta-calendar[aria-disabled="true"],
-  a-calendar[disabled] {
-    opacity: 0.55;
-    pointer-events: none;
-  }
+  /* No calendar-wide dimming when disabled — every day cell, chevron, and the
+     heading is an already-disabled <Button>, and the element ignores input while
+     `[disabled]`, so dimming the whole box would just double up. */
 }

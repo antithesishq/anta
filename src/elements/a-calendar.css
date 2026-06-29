@@ -40,6 +40,7 @@
   a-calendar {
     display: inline-grid;
     grid-template-columns: repeat(7, var(--calendar-cell-width, 30px));
+    gap: 1px;
     font-family: var(--sans-serif);
   }
 

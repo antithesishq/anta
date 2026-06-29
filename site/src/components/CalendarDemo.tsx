@@ -1,16 +1,16 @@
 import { Calendar } from "@antadesign/anta"
+import type { CalendarProps } from "@antadesign/anta"
 
 /**
- * Hydrated interactive Calendar for the docs "Selecting a date" preview. Rendered
- * as a `client:only="preact"` island so the wrapper actually runs — month-switch
- * (chevrons), edge keyboard navigation, and selection all re-render live, which a
- * static `<Preview>` (no client runtime) can't do. `client:only` also avoids an
- * SSR/hydration mismatch from `Temporal.Now` / `navigator.language` differing
- * between the server render and the browser.
+ * Hydrated interactive `Calendar` for the docs previews — used as a
+ * `client:only="preact"` island so month-switch (chevrons), keyboard navigation,
+ * and day selection actually run (a static `<Preview>` has no client runtime and
+ * can't re-render a new month). `client:only` also avoids an SSR/hydration
+ * mismatch from `Temporal.Now` / `navigator.language` differing server vs client.
  *
- * `defaultValue` is a non-today date so the preview shows both states at once:
- * the selected day (tertiary + selected) and today (a secondary Button).
+ * It just forwards every prop to `Calendar`, so each example passes its own
+ * `defaultValue` / `min` / `max` / `locale` / `size` / `disabled` / `className`.
  */
-export default function CalendarDemo() {
-  return <Calendar defaultValue="2026-06-12" />
+export default function CalendarDemo(props: CalendarProps) {
+  return <Calendar {...props} />
 }

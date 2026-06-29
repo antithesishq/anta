@@ -3,6 +3,8 @@ import { Temporal } from "temporal-polyfill"
 import { useId, useState } from "../jsx-runtime"
 import { nativeStateChange } from "../anta_helpers"
 import { Button } from "./Button"
+import { Menu } from "./Menu"
+import { MenuItem } from "./MenuItem"
 import { buildMonth, clampDate, parseISODate } from "../calendar-core"
 import type { BaseProps } from "../general_types"
 
@@ -34,6 +36,11 @@ export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> 
   locale?: string
   /** Form field name — the selected ISO date submits under this key. */
   name?: string
+  /** Size of the whole calendar — scales the day cells, the chevrons, and the
+   *  weekday / month-heading type together (uses Button's `small` / `medium` /
+   *  `large` scale).
+   *  @defaultValue 'medium' */
+  size?: "small" | "medium" | "large"
   /** Disable the whole calendar (not focusable or selectable). */
   disabled?: boolean
   /** Accessible name for the grid (defaults to the visible month heading). */
@@ -78,6 +85,7 @@ export const Calendar = ({
   max,
   locale,
   name,
+  size,
   disabled,
   onStateChange,
   onChange,
@@ -112,10 +120,22 @@ export const Calendar = ({
   const month = buildMonth({ anchor: cursor, locale: resolvedLocale, min: minD, max: maxD, selected, today })
   const cursorIso = cursor.toString()
 
+  // Years for the heading menu — spanning min..max (defaulting to ±100 years
+  // around today when unbounded). Listed in full, no virtual scroll.
+  const minYear = minD ? minD.year : today.year - 100
+  const maxYear = maxD ? maxD.year : today.year + 100
+  const years: number[] = []
+  for (let y = minYear; y <= maxYear; y++) years.push(y)
+
   // Month switcher — chevrons keep focus (mouse), so no focus signal.
   const moveCursorByMonth = (delta: number) => {
     if (disabled) return
     setCursor((c) => clampDate(c.add({ months: delta }), minD, maxD))
+  }
+  // Year picked from the heading menu — keep the month/day, change the year.
+  const pickYear = (y: number) => {
+    if (disabled) return
+    setCursor((c) => clampDate(c.with({ year: y }), minD, maxD))
   }
 
   // The `<a-calendar>` element is the interaction authority: it dispatches
@@ -163,6 +183,7 @@ export const Calendar = ({
   return (
     <div
       className={cn("anta-calendar", className)}
+      data-size={size && size !== "medium" ? size : undefined}
       aria-disabled={disabled ? "true" : undefined}
       style={style}
       {...rest}
@@ -171,16 +192,38 @@ export const Calendar = ({
         <Button
           priority="tertiary"
           icon="chevron-left"
+          size={size}
           aria-label="Previous month"
           disabled={prevDisabled}
           onClick={() => moveCursorByMonth(-1)}
         />
-        <span id={headingId} data-part="heading" aria-live="polite">
+        <Button
+          id={headingId}
+          data-part="heading"
+          priority="tertiary"
+          size={size}
+          iconTrailing="chevron-down"
+          aria-live="polite"
+          aria-label={`${month.heading} — choose year`}
+          disabled={disabled}
+        >
           {month.heading}
-        </span>
+        </Button>
+        <Menu placement="bottom">
+          {years.map((y) => (
+            <MenuItem
+              key={y}
+              value={y}
+              label={String(y)}
+              iconTrailing={y === cursor.year ? "check" : undefined}
+              onSelect={() => pickYear(y)}
+            />
+          ))}
+        </Menu>
         <Button
           priority="tertiary"
           icon="chevron-right"
+          size={size}
           aria-label="Next month"
           disabled={nextDisabled}
           onClick={() => moveCursorByMonth(1)}
@@ -226,6 +269,7 @@ export const Calendar = ({
             <Button
               key={d.iso}
               {...variant}
+              size={size}
               disabled={disabled || d.disabled}
               tabIndex={d.iso === cursorIso ? 0 : -1}
               aria-label={d.label}

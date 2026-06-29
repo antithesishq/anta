@@ -1,18 +1,17 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: DateInput
+title: InputDate
 ---
 import Playground from '../../components/Playground'
 import Preview from '../../components/Preview.astro'
 import PropsTable from '../../components/PropsTable.astro'
 import Disclosure from '../../components/Disclosure.astro'
-import dateInputDemoCode from './date-input.demo.ts'
+import dateInputDemoCode from './input-date.demo.ts'
 import CalendarDemo from '../../components/CalendarDemo'
-import { Calendar } from '@antadesign/anta'
 
-# DateInput
+# InputDate
 
-DateInput is the family of components for choosing a date. This page documents its
+InputDate is the family of components for choosing a date. This page documents its
 foundation: **`Calendar`** — a month grid you pick a single day from. Free-text
 entry, a popover/menu shell, time, and month/year jump pickers compose on top of
 this grid and land here as they ship.
@@ -48,7 +47,7 @@ selected day takes the tertiary-button selected look — a subtle fill with a ri
 today is shown as a secondary Button (a subtle resting fill).
 
 <Preview>
-  <CalendarDemo client:only="preact" />
+  <CalendarDemo client:only="preact" defaultValue="2026-06-12" />
 </Preview>
 
 ```tsx folded
@@ -81,11 +80,29 @@ vetoes it (uncontrolled). A controlled calendar with no `onStateChange` is read-
 disabled and skip keyboard focus, and the prev/next arrows stop at the range edge.
 
 <Preview>
-  <Calendar defaultValue="2026-06-15" min="2026-06-08" max="2026-06-24" />
+  <CalendarDemo client:only="preact" defaultValue="2026-06-15" min="2026-06-08" max="2026-06-24" />
 </Preview>
 
 ```tsx folded
 <Calendar defaultValue="2026-06-15" min="2026-06-08" max="2026-06-24" />
+```
+
+## Size
+
+`size` scales the whole calendar — day cells, the prev/next chevrons, and the
+weekday / month-heading type — using Button's `small` / `medium` (default) /
+`large` scale (cell heights 24 / 28 / 32).
+
+<Preview gap="24px" style="flex-wrap: wrap; align-items: flex-start;">
+  <CalendarDemo client:only="preact" size="small" defaultValue="2026-06-28" aria-label="Small" />
+  <CalendarDemo client:only="preact" defaultValue="2026-06-28" aria-label="Medium" />
+  <CalendarDemo client:only="preact" size="large" defaultValue="2026-06-28" aria-label="Large" />
+</Preview>
+
+```tsx folded
+<Calendar size="small" defaultValue="2026-06-28" />
+<Calendar defaultValue="2026-06-28" />          {/* medium (default) */}
+<Calendar size="large" defaultValue="2026-06-28" />
 ```
 
 ## Locale
@@ -95,9 +112,9 @@ BCP-47 `locale` to override it: the first day of week comes from the locale's we
 info (never hard-coded to Sunday), and the weekday and month names are localized.
 
 <Preview gap="24px" style="flex-wrap: wrap; align-items: flex-start;">
-  <Calendar defaultValue="2026-06-28" locale="en-US" aria-label="US English" />
-  <Calendar defaultValue="2026-06-28" locale="fr-FR" aria-label="French" />
-  <Calendar defaultValue="2026-06-28" locale="ja-JP" aria-label="Japanese" />
+  <CalendarDemo client:only="preact" defaultValue="2026-06-28" locale="en-US" aria-label="US English" />
+  <CalendarDemo client:only="preact" defaultValue="2026-06-28" locale="fr-FR" aria-label="French" />
+  <CalendarDemo client:only="preact" defaultValue="2026-06-28" locale="ja-JP" aria-label="Japanese" />
 </Preview>
 
 ```tsx folded
@@ -111,7 +128,7 @@ info (never hard-coded to Sunday), and the weekday and month names are localized
 `disabled` dims the whole calendar and removes it from interaction.
 
 <Preview>
-  <Calendar defaultValue="2026-06-28" disabled />
+  <CalendarDemo client:only="preact" defaultValue="2026-06-28" disabled />
 </Preview>
 
 ```tsx folded
@@ -165,7 +182,7 @@ themselves), inside the `<a-calendar>` grid; the switcher header sits in the
 `!important`. The class below is just for the demo.
 
 <Preview>
-  <Calendar className="roomy" defaultValue="2026-06-28" />
+  <CalendarDemo client:only="preact" className="roomy" defaultValue="2026-06-28" />
   <style is:inline>{`
     .anta-calendar.roomy { --calendar-cell-width: 40px; --calendar-cell-height: 40px; }
     .anta-calendar.roomy a-button[data-part="day-cell"] { border-radius: 50%; }

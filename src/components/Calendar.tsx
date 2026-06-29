@@ -202,7 +202,6 @@ export const Calendar = ({
           data-part="heading"
           priority="tertiary"
           size={size}
-          iconTrailing="chevron-down"
           aria-live="polite"
           aria-label={`${month.heading} — choose year`}
           disabled={disabled}

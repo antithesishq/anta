@@ -22,7 +22,7 @@
   .anta-calendar [data-part="header"] {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 0;
   }
   /* The heading is a <Button> (year-menu trigger); it styles its own text, so we
      only handle layout: fill the space between the chevrons and centre the label. */
@@ -92,6 +92,12 @@
     min-width: var(--calendar-cell-width, 32px);
     min-height: var(--calendar-cell-height, 28px);
     justify-content: center;
+  }
+  /* Day labels are uniform digits, so drop Button's optical bottom padding (it
+     compensates for text glyphs sitting low in the line-box) — it would otherwise
+     nudge the centred number off-centre. */
+  a-calendar a-button[data-part="day-cell"] a-button-label {
+    padding-bottom: 0;
   }
   /* Tuck the focus ring 1px inward (Button's default is 1px outset) so it sits
      inside the cell, clear of the 1px grid gap and the neighbouring cells. */

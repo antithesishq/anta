@@ -24,6 +24,7 @@ Versions ending in `-dev.N` are pre-release builds published under the npm `dev`
 - New **`calendar-days`** icon shape (lucide), available as `<Icon shape="calendar-days" />` and in the `IconShape` union.
 
 ### Changed
+- **`Button`: the secondary variant's inset border is fainter** — its `box-shadow` mixes `currentColor` with `transparent 90%` (was `70%`).
 - **Tabular lining figures are now the global default.** `tokens.css` sets `font-variant-numeric: lining-nums tabular-nums` on `:root`, so all text and every component render digits as equal-width lining figures (numbers align in columns and never reflow — calendars, counters, timers). It's inherited, so it reaches components and their shadow DOM; `Button` re-states it to survive any ancestor override (and `Progress` / the table reset now carry `lining-nums` too). Opt a region back into proportional figures with `font-variant-numeric: proportional-nums`.
 
 ## 0.3.1 — June 26, 2026

@@ -14,6 +14,7 @@ export const ICON_SHAPES = [
   'book-open',
   'braces',
   'bug',
+  'calendar-days',
   'calendar',
   'case-sensitive',
   'chat',
@@ -211,6 +212,7 @@ declare module '@antadesign/anta' {
     'book-open': true
     'braces': true
     'bug': true
+    'calendar-days': true
     'calendar': true
     'case-sensitive': true
     'chat': true

@@ -1,0 +1,186 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: DateInput
+---
+import Playground from '../../components/Playground'
+import Preview from '../../components/Preview.astro'
+import PropsTable from '../../components/PropsTable.astro'
+import Disclosure from '../../components/Disclosure.astro'
+import dateInputDemoCode from './date-input.demo.ts'
+import CalendarDemo from '../../components/CalendarDemo'
+import { Calendar } from '@antadesign/anta'
+
+# DateInput
+
+DateInput is the family of components for choosing a date. This page documents its
+foundation: **`Calendar`** — a month grid you pick a single day from. Free-text
+entry, a popover/menu shell, time, and month/year jump pickers compose on top of
+this grid and land here as they ship.
+
+`Calendar` is **composed from Anta components in light DOM** — nothing is hidden in
+a shadow root. Days and the prev/next chevrons are `<Button>`s (a selected day is
+literally a `tertiary` Button in its selected state), inside a form-associated
+`<a-calendar>` grid. All date math runs on the
+[Temporal API](https://tc39.es/proposal-temporal/docs/) (bundled via
+`temporal-polyfill`) — exported as `buildMonth` & friends, so you can populate your
+own grid — and the value is a plain ISO `YYYY-MM-DD` string, never a `Date`. It
+works controlled (`value` + `onStateChange`) or uncontrolled (`defaultValue`), and
+participates in forms under `name`.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="Calendar"
+  layout="side"
+  panelHeight={460}
+  initialCode={dateInputDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; align-items: center; justify-content: center; }`}
+/>
+
+</Disclosure>
+
+## Selecting a date
+
+Click a day, or focus the grid and press <kbd>Enter</kbd> / <kbd>Space</kbd>. The
+selected day takes the tertiary-button selected look — a subtle fill with a ring;
+today is shown as a secondary Button (a subtle resting fill).
+
+<Preview>
+  <CalendarDemo client:only="preact" />
+</Preview>
+
+```tsx folded
+<Calendar defaultValue="2026-06-12" />
+```
+
+## Controlled
+
+Uncontrolled by default: pass `defaultValue` and read the date from `onAnyChange`
+or at form submit. Make it controlled with `value` + `onStateChange` to drive it
+from your store — the grid then follows `value`, and a pick only *requests* a
+change (answer by updating `value`; reject by doing nothing).
+
+```tsx folded
+const [date, setDate] = useState('2026-06-28')
+
+<Calendar
+  value={date}
+  onStateChange={(_e, { next }) => setDate(next ?? '')}
+/>
+```
+
+`onStateChange` fires before the element applies, with `(event, { next, prev, reason })`
+where `next` / `prev` are ISO strings. For a `'user'` pick, `event.preventDefault()`
+vetoes it (uncontrolled). A controlled calendar with no `onStateChange` is read-only.
+
+## Range
+
+`min` and `max` (ISO strings) bound the selectable range — days outside it render
+disabled and skip keyboard focus, and the prev/next arrows stop at the range edge.
+
+<Preview>
+  <Calendar defaultValue="2026-06-15" min="2026-06-08" max="2026-06-24" />
+</Preview>
+
+```tsx folded
+<Calendar defaultValue="2026-06-15" min="2026-06-08" max="2026-06-24" />
+```
+
+## Locale
+
+`Calendar` respects the browser locale by default (`navigator.language`). Pass a
+BCP-47 `locale` to override it: the first day of week comes from the locale's week
+info (never hard-coded to Sunday), and the weekday and month names are localized.
+
+<Preview gap="24px" style="flex-wrap: wrap; align-items: flex-start;">
+  <Calendar defaultValue="2026-06-28" locale="en-US" aria-label="US English" />
+  <Calendar defaultValue="2026-06-28" locale="fr-FR" aria-label="French" />
+  <Calendar defaultValue="2026-06-28" locale="ja-JP" aria-label="Japanese" />
+</Preview>
+
+```tsx folded
+<Calendar defaultValue="2026-06-28" locale="en-US" />  {/* week starts Sunday */}
+<Calendar defaultValue="2026-06-28" locale="fr-FR" />  {/* week starts Monday */}
+<Calendar defaultValue="2026-06-28" locale="ja-JP" />
+```
+
+## Disabled
+
+`disabled` dims the whole calendar and removes it from interaction.
+
+<Preview>
+  <Calendar defaultValue="2026-06-28" disabled />
+</Preview>
+
+```tsx folded
+<Calendar defaultValue="2026-06-28" disabled />
+```
+
+## Forms
+
+`Calendar` is form-associated. Give it a `name` and it submits the selected ISO
+date under that key, resets to `defaultValue` on form reset, and reports through
+the standard constraint-validation pipeline.
+
+```tsx folded
+<form>
+  <Calendar name="due-date" defaultValue="2026-06-28" />
+</form>
+```
+
+## Accessibility
+
+The calendar is a labelled **group** of day buttons — a flat grid, not a nested
+`grid`/`row`/`gridcell` tree. The group is named by the visible month
+(`aria-labelledby`); each day is a `<button>` whose `aria-label` is its full date
+including weekday ("Sunday, June 28, 2026"), with `aria-pressed` on the selected
+day and `aria-current="date"` on today. The decorative weekday headers are
+`aria-hidden` (each day already names its weekday). A roving `tabindex` keeps a
+single tab stop, and an `aria-live` region announces the month when it changes.
+
+| Key | Moves focus |
+|---|---|
+| <kbd>←</kbd> / <kbd>→</kbd> | by one day |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | by one week |
+| <kbd>Home</kbd> / <kbd>End</kbd> | to the start / end of the week |
+| <kbd>PageUp</kbd> / <kbd>PageDown</kbd> | by one month |
+| <kbd>Shift</kbd> + <kbd>PageUp</kbd> / <kbd>PageDown</kbd> | by one year |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> | select the focused day |
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Calendar" />
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+The calendar is **light DOM**, so everything is plain CSS — no shadow parts, no
+hidden internals. Days and chevrons are real `<a-button>`s (so their colours,
+hover, focus ring, and the selected look come from the Button styles and theme
+themselves), inside the `<a-calendar>` grid; the switcher header sits in the
+`.anta-calendar` shell. An un-layered consumer rule beats `@layer anta` without
+`!important`. The class below is just for the demo.
+
+<Preview>
+  <Calendar className="roomy" defaultValue="2026-06-28" />
+  <style is:inline>{`
+    .anta-calendar.roomy { --calendar-cell-width: 40px; --calendar-cell-height: 40px; }
+    .anta-calendar.roomy a-button[data-part="day-cell"] { border-radius: 50%; }
+  `}</style>
+</Preview>
+
+```css folded
+/* Bigger, circular day cells. `className` lands on the outer .anta-calendar
+   shell; `--calendar-cell-width` / `--calendar-cell-height` drive the grid track
+   and the cell box (inherited down), and you target the day Buttons directly. */
+.anta-calendar.roomy { --calendar-cell-width: 40px; --calendar-cell-height: 40px; }
+.anta-calendar.roomy a-button[data-part="day-cell"] { border-radius: 50%; }
+```
+
+The engine (`buildMonth`, `firstDayOfWeek`, …) is exported, so you can render a
+fully custom grid and keep only the `<a-calendar>` form plumbing.
+
+</Disclosure>

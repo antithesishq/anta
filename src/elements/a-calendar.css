@@ -1,0 +1,84 @@
+@layer anta {
+  /* The calendar is composed in LIGHT DOM from Anta components, so its styling is
+     ordinary CSS targeting those elements — nothing is hidden in a shadow root.
+     Day cells are real <a-button>s, so their colours/states (hover, focus ring,
+     and the selected look) come from a-button.css for free and theme themselves;
+     we only square them off here. The few tokens below point at role tokens, so
+     dark mode needs no override. */
+
+  /* Outer shell rendered by the <Calendar> wrapper: the switcher header stacked
+     above the grid. (Scoped by the wrapper's class so the rules don't leak.) */
+  .anta-calendar {
+    /* Day cells: a touch wider than tall, with the height matching a normal
+       (medium) Anta button. */
+    --calendar-cell-width: 30px;
+    --calendar-cell-height: 28px;
+
+    display: inline-flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .anta-calendar [data-part="header"] {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .anta-calendar [data-part="heading"] {
+    flex: 1 1 auto;
+    text-align: center;
+    font-family: var(--sans-serif);
+    font-feature-settings: 'ss02', 'ss05';
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 500;
+    color: var(--text-1);
+    white-space: nowrap;
+  }
+
+  /* The element IS the grid: a flat 7-column grid whose direct children are the
+     seven weekday headers followed by the day cells — no row wrappers. */
+  a-calendar {
+    display: inline-grid;
+    grid-template-columns: repeat(7, var(--calendar-cell-width, 30px));
+    font-family: var(--sans-serif);
+  }
+
+  a-calendar [data-part="weekday"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 500;
+    color: var(--text-4);
+    user-select: none;
+  }
+  /* Dim the weekend column headers (Sat/Sun, locale-independent). */
+  a-calendar [data-part="weekday"][data-weekend] {
+    color: var(--text-5);
+  }
+
+  /* Day cells are <a-button>s — sized to the cell box, number centred. The colour
+     curve (rest/hover/active, the `selected` fill + ring, disabled) all comes
+     from a-button.css. */
+  a-calendar a-button[data-part="day-cell"] {
+    --button-padding-x: 0;
+
+    min-width: var(--calendar-cell-width, 30px);
+    min-height: var(--calendar-cell-height, 28px);
+    justify-content: center;
+  }
+  /* (Today is rendered as a secondary Button by the wrapper — no extra ring.) */
+
+  /* Adjacent-month spill-over days read quieter. */
+  a-calendar a-button[data-part="day-cell"][data-outside]:not([selected]) {
+    opacity: 0.5;
+  }
+
+  .anta-calendar[aria-disabled="true"],
+  a-calendar[disabled] {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}

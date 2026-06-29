@@ -332,6 +332,10 @@
        font-feature-settings a consumer sets on an ancestor — it replaces, not
        merges. */
     font-feature-settings: "ss02", "ss05";
+    /* Enforce Anta's tabular lining figures (the global default in tokens.css)
+       so they survive any font-variant-numeric a consumer sets on an ancestor —
+       re-stated here for the same reason as the stylistic sets above. */
+    font-variant-numeric: lining-nums tabular-nums;
     line-height: var(--_lh);
     letter-spacing: 0.05ch;
 

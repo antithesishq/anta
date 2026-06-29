@@ -26,6 +26,11 @@
   font-size: 15px;
   font-weight: 400;
   font-feature-settings: 'ss02' on, 'ss05' on;
+  /* Tabular lining figures everywhere by default — digits are equal-width, so
+     numbers align in columns and never reflow (calendars, tables, counters,
+     timers). Inherited, so it reaches all components and into their shadow DOM;
+     a component or consumer can still opt a region into proportional figures. */
+  font-variant-numeric: lining-nums tabular-nums;
 
   /* Colors imported from Figma library "Anta 0.2" → "Dynamic colors" collection.
      See FIGMA.md for the full extraction procedure (figma.variables Plugin

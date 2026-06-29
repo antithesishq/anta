@@ -15,6 +15,7 @@
  * manual step as `build:css` / `elements/index.ts`).
  */
 @import url('../../node_modules/@antadesign/anta/dist/elements/a-button.css');
+@import url('../../node_modules/@antadesign/anta/dist/elements/a-calendar.css');
 @import url('../../node_modules/@antadesign/anta/dist/elements/a-checkbox.css');
 @import url('../../node_modules/@antadesign/anta/dist/elements/a-expander.css');
 @import url('../../node_modules/@antadesign/anta/dist/elements/a-icon.css');

@@ -14,6 +14,9 @@ export interface BaseProps {
   title?: string
   /** Tab order. Set to `-1` to skip the element when tabbing. */
   tabIndex?: number
+  /** React/Preact reconciliation key when rendered inside a list. Consumed by the
+   *  JSX runtime (not forwarded as a DOM attribute). */
+  key?: string | number | null
   /** Any `data-*` attribute is forwarded to the rendered element. */
   [key: `data-${string}`]: unknown
   /** Any `aria-*` attribute is forwarded to the rendered element. */
@@ -468,6 +471,57 @@ export interface AInputAttributes extends BaseAttributes {
   onclearinput?: (e: any) => void
   'aria-invalid'?: 'true' | 'false' | boolean
   'aria-label'?: string
+}
+
+/**
+ * Attributes for the `<a-calendar>` custom element — a **light-DOM,
+ * form-associated** month grid, and the **interaction authority** for it. The
+ * element is the grid (a flat 7-column CSS grid whose children are the weekday
+ * headers + day cells), owns the submitted form value, and **dispatches the
+ * selection (`statechange` / `change`) and navigation (`navigate`) events** plus
+ * manages keyboard focus — so it works for a vanilla consumer, not only via the
+ * wrapper. It does **not** build or mutate its own contents: whoever renders into
+ * it (the `Calendar` JSX wrapper, or a vanilla consumer using the exported
+ * `buildMonth` engine) fills it with day cells and *re-renders on its events* —
+ * the `<a-radio-group>` model. Controlled by the presence of `value` (a pick only
+ * *requests* a change); uncontrolled with `defaultvalue` (a pick self-applies).
+ * For the typed, batteries-included wrapper use `Calendar` from `@antadesign/anta`.
+ *
+ * `:state(filled)` is the styling hook for "has a selection".
+ */
+export interface ACalendarAttributes extends BaseAttributes {
+  /** Controlled selected date — ISO `YYYY-MM-DD`. Present → controlled (a pick
+   *  only requests a change). Mirrored to the owning form via `ElementInternals`. */
+  value?: string
+  /** Uncontrolled initial date / reset baseline — ISO `YYYY-MM-DD`. */
+  defaultvalue?: string
+  /** Form field name — the selected ISO date submits under this key. */
+  name?: string
+  /** Disable the whole calendar. Presence-based (`''` on, omit off). */
+  disabled?: boolean | ''
+  /** Focus signal — `"<iso>#<nonce>"`. When it changes, the element focuses the
+   *  day cell whose `data-date` matches `<iso>` (set by the renderer after a
+   *  month-changing keyboard move). */
+  'data-focus'?: string
+  /** Cancelable, bubbling `statechange` fired BEFORE a pick applies. `detail` is
+   *  `{ next, prev, reason }` — ISO strings (or `null`); `reason` ∈
+   *  `'user' | 'reset' | 'restore'`. `preventDefault()` vetoes a `'user'` pick in
+   *  uncontrolled mode. */
+  onstatechange?: (
+    e: CustomEvent<{ next: string | null; prev: string | null; reason: 'user' | 'reset' | 'restore' }>,
+  ) => void
+  /** Native `change`, fired AFTER a selection applies (uncontrolled) and on
+   *  reset/restore. */
+  onchange?: (e: Event) => void
+  /** Keyboard navigation request — the element handles arrow / Home / End /
+   *  PageUp / PageDown, focuses the target cell when it's rendered, and emits this
+   *  bubbling `navigate` `CustomEvent` (`detail: { date }`, ISO) so the renderer can
+   *  move the roving tab stop and flip the displayed month when needed. */
+  onnavigate?: (e: CustomEvent<{ date: string }>) => void
+  /** ARIA — `role="grid"` and the accessible name are set by the renderer (the
+   *  `Calendar` wrapper wires `aria-labelledby` to the month heading). */
+  'aria-label'?: string
+  'aria-labelledby'?: string
 }
 
 /**

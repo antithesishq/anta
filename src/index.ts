@@ -51,6 +51,22 @@ export { Expander } from './components/Expander'
 export type { ExpanderProps } from './components/Expander'
 export { Input } from './components/Input'
 export type { InputProps, InputChangeAttrs } from './components/Input'
+export { Calendar } from './components/Calendar'
+export type { CalendarProps, CalendarChangeAttrs } from './components/Calendar'
+export {
+  buildMonth,
+  getWeekdays,
+  firstDayOfWeek,
+  clampDate,
+  isOutOfRange,
+  parseISODate,
+} from './calendar-core'
+export type {
+  CalendarDay,
+  CalendarWeekday,
+  CalendarMonth,
+  BuildMonthOptions,
+} from './calendar-core'
 export { RadioGroup } from './components/RadioGroup'
 export type { RadioGroupProps, RadioOption } from './components/RadioGroup'
 export type { BaseProps, BaseAttributes } from './general_types'

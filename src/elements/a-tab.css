@@ -1,0 +1,101 @@
+@layer anta {
+  /* Intrinsic, priority-independent tab chrome. The per-priority / per-tone / per-
+     state values of --tab-fg / --tab-bg, the type-scale vars (--_fs/--_lh/--_pb),
+     padding, and the track live on the parent <a-tabs> (a-tabs.css) and inherit /
+     cascade down — this file is just the box that consumes them, so a-tab stays the
+     button-like item regardless of which tablist style wraps it. */
+  a-tab {
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5ch;
+    /* min-width:0 lets the label ellipsize when the strip overflows (the default;
+       horizontal sizing itself is set on the parent — see a-tabs.css). flex-shrink:1 is
+       the base used by a vertical strip. Opt back into scrolling with `flex: none` on the
+       tab + `overflow-x: auto` on the strip (see the Tabs docs Styling section). */
+    flex-shrink: 1;
+    min-width: 0;
+    cursor: pointer;
+
+    color: var(--tab-fg, var(--text-3));
+    background-color: var(--tab-bg, transparent);
+    border: none;
+    border-radius: var(--tab-radius, 4px);
+    /* Zero-spread transparent baseline so the selected pill's ring (--tab-pill-shadow)
+       animates in (spread 0→0.5px, transparent→colour) instead of popping from `none`. */
+    box-shadow: 0 0 0 0 transparent;
+
+    font-size: var(--_fs, 15px);
+    font-family: var(--sans-serif);
+    font-weight: 450;
+    font-variation-settings: "wdth" 88, "slnt" 0, "ital" 0;
+    font-feature-settings: "ss02", "ss05";
+    line-height: var(--_lh, 20px);
+    letter-spacing: 0.05ch;
+
+    white-space: nowrap;
+    text-wrap: nowrap;
+
+    /* Height = line-height + 8 (matching the same-size Button / Input). Block padding
+       is SYMMETRIC; the optical --_pb nudge for Anta's low-sitting glyphs lives on
+       <a-tab-label> (below), not the tab box — so a sibling <a-icon> stays centered
+       instead of riding high. (The label's --_pb + the symmetric padding still sum to
+       line-height + 8, so the height is unchanged. Mirrors <a-button-label>.) */
+    padding-block: var(--tab-padding-y, 4px);
+    padding-inline: var(--tab-padding-x, 9px);
+
+    /* The text/icon `color` is INSTANT (not transitioned) — hover/select recolour the
+       label immediately. Background and shadow still ease in/out, so the active fill +
+       pill ring animate while the text snaps. (The tertiary underline is the ::after
+       overlay in a-tabs.css; it eases its own size + colour.) */
+    transition:
+      background-color var(--tab-timing, 150ms ease-out),
+      box-shadow var(--tab-timing, 150ms ease-out);
+
+    /* The label box — the `Tabs` wrapper wraps a string label in <a-tab-label>. It
+       carries the optical --_pb and is ellipsis-/wrap-capable, exactly like
+       <a-button-label>, so a constrained tab truncates cleanly and icons align. */
+    & > a-tab-label {
+      display: inline-block;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-wrap: nowrap;
+      white-space: nowrap;
+
+      line-height: var(--_lh, 20px);
+      padding-bottom: var(--_pb, 1px);
+
+      &:has(> *) {
+        display: inline-flex;
+        gap: 0.25ch;
+      }
+    }
+
+    & > * {
+      pointer-events: none;
+    }
+
+    /* Trim the edge padding by 2px when an <a-icon> (not the label) sits at that edge —
+       an icon looks balanced with a little less inset than text. Only when the tab also
+       has a label, so an icon-only tab keeps its symmetric padding. Mirrors <a-button>. */
+    &:has(> a-icon:first-child):has(> a-tab-label) {
+      padding-inline-start: max(0px, var(--tab-padding-x, 9px) - 2px);
+    }
+    &:has(> a-icon:last-child):has(> a-tab-label) {
+      padding-inline-end: max(0px, var(--tab-padding-x, 9px) - 2px);
+    }
+  }
+
+  a-tab:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: -1px;
+  }
+
+  a-tab[disabled] {
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}

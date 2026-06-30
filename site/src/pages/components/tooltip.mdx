@@ -166,6 +166,37 @@ it, and the outer takes back over when you leave. Hover the examples to feel it.
 </div>
 ```
 
+### Show only when truncated
+
+Pass **`truncatedOnly`** and the tooltip appears only when its target's text is
+actually ellipsized — a label that fits gets no tooltip. The check is a UI-thread
+layout read, re-measured on each hover (so resizing the container flips it live). By
+default it measures the nearest Anta ellipsizing label (`a-tab-label` /
+`a-button-label`) inside the anchor, then the anchor itself; point it elsewhere with
+**`truncatedSelector`**. Hover both — only the clipped one reveals its full text:
+
+<Preview>
+  <div style={{ display: 'flex', gap: '28px', alignItems: 'flex-start' }}>
+    <span style={{ display: 'inline-block', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'help' }}>
+      A long label that gets truncated
+      <Tooltip truncatedOnly>A long label that gets truncated</Tooltip>
+    </span>
+    <span style={{ display: 'inline-block', cursor: 'help' }}>
+      Short label
+      <Tooltip truncatedOnly>Short label</Tooltip>
+    </span>
+  </div>
+</Preview>
+
+```tsx folded
+{/* Only the clipped span shows a tooltip. The anchor IS the clipping box here,
+    so no selector is needed; inside a <Tab> / <Button> the default finds the label. */}
+<span style={{ maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+  A long label that gets truncated
+  <Tooltip truncatedOnly>A long label that gets truncated</Tooltip>
+</span>
+```
+
 <Disclosure title="Component props" open>
 
 <PropsTable component="Tooltip" />

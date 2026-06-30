@@ -1,0 +1,19 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Vertical: tablist beside the panel region. The tablist hugs its content (it sets
+   align-self: flex-start itself), the active panel takes the remaining width. */
+.container[data-orientation="vertical"] {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.container[data-orientation="vertical"] > a-tabpanel {
+  flex: 1 1 auto;
+  min-width: 0;
+}

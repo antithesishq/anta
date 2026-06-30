@@ -9,6 +9,7 @@ export const ICON_SHAPES = [
   'circle-play',
   'octagon-pause',
   'sticker',
+  'tabs',
 ] as const
 
 export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
@@ -22,6 +23,7 @@ declare module '@antadesign/anta' {
     'circle-play': true
     'octagon-pause': true
     'sticker': true
+    'tabs': true
   }
 }
 

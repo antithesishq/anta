@@ -1,0 +1,448 @@
+@layer anta {
+  a-tabs {
+    /* Type scale by size — shared with Button/Input (small 13/16 · medium 15/20 ·
+       large 17/24). --_pb is the optical bottom nudge for Anta's low-sitting glyphs;
+       a-tab.css consumes it. Block padding holds each tab at line-height + 8. */
+    --_fs: 15px;
+    --_lh: 20px;
+    --_pb: 1px;
+    --tab-padding-x: 9px;
+    /* (8 − --_pb)/2 so that 2×padding + the label's --_pb = 8 exactly — the tab box
+       lands on line-height + 8 (an integer at every size). Height comes out 32 at
+       medium because the track adds 4 (2px padding + 2×1px border); see below. */
+    --tab-padding-y: calc((8px - var(--_pb)) / 2);
+    --tab-radius: 4px;
+    --tabs-gap: 3px;
+    --tab-timing: 150ms ease-out;
+
+    /* Tone (neutral default). Named tones re-point --tabs-tone-source; everything toned
+       derives from it — the selected label (--tab-selected-text), and for non-neutral
+       tones the track tint (--tabs-track-bg), track border (--tabs-track-border), and the
+       pill ring (--tab-pill-shadow), so a toned strip's well/border/fill/ring carry the
+       tone across all priorities. Only the primary pill's fill (--bg-1) + its neutral
+       selected label stay tone-free. */
+    --tabs-tone-source: #635b65;
+    --tab-fg-rest: var(--text-3);
+    --tab-fg-hover: var(--text-1);
+    --tab-selected-text: var(--text-1);
+    /* Tertiary uses softer steps: --text-2 selected label, --border-5 rest divider
+       (toned variants set per tone below). */
+    --tab-text-2: var(--text-2);
+    --tab-divider: var(--border-5);
+
+    /* Primary track (recessed well) — a faint 6% overlay (Button's neutral tertiary
+       hue; dark value below). The raised pill is --bg-1 (theme-aware), like the docs
+       segmented control. */
+    --tabs-track-bg: color-mix(in oklch, #44374b 6%, transparent);
+    --tabs-track-border: var(--border-4);
+    --tab-pill-bg: var(--bg-1);
+    /* Primary pill: a soft 3px-blur shadow (no spread) for a subtle raised feel.
+       `--border-3` is theme-aware, so this works in dark too. */
+    --tab-pill-shadow: 0 0 3px 0 var(--border-3);
+
+    /* Secondary's selected fill + ring. The fill is a fainter overlay than the primary
+       track (3% light / 6% dark; toned + dark values below). The ring is a 1px INSET
+       outline one border-step DARKER than the primary track border — `--border-3` vs the
+       track's `--border-4`; both theme-aware, so it reads darker in light and lighter in
+       dark. Drawn inside the tab box (no outward bleed / clipping). */
+    --tab-secondary-bg: color-mix(in oklch, #44374b 3%, transparent);
+    --tab-secondary-border: var(--border-3);
+    --tab-secondary-shadow: inset 0 0 0px 1px var(--tab-secondary-border);
+
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--tabs-gap);
+
+    /* Hug content, not the parent. `display: flex` is block-level, so the strip would
+       otherwise fill its parent's width (stretching the track / underline across empty
+       space). `width: fit-content` sizes it to its tabs in ANY parent — block or flex —
+       capped at max-width:100% below. `align-self: flex-start` additionally stops a flex
+       parent from stretching it on the cross axis (e.g. the vertical layout's row, so the
+       strip doesn't grow tall to match the panel). Opt into a full-width strip with
+       `width: 100%` (see the equal-width Styling example). */
+    width: fit-content;
+    align-self: flex-start;
+
+    /* Capped at the parent width; the tabs shrink (a-tab is flex-shrink:1) so an
+       overflowing strip ELLIPSIZES its labels rather than widening or scrolling.
+       overflow:hidden clips any residual overflow instead of pushing the page wider.
+       To scroll instead, opt in per the docs Styling section. min-width:0 lets the
+       strip shrink in a flex parent (the Tabs wrapper's layout row). */
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    scroll-behavior: smooth;
+  }
+
+  /* ── Sizes ───────────────────────────────────────────────────────────────── */
+  a-tabs[size="small"] {
+    --_fs: 13px;
+    --_lh: 16px;
+    --_pb: 0.5px;
+    --tab-padding-x: 7px;
+  }
+  a-tabs[size="large"] {
+    --_fs: 17px;
+    --_lh: 24px;
+    --_pb: 1.5px;
+    --tab-padding-x: 13px;
+  }
+  /* Icons track the tab size (medium = a-icon's 16px default). */
+  a-tabs a-tab a-icon { --icon-size: 16px; }
+  a-tabs[size="small"] a-tab a-icon { --icon-size: 14px; }
+  a-tabs[size="large"] a-tab a-icon { --icon-size: 18px; }
+
+  /* ── Tones — re-point the source + the label colours: --tab-selected-text is the
+     tone's --text-1-<tone>, --tab-rest-tone its muted --text-3-<tone> (both theme-aware,
+     like neutral's --text-1 / --text-3). Primary's non-selected labels use the rest
+     tone; secondary/tertiary keep neutral rest. ──────────────────────────────────── */
+  a-tabs[tone="brand"] {
+    --tabs-tone-source: #5f4bc3;
+    --tab-selected-text: var(--text-1-brand); --tab-text-2: var(--text-2-brand);
+    --tab-rest-tone: var(--text-3-brand); --tab-divider: var(--border-5-brand);
+    --tabs-track-border: var(--border-4-brand); --tab-secondary-border: var(--border-3-brand);
+  }
+  a-tabs[tone="info"] {
+    --tabs-tone-source: #1f6eb2;
+    --tab-selected-text: var(--text-1-info); --tab-text-2: var(--text-2-info);
+    --tab-rest-tone: var(--text-3-info); --tab-divider: var(--border-5-info);
+    --tabs-track-border: var(--border-4-info); --tab-secondary-border: var(--border-3-info);
+  }
+  a-tabs[tone="success"] {
+    --tabs-tone-source: #2a7e43;
+    --tab-selected-text: var(--text-1-success); --tab-text-2: var(--text-2-success);
+    --tab-rest-tone: var(--text-3-success); --tab-divider: var(--border-5-success);
+    --tabs-track-border: var(--border-4-success); --tab-secondary-border: var(--border-3-success);
+  }
+  a-tabs[tone="warning"] {
+    --tabs-tone-source: #c37416;
+    --tab-selected-text: var(--text-1-warning); --tab-text-2: var(--text-2-warning);
+    --tab-rest-tone: var(--text-3-warning); --tab-divider: var(--border-5-warning);
+    --tabs-track-border: var(--border-4-warning); --tab-secondary-border: var(--border-3-warning);
+  }
+  a-tabs[tone="critical"] {
+    --tabs-tone-source: #c9302c;
+    --tab-selected-text: var(--text-1-critical); --tab-text-2: var(--text-2-critical);
+    --tab-rest-tone: var(--text-3-critical); --tab-divider: var(--border-5-critical);
+    --tabs-track-border: var(--border-4-critical); --tab-secondary-border: var(--border-3-critical);
+  }
+
+  a-tabs[tone]:not([tone=""], [tone="neutral"]) {
+    /* Track tint + ring derived from the tone (mid lightness on white), so a toned
+       strip's well/fill and pill ring carry the tone instead of staying neutral. The
+       secondary fill is the same hue at a fainter 3% (6% dark, below). */
+    --tabs-track-bg: oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.08);
+    --tab-secondary-bg: oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.03);
+    --tab-pill-shadow: 0 0 3px 0 oklch(from var(--tabs-tone-source) 0.62 0.12 h / 0.5);
+  }
+  /* Custom literal-colour tone (anything not a named tone): derive the source from the
+     attribute via typed attr(), and the selected label by oklch (no --text-1-<tone>). */
+  a-tabs[tone]:not(
+      [tone=""],
+      [tone="neutral"],
+      [tone="brand"],
+      [tone="info"],
+      [tone="success"],
+      [tone="warning"],
+      [tone="critical"]
+    ) {
+    /* No --*-<tone> tokens to lean on, so derive each from the literal colour's HUE at the
+       fixed L/C the named tone tokens use at that step (measured average across the five
+       named tones in oklch) — so a custom colour gets the same treatment a named tone would.
+       text-3 (rest) == text-2, matching the named token scale. */
+    --tabs-tone-source: attr(tone type(<color>), #635b65);
+    --tab-selected-text: oklch(from var(--tabs-tone-source) 0.38 0.13 h);
+    --tab-text-2: oklch(from var(--tabs-tone-source) 0.45 0.13 h);
+    --tab-rest-tone: oklch(from var(--tabs-tone-source) 0.45 0.13 h);
+    --tab-divider: oklch(from var(--tabs-tone-source) 0.94 0.03 h);
+    --tabs-track-border: oklch(from var(--tabs-tone-source) 0.9 0.047 h);
+    --tab-secondary-border: oklch(from var(--tabs-tone-source) 0.87 0.065 h);
+  }
+
+  /* ── Tab base state (all priorities) ─────────────────────────────────────── */
+  a-tabs a-tab {
+    --tab-fg: var(--tab-fg-rest);
+    --tab-bg: transparent;
+  }
+  /* Horizontal sizing — content-sized until the strip overflows, then compress.
+     `flex: 1 1 0` grows each tab from a 0 basis (so an overflowing row distributes the
+     squeeze evenly), while `max-width: max-content` caps each at its natural width when
+     there's room — so a roomy strip stays content-sized, and only an overflowing one
+     squeezes: short labels keep their width, the long ones share the pressure and
+     ellipsize. (Vertical keeps the base content sizing — it scrolls instead.) */
+  a-tabs:not([orientation="vertical"]) a-tab {
+    flex: 1 1 0;
+    max-width: max-content;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    /* Instant recolour (no `color` transition; see a-tab.css). */
+    a-tabs a-tab:hover {
+      --tab-fg: var(--tab-fg-hover);
+    }
+  }
+
+  /* ── Primary (default): recessed track + raised selected pill ────────────── */
+  a-tabs:not([priority="secondary"], [priority="tertiary"]) {
+    background: var(--tabs-track-bg);
+    border: 0.5px solid var(--tabs-track-border);
+    border-radius: 6px;
+    padding: 1.5px;
+  }
+  a-tabs:not([priority="secondary"], [priority="tertiary"]) a-tab:state(selected) {
+    /* Selected label = --tab-selected-text: neutral dark for the neutral tone (the docs
+       segmented-control look), the tone colour when toned. The pill FILL stays neutral. */
+    --tab-fg: var(--tab-selected-text);
+    --tab-bg: var(--tab-pill-bg);
+
+    box-shadow: var(--tab-pill-shadow);
+  }
+  /* Toned strips tint their non-selected labels with the muted --tab-rest-tone (and the
+     fuller --tab-selected-text on hover / selected; tertiary overrides hover below). */
+  a-tabs[tone]:not([tone=""], [tone="neutral"]) {
+    --tab-fg-rest: var(--tab-rest-tone);
+    --tab-fg-hover: var(--tab-selected-text);
+  }
+
+  /* ── Secondary: primary's sizing but no visible track; the selected tab gets the
+     track-colour fill plus a ring in the primary track-border colour. ──────────── */
+  a-tabs[priority="secondary"] {
+    /* Transparent 0.5px border matches primary's track border width, so the box is the
+       same size as a primary strip even though there's no visible track. */
+    border: 0.5px solid transparent;
+    padding: 1.5px;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    a-tabs[priority="secondary"] a-tab:hover {
+      /* Hover only shifts the text colour — no background fill (only the selected tab
+         gets the track-colour fill). */
+      --tab-fg: var(--tab-selected-text);
+    }
+  }
+  a-tabs[priority="secondary"] a-tab:state(selected) {
+    --tab-fg: var(--tab-selected-text);
+    /* Faint active fill (3% light / 6% dark); the tone shows on the label + border. */
+    --tab-bg: var(--tab-secondary-bg);
+
+    /* 1px inset ring, one border-step darker than the primary track border. */
+    box-shadow: var(--tab-secondary-shadow);
+  }
+
+  /* ── Tertiary: flush tabs (no gap) each carrying its OWN underline — the --tab-divider
+     (border-5 / border-5-<tone>) at 1px when at rest, thickening to a 2px --tab-selected-text
+     accent on the selected tab. The underline is an absolutely-positioned ::after OVERLAY
+     pinned to the edge (bottom when horizontal, inline-end when vertical) — NOT an in-flow
+     border — so the rest→active weight change costs no layout (no border-width / padding
+     juggling to keep labels aligned). Its size + colour ride --tab-underline-size /
+     --tab-underline-color so one ::after rule serves rest, active, both orientations, and the
+     slide-mode revert below. The SELECTED label uses the high-contrast --tab-selected-text
+     (text-1 tone); hover is the softer --tab-text-2 step. Flush so the per-tab underlines join
+     into one continuous line; no track, so there's nothing to overlap. */
+  a-tabs[priority="tertiary"] {
+    --tabs-gap: 0;
+  }
+  a-tabs[priority="tertiary"] a-tab {
+    --tab-underline-size: 1px;
+    --tab-underline-color: var(--tab-divider);
+
+    position: relative;
+    border-radius: 0;
+    /* +1.5px side padding since there's no track inset around these flush tabs. */
+    padding-inline: calc(var(--tab-padding-x) + 1.5px);
+  }
+  /* Horizontal only: the underline is at the bottom edge, so nudge the label up — +0.5px
+     top / +3.5px bottom (medium: 4 / 7) keeps the strip at 32px (same as primary/secondary)
+     with room above the underline. The old 1px bottom-border is gone, so its +1px folds into
+     the bottom padding and the label position is unchanged. Vertical tabs carry the underline
+     on the inline-end edge instead, so they keep the base symmetric block padding (no bottom
+     correction). */
+  a-tabs[priority="tertiary"]:not([orientation="vertical"]) a-tab {
+    padding-top: calc(var(--tab-padding-y) + 0.5px);
+    padding-bottom: calc(var(--tab-padding-y) + 3.5px);
+  }
+  /* A full-cover overlay (inset:0, pointer-events:none) whose only paint is its edge
+     border: a bottom border when horizontal, swapped to the inline-end edge when vertical
+     (below) — so one geometry serves both orientations, only the side flips. box-sizing is
+     pinned to border-box so the border lands inside the padding-box bottom regardless of the
+     consumer's reset. The rest→active weight rides --tab-underline-size, growing in place. */
+  a-tabs[priority="tertiary"] a-tab::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    pointer-events: none;
+    border-bottom: var(--tab-underline-size) solid var(--tab-underline-color);
+    transition:
+      border-width var(--tab-timing),
+      border-color var(--tab-timing);
+  }
+  a-tabs[orientation="vertical"][priority="tertiary"] a-tab::after {
+    border-bottom: 0;
+    border-inline-end: var(--tab-underline-size) solid var(--tab-underline-color);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    a-tabs[priority="tertiary"] a-tab:hover {
+      --tab-fg: var(--tab-text-2);
+    }
+  }
+  a-tabs[priority="tertiary"] a-tab:state(selected) {
+    --tab-fg: var(--tab-selected-text);
+    --tab-underline-size: 2px;
+    --tab-underline-color: var(--tab-selected-text);
+  }
+
+  /* ── Vertical orientation ────────────────────────────────────────────────── */
+  a-tabs[orientation="vertical"] {
+    flex-direction: column;
+    align-items: stretch;
+
+    max-width: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* Beside a panel (the wrapper lays the strip + panel in a row), the strip keeps its
+       content width — the panel gives way — so vertical tab labels never ellipsize. */
+    flex-shrink: 0;
+  }
+  a-tabs[orientation="vertical"] a-tab {
+    justify-content: flex-start;
+    /* Vertical main axis is the block axis — don't let tabs compress their height; a tall
+       strip scrolls (overflow-y:auto above) instead. */
+    flex-shrink: 0;
+  }
+  /* (Vertical tertiary swaps the ::after border to the inline-end edge — see the
+     tertiary block above, beside the horizontal default.) */
+
+  /* ── Sliding indicator (CSS anchor positioning) ─────────────────────────────────
+     Default behaviour. A single rectangle pinned to the selected tab with anchor(),
+     which the browser slides + resizes between tabs as :state(selected) moves — no JS,
+     no DOM mutation. Every strip uses the SAME anchor-name (`--tabs-active`); they don't
+     cross-wire because `anchor-scope: all` (below) scopes the name to each strip's own
+     subtree. Opt out with the `noslide` attribute.
+
+     The block is gated on @supports (anchor-scope) — NOT just (anchor-name) — on purpose:
+     `anchor-scope` is what isolates strips that share `--tabs-active`. An engine with
+     anchor positioning but no anchor-scope (the narrow Chrome ~125-130 window) would let
+     the shared name cross-wire every strip's indicator to the last strip's selected tab,
+     so we keep the slider off there and fall back to the per-tab :state(selected) paint
+     above (correct selection, just no slide) — the same fallback as no-anchor browsers. */
+  @supports (anchor-scope: all) {
+    a-tabs:not([noslide]) {
+      position: relative;
+      /* Scope the anchor-name to this strip's own subtree, so multiple strips on a page
+         can all use `--tabs-active` without the spec's "last anchor in source order wins"
+         rule cross-wiring their indicators. */
+      anchor-scope: all;
+    }
+    /* Tabs sit above the indicator (labels read over the pill); the selected tab is the
+       anchor the indicator pins to. */
+    a-tabs:not([noslide]) a-tab {
+      position: relative;
+      z-index: 1;
+    }
+    a-tabs:not([noslide]) a-tab:state(selected) {
+      anchor-name: --tabs-active;
+    }
+
+    a-tabs:not([noslide])::before {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      box-sizing: border-box;
+      position-anchor: --tabs-active;
+      top: anchor(top);
+      right: anchor(right);
+      bottom: anchor(bottom);
+      left: anchor(left);
+      transition:
+        top var(--tab-timing),
+        right var(--tab-timing),
+        bottom var(--tab-timing),
+        left var(--tab-timing);
+    }
+    /* Nothing selected → no anchor → keep the indicator out of view. */
+    a-tabs:not([noslide]):not(:has(a-tab:state(selected)))::before {
+      display: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      a-tabs:not([noslide])::before {
+        transition: none;
+      }
+    }
+
+    /* The selected tab no longer paints its own fill / ring / underline — the moving
+       indicator does. Only the label colour (--tab-fg, set above) stays on the tab. */
+    a-tabs:not([noslide]) a-tab:state(selected) {
+      --tab-bg: transparent;
+
+      box-shadow: none;
+    }
+
+    /* Primary: the raised pill. */
+    a-tabs:not([noslide], [priority="secondary"], [priority="tertiary"])::before {
+      background: var(--tab-pill-bg);
+      border-radius: var(--tab-radius);
+      box-shadow: var(--tab-pill-shadow);
+    }
+    /* Secondary: the faint active fill + the 1px inset ring (one step darker border). */
+    a-tabs:not([noslide])[priority="secondary"]::before {
+      background: var(--tab-secondary-bg);
+      border-radius: var(--tab-radius);
+      box-shadow: var(--tab-secondary-shadow);
+    }
+    /* Tertiary: the slider is the same full-cover box as primary/secondary (it inherits the
+       anchor edges above), but its only paint is a 2px bottom border — so it reads as a
+       sliding underline, consistent with the per-tab ::after, while the full-cover box can
+       also carry a sliding background glow (see the docs Styling example). z-index 2 so the
+       line tracks visibly over the per-tab rest dividers as it moves; the selected tab's own
+       ::after reverts to the 1px rest divider (resetting the shared vars, both orientations)
+       so the destination tab doesn't pre-paint its accent and the slider stays the sole
+       indicator. */
+    a-tabs:not([noslide])[priority="tertiary"] a-tab:state(selected) {
+      --tab-underline-size: 1px;
+      --tab-underline-color: var(--tab-divider);
+    }
+    a-tabs:not([noslide])[priority="tertiary"]::before {
+      z-index: 2;
+      border-bottom: 2px solid var(--tab-selected-text);
+    }
+    /* Vertical tertiary: the border moves to the inline-end edge — a 2px vertical bar. */
+    a-tabs[orientation="vertical"]:not([noslide])[priority="tertiary"]::before {
+      border-bottom: 0;
+      border-inline-end: 2px solid var(--tab-selected-text);
+    }
+  }
+
+  /* ── Dark mode — the track tint is the dark tertiary-hover overlay; the coloured
+     label gets a lift; pill / border ride theme-aware tokens already. ────────── */
+  .dark a-tabs {
+    --tabs-track-bg: color-mix(in oklch, #e4d1ef 10%, transparent);
+    --tab-secondary-bg: color-mix(in oklch, #e4d1ef 6%, transparent);
+  }
+  .dark a-tabs[tone]:not([tone=""], [tone="neutral"]) {
+    /* Lighter tone (higher L) so the tint/ring lighten the dark surface like the
+       neutral dark overlay does. (Named tones' --text-1-<tone> labels are theme-aware,
+       so only the custom tone needs a dark selected-label lift, below.) */
+    --tabs-track-bg: oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.12);
+    --tab-secondary-bg: oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.06);
+    --tab-pill-shadow: 0 0 3px 0 oklch(from var(--tabs-tone-source) 0.8 0.1 h / 0.45);
+  }
+  /* Custom literal tone has no theme-aware --text-*-<tone> tokens, so lift its derived
+     label colours for dark (named tones' tokens already carry their dark values). */
+  .dark a-tabs[tone]:not(
+      [tone=""],
+      [tone="neutral"],
+      [tone="brand"],
+      [tone="info"],
+      [tone="success"],
+      [tone="warning"],
+      [tone="critical"]
+    ) {
+    /* Same step L/C as the named -<tone> tokens' dark values (measured average). */
+    --tab-selected-text: oklch(from var(--tabs-tone-source) 0.83 0.1 h);
+    --tab-text-2: oklch(from var(--tabs-tone-source) 0.76 0.11 h);
+    --tab-rest-tone: oklch(from var(--tabs-tone-source) 0.76 0.11 h);
+    --tab-divider: oklch(from var(--tabs-tone-source) 0.21 0.045 h);
+    --tabs-track-border: oklch(from var(--tabs-tone-source) 0.25 0.057 h);
+    --tab-secondary-border: oklch(from var(--tabs-tone-source) 0.33 0.087 h);
+  }
+}

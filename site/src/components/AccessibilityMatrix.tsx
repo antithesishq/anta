@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'preact/hooks'
+import { Tabs, Tab, Tooltip } from '@antadesign/anta'
 import s from './Swatches.module.css'
 
 type Tone = 'neutral' | 'brand' | 'info' | 'success' | 'critical' | 'warning'
@@ -677,104 +678,91 @@ export default function AccessibilityMatrix() {
 
       <div class={s.a11yControls}>
         <div class={s.a11yControlRow}>
-          <div class={s.a11ySegment} role="tablist" aria-label="Tone">
+          <Tabs
+            size="small"
+            label="Tone"
+            value={tone}
+            onStateChange={(_e, { next }) => next && setTone(next as Tone)}
+          >
             {TONES.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                aria-selected={t.id === tone}
-                class={t.id === tone ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
-                onClick={() => setTone(t.id)}
-              >
-                {t.label}
-              </button>
+              <Tab key={t.id} value={t.id} label={t.label} />
             ))}
-          </div>
+          </Tabs>
         </div>
         <div class={s.a11yControlRow}>
-          <div class={s.a11ySegment} role="radiogroup" aria-label="Font size">
+          <Tabs
+            size="small"
+            label="Font size"
+            value={String(size)}
+            onStateChange={(_e, { next }) => next && setSize(Number(next) as Size)}
+          >
             {SIZES.map((p) => (
-              <button
-                key={p}
-                type="button"
-                role="radio"
-                aria-checked={p === size}
-                class={p === size ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
-                onClick={() => setSize(p)}
-              >
-                {p}px
-              </button>
+              <Tab key={p} value={String(p)} label={`${p}px`} />
             ))}
-          </div>
-          <div class={s.a11ySegment} role="radiogroup" aria-label="Weight">
+          </Tabs>
+          <Tabs
+            size="small"
+            label="Weight"
+            value={weight}
+            onStateChange={(_e, { next }) => next && setWeight(next as Weight)}
+          >
             {WEIGHTS.map((w) => (
-              <button
-                key={w.id}
-                type="button"
-                role="radio"
-                aria-checked={w.id === weight}
-                class={w.id === weight ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
-                onClick={() => setWeight(w.id)}
-              >
-                {w.label}
-              </button>
+              <Tab key={w.id} value={w.id} label={w.label} />
             ))}
-          </div>
-          <div class={s.a11ySegment} role="radiogroup" aria-label="Letter case">
-            <button
-              type="button"
-              role="radio"
-              aria-checked={!capital}
-              class={!capital ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
-              onClick={() => setCapital(false)}
-            >
-              Sentence
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={capital}
-              class={capital ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
-              onClick={() => setCapital(true)}
-            >
-              Capital
-            </button>
-          </div>
+          </Tabs>
+          <Tabs
+            size="small"
+            label="Letter case"
+            value={capital ? 'capital' : 'sentence'}
+            onStateChange={(_e, { next }) => setCapital(next === 'capital')}
+          >
+            <Tab value="sentence" label="Sentence" />
+            <Tab value="capital" label="Capital" />
+          </Tabs>
         </div>
         <div class={s.a11yControlRow}>
-          <div class={s.a11ySegment} role="radiogroup" aria-label="Color vision">
-            {CVDS.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                role="radio"
-                aria-checked={v.id === cvd}
-                title={tooltip(v.id)}
-                class={v.id === cvd ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
-                onClick={() => setCvd(v.id)}
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            size="small"
+            label="Color vision"
+            value={cvd}
+            onStateChange={(_e, { next }) => next && setCvd(next as CVD)}
+          >
+            {CVDS.map((v) => {
+              const tip = tooltip(v.id)
+              return (
+                <Tab key={v.id} value={v.id}>
+                  {v.label}
+                  {tip && (
+                    <Tooltip placement="top">
+                      <span class={s.a11yTip}>{tip}</span>
+                    </Tooltip>
+                  )}
+                </Tab>
+              )
+            })}
+          </Tabs>
         </div>
         <div class={s.a11yControlRow}>
-          <div class={s.a11ySegment} role="radiogroup" aria-label="Vision condition">
-            {CONDITIONS.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                role="radio"
-                aria-checked={c.id === condition}
-                title={tooltip(c.id)}
-                class={c.id === condition ? `${s.a11ySegBtn} ${s.a11ySegBtnActive}` : s.a11ySegBtn}
-                onClick={() => setCondition(c.id)}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            size="small"
+            label="Vision condition"
+            value={condition}
+            onStateChange={(_e, { next }) => next && setCondition(next as Condition)}
+          >
+            {CONDITIONS.map((c) => {
+              const tip = tooltip(c.id)
+              return (
+                <Tab key={c.id} value={c.id}>
+                  {c.label}
+                  {tip && (
+                    <Tooltip placement="top">
+                      <span class={s.a11yTip}>{tip}</span>
+                    </Tooltip>
+                  )}
+                </Tab>
+              )
+            })}
+          </Tabs>
         </div>
       </div>
 

@@ -39,6 +39,11 @@ const PROP_ORDER: Record<string, string[]> = {
     'loading', 'disabled', 'selected',
     'href', 'target', 'children', 'className', 'style',
   ],
+  Tabs: [
+    'priority', 'tone', 'size', 'orientation', 'mounting', 'noslide', 'disabled',
+    'label', 'value', 'defaultValue',
+    'children', 'className', 'style',
+  ],
 }
 
 /** Props whose validity depends on another prop's value — the discriminated
@@ -458,23 +463,29 @@ function controlFor(p: any, root?: any): PropEntry | null {
     )
   }
 
-  // A reference to a local type alias whose definition is a boolean-ish
-  // union (e.g. `CheckboxValue = boolean | 'indeterminate'`, the type of
-  // `checked` / `defaultChecked`) — surface as a boolean toggle. The
-  // non-boolean members aren't reachable from the simple checkbox control,
-  // by design: the panel drives the binary axis.
+  // A reference to a local type alias (e.g. `TabsMounting`, `CheckboxValue`). Resolve it
+  // and treat it like the inline shape would have been:
   if (t.type === 'reference' && root) {
     const target = root.children?.find((c: any) => c.name === t.name)
     const resolved = target?.type
+    // Boolean-ish union (`boolean | 'indeterminate'`) → a boolean toggle. Handled here, not
+    // by recursion, because the inline union path only maps `true | false` to a toggle — the
+    // non-boolean members aren't reachable from the binary control, by design.
     if (
       resolved?.type === 'union' &&
       Array.isArray(resolved.types) &&
       resolved.types.some((x: any) => x.type === 'intrinsic' && x.name === 'boolean')
     ) {
-      return wrap(
-        { kind: 'boolean', name, description },
-        { name, kind: 'boolean' },
-      )
+      return wrap({ kind: 'boolean', name, description }, { name, kind: 'boolean' })
+    }
+    // Any other alias → run its underlying type back through controlFor, so an aliased
+    // union behaves EXACTLY like the same union written inline (segmented buttons for string
+    // literals, a number input for number literals, a text input for an open-string union,
+    // …) rather than re-implementing a subset of the arms here and silently dropping the
+    // rest. Recursion terminates: an alias-of-alias re-enters this branch and resolves again.
+    if (resolved) {
+      const viaAlias = controlFor({ ...p, type: resolved }, root)
+      if (viaAlias) return viaAlias
     }
   }
 
@@ -519,8 +530,14 @@ function renderType(type: any): string {
 function renderComment(comment: any): string | undefined {
   if (!comment?.summary) return undefined
   const text = comment.summary
-    .map((part: any) => (part.kind === 'code' ? part.text : part.text))
+    .map((part: any) => part.text)
     .join('')
+    // TSDoc source wraps prose across lines with a `*  ` continuation indent;
+    // typedoc keeps those newlines + leading spaces in the summary. Collapse all
+    // whitespace runs to single spaces so the description reads as flowing prose —
+    // otherwise the tooltip bubble (`white-space: break-spaces`) renders the source
+    // line-breaks and indent verbatim.
+    .replace(/\s+/g, ' ')
     .trim()
   return text || undefined
 }

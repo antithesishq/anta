@@ -19,9 +19,9 @@ const stateToValue = (s: CheckboxState): CheckboxValue =>
 type StateDetail = { next: CheckboxState; prev: CheckboxState }
 type StateChangeEvent = CustomEvent<StateDetail>
 
-/** Snapshot passed as the 2nd argument to `onAnyChange` — the new value plus
+/** Snapshot passed as the 2nd argument to `onValueChange` — the new value plus
  *  form-relevant fields, so you don't poke at `event.target`. Mirrors `Input`'s
- *  `onAnyChange` convention. */
+ *  `onValueChange` convention. */
 export interface CheckboxChangeAttrs {
   checked: boolean
   indeterminate: boolean
@@ -93,8 +93,8 @@ export interface CheckboxProps extends BaseProps {
   onChange?: (event: Event) => void
   /** Like `onChange`, but with a `{ checked, indeterminate, name, value }` snapshot
    *  as the 2nd argument — the ergonomic "just give me the new value" callback
-   *  (mirrors `Input`'s `onAnyChange`). */
-  onAnyChange?: (event: Event, attrs: CheckboxChangeAttrs) => void
+   *  (mirrors `Input`'s `onValueChange`). */
+  onValueChange?: (event: Event, attrs: CheckboxChangeAttrs) => void
 }
 
 /**
@@ -119,7 +119,7 @@ export const Checkbox = ({
   priority,
   onStateChange,
   onChange,
-  onAnyChange,
+  onValueChange,
   label,
   hint,
   className,
@@ -158,13 +158,13 @@ export const Checkbox = ({
       }
     : undefined
 
-  // Native `change` (post-apply). `onAnyChange` adds the value snapshot; both read
+  // Native `change` (post-apply). `onValueChange` adds the value snapshot; both read
   // the new value off the element (`event.currentTarget`).
   const onchange =
-    onChange || onAnyChange
+    onChange || onValueChange
       ? (e: Event) => {
           onChange?.(e)
-          onAnyChange?.(e, checkboxAttrsOf(e.currentTarget))
+          onValueChange?.(e, checkboxAttrsOf(e.currentTarget))
         }
       : undefined
 

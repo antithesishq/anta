@@ -11,7 +11,7 @@ type StateReason = "user" | "reset" | "restore"
 type StateDetail = { next: string | null; prev: string | null; reason: StateReason }
 type StateChangeEvent = CustomEvent<StateDetail>
 
-/** Snapshot passed as the 2nd argument to `onAnyChange` — the new value plus the
+/** Snapshot passed as the 2nd argument to `onValueChange` — the new value plus the
  *  field name, so you don't poke at `event.target`. Mirrors `Input`/`Checkbox`. */
 export interface RadioChangeAttrs {
   value: string | null
@@ -68,7 +68,7 @@ export interface RadioGroupProps extends Omit<BaseProps, "children" | "onChange"
   onChange?: (event: Event) => void
   /** Like `onChange`, but with a `{ value, name }` snapshot as the 2nd argument —
    *  the ergonomic "just give me the new value" callback (mirrors `Input`). */
-  onAnyChange?: (event: Event, attrs: RadioChangeAttrs) => void
+  onValueChange?: (event: Event, attrs: RadioChangeAttrs) => void
   /** Fired when focus enters the group (any option) — wired to `focusin`, since
    *  focus lands on an individual option, not the group element itself. */
   onFocus?: (event: FocusEvent) => void
@@ -132,7 +132,7 @@ export const RadioGroup = ({
   defaultValue,
   onStateChange,
   onChange,
-  onAnyChange,
+  onValueChange,
   onFocus,
   onBlur,
   name,
@@ -190,12 +190,12 @@ export const RadioGroup = ({
     setInternalValue(detail.next ?? undefined)
   }
 
-  // Native `change` (post-apply). `onAnyChange` adds the value snapshot.
+  // Native `change` (post-apply). `onValueChange` adds the value snapshot.
   const onchange =
-    onChange || onAnyChange
+    onChange || onValueChange
       ? (e: Event) => {
           onChange?.(e)
-          onAnyChange?.(e, radioAttrsOf(e.currentTarget))
+          onValueChange?.(e, radioAttrsOf(e.currentTarget))
         }
       : undefined
 

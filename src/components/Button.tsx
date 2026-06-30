@@ -1,32 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle } from "../anta_helpers"
-
-/** Normalize button children. Uses plain Array.isArray + typeof for
- *  React/Preact portability — avoids React.Children.* helpers.
- *
- *  - string / number → wrapped in `<a-button-label>` so the ellipsis rule
- *    applies and the icon-only CSS detector doesn't false-positive on a bare
- *    text-node sibling. Empty / whitespace-only strings and `NaN` carry no
- *    visible content, so they're dropped rather than wrapped (a blank label
- *    would add padding/structure for no text); a valid `0` still renders.
- *  - boolean / null / undefined → dropped: no renderable content.
- *  - JSX elements → passed through unwrapped. The label treatment is only for
- *    bare text; an element is the consumer's own structure, left untouched. */
-const wrapChildren = (kids: React.ReactNode): React.ReactNode => {
-  if (kids == null) return kids
-  const arr = Array.isArray(kids) ? kids : [kids]
-  return arr.map((child, i) => {
-    if (typeof child === 'string') {
-      return child.trim() === '' ? null : <a-button-label key={i}>{child}</a-button-label>
-    }
-    if (typeof child === 'number') {
-      return Number.isNaN(child) ? null : <a-button-label key={i}>{child}</a-button-label>
-    }
-    if (child == null || typeof child === 'boolean') return null
-    return child
-  })
-}
+import { toneStyle, wrapLabel } from "../anta_helpers"
 
 /** Always-allowed props, independent of content/submit/priority mode. */
 export type BaseButtonProps = {
@@ -225,7 +199,7 @@ export const Button = ({
     <>
       {icon && <a-icon shape={icon} aria-hidden="true" />}
       {label != null && <a-button-label>{label}</a-button-label>}
-      {wrapChildren(children)}
+      {wrapLabel(children, 'a-button-label')}
       {iconTrailing && <a-icon shape={iconTrailing} aria-hidden="true" />}
     </>
   )

@@ -4,7 +4,7 @@ import { nativeStateChange, toneStyle } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
 
-/** Convenience snapshot passed as the 2nd argument to `onAnyChange`. */
+/** Convenience snapshot passed as the 2nd argument to `onValueChange`. */
 export interface InputChangeAttrs {
   /** Current value. */
   value: string
@@ -123,7 +123,7 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   onInput?: (e: any) => void
   /** Fires on **commit** (blur / Enter) — the platform `change` semantics, **not**
    *  React's per-keystroke `onChange`. This is a web component, so `onChange` keeps
-   *  the native meaning; reach for `onInput` (every keystroke) or `onAnyChange`
+   *  the native meaning; reach for `onInput` (every keystroke) or `onValueChange`
    *  (both) for live updates. Read `e.target.value`. */
   onChange?: (e: any) => void
   /** Unified value-change handler — the easy path for state. Fires on `input`
@@ -132,7 +132,7 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    *  you can do `setForm(s => ({ ...s, [attrs.name]: attrs.value }))` without
    *  digging into the event. Use `event.type` to tell a live edit (`input`) from
    *  a commit (`change`); read `id` / `type` / `className` off `event.target`. */
-  onAnyChange?: (event: any, attrs: InputChangeAttrs) => void
+  onValueChange?: (event: any, attrs: InputChangeAttrs) => void
   /** Fires when the built-in clear button (`clearable`) is clicked, *before*
    *  the field is cleared. Call `e.preventDefault()` to keep the current value
    *  — the clear is cancelled and `onClearInput` won't fire. Backed by the
@@ -155,7 +155,7 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
 const presence = (on: boolean | undefined) => (on ? '' : undefined)
 const isStringish = (n: React.ReactNode) => typeof n === 'string' || typeof n === 'number'
 
-// Build the `onAnyChange` attrs snapshot from the event target (the <a-input>
+// Build the `onValueChange` attrs snapshot from the event target (the <a-input>
 // host — the value retargets to it). Carries the value + derived results only;
 // `name` is the lone caller-provided field, kept for keyed `[name]: value`
 // updates. Read `id` / `type` / `className` off `event.target` if needed.
@@ -245,7 +245,7 @@ export const Input = ({
   step,
   onInput,
   onChange,
-  onAnyChange,
+  onValueChange,
   onClearClick,
   onClearInput,
   children,
@@ -288,8 +288,8 @@ export const Input = ({
       max={max}
       step={step}
       aria-invalid={status === 'critical' ? 'true' : undefined}
-      oninput={onInput || onAnyChange ? (e: any) => { onInput?.(e); onAnyChange?.(e, attrsOf(e)) } : undefined}
-      onchange={onChange || onAnyChange ? (e: any) => { onChange?.(e); onAnyChange?.(e, attrsOf(e)) } : undefined}
+      oninput={onInput || onValueChange ? (e: any) => { onInput?.(e); onValueChange?.(e, attrsOf(e)) } : undefined}
+      onchange={onChange || onValueChange ? (e: any) => { onChange?.(e); onValueChange?.(e, attrsOf(e)) } : undefined}
       onclearclick={onClearClick ? (e: any) => onClearClick(nativeStateChange(e).event) : undefined}
       onclearinput={onClearInput ? (e: any) => onClearInput(nativeStateChange(e).event) : undefined}
       class={className}

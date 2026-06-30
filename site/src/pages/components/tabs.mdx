@@ -1,0 +1,540 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Tabs
+---
+import Playground from '../../components/Playground'
+import Preview from '../../components/Preview.astro'
+import PropsTable from '../../components/PropsTable.astro'
+import Disclosure from '../../components/Disclosure.astro'
+import Columns from '../../components/Columns.astro'
+import Col from '../../components/Col.astro'
+import tabsDemoCode from './tabs.demo.ts'
+import { Basic, Priorities, TonesColumn, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, SquareTabs, TertiaryGlow, NoSlide } from '../../components/TabsDemo'
+
+# Tabs
+
+A tablist for switching between views. Compose it from `<Tab>` children — each
+takes a unique `value` and a `label` (or `children`), plus optional `icon` /
+`iconTrailing`. That alone is a selectable strip that emits the chosen value; add
+matching `<TabPanel>`s (see [Panels](#panels)) when you want `Tabs` to show and
+hide the content too.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="Tabs"
+  layout="side"
+  panelHeight={420}
+  initialCode={tabsDemoCode}
+  initialCss={`a-tabpanel {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border-4);
+  border-radius: 8px;
+}`}
+/>
+
+</Disclosure>
+
+## Priority
+
+<Columns>
+<Col>
+
+<Preview>
+  <Priorities client:only="preact" />
+</Preview>
+
+```tsx folded
+<Tabs priority="primary"   defaultValue="a">…</Tabs>  {/* default */}
+<Tabs priority="secondary" defaultValue="a">…</Tabs>
+<Tabs priority="tertiary"  defaultValue="a">…</Tabs>
+```
+
+</Col>
+<Col>
+
+`priority` sets the selected-tab indicator:
+
+- **`primary`** (default) — a pill on a track.
+- **`secondary`** — a filled tab, no track.
+- **`tertiary`** — an underline.
+
+</Col>
+</Columns>
+
+## Tones
+
+Six named tones — `neutral` (default), `brand`, `info`, `success`, `warning`,
+`critical` — plus any CSS colour for a one-off custom tone. The tone runs through the
+strip's labels, indicator, and track at every priority. Rows are tones (the last is a
+custom colour); columns are priorities.
+
+<Columns colGap="16px" rowGap="16px">
+<Col min={0}>
+
+**Primary**
+
+<Preview>
+  <TonesColumn client:only="preact" priority="primary" />
+</Preview>
+
+</Col>
+<Col min={0}>
+
+**Secondary**
+
+<Preview>
+  <TonesColumn client:only="preact" priority="secondary" />
+</Preview>
+
+</Col>
+<Col min={0}>
+
+**Tertiary**
+
+<Preview>
+  <TonesColumn client:only="preact" priority="tertiary" />
+</Preview>
+
+</Col>
+</Columns>
+
+```tsx folded
+<Tabs tone="brand" priority="secondary" defaultValue="a">…</Tabs>
+<Tabs tone="#e0457b" priority="tertiary" defaultValue="a">…</Tabs>  {/* any CSS colour */}
+```
+
+## Size
+
+<Columns>
+<Col>
+
+<Preview>
+  <Sizes client:only="preact" />
+</Preview>
+
+```tsx folded
+<Tabs size="small" defaultValue="a">…</Tabs>
+```
+
+</Col>
+<Col>
+
+Three sizes — `small`, `medium` (default), `large` — reuse
+[`Button`](/components/button/)'s type scale, so a strip lines up with same-size
+buttons and inputs. Icons scale with the tab.
+
+</Col>
+</Columns>
+
+## Orientation
+
+`horizontal` (default) lays the tabs in a row; `vertical` stacks them, and a paired
+panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when horizontal,
+`↑`/`↓` when vertical. Vertical works at every priority:
+
+<Columns colGap="16px" rowGap="16px">
+<Col min={0}>
+
+**Primary**
+
+<Preview>
+  <VerticalStrip client:only="preact" priority="primary" />
+</Preview>
+
+</Col>
+<Col min={0}>
+
+**Secondary**
+
+<Preview>
+  <VerticalStrip client:only="preact" priority="secondary" />
+</Preview>
+
+</Col>
+<Col min={0}>
+
+**Tertiary**
+
+<Preview>
+  <VerticalStrip client:only="preact" priority="tertiary" />
+</Preview>
+
+</Col>
+</Columns>
+
+```tsx folded
+<Tabs orientation="vertical" priority="tertiary" defaultValue="general">
+  <Tab value="general" label="General" />
+  <Tab value="members" label="Members" />
+  <Tab value="integrations" label="Integrations" />
+</Tabs>
+```
+
+## Icons & content
+
+A `<Tab>` takes a leading **`icon`** and a trailing **`iconTrailing`** — here the trailing
+dot flags an unsaved file. Its content is otherwise arbitrary: pass **children** instead of
+`label` to add more than text, like a [`<Tag>`](/components/tag/) counter.
+
+<Columns>
+<Col>
+
+<Preview>
+  <IconsContent client:only="preact" />
+</Preview>
+
+</Col>
+<Col>
+
+```tsx folded
+<Tabs defaultValue="app" label="Open files">
+  <Tab value="app" icon="braces">app.tsx <Tag size="small" nocaps value="2" /></Tab>
+  <Tab value="readme" label="README.md" icon="file" />
+  <Tab value="styles" icon="file" iconTrailing="circle-small-solid">styles.css</Tab>
+</Tabs>
+```
+
+</Col>
+</Columns>
+
+## Overflow
+
+<Columns>
+<Col>
+
+<Preview>
+  <Overflow client:only="preact" />
+</Preview>
+
+</Col>
+<Col>
+
+When the tabs don't fit, their labels truncate with an ellipsis — the strip never
+widens the page. To scroll the strip or let labels wrap instead, see
+[Styling](#styling).
+
+Drop a [`<Tooltip truncatedOnly>`](/components/tooltip/#show-only-when-truncated) in a
+`<Tab>` and a clipped tab reveals its full label on hover — while tabs that fit show
+nothing. The tooltip finds the tab's `a-tab-label` automatically. Hover the truncated
+tabs above to see it.
+
+```tsx folded
+<Tabs defaultValue="overview" label="Sections">
+  <Tab value="overview">
+    Overview
+    <Tooltip truncatedOnly>Overview</Tooltip>
+  </Tab>
+  {/* …more tabs… */}
+</Tabs>
+```
+
+</Col>
+</Columns>
+
+## Panels
+
+<Columns>
+<Col>
+
+<Preview>
+  <Basic client:only="preact" />
+  <style is:inline>{`
+    .panels-demo > a-tabs { align-self: center; }
+  `}</style>
+</Preview>
+
+```tsx folded
+<Tabs defaultValue="account" label="Settings">
+  <Tab value="account" label="Account" icon="home" />
+  <Tab value="security" label="Security" />
+  <Tab value="billing" label="Billing" />
+
+  <TabPanel value="account"><AccountForm /></TabPanel>
+  <TabPanel value="security"><SecurityForm /></TabPanel>
+  <TabPanel value="billing"><BillingForm /></TabPanel>
+</Tabs>
+```
+
+</Col>
+<Col>
+
+Pair a `<TabPanel value="…">` to the `<Tab>` of the same value and `Tabs` shows
+the active panel, wiring up the `aria-controls` / `aria-labelledby` link between
+them. Panel content is arbitrary React — forms, charts, whatever — so it renders
+normally.
+
+Panels are **optional**. With none, `Tabs` is just the strip: listen to
+`onStateChange` / `onValueChange` and render whatever you like yourself.
+
+</Col>
+</Columns>
+
+<Disclosure title="JSX vs DOM" level={3}>
+
+`<Tab>` and `<TabPanel>` are **config-only** components — they render nothing
+themselves; `Tabs` reads their props. The flat, interleaved JSX above splits into a
+strip element with the panels as its **siblings** (not children), inside a layout
+wrapper:
+
+```html
+<div>                              <!-- layout wrapper, only when panels exist -->
+  <a-tabs role="tablist">
+    <a-tab role="tab" id="…-tab-account" aria-controls="…-panel-account" tabindex="0">
+      <a-tab-label>Account</a-tab-label>
+    </a-tab>
+    …
+  </a-tabs>
+  <a-tabpanel role="tabpanel" id="…-panel-account" aria-labelledby="…-tab-account">…</a-tabpanel>
+  <a-tabpanel … hidden inert>…</a-tabpanel>   <!-- inactive: hidden/unmounted per `mounting` -->
+</div>
+```
+
+Each `<TabPanel>` becomes an `<a-tabpanel>` **beside** `<a-tabs>`, never inside it — so
+a panel never sits in the primary track (the track background lives on `<a-tabs>`
+itself). The tab↔panel link is by `id` (`aria-controls` / `aria-labelledby`), so their
+adjacency isn't required for correctness.
+
+</Disclosure>
+
+### Mounting
+
+`mounting` controls what happens to **inactive** panels. Set it on `Tabs` for all
+panels, or on a single `<TabPanel>` to override one.
+
+- **`display`** (default) — every panel is mounted; inactive ones hide via
+  `display:none`. Preserves their DOM/form state, and a hidden panel correctly
+  leaves the tab order + a11y tree.
+- **`visibility`** — same, but hidden via `visibility:hidden`, so each panel keeps
+  its layout box (useful to avoid reflow or to measure).
+- **`active`** — only the active panel is rendered; React unmounts the others
+  (resets their state on switch; defers expensive subtrees).
+- **`lazy`** — a panel mounts on first activation, then stays mounted+hidden.
+
+```tsx folded
+{/* default — every panel mounted, inactive ones display:none */}
+<Tabs defaultValue="a">
+  <Tab value="a" label="A" /><Tab value="b" label="B" />
+  <TabPanel value="a"><Expensive /></TabPanel>
+  <TabPanel value="b"><Form /></TabPanel>
+</Tabs>
+
+{/* render only the active panel; React unmounts the rest */}
+<Tabs mounting="active" defaultValue="a">…</Tabs>
+
+{/* per-panel override */}
+<TabPanel value="b" mounting="lazy"><Heavy /></TabPanel>
+```
+
+## Keyboard & accessibility
+
+Every enabled tab is in the tab order — `Tab` / `Shift`+`Tab` step through them.
+The arrow keys also move between enabled tabs (wrapping at the ends), `Home` /
+`End` jump to the first / last, and `Space` / `Enter` activate the focused tab;
+arrow / `Home` / `End` navigation activates as it moves (selection follows focus).
+Disabled tabs are skipped and dropped from the tab order.
+
+Pass `label` for the tablist's accessible name. Each `<TabPanel>` is labelled by
+its tab (`aria-labelledby`) and pointed at from it (`aria-controls`).
+
+## Controlled vs. uncontrolled
+
+The active tab is named by a single **value string** — the `value` of one of your
+`<Tab>`s. Whatever value is active, `Tabs` marks that `<Tab>` selected and reveals the
+`<TabPanel value="…">` that shares it (if any). You choose who owns that value:
+
+<Columns>
+<Col>
+
+**Uncontrolled** — pass `defaultValue` (a `<Tab>`'s `value`) and let `Tabs` own the
+active tab from there:
+
+```tsx folded
+<Tabs defaultValue="overview">
+  <Tab value="overview" label="Overview" />
+  <Tab value="activity" label="Activity" />
+</Tabs>
+```
+
+</Col>
+<Col>
+
+**Controlled** — pass `value` (a `<Tab>`'s `value`) + `onStateChange` and own it
+yourself. `onStateChange` fires *before* the pick applies, so accept it by setting
+`value` to the new tab and reject it by doing nothing (or `event.preventDefault()` to
+veto in uncontrolled mode):
+
+```tsx folded
+const [tab, setTab] = useState('overview')
+
+<Tabs value={tab} onStateChange={(e, { next }) => setTab(next)}>
+  <Tab value="overview" label="Overview" />
+  <Tab value="activity" label="Activity" />
+</Tabs>
+```
+
+</Col>
+</Columns>
+
+## Events
+
+Three callbacks, in firing order:
+
+| Callback | When | Cancelable | Payload |
+|---|---|---|---|
+| `onStateChange(e, { next, prev })` | **before** a pick applies | ✅ | next / prev value |
+| `onChange(e)` | **after** selection applies | — | native `change` event |
+| `onValueChange(e, { value })` | **after** selection applies | — | `{ value }` |
+
+Reach for **`onStateChange`** to intercept or veto a pick; for the everyday "react
+to the new value", use **`onValueChange`**. **`onFocus` / `onBlur`** report focus
+entering and leaving the *strip* (wired to `focusin` / `focusout`, since focus
+lands on an individual tab).
+
+```tsx folded
+<Tabs onValueChange={(_e, { value }) => route(value)}>…</Tabs>
+```
+
+<Disclosure title="Tabs props" open>
+
+<PropsTable component="Tabs" />
+
+</Disclosure>
+
+<Disclosure title="Tab props">
+
+<PropsTable component="Tab" />
+
+</Disclosure>
+
+<Disclosure title="TabPanel props">
+
+<PropsTable component="TabPanel" />
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+Reach for the props first: **`tone`**, **`size`**, **`priority`**. The focus ring is
+the global [`--focus-ring`](/colors/#focus-ring).
+
+For anything else the strip is light-DOM — `<a-tabs>` the tablist, each `<a-tab>` a
+tab (its text wrapped in `<a-tab-label>`), `<a-tabpanel>` a panel, and the moving
+indicator is `<a-tabs>`'s `::before`. Target them with ordinary CSS — an un-layered rule
+beats `@layer anta` without `!important` — and reach for real properties
+(`border-radius`, `padding`, `background`, …), **not** the internal `--*` output tokens.
+The demo classes below (`.square-tabs`, `.glow-tabs`, …) are just hooks; swap your own.
+
+**Squarer primary** — square corners, heavier labels, a roomier track, and a single
+`light-dark()` colour on both the track's 1px border and the pill's crisp 1px ring
+(spread, no blur). The track is `<a-tabs>` and the sliding pill its `::before`:
+
+<Preview>
+  <SquareTabs client:only="preact" />
+  <style is:inline>{`
+    a-tabs.square-tabs { border: 1px solid light-dark(#cfcfd6, #46464e); border-radius: 0; padding: 4px; }
+    .square-tabs a-tab { border-radius: 0; font-weight: 600; }
+    a-tabs.square-tabs::before { border-radius: 0; box-shadow: 0 0 0 1px light-dark(#cfcfd6, #46464e); }
+  `}</style>
+</Preview>
+
+```css folded
+a-tabs.square-tabs         { border: 1px solid light-dark(#cfcfd6, #46464e); border-radius: 0; padding: 4px; }
+.square-tabs a-tab         { border-radius: 0; font-weight: 600; }
+a-tabs.square-tabs::before { border-radius: 0; box-shadow: 0 0 0 1px light-dark(#cfcfd6, #46464e); }  /* 1px spread, no blur */
+```
+
+**Tertiary glowing underline** — recolour the sliding underline and add a radial highlight
+rising from it. The slider is a full-cover box whose `border-bottom` is the line, so a
+`background` gradient on it fills the tab behind the label — and because it's all one
+element, the glow **slides with the line** between tabs. No `noslide`, no separate per-tab
+background.
+
+<Preview>
+  <TertiaryGlow client:only="preact" />
+  <style is:inline>{`
+    a-tabs.glow-tabs::before {
+      border-bottom-color: light-dark(#8067ff, #907aff);
+      background: radial-gradient(80% 100% at 50% 100%, color-mix(in oklch, light-dark(#8067ff, #907aff) 30%, transparent), transparent 70%);
+    }
+  `}</style>
+</Preview>
+
+```css folded
+/* The class is on the <a-tabs> element itself, so target a-tabs.glow-tabs (not a descendant).
+   The tertiary slider is a full-cover box with a border-bottom line — recolour the border and
+   fill it with a gradient; both slide together. Where CSS anchor positioning isn't supported
+   there's no slider — tertiary falls back to the per-tab ::after underline (a plain line). */
+a-tabs.glow-tabs::before {
+  border-bottom-color: light-dark(#8067ff, #907aff);   /* recolour the sliding line */
+  background:                                          /* highlight rising from the line, slides with it */
+    radial-gradient(80% 100% at 50% 100%,
+      color-mix(in oklch, light-dark(#8067ff, #907aff) 30%, transparent), transparent 70%);
+}
+```
+
+**Scroll instead of ellipsizing** — keep full labels and let the strip scroll
+horizontally: pin each tab to its content width (`flex: none`) and make the strip
+scrollable.
+
+<Preview>
+  <ScrollTabs client:only="preact" />
+  <style is:inline>{`
+    .scroll-tabs a-tabs { overflow-x: auto; scrollbar-width: thin; }
+    .scroll-tabs a-tab { flex: none; }
+  `}</style>
+</Preview>
+
+```css folded
+.scroll-tabs a-tabs { overflow-x: auto; scrollbar-width: thin; }
+.scroll-tabs a-tab  { flex: none; }
+```
+
+**Equal-width tabs** — by default tabs are sized to their labels (and only compress
+when the strip overflows). For a segmented-control look where every tab is the same
+width regardless of label, let them fill the strip from a zero basis:
+
+<Preview>
+  <EqualWidth client:only="preact" />
+  <style is:inline>{`
+    .equal-tabs a-tabs { width: 100%; }
+    .equal-tabs a-tab { flex: 1 1 0; max-width: none; }
+  `}</style>
+</Preview>
+
+```css folded
+.equal-tabs a-tabs { width: 100%; }
+.equal-tabs a-tab  { flex: 1 1 0; max-width: none; }
+```
+
+**Wrap labels** — let long labels wrap so the tabs grow taller instead of truncating:
+
+<Preview>
+  <WrapTabs client:only="preact" />
+  <style is:inline>{`
+    .wrap-tabs a-tab,
+    .wrap-tabs a-tab-label { white-space: normal; text-overflow: clip; overflow: visible; text-align: center; }
+  `}</style>
+</Preview>
+
+```css folded
+.wrap-tabs a-tab,
+.wrap-tabs a-tab-label { white-space: normal; text-overflow: clip; overflow: visible; text-align: center; }
+```
+
+**Disable the slide** — by default the selected-tab indicator slides between tabs (a
+single rectangle, via CSS anchor positioning). Pass `noslide` to paint it on each tab
+instead, so the highlight snaps with no movement. This is also the automatic fallback
+where anchor positioning isn't supported.
+
+<Preview>
+  <NoSlide client:only="preact" />
+</Preview>
+
+```tsx folded
+<Tabs noslide defaultValue="a">…</Tabs>
+```
+
+</Disclosure>

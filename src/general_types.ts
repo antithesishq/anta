@@ -345,6 +345,14 @@ export interface ATooltipAttributes extends BaseAttributes {
   /** Make the bubble hoverable/clickable (pointer events on, stays open while
    *  hovered). Always pinned. Presence-based (`''` on, omit off). */
   interactive?: boolean | ''
+  /** Only show when the measured target is actually truncated/clipped (its text
+   *  overflows). UI-thread layout read, re-measured per show. Defaults to the
+   *  nearest Anta ellipsizing label part (`a-tab-label` / `a-button-label`) in the
+   *  anchor, then the anchor itself. Presence-based (`''` on, omit off). */
+  'truncated-only'?: boolean | ''
+  /** CSS selector (resolved within the anchor) for the element whose overflow a
+   *  `truncated-only` tooltip measures. */
+  'truncated-selector'?: string
   /** HTML `id`. */
   id?: string
 }
@@ -744,5 +752,117 @@ export interface ARadioGroupAttributes extends BaseAttributes {
   role?: 'radiogroup'
   'aria-disabled'?: 'true' | 'false'
   'aria-label'?: string
+  'aria-labelledby'?: string
+}
+
+/**
+ * Attributes for the `<a-tab>` custom element — one tab in a tablist. Presentational,
+ * the sibling of `<a-radio>`: the parent `<a-tabs>` owns selection, keyboard, and
+ * scrolling. The selected look comes from the element's `:state(selected)` (set by the
+ * tablist via the `selected` property), not a host attribute. There is no `Tab` web
+ * component to render directly — `Tabs` renders these from its `<Tab>` children, and
+ * hand-authors write `<a-tab>` directly inside an `<a-tabs>`. Wrap the visible label in
+ * `<a-tab-label>` (as `Tabs` does) so it carries the optical baseline nudge, truncates
+ * with an ellipsis when constrained, and keeps a sibling `<a-icon>` centered — exactly
+ * like `<a-button-label>`.
+ */
+export interface ATabAttributes extends BaseAttributes {
+  /** This tab's identity / the value reported when it's selected. */
+  value?: string
+  /** Selected state — connect-time seed for the standalone render path (no tablist).
+   *  In an `<a-tabs>`, the tablist drives `:state(selected)` directly and this
+   *  attribute is ignored. Presence-based (`''` on, omit off). */
+  selected?: boolean | ''
+  /** Disabled state. Presence-based (`''` on, omit off). */
+  disabled?: boolean | ''
+  /** ARIA — `role="tab"` is set by the consumer (`Tabs` on each tab, or a hand-author),
+   *  and `aria-controls` points at the paired panel. `aria-selected` is published by
+   *  the element through `ElementInternals` (off the DOM), driven by the `selected`
+   *  property the tablist sets — not a DOM attribute. `tabindex` (inherited from
+   *  `BaseAttributes`) is set by `Tabs` — every enabled tab is its own tab stop
+   *  (`tabindex="0"`) — not by the element. */
+  role?: 'tab'
+  'aria-controls'?: string
+  'aria-disabled'?: 'true' | 'false'
+}
+
+/**
+ * Attributes for the `<a-tabs>` custom element — the tablist + single-select
+ * coordinator. No shadow DOM: `<a-tab>` children are plain light-DOM, laid out by
+ * `a-tabs.css`, so the strip is restylable with ordinary CSS and usable hand-assembled.
+ * Unlike `<a-radio-group>` it is NOT form-associated (a tablist submits nothing), and
+ * the panels live outside it (siblings the `Tabs` wrapper shows/hides). The element
+ * coordinates **off-DOM only** — selection via each tab's `selected` property, focus via
+ * `internals.ariaActiveDescendantElement`, scroll via `scrollIntoView`. Roving
+ * `tabindex` (the JSX path) is rendered by the `Tabs` wrapper, not the element. For the
+ * typed JSX wrapper use `Tabs` from `@antadesign/anta`.
+ */
+export interface ATabsAttributes extends BaseAttributes {
+  /** Controlled selected value (the active tab's `value`). Present → controlled: the
+   *  element reflects changes to this attribute and a pick only dispatches
+   *  `statechange`. Absent → uncontrolled (seed with `default-state`). */
+  state?: string
+  /** Uncontrolled initial selected value — read once on connect. */
+  'default-state'?: string
+  /** Visual priority. `primary` (default) is the raised pill on a recessed track; `secondary`
+   *  keeps that sizing but drops the track (selected = subtle active background fill, no
+   *  border); `tertiary` is a flush border-bottom underline. `tone` tints secondary +
+   *  tertiary; primary stays neutral. */
+  priority?: 'primary' | 'secondary' | 'tertiary'
+  /** Tone applied to the selected indicator/label, or any literal CSS color for a
+   *  one-off custom tone (derived in oklch). `'neutral'` is the default. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Size variant. small=24px, medium (default)=28px, large=32px tall (Button's scale). */
+  size?: 'small' | 'medium' | 'large'
+  /** Layout + arrow-key axis. `'horizontal'` (default) ellipsizes labels when tabs
+   *  overflow (scrolling is opt-in via CSS); `'vertical'` stacks them. */
+  orientation?: 'horizontal' | 'vertical'
+  /** Disable the sliding indicator. By default the selected-tab indicator is a single
+   *  rectangle that animates between tabs via CSS anchor positioning; with `noslide` the
+   *  highlight is painted on each tab and snaps with no movement (also the automatic
+   *  fallback where anchor positioning isn't supported). Presence-based (`''` on, omit off). */
+  noslide?: boolean | ''
+  /** Disable the whole strip. Presence-based (`''` on, omit off). */
+  disabled?: boolean | ''
+  /** Fires whenever the active tab changes. `detail` carries `{ next, prev }` (values;
+   *  `null` = none). Cancelable: a synchronous `preventDefault()` vetoes the pick in
+   *  uncontrolled mode. All-lowercase to bind across both renderers (like
+   *  `<a-radio-group>`). */
+  onstatechange?: (
+    e: CustomEvent<{ next: string | null; prev: string | null }>,
+  ) => void
+  /** Native `change`, fired *after* a selection applies (post-apply counterpart to
+   *  `onstatechange`). Lowercase so both renderers bind the native event. */
+  onchange?: (e: Event) => void
+  /** Strip focus enter / leave — wired from the bubbling `focusin` / `focusout` (focus
+   *  lands on a tab, not the tablist). The `Tabs` wrapper maps its `onFocus`/`onBlur`. */
+  onfocusin?: (e: FocusEvent) => void
+  onfocusout?: (e: FocusEvent) => void
+  /** ARIA — set by the `Tabs` wrapper (the element never touches these). */
+  role?: 'tablist'
+  'aria-orientation'?: 'horizontal' | 'vertical'
+  'aria-disabled'?: 'true' | 'false'
+  'aria-label'?: string
+}
+
+/**
+ * Attributes for the `<a-tabpanel>` styled tag.
+ *
+ * `<a-tabpanel>` has no JS — it's a CSS-only styled element. The `Tabs` wrapper renders
+ * it, pairs it to its tab via id, and toggles visibility declaratively: `hidden`
+ * (display:none) or `data-hide="visibility"` (keeps the layout box), plus `inert` while
+ * hidden. Low-level attributes; for the typed JSX wrapper use `TabPanel` (inside `Tabs`)
+ * from `@antadesign/anta`.
+ */
+export interface ATabpanelAttributes extends BaseAttributes {
+  /** Hidden via `display:none`. Presence-based (`''` on, omit off). */
+  hidden?: boolean | ''
+  /** Hidden via `visibility:hidden` (keeps the layout box). The `Tabs` wrapper sets
+   *  this for `mounting="visibility"`. */
+  'data-hide'?: 'visibility'
+  /** Removes the hidden panel from focus + the a11y tree. Presence-based. */
+  inert?: boolean | ''
+  /** ARIA — set by the `Tabs` wrapper. */
+  role?: 'tabpanel'
   'aria-labelledby'?: string
 }

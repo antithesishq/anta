@@ -1,0 +1,20 @@
+@layer anta {
+  /* <a-tabpanel> is a CSS-only styled tag (no JS). The `Tabs` wrapper renders it,
+     pairs it to its tab via id, and toggles visibility declaratively:
+       • shown   → no `hidden`, no `data-hide`, not inert
+       • display → `hidden` (removed from layout) + `inert`
+       • visibility → `data-hide="visibility"` (keeps its layout box) + `inert`
+     The explicit [hidden] rule is required: an author rule on a-tabpanel beats the
+     UA `[hidden]{display:none}`, so display:block would otherwise win. */
+  a-tabpanel {
+    display: block;
+  }
+
+  a-tabpanel[hidden] {
+    display: none;
+  }
+
+  a-tabpanel[data-hide="visibility"] {
+    visibility: hidden;
+  }
+}

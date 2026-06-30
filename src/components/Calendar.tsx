@@ -13,7 +13,7 @@ type StateReason = "user" | "reset" | "restore"
 type StateDetail = { next: string | null; prev: string | null; reason: StateReason }
 type StateChangeEvent = CustomEvent<StateDetail>
 
-/** Snapshot passed as the 2nd argument to `onAnyChange` — the new ISO date plus
+/** Snapshot passed as the 2nd argument to `onValueChange` — the new ISO date plus
  *  the field name (mirrors `Input` / `RadioGroup`). */
 export interface CalendarChangeAttrs {
   value: string | null
@@ -58,7 +58,7 @@ export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> 
   onChange?: (event: Event) => void
   /** Like `onChange`, but with a `{ value, name }` snapshot — the ergonomic
    *  "just give me the new date" callback (mirrors `Input`). */
-  onAnyChange?: (event: Event, attrs: CalendarChangeAttrs) => void
+  onValueChange?: (event: Event, attrs: CalendarChangeAttrs) => void
 }
 
 /**
@@ -90,7 +90,7 @@ export const Calendar = ({
   disabled,
   onStateChange,
   onChange,
-  onAnyChange,
+  onValueChange,
   className,
   style,
   "aria-label": ariaLabel,
@@ -157,7 +157,7 @@ export const Calendar = ({
   const onElementChange = (raw: Event) => {
     const e = "nativeEvent" in raw ? (raw as any).nativeEvent : raw
     onChange?.(e)
-    onAnyChange?.(e, { value: (e?.target as { value?: string } | null)?.value || null, name })
+    onValueChange?.(e, { value: (e?.target as { value?: string } | null)?.value || null, name })
   }
 
   // Keyboard navigation is owned by the `<a-calendar>` element (it focuses cells

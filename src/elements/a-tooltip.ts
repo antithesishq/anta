@@ -48,6 +48,13 @@ const PROX_FADE_MS = 60
  */
 const ENTER_TOUCH_DELAY = 500
 /**
+ * Default elements measured for `truncated-only` — Anta's ellipsizing label parts
+ * (`<a-tab-label>` / `<a-button-label>` share the same overflow:hidden + ellipsis
+ * pattern). A `truncated-selector` overrides this; otherwise we fall back to the
+ * anchor itself. Append future ellipsizing parts here.
+ */
+const TRUNCATING_PARTS = 'a-tab-label, a-button-label'
+/**
  * How long (ms) a touch-opened tooltip lingers after the finger lifts, so it
  * stays readable once the anchor is no longer occluded by the fingertip.
  */
@@ -387,6 +394,44 @@ export class ATooltipElement extends HTMLElementBase {
     return Number.isFinite(n) ? n : DEFAULT_DELAY
   }
 
+  // --- truncated-only gating (UI-thread layout READS — no mutation) ---
+
+  /** When set, the tooltip only shows if its resolved target is actually
+   *  truncated/clipped; a fitting label gets no tooltip. */
+  private get truncatedOnly(): boolean {
+    return this.hasAttribute('truncated-only')
+  }
+
+  /** The element whose overflow decides whether the tooltip shows: a
+   *  `truncated-selector` resolved within the anchor wins; else the first of
+   *  Anta's ellipsizing label parts inside the anchor; else the anchor itself
+   *  (which may be the clipping box for a hand-authored target). */
+  private resolveTruncationTarget(): HTMLElement | null {
+    const anchor = this.anchor
+    if (!anchor) return null
+    const sel = this.getAttribute('truncated-selector')
+    if (sel) {
+      try {
+        const found = anchor.querySelector(sel) as HTMLElement | null
+        if (found) return found
+      } catch {
+        /* invalid selector → fall through to the defaults */
+      }
+    }
+    return (anchor.querySelector(TRUNCATING_PARTS) as HTMLElement | null) ?? anchor
+  }
+
+  /** True when the resolved target overflows its box (horizontal ellipsis or
+   *  vertical clamp). A 1px threshold absorbs sub-pixel rounding; a zero-size
+   *  (hidden / detached) target counts as not truncated. Measured fresh on each
+   *  show attempt, so late fonts / resizes self-correct with no observer. */
+  private isTargetTruncated(): boolean {
+    const t = this.resolveTruncationTarget()
+    if (!t) return false
+    if (t.clientWidth === 0 && t.clientHeight === 0) return false
+    return t.scrollWidth - t.clientWidth > 1 || t.scrollHeight - t.clientHeight > 1
+  }
+
   // --- positioning (sets only the shadow container's own transform) ---
 
   // Single pending position frame: a burst of mousemoves within one frame
@@ -471,6 +516,9 @@ export class ATooltipElement extends HTMLElementBase {
 
   show = (e?: MouseEvent) => {
     if (!this.anchor) return
+    // truncated-only: bail unless the target is actually clipped (covers the
+    // hot-path, focus, and touch long-press, which call show() directly).
+    if (this.truncatedOnly && !this.isTargetTruncated()) return
     this.cancelHide() // re-showing (or a hand-off) cancels any pending close
     // Nested anchors: if this anchor *contains* the currently-open tooltip's
     // anchor, an inner (descendant) tooltip is showing — defer to it instead
@@ -604,6 +652,8 @@ export class ATooltipElement extends HTMLElementBase {
   /** Open now if another tooltip is hot (skip delay), else (re)arm the delayed
    *  show with the latest cursor event. */
   private trigger(e?: MouseEvent) {
+    // Don't even arm the delayed show for a non-truncated target.
+    if (this.truncatedOnly && !this.isTargetTruncated()) return
     if (isHot()) {
       this.debouncedShow?.cancel()
       this.show(e)

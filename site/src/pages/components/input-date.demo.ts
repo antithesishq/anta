@@ -7,6 +7,6 @@ export default `import { Calendar } from '@antadesign/anta'
 
 <Calendar
   defaultValue="2026-06-28"
-  onAnyChange={(_e, { value }) => console.log('picked', value)}
+  onValueChange={(_e, { value }) => console.log('picked', value)}
 />
 `

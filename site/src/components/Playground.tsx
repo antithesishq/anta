@@ -811,6 +811,46 @@ function visibleControls(
   })
 }
 
+/** Inline-markdown → HTML, cached by source string. Prop descriptions come from
+ *  build-time api.json (constant for the page's life) and FieldName renders on every
+ *  editor keystroke (FormField isn't memoized, `code` is a dep), so without this every
+ *  visible control re-parses its static description through `marked` on each keypress. */
+const mdInlineCache = new Map<string, string>()
+function parseInlineCached(md: string): string {
+  let html = mdInlineCache.get(md)
+  if (html === undefined) {
+    html = marked.parseInline(md) as string
+    mdInlineCache.set(md, html)
+  }
+  return html
+}
+
+/** A prop-control label: the prop name plus, when it has TSDoc, a hover
+ *  `<Tooltip>` rendering the description (inline markdown — our own build-time
+ *  api.json, so the HTML is trusted). Shared by every control kind so the
+ *  description surfaces identically whether the control is a text input, a
+ *  segmented/tone picker, a slider, or a boolean — rather than only the
+ *  text/number inputs getting the rich bubble and the rest a native `title`. */
+function FieldName({ name, description, suffix }: {
+  name: string
+  description?: string
+  suffix?: React.ReactNode
+}) {
+  return (
+    <span class={s.fieldName} style={description ? { cursor: 'help' } : undefined}>
+      {name}
+      {description ? (
+        <Tooltip>
+          <Text size="small">
+            <span dangerouslySetInnerHTML={{ __html: parseInlineCached(description) }} />
+          </Text>
+        </Tooltip>
+      ) : null}
+      {suffix}
+    </span>
+  )
+}
+
 function FormField({
   entry,
   code,
@@ -872,7 +912,7 @@ function FormField({
           aria-label={c.name}
           onStateChange={(_e, { next }) => handle(next === true)}
         >
-          <span class={s.fieldName} title={c.description}>{c.name}</span>
+          <FieldName name={c.name} description={c.description} />
         </Checkbox>
         {fromExpression ? <span class={s.fieldExpressionBadge}>set by code</span> : null}
       </div>
@@ -884,20 +924,11 @@ function FormField({
   // <Tooltip>, + the "set by code" badge) into the Input's `label` prop.
   if (c.kind === 'text' || c.kind === 'number') {
     const inputLabel = (
-      <span class={s.fieldName} style={c.description ? { cursor: 'help' } : undefined}>
-        {c.name}
-        {c.description ? (
-          // Render the description's inline markdown (it's full of `code` spans)
-          // and wrap it in a small <Text> for the bubble. Source is our own
-          // TSDoc (build-time api.json), so the HTML is trusted.
-          <Tooltip>
-            <Text size="small">
-              <span dangerouslySetInnerHTML={{ __html: marked.parseInline(c.description) as string }} />
-            </Text>
-          </Tooltip>
-        ) : null}
-        {fromExpression ? <span class={s.fieldExpressionBadge}> · set by code</span> : null}
-      </span>
+      <FieldName
+        name={c.name}
+        description={c.description}
+        suffix={fromExpression ? <span class={s.fieldExpressionBadge}> · set by code</span> : null}
+      />
     )
     // `children` and ReactNode (`expression`) props hold JSX/markup, not a short
     // value — give them an auto-growing, monospace, code-style field.
@@ -920,7 +951,7 @@ function FormField({
     <div class={s.field}>
       <div class={s.fieldLabel}>
         <span>
-          <span class={s.fieldName} title={c.description}>{c.name}</span>
+          <FieldName name={c.name} description={c.description} />
         </span>
         {fromExpression
           ? <span class={s.fieldExpressionBadge}>set by code</span>

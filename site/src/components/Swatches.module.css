@@ -16,10 +16,9 @@
 }
 
 /* ─── Segmented control ──────────────────────────────────────────────────
-   Unified style shared by the documentation tone tabs (Colors) and the
-   a11y segments (Accessibility). Surface is bg-block. */
-.toneTabs,
-.a11ySegment {
+   Style for the documentation tone tabs (Colors). Surface is bg-block.
+   (The Accessibility matrix controls are Anta <Tabs> — see AccessibilityMatrix.) */
+.toneTabs {
   display: inline-flex;
   flex-wrap: nowrap;
   align-items: stretch;
@@ -65,15 +64,13 @@
 }
 
 /* Items. Tone tabs are <a> (per-tone navigation) so the selector list strips
-   every facet of the global `<a>` styling across all link pseudos; a11y
-   segments are <button>. The shared reset covers both. */
+   every facet of the global `<a>` styling across all link pseudos. */
 .toneTab,
 .toneTab:link,
 .toneTab:visited,
 .toneTab:hover,
 .toneTab:focus,
-.toneTab:active,
-.a11ySegBtn {
+.toneTab:active {
   appearance: none;
   border: none;
   background: transparent;
@@ -93,9 +90,7 @@
 }
 
 .toneTab:hover,
-.toneTab:focus,
-.a11ySegBtn:hover,
-.a11ySegBtn:focus {
+.toneTab:focus {
   color: var(--text-1);
 }
 
@@ -107,10 +102,7 @@
 .toneTabActive:visited,
 .toneTabActive:hover,
 .toneTabActive:focus,
-.toneTabActive:active,
-.a11ySegBtnActive,
-.a11ySegBtnActive:hover,
-.a11ySegBtnActive:focus {
+.toneTabActive:active {
   background: var(--bg-canvas);
   color: var(--text-1);
   box-shadow: 0 0 2px var(--border-3);
@@ -375,12 +367,12 @@
   align-items: center;
 }
 
-/* `.a11ySegment` / `.a11ySegBtn` / `.a11ySegBtnActive` are styled by the
-   unified "Segmented control" rules near the top of this file. */
-.a11ySegmentLabel {
-  font-size: 0.75rem;
-  color: var(--text-4);
-  padding: 0 6px 0 4px;
+/* Tooltip body for the Color-vision / Vision-condition tabs — the description
+   and per-region stats are a single `\n`-joined string, so preserve the line
+   breaks. Sits inside the Anta tooltip bubble. */
+.a11yTip {
+  display: block;
+  white-space: pre-line;
 }
 
 .a11yScroll {

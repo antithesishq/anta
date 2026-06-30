@@ -1,5 +1,27 @@
+import { jsx } from "./jsx-runtime"
+
 export function hasChildren(children: React.ReactNode): boolean {
   return Array.isArray(children) ? children.length > 0 : children != null
+}
+
+/**
+ * Normalize a wrapper's label content the way `Button` / `Tabs` do: a bare string
+ * or number becomes a `<tag>` — the ellipsis-capable label part (`a-button-label`,
+ * `a-tab-label`, …) that carries the optical baseline nudge and truncates cleanly;
+ * empty / whitespace strings and `NaN` carry no content and are dropped; a JSX
+ * element is the consumer's own structure, passed through unwrapped (so an icon-only
+ * child keeps its layout). Shared so the rule lives in one place — don't re-implement
+ * it per component.
+ */
+export function wrapLabel(kids: React.ReactNode, tag: string): React.ReactNode {
+  if (kids == null) return kids
+  const arr = Array.isArray(kids) ? kids : [kids]
+  return arr.map((child, i) => {
+    if (typeof child === "string") return child.trim() === "" ? null : jsx(tag, { children: child }, i)
+    if (typeof child === "number") return Number.isNaN(child) ? null : jsx(tag, { children: child }, i)
+    if (child == null || typeof child === "boolean") return null
+    return child
+  }) as React.ReactNode
 }
 
 /**

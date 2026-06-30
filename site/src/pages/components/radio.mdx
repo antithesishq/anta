@@ -416,16 +416,16 @@ Three callbacks, in firing order:
 |---|---|---|---|
 | `onStateChange(e, { next, prev, reason })` | **before** a pick applies | ✅ (user picks only) | next / prev value + `reason` |
 | `onChange(e)` | **after** selection applies | — | native `change` event |
-| `onAnyChange(e, attrs)` | **after** selection applies | — | `{ value, name }` |
+| `onValueChange(e, attrs)` | **after** selection applies | — | `{ value, name }` |
 
 Reach for **`onStateChange`** to intercept/veto or to filter on `reason` (reset vs
-restore vs user); for the everyday "react to the new value", use **`onAnyChange`**.
+restore vs user); for the everyday "react to the new value", use **`onValueChange`**.
 `onChange` is the plain native hook. **`onFocus` / `onBlur`** report focus entering
 and leaving the *group* (wired to `focusin` / `focusout`, since focus lands on an
 individual option).
 
 ```tsx folded
-<RadioGroup onAnyChange={(_e, { value }) => save(value)} options={…} />
+<RadioGroup onValueChange={(_e, { value }) => save(value)} options={…} />
 ```
 
 <Disclosure title="RadioGroup props" open>

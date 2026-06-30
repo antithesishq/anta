@@ -21,6 +21,15 @@ export interface TooltipProps extends BaseProps {
    *  buttons) can be interacted with. Always pinned (an interactive bubble
    *  can't follow the cursor, even with `follow`). */
   interactive?: boolean
+  /** Only show when the target is actually truncated (its text overflows and is
+   *  ellipsized); a label that fits gets no tooltip. The check is a UI-thread
+   *  layout read, re-measured on each show. By default it measures the nearest
+   *  Anta ellipsizing label part (`<a-tab-label>` / `<a-button-label>`) inside
+   *  the anchor, then the anchor itself — override with `truncatedSelector`. */
+  truncatedOnly?: boolean
+  /** CSS selector (resolved within the anchor) for the element whose overflow
+   *  decides whether a `truncatedOnly` tooltip shows. */
+  truncatedSelector?: string
 }
 
 /**
@@ -71,6 +80,8 @@ export const Tooltip = ({
   placement,
   follow,
   interactive,
+  truncatedOnly,
+  truncatedSelector,
   className,
   children,
   ...rest
@@ -83,6 +94,8 @@ export const Tooltip = ({
       // Boolean attributes: presence form when on, omitted when off.
       follow={follow ? '' : undefined}
       interactive={interactive ? '' : undefined}
+      truncated-only={truncatedOnly ? '' : undefined}
+      truncated-selector={truncatedSelector || undefined}
       class={className}
       {...rest}
     >

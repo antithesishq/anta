@@ -159,16 +159,16 @@ Three callbacks, in firing order:
 |---|---|---|---|
 | `onStateChange(e, { next, prev })` | **before** the toggle applies | ✅ `e.preventDefault()` vetoes | next / prev state |
 | `onChange(e)` | **after** it applies | — | native `change` event |
-| `onAnyChange(e, attrs)` | **after** it applies | — | `{ checked, indeterminate, name, value }` |
+| `onValueChange(e, attrs)` | **after** it applies | — | `{ checked, indeterminate, name, value }` |
 
 Reach for **`onStateChange`** only to intercept or veto (or to drive a controlled
-checkbox). For the everyday "react to the new value", use **`onAnyChange`** — it
+checkbox). For the everyday "react to the new value", use **`onValueChange`** — it
 hands you the value without touching `event.target`. `onChange` is the plain
-native hook. (In controlled mode `onChange`/`onAnyChange` fire once you've updated
+native hook. (In controlled mode `onChange`/`onValueChange` fire once you've updated
 `checked`.) `onFocus` / `onBlur` work too — the host is the focusable element.
 
 ```tsx folded
-<Checkbox onAnyChange={(_e, { checked }) => save(checked)}>Subscribe</Checkbox>
+<Checkbox onValueChange={(_e, { checked }) => save(checked)}>Subscribe</Checkbox>
 ```
 
 ## Indeterminate

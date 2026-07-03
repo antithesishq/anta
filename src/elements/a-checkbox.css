@@ -6,27 +6,27 @@
      timings are baked-in literals (see PR #63 token-surface review). */
 
   a-checkbox {
-    --checkbox-gap: 8px;
+    --checkbox-gap: 6px;
 
     --checkbox-bg: var(--bg-1);
 
     /* Default tone is neutral — `brand` (and the rest) are explicit opt-ins. */
-    --checkbox-fill: #635b65;
-    --checkbox-fill-hover: #534c57;
-    --checkbox-fill-active: #49424c;
+    --checkbox-fill: #938d96;
+    --checkbox-fill-hover: #878089;
+    --checkbox-fill-active: #776e77;
 
     /* Unselected box border: neutral grey by default. Tinted tones (rule after the
        tones) mix the fill toward this grey so the border sits a bit lighter than the
-       fill, nearer neutral. The mix anchor is theme-aware. 1.5px width. */
+       fill, nearer neutral. The mix anchor is theme-aware. 1px width. */
     --checkbox-border-neutral: #d4ced4;
     --checkbox-border: var(--checkbox-border-neutral);
     --checkbox-border-hover: #c1b9c1;
     --checkbox-border-active: #9f99a1;
 
-    --checkbox-icon: #ffffff;
-    --checkbox-icon-disabled: #c1b9c1;
+    --checkbox-icon: #f1eff1;
+    --checkbox-icon-disabled: #cac4ca;
     --checkbox-bg-disabled: color-mix(in oklch, #44374b 10%, transparent);
-    --checkbox-border-disabled: color-mix(in oklch, #44374b 15%, transparent);
+    --checkbox-border-disabled: color-mix(in oklch, #44374b 10%, transparent);
 
     /* The glyph (::after mark): its size and the check / minus mask images, exposed
        so a consumer can resize or swap the mark. The keyboard focus ring uses the
@@ -79,7 +79,7 @@
       block-size: 16px;
       border-radius: 4px;
       background: var(--checkbox-bg);
-      border: 1.5px solid var(--checkbox-border);
+      border: 1px solid var(--checkbox-border);
       transition:
         background-color 150ms ease-out,
         border-color 150ms ease-out;
@@ -174,7 +174,6 @@
     }
 
     &[size="small"] {
-      --checkbox-gap: 6px;
       --checkbox-label-fs: 13px;
       --checkbox-label-lh: 16px;
       --checkbox-hint-fs: 12px;
@@ -184,10 +183,11 @@
       &::after { inline-size: 14px; block-size: 14px; }
     }
     &[size="large"] {
+      --checkbox-gap: 8px;
       --checkbox-label-fs: 17px;
-      --checkbox-label-lh: 24px;
+      --checkbox-label-lh: 22px;
       --checkbox-hint-fs: 15px;
-      --checkbox-hint-lh: 19px;
+      --checkbox-hint-lh: 20px;
       --checkbox-mask-size: 14px;
       &::before,
       &::after { inline-size: 18px; block-size: 18px; }
@@ -222,34 +222,34 @@
      rules further down). `neutral` keeps the base greys. The default (no [tone]) is
      untouched — the wrapper omits tone="neutral". */
   a-checkbox[tone="brand"] {
-    --checkbox-fill: #5f4bc3;
-    --checkbox-fill-hover: #503cb4;
-    --checkbox-fill-active: #483493;
+    --checkbox-fill: #7460d7;
+    --checkbox-fill-hover: #5f4bc3;
+    --checkbox-fill-active: #503cb4;
   }
   a-checkbox[tone="neutral"] {
-    --checkbox-fill: #635b65;
-    --checkbox-fill-hover: #534c57;
-    --checkbox-fill-active: #49424c;
+    --checkbox-fill: #938d96;
+    --checkbox-fill-hover: #878089;
+    --checkbox-fill-active: #776e77;
   }
   a-checkbox[tone="info"] {
-    --checkbox-fill: #1f6eb2;
-    --checkbox-fill-hover: #1a5b93;
-    --checkbox-fill-active: #175082;
+    --checkbox-fill: #2686d9;
+    --checkbox-fill-hover: #1f6eb2;
+    --checkbox-fill-active: #1a5b93;
   }
   a-checkbox[tone="success"] {
-    --checkbox-fill: #2a7e43;
-    --checkbox-fill-hover: #226737;
-    --checkbox-fill-active: #1f5c31;
+    --checkbox-fill: #329550;
+    --checkbox-fill-hover: #2a7e43;
+    --checkbox-fill-active: #226737;
   }
   a-checkbox[tone="warning"] {
-    --checkbox-fill: #c37416;
-    --checkbox-fill-hover: #ae6613;
-    --checkbox-fill-active: #995200;
+    --checkbox-fill: #ae6613;
+    --checkbox-fill-hover: #995200;
+    --checkbox-fill-active: #7f410b;
   }
   a-checkbox[tone="critical"] {
-    --checkbox-fill: #c9302c;
-    --checkbox-fill-hover: #b02120;
-    --checkbox-fill-active: #a01c1c;
+    --checkbox-fill: #de4545;
+    --checkbox-fill-hover: #c9302c;
+    --checkbox-fill-active: #b02120;
   }
 
   /* `tone-text` drives only the label + hint, via the theme-aware --text-N role
@@ -360,13 +360,14 @@
     --checkbox-border-active: #776e77;
 
     /* Neutral default. */
-    --checkbox-fill: #534c57;
-    --checkbox-fill-hover: #635b65;
-    --checkbox-fill-active: #938d96;
+    --checkbox-fill: #49424c;
+    --checkbox-fill-hover: #534c57;
+    --checkbox-fill-active: #635b65;
 
-    --checkbox-icon-disabled: #635b65;
+    --checkbox-icon: #d4ced4;
+    --checkbox-icon-disabled: #49424c;
     --checkbox-bg-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
-    --checkbox-border-disabled: color-mix(in oklch, #e4d1ef 15%, transparent);
+    --checkbox-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
   }
   .dark a-checkbox[tone="brand"] {
     --checkbox-fill: #503cb4;
@@ -374,9 +375,9 @@
     --checkbox-fill-active: #7460d7;
   }
   .dark a-checkbox[tone="neutral"] {
-    --checkbox-fill: #534c57;
-    --checkbox-fill-hover: #635b65;
-    --checkbox-fill-active: #938d96;
+    --checkbox-fill: #49424c;
+    --checkbox-fill-hover: #534c57;
+    --checkbox-fill-active: #635b65;
   }
   .dark a-checkbox[tone="info"] {
     --checkbox-fill: #1a5b93;

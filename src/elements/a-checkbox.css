@@ -140,7 +140,7 @@
     &:is(:state(checked), :state(indeterminate)) {
       &::before {
         background: var(--checkbox-fill);
-        border-color: var(--checkbox-fill);
+        border-color: var(--checkbox-border);
       }
       &::after { background-color: var(--checkbox-icon); }
     }
@@ -216,11 +216,13 @@
     margin-block-start: 2px;
   }
 
-  /* `tone` drives only the MARK — the fill (checked box + glyph) and the unselected
-     box border (the border ramp is in the rule below; the base wires the fill). The
-     label + hint stay neutral unless `tone-text` recolours them (see the tone-text
-     rules further down). `neutral` keeps the base greys. The default (no [tone]) is
-     untouched — the wrapper omits tone="neutral". */
+  /* `tone` drives only the checked-box fill + glyph — the unselected box border
+     always stays the neutral grey ramp (`--checkbox-border-neutral`/`-hover`/
+     `-active`, declared on the base rule and in `.dark`) regardless of tone, so it
+     stays visible against any background instead of thinning into a tone-tinted
+     hairline. The label + hint stay neutral unless `tone-text` recolours them (see
+     the tone-text rules further down). `neutral` keeps the base greys. The default
+     (no [tone]) is untouched — the wrapper omits tone="neutral". */
   a-checkbox[tone="brand"] {
     --checkbox-fill: #7460d7;
     --checkbox-fill-hover: #5f4bc3;
@@ -275,26 +277,6 @@
   a-checkbox[tone-text="critical"] {
     --checkbox-label-color: var(--text-2-critical);
     --checkbox-hint-color: var(--text-4-critical);
-  }
-
-  /* Tinted tones only: the unselected box border picks up the tone and ramps like
-     the neutral border — lightest at rest, darkening through hover to active. The
-     active anchor is the fill mixed toward the neutral grey (this is the old static
-     value); rest and hover step up in oklch lightness from there, so hue/chroma
-     stay put. Tracks light/dark via --checkbox-fill and the theme-aware grey. */
-  a-checkbox[tone]:not([tone=""], [tone="neutral"]) {
-    --_checkbox-border-base: color-mix(in oklch, var(--checkbox-fill) 70%, var(--checkbox-border-neutral));
-    --checkbox-border:        oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
-    --checkbox-border-hover:  oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
-    --checkbox-border-active: var(--_checkbox-border-base);
-
-    /* Dark inverts the direction: interaction brightens the border (rest darkest,
-       active lightest), matching the neutral dark ramp. */
-    .dark & {
-      --checkbox-border:        var(--_checkbox-border-base);
-      --checkbox-border-hover:  oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
-      --checkbox-border-active: oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
-    }
   }
 
   /* Custom mark tone — any non-named `tone` is a literal CSS color; the fill curve

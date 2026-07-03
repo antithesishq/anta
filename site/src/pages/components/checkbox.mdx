@@ -34,10 +34,10 @@ The `Checkbox` wrapper renders an `<a-checkbox>` element that manages its own st
 
 ## Tone
 
-`tone` colours the **mark** — the checked-box fill and, for a tinted tone, the
-unselected box border (a light shade of the fill that darkens on hover and active,
-like the neutral border; `neutral` keeps a grey border). The label and hint stay
-neutral. Six named tones (`neutral` default), or pass any CSS color for a custom tone.
+`tone` colours only the **mark** — the checked-box fill and the checkmark glyph. The
+unselected box border always stays the neutral grey regardless of tone, so it stays
+visible as a thin `1px` line against any background. The label and hint stay neutral.
+Six named tones (`neutral` default), or pass any CSS color for a custom tone.
 
 <Preview gap="16px">
   <Checkbox defaultChecked tone="neutral">Neutral</Checkbox>

@@ -14,6 +14,10 @@ export interface MenuItemProps extends BaseProps {
   iconTrailing?: IconShape
   /** Disable the item: greyed out, not focusable for activation, no close. */
   disabled?: boolean
+  /** Mark the item as selected — a persistent background tint, the same resting
+   *  fill a pressed row shows. The building block for single- / multi-select
+   *  menus; leaves layout untouched (no reserved gutter). */
+  selected?: boolean
   /** Semantic tone — colors the label, icon, and hover tint. `critical` is the
    *  destructive action; `neutral` (the default) is the standard gray.
    *  @defaultValue neutral */
@@ -63,6 +67,7 @@ export const MenuItem = ({
   kbd,
   iconTrailing,
   disabled,
+  selected,
   tone,
   submenu,
   value,
@@ -76,6 +81,7 @@ export const MenuItem = ({
       role="menuitem"
       tabIndex={0}
       disabled={disabled ? '' : undefined}
+      selected={selected ? '' : undefined}
       // 'neutral' is the implicit default — emit no DOM attribute.
       tone={tone && tone !== 'neutral' ? tone : undefined}
       submenu={submenu ? '' : undefined}
@@ -103,15 +109,19 @@ export const MenuItem = ({
     >
       {icon && <a-icon shape={icon} aria-hidden="true" />}
       {label != null && <a-menu-item-label>{label}</a-menu-item-label>}
+      {/* Children sit after the label but before `kbd` and the trailing icon, so
+          a slotted badge / counter (a `<Tag>`) lands just left of the shortcut
+          hint / chevron rather than past it. The label's `flex: 1` right-aligns
+          them. A submenu's nested `<a-menu>` is a child too, so it's no longer
+          the item's last child — the `[submenu]`-scoped CSS positions the chevron
+          without relying on that (see a-menu-item.css). */}
+      {children}
       {kbd && <kbd>{kbd}</kbd>}
       {(() => {
         // A submenu shows the chevron by default; `iconTrailing` overrides it.
-        // The `[submenu]` CSS still positions whatever icon sits here, since the
-        // nested <a-menu> — not this icon — is the item's real last child.
         const trailing = submenu ? (iconTrailing ?? 'chevron-right') : iconTrailing
         return trailing ? <a-icon shape={trailing} aria-hidden="true" /> : null
       })()}
-      {children}
     </a-menu-item>
   )
 }

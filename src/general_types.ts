@@ -547,6 +547,10 @@ export interface AMenuAttributes extends BaseAttributes {
 export interface AMenuItemAttributes extends BaseAttributes {
   /** Disabled state. Presence-based (`''` on, omit off). */
   disabled?: boolean | ''
+  /** Marks the item as selected — a persistent background tint (the same
+   *  resting look a pressed row shows), for building single- / multi-select
+   *  menus. Presence-based (`''` on, omit off). */
+  selected?: boolean | ''
   /** Semantic tone. Colors the label, icon, and hover tint. `'neutral'`
    *  (the default) is the same as omitting it. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'

@@ -11,6 +11,7 @@ export const ICON_SHAPES = [
   'arrow-right',
   'arrow-top-right',
   'asterisk',
+  'blank',
   'book-open',
   'braces',
   'bug',
@@ -108,6 +109,7 @@ export const ICON_SHAPES = [
 ] as const
 
 export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
+  'blank': ['spacer', 'empty', 'placeholder', 'space', 'none'],
   'warning-diamond': ['error', 'invalid', 'alert', 'danger'],
   'swatch-book': ['palette', 'color', 'swatch', 'paint', 'design'],
   'hat-glasses': ['accessibility', 'vision', 'disguise', 'person'],
@@ -208,6 +210,7 @@ declare module '@antadesign/anta' {
     'arrow-right': true
     'arrow-top-right': true
     'asterisk': true
+    'blank': true
     'book-open': true
     'braces': true
     'bug': true

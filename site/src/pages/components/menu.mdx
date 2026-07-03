@@ -10,7 +10,7 @@ import Columns from '../../components/Columns.astro'
 import Col from '../../components/Col.astro'
 import menuDemoCode from './menu.demo.ts'
 import MenuNestedDemo from '../../components/MenuNestedDemo'
-import { Menu, MenuItem, MenuSeparator, MenuGroup, Button } from '@antadesign/anta'
+import { Menu, MenuItem, MenuSeparator, MenuGroup, Button, Tag } from '@antadesign/anta'
 
 # Menu
 
@@ -420,6 +420,80 @@ and call `.open()` / `.close()` / `.toggle()`.
     {/* a plain button, not a MenuItem — data-menu-close lets it dismiss */}
     <button data-menu-close>Done</button>
   </div>
+</Menu>
+```
+
+</Col>
+</Columns>
+
+## Selected
+
+<Columns>
+<Col>
+
+`selected` gives a row a persistent background tint — the resting fill a pressed
+row shows — marking it as chosen. It touches only the background, so nothing
+shifts and no gutter is reserved. It's the building block for select-style
+menus: mark one row for single-select, several for multi-select (pair with
+`data-menu-open` to keep the menu open as choices toggle). The tint tracks
+`tone`, so a toned row stays in its own color.
+
+Menu-level selection affordances — a checkmark, and single- vs multi-select
+semantics — are coming next. Today `selected` is the visual state you drive.
+
+</Col>
+<Col>
+
+<Preview>
+  <Button>Sort by</Button>
+  <Menu>
+    <MenuItem label="Relevance" selected />
+    <MenuItem label="Newest" />
+    <MenuItem label="Oldest" />
+    <MenuItem label="Most viewed" />
+  </Menu>
+</Preview>
+
+```tsx folded
+<Menu>
+  <MenuItem label="Relevance" selected />
+  <MenuItem label="Newest" />
+  <MenuItem label="Oldest" />
+  <MenuItem label="Most viewed" />
+</Menu>
+```
+
+</Col>
+</Columns>
+
+## Counters & badges
+
+<Columns>
+<Col>
+
+Drop a `<Tag>` (or any element) as a **child** of a `MenuItem` for a trailing
+counter or badge. Children render after the label but before the `kbd` hint and
+trailing icon, and the label's `flex: 1` right-aligns them — so a small tag sits
+at the row's edge, just left of a shortcut or submenu chevron. Use `size="small"`
+so it sits comfortably in the row.
+
+</Col>
+<Col>
+
+<Preview>
+  <Button>Folders</Button>
+  <Menu>
+    <MenuItem icon="folder-open" label="Active"><Tag size="small" tone="info">12</Tag></MenuItem>
+    <MenuItem icon="folder-close" label="Archived" />
+    <MenuItem icon="trash" label="Trash"><Tag size="small">3</Tag></MenuItem>
+  </Menu>
+</Preview>
+
+```tsx folded
+<Menu>
+  <MenuItem icon="folder-open" label="Active"><Tag size="small" tone="info">12</Tag></MenuItem>
+  <MenuItem icon="folder-close" label="Archived" />
+  <MenuItem icon="trash" label="Trash"><Tag size="small">3</Tag></MenuItem>
 </Menu>
 ```
 

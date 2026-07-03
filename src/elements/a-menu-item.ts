@@ -38,10 +38,12 @@ declare global {
  *   surface's 4px padding; pairs with the hover background so keyboard focus
  *   reads as tint + ring.
  * - Optical side padding (same idea as a-button): a non-only icon at an edge
- *   is trimmed ~2px on that side. Submenu items keep symmetric padding —
- *   the nested `<a-menu>` is the actual last child, so the trim rule doesn't
- *   fire — and the chevron / a trailing icon is instead nudged toward the
- *   edge with relative positioning (visual only, no reflow).
+ *   is trimmed ~2px on that side. Submenu items keep symmetric padding — the
+ *   end-trim is scoped `:not([submenu])` — and the chevron / a trailing icon is
+ *   instead nudged toward the edge with relative positioning (visual only, no
+ *   reflow). The trim's `:not([submenu])` guard is why children (which include a
+ *   submenu's nested `<a-menu>`) can render before the chevron without the
+ *   chevron-as-last-child re-triggering the trim.
  */
 export class AMenuItemElement extends HTMLElementBase {
   connectedCallback() {

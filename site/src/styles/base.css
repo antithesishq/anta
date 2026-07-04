@@ -775,6 +775,12 @@ code[data-copied]::after {
      below), so the group itself owns the gap to what follows. */
   margin-block-end: 8px;
 }
+/* `reverse` flips the visual order in both layouts (see <Columns reverse>): the
+   second child (typically the prose) trails, so the example leads — on top when
+   stacked, on the left in row mode below. Source order is unchanged. */
+.columns.reverse {
+  flex-direction: column-reverse;
+}
 /* The gap owns the spacing between stacked rows, so a column's last flow
    child must not add its own bottom margin on top of `row-gap`. Zeroing it
    also evens out column heights in row mode (no dangling trailing margin).
@@ -787,6 +793,9 @@ code[data-copied]::after {
   .columns {
     flex-direction: row;
     align-items: start;
+  }
+  .columns.reverse {
+    flex-direction: row-reverse;
   }
   /* Default: every child is an equal column with a sensible min width. */
   .columns > * {

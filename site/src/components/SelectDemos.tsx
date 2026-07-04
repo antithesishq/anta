@@ -14,11 +14,12 @@ const useElements = () =>
   }, [])
 
 const FIELDS: SelectOption[] = [
-  { value: 'output_text', label: 'output_text', hint: 'Raw log message or event payload' },
-  { value: 'stream', label: 'stream', hint: 'Log level: error · info · internal' },
-  { value: 'container', label: 'container', hint: 'Host where the event occurred' },
-  { value: 'archived', label: 'archived', disabled: true },
-  { value: 'custom', label: 'custom', tone: 'brand' },
+  { value: 'output_text', label: 'output_text', hint: 'Raw log message or event payload', icon: 'file' },
+  { value: 'stream', label: 'stream', hint: 'Log level: error · info · internal', icon: 'braces' },
+  { value: 'container', label: 'container', hint: 'Host where the event occurred', icon: 'cube' },
+  { value: 'archived', label: 'archived', hint: 'Read-only snapshot', icon: 'folder-close', disabled: true },
+  { value: 'flagged', label: 'flagged', hint: 'Needs review', icon: 'warning-triangle', tone: 'warning' },
+  { value: 'custom', label: 'custom', hint: 'Your own field path', icon: 'asterisk', tone: '#c026d3' },
 ]
 
 export function SelectOptionsDemo() {
@@ -41,6 +42,89 @@ export function SelectBasicDemo() {
         value={value}
         onValueChange={setValue}
         placeholder="Select a field…"
+      />
+    </div>
+  )
+}
+
+export function SelectModesDemo() {
+  useElements()
+  const [check, setCheck] = useState('stream')
+  const [radio, setRadio] = useState('stream')
+  const [checks, setChecks] = useState<string[]>(['stream', 'container'])
+  const opts = ['output_text', 'stream', 'container', 'vtime', 'custom']
+  return (
+    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div style={{ width: '220px' }}>
+        <Select
+          label="Checkmark · brand tone"
+          indicator="check"
+          toneSelected="brand"
+          options={opts}
+          value={check}
+          onValueChange={setCheck}
+        />
+      </div>
+      <div style={{ width: '220px' }}>
+        <Select
+          label="Radio · custom tone"
+          indicator="radio"
+          toneSelected="#c026d3"
+          options={opts}
+          value={radio}
+          onValueChange={setRadio}
+        />
+      </div>
+      <div style={{ width: '220px' }}>
+        <Select
+          label="Multiple · brand tone"
+          selection="multiple"
+          selectAll
+          toneSelected="brand"
+          placeholder="Select fields…"
+          options={opts}
+          value={checks}
+          onValueChange={setChecks}
+        />
+      </div>
+    </div>
+  )
+}
+
+export function SelectSizeStatusDemo() {
+  useElements()
+  const opts = ['output_text', 'stream', 'container', 'vtime']
+  const box = { width: '220px' }
+  return (
+    <div style={{ display: 'flex', gap: '20px 24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      <div style={box}>
+        <Select label="Small · info" size="small" status="info" hint="Lowercase & dashes only" options={opts} defaultValue="stream" />
+      </div>
+      <div style={box}>
+        <Select label="Medium · success" size="medium" status="success" hint="Field is valid" options={opts} defaultValue="stream" />
+      </div>
+      <div style={box}>
+        <Select label="Large · warning" size="large" status="warning" hint="Deprecated field" options={opts} defaultValue="stream" />
+      </div>
+      <div style={box}>
+        <Select label="Large · critical" size="large" status="critical" hint="Pick a field" options={opts} placeholder="Required…" />
+      </div>
+      <div style={box}>
+        <Select label="Small · custom icon" size="small" status="info" statusIcon="sparkles" hint="statusIcon override" options={opts} defaultValue="stream" />
+      </div>
+    </div>
+  )
+}
+
+export function SelectGhostDemo() {
+  useElements()
+  const [value, setValue] = useState('stream')
+  return (
+    <div className="ghost-select" style={{ width: '220px' }}>
+      <Select
+        options={['output_text', 'stream', 'container', 'vtime', 'custom']}
+        value={value}
+        onValueChange={setValue}
       />
     </div>
   )

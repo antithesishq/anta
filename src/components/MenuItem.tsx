@@ -1,5 +1,6 @@
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
+import { toneStyle } from '../anta_helpers'
 
 export interface MenuItemProps extends BaseProps {
   /** Leading icon shape. */
@@ -18,14 +19,32 @@ export interface MenuItemProps extends BaseProps {
   iconTrailing?: IconShape
   /** Disable the item: greyed out, not focusable for activation, no close. */
   disabled?: boolean
-  /** Mark the item as selected — a persistent background tint, the same resting
-   *  fill a pressed row shows. The building block for single- / multi-select
-   *  menus; leaves layout untouched (no reserved gutter). */
+  /** Mark the item as selected. On a plain row (no `selectionIndicator`) this is
+   *  a persistent background tint, the same resting fill a pressed row shows. On a
+   *  checkable row (`selectionIndicator` set) it instead drives the leading
+   *  `checkbox` / `radio` indicator and the row's `aria-checked`. */
   selected?: boolean
-  /** Semantic tone — colors the label, icon, and hover tint. `critical` is the
-   *  destructive action; `neutral` (the default) is the standard gray.
+  /** Turn the row into a checkable item, driven by `selected` (the row stays the
+   *  control and carries `aria-checked`):
+   *  - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>`
+   *    (before `icon`); the tint is dropped (the box carries state).
+   *  - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped.
+   *  - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected
+   *    row *and* the background tint (the canonical single-select look).
+   *  Omit for a plain row (the default). */
+  selectionIndicator?: 'checkbox' | 'radio' | 'check'
+  /** Only meaningful with `selectionIndicator="checkbox"`: render the box in the
+   *  mixed state (`aria-checked="mixed"`) — e.g. a "Select all" row when some but
+   *  not all of its options are selected. */
+  indeterminate?: boolean
+  /** Semantic tone — colors the label, icon, and hover/selected tint (and the
+   *  `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal
+   *  CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose
+   *  hue + chroma are kept while the lightness is pinned to match the brand text.
+   *  `critical` is the destructive action; `neutral` (the default) is the standard
+   *  gray.
    *  @defaultValue neutral */
-  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Marks this item as a submenu parent: adds the trailing chevron,
    *  `aria-haspopup="menu"`, and an `aria-expanded` baseline (kept in sync by
    *  the nested menu). Nest the flyout as a `<Menu>` child. */
@@ -73,22 +92,53 @@ export const MenuItem = ({
   iconTrailing,
   disabled,
   selected,
+  selectionIndicator,
+  indeterminate,
   tone,
   submenu,
   value,
   onSelect,
   className,
+  style,
   children,
   ...rest
 }: MenuItemProps) => {
+  // A checkable row is the control itself: it flips role to menuitem{checkbox,radio}
+  // and carries aria-checked. The leading `checkbox`/`radio` styles render a passive
+  // <a-checkbox>/<a-radio> and drop the tint (the mark conveys state); the `check`
+  // style instead keeps the tint and adds a trailing check glyph. So `selected=""`
+  // (the tint) is emitted for plain rows *and* the `check` style.
+  const checkable =
+    selectionIndicator === 'checkbox' || selectionIndicator === 'radio' || selectionIndicator === 'check'
+  const role =
+    selectionIndicator === 'checkbox'
+      ? 'menuitemcheckbox'
+      : selectionIndicator === 'radio' || selectionIndicator === 'check'
+        ? 'menuitemradio'
+        : 'menuitem'
+  const ariaChecked = !checkable
+    ? undefined
+    : selectionIndicator === 'checkbox' && indeterminate
+      ? 'mixed'
+      : selected
+        ? 'true'
+        : 'false'
+  const keepTint = selected && (selectionIndicator === undefined || selectionIndicator === 'check')
+  // A named tone travels as the attribute; a custom colour also needs its
+  // `--{component}-tone-source` var set inline (the typed `attr()` path only
+  // resolves on newer engines) — for the host and, so it adopts the row's tone,
+  // the checkbox/radio indicator.
+  const toneAttr = tone && tone !== 'neutral' ? tone : undefined
   return (
     <a-menu-item
-      role="menuitem"
+      role={role}
       tabIndex={0}
       disabled={disabled ? '' : undefined}
-      selected={selected ? '' : undefined}
+      selected={keepTint ? '' : undefined}
+      aria-checked={ariaChecked}
       // 'neutral' is the implicit default — emit no DOM attribute.
-      tone={tone && tone !== 'neutral' ? tone : undefined}
+      tone={toneAttr}
+      style={toneStyle(tone, '--menu-item-tone-source', style)}
       submenu={submenu ? '' : undefined}
       aria-haspopup={submenu ? 'menu' : undefined}
       // Resting baseline; the nested submenu's a-menu element reflects the
@@ -112,6 +162,31 @@ export const MenuItem = ({
       class={className}
       {...rest}
     >
+      {/* Passive selection indicator — reuses the checkbox/radio *element* visuals
+          (no wrapper: no role, no focus, no form value). `aria-hidden` keeps the
+          row the sole a11y node; a-menu-item.css zeroes its label gap + disables
+          pointer events so the row owns the click. */}
+      {selectionIndicator === 'checkbox' && (
+        <a-checkbox
+          aria-hidden="true"
+          state={indeterminate ? 'indeterminate' : selected ? 'checked' : 'unchecked'}
+          tone={toneAttr}
+          style={toneStyle(tone, '--checkbox-tone-source')}
+        />
+      )}
+      {selectionIndicator === 'radio' && (
+        // Real boolean, not the ''/undefined presence form: `a-radio` has a
+        // `selected` *property* setter (`applyState(!!on)`), so Preact routes the
+        // prop through it — `''` would read as false and never select. A boolean
+        // drives the property correctly and clears stale state on deselect. (The
+        // checkbox above is safe: its `state` is attribute-only, no property.)
+        <a-radio
+          aria-hidden="true"
+          selected={!!selected}
+          tone={toneAttr}
+          style={toneStyle(tone, '--radio-tone-source')}
+        />
+      )}
       {icon && <a-icon shape={icon} aria-hidden="true" />}
       {label != null &&
         (hint != null ? (
@@ -134,8 +209,11 @@ export const MenuItem = ({
       {children}
       {kbd && <kbd>{kbd}</kbd>}
       {(() => {
-        // A submenu shows the chevron by default; `iconTrailing` overrides it.
-        const trailing = submenu ? (iconTrailing ?? 'chevron-right') : iconTrailing
+        // A submenu shows the chevron by default; `iconTrailing` overrides it. The
+        // `check` selection style puts a trailing check on the selected row (unless
+        // the author set an explicit `iconTrailing`).
+        let trailing = submenu ? (iconTrailing ?? 'chevron-right') : iconTrailing
+        if (!submenu && !iconTrailing && selectionIndicator === 'check' && selected) trailing = 'check'
         return trailing ? <a-icon shape={trailing} aria-hidden="true" /> : null
       })()}
     </a-menu-item>

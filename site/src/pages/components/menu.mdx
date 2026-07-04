@@ -45,7 +45,7 @@ open with `event.preventDefault()`. You can also grab a `ref` and call
 
 ## Dropdown from a button
 
-<Columns>
+<Columns reverse>
 <Col>
 
 Render `<Menu>` right after the trigger element. A `MenuItem` takes a leading
@@ -89,13 +89,16 @@ const onSelect = (e, { value }) => act(value)
 
 ## Tones
 
-<Columns>
+<Columns reverse>
 <Col>
 
-`tone` colors an item's label, icon, and hover tint with a semantic palette —
-`brand`, `info`, `success`, `warning`, or `critical` — tracking light and dark
-mode automatically. Omit it (or pass `neutral`) for the standard gray. `critical`
-is the conventional destructive action.
+`tone` colors an item's label, icon, and hover/selected tint (and its
+`selectionIndicator`) with a semantic palette — `brand`, `info`, `success`,
+`warning`, or `critical` — tracking light and dark mode automatically. Omit it (or
+pass `neutral`) for the standard gray. `critical` is the conventional destructive
+action. Pass **any CSS color** for a one-off custom tone — its hue and chroma are
+kept while the lightness is pinned to match the brand text (resolved through
+`--menu-item-tone-source`).
 
 </Col>
 <Col>
@@ -128,7 +131,7 @@ is the conventional destructive action.
 
 ## Placement
 
-<Columns>
+<Columns reverse>
 <Col>
 
 `placement` sets the preferred side and edge alignment: `bottom-start` (the
@@ -188,7 +191,7 @@ field, not the whole component (whose box also spans the label and hint).
 
 ## Right-click & at-cursor
 
-<Columns>
+<Columns reverse>
 <Col>
 
 Pass `context` to open on right-click (the `contextmenu` event) of the region
@@ -221,7 +224,7 @@ the trigger box.
 
 ## Submenus
 
-<Columns>
+<Columns reverse>
 <Col>
 
 Mark a `MenuItem` with `submenu` and nest a `<Menu>` inside it to create a
@@ -332,7 +335,7 @@ const only = (c) => setOn(Object.fromEntries(COLUMNS.map((k) => [k, k === c])))
 
 ## Groups
 
-<Columns>
+<Columns reverse>
 <Col>
 
 Wrap related items in a `MenuGroup` with a `label` to add a titled section.
@@ -375,7 +378,7 @@ single up/down sequence across group boundaries.
 
 ## Custom content & the close contract
 
-<Columns>
+<Columns reverse>
 <Col>
 
 The close decision is read straight from the DOM on click — never from whether a
@@ -434,7 +437,7 @@ and call `.open()` / `.close()` / `.toggle()`.
 
 ## Selected
 
-<Columns>
+<Columns reverse>
 <Col>
 
 `selected` gives a row a persistent background tint — the resting fill a pressed
@@ -444,8 +447,13 @@ menus: mark one row for single-select, several for multi-select (pair with
 `data-menu-open` to keep the menu open as choices toggle). The tint tracks
 `tone`, so a toned row stays in its own color.
 
-Menu-level selection affordances — a checkmark, and single- vs multi-select
-semantics — are coming next. Today `selected` is the visual state you drive.
+For a real checkable row, add **`selectionIndicator`** (`'checkbox'` or `'radio'`).
+It renders a passive checkbox/radio at the leading edge (reusing the
+[Checkbox](/components/checkbox/) / [Radio](/components/radio/) element visuals),
+flips the row to `role="menuitemcheckbox"` / `"menuitemradio"`, and pairs
+`aria-checked` — the row stays the control, the indicator is decorative. This is
+what [Select](/components/select/)'s `selection` modes render; use it directly for
+a checkable menu.
 
 </Col>
 <Col>
@@ -458,15 +466,21 @@ semantics — are coming next. Today `selected` is the visual state you drive.
     <MenuItem label="Oldest" />
     <MenuItem label="Most viewed" />
   </Menu>
+  <Menu>
+    <MenuItem selectionIndicator="radio" label="Relevance" selected />
+    <MenuItem selectionIndicator="radio" label="Newest" />
+    <MenuItem selectionIndicator="checkbox" label="Show archived" selected data-menu-open />
+    <MenuItem selectionIndicator="checkbox" label="Show drafts" data-menu-open />
+  </Menu>
 </Preview>
 
 ```tsx folded
-<Menu>
-  <MenuItem label="Relevance" selected />
-  <MenuItem label="Newest" />
-  <MenuItem label="Oldest" />
-  <MenuItem label="Most viewed" />
-</Menu>
+{/* Plain tint (no indicator) */}
+<MenuItem label="Relevance" selected />
+
+{/* Checkable rows — the row is the control; the mark is decorative */}
+<MenuItem selectionIndicator="radio" label="Relevance" selected />
+<MenuItem selectionIndicator="checkbox" label="Show archived" selected data-menu-open />
 ```
 
 </Col>
@@ -474,7 +488,7 @@ semantics — are coming next. Today `selected` is the visual state you drive.
 
 ## Badges, counters & hints
 
-<Columns>
+<Columns reverse>
 <Col>
 
 Drop a `<Tag>` (or any element) as a **child** of a `MenuItem` for a trailing

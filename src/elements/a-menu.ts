@@ -85,8 +85,14 @@ function unbindDocListeners() {
 function trackPosition(el: HTMLElement, onEscape: () => void): () => void {
   if (typeof IntersectionObserver === 'undefined') return () => {}
   const doc = el.ownerDocument
-  // Track the anchor's advertised rect (a-input reports its field, not the host).
-  const rect = anchorRect(el)
+  // Window the observer to el's OWN box — it's the element we observe, so the
+  // intersection ratio is (el ∩ window) / el, ≈1 at rest and only dropping as el
+  // scrolls away. Do NOT use anchorRect here: getAnchorRect may advertise a
+  // sub-region (a-input returns its `.field`, excluding the label + hint), and
+  // windowing the full host to that smaller rect starts the ratio below the
+  // threshold — a tall label+hint field would self-dismiss the instant it opened.
+  // (Positioning still uses anchorRect elsewhere, to align the menu to the field.)
+  const rect = el.getBoundingClientRect()
   const vw = doc.documentElement.clientWidth
   const vh = doc.documentElement.clientHeight
   // Negative margins shrink the viewport root down to el's current rect.

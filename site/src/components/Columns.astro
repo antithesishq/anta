@@ -19,8 +19,12 @@ interface Props {
   colGap?: string
   /** Vertical gap between rows when stacked. Falls back to `gap`, then `colGap`. */
   rowGap?: string
+  /** Reverse the visual column order in *both* layouts (row-reverse desktop,
+   *  column-reverse stacked) while keeping source order. Use to lead with the
+   *  example on the left / top while the prose stays second in the markup. */
+  reverse?: boolean
 }
-const { gap, colGap, rowGap } = Astro.props
+const { gap, colGap, rowGap, reverse } = Astro.props
 
 // Each axis prefers its own value, then the shorthand, then the other axis —
 // so a lone colGap or rowGap applies to both. Unset → CSS default (20px).
@@ -32,6 +36,6 @@ const style = [
 ].filter(Boolean).join('; ') || undefined
 ---
 
-<div class="columns" style={style}>
+<div class:list={['columns', { reverse }]} style={style}>
   <slot />
 </div>

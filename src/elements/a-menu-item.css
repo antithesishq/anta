@@ -117,6 +117,19 @@
     color: var(--menu-item-icon-color);
   }
 
+  /* Selection indicator (checkbox / radio) — a passive, label-less control at the
+     leading edge. The row is the actual control (see MenuItem), so zero the
+     control's own label gap (no label here) and let the row's flex `gap` space it,
+     and drop pointer events so a click lands on the row (a-checkbox self-toggles on
+     click otherwise). 16px box aligns with the 16px leading icon. */
+  a-menu-item > a-checkbox,
+  a-menu-item > a-radio {
+    flex: none;
+    --checkbox-gap: 0;
+    --radio-gap: 0;
+    pointer-events: none;
+  }
+
   a-menu-item:has(> a-icon:first-child:not(:only-child)) {
     padding-inline-start: max(0px, var(--menu-item-padding-x) - 2px);
   }
@@ -161,6 +174,34 @@
   a-menu-item[tone="success"]  { --menu-item-color: var(--text-2-success);  --menu-item-hint-color: var(--text-3-success); }
   a-menu-item[tone="warning"]  { --menu-item-color: var(--text-2-warning);  --menu-item-hint-color: var(--text-3-warning); }
   a-menu-item[tone="critical"] { --menu-item-color: var(--text-2-critical); --menu-item-hint-color: var(--text-3-critical); }
+
+  /* Custom tone — any non-named `tone` is a literal CSS color; the label / icon /
+     hint colours are derived in oklch (keeping the custom hue + chroma, pinning the
+     lightness to roughly match the named brand text). Every named value must be
+     listed in the :not() — without it they'd hit this rule too and attr(tone
+     type(<color>)) would fail to parse them. The wrapper also sets
+     --menu-item-tone-source inline for engines without typed attr(). FIRST-PASS
+     lightness values — review. */
+  a-menu-item[tone]:not(
+      [tone=""],
+      [tone="brand"],
+      [tone="neutral"],
+      [tone="info"],
+      [tone="success"],
+      [tone="warning"],
+      [tone="critical"]
+    ) {
+    --menu-item-tone-source: attr(tone type(<color>), var(--text-2));
+
+    --menu-item-color:      oklch(from var(--menu-item-tone-source) 0.45 c h);
+    --menu-item-icon-color: var(--menu-item-color);
+    --menu-item-hint-color: oklch(from var(--menu-item-tone-source) 0.55 calc(c * 0.85) h);
+
+    .dark & {
+      --menu-item-color:      oklch(from var(--menu-item-tone-source) 0.78 c h);
+      --menu-item-hint-color: oklch(from var(--menu-item-tone-source) 0.68 calc(c * 0.85) h);
+    }
+  }
 
   a-menu-item[disabled] {
     --menu-item-color: var(--text-5);

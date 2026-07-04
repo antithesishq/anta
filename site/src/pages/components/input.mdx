@@ -175,6 +175,11 @@ content.)
 dark mode is automatic. The message always rides in `hint`; `status` only
 recolors it.
 
+It reuses the tone palette but isn't `tone`: **`status` is a validation *state*** (it
+also carries the glyph and, for `critical`, validity), whereas `tone` — elsewhere in
+Anta — is decorative colour. On `Input` the named tones live on `status`; `tone` is
+reserved for a one-off custom border colour.
+
 Only `status="critical"` carries validity — it sets `aria-invalid`, flips the
 `:state(invalid)` hook, and reports invalid to a surrounding `<form>` through
 `ElementInternals`. The other tones are advisory and stay valid.

@@ -551,9 +551,11 @@ export interface AMenuItemAttributes extends BaseAttributes {
    *  resting look a pressed row shows), for building single- / multi-select
    *  menus. Presence-based (`''` on, omit off). */
   selected?: boolean | ''
-  /** Semantic tone. Colors the label, icon, and hover tint. `'neutral'`
-   *  (the default) is the same as omitting it. */
-  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Semantic tone. Colors the label, icon, and hover/selected tint. A named tone,
+   *  or any literal CSS color for a one-off custom tone (resolved through
+   *  `--menu-item-tone-source`, hue/chroma kept, lightness pinned to the brand
+   *  text). `'neutral'` (the default) is the same as omitting it. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Keep the menu open after this item is chosen (toggles / multi-select),
    *  instead of the default close-on-select. Presence-based (`''` on, omit
    *  off). The universal form is `data-menu-open` (works on any element). */

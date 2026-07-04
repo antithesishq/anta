@@ -9,22 +9,21 @@ import Disclosure from '../../components/Disclosure.astro'
 import Columns from '../../components/Columns.astro'
 import Col from '../../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
-import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo } from '../../components/SelectDemos'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectGhostDemo } from '../../components/SelectDemos'
 
 # Select
 
-A single-select dropdown: a field showing the chosen value, and a menu of options
-to pick from. Select is a **composed component** — not a new element, but an
-[Input](/components/input/) trigger stitched to a [Menu](/components/menu/) of
-options, with the wrapper coordinating value and open state. The field is
-read-only and shows the selected label with a chevron that flips on open; the
-menu anchors to the field, opens on click, closes on select, and highlights the
+A single- or multi-select dropdown: a read-only field showing the chosen
+value(s), and a menu of options to pick from. Click the field to open the menu; it
+anchors to the field, dismisses on outside-click or `Esc`, and highlights the
 chosen row.
 
-Pick options from a JSON array (bare strings or objects, like
-[RadioGroup](/components/radio/) / [Tabs](/components/tabs/)), and read changes
-from a single **`onValueChange`** callback. Controlled (`value`) or uncontrolled
-(`defaultValue`).
+Select is a **composed component** — not a new element, but an
+[Input](/components/input/) trigger stitched to a [Menu](/components/menu/), with
+the wrapper coordinating value and open state. Options come from a JSON array of
+bare strings or objects (like [RadioGroup](/components/radio/) /
+[Tabs](/components/tabs/)); changes arrive through one **`onValueChange`**
+callback. Control it with `value` or leave it uncontrolled with `defaultValue`.
 
 Requires `@antadesign/anta/elements` (client-side only).
 
@@ -47,14 +46,6 @@ Requires `@antadesign/anta/elements` (client-side only).
 <Columns>
 <Col>
 
-`options` takes bare strings or objects. A string is shorthand for
-`{ value: s, label: s }`; an object adds a `hint` (secondary line), a leading
-`icon`, a per-option `tone`, or `disabled`. Open the field to see the chosen row
-highlighted and a disabled option skipped.
-
-</Col>
-<Col>
-
 <Preview>
   <SelectOptionsDemo client:load />
 </Preview>
@@ -63,14 +54,81 @@ highlighted and a disabled option skipped.
 <Select
   label="Field"
   options={[
-    { value: 'output_text', label: 'output_text', hint: 'Raw log message or event payload' },
-    { value: 'stream', label: 'stream', hint: 'Log level: error · info · internal' },
-    { value: 'container', label: 'container', hint: 'Host where the event occurred' },
-    { value: 'archived', label: 'archived', disabled: true },
-    { value: 'custom', label: 'custom', tone: 'brand' },
+    { value: 'output_text', hint: 'Raw log message or event payload', icon: 'file' },
+    { value: 'stream', hint: 'Log level: error · info · internal', icon: 'braces' },
+    { value: 'container', hint: 'Host where the event occurred', icon: 'cube' },
+    { value: 'archived', hint: 'Read-only snapshot', icon: 'folder-close', disabled: true },
+    { value: 'flagged', hint: 'Needs review', icon: 'warning-triangle', tone: 'warning' },
+    { value: 'custom', hint: 'Your own field path', icon: 'asterisk', tone: '#c026d3' },
   ]}
 />
 ```
+
+</Col>
+<Col>
+
+`options` takes bare strings or objects. A string is shorthand for
+`{ value, label: value }`. An object adds a `label`, a `hint` (the secondary line),
+a leading `icon`, a per-option `tone` (a named tone or a custom CSS color), or
+`disabled`. Open the field: the chosen row is highlighted, and the disabled row is
+skipped by the keyboard.
+
+</Col>
+</Columns>
+
+## Selection modes
+
+<Columns>
+<Col>
+
+<Preview>
+  <SelectModesDemo client:load />
+</Preview>
+
+```tsx folded
+// Single-select marks (value is a string)
+<Select indicator="check" options={OPTIONS} value={one} onValueChange={setOne} />  // trailing ✓ + tint
+<Select indicator="radio" options={OPTIONS} value={one} onValueChange={setOne} />  // leading radio
+<Select options={OPTIONS} value={one} onValueChange={setOne} />                    // tint only (default)
+
+// Tone the selected row — named tone or custom colour (indicator adopts it too)
+<Select indicator="check" toneSelected="brand" options={OPTIONS} value={one} onValueChange={setOne} />
+<Select indicator="radio" toneSelected="#c026d3" options={OPTIONS} value={one} onValueChange={setOne} />
+
+// Multiple: checkboxes, count summary, Select-all row; value is a string[]
+<Select
+  selection="multiple"
+  selectAll
+  options={OPTIONS}
+  value={many}
+  onValueChange={setMany}
+/>
+```
+
+</Col>
+<Col>
+
+`selection` sets **behaviour**, `indicator` sets the single-select **mark**.
+
+`selection="single"` (the default) keeps `value` a string and closes on pick.
+`indicator` then chooses the row mark: **`"none"`** (default — a tint-only
+highlight), **`"check"`** (a trailing checkmark on the chosen row, keeping the tint
+— the canonical Select look), or **`"radio"`** (a leading radio on every row).
+
+`selection="multiple"` makes `value` a **string array**, puts a **checkbox** on
+every row, keeps the menu open as you toggle, and summarises the count in the field
+("N selected"). Add **`selectAll`** for a top row that toggles everything — its box
+goes mixed when only some are on.
+
+Each checkable row is the control itself (`role="menuitemcheckbox"` /
+`menuitemradio`, `aria-checked`); the checkbox / radio / check is a passive
+indicator, not a nested control.
+
+**`toneSelected`** tones the selected row(s): the whole row takes the tone — label,
+icon, indicator, and tint. Pass a named tone or any CSS color (a custom color keeps
+its hue, with lightness pinned to the brand text). It reads strongest with
+`indicator` `none` / `check`, which show the row tint; `radio` / `checkbox` have no
+row tint, so it tones the label and indicator only.
 
 </Col>
 </Columns>
@@ -78,20 +136,6 @@ highlighted and a disabled option skipped.
 ## Value & changes
 
 <Columns>
-<Col>
-
-Leave `value` off and pass `defaultValue` for an **uncontrolled** select (the
-wrapper owns the value). Pass `value` to **control** it — the field follows the
-prop, and a pick only requests a change that you apply in `onValueChange`.
-
-**`onValueChange(value, { value, option })`** is the single selection callback —
-value first, with a snapshot (the resolved option) second. There's deliberately
-**no `onStateChange`**: Select has no discrete element state to veto (unlike
-Checkbox or RadioGroup), so it follows Input's model — one value callback, and a
-controlled consumer rejects by not updating `value`. See the
-[event-model note on Input](/components/input/#events) for the full rationale.
-
-</Col>
 <Col>
 
 <Preview>
@@ -108,6 +152,56 @@ const [field, setField] = useState('stream')
   onValueChange={(v) => setField(v)}
 />
 ```
+
+</Col>
+<Col>
+
+Leave `value` off and pass `defaultValue` for an **uncontrolled** select (the
+wrapper owns the value). Pass `value` to **control** it — the field follows the
+prop, and a pick only requests a change that you apply in `onValueChange`.
+
+**`onValueChange(value, attrs)`** is the single selection callback — the new value
+first (a string, or a string array in `multiple` mode), with a snapshot second:
+`{ value, option }` for the changed row, plus `selected` in `multiple` mode (or
+`{ all: true }` for the Select-all row). There's deliberately **no
+`onStateChange`**: Select has no discrete element state to veto (unlike Checkbox or
+RadioGroup), so it follows Input's model — one value callback, and a controlled
+consumer rejects by not updating `value`. See the
+[event-model note on Input](/components/input/#events) for the full rationale.
+
+</Col>
+</Columns>
+
+## Size & status
+
+<Columns>
+<Col>
+
+<Preview>
+  <SelectSizeStatusDemo client:load />
+</Preview>
+
+```tsx folded
+<Select label="Small · info"    size="small"  status="info"     hint="Lowercase & dashes only" options={OPTIONS} defaultValue="stream" />
+<Select label="Medium · success" size="medium" status="success"  hint="Field is valid" options={OPTIONS} defaultValue="stream" />
+<Select label="Large · critical" size="large"  status="critical" hint="Pick a field" options={OPTIONS} placeholder="Required…" />
+{/* statusIcon overrides the per-status glyph (or `false` drops it) — like Input */}
+<Select status="info" statusIcon="sparkles" hint="Custom glyph" options={OPTIONS} defaultValue="stream" />
+```
+
+</Col>
+<Col>
+
+The trigger is an [Input](/components/input/), so it inherits the field props.
+**`size`** (`small` · `medium` · `large`) sets the height and type scale.
+**`status`** paints a validation tone on the border and `hint` and prefixes a glyph
+(`info` / `success` / `warning` / `critical`); **`statusIcon`** overrides that glyph
+(any shape, or `false` to drop it), exactly as on Input. The message rides in `hint`.
+
+`status` is a validation *state*, not `tone` — same palette, but it also carries the
+glyph and (for `critical`) validity. See the [Input status note](/components/input/#status).
+The field also takes `label`, `placeholder`, `round`, and `disabled`, and fills its
+container — set a width via `style` / `className` (both forwarded to the field).
 
 </Col>
 </Columns>
@@ -134,7 +228,7 @@ plus a menu plus a little glue is a working select:
 <div class="select" style="width: 240px">
   <!-- Read-only field trigger; `dim-actions` dims the chevron at rest. The 7px
        inline margin + transition on the chevron match <Select>. -->
-  <a-input readonly dim-actions value="stream" aria-haspopup="listbox">
+  <a-input readonly dim-actions value="stream" aria-haspopup="menu">
     <a-icon slot="trailing" shape="chevron-down" style="margin-inline-end: 7px; transition: transform 150ms ease"></a-icon>
   </a-input>
   <a-menu>
@@ -169,33 +263,64 @@ field. The React `Select` packages exactly this.
 
 ## Coming soon
 
-Phase 1 is single-select with a read-only field. Still to land: **multi-select**
-(chips / "N selected" in the field), **filter / autocomplete** (an editable field
-that narrows the list), **sections** (grouped options), full **listbox ARIA**
-(`role="listbox"` / `option`, `aria-activedescendant`, keyboard-open from the
-closed field), and a **custom-trigger** render prop (so the same machine can wear
-a button — e.g. a Filter control — instead of the default field).
+Landed: single / multiple selection with radio & checkbox indicators, count
+summary, and Select-all. Still to come: **filter / autocomplete** (an editable
+field that narrows the list), **sections** (grouped options), **custom option /
+indicator renderers**, and a **custom-trigger** render prop (so the same machine
+can wear a button — e.g. a Filter control — instead of the default field).
+
+<Disclosure title="Component props" open>
 
 <PropsTable component="Select" />
 
+</Disclosure>
+
 <Disclosure title="Styling">
 
-Select renders an [Input](/components/input/) and a [Menu](/components/menu/), so
-it inherits both surfaces' styling hooks — style the field via Input's props
-(`size`, `status`, `round`) and its `::part`s, and the popover via Menu's
-`--menu-*` / `::part(menu)`. The field width sizes the trigger; pass `style` /
-`className` (forwarded to the field) to set it. Selected rows use the `selected`
-tint, which tracks each option's `tone`.
+Select is an [Input](/components/input/) plus a [Menu](/components/menu/), so it
+inherits both surfaces' hooks. Reach for props first, plain CSS or `::part` for the
+rest — never override an element's internal `--*` output tokens.
+
+**Selection colour** goes through the props, not CSS: a per-option `tone`, or
+`toneSelected` for the chosen row(s). Both take a named tone or any CSS color (a
+custom color keeps its hue, with lightness pinned to the brand text).
+
+**The field** is styled through Input's props (`size`, `status`, `round`) and its
+`::part`s; set its width with `style` / `className` (forwarded to the field). **The
+popover** takes Menu's `::part(menu)`.
 
 ```tsx folded
-// The field is styled through Input's props; give the trigger a width.
-<Select
-  size="small"
-  status="critical"
-  round
-  style={{ width: '220px' }}
-  options={OPTIONS}
-/>
+// Tone the selection; give the trigger a width.
+<Select toneSelected="brand" style={{ width: '220px' }} options={OPTIONS} />
+```
+
+**Borderless trigger.** The field's border is an inset `box-shadow`, so you can drop
+it *at rest* and let the standard hover / focus shadow return on its own — no need to
+re-declare it. Pair that with hiding the chevron for a field that reads as plain text
+until you reach for it. Hide the chevron by targeting the trailing `a-icon` (its slot
+wrapper is inline-`display:contents`, so hit the icon itself).
+
+<Preview>
+  <SelectGhostDemo client:load />
+  <style is:inline>{`
+    /* '.ghost-select' is just this demo's wrapper — swap your own selector. */
+    .ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
+      box-shadow: none;
+    }
+    .ghost-select a-input::part(input) { text-align: center; }
+    .ghost-select a-input [slot="trailing"] a-icon { display: none; }
+  `}</style>
+</Preview>
+
+```css folded
+/* Drop the resting border-shadow; the standard hover / focus shadow still shows. */
+.ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
+  box-shadow: none;
+}
+/* Centre the chosen label in the field. */
+.ghost-select a-input::part(input) { text-align: center; }
+/* The chevron's slot wrapper is inline display:contents; hide the icon itself. */
+.ghost-select a-input [slot="trailing"] a-icon { display: none; }
 ```
 
 </Disclosure>

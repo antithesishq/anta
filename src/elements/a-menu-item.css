@@ -6,6 +6,7 @@
   a-menu-item {
     --menu-item-color: var(--text-2);
     --menu-item-icon-color: var(--text-3);
+    --menu-item-hint-color: var(--text-3);
     --menu-item-hover: 5%;
     --menu-item-active: 9%;
     /* Persistent "on" tint for a selected row, plus its own hover / press
@@ -82,11 +83,41 @@
     outline-offset: 1px;
   }
 
-  a-menu-item > a-menu-item-label {
+  /* The growing text region: either the bare label, or the label+hint column
+     (a-menu-item-text). Either way it takes the row's slack so trailing content
+     right-aligns. */
+  a-menu-item > a-menu-item-label,
+  a-menu-item > a-menu-item-text {
     flex: 1 1 auto;
+    min-width: 0;
+  }
+  a-menu-item > a-menu-item-text {
+    display: flex;
+    flex-direction: column;
+  }
+  /* A hinted item top-aligns its row content, so the icon / badge / chevron stay
+     on the label's first line instead of centering against the two-line block; the
+     hint then flows below, aligned under the label (it's inside the text column, so
+     it never extends under the leading icon or the trailing content). */
+  a-menu-item:has(> a-menu-item-text) {
+    align-items: flex-start;
+  }
+  /* Ellipsis on the label wherever it sits — direct child or inside the column. */
+  a-menu-item-label {
+    display: block;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  a-menu-item-hint {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-block-start: 1px;
+    color: var(--menu-item-hint-color);
+    font-size: 12px;
+    line-height: 15px;
   }
 
   a-menu-item > a-icon {
@@ -134,15 +165,16 @@
   a-menu-item[tone="critical"] {
     --menu-item-icon-color: var(--menu-item-color);
   }
-  a-menu-item[tone="brand"]    { --menu-item-color: var(--text-2-brand); }
-  a-menu-item[tone="info"]     { --menu-item-color: var(--text-2-info); }
-  a-menu-item[tone="success"]  { --menu-item-color: var(--text-2-success); }
-  a-menu-item[tone="warning"]  { --menu-item-color: var(--text-2-warning); }
-  a-menu-item[tone="critical"] { --menu-item-color: var(--text-2-critical); }
+  a-menu-item[tone="brand"]    { --menu-item-color: var(--text-2-brand);    --menu-item-hint-color: var(--text-3-brand); }
+  a-menu-item[tone="info"]     { --menu-item-color: var(--text-2-info);     --menu-item-hint-color: var(--text-3-info); }
+  a-menu-item[tone="success"]  { --menu-item-color: var(--text-2-success);  --menu-item-hint-color: var(--text-3-success); }
+  a-menu-item[tone="warning"]  { --menu-item-color: var(--text-2-warning);  --menu-item-hint-color: var(--text-3-warning); }
+  a-menu-item[tone="critical"] { --menu-item-color: var(--text-2-critical); --menu-item-hint-color: var(--text-3-critical); }
 
   a-menu-item[disabled] {
     --menu-item-color: var(--text-5);
     --menu-item-icon-color: var(--text-5);
+    --menu-item-hint-color: var(--text-5);
     cursor: default;
     pointer-events: none;
   }

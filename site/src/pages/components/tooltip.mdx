@@ -23,6 +23,11 @@ default the bubble is **pinned** under the anchor; pass `follow` to make it
 **track the cursor** (fading out as the cursor moves away), or `interactive` to
 make it hoverable and clickable (for content like links).
 
+When the anchor implements **`getAnchorRect(): DOMRect`**, the bubble positions
+against that rect instead of the anchor's full box. Anta's `Input` reports its
+field box, so a tooltip on an `<Input>` points at the field, not the surrounding
+label or hint.
+
 <Disclosure title="Playground" anchor={false} brand>
 
 A single tooltip on a button — tweak its props (or edit the code) and hover the

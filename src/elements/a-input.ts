@@ -175,6 +175,12 @@ const SHADOW_STYLE = `
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
   }
+  /* A read-only field (e.g. the Select trigger) isn't typed into, so a mouse
+     click shouldn't ring it — only keyboard focus (:focus-visible) does.
+     Editable fields keep the ring on any focus. */
+  :host([readonly]) .field:has(input:focus:not(:focus-visible), textarea:focus:not(:focus-visible)) {
+    outline: none;
+  }
 
   input, textarea {
     flex: 1 1 auto;
@@ -208,6 +214,9 @@ const SHADOW_STYLE = `
   }
   input::placeholder, textarea::placeholder { color: var(--input-placeholder); opacity: 1; }
   input:disabled, textarea:disabled { cursor: not-allowed; }
+  :host([readonly]:not([disabled])) .field,
+  :host([readonly]:not([disabled])) input,
+  :host([readonly]:not([disabled])) textarea { cursor: pointer; }
   input::-webkit-search-cancel-button,
   input::-webkit-search-decoration,
   input::-webkit-search-results-button,
@@ -393,6 +402,14 @@ export class AInputElement extends HTMLElementBase {
     const extrasSlot = document.createElement('slot')
 
     shadow.append(style, this.labelBox, this.field, extrasSlot, this.hintBox)
+  }
+
+  /** Floating-element anchor protocol (see `anchorRect` in anta_helpers): point
+   *  a menu / tooltip anchored to this input at the `.field` box, not the host —
+   *  the host's box also spans the label and hint, which would push a dropdown
+   *  below the hint or misalign a tooltip. */
+  getAnchorRect(): DOMRect {
+    return this.field.getBoundingClientRect()
   }
 
   connectedCallback() {

@@ -1,0 +1,189 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Select
+---
+import Playground from '../../components/Playground'
+import Preview from '../../components/Preview.astro'
+import PropsTable from '../../components/PropsTable.astro'
+import Disclosure from '../../components/Disclosure.astro'
+import Columns from '../../components/Columns.astro'
+import Col from '../../components/Col.astro'
+import selectDemoCode from './select.demo.ts'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo } from '../../components/SelectDemos'
+
+# Select
+
+A single-select dropdown: a field showing the chosen value, and a menu of options
+to pick from. Select is a **composed component** — not a new element, but an
+[Input](/components/input/) trigger stitched to a [Menu](/components/menu/) of
+options, with the wrapper coordinating value and open state. The field is
+read-only and shows the selected label with a chevron that flips on open; the
+menu anchors to the field, opens on click, closes on select, and highlights the
+chosen row.
+
+Pick options from a JSON array (bare strings or objects, like
+[RadioGroup](/components/radio/) / [Tabs](/components/tabs/)), and read changes
+from a single **`onValueChange`** callback. Controlled (`value`) or uncontrolled
+(`defaultValue`).
+
+Requires `@antadesign/anta/elements` (client-side only).
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="Select"
+  layout="side"
+  panelHeight={420}
+  initialCode={selectDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; justify-content: flex-start; align-items: center; padding-top: 24px; }`}
+/>
+
+</Disclosure>
+
+## Options
+
+<Columns>
+<Col>
+
+`options` takes bare strings or objects. A string is shorthand for
+`{ value: s, label: s }`; an object adds a `hint` (secondary line), a leading
+`icon`, a per-option `tone`, or `disabled`. Open the field to see the chosen row
+highlighted and a disabled option skipped.
+
+</Col>
+<Col>
+
+<Preview>
+  <SelectOptionsDemo client:load />
+</Preview>
+
+```tsx folded
+<Select
+  label="Field"
+  options={[
+    { value: 'output_text', label: 'output_text', hint: 'Raw log message or event payload' },
+    { value: 'stream', label: 'stream', hint: 'Log level: error · info · internal' },
+    { value: 'container', label: 'container', hint: 'Host where the event occurred' },
+    { value: 'archived', label: 'archived', disabled: true },
+    { value: 'custom', label: 'custom', tone: 'brand' },
+  ]}
+/>
+```
+
+</Col>
+</Columns>
+
+## Value & changes
+
+<Columns>
+<Col>
+
+Leave `value` off and pass `defaultValue` for an **uncontrolled** select (the
+wrapper owns the value). Pass `value` to **control** it — the field follows the
+prop, and a pick only requests a change that you apply in `onValueChange`.
+
+**`onValueChange(value, { value, option })`** is the single selection callback —
+value first, with a snapshot (the resolved option) second. There's deliberately
+**no `onStateChange`**: Select has no discrete element state to veto (unlike
+Checkbox or RadioGroup), so it follows Input's model — one value callback, and a
+controlled consumer rejects by not updating `value`. See the
+[event-model note on Input](/components/input/#events) for the full rationale.
+
+</Col>
+<Col>
+
+<Preview>
+  <SelectControlledDemo client:load />
+</Preview>
+
+```tsx folded
+const [field, setField] = useState('stream')
+
+<Select
+  label="Field"
+  options={['output_text', 'stream', 'container', 'vtime', 'custom']}
+  value={field}
+  onValueChange={(v) => setField(v)}
+/>
+```
+
+</Col>
+</Columns>
+
+## A composed component
+
+`Select` has no `<a-select>` element — the JSX wrapper *is* the coordinator. It
+renders an `<Input readOnly>` followed by a `<Menu>`, holds the value and open
+state, reflects the value into the field and into each option's `selected`, and
+turns a `MenuItem` pick into `onValueChange`. Everything hard — positioning,
+outside-click / Esc dismiss, in-menu arrow / type-ahead keyboard — comes from
+`Menu` for free.
+
+<Preview>
+  <SelectBasicDemo client:load />
+</Preview>
+
+Because it's a composition, the same result is reachable **without React** by
+hand-assembling the pieces — the menu anchors to its previous sibling, so a field
+plus a menu plus a little glue is a working select:
+
+```html folded
+<a-input readonly value="stream" aria-haspopup="listbox">
+  <a-icon slot="trailing" shape="chevron-down"></a-icon>
+</a-input>
+<a-menu>
+  <a-menu-item value="output_text">output_text</a-menu-item>
+  <a-menu-item value="stream" selected>stream</a-menu-item>
+  <a-menu-item value="container">container</a-menu-item>
+</a-menu>
+<script type="module">
+  import '@antadesign/anta/elements'
+  const field = document.currentScript.previousElementSibling.previousElementSibling.previousElementSibling
+  const menu = field.nextElementSibling
+  menu.addEventListener('click', (e) => {
+    const item = e.target.closest('a-menu-item')
+    if (!item) return
+    menu.querySelectorAll('a-menu-item').forEach((el) => el.toggleAttribute('selected', el === item))
+    field.value = item.getAttribute('value')
+  })
+</script>
+```
+
+`Menu` gives you open/close, positioning, and dismissal; you supply the ~6 lines
+that track which item is `selected` and update the field. The React `Select`
+packages exactly this.
+
+## Coming soon
+
+Phase 1 is single-select with a read-only field. Still to land: **multi-select**
+(chips / "N selected" in the field), **filter / autocomplete** (an editable field
+that narrows the list), **sections** (grouped options), full **listbox ARIA**
+(`role="listbox"` / `option`, `aria-activedescendant`, keyboard-open from the
+closed field), and a **custom-trigger** render prop (so the same machine can wear
+a button — e.g. a Filter control — instead of the default field).
+
+<PropsTable component="Select" />
+
+<Disclosure title="Styling">
+
+Select renders an [Input](/components/input/) and a [Menu](/components/menu/), so
+it inherits both surfaces' styling hooks — style the field via Input's props
+(`size`, `status`, `round`) and its `::part`s, and the popover via Menu's
+`--menu-*` / `::part(menu)`. The field width sizes the trigger; pass `style` /
+`className` (forwarded to the field) to set it. Selected rows use the `selected`
+tint, which tracks each option's `tone`.
+
+```tsx folded
+// The field is styled through Input's props; give the trigger a width.
+<Select
+  size="small"
+  status="critical"
+  round
+  style={{ width: '220px' }}
+  options={OPTIONS}
+/>
+```
+
+</Disclosure>

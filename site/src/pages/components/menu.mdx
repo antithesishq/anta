@@ -180,6 +180,12 @@ preference, not a constraint.
 </Col>
 </Columns>
 
+The menu positions against the trigger's box. A trigger can narrow that: if it
+implements **`getAnchorRect(): DOMRect`**, the menu positions against *that* rect
+instead of its full border box. Anta's `Input` does this — it reports its field
+box — so a `Menu` placed after an `<Input>` (as in `Select`) lines up with the
+field, not the whole component (whose box also spans the label and hint).
+
 ## Right-click & at-cursor
 
 <Columns>
@@ -466,7 +472,7 @@ semantics — are coming next. Today `selected` is the visual state you drive.
 </Col>
 </Columns>
 
-## Counters & badges
+## Badges, counters & hints
 
 <Columns>
 <Col>
@@ -477,22 +483,26 @@ trailing icon, and the label's `flex: 1` right-aligns them — so a small tag si
 at the row's edge, just left of a shortcut or submenu chevron. Use `size="small"`
 so it sits comfortably in the row.
 
+Add `hint` for secondary text under the label — muted, and it tracks the row's
+`tone`. It stacks in a column beneath the label while the icon, badge, and
+chevron stay centered on the row, so it composes with a trailing counter.
+
 </Col>
 <Col>
 
 <Preview>
   <Button>Folders</Button>
   <Menu>
-    <MenuItem icon="folder-open" label="Active"><Tag size="small" tone="info">12</Tag></MenuItem>
-    <MenuItem icon="folder-close" label="Archived" />
+    <MenuItem icon="folder-open" label="Active" hint="12 open items"><Tag size="small" tone="info">12</Tag></MenuItem>
+    <MenuItem icon="folder-close" label="Archived" hint="Read-only" />
     <MenuItem icon="trash" label="Trash"><Tag size="small">3</Tag></MenuItem>
   </Menu>
 </Preview>
 
 ```tsx folded
 <Menu>
-  <MenuItem icon="folder-open" label="Active"><Tag size="small" tone="info">12</Tag></MenuItem>
-  <MenuItem icon="folder-close" label="Archived" />
+  <MenuItem icon="folder-open" label="Active" hint="12 open items"><Tag size="small" tone="info">12</Tag></MenuItem>
+  <MenuItem icon="folder-close" label="Archived" hint="Read-only" />
   <MenuItem icon="trash" label="Trash"><Tag size="small">3</Tag></MenuItem>
 </Menu>
 ```

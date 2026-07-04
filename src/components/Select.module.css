@@ -1,0 +1,9 @@
+/* The trailing chevron is a plain <Icon> in the field's trailing slot; space it
+   from the edge and rotate it 180° (down → up) when the menu opens. */
+.chevron {
+  margin-inline-end: 7px;
+  transition: transform 150ms ease;
+}
+.chevron.open {
+  transform: rotate(180deg);
+}

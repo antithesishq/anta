@@ -1,4 +1,4 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { HTMLElementBase, anchorRect } from '../anta_helpers'
 import { AMenuItemElement } from './a-menu-item'
 import './a-menu.css'
 
@@ -85,7 +85,8 @@ function unbindDocListeners() {
 function trackPosition(el: HTMLElement, onEscape: () => void): () => void {
   if (typeof IntersectionObserver === 'undefined') return () => {}
   const doc = el.ownerDocument
-  const rect = el.getBoundingClientRect()
+  // Track the anchor's advertised rect (a-input reports its field, not the host).
+  const rect = anchorRect(el)
   const vw = doc.documentElement.clientWidth
   const vh = doc.documentElement.clientHeight
   // Negative margins shrink the viewport root down to el's current rect.
@@ -272,7 +273,7 @@ export class AMenuElement extends HTMLElementBase {
         box-sizing: border-box;
         flex-direction: column;
         gap: 1px;
-        min-width: var(--menu-min-width, 88px);
+        min-width: max(var(--menu-min-width, 88px), var(--_anchor-width, 0px));
         max-width: calc(100vw - ${2 * MARGIN}px);
         max-height: calc(100dvh - ${2 * MARGIN}px);
         overflow-y: auto;
@@ -704,7 +705,7 @@ export class AMenuElement extends HTMLElementBase {
         if (top + box.height > vh - MARGIN) top = top - box.height
         top = Math.max(MARGIN, top)
       } else if (this.isSubmenu) {
-        const it = this.triggerAnchor?.getBoundingClientRect()
+        const it = this.triggerAnchor ? anchorRect(this.triggerAnchor) : null
         if (!it) return
         surface.style.maxHeight = `${Math.max(MIN_HEIGHT, vh - 2 * MARGIN)}px`
         const box = surface.getBoundingClientRect()
@@ -725,8 +726,12 @@ export class AMenuElement extends HTMLElementBase {
         if (top + box.height > vh - MARGIN) top = vh - box.height - MARGIN
         top = Math.max(MARGIN, top)
       } else {
-        const a = this.triggerAnchor?.getBoundingClientRect()
+        const a = this.triggerAnchor ? anchorRect(this.triggerAnchor) : null
         if (!a) return
+        // A root menu is never narrower than its trigger: publish the anchor width
+        // so the surface min-width floors to it (see the shadow style's `max()`).
+        // Content can still make it wider; it never shrinks below the trigger.
+        surface.style.setProperty('--_anchor-width', `${Math.ceil(a.width)}px`)
         const p = this.placement
         const spaceBelow = vh - a.bottom - 2 * MARGIN
         const spaceAbove = a.top - 2 * MARGIN
@@ -1000,7 +1005,7 @@ export class AMenuElement extends HTMLElementBase {
         let coord: [number, number] | undefined
         if (this.isCoord) {
           if (viaKeyboard) {
-            const r = anchor.getBoundingClientRect()
+            const r = anchorRect(anchor)
             coord = [r.left, r.bottom]
           } else {
             coord = [e.clientX, e.clientY]

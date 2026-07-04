@@ -1,4 +1,4 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { HTMLElementBase, anchorRect } from '../anta_helpers'
 import { debounce } from 'es-toolkit'
 import './a-tooltip.css'
 
@@ -479,7 +479,8 @@ export class ATooltipElement extends HTMLElementBase {
   private positionToTarget = () => {
     this.schedulePosition(() => {
       if (!this.anchor || !this.shown) return
-      const a = this.anchor.getBoundingClientRect()
+      // The anchor's advertised rect (a-input reports its field, not the host).
+      const a = anchorRect(this.anchor)
       const box = this.container.getBoundingClientRect()
       const { innerWidth: vw, innerHeight: vh } = this.view
       // Touch long-press biases above the anchor so the fingertip resting on it
@@ -511,7 +512,7 @@ export class ATooltipElement extends HTMLElementBase {
    *  Cursor-follow only — drives the "fade as you move away" behaviour. */
   private proximityOpacity(e: MouseEvent): number {
     if (!this.anchor) return 1
-    const r = this.anchor.getBoundingClientRect()
+    const r = anchorRect(this.anchor)
     const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right)
     const dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom)
     const dist = Math.hypot(dx, dy)

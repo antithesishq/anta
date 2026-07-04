@@ -87,6 +87,20 @@ export function roundStyle(
 }
 
 /**
+ * The rect a floating-element anchor advertises for positioning. Any element may
+ * implement `getAnchorRect(): DOMRect` to point positioners (`a-menu`,
+ * `a-tooltip`) at a sub-region of itself — e.g. `a-input` returns its `.field`
+ * box rather than the host, whose box also spans the label / hint, so a menu or
+ * tooltip lines up with the field itself. Elements without it fall back to their
+ * border box (`getBoundingClientRect`), so this is opt-in and back-compatible.
+ * Shared by a-menu and a-tooltip.
+ */
+export function anchorRect(el: Element): DOMRect {
+  const fn = (el as { getAnchorRect?: () => DOMRect }).getAnchorRect
+  return typeof fn === 'function' ? fn.call(el) : el.getBoundingClientRect()
+}
+
+/**
  * `HTMLElement` in browsers, a noop class in Node/Worker environments.
  * Use this as the base for custom element classes so importing the
  * module in a non-DOM environment doesn't throw on `extends HTMLElement`.

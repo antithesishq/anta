@@ -6,6 +6,10 @@ export interface MenuItemProps extends BaseProps {
   icon?: IconShape
   /** The item's text. Omit and pass `children` for richer content. */
   label?: string
+  /** Secondary text under the label — explanatory copy, like `RadioGroup`'s
+   *  option `hint`. Requires `label` (it stacks in a column beneath it). Muted
+   *  (`--text-3`) and tracks the row's `tone`. */
+  hint?: string
   /** A trailing keyboard-shortcut hint, e.g. `"⌘E"`. */
   kbd?: string
   /** A trailing icon. On a `submenu` item this **overrides** the default
@@ -64,6 +68,7 @@ export interface MenuItemProps extends BaseProps {
 export const MenuItem = ({
   icon,
   label,
+  hint,
   kbd,
   iconTrailing,
   disabled,
@@ -108,7 +113,18 @@ export const MenuItem = ({
       {...rest}
     >
       {icon && <a-icon shape={icon} aria-hidden="true" />}
-      {label != null && <a-menu-item-label>{label}</a-menu-item-label>}
+      {label != null &&
+        (hint != null ? (
+          // A hint stacks under the label in a column; the icon / kbd / trailing
+          // icon stay in the row (the item's `align-items: center` centers them
+          // against the two-line block).
+          <a-menu-item-text>
+            <a-menu-item-label>{label}</a-menu-item-label>
+            <a-menu-item-hint>{hint}</a-menu-item-hint>
+          </a-menu-item-text>
+        ) : (
+          <a-menu-item-label>{label}</a-menu-item-label>
+        ))}
       {/* Children sit after the label but before `kbd` and the trailing icon, so
           a slotted badge / counter (a `<Tag>`) lands just left of the shortcut
           hint / chevron rather than past it. The label's `flex: 1` right-aligns

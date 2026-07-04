@@ -408,6 +408,26 @@ since the framework skips the re-render. Constrain hard with `maxLength` /
 </Col>
 </Columns>
 
+## Events
+
+| handler | fires | payload |
+|---|---|---|
+| `onInput(e)` | on **every keystroke** | read `e.target.value` |
+| `onChange(e)` | on **commit** (blur / Enter) — native `change` semantics, *not* React's per-keystroke `onChange` | read `e.target.value` |
+| `onValueChange(e, attrs)` | on `input` **and** `change` (and clear) | `{ value, name, empty, valid, validationMessage }` |
+| `onClearClick(e)` | before the `clearable` × clears | ✅ `e.preventDefault()` keeps the value |
+
+**Input has no `onStateChange`, on purpose.** That event belongs to components
+with a *discrete* state — a small enum like `Checkbox`'s `checked · unchecked ·
+indeterminate` or a menu's `open · closed` — where a transition can be vetoed as
+a unit before it applies. A text field's value is **free-form**, not a discrete
+state, so there's nothing to model as `state` and nothing to veto wholesale;
+you control it the native way (`value` + `onInput`/`onChange`, reject by not
+updating). Reach for `onValueChange` as the one unified "the value changed"
+handler — it's the same callback `Checkbox`, `RadioGroup`, and `Select` expose,
+so form code reads the same across all of them. (`Select`, likewise composed and
+value-based, also has only `onValueChange`.)
+
 ## Forms
 
 <Columns>

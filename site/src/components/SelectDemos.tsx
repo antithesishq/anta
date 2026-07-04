@@ -96,7 +96,7 @@ export function SelectSizeStatusDemo() {
   const opts = ['output_text', 'stream', 'container', 'vtime']
   const box = { width: '220px' }
   return (
-    <div style={{ display: 'flex', gap: '20px 24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+    <div style={{ display: 'flex', gap: '20px 24px', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'center' }}>
       <div style={box}>
         <Select label="Small · info" size="small" status="info" hint="Lowercase & dashes only" options={opts} defaultValue="stream" />
       </div>
@@ -111,6 +111,33 @@ export function SelectSizeStatusDemo() {
       </div>
       <div style={box}>
         <Select label="Small · custom icon" size="small" status="info" statusIcon="sparkles" hint="statusIcon override" options={opts} defaultValue="stream" />
+      </div>
+    </div>
+  )
+}
+
+const FILTER_OPTS: SelectOption[] = [
+  { value: 'output_text', hint: 'Raw log message or event payload' },
+  { value: 'stream', hint: 'Log level: error · info · internal' },
+  { value: 'container', hint: 'Host where the event occurred' },
+  { value: 'vtime', hint: 'Simulation time in seconds' },
+  { value: 'source', hint: 'Emitting system or process' },
+  { value: 'message', hint: 'Assertion description' },
+  { value: 'condition', hint: 'Passing or failing' },
+  { value: 'fault', hint: 'Injected fault type and name' },
+]
+
+export function SelectFilterDemo() {
+  useElements()
+  const [one, setOne] = useState('stream')
+  const [many, setMany] = useState<string[]>(['stream'])
+  return (
+    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div style={{ width: '240px' }}>
+        <Select label="Single · filter" filter indicator="check" options={FILTER_OPTS} value={one} onValueChange={setOne} />
+      </div>
+      <div style={{ width: '240px' }}>
+        <Select label="Multiple · filter" selection="multiple" filter selectAll placeholder="Fields…" options={FILTER_OPTS} value={many} onValueChange={setMany} />
       </div>
     </div>
   )

@@ -9,7 +9,7 @@ import Disclosure from '../../components/Disclosure.astro'
 import Columns from '../../components/Columns.astro'
 import Col from '../../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
-import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectGhostDemo } from '../../components/SelectDemos'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectGhostDemo } from '../../components/SelectDemos'
 
 # Select
 
@@ -133,6 +133,47 @@ row tint, so it tones the label and indicator only.
 </Col>
 </Columns>
 
+## Filter
+
+<Columns>
+<Col>
+
+<Preview>
+  <SelectFilterDemo client:load />
+</Preview>
+
+```tsx folded
+// Built-in matcher — case-insensitive substring of value / label / hint
+<Select filter indicator="check" options={OPTIONS} value={v} onValueChange={setV} />
+
+// Custom matcher — a per-option predicate
+<Select
+  filter={(option, query) => option.value.startsWith(query)}
+  options={OPTIONS}
+  value={v}
+  onValueChange={setV}
+/>
+```
+
+</Col>
+<Col>
+
+Add **`filter`** for a search field at the top of the menu that narrows the options
+as you type. `true` uses the built-in matcher — a case-insensitive substring of the
+option's **value, label, or hint** — which is **whitespace-flexible** (a typed space
+matches any run of whitespace) and **bolds the matched substring** in the results.
+Pass a **function** `(option, query) => boolean` for custom matching (no highlight).
+
+The menu becomes a **combobox**: opening focuses the search field, `↑`/`↓` move a
+cursor through the matches (focus stays in the field, so you keep typing), `Enter`
+picks the active one, and `Esc` closes. The field stays **pinned** while the matches
+scroll beneath it, and the menu re-anchors to the trigger as the list shrinks. No
+matches shows a "No matches" row, and the query resets when the menu closes. In
+`multiple` mode, `selectAll` acts on the currently-visible matches.
+
+</Col>
+</Columns>
+
 ## Value & changes
 
 <Columns>
@@ -194,9 +235,10 @@ consumer rejects by not updating `value`. See the
 
 The trigger is an [Input](/components/input/), so it inherits the field props.
 **`size`** (`small` · `medium` · `large`) sets the height and type scale.
-**`status`** paints a validation tone on the border and `hint` and prefixes a glyph
-(`info` / `success` / `warning` / `critical`); **`statusIcon`** overrides that glyph
-(any shape, or `false` to drop it), exactly as on Input. The message rides in `hint`.
+**`status`** paints a validation tone on the border, `hint`, and the chevron, and
+prefixes a glyph (`info` / `success` / `warning` / `critical`); **`statusIcon`**
+overrides that glyph (any shape, or `false` to drop it), exactly as on Input. The
+message rides in `hint`.
 
 `status` is a validation *state*, not `tone` — same palette, but it also carries the
 glyph and (for `critical`) validity. See the [Input status note](/components/input/#status).
@@ -264,10 +306,11 @@ field. The React `Select` packages exactly this.
 ## Coming soon
 
 Landed: single / multiple selection with radio & checkbox indicators, count
-summary, and Select-all. Still to come: **filter / autocomplete** (an editable
-field that narrows the list), **sections** (grouped options), **custom option /
-indicator renderers**, and a **custom-trigger** render prop (so the same machine
-can wear a button — e.g. a Filter control — instead of the default field).
+summary, Select-all, and **filter** (a combobox search field). Still to come:
+**sections** (grouped options), **`allow_new`** (create an option from the filter
+query), **custom option / indicator renderers**, and a **custom-trigger** render
+prop (so the same machine can wear a button — e.g. a Filter control — instead of
+the default field).
 
 <Disclosure title="Component props" open>
 

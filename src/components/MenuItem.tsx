@@ -5,12 +5,14 @@ import { toneStyle } from '../anta_helpers'
 export interface MenuItemProps extends BaseProps {
   /** Leading icon shape. */
   icon?: IconShape
-  /** The item's text. Omit and pass `children` for richer content. */
-  label?: string
+  /** The item's text. Usually a string, but any node is accepted — e.g. a filtered
+   *  `Select` bolds the matched substring. Omit and pass `children` for richer
+   *  content. */
+  label?: React.ReactNode
   /** Secondary text under the label — explanatory copy, like `RadioGroup`'s
    *  option `hint`. Requires `label` (it stacks in a column beneath it). Muted
-   *  (`--text-3`) and tracks the row's `tone`. */
-  hint?: string
+   *  (`--text-3`) and tracks the row's `tone`. A string, or any node. */
+  hint?: React.ReactNode
   /** A trailing keyboard-shortcut hint, e.g. `"⌘E"`. */
   kbd?: string
   /** A trailing icon. On a `submenu` item this **overrides** the default
@@ -58,7 +60,7 @@ export interface MenuItemProps extends BaseProps {
    *  (clicking that opens the flyout, which isn't a selection) nor for a
    *  selection bubbling up from a nested submenu. Receives the event plus a
    *  `{ value, label }` detail. */
-  onSelect?: (event: any, detail: { value?: string | number; label?: string }) => void
+  onSelect?: (event: any, detail: { value?: string | number; label?: React.ReactNode }) => void
   /** Item content. With `label` set, children are extra content — most
    *  notably the nested `<Menu>` for a submenu parent. */
   children?: React.ReactNode

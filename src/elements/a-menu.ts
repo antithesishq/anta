@@ -227,6 +227,8 @@ export class AMenuElement extends HTMLElementBase {
 
   /** Shadow-internal popover surface — the only thing we ever mutate. */
   surface!: HTMLDivElement
+  /** The scrolling body inside the surface (holds the items). */
+  private scrollEl!: HTMLDivElement
 
   listening = false
   private _shown = false
@@ -244,6 +246,16 @@ export class AMenuElement extends HTMLElementBase {
   // Typeahead state (root navigation).
   private typeBuffer = ''
   private typeTimer?: ReturnType<typeof setTimeout>
+
+  // Combobox (filter) state — engaged when a `[data-menu-search]` field is slotted
+  // in (e.g. `Select` with `filter`). Focus stays in that field; ArrowUp/Down move
+  // `activeItem` (a cursor, not DOM focus) and reflect `aria-activedescendant`.
+  private activeItem: AMenuItemElement | null = null
+  private comboObserver?: MutationObserver
+  // The vertical side chosen at open (true = flipped above the anchor). A re-anchor
+  // (filtering changes height) keeps this side rather than re-deciding — a shrunk
+  // menu shouldn't hop back under the trigger.
+  private _flippedTop: boolean | null = null
 
   constructor() {
     super()
@@ -278,13 +290,10 @@ export class AMenuElement extends HTMLElementBase {
         margin: 0;
         box-sizing: border-box;
         flex-direction: column;
-        gap: 1px;
         min-width: max(var(--menu-min-width, 88px), var(--_anchor-width, 0px));
         max-width: calc(100vw - ${2 * MARGIN}px);
         max-height: calc(100dvh - ${2 * MARGIN}px);
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        scrollbar-width: thin;
+        overflow: hidden;
         padding: var(--menu-padding, 4px);
         background: var(--menu-bg, Canvas);
         color: var(--text-2, CanvasText);
@@ -324,6 +333,26 @@ export class AMenuElement extends HTMLElementBase {
       @starting-style {
         .container:popover-open { opacity: 0; translate: 0 -4px; }
       }
+      /* The scrolling body — only the items scroll; the header / footer slots stay
+         fixed above and below it. min-height:0 lets it shrink so its own scrollbar
+         engages instead of the flex item overflowing. The 1px inter-item gap that
+         used to live on the container lives here now. */
+      .scroll {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        /* Soft scroll edges: fade the content into the top / bottom only on the side
+           with more to scroll (the --fade-* vars, set from JS, are 0 otherwise). */
+        --fade-top: 0px;
+        --fade-bottom: 0px;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+        mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+      }
     `
     this.surface = document.createElement('div')
     this.surface.className = 'container'
@@ -332,7 +361,22 @@ export class AMenuElement extends HTMLElementBase {
     // instead of the `--menu-*` custom properties.
     this.surface.setAttribute('part', 'menu')
     this.surface.setAttribute('popover', 'manual')
-    this.surface.append(document.createElement('slot'))
+    // Three regions: a fixed `header` slot, a scrolling body (the default slot,
+    // holding the items), and a fixed `footer` slot. Only the body scrolls, so
+    // pinned content (a filter field, a footer action) stays put and the scrollbar
+    // spans just the items. `header`/`footer` slots are empty (0-height) for a plain
+    // menu, so the body fills the surface exactly as before.
+    const header = document.createElement('slot')
+    header.setAttribute('name', 'header')
+    const scroll = document.createElement('div')
+    scroll.className = 'scroll'
+    scroll.setAttribute('part', 'scroll')
+    scroll.append(document.createElement('slot'))
+    scroll.addEventListener('scroll', () => this.updateScrollFade(), { passive: true })
+    this.scrollEl = scroll
+    const footer = document.createElement('slot')
+    footer.setAttribute('name', 'footer')
+    this.surface.append(header, scroll, footer)
 
     // Keep an open submenu alive while the pointer is inside it. Hover-intent is
     // mouse-only: touch/pen emit compatibility pointerenter/leave for a tap, and
@@ -493,7 +537,7 @@ export class AMenuElement extends HTMLElementBase {
   private focusables(): HTMLElement[] {
     const sel =
       'a-menu-item, a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]),' +
-      ' select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ' select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [data-menu-search]'
     return (Array.from(this.querySelectorAll(sel)) as HTMLElement[]).filter(
       (el) =>
         el.closest('a-menu') === this && !el.hasAttribute('disabled') && this.isVisible(el),
@@ -506,6 +550,86 @@ export class AMenuElement extends HTMLElementBase {
     // when the item sits near a viewport edge that programmatic scroll fires the
     // just-bound scroll-dismiss listener, closing the menu the instant it opens.
     this.focusableItems()[0]?.focus({ preventScroll: true })
+  }
+
+  /** Fade the scrolling body's content into the top / bottom edges — but only on the
+   *  side that actually has more to scroll, so a short (non-scrolling) menu and the
+   *  true top / bottom stay crisp. Drives the `--fade-*` vars the `.scroll` mask
+   *  reads; runs on scroll and after every (re)position. Shadow-internal only. */
+  private updateScrollFade() {
+    const el = this.scrollEl
+    if (!el) return
+    const top = el.scrollTop > 1
+    const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 1
+    el.style.setProperty('--fade-top', top ? '14px' : '0px')
+    el.style.setProperty('--fade-bottom', bottom ? '14px' : '0px')
+  }
+
+  /* ------------------------------ combobox mode ------------------------------ */
+
+  /** The filter field slotted into THIS menu (never a submenu's), or null. Its
+   *  presence switches the menu to the combobox keyboard. */
+  private get searchField(): HTMLElement | null {
+    const el = this.querySelector('[data-menu-search]') as HTMLElement | null
+    return el && el.closest('a-menu') === this ? el : null
+  }
+
+  /** Move the combobox cursor. Sets the item's `active` **property** (off-DOM
+   *  `:state(active)`, no attribute churn) and reflects `aria-activedescendant`
+   *  onto the search field — the same ARIA-state-reflection latitude as
+   *  `aria-expanded` on the anchor. `null` clears the cursor. */
+  private setActive(item: AMenuItemElement | null) {
+    if (this.activeItem && this.activeItem !== item) this.activeItem.active = false
+    this.activeItem = item
+    if (item) {
+      item.active = true
+      item.scrollIntoView?.({ block: 'nearest' })
+    }
+    const s = this.searchField
+    if (!s) return
+    if (item?.id) s.setAttribute('aria-activedescendant', item.id)
+    else s.removeAttribute('aria-activedescendant')
+  }
+
+  /** Re-seat the cursor on the first option — but only once the filter has input.
+   *  An empty filter (e.g. right after opening) shows NO active row, so the first
+   *  ArrowDown is what steps onto the list; typing then keeps the top match active. */
+  private resetActive() {
+    const q = (this.searchField as { value?: string } | null)?.value
+    this.setActive(q && q.trim() ? (this.focusableItems()[0] ?? null) : null)
+  }
+
+  /** Combobox arrow / Home / End / Enter handling; returns true if it consumed the
+   *  key (so `handleKey` stops). Any other key falls through to the input (typing). */
+  private handleComboKey(e: KeyboardEvent): boolean {
+    const items = this.focusableItems()
+    const idx = this.activeItem ? items.indexOf(this.activeItem) : -1
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        this.setActive(items[idx < 0 ? 0 : (idx + 1) % items.length] ?? null)
+        return true
+      case 'ArrowUp':
+        e.preventDefault()
+        this.setActive(items[idx <= 0 ? items.length - 1 : idx - 1] ?? null)
+        return true
+      case 'Home':
+        e.preventDefault()
+        this.setActive(items[0] ?? null)
+        return true
+      case 'End':
+        e.preventDefault()
+        this.setActive(items[items.length - 1] ?? null)
+        return true
+      case 'Enter':
+        if (this.activeItem) {
+          e.preventDefault()
+          this.activeItem.click()
+        }
+        return true
+      default:
+        return false
+    }
   }
 
   /* ============================ open / close ============================ */
@@ -604,7 +728,37 @@ export class AMenuElement extends HTMLElementBase {
       this.armPositionTracker()
     }
 
-    if (viaKeyboard) this.focusFirstItem()
+    const search = this.searchField
+    if (search) {
+      // Combobox: focus the filter field on open (mouse OR keyboard) so typing
+      // narrows immediately, seat the cursor on the first option, and watch for the
+      // filtered list changing.
+      ;(search as HTMLElement).focus({ preventScroll: true })
+      this.resetActive()
+      this.startComboObserver()
+    } else if (viaKeyboard) {
+      this.focusFirstItem()
+    }
+  }
+
+  /** While a filter field is open, the visible option list changes as the user
+   *  types (the consumer re-renders the matches); re-seat the cursor on the first
+   *  match. `childList` only — an item toggling its own `selected` (multi-select)
+   *  mutates deep in its subtree, not this menu's direct children, so it won't
+   *  spuriously reset the cursor. */
+  private startComboObserver() {
+    this.comboObserver?.disconnect()
+    this.comboObserver = new this.view.MutationObserver(() => {
+      if (!this._shown || !this.searchField) return
+      this.resetActive()
+      // The filtered list changed the menu's height — re-anchor to the trigger,
+      // keeping the side chosen at open (`reanchor`). Matters when flipped ABOVE:
+      // its `top` derives from its height, so a shrunk list must move down to stay
+      // against the field instead of floating where the taller list reached — and
+      // it must NOT flip back under the field once it's short enough to fit.
+      this.position(undefined, false, true)
+    })
+    this.comboObserver.observe(this, { childList: true })
   }
 
   /** Watch the root trigger and dismiss the system once it scrolls out of the
@@ -625,6 +779,11 @@ export class AMenuElement extends HTMLElementBase {
   /** Apply CLOSE to the DOM (no event). Closes this menu and everything stacked
    *  above it (its submenus). */
   private hide() {
+    // Tear down combobox state (no-op for a plain menu).
+    this.comboObserver?.disconnect()
+    this.comboObserver = undefined
+    this.setActive(null)
+    this._flippedTop = null // re-decide the side on the next open
     const idx = openStack.indexOf(this)
     if (idx === -1) {
       if (this._shown) this._doHide()
@@ -690,7 +849,7 @@ export class AMenuElement extends HTMLElementBase {
 
   /* ============================ positioning ============================ */
 
-  private position(coord?: [number, number], sync = false) {
+  private position(coord?: [number, number], sync = false, reanchor = false) {
     const run = () => {
       if (!this._shown) return
       const view = this.view
@@ -745,9 +904,20 @@ export class AMenuElement extends HTMLElementBase {
         // Decide the vertical side: honor the placement, flip if the preferred
         // side lacks room and the other side has more.
         let onTop = p.startsWith('top')
+        // The body scrolls (not the surface), so a capped surface no longer reports
+        // its natural height. Drop the cap, read the full height, then re-cap below.
+        // Synchronous, so the unconstrained layout never paints.
+        surface.style.maxHeight = ''
         const natural = surface.scrollHeight
-        if (onTop && spaceAbove < natural && spaceBelow > spaceAbove) onTop = false
-        else if (!onTop && spaceBelow < natural && spaceAbove > spaceBelow) onTop = true
+        if (reanchor && this._flippedTop !== null) {
+          // Keep the side chosen at open — don't let a shrunk (filtered) menu hop
+          // back under the trigger just because it now fits there.
+          onTop = this._flippedTop
+        } else {
+          if (onTop && spaceAbove < natural && spaceBelow > spaceAbove) onTop = false
+          else if (!onTop && spaceBelow < natural && spaceAbove > spaceBelow) onTop = true
+        }
+        this._flippedTop = onTop
 
         // Cap the surface to the chosen side's space (it scrolls if taller).
         const space = onTop ? spaceAbove : spaceBelow
@@ -771,6 +941,7 @@ export class AMenuElement extends HTMLElementBase {
       }
 
       surface.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`
+      this.updateScrollFade()
     }
     // Sync (instant open atop an already-open menu) avoids both the rAF delay
     // and the unpositioned first frame; otherwise position next frame.
@@ -872,6 +1043,15 @@ export class AMenuElement extends HTMLElementBase {
       return
     }
 
+    // Combobox: focus is in the filter field → arrows / Home / End / Enter move &
+    // activate the cursor (focus stays put so you keep typing); every other key
+    // falls through to the input. Suppresses the plain-menu item nav + type-ahead.
+    const search = this.searchField
+    if (search && (active === search || search.contains(active as Node))) {
+      this.handleComboKey(e)
+      return
+    }
+
     // Arrow / Home / End / type-ahead drive the item cursor — but only while
     // focus is on a menu item (or still outside, entering via ArrowDown). If
     // the user has Tabbed onto a NESTED control in this menu (input, slider,
@@ -885,19 +1065,19 @@ export class AMenuElement extends HTMLElementBase {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        items[idx < 0 ? 0 : (idx + 1) % items.length]?.focus()
+        items[idx < 0 ? 0 : (idx + 1) % items.length]?.focus({ preventScroll: true })
         break
       case 'ArrowUp':
         e.preventDefault()
-        items[idx <= 0 ? items.length - 1 : idx - 1]?.focus()
+        items[idx <= 0 ? items.length - 1 : idx - 1]?.focus({ preventScroll: true })
         break
       case 'Home':
         e.preventDefault()
-        items[0]?.focus()
+        items[0]?.focus({ preventScroll: true })
         break
       case 'End':
         e.preventDefault()
-        items[items.length - 1]?.focus()
+        items[items.length - 1]?.focus({ preventScroll: true })
         break
       case 'ArrowRight': {
         const sub = this.submenuOf(active)

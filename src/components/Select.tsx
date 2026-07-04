@@ -3,7 +3,7 @@
 // component: it holds selection + open state and renders an <Input> trigger
 // followed by a <Menu> of options. There is no `a-select` element — the wrapper
 // IS the coordinator (see the Select docs page: "Components composition").
-import { useState } from '../jsx-runtime'
+import { useState, useId } from '../jsx-runtime'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { Input } from './Input'
@@ -90,8 +90,14 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` /
    *  `'checkbox'` it tones the label + indicator (those modes have no row tint). */
   toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Add a search field at the top of the menu that filters the options as you
+   *  type. `true` uses the built-in matcher — a case-insensitive substring of the
+   *  option's **value / label / hint**. Pass a **function** `(option, query) =>
+   *  boolean` for custom matching (called per option; return `true` to keep it). */
+  filter?: boolean | ((option: SelectOption, query: string) => boolean)
   /** `multiple` only: add a "Select all" row at the top that toggles every enabled
-   *  option; its box shows the mixed state when only some are selected. */
+   *  option (the currently-visible ones when a `filter` query is active); its box
+   *  shows the mixed state when only some are selected. */
   selectAll?: boolean
   /** Label for the `selectAll` row.
    *  @defaultValue Select all */
@@ -183,6 +189,7 @@ export const Select = (props: SelectProps) => {
     round,
     disabled,
     toneSelected,
+    filter,
     selectAll,
     selectAllLabel = 'Select all',
     className,
@@ -191,6 +198,9 @@ export const Select = (props: SelectProps) => {
   } = props
 
   const multiple = selection === 'multiple'
+  // A validation status tints the chevron to match the field's border/hint.
+  const statusColor =
+    status && status !== 'neutral' ? `var(--text-2-${status})` : undefined
   // Multi-select always uses checkboxes; single-select's mark is the `indicator`
   // prop ('none' → no per-row mark, just the tint).
   const mark = multiple ? 'checkbox' : indicator ?? 'none'
@@ -203,9 +213,48 @@ export const Select = (props: SelectProps) => {
   const [internal, setInternal] = useState<string | string[] | undefined>(defaultValue)
   const currentRaw = controlled ? value : internal
   const [open, setOpen] = useState(false)
+  // Filter query (reset when the menu closes — see the Menu's onStateChange).
+  const [query, setQuery] = useState('')
+  const uid = useId()
 
   const opts = options.map(normalize)
   const byValue = new Map(opts.map((o) => [o.value, o]))
+
+  // `filter`: which options the menu shows. The built-in matcher is a regex that's
+  // case-insensitive and treats each run of whitespace in the query as "one or more
+  // whitespace symbols" (so a typed space spans any gap); a function is a custom
+  // per-option predicate. `queryRe` is null for a function or an empty query — which
+  // is also the signal to skip match-highlighting.
+  const filtering = filter !== undefined && filter !== false
+  const q = query.trim()
+  const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const queryRe =
+    filtering && typeof filter !== 'function' && q
+      ? new RegExp(q.split(/\s+/).map(escapeRe).join('\\s+'), 'i')
+      : null
+  const matches = (o: SelectOption) =>
+    typeof filter === 'function'
+      ? filter(o, query)
+      : !queryRe || [o.value, o.label ?? '', o.hint ?? ''].some((s) => queryRe.test(s))
+  const visibleOpts = filtering && q ? opts.filter(matches) : opts
+
+  // Bold the matched substring(s) for display — built-in matcher only.
+  const highlight = (text: string): React.ReactNode => {
+    if (!queryRe) return text
+    const re = new RegExp(queryRe.source, 'gi')
+    const out: React.ReactNode[] = []
+    let last = 0
+    let m: RegExpExecArray | null
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) out.push(text.slice(last, m.index))
+      out.push(<b key={out.length}>{m[0]}</b>)
+      last = m.index + m[0].length
+      if (m[0].length === 0) re.lastIndex++ // guard against a zero-width match looping
+    }
+    if (out.length === 0) return text
+    if (last < text.length) out.push(text.slice(last))
+    return out
+  }
 
   // Collapse whatever selection shape we have into a lookup list.
   const selectedValues: string[] = Array.isArray(currentRaw)
@@ -245,7 +294,7 @@ export const Select = (props: SelectProps) => {
   // selected disabled / unknown values (the user can't reach those to re-add them).
   // The row's box shows mixed when only some enabled options are on. Computed only
   // in multiple mode — single-select never reads it.
-  const enabledValues = multiple ? opts.filter((o) => !o.disabled).map((o) => o.value) : []
+  const enabledValues = multiple ? visibleOpts.filter((o) => !o.disabled).map((o) => o.value) : []
   const enabledSelected = enabledValues.filter((v) => selectedValues.includes(v))
   const allSelected = enabledValues.length > 0 && enabledSelected.length === enabledValues.length
   const someSelected = enabledSelected.length > 0 && !allSelected
@@ -273,11 +322,13 @@ export const Select = (props: SelectProps) => {
         aria-haspopup="menu"
         aria-expanded={open ? 'true' : 'false'}
         onKeyDown={(e: any) => {
-          // A read-only field doesn't synthesize a click on Enter/Space the way a
-          // button does, so open the menu ourselves: a programmatic click on the
-          // field fires the Menu's anchor handler (detail 0 → opens via keyboard,
-          // focusing the first option). ArrowDown opens too (listbox pattern).
-          if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+          // Open on Enter/Space/ArrowDown, but ONLY while closed. A read-only field
+          // doesn't synthesize a click, so we click it ourselves (detail 0 → the
+          // Menu opens via keyboard and focuses the first option). Guarding on `open`
+          // matters after a *mouse* open, where focus stays on the trigger: without
+          // it, ArrowDown would re-click the still-open menu and toggle it shut.
+          // While open, the key falls through to the Menu (ArrowDown enters the list).
+          if (!open && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown')) {
             e.preventDefault()
             e.currentTarget.click()
           }
@@ -288,6 +339,7 @@ export const Select = (props: SelectProps) => {
           <Icon
             shape="chevron-down"
             className={open ? `${styles.chevron} ${styles.open}` : styles.chevron}
+            style={statusColor ? { color: statusColor } : undefined}
           />
         }
         className={className}
@@ -296,10 +348,32 @@ export const Select = (props: SelectProps) => {
       />
       {/* Anchors to the field (its previous sibling); opens on click. Single-select
           closes on pick; multi-select rows carry `data-menu-open` so toggling keeps
-          the menu open. We observe onStateChange only to flip the chevron +
-          aria-expanded. */}
-      <Menu onStateChange={(_e, { next }) => setOpen(next)}>
-        {multiple && selectAll && (
+          the menu open. We observe onStateChange to flip the chevron / aria-expanded
+          and to reset the filter when the menu closes. */}
+      <Menu
+        onStateChange={(_e, { next }) => {
+          setOpen(next)
+          if (!next) setQuery('') // closed → clear the filter for next open
+        }}
+      >
+        {filtering && (
+          // `slot="header"` pins the field in the Menu's fixed header region (above
+          // the scrolling options); `data-menu-search` puts the menu in combobox
+          // mode — it focuses this field on open and drives an active-option cursor.
+          <div className={styles.filter} slot="header" data-menu-open="">
+            <Input
+              data-menu-search=""
+              size="small"
+              value={query}
+              placeholder="Filter…"
+              aria-label="Filter options"
+              aria-autocomplete="list"
+              leading={<Icon shape="search" />}
+              onInput={(e: any) => setQuery(e.currentTarget.value)}
+            />
+          </div>
+        )}
+        {multiple && selectAll && visibleOpts.length > 0 && (
           <>
             <MenuItem
               selectionIndicator="checkbox"
@@ -312,22 +386,27 @@ export const Select = (props: SelectProps) => {
             <MenuSeparator />
           </>
         )}
-        {opts.map((o) => (
-          <MenuItem
-            key={o.value}
-            selectionIndicator={menuItemIndicator}
-            label={o.label ?? o.value}
-            hint={o.hint}
-            icon={o.icon}
-            // The selected row(s) take `toneSelected` (falling back to the option's
-            // own tone); everything else keeps its own tone.
-            tone={isSelected(o.value) && toneSelected ? toneSelected : o.tone}
-            selected={isSelected(o.value)}
-            disabled={o.disabled}
-            data-menu-open={multiple ? '' : undefined}
-            onSelect={() => choose(o)}
-          />
-        ))}
+        {visibleOpts.length === 0 ? (
+          <MenuItem disabled label="No matches" data-menu-open="" />
+        ) : (
+          visibleOpts.map((o) => (
+            <MenuItem
+              key={o.value}
+              id={`${uid}-opt-${o.value}`}
+              selectionIndicator={menuItemIndicator}
+              label={queryRe ? highlight(o.label ?? o.value) : o.label ?? o.value}
+              hint={queryRe && o.hint ? highlight(o.hint) : o.hint}
+              icon={o.icon}
+              // The selected row(s) take `toneSelected` (falling back to the option's
+              // own tone); everything else keeps its own tone.
+              tone={isSelected(o.value) && toneSelected ? toneSelected : o.tone}
+              selected={isSelected(o.value)}
+              disabled={o.disabled}
+              data-menu-open={multiple ? '' : undefined}
+              onSelect={() => choose(o)}
+            />
+          ))
+        )}
       </Menu>
     </>
   )

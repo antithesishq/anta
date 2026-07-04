@@ -7,3 +7,10 @@
 .chevron.open {
   transform: rotate(180deg);
 }
+
+/* The `filter` search field sits in the Menu's fixed header slot (`slot="header"`),
+   so it stays put while the options scroll below it — no sticky/overlay needed.
+   Just spacing: a little breathing room above and a gap down to the first option. */
+.filter {
+  padding: 2px 2px 6px;
+}

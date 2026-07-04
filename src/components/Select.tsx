@@ -142,6 +142,16 @@ export const Select = ({
         round={round}
         aria-haspopup="listbox"
         aria-expanded={open ? 'true' : 'false'}
+        onKeyDown={(e: any) => {
+          // A read-only field doesn't synthesize a click on Enter/Space the way a
+          // button does, so open the menu ourselves: a programmatic click on the
+          // field fires the Menu's anchor handler (detail 0 → opens via keyboard,
+          // focusing the first option). ArrowDown opens too (listbox pattern).
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+            e.preventDefault()
+            e.currentTarget.click()
+          }
+        }}
         trailing={
           // Chevron rotates down → up when open (spacing + rotation in the CSS
           // module, matching the Input "Select dropdown" example).

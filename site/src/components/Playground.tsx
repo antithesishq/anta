@@ -33,16 +33,12 @@ import 'monaco-editor/min/vs/editor/editor.main.css'
 
 import { controlsFor, controlsForExample, CONDITIONAL_PROPS, type Control, type PropEntry } from '../../lib/sandbox/props-form.ts'
 import { bundle, type BundleResult } from '../../lib/sandbox/bundler.ts'
-import { getDemoModules, moduleManifest } from '../../lib/sandbox/modules.ts'
+import { moduleManifest } from '../../lib/sandbox/modules.ts'
+import { IFRAME_ASSETS } from '../generated/iframe-assets'
 import { replaceProp, readChildren } from '../../lib/sandbox/prop-patch.ts'
 import { readProp } from '../../lib/sandbox/prop-read.ts'
 import { parseExamples, type Example } from '../../lib/sandbox/parse-examples.ts'
 import { throttle } from 'es-toolkit'
-
-/** Path served from `site/public/`. The script is a self-contained
- *  browser ESM bundle of @antadesign/anta/elements + per-element CSS;
- *  built by `site/scripts/build-iframe-runtime.mjs`. */
-const IFRAME_RUNTIME_URL = '/iframe-anta-runtime.js'
 
 /** The prose column width (matches the 960px measure in base.css). The
  *  playground starts here and can't be resized narrower. */
@@ -323,12 +319,12 @@ export default function Playground({ component, initialCode, initialCss = '', la
         pushBundleToIframe(iframe, (bundleState as BundleResult & { code: string }).code)
       }
     }
-    const doc = iframe.contentDocument
-    if (doc && (doc.readyState === 'complete' || doc.readyState === 'interactive')) {
-      init()
-      return () => { cancelled = true }
-    }
+    // Set srcdoc client-side (window exists here) so the import-map / asset URLs
+    // resolve against the real origin — SSR has no window and would bake a wrong
+    // host (ERR_CONNECTION_REFUSED). Listener first, then assign, so the fresh
+    // srcdoc's `load` is always caught → init() → setupIframe.
     iframe.addEventListener('load', init)
+    iframe.srcdoc = buildSrcdoc()
     return () => {
       cancelled = true
       iframe.removeEventListener('load', init)
@@ -564,7 +560,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
           <iframe
             ref={iframeRef}
             class={s.previewFrame}
-            srcDoc={IFRAME_SRCDOC}
+            // srcdoc is set imperatively in the mount effect — it must be built
+            // client-side (asset URLs need the real origin; SSR has no window).
             title={`${component} interactive demo preview`}
             // In `side` layout the preview fills the grid row (its
             // sibling panel drives the height); we let the iframe
@@ -1223,13 +1220,29 @@ function ExampleAccordion({
 // element's color-scheme does NOT propagate into the document (its canvas
 // defaults to light), which is why a white flash appeared on expand in dark
 // mode. The setupIframe mirror keeps the `.dark` class in sync on later toggles.
-const IFRAME_SRCDOC = `<!DOCTYPE html><html><head><meta charset="utf-8"><script>
+/** Absolute URL for a prebuilt, content-hashed iframe asset. srcdoc lives at
+ *  `about:srcdoc` and can't resolve relative paths, so we anchor to the parent
+ *  origin. The hash in the filename is the cache-buster. */
+function iframeAssetUrl(file: string): string {
+  const base = typeof window !== 'undefined' ? window.location.href : 'http://localhost/'
+  return new URL(`/iframe/${file}`, base).href
+}
+
+/** The preview iframe as a self-contained Anta app: it loads one prebuilt,
+ *  content-hashed bundle (`iframe-app.js` — Preact + the whole Anta + element
+ *  registration) plus its matching stylesheet. That bundle seeds
+ *  `window.__demo_modules__` from its own instances, which the sandbox-compiled
+ *  demo reads — so the demo runs against the iframe's Anta + Preact (one Preact
+ *  instance, Anta CSS present with matching class names). */
+function buildSrcdoc(): string {
+  const A = IFRAME_ASSETS
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><script>
   try {
     var d = parent.document.documentElement.classList.contains('dark');
     document.documentElement.classList.toggle('dark', d);
     document.documentElement.style.colorScheme = d ? 'dark' : 'light';
   } catch (e) {}
-</script><style>
+</script><link rel="stylesheet" href="${iframeAssetUrl(A.css)}"><script type="module" src="${iframeAssetUrl(A.js)}"></script><style>
   /* Pin the Antithesis-sans variable font's slnt / ital axes to 0.
      Safari leaves variable-font axes at the font file's internal
      defaults unless they're explicitly set — and our font ships
@@ -1252,16 +1265,19 @@ const IFRAME_SRCDOC = `<!DOCTYPE html><html><head><meta charset="utf-8"><script>
     width: 100%;
   }
 </style></head><body><div id="root" class="preview"></div></body></html>`
+}
 
 function setupIframe(iframe: HTMLIFrameElement) {
   const doc = iframe.contentDocument
   const win = iframe.contentWindow as Window & { __demo_modules__?: Record<string, unknown> }
   if (!doc || !win) return
 
-  // 1) Module registry.
-  win.__demo_modules__ = getDemoModules()
+  // `window.__demo_modules__` (the Anta + Preact instances the demo shim reads)
+  // and the custom-element registration are both handled by the preview-app
+  // bundle loaded from the srcdoc (see buildSrcdoc) — it runs before this
+  // iframe's `load`, so the modules are seeded by the time we push a demo.
 
-  // 2) Clone Anta-related <link rel="stylesheet"> + <style> tags from
+  // Clone Anta-related <link rel="stylesheet"> + <style> tags from
   //    the parent into the iframe so the rendered preview gets the
   //    same look as the docs site. Anta CSS stays unlayered — its
   //    component defaults beat anything in a cascade layer
@@ -1287,19 +1303,6 @@ function setupIframe(iframe: HTMLIFrameElement) {
     }
   }
 
-  // 3) Register Anta's custom elements inside the iframe so <a-progress>
-  //    upgrades on the iframe's own customElements registry. We import
-  //    the module directly into the iframe's window via a script tag.
-  //    Vite resolves the bare specifier in the parent at build time;
-  //    inside the iframe we use a dynamic import of the resolved URL.
-  const reg = doc.createElement('script')
-  reg.type = 'module'
-  reg.textContent = `
-    // Side-effect import — registers <a-progress>, <a-text>, <a-icon>
-    // on this iframe's customElements registry.
-    import("${getElementsModuleUrl()}").catch(() => {})
-  `
-  doc.head.appendChild(reg)
 
   // 4) Mirror the parent's .dark class (and color-scheme, so a light docs
   //    theme flips the iframe canvas back to light — the srcdoc defaults to
@@ -1387,12 +1390,6 @@ function pushBundleToIframe(iframe: HTMLIFrameElement, code: string, resetRoot =
   }, 50)
 }
 
-/** Return an absolute URL pointing at the prebuilt iframe runtime
- *  bundle (Anta elements registration + CSS). The iframe lives at
- *  `about:srcdoc` and can't resolve relative paths. */
-function getElementsModuleUrl(): string {
-  return new URL(IFRAME_RUNTIME_URL, window.location.href).href
-}
 
 // ──────────────────────────────────────────────────────────────────
 // Shiki ↔ Monaco bridge. shikiToMonaco installs themes + token

@@ -175,12 +175,6 @@ const SHADOW_STYLE = `
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
   }
-  /* A read-only field (e.g. the Select trigger) isn't typed into, so a mouse
-     click shouldn't ring it — only keyboard focus (:focus-visible) does.
-     Editable fields keep the ring on any focus. */
-  :host([readonly]) .field:has(input:focus:not(:focus-visible), textarea:focus:not(:focus-visible)) {
-    outline: none;
-  }
 
   input, textarea {
     flex: 1 1 auto;

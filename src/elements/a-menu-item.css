@@ -8,12 +8,10 @@
     --menu-item-icon-color: var(--text-3);
     --menu-item-hint-color: var(--text-3);
     --menu-item-hover: 5%;
-    --menu-item-active: 9%;
-    /* Persistent "on" tint for a selected row, plus its own hover / press
-       steps so a selected item still reacts to the pointer. */
-    --menu-item-selected: 9%;
-    --menu-item-selected-hover: 13%;
-    --menu-item-selected-active: 16%;
+    --menu-item-active: 8%;
+    /* Persistent "on" tint for a selected row — held in every state (an
+       already-selected row doesn't change on hover / press). */
+    --menu-item-selected: 8%;
     /* Hover eases in quickly and eases out slower; active is instant. */
     --menu-item-timing-in: 60ms ease-in-out;
     --menu-item-timing-out: 280ms ease-out;
@@ -63,19 +61,12 @@
     transition: none;
   }
 
-  /* Selected rows sit after the hover / active rules (equal specificity) so a
-     selected item's own hover / press steps win over the generic ones. */
+  /* A selected row holds its tint in every state — an already-selected row
+     doesn't change on hover / press. This rule sits after the hover / active
+     rules (equal specificity) so it wins the tie; the keyboard focus ring is a
+     separate `outline` rule below, so it still shows. */
   a-menu-item[selected] {
     background: color-mix(in oklch, currentColor var(--menu-item-selected), transparent);
-  }
-  a-menu-item[selected]:hover,
-  a-menu-item[selected]:focus-visible {
-    background: color-mix(in oklch, currentColor var(--menu-item-selected-hover), transparent);
-    transition: background-color var(--menu-item-timing-in);
-  }
-  a-menu-item[selected]:active {
-    background: color-mix(in oklch, currentColor var(--menu-item-selected-active), transparent);
-    transition: none;
   }
 
   a-menu-item:focus-visible {
@@ -181,9 +172,7 @@
 
   .dark a-menu-item {
     --menu-item-hover: 10%;
-    --menu-item-active: 15%;
-    --menu-item-selected: 15%;
-    --menu-item-selected-hover: 20%;
-    --menu-item-selected-active: 24%;
+    --menu-item-active: 14%;
+    --menu-item-selected: 14%;
   }
 }

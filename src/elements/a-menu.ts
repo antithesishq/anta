@@ -294,7 +294,6 @@ export class AMenuElement extends HTMLElementBase {
         max-width: calc(100vw - ${2 * MARGIN}px);
         max-height: calc(100dvh - ${2 * MARGIN}px);
         overflow: hidden;
-        padding: var(--menu-padding, 4px);
         background: var(--menu-bg, Canvas);
         color: var(--text-2, CanvasText);
         border: var(--menu-border, 1px solid);
@@ -346,6 +345,11 @@ export class AMenuElement extends HTMLElementBase {
         overflow-y: auto;
         overscroll-behavior: contain;
         scrollbar-width: thin;
+        /* The menu's padding lives here (not on the clipping container) so an item's
+           focus outline has room inside the scroll box instead of being clipped at
+           the edge; scroll-padding keeps a focused row off the edge when scrolled. */
+        padding: var(--menu-padding, 4px);
+        scroll-padding-block: var(--menu-padding, 4px);
         /* Soft scroll edges: fade the content into the top / bottom only on the side
            with more to scroll (the --fade-* vars, set from JS, are 0 otherwise). */
         --fade-top: 0px;

@@ -13,19 +13,15 @@ import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDe
 
 # Select
 
-A single- or multi-select dropdown: a read-only field showing the chosen
-value(s), and a menu of options to pick from. Click the field to open the menu; it
-anchors to the field, dismisses on outside-click or `Esc`, and highlights the
-chosen row.
+A single- or multi-select dropdown: a read-only field showing the chosen value(s)
+over a menu of options. Click to open; it anchors to the field, dismisses on
+outside-click or `Esc`, and highlights the chosen row.
 
-Select is a **composed component** — not a new element, but an
-[Input](/components/input/) trigger stitched to a [Menu](/components/menu/), with
-the wrapper coordinating value and open state. Options come from a JSON array of
-bare strings or objects (like [RadioGroup](/components/radio/) /
-[Tabs](/components/tabs/)); changes arrive through one **`onValueChange`**
-callback. Control it with `value` or leave it uncontrolled with `defaultValue`.
-
-Requires `@antadesign/anta/elements` (client-side only).
+It's a **composed component** — an [Input](/components/input/) trigger stitched to
+a [Menu](/components/menu/), not a new element. Options are a JSON array of strings
+or objects (like [RadioGroup](/components/radio/) / [Tabs](/components/tabs/));
+changes arrive through one **`onValueChange`**. Controlled via `value`, uncontrolled
+via `defaultValue`.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -250,20 +246,16 @@ container — set a width via `style` / `className` (both forwarded to the field
 
 ## Components composition
 
-`Select` has no `<a-select>` element — the JSX wrapper *is* the coordinator. It
-renders an `<Input readOnly>` followed by a `<Menu>`, holds the value and open
-state, reflects the value into the field and into each option's `selected`, and
-turns a `MenuItem` pick into `onValueChange`. Everything hard — positioning,
-outside-click / Esc dismiss, in-menu arrow / type-ahead keyboard — comes from
-`Menu` for free.
+`Select` has no `<a-select>` element — the wrapper *is* the coordinator: it renders
+`<Input readOnly>` + `<Menu>`, reflects the value into the field and each option's
+`selected`, and turns a pick into `onValueChange`. Positioning, dismissal, and
+in-menu keyboard come from `Menu`. So the same result is reachable **without React**
+— the menu anchors to its previous sibling, so a field + a menu + a little glue is a
+working select:
 
 <Preview>
   <SelectBasicDemo client:load />
 </Preview>
-
-Because it's a composition, the same result is reachable **without React** by
-hand-assembling the pieces — the menu anchors to its previous sibling, so a field
-plus a menu plus a little glue is a working select:
 
 ```html folded
 <!-- `.select` is your own wrapper class — everything below is scoped to it. -->
@@ -299,9 +291,8 @@ plus a menu plus a little glue is a working select:
 </script>
 ```
 
-`Menu` gives you open/close, positioning, and dismissal; you supply the small bit
-of glue that tracks which item is `selected`, flips the chevron, and updates the
-field. The React `Select` packages exactly this.
+That glue — tracking `selected`, flipping the chevron, updating the field — is
+exactly what the React `Select` packages.
 
 ## Coming soon
 

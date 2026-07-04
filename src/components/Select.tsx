@@ -2,7 +2,7 @@
 // not a hard `react` import — same rule as RadioGroup. Select is a *composed*
 // component: it holds selection + open state and renders an <Input> trigger
 // followed by a <Menu> of options. There is no `a-select` element — the wrapper
-// IS the coordinator (see the Select docs page: "A composed component").
+// IS the coordinator (see the Select docs page: "Components composition").
 import { useState } from '../jsx-runtime'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'

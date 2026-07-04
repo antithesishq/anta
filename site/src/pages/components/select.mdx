@@ -112,7 +112,7 @@ const [field, setField] = useState('stream')
 </Col>
 </Columns>
 
-## A composed component
+## Components composition
 
 `Select` has no `<a-select>` element — the JSX wrapper *is* the coordinator. It
 renders an `<Input readOnly>` followed by a `<Menu>`, holds the value and open
@@ -130,30 +130,42 @@ hand-assembling the pieces — the menu anchors to its previous sibling, so a fi
 plus a menu plus a little glue is a working select:
 
 ```html folded
-<a-input readonly value="stream" aria-haspopup="listbox">
-  <a-icon slot="trailing" shape="chevron-down"></a-icon>
-</a-input>
-<a-menu>
-  <a-menu-item value="output_text">output_text</a-menu-item>
-  <a-menu-item value="stream" selected>stream</a-menu-item>
-  <a-menu-item value="container">container</a-menu-item>
-</a-menu>
+<!-- `.select` is your own wrapper class — everything below is scoped to it. -->
+<div class="select" style="width: 240px">
+  <!-- Read-only field trigger; `dim-actions` dims the chevron at rest. The 7px
+       inline margin + transition on the chevron match <Select>. -->
+  <a-input readonly dim-actions value="stream" aria-haspopup="listbox">
+    <a-icon slot="trailing" shape="chevron-down" style="margin-inline-end: 7px; transition: transform 150ms ease"></a-icon>
+  </a-input>
+  <a-menu>
+    <a-menu-item value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
+    <a-menu-item value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
+    <a-menu-item value="container"><a-menu-item-label>container</a-menu-item-label></a-menu-item>
+  </a-menu>
+</div>
 <script type="module">
   import '@antadesign/anta/elements'
-  const field = document.currentScript.previousElementSibling.previousElementSibling.previousElementSibling
-  const menu = field.nextElementSibling
+  const root = document.querySelector('.select')
+  const field = root.querySelector('a-input')
+  const menu = root.querySelector('a-menu')
+  const chevron = field.querySelector('a-icon')
+  // Flip the chevron with the menu's open state (as <Select> does).
+  menu.addEventListener('statechange', (e) => {
+    chevron.style.transform = e.detail.next === 'open' ? 'rotate(180deg)' : ''
+  })
+  // On pick: mark the row selected + reflect its label into the field.
   menu.addEventListener('click', (e) => {
     const item = e.target.closest('a-menu-item')
     if (!item) return
     menu.querySelectorAll('a-menu-item').forEach((el) => el.toggleAttribute('selected', el === item))
-    field.value = item.getAttribute('value')
+    field.value = item.querySelector('a-menu-item-label').textContent
   })
 </script>
 ```
 
-`Menu` gives you open/close, positioning, and dismissal; you supply the ~6 lines
-that track which item is `selected` and update the field. The React `Select`
-packages exactly this.
+`Menu` gives you open/close, positioning, and dismissal; you supply the small bit
+of glue that tracks which item is `selected`, flips the chevron, and updates the
+field. The React `Select` packages exactly this.
 
 ## Coming soon
 

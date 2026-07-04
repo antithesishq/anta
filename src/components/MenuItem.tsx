@@ -210,10 +210,11 @@ export const MenuItem = ({
       {kbd && <kbd>{kbd}</kbd>}
       {(() => {
         // A submenu shows the chevron by default; `iconTrailing` overrides it. The
-        // `check` selection style puts a trailing check on the selected row (unless
-        // the author set an explicit `iconTrailing`).
+        // `check` selection style reserves a trailing slot on *every* row — a check
+        // on the selected row, an invisible `blank` spacer on the rest — so the label
+        // and end padding don't shift as the selection moves.
         let trailing = submenu ? (iconTrailing ?? 'chevron-right') : iconTrailing
-        if (!submenu && !iconTrailing && selectionIndicator === 'check' && selected) trailing = 'check'
+        if (!submenu && !iconTrailing && selectionIndicator === 'check') trailing = selected ? 'check' : 'blank'
         return trailing ? <a-icon shape={trailing} aria-hidden="true" /> : null
       })()}
     </a-menu-item>

@@ -180,8 +180,7 @@
      lightness to roughly match the named brand text). Every named value must be
      listed in the :not() — without it they'd hit this rule too and attr(tone
      type(<color>)) would fail to parse them. The wrapper also sets
-     --menu-item-tone-source inline for engines without typed attr(). FIRST-PASS
-     lightness values — review. */
+     --menu-item-tone-source inline for engines without typed attr(). */
   a-menu-item[tone]:not(
       [tone=""],
       [tone="brand"],

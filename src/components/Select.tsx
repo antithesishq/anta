@@ -32,19 +32,26 @@ export interface SelectOption {
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
 }
 
-/** Snapshot passed as the 2nd argument to `onValueChange` — describes *what
- *  changed*, alongside the new full value in the 1st argument. */
-export interface SelectChangeAttrs {
-  /** The option value that changed — the chosen value (single) or the toggled
-   *  row (multiple). Omitted for a "Select all" change. */
-  value?: string
-  /** The resolved option object for `value`. Omitted for "Select all". */
-  option?: SelectOption
-  /** Multiple only: whether the change turned selection **on** (true) or off. */
-  selected?: boolean
-  /** Multiple only: true when the change came from the "Select all" row. */
-  all?: boolean
-}
+/** Snapshot passed as the 2nd argument to `onValueChange` — describes *what*
+ *  changed, alongside the new full value in the 1st argument. A discriminated
+ *  union: a row toggle carries `value` + `option`; the "Select all" row carries
+ *  `all: true` instead. Narrow on `'all' in attrs` before reading `option`. */
+export type SelectChangeAttrs =
+  | {
+      /** The option value that changed — the chosen value (single) or the toggled
+       *  row (multiple). */
+      value: string
+      /** The resolved option object for `value`. */
+      option: SelectOption
+      /** Multiple only: whether the change turned selection **on** (true) or off. */
+      selected?: boolean
+    }
+  | {
+      /** Marks the change as coming from the "Select all" row (multiple only). */
+      all: true
+      /** Whether Select-all turned everything **on** (true) or cleared it. */
+      selected: boolean
+    }
 
 /** Props shared by both selection modes, intersected into `SelectProps`. Exported
  *  (and kept as an interface intersected — not a union base via `extends`) so its
@@ -198,6 +205,7 @@ export const Select = (props: SelectProps) => {
   const [open, setOpen] = useState(false)
 
   const opts = options.map(normalize)
+  const byValue = new Map(opts.map((o) => [o.value, o]))
 
   // Collapse whatever selection shape we have into a lookup list.
   const selectedValues: string[] = Array.isArray(currentRaw)
@@ -206,19 +214,19 @@ export const Select = (props: SelectProps) => {
       ? [currentRaw as string]
       : []
   const isSelected = (v: string) => selectedValues.includes(v)
-  const labelFor = (v: string) => {
-    const o = opts.find((x) => x.value === v)
-    return o?.label ?? o?.value ?? v
-  }
+  // Only values that map to a real option row count toward the trigger — a stale or
+  // unknown value contributes nothing rather than corrupting the label or the count.
+  const selectedOptions = selectedValues.map((v) => byValue.get(v)).filter(Boolean) as SelectOption[]
 
   // Trigger text: single shows the chosen label; multiple shows the one label or a
-  // count summary; empty falls through to the placeholder.
+  // count summary; nothing selectable falls through to the placeholder.
   let display = ''
   if (multiple) {
-    if (selectedValues.length === 1) display = labelFor(selectedValues[0])
-    else if (selectedValues.length > 1) display = `${selectedValues.length} selected`
-  } else if (selectedValues.length) {
-    display = labelFor(selectedValues[0])
+    if (selectedOptions.length === 1) display = selectedOptions[0].label ?? selectedOptions[0].value
+    else if (selectedOptions.length > 1) display = `${selectedOptions.length} selected`
+  } else if (currentRaw != null) {
+    const o = byValue.get(currentRaw as string)
+    display = o ? (o.label ?? o.value) : ''
   }
 
   const choose = (o: SelectOption) => {
@@ -233,13 +241,17 @@ export const Select = (props: SelectProps) => {
     }
   }
 
-  // Select-all (multiple only): toggle every enabled option. The row's box shows
-  // mixed when only some are on.
-  const enabledValues = opts.filter((o) => !o.disabled).map((o) => o.value)
-  const allSelected = enabledValues.length > 0 && enabledValues.every((v) => selectedValues.includes(v))
-  const someSelected = selectedValues.length > 0 && !allSelected
+  // Select-all (multiple only): toggle every *enabled* option, preserving any
+  // selected disabled / unknown values (the user can't reach those to re-add them).
+  // The row's box shows mixed when only some enabled options are on. Computed only
+  // in multiple mode — single-select never reads it.
+  const enabledValues = multiple ? opts.filter((o) => !o.disabled).map((o) => o.value) : []
+  const enabledSelected = enabledValues.filter((v) => selectedValues.includes(v))
+  const allSelected = enabledValues.length > 0 && enabledSelected.length === enabledValues.length
+  const someSelected = enabledSelected.length > 0 && !allSelected
   const toggleAll = () => {
-    const next = allSelected ? [] : enabledValues
+    const keep = selectedValues.filter((v) => !enabledValues.includes(v))
+    const next = allSelected ? keep : [...keep, ...enabledValues]
     if (!controlled) setInternal(next)
     emit?.(next, { all: true, selected: !allSelected })
   }

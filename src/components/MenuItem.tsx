@@ -179,9 +179,13 @@ export const MenuItem = ({
           otherwise reuse the checkbox/radio *element* visuals (no role, no focus,
           no form value). a-menu-item.css handles the built-ins' gap/pointer-events. */}
       {indicator != null ? (
+        // `min-height: 1lh` makes the wrapper one text line tall and centres the node
+        // in it, so a small indicator aligns with the label's first line in a hinted
+        // (top-aligned) row instead of riding at the top.
         <span
           aria-hidden="true"
-          style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', pointerEvents: 'none' }}
+          data-indicator=""
+          style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', minHeight: '1lh', pointerEvents: 'none' }}
         >
           {indicator}
         </span>

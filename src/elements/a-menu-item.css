@@ -133,8 +133,11 @@
     pointer-events: none;
   }
 
-  a-menu-item:has(> a-icon:first-child:not(:only-child)) {
-    padding-inline-start: max(0px, var(--menu-item-padding-x) - 2px);
+  /* A leading mark (icon, checkbox, radio, or a custom `[data-indicator]`) reads
+     better with the left padding pulled in to equal the vertical padding, so the mark
+     hugs the corner symmetrically instead of floating in the wider inline inset. */
+  a-menu-item:has(> :is(a-icon, a-checkbox, a-radio, [data-indicator]):first-child:not(:only-child)) {
+    padding-inline-start: var(--menu-item-padding-y);
   }
   /* Trim the end padding when a trailing icon is the last child — but not on a
      submenu item: its chevron is now the last child (children, incl. the nested

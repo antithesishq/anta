@@ -196,6 +196,14 @@ details[open] > summary:not(.summary)::before {
   text-underline-offset: 3px;
 }
 
+/* Same-page links (in-page anchors, `href="#…"`) get a dotted underline so a
+   soft cross-reference reads apart from a solid-underlined link that navigates
+   away. Header anchors set their own styling above. */
+.content a[href^="#"]:not(.header-anchor) {
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
 p, ul, ol, blockquote, dl { margin: 0 0 1em; }
 pre, figure, hr, .expressive-code { margin: 0 0 1.5em; }
 

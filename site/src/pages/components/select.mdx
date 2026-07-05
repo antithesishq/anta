@@ -387,13 +387,11 @@ const renderPath = (o) => (
   <Select label="No cap · grows to fit" options={paths} value={a} onValueChange={setA} renderOption={renderPath} />
 </div>
 
-// Second: cap the popover, so the same rows truncate to the trigger width.
+// Second: cap the popover so the same rows truncate to the trigger width.
+<style>{`.path-capped a-menu::part(menu) { max-width: 220px }`}</style>
 <div className="path-capped" style={{ width: 220 }}>
   <Select label="Capped · ellipsizes" options={paths} value={b} onValueChange={setB} renderOption={renderPath} />
 </div>
-```
-```css folded
-.path-capped a-menu::part(menu) { max-width: 220px; }
 ```
 
 </Col>

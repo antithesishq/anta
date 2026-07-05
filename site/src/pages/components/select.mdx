@@ -9,7 +9,7 @@ import Disclosure from '../../components/Disclosure.astro'
 import Columns from '../../components/Columns.astro'
 import Col from '../../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
-import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectGhostDemo } from '../../components/SelectDemos'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectGhostDemo } from '../../components/SelectDemos'
 
 # Select
 
@@ -457,14 +457,60 @@ both, or neither.
 </Col>
 </Columns>
 
+### Custom trigger
+
+<Columns>
+<Col>
+
+<Preview>
+  <SelectTriggerDemo client:load />
+</Preview>
+
+```tsx folded
+const [value, setValue] = useState(['stream', 'message'])
+
+<Select
+  selection="multiple"
+  options={fields}
+  value={value}
+  onValueChange={setValue}
+  renderTrigger={({ open, selected }) => (
+    // one focusable element the menu anchors to; it carries its own ARIA
+    <Button icon="filter" label="Filter" priority="secondary"
+      aria-haspopup="menu" aria-expanded={open ? 'true' : 'false'}>
+      {selected.length > 0 && (
+        <Tag size="small" priority="primary" tone="brand">
+          {selected.length === fields.length ? 'All' : selected.length}
+        </Tag>
+      )}
+    </Button>
+  )}
+/>
+```
+
+</Col>
+<Col>
+
+**`renderTrigger(state)`** swaps the default field for your own trigger. Return one
+focusable element (an Anta `Button` here); the menu anchors to it, opens it on click,
+and leaves its ARIA to you, so add `aria-haspopup="menu"` and
+`aria-expanded={state.open}`.
+
+`state` carries `open`, `value`, `selected`, and `disabled`. `selected` is the
+resolved option list, so the multi-select count is `selected.length` (rendered here
+in a `Tag`, or `All` once every option is chosen). The field props (`label`, `size`,
+`status`, …) don't apply, since you own the element.
+
+</Col>
+</Columns>
+
 ## Coming soon
 
 Landed: single / multiple selection with radio & checkbox indicators, count
 summary, Select-all, **filter** (a combobox search field), and **custom renderers**
-for the option content (`renderOption`) and the selection mark (`renderIndicator`).
-Still to come: **sections** (grouped options), **`allow_new`** (create an option
-from the filter query), and a **custom-trigger** render prop, so the same machine
-can wear a button (a Filter control, say) instead of the default field.
+for the option content (`renderOption`), the selection mark (`renderIndicator`), and
+the trigger (`renderTrigger`). Still to come: **sections** (grouped options) and
+**`allow_new`** (create an option from the filter query).
 
 <Disclosure title="Component props" open>
 

@@ -48,6 +48,21 @@ export interface OptionState {
   disabled: boolean
 }
 
+/** Snapshot passed to `renderTrigger` so a custom trigger can reflect the current
+ *  selection and open state. */
+export interface TriggerState {
+  /** Whether the menu is open — use it for `aria-expanded` and a chevron. */
+  open: boolean
+  /** The current selection: a string (single), a string array (`multiple`), or
+   *  `undefined` when nothing is chosen. */
+  value: string | string[] | undefined
+  /** The resolved option objects for the current selection (empty when none).
+   *  `selected.length` is the multi-select count. */
+  selected: SelectOption[]
+  /** Whether the whole select is disabled. */
+  disabled: boolean
+}
+
 /** Snapshot passed as the 2nd argument to `onValueChange` — describes *what*
  *  changed, alongside the new full value in the 1st argument. A discriminated
  *  union: a row toggle carries `value` + `option`; the "Select all" row carries
@@ -132,6 +147,13 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the
    *  semantics. Composes with `renderOption`. */
   renderIndicator?: (state: OptionState) => React.ReactNode
+  /** Render your own trigger in place of the default field. Receives a
+   *  `TriggerState` (`open` / `value` / `selected` / `disabled`) to drive its look.
+   *  Return a single focusable element (an Anta `Button`, say) and give it
+   *  `aria-haspopup="menu"` plus `aria-expanded={state.open}`; the menu anchors to
+   *  it and opens it on click. The field props (`label`, `hint`, `size`, `status`,
+   *  `placeholder`, `round`) don't apply to a custom trigger. */
+  renderTrigger?: (state: TriggerState) => React.ReactNode
 }
 
 /**
@@ -224,6 +246,7 @@ export const Select = (props: SelectProps) => {
     selectAllLabel = 'Select all',
     renderOption,
     renderIndicator,
+    renderTrigger,
     className,
     style,
     ...rest
@@ -339,6 +362,9 @@ export const Select = (props: SelectProps) => {
 
   return (
     <>
+      {renderTrigger ? (
+        renderTrigger({ open, value: currentRaw, selected: selectedOptions, disabled: !!disabled })
+      ) : (
       <Input
         label={label}
         hint={hint}
@@ -378,7 +404,8 @@ export const Select = (props: SelectProps) => {
         style={style}
         {...rest}
       />
-      {/* Anchors to the field (its previous sibling); opens on click. Single-select
+      )}
+      {/* Anchors to the trigger (its previous sibling); opens on click. Single-select
           closes on pick; multi-select rows carry `data-menu-open` so toggling keeps
           the menu open. We observe onStateChange to flip the chevron / aria-expanded
           and to reset the filter when the menu closes. */}

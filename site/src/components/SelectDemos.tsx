@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Select, Tooltip, Tag } from '@antadesign/anta'
+import { Select, Tooltip, Tag, Button } from '@antadesign/anta'
 import type { SelectOption } from '@antadesign/anta'
 
 /**
@@ -284,6 +284,30 @@ export function SelectRenderIndicatorDemo() {
         }}
       />
     </div>
+  )
+}
+
+export function SelectTriggerDemo() {
+  useElements()
+  const [value, setValue] = useState<string[]>(['stream', 'message'])
+  return (
+    <Select
+      selection="multiple"
+      options={FILTER_OPTS}
+      value={value}
+      onValueChange={setValue}
+      renderTrigger={({ open, selected }) => (
+        // A single focusable element the menu anchors to. It carries its own ARIA;
+        // `state.open` drives aria-expanded, `selected` drives the count Tag.
+        <Button icon="filter" label="Filter" priority="secondary" aria-haspopup="menu" aria-expanded={open ? 'true' : 'false'}>
+          {selected.length > 0 && (
+            <Tag size="small" priority="primary" tone="brand">
+              {selected.length === FILTER_OPTS.length ? 'All' : selected.length}
+            </Tag>
+          )}
+        </Button>
+      )}
+    />
   )
 }
 

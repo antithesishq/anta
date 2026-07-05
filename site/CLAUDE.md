@@ -63,18 +63,14 @@ The site's own `pnpm run dev` (which the root command invokes under the hood) ch
 
 ## Docs prose style
 
-Component-page copy should be **precise, concrete, and said once** — dense with information but not with words. The failure mode here is the four-clause run-on stitched together with em-dashes and parentheticals. Check every sentence against these:
+Prose voice for the whole repo lives in the repo-root [`WRITING.md`](../WRITING.md):
+lead with the point, give values not adjectives, rare em dashes, no "not X, but Y"
+framing, no hype or signposts. It governs docs pages, source comments, and TSDoc
+alike. Read it before writing or editing page copy.
 
-- **Lead with the point.** A section's first sentence states what the thing *is* or *does*; details follow. No throat-clearing ("In this section we'll look at…").
-- **One idea per sentence.** Two em-dashes or two parentheticals in a sentence means it's doing too much — split it.
-- **Don't narrate the props table.** `PropsTable` already lists names, types, and defaults; prose adds only what a table can't — *when* to reach for a prop, gotchas, interactions. Never restate each value as a sentence.
-- **Show over tell.** A short code block beats a paragraph describing the code.
-- **Cut filler.** Drop "simply / just / basically / note that"; "in order to" → "to", "is able to" → "can", "a number of" → "several".
-- **Active voice, present tense, second person.** "Pass `open` to control it," not "`open` can be passed."
-- **Say each fact once**, in its most relevant section; cross-reference rather than repeat.
-- **Concrete, not vague.** "24px tall," not "appropriately sized."
-
-This tightens the existing voice — it doesn't dumb it down. Keep the technical depth; cut the word count. `input.mdx` is the worked reference for the tightened style.
+Most existing pages predate that guide and read in a denser voice with more dashes;
+bring a section into voice when you edit it. This file covers the page *structure*
+(below); `WRITING.md` covers the words.
 
 ## Component reference tables
 

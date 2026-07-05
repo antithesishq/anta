@@ -115,6 +115,9 @@ const SUPPORTS_FIELD_SIZING =
 //    vertical padding; the autogrow cap (:host([maxrows]:not([rows]))) is computed
 //    from --_lh + that padding so it tracks size, with JS injecting only the
 //    --_maxrows integer. A fixed `rows` turns autogrow off, so the cap doesn't apply.
+//    A readonly single-line input fades its value at both horizontal edges (a mask
+//    over the ~7px inline padding), so an overflowing display value (the Select
+//    trigger) dissolves rather than clipping; editable inputs stay crisp for the caret.
 //  • slots — leading/trailing/clear are display:none until they hold content
 //    (toggled via slotchange), so an empty slot reserves no box or phantom gap.
 //    Adornments are muted (--input-adornment) and inherit currentColor; a slotted
@@ -211,6 +214,10 @@ const SHADOW_STYLE = `
   :host([readonly]:not([disabled])) .field,
   :host([readonly]:not([disabled])) input,
   :host([readonly]:not([disabled])) textarea { cursor: pointer; }
+  :host([readonly]:not([disabled])) input {
+    -webkit-mask-image: linear-gradient(to right, transparent 7px, #000 11px, #000 calc(100% - 18px), transparent calc(100% - 7px));
+    mask-image: linear-gradient(to right, transparent 7px, #000 11px, #000 calc(100% - 18px), transparent calc(100% - 7px));
+  }
   input::-webkit-search-cancel-button,
   input::-webkit-search-decoration,
   input::-webkit-search-results-button,

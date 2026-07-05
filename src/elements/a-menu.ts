@@ -288,6 +288,7 @@ export class AMenuElement extends HTMLElementBase {
         left: 0;
         top: 0;
         margin: 0;
+        padding: 0;
         box-sizing: border-box;
         flex-direction: column;
         min-width: max(var(--menu-min-width, 88px), var(--_anchor-width, 0px));

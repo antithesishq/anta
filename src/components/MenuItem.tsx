@@ -39,6 +39,13 @@ export interface MenuItemProps extends BaseProps {
    *  mixed state (`aria-checked="mixed"`) — e.g. a "Select all" row when some but
    *  not all of its options are selected. */
   indeterminate?: boolean
+  /** Replace the built-in selection-indicator *visual* with your own node,
+   *  rendered at the **leading** edge (where the checkbox / radio sit). Pair with
+   *  `selectionIndicator` to keep the semantics — the row stays the control and
+   *  carries `role` + `aria-checked`; only the drawn mark changes. Suppresses the
+   *  built-in checkbox / radio and the trailing `check` glyph. The node is made
+   *  passive (aria-hidden, no pointer events) so the row owns the click. */
+  indicator?: React.ReactNode
   /** Semantic tone — colors the label, icon, and hover/selected tint (and the
    *  `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal
    *  CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose
@@ -96,6 +103,7 @@ export const MenuItem = ({
   selected,
   selectionIndicator,
   indeterminate,
+  indicator,
   tone,
   submenu,
   value,
@@ -164,19 +172,27 @@ export const MenuItem = ({
       class={className}
       {...rest}
     >
-      {/* Passive selection indicator — reuses the checkbox/radio *element* visuals
-          (no wrapper: no role, no focus, no form value). `aria-hidden` keeps the
-          row the sole a11y node; a-menu-item.css zeroes its label gap + disables
-          pointer events so the row owns the click. */}
-      {selectionIndicator === 'checkbox' && (
+      {/* Passive selection indicator at the leading edge — the row is the actual
+          control (role + aria-checked), so the mark is decorative. A custom
+          `indicator` node wins (rendered passive: aria-hidden + no pointer events,
+          `flex: none` so the row's flex `gap` spaces it, matching the built-ins);
+          otherwise reuse the checkbox/radio *element* visuals (no role, no focus,
+          no form value). a-menu-item.css handles the built-ins' gap/pointer-events. */}
+      {indicator != null ? (
+        <span
+          aria-hidden="true"
+          style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', pointerEvents: 'none' }}
+        >
+          {indicator}
+        </span>
+      ) : selectionIndicator === 'checkbox' ? (
         <a-checkbox
           aria-hidden="true"
           state={indeterminate ? 'indeterminate' : selected ? 'checked' : 'unchecked'}
           tone={toneAttr}
           style={toneStyle(tone, '--checkbox-tone-source')}
         />
-      )}
-      {selectionIndicator === 'radio' && (
+      ) : selectionIndicator === 'radio' ? (
         // Real boolean, not the ''/undefined presence form: `a-radio` has a
         // `selected` *property* setter (`applyState(!!on)`), so Preact routes the
         // prop through it — `''` would read as false and never select. A boolean
@@ -188,7 +204,7 @@ export const MenuItem = ({
           tone={toneAttr}
           style={toneStyle(tone, '--radio-tone-source')}
         />
-      )}
+      ) : null}
       {icon && <a-icon shape={icon} aria-hidden="true" />}
       {label != null &&
         (hint != null ? (
@@ -216,7 +232,9 @@ export const MenuItem = ({
         // on the selected row, an invisible `blank` spacer on the rest — so the label
         // and end padding don't shift as the selection moves.
         let trailing = submenu ? (iconTrailing ?? 'chevron-right') : iconTrailing
-        if (!submenu && !iconTrailing && selectionIndicator === 'check') trailing = selected ? 'check' : 'blank'
+        // A custom leading `indicator` replaces the mark entirely — no trailing check.
+        if (!submenu && !iconTrailing && selectionIndicator === 'check' && indicator == null)
+          trailing = selected ? 'check' : 'blank'
         return trailing ? <a-icon shape={trailing} aria-hidden="true" /> : null
       })()}
     </a-menu-item>

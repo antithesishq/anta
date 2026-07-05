@@ -15,7 +15,9 @@ import styles from './Select.module.css'
 
 
 /** One option in a `<Select>`. Pass a bare string as shorthand for
- *  `{ value: s, label: s }`. */
+ *  `{ value: s, label: s }`. Carries an index signature so you can attach
+ *  arbitrary fields (a `ranAt` date, a `status`, …) and read them back in
+ *  `renderOption`; the built-in filter still matches on `value`/`label`/`hint`. */
 export interface SelectOption {
   /** The option's value — its identity and what `onValueChange` reports. */
   value: string
@@ -30,6 +32,20 @@ export interface SelectOption {
   /** Tone for this option's row (label, icon, hint, selected tint, and the
    *  checkbox/radio indicator). A named tone or a custom CSS color. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Your own data — attach anything and read it in `renderOption`. */
+  [key: string]: unknown
+}
+
+/** Per-row snapshot passed to `renderOption` / `renderIndicator`. Everything here
+ *  is known at render time; the combobox "active" cursor is deliberately absent
+ *  (it's a live element state the DOM owns, not a render-time value). */
+export interface OptionState {
+  /** The option's value. */
+  value: string
+  /** Whether this row is currently selected. */
+  selected: boolean
+  /** Whether this row is disabled. */
+  disabled: boolean
 }
 
 /** Snapshot passed as the 2nd argument to `onValueChange` — describes *what*
@@ -102,6 +118,20 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
   /** Label for the `selectAll` row.
    *  @defaultValue Select all */
   selectAllLabel?: string
+  /** Render the **content** of each option row yourself, replacing the built-in
+   *  `label`/`hint`/`icon` layout. Select still supplies the row box, click, ARIA,
+   *  and the selection indicator — you return only what goes *inside*. Read extra
+   *  fields off the option (see `SelectOption`'s index signature) plus an
+   *  `OptionState` (`value`/`selected`/`disabled`). Filtering still works (it
+   *  matches the option's `value`/`label`/`hint`), but match-highlighting is
+   *  skipped — your content owns its own display. */
+  renderOption?: (option: SelectOption, state: OptionState) => React.ReactNode
+  /** Replace each row's selection **mark** with your own node, drawn at the
+   *  leading edge. The row stays the control (`role` + `aria-checked` from
+   *  `indicator` / `selection`); only the drawn mark changes, so pair it with an
+   *  `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the
+   *  semantics. Composes with `renderOption`. */
+  renderIndicator?: (state: OptionState) => React.ReactNode
 }
 
 /**
@@ -192,6 +222,8 @@ export const Select = (props: SelectProps) => {
     filter,
     selectAll,
     selectAllLabel = 'Select all',
+    renderOption,
+    renderIndicator,
     className,
     style,
     ...rest
@@ -389,23 +421,39 @@ export const Select = (props: SelectProps) => {
         {visibleOpts.length === 0 ? (
           <MenuItem disabled label="No matches" data-menu-open="" />
         ) : (
-          visibleOpts.map((o) => (
-            <MenuItem
-              key={o.value}
-              id={`${uid}-opt-${o.value}`}
-              selectionIndicator={menuItemIndicator}
-              label={queryRe ? highlight(o.label ?? o.value) : o.label ?? o.value}
-              hint={queryRe && o.hint ? highlight(o.hint) : o.hint}
-              icon={o.icon}
-              // The selected row(s) take `toneSelected` (falling back to the option's
-              // own tone); everything else keeps its own tone.
-              tone={isSelected(o.value) && toneSelected ? toneSelected : o.tone}
-              selected={isSelected(o.value)}
-              disabled={o.disabled}
-              data-menu-open={multiple ? '' : undefined}
-              onSelect={() => choose(o)}
-            />
-          ))
+          visibleOpts.map((o) => {
+            const optState: OptionState = {
+              value: o.value,
+              selected: isSelected(o.value),
+              disabled: !!o.disabled,
+            }
+            // `renderOption` owns the row content (passed as `children`, replacing
+            // `label`/`hint`/`icon`); `renderIndicator` owns the leading mark (passed
+            // as MenuItem's `indicator`). Select still supplies the row box, click, and
+            // ARIA. No match-highlighting with a custom row — its content is its own.
+            const custom = renderOption?.(o, optState)
+            const customMark = renderIndicator?.(optState)
+            return (
+              <MenuItem
+                key={o.value}
+                id={`${uid}-opt-${o.value}`}
+                selectionIndicator={menuItemIndicator}
+                indicator={customMark ?? undefined}
+                label={custom ? undefined : queryRe ? highlight(o.label ?? o.value) : o.label ?? o.value}
+                hint={custom ? undefined : queryRe && o.hint ? highlight(o.hint) : o.hint}
+                icon={custom ? undefined : o.icon}
+                // The selected row(s) take `toneSelected` (falling back to the option's
+                // own tone); everything else keeps its own tone.
+                tone={isSelected(o.value) && toneSelected ? toneSelected : o.tone}
+                selected={isSelected(o.value)}
+                disabled={o.disabled}
+                data-menu-open={multiple ? '' : undefined}
+                onSelect={() => choose(o)}
+              >
+                {custom}
+              </MenuItem>
+            )
+          })
         )}
       </Menu>
     </>

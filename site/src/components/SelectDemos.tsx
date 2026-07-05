@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Select } from '@antadesign/anta'
+import { Select, Tooltip, Tag } from '@antadesign/anta'
 import type { SelectOption } from '@antadesign/anta'
 
 /**
  * Hydrated island demos for the Select docs. Select is a *composed wrapper*
- * (no coordinating element), so its interactivity lives in Preact — a static
- * <Preview> would render the field but couldn't update on selection. These small
- * `client:load` islands hydrate so the previews actually work.
+ * (no coordinating element), so its interactivity lives in Preact. A static
+ * <Preview> would render the field but couldn't update on selection, so these
+ * small `client:load` islands hydrate to make the previews interactive.
  */
 const useElements = () =>
   useEffect(() => {
@@ -139,6 +139,150 @@ export function SelectFilterDemo() {
       <div style={{ width: '240px' }}>
         <Select label="Multiple · filter" selection="multiple" filter selectAll placeholder="Fields…" options={FILTER_OPTS} value={many} onValueChange={setMany} />
       </div>
+    </div>
+  )
+}
+
+// A list of test runs. Each option carries its own `name` / `ranAt` / `status`
+// (allowed by SelectOption's index signature), read back in `renderOption`.
+type RunStatus = 'in_progress' | 'completed' | 'incomplete'
+type Run = SelectOption & { name: string; ranAt: string; status: RunStatus }
+const RUN_TONE: Record<RunStatus, 'info' | 'neutral' | 'critical'> = {
+  in_progress: 'info',
+  completed: 'neutral',
+  incomplete: 'critical',
+}
+const RUN_LABEL: Record<RunStatus, string> = {
+  in_progress: 'In progress',
+  completed: 'Completed',
+  incomplete: 'Incomplete',
+}
+// `label` = the run name so the closed trigger reads it. renderOption styles the
+// menu rows; the rich row layout below comes from it.
+const RUNS: Run[] = [
+  { value: 'r-8842', name: 'nightly-regression-full-matrix — shard 14 of 32', ranAt: 'Today 11:00 AM', status: 'in_progress' },
+  { value: 'r-8841', name: 'pr-4821-merge-gate', ranAt: 'Today 9:42 AM', status: 'completed' },
+  { value: 'r-8830', name: 'release-1.8.0-smoke-and-soak-extended-duration', ranAt: 'Yesterday 6:15 PM', status: 'incomplete' },
+  { value: 'r-8829', name: 'hotfix-verification', ranAt: 'Yesterday 2:03 PM', status: 'completed' },
+  { value: 'r-8815', name: 'weekly-chaos-injection-broad-sweep', ranAt: 'Jul 2, 4:20 PM', status: 'incomplete' },
+  { value: 'r-8802', name: 'main-branch-continuous', ranAt: 'Jul 1, 8:00 AM', status: 'completed' },
+].map((r) => ({ ...r, label: r.name }))
+
+export function SelectRenderOptionDemo() {
+  useElements()
+  const [value, setValue] = useState('r-8842')
+  return (
+    // Cap the popover so the wide names ellipsize. The trigger width only floors the
+    // menu; it grows to fit content until a max-width caps it.
+    <div className="run-select" style={{ width: '260px' }}>
+      <style>{`.run-select a-menu::part(menu) { max-width: 260px; }`}</style>
+      <Select
+        label="Test run"
+        filter
+        options={RUNS}
+        value={value}
+        onValueChange={setValue}
+        renderOption={(o) => {
+          const run = o as Run
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: '1', minWidth: 0, gap: '2px' }}>
+              {/* The ellipsized name is the anchor; the nested Tooltip reveals the full
+                  name when it's clipped (`truncatedOnly`). */}
+              <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {run.name}
+                <Tooltip truncatedOnly>{run.name}</Tooltip>
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-3)', fontSize: '12px', fontVariantNumeric: 'tabular-nums' }}>
+                  {run.ranAt}
+                </span>
+                <Tag size="small" tone={RUN_TONE[run.status]} style={{ marginInlineStart: 'auto' }}>
+                  {RUN_LABEL[run.status]}
+                </Tag>
+              </div>
+            </div>
+          )
+        }}
+      />
+    </div>
+  )
+}
+
+// Width & truncation: the menu grows to fit its widest row until the content
+// ellipsizes and the menu is capped. Two dropdowns show the difference; the capped
+// rows reveal the full path via a truncation Tooltip.
+const PATHS: SelectOption[] = [
+  { value: 'revenue', label: 'src/features/dashboard/RevenueChart.tsx' },
+  { value: 'billing', label: 'src/features/account/settings/BillingPanel.tsx' },
+  { value: 'session', label: 'src/lib/auth/session/useCurrentUser.ts' },
+  { value: 'date', label: 'src/utils/date.ts' },
+]
+
+// Same ellipsis-ready row for both dropdowns: a shrinkable box + single-line
+// ellipsis, with a Tooltip that reveals the full path when it's clipped. It
+// truncates once the menu is capped; otherwise the menu grows to fit it.
+const renderPath = (o: SelectOption) => (
+  <span style={{ display: 'block', flex: '1', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+    {o.label}
+    <Tooltip truncatedOnly>{o.label}</Tooltip>
+  </span>
+)
+
+export function SelectTruncateDemo() {
+  useElements()
+  const [a, setA] = useState('billing')
+  const [b, setB] = useState('billing')
+  return (
+    <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      {/* The cap is the only difference between the two: it's what makes the wide
+          rows truncate instead of stretching the menu. */}
+      <style>{`.path-capped a-menu::part(menu) { max-width: 220px; }`}</style>
+      <div style={{ width: '220px' }}>
+        <Select label="No cap · grows to fit" options={PATHS} value={a} onValueChange={setA} renderOption={renderPath} />
+      </div>
+      <div className="path-capped" style={{ width: '220px' }}>
+        <Select label="Capped · ellipsizes" options={PATHS} value={b} onValueChange={setB} renderOption={renderPath} />
+      </div>
+    </div>
+  )
+}
+
+// renderIndicator: a leading status dot colored by log level, filled when selected.
+type Level = SelectOption & { dot: string }
+const LEVELS: Level[] = [
+  { value: 'error', label: 'error', hint: 'Failures and exceptions', dot: 'var(--text-2-critical)' },
+  { value: 'warning', label: 'warning', hint: 'Recoverable issues', dot: 'var(--text-2-warning)' },
+  { value: 'info', label: 'info', hint: 'Normal operational events', dot: 'var(--text-2-info)' },
+  { value: 'debug', label: 'debug', hint: 'Verbose diagnostic detail', dot: 'var(--text-3)' },
+]
+
+export function SelectRenderIndicatorDemo() {
+  useElements()
+  const [value, setValue] = useState('info')
+  return (
+    <div style={{ width: '220px' }}>
+      <Select
+        label="Log level"
+        indicator="check"
+        options={LEVELS}
+        value={value}
+        onValueChange={setValue}
+        renderIndicator={(state) => {
+          const dot = (LEVELS.find((l) => l.value === state.value) as Level).dot
+          return (
+            <span
+              style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                display: 'inline-block',
+                boxShadow: `inset 0 0 0 2px ${dot}`,
+                background: state.selected ? dot : 'transparent',
+              }}
+            />
+          )
+        }}
+      />
     </div>
   )
 }

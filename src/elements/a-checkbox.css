@@ -8,6 +8,7 @@
   a-checkbox {
     --checkbox-gap: 6px;
     --checkbox-align-items: start;
+    --checkbox-box-size: 16px;
 
     --checkbox-bg: var(--bg-1);
 
@@ -179,6 +180,7 @@
     }
 
     &[size="small"] {
+      --checkbox-box-size: 14px;
       --checkbox-label-fs: 13px;
       --checkbox-label-lh: 16px;
       --checkbox-hint-fs: 12px;
@@ -188,6 +190,7 @@
       &::after { inline-size: 14px; block-size: 14px; }
     }
     &[size="large"] {
+      --checkbox-box-size: 18px;
       --checkbox-gap: 8px;
       --checkbox-label-fs: 17px;
       --checkbox-label-lh: 22px;
@@ -220,10 +223,10 @@
 
   /* Align label text baseline with checkbox box. Text is naturally centered in
      grid cell due to line-height > box-size. Negative margin shifts text up so
-     it aligns with checkbox top in start mode. Compensation = (box-size - 16px) / 2
-     (negative to pull text up). */
+     it aligns with checkbox top in start mode. Compensation = (box-size - line-height) / 2
+     (negative to pull text up). Varies by size: small (-1px), medium (-2px), large (-2px). */
   a-checkbox-label {
-    margin-top: calc((16px - var(--checkbox-label-lh)) / 2);
+    margin-top: calc((var(--checkbox-box-size) - var(--checkbox-label-lh)) / 2);
   }
 
   /* Remove compensation when checkbox is center-aligned */

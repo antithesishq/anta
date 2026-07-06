@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Select, Tooltip, Tag, Button, Icon } from '@antadesign/anta'
+import { Select, Tooltip, Tag, Button, Icon, MenuItem } from '@antadesign/anta'
 import type { SelectOption } from '@antadesign/anta'
 
 /**
@@ -337,6 +337,49 @@ export function SelectColumnsDemo() {
         </Button>
       )}
     />
+  )
+}
+
+const TAGS = ['bug', 'feature', 'chore', 'docs']
+
+export function SelectEmptyDemo() {
+  useElements()
+  const [options, setOptions] = useState<string[]>(TAGS)
+  const [value, setValue] = useState<string>()
+  const [loading, setLoading] = useState(false)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '260px' }}>
+      <label style={{ display: 'flex', gap: '6px', alignItems: 'center', fontSize: '13px', color: 'var(--text-2)' }}>
+        <input type="checkbox" checked={loading} onChange={(e: any) => setLoading(e.currentTarget.checked)} />
+        Simulate loading
+      </label>
+      <Select
+        label="Tag"
+        filter
+        placeholder="Filter or create…"
+        options={loading ? [] : options}
+        value={value}
+        onValueChange={setValue}
+        // `query` is the current filter text; loading is the consumer's own state.
+        renderEmpty={({ query }) =>
+          loading ? (
+            'Loading…'
+          ) : (
+            <>
+              No options are matching the filter
+              <MenuItem
+                icon="plus"
+                label={`Create "${query}"`}
+                onSelect={() => {
+                  setOptions((o) => [...o, query])
+                  setValue(query)
+                }}
+              />
+            </>
+          )
+        }
+      />
+    </div>
   )
 }
 

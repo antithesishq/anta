@@ -48,6 +48,16 @@ export interface OptionState {
   disabled: boolean
 }
 
+/** Snapshot passed to `renderEmpty` when the option list (after any active
+ *  filter) is empty. `query` discriminates the cause: non-empty means the filter
+ *  hid everything; empty means there were no options to begin with (where the
+ *  consumer's own external loading state, if any, decides "loading" vs "empty"). */
+export interface EmptyState {
+  /** The current filter query, trimmed ('' when there's no filter, nothing typed,
+   *  or simply no options). */
+  query: string
+}
+
 /** Snapshot passed to `renderTrigger` so a custom trigger can reflect the current
  *  selection and open state. */
 export interface TriggerState {
@@ -154,6 +164,14 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  it and opens it on click. The field props (`label`, `hint`, `size`, `status`,
    *  `placeholder`, `round`) don't apply to a custom trigger. */
   renderTrigger?: (state: TriggerState) => React.ReactNode
+  /** Render content in the menu body when the (filtered) option list is empty —
+   *  a "no results" message, a loading indicator (gated on your own external
+   *  loading state), or a "create from the query" row. Receives an `EmptyState`
+   *  (`query`, trimmed). There is no built-in empty message: when omitted, an empty
+   *  list renders nothing. Whatever you return goes where the option rows would —
+   *  a plain node is inert; return a `MenuItem` (e.g. a "Create" row) to make it
+   *  focusable and selectable. */
+  renderEmpty?: (state: EmptyState) => React.ReactNode
 }
 
 /**
@@ -247,6 +265,7 @@ export const Select = (props: SelectProps) => {
     renderOption,
     renderIndicator,
     renderTrigger,
+    renderEmpty,
     className,
     style,
     ...rest
@@ -427,7 +446,6 @@ export const Select = (props: SelectProps) => {
               placeholder="Filter…"
               aria-label="Filter options"
               aria-autocomplete="list"
-              leading={<Icon shape="search" />}
               onInput={(e: any) => setQuery(e.currentTarget.value)}
             />
           </div>
@@ -446,7 +464,9 @@ export const Select = (props: SelectProps) => {
           </>
         )}
         {visibleOpts.length === 0 ? (
-          <MenuItem disabled label="No matches" data-menu-open="" />
+          // No built-in empty copy: only what `renderEmpty` returns (nothing when
+          // it's absent). `q` is the trimmed query — '' when unfiltered or empty.
+          renderEmpty?.({ query: q })
         ) : (
           visibleOpts.map((o) => {
             const optState: OptionState = {

@@ -9,7 +9,7 @@ import Disclosure from '../../components/Disclosure.astro'
 import Columns from '../../components/Columns.astro'
 import Col from '../../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
-import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectGhostDemo } from '../../components/SelectDemos'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGhostDemo } from '../../components/SelectDemos'
 
 # Select
 
@@ -534,6 +534,63 @@ visibility** control: an icon-only `Button` (`columns-3-cog`, tertiary), and opt
 that are bare column names. Here selection means *hidden* — the mark reads `eye` while
 a column shows and flips to `eye-closed` once it's selected off. The trigger reads its count off the
 same `selected` list `renderTrigger` hands it, so the `Tag` stays empty until you turn a column off.
+
+</Col>
+</Columns>
+
+### Empty state
+
+<Columns>
+<Col>
+
+<Preview>
+  <SelectEmptyDemo client:load />
+</Preview>
+
+```tsx folded
+const [options, setOptions] = useState(['bug', 'feature', 'chore', 'docs'])
+const [value, setValue] = useState()
+const [loading, setLoading] = useState(false) // your own fetch state
+
+<Select
+  label="Tag"
+  filter
+  placeholder="Filter or create…"
+  options={loading ? [] : options}
+  value={value}
+  onValueChange={setValue}
+  renderEmpty={({ query }) =>
+    loading ? (
+      'Loading…'
+    ) : (
+      <>
+        No options are matching the filter
+        <MenuItem
+          icon="plus"
+          label={`Create "${query}"`}
+          onSelect={() => { setOptions((o) => [...o, query]); setValue(query) }}
+        />
+      </>
+    )
+  }
+/>
+```
+
+</Col>
+<Col>
+
+**`renderEmpty({ query })`** fills the menu body when the option list is empty after
+the filter runs — a "no results" line, a loading indicator, or a create-from-query
+row. `query` is the current filter text: non-empty means the filter hid everything,
+empty means there were no options to begin with.
+
+There's **no built-in empty message** — omit `renderEmpty` and an empty list shows
+nothing. Loading isn't a Select prop either: you already own the fetch, so gate a
+`'Loading…'` branch on your own state (here a checkbox stands in for it).
+
+Whatever you return renders where the rows would. A plain string is inert; return a
+`MenuItem` — like the `Create "…"` row here, which arrow-keys and Enter reach like any
+option — to make it selectable.
 
 </Col>
 </Columns>

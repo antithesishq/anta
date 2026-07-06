@@ -206,6 +206,9 @@ with `statusIcon={false}`.
 {/* dimActions — adornments rest quiet, brighten when the field is hovered/focused */}
 <Input label="Search" placeholder="Search…" clearable dimActions defaultValue="design tokens" />
 
+{/* type="search" is a shorthand for the leading search icon + clearable below */}
+<Input label="Search" type="search" placeholder="Search…" />
+
 {/* leading / trailing take any node — see the live playground above */}
 <Input label="Search" leading={<Icon shape="search" />} clearable dimActions />
 <Input
@@ -224,6 +227,11 @@ with `statusIcon={false}`.
 left by the same `pad-x` as the text, so it lines up on the field's rhythm; the
 playground at the top of this page shows a live leading icon alongside the clear
 button.
+
+**`type="search"`** is a shorthand for that search pattern: it defaults a leading
+search icon and `clearable` (override either — pass your own `leading`, or
+`clearable={false}`). It's wrapper-only — the native `search` type never reaches the
+DOM input, so the browser's own clear/search chrome never appears; Anta owns it.
 
 **`dimActions`** rests the adornments quiet (60% opacity) and brightens them to
 full when the field is hovered or focused — a "quiet until engaged" look for

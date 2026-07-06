@@ -927,61 +927,6 @@ code[data-copied]::after {
   bottom: 4px;
 }
 
-.iconFilter {
-  width: 100%;
-  padding: 8px 12px;
-  margin: 8px 0 16px;
-  font: inherit;
-  font-size: 0.9rem;
-  color: var(--text-1);
-  background: var(--bg-canvas);
-  border: 1px solid var(--border-2);
-  border-radius: 6px;
-  outline: none;
-  transition: border-color 150ms ease-out;
-}
-.iconFilter:focus {
-  border-color: var(--border-1);
-}
-
-/* Demo segmented tabs (e.g. the Sticker gallery's Static / Animated switch).
-   Mirrors the segmented controls used elsewhere on the site. */
-.demoSeg {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 3px;
-  padding: 3px;
-  background: var(--bg-block);
-  border: 0.5px solid var(--border-4);
-  border-radius: 6px;
-}
-.demoSegBtn {
-  appearance: none;
-  border: none;
-  background: transparent;
-  font: inherit;
-  font-size: 0.85rem;
-  line-height: 1.2;
-  color: var(--text-3);
-  padding: 4px 10px 5px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 150ms ease-out, color 150ms ease-out;
-}
-.demoSegBtn:hover,
-.demoSegBtn:focus-visible {
-  color: var(--text-1);
-}
-.demoSegBtnActive,
-.demoSegBtnActive:hover,
-.demoSegBtnActive:focus-visible {
-  background: var(--bg-canvas);
-  color: var(--text-1);
-  box-shadow: 0 0 2px var(--border-3);
-  outline: none;
-}
-
 /* On mobile the sticky topbar is 44px tall, so anchor-scrolls need to
    account for it — otherwise the target heading lands underneath the
    topbar. The number is duplicated in DocsLayout.astro's `.topbar`

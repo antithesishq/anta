@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Select, Tooltip, Tag, Button, Icon, MenuItem, MenuSeparator } from '@antadesign/anta'
+import { Select, Tooltip, Tag, Button, Icon, MenuItem, MenuSeparator, Checkbox } from '@antadesign/anta'
 import type { SelectOption } from '@antadesign/anta'
 
 /**
@@ -349,10 +349,9 @@ export function SelectEmptyDemo() {
   const [loading, setLoading] = useState(false)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '260px' }}>
-      <label style={{ display: 'flex', gap: '6px', alignItems: 'center', fontSize: '13px', color: 'var(--text-2)' }}>
-        <input type="checkbox" checked={loading} onChange={(e: any) => setLoading(e.currentTarget.checked)} />
+      <Checkbox size="small" checked={loading} onStateChange={(_e, { next }) => setLoading(next === true)}>
         Simulate loading
-      </label>
+      </Checkbox>
       <Select
         label="Tag"
         filter

@@ -1039,15 +1039,16 @@ function FieldControl({
         />
       )
     case 'boolean':
+      // Dogfood Anta <Checkbox> (small); the prop name is shown by the row, so
+      // the box takes an aria-label rather than a visible label.
       return (
-        <label class={cls}>
-          <input
-            type="checkbox"
-            checked={value === true}
-            onChange={(e) => onChange((e.currentTarget as HTMLInputElement).checked)}
-            disabled={disabled}
-          />
-        </label>
+        <Checkbox
+          size="small"
+          aria-label={label}
+          checked={value === true}
+          onStateChange={(_e, { next }) => onChange(next === true)}
+          disabled={disabled}
+        />
       )
     case 'segmented': {
       // Dogfood Anta <Tabs> (primary = segmented-control look, small) as the enum

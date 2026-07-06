@@ -53,10 +53,16 @@ const GROUPED = [
 
 export function SelectGroupsDemo() {
   useElements()
-  const [value, setValue] = useState('stream')
+  const [one, setOne] = useState('stream')
+  const [many, setMany] = useState<string[]>(['stream', 'tag.env'])
   return (
-    <div style={{ width: '260px' }}>
-      <Select label="Field" filter options={GROUPED} value={value} onValueChange={setValue} />
+    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div style={{ width: '240px' }}>
+        <Select label="Field · single" filter options={GROUPED} value={one} onValueChange={setOne} />
+      </div>
+      <div style={{ width: '240px' }}>
+        <Select label="Fields · multiple" selection="multiple" filter options={GROUPED} value={many} onValueChange={setMany} />
+      </div>
     </div>
   )
 }

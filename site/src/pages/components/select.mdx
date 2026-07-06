@@ -609,26 +609,26 @@ here, which arrow-keys and Enter reach like any option — to make it selectable
 </Preview>
 
 ```tsx folded
-<Select
-  label="Field"
-  filter
-  options={[
-    'output_text',                                         // a plain option
-    { label: 'Log', options: ['stream', 'message'] },      // an inline group
-    {
-      label: 'Metadata',                                   // a submenu (flyout)
-      icon: 'braces',
-      submenu: [
-        'metadata.host',
-        { label: 'Tags', options: ['tag.env', 'tag.team'] }, // group inside submenu
-        { label: 'Custom', submenu: ['custom.a', 'custom.b'] }, // submenu inside submenu
-      ],
-    },
-    { label: 'Time', submenu: ['vtime'], disabled: true }, // disabled → cascades
-  ]}
-  value={value}
-  onValueChange={setValue}
-/>
+// The same tree drives both modes — selection is global, so `selection` is the
+// only difference between the two selects below.
+const fields = [
+  'output_text',                                         // a plain option
+  { label: 'Log', options: ['stream', 'message'] },      // an inline group
+  {
+    label: 'Metadata',                                   // a submenu (flyout)
+    icon: 'braces',
+    submenu: [
+      'metadata.host',
+      { label: 'Tags', options: ['tag.env', 'tag.team'] }, // group inside submenu
+      { label: 'Custom', submenu: ['custom.a', 'custom.b'] }, // submenu inside submenu
+    ],
+  },
+  { label: 'Time', submenu: ['vtime'], disabled: true }, // disabled → cascades
+]
+
+<Select label="Field · single" filter options={fields} value={one} onValueChange={setOne} />
+
+<Select label="Fields · multiple" selection="multiple" filter options={fields} value={many} onValueChange={setMany} />
 ```
 
 </Col>
@@ -641,8 +641,9 @@ submenu, everything else is an option (so those two keys are reserved on an opti
 
 **Selection stays global.** The Select's `selection` (single / multiple) applies to
 every leaf wherever it sits; group headings and submenu parents organize but aren't
-selectable. One `value`, one `onValueChange`, one count — unchanged. `disabled` on a
-group or submenu cascades to all its descendants.
+selectable. One `value`, one `onValueChange`, one count — unchanged. The two selects
+above share the exact same `fields` tree and differ only by `selection`. `disabled` on
+a group or submenu cascades to all its descendants.
 
 **A query flattens the tree.** With `filter`, typing collapses submenus into inline
 groups (their label becomes the heading) and drops empty ones, so results read as one

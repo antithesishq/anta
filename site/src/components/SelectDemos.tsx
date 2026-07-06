@@ -32,6 +32,35 @@ export function SelectOptionsDemo() {
   )
 }
 
+// Mixed tree: a flat option, an inline group (level 1), a submenu (level 1) that
+// itself holds a group (level 2) and a nested submenu (level 2 → its options level 3),
+// and a disabled submenu (cascades to its children).
+const GROUPED = [
+  'output_text',
+  { label: 'Log', options: ['stream', 'message', 'severity'] },
+  {
+    label: 'Metadata',
+    icon: 'braces',
+    submenu: [
+      'metadata.host',
+      'metadata.region',
+      { label: 'Tags', options: ['tag.env', 'tag.team'] },
+      { label: 'Custom', submenu: ['custom.a', 'custom.b'] },
+    ],
+  },
+  { label: 'Time', submenu: ['vtime', 'wall_clock'], disabled: true },
+]
+
+export function SelectGroupsDemo() {
+  useElements()
+  const [value, setValue] = useState('stream')
+  return (
+    <div style={{ width: '260px' }}>
+      <Select label="Field" filter options={GROUPED} value={value} onValueChange={setValue} />
+    </div>
+  )
+}
+
 export function SelectBasicDemo() {
   useElements()
   const [value, setValue] = useState('stream')

@@ -9,7 +9,7 @@ import Disclosure from '../../components/Disclosure.astro'
 import Columns from '../../components/Columns.astro'
 import Col from '../../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
-import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGhostDemo } from '../../components/SelectDemos'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGroupsDemo, SelectGhostDemo } from '../../components/SelectDemos'
 
 # Select
 
@@ -599,11 +599,63 @@ here, which arrow-keys and Enter reach like any option — to make it selectable
 </Col>
 </Columns>
 
+### Groups & submenus
+
+<Columns>
+<Col>
+
+<Preview>
+  <SelectGroupsDemo client:load />
+</Preview>
+
+```tsx folded
+<Select
+  label="Field"
+  filter
+  options={[
+    'output_text',                                         // a plain option
+    { label: 'Log', options: ['stream', 'message'] },      // an inline group
+    {
+      label: 'Metadata',                                   // a submenu (flyout)
+      icon: 'braces',
+      submenu: [
+        'metadata.host',
+        { label: 'Tags', options: ['tag.env', 'tag.team'] }, // group inside submenu
+        { label: 'Custom', submenu: ['custom.a', 'custom.b'] }, // submenu inside submenu
+      ],
+    },
+    { label: 'Time', submenu: ['vtime'], disabled: true }, // disabled → cascades
+  ]}
+  value={value}
+  onValueChange={setValue}
+/>
+```
+
+</Col>
+<Col>
+
+An `options` entry is a plain option, a **group** (`{ label, options }`, an inline
+titled section), or a **submenu** (`{ label, submenu }`, a flyout). They nest and mix
+freely. Discriminated by shape — an `options` array is a group, a `submenu` array is a
+submenu, everything else is an option (so those two keys are reserved on an option).
+
+**Selection stays global.** The Select's `selection` (single / multiple) applies to
+every leaf wherever it sits; group headings and submenu parents organize but aren't
+selectable. One `value`, one `onValueChange`, one count — unchanged. `disabled` on a
+group or submenu cascades to all its descendants.
+
+**A query flattens the tree.** With `filter`, typing collapses submenus into inline
+groups (their label becomes the heading) and drops empty ones, so results read as one
+scannable list instead of hiding matches behind flyouts.
+
+</Col>
+</Columns>
+
 ## Coming soon
 
-**Sections** — grouped options under a heading, the way `MenuGroup` does for menus —
-aren't built yet. Creating a new option from the filter query needs no dedicated
-feature: return a "Create …" row from `renderEmpty`.
+Nothing pending. Selection modes, filtering, custom renderers, an empty/loading
+slot, and grouped / nested options all landed; creating an option from the filter
+query needs no dedicated prop — return a "Create …" row from `renderEmpty`.
 
 <Disclosure title="Component props" open>
 

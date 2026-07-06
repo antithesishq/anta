@@ -75,9 +75,7 @@
       content: "";
       grid-column: 1;
       grid-row: 1 / -1;
-      /* Box always uses align-self: start to align to first line.
-         Icon (::after) handles centering via its own align-self. */
-      align-self: start;
+      align-self: var(--checkbox-align-items);
       box-sizing: border-box;
       inline-size: 16px;
       block-size: 16px;
@@ -87,11 +85,9 @@
       transition:
         background-color 150ms ease-out,
         border-color 150ms ease-out;
-    }
-
-    /* When alignItems center override is set, use center alignment */
-    &[style*="--checkbox-align-items: center"]::before {
-      align-self: center;
+      /* Make ::before a grid container so ::after can be centered inside it */
+      display: grid;
+      place-items: center;
     }
 
     /* `round` → circular mark. 999px on the 16px box is clamped to a circle; a
@@ -104,14 +100,14 @@
       border-radius: var(--checkbox-round, 999px);
     }
 
-    /* Glyph, stacked on the box (same cell, source order = paint order).
+    /* Glyph, a grid item centered inside the box (::before).
        Transparent until a filled state masks + colours it — an unmasked
-       ::after would paint a solid square. */
+       ::after would paint a solid square. Icon always stays centered in box
+       via the parent's place-items: center. */
     &::after {
       content: "";
       grid-column: 1;
-      grid-row: 1 / -1;
-      align-self: center;
+      grid-row: 1;
       inline-size: 16px;
       block-size: 16px;
       background-color: transparent;

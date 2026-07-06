@@ -71,6 +71,9 @@ export interface TriggerState {
   selected: SelectOption[]
   /** Whether the whole select is disabled. */
   disabled: boolean
+  /** The `icon` shape passed to `Select`, if any — hand it to your trigger
+   *  (e.g. a `Button`'s `icon`) so a custom trigger keeps the same leading glyph. */
+  icon?: IconShape
 }
 
 /** Snapshot passed as the 2nd argument to `onValueChange` — describes *what*
@@ -108,6 +111,10 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
   indicator?: 'none' | 'check' | 'radio'
   /** Text shown when nothing is selected. */
   placeholder?: string
+  /** Leading icon shown at the left of the field (the default trigger's `Input`
+   *  `leading` slot). With a custom `renderTrigger`, it's passed through as
+   *  `state.icon` instead — the consumer places it. */
+  icon?: IconShape
   /** Field label, above the trigger (Input's `label`). */
   label?: string
   /** Helper text under the field (Input's `hint`). */
@@ -251,6 +258,7 @@ export const Select = (props: SelectProps) => {
     defaultValue,
     onValueChange,
     placeholder,
+    icon,
     label,
     hint,
     size,
@@ -382,7 +390,7 @@ export const Select = (props: SelectProps) => {
   return (
     <>
       {renderTrigger ? (
-        renderTrigger({ open, value: currentRaw, selected: selectedOptions, disabled: !!disabled })
+        renderTrigger({ open, value: currentRaw, selected: selectedOptions, disabled: !!disabled, icon })
       ) : (
       <Input
         label={label}
@@ -392,6 +400,7 @@ export const Select = (props: SelectProps) => {
         readOnly
         dimActions
         disabled={disabled}
+        leading={icon ? <Icon shape={icon} /> : undefined}
         size={size}
         status={status}
         statusIcon={statusIcon}

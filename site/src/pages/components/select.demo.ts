@@ -6,6 +6,7 @@ export default `import { Select } from '@antadesign/anta'
 
 <Select
   label="Field"
+  icon="braces"
   placeholder="Select a field…"
   defaultValue="stream"
   style={{ width: '260px' }}

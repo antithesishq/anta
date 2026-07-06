@@ -524,10 +524,12 @@ focusable element (an Anta `Button` here); the menu anchors to it, opens it on c
 and leaves its ARIA to you, so add `aria-haspopup="menu"` and
 `aria-expanded={state.open}`.
 
-`state` carries `open`, `value`, `selected`, and `disabled`. `selected` is the
+`state` carries `open`, `value`, `selected`, `disabled`, and `icon`. `selected` is the
 resolved option list, so the multi-select count is `selected.length` (rendered here
 in a `Tag`, or `All` once every option is chosen). The field props (`label`, `size`,
-`status`, …) don't apply, since you own the element.
+`status`, …) don't apply, since you own the element — except `icon`, which is handed
+through as `state.icon` so a custom trigger can place the same leading glyph (e.g. a
+`Button`'s `icon`).
 
 The second example pairs a custom trigger with `renderIndicator` for a **column
 visibility** control: an icon-only `Button` (`columns-3-cog`, tertiary), and options

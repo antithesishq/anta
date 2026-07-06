@@ -1,4 +1,5 @@
 {
+  "columns-3-cog": ["columns", "table", "settings", "configure", "fields", "visibility"],
   "blank": ["spacer", "empty", "placeholder", "space", "none"],
   "warning-diamond": ["error", "invalid", "alert", "danger"],
   "swatch-book": ["palette", "color", "swatch", "paint", "design"],

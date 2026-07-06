@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Select, Tooltip, Tag, Button } from '@antadesign/anta'
+import { Select, Tooltip, Tag, Button, Icon } from '@antadesign/anta'
 import type { SelectOption } from '@antadesign/anta'
 
 /**
@@ -304,6 +304,35 @@ export function SelectTriggerDemo() {
             <Tag size="small" priority="primary" tone="brand">
               {selected.length === FILTER_OPTS.length ? 'All' : selected.length}
             </Tag>
+          )}
+        </Button>
+      )}
+    />
+  )
+}
+
+// Arbitrary table columns. Selection means *hidden*, so `value` is the list of
+// hidden columns and starts empty (every column visible).
+const COLUMNS = ['Name', 'Status', 'Owner', 'Created', 'Duration', 'Environment', 'Branch', 'Commit']
+
+export function SelectColumnsDemo() {
+  useElements()
+  const [hidden, setHidden] = useState<string[]>([])
+  return (
+    <Select
+      selection="multiple"
+      options={COLUMNS}
+      value={hidden}
+      onValueChange={setHidden}
+      // Selecting a column hides it: eye by default, eye-closed once hidden.
+      renderIndicator={({ selected }) => (
+        <Icon shape={selected ? 'eye-closed' : 'eye'} />
+      )}
+      renderTrigger={({ open, selected }) => (
+        <Button icon="columns-3-cog" priority="tertiary" aria-label="Configure columns"
+          aria-haspopup="menu" aria-expanded={open ? 'true' : 'false'}>
+          {selected.length > 0 && (
+            <Tag size="small" priority="secondary" tone="neutral">{selected.length}</Tag>
           )}
         </Button>
       )}

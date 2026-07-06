@@ -9,7 +9,7 @@ import Disclosure from '../../components/Disclosure.astro'
 import Columns from '../../components/Columns.astro'
 import Col from '../../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
-import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectGhostDemo } from '../../components/SelectDemos'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectGhostDemo } from '../../components/SelectDemos'
 
 # Select
 
@@ -488,6 +488,34 @@ const [value, setValue] = useState(['stream', 'message'])
 />
 ```
 
+<Preview>
+  <SelectColumnsDemo client:load />
+</Preview>
+
+```tsx folded
+const columns = ['Name', 'Status', 'Owner', 'Created', 'Duration', 'Environment', 'Branch', 'Commit']
+const [hidden, setHidden] = useState([])
+
+<Select
+  selection="multiple"
+  options={columns}
+  value={hidden}
+  onValueChange={setHidden}
+  // selecting a column hides it: eye by default, eye-closed once hidden
+  renderIndicator={({ selected }) => (
+    <Icon shape={selected ? 'eye-closed' : 'eye'} />
+  )}
+  renderTrigger={({ open, selected }) => (
+    <Button icon="columns-3-cog" priority="tertiary" aria-label="Configure columns"
+      aria-haspopup="menu" aria-expanded={open ? 'true' : 'false'}>
+      {selected.length > 0 && (
+        <Tag size="small" priority="secondary" tone="neutral">{selected.length}</Tag>
+      )}
+    </Button>
+  )}
+/>
+```
+
 </Col>
 <Col>
 
@@ -500,6 +528,12 @@ and leaves its ARIA to you, so add `aria-haspopup="menu"` and
 resolved option list, so the multi-select count is `selected.length` (rendered here
 in a `Tag`, or `All` once every option is chosen). The field props (`label`, `size`,
 `status`, …) don't apply, since you own the element.
+
+The second example pairs a custom trigger with `renderIndicator` for a **column
+visibility** control: an icon-only `Button` (`columns-3-cog`, tertiary), and options
+that are bare column names. Here selection means *hidden* — the mark reads `eye` while
+a column shows and flips to `eye-closed` once it's selected off. The trigger reads its count off the
+same `selected` list `renderTrigger` hands it, so the `Tag` stays empty until you turn a column off.
 
 </Col>
 </Columns>

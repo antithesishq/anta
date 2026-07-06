@@ -9,8 +9,10 @@ export interface TitleProps extends BaseProps {
   /** Visual priority. Maps to text-1..text-5 (`primary` = text-1).
    *  @defaultValue primary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. Applies the matching `--text-{N}-{tone}` palette. */
-  tone?: 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale;
+   *  the others apply the matching `--text-{N}-{tone}` palette.
+   *  @defaultValue neutral */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
 }
 
 /**

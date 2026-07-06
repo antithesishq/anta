@@ -185,8 +185,9 @@ export interface AProgressAttributes extends BaseAttributes {
 export interface ATextAttributes extends BaseAttributes {
   /** Visual priority. Maps to text-1..text-5. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. Applies the matching `--text-{N}-{tone}` palette. */
-  tone?: 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale;
+   *  the others apply the matching `--text-{N}-{tone}` palette. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Type scale. `small` = 13/16, `medium` (default) = 15/20, `large` = 17/24. */
   size?: 'small' | 'medium' | 'large'
   /** Render as inline-block instead of the default block. */
@@ -219,8 +220,9 @@ export interface ATitleAttributes extends BaseAttributes {
   level?: string
   /** Visual priority. Maps to text-1..text-5. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. Applies the matching `--text-{N}-{tone}` palette. */
-  tone?: 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale;
+   *  the others apply the matching `--text-{N}-{tone}` palette. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** ARIA role — the JSX wrapper sets this to `'heading'`. */
   role?: string
   /** ARIA heading level — the JSX wrapper sets this to match `level`. */

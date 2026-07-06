@@ -168,6 +168,12 @@ hands you the value without touching `event.target`. `onChange` is the plain
 native hook. (In controlled mode `onChange`/`onValueChange` fire once you've updated
 `checked`.) `onFocus` / `onBlur` work too — the host is the focusable element.
 
+Checkbox has `onStateChange` (and `Input` doesn't) because its state is
+**discrete** — `checked · unchecked · indeterminate` — so a transition can be
+vetoed *before* it applies. A text field's value is free-form, with no discrete
+state to model or veto, so `Input` (and the composed `Select`) expose only the
+`onValueChange` half. The `onValueChange` shape is identical across all of them.
+
 ```tsx folded
 <Checkbox onValueChange={(_e, { checked }) => save(checked)}>Subscribe</Checkbox>
 ```

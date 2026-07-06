@@ -1,0 +1,19 @@
+/* The trailing chevron is a plain <Icon> in the field's trailing slot; space it
+   from the edge and rotate it 180° (down → up) when the menu opens. */
+.chevron {
+  margin-inline-end: 7px;
+  transition: transform 150ms ease;
+}
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+/* The `filter` search field sits in the Menu's fixed header slot (`slot="header"`),
+   so it stays put while the options scroll below it — no sticky/overlay needed.
+   Just spacing: a little breathing room above and a gap down to the first option. */
+.filter {
+  /* The Menu container no longer pads (padding moved to the scroll body for focus
+     rings), so the header provides its own inset: 4px to match the option rows, and
+     the gap to the first row comes from the scroll body's top padding. */
+  padding: 4px 4px 0;
+}

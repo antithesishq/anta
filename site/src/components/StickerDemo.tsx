@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'preact/hooks'
-import { Button } from '@antadesign/anta'
+import { Button, Input, Tabs } from '@antadesign/anta'
 import * as Stickers from '@antadesign/stickers'
 
 // Pull the bare names from the barrel by stripping the `Sticker` prefix
@@ -37,20 +37,12 @@ export default function StickerDemo() {
     <div class="full-bleed">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 960, margin: '0 auto 16px' }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div class="demoSeg" role="tablist" aria-label="Sticker variant">
-            {MODES.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                role="tab"
-                aria-selected={mode === m.id}
-                class={mode === m.id ? 'demoSegBtn demoSegBtnActive' : 'demoSegBtn'}
-                onClick={() => setMode(m.id)}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            options={MODES.map((m) => ({ value: m.id, label: m.label }))}
+            value={mode}
+            onValueChange={(_e, { value }) => { if (value) setMode(value as 'animated' | 'static') }}
+            aria-label="Sticker variant"
+          />
           {mode === 'animated' && (
             <div style={{ display: 'flex' }}>
               <Button priority="tertiary" tone="brand" icon="circle-play" label="Play all" onClick={() => setPaused(false)} />
@@ -59,13 +51,13 @@ export default function StickerDemo() {
             </div>
           )}
         </div>
-        <input
+        <Input
           type="search"
           value={query}
-          onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+          onValueChange={(_e, { value }) => setQuery(value)}
           placeholder={`Search ${NAMES.length} stickers…`}
-          class="iconFilter"
-          style={{ margin: 0 }}
+          aria-label="Search stickers"
+          style={{ width: '100%' }}
         />
       </div>
       {filtered.length === 0 ? (

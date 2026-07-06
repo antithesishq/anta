@@ -57,6 +57,23 @@ size too — useful for sizing whole regions of UI at once:
 > and the icon falls back to the 16px default. Prefer `<Icon size>` for
 > exact custom sizes.
 
+## The `blank` spacer
+
+`shape="blank"` renders nothing but still occupies a full icon box at the
+current `size`. Use it to reserve a leading-icon column so labels line up when
+only some rows carry an icon — a menu or list where a few items have a leading
+glyph and the rest shouldn't shift.
+
+```tsx
+<Icon shape="blank" />                    {/* invisible 16×16 spacer */}
+<MenuItem icon="blank" label="No icon, but aligned" />
+```
+
+Note this differs from omitting the icon: leaving `shape` (or `MenuItem`'s
+`icon`) unset renders **no element**, while `blank` renders an invisible sized
+box. A bare `<Icon>` with no shape is *not* a spacer — with no mask it paints a
+solid square.
+
 ## Adding your own icons
 
 Anta ships a generator script at `dist/generate-icons.mjs`. Drop your

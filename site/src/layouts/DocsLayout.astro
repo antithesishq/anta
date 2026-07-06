@@ -238,12 +238,13 @@ if (isComponentPage && title) {
         <menu>
           <li><a href="/components/button/" aria-current={isCurrent('/components/button/') ? 'page' : undefined}><Icon shape="pointer" size={18} /> Button</a></li>
           <li><a href="/components/checkbox/" aria-current={isCurrent('/components/checkbox/') ? 'page' : undefined}><Icon shape="square-check-big" size={18} /> Checkbox</a></li>
-          <li><a href="/components/expander/" aria-current={isCurrent('/components/expander/') ? 'page' : undefined}><Icon shape="chevrons-up-down-square" size={18} /> Expander</a></li>
+          <li><a href="/components/expander/" aria-current={isCurrent('/components/expander/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 8 4 4-4 4"/></svg> Expander</a></li>
           <li><a href="/components/icon/" aria-current={isCurrent('/components/icon/') ? 'page' : undefined}><Icon shape="bug" size={18} /> Icon</a></li>
           <li><a href="/components/input/" aria-current={isCurrent('/components/input/') ? 'page' : undefined}><Icon shape="text-cursor-input" size={18} /> Input</a></li>
           <li><a href="/components/menu/" aria-current={isCurrent('/components/menu/') ? 'page' : undefined}><Icon shape="square-menu" size={18} /> Menu</a></li>
           <li><a href="/components/progress/" aria-current={isCurrent('/components/progress/') ? 'page' : undefined}><Icon shape="hourglass" size={18} /> Progress</a></li>
           <li><a href="/components/radio/" aria-current={isCurrent('/components/radio/') ? 'page' : undefined}><Icon shape="circle-dot" size={18} /> Radio</a></li>
+          <li><a href="/components/select/" aria-current={isCurrent('/components/select/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m8 10 4 4 4-4"/></svg> Select</a></li>
           <li><a href="/components/sticker/" aria-current={isCurrent('/components/sticker/') ? 'page' : undefined}><Icon shape="sticker" size={18} /> Sticker</a></li>
           <li><a href="/components/table/" aria-current={isCurrent('/components/table/') ? 'page' : undefined}><Icon shape="table-2" size={18} /> Table</a></li>
           <li><a href="/components/tabs/" aria-current={isCurrent('/components/tabs/') ? 'page' : undefined}><Icon shape="tabs" size={18} /> Tabs</a></li>
@@ -533,7 +534,8 @@ if (isComponentPage && title) {
     text-decoration: none;
     transition: color 160ms ease-out;
   }
-  .sidebar menu li a > a-icon {
+  .sidebar menu li a > a-icon,
+  .sidebar menu li a > svg {
     color: var(--text-4-brand);
     flex-shrink: 0;
     transition: color 160ms ease-out;
@@ -549,7 +551,9 @@ if (isComponentPage && title) {
     text-decoration: none;
   }
   .sidebar menu li a:hover > a-icon,
-  .sidebar menu li a[aria-current="page"] > a-icon {
+  .sidebar menu li a[aria-current="page"] > a-icon,
+  .sidebar menu li a:hover > svg,
+  .sidebar menu li a[aria-current="page"] > svg {
     color: var(--text-1-brand);
   }
 

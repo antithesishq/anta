@@ -48,6 +48,8 @@ Create `site/src/pages/components/{name}.mdx` with `layout: ../../layouts/DocsLa
 
 **Always use the shared `<Playground>` for the interactive demo — never hand-roll a bespoke per-component playground island.** The shared one gives a uniform editor + auto props form (from `api.json`) + isolated preview iframe across every page, and is slated for extraction into its own package; a one-off island fragments that and drifts. The `initialCode` is plain TSX — imports followed by a trailing JSX block that the bundler auto-wraps in a `<>…</>` fragment, so it can hold **multiple sibling or nested elements** (e.g. several anchors each wrapping a `<Tooltip>`); the props panel binds to the first instance of `component`. Keep `initialCode` in a sibling `{name}.demo.ts` (`export default \`…\``) so Astro's MDX pipeline doesn't mangle the template literal's indentation. Reserve custom islands for demos the playground genuinely can't express (e.g. a self-animating `AnimatedProgress`).
 
+**Demos use Anta's own components wherever one exists — down to the incidental controls.** Any control the design system ships — `Checkbox`, `Input`, `Button`, `RadioGroup`, `Select`, `Tabs`, `Tag`, `Tooltip`, … — is what a demo reaches for, whether it's the component under test or just a knob beside it (a "simulate loading" toggle, a filter field, a segmented switcher). This holds in every demo surface: Playground `initialCode`, a hydrated island (`src/components/*.tsx`), and inline `.mdx` examples. The point is that every example dogfoods the library and looks/behaves like real usage; a raw `<input>` / `<button>` / `<select>` next to an Anta component reads as an oversight. Drop to a raw HTML control **only** when there's genuinely no Anta equivalent yet (e.g. `<input type="range">` — there's no slider component). The `Playground` island itself is exempt — it's editor/props-form infrastructure kept standalone for extraction, not a component demo.
+
 The preview iframe loads `tokens.css` + `reset.css` + the registered elements via `site/scripts/build-iframe-runtime.mjs` (→ `public/iframe-anta-runtime.js`), so component CSS that references `--bg-*` / `--text-*` / `--border-*` resolves the same as on the docs site. If a new component's appearance depends on a stylesheet not in that bundle, add it there.
 
 **`site/src/layouts/element-host-styles.css` is a hand-maintained aggregator** — it `@import`s every element's `dist/elements/a-*.css` so `DocsLayout.astro` can link the host/light-DOM chrome render-blocking in `<head>` (otherwise the element CSS only arrives when the client `@antadesign/anta/elements` JS registers the elements, flashing an unstyled box on load). **When you add a new component, add its `a-{name}.css` `@import` here too** (the same manual step as `build:css` and `elements/index.ts`), or its host chrome will flash before upgrade on the docs site.
@@ -63,18 +65,14 @@ The site's own `pnpm run dev` (which the root command invokes under the hood) ch
 
 ## Docs prose style
 
-Component-page copy should be **precise, concrete, and said once** — dense with information but not with words. The failure mode here is the four-clause run-on stitched together with em-dashes and parentheticals. Check every sentence against these:
+Prose voice for the whole repo lives in the repo-root [`WRITING.md`](../WRITING.md):
+lead with the point, give values not adjectives, rare em dashes, no "not X, but Y"
+framing, no hype or signposts. It governs docs pages, source comments, and TSDoc
+alike. Read it before writing or editing page copy.
 
-- **Lead with the point.** A section's first sentence states what the thing *is* or *does*; details follow. No throat-clearing ("In this section we'll look at…").
-- **One idea per sentence.** Two em-dashes or two parentheticals in a sentence means it's doing too much — split it.
-- **Don't narrate the props table.** `PropsTable` already lists names, types, and defaults; prose adds only what a table can't — *when* to reach for a prop, gotchas, interactions. Never restate each value as a sentence.
-- **Show over tell.** A short code block beats a paragraph describing the code.
-- **Cut filler.** Drop "simply / just / basically / note that"; "in order to" → "to", "is able to" → "can", "a number of" → "several".
-- **Active voice, present tense, second person.** "Pass `open` to control it," not "`open` can be passed."
-- **Say each fact once**, in its most relevant section; cross-reference rather than repeat.
-- **Concrete, not vague.** "24px tall," not "appropriately sized."
-
-This tightens the existing voice — it doesn't dumb it down. Keep the technical depth; cut the word count. `input.mdx` is the worked reference for the tightened style.
+Most existing pages predate that guide and read in a denser voice with more dashes;
+bring a section into voice when you edit it. This file covers the page *structure*
+(below); `WRITING.md` covers the words.
 
 ## Component reference tables
 

@@ -32,6 +32,41 @@ export function SelectOptionsDemo() {
   )
 }
 
+// Mixed tree: a flat option, an inline group (level 1), a submenu (level 1) that
+// itself holds a group (level 2) and a nested submenu (level 2 → its options level 3),
+// and a disabled submenu (cascades to its children).
+const GROUPED = [
+  'output_text',
+  { label: 'Log', options: ['stream', 'message', 'severity'] },
+  {
+    label: 'Metadata',
+    icon: 'braces',
+    submenu: [
+      'metadata.host',
+      'metadata.region',
+      { label: 'Tags', options: ['tag.env', 'tag.team'] },
+      { label: 'Custom', submenu: ['custom.a', 'custom.b'] },
+    ],
+  },
+  { label: 'Time', submenu: ['vtime', 'wall_clock'], disabled: true },
+]
+
+export function SelectGroupsDemo() {
+  useElements()
+  const [one, setOne] = useState('stream')
+  const [many, setMany] = useState<string[]>(['stream', 'tag.env'])
+  return (
+    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div style={{ width: '240px' }}>
+        <Select label="Field · single" filter options={GROUPED} value={one} onValueChange={setOne} />
+      </div>
+      <div style={{ width: '240px' }}>
+        <Select label="Fields · multiple" selection="multiple" filter options={GROUPED} value={many} onValueChange={setMany} />
+      </div>
+    </div>
+  )
+}
+
 export function SelectBasicDemo() {
   useElements()
   const [value, setValue] = useState('stream')

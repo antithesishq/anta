@@ -600,11 +600,9 @@ here, which arrow-keys and Enter reach like any option — to make it selectable
 
 ## Coming soon
 
-Landed: single / multiple selection with radio & checkbox indicators, count
-summary, Select-all, **filter** (a combobox search field), and **custom renderers**
-for the option content (`renderOption`), the selection mark (`renderIndicator`), and
-the trigger (`renderTrigger`). Still to come: **sections** (grouped options) and
-**`allow_new`** (create an option from the filter query).
+**Sections** — grouped options under a heading, the way `MenuGroup` does for menus —
+aren't built yet. Creating a new option from the filter query needs no dedicated
+feature: return a "Create …" row from `renderEmpty`.
 
 <Disclosure title="Component props" open>
 

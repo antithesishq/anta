@@ -352,11 +352,15 @@ export class AMenuElement extends HTMLElementBase {
         padding: var(--menu-padding, 4px);
         scroll-padding-block: var(--menu-padding, 4px);
         /* Soft scroll edges: fade the content into the top / bottom only on the side
-           with more to scroll (the --fade-* vars, set from JS, are 0 otherwise). */
+           with more to scroll (the --fade-* vars, set from JS, are 0 otherwise). The
+           top also clears a hard --gap-top band (fully transparent, ahead of the ramp)
+           so a row scrolling up disappears cleanly under a pinned header / filter field
+           before the fade begins, instead of bleeding right against it. */
         --fade-top: 0px;
         --fade-bottom: 0px;
-        -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
-        mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+        --gap-top: 0px;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--gap-top), #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+        mask-image: linear-gradient(to bottom, transparent 0, transparent var(--gap-top), #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
       }
     `
     this.surface = document.createElement('div')
@@ -586,14 +590,16 @@ export class AMenuElement extends HTMLElementBase {
 
   /** Fade the scrolling body's content into the top / bottom edges — but only on the
    *  side that actually has more to scroll, so a short (non-scrolling) menu and the
-   *  true top / bottom stay crisp. Drives the `--fade-*` vars the `.scroll` mask
-   *  reads; runs on scroll and after every (re)position. Shadow-internal only. */
+   *  true top / bottom stay crisp. Drives the `--fade-*` / `--gap-top` vars the
+   *  `.scroll` mask reads; runs on scroll and after every (re)position.
+   *  Shadow-internal only. */
   private updateScrollFade() {
     const el = this.scrollEl
     if (!el) return
     const top = el.scrollTop > 1
     const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 1
-    el.style.setProperty('--fade-top', top ? '14px' : '0px')
+    el.style.setProperty('--fade-top', top ? '16px' : '0px')
+    el.style.setProperty('--gap-top', top ? '3px' : '0px')
     el.style.setProperty('--fade-bottom', bottom ? '14px' : '0px')
   }
 

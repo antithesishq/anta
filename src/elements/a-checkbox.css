@@ -218,9 +218,12 @@
     min-width: 0;
   }
 
-  /* Align label text with checkbox box top (default start alignment) */
+  /* Align label text baseline with checkbox box. Text is naturally centered in
+     grid cell due to line-height > box-size. Negative margin shifts text up so
+     it aligns with checkbox top in start mode. Compensation = (box-size - 16px) / 2
+     (negative to pull text up). */
   a-checkbox-label {
-    margin-top: calc((var(--checkbox-label-lh) - 16px) / 2);
+    margin-top: calc((16px - var(--checkbox-label-lh)) / 2);
   }
 
   /* Remove compensation when checkbox is center-aligned */

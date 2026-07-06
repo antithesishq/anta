@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Select, Tooltip, Tag, Button, Icon, MenuItem } from '@antadesign/anta'
+import { Select, Tooltip, Tag, Button, Icon, MenuItem, MenuSeparator } from '@antadesign/anta'
 import type { SelectOption } from '@antadesign/anta'
 
 /**
@@ -363,10 +363,10 @@ export function SelectEmptyDemo() {
         // `query` is the current filter text; loading is the consumer's own state.
         renderEmpty={({ query }) =>
           loading ? (
-            'Loading…'
+            <MenuSeparator>Loading…</MenuSeparator>
           ) : (
             <>
-              No options are matching the filter
+              <MenuSeparator>No options are matching the filter</MenuSeparator>
               <MenuItem
                 icon="plus"
                 label={`Create "${query}"`}

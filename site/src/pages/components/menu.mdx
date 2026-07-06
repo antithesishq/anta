@@ -342,6 +342,11 @@ Wrap related items in a `MenuGroup` with a `label` to add a titled section.
 Headings are skipped during keyboard navigation, which flattens all items into a
 single up/down sequence across group boundaries.
 
+A `MenuSeparator` is a plain hairline when empty, but given text
+(`<MenuSeparator>No results</MenuSeparator>`) it renders a small muted caption and
+becomes an `aria-live="polite"` status region — the styled home for a status or
+empty-state message (what `Select`'s `renderEmpty` uses).
+
 </Col>
 <Col>
 

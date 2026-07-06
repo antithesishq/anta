@@ -75,10 +75,11 @@
       content: "";
       grid-column: 1;
       grid-row: 1 / -1;
-      /* Box aligns per --checkbox-align-items: controlled entirely by align-self.
-         start = first line, center = vertically centered. No margin compensation
-         to avoid overflow/clipping issues with very long text. */
+      /* Box aligns per --checkbox-align-items: start = first line, center = middle.
+         Always use align-self: center for proper grid cell centering, then use
+         margin-top for alignment adjustments. This keeps icon centered in box. */
       align-self: start;
+      margin-top: calc((var(--checkbox-label-lh) - 16px) / 2);
       box-sizing: border-box;
       inline-size: 16px;
       block-size: 16px;
@@ -90,9 +91,10 @@
         border-color 150ms ease-out;
     }
 
-    /* When alignItems center override is set, use center alignment */
+    /* When alignItems center override is set, remove the margin */
     &[style*="--checkbox-align-items: center"]::before {
       align-self: center;
+      margin-top: 0;
     }
 
     /* `round` → circular mark. 999px on the 16px box is clamped to a circle; a

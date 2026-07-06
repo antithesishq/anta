@@ -165,11 +165,13 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  semantics. Composes with `renderOption`. */
   renderIndicator?: (state: OptionState) => React.ReactNode
   /** Render your own trigger in place of the default field. Receives a
-   *  `TriggerState` (`open` / `value` / `selected` / `disabled`) to drive its look.
-   *  Return a single focusable element (an Anta `Button`, say) and give it
-   *  `aria-haspopup="menu"` plus `aria-expanded={state.open}`; the menu anchors to
-   *  it and opens it on click. The field props (`label`, `hint`, `size`, `status`,
-   *  `placeholder`, `round`) don't apply to a custom trigger. */
+   *  `TriggerState` (`open` / `value` / `selected` / `disabled` / `icon`) to drive
+   *  its look. **Return exactly one focusable element** (an Anta `Button`, say) —
+   *  the menu anchors to it (its own previous DOM sibling) and opens it on click,
+   *  so a fragment, multiple siblings, or a non-focusable wrapper will misanchor
+   *  (the menu warns in the console if the trigger has no focusable element). Give
+   *  the element `aria-haspopup="menu"` plus `aria-expanded={state.open}`. The field
+   *  props (`label`, `hint`, `size`, `status`, `placeholder`, `round`) don't apply. */
   renderTrigger?: (state: TriggerState) => React.ReactNode
   /** Render content in the menu body when the (filtered) option list is empty —
    *  a "no results" message, a loading indicator (gated on your own external
@@ -316,9 +318,15 @@ export const Select = (props: SelectProps) => {
       : null
   const matches = (o: SelectOption) =>
     typeof filter === 'function'
-      ? filter(o, query)
+      ? filter(o, q)
       : !queryRe || [o.value, o.label ?? '', o.hint ?? ''].some((s) => queryRe.test(s))
-  const visibleOpts = filtering && q ? opts.filter(matches) : opts
+  // A custom filter *function* runs on every render (even with an empty query),
+  // so a predicate that prunes by a criterion — not the typed text — always
+  // applies. The built-in matcher only kicks in once something is typed (empty
+  // query = show all). A text-matching function is safe here too: it matches all
+  // options against '' (e.g. `includes('')`), so an empty query still shows all.
+  const visibleOpts =
+    typeof filter === 'function' || (filtering && q) ? opts.filter(matches) : opts
 
   // Bold the matched substring(s) for display — built-in matcher only.
   const highlight = (text: string): React.ReactNode => {
@@ -467,6 +475,9 @@ export const Select = (props: SelectProps) => {
               indeterminate={someSelected}
               label={selectAllLabel}
               data-menu-open=""
+              // Keep the combobox's typed-query cursor off this action row — it
+              // seats on the first real option instead (still arrow-reachable).
+              data-menu-skip-active=""
               onSelect={toggleAll}
             />
             <MenuSeparator />
@@ -489,11 +500,21 @@ export const Select = (props: SelectProps) => {
             // ARIA. No match-highlighting with a custom row — its content is its own.
             const custom = renderOption?.(o, optState)
             const customMark = renderIndicator?.(optState)
+            // Default single-select (`indicator="none"`) draws only a tint, so it
+            // has no checkable role. Expose the choice to assistive tech anyway:
+            // every row is a `menuitemradio` carrying `aria-checked` (single-select
+            // is radio semantics), the mark stays invisible. `check` / `radio` /
+            // `multiple` already set role + aria-checked via `selectionIndicator`.
+            const ariaSelectable =
+              !multiple && mark === 'none'
+                ? { role: 'menuitemradio', 'aria-checked': isSelected(o.value) ? 'true' : 'false' }
+                : undefined
             return (
               <MenuItem
                 key={o.value}
                 id={`${uid}-opt-${o.value}`}
                 selectionIndicator={menuItemIndicator}
+                {...ariaSelectable}
                 indicator={customMark ?? undefined}
                 label={custom ? undefined : queryRe ? highlight(o.label ?? o.value) : o.label ?? o.value}
                 hint={custom ? undefined : queryRe && o.hint ? highlight(o.hint) : o.hint}

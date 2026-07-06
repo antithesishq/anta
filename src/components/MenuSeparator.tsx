@@ -25,7 +25,11 @@ export interface MenuSeparatorProps extends BaseProps {
  * ```
  */
 export const MenuSeparator = ({ className, children, ...rest }: MenuSeparatorProps) => {
-  const hasContent = children != null && children !== false && children !== ''
+  // Content = anything truthy that isn't a blank string. `!!` drops the falsy
+  // footguns (`0` from a `count && …` caption, `''`, `false`, `null`), and the
+  // trim guard drops whitespace-only strings — all fall back to a plain divider.
+  const hasContent =
+    !!children && !(typeof children === 'string' && children.trim() === '')
   return (
     <a-menu-separator
       role={hasContent ? 'status' : 'separator'}
@@ -33,7 +37,7 @@ export const MenuSeparator = ({ className, children, ...rest }: MenuSeparatorPro
       class={className}
       {...rest}
     >
-      {children}
+      {hasContent ? children : null}
     </a-menu-separator>
   )
 }

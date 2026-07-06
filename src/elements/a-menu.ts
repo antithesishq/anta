@@ -500,6 +500,33 @@ export class AMenuElement extends HTMLElementBase {
     )
   }
 
+  /** The focusable element to hand focus back to — the anchor itself if it's
+   *  focusable, else the first focusable within it. Positioning still uses the
+   *  anchor's box; this only picks the focus target. A custom `renderTrigger`
+   *  that returns a single focusable element (the documented contract) resolves
+   *  to that element; if it wrongly returns a non-focusable node with none
+   *  inside, this is null and `focusTrigger` warns. */
+  private get triggerFocusable(): HTMLElement | null {
+    const a = this.triggerAnchor
+    if (!a) return null
+    const sel =
+      'a-input, a-button, button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])'
+    return a.matches(sel) ? a : a.querySelector<HTMLElement>(sel)
+  }
+
+  /** Return focus to the trigger. Focuses the first focusable in the anchor; if
+   *  there is none (a mis-authored trigger — e.g. `renderTrigger` returning a
+   *  fragment or a non-focusable node), warns instead of silently focusing air. */
+  private focusTrigger() {
+    const f = this.triggerFocusable
+    if (f) f.focus()
+    else if (this.triggerAnchor) {
+      console.warn(
+        '[a-menu] trigger has no focusable element — a menu trigger (or `Select` renderTrigger) must be a single focusable element.',
+      )
+    }
+  }
+
   /** For a submenu: the menu that contains its anchor item. */
   private get ownerMenu(): AMenuElement | null {
     if (!this.isSubmenu) return null
@@ -598,10 +625,15 @@ export class AMenuElement extends HTMLElementBase {
 
   /** Re-seat the cursor on the first option — but only once the filter has input.
    *  An empty filter (e.g. right after opening) shows NO active row, so the first
-   *  ArrowDown is what steps onto the list; typing then keeps the top match active. */
+   *  ArrowDown is what steps onto the list; typing then keeps the top match active.
+   *  Rows marked `data-menu-skip-active` (e.g. a Select-all action) are skipped as
+   *  the seat target — the cursor lands on the first real option — but they stay
+   *  arrow-reachable. */
   private resetActive() {
     const q = (this.searchField as { value?: string } | null)?.value
-    this.setActive(q && q.trim() ? (this.focusableItems()[0] ?? null) : null)
+    if (!q || !q.trim()) return this.setActive(null)
+    const items = this.focusableItems()
+    this.setActive(items.find((it) => !it.hasAttribute('data-menu-skip-active')) ?? items[0] ?? null)
   }
 
   /** Combobox arrow / Home / End / Enter handling; returns true if it consumed the
@@ -889,9 +921,12 @@ export class AMenuElement extends HTMLElementBase {
         // sits border-top + padding-top below the surface's box edge (which is
         // what `top` sets), so offset by that real inset — not a bare MARGIN, or
         // the unaccounted 1px border drifts the flyout down a pixel per level
-        // and the drift compounds through nested submenus.
+        // and the drift compounds through nested submenus. The body's own
+        // padding lives on `.scroll` (not the surface), so add it too.
         const cs = view.getComputedStyle(surface)
-        const insetTop = parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop)
+        const scs = view.getComputedStyle(this.scrollEl)
+        const insetTop =
+          parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop) + parseFloat(scs.paddingTop)
         top = it.top - insetTop
         if (top + box.height > vh - MARGIN) top = vh - box.height - MARGIN
         top = Math.max(MARGIN, top)
@@ -1016,9 +1051,8 @@ export class AMenuElement extends HTMLElementBase {
     if (e.key === 'Escape') {
       e.preventDefault()
       e.stopPropagation()
-      const anchor = this.triggerAnchor
       this.requestClose(e)
-      anchor?.focus()
+      this.focusTrigger()
       return
     }
 

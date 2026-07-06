@@ -519,10 +519,11 @@ const [hidden, setHidden] = useState([])
 </Col>
 <Col>
 
-**`renderTrigger(state)`** swaps the default field for your own trigger. Return one
-focusable element (an Anta `Button` here); the menu anchors to it, opens it on click,
-and leaves its ARIA to you, so add `aria-haspopup="menu"` and
-`aria-expanded={state.open}`.
+**`renderTrigger(state)`** swaps the default field for your own trigger. Return
+**exactly one focusable element** (an Anta `Button` here) — the menu anchors to it (its
+own previous DOM sibling) and opens it on click, so a fragment or a wrapping `<div>`
+misanchors (the menu logs a console warning if the trigger has no focusable element).
+It leaves ARIA to you, so add `aria-haspopup="menu"` and `aria-expanded={state.open}`.
 
 `state` carries `open`, `value`, `selected`, `disabled`, and `icon`. `selected` is the
 resolved option list, so the multi-select count is `selected.length` (rendered here

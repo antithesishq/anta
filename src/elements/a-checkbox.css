@@ -48,14 +48,14 @@
 
     /* Inline-grid: box in column 1, label/hint stacked in column 2. The box
        (::before) and glyph (::after) span rows 1/-1 of column 1 so they stay
-       centred against the label column whether or not a hint adds a 2nd row.
-       Column 2 is `1fr` (not `auto`): when the checkbox is stretched (e.g. a flex
-       item in a column), all slack goes to the label column, keeping the box column
-       content-sized — two `auto` tracks would split the slack and shift the label
-       (a visible indent). 1fr also gives the label a bounded width to wrap in. */
+       aligned to the top of the label column. Column 2 is `1fr` (not `auto`):
+       when the checkbox is stretched (e.g. a flex item in a column), all slack
+       goes to the label column, keeping the box column content-sized — two `auto`
+       tracks would split the slack and shift the label (a visible indent). 1fr
+       also gives the label a bounded width to wrap in. */
     display: inline-grid;
     grid-template-columns: auto 1fr;
-    align-items: center;
+    align-items: start;
     column-gap: var(--checkbox-gap);
     vertical-align: middle;
     cursor: pointer;

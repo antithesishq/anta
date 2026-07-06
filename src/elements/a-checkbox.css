@@ -76,6 +76,7 @@
       grid-column: 1;
       grid-row: 1 / -1;
       align-self: start;
+      margin-block-start: calc((var(--checkbox-label-lh) - 16px) / 2);
       box-sizing: border-box;
       inline-size: 16px;
       block-size: 16px;

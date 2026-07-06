@@ -105,6 +105,20 @@ Pass the label as `children` or the `label` prop. Add a `hint` for a secondary l
 <Checkbox aria-label="Select all rows" />
 ```
 
+## Alignment
+
+By default, the checkbox box aligns to the **top of the first line** when labels wrap to multiple lines. Use `alignItems="center"` to center the checkbox vertically on the text instead.
+
+<Preview gap="16px">
+  <Checkbox defaultChecked label="Top-aligned (default)" hint="Label text wraps to multiple lines and checkbox stays at the top edge of the first line." />
+  <Checkbox defaultChecked alignItems="center" label="Center-aligned" hint="Label text wraps to multiple lines and checkbox centers vertically." />
+</Preview>
+
+```tsx folded
+<Checkbox defaultChecked label="Top-aligned (default)" hint="..." />
+<Checkbox defaultChecked alignItems="center" label="Center-aligned" hint="..." />
+```
+
 ## States
 
 Checkboxes are unchecked, checked, or indeterminate (for partial selection in groups).

@@ -83,6 +83,11 @@ export interface CheckboxProps extends BaseProps {
   /** Size variant. small=14px, medium=16px, large=18px box.
    *  @defaultValue 'medium' */
   size?: 'small' | 'medium' | 'large'
+  /** Vertical alignment of checkbox box relative to multiline labels. `start` aligns
+   *  to the first line (Figma spec, default); `center` centers vertically on the text.
+   *  Use when wrapping labels to text on multiple lines.
+   *  @defaultValue 'start' */
+  alignItems?: 'start' | 'center'
   /** Fired on click / Space *before* the element applies any change. Event-first
    *  so `event.preventDefault()` is the synchronous veto (uncontrolled mode);
    *  `detail` carries `{ next, prev }`. In controlled mode the element never
@@ -122,6 +127,7 @@ export const Checkbox = ({
   toneText,
   size,
   round,
+  alignItems,
   onStateChange,
   onChange,
   onValueChange,
@@ -141,15 +147,19 @@ export const Checkbox = ({
   // A non-named tone/toneText is a custom CSS color — `toneStyle` hands each to the
   // element via its `--checkbox-tone-source` / `--checkbox-tone-text-source` var; the
   // element's CSS derives the fill / text curve. Chained so both can be custom.
-  const computedStyle = roundStyle(
-    round,
-    '--checkbox-round',
-    toneStyle(
-      toneText,
-      '--checkbox-tone-text-source',
-      toneStyle(tone, '--checkbox-tone-source', style),
+  // alignItems sets the vertical alignment of the checkbox box (start = top, center = middle).
+  const computedStyle = {
+    ...roundStyle(
+      round,
+      '--checkbox-round',
+      toneStyle(
+        toneText,
+        '--checkbox-tone-text-source',
+        toneStyle(tone, '--checkbox-tone-source', style),
+      ),
     ),
-  )
+    ...(alignItems && alignItems !== 'start' ? { '--checkbox-align-items': alignItems } : {}),
+  }
 
   // The accessible name is wrapper-derived (matches `Input` and the "ARIA lives
   // in the wrapper" rule): a string label / children becomes the box's

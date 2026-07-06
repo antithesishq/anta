@@ -28,7 +28,15 @@ export class ARadioElement extends HTMLElementBase {
     // Reflect a hand-authored `selected` attribute as the initial paint; the
     // enclosing <a-radio-group> observes child add/remove and drives selection
     // thereafter (its MutationObserver catches this radio appearing).
-    this.applyState(this.hasAttribute("selected"));
+    //
+    // Only ever turn state ON here — never force it OFF. Under eager element
+    // registration the group connects first (parent-before-child tree order) and
+    // has already set `selected` via the property by the time this runs; forcing
+    // OFF for an absent attribute would silently clobber that initial
+    // `default-state` selection (the dot never paints even though the group's
+    // value is correct). The resting internals state is already "not selected",
+    // so there is nothing to reset. Mirrors a-tab's connectedCallback guard.
+    if (this.hasAttribute("selected")) this.applyState(true);
   }
 
   attributeChangedCallback(name: string) {

@@ -36,6 +36,8 @@
   a-text[priority="quaternary"] { --text-color: var(--text-4); --text-link-color: currentColor; --text-link-hover: var(--text-3); }
   a-text[priority="quinary"]    { --text-color: var(--text-5); --text-link-color: currentColor; --text-link-hover: var(--text-4); }
 
+  /* tone="neutral" has no rule on purpose — it is the untinted default, resolved
+     by the base + priority rules above (the --text-N scale). */
   a-text[tone="brand"]                              { --text-color: var(--text-2-brand); --text-link-color: currentColor; --text-link-hover: var(--text-1-brand); }
   a-text[tone="brand"][priority="primary"]          { --text-color: var(--text-1-brand); }
   a-text[tone="brand"][priority="tertiary"]         { --text-color: var(--text-3-brand); --text-link-hover: var(--text-2-brand); }

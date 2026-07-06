@@ -75,6 +75,12 @@ export function readProp(
   if (prop.kind === 'expression') {
     return { kind: 'literal', value: inner }
   }
+  // Style object literal (`style={{ marginLeft: '16px' }}`) → CSS declarations string
+  // for the field — the inverse of prop-patch's `cssDeclarationsToObjectLiteral`.
+  if (prop.kind === 'style-css') {
+    const css = objectLiteralToCssDeclarations(inner)
+    return css !== undefined ? { kind: 'literal', value: css } : { kind: 'expression' }
+  }
   // Numeric literal.
   if (prop.kind === 'number') {
     if (/^-?\d+(\.\d+)?$/.test(inner)) return { kind: 'literal', value: Number(inner) }
@@ -93,4 +99,82 @@ export function readProp(
     return { kind: 'expression' }
   }
   return { kind: 'expression' }
+}
+
+/**
+ * Inverse of prop-patch's `cssDeclarationsToObjectLiteral`: turn a JSX style object
+ * literal (`{ marginLeft: '16px', '--foo': 'bar' }`) back into a CSS declarations
+ * string (`margin-left: 16px; --foo: bar`) for the style field. Returns undefined if
+ * any value isn't a plain string / number literal (i.e. a computed expression) — the
+ * caller then surfaces the whole prop as `{ kind: 'expression' }` ("set by code").
+ */
+function objectLiteralToCssDeclarations(objText: string): string | undefined {
+  let s = objText.trim()
+  if (!s.startsWith('{') || !s.endsWith('}')) return undefined
+  s = s.slice(1, -1).trim()
+  if (!s) return ''
+  const decls: string[] = []
+  for (const part of splitTopLevel(s, ',')) {
+    const entry = part.trim()
+    if (!entry) continue
+    const colon = topLevelIndexOf(entry, ':')
+    if (colon === -1) return undefined
+    let key = entry.slice(0, colon).trim()
+    const rawVal = entry.slice(colon + 1).trim()
+    // Key: a quoted string (custom prop `--foo` or arbitrary) or a bare camelCase
+    // identifier (marginLeft → margin-left).
+    const kq = key.match(/^(['"])(.*)\1$/)
+    if (kq) key = kq[2]
+    else if (/^[A-Za-z_][\w$]*$/.test(key)) key = key.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase())
+    else return undefined
+    // Value: a string literal, or a bare number (e.g. `zIndex: 5`). Anything else is
+    // an expression we can't render as a CSS string.
+    const vq = rawVal.match(/^(['"])(.*)\1$/)
+    if (vq) decls.push(`${key}: ${vq[2]}`)
+    else if (/^-?\d+(\.\d+)?$/.test(rawVal)) decls.push(`${key}: ${rawVal}`)
+    else return undefined
+  }
+  return decls.join('; ')
+}
+
+/** Split `s` on top-level `delim`, ignoring delimiters inside quotes or nested (){}[]. */
+function splitTopLevel(s: string, delim: string): string[] {
+  const out: string[] = []
+  let depth = 0
+  let quote = ''
+  let start = 0
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i]
+    if (quote) {
+      if (c === quote && s[i - 1] !== '\\') quote = ''
+      continue
+    }
+    if (c === '"' || c === "'" || c === '`') quote = c
+    else if (c === '(' || c === '[' || c === '{') depth++
+    else if (c === ')' || c === ']' || c === '}') depth--
+    else if (c === delim && depth === 0) {
+      out.push(s.slice(start, i))
+      start = i + 1
+    }
+  }
+  out.push(s.slice(start))
+  return out
+}
+
+/** First top-level index of `ch`, ignoring occurrences inside quotes or nested (){}[]. */
+function topLevelIndexOf(s: string, ch: string): number {
+  let depth = 0
+  let quote = ''
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i]
+    if (quote) {
+      if (c === quote && s[i - 1] !== '\\') quote = ''
+      continue
+    }
+    if (c === '"' || c === "'" || c === '`') quote = c
+    else if (c === '(' || c === '[' || c === '{') depth++
+    else if (c === ')' || c === ']' || c === '}') depth--
+    else if (c === ch && depth === 0) return i
+  }
+  return -1
 }

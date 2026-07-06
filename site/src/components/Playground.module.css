@@ -209,89 +209,55 @@
   overflow: hidden;
 }
 
-/* Minimal tab strip: each tab fills the full strip height (matches
-   the preview header so the two halves of the playground align) and
-   has comfortable left / right padding so the hit area is generous.
-   The active tab is signalled by a 1px underline drawn over the
-   strip's bottom border. */
+/* Header row holding the Anta <Tabs> control (Props / Code / CSS) on
+   the left and the reset button on the right. The bottom border
+   matches `.previewHeader` so the two halves of the playground align.
+   The strip is bottom-aligned and pulled down 1px (see below) so its
+   per-tab underline overlaps the row border — the active tab's accent
+   reads as a thickening of that line. */
 .tabs {
   display: flex;
+  align-items: flex-end;
   border-bottom: 1px solid var(--border-4);
 }
 
-.tabBtn {
-  appearance: none;
-  border: none;
-  background: transparent;
-  font: inherit;
+/* Match the tab labels to the PREVIEW header's static label — uppercase,
+   12px / 500 with the same letter-spacing — so the two panel headers read
+   as a matched pair. The tertiary tab states still drive the colour (muted
+   at rest, brightening when active); we only override the typography.
+   Unlayered, so it beats a-tab-label's @layer anta defaults. */
+.tabs a-tab-label {
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-4);
-  /* Vertical padding mirrors `.previewHeader` so the strips line up.
-     Side padding is 6px on each tab so the visual gap between
-     adjacent labels (6 + 6 = 12px) matches the form's 12px padding. */
-  padding: 7px 6px 6px;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  transition: color 120ms ease-out;
+  /* Full-width axis (a-tab defaults to the condensed "wdth" 88) so the labels
+     match the PREVIEW header's normal-width type. */
+  font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0;
 }
 
-/* First tab's left padding is doubled (12px) so the gap from the
-   strip edge to the first label matches the gap between adjacent
-   labels and the form's left padding. */
-.tabBtn:first-child {
-  padding-left: 12px;
+/* Roomier tabs — wider inline padding than the small default so the
+   uppercase labels get more breathing room and the tabs read as a
+   generous strip. */
+.tabs a-tab {
+  padding-inline: 12px;
 }
 
-.tabBtnActive {
-  color: var(--text-2);
+/* Flush tabs (no gap). A -1px bottom margin pulls the strip down so its
+   per-tab underline sits over the row's bottom border rather than just above it. */
+.tabs a-tabs {
+  gap: 0;
+  margin-bottom: -1px;
 }
 
-/* Reset button anchored to the right edge of the tab strip. Same
-   vertical metrics as a tab so its hit area matches the strip
-   height; just an icon, no label. */
 /* Reset control — a quaternary <a-button> (no bg/border) holding the
    rotate-ccw icon. Anta's button styling owns the colour/hover; we only
-   push it to the end of the tab strip and give it 8px inline padding. */
+   push it to the end of the header row, centre it against the strip,
+   and give it 8px inline padding. */
 .resetBtn {
   margin-inline-start: auto;
+  align-self: center;
   --button-padding-x: 8px;
-}
-
-/* Hover wins so only the tab under the cursor reads at full intensity. */
-.tabBtn:hover,
-.tabBtn:focus-visible {
-  color: var(--text-1);
-  outline: none;
-}
-
-/* Pressed state: drop back down to the active-tab color so the
-   click reads as committal. Declared after :hover so the equal-
-   specificity `:active` rule wins by source order. */
-.tabBtn:active {
-  color: var(--text-2);
-}
-
-/* The label wrapper lets the active underline track the word width
-   instead of the full button. The underline drops below the span
-   to sit on top of the strip's border-bottom (1px line at the
-   strip's edge): span-bottom + 6px padding + 1px border = 7px. */
-.tabLabel {
-  position: relative;
-  display: inline-block;
-}
-
-.tabBtnActive .tabLabel::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -7px;
-  height: 1px;
-  background: var(--text-2);
 }
 
 /* Stacking container — both tab panels share the same grid cell so
@@ -495,20 +461,16 @@
   pointer-events: none;
 }
 
-.segment {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 2px;
-  padding: 3px;
-  background: var(--bg-spot);
-  border-radius: 6px;
-  align-self: flex-start;
-  /* Tabs that don't fit the panel scroll horizontally rather than wrap or
-     push the panel wider. */
+/* Enum / tone pickers are Anta <Tabs> (primary, small). Opt into horizontal
+   scrolling so a long option set (e.g. tone) scrolls rather than ellipsizing
+   its labels or widening the panel. */
+.segTabs {
   max-width: 100%;
   overflow-x: auto;
   scrollbar-width: thin;
+}
+.segTabs a-tab {
+  flex: none;
 }
 
 /* Prop name — plain monospace value, not a copyable code pill. Inherits its
@@ -526,34 +488,6 @@
   font-family: var(--monospace);
   letter-spacing: 0;
   font-size: 12px;
-}
-
-.segBtn {
-  appearance: none;
-  border: none;
-  background: transparent;
-  font: inherit;
-  font-size: 12px;
-  color: var(--text-3);
-  padding: 4px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 150ms ease-out, color 150ms ease-out;
-}
-
-/* Hover renders the same pill affordance as the active state so the
-   tab-like control previews on hover and commits on click. The
-   default rest state stays "no selection rendered" when the prop
-   isn't yet set in code, matching the form contract. */
-.segBtn:hover,
-.segBtn:focus-visible,
-.segBtnActive,
-.segBtnActive:hover,
-.segBtnActive:focus-visible {
-  background: var(--bg-canvas);
-  color: var(--text-1);
-  box-shadow: 0 0 2px var(--border-3);
-  outline: none;
 }
 
 /* Tone control: the named/Custom tab row plus, when Custom is active, a

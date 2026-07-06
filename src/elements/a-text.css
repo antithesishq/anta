@@ -12,11 +12,11 @@
        reset (headings use `balance`). Only affects the non-truncated case;
        `truncate` clamps in shadow DOM. */
     text-wrap: pretty;
-    /* Anta's stylistic sets: ss02 (alternate l) + ss05. Re-stated explicitly
-       (not just inherited from :root) so a consumer's own font-feature-settings
-       on an ancestor can't silently drop them — the property replaces, not
-       merges. */
-    font-feature-settings: 'ss02', 'ss05';
+    /* Anta's stylistic sets: ss02 (alternate l) + ss05, plus tnum for tabular
+       (fixed-width) figures. Re-stated explicitly (not just inherited from :root)
+       so a consumer's own font-feature-settings on an ancestor can't silently
+       drop them — the property replaces, not merges. */
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
   }
 
   a-text[size="small"]  { font-size: 13px; line-height: 16px; }

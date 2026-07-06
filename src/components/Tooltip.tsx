@@ -1,4 +1,5 @@
 import type { BaseProps } from "../general_types"
+import { roundStyle } from "../anta_helpers"
 
 export interface TooltipProps extends BaseProps {
   /** Tooltip content. Renders anything — text, markup, an icon + text.
@@ -12,6 +13,9 @@ export interface TooltipProps extends BaseProps {
    *  side when there isn't room.
    *  @defaultValue bottom */
   placement?: 'top' | 'bottom'
+  /** Round the bubble to a 20px radius (matching a round menu). Pass a `number`
+   *  (px) or a CSS length string for a custom radius. */
+  round?: boolean | number | string
   /** Follow the cursor instead of pinning under the anchor. The bubble is
    *  pinned (anchored beneath the target) by default; pass `follow` for the
    *  cursor-tracking behaviour, which fades by distance as the cursor leaves. */
@@ -78,11 +82,13 @@ export interface TooltipProps extends BaseProps {
 export const Tooltip = ({
   delay,
   placement,
+  round,
   follow,
   interactive,
   truncatedOnly,
   truncatedSelector,
   className,
+  style,
   children,
   ...rest
 }: TooltipProps) => {
@@ -92,11 +98,13 @@ export const Tooltip = ({
       // 'bottom' is the implicit default — emit no DOM attribute for it.
       placement={placement === 'top' ? 'top' : undefined}
       // Boolean attributes: presence form when on, omitted when off.
+      round={round ? '' : undefined}
       follow={follow ? '' : undefined}
       interactive={interactive ? '' : undefined}
       truncated-only={truncatedOnly ? '' : undefined}
       truncated-selector={truncatedSelector || undefined}
       class={className}
+      style={roundStyle(round, '--tooltip-round', style)}
       {...rest}
     >
       {children}

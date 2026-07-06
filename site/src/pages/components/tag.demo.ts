@@ -5,5 +5,5 @@
  */
 export default `import { Tag } from '@antadesign/anta'
 
-<Tag tone="info" icon="hourglass" label="Running" value="20m 16s" />
+<Tag allcaps tone="info" icon="hourglass" label="Running" value="20m 16s" />
 `

@@ -31,9 +31,9 @@ export interface TagProps extends BaseProps {
    *  default — both render identically and emit no DOM attribute.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
-  /** Render in normal (mixed) case instead of the default uppercase
-   *  (keeps Anta's small body-text letter-spacing; uppercase tracks wider). */
-  nocaps?: boolean
+  /** Render in all-caps instead of the default normal (mixed) case
+   *  (uppercase tracks wider than the default body-text letter-spacing). */
+  allcaps?: boolean
   /** Leading icon shape. Sits flush before the label, scaled to the pill. */
   icon?: IconShape
   /** Trailing icon shape. Renders last, after the value. */
@@ -77,16 +77,17 @@ export interface TagProps extends BaseProps {
  *   are the only numbers to tune and the `.dark` block re-tunes them. The
  *   wrapper writes `--tag-tone-source` inline; a typed `attr()` fallback
  *   picks up raw `<a-tag tone="…">` on Chrome 133+/Safari 18.2+.
- * - `nocaps` drops the uppercase transform and tightens tracking to the
- *   body-text 0.02ch (uppercase needs 0.08ch); tabular figures + `ss05`
- *   stay on. Large + nocaps bumps to 13px, keeping the same +1px
- *   over-uppercase relationship medium has, with height unchanged.
+ * - `allcaps` switches on the uppercase transform and widens tracking to
+ *   0.08ch (the default mixed case uses the body-text 0.02ch); tabular
+ *   figures + `ss05` stay on. Each size steps down 1px under `allcaps`
+ *   (uppercase reads larger than mixed case at the same px), with height
+ *   unchanged.
  *
  * @example Basic usage
  * ```tsx
  * <Tag tone="success" label="Running" />
  * <Tag tone="info" icon="hourglass" label="Build" value="2m 14s" />
- * <Tag tone="brand" size="small" nocaps value="v2.1.0" />
+ * <Tag tone="brand" size="small" allcaps label="Status" />
  * ```
  */
 export const Tag = ({
@@ -97,7 +98,7 @@ export const Tag = ({
   tone,
   priority,
   size,
-  nocaps,
+  allcaps,
   className,
   style,
   children,
@@ -128,8 +129,8 @@ export const Tag = ({
       // 'medium' (and unset) is the implicit default — emit no DOM attr.
       size={size && size !== 'medium' ? size : undefined}
       // Boolean attribute: presence (empty string) on, omit off — the CSS
-      // matches `[nocaps]` by presence, consistent across React / Preact.
-      nocaps={nocaps ? '' : undefined}
+      // matches `[allcaps]` by presence, consistent across React / Preact.
+      allcaps={allcaps ? '' : undefined}
       class={className}
       style={computedStyle}
       {...rest}

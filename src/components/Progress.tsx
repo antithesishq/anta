@@ -1,5 +1,5 @@
 import type { BaseProps } from "../general_types"
-import { hasChildren, toneStyle } from "../anta_helpers"
+import { hasChildren, toneStyle, roundStyle } from "../anta_helpers"
 
 export interface ProgressProps extends BaseProps {
   /** Current progress value. Negative values are clamped to 0. */
@@ -12,6 +12,9 @@ export interface ProgressProps extends BaseProps {
    *  light/dark automatically.
    *  @defaultValue 'neutral' */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Fully-round track (`border-radius: 999px`); the fill is clipped to it. Pass a
+   *  `number` (px) or a CSS length string for a custom radius. */
+  round?: boolean | number | string
   /** Text label displayed after the percentage. When you provide custom
    *  `children` (which replace the default label row), `label` is no longer
    *  rendered — but it still supplies the progressbar's accessible name, so
@@ -49,7 +52,7 @@ export interface ProgressProps extends BaseProps {
  * <Progress value={75} tone="info" label="Processing" />
  * ```
  */
-export const Progress = ({ value, max = 100, tone, label, hint, className, style, children, ...rest }: ProgressProps) => {
+export const Progress = ({ value, max = 100, tone, round, label, hint, className, style, children, ...rest }: ProgressProps) => {
   const percent = max > 0 ? Math.round(Math.min(100, Math.max(0, (value / max) * 100))) : 0
   // Clamp the announced value to [0, max] so screen readers never report an
   // out-of-range progress (e.g. "150 of 100") that contradicts the visually
@@ -67,13 +70,14 @@ export const Progress = ({ value, max = 100, tone, label, hint, className, style
       value={value}
       max={max}
       tone={tone && tone !== 'neutral' ? tone : undefined}
+      round={round ? '' : undefined}
       role="progressbar"
       aria-valuenow={clampedValue}
       aria-valuemin={0}
       aria-valuemax={max}
       aria-label={ariaLabel}
       class={className}
-      style={toneStyle(tone, '--progress-tone-source', style)}
+      style={roundStyle(round, '--progress-round', toneStyle(tone, '--progress-tone-source', style))}
       {...rest}
     >
       {hasChildren(children) ? children : (

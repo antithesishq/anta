@@ -69,6 +69,8 @@ export type {
 } from './calendar-core'
 export { RadioGroup } from './components/RadioGroup'
 export type { RadioGroupProps, RadioOption } from './components/RadioGroup'
+export { Select } from './components/Select'
+export type { SelectProps, SelectCommonProps, SelectOption, SelectChangeAttrs } from './components/Select'
 export { Tabs } from './components/Tabs'
 export type { TabsProps, TabsMounting, TabsChangeAttrs } from './components/Tabs'
 export { Tab } from './components/Tab'

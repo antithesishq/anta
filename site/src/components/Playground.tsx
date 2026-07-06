@@ -17,7 +17,7 @@
  * See site/lib/sandbox/* for the moving parts.
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
-import { Input, Tooltip, Text, Checkbox } from '@antadesign/anta'
+import { Input, Tooltip, Text, Checkbox, Tabs, Tab as TabItem } from '@antadesign/anta'
 import { marked } from 'marked'
 import s from './Playground.module.css'
 // Monaco ships its structural CSS as ~110 separate `import './x.css'`
@@ -33,16 +33,12 @@ import 'monaco-editor/min/vs/editor/editor.main.css'
 
 import { controlsFor, controlsForExample, CONDITIONAL_PROPS, type Control, type PropEntry } from '../../lib/sandbox/props-form.ts'
 import { bundle, type BundleResult } from '../../lib/sandbox/bundler.ts'
-import { getDemoModules } from '../../lib/sandbox/modules.ts'
+import { moduleManifest } from '../../lib/sandbox/modules.ts'
+import { IFRAME_ASSETS } from '../generated/iframe-assets'
 import { replaceProp, readChildren } from '../../lib/sandbox/prop-patch.ts'
 import { readProp } from '../../lib/sandbox/prop-read.ts'
 import { parseExamples, type Example } from '../../lib/sandbox/parse-examples.ts'
 import { throttle } from 'es-toolkit'
-
-/** Path served from `site/public/`. The script is a self-contained
- *  browser ESM bundle of @antadesign/anta/elements + per-element CSS;
- *  built by `site/scripts/build-iframe-runtime.mjs`. */
-const IFRAME_RUNTIME_URL = '/iframe-anta-runtime.js'
 
 /** The prose column width (matches the 960px measure in base.css). The
  *  playground starts here and can't be resized narrower. */
@@ -108,6 +104,11 @@ export default function Playground({ component, initialCode, initialCss = '', la
   const [monoFontFamily, setMonoFontFamily] = useState<string>('')
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
   const iframeReadyRef = useRef(false)
+  // True once a render has thrown (runtime error). A thrown render can leave
+  // Preact's bookkeeping on `#root` half-committed, so the *next* successful
+  // bundle re-mounts into a fresh root (see `pushBundleToIframe`'s `resetRoot`)
+  // — that's how a fixed edit fully recovers instead of diffing broken state.
+  const renderErroredRef = useRef(false)
   const monacoRef = useRef<any>(null)
   const editorRef = useRef<any>(null)
   const cssEditorRef = useRef<any>(null)
@@ -264,7 +265,11 @@ export default function Playground({ component, initialCode, initialCss = '', la
       if (cancelled) return
       setBundleState(result)
       if (result.ok && iframeRef.current && iframeReadyRef.current) {
-        pushBundleToIframe(iframeRef.current, result.code)
+        // If the previous render threw, re-mount into a fresh root so a fixed
+        // edit recovers cleanly rather than diffing against half-committed state.
+        const resetRoot = renderErroredRef.current
+        renderErroredRef.current = false
+        pushBundleToIframe(iframeRef.current, result.code, resetRoot)
         setRuntimeError(null)
       }
     }, 200)
@@ -280,6 +285,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
       if (!e.data || typeof e.data !== 'object') return
       if (e.data.__demo === 'runtime-error') {
         setRuntimeError(String(e.data.message ?? 'Unknown runtime error'))
+        // Flag so the next successful bundle re-mounts into a fresh root.
+        renderErroredRef.current = true
       } else if (e.data.__demo === 'runtime-clear') {
         setRuntimeError(null)
       } else if (e.data.__demo === 'content-height') {
@@ -312,12 +319,12 @@ export default function Playground({ component, initialCode, initialCss = '', la
         pushBundleToIframe(iframe, (bundleState as BundleResult & { code: string }).code)
       }
     }
-    const doc = iframe.contentDocument
-    if (doc && (doc.readyState === 'complete' || doc.readyState === 'interactive')) {
-      init()
-      return () => { cancelled = true }
-    }
+    // Set srcdoc client-side (window exists here) so the import-map / asset URLs
+    // resolve against the real origin — SSR has no window and would bake a wrong
+    // host (ERR_CONNECTION_REFUSED). Listener first, then assign, so the fresh
+    // srcdoc's `load` is always caught → init() → setupIframe.
     iframe.addEventListener('load', init)
+    iframe.srcdoc = buildSrcdoc()
     return () => {
       cancelled = true
       iframe.removeEventListener('load', init)
@@ -553,7 +560,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
           <iframe
             ref={iframeRef}
             class={s.previewFrame}
-            srcDoc={IFRAME_SRCDOC}
+            // srcdoc is set imperatively in the mount effect — it must be built
+            // client-side (asset URLs need the real origin; SSR has no window).
             title={`${component} interactive demo preview`}
             // In `side` layout the preview fills the grid row (its
             // sibling panel drives the height); we let the iframe
@@ -578,34 +586,22 @@ export default function Playground({ component, initialCode, initialCss = '', la
         )}
 
         <div class={s.panel} style={{ '--demo-panel-h': `${widgetHeight}px` } as any}>
-          <div class={s.tabs} role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'props'}
-              class={tab === 'props' ? `${s.tabBtn} ${s.tabBtnActive}` : s.tabBtn}
-              onClick={() => setTab('props')}
+          <div class={s.tabs}>
+            {/* Dogfood Anta's <Tabs> as a bare selectable strip (no
+                <TabPanel>s) — the playground keeps its own panel
+                management below (the `.tabStack` grid: Props/Code share
+                a cell sized to the taller, CSS stays mounted so Monaco
+                never inits mid-typing). Controlled via `tab`. */}
+            <Tabs
+              priority="tertiary"
+              label="Playground panel"
+              value={tab}
+              onStateChange={(_e, { next }) => next && setTab(next as Tab)}
             >
-              <span class={s.tabLabel}>Props</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'code'}
-              class={tab === 'code' ? `${s.tabBtn} ${s.tabBtnActive}` : s.tabBtn}
-              onClick={() => setTab('code')}
-            >
-              <span class={s.tabLabel}>Code</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'css'}
-              class={tab === 'css' ? `${s.tabBtn} ${s.tabBtnActive}` : s.tabBtn}
-              onClick={() => setTab('css')}
-            >
-              <span class={s.tabLabel}>CSS</span>
-            </button>
+              <TabItem value="props" label="Props" />
+              <TabItem value="code" label="Code" />
+              <TabItem value="css" label="CSS" />
+            </Tabs>
             {/* Reset edits to props / code. CSS is intentionally
                 preserved — the user owns it independently. */}
             <a-button
@@ -865,17 +861,13 @@ function FormField({
   onChange: (v: string | number | boolean | null) => void
 }) {
   const c = entry.control
-  // `children` doesn't live in the attribute list — read the JSX
-  // element's body content instead. `style-css` stores a JSX object
-  // literal in source, so we can't recover the original CSS string
-  // without a back-parser; leave the input empty in that case (the
-  // user always sees a blank field, edits flow forward only).
+  // `children` doesn't live in the attribute list — read the JSX element's body
+  // content instead. Everything else (including `style`, whose JSX object literal
+  // `readProp` parses back into a CSS-declarations string) reads from the tag.
   let read: ReturnType<typeof readProp>
   if (entry.prop.kind === 'children') {
     const body = readChildren(code, componentName, range)
     read = body !== undefined ? { kind: 'literal', value: body } : undefined
-  } else if (entry.prop.kind === 'style-css') {
-    read = undefined
   } else {
     read = readProp(code, componentName, entry.prop, range)
   }
@@ -891,8 +883,16 @@ function FormField({
   // changes externally — a Monaco edit, a Reset, or the throttled flush
   // landing the value we just set (a same-value set, so Preact skips
   // the re-render and there's no feedback loop).
+  //
+  // …except while the field is focused: the `style` control's CSS-string ↔
+  // object-literal round-trip re-formats (so the flushed value differs from the
+  // keystrokes, and a partial declaration parses to nothing), which would clobber
+  // in-flight typing. `focusedRef` (set by the text field's focusin/focusout, below)
+  // suppresses the sync while typing; on blur the next parse re-syncs the canonical
+  // value. Other controls round-trip identically, so the guard is a no-op there.
   const [value, setValue] = useState<string | number | boolean | undefined>(current)
-  useEffect(() => { setValue(current) }, [current])
+  const focusedRef = useRef(false)
+  useEffect(() => { if (!focusedRef.current) setValue(current) }, [current])
   const handle = (v: string | number | boolean | null) => {
     setValue(v == null ? undefined : v)
     onChange(v)
@@ -933,8 +933,14 @@ function FormField({
     // `children` and ReactNode (`expression`) props hold JSX/markup, not a short
     // value — give them an auto-growing, monospace, code-style field.
     const code = entry.prop.kind === 'children' || entry.prop.kind === 'expression'
+    // focusin/focusout bubble from the inner <input>, so we can track focus on the
+    // wrapper without threading handlers through <Input>. See `focusedRef` above.
     return (
-      <div class={s.field}>
+      <div
+        class={s.field}
+        onfocusin={() => { focusedRef.current = true }}
+        onfocusout={() => { focusedRef.current = false }}
+      >
         <FieldControl
           control={c}
           value={value}
@@ -1033,95 +1039,70 @@ function FieldControl({
         />
       )
     case 'boolean':
+      // Dogfood Anta <Checkbox> (small); the prop name is shown by the row, so
+      // the box takes an aria-label rather than a visible label.
       return (
-        <label class={cls}>
-          <input
-            type="checkbox"
-            checked={value === true}
-            onChange={(e) => onChange((e.currentTarget as HTMLInputElement).checked)}
-            disabled={disabled}
-          />
-        </label>
+        <Checkbox
+          size="small"
+          aria-label={label}
+          checked={value === true}
+          onStateChange={(_e, { next }) => onChange(next === true)}
+          disabled={disabled}
+        />
       )
     case 'segmented': {
-      // When no literal is set in code, fall back to the control's
-      // default so the "implicit" choice still reads as active —
-      // unlike text/number inputs, segmented buttons need a visible
-      // selection to convey state.
+      // Dogfood Anta <Tabs> (primary = segmented-control look, small) as the enum
+      // picker. Controlled via `value`; a pick requests the change through
+      // `onStateChange`, which we forward to the form. When no literal is set in
+      // code we fall back to the control's default so the implicit choice still
+      // reads as active. `clearable` adds a leading "none" tab that omits the attr.
       const selected = value !== undefined ? value : control.defaultValue
+      const active = selected === undefined ? '__none' : String(selected)
       return (
-        <div class={`${s.segment} ${cls}`} role="radiogroup" aria-label={control.name}>
-          {control.clearable && (
-            // Optional prop with no default — "none" clears the attribute
-            // so the omitted state is selectable, and stays lit while
-            // nothing else is chosen.
-            <button
-              key="__none"
-              type="button"
-              role="radio"
-              aria-checked={selected === undefined}
-              class={selected === undefined ? `${s.segBtn} ${s.segBtnActive}` : s.segBtn}
-              onClick={() => onChange(null)}
-              disabled={disabled}
-            >
-              none
-            </button>
-          )}
+        <Tabs
+          className={s.segTabs}
+          priority="primary"
+          size="small"
+          label={control.name}
+          value={active}
+          disabled={disabled}
+          onStateChange={(_e, { next }) => onChange(next === '__none' ? null : next)}
+        >
+          {control.clearable && <TabItem value="__none" label="none" />}
           {control.options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              role="radio"
-              aria-checked={selected === opt}
-              class={selected === opt ? `${s.segBtn} ${s.segBtnActive}` : s.segBtn}
-              onClick={() => onChange(opt)}
-              disabled={disabled}
-            >
-              {opt}
-            </button>
+            <TabItem key={opt} value={opt} label={opt} />
           ))}
-        </div>
+        </Tabs>
       )
     }
     case 'tone': {
-      // Named-tone tabs + a "Custom" tab. Mode is derived from the value:
-      // a value outside `options` (a color literal) means custom. The color
-      // picker only reflects valid hex; a hand-typed `oklch(…)` stays in the
-      // code and shows beside the picker without being overwritten.
+      // Named-tone tabs + a "custom" tab, as Anta <Tabs> (small). A value outside
+      // `options` (a colour literal) means custom → reveal the colour picker. The
+      // picker only reflects valid hex; a hand-typed `oklch(…)` stays in the code
+      // and shows beside the picker without being overwritten.
       const v = typeof value === 'string' ? value : undefined
       const selected = v ?? control.defaultValue
       const isCustom = v !== undefined && !control.options.includes(v)
       const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v ?? '') ? (v as string) : '#ff1493'
+      const active = isCustom ? 'custom' : String(selected)
       return (
         <div class={`${s.toneControl} ${cls}`}>
-          <div class={s.segment} role="radiogroup" aria-label={control.name}>
-            {control.options.map((opt) => {
-              const active = !isCustom && selected === opt
-              return (
-                <button
-                  key={opt}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  class={active ? `${s.segBtn} ${s.segBtnActive}` : s.segBtn}
-                  onClick={() => onChange(opt)}
-                  disabled={disabled}
-                >
-                  {opt}
-                </button>
-              )
-            })}
-            <button
-              type="button"
-              role="radio"
-              aria-checked={isCustom}
-              class={isCustom ? `${s.segBtn} ${s.segBtnActive}` : s.segBtn}
-              onClick={() => onChange(isCustom ? (v as string) : '#ff1493')}
-              disabled={disabled}
-            >
-              custom
-            </button>
-          </div>
+          <Tabs
+            className={s.segTabs}
+            priority="primary"
+            size="small"
+            label={control.name}
+            value={active}
+            disabled={disabled}
+            onStateChange={(_e, { next }) =>
+              onChange(next === 'custom' ? (isCustom ? (v as string) : '#ff1493') : next)
+            }
+          >
+            {control.options.map((opt) => (
+              <TabItem key={opt} value={opt} label={opt} />
+            ))}
+            <TabItem value="custom" label="custom" />
+          </Tabs>
           {isCustom && (
             <div class={s.toneCustomRow}>
               <input
@@ -1240,13 +1221,29 @@ function ExampleAccordion({
 // element's color-scheme does NOT propagate into the document (its canvas
 // defaults to light), which is why a white flash appeared on expand in dark
 // mode. The setupIframe mirror keeps the `.dark` class in sync on later toggles.
-const IFRAME_SRCDOC = `<!DOCTYPE html><html><head><meta charset="utf-8"><script>
+/** Absolute URL for a prebuilt, content-hashed iframe asset. srcdoc lives at
+ *  `about:srcdoc` and can't resolve relative paths, so we anchor to the parent
+ *  origin. The hash in the filename is the cache-buster. */
+function iframeAssetUrl(file: string): string {
+  const base = typeof window !== 'undefined' ? window.location.href : 'http://localhost/'
+  return new URL(`/iframe/${file}`, base).href
+}
+
+/** The preview iframe as a self-contained Anta app: it loads one prebuilt,
+ *  content-hashed bundle (`iframe-app.js` — Preact + the whole Anta + element
+ *  registration) plus its matching stylesheet. That bundle seeds
+ *  `window.__demo_modules__` from its own instances, which the sandbox-compiled
+ *  demo reads — so the demo runs against the iframe's Anta + Preact (one Preact
+ *  instance, Anta CSS present with matching class names). */
+function buildSrcdoc(): string {
+  const A = IFRAME_ASSETS
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><script>
   try {
     var d = parent.document.documentElement.classList.contains('dark');
     document.documentElement.classList.toggle('dark', d);
     document.documentElement.style.colorScheme = d ? 'dark' : 'light';
   } catch (e) {}
-</script><style>
+</script><link rel="stylesheet" href="${iframeAssetUrl(A.css)}"><script type="module" src="${iframeAssetUrl(A.js)}"></script><style>
   /* Pin the Antithesis-sans variable font's slnt / ital axes to 0.
      Safari leaves variable-font axes at the font file's internal
      defaults unless they're explicitly set — and our font ships
@@ -1269,16 +1266,19 @@ const IFRAME_SRCDOC = `<!DOCTYPE html><html><head><meta charset="utf-8"><script>
     width: 100%;
   }
 </style></head><body><div id="root" class="preview"></div></body></html>`
+}
 
 function setupIframe(iframe: HTMLIFrameElement) {
   const doc = iframe.contentDocument
   const win = iframe.contentWindow as Window & { __demo_modules__?: Record<string, unknown> }
   if (!doc || !win) return
 
-  // 1) Module registry.
-  win.__demo_modules__ = getDemoModules()
+  // `window.__demo_modules__` (the Anta + Preact instances the demo shim reads)
+  // and the custom-element registration are both handled by the preview-app
+  // bundle loaded from the srcdoc (see buildSrcdoc) — it runs before this
+  // iframe's `load`, so the modules are seeded by the time we push a demo.
 
-  // 2) Clone Anta-related <link rel="stylesheet"> + <style> tags from
+  // Clone Anta-related <link rel="stylesheet"> + <style> tags from
   //    the parent into the iframe so the rendered preview gets the
   //    same look as the docs site. Anta CSS stays unlayered — its
   //    component defaults beat anything in a cascade layer
@@ -1304,19 +1304,6 @@ function setupIframe(iframe: HTMLIFrameElement) {
     }
   }
 
-  // 3) Register Anta's custom elements inside the iframe so <a-progress>
-  //    upgrades on the iframe's own customElements registry. We import
-  //    the module directly into the iframe's window via a script tag.
-  //    Vite resolves the bare specifier in the parent at build time;
-  //    inside the iframe we use a dynamic import of the resolved URL.
-  const reg = doc.createElement('script')
-  reg.type = 'module'
-  reg.textContent = `
-    // Side-effect import — registers <a-progress>, <a-text>, <a-icon>
-    // on this iframe's customElements registry.
-    import("${getElementsModuleUrl()}").catch(() => {})
-  `
-  doc.head.appendChild(reg)
 
   // 4) Mirror the parent's .dark class (and color-scheme, so a light docs
   //    theme flips the iframe canvas back to light — the srcdoc defaults to
@@ -1359,18 +1346,33 @@ function setupIframe(iframe: HTMLIFrameElement) {
   setTimeout(report, 0)
 }
 
-function pushBundleToIframe(iframe: HTMLIFrameElement, code: string) {
+function pushBundleToIframe(iframe: HTMLIFrameElement, code: string, resetRoot = false) {
   const doc = iframe.contentDocument
   if (!doc) return
   // Remove previous user bundle.
   const prev = doc.getElementById('user-bundle')
   if (prev) prev.remove()
-  // Do NOT clear `#root` here. Preact tracks its previous render via a
-  // `_children` property on the parent DOM node; clearing innerHTML
-  // removes the visible nodes but leaves preact's bookkeeping pointing
-  // at stale references, so the next `render()` call silently does
-  // nothing. Letting preact diff in place is also the right behaviour
-  // — typical "re-render with new props" patches the existing tree.
+  // Normally we do NOT clear `#root`. Preact tracks its previous render via a
+  // `_children` property on the parent DOM node; clearing innerHTML removes the
+  // visible nodes but leaves preact's bookkeeping pointing at stale references,
+  // so the next `render()` call silently does nothing. Letting preact diff in
+  // place is also the right behaviour — typical "re-render with new props"
+  // patches the existing tree (and preserves focus / DOM state across edits).
+  //
+  // The exception is recovering from a thrown render (`resetRoot`): a render
+  // that errored can leave `_children` half-committed, so diffing against it
+  // may throw again or no-op. Swapping `#root` for a fresh, identical-but-empty
+  // node (no `_children`) makes the next `render()` a clean initial mount — so
+  // a corrected edit fully restores instead of staying broken.
+  if (resetRoot) {
+    const oldRoot = doc.getElementById('root')
+    if (oldRoot) {
+      const fresh = doc.createElement('div')
+      fresh.id = 'root'
+      fresh.className = oldRoot.className
+      oldRoot.replaceWith(fresh)
+    }
+  }
   // Clear last runtime error.
   window.postMessage({ __demo: 'runtime-clear' }, '*')
   // Append new script as a module so user-code imports resolve.
@@ -1389,12 +1391,6 @@ function pushBundleToIframe(iframe: HTMLIFrameElement, code: string) {
   }, 50)
 }
 
-/** Return an absolute URL pointing at the prebuilt iframe runtime
- *  bundle (Anta elements registration + CSS). The iframe lives at
- *  `about:srcdoc` and can't resolve relative paths. */
-function getElementsModuleUrl(): string {
-  return new URL(IFRAME_RUNTIME_URL, window.location.href).href
-}
 
 // ──────────────────────────────────────────────────────────────────
 // Shiki ↔ Monaco bridge. shikiToMonaco installs themes + token
@@ -1629,6 +1625,20 @@ function onMonacoMount(_editor: unknown, monaco: any) {
   for (const [absPath, contents] of Object.entries(antaTypeDefs)) {
     ts.typescriptDefaults.addExtraLib(contents, 'file://' + absPath)
   }
+  // The bundler auto-imports every anta export into the compiled output
+  // (see bundler.ts `buildAntaAutoImport`), so demo code can drop any
+  // component into the JSX without an explicit import. Mirror that in the
+  // editor: declare each anta export as an ambient global so Monaco's TS
+  // service resolves a bare `<Button>` (with full hover/autocomplete types)
+  // instead of squiggling "Cannot find name". Kept in lockstep with the
+  // runtime list via the same `moduleManifest` the bundler resolves against.
+  const antaGlobals = (moduleManifest['@antadesign/anta'] ?? [])
+    .map((n) => `  const ${n}: typeof import('@antadesign/anta').${n}`)
+    .join('\n')
+  ts.typescriptDefaults.addExtraLib(
+    `export {}\ndeclare global {\n${antaGlobals}\n}\n`,
+    'file:///anta-auto-imports.d.ts',
+  )
   for (const [absPath, contents] of Object.entries(preactTypeDefs)) {
     ts.typescriptDefaults.addExtraLib(contents, 'file://' + absPath)
   }

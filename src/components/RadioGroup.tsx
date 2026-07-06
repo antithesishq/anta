@@ -34,12 +34,12 @@ export interface RadioOption {
   hint?: React.ReactNode
   /** Disable just this option (skipped by keyboard, dropped from the tab order). */
   disabled?: boolean
-  /** Override this one option's tone (defaults to the group's `tone`). */
+  /** Override this one option's mark tone (defaults to the group's `tone`). */
   tone?: "brand" | "neutral" | "info" | "success" | "warning" | "critical" | (string & {})
+  /** Override this one option's text tone (defaults to the group's `toneText`). */
+  toneText?: "brand" | "neutral" | "info" | "success" | "warning" | "critical" | (string & {})
   /** Override this one option's size (defaults to the group's `size`). */
   size?: "small" | "medium" | "large"
-  /** Override this one option's priority (defaults to the group's `priority`). */
-  priority?: "primary" | "secondary"
 }
 
 /** Public props for `<RadioGroup>` — the single-select container. */
@@ -88,20 +88,20 @@ export interface RadioGroupProps extends Omit<BaseProps, "children" | "onChange"
    *  the neutral default.
    *  @defaultValue 'neutral' */
   status?: "neutral" | "brand" | "info" | "success" | "warning" | "critical"
-  /** Tone applied to every option (an option's own `tone` wins), or any literal
-   *  CSS color for a one-off custom tone. Tints fill, label, hint, and the
-   *  unselected ring border. Named tones track light/dark mode.
+  /** Mark tone applied to every option (an option's own `tone` wins), or any literal
+   *  CSS color for a one-off custom tone. Colours the selected-ring fill + dot and
+   *  the unselected ring border. Named tones track light/dark mode. The option text
+   *  stays neutral — use `toneText` for that.
    *  @defaultValue 'neutral' */
   tone?: "brand" | "neutral" | "info" | "success" | "warning" | "critical" | (string & {})
+  /** Text tone applied to every option's label + hint (an option's own `toneText`
+   *  wins), independent of `tone`. A named tone or any literal CSS color. Omit to
+   *  leave the text neutral.
+   *  @defaultValue 'neutral' */
+  toneText?: "brand" | "neutral" | "info" | "success" | "warning" | "critical" | (string & {})
   /** Size applied to every option (an option's own `size` wins).
    *  @defaultValue 'medium' */
   size?: "small" | "medium" | "large"
-  /** Visual priority applied to every option (an option's own `priority` wins).
-   *  `primary` fills the selected ring with the tone colour and draws a white dot;
-   *  `secondary` keeps the ring unfilled and draws the border + dot in the tone
-   *  colour (an outlined look).
-   *  @defaultValue 'primary' */
-  priority?: "primary" | "secondary"
   /** Disable the whole group. */
   disabled?: boolean
   /** Layout + arrow-key axis.
@@ -140,8 +140,8 @@ export const RadioGroup = ({
   hint,
   status,
   tone,
+  toneText,
   size,
-  priority,
   disabled,
   orientation,
   className,
@@ -216,8 +216,8 @@ export const RadioGroup = ({
       name={name}
       status={status && status !== "neutral" ? status : undefined}
       tone={tone && tone !== "neutral" ? tone : undefined}
+      tone-text={toneText && toneText !== "neutral" ? toneText : undefined}
       size={size && size !== "medium" ? size : undefined}
-      priority={priority && priority !== "primary" ? priority : undefined}
       disabled={disabled ? "" : undefined}
       orientation={orientation && orientation !== "vertical" ? orientation : undefined}
       onstatechange={onstatechange}
@@ -229,7 +229,10 @@ export const RadioGroup = ({
       onfocusin={onFocus}
       onfocusout={onBlur}
       class={className}
-      style={toneStyle(tone, "--radio-tone-source", style)}
+      // Custom mark / text tones flow to children via the group's inherited
+      // `--radio-tone-source` / `--radio-tone-text-source` (chained so both can be
+      // custom); named tones cascade through the [tone] / [tone-text] CSS instead.
+      style={toneStyle(toneText, "--radio-tone-text-source", toneStyle(tone, "--radio-tone-source", style))}
     >
       {label && <a-radio-group-label id={labelId}>{label}</a-radio-group-label>}
       {hint && <a-radio-group-hint id={hintId}>{hint}</a-radio-group-hint>}
@@ -248,10 +251,10 @@ export const RadioGroup = ({
               // NOT set here — the element publishes it off-DOM via internals.
               tabIndex={o.value === tabStopValue ? 0 : -1}
               tone={o.tone && o.tone !== "neutral" ? o.tone : undefined}
+              tone-text={o.toneText && o.toneText !== "neutral" ? o.toneText : undefined}
               size={o.size && o.size !== "medium" ? o.size : undefined}
-              priority={o.priority && o.priority !== "primary" ? o.priority : undefined}
               disabled={o.disabled ? "" : undefined}
-              style={toneStyle(o.tone, "--radio-tone-source")}
+              style={toneStyle(o.toneText, "--radio-tone-text-source", toneStyle(o.tone, "--radio-tone-source"))}
             >
               <a-radio-label>{o.label}</a-radio-label>
               {o.hint != null && <a-radio-hint>{o.hint}</a-radio-hint>}

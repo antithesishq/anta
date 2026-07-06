@@ -5,10 +5,11 @@
     font-weight: 584.62;
     letter-spacing: 0;
     text-wrap: balance;
-    /* Anta's stylistic sets: ss02 (alternate l) + ss05. Re-stated explicitly
-       (not just inherited from :root) so a consumer's font-feature-settings on
-       an ancestor can't drop them — the property replaces, not merges. */
-    font-feature-settings: 'ss02', 'ss05';
+    /* Anta's stylistic sets: ss02 (alternate l) + ss05, plus tnum for tabular
+       (fixed-width) figures. Re-stated explicitly (not just inherited from :root)
+       so a consumer's font-feature-settings on an ancestor can't drop them — the
+       property replaces, not merges. */
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
   }
 
   a-title a-icon {

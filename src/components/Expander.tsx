@@ -1,4 +1,4 @@
-import { nativeStateChange, toneStyle } from "../anta_helpers";
+import { nativeStateChange, toneStyle, roundStyle } from "../anta_helpers";
 import type { BaseProps } from "../general_types";
 
 /** Public props for the `<Expander>` disclosure. `title` is the always-
@@ -47,6 +47,12 @@ export interface ExpanderProps extends Omit<BaseProps, "title"> {
    *  expander keeps it open. `actions` stay live; disable them
    *  separately if needed. */
   disabled?: boolean;
+  /** Round corners sized to half the folded (header) height: a pill when folded,
+   *  and — when expanded — the same corner radius rather than a bigger stadium.
+   *  The element measures the header, so it tracks custom header content. Pass a
+   *  `number` (px) or CSS length string for a *fixed* radius that overrides the
+   *  measurement (and skips it) in both states. */
+  round?: boolean | number | string;
   /** Controlled open state. When provided, the consumer owns open/close:
    *  the expander only follows this prop, and clicking the summary just
    *  requests a change via `onStateChange` (so a toggle can be rejected by
@@ -96,6 +102,7 @@ export const Expander = ({
   outdent,
   actions,
   disabled,
+  round,
   open,
   defaultOpen,
   onStateChange,
@@ -109,7 +116,7 @@ export const Expander = ({
   // A non-named tone is a literal CSS color: feed it to the element's
   // oklch derivation via an inline custom property (the CSS attr() form
   // is only a fallback for raw-HTML authors). Shared helper — see anta_helpers.
-  const computedStyle = toneStyle(tone, "--expander-tone-source", style);
+  const computedStyle = roundStyle(round, "--expander-round", toneStyle(tone, "--expander-tone-source", style));
 
   // A string (or number) title is rendered as our <a-expander-summary>,
   // which carries the hover affordance. A node title is the consumer's
@@ -136,6 +143,7 @@ export const Expander = ({
       tone={tone && tone !== "neutral" ? tone : undefined}
       priority={priority && priority !== "secondary" ? priority : undefined}
       outdent={outdent ? "" : undefined}
+      round={round ? "" : undefined}
       disabled={disabled ? "" : undefined}
       // All-lowercase `onstatechange` is the one event-prop spelling both
       // renderers bind to our `statechange` event: React 19 keeps the case of

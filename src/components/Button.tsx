@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle, wrapLabel } from "../anta_helpers"
+import { toneStyle, roundStyle, wrapLabel } from "../anta_helpers"
 
 /** Always-allowed props, independent of content/submit/priority mode. */
 export type BaseButtonProps = {
@@ -29,6 +29,10 @@ export type BaseButtonProps = {
   disabled?: boolean
   /** Toggled-on / pressed state, e.g. for filter chips. */
   selected?: boolean
+  /** Fully-round corners — a pill for text buttons, a circle for icon-only ones
+   *  (`border-radius: 999px`, clamped to the element's height). Pass a `number`
+   *  (px) or a CSS length string (`'1rem'`) for a custom radius instead. */
+  round?: boolean | number | string
   /** Click handler. */
   onClick?: (e: any) => void
   /** Tab order. The button is keyboard-focusable by default (`0`) and
@@ -147,6 +151,7 @@ export const Button = ({
   loading,
   disabled,
   selected,
+  round,
   href,
   type,
   form,
@@ -161,12 +166,18 @@ export const Button = ({
   const toneAttr = tone || undefined
   // A non-named tone is a literal CSS color: feed it to the element's oklch
   // derivation via the inline custom property (shared helper — see anta_helpers).
-  const computedStyle = toneStyle(toneAttr, '--button-tone-source', style)
+  const computedStyle = roundStyle(round, '--button-round', toneStyle(toneAttr, '--button-tone-source', style))
 
   const isIconOnly =
     icon != null && label == null && children == null && iconTrailing == null
 
   const sharedAttrs = {
+    // `<a-button>` is a custom element with no implicit ARIA role, so AT would
+    // announce it as a generic clickable — and `aria-pressed` below is only
+    // valid on a button/switch role. Publish `role="button"` from the wrapper
+    // (ARIA lives in the wrapper) for both the element and the `<a href>` path;
+    // a consumer's own `role` in `...rest` still wins by spread order.
+    role: 'button',
     priority,
     tone: toneAttr,
     underline,
@@ -178,6 +189,7 @@ export const Button = ({
     // presence (`[disabled]`, not `[disabled="true"]`), so any present form
     // works. (ARIA attributes below stay string-valued — ARIA needs "true".)
     paddingless: paddingless ? '' : undefined,
+    round: round ? '' : undefined,
     loading: loading ? '' : undefined,
     disabled: disabled ? '' : undefined,
     selected: selected ? '' : undefined,
@@ -206,10 +218,17 @@ export const Button = ({
 
   if (href != null) {
     // type / form intentionally omitted — anchors don't submit forms.
+    // `data-anta` opts this anchor into Anta's `a[role="button"]` styling.
+    // The role is generic (any widget emits `role="button"`), so the CSS
+    // only styles anchors carrying this marker — the wrapper adds it here so
+    // the button look is automatic, while foreign `<a role="button">` (e.g.
+    // Monaco's) stays untouched. A consumer's own `data-anta` in `...rest`
+    // still passes through. The `<a-button>` branch below needs no marker —
+    // Anta owns that tag and styles it unconditionally.
     return (
       <a
         href={href}
-        role="button"
+        data-anta=""
         {...sharedAttrs as any}
         {...rest}
       >

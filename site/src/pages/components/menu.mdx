@@ -10,7 +10,7 @@ import Columns from '../../components/Columns.astro'
 import Col from '../../components/Col.astro'
 import menuDemoCode from './menu.demo.ts'
 import MenuNestedDemo from '../../components/MenuNestedDemo'
-import { Menu, MenuItem, MenuSeparator, MenuGroup, Button } from '@antadesign/anta'
+import { Menu, MenuItem, MenuSeparator, MenuGroup, Button, Tag } from '@antadesign/anta'
 
 # Menu
 
@@ -45,7 +45,7 @@ open with `event.preventDefault()`. You can also grab a `ref` and call
 
 ## Dropdown from a button
 
-<Columns>
+<Columns reverse>
 <Col>
 
 Render `<Menu>` right after the trigger element. A `MenuItem` takes a leading
@@ -89,13 +89,16 @@ const onSelect = (e, { value }) => act(value)
 
 ## Tones
 
-<Columns>
+<Columns reverse>
 <Col>
 
-`tone` colors an item's label, icon, and hover tint with a semantic palette —
-`brand`, `info`, `success`, `warning`, or `critical` — tracking light and dark
-mode automatically. Omit it (or pass `neutral`) for the standard gray. `critical`
-is the conventional destructive action.
+`tone` colors an item's label, icon, and hover/selected tint (and its
+`selectionIndicator`) with a semantic palette — `brand`, `info`, `success`,
+`warning`, or `critical` — tracking light and dark mode automatically. Omit it (or
+pass `neutral`) for the standard gray. `critical` is the conventional destructive
+action. Pass **any CSS color** for a one-off custom tone — its hue and chroma are
+kept while the lightness is pinned to match the brand text (resolved through
+`--menu-item-tone-source`).
 
 </Col>
 <Col>
@@ -128,7 +131,7 @@ is the conventional destructive action.
 
 ## Placement
 
-<Columns>
+<Columns reverse>
 <Col>
 
 `placement` sets the preferred side and edge alignment: `bottom-start` (the
@@ -180,9 +183,15 @@ preference, not a constraint.
 </Col>
 </Columns>
 
+The menu positions against the trigger's box. A trigger can narrow that: if it
+implements **`getAnchorRect(): DOMRect`**, the menu positions against *that* rect
+instead of its full border box. Anta's `Input` does this — it reports its field
+box — so a `Menu` placed after an `<Input>` (as in `Select`) lines up with the
+field, not the whole component (whose box also spans the label and hint).
+
 ## Right-click & at-cursor
 
-<Columns>
+<Columns reverse>
 <Col>
 
 Pass `context` to open on right-click (the `contextmenu` event) of the region
@@ -215,7 +224,7 @@ the trigger box.
 
 ## Submenus
 
-<Columns>
+<Columns reverse>
 <Col>
 
 Mark a `MenuItem` with `submenu` and nest a `<Menu>` inside it to create a
@@ -326,12 +335,17 @@ const only = (c) => setOn(Object.fromEntries(COLUMNS.map((k) => [k, k === c])))
 
 ## Groups
 
-<Columns>
+<Columns reverse>
 <Col>
 
 Wrap related items in a `MenuGroup` with a `label` to add a titled section.
 Headings are skipped during keyboard navigation, which flattens all items into a
 single up/down sequence across group boundaries.
+
+A `MenuSeparator` is a plain hairline when empty, but given text
+(`<MenuSeparator>No results</MenuSeparator>`) it renders a small muted caption and
+becomes an `aria-live="polite"` status region — the styled home for a status or
+empty-state message (what `Select`'s `renderEmpty` uses).
 
 </Col>
 <Col>
@@ -369,7 +383,7 @@ single up/down sequence across group boundaries.
 
 ## Custom content & the close contract
 
-<Columns>
+<Columns reverse>
 <Col>
 
 The close decision is read straight from the DOM on click — never from whether a
@@ -420,6 +434,95 @@ and call `.open()` / `.close()` / `.toggle()`.
     {/* a plain button, not a MenuItem — data-menu-close lets it dismiss */}
     <button data-menu-close>Done</button>
   </div>
+</Menu>
+```
+
+</Col>
+</Columns>
+
+## Selected
+
+<Columns reverse>
+<Col>
+
+`selected` gives a row a persistent background tint — the resting fill a pressed
+row shows — marking it as chosen. It touches only the background, so nothing
+shifts and no gutter is reserved. It's the building block for select-style
+menus: mark one row for single-select, several for multi-select (pair with
+`data-menu-open` to keep the menu open as choices toggle). The tint tracks
+`tone`, so a toned row stays in its own color.
+
+For a real checkable row, add **`selectionIndicator`** (`'checkbox'` or `'radio'`).
+It renders a passive checkbox/radio at the leading edge (reusing the
+[Checkbox](/components/checkbox/) / [Radio](/components/radio/) element visuals),
+flips the row to `role="menuitemcheckbox"` / `"menuitemradio"`, and pairs
+`aria-checked` — the row stays the control, the indicator is decorative. This is
+what [Select](/components/select/)'s `selection` modes render; use it directly for
+a checkable menu.
+
+</Col>
+<Col>
+
+<Preview>
+  <Button>Sort by</Button>
+  <Menu>
+    <MenuItem label="Relevance" selected />
+    <MenuItem label="Newest" />
+    <MenuItem label="Oldest" />
+    <MenuItem label="Most viewed" />
+  </Menu>
+  <Menu>
+    <MenuItem selectionIndicator="radio" label="Relevance" selected />
+    <MenuItem selectionIndicator="radio" label="Newest" />
+    <MenuItem selectionIndicator="checkbox" label="Show archived" selected data-menu-open />
+    <MenuItem selectionIndicator="checkbox" label="Show drafts" data-menu-open />
+  </Menu>
+</Preview>
+
+```tsx folded
+{/* Plain tint (no indicator) */}
+<MenuItem label="Relevance" selected />
+
+{/* Checkable rows — the row is the control; the mark is decorative */}
+<MenuItem selectionIndicator="radio" label="Relevance" selected />
+<MenuItem selectionIndicator="checkbox" label="Show archived" selected data-menu-open />
+```
+
+</Col>
+</Columns>
+
+## Badges, counters & hints
+
+<Columns reverse>
+<Col>
+
+Drop a `<Tag>` (or any element) as a **child** of a `MenuItem` for a trailing
+counter or badge. Children render after the label but before the `kbd` hint and
+trailing icon, and the label's `flex: 1` right-aligns them — so a small tag sits
+at the row's edge, just left of a shortcut or submenu chevron. Use `size="small"`
+so it sits comfortably in the row.
+
+Add `hint` for secondary text under the label — muted, and it tracks the row's
+`tone`. It stacks in a column beneath the label while the icon, badge, and
+chevron stay centered on the row, so it composes with a trailing counter.
+
+</Col>
+<Col>
+
+<Preview>
+  <Button>Folders</Button>
+  <Menu>
+    <MenuItem icon="folder-open" label="Active" hint="12 open items"><Tag size="small" tone="info">12</Tag></MenuItem>
+    <MenuItem icon="folder-close" label="Archived" hint="Read-only" />
+    <MenuItem icon="trash" label="Trash"><Tag size="small">3</Tag></MenuItem>
+  </Menu>
+</Preview>
+
+```tsx folded
+<Menu>
+  <MenuItem icon="folder-open" label="Active" hint="12 open items"><Tag size="small" tone="info">12</Tag></MenuItem>
+  <MenuItem icon="folder-close" label="Archived" hint="Read-only" />
+  <MenuItem icon="trash" label="Trash"><Tag size="small">3</Tag></MenuItem>
 </Menu>
 ```
 

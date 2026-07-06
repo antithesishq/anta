@@ -1,4 +1,4 @@
-import { nativeStateChange } from '../anta_helpers'
+import { nativeStateChange, roundStyle } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 
 export interface MenuProps extends BaseProps {
@@ -31,6 +31,10 @@ export interface MenuProps extends BaseProps {
    *  in response. Submenus are always uncontrolled regardless of this. See
    *  STATEFUL-COMPONENTS.md. */
   open?: boolean
+  /** Round the menu: the container softens to a 20px radius and its items go
+   *  fully round. A `number` (px) or CSS length string tunes the container radius
+   *  only — items stay full pills. */
+  round?: boolean | number | string
   /** Fired before the open state changes — on open, and on every dismiss (Esc,
    *  outside-click, scroll, selecting an item). `event` is the cancelable
    *  `statechange`; `detail.next`/`detail.prev` are the requested/previous open
@@ -88,7 +92,9 @@ export const Menu = ({
   offset,
   open,
   onStateChange,
+  round,
   className,
+  style,
   children,
   ...rest
 }: MenuProps) => {
@@ -117,9 +123,11 @@ export const Menu = ({
             }
           : undefined
       }
+      round={round ? '' : undefined}
       role="menu"
       aria-orientation="vertical"
       class={className}
+      style={roundStyle(round, '--menu-round', style)}
       {...rest}
     >
       {children}

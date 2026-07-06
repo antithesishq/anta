@@ -1,6 +1,6 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { nativeStateChange, toneStyle } from '../anta_helpers'
+import { nativeStateChange, toneStyle, roundStyle } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
 
@@ -79,10 +79,14 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   /** Content pinned to the end of the field (e.g. icons, buttons), after the
    *  clear button when `clearable`. */
   trailing?: React.ReactNode
-  /** Single-line input type. Ignored when `multiline`. (`search` is omitted
-   *  deliberately — it triggers browser-injected clear/search affordances.)
+  /** Single-line input type. Ignored when `multiline`. `search` is a
+   *  **wrapper-only** shorthand: it defaults a leading search icon and a clear
+   *  button (both overridable — pass your own `leading`, or `clearable={false}`)
+   *  and sets `inputmode="search"`, but the DOM input stays `type="text"`. The
+   *  native `search` type never reaches the element, so the browser's own
+   *  clear/search affordances never appear — Anta owns that chrome.
    *  @defaultValue text */
-  type?: 'text' | 'email' | 'password' | 'tel' | 'url' | 'number'
+  type?: 'text' | 'search' | 'email' | 'password' | 'tel' | 'url' | 'number'
   /** Native autocomplete token. Overrides the value derived from `type`
    *  (`email` / `tel` / `url`) — set it for the cases `type` can't express, e.g.
    *  `username`, `current-password`, `new-password`, `one-time-code`, or `off`. */
@@ -107,6 +111,10 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    *  when the field is hovered or focused (a quiet-until-engaged affordance for
    *  trailing actions). */
   dimActions?: boolean
+  /** Fully-round the field (`border-radius: 999px`). Pass a `number` (px) or a CSS
+   *  length string for a custom radius. The `clearable` × button always rounds to
+   *  a circle to match (it isn't sized by a custom field value). */
+  round?: boolean | number | string
   /** Toggle native spell-checking. */
   spellCheck?: boolean
   /** Max input length. */
@@ -181,8 +189,8 @@ const AUTOCOMPLETE_BY_TYPE: Record<string, string> = { email: 'email', tel: 'tel
 // Virtual-keyboard hint default, derived from `type` (the `inputMode` prop
 // overrides it). `type` already drives the keyboard for these, so this is
 // belt-and-suspenders; set `inputMode` to decouple keyboard from type (e.g. an OTP).
-const INPUTMODE_BY_TYPE: Record<string, 'email' | 'tel' | 'url' | 'numeric'> = {
-  email: 'email', tel: 'tel', url: 'url', number: 'numeric',
+const INPUTMODE_BY_TYPE: Record<string, 'email' | 'tel' | 'url' | 'numeric' | 'search'> = {
+  email: 'email', tel: 'tel', url: 'url', number: 'numeric', search: 'search',
 }
 // Default glyph per status, prefixed to the message. `neutral` has none (it's
 // the no-status case). Overridable per instance via `statusIcon` (or
@@ -219,6 +227,7 @@ export const Input = ({
   statusIcon,
   tone,
   size,
+  round,
   value,
   defaultValue,
   multiline,
@@ -258,9 +267,19 @@ export const Input = ({
   const statusTone = status && status !== 'neutral' ? status : undefined
   const glyph = statusIcon === undefined ? (statusTone ? STATUS_ICON[statusTone] : undefined) : statusIcon
 
+  // `type="search"` is a wrapper-only affordance: the `search` type never reaches
+  // the DOM input (which would summon the browser's own clear/search UI). Instead
+  // it defaults a leading search icon + a clear button — both overridable — while
+  // the native input stays `text` (see the `type` prop doc).
+  const isSearch = type === 'search'
+  const nativeType = isSearch ? undefined : type
+  const resolvedLeading = leading ?? (isSearch ? <Icon shape="search" /> : undefined)
+  const resolvedClearable = isSearch ? clearable ?? true : clearable
+
   return (
     <a-input
       size={size && size !== 'medium' ? size : undefined}
+      round={round ? '' : undefined}
       value={value}
       // Pass `defaultvalue` even when controlled, so a <form> reset has a target
       // (the element resets to it and fires change → controlled state re-syncs).
@@ -271,7 +290,7 @@ export const Input = ({
       maxrows={maxRows != null ? String(maxRows) : undefined}
       status={statusTone}
       tone={tone || undefined}
-      type={!multiline && rows == null ? type : undefined}
+      type={!multiline && rows == null ? nativeType : undefined}
       name={name}
       placeholder={placeholder}
       disabled={presence(disabled)}
@@ -293,7 +312,7 @@ export const Input = ({
       onclearclick={onClearClick ? (e: any) => onClearClick(nativeStateChange(e).event) : undefined}
       onclearinput={onClearInput ? (e: any) => onClearInput(nativeStateChange(e).event) : undefined}
       class={className}
-      style={toneStyle(tone, '--input-tone-source', style)}
+      style={roundStyle(round, '--input-round', toneStyle(tone, '--input-tone-source', style))}
       {...rest}
     >
       {label != null &&
@@ -305,13 +324,13 @@ export const Input = ({
           </span>
         ))}
 
-      {leading != null && (
+      {resolvedLeading != null && (
         <span slot="leading" style={{ display: 'contents' }}>
-          {leading}
+          {resolvedLeading}
         </span>
       )}
 
-      {clearable && (
+      {resolvedClearable && (
         // A real <a-button> (light DOM → fully styled, keyboard-focusable) in
         // the element's `clear` slot — the element owns its visibility (shown
         // only when filled + editable). It fires the bubbling `clearrequest`
@@ -325,6 +344,7 @@ export const Input = ({
           <Button
             priority="tertiary"
             size={size}
+            round={!!round}
             icon="x"
             aria-label="Clear"
             data-custom-event="clearrequest"

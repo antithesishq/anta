@@ -217,12 +217,46 @@ function wrapWithRender(code: string): string | null {
   const { cleaned, scripts } = extractScripts(jsxBlock)
   jsxBlock = cleaned || '<></>'
 
-  return `${before}
+  // Auto-import every anta export the user hasn't already referenced, so a
+  // demo can drop *any* component into the JSX (e.g. a `<Button>` inside a
+  // `<Tag>`'s children) without hand-adding the import — otherwise the bare
+  // identifier compiles to an undeclared reference and throws at runtime
+  // ("Button is not defined"). We skip names that already appear in the
+  // preamble (the user's own imports / declarations) to avoid duplicate
+  // bindings, and esbuild tree-shakes whatever the JSX doesn't use, so the
+  // blanket import costs nothing at runtime.
+  const autoImport = buildAntaAutoImport(before, jsxBlock)
+
+  return `${autoImport}${before}
 ${scriptInjections(scripts)}
 import { render as __demo_render__ } from 'preact'
 const __demo_content__ = (<>${jsxBlock}</>)
 __demo_render__(__demo_content__, document.getElementById('root'))
 `
+}
+
+/** Names the anta barrel exposes to demo code — the same list the bundler's
+ *  resolve plugin can satisfy from `window.__demo_modules__`. */
+const ANTA_EXPORTS = moduleManifest['@antadesign/anta'] ?? []
+
+/**
+ * Build an `import { … } from '@antadesign/anta'` line covering every anta
+ * export the trailing JSX references but the preamble doesn't already bind.
+ * This lets a demo nest any component (`<Button>` inside a `<Tag>`) without
+ * the author adding the import by hand. We only inject names that (a) appear
+ * in the JSX block and (b) aren't mentioned in the preamble — skipping (b)
+ * avoids clashing with the user's own `import`/`const` and the duplicate-
+ * binding error esbuild would raise. Returns `''` when nothing needs adding.
+ */
+function buildAntaAutoImport(before: string, jsxBlock: string): string {
+  const names = ANTA_EXPORTS.filter(
+    (name) =>
+      new RegExp(`\\b${name}\\b`).test(jsxBlock) &&
+      !new RegExp(`\\b${name}\\b`).test(before),
+  )
+  return names.length
+    ? `import { ${names.join(', ')} } from '@antadesign/anta'\n`
+    : ''
 }
 
 interface ExtractedScript {

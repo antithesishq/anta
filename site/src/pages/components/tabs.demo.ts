@@ -6,7 +6,7 @@
  */
 export default `import { Tabs, Tab, TabPanel } from '@antadesign/anta'
 
-<Tabs defaultValue="overview" label="Project sections">
+<Tabs defaultValue="overview" label="Project sections" style={{ marginLeft: '16px' }}>
   <Tab value="overview" label="Overview" icon="home" />
   <Tab value="activity" label="Activity" icon="clock" />
   <Tab value="settings" label="Settings" icon="more" />

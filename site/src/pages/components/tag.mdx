@@ -42,15 +42,15 @@ a transparent outline. It composes with every tone — named or custom —
 and tracks dark mode.
 
 <Preview gap="4px">
-  <Tag priority="primary" tone="brand" label="Primary" />
-  <Tag label="Secondary" tone="brand" />
-  <Tag priority="tertiary" tone="brand" label="Tertiary" />
+  <Tag allcaps priority="primary" tone="brand" label="Primary" />
+  <Tag allcaps label="Secondary" tone="brand" />
+  <Tag allcaps priority="tertiary" tone="brand" label="Tertiary" />
 </Preview>
 
 ```tsx folded
-<Tag priority="primary" tone="brand" label="Primary" />
-<Tag tone="brand" label="Secondary" />
-<Tag priority="tertiary" tone="brand" label="Tertiary" />
+<Tag allcaps priority="primary" tone="brand" label="Primary" />
+<Tag allcaps tone="brand" label="Secondary" />
+<Tag allcaps priority="tertiary" tone="brand" label="Tertiary" />
 ```
 
 ## Tones
@@ -63,21 +63,21 @@ comes from the theme tokens, so every tone tracks light and dark mode
 automatically.
 
 <Preview gap="4px">
-  <Tag label="Neutral" />
-  <Tag tone="brand" label="Brand" />
-  <Tag tone="info" label="Info" />
-  <Tag tone="success" label="Success" />
-  <Tag tone="warning" label="Warning" />
-  <Tag tone="critical" label="Critical" />
+  <Tag allcaps label="Neutral" />
+  <Tag allcaps tone="brand" label="Brand" />
+  <Tag allcaps tone="info" label="Info" />
+  <Tag allcaps tone="success" label="Success" />
+  <Tag allcaps tone="warning" label="Warning" />
+  <Tag allcaps tone="critical" label="Critical" />
 </Preview>
 
 ```tsx folded
-<Tag label="Neutral" />
-<Tag tone="brand" label="Brand" />
-<Tag tone="info" label="Info" />
-<Tag tone="success" label="Success" />
-<Tag tone="warning" label="Warning" />
-<Tag tone="critical" label="Critical" />
+<Tag allcaps label="Neutral" />
+<Tag allcaps tone="brand" label="Brand" />
+<Tag allcaps tone="info" label="Info" />
+<Tag allcaps tone="success" label="Success" />
+<Tag allcaps tone="warning" label="Warning" />
+<Tag allcaps tone="critical" label="Critical" />
 ```
 
 </Col>
@@ -87,15 +87,15 @@ automatically.
 kept while lightness and chroma are pinned to the named-tone curve.
 
 <Preview gap="4px">
-  <Tag tone="#ff1493" label="Magenta" />
-  <Tag tone="rebeccapurple" label="Purple" />
-  <Tag tone="#0d9488" label="Teal" />
+  <Tag allcaps tone="#ff1493" label="Magenta" />
+  <Tag allcaps tone="rebeccapurple" label="Purple" />
+  <Tag allcaps tone="#0d9488" label="Teal" />
 </Preview>
 
 ```tsx folded
-<Tag tone="#ff1493" label="Magenta" />
-<Tag tone="rebeccapurple" label="Purple" />
-<Tag tone="#0d9488" label="Teal" />
+<Tag allcaps tone="#ff1493" label="Magenta" />
+<Tag allcaps tone="rebeccapurple" label="Purple" />
+<Tag allcaps tone="#0d9488" label="Teal" />
 ```
 
 </Col>
@@ -107,12 +107,12 @@ whatever surface sits behind it. Here the same tags sit on a `--bg-4`
 panel instead of the page canvas.
 
 <Preview gap="4px" background="var(--bg-4)">
-  <Tag label="Neutral" />
-  <Tag tone="brand" label="Brand" />
-  <Tag tone="success" label="Success" />
-  <Tag tone="critical" label="Critical" />
-  <Tag tone="#ff1493" label="Magenta" />
-  <Tag tone="#0d9488" label="Teal" />
+  <Tag allcaps label="Neutral" />
+  <Tag allcaps tone="brand" label="Brand" />
+  <Tag allcaps tone="success" label="Success" />
+  <Tag allcaps tone="critical" label="Critical" />
+  <Tag allcaps tone="#ff1493" label="Magenta" />
+  <Tag allcaps tone="#0d9488" label="Teal" />
 </Preview>
 
 ## Size
@@ -123,15 +123,15 @@ attribute), and `large` (24px) — matching `Button`. Height is intrinsic
 clipped.
 
 <Preview>
-  <Tag tone="info" size="small" label="Small" />
-  <Tag tone="info" label="Medium" />
-  <Tag tone="info" size="large" label="Large" />
+  <Tag allcaps tone="info" size="small" label="Small" />
+  <Tag allcaps tone="info" label="Medium" />
+  <Tag allcaps tone="info" size="large" label="Large" />
 </Preview>
 
 ```tsx folded
-<Tag tone="info" size="small" label="Small" />
-<Tag tone="info" label="Medium" />
-<Tag tone="info" size="large" label="Large" />
+<Tag allcaps tone="info" size="small" label="Small" />
+<Tag allcaps tone="info" label="Medium" />
+<Tag allcaps tone="info" size="large" label="Large" />
 ```
 
 ## Icon, label & value
@@ -144,17 +144,17 @@ contrast does the separating. Tabular figures are always on, so counts,
 versions, and timers don't reflow.
 
 <Preview>
-  <Tag tone="success" icon="circle-check" label="Build" value="passed" />
-  <Tag tone="info" icon="hourglass" label="Running" value="20m 16s" />
-  <Tag icon="github-logo" label="Commit" value="4f90d13" />
-  <Tag tone="warning" label="Retries" value="3" iconTrailing="refresh" />
+  <Tag allcaps tone="success" icon="circle-check" label="Build" value="passed" />
+  <Tag allcaps tone="info" icon="hourglass" label="Running" value="20m 16s" />
+  <Tag allcaps icon="github-logo" label="Commit" value="4f90d13" />
+  <Tag allcaps tone="warning" label="Retries" value="3" iconTrailing="refresh" />
 </Preview>
 
 ```tsx folded
-<Tag tone="success" icon="circle-check" label="Build" value="passed" />
-<Tag tone="info" icon="hourglass" label="Running" value="20m 16s" />
-<Tag icon="github-logo" label="Commit" value="4f90d13" />
-<Tag tone="warning" label="Retries" value="3" iconTrailing="refresh" />
+<Tag allcaps tone="success" icon="circle-check" label="Build" value="passed" />
+<Tag allcaps tone="info" icon="hourglass" label="Running" value="20m 16s" />
+<Tag allcaps icon="github-logo" label="Commit" value="4f90d13" />
+<Tag allcaps tone="warning" label="Retries" value="3" iconTrailing="refresh" />
 ```
 
 ## Segments
@@ -165,34 +165,34 @@ For an arbitrary multi-part tag, pass several **children** instead of
 pairing is the exception; everything else segments like this.
 
 <Preview gap="4px">
-  <Tag>
+  <Tag allcaps>
     <span>v2.1.0</span>
     <span>stable</span>
     <span>x64</span>
   </Tag>
-  <Tag tone="info">
+  <Tag allcaps tone="info">
     <span>GET</span>
     <span>200</span>
     <span>142 ms</span>
   </Tag>
-  <Tag tone="critical" icon="warning-triangle">
+  <Tag allcaps tone="critical" icon="warning-triangle">
     <span>Exit 137</span>
     <span>OOM</span>
   </Tag>
 </Preview>
 
 ```tsx folded
-<Tag>
+<Tag allcaps>
   <span>v2.1.0</span>
   <span>stable</span>
   <span>x64</span>
 </Tag>
-<Tag tone="info">
+<Tag allcaps tone="info">
   <span>GET</span>
   <span>200</span>
   <span>142 ms</span>
 </Tag>
-<Tag tone="critical" icon="warning-triangle">
+<Tag allcaps tone="critical" icon="warning-triangle">
   <span>Exit 137</span>
   <span>OOM</span>
 </Tag>
@@ -200,22 +200,22 @@ pairing is the exception; everything else segments like this.
 
 ## Case
 
-Tags are uppercase by default: a tag is a concise marker, not prose, so
-at this small size all-caps reads as a label at a glance and keeps a
-uniform, scannable shape — the word-shape cues that aid long-form
-reading don't matter for a word or two. Pass `nocaps` when the case
-itself carries meaning — proper names, identifiers, or case-sensitive
-IDs. Here all-caps would flatten the brand name to `GITHUB`; `nocaps`
-keeps it as `GitHub`.
+Tags are normal (mixed) case by default, so the text is read as written —
+proper names, identifiers, and case-sensitive IDs keep their shape (`GitHub`,
+not `GITHUB`). Pass `allcaps` for the uppercase treatment: at this small size
+all-caps reads as a label at a glance and keeps a uniform, scannable shape,
+which suits short status words where the exact case carries no meaning.
+Uppercase also tracks wider (0.08ch vs the default 0.02ch) and steps each size
+down 1px, since caps read larger than mixed case at the same size.
 
 <Preview>
   <Tag icon="github-logo" label="GitHub" value="v1.6.9" />
-  <Tag icon="github-logo" nocaps label="GitHub" value="v1.6.9" />
+  <Tag allcaps label="Running" />
 </Preview>
 
 ```tsx folded
 <Tag icon="github-logo" label="GitHub" value="v1.6.9" />
-<Tag icon="github-logo" nocaps label="GitHub" value="v1.6.9" />
+<Tag allcaps label="Running" />
 ```
 
 <Disclosure title="Component props" open>
@@ -231,7 +231,7 @@ tone — it derives the fill / border / text in oklch), **`priority`** the fill 
 **`size`** the dimensions.
 
 ```tsx folded
-<Tag tone="#e0457b" priority="secondary" label="Custom" />
+<Tag allcaps tone="#e0457b" priority="secondary" label="Custom" />
 ```
 
 `<a-tag>` is light-DOM, so for anything a tone can't give you it's plain CSS (an
@@ -240,7 +240,7 @@ takes a **gradient** background (impossible from `tone`, which is a solid colour
 **1px** corners, and taller vertical padding so it reads completely differently:
 
 <Preview gap="8px">
-  <Tag className="badge" priority="secondary" label="Status" value="Active" />
+  <Tag allcaps className="badge" priority="secondary" label="Status" value="Active" />
   <style is:inline>{`
     a-tag.badge {
       background: linear-gradient(135deg, light-dark(#1f6e5f, #2f9c84), light-dark(#845ec2, #9d78d6));

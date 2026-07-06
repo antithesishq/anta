@@ -85,6 +85,11 @@ import type { AProgressAttributes, ATextAttributes, ATitleAttributes, ATagAttrib
 // custom-element tags via `declare module '@antadesign/anta/jsx-runtime'`.
 export namespace JSX {
   export interface IntrinsicElements extends React.JSX.IntrinsicElements, AntaIntrinsicElements {}
+  // Lets `key` (and other framework-managed attrs) be passed to *component*
+  // elements — e.g. mapping `<MenuItem key=… />` in a list. Intrinsic `a-*`
+  // elements already accept `key` via BaseAttributes; this is the equivalent for
+  // wrapper components, which otherwise only accept their own props.
+  export interface IntrinsicAttributes extends React.JSX.IntrinsicAttributes {}
 }
 
 export interface AntaIntrinsicElements {
@@ -120,6 +125,8 @@ export interface AntaIntrinsicElements {
   'a-menu': AMenuAttributes
   'a-menu-item': AMenuItemAttributes
   'a-menu-item-label': BaseAttributes
+  'a-menu-item-hint': BaseAttributes
+  'a-menu-item-text': BaseAttributes
   'a-menu-separator': BaseAttributes
   'a-menu-group': AMenuGroupAttributes
   'a-menu-group-label': BaseAttributes

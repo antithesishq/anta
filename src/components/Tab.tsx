@@ -15,6 +15,17 @@ export interface TabProps {
   icon?: IconShape
   /** Trailing icon shape, rendered after the label. */
   iconTrailing?: IconShape
+  /** Fully-round just this tab's box. `<Tabs round>` rounds the whole strip
+   *  (tabs + sliding indicator) instead. */
+  round?: boolean
+  /** Per-tab tone override, same vocabulary as `<Tabs tone>` — colours this one tab's
+   *  label + icons (all priorities/modes, named or custom colour) and, when it's the
+   *  active tab, its indicator. For a **custom literal colour** the sliding indicator can't
+   *  adopt it (the shared moving element can't read a descendant's colour), so a custom tone
+   *  colours the label everywhere and the indicator only in `noslide`; the six **named**
+   *  tones colour both in every mode. Overrides the strip's `tone` for this tab.
+   *  @defaultValue inherits the strip's `tone` */
+  tone?: "neutral" | "brand" | "info" | "success" | "warning" | "critical" | (string & {})
   /** Disable just this tab — skipped by keyboard nav and dropped from the tab order
    *  (a disabled-but-selected tab stays reachable, per the ARIA pattern). */
   disabled?: boolean

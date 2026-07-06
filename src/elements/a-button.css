@@ -1,6 +1,14 @@
 @layer anta {
+  /* `<a-button>` is Anta's own tag, so it's always styled. The anchor
+     variant keys off `role="button"` — a *generic* ARIA role that any
+     widget (Monaco, third-party menus, comboboxes) also emits — so it
+     must opt in explicitly via the `data-anta` marker, or Anta would
+     silently restyle foreign anchors it doesn't own. The `<Button href>`
+     wrapper stamps `data-anta` automatically; a hand-authored anchor-button
+     (e.g. a routing-library `<Link role="button">`) adds the attribute
+     itself. Absent the marker, `a[role="button"]` is left untouched. */
   a-button,
-  a[role="button"] {
+  a[role="button"][data-anta] {
     --button-primary-fg: #ffffff;
 
     --bg-primary-disabled: #ece9ec;
@@ -61,8 +69,21 @@
     --button-loading-duration: 0.5s;
   }
 
+  /* `round` → fully-round (pill / circle). 999px is clamped by the browser to
+     half the shorter side, so it's a stadium on a wide button and a perfect
+     circle on a square (icon-only) one — height-aware with no size math. A value
+     (`round="20px"`, or the wrapper's `round={20}`) sets a custom radius instead:
+     `attr()` reads a hand-authored length (newer engines), while the `Button`
+     wrapper sets `--button-round` inline for portability — same dual mechanism as
+     the custom-tone `--button-tone-source`. */
+  a-button[round],
+  a[role="button"][data-anta][round] {
+    --button-round: attr(round type(<length>), 999px);
+    border-radius: var(--button-round, 999px);
+  }
+
   a-button[tone="brand"],
-  a[role="button"][tone="brand"] {
+  a[role="button"][data-anta][tone="brand"] {
     --button-bg-primary-rest: #5f4bc3;
     --button-bg-primary-hover: #503cb4;
     --button-bg-primary-active: #483493;
@@ -84,7 +105,7 @@
   }
 
   a-button[tone="critical"],
-  a[role="button"][tone="critical"] {
+  a[role="button"][data-anta][tone="critical"] {
     --button-bg-primary-rest: #c9302c;
     --button-bg-primary-hover: #b02120;
     --button-bg-primary-active: #a01c1c;
@@ -106,7 +127,7 @@
   }
 
   a-button[tone="info"],
-  a[role="button"][tone="info"] {
+  a[role="button"][data-anta][tone="info"] {
     --button-bg-primary-rest: #1f6eb2;
     --button-bg-primary-hover: #1a5b93;
     --button-bg-primary-active: #175082;
@@ -128,7 +149,7 @@
   }
 
   a-button[tone="success"],
-  a[role="button"][tone="success"] {
+  a[role="button"][data-anta][tone="success"] {
     --button-bg-primary-rest: #2a7e43;
     --button-bg-primary-hover: #226737;
     --button-bg-primary-active: #1f5c31;
@@ -150,7 +171,7 @@
   }
 
   a-button[tone="warning"],
-  a[role="button"][tone="warning"] {
+  a[role="button"][data-anta][tone="warning"] {
     --button-bg-primary-rest: #c37416;
     --button-bg-primary-hover: #ae6613;
     --button-bg-primary-active: #995200;
@@ -172,7 +193,7 @@
   }
 
   .dark a-button,
-  .dark a[role="button"] {
+  .dark a[role="button"][data-anta] {
     --bg-primary-disabled: #272329;
     --bg-secondary-disabled: #1d1a1e;
     --fg-disabled-primary: #776e77;
@@ -200,7 +221,7 @@
   }
 
   .dark a-button[tone="brand"],
-  .dark a[role="button"][tone="brand"] {
+  .dark a[role="button"][data-anta][tone="brand"] {
     --button-bg-primary-rest: #503cb4;
     --button-bg-primary-hover: #5f4bc3;
     --button-bg-primary-active: #7460d7;
@@ -221,7 +242,7 @@
   }
 
   .dark a-button[tone="critical"],
-  .dark a[role="button"][tone="critical"] {
+  .dark a[role="button"][data-anta][tone="critical"] {
     --button-bg-primary-rest: #b02120;
     --button-bg-primary-hover: #c9302c;
     --button-bg-primary-active: #de4545;
@@ -242,7 +263,7 @@
   }
 
   .dark a-button[tone="info"],
-  .dark a[role="button"][tone="info"] {
+  .dark a[role="button"][data-anta][tone="info"] {
     --button-bg-primary-rest: #1a5b93;
     --button-bg-primary-hover: #1f6eb2;
     --button-bg-primary-active: #2686d9;
@@ -263,7 +284,7 @@
   }
 
   .dark a-button[tone="success"],
-  .dark a[role="button"][tone="success"] {
+  .dark a[role="button"][data-anta][tone="success"] {
     --button-bg-primary-rest: #226737;
     --button-bg-primary-hover: #2a7e43;
     --button-bg-primary-active: #329550;
@@ -284,7 +305,7 @@
   }
 
   .dark a-button[tone="warning"],
-  .dark a[role="button"][tone="warning"] {
+  .dark a[role="button"][data-anta][tone="warning"] {
     --button-bg-primary-rest: #7f410b;
     --button-bg-primary-hover: #995200;
     --button-bg-primary-active: #ae6613;
@@ -305,7 +326,7 @@
   }
 
   a-button,
-  a[role="button"] {
+  a[role="button"][data-anta] {
     user-select: none;
     display: inline-flex;
     align-items: center;
@@ -327,15 +348,12 @@
     font-weight: 450;
 
     font-variation-settings: "wdth" 88, "slnt" 0, "ital" 0;
-    /* Anta's stylistic sets: ss02 (alternate l) + ss05. Re-stated here (like
-       the variation axes above) so it survives in the shadow regardless of any
+    /* Anta's stylistic sets: ss02 (alternate l) + ss05, plus tnum for tabular
+       (fixed-width) figures so numbers align. Re-stated here (like the variation
+       axes above) so it survives in the shadow regardless of any
        font-feature-settings a consumer sets on an ancestor — it replaces, not
        merges. */
-    font-feature-settings: "ss02", "ss05";
-    /* Enforce Anta's tabular lining figures (the global default in tokens.css)
-       so they survive any font-variant-numeric a consumer sets on an ancestor —
-       re-stated here for the same reason as the stylistic sets above. */
-    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "ss02", "ss05", "tnum";
     line-height: var(--_lh);
     letter-spacing: 0.05ch;
 
@@ -347,6 +365,13 @@
     max-height: var(--button-max-height);
     padding-inline: var(--button-padding-x);
     padding-block: var(--button-padding-y);
+
+    /* Floor the box at the same-size Input height (24 / 28 / 32). Text buttons
+       already reach this via line-height + block padding, so it's a no-op for
+       them; it holds the height for content that carries no line-box — an
+       icon + counter Tag, or icon + icon — which would otherwise collapse to
+       just its children + padding. Paddingless quaternary opts out below. */
+    min-height: 28px;
 
     & > a-button-label {
       display: inline-block;
@@ -426,6 +451,7 @@
       --_fs: 13px;
       --_lh: 16px;
       --_pb: 0.5px;
+      min-height: 24px;
       /* Icon tracks the button size (medium is the a-icon default, 16px). An
          explicit `<Icon size>` (inline `--icon-size`) still wins. */
       & a-icon { --icon-size: 14px; }
@@ -435,6 +461,7 @@
       --_fs: 17px;
       --_lh: 24px;
       --_pb: 1.5px;
+      min-height: 32px;
       & a-icon { --icon-size: 18px; }
     }
 
@@ -470,26 +497,26 @@
     &[priority="quaternary"][paddingless] {
       --button-padding-x: 0;
       --button-padding-y: 0;
+      /* Inline link-style button: no box, so it must sit on the text baseline
+         at its natural height rather than the size floor. */
+      min-height: 0;
     }
 
     &:has(> a-icon):not(:has(> a-icon ~ a-icon)):not(:has(> :not(a-icon):not(a-tooltip))) {
       --button-padding-y: 5px;
       --button-padding-x: 5px;
       min-width: 28px;
-      min-height: 28px;
 
       justify-content: center;
       &[size="small"] {
         --button-padding-y: 3px;
         --button-padding-x: 3px;
         min-width: 24px;
-        min-height: 24px;
       }
       &[size="large"] {
         --button-padding-y: 7px;
         --button-padding-x: 7px;
         min-width: 32px;
-        min-height: 32px;
       }
     }
 

@@ -249,11 +249,16 @@ const SHADOW_STYLE = `
     cursor: pointer;
     user-select: none;
     border-radius: 2px;
-    outline-offset: 4px;
+    outline: none;
     font-size: ${SUMMARY_TYPE_SCALE['5'][0]}px;
     line-height: ${SUMMARY_TYPE_SCALE['5'][1]}px;
     font-weight: ${SUMMARY_FONT_WEIGHT};
     letter-spacing: 0;
+  }
+
+  button:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 0px;
   }
 
   ${SUMMARY_LEVEL_RULES}
@@ -328,10 +333,19 @@ type ExpanderState = 'open' | 'closed'
 const parseState = (v: string | null): ExpanderState => (v === 'open' ? 'open' : 'closed')
 
 export class AExpanderElement extends HTMLElementBase {
-  static observedAttributes = ['state', 'disabled']
+  static observedAttributes = ['state', 'disabled', 'round']
 
   private summary: HTMLButtonElement
   private region: HTMLDivElement
+  private header: HTMLDivElement
+  // A dedicated shadow <style> the element rewrites to publish the measured
+  // `round` radius as a `:host` custom property (see `measureRoundRadius`). Kept
+  // separate from the static SHADOW_STYLE so updating it is a cheap textContent
+  // swap on one small sheet, and it's shadow-internal (no host mutation).
+  private roundStyle: HTMLStyleElement
+  // Observes the header (folded) box so the `round` radius tracks its height —
+  // including custom header content. Guarded for engines without ResizeObserver.
+  private roundObserver?: ResizeObserver
   // ElementInternals exposes the open/closed state as a custom state
   // (`:state(open)`) for consumer styling — e.g. rotating a chevron that lives
   // in `actions`, or matching an open header to a design. It's NOT a host
@@ -362,6 +376,7 @@ export class AExpanderElement extends HTMLElementBase {
 
     const header = document.createElement('div')
     header.className = 'header'
+    this.header = header
     const actionsSlot = document.createElement('slot')
     actionsSlot.name = 'actions'
     // The actions row, exposed as a part for the same reason.
@@ -384,7 +399,54 @@ export class AExpanderElement extends HTMLElementBase {
     content.setAttribute('part', 'content')
     this.region.append(content)
 
-    shadow.append(style, header, this.region)
+    // Shadow-internal sheet for the measured `round` radius (empty until `round`
+    // is set and the header is measured). Placed after the main style so it wins
+    // on equal specificity if that ever matters.
+    this.roundStyle = document.createElement('style')
+
+    // ResizeObserver on the header (not the host): the header height is stable
+    // across open/close, so the radius is a single value that makes the folded
+    // box a pill AND keeps the same corners when expanded — no open-state
+    // branching, and correct even for an expander that starts open.
+    if (typeof ResizeObserver !== 'undefined') {
+      this.roundObserver = new ResizeObserver(() => this.measureRoundRadius())
+    }
+
+    shadow.append(style, this.roundStyle, header, this.region)
+  }
+
+  /** Publish HALF the folded (header + host borders) height as
+   *  `--_expander-round-radius` on `:host`, for `a-expander[round]` to consume.
+   *  Reads layout only; writes only the shadow sheet — no host mutation. */
+  /** A `round` attribute carrying a length (`round="12px"`) is a fixed radius —
+   *  the CSS uses it directly and the measured pill is unused, so skip measuring.
+   *  (The wrapper's `round={12}` path sets an inline var + a bare `round=""`, so
+   *  it isn't caught here; the measurement runs but its var is simply overridden.) */
+  private hasFixedRound(): boolean {
+    const v = this.getAttribute('round')
+    return v != null && v.trim() !== ''
+  }
+
+  private measureRoundRadius() {
+    if (!this.hasAttribute('round') || this.hasFixedRound()) return
+    const h = this.header.getBoundingClientRect().height
+    if (h <= 0) return
+    const cs = getComputedStyle(this)
+    const borders =
+      (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0)
+    const radius = (h + borders) / 2
+    this.roundStyle.textContent = `:host{--_expander-round-radius:${radius}px}`
+  }
+
+  private startRoundObserver() {
+    if (!this.roundObserver || this.hasFixedRound()) return
+    this.roundObserver.observe(this.header)
+    this.measureRoundRadius()
+  }
+
+  private stopRoundObserver() {
+    this.roundObserver?.disconnect()
+    this.roundStyle.textContent = ''
   }
 
   /** Controlled mode: the `state` attribute is present and owns the state. */
@@ -402,6 +464,11 @@ export class AExpanderElement extends HTMLElementBase {
     this.syncDisabled()
     // Controlled → reflect `state`; uncontrolled → seed once from `default-state`.
     this.applyState(parseState(this.getAttribute(this.controlled ? 'state' : 'default-state')))
+    if (this.hasAttribute('round')) this.startRoundObserver()
+  }
+
+  disconnectedCallback() {
+    this.roundObserver?.disconnect()
   }
 
   attributeChangedCallback(name: string) {
@@ -410,6 +477,11 @@ export class AExpanderElement extends HTMLElementBase {
     // (controlled → uncontrolled hand-off) `controlled` is false, so we skip and
     // the current applied state is kept, not reset.
     else if (name === 'state' && this.controlled) this.applyState(parseState(this.getAttribute('state')))
+    // `round` toggled → start/stop measuring + publishing the radius var.
+    else if (name === 'round') {
+      if (this.hasAttribute('round')) this.startRoundObserver()
+      else this.stopRoundObserver()
+    }
   }
 
   private syncDisabled() {

@@ -1,17 +1,43 @@
 import type { BaseProps } from '../general_types'
 
-export interface MenuSeparatorProps extends BaseProps {}
+export interface MenuSeparatorProps extends BaseProps {
+  /** Optional caption. With content, the separator renders as a small muted text
+   *  row — a group / subsection name, or a utility message like `Loading…` — instead
+   *  of a line, and the wrapper flips it to an `aria-live="polite"` status region
+   *  (`role="status"`) so a changing message is announced. Empty, it's a plain divider. */
+  children?: React.ReactNode
+}
 
 /**
- * MenuSeparator — a thin divider between groups of `MenuItem`s.
+ * MenuSeparator — a divider between groups of `MenuItem`s, or a small caption row.
+ *
+ * Empty, it's a thin line. Given text, it becomes a muted caption (a group name or
+ * a status message) and turns into an `aria-live="polite"` region — this is what
+ * `Select`'s `renderEmpty` uses for its "no results" / "loading" messages.
  *
  * @example
  * ```tsx
  * <MenuItem label="Edit" />
  * <MenuSeparator />
  * <MenuItem tone="critical" label="Delete" />
+ *
+ * <MenuSeparator>No results</MenuSeparator>
  * ```
  */
-export const MenuSeparator = ({ className, ...rest }: MenuSeparatorProps) => {
-  return <a-menu-separator role="separator" class={className} {...rest} />
+export const MenuSeparator = ({ className, children, ...rest }: MenuSeparatorProps) => {
+  // Content = anything truthy that isn't a blank string. `!!` drops the falsy
+  // footguns (`0` from a `count && …` caption, `''`, `false`, `null`), and the
+  // trim guard drops whitespace-only strings — all fall back to a plain divider.
+  const hasContent =
+    !!children && !(typeof children === 'string' && children.trim() === '')
+  return (
+    <a-menu-separator
+      role={hasContent ? 'status' : 'separator'}
+      aria-live={hasContent ? 'polite' : undefined}
+      class={className}
+      {...rest}
+    >
+      {hasContent ? children : null}
+    </a-menu-separator>
+  )
 }

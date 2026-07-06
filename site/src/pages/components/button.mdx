@@ -245,6 +245,26 @@ button to read as an inline link inside a sentence.
 </Col>
 </Columns>
 
+## Round
+
+`round` fully rounds the corners — a pill for text buttons, a perfect circle for
+icon-only ones. The radius (`999px`) is clamped to half the button's height, so it
+adapts to every `size` with no configuration. Pass a **number** (px) or a CSS length
+string for a custom radius instead of a full pill.
+
+<Preview>
+  <Button round tone="brand" label="Pill" />
+  <Button round tone="brand" icon="check" label="Confirm" />
+  <Button round tone="brand" icon="heart" aria-label="Like" />
+  <Button round={10} tone="brand" label="Custom 10px" />
+</Preview>
+
+```tsx folded
+<Button round tone="brand" label="Pill" />
+<Button round tone="brand" icon="heart" aria-label="Like" /> // circle
+<Button round={10} tone="brand" label="Custom 10px" />       // custom radius
+```
+
 ## Icons
 
 <Columns>
@@ -421,20 +441,25 @@ underline stylistically, it supports three styles — `solid`, `dashed`,
 <Col>
 
 Setting `href` switches the rendered tag from `<a-button>` to
-`<a role="button">`. Styling is identical — both selectors share the
-same CSS rules.
+`<a role="button" data-anta>`. Styling is identical — both selectors share
+the same CSS rules. `<Button>` adds the `data-anta` marker for you.
 
 </Col>
 </Columns>
 
 <Disclosure title="Routing libraries" level={3}>
 
-Anta's CSS targets `a-button, a[role="button"]` — an anchor (`<a>`) with
-`role="button"` and the right attributes gets the styling. That means anta doesn't
-need an `as` / `asChild` / `component` prop or per-framework integrations.
-Compose your own thin wrapper around
-your library's `Link` component — which renders an `<a>`, so it matches the
-selector.
+Anta's CSS targets `a-button, a[role="button"][data-anta]` — an anchor (`<a>`)
+with `role="button"`, the `data-anta` opt-in marker, and the right attributes
+gets the styling. That means anta doesn't need an `as` / `asChild` /
+`component` prop or per-framework integrations. Compose your own thin wrapper
+around your library's `Link` component — which renders an `<a>`, so adding
+`role="button"` and `data-anta` matches the selector.
+
+The `data-anta` marker is required because `role="button"` is a *generic* ARIA
+role that other widgets emit too — gating on the marker keeps anta from
+restyling anchors it doesn't own (a third-party menu, an embedded editor's
+toolbar, etc.).
 
 ```tsx
 // LinkButton.tsx — anta-styled link for client-side routing
@@ -453,7 +478,7 @@ type LinkButtonProps = LinkProps & {
 export const LinkButton = ({
   tone, priority, size, icon, iconTrailing, label, children, ...rest
 }: LinkButtonProps) => (
-  <Link role="button" tone={tone} priority={priority} size={size} {...rest}>
+  <Link role="button" data-anta tone={tone} priority={priority} size={size} {...rest}>
     {icon && <a-icon shape={icon} aria-hidden="true" />}
     {label != null && <a-button-label>{label}</a-button-label>}
     {children}

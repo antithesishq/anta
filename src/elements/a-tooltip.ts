@@ -1,4 +1,4 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { HTMLElementBase, anchorRect } from '../anta_helpers'
 import { debounce } from 'es-toolkit'
 import './a-tooltip.css'
 
@@ -432,6 +432,14 @@ export class ATooltipElement extends HTMLElementBase {
     return t.scrollWidth - t.clientWidth > 1 || t.scrollHeight - t.clientHeight > 1
   }
 
+  /** True when there's nothing worth showing: no element children (so an
+   *  icon/image-only bubble still counts as content) and no non-whitespace text
+   *  (so formatting whitespace / an empty conditional doesn't open a blank bubble).
+   *  Re-checked on every show(), so a tooltip populated later self-corrects. */
+  private isEmpty(): boolean {
+    return this.children.length === 0 && (this.textContent ?? '').trim() === ''
+  }
+
   // --- positioning (sets only the shadow container's own transform) ---
 
   // Single pending position frame: a burst of mousemoves within one frame
@@ -471,7 +479,8 @@ export class ATooltipElement extends HTMLElementBase {
   private positionToTarget = () => {
     this.schedulePosition(() => {
       if (!this.anchor || !this.shown) return
-      const a = this.anchor.getBoundingClientRect()
+      // The anchor's advertised rect (a-input reports its field, not the host).
+      const a = anchorRect(this.anchor)
       const box = this.container.getBoundingClientRect()
       const { innerWidth: vw, innerHeight: vh } = this.view
       // Touch long-press biases above the anchor so the fingertip resting on it
@@ -503,7 +512,7 @@ export class ATooltipElement extends HTMLElementBase {
    *  Cursor-follow only — drives the "fade as you move away" behaviour. */
   private proximityOpacity(e: MouseEvent): number {
     if (!this.anchor) return 1
-    const r = this.anchor.getBoundingClientRect()
+    const r = anchorRect(this.anchor)
     const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right)
     const dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom)
     const dist = Math.hypot(dx, dy)
@@ -516,6 +525,9 @@ export class ATooltipElement extends HTMLElementBase {
 
   show = (e?: MouseEvent) => {
     if (!this.anchor) return
+    // Nothing to show → don't open a blank bubble (checked here so every show
+    // path — hot-path, focus, touch long-press — is covered).
+    if (this.isEmpty()) return
     // truncated-only: bail unless the target is actually clipped (covers the
     // hot-path, focus, and touch long-press, which call show() directly).
     if (this.truncatedOnly && !this.isTargetTruncated()) return
@@ -652,7 +664,8 @@ export class ATooltipElement extends HTMLElementBase {
   /** Open now if another tooltip is hot (skip delay), else (re)arm the delayed
    *  show with the latest cursor event. */
   private trigger(e?: MouseEvent) {
-    // Don't even arm the delayed show for a non-truncated target.
+    // Don't even arm the delayed show for an empty or non-truncated target.
+    if (this.isEmpty()) return
     if (this.truncatedOnly && !this.isTargetTruncated()) return
     if (isHot()) {
       this.debouncedShow?.cancel()

@@ -64,6 +64,24 @@ its chevron, for an inline disclosure.
 <Expander title="Tertiary" priority="tertiary">…</Expander>
 ```
 
+## Round
+
+`round` sizes the corners to **half the folded header height** — so a folded
+expander reads as a pill, and an open one keeps that *same* corner radius instead
+of a bigger stadium. The header is measured (a `ResizeObserver`), so the pill
+tracks the header at any `level` or with custom header content. Open the example
+to see the corners hold their radius as the body appears.
+
+<Preview direction="column" gap="8px">
+  <Expander round title="Round — click to expand" priority="primary">
+    <Text>The corners stay at the folded pill's radius while the body is revealed, rather than re-rounding to half this taller box.</Text>
+  </Expander>
+</Preview>
+
+```tsx folded
+<Expander round title="Details" priority="primary">…</Expander>
+```
+
 ## Tones
 
 Pick a semantic `tone` to tint the header text and — on the filled

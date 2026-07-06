@@ -164,6 +164,9 @@ export interface AProgressAttributes extends BaseAttributes {
   /** Colour variant, or any literal CSS colour for a custom tone (derived in
    *  oklch). Named tones track light/dark automatically. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Fully-round track (`border-radius: 999px`), or a custom radius via a length
+   *  value (`round="6px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
   /** ARIA role — the JSX wrapper sets this to `'progressbar'`. */
   role?: string
   /** ARIA value-now (current). */
@@ -246,9 +249,9 @@ export interface ATagAttributes extends BaseAttributes {
   /** Size variant. `small` = 16px tall, `medium` (default) = 20px,
    *  `large` = 24px. */
   size?: 'small' | 'medium' | 'large'
-  /** Render in normal case instead of the default uppercase.
+  /** Render in all-caps instead of the default normal (mixed) case.
    *  Presence-based (`''` on, omit off). */
-  nocaps?: boolean | ''
+  allcaps?: boolean | ''
 }
 
 /**
@@ -281,6 +284,11 @@ export interface AExpanderAttributes extends BaseAttributes {
   /** Disables the header: not clickable or focusable, hover affordance
    *  off, text dimmed. The open state freezes as-is. Presence-based. */
   disabled?: boolean | ''
+  /** Round corners sized to half the folded (header) height — a pill when folded,
+   *  the same radius when expanded (the element measures the header and publishes
+   *  `--_expander-round-radius`). A length value (`round="12px"`) is a fixed radius
+   *  that overrides the measurement. Presence-based for the boolean form. */
+  round?: boolean | number | string
   /** Semantic tone, or any literal CSS color for a one-off custom tone.
    *  Named tones re-point the text + filled surface palette; a custom
    *  color keeps its hue with lightness/chroma pinned. `'neutral'` is the
@@ -350,6 +358,9 @@ export interface ATooltipAttributes extends BaseAttributes {
    *  nearest Anta ellipsizing label part (`a-tab-label` / `a-button-label`) in the
    *  anchor, then the anchor itself. Presence-based (`''` on, omit off). */
   'truncated-only'?: boolean | ''
+  /** Round the bubble (20px radius), or a custom radius via a length value
+   *  (`round="12px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
   /** CSS selector (resolved within the anchor) for the element whose overflow a
    *  `truncated-only` tooltip measures. */
   'truncated-selector'?: string
@@ -368,16 +379,17 @@ export interface ATooltipAttributes extends BaseAttributes {
  * `@antadesign/anta`.
  */
 export interface ACheckboxAttributes extends BaseAttributes {
-  /** Colour variant, or any literal CSS color for a one-off custom tone.
-   *  Named tones track light/dark mode automatically via the theme-aware role
-   *  tokens. `'neutral'` is the default (same as omitting it). */
+  /** Mark colour (checked fill + unselected box border), or any literal CSS color
+   *  for a one-off custom tone. Named tones track light/dark mode automatically via
+   *  the theme-aware role tokens. `'neutral'` is the default (same as omitting it).
+   *  The label + hint stay neutral — use `tone-text` for those. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Text colour (label + hint), independent of `tone`. A named tone or any literal
+   *  CSS color; named tones track light/dark via the `--text-*` role tokens. Omit
+   *  (or `'neutral'`) to leave the text neutral. */
+  'tone-text'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. `small` = 14px, `medium` (default) = 16px, `large` = 18px box. */
   size?: 'small' | 'medium' | 'large'
-  /** Visual priority. `primary` (default) fills the checked box with the tone
-   *  colour and draws a white checkmark; `secondary` keeps the box unfilled and
-   *  draws the border + checkmark in the tone colour (an outlined look). */
-  priority?: 'primary' | 'secondary'
   /** Controlled state — the element reflects changes to this attribute. Use this
    *  (driven from your store) for a controlled checkbox; use `default-state` for
    *  an uncontrolled one. */
@@ -387,6 +399,9 @@ export interface ACheckboxAttributes extends BaseAttributes {
   'default-state'?: 'checked' | 'unchecked' | 'indeterminate'
   /** Disabled state. Presence-based (`''` on, omit off). */
   disabled?: boolean | ''
+  /** Round the mark to a circle (`::before` `border-radius: 999px`), or a rounded
+   *  square via a length value (`round="5px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
   /** Form field name — the key this checkbox submits under inside a `<form>`. */
   name?: string
   /** Value submitted when checked. Defaults to `"on"`. */
@@ -447,6 +462,9 @@ export interface AInputAttributes extends BaseAttributes {
   /** Dim the leading/trailing adornments at rest (0.6); they brighten to full
    *  when the field is hovered or focused. Presence-based. */
   'dim-actions'?: boolean | ''
+  /** Fully-round field (`border-radius: 999px`), or a custom radius via a length
+   *  value (`round="10px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
   /** Size variant. small=24px, medium (default)=28px, large=32px. */
   size?: 'small' | 'medium' | 'large'
   /** Single-line input type (ignored when multiline). `search` is intentionally
@@ -552,6 +570,10 @@ export interface AMenuAttributes extends BaseAttributes {
    *  default; this opts out, making the submenu click-only. Presence-based
    *  (`''` on, omit off). */
   nohover?: boolean | ''
+  /** Round: container softens to a 20px radius and its items go fully round. A
+   *  length value (`round="12px"`) tunes the container radius only (items stay
+   *  pills). Presence-based for the boolean form. */
+  round?: boolean | number | string
   /** Gap in pixels between the trigger and the menu. Defaults to 4. */
   offset?: number | string
   /** Controlled open state (`'open'` / `'closed'`). Omit for uncontrolled;
@@ -579,9 +601,15 @@ export interface AMenuAttributes extends BaseAttributes {
 export interface AMenuItemAttributes extends BaseAttributes {
   /** Disabled state. Presence-based (`''` on, omit off). */
   disabled?: boolean | ''
-  /** Semantic tone. Colors the label, icon, and hover tint. `'neutral'`
-   *  (the default) is the same as omitting it. */
-  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Marks the item as selected — a persistent background tint (the same
+   *  resting look a pressed row shows), for building single- / multi-select
+   *  menus. Presence-based (`''` on, omit off). */
+  selected?: boolean | ''
+  /** Semantic tone. Colors the label, icon, and hover/selected tint. A named tone,
+   *  or any literal CSS color for a one-off custom tone (resolved through
+   *  `--menu-item-tone-source`, hue/chroma kept, lightness pinned to the brand
+   *  text). `'neutral'` (the default) is the same as omitting it. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Keep the menu open after this item is chosen (toggles / multi-select),
    *  instead of the default close-on-select. Presence-based (`''` on, omit
    *  off). The universal form is `data-menu-open` (works on any element). */
@@ -639,6 +667,9 @@ export interface AButtonAttributes extends BaseAttributes {
   disabled?: boolean | ''
   /** Toggled-on / pressed state. Presence-based (`''` on, omit off). */
   selected?: boolean | ''
+  /** Fully-round (pill / circle) — `border-radius: 999px` — or a custom radius via
+   *  a length value (`round="20px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
   /** Submit/reset semantics. */
   type?: 'button' | 'submit' | 'reset'
   /** Associate with a form by id when not nested inside it. */
@@ -660,16 +691,17 @@ export interface AButtonAttributes extends BaseAttributes {
 export interface ARadioAttributes extends BaseAttributes {
   /** This option's identity / submitted value. */
   value?: string
-  /** Colour variant, or any literal CSS color for a one-off custom tone.
-   *  Named tones track light/dark mode automatically via the theme-aware role
-   *  tokens. `'neutral'` is the default (same as omitting it). */
+  /** Mark colour (selected ring fill + dot, unselected ring border), or any literal
+   *  CSS color for a one-off custom tone. Named tones track light/dark mode via the
+   *  theme-aware role tokens. `'neutral'` is the default. The label + hint stay
+   *  neutral — use `tone-text` for those. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Text colour (label + hint), independent of `tone`. A named tone or any literal
+   *  CSS color; named tones track light/dark via the `--text-*` role tokens. Omit
+   *  (or `'neutral'`) to leave the text neutral. */
+  'tone-text'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=14px, medium=16px, large=18px control. */
   size?: 'small' | 'medium' | 'large'
-  /** Visual priority. `primary` (default) fills the selected ring with the tone
-   *  colour and draws a white dot; `secondary` keeps the ring unfilled and draws
-   *  the border + dot in the tone colour (an outlined look). */
-  priority?: 'primary' | 'secondary'
   /** Disabled state. Presence-based (`''` on, omit off). */
   disabled?: boolean | ''
   /** Selected state — connect-time seed for the standalone render path (no
@@ -710,16 +742,16 @@ export interface ARadioGroupAttributes extends BaseAttributes {
   'default-state'?: string
   /** Form field name — the group submits `name=value`. */
   name?: string
-  /** Tone cascaded to children that don't set their own, or any literal CSS
+  /** Mark tone cascaded to children that don't set their own, or any literal CSS
    *  color for a one-off custom tone. Inherits through CSS so every child
-   *  `<a-radio>` picks up the same fill curve. */
+   *  `<a-radio>` picks up the same fill curve. The option text stays neutral —
+   *  use `tone-text`. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Text tone cascaded to children's label + hint, independent of `tone`. A named
+   *  tone or any literal CSS color. Omit (or `'neutral'`) to leave the text neutral. */
+  'tone-text'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size cascaded to children that don't set their own. */
   size?: 'small' | 'medium' | 'large'
-  /** Visual priority cascaded to children that don't set their own. `primary`
-   *  (default) fills the selected ring with the tone colour; `secondary` keeps it
-   *  unfilled and draws the border + dot in the tone colour (an outlined look). */
-  priority?: 'primary' | 'secondary'
   /** Validation/feedback tone for the group hint — same set as `<a-input>`'s
    *  `status`. Recolours `<a-radio-group-hint>`; omit for the neutral default. */
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
@@ -769,12 +801,20 @@ export interface ARadioGroupAttributes extends BaseAttributes {
 export interface ATabAttributes extends BaseAttributes {
   /** This tab's identity / the value reported when it's selected. */
   value?: string
+  /** Per-tab tone override (same vocabulary as `<a-tabs tone>`): colours this tab's
+   *  label + icons and, when selected, its indicator. Named tones tone the sliding
+   *  indicator too; a custom literal colour tones the indicator only in `noslide`.
+   *  Custom tones also set `--tabs-tone-source` on the tab (via the wrapper's style). */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Selected state — connect-time seed for the standalone render path (no tablist).
    *  In an `<a-tabs>`, the tablist drives `:state(selected)` directly and this
    *  attribute is ignored. Presence-based (`''` on, omit off). */
   selected?: boolean | ''
   /** Disabled state. Presence-based (`''` on, omit off). */
   disabled?: boolean | ''
+  /** Fully-round this tab's box (`--tab-radius: 999px`). `<a-tabs round>` sets it
+   *  strip-wide instead. Presence-based (`''` on, omit off) — no custom value. */
+  round?: boolean | ''
   /** ARIA — `role="tab"` is set by the consumer (`Tabs` on each tab, or a hand-author),
    *  and `aria-controls` points at the paired panel. `aria-selected` is published by
    *  the element through `ElementInternals` (off the DOM), driven by the `selected`
@@ -806,13 +846,14 @@ export interface ATabsAttributes extends BaseAttributes {
   'default-state'?: string
   /** Visual priority. `primary` (default) is the raised pill on a recessed track; `secondary`
    *  keeps that sizing but drops the track (selected = subtle active background fill, no
-   *  border); `tertiary` is a flush border-bottom underline. `tone` tints secondary +
-   *  tertiary; primary stays neutral. */
+   *  border); `tertiary` is a bottom-underline under the selected tab only (no track, no rest
+   *  line). `tone` tints secondary + tertiary; primary stays neutral. */
   priority?: 'primary' | 'secondary' | 'tertiary'
   /** Tone applied to the selected indicator/label, or any literal CSS color for a
    *  one-off custom tone (derived in oklch). `'neutral'` is the default. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Size variant. small=24px, medium (default)=28px, large=32px tall (Button's scale). */
+  /** Size variant. small=24px, medium (default)=28px, large=32px tall — matching Button's
+   *  scale (the label leading runs a touch tighter, offset by 1px more block padding per side). */
   size?: 'small' | 'medium' | 'large'
   /** Layout + arrow-key axis. `'horizontal'` (default) ellipsizes labels when tabs
    *  overflow (scrolling is opt-in via CSS); `'vertical'` stacks them. */
@@ -824,6 +865,10 @@ export interface ATabsAttributes extends BaseAttributes {
   noslide?: boolean | ''
   /** Disable the whole strip. Presence-based (`''` on, omit off). */
   disabled?: boolean | ''
+  /** Fully-round tabs + sliding indicator (via `--tab-radius: 999px`) and the primary
+   *  track well. A length value (`round="10px"`) applies to the top-level track well
+   *  only (pills + indicator stay full). Presence-based for the boolean form. */
+  round?: boolean | number | string
   /** Fires whenever the active tab changes. `detail` carries `{ next, prev }` (values;
    *  `null` = none). Cancelable: a synchronous `preventDefault()` vetoes the pick in
    *  uncontrolled mode. All-lowercase to bind across both renderers (like

@@ -22,6 +22,14 @@
     border-radius: 0;
   }
 
+  /* `round` → fully-round track. `:host { overflow: hidden }` (shadow) clips the
+     fill indicator to the rounded shape, so only the host radius is needed. A
+     value (`round="6px"`, or the wrapper's `round={6}`) sets a custom radius. */
+  a-progress[round] {
+    --progress-round: attr(round type(<length>), 999px);
+    border-radius: var(--progress-round, 999px);
+  }
+
   /* Named tones — each re-aliases the surface/indicator/text to the matching
      theme-aware role-token tone (so dark mode is free). `neutral` is the base. */
   a-progress[tone="brand"] {

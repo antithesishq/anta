@@ -23,6 +23,11 @@ default the bubble is **pinned** under the anchor; pass `follow` to make it
 **track the cursor** (fading out as the cursor moves away), or `interactive` to
 make it hoverable and clickable (for content like links).
 
+When the anchor implements **`getAnchorRect(): DOMRect`**, the bubble positions
+against that rect instead of the anchor's full box. Anta's `Input` reports its
+field box, so a tooltip on an `<Input>` points at the field, not the surrounding
+label or hint.
+
 <Disclosure title="Playground" anchor={false} brand>
 
 A single tooltip on a button — tweak its props (or edit the code) and hover the
@@ -196,6 +201,14 @@ default it measures the nearest Anta ellipsizing label (`a-tab-label` /
   <Tooltip truncatedOnly>A long label that gets truncated</Tooltip>
 </span>
 ```
+
+### Empty tooltips
+
+A tooltip with nothing to show — no element children and no non-whitespace text —
+doesn't open, so `<Tooltip>{maybeEmpty}</Tooltip>` never flashes a blank bubble. This
+is automatic (no prop) and re-checked on each hover, so a tooltip whose content
+arrives later works normally. Content that's a single icon or image (an element, no
+text) still shows.
 
 <Disclosure title="Component props" open>
 

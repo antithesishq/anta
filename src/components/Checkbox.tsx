@@ -1,4 +1,4 @@
-import { nativeStateChange, toneStyle } from "../anta_helpers"
+import { nativeStateChange, toneStyle, roundStyle } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
 
 /** The wrapper-level checked value: a boolean for the binary axis, the string
@@ -58,27 +58,31 @@ export interface CheckboxProps extends BaseProps {
   defaultChecked?: CheckboxValue
   /** Disable the checkbox (no interaction, dropped from the tab order). */
   disabled?: boolean
+  /** Round the checkbox mark to a circle (`border-radius: 999px` on the box). Pass
+   *  a `number` (px) or a CSS length string for a rounded-square mark instead. */
+  round?: boolean | number | string
   /** Form field name. Inside a `<form>` the checkbox submits under this name,
    *  contributing `value` when checked — like a native checkbox. */
   name?: string
   /** Value submitted with the form when checked — like a native checkbox.
    *  @defaultValue "on" */
   value?: string
-  /** Colour variant, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`)
-   *  for a one-off custom tone. Tints fill, label, hint, and the unselected box
-   *  border. Named tones track light/dark mode automatically via the theme-aware
-   *  role tokens; a custom colour keeps its hue + chroma and pins lightness to the
-   *  fill curve.
+  /** Colour of the **mark** — the checked-box fill and the unselected box border.
+   *  A named tone or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a
+   *  one-off custom tone. Named tones track light/dark mode automatically via the
+   *  theme-aware role tokens; a custom colour keeps its hue + chroma and pins
+   *  lightness to the fill curve. The label + hint stay neutral — use `toneText`
+   *  to recolour those.
    *  @defaultValue 'neutral' */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Colour of the **text** — the label and hint — independent of `tone`. A named
+   *  tone or any literal CSS color. Named tones track light/dark via the theme-aware
+   *  `--text-*` role tokens. Omit to leave the text neutral.
+   *  @defaultValue 'neutral' */
+  toneText?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=14px, medium=16px, large=18px box.
    *  @defaultValue 'medium' */
   size?: 'small' | 'medium' | 'large'
-  /** Visual priority. `primary` fills the checked box with the tone colour and
-   *  draws a white checkmark; `secondary` keeps the box unfilled and draws the
-   *  border + checkmark in the tone colour (an outlined look).
-   *  @defaultValue 'primary' */
-  priority?: 'primary' | 'secondary'
   /** Fired on click / Space *before* the element applies any change. Event-first
    *  so `event.preventDefault()` is the synchronous veto (uncontrolled mode);
    *  `detail` carries `{ next, prev }`. In controlled mode the element never
@@ -115,8 +119,9 @@ export const Checkbox = ({
   defaultChecked,
   disabled,
   tone,
+  toneText,
   size,
-  priority,
+  round,
   onStateChange,
   onChange,
   onValueChange,
@@ -133,9 +138,18 @@ export const Checkbox = ({
   // publishes it off-DOM via `ElementInternals`, so it stays live through
   // uncontrolled self-toggles (a wrapper-set value would go stale there).
 
-  // A non-named tone is a custom CSS color — `toneStyle` hands it to the element
-  // via `--checkbox-tone-source`; the element's CSS derives the fill curve.
-  const computedStyle = toneStyle(tone, '--checkbox-tone-source', style)
+  // A non-named tone/toneText is a custom CSS color — `toneStyle` hands each to the
+  // element via its `--checkbox-tone-source` / `--checkbox-tone-text-source` var; the
+  // element's CSS derives the fill / text curve. Chained so both can be custom.
+  const computedStyle = roundStyle(
+    round,
+    '--checkbox-round',
+    toneStyle(
+      toneText,
+      '--checkbox-tone-text-source',
+      toneStyle(tone, '--checkbox-tone-source', style),
+    ),
+  )
 
   // The accessible name is wrapper-derived (matches `Input` and the "ARIA lives
   // in the wrapper" rule): a string label / children becomes the box's
@@ -189,8 +203,9 @@ export const Checkbox = ({
       default-state={defaultStateAttr}
       disabled={disabled ? '' : undefined}
       tone={tone && tone !== 'neutral' ? tone : undefined}
+      tone-text={toneText && toneText !== 'neutral' ? toneText : undefined}
       size={size && size !== 'medium' ? size : undefined}
-      priority={priority && priority !== 'primary' ? priority : undefined}
+      round={round ? '' : undefined}
       tabIndex={disabled ? -1 : (tabIndex ?? 0)}
       // All-lowercase `onstatechange` is the one event-prop spelling both
       // renderers bind to our custom `statechange` event: React 19 keeps the

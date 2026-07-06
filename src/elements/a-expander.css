@@ -48,6 +48,26 @@
     transition: background-color 100ms ease;
   }
 
+  /* `round` → the corners take HALF the folded (header) height, so folded reads
+     as a perfect pill and — crucially — an *expanded* box keeps that exact corner
+     radius instead of re-clamping to half its taller height (which would look
+     over-round). The element measures the header via a ResizeObserver and
+     publishes the value as `--_expander-round-radius` through a shadow `:host`
+     rule (see a-expander.ts) — robust to custom header content. The `999px`
+     fallback is a plain pill for the first paint before measurement lands, and
+     for engines without ResizeObserver. Applies to every priority so a consumer
+     who adds a background to a tertiary expander still gets round corners. */
+  a-expander[round] {
+    /* A custom value (`round="12px"`, or the wrapper's `round={12}` → inline
+       `--expander-round`) is a FIXED radius that overrides the measured pill;
+       with no value `--expander-round` is invalid/unset, so it falls through to
+       the measured `--_expander-round-radius`, then to the 999px first-paint
+       fallback. `attr()` has no fallback here on purpose — an empty `round` must
+       fall through to the measurement, not resolve to a length. */
+    --expander-round: attr(round type(<length>));
+    border-radius: var(--expander-round, var(--_expander-round-radius, 999px));
+  }
+
   /* FOUC guard for the gap before the custom element upgrades. Until `a-expander`
      is `:defined`, there is no shadow DOM to collapse the region, so the light-DOM
      body (`<a-expander-details>`, `display:block`) would paint fully open and then

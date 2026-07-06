@@ -1,74 +1,86 @@
 /**
- * build-iframe-runtime.mjs — produce `site/public/iframe-anta-runtime.js`,
- * a self-contained browser ESM bundle that, when imported into any
- * window, registers Anta's custom elements on that window's
- * `customElements` registry and injects the per-element CSS into the
- * document head.
+ * build-iframe-runtime.mjs — build the Playground's preview-app bundle.
  *
- * The Playground's preview iframe (lives at `about:srcdoc`,
- * has its own customElements registry, can't share the parent's)
- * dynamic-imports this URL on first load.
+ * ONE self-contained ESM bundle (`site/public/iframe/iframe-app.<hash>.js` +
+ * `.css`) that has Preact and the whole Anta library baked in: it registers the
+ * custom elements, and seeds `window.__demo_modules__` from ITS OWN Anta/Preact
+ * instances. The sandbox bundler compiles the (TS→JS) demo code with a tiny shim
+ * that reads those globals, so the demo runs against the iframe's own Anta +
+ * Preact — one Preact instance, and Anta's CSS (bundled here, class names
+ * matching the JS) lives in the iframe. The iframe (`about:srcdoc`, its own
+ * customElements registry) loads this once; it's content-hash cache-busted.
  *
- * We use Node esbuild (available transitively via Astro/Vite) rather
- * than esbuild-wasm so the build step runs at native speed alongside
- * the rest of `docs:`.
+ * We use Node esbuild (via Astro/Vite) so it runs at native speed in `docs:`.
  */
 import { build } from 'esbuild'
-import { readFile, mkdir } from 'node:fs/promises'
+import { writeFile, mkdir } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { dirname } from 'node:path'
+import { createHash } from 'node:crypto'
 
 const root = new URL('../..', import.meta.url)
 const tokensCss = fileURLToPath(new URL('src/tokens.css', root))
 const resetCss = fileURLToPath(new URL('src/reset.css', root))
-const elementsEntry = fileURLToPath(new URL('src/elements/index.ts', root))
-const outFile = fileURLToPath(new URL('site/public/iframe-anta-runtime.js', root))
+const distElements = fileURLToPath(new URL('dist/elements/index.js', root))
+const distIndex = fileURLToPath(new URL('dist/index.js', root))
+const iframeDir = fileURLToPath(new URL('site/public/iframe', root))
+const manifestFile = fileURLToPath(new URL('site/src/generated/iframe-assets.ts', root))
+// Bare specifiers (`preact`) resolve from the site's node_modules.
+const siteDir = fileURLToPath(new URL('..', import.meta.url))
 
-await mkdir(dirname(outFile), { recursive: true })
+await mkdir(iframeDir, { recursive: true })
 
-await build({
-  // Virtual entry: pull in the design tokens (so component CSS that
-  // references `--bg-*` / `--text-*` / `--border-*` resolves the same way
-  // it does on the docs site — e.g. the tooltip's frosted background) plus
-  // reset.css's `@layer anta` rules (base link styling, list resets, etc.)
-  // alongside the element registrations, so the iframe matches the real
-  // site's appearance.
-  stdin: {
-    contents: `import ${JSON.stringify(tokensCss)}; import ${JSON.stringify(resetCss)}; import ${JSON.stringify(elementsEntry)};`,
-    resolveDir: fileURLToPath(root),
-    loader: 'ts',
-  },
-  outfile: outFile,
+// Entry: pull in tokens + reset + element registration + the Anta barrel + Preact,
+// then publish everything the demo shim needs onto `window.__demo_modules__`.
+const entry = `
+import ${JSON.stringify(tokensCss)};
+import ${JSON.stringify(resetCss)};
+import ${JSON.stringify(distElements)};
+import * as anta from ${JSON.stringify(distIndex)};
+import * as preact from 'preact';
+import * as preactHooks from 'preact/hooks';
+if (typeof window !== 'undefined') {
+  window.__demo_modules__ = Object.assign(window.__demo_modules__ || {}, {
+    '@antadesign/anta': anta,
+    '@antadesign/anta/elements': {},
+    'preact': preact,
+    'preact/hooks': preactHooks,
+  });
+}
+`
+
+const out = await build({
+  stdin: { contents: entry, resolveDir: siteDir, loader: 'js' },
+  outfile: `${iframeDir}/iframe-app.js`,
   bundle: true,
   format: 'esm',
   target: 'es2020',
   logLevel: 'silent',
+  write: false,
+  // Anta's JSX runtime resolves `react` — map it to Preact's compat (bundled in,
+  // so there's a single Preact instance shared with the demo).
+  alias: {
+    react: 'preact/compat',
+    'react-dom': 'preact/compat',
+    'react/jsx-runtime': 'preact/jsx-runtime',
+  },
   loader: { '.svg': 'text' },
-  // Anta's element CSS files use `@import` syntax in some cases and
-  // import-from-JS in others. We inline every imported .css as a
-  // `<style>` element appended to document.head at module-init time,
-  // so the iframe's document picks the CSS up wherever this bundle
-  // is dynamic-imported.
-  plugins: [
-    {
-      name: 'css-as-style-tag',
-      setup(b) {
-        b.onLoad({ filter: /\.css$/ }, async (args) => {
-          const css = await readFile(args.path, 'utf8')
-          return {
-            contents: `
-              if (typeof document !== 'undefined') {
-                const __s = document.createElement('style');
-                __s.textContent = ${JSON.stringify(css)};
-                document.head.appendChild(__s);
-              }
-            `,
-            loader: 'js',
-          }
-        })
-      },
-    },
-  ],
 })
 
-console.log(`built ${outFile}`)
+// Write the JS + the sibling CSS esbuild bundles (module-class names hashed
+// consistently across both), content-hashed for cache-busting.
+const manifest = {}
+for (const f of out.outputFiles) {
+  const ext = f.path.endsWith('.css') ? 'css' : 'js'
+  const hash = createHash('sha256').update(f.contents).digest('hex').slice(0, 8)
+  const file = `iframe-app.${hash}.${ext}`
+  await writeFile(`${iframeDir}/${file}`, f.contents)
+  manifest[ext] = file
+}
+
+await writeFile(
+  manifestFile,
+  `// Auto-generated by build-iframe-runtime.mjs. Do not edit.\n` +
+    `export const IFRAME_ASSETS = ${JSON.stringify(manifest, null, 2)} as const\n`,
+)
+
+console.log('built preview app:', manifest)

@@ -24,6 +24,13 @@
     width: 100%;
   }
 
+  /* `round` field radius: presence → 999px pill; a value (`round="20px"`, or the
+     `Input` wrapper's `round={20}` → inline `--input-round`) sets a custom radius.
+     Read by the shadow `.field` rule (the var inherits into the shadow). */
+  a-input[round] {
+    --input-round: attr(round type(<length>), 999px);
+  }
+
   /* Custom tone — a literal CSS colour tints the resting + hover border (the focus
      ring stays the global `--focus-ring`). Declared *before* `[status]` so a
      validation status still wins the border on the specificity tie. FIRST-PASS

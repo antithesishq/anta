@@ -34,10 +34,10 @@ The `Checkbox` wrapper renders an `<a-checkbox>` element that manages its own st
 
 ## Tone
 
-`tone` tints the whole control — the fill, the label, the hint, and, for a tinted
-tone, the unselected box border (a light shade of the fill that darkens on hover
-and active, like the neutral border; `neutral` keeps a grey border). Six named
-tones (`neutral` default), or pass any CSS color for a custom tone.
+`tone` colours the **mark** — the checked-box fill and, for a tinted tone, the
+unselected box border (a light shade of the fill that darkens on hover and active,
+like the neutral border; `neutral` keeps a grey border). The label and hint stay
+neutral. Six named tones (`neutral` default), or pass any CSS color for a custom tone.
 
 <Preview gap="16px">
   <Checkbox defaultChecked tone="neutral">Neutral</Checkbox>
@@ -56,21 +56,22 @@ tones (`neutral` default), or pass any CSS color for a custom tone.
 <Checkbox defaultChecked tone="mediumaquamarine">Custom color</Checkbox>
 ```
 
-## Priority
+## Text tone
 
-`priority` sets how a checked box is painted. `primary` (the default) fills the
-box with the tone colour and draws a white checkmark. `secondary` leaves the box
-unfilled and draws the border + checkmark in the tone colour — an outlined look
-that sits lighter in dense lists.
+`toneText` colours the **label and hint**, independent of `tone` — colour the mark,
+the text, or both. Same six named tones or any CSS color; omit to leave the text
+neutral.
 
 <Preview gap="16px">
-  <Checkbox defaultChecked tone="brand">Primary (default)</Checkbox>
-  <Checkbox defaultChecked tone="brand" priority="secondary">Secondary</Checkbox>
+  <Checkbox defaultChecked toneText="brand">Brand text</Checkbox>
+  <Checkbox defaultChecked tone="success" toneText="success">Matched mark + text</Checkbox>
+  <Checkbox defaultChecked tone="critical" toneText="neutral">Critical mark, neutral text</Checkbox>
 </Preview>
 
 ```tsx folded
-<Checkbox defaultChecked tone="brand">Primary (default)</Checkbox>
-<Checkbox defaultChecked tone="brand" priority="secondary">Secondary</Checkbox>
+<Checkbox defaultChecked toneText="brand">Brand text</Checkbox>
+<Checkbox defaultChecked tone="success" toneText="success">Matched mark + text</Checkbox>
+<Checkbox defaultChecked tone="critical">Critical mark, neutral text</Checkbox>
 ```
 
 ## Size
@@ -167,6 +168,12 @@ hands you the value without touching `event.target`. `onChange` is the plain
 native hook. (In controlled mode `onChange`/`onValueChange` fire once you've updated
 `checked`.) `onFocus` / `onBlur` work too — the host is the focusable element.
 
+Checkbox has `onStateChange` (and `Input` doesn't) because its state is
+**discrete** — `checked · unchecked · indeterminate` — so a transition can be
+vetoed *before* it applies. A text field's value is free-form, with no discrete
+state to model or veto, so `Input` (and the composed `Select`) expose only the
+`onValueChange` half. The `onValueChange` shape is identical across all of them.
+
 ```tsx folded
 <Checkbox onValueChange={(_e, { checked }) => save(checked)}>Subscribe</Checkbox>
 ```
@@ -223,10 +230,10 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 
 <Disclosure title="Styling">
 
-Reach for the props first: **`tone`** sets the colour (any CSS colour for a custom
-tone — it derives the full rest/hover/active curve in oklch), **`size`** the
-dimensions + type, **`priority`** the fill-vs-outline look. The focus ring is the
-global [`--focus-ring`](/colors/#focus-ring).
+Reach for the props first: **`tone`** colours the mark (any CSS colour for a custom
+tone — it derives the full rest/hover/active curve in oklch), **`toneText`** the
+label + hint, **`size`** the dimensions + type. The focus ring is the global
+[`--focus-ring`](/colors/#focus-ring).
 
 ```tsx folded
 <Checkbox tone="#e0457b" defaultChecked>Custom colour</Checkbox>
@@ -239,9 +246,13 @@ Target them with plain CSS, **per state** (an un-layered rule beats `@layer anta
 without `!important`). The classes below are just for the demos:
 
 <Preview gap="20px">
+  <Checkbox className="outlined" defaultChecked>Outlined</Checkbox>
   <Checkbox className="customized" defaultChecked>Customized</Checkbox>
   <Checkbox className="beautified" defaultChecked>Beautified</Checkbox>
   <style is:inline>{`
+    a-checkbox.outlined:state(checked)::before { background: var(--checkbox-bg); border-color: light-dark(#5f4bc3, #7460d7); }
+    a-checkbox.outlined:state(checked)::after { background-color: light-dark(#5f4bc3, #7460d7); }
+
     a-checkbox.customized { font-weight: 700; }
     a-checkbox.customized::before,
     a-checkbox.customized::after { inline-size: 24px; block-size: 24px; }
@@ -257,6 +268,16 @@ without `!important`). The classes below are just for the demos:
 </Preview>
 
 ```css folded
+/* Outlined — an unfilled box: the checked box keeps its background and paints the
+   border + checkmark in the tone colour (light-dark() tunes both themes at once). */
+a-checkbox.outlined:state(checked)::before {
+  background: var(--checkbox-bg);
+  border-color: light-dark(#5f4bc3, #7460d7);
+}
+a-checkbox.outlined:state(checked)::after {
+  background-color: light-dark(#5f4bc3, #7460d7);
+}
+
 /* Customized — bold label, bigger circular box, bigger checkmark.
    Colours use light-dark() so they're tuned for both themes at once. */
 a-checkbox.customized { font-weight: 700; }

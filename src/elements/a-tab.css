@@ -21,37 +21,42 @@
     color: var(--tab-fg, var(--text-3));
     background-color: var(--tab-bg, transparent);
     border: none;
-    border-radius: var(--tab-radius, 4px);
+    border-radius: var(--tab-radius);
+    /* `round` on a lone tab rounds just this tab's box; `<Tabs round>` sets it
+       strip-wide (incl. the sliding indicator) via a-tabs.css. */
+    &[round] { --tab-radius: 999px; }
     /* Zero-spread transparent baseline so the selected pill's ring (--tab-pill-shadow)
        animates in (spread 0→0.5px, transparent→colour) instead of popping from `none`. */
     box-shadow: 0 0 0 0 transparent;
 
-    font-size: var(--_fs, 15px);
+    font-size: var(--_fs);
     font-family: var(--sans-serif);
     font-weight: 450;
     font-variation-settings: "wdth" 88, "slnt" 0, "ital" 0;
-    font-feature-settings: "ss02", "ss05";
-    line-height: var(--_lh, 20px);
+    font-feature-settings: "ss02", "ss05", "tnum";
+    line-height: var(--_lh);
     letter-spacing: 0.05ch;
 
     white-space: nowrap;
     text-wrap: nowrap;
 
-    /* Height = line-height + 8 (matching the same-size Button / Input). Block padding
-       is SYMMETRIC; the optical --_pb nudge for Anta's low-sitting glyphs lives on
-       <a-tab-label> (below), not the tab box — so a sibling <a-icon> stays centered
-       instead of riding high. (The label's --_pb + the symmetric padding still sum to
-       line-height + 8, so the height is unchanged. Mirrors <a-button-label>.) */
-    padding-block: var(--tab-padding-y, 4px);
-    padding-inline: var(--tab-padding-x, 9px);
+    /* Height = --_lh + 8 — the same as the same-size Button / Input. The block padding is
+       SYMMETRIC and nets +10 around a label box of the full type-scale leading; the optical
+       --_pb nudge for Anta's low-sitting glyphs lives on <a-tab-label> (below), not the tab
+       box — so a sibling <a-icon> stays centered instead of riding high. The label trims its
+       leading by 2px (calc(--_lh − 2), below), which the extra +1px padding per side offsets,
+       so the box matches Button while the label reads a touch tighter; the label stays
+       centered. Mirrors <a-button-label>. */
+    padding-block: var(--tab-padding-y);
+    padding-inline: var(--tab-padding-x);
 
     /* The text/icon `color` is INSTANT (not transitioned) — hover/select recolour the
        label immediately. Background and shadow still ease in/out, so the active fill +
        pill ring animate while the text snaps. (The tertiary underline is the ::after
        overlay in a-tabs.css; it eases its own size + colour.) */
     transition:
-      background-color var(--tab-timing, 150ms ease-out),
-      box-shadow var(--tab-timing, 150ms ease-out);
+      background-color var(--tab-timing),
+      box-shadow var(--tab-timing);
 
     /* The label box — the `Tabs` wrapper wraps a string label in <a-tab-label>. It
        carries the optical --_pb and is ellipsis-/wrap-capable, exactly like
@@ -64,8 +69,11 @@
       text-wrap: nowrap;
       white-space: nowrap;
 
-      line-height: var(--_lh, 20px);
-      padding-bottom: var(--_pb, 1px);
+      /* 2px tighter than the type-scale leading (--_lh) so each tab sits 2px shorter
+         than the same-size Button, without re-pointing the shared 13/16·15/20·17/24
+         scale; the symmetric tab padding is untouched, so the height comment above holds. */
+      line-height: calc(var(--_lh) - 2px);
+      padding-bottom: var(--_pb);
 
       &:has(> *) {
         display: inline-flex;
@@ -81,10 +89,10 @@
        an icon looks balanced with a little less inset than text. Only when the tab also
        has a label, so an icon-only tab keeps its symmetric padding. Mirrors <a-button>. */
     &:has(> a-icon:first-child):has(> a-tab-label) {
-      padding-inline-start: max(0px, var(--tab-padding-x, 9px) - 2px);
+      padding-inline-start: max(0px, var(--tab-padding-x) - 2px);
     }
     &:has(> a-icon:last-child):has(> a-tab-label) {
-      padding-inline-end: max(0px, var(--tab-padding-x, 9px) - 2px);
+      padding-inline-end: max(0px, var(--tab-padding-x) - 2px);
     }
   }
 

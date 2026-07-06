@@ -15,6 +15,14 @@
     --menu-backdrop-filter: blur(20px);
   }
 
+  /* `round` softens the menu container to a 20px radius (a full pill would be
+     absurd on a tall box); the items themselves go fully round — see
+     a-menu-item.css. A custom value (`round="12px"`, or the wrapper's `round={12}`)
+     tunes the CONTAINER radius only — items stay full pills. */
+  a-menu[round] {
+    --menu-radius: attr(round type(<length>), 20px);
+  }
+
   .dark a-menu {
     --menu-bg: color-mix(in oklch, var(--bg-1) 78%, transparent);
     --menu-shadow:

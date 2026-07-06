@@ -65,6 +65,42 @@ export function toneStyle(
 }
 
 /**
+ * Inline-style helper for a valued `round` — the polymorphic corner-radius prop
+ * (`true` = fully round, a `number`/length = a custom radius). Mirrors `toneStyle`:
+ * a custom value is handed to the element via `varName` (e.g. `--button-round`), so
+ * the element's CSS resolves `border-radius: var(--{c}-round, <default>)`. This is
+ * the portable path — the element's `attr(round type(<length>), …)` default only
+ * resolves on newer engines, exactly like the tone-source `attr()`.
+ *
+ * A `number` becomes `<n>px`; a non-empty `string` is used verbatim (so `'1rem'` /
+ * `'50%'` work). `true` / `false` / `undefined` add nothing (presence alone → the
+ * element's default full-round). Returns `base` unchanged when there's no value.
+ */
+export function roundStyle(
+  round: boolean | number | string | undefined,
+  varName: string,
+  base?: React.CSSProperties,
+): React.CSSProperties | undefined {
+  if (typeof round === 'number') return { ...base, [varName]: `${round}px` }
+  if (typeof round === 'string' && round !== '') return { ...base, [varName]: round }
+  return base
+}
+
+/**
+ * The rect a floating-element anchor advertises for positioning. Any element may
+ * implement `getAnchorRect(): DOMRect` to point positioners (`a-menu`,
+ * `a-tooltip`) at a sub-region of itself — e.g. `a-input` returns its `.field`
+ * box rather than the host, whose box also spans the label / hint, so a menu or
+ * tooltip lines up with the field itself. Elements without it fall back to their
+ * border box (`getBoundingClientRect`), so this is opt-in and back-compatible.
+ * Shared by a-menu and a-tooltip.
+ */
+export function anchorRect(el: Element): DOMRect {
+  const fn = (el as { getAnchorRect?: () => DOMRect }).getAnchorRect
+  return typeof fn === 'function' ? fn.call(el) : el.getBoundingClientRect()
+}
+
+/**
  * `HTMLElement` in browsers, a noop class in Node/Worker environments.
  * Use this as the base for custom element classes so importing the
  * module in a non-DOM environment doesn't throw on `extends HTMLElement`.

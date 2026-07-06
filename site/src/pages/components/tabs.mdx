@@ -9,7 +9,7 @@ import Disclosure from '../../components/Disclosure.astro'
 import Columns from '../../components/Columns.astro'
 import Col from '../../components/Col.astro'
 import tabsDemoCode from './tabs.demo.ts'
-import { Basic, Priorities, TonesColumn, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, SquareTabs, TertiaryGlow, NoSlide } from '../../components/TabsDemo'
+import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, SquareTabs, TertiaryGlow, PillTabs, OptionsTabs, NoSlide } from '../../components/TabsDemo'
 
 # Tabs
 
@@ -32,6 +32,11 @@ hide the content too.
   padding: 16px;
   border: 1px solid var(--border-4);
   border-radius: 8px;
+}
+
+/* When the strip is tertiary, pull the panel up 1px so it meets the underline. */
+a-tabs[priority="tertiary"] ~ a-tabpanel {
+  margin-top: -1px;
 }`}
 />
 
@@ -104,6 +109,25 @@ custom colour); columns are priorities.
 ```tsx folded
 <Tabs tone="brand" priority="secondary" defaultValue="a">…</Tabs>
 <Tabs tone="#e0457b" priority="tertiary" defaultValue="a">…</Tabs>  {/* any CSS colour */}
+```
+
+**Per-tab tone.** A `tone` on an individual `<Tab>` overrides the strip's tone for that one
+tab — colouring its label + icons in every mode, and its indicator when it's the active tab.
+The six named tones colour the sliding indicator too; a custom literal colour tones the label
+everywhere and the indicator only under `noslide` (the single shared sliding element can't
+read a descendant's colour).
+
+<Preview>
+  <PerTabTone client:only="preact" />
+</Preview>
+
+```tsx folded
+<Tabs defaultValue="overview" label="Review queue">
+  <Tab value="overview" label="Overview" />
+  <Tab value="approved" label="Approved" icon="circle-check" tone="success" />
+  <Tab value="flagged" label="Flagged" tone="warning" />
+  <Tab value="rejected" label="Rejected" tone="critical" />
+</Tabs>
 ```
 
 ## Size
@@ -191,7 +215,7 @@ dot flags an unsaved file. Its content is otherwise arbitrary: pass **children**
 
 ```tsx folded
 <Tabs defaultValue="app" label="Open files">
-  <Tab value="app" icon="braces">app.tsx <Tag size="small" nocaps value="2" /></Tab>
+  <Tab value="app" icon="braces">app.tsx <Tag size="small" value="2" /></Tab>
   <Tab value="readme" label="README.md" icon="file" />
   <Tab value="styles" icon="file" iconTrailing="circle-small-solid">styles.css</Tab>
 </Tabs>
@@ -242,6 +266,7 @@ tabs above to see it.
 <Preview>
   <Basic client:only="preact" />
   <style is:inline>{`
+    .panels-demo { width: 100%; }
     .panels-demo > a-tabs { align-self: center; }
   `}</style>
 </Preview>
@@ -326,6 +351,30 @@ panels, or on a single `<TabPanel>` to override one.
 
 {/* per-panel override */}
 <TabPanel value="b" mounting="lazy"><Heavy /></TabPanel>
+```
+
+## Data-driven tabs (`options`)
+
+Instead of `<Tab>` children, pass an **`options`** array — one object per tab
+(`value`, `label`, `icon`, `iconTrailing`, `tone`, `disabled`, `round`), the same
+data-driven style as [`RadioGroup`](/components/radio/). Handy when tabs come from a
+config or a `.map()`. `<TabPanel>` children still supply panel bodies (matched by
+`value`), so the array and panels compose.
+
+<Preview>
+  <OptionsTabs client:only="preact" />
+</Preview>
+
+```tsx
+<Tabs
+  defaultValue="overview"
+  label="Sections"
+  options={[
+    { value: 'overview', label: 'Overview', icon: 'home' },
+    { value: 'activity', label: 'Activity', icon: 'history' },
+    { value: 'settings', label: 'Settings', icon: 'list' },
+  ]}
+/>
 ```
 
 ## Keyboard & accessibility
@@ -535,6 +584,25 @@ where anchor positioning isn't supported.
 
 ```tsx folded
 <Tabs noslide defaultValue="a">…</Tabs>
+```
+
+**Fully-rounded pill** — the built-in **`round`** prop rounds the track, every tab, **and**
+the sliding pill to `999px` in one flag (it drives `--tab-radius`, which feeds both the tabs
+and the moving indicator, plus the primary track well) — no CSS needed. Here we only add a
+taller block padding per tab for a capsule shape:
+
+<Preview>
+  <PillTabs client:only="preact" />
+  <style is:inline>{`
+    .pill-tabs a-tab { padding-block: 8px; }
+  `}</style>
+</Preview>
+
+```tsx folded
+<Tabs round defaultValue="a" label="Sections">…</Tabs>   {/* pill track + tabs + indicator */}
+```
+```css folded
+.pill-tabs a-tab { padding-block: 8px; }   /* optional: a taller capsule */
 ```
 
 </Disclosure>

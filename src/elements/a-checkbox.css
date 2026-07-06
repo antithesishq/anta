@@ -67,7 +67,7 @@
     font-family: var(--sans-serif);
     font-size: var(--checkbox-label-fs);
     line-height: var(--checkbox-label-lh);
-    font-feature-settings: "ss02", "ss05";
+    font-feature-settings: "ss02", "ss05", "tnum";
 
     &::before {
       content: "";
@@ -83,6 +83,16 @@
       transition:
         background-color 150ms ease-out,
         border-color 150ms ease-out;
+    }
+
+    /* `round` → circular mark. 999px on the 16px box is clamped to a circle; a
+       value (`round="6px"`, or the wrapper's `round={6}` → inline `--checkbox-round`)
+       gives a rounded-square mark instead. */
+    &[round] {
+      --checkbox-round: attr(round type(<length>), 999px);
+    }
+    &[round]::before {
+      border-radius: var(--checkbox-round, 999px);
     }
 
     /* Glyph, stacked on the box (same cell, source order = paint order).
@@ -184,65 +194,12 @@
     }
   }
 
-  /* Secondary priority — outlined: the checked/indeterminate box stays unfilled
-     (keeps --checkbox-bg) and the border + glyph take the fill colour instead, so
-     a checked secondary box reads as a tinted outline with a tinted check rather
-     than a solid fill with a white check. Border + glyph follow the same
-     rest/hover/active fill curve. Disabled is left to the shared :disabled rule
-     (hence :not(:disabled) here), so a disabled secondary looks like primary. */
-  a-checkbox[priority="secondary"] {
-    &:not(:disabled):is(:state(checked), :state(indeterminate)) {
-      &::before { background: var(--checkbox-bg); border-color: var(--checkbox-fill); }
-      &::after  { background-color: var(--checkbox-fill); }
-    }
-    @media (hover: hover) and (pointer: fine) {
-      &:not(:disabled):hover:is(:state(checked), :state(indeterminate)) {
-        &::before { background: var(--checkbox-bg); border-color: var(--checkbox-fill-hover); }
-        &::after  { background-color: var(--checkbox-fill-hover); }
-      }
-    }
-    &:not(:disabled):active:is(:state(checked), :state(indeterminate)) {
-      &::before { background: var(--checkbox-bg); border-color: var(--checkbox-fill-active); }
-      &::after  { background-color: var(--checkbox-fill-active); }
-    }
-  }
-
   /* Dark: the check / minus glyph reads a touch thin on the solid fill, so nudge the
      mask up 1px across sizes (12 / 10 / 14 → 13 / 11 / 15) via the token (so a
-     consumer's --checkbox-mask-size override still wins). Secondary bumps further
-     (+2) in its own rule below. */
+     consumer's --checkbox-mask-size override still wins). */
   .dark a-checkbox { --checkbox-mask-size: 13px; }
   .dark a-checkbox[size="small"] { --checkbox-mask-size: 11px; }
   .dark a-checkbox[size="large"] { --checkbox-mask-size: 15px; }
-
-  /* Dark: an outlined box in the resting fill (the darkest shade in dark) barely
-     reads against the dark page, so anchor the secondary border + checkmark to the
-     brightest shade (--checkbox-fill-active) — keeping the checked look as legible
-     in dark as it is in light. Hover/active still respond (brightening further, the
-     dark-mode direction) so a checked secondary isn't inert. Mirrors a-radio. */
-  .dark a-checkbox[priority="secondary"] {
-    /* The outlined checkmark is a thin tone-coloured stroke (not a white glyph on a
-       solid fill), so give the glyph +2px of mask in dark for a touch more presence
-       (13 / 11 / 15 → 14 / 12 / 16), via the token. */
-    --checkbox-mask-size: 14px;
-    &[size="small"] { --checkbox-mask-size: 12px; }
-    &[size="large"] { --checkbox-mask-size: 16px; }
-
-    &:not(:disabled):is(:state(checked), :state(indeterminate)) {
-      &::before { border-color: var(--checkbox-fill-active); }
-      &::after  { background-color: var(--checkbox-fill-active); }
-    }
-    @media (hover: hover) and (pointer: fine) {
-      &:not(:disabled):hover:is(:state(checked), :state(indeterminate)) {
-        &::before { border-color: oklch(from var(--checkbox-fill-active) calc(l + 0.07) c h); }
-        &::after  { background-color: oklch(from var(--checkbox-fill-active) calc(l + 0.07) c h); }
-      }
-    }
-    &:not(:disabled):active:is(:state(checked), :state(indeterminate)) {
-      &::before { border-color: oklch(from var(--checkbox-fill-active) calc(l + 0.12) c h); }
-      &::after  { background-color: oklch(from var(--checkbox-fill-active) calc(l + 0.12) c h); }
-    }
-  }
 
   /* Label column — light-DOM styled tags. Both `display: block` so they stack in
      column 2; `min-width: 0` lets a consumer ellipsis either line. */
@@ -259,14 +216,12 @@
     margin-block-start: 2px;
   }
 
-  /* Tone drives the WHOLE control — label, hint, and the unselected box border,
-     not just the fill — label + hint via the theme-aware --text-N role tokens
-     (dark mode free), and the border follows the fill (set in the base). The hint
-     keeps its --text-4 muting (so --text-4-{tone}). `neutral` keeps the base
-     greys. The default (no [tone]) is untouched — the wrapper omits tone="neutral". */
+  /* `tone` drives only the MARK — the fill (checked box + glyph) and the unselected
+     box border (the border ramp is in the rule below; the base wires the fill). The
+     label + hint stay neutral unless `tone-text` recolours them (see the tone-text
+     rules further down). `neutral` keeps the base greys. The default (no [tone]) is
+     untouched — the wrapper omits tone="neutral". */
   a-checkbox[tone="brand"] {
-    --checkbox-label-color: var(--text-2-brand);
-    --checkbox-hint-color: var(--text-4-brand);
     --checkbox-fill: #5f4bc3;
     --checkbox-fill-hover: #503cb4;
     --checkbox-fill-active: #483493;
@@ -277,32 +232,49 @@
     --checkbox-fill-active: #49424c;
   }
   a-checkbox[tone="info"] {
-    --checkbox-label-color: var(--text-2-info);
-    --checkbox-hint-color: var(--text-4-info);
     --checkbox-fill: #1f6eb2;
     --checkbox-fill-hover: #1a5b93;
     --checkbox-fill-active: #175082;
   }
   a-checkbox[tone="success"] {
-    --checkbox-label-color: var(--text-2-success);
-    --checkbox-hint-color: var(--text-4-success);
     --checkbox-fill: #2a7e43;
     --checkbox-fill-hover: #226737;
     --checkbox-fill-active: #1f5c31;
   }
   a-checkbox[tone="warning"] {
-    --checkbox-label-color: var(--text-2-warning);
-    --checkbox-hint-color: var(--text-4-warning);
     --checkbox-fill: #c37416;
     --checkbox-fill-hover: #ae6613;
     --checkbox-fill-active: #995200;
   }
   a-checkbox[tone="critical"] {
-    --checkbox-label-color: var(--text-2-critical);
-    --checkbox-hint-color: var(--text-4-critical);
     --checkbox-fill: #c9302c;
     --checkbox-fill-hover: #b02120;
     --checkbox-fill-active: #a01c1c;
+  }
+
+  /* `tone-text` drives only the label + hint, via the theme-aware --text-N role
+     tokens (dark mode free); the hint keeps its --text-4 muting (so --text-4-{tone}).
+     Independent of `tone`: colour the mark, the text, or both. `neutral` keeps the
+     base greys — the wrapper omits tone-text="neutral". */
+  a-checkbox[tone-text="brand"] {
+    --checkbox-label-color: var(--text-2-brand);
+    --checkbox-hint-color: var(--text-4-brand);
+  }
+  a-checkbox[tone-text="info"] {
+    --checkbox-label-color: var(--text-2-info);
+    --checkbox-hint-color: var(--text-4-info);
+  }
+  a-checkbox[tone-text="success"] {
+    --checkbox-label-color: var(--text-2-success);
+    --checkbox-hint-color: var(--text-4-success);
+  }
+  a-checkbox[tone-text="warning"] {
+    --checkbox-label-color: var(--text-2-warning);
+    --checkbox-hint-color: var(--text-4-warning);
+  }
+  a-checkbox[tone-text="critical"] {
+    --checkbox-label-color: var(--text-2-critical);
+    --checkbox-hint-color: var(--text-4-critical);
   }
 
   /* Tinted tones only: the unselected box border picks up the tone and ramps like
@@ -325,11 +297,11 @@
     }
   }
 
-  /* Custom tone — any non-named tone is treated as a literal CSS color and the
-     fill curve is derived in oklch. Every named value must be listed in the
-     :not(): without it `info` / `success` / etc would also hit this rule and
-     attr(tone type(<color>)) would fail to parse them, rendering transparent.
-     The focus ring is the global --focus-ring across every tone. */
+  /* Custom mark tone — any non-named `tone` is a literal CSS color; the fill curve
+     is derived in oklch. Every named value must be listed in the :not(): without it
+     `info` / `success` / etc would also hit this rule and attr(tone type(<color>))
+     would fail to parse them, rendering transparent. The focus ring is the global
+     --focus-ring across every tone. */
   a-checkbox[tone]:not(
       [tone=""],
       [tone="brand"],
@@ -349,19 +321,35 @@
     --checkbox-fill-hover:  oklch(from var(--checkbox-tone-source) var(--_tone-l-hover) c h);
     --checkbox-fill-active: oklch(from var(--checkbox-tone-source) var(--_tone-l-active) c h);
 
-    /* Label / hint derived from the same colour (the border follows the fill via
-       the base). Lightness literals are tuning knobs. */
-    --checkbox-label-color: oklch(from var(--checkbox-tone-source) 0.5 c h);
-    --checkbox-hint-color:  oklch(from var(--checkbox-tone-source) 0.5 c h / 0.7);
-
-    /* Dark — same formulas, lighter text to read on a dark page. */
+    /* Dark — same formulas, brighter fill on a dark page. */
     .dark & {
       --_tone-l-rest: 0.45;
       --_tone-l-hover: 0.5;
       --_tone-l-active: 0.57;
+    }
+  }
 
-      --checkbox-label-color: oklch(from var(--checkbox-tone-source) 0.8 c h);
-      --checkbox-hint-color:  oklch(from var(--checkbox-tone-source) 0.8 c h / 0.7);
+  /* Custom text tone — any non-named `tone-text` is a literal CSS color; the label +
+     hint are derived from it in oklch (hint at 0.7 alpha). Named values listed in the
+     :not() as above. Independent of the mark tone. */
+  a-checkbox[tone-text]:not(
+      [tone-text=""],
+      [tone-text="brand"],
+      [tone-text="neutral"],
+      [tone-text="info"],
+      [tone-text="success"],
+      [tone-text="warning"],
+      [tone-text="critical"]
+    ) {
+    --checkbox-tone-text-source: attr(tone-text type(<color>), transparent);
+
+    --checkbox-label-color: oklch(from var(--checkbox-tone-text-source) 0.5 c h);
+    --checkbox-hint-color:  oklch(from var(--checkbox-tone-text-source) 0.5 c h / 0.7);
+
+    /* Dark — lighter text to read on a dark page. */
+    .dark & {
+      --checkbox-label-color: oklch(from var(--checkbox-tone-text-source) 0.8 c h);
+      --checkbox-hint-color:  oklch(from var(--checkbox-tone-text-source) 0.8 c h / 0.7);
     }
   }
 

@@ -69,7 +69,7 @@
     font-family: var(--sans-serif);
     font-size: var(--radio-label-fs);
     line-height: var(--radio-label-lh);
-    font-feature-settings: "ss02", "ss05";
+    font-feature-settings: "ss02", "ss05", "tnum";
 
     &::before {
       content: "";
@@ -199,66 +199,14 @@
     outline-offset: 1px;
   }
 
-  /* Secondary priority — outlined: the selected ring stays unfilled (keeps
-     --radio-bg) and the border + dot take the fill colour instead, so a selected
-     secondary radio reads as a tinted ring with a tinted dot rather than a solid
-     fill with a white dot. Border + dot follow the same rest/hover/active fill
-     curve. Disabled is left to the shared [disabled] rule (hence :not([disabled])).
-     Covers standalone radios and group-cascaded children (group sets priority; a
-     child without its own inherits it). Tracks light/dark via --radio-fill. */
-  a-radio[priority="secondary"],
-  a-radio-group[priority="secondary"] a-radio:not([priority]) {
-    &:not([disabled]):state(selected) {
-      &::before { background: var(--radio-bg); border-color: var(--radio-fill); }
-      &::after  { background: var(--radio-fill); }
-    }
-    @media (hover: hover) and (pointer: fine) {
-      &:not([disabled]):hover:state(selected) {
-        &::before { background: var(--radio-bg); border-color: var(--radio-fill-hover); }
-        &::after  { background: var(--radio-fill-hover); }
-      }
-    }
-    &:not([disabled]):active:state(selected) {
-      &::before { background: var(--radio-bg); border-color: var(--radio-fill-active); }
-      &::after  { background: var(--radio-fill-active); }
-    }
-  }
-
-  /* Dark: an outlined ring in the resting fill (the darkest shade in dark) barely
-     reads against the dark page, so anchor the secondary border + dot to the
-     brightest shade (--radio-fill-active) — keeping the selected look as legible in
-     dark as it is in light. Hover/active still respond (brightening further, the
-     dark-mode direction) so a selected secondary isn't inert. The rest rule's
-     :state(selected) also matches under hover/active and ties the light hover/active
-     rules on specificity, but the hover/active rules below (one class more) win. */
-  .dark a-radio[priority="secondary"],
-  .dark a-radio-group[priority="secondary"] a-radio:not([priority]) {
-    &:not([disabled]):state(selected) {
-      &::before { border-color: var(--radio-fill-active); }
-      &::after  { background: var(--radio-fill-active); }
-    }
-    @media (hover: hover) and (pointer: fine) {
-      &:not([disabled]):hover:state(selected) {
-        &::before { border-color: oklch(from var(--radio-fill-active) calc(l + 0.07) c h); }
-        &::after  { background: oklch(from var(--radio-fill-active) calc(l + 0.07) c h); }
-      }
-    }
-    &:not([disabled]):active:state(selected) {
-      &::before { border-color: oklch(from var(--radio-fill-active) calc(l + 0.12) c h); }
-      &::after  { background: oklch(from var(--radio-fill-active) calc(l + 0.12) c h); }
-    }
-  }
-
   /* Each tone is shared by a standalone <a-radio tone> and a group-cascaded child
-     (group sets the tone; a child without its own tone inherits it). Tone drives
-     the WHOLE control — label + hint via the theme-aware --text-N role tokens (so
-     dark mode comes for free), and the ring border follows the fill (set in the
-     base). `neutral` keeps the base greys. The default (no [tone]) is untouched:
-     the wrapper omits tone="neutral", so plain controls stay neutral. */
+     (group sets the tone; a child without its own tone inherits it). `tone` drives
+     only the MARK — the fill (selected ring + dot) and the ring border (border ramp
+     below; base wires the fill). Label + hint stay neutral unless `tone-text`
+     recolours them (rules after this). `neutral` keeps the base greys. The default
+     (no [tone]) is untouched: the wrapper omits tone="neutral". */
   a-radio[tone="brand"],
   a-radio-group[tone="brand"] a-radio:not([tone]) {
-    --radio-label-color: var(--text-2-brand);
-    --radio-hint-color: var(--text-3-brand);
     --radio-fill: #5f4bc3;
     --radio-fill-hover: #503cb4;
     --radio-fill-active: #483493;
@@ -271,35 +219,58 @@
   }
   a-radio[tone="info"],
   a-radio-group[tone="info"] a-radio:not([tone]) {
-    --radio-label-color: var(--text-2-info);
-    --radio-hint-color: var(--text-3-info);
     --radio-fill: #1f6eb2;
     --radio-fill-hover: #1a5b93;
     --radio-fill-active: #175082;
   }
   a-radio[tone="success"],
   a-radio-group[tone="success"] a-radio:not([tone]) {
-    --radio-label-color: var(--text-2-success);
-    --radio-hint-color: var(--text-3-success);
     --radio-fill: #2a7e43;
     --radio-fill-hover: #226737;
     --radio-fill-active: #1f5c31;
   }
   a-radio[tone="warning"],
   a-radio-group[tone="warning"] a-radio:not([tone]) {
-    --radio-label-color: var(--text-2-warning);
-    --radio-hint-color: var(--text-3-warning);
     --radio-fill: #c37416;
     --radio-fill-hover: #ae6613;
     --radio-fill-active: #995200;
   }
   a-radio[tone="critical"],
   a-radio-group[tone="critical"] a-radio:not([tone]) {
-    --radio-label-color: var(--text-2-critical);
-    --radio-hint-color: var(--text-3-critical);
     --radio-fill: #c9302c;
     --radio-fill-hover: #b02120;
     --radio-fill-active: #a01c1c;
+  }
+
+  /* `tone-text` drives only the label + hint, via the theme-aware --text-N role
+     tokens (dark mode free); the hint keeps its --text-3 muting. Shared by a
+     standalone <a-radio tone-text> and a group-cascaded child (group sets it; a
+     child without its own tone-text inherits it). Independent of `tone`: colour the
+     mark, the text, or both. `neutral` keeps the base greys — wrapper omits it. */
+  a-radio[tone-text="brand"],
+  a-radio-group[tone-text="brand"] a-radio:not([tone-text]) {
+    --radio-label-color: var(--text-2-brand);
+    --radio-hint-color: var(--text-3-brand);
+  }
+  a-radio[tone-text="info"],
+  a-radio-group[tone-text="info"] a-radio:not([tone-text]) {
+    --radio-label-color: var(--text-2-info);
+    --radio-hint-color: var(--text-3-info);
+  }
+  a-radio[tone-text="success"],
+  a-radio-group[tone-text="success"] a-radio:not([tone-text]) {
+    --radio-label-color: var(--text-2-success);
+    --radio-hint-color: var(--text-3-success);
+  }
+  a-radio[tone-text="warning"],
+  a-radio-group[tone-text="warning"] a-radio:not([tone-text]) {
+    --radio-label-color: var(--text-2-warning);
+    --radio-hint-color: var(--text-3-warning);
+  }
+  a-radio[tone-text="critical"],
+  a-radio-group[tone-text="critical"] a-radio:not([tone-text]) {
+    --radio-label-color: var(--text-2-critical);
+    --radio-hint-color: var(--text-3-critical);
   }
 
   /* Tinted tones only: the unselected ring border picks up the tone and ramps like
@@ -324,7 +295,7 @@
     }
   }
 
-  /* Custom tone — a non-named tone is a literal CSS color; the fill curve is
+  /* Custom mark tone — a non-named `tone` is a literal CSS color; the fill curve is
      derived in oklch. Every named value must be listed in the :not(), or
      attr(tone type(<color>)) would parse `info` / `success` / etc as colors and
      render transparent. A standalone radio reads its own attr(tone); a
@@ -349,19 +320,36 @@
     --radio-fill-hover:  oklch(from var(--radio-tone-source) var(--_tone-l-hover) c h);
     --radio-fill-active: oklch(from var(--radio-tone-source) var(--_tone-l-active) c h);
 
-    /* Label / hint derived from the same colour (the border follows the fill via
-       the base). Hint = label at 0.8 alpha. Lightness literals are tuning knobs. */
-    --radio-label-color:   oklch(from var(--radio-tone-source) 0.5 c h);
-    --radio-hint-color:    oklch(from var(--radio-tone-source) 0.5 c h / 0.8);
-
-    /* Dark — same formulas, lighter text to read on a dark page. */
+    /* Dark — same formulas, brighter fill on a dark page. */
     .dark & {
       --_tone-l-rest: 0.45;
       --_tone-l-hover: 0.5;
       --_tone-l-active: 0.57;
+    }
+  }
 
-      --radio-label-color:   oklch(from var(--radio-tone-source) 0.8 c h);
-      --radio-hint-color:    oklch(from var(--radio-tone-source) 0.8 c h / 0.8);
+  /* Custom text tone — a non-named `tone-text` is a literal CSS color; the label +
+     hint are derived from it in oklch (hint at 0.8 alpha). A standalone radio reads
+     its own attr(tone-text); a group-cascaded child inherits --radio-tone-text-source
+     from the group (the wrapper sets it inline). Independent of the mark tone. */
+  a-radio[tone-text]:not(
+      [tone-text=""], [tone-text="brand"], [tone-text="neutral"], [tone-text="info"],
+      [tone-text="success"], [tone-text="warning"], [tone-text="critical"]) {
+    --radio-tone-text-source: attr(tone-text type(<color>), transparent);
+  }
+  a-radio[tone-text]:not(
+      [tone-text=""], [tone-text="brand"], [tone-text="neutral"], [tone-text="info"],
+      [tone-text="success"], [tone-text="warning"], [tone-text="critical"]),
+  a-radio-group[tone-text]:not(
+      [tone-text=""], [tone-text="brand"], [tone-text="neutral"], [tone-text="info"],
+      [tone-text="success"], [tone-text="warning"], [tone-text="critical"]) a-radio:not([tone-text]) {
+    --radio-label-color:   oklch(from var(--radio-tone-text-source) 0.5 c h);
+    --radio-hint-color:    oklch(from var(--radio-tone-text-source) 0.5 c h / 0.8);
+
+    /* Dark — lighter text to read on a dark page. */
+    .dark & {
+      --radio-label-color:   oklch(from var(--radio-tone-text-source) 0.8 c h);
+      --radio-hint-color:    oklch(from var(--radio-tone-text-source) 0.8 c h / 0.8);
     }
   }
 

@@ -5,20 +5,29 @@
  * `window.__demo_modules__` on the iframe's window. The iframe is seeded
  * with that object on first load (see Playground's iframe wiring).
  *
- * Keep the surface small: only modules we expect playground code to need.
- * Unknown imports become compile errors with a friendly message — the
- * user sees "Module '…' is not available in the demo sandbox" instead
- * of a cryptic bundler failure.
+ * The `@antadesign/anta` barrel is exposed *whole* — every runtime export is
+ * available in playground code automatically, so any component (current or
+ * future) can be imported or passed as children without a hand-maintained
+ * allow-list to keep in sync. Other module paths stay curated. Unknown imports
+ * become compile errors with a friendly message — the user sees "Module '…' is
+ * not available in the demo sandbox" instead of a cryptic bundler failure.
  */
 import * as anta from '@antadesign/anta'
 import * as preact from 'preact'
 import * as preactHooks from 'preact/hooks'
 
+/** Every runtime export of the anta barrel, filtered to valid JS identifiers so
+ *  each name can be emitted as `export const <name>` in the bundler shim (drops
+ *  `default` and any Symbol/toStringTag noise on the namespace object). */
+const antaExportNames = Object.keys(anta).filter(
+  (k) => k !== 'default' && /^[A-Za-z_$][\w$]*$/.test(k),
+)
+
 /** The named exports the bundler will expose for each module path. The
  *  resolve plugin uses these names to emit a deterministic shim per
  *  module. Each name must exist on `getDemoModules()[path]` at runtime. */
 export const moduleManifest: Record<string, string[]> = {
-  '@antadesign/anta': ['Progress', 'Text', 'Title', 'Tag', 'Expander', 'Icon', 'Button', 'Tooltip', 'Input', 'Calendar', 'Checkbox', 'RadioGroup', 'Menu', 'MenuItem', 'MenuSeparator', 'MenuGroup', 'Tabs', 'Tab', 'TabPanel', 'configure'],
+  '@antadesign/anta': antaExportNames,
   '@antadesign/anta/elements': [],  // side-effect only
   'preact': ['createElement', 'Fragment', 'h', 'render'],
   'preact/hooks': ['useState', 'useEffect', 'useRef', 'useMemo', 'useCallback', 'useReducer'],
@@ -28,28 +37,10 @@ export const moduleManifest: Record<string, string[]> = {
  *  with. Called once per Playground mount. */
 export function getDemoModules(): Record<string, Record<string, unknown>> {
   return {
-    '@antadesign/anta': {
-      Progress: (anta as any).Progress,
-      Text: (anta as any).Text,
-      Title: (anta as any).Title,
-      Tag: (anta as any).Tag,
-      Expander: (anta as any).Expander,
-      Icon: (anta as any).Icon,
-      Button: (anta as any).Button,
-      Tooltip: (anta as any).Tooltip,
-      Input: (anta as any).Input,
-      Calendar: (anta as any).Calendar,
-      Checkbox: (anta as any).Checkbox,
-      RadioGroup: (anta as any).RadioGroup,
-      Menu: (anta as any).Menu,
-      MenuItem: (anta as any).MenuItem,
-      MenuSeparator: (anta as any).MenuSeparator,
-      MenuGroup: (anta as any).MenuGroup,
-      Tabs: (anta as any).Tabs,
-      Tab: (anta as any).Tab,
-      TabPanel: (anta as any).TabPanel,
-      configure: (anta as any).configure,
-    },
+    // Spread the whole barrel — mirrors `moduleManifest['@antadesign/anta']`.
+    '@antadesign/anta': Object.fromEntries(
+      antaExportNames.map((k) => [k, (anta as any)[k]]),
+    ),
     '@antadesign/anta/elements': {},
     'preact': {
       createElement: preact.createElement,

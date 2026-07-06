@@ -207,12 +207,25 @@
   .dark a-checkbox[size="large"] { --checkbox-mask-size: 15px; }
 
   /* Label column — light-DOM styled tags. Both `display: block` so they stack in
-     column 2; `min-width: 0` lets a consumer ellipsis either line. */
+     column 2; `min-width: 0` lets a consumer ellipsis either line. Label gets
+     margin-top compensation so text aligns with checkbox box (not centered in
+     full grid cell). Compensation = (line-height - box-size) / 2, applied only
+     when checkbox aligns to start (default). */
   a-checkbox-label,
   a-checkbox-hint {
     display: block;
     grid-column: 2;
     min-width: 0;
+  }
+
+  /* Align label text with checkbox box top (default start alignment) */
+  a-checkbox-label {
+    margin-top: calc((var(--checkbox-label-lh) - 16px) / 2);
+  }
+
+  /* Remove compensation when checkbox is center-aligned */
+  a-checkbox[style*="--checkbox-align-items: center"] a-checkbox-label {
+    margin-top: 0;
   }
   a-checkbox-hint {
     color: var(--checkbox-hint-color);

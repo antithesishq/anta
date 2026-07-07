@@ -220,8 +220,8 @@
      differ only in the OFF state: `tone` also tints the unselected box border (the
      ramp rule below, keyed to [tone]); `tone-selected` leaves that border neutral, so
      the tone shows only once the box is checked. The label + hint are never toned —
-     recolour them in plain CSS via the theme-aware --text-N-{tone} tokens (e.g.
-     `color: var(--text-2-critical); --checkbox-hint-color: var(--text-4-critical)`).
+     recolour them in plain CSS via the theme-aware --text-N-{tone} tokens (a `color`
+     rule on the host for the label, on a-checkbox-hint for the hint).
      `neutral` keeps the base greys; the default (no attribute) is untouched — the
      wrapper omits the neutral value. */
   a-checkbox[tone="brand"],

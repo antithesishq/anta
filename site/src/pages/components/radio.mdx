@@ -161,9 +161,8 @@ neutral grey. Reach for it instead of `tone` when a resting tinted border would 
 as a validation error. Same tone set; set it on the group, or on a single option to
 override one.
 
-To colour the **label and hint**, there's no prop — set the `--radio-label-color` and
-`--radio-hint-color` tokens (they cascade to every option) to a `--text-N-{tone}`
-value.
+To colour the **label and hint**, there's no prop — add a `color` rule on the
+option's `a-radio-label` / `a-radio-hint` with a `--text-N-{tone}` value.
 
 </Col>
 </Columns>
@@ -451,9 +450,9 @@ element — `Input`, and the composed `Select` — skip it and expose only
 Reach for the props first: **`tone`** colours the mark in every state,
 **`toneSelected`** only the selected option (any CSS colour for a custom tone, set on
 the group or a single option — derives the full curve in oklch), **`size`** the
-dimensions + type. To tint the label + hint, set the `--radio-label-color` /
-`--radio-hint-color` tokens with the `--text-N-{tone}` values — there's no text-tone
-prop. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).
+dimensions + type. To tint the label + hint, add a `color` rule on the option's
+`a-radio-label` / `a-radio-hint` with the `--text-N-{tone}` values — there's no
+text-tone prop. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).
 
 ```tsx folded
 <RadioGroup tone="#e0457b" defaultValue="a" options={[{ value: 'a', label: 'A' }]} />

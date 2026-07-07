@@ -75,25 +75,25 @@ read as a validation error. Same value set as `tone`.
 
 ## Colouring the text
 
-There's no text-tone prop. To tint the **label and hint**, set `color` on the
-checkbox with a theme-aware `--text-N-{tone}` token (and `--checkbox-hint-color` for
-the hint). Setting `color` alone tints the label; pair it with `tone` /
-`toneSelected` to tint the whole control.
+There's no text-tone prop. To tint the **label**, set `color` on the checkbox with a
+theme-aware `--text-N-{tone}` token (the label inherits it); for the **hint**, add a
+`color` rule on the `a-checkbox-hint` child. Pair either with `tone` / `toneSelected`
+to tint the whole control.
 
 <Preview gap="16px">
   <Checkbox className="toned-text" defaultChecked tone="critical" hint="Deletes everything">Critical</Checkbox>
   <style is:inline>{`
-    a-checkbox.toned-text { color: var(--text-1-critical); --checkbox-hint-color: var(--text-4-critical); }
+    a-checkbox.toned-text { color: var(--text-1-critical); }
+    a-checkbox.toned-text a-checkbox-hint { color: var(--text-4-critical); }
   `}</style>
 </Preview>
 
 ```css folded
-/* Mark via the prop, text via the role tokens. The class is just for the demo —
-   swap your own selector. */
-a-checkbox.toned-text {
-  color: var(--text-1-critical);
-  --checkbox-hint-color: var(--text-4-critical);
-}
+/* Mark via the prop, text via a plain color rule — the label inherits the host
+   colour, the hint is targeted directly. The class is just for the demo — swap
+   your own selector. */
+a-checkbox.toned-text { color: var(--text-1-critical); }
+a-checkbox.toned-text a-checkbox-hint { color: var(--text-4-critical); }
 ```
 
 ## Size
@@ -255,8 +255,9 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 Reach for the props first: **`tone`** colours the mark in every state,
 **`toneSelected`** only the checked mark (any CSS colour for a custom tone — it
 derives the full rest/hover/active curve in oklch), **`size`** the dimensions + type.
-To tint the label + hint, set `color` (and `--checkbox-hint-color`) with the
-`--text-N-{tone}` tokens — there's no text-tone prop. The focus ring is the global
+To tint the label + hint, add a `color` rule (on the host for the label, on
+`a-checkbox-hint` for the hint) with the `--text-N-{tone}` tokens — there's no
+text-tone prop. The focus ring is the global
 [`--focus-ring`](/colors/#focus-ring).
 
 ```tsx folded

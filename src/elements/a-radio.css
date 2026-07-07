@@ -205,8 +205,8 @@
      the OFF state — `tone` also tints the unselected ring border (the ramp rule below,
      keyed [tone]), `tone-selected` leaves it neutral so the tone shows only once
      selected. Label + hint are never toned — recolour them in plain CSS via the
-     theme-aware --text-N-{tone} tokens (e.g. `color: var(--text-2-critical);
-     --radio-hint-color: var(--text-3-critical)`). `neutral` keeps the base greys; the
+     theme-aware --text-N-{tone} tokens (a `color` rule on a-radio-label /
+     a-radio-hint). `neutral` keeps the base greys; the
      default (no attribute) is untouched — the wrapper omits the neutral value. */
   a-radio[tone="brand"],
   a-radio[tone-selected="brand"],

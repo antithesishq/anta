@@ -162,7 +162,7 @@ const SHADOW_STYLE = `
   :host([multiline]) .field { align-items: stretch; }
   :host([status]) .field { --_bw: 1px; }
   :host([size="small"]) { --_fs: 13px; --_lh: 16px; }
-  :host([size="large"]) { --_fs: 17px; --_lh: 24px; }
+  :host([size="large"]) { --_fs: 17px; --_lh: 22px; }
   :host([size="small"]) .field { min-height: 24px; }
   :host([size="large"]) .field { min-height: 32px; }
   :host([size="small"]) input,

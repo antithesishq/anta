@@ -78,10 +78,9 @@ function unbindDocListeners() {
 
 /** Fire `onEscape` once `el` has moved so that less than ANCHOR_VISIBLE_RATIO of
  *  it still overlaps the rect it occupied at setup. An IntersectionObserver whose
- *  viewport root is shrunk (via negative rootMargin) to el's current rect; el
- *  sliding past the threshold drops `isIntersecting`. Read-only (no DOM
- *  mutation). Returns a disconnect fn. (Ported from the prior menu's
- *  browser_utils.trackPosition.) */
+ *  root is shrunk (via negative rootMargin) to el's current rect; el sliding past
+ *  the threshold drops `isIntersecting`. Read-only (no DOM mutation). Returns a
+ *  disconnect fn. (Ported from the prior menu's browser_utils.trackPosition.) */
 function trackPosition(el: HTMLElement, onEscape: () => void): () => void {
   if (typeof IntersectionObserver === 'undefined') return () => {}
   const doc = el.ownerDocument
@@ -101,7 +100,13 @@ function trackPosition(el: HTMLElement, onEscape: () => void): () => void {
     ([entry]) => {
       if (!entry.isIntersecting) onEscape()
     },
-    { root: null, rootMargin, threshold: ANCHOR_VISIBLE_RATIO },
+    // Root is the anchor's own `documentElement`, not `null`. At top level that's
+    // equivalent to the viewport, but inside an iframe a `null` root resolves
+    // against the TOP-LEVEL viewport — the iframe-relative `rootMargin` then
+    // windows the wrong region and the observer reports the at-rest anchor as
+    // out-of-view, dismissing the menu a frame after it opens. `documentElement`
+    // keeps the measurement iframe-local.
+    { root: doc.documentElement, rootMargin, threshold: ANCHOR_VISIBLE_RATIO },
   )
   io.observe(el)
   return () => io.disconnect()

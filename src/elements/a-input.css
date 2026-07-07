@@ -87,6 +87,9 @@
   }
 
   a-input:disabled {
+    --input-bg: #e4d1ef0d;
+    --input-border: #e4d1ef26;
+    --input-border-hover: #e4d1ef26;
     --input-text: var(--text-4);
     --input-label: var(--text-4);
     --input-hint: var(--text-5);

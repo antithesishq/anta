@@ -31,6 +31,17 @@
     justify-content: center;
     white-space: nowrap;
   }
+  /* Active-year marker in the jump menu: a small dot before the year row's
+     submenu chevron, flagging the year whose month flyout holds the current view
+     (the row tint marks it too; the check lives on the active month inside).
+     currentColor tracks the row's text tone. The row's 0.6ch flex gap spaces it. */
+  .anta-calendar .year-dot {
+    flex: none;
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 999px;
+    background: currentColor;
+  }
 
   /* Size — scales the cell box; the day cells + chevrons take the matching Button
      size via the `size` prop, so their text/icons scale too. Cell heights track

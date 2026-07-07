@@ -116,27 +116,67 @@ export const Calendar = ({
   )
   // Focus signal handed to the element after a keyboard move ("<iso>#<nonce>").
   const [focusReq, setFocusReq] = useState<{ iso: string; n: number } | null>(null)
+  // The year/month jump menu is controlled so a month pick closes *only* it, not
+  // an ancestor popover it may be nested in (e.g. inside `InputDate`'s menu). A
+  // month row also carries `data-menu-open`, so activating it never triggers the
+  // shared open-stack's closeSystem — we dismiss the jump menu here instead.
+  const [jumpOpen, setJumpOpen] = useState(false)
 
   const headingId = useId()
   const month = buildMonth({ anchor: cursor, locale: resolvedLocale, min: minD, max: maxD, selected, today })
   const cursorIso = cursor.toString()
 
-  // Years for the heading menu — spanning min..max (defaulting to ±100 years
-  // around today when unbounded). Listed in full, no virtual scroll.
-  const minYear = minD ? minD.year : today.year - 100
-  const maxYear = maxD ? maxD.year : today.year + 100
+  // Years for the heading menu — spanning min..max, defaulting to today ±3 years
+  // when unbounded (a short list that fits without scrolling; a bound `min`/`max`
+  // widens or narrows it). Each year is a submenu of its twelve months.
+  const minYear = minD ? minD.year : today.year - 3
+  const maxYear = maxD ? maxD.year : today.year + 3
   const years: number[] = []
   for (let y = minYear; y <= maxYear; y++) years.push(y)
+
+  // Localized month names (year-independent — any year serves). "long" full names
+  // for the flyout rows.
+  const monthNames = Array.from({ length: 12 }, (_, i) =>
+    Temporal.PlainDate.from({ year: 2000, month: i + 1, day: 1 }).toLocaleString(resolvedLocale, {
+      month: "long",
+    }),
+  )
+  // A month is unreachable when it lies entirely before `min` or after `max`
+  // (partial months keep some selectable days, so they stay enabled).
+  const monthOutOfRange = (y: number, m: number) =>
+    (minD != null && (y < minD.year || (y === minD.year && m < minD.month))) ||
+    (maxD != null && (y > maxD.year || (y === maxD.year && m > maxD.month)))
 
   // Month switcher — chevrons keep focus (mouse), so no focus signal.
   const moveCursorByMonth = (delta: number) => {
     if (disabled) return
     setCursor((c) => clampDate(c.add({ months: delta }), minD, maxD))
   }
-  // Year picked from the heading menu — keep the month/day, change the year.
-  const pickYear = (y: number) => {
+  // Month picked from the heading flyout — jump the view to that year + month,
+  // keeping the day (clamped). Navigation only; it doesn't change the selection.
+  const pickMonth = (y: number, m: number) => {
     if (disabled) return
-    setCursor((c) => clampDate(c.with({ year: y }), minD, maxD))
+    setCursor((c) => clampDate(c.with({ year: y, month: m }), minD, maxD))
+  }
+  // One month row in the jump menu (`i` is 0-based). Highlights the shown month
+  // (tint + check) and disables months outside `min`…`max`. Shared by the flat
+  // single-year list and each year's submenu.
+  const monthItem = (y: number, i: number) => {
+    const m = i + 1
+    return (
+      <MenuItem
+        key={`${y}-${m}`}
+        label={monthNames[i]}
+        selectionIndicator="check"
+        selected={y === cursor.year && m === cursor.month}
+        disabled={monthOutOfRange(y, m) || undefined}
+        data-menu-open=""
+        onSelect={() => {
+          pickMonth(y, m)
+          setJumpOpen(false)
+        }}
+      />
+    )
   }
 
   // The `<a-calendar>` element is the interaction authority: it dispatches
@@ -204,21 +244,29 @@ export const Calendar = ({
           priority="tertiary"
           size={size}
           aria-live="polite"
-          aria-label={`${month.heading} — choose year`}
-          disabled={disabled}
+          aria-label={`${month.heading} — choose month and year`}
+          // Nothing to jump to when both arrows are dead — that means the whole
+          // `min`…`max` range sits inside the shown month, so the jump menu would
+          // offer one year with a single enabled month. Disable the trigger too.
+          disabled={disabled || (prevDisabled && nextDisabled)}
         >
           {month.heading}
         </Button>
-        <Menu placement="bottom">
-          {years.map((y) => (
-            <MenuItem
-              key={y}
-              value={y}
-              label={String(y)}
-              iconTrailing={y === cursor.year ? "check" : undefined}
-              onSelect={() => pickYear(y)}
-            />
-          ))}
+        {/* Jump menu: pick a year (a submenu of its months), then a month — the
+            view leaps there. The shown year/month is highlighted so you can see
+            where you're jumping from: the active year keeps a tint + a trailing
+            dot (its month flyout holds the check), the active month a tint + check. */}
+        <Menu placement="bottom" open={jumpOpen} onStateChange={(_e, { next }) => setJumpOpen(next)}>
+          {years.length === 1
+            ? // A single reachable year: skip the year level entirely and list its
+              // months right away (no point drilling through one year).
+              monthNames.map((_, i) => monthItem(years[0], i))
+            : years.map((y) => (
+                <MenuItem key={y} submenu label={String(y)} selected={y === cursor.year}>
+                  {y === cursor.year && <span className="year-dot" aria-hidden="true" />}
+                  <Menu>{monthNames.map((_, i) => monthItem(y, i))}</Menu>
+                </MenuItem>
+              ))}
         </Menu>
         <Button
           priority="tertiary"

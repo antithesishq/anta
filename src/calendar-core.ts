@@ -199,3 +199,165 @@ export function buildMonth(opts: BuildMonthOptions): CalendarMonth {
     weeks: grid,
   }
 }
+
+/* --- Free-text date input: pattern, display, and lenient parse ---
+   These back `<InputDate>`, whose field accepts arbitrary text and only
+   resolves it on blur. All three read the locale's numeric date format via
+   `Intl`, forced to latin digits so the round-trip (parse → format) stays
+   deterministic across numbering systems. */
+
+// A fixed reference date whose fields are all unambiguous by position (month
+// 06, day 15, year 2026). UTC so the formatter never shifts it a day.
+const FMT_SAMPLE = new Date(Date.UTC(2026, 5, 15))
+const NUMERIC_DATE: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: 'UTC',
+  numberingSystem: 'latn',
+}
+
+/** The locale's numeric date order as `Intl` part types, e.g. `['month','day','year']`
+ *  (en-US) or `['day','month','year']` (de-DE). Falls back to ISO order. */
+function fieldOrder(locale: string): ('year' | 'month' | 'day')[] {
+  try {
+    return new Intl.DateTimeFormat(locale, NUMERIC_DATE)
+      .formatToParts(FMT_SAMPLE)
+      .filter((p) => p.type === 'year' || p.type === 'month' || p.type === 'day')
+      .map((p) => p.type as 'year' | 'month' | 'day')
+  } catch {
+    return ['year', 'month', 'day']
+  }
+}
+
+/** The placeholder mask for a locale: `MM/DD/YYYY` (en-US), `DD.MM.YYYY` (de-DE),
+ *  `YYYY/MM/DD` (ja-JP). Built from the locale's own separators and field order. */
+export function dateFormatPattern(locale: string): string {
+  try {
+    return new Intl.DateTimeFormat(locale, NUMERIC_DATE)
+      .formatToParts(FMT_SAMPLE)
+      .map((p) =>
+        p.type === 'year' ? 'YYYY' : p.type === 'month' ? 'MM' : p.type === 'day' ? 'DD' : p.value,
+      )
+      .join('')
+  } catch {
+    return 'YYYY-MM-DD'
+  }
+}
+
+/** A date in the locale's canonical numeric form (2-digit month/day, 4-digit year,
+ *  latin digits) — what the field shows once a typed or picked date resolves. */
+export function formatDateInput(date: Temporal.PlainDate, locale: string): string {
+  const d = new Date(Date.UTC(date.year, date.month - 1, date.day))
+  return new Intl.DateTimeFormat(locale, NUMERIC_DATE).format(d)
+}
+
+/** The month number (1–12) an alpha token names in `locale` (long or short form,
+ *  case-insensitive), or `null`. Also matches a 3+ char prefix ("sept" → 9). */
+function matchMonthName(text: string, locale: string): number | null {
+  const alpha = text.toLowerCase().match(/[^\d\s.,/-]+/g)
+  if (!alpha) return null
+  const long = new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' })
+  const short = new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' })
+  for (let mo = 1; mo <= 12; mo++) {
+    const d = new Date(Date.UTC(2020, mo - 1, 1))
+    const l = long.format(d).toLowerCase()
+    const s = short.format(d).toLowerCase().replace(/\.$/, '')
+    if (alpha.some((a) => a === l || a === s || (a.length >= 3 && l.startsWith(a)))) return mo
+  }
+  return null
+}
+
+/** Options for {@link parseDateInput}. */
+export interface ParseDateOptions {
+  /** Earliest acceptable date; earlier input resolves to `null`. */
+  min?: Temporal.PlainDate | null
+  /** Latest acceptable date; later input resolves to `null`. */
+  max?: Temporal.PlainDate | null
+}
+
+/**
+ * Recognize a date from free-form text, or return `null` when it can't. Lenient
+ * by design (the field lets you type anything, then resolves on blur):
+ *
+ * - ISO `YYYY-MM-DD`.
+ * - Numbers in any separator, mapped to day/month/year by the locale's order —
+ *   `06/07/2026` is June 7 in en-US, July 6 in de-DE.
+ * - A month name plus a day and year (`15 Jun 2026`, `June 15 2026`).
+ * - Eight run-together digits, split by the locale order (`06152026` en-US).
+ * - Two numbers (day + month) take the current year; two-digit years pivot at 70.
+ *
+ * A real but out-of-`[min, max]` date returns `null` — the value stays uncommitted.
+ */
+export function parseDateInput(
+  text: string,
+  locale: string,
+  opts: ParseDateOptions = {},
+): Temporal.PlainDate | null {
+  const accept = (d: Temporal.PlainDate) =>
+    isOutOfRange(d, opts.min ?? null, opts.max ?? null) ? null : d
+
+  const s = (text ?? '').trim()
+  if (!s) return null
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const iso = parseISODate(s)
+    return iso ? accept(iso) : null
+  }
+
+  const order = fieldOrder(locale)
+  const month = matchMonthName(s, locale)
+  const nums = (s.match(/\d+/g) ?? []).map(Number)
+
+  let y: number | undefined
+  let m: number | undefined
+  let d: number | undefined
+
+  if (month != null) {
+    m = month
+    if (nums.length === 1) {
+      d = nums[0]
+      y = Temporal.Now.plainDateISO().year
+    } else if (nums.length >= 2) {
+      // The 4-digit / >31 number is the year; the other is the day.
+      const [a, b] = nums
+      if (a > 31) [y, d] = [a, b]
+      else if (b > 31) [y, d] = [b, a]
+      else [d, y] = [a, b]
+    } else return null
+  } else if (nums.length === 1) {
+    const digits = s.replace(/\D/g, '')
+    if (digits.length !== 8) return null
+    // Split eight digits by the locale field order (year 4 wide, the rest 2).
+    let i = 0
+    const seg: Record<string, number> = {}
+    for (const f of order) {
+      const w = f === 'year' ? 4 : 2
+      seg[f] = Number(digits.slice(i, i + w))
+      i += w
+    }
+    ;({ year: y, month: m, day: d } = seg as { year: number; month: number; day: number })
+  } else if (nums.length === 2) {
+    // Day + month in locale order (year dropped), current year.
+    const dm = order.filter((f) => f !== 'year')
+    const seg: Record<string, number> = {}
+    dm.forEach((f, i) => (seg[f] = nums[i]))
+    m = seg.month
+    d = seg.day
+    y = Temporal.Now.plainDateISO().year
+  } else if (nums.length >= 3) {
+    const seg: Record<string, number> = {}
+    order.forEach((f, i) => (seg[f] = nums[i]))
+    y = seg.year
+    m = seg.month
+    d = seg.day
+  } else return null
+
+  if (y != null && y < 100) y = y < 70 ? 2000 + y : 1900 + y
+
+  try {
+    return accept(Temporal.PlainDate.from({ year: y!, month: m!, day: d! }, { overflow: 'reject' }))
+  } catch {
+    return null
+  }
+}

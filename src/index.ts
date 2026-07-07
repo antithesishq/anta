@@ -53,6 +53,8 @@ export { Input } from './components/Input'
 export type { InputProps, InputChangeAttrs } from './components/Input'
 export { Calendar } from './components/Calendar'
 export type { CalendarProps, CalendarChangeAttrs } from './components/Calendar'
+export { InputDate } from './components/InputDate'
+export type { InputDateProps, InputDateChangeAttrs } from './components/InputDate'
 export {
   buildMonth,
   getWeekdays,
@@ -60,12 +62,16 @@ export {
   clampDate,
   isOutOfRange,
   parseISODate,
+  parseDateInput,
+  formatDateInput,
+  dateFormatPattern,
 } from './calendar-core'
 export type {
   CalendarDay,
   CalendarWeekday,
   CalendarMonth,
   BuildMonthOptions,
+  ParseDateOptions,
 } from './calendar-core'
 export { RadioGroup } from './components/RadioGroup'
 export type { RadioGroupProps, RadioOption } from './components/RadioGroup'

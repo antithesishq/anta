@@ -56,44 +56,66 @@
      `[status]` host attribute; only `critical` also drives validity. The border
      stops reacting to hover (hover == border, so pin it to the status color). */
   a-input[status="critical"] {
-    --input-border: var(--border-1-critical);
-    --input-border-hover: var(--border-1-critical);
+    --input-border: #de4545;
+    --input-border-hover: #de4545;
     --input-hint: var(--text-2-critical);
   }
   a-input[status="warning"] {
-    --input-border: var(--border-1-warning);
-    --input-border-hover: var(--border-1-warning);
+    --input-border: #ae6613;
+    --input-border-hover: #ae6613;
     --input-hint: var(--text-2-warning);
   }
   a-input[status="success"] {
-    /* --border-1-success reads a touch hot in light mode (green is the brightest
-       hue at a given step), so deepen it toward the success text tone in oklch —
-       same hue, lower brightness — to sit alongside the critical/warning borders.
-       Dialing knob: raise the second percentage to deepen further. Dark mode
-       (below) keeps the muted role token as-is. */
-    --input-border: color-mix(in oklch, var(--border-1-success) 72%, var(--text-2-success));
-    --input-border-hover: color-mix(in oklch, var(--border-1-success) 72%, var(--text-2-success));
+    --input-border: #329550;
+    --input-border-hover: #329550;
     --input-hint: var(--text-2-success);
   }
   a-input[status="info"] {
-    --input-border: var(--border-1-info);
-    --input-border-hover: var(--border-1-info);
+    --input-border: #2686d9;
+    --input-border-hover: #2686d9;
     --input-hint: var(--text-2-info);
   }
   a-input[status="brand"] {
-    --input-border: var(--border-1-brand);
-    --input-border-hover: var(--border-1-brand);
+    --input-border: #7460d7;
+    --input-border-hover: #7460d7;
     --input-hint: var(--text-2-brand);
   }
 
+  .dark a-input[status="critical"] {
+    --input-border: #c9302c;
+    --input-border-hover: #c9302c;
+  }
+  .dark a-input[status="warning"] {
+    --input-border: #995200;
+    --input-border-hover: #995200;
+  }
+  .dark a-input[status="success"] {
+    --input-border: #2a7e43;
+    --input-border-hover: #2a7e43;
+  }
+  .dark a-input[status="info"] {
+    --input-border: #1f6eb2;
+    --input-border-hover: #1f6eb2;
+  }
+  .dark a-input[status="brand"] {
+    --input-border: #5f4bc3;
+    --input-border-hover: #5f4bc3;
+  }
+
   a-input:disabled {
-    --input-bg: #e4d1ef0d;
-    --input-border: #e4d1ef26;
-    --input-border-hover: #e4d1ef26;
+    --input-bg: #44374b12;
+    --input-border: #44374b26;
+    --input-border-hover: #44374b26;
     --input-text: var(--text-4);
     --input-label: var(--text-4);
     --input-hint: var(--text-5);
     cursor: not-allowed;
+  }
+
+  .dark a-input:disabled {
+    --input-bg: #e4d1ef0d;
+    --input-border: #e4d1ef26;
+    --input-border-hover: #e4d1ef26;
   }
 
   /* Icon size tracks the field size — small 14 / medium 16 (the a-icon default)

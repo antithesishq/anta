@@ -127,10 +127,24 @@
     cursor: not-allowed;
   }
 
+  a-input[status]:disabled {
+    --input-bg: #44374b12;
+    --input-border: #44374b26;
+    --input-border-hover: #44374b26;
+    --input-hint: var(--text-5);
+  }
+
   .dark a-input:disabled {
     --input-bg: #e4d1ef0d;
     --input-border: #e4d1ef1f;
     --input-border-hover: #e4d1ef1f;
+  }
+
+  .dark a-input[status]:disabled {
+    --input-bg: #e4d1ef0d;
+    --input-border: #e4d1ef1f;
+    --input-border-hover: #e4d1ef1f;
+    --input-hint: var(--text-5);
   }
 
   /* Icon size tracks the field size — small 14 / medium 16 (the a-icon default)

@@ -153,9 +153,8 @@
      would show only on hover. Status borders use tone role tokens, which carry
      their own dark variants, so they need no dark override here. */
   .dark a-input:not([status]) {
-    /* Dimmer than the light default (--border-2 reads too bright on the dark
-       surface); hover still lifts to --border-1. */
-    --input-border: var(--border-3);
+    --input-border: #3f3941;
+    --input-border-hover: #534c57;
   }
   /* The success border's light-mode deepening would read muddy against the dark
      surface — fall back to the muted dark role token there. */

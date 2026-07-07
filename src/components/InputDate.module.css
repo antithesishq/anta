@@ -1,0 +1,32 @@
+/* The time row under the calendar in an `<InputDate time>` menu: the two
+   hour/minute fields on the left, the Done button on the right. */
+.timeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-3);
+}
+
+/* Hour : minute, snug together. */
+.time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sep {
+  color: var(--text-3);
+  user-select: none;
+}
+
+/* Two digits, centered, tabular so the pair doesn't jitter as it changes. */
+.timeField {
+  width: 3.25rem;
+}
+.timeField::part(input) {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

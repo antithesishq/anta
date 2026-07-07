@@ -361,3 +361,84 @@ export function parseDateInput(
     return null
   }
 }
+
+/* --- Time and date-time input (for `<InputDate time>`) --- */
+
+/** Recognize a wall-clock time from free-form text, or `null`. Accepts `14:30`,
+ *  `9:5`, `230` / `1430` (run-together), and a 12-hour form with a meridiem
+ *  (`2:30 pm`, `12am`), normalized to 24-hour. Minutes only (no seconds). */
+export function parseTimeInput(text: string): Temporal.PlainTime | null {
+  let s = (text ?? '').trim().toLowerCase()
+  if (!s) return null
+  let meridiem: 'am' | 'pm' | null = null
+  const mer = s.match(/([ap])\.?m?\.?$/)
+  if (mer) {
+    meridiem = mer[1] === 'p' ? 'pm' : 'am'
+    s = s.slice(0, mer.index).trim()
+  }
+  let h: number
+  let min: number
+  if (/[:.]/.test(s)) {
+    const [hp, mp] = s.split(/[:.]/)
+    h = Number(hp)
+    min = Number(mp ?? '0')
+  } else {
+    const digits = s.replace(/\D/g, '')
+    if (!digits) return null
+    if (digits.length <= 2) {
+      h = Number(digits)
+      min = 0
+    } else {
+      // 3 digits → H:MM, 4 → HH:MM.
+      const cut = digits.length - 2
+      h = Number(digits.slice(0, cut))
+      min = Number(digits.slice(cut))
+    }
+  }
+  if (meridiem === 'pm' && h < 12) h += 12
+  if (meridiem === 'am' && h === 12) h = 0
+  try {
+    return Temporal.PlainTime.from({ hour: h, minute: min }, { overflow: 'reject' })
+  } catch {
+    return null
+  }
+}
+
+/** Recognize a date-time from free-form text, or `null`. Peels a trailing time
+ *  token that follows whitespace (`06/15/2026 14:30`, `June 15 2026 2:30pm`),
+ *  parsing the rest as the date via {@link parseDateInput}; with no time token the
+ *  time defaults to midnight. `min` / `max` bound the date (day-level). */
+export function parseDateTimeInput(
+  text: string,
+  locale: string,
+  opts: ParseDateOptions = {},
+): Temporal.PlainDateTime | null {
+  const s = (text ?? '').trim()
+  if (!s) return null
+  // The time must follow a space so date separators (de-DE's `15.06.2026`) aren't
+  // mistaken for a time. Match `HH:mm`/`HH.mm` (optional meridiem) or a bare
+  // meridiem hour (`3pm`).
+  const tm = s.match(/\s+(\d{1,2}[:.]\d{1,2}(?:\s*[ap]\.?m?\.?)?|\d{1,2}\s*[ap]\.?m\.?)\s*$/i)
+  let dateStr = s
+  let time: Temporal.PlainTime | null = null
+  if (tm) {
+    time = parseTimeInput(tm[1])
+    if (time) dateStr = s.slice(0, tm.index).trim()
+  }
+  const date = parseDateInput(dateStr, locale, opts)
+  if (!date) return null
+  return date.toPlainDateTime(time ?? Temporal.PlainTime.from('00:00'))
+}
+
+/** A date-time in the canonical display form: the locale's date plus a 24-hour
+ *  `HH:mm` (`06/15/2026 14:30`). */
+export function formatDateTimeInput(dt: Temporal.PlainDateTime, locale: string): string {
+  const hh = String(dt.hour).padStart(2, '0')
+  const mm = String(dt.minute).padStart(2, '0')
+  return `${formatDateInput(dt.toPlainDate(), locale)} ${hh}:${mm}`
+}
+
+/** The placeholder mask for a date-time field: the date mask plus ` HH:MM`. */
+export function dateTimeFormatPattern(locale: string): string {
+  return `${dateFormatPattern(locale)} HH:MM`
+}

@@ -119,9 +119,12 @@ export class ACalendarElement extends HTMLElementBase {
   private requestSelect(iso: string) {
     const prev = this.currentIso()
     if (iso === prev) return
+    // Non-bubbling: the wrapper binds `onstatechange` on this element directly, and
+    // `a-menu` also uses `statechange` — a bubbling one would reach an ancestor menu
+    // (e.g. inside `InputDate`) and be misread as a menu open/close.
     const proceed = this.dispatchEvent(
       new CustomEvent('statechange', {
-        bubbles: true,
+        bubbles: false,
         cancelable: true,
         detail: { next: iso, prev, reason: 'user' },
       }),
@@ -199,8 +202,9 @@ export class ACalendarElement extends HTMLElementBase {
   // --- Public value API + form callbacks ----------------------------------
 
   private emitState(next: string | null, prev: string | null, reason: 'reset' | 'restore') {
+    // Non-bubbling — see requestSelect (avoid colliding with an ancestor a-menu).
     this.dispatchEvent(
-      new CustomEvent('statechange', { bubbles: true, detail: { next, prev, reason } }),
+      new CustomEvent('statechange', { bubbles: false, detail: { next, prev, reason } }),
     )
     this.dispatchEvent(new Event('change', { bubbles: true }))
   }

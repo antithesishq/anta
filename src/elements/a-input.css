@@ -129,8 +129,8 @@
 
   .dark a-input:disabled {
     --input-bg: #e4d1ef0d;
-    --input-border: #e4d1ef26;
-    --input-border-hover: #e4d1ef26;
+    --input-border: #e4d1ef1f;
+    --input-border-hover: #e4d1ef1f;
   }
 
   /* Icon size tracks the field size — small 14 / medium 16 (the a-icon default)

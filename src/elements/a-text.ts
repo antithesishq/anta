@@ -173,24 +173,24 @@ export class ATextElement extends HTMLElementBase {
     this.syncExpandButton()
   }
 
-  private get isExpandable(): boolean {
+  get #isExpandable(): boolean {
     return this.hasAttribute('truncate') && this.hasAttribute('expandable')
   }
-  private get isCollapsible(): boolean {
+  get #isCollapsible(): boolean {
     return this.hasAttribute('collapsible')
   }
 
   /** Create or remove the chevron button to match `expandable`, then refresh
    *  its label/visibility — the single place the button's lifecycle lives. */
   private syncExpandButton() {
-    if (this.isExpandable && !this.expandBtn) {
+    if (this.#isExpandable && !this.expandBtn) {
       const btn = document.createElement('button')
       btn.className = 'expand-btn'
       btn.type = 'button'
       btn.addEventListener('click', this.handleToggle)
       this.shadowRoot!.append(btn)
       this.expandBtn = btn
-    } else if (!this.isExpandable && this.expandBtn) {
+    } else if (!this.#isExpandable && this.expandBtn) {
       this.expandBtn.remove()
       this.expandBtn = undefined
     }
@@ -215,7 +215,7 @@ export class ATextElement extends HTMLElementBase {
   private refreshButton() {
     const btn = this.expandBtn
     if (!btn) return
-    if (this.expanded && !this.isCollapsible) {
+    if (this.expanded && !this.#isCollapsible) {
       btn.remove()
       this.expandBtn = undefined
       return

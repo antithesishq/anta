@@ -86,11 +86,11 @@ export class ACalendarElement extends HTMLElementBase {
 
   /** Controlled when the `value` attribute is present (the renderer sets it only
    *  in controlled mode); otherwise the element owns selection. */
-  private get controlled(): boolean {
+  get #controlled(): boolean {
     return this.hasAttribute('value')
   }
   private currentIso(): string | null {
-    return this.controlled ? this.getAttribute('value') || null : this.selectedIso
+    return this.#controlled ? this.getAttribute('value') || null : this.selectedIso
   }
 
   private applyFormValue(value: string | null) {
@@ -129,7 +129,7 @@ export class ACalendarElement extends HTMLElementBase {
         detail: { next: iso, prev, reason: 'user' },
       }),
     )
-    if (this.controlled || !proceed) return
+    if (this.#controlled || !proceed) return
     this.selectedIso = iso
     this.applyFormValue(iso)
     this.dispatchEvent(new Event('change', { bubbles: true }))
@@ -137,13 +137,13 @@ export class ACalendarElement extends HTMLElementBase {
 
   // --- Keyboard navigation ------------------------------------------------
 
-  private get dayCells(): HTMLElement[] {
+  get #dayCells(): HTMLElement[] {
     return Array.from(this.querySelectorAll<HTMLElement>('[data-part="day-cell"]'))
   }
 
   private onKeydown = (e: KeyboardEvent) => {
     if (this.hasAttribute('disabled')) return
-    const cells = this.dayCells
+    const cells = this.#dayCells
     if (cells.length === 0) return
     const focused =
       (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-part="day-cell"]') ??
@@ -220,6 +220,9 @@ export class ACalendarElement extends HTMLElementBase {
   /** Form field name — mirrors the `name` attribute, like native `<input>.name`. */
   get name(): string {
     return this.getAttribute('name') ?? ''
+  }
+  set name(v: string) {
+    this.setAttribute('name', v)
   }
 
   formResetCallback() {

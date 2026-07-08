@@ -52,6 +52,7 @@
     "dev": "echo $$ > .dev.pid; trap 'rm -f .dev.pid' EXIT; nodemon -w src -w stickers/src -e ts,tsx,css -x 'pnpm run build:dev && pnpm --filter @antadesign/stickers run build:dev && pnpm --filter anta-site run docs' & pnpm --filter anta-site run dev & wait",
     "stop": "node scripts/dev-stop.mjs",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
+    "lint": "node scripts/lint-getters.mjs",
     "icons": "node scripts/generate-icons.mjs --input src/elements/icons --output src/elements --name a-icon.shapes --internal",
     "clean": "rm -rf dist",
     "prepare": "pnpm run build",

@@ -326,8 +326,8 @@ export class ATooltipElement extends HTMLElementBase {
     // only fire when pointer-events is on, i.e. interactive mode). The
     // anchor's mouseleave schedules a hide; moving into the bubble within
     // that window cancels it, so you can travel anchor → bubble and click.
-    this.container.addEventListener('mouseenter', () => { if (this.isInteractive) this.cancelHide() })
-    this.container.addEventListener('mouseleave', () => { if (this.isInteractive && this.shown) this.scheduleHide() })
+    this.container.addEventListener('mouseenter', () => { if (this.#isInteractive) this.cancelHide() })
+    this.container.addEventListener('mouseleave', () => { if (this.#isInteractive && this.shown) this.scheduleHide() })
 
     shadow.append(style, this.container)
   }
@@ -366,11 +366,11 @@ export class ATooltipElement extends HTMLElementBase {
    *  onto an anchor after the tooltip was dismissed re-arms it. */
   private makeDebouncedShow() {
     this.debouncedShow?.cancel()
-    this.debouncedShow = debounce((e?: MouseEvent) => this.show(e), this.delay)
+    this.debouncedShow = debounce((e?: MouseEvent) => this.show(e), this.#delay)
   }
 
 
-  private get isInteractive(): boolean {
+  get #isInteractive(): boolean {
     return this.hasAttribute('interactive')
   }
 
@@ -378,16 +378,16 @@ export class ATooltipElement extends HTMLElementBase {
    *  cursor is opt-in via the `follow` attribute. `interactive` (you can't move
    *  into a bubble that chases the cursor) and a touch long-press (a finger
    *  can't track one) force pinned regardless of `follow`. */
-  private get isPinned(): boolean {
-    if (this.isInteractive || this.touchOpen) return true
+  get #isPinned(): boolean {
+    if (this.#isInteractive || this.touchOpen) return true
     return !this.hasAttribute('follow')
   }
 
-  private get prefersTop(): boolean {
+  get #prefersTop(): boolean {
     return this.getAttribute('placement') === 'top'
   }
 
-  private get delay(): number {
+  get #delay(): number {
     const attr = this.getAttribute('delay')
     if (attr == null) return DEFAULT_DELAY
     const n = parseInt(attr, 10)
@@ -398,7 +398,7 @@ export class ATooltipElement extends HTMLElementBase {
 
   /** When set, the tooltip only shows if its resolved target is actually
    *  truncated/clipped; a fitting label gets no tooltip. */
-  private get truncatedOnly(): boolean {
+  get #truncatedOnly(): boolean {
     return this.hasAttribute('truncated-only')
   }
 
@@ -485,7 +485,7 @@ export class ATooltipElement extends HTMLElementBase {
       const { innerWidth: vw, innerHeight: vh } = this.view
       // Touch long-press biases above the anchor so the fingertip resting on it
       // doesn't cover the bubble (auto-flips below when there's no room).
-      const top = this.flipVertical(a.top - box.height - MARGIN, a.bottom + MARGIN, box.height, vh, this.prefersTop || this.touchOpen)
+      const top = this.flipVertical(a.top - box.height - MARGIN, a.bottom + MARGIN, box.height, vh, this.#prefersTop || this.touchOpen)
       this.place(a.left, top, box.width, vw)
     })
   }
@@ -497,13 +497,13 @@ export class ATooltipElement extends HTMLElementBase {
       const { innerWidth: vw, innerHeight: vh } = this.view
       // Shift left by the bubble's left padding so the cursor sits at the start
       // of the text rather than to the left of the whole bubble.
-      const top = this.flipVertical(e.clientY - box.height - MARGIN * 2, e.clientY + CURSOR_SIZE, box.height, vh, this.prefersTop)
+      const top = this.flipVertical(e.clientY - box.height - MARGIN * 2, e.clientY + CURSOR_SIZE, box.height, vh, this.#prefersTop)
       this.place(e.clientX - PADDING_X, top, box.width, vw)
     })
   }
 
   private position(e?: MouseEvent) {
-    if (!this.isPinned && e) this.positionToMouse(e)
+    if (!this.#isPinned && e) this.positionToMouse(e)
     else this.positionToTarget()
   }
 
@@ -530,7 +530,7 @@ export class ATooltipElement extends HTMLElementBase {
     if (this.isEmpty()) return
     // truncated-only: bail unless the target is actually clipped (covers the
     // hot-path, focus, and touch long-press, which call show() directly).
-    if (this.truncatedOnly && !this.isTargetTruncated()) return
+    if (this.#truncatedOnly && !this.isTargetTruncated()) return
     this.cancelHide() // re-showing (or a hand-off) cancels any pending close
     // Nested anchors: if this anchor *contains* the currently-open tooltip's
     // anchor, an inner (descendant) tooltip is showing — defer to it instead
@@ -622,7 +622,7 @@ export class ATooltipElement extends HTMLElementBase {
     // The next mouse move tears us down — mousemove is the one global event
     // guaranteed to keep firing while a following bubble is up.
     if (!this.isConnected) { this.cleanup(); return }
-    if (!(this.shown || this.fading) || this.isPinned) return
+    if (!(this.shown || this.fading) || this.#isPinned) return
     this.lastMouse = e
     const o = this.proximityOpacity(e)
     // Beyond PROX_FAR the cursor has clearly left: blank the bubble instantly
@@ -666,7 +666,7 @@ export class ATooltipElement extends HTMLElementBase {
   private trigger(e?: MouseEvent) {
     // Don't even arm the delayed show for an empty or non-truncated target.
     if (this.isEmpty()) return
-    if (this.truncatedOnly && !this.isTargetTruncated()) return
+    if (this.#truncatedOnly && !this.isTargetTruncated()) return
     if (isHot()) {
       this.debouncedShow?.cancel()
       this.show(e)
@@ -700,7 +700,7 @@ export class ATooltipElement extends HTMLElementBase {
       if (e.pointerType !== 'mouse') return
       this.lastMouse = e
       if (this.shown) {
-        if (!this.isPinned) this.positionToMouse(e)
+        if (!this.#isPinned) this.positionToMouse(e)
       } else {
         // (Re)arm the delayed show. This also re-arms after the tooltip was
         // dismissed without leaving the anchor — e.g. moving back onto the

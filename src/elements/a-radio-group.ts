@@ -54,7 +54,7 @@ export class ARadioGroupElement extends HTMLElementBase {
 
   /** The selected option's value, or `null` when nothing is selected. */
   get value(): string | null {
-    return this.currentValue;
+    return this.#currentValue;
   }
 
   constructor() {
@@ -118,7 +118,7 @@ export class ARadioGroupElement extends HTMLElementBase {
     // `reason: "reset"` statechange lets a controller (the RadioGroup wrapper's
     // mirror, or the app) follow without mistaking it for a user pick.
     const next = this.getAttribute("default-state");
-    this.emitStateChange(next, this.currentValue, "reset", false);
+    this.emitStateChange(next, this.#currentValue, "reset", false);
     this.uncontrolledValue = next;
     this.sync();
   }
@@ -127,32 +127,32 @@ export class ARadioGroupElement extends HTMLElementBase {
     // bfcache / autofill restore changes selection without a user pick — emit a
     // `reason: "restore"` statechange so the wrapper's roving-tabindex mirror (and
     // any app controller) re-syncs instead of diverging from the restored dot.
-    this.emitStateChange(state, this.currentValue, "restore", false);
+    this.emitStateChange(state, this.#currentValue, "restore", false);
     this.uncontrolledValue = state;
     this.sync();
   }
 
   // Controlled when `state` is present; otherwise the in-memory uncontrolled value.
-  private get currentValue() {
+  get #currentValue() {
     return this.hasAttribute("state")
       ? this.getAttribute("state")
       : this.uncontrolledValue;
   }
 
-  private get isDisabled() {
+  get #isDisabled() {
     return (
       this.hasAttribute("disabled") ||
       (this.internals?.states.has("disabled") ?? false)
     );
   }
 
-  private get radios() {
+  get #radios() {
     return Array.from(this.querySelectorAll("a-radio")) as ARadioElement[];
   }
 
   private sync = () => {
-    const value = this.currentValue;
-    const radios = this.radios;
+    const value = this.#currentValue;
+    const radios = this.#radios;
     // `null` (attribute absent) means "nothing selected"; an empty string is a
     // *real* value (a legitimate `value=""` option), so only the null check guards.
     const selectedEl = radios.find((r) => r.value === value && value != null) ?? null;
@@ -179,7 +179,7 @@ export class ARadioGroupElement extends HTMLElementBase {
   // The shared state algorithm: fire the cancelable `statechange` *before*
   // applying. Controlled never self-applies; uncontrolled applies unless vetoed.
   private requestSelect(next: string) {
-    const prev = this.currentValue;
+    const prev = this.#currentValue;
     if (next === prev) return;
     const ok = this.emitStateChange(next, prev, "user", true);
     if (this.hasAttribute("state")) return;
@@ -217,7 +217,7 @@ export class ARadioGroupElement extends HTMLElementBase {
   }
 
   private onClick = (e: MouseEvent) => {
-    if (this.isDisabled) return;
+    if (this.#isDisabled) return;
     const radio = (e.target as HTMLElement | null)?.closest(
       "a-radio",
     ) as ARadioElement | null;
@@ -229,8 +229,8 @@ export class ARadioGroupElement extends HTMLElementBase {
   };
 
   private onKeyDown = (e: KeyboardEvent) => {
-    if (this.isDisabled) return;
-    const enabled = this.radios.filter((r) => !r.hasAttribute("disabled"));
+    if (this.#isDisabled) return;
+    const enabled = this.#radios.filter((r) => !r.hasAttribute("disabled"));
     if (enabled.length === 0) return;
     const focused = (e.target as HTMLElement | null)?.closest(
       "a-radio",
@@ -251,7 +251,7 @@ export class ARadioGroupElement extends HTMLElementBase {
 
     // Index of the currently-focused / currently-selected option, then step.
     let i = focused ? enabled.indexOf(focused) : -1;
-    if (i === -1) i = enabled.findIndex((r) => r.value === this.currentValue);
+    if (i === -1) i = enabled.findIndex((r) => r.value === this.#currentValue);
     if (i === -1) i = 0;
 
     const next =

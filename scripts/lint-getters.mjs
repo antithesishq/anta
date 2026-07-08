@@ -81,22 +81,31 @@ function collectTsFiles(dir) {
   return out
 }
 
-/** The name of the class a declaration `extends`, or undefined. */
-function baseName(node) {
-  const clause = node.heritageClauses?.find((c) => c.token === ts.SyntaxKind.ExtendsKeyword)
-  const expr = clause?.types[0]?.expression
-  return expr && ts.isIdentifier(expr) ? expr.text : undefined
+/** The names a class/interface declaration `extends`, or []. */
+function heritage(node) {
+  return (node.heritageClauses ?? [])
+    .filter((c) => c.token === ts.SyntaxKind.ExtendsKeyword)
+    .flatMap((c) => c.types.map((t) => (ts.isIdentifier(t.expression) ? t.expression.text : null)))
+    .filter(Boolean)
 }
 
-// Parse every source file and register its class declarations by name.
+// Parse every source file; register class declarations and interface
+// declarations by name. Interfaces feed the prop-collision check (rule 2).
 const sources = new Map() // path -> SourceFile
 const classes = new Map() // className -> { path, node, base }
+const interfaces = new Map() // interfaceName -> { props: Set<string>, ext: string[] }
 for (const path of collectTsFiles(SRC).sort()) {
   const sf = ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true)
   sources.set(path, sf)
   const visit = (node) => {
     if (ts.isClassDeclaration(node) && node.name) {
-      classes.set(node.name.text, { path, node, base: baseName(node) })
+      classes.set(node.name.text, { path, node, base: heritage(node)[0] })
+    } else if (ts.isInterfaceDeclaration(node)) {
+      const props = new Set()
+      for (const m of node.members) {
+        if (ts.isPropertySignature(m) && m.name && ts.isIdentifier(m.name)) props.add(m.name.text)
+      }
+      interfaces.set(node.name.text, { props, ext: heritage(node) })
     }
     ts.forEachChild(node, visit)
   }
@@ -118,51 +127,112 @@ function isElement(name, seen = new Set()) {
 
 const STATIC = ts.SyntaxKind.StaticKeyword
 
-/** Getter/setter violations for one element class, scoped to its own members. */
-function scan(className, path, node) {
-  const readonly = new Set(READONLY_ALLOWLIST[className] ?? [])
-  const getters = [] // { name, member }
-  const setters = new Set() // name
-
+/** The camelCase, JS-assignable members a class declares, keyed by name. A
+ *  `#`-private member is skipped (it never creates a public `foo` key). An
+ *  accessor is `paired` when the same class has both get and set. Computed /
+ *  string-literal names are skipped — they aren't plain props React assigns. */
+function ownMembers(node) {
+  const get = new Map() // name -> accessor node (for line reporting)
+  const set = new Set()
+  const other = new Map() // name -> { kind: 'method' | 'field', node }
   for (const m of node.members) {
-    if (!ts.isGetAccessorDeclaration(m) && !ts.isSetAccessorDeclaration(m)) continue
-    if (m.modifiers?.some((mod) => mod.kind === STATIC)) continue // on the constructor, never assigned as an instance prop
-    if (ts.isPrivateIdentifier(m.name)) continue // #private — invisible to React
-    if (!ts.isIdentifier(m.name)) continue // computed / string-literal names aren't plain props
-    if (ts.isSetAccessorDeclaration(m)) setters.add(m.name.text)
-    else getters.push({ name: m.name.text, member: m })
+    if (m.modifiers?.some((mod) => mod.kind === STATIC)) continue
+    if (!m.name || ts.isPrivateIdentifier(m.name) || !ts.isIdentifier(m.name)) continue
+    const name = m.name.text
+    if (ts.isGetAccessorDeclaration(m)) get.set(name, m)
+    else if (ts.isSetAccessorDeclaration(m)) set.add(name)
+    else if (ts.isMethodDeclaration(m)) other.set(name, { kind: 'method', node: m })
+    else if (ts.isPropertyDeclaration(m)) other.set(name, { kind: 'field', node: m })
   }
-
-  const sf = sources.get(path)
-  const violations = []
-  for (const { name, member } of getters) {
-    if (setters.has(name)) continue // assignable — paired in this class
-    if (readonly.has(name)) continue // explicit, reviewed read-only opt-out
-    const line = sf.getLineAndCharacterOfPosition(member.name.getStart(sf)).line + 1
-    violations.push({ name, line, rel: relative(ROOT, path) })
-  }
-  return violations
+  const members = new Map() // name -> { kind, node }
+  for (const [name, node] of get) members.set(name, { kind: set.has(name) ? 'paired' : 'getter', node })
+  for (const name of set) if (!get.has(name)) members.set(name, { kind: 'setter', node: null })
+  for (const [name, info] of other) if (!members.has(name)) members.set(name, info)
+  return members
 }
 
-const elements = [...classes].filter(([name]) => isElement(name))
-const all = elements
-  .flatMap(([name, { path, node }]) => scan(name, path, node))
-  .sort((a, b) => a.rel.localeCompare(b.rel) || a.line - b.line)
+/** Every assignable member on `className`'s prototype chain, resolved so an own
+ *  member shadows an inherited one of the same name — matching how JS property
+ *  lookup (and thus React's `el[key] = value`) sees the element. */
+function resolveMembers(className) {
+  const chain = []
+  const seen = new Set()
+  for (let cur = className; cur && classes.has(cur) && !seen.has(cur); cur = classes.get(cur).base) {
+    seen.add(cur)
+    chain.push(classes.get(cur))
+  }
+  const merged = new Map()
+  for (const cls of chain.reverse()) {
+    for (const [name, info] of ownMembers(cls.node)) merged.set(name, { ...info, path: cls.path })
+  }
+  return merged
+}
 
-for (const v of all) {
+/** All identifier-named attributes an element accepts (its own interface plus
+ *  everything it `extends`), minus `on*` event handlers — React binds those via
+ *  addEventListener, never as a property, so they can't clobber a member. */
+function attrProps(interfaceName, seen = new Set()) {
+  const iface = interfaces.get(interfaceName)
+  if (!iface || seen.has(interfaceName)) return new Set()
+  seen.add(interfaceName)
+  const out = new Set()
+  for (const p of iface.props) if (!/^on[A-Z]/.test(p)) out.add(p)
+  for (const ext of iface.ext) for (const p of attrProps(ext, seen)) out.add(p)
+  return out
+}
+
+const line = (path, node) =>
+  node ? sources.get(path).getLineAndCharacterOfPosition(node.name.getStart(sources.get(path))).line + 1 : 0
+
+const elements = [...classes].filter(([name]) => isElement(name))
+const getterViolations = [] // rule 1: getter with no setter (a crash)
+const collisions = [] // rule 2: an attribute name clobbers a method/field
+
+for (const [className, { path }] of elements) {
+  const readonly = new Set(READONLY_ALLOWLIST[className] ?? [])
+  const members = resolveMembers(className)
+
+  // Rule 1 — a getter with no setter throws when React assigns the property.
+  for (const [name, m] of ownMembers(classes.get(className).node)) {
+    if (m.kind !== 'getter' || readonly.has(name)) continue
+    getterViolations.push({ name, rel: relative(ROOT, path), line: line(path, m.node) })
+  }
+
+  // Rule 2 — an attribute React can assign as a property must not land on a
+  // method or plain field (silently overwriting it). A paired/setter accessor
+  // is fine (intended reflection); a getter-only is already rule 1.
+  for (const name of attrProps(className.replace(/Element$/, 'Attributes'))) {
+    const m = members.get(name)
+    if (!m || m.kind === 'paired' || m.kind === 'setter' || m.kind === 'getter') continue
+    collisions.push({ name, kind: m.kind, className, rel: relative(ROOT, m.path), line: line(m.path, m.node) })
+  }
+}
+
+getterViolations.sort((a, b) => a.rel.localeCompare(b.rel) || a.line - b.line)
+collisions.sort((a, b) => a.rel.localeCompare(b.rel) || a.line - b.line)
+
+for (const v of getterViolations) {
   console.error(
     `${v.rel}:${v.line}  getter \`${v.name}\` has no setter. ` +
       `Give it a \`set ${v.name}()\`, rename it to \`#${v.name}\` (true private), ` +
       `or add it to READONLY_ALLOWLIST in scripts/lint-getters.mjs if it is a deliberate read-only property.`,
   )
 }
-
-if (all.length) {
+for (const c of collisions) {
   console.error(
-    `\n✗ ${all.length} getter${all.length === 1 ? '' : 's'} without a setter. ` +
-      `React 19 assigns custom-element props as properties, so a getter-only ` +
-      `property throws on assignment. See CLAUDE.md → "React 19 property assignment".`,
+    `${c.rel}:${c.line}  ${c.kind} \`${c.name}\` collides with the \`${c.name}\` attribute of ${c.className}. ` +
+      `React 19 assigns that prop as a property (\`el.${c.name} = value\`), overwriting this ${c.kind}. ` +
+      `Rename the ${c.kind} to \`#${c.name}\` (true private) or rename the attribute.`,
+  )
+}
+
+const total = getterViolations.length + collisions.length
+if (total) {
+  console.error(
+    `\n✗ ${total} React-19 property-assignment hazard${total === 1 ? '' : 's'}. ` +
+      `React 19 assigns custom-element props as properties (\`key in el\` → \`el[key] = value\`). ` +
+      `See CLAUDE.md → "React 19 property assignment".`,
   )
   process.exit(1)
 }
-console.log(`✓ getter/setter rule: ${elements.length} element classes clean.`)
+console.log(`✓ React-19 property rules: ${elements.length} element classes clean.`)

@@ -7,26 +7,25 @@
 
   a-checkbox {
     --checkbox-gap: 8px;
+    --checkbox-box-size: 16px;
 
     --checkbox-bg: var(--bg-1);
 
     /* Default tone is neutral — `brand` (and the rest) are explicit opt-ins. */
-    --checkbox-fill: #635b65;
-    --checkbox-fill-hover: #534c57;
-    --checkbox-fill-active: #49424c;
+    --checkbox-fill: #878089;
+    --checkbox-fill-hover: #776e77;
+    --checkbox-fill-active: #635b65;
 
-    /* Unselected box border: neutral grey by default. Tinted tones (rule after the
-       tones) mix the fill toward this grey so the border sits a bit lighter than the
-       fill, nearer neutral. The mix anchor is theme-aware. 1.5px width. */
+    /* Unselected box border: neutral grey by default (1.5px). Named tinted tones override the resting fill + border to mirror the Input field (rules below); a custom-colour tone derives its border from the fill. */
     --checkbox-border-neutral: #d4ced4;
     --checkbox-border: var(--checkbox-border-neutral);
     --checkbox-border-hover: #c1b9c1;
     --checkbox-border-active: #9f99a1;
 
-    --checkbox-icon: #ffffff;
+    --checkbox-icon: #f1eff1;
     --checkbox-icon-disabled: #c1b9c1;
     --checkbox-bg-disabled: color-mix(in oklch, #44374b 10%, transparent);
-    --checkbox-border-disabled: color-mix(in oklch, #44374b 15%, transparent);
+    --checkbox-border-disabled: color-mix(in oklch, #44374b 10%, transparent);
 
     /* The glyph (::after mark): its size and the check / minus mask images, exposed
        so a consumer can resize or swap the mark. The keyboard focus ring uses the
@@ -46,16 +45,10 @@
     --checkbox-hint-fs: 13px;
     --checkbox-hint-lh: 16px;
 
-    /* Inline-grid: box in column 1, label/hint stacked in column 2. The box
-       (::before) and glyph (::after) span rows 1/-1 of column 1 so they stay
-       centred against the label column whether or not a hint adds a 2nd row.
-       Column 2 is `1fr` (not `auto`): when the checkbox is stretched (e.g. a flex
-       item in a column), all slack goes to the label column, keeping the box column
-       content-sized — two `auto` tracks would split the slack and shift the label
-       (a visible indent). 1fr also gives the label a bounded width to wrap in. */
+    /* Inline-grid: box + glyph in column 1, label/hint in column 2. Box and glyph top-align to the label's first line (align-self: start plus a margin offset on the control, so the row keeps the label's line-height); they share align-self + margin so the glyph never drifts off the box. Column 2 is 1fr so a stretched checkbox's slack goes to the label, keeping the box column content-sized. */
     display: inline-grid;
     grid-template-columns: auto 1fr;
-    align-items: center;
+    align-items: start;
     column-gap: var(--checkbox-gap);
     vertical-align: middle;
     cursor: pointer;
@@ -73,7 +66,9 @@
       content: "";
       grid-column: 1;
       grid-row: 1 / -1;
-      align-self: center;
+      align-self: start;
+      /* Sit the box on the label's first-line centre; offset on the box so the row keeps the label's line-height. */
+      margin-block-start: calc((var(--checkbox-label-lh) - var(--checkbox-box-size)) / 2);
       box-sizing: border-box;
       inline-size: 16px;
       block-size: 16px;
@@ -95,14 +90,13 @@
       border-radius: var(--checkbox-round, 999px);
     }
 
-    /* Glyph, stacked on the box (same cell, source order = paint order).
-       Transparent until a filled state masks + colours it — an unmasked
-       ::after would paint a solid square. */
+    /* Glyph, stacked on the box (same cell). Shares the box's grid-row + align-self + margin so it stays centred on the box. Transparent until a filled state masks + colours it. */
     &::after {
       content: "";
       grid-column: 1;
       grid-row: 1 / -1;
-      align-self: center;
+      align-self: start;
+      margin-block-start: calc((var(--checkbox-label-lh) - var(--checkbox-box-size)) / 2);
       inline-size: 16px;
       block-size: 16px;
       background-color: transparent;
@@ -175,6 +169,7 @@
 
     &[size="small"] {
       --checkbox-gap: 6px;
+      --checkbox-box-size: 14px;
       --checkbox-label-fs: 13px;
       --checkbox-label-lh: 16px;
       --checkbox-hint-fs: 12px;
@@ -184,8 +179,9 @@
       &::after { inline-size: 14px; block-size: 14px; }
     }
     &[size="large"] {
+      --checkbox-box-size: 18px;
       --checkbox-label-fs: 17px;
-      --checkbox-label-lh: 24px;
+      --checkbox-label-lh: 22px;
       --checkbox-hint-fs: 15px;
       --checkbox-hint-lh: 19px;
       --checkbox-mask-size: 14px;
@@ -216,14 +212,7 @@
     margin-block-start: 2px;
   }
 
-  /* `tone` and `tone-selected` both set the MARK fill (checked box + glyph). They
-     differ only in the OFF state: `tone` also tints the unselected box border (the
-     ramp rule below, keyed to [tone]); `tone-selected` leaves that border neutral, so
-     the tone shows only once the box is checked. The label + hint are never toned —
-     recolour them in plain CSS via the theme-aware --text-N-{tone} tokens (a `color`
-     rule on the host for the label, on a-checkbox-hint for the hint).
-     `neutral` keeps the base greys; the default (no attribute) is untouched — the
-     wrapper omits the neutral value. */
+  /* `tone` and `tone-selected` both set the checked mark fill; they differ in the off state: `tone` tints the unselected box (faint fill + tone border, like the Input field), `tone-selected` leaves it neutral. Label + hint are never toned (recolour in plain CSS via --text-N-{tone}). `neutral` keeps the base greys; the default omits the attribute. */
   a-checkbox[tone="brand"],
   a-checkbox[tone-selected="brand"] {
     --checkbox-fill: #5f4bc3;
@@ -232,9 +221,9 @@
   }
   a-checkbox[tone="neutral"],
   a-checkbox[tone-selected="neutral"] {
-    --checkbox-fill: #635b65;
-    --checkbox-fill-hover: #534c57;
-    --checkbox-fill-active: #49424c;
+    --checkbox-fill: #878089;
+    --checkbox-fill-hover: #776e77;
+    --checkbox-fill-active: #635b65;
   }
   a-checkbox[tone="info"],
   a-checkbox[tone-selected="info"] {
@@ -261,20 +250,50 @@
     --checkbox-fill-active: #a01c1c;
   }
 
-  /* Tinted tones only: the unselected box border picks up the tone and ramps like
-     the neutral border — lightest at rest, darkening through hover to active. The
-     active anchor is the fill mixed toward the neutral grey (this is the old static
-     value); rest and hover step up in oklch lightness from there, so hue/chroma
-     stay put. Tracks light/dark via --checkbox-fill and the theme-aware grey. */
-  a-checkbox[tone]:not([tone=""], [tone="neutral"]) {
+  /* Named tinted tones: unselected box gets a faint tone fill (--checkbox-bg) under a tone border ramp (rest/hover/active), per tone (light here, dark below). Keyed to [tone] only, so tone-selected keeps a neutral off-state box. */
+  a-checkbox[tone="brand"] {
+    --checkbox-bg: #fcfcfe;
+    --checkbox-border: #bcb1f1;
+    --checkbox-border-hover: #9e8eeb;
+    --checkbox-border-active: #9081df;
+  }
+  a-checkbox[tone="info"] {
+    --checkbox-bg: #fbfcfe;
+    --checkbox-border: #93c5ec;
+    --checkbox-border-hover: #69ace5;
+    --checkbox-border-active: #56a1e1;
+  }
+  a-checkbox[tone="success"] {
+    --checkbox-bg: #f7fcf9;
+    --checkbox-border: #88d7a0;
+    --checkbox-border-hover: #5bc87b;
+    --checkbox-border-active: #44c169;
+  }
+  a-checkbox[tone="warning"] {
+    --checkbox-bg: #fefbf6;
+    --checkbox-border: #edb25a;
+    --checkbox-border-hover: #e09127;
+    --checkbox-border-active: #d88118;
+  }
+  a-checkbox[tone="critical"] {
+    --checkbox-bg: #fefbfb;
+    --checkbox-border: #efa4a4;
+    --checkbox-border-hover: #e87f7f;
+    --checkbox-border-active: #e56c6c;
+  }
+
+  /* Custom tone (non-named colour): derive the unselected box in oklch. Fill pins lightness near-white in light / near-black in dark with chroma scaled down (~3% light, ~18% dark) so it reads as a whisper of the colour; the border ramps off the fill (lightest at rest, darkening to active; dark inverts). Named tones and neutral never reach this. */
+  a-checkbox[tone]:not(
+      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]) {
+    --checkbox-bg: oklch(from var(--checkbox-tone-source) 0.99 calc(c * 0.03) h);
     --_checkbox-border-base: color-mix(in oklch, var(--checkbox-fill) 70%, var(--checkbox-border-neutral));
     --checkbox-border:        oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
     --checkbox-border-hover:  oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
     --checkbox-border-active: var(--_checkbox-border-base);
 
-    /* Dark inverts the direction: interaction brightens the border (rest darkest,
-       active lightest), matching the neutral dark ramp. */
     .dark & {
+      --checkbox-bg: oklch(from var(--checkbox-tone-source) 0.15 calc(c * 0.18) h);
       --checkbox-border:        var(--_checkbox-border-base);
       --checkbox-border-hover:  oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
       --checkbox-border-active: oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
@@ -327,13 +346,14 @@
     --checkbox-border-active: #776e77;
 
     /* Neutral default. */
-    --checkbox-fill: #534c57;
-    --checkbox-fill-hover: #635b65;
-    --checkbox-fill-active: #938d96;
+    --checkbox-fill: #49424c;
+    --checkbox-fill-hover: #534c57;
+    --checkbox-fill-active: #635b65;
 
-    --checkbox-icon-disabled: #635b65;
+    --checkbox-icon: #d4ced4;
+    --checkbox-icon-disabled: #534c57;
     --checkbox-bg-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
-    --checkbox-border-disabled: color-mix(in oklch, #e4d1ef 15%, transparent);
+    --checkbox-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
   }
   .dark a-checkbox[tone="brand"],
   .dark a-checkbox[tone-selected="brand"] {
@@ -343,9 +363,9 @@
   }
   .dark a-checkbox[tone="neutral"],
   .dark a-checkbox[tone-selected="neutral"] {
-    --checkbox-fill: #534c57;
-    --checkbox-fill-hover: #635b65;
-    --checkbox-fill-active: #938d96;
+    --checkbox-fill: #49424c;
+    --checkbox-fill-hover: #534c57;
+    --checkbox-fill-active: #635b65;
   }
   .dark a-checkbox[tone="info"],
   .dark a-checkbox[tone-selected="info"] {
@@ -370,5 +390,37 @@
     --checkbox-fill: #b02120;
     --checkbox-fill-hover: #c9302c;
     --checkbox-fill-active: #de4545;
+  }
+
+  /* Named tinted tones: unselected box, dark values. */
+  .dark a-checkbox[tone="brand"] {
+    --checkbox-bg: #0b0916;
+    --checkbox-border: #483493;
+    --checkbox-border-hover: #5f4bc3;
+    --checkbox-border-active: #7460d7;
+  }
+  .dark a-checkbox[tone="info"] {
+    --checkbox-bg: #040d18;
+    --checkbox-border: #175082;
+    --checkbox-border-hover: #1f6eb2;
+    --checkbox-border-active: #2686d9;
+  }
+  .dark a-checkbox[tone="success"] {
+    --checkbox-bg: #041008;
+    --checkbox-border: #1f5c31;
+    --checkbox-border-hover: #2a7e43;
+    --checkbox-border-active: #329550;
+  }
+  .dark a-checkbox[tone="warning"] {
+    --checkbox-bg: #120a03;
+    --checkbox-border: #6a3b0c;
+    --checkbox-border-hover: #995200;
+    --checkbox-border-active: #ae6613;
+  }
+  .dark a-checkbox[tone="critical"] {
+    --checkbox-bg: #190405;
+    --checkbox-border: #a01c1c;
+    --checkbox-border-hover: #c9302c;
+    --checkbox-border-active: #de4545;
   }
 }

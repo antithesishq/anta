@@ -1,0 +1,131 @@
+@layer anta {
+  /* The calendar is composed in LIGHT DOM from Anta components, so its styling is
+     ordinary CSS targeting those elements — nothing is hidden in a shadow root.
+     Day cells are real <a-button>s, so their colours/states (hover, focus ring,
+     and the selected look) come from a-button.css for free and theme themselves;
+     we only square them off here. The few tokens below point at role tokens, so
+     dark mode needs no override. */
+
+  /* Outer shell rendered by the <Calendar> wrapper: the switcher header stacked
+     above the grid. (Scoped by the wrapper's class so the rules don't leak.) */
+  .anta-calendar {
+    /* Day cells: wider than tall (width = height + 4), with the height matching
+       the same-size Anta button (medium = 28). The `size` prop sets `data-size`
+       for the others. */
+    --calendar-cell-width: 32px;
+    --calendar-cell-height: 28px;
+
+    display: inline-flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .anta-calendar [data-part="header"] {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  /* The heading is a <Button> (year-menu trigger); it styles its own text, so we
+     only handle layout: fill the space between the chevrons and centre the label. */
+  .anta-calendar [data-part="heading"] {
+    flex: 1 1 auto;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  /* Active-year marker in the jump menu: a small dot before the year row's
+     submenu chevron, flagging the year whose month flyout holds the current view
+     (the row tint marks it too; the check lives on the active month inside).
+     currentColor tracks the row's text tone. The row's 0.6ch flex gap spaces it. */
+  .anta-calendar .year-dot {
+    flex: none;
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  /* Size — scales the cell box; the day cells + chevrons take the matching Button
+     size via the `size` prop, so their text/icons scale too. Cell heights track
+     the same-size Button (small 24 / medium 28 / large 32); weekday + heading type
+     match Button's scale (small 13/16 · medium 15/20 · large 17/24). */
+  .anta-calendar[data-size="small"] {
+    --calendar-cell-width: 28px;
+    --calendar-cell-height: 24px;
+  }
+  .anta-calendar[data-size="large"] {
+    --calendar-cell-width: 36px;
+    --calendar-cell-height: 32px;
+  }
+  .anta-calendar[data-size="small"] [data-part="weekday"] {
+    font-size: 13px;
+    line-height: 16px;
+  }
+  .anta-calendar[data-size="large"] [data-part="weekday"] {
+    font-size: 17px;
+    line-height: 24px;
+  }
+
+  /* The element IS the grid: a flat 7-column grid whose direct children are the
+     seven weekday headers followed by the day cells — no row wrappers. */
+  a-calendar {
+    display: inline-grid;
+    grid-template-columns: repeat(7, var(--calendar-cell-width, 32px));
+    gap: 1px;
+    font-family: var(--sans-serif);
+  }
+
+  a-calendar [data-part="weekday"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 400;
+    color: var(--text-4);
+    user-select: none;
+  }
+  /* Dim the weekend column headers (Sat/Sun, locale-independent). */
+  a-calendar [data-part="weekday"][data-weekend] {
+    color: var(--text-5);
+  }
+
+  /* Day cells are <a-button>s — sized to the cell box, number centred. The colour
+     curve (rest/hover/active, the `selected` fill + ring, disabled) all comes
+     from a-button.css. */
+  a-calendar a-button[data-part="day-cell"] {
+    /* Zero the horizontal padding directly (not via --button-padding-x): the
+       size rules in a-button.css set that var, and their `:is(a-button,
+       a[role="button"])[size]` selector outweighs ours — so a small day would
+       keep 7px padding and clip "10"→"1..". Setting padding-inline here wins on
+       specificity over Button's base `padding-inline: var(--button-padding-x)`. */
+    padding-inline: 0;
+
+    min-width: var(--calendar-cell-width, 32px);
+    min-height: var(--calendar-cell-height, 28px);
+    justify-content: center;
+  }
+  /* Day labels are uniform digits, so drop Button's optical bottom padding (it
+     compensates for text glyphs sitting low in the line-box) — it would otherwise
+     nudge the centred number off-centre. */
+  a-calendar a-button[data-part="day-cell"] a-button-label {
+    padding-bottom: 0;
+  }
+  /* Tuck the focus ring 1px inward (Button's default is 1px outset) so it sits
+     inside the cell, clear of the 1px grid gap and the neighbouring cells. */
+  a-calendar a-button[data-part="day-cell"]:focus-visible {
+    outline-offset: 0;
+  }
+  /* Today (a secondary Button) reads bolder so it stands out. */
+  a-calendar a-button[data-part="day-cell"][data-today]:not([selected]) {
+    font-weight: 600;
+  }
+
+  /* Adjacent-month spill-over days read quieter. */
+  a-calendar a-button[data-part="day-cell"][data-outside]:not([selected]) {
+    opacity: 0.5;
+  }
+
+  /* No calendar-wide dimming when disabled — every day cell, chevron, and the
+     heading is an already-disabled <Button>, and the element ignores input while
+     `[disabled]`, so dimming the whole box would just double up. */
+}

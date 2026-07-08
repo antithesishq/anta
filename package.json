@@ -65,7 +65,8 @@
   },
   "dependencies": {
     "clsx": "^2.1.0",
-    "es-toolkit": "1.47.0"
+    "es-toolkit": "1.47.0",
+    "temporal-polyfill": "^1.0.1"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"

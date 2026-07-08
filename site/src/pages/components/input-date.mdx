@@ -14,10 +14,10 @@ import InputDateDemo from '../../components/InputDateDemo'
 
 # InputDate
 
-**`InputDate`** is a date field that replaces the native `type="date"` input: a
-text field you can type into, backed by a `Calendar` that opens from the trailing
-button. It's the headline of the InputDate family; **`Calendar`**, the month grid it
-builds on, is documented lower down. Time entry lands as it ships.
+**`InputDate`** is a date field that replaces the native `type="date"` (and, with
+`time`, `type="datetime-local"`): a text field you can type into, backed by a
+`Calendar` that opens from the trailing button. `Calendar`, the month grid it builds
+on, is documented lower down.
 
 The field accepts free text and resolves it on commit (blur / Enter): a lenient
 parser reads the locale's order (`06/07/2026` is June 7 in en-US, July 6 in de-DE),
@@ -70,11 +70,11 @@ bound both the calendar and what a typed date will accept.
 ```
 
 `time` turns it into a date-time field (value `YYYY-MM-DDTHH:mm`). The menu grows a
-time row under the calendar — hours, minutes, and, in 12-hour locales, an AM/PM
-toggle, and a confirm (✓) button; picking a day keeps the menu open so you can set the
-time. The clock follows the locale (`en-US` is 12-hour, most others 24), overridable
-with `hour12`. The field parses a trailing time after a space (`06/15/2026 2:30pm`
-or `… 14:30`), and typing a 24-hour hour into a 12-hour field converts it (18 → 6 PM).
+time row under the calendar: hours, minutes, an AM/PM toggle in 12-hour locales, and
+a confirm (✓) button. Picking a day keeps the menu open so you can set the time. The
+clock follows the locale (`en-US` is 12-hour, most others 24), overridable with
+`hour12`. The field parses a trailing time after a space (`06/15/2026 2:30pm` or
+`… 14:30`), and typing a 24-hour hour into a 12-hour field converts it (18 → 6 PM).
 
 <Preview gap="16px" style="flex-direction: column; align-items: flex-start; padding-left: 40px;">
   <InputDateDemo client:only="preact" size="small" label="Small" time defaultValue="2026-06-15T09:00" style={{ width: '260px' }} />
@@ -315,12 +315,23 @@ stop, and an `aria-live` region announces the month when it changes.
 
 ## Customization
 
-`Calendar` splits along one seam: the `<a-calendar>` element is the **day grid**,
-and the JSX wrapper adds the **navigation chrome** around it. Knowing which half
-owns what tells you where to reach when you extend it, and lets a non-React consumer
-rebuild the chrome from stock elements.
+The family stacks in layers: `InputDate` composes `Input` + `Menu` + `Calendar`,
+and `Calendar` itself splits into the `<a-calendar>` element (the day grid) and a
+JSX wrapper (the navigation chrome). Knowing which layer owns what tells you where to
+reach when you extend it, and lets a non-React consumer rebuild the chrome from stock
+elements.
 
 ### Components composition
+
+`InputDate` has no `a-inputdate` element; the wrapper is the coordinator, the role
+`Select` plays over `Input` + `Menu`. It renders an editable `<Input>` trigger and a
+`<Menu>` holding a `<Calendar>` (with `time`, the hour/minute row and AM/PM `Tabs`
+sit under the grid), and owns the draft text, the lenient parse on commit, the ISO
+value, and opening the menu from the trailing button. Focusing the field just types;
+the button opens the menu, so picking a day and typing never fight. Nesting a stateful
+component in a menu has one wrinkle: the `Calendar` (and `Tabs`) dispatch their own
+`statechange`, so the `Menu` acts only on its own `open` / `closed`, and a bubbled
+pick isn't mistaken for a dismiss.
 
 The `<a-calendar>` element owns the grid and nothing else. It wires the day
 `<button>`s you render into it (click and keyboard: arrows, <kbd>Home</kbd>/<kbd>End</kbd>,
@@ -429,6 +440,42 @@ the `.anta-calendar` shell. An un-layered consumer rule beats `@layer anta` with
    and the cell box (inherited down), and you target the day Buttons directly. */
 .anta-calendar.roomy { --calendar-cell-width: 40px; --calendar-cell-height: 40px; }
 .anta-calendar.roomy a-button[data-part="day-cell"] { border-radius: 50%; }
+```
+
+Each day is a `<a-button data-part="day-cell" data-date="YYYY-MM-DD">`, so a
+specific date is addressable by its `data-date`: tint it, or hang an event marker
+off a `::after` (give the cell `position: relative` first). Below, three days carry a
+brand dot and one is flagged in the critical colour.
+
+<Preview>
+  <CalendarDemo client:only="preact" className="events" defaultValue="2026-06-15" />
+  <style is:inline>{`
+    .anta-calendar.events a-button[data-part="day-cell"] { position: relative; }
+    .anta-calendar.events a-button[data-part="day-cell"]:is([data-date="2026-06-05"], [data-date="2026-06-12"], [data-date="2026-06-20"])::after {
+      content: ""; position: absolute; inset-block-end: 3px; inset-inline-start: 50%;
+      inline-size: 4px; block-size: 4px; transform: translateX(-50%);
+      border-radius: 999px; background: var(--text-2-brand);
+    }
+    .anta-calendar.events a-button[data-part="day-cell"][data-date="2026-06-25"] {
+      color: var(--text-2-critical); font-weight: 600;
+    }
+  `}</style>
+</Preview>
+
+```css folded
+/* Day cells are `<a-button data-part="day-cell" data-date="YYYY-MM-DD">`. Give them a
+   positioning context, dot event days with a `::after`, and tint a date's text. */
+.anta-calendar.events a-button[data-part="day-cell"] { position: relative; }
+.anta-calendar.events a-button[data-part="day-cell"]:is(
+  [data-date="2026-06-05"], [data-date="2026-06-12"], [data-date="2026-06-20"]
+)::after {
+  content: ""; position: absolute; inset-block-end: 3px; inset-inline-start: 50%;
+  inline-size: 4px; block-size: 4px; transform: translateX(-50%);
+  border-radius: 999px; background: var(--text-2-brand);
+}
+.anta-calendar.events a-button[data-part="day-cell"][data-date="2026-06-25"] {
+  color: var(--text-2-critical); font-weight: 600;
+}
 ```
 
 The engine (`buildMonth`, `firstDayOfWeek`, …) is exported, so you can render a

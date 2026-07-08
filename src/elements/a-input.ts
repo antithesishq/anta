@@ -671,6 +671,7 @@ export class AInputElement extends HTMLElementBase {
   /** Form field name — mirrors the `name` attribute, like native `<input>.name`,
    *  so `el.name` works (e.g. keying validation messages by field in a form loop). */
   get name(): string { return this.getAttribute('name') ?? '' }
+  set name(v: string) { this.setAttribute('name', v) }
 
   // --- Form-associated callbacks ---
   formResetCallback() {

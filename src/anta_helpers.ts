@@ -179,6 +179,21 @@ export class SelectableChildElement extends HTMLElementBase {
   get selected(): boolean {
     return this.internals?.states.has('selected') ?? false
   }
+  /**
+   * Live selection, held off the DOM as `:state(selected)` (mirrored to `ariaProp`).
+   * The parent `a-radio-group` / `a-tabs` drives it by assigning the *property* a real
+   * boolean from its `sync()` (`el.selected = r === selectedEl`), so a genuine boolean
+   * is the only input the setter sees in practice.
+   *
+   * `!!on` is deliberate and matches native IDL booleans: `el.selected = ''` yields
+   * `false`, exactly like `input.disabled = '' → false`. Empty string is a falsy
+   * *value*; "presence means true" is an attribute-world rule (it governs `hasAttribute`
+   * in `attributeChangedCallback` and CSS `[selected]` matching) and does not carry to
+   * property assignment. React 19 assigns element props as properties, so a hand-written
+   * `<a-radio selected="">` there reads as `false` while the same markup in plain HTML
+   * reads as `true` — the split every boolean IDL property has. Write bare `selected` /
+   * `selected={true}` for on; both paths agree. Do not "fix" `!!on` to treat `''` as true.
+   */
   set selected(on: boolean) {
     this.applyState(!!on)
   }

@@ -69,6 +69,7 @@ export {
   parseDateTimeInput,
   formatDateTimeInput,
   dateTimeFormatPattern,
+  usesHour12,
 } from './calendar-core'
 export type {
   CalendarDay,

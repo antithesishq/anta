@@ -69,17 +69,24 @@ bound both the calendar and what a typed date will accept.
 <InputDate label="German" locale="de-DE" defaultValue="2026-06-15" />
 ```
 
-`time` turns it into a date-time field. The value becomes `YYYY-MM-DDTHH:mm`, the
-field takes a 24-hour time after a space (`06/15/2026 14:30`, or `2:30pm`), and the
-menu grows a time row under the calendar. Picking a day keeps the menu open so you
-can set the time; the Done button closes it.
+`time` turns it into a date-time field (value `YYYY-MM-DDTHH:mm`). The menu grows a
+time row under the calendar — hours, minutes, and, in 12-hour locales, an AM/PM
+toggle, and a confirm (✓) button; picking a day keeps the menu open so you can set the
+time. The clock follows the locale (`en-US` is 12-hour, most others 24), overridable
+with `hour12`. The field parses a trailing time after a space (`06/15/2026 2:30pm`
+or `… 14:30`), and typing a 24-hour hour into a 12-hour field converts it (18 → 6 PM).
 
-<Preview>
-  <InputDateDemo client:only="preact" label="Starts at" time defaultValue="2026-06-15T09:00" style={{ width: '260px' }} />
+<Preview gap="16px" style="flex-direction: column; align-items: flex-start; padding-left: 40px;">
+  <InputDateDemo client:only="preact" size="small" label="Small" time defaultValue="2026-06-15T09:00" style={{ width: '260px' }} />
+  <InputDateDemo client:only="preact" size="medium" label="Medium" time defaultValue="2026-06-15T09:00" style={{ width: '260px' }} />
+  <InputDateDemo client:only="preact" size="large" label="Large" time defaultValue="2026-06-15T09:00" style={{ width: '260px' }} />
 </Preview>
 
 ```tsx folded
-<InputDate label="Starts at" time defaultValue="2026-06-15T09:00" />
+{/* `size` scales the calendar, the time inputs, the AM/PM toggle, and the buttons together. */}
+<InputDate size="small" label="Small" time defaultValue="2026-06-15T09:00" />
+<InputDate size="medium" label="Medium" time defaultValue="2026-06-15T09:00" />
+<InputDate size="large" label="Large" time defaultValue="2026-06-15T09:00" />
 ```
 
 <Disclosure title="InputDate props" open>

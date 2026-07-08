@@ -430,15 +430,38 @@ export function parseDateTimeInput(
   return date.toPlainDateTime(time ?? Temporal.PlainTime.from('00:00'))
 }
 
-/** A date-time in the canonical display form: the locale's date plus a 24-hour
- *  `HH:mm` (`06/15/2026 14:30`). */
-export function formatDateTimeInput(dt: Temporal.PlainDateTime, locale: string): string {
-  const hh = String(dt.hour).padStart(2, '0')
-  const mm = String(dt.minute).padStart(2, '0')
-  return `${formatDateInput(dt.toPlainDate(), locale)} ${hh}:${mm}`
+/** Whether a locale writes time in 12-hour form (AM/PM). `en-US` is `true`; most
+ *  others (`en-GB`, `de-DE`, `ja-JP`, …) are `false`. Read from `Intl`'s resolved
+ *  `hourCycle` (`h11`/`h12` → 12-hour). */
+export function usesHour12(locale: string): boolean {
+  try {
+    const hc = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions().hourCycle
+    return hc === 'h11' || hc === 'h12'
+  } catch {
+    return false
+  }
 }
 
-/** The placeholder mask for a date-time field: the date mask plus ` HH:MM`. */
-export function dateTimeFormatPattern(locale: string): string {
-  return `${dateFormatPattern(locale)} HH:MM`
+/** A date-time in the canonical display form: the locale's date plus the time in
+ *  the given cycle — 24-hour `HH:mm` (`06/15/2026 14:30`) or 12-hour `hh:mm AM/PM`
+ *  (`06/15/2026 02:30 PM`). `hour12` defaults to the locale's convention. */
+export function formatDateTimeInput(
+  dt: Temporal.PlainDateTime,
+  locale: string,
+  hour12: boolean = usesHour12(locale),
+): string {
+  const date = formatDateInput(dt.toPlainDate(), locale)
+  const mm = String(dt.minute).padStart(2, '0')
+  if (!hour12) return `${date} ${String(dt.hour).padStart(2, '0')}:${mm}`
+  const h12 = ((dt.hour + 11) % 12) + 1
+  return `${date} ${String(h12).padStart(2, '0')}:${mm} ${dt.hour < 12 ? 'AM' : 'PM'}`
+}
+
+/** The placeholder mask for a date-time field: the date mask plus the time mask
+ *  (`HH:MM`, or `HH:MM AM` in 12-hour locales). `hour12` defaults to the locale. */
+export function dateTimeFormatPattern(
+  locale: string,
+  hour12: boolean = usesHour12(locale),
+): string {
+  return `${dateFormatPattern(locale)} HH:MM${hour12 ? ' AM' : ''}`
 }

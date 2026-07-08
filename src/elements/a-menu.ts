@@ -576,9 +576,14 @@ export class AMenuElement extends HTMLElementBase {
    *  used to trap Tab within the open menu. Submenu contents are excluded
    *  (their nearest `a-menu` is the submenu). */
   private focusables(): HTMLElement[] {
+    // `a-input` is listed explicitly: its real control lives in shadow, so the bare
+    // `input` selector can't see it, and without this a slotted Anta field (a time
+    // input, a filter) drops out of the Tab cycle — focus on it then Tab jumps to
+    // the first item instead of the next field. `.focus()` on the host delegates in.
     const sel =
       'a-menu-item, a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]),' +
-      ' select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [data-menu-search]'
+      ' a-input:not([disabled]), select:not([disabled]), textarea:not([disabled]),' +
+      ' [tabindex]:not([tabindex="-1"]), [data-menu-search]'
     return (Array.from(this.querySelectorAll(sel)) as HTMLElement[]).filter(
       (el) =>
         el.closest('a-menu') === this && !el.hasAttribute('disabled') && this.isVisible(el),

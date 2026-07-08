@@ -13,9 +13,9 @@
     --checkbox-bg: var(--bg-1);
 
     /* Default tone is neutral — `brand` (and the rest) are explicit opt-ins. */
-    --checkbox-fill: #938d96;
-    --checkbox-fill-hover: #878089;
-    --checkbox-fill-active: #776e77;
+    --checkbox-fill: #878089;
+    --checkbox-fill-hover: #776e77;
+    --checkbox-fill-active: #635b65;
 
     /* Unselected box border: neutral grey by default. Tinted tones (rule after the
        tones) mix the fill toward this grey so the border sits a bit lighter than the
@@ -248,34 +248,34 @@
      the tone-text rules further down). `neutral` keeps the base greys. The default
      (no [tone]) is untouched — the wrapper omits tone="neutral". */
   a-checkbox[tone="brand"] {
-    --checkbox-fill: #7460d7;
-    --checkbox-fill-hover: #5f4bc3;
-    --checkbox-fill-active: #503cb4;
+    --checkbox-fill: #5f4bc3;
+    --checkbox-fill-hover: #503cb4;
+    --checkbox-fill-active: #483493;
   }
   a-checkbox[tone="neutral"] {
-    --checkbox-fill: #938d96;
-    --checkbox-fill-hover: #878089;
-    --checkbox-fill-active: #776e77;
+    --checkbox-fill: #878089;
+    --checkbox-fill-hover: #776e77;
+    --checkbox-fill-active: #635b65;
   }
   a-checkbox[tone="info"] {
-    --checkbox-fill: #2686d9;
-    --checkbox-fill-hover: #1f6eb2;
-    --checkbox-fill-active: #1a5b93;
+    --checkbox-fill: #1f6eb2;
+    --checkbox-fill-hover: #1a5b93;
+    --checkbox-fill-active: #175082;
   }
   a-checkbox[tone="success"] {
-    --checkbox-fill: #329550;
-    --checkbox-fill-hover: #2a7e43;
-    --checkbox-fill-active: #226737;
+    --checkbox-fill: #2a7e43;
+    --checkbox-fill-hover: #226737;
+    --checkbox-fill-active: #1f5c31;
   }
   a-checkbox[tone="warning"] {
-    --checkbox-fill: #ae6613;
-    --checkbox-fill-hover: #995200;
-    --checkbox-fill-active: #7f410b;
+    --checkbox-fill: #c37416;
+    --checkbox-fill-hover: #ae6613;
+    --checkbox-fill-active: #995200;
   }
   a-checkbox[tone="critical"] {
-    --checkbox-fill: #de4545;
-    --checkbox-fill-hover: #c9302c;
-    --checkbox-fill-active: #b02120;
+    --checkbox-fill: #c9302c;
+    --checkbox-fill-hover: #b02120;
+    --checkbox-fill-active: #a01c1c;
   }
 
   /* `tone-text` drives only the label + hint, via the theme-aware --text-N role

@@ -1,4 +1,5 @@
 import type { IconShape } from "../elements/a-icon.shapes"
+import { markTabsKind } from "../anta_helpers"
 
 /** One tab in a `<Tabs>` strip. A **config component**: `Tabs` reads these props to
  *  render the underlying `<a-tab>` (`tabindex`, `role`, `aria-controls`, and
@@ -36,4 +37,4 @@ export interface TabProps {
  * real `<a-tab>`, so this component itself produces no DOM. Use it as a direct child
  * of `<Tabs>`; rendering it elsewhere does nothing.
  */
-export const Tab = (_props: TabProps): null => null
+export const Tab = markTabsKind((_props: TabProps): null => null, "tab")

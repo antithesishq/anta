@@ -4,11 +4,9 @@
 // (stateless-wrapper exception — Tabs holds the active value to render the roving
 // tabindex + decide which panel shows, exactly like RadioGroup).
 import { useId, useState, Fragment } from "../jsx-runtime"
-import { nativeStateChange, toneStyle, roundStyle, wrapLabel } from "../anta_helpers"
+import { nativeStateChange, toneStyle, roundStyle, wrapLabel, TABS_KIND } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
-import { Tab } from "./Tab"
 import type { TabProps } from "./Tab"
-import { TabPanel } from "./TabPanel"
 import type { TabPanelProps } from "./TabPanel"
 import styles from "./Tabs.module.css"
 
@@ -211,14 +209,11 @@ export const Tabs = ({
   // Tabs come from `options` (data-driven, like RadioGroup) when provided,
   // otherwise from `<Tab>` children. Panels always come from `<TabPanel>`
   // children — so `options` + child panels compose.
-  // Children are matched by function name, not reference (`c?.type === Tab`): a
-  // duplicate anta copy (federated bundles, dual CDN loads, sandbox platforms) makes the
-  // consumer's `Tab` a different object, so a reference check would drop every child and
-  // render an empty strip.
+  // Matched by their `TABS_KIND` stamp, not reference — survives a duplicate anta copy.
   const tabs = options
     ? options.map((o) => ({ props: o as TabProps }))
-    : (items.filter((c) => c?.type?.name === Tab.name) as { props: TabProps }[])
-  const panels = items.filter((c) => c?.type?.name === TabPanel.name) as { props: TabPanelProps }[]
+    : (items.filter((c) => c?.type?.[TABS_KIND] === "tab") as { props: TabProps }[])
+  const panels = items.filter((c) => c?.type?.[TABS_KIND] === "panel") as { props: TabPanelProps }[]
   // Set once so each tab's `aria-controls` lookup is O(1), not an O(panels) scan per tab.
   const panelValues = new Set(panels.map((pan) => pan.props.value))
 

@@ -153,7 +153,7 @@ export class ATextElement extends HTMLElementBase {
 
   connectedCallback() {
     this.syncExpandButton()
-    if (this.isExpandable) this.startOverflowObserver()
+    if (this.#isExpandable) this.startOverflowObserver()
   }
 
   disconnectedCallback() {
@@ -168,28 +168,28 @@ export class ATextElement extends HTMLElementBase {
     if (name === 'truncate' || name === 'expandable') this.setExpanded(false)
     this.syncExpandButton()
     if (name === 'truncate' || name === 'expandable') {
-      if (this.isExpandable) this.startOverflowObserver()
+      if (this.#isExpandable) this.startOverflowObserver()
       else this.stopOverflowObserver()
     }
   }
 
-  private get isExpandable(): boolean {
+  get #isExpandable(): boolean {
     return this.hasAttribute('truncate') && this.hasAttribute('expandable')
   }
-  private get isCollapsible(): boolean {
+  get #isCollapsible(): boolean {
     return this.hasAttribute('collapsible')
   }
 
   /** Create or remove the chevron to match `expandable`, then refresh it. */
   private syncExpandButton() {
-    if (this.isExpandable && !this.expandBtn) {
+    if (this.#isExpandable && !this.expandBtn) {
       const btn = document.createElement('button')
       btn.className = 'expand-btn'
       btn.type = 'button'
       btn.addEventListener('click', this.handleToggle)
       this.shadowRoot!.append(btn)
       this.expandBtn = btn
-    } else if (!this.isExpandable && this.expandBtn) {
+    } else if (!this.#isExpandable && this.expandBtn) {
       this.expandBtn.remove()
       this.expandBtn = undefined
     }
@@ -209,7 +209,7 @@ export class ATextElement extends HTMLElementBase {
   }
 
   private startOverflowObserver() {
-    if (!this.isExpandable) return
+    if (!this.#isExpandable) return
     this.overflowObserver ??= new ResizeObserver(() => this.measureOverflow())
     this.contentObserver ??= new MutationObserver(() => this.measureOverflow())
     this.overflowObserver.observe(this.slotEl)
@@ -226,7 +226,7 @@ export class ATextElement extends HTMLElementBase {
   /** Toggle `slot.overflowing` (gates the fade + chevron) to whether the clamp
    *  clips. Frozen on while expanded; height catches wrapped text, width a long word. */
   private measureOverflow() {
-    if (!this.isExpandable || this.expanded) return
+    if (!this.#isExpandable || this.expanded) return
     const s = this.slotEl
     const over = s.scrollHeight > s.clientHeight + 1 || s.scrollWidth > s.clientWidth + 1
     s.classList.toggle('overflowing', over)
@@ -237,7 +237,7 @@ export class ATextElement extends HTMLElementBase {
   private refreshButton() {
     const btn = this.expandBtn
     if (!btn) return
-    if (this.expanded && !this.isCollapsible) {
+    if (this.expanded && !this.#isCollapsible) {
       btn.remove()
       this.expandBtn = undefined
       return

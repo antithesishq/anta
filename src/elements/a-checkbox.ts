@@ -97,16 +97,16 @@ export class ACheckboxElement extends HTMLElementBase {
     // input's `checked` attribute reflection doesn't fire `change`. Once dirtied —
     // or once `state` is present — later changes are ignored. (`value` only
     // re-syncs the form entry.)
-    if (name === "default-state" && !this.isControlled && !this.dirty) this.seed();
+    if (name === "default-state" && !this.#isControlled && !this.dirty) this.seed();
     this.paint();
   }
 
   // Matches the host `disabled` attribute and an ancestor `<fieldset disabled>`.
-  private get isDisabled() {
+  get #isDisabled() {
     return this.matches(":disabled");
   }
   // Controlled mode: the `state` attribute is present and owns the live value.
-  private get isControlled() {
+  get #isControlled() {
     return this.hasAttribute("state");
   }
 
@@ -125,7 +125,7 @@ export class ACheckboxElement extends HTMLElementBase {
   }
 
   private toggle(_e: Event) {
-    if (this.isDisabled) return;
+    if (this.#isDisabled) return;
     const prev = this.currentState;
     // Indeterminate resolves to checked; otherwise flip (native convention).
     const next: CheckboxState = prev === "checked" ? "unchecked" : "checked";
@@ -139,7 +139,7 @@ export class ACheckboxElement extends HTMLElementBase {
     );
     // Controlled: never self-apply — wait for the consumer to update `state`.
     // Uncontrolled: apply unless a listener synchronously preventDefault()'d.
-    if (this.isControlled) return;
+    if (this.#isControlled) return;
     if (ok) {
       this.currentState = next;
       this.dirty = true;

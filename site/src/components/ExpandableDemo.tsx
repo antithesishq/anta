@@ -22,6 +22,10 @@ export default function ExpandableDemo() {
         <span class="demoLabel">truncate=&#123;5&#125; expandable</span>
         <div class="demoBox"><Text truncate={5} expandable>{longText}</Text></div>
       </div>
+      <div class="demoRow">
+        <span class="demoLabel">truncate=&#123;3&#125; expandable collapsible</span>
+        <div class="demoBox"><Text truncate={3} expandable collapsible>{longText}</Text></div>
+      </div>
     </div>
   )
 }

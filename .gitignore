@@ -18,3 +18,4 @@ site/public/iframe-anta-runtime.js
 .DS_Store
 **/.DS_Store
 .dev.pid
+site/public/iframe/

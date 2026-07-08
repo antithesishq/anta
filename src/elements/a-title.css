@@ -28,6 +28,8 @@
   a-title[priority="quaternary"] { color: var(--text-4); }
   a-title[priority="quinary"]    { color: var(--text-5); }
 
+  /* tone="neutral" has no rule on purpose — it is the untinted default, resolved
+     by the base + priority rules above (the --text-N scale). */
   a-title[tone="brand"]                          { color: var(--text-1-brand);    }
   a-title[tone="brand"][priority="secondary"]    { color: var(--text-2-brand);    }
   a-title[tone="brand"][priority="tertiary"]     { color: var(--text-3-brand);    }

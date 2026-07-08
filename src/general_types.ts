@@ -14,6 +14,9 @@ export interface BaseProps {
   title?: string
   /** Tab order. Set to `-1` to skip the element when tabbing. */
   tabIndex?: number
+  /** React/Preact reconciliation key when rendered inside a list. Consumed by the
+   *  JSX runtime (not forwarded as a DOM attribute). */
+  key?: string | number | null
   /** Any `data-*` attribute is forwarded to the rendered element. */
   [key: `data-${string}`]: unknown
   /** Any `aria-*` attribute is forwarded to the rendered element. */
@@ -185,8 +188,9 @@ export interface AProgressAttributes extends BaseAttributes {
 export interface ATextAttributes extends BaseAttributes {
   /** Visual priority. Maps to text-1..text-5. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. Applies the matching `--text-{N}-{tone}` palette. */
-  tone?: 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale;
+   *  the others apply the matching `--text-{N}-{tone}` palette. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Type scale. `small` = 13/16, `medium` (default) = 15/20, `large` = 17/24. */
   size?: 'small' | 'medium' | 'large'
   /** Render as inline-block instead of the default block. */
@@ -219,8 +223,9 @@ export interface ATitleAttributes extends BaseAttributes {
   level?: string
   /** Visual priority. Maps to text-1..text-5. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. Applies the matching `--text-{N}-{tone}` palette. */
-  tone?: 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale;
+   *  the others apply the matching `--text-{N}-{tone}` palette. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** ARIA role — the JSX wrapper sets this to `'heading'`. */
   role?: string
   /** ARIA heading level — the JSX wrapper sets this to match `level`. */
@@ -376,15 +381,15 @@ export interface ATooltipAttributes extends BaseAttributes {
  * `@antadesign/anta`.
  */
 export interface ACheckboxAttributes extends BaseAttributes {
-  /** Mark colour (checked fill + unselected box border), or any literal CSS color
-   *  for a one-off custom tone. Named tones track light/dark mode automatically via
-   *  the theme-aware role tokens. `'neutral'` is the default (same as omitting it).
-   *  The label + hint stay neutral — use `tone-text` for those. */
+  /** Mark colour in every state — checked fill *and* unselected box border — or any
+   *  literal CSS color for a one-off custom tone. Named tones track light/dark mode
+   *  automatically. `'neutral'` is the default (same as omitting it). The label + hint
+   *  stay neutral — recolour them in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Text colour (label + hint), independent of `tone`. A named tone or any literal
-   *  CSS color; named tones track light/dark via the `--text-*` role tokens. Omit
-   *  (or `'neutral'`) to leave the text neutral. */
-  'tone-text'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Like `tone`, but coloured onto the checked mark only — the empty box stays
+   *  neutral grey. Same value set as `tone`; if both are set, `tone` governs the
+   *  off-state border and `tone-selected` the checked fill. */
+  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. `small` = 14px, `medium` (default) = 16px, `large` = 18px box. */
   size?: 'small' | 'medium' | 'large'
   /** Controlled state — the element reflects changes to this attribute. Use this
@@ -497,6 +502,57 @@ export interface AInputAttributes extends BaseAttributes {
 }
 
 /**
+ * Attributes for the `<a-calendar>` custom element — a **light-DOM,
+ * form-associated** month grid, and the **interaction authority** for it. The
+ * element is the grid (a flat 7-column CSS grid whose children are the weekday
+ * headers + day cells), owns the submitted form value, and **dispatches the
+ * selection (`statechange` / `change`) and navigation (`navigate`) events** plus
+ * manages keyboard focus — so it works for a vanilla consumer, not only via the
+ * wrapper. It does **not** build or mutate its own contents: whoever renders into
+ * it (the `Calendar` JSX wrapper, or a vanilla consumer using the exported
+ * `buildMonth` engine) fills it with day cells and *re-renders on its events* —
+ * the `<a-radio-group>` model. Controlled by the presence of `value` (a pick only
+ * *requests* a change); uncontrolled with `defaultvalue` (a pick self-applies).
+ * For the typed, batteries-included wrapper use `Calendar` from `@antadesign/anta`.
+ *
+ * `:state(filled)` is the styling hook for "has a selection".
+ */
+export interface ACalendarAttributes extends BaseAttributes {
+  /** Controlled selected date — ISO `YYYY-MM-DD`. Present → controlled (a pick
+   *  only requests a change). Mirrored to the owning form via `ElementInternals`. */
+  value?: string
+  /** Uncontrolled initial date / reset baseline — ISO `YYYY-MM-DD`. */
+  defaultvalue?: string
+  /** Form field name — the selected ISO date submits under this key. */
+  name?: string
+  /** Disable the whole calendar. Presence-based (`''` on, omit off). */
+  disabled?: boolean | ''
+  /** Focus signal — `"<iso>#<nonce>"`. When it changes, the element focuses the
+   *  day cell whose `data-date` matches `<iso>` (set by the renderer after a
+   *  month-changing keyboard move). */
+  'data-focus'?: string
+  /** Cancelable, bubbling `statechange` fired BEFORE a pick applies. `detail` is
+   *  `{ next, prev, reason }` — ISO strings (or `null`); `reason` ∈
+   *  `'user' | 'reset' | 'restore'`. `preventDefault()` vetoes a `'user'` pick in
+   *  uncontrolled mode. */
+  onstatechange?: (
+    e: CustomEvent<{ next: string | null; prev: string | null; reason: 'user' | 'reset' | 'restore' }>,
+  ) => void
+  /** Native `change`, fired AFTER a selection applies (uncontrolled) and on
+   *  reset/restore. */
+  onchange?: (e: Event) => void
+  /** Keyboard navigation request — the element handles arrow / Home / End /
+   *  PageUp / PageDown, focuses the target cell when it's rendered, and emits this
+   *  bubbling `navigate` `CustomEvent` (`detail: { date }`, ISO) so the renderer can
+   *  move the roving tab stop and flip the displayed month when needed. */
+  onnavigate?: (e: CustomEvent<{ date: string }>) => void
+  /** ARIA — `role="group"` and the accessible name are set by the renderer (the
+   *  `Calendar` wrapper wires `aria-labelledby` to the month heading). */
+  'aria-label'?: string
+  'aria-labelledby'?: string
+}
+
+/**
  * Attributes for the `<a-menu>` custom element. Placed immediately after the
  * trigger it anchors to (root menu), or nested inside an `<a-menu-item>`
  * (submenu). For the typed JSX wrapper use `Menu` from `@antadesign/anta`.
@@ -547,9 +603,15 @@ export interface AMenuAttributes extends BaseAttributes {
 export interface AMenuItemAttributes extends BaseAttributes {
   /** Disabled state. Presence-based (`''` on, omit off). */
   disabled?: boolean | ''
-  /** Semantic tone. Colors the label, icon, and hover tint. `'neutral'`
-   *  (the default) is the same as omitting it. */
-  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Marks the item as selected — a persistent background tint (the same
+   *  resting look a pressed row shows), for building single- / multi-select
+   *  menus. Presence-based (`''` on, omit off). */
+  selected?: boolean | ''
+  /** Semantic tone. Colors the label, icon, and hover/selected tint. A named tone,
+   *  or any literal CSS color for a one-off custom tone (resolved through
+   *  `--menu-item-tone-source`, hue/chroma kept, lightness pinned to the brand
+   *  text). `'neutral'` (the default) is the same as omitting it. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Keep the menu open after this item is chosen (toggles / multi-select),
    *  instead of the default close-on-select. Presence-based (`''` on, omit
    *  off). The universal form is `data-menu-open` (works on any element). */
@@ -631,15 +693,15 @@ export interface AButtonAttributes extends BaseAttributes {
 export interface ARadioAttributes extends BaseAttributes {
   /** This option's identity / submitted value. */
   value?: string
-  /** Mark colour (selected ring fill + dot, unselected ring border), or any literal
-   *  CSS color for a one-off custom tone. Named tones track light/dark mode via the
-   *  theme-aware role tokens. `'neutral'` is the default. The label + hint stay
-   *  neutral — use `tone-text` for those. */
+  /** Mark colour in every state — selected ring fill + dot *and* unselected ring
+   *  border — or any literal CSS color for a one-off custom tone. Named tones track
+   *  light/dark mode. `'neutral'` is the default. The label + hint stay neutral —
+   *  recolour them in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Text colour (label + hint), independent of `tone`. A named tone or any literal
-   *  CSS color; named tones track light/dark via the `--text-*` role tokens. Omit
-   *  (or `'neutral'`) to leave the text neutral. */
-  'tone-text'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Like `tone`, but coloured onto the selected mark only — an unselected ring stays
+   *  neutral grey. Same value set as `tone`; if both are set, `tone` governs the
+   *  off-state border and `tone-selected` the selected fill. */
+  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=14px, medium=16px, large=18px control. */
   size?: 'small' | 'medium' | 'large'
   /** Disabled state. Presence-based (`''` on, omit off). */
@@ -683,13 +745,13 @@ export interface ARadioGroupAttributes extends BaseAttributes {
   /** Form field name — the group submits `name=value`. */
   name?: string
   /** Mark tone cascaded to children that don't set their own, or any literal CSS
-   *  color for a one-off custom tone. Inherits through CSS so every child
-   *  `<a-radio>` picks up the same fill curve. The option text stays neutral —
-   *  use `tone-text`. */
+   *  color for a one-off custom tone. Colours every child's ring fill + dot *and*
+   *  unselected border. The option text stays neutral — recolour it in plain CSS via
+   *  the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Text tone cascaded to children's label + hint, independent of `tone`. A named
-   *  tone or any literal CSS color. Omit (or `'neutral'`) to leave the text neutral. */
-  'tone-text'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Like `tone`, but coloured onto the selected option only — every unselected ring
+   *  stays neutral grey. Cascaded to children that don't set their own. */
+  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size cascaded to children that don't set their own. */
   size?: 'small' | 'medium' | 'large'
   /** Validation/feedback tone for the group hint — same set as `<a-input>`'s

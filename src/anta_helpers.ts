@@ -87,6 +87,20 @@ export function roundStyle(
 }
 
 /**
+ * The rect a floating-element anchor advertises for positioning. Any element may
+ * implement `getAnchorRect(): DOMRect` to point positioners (`a-menu`,
+ * `a-tooltip`) at a sub-region of itself — e.g. `a-input` returns its `.field`
+ * box rather than the host, whose box also spans the label / hint, so a menu or
+ * tooltip lines up with the field itself. Elements without it fall back to their
+ * border box (`getBoundingClientRect`), so this is opt-in and back-compatible.
+ * Shared by a-menu and a-tooltip.
+ */
+export function anchorRect(el: Element): DOMRect {
+  const fn = (el as { getAnchorRect?: () => DOMRect }).getAnchorRect
+  return typeof fn === 'function' ? fn.call(el) : el.getBoundingClientRect()
+}
+
+/**
  * `HTMLElement` in browsers, a noop class in Node/Worker environments.
  * Use this as the base for custom element classes so importing the
  * module in a non-DOM environment doesn't throw on `extends HTMLElement`.
@@ -112,5 +126,61 @@ export class HTMLElementBase extends NativeHTMLElement {
   /** This element's own document (the iframe's document when nested). */
   protected get doc(): Document {
     return this.ownerDocument ?? document
+  }
+}
+
+/**
+ * Base for a coordinated presentational child — one option in a control whose
+ * parent owns the selection (`<a-radio>` in `<a-radio-group>`, `<a-tab>` in
+ * `<a-tabs>`). The parent is the single source of truth and pushes selection down
+ * by setting the `selected` *property* (never an attribute — that would mutate the
+ * child's DOM, which app-DOM-in-a-worker forbids). This child's only job is to
+ * reflect that into a `:state(selected)` custom state (the CSS hook) and one ARIA
+ * property — `aria-checked` for radios, `aria-selected` for tabs — through its OWN
+ * ElementInternals. It owns no selection *logic*: the `internals` bit is a render
+ * latch, not authoritative state.
+ *
+ * The `selected` attribute is a hand-author / raw-assembly seed for the initial
+ * paint only. `connectedCallback` reads it **ON-only, never OFF**: under eager
+ * element registration the parent connects first (parent-before-child tree order)
+ * and has already set the property by the time this runs, so forcing OFF for an
+ * absent attribute would silently clobber that initial selection (state right,
+ * nothing painted). The resting latch is already off, so seeding only-ON loses
+ * nothing. After connect, both the property setter and `attributeChangedCallback`
+ * drive selection two-way. Encoding the guard here (not per element) is what makes
+ * the clobber bug impossible by construction for every child that extends this.
+ *
+ * Subclasses set `ariaProp` to the ARIA reflection property their role needs.
+ */
+export class SelectableChildElement extends HTMLElementBase {
+  static observedAttributes = ['selected']
+  /** ARIA property this element reflects selection into. Subclass sets it. */
+  protected ariaProp: 'ariaChecked' | 'ariaSelected' = 'ariaChecked'
+  private internals? = this.attachInternals?.()
+
+  connectedCallback() {
+    if (this.hasAttribute('selected')) this.applyState(true)
+  }
+
+  attributeChangedCallback(name: string) {
+    if (name === 'selected') this.applyState(this.hasAttribute('selected'))
+  }
+
+  get selected(): boolean {
+    return this.internals?.states.has('selected') ?? false
+  }
+  set selected(on: boolean) {
+    this.applyState(!!on)
+  }
+
+  get value(): string {
+    return this.getAttribute('value') ?? ''
+  }
+
+  protected applyState(on: boolean) {
+    if (!this.internals) return
+    if (on) this.internals.states.add('selected')
+    else this.internals.states.delete('selected')
+    this.internals[this.ariaProp] = on ? 'true' : 'false'
   }
 }

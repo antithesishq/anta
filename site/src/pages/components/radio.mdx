@@ -114,39 +114,40 @@ The group's own `label` and `hint` form a header **above** the options: the
 <Col>
 
 Six named tones — `neutral` (default), `brand`, `info`, `success`, `warning`,
-`critical`. `tone` colours the **mark** — the selected-ring fill + dot and (for a
-tinted tone) the unselected ring border (a light shade of the fill that darkens on
-hover and active, like the neutral ring; `neutral` keeps a grey ring). The label and
-hint stay neutral — use `toneText` for those. Set `tone` on the `RadioGroup` to
-colour every option, or on a single option to override just that one. Any literal
-CSS colour works too, for a one-off custom tone.
+`critical`. `tone` colours the **mark** in every state — the selected-ring fill + dot
+and (for a tinted tone) the unselected ring border (a light shade of the fill that
+darkens on hover and active; `neutral` keeps a grey ring). The label and hint stay
+neutral — colour them in plain CSS with the `--text-N-{tone}` tokens. Set `tone` on
+the `RadioGroup` to colour every option, or on a single option to override just that
+one. Any literal CSS colour works too, for a one-off custom tone.
 
 </Col>
 </Columns>
 
-## Text tone
+## Selected-only tone
 
 <Columns>
 <Col>
 
 <Preview>
   <RadioGroup
-    name="tone-text"
+    name="tone-selected"
     defaultValue="a"
-    toneText="info"
+    toneSelected="brand"
     options={[
-      { value: 'a', label: 'Option A', hint: 'With a hint' },
+      { value: 'a', label: 'Option A' },
       { value: 'b', label: 'Option B' },
+      { value: 'c', label: 'Option C' },
     ]}
   />
 </Preview>
 
 ```tsx folded
 <RadioGroup
-  toneText="info"
+  toneSelected="brand"
   defaultValue="a"
   options={[
-    { value: 'a', label: 'Option A', hint: 'With a hint' },
+    { value: 'a', label: 'Option A' },
     { value: 'b', label: 'Option B' },
   ]}
 />
@@ -155,10 +156,13 @@ CSS colour works too, for a one-off custom tone.
 </Col>
 <Col>
 
-`toneText` colours the **label and hint**, independent of `tone` — colour the mark,
-the text, or both. Same tone set (named or any CSS colour); set it on the group to
-colour every option's text, or on a single option to override one. Omit to leave the
-text neutral.
+`toneSelected` tones the **selected option only** — every unselected ring stays
+neutral grey. Reach for it instead of `tone` when a resting tinted border would read
+as a validation error. Same tone set; set it on the group, or on a single option to
+override one.
+
+To colour the **label and hint**, there's no prop — add a `color` rule on the
+option's `a-radio-label` / `a-radio-hint` with a `--text-N-{tone}` value.
 
 </Col>
 </Columns>
@@ -425,6 +429,12 @@ restore vs user); for the everyday "react to the new value", use **`onValueChang
 and leaving the *group* (wired to `focusin` / `focusout`, since focus lands on an
 individual option).
 
+The group has `onStateChange` because its selection is a **discrete** state (one
+of a fixed set) the element self-applies — so a transition can be vetoed before it
+lands, and it carries `reason`. Value-based composites without a self-applying
+element — `Input`, and the composed `Select` — skip it and expose only
+`onValueChange`; the `onValueChange` shape is the same across all of them.
+
 ```tsx folded
 <RadioGroup onValueChange={(_e, { value }) => save(value)} options={…} />
 ```
@@ -437,10 +447,12 @@ individual option).
 
 <Disclosure title="Styling">
 
-Reach for the props first: **`tone`** colours the mark (any CSS colour for a custom
-tone, set on the group or a single option — derives the full curve in oklch),
-**`toneText`** the label + hint, **`size`** the dimensions + type. The focus ring is
-the global [`--focus-ring`](/colors/#focus-ring).
+Reach for the props first: **`tone`** colours the mark in every state,
+**`toneSelected`** only the selected option (any CSS colour for a custom tone, set on
+the group or a single option — derives the full curve in oklch), **`size`** the
+dimensions + type. To tint the label + hint, add a `color` rule on the option's
+`a-radio-label` / `a-radio-hint` with the `--text-N-{tone}` values — there's no
+text-tone prop. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).
 
 ```tsx folded
 <RadioGroup tone="#e0457b" defaultValue="a" options={[{ value: 'a', label: 'A' }]} />

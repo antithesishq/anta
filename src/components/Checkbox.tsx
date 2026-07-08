@@ -67,19 +67,21 @@ export interface CheckboxProps extends BaseProps {
   /** Value submitted with the form when checked — like a native checkbox.
    *  @defaultValue "on" */
   value?: string
-  /** Colour of the **mark** — the checked-box fill and the unselected box border.
-   *  A named tone or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a
-   *  one-off custom tone. Named tones track light/dark mode automatically via the
-   *  theme-aware role tokens; a custom colour keeps its hue + chroma and pins
-   *  lightness to the fill curve. The label + hint stay neutral — use `toneText`
-   *  to recolour those.
+  /** Colour of the **mark** in every state — the checked-box fill *and* the
+   *  unselected box border. A named tone or any literal CSS color (`'#ff1493'`,
+   *  `'rebeccapurple'`) for a one-off custom tone. Named tones track light/dark mode
+   *  automatically; a custom colour keeps its hue + chroma and pins lightness to the
+   *  fill curve. Use `toneSelected` instead to tone only the checked mark and leave
+   *  the empty box neutral. The label + hint stay neutral — recolour them in plain
+   *  CSS via the theme-aware `--text-N-{tone}` tokens.
    *  @defaultValue 'neutral' */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Colour of the **text** — the label and hint — independent of `tone`. A named
-   *  tone or any literal CSS color. Named tones track light/dark via the theme-aware
-   *  `--text-*` role tokens. Omit to leave the text neutral.
+  /** Like `tone`, but coloured onto the **checked mark only** — the empty box stays
+   *  neutral grey until it's checked. Prefer this over `tone` when a resting tinted
+   *  border would read as a validation state. Same value set as `tone`; if both are
+   *  set, `tone` governs the off-state border and `toneSelected` the checked fill.
    *  @defaultValue 'neutral' */
-  toneText?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  toneSelected?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=14px, medium=16px, large=18px box.
    *  @defaultValue 'medium' */
   size?: 'small' | 'medium' | 'large'
@@ -119,7 +121,7 @@ export const Checkbox = ({
   defaultChecked,
   disabled,
   tone,
-  toneText,
+  toneSelected,
   size,
   round,
   onStateChange,
@@ -138,15 +140,16 @@ export const Checkbox = ({
   // publishes it off-DOM via `ElementInternals`, so it stays live through
   // uncontrolled self-toggles (a wrapper-set value would go stale there).
 
-  // A non-named tone/toneText is a custom CSS color — `toneStyle` hands each to the
-  // element via its `--checkbox-tone-source` / `--checkbox-tone-text-source` var; the
-  // element's CSS derives the fill / text curve. Chained so both can be custom.
+  // A non-named tone/toneSelected is a custom CSS color — `toneStyle` hands it to the
+  // element via the shared `--checkbox-tone-source` var (both drive the same fill
+  // curve; they differ only in whether the off-state border tints, which the CSS keys
+  // off the attribute name). Chained so whichever is custom sets the source.
   const computedStyle = roundStyle(
     round,
     '--checkbox-round',
     toneStyle(
-      toneText,
-      '--checkbox-tone-text-source',
+      toneSelected,
+      '--checkbox-tone-source',
       toneStyle(tone, '--checkbox-tone-source', style),
     ),
   )
@@ -203,7 +206,7 @@ export const Checkbox = ({
       default-state={defaultStateAttr}
       disabled={disabled ? '' : undefined}
       tone={tone && tone !== 'neutral' ? tone : undefined}
-      tone-text={toneText && toneText !== 'neutral' ? toneText : undefined}
+      tone-selected={toneSelected && toneSelected !== 'neutral' ? toneSelected : undefined}
       size={size && size !== 'medium' ? size : undefined}
       round={round ? '' : undefined}
       tabIndex={disabled ? -1 : (tabIndex ?? 0)}

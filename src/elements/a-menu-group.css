@@ -3,8 +3,13 @@
     display: none;
   }
 
+  /* Match the 1px inter-item gap the menu's scroll body gives top-level items, so
+     items inside a group don't touch (two tinted rows — a selected + the active
+     cursor — would otherwise merge into one block). */
   a-menu-group {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
   }
 
   a-menu-group-label {

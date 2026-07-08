@@ -54,6 +54,12 @@ export interface MenuItemProps extends BaseProps {
    *  gray.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Like `tone`, but applied only while the row is `selected` — an unselected row
+   *  stays neutral. The whole selected row (label, icon, tint, and the `checkbox` /
+   *  `radio` indicator) takes the tone. Same value set as `tone`; on a selected row
+   *  `toneSelected` wins over `tone` when both are set.
+   *  @defaultValue neutral */
+  toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Marks this item as a submenu parent: adds the trailing chevron,
    *  `aria-haspopup="menu"`, and an `aria-expanded` baseline (kept in sync by
    *  the nested menu). Nest the flyout as a `<Menu>` child. */
@@ -105,6 +111,7 @@ export const MenuItem = ({
   indeterminate,
   indicator,
   tone,
+  toneSelected,
   submenu,
   value,
   onSelect,
@@ -134,11 +141,14 @@ export const MenuItem = ({
         ? 'true'
         : 'false'
   const keepTint = selected && (selectionIndicator === undefined || selectionIndicator === 'check')
+  // `toneSelected` tones the whole row (text, icon, tint, indicator) only while the
+  // row is selected; `tone` tones it always. On a selected row toneSelected wins.
+  const effectiveTone = (selected && toneSelected) || tone
   // A named tone travels as the attribute; a custom colour also needs its
   // `--{component}-tone-source` var set inline (the typed `attr()` path only
   // resolves on newer engines) — for the host and, so it adopts the row's tone,
   // the checkbox/radio indicator.
-  const toneAttr = tone && tone !== 'neutral' ? tone : undefined
+  const toneAttr = effectiveTone && effectiveTone !== 'neutral' ? effectiveTone : undefined
   return (
     <a-menu-item
       role={role}
@@ -148,7 +158,7 @@ export const MenuItem = ({
       aria-checked={ariaChecked}
       // 'neutral' is the implicit default — emit no DOM attribute.
       tone={toneAttr}
-      style={toneStyle(tone, '--menu-item-tone-source', style)}
+      style={toneStyle(effectiveTone, '--menu-item-tone-source', style)}
       submenu={submenu ? '' : undefined}
       aria-haspopup={submenu ? 'menu' : undefined}
       // Resting baseline; the nested submenu's a-menu element reflects the
@@ -194,7 +204,7 @@ export const MenuItem = ({
           aria-hidden="true"
           state={indeterminate ? 'indeterminate' : selected ? 'checked' : 'unchecked'}
           tone={toneAttr}
-          style={toneStyle(tone, '--checkbox-tone-source')}
+          style={toneStyle(effectiveTone, '--checkbox-tone-source')}
         />
       ) : selectionIndicator === 'radio' ? (
         // Real boolean, not the ''/undefined presence form: `a-radio` has a
@@ -206,7 +216,7 @@ export const MenuItem = ({
           aria-hidden="true"
           selected={!!selected}
           tone={toneAttr}
-          style={toneStyle(tone, '--radio-tone-source')}
+          style={toneStyle(effectiveTone, '--radio-tone-source')}
         />
       ) : null}
       {icon && <a-icon shape={icon} aria-hidden="true" />}

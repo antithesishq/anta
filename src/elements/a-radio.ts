@@ -1,4 +1,4 @@
-import { HTMLElementBase } from "../anta_helpers";
+import { SelectableChildElement } from "../anta_helpers";
 import "./a-radio.css";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -11,52 +11,17 @@ import "./a-radio.css";
 // ElementInternals. So the group can drive selection without writing any attribute
 // to the radio — which is what keeps the whole control free of DOM mutation.
 //
+// All of that (the property/attribute contract, the ON-only connect seed that stops
+// the group's initial selection being clobbered) lives in SelectableChildElement,
+// shared with <a-tab>; this class only pins the ARIA property to `aria-checked`
+// (role="radio" comes from the wrapper, which gives it something to attach to).
+//
 // Focus/`tabindex` is deliberately NOT this element's concern: in the JSX wrapper
 // path the wrapper renders a roving `tabindex` declaratively; in raw hand-assembly
 // the group is the tab stop and uses aria-activedescendant. See a-radio-group.ts.
 // ─────────────────────────────────────────────────────────────────────────────
-export class ARadioElement extends HTMLElementBase {
-  static observedAttributes = ["selected"];
-  private internals?: ElementInternals;
-
-  constructor() {
-    super();
-    this.internals = this.attachInternals?.();
-  }
-
-  connectedCallback() {
-    // Reflect a hand-authored `selected` attribute as the initial paint; the
-    // enclosing <a-radio-group> observes child add/remove and drives selection
-    // thereafter (its MutationObserver catches this radio appearing).
-    this.applyState(this.hasAttribute("selected"));
-  }
-
-  attributeChangedCallback(name: string) {
-    if (name === "selected") this.applyState(this.hasAttribute("selected"));
-  }
-
-  get selected(): boolean {
-    return this.internals?.states.has("selected") ?? this.hasAttribute("selected");
-  }
-  set selected(on: boolean) {
-    this.applyState(!!on);
-  }
-
-  get value(): string {
-    return this.getAttribute("value") ?? "";
-  }
-
-  // `selected` is the single source: it drives the visual `:state(selected)` and
-  // publishes `aria-checked` through ElementInternals (the accessibility tree,
-  // not a DOM attribute). The group only sets `r.selected`; the radio owns how it
-  // reflects that. role="radio" comes from the wrapper, which gives ariaChecked
-  // something to attach to.
-  private applyState(on: boolean) {
-    if (!this.internals) return;
-    if (on) this.internals.states.add("selected");
-    else this.internals.states.delete("selected");
-    this.internals.ariaChecked = on ? "true" : "false";
-  }
+export class ARadioElement extends SelectableChildElement {
+  protected ariaProp = "ariaChecked" as const;
 }
 
 export function register_a_radio() {

@@ -57,6 +57,11 @@ const FORWARDED = [
   'placeholder', 'type', 'name', 'autocomplete', 'inputmode',
   'maxlength', 'minlength', 'pattern', 'spellcheck', 'readonly', 'required',
   'min', 'max', 'step',
+  // `aria-label` on the host names the internal control (the actual textbox);
+  // without forwarding it, a bare `<a-input aria-label>` leaves the control
+  // unnamed. `applyLabelAria` already defers to a host `aria-label` over the
+  // label-slot text, so the two don't fight.
+  'aria-label',
 ] as const
 // Presence-based among the forwarded set (toggled, not value-copied).
 const BOOL_FORWARDED = new Set(['readonly', 'required'])

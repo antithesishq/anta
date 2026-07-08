@@ -1,0 +1,484 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: InputDate
+---
+import Playground from '../../components/Playground'
+import Preview from '../../components/Preview.astro'
+import PropsTable from '../../components/PropsTable.astro'
+import Disclosure from '../../components/Disclosure.astro'
+import Columns from '../../components/Columns.astro'
+import Col from '../../components/Col.astro'
+import dateInputDemoCode from './input-date.demo.ts'
+import CalendarDemo from '../../components/CalendarDemo'
+import InputDateDemo from '../../components/InputDateDemo'
+
+# InputDate
+
+**`InputDate`** is a date field that replaces the native `type="date"` (and, with
+`time`, `type="datetime-local"`): a text field you can type into, backed by a
+`Calendar` that opens from the trailing button. `Calendar`, the month grid it builds
+on, is documented lower down.
+
+The field accepts free text and resolves it on commit (blur / Enter): a lenient
+parser reads the locale's order (`06/07/2026` is June 7 in en-US, July 6 in de-DE),
+month names, and run-together digits, then rewrites the entry to the canonical
+format. An unrecognized entry marks the field until you fix it. The value is an ISO
+`YYYY-MM-DD` string, never a `Date`; it works controlled (`value` + `onValueChange`)
+or uncontrolled (`defaultValue`), and submits under `name`.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="InputDate"
+  layout="side"
+  panelHeight={460}
+  initialCode={dateInputDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; align-items: center; justify-content: center; }`}
+/>
+
+</Disclosure>
+
+## The date field
+
+Type a date and it resolves on blur or <kbd>Enter</kbd>, or open the calendar from
+the trailing button and pick a day. Either way the field settles on the locale's
+canonical format and the value is ISO `YYYY-MM-DD`. Focusing the field just places
+the cursor to type; only the button opens the calendar.
+
+<Preview>
+  <InputDateDemo client:only="preact" label="Due date" defaultValue="2026-06-15" style={{ width: '260px' }} />
+</Preview>
+
+```tsx folded
+<InputDate label="Due date" defaultValue="2026-06-15" onValueChange={(v) => save(v)} />
+```
+
+The placeholder shows the locale's format, and parsing follows the same order, so
+`de-DE` reads and writes `TT.MM.JJJJ` while `en-US` uses `MM/DD/YYYY`. `min` / `max`
+bound both the calendar and what a typed date will accept.
+
+<Preview gap="24px" style="flex-wrap: wrap; align-items: flex-start;">
+  <InputDateDemo client:only="preact" label="US English" locale="en-US" defaultValue="2026-06-15" style={{ width: '220px' }} />
+  <InputDateDemo client:only="preact" label="German" locale="de-DE" defaultValue="2026-06-15" style={{ width: '220px' }} />
+</Preview>
+
+```tsx folded
+<InputDate label="US English" locale="en-US" defaultValue="2026-06-15" />
+<InputDate label="German" locale="de-DE" defaultValue="2026-06-15" />
+```
+
+`time` turns it into a date-time field (value `YYYY-MM-DDTHH:mm`). The menu grows a
+time row under the calendar: hours, minutes, an AM/PM toggle in 12-hour locales, and
+a confirm (✓) button. Picking a day keeps the menu open so you can set the time. The
+clock follows the locale (`en-US` is 12-hour, most others 24), overridable with
+`hour12`. The field parses a trailing time after a space (`06/15/2026 2:30pm` or
+`… 14:30`), and typing a 24-hour hour into a 12-hour field converts it (18 → 6 PM).
+
+<Preview gap="16px" style="flex-direction: column; align-items: flex-start; padding-left: 40px;">
+  <InputDateDemo client:only="preact" size="small" label="Small" time defaultValue="2026-06-15T09:00" style={{ width: '260px' }} />
+  <InputDateDemo client:only="preact" size="medium" label="Medium" time defaultValue="2026-06-15T09:00" style={{ width: '260px' }} />
+  <InputDateDemo client:only="preact" size="large" label="Large" time defaultValue="2026-06-15T09:00" style={{ width: '260px' }} />
+</Preview>
+
+```tsx folded
+{/* `size` scales the calendar, the time inputs, the AM/PM toggle, and the buttons together. */}
+<InputDate size="small" label="Small" time defaultValue="2026-06-15T09:00" />
+<InputDate size="medium" label="Medium" time defaultValue="2026-06-15T09:00" />
+<InputDate size="large" label="Large" time defaultValue="2026-06-15T09:00" />
+```
+
+<Disclosure title="InputDate props" open>
+
+<PropsTable component="InputDate" />
+
+</Disclosure>
+
+## Calendar
+
+The sections below document `Calendar`, the month grid `InputDate` opens. Reach for
+it directly when you want the grid inline, without a field.
+
+`Calendar` is **composed from Anta components in light DOM**, with nothing hidden in
+a shadow root. The days and prev/next chevrons are `<Button>`s (a selected day is a
+`tertiary` Button in its selected state), inside a form-associated `<a-calendar>`
+grid. Date math runs on the [Temporal API](https://tc39.es/proposal-temporal/docs/),
+bundled via `temporal-polyfill` and exported as `buildMonth` and friends so you can
+populate your own grid. The value is an ISO `YYYY-MM-DD` string, never a `Date`. It
+works controlled (`value` + `onStateChange`) or uncontrolled (`defaultValue`), and
+participates in forms under `name`.
+
+## Selecting a date
+
+Click a day, or focus the grid and press <kbd>Enter</kbd> / <kbd>Space</kbd>. The
+selected day takes the tertiary-button selected look, a filled cell with a ring.
+Today shows as a secondary Button, a resting fill.
+
+<Preview>
+  <CalendarDemo client:only="preact" defaultValue="2026-06-12" />
+</Preview>
+
+```tsx folded
+<Calendar defaultValue="2026-06-12" />
+```
+
+## Size
+
+`size` scales the whole calendar: the day cells, the prev/next chevrons, and the
+weekday and month-heading type. It follows Button's `small` / `medium` (default) /
+`large` scale, with day-cell heights of 24 / 28 / 32px.
+
+<Preview gap="24px" style="flex-wrap: wrap; align-items: flex-start;">
+  <CalendarDemo client:only="preact" size="small" defaultValue="2026-06-28" aria-label="Small" />
+  <CalendarDemo client:only="preact" defaultValue="2026-06-28" aria-label="Medium" />
+  <CalendarDemo client:only="preact" size="large" defaultValue="2026-06-28" aria-label="Large" />
+</Preview>
+
+```tsx folded
+<Calendar size="small" defaultValue="2026-06-28" />
+<Calendar defaultValue="2026-06-28" />          {/* medium (default) */}
+<Calendar size="large" defaultValue="2026-06-28" />
+```
+
+## Range
+
+`min` and `max` (ISO strings) bound the selectable range. Days outside it render
+disabled and skip keyboard focus, and the prev/next arrows stop at the range edge.
+The jump menu adapts to how far the range reaches.
+
+<style is:inline>{`.range-stack .columns:not(:last-child) { margin-bottom: 28px; }`}</style>
+
+<div class="range-stack">
+
+<Columns reverse>
+<Col>
+
+No `min` / `max`: the jump menu lists today ±3 years, each a submenu of its months.
+
+</Col>
+<Col>
+
+<Preview>
+  <CalendarDemo client:only="preact" size="small" defaultValue="2026-06-15" />
+</Preview>
+
+```tsx folded
+<Calendar size="small" defaultValue="2026-06-15" />
+```
+
+</Col>
+</Columns>
+
+<Columns reverse>
+<Col>
+
+A range across years lists each year (here 2026 and 2027) as a submenu of months.
+June 2026 disables days 1–7, and the back arrow stops at the range's start.
+
+</Col>
+<Col>
+
+<Preview>
+  <CalendarDemo client:only="preact" size="small" defaultValue="2026-06-15" min="2026-06-08" max="2027-06-24" />
+</Preview>
+
+```tsx folded
+<Calendar size="small" defaultValue="2026-06-15" min="2026-06-08" max="2027-06-24" />
+```
+
+</Col>
+</Columns>
+
+<Columns reverse>
+<Col>
+
+A range inside one year skips the year level and lists months directly, March
+through November enabled and the rest disabled.
+
+</Col>
+<Col>
+
+<Preview>
+  <CalendarDemo client:only="preact" size="small" defaultValue="2026-06-15" min="2026-03-01" max="2026-11-30" />
+</Preview>
+
+```tsx folded
+<Calendar size="small" defaultValue="2026-06-15" min="2026-03-01" max="2026-11-30" />
+```
+
+</Col>
+</Columns>
+
+<Columns reverse>
+<Col>
+
+A range inside one month leaves nowhere to jump. Both arrows and the month/year
+button are disabled, and only the in-range days stay selectable.
+
+</Col>
+<Col>
+
+<Preview>
+  <CalendarDemo client:only="preact" size="small" defaultValue="2026-06-15" min="2026-06-08" max="2026-06-24" />
+</Preview>
+
+```tsx folded
+<Calendar size="small" defaultValue="2026-06-15" min="2026-06-08" max="2026-06-24" />
+```
+
+</Col>
+</Columns>
+
+</div>
+
+## Locale
+
+`Calendar` respects the browser locale by default (`navigator.language`). Pass a
+BCP-47 `locale` to override it: the first day of week comes from the locale's week
+info (never hard-coded to Sunday), and the weekday and month names are localized.
+
+<Preview gap="24px" style="flex-wrap: wrap; align-items: flex-start;">
+  <CalendarDemo client:only="preact" defaultValue="2026-06-28" locale="en-US" aria-label="US English" />
+  <CalendarDemo client:only="preact" defaultValue="2026-06-28" locale="fr-FR" aria-label="French" />
+  <CalendarDemo client:only="preact" defaultValue="2026-06-28" locale="ja-JP" aria-label="Japanese" />
+</Preview>
+
+```tsx folded
+<Calendar defaultValue="2026-06-28" locale="en-US" />  {/* week starts Sunday */}
+<Calendar defaultValue="2026-06-28" locale="fr-FR" />  {/* week starts Monday */}
+<Calendar defaultValue="2026-06-28" locale="ja-JP" />
+```
+
+## Controlled
+
+Uncontrolled by default: pass `defaultValue` and read the date from `onValueChange`
+or at form submit. Make it controlled with `value` + `onStateChange` to drive it
+from your store. The grid then follows `value`, and a pick only *requests* a change:
+answer by updating `value`, reject by doing nothing.
+
+```tsx folded
+const [date, setDate] = useState('2026-06-28')
+
+<Calendar
+  value={date}
+  onStateChange={(_e, { next }) => setDate(next ?? '')}
+/>
+```
+
+`onStateChange` fires before the element applies, with `(event, { next, prev, reason })`
+where `next` / `prev` are ISO strings. For a `'user'` pick, `event.preventDefault()`
+vetoes it (uncontrolled). A controlled calendar with no `onStateChange` is read-only.
+
+## Disabled
+
+`disabled` dims the whole calendar and removes it from interaction.
+
+<Preview>
+  <CalendarDemo client:only="preact" defaultValue="2026-06-28" disabled />
+</Preview>
+
+```tsx folded
+<Calendar defaultValue="2026-06-28" disabled />
+```
+
+## Forms
+
+`Calendar` is form-associated. Give it a `name` and it submits the selected ISO
+date under that key, resets to `defaultValue` on form reset, and reports through
+the standard constraint-validation pipeline.
+
+```tsx folded
+<form>
+  <Calendar name="due-date" defaultValue="2026-06-28" />
+</form>
+```
+
+## Accessibility
+
+The calendar is a labelled **group** of day buttons, a flat grid rather than a
+nested `grid`/`row`/`gridcell` tree. The group is named by the visible month
+(`aria-labelledby`). Each day is a `<button>` whose `aria-label` is its full date
+including weekday ("Sunday, June 28, 2026"), with `aria-pressed` on the selected day
+and `aria-current="date"` on today. The decorative weekday headers are `aria-hidden`,
+since each day already names its weekday. A roving `tabindex` keeps a single tab
+stop, and an `aria-live` region announces the month when it changes.
+
+| Key | Moves focus |
+|---|---|
+| <kbd>←</kbd> / <kbd>→</kbd> | by one day |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | by one week |
+| <kbd>Home</kbd> / <kbd>End</kbd> | to the start / end of the week |
+| <kbd>PageUp</kbd> / <kbd>PageDown</kbd> | by one month |
+| <kbd>Shift</kbd> + <kbd>PageUp</kbd> / <kbd>PageDown</kbd> | by one year |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> | select the focused day |
+
+## Customization
+
+The family stacks in layers: `InputDate` composes `Input` + `Menu` + `Calendar`,
+and `Calendar` itself splits into the `<a-calendar>` element (the day grid) and a
+JSX wrapper (the navigation chrome). Knowing which layer owns what tells you where to
+reach when you extend it, and lets a non-React consumer rebuild the chrome from stock
+elements.
+
+### Components composition
+
+`InputDate` has no `a-inputdate` element; the wrapper is the coordinator, the role
+`Select` plays over `Input` + `Menu`. It renders an editable `<Input>` trigger and a
+`<Menu>` holding a `<Calendar>` (with `time`, the hour/minute row and AM/PM `Tabs`
+sit under the grid), and owns the draft text, the lenient parse on commit, the ISO
+value, and opening the menu from the trailing button. Focusing the field just types;
+the button opens the menu, so picking a day and typing never fight. Nesting a stateful
+component in a menu has one wrinkle: the `Calendar` (and `Tabs`) dispatch their own
+`statechange`, so the `Menu` acts only on its own `open` / `closed`, and a bubbled
+pick isn't mistaken for a dismiss.
+
+The `<a-calendar>` element owns the grid and nothing else. It wires the day
+`<button>`s you render into it (click and keyboard: arrows, <kbd>Home</kbd>/<kbd>End</kbd>,
+<kbd>PageUp</kbd>/<kbd>PageDown</kbd>), holds the submitted value via `ElementInternals`,
+and dispatches the events: `statechange` / `change` on a pick, and `navigate` when a
+key pages past the rendered month. It's framework-agnostic and works on its own, with
+no notion of a "current month" and no sight of `min` / `max`.
+
+Everything above the grid is the JSX wrapper, rendered as **siblings outside**
+`<a-calendar>` from ordinary components: the prev/next arrows are `<Button>`s, and the
+month/year picker is a `<Button>` opening a `<Menu>` of year `MenuItem`s, each a
+submenu of months. The wrapper holds the displayed-month cursor in state, derives the
+day cells and the arrows' `disabled` state from `min` / `max`, and turns a click on an
+arrow, a pick in the menu, or a `navigate` event into a new cursor, then re-renders
+the grid. So range enforcement (disabled days, capped arrows, a disabled picker for a
+single-month range) lives entirely in the wrapper; the element only refuses to
+activate a day you've rendered `disabled`.
+
+That seam is why the element has no `min` / `max` and the switcher is a sibling: the
+grid stays a small, portable authority, and the chrome (Anta `Button`s and a `Menu`)
+is composition you can replace or rebuild. **Without React**, render the grid from the
+exported engine (`buildMonth`) and drive it with the same glue the wrapper packages:
+
+```html folded
+<!-- `.calendar` is your own wrapper; the switcher is plain Buttons + a Menu. -->
+<div class="calendar" style="display: inline-flex; flex-direction: column; gap: 6px">
+  <div style="display: flex; align-items: center">
+    <a-button priority="tertiary" data-prev aria-label="Previous month"><a-icon shape="chevron-left"></a-icon></a-button>
+    <a-button priority="tertiary" data-heading style="flex: 1; justify-content: center" aria-haspopup="menu"></a-button>
+    <a-button priority="tertiary" data-next aria-label="Next month"><a-icon shape="chevron-right"></a-icon></a-button>
+  </div>
+  <!-- The element wires whatever day cells you render; it owns selection,
+       keyboard, the form value, and the events. -->
+  <a-calendar role="group" name="date"></a-calendar>
+</div>
+<script type="module">
+  import '@antadesign/anta/elements'
+  import { buildMonth, parseISODate } from '@antadesign/anta'
+  import { Temporal } from 'temporal-polyfill'
+
+  const root = document.querySelector('.calendar')
+  const grid = root.querySelector('a-calendar')
+  const heading = root.querySelector('[data-heading]')
+  let cursor = Temporal.Now.plainDateISO()
+
+  function render() {
+    const m = buildMonth({ anchor: cursor, locale: navigator.language })
+    heading.textContent = m.heading
+    grid.replaceChildren()
+    for (const w of m.weekdays) {
+      const s = Object.assign(document.createElement('span'), { textContent: w.narrow })
+      s.setAttribute('data-part', 'weekday')
+      s.setAttribute('aria-hidden', 'true')
+      grid.append(s)
+    }
+    for (const d of m.weeks.flat()) {
+      const b = Object.assign(document.createElement('a-button'), { textContent: String(d.day) })
+      b.setAttribute('priority', 'tertiary')
+      b.setAttribute('data-part', 'day-cell')
+      b.setAttribute('data-date', d.iso)      // the element keys off this
+      b.tabIndex = d.iso === cursor.toString() ? 0 : -1
+      if (d.selected) b.setAttribute('selected', '')
+      if (d.disabled) b.setAttribute('disabled', '')
+      grid.append(b)
+    }
+  }
+
+  root.querySelector('[data-prev]').addEventListener('click', () => { cursor = cursor.subtract({ months: 1 }); render() })
+  root.querySelector('[data-next]').addEventListener('click', () => { cursor = cursor.add({ months: 1 }); render() })
+  // Keyboard paging past the rendered grid: the element asks for a month flip.
+  grid.addEventListener('navigate', (e) => { cursor = parseISODate(e.detail.date) ?? cursor; render() })
+  render()
+</script>
+```
+
+Tracking the cursor, painting the grid from `buildMonth`, and re-rendering on
+`navigate` is what the React `Calendar` packages, plus the year/month jump menu,
+which uses the same `Menu` composition shown on the [Menu](/components/menu/) page.
+
+<Disclosure title="Calendar props" open>
+
+<PropsTable component="Calendar" />
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+The calendar is **light DOM**, so everything is plain CSS, with no shadow parts or
+hidden internals. The days and chevrons are real `<a-button>`s, so their colours,
+hover, focus ring, and selected look come from the Button styles and theme
+themselves; they sit inside the `<a-calendar>` grid, and the switcher header sits in
+the `.anta-calendar` shell. An un-layered consumer rule beats `@layer anta` without
+`!important`. The class below is for the demo.
+
+<Preview>
+  <CalendarDemo client:only="preact" className="roomy" defaultValue="2026-06-28" />
+  <style is:inline>{`
+    .anta-calendar.roomy { --calendar-cell-width: 40px; --calendar-cell-height: 40px; }
+    .anta-calendar.roomy a-button[data-part="day-cell"] { border-radius: 50%; }
+  `}</style>
+</Preview>
+
+```css folded
+/* Bigger, circular day cells. `className` lands on the outer .anta-calendar
+   shell; `--calendar-cell-width` / `--calendar-cell-height` drive the grid track
+   and the cell box (inherited down), and you target the day Buttons directly. */
+.anta-calendar.roomy { --calendar-cell-width: 40px; --calendar-cell-height: 40px; }
+.anta-calendar.roomy a-button[data-part="day-cell"] { border-radius: 50%; }
+```
+
+Each day is a `<a-button data-part="day-cell" data-date="YYYY-MM-DD">`, so a
+specific date is addressable by its `data-date`: tint it, or hang an event marker
+off a `::after` (give the cell `position: relative` first). Below, three days carry a
+brand dot and one is flagged in the critical colour.
+
+<Preview>
+  <CalendarDemo client:only="preact" className="events" defaultValue="2026-06-15" />
+  <style is:inline>{`
+    .anta-calendar.events a-button[data-part="day-cell"] { position: relative; }
+    .anta-calendar.events a-button[data-part="day-cell"]:is([data-date="2026-06-05"], [data-date="2026-06-12"], [data-date="2026-06-20"])::after {
+      content: ""; position: absolute; inset-block-end: 3px; inset-inline-start: 50%;
+      inline-size: 4px; block-size: 4px; transform: translateX(-50%);
+      border-radius: 999px; background: var(--text-2-brand);
+    }
+    .anta-calendar.events a-button[data-part="day-cell"][data-date="2026-06-25"] {
+      color: var(--text-2-critical); font-weight: 600;
+    }
+  `}</style>
+</Preview>
+
+```css folded
+/* Day cells are `<a-button data-part="day-cell" data-date="YYYY-MM-DD">`. Give them a
+   positioning context, dot event days with a `::after`, and tint a date's text. */
+.anta-calendar.events a-button[data-part="day-cell"] { position: relative; }
+.anta-calendar.events a-button[data-part="day-cell"]:is(
+  [data-date="2026-06-05"], [data-date="2026-06-12"], [data-date="2026-06-20"]
+)::after {
+  content: ""; position: absolute; inset-block-end: 3px; inset-inline-start: 50%;
+  inline-size: 4px; block-size: 4px; transform: translateX(-50%);
+  border-radius: 999px; background: var(--text-2-brand);
+}
+.anta-calendar.events a-button[data-part="day-cell"][data-date="2026-06-25"] {
+  color: var(--text-2-critical); font-weight: 600;
+}
+```
+
+The engine (`buildMonth`, `firstDayOfWeek`, …) is exported, so you can render a
+fully custom grid and keep only the `<a-calendar>` form plumbing.
+
+</Disclosure>

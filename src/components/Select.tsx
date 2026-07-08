@@ -480,7 +480,8 @@ export const Select = (props: SelectProps) => {
         label={custom ? undefined : queryRe ? highlight(o.label ?? o.value) : o.label ?? o.value}
         hint={custom ? undefined : queryRe && o.hint ? highlight(o.hint) : o.hint}
         icon={custom ? undefined : o.icon}
-        tone={isSelected(o.value) && toneSelected ? toneSelected : o.tone}
+        tone={o.tone}
+        toneSelected={toneSelected}
         selected={isSelected(o.value)}
         disabled={disabled || undefined}
         data-menu-open={multiple ? '' : undefined}

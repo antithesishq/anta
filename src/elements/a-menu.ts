@@ -78,10 +78,9 @@ function unbindDocListeners() {
 
 /** Fire `onEscape` once `el` has moved so that less than ANCHOR_VISIBLE_RATIO of
  *  it still overlaps the rect it occupied at setup. An IntersectionObserver whose
- *  viewport root is shrunk (via negative rootMargin) to el's current rect; el
- *  sliding past the threshold drops `isIntersecting`. Read-only (no DOM
- *  mutation). Returns a disconnect fn. (Ported from the prior menu's
- *  browser_utils.trackPosition.) */
+ *  root is shrunk (via negative rootMargin) to el's current rect; el sliding past
+ *  the threshold drops `isIntersecting`. Read-only (no DOM mutation). Returns a
+ *  disconnect fn. (Ported from the prior menu's browser_utils.trackPosition.) */
 function trackPosition(el: HTMLElement, onEscape: () => void): () => void {
   if (typeof IntersectionObserver === 'undefined') return () => {}
   const doc = el.ownerDocument
@@ -97,11 +96,24 @@ function trackPosition(el: HTMLElement, onEscape: () => void): () => void {
   const vh = doc.documentElement.clientHeight
   // Negative margins shrink the viewport root down to el's current rect.
   const rootMargin = `${-rect.top}px ${-(vw - rect.right)}px ${-(vh - rect.bottom)}px ${-rect.left}px`
+  // Root choice depends on the frame context:
+  //   • Top level: `null` (the viewport). The negative rootMargin windows the
+  //     viewport to el's open-time rect, so scrolling el out of view drops the
+  //     ratio and dismisses — what we want. A pinned `documentElement` root
+  //     scrolls together with el, so its ratio never drops and the menu floats
+  //     detached, which is wrong here.
+  //   • Inside an iframe: a `null` root resolves against the TOP-LEVEL viewport,
+  //     so the iframe-relative rootMargin windows the wrong region and reports the
+  //     at-rest anchor out-of-view, dismissing a frame after it opens.
+  //     `documentElement` keeps the measurement iframe-local (and, scrolling with
+  //     el, leaves an embedded preview's menu open as the outer page scrolls).
+  const win = doc.defaultView
+  const root = win && win !== win.top ? doc.documentElement : null
   const io = new IntersectionObserver(
     ([entry]) => {
       if (!entry.isIntersecting) onEscape()
     },
-    { root: null, rootMargin, threshold: ANCHOR_VISIBLE_RATIO },
+    { root, rootMargin, threshold: ANCHOR_VISIBLE_RATIO },
   )
   io.observe(el)
   return () => io.disconnect()
@@ -571,21 +583,58 @@ export class AMenuElement extends HTMLElementBase {
    *  used to trap Tab within the open menu. Submenu contents are excluded
    *  (their nearest `a-menu` is the submenu). */
   private focusables(): HTMLElement[] {
+    // `a-input` is listed explicitly: its real control lives in shadow, so the bare
+    // `input` selector can't see it, and without this a slotted Anta field (a time
+    // input, a filter) drops out of the Tab cycle — focus on it then Tab jumps to
+    // the first item instead of the next field. `.focus()` on the host delegates in.
     const sel =
       'a-menu-item, a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]),' +
-      ' select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [data-menu-search]'
+      ' a-input:not([disabled]), select:not([disabled]), textarea:not([disabled]),' +
+      ' [tabindex]:not([tabindex="-1"]), [data-menu-search]'
     return (Array.from(this.querySelectorAll(sel)) as HTMLElement[]).filter(
       (el) =>
         el.closest('a-menu') === this && !el.hasAttribute('disabled') && this.isVisible(el),
     )
   }
 
-  private focusFirstItem() {
+  /** On open, seat initial focus like a native `<select>` / macOS menu: a menu
+   *  carrying a current value opens *at* that value, not at the top. Brings the
+   *  first selected row into view and, when opened via keyboard, focuses it;
+   *  with no selected row it focuses the first item (keyboard) and does nothing
+   *  otherwise. "Selected" = a `selected` row (tint) or `aria-checked` /
+   *  `aria-selected="true"` (checkable rows) — the first such visible item of
+   *  THIS menu, so a leaf buried in a closed submenu (not visible) is skipped and
+   *  a multi-select lands on its topmost checked row. */
+  private seatInitialFocus(viaKeyboard: boolean) {
+    const items = this.focusableItems()
+    const selected = items.find(
+      (el) =>
+        el.hasAttribute('selected') ||
+        el.getAttribute('aria-checked') === 'true' ||
+        el.getAttribute('aria-selected') === 'true',
+    )
+    if (selected) this.scrollItemIntoView(selected)
     // `preventScroll`: the surface is already positioned in-view, so letting the
     // browser scroll the document to the freshly-focused item is redundant — and
     // when the item sits near a viewport edge that programmatic scroll fires the
     // just-bound scroll-dismiss listener, closing the menu the instant it opens.
-    this.focusableItems()[0]?.focus({ preventScroll: true })
+    // scrollItemIntoView (above) handles bringing a selected row into view by
+    // touching only the internal scroll container.
+    if (viaKeyboard) (selected ?? items[0])?.focus({ preventScroll: true })
+  }
+
+  /** Scroll THIS menu's body so `item` sits inside the visible scroll viewport,
+   *  touching only the internal `.scroll` container — never the document, whose
+   *  scroll would trip the anchor-scrolled-out dismiss. No-op for a menu short
+   *  enough not to scroll. */
+  private scrollItemIntoView(item: HTMLElement) {
+    const c = this.scrollEl
+    if (!c) return
+    const pad = 4
+    const cr = c.getBoundingClientRect()
+    const ir = item.getBoundingClientRect()
+    if (ir.top < cr.top + pad) c.scrollTop -= cr.top + pad - ir.top
+    else if (ir.bottom > cr.bottom - pad) c.scrollTop += ir.bottom - cr.bottom + pad
   }
 
   /** Fade the scrolling body's content into the top / bottom edges — but only on the
@@ -746,12 +795,32 @@ export class AMenuElement extends HTMLElementBase {
         }
       }
     } else if (!openStack.includes(this)) {
-      // Root menu: a fresh root closes any other open menu system entirely.
-      // Skip when THIS same menu is already open — a context/coord re-trigger
-      // is a quiet reposition (below), not a close-then-reopen, which would run
-      // closeAll() → a spurious statechange('closed') that dismisses a
-      // controlled menu instead of moving it.
-      closeAll()
+      // A fresh root normally closes any other open menu system entirely. But if
+      // this menu's trigger lives inside an already-open menu's content — a menu
+      // opened from within another menu, e.g. `Calendar`'s year/month jump menu
+      // sitting inside `InputDate`'s popover — nest on top of that container
+      // instead: trim the stack to it and stack above, so the container stays
+      // open. (Slotted content are light-DOM children of the `<a-menu>`, so
+      // `contains` finds the container.) Skip when THIS same menu is already open
+      // (handled below) — a context/coord re-trigger is a quiet reposition, not a
+      // close-then-reopen, which would run closeAll() → a spurious
+      // statechange('closed') that dismisses a controlled menu instead of moving it.
+      const anchor = this.triggerAnchor
+      const container = anchor ? openStack.find((m) => m !== this && m.contains(anchor)) : undefined
+      if (container) {
+        const idx = openStack.indexOf(container)
+        // Trim everything stacked above the container. Emit a notify-only
+        // `statechange('closed')` for each (as closeAll does), so a controlled
+        // menu among them isn't left `open` in consumer state with no surface.
+        for (let i = openStack.length - 1; i > idx; i--) {
+          const m = openStack[i]
+          if (m.isOpen && !m._dismissNotified) m.emitChange('closed')
+          m._doHide()
+        }
+        openStack.length = idx + 1
+      } else {
+        closeAll()
+      }
     }
 
     if (openStack.includes(this)) {
@@ -779,8 +848,8 @@ export class AMenuElement extends HTMLElementBase {
       ;(search as HTMLElement).focus({ preventScroll: true })
       this.resetActive()
       this.startComboObserver()
-    } else if (viaKeyboard) {
-      this.focusFirstItem()
+    } else {
+      this.seatInitialFocus(viaKeyboard)
     }
   }
 

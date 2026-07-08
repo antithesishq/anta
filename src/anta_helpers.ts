@@ -176,6 +176,9 @@ export class SelectableChildElement extends HTMLElementBase {
   get value(): string {
     return this.getAttribute('value') ?? ''
   }
+  set value(v: string) {
+    this.setAttribute('value', v)
+  }
 
   protected applyState(on: boolean) {
     if (!this.internals) return

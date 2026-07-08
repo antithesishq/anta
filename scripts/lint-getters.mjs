@@ -35,6 +35,15 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const ELEMENTS_DIR = join(ROOT, 'src', 'elements')
 
 /**
+ * Extra files outside `src/elements` that define element base classes. Their
+ * getters land on the prototype chain of real `<a-*>` elements, so React 19
+ * assigns them just the same — `SelectableChildElement` is the base of both
+ * `<a-radio>` and `<a-tab>`, and its getter-only `value` crashed React 19 until
+ * a reflecting setter was added. Scanned with the same rule as the elements dir.
+ */
+const EXTRA_FILES = ['anta_helpers.ts']
+
+/**
  * Getters that are intentionally read-only public properties: native mirrors, or
  * state whose write channel is a *different* attribute (usually `state`). Safe
  * without a setter only because nothing passes them as a JSX prop, so React 19
@@ -46,6 +55,9 @@ const READONLY_ALLOWLIST = {
   'a-radio-group.ts': ['value'],
   'a-tabs.ts': ['value'],
   'a-checkbox.ts': ['checked', 'indeterminate'],
+  // `view`/`doc` are protected internals on HTMLElementBase, never passed as a
+  // JSX prop, so React 19 never assigns them.
+  'anta_helpers.ts': ['view', 'doc'],
 }
 
 /** Accessor declaration: optional modifiers, then `get`/`set`, a name (which
@@ -79,17 +91,21 @@ function scan(file, basename) {
   return violations
 }
 
-const files = readdirSync(ELEMENTS_DIR)
-  .filter((f) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
+const files = [
+  ...readdirSync(ELEMENTS_DIR)
+    .filter((f) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
+    .map((f) => ({ basename: f, path: join(ELEMENTS_DIR, f), rel: `src/elements/${f}` })),
+  ...EXTRA_FILES.map((f) => ({ basename: f, path: join(ROOT, 'src', f), rel: `src/${f}` })),
+]
 
 let total = 0
-for (const basename of files) {
-  const violations = scan(join(ELEMENTS_DIR, basename), basename)
+for (const { basename, path, rel } of files) {
+  const violations = scan(path, basename)
   if (!violations.length) continue
   total += violations.length
   for (const v of violations) {
     console.error(
-      `src/elements/${basename}:${v.line}  getter \`${v.name}\` has no setter. ` +
+      `${rel}:${v.line}  getter \`${v.name}\` has no setter. ` +
         `Give it a \`set ${v.name}()\`, rename it to \`#${v.name}\` (true private), ` +
         `or add it to READONLY_ALLOWLIST in scripts/lint-getters.mjs if it is a deliberate read-only property.`,
     )

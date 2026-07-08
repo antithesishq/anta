@@ -24,8 +24,10 @@ export type TextProps = BaseProps & {
    *  step softer than the strongest foreground; pass `primary` for emphasis.
    *  @defaultValue secondary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. Applies the matching `--text-{N}-{tone}` palette. */
-  tone?: 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale;
+   *  the others apply the matching `--text-{N}-{tone}` palette.
+   *  @defaultValue neutral */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Type scale. `small` = 13/16, `medium` = 15/20, `large` = 17/24.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'

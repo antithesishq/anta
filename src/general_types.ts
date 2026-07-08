@@ -188,8 +188,9 @@ export interface AProgressAttributes extends BaseAttributes {
 export interface ATextAttributes extends BaseAttributes {
   /** Visual priority. Maps to text-1..text-5. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. Applies the matching `--text-{N}-{tone}` palette. */
-  tone?: 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale;
+   *  the others apply the matching `--text-{N}-{tone}` palette. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Type scale. `small` = 13/16, `medium` (default) = 15/20, `large` = 17/24. */
   size?: 'small' | 'medium' | 'large'
   /** Render as inline-block instead of the default block. */
@@ -222,8 +223,9 @@ export interface ATitleAttributes extends BaseAttributes {
   level?: string
   /** Visual priority. Maps to text-1..text-5. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. Applies the matching `--text-{N}-{tone}` palette. */
-  tone?: 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale;
+   *  the others apply the matching `--text-{N}-{tone}` palette. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** ARIA role — the JSX wrapper sets this to `'heading'`. */
   role?: string
   /** ARIA heading level — the JSX wrapper sets this to match `level`. */
@@ -379,15 +381,15 @@ export interface ATooltipAttributes extends BaseAttributes {
  * `@antadesign/anta`.
  */
 export interface ACheckboxAttributes extends BaseAttributes {
-  /** Mark colour (checked fill + unselected box border), or any literal CSS color
-   *  for a one-off custom tone. Named tones track light/dark mode automatically via
-   *  the theme-aware role tokens. `'neutral'` is the default (same as omitting it).
-   *  The label + hint stay neutral — use `tone-text` for those. */
+  /** Mark colour in every state — checked fill *and* unselected box border — or any
+   *  literal CSS color for a one-off custom tone. Named tones track light/dark mode
+   *  automatically. `'neutral'` is the default (same as omitting it). The label + hint
+   *  stay neutral — recolour them in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Text colour (label + hint), independent of `tone`. A named tone or any literal
-   *  CSS color; named tones track light/dark via the `--text-*` role tokens. Omit
-   *  (or `'neutral'`) to leave the text neutral. */
-  'tone-text'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Like `tone`, but coloured onto the checked mark only — the empty box stays
+   *  neutral grey. Same value set as `tone`; if both are set, `tone` governs the
+   *  off-state border and `tone-selected` the checked fill. */
+  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. `small` = 14px, `medium` (default) = 16px, `large` = 18px box. */
   size?: 'small' | 'medium' | 'large'
   /** Controlled state — the element reflects changes to this attribute. Use this
@@ -691,15 +693,15 @@ export interface AButtonAttributes extends BaseAttributes {
 export interface ARadioAttributes extends BaseAttributes {
   /** This option's identity / submitted value. */
   value?: string
-  /** Mark colour (selected ring fill + dot, unselected ring border), or any literal
-   *  CSS color for a one-off custom tone. Named tones track light/dark mode via the
-   *  theme-aware role tokens. `'neutral'` is the default. The label + hint stay
-   *  neutral — use `tone-text` for those. */
+  /** Mark colour in every state — selected ring fill + dot *and* unselected ring
+   *  border — or any literal CSS color for a one-off custom tone. Named tones track
+   *  light/dark mode. `'neutral'` is the default. The label + hint stay neutral —
+   *  recolour them in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Text colour (label + hint), independent of `tone`. A named tone or any literal
-   *  CSS color; named tones track light/dark via the `--text-*` role tokens. Omit
-   *  (or `'neutral'`) to leave the text neutral. */
-  'tone-text'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Like `tone`, but coloured onto the selected mark only — an unselected ring stays
+   *  neutral grey. Same value set as `tone`; if both are set, `tone` governs the
+   *  off-state border and `tone-selected` the selected fill. */
+  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=14px, medium=16px, large=18px control. */
   size?: 'small' | 'medium' | 'large'
   /** Disabled state. Presence-based (`''` on, omit off). */
@@ -743,13 +745,13 @@ export interface ARadioGroupAttributes extends BaseAttributes {
   /** Form field name — the group submits `name=value`. */
   name?: string
   /** Mark tone cascaded to children that don't set their own, or any literal CSS
-   *  color for a one-off custom tone. Inherits through CSS so every child
-   *  `<a-radio>` picks up the same fill curve. The option text stays neutral —
-   *  use `tone-text`. */
+   *  color for a one-off custom tone. Colours every child's ring fill + dot *and*
+   *  unselected border. The option text stays neutral — recolour it in plain CSS via
+   *  the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Text tone cascaded to children's label + hint, independent of `tone`. A named
-   *  tone or any literal CSS color. Omit (or `'neutral'`) to leave the text neutral. */
-  'tone-text'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Like `tone`, but coloured onto the selected option only — every unselected ring
+   *  stays neutral grey. Cascaded to children that don't set their own. */
+  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size cascaded to children that don't set their own. */
   size?: 'small' | 'medium' | 'large'
   /** Validation/feedback tone for the group hint — same set as `<a-input>`'s

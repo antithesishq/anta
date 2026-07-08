@@ -544,7 +544,7 @@ export interface ACalendarAttributes extends BaseAttributes {
    *  bubbling `navigate` `CustomEvent` (`detail: { date }`, ISO) so the renderer can
    *  move the roving tab stop and flip the displayed month when needed. */
   onnavigate?: (e: CustomEvent<{ date: string }>) => void
-  /** ARIA — `role="grid"` and the accessible name are set by the renderer (the
+  /** ARIA — `role="group"` and the accessible name are set by the renderer (the
    *  `Calendar` wrapper wires `aria-labelledby` to the month heading). */
   'aria-label'?: string
   'aria-labelledby'?: string

@@ -43,7 +43,8 @@ export type BaseButtonProps = {
    *  @defaultValue 0 */
   tabIndex?: number
   /** ARIA role override (e.g. `'gridcell'` when a button is a cell in a grid).
-   *  Forwarded to the underlying element; defaults to the element's own role. */
+   *  Forwarded to the underlying element.
+   *  @defaultValue button */
   role?: string
 }
 

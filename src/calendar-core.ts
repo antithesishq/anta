@@ -12,6 +12,26 @@ import { Temporal } from 'temporal-polyfill'
 
 const cmp = Temporal.PlainDate.compare
 
+// Constructing an `Intl.DateTimeFormat` is the expensive part of formatting;
+// `.format()` on an existing one is cheap. `buildMonth` runs on every calendar
+// render (each keystroke in `<InputDate>` re-renders the child calendar), and a
+// naive `date.toLocaleString(locale, opts)` builds a fresh formatter per cell —
+// ~56 per grid. Cache them by locale + options so a render reuses one formatter
+// per shape. Realistically one or two locales, so the map stays tiny.
+const dtfCache = new Map<string, Intl.DateTimeFormat>()
+function dtf(locale: string, opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const key = `${locale}|${JSON.stringify(opts)}`
+  let f = dtfCache.get(key)
+  if (!f) {
+    f = new Intl.DateTimeFormat(locale, opts)
+    dtfCache.set(key, f)
+  }
+  return f
+}
+// A `Temporal.PlainDate` as a UTC `Date` at midnight — what the cached
+// `Intl.DateTimeFormat` (all `timeZone: 'UTC'`) formats, with no day shift.
+const asUTCDate = (d: Temporal.PlainDate): Date => new Date(Date.UTC(d.year, d.month - 1, d.day))
+
 /** One day cell in the rendered grid. */
 export interface CalendarDay {
   /** The date this cell represents. */
@@ -134,14 +154,16 @@ export function getWeekdays(locale: string, firstDay = firstDayOfWeek(locale)): 
   // Reference Monday (2021-02-01) rolled to the locale's first weekday.
   const ref = Temporal.PlainDate.from('2021-02-01')
   const start = ref.add({ days: (firstDay - ref.dayOfWeek + 7) % 7 })
+  const shortFmt = dtf(locale, { weekday: 'short', timeZone: 'UTC' })
+  const longFmt = dtf(locale, { weekday: 'long', timeZone: 'UTC' })
   const out: CalendarWeekday[] = []
   for (let i = 0; i < 7; i++) {
     const d = start.add({ days: i })
-    const short = d.toLocaleString(locale, { weekday: 'short' })
+    const short = shortFmt.format(asUTCDate(d))
     out.push({
       short,
       narrow: twoLetter(short),
-      long: d.toLocaleString(locale, { weekday: 'long' }),
+      long: longFmt.format(asUTCDate(d)),
       weekend: d.dayOfWeek === 6 || d.dayOfWeek === 7,
     })
   }
@@ -166,6 +188,13 @@ export function buildMonth(opts: BuildMonthOptions): CalendarMonth {
   const lead = (firstOfMonth.dayOfWeek - fd + 7) % 7
   const start = firstOfMonth.subtract({ days: lead })
 
+  const labelFmt = dtf(locale, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  })
   const grid: CalendarDay[][] = []
   for (let w = 0; w < weeks; w++) {
     const row: CalendarDay[] = []
@@ -180,12 +209,7 @@ export function buildMonth(opts: BuildMonthOptions): CalendarMonth {
         disabled: isOutOfRange(date, min, max),
         today: today != null && cmp(date, today) === 0,
         selected: selected != null && cmp(date, selected) === 0,
-        label: date.toLocaleString(locale, {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
+        label: labelFmt.format(asUTCDate(date)),
       })
     }
     grid.push(row)
@@ -194,7 +218,7 @@ export function buildMonth(opts: BuildMonthOptions): CalendarMonth {
   return {
     year,
     month,
-    heading: anchor.toLocaleString(locale, { month: 'long', year: 'numeric' }),
+    heading: dtf(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(asUTCDate(anchor)),
     weekdays: getWeekdays(locale, fd),
     weeks: grid,
   }
@@ -221,7 +245,7 @@ const NUMERIC_DATE: Intl.DateTimeFormatOptions = {
  *  (en-US) or `['day','month','year']` (de-DE). Falls back to ISO order. */
 function fieldOrder(locale: string): ('year' | 'month' | 'day')[] {
   try {
-    return new Intl.DateTimeFormat(locale, NUMERIC_DATE)
+    return dtf(locale, NUMERIC_DATE)
       .formatToParts(FMT_SAMPLE)
       .filter((p) => p.type === 'year' || p.type === 'month' || p.type === 'day')
       .map((p) => p.type as 'year' | 'month' | 'day')
@@ -234,7 +258,7 @@ function fieldOrder(locale: string): ('year' | 'month' | 'day')[] {
  *  `YYYY/MM/DD` (ja-JP). Built from the locale's own separators and field order. */
 export function dateFormatPattern(locale: string): string {
   try {
-    return new Intl.DateTimeFormat(locale, NUMERIC_DATE)
+    return dtf(locale, NUMERIC_DATE)
       .formatToParts(FMT_SAMPLE)
       .map((p) =>
         p.type === 'year' ? 'YYYY' : p.type === 'month' ? 'MM' : p.type === 'day' ? 'DD' : p.value,
@@ -248,8 +272,7 @@ export function dateFormatPattern(locale: string): string {
 /** A date in the locale's canonical numeric form (2-digit month/day, 4-digit year,
  *  latin digits) — what the field shows once a typed or picked date resolves. */
 export function formatDateInput(date: Temporal.PlainDate, locale: string): string {
-  const d = new Date(Date.UTC(date.year, date.month - 1, date.day))
-  return new Intl.DateTimeFormat(locale, NUMERIC_DATE).format(d)
+  return dtf(locale, NUMERIC_DATE).format(asUTCDate(date))
 }
 
 /** The month number (1–12) an alpha token names in `locale` (long or short form,
@@ -257,8 +280,8 @@ export function formatDateInput(date: Temporal.PlainDate, locale: string): strin
 function matchMonthName(text: string, locale: string): number | null {
   const alpha = text.toLowerCase().match(/[^\d\s.,/-]+/g)
   if (!alpha) return null
-  const long = new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' })
-  const short = new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' })
+  const long = dtf(locale, { month: 'long', timeZone: 'UTC' })
+  const short = dtf(locale, { month: 'short', timeZone: 'UTC' })
   for (let mo = 1; mo <= 12; mo++) {
     const d = new Date(Date.UTC(2020, mo - 1, 1))
     const l = long.format(d).toLowerCase()
@@ -435,7 +458,7 @@ export function parseDateTimeInput(
  *  `hourCycle` (`h11`/`h12` → 12-hour). */
 export function usesHour12(locale: string): boolean {
   try {
-    const hc = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions().hourCycle
+    const hc = dtf(locale, { hour: 'numeric' }).resolvedOptions().hourCycle
     return hc === 'h11' || hc === 'h12'
   } catch {
     return false

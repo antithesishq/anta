@@ -1,6 +1,6 @@
 import cn from "clsx"
 import { Temporal } from "temporal-polyfill"
-import { useId, useState } from "../jsx-runtime"
+import { useId, useMemo, useState } from "../jsx-runtime"
 import { nativeStateChange } from "../anta_helpers"
 import { Button } from "./Button"
 import { Menu } from "./Menu"
@@ -135,11 +135,17 @@ export const Calendar = ({
   for (let y = minYear; y <= maxYear; y++) years.push(y)
 
   // Localized month names (year-independent — any year serves). "long" full names
-  // for the flyout rows.
-  const monthNames = Array.from({ length: 12 }, (_, i) =>
-    Temporal.PlainDate.from({ year: 2000, month: i + 1, day: 1 }).toLocaleString(resolvedLocale, {
-      month: "long",
-    }),
+  // for the flyout rows. Memoized on locale — the parent re-renders the calendar
+  // on unrelated changes (e.g. each `<InputDate>` keystroke) and these localized
+  // names never change unless the locale does.
+  const monthNames = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) =>
+        Temporal.PlainDate.from({ year: 2000, month: i + 1, day: 1 }).toLocaleString(resolvedLocale, {
+          month: "long",
+        }),
+      ),
+    [resolvedLocale],
   )
   // A month is unreachable when it lies entirely before `min` or after `max`
   // (partial months keep some selectable days, so they stay enabled).
@@ -158,26 +164,41 @@ export const Calendar = ({
     if (disabled) return
     setCursor((c) => clampDate(c.with({ year: y, month: m }), minD, maxD))
   }
-  // One month row in the jump menu (`i` is 0-based). Highlights the shown month
-  // (tint + check) and disables months outside `min`…`max`. Shared by the flat
-  // single-year list and each year's submenu.
-  const monthItem = (y: number, i: number) => {
-    const m = i + 1
-    return (
-      <MenuItem
-        key={`${y}-${m}`}
-        label={monthNames[i]}
-        selectionIndicator="check"
-        selected={y === cursor.year && m === cursor.month}
-        disabled={monthOutOfRange(y, m) || undefined}
-        data-menu-open=""
-        onSelect={() => {
-          pickMonth(y, m)
-          setJumpOpen(false)
-        }}
-      />
-    )
-  }
+  // The year/month jump tree — up to 84 `MenuItem`s. Memoized so the parent
+  // re-rendering the calendar on unrelated changes (each `<InputDate>` keystroke)
+  // doesn't rebuild the whole subtree; it only recomputes when the highlighted
+  // month, the reachable range, or the locale changes. A single reachable year
+  // skips the year level and lists its months directly.
+  const jumpItems = useMemo(() => {
+    // One month row (`i` is 0-based): highlights the shown month (tint + check)
+    // and disables months outside `min`…`max`.
+    const monthItem = (y: number, i: number) => {
+      const m = i + 1
+      return (
+        <MenuItem
+          key={`${y}-${m}`}
+          label={monthNames[i]}
+          selectionIndicator="check"
+          selected={y === cursor.year && m === cursor.month}
+          disabled={monthOutOfRange(y, m) || undefined}
+          data-menu-open=""
+          onSelect={() => {
+            pickMonth(y, m)
+            setJumpOpen(false)
+          }}
+        />
+      )
+    }
+    return years.length === 1
+      ? monthNames.map((_, i) => monthItem(years[0], i))
+      : years.map((y) => (
+          <MenuItem key={y} submenu label={String(y)} selected={y === cursor.year}>
+            {y === cursor.year && <span className="year-dot" aria-hidden="true" />}
+            <Menu>{monthNames.map((_, i) => monthItem(y, i))}</Menu>
+          </MenuItem>
+        ))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthNames, cursor.year, cursor.month, minYear, maxYear, min, max, disabled])
 
   // The `<a-calendar>` element is the interaction authority: it dispatches
   // `statechange` (picks + reset/restore) and `change`. We forward both to the
@@ -257,16 +278,7 @@ export const Calendar = ({
             where you're jumping from: the active year keeps a tint + a trailing
             dot (its month flyout holds the check), the active month a tint + check. */}
         <Menu placement="bottom" open={jumpOpen} onStateChange={(_e, { next }) => setJumpOpen(next)}>
-          {years.length === 1
-            ? // A single reachable year: skip the year level entirely and list its
-              // months right away (no point drilling through one year).
-              monthNames.map((_, i) => monthItem(years[0], i))
-            : years.map((y) => (
-                <MenuItem key={y} submenu label={String(y)} selected={y === cursor.year}>
-                  {y === cursor.year && <span className="year-dot" aria-hidden="true" />}
-                  <Menu>{monthNames.map((_, i) => monthItem(y, i))}</Menu>
-                </MenuItem>
-              ))}
+          {jumpItems}
         </Menu>
         <Button
           priority="tertiary"

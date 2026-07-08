@@ -96,17 +96,24 @@ function trackPosition(el: HTMLElement, onEscape: () => void): () => void {
   const vh = doc.documentElement.clientHeight
   // Negative margins shrink the viewport root down to el's current rect.
   const rootMargin = `${-rect.top}px ${-(vw - rect.right)}px ${-(vh - rect.bottom)}px ${-rect.left}px`
+  // Root choice depends on the frame context:
+  //   • Top level: `null` (the viewport). The negative rootMargin windows the
+  //     viewport to el's open-time rect, so scrolling el out of view drops the
+  //     ratio and dismisses — what we want. A pinned `documentElement` root
+  //     scrolls together with el, so its ratio never drops and the menu floats
+  //     detached, which is wrong here.
+  //   • Inside an iframe: a `null` root resolves against the TOP-LEVEL viewport,
+  //     so the iframe-relative rootMargin windows the wrong region and reports the
+  //     at-rest anchor out-of-view, dismissing a frame after it opens.
+  //     `documentElement` keeps the measurement iframe-local (and, scrolling with
+  //     el, leaves an embedded preview's menu open as the outer page scrolls).
+  const win = doc.defaultView
+  const root = win && win !== win.top ? doc.documentElement : null
   const io = new IntersectionObserver(
     ([entry]) => {
       if (!entry.isIntersecting) onEscape()
     },
-    // Root is the anchor's own `documentElement`, not `null`. At top level that's
-    // equivalent to the viewport, but inside an iframe a `null` root resolves
-    // against the TOP-LEVEL viewport — the iframe-relative `rootMargin` then
-    // windows the wrong region and the observer reports the at-rest anchor as
-    // out-of-view, dismissing the menu a frame after it opens. `documentElement`
-    // keeps the measurement iframe-local.
-    { root: doc.documentElement, rootMargin, threshold: ANCHOR_VISIBLE_RATIO },
+    { root, rootMargin, threshold: ANCHOR_VISIBLE_RATIO },
   )
   io.observe(el)
   return () => io.disconnect()
@@ -802,7 +809,14 @@ export class AMenuElement extends HTMLElementBase {
       const container = anchor ? openStack.find((m) => m !== this && m.contains(anchor)) : undefined
       if (container) {
         const idx = openStack.indexOf(container)
-        for (let i = openStack.length - 1; i > idx; i--) openStack[i]._doHide()
+        // Trim everything stacked above the container. Emit a notify-only
+        // `statechange('closed')` for each (as closeAll does), so a controlled
+        // menu among them isn't left `open` in consumer state with no surface.
+        for (let i = openStack.length - 1; i > idx; i--) {
+          const m = openStack[i]
+          if (m.isOpen && !m._dismissNotified) m.emitChange('closed')
+          m._doHide()
+        }
         openStack.length = idx + 1
       } else {
         closeAll()

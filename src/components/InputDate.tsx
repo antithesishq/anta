@@ -5,7 +5,7 @@
 // that opens from the trailing button. There is no `a-inputdate` element; the
 // wrapper is the coordinator (like Select).
 import cn from 'clsx'
-import { useState } from '../jsx-runtime'
+import { useMemo, useState } from '../jsx-runtime'
 import { Temporal } from 'temporal-polyfill'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
@@ -138,9 +138,14 @@ export const InputDate = ({
   const maxD = parseISODate(max)
   // 12-hour (AM/PM) vs 24-hour, following the locale unless `hour12` overrides.
   const twelveHour = time ? (hour12 ?? usesHour12(resolvedLocale)) : false
-  const pattern =
-    placeholder ??
-    (time ? dateTimeFormatPattern(resolvedLocale, twelveHour) : dateFormatPattern(resolvedLocale))
+  // The placeholder mask is constant for a locale + cycle, so derive it once
+  // rather than rebuilding an `Intl.DateTimeFormat` on every keystroke's render.
+  const pattern = useMemo(
+    () =>
+      placeholder ??
+      (time ? dateTimeFormatPattern(resolvedLocale, twelveHour) : dateFormatPattern(resolvedLocale)),
+    [placeholder, time, resolvedLocale, twelveHour],
+  )
 
   // Format an ISO value to the field's display string ('' when empty/invalid).
   const fmt = (iso: string | undefined): string => {
@@ -177,12 +182,6 @@ export const InputDate = ({
   const [text, setText] = useState<string>(() => fmt(current))
   const [open, setOpen] = useState(false)
   const [invalid, setInvalid] = useState(false)
-  // Tracks whether the user actually typed in the field since the last commit. The
-  // field's `onChange` (blur / Enter) resolves the text only when this is set — a
-  // value-prop update driven by a calendar pick or the time row must not re-enter
-  // `resolve` (which would fight the control that made the change). A value-holding
-  // holder (not a DOM ref), so it survives renders without triggering one.
-  const [edit] = useState(() => ({ dirty: false }))
   // Drafts for the time fields (free typing; clamped + zero-padded on commit).
   const [hourText, setHourText] = useState(curHourShown)
   const [minuteText, setMinuteText] = useState(curM)
@@ -237,6 +236,15 @@ export const InputDate = ({
     return `${d}T${String(h).padStart(2, '0')}:${clampPad(minuteText, 59)}`
   }
 
+  // Apply a resolved ISO value (typed commit or calendar pick): recanonicalize the
+  // field when it already equals the committed value, otherwise commit the change.
+  // Clears the invalid flag either way. Shared so both entry points stay in step.
+  const apply = (iso: string) => {
+    setInvalid(false)
+    if (iso === (current ?? '')) setText(fmt(iso))
+    else commit(iso)
+  }
+
   // Resolve the field's raw text on commit (blur / Enter): recognize → canonicalize
   // + commit; empty → clear; unrecognized → mark invalid and keep the text.
   const resolve = (raw: string) => {
@@ -254,12 +262,10 @@ export const InputDate = ({
       setInvalid(true)
       return
     }
-    setInvalid(false)
     const iso = time
       ? (parsed as Temporal.PlainDateTime).toString({ smallestUnit: 'minute' })
       : parsed.toString()
-    if (iso === (current ?? '')) setText(fmt(iso))
-    else commit(iso)
+    apply(iso)
   }
 
   // Commit the time row: normalize the hour (with meridiem, auto-converting a
@@ -290,13 +296,14 @@ export const InputDate = ({
         inputMode={time ? 'text' : 'numeric'}
         autoComplete="off"
         onInput={(e: any) => {
-          edit.dirty = true
           setText(e.currentTarget.value)
           if (invalid) setInvalid(false)
         }}
         onChange={(e: any) => {
-          if (!edit.dirty) return
-          edit.dirty = false
+          // `change` bubbles and isn't composed, so the nested time inputs' own
+          // commit events surface here too. Act only on the field's own commit —
+          // the time row drives its value directly (`commitTime`).
+          if (e.target !== e.currentTarget) return
           resolve(e.currentTarget.value)
         }}
         className={cn(styles.dateField, className)}
@@ -325,7 +332,7 @@ export const InputDate = ({
                   (time), and the Done button closes it. */}
               <div data-menu-open="">
                 <Calendar
-                  value={dateISO || undefined}
+                  value={dateISO}
                   min={min}
                   max={max}
                   locale={locale}
@@ -334,10 +341,7 @@ export const InputDate = ({
                   onStateChange={(_e, { next, reason }) => {
                     if (reason !== 'user') return
                     const d = next ?? ''
-                    const iso = time && d ? withTime(d) : d
-                    if (iso === (current ?? '')) setText(fmt(iso))
-                    else commit(iso)
-                    setInvalid(false)
+                    apply(time && d ? withTime(d) : d)
                     if (!time) setOpen(false)
                   }}
                 />

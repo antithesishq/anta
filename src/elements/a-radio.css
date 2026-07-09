@@ -17,23 +17,22 @@
 
     --radio-bg: var(--bg-1);
 
-    /* Default tone is neutral — `brand` (and the rest) are explicit opt-ins. */
-    --radio-fill: #635b65;
-    --radio-fill-hover: #534c57;
-    --radio-fill-active: #49424c;
+    /* Default tone is neutral; brand and the rest are explicit opt-ins. Colours mirror a-checkbox. */
+    --radio-fill: #878089;
+    --radio-fill-hover: #776e77;
+    --radio-fill-active: #635b65;
 
-    /* Unselected ring border: neutral grey by default. Tinted tones (rule after
-       the tones) mix the fill toward this grey so the ring sits a bit lighter than
-       the fill, nearer neutral. The mix anchor is theme-aware. */
+    /* Unselected ring border: neutral grey by default. Named tinted tones override the resting fill + border to mirror the Input field (rules below); a custom-colour tone derives its border from the fill. */
     --radio-border-neutral: #d4ced4;
     --radio-border: var(--radio-border-neutral);
     --radio-border-hover: #c1b9c1;
     --radio-border-active: #9f99a1;
 
-    --radio-dot: #ffffff;
+    /* Off-white dot, matching a-checkbox's checkmark glyph (was pure white). */
+    --radio-dot: #f1eff1;
     --radio-dot-disabled: #c1b9c1;
     --radio-bg-disabled: color-mix(in oklch, #44374b 10%, transparent);
-    --radio-border-disabled: color-mix(in oklch, #44374b 15%, transparent);
+    --radio-border-disabled: color-mix(in oklch, #44374b 10%, transparent);
 
     --radio-label-color: var(--text-2);
     --radio-label-color-disabled: var(--text-4);
@@ -46,18 +45,10 @@
     --radio-hint-fs: 14px;
     --radio-hint-lh: 17px;
 
-    /* Inline-grid (mirrors a-checkbox): ring + dot in column 1, label + optional
-       hint stacked in column 2. The ring (::before) and dot (::after) share
-       column 1 / rows 1/-1, centred — so the control sits centred against the
-       label column whether or not a hint adds a second row.
-       Column 2 is `1fr` (not `auto`): when the radio is stretched (it's a flex
-       item in <a-radio-list>), all slack goes to the label column, keeping the
-       ring column content-sized — otherwise two `auto` tracks split the slack and
-       short-label rows get a wider ring column (a visible indent). 1fr also gives
-       the label a bounded width to wrap within. */
+    /* Inline-grid: ring + dot in column 1, label/hint in column 2. Ring and dot top-align to the label's first line (align-self: start plus a margin offset on the control, so the row keeps the label's line-height); the dot's offset differs by half a dot so it stays centred on the ring. Column 2 is 1fr so a stretched radio's slack goes to the label, keeping the ring column content-sized. */
     display: inline-grid;
     grid-template-columns: auto 1fr;
-    align-items: center;
+    align-items: start;
     column-gap: var(--radio-gap);
     cursor: pointer;
     user-select: none;
@@ -75,7 +66,9 @@
       content: "";
       grid-column: 1;
       grid-row: 1 / -1;
-      align-self: center;
+      align-self: start;
+      /* Sit the ring on the label's first-line centre; offset on the control so the row keeps the label's line-height. */
+      margin-block-start: calc((var(--radio-label-lh) - var(--radio-control-size)) / 2);
       box-sizing: border-box;
       inline-size: var(--radio-control-size);
       block-size: var(--radio-control-size);
@@ -91,8 +84,10 @@
       content: "";
       grid-column: 1;
       grid-row: 1 / -1;
-      align-self: center;
+      align-self: start;
       justify-self: center;
+      /* Centre the dot on the first line like the ring, using its rendered size (minus the dark-mode shrink) so it stays centred on the ring in both themes. */
+      margin-block-start: calc((var(--radio-label-lh) - (var(--radio-dot-size) - var(--_radio-dot-adjust))) / 2);
       inline-size: calc(var(--radio-dot-size) - var(--_radio-dot-adjust));
       block-size: calc(var(--radio-dot-size) - var(--_radio-dot-adjust));
       border-radius: 50%;
@@ -167,7 +162,7 @@
       --radio-control-size: 18px;
       --radio-dot-size: 7px;
       --radio-label-fs: 17px;
-      --radio-label-lh: 24px;
+      --radio-label-lh: 22px;
       --radio-hint-fs: 16px;
       --radio-hint-lh: 21px;
     }
@@ -183,6 +178,7 @@
     grid-column: 2;
     min-width: 0;
   }
+
   a-radio-hint {
     color: var(--radio-hint-color);
     font-size: var(--radio-hint-fs);
@@ -220,9 +216,9 @@
   a-radio[tone-selected="neutral"],
   a-radio-group[tone="neutral"] a-radio:not([tone]),
   a-radio-group[tone-selected="neutral"] a-radio:not([tone-selected]) {
-    --radio-fill: #635b65;
-    --radio-fill-hover: #534c57;
-    --radio-fill-active: #49424c;
+    --radio-fill: #878089;
+    --radio-fill-hover: #776e77;
+    --radio-fill-active: #635b65;
   }
   a-radio[tone="info"],
   a-radio[tone-selected="info"],
@@ -257,22 +253,58 @@
     --radio-fill-active: #a01c1c;
   }
 
-  /* Tinted tones only: the unselected ring border picks up the tone and ramps like
-     the neutral border — lightest at rest, darkening through hover to active. The
-     active anchor is the fill mixed toward the neutral grey (this is the old static
-     value); rest and hover step up in oklch lightness from there, so hue/chroma
-     stay put. Tracks light/dark via --radio-fill and the theme-aware grey. Covers
-     standalone radios and group-cascaded children. */
-  a-radio[tone]:not([tone=""], [tone="neutral"]),
-  a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone]) {
+  /* Named tinted tones: unselected ring gets a faint tone fill under a tone border ramp (rest/hover/active), same colours as a-checkbox. Keyed to [tone] only (standalone or group-cascaded); tone-selected keeps a neutral off-state ring. */
+  a-radio[tone="brand"],
+  a-radio-group[tone="brand"] a-radio:not([tone]) {
+    --radio-bg: #fcfcfe;
+    --radio-border: #bcb1f1;
+    --radio-border-hover: #9e8eeb;
+    --radio-border-active: #9081df;
+  }
+  a-radio[tone="info"],
+  a-radio-group[tone="info"] a-radio:not([tone]) {
+    --radio-bg: #fbfcfe;
+    --radio-border: #93c5ec;
+    --radio-border-hover: #69ace5;
+    --radio-border-active: #56a1e1;
+  }
+  a-radio[tone="success"],
+  a-radio-group[tone="success"] a-radio:not([tone]) {
+    --radio-bg: #f7fcf9;
+    --radio-border: #88d7a0;
+    --radio-border-hover: #5bc87b;
+    --radio-border-active: #44c169;
+  }
+  a-radio[tone="warning"],
+  a-radio-group[tone="warning"] a-radio:not([tone]) {
+    --radio-bg: #fefbf6;
+    --radio-border: #edb25a;
+    --radio-border-hover: #e09127;
+    --radio-border-active: #d88118;
+  }
+  a-radio[tone="critical"],
+  a-radio-group[tone="critical"] a-radio:not([tone]) {
+    --radio-bg: #fefbfb;
+    --radio-border: #efa4a4;
+    --radio-border-hover: #e87f7f;
+    --radio-border-active: #e56c6c;
+  }
+
+  /* Custom tone (non-named colour): derive the unselected ring in oklch like a-checkbox — a faint fill (near-white light, near-black dark, chroma scaled down) under a border ramped off the fill. Covers standalone + group-cascaded. */
+  a-radio[tone]:not(
+      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]),
+  a-radio-group[tone]:not(
+      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]) a-radio:not([tone]) {
+    --radio-bg: oklch(from var(--radio-tone-source) 0.99 calc(c * 0.03) h);
     --_radio-border-base: color-mix(in oklch, var(--radio-fill) 70%, var(--radio-border-neutral));
     --radio-border:        oklch(from var(--_radio-border-base) calc(l + 0.17) c h);
     --radio-border-hover:  oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
     --radio-border-active: var(--_radio-border-base);
 
-    /* Dark inverts the direction: interaction brightens the border (rest darkest,
-       active lightest), matching the neutral dark ramp. */
     .dark & {
+      --radio-bg: oklch(from var(--radio-tone-source) 0.15 calc(c * 0.18) h);
       --radio-border:        var(--_radio-border-base);
       --radio-border-hover:  oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
       --radio-border-active: oklch(from var(--_radio-border-base) calc(l + 0.17) c h);
@@ -328,9 +360,8 @@
   .dark a-radio {
     --_radio-dot-adjust: 1px;
 
-    /* Dark only: a 1px halo gives the dot definition against the darker fill.
-       Light mode keeps a plain dot (no shadow). */
-    &::after { box-shadow: 0 0 1px 1px black; }
+    /* Dark only: a 1px halo (black at 40%) defines the dot against the darker fill; light mode keeps a plain dot. */
+    &::after { box-shadow: 0 0 1px 1px color-mix(in oklch, black 40%, transparent); }
 
     /* Neutral grey border (tinted tones mix the fill toward this). */
     --radio-border-neutral: #49424c;
@@ -338,13 +369,14 @@
     --radio-border-active: #776e77;
 
     /* Neutral default — brand and the rest are explicit opt-ins. */
-    --radio-fill: #534c57;
-    --radio-fill-hover: #635b65;
-    --radio-fill-active: #938d96;
+    --radio-fill: #49424c;
+    --radio-fill-hover: #534c57;
+    --radio-fill-active: #635b65;
 
-    --radio-dot-disabled: #635b65;
+    --radio-dot: #d4ced4;
+    --radio-dot-disabled: #534c57;
     --radio-bg-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
-    --radio-border-disabled: color-mix(in oklch, #e4d1ef 15%, transparent);
+    --radio-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
   }
   .dark a-radio[tone="brand"],
   .dark a-radio[tone-selected="brand"],
@@ -358,9 +390,9 @@
   .dark a-radio[tone-selected="neutral"],
   .dark a-radio-group[tone="neutral"] a-radio:not([tone]),
   .dark a-radio-group[tone-selected="neutral"] a-radio:not([tone-selected]) {
-    --radio-fill: #534c57;
-    --radio-fill-hover: #635b65;
-    --radio-fill-active: #938d96;
+    --radio-fill: #49424c;
+    --radio-fill-hover: #534c57;
+    --radio-fill-active: #635b65;
   }
   .dark a-radio[tone="info"],
   .dark a-radio[tone-selected="info"],
@@ -393,5 +425,42 @@
     --radio-fill: #b02120;
     --radio-fill-hover: #c9302c;
     --radio-fill-active: #de4545;
+  }
+
+  /* Named tinted tones: unselected ring, dark values. */
+  .dark a-radio[tone="brand"],
+  .dark a-radio-group[tone="brand"] a-radio:not([tone]) {
+    --radio-bg: #0b0916;
+    --radio-border: #483493;
+    --radio-border-hover: #5f4bc3;
+    --radio-border-active: #7460d7;
+  }
+  .dark a-radio[tone="info"],
+  .dark a-radio-group[tone="info"] a-radio:not([tone]) {
+    --radio-bg: #040d18;
+    --radio-border: #175082;
+    --radio-border-hover: #1f6eb2;
+    --radio-border-active: #2686d9;
+  }
+  .dark a-radio[tone="success"],
+  .dark a-radio-group[tone="success"] a-radio:not([tone]) {
+    --radio-bg: #041008;
+    --radio-border: #1f5c31;
+    --radio-border-hover: #2a7e43;
+    --radio-border-active: #329550;
+  }
+  .dark a-radio[tone="warning"],
+  .dark a-radio-group[tone="warning"] a-radio:not([tone]) {
+    --radio-bg: #120a03;
+    --radio-border: #6a3b0c;
+    --radio-border-hover: #995200;
+    --radio-border-active: #ae6613;
+  }
+  .dark a-radio[tone="critical"],
+  .dark a-radio-group[tone="critical"] a-radio:not([tone]) {
+    --radio-bg: #190405;
+    --radio-border: #a01c1c;
+    --radio-border-hover: #c9302c;
+    --radio-border-active: #de4545;
   }
 }

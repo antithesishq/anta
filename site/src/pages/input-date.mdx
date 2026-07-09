@@ -109,6 +109,13 @@ populate your own grid. The value is an ISO `YYYY-MM-DD` string, never a `Date`.
 works controlled (`value` + `onStateChange`) or uncontrolled (`defaultValue`), and
 participates in forms under `name`.
 
+**Not SSR-safe.** `Calendar` (and `InputDate`, which embeds it) reads the current
+date (`Temporal.Now`) and locale (`navigator.language`) at render, so a server
+render disagrees with the client on the highlighted "today" and on localized
+labels, and the page hydrates with a mismatch. Render it client-side only: Astro
+`client:only`, or a dynamic import inside `useEffect`. Every demo on this page uses
+`client:only` for that reason.
+
 ## Selecting a date
 
 Click a day, or focus the grid and press <kbd>Enter</kbd> / <kbd>Space</kbd>. The

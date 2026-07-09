@@ -47,8 +47,8 @@ a-tabs[priority="tertiary"] ~ a-tabpanel {
 <Columns>
 <Col>
 
-<Preview minHeight={186}>
-  <Priorities client:only="preact" />
+<Preview>
+  <Priorities client:load />
 </Preview>
 
 ```tsx folded
@@ -81,8 +81,8 @@ custom colour); columns are priorities.
 
 **Primary**
 
-<Preview minHeight={282}>
-  <TonesColumn client:only="preact" priority="primary" />
+<Preview>
+  <TonesColumn client:load priority="primary" />
 </Preview>
 
 </Col>
@@ -90,8 +90,8 @@ custom colour); columns are priorities.
 
 **Secondary**
 
-<Preview minHeight={282}>
-  <TonesColumn client:only="preact" priority="secondary" />
+<Preview>
+  <TonesColumn client:load priority="secondary" />
 </Preview>
 
 </Col>
@@ -99,8 +99,8 @@ custom colour); columns are priorities.
 
 **Tertiary**
 
-<Preview minHeight={282}>
-  <TonesColumn client:only="preact" priority="tertiary" />
+<Preview>
+  <TonesColumn client:load priority="tertiary" />
 </Preview>
 
 </Col>
@@ -118,7 +118,7 @@ everywhere and the indicator only under `noslide` (the single shared sliding ele
 read a descendant's colour).
 
 <Preview>
-  <PerTabTone client:only="preact" />
+  <PerTabTone client:load />
 </Preview>
 
 ```tsx folded
@@ -135,8 +135,8 @@ read a descendant's colour).
 <Columns>
 <Col>
 
-<Preview minHeight={186}>
-  <Sizes client:only="preact" />
+<Preview>
+  <Sizes client:load />
 </Preview>
 
 ```tsx folded
@@ -164,8 +164,8 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 
 **Primary**
 
-<Preview minHeight={144}>
-  <VerticalStrip client:only="preact" priority="primary" />
+<Preview>
+  <VerticalStrip client:load priority="primary" />
 </Preview>
 
 </Col>
@@ -173,8 +173,8 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 
 **Secondary**
 
-<Preview minHeight={144}>
-  <VerticalStrip client:only="preact" priority="secondary" />
+<Preview>
+  <VerticalStrip client:load priority="secondary" />
 </Preview>
 
 </Col>
@@ -182,8 +182,8 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 
 **Tertiary**
 
-<Preview minHeight={144}>
-  <VerticalStrip client:only="preact" priority="tertiary" />
+<Preview>
+  <VerticalStrip client:load priority="tertiary" />
 </Preview>
 
 </Col>
@@ -207,7 +207,7 @@ dot flags an unsaved file. Its content is otherwise arbitrary: pass **children**
 <Col>
 
 <Preview>
-  <IconsContent client:only="preact" />
+  <IconsContent client:load />
 </Preview>
 
 </Col>
@@ -230,7 +230,7 @@ dot flags an unsaved file. Its content is otherwise arbitrary: pass **children**
 <Col>
 
 <Preview>
-  <Overflow client:only="preact" />
+  <Overflow client:load />
 </Preview>
 
 </Col>
@@ -263,8 +263,8 @@ tabs above to see it.
 <Columns>
 <Col>
 
-<Preview minHeight={142}>
-  <Basic client:only="preact" />
+<Preview>
+  <Basic client:load />
   <style is:inline>{`
     .panels-demo { width: 100%; }
     .panels-demo > a-tabs { align-self: center; }
@@ -362,7 +362,7 @@ config or a `.map()`. `<TabPanel>` children still supply panel bodies (matched b
 `value`), so the array and panels compose.
 
 <Preview>
-  <OptionsTabs client:only="preact" />
+  <OptionsTabs client:load />
 </Preview>
 
 ```tsx
@@ -500,7 +500,7 @@ The demo classes below (`.square-tabs`, `.glow-tabs`, …) are just hooks; swap 
 (spread, no blur). The track is `<a-tabs>` and the sliding pill its `::before`:
 
 <Preview>
-  <SquareTabs client:only="preact" />
+  <SquareTabs client:load />
   <style is:inline>{`
     a-tabs.square-tabs { border: 1px solid light-dark(#cfcfd6, #46464e); border-radius: 0; padding: 4px; }
     .square-tabs a-tab { border-radius: 0; font-weight: 600; }
@@ -521,7 +521,7 @@ element, the glow **slides with the line** between tabs. No `noslide`, no separa
 background.
 
 <Preview>
-  <TertiaryGlow client:only="preact" />
+  <TertiaryGlow client:load />
   <style is:inline>{`
     a-tabs.glow-tabs::before {
       border-bottom-color: light-dark(#8067ff, #907aff);
@@ -548,7 +548,7 @@ horizontally: pin each tab to its content width (`flex: none`) and make the stri
 scrollable.
 
 <Preview>
-  <ScrollTabs client:only="preact" />
+  <ScrollTabs client:load />
   <style is:inline>{`
     .scroll-tabs a-tabs { overflow-x: auto; scrollbar-width: thin; }
     .scroll-tabs a-tab { flex: none; }
@@ -565,7 +565,7 @@ when the strip overflows). For a segmented-control look where every tab is the s
 width regardless of label, let them fill the strip from a zero basis:
 
 <Preview>
-  <EqualWidth client:only="preact" />
+  <EqualWidth client:load />
   <style is:inline>{`
     .equal-tabs a-tabs { width: 100%; }
     .equal-tabs a-tab { flex: 1 1 0; max-width: none; }
@@ -580,7 +580,7 @@ width regardless of label, let them fill the strip from a zero basis:
 **Wrap labels** — let long labels wrap so the tabs grow taller instead of truncating:
 
 <Preview>
-  <WrapTabs client:only="preact" />
+  <WrapTabs client:load />
   <style is:inline>{`
     .wrap-tabs a-tab,
     .wrap-tabs a-tab-label { white-space: normal; text-overflow: clip; overflow: visible; text-align: center; }
@@ -598,7 +598,7 @@ instead, so the highlight snaps with no movement. This is also the automatic fal
 where anchor positioning isn't supported.
 
 <Preview>
-  <NoSlide client:only="preact" />
+  <NoSlide client:load />
 </Preview>
 
 ```tsx folded
@@ -611,7 +611,7 @@ and the moving indicator, plus the primary track well) — no CSS needed. Here w
 taller block padding per tab for a capsule shape:
 
 <Preview>
-  <PillTabs client:only="preact" />
+  <PillTabs client:load />
   <style is:inline>{`
     .pill-tabs a-tab { padding-block: 8px; }
   `}</style>

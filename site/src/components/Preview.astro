@@ -50,13 +50,14 @@ const style = [
     min-height: var(--preview-min-height, auto);
   }
 
-  /* Previews whose demo hydrates client-side (Astro wraps it in an
-     <astro-island>) render at zero height until hydration, so the panel
-     would snap from empty to full and flash on load. Reserve a modest
-     floor so the box is already there; the content still grows into it.
-     Static (SSR-only) previews keep their natural height. Taller demos
-     override the floor with the `minHeight` prop (inline var wins). */
-  .preview:has(astro-island) {
+  /* A `client:only` island renders nothing server-side, so its preview
+     collapses to zero height until hydration, then snaps open — a flash.
+     Reserve a modest floor for those so the box is already there; the
+     content grows into it, and a taller demo overrides via the `minHeight`
+     prop (inline var wins). `client:load` / `client:visible` islands SSR at
+     their real height, so they need no reserve and are left at natural
+     height (matching by `client="only"` avoids over-reserving them). */
+  .preview:has(astro-island[client="only"]) {
     --preview-min-height: 96px;
   }
 

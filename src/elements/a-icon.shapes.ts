@@ -55,6 +55,7 @@ export const ICON_SHAPES = [
   'gitlab-logo',
   'hat-glasses',
   'heart-handshake',
+  'heart',
   'help-disk',
   'history-tree',
   'history',
@@ -118,6 +119,7 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'swatch-book': ['palette', 'color', 'swatch', 'paint', 'design'],
   'hat-glasses': ['accessibility', 'vision', 'disguise', 'person'],
   'heart-handshake': ['credits', 'thanks', 'agreement', 'deal', 'partnership'],
+  'heart': ['like', 'favorite', 'love', 'wishlist'],
   'hourglass': ['progress', 'time', 'wait', 'loading', 'timer'],
   'text-initial': ['text', 'typography', 'letter', 'a'],
   'chevron-down': ['arrow', 'expand', 'open', 'down'],
@@ -259,6 +261,7 @@ declare module '@antadesign/anta' {
     'gitlab-logo': true
     'hat-glasses': true
     'heart-handshake': true
+    'heart': true
     'help-disk': true
     'history-tree': true
     'history': true

@@ -5,6 +5,7 @@
   "swatch-book": ["palette", "color", "swatch", "paint", "design"],
   "hat-glasses": ["accessibility", "vision", "disguise", "person"],
   "heart-handshake": ["credits", "thanks", "agreement", "deal", "partnership"],
+  "heart": ["like", "favorite", "love", "wishlist"],
   "hourglass": ["progress", "time", "wait", "loading", "timer"],
   "text-initial": ["text", "typography", "letter", "a"],
   "chevron-down": ["arrow", "expand", "open", "down"],

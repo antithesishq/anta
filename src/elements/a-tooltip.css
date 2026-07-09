@@ -1,11 +1,11 @@
 @layer anta {
-  /* Pre-upgrade, keep the trigger (a-tooltip's child) visible and let it lay
-     out as if the wrapper weren't there — matching the shadow `:host { display:
-     contents }` once defined, so SSR / first paint shows the trigger with no
-     flash. The bubble is rendered from the `content` attribute into the shadow
-     on upgrade, so there's no light-DOM bubble to leak here. */
+  /* Keep hidden until defined. The bubble content is SLOTTED (a-tooltip's
+     children), and the anchor is the tooltip's PARENT — so hiding the tooltip
+     never hides the trigger, but pre-upgrade (no shadow yet) the slotted
+     content would otherwise flash *inline inside the anchor*. Do NOT switch
+     this to `display: contents` (that leaks the bubble). See a-tooltip.ts. */
   a-tooltip:not(:defined) {
-    display: contents;
+    display: none;
   }
 
   @media (hover: none) and (pointer: coarse) {

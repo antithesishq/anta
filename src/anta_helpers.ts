@@ -111,6 +111,37 @@ export function anchorRect(el: Element): DOMRect {
 }
 
 /**
+ * Menu ↔ Tooltip presence coordinator — in-memory only, no DOM. `a-menu`
+ * publishes whether a menu system is open and whether a node sits inside it;
+ * `a-tooltip` reads this to suppress a tooltip anchored *outside* an open menu.
+ * (Menu and tooltip are both top-layer popovers, stacked by show order, so a
+ * tooltip opened while a menu is up would paint over it — z-index can't reorder
+ * the top layer.) Decoupled on purpose: neither element imports the other, and
+ * if `a-menu` never loads the provider stays null and every tooltip shows.
+ */
+export interface MenuPresence {
+  /** Is any `a-menu` open? */
+  isOpen(): boolean
+  /** Is `node` inside the open menu system — a menu surface, a slotted item, or
+   *  an open trigger? (A tooltip there is a menu-item tooltip and still shows,
+   *  above the menu.) */
+  contains(node: Node): boolean
+}
+let menuPresence: MenuPresence | null = null
+/** `a-menu` registers its live open-state provider here (once, on load). */
+export function setMenuPresence(p: MenuPresence | null): void {
+  menuPresence = p
+}
+/** True while any `a-menu` is open. */
+export function isMenuOpen(): boolean {
+  return menuPresence?.isOpen() ?? false
+}
+/** True if `node` sits inside the open menu system. */
+export function isInsideOpenMenu(node: Node): boolean {
+  return menuPresence?.contains(node) ?? false
+}
+
+/**
  * `HTMLElement` in browsers, a noop class in Node/Worker environments.
  * Use this as the base for custom element classes so importing the
  * module in a non-DOM environment doesn't throw on `extends HTMLElement`.

@@ -1,63 +1,36 @@
 ---
 /**
- * ChangelogNav.astro — two-link nav strip between the two changelog pages:
+ * ChangelogNav.astro — nav between the two changelog pages:
  *   • /changelog/      — Main releases (stable, summarised)
  *   • /changelog/dev/  — Dev releases (prereleases, full detail)
  *
- * The changelog used to be a single page with a client-side stream filter;
- * it's now physically split into two pages (so each page's "On this page"
- * rail lists only its own versions). This strip is plain links — the active
- * page is marked with aria-current="page". No JS.
+ * Rendered as an Anta <Tabs> strip (via the NavTabs island) that navigates to
+ * the picked URL on the client. Hydrated (`client:load`) since the tabs are
+ * buttons, not links.
  */
+import NavTabs from './NavTabs'
+
 interface Props {
   active: 'main' | 'dev'
 }
 const { active } = Astro.props
+const activeUrl = active === 'dev' ? '/changelog/dev/' : '/changelog/'
 ---
 
-<nav class="changelog-tabs" aria-label="Changelog releases">
-  <a href="/changelog/" aria-current={active === 'main' ? 'page' : undefined}>
-    Main releases
-  </a>
-  <a href="/changelog/dev/" aria-current={active === 'dev' ? 'page' : undefined}>
-    Dev releases
-  </a>
-</nav>
+<div class="changelog-nav">
+  <NavTabs
+    client:load
+    label="Changelog releases"
+    active={activeUrl}
+    tabs={[
+      { value: '/changelog/', label: 'Main releases' },
+      { value: '/changelog/dev/', label: 'Dev releases' },
+    ]}
+  />
+</div>
 
-<style is:global>
-  .changelog-tabs {
-    display: inline-flex;
-    flex-wrap: nowrap;
-    align-items: stretch;
-    gap: 4px;
-    border: 0.5px solid var(--border-4);
-    background: var(--bg-pane);
-    padding: 4px;
-    border-radius: 6px;
+<style>
+  .changelog-nav {
     margin: 0 0 24px;
-    max-width: 100%;
-    overflow-x: auto;
-    scrollbar-width: thin;
-  }
-  .changelog-tabs > a {
-    font: inherit;
-    font-size: 0.85rem;
-    line-height: 1.2;
-    color: var(--text-3);
-    padding: 4px 8px 5px;
-    border-radius: 4px;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: background 150ms ease-out, color 150ms ease-out;
-  }
-  .changelog-tabs > a:hover,
-  .changelog-tabs > a:focus-visible {
-    color: var(--text-2);
-    outline: none;
-  }
-  .changelog-tabs > a[aria-current='page'] {
-    background: var(--bg-canvas);
-    color: var(--text-1);
-    box-shadow: 0 0 2px var(--border-3);
   }
 </style>

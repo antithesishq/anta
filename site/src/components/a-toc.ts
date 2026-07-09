@@ -249,7 +249,7 @@ export class ATocElement extends HTMLElement {
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: var(--text-4-brand);
+        color: var(--text-3-brand);
         text-decoration: none;
         cursor: pointer;
         transition: color 160ms ease-out;

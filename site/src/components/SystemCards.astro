@@ -17,13 +17,13 @@ import { SYSTEMS } from './comparison-data'
       <p class="card-tagline">{s.tagline}</p>
       <div class="card-cols">
         <div class="col-pros">
-          <h4>Strengths</h4>
+          <h4><a-icon shape="circle-check" class="head-icon"></a-icon>Strengths</h4>
           <ul>
             {s.pros.map((p) => <li>{p}</li>)}
           </ul>
         </div>
         <div class="col-cons">
-          <h4>Trade-offs</h4>
+          <h4><a-icon shape="help-disk" class="head-icon"></a-icon>Trade-offs</h4>
           <ul>
             {s.cons.map((c) => <li>{c}</li>)}
           </ul>
@@ -99,11 +99,20 @@ import { SYSTEMS } from './comparison-data'
   }
 
   .card-cols h4 {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     margin: 0 0 8px;
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--text-3);
+  }
+  /* a-icon draws with currentColor, so the heading's color tints the glyph.
+     Sized a touch above the 12px label so the mark reads clearly. */
+  .head-icon {
+    --icon-size: 15px;
+    flex-shrink: 0;
   }
   .col-pros h4 { color: var(--text-1-success); }
   .col-cons h4 { color: var(--text-2-warning); }

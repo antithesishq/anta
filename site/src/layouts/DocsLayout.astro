@@ -441,6 +441,14 @@ if (isComponentPage && title) {
   .layout {
     display: flex;
     min-height: 100vh;
+    /* Clip horizontal overflow so the off-canvas slide-out panels (the nav
+       sidebar ≤640px and the TOC rail ≤1024px, both fixed + translated past
+       the right edge when closed) can't create a pannable region. Without it
+       a wide page — the comparison matrices in landscape especially — scrolls
+       sideways into empty space. `clip` (not `hidden`) doesn't establish a
+       scroll container, so the sticky sidebar's vertical stickiness is
+       unaffected; opened panels translate back into the viewport and show. */
+    overflow-x: clip;
   }
 
   .sidebar {

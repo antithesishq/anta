@@ -1,0 +1,125 @@
+---
+// At-a-glance matrix for the /comparison page: one row per system, columns
+// for the facts that decide adoption (shape, frameworks, styling, dark mode,
+// a11y, license). The Anta row is highlighted. Full-bleed + horizontal scroll
+// so the wide table never forces the page body to scroll sideways.
+import { SYSTEMS } from './comparison-data'
+---
+
+<div class="full-bleed matrix-scroll">
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th scope="col" class="sys-col">System</th>
+        <th scope="col">Shape</th>
+        <th scope="col">Frameworks</th>
+        <th scope="col">Styling</th>
+        <th scope="col">Dark mode</th>
+        <th scope="col">Accessibility</th>
+        <th scope="col">License</th>
+      </tr>
+    </thead>
+    <tbody>
+      {SYSTEMS.map((s) => (
+        <tr class:list={[{ anta: s.anta }]}>
+          <th scope="row" class="sys-col">
+            <a href={s.docs} target="_blank" rel="noopener" class="sys-name">{s.name}</a>
+            <span class="sys-ver">{s.version}</span>
+          </th>
+          <td>{s.kind}</td>
+          <td>{s.frameworks}</td>
+          <td>{s.styling}</td>
+          <td>{s.dark}</td>
+          <td>{s.a11y}</td>
+          <td>{s.license}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .matrix-scroll {
+    overflow-x: auto;
+    margin-block: 24px;
+  }
+
+  .matrix {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 860px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .matrix th,
+  .matrix td {
+    text-align: left;
+    vertical-align: top;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-5);
+  }
+
+  .matrix thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-base);
+    color: var(--text-3);
+    font-weight: 550;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border-4);
+    white-space: nowrap;
+  }
+
+  /* First column: the system name + version. Sticky so it stays anchored
+     while the fact columns scroll horizontally. */
+  .sys-col {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--bg-canvas);
+    min-width: 168px;
+  }
+  thead .sys-col {
+    z-index: 3;
+  }
+
+  .sys-name {
+    display: block;
+    font-weight: 550;
+    color: var(--text-1);
+    text-decoration: none;
+  }
+  .sys-name:hover {
+    text-decoration: underline;
+  }
+  .sys-ver {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--text-4);
+    font-family: var(--monospace, ui-monospace, monospace);
+  }
+
+  .matrix td {
+    color: var(--text-2);
+  }
+
+  /* Anta row: brand tint across the row, including the sticky name cell,
+     so it reads as the reference point the page is written around. */
+  .matrix tbody tr.anta th,
+  .matrix tbody tr.anta td {
+    background: var(--bg-5-brand);
+    border-bottom-color: var(--border-4-brand);
+  }
+  .matrix tbody tr.anta .sys-name {
+    color: var(--text-1-brand);
+  }
+  .matrix tbody tr.anta td {
+    color: var(--text-1);
+  }
+</style>

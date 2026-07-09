@@ -450,20 +450,20 @@ export class AExpanderElement extends HTMLElementBase {
   }
 
   /** Controlled mode: the `state` attribute is present and owns the state. */
-  private get controlled(): boolean {
+  get #controlled(): boolean {
     return this.hasAttribute('state')
   }
 
   /** The currently *applied* state (read from the shadow, the source of truth
    *  for what's painted). */
-  private get current(): ExpanderState {
+  get #current(): ExpanderState {
     return this.summary.getAttribute('aria-expanded') === 'true' ? 'open' : 'closed'
   }
 
   connectedCallback() {
     this.syncDisabled()
     // Controlled → reflect `state`; uncontrolled → seed once from `default-state`.
-    this.applyState(parseState(this.getAttribute(this.controlled ? 'state' : 'default-state')))
+    this.applyState(parseState(this.getAttribute(this.#controlled ? 'state' : 'default-state')))
     if (this.hasAttribute('round')) this.startRoundObserver()
   }
 
@@ -476,7 +476,7 @@ export class AExpanderElement extends HTMLElementBase {
     // `state` is the controlled lever — reflect changes. When it's *removed*
     // (controlled → uncontrolled hand-off) `controlled` is false, so we skip and
     // the current applied state is kept, not reset.
-    else if (name === 'state' && this.controlled) this.applyState(parseState(this.getAttribute('state')))
+    else if (name === 'state' && this.#controlled) this.applyState(parseState(this.getAttribute('state')))
     // `round` toggled → start/stop measuring + publishing the radius var.
     else if (name === 'round') {
       if (this.hasAttribute('round')) this.startRoundObserver()
@@ -508,12 +508,12 @@ export class AExpanderElement extends HTMLElementBase {
    *  Controlled: never self-apply; the consumer answers via the `state`
    *  attribute. See STATEFUL-COMPONENTS.md. */
   private onSummaryClick = () => {
-    const prev = this.current
+    const prev = this.#current
     const next: ExpanderState = prev === 'open' ? 'closed' : 'open'
     const ok = this.dispatchEvent(
       new CustomEvent('statechange', { cancelable: true, detail: { next, prev } }),
     )
-    if (this.controlled) return
+    if (this.#controlled) return
     if (ok) this.applyState(next)
   }
 }

@@ -1,0 +1,169 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Text
+---
+import TextDemo from '../components/TextDemo'
+import TruncateDemo from '../components/TruncateDemo'
+import ExpandableDemo from '../components/ExpandableDemo'
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
+import textDemoCode from './text.demo.ts'
+import { Text } from '@antadesign/anta'
+
+# Text
+
+A block-level text container that scopes the color hierarchy of its
+contents. `priority` sets the emphasis from `primary` (`--text-1`) to
+`quinary` (`--text-5`). It defaults to `secondary` (`--text-2`), so body
+text reads a step softer than the strongest foreground; pass `primary`
+for emphasis. `tone` adds a tint (`brand`, `success`, `critical`,
+`warning`, `info`); the default `neutral` leaves it untinted. `inline`
+renders it `inline-block` for use mid-sentence.
+
+Links nested inside `<Text>` take Anta's prose-link styling from the
+design system, with no per-page overrides to maintain.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="Text"
+  layout="side"
+  initialCode={textDemoCode}
+  initialCss={`.preview { align-items: center; justify-content: center; min-height: 100%; }`}
+/>
+
+</Disclosure>
+
+## Link behavior
+
+Links inside `<Text>` follow a priority-aware hierarchy that keeps
+emphasis consistent with the surrounding text:
+
+| Priority      | Link color (default)              | Link color (hover)            |
+|---------------|-----------------------------------|-------------------------------|
+| `primary`     | `--link-color` (brand blue)       | `--link-color-hover`          |
+| `secondary`   | `--link-color`                    | `--link-color-hover`          |
+| `tertiary`    | `currentColor` (= `--text-3`)     | `--text-2`                    |
+| `quaternary`  | `currentColor` (= `--text-4`)     | `--text-3`                    |
+| `quinary`     | `currentColor` (= `--text-5`)     | `--text-4`                    |
+
+The underline is a 0.5px hairline at 75% alpha by default and bumps to
+1px / 100% alpha on hover. On `:active` it returns to the 0.5px / 75%
+resting state.
+
+For tinted text (`tone="brand|success|critical|warning|info"`) links are
+always muted regardless of priority: they take `currentColor` and step up
+to the next-stronger level of the same tint on hover. At
+`priority="primary"` there is no level above, so hovering only brings the
+underline to full alpha.
+
+## Demo
+
+<TextDemo client:load />
+
+## Truncation & expansion
+
+<Columns>
+<Col>
+
+<TruncateDemo client:load />
+
+`truncate` takes `true` (or `1`) for a single-line ellipsis, any integer
+≥ 2 for multi-line clamping, and `0` or a negative value for no
+truncation. Both modes use `-webkit-line-clamp` inside
+`display: -webkit-box`, supported in every major browser despite the
+prefix (Firefox 68+, Chrome, Safari, Edge). The host gets `min-width: 0`
+so truncation works inside flex and grid containers.
+
+```tsx folded
+{/* Single line */}
+<Text truncate>{longSentence}</Text>
+
+{/* Multi-line: pass the line count */}
+<Text truncate={2}>{longSentence}</Text>
+<Text truncate={3}>{longSentence}</Text>
+```
+
+</Col>
+<Col>
+
+<ExpandableDemo client:load />
+
+Pair `expandable` with `truncate` to let the reader reveal the full text.
+The fade and chevron appear only when the clamped content overflows; text
+that fits gets neither. Single-line truncation fades on the right edge,
+multi-line over the last line. The chevron is a real `<button>` carrying
+`aria-expanded`: click it, or focus it and press Enter, to drop the clamp.
+`expandable` takes effect only with `truncate`.
+
+Expanding is one-way by default, so the control is removed once the text
+is revealed. Add `collapsible` for a two-way toggle: the chevron stays
+visible while expanded (rotated up) and flips its label between "Show
+more" and "Show less". `collapsible` takes effect only with `expandable`.
+
+```tsx folded
+{/* One-way: the chevron is removed once expanded */}
+<Text truncate expandable>{longSentence}</Text>
+<Text truncate={3} expandable>{longSentence}</Text>
+
+{/* Two-way: the reader can collapse it back */}
+<Text truncate={3} expandable collapsible>{longSentence}</Text>
+```
+
+</Col>
+</Columns>
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Text" />
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+Colour comes from **`priority`** (the neutral text level) and **`tone`** (the tint);
+`size` and the type props set the rest. `Text` exposes no tokens of its own. It
+consumes the global **text role tokens** (`--text-1` … `--text-5`, the `-{tone}`
+tints, `--link-color`), so retuning those once on `:root` / `.dark` shifts text
+colour everywhere (see [Colors](/colors/)).
+
+```tsx folded
+<Text priority="secondary" tone="brand">Tinted secondary text</Text>
+```
+
+`<a-text>` is light-DOM, so one-offs are plain CSS on the element or its prose
+links. The `.fancy` class names the demo example:
+
+<Preview>
+  <Text className="fancy">
+    Body copy with a <a href="#styling">prose link</a> inside it.
+  </Text>
+  <style is:inline>{`
+    a-text.fancy {
+      color: light-dark(#0f6e5f, #5fd0bb);
+      font-size: 16px;
+      line-height: 1.7;
+      letter-spacing: 0.06em;
+    }
+    a-text.fancy a { text-decoration-thickness: 2px; text-underline-offset: 3px; }
+  `}</style>
+</Preview>
+
+```css folded
+/* teal body text via light-dark() (deep in light, bright in dark; Anta drives
+   color-scheme from its theme toggle), with wider tracking */
+a-text.fancy {
+  color: light-dark(#0f6e5f, #5fd0bb);
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0.06em;
+}
+a-text.fancy a { text-decoration-thickness: 2px; text-underline-offset: 3px; }
+```
+
+</Disclosure>

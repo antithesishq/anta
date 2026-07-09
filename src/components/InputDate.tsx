@@ -104,6 +104,10 @@ export interface InputDateProps extends Omit<BaseProps, 'children'> {
  * Controlled (`value` + `onValueChange`) or uncontrolled (`defaultValue`).
  * Requires `@antadesign/anta/elements` (client-side only).
  *
+ * @remarks Not SSR-safe (it embeds `Calendar`): it reads the current date
+ * (`Temporal.Now`) and locale (`navigator.language`) at render, so server and
+ * client output diverge and hydration mismatches. Render it client-side only.
+ *
  * @example
  * ```tsx
  * <InputDate label="Starts" time defaultValue="2026-06-15T09:00" onValueChange={(v) => save(v)} />

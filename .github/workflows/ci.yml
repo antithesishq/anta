@@ -15,6 +15,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
+      - run: pnpm run lint
       - run: pnpm run typecheck
       - name: Build stickers
         run: pnpm --filter @antadesign/stickers run build

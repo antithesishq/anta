@@ -1,4 +1,4 @@
-import { HTMLElementBase, anchorRect } from '../anta_helpers'
+import { HTMLElementBase, anchorRect, setMenuPresence } from '../anta_helpers'
 import { AMenuItemElement } from './a-menu-item'
 import './a-menu.css'
 
@@ -140,6 +140,26 @@ function pathHitsMenus(e: Event, primaryClick = false): boolean {
   }
   return false
 }
+
+/** Node-based sibling of `pathHitsMenus`: is `node` inside any open menu's
+ *  surface, its slotted light-DOM content (menu items), or its trigger anchor?
+ *  Published to `anta_helpers` so `a-tooltip` can suppress a tooltip anchored
+ *  outside the open menu system (it would otherwise paint over the menu). */
+function nodeHitsMenus(node: Node): boolean {
+  for (const m of openStack) {
+    if (m.contains(node) || m.surface.contains(node)) return true
+    const anchor = m.triggerAnchor
+    if (anchor && anchor.contains(node)) return true
+  }
+  return false
+}
+
+// Live open-state provider (reads `openStack` directly, so no push/pop
+// instrumentation is needed). Set once on module load; `a-tooltip` consumes it.
+setMenuPresence({
+  isOpen: () => openStack.length > 0,
+  contains: nodeHitsMenus,
+})
 
 function onDocPointerDown(e: Event) {
   if (!openStack.length) return
@@ -410,7 +430,7 @@ export class AMenuElement extends HTMLElementBase {
     })
     this.surface.addEventListener('pointerleave', (e) => {
       if (e.pointerType !== 'mouse') return
-      if (this.isSubmenu && this.isHover) this.scheduleClose()
+      if (this.isSubmenu && this.#isHover) this.scheduleClose()
     })
 
     // Single delegated click for activation + the close contract.
@@ -480,22 +500,22 @@ export class AMenuElement extends HTMLElementBase {
   get isSubmenu(): boolean {
     return !!this.closest('a-menu-item')
   }
-  private get isContext(): boolean {
+  get #isContext(): boolean {
     return this.hasAttribute('context')
   }
-  private get isCoord(): boolean {
+  get #isCoord(): boolean {
     return this.hasAttribute('coord')
   }
   // Submenus open on hover by default; `nohover` opts out (click-only). Root
   // menus never consult this — it's read only on the submenu paths.
-  private get isHover(): boolean {
+  get #isHover(): boolean {
     return !this.hasAttribute('nohover')
   }
-  private get offset(): number {
+  get #offset(): number {
     const n = parseInt(this.getAttribute('offset') ?? '', 10)
     return Number.isFinite(n) ? n : MARGIN
   }
-  private get placement(): Placement {
+  get #placement(): Placement {
     const p = this.getAttribute('placement')
     if (
       p === 'bottom-end' || p === 'top-start' || p === 'top-end' ||
@@ -522,7 +542,7 @@ export class AMenuElement extends HTMLElementBase {
    *  that returns a single focusable element (the documented contract) resolves
    *  to that element; if it wrongly returns a non-focusable node with none
    *  inside, this is null and `focusTrigger` warns. */
-  private get triggerFocusable(): HTMLElement | null {
+  get #triggerFocusable(): HTMLElement | null {
     const a = this.triggerAnchor
     if (!a) return null
     const sel =
@@ -534,7 +554,7 @@ export class AMenuElement extends HTMLElementBase {
    *  there is none (a mis-authored trigger — e.g. `renderTrigger` returning a
    *  fragment or a non-focusable node), warns instead of silently focusing air. */
   private focusTrigger() {
-    const f = this.triggerFocusable
+    const f = this.#triggerFocusable
     if (f) f.focus()
     else if (this.triggerAnchor) {
       console.warn(
@@ -544,7 +564,7 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   /** For a submenu: the menu that contains its anchor item. */
-  private get ownerMenu(): AMenuElement | null {
+  get #ownerMenu(): AMenuElement | null {
     if (!this.isSubmenu) return null
     return (this.triggerAnchor?.closest('a-menu') as AMenuElement | null) ?? null
   }
@@ -656,7 +676,7 @@ export class AMenuElement extends HTMLElementBase {
 
   /** The filter field slotted into THIS menu (never a submenu's), or null. Its
    *  presence switches the menu to the combobox keyboard. */
-  private get searchField(): HTMLElement | null {
+  get #searchField(): HTMLElement | null {
     const el = this.querySelector('[data-menu-search]') as HTMLElement | null
     return el && el.closest('a-menu') === this ? el : null
   }
@@ -672,7 +692,7 @@ export class AMenuElement extends HTMLElementBase {
       item.active = true
       item.scrollIntoView?.({ block: 'nearest' })
     }
-    const s = this.searchField
+    const s = this.#searchField
     if (!s) return
     if (item?.id) s.setAttribute('aria-activedescendant', item.id)
     else s.removeAttribute('aria-activedescendant')
@@ -685,7 +705,7 @@ export class AMenuElement extends HTMLElementBase {
    *  the seat target — the cursor lands on the first real option — but they stay
    *  arrow-reachable. */
   private resetActive() {
-    const q = (this.searchField as { value?: string } | null)?.value
+    const q = (this.#searchField as { value?: string } | null)?.value
     if (!q || !q.trim()) return this.setActive(null)
     const items = this.focusableItems()
     this.setActive(items.find((it) => !it.hasAttribute('data-menu-skip-active')) ?? items[0] ?? null)
@@ -786,7 +806,7 @@ export class AMenuElement extends HTMLElementBase {
   private show(coord?: [number, number], viaKeyboard = false, _originEvent?: Event) {
     if (this.isSubmenu) {
       // Collapse any deeper menus opened from sibling items.
-      const parent = this.ownerMenu
+      const parent = this.#ownerMenu
       if (parent) {
         const pidx = openStack.indexOf(parent)
         if (pidx !== -1) {
@@ -840,7 +860,7 @@ export class AMenuElement extends HTMLElementBase {
       this.armPositionTracker()
     }
 
-    const search = this.searchField
+    const search = this.#searchField
     if (search) {
       // Combobox: focus the filter field on open (mouse OR keyboard) so typing
       // narrows immediately, seat the cursor on the first option, and watch for the
@@ -861,7 +881,7 @@ export class AMenuElement extends HTMLElementBase {
   private startComboObserver() {
     this.comboObserver?.disconnect()
     this.comboObserver = new this.view.MutationObserver(() => {
-      if (!this._shown || !this.searchField) return
+      if (!this._shown || !this.#searchField) return
       this.resetActive()
       // The filtered list changed the menu's height — re-anchor to the trigger,
       // keeping the side chosen at open (`reanchor`). Matters when flipped ABOVE:
@@ -986,10 +1006,10 @@ export class AMenuElement extends HTMLElementBase {
         if (!it) return
         surface.style.maxHeight = `${Math.max(MIN_HEIGHT, vh - 2 * MARGIN)}px`
         const box = surface.getBoundingClientRect()
-        left = it.right + this.offset
+        left = it.right + this.#offset
         if (left + box.width > vw - MARGIN) {
           // Flip to the left of the parent item.
-          left = it.left - box.width - this.offset
+          left = it.left - box.width - this.#offset
         }
         left = Math.max(MARGIN, left)
         // Line the submenu's FIRST row up with the parent item. The first row
@@ -1012,7 +1032,7 @@ export class AMenuElement extends HTMLElementBase {
         // so the surface min-width floors to it (see the shadow style's `max()`).
         // Content can still make it wider; it never shrinks below the trigger.
         surface.style.setProperty('--_anchor-width', `${Math.ceil(a.width)}px`)
-        const p = this.placement
+        const p = this.#placement
         const spaceBelow = vh - a.bottom - 2 * MARGIN
         const spaceAbove = a.top - 2 * MARGIN
 
@@ -1051,7 +1071,7 @@ export class AMenuElement extends HTMLElementBase {
         if (left + box.width > vw - MARGIN) left = vw - box.width - MARGIN
         left = Math.max(MARGIN, left)
 
-        top = onTop ? a.top - box.height - this.offset : a.bottom + this.offset
+        top = onTop ? a.top - box.height - this.#offset : a.bottom + this.#offset
         top = Math.max(MARGIN, top)
       }
 
@@ -1160,7 +1180,7 @@ export class AMenuElement extends HTMLElementBase {
     // Combobox: focus is in the filter field → arrows / Home / End / Enter move &
     // activate the cursor (focus stays put so you keep typing); every other key
     // falls through to the input. Suppresses the plain-menu item nav + type-ahead.
-    const search = this.searchField
+    const search = this.#searchField
     if (search && (active === search || search.contains(active as Node))) {
       this.handleComboKey(e)
       return
@@ -1269,7 +1289,7 @@ export class AMenuElement extends HTMLElementBase {
       anchor.addEventListener('click', onClick)
       let onEnter: ((e: PointerEvent) => void) | undefined
       let onLeave: ((e: PointerEvent) => void) | undefined
-      if (this.isHover) {
+      if (this.#isHover) {
         // Mouse-only hover-intent (see the surface listeners above): touch/pen
         // taps emit synthetic pointerenter/leave that would open-then-close.
         onEnter = (e) => { if (e.pointerType === 'mouse') this.scheduleOpen() }
@@ -1283,7 +1303,7 @@ export class AMenuElement extends HTMLElementBase {
         if (onLeave) anchor.removeEventListener('pointerleave', onLeave)
         this.listening = false
       }
-    } else if (this.isContext) {
+    } else if (this.#isContext) {
       const onContext = (e: MouseEvent) => {
         e.preventDefault()
         this.requestOpen({ coord: [e.clientX, e.clientY], originEvent: e })
@@ -1303,7 +1323,7 @@ export class AMenuElement extends HTMLElementBase {
         // back to the trigger's own rect (a DOM read, not a mutation) so it
         // opens at the focused trigger instead.
         let coord: [number, number] | undefined
-        if (this.isCoord) {
+        if (this.#isCoord) {
           if (viaKeyboard) {
             const r = anchorRect(anchor)
             coord = [r.left, r.bottom]

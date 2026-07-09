@@ -1,4 +1,9 @@
 @layer anta {
+  /* Keep hidden until defined. The bubble content is SLOTTED (a-tooltip's
+     children), and the anchor is the tooltip's PARENT — so hiding the tooltip
+     never hides the trigger, but pre-upgrade (no shadow yet) the slotted
+     content would otherwise flash *inline inside the anchor*. Do NOT switch
+     this to `display: contents` (that leaks the bubble). See a-tooltip.ts. */
   a-tooltip:not(:defined) {
     display: none;
   }

@@ -6,6 +6,7 @@
 // read live from the rendered colours. One island per theme example.
 import s from './Swatches.module.css'
 import SwatchGrid from './SwatchGrid.tsx'
+import NavTabs from './NavTabs'
 
 type Tone = 'neutral' | 'brand' | 'info' | 'success' | 'critical' | 'warning'
 type Kind = 'bg' | 'text' | 'border'
@@ -45,18 +46,13 @@ const slug = (k: Kind) => TITLES[k].toLowerCase()
 ---
 
 <div class:list={[s.page, 'full-bleed']}>
-  <div class={s.toneTabs} role="tablist">
-    {TONES.map((t) => (
-      <a
-        href={toneHref(t.id)}
-        role="tab"
-        aria-selected={t.id === tone ? 'true' : 'false'}
-        data-preserve-scroll
-        class:list={[s.toneTab, { [s.toneTabActive]: t.id === tone }]}
-      >
-        {t.label}
-      </a>
-    ))}
+  <div class={s.toneTabs}>
+    <NavTabs
+      client:load
+      label="Colour tones"
+      active={toneHref(tone)}
+      tabs={TONES.map((t) => ({ value: toneHref(t.id), label: t.label }))}
+    />
   </div>
 
   {KINDS.map((kind) => (

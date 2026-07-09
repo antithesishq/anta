@@ -51,7 +51,7 @@ export class ATabsElement extends HTMLElementBase {
 
   /** The selected tab's value, or `null` when nothing is selected. */
   get value(): string | null {
-    return this.currentValue;
+    return this.#currentValue;
   }
 
   constructor() {
@@ -108,30 +108,30 @@ export class ATabsElement extends HTMLElementBase {
   }
 
   // Controlled when `state` is present; otherwise the in-memory uncontrolled value.
-  private get currentValue() {
+  get #currentValue() {
     return this.hasAttribute("state")
       ? this.getAttribute("state")
       : this.uncontrolledValue;
   }
 
-  private get isDisabled() {
+  get #isDisabled() {
     return (
       this.hasAttribute("disabled") ||
       (this.internals?.states.has("disabled") ?? false)
     );
   }
 
-  private get isVertical() {
+  get #isVertical() {
     return this.getAttribute("orientation") === "vertical";
   }
 
-  private get tabs() {
+  get #tabs() {
     return Array.from(this.querySelectorAll("a-tab")) as ATabElement[];
   }
 
   private sync = () => {
-    const value = this.currentValue;
-    const tabs = this.tabs;
+    const value = this.#currentValue;
+    const tabs = this.#tabs;
     // `null` (attribute absent) means "nothing selected"; an empty string is a *real*
     // value (a legitimate `value=""` tab), so only the null check guards.
     const selectedEl = tabs.find((t) => t.value === value && value != null) ?? null;
@@ -160,7 +160,7 @@ export class ATabsElement extends HTMLElementBase {
   // The shared state algorithm: fire the cancelable `statechange` *before* applying.
   // Controlled never self-applies; uncontrolled applies unless vetoed.
   private requestSelect(next: string) {
-    const prev = this.currentValue;
+    const prev = this.#currentValue;
     if (next === prev) return;
     const ok = this.emitStateChange(next, prev);
     if (this.hasAttribute("state")) return;
@@ -191,7 +191,7 @@ export class ATabsElement extends HTMLElementBase {
   }
 
   private onClick = (e: MouseEvent) => {
-    if (this.isDisabled) return;
+    if (this.#isDisabled) return;
     const tab = (e.target as HTMLElement | null)?.closest("a-tab") as ATabElement | null;
     if (!tab || tab.hasAttribute("disabled")) return;
     // Move real focus to the clicked tab. A no-op in raw/aria-activedescendant mode
@@ -201,8 +201,8 @@ export class ATabsElement extends HTMLElementBase {
   };
 
   private onKeyDown = (e: KeyboardEvent) => {
-    if (this.isDisabled) return;
-    const enabled = this.tabs.filter((t) => !t.hasAttribute("disabled"));
+    if (this.#isDisabled) return;
+    const enabled = this.#tabs.filter((t) => !t.hasAttribute("disabled"));
     if (enabled.length === 0) return;
     const focused = (e.target as HTMLElement | null)?.closest("a-tab") as ATabElement | null;
 
@@ -225,13 +225,13 @@ export class ATabsElement extends HTMLElementBase {
 
     // Arrow keys step along the orientation axis only (vertical → Up/Down,
     // horizontal → Left/Right), matching the WAI-ARIA tabs pattern.
-    const forward = e.key === (this.isVertical ? "ArrowDown" : "ArrowRight");
-    const back = e.key === (this.isVertical ? "ArrowUp" : "ArrowLeft");
+    const forward = e.key === (this.#isVertical ? "ArrowDown" : "ArrowRight");
+    const back = e.key === (this.#isVertical ? "ArrowUp" : "ArrowLeft");
     if (!forward && !back) return;
     e.preventDefault();
 
     let i = focused ? enabled.indexOf(focused) : -1;
-    if (i === -1) i = enabled.findIndex((t) => t.value === this.currentValue);
+    if (i === -1) i = enabled.findIndex((t) => t.value === this.#currentValue);
     if (i === -1) i = 0;
 
     const next = enabled[(i + (forward ? 1 : -1) + enabled.length) % enabled.length];

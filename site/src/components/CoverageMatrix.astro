@@ -1,0 +1,170 @@
+---
+// Component-coverage matrix: one row per grouped component category, one
+// column per system, so you can read across a row to see who ships a Table
+// or down the Anta column to see its shape. Marks are honest and grouped by
+// job (see comparison-data.ts). Anta's column is highlighted; the category
+// column and the header row are sticky so the wide grid stays legible while
+// it scrolls horizontally.
+import { SYSTEMS, CATEGORIES, COVERAGE, type Mark } from './comparison-data'
+
+const MARK: Record<Mark | 'none', { glyph: string; label: string; cls: string }> = {
+  yes: { glyph: '✓', label: 'Included', cls: 'm-yes' },
+  partial: { glyph: '~', label: 'Basic or community-only', cls: 'm-partial' },
+  paid: { glyph: '$', label: 'Paid / commercial tier', cls: 'm-paid' },
+  no: { glyph: '·', label: 'Not shipped', cls: 'm-no' },
+  none: { glyph: '·', label: 'Not shipped', cls: 'm-no' },
+}
+
+const cell = (systemId: string, catId: string) =>
+  MARK[COVERAGE[systemId]?.[catId] ?? 'none']
+---
+
+<div class="full-bleed cov-scroll">
+  <table class="cov">
+    <thead>
+      <tr>
+        <th scope="col" class="cat-col">Component</th>
+        {SYSTEMS.map((s) => (
+          <th scope="col" class:list={['sys-head', { anta: s.anta }]}>
+            <span class="sys-head-label">{s.name}</span>
+          </th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {CATEGORIES.map((c) => (
+        <tr>
+          <th scope="row" class="cat-col">
+            <span class="cat-label">{c.label}</span>
+            <span class="cat-members">{c.members}</span>
+          </th>
+          {SYSTEMS.map((s) => {
+            const m = cell(s.id, c.id)
+            return (
+              <td class:list={['mark', m.cls, { anta: s.anta }]} title={`${s.name} — ${c.label}: ${m.label}`}>
+                <span aria-hidden="true">{m.glyph}</span>
+                <span class="sr-only">{m.label}</span>
+              </td>
+            )
+          })}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<p class="cov-legend">
+  <span><b class="m-yes">✓</b> included</span>
+  <span><b class="m-partial">~</b> basic / community-only</span>
+  <span><b class="m-paid">$</b> paid tier</span>
+  <span><b class="m-no">·</b> not shipped</span>
+</p>
+
+<style>
+  .cov-scroll {
+    overflow-x: auto;
+    margin-block: 24px 8px;
+  }
+
+  .cov {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+
+  .cov th,
+  .cov td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-5);
+    white-space: nowrap;
+  }
+
+  /* Header row: system names, sticky to the top on vertical scroll. */
+  .cov thead .sys-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-base);
+    color: var(--text-2);
+    font-weight: 550;
+    text-align: center;
+    border-bottom: 1px solid var(--border-4);
+    vertical-align: bottom;
+  }
+  .sys-head-label {
+    display: inline-block;
+    font-size: 12px;
+  }
+
+  /* First column: the grouped category, sticky to the left on horizontal
+     scroll. Label on top, grouped members underneath. */
+  .cat-col {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--bg-canvas);
+    text-align: left;
+    min-width: 150px;
+    white-space: normal;
+  }
+  thead .cat-col {
+    z-index: 3;
+    background: var(--bg-base);
+  }
+  .cat-label {
+    display: block;
+    font-weight: 500;
+    color: var(--text-1);
+  }
+  .cat-members {
+    display: block;
+    margin-top: 1px;
+    font-size: 11px;
+    color: var(--text-4);
+  }
+
+  /* Mark cells. */
+  .mark {
+    text-align: center;
+    font-weight: 600;
+    min-width: 40px;
+  }
+  .m-yes { color: var(--text-1-success); }
+  .m-partial { color: var(--text-2-warning); }
+  .m-paid { color: var(--text-2-info); }
+  .m-no { color: var(--text-5); font-weight: 400; }
+
+  /* Anta column highlight — header + every cell down the column. */
+  .cov thead .sys-head.anta {
+    color: var(--text-1-brand);
+    background: var(--bg-5-brand);
+  }
+  .cov td.mark.anta {
+    background: var(--bg-5-brand);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .cov-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-3);
+    margin-block: 4px 0;
+  }
+  .cov-legend b {
+    font-weight: 700;
+    margin-right: 3px;
+  }
+</style>

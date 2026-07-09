@@ -38,6 +38,16 @@ export function nativeStateChange<D>(
   return { event, detail: event?.detail }
 }
 
+// `Symbol.for` pulls a shared key from a cross-realm registry, so `<Tabs>` can identify
+// `<Tab>` / `<TabPanel>` children even from a duplicate anta copy (federated bundles, dual
+// CDN loads) where reference and function-name matching both fail.
+export const TABS_KIND: unique symbol = Symbol.for("@antadesign/anta/tabs.kind")
+
+export function markTabsKind<F>(component: F & { [TABS_KIND]?: "tab" | "panel" }, kind: "tab" | "panel"): F {
+  component[TABS_KIND] = kind
+  return component
+}
+
 /** The six named tones every toned component shares. Anything else is a literal
  *  CSS colour the element resolves through its `--{component}-tone-source` var. */
 export const NAMED_TONES = new Set([
@@ -98,6 +108,37 @@ export function roundStyle(
 export function anchorRect(el: Element): DOMRect {
   const fn = (el as { getAnchorRect?: () => DOMRect }).getAnchorRect
   return typeof fn === 'function' ? fn.call(el) : el.getBoundingClientRect()
+}
+
+/**
+ * Menu ↔ Tooltip presence coordinator — in-memory only, no DOM. `a-menu`
+ * publishes whether a menu system is open and whether a node sits inside it;
+ * `a-tooltip` reads this to suppress a tooltip anchored *outside* an open menu.
+ * (Menu and tooltip are both top-layer popovers, stacked by show order, so a
+ * tooltip opened while a menu is up would paint over it — z-index can't reorder
+ * the top layer.) Decoupled on purpose: neither element imports the other, and
+ * if `a-menu` never loads the provider stays null and every tooltip shows.
+ */
+export interface MenuPresence {
+  /** Is any `a-menu` open? */
+  isOpen(): boolean
+  /** Is `node` inside the open menu system — a menu surface, a slotted item, or
+   *  an open trigger? (A tooltip there is a menu-item tooltip and still shows,
+   *  above the menu.) */
+  contains(node: Node): boolean
+}
+let menuPresence: MenuPresence | null = null
+/** `a-menu` registers its live open-state provider here (once, on load). */
+export function setMenuPresence(p: MenuPresence | null): void {
+  menuPresence = p
+}
+/** True while any `a-menu` is open. */
+export function isMenuOpen(): boolean {
+  return menuPresence?.isOpen() ?? false
+}
+/** True if `node` sits inside the open menu system. */
+export function isInsideOpenMenu(node: Node): boolean {
+  return menuPresence?.contains(node) ?? false
 }
 
 /**
@@ -169,12 +210,30 @@ export class SelectableChildElement extends HTMLElementBase {
   get selected(): boolean {
     return this.internals?.states.has('selected') ?? false
   }
+  /**
+   * Live selection, held off the DOM as `:state(selected)` (mirrored to `ariaProp`).
+   * The parent `a-radio-group` / `a-tabs` drives it by assigning the *property* a real
+   * boolean from its `sync()` (`el.selected = r === selectedEl`), so a genuine boolean
+   * is the only input the setter sees in practice.
+   *
+   * `!!on` is deliberate and matches native IDL booleans: `el.selected = ''` yields
+   * `false`, exactly like `input.disabled = '' → false`. Empty string is a falsy
+   * *value*; "presence means true" is an attribute-world rule (it governs `hasAttribute`
+   * in `attributeChangedCallback` and CSS `[selected]` matching) and does not carry to
+   * property assignment. React 19 assigns element props as properties, so a hand-written
+   * `<a-radio selected="">` there reads as `false` while the same markup in plain HTML
+   * reads as `true` — the split every boolean IDL property has. Write bare `selected` /
+   * `selected={true}` for on; both paths agree. Do not "fix" `!!on` to treat `''` as true.
+   */
   set selected(on: boolean) {
     this.applyState(!!on)
   }
 
   get value(): string {
     return this.getAttribute('value') ?? ''
+  }
+  set value(v: string) {
+    this.setAttribute('value', v)
   }
 
   protected applyState(on: boolean) {

@@ -1,15 +1,15 @@
 ---
-layout: ../../layouts/DocsLayout.astro
+layout: ../layouts/DocsLayout.astro
 title: Select
 ---
-import Playground from '../../components/Playground'
-import Preview from '../../components/Preview.astro'
-import PropsTable from '../../components/PropsTable.astro'
-import Disclosure from '../../components/Disclosure.astro'
-import Columns from '../../components/Columns.astro'
-import Col from '../../components/Col.astro'
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
-import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGroupsDemo, SelectGhostDemo } from '../../components/SelectDemos'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGroupsDemo, SelectGhostDemo } from '../components/SelectDemos'
 
 # Select
 
@@ -17,9 +17,9 @@ A single- or multi-select dropdown: a read-only field showing the chosen value(s
 over a menu of options. Click to open; it anchors to the field, dismisses on
 outside-click or `Esc`, and highlights the chosen row.
 
-It's a **composed component**, an [Input](/components/input/) trigger stitched to a
-[Menu](/components/menu/). Options are a JSON array of strings or objects, like
-[RadioGroup](/components/radio/) and [Tabs](/components/tabs/); changes arrive
+It's a **composed component**, an [Input](/input/) trigger stitched to a
+[Menu](/menu/). Options are a JSON array of strings or objects, like
+[RadioGroup](/radio/) and [Tabs](/tabs/); changes arrive
 through one **`onValueChange`**. Controlled via `value`, uncontrolled via
 `defaultValue`.
 
@@ -203,7 +203,7 @@ second: `{ value, option }` for the changed row, plus `selected` in `multiple` m
 (or `{ all: true }` for the Select-all row). There's **no `onStateChange`**: Select
 has no discrete element state to veto (Checkbox and RadioGroup do), so it follows
 Input's model of one value callback, and a controlled consumer rejects a pick by not
-updating `value`. See the [event-model note on Input](/components/input/#events) for
+updating `value`. See the [event-model note on Input](/input/#events) for
 the rationale.
 
 </Col>
@@ -229,7 +229,7 @@ the rationale.
 </Col>
 <Col>
 
-The trigger is an [Input](/components/input/), so it inherits the field props.
+The trigger is an [Input](/input/), so it inherits the field props.
 **`size`** (`small` · `medium` · `large`) sets the height and type scale.
 **`status`** paints a validation tone on the border, `hint`, and chevron, and
 prefixes a glyph (`info` / `success` / `warning` / `critical`); **`statusIcon`**
@@ -238,7 +238,7 @@ rides in `hint`.
 
 `status` is a validation *state* over the same palette as `tone`: it also carries
 the glyph and, for `critical`, validity. See the
-[Input status note](/components/input/#status). The field also takes `label`,
+[Input status note](/input/#status). The field also takes `label`,
 `placeholder`, `round`, and `disabled`, and fills its container; set a width via
 `style` / `className` (both forwarded to the field).
 
@@ -666,7 +666,7 @@ query needs no dedicated prop — return a "Create …" row from `renderEmpty`.
 
 <Disclosure title="Styling">
 
-Select is an [Input](/components/input/) plus a [Menu](/components/menu/), so it
+Select is an [Input](/input/) plus a [Menu](/menu/), so it
 inherits both surfaces' hooks. Reach for props first, then plain CSS or `::part` for
 the rest. Don't override an element's internal `--*` output tokens.
 

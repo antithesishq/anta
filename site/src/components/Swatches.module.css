@@ -18,20 +18,11 @@
 /* ─── Segmented control ──────────────────────────────────────────────────
    Style for the documentation tone tabs (Colors). Surface is bg-block.
    (The Accessibility matrix controls are Anta <Tabs> — see AccessibilityMatrix.) */
+/* The tone nav is an Anta <Tabs> strip (the NavTabs island) that navigates on
+   pick; this wrapper only positions it (sticky page-nav below) and caps its
+   width. The strip's own chrome comes from <Tabs>. */
 .toneTabs {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 3px;
-  padding: 3px;
-  background: var(--bg-block);
-  border: 0.5px solid var(--border-4);
-  border-radius: 6px;
-  /* Cap at parent width so a long control list scrolls horizontally instead
-     of pushing the page wider than the content column. */
   max-width: 100%;
-  overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 /* Tone tabs are also sticky page-nav, nudged in to the 960 prose left edge
@@ -61,51 +52,6 @@
 }
 .page .themeRows {
   max-width: none;
-}
-
-/* Items. Tone tabs are <a> (per-tone navigation) so the selector list strips
-   every facet of the global `<a>` styling across all link pseudos. */
-.toneTab,
-.toneTab:link,
-.toneTab:visited,
-.toneTab:hover,
-.toneTab:focus,
-.toneTab:active {
-  appearance: none;
-  border: none;
-  background: transparent;
-  font: inherit;
-  font-size: 0.8rem;
-  line-height: 1.2;
-  color: var(--text-3);
-  padding: 4px 8px 5px;
-  border-radius: 4px;
-  cursor: pointer;
-  text-decoration: none;
-  text-decoration-line: none;
-  text-decoration-color: transparent;
-  text-decoration-thickness: 0;
-  text-underline-offset: 0;
-  transition: background 150ms ease-out, color 150ms ease-out;
-}
-
-.toneTab:hover,
-.toneTab:focus {
-  color: var(--text-1);
-}
-
-/* Active state. The `:link` / `:visited` / `:hover` / `:focus` coverage keeps
-   the active styling winning over the base group at every link state (so the
-   active tab doesn't fall back to the inactive look on hover). */
-.toneTabActive,
-.toneTabActive:link,
-.toneTabActive:visited,
-.toneTabActive:hover,
-.toneTabActive:focus,
-.toneTabActive:active {
-  background: var(--bg-canvas);
-  color: var(--text-1);
-  box-shadow: 0 0 2px var(--border-3);
 }
 
 .block {

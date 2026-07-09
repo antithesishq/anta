@@ -16,6 +16,7 @@ import '../styles/base.css'
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
 import '../icons/docs-icons.css'
 import { Button, Icon } from '@antadesign/anta'
+import { COMPONENT_SLUGS } from '../../lib/component-slugs'
 
 interface Props {
   title?: string
@@ -57,7 +58,7 @@ const description = "Antithesis design system: global CSS tokens, framework-agno
 
 // JSON-LD structured data. Every page declares the WebSite; component
 // pages add a breadcrumb trail so search results show the site hierarchy.
-const isComponentPage = /^\/components\/[^/]+\/?$/.test(Astro.url.pathname)
+const isComponentPage = COMPONENT_SLUGS.includes(Astro.url.pathname.replace(/^\/|\/$/g, ''))
 const jsonLd: object[] = [
   {
     '@context': 'https://schema.org',
@@ -92,7 +93,14 @@ if (isComponentPage && title) {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* viewport-fit=cover so the layout spans the whole screen on notched /
+        Dynamic-Island iPhones. Without it, Safari letterboxes the page in
+        landscape — insetting the content away from the notch and painting the
+        margins with the page background, so the UI looks like it doesn't use
+        the full width. `env(safe-area-inset-*)` padding on `.layout` keeps
+        content clear of the notch; the insets are 0 everywhere else, so this
+        is a no-op on non-notched screens. */}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={pageUrl} />
@@ -231,28 +239,29 @@ if (isComponentPage && title) {
           <li><a href="/colors/" aria-current={isCurrent('/colors/') ? 'page' : undefined}><Icon shape="swatch-book" size={18} /> Colors</a></li>
           <li><a href="/normalization/" aria-current={isCurrent('/normalization/') ? 'page' : undefined}><Icon shape="book-a" size={18} /> Normalization</a></li>
           <li><a href="/accessibility/" aria-current={isCurrent('/accessibility/') ? 'page' : undefined}><Icon shape="hat-glasses" size={18} /> Accessibility</a></li>
+          <li><a href="/comparison/" aria-current={isCurrent('/comparison/') ? 'page' : undefined}><Icon shape="table-2" size={18} /> Comparison</a></li>
           <li><a href="/changelog/" aria-current={isCurrent('/changelog/') ? 'page' : undefined}><Icon shape="scroll-text" size={18} /> Changelog</a></li>
           <li><a href="/credits/" aria-current={isCurrent('/credits/') ? 'page' : undefined}><Icon shape="heart-handshake" size={18} /> Credits</a></li>
         </menu>
         <h4>Components</h4>
         <menu>
-          <li><a href="/components/button/" aria-current={isCurrent('/components/button/') ? 'page' : undefined}><Icon shape="pointer" size={18} /> Button</a></li>
-          <li><a href="/components/checkbox/" aria-current={isCurrent('/components/checkbox/') ? 'page' : undefined}><Icon shape="square-check-big" size={18} /> Checkbox</a></li>
-          <li><a href="/components/expander/" aria-current={isCurrent('/components/expander/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 8 4 4-4 4"/></svg> Expander</a></li>
-          <li><a href="/components/icon/" aria-current={isCurrent('/components/icon/') ? 'page' : undefined}><Icon shape="bug" size={18} /> Icon</a></li>
-          <li><a href="/components/input/" aria-current={isCurrent('/components/input/') ? 'page' : undefined}><Icon shape="text-cursor-input" size={18} /> Input</a></li>
-          <li><a href="/components/input-date/" aria-current={isCurrent('/components/input-date/') ? 'page' : undefined}><Icon shape="calendar-days" size={18} /> InputDate</a></li>
-          <li><a href="/components/menu/" aria-current={isCurrent('/components/menu/') ? 'page' : undefined}><Icon shape="square-menu" size={18} /> Menu</a></li>
-          <li><a href="/components/progress/" aria-current={isCurrent('/components/progress/') ? 'page' : undefined}><Icon shape="hourglass" size={18} /> Progress</a></li>
-          <li><a href="/components/radio/" aria-current={isCurrent('/components/radio/') ? 'page' : undefined}><Icon shape="circle-dot" size={18} /> Radio</a></li>
-          <li><a href="/components/select/" aria-current={isCurrent('/components/select/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m8 10 4 4 4-4"/></svg> Select</a></li>
-          <li><a href="/components/sticker/" aria-current={isCurrent('/components/sticker/') ? 'page' : undefined}><Icon shape="sticker" size={18} /> Sticker</a></li>
-          <li><a href="/components/table/" aria-current={isCurrent('/components/table/') ? 'page' : undefined}><Icon shape="table-2" size={18} /> Table</a></li>
-          <li><a href="/components/tabs/" aria-current={isCurrent('/components/tabs/') ? 'page' : undefined}><Icon shape="tabs" size={18} /> Tabs</a></li>
-          <li><a href="/components/tag/" aria-current={isCurrent('/components/tag/') ? 'page' : undefined}><Icon shape="tag" size={18} /> Tag</a></li>
-          <li><a href="/components/text/" aria-current={isCurrent('/components/text/') ? 'page' : undefined}><Icon shape="text-initial" size={18} /> Text</a></li>
-          <li><a href="/components/title/" aria-current={isCurrent('/components/title/') ? 'page' : undefined}><Icon shape="case-sensitive" size={18} /> Title</a></li>
-          <li><a href="/components/tooltip/" aria-current={isCurrent('/components/tooltip/') ? 'page' : undefined}><Icon shape="chat" size={18} /> Tooltip</a></li>
+          <li><a href="/button/" aria-current={isCurrent('/button/') ? 'page' : undefined}><Icon shape="pointer" size={18} /> Button</a></li>
+          <li><a href="/checkbox/" aria-current={isCurrent('/checkbox/') ? 'page' : undefined}><Icon shape="square-check-big" size={18} /> Checkbox</a></li>
+          <li><a href="/expander/" aria-current={isCurrent('/expander/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 8 4 4-4 4"/></svg> Expander</a></li>
+          <li><a href="/icon/" aria-current={isCurrent('/icon/') ? 'page' : undefined}><Icon shape="bug" size={18} /> Icon</a></li>
+          <li><a href="/input/" aria-current={isCurrent('/input/') ? 'page' : undefined}><Icon shape="text-cursor-input" size={18} /> Input</a></li>
+          <li><a href="/input-date/" aria-current={isCurrent('/input-date/') ? 'page' : undefined}><Icon shape="calendar-days" size={18} /> InputDate</a></li>
+          <li><a href="/menu/" aria-current={isCurrent('/menu/') ? 'page' : undefined}><Icon shape="square-menu" size={18} /> Menu</a></li>
+          <li><a href="/progress/" aria-current={isCurrent('/progress/') ? 'page' : undefined}><Icon shape="hourglass" size={18} /> Progress</a></li>
+          <li><a href="/radio/" aria-current={isCurrent('/radio/') ? 'page' : undefined}><Icon shape="circle-dot" size={18} /> Radio</a></li>
+          <li><a href="/select/" aria-current={isCurrent('/select/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m8 10 4 4 4-4"/></svg> Select</a></li>
+          <li><a href="/sticker/" aria-current={isCurrent('/sticker/') ? 'page' : undefined}><Icon shape="sticker" size={18} /> Sticker</a></li>
+          <li><a href="/table/" aria-current={isCurrent('/table/') ? 'page' : undefined}><Icon shape="table-2" size={18} /> Table</a></li>
+          <li><a href="/tabs/" aria-current={isCurrent('/tabs/') ? 'page' : undefined}><Icon shape="tabs" size={18} /> Tabs</a></li>
+          <li><a href="/tag/" aria-current={isCurrent('/tag/') ? 'page' : undefined}><Icon shape="tag" size={18} /> Tag</a></li>
+          <li><a href="/text/" aria-current={isCurrent('/text/') ? 'page' : undefined}><Icon shape="text-initial" size={18} /> Text</a></li>
+          <li><a href="/title/" aria-current={isCurrent('/title/') ? 'page' : undefined}><Icon shape="case-sensitive" size={18} /> Title</a></li>
+          <li><a href="/tooltip/" aria-current={isCurrent('/tooltip/') ? 'page' : undefined}><Icon shape="chat" size={18} /> Tooltip</a></li>
         </menu>
       </aside>
       <main class="content">
@@ -439,6 +448,20 @@ if (isComponentPage && title) {
   .layout {
     display: flex;
     min-height: 100vh;
+    /* Clip horizontal overflow so the off-canvas slide-out panels (the nav
+       sidebar ≤640px and the TOC rail ≤1024px, both fixed + translated past
+       the right edge when closed) can't create a pannable region. Without it
+       a wide page — the comparison matrices in landscape especially — scrolls
+       sideways into empty space. `clip` (not `hidden`) doesn't establish a
+       scroll container, so the sticky sidebar's vertical stickiness is
+       unaffected; opened panels translate back into the viewport and show. */
+    overflow-x: clip;
+    /* Inset the shell out of the display's safe area. Paired with
+       viewport-fit=cover (see the head meta), this fills the whole screen on
+       notched / Dynamic-Island iPhones while keeping the sidebar and content
+       clear of the side notch in landscape. The insets are 0 on every
+       non-notched screen, so it changes nothing elsewhere. */
+    padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
   }
 
   .sidebar {
@@ -516,7 +539,7 @@ if (isComponentPage && title) {
     line-height: 16px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--text-4-brand);
+    color: var(--text-3-brand);
     margin: 24px 0 8px;
   }
 

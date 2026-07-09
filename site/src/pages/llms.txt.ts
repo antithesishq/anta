@@ -1,19 +1,22 @@
 import type { APIRoute } from 'astro'
+import { COMPONENT_SLUGS } from '../../lib/component-slugs'
 
 const SITE = 'https://anta.design'
 
-const componentModules = import.meta.glob('./components/*.mdx', { eager: true }) as Record<
+// Component pages now live at the site root alongside Colors/Changelog/etc.,
+// so glob every root `.mdx` and keep only the component slugs.
+const componentModules = import.meta.glob('./*.mdx', { eager: true }) as Record<
   string,
   { frontmatter: { title?: string } }
 >
 
 const componentLinks = Object.entries(componentModules)
-  .filter(([path]) => !path.endsWith('.demo.ts'))
+  .map(([path, mod]) => [path.replace('./', '').replace('.mdx', ''), mod] as const)
+  .filter(([slug]) => COMPONENT_SLUGS.includes(slug))
   .sort(([a], [b]) => a.localeCompare(b))
-  .map(([path, mod]) => {
-    const slug = path.replace('./components/', '').replace('.mdx', '')
+  .map(([slug, mod]) => {
     const title = mod.frontmatter?.title ?? slug.charAt(0).toUpperCase() + slug.slice(1)
-    return `- [${title}](${SITE}/components/${slug}/)`
+    return `- [${title}](${SITE}/${slug}/)`
   })
 
 const otherLinks = [

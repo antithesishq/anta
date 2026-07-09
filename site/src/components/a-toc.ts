@@ -42,10 +42,13 @@ export class ATocElement extends HTMLElement {
   }
 
   connectedCallback() {
-    // Build after layout settles so all headings exist and have their ids.
-    const idle =
-      (window as any).requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 1))
-    idle(() => this.build())
+    // Build on the next frame, not requestIdleCallback: the headings (and their
+    // rehype-slug ids) are already in the server-rendered HTML by the time this
+    // upgrades, so waiting for idle only left the reserved-width rail blank for
+    // a beat after load. rAF runs after the current layout pass and before
+    // paint, so the TOC fills in right away; scroll positions self-correct on
+    // the scroll / resize listeners build() attaches.
+    requestAnimationFrame(() => this.build())
   }
 
   disconnectedCallback() {
@@ -249,7 +252,7 @@ export class ATocElement extends HTMLElement {
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: var(--text-4-brand);
+        color: var(--text-3-brand);
         text-decoration: none;
         cursor: pointer;
         transition: color 160ms ease-out;
@@ -288,7 +291,7 @@ export class ATocElement extends HTMLElement {
       a {
         display: block;
         padding: 4px 0 4px calc(var(--_depth, 0) * ${INDENT_STEP}px);
-        color: var(--text-4);
+        color: var(--text-3);
         text-decoration: none;
         letter-spacing: 0.03ch;
         transition: color 160ms ease-out;
@@ -298,6 +301,10 @@ export class ATocElement extends HTMLElement {
       a:focus-visible {
         color: var(--text-1);
         outline: none;
+        text-decoration: underline dotted;
+        text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
       }
       a[aria-current="true"] {
         color: var(--text-1);

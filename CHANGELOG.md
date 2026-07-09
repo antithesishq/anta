@@ -24,7 +24,7 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 - **`Button` `role` prop** — an ARIA role override (e.g. `role="gridcell"`), forwarded to the element. Defaults to `button`.
 - **`getAnchorRect()` anchor protocol for `Menu` & `Tooltip`.** An anchor can implement `getAnchorRect(): DOMRect` to be positioned against a sub-region of itself; anchors without it fall back to `getBoundingClientRect()`. `a-input` implements it (returns its `.field`), so a menu or tooltip anchored to an `Input` lines up with the field, not the label + hint. Exposed as `anchorRect(el)` in `@antadesign/anta/anta_helpers`.
 - **`Input` `type="search"`** — a wrapper-only shorthand that defaults a leading search icon and `clearable` and sets `inputmode="search"`. The native `search` type never reaches the DOM input, so the browser's own affordances stay off; Anta owns that chrome.
-- **New icon shapes** — `calendar-days`, `columns-3-cog` (table-configuration), and `blank` (a sized invisible spacer for aligning a leading-icon column). All as `<Icon shape="…" />` and in the `IconShape` union.
+- **New icon shapes** — `calendar-days`, `columns-3-cog` (table-configuration), `blank` (a sized invisible spacer for aligning a leading-icon column), and `filter-x` (clear/reset a filter). All as `<Icon shape="…" />` and in the `IconShape` union.
 
 ### Fixed
 - **`RadioGroup` `defaultValue` paints its initial selection under eager registration.** `<a-radio>`'s `connectedCallback` re-derived state from the `selected` attribute (which the group never sets) and forced it off after the group had selected the default via the property, so `group.value` was right but no dot painted. `connectedCallback` now only ever turns state on. The seed guard, property/attribute contract, and `:state(selected)` + ARIA reflection now live in one shared `SelectableChildElement` base that both `<a-radio>` and `<a-tab>` extend.
@@ -36,6 +36,7 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 - **Menu items inside a `MenuGroup` keep the 1px inter-item gap.** The gap lived only on the scroll body, so grouped rows touched. `a-menu-group` now applies the same gap.
 
 ### Changed
+- **`filter` icon redrawn** — three horizontal bars (was the wider funnel-bars glyph), matching the new `filter-x`.
 - **`Button` secondary inset border is fainter** — its `box-shadow` mixes `currentColor` with `transparent 90%` (was `70%`).
 - **A read-only `Input` shows a pointer cursor and ellipsizes an overflowing value.** A read-only field is clicked, not typed into, so it reads correctly as the `Select` trigger and a long value renders as `name …`. Editable fields keep the text cursor and the caret-friendly clip.
 - **A root `Menu` is never narrower than its trigger** — its `min-width` floors to the anchor's width (`max(--menu-min-width, anchor width)`). Long items still widen it; submenu / context menus are unchanged.

@@ -46,6 +46,7 @@ export const ICON_SHAPES = [
   'eye',
   'file-down',
   'file',
+  'filter-x',
   'filter',
   'folder-close',
   'folder-open',
@@ -196,6 +197,7 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'maximize': ['fullscreen', 'expand'],
   'minimize': ['collapse', 'shrink'],
   'filter': ['sort', 'narrow'],
+  'filter-x': ['clear filter', 'reset filter', 'remove filter'],
   'download': ['save', 'import'],
   'cloud-upload': ['save', 'sync', 'upload', 'send', 'export'],
   'link': ['url', 'href', 'anchor'],
@@ -248,6 +250,7 @@ declare module '@antadesign/anta' {
     'eye': true
     'file-down': true
     'file': true
+    'filter-x': true
     'filter': true
     'folder-close': true
     'folder-open': true

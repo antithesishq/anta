@@ -84,6 +84,7 @@
   "maximize": ["fullscreen", "expand"],
   "minimize": ["collapse", "shrink"],
   "filter": ["sort", "narrow"],
+  "filter-x": ["clear filter", "reset filter", "remove filter"],
   "download": ["save", "import"],
   "cloud-upload": ["save", "sync", "upload", "send", "export"],
   "link": ["url", "href", "anchor"],

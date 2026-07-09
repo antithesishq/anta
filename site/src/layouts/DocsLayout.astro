@@ -517,7 +517,7 @@ if (isComponentPage && title) {
     line-height: 16px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--text-4-brand);
+    color: var(--text-3);
     margin: 24px 0 8px;
   }
 
@@ -538,7 +538,7 @@ if (isComponentPage && title) {
   }
   .sidebar menu li a > a-icon,
   .sidebar menu li a > svg {
-    color: var(--text-4-brand);
+    color: var(--text-3);
     flex-shrink: 0;
     transition: color 160ms ease-out;
   }
@@ -550,7 +550,17 @@ if (isComponentPage && title) {
   .sidebar menu li a:hover,
   .sidebar menu li a[aria-current="page"] {
     color: var(--text-1);
-    text-decoration: none;
+  }
+  /* Rest sits at --text-3 for legibility, so the hover shift to --text-1 is a
+     smaller step than it was from --text-4-brand. Add a dotted underline on
+     hover (the docs' local-link treatment) as a clear, colour-independent
+     affordance. `text-decoration-skip-ink` keeps it under the label text, not
+     the leading icon. */
+  .sidebar menu li a:hover {
+    text-decoration: underline dotted;
+    text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
   }
   .sidebar menu li a:hover > a-icon,
   .sidebar menu li a[aria-current="page"] > a-icon,

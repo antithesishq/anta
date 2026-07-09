@@ -56,6 +56,14 @@ export const CONDITIONAL_PROPS: Record<string, Record<string, (v: Record<string,
     underline: (v) => v.priority === 'tertiary' || v.priority === 'quaternary',
     paddingless: (v) => v.priority === 'quaternary',
   },
+  Text: {
+    // `collapsible` is only valid alongside `expandable` (the ExpandMode
+    // discriminated union forbids it on its own), so hide it until
+    // `expandable` is on — otherwise the panel could emit an invalid
+    // `<Text collapsible>`. `expandable` itself stays always-visible: it's
+    // valid TSX without `truncate` (just inert), only a runtime no-op.
+    collapsible: (v) => !!v.expandable,
+  },
 }
 
 export type Control =

@@ -3,8 +3,8 @@ import type { BaseProps } from "../general_types"
 /** Truncation / expansion axis. `expandable` only takes effect with `truncate`;
  *  `collapsible` only with `expandable` — so the type forbids `collapsible`
  *  unless `expandable` is set (a dynamic `expandable={cond}` is still allowed). */
-type ExpandMode =
-  | { expandable?: false; collapsible?: never }
+export type ExpandMode =
+  | { expandable?: never; collapsible?: never }
   | {
       /** Show a fade hint and chevron over the truncated text and let the user
        *  expand it by clicking the chevron region or pressing Enter while the

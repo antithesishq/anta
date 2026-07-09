@@ -19,7 +19,7 @@
 export { Progress } from './components/Progress'
 export type { ProgressProps } from './components/Progress'
 export { Text } from './components/Text'
-export type { TextProps } from './components/Text'
+export type { TextProps, ExpandMode } from './components/Text'
 export { Title } from './components/Title'
 export type { TitleProps } from './components/Title'
 export { Tag } from './components/Tag'

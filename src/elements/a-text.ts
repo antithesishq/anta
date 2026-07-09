@@ -1,20 +1,10 @@
 import { HTMLElementBase } from '../anta_helpers'
 import './a-text.css'
 
-// Shadow CSS (kept comment-free — this string ships into every consumer
-// document). How it hangs together:
-// - The slot defaults to `display: contents` so slotted nodes flow as direct
-//   children of the host; the `[truncate]` rule gives it a real -webkit-box
-//   display so it becomes the wrapper that holds the line clamp, and
-//   `.expanded` drops the clamp entirely.
-// - The expandable fade mask is vertical for multi-line, a right-edge
-//   horizontal fade for single-line (`truncate="1"`).
-// - The expand button is the whole fade strip (full-width bottom strip for
-//   multi-line, narrow right region for single-line) — the chevron is just
-//   a masked ::before pinned in its bottom-right corner. It appears on
-//   hover / focus-within while collapsed; while expanded (the two-way
-//   `collapsible` toggle) it stays visible with the chevron rotated to point
-//   up. A one-way expand removes the button entirely (handled in JS).
+// Ships verbatim into every instance's shadow root — keep comment-free. The
+// slot is the clamp box (-webkit-box under [truncate]); the fade mask and the
+// expand button (its following sibling, via `slot.overflowing ~ .expand-btn`)
+// are gated on `slot.overflowing`, a class JS sets only when content clips.
 const SHADOW_STYLE = `
   :host {
     display: block;
@@ -35,12 +25,12 @@ const SHADOW_STYLE = `
     overflow: hidden;
   }
 
-  :host([truncate][expandable]) slot:not(.expanded) {
+  :host([truncate][expandable]) slot.overflowing:not(.expanded) {
     -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 2em), transparent 97%);
             mask-image: linear-gradient(to bottom, black calc(100% - 2em), transparent 97%);
   }
 
-  :host([truncate="1"][expandable]) slot:not(.expanded) {
+  :host([truncate="1"][expandable]) slot.overflowing:not(.expanded) {
     -webkit-mask-image: linear-gradient(to right, black calc(100% - 7ch), transparent 97%);
             mask-image: linear-gradient(to right, black calc(100% - 7ch), transparent 97%);
   }
@@ -88,7 +78,7 @@ const SHADOW_STYLE = `
     transition: transform 150ms ease-out;
   }
 
-  :host([truncate][expandable]) .expand-btn {
+  :host([truncate][expandable]) slot.overflowing ~ .expand-btn {
     display: block;
     left: 0;
     right: 0;
@@ -96,15 +86,15 @@ const SHADOW_STYLE = `
     height: 1.5em;
   }
 
-  :host([truncate="1"][expandable]) .expand-btn {
+  :host([truncate="1"][expandable]) slot.overflowing ~ .expand-btn {
     left: auto;
     top: 0;
     bottom: 0;
     width: 3em;
   }
 
-  :host([truncate][expandable]:hover) .expand-btn,
-  :host([truncate][expandable]:focus-within) .expand-btn,
+  :host([truncate][expandable]:hover) slot.overflowing ~ .expand-btn,
+  :host([truncate][expandable]:focus-within) slot.overflowing ~ .expand-btn,
   .expand-btn.expanded {
     opacity: 1;
   }
@@ -139,13 +129,15 @@ export class ATextElement extends HTMLElementBase {
   static observedAttributes = ['expandable', 'truncate', 'collapsible']
 
   private slotEl: HTMLSlotElement
-  /** The expand/collapse chevron — built lazily, only while the element is
-   *  expandable (a plain `<a-text>` never creates a button or a listener).
-   *  Removed when `expandable` is dropped, and when a one-way expand completes. */
+  /** The chevron — built only while expandable, removed on drop or one-way expand. */
   private expandBtn?: HTMLButtonElement
-  /** Expanded state lives here, on the element — a stateless wrapper can't hold
-   *  it and the app DOM may be reconciled off the UI thread. */
+  /** Expanded state lives on the element — a stateless wrapper can't hold it. */
   private expanded = false
+  // Re-sync `slot.overflowing`: the resize observer watches the box (width),
+  // the mutation observer watches the slotted content — the clamped box never
+  // resizes as content grows, so resize alone misses added lines.
+  private overflowObserver?: ResizeObserver
+  private contentObserver?: MutationObserver
 
   constructor() {
     super()
@@ -161,16 +153,24 @@ export class ATextElement extends HTMLElementBase {
 
   connectedCallback() {
     this.syncExpandButton()
+    if (this.#isExpandable) this.startOverflowObserver()
+  }
+
+  disconnectedCallback() {
+    this.overflowObserver?.disconnect()
+    this.contentObserver?.disconnect()
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
-    // A no-op re-render (a reactive engine re-setting an attribute to the same
-    // value) must NOT discard the reader's expand — only a real change to the
-    // truncation/expandability resets to collapsed. (`collapsible` flipping
-    // changes the affordance, not the state.)
+    // A no-op re-set (same value) must not discard the reader's expand; only a
+    // real truncate/expandable change resets to collapsed.
     if (oldValue === newValue) return
     if (name === 'truncate' || name === 'expandable') this.setExpanded(false)
     this.syncExpandButton()
+    if (name === 'truncate' || name === 'expandable') {
+      if (this.#isExpandable) this.startOverflowObserver()
+      else this.stopOverflowObserver()
+    }
   }
 
   get #isExpandable(): boolean {
@@ -180,8 +180,7 @@ export class ATextElement extends HTMLElementBase {
     return this.hasAttribute('collapsible')
   }
 
-  /** Create or remove the chevron button to match `expandable`, then refresh
-   *  its label/visibility — the single place the button's lifecycle lives. */
+  /** Create or remove the chevron to match `expandable`, then refresh it. */
   private syncExpandButton() {
     if (this.#isExpandable && !this.expandBtn) {
       const btn = document.createElement('button')
@@ -206,12 +205,35 @@ export class ATextElement extends HTMLElementBase {
     this.expanded = next
     this.slotEl.classList.toggle('expanded', next)
     this.refreshButton()
+    if (!next) this.measureOverflow()
   }
 
-  /** Reflect the current state onto the button: label + `aria-expanded` + the
-   *  `.expanded` class (CSS keeps it visible and rotates the chevron up). A
-   *  one-way expand (no `collapsible`) removes the button once expanded — there
-   *  is nothing to collapse back to. */
+  private startOverflowObserver() {
+    if (!this.#isExpandable) return
+    this.overflowObserver ??= new ResizeObserver(() => this.measureOverflow())
+    this.contentObserver ??= new MutationObserver(() => this.measureOverflow())
+    this.overflowObserver.observe(this.slotEl)
+    this.contentObserver.observe(this, { childList: true, subtree: true, characterData: true })
+    this.measureOverflow()
+  }
+
+  private stopOverflowObserver() {
+    this.overflowObserver?.disconnect()
+    this.contentObserver?.disconnect()
+    this.slotEl.classList.remove('overflowing')
+  }
+
+  /** Toggle `slot.overflowing` (gates the fade + chevron) to whether the clamp
+   *  clips. Frozen on while expanded; height catches wrapped text, width a long word. */
+  private measureOverflow() {
+    if (!this.#isExpandable || this.expanded) return
+    const s = this.slotEl
+    const over = s.scrollHeight > s.clientHeight + 1 || s.scrollWidth > s.clientWidth + 1
+    s.classList.toggle('overflowing', over)
+  }
+
+  /** Reflect state onto the button (label + `aria-expanded` + `.expanded`); a
+   *  one-way expand removes it once open. */
   private refreshButton() {
     const btn = this.expandBtn
     if (!btn) return
@@ -233,6 +255,5 @@ export function register_a_text() {
   }
 }
 
-// Importing this module registers the element (granular entry point). The
-// barrel re-exports it, so importing the barrel registers it too. Idempotent.
+// Importing this module self-registers the element (idempotent).
 register_a_text()

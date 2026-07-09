@@ -1362,11 +1362,28 @@ export class AMenuElement extends HTMLElementBase {
   private scheduleClose() {
     this.cancelOpenTimer()
     if (!this._shown) return
+    // Keyboard focus has moved into this submenu (a `:focus-visible` element
+    // inside it) — the user is navigating by keyboard now, so a mouse hover-away
+    // must not yank the flyout out from under them. The explicit close paths
+    // (Esc, ArrowLeft, outside-click, focus leaving on Tab) still close it, and a
+    // deeper flyout keeps its ancestors open (they `contains()` it too).
+    if (this.#hasKeyboardFocusInside) return
     this.cancelCloseTimer()
     this.closeTimer = setTimeout(() => {
       this.closeTimer = undefined
       this.requestClose()
     }, SUBMENU_CLOSE_DELAY)
+  }
+
+  /** True when the document's focused element is inside this menu AND is
+   *  keyboard-focused (`:focus-visible`). Distinguishes "arrowed into the flyout"
+   *  (keep it open on hover-out) from a mouse-click focus (close as usual).
+   *  `activeElement` retargets to the shadow host at the document level, so a
+   *  focused menu item (or its delegated inner control) reads as a light-DOM
+   *  descendant here. */
+  get #hasKeyboardFocusInside(): boolean {
+    const active = this.doc.activeElement as HTMLElement | null
+    return !!active && this.contains(active) && active.matches(':focus-visible')
   }
   private cancelOpenTimer() {
     if (this.openTimer !== undefined) {

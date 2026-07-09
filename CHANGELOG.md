@@ -6,7 +6,7 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
-## Unreleased
+## 0.3.3 — July 8, 2026
 
 ### Added
 - **`InputDate`** — a date (and date-time, with `time`) field, composed from `Input` + `Menu` + `Calendar`. Type freely; it resolves on blur or Enter with a locale-aware parser (field order, month names, run-together digits) and rewrites the entry to the canonical format. An unrecognized entry marks the field `critical` and keeps the text. The trailing button opens the calendar. `time` makes the value `YYYY-MM-DDTHH:mm` and adds a time row with a 12- or 24-hour clock (locale-driven, `hour12` to override; a 24-hour hour typed into a 12-hour field auto-converts). Controlled or uncontrolled, submits ISO under `name`. Exports `InputDateProps` / `InputDateChangeAttrs`.

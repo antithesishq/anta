@@ -249,7 +249,7 @@ export class ATocElement extends HTMLElement {
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: var(--text-4-brand);
+        color: var(--text-3-brand);
         text-decoration: none;
         cursor: pointer;
         transition: color 160ms ease-out;
@@ -288,7 +288,7 @@ export class ATocElement extends HTMLElement {
       a {
         display: block;
         padding: 4px 0 4px calc(var(--_depth, 0) * ${INDENT_STEP}px);
-        color: var(--text-4);
+        color: var(--text-3);
         text-decoration: none;
         letter-spacing: 0.03ch;
         transition: color 160ms ease-out;
@@ -298,6 +298,10 @@ export class ATocElement extends HTMLElement {
       a:focus-visible {
         color: var(--text-1);
         outline: none;
+        text-decoration: underline dotted;
+        text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
       }
       a[aria-current="true"] {
         color: var(--text-1);

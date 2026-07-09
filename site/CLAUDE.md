@@ -15,7 +15,7 @@ The docs site consumes Anta via the workspace symlink (`"@antadesign/anta": "wor
 
 ## Playground
 
-The `<Playground>` component (`site/src/components/Playground.tsx`) is the playground that lands on `/components/<name>/` pages. It is the largest single component in this directory and is intentionally self-contained so that a future migration to a dedicated package (`@antadesign/sandbox` or similar) and a dedicated repository can lift it out without disturbing the rest of the site.
+The `<Playground>` component (`site/src/components/Playground.tsx`) is the playground that lands on `/<name>/` pages. It is the largest single component in this directory and is intentionally self-contained so that a future migration to a dedicated package (`@antadesign/sandbox` or similar) and a dedicated repository can lift it out without disturbing the rest of the site.
 
 Supporting code:
 
@@ -38,13 +38,13 @@ import('@monaco-editor/react')                                                  
 
 After load, `MonacoEnvironment.getWorker(_, label)` returns a fresh `Worker` for `typescript`/`javascript` (ts.worker), `css`/`scss`/`less` (css.worker), and anything else (editor.worker). `loader.config({ monaco: monacoNs })` is what makes `@monaco-editor/react` skip its default CDN fetch.
 
-Trade-off: ~1.5 MB Monaco enters the `/components/<name>/` lazy chunk. The docs site is self-contained — no third-party JS fetch, offline-correct, and the runtime version is whatever `package.json` says.
+Trade-off: ~1.5 MB Monaco enters the `/<name>/` lazy chunk. The docs site is self-contained — no third-party JS fetch, offline-correct, and the runtime version is whatever `package.json` says.
 
 We only register workers for languages the playground actually uses. Adding JSON/HTML support means adding two more `?worker` imports and switch arms.
 
 ## Adding a component docs page
 
-Create `site/src/pages/components/{name}.mdx` with `layout: ../../layouts/DocsLayout.astro`. For an interactive demo, drop `<Playground client:visible component="…" layout="side" initialCode={…} />` near the top.
+Create `site/src/pages/{name}.mdx` with `layout: ../layouts/DocsLayout.astro` (component pages are served at the site root, `/{name}/`, not under `/components/`; add the slug to `site/lib/component-slugs.ts` and the sidebar nav in `DocsLayout.astro`). For an interactive demo, drop `<Playground client:visible component="…" layout="side" initialCode={…} />` near the top.
 
 **Always use the shared `<Playground>` for the interactive demo — never hand-roll a bespoke per-component playground island.** The shared one gives a uniform editor + auto props form (from `api.json`) + isolated preview iframe across every page, and is slated for extraction into its own package; a one-off island fragments that and drifts. The `initialCode` is plain TSX — imports followed by a trailing JSX block that the bundler auto-wraps in a `<>…</>` fragment, so it can hold **multiple sibling or nested elements** (e.g. several anchors each wrapping a `<Tooltip>`); the props panel binds to the first instance of `component`. Keep `initialCode` in a sibling `{name}.demo.ts` (`export default \`…\``) so Astro's MDX pipeline doesn't mangle the template literal's indentation. Reserve custom islands for demos the playground genuinely can't express (e.g. a self-animating `AnimatedProgress`).
 

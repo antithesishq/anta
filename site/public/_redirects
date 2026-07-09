@@ -1,0 +1,2 @@
+# Component docs moved from /components/<name>/ to the site root /<name>/.
+/components/* /:splat 301

@@ -1,15 +1,15 @@
 ---
-layout: ../../layouts/DocsLayout.astro
+layout: ../layouts/DocsLayout.astro
 title: Menu
 ---
-import Playground from '../../components/Playground'
-import Preview from '../../components/Preview.astro'
-import PropsTable from '../../components/PropsTable.astro'
-import Disclosure from '../../components/Disclosure.astro'
-import Columns from '../../components/Columns.astro'
-import Col from '../../components/Col.astro'
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
 import menuDemoCode from './menu.demo.ts'
-import MenuNestedDemo from '../../components/MenuNestedDemo'
+import MenuNestedDemo from '../components/MenuNestedDemo'
 import { Menu, MenuItem, MenuSeparator, MenuGroup, Button, Tag } from '@antadesign/anta'
 
 # Menu
@@ -458,10 +458,10 @@ menus: mark one row for single-select, several for multi-select (pair with
 
 For a real checkable row, add **`selectionIndicator`** (`'checkbox'` or `'radio'`).
 It renders a passive checkbox/radio at the leading edge (reusing the
-[Checkbox](/components/checkbox/) / [Radio](/components/radio/) element visuals),
+[Checkbox](/checkbox/) / [Radio](/radio/) element visuals),
 flips the row to `role="menuitemcheckbox"` / `"menuitemradio"`, and pairs
 `aria-checked` — the row stays the control, the indicator is decorative. This is
-what [Select](/components/select/)'s `selection` modes render; use it directly for
+what [Select](/select/)'s `selection` modes render; use it directly for
 a checkable menu.
 
 </Col>

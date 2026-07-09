@@ -1,4 +1,4 @@
-import { HTMLElementBase, anchorRect } from '../anta_helpers'
+import { HTMLElementBase, anchorRect, isMenuOpen, isInsideOpenMenu } from '../anta_helpers'
 import { debounce } from 'es-toolkit'
 import './a-tooltip.css'
 
@@ -525,6 +525,12 @@ export class ATooltipElement extends HTMLElementBase {
 
   show = (e?: MouseEvent) => {
     if (!this.anchor) return
+    // While a menu is open, a tooltip anchored OUTSIDE the open menu system must
+    // not show: both are top-layer popovers ordered by show time, so it would
+    // paint over the menu (z-index can't reorder the top layer). A menu-item
+    // tooltip (anchor inside the menu) still shows, above the menu. Mirrors the
+    // menu dismissing its own trigger's tooltip on open.
+    if (isMenuOpen() && !isInsideOpenMenu(this.anchor)) return
     // Nothing to show → don't open a blank bubble (checked here so every show
     // path — hot-path, focus, touch long-press — is covered).
     if (this.isEmpty()) return

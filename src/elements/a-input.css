@@ -8,6 +8,32 @@
      height plus a per-size type scale (small 13/16 · medium 15/20 · large 17/22)
      and icon size (14/16/18); the field min-height still anchors the box to the
      same-size Button. */
+  /* Pre-upgrade, the `.field` box and the `<input>` live in the shadow, so an
+     SSR'd / not-yet-upgraded a-input shows only its slotted label; the field
+     then pops in below on upgrade and shifts the page. Two-part guard, dropped
+     once `:defined`:
+       1. A custom element is `display: inline` until upgraded, which ignores
+          the `width: 100%` below and collapses the box to the label width.
+          Mirror the defined shadow `:host` (single-column grid, 4px row gap) so
+          the pre-upgrade box is the same block, full-width shape.
+       2. An `::after` placeholder standing in for the shadow `.field` (same
+          min-height + inset border) reserves the field's row so it paints
+          immediately instead of jumping in on upgrade. */
+  a-input:not(:defined) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4px;
+  }
+  a-input:not(:defined)::after {
+    content: "";
+    min-height: 28px;
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 0.5px var(--input-border);
+  }
+  a-input[size="small"]:not(:defined)::after { min-height: 24px; }
+  a-input[size="large"]:not(:defined)::after { min-height: 32px; }
+  a-input[round]:not(:defined)::after { border-radius: var(--input-round, 999px); }
+
   a-input {
     --input-bg: var(--bg-1);
     --input-border: var(--border-2);

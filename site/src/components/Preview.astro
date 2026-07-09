@@ -16,12 +16,19 @@ interface Props {
   gap?: string
   /** Panel background. Any CSS color; defaults to `--bg-canvas`. */
   background?: string
+  /** Reserve a minimum panel height so a client-hydrated demo doesn't snap
+   *  open from zero on load. Any CSS length (a number is read as px). Previews
+   *  holding an island get a modest default; set this for taller demos to
+   *  reserve their real height. */
+  minHeight?: string | number
 }
-const { cols, gap, background } = Astro.props
+const { cols, gap, background, minHeight } = Astro.props
+const mh = typeof minHeight === 'number' ? `${minHeight}px` : minHeight
 const style = [
   cols ? `--preview-cols: ${cols}` : '',
   gap ? `gap: ${gap}` : '',
   background ? `background: ${background}` : '',
+  mh ? `--preview-min-height: ${mh}` : '',
 ].filter(Boolean).join('; ') || undefined
 ---
 <div class="preview" data-cols={cols} style={style}>
@@ -40,6 +47,18 @@ const style = [
     border-radius: 6px;
     background: var(--bg-canvas);
     margin-bottom: 4px;
+    min-height: var(--preview-min-height, auto);
+  }
+
+  /* A `client:only` island renders nothing server-side, so its preview
+     collapses to zero height until hydration, then snaps open — a flash.
+     Reserve a modest floor for those so the box is already there; the
+     content grows into it, and a taller demo overrides via the `minHeight`
+     prop (inline var wins). `client:load` / `client:visible` islands SSR at
+     their real height, so they need no reserve and are left at natural
+     height (matching by `client="only"` avoids over-reserving them). */
+  .preview:has(astro-island[client="only"]) {
+    --preview-min-height: 96px;
   }
 
   /* `cols` mode: a centered grid of N max-content columns. Same 12px

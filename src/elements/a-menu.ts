@@ -1,4 +1,4 @@
-import { HTMLElementBase, anchorRect } from '../anta_helpers'
+import { HTMLElementBase, anchorRect, setMenuPresence } from '../anta_helpers'
 import { AMenuItemElement } from './a-menu-item'
 import './a-menu.css'
 
@@ -140,6 +140,26 @@ function pathHitsMenus(e: Event, primaryClick = false): boolean {
   }
   return false
 }
+
+/** Node-based sibling of `pathHitsMenus`: is `node` inside any open menu's
+ *  surface, its slotted light-DOM content (menu items), or its trigger anchor?
+ *  Published to `anta_helpers` so `a-tooltip` can suppress a tooltip anchored
+ *  outside the open menu system (it would otherwise paint over the menu). */
+function nodeHitsMenus(node: Node): boolean {
+  for (const m of openStack) {
+    if (m.contains(node) || m.surface.contains(node)) return true
+    const anchor = m.triggerAnchor
+    if (anchor && anchor.contains(node)) return true
+  }
+  return false
+}
+
+// Live open-state provider (reads `openStack` directly, so no push/pop
+// instrumentation is needed). Set once on module load; `a-tooltip` consumes it.
+setMenuPresence({
+  isOpen: () => openStack.length > 0,
+  contains: nodeHitsMenus,
+})
 
 function onDocPointerDown(e: Event) {
   if (!openStack.length) return

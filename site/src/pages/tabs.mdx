@@ -1,15 +1,15 @@
 ---
-layout: ../../layouts/DocsLayout.astro
+layout: ../layouts/DocsLayout.astro
 title: Tabs
 ---
-import Playground from '../../components/Playground'
-import Preview from '../../components/Preview.astro'
-import PropsTable from '../../components/PropsTable.astro'
-import Disclosure from '../../components/Disclosure.astro'
-import Columns from '../../components/Columns.astro'
-import Col from '../../components/Col.astro'
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
 import tabsDemoCode from './tabs.demo.ts'
-import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, SquareTabs, TertiaryGlow, PillTabs, OptionsTabs, NoSlide } from '../../components/TabsDemo'
+import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, SquareTabs, TertiaryGlow, PillTabs, OptionsTabs, NoSlide } from '../components/TabsDemo'
 
 # Tabs
 
@@ -48,7 +48,7 @@ a-tabs[priority="tertiary"] ~ a-tabpanel {
 <Col>
 
 <Preview>
-  <Priorities client:only="preact" />
+  <Priorities client:load />
 </Preview>
 
 ```tsx folded
@@ -82,7 +82,7 @@ custom colour); columns are priorities.
 **Primary**
 
 <Preview>
-  <TonesColumn client:only="preact" priority="primary" />
+  <TonesColumn client:load priority="primary" />
 </Preview>
 
 </Col>
@@ -91,7 +91,7 @@ custom colour); columns are priorities.
 **Secondary**
 
 <Preview>
-  <TonesColumn client:only="preact" priority="secondary" />
+  <TonesColumn client:load priority="secondary" />
 </Preview>
 
 </Col>
@@ -100,7 +100,7 @@ custom colour); columns are priorities.
 **Tertiary**
 
 <Preview>
-  <TonesColumn client:only="preact" priority="tertiary" />
+  <TonesColumn client:load priority="tertiary" />
 </Preview>
 
 </Col>
@@ -118,7 +118,7 @@ everywhere and the indicator only under `noslide` (the single shared sliding ele
 read a descendant's colour).
 
 <Preview>
-  <PerTabTone client:only="preact" />
+  <PerTabTone client:load />
 </Preview>
 
 ```tsx folded
@@ -136,7 +136,7 @@ read a descendant's colour).
 <Col>
 
 <Preview>
-  <Sizes client:only="preact" />
+  <Sizes client:load />
 </Preview>
 
 ```tsx folded
@@ -147,7 +147,7 @@ read a descendant's colour).
 <Col>
 
 Three sizes — `small`, `medium` (default), `large` — reuse
-[`Button`](/components/button/)'s type scale, so a strip lines up with same-size
+[`Button`](/button/)'s type scale, so a strip lines up with same-size
 buttons and inputs. Icons scale with the tab.
 
 </Col>
@@ -165,7 +165,7 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 **Primary**
 
 <Preview>
-  <VerticalStrip client:only="preact" priority="primary" />
+  <VerticalStrip client:load priority="primary" />
 </Preview>
 
 </Col>
@@ -174,7 +174,7 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 **Secondary**
 
 <Preview>
-  <VerticalStrip client:only="preact" priority="secondary" />
+  <VerticalStrip client:load priority="secondary" />
 </Preview>
 
 </Col>
@@ -183,7 +183,7 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 **Tertiary**
 
 <Preview>
-  <VerticalStrip client:only="preact" priority="tertiary" />
+  <VerticalStrip client:load priority="tertiary" />
 </Preview>
 
 </Col>
@@ -201,13 +201,13 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 
 A `<Tab>` takes a leading **`icon`** and a trailing **`iconTrailing`** — here the trailing
 dot flags an unsaved file. Its content is otherwise arbitrary: pass **children** instead of
-`label` to add more than text, like a [`<Tag>`](/components/tag/) counter.
+`label` to add more than text, like a [`<Tag>`](/tag/) counter.
 
 <Columns>
 <Col>
 
 <Preview>
-  <IconsContent client:only="preact" />
+  <IconsContent client:load />
 </Preview>
 
 </Col>
@@ -230,7 +230,7 @@ dot flags an unsaved file. Its content is otherwise arbitrary: pass **children**
 <Col>
 
 <Preview>
-  <Overflow client:only="preact" />
+  <Overflow client:load />
 </Preview>
 
 </Col>
@@ -240,7 +240,7 @@ When the tabs don't fit, their labels truncate with an ellipsis — the strip ne
 widens the page. To scroll the strip or let labels wrap instead, see
 [Styling](#styling).
 
-Drop a [`<Tooltip truncatedOnly>`](/components/tooltip/#show-only-when-truncated) in a
+Drop a [`<Tooltip truncatedOnly>`](/tooltip/#show-only-when-truncated) in a
 `<Tab>` and a clipped tab reveals its full label on hover — while tabs that fit show
 nothing. The tooltip finds the tab's `a-tab-label` automatically. Hover the truncated
 tabs above to see it.
@@ -264,7 +264,7 @@ tabs above to see it.
 <Col>
 
 <Preview>
-  <Basic client:only="preact" />
+  <Basic client:load />
   <style is:inline>{`
     .panels-demo { width: 100%; }
     .panels-demo > a-tabs { align-self: center; }
@@ -357,12 +357,12 @@ panels, or on a single `<TabPanel>` to override one.
 
 Instead of `<Tab>` children, pass an **`options`** array — one object per tab
 (`value`, `label`, `icon`, `iconTrailing`, `tone`, `disabled`, `round`), the same
-data-driven style as [`RadioGroup`](/components/radio/). Handy when tabs come from a
+data-driven style as [`RadioGroup`](/radio/). Handy when tabs come from a
 config or a `.map()`. `<TabPanel>` children still supply panel bodies (matched by
 `value`), so the array and panels compose.
 
 <Preview>
-  <OptionsTabs client:only="preact" />
+  <OptionsTabs client:load />
 </Preview>
 
 ```tsx
@@ -427,6 +427,25 @@ const [tab, setTab] = useState('overview')
 </Col>
 </Columns>
 
+## Routing
+
+`Tabs` reports the picked value and leaves navigation to the app, so a strip can
+switch routes as readily as panels. Treat each `value` as a path: control `value`
+from the current location and navigate in `onValueChange`. Skip the `<TabPanel>`s,
+since the router renders the view.
+
+```tsx folded
+<Tabs value={pathname} onValueChange={(_e, { value }) => navigation.navigate(value)}>
+  <Tab value="/settings/profile" label="Profile" />
+  <Tab value="/settings/billing" label="Billing" />
+</Tabs>
+```
+
+Swap `navigation.navigate` for whatever the app uses (`router.push`, Astro's
+`navigate`, `location.assign`). Controlling `value` from the route keeps the right
+tab active through back/forward and deep links. To guard a switch (unsaved edits),
+veto it in `onStateChange` with `event.preventDefault()`.
+
 ## Events
 
 Three callbacks, in firing order:
@@ -481,7 +500,7 @@ The demo classes below (`.square-tabs`, `.glow-tabs`, …) are just hooks; swap 
 (spread, no blur). The track is `<a-tabs>` and the sliding pill its `::before`:
 
 <Preview>
-  <SquareTabs client:only="preact" />
+  <SquareTabs client:load />
   <style is:inline>{`
     a-tabs.square-tabs { border: 1px solid light-dark(#cfcfd6, #46464e); border-radius: 0; padding: 4px; }
     .square-tabs a-tab { border-radius: 0; font-weight: 600; }
@@ -502,7 +521,7 @@ element, the glow **slides with the line** between tabs. No `noslide`, no separa
 background.
 
 <Preview>
-  <TertiaryGlow client:only="preact" />
+  <TertiaryGlow client:load />
   <style is:inline>{`
     a-tabs.glow-tabs::before {
       border-bottom-color: light-dark(#8067ff, #907aff);
@@ -529,7 +548,7 @@ horizontally: pin each tab to its content width (`flex: none`) and make the stri
 scrollable.
 
 <Preview>
-  <ScrollTabs client:only="preact" />
+  <ScrollTabs client:load />
   <style is:inline>{`
     .scroll-tabs a-tabs { overflow-x: auto; scrollbar-width: thin; }
     .scroll-tabs a-tab { flex: none; }
@@ -546,7 +565,7 @@ when the strip overflows). For a segmented-control look where every tab is the s
 width regardless of label, let them fill the strip from a zero basis:
 
 <Preview>
-  <EqualWidth client:only="preact" />
+  <EqualWidth client:load />
   <style is:inline>{`
     .equal-tabs a-tabs { width: 100%; }
     .equal-tabs a-tab { flex: 1 1 0; max-width: none; }
@@ -561,7 +580,7 @@ width regardless of label, let them fill the strip from a zero basis:
 **Wrap labels** — let long labels wrap so the tabs grow taller instead of truncating:
 
 <Preview>
-  <WrapTabs client:only="preact" />
+  <WrapTabs client:load />
   <style is:inline>{`
     .wrap-tabs a-tab,
     .wrap-tabs a-tab-label { white-space: normal; text-overflow: clip; overflow: visible; text-align: center; }
@@ -579,7 +598,7 @@ instead, so the highlight snaps with no movement. This is also the automatic fal
 where anchor positioning isn't supported.
 
 <Preview>
-  <NoSlide client:only="preact" />
+  <NoSlide client:load />
 </Preview>
 
 ```tsx folded
@@ -592,7 +611,7 @@ and the moving indicator, plus the primary track well) — no CSS needed. Here w
 taller block padding per tab for a capsule shape:
 
 <Preview>
-  <PillTabs client:only="preact" />
+  <PillTabs client:load />
   <style is:inline>{`
     .pill-tabs a-tab { padding-block: 8px; }
   `}</style>

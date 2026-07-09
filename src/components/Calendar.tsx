@@ -78,6 +78,12 @@ export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> 
  *
  * Controlled (`value` + `onStateChange`) or uncontrolled (`defaultValue`).
  * Requires `@antadesign/anta/elements` (client-side only).
+ *
+ * @remarks Not SSR-safe. It reads the current date (`Temporal.Now`) and locale
+ * (`navigator.language`) at render, so a server render and the client render
+ * disagree on the highlighted "today" and on localized labels, causing a
+ * hydration mismatch. Render it client-side only (Astro `client:only`, or a
+ * dynamic import inside `useEffect`).
  */
 export const Calendar = ({
   value,

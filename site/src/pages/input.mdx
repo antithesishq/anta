@@ -1,17 +1,17 @@
 ---
-layout: ../../layouts/DocsLayout.astro
+layout: ../layouts/DocsLayout.astro
 title: Input
 ---
-import Playground from '../../components/Playground'
-import Preview from '../../components/Preview.astro'
-import PropsTable from '../../components/PropsTable.astro'
-import Disclosure from '../../components/Disclosure.astro'
-import Columns from '../../components/Columns.astro'
-import Col from '../../components/Col.astro'
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
 import inputDemoCode from './input.demo.ts'
-import InputSelectDemo from '../../components/InputSelectDemo'
-import InputPasswordDemo from '../../components/InputPasswordDemo'
-import InputValidationDemo from '../../components/InputValidationDemo'
+import InputSelectDemo from '../components/InputSelectDemo'
+import InputPasswordDemo from '../components/InputPasswordDemo'
+import InputValidationDemo from '../components/InputValidationDemo'
 import { Input, Icon, Button, Tooltip } from '@antadesign/anta'
 
 {/* Inputs sit on bg-1, so lift every preview panel on this page to bg-2 so the
@@ -519,7 +519,7 @@ blocked while invalid — no extra wiring.
 <Columns>
 <Col>
 
-<Preview>
+<Preview minHeight={276}>
   <InputValidationDemo client:load />
 </Preview>
 

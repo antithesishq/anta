@@ -1,15 +1,15 @@
 ---
-layout: ../../layouts/DocsLayout.astro
+layout: ../layouts/DocsLayout.astro
 title: Tabs
 ---
-import Playground from '../../components/Playground'
-import Preview from '../../components/Preview.astro'
-import PropsTable from '../../components/PropsTable.astro'
-import Disclosure from '../../components/Disclosure.astro'
-import Columns from '../../components/Columns.astro'
-import Col from '../../components/Col.astro'
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
 import tabsDemoCode from './tabs.demo.ts'
-import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, SquareTabs, TertiaryGlow, PillTabs, OptionsTabs, NoSlide } from '../../components/TabsDemo'
+import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, SquareTabs, TertiaryGlow, PillTabs, OptionsTabs, NoSlide } from '../components/TabsDemo'
 
 # Tabs
 
@@ -47,7 +47,7 @@ a-tabs[priority="tertiary"] ~ a-tabpanel {
 <Columns>
 <Col>
 
-<Preview>
+<Preview minHeight={186}>
   <Priorities client:only="preact" />
 </Preview>
 
@@ -81,7 +81,7 @@ custom colour); columns are priorities.
 
 **Primary**
 
-<Preview>
+<Preview minHeight={282}>
   <TonesColumn client:only="preact" priority="primary" />
 </Preview>
 
@@ -90,7 +90,7 @@ custom colour); columns are priorities.
 
 **Secondary**
 
-<Preview>
+<Preview minHeight={282}>
   <TonesColumn client:only="preact" priority="secondary" />
 </Preview>
 
@@ -99,7 +99,7 @@ custom colour); columns are priorities.
 
 **Tertiary**
 
-<Preview>
+<Preview minHeight={282}>
   <TonesColumn client:only="preact" priority="tertiary" />
 </Preview>
 
@@ -135,7 +135,7 @@ read a descendant's colour).
 <Columns>
 <Col>
 
-<Preview>
+<Preview minHeight={186}>
   <Sizes client:only="preact" />
 </Preview>
 
@@ -147,7 +147,7 @@ read a descendant's colour).
 <Col>
 
 Three sizes — `small`, `medium` (default), `large` — reuse
-[`Button`](/components/button/)'s type scale, so a strip lines up with same-size
+[`Button`](/button/)'s type scale, so a strip lines up with same-size
 buttons and inputs. Icons scale with the tab.
 
 </Col>
@@ -164,7 +164,7 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 
 **Primary**
 
-<Preview>
+<Preview minHeight={144}>
   <VerticalStrip client:only="preact" priority="primary" />
 </Preview>
 
@@ -173,7 +173,7 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 
 **Secondary**
 
-<Preview>
+<Preview minHeight={144}>
   <VerticalStrip client:only="preact" priority="secondary" />
 </Preview>
 
@@ -182,7 +182,7 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 
 **Tertiary**
 
-<Preview>
+<Preview minHeight={144}>
   <VerticalStrip client:only="preact" priority="tertiary" />
 </Preview>
 
@@ -201,7 +201,7 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 
 A `<Tab>` takes a leading **`icon`** and a trailing **`iconTrailing`** — here the trailing
 dot flags an unsaved file. Its content is otherwise arbitrary: pass **children** instead of
-`label` to add more than text, like a [`<Tag>`](/components/tag/) counter.
+`label` to add more than text, like a [`<Tag>`](/tag/) counter.
 
 <Columns>
 <Col>
@@ -240,7 +240,7 @@ When the tabs don't fit, their labels truncate with an ellipsis — the strip ne
 widens the page. To scroll the strip or let labels wrap instead, see
 [Styling](#styling).
 
-Drop a [`<Tooltip truncatedOnly>`](/components/tooltip/#show-only-when-truncated) in a
+Drop a [`<Tooltip truncatedOnly>`](/tooltip/#show-only-when-truncated) in a
 `<Tab>` and a clipped tab reveals its full label on hover — while tabs that fit show
 nothing. The tooltip finds the tab's `a-tab-label` automatically. Hover the truncated
 tabs above to see it.
@@ -263,7 +263,7 @@ tabs above to see it.
 <Columns>
 <Col>
 
-<Preview>
+<Preview minHeight={142}>
   <Basic client:only="preact" />
   <style is:inline>{`
     .panels-demo { width: 100%; }
@@ -357,7 +357,7 @@ panels, or on a single `<TabPanel>` to override one.
 
 Instead of `<Tab>` children, pass an **`options`** array — one object per tab
 (`value`, `label`, `icon`, `iconTrailing`, `tone`, `disabled`, `round`), the same
-data-driven style as [`RadioGroup`](/components/radio/). Handy when tabs come from a
+data-driven style as [`RadioGroup`](/radio/). Handy when tabs come from a
 config or a `.map()`. `<TabPanel>` children still supply panel bodies (matched by
 `value`), so the array and panels compose.
 
@@ -426,6 +426,25 @@ const [tab, setTab] = useState('overview')
 
 </Col>
 </Columns>
+
+## Routing
+
+`Tabs` reports the picked value and leaves navigation to the app, so a strip can
+switch routes as readily as panels. Treat each `value` as a path: control `value`
+from the current location and navigate in `onValueChange`. Skip the `<TabPanel>`s,
+since the router renders the view.
+
+```tsx folded
+<Tabs value={pathname} onValueChange={(_e, { value }) => navigation.navigate(value)}>
+  <Tab value="/settings/profile" label="Profile" />
+  <Tab value="/settings/billing" label="Billing" />
+</Tabs>
+```
+
+Swap `navigation.navigate` for whatever the app uses (`router.push`, Astro's
+`navigate`, `location.assign`). Controlling `value` from the route keeps the right
+tab active through back/forward and deep links. To guard a switch (unsaved edits),
+veto it in `onStateChange` with `event.preventDefault()`.
 
 ## Events
 

@@ -1,19 +1,22 @@
 import type { APIRoute } from 'astro'
 import { renderPropsTable } from '../../lib/llms/props-from-api.ts'
 import { parseMdx } from '../../lib/llms/parse-mdx.ts'
+import { COMPONENT_SLUGS } from '../../lib/component-slugs'
 
 const SITE = 'https://anta.design'
 
-const componentModules = import.meta.glob('./components/*.mdx', {
+// Component pages now live at the site root; glob every root `.mdx`/`.demo.ts`
+// and keep only the component slugs (Colors/Changelog/index are also here).
+const componentModules = import.meta.glob('./*.mdx', {
   eager: true,
 }) as Record<string, { frontmatter: { title?: string } }>
 
-const rawMdx = import.meta.glob('./components/*.mdx', {
+const rawMdx = import.meta.glob('./*.mdx', {
   eager: true,
   as: 'raw',
 }) as Record<string, string>
 
-const demoModules = import.meta.glob('./components/*.demo.ts', {
+const demoModules = import.meta.glob('./*.demo.ts', {
   eager: true,
 }) as Record<string, { default: string }>
 
@@ -23,7 +26,7 @@ function extractComponentName(raw: string): string | null {
 }
 
 function extractDemoCode(raw: string, slug: string): string | null {
-  const key = `./components/${slug}.demo.ts`
+  const key = `./${slug}.demo.ts`
   const mod = demoModules[key]
   if (!mod?.default) return null
   // Strip `export default \`...\`` wrapper, keep the bare TSX string
@@ -39,11 +42,11 @@ const header = `# Anta
 const sections: string[] = []
 
 const sortedPaths = Object.keys(componentModules)
-  .filter((p) => !p.endsWith('.demo.ts'))
+  .filter((p) => COMPONENT_SLUGS.includes(p.replace('./', '').replace('.mdx', '')))
   .sort()
 
 for (const path of sortedPaths) {
-  const slug = path.replace('./components/', '').replace('.mdx', '')
+  const slug = path.replace('./', '').replace('.mdx', '')
   let raw = rawMdx[path] ?? ''
 
   // Replace <PropsTable component="X" /> with the rendered markdown table

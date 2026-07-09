@@ -1,14 +1,14 @@
 ---
-layout: ../../layouts/DocsLayout.astro
+layout: ../layouts/DocsLayout.astro
 title: Checkbox
 ---
-import Playground from '../../components/Playground'
-import Preview from '../../components/Preview.astro'
-import PropsTable from '../../components/PropsTable.astro'
-import Disclosure from '../../components/Disclosure.astro'
-import Columns from '../../components/Columns.astro'
-import Col from '../../components/Col.astro'
-import SelectAllDemo from '../../components/SelectAllDemo'
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
+import SelectAllDemo from '../components/SelectAllDemo'
 import checkboxDemoCode from './checkbox.demo.ts'
 import { Checkbox } from '@antadesign/anta'
 
@@ -204,7 +204,7 @@ state to model or veto, so `Input` (and the composed `Select`) expose only the
 
 Set `checked="indeterminate"` to show the "mixed" state (minus glyph). Common for a parent checkbox whose state derives from its children: all on = checked, all off = unchecked, mixed = indeterminate.
 
-<Preview>
+<Preview minHeight={134}>
   <SelectAllDemo client:visible />
 </Preview>
 

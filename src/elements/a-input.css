@@ -5,7 +5,7 @@
      uses the global `--focus-ring` token directly (it themes itself — no per-input
      token, no `.dark` override needed); the error border is the one literal (no
      role token matches it) and gets a `.dark` override below. Sizes set the field
-     height plus a per-size type scale (small 13/16 · medium 15/20 · large 17/24)
+     height plus a per-size type scale (small 13/16 · medium 15/20 · large 17/22)
      and icon size (14/16/18); the field min-height still anchors the box to the
      same-size Button. */
   a-input {

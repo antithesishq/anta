@@ -52,7 +52,7 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   tone?: string
   /** Size variant. small=24px, medium=28px, large=32px tall; the type scale and
    *  icon track the size (small 13/16 + 14px icon · medium 15/20 + 16px ·
-   *  large 17/24 + 18px).
+   *  large 17/22 + 18px).
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
   /** Controlled value. Pair with `onChange` / `onInput`. */

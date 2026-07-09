@@ -36,7 +36,9 @@
 
     --checkbox-label-color: var(--text-2);
     --checkbox-label-color-disabled: var(--text-4);
-    --checkbox-hint-color: var(--text-4);
+    /* Hint uses --text-3 to match <a-radio>'s hint (one step less muted than the
+       disabled label). */
+    --checkbox-hint-color: var(--text-3);
 
     /* Type scales with `size` (like <a-radio>): label tracks the body size, hint
        a step down. Tokens so the size variants set them in one place. */

@@ -11,9 +11,11 @@ export const ICON_SHAPES = [
   'arrow-right',
   'arrow-top-right',
   'asterisk',
+  'blank',
   'book-open',
   'braces',
   'bug',
+  'calendar-days',
   'calendar',
   'case-sensitive',
   'chat',
@@ -31,6 +33,7 @@ export const ICON_SHAPES = [
   'click',
   'clock',
   'cloud-upload',
+  'columns-3-cog',
   'copy',
   'corner-down-right',
   'cube',
@@ -108,6 +111,8 @@ export const ICON_SHAPES = [
 ] as const
 
 export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
+  'columns-3-cog': ['columns', 'table', 'settings', 'configure', 'fields', 'visibility'],
+  'blank': ['spacer', 'empty', 'placeholder', 'space', 'none'],
   'warning-diamond': ['error', 'invalid', 'alert', 'danger'],
   'swatch-book': ['palette', 'color', 'swatch', 'paint', 'design'],
   'hat-glasses': ['accessibility', 'vision', 'disguise', 'person'],
@@ -208,9 +213,11 @@ declare module '@antadesign/anta' {
     'arrow-right': true
     'arrow-top-right': true
     'asterisk': true
+    'blank': true
     'book-open': true
     'braces': true
     'bug': true
+    'calendar-days': true
     'calendar': true
     'case-sensitive': true
     'chat': true
@@ -228,6 +235,7 @@ declare module '@antadesign/anta' {
     'click': true
     'clock': true
     'cloud-upload': true
+    'columns-3-cog': true
     'copy': true
     'corner-down-right': true
     'cube': true

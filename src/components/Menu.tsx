@@ -115,7 +115,12 @@ export const Menu = ({
         onStateChange
           ? (e: StateChangeEvent) => {
               const { event, detail } = nativeStateChange<StateChangeDetail>(e)
-              if (detail)
+              // Only the menu's own `statechange` (open/closed) counts. A stateful
+              // component slotted inside the menu — a `Calendar`, `Tabs`, … —
+              // dispatches its *own* bubbling `statechange` (detail.next is a date, a
+              // tab value, …) that reaches this ancestor listener; ignore those, or
+              // they'd read as a spurious close.
+              if (detail && (detail.next === 'open' || detail.next === 'closed'))
                 onStateChange(event, {
                   next: detail.next === 'open',
                   prev: detail.prev === 'open',

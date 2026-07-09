@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'preact/hooks'
-import { Icon, ICON_SHAPES, ICON_SYNONYMS } from '@antadesign/anta'
+import { Icon, Input, ICON_SHAPES, ICON_SYNONYMS } from '@antadesign/anta'
 
 export default function IconDemo() {
   useEffect(() => {
@@ -27,12 +27,13 @@ export default function IconDemo() {
 
   return (
     <div>
-      <input
+      <Input
         type="search"
         value={query}
-        onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+        onValueChange={(_e, { value }) => setQuery(value)}
         placeholder={`Search ${ICON_SHAPES.length} icons by name or synonym…`}
-        class="iconFilter"
+        aria-label="Search icons"
+        style={{ width: '100%', margin: '8px 0 16px' }}
       />
       {filtered.length === 0 ? (
         <p class="demoLabel" style={{ padding: '24px 0' }}>No icons match “{query}”.</p>

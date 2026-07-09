@@ -199,78 +199,62 @@
     outline-offset: 1px;
   }
 
-  /* Each tone is shared by a standalone <a-radio tone> and a group-cascaded child
-     (group sets the tone; a child without its own tone inherits it). `tone` drives
-     only the MARK — the fill (selected ring + dot) and the ring border (border ramp
-     below; base wires the fill). Label + hint stay neutral unless `tone-text`
-     recolours them (rules after this). `neutral` keeps the base greys. The default
-     (no [tone]) is untouched: the wrapper omits tone="neutral". */
+  /* Each tone is shared by a standalone <a-radio> and a group-cascaded child (the
+     group sets the tone; a child without its own inherits it). `tone` and
+     `tone-selected` both set the MARK fill (selected ring + dot); they differ only in
+     the OFF state — `tone` also tints the unselected ring border (the ramp rule below,
+     keyed [tone]), `tone-selected` leaves it neutral so the tone shows only once
+     selected. Label + hint are never toned — recolour them in plain CSS via the
+     theme-aware --text-N-{tone} tokens (a `color` rule on a-radio-label /
+     a-radio-hint). `neutral` keeps the base greys; the
+     default (no attribute) is untouched — the wrapper omits the neutral value. */
   a-radio[tone="brand"],
-  a-radio-group[tone="brand"] a-radio:not([tone]) {
+  a-radio[tone-selected="brand"],
+  a-radio-group[tone="brand"] a-radio:not([tone]),
+  a-radio-group[tone-selected="brand"] a-radio:not([tone-selected]) {
     --radio-fill: #5f4bc3;
     --radio-fill-hover: #503cb4;
     --radio-fill-active: #483493;
   }
   a-radio[tone="neutral"],
-  a-radio-group[tone="neutral"] a-radio:not([tone]) {
+  a-radio[tone-selected="neutral"],
+  a-radio-group[tone="neutral"] a-radio:not([tone]),
+  a-radio-group[tone-selected="neutral"] a-radio:not([tone-selected]) {
     --radio-fill: #635b65;
     --radio-fill-hover: #534c57;
     --radio-fill-active: #49424c;
   }
   a-radio[tone="info"],
-  a-radio-group[tone="info"] a-radio:not([tone]) {
+  a-radio[tone-selected="info"],
+  a-radio-group[tone="info"] a-radio:not([tone]),
+  a-radio-group[tone-selected="info"] a-radio:not([tone-selected]) {
     --radio-fill: #1f6eb2;
     --radio-fill-hover: #1a5b93;
     --radio-fill-active: #175082;
   }
   a-radio[tone="success"],
-  a-radio-group[tone="success"] a-radio:not([tone]) {
+  a-radio[tone-selected="success"],
+  a-radio-group[tone="success"] a-radio:not([tone]),
+  a-radio-group[tone-selected="success"] a-radio:not([tone-selected]) {
     --radio-fill: #2a7e43;
     --radio-fill-hover: #226737;
     --radio-fill-active: #1f5c31;
   }
   a-radio[tone="warning"],
-  a-radio-group[tone="warning"] a-radio:not([tone]) {
+  a-radio[tone-selected="warning"],
+  a-radio-group[tone="warning"] a-radio:not([tone]),
+  a-radio-group[tone-selected="warning"] a-radio:not([tone-selected]) {
     --radio-fill: #c37416;
     --radio-fill-hover: #ae6613;
     --radio-fill-active: #995200;
   }
   a-radio[tone="critical"],
-  a-radio-group[tone="critical"] a-radio:not([tone]) {
+  a-radio[tone-selected="critical"],
+  a-radio-group[tone="critical"] a-radio:not([tone]),
+  a-radio-group[tone-selected="critical"] a-radio:not([tone-selected]) {
     --radio-fill: #c9302c;
     --radio-fill-hover: #b02120;
     --radio-fill-active: #a01c1c;
-  }
-
-  /* `tone-text` drives only the label + hint, via the theme-aware --text-N role
-     tokens (dark mode free); the hint keeps its --text-3 muting. Shared by a
-     standalone <a-radio tone-text> and a group-cascaded child (group sets it; a
-     child without its own tone-text inherits it). Independent of `tone`: colour the
-     mark, the text, or both. `neutral` keeps the base greys — wrapper omits it. */
-  a-radio[tone-text="brand"],
-  a-radio-group[tone-text="brand"] a-radio:not([tone-text]) {
-    --radio-label-color: var(--text-2-brand);
-    --radio-hint-color: var(--text-3-brand);
-  }
-  a-radio[tone-text="info"],
-  a-radio-group[tone-text="info"] a-radio:not([tone-text]) {
-    --radio-label-color: var(--text-2-info);
-    --radio-hint-color: var(--text-3-info);
-  }
-  a-radio[tone-text="success"],
-  a-radio-group[tone-text="success"] a-radio:not([tone-text]) {
-    --radio-label-color: var(--text-2-success);
-    --radio-hint-color: var(--text-3-success);
-  }
-  a-radio[tone-text="warning"],
-  a-radio-group[tone-text="warning"] a-radio:not([tone-text]) {
-    --radio-label-color: var(--text-2-warning);
-    --radio-hint-color: var(--text-3-warning);
-  }
-  a-radio[tone-text="critical"],
-  a-radio-group[tone-text="critical"] a-radio:not([tone-text]) {
-    --radio-label-color: var(--text-2-critical);
-    --radio-hint-color: var(--text-3-critical);
   }
 
   /* Tinted tones only: the unselected ring border picks up the tone and ramps like
@@ -295,23 +279,36 @@
     }
   }
 
-  /* Custom mark tone — a non-named `tone` is a literal CSS color; the fill curve is
-     derived in oklch. Every named value must be listed in the :not(), or
-     attr(tone type(<color>)) would parse `info` / `success` / etc as colors and
-     render transparent. A standalone radio reads its own attr(tone); a
-     group-cascaded child inherits --radio-tone-source from the group (the
-     wrapper sets it inline). Focus ring stays brand across every tone. */
+  /* Custom mark tone — a non-named `tone` / `tone-selected` is a literal CSS color;
+     both feed the same --radio-tone-source and the fill curve is derived from it in
+     oklch. Every named value must be listed in the :not(), or attr(… type(<color>))
+     would parse `info` / `success` / etc as colors and render transparent. A
+     standalone radio reads its own attr(); a group-cascaded child inherits
+     --radio-tone-source from the group (the wrapper sets it inline). `tone` still
+     tints the off-ring border (the ramp above, keyed [tone]); `tone-selected` does
+     not. Focus ring stays brand across every tone. */
   a-radio[tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
     --radio-tone-source: attr(tone type(<color>), transparent);
   }
+  a-radio[tone-selected]:not(
+      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
+      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
+    --radio-tone-source: attr(tone-selected type(<color>), transparent);
+  }
   a-radio[tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]),
+  a-radio[tone-selected]:not(
+      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
+      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]),
   a-radio-group[tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]) a-radio:not([tone]) {
+      [tone="success"], [tone="warning"], [tone="critical"]) a-radio:not([tone]),
+  a-radio-group[tone-selected]:not(
+      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
+      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) a-radio:not([tone-selected]) {
     --_tone-l-rest: 0.5;
     --_tone-l-hover: 0.45;
     --_tone-l-active: 0.4;
@@ -325,31 +322,6 @@
       --_tone-l-rest: 0.45;
       --_tone-l-hover: 0.5;
       --_tone-l-active: 0.57;
-    }
-  }
-
-  /* Custom text tone — a non-named `tone-text` is a literal CSS color; the label +
-     hint are derived from it in oklch (hint at 0.8 alpha). A standalone radio reads
-     its own attr(tone-text); a group-cascaded child inherits --radio-tone-text-source
-     from the group (the wrapper sets it inline). Independent of the mark tone. */
-  a-radio[tone-text]:not(
-      [tone-text=""], [tone-text="brand"], [tone-text="neutral"], [tone-text="info"],
-      [tone-text="success"], [tone-text="warning"], [tone-text="critical"]) {
-    --radio-tone-text-source: attr(tone-text type(<color>), transparent);
-  }
-  a-radio[tone-text]:not(
-      [tone-text=""], [tone-text="brand"], [tone-text="neutral"], [tone-text="info"],
-      [tone-text="success"], [tone-text="warning"], [tone-text="critical"]),
-  a-radio-group[tone-text]:not(
-      [tone-text=""], [tone-text="brand"], [tone-text="neutral"], [tone-text="info"],
-      [tone-text="success"], [tone-text="warning"], [tone-text="critical"]) a-radio:not([tone-text]) {
-    --radio-label-color:   oklch(from var(--radio-tone-text-source) 0.5 c h);
-    --radio-hint-color:    oklch(from var(--radio-tone-text-source) 0.5 c h / 0.8);
-
-    /* Dark — lighter text to read on a dark page. */
-    .dark & {
-      --radio-label-color:   oklch(from var(--radio-tone-text-source) 0.8 c h);
-      --radio-hint-color:    oklch(from var(--radio-tone-text-source) 0.8 c h / 0.8);
     }
   }
 
@@ -375,37 +347,49 @@
     --radio-border-disabled: color-mix(in oklch, #e4d1ef 15%, transparent);
   }
   .dark a-radio[tone="brand"],
-  .dark a-radio-group[tone="brand"] a-radio:not([tone]) {
+  .dark a-radio[tone-selected="brand"],
+  .dark a-radio-group[tone="brand"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="brand"] a-radio:not([tone-selected]) {
     --radio-fill: #503cb4;
     --radio-fill-hover: #5f4bc3;
     --radio-fill-active: #7460d7;
   }
   .dark a-radio[tone="neutral"],
-  .dark a-radio-group[tone="neutral"] a-radio:not([tone]) {
+  .dark a-radio[tone-selected="neutral"],
+  .dark a-radio-group[tone="neutral"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="neutral"] a-radio:not([tone-selected]) {
     --radio-fill: #534c57;
     --radio-fill-hover: #635b65;
     --radio-fill-active: #938d96;
   }
   .dark a-radio[tone="info"],
-  .dark a-radio-group[tone="info"] a-radio:not([tone]) {
+  .dark a-radio[tone-selected="info"],
+  .dark a-radio-group[tone="info"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="info"] a-radio:not([tone-selected]) {
     --radio-fill: #1a5b93;
     --radio-fill-hover: #1f6eb2;
     --radio-fill-active: #2686d9;
   }
   .dark a-radio[tone="success"],
-  .dark a-radio-group[tone="success"] a-radio:not([tone]) {
+  .dark a-radio[tone-selected="success"],
+  .dark a-radio-group[tone="success"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="success"] a-radio:not([tone-selected]) {
     --radio-fill: #226737;
     --radio-fill-hover: #2a7e43;
     --radio-fill-active: #329550;
   }
   .dark a-radio[tone="warning"],
-  .dark a-radio-group[tone="warning"] a-radio:not([tone]) {
+  .dark a-radio[tone-selected="warning"],
+  .dark a-radio-group[tone="warning"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="warning"] a-radio:not([tone-selected]) {
     --radio-fill: #7f410b;
     --radio-fill-hover: #995200;
     --radio-fill-active: #ae6613;
   }
   .dark a-radio[tone="critical"],
-  .dark a-radio-group[tone="critical"] a-radio:not([tone]) {
+  .dark a-radio[tone-selected="critical"],
+  .dark a-radio-group[tone="critical"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="critical"] a-radio:not([tone-selected]) {
     --radio-fill: #b02120;
     --radio-fill-hover: #c9302c;
     --radio-fill-active: #de4545;

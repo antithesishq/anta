@@ -57,6 +57,11 @@ const FORWARDED = [
   'placeholder', 'type', 'name', 'autocomplete', 'inputmode',
   'maxlength', 'minlength', 'pattern', 'spellcheck', 'readonly', 'required',
   'min', 'max', 'step',
+  // `aria-label` on the host names the internal control (the actual textbox);
+  // without forwarding it, a bare `<a-input aria-label>` leaves the control
+  // unnamed. `applyLabelAria` already defers to a host `aria-label` over the
+  // label-slot text, so the two don't fight.
+  'aria-label',
 ] as const
 // Presence-based among the forwarded set (toggled, not value-copied).
 const BOOL_FORWARDED = new Set(['readonly', 'required'])
@@ -116,6 +121,10 @@ const SUPPORTS_FIELD_SIZING =
 //    padding; the autogrow cap (:host([maxrows]:not([rows]))) is computed from
 //    --_lh + that padding so it tracks size, with JS injecting only the --_maxrows
 //    integer. A fixed `rows` turns autogrow off, so the cap doesn't apply.
+//    A readonly single-line input shows an ellipsis for an overflowing value
+//    (text-overflow: ellipsis), so the Select trigger reads a long value as `name …`
+//    instead of a hard clip. Editable inputs keep the default clip (caret needs the
+//    scrolled end); textarea wraps, so neither applies there.
 //  • slots — leading/trailing/clear are display:none until they hold content
 //    (toggled via slotchange), so an empty slot reserves no box or phantom gap.
 //    Adornments are muted (--input-adornment) and inherit currentColor; a slotted
@@ -211,6 +220,10 @@ const SHADOW_STYLE = `
   }
   input::placeholder, textarea::placeholder { color: var(--input-placeholder); opacity: 1; }
   input:disabled, textarea:disabled { cursor: not-allowed; }
+  :host([readonly]:not([disabled])) .field,
+  :host([readonly]:not([disabled])) input,
+  :host([readonly]:not([disabled])) textarea { cursor: pointer; }
+  :host([readonly]:not([disabled])) input { text-overflow: ellipsis; }
   input::-webkit-search-cancel-button,
   input::-webkit-search-decoration,
   input::-webkit-search-results-button,
@@ -396,6 +409,14 @@ export class AInputElement extends HTMLElementBase {
     const extrasSlot = document.createElement('slot')
 
     shadow.append(style, this.labelBox, this.field, extrasSlot, this.hintBox)
+  }
+
+  /** Floating-element anchor protocol (see `anchorRect` in anta_helpers): point
+   *  a menu / tooltip anchored to this input at the `.field` box, not the host —
+   *  the host's box also spans the label and hint, which would push a dropdown
+   *  below the hint or misalign a tooltip. */
+  getAnchorRect(): DOMRect {
+    return this.field.getBoundingClientRect()
   }
 
   connectedCallback() {
@@ -653,6 +674,7 @@ export class AInputElement extends HTMLElementBase {
   /** Form field name — mirrors the `name` attribute, like native `<input>.name`,
    *  so `el.name` works (e.g. keying validation messages by field in a form loop). */
   get name(): string { return this.getAttribute('name') ?? '' }
+  set name(v: string) { this.setAttribute('name', v) }
 
   // --- Form-associated callbacks ---
   formResetCallback() {

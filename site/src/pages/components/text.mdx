@@ -17,17 +17,15 @@ import { Text } from '@antadesign/anta'
 # Text
 
 A block-level text container that scopes the color hierarchy of its
-contents. Use `priority` to dial the emphasis from `primary` (most
-prominent, `--text-1`) down to `quinary` (least prominent, `--text-5`);
-the **default is `secondary` (`--text-2`)** — body text reads a step
-softer than the strongest foreground, so reach for `primary` when you
-want emphasis. Pair with `tone` to apply a tinted palette (`brand`,
-`success`, `critical`, `warning`, `info`). Pass `inline` to render as
-`inline-block` for use in the middle of other text.
+contents. `priority` sets the emphasis from `primary` (`--text-1`) to
+`quinary` (`--text-5`). It defaults to `secondary` (`--text-2`), so body
+text reads a step softer than the strongest foreground; pass `primary`
+for emphasis. `tone` adds a tint (`brand`, `success`, `critical`,
+`warning`, `info`); the default `neutral` leaves it untinted. `inline`
+renders it `inline-block` for use mid-sentence.
 
-`Text` also owns Anta's prose-link styling. Links nested inside
-`<Text>` are styled by the design system — there are no per-page
-overrides to maintain.
+Links nested inside `<Text>` take Anta's prose-link styling from the
+design system, with no per-page overrides to maintain.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -58,11 +56,11 @@ The underline is a 0.5px hairline at 75% alpha by default and bumps to
 1px / 100% alpha on hover. On `:active` it returns to the 0.5px / 75%
 resting state.
 
-For tinted text (`tone="brand|success|critical|warning|info"`) links
-are **always** muted regardless of priority — they take `currentColor`
-and step up to the next-stronger level of the same tint on hover. At
-`priority="primary"` there is no level above, so hovering only brings
-the underline to full alpha.
+For tinted text (`tone="brand|success|critical|warning|info"`) links are
+always muted regardless of priority: they take `currentColor` and step up
+to the next-stronger level of the same tint on hover. At
+`priority="primary"` there is no level above, so hovering only brings the
+underline to full alpha.
 
 ## Demo
 
@@ -75,19 +73,18 @@ the underline to full alpha.
 
 <TruncateDemo client:load />
 
-`truncate` accepts either `true` (or `1`) for a single-line ellipsis or
-any integer ≥ 2 for multi-line clamping; `0` or a negative value means
-no truncation. Both modes use `-webkit-line-clamp` inside
-`display: -webkit-box`. Despite the `-webkit-` prefix, every major
-browser supports it (Firefox 68+, Chrome, Safari, Edge). The host gets
-`min-width: 0` so truncation works correctly inside flex and grid
-containers.
+`truncate` takes `true` (or `1`) for a single-line ellipsis, any integer
+≥ 2 for multi-line clamping, and `0` or a negative value for no
+truncation. Both modes use `-webkit-line-clamp` inside
+`display: -webkit-box`, supported in every major browser despite the
+prefix (Firefox 68+, Chrome, Safari, Edge). The host gets `min-width: 0`
+so truncation works inside flex and grid containers.
 
 ```tsx folded
 {/* Single line */}
 <Text truncate>{longSentence}</Text>
 
-{/* Multi-line — pass the line count */}
+{/* Multi-line: pass the line count */}
 <Text truncate={2}>{longSentence}</Text>
 <Text truncate={3}>{longSentence}</Text>
 ```
@@ -97,26 +94,25 @@ containers.
 
 <ExpandableDemo client:load />
 
-Pair `expandable` with `truncate` to let the user reveal the full
-text. Single-line truncation gets a horizontal fade on the right edge;
-multi-line gets a vertical fade over the last line. A chevron-down
-hint appears in the bottom-right corner on hover or keyboard focus.
-The chevron is a real `<button>` carrying `aria-expanded` — clicking it
-(or focusing it and pressing Enter) drops the clamp and reveals the
-full text. `expandable` only takes effect together with `truncate`.
+Pair `expandable` with `truncate` to let the reader reveal the full text.
+The fade and chevron appear only when the clamped content overflows; text
+that fits gets neither. Single-line truncation fades on the right edge,
+multi-line over the last line. The chevron is a real `<button>` carrying
+`aria-expanded`: click it, or focus it and press Enter, to drop the clamp.
+`expandable` takes effect only with `truncate`.
 
-By default expanding is **one-way** — once revealed, the control is
-removed. Add `collapsible` to make it a two-way toggle: the chevron
-stays visible while expanded (rotated to point up) and flips between
-"Show more" and "Show less". `collapsible` only takes effect together
-with `expandable`.
+Expanding is one-way by default, so the control is removed once the text
+is revealed. Add `collapsible` for a two-way toggle: the chevron stays
+visible while expanded (rotated up) and flips its label between "Show
+more" and "Show less". `collapsible` takes effect only with `expandable`.
 
 ```tsx folded
+{/* One-way: the chevron is removed once expanded */}
 <Text truncate expandable>{longSentence}</Text>
 <Text truncate={3} expandable>{longSentence}</Text>
 
-{/* Two-way: reader can collapse it back */}
-<Text truncate={5} expandable collapsible>{longSentence}</Text>
+{/* Two-way: the reader can collapse it back */}
+<Text truncate={3} expandable collapsible>{longSentence}</Text>
 ```
 
 </Col>
@@ -131,17 +127,17 @@ with `expandable`.
 <Disclosure title="Styling">
 
 Colour comes from **`priority`** (the neutral text level) and **`tone`** (the tint);
-`size` and the type props set the rest. `Text` doesn't expose its own tokens — it
+`size` and the type props set the rest. `Text` exposes no tokens of its own. It
 consumes the global **text role tokens** (`--text-1` … `--text-5`, the `-{tone}`
-tints, `--link-color`). Retune those once on `:root` / `.dark` to shift text colour
-everywhere — see [Colors](/colors/).
+tints, `--link-color`), so retuning those once on `:root` / `.dark` shifts text
+colour everywhere (see [Colors](/colors/)).
 
 ```tsx folded
 <Text priority="secondary" tone="brand">Tinted secondary text</Text>
 ```
 
 `<a-text>` is light-DOM, so one-offs are plain CSS on the element or its prose
-links. The `.fancy` class is just for the demo:
+links. The `.fancy` class names the demo example:
 
 <Preview>
   <Text className="fancy">
@@ -159,7 +155,7 @@ links. The `.fancy` class is just for the demo:
 </Preview>
 
 ```css folded
-/* teal body text via light-dark() (deep in light, bright in dark — Anta drives
+/* teal body text via light-dark() (deep in light, bright in dark; Anta drives
    color-scheme from its theme toggle), with wider tracking */
 a-text.fancy {
   color: light-dark(#0f6e5f, #5fd0bb);

@@ -42,6 +42,10 @@ export type BaseButtonProps = {
    *  fire it mid-flight.
    *  @defaultValue 0 */
   tabIndex?: number
+  /** ARIA role override (e.g. `'gridcell'` when a button is a cell in a grid).
+   *  Forwarded to the underlying element.
+   *  @defaultValue button */
+  role?: string
 }
 
 /** Content axis — slots render in this order inside the button:

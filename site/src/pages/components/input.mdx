@@ -174,6 +174,11 @@ content.)
 dark mode is automatic. The message always rides in `hint`; `status` only
 recolors it.
 
+It reuses the tone palette but isn't `tone`: **`status` is a validation *state*** (it
+also carries the glyph and, for `critical`, validity), whereas `tone` — elsewhere in
+Anta — is decorative colour. On `Input` the named tones live on `status`; `tone` is
+reserved for a one-off custom border colour.
+
 Only `status="critical"` carries validity — it sets `aria-invalid`, flips the
 `:state(invalid)` hook, and reports invalid to a surrounding `<form>` through
 `ElementInternals`. The other tones are advisory and stay valid.
@@ -200,6 +205,9 @@ with `statusIcon={false}`.
 {/* dimActions — adornments rest quiet, brighten when the field is hovered/focused */}
 <Input label="Search" placeholder="Search…" clearable dimActions defaultValue="design tokens" />
 
+{/* type="search" is a shorthand for the leading search icon + clearable below */}
+<Input label="Search" type="search" placeholder="Search…" />
+
 {/* leading / trailing take any node — see the live playground above */}
 <Input label="Search" leading={<Icon shape="search" />} clearable dimActions />
 <Input
@@ -218,6 +226,11 @@ with `statusIcon={false}`.
 left by the same `pad-x` as the text, so it lines up on the field's rhythm; the
 playground at the top of this page shows a live leading icon alongside the clear
 button.
+
+**`type="search"`** is a shorthand for that search pattern: it defaults a leading
+search icon and `clearable` (override either — pass your own `leading`, or
+`clearable={false}`). It's wrapper-only — the native `search` type never reaches the
+DOM input, so the browser's own clear/search chrome never appears; Anta owns it.
 
 **`dimActions`** rests the adornments quiet (60% opacity) and brightens them to
 full when the field is hovered or focused — a "quiet until engaged" look for
@@ -406,6 +419,26 @@ since the framework skips the re-render. Constrain hard with `maxLength` /
 
 </Col>
 </Columns>
+
+## Events
+
+| handler | fires | payload |
+|---|---|---|
+| `onInput(e)` | on **every keystroke** | read `e.target.value` |
+| `onChange(e)` | on **commit** (blur / Enter) — native `change` semantics, *not* React's per-keystroke `onChange` | read `e.target.value` |
+| `onValueChange(e, attrs)` | on `input` **and** `change` (and clear) | `{ value, name, empty, valid, validationMessage }` |
+| `onClearClick(e)` | before the `clearable` × clears | ✅ `e.preventDefault()` keeps the value |
+
+**Input has no `onStateChange`, on purpose.** That event belongs to components
+with a *discrete* state — a small enum like `Checkbox`'s `checked · unchecked ·
+indeterminate` or a menu's `open · closed` — where a transition can be vetoed as
+a unit before it applies. A text field's value is **free-form**, not a discrete
+state, so there's nothing to model as `state` and nothing to veto wholesale;
+you control it the native way (`value` + `onInput`/`onChange`, reject by not
+updating). Reach for `onValueChange` as the one unified "the value changed"
+handler — it's the same callback `Checkbox`, `RadioGroup`, and `Select` expose,
+so form code reads the same across all of them. (`Select`, likewise composed and
+value-based, also has only `onValueChange`.)
 
 ## Forms
 

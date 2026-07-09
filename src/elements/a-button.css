@@ -341,7 +341,7 @@
     border-radius: 4px;
     text-decoration: none;
 
-    box-shadow: inset 0 0 1px color-mix(in oklch, currentColor, transparent 70%);
+    box-shadow: inset 0 0 1px color-mix(in oklch, currentColor, transparent 90%);
 
     font-size: var(--_fs);
     font-family: var(--sans-serif);
@@ -365,6 +365,13 @@
     max-height: var(--button-max-height);
     padding-inline: var(--button-padding-x);
     padding-block: var(--button-padding-y);
+
+    /* Floor the box at the same-size Input height (24 / 28 / 32). Text buttons
+       already reach this via line-height + block padding, so it's a no-op for
+       them; it holds the height for content that carries no line-box — an
+       icon + counter Tag, or icon + icon — which would otherwise collapse to
+       just its children + padding. Paddingless quaternary opts out below. */
+    min-height: 28px;
 
     & > a-button-label {
       display: inline-block;
@@ -444,6 +451,7 @@
       --_fs: 13px;
       --_lh: 16px;
       --_pb: 0.5px;
+      min-height: 24px;
       /* Icon tracks the button size (medium is the a-icon default, 16px). An
          explicit `<Icon size>` (inline `--icon-size`) still wins. */
       & a-icon { --icon-size: 14px; }
@@ -453,6 +461,7 @@
       --_fs: 17px;
       --_lh: 24px;
       --_pb: 1.5px;
+      min-height: 32px;
       & a-icon { --icon-size: 18px; }
     }
 
@@ -488,26 +497,26 @@
     &[priority="quaternary"][paddingless] {
       --button-padding-x: 0;
       --button-padding-y: 0;
+      /* Inline link-style button: no box, so it must sit on the text baseline
+         at its natural height rather than the size floor. */
+      min-height: 0;
     }
 
     &:has(> a-icon):not(:has(> a-icon ~ a-icon)):not(:has(> :not(a-icon):not(a-tooltip))) {
       --button-padding-y: 5px;
       --button-padding-x: 5px;
       min-width: 28px;
-      min-height: 28px;
 
       justify-content: center;
       &[size="small"] {
         --button-padding-y: 3px;
         --button-padding-x: 3px;
         min-width: 24px;
-        min-height: 24px;
       }
       &[size="large"] {
         --button-padding-y: 7px;
         --button-padding-x: 7px;
         min-width: 32px;
-        min-height: 32px;
       }
     }
 

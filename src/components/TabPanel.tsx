@@ -1,4 +1,5 @@
 import type { TabsMounting } from "./Tabs"
+import { markTabsKind } from "../anta_helpers"
 
 /** A panel paired to the `<Tab>` of the same `value`. A **config component**: `Tabs`
  *  reads these props and renders the underlying `<a-tabpanel>` (id wiring, show/hide,
@@ -21,4 +22,4 @@ export interface TabPanelProps {
  * the real `<a-tabpanel>`, so this component itself produces no DOM. Use it as a direct
  * child of `<Tabs>`; rendering it elsewhere does nothing.
  */
-export const TabPanel = (_props: TabPanelProps): null => null
+export const TabPanel = markTabsKind((_props: TabPanelProps): null => null, "panel")

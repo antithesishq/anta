@@ -3,8 +3,8 @@ import type { BaseProps } from "../general_types"
 /** Truncation / expansion axis. `expandable` only takes effect with `truncate`;
  *  `collapsible` only with `expandable` — so the type forbids `collapsible`
  *  unless `expandable` is set (a dynamic `expandable={cond}` is still allowed). */
-type ExpandMode =
-  | { expandable?: false; collapsible?: never }
+export type ExpandMode =
+  | { expandable?: never; collapsible?: never }
   | {
       /** Show a fade hint and chevron over the truncated text and let the user
        *  expand it by clicking the chevron region or pressing Enter while the
@@ -24,8 +24,10 @@ export type TextProps = BaseProps & {
    *  step softer than the strongest foreground; pass `primary` for emphasis.
    *  @defaultValue secondary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. Applies the matching `--text-{N}-{tone}` palette. */
-  tone?: 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale;
+   *  the others apply the matching `--text-{N}-{tone}` palette.
+   *  @defaultValue neutral */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Type scale. `small` = 13/16, `medium` = 15/20, `large` = 17/24.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'

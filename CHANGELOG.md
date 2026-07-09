@@ -8,6 +8,12 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 
 ## Unreleased
 
+### Changed
+- **`InputDate` opens the calendar from the field, not a trailing button.** Clicking anywhere in the field opens the calendar (the menu now anchors to the field, like `Select`), and a leading calendar icon marks the affordance — the `icon` prop defaults to `calendar-days` and still overrides it. The separate trailing calendar button is gone. A mouse open keeps focus in the field, so you can keep typing or click a day; <kbd>ArrowDown</kbd> opens the calendar and moves focus into the grid, and <kbd>Esc</kbd> closes it back to the field. <kbd>Enter</kbd> still commits the typed date. The field carries `aria-haspopup="dialog"` + `aria-expanded`.
+
+### Added
+- **`Calendar` `focusSignal` prop.** A nonce (change it — e.g. increment a counter — to fire) that moves keyboard focus onto the calendar's active day, driven declaratively through `<a-calendar>`'s `data-focus`. `InputDate` bumps it on a keyboard open so focus lands in the grid without the wrapper ever touching the DOM.
+
 ### Fixed
 - **`Input` pins its variable-font width axis.** The shadow `<input>` / `<textarea>` now restates `font-variation-settings` (`wdth 100`, upright), because the UA form-control `font` shorthand resets the variable-font axes to the font file's default instance. With a variable `--sans-serif` the field text otherwise rendered at a different width from the surrounding text and shifted as the font loaded. `Select` and `InputDate` triggers (built on `Input`) inherit the fix.
 - **`Input` skeleton renders its content before upgrade, not just an empty box.** Building on 0.3.3's reserved field box, `a-input:not(:defined)` now paints the field's text — the `value`, or the `placeholder` when empty — and matches the shadow control's type scale (font size / line-height / weight per `size`, feature settings, and variable-font axes), so a not-yet-upgraded / SSR'd field reads as populated and the label + value hold position across upgrade. The label matches the shadow `.label` metrics so the field below it doesn't jump; adornments and the hint are held back until the shadow exists; and the field fades from a dimmed rest state to full opacity on `:defined` (skipped under `prefers-reduced-motion`). A `password` field never paints its value in the skeleton. This most visibly smooths the `Select` and `InputDate` triggers on load.

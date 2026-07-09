@@ -16,8 +16,9 @@ import InputDateDemo from '../components/InputDateDemo'
 
 **`InputDate`** is a date field that replaces the native `type="date"` (and, with
 `time`, `type="datetime-local"`): a text field you can type into, backed by a
-`Calendar` that opens from the trailing button. `Calendar`, the month grid it builds
-on, is documented lower down.
+`Calendar` that opens when you click the field (or press <kbd>↓</kbd>), marked by a
+leading calendar icon. `Calendar`, the month grid it builds on, is documented lower
+down.
 
 The field accepts free text and resolves it on commit (blur / Enter): a lenient
 parser reads the locale's order (`06/07/2026` is June 7 in en-US, July 6 in de-DE),
@@ -42,10 +43,11 @@ or uncontrolled (`defaultValue`), and submits under `name`.
 
 ## The date field
 
-Type a date and it resolves on blur or <kbd>Enter</kbd>, or open the calendar from
-the trailing button and pick a day. Either way the field settles on the locale's
-canonical format and the value is ISO `YYYY-MM-DD`. Focusing the field just places
-the cursor to type; only the button opens the calendar.
+Type a date and it resolves on blur or <kbd>Enter</kbd>, or click the field to open
+the calendar and pick a day. Either way the field settles on the locale's canonical
+format and the value is ISO `YYYY-MM-DD`. A click keeps focus in the field, so you
+can keep typing or click a day; <kbd>↓</kbd> opens the calendar and moves focus into
+the grid, and <kbd>Esc</kbd> closes it back to the field.
 
 <Preview>
   <InputDateDemo client:only="preact" label="Due date" defaultValue="2026-06-15" style={{ width: '260px' }} />
@@ -333,10 +335,14 @@ elements.
 `InputDate` has no `a-inputdate` element; the wrapper is the coordinator, the role
 `Select` plays over `Input` + `Menu`. It renders an editable `<Input>` trigger and a
 `<Menu>` holding a `<Calendar>` (with `time`, the hour/minute row and AM/PM `Tabs`
-sit under the grid), and owns the draft text, the lenient parse on commit, the ISO
-value, and opening the menu from the trailing button. Focusing the field just types;
-the button opens the menu, so picking a day and typing never fight. Nesting a stateful
-component in a menu has one wrinkle: the `Calendar` (and `Tabs`) dispatch their own
+sit under the grid), and owns the draft text, the lenient parse on commit, and the
+ISO value. The menu anchors to the field and opens on click (via the `Menu`'s own
+anchor-click trigger, like `Select`) — a mouse open leaves focus in the field so you
+can keep typing, while <kbd>↓</kbd> opens it and moves focus into the grid. That
+focus move is declarative: `InputDate` bumps `Calendar`'s `focusSignal`, which
+renders a `data-focus` attribute the `<a-calendar>` element reads to focus the active
+day — the wrapper never touches the DOM. Nesting a stateful component in a menu has
+one wrinkle: the `Calendar` (and `Tabs`) dispatch their own
 `statechange`, so the `Menu` acts only on its own `open` / `closed`, and a bubbled
 pick isn't mistaken for a dismiss.
 

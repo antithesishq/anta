@@ -2,8 +2,8 @@
 // not a hard `react` import — same rule as RadioGroup / Select. InputDate is a
 // *composed* component: an editable <Input> that accepts free text and resolves
 // it to an ISO date (or date-time) on commit, plus a <Menu> holding a <Calendar>
-// that opens from the trailing button. There is no `a-inputdate` element; the
-// wrapper is the coordinator (like Select).
+// that opens from the field itself (click or ArrowDown), anchored to it like
+// Select. There is no `a-inputdate` element; the wrapper is the coordinator.
 import cn from 'clsx'
 import { useMemo, useState } from '../jsx-runtime'
 import { Temporal } from 'temporal-polyfill'
@@ -73,7 +73,8 @@ export interface InputDateProps extends Omit<BaseProps, 'children'> {
   round?: boolean | number | string
   /** Show a clear button once the field has a value. */
   clearable?: boolean
-  /** Leading icon at the start of the field. */
+  /** Leading icon at the start of the field — the calendar affordance.
+   *  @defaultValue calendar-days */
   icon?: IconShape
   /** Include a time. The value becomes ISO `YYYY-MM-DDTHH:mm`, the field parses a
    *  trailing time after a space (`06/15/2026 14:30`, `… 2:30pm`), and the menu
@@ -96,10 +97,11 @@ export interface InputDateProps extends Omit<BaseProps, 'children'> {
  * `Menu` + `Calendar` (no `a-inputdate` element; the wrapper is the coordinator).
  * The field accepts free text and resolves it on commit (blur / Enter) with a
  * lenient, locale-aware parser, then rewrites the entry to the canonical format;
- * an unrecognized entry marks the field `critical` and keeps the text. The trailing
- * calendar button opens a `Calendar` in a menu (a field click just types); with
- * `time`, a time row sits under the grid. The value is an ISO `YYYY-MM-DD` string,
- * or `YYYY-MM-DDTHH:mm` with `time`.
+ * an unrecognized entry marks the field `critical` and keeps the text. Clicking the
+ * field (or pressing ArrowDown) opens a `Calendar` in a menu; a leading calendar
+ * icon marks the affordance. Mouse-open keeps focus in the field so you can keep
+ * typing; ArrowDown moves focus into the grid. With `time`, a time row sits under
+ * the grid. The value is an ISO `YYYY-MM-DD` string, or `YYYY-MM-DDTHH:mm` with `time`.
  *
  * Controlled (`value` + `onValueChange`) or uncontrolled (`defaultValue`).
  * Requires `@antadesign/anta/elements` (client-side only).
@@ -186,6 +188,9 @@ export const InputDate = ({
   const [text, setText] = useState<string>(() => fmt(current))
   const [open, setOpen] = useState(false)
   const [invalid, setInvalid] = useState(false)
+  // Bumped to move focus into the calendar grid on a keyboard open (ArrowDown) —
+  // fed to `Calendar`'s `focusSignal`, which drives `<a-calendar>`'s `data-focus`.
+  const [focusNonce, setFocusNonce] = useState(0)
   // Drafts for the time fields (free typing; clamped + zero-padded on commit).
   const [hourText, setHourText] = useState(curHourShown)
   const [minuteText, setMinuteText] = useState(curM)
@@ -294,11 +299,13 @@ export const InputDate = ({
         round={round}
         disabled={disabled}
         clearable={clearable}
-        leading={icon ? <Icon shape={icon} /> : undefined}
+        leading={<Icon shape={icon ?? 'calendar-days'} />}
         value={text}
         placeholder={pattern}
         inputMode={time ? 'text' : 'numeric'}
         autoComplete="off"
+        aria-haspopup="dialog"
+        aria-expanded={open ? 'true' : 'false'}
         onInput={(e: any) => {
           setText(e.currentTarget.value)
           if (invalid) setInvalid(false)
@@ -310,109 +317,115 @@ export const InputDate = ({
           if (e.target !== e.currentTarget) return
           resolve(e.currentTarget.value)
         }}
+        onKeyDown={(e: any) => {
+          // Open on ArrowDown and step focus into the grid — the deliberate "enter
+          // the grid" gesture. Enter stays "commit the typed date", so it isn't
+          // overloaded. A mouse click opens via the Menu's own anchor-click trigger
+          // (like Select) — leaving focus in the field — so there's no `onClick`
+          // here; for the keyboard we synthesize that same click, guarded on `!open`
+          // so a second ArrowDown doesn't toggle it shut. `focusSignal` (bumped
+          // below) then lands focus in the grid. Once inside, <a-calendar> owns the
+          // arrows, so this only runs while focus is in the field.
+          if (e.key === 'ArrowDown' && !disabled) {
+            e.preventDefault()
+            if (!open) e.currentTarget.click()
+            setFocusNonce((n) => n + 1)
+          }
+        }}
         className={cn(styles.dateField, className)}
         style={style}
-        trailing={
-          <>
-            <Button
-              priority="tertiary"
-              size={size}
-              icon="calendar-days"
-              aria-label="Open calendar"
-              aria-haspopup="dialog"
-              disabled={disabled}
-            />
-            {/* Anchors to its previous sibling (the button), so only the button opens
-                it — a click in the field just types. Controlled so a day pick / Done
-                can close it. `bottom-end` right-aligns it under the field edge. */}
-            <Menu
-              open={open}
-              placement="bottom-end"
-              className={styles.calendarMenu}
-              onStateChange={(_e, { next }) => setOpen(next)}
-            >
-              {/* `data-menu-open` keeps the menu open through calendar + time
-                  interactions; a day pick closes it (date-only) or keeps it open
-                  (time), and the Done button closes it. */}
-              <div data-menu-open="">
-                <Calendar
-                  value={dateISO}
-                  min={min}
-                  max={max}
-                  locale={locale}
-                  size={size}
-                  disabled={disabled}
-                  onStateChange={(_e, { next, reason }) => {
-                    if (reason !== 'user') return
-                    const d = next ?? ''
-                    apply(time && d ? withTime(d) : d)
-                    if (!time) setOpen(false)
-                  }}
-                />
-                {time && (
-                  <div className={styles.timeRow}>
-                    <div className={styles.time} role="group" aria-label="Time">
-                      <Icon shape="clock" aria-hidden="true" className={styles.clock} />
-                      <Input
-                        size={size}
-                        className={styles.timeField}
-                        value={hourText}
-                        placeholder="HH"
-                        type="number"
-                        inputMode="numeric"
-                        aria-label="Hours"
-                        disabled={disabled}
-                        onInput={(e: any) => setHourText(e.currentTarget.value.replace(/\D/g, '').slice(0, 2))}
-                        onChange={(e: any) => commitTime(e.currentTarget.value, minuteText, meridiem)}
-                      />
-                      <span className={styles.sep} aria-hidden="true">
-                        :
-                      </span>
-                      <Input
-                        size={size}
-                        className={styles.timeField}
-                        value={minuteText}
-                        placeholder="MM"
-                        type="number"
-                        inputMode="numeric"
-                        aria-label="Minutes"
-                        disabled={disabled}
-                        onInput={(e: any) => setMinuteText(e.currentTarget.value.replace(/\D/g, '').slice(0, 2))}
-                        onChange={(e: any) => commitTime(hourText, e.currentTarget.value, meridiem)}
-                      />
-                      {twelveHour && (
-                        <Tabs
-                          className={styles.meridiem}
-                          size={size}
-                          priority="primary"
-                          aria-label="AM or PM"
-                          options={[
-                            { value: 'AM', label: 'AM' },
-                            { value: 'PM', label: 'PM' },
-                          ]}
-                          value={meridiem}
-                          onStateChange={(_e: any, { next }: { next: string | null }) => {
-                            if (next === 'AM' || next === 'PM') commitTime(hourText, minuteText, next)
-                          }}
-                          disabled={disabled}
-                        />
-                      )}
-                    </div>
-                    <Button
-                      priority="tertiary"
-                      size={size}
-                      icon="check"
-                      aria-label="Done"
-                      onClick={() => setOpen(false)}
-                    />
-                  </div>
-                )}
-              </div>
-            </Menu>
-          </>
-        }
         {...rest}
       />
+      {/* The calendar menu anchors to its previous sibling, the field: a-input's
+          getAnchorRect() returns its `.field` box, so a click anywhere in the field
+          opens it and never counts as an outside-click dismiss. A mouse open leaves
+          focus in the field (type, or click a day); ArrowDown moves focus into the
+          grid via `focusSignal`. Controlled so a day pick / Done can close it. */}
+      <Menu
+        open={open}
+        placement="bottom-start"
+        className={styles.calendarMenu}
+        onStateChange={(_e, { next }) => setOpen(next)}
+      >
+        {/* `data-menu-open` keeps the menu open through calendar + time
+            interactions; a day pick closes it (date-only) or keeps it open (time),
+            and the Done button closes it. */}
+        <div data-menu-open="">
+          <Calendar
+            value={dateISO}
+            min={min}
+            max={max}
+            locale={locale}
+            size={size}
+            disabled={disabled}
+            focusSignal={focusNonce}
+            onStateChange={(_e, { next, reason }) => {
+              if (reason !== 'user') return
+              const d = next ?? ''
+              apply(time && d ? withTime(d) : d)
+              if (!time) setOpen(false)
+            }}
+          />
+          {time && (
+            <div className={styles.timeRow}>
+              <div className={styles.time} role="group" aria-label="Time">
+                <Icon shape="clock" aria-hidden="true" className={styles.clock} />
+                <Input
+                  size={size}
+                  className={styles.timeField}
+                  value={hourText}
+                  placeholder="HH"
+                  type="number"
+                  inputMode="numeric"
+                  aria-label="Hours"
+                  disabled={disabled}
+                  onInput={(e: any) => setHourText(e.currentTarget.value.replace(/\D/g, '').slice(0, 2))}
+                  onChange={(e: any) => commitTime(e.currentTarget.value, minuteText, meridiem)}
+                />
+                <span className={styles.sep} aria-hidden="true">
+                  :
+                </span>
+                <Input
+                  size={size}
+                  className={styles.timeField}
+                  value={minuteText}
+                  placeholder="MM"
+                  type="number"
+                  inputMode="numeric"
+                  aria-label="Minutes"
+                  disabled={disabled}
+                  onInput={(e: any) => setMinuteText(e.currentTarget.value.replace(/\D/g, '').slice(0, 2))}
+                  onChange={(e: any) => commitTime(hourText, e.currentTarget.value, meridiem)}
+                />
+                {twelveHour && (
+                  <Tabs
+                    className={styles.meridiem}
+                    size={size}
+                    priority="primary"
+                    aria-label="AM or PM"
+                    options={[
+                      { value: 'AM', label: 'AM' },
+                      { value: 'PM', label: 'PM' },
+                    ]}
+                    value={meridiem}
+                    onStateChange={(_e: any, { next }: { next: string | null }) => {
+                      if (next === 'AM' || next === 'PM') commitTime(hourText, minuteText, next)
+                    }}
+                    disabled={disabled}
+                  />
+                )}
+              </div>
+              <Button
+                priority="tertiary"
+                size={size}
+                icon="check"
+                aria-label="Done"
+                onClick={() => setOpen(false)}
+              />
+            </div>
+          )}
+        </div>
+      </Menu>
       {/* Submit the ISO value under `name` (the field itself shows locale text). */}
       {name ? <input type="hidden" name={name} value={current ?? ''} /> : null}
     </>

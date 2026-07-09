@@ -1250,7 +1250,7 @@ function buildSrcdoc(): string {
      with non-zero defaults — so without this the preview iframe
      renders italic on Safari only. \`font-style: normal\` is the
      belt to the variation-settings braces. */
-  html, body { margin: 0; background: transparent; font-family: var(--sans-serif, sans-serif); font-style: normal; font-variation-settings: "slnt" 0, "ital" 0; }
+  html, body { margin: 0; background: transparent; font-family: var(--sans-serif, sans-serif); font-style: normal; font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0; }
   body { padding: 24px; overflow: auto; box-sizing: border-box; min-height: 100%; }
   /* Preview default layout: a column-flex with 16px gap so multiple
      examples stack vertically with consistent breathing room. The

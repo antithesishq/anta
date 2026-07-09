@@ -111,12 +111,17 @@ if (isComponentPage && title) {
 
     {/*
       Preload the brand fonts so the browser starts fetching them in
-      parallel with HTML parsing — without this the font requests
-      don't fire until the CSS rule is parsed, by which point the page
-      has already painted with the fallback and `font-display: swap`
-      visibly re-renders. `crossorigin` is required for fetch-credentials
-      to match @font-face requests; without it the preloaded resource
-      doesn't get reused by the @font-face fetch and we'd preload twice.
+      parallel with HTML parsing — without this the font requests don't
+      fire until the CSS rule is parsed. This preload is what makes
+      `font-display: optional` (see base.css) reliable: optional gives
+      the font only a ~100ms block window and never swaps afterward, so
+      the fetch has to be in flight from the very start to win that race
+      and render the brand font on first paint with no reflow. Without
+      the preload, optional would usually miss the window and the page
+      would stay in the system fallback for the whole load. `crossorigin`
+      is required for fetch-credentials to match @font-face requests;
+      without it the preloaded resource doesn't get reused by the
+      @font-face fetch and we'd preload twice.
     */}
     <link
       rel="preload"

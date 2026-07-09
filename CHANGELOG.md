@@ -6,6 +6,12 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
+## Unreleased
+
+### Fixed
+- **`Input` pins its variable-font width axis.** The shadow `<input>` / `<textarea>` now restates `font-variation-settings` (`wdth 100`, upright), because the UA form-control `font` shorthand resets the variable-font axes to the font file's default instance. With a variable `--sans-serif` the field text otherwise rendered at a different width from the surrounding text and shifted as the font loaded. `Select` and `InputDate` triggers (built on `Input`) inherit the fix.
+- **`Input` skeleton renders its content before upgrade, not just an empty box.** Building on 0.3.3's reserved field box, `a-input:not(:defined)` now paints the field's text — the `value`, or the `placeholder` when empty — and matches the shadow control's type scale (font size / line-height / weight per `size`, feature settings, and variable-font axes), so a not-yet-upgraded / SSR'd field reads as populated and the label + value hold position across upgrade. The label matches the shadow `.label` metrics so the field below it doesn't jump; adornments and the hint are held back until the shadow exists; and the field fades from a dimmed rest state to full opacity on `:defined` (skipped under `prefers-reduced-motion`). A `password` field never paints its value in the skeleton. This most visibly smooths the `Select` and `InputDate` triggers on load.
+
 ## 0.3.3 — July 8, 2026
 
 ### Added

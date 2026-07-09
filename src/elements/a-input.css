@@ -8,31 +8,110 @@
      height plus a per-size type scale (small 13/16 · medium 15/20 · large 17/22)
      and icon size (14/16/18); the field min-height still anchors the box to the
      same-size Button. */
-  /* Pre-upgrade, the `.field` box and the `<input>` live in the shadow, so an
-     SSR'd / not-yet-upgraded a-input shows only its slotted label; the field
-     then pops in below on upgrade and shifts the page. Two-part guard, dropped
-     once `:defined`:
-       1. A custom element is `display: inline` until upgraded, which ignores
-          the `width: 100%` below and collapses the box to the label width.
-          Mirror the defined shadow `:host` (single-column grid, 4px row gap) so
-          the pre-upgrade box is the same block, full-width shape.
-       2. An `::after` placeholder standing in for the shadow `.field` (same
-          min-height + inset border) reserves the field's row so it paints
-          immediately instead of jumping in on upgrade. */
+  /* Pre-upgrade skeleton. The `.field` box, the `<input>`, and the slotted
+     adornments all live in — or project into — the shadow, which doesn't exist
+     until the element upgrades. An SSR'd / not-yet-upgraded a-input would
+     otherwise show its bare light-DOM children stacked as grid rows above an
+     empty box, then snap into a composed field on upgrade. This block makes the
+     resting state read as a populated field so the swap is invisible; it's
+     dropped once `:defined`.
+
+     Composed by region:
+       • The host mirrors the defined shadow `:host` (single-column grid, 4px
+         row gap) so it's the same full-width block. Without this a custom
+         element is `display: inline` until upgraded, ignoring `width: 100%` and
+         collapsing to the label width.
+       • The `::after` stands in for the shadow `.field`: same min-height and
+         inset border, and the same text as the shadow control would show — the
+         `value` in the text colour when filled (the Select trigger's chosen
+         label, an InputDate's date, a controlled input's text), otherwise the
+         `placeholder` in the placeholder colour. It mirrors the control's
+         per-size type scale, weight, feature settings, 7px inset, and readonly
+         ellipsis, so upgrade is a pure content swap with no reflow.
+       • The in-field adornments (leading, trailing, clear) are hidden until
+         upgrade — before the shadow exists they don't project into the field
+         and would stack as their own rows. The hint is hidden too: a `::after`
+         always follows the light-DOM children, so a visible hint would sit
+         above the field box rather than below it. All three fade into place
+         with the rest of the shadow content on `:defined`. The label stays: it
+         renders above the box, which is where it belongs.
+         `!important` overrides the `display: contents` the `Input` wrapper sets
+         inline on these slot spans (an inline style otherwise wins). */
   a-input:not(:defined) {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     row-gap: 4px;
   }
+  a-input:not(:defined) > [slot="leading"],
+  a-input:not(:defined) > [slot="trailing"],
+  a-input:not(:defined) > [slot="clear"],
+  a-input:not(:defined) > [slot="hint"] {
+    display: none !important;
+  }
+  /* Match the shadow `.label` type scale exactly. Pre-upgrade the label is a
+     bare light-DOM child inheriting the page's font and line-height; on upgrade
+     it adopts the shadow `.label` (per-size scale, weight 500), and any height
+     delta shifts the field below it. Setting the same metrics here keeps the
+     label box the same height across upgrade, so the field doesn't jump. (Font
+     properties inherit through a node label's inline `display: contents`, so
+     both the string and node label forms track.) */
+  a-input:not(:defined) > [slot="label"] {
+    display: block;
+    color: var(--input-label);
+    font-family: var(--sans-serif);
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 500;
+  }
+  a-input[size="small"]:not(:defined) > [slot="label"] { font-size: 13px; line-height: 16px; }
+  a-input[size="large"]:not(:defined) > [slot="label"] { font-size: 17px; line-height: 22px; }
   a-input:not(:defined)::after {
-    content: "";
+    content: attr(placeholder);
+    display: block;
     min-height: 28px;
+    line-height: 28px;
+    padding-inline: 7px;
     border-radius: 4px;
     box-shadow: inset 0 0 0 0.5px var(--input-border);
+    color: var(--input-placeholder);
+    font-family: var(--sans-serif);
+    font-size: 15px;
+    font-weight: 400;
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  a-input[size="small"]:not(:defined)::after { min-height: 24px; }
-  a-input[size="large"]:not(:defined)::after { min-height: 32px; }
+  /* Filled: the value in the text colour. Excludes password so a value is never
+     painted as plaintext pre-upgrade — a password field falls back to the
+     placeholder branch above, keeping the secret in the shadow control. */
+  a-input[value]:not([value=""]):not([type="password"]):not(:defined)::after {
+    content: attr(value);
+    color: var(--input-text);
+  }
+  a-input[size="small"]:not(:defined)::after { min-height: 24px; line-height: 24px; font-size: 13px; }
+  a-input[size="large"]:not(:defined)::after { min-height: 32px; line-height: 32px; font-size: 17px; }
   a-input[round]:not(:defined)::after { border-radius: var(--input-round, 999px); }
+
+  /* Fade the whole field up as it upgrades: the skeleton rests slightly
+     dimmed, then eases to full opacity the instant the shadow content (real
+     control + adornments) takes over on `:defined`. The element node persists
+     across upgrade, so flipping `:not(:defined)` off transitions opacity rather
+     than snapping. The short delay holds the dim across the swap frame, giving
+     the browser a beat to lay out the shadow content before it reaches full
+     opacity. Only the first page-load upgrade sees the dim; inputs created after
+     registration are already `:defined`, so they start at full opacity with no
+     transition. */
+  a-input {
+    transition: opacity 280ms ease-out 40ms;
+  }
+  a-input:not(:defined) {
+    opacity: 0.5;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    a-input { transition: none; }
+  }
 
   a-input {
     --input-bg: var(--bg-1);

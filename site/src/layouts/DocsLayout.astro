@@ -93,7 +93,14 @@ if (isComponentPage && title) {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* viewport-fit=cover so the layout spans the whole screen on notched /
+        Dynamic-Island iPhones. Without it, Safari letterboxes the page in
+        landscape — insetting the content away from the notch and painting the
+        margins with the page background, so the UI looks like it doesn't use
+        the full width. `env(safe-area-inset-*)` padding on `.layout` keeps
+        content clear of the notch; the insets are 0 everywhere else, so this
+        is a no-op on non-notched screens. */}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={pageUrl} />
@@ -449,6 +456,12 @@ if (isComponentPage && title) {
        scroll container, so the sticky sidebar's vertical stickiness is
        unaffected; opened panels translate back into the viewport and show. */
     overflow-x: clip;
+    /* Inset the shell out of the display's safe area. Paired with
+       viewport-fit=cover (see the head meta), this fills the whole screen on
+       notched / Dynamic-Island iPhones while keeping the sidebar and content
+       clear of the side notch in landscape. The insets are 0 on every
+       non-notched screen, so it changes nothing elsewhere. */
+    padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
   }
 
   .sidebar {

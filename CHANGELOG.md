@@ -48,6 +48,9 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 - **Removed `toneText` from `Checkbox` and `RadioGroup`.** Recolour the label + hint in plain CSS with the theme-aware `--text-N-{tone}` tokens (`a-checkbox { color: var(--text-1-critical) }`; target `a-checkbox-hint` / `a-radio-hint` for the hint). The mark-tone axis stays `tone`; `toneSelected` tints only the chosen mark. **Breaking, no alias:** drop `toneText` and any `tone-text` attribute.
 - **Anchor-buttons (`<a role="button">`) require a `data-anta` marker to be styled.** The selector is now `a[role="button"][data-anta]`, so Anta no longer styles every page anchor that happens to carry `role="button"`. `<Button href>` adds the marker automatically; hand-authored anchor-buttons must add it. The `<a-button>` element is unchanged.
 
+### Fixed
+- **`Input`: leading / trailing / clear adornments stay centered on the first line in `multiline` fields.** A multiline field top-anchored its icons with a fixed 2px offset, so they sat ~4px above where the text's first line sits and jumped up when `multiline` toggled. They now center in a one-line-tall box (`--_lh + 2·--_pad-block`), tracking the first text line at every size — the same vertical position as a single-line field, with no jump.
+
 ## 0.3.2 — July 2, 2026
 
 ### Added

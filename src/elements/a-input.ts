@@ -107,7 +107,7 @@ const SUPPORTS_FIELD_SIZING =
 //    display:none, so it contributes no track or gap. The host's own focus
 //    outline is suppressed (delegatesFocus can ring it) — the field ring is the
 //    single indicator. --_fs/--_lh are the size-driven type scale (small 13/16 ·
-//    medium 15/20 · large 17/24); label, control, and hint all read them.
+//    medium 15/20 · large 17/22); label, control, and hint all read them.
 //  • .field — min-height (24/28/32) matches the same-size Button. The border is a
 //    box-shadow (inset), not a real border, so the rest→status width bump
 //    (0.5px→1px, thickened for emphasis; colour from a-input.css per-status
@@ -116,10 +116,11 @@ const SUPPORTS_FIELD_SIZING =
 //  • input / textarea — only the control carries the horizontal text inset; edge
 //    slots + clear sit flush. appearance:none and the ::-webkit/::-ms resets strip
 //    browser-injected affordances (search clear/spinners/Edge reveal) — Anta owns
-//    every in-field control. textarea's --_pad-block is the single source for its
-//    vertical padding; the autogrow cap (:host([maxrows]:not([rows]))) is computed
-//    from --_lh + that padding so it tracks size, with JS injecting only the
-//    --_maxrows integer. A fixed `rows` turns autogrow off, so the cap doesn't apply.
+//    every in-field control. --_pad-block (on .field, shared with the multiline
+//    adornment boxes below) is the single source for the textarea's vertical
+//    padding; the autogrow cap (:host([maxrows]:not([rows]))) is computed from
+//    --_lh + that padding so it tracks size, with JS injecting only the --_maxrows
+//    integer. A fixed `rows` turns autogrow off, so the cap doesn't apply.
 //    A readonly single-line input shows an ellipsis for an overflowing value
 //    (text-overflow: ellipsis), so the Select trigger reads a long value as `name …`
 //    instead of a hard clip. Editable inputs keep the default clip (caret needs the
@@ -130,7 +131,10 @@ const SUPPORTS_FIELD_SIZING =
 //    <a-button> keeps its own colour. `dim-actions` rests them at 0.6 and brightens
 //    to full on field hover/focus — but never while disabled. The clear slot shows
 //    only when filled + editable (hidden when disabled/readonly). A leading item is
-//    inset to line up with the text's left rhythm.
+//    inset to line up with the text's left rhythm. Single-line, adornments center
+//    in the one-line field; multiline, they top-anchor in a one-line-tall box
+//    (--_lh + 2·--_pad-block) so they stay centered on the first text line — same
+//    vertical position as single-line, no jump when `multiline` toggles.
 //  • .hint — reads quieter (1px smaller, tighter line, --input-hint), 1px off the
 //    left edge; a status recolours the whole row (message + glyph) via the
 //    per-status --input-hint override in a-input.css.
@@ -158,6 +162,7 @@ const SHADOW_STYLE = `
   .field {
     --_bc: var(--input-border);
     --_bw: 0.5px;
+    --_pad-block: 4px;
 
     display: flex;
     align-items: center;
@@ -171,7 +176,7 @@ const SHADOW_STYLE = `
   :host([multiline]) .field { align-items: stretch; }
   :host([status]) .field { --_bw: 1px; }
   :host([size="small"]) { --_fs: 13px; --_lh: 16px; }
-  :host([size="large"]) { --_fs: 17px; --_lh: 24px; }
+  :host([size="large"]) { --_fs: 17px; --_lh: 22px; }
   :host([size="small"]) .field { min-height: 24px; }
   :host([size="large"]) .field { min-height: 32px; }
   :host([round]) .field { border-radius: var(--input-round, 999px); }
@@ -206,8 +211,6 @@ const SHADOW_STYLE = `
             appearance: none;
   }
   textarea {
-    --_pad-block: 4px;
-
     resize: none;
     padding-block: var(--_pad-block);
     overflow-y: auto;
@@ -260,15 +263,15 @@ const SHADOW_STYLE = `
   .field.is-filled slot[name="clear"] { display: flex; align-items: center; }
   :host(:disabled) slot[name="clear"],
   :host([readonly]) slot[name="clear"] { display: none; }
-  :host([multiline]) slot[name="clear"] { align-self: flex-start; }
 
   .field.has-leading slot[name="leading"] { margin-inline-start: 7px; }
   .field.has-leading input,
   .field.has-leading textarea { padding-inline-start: 5px; }
   :host([multiline]) .field.has-leading slot[name="leading"],
-  :host([multiline]) .field.has-trailing slot[name="trailing"] {
-    align-items: flex-start;
-    padding-top: 2px;
+  :host([multiline]) .field.has-trailing slot[name="trailing"],
+  :host([multiline]) .field.is-filled slot[name="clear"] {
+    align-self: flex-start;
+    height: calc(var(--_lh) + var(--_pad-block) * 2);
   }
 
   .hint {

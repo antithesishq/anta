@@ -265,7 +265,7 @@ export function OptionsTabs() {
       options={[
         { value: 'overview', label: 'Overview', icon: 'home' },
         { value: 'activity', label: 'Activity', icon: 'history' },
-        { value: 'settings', label: 'Settings', icon: 'list' },
+        { value: 'settings', label: 'Settings', icon: 'columns-3-cog' },
       ]}
     />
   )

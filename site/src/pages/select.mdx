@@ -254,12 +254,23 @@ const tree = optionsWithSelection(scopes, values)
 {/* render `tree` however you like — a summary, section indicators, a diff */}
 ```
 
-The flow is one-directional: **`value` controls the `Select`; the tree is a derived,
-read-only view.** `Select` never reads `selected` off `options` (selection is
-value-keyed), so passing the annotated tree back as `options` would not control it —
-the `selected` flags would ride along as inert data. Bare-string options normalize to
-`{ value, label }`; a value under more than one section marks the leaf everywhere it
-occurs.
+**Don't feed the tree back into `options` to control selection.** The projection
+flows one way: `value` controls the `Select`, and the tree is a derived, read-only
+view of it. `Select` resolves selection purely from `value` and never reads a
+`selected` flag off `options`, so a `selected: true` in the tree changes nothing — it
+rides along as inert data. Control the `Select` with the value array; keep the
+annotated tree for rendering.
+
+```tsx
+// ✗ Wrong — `selected` is ignored, so the Select isn't controlled by this
+<Select options={optionsWithSelection(scopes, values)} />
+
+// ✓ Right — selection is value-keyed; drive it with `value`
+<Select options={scopes} value={values} onValueChange={setValues} />
+```
+
+Bare-string options normalize to `{ value, label }`; a value under more than one
+section marks the leaf everywhere it occurs (selection is value-keyed).
 
 ## Size & status
 

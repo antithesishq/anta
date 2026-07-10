@@ -25,7 +25,9 @@ const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navig
  *  arbitrary fields (a `ranAt` date, a `status`, …) and read them back in
  *  `renderOption`; the built-in filter still matches on `value`/`label`/`hint`. */
 export interface SelectOption {
-  /** The option's value — its identity and what `onValueChange` reports. */
+  /** The option's value — its identity, what `value` / `defaultValue` name, and what
+   *  `onValueChange` reports. Unique across the whole `options` tree (selection is
+   *  value-keyed and global across groups / submenus). */
   value: string
   /** Visible label. Defaults to `value`. */
   label?: string
@@ -148,7 +150,12 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
   /** The options to choose from — bare strings, `SelectOption` objects, `SelectGroup`s
    *  (inline titled sections), or `SelectSubmenu`s (flyout branches). Groups and
    *  submenus nest and mix with plain options. Selection stays global (one `value`,
-   *  leaf options only); a filter query flattens the tree into grouped results. */
+   *  leaf options only); a filter query flattens the tree into grouped results.
+   *
+   *  Each leaf `value` is the option's identity and must be **unique across the whole
+   *  tree** — selection is value-keyed, so a value repeated in two sections is one
+   *  logical pick (both rows toggle together; the trigger resolves to the last). Dev
+   *  builds `console.warn` on a duplicate. */
   options: SelectItem[]
   /** The per-row mark for **single**-select: `'none'` (a tint-only highlight),
    *  `'check'` (a trailing checkmark on the selected row, keeping the tint — the
@@ -242,11 +249,13 @@ export type SelectProps = SelectCommonProps &
          *  array value.
          *  @defaultValue single */
         selection?: 'single'
-        /** Controlled value. When provided, the consumer owns selection: the field
-         *  follows this prop and a pick only *requests* a change via `onValueChange`
-         *  (reject by not updating). Leave undefined for uncontrolled. */
+        /** Controlled value — the `value` string of the selected option. When
+         *  provided, the consumer owns selection: the field follows this prop and a
+         *  pick only *requests* a change via `onValueChange` (reject by not updating).
+         *  Leave undefined for uncontrolled. */
         value?: string
-        /** Initial value for the uncontrolled case (the wrapper then owns it). */
+        /** Initial value (an option's `value` string) for the uncontrolled case — the
+         *  wrapper then owns it. */
         defaultValue?: string
         /** Fires after the selection changes, with the new value and a
          *  `{ value, option }` snapshot. Select has no discrete element state, so
@@ -257,9 +266,10 @@ export type SelectProps = SelectCommonProps &
         /** Multi-select: checkboxes on every row, the menu stays open while
          *  toggling, the field shows an "N selected" count, and `value` is an array. */
         selection: 'multiple'
-        /** Controlled values (see the single-select `value` note). */
+        /** Controlled values — the `value` strings of the selected options (see the
+         *  single-select `value` note). */
         value?: string[]
-        /** Initial values for the uncontrolled case. */
+        /** Initial values (option `value` strings) for the uncontrolled case. */
         defaultValue?: string[]
         /** Fires after any toggle, with the new value array and a `{ value, option,
          *  selected }` snapshot of the row that changed (or `{ all: true }` for the
@@ -270,6 +280,99 @@ export type SelectProps = SelectCommonProps &
 
 const normalize = (o: SelectOption | string): SelectOption =>
   typeof o === 'string' ? { value: o, label: o } : o
+
+/** Rolled-up selection of a group / submenu subtree: `'none'` / `'all'` of the
+ *  descendant leaves selected, or `'some'` in between. On `SelectedGroup` /
+ *  `SelectedSubmenu`, for a section indicator or custom styling. */
+export type SelectionState = 'none' | 'some' | 'all'
+
+/** A leaf option annotated with its current selection — a `SelectOption` plus
+ *  `selected`. Returned by {@link optionsWithSelection}. */
+export type SelectedOption = SelectOption & { selected: boolean }
+
+/** A group with its descendants annotated and a rolled-up `selectionState`.
+ *  Returned by {@link optionsWithSelection}. */
+export interface SelectedGroup extends Omit<SelectGroup, 'options'> {
+  options: SelectedItem[]
+  selectionState: SelectionState
+}
+
+/** A submenu with its descendants annotated and a rolled-up `selectionState`.
+ *  Returned by {@link optionsWithSelection}. */
+export interface SelectedSubmenu extends Omit<SelectSubmenu, 'submenu'> {
+  submenu: SelectedItem[]
+  selectionState: SelectionState
+}
+
+/** One node of the tree from {@link optionsWithSelection}: a leaf `SelectedOption`
+ *  (with `selected`), or a `SelectedGroup` / `SelectedSubmenu` (annotated children
+ *  + rolled-up `selectionState`). Mirrors `SelectItem` minus the bare-string
+ *  shorthand — strings are normalized to `SelectedOption`. */
+export type SelectedItem = SelectedOption | SelectedGroup | SelectedSubmenu
+
+/**
+ * Project a `Select` `options` tree onto a set of selected values: returns a mirror
+ * of the tree with every leaf marked `selected` and every group / submenu carrying a
+ * rolled-up `selectionState` (`'none'` / `'some'` / `'all'` of its descendant leaves).
+ * Bare-string options are normalized to `{ value, label }`; structure and order are
+ * preserved.
+ *
+ * A pure function of `(options, values)` — it needs no `Select` instance and reads
+ * nothing off the change event, so it behaves identically in controlled and
+ * uncontrolled code. Pass the current `value` (a string, an array, or `undefined`)
+ * and render a grouped summary, drive section indicators, or diff picks.
+ *
+ * A value that appears under more than one section marks the leaf in *every* place it
+ * occurs (selection is value-keyed), mirroring how the menu itself renders it.
+ *
+ * @example
+ * ```tsx
+ * const tree = optionsWithSelection(options, values)
+ * // tree[1] === { label: 'Engineering', selectionState: 'some', options: [
+ * //   { value: 'eng-fe', label: 'Frontend', selected: false }, … ] }
+ * ```
+ */
+export function optionsWithSelection(
+  options: SelectItem[],
+  values: string | string[] | undefined,
+): SelectedItem[] {
+  const set = new Set<string>(values == null ? [] : Array.isArray(values) ? values : [values])
+
+  const rollUp = (items: SelectedItem[]): SelectionState => {
+    let total = 0
+    let on = 0
+    const count = (its: SelectedItem[]) => {
+      for (const it of its) {
+        if (Array.isArray((it as SelectedSubmenu).submenu)) count((it as SelectedSubmenu).submenu)
+        else if (Array.isArray((it as SelectedGroup).options)) count((it as SelectedGroup).options)
+        else {
+          total++
+          if ((it as SelectedOption).selected) on++
+        }
+      }
+    }
+    count(items)
+    return on === 0 ? 'none' : on === total ? 'all' : 'some'
+  }
+
+  const walk = (items: SelectItem[]): SelectedItem[] =>
+    items.map((raw): SelectedItem => {
+      if (typeof raw !== 'string' && Array.isArray((raw as SelectSubmenu).submenu)) {
+        const sm = raw as SelectSubmenu
+        const submenu = walk(sm.submenu)
+        return { ...sm, submenu, selectionState: rollUp(submenu) }
+      }
+      if (typeof raw !== 'string' && Array.isArray((raw as SelectGroup).options)) {
+        const g = raw as SelectGroup
+        const opts = walk(g.options)
+        return { ...g, options: opts, selectionState: rollUp(opts) }
+      }
+      const o = normalize(raw as SelectOption | string)
+      return { ...o, selected: set.has(o.value) }
+    })
+
+  return walk(options)
+}
 
 /**
  * `<Select>` — a single- or multi-select dropdown, composed from `<Input>` (a
@@ -378,6 +481,17 @@ export const Select = (props: SelectProps) => {
   }
   const allLeaves: Leaf[] = []
   collectLeaves(options, undefined, false, allLeaves)
+  // A value is an option's identity across the whole tree — selection is global, so a
+  // value repeated in two sections is one logical pick. Warn on duplicates (like
+  // <Tabs> / RadioGroup, a bare console.warn that only fires on the bug): they collapse
+  // into a single selection — `byValue` keeps the last, and every row sharing the value
+  // selects/toggles together.
+  const seenValues = new Set<string>()
+  for (const l of allLeaves) {
+    if (seenValues.has(l.opt.value))
+      console.warn(`[anta] <Select> duplicate option value=${JSON.stringify(l.opt.value)} — values must be unique.`)
+    seenValues.add(l.opt.value)
+  }
   const byValue = new Map(allLeaves.map((l) => [l.opt.value, l.opt]))
 
   // `filter`: which options the menu shows. The built-in matcher is a regex that's

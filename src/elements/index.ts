@@ -30,10 +30,9 @@ export { AMenuSeparatorElement, register_a_menu_separator } from './a-menu-separ
 export { AMenuGroupElement, register_a_menu_group } from './a-menu-group'
 export { ATabElement, register_a_tab } from './a-tab'
 export { ATabsElement, register_a_tabs } from './a-tabs'
+export { ATabPanelElement, register_a_tabpanel } from './a-tabpanel'
 
-// `a-title`, `a-tag`, and `a-tabpanel` are CSS-only styled tags (no JS / no
-// element module), so their styles can't ride along on a module import — load
-// them here directly.
+// `a-title` and `a-tag` are CSS-only styled tags (no JS / no element module), so
+// their styles can't ride along on a module import — load them here directly.
 import './a-title.css'
 import './a-tag.css'
-import './a-tabpanel.css'

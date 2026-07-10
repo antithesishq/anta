@@ -17,7 +17,7 @@
  * See site/lib/sandbox/* for the moving parts.
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
-import { Input, Tooltip, Text, Checkbox, Tabs, Tab as TabItem } from '@antadesign/anta'
+import { Input, Tooltip, Text, Checkbox, Tabs } from '@antadesign/anta'
 import { marked } from 'marked'
 import s from './Playground.module.css'
 // Monaco ships its structural CSS as ~110 separate `import './x.css'`
@@ -597,11 +597,12 @@ export default function Playground({ component, initialCode, initialCss = '', la
               label="Playground panel"
               value={tab}
               onStateChange={(_e, { next }) => next && setTab(next as Tab)}
-            >
-              <TabItem value="props" label="Props" />
-              <TabItem value="code" label="Code" />
-              <TabItem value="css" label="CSS" />
-            </Tabs>
+              options={[
+                { value: 'props', label: 'Props' },
+                { value: 'code', label: 'Code' },
+                { value: 'css', label: 'CSS' },
+              ]}
+            />
             {/* Reset edits to props / code. CSS is intentionally
                 preserved — the user owns it independently. */}
             <a-button
@@ -1067,12 +1068,11 @@ function FieldControl({
           value={active}
           disabled={disabled}
           onStateChange={(_e, { next }) => onChange(next === '__none' ? null : next)}
-        >
-          {control.clearable && <TabItem value="__none" label="none" />}
-          {control.options.map((opt) => (
-            <TabItem key={opt} value={opt} label={opt} />
-          ))}
-        </Tabs>
+          options={[
+            ...(control.clearable ? [{ value: '__none', label: 'none' }] : []),
+            ...control.options.map((opt) => ({ value: opt, label: opt })),
+          ]}
+        />
       )
     }
     case 'tone': {
@@ -1097,12 +1097,11 @@ function FieldControl({
             onStateChange={(_e, { next }) =>
               onChange(next === 'custom' ? (isCustom ? (v as string) : '#ff1493') : next)
             }
-          >
-            {control.options.map((opt) => (
-              <TabItem key={opt} value={opt} label={opt} />
-            ))}
-            <TabItem value="custom" label="custom" />
-          </Tabs>
+            options={[
+              ...control.options.map((opt) => ({ value: opt, label: opt })),
+              { value: 'custom', label: 'custom' },
+            ]}
+          />
           {isCustom && (
             <div class={s.toneCustomRow}>
               <input

@@ -4,13 +4,18 @@
  * indentation — see button.demo.ts. The panel framing lives in the playground's
  * CSS tab (see `initialCss` in tabs.mdx).
  */
-export default `import { Tabs, Tab, TabPanel } from '@antadesign/anta'
+export default `import { Tabs, TabPanel } from '@antadesign/anta'
 
-<Tabs defaultValue="overview" label="Project sections" style={{ marginLeft: '16px' }}>
-  <Tab value="overview" label="Overview" icon="home" />
-  <Tab value="activity" label="Activity" icon="clock" />
-  <Tab value="settings" label="Settings" icon="more" />
-
+<Tabs
+  defaultValue="overview"
+  label="Project sections"
+  style={{ marginLeft: '16px' }}
+  options={[
+    { value: 'overview', label: 'Overview', icon: 'home' },
+    { value: 'activity', label: 'Activity', icon: 'clock' },
+    { value: 'settings', label: 'Settings', icon: 'more' },
+  ]}
+>
   <TabPanel value="overview">
     <p style={{ margin: 0 }}>A quick summary of the project and its status.</p>
   </TabPanel>

@@ -168,20 +168,12 @@ export const MenuItem = ({
       // announces the submenu, and the open branch's visual rides the nested
       // a-menu's off-DOM `:state(open)` (see a-menu-item.css).
       aria-disabled={disabled ? 'true' : undefined}
-      onClick={
-        disabled || !onSelect
-          ? undefined
-          : (e: any) => {
-              // Only a genuine activation of THIS item fires onSelect. Skip a
-              // submenu parent (its click opens the flyout, not a selection),
-              // and skip a click bubbling up from a nested submenu item
-              // (e.target's nearest item would be the child, not this row).
-              if (submenu) return
-              const t = e.target as Element | null
-              if (t?.closest?.('a-menu-item') !== e.currentTarget) return
-              onSelect(e, { value, label })
-            }
-      }
+      // Pure projection — no DOM walking. `a-menu` decides which item was
+      // genuinely activated (on the UI thread, via the composed path) and fires a
+      // pre-filtered `menuselect` on it (skipping submenu parents + bubbled child
+      // clicks). It's a MouseEvent, so `onSelect` still sees the modifier keys
+      // (e.g. `Select`'s Alt/Option-click isolate reads `altKey`).
+      onmenuselect={onSelect ? (e: any) => onSelect(e, { value, label }) : undefined}
       class={className}
       {...rest}
     >

@@ -636,6 +636,13 @@ export interface AMenuItemAttributes extends BaseAttributes {
    *  submenu; the open branch's visual rides the nested `<a-menu>`'s `:state(open)`. */
   'aria-expanded'?: 'true' | 'false' | boolean
   'aria-disabled'?: 'true' | 'false' | boolean
+  /** Fired when this row is genuinely activated (click / Enter / Space). The
+   *  parent `<a-menu>` owns click delegation and dispatches this — already
+   *  filtered so it never fires on a submenu parent or from a bubbled child
+   *  click — so the `MenuItem` wrapper's `onSelect` needs no DOM traversal. It's
+   *  a `MouseEvent`, carrying the modifier keys (e.g. `altKey`). All-lowercase so
+   *  React/Preact bind it to the CustomEvent. */
+  onmenuselect?: (e: MouseEvent) => void
 }
 
 /**
@@ -912,14 +919,15 @@ export interface ATabsAttributes extends BaseAttributes {
  * from `@antadesign/anta`.
  */
 export interface ATabpanelAttributes extends BaseAttributes {
-  /** Hidden via `display:none`. Presence-based (`''` on, omit off). */
-  hidden?: boolean | ''
-  /** Hidden via `visibility:hidden` (keeps the layout box). The `Tabs` wrapper sets
-   *  this for `mounting="visibility"`. */
-  'data-hide'?: 'visibility'
-  /** Removes the hidden panel from focus + the a11y tree. Presence-based. */
-  inert?: boolean | ''
-  /** ARIA — set by the `Tabs` wrapper. */
+  /** Pairs the panel with the tab of the same value. The element reads its
+   *  `<a-tabs>` and shows itself when this is the active value. */
+  value?: string
+  /** How the panel hides while inactive: omit for `display:none` (removed from
+   *  layout + the a11y tree), or `'visibility'` to keep its layout box. The
+   *  element toggles its own `:state(active)`; this only picks the hide style. */
+  'hide-mode'?: 'display' | 'visibility'
+  /** ARIA — set statically by the `TabPanel` wrapper. `aria-labelledby` is NOT an
+   *  attribute here: the element points at its tab off-DOM via
+   *  `internals.ariaLabelledByElements`. */
   role?: 'tabpanel'
-  'aria-labelledby'?: string
 }

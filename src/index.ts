@@ -94,9 +94,7 @@ export type {
   EmptyState,
 } from './components/Select'
 export { Tabs } from './components/Tabs'
-export type { TabsProps, TabsMounting, TabsChangeAttrs } from './components/Tabs'
-export { Tab } from './components/Tab'
-export type { TabProps } from './components/Tab'
+export type { TabsProps, TabOption, TabsChangeAttrs } from './components/Tabs'
 export { TabPanel } from './components/TabPanel'
 export type { TabPanelProps } from './components/TabPanel'
 export type { BaseProps, BaseAttributes } from './general_types'

@@ -1114,6 +1114,34 @@ export class AMenuElement extends HTMLElementBase {
    *   - nothing → keep open (plain custom content doesn't dismiss).
    */
   private onSurfaceClick = (e: MouseEvent) => {
+    // Selection pass — do the "which item was actually activated?" walk HERE, on
+    // the UI thread where the composed path is real, and emit a pre-filtered
+    // `menuselect` on that item. The `MenuItem` wrapper then reacts with a pure
+    // handler (no `.closest()` / `e.target` walking — a worker-thread reactive
+    // engine has no live tree to traverse). Dispatched as a MouseEvent so it
+    // carries the modifier keys (`Select`'s Alt/Option-click isolate reads
+    // `altKey`). Fires regardless of the open/close decision below — a
+    // `data-menu-open` multi-select row selects AND stays open. The innermost
+    // a-menu-item wins (a bubbled child click doesn't re-fire on ancestors); a
+    // submenu parent (nested `<a-menu>`) opens its flyout, so it's not a selection.
+    for (const node of e.composedPath()) {
+      if (node === this.surface) break
+      if (node instanceof AMenuItemElement) {
+        if (!node.hasAttribute('disabled') && !node.querySelector('a-menu')) {
+          node.dispatchEvent(
+            new MouseEvent('menuselect', {
+              bubbles: false,
+              altKey: e.altKey,
+              ctrlKey: e.ctrlKey,
+              metaKey: e.metaKey,
+              shiftKey: e.shiftKey,
+            }),
+          )
+        }
+        break
+      }
+    }
+
     for (const node of e.composedPath()) {
       if (node === this.surface) break // reached the menu boundary
       if (!(node instanceof Element)) continue

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'preact/hooks'
-import { Tabs, Tab, Tooltip } from '@antadesign/anta'
+import { Tabs, Tooltip } from '@antadesign/anta'
 import s from './Swatches.module.css'
 
 type Tone = 'neutral' | 'brand' | 'info' | 'success' | 'critical' | 'warning'
@@ -683,11 +683,8 @@ export default function AccessibilityMatrix() {
             label="Tone"
             value={tone}
             onStateChange={(_e, { next }) => next && setTone(next as Tone)}
-          >
-            {TONES.map((t) => (
-              <Tab key={t.id} value={t.id} label={t.label} />
-            ))}
-          </Tabs>
+            options={TONES.map((t) => ({ value: t.id, label: t.label }))}
+          />
         </div>
         <div class={s.a11yControlRow}>
           <Tabs
@@ -695,30 +692,25 @@ export default function AccessibilityMatrix() {
             label="Font size"
             value={String(size)}
             onStateChange={(_e, { next }) => next && setSize(Number(next) as Size)}
-          >
-            {SIZES.map((p) => (
-              <Tab key={p} value={String(p)} label={`${p}px`} />
-            ))}
-          </Tabs>
+            options={SIZES.map((p) => ({ value: String(p), label: `${p}px` }))}
+          />
           <Tabs
             size="small"
             label="Weight"
             value={weight}
             onStateChange={(_e, { next }) => next && setWeight(next as Weight)}
-          >
-            {WEIGHTS.map((w) => (
-              <Tab key={w.id} value={w.id} label={w.label} />
-            ))}
-          </Tabs>
+            options={WEIGHTS.map((w) => ({ value: w.id, label: w.label }))}
+          />
           <Tabs
             size="small"
             label="Letter case"
             value={capital ? 'capital' : 'sentence'}
             onStateChange={(_e, { next }) => setCapital(next === 'capital')}
-          >
-            <Tab value="sentence" label="Sentence" />
-            <Tab value="capital" label="Capital" />
-          </Tabs>
+            options={[
+              { value: 'sentence', label: 'Sentence' },
+              { value: 'capital', label: 'Capital' },
+            ]}
+          />
         </div>
         <div class={s.a11yControlRow}>
           <Tabs
@@ -726,21 +718,23 @@ export default function AccessibilityMatrix() {
             label="Color vision"
             value={cvd}
             onStateChange={(_e, { next }) => next && setCvd(next as CVD)}
-          >
-            {CVDS.map((v) => {
+            options={CVDS.map((v) => {
               const tip = tooltip(v.id)
-              return (
-                <Tab key={v.id} value={v.id}>
-                  {v.label}
-                  {tip && (
-                    <Tooltip placement="top">
-                      <span class={s.a11yTip}>{tip}</span>
-                    </Tooltip>
-                  )}
-                </Tab>
-              )
+              return {
+                value: v.id,
+                children: (
+                  <>
+                    {v.label}
+                    {tip && (
+                      <Tooltip placement="top">
+                        <span class={s.a11yTip}>{tip}</span>
+                      </Tooltip>
+                    )}
+                  </>
+                ),
+              }
             })}
-          </Tabs>
+          />
         </div>
         <div class={s.a11yControlRow}>
           <Tabs
@@ -748,21 +742,23 @@ export default function AccessibilityMatrix() {
             label="Vision condition"
             value={condition}
             onStateChange={(_e, { next }) => next && setCondition(next as Condition)}
-          >
-            {CONDITIONS.map((c) => {
+            options={CONDITIONS.map((c) => {
               const tip = tooltip(c.id)
-              return (
-                <Tab key={c.id} value={c.id}>
-                  {c.label}
-                  {tip && (
-                    <Tooltip placement="top">
-                      <span class={s.a11yTip}>{tip}</span>
-                    </Tooltip>
-                  )}
-                </Tab>
-              )
+              return {
+                value: c.id,
+                children: (
+                  <>
+                    {c.label}
+                    {tip && (
+                      <Tooltip placement="top">
+                        <span class={s.a11yTip}>{tip}</span>
+                      </Tooltip>
+                    )}
+                  </>
+                ),
+              }
             })}
-          </Tabs>
+          />
         </div>
       </div>
 

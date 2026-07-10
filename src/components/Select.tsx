@@ -617,10 +617,14 @@ export const Select = (props: SelectProps) => {
     const isolateHint =
       multiple && selectAll && !disabled
         ? IS_MAC
-          ? '⌥-click to select only this'
-          : 'Alt-click to select only this'
+          ? '⌥+Click to select only this'
+          : 'Alt+Click to select only this'
         : undefined
     const tip = o.tooltip ?? isolateHint
+    // The default hint teaches an accelerator, so it's unobtrusive: a longer delay
+    // than the 250ms default (it shouldn't fire on a casual pass over the rows) and
+    // it follows the cursor. A consumer's own `tooltip` keeps the default pinned look.
+    const hintOnly = o.tooltip == null && isolateHint != null
     return (
       <MenuItem
         key={o.value}
@@ -639,7 +643,9 @@ export const Select = (props: SelectProps) => {
         onSelect={(e: any) => choose(o, e)}
       >
         {custom}
-        {tip && <Tooltip>{tip}</Tooltip>}
+        {tip && (
+          <Tooltip {...(hintOnly ? { follow: true, delay: 700 } : {})}>{tip}</Tooltip>
+        )}
       </MenuItem>
     )
   }

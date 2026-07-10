@@ -116,6 +116,10 @@ every row, keeps the menu open as you toggle, and summarises the count in the fi
 ("N selected"). Add **`selectAll`** for a top row that toggles everything; its box
 goes mixed when only some are on.
 
+On a `selectAll` multi-select, **`Alt`+Click** a row (⌥+Click on macOS) to *isolate*
+it — clear the rest and select only that one. A cursor-following hint teaches the
+accelerator; override it per row with `SelectOption.tooltip` (or `''` to suppress).
+
 Each checkable row is the control itself (`role="menuitemcheckbox"` /
 `menuitemradio`, `aria-checked`); the checkbox / radio / check is a passive indicator
 the row drives.

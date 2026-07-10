@@ -8,7 +8,14 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 
 ## Unreleased
 
+### Added
+- **`SelectOption.tooltip`** — a per-option row tooltip (string or node). In a `multiple` select with `selectAll`, a row with no `tooltip` falls back to a default hint for the Alt/Option-click accelerator (below); set `tooltip` to override, or `''` to suppress.
+- **`TabOption.children`** — an `options`-array tab can carry a node for its content, not just a string `label` (same precedence as `<Tab>`: `label` wins when both are set).
+
 ### Changed
+- **`Select`: Alt/Option-click a row selects only that one** (`multiple` + `selectAll`). Plain click still toggles; Alt/Option-click isolates — clears the rest, selects just that row — with no extra UI. A per-row hint tooltip teaches it (platform-worded: ⌥ on macOS, Alt elsewhere), suppressible via `SelectOption.tooltip`.
+- **A submenu's parent row stays highlighted while its flyout is open** — keyed off the nested menu's own off-DOM `:state(open)` (`a-menu-item:has(> a-menu:state(open))`), so the branch you're in reads as active even after the pointer moves into the flyout.
+- **Web components no longer write light DOM (ARIA included).** `a-menu` used to `setAttribute` `aria-expanded` on a submenu's parent and `aria-activedescendant` on a combobox filter field — light-DOM writes that desync a worker-thread reactive model. Now: submenu open state is off-DOM (`:state(open)`, styled via CSS; `aria-expanded` is dropped rather than written), and the combobox active-option is emitted as an `activedescendant` event that the reactive layer (`Select`) reflects onto the field itself. Behavior is unchanged for consumers; the element layer is now free of light-DOM mutation.
 - **`InputDate` opens the calendar from the field, not a trailing button.** Clicking anywhere in the field opens the calendar (the menu now anchors to the field, like `Select`), and a leading calendar icon marks the affordance — the `icon` prop defaults to `calendar-days` and still overrides it. The separate trailing calendar button is gone. A mouse open keeps focus in the field, so you can keep typing or click a day; <kbd>ArrowDown</kbd> opens the calendar and moves focus into the grid, and <kbd>Esc</kbd> closes it back to the field. <kbd>Enter</kbd> still commits the typed date. The field carries `aria-haspopup="dialog"` + `aria-expanded`.
 
 ### Added

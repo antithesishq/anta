@@ -591,6 +591,13 @@ export interface AMenuAttributes extends BaseAttributes {
   onstatechange?: (
     e: CustomEvent<{ next: 'open' | 'closed'; prev: 'open' | 'closed' }>,
   ) => void
+  /** Combobox-mode cursor report — fired when the active option changes (arrow
+   *  keys, or the list re-filtering), with `detail.id` the active option's `id`
+   *  (`null` when none). The element owns the keyboard cursor but must NOT write
+   *  `aria-activedescendant` on the (light-DOM) filter field itself; the reactive
+   *  layer that owns the field (e.g. `Select`) listens here and reflects it.
+   *  All-lowercase so React/Preact bind it to the CustomEvent. */
+  onactivedescendant?: (e: CustomEvent<{ id: string | null }>) => void
   /** ARIA role — the JSX wrapper sets this to `'menu'`. */
   role?: string
   'aria-orientation'?: 'vertical' | 'horizontal'
@@ -622,8 +629,11 @@ export interface AMenuItemAttributes extends BaseAttributes {
   /** ARIA role — `'menuitem'`. */
   role?: string
   'aria-haspopup'?: 'menu' | 'true' | 'false' | boolean
-  /** Submenu-parent expanded state. Render `'false'` as the resting baseline;
-   *  the nested `<a-menu>` element reflects the live open state. */
+  /** Available for hand-authored markup, but the `MenuItem` wrapper does NOT set
+   *  it: keeping it in sync would need a light-DOM mutation (desyncs the
+   *  worker-thread reactive model) or reactive state for one attribute, and a
+   *  static value would lie once the submenu opens. `aria-haspopup` announces the
+   *  submenu; the open branch's visual rides the nested `<a-menu>`'s `:state(open)`. */
   'aria-expanded'?: 'true' | 'false' | boolean
   'aria-disabled'?: 'true' | 'false' | boolean
 }

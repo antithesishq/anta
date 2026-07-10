@@ -51,6 +51,12 @@
 
   a-menu-item:hover,
   a-menu-item:focus-visible,
+  /* An open submenu keeps its parent row lit: the nested `a-menu` carries its own
+     off-DOM `:state(open)` while the flyout is open, so the branch you're in reads
+     as hovered even after the pointer moves into it. Keyed off the child's state
+     (not an attribute) so nothing mutates light DOM — the element never writes the
+     parent's DOM, which would desync the worker-thread reactive model. */
+  a-menu-item:has(> a-menu:state(open)),
   /* Combobox cursor: focus stays in the filter input, so the active option can't
      use :focus — `a-menu` sets :state(active) instead. Same tint as hover/focus. */
   a-menu-item:state(active) {

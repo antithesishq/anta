@@ -12,7 +12,12 @@ import { Menu } from './Menu'
 import { MenuItem } from './MenuItem'
 import { MenuGroup } from './MenuGroup'
 import { MenuSeparator } from './MenuSeparator'
+import { Tooltip } from './Tooltip'
 import styles from './Select.module.css'
+
+// macOS labels the isolate accelerator ⌥ (Option); every other platform, Alt.
+// `altKey` fires for both at runtime — only the *hint* wording differs.
+const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '')
 
 
 /** One option in a `<Select>`. Pass a bare string as shorthand for
@@ -33,6 +38,11 @@ export interface SelectOption {
   /** Tone for this option's row (label, icon, hint, selected tint, and the
    *  checkbox/radio indicator). A named tone or a custom CSS color. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Tooltip for this option's row — a string or any node. In a `multiple`
+   *  select with `selectAll`, a row with no `tooltip` falls back to a default
+   *  hint for the Alt/Option-click "select only this" accelerator; set `tooltip`
+   *  to override that, or `''` to suppress it. */
+  tooltip?: React.ReactNode
   /** Your own data — attach anything and read it in `renderOption`. */
   [key: string]: unknown
 }
@@ -336,6 +346,11 @@ export const Select = (props: SelectProps) => {
   const [open, setOpen] = useState(false)
   // Filter query (reset when the menu closes — see the Menu's onStateChange).
   const [query, setQuery] = useState('')
+  // Combobox active-option id, reported by the menu's `activedescendant` event.
+  // Select (the reactive layer that owns the filter field) reflects it onto the
+  // field's `aria-activedescendant` — the element must not write that light-DOM
+  // attribute itself.
+  const [activeId, setActiveId] = useState<string | null>(null)
   const uid = useId()
 
   // Discriminate an `options` entry by shape: a `submenu` array → flyout branch, an
@@ -431,8 +446,19 @@ export const Select = (props: SelectProps) => {
     display = o ? (o.label ?? o.value) : ''
   }
 
-  const choose = (o: SelectOption) => {
+  const choose = (o: SelectOption, e?: any) => {
     if (multiple) {
+      // Alt/Option-click isolates the row: clear the rest and select only this
+      // one — the inverse of Select all, with no visible affordance (the row's
+      // hint tooltip below teaches it). Gated on `selectAll`, the bulk-selection
+      // context where "isolate" is the natural companion. `altKey` covers Alt and
+      // macOS Option, and sidesteps the Ctrl-click / context-menu clash.
+      if (selectAll && e?.altKey) {
+        const next = [o.value]
+        if (!controlled) setInternal(next)
+        emit?.(next, { value: o.value, option: o, selected: true })
+        return
+      }
       const has = selectedValues.includes(o.value)
       const next = has ? selectedValues.filter((v) => v !== o.value) : [...selectedValues, o.value]
       if (!controlled) setInternal(next)
@@ -470,6 +496,17 @@ export const Select = (props: SelectProps) => {
       !multiple && mark === 'none'
         ? { role: 'menuitemradio', 'aria-checked': isSelected(o.value) ? 'true' : 'false' }
         : undefined
+    // Row tooltip: the option's own `tooltip`, else — in a `multiple` + `selectAll`
+    // menu, on an enabled row — the default Alt/Option-click isolate hint. A
+    // `tooltip=""` stays empty (falsy → no bubble), which is how a consumer opts a
+    // row out of the default hint.
+    const isolateHint =
+      multiple && selectAll && !disabled
+        ? IS_MAC
+          ? '⌥-click to select only this'
+          : 'Alt-click to select only this'
+        : undefined
+    const tip = o.tooltip ?? isolateHint
     return (
       <MenuItem
         key={o.value}
@@ -485,9 +522,10 @@ export const Select = (props: SelectProps) => {
         selected={isSelected(o.value)}
         disabled={disabled || undefined}
         data-menu-open={multiple ? '' : undefined}
-        onSelect={() => choose(o)}
+        onSelect={(e: any) => choose(o, e)}
       >
         {custom}
+        {tip && <Tooltip>{tip}</Tooltip>}
       </MenuItem>
     )
   }
@@ -607,8 +645,9 @@ export const Select = (props: SelectProps) => {
       <Menu
         onStateChange={(_e, { next }) => {
           setOpen(next)
-          if (!next) setQuery('') // closed → clear the filter for next open
+          if (!next) { setQuery(''); setActiveId(null) } // closed → clear filter + cursor
         }}
+        onactivedescendant={(e: any) => setActiveId(((e.nativeEvent ?? e).detail?.id) ?? null)}
       >
         {filtering && (
           // `slot="header"` pins the field in the Menu's fixed header region (above
@@ -622,6 +661,9 @@ export const Select = (props: SelectProps) => {
               placeholder="Filter…"
               aria-label="Filter options"
               aria-autocomplete="list"
+              // Reflect the menu's reported cursor (in-sync — Select owns this
+              // field), rather than the element writing this light-DOM attribute.
+              aria-activedescendant={open && activeId ? activeId : undefined}
               onInput={(e: any) => setQuery(e.currentTarget.value)}
             />
           </div>

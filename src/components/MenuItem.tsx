@@ -161,9 +161,12 @@ export const MenuItem = ({
       style={toneStyle(effectiveTone, '--menu-item-tone-source', style)}
       submenu={submenu ? '' : undefined}
       aria-haspopup={submenu ? 'menu' : undefined}
-      // Resting baseline; the nested submenu's a-menu element reflects the
-      // live open state onto this attribute (it owns that state).
-      aria-expanded={submenu ? 'false' : undefined}
+      // No `aria-expanded`: keeping it in sync would need the element to flip it
+      // (a light-DOM mutation that desyncs the worker-thread reactive model) or
+      // reactive state here for one attribute — not worth it. A static value would
+      // just lie once the submenu opens, so it's omitted; `aria-haspopup` still
+      // announces the submenu, and the open branch's visual rides the nested
+      // a-menu's off-DOM `:state(open)` (see a-menu-item.css).
       aria-disabled={disabled ? 'true' : undefined}
       onClick={
         disabled || !onSelect

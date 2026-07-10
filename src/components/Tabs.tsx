@@ -21,9 +21,11 @@ export interface TabsChangeAttrs {
 
 /** One tab as a plain data object for the `options` prop — the array-driven
  *  alternative to `<Tab>` children (mirrors `RadioGroup`'s `options`). Same
- *  fields as `<Tab>` minus `children` (use `label`); `icon` / `iconTrailing`
- *  are icon-shape strings. */
-export type TabOption = Omit<TabProps, "children">
+ *  fields as `<Tab>`: `label` is the string shorthand for the tab's content, or
+ *  pass `children` (any node) for richer content — same precedence as `<Tab>`
+ *  (`label` wins when both are set). `icon` / `iconTrailing` are icon-shape
+ *  strings. */
+export type TabOption = TabProps
 
 /**
  * How `<TabPanel>`s that aren't the active one are handled.

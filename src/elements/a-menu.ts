@@ -271,6 +271,11 @@ export class AMenuElement extends HTMLElementBase {
    *  `closeAll` backstop skip a duplicate emit. Cleared on every show. */
   _dismissNotified = false
 
+  // Custom-state carrier — exposes the menu's own open state as `:state(open)`
+  // (off-DOM, like `a-menu-item`'s `:state(active)`). Never used to mutate light
+  // DOM; see `reflectOpen`.
+  private internals?: ElementInternals
+
   // Submenu hover-intent timers.
   private openTimer?: ReturnType<typeof setTimeout>
   private closeTimer?: ReturnType<typeof setTimeout>
@@ -281,7 +286,8 @@ export class AMenuElement extends HTMLElementBase {
 
   // Combobox (filter) state — engaged when a `[data-menu-search]` field is slotted
   // in (e.g. `Select` with `filter`). Focus stays in that field; ArrowUp/Down move
-  // `activeItem` (a cursor, not DOM focus) and reflect `aria-activedescendant`.
+  // `activeItem` (a cursor, not DOM focus) and REPORT it via the `activedescendant`
+  // event, which the reactive layer reflects onto the field's `aria-activedescendant`.
   private activeItem: AMenuItemElement | null = null
   private comboObserver?: MutationObserver
   // The vertical side chosen at open (true = flipped above the anchor). A re-anchor
@@ -291,6 +297,10 @@ export class AMenuElement extends HTMLElementBase {
 
   constructor() {
     super()
+    // Off-DOM state only (`:state(open)`); guarded for non-standard runtimes.
+    try {
+      this.internals = this.attachInternals?.()
+    } catch {}
     const shadow = this.attachShadow({ mode: 'open' })
     const style = document.createElement('style')
     // Shadow surface CSS (kept comment-free — this string ships into every
@@ -682,9 +692,9 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   /** Move the combobox cursor. Sets the item's `active` **property** (off-DOM
-   *  `:state(active)`, no attribute churn) and reflects `aria-activedescendant`
-   *  onto the search field — the same ARIA-state-reflection latitude as
-   *  `aria-expanded` on the anchor. `null` clears the cursor. */
+   *  `:state(active)`, no attribute churn) for the highlight, and REPORTS the
+   *  active id via the `activedescendant` event so the reactive layer can set
+   *  `aria-activedescendant` on the light-DOM field. `null` clears the cursor. */
   private setActive(item: AMenuItemElement | null) {
     if (this.activeItem && this.activeItem !== item) this.activeItem.active = false
     this.activeItem = item
@@ -692,10 +702,15 @@ export class AMenuElement extends HTMLElementBase {
       item.active = true
       item.scrollIntoView?.({ block: 'nearest' })
     }
-    const s = this.#searchField
-    if (!s) return
-    if (item?.id) s.setAttribute('aria-activedescendant', item.id)
-    else s.removeAttribute('aria-activedescendant')
+    // The cursor *highlight* rides the item's off-DOM `:state(active)` above. The
+    // ARIA `aria-activedescendant` relationship, though, points from the (light-DOM)
+    // filter field to the active option — and a web component must not write that
+    // light-DOM attribute itself (it would desync the worker-thread reactive
+    // model). So we only REPORT the active id; the reactive layer that owns the
+    // field (e.g. `Select`) reflects it onto `aria-activedescendant`.
+    this.dispatchEvent(
+      new CustomEvent('activedescendant', { detail: { id: item?.id ?? null } }),
+    )
   }
 
   /** Re-seat the cursor on the first option — but only once the filter has input.
@@ -935,7 +950,7 @@ export class AMenuElement extends HTMLElementBase {
     if (this.surface.isConnected && !this._shown) this.surface.showPopover()
     this._shown = true
     this._dismissNotified = false
-    this.reflectExpanded(true)
+    this.reflectOpen(true)
     this.hideAnchorTooltip()
     // `instant` (opening over an already-open menu) only positions synchronously
     // now — no fade-skip needed; the CSS transition + @starting-style handle the
@@ -958,25 +973,24 @@ export class AMenuElement extends HTMLElementBase {
   _doHide() {
     if (this.surface.isConnected && this._shown) this.surface.hidePopover()
     this._shown = false
-    this.reflectExpanded(false)
+    this.reflectOpen(false)
     this.cancelOpenTimer()
     this.cancelCloseTimer()
   }
 
-  /** Mirror the open state onto a SUBMENU parent's `aria-expanded`. This is the
-   *  one sanctioned light-DOM ARIA mutation (like `el.focus()`): the anchor is
-   *  an `<a-menu-item>` the `MenuItem` wrapper renders WITH a resting
-   *  `aria-expanded="false"` baseline, so a reactive re-render resets it to a
-   *  valid value and the next open/close re-syncs.
-   *
-   *  A ROOT menu's trigger is a consumer-owned sibling we don't render and have
-   *  no baseline for — writing to it would mutate foreign DOM (and couldn't
-   *  self-heal), so we leave its `aria-expanded` to the consumer. The menu is
-   *  still announced and Esc-dismissable; consumers add `aria-haspopup="menu"`
-   *  to their trigger themselves. (`context` menus aren't triggers either.) */
-  private reflectExpanded(open: boolean) {
-    if (!this.isSubmenu) return
-    this.triggerAnchor?.setAttribute('aria-expanded', open ? 'true' : 'false')
+  /** Expose the menu's OWN open state as an off-DOM custom state (`:state(open)`),
+   *  never a light-DOM attribute. A web component must not mutate light DOM — it
+   *  desyncs the worker-thread reactive model, which owns the light tree. A
+   *  submenu parent lights its open branch purely in CSS via
+   *  `a-menu-item:has(> a-menu:state(open))`; the state is element-owned (like
+   *  `a-menu-item`'s `:state(active)`) and, being off-DOM, survives a reactive
+   *  re-render without the element ever writing an attribute. Set on every menu
+   *  (harmless on roots — no `a-menu-item` parent matches the selector). */
+  private reflectOpen(open: boolean) {
+    try {
+      if (open) this.internals?.states.add('open')
+      else this.internals?.states.delete('open')
+    } catch {}
   }
 
   /* ============================ positioning ============================ */

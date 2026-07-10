@@ -10,10 +10,33 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 
 ### Added
 - **`SelectOption.tooltip`** — a per-option row tooltip (string or node). In a `multiple` select with `selectAll`, a row with no `tooltip` falls back to a default hint for the Alt/Option-click accelerator (below); set `tooltip` to override, or `''` to suppress.
-- **`TabOption.children`** — an `options`-array tab can carry a node for its content, not just a string `label` (same precedence as `<Tab>`: `label` wins when both are set).
+- **`TabOption.children`** — an `options`-array tab can carry a node for its content, not just a string `label` (`label` wins when both are set).
 
 ### Changed
-- **`Tabs` is options-only; the `<Tab>` component is gone (breaking).** The strip renders solely from the `options` array (`TabOption[]`, shipped in 0.3.3) — the `<Tab>` component and its `TabProps` type are removed. `<TabPanel>` now renders a real `<a-tabpanel>` element (new, registered via `@antadesign/anta/elements`) that reads the active value from its sibling `<a-tabs>` and shows/hides itself off-DOM (`:state(active)`); `Tabs` never introspects or toggles its children, so it renders the same across React / Preact / custom runtimes and static SSR. `TabPanel` gains **`hideMode`** — `'display'` (default, removed from layout + a11y tree) or `'visibility'` (keeps the layout box). The old `mounting="active" | "lazy"` is dropped: to not-render an inactive panel (unmount or lazy-mount), drive a controlled `value` and render panels conditionally yourself (documented). The tab↔panel a11y link is off-DOM (`ariaLabelledByElements`), so no `id` wiring is emitted.
+- **`Tabs` is options-only; the `<Tab>` component is gone (breaking).** The strip renders solely from the `options` array (`TabOption[]`, shipped in 0.3.3) — the `<Tab>` component and its `TabProps` type are removed. Migrate by moving each `<Tab>`'s props into an `options` entry (the field names are identical); `<TabPanel>` children are unchanged.
+
+  ```tsx
+  // Before
+  <Tabs defaultValue="a" label="Sections">
+    <Tab value="a" label="Overview" icon="home" />
+    <Tab value="b" tone="critical" disabled><Badge /> Alerts</Tab>
+    <TabPanel value="a"><Overview /></TabPanel>
+  </Tabs>
+
+  // After — <Tab> props become option objects; a rich <Tab> body becomes `children`
+  <Tabs
+    defaultValue="a"
+    label="Sections"
+    options={[
+      { value: 'a', label: 'Overview', icon: 'home' },
+      { value: 'b', tone: 'critical', disabled: true, children: <><Badge /> Alerts</> },
+    ]}
+  >
+    <TabPanel value="a"><Overview /></TabPanel>
+  </Tabs>
+  ```
+
+  `<TabPanel>` now renders a real `<a-tabpanel>` element (new, registered via `@antadesign/anta/elements`) that reads the active value from its sibling `<a-tabs>` and shows/hides itself off-DOM (`:state(active)`); `Tabs` never introspects or toggles its children, so it renders the same across React / Preact / custom runtimes and static SSR. `TabPanel` gains **`hideMode`** — `'display'` (default, removed from layout + a11y tree) or `'visibility'` (keeps the layout box). The old `mounting="active" | "lazy"` is dropped: to not-render an inactive panel (unmount or lazy-mount), drive a controlled `value` and render panels conditionally yourself (see the docs). The tab↔panel a11y link is off-DOM (`ariaLabelledByElements`), so no `id` wiring is emitted.
 - **`MenuItem` `onSelect` now fires only for selectable rows.** `a-menu` decides which row a click selects — skipping disabled rows and submenu parents — and emits a pre-filtered `menuselect` event the wrapper forwards, replacing the wrapper's old `.closest()` DOM walk (which doesn't exist off the UI thread). A click on a submenu parent or disabled row no longer invokes `onSelect`.
 - **`Select`: Alt/Option-click a row selects only that one** (`multiple` + `selectAll`). Plain click still toggles; Alt/Option-click isolates — clears the rest, selects just that row — with no extra UI. A per-row hint tooltip teaches it (platform-worded: ⌥ on macOS, Alt elsewhere), suppressible via `SelectOption.tooltip`.
 - **A submenu's parent row stays highlighted while its flyout is open** — keyed off the nested menu's own off-DOM `:state(open)` (`a-menu-item:has(> a-menu:state(open))`), so the branch you're in reads as active even after the pointer moves into the flyout.

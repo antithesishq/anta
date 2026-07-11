@@ -26,7 +26,10 @@ import { SYSTEMS } from './comparison-data'
             <span class="sys-ver">{s.version}</span>
           </th>
           <td>{s.kind}</td>
-          <td>{s.frameworks}</td>
+          <td>
+            {s.frameworks}
+            {s.frameworksNote && <span class="fw-note">({s.frameworksNote})</span>}
+          </td>
           <td>{s.styling}</td>
           <td>{s.a11y}</td>
           <td>{s.license}</td>
@@ -106,6 +109,14 @@ import { SYSTEMS } from './comparison-data'
 
   .matrix td {
     color: var(--text-2);
+  }
+
+  /* Secondary framework reach on its own muted line under the primary. */
+  .fw-note {
+    display: block;
+    margin-top: 2px;
+    color: var(--text-4);
+    font-size: 12px;
   }
 
   /* Anta row: brand tint across the row, including the sticky name cell,

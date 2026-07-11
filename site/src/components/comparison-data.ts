@@ -29,8 +29,10 @@ export interface System {
   tagline: string
   /** Distribution / shape, e.g. "Styled web components + JSX wrappers". */
   kind: string
-  /** Which frameworks it targets. */
+  /** Primary framework(s) it targets, shown on the first line. */
   frameworks: string
+  /** Secondary / community reach, shown muted in parens on a second line. */
+  frameworksNote?: string
   /** Styling mechanism. */
   styling: string
   /** Accessibility reputation, short. */
@@ -81,7 +83,8 @@ export const SYSTEMS: System[] = [
     tagline:
       "Font Awesome's framework-agnostic web components and CSS framework, the commercial successor to Shoelace.",
     kind: 'Styled web components',
-    frameworks: 'Any: web components (React/Vue/Angular/Svelte guides)',
+    frameworks: 'Any: web components',
+    frameworksNote: 'React, Vue, Angular, Svelte guides',
     styling: 'CSS framework + ::part() + CSS variables',
     a11y: 'Good (inherited from Shoelace)',
     license: 'MIT core + paid Pro tier',
@@ -156,7 +159,8 @@ export const SYSTEMS: System[] = [
     tagline:
       'An enterprise-class React library, strong for data-dense admin and dashboard UIs.',
     kind: 'Styled React components',
-    frameworks: 'React (Angular/Vue community ports)',
+    frameworks: 'React',
+    frameworksNote: 'Angular, Vue community ports',
     styling: 'CSS-in-JS + CSS variables (v6)',
     a11y: 'Weak; no a11y docs',
     license: 'MIT',
@@ -206,7 +210,8 @@ export const SYSTEMS: System[] = [
     tagline:
       "IBM's enterprise design system, with a first-party web-components package alongside React.",
     kind: 'Styled React (+ web components)',
-    frameworks: 'React, web components; Angular/Vue/Svelte (community)',
+    frameworks: 'React wrappers of web components',
+    frameworksNote: 'Angular, Vue, Svelte community',
     styling: 'Sass + CSS variables',
     a11y: 'Strong (IBM Equal Access program)',
     license: 'Apache-2.0',
@@ -356,7 +361,8 @@ export const SYSTEMS: System[] = [
     tagline:
       'A copy-paste collection of Tailwind-styled components you own in your repo, added by CLI rather than installed as a dependency.',
     kind: 'Copy-paste React source',
-    frameworks: 'React (Vue/Svelte community ports)',
+    frameworks: 'React',
+    frameworksNote: 'Vue, Svelte community ports',
     styling: 'Tailwind + CSS variables (oklch)',
     a11y: 'Inherits Radix / Base UI',
     license: 'MIT',

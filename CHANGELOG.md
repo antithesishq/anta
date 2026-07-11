@@ -6,6 +6,21 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
+## Unreleased
+
+### Added
+- **`Menu` `autoWidth` prop** (`<a-menu autowidth>`) — sizes the menu to its content instead of flooring its width to the trigger. A root menu is never narrower than its trigger by default; `autoWidth` drops that floor (min-width falls back to `--menu-min-width`) for a content menu under a wide trigger. `InputDate` uses it so its calendar wraps its own width and left-aligns under a full-width field rather than stretching across it.
+- **`TabOption.tooltip`** — a per-tab tooltip (string or node) shown **only when the tab's label is truncated** (tabs ellipsize when the strip overflows), so a clipped tab reveals its full text on hover. Rendered as a `truncatedOnly` `<Tooltip>` the component anchors to the tab; mirrors `SelectOption.tooltip`. For an always-visible tooltip or custom trigger content, keep using `children` with your own `<Tooltip>`.
+
+### Fixed
+- **`InputDate` — typing drives the calendar, and `Enter` commits + closes.** As you type a recognized date the calendar previews it (jumps to that month and highlights the day) without committing; `Enter` commits the typed date and closes the calendar. An unrecognized entry keeps the calendar open and marks the field `critical`. Previously the calendar updated only on blur, and `Enter` did nothing (a standalone input's `change` fires on blur, not Enter).
+
+### Changed
+- **`Calendar` follows a controlled `value` change to the visible month.** Setting `value` to a date in another month now moves the shown month to it. Before, only the initial value positioned the view; a later change updated the selected day but left the month put. Uncontrolled calendars and manual month navigation are unaffected (the move fires only on an actual `value` change). This is what lets `InputDate` preview a typed date's month.
+- **`Tabs` sizing + track restyle.** A tab is now a prescribed height (`min-height` = 24/28/32, matching Button's scale) rather than one derived from padding, and the strip carries no padding by default — so a strip is exactly a same-size button / input tall at every priority (primary, secondary, tertiary), and `InputDate`'s time toggle matches its inputs by construction. Rings are crisp 0.5px inset outlines: the track edge uses `--tabs-track-border` (`--border-3`) and the selected tab (primary pill + secondary fill) uses its own `--tab-selected-border` (`--border-2`), each an independent, tone-aware knob. For a roomier "well" look, override the strip's `padding` (and bump `border-radius` to match) in plain CSS.
+- **`Button` selected state uses the hover fill, not active.** A `[selected]` `a-button` / `a[role="button"][data-anta]` now takes the hover background (was the darker active background) across secondary / primary / tertiary, so a selected button reads like a resting hover rather than a held press. Its `[selected]` inset ring also thins from 1px to 0.5px, matching the thinner ring weights elsewhere.
+- **`Tooltip` bubble text uses `--text-2`.** The bubble's default text colour moves from `--text-3` to `--text-2` (a step stronger), with the same `CanvasText` fallback.
+
 ## 0.3.4 — July 10, 2026
 
 ### Added

@@ -9,15 +9,15 @@ import Disclosure from '../components/Disclosure.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import tabsDemoCode from './tabs.demo.ts'
-import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, SquareTabs, TertiaryGlow, PillTabs, NoSlide } from '../components/TabsDemo'
+import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, RoomyTabs, SquareTabs, TertiaryGlow, PillTabs, NoSlide } from '../components/TabsDemo'
 
 # Tabs
 
 A tablist for switching between views. The strip is data-driven: pass an
 `options` array (like [RadioGroup](/radio/)), each entry a unique `value` plus a
-`label` (or rich `children`) and optional `icon` / `iconTrailing`. That alone is a
+`label` (or `children`) and optional `icon` / `iconTrailing`. That alone is a
 selectable strip that emits the chosen value; add matching `<TabPanel>` children
-(see [Panels](#panels)) when you want `Tabs` to show and hide the content too.
+(see [Panels](#panels)) to show and hide the content too.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -34,9 +34,9 @@ selectable strip that emits the chosen value; add matching `<TabPanel>` children
   border-radius: 8px;
 }
 
-/* When the strip is tertiary, pull the panel up 1px so it meets the underline. */
+/* When the strip is tertiary, pull the panel up so it meets the underline. */
 a-tabs[priority="tertiary"] ~ a-tabpanel {
-  margin-top: -1px;
+  margin-top: -17px;
 }`}
 />
 
@@ -47,7 +47,7 @@ a-tabs[priority="tertiary"] ~ a-tabpanel {
 <Columns>
 <Col>
 
-<Preview>
+<Preview background="var(--bg-base)">
   <Priorities client:load />
 </Preview>
 
@@ -62,17 +62,17 @@ a-tabs[priority="tertiary"] ~ a-tabpanel {
 
 `priority` sets the selected-tab indicator:
 
-- **`primary`** (default) — a pill on a track.
-- **`secondary`** — a filled tab, no track.
-- **`tertiary`** — an underline.
+- **`primary`** (default): a pill on a track.
+- **`secondary`**: a filled tab, no track.
+- **`tertiary`**: an underline.
 
 </Col>
 </Columns>
 
 ## Tones
 
-Six named tones — `neutral` (default), `brand`, `info`, `success`, `warning`,
-`critical` — plus any CSS colour for a one-off custom tone. The tone runs through the
+Six named tones: `neutral` (default), `brand`, `info`, `success`, `warning`,
+`critical`. Any CSS colour works for a one-off custom tone. The tone runs through the
 strip's labels, indicator, and track at every priority. Rows are tones (the last is a
 custom colour); columns are priorities.
 
@@ -81,7 +81,7 @@ custom colour); columns are priorities.
 
 **Primary**
 
-<Preview>
+<Preview background="var(--bg-base)">
   <TonesColumn client:load priority="primary" />
 </Preview>
 
@@ -90,7 +90,7 @@ custom colour); columns are priorities.
 
 **Secondary**
 
-<Preview>
+<Preview background="var(--bg-base)">
   <TonesColumn client:load priority="secondary" />
 </Preview>
 
@@ -99,7 +99,7 @@ custom colour); columns are priorities.
 
 **Tertiary**
 
-<Preview>
+<Preview background="var(--bg-base)">
   <TonesColumn client:load priority="tertiary" />
 </Preview>
 
@@ -112,12 +112,12 @@ custom colour); columns are priorities.
 ```
 
 **Per-tab tone.** A `tone` on an individual option overrides the strip's tone for that one
-tab — colouring its label + icons in every mode, and its indicator when it's the active tab.
-The six named tones colour the sliding indicator too; a custom literal colour tones the label
-everywhere and the indicator only under `noslide` (the single shared sliding element can't
+tab: it colours the label and icons in every mode, and the indicator when it's the active tab.
+A named tone colours the sliding indicator too; a custom literal colour tones the label
+everywhere but the indicator only under `noslide` (the single shared sliding element can't
 read a descendant's colour).
 
-<Preview>
+<Preview background="var(--bg-base)">
   <PerTabTone client:load />
 </Preview>
 
@@ -139,7 +139,7 @@ read a descendant's colour).
 <Columns>
 <Col>
 
-<Preview>
+<Preview background="var(--bg-base)">
   <Sizes client:load />
 </Preview>
 
@@ -150,9 +150,9 @@ read a descendant's colour).
 </Col>
 <Col>
 
-Three sizes — `small`, `medium` (default), `large` — reuse
-[`Button`](/button/)'s type scale, so a strip lines up with same-size
-buttons and inputs. Icons scale with the tab.
+Three sizes reuse [Button](/button/)'s type scale, so a strip lines up with
+same-size buttons and inputs: `small`, `medium` (default), `large`. Icons scale
+with the tab.
 
 </Col>
 </Columns>
@@ -160,16 +160,16 @@ buttons and inputs. Icons scale with the tab.
 ## Orientation
 
 `horizontal` (default) lays the tabs in a row; `vertical` stacks them into a column.
-The arrow keys follow the axis — `←`/`→` when horizontal, `↑`/`↓` when vertical. To
+The arrow keys follow the axis: `←`/`→` when horizontal, `↑`/`↓` when vertical. To
 put panels **beside** a vertical strip, wrap `<Tabs>` in your own flex row (the strip
-and panels are siblings — see [Panels](#panels)). Vertical works at every priority:
+and panels are siblings; see [Panels](#panels)). Vertical works at every priority:
 
 <Columns colGap="16px" rowGap="16px">
 <Col min={0}>
 
 **Primary**
 
-<Preview>
+<Preview background="var(--bg-base)">
   <VerticalStrip client:load priority="primary" />
 </Preview>
 
@@ -178,7 +178,7 @@ and panels are siblings — see [Panels](#panels)). Vertical works at every prio
 
 **Secondary**
 
-<Preview>
+<Preview background="var(--bg-base)">
   <VerticalStrip client:load priority="secondary" />
 </Preview>
 
@@ -187,7 +187,7 @@ and panels are siblings — see [Panels](#panels)). Vertical works at every prio
 
 **Tertiary**
 
-<Preview>
+<Preview background="var(--bg-base)">
   <VerticalStrip client:load priority="tertiary" />
 </Preview>
 
@@ -209,14 +209,14 @@ and panels are siblings — see [Panels](#panels)). Vertical works at every prio
 
 ## Icons & content
 
-A tab option takes a leading **`icon`** and a trailing **`iconTrailing`** — here the
-trailing dot flags an unsaved file. Its content is otherwise arbitrary: give the option
-**`children`** instead of `label` to add more than text, like a [`<Tag>`](/tag/) counter.
+A tab option takes a leading **`icon`** and a trailing **`iconTrailing`**; here the
+trailing dot flags an unsaved file. For more than text, give the option **`children`**
+instead of `label`, like a [Tag](/tag/) counter.
 
 <Columns>
 <Col>
 
-<Preview>
+<Preview background="var(--bg-base)">
   <IconsContent client:load />
 </Preview>
 
@@ -243,21 +243,20 @@ trailing dot flags an unsaved file. Its content is otherwise arbitrary: give the
 <Columns>
 <Col>
 
-<Preview>
+<Preview background="var(--bg-base)">
   <Overflow client:load />
 </Preview>
 
 </Col>
 <Col>
 
-When the tabs don't fit, their labels truncate with an ellipsis — the strip never
-widens the page. To scroll the strip or let labels wrap instead, see
-[Styling](#styling).
+When the tabs don't fit, their labels truncate with an ellipsis; the strip never
+widens the page. To scroll or wrap labels instead, see [Styling](#styling).
 
-Drop a [`<Tooltip truncatedOnly>`](/tooltip/#show-only-when-truncated) in an
-option's `children` and a clipped tab reveals its full label on hover — while tabs
-that fit show nothing. The tooltip finds the tab's `a-tab-label` automatically.
-Hover the truncated tabs above to see it.
+Set an option's **`tooltip`** and a clipped tab reveals its full label on hover; tabs
+that fit show nothing. It renders as a `truncatedOnly` [Tooltip](/tooltip/#show-only-when-truncated)
+anchored to the tab, so it shows only when the label ellipsizes. Hover the truncated
+tabs above to see it.
 
 ```tsx folded
 <Tabs
@@ -265,12 +264,8 @@ Hover the truncated tabs above to see it.
   label="Sections"
   options={sections.map(({ value, label }) => ({
     value,
-    children: (
-      <>
-        {label}
-        <Tooltip truncatedOnly>{label}</Tooltip>
-      </>
-    ),
+    label,
+    tooltip: label,
   }))}
 />
 ```
@@ -283,7 +278,7 @@ Hover the truncated tabs above to see it.
 <Columns>
 <Col>
 
-<Preview>
+<Preview background="var(--bg-base)">
   <Basic client:load />
 </Preview>
 
@@ -311,13 +306,12 @@ Hover the truncated tabs above to see it.
 </Col>
 <Col>
 
-Add a `<TabPanel value="…">` child for each option and each panel shows itself when
+Add a `<TabPanel value="…">` child for each option; each panel shows itself when
 its value is active. The panel names its tab as its accessible label
-(`aria-labelledby`, off-DOM). Panel content is arbitrary React — forms, charts,
-whatever — so it renders normally.
+(`aria-labelledby`, off-DOM). Panel content is arbitrary React, so it renders normally.
 
 Panels are **optional**. With none, `Tabs` is just the strip: listen to
-`onStateChange` / `onValueChange` and render whatever you like yourself.
+`onStateChange` / `onValueChange` and render the content yourself.
 
 </Col>
 </Columns>
@@ -325,7 +319,7 @@ Panels are **optional**. With none, `Tabs` is just the strip: listen to
 <Disclosure title="JSX vs DOM" level={3}>
 
 The strip renders from the `options` array; each `<TabPanel>` renders a
-self-managing `<a-tabpanel>`. `Tabs` **never reads or toggles the panels** — there's
+self-managing `<a-tabpanel>`. `Tabs` **never reads or toggles the panels**: there's
 no child introspection, so it renders the same in static SSR and works with any
 renderer. There is **no wrapper element**: the JSX becomes the strip followed by the
 panels as flat **siblings**, and `className` / `id` / `style` / `...rest` land on the
@@ -343,34 +337,34 @@ strip. Arranging them is up to you (see below):
 A horizontal strip stacks above its panels in normal flow with no extra markup; for a
 vertical strip beside its panels, wrap `<Tabs>` in your own flex row. The panels find
 the strip as a sibling under the same parent (`a-tabpanel` → `:scope > a-tabs`), so
-keep them together — or, to split them into separate layout regions, drive a
+keep them together; to split them into separate layout regions, drive a
 controlled `value` and render the panels yourself.
 
-Each `<a-tabpanel>` sits **beside** `<a-tabs>` (its sibling — never inside it, so a
+Each `<a-tabpanel>` sits **beside** `<a-tabs>` (its sibling, never inside it, so a
 panel never lands in the primary track). It reads the active value from `<a-tabs>`
-and shows/hides **itself** via its own off-DOM `:state(active)` — nothing writes
+and shows/hides **itself** via its own off-DOM `:state(active)`; nothing writes
 `hidden` / `inert` on it. The panel↔tab link is off-DOM too
-(`internals.ariaLabelledByElements`), so no `id` wiring is needed. The upshot: no
-web component writes the light DOM — only your JSX does — which keeps a
-worker-thread reactive engine in sync.
+(`internals.ariaLabelledByElements`), so no `id` wiring is needed. No web component
+writes the light DOM, only your JSX does, which keeps a worker-thread reactive engine
+in sync.
 
 </Disclosure>
 
-### Hiding an inactive panel
+<Disclosure title="Hiding an inactive panel" level={3}>
 
 A `<TabPanel>` stays mounted while inactive (its DOM, form values, and scroll
 survive tab switches); `hideMode` picks how it hides:
 
-- **`display`** (default) — `display:none`; leaves the tab order + a11y tree.
-- **`visibility`** — `visibility:hidden`, keeping its layout box (to avoid reflow
+- **`display`** (default): `display:none`; leaves the tab order + a11y tree.
+- **`visibility`**: `visibility:hidden`, keeping its layout box (to avoid reflow
   or to measure a hidden panel).
 
 ```tsx folded
 <TabPanel value="b" hideMode="visibility"><Chart /></TabPanel>
 ```
 
-To **not render** an inactive panel at all — unmount it (resets its state, defers
-an expensive subtree) or mount it lazily on first open — drive selection with a
+To **not render** an inactive panel at all (unmount it to reset its state or defer an
+expensive subtree, or mount it lazily on first open), drive selection with a
 controlled `value` and render the panels yourself. `Tabs` passes panels straight
 through, so you decide what's mounted:
 
@@ -391,28 +385,18 @@ The same controlled pattern places the strip and panels in **different layout
 regions**: render `<Tabs options={…} value onStateChange>` in one place and your
 content wherever you like, switching on the value yourself.
 
-## Keyboard & accessibility
-
-Every enabled tab is in the tab order — `Tab` / `Shift`+`Tab` step through them.
-The arrow keys also move between enabled tabs (wrapping at the ends), `Home` /
-`End` jump to the first / last, and `Space` / `Enter` activate the focused tab;
-arrow / `Home` / `End` navigation activates as it moves (selection follows focus).
-Disabled tabs are skipped and dropped from the tab order.
-
-Pass `label` for the tablist's accessible name. Each `<TabPanel>` names its tab as
-its accessible label (`aria-labelledby`), set off-DOM so nothing writes the panel's
-attributes.
+</Disclosure>
 
 ## Controlled vs. uncontrolled
 
-The active tab is named by a single **value string** — the `value` of one of your
+The active tab is named by a single **value string**, the `value` of one of your
 `options`. Whatever value is active, `Tabs` marks that tab selected and reveals the
 `<TabPanel value="…">` that shares it (if any). You choose who owns that value:
 
 <Columns>
 <Col>
 
-**Uncontrolled** — pass `defaultValue` (an option's `value`) and let `Tabs` own the
+**Uncontrolled.** Pass `defaultValue` (an option's `value`) and let `Tabs` own the
 active tab from there:
 
 ```tsx folded
@@ -428,10 +412,9 @@ active tab from there:
 </Col>
 <Col>
 
-**Controlled** — pass `value` (an option's `value`) + `onStateChange` and own it
-yourself. `onStateChange` fires *before* the pick applies, so accept it by setting
-`value` to the new tab and reject it by doing nothing (or `event.preventDefault()` to
-veto in uncontrolled mode):
+**Controlled.** Pass `value` (an option's `value`) + `onStateChange` and own it
+yourself. `onStateChange` fires *before* the pick applies: set `value` to the new tab
+to accept, or do nothing to reject.
 
 ```tsx folded
 const [tab, setTab] = useState('overview')
@@ -449,14 +432,27 @@ const [tab, setTab] = useState('overview')
 </Col>
 </Columns>
 
-## Routing
+<Disclosure title="Keyboard & accessibility">
+
+Every enabled tab is in the tab order; `Tab` / `Shift`+`Tab` step through them.
+The arrow keys also move between enabled tabs (wrapping at the ends), `Home` /
+`End` jump to the first / last, and `Space` / `Enter` activate the focused tab;
+arrow / `Home` / `End` navigation activates as it moves (selection follows focus).
+Disabled tabs are skipped and dropped from the tab order.
+
+Pass `label` for the tablist's accessible name. Each `<TabPanel>` names its tab as
+its accessible label (`aria-labelledby`), set off-DOM so nothing writes the panel's
+attributes.
+
+</Disclosure>
+
+<Disclosure title="Routing">
 
 `Tabs` reports the picked value and leaves navigation to the app, so a strip can
 switch routes as readily as panels. Treat each `value` as a path: control `value`
-from the current location and navigate in `onStateChange` (the pick that fires *on
-click* — `onValueChange` waits for `value` to change, which for a route only happens
-after you've already navigated). Skip the `<TabPanel>`s, since the router renders the
-view.
+from the current location and navigate in `onStateChange` (the pick fires *on click*;
+`onValueChange` waits for `value` to change, which for a route happens only after
+you've already navigated). Skip the `<TabPanel>`s, since the router renders the view.
 
 ```tsx folded
 <Tabs
@@ -474,6 +470,8 @@ Swap `navigation.navigate` for whatever the app uses (`router.push`, Astro's
 tab active through back/forward and deep links. To guard a switch (unsaved edits),
 veto it in `onStateChange` with `event.preventDefault()`.
 
+</Disclosure>
+
 ## Events
 
 Three callbacks, in firing order:
@@ -484,13 +482,12 @@ Three callbacks, in firing order:
 | `onChange(e)` | **after** selection applies | — | native `change` event |
 | `onValueChange(e, { value })` | **after** selection applies | — | `{ value }` |
 
-Reach for **`onStateChange`** whenever you *control* `value` — it's the one that
-fires on a user pick, so it's how you learn of a change in time to apply it (a
-controlled strip's `value` update, and only that, later fires `onChange` /
-`onValueChange`). For an *uncontrolled* strip the element applies the pick itself,
-so **`onValueChange`** is the everyday "react to the new value". **`onFocus` /
-`onBlur`** report focus entering and leaving the *strip* (wired to `focusin` /
-`focusout`, since focus lands on an individual tab).
+Use **`onStateChange`** when you control `value`: it fires on the user's pick before
+anything applies, so it's your chance to set the new `value`. Applying it (or the
+element self-applying, uncontrolled) then fires **`onChange`** / **`onValueChange`**,
+so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
+**`onBlur`** report focus entering and leaving the strip (wired to `focusin` /
+`focusout`, since focus lands on a tab).
 
 ```tsx folded
 // Uncontrolled: the strip owns selection, so onValueChange fires on each pick.
@@ -518,41 +515,59 @@ so **`onValueChange`** is the everyday "react to the new value". **`onFocus` /
 <Disclosure title="Styling">
 
 Reach for the props first: **`tone`**, **`size`**, **`priority`**. The focus ring is
-the global [`--focus-ring`](/colors/#focus-ring).
+the global `--focus-ring` (see [Colors](/colors/#focus-ring)).
 
-For anything else the strip is light-DOM — `<a-tabs>` the tablist, each `<a-tab>` a
+For anything else the strip is light-DOM: `<a-tabs>` the tablist, each `<a-tab>` a
 tab (its text wrapped in `<a-tab-label>`), `<a-tabpanel>` a panel, and the moving
-indicator is `<a-tabs>`'s `::before`. Target them with ordinary CSS — an un-layered rule
-beats `@layer anta` without `!important` — and reach for real properties
+indicator is `<a-tabs>`'s `::before`. Target them with ordinary CSS (an un-layered rule
+beats `@layer anta` without `!important`) and reach for real properties
 (`border-radius`, `padding`, `background`, …), **not** the internal `--*` output tokens.
 The demo classes below (`.square-tabs`, `.glow-tabs`, …) are just hooks; swap your own.
 
-**Squarer primary** — square corners, heavier labels, a roomier track, and a single
-`light-dark()` colour on both the track's 1px border and the pill's crisp 1px ring
-(spread, no blur). The track is `<a-tabs>` and the sliding pill its `::before`:
+**Roomier track.** The strip hugs its tabs by default (0 padding), so it's exactly a
+same-size button tall. For a gap around the selected pill (the classic "well" look), add
+`padding` and bump `border-radius` by the same amount, so the outer corner stays concentric
+with the tabs' 4px. The strip grows 2×the padding taller.
 
-<Preview>
+<Preview background="var(--bg-base)">
+  <RoomyTabs client:load />
+  <style is:inline>{`
+    a-tabs.roomy-1 { padding: 1px; border-radius: 5px; }
+    a-tabs.roomy-3 { padding: 3px; border-radius: 7px; }
+  `}</style>
+</Preview>
+
+```css folded
+a-tabs.roomy-1 { padding: 1px; border-radius: 5px; }   /* 4 + 1 */
+a-tabs.roomy-3 { padding: 3px; border-radius: 7px; }   /* 4 + 3 */
+```
+
+**Squarer primary.** Square corners, heavier labels, and a roomier `4px` track with no
+border or ring on the strip (`box-shadow: none` drops the default track ring) — just a 1px
+square ring on the raised pill. The track is `<a-tabs>`, the sliding pill its `::before`:
+
+<Preview background="var(--bg-base)">
   <SquareTabs client:load />
   <style is:inline>{`
-    a-tabs.square-tabs { border: 1px solid light-dark(#cfcfd6, #46464e); border-radius: 0; padding: 4px; }
+    a-tabs.square-tabs { border-radius: 0; padding: 4px; box-shadow: none; }
     .square-tabs a-tab { border-radius: 0; font-weight: 600; }
     a-tabs.square-tabs::before { border-radius: 0; box-shadow: 0 0 0 1px light-dark(#cfcfd6, #46464e); }
   `}</style>
 </Preview>
 
 ```css folded
-a-tabs.square-tabs         { border: 1px solid light-dark(#cfcfd6, #46464e); border-radius: 0; padding: 4px; }
+a-tabs.square-tabs         { border-radius: 0; padding: 4px; box-shadow: none; }  /* no track border / ring */
 .square-tabs a-tab         { border-radius: 0; font-weight: 600; }
-a-tabs.square-tabs::before { border-radius: 0; box-shadow: 0 0 0 1px light-dark(#cfcfd6, #46464e); }  /* 1px spread, no blur */
+a-tabs.square-tabs::before { border-radius: 0; box-shadow: 0 0 0 1px light-dark(#cfcfd6, #46464e); }  /* 1px square pill ring */
 ```
 
-**Tertiary glowing underline** — recolour the sliding underline and add a radial highlight
+**Tertiary glowing underline.** Recolour the sliding underline and add a radial highlight
 rising from it. The slider is a full-cover box whose `border-bottom` is the line, so a
-`background` gradient on it fills the tab behind the label — and because it's all one
-element, the glow **slides with the line** between tabs. No `noslide`, no separate per-tab
+`background` gradient on it fills the tab behind the label. Because it's one element, the
+glow **slides with the line** between tabs, with no `noslide` and no separate per-tab
 background.
 
-<Preview>
+<Preview background="var(--bg-base)">
   <TertiaryGlow client:load />
   <style is:inline>{`
     a-tabs.glow-tabs::before {
@@ -575,11 +590,11 @@ a-tabs.glow-tabs::before {
 }
 ```
 
-**Scroll instead of ellipsizing** — keep full labels and let the strip scroll
+**Scroll instead of ellipsizing.** Keep full labels and let the strip scroll
 horizontally: pin each tab to its content width (`flex: none`) and make the strip
 scrollable.
 
-<Preview>
+<Preview background="var(--bg-base)">
   <ScrollTabs client:load />
   <style is:inline>{`
     .scroll-tabs a-tabs { overflow-x: auto; scrollbar-width: thin; }
@@ -592,11 +607,11 @@ scrollable.
 .scroll-tabs a-tab  { flex: none; }
 ```
 
-**Equal-width tabs** — by default tabs are sized to their labels (and only compress
+**Equal-width tabs.** By default tabs are sized to their labels (and compress only
 when the strip overflows). For a segmented-control look where every tab is the same
-width regardless of label, let them fill the strip from a zero basis:
+width, let them fill the strip from a zero basis:
 
-<Preview>
+<Preview background="var(--bg-base)">
   <EqualWidth client:load />
   <style is:inline>{`
     .equal-tabs a-tabs { width: 100%; }
@@ -609,9 +624,9 @@ width regardless of label, let them fill the strip from a zero basis:
 .equal-tabs a-tab  { flex: 1 1 0; max-width: none; }
 ```
 
-**Wrap labels** — let long labels wrap so the tabs grow taller instead of truncating:
+**Wrap labels.** Let long labels wrap so the tabs grow taller instead of truncating:
 
-<Preview>
+<Preview background="var(--bg-base)">
   <WrapTabs client:load />
   <style is:inline>{`
     .wrap-tabs a-tab,
@@ -624,12 +639,12 @@ width regardless of label, let them fill the strip from a zero basis:
 .wrap-tabs a-tab-label { white-space: normal; text-overflow: clip; overflow: visible; text-align: center; }
 ```
 
-**Disable the slide** — by default the selected-tab indicator slides between tabs (a
+**Disable the slide.** By default the selected-tab indicator slides between tabs (a
 single rectangle, via CSS anchor positioning). Pass `noslide` to paint it on each tab
-instead, so the highlight snaps with no movement. This is also the automatic fallback
+instead, so the highlight snaps with no movement. It's also the automatic fallback
 where anchor positioning isn't supported.
 
-<Preview>
+<Preview background="var(--bg-base)">
   <NoSlide client:load />
 </Preview>
 
@@ -637,23 +652,16 @@ where anchor positioning isn't supported.
 <Tabs noslide defaultValue="a">…</Tabs>
 ```
 
-**Fully-rounded pill** — the built-in **`round`** prop rounds the track, every tab, **and**
-the sliding pill to `999px` in one flag (it drives `--tab-radius`, which feeds both the tabs
-and the moving indicator, plus the primary track well) — no CSS needed. Here we only add a
-taller block padding per tab for a capsule shape:
+**Fully-rounded pill.** The built-in **`round`** prop rounds the track, every tab, **and**
+the sliding pill to `999px` in one flag, no CSS needed (it drives `--tab-radius`, which feeds
+the tabs, the moving indicator, and the primary track well):
 
-<Preview>
+<Preview background="var(--bg-base)">
   <PillTabs client:load />
-  <style is:inline>{`
-    .pill-tabs a-tab { padding-block: 8px; }
-  `}</style>
 </Preview>
 
 ```tsx folded
 <Tabs round defaultValue="a" label="Sections">…</Tabs>   {/* pill track + tabs + indicator */}
-```
-```css folded
-.pill-tabs a-tab { padding-block: 8px; }   /* optional: a taller capsule */
 ```
 
 </Disclosure>

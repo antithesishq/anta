@@ -55,7 +55,7 @@ export const SYSTEMS: System[] = [
       'Framework-agnostic web components with thin React/Preact wrappers, a tiny CSS-variable token set, and no style or animation runtime.',
     kind: 'Styled web components + JSX wrappers',
     frameworks: 'React/Preact wrappers of Web components',
-    styling: 'Plain CSS + CSS-variable tokens (oklch)',
+    styling: 'Plain CSS + CSS-variable tokens',
     license: 'MIT',
     pros: [
       'Web components run in React, Preact, or plain HTML; the JSX wrappers are a thin, optional convenience.',
@@ -270,7 +270,7 @@ export const SYSTEMS: System[] = [
   {
     id: 'astryx',
     name: 'Astryx',
-    version: '@astryxdesign/core 0.1.4 (beta)',
+    version: '@astryxdesign/core 0.1.4',
     docs: 'https://astryx.atmeta.com',
     tagline:
       "Meta's new, AI-fluent design system: precompiled CSS and typed React components built on StyleX.",
@@ -349,7 +349,7 @@ export const SYSTEMS: System[] = [
     kind: 'Copy-paste React source',
     frameworks: 'React',
     frameworksNote: 'Vue, Svelte community ports',
-    styling: 'Tailwind + CSS variables (oklch)',
+    styling: 'Tailwind + CSS variables',
     license: 'MIT',
     pros: [
       'Total ownership: no black-box dependency, edit anything.',

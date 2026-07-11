@@ -56,7 +56,7 @@ export const SYSTEMS: System[] = [
     tagline:
       'Framework-agnostic web components with thin React/Preact wrappers, a tiny CSS-variable token set, and no style or animation runtime.',
     kind: 'Styled web components + JSX wrappers',
-    frameworks: 'Any: React, Preact, plain HTML',
+    frameworks: 'React/Preact wrappers of Web components',
     styling: 'Plain CSS + CSS-variable tokens (oklch)',
     a11y: 'ARIA layered in wrappers; solid',
     license: 'MIT',

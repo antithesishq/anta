@@ -17,19 +17,20 @@ import "./a-tabpanel.css";
 // owns the light tree. The `Tabs` wrapper only renders it — `role` / `tabindex` /
 // `value` / `hide-mode` are static, JSX-set — and never toggles it.
 //
-// Coordination is by DOM scope: the panel is a sibling of its <a-tabs> inside the
-// `Tabs` container (`this.parentElement`), matched by `value`, and re-syncs on the
-// tablist's `change` (which fires for both controlled and uncontrolled
-// transitions). For split layouts (strip and panels in different regions) there's
-// no shared scope — drive selection with a controlled `value` and render the
-// content yourself. Not SSR-visible: the active panel resolves on upgrade (a
-// non-hydrated static render shows no panel until the element registers).
+// Coordination is by DOM scope: the panel and its <a-tabs> are flat siblings under
+// one parent (`this.parentElement`) — `Tabs` renders them with no wrapper element —
+// matched by `value`, and re-syncs on the tablist's `change` (which fires for both
+// controlled and uncontrolled transitions). For split layouts (strip and panels in
+// different regions, so no shared parent) there's no scope — drive selection with a
+// controlled `value` and render the content yourself. Not SSR-visible: the active
+// panel resolves on upgrade (a non-hydrated static render shows no panel until the
+// element registers).
 // ─────────────────────────────────────────────────────────────────────────────
 export class ATabPanelElement extends HTMLElementBase {
   static observedAttributes = ["value"];
 
   private internals?: ElementInternals;
-  // The tablist this panel belongs to (its sibling in the `Tabs` container).
+  // The tablist this panel belongs to (its flat sibling under the same parent).
   private tabs: (Element & { value?: string | null }) | null = null;
   private onTabsChange = () => this.sync();
 
@@ -63,8 +64,8 @@ export class ATabPanelElement extends HTMLElementBase {
     this.sync();
   }
 
-  /** Locate the sibling <a-tabs> (the `Tabs` container holds the strip + panels as
-   *  direct children) and subscribe to its `change`. */
+  /** Locate the sibling <a-tabs> (the strip and panels are flat siblings under one
+   *  parent — `Tabs` renders no wrapper) and subscribe to its `change`. */
   private bindTabs() {
     const tabs =
       (this.parentElement?.querySelector(":scope > a-tabs") as

@@ -338,40 +338,37 @@ export function optionsWithSelection(
 ): SelectedItem[] {
   const set = new Set<string>(values == null ? [] : Array.isArray(values) ? values : [values])
 
-  const rollUp = (items: SelectedItem[]): SelectionState => {
-    let total = 0
-    let on = 0
-    const count = (its: SelectedItem[]) => {
-      for (const it of its) {
-        if (Array.isArray((it as SelectedSubmenu).submenu)) count((it as SelectedSubmenu).submenu)
-        else if (Array.isArray((it as SelectedGroup).options)) count((it as SelectedGroup).options)
-        else {
-          total++
-          if ((it as SelectedOption).selected) on++
-        }
-      }
-    }
-    count(items)
-    return on === 0 ? 'none' : on === total ? 'all' : 'some'
-  }
+  const state = (on: number, total: number): SelectionState =>
+    on === 0 ? 'none' : on === total ? 'all' : 'some'
 
-  const walk = (items: SelectItem[]): SelectedItem[] =>
-    items.map((raw): SelectedItem => {
+  // One bottom-up pass: each node reports its (on, total) leaf tally and every
+  // parent rolls up by summing its children's tallies — so a subtree is counted
+  // once, not re-descended once per enclosing ancestor (the old rollUp was
+  // O(n·depth)). Summing tallies matches leaf-counting exactly, including empty
+  // groups (total 0 → 'none').
+  type Counted = { node: SelectedItem; on: number; total: number }
+  const walk = (items: SelectItem[]): Counted[] =>
+    items.map((raw): Counted => {
       if (typeof raw !== 'string' && Array.isArray((raw as SelectSubmenu).submenu)) {
         const sm = raw as SelectSubmenu
-        const submenu = walk(sm.submenu)
-        return { ...sm, submenu, selectionState: rollUp(submenu) }
+        const children = walk(sm.submenu)
+        const on = children.reduce((n, c) => n + c.on, 0)
+        const total = children.reduce((n, c) => n + c.total, 0)
+        return { node: { ...sm, submenu: children.map((c) => c.node), selectionState: state(on, total) }, on, total }
       }
       if (typeof raw !== 'string' && Array.isArray((raw as SelectGroup).options)) {
         const g = raw as SelectGroup
-        const opts = walk(g.options)
-        return { ...g, options: opts, selectionState: rollUp(opts) }
+        const children = walk(g.options)
+        const on = children.reduce((n, c) => n + c.on, 0)
+        const total = children.reduce((n, c) => n + c.total, 0)
+        return { node: { ...g, options: children.map((c) => c.node), selectionState: state(on, total) }, on, total }
       }
       const o = normalize(raw as SelectOption | string)
-      return { ...o, selected: set.has(o.value) }
+      const selected = set.has(o.value)
+      return { node: { ...o, selected }, on: selected ? 1 : 0, total: 1 }
     })
 
-  return walk(options)
+  return walk(options).map((c) => c.node)
 }
 
 /**

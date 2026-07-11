@@ -9,7 +9,6 @@ import { useState } from "../jsx-runtime"
 import { nativeStateChange, toneStyle, roundStyle, wrapLabel } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
-import styles from "./Tabs.module.css"
 
 /** The element's `statechange` payload — `next`/`prev` are tab values (`null` = none). */
 type StateDetail = { next: string | null; prev: string | null }
@@ -122,15 +121,15 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
   disabled?: boolean
 }
 
-/** True when `children` holds at least one renderable node (panels present). */
-const hasRenderable = (children: React.ReactNode): boolean =>
-  Array.isArray(children)
-    ? children.some((c) => c != null && c !== false && c !== true)
-    : children != null && children !== false && children !== true
-
 /**
  * `<Tabs>` — a tablist with optional panels. The strip renders from the `options`
  * array; panels are `<TabPanel>` children that manage their own visibility.
+ *
+ * The strip (`<a-tabs>`) and the panels render as flat siblings — there is no wrapper
+ * element, so `className` / `id` / `style` / `...rest` land on the strip. Laying the
+ * strip out relative to its panels is the consumer's job: a horizontal strip stacks
+ * above the panels in normal flow; for a vertical strip beside them, wrap `<Tabs>` in
+ * your own flex container. Any non-`TabPanel` children render verbatim as siblings too.
  *
  * `<a-tabs>` owns selection off-DOM (it sets each tab's `selected` property and the
  * roving `aria-activedescendant` via `ElementInternals`, writing no attribute to any
@@ -214,11 +213,6 @@ export const Tabs = ({
       : undefined
 
   const vertical = orientation === "vertical"
-  // The strip is the root unless there's something to lay out around it — panels (they
-  // stack under, or beside when vertical) or a vertical strip. Otherwise a wrapper
-  // `<div>` would just be a redundant box, so the bare strip is returned and takes the
-  // consumer's className / style / id / rest.
-  const needsContainer = hasRenderable(children) || vertical
 
   const strip = (
     <a-tabs
@@ -245,12 +239,10 @@ export const Tabs = ({
       // Focus lands on a tab, not the tablist — report via bubbling focusin/focusout.
       onfocusin={onFocus}
       onfocusout={onBlur}
-      class={needsContainer ? undefined : className}
-      id={needsContainer ? undefined : id}
-      // `style` always lands on <a-tabs> — you style the strip, even when a container
-      // wraps the panels; `class` / `id` / `rest` go on that container root instead.
+      class={className}
+      id={id}
       style={roundStyle(round, "--tabs-round", toneStyle(tone, "--tabs-tone-source", style))}
-      {...(needsContainer ? {} : rest)}
+      {...rest}
     >
       {tabs.map((p) => {
         const tabDisabled = disabled || p.disabled
@@ -283,19 +275,17 @@ export const Tabs = ({
     </a-tabs>
   )
 
-  // No panels, horizontal → the strip is the whole component; skip the wrapper div.
-  if (!needsContainer) return strip
-
+  // The strip and its panels (any children) render as flat siblings — no wrapper element,
+  // so the `class` / `id` / `style` / `rest` above land on the strip, the one consistent
+  // root. Arranging the strip relative to its panels is the consumer's job: a horizontal
+  // strip stacks above the panels in normal flow; for a vertical strip beside them, wrap
+  // `<Tabs>` in your own flex container (see the docs). Panels find the strip as a sibling
+  // (`a-tabpanel` → `:scope > a-tabs`), so keep them under one parent — or drive a
+  // controlled `value` when you split them into separate regions.
   return (
-    <div
-      className={className ? `${styles.container} ${className}` : styles.container}
-      data-orientation={vertical ? "vertical" : undefined}
-      id={id}
-      {...rest}
-    >
+    <>
       {strip}
-      {/* Panels — self-managing `<a-tabpanel>`s, passed through untouched. */}
       {children}
-    </div>
+    </>
   )
 }

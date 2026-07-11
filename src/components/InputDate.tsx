@@ -310,13 +310,7 @@ export const InputDate = ({
           setText(e.currentTarget.value)
           if (invalid) setInvalid(false)
         }}
-        onChange={(e: any) => {
-          // `change` bubbles and isn't composed, so the nested time inputs' own
-          // commit events surface here too. Act only on the field's own commit —
-          // the time row drives its value directly (`commitTime`).
-          if (e.target !== e.currentTarget) return
-          resolve(e.currentTarget.value)
-        }}
+        onChange={(e: any) => resolve(e.currentTarget.value)}
         onKeyDown={(e: any) => {
           // Open on ArrowDown and step focus into the grid — the deliberate "enter
           // the grid" gesture. Enter stays "commit the typed date", so it isn't

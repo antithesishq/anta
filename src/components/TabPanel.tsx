@@ -1,14 +1,15 @@
 /**
  * A tab panel inside `<Tabs>`. Renders a self-managing `<a-tabpanel>` — the element
- * finds its `<a-tabs>` (its sibling in the `Tabs` container), matches by `value`,
- * and shows/hides itself off-DOM. This wrapper is a pure projection: it sets the
- * static ARIA (`role`, `tabindex`, `value`) and passes `children` straight through;
- * `Tabs` never reads or toggles it.
+ * finds its `<a-tabs>` (its flat sibling under the same parent — `Tabs` renders the
+ * strip and panels with no wrapper), matches by `value`, and shows/hides itself
+ * off-DOM. This wrapper is a pure projection: it sets the static ARIA (`role`,
+ * `tabindex`, `value`) and passes `children` straight through; `Tabs` never reads
+ * or toggles it.
  *
  * Use it as a direct child of `<Tabs>`, paired to an `options` entry by `value`.
- * For a strip and panels in different layout regions, or to unmount an inactive
- * panel (the old `mounting="active" | "lazy"`), drive selection with a controlled
- * `value` and render the content yourself — see the Tabs docs.
+ * For a strip and panels in different layout regions (no shared parent), or to
+ * unmount an inactive panel (the old `mounting="active" | "lazy"`), drive selection
+ * with a controlled `value` and render the content yourself — see the Tabs docs.
  */
 export interface TabPanelProps {
   /** Pairs this panel with the tab (`options` entry) of the same `value`. */

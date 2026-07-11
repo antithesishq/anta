@@ -1124,10 +1124,14 @@ export class AMenuElement extends HTMLElementBase {
     // `data-menu-open` multi-select row selects AND stays open. The innermost
     // a-menu-item wins (a bubbled child click doesn't re-fire on ancestors); a
     // submenu parent (nested `<a-menu>`) opens its flyout, so it's not a selection.
+    // A submenu's leaf bubbles through this parent surface too (the nested `<a-menu>`
+    // is a real descendant — never portaled), so dispatch only for an item that
+    // belongs to THIS menu (`closest('a-menu') === this`); its own submenu dispatches
+    // for it, otherwise `menuselect` would fire once per ancestor menu level.
     for (const node of e.composedPath()) {
       if (node === this.surface) break
       if (node instanceof AMenuItemElement) {
-        if (!node.hasAttribute('disabled') && !node.querySelector('a-menu')) {
+        if (!node.hasAttribute('disabled') && !node.querySelector('a-menu') && node.closest('a-menu') === this) {
           node.dispatchEvent(
             new MouseEvent('menuselect', {
               bubbles: false,

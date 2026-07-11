@@ -26,21 +26,26 @@ const panel = { margin: 0, paddingTop: '4px', minHeight: '48px', width: '100%', 
 /** Core API: a strip (from `options`) with panels that switch. */
 export function Basic() {
   useElements()
+  // The strip and panels are flat siblings; laying them out is the consumer's job. Here
+  // a flex column gaps them and centres the strip (`alignSelf` on the strip, since a
+  // `<Tabs>` `style` lands on `<a-tabs>`) while the panels stay full width.
   return (
-    <Tabs
-      className="panels-demo"
-      defaultValue="account"
-      label="Settings"
-      options={[
-        { value: 'account', label: 'Account', icon: 'home' },
-        { value: 'security', label: 'Security' },
-        { value: 'billing', label: 'Billing' },
-      ]}
-    >
-      <TabPanel value="account" style={panel}><p style={{ margin: 0 }}>Profile, email, and password.</p></TabPanel>
-      <TabPanel value="security" style={panel}><p style={{ margin: 0 }}>Two-factor auth and active sessions.</p></TabPanel>
-      <TabPanel value="billing" style={panel}><p style={{ margin: 0 }}>Plan, invoices, and payment method.</p></TabPanel>
-    </Tabs>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+      <Tabs
+        defaultValue="account"
+        label="Settings"
+        style={{ alignSelf: 'center' }}
+        options={[
+          { value: 'account', label: 'Account', icon: 'home' },
+          { value: 'security', label: 'Security' },
+          { value: 'billing', label: 'Billing' },
+        ]}
+      >
+        <TabPanel value="account" style={panel}><p style={{ margin: 0 }}>Profile, email, and password.</p></TabPanel>
+        <TabPanel value="security" style={panel}><p style={{ margin: 0 }}>Two-factor auth and active sessions.</p></TabPanel>
+        <TabPanel value="billing" style={panel}><p style={{ margin: 0 }}>Plan, invoices, and payment method.</p></TabPanel>
+      </Tabs>
+    </div>
   )
 }
 

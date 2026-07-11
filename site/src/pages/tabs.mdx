@@ -159,9 +159,10 @@ buttons and inputs. Icons scale with the tab.
 
 ## Orientation
 
-`horizontal` (default) lays the tabs in a row; `vertical` stacks them, and a paired
-panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when horizontal,
-`↑`/`↓` when vertical. Vertical works at every priority:
+`horizontal` (default) lays the tabs in a row; `vertical` stacks them into a column.
+The arrow keys follow the axis — `←`/`→` when horizontal, `↑`/`↓` when vertical. To
+put panels **beside** a vertical strip, wrap `<Tabs>` in your own flex row (the strip
+and panels are siblings — see [Panels](#panels)). Vertical works at every priority:
 
 <Columns colGap="16px" rowGap="16px">
 <Col min={0}>
@@ -284,26 +285,27 @@ Hover the truncated tabs above to see it.
 
 <Preview>
   <Basic client:load />
-  <style is:inline>{`
-    .panels-demo { width: 100%; }
-    .panels-demo > a-tabs { align-self: center; }
-  `}</style>
 </Preview>
 
 ```tsx folded
-<Tabs
-  defaultValue="account"
-  label="Settings"
-  options={[
-    { value: 'account', label: 'Account', icon: 'home' },
-    { value: 'security', label: 'Security' },
-    { value: 'billing', label: 'Billing' },
-  ]}
->
-  <TabPanel value="account"><AccountForm /></TabPanel>
-  <TabPanel value="security"><SecurityForm /></TabPanel>
-  <TabPanel value="billing"><BillingForm /></TabPanel>
-</Tabs>
+{/* The strip and panels are flat siblings — you arrange them. A flex column gaps
+    them; the strip centres itself (a <Tabs> `style` lands on <a-tabs>). */}
+<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+  <Tabs
+    defaultValue="account"
+    label="Settings"
+    style={{ alignSelf: 'center' }}
+    options={[
+      { value: 'account', label: 'Account', icon: 'home' },
+      { value: 'security', label: 'Security' },
+      { value: 'billing', label: 'Billing' },
+    ]}
+  >
+    <TabPanel value="account"><AccountForm /></TabPanel>
+    <TabPanel value="security"><SecurityForm /></TabPanel>
+    <TabPanel value="billing"><BillingForm /></TabPanel>
+  </Tabs>
+</div>
 ```
 
 </Col>
@@ -325,19 +327,24 @@ Panels are **optional**. With none, `Tabs` is just the strip: listen to
 The strip renders from the `options` array; each `<TabPanel>` renders a
 self-managing `<a-tabpanel>`. `Tabs` **never reads or toggles the panels** — there's
 no child introspection, so it renders the same in static SSR and works with any
-renderer. The JSX becomes a strip element with the panels as its **siblings**,
-inside a layout wrapper:
+renderer. There is **no wrapper element**: the JSX becomes the strip followed by the
+panels as flat **siblings**, and `className` / `id` / `style` / `...rest` land on the
+strip. Arranging them is up to you (see below):
 
 ```html
-<div>                              <!-- layout wrapper, only when panels exist -->
-  <a-tabs role="tablist">
-    <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
-    …
-  </a-tabs>
-  <a-tabpanel role="tabpanel" value="account">…</a-tabpanel>   <!-- active: shown -->
-  <a-tabpanel role="tabpanel" value="security">…</a-tabpanel>  <!-- inactive: display:none -->
-</div>
+<a-tabs role="tablist">
+  <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
+  …
+</a-tabs>
+<a-tabpanel role="tabpanel" value="account">…</a-tabpanel>   <!-- active: shown -->
+<a-tabpanel role="tabpanel" value="security">…</a-tabpanel>  <!-- inactive: display:none -->
 ```
+
+A horizontal strip stacks above its panels in normal flow with no extra markup; for a
+vertical strip beside its panels, wrap `<Tabs>` in your own flex row. The panels find
+the strip as a sibling under the same parent (`a-tabpanel` → `:scope > a-tabs`), so
+keep them together — or, to split them into separate layout regions, drive a
+controlled `value` and render the panels yourself.
 
 Each `<a-tabpanel>` sits **beside** `<a-tabs>` (its sibling — never inside it, so a
 panel never lands in the primary track). It reads the active value from `<a-tabs>`

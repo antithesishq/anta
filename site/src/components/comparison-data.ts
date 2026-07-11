@@ -35,8 +35,6 @@ export interface System {
   frameworksNote?: string
   /** Styling mechanism. */
   styling: string
-  /** Accessibility reputation, short. */
-  a11y: string
   /** License, short. */
   license: string
   pros: string[]
@@ -58,7 +56,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled web components + JSX wrappers',
     frameworks: 'React/Preact wrappers of Web components',
     styling: 'Plain CSS + CSS-variable tokens (oklch)',
-    a11y: 'ARIA layered in wrappers; solid',
     license: 'MIT',
     pros: [
       'Web components run in React, Preact, or plain HTML; the JSX wrappers are a thin, optional convenience.',
@@ -86,7 +83,6 @@ export const SYSTEMS: System[] = [
     frameworks: 'Web components',
     frameworksNote: 'React, Vue, Angular, Svelte guides',
     styling: 'CSS framework + ::part() + CSS variables',
-    a11y: 'Good (inherited from Shoelace)',
     license: 'MIT core + paid Pro tier',
     pros: [
       'Framework-agnostic web components that work in any stack or plain HTML.',
@@ -111,7 +107,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled web components (CDN)',
     frameworks: 'Web components',
     styling: 'Locked to the Shopify look',
-    a11y: 'Strong; dev-time a11y warnings',
     license: 'Restricted (Shopify apps only)',
     pros: [
       'Framework-agnostic web components, a rare modern first-party example.',
@@ -136,7 +131,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'CSS-in-JS (Emotion, moving to Pigment)',
-    a11y: 'Mature, generally strong',
     license: 'MIT core + paid MUI X',
     pros: [
       'A large component surface out of the box, plus MUI X for data grid, charts, and pickers.',
@@ -162,7 +156,6 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     frameworksNote: 'Angular, Vue community ports',
     styling: 'CSS-in-JS + CSS variables (v6)',
-    a11y: 'Weak; no a11y docs',
     license: 'MIT',
     pros: [
       'One of the largest component libraries, with heavy-duty Table, Form, Transfer, and Cascader.',
@@ -187,7 +180,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'CSS Modules + CSS variables',
-    a11y: 'Good (varies by component)',
     license: 'MIT',
     pros: [
       'Broad coverage out of the box: forms, dates, charts, notifications, and rich text are all official.',
@@ -213,7 +205,6 @@ export const SYSTEMS: System[] = [
     frameworks: 'React wrappers of web components',
     frameworksNote: 'Angular, Vue, Svelte community',
     styling: 'Sass + CSS variables',
-    a11y: 'Strong (IBM Equal Access program)',
     license: 'Apache-2.0',
     pros: [
       'Hardened for enterprise, with data-table and app-shell components most systems lack.',
@@ -238,7 +229,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'Compiled CSS-in-JS + tokens',
-    a11y: 'Strong (WCAG 2.1 AA)',
     license: 'Apache-2.0',
     pros: [
       "Proven at scale in Atlassian's products.",
@@ -263,7 +253,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'Sass-compiled CSS (bp6- classes)',
-    a11y: 'Good for desktop/keyboard',
     license: 'Apache-2.0',
     pros: [
       'Built for dense professional desktop apps: dashboards, tooling, and data grids.',
@@ -288,7 +277,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'StyleX (precompiled atomic CSS)',
-    a11y: 'Claimed accessible (unaudited)',
     license: 'MIT',
     pros: [
       'Backed by Meta, reportedly matured internally for years before open-sourcing.',
@@ -313,7 +301,6 @@ export const SYSTEMS: System[] = [
     kind: 'Headless React primitives',
     frameworks: 'React',
     styling: 'Unstyled; bring your own',
-    a11y: 'Reference-grade (WAI-ARIA APG)',
     license: 'MIT',
     pros: [
       'Accessibility and interaction behavior that other libraries treat as the reference.',
@@ -338,7 +325,6 @@ export const SYSTEMS: System[] = [
     kind: 'Headless React primitives',
     frameworks: 'React',
     styling: 'Unstyled; bring your own',
-    a11y: 'Reference-grade (WAI-ARIA APG)',
     license: 'MIT',
     pros: [
       'Headless accessibility from the people who wrote Radix and Floating UI, with cleaner APIs.',
@@ -364,7 +350,6 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     frameworksNote: 'Vue, Svelte community ports',
     styling: 'Tailwind + CSS variables (oklch)',
-    a11y: 'Inherits Radix / Base UI',
     license: 'MIT',
     pros: [
       'Total ownership: no black-box dependency, edit anything.',

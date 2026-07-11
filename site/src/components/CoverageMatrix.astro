@@ -17,6 +17,15 @@ const MARK: Record<Mark | 'none', { glyph: string; label: string; cls: string }>
 
 const cell = (systemId: string, catId: string) =>
   MARK[COVERAGE[systemId]?.[catId] ?? 'none']
+
+// Category → Anta's own component doc page, for the row-label link. Only
+// categories Anta ships a page for; the rest render as plain, unlinked labels.
+const ANTA_SLUG: Record<string, string> = {
+  button: 'button', textinput: 'input', select: 'select', choice: 'checkbox',
+  datetime: 'input-date', tabs: 'tabs', menu: 'menu', tooltip: 'tooltip',
+  accordion: 'expander', table: 'table', tag: 'tag', progress: 'progress',
+  icons: 'icon', typography: 'text',
+}
 ---
 
 <div class="full-bleed cov-scroll">
@@ -26,7 +35,7 @@ const cell = (systemId: string, catId: string) =>
         <th scope="col" class="cat-col">Component</th>
         {SYSTEMS.map((s) => (
           <th scope="col" class:list={['sys-head', { anta: s.anta }]}>
-            <span class="sys-head-label">{s.name}</span>
+            <a href={s.docs} target="_blank" rel="noopener" class="sys-head-label">{s.name}</a>
           </th>
         ))}
       </tr>
@@ -35,7 +44,9 @@ const cell = (systemId: string, catId: string) =>
       {CATEGORIES.map((c) => (
         <tr>
           <th scope="row" class="cat-col">
-            <span class="cat-label">{c.label}</span>
+            {ANTA_SLUG[c.id]
+              ? <a href={`/${ANTA_SLUG[c.id]}`} class="cat-label cat-link">{c.label}</a>
+              : <span class="cat-label">{c.label}</span>}
             <span class="cat-members">{c.members}</span>
           </th>
           {SYSTEMS.map((s) => {
@@ -94,6 +105,11 @@ const cell = (systemId: string, catId: string) =>
   .sys-head-label {
     display: inline-block;
     font-size: 12px;
+    color: inherit;
+    text-decoration: none;
+  }
+  .sys-head-label:hover {
+    text-decoration: underline;
   }
 
   /* First column: the grouped category, sticky to the left on horizontal
@@ -115,6 +131,12 @@ const cell = (systemId: string, catId: string) =>
     display: block;
     font-weight: 500;
     color: var(--text-1);
+  }
+  a.cat-label {
+    text-decoration: none;
+  }
+  a.cat-label:hover {
+    text-decoration: underline;
   }
   .cat-members {
     display: block;

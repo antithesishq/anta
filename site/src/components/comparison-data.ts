@@ -29,14 +29,12 @@ export interface System {
   tagline: string
   /** Distribution / shape, e.g. "Styled web components + JSX wrappers". */
   kind: string
-  /** Which frameworks it targets. */
+  /** Primary framework(s) it targets, shown on the first line. */
   frameworks: string
+  /** Secondary / community reach, shown muted in parens on a second line. */
+  frameworksNote?: string
   /** Styling mechanism. */
   styling: string
-  /** Dark-mode story, short. */
-  dark: string
-  /** Accessibility reputation, short. */
-  a11y: string
   /** License, short. */
   license: string
   pros: string[]
@@ -56,10 +54,8 @@ export const SYSTEMS: System[] = [
     tagline:
       'Framework-agnostic web components with thin React/Preact wrappers, a tiny CSS-variable token set, and no style or animation runtime.',
     kind: 'Styled web components + JSX wrappers',
-    frameworks: 'Any: React, Preact, plain HTML',
-    styling: 'Plain CSS + CSS-variable tokens (oklch)',
-    dark: '.dark ancestor class',
-    a11y: 'ARIA layered in wrappers; solid',
+    frameworks: 'React/Preact wrappers of Web components',
+    styling: 'Plain CSS + CSS-variable tokens',
     license: 'MIT',
     pros: [
       'Web components run in React, Preact, or plain HTML; the JSX wrappers are a thin, optional convenience.',
@@ -84,10 +80,9 @@ export const SYSTEMS: System[] = [
     tagline:
       "Font Awesome's framework-agnostic web components and CSS framework, the commercial successor to Shoelace.",
     kind: 'Styled web components',
-    frameworks: 'Any: web components (React/Vue/Angular/Svelte guides)',
+    frameworks: 'Web components',
+    frameworksNote: 'React, Vue, Angular, Svelte guides',
     styling: 'CSS framework + ::part() + CSS variables',
-    dark: 'Built-in light/dark themes',
-    a11y: 'Good (inherited from Shoelace)',
     license: 'MIT core + paid Pro tier',
     pros: [
       'Framework-agnostic web components that work in any stack or plain HTML.',
@@ -105,15 +100,13 @@ export const SYSTEMS: System[] = [
   {
     id: 'polaris',
     name: 'Shopify Polaris',
-    version: 'Polaris web components 2026-01',
+    version: 'Web components 2026-01',
     docs: 'https://shopify.dev/docs/api/app-home/web-components',
     tagline:
       "Shopify's system for apps that must look native inside Shopify Admin, now shipped as CDN-delivered web components.",
     kind: 'Styled web components (CDN)',
-    frameworks: 'Any: web components',
+    frameworks: 'Web components',
     styling: 'Locked to the Shopify look',
-    dark: 'Automatic (adopts host surface)',
-    a11y: 'Strong; dev-time a11y warnings',
     license: 'Restricted (Shopify apps only)',
     pros: [
       'Framework-agnostic web components, a rare modern first-party example.',
@@ -138,8 +131,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'CSS-in-JS (Emotion, moving to Pigment)',
-    dark: 'Color schemes / palette.mode',
-    a11y: 'Mature, generally strong',
     license: 'MIT core + paid MUI X',
     pros: [
       'A large component surface out of the box, plus MUI X for data grid, charts, and pickers.',
@@ -162,10 +153,9 @@ export const SYSTEMS: System[] = [
     tagline:
       'An enterprise-class React library, strong for data-dense admin and dashboard UIs.',
     kind: 'Styled React components',
-    frameworks: 'React (Angular/Vue community ports)',
+    frameworks: 'React',
+    frameworksNote: 'Angular, Vue community ports',
     styling: 'CSS-in-JS + CSS variables (v6)',
-    dark: 'darkAlgorithm token preset',
-    a11y: 'Weak; no a11y docs',
     license: 'MIT',
     pros: [
       'One of the largest component libraries, with heavy-duty Table, Form, Transfer, and Cascader.',
@@ -190,8 +180,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'CSS Modules + CSS variables',
-    dark: 'Built-in light/dark/auto',
-    a11y: 'Good (varies by component)',
     license: 'MIT',
     pros: [
       'Broad coverage out of the box: forms, dates, charts, notifications, and rich text are all official.',
@@ -214,10 +202,9 @@ export const SYSTEMS: System[] = [
     tagline:
       "IBM's enterprise design system, with a first-party web-components package alongside React.",
     kind: 'Styled React (+ web components)',
-    frameworks: 'React, web components; Angular/Vue/Svelte (community)',
+    frameworks: 'React wrappers of web components',
+    frameworksNote: 'Angular, Vue, Svelte community',
     styling: 'Sass + CSS variables',
-    dark: 'Four built-in themes',
-    a11y: 'Strong (IBM Equal Access program)',
     license: 'Apache-2.0',
     pros: [
       'Hardened for enterprise, with data-table and app-shell components most systems lack.',
@@ -242,8 +229,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'Compiled CSS-in-JS + tokens',
-    dark: 'Token themes (light/dark)',
-    a11y: 'Strong (WCAG 2.1 AA)',
     license: 'Apache-2.0',
     pros: [
       "Proven at scale in Atlassian's products.",
@@ -268,8 +253,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'Sass-compiled CSS (bp6- classes)',
-    dark: '.bp6-dark container class',
-    a11y: 'Good for desktop/keyboard',
     license: 'Apache-2.0',
     pros: [
       'Built for dense professional desktop apps: dashboards, tooling, and data grids.',
@@ -287,15 +270,13 @@ export const SYSTEMS: System[] = [
   {
     id: 'astryx',
     name: 'Astryx',
-    version: '@astryxdesign/core 0.1.4 (beta)',
+    version: '@astryxdesign/core 0.1.4',
     docs: 'https://astryx.atmeta.com',
     tagline:
       "Meta's new, AI-fluent design system: precompiled CSS and typed React components built on StyleX.",
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'StyleX (precompiled atomic CSS)',
-    dark: 'Installable theme packages',
-    a11y: 'Claimed accessible (unaudited)',
     license: 'MIT',
     pros: [
       'Backed by Meta, reportedly matured internally for years before open-sourcing.',
@@ -320,8 +301,6 @@ export const SYSTEMS: System[] = [
     kind: 'Headless React primitives',
     frameworks: 'React',
     styling: 'Unstyled; bring your own',
-    dark: 'Bring your own (Themes adds one)',
-    a11y: 'Reference-grade (WAI-ARIA APG)',
     license: 'MIT',
     pros: [
       'Accessibility and interaction behavior that other libraries treat as the reference.',
@@ -346,8 +325,6 @@ export const SYSTEMS: System[] = [
     kind: 'Headless React primitives',
     frameworks: 'React',
     styling: 'Unstyled; bring your own',
-    dark: 'Bring your own',
-    a11y: 'Reference-grade (WAI-ARIA APG)',
     license: 'MIT',
     pros: [
       'Headless accessibility from the people who wrote Radix and Floating UI, with cleaner APIs.',
@@ -370,10 +347,9 @@ export const SYSTEMS: System[] = [
     tagline:
       'A copy-paste collection of Tailwind-styled components you own in your repo, added by CLI rather than installed as a dependency.',
     kind: 'Copy-paste React source',
-    frameworks: 'React (Vue/Svelte community ports)',
-    styling: 'Tailwind + CSS variables (oklch)',
-    dark: '.dark class (next-themes)',
-    a11y: 'Inherits Radix / Base UI',
+    frameworks: 'React',
+    frameworksNote: 'Vue, Svelte community ports',
+    styling: 'Tailwind + CSS variables',
     license: 'MIT',
     pros: [
       'Total ownership: no black-box dependency, edit anything.',
@@ -422,7 +398,6 @@ export const CATEGORIES: Category[] = [
   { id: 'icons', label: 'Icons', members: 'Bundled icon set' },
   { id: 'typography', label: 'Typography', members: 'Text / title components' },
   { id: 'charts', label: 'Charts', members: 'First-party data viz' },
-  { id: 'motion', label: 'Animated art', members: 'Stickers / illustrations' },
 ]
 
 /**
@@ -437,14 +412,14 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     button: 'yes', textinput: 'yes', select: 'yes', choice: 'partial',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes',
     accordion: 'yes', table: 'partial', tag: 'yes', progress: 'partial',
-    icons: 'yes', typography: 'yes', motion: 'yes',
+    icons: 'yes', typography: 'yes',
   },
   webawesome: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'paid',
     choice: 'yes', slider: 'yes', datetime: 'paid', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'paid', accordion: 'yes',
     tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes', nav: 'partial',
-    icons: 'yes', typography: 'partial', charts: 'paid', motion: 'partial',
+    icons: 'yes', typography: 'partial', charts: 'paid',
   },
   polaris: {
     button: 'yes', textinput: 'yes', select: 'yes', choice: 'yes',
@@ -503,9 +478,10 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     nav: 'yes', icons: 'yes', typography: 'yes',
   },
   radix: {
-    select: 'yes', combobox: 'no', choice: 'yes', slider: 'yes', tabs: 'yes',
-    menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
-    progress: 'yes', avatar: 'yes', nav: 'partial',
+    button: 'partial', select: 'yes', combobox: 'no', choice: 'yes',
+    slider: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes',
+    toast: 'yes', accordion: 'yes', progress: 'yes', avatar: 'yes',
+    nav: 'partial', icons: 'yes',
   },
   baseui: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',

@@ -378,7 +378,7 @@ through, so you decide what's mounted:
 const [tab, setTab] = useState('a')
 
 // Unmount inactive — only the open panel exists:
-<Tabs value={tab} onValueChange={(_e, { value }) => setTab(value)} options={…}>
+<Tabs value={tab} onStateChange={(_e, { next }) => next && setTab(next)} options={…}>
   {tab === 'a' && <TabPanel value="a"><Expensive /></TabPanel>}
   {tab === 'b' && <TabPanel value="b"><Form /></TabPanel>}
 </Tabs>
@@ -388,7 +388,7 @@ const [tab, setTab] = useState('a')
 ```
 
 The same controlled pattern places the strip and panels in **different layout
-regions**: render `<Tabs options={…} value onValueChange>` in one place and your
+regions**: render `<Tabs options={…} value onStateChange>` in one place and your
 content wherever you like, switching on the value yourself.
 
 ## Keyboard & accessibility
@@ -453,13 +453,15 @@ const [tab, setTab] = useState('overview')
 
 `Tabs` reports the picked value and leaves navigation to the app, so a strip can
 switch routes as readily as panels. Treat each `value` as a path: control `value`
-from the current location and navigate in `onValueChange`. Skip the `<TabPanel>`s,
-since the router renders the view.
+from the current location and navigate in `onStateChange` (the pick that fires *on
+click* — `onValueChange` waits for `value` to change, which for a route only happens
+after you've already navigated). Skip the `<TabPanel>`s, since the router renders the
+view.
 
 ```tsx folded
 <Tabs
   value={pathname}
-  onValueChange={(_e, { value }) => navigation.navigate(value)}
+  onStateChange={(_e, { next }) => next && navigation.navigate(next)}
   options={[
     { value: '/settings/profile', label: 'Profile' },
     { value: '/settings/billing', label: 'Billing' },
@@ -482,13 +484,17 @@ Three callbacks, in firing order:
 | `onChange(e)` | **after** selection applies | — | native `change` event |
 | `onValueChange(e, { value })` | **after** selection applies | — | `{ value }` |
 
-Reach for **`onStateChange`** to intercept or veto a pick; for the everyday "react
-to the new value", use **`onValueChange`**. **`onFocus` / `onBlur`** report focus
-entering and leaving the *strip* (wired to `focusin` / `focusout`, since focus
-lands on an individual tab).
+Reach for **`onStateChange`** whenever you *control* `value` — it's the one that
+fires on a user pick, so it's how you learn of a change in time to apply it (a
+controlled strip's `value` update, and only that, later fires `onChange` /
+`onValueChange`). For an *uncontrolled* strip the element applies the pick itself,
+so **`onValueChange`** is the everyday "react to the new value". **`onFocus` /
+`onBlur`** report focus entering and leaving the *strip* (wired to `focusin` /
+`focusout`, since focus lands on an individual tab).
 
 ```tsx folded
-<Tabs onValueChange={(_e, { value }) => route(value)}>…</Tabs>
+// Uncontrolled: the strip owns selection, so onValueChange fires on each pick.
+<Tabs defaultValue="a" onValueChange={(_e, { value }) => route(value)}>…</Tabs>
 ```
 
 <Disclosure title="Tabs props" open>

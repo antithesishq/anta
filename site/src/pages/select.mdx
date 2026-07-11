@@ -725,6 +725,97 @@ scannable list instead of hiding matches behind flyouts.
 
 <PropsTable component="Select" />
 
+### The `SelectItem` type
+
+`options` takes a `SelectItem[]`. Each entry is one of four shapes, discriminated by
+its keys — an `options` array is a group, a `submenu` array is a submenu, and a bare
+string or a plain object is a single option:
+
+| Shape | Renders as |
+|---|---|
+| `string` | One option; shorthand for `{ value: s, label: s }`. |
+| `SelectOption` | One option with a label, hint, icon, tone, tooltip, or your own fields. |
+| `SelectGroup` | A titled group of items, **inline** under a heading. |
+| `SelectSubmenu` | A titled branch of items behind a **flyout**. |
+
+`value` is unique across the whole tree — selection is value-keyed and global, so a
+group or submenu only organizes (its heading isn't selectable), and a `disabled`
+group or submenu cascades to every descendant.
+
+The smallest form is three options, each carrying only a `value` (a bare string is
+the same thing):
+
+```tsx
+<Select
+  label="Priority"
+  options={[
+    { value: 'low' },
+    { value: 'medium' },
+    { value: 'high' },
+  ]}
+/>
+// equivalent: options={['low', 'medium', 'high']}
+```
+
+**`SelectOption`** — one selectable row.
+
+| Field | Type | Description |
+|---|---|---|
+| `value` | `string` | The option's identity — what `value` / `defaultValue` name and `onValueChange` reports. Required, unique across the tree. |
+| `label` | `string` | Visible label. Defaults to `value`. |
+| `hint` | `string` | Secondary line under the label. |
+| `icon` | `IconShape` | Leading icon, after the selection indicator. |
+| `disabled` | `boolean` | Disable just this option. |
+| `tone` | `string` | The row's color across label, icon, hint, selected tint, and indicator. A named tone (`neutral` / `brand` / `info` / `success` / `warning` / `critical`) or any CSS color. |
+| `tooltip` | `React.ReactNode` | Row tooltip. In a `multiple` select with `selectAll`, a row with no `tooltip` shows the default "select only this" (Alt/⌥-click) hint; set it to override, or `''` to suppress. |
+| `[key: string]` | `unknown` | Your own data — attach anything and read it back in `renderOption`. |
+
+**`SelectGroup`** — a heading with items rendered inline beneath it.
+
+| Field | Type | Description |
+|---|---|---|
+| `label` | `string` | The section heading (non-interactive). |
+| `options` | `SelectItem[]` | The grouped items — options, or nested groups / submenus. |
+| `disabled` | `boolean` | Disable the whole group (cascades to all descendants). |
+
+**`SelectSubmenu`** — a parent row whose items live behind a flyout.
+
+| Field | Type | Description |
+|---|---|---|
+| `label` | `string` | The parent row's label, and the group heading when a filter query flattens the tree. |
+| `icon` | `IconShape` | Leading icon on the parent row. |
+| `submenu` | `SelectItem[]` | The branch's items — options, or nested groups / submenus. |
+| `disabled` | `boolean` | Disable the whole branch (cascades to all descendants). |
+
+All four shapes mix in one `options` array — a bare string, a full `SelectOption`, an
+inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
+`SelectItem`s, so groups and submenus nest freely):
+
+```tsx
+<Select
+  label="Field"
+  options={[
+    'output_text',                                             // string shorthand
+    { value: 'stream', label: 'Stream', hint: 'Log level', icon: 'braces' }, // SelectOption
+    {                                                          // SelectGroup — inline heading
+      label: 'Metadata',
+      options: [
+        { value: 'container', icon: 'cube' },
+        { value: 'file_path', icon: 'file' },
+      ],
+    },
+    {                                                          // SelectSubmenu — flyout branch
+      label: 'Advanced',
+      icon: 'folder-close',
+      submenu: [
+        'raw_bytes',
+        { value: 'custom', hint: 'Your own field path', icon: 'asterisk', disabled: true },
+      ],
+    },
+  ]}
+/>
+```
+
 </Disclosure>
 
 <Disclosure title="Styling">

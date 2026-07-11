@@ -40,7 +40,7 @@ export default function StickerDemo() {
           <Tabs
             options={MODES.map((m) => ({ value: m.id, label: m.label }))}
             value={mode}
-            onValueChange={(_e, { value }) => { if (value) setMode(value as 'animated' | 'static') }}
+            onStateChange={(_e, { next }) => { if (next) setMode(next as 'animated' | 'static') }}
             aria-label="Sticker variant"
           />
           {mode === 'animated' && (

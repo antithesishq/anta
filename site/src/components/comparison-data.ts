@@ -101,7 +101,7 @@ export const SYSTEMS: System[] = [
   {
     id: 'polaris',
     name: 'Shopify Polaris',
-    version: 'Polaris web components 2026-01',
+    version: 'Web components 2026-01',
     docs: 'https://shopify.dev/docs/api/app-home/web-components',
     tagline:
       "Shopify's system for apps that must look native inside Shopify Admin, now shipped as CDN-delivered web components.",

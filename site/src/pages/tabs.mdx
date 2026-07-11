@@ -9,15 +9,15 @@ import Disclosure from '../components/Disclosure.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import tabsDemoCode from './tabs.demo.ts'
-import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, SquareTabs, TertiaryGlow, PillTabs, OptionsTabs, NoSlide } from '../components/TabsDemo'
+import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, SquareTabs, TertiaryGlow, PillTabs, NoSlide } from '../components/TabsDemo'
 
 # Tabs
 
-A tablist for switching between views. Compose it from `<Tab>` children — each
-takes a unique `value` and a `label` (or `children`), plus optional `icon` /
-`iconTrailing`. That alone is a selectable strip that emits the chosen value; add
-matching `<TabPanel>`s (see [Panels](#panels)) when you want `Tabs` to show and
-hide the content too.
+A tablist for switching between views. The strip is data-driven: pass an
+`options` array (like [RadioGroup](/radio/)), each entry a unique `value` plus a
+`label` (or rich `children`) and optional `icon` / `iconTrailing`. That alone is a
+selectable strip that emits the chosen value; add matching `<TabPanel>` children
+(see [Panels](#panels)) when you want `Tabs` to show and hide the content too.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -111,7 +111,7 @@ custom colour); columns are priorities.
 <Tabs tone="#e0457b" priority="tertiary" defaultValue="a">…</Tabs>  {/* any CSS colour */}
 ```
 
-**Per-tab tone.** A `tone` on an individual `<Tab>` overrides the strip's tone for that one
+**Per-tab tone.** A `tone` on an individual option overrides the strip's tone for that one
 tab — colouring its label + icons in every mode, and its indicator when it's the active tab.
 The six named tones colour the sliding indicator too; a custom literal colour tones the label
 everywhere and the indicator only under `noslide` (the single shared sliding element can't
@@ -122,12 +122,16 @@ read a descendant's colour).
 </Preview>
 
 ```tsx folded
-<Tabs defaultValue="overview" label="Review queue">
-  <Tab value="overview" label="Overview" />
-  <Tab value="approved" label="Approved" icon="circle-check" tone="success" />
-  <Tab value="flagged" label="Flagged" tone="warning" />
-  <Tab value="rejected" label="Rejected" tone="critical" />
-</Tabs>
+<Tabs
+  defaultValue="overview"
+  label="Review queue"
+  options={[
+    { value: 'overview', label: 'Overview' },
+    { value: 'approved', label: 'Approved', icon: 'circle-check', tone: 'success' },
+    { value: 'flagged', label: 'Flagged', tone: 'warning' },
+    { value: 'rejected', label: 'Rejected', tone: 'critical' },
+  ]}
+/>
 ```
 
 ## Size
@@ -155,9 +159,10 @@ buttons and inputs. Icons scale with the tab.
 
 ## Orientation
 
-`horizontal` (default) lays the tabs in a row; `vertical` stacks them, and a paired
-panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when horizontal,
-`↑`/`↓` when vertical. Vertical works at every priority:
+`horizontal` (default) lays the tabs in a row; `vertical` stacks them into a column.
+The arrow keys follow the axis — `←`/`→` when horizontal, `↑`/`↓` when vertical. To
+put panels **beside** a vertical strip, wrap `<Tabs>` in your own flex row (the strip
+and panels are siblings — see [Panels](#panels)). Vertical works at every priority:
 
 <Columns colGap="16px" rowGap="16px">
 <Col min={0}>
@@ -190,18 +195,23 @@ panel sits beside the strip. The arrow keys follow the axis — `←`/`→` when
 </Columns>
 
 ```tsx folded
-<Tabs orientation="vertical" priority="tertiary" defaultValue="general">
-  <Tab value="general" label="General" />
-  <Tab value="members" label="Members" />
-  <Tab value="integrations" label="Integrations" />
-</Tabs>
+<Tabs
+  orientation="vertical"
+  priority="tertiary"
+  defaultValue="general"
+  options={[
+    { value: 'general', label: 'General' },
+    { value: 'members', label: 'Members' },
+    { value: 'integrations', label: 'Integrations' },
+  ]}
+/>
 ```
 
 ## Icons & content
 
-A `<Tab>` takes a leading **`icon`** and a trailing **`iconTrailing`** — here the trailing
-dot flags an unsaved file. Its content is otherwise arbitrary: pass **children** instead of
-`label` to add more than text, like a [`<Tag>`](/tag/) counter.
+A tab option takes a leading **`icon`** and a trailing **`iconTrailing`** — here the
+trailing dot flags an unsaved file. Its content is otherwise arbitrary: give the option
+**`children`** instead of `label` to add more than text, like a [`<Tag>`](/tag/) counter.
 
 <Columns>
 <Col>
@@ -214,11 +224,15 @@ dot flags an unsaved file. Its content is otherwise arbitrary: pass **children**
 <Col>
 
 ```tsx folded
-<Tabs defaultValue="app" label="Open files">
-  <Tab value="app" icon="braces">app.tsx <Tag size="small" value="2" /></Tab>
-  <Tab value="readme" label="README.md" icon="file" />
-  <Tab value="styles" icon="file" iconTrailing="circle-small-solid">styles.css</Tab>
-</Tabs>
+<Tabs
+  defaultValue="app"
+  label="Open files"
+  options={[
+    { value: 'app', icon: 'braces', children: <>app.tsx <Tag size="small" value="2" /></> },
+    { value: 'readme', label: 'README.md', icon: 'file' },
+    { value: 'styles', icon: 'file', iconTrailing: 'circle-small-solid', children: 'styles.css' },
+  ]}
+/>
 ```
 
 </Col>
@@ -240,19 +254,25 @@ When the tabs don't fit, their labels truncate with an ellipsis — the strip ne
 widens the page. To scroll the strip or let labels wrap instead, see
 [Styling](#styling).
 
-Drop a [`<Tooltip truncatedOnly>`](/tooltip/#show-only-when-truncated) in a
-`<Tab>` and a clipped tab reveals its full label on hover — while tabs that fit show
-nothing. The tooltip finds the tab's `a-tab-label` automatically. Hover the truncated
-tabs above to see it.
+Drop a [`<Tooltip truncatedOnly>`](/tooltip/#show-only-when-truncated) in an
+option's `children` and a clipped tab reveals its full label on hover — while tabs
+that fit show nothing. The tooltip finds the tab's `a-tab-label` automatically.
+Hover the truncated tabs above to see it.
 
 ```tsx folded
-<Tabs defaultValue="overview" label="Sections">
-  <Tab value="overview">
-    Overview
-    <Tooltip truncatedOnly>Overview</Tooltip>
-  </Tab>
-  {/* …more tabs… */}
-</Tabs>
+<Tabs
+  defaultValue="overview"
+  label="Sections"
+  options={sections.map(({ value, label }) => ({
+    value,
+    children: (
+      <>
+        {label}
+        <Tooltip truncatedOnly>{label}</Tooltip>
+      </>
+    ),
+  }))}
+/>
 ```
 
 </Col>
@@ -265,31 +285,36 @@ tabs above to see it.
 
 <Preview>
   <Basic client:load />
-  <style is:inline>{`
-    .panels-demo { width: 100%; }
-    .panels-demo > a-tabs { align-self: center; }
-  `}</style>
 </Preview>
 
 ```tsx folded
-<Tabs defaultValue="account" label="Settings">
-  <Tab value="account" label="Account" icon="home" />
-  <Tab value="security" label="Security" />
-  <Tab value="billing" label="Billing" />
-
-  <TabPanel value="account"><AccountForm /></TabPanel>
-  <TabPanel value="security"><SecurityForm /></TabPanel>
-  <TabPanel value="billing"><BillingForm /></TabPanel>
-</Tabs>
+{/* The strip and panels are flat siblings — you arrange them. A flex column gaps
+    them; the strip centres itself (a <Tabs> `style` lands on <a-tabs>). */}
+<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+  <Tabs
+    defaultValue="account"
+    label="Settings"
+    style={{ alignSelf: 'center' }}
+    options={[
+      { value: 'account', label: 'Account', icon: 'home' },
+      { value: 'security', label: 'Security' },
+      { value: 'billing', label: 'Billing' },
+    ]}
+  >
+    <TabPanel value="account"><AccountForm /></TabPanel>
+    <TabPanel value="security"><SecurityForm /></TabPanel>
+    <TabPanel value="billing"><BillingForm /></TabPanel>
+  </Tabs>
+</div>
 ```
 
 </Col>
 <Col>
 
-Pair a `<TabPanel value="…">` to the `<Tab>` of the same value and `Tabs` shows
-the active panel, wiring up the `aria-controls` / `aria-labelledby` link between
-them. Panel content is arbitrary React — forms, charts, whatever — so it renders
-normally.
+Add a `<TabPanel value="…">` child for each option and each panel shows itself when
+its value is active. The panel names its tab as its accessible label
+(`aria-labelledby`, off-DOM). Panel content is arbitrary React — forms, charts,
+whatever — so it renders normally.
 
 Panels are **optional**. With none, `Tabs` is just the strip: listen to
 `onStateChange` / `onValueChange` and render whatever you like yourself.
@@ -299,83 +324,72 @@ Panels are **optional**. With none, `Tabs` is just the strip: listen to
 
 <Disclosure title="JSX vs DOM" level={3}>
 
-`<Tab>` and `<TabPanel>` are **config-only** components — they render nothing
-themselves; `Tabs` reads their props. The flat, interleaved JSX above splits into a
-strip element with the panels as its **siblings** (not children), inside a layout
-wrapper:
+The strip renders from the `options` array; each `<TabPanel>` renders a
+self-managing `<a-tabpanel>`. `Tabs` **never reads or toggles the panels** — there's
+no child introspection, so it renders the same in static SSR and works with any
+renderer. There is **no wrapper element**: the JSX becomes the strip followed by the
+panels as flat **siblings**, and `className` / `id` / `style` / `...rest` land on the
+strip. Arranging them is up to you (see below):
 
 ```html
-<div>                              <!-- layout wrapper, only when panels exist -->
-  <a-tabs role="tablist">
-    <a-tab role="tab" id="…-tab-account" aria-controls="…-panel-account" tabindex="0">
-      <a-tab-label>Account</a-tab-label>
-    </a-tab>
-    …
-  </a-tabs>
-  <a-tabpanel role="tabpanel" id="…-panel-account" aria-labelledby="…-tab-account">…</a-tabpanel>
-  <a-tabpanel … hidden inert>…</a-tabpanel>   <!-- inactive: hidden/unmounted per `mounting` -->
-</div>
+<a-tabs role="tablist">
+  <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
+  …
+</a-tabs>
+<a-tabpanel role="tabpanel" value="account">…</a-tabpanel>   <!-- active: shown -->
+<a-tabpanel role="tabpanel" value="security">…</a-tabpanel>  <!-- inactive: display:none -->
 ```
 
-Each `<TabPanel>` becomes an `<a-tabpanel>` **beside** `<a-tabs>`, never inside it — so
-a panel never sits in the primary track (the track background lives on `<a-tabs>`
-itself). The tab↔panel link is by `id` (`aria-controls` / `aria-labelledby`), so their
-adjacency isn't required for correctness.
+A horizontal strip stacks above its panels in normal flow with no extra markup; for a
+vertical strip beside its panels, wrap `<Tabs>` in your own flex row. The panels find
+the strip as a sibling under the same parent (`a-tabpanel` → `:scope > a-tabs`), so
+keep them together — or, to split them into separate layout regions, drive a
+controlled `value` and render the panels yourself.
+
+Each `<a-tabpanel>` sits **beside** `<a-tabs>` (its sibling — never inside it, so a
+panel never lands in the primary track). It reads the active value from `<a-tabs>`
+and shows/hides **itself** via its own off-DOM `:state(active)` — nothing writes
+`hidden` / `inert` on it. The panel↔tab link is off-DOM too
+(`internals.ariaLabelledByElements`), so no `id` wiring is needed. The upshot: no
+web component writes the light DOM — only your JSX does — which keeps a
+worker-thread reactive engine in sync.
 
 </Disclosure>
 
-### Mounting
+### Hiding an inactive panel
 
-`mounting` controls what happens to **inactive** panels. Set it on `Tabs` for all
-panels, or on a single `<TabPanel>` to override one.
+A `<TabPanel>` stays mounted while inactive (its DOM, form values, and scroll
+survive tab switches); `hideMode` picks how it hides:
 
-- **`display`** (default) — every panel is mounted; inactive ones hide via
-  `display:none`. Preserves their DOM/form state, and a hidden panel correctly
-  leaves the tab order + a11y tree.
-- **`visibility`** — same, but hidden via `visibility:hidden`, so each panel keeps
-  its layout box (useful to avoid reflow or to measure).
-- **`active`** — only the active panel is rendered; React unmounts the others
-  (resets their state on switch; defers expensive subtrees).
-- **`lazy`** — a panel mounts on first activation, then stays mounted+hidden.
+- **`display`** (default) — `display:none`; leaves the tab order + a11y tree.
+- **`visibility`** — `visibility:hidden`, keeping its layout box (to avoid reflow
+  or to measure a hidden panel).
 
 ```tsx folded
-{/* default — every panel mounted, inactive ones display:none */}
-<Tabs defaultValue="a">
-  <Tab value="a" label="A" /><Tab value="b" label="B" />
-  <TabPanel value="a"><Expensive /></TabPanel>
-  <TabPanel value="b"><Form /></TabPanel>
+<TabPanel value="b" hideMode="visibility"><Chart /></TabPanel>
+```
+
+To **not render** an inactive panel at all — unmount it (resets its state, defers
+an expensive subtree) or mount it lazily on first open — drive selection with a
+controlled `value` and render the panels yourself. `Tabs` passes panels straight
+through, so you decide what's mounted:
+
+```tsx folded
+const [tab, setTab] = useState('a')
+
+// Unmount inactive — only the open panel exists:
+<Tabs value={tab} onValueChange={(_e, { value }) => setTab(value)} options={…}>
+  {tab === 'a' && <TabPanel value="a"><Expensive /></TabPanel>}
+  {tab === 'b' && <TabPanel value="b"><Form /></TabPanel>}
 </Tabs>
 
-{/* render only the active panel; React unmounts the rest */}
-<Tabs mounting="active" defaultValue="a">…</Tabs>
-
-{/* per-panel override */}
-<TabPanel value="b" mounting="lazy"><Heavy /></TabPanel>
+// Lazy — mount on first open, keep after (track a "seen" set in state):
+{seen.has('b') && <TabPanel value="b"><Heavy /></TabPanel>}
 ```
 
-## Data-driven tabs (`options`)
-
-Instead of `<Tab>` children, pass an **`options`** array — one object per tab
-(`value`, `label`, `icon`, `iconTrailing`, `tone`, `disabled`, `round`), the same
-data-driven style as [`RadioGroup`](/radio/). Handy when tabs come from a
-config or a `.map()`. `<TabPanel>` children still supply panel bodies (matched by
-`value`), so the array and panels compose.
-
-<Preview>
-  <OptionsTabs client:load />
-</Preview>
-
-```tsx
-<Tabs
-  defaultValue="overview"
-  label="Sections"
-  options={[
-    { value: 'overview', label: 'Overview', icon: 'home' },
-    { value: 'activity', label: 'Activity', icon: 'history' },
-    { value: 'settings', label: 'Settings', icon: 'columns-3-cog' },
-  ]}
-/>
-```
+The same controlled pattern places the strip and panels in **different layout
+regions**: render `<Tabs options={…} value onValueChange>` in one place and your
+content wherever you like, switching on the value yourself.
 
 ## Keyboard & accessibility
 
@@ -385,32 +399,36 @@ The arrow keys also move between enabled tabs (wrapping at the ends), `Home` /
 arrow / `Home` / `End` navigation activates as it moves (selection follows focus).
 Disabled tabs are skipped and dropped from the tab order.
 
-Pass `label` for the tablist's accessible name. Each `<TabPanel>` is labelled by
-its tab (`aria-labelledby`) and pointed at from it (`aria-controls`).
+Pass `label` for the tablist's accessible name. Each `<TabPanel>` names its tab as
+its accessible label (`aria-labelledby`), set off-DOM so nothing writes the panel's
+attributes.
 
 ## Controlled vs. uncontrolled
 
 The active tab is named by a single **value string** — the `value` of one of your
-`<Tab>`s. Whatever value is active, `Tabs` marks that `<Tab>` selected and reveals the
+`options`. Whatever value is active, `Tabs` marks that tab selected and reveals the
 `<TabPanel value="…">` that shares it (if any). You choose who owns that value:
 
 <Columns>
 <Col>
 
-**Uncontrolled** — pass `defaultValue` (a `<Tab>`'s `value`) and let `Tabs` own the
+**Uncontrolled** — pass `defaultValue` (an option's `value`) and let `Tabs` own the
 active tab from there:
 
 ```tsx folded
-<Tabs defaultValue="overview">
-  <Tab value="overview" label="Overview" />
-  <Tab value="activity" label="Activity" />
-</Tabs>
+<Tabs
+  defaultValue="overview"
+  options={[
+    { value: 'overview', label: 'Overview' },
+    { value: 'activity', label: 'Activity' },
+  ]}
+/>
 ```
 
 </Col>
 <Col>
 
-**Controlled** — pass `value` (a `<Tab>`'s `value`) + `onStateChange` and own it
+**Controlled** — pass `value` (an option's `value`) + `onStateChange` and own it
 yourself. `onStateChange` fires *before* the pick applies, so accept it by setting
 `value` to the new tab and reject it by doing nothing (or `event.preventDefault()` to
 veto in uncontrolled mode):
@@ -418,10 +436,14 @@ veto in uncontrolled mode):
 ```tsx folded
 const [tab, setTab] = useState('overview')
 
-<Tabs value={tab} onStateChange={(e, { next }) => setTab(next)}>
-  <Tab value="overview" label="Overview" />
-  <Tab value="activity" label="Activity" />
-</Tabs>
+<Tabs
+  value={tab}
+  onStateChange={(e, { next }) => setTab(next)}
+  options={[
+    { value: 'overview', label: 'Overview' },
+    { value: 'activity', label: 'Activity' },
+  ]}
+/>
 ```
 
 </Col>
@@ -435,10 +457,14 @@ from the current location and navigate in `onValueChange`. Skip the `<TabPanel>`
 since the router renders the view.
 
 ```tsx folded
-<Tabs value={pathname} onValueChange={(_e, { value }) => navigation.navigate(value)}>
-  <Tab value="/settings/profile" label="Profile" />
-  <Tab value="/settings/billing" label="Billing" />
-</Tabs>
+<Tabs
+  value={pathname}
+  onValueChange={(_e, { value }) => navigation.navigate(value)}
+  options={[
+    { value: '/settings/profile', label: 'Profile' },
+    { value: '/settings/billing', label: 'Billing' },
+  ]}
+/>
 ```
 
 Swap `navigation.navigate` for whatever the app uses (`router.push`, Astro's
@@ -471,9 +497,9 @@ lands on an individual tab).
 
 </Disclosure>
 
-<Disclosure title="Tab props">
+<Disclosure title="Tab option props">
 
-<PropsTable component="Tab" />
+<PropsTable component="TabOption" />
 
 </Disclosure>
 

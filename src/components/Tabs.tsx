@@ -1,14 +1,14 @@
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`), not a
-// hard `react` import — so a custom runtime resolves them. Fragment too, so the child
-// scan can descend a `<>…</>` the consumer wrapped its tabs/panels in. See CLAUDE.md
-// (stateless-wrapper exception — Tabs holds the active value to render the roving
-// tabindex + decide which panel shows, exactly like RadioGroup).
-import { useId, useState, Fragment } from "../jsx-runtime"
-import { nativeStateChange, toneStyle, roundStyle, wrapLabel, TABS_KIND } from "../anta_helpers"
+// hard `react` import — so a custom runtime resolves them. Tabs holds the active value
+// only to render the strip's roving tabindex (like RadioGroup); the PANELS are
+// self-managing `<a-tabpanel>` elements that read the active value from `<a-tabs>` and
+// hide themselves — Tabs never reads or toggles them, so there's no child introspection
+// (no `Children`/Fragment scan, no component-identity matching), which keeps it robust
+// across React / Preact / custom runtimes and static SSR.
+import { useState } from "../jsx-runtime"
+import { nativeStateChange, toneStyle, roundStyle, wrapLabel } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
-import type { TabProps } from "./Tab"
-import type { TabPanelProps } from "./TabPanel"
-import styles from "./Tabs.module.css"
+import type { IconShape } from "../elements/a-icon.shapes"
 
 /** The element's `statechange` payload — `next`/`prev` are tab values (`null` = none). */
 type StateDetail = { next: string | null; prev: string | null }
@@ -19,46 +19,59 @@ export interface TabsChangeAttrs {
   value: string | null
 }
 
-/** One tab as a plain data object for the `options` prop — the array-driven
- *  alternative to `<Tab>` children (mirrors `RadioGroup`'s `options`). Same
- *  fields as `<Tab>` minus `children` (use `label`); `icon` / `iconTrailing`
- *  are icon-shape strings. */
-export type TabOption = Omit<TabProps, "children">
-
-/**
- * How `<TabPanel>`s that aren't the active one are handled.
- * - `'display'` *(default)* — all panels mounted; inactive ones hidden via
- *   `display:none`. Preserves panel DOM/form state; correct a11y for free.
- * - `'visibility'` — all mounted; inactive hidden via `visibility:hidden`, so each
- *   panel keeps its layout box (useful to avoid reflow / for measuring).
- * - `'active'` — only the active panel is rendered; React unmounts the rest (state
- *   resets on switch; defers expensive subtrees).
- * - `'lazy'` — a panel mounts on first activation, then stays mounted+hidden.
- */
-export type TabsMounting = "display" | "visibility" | "active" | "lazy"
+/** One tab as a plain data object for the `options` array — the single source `Tabs`
+ *  renders its strip from (like `RadioGroup`'s `options`). `Tabs` reads these fields to
+ *  render the underlying `<a-tab>` (`tabindex`, `role`, and selection are all `Tabs`'
+ *  job, published off-DOM by the element). */
+export interface TabOption {
+  /** This tab's identity — pairs it with the `<TabPanel value="…">` of the same
+   *  value, and the value reported by `onStateChange` / `onChange`. Unique per strip. */
+  value: string
+  /** Visible label. The string shorthand for the tab's content; for richer content
+   *  pass `children` instead (`label` wins when both are set). */
+  label?: React.ReactNode
+  /** Tab content when you need more than a string — used if `label` is omitted. */
+  children?: React.ReactNode
+  /** Leading icon shape, rendered before the label. */
+  icon?: IconShape
+  /** Trailing icon shape, rendered after the label. */
+  iconTrailing?: IconShape
+  /** Fully-round just this tab's box. `<Tabs round>` rounds the whole strip
+   *  (tabs + sliding indicator) instead. */
+  round?: boolean
+  /** Per-tab tone override, same vocabulary as `<Tabs tone>` — colours this one tab's
+   *  label + icons (all priorities/modes, named or custom colour) and, when it's the
+   *  active tab, its indicator. For a **custom literal colour** the sliding indicator can't
+   *  adopt it (the shared moving element can't read a descendant's colour), so a custom tone
+   *  colours the label everywhere and the indicator only in `noslide`; the six **named**
+   *  tones colour both in every mode. Overrides the strip's `tone` for this tab.
+   *  @defaultValue inherits the strip's `tone` */
+  tone?: "neutral" | "brand" | "info" | "success" | "warning" | "critical" | (string & {})
+  /** Disable just this tab — skipped by keyboard nav and dropped from the tab order
+   *  (a disabled-but-selected tab stays reachable, per the ARIA pattern). */
+  disabled?: boolean
+}
 
 /** Public props for `<Tabs>`. */
 export interface TabsProps extends Omit<BaseProps, "onChange"> {
-  /** The strip's contents, as config-only elements `Tabs` reads (they render
-   *  nothing themselves): one `<Tab value="…" label="…">` per tab, and optionally a
-   *  `<TabPanel value="…">` whose `value` matches a tab — `Tabs` then shows that
-   *  panel's body when its tab is active. Omit the panels to use `Tabs` as a bare
-   *  selectable strip. Order is free; tabs and panels can interleave. */
+  /** Optional `<TabPanel value="…">` panels, one per tab value. Each is a
+   *  self-managing `<a-tabpanel>` that shows itself when its `value` is the active
+   *  tab. Omit them to use `Tabs` as a bare selectable strip. To place panels in a
+   *  different layout region, or to unmount an inactive panel, drive selection with
+   *  a controlled `value` and render the content yourself (see the docs). */
   children?: React.ReactNode
-  /** Tabs as a data array instead of `<Tab>` children (like `RadioGroup`'s
-   *  `options`). When set, the strip renders from these and `<Tab>` children are
-   *  ignored; `<TabPanel>` children still supply panel bodies (matched by `value`).
-   *  Each entry is a `TabOption` (`value`, `label`, `icon`, `iconTrailing`,
-   *  `tone`, `disabled`, `round`). */
+  /** The tabs, as a data array (the strip's single source). Each entry is a
+   *  `TabOption` (`value`, `label` or `children`, `icon`, `iconTrailing`, `tone`,
+   *  `disabled`, `round`). */
   options?: TabOption[]
-  /** Controlled active value — the `value` of the `<Tab>` to mark selected (and, when a
-   *  `<TabPanel value="…">` shares it, the panel to reveal). When set, you own selection:
-   *  the strip renders exactly what this says, and a user pick only *requests* a change
-   *  via `onStateChange` — apply it by updating this prop, reject it by leaving it
-   *  unchanged. Leave undefined (and use `defaultValue`) for uncontrolled. */
+  /** Controlled active value — the tab `value` to mark selected (and, when a
+   *  `<TabPanel value="…">` shares it, the panel to reveal). When set, you own
+   *  selection: the strip renders exactly what this says, and a user pick only
+   *  *requests* a change via `onStateChange` — apply it by updating this prop.
+   *  Leave undefined (and use `defaultValue`) for uncontrolled. */
   value?: string
-  /** Initial active value for the uncontrolled case — the `value` of the `<Tab>` selected
-   *  on first render. After that `Tabs` owns selection itself. */
+  /** Initial active value for the uncontrolled case. After first render `Tabs`
+   *  owns selection itself. */
   defaultValue?: string
   /** Fired whenever the active tab changes — event-first. `detail` is
    *  `{ next, prev }` (values; `null` = none). Cancelable: `event.preventDefault()`
@@ -94,16 +107,13 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
    *  is opt-in via CSS); vertical stacks them.
    *  @defaultValue 'horizontal' */
   orientation?: "horizontal" | "vertical"
-  /** How inactive panels are mounted/hidden. Per-panel `<TabPanel mounting>` overrides.
-   *  @defaultValue 'display' */
-  mounting?: TabsMounting
   /** Disable the sliding indicator. By default the selected-tab indicator animates
    *  between tabs (a single rectangle, via CSS anchor positioning); `noslide` paints it
    *  per tab so it snaps with no movement. (Browsers without anchor positioning get that
    *  per-tab paint automatically — `noslide` is the explicit opt-out.) */
   noslide?: boolean
   /** Fully-round the tabs and the sliding indicator (and the primary track
-   *  well). Applies strip-wide; a single `<Tab round>` rounds just that tab. A
+   *  well). Applies strip-wide; a single tab's `round` rounds just that tab. A
    *  `number` (px) or CSS length string sets a custom radius on the top-level
    *  track well only — the tab pills + indicator stay fully round. */
   round?: boolean | number | string
@@ -111,47 +121,34 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
   disabled?: boolean
 }
 
-/** Flatten children one fragment/array level deep into a plain list, dropping nullish
- *  / boolean nodes — portable across React & Preact (no `Children` helpers). */
-const flattenChildren = (nodes: React.ReactNode): any[] => {
-  const out: any[] = []
-  const visit = (n: any) => {
-    if (n == null || typeof n === "boolean") return
-    if (Array.isArray(n)) {
-      n.forEach(visit)
-      return
-    }
-    if (n && n.type === Fragment) {
-      visit(n.props?.children)
-      return
-    }
-    out.push(n)
-  }
-  visit(nodes)
-  return out
-}
-
 /**
- * `<Tabs>` — a tablist with optional panels, rendered from `<Tab>` / `<TabPanel>`
- * children.
+ * `<Tabs>` — a tablist with optional panels. The strip renders from the `options`
+ * array; panels are `<TabPanel>` children that manage their own visibility.
  *
- * Like `RadioGroup`, this wrapper owns the **declarative** DOM concerns the elements
- * deliberately don't touch — each tab's **`tabindex`** (every enabled tab is its own
- * tab stop), `role`, the `aria-controls`/`aria-labelledby` wiring, and which panel
- * shows (per `mounting`). Selection itself lives in `<a-tabs>` off-DOM (it sets each
- * tab's `selected` property), so the elements never mutate the DOM; this wrapper
- * reflects the current value into panel visibility on re-render.
+ * The strip (`<a-tabs>`) and the panels render as flat siblings — there is no wrapper
+ * element, so `className` / `id` / `style` / `...rest` land on the strip. Laying the
+ * strip out relative to its panels is the consumer's job: a horizontal strip stacks
+ * above the panels in normal flow; for a vertical strip beside them, wrap `<Tabs>` in
+ * your own flex container. Any non-`TabPanel` children render verbatim as siblings too.
  *
- * Controlled (`value` + `onStateChange`) or uncontrolled (`defaultValue`). Drop the
- * `<TabPanel>`s and it's just a selectable strip emitting `statechange` / `change`.
+ * `<a-tabs>` owns selection off-DOM (it sets each tab's `selected` property and the
+ * roving `aria-activedescendant` via `ElementInternals`, writing no attribute to any
+ * tab); this wrapper mirrors the value only to render the strip's roving `tabindex`,
+ * and the panels read it straight from `<a-tabs>`. Controlled (`value` + `onStateChange`)
+ * or uncontrolled (`defaultValue`).
  *
  * Requires `@antadesign/anta/elements` (client-side only).
  *
  * @example
  * ```tsx
- * <Tabs defaultValue="account" label="Settings">
- *   <Tab value="account" label="Account" icon="user" />
- *   <Tab value="security" label="Security" />
+ * <Tabs
+ *   defaultValue="account"
+ *   label="Settings"
+ *   options={[
+ *     { value: "account", label: "Account", icon: "user" },
+ *     { value: "security", label: "Security" },
+ *   ]}
+ * >
  *   <TabPanel value="account"><AccountForm /></TabPanel>
  *   <TabPanel value="security"><SecurityForm /></TabPanel>
  * </Tabs>
@@ -172,7 +169,6 @@ export const Tabs = ({
   tone,
   size,
   orientation,
-  mounting = "display",
   noslide,
   round,
   disabled,
@@ -183,47 +179,20 @@ export const Tabs = ({
 }: TabsProps) => {
   const controlled = value !== undefined
   // Uncontrolled selection lives here (re-renders declaratively) — the wrapper needs
-  // the value to decide which panel shows.
+  // the value only to render the strip's roving `tabindex`. Panels read the value
+  // straight from `<a-tabs>`, so they don't depend on this mirror.
   const [internalValue, setInternalValue] = useState<string | undefined>(defaultValue)
   const currentValue = controlled ? value : internalValue
 
-  // Lazy mounting: remember every value that has ever been active so its panel stays
-  // mounted after the first visit. Seeded with the initial active value, then topped up
-  // below for *any* later active value — including a programmatic/controlled `value`
-  // change, which fires no statechange (so updating it in `onstatechange` alone would
-  // miss it and the panel would unmount on switch-away).
-  const [mounted, setMounted] = useState<Set<string>>(
-    () => new Set(currentValue != null ? [currentValue] : []),
-  )
-  // "Adjust state during render" (no effect, no DOM): converges in one extra render and
-  // is the renderer-agnostic way to derive accumulated state from the current value.
-  if (currentValue != null && !mounted.has(currentValue)) {
-    setMounted((m) => (m.has(currentValue) ? m : new Set(m).add(currentValue)))
-  }
-
-  const baseId = useId()
-  const tabId = (v: string) => `${baseId}-tab-${v}`
-  const panelId = (v: string) => `${baseId}-panel-${v}`
-
-  const items = flattenChildren(children)
-  // Tabs come from `options` (data-driven, like RadioGroup) when provided,
-  // otherwise from `<Tab>` children. Panels always come from `<TabPanel>`
-  // children — so `options` + child panels compose.
-  // Matched by their `TABS_KIND` stamp, not reference — survives a duplicate anta copy.
-  const tabs = options
-    ? options.map((o) => ({ props: o as TabProps }))
-    : (items.filter((c) => c?.type?.[TABS_KIND] === "tab") as { props: TabProps }[])
-  const panels = items.filter((c) => c?.type?.[TABS_KIND] === "panel") as { props: TabPanelProps }[]
-  // Set once so each tab's `aria-controls` lookup is O(1), not an O(panels) scan per tab.
-  const panelValues = new Set(panels.map((pan) => pan.props.value))
+  const tabs = options ?? []
 
   // Values are a tab's identity — duplicates make selection ambiguous. Warn (only ever
   // fires on the bug itself), matching RadioGroup / a-input's bare console.warn.
   const seen = new Set<string>()
   for (const t of tabs) {
-    if (seen.has(t.props.value))
-      console.warn(`[anta] <Tabs> duplicate <Tab value=${JSON.stringify(t.props.value)}> — values must be unique.`)
-    seen.add(t.props.value)
+    if (seen.has(t.value))
+      console.warn(`[anta] <Tabs> duplicate option value=${JSON.stringify(t.value)} — values must be unique.`)
+    seen.add(t.value)
   }
 
   const onstatechange = (e: StateChangeEvent) => {
@@ -244,131 +213,79 @@ export const Tabs = ({
       : undefined
 
   const vertical = orientation === "vertical"
-  // The strip is the root unless there's something to lay out around it — panels (the
-  // panel stacks under, or beside when vertical) or a vertical strip. Otherwise a
-  // wrapper `<div>` would just be a redundant box around a single `<a-tabs>`, so the
-  // bare strip is returned and takes the consumer's className / style / id / rest.
-  const needsContainer = panels.length > 0 || vertical
 
   const strip = (
-      <a-tabs
-        role="tablist"
-        aria-label={label}
-        aria-orientation={vertical ? "vertical" : undefined}
-        aria-disabled={disabled ? "true" : undefined}
-        // Controlled → drive the element's `state`. Uncontrolled → seed `default-state`
-        // and let the ELEMENT own selection (off-DOM via each tab's `selected`
-        // property) — so the strip works even unhydrated (static docs preview) or
-        // hand-assembled. Either way the wrapper's mirror (kept current via
-        // `onstatechange`) feeds panel visibility.
-        state={controlled ? value : undefined}
-        default-state={!controlled ? defaultValue : undefined}
-        priority={priority && priority !== "primary" ? priority : undefined}
-        tone={tone && tone !== "neutral" ? tone : undefined}
-        size={size && size !== "medium" ? size : undefined}
-        orientation={vertical ? "vertical" : undefined}
-        noslide={noslide ? "" : undefined}
-        round={round ? "" : undefined}
-        disabled={disabled ? "" : undefined}
-        onstatechange={onstatechange}
-        onchange={onchange}
-        // Focus lands on a tab, not the tablist — report via bubbling focusin/focusout.
-        onfocusin={onFocus}
-        onfocusout={onBlur}
-        // No container → the strip is the root and carries the consumer's class/id/rest.
-        class={needsContainer ? undefined : className}
-        id={needsContainer ? undefined : id}
-        // The sliding indicator's anchor-name is a fixed `--tabs-active`, isolated per strip
-        // by `anchor-scope: all` (a-tabs.css) — so no per-strip unique name is needed here.
-        // `style` always lands on <a-tabs> — you style the strip, even when a container wraps
-        // the panels; `class` / `id` / `rest` go on that container root instead (below).
-        style={roundStyle(round, "--tabs-round", toneStyle(tone, "--tabs-tone-source", style))}
-        {...(needsContainer ? {} : rest)}
-      >
-        {tabs.map((t) => {
-          const p = t.props
-          const tabDisabled = disabled || p.disabled
-          const isSelected = p.value === currentValue
-          const hasPanel = panelValues.has(p.value)
-          return (
-            <a-tab
-              key={p.value}
-              role="tab"
-              value={p.value}
-              id={tabId(p.value)}
-              // Per-tab tone override: named/custom pass the attribute (CSS keys off it),
-              // and a custom literal colour also needs --tabs-tone-source on the tab (toneStyle
-              // sets it for non-named values, returns undefined otherwise).
-              tone={p.tone && p.tone !== "neutral" ? p.tone : undefined}
-              style={toneStyle(p.tone, "--tabs-tone-source", undefined)}
-              aria-controls={hasPanel ? panelId(p.value) : undefined}
-              aria-disabled={tabDisabled ? "true" : undefined}
-              // Every enabled tab is its own tab stop (not a roving single stop) — Tab
-              // / Shift+Tab step through them; arrows still move + select via the element.
-              // A disabled tab leaves the tab order (-1) UNLESS it's the selected one,
-              // which stays focusable so AT can still reach the active tab (WAI-ARIA).
-              // `aria-selected` is NOT set here — the element publishes it off-DOM.
-              tabIndex={tabDisabled && !isSelected ? -1 : 0}
-              disabled={tabDisabled ? "" : undefined}
-              // Strip-level `round` (or a per-tab `round`) → round this tab. The
-              // strip-wide radius (incl. the sliding indicator) also comes from
-              // `round` on <a-tabs> above; this stamps each tab for parity.
-              round={round || p.round ? "" : undefined}
-            >
-              {p.icon && <a-icon shape={p.icon} aria-hidden="true" />}
-              {wrapLabel(p.label != null ? p.label : p.children, "a-tab-label")}
-              {p.iconTrailing && <a-icon shape={p.iconTrailing} aria-hidden="true" />}
-            </a-tab>
-          )
-        })}
-      </a-tabs>
-  )
-
-  // No panels, horizontal → the strip is the whole component; skip the wrapper div.
-  if (!needsContainer) return strip
-
-  return (
-    <div
-      className={className ? `${styles.container} ${className}` : styles.container}
-      data-orientation={vertical ? "vertical" : undefined}
+    <a-tabs
+      role="tablist"
+      aria-label={label}
+      aria-orientation={vertical ? "vertical" : undefined}
+      aria-disabled={disabled ? "true" : undefined}
+      // Controlled → drive the element's `state`. Uncontrolled → seed `default-state`
+      // and let the ELEMENT own selection (off-DOM via each tab's `selected` property)
+      // — so the strip works even unhydrated or hand-assembled. Either way the panels
+      // read the value from here, and the wrapper's mirror (kept current via
+      // `onstatechange`) feeds the roving `tabindex`.
+      state={controlled ? value : undefined}
+      default-state={!controlled ? defaultValue : undefined}
+      priority={priority && priority !== "primary" ? priority : undefined}
+      tone={tone && tone !== "neutral" ? tone : undefined}
+      size={size && size !== "medium" ? size : undefined}
+      orientation={vertical ? "vertical" : undefined}
+      noslide={noslide ? "" : undefined}
+      round={round ? "" : undefined}
+      disabled={disabled ? "" : undefined}
+      onstatechange={onstatechange}
+      onchange={onchange}
+      // Focus lands on a tab, not the tablist — report via bubbling focusin/focusout.
+      onfocusin={onFocus}
+      onfocusout={onBlur}
+      class={className}
       id={id}
+      style={roundStyle(round, "--tabs-round", toneStyle(tone, "--tabs-tone-source", style))}
       {...rest}
     >
-      {strip}
-      {panels.map((pan) => {
-        const p = pan.props
-        const active = p.value === currentValue
-        const mode: TabsMounting = p.mounting ?? mounting
-        // Mount decision: 'active' renders only the active panel; 'lazy' keeps it once
-        // seen; 'display'/'visibility' always render and hide inactive ones.
-        if (mode === "active" && !active) return null
-        if (mode === "lazy" && !active && !mounted.has(p.value)) return null
-
-        const hidden = !active
-        const hideByVisibility = hidden && mode === "visibility"
+      {tabs.map((p) => {
+        const tabDisabled = disabled || p.disabled
+        const isSelected = p.value === currentValue
         return (
-          <a-tabpanel
+          <a-tab
             key={p.value}
-            role="tabpanel"
-            id={panelId(p.value)}
-            aria-labelledby={tabId(p.value)}
-            tabIndex={active ? 0 : undefined}
-            // display/lazy/active hide via the native `hidden` attribute (display:none);
-            // visibility mode keeps the layout box and is hidden via data-hide + CSS.
-            // `hidden` / `inert` are real IDL boolean props on every element, so they
-            // must be passed as real booleans (not the `''` presence form used for our
-            // custom attrs) — Preact runs IDL booleans through the property setter, where
-            // `''` is falsy and the attribute is dropped.
-            hidden={hidden && !hideByVisibility ? true : undefined}
-            data-hide={hideByVisibility ? "visibility" : undefined}
-            inert={hidden ? true : undefined}
-            class={p.className}
-            style={p.style}
+            role="tab"
+            value={p.value}
+            // Per-tab tone override: named/custom pass the attribute (CSS keys off it),
+            // and a custom literal colour also sets --tabs-tone-source on the tab.
+            tone={p.tone && p.tone !== "neutral" ? p.tone : undefined}
+            style={toneStyle(p.tone, "--tabs-tone-source", undefined)}
+            aria-disabled={tabDisabled ? "true" : undefined}
+            // Every enabled tab is its own tab stop (not a roving single stop) — Tab /
+            // Shift+Tab step through them; arrows move + select via the element. A
+            // disabled tab leaves the tab order (-1) UNLESS it's the selected one, which
+            // stays focusable so AT can reach the active tab. `aria-selected` and the
+            // panel `aria-labelledby` link are published off-DOM by the elements.
+            tabIndex={tabDisabled && !isSelected ? -1 : 0}
+            disabled={tabDisabled ? "" : undefined}
+            round={round || p.round ? "" : undefined}
           >
-            {p.children}
-          </a-tabpanel>
+            {p.icon && <a-icon shape={p.icon} aria-hidden="true" />}
+            {wrapLabel(p.label != null ? p.label : p.children, "a-tab-label")}
+            {p.iconTrailing && <a-icon shape={p.iconTrailing} aria-hidden="true" />}
+          </a-tab>
         )
       })}
-    </div>
+    </a-tabs>
+  )
+
+  // The strip and its panels (any children) render as flat siblings — no wrapper element,
+  // so the `class` / `id` / `style` / `rest` above land on the strip, the one consistent
+  // root. Arranging the strip relative to its panels is the consumer's job: a horizontal
+  // strip stacks above the panels in normal flow; for a vertical strip beside them, wrap
+  // `<Tabs>` in your own flex container (see the docs). Panels find the strip as a sibling
+  // (`a-tabpanel` → `:scope > a-tabs`), so keep them under one parent — or drive a
+  // controlled `value` when you split them into separate regions.
+  return (
+    <>
+      {strip}
+      {children}
+    </>
   )
 }

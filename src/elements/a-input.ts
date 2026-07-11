@@ -124,7 +124,11 @@ const SUPPORTS_FIELD_SIZING =
 //    A readonly single-line input shows an ellipsis for an overflowing value
 //    (text-overflow: ellipsis), so the Select trigger reads a long value as `name …`
 //    instead of a hard clip. Editable inputs keep the default clip (caret needs the
-//    scrolled end); textarea wraps, so neither applies there.
+//    scrolled end); textarea wraps, so neither applies there. font-variation-settings
+//    is restated (wdth 100, upright) because the UA form-control `font` shorthand
+//    resets the variable-font axes to normal — without this the control renders at
+//    the font's default-instance width while the label / hint / pre-upgrade skeleton
+//    sit at wdth 100, so the value's character width jumps on upgrade.
 //  • slots — leading/trailing/clear are display:none until they hold content
 //    (toggled via slotchange), so an empty slot reserves no box or phantom gap.
 //    Adornments are muted (--input-adornment) and inherit currentColor; a slotted
@@ -204,6 +208,7 @@ const SHADOW_STYLE = `
     color: var(--input-text);
     font-family: var(--sans-serif);
     font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
     font-size: var(--_fs);
     line-height: var(--_lh);
     font-weight: 400;

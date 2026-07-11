@@ -6,6 +6,53 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
+## 0.3.4 — July 10, 2026
+
+### Added
+- **`optionsWithSelection(options, values)` helper** — a pure function that projects a `Select` `options` tree onto a selection: returns the same tree (bare strings normalized) with every leaf marked `selected` and every group / submenu carrying a rolled-up `selectionState` (`'none' | 'some' | 'all'` of its descendant leaves). Needs no `Select` instance and reads nothing off the change event, so it behaves the same controlled or uncontrolled — feed it your current `value` to render a grouped summary, section indicator, or diff. Exported with types `SelectedItem` / `SelectedOption` / `SelectedGroup` / `SelectedSubmenu` / `SelectionState`.
+- **`SelectOption.tooltip`** — a per-option row tooltip (string or node). In a `multiple` select with `selectAll`, a row with no `tooltip` falls back to a default hint for the Alt/Option-click accelerator (below); set `tooltip` to override, or `''` to suppress.
+- **`TabOption.children`** — an `options`-array tab can carry a node for its content, not just a string `label` (`label` wins when both are set).
+- **`Calendar` `focusSignal` prop.** A nonce (change it — e.g. increment a counter — to fire) that moves keyboard focus onto the calendar's active day, driven declaratively through `<a-calendar>`'s `data-focus`. `InputDate` bumps it on a keyboard open so focus lands in the grid without the wrapper ever touching the DOM.
+
+### Changed
+- **`Tabs` is options-only; the `<Tab>` component is gone (breaking).** The strip renders solely from the `options` array (`TabOption[]`, shipped in 0.3.3) — the `<Tab>` component and its `TabProps` type are removed. Migrate by moving each `<Tab>`'s props into an `options` entry (the field names are identical); `<TabPanel>` children are unchanged.
+
+  ```tsx
+  // Before
+  <Tabs defaultValue="a" label="Sections">
+    <Tab value="a" label="Overview" icon="home" />
+    <Tab value="b" tone="critical" disabled><Badge /> Alerts</Tab>
+    <TabPanel value="a"><Overview /></TabPanel>
+  </Tabs>
+
+  // After — <Tab> props become option objects; a rich <Tab> body becomes `children`
+  <Tabs
+    defaultValue="a"
+    label="Sections"
+    options={[
+      { value: 'a', label: 'Overview', icon: 'home' },
+      { value: 'b', tone: 'critical', disabled: true, children: <><Badge /> Alerts</> },
+    ]}
+  >
+    <TabPanel value="a"><Overview /></TabPanel>
+  </Tabs>
+  ```
+
+  `<TabPanel>` now renders a real `<a-tabpanel>` element (new, registered via `@antadesign/anta/elements`) that reads the active value from its sibling `<a-tabs>` and shows/hides itself off-DOM (`:state(active)`); `Tabs` never introspects or toggles its children, so it renders the same across React / Preact / custom runtimes and static SSR. `TabPanel` gains **`hideMode`** — `'display'` (default, removed from layout + a11y tree) or `'visibility'` (keeps the layout box). The old `mounting="active" | "lazy"` is dropped: to not-render an inactive panel (unmount or lazy-mount), drive a controlled `value` and render panels conditionally yourself (see the docs). The tab↔panel a11y link is off-DOM (`ariaLabelledByElements`), so no `id` wiring is emitted.
+
+  `Tabs` renders **no wrapper element** — the strip (`<a-tabs>`) and the panels render as flat siblings, and `className` / `id` / `style` / `...rest` land on the strip. Laying the strip out relative to its panels is the consumer's job: a horizontal strip stacks above its panels in normal flow with no extra markup, and a vertical strip sits beside its panels only if you wrap `<Tabs>` in your own flex row. Panels still resolve their strip as a sibling under the same parent, so keep them together (or drive a controlled `value` to split them into separate regions).
+- **`Select` warns on duplicate option values (dev only).** A leaf `value` is the option's identity and must be unique across the whole tree (selection is value-keyed and global across groups / submenus); duplicates collapse into one logical pick. `Select` now `console.warn`s on a repeat, matching `Tabs` / `RadioGroup`.
+- **`MenuItem` `onSelect` now fires only for selectable rows.** `a-menu` decides which row a click selects — skipping disabled rows and submenu parents — and emits a pre-filtered `menuselect` event the wrapper forwards, replacing the wrapper's old `.closest()` DOM walk (which doesn't exist off the UI thread). A click on a submenu parent or disabled row no longer invokes `onSelect`.
+- **`Select`: Alt+Click a row selects only that one** (`multiple` + `selectAll`). Plain click still toggles; Alt+Click isolates — clears the rest, selects just that row — with no extra UI. A per-row hint tooltip teaches it (platform-worded: ⌥+Click on macOS, Alt+Click elsewhere) and stays unobtrusive — a longer show delay and it follows the cursor; suppress or replace it via `SelectOption.tooltip`.
+- **A submenu's parent row stays highlighted while its flyout is open** — keyed off the nested menu's own off-DOM `:state(open)` (`a-menu-item:has(> a-menu:state(open))`), so the branch you're in reads as active even after the pointer moves into the flyout.
+- **Web components no longer write light DOM (ARIA included).** `a-menu` used to `setAttribute` `aria-expanded` on a submenu's parent and `aria-activedescendant` on a combobox filter field — light-DOM writes that desync a worker-thread reactive model. Now: submenu open state is off-DOM (`:state(open)`, styled via CSS; `aria-expanded` is dropped rather than written), and the combobox active-option is emitted as an `activedescendant` event that the reactive layer (`Select`) reflects onto the field itself. Behavior is unchanged for consumers; the element layer is now free of light-DOM mutation.
+- **`InputDate` opens the calendar from the field, not a trailing button.** Clicking anywhere in the field opens the calendar (the menu now anchors to the field, like `Select`), and a leading calendar icon marks the affordance — the `icon` prop defaults to `calendar-days` and still overrides it. The separate trailing calendar button is gone. A mouse open keeps focus in the field, so you can keep typing or click a day; <kbd>ArrowDown</kbd> opens the calendar and moves focus into the grid, and <kbd>Esc</kbd> closes it back to the field. <kbd>Enter</kbd> still commits the typed date. The field carries `aria-haspopup="dialog"` + `aria-expanded`.
+
+### Fixed
+- **A hover-opened submenu no longer closes on hover-away once you've keyboard-focused into it.** After a submenu opens on hover, moving keyboard focus into it (e.g. ArrowRight / ArrowDown) and then moving the mouse away used to schedule the flyout closed, yanking it out from under the keyboard. `scheduleClose()` now skips while a `:focus-visible` element is inside the submenu (a deeper flyout keeps its ancestors open too). The explicit close paths — Esc, ArrowLeft, outside-click, focus leaving on Tab — are unchanged, and a submenu with no keyboard focus still closes on hover-away as before.
+- **`Input` pins its variable-font width axis.** The shadow `<input>` / `<textarea>` now restates `font-variation-settings` (`wdth 100`, upright), because the UA form-control `font` shorthand resets the variable-font axes to the font file's default instance. With a variable `--sans-serif` the field text otherwise rendered at a different width from the surrounding text and shifted as the font loaded. `Select` and `InputDate` triggers (built on `Input`) inherit the fix.
+- **`Input` skeleton renders its content before upgrade, not just an empty box.** Building on 0.3.3's reserved field box, `a-input:not(:defined)` now paints the field's text — the `value`, or the `placeholder` when empty — and matches the shadow control's type scale (font size / line-height / weight per `size`, feature settings, and variable-font axes), so a not-yet-upgraded / SSR'd field reads as populated and the label + value hold position across upgrade. The label matches the shadow `.label` metrics so the field below it doesn't jump; adornments and the hint are held back until the shadow exists; and the field fades from a dimmed rest state to full opacity on `:defined` (skipped under `prefers-reduced-motion`). A `password` field never paints its value in the skeleton. This most visibly smooths the `Select` and `InputDate` triggers on load.
+
 ## 0.3.3 — July 8, 2026
 
 ### Added

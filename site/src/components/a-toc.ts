@@ -135,6 +135,11 @@ export class ATocElement extends HTMLElement {
     window.addEventListener('scroll', this.onScroll, { passive: true })
     window.addEventListener('resize', this.onScroll, { passive: true })
     this.updateScrollbar()
+
+    // The whole TOC is built at once a frame after upgrade, so it would
+    // otherwise pop in from blank. `nav` starts at opacity 0 (see css()); flip
+    // it on the next frame so the change animates instead of snapping.
+    requestAnimationFrame(() => nav.classList.add('ready'))
   }
 
   /** Position the thumb against the *headings'* positions rather than a flat
@@ -244,6 +249,14 @@ export class ATocElement extends HTMLElement {
         display: flex;
         flex-direction: column;
         gap: 2px;
+        opacity: 0;
+        transition: opacity 300ms ease-out;
+      }
+      nav.ready {
+        opacity: 1;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        nav { transition: none; }
       }
       .toc-title {
         display: block;

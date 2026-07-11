@@ -9,7 +9,7 @@ import Disclosure from '../components/Disclosure.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
-import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGroupsDemo, SelectGhostDemo } from '../components/SelectDemos'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGroupsDemo, SelectGhostDemo, SelectSelectionTreeDemo } from '../components/SelectDemos'
 
 # Select
 
@@ -116,6 +116,10 @@ every row, keeps the menu open as you toggle, and summarises the count in the fi
 ("N selected"). Add **`selectAll`** for a top row that toggles everything; its box
 goes mixed when only some are on.
 
+On a `selectAll` multi-select, **`Alt`+Click** a row (⌥+Click on macOS) to *isolate*
+it — clear the rest and select only that one. A cursor-following hint teaches the
+accelerator; override it per row with `SelectOption.tooltip` (or `''` to suppress).
+
 Each checkable row is the control itself (`role="menuitemcheckbox"` /
 `menuitemradio`, `aria-checked`); the checkbox / radio / check is a passive indicator
 the row drives.
@@ -193,6 +197,14 @@ const [field, setField] = useState('stream')
 </Col>
 <Col>
 
+The value is the **option's `value` string** — `value="stream"` in single mode, an
+array like `value={['stream', 'container']}` in `multiple`. That string is the
+option's identity: it's what `value` / `defaultValue` name and what `onValueChange`
+reports, so keep each option's `value` **unique across the whole tree**. Selection is
+value-keyed and global across groups / submenus, so a value repeated in two sections
+is one logical pick (both rows toggle together; the trigger resolves to the last).
+Dev builds `console.warn` on a duplicate.
+
 Leave `value` off and pass `defaultValue` for an **uncontrolled** select (the
 wrapper owns the value). Pass `value` to **control** it: the field follows the prop,
 and a pick only requests a change that you apply in `onValueChange`.
@@ -208,6 +220,61 @@ the rationale.
 
 </Col>
 </Columns>
+
+### Deriving the selection tree
+
+The callback hands you the new value (and the one row that changed); to read the
+whole selection back against your hierarchy, use **`optionsWithSelection(options,
+values)`**. It returns your `options` tree with every leaf marked `selected` and
+every group / submenu carrying a rolled-up `selectionState` — `'all'`, `'none'`, or
+`'some'` of its descendants. It's a pure function (no `Select` instance, reads
+nothing off the event), so it behaves the same controlled or uncontrolled: hand it
+your current `value` and render a grouped summary, a section indicator, or a diff.
+
+The panel on the right is that projection, re-derived on every pick. Toggle scopes and
+watch the leaf checks and the section `Tag`s (`some` / `all`) update:
+
+<Preview>
+  <SelectSelectionTreeDemo client:load />
+</Preview>
+
+```tsx folded
+import { Select, optionsWithSelection } from '@antadesign/anta'
+
+const [values, setValues] = useState<string[]>(['repo.read', 'billing.view'])
+
+// `values` drives the Select; the tree is derived from it and rendered read-only.
+const tree = optionsWithSelection(scopes, values)
+// tree: [ { label: 'Repositories', selectionState: 'some', options: [
+//           { value: 'repo.read',  label: 'Read',  selected: true  },
+//           { value: 'repo.write', label: 'Write', selected: false }, … ] },
+//         { label: 'Members', selectionState: 'some', options: [ …,
+//           { label: 'Billing', selectionState: 'all', submenu: [
+//             { value: 'billing.view',   label: 'View invoices', selected: true },
+//             { value: 'billing.manage', label: 'Manage plan',   selected: true } ] } ] },
+//         { value: 'audit.read', label: 'Audit log', selected: false } ]
+
+<Select selection="multiple" options={scopes} value={values} onValueChange={setValues} />
+{/* render `tree` however you like — a summary, section indicators, a diff */}
+```
+
+**Don't feed the tree back into `options` to control selection.** The projection
+flows one way: `value` controls the `Select`, and the tree is a derived, read-only
+view of it. `Select` resolves selection purely from `value` and never reads a
+`selected` flag off `options`, so a `selected: true` in the tree changes nothing — it
+rides along as inert data. Control the `Select` with the value array; keep the
+annotated tree for rendering.
+
+```tsx
+// ✗ Wrong — `selected` is ignored, so the Select isn't controlled by this
+<Select options={optionsWithSelection(scopes, values)} />
+
+// ✓ Right — selection is value-keyed; drive it with `value`
+<Select options={scopes} value={values} onValueChange={setValues} />
+```
+
+Bare-string options normalize to `{ value, label }`; a value under more than one
+section marks the leaf everywhere it occurs (selection is value-keyed).
 
 ## Size & status
 
@@ -643,7 +710,9 @@ submenu, everything else is an option (so those two keys are reserved on an opti
 every leaf wherever it sits; group headings and submenu parents organize but aren't
 selectable. One `value`, one `onValueChange`, one count — unchanged. The two selects
 above share the exact same `fields` tree and differ only by `selection`. `disabled` on
-a group or submenu cascades to all its descendants.
+a group or submenu cascades to all its descendants. Because selection is global, a
+leaf's `value` must be **unique across the whole tree** — the same value under two
+sections is one pick (dev builds warn).
 
 **A query flattens the tree.** With `filter`, typing collapses submenus into inline
 groups (their label becomes the heading) and drops empty ones, so results read as one
@@ -651,12 +720,6 @@ scannable list instead of hiding matches behind flyouts.
 
 </Col>
 </Columns>
-
-## Coming soon
-
-Nothing pending. Selection modes, filtering, custom renderers, an empty/loading
-slot, and grouped / nested options all landed; creating an option from the filter
-query needs no dedicated prop — return a "Create …" row from `renderEmpty`.
 
 <Disclosure title="Component props" open>
 

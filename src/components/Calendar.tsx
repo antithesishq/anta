@@ -44,6 +44,11 @@ export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> 
   size?: "small" | "medium" | "large"
   /** Disable the whole calendar (not focusable or selectable). */
   disabled?: boolean
+  /** Move keyboard focus onto the active day. Change this to a new value (e.g.
+   *  increment a counter) to focus the cursor cell — `InputDate` bumps it when
+   *  the calendar is opened from the field by keyboard (ArrowDown), so focus
+   *  lands in the grid. The initial value never focuses; only a change does. */
+  focusSignal?: number
   /** Accessible name for the grid (defaults to the visible month heading). */
   "aria-label"?: string
   /** Fired whenever the selection changes — event-first. `detail` is
@@ -94,6 +99,7 @@ export const Calendar = ({
   name,
   size,
   disabled,
+  focusSignal,
   onStateChange,
   onChange,
   onValueChange,
@@ -131,6 +137,16 @@ export const Calendar = ({
   const headingId = useId()
   const month = buildMonth({ anchor: cursor, locale: resolvedLocale, min: minD, max: maxD, selected, today })
   const cursorIso = cursor.toString()
+
+  // Focus the cursor day when `focusSignal` changes — an external "step into the
+  // grid" request (InputDate bumps it on a keyboard open). React's adjust-state-
+  // during-render, guarded so only a change fires it; the signal value doubles as
+  // the `data-focus` nonce, so a repeat request on the same day still re-focuses.
+  const [lastFocusSignal, setLastFocusSignal] = useState(focusSignal)
+  if (focusSignal !== lastFocusSignal) {
+    setLastFocusSignal(focusSignal)
+    if (focusSignal !== undefined) setFocusReq({ iso: cursorIso, n: focusSignal })
+  }
 
   // Years for the heading menu — spanning min..max, defaulting to today ±3 years
   // when unbounded (a short list that fits without scrolling; a bound `min`/`max`

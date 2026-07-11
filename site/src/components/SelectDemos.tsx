@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Select, Tooltip, Tag, Button, Icon, MenuItem, MenuSeparator, Checkbox } from '@antadesign/anta'
-import type { SelectOption } from '@antadesign/anta'
+import { Select, Tooltip, Tag, Button, Icon, MenuItem, MenuSeparator, Checkbox, optionsWithSelection } from '@antadesign/anta'
+import type { SelectOption, SelectItem, SelectedItem } from '@antadesign/anta'
 
 /**
  * Hydrated island demos for the Select docs. Select is a *composed wrapper*
@@ -427,6 +427,92 @@ export function SelectGhostDemo() {
         value={value}
         onValueChange={setValue}
       />
+    </div>
+  )
+}
+
+// A scopes/permissions picker with two levels of nesting: an inline group, a
+// submenu that itself holds a nested submenu, and a flat option. Shows how
+// `optionsWithSelection` mirrors any shape.
+const SCOPES: SelectItem[] = [
+  { label: 'Repositories', options: [
+      { value: 'repo.read', label: 'Read' },
+      { value: 'repo.write', label: 'Write' },
+      { value: 'repo.admin', label: 'Admin' },
+  ] },
+  { label: 'Members', options: [
+      { value: 'members.view', label: 'View' },
+      { value: 'members.invite', label: 'Invite' },
+      { label: 'Billing', submenu: [
+          { value: 'billing.view', label: 'View invoices' },
+          { value: 'billing.manage', label: 'Manage plan' },
+      ] },
+  ] },
+  { value: 'audit.read', label: 'Audit log' },
+]
+
+// Read-only render of the projected tree: section headings show their rolled-up
+// `selectionState` as a Tag (hidden when 'none'); leaves show a check when selected.
+function SelectionSummary({ items, depth = 0 }: { items: SelectedItem[]; depth?: number }) {
+  return (
+    <>
+      {items.map((it, i) => {
+        const kids =
+          Array.isArray((it as any).submenu) ? (it as any).submenu :
+          Array.isArray((it as any).options) ? (it as any).options : null
+        if (kids) {
+          const state = (it as any).selectionState as 'none' | 'some' | 'all'
+          return (
+            <div key={(it as any).label + i} style={{ marginInlineStart: `${depth * 14}px` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 0', fontWeight: 500 }}>
+                <span>{(it as any).label}</span>
+                {state !== 'none' && (
+                  <Tag size="small" tone={state === 'all' ? 'success' : 'info'}>{state}</Tag>
+                )}
+              </div>
+              <SelectionSummary items={kids} depth={depth + 1} />
+            </div>
+          )
+        }
+        const leaf = it as SelectOption & { selected: boolean }
+        return (
+          <div key={leaf.value} style={{ marginInlineStart: `${depth * 14}px`, display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 0', color: leaf.selected ? 'var(--text-1)' : 'var(--text-4)' }}>
+            <Icon shape={leaf.selected ? 'circle-check' : 'blank'} size={14} />
+            <span>{leaf.label ?? leaf.value}</span>
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
+export function SelectSelectionTreeDemo() {
+  useElements()
+  const [values, setValues] = useState<string[]>(['repo.read', 'billing.view', 'billing.manage'])
+  // One-directional: `values` drives the Select; the tree is derived and rendered
+  // read-only. The tree is never fed back into `<Select options>` — selection is
+  // value-keyed, not a flag on options.
+  const tree = optionsWithSelection(SCOPES, values)
+  return (
+    <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      <div style={{ width: '240px' }}>
+        <Select
+          label="Scopes"
+          selection="multiple"
+          selectAll
+          filter
+          placeholder="Select scopes…"
+          options={SCOPES}
+          value={values}
+          onValueChange={setValues}
+        />
+      </div>
+      <div style={{ flex: '1', minWidth: '200px', fontSize: '13px', borderInlineStart: '1px solid var(--border-4)', paddingInlineStart: '16px' }}>
+        <div style={{ color: 'var(--text-3)', marginBottom: '6px', fontFamily: 'var(--monospace, monospace)' }}>
+          optionsWithSelection(scopes, value)
+        </div>
+        <SelectionSummary items={tree} />
+      </div>
     </div>
   )
 }

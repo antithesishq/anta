@@ -18,12 +18,14 @@ declare global {
  * Enter / Space on a focused item synthesizes a click (the single
  * activation path that flows through the menu's click delegation).
  *
- * Static ARIA (`role="menuitem"`, `tabindex`, `aria-haspopup` and the
- * `aria-expanded="false"` baseline on submenu parents) is added by the
- * `MenuItem` JSX wrapper, never here — the element must stay re-renderable
- * from any reactive engine without churning host attributes. The one dynamic
- * bit, live `aria-expanded` on a submenu parent, is reflected by the nested
- * `a-menu` element, which owns that state (see `reflectExpanded` there).
+ * ARIA (`role="menuitem"`, `tabindex`, `aria-haspopup` on submenu parents) is
+ * added by the `MenuItem` JSX wrapper, never here — the element must stay
+ * re-renderable from any reactive engine, and a web component must not mutate
+ * light DOM (it would desync the worker-thread reactive model that owns the
+ * light tree). So submenu open state is NOT written to the parent's attributes
+ * (no `aria-expanded`): the nested `a-menu` carries its own off-DOM
+ * `:state(open)`, and the parent styles its open branch purely in CSS
+ * (`a-menu-item:has(> a-menu:state(open))`, see `reflectOpen` there).
  *
  * Styling notes (`a-menu-item.css` ships comment-free):
  * - `a-menu-item:not(:defined)` is hidden against the pre-upgrade flash

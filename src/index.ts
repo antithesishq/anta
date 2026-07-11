@@ -80,7 +80,7 @@ export type {
 } from './calendar-core'
 export { RadioGroup } from './components/RadioGroup'
 export type { RadioGroupProps, RadioOption } from './components/RadioGroup'
-export { Select } from './components/Select'
+export { Select, optionsWithSelection } from './components/Select'
 export type {
   SelectProps,
   SelectCommonProps,
@@ -92,11 +92,14 @@ export type {
   OptionState,
   TriggerState,
   EmptyState,
+  SelectionState,
+  SelectedOption,
+  SelectedGroup,
+  SelectedSubmenu,
+  SelectedItem,
 } from './components/Select'
 export { Tabs } from './components/Tabs'
-export type { TabsProps, TabsMounting, TabsChangeAttrs } from './components/Tabs'
-export { Tab } from './components/Tab'
-export type { TabProps } from './components/Tab'
+export type { TabsProps, TabOption, TabsChangeAttrs } from './components/Tabs'
 export { TabPanel } from './components/TabPanel'
 export type { TabPanelProps } from './components/TabPanel'
 export type { BaseProps, BaseAttributes } from './general_types'

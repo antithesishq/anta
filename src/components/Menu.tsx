@@ -46,6 +46,13 @@ export interface MenuProps extends BaseProps {
     event: CustomEvent,
     detail: { next: boolean; prev: boolean },
   ) => void
+  /** Combobox-mode cursor report (raw element event). Fires when the active
+   *  option changes as arrow keys move the cursor while focus stays in a
+   *  `[data-menu-search]` filter field; `detail.id` is the active option's `id`
+   *  (`null` when none). The reactive layer that owns the field reflects this
+   *  onto its `aria-activedescendant` — the element can't write that light-DOM
+   *  attribute itself. Passed straight through to the element. */
+  onactivedescendant?: (e: CustomEvent<{ id: string | null }>) => void
   /** The menu's contents: `MenuItem`, `MenuSeparator`, `MenuGroup`, or any
    *  custom element. */
   children?: React.ReactNode

@@ -38,16 +38,6 @@ export function nativeStateChange<D>(
   return { event, detail: event?.detail }
 }
 
-// `Symbol.for` pulls a shared key from a cross-realm registry, so `<Tabs>` can identify
-// `<Tab>` / `<TabPanel>` children even from a duplicate anta copy (federated bundles, dual
-// CDN loads) where reference and function-name matching both fail.
-export const TABS_KIND: unique symbol = Symbol.for("@antadesign/anta/tabs.kind")
-
-export function markTabsKind<F>(component: F & { [TABS_KIND]?: "tab" | "panel" }, kind: "tab" | "panel"): F {
-  component[TABS_KIND] = kind
-  return component
-}
-
 /** The six named tones every toned component shares. Anything else is a literal
  *  CSS colour the element resolves through its `--{component}-tone-source` var. */
 export const NAMED_TONES = new Set([

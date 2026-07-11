@@ -33,8 +33,6 @@ export interface System {
   frameworks: string
   /** Styling mechanism. */
   styling: string
-  /** Dark-mode story, short. */
-  dark: string
   /** Accessibility reputation, short. */
   a11y: string
   /** License, short. */
@@ -58,7 +56,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled web components + JSX wrappers',
     frameworks: 'Any: React, Preact, plain HTML',
     styling: 'Plain CSS + CSS-variable tokens (oklch)',
-    dark: '.dark ancestor class',
     a11y: 'ARIA layered in wrappers; solid',
     license: 'MIT',
     pros: [
@@ -86,7 +83,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled web components',
     frameworks: 'Any: web components (React/Vue/Angular/Svelte guides)',
     styling: 'CSS framework + ::part() + CSS variables',
-    dark: 'Built-in light/dark themes',
     a11y: 'Good (inherited from Shoelace)',
     license: 'MIT core + paid Pro tier',
     pros: [
@@ -112,7 +108,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled web components (CDN)',
     frameworks: 'Any: web components',
     styling: 'Locked to the Shopify look',
-    dark: 'Automatic (adopts host surface)',
     a11y: 'Strong; dev-time a11y warnings',
     license: 'Restricted (Shopify apps only)',
     pros: [
@@ -138,7 +133,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'CSS-in-JS (Emotion, moving to Pigment)',
-    dark: 'Color schemes / palette.mode',
     a11y: 'Mature, generally strong',
     license: 'MIT core + paid MUI X',
     pros: [
@@ -164,7 +158,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React (Angular/Vue community ports)',
     styling: 'CSS-in-JS + CSS variables (v6)',
-    dark: 'darkAlgorithm token preset',
     a11y: 'Weak; no a11y docs',
     license: 'MIT',
     pros: [
@@ -190,7 +183,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'CSS Modules + CSS variables',
-    dark: 'Built-in light/dark/auto',
     a11y: 'Good (varies by component)',
     license: 'MIT',
     pros: [
@@ -216,7 +208,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React (+ web components)',
     frameworks: 'React, web components; Angular/Vue/Svelte (community)',
     styling: 'Sass + CSS variables',
-    dark: 'Four built-in themes',
     a11y: 'Strong (IBM Equal Access program)',
     license: 'Apache-2.0',
     pros: [
@@ -242,7 +233,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'Compiled CSS-in-JS + tokens',
-    dark: 'Token themes (light/dark)',
     a11y: 'Strong (WCAG 2.1 AA)',
     license: 'Apache-2.0',
     pros: [
@@ -268,7 +258,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'Sass-compiled CSS (bp6- classes)',
-    dark: '.bp6-dark container class',
     a11y: 'Good for desktop/keyboard',
     license: 'Apache-2.0',
     pros: [
@@ -294,7 +283,6 @@ export const SYSTEMS: System[] = [
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'StyleX (precompiled atomic CSS)',
-    dark: 'Installable theme packages',
     a11y: 'Claimed accessible (unaudited)',
     license: 'MIT',
     pros: [
@@ -320,7 +308,6 @@ export const SYSTEMS: System[] = [
     kind: 'Headless React primitives',
     frameworks: 'React',
     styling: 'Unstyled; bring your own',
-    dark: 'Bring your own (Themes adds one)',
     a11y: 'Reference-grade (WAI-ARIA APG)',
     license: 'MIT',
     pros: [
@@ -346,7 +333,6 @@ export const SYSTEMS: System[] = [
     kind: 'Headless React primitives',
     frameworks: 'React',
     styling: 'Unstyled; bring your own',
-    dark: 'Bring your own',
     a11y: 'Reference-grade (WAI-ARIA APG)',
     license: 'MIT',
     pros: [
@@ -372,7 +358,6 @@ export const SYSTEMS: System[] = [
     kind: 'Copy-paste React source',
     frameworks: 'React (Vue/Svelte community ports)',
     styling: 'Tailwind + CSS variables (oklch)',
-    dark: '.dark class (next-themes)',
     a11y: 'Inherits Radix / Base UI',
     license: 'MIT',
     pros: [

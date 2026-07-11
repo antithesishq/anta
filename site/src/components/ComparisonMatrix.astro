@@ -1,7 +1,7 @@
 ---
 // At-a-glance matrix for the /comparison page: one row per system, columns
-// for the facts that decide adoption (shape, frameworks, styling, dark mode,
-// a11y, license). The Anta row is highlighted. Full-bleed + horizontal scroll
+// for the facts that decide adoption (shape, frameworks, styling, a11y,
+// license). The Anta row is highlighted. Full-bleed + horizontal scroll
 // so the wide table never forces the page body to scroll sideways.
 import { SYSTEMS } from './comparison-data'
 ---
@@ -14,7 +14,6 @@ import { SYSTEMS } from './comparison-data'
         <th scope="col">Shape</th>
         <th scope="col">Frameworks</th>
         <th scope="col">Styling</th>
-        <th scope="col">Dark mode</th>
         <th scope="col">Accessibility</th>
         <th scope="col">License</th>
       </tr>
@@ -29,7 +28,6 @@ import { SYSTEMS } from './comparison-data'
           <td>{s.kind}</td>
           <td>{s.frameworks}</td>
           <td>{s.styling}</td>
-          <td>{s.dark}</td>
           <td>{s.a11y}</td>
           <td>{s.license}</td>
         </tr>

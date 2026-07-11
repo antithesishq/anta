@@ -164,7 +164,7 @@
    halves visually symmetric. Uses text-2 (matches the active-tab
    color) since it's just a single label. */
 .previewHeader {
-  padding: 7px 12px 6px;
+  padding: 5px 12px 4px;
   border-bottom: 1px solid var(--border-4);
   font-size: 12px;
   font-weight: 500;

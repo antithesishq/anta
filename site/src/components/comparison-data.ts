@@ -478,9 +478,10 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     nav: 'yes', icons: 'yes', typography: 'yes',
   },
   radix: {
-    select: 'yes', combobox: 'no', choice: 'yes', slider: 'yes', tabs: 'yes',
-    menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
-    progress: 'yes', avatar: 'yes', nav: 'partial',
+    button: 'partial', select: 'yes', combobox: 'no', choice: 'yes',
+    slider: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes',
+    toast: 'yes', accordion: 'yes', progress: 'yes', avatar: 'yes',
+    nav: 'partial', icons: 'yes',
   },
   baseui: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',

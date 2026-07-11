@@ -26,6 +26,9 @@ const reactCompatShim = fileURLToPath(new URL('./lib/react-compat-shim.mjs', imp
 export default defineConfig({
   site: 'https://anta.design',
   devToolbar: { enabled: false },
+  // Stickers moved from the "Sticker" component page to the Packages section
+  // (route /sticker/ → /stickers/). Keep the old URL resolving for external links.
+  redirects: { '/sticker': '/stickers' },
   // Never inline component styles into the page `<head>`. Astro's default
   // (`'auto'`) inlines small scoped style sets — but for a component used
   // inside MDX that wraps a hydrated island (e.g. <Disclosure> around the

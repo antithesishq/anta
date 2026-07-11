@@ -7,6 +7,6 @@
  *  in DocsLayout.astro when adding a component. */
 export const COMPONENT_SLUGS = [
   'button', 'checkbox', 'expander', 'icon', 'input', 'input-date', 'menu',
-  'progress', 'radio', 'select', 'sticker', 'table', 'tabs', 'tag', 'text',
+  'progress', 'radio', 'select', 'stickers', 'table', 'tabs', 'tag', 'text',
   'title', 'tooltip',
 ]

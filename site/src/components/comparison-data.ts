@@ -407,7 +407,6 @@ export const CATEGORIES: Category[] = [
   { id: 'icons', label: 'Icons', members: 'Bundled icon set' },
   { id: 'typography', label: 'Typography', members: 'Text / title components' },
   { id: 'charts', label: 'Charts', members: 'First-party data viz' },
-  { id: 'motion', label: 'Animated art', members: 'Stickers / illustrations' },
 ]
 
 /**
@@ -422,14 +421,14 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     button: 'yes', textinput: 'yes', select: 'yes', choice: 'partial',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes',
     accordion: 'yes', table: 'partial', tag: 'yes', progress: 'partial',
-    icons: 'yes', typography: 'yes', motion: 'yes',
+    icons: 'yes', typography: 'yes',
   },
   webawesome: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'paid',
     choice: 'yes', slider: 'yes', datetime: 'paid', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'paid', accordion: 'yes',
     tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes', nav: 'partial',
-    icons: 'yes', typography: 'partial', charts: 'paid', motion: 'partial',
+    icons: 'yes', typography: 'partial', charts: 'paid',
   },
   polaris: {
     button: 'yes', textinput: 'yes', select: 'yes', choice: 'yes',

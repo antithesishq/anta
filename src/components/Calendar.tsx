@@ -126,6 +126,17 @@ export const Calendar = ({
   const [cursor, setCursor] = useState<Temporal.PlainDate>(() =>
     clampDate(parseISODate(value ?? defaultValue) ?? today, minD, maxD),
   )
+  // A controlled `value` change moves the visible month to it (adjust-state-during-
+  // render, guarded so it fires only on a real value change — an unrelated re-render,
+  // e.g. an InputDate keystroke, never yanks a manually-navigated view back). This is
+  // what lets InputDate preview a typed date's month. A cleared value ('') leaves the
+  // view put; uncontrolled calendars never enter here (`value` stays undefined).
+  const [lastSyncedValue, setLastSyncedValue] = useState(value)
+  if (value !== lastSyncedValue) {
+    setLastSyncedValue(value)
+    const d = parseISODate(value)
+    if (d) setCursor(clampDate(d, minD, maxD))
+  }
   // Focus signal handed to the element after a keyboard move ("<iso>#<nonce>").
   const [focusReq, setFocusReq] = useState<{ iso: string; n: number } | null>(null)
   // The year/month jump menu is controlled so a month pick closes *only* it, not

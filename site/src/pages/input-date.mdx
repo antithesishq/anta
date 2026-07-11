@@ -47,7 +47,10 @@ Type a date and it resolves on blur or <kbd>Enter</kbd>, or click the field to o
 the calendar and pick a day. Either way the field settles on the locale's canonical
 format and the value is ISO `YYYY-MM-DD`. A click keeps focus in the field, so you
 can keep typing or click a day; <kbd>↓</kbd> opens the calendar and moves focus into
-the grid, and <kbd>Esc</kbd> closes it back to the field.
+the grid, and <kbd>Esc</kbd> closes it back to the field. While you type, the calendar
+previews the entry — it jumps to that month and highlights the day — and commits it on
+<kbd>Enter</kbd> (which also closes the calendar); an unrecognized entry keeps the
+calendar open and marks the field.
 
 <Preview>
   <InputDateDemo client:only="preact" label="Due date" defaultValue="2026-06-15" style={{ width: '260px' }} />

@@ -54,16 +54,14 @@
   font-weight: 500;
 }
 
-/* Compact AM/PM segmented toggle. Keep the full type line-height (so the label
-   isn't cramped) but trim the per-tab block padding by 2px/side so the toggle's
-   overall height still matches the input (the primary track adds ~4px). Tighter
-   side padding, no gap between the two tabs, and a 4px leading margin off the
-   minutes field. */
+/* Compact AM/PM segmented toggle. The strip carries no padding, so its height matches
+   its tabs — the same 24/28/32 as the time input beside it — with no height tweak.
+   Just tighten the side padding and drop the gap between the two tabs, with a 4px
+   leading margin off the minutes field. */
 .meridiem {
   margin-inline-start: 4px;
   --tab-padding-x: 6px;
   --tabs-gap: 0px;
-  --tab-padding-y: max(0px, calc((10px - var(--_pb)) / 2 - 2px));
 }
 /* Regular weight for the AM/PM labels (the tab default is 450). */
 .meridiem a-tab {

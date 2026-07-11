@@ -6,12 +6,13 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
-## Unreleased
+## 0.3.4 — July 10, 2026
 
 ### Added
 - **`optionsWithSelection(options, values)` helper** — a pure function that projects a `Select` `options` tree onto a selection: returns the same tree (bare strings normalized) with every leaf marked `selected` and every group / submenu carrying a rolled-up `selectionState` (`'none' | 'some' | 'all'` of its descendant leaves). Needs no `Select` instance and reads nothing off the change event, so it behaves the same controlled or uncontrolled — feed it your current `value` to render a grouped summary, section indicator, or diff. Exported with types `SelectedItem` / `SelectedOption` / `SelectedGroup` / `SelectedSubmenu` / `SelectionState`.
 - **`SelectOption.tooltip`** — a per-option row tooltip (string or node). In a `multiple` select with `selectAll`, a row with no `tooltip` falls back to a default hint for the Alt/Option-click accelerator (below); set `tooltip` to override, or `''` to suppress.
 - **`TabOption.children`** — an `options`-array tab can carry a node for its content, not just a string `label` (`label` wins when both are set).
+- **`Calendar` `focusSignal` prop.** A nonce (change it — e.g. increment a counter — to fire) that moves keyboard focus onto the calendar's active day, driven declaratively through `<a-calendar>`'s `data-focus`. `InputDate` bumps it on a keyboard open so focus lands in the grid without the wrapper ever touching the DOM.
 
 ### Changed
 - **`Tabs` is options-only; the `<Tab>` component is gone (breaking).** The strip renders solely from the `options` array (`TabOption[]`, shipped in 0.3.3) — the `<Tab>` component and its `TabProps` type are removed. Migrate by moving each `<Tab>`'s props into an `options` entry (the field names are identical); `<TabPanel>` children are unchanged.
@@ -46,9 +47,6 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 - **A submenu's parent row stays highlighted while its flyout is open** — keyed off the nested menu's own off-DOM `:state(open)` (`a-menu-item:has(> a-menu:state(open))`), so the branch you're in reads as active even after the pointer moves into the flyout.
 - **Web components no longer write light DOM (ARIA included).** `a-menu` used to `setAttribute` `aria-expanded` on a submenu's parent and `aria-activedescendant` on a combobox filter field — light-DOM writes that desync a worker-thread reactive model. Now: submenu open state is off-DOM (`:state(open)`, styled via CSS; `aria-expanded` is dropped rather than written), and the combobox active-option is emitted as an `activedescendant` event that the reactive layer (`Select`) reflects onto the field itself. Behavior is unchanged for consumers; the element layer is now free of light-DOM mutation.
 - **`InputDate` opens the calendar from the field, not a trailing button.** Clicking anywhere in the field opens the calendar (the menu now anchors to the field, like `Select`), and a leading calendar icon marks the affordance — the `icon` prop defaults to `calendar-days` and still overrides it. The separate trailing calendar button is gone. A mouse open keeps focus in the field, so you can keep typing or click a day; <kbd>ArrowDown</kbd> opens the calendar and moves focus into the grid, and <kbd>Esc</kbd> closes it back to the field. <kbd>Enter</kbd> still commits the typed date. The field carries `aria-haspopup="dialog"` + `aria-expanded`.
-
-### Added
-- **`Calendar` `focusSignal` prop.** A nonce (change it — e.g. increment a counter — to fire) that moves keyboard focus onto the calendar's active day, driven declaratively through `<a-calendar>`'s `data-focus`. `InputDate` bumps it on a keyboard open so focus lands in the grid without the wrapper ever touching the DOM.
 
 ### Fixed
 - **A hover-opened submenu no longer closes on hover-away once you've keyboard-focused into it.** After a submenu opens on hover, moving keyboard focus into it (e.g. ArrowRight / ArrowDown) and then moving the mouse away used to schedule the flyout closed, yanking it out from under the keyboard. `scheduleClose()` now skips while a `:focus-visible` element is inside the submenu (a deeper flyout keeps its ancestors open too). The explicit close paths — Esc, ArrowLeft, outside-click, focus leaving on Tab — are unchanged, and a submenu with no keyboard focus still closes on hover-away as before.

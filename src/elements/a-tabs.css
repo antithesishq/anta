@@ -110,38 +110,38 @@
     --tabs-tone-source: #5f4bc3;
     --tab-selected-text: var(--text-1-brand); --tab-text-2: var(--text-2-brand);
     --tab-rest-tone: var(--text-3-brand);
-    --tabs-track-border: var(--border-3-brand); --tab-selected-border: var(--border-2-brand);
+    --tabs-track-border: var(--border-4-brand); --tab-selected-border: var(--border-2-brand);
   }
   a-tabs[tone="info"], a-tab[tone="info"] {
     --tabs-tone-source: #1f6eb2;
     --tab-selected-text: var(--text-1-info); --tab-text-2: var(--text-2-info);
     --tab-rest-tone: var(--text-3-info);
-    --tabs-track-border: var(--border-3-info); --tab-selected-border: var(--border-2-info);
+    --tabs-track-border: var(--border-4-info); --tab-selected-border: var(--border-2-info);
   }
   a-tabs[tone="success"], a-tab[tone="success"] {
     --tabs-tone-source: #2a7e43;
     --tab-selected-text: var(--text-1-success); --tab-text-2: var(--text-2-success);
     --tab-rest-tone: var(--text-3-success);
-    --tabs-track-border: var(--border-3-success); --tab-selected-border: var(--border-2-success);
+    --tabs-track-border: var(--border-4-success); --tab-selected-border: var(--border-2-success);
   }
   a-tabs[tone="warning"], a-tab[tone="warning"] {
     --tabs-tone-source: #c37416;
     --tab-selected-text: var(--text-1-warning); --tab-text-2: var(--text-2-warning);
     --tab-rest-tone: var(--text-3-warning);
-    --tabs-track-border: var(--border-3-warning); --tab-selected-border: var(--border-2-warning);
+    --tabs-track-border: var(--border-4-warning); --tab-selected-border: var(--border-2-warning);
   }
   a-tabs[tone="critical"], a-tab[tone="critical"] {
     --tabs-tone-source: #c9302c;
     --tab-selected-text: var(--text-1-critical); --tab-text-2: var(--text-2-critical);
     --tab-rest-tone: var(--text-3-critical);
-    --tabs-track-border: var(--border-3-critical); --tab-selected-border: var(--border-2-critical);
+    --tabs-track-border: var(--border-4-critical); --tab-selected-border: var(--border-2-critical);
   }
 
   a-tabs[tone]:not([tone=""], [tone="neutral"]),
   a-tab[tone]:not([tone=""], [tone="neutral"]) {
     /* Toned track tint — a touch stronger than the secondary fill (mirroring neutral's 6% vs
        3%), both derived from the tone. The rings ride the toned border tokens set above
-       (--border-3-<tone> track, --border-2-<tone> selected). */
+       (--border-4-<tone> track, --border-2-<tone> selected). */
     --tabs-track-bg: oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.06);
     --tab-secondary-bg: oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.03);
   }

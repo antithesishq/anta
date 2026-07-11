@@ -280,20 +280,26 @@ export const InputDate = ({
     return true
   }
 
-  // The date the calendar shows: while the field holds a live draft, preview it
-  // (jump month + highlight) by parsing the draft; fall back to the committed date
-  // when it doesn't (yet) parse or is out of range. Previewing never commits — the
-  // value only changes on Enter / blur / a calendar pick. `min`/`max` are the memo
-  // deps (not the recreated `minD`/`maxD` objects) so it's stable across keystrokes.
-  const previewISO = useMemo(() => {
+  // Parse the live draft to the date the calendar should preview (jump month + highlight).
+  // Empty text tracks the committed date; a non-empty draft that doesn't (yet) parse or is
+  // out of range yields `null`. Previewing never commits — the value only changes on Enter /
+  // blur / a calendar pick. `min`/`max` are the memo deps (not the recreated `minD`/`maxD`
+  // objects) so it's stable across keystrokes.
+  const parsedPreview = useMemo(() => {
     const t = text.trim()
     if (!t) return dateISO
     const parsed = time
       ? parseDateTimeInput(t, resolvedLocale, { min: minD, max: maxD })
       : parseDateInput(t, resolvedLocale, { min: minD, max: maxD })
-    return parsed ? parsed.toString().slice(0, 10) : dateISO
+    return parsed ? parsed.toString().slice(0, 10) : null
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, time, resolvedLocale, dateISO, min, max])
+
+  // Hold the last resolvable preview so an intermediate unparseable keystroke (e.g. midway
+  // through typing a date in another month) doesn't snap the calendar back to the committed
+  // month and flicker. Only advance when the draft resolves; unparseable keeps the last view.
+  const [previewISO, setPreviewISO] = useState(dateISO)
+  if (parsedPreview !== null && parsedPreview !== previewISO) setPreviewISO(parsedPreview)
 
   // Commit the time row: normalize the hour (with meridiem, auto-converting a
   // 24-hour entry) + minutes, then combine with the date (or today if none is set,

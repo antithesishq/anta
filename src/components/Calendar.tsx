@@ -132,10 +132,18 @@ export const Calendar = ({
   // what lets InputDate preview a typed date's month. A cleared value ('') leaves the
   // view put; uncontrolled calendars never enter here (`value` stays undefined).
   const [lastSyncedValue, setLastSyncedValue] = useState(value)
+  // Resolve the target month synchronously into a local: `setCursor` only *schedules* the
+  // update, so `cursor` stays stale this render — reading it below (for the grid and the
+  // focus request) would capture the previous month if `value` and `focusSignal` both
+  // change in one render. `effectiveCursor` reflects the new value immediately.
+  let effectiveCursor = cursor
   if (value !== lastSyncedValue) {
     setLastSyncedValue(value)
     const d = parseISODate(value)
-    if (d) setCursor(clampDate(d, minD, maxD))
+    if (d) {
+      effectiveCursor = clampDate(d, minD, maxD)
+      setCursor(effectiveCursor)
+    }
   }
   // Focus signal handed to the element after a keyboard move ("<iso>#<nonce>").
   const [focusReq, setFocusReq] = useState<{ iso: string; n: number } | null>(null)
@@ -146,8 +154,8 @@ export const Calendar = ({
   const [jumpOpen, setJumpOpen] = useState(false)
 
   const headingId = useId()
-  const month = buildMonth({ anchor: cursor, locale: resolvedLocale, min: minD, max: maxD, selected, today })
-  const cursorIso = cursor.toString()
+  const month = buildMonth({ anchor: effectiveCursor, locale: resolvedLocale, min: minD, max: maxD, selected, today })
+  const cursorIso = effectiveCursor.toString()
 
   // Focus the cursor day when `focusSignal` changes — an external "step into the
   // grid" request (InputDate bumps it on a keyboard open). React's adjust-state-

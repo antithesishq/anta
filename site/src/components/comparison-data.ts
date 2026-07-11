@@ -83,7 +83,7 @@ export const SYSTEMS: System[] = [
     tagline:
       "Font Awesome's framework-agnostic web components and CSS framework, the commercial successor to Shoelace.",
     kind: 'Styled web components',
-    frameworks: 'Any: web components',
+    frameworks: 'Web components',
     frameworksNote: 'React, Vue, Angular, Svelte guides',
     styling: 'CSS framework + ::part() + CSS variables',
     a11y: 'Good (inherited from Shoelace)',
@@ -109,7 +109,7 @@ export const SYSTEMS: System[] = [
     tagline:
       "Shopify's system for apps that must look native inside Shopify Admin, now shipped as CDN-delivered web components.",
     kind: 'Styled web components (CDN)',
-    frameworks: 'Any: web components',
+    frameworks: 'Web components',
     styling: 'Locked to the Shopify look',
     a11y: 'Strong; dev-time a11y warnings',
     license: 'Restricted (Shopify apps only)',

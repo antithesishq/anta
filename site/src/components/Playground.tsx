@@ -1069,8 +1069,8 @@ function FieldControl({
           disabled={disabled}
           onStateChange={(_e, { next }) => onChange(next === '__none' ? null : next)}
           options={[
-            ...(control.clearable ? [{ value: '__none', label: 'none' }] : []),
-            ...control.options.map((opt) => ({ value: opt, label: opt })),
+            ...(control.clearable ? [{ value: '__none', label: 'none', tooltip: 'none' }] : []),
+            ...control.options.map((opt) => ({ value: opt, label: opt, tooltip: opt })),
           ]}
         />
       )
@@ -1098,8 +1098,8 @@ function FieldControl({
               onChange(next === 'custom' ? (isCustom ? (v as string) : '#ff1493') : next)
             }
             options={[
-              ...control.options.map((opt) => ({ value: opt, label: opt })),
-              { value: 'custom', label: 'custom' },
+              ...control.options.map((opt) => ({ value: opt, label: opt, tooltip: opt })),
+              { value: 'custom', label: 'custom', tooltip: 'custom' },
             ]}
           />
           {isCustom && (

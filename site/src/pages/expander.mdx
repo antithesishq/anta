@@ -10,6 +10,7 @@ import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import expanderDemoCode from './expander.demo.ts'
 import { Expander, Text, Button, Icon, Title } from '@antadesign/anta'
+import { AccordionDemo } from '../components/AccordionDemo'
 
 # Expander
 
@@ -411,6 +412,63 @@ them:
 change. Uncontrolled, call `event.preventDefault()` to veto a toggle (e.g.
 confirm before closing). Controlled, the element never self-applies — apply
 `detail.next` to `open` to accept, or do nothing to reject.
+
+### Accordion
+
+An accordion is the controlled pattern applied to a stack of expanders that share one
+open value: hold the open item's id in state, point each `open` at it, and on
+`onStateChange` set that id (or `null`) — so opening one folds the rest. Wrapping them
+in a `.accordion` lets you square the inner corners and overlap the borders by 1px, so
+the stack reads as one panel.
+
+<Preview direction="column" gap="8px">
+  <AccordionDemo client:load />
+  <style is:inline>{`
+    .accordion { display: flex; flex-direction: column; width: 100%; }
+    .accordion a-expander:not(:first-child) { margin-top: -1px; }
+    .accordion a-expander:first-child { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+    .accordion a-expander:last-child  { border-top-left-radius: 0; border-top-right-radius: 0; }
+    .accordion a-expander:not(:first-child):not(:last-child) { border-radius: 0; }
+  `}</style>
+</Preview>
+
+```tsx folded
+const ITEMS = [
+  { id: 'shipping', title: 'Shipping & delivery', body: '…' },
+  { id: 'returns',  title: 'Returns',             body: '…' },
+  { id: 'warranty', title: 'Warranty',            body: '…' },
+]
+
+function Accordion() {
+  const [openId, setOpenId] = useState('shipping')  // null = all closed
+  return (
+    <div className="accordion">
+      {ITEMS.map((item) => (
+        <Expander
+          key={item.id}
+          title={item.title}
+          open={openId === item.id}
+          onStateChange={(_e, { next }) => setOpenId(next ? item.id : null)}
+        >
+          <Text>{item.body}</Text>
+        </Expander>
+      ))}
+    </div>
+  )
+}
+```
+
+```css folded
+.accordion { display: flex; flex-direction: column; }
+
+/* Overlap adjacent borders so they share one 1px line. */
+.accordion a-expander:not(:first-child) { margin-top: -1px; }
+
+/* Square the inner corners so the stack reads as one panel. */
+.accordion a-expander:first-child { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.accordion a-expander:last-child  { border-top-left-radius: 0; border-top-right-radius: 0; }
+.accordion a-expander:not(:first-child):not(:last-child) { border-radius: 0; }
+```
 
 <Disclosure title="Component props" open>
 

@@ -255,27 +255,51 @@ export const InputDate = ({
   }
 
   // Resolve the field's raw text on commit (blur / Enter): recognize → canonicalize
-  // + commit; empty → clear; unrecognized → mark invalid and keep the text.
-  const resolve = (raw: string) => {
+  // + commit; empty → clear; unrecognized → mark invalid and keep the text. Returns
+  // whether the entry resolved (valid or empty) — Enter uses it to decide whether to
+  // close the menu (an unrecognized entry keeps it open with the error).
+  const resolve = (raw: string): boolean => {
     const t = raw.trim()
     if (!t) {
       setInvalid(false)
       if (current) commit('')
       else setText('')
-      return
+      return true
     }
     const parsed = time
       ? parseDateTimeInput(t, resolvedLocale, { min: minD, max: maxD })
       : parseDateInput(t, resolvedLocale, { min: minD, max: maxD })
     if (!parsed) {
       setInvalid(true)
-      return
+      return false
     }
     const iso = time
       ? (parsed as Temporal.PlainDateTime).toString({ smallestUnit: 'minute' })
       : parsed.toString()
     apply(iso)
+    return true
   }
+
+  // Parse the live draft to the date the calendar should preview (jump month + highlight).
+  // Empty text tracks the committed date; a non-empty draft that doesn't (yet) parse or is
+  // out of range yields `null`. Previewing never commits — the value only changes on Enter /
+  // blur / a calendar pick. `min`/`max` are the memo deps (not the recreated `minD`/`maxD`
+  // objects) so it's stable across keystrokes.
+  const parsedPreview = useMemo(() => {
+    const t = text.trim()
+    if (!t) return dateISO
+    const parsed = time
+      ? parseDateTimeInput(t, resolvedLocale, { min: minD, max: maxD })
+      : parseDateInput(t, resolvedLocale, { min: minD, max: maxD })
+    return parsed ? parsed.toString().slice(0, 10) : null
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, time, resolvedLocale, dateISO, min, max])
+
+  // Hold the last resolvable preview so an intermediate unparseable keystroke (e.g. midway
+  // through typing a date in another month) doesn't snap the calendar back to the committed
+  // month and flicker. Only advance when the draft resolves; unparseable keeps the last view.
+  const [previewISO, setPreviewISO] = useState(dateISO)
+  if (parsedPreview !== null && parsedPreview !== previewISO) setPreviewISO(parsedPreview)
 
   // Commit the time row: normalize the hour (with meridiem, auto-converting a
   // 24-hour entry) + minutes, then combine with the date (or today if none is set,
@@ -325,6 +349,13 @@ export const InputDate = ({
             if (!open) e.currentTarget.click()
             setFocusNonce((n) => n + 1)
           }
+          // Enter commits the typed date (blur's `change` doesn't fire on Enter for a
+          // standalone input). A resolved entry closes the menu; an unrecognized one
+          // keeps it open with the error so the user can fix it or pick a day.
+          if (e.key === 'Enter' && !disabled) {
+            e.preventDefault()
+            if (resolve(e.currentTarget.value)) setOpen(false)
+          }
         }}
         className={cn(styles.dateField, className)}
         style={style}
@@ -338,6 +369,7 @@ export const InputDate = ({
       <Menu
         open={open}
         placement="bottom-start"
+        autoWidth
         className={styles.calendarMenu}
         onStateChange={(_e, { next }) => setOpen(next)}
       >
@@ -346,7 +378,7 @@ export const InputDate = ({
             and the Done button closes it. */}
         <div data-menu-open="">
           <Calendar
-            value={dateISO}
+            value={previewISO}
             min={min}
             max={max}
             locale={locale}

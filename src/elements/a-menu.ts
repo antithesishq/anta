@@ -1045,7 +1045,11 @@ export class AMenuElement extends HTMLElementBase {
         // A root menu is never narrower than its trigger: publish the anchor width
         // so the surface min-width floors to it (see the shadow style's `max()`).
         // Content can still make it wider; it never shrinks below the trigger.
-        surface.style.setProperty('--_anchor-width', `${Math.ceil(a.width)}px`)
+        // `autowidth` opts out — the surface sizes to its content (floored only at
+        // --menu-min-width) for a content menu whose trigger is a wide field (e.g.
+        // InputDate's calendar under a full-width input), rather than stretching to it.
+        if (this.hasAttribute('autowidth')) surface.style.removeProperty('--_anchor-width')
+        else surface.style.setProperty('--_anchor-width', `${Math.ceil(a.width)}px`)
         const p = this.#placement
         const spaceBelow = vh - a.bottom - 2 * MARGIN
         const spaceAbove = a.top - 2 * MARGIN

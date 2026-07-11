@@ -277,7 +277,7 @@ export class ATooltipElement extends HTMLElementBase {
         overflow: clip;
         text-align: left;
         background: var(--tooltip-bg, Canvas);
-        color: var(--text-3, CanvasText);
+        color: var(--text-2, CanvasText);
         box-shadow: var(--tooltip-shadow, 0 1px 8px rgba(0, 0, 0, 0.2));
         -webkit-backdrop-filter: var(--tooltip-backdrop-filter, blur(8px));
         backdrop-filter: var(--tooltip-backdrop-filter, blur(8px));

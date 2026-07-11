@@ -1,5 +1,5 @@
 import { useEffect } from 'preact/hooks'
-import { Tabs, TabPanel, Tooltip, Tag } from '@antadesign/anta'
+import { Tabs, TabPanel, Tag } from '@antadesign/anta'
 
 /**
  * Live demo islands for the Tabs docs page.
@@ -168,8 +168,8 @@ const OVERFLOW_TABS = [
 ] as const
 
 /** Default overflow: a strip wider than its container ellipsizes the labels. Each tab
- *  carries a `truncatedOnly` tooltip (via the option's `children`), so hovering a clipped
- *  tab reveals its full label. */
+ *  sets a `tooltip` (a truncatedOnly Tooltip the component anchors to the tab), so
+ *  hovering a clipped tab reveals its full label. */
 export function Overflow() {
   useElements()
   return (
@@ -177,15 +177,7 @@ export function Overflow() {
       <Tabs
         defaultValue="overview"
         label="Sections"
-        options={OVERFLOW_TABS.map(({ value, label }) => ({
-          value,
-          children: (
-            <>
-              {label}
-              <Tooltip truncatedOnly delay={0}>{label}</Tooltip>
-            </>
-          ),
-        }))}
+        options={OVERFLOW_TABS.map(({ value, label }) => ({ value, label, tooltip: label }))}
       />
     </div>
   )
@@ -246,6 +238,18 @@ export function WrapTabs() {
           { value: 'c', label: 'Product analytics' },
         ]}
       />
+    </div>
+  )
+}
+
+/** Styling: a roomier primary track via plain CSS — `padding` + a matching `border-radius`
+ *  (kept concentric). Two gaps shown: 1px and 3px. */
+export function RoomyTabs() {
+  useElements()
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'flex-start' }}>
+      <Tabs className="roomy-1" defaultValue="a" label="Sections, 1px gap" options={triad} />
+      <Tabs className="roomy-3" defaultValue="a" label="Sections, 3px gap" options={triad} />
     </div>
   )
 }

@@ -25,9 +25,10 @@
     /* `round` on a lone tab rounds just this tab's box; `<Tabs round>` sets it
        strip-wide (incl. the sliding indicator) via a-tabs.css. */
     &[round] { --tab-radius: 999px; }
-    /* Zero-spread transparent baseline so the selected pill's ring (--tab-pill-shadow)
-       animates in (spread 0→0.5px, transparent→colour) instead of popping from `none`. */
-    box-shadow: 0 0 0 0 transparent;
+    /* Inset zero-spread transparent baseline so the selected tab's ring (--tab-selected-shadow,
+       inset) animates in (spread 0→0.5px, transparent→colour) instead of popping from `none`.
+       Inset matches the ring so the transition doesn't flip inset↔outset mid-way. */
+    box-shadow: inset 0 0 0 0 transparent;
 
     font-size: var(--_fs);
     font-family: var(--sans-serif);
@@ -40,14 +41,14 @@
     white-space: nowrap;
     text-wrap: nowrap;
 
-    /* Height = --_lh + 8 — the same as the same-size Button / Input. The block padding is
-       SYMMETRIC and nets +10 around a label box of the full type-scale leading; the optical
-       --_pb nudge for Anta's low-sitting glyphs lives on <a-tab-label> (below), not the tab
-       box — so a sibling <a-icon> stays centered instead of riding high. The label trims its
-       leading by 2px (calc(--_lh − 2), below), which the extra +1px padding per side offsets,
-       so the box matches Button while the label reads a touch tighter; the label stays
-       centered. Mirrors <a-button-label>. */
-    padding-block: var(--tab-padding-y);
+    /* Height is prescribed, not derived: `min-height` = --tab-height (24/28/32), the same
+       scale as Button's min-height, and align-items:center centres the label. Block padding
+       mirrors Button's `(8px − --_pb)/2` — for a single-line label it stays under the
+       min-height floor, so the box is exactly --tab-height (and a strip, also unpadded,
+       matches it at every priority); once a label wraps, it gives the extra lines their
+       vertical breathing room. */
+    min-height: var(--tab-height);
+    padding-block: calc((8px - var(--_pb)) / 2);
     padding-inline: var(--tab-padding-x);
 
     /* The text/icon `color` is INSTANT (not transitioned) — hover/select recolour the

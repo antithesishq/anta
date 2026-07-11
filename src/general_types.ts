@@ -578,6 +578,12 @@ export interface AMenuAttributes extends BaseAttributes {
   round?: boolean | number | string
   /** Gap in pixels between the trigger and the menu. Defaults to 4. */
   offset?: number | string
+  /** Size the menu to its content instead of flooring its width to the trigger.
+   *  By default a root menu is never narrower than its trigger; `autowidth` drops
+   *  that floor (min-width falls back to `--menu-min-width`) for a content menu
+   *  under a wide trigger, e.g. InputDate's calendar below a full-width field.
+   *  Presence-based (`''` on, omit off). */
+  autowidth?: boolean | ''
   /** Controlled open state (`'open'` / `'closed'`). Omit for uncontrolled;
    *  present → visibility follows this value, and the element never writes it
    *  (the consumer owns it). Listen to `statechange` to keep it in sync. See

@@ -7,7 +7,8 @@
 //
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
-import { useState } from '../jsx-runtime'
+import { useState, useMemo } from '../jsx-runtime'
+import { nativeStateChange } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { SelectItem, SelectOption } from './Select'
@@ -186,7 +187,9 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   /** Render your own trigger in place of the default `Button`. Receives a
    *  `SelectFacetedTriggerState`; **return exactly one focusable element** (the
    *  menu anchors to it as its previous sibling and opens it on click). Give it
-   *  `aria-haspopup="menu"` plus `aria-expanded={state.open}`. */
+   *  `aria-haspopup="menu"` plus `aria-expanded={state.open}`. The custom trigger
+   *  owns its own styling — `className` / `style` / other props apply to the
+   *  *default* trigger only, so put your own on the element you return. */
   renderTrigger?: (state: SelectFacetedTriggerState) => React.ReactNode
 }
 
@@ -214,12 +217,14 @@ const leavesOf = (items: SelectItem[]): SelectOption[] => {
 const isEmpty = (v: unknown): boolean =>
   v == null || v === '' || (Array.isArray(v) && v.length === 0)
 
-/** The built-in filter matcher — case-insensitive substring of an option's
- *  value / label / hint (matching `Select`'s default). */
+/** The built-in filter matcher — case-insensitive, with each run of whitespace in
+ *  the query matching any gap (`\s+`), matching `Select`'s default matcher exactly. */
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const defaultMatch = (o: SelectOption, query: string): boolean => {
-  const q = query.trim().toLowerCase()
+  const q = query.trim()
   if (!q) return true
-  return [o.value, o.label, o.hint].some((v) => typeof v === 'string' && v.toLowerCase().includes(q))
+  const re = new RegExp(q.split(/\s+/).map(escapeRe).join('\\s+'), 'i')
+  return [o.value, o.label, o.hint].some((v) => typeof v === 'string' && re.test(v))
 }
 
 /**
@@ -310,11 +315,25 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   // global search, the facet key for a per-facet filter.
   const [activeIds, setActiveIds] = useState<Record<string, string | null>>({})
   const onActive = (key: string) => (e: any) => {
-    const id = ((e.nativeEvent ?? e).detail?.id) ?? null
+    const id = nativeStateChange<{ id: string | null }>(e).detail?.id ?? null
     setActiveIds((s) => (s[key] === id ? s : { ...s, [key]: id }))
   }
 
   const activeCount = facets.reduce((n, f) => n + (isEmpty(current[f.key]) ? 0 : 1), 0)
+
+  // Flatten each options facet's leaves once per `facets` change — visibleLeavesOf,
+  // renderFlatResults, and summaryOf all read this instead of re-running the recursive
+  // leavesOf() on every render / global-search keystroke.
+  const leavesByKey = useMemo(
+    () =>
+      new Map<string, SelectOption[]>(
+        facets.map((f) => [
+          f.key,
+          f.kind === 'single' || f.kind === 'multiple' ? leavesOf(f.options) : [],
+        ]),
+      ),
+    [facets],
+  )
 
   const commit = (next: SelectFacetedValue, attrs: SelectFacetedChangeAttrs) => {
     if (!controlled) setInternal(next)
@@ -335,7 +354,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
 
   // Leaves of an options facet, narrowed by its filter query when `filter` is on.
   const visibleLeavesOf = (facet: SelectFacetSingle | SelectFacetMultiple): SelectOption[] => {
-    const leaves = leavesOf(facet.options)
+    const leaves = leavesByKey.get(facet.key) ?? []
     if (!facet.filter) return leaves
     const q = queries[facet.key] ?? ''
     const match = typeof facet.filter === 'function' ? facet.filter : defaultMatch
@@ -445,7 +464,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
       .filter((f): f is SelectFacetSingle | SelectFacetMultiple => f.kind === 'single' || f.kind === 'multiple')
       .map((facet) => {
         const match = typeof facet.filter === 'function' ? facet.filter : defaultMatch
-        return { facet, matched: leavesOf(facet.options).filter((o) => match(o, rootQuery)) }
+        return { facet, matched: (leavesByKey.get(facet.key) ?? []).filter((o) => match(o, rootQuery)) }
       })
       .filter((g) => g.matched.length > 0)
     return groups.map(({ facet, matched }) => (
@@ -458,7 +477,12 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   const renderText = (facet: SelectFacetText) => {
     const applied = (current[facet.key] as string | undefined) ?? ''
     const draft = drafts[facet.key] ?? applied
-    const apply = () => setFacet(facet, draft.trim() || undefined)
+    // Commit only when the draft actually differs from the committed value, so a
+    // focus/blur with no edit doesn't fire a spurious onValueChange.
+    const apply = () => {
+      const next = draft.trim() || undefined
+      if (next !== (applied || undefined)) setFacet(facet, next)
+    }
     return (
       // `data-menu-open` keeps the menu open through typing; the value commits on
       // Enter / blur, not per keystroke.
@@ -529,7 +553,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
     if (isEmpty(v)) return null
     switch (facet.kind) {
       case 'single': {
-        const opt = leavesOf(facet.options).find((o) => o.value === v)
+        const opt = (leavesByKey.get(facet.key) ?? []).find((o) => o.value === v)
         return opt?.label ?? String(v)
       }
       case 'multiple':

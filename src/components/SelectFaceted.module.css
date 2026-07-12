@@ -8,7 +8,7 @@
   /* Pins the "Clear" action below the scrolling options with a hairline separator,
      so it never scrolls away in a long or filtered list. The 4px inset matches the
      menu scroll body's padding (--menu-padding) so the row lines up with the options
-     above it. */
+     above it. Duplicated in Select.module.css `.footer` — keep the two in sync. */
   padding: var(--menu-padding, 4px);
   border-top: 1px solid var(--border-4);
 }

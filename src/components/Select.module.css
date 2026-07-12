@@ -19,7 +19,8 @@
 }
 
 /* The `clearable` "Clear" row, pinned in the Menu's footer slot: a hairline
-   separator above it and a 4px inset so the row lines up with the options. */
+   separator above it and a 4px inset so the row lines up with the options.
+   Duplicated in SelectFaceted.module.css `.footer` — keep the two in sync. */
 .footer {
   padding: var(--menu-padding, 4px);
   border-top: 1px solid var(--border-4);

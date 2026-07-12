@@ -37,10 +37,6 @@ option model, [Input](/input/), and [Tag](/tag/) — no new element. Controlled 
 
 </Disclosure>
 
-The trigger opens the facet menu; each **active** facet's result renders below as its
-own [Select](/select/) — editable in place, with the facet key piped into the trigger's
-`leading` slot as a prefix.
-
 <Preview background="var(--bg-base)">
   <SelectFacetedBasicDemo client:load />
   <style is:inline>{`
@@ -73,7 +69,14 @@ function Demo() {
   const active = FACETS.filter((f) => isSet(value[f.key]) || f.key === focusedKey)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', width: '100%' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 12,
+      alignItems: 'center',
+      width: '100%',
+    }}>
       <SelectFaceted facets={FACETS} value={value} onValueChange={setValue} searchable />
 
       {active.length > 0 && (
@@ -115,12 +118,27 @@ function Demo() {
               />
             )
           })}
+          {/* Once more than one result is showing, a single control resets them
+              all — pushed to the right of the last chip. */}
+          {active.length > 1 && (
+            <Button
+              priority="tertiary"
+              icon="filter-x"
+              label="Clear all"
+              style={{ marginLeft: 'auto' }}
+              onClick={() => { setFocusedKey(null); setValue({}) }}
+            />
+          )}
         </div>
       )}
     </div>
   )
 }
 ```
+
+The trigger opens the facet menu; each **active** facet's result renders below as its
+own [Select](/select/) — editable in place, with the facet key piped into the trigger's
+`leading` slot as a prefix.
 
 <Disclosure title="Component props" open>
 

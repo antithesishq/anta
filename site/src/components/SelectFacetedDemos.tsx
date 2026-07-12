@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { SelectFaceted, Select, Input } from '@antadesign/anta'
+import { SelectFaceted, Select, Input, Button } from '@antadesign/anta'
 import type { SelectFacet } from '@antadesign/anta'
 
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
@@ -146,6 +146,20 @@ export function SelectFacetedBasicDemo() {
               />
             )
           })}
+          {active.length > 1 && (
+            // Once more than one result is showing, a single control resets them
+            // all — pushed to the right of the last chip.
+            <Button
+              priority="tertiary"
+              icon="filter-x"
+              label="Clear all"
+              style={{ marginLeft: 'auto' }}
+              onClick={() => {
+                setFocusedKey(null)
+                setValue({})
+              }}
+            />
+          )}
         </div>
       )}
     </div>

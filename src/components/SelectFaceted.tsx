@@ -280,6 +280,26 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   const [open, setOpen] = useState(false)
   // Text-facet drafts — the value only commits to `current` on Enter / blur.
   const [drafts, setDrafts] = useState<Record<string, string>>({})
+  // Re-seed a text draft when its committed value changes from OUTSIDE this editor
+  // (cleared elsewhere, controlled update). Adjust-state-during-render, guarded per key
+  // by the last value seen — so active typing (draft diverged, value unchanged) is
+  // never clobbered, but an external change flows into the field.
+  const [seenText, setSeenText] = useState<Record<string, unknown>>({})
+  {
+    let nextSeen: Record<string, unknown> | null = null
+    let nextDrafts = drafts
+    for (const f of facets) {
+      if (f.kind !== 'text') continue
+      if (seenText[f.key] !== current[f.key]) {
+        nextSeen = { ...(nextSeen ?? seenText), [f.key]: current[f.key] }
+        nextDrafts = { ...nextDrafts, [f.key]: (current[f.key] as string) ?? '' }
+      }
+    }
+    if (nextSeen) {
+      setSeenText(nextSeen)
+      setDrafts(nextDrafts)
+    }
+  }
   // Per-facet option-filter queries (for facets with `filter`).
   const [queries, setQueries] = useState<Record<string, string>>({})
   // The global search query (for `searchable`) — resets when the menu closes.

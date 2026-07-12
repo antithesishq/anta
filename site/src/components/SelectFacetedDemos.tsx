@@ -71,7 +71,7 @@ const isSet = (v: unknown) => !(v == null || v === '' || (Array.isArray(v) && v.
 
 export function SelectFacetedBasicDemo() {
   useElements()
-  const [value, setValue] = useState<Record<string, unknown>>({ assignee: ['Alice Nguyen'], status: 'open' })
+  const [value, setValue] = useState<Record<string, unknown>>({ assignee: ['Alice Nguyen'], status: 'open', title: 'crash' })
   const setFacet = (key: string, v: unknown) =>
     setValue((prev) => {
       const next = { ...prev }
@@ -79,7 +79,11 @@ export function SelectFacetedBasicDemo() {
       else delete next[key]
       return next
     })
-  const active = FACETS.filter((f) => isSet(value[f.key]))
+  // Keep a text/custom result chip mounted while it's focused, even if emptied — so
+  // backspacing to empty doesn't yank the field mid-edit (only the Clear button or
+  // blurring an empty field removes it).
+  const [focusedKey, setFocusedKey] = useState<string | null>(null)
+  const active = FACETS.filter((f) => isSet(value[f.key]) || f.key === focusedKey)
   return (
     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '12px', alignItems: 'center', width: '100%' }}>
       <SelectFaceted facets={FACETS} value={value} onValueChange={setValue} searchable />
@@ -111,7 +115,13 @@ export function SelectFacetedBasicDemo() {
                   clearable
                   dimActions
                   className="sf-chip"
+                  onFocus={() => setFocusedKey(facet.key)}
+                  onBlur={() => setFocusedKey(null)}
                   onInput={(e: any) => setFacet(facet.key, e.currentTarget.value || undefined)}
+                  onClearInput={() => {
+                    setFocusedKey(null)
+                    setFacet(facet.key, undefined)
+                  }}
                 />
               )
             // Custom (duration) → an Input editing its `min`.
@@ -123,9 +133,15 @@ export function SelectFacetedBasicDemo() {
                 clearable
                 dimActions
                 className="sf-chip"
+                onFocus={() => setFocusedKey(facet.key)}
+                onBlur={() => setFocusedKey(null)}
                 onInput={(e: any) =>
                   setFacet(facet.key, e.currentTarget.value ? { min: e.currentTarget.value } : undefined)
                 }
+                onClearInput={() => {
+                  setFocusedKey(null)
+                  setFacet(facet.key, undefined)
+                }}
               />
             )
           })}

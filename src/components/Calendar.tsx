@@ -70,8 +70,9 @@ export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> 
  * `<Calendar>` — a single-date month grid you pick a day from, **composed from
  * Anta components in light DOM** (nothing is hidden in a shadow root): days and
  * the prev/next chevrons are `<Button>`s, so they inherit the design system's
- * states for free — a selected day is literally a `secondary` Button in its
- * `selected` state. All date math runs on the Temporal engine
+ * states for free — a selected day is literally a `tertiary` Button in its
+ * `selected` state, toned `brand` so the active date reads in the brand color.
+ * All date math runs on the Temporal engine
  * (`@antadesign/anta` exports `buildMonth` & friends), and the value is an ISO
  * `YYYY-MM-DD` string.
  *
@@ -360,12 +361,13 @@ export const Calendar = ({
         ))}
         {month.weeks.flat().map((d) => {
           // Days are `tertiary` Buttons; the selected one is a tertiary Button in
-          // its `selected` state, and today (when not selected) is a `secondary`
-          // Button — a subtle resting fill that marks it without a custom ring.
+          // its `selected` state toned `brand`, so the active date reads in the
+          // brand color. Today (when not selected) is a `secondary` Button — a
+          // subtle resting fill that marks it without a custom ring.
           const variant =
             d.today && !d.selected
               ? ({ priority: "secondary" } as const)
-              : ({ priority: "tertiary", selected: d.selected } as const)
+              : ({ priority: "tertiary", selected: d.selected, tone: d.selected ? "brand" : undefined } as const)
           return (
             <Button
               key={d.iso}

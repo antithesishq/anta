@@ -169,6 +169,11 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  `leading` slot). With a custom `renderTrigger`, it's passed through as
    *  `state.icon` instead — the consumer places it. */
   icon?: IconShape
+  /** Arbitrary content for the default trigger's leading slot (piped straight to
+   *  `Input`'s `leading`) — e.g. a key prefix before the value. Overrides the
+   *  `icon`-derived glyph when both are set; include your own `<Icon>` if you want
+   *  one alongside. Ignored with a custom `renderTrigger`. */
+  leading?: React.ReactNode
   /** Field label, above the trigger (Input's `label`). */
   label?: string
   /** Helper text under the field (Input's `hint`). */
@@ -408,6 +413,7 @@ export const Select = (props: SelectProps) => {
     onValueChange,
     placeholder,
     icon,
+    leading,
     label,
     hint,
     size,
@@ -722,7 +728,7 @@ export const Select = (props: SelectProps) => {
         readOnly
         dimActions
         disabled={disabled}
-        leading={icon ? <Icon shape={icon} /> : undefined}
+        leading={leading ?? (icon ? <Icon shape={icon} /> : undefined)}
         size={size}
         status={status}
         statusIcon={statusIcon}

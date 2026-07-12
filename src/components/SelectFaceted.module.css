@@ -1,0 +1,14 @@
+.search {
+  /* The global search field, pinned in the menu header. 4px inset matches the
+     scroll body so the field lines up with the rows below it. */
+  padding: var(--menu-padding, 4px);
+}
+
+.footer {
+  /* Pins the "Clear" action below the scrolling options with a hairline separator,
+     so it never scrolls away in a long or filtered list. The 4px inset matches the
+     menu scroll body's padding (--menu-padding) so the row lines up with the options
+     above it. */
+  padding: var(--menu-padding, 4px);
+  border-top: 1px solid var(--border-4);
+}

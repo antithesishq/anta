@@ -121,7 +121,7 @@
     --input-text: var(--text-1);
     --input-label: var(--text-3);
     --input-placeholder: var(--text-4);
-    --input-adornment: var(--text-4);
+    --input-adornment: var(--text-3);
     --input-hint: var(--text-3);
 
     /* `display` is owned by the shadow `:host` (a grid) so consumer CSS can

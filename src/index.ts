@@ -98,6 +98,19 @@ export type {
   SelectedSubmenu,
   SelectedItem,
 } from './components/Select'
+export { SelectFaceted } from './components/SelectFaceted'
+export type {
+  SelectFacetedProps,
+  SelectFacet,
+  SelectFacetSingle,
+  SelectFacetMultiple,
+  SelectFacetText,
+  SelectFacetCustom,
+  SelectFacetCustomContext,
+  SelectFacetedValue,
+  SelectFacetedChangeAttrs,
+  SelectFacetedTriggerState,
+} from './components/SelectFaceted'
 export { Tabs } from './components/Tabs'
 export type { TabsProps, TabOption, TabsChangeAttrs } from './components/Tabs'
 export { TabPanel } from './components/TabPanel'

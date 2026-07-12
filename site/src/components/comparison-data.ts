@@ -22,6 +22,10 @@ export interface System {
   /** Compact label for the matrix column headers, where horizontal space is
    *  tight. Falls back to `name` (used verbatim on the pros/cons cards). */
   short?: string
+  /** Coverage-column width tier: `narrow` (40px), `regular` (60px, the
+   *  default when omitted), or `wide` (reserved). Short-named systems go
+   *  `narrow`; the rest stay `regular`. */
+  width?: 'narrow' | 'regular' | 'wide'
   /** True for Anta; drives the highlight styling in both matrices. */
   anta?: boolean
   /** Package + version string, e.g. "@mui/material 9.2.0". */
@@ -52,6 +56,7 @@ export const SYSTEMS: System[] = [
     id: 'anta',
     name: 'Anta',
     anta: true,
+    width: 'narrow',
     version: '@antadesign/anta 0.3.3',
     docs: 'https://anta.design',
     tagline:
@@ -79,6 +84,7 @@ export const SYSTEMS: System[] = [
     id: 'webawesome',
     name: 'Web Awesome',
     short: 'WA',
+    width: 'narrow',
     version: 'webawesome 3.10.0 (beta)',
     docs: 'https://webawesome.com',
     tagline:
@@ -130,6 +136,7 @@ export const SYSTEMS: System[] = [
     id: 'mui',
     name: 'MUI (Material UI)',
     short: 'MUI',
+    width: 'narrow',
     version: '@mui/material 9.2.0',
     docs: 'https://mui.com/material-ui/',
     tagline:
@@ -155,6 +162,7 @@ export const SYSTEMS: System[] = [
     id: 'antd',
     name: 'Ant Design',
     short: 'Ant',
+    width: 'narrow',
     version: 'antd 6.5.0',
     docs: 'https://ant.design',
     tagline:
@@ -300,9 +308,35 @@ export const SYSTEMS: System[] = [
     ],
   },
   {
+    id: 'gravity',
+    name: 'Gravity UI',
+    short: 'Gravity',
+    version: '@gravity-ui/uikit 7.44.2',
+    docs: 'https://gravity-ui.com',
+    tagline:
+      "Yandex's open-source React design system: a family of @gravity-ui packages with light/dark theming, a Figma library, and Storybook.",
+    kind: 'Styled React components',
+    frameworks: 'React',
+    styling: 'Sass + CSS variables',
+    license: 'MIT',
+    pros: [
+      'Open-sourced from Yandex and proven across its products, with a broad component set in @gravity-ui/uikit.',
+      'A ThemeProvider with built-in light/dark themes, SCSS mixins, and CSS-variable theming.',
+      'A first-party ecosystem of scoped packages: date components, ~740 icons, and charts.',
+      'MIT-licensed, with a Figma library and Storybook alongside the docs.',
+    ],
+    cons: [
+      'React-only, with no web-component or multi-framework path.',
+      'Capabilities split across separate packages (dates, charts), so full coverage adds dependencies.',
+      'The Sass build pipeline adds friction versus plain-CSS or CDN systems.',
+      'A smaller, more Yandex-centric community and docs than the largest incumbents.',
+    ],
+  },
+  {
     id: 'radix',
     name: 'Radix UI',
     short: 'Radix',
+    width: 'narrow',
     version: 'radix-ui 1.6.2',
     docs: 'https://www.radix-ui.com/primitives',
     tagline:
@@ -372,6 +406,31 @@ export const SYSTEMS: System[] = [
       'No automatic upgrades; you re-sync manually when upstream improves.',
       'Code sprawl: dozens of files copied into your repo, and consistency is your problem.',
       'Not a portable dependency you can pin and share; React-first.',
+    ],
+  },
+  {
+    id: 'untitledui',
+    name: 'Untitled UI',
+    short: 'Untitled',
+    version: 'untitledui CLI 0.1.64',
+    docs: 'https://www.untitledui.com/react',
+    tagline:
+      'A large copy-paste React + Tailwind component collection built on React Aria, the code counterpart to the Untitled UI Figma kit.',
+    kind: 'Copy-paste React source',
+    frameworks: 'React',
+    styling: 'Tailwind CSS + React Aria',
+    license: 'MIT core + paid Pro tier',
+    pros: [
+      'A broad component set on React Aria behavior and accessibility, added by CLI into your repo so you own the code with no runtime dependency.',
+      'Tailwind v4 styling with a synced Figma kit, so design and code stay close.',
+      'The free tier is genuinely MIT and covers most base components; charts (Recharts) and toasts (Sonner) come wired.',
+      'No version-lock upgrade treadmill for the copied component code.',
+    ],
+    cons: [
+      'Requires Tailwind and React 19, so not usable as-is without them.',
+      'React-only, with no web-component or multi-framework path.',
+      'The full page/app examples, extra icon styles, and Figma kit sit behind paid Pro tiers ($349–$8,999).',
+      'Copy-paste sprawl: components land in your repo and consistency plus upgrades are your problem.',
     ],
   },
 ]
@@ -505,6 +564,20 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
     nav: 'yes', icons: 'partial', charts: 'yes',
+  },
+  untitledui: {
+    button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
+    choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
+    tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'partial',
+    table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'partial',
+    nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes',
+  },
+  gravity: {
+    button: 'yes', textinput: 'yes', select: 'yes', combobox: 'partial',
+    choice: 'yes', slider: 'yes', datetime: 'partial', tabs: 'yes', menu: 'yes',
+    tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
+    table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
+    nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial',
   },
 }
 
@@ -780,5 +853,50 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     card: 'https://ui.shadcn.com/docs/components/card',
     nav: 'https://ui.shadcn.com/docs/components/breadcrumb',
     charts: 'https://ui.shadcn.com/charts',
+  },
+  untitledui: {
+    button: 'https://www.untitledui.com/react/components/buttons',
+    textinput: 'https://www.untitledui.com/react/components/inputs',
+    select: 'https://www.untitledui.com/react/components/select',
+    combobox: 'https://www.untitledui.com/react/components/select',
+    choice: 'https://www.untitledui.com/react/components/checkboxes',
+    slider: 'https://www.untitledui.com/react/components/sliders',
+    datetime: 'https://www.untitledui.com/react/components/date-pickers',
+    tabs: 'https://www.untitledui.com/react/components/tabs',
+    menu: 'https://www.untitledui.com/react/components/dropdowns',
+    tooltip: 'https://www.untitledui.com/react/components/tooltips',
+    dialog: 'https://www.untitledui.com/react/components/modals',
+    toast: 'https://www.untitledui.com/react/components/notifications',
+    table: 'https://www.untitledui.com/react/components/tables',
+    tag: 'https://www.untitledui.com/react/components/tags',
+    progress: 'https://www.untitledui.com/react/components/progress-indicators',
+    avatar: 'https://www.untitledui.com/react/components/avatars',
+    nav: 'https://www.untitledui.com/react/components/breadcrumbs',
+    icons: 'https://www.untitledui.com/react/docs/icons',
+    typography: 'https://www.untitledui.com/react/docs/typography',
+    charts: 'https://www.untitledui.com/react/components/line-bar-charts',
+  },
+  gravity: {
+    button: 'https://gravity-ui.com/components/uikit/button',
+    textinput: 'https://gravity-ui.com/components/uikit/text-input',
+    select: 'https://gravity-ui.com/components/uikit/select',
+    combobox: 'https://gravity-ui.com/components/uikit/select',
+    choice: 'https://gravity-ui.com/components/uikit/checkbox',
+    slider: 'https://gravity-ui.com/components/uikit/slider',
+    datetime: 'https://gravity-ui.com/components/date-components/date-picker',
+    tabs: 'https://gravity-ui.com/components/uikit/tabs',
+    menu: 'https://gravity-ui.com/components/uikit/dropdown-menu',
+    tooltip: 'https://gravity-ui.com/components/uikit/tooltip',
+    dialog: 'https://gravity-ui.com/components/uikit/modal',
+    toast: 'https://gravity-ui.com/components/uikit/toaster',
+    accordion: 'https://gravity-ui.com/components/uikit/disclosure',
+    table: 'https://gravity-ui.com/components/uikit/table',
+    tag: 'https://gravity-ui.com/components/uikit/label',
+    progress: 'https://gravity-ui.com/components/uikit/progress',
+    avatar: 'https://gravity-ui.com/components/uikit/avatar',
+    card: 'https://gravity-ui.com/components/uikit/card',
+    nav: 'https://gravity-ui.com/components/uikit/breadcrumbs',
+    icons: 'https://gravity-ui.com/components/uikit/icon',
+    typography: 'https://gravity-ui.com/components/uikit/text',
   },
 }

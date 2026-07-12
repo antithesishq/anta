@@ -1,8 +1,8 @@
 ---
 // At-a-glance matrix for the /comparison page: one row per system, columns
-// for the facts that decide adoption (shape, frameworks, styling,
-// license). The Anta row is highlighted. Full-bleed + horizontal scroll
-// so the wide table never forces the page body to scroll sideways.
+// for the facts that decide adoption (frameworks, styling, license). The
+// Anta row is highlighted. Full-bleed + horizontal scroll so the wide table
+// never forces the page body to scroll sideways.
 import { SYSTEMS } from './comparison-data'
 ---
 
@@ -11,7 +11,6 @@ import { SYSTEMS } from './comparison-data'
     <thead>
       <tr>
         <th scope="col" class="sys-col">System</th>
-        <th scope="col">Shape</th>
         <th scope="col">Frameworks</th>
         <th scope="col">Styling</th>
         <th scope="col">License</th>
@@ -24,7 +23,6 @@ import { SYSTEMS } from './comparison-data'
             <a href={s.docs} target="_blank" rel="noopener" class="sys-name">{s.short ?? s.name}</a>
             <span class="sys-ver">{s.version}</span>
           </th>
-          <td>{s.kind}</td>
           <td>
             {s.frameworks}
             {s.frameworksNote && <span class="fw-note">({s.frameworksNote})</span>}
@@ -47,7 +45,7 @@ import { SYSTEMS } from './comparison-data'
     border-collapse: separate;
     border-spacing: 0;
     width: 100%;
-    min-width: 860px;
+    min-width: 720px;
     font-size: 13px;
     line-height: 1.4;
   }

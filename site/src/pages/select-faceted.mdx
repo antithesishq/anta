@@ -60,38 +60,57 @@ const FACETS = [
   { key: 'duration', label: 'Min duration', kind: 'custom', summary: (v) => `≥ ${v.min}s`, render: /* … */ },
 ]
 
+const isSet = (v) => !(v == null || v === '' || (Array.isArray(v) && v.length === 0))
+
 function Demo() {
   const [value, setValue] = useState({ assignee: ['Alice Nguyen'], status: 'open' })
-  const active = FACETS.filter((f) => isSet(value[f.key]))
-  const setFacet = (key, v) => setValue((p) => (isSet(v) ? { ...p, [key]: v } : omit(p, key)))
+  const setFacet = (key, v) =>
+    setValue((p) => (isSet(v) ? { ...p, [key]: v } : (({ [key]: _, ...rest }) => rest)(p)))
+
+  // Keep a text/custom chip mounted while it's focused, even when emptied — so
+  // backspacing to empty doesn't yank the field (only Clear or blur-when-empty does).
+  const [focusedKey, setFocusedKey] = useState(null)
+  const active = FACETS.filter((f) => isSet(value[f.key]) || f.key === focusedKey)
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
       <SelectFaceted facets={FACETS} value={value} onValueChange={setValue} searchable />
 
-      {/* Each result is its own control, the facet key piped into `leading`:
-          options facets → a Select, free-form / custom facets → an Input. */}
-      {active.map((facet) =>
-        facet.kind === 'single' || facet.kind === 'multiple' ? (
-          <Select
-            key={facet.key}
-            selection={facet.kind}
-            options={facet.options}
-            value={value[facet.key]}
-            onValueChange={(v) => setFacet(facet.key, v)}
-            leading={`${facet.label}:`}
-          />
-        ) : (
+      {/* Each result is its own control, the facet key piped into `leading`. */}
+      {active.map((facet) => {
+        // Options facets → an editable Select (filterable + clearable footer).
+        if (facet.kind === 'single' || facet.kind === 'multiple')
+          return (
+            <Select
+              key={facet.key}
+              selection={facet.kind}
+              options={facet.options}
+              value={value[facet.key]}
+              onValueChange={(v) => setFacet(facet.key, v)}
+              leading={`${facet.label}:`}
+              filter={facet.filter}
+              clearable
+            />
+          )
+
+        // Free-form text / custom → an editable Input.
+        const val = facet.kind === 'text' ? value[facet.key] : value[facet.key]?.min
+        const write = (raw) =>
+          setFacet(facet.key, facet.kind === 'text' ? raw || undefined : raw ? { min: raw } : undefined)
+        return (
           <Input
             key={facet.key}
-            value={facet.kind === 'text' ? value[facet.key] : value[facet.key].min}
+            value={val ?? ''}
             leading={`${facet.label}:`}
             clearable
             dimActions
-            onInput={(e) => setFacet(facet.key, /* text → string, custom → { min } */ e.currentTarget.value)}
+            onFocus={() => setFocusedKey(facet.key)}
+            onBlur={() => setFocusedKey(null)}
+            onInput={(e) => write(e.currentTarget.value)}
+            onClearInput={() => { setFocusedKey(null); setFacet(facet.key, undefined) }}
           />
-        ),
-      )}
+        )
+      })}
     </div>
   )
 }

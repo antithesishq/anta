@@ -5,7 +5,7 @@
 // job (see comparison-data.ts). Anta's column is highlighted; the category
 // column and the header row are sticky so the wide grid stays legible while
 // it scrolls horizontally.
-import { SYSTEMS, CATEGORIES, COVERAGE, type Mark } from './comparison-data'
+import { SYSTEMS, CATEGORIES, COVERAGE, COVERAGE_URLS, type Mark } from './comparison-data'
 
 const MARK: Record<Mark | 'none', { glyph: string; label: string; cls: string }> = {
   yes: { glyph: '✓', label: 'Included', cls: 'm-yes' },
@@ -14,9 +14,6 @@ const MARK: Record<Mark | 'none', { glyph: string; label: string; cls: string }>
   no: { glyph: '·', label: 'Not shipped', cls: 'm-no' },
   none: { glyph: '·', label: 'Not shipped', cls: 'm-no' },
 }
-
-const cell = (systemId: string, catId: string) =>
-  MARK[COVERAGE[systemId]?.[catId] ?? 'none']
 
 // Category → Anta's own component doc page, for the row-label link. Only
 // categories Anta ships a page for; the rest render as plain, unlinked labels.
@@ -35,7 +32,7 @@ const ANTA_SLUG: Record<string, string> = {
         <th scope="col" class="cat-col">Component</th>
         {SYSTEMS.map((s) => (
           <th scope="col" class:list={['sys-head', { anta: s.anta }]}>
-            <a href={s.docs} target="_blank" rel="noopener" class="sys-head-label">{s.name}</a>
+            <a href={s.docs} target="_blank" rel="noopener" class="sys-head-label">{s.short ?? s.name}</a>
           </th>
         ))}
       </tr>
@@ -50,11 +47,35 @@ const ANTA_SLUG: Record<string, string> = {
             <span class="cat-members">{c.members}</span>
           </th>
           {SYSTEMS.map((s) => {
-            const m = cell(s.id, c.id)
+            const raw = COVERAGE[s.id]?.[c.id]
+            const m = MARK[raw ?? 'none']
+            // Link a shipped cell to that system's doc page for the job: Anta
+            // to our own component page (internal), peers to their external
+            // docs. A shipped cell with no known page stays an unlinked glyph.
+            const href =
+              raw && raw !== 'no'
+                ? s.anta
+                  ? ANTA_SLUG[c.id] ? `/${ANTA_SLUG[c.id]}` : undefined
+                  : COVERAGE_URLS[s.id]?.[c.id]
+                : undefined
+            const title = `${s.name} — ${c.label}: ${m.label}`
             return (
-              <td class:list={['mark', m.cls, { anta: s.anta }]} title={`${s.name} — ${c.label}: ${m.label}`}>
-                <span aria-hidden="true">{m.glyph}</span>
+              <td class:list={['mark', m.cls, { anta: s.anta }]}>
+                {href ? (
+                  <a
+                    href={href}
+                    class="mark-link"
+                    target={s.anta ? undefined : '_blank'}
+                    rel={s.anta ? undefined : 'noopener'}
+                    aria-label={`${title} — open docs`}
+                  >
+                    <span aria-hidden="true">{m.glyph}</span>
+                  </a>
+                ) : (
+                  <span aria-hidden="true">{m.glyph}</span>
+                )}
                 <span class="sr-only">{m.label}</span>
+                <a-tooltip class="mark-tip">{title}</a-tooltip>
               </td>
             )
           })}
@@ -64,16 +85,13 @@ const ANTA_SLUG: Record<string, string> = {
   </table>
 </div>
 
-<p class="cov-legend">
-  <span><b class="m-yes">✓</b> included</span>
-  <span><b class="m-partial">~</b> basic / community-only</span>
-  <span><b class="m-paid">$</b> paid tier</span>
-  <span><b class="m-no">·</b> not shipped</span>
-</p>
-
 <style>
+  /* Scroll the matrix inside a bounded box (both axes) so the sticky header
+     row and category column pin to the box edges while you scroll — the whole
+     grid stays legible without either running off-screen. */
   .cov-scroll {
-    overflow-x: auto;
+    overflow: auto;
+    max-height: 75vh;
     margin-block: 24px 8px;
   }
 
@@ -156,13 +174,35 @@ const ANTA_SLUG: Record<string, string> = {
   .m-paid { color: var(--text-2-info); }
   .m-no { color: var(--text-5); font-weight: 400; }
 
-  /* Anta column highlight — header + every cell down the column. */
+  /* The glyph is a link to that system's doc page for the component. Inherit
+     the mark's color (set on the cell above) so linking doesn't recolor it;
+     the whole cell reads as clickable, underline on hover/focus. */
+  .mark-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+  .mark-link:hover,
+  .mark-link:focus-visible {
+    text-decoration: underline;
+  }
+
+  /* Anta's column is no longer tinted by default — only its header name keeps
+     the brand color as a light identity cue. It highlights on hover like any
+     other column. */
   .cov thead .sys-head.anta {
     color: var(--text-1-brand);
-    background: var(--bg-5-brand);
   }
-  .cov td.mark.anta {
-    background: var(--bg-5-brand);
+
+  /* Cross-highlight the hovered cell's row and column. The script toggles
+     `row-hl` on the row and `col-hl` on every cell down the column; these
+     selectors sit after the base cell backgrounds so they win on the sticky
+     header / category cells too (equal specificity, later in source). */
+  .cov tr.row-hl > th,
+  .cov tr.row-hl > td,
+  .cov th.col-hl,
+  .cov td.col-hl {
+    background: var(--bg-4);
   }
 
   .sr-only {
@@ -176,17 +216,35 @@ const ANTA_SLUG: Record<string, string> = {
     white-space: nowrap;
     border: 0;
   }
-
-  .cov-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    font-size: 12px;
-    color: var(--text-3);
-    margin-block: 4px 0;
-  }
-  .cov-legend b {
-    font-weight: 700;
-    margin-right: 3px;
-  }
 </style>
+
+<script>
+  // Cross-highlight the hovered cell's row and column. Plain class toggling on
+  // an in-DOM table (this docs component isn't worker-rendered), driven by
+  // delegated pointer events so it costs nothing until the pointer enters.
+  // `cellIndex` / `rows` / `cells` are native table APIs; the header cell in
+  // each column is included, so hovering also tints the system name on top.
+  for (const table of document.querySelectorAll<HTMLTableElement>('table.cov')) {
+    let col = -1
+    let row: HTMLTableRowElement | null = null
+    const clear = () => {
+      for (const el of table.querySelectorAll('.col-hl')) el.classList.remove('col-hl')
+      row?.classList.remove('row-hl')
+      col = -1
+      row = null
+    }
+    table.addEventListener('mouseover', (e) => {
+      const cell = (e.target as Element).closest('th, td')
+      if (!cell || !table.contains(cell)) return
+      const nextCol = (cell as HTMLTableCellElement).cellIndex
+      const nextRow = cell.parentElement as HTMLTableRowElement
+      if (nextCol === col && nextRow === row) return
+      clear()
+      col = nextCol
+      row = nextRow
+      for (const r of table.rows) r.cells[col]?.classList.add('col-hl')
+      row.classList.add('row-hl')
+    })
+    table.addEventListener('mouseleave', clear)
+  }
+</script>

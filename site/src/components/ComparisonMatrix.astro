@@ -21,7 +21,7 @@ import { SYSTEMS } from './comparison-data'
       {SYSTEMS.map((s) => (
         <tr class:list={[{ anta: s.anta }]}>
           <th scope="row" class="sys-col">
-            <a href={s.docs} target="_blank" rel="noopener" class="sys-name">{s.name}</a>
+            <a href={s.docs} target="_blank" rel="noopener" class="sys-name">{s.short ?? s.name}</a>
             <span class="sys-ver">{s.version}</span>
           </th>
           <td>{s.kind}</td>

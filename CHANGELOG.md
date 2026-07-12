@@ -13,6 +13,7 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 - **`TabOption.tooltip`** — a per-tab tooltip (string or node) shown **only when the tab's label is truncated** (tabs ellipsize when the strip overflows), so a clipped tab reveals its full text on hover. Rendered as a `truncatedOnly` `<Tooltip>` the component anchors to the tab; mirrors `SelectOption.tooltip`. For an always-visible tooltip or custom trigger content, keep using `children` with your own `<Tooltip>`.
 
 ### Fixed
+- **`MenuItem` radio dot re-centered.** A `MenuItem` with `selectionIndicator="radio"` rendered its selected dot pinned to the top edge of the ring instead of the centre: the menu's label-less centering zeroed the standalone `margin-block-start` on both the ring (`::before`) and the dot (`::after`), which discarded the offset that keeps the smaller dot concentric with the ring. The dot now keeps a `(control − dot) / 2` offset so it sits centred in the ring (checkbox rows were unaffected — their glyph is box-sized and stacks on the box).
 - **`InputDate` — typing drives the calendar, and `Enter` commits + closes.** As you type a recognized date the calendar previews it (jumps to that month and highlights the day) without committing; `Enter` commits the typed date and closes the calendar. An unrecognized entry keeps the calendar open and marks the field `critical`. Previously the calendar updated only on blur, and `Enter` did nothing (a standalone input's `change` fires on blur, not Enter).
 
 ### Changed

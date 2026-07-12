@@ -17,3 +17,10 @@
      the gap to the first row comes from the scroll body's top padding. */
   padding: 4px 4px 0;
 }
+
+/* The `clearable` "Clear" row, pinned in the Menu's footer slot: a hairline
+   separator above it and a 4px inset so the row lines up with the options. */
+.footer {
+  padding: var(--menu-padding, 4px);
+  border-top: 1px solid var(--border-4);
+}

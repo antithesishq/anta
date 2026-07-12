@@ -209,6 +209,13 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
   /** Label for the `selectAll` row.
    *  @defaultValue Select all */
   selectAllLabel?: string
+  /** Add a "Clear" row pinned in the menu **footer** that empties the selection
+   *  (single → none, multiple → `[]`). Shown only while something is selected, so
+   *  it never scrolls away in a long or filtered list. */
+  clearable?: boolean
+  /** Label for the `clearable` footer row.
+   *  @defaultValue Clear */
+  clearLabel?: string
   /** Render the **content** of each option row yourself, replacing the built-in
    *  `label`/`hint`/`icon` layout. Select still supplies the row box, click, ARIA,
    *  and the selection indicator — you return only what goes *inside*. Read extra
@@ -425,6 +432,8 @@ export const Select = (props: SelectProps) => {
     filter,
     selectAll,
     selectAllLabel = 'Select all',
+    clearable,
+    clearLabel = 'Clear',
     renderOption,
     renderIndicator,
     renderTrigger,
@@ -599,6 +608,12 @@ export const Select = (props: SelectProps) => {
     const next = allSelected ? keep : [...keep, ...enabledValues]
     if (!controlled) setInternal(next)
     emit?.(next, { all: true, selected: !allSelected })
+  }
+  // Footer "Clear": empty the selection (single → '', multiple → []).
+  const clear = () => {
+    const next: string | string[] = multiple ? [] : ''
+    if (!controlled) setInternal(next)
+    emit?.(next, { all: true, selected: false })
   }
 
   // One option row. `disabled` is the leaf's *effective* disabled (cascaded).
@@ -815,6 +830,12 @@ export const Select = (props: SelectProps) => {
           : flattening
             ? renderFlat()
             : renderTree(options, false)}
+        {clearable && selectedValues.length > 0 && (
+          // Pinned in the footer so it never scrolls away in a long / filtered list.
+          <div slot="footer" className={styles.footer}>
+            <MenuItem icon="x" label={clearLabel} data-menu-open="" onSelect={clear} />
+          </div>
+        )}
       </Menu>
     </>
   )

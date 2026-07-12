@@ -46,7 +46,7 @@ own [Select](/select/) — editable in place, with the facet key piped into the 
   <style is:inline>{`
     /* Result chips size to their value (field-sizing) and cap at a max-width,
        ellipsizing past it — the .sf-chip class is only for this demo. */
-    .sf-chip { width: fit-content; max-width: 220px; }
+    .sf-chip { width: fit-content; max-width: 240px; }
     .sf-chip::part(input) { field-sizing: content; text-overflow: ellipsis; }
   `}</style>
 </Preview>
@@ -87,6 +87,7 @@ function Demo() {
             value={facet.kind === 'text' ? value[facet.key] : value[facet.key].min}
             leading={`${facet.label}:`}
             clearable
+            dimActions
             onInput={(e) => setFacet(facet.key, /* text → string, custom → { min } */ e.currentTarget.value)}
           />
         ),

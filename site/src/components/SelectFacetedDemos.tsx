@@ -96,6 +96,8 @@ export function SelectFacetedBasicDemo() {
                   value={value[facet.key] as any}
                   onValueChange={(v: any) => setFacet(facet.key, v)}
                   leading={`${facet.label}:`}
+                  filter={facet.filter}
+                  clearable
                   className="sf-chip"
                 />
               )
@@ -107,6 +109,7 @@ export function SelectFacetedBasicDemo() {
                   value={(value[facet.key] as string) ?? ''}
                   leading={`${facet.label}:`}
                   clearable
+                  dimActions
                   className="sf-chip"
                   onInput={(e: any) => setFacet(facet.key, e.currentTarget.value || undefined)}
                 />
@@ -118,6 +121,7 @@ export function SelectFacetedBasicDemo() {
                 value={((value[facet.key] as any)?.min ?? '') as string}
                 leading={`${facet.label}:`}
                 clearable
+                dimActions
                 className="sf-chip"
                 onInput={(e: any) =>
                   setFacet(facet.key, e.currentTarget.value ? { min: e.currentTarget.value } : undefined)

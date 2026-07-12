@@ -139,6 +139,17 @@
     pointer-events: none;
   }
 
+  /* The standalone checkbox / radio offsets its box (::before) + glyph (::after) with a
+     margin-block-start to sit on a label's first-line centre (see a-checkbox.css /
+     a-radio.css). In a menu the mark is label-less and the row centres it, so that
+     compensation drops it a touch low — zero it to keep the mark on the row's centre. */
+  a-menu-item > a-checkbox::before,
+  a-menu-item > a-checkbox::after,
+  a-menu-item > a-radio::before,
+  a-menu-item > a-radio::after {
+    margin-block-start: 0;
+  }
+
   /* A leading mark (icon, checkbox, radio, or a custom `[data-indicator]`) reads
      better with the left padding pulled in to equal the vertical padding, so the mark
      hugs the corner symmetrically instead of floating in the wider inline inset. */

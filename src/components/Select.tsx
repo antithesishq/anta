@@ -124,8 +124,10 @@ export interface TriggerState {
 
 /** Snapshot passed as the 2nd argument to `onValueChange` — describes *what*
  *  changed, alongside the new full value in the 1st argument. A discriminated
- *  union: a row toggle carries `value` + `option`; the "Select all" row carries
- *  `all: true` instead. Narrow on `'all' in attrs` before reading `option`. */
+ *  union: a row toggle carries `value` + `option`; a bulk change (the "Select all"
+ *  row, or the `clearable` "Clear" footer) carries `all: true` instead. **Always
+ *  narrow on `'all' in attrs` before reading `option`** — the `all` variant fires
+ *  for single-select too (via `clearable`), not just multiple. */
 export type SelectChangeAttrs =
   | {
       /** The option value that changed — the chosen value (single) or the toggled
@@ -137,9 +139,11 @@ export type SelectChangeAttrs =
       selected?: boolean
     }
   | {
-      /** Marks the change as coming from the "Select all" row (multiple only). */
+      /** Marks the change as a bulk one with no single `option`: the "Select all"
+       *  row (multiple), or the `clearable` "Clear" footer (single or multiple). */
       all: true
-      /** Whether Select-all turned everything **on** (true) or cleared it. */
+      /** Whether the bulk change turned everything **on** (true) or cleared it
+       *  (false — always false for a "Clear"). */
       selected: boolean
     }
 
@@ -169,6 +173,11 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  `leading` slot). With a custom `renderTrigger`, it's passed through as
    *  `state.icon` instead — the consumer places it. */
   icon?: IconShape
+  /** Arbitrary content for the default trigger's leading slot (piped straight to
+   *  `Input`'s `leading`) — e.g. a key prefix before the value. Overrides the
+   *  `icon`-derived glyph when both are set; include your own `<Icon>` if you want
+   *  one alongside. Ignored with a custom `renderTrigger`. */
+  leading?: React.ReactNode
   /** Field label, above the trigger (Input's `label`). */
   label?: string
   /** Helper text under the field (Input's `hint`). */
@@ -204,6 +213,13 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
   /** Label for the `selectAll` row.
    *  @defaultValue Select all */
   selectAllLabel?: string
+  /** Add a "Clear" row pinned in the menu **footer** that empties the selection
+   *  (single → none, multiple → `[]`). Shown only while something is selected, so
+   *  it never scrolls away in a long or filtered list. */
+  clearable?: boolean
+  /** Label for the `clearable` footer row.
+   *  @defaultValue Clear */
+  clearLabel?: string
   /** Render the **content** of each option row yourself, replacing the built-in
    *  `label`/`hint`/`icon` layout. Select still supplies the row box, click, ARIA,
    *  and the selection indicator — you return only what goes *inside*. Read extra
@@ -224,8 +240,10 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  the menu anchors to it (its own previous DOM sibling) and opens it on click,
    *  so a fragment, multiple siblings, or a non-focusable wrapper will misanchor
    *  (the menu warns in the console if the trigger has no focusable element). Give
-   *  the element `aria-haspopup="menu"` plus `aria-expanded={state.open}`. The field
-   *  props (`label`, `hint`, `size`, `status`, `placeholder`, `round`) don't apply. */
+   *  the element `aria-haspopup="menu"` plus `aria-expanded={state.open}`. The custom
+   *  trigger owns its own styling: the field props (`label`, `hint`, `size`, `status`,
+   *  `placeholder`, `round`) and `className` / `style` apply to the *default* trigger
+   *  only — put your own on the element you return. */
   renderTrigger?: (state: TriggerState) => React.ReactNode
   /** Render content in the menu body when the (filtered) option list is empty —
    *  a "no results" message, a loading indicator (gated on your own external
@@ -408,6 +426,7 @@ export const Select = (props: SelectProps) => {
     onValueChange,
     placeholder,
     icon,
+    leading,
     label,
     hint,
     size,
@@ -419,6 +438,8 @@ export const Select = (props: SelectProps) => {
     filter,
     selectAll,
     selectAllLabel = 'Select all',
+    clearable,
+    clearLabel = 'Clear',
     renderOption,
     renderIndicator,
     renderTrigger,
@@ -594,6 +615,14 @@ export const Select = (props: SelectProps) => {
     if (!controlled) setInternal(next)
     emit?.(next, { all: true, selected: !allSelected })
   }
+  // Footer "Clear": empty the selection (single → undefined, multiple → []). Single
+  // must clear to `undefined`, not '': `selectedValues` treats '' as a present pick,
+  // which would keep the footer's Clear row visible with nothing to clear.
+  const clear = () => {
+    const next = multiple ? [] : undefined
+    if (!controlled) setInternal(next)
+    emit?.(next as string | string[], { all: true, selected: false })
+  }
 
   // One option row. `disabled` is the leaf's *effective* disabled (cascaded).
   const renderOptionRow = (o: SelectOption, disabled: boolean) => {
@@ -722,7 +751,7 @@ export const Select = (props: SelectProps) => {
         readOnly
         dimActions
         disabled={disabled}
-        leading={icon ? <Icon shape={icon} /> : undefined}
+        leading={leading ?? (icon ? <Icon shape={icon} /> : undefined)}
         size={size}
         status={status}
         statusIcon={statusIcon}
@@ -809,6 +838,12 @@ export const Select = (props: SelectProps) => {
           : flattening
             ? renderFlat()
             : renderTree(options, false)}
+        {clearable && selectedValues.length > 0 && (
+          // Pinned in the footer so it never scrolls away in a long / filtered list.
+          <div slot="footer" className={styles.footer}>
+            <MenuItem icon="x" label={clearLabel} data-menu-open="" onSelect={clear} />
+          </div>
+        )}
       </Menu>
     </>
   )

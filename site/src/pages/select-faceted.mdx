@@ -1,0 +1,129 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Faceted select
+---
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import selectFacetedDemoCode from './select-faceted.demo.ts'
+import { SelectFacetedBasicDemo } from '../components/SelectFacetedDemos'
+
+# Faceted select
+
+A faceted filter: one trigger opens a menu of **facets** (dimensions), each a
+submenu flyout with its own editor. The value is a `Record<facetKey, value>`, so
+the same option value under two facets — assignee "Alice" and owner "Alice" —
+stays distinct. Each facet declares a `kind`: `single`, `multiple`, `text`
+(free-form substring, applied on Enter / blur), or `custom` (bring your own
+editor and value, including an object).
+
+It's a **composed component** built from [Menu](/menu/), [Select](/select/)'s
+option model, [Input](/input/), and [Tag](/tag/) — no new element. Controlled via
+`value`, uncontrolled via `defaultValue`; changes arrive through one
+**`onValueChange`**.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="SelectFaceted"
+  layout="side"
+  panelHeight={440}
+  initialCode={selectFacetedDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; justify-content: flex-start; align-items: flex-start; padding: 24px; }`}
+/>
+
+</Disclosure>
+
+The trigger opens the facet menu; each **active** facet's result renders below as its
+own [Select](/select/) — editable in place, with the facet key piped into the trigger's
+`leading` slot as a prefix.
+
+<Preview background="var(--bg-base)">
+  <SelectFacetedBasicDemo client:load />
+  <style is:inline>{`
+    /* Result chips size to their value (field-sizing) and cap at a max-width,
+       ellipsizing past it — the .sf-chip class is only for this demo. */
+    .sf-chip { width: fit-content; max-width: 240px; }
+    .sf-chip::part(input) { field-sizing: content; text-overflow: ellipsis; }
+  `}</style>
+</Preview>
+
+```tsx folded
+const FACETS = [
+  { key: 'assignee', label: 'Assignee', kind: 'multiple', filter: true, options: people },
+  { key: 'owner',    label: 'Owner',    kind: 'single',   filter: true, options: people },
+  { key: 'status',   label: 'Status',   kind: 'single',   options: [{ value: 'open', label: 'Open' }, /* … */] },
+  { key: 'title',    label: 'Title contains', kind: 'text' },
+  { key: 'duration', label: 'Min duration', kind: 'custom', summary: (v) => `≥ ${v.min}s`, render: /* … */ },
+]
+
+const isSet = (v) => !(v == null || v === '' || (Array.isArray(v) && v.length === 0))
+
+function Demo() {
+  const [value, setValue] = useState({ assignee: ['Alice Nguyen'], status: 'open', title: 'crash' })
+  const setFacet = (key, v) =>
+    setValue((p) => (isSet(v) ? { ...p, [key]: v } : (({ [key]: _, ...rest }) => rest)(p)))
+
+  // Keep a text/custom chip mounted while it's focused, even when emptied — so
+  // backspacing to empty doesn't yank the field (only Clear or blur-when-empty does).
+  const [focusedKey, setFocusedKey] = useState(null)
+  const active = FACETS.filter((f) => isSet(value[f.key]) || f.key === focusedKey)
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', width: '100%' }}>
+      <SelectFaceted facets={FACETS} value={value} onValueChange={setValue} searchable />
+
+      {active.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+          {/* Each active facet's result is its own control, the key piped into `leading`. */}
+          {active.map((facet) => {
+            // Options facets → an editable Select (single shows the trailing check;
+            // both are filterable + have a clearable footer).
+            if (facet.kind === 'single' || facet.kind === 'multiple')
+              return (
+                <Select
+                  key={facet.key}
+                  selection={facet.kind}
+                  indicator={facet.kind === 'single' ? 'check' : undefined}
+                  options={facet.options}
+                  value={value[facet.key]}
+                  onValueChange={(v) => setFacet(facet.key, v)}
+                  leading={`${facet.label}:`}
+                  filter={facet.filter}
+                  clearable
+                />
+              )
+
+            // Free-form text / custom → an editable Input.
+            const val = facet.kind === 'text' ? value[facet.key] : value[facet.key]?.min
+            const write = (raw) =>
+              setFacet(facet.key, facet.kind === 'text' ? raw || undefined : raw ? { min: raw } : undefined)
+            return (
+              <Input
+                key={facet.key}
+                value={val ?? ''}
+                leading={`${facet.label}:`}
+                clearable
+                dimActions
+                onFocus={() => setFocusedKey(facet.key)}
+                onBlur={() => setFocusedKey(null)}
+                onInput={(e) => write(e.currentTarget.value)}
+                onClearInput={() => { setFocusedKey(null); setFacet(facet.key, undefined) }}
+              />
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="SelectFaceted" />
+
+</Disclosure>

@@ -132,7 +132,10 @@ const SUPPORTS_FIELD_SIZING =
 //  • slots — leading/trailing/clear are display:none until they hold content
 //    (toggled via slotchange), so an empty slot reserves no box or phantom gap.
 //    Adornments are muted (--input-adornment) and inherit currentColor; a slotted
-//    <a-button> keeps its own colour. `dim-actions` rests them at 0.6 and brightens
+//    <a-button> keeps its own colour. Slotted TEXT gets the field's type scale
+//    (--_fs/--_lh) plus a condensed wdth 88, so a key prefix lines up with the value
+//    and reads as a compact label; icons carry their own explicit size + width.
+//    `dim-actions` rests them at 0.6 and brightens
 //    to full on field hover/focus — but never while disabled. The clear slot shows
 //    only when filled + editable (hidden when disabled/readonly). A leading item is
 //    inset to line up with the text's left rhythm. Single-line, adornments center
@@ -237,7 +240,13 @@ const SHADOW_STYLE = `
   input::-webkit-outer-spin-button { -webkit-appearance: none; appearance: none; display: none; }
   input::-ms-clear, input::-ms-reveal { display: none; }
 
-  slot[name="leading"], slot[name="trailing"] { display: none; color: var(--input-adornment); }
+  slot[name="leading"], slot[name="trailing"] {
+    display: none;
+    color: var(--input-adornment);
+    font-size: var(--_fs);
+    line-height: var(--_lh);
+    font-variation-settings: "wdth" 88, "slnt" 0, "ital" 0;
+  }
   .field.has-leading slot[name="leading"],
   .field.has-trailing slot[name="trailing"] {
     display: flex;

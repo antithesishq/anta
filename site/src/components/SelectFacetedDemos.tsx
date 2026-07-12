@@ -96,6 +96,7 @@ export function SelectFacetedBasicDemo() {
                 <Select
                   key={facet.key}
                   selection={facet.kind}
+                  indicator={facet.kind === 'single' ? 'check' : undefined}
                   options={facet.options}
                   value={value[facet.key] as any}
                   onValueChange={(v: any) => setFacet(facet.key, v)}

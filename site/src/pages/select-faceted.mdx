@@ -84,6 +84,7 @@ function Demo() {
             <Select
               key={facet.key}
               selection={facet.kind}
+              indicator={facet.kind === 'single' ? 'check' : undefined}
               options={facet.options}
               value={value[facet.key]}
               onValueChange={(v) => setFacet(facet.key, v)}

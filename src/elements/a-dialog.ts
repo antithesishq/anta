@@ -64,9 +64,9 @@ import './a-dialog.css'
  * a consumer calling the shadow `<dialog>`'s `close()`, bfcache — is reconciled
  * by a `close` listener so the DOM never drifts from the contract: controlled
  * re-asserts `state` (reopening if still `open`), uncontrolled records the
- * closed intent. Our own closes are flagged (`#programmaticClose`) and skipped —
- * a persistent flag, not a synchronous one, because the native `close` event
- * fires from a queued task.
+ * closed intent. Our own closes are counted (`#programmaticCloses`) and skipped:
+ * a counter, not a synchronous flag, because the native `close` event fires from
+ * a queued task and a burst of closes queues several.
  *
  * ## Focus
  *
@@ -129,9 +129,13 @@ const ANIM_MS = 200
 //    here with literal fallbacks, so external CSS (lower specificity than :host)
 //    can still override them. The surface is --bg-1 with a composed box-shadow
 //    whose first inset layer is the hairline border (drawn inside, so no reflow).
-//    display flips to flex when [open] (flex-direction:column stays on the base
-//    rule so it survives the exit — see the note there); the UA centers a modal
-//    dialog, and the :host([position=…]) rules re-pin it to an edge as a drawer.
+//    display flips to flex when [open]; the UA centers a modal dialog, and the
+//    :host([position=…]) rules re-pin it to an edge as a drawer. flex-direction
+//    stays on the BASE rule, not dialog[open]: on close, display is held at flex
+//    through the exit fade by allow-discrete, but flex-direction isn't a
+//    transitioned property, so if it were [open]-scoped it would snap back to row
+//    the instant [open] drops, reflowing the zones for the whole fade-out. On the
+//    base rule it's inert while display:none and stays column through the exit.
 //  • enter / exit — opacity + transform transition with `overlay` / `display`
 //    on `allow-discrete`, and `@starting-style` so every open starts from the
 //    hidden state (fade/scale in). The exit runs because allow-discrete keeps the
@@ -161,12 +165,6 @@ const SHADOW_STYLE = `
     border-radius: var(--dialog-radius, 10px);
     box-shadow: var(--dialog-shadow, inset 0 0 0 1px color-mix(in oklch, black 8%, transparent), 0 10px 38px color-mix(in oklch, black 28%, transparent));
 
-    /* flex-direction lives here, NOT on dialog[open]: on close, display is held
-       at flex through the exit fade by allow-discrete, but flex-direction isn't
-       a transitioned property, so if it were [open]-scoped it would snap back to
-       row the instant [open] drops — reflowing the zones into a row for the whole
-       fade-out. Kept on the base rule it's inert while display:none and stays
-       column through the exit. */
     flex-direction: column;
   }
 
@@ -221,7 +219,7 @@ const SHADOW_STYLE = `
   :host([position="right"]) dialog {
     width: var(--dialog-width, 380px);
     max-width: calc(100vw - var(--dialog-margin, 32px));
-    height: var(--dialog-height, 100dvh);
+    height: 100dvh;
     max-height: 100dvh;
     border-radius: 0;
   }
@@ -230,7 +228,7 @@ const SHADOW_STYLE = `
 
   :host([position="top"]) dialog,
   :host([position="bottom"]) dialog {
-    width: var(--dialog-width, 100vw);
+    width: 100vw;
     max-width: 100vw;
     height: var(--dialog-height, fit-content);
     max-height: calc(100dvh - var(--dialog-margin, 32px));
@@ -266,6 +264,11 @@ const SHADOW_STYLE = `
     overflow: auto;
     padding: var(--dialog-body-padding, 8px 20px 12px);
   }
+  /* With a close button but no header, the body is the top zone, so it takes the
+     ✕ clearance instead of the header (which is display:none when empty). */
+  dialog.has-close slot[name="header"]:not(.has-content) ~ slot[part="body"] {
+    padding-inline-end: 52px;
+  }
 
   slot[name="footer"] {
     display: none;
@@ -299,13 +302,15 @@ export class ADialogElement extends HTMLElementBase {
   private headerSlot: HTMLSlotElement
   private footerSlot: HTMLSlotElement
   private closeSlot: HTMLSlotElement
-  // Set before every `dialog.close()` WE initiate, and consumed by the `close`
-  // listener. The native `close` event fires from a queued task (async), so a
-  // synchronous "applying" guard can't span it — this persistent flag can. It
-  // lets the `close` handler tell our own closes (ignore) from an out-of-band
-  // one — `<form method="dialog">`, a consumer calling the shadow dialog's
-  // close(), bfcache — which it must reconcile.
-  #programmaticClose = false
+  // Counts `dialog.close()` calls WE initiate whose async `close` event is still
+  // pending, and is decremented as each arrives. The native `close` event fires
+  // from a queued task, so a synchronous guard can't span it, and a boolean
+  // can't span a BURST (two re-parents in one tick queue two closes; the first
+  // event would clear the flag and the second would be misread as out-of-band).
+  // The counter lets the `close` handler tell our own closes (ignore) from an
+  // out-of-band one (`<form method="dialog">`, a consumer calling the shadow
+  // dialog's close(), bfcache), which it must reconcile.
+  #programmaticCloses = 0
   // The intended (uncontrolled) open state, held in JS so it survives a
   // disconnect → reconnect (a DOM move / re-parent). disconnectedCallback
   // force-closes the native dialog to free the top layer, but must not lose
@@ -406,8 +411,8 @@ export class ADialogElement extends HTMLElementBase {
     // the contract. Reconcile: controlled → re-assert `state` (the source of
     // truth — reopens if still `open`); uncontrolled → record the closed intent.
     this.dialog.addEventListener('close', () => {
-      if (this.#programmaticClose) {
-        this.#programmaticClose = false
+      if (this.#programmaticCloses > 0) {
+        this.#programmaticCloses--
         return
       }
       if (this.#controlled) this.#reflect(parseOpenState(this.getAttribute('state')))
@@ -426,8 +431,10 @@ export class ADialogElement extends HTMLElementBase {
       // Seed the intended open state from `default-state` on the FIRST connect
       // only; thereafter `#wantOpen` (which survives a disconnect) is the truth,
       // so a re-parent restores exactly what the user last had — no re-seeding.
+      // Only ever set it ON here: a pre-connect `show()` already set `#wantOpen`
+      // true, and overwriting from `default-state` would clobber that intent.
       if (!this.#seeded) {
-        this.#wantOpen = parseOpenState(this.getAttribute('default-state')) === 'open'
+        if (parseOpenState(this.getAttribute('default-state')) === 'open') this.#wantOpen = true
         this.#seeded = true
       }
       if (this.#wantOpen) this.#open()
@@ -439,11 +446,11 @@ export class ADialogElement extends HTMLElementBase {
   disconnectedCallback() {
     this.#teardownTriggerListener()
     // Leaving the DOM while open would strand the top-layer entry; close quietly.
-    // Flag it as ours so the async `close` event doesn't clear `#wantOpen` — a
+    // Count it as ours so the async `close` event doesn't clear `#wantOpen` — a
     // re-parent must restore the open state on reconnect. Close directly (not via
     // #close(), which would zero `#wantOpen`).
     if (this.dialog.open) {
-      this.#programmaticClose = true
+      this.#programmaticCloses++
       this.dialog.close()
     }
   }
@@ -542,13 +549,13 @@ export class ADialogElement extends HTMLElementBase {
     if (!this.querySelector('[autofocus]')) this.dialog.focus()
   }
 
-  /** Raw close. Records the closed intent and flags the pending `close` event as
+  /** Raw close. Records the closed intent and counts the pending `close` event as
    *  ours so the listener doesn't reconcile it. (The disconnect teardown closes
    *  the native dialog directly, NOT through here, to preserve `#wantOpen`.) */
   #close() {
     this.#wantOpen = false
     if (!this.dialog.open) return
-    this.#programmaticClose = true
+    this.#programmaticCloses++
     this.dialog.close()
   }
 

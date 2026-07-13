@@ -19,13 +19,16 @@ export interface DialogProps extends Omit<BaseProps, "title"> {
    *  edge gap or corner radius.
    *  @defaultValue 'center' */
   position?: "center" | "left" | "right" | "top" | "bottom" | "fullscreen";
-  /** Show the top-right close (✕) button.
+  /** Whether the top-right ✕ button is present. It's one way to close the dialog,
+   *  alongside Esc, the backdrop, a `data-dialog-close` / footer action, and your
+   *  own code; `false` just removes the ✕, it doesn't make the dialog un-closable.
    *  @defaultValue true */
   closable?: boolean;
-  /** Keep the dialog up until an explicit control closes it: disables light
-   *  dismiss (backdrop click + Esc). For an alert / confirm that must be answered
-   *  via its own buttons; the close button and programmatic close still work.
-   *  Omit for the default dismissible behavior. */
+  /** Turn off light-dismiss: a backdrop click and Esc no longer close the dialog.
+   *  It stays closable through explicit controls (the ✕ when `closable`, a footer
+   *  action, your own code); `persistent` isn't "un-closable", it stops an
+   *  accidental click or stray Esc from dismissing. For an alert / confirm that
+   *  should be answered deliberately. Omit for the default dismissible behavior. */
   persistent?: boolean;
   /** Controlled open state. When provided, the consumer owns open/close: the
    *  dialog only follows this prop, and every user dismiss (Esc, backdrop, close

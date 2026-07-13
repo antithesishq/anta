@@ -116,8 +116,9 @@ corners against the edges they touch.
 <Dialog position="bottom" open={open} onStateChange={…}>…</Dialog>  {/* full-width bottom sheet */}
 ```
 
-The drawer's thickness is one token: `--dialog-drawer-size` (width for
-`left` / `right`, height for `top` / `bottom`).
+The drawer's thickness is one token, `--dialog-drawer-size`: the width of a
+`left` / `right` drawer (default `380px`), or the height of a `top` / `bottom`
+one (default content height — set the token to pin it).
 
 ## Close button
 
@@ -151,7 +152,7 @@ longer close it; only the close button, the footer actions, or your own code do.
 
 <Preview gap="8px">
   <a-button data-dialog-open="persistent">Delete account</a-button>
-  <a-dialog name="persistent" persistent closable="">
+  <a-dialog name="persistent" persistent>
     <Title slot="header" level={4} style={{ margin: 0 }}>Delete account?</Title>
     <Text>
       This permanently removes your account and all its data. This can't be
@@ -234,13 +235,13 @@ const [open, setOpen] = useState(false)
 ## Composing the element directly
 
 Without the JSX wrapper, the `slot` attribute is the wire format: `slot="header"`
-and `slot="footer"` on your own elements, anything unslotted becomes the body,
-and a close button is a `Button` in `slot="close"` carrying
-`data-custom-event="closerequest"` (the wrapper injects exactly this when
-`closable`). The element handles the rest.
+and `slot="footer"` on your own elements, anything unslotted becomes the body. The
+element has no `closable` attribute — the ✕ is just a `Button` you slot into
+`slot="close"` carrying `data-custom-event="closerequest"` (this is exactly what
+the wrapper's `closable` injects). The element handles the rest.
 
 ```html
-<a-dialog name="invite" closable>
+<a-dialog name="invite">
   <h2 slot="header">Invite teammates</h2>
 
   <p>Send an invite link to your team.</p>
@@ -248,7 +249,7 @@ and a close button is a `Button` in `slot="close"` carrying
   <a-button slot="footer" data-dialog-close="invite">Cancel</a-button>
   <a-button slot="footer" priority="primary" data-dialog-close="invite">Send</a-button>
 
-  <!-- the close button the wrapper's `closable` injects for you -->
+  <!-- the close button (what the wrapper's `closable` injects for you) -->
   <a-button slot="close" priority="tertiary" size="small"
             aria-label="Close" data-custom-event="closerequest">
     <a-icon shape="x"></a-icon>
@@ -273,7 +274,7 @@ A handful of tokens cover the rest — set them on the host (the `<a-dialog>` / 
 own class) in plain CSS:
 
 - **`--dialog-width`** — the centered modal's width (default `min(480px, 100vw − 32px)`).
-- **`--dialog-drawer-size`** — a drawer's thickness (width for `left` / `right`, height for `top` / `bottom`; default `380px`).
+- **`--dialog-drawer-size`** — a drawer's thickness: width for `left` / `right` (default `380px`); height for `top` / `bottom` (default content height, so set this to pin them).
 - **`--dialog-overlay`** — the backdrop fill (black at 42% in light, 62% in dark).
 - **`--dialog-radius`** — the corner radius (drawers square the edges they touch regardless).
 - **`--dialog-shadow`** — the whole composed elevation (inset hairline border + drop shadows).

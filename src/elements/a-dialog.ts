@@ -1,4 +1,4 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { HTMLElementBase, parseOpenState } from '../anta_helpers'
 import './a-dialog.css'
 
 /**
@@ -76,8 +76,9 @@ import './a-dialog.css'
 // the wrapper can't import this module without pulling in element registration.
 const CLOSE_TRIGGER = 'closerequest'
 
-// Enter / exit transition duration (ms). Mirrors `--_dur` in the shadow style so
-// the JS and CSS agree on how long the exit animation runs.
+// Enter / exit transition duration (ms), interpolated into the shadow style's
+// `--_dur`. Purely CSS-driven (the exit runs via `allow-discrete`), so no JS
+// timer reads it — it's a single source for the two transitions' duration.
 const ANIM_MS = 200
 
 // Shadow styles, injected verbatim into every <a-dialog> shadow root — kept
@@ -120,7 +121,7 @@ const SHADOW_STYLE = `
     color: var(--dialog-text, inherit);
     background: var(--dialog-bg, #fff);
     border-radius: var(--dialog-radius, 10px);
-    box-shadow: var(--dialog-shadow, inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 10px 38px rgba(0, 0, 0, 0.28));
+    box-shadow: var(--dialog-shadow, inset 0 0 0 1px color-mix(in oklch, black 8%, transparent), 0 10px 38px color-mix(in oklch, black 28%, transparent));
   }
 
   dialog[open] {
@@ -131,7 +132,7 @@ const SHADOW_STYLE = `
   dialog:focus-visible { outline: none; }
 
   dialog::backdrop {
-    background: var(--dialog-overlay, oklch(0 0 0 / 0.4));
+    background: var(--dialog-overlay, color-mix(in oklch, black 40%, transparent));
   }
 
   :host { --_enter-from: scale(0.97); }
@@ -165,7 +166,7 @@ const SHADOW_STYLE = `
         overlay var(--_dur) ease allow-discrete,
         display var(--_dur) ease allow-discrete;
     }
-    dialog[open]::backdrop { background: var(--dialog-overlay, oklch(0 0 0 / 0.4)); }
+    dialog[open]::backdrop { background: var(--dialog-overlay, color-mix(in oklch, black 40%, transparent)); }
     @starting-style {
       dialog[open]::backdrop { background: transparent; }
     }
@@ -233,7 +234,6 @@ const SHADOW_STYLE = `
 `
 
 type DialogState = 'open' | 'closed'
-const parseState = (v: string | null): DialogState => (v === 'open' ? 'open' : 'closed')
 
 export class ADialogElement extends HTMLElementBase {
   static observedAttributes = ['state', 'name']
@@ -242,9 +242,28 @@ export class ADialogElement extends HTMLElementBase {
   private headerSlot: HTMLSlotElement
   private footerSlot: HTMLSlotElement
   private closeSlot: HTMLSlotElement
-  // Guards the raw open/close operations so the native `close`/`cancel` events
-  // they fire don't re-enter the request flow (which would loop or double-fire).
-  #applying = false
+  // Set before every `dialog.close()` WE initiate, and consumed by the `close`
+  // listener. The native `close` event fires from a queued task (async), so a
+  // synchronous "applying" guard can't span it — this persistent flag can. It
+  // lets the `close` handler tell our own closes (ignore) from an out-of-band
+  // one — `<form method="dialog">`, a consumer calling the shadow dialog's
+  // close(), bfcache — which it must reconcile.
+  #programmaticClose = false
+  // The intended (uncontrolled) open state, held in JS so it survives a
+  // disconnect → reconnect (a DOM move / re-parent). disconnectedCallback
+  // force-closes the native dialog to free the top layer, but must not lose
+  // whether the user had it open — otherwise a re-parented open dialog would
+  // vanish (trigger-opened) or a re-parented closed one would pop back (a stale
+  // `default-state="open"` re-seeding). Only ever reflects genuine open/close
+  // intent, never the disconnect teardown.
+  #wantOpen = false
+  // default-state is read ONCE (the first connect), never again — re-seeding on
+  // every connect would reopen a dialog the user has since closed.
+  #seeded = false
+  // Whether the current pointer press began on the backdrop (the dialog element
+  // itself), so a press-inside → release-on-backdrop drag (text selection) is
+  // NOT read as a backdrop dismiss.
+  #pressedBackdrop = false
   // The document click listener wired for the `name`-trigger convenience, kept so
   // it can be torn down (and re-wired when `name` / controlled-ness changes).
   #triggerListener?: (e: Event) => void
@@ -282,29 +301,53 @@ export class ADialogElement extends HTMLElementBase {
         slot.classList.toggle('has-content', slot.assignedNodes().length > 0),
       )
     }
+    // Mirror the header text into the shadow dialog's aria-label so screen
+    // readers announce the dialog by its title (IDREFs can't cross the shadow
+    // boundary to reference the slotted header). Same approach as a-input's
+    // label → control aria-label mirror; the dialog is shadow-internal, so this
+    // is not a host / light-DOM mutation.
+    this.headerSlot.addEventListener('slotchange', () => this.#syncAccessibleName())
 
-    this.dialog.append(this.closeSlot, this.headerSlot, bodySlot, this.footerSlot)
+    // Close slot is appended LAST so it isn't the native dialog's first focusable
+    // child: showModal() would otherwise land initial focus on the ✕ instead of
+    // the first meaningful control. It's positioned top-right by CSS regardless
+    // of DOM order.
+    this.dialog.append(this.headerSlot, bodySlot, this.footerSlot, this.closeSlot)
     shadow.append(style, this.dialog)
 
     // Esc → native `cancel` (cancelable). Always preventDefault so the UA never
     // auto-closes; route through the request flow so the contract + `persistent`
-    // gate decide. Ignored while we're applying a programmatic close.
+    // gate decide (uncontrolled → #close(); controlled → just announces).
     this.dialog.addEventListener('cancel', (e) => {
-      if (this.#applying) return
       e.preventDefault()
       if (!this.#persistent) this.requestClose()
     })
 
-    // Backdrop click: a click whose coordinates fall OUTSIDE the dialog's box is a
-    // backdrop hit (robust across shadow/slot retargeting — a plain layout read).
+    // Backdrop dismiss: only when BOTH the press and the release land on the
+    // dialog element itself. Backdrop hits retarget to the dialog; a click on
+    // slotted content (including a Menu / Select popover that overflows the
+    // dialog box) targets that content, so it never closes. Tracking the press
+    // origin also stops a text-selection drag that starts inside and releases on
+    // the backdrop from dismissing.
+    this.dialog.addEventListener('pointerdown', (e) => {
+      this.#pressedBackdrop = e.target === this.dialog
+    })
     this.dialog.addEventListener('click', (e) => {
       if (this.#persistent) return
-      const r = this.dialog.getBoundingClientRect()
-      const inside =
-        e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
-      // A click with no coordinates (keyboard-synthesized) reports 0,0 — never
-      // treat that as a backdrop click.
-      if (!inside && (e.clientX !== 0 || e.clientY !== 0)) this.requestClose()
+      if (this.#pressedBackdrop && e.target === this.dialog) this.requestClose()
+    })
+
+    // A native close that bypassed our flow (`<form method="dialog">`, a consumer
+    // calling the shadow dialog's `close()`, bfcache) would drift the DOM from
+    // the contract. Reconcile: controlled → re-assert `state` (the source of
+    // truth — reopens if still `open`); uncontrolled → record the closed intent.
+    this.dialog.addEventListener('close', () => {
+      if (this.#programmaticClose) {
+        this.#programmaticClose = false
+        return
+      }
+      if (this.#controlled) this.#reflect(parseOpenState(this.getAttribute('state')))
+      else this.#wantOpen = false
     })
 
     // The close button (an <a-button data-custom-event="closerequest"> slotted at
@@ -313,19 +356,31 @@ export class ADialogElement extends HTMLElementBase {
   }
 
   connectedCallback() {
-    // Controlled → reflect `state`; uncontrolled → seed once from `default-state`.
-    if (this.#controlled) this.#reflect(parseState(this.getAttribute('state')))
-    else if (parseState(this.getAttribute('default-state')) === 'open') this.#open()
+    if (this.#controlled) {
+      this.#reflect(parseOpenState(this.getAttribute('state')))
+    } else {
+      // Seed the intended open state from `default-state` on the FIRST connect
+      // only; thereafter `#wantOpen` (which survives a disconnect) is the truth,
+      // so a re-parent restores exactly what the user last had — no re-seeding.
+      if (!this.#seeded) {
+        this.#wantOpen = parseOpenState(this.getAttribute('default-state')) === 'open'
+        this.#seeded = true
+      }
+      if (this.#wantOpen) this.#open()
+    }
     this.#syncTriggerListener()
+    this.#syncAccessibleName()
   }
 
   disconnectedCallback() {
     this.#teardownTriggerListener()
     // Leaving the DOM while open would strand the top-layer entry; close quietly.
+    // Flag it as ours so the async `close` event doesn't clear `#wantOpen` — a
+    // re-parent must restore the open state on reconnect. Close directly (not via
+    // #close(), which would zero `#wantOpen`).
     if (this.dialog.open) {
-      this.#applying = true
+      this.#programmaticClose = true
       this.dialog.close()
-      this.#applying = false
     }
   }
 
@@ -334,7 +389,7 @@ export class ADialogElement extends HTMLElementBase {
       // `state` is the controlled lever — reflect it. When it's REMOVED
       // (controlled → uncontrolled) `#controlled` is false, so skip: the current
       // open state is kept, not reset.
-      if (this.#controlled) this.#reflect(parseState(this.getAttribute('state')))
+      if (this.#controlled) this.#reflect(parseOpenState(this.getAttribute('state')))
       this.#syncTriggerListener()
     } else if (name === 'name') {
       this.#syncTriggerListener()
@@ -406,24 +461,36 @@ export class ADialogElement extends HTMLElementBase {
     else this.#close()
   }
 
-  /** Raw open: show the modal dialog. Guarded against a not-connected / already-
-   *  open native element (both throw / no-op). */
+  /** Raw open: show the modal dialog. Records the open intent (survives a
+   *  disconnect). Guarded against a not-connected / already-open native element
+   *  (both throw / no-op). */
   #open() {
+    this.#wantOpen = true
+    // showModal() fires neither `close` nor `cancel`, so no suppression is needed.
     if (this.dialog.open || !this.isConnected) return
-    this.#applying = true
-    try {
-      this.dialog.showModal()
-    } finally {
-      this.#applying = false
-    }
+    this.dialog.showModal()
   }
 
-  /** Raw close. */
+  /** Raw close. Records the closed intent and flags the pending `close` event as
+   *  ours so the listener doesn't reconcile it. (The disconnect teardown closes
+   *  the native dialog directly, NOT through here, to preserve `#wantOpen`.) */
   #close() {
+    this.#wantOpen = false
     if (!this.dialog.open) return
-    this.#applying = true
+    this.#programmaticClose = true
     this.dialog.close()
-    this.#applying = false
+  }
+
+  /** Publish the header text as the shadow dialog's accessible name (a-input's
+   *  label-mirror pattern). Shadow-internal — not a host / light-DOM write. */
+  #syncAccessibleName() {
+    const text = this.headerSlot
+      .assignedNodes()
+      .map((n) => n.textContent ?? '')
+      .join(' ')
+      .trim()
+    if (text) this.dialog.setAttribute('aria-label', text)
+    else this.dialog.removeAttribute('aria-label')
   }
 
   // --- `name`-trigger convenience (uncontrolled only) ---

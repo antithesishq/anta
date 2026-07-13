@@ -332,6 +332,12 @@ export interface ADialogAttributes extends BaseAttributes {
    *  `top` / `bottom` turn it into an edge drawer; `fullscreen` fills the whole
    *  viewport (no edge gap, no radius). */
   position?: 'center' | 'left' | 'right' | 'top' | 'bottom' | 'fullscreen'
+  /** Corner radius. A side keyword (`top` / `right` / `bottom` / `left`) rounds
+   *  only that edge's two corners at `--dialog-radius`; a length (`round="20px"`)
+   *  or full `border-radius` shorthand rounds all corners at that value; bare
+   *  `round` rounds all corners at `--dialog-radius`. Omit for the position
+   *  default (center rounded, drawers / fullscreen square). */
+  round?: boolean | number | 'top' | 'right' | 'bottom' | 'left' | (string & {})
   /** Disable light dismiss — Esc + backdrop click no longer close the dialog (it
    *  closes only via the close button or programmatically). For alert / confirm
    *  dialogs. Presence-based (`''` on, omit off). */

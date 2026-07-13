@@ -34,6 +34,16 @@
     display: contents;
   }
 
+  /* `round` radius: a length value (`round="20px"`, or the `Dialog` wrapper's
+     `round={20}` → inline `--dialog-round`) sets the corner radius the shadow
+     reads via `--_r`. A side keyword (`round="top"`) fails the typed attr() and
+     falls back to `--dialog-radius`, rounding only that edge's corners (the
+     shadow's per-side rules). A full shorthand (`round="5px 3px 0 0"`) comes
+     through the wrapper's inline `--dialog-round` only. */
+  a-dialog[round] {
+    --dialog-round: attr(round type(<length>), var(--dialog-radius, 10px));
+  }
+
   /* Before the element upgrades, the light-DOM children (header / body / footer)
      would flash inline. A dialog's content shouldn't show until it opens anyway,
      so hide the host until it's defined. */

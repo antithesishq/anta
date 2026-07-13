@@ -1,6 +1,9 @@
-import { nativeStateChange } from "../anta_helpers";
+import { nativeStateChange, roundStyle } from "../anta_helpers";
 import type { BaseProps } from "../general_types";
 import { Button } from "./Button";
+
+/** The `round` side keywords, which select corners rather than set an amount. */
+const ROUND_SIDES = new Set(["top", "right", "bottom", "left"]);
 
 /** Public props for the `<Dialog>` modal / drawer. `header` and `footer` are the
  *  chrome zones; `children` is the (scrollable) body. */
@@ -30,6 +33,14 @@ export interface DialogProps extends Omit<BaseProps, "title"> {
    *  accidental click or stray Esc from dismissing. For an alert / confirm that
    *  should be answered deliberately. Omit for the default dismissible behavior. */
   persistent?: boolean;
+  /** Corner radius. A side keyword — `'top'` / `'right'` / `'bottom'` / `'left'` —
+   *  rounds only that edge's two corners (at `--dialog-radius`), which pairs with
+   *  a drawer's exposed edge (a bottom sheet → `'top'`, a right drawer → `'left'`).
+   *  A `number` (px) or CSS string rounds all corners at that value; the string
+   *  may be a full `border-radius` shorthand (`'12px 12px 0 0'`). `true` rounds all
+   *  corners at `--dialog-radius`. Omit for the position default: `center` is
+   *  rounded, drawers and `fullscreen` are square. */
+  round?: boolean | number | "top" | "right" | "bottom" | "left" | (string & {});
   /** Controlled open state. When provided, the consumer owns open/close: the
    *  dialog only follows this prop, and every user dismiss (Esc, backdrop, close
    *  button) *requests* a change via `onStateChange` (reject by not updating).
@@ -97,6 +108,7 @@ export const Dialog = ({
   position,
   closable,
   persistent,
+  round,
   open,
   defaultOpen,
   name,
@@ -108,6 +120,12 @@ export const Dialog = ({
 }: DialogProps) => {
   const controlled = open !== undefined;
 
+  // A side keyword selects corners (passed through as the attribute value); any
+  // other truthy `round` sets the amount via the `--dialog-round` var (the shared
+  // roundStyle path) and emits the bare presence flag.
+  const roundSide =
+    typeof round === "string" && ROUND_SIDES.has(round) ? round : undefined;
+
   return (
     <a-dialog
       state={controlled ? (open ? "open" : "closed") : undefined}
@@ -116,6 +134,7 @@ export const Dialog = ({
       position={position && position !== "center" ? position : undefined}
       // Positive opt-in (default off): emit the presence flag only when set.
       persistent={persistent ? "" : undefined}
+      round={roundSide ?? (round ? "" : undefined)}
       name={!controlled ? name : undefined}
       // All-lowercase `onstatechange` is the one spelling both renderers bind to
       // the element's `statechange` event (React 19 keeps the case after `on`, so
@@ -133,7 +152,9 @@ export const Dialog = ({
           : undefined
       }
       class={className}
-      style={style}
+      // A side keyword sets no amount; anything else feeds --dialog-round (a
+      // number → px, a string verbatim, so a shorthand like "12px 12px 0 0" works).
+      style={roundStyle(roundSide ? undefined : round, "--dialog-round", style)}
       {...rest}
     >
       {closable !== false && (

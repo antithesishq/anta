@@ -150,6 +150,7 @@ const SHADOW_STYLE = `
 
   dialog {
     --_dur: ${ANIM_MS}ms;
+    --_r: var(--dialog-round, var(--dialog-radius, 10px));
 
     position: fixed;
     box-sizing: border-box;
@@ -162,7 +163,7 @@ const SHADOW_STYLE = `
     overflow: visible;
     color: var(--dialog-text, inherit);
     background: var(--dialog-bg, #fff);
-    border-radius: var(--dialog-radius, 10px);
+    border-radius: var(--_r);
     box-shadow: var(--dialog-shadow, inset 0 0 0 1px color-mix(in oklch, black 8%, transparent), 0 10px 38px color-mix(in oklch, black 28%, transparent));
 
     flex-direction: column;
@@ -245,6 +246,12 @@ const SHADOW_STYLE = `
     margin: 0;
     border-radius: 0;
   }
+
+  :host([round]) dialog { border-radius: var(--_r); }
+  :host([round="top"]) dialog { border-radius: var(--_r) var(--_r) 0 0; }
+  :host([round="bottom"]) dialog { border-radius: 0 0 var(--_r) var(--_r); }
+  :host([round="left"]) dialog { border-radius: var(--_r) 0 0 var(--_r); }
+  :host([round="right"]) dialog { border-radius: 0 var(--_r) var(--_r) 0; }
 
   slot[name="header"] {
     display: none;

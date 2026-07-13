@@ -134,6 +134,42 @@ whichever axis it slides along: `--dialog-width` for a `left` / `right` drawer,
 `--dialog-height` for a `top` / `bottom` one. The cross axis fills the viewport,
 so the far-side space is `100vw`/`100dvh` minus that size.
 
+## Round
+
+The centered modal is rounded by default (`--dialog-radius`, 10px) and drawers
+are square. `round` overrides that. A **side keyword** rounds only that edge's
+two corners, which pairs with a drawer's exposed edge: a bottom sheet takes
+`round="top"`, a right drawer `round="left"`.
+
+<Preview gap="8px">
+  <a-button tabindex="0" data-dialog-open="round-sheet">Rounded bottom sheet</a-button>
+  <a-button tabindex="0" data-dialog-open="round-modal">Rounded modal</a-button>
+  <a-dialog name="round-sheet" position="bottom" round="top">
+    <Title slot="header" level={4} style={{ margin: 0 }}>Share</Title>
+    <Text>A bottom sheet with its exposed top edge rounded (<code>round="top"</code>).</Text>
+  </a-dialog>
+  <a-dialog name="round-modal" round="24px">
+    <Title slot="header" level={4} style={{ margin: 0 }}>Softer corners</Title>
+    <Text>A centered modal with all four corners at 24px (<code>round="24px"</code>).</Text>
+    <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="round-modal">Done</a-button>
+  </a-dialog>
+</Preview>
+
+```tsx folded
+<Dialog position="bottom" round="top">…</Dialog>   {/* round the sheet's top edge */}
+<Dialog position="right" round="left">…</Dialog>   {/* round a right drawer's inner edge */}
+<Dialog round={24}>…</Dialog>                      {/* all corners, 24px */}
+<Dialog round="12px 12px 0 0">…</Dialog>           {/* any border-radius shorthand */}
+```
+
+A `number` or CSS string sets the amount on all corners; the string may be a
+full `border-radius` shorthand (`"12px 12px 0 0"`). Bare `round` rounds all
+corners at `--dialog-radius`, handy to round an otherwise-square drawer. The
+side keywords take their amount from `--dialog-radius`, so raise that token for a
+bigger sweep. Authoring the raw `<a-dialog>`, a single length works through the
+typed `attr()` (`round="20px"`); shorthands need the wrapper (or set
+`--dialog-round` yourself).
+
 ## Close button
 
 `closable` controls one thing: whether the top-right ✕ is present (on by

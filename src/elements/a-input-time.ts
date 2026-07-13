@@ -145,6 +145,7 @@ const SHADOW_STYLE = `
     padding-inline: 1px;
     border-radius: 2px;
     text-align: center;
+    white-space: nowrap;
     outline: none;
     cursor: default;
     font-variant-numeric: tabular-nums;
@@ -153,7 +154,7 @@ const SHADOW_STYLE = `
   .seg[inputmode="numeric"] {
     /* Fixed to two tabular digits so the box never reflows: neither the narrower
        placeholder dashes nor a mid-entry single digit changes the field width. */
-    width: calc(2ch + 2px);
+    width: calc(2ch + 4px);
   }
   .seg:focus {
     background: var(--input-time-seg-focus-bg);

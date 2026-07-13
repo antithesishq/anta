@@ -116,9 +116,11 @@ corners against the edges they touch.
 <Dialog position="bottom" open={open} onStateChange={…}>…</Dialog>  {/* full-width bottom sheet */}
 ```
 
-The drawer's thickness is one token, `--dialog-drawer-size`: the width of a
-`left` / `right` drawer (default `380px`), or the height of a `top` / `bottom`
-one (default content height — set the token to pin it).
+A drawer is sized by the same `--dialog-width` / `--dialog-height` tokens as a
+modal — whichever axis it slides along. `--dialog-width` sets a `left` / `right`
+drawer's width (default `380px`); `--dialog-height` sets a `top` / `bottom`
+drawer's height (default content height). The cross axis fills the viewport, so
+the space on the far side is `100vw`/`100dvh` minus that size.
 
 ## Close button
 
@@ -306,8 +308,8 @@ hairline border.
 A handful of tokens cover the rest — set them on the host (the `<a-dialog>` / your
 own class) in plain CSS:
 
-- **`--dialog-width`** — the centered modal's width (default `min(480px, 100vw − 32px)`).
-- **`--dialog-drawer-size`** — a drawer's thickness: width for `left` / `right` (default `380px`); height for `top` / `bottom` (default content height, so set this to pin them).
+- **`--dialog-width`** — the box's width: a centered modal (default `min(480px, 100vw − 32px)`) or a `left` / `right` drawer (default `380px`).
+- **`--dialog-height`** — the box's height: a modal (default content height) or a `top` / `bottom` drawer (default content height). A drawer's cross axis fills the viewport, so these size the axis the drawer slides along.
 - **`--dialog-overlay`** — the backdrop fill (black at 42% in light, 62% in dark).
 - **`--dialog-radius`** — the corner radius (drawers square the edges they touch regardless).
 - **`--dialog-shadow`** — the whole composed elevation (inset hairline border + drop shadows).

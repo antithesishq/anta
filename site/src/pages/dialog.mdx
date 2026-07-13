@@ -81,11 +81,13 @@ const [open, setOpen] = useState(false)
 ## Position
 
 `position` places the dialog. `center` (the default) is a modal centered on the
-viewport, keeping a `--dialog-margin` gap (16px) from every edge. `left`,
+viewport, keeping a `--dialog-margin` gap (32px) from every edge. `left`,
 `right`, `top`, and `bottom` turn it into an edge drawer: `left` / `right` run
 the full viewport height and slide in from the side; `top` / `bottom` span the
-full width and slide down / up. Drawers square their corners against the edges
-they touch. `fullscreen` fills the whole viewport — no edge gap, no radius.
+full width and slide down / up. A drawer sits flush against its edge but keeps
+that same `--dialog-margin` of overlay on the far side, so the backdrop stays
+visible however wide/tall you make it. Drawers square their corners against the
+edges they touch. `fullscreen` fills the whole viewport — no gap, no radius.
 
 <Preview gap="8px">
   <a-button data-dialog-open="drawer-left">Left</a-button>
@@ -321,7 +323,7 @@ own class) in plain CSS:
 
 - **`--dialog-width`** — the box's width: a centered modal (default `480px`, capped to the viewport minus the margin) or a `left` / `right` drawer (default `380px`).
 - **`--dialog-height`** — the box's height: a modal (default content height) or a `top` / `bottom` drawer (default content height). A drawer's cross axis fills the viewport, so these size the axis the drawer slides along.
-- **`--dialog-margin`** — the gap the centered modal keeps from every viewport edge (default `16px`); it also sets the modal's max size (`100vw`/`100dvh` minus twice this). Drawers ignore it (they sit flush), and `fullscreen` overrides it to `0`.
+- **`--dialog-margin`** — the minimum overlay kept between the dialog and the far viewport edge (default `32px`), so the backdrop is always visible/tappable. The centered modal keeps it on all four edges (max size = `100vw`/`100dvh` − 2×); a drawer keeps it on its one exposed edge (its slide-axis size is capped at `100vw`/`100dvh` − 1×, however large you set `--dialog-width`/`--dialog-height`). `fullscreen` ignores it (0).
 - **`--dialog-overlay`** — the backdrop fill (black at 42% in light, 62% in dark).
 - **`--dialog-radius`** — the corner radius (drawers square the edges they touch regardless).
 - **`--dialog-shadow`** — the whole composed elevation (inset hairline border + drop shadows).

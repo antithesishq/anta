@@ -151,8 +151,8 @@ const SHADOW_STYLE = `
     box-sizing: border-box;
     padding: 0;
     border: none;
-    max-width: calc(100vw - 2 * var(--dialog-margin, 16px));
-    max-height: calc(100dvh - 2 * var(--dialog-margin, 16px));
+    max-width: calc(100vw - 2 * var(--dialog-margin, 32px));
+    max-height: calc(100dvh - 2 * var(--dialog-margin, 32px));
     width: var(--dialog-width, 480px);
     height: var(--dialog-height, fit-content);
     overflow: visible;
@@ -220,6 +220,7 @@ const SHADOW_STYLE = `
   :host([position="left"]) dialog,
   :host([position="right"]) dialog {
     width: var(--dialog-width, 380px);
+    max-width: calc(100vw - var(--dialog-margin, 32px));
     height: var(--dialog-height, 100dvh);
     max-height: 100dvh;
     border-radius: 0;
@@ -232,6 +233,7 @@ const SHADOW_STYLE = `
     width: var(--dialog-width, 100vw);
     max-width: 100vw;
     height: var(--dialog-height, fit-content);
+    max-height: calc(100dvh - var(--dialog-margin, 32px));
     border-radius: 0;
   }
   :host([position="top"]) dialog { margin: 0 auto auto auto; }

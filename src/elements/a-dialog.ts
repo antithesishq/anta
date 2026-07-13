@@ -257,6 +257,7 @@ const SHADOW_STYLE = `
     line-height: 24px;
   }
   slot[name="header"].has-content { display: block; }
+  dialog.has-close slot[name="header"] { padding-inline-end: 52px; }
 
   slot[part="body"] {
     display: block;
@@ -354,11 +355,16 @@ export class ADialogElement extends HTMLElementBase {
     this.footerSlot.setAttribute('part', 'footer')
 
     // CSS can't express "slot has assigned nodes", so toggle a class per zone —
-    // an empty header / footer / close slot then reserves no box.
+    // an empty header / footer / close slot then reserves no box. The close slot
+    // also flags the dialog (`has-close`) so the header can reserve right-side
+    // clearance for the absolutely-positioned ✕ (a long title would otherwise
+    // slide under it).
     for (const slot of [this.headerSlot, this.footerSlot, this.closeSlot]) {
-      slot.addEventListener('slotchange', () =>
-        slot.classList.toggle('has-content', slot.assignedNodes().length > 0),
-      )
+      slot.addEventListener('slotchange', () => {
+        const has = slot.assignedNodes().length > 0
+        slot.classList.toggle('has-content', has)
+        if (slot === this.closeSlot) this.dialog.classList.toggle('has-close', has)
+      })
     }
     // Mirror the header text into the shadow dialog's aria-label so screen
     // readers announce the dialog by its title (IDREFs can't cross the shadow

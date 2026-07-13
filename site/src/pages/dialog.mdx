@@ -11,15 +11,15 @@ import { Dialog, Button, Text, Icon, Title } from '@antadesign/anta'
 
 # Dialog
 
-A modal dialog — content that opens above a dimmed overlay and takes focus
-until it's dismissed. The `Dialog` JSX wrapper renders an `<a-dialog>`, whose
-shadow DOM wraps a native `<dialog>`: the browser's top layer (so it escapes
-any `overflow` or stacking context on the page), the focus trap, focus return
-on close, the backdrop, and Esc handling all come from the platform.
+A modal dialog: content that opens above a dimmed overlay and holds focus until
+it's dismissed. The `Dialog` wrapper renders an `<a-dialog>` whose shadow DOM
+wraps a native `<dialog>`, so the top layer (which escapes any `overflow` or
+stacking context on the page), the focus trap, focus return on close, the
+backdrop, and Esc all come from the platform.
 
-A dialog has three optional zones — a `header`, the body (`children`), and a
-`footer` — plus a close button in the top-right corner. Set `position` to turn
-it into an edge drawer.
+It has three optional zones: a `header`, the body (`children`), and a `footer`,
+plus a close button in the top-right corner. Set `position` to make it an edge
+drawer instead.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -37,9 +37,9 @@ it into an edge drawer.
 
 `header`, `children` (the body), and `footer` are the three zones. The body
 scrolls when it overflows the available height; the header and footer stay
-pinned. Each zone is optional — omit `header` for a chromeless sheet, omit
-`footer` when there are no actions. The footer lays its content out as a
-right-aligned row.
+pinned. Each zone is optional: drop `header` for a chromeless sheet, or `footer`
+when there are no actions. The footer lays its content out in a right-aligned
+row.
 
 <Preview>
   <a-button data-dialog-open="zones">Open dialog</a-button>
@@ -53,7 +53,7 @@ right-aligned row.
       <Button data-dialog-close="zones">Not now</Button>
       <Button priority="primary" data-dialog-close="zones">Enable</Button>
     </span>
-    <a-button slot="close" priority="tertiary" size="small" aria-label="Close" data-dialog-close="zones">
+    <a-button slot="close" priority="tertiary" size="large" aria-label="Close" data-dialog-close="zones">
       <Icon shape="x" />
     </a-button>
   </a-dialog>
@@ -86,8 +86,8 @@ viewport, keeping a `--dialog-margin` gap (32px) from every edge. `left`,
 the full viewport height and slide in from the side; `top` / `bottom` span the
 full width and slide down / up. A drawer sits flush against its edge but keeps
 that same `--dialog-margin` of overlay on the far side, so the backdrop stays
-visible however wide/tall you make it. Drawers square their corners against the
-edges they touch. `fullscreen` fills the whole viewport — no gap, no radius.
+visible however wide or tall you make it. Drawers square their corners against
+the edges they touch. `fullscreen` fills the whole viewport: no gap, no radius.
 
 <Preview gap="8px">
   <a-button data-dialog-open="drawer-left">Left</a-button>
@@ -101,7 +101,7 @@ edges they touch. `fullscreen` fills the whole viewport — no gap, no radius.
   </a-dialog>
   <a-dialog name="drawer-right" position="right">
     <Title slot="header" level={4} style={{ margin: 0 }}>Details</Title>
-    <Text>A right drawer — the common inspector / detail-panel placement.</Text>
+    <Text>A right drawer, the common inspector / detail-panel placement.</Text>
   </a-dialog>
   <a-dialog name="drawer-top" position="top">
     <Title slot="header" level={4} style={{ margin: 0 }}>Notice</Title>
@@ -109,13 +109,13 @@ edges they touch. `fullscreen` fills the whole viewport — no gap, no radius.
   </a-dialog>
   <a-dialog name="drawer-bottom" position="bottom">
     <Title slot="header" level={4} style={{ margin: 0 }}>Actions</Title>
-    <Text>A bottom sheet — full width, rising from the bottom edge.</Text>
+    <Text>A bottom sheet, full width, rising from the bottom edge.</Text>
   </a-dialog>
   <a-dialog name="drawer-full" position="fullscreen">
     <Title slot="header" level={4} style={{ margin: 0 }}>Fullscreen</Title>
-    <Text>Fills the entire viewport — edge to edge, no gap, no corner radius.</Text>
+    <Text>Fills the entire viewport, edge to edge with no gap or corner radius.</Text>
     <a-button slot="footer" priority="primary" data-dialog-close="drawer-full">Done</a-button>
-    <a-button slot="close" priority="tertiary" size="small" aria-label="Close" data-dialog-close="drawer-full">
+    <a-button slot="close" priority="tertiary" size="large" aria-label="Close" data-dialog-close="drawer-full">
       <Icon shape="x" />
     </a-button>
   </a-dialog>
@@ -129,24 +129,23 @@ edges they touch. `fullscreen` fills the whole viewport — no gap, no radius.
 <Dialog position="fullscreen" open={open} onStateChange={…}>…</Dialog> {/* edge-to-edge, no gap */}
 ```
 
-A drawer is sized by the same `--dialog-width` / `--dialog-height` tokens as a
-modal — whichever axis it slides along. `--dialog-width` sets a `left` / `right`
-drawer's width (default `380px`); `--dialog-height` sets a `top` / `bottom`
-drawer's height (default content height). The cross axis fills the viewport, so
-the space on the far side is `100vw`/`100dvh` minus that size.
+A drawer uses the same `--dialog-width` / `--dialog-height` tokens as a modal, on
+whichever axis it slides along: `--dialog-width` for a `left` / `right` drawer,
+`--dialog-height` for a `top` / `bottom` one. The cross axis fills the viewport,
+so the far-side space is `100vw`/`100dvh` minus that size.
 
 ## Close button
 
-The top-right ✕ shows by default. Pass `closable={false}` to drop it — for a
-dialog whose footer already carries a Cancel button, or one you only close
-programmatically. The button is a real, keyboard-focusable `Button`; clicking
-it requests a close the same way Esc and the backdrop do.
+The top-right ✕ shows by default. Pass `closable={false}` to drop it, for a
+dialog whose footer already carries a Cancel button or one you close only in
+code. The ✕ is a keyboard-focusable `Button`; clicking it requests a close the
+same way Esc and the backdrop do.
 
 <Preview gap="8px">
   <a-button data-dialog-open="no-x">No close button</a-button>
   <a-dialog name="no-x">
     <Title slot="header" level={4} style={{ margin: 0 }}>Rename file</Title>
-    <Text>There's no ✕ here — dismiss with the footer buttons, Esc, or the backdrop.</Text>
+    <Text>No ✕ here; dismiss with the footer buttons, Esc, or the backdrop.</Text>
     <span slot="footer" style={{ display: 'contents' }}>
       <Button data-dialog-close="no-x">Cancel</Button>
       <Button priority="primary" data-dialog-close="no-x">Rename</Button>
@@ -161,9 +160,9 @@ it requests a close the same way Esc and the backdrop do.
 ## Dismiss
 
 By default a dialog is dismissible: clicking the backdrop or pressing Esc closes
-it. For an alert or a destructive confirm — where an accidental click shouldn't
-lose the user's place — pass `persistent`. The backdrop and Esc no longer close
-it; only the close button, the footer actions, or your own code do.
+it. Pass `persistent` for an alert or destructive confirm, where an accidental
+click shouldn't lose the user's place. The backdrop and Esc then do nothing; the
+dialog closes only through the ✕, a footer action, or your code.
 
 <Preview gap="8px">
   <a-button data-dialog-open="persistent">Delete account</a-button>
@@ -171,7 +170,7 @@ it; only the close button, the footer actions, or your own code do.
     <Title slot="header" level={4} style={{ margin: 0 }}>Delete account?</Title>
     <Text>
       This permanently removes your account and all its data. This can't be
-      undone — answer with a button below.
+      undone.
     </Text>
     <span slot="footer" style={{ display: 'contents' }}>
       <Button data-dialog-close="persistent">Cancel</Button>
@@ -179,13 +178,6 @@ it; only the close button, the footer actions, or your own code do.
     </span>
   </a-dialog>
 </Preview>
-
-A backdrop click only dismisses when the press **and** the release both land on
-the backdrop. Selecting text in the body and releasing outside the dialog won't
-close it, and neither will clicking an option in a `Menu` or `Select` whose
-dropdown overflows the dialog's box — that click targets the popover, not the
-backdrop. So a dialog can safely hold interactive content that spills past its
-edges.
 
 ```tsx folded
 <Dialog
@@ -202,14 +194,19 @@ edges.
 </Dialog>
 ```
 
+A backdrop click dismisses only when the press **and** the release both land on
+the backdrop. Selecting text and releasing outside the dialog won't close it,
+and neither will clicking an option in a `Menu` or `Select` whose dropdown
+overflows the dialog's box: that click lands on the popover. So a dialog can
+hold interactive content that spills past its edges.
+
 ## Triggers
 
-For the uncontrolled case, give the dialog a unique `name`, then any element
-with `data-dialog-open="{name}"` opens it and `data-dialog-close="{name}"`
-closes it — no state, no handler. Useful when the trigger lives far from the
-dialog in the markup. It's a convenience for hand-authored or vanilla usage;
-in controlled mode (below) the `name` triggers are ignored and you drive `open`
-yourself.
+Give the dialog a unique `name`, and any element with `data-dialog-open="{name}"`
+opens it while `data-dialog-close="{name}"` closes it, with no state or handler.
+This helps when the trigger sits far from the dialog in the markup. It's for
+hand-authored or vanilla usage; controlled mode (below) ignores `name` and you
+drive `open` yourself.
 
 ```html
 <a-button data-dialog-open="settings">Settings</a-button>
@@ -225,28 +222,28 @@ yourself.
 
 Open state follows Anta's shared **state contract**. Leave it *uncontrolled*
 (seed with `defaultOpen`, or drive it with the `name` triggers) and the dialog
-owns open/close. Pass `open` + `onStateChange` to *control* it: the dialog only
-follows `open`, and every user dismiss (Esc, backdrop, close button) *requests*
-a change — you apply `detail.next` to accept, or ignore it to reject. The two
-layers speak different idioms — the wrapper takes booleans, the element takes a
-`state` string enum — and the wrapper maps between them:
+owns open/close. Pass `open` + `onStateChange` to *control* it: the dialog
+follows `open` only, and every user dismiss (Esc, backdrop, close button)
+*requests* a change that you apply to accept or ignore to reject. The wrapper
+takes booleans and the element takes a `state` string enum; the wrapper maps
+between them:
 
 | | `<Dialog>` (JSX) | `<a-dialog>` (element) |
 |---|---|---|
-| **Uncontrolled** — element owns it | `defaultOpen` / `name` triggers | `default-state="open" \| "closed"` / `name` |
-| **Controlled** — you own it | `open` + `onStateChange` | `state="open" \| "closed"` + `statechange` |
-| **Change event** | `onStateChange(event, { next, prev })` — booleans | `statechange`, a `CustomEvent<{ next, prev }>` — `'open'` / `'closed'` |
+| **Uncontrolled** (element owns it) | `defaultOpen` / `name` triggers | `default-state="open" \| "closed"` / `name` |
+| **Controlled** (you own it) | `open` + `onStateChange` | `state="open" \| "closed"` + `statechange` |
+| **Change event** | `onStateChange(event, { next, prev })`, booleans | `statechange`, a `CustomEvent<{ next, prev }>` of `'open'` / `'closed'` |
 
 `statechange` is **cancelable** and fires *before* the dialog applies the
 change. Uncontrolled, call `event.preventDefault()` to veto a dismiss (e.g.
 confirm before discarding unsaved edits). Controlled, the element never
-self-applies — apply `detail.next` to `open` to accept, or do nothing to reject.
+self-applies; apply `detail.next` to `open` to accept, or do nothing to reject.
 
 In controlled mode the element keeps the dialog in sync with your `open` value,
-even against a native close it didn't route — a `<form method="dialog">` submit,
-or calling `close()` on the underlying `<dialog>`. Such a close re-asserts your
-state: if `open` is still true the dialog reopens. Drive closing through your
-state (set `open` to `false` in `onStateChange`), not a raw native close.
+even against a native close it didn't route (a `<form method="dialog">` submit,
+or calling `close()` on the underlying `<dialog>`). Such a close re-asserts your
+state: the dialog reopens if `open` is still true. Drive closing through your
+state, setting `open` to `false` in `onStateChange`.
 
 ```tsx
 // controlled
@@ -262,17 +259,15 @@ const [open, setOpen] = useState(false)
 
 ## Focus
 
-On open, focus goes to the **dialog itself**, not the first control inside it —
-so the user Tabs to reach the first field, focus never lands on the ✕ or a
-destructive button, and it behaves the same whether or not the dialog has a
-close button or any focusable content. A screen reader announces the dialog by
-its `header` text (mirrored to the dialog's accessible name). The ✕ is the last
-tab stop.
+On open, focus goes to the **dialog itself** rather than a control inside it. So
+the user Tabs to reach the first field, focus never lands on the ✕ or a
+destructive button, and it works the same with or without a close button or
+focusable content. A screen reader announces the dialog by its `header` text
+(mirrored to the dialog's accessible name), and the ✕ is the last tab stop.
 
-To focus a specific control on open instead — a search field, the primary
-action — put `autofocus` on it; the dialog honors it and skips the default.
-Focus returns to whatever opened the dialog when it closes (from the native
-`<dialog>`).
+To focus a specific control on open instead (a search field, say), put
+`autofocus` on it; the dialog honors that and skips the default. On close, focus
+returns to whatever opened the dialog, from the native `<dialog>`.
 
 ```tsx folded
 <Dialog header="Rename" footer={…}>
@@ -280,13 +275,19 @@ Focus returns to whatever opened the dialog when it closes (from the native
 </Dialog>
 ```
 
-## Composing the element directly
+<Disclosure title="Component props" open>
+
+<PropsTable component="Dialog" />
+
+</Disclosure>
+
+## Web component
 
 Without the JSX wrapper, the `slot` attribute is the wire format: `slot="header"`
-and `slot="footer"` on your own elements, anything unslotted becomes the body. The
-element has no `closable` attribute — the ✕ is just a `Button` you slot into
-`slot="close"` carrying `data-custom-event="closerequest"` (this is exactly what
-the wrapper's `closable` injects). The element handles the rest.
+and `slot="footer"` on your own elements, and anything unslotted is the body. The
+element has no `closable` attribute; the ✕ is a `Button` you slot into
+`slot="close"` with `data-custom-event="closerequest"` (what the wrapper's
+`closable` injects). The element handles the rest.
 
 ```html
 <a-dialog name="invite">
@@ -298,18 +299,12 @@ the wrapper's `closable` injects). The element handles the rest.
   <a-button slot="footer" priority="primary" data-dialog-close="invite">Send</a-button>
 
   <!-- the close button (what the wrapper's `closable` injects for you) -->
-  <a-button slot="close" priority="tertiary" size="small"
+  <a-button slot="close" priority="tertiary" size="large"
             aria-label="Close" data-custom-event="closerequest">
     <a-icon shape="x"></a-icon>
   </a-button>
 </a-dialog>
 ```
-
-<Disclosure title="Component props" open>
-
-<PropsTable component="Dialog" />
-
-</Disclosure>
 
 <Disclosure title="Styling">
 
@@ -318,22 +313,22 @@ Reach for the props first: **`position`** (modal or a drawer edge), **`closable`
 dimmed overlay, lifted by a composed `box-shadow` whose first `inset` layer is the
 hairline border.
 
-A handful of tokens cover the rest — set them on the host (the `<a-dialog>` / your
-own class) in plain CSS:
+A few tokens cover the rest. Set them on the host (the `<a-dialog>` or your own
+class) in plain CSS:
 
-- **`--dialog-width`** — the box's width: a centered modal (default `480px`, capped to the viewport minus the margin) or a `left` / `right` drawer (default `380px`).
-- **`--dialog-height`** — the box's height: a modal (default content height) or a `top` / `bottom` drawer (default content height). A drawer's cross axis fills the viewport, so these size the axis the drawer slides along.
-- **`--dialog-margin`** — the minimum overlay kept between the dialog and the far viewport edge (default `32px`), so the backdrop is always visible/tappable. The centered modal keeps it on all four edges (max size = `100vw`/`100dvh` − 2×); a drawer keeps it on its one exposed edge (its slide-axis size is capped at `100vw`/`100dvh` − 1×, however large you set `--dialog-width`/`--dialog-height`). `fullscreen` ignores it (0).
-- **`--dialog-overlay`** — the backdrop fill (black at 42% in light, 62% in dark).
-- **`--dialog-radius`** — the corner radius (drawers square the edges they touch regardless).
-- **`--dialog-shadow`** — the whole composed elevation (inset hairline border + drop shadows).
-- **`--dialog-bg`** / **`--dialog-text`** — the surface fill and text colour.
+- **`--dialog-width`**: the box's width. A centered modal defaults to `480px` (capped to the viewport minus the margin); a `left` / `right` drawer defaults to `380px`.
+- **`--dialog-height`**: the box's height, content by default for both a modal and a `top` / `bottom` drawer. A drawer's cross axis fills the viewport, so this sizes the axis it slides along.
+- **`--dialog-margin`**: the minimum overlay kept between the dialog and the far viewport edge (default `32px`), so the backdrop stays visible. The centered modal keeps it on all four edges (max size `100vw`/`100dvh` − 2×); a drawer keeps it on its one exposed edge (slide-axis size capped at `100vw`/`100dvh` − 1×, however large you set `--dialog-width`/`--dialog-height`). `fullscreen` ignores it (0).
+- **`--dialog-overlay`**: the backdrop fill (black at 42% in light, 62% in dark).
+- **`--dialog-radius`**: the corner radius (drawers square the edges they touch regardless).
+- **`--dialog-shadow`**: the composed elevation (inset hairline border plus drop shadows).
+- **`--dialog-bg`** / **`--dialog-text`**: the surface fill and text colour.
 
 <Preview gap="8px">
   <a-button data-dialog-open="styled">Wider, softer dialog</a-button>
   <a-dialog name="styled" class="styled-dialog">
     <Title slot="header" level={4} style={{ margin: 0 }}>Custom surface</Title>
-    <Text>A wider modal with a bigger radius and a stronger overlay — all via tokens on the host.</Text>
+    <Text>A wider modal with a bigger radius and a stronger overlay, all via tokens on the host.</Text>
     <a-button slot="footer" priority="primary" data-dialog-close="styled">Done</a-button>
   </a-dialog>
   <style is:inline>{`
@@ -353,10 +348,10 @@ a-dialog.styled-dialog {
 }
 ```
 
-For everything else, `<a-dialog>` exposes shadow **parts** — `::part(dialog)` (the
-native dialog surface), `::part(header)`, `::part(body)`, `::part(footer)`, and
-`::part(close)` (the close button's slot). The zone paddings default to a shared
-rhythm; retarget any part to change it:
+For everything else, `<a-dialog>` exposes shadow **parts**: `::part(dialog)` (the
+surface), `::part(header)`, `::part(body)`, `::part(footer)`, and `::part(close)`
+(the close button's slot). The zone paddings share a rhythm; retarget any part to
+change it:
 
 ```css folded
 a-dialog::part(header) { padding: 24px 24px 12px; font-size: 20px; }

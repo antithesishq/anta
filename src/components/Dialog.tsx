@@ -5,11 +5,11 @@ import { Button } from "./Button";
 /** Public props for the `<Dialog>` modal / drawer. `header` and `footer` are the
  *  chrome zones; `children` is the (scrollable) body. */
 export interface DialogProps extends Omit<BaseProps, "title"> {
-  /** Header content — a title, or any node. Rendered in the top zone.
-   *  Omit for a chromeless dialog (just a body). */
+  /** Header content: a title, or any node. Rendered in the top zone. Omit for a
+   *  chromeless dialog with only a body. */
   header?: React.ReactNode;
-  /** Footer content — typically the action buttons. Rendered in the bottom
-   *  zone as a right-aligned row (wraps under pressure). Omit for none. */
+  /** Footer content, usually the action buttons. Rendered in the bottom zone as
+   *  a right-aligned row (wraps under pressure). Omit for none. */
   footer?: React.ReactNode;
   /** The dialog body. Scrolls when it overflows the available height. */
   children?: React.ReactNode;
@@ -22,15 +22,15 @@ export interface DialogProps extends Omit<BaseProps, "title"> {
   /** Show the top-right close (✕) button.
    *  @defaultValue true */
   closable?: boolean;
-  /** Keep the dialog up until an explicit control closes it — disables light
+  /** Keep the dialog up until an explicit control closes it: disables light
    *  dismiss (backdrop click + Esc). For an alert / confirm that must be answered
    *  via its own buttons; the close button and programmatic close still work.
    *  Omit for the default dismissible behavior. */
   persistent?: boolean;
   /** Controlled open state. When provided, the consumer owns open/close: the
    *  dialog only follows this prop, and every user dismiss (Esc, backdrop, close
-   *  button) just *requests* a change via `onStateChange` (reject by not
-   *  updating). Leave undefined for uncontrolled. */
+   *  button) *requests* a change via `onStateChange` (reject by not updating).
+   *  Leave undefined for uncontrolled. */
   open?: boolean;
   /** Initial open state for the uncontrolled case (read once on mount). */
   defaultOpen?: boolean;
@@ -38,7 +38,7 @@ export interface DialogProps extends Omit<BaseProps, "title"> {
    *  opens this dialog, `data-dialog-close="{name}"` closes it. A convenience for
    *  triggers rendered elsewhere; ignored in controlled mode. */
   name?: string;
-  /** Fired before the open state changes — on every user open / dismiss.
+  /** Fired before the open state changes, on every user open or dismiss.
    *  `event` is the cancelable `statechange`: call `event.preventDefault()` to
    *  veto an *uncontrolled* transition. `detail.next` is the requested open
    *  state, `detail.prev` the current one (booleans). In controlled mode, apply
@@ -145,7 +145,7 @@ export const Dialog = ({
         <span slot="close" style={{ display: "contents" }}>
           <Button
             priority="tertiary"
-            size="small"
+            size="large"
             icon="x"
             aria-label="Close"
             data-custom-event="closerequest"

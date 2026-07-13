@@ -12,6 +12,7 @@
     grid-template-columns: minmax(0, 1fr);
     row-gap: 4px;
   }
+  a-input-time:not(:defined) > [slot="leading"],
   a-input-time:not(:defined) > [slot="trailing"],
   a-input-time:not(:defined) > [slot="clear"],
   a-input-time:not(:defined) > [slot="hint"] {
@@ -72,12 +73,23 @@
     --input-time-seg-focus-bg: color-mix(in oklch, var(--focus-ring) 16%, transparent);
     --input-time-seg-focus-text: var(--text-1);
 
-    width: 100%;
+    /* A time is a fixed, small control (like native `<input type="time">`), so the
+       field wraps its content — the icon + segments — rather than filling the
+       container the way a text `<a-input>` does (`width: 100%`). A consumer that
+       wants it to fill sets `width: 100%` (or any width) from the outside. Caps at
+       the available width so a long label / hint can't overflow a narrow column. */
+    width: fit-content;
+    max-width: 100%;
   }
 
   a-input-time[round] {
     --input-time-round: attr(round type(<length>), 999px);
   }
+
+  /* Leading icon size tracks the field size — small 14 / medium 16 / large 18,
+     matching a-input. */
+  a-input-time[size="small"] a-icon { --icon-size: 14px; }
+  a-input-time[size="large"] a-icon { --icon-size: 18px; }
 
   a-input-time[tone]:not([tone=""]) {
     --input-time-tone-source: attr(tone type(<color>), var(--border-2));

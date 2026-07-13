@@ -8,7 +8,6 @@ export default `import { InputTime } from '@antadesign/anta'
 <InputTime
   label="Start time"
   defaultValue="09:30"
-  clearable
   onValueChange={(_, { value }) => console.log('time', value)}
 />
 `

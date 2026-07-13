@@ -63,6 +63,10 @@ export interface InputTimeProps extends BaseProps, DOMEventHandlers {
   disabled?: boolean
   /** Mark the field required (drives native validity). */
   required?: boolean
+  /** Leading icon at the start of the field — the clock affordance. Pass another
+   *  shape to change it, or `false` to drop it.
+   *  @defaultValue clock */
+  icon?: IconShape | false
   /** Show a clear button once the field has a value. */
   clearable?: boolean
   /** Dim the trailing adornments at rest; they brighten on hover / focus. */
@@ -144,6 +148,7 @@ export const InputTime = ({
   name,
   disabled,
   required,
+  icon,
   clearable,
   dimActions,
   trailing,
@@ -189,6 +194,12 @@ export const InputTime = ({
             {label}
           </span>
         ))}
+
+      {icon !== false && (
+        <span slot="leading" style={{ display: 'contents' }}>
+          <Icon shape={icon ?? 'clock'} />
+        </span>
+      )}
 
       {clearable && (
         // Real <a-button> in the element's `clear` slot; the element owns its

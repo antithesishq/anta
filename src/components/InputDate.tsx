@@ -24,7 +24,7 @@ import { Menu } from './Menu'
 import { Calendar } from './Calendar'
 import { Button } from './Button'
 import { Icon } from './Icon'
-import { Tabs } from './Tabs'
+import { InputTime } from './InputTime'
 import styles from './InputDate.module.css'
 
 /** Snapshot passed as the 2nd argument to `onValueChange` — the new ISO value
@@ -73,9 +73,10 @@ export interface InputDateProps extends Omit<BaseProps, 'children'> {
   round?: boolean | number | string
   /** Show a clear button once the field has a value. */
   clearable?: boolean
-  /** Leading icon at the start of the field — the calendar affordance.
+  /** Leading icon at the start of the field — the calendar affordance. Pass
+   *  another shape to change it, or `false` to drop it.
    *  @defaultValue calendar-days */
-  icon?: IconShape
+  icon?: IconShape | false
   /** Include a time. The value becomes ISO `YYYY-MM-DDTHH:mm`, the field parses a
    *  trailing time after a space (`06/15/2026 14:30`, `… 2:30pm`), and the menu
    *  shows a time row (hours : minutes, an AM/PM toggle in 12-hour locales, then a
@@ -176,12 +177,6 @@ export const InputDate = ({
   const hasTime = !!current && current.length >= 16 && current[10] === 'T'
   const h24 = hasTime ? parseInt(current!.slice(11, 13), 10) || 0 : 0
   const curM = hasTime ? current!.slice(14, 16) : '00'
-  // The hour as shown in the field(s) — 1–12 (12-hour) or 00–23 — and the meridiem
-  // the value falls in.
-  const curMer: 'AM' | 'PM' = h24 < 12 ? 'AM' : 'PM'
-  const curHourShown = twelveHour
-    ? String(((h24 + 11) % 12) + 1).padStart(2, '0')
-    : String(h24).padStart(2, '0')
 
   // `text` is what the field shows — a live draft while typing, canonicalized on
   // commit. `open` drives the calendar menu; `invalid` flags an unrecognized entry.
@@ -191,13 +186,6 @@ export const InputDate = ({
   // Bumped to move focus into the calendar grid on a keyboard open (ArrowDown) —
   // fed to `Calendar`'s `focusSignal`, which drives `<a-calendar>`'s `data-focus`.
   const [focusNonce, setFocusNonce] = useState(0)
-  // Drafts for the time fields (free typing; clamped + zero-padded on commit).
-  const [hourText, setHourText] = useState(curHourShown)
-  const [minuteText, setMinuteText] = useState(curM)
-  // The AM/PM toggle is DERIVED from the committed value, not its own state —
-  // making it a state that syncs back from `current` created a feedback loop with
-  // the controlled `<Tabs>`.
-  const meridiem = curMer
 
   // Reformat the field when the committed value changes from outside typing — a
   // calendar pick, a controlled `value` update, or an accepted commit (React's
@@ -208,42 +196,14 @@ export const InputDate = ({
     setText(fmt(current))
     setInvalid(false)
   }
-  // Keep the time drafts in step with the committed time when it changes elsewhere.
-  const [lastTime, setLastTime] = useState(`${h24}:${curM}`)
-  if (time && `${h24}:${curM}` !== lastTime) {
-    setLastTime(`${h24}:${curM}`)
-    setHourText(curHourShown)
-    setMinuteText(curM)
-  }
-
   const commit = (iso: string) => {
     if (!controlled) setInternal(iso || undefined)
     onValueChange?.(iso, { value: iso, name })
   }
-  const clampPad = (v: string, hi: number) =>
-    String(Math.min(Math.max(parseInt(String(v || '0'), 10) || 0, 0), hi)).padStart(2, '0')
 
-  // Resolve a raw hours entry to { h24, shown hour, meridiem }, following the cycle.
-  // In 12-hour mode a 24-hour entry auto-converts and flips the meridiem (type 18 →
-  // 6 PM; 0 → 12 AM), so pasting a 24-hour time just works.
-  const resolveHour = (raw: string, mer: 'AM' | 'PM') => {
-    let n = parseInt(String(raw || '0'), 10) || 0
-    if (!twelveHour) {
-      const h = Math.min(Math.max(n, 0), 23)
-      return { h24: h, shown: String(h).padStart(2, '0'), mer }
-    }
-    if (n === 0) return { h24: 0, shown: '12', mer: 'AM' as const }
-    if (n > 23) n = 23
-    if (n > 12) return { h24: n, shown: String(n - 12).padStart(2, '0'), mer: 'PM' as const }
-    return { h24: mer === 'AM' ? n % 12 : (n % 12) + 12, shown: String(n).padStart(2, '0'), mer }
-  }
-
-  // Combine a date with the current time drafts (used on a calendar pick in time
-  // mode). Honors an in-progress draft, not just the committed one.
-  const withTime = (d: string) => {
-    const { h24: h } = resolveHour(hourText, meridiem)
-    return `${d}T${String(h).padStart(2, '0')}:${clampPad(minuteText, 59)}`
-  }
+  // Combine a picked date with the committed time (midnight when none is set yet),
+  // so choosing a day in a date-time field keeps the time the `<InputTime>` holds.
+  const withTime = (d: string) => `${d}T${String(h24).padStart(2, '0')}:${curM}`
 
   // Apply a resolved ISO value (typed commit or calendar pick): recanonicalize the
   // field when it already equals the committed value, otherwise commit the change.
@@ -301,18 +261,6 @@ export const InputDate = ({
   const [previewISO, setPreviewISO] = useState(dateISO)
   if (parsedPreview !== null && parsedPreview !== previewISO) setPreviewISO(parsedPreview)
 
-  // Commit the time row: normalize the hour (with meridiem, auto-converting a
-  // 24-hour entry) + minutes, then combine with the date (or today if none is set,
-  // so the value is a complete date-time).
-  const commitTime = (hRaw: string, mRaw: string, mer: 'AM' | 'PM') => {
-    const { h24: h, shown } = resolveHour(hRaw, mer)
-    const mm = clampPad(mRaw, 59)
-    setHourText(shown)
-    setMinuteText(mm)
-    const base = dateISO || Temporal.Now.plainDateISO().toString()
-    commit(`${base}T${String(h).padStart(2, '0')}:${mm}`)
-  }
-
   return (
     <>
       <Input
@@ -323,7 +271,7 @@ export const InputDate = ({
         round={round}
         disabled={disabled}
         clearable={clearable}
-        leading={<Icon shape={icon ?? 'calendar-days'} />}
+        leading={icon === false ? undefined : <Icon shape={icon ?? 'calendar-days'} />}
         value={text}
         placeholder={pattern}
         inputMode={time ? 'text' : 'numeric'}
@@ -394,53 +342,23 @@ export const InputDate = ({
           />
           {time && (
             <div className={styles.timeRow}>
-              <div className={styles.time} role="group" aria-label="Time">
-                <Icon shape="clock" aria-hidden="true" className={styles.clock} />
-                <Input
-                  size={size}
-                  className={styles.timeField}
-                  value={hourText}
-                  placeholder="HH"
-                  type="number"
-                  inputMode="numeric"
-                  aria-label="Hours"
-                  disabled={disabled}
-                  onInput={(e: any) => setHourText(e.currentTarget.value.replace(/\D/g, '').slice(0, 2))}
-                  onChange={(e: any) => commitTime(e.currentTarget.value, minuteText, meridiem)}
-                />
-                <span className={styles.sep} aria-hidden="true">
-                  :
-                </span>
-                <Input
-                  size={size}
-                  className={styles.timeField}
-                  value={minuteText}
-                  placeholder="MM"
-                  type="number"
-                  inputMode="numeric"
-                  aria-label="Minutes"
-                  disabled={disabled}
-                  onInput={(e: any) => setMinuteText(e.currentTarget.value.replace(/\D/g, '').slice(0, 2))}
-                  onChange={(e: any) => commitTime(hourText, e.currentTarget.value, meridiem)}
-                />
-                {twelveHour && (
-                  <Tabs
-                    className={styles.meridiem}
-                    size={size}
-                    priority="primary"
-                    aria-label="AM or PM"
-                    options={[
-                      { value: 'AM', label: 'AM' },
-                      { value: 'PM', label: 'PM' },
-                    ]}
-                    value={meridiem}
-                    onStateChange={(_e: any, { next }: { next: string | null }) => {
-                      if (next === 'AM' || next === 'PM') commitTime(hourText, minuteText, next)
-                    }}
-                    disabled={disabled}
-                  />
-                )}
-              </div>
+              {/* The time half is the standalone InputTime — a segmented hour /
+                  minute / (AM-PM) field. It owns the 12h/24h clock, the AM/PM
+                  toggle, and 24h→12h conversion; we just splice its `HH:mm` onto
+                  the picked (or today's) date. */}
+              <InputTime
+                size={size}
+                locale={locale}
+                hour12={hour12}
+                disabled={disabled}
+                aria-label="Time"
+                value={hasTime ? `${String(h24).padStart(2, '0')}:${curM}` : ''}
+                onValueChange={(_e: any, { value: t }: { value: string }) => {
+                  if (!t) return
+                  const base = dateISO || Temporal.Now.plainDateISO().toString()
+                  commit(`${base}T${t}`)
+                }}
+              />
               <Button
                 priority="tertiary"
                 size={size}

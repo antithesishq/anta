@@ -106,6 +106,24 @@ const SHADOW_STYLE = `
     outline-offset: 1px;
   }
 
+  slot[name="leading"] {
+    display: none;
+    color: var(--input-time-adornment);
+    font-size: var(--_fs);
+    line-height: var(--_lh);
+  }
+  .field.has-leading slot[name="leading"] {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-inline-start: 7px;
+  }
+  .field.has-leading .segments { padding-inline-start: 5px; }
+  :host([dim-actions]) slot[name="leading"] { opacity: 0.6; transition: opacity 120ms ease; }
+  :host([dim-actions]:not(:disabled)) .field:hover slot[name="leading"],
+  :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="leading"] { opacity: 1; }
+  :host(:disabled) slot[name="leading"] { opacity: 0.5; pointer-events: none; }
+
   .segments {
     display: flex;
     align-items: center;
@@ -158,8 +176,13 @@ const SHADOW_STYLE = `
   :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="trailing"],
   :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="clear"] { opacity: 1; }
 
-  slot[name="clear"] { display: none; flex-shrink: 0; }
-  .field.is-filled slot[name="clear"] { display: flex; align-items: center; }
+  slot[name="clear"] {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    visibility: hidden;
+  }
+  .field.is-filled slot[name="clear"] { visibility: visible; }
   :host(:disabled) slot[name="clear"] { display: none; }
 
   .hint {
@@ -187,6 +210,7 @@ export class AInputTimeElement extends HTMLElementBase {
   #labelSlot: HTMLSlotElement
   #hintBox: HTMLDivElement
   #hintSlot: HTMLSlotElement
+  #leadingSlot: HTMLSlotElement
   #trailingSlot: HTMLSlotElement
   #segRow: HTMLDivElement
   #ready = false
@@ -239,6 +263,12 @@ export class AInputTimeElement extends HTMLElementBase {
       }
     })
 
+    this.#leadingSlot = document.createElement('slot')
+    this.#leadingSlot.name = 'leading'
+    this.#leadingSlot.setAttribute('part', 'leading')
+    this.#leadingSlot.addEventListener('slotchange', () =>
+      this.#field.classList.toggle('has-leading', this.#leadingSlot.assignedNodes().length > 0))
+
     const clearSlot = document.createElement('slot')
     clearSlot.name = 'clear'
     clearSlot.setAttribute('part', 'clear')
@@ -248,7 +278,7 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#trailingSlot.addEventListener('slotchange', () =>
       this.#field.classList.toggle('has-trailing', this.#trailingSlot.assignedNodes().length > 0))
 
-    this.#field.append(this.#segRow, clearSlot, this.#trailingSlot)
+    this.#field.append(this.#leadingSlot, this.#segRow, clearSlot, this.#trailingSlot)
 
     this.addEventListener(CLEAR_TRIGGER, () => this.clear())
 
@@ -386,6 +416,12 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#syncStatus()
     this.#syncDisabled()
     this.#render()
+    // Sync the initial filled state (gates the clear button), form value, and
+    // validity — a field mounted with a `defaultValue` is filled on the first
+    // paint, not only after an edit.
+    this.#internals?.setFormValue(this.value)
+    this.#updateFilled()
+    this.#updateValidity()
   }
 
   #amText = 'AM'
@@ -501,28 +537,40 @@ export class AInputTimeElement extends HTMLElementBase {
   /** Type a digit into a numeric segment, accumulating and auto-advancing once the
    *  segment can't take another digit (the `Number(v + '0') > max` heuristic). */
   #typeDigit(seg: Seg, d: string) {
+    // A 12-hour hour accepts a 24-hour entry while typing (up to 23) and converts
+    // it — `18` → `6 PM`, `0` → `12 AM` — so pasting/typing a 24-hour time just
+    // works. Arrows still wrap the display range (1–12); only typing converts.
+    const hour12Hour = seg.kind === 'hour' && this.#hour12
+    const typeMax = hour12Hour ? 23 : seg.max
     const candidate = Number(this.#buf + d)
-    let val: number
+    let raw: number
     let advance = false
-    if (candidate > seg.max) {
+    if (candidate > typeMax) {
       // The running value can't hold this digit — start fresh from it.
-      val = Number(d)
+      raw = Number(d)
       this.#buf = d
     } else {
-      val = candidate
+      raw = candidate
       this.#buf += d
     }
-    // Advance when a further digit is impossible or the field is 2 digits wide.
-    if (Number(val + '0') > seg.max || this.#buf.length >= String(seg.max).length) {
+    // Advance when a further digit is impossible or the segment is 2 digits wide.
+    if (Number(`${raw}0`) > typeMax || this.#buf.length >= String(typeMax).length) {
       advance = true
       this.#buf = ''
     }
-    // A 12-hour hour of 0 isn't valid yet (min 1) — hold for a second digit.
-    if (seg.kind === 'hour' && val < seg.min && !advance) {
-      this.#renderSeg(seg, val)
+    if (hour12Hour) {
+      // A lone 0/1/2 may still take a second digit (0x / 1x / 2x), so hold `0` as a
+      // partial until it commits (1 and 2 are valid 12-hour hours on their own).
+      if (raw === 0 && !advance) { this.#renderSeg(seg, 0); return }
+      if (raw === 0) { this.#hour = 12; this.#period = 'am' }
+      else if (raw > 12) { this.#hour = raw - 12; this.#period = 'pm' }
+      else { this.#hour = raw; if (this.#period == null) this.#period = 'am' }
+      this.#commitEdit()
+      if (advance) this.#moveFocus(seg, 1)
       return
     }
-    this.#set(seg, Math.max(seg.min, val))
+    this.#assign(seg, Math.max(seg.min, raw))
+    this.#commitEdit()
     if (advance) this.#moveFocus(seg, 1)
   }
 

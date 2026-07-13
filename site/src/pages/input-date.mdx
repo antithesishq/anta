@@ -75,11 +75,12 @@ bound both the calendar and what a typed date will accept.
 ```
 
 `time` turns it into a date-time field (value `YYYY-MM-DDTHH:mm`). The menu grows a
-time row under the calendar: hours, minutes, an AM/PM toggle in 12-hour locales, and
-a confirm (✓) button. Picking a day keeps the menu open so you can set the time. The
-clock follows the locale (`en-US` is 12-hour, most others 24), overridable with
-`hour12`. The field parses a trailing time after a space (`06/15/2026 2:30pm` or
-`… 14:30`), and typing a 24-hour hour into a 12-hour field converts it (18 → 6 PM).
+time row under the calendar: an [`InputTime`](/input-time/) (segmented hour / minute,
+plus AM/PM in 12-hour locales) and a confirm (✓) button. Picking a day keeps the menu
+open so you can set the time. The clock follows the locale (`en-US` is 12-hour, most
+others 24), overridable with `hour12`. The field parses a trailing time after a space
+(`06/15/2026 2:30pm` or `… 14:30`), and typing a 24-hour hour into the 12-hour time
+field converts it (18 → 6 PM).
 
 <Preview gap="16px" style="flex-direction: column; align-items: flex-start; padding-left: 40px;">
   <InputDateDemo client:only="preact" size="small" label="Small" time defaultValue="2026-06-15T09:00" style={{ width: '260px' }} />

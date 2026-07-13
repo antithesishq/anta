@@ -178,7 +178,7 @@ const SHADOW_STYLE = `
 export class AInputTimeElement extends HTMLElementBase {
   static formAssociated = true
   static observedAttributes = [
-    ...FORWARDED, 'value', 'defaultvalue', 'locale', 'hour12', 'status', 'disabled', 'size',
+    ...FORWARDED, 'value', 'defaultvalue', 'locale', 'hour12', 'status', 'disabled', 'size', 'min', 'max',
   ]
 
   #internals?: ElementInternals
@@ -291,6 +291,13 @@ export class AInputTimeElement extends HTMLElementBase {
     if (name === 'status') { this.#syncStatus(); return }
     if (name === 'disabled') { this.#syncDisabled(); return }
     if (name === 'size') return
+    if (name === 'min' || name === 'max') {
+      // A tighter bound can put the current value out of range — re-clamp it and
+      // refresh validity. Only clamps a complete value; an in-progress one waits.
+      if (this.#clampIfComplete()) this.#commitEdit()
+      else this.#updateValidity()
+      return
+    }
     // Forwarded (name / aria-label / required) → the group container for a11y.
     if (name === 'aria-label') { this.#applyGroupLabel(); return }
     if (name === 'required') { this.#updateValidity(); return }
@@ -360,7 +367,7 @@ export class AInputTimeElement extends HTMLElementBase {
               : { kind, el, min: 0, max: 1 }
         el.addEventListener('keydown', (e) => this.#onSegKeyDown(e, seg))
         el.addEventListener('focus', () => { this.#buf = '' })
-        el.addEventListener('blur', () => { this.#buf = ''; this.#dispatch('change') })
+        el.addEventListener('blur', () => this.#onSegBlur())
         this.#segRow.append(el)
         this.#segs.push(seg)
       } else {
@@ -418,13 +425,15 @@ export class AInputTimeElement extends HTMLElementBase {
     }
   }
 
-  /** Arrow / page / home / end increment: wraps within [min, max]; from empty,
-   *  ↑ lands on min and ↓ on max. */
+  /** Arrow / page / home / end increment: wraps within a segment's [min, max];
+   *  from empty, ↑ lands on min and ↓ on max. Clamps the resulting complete value
+   *  into the field's `min`/`max` range (so ↑ can't step past `max`). */
   #step(seg: Seg, delta: number) {
     this.#buf = ''
     if (seg.kind === 'period') {
       // From empty, land on AM; otherwise toggle.
       this.#period = this.#period == null ? 'am' : this.#period === 'am' ? 'pm' : 'am'
+      this.#clampIfComplete()
       this.#commitEdit()
       return
     }
@@ -433,17 +442,53 @@ export class AInputTimeElement extends HTMLElementBase {
     let next: number
     if (cur == null) next = delta > 0 ? seg.min : seg.max
     else next = ((cur - seg.min + delta) % span + span) % span + seg.min
-    this.#set(seg, next)
+    this.#assign(seg, next)
+    this.#clampIfComplete()
+    this.#commitEdit()
   }
 
-  #set(seg: Seg, val: number) {
+  /** Mutate a segment's state without committing (so callers can clamp first). */
+  #assign(seg: Seg, val: number) {
     if (seg.kind === 'period') return
     if (seg.kind === 'hour') this.#hour = val
     else this.#minute = val
     // Setting the hour with no meridiem yet defaults it to AM so a 12-hour value
     // can complete without touching the AM/PM segment.
     if (seg.kind === 'hour' && this.#hour12 && this.#period == null) this.#period = 'am'
+  }
+
+  #set(seg: Seg, val: number) {
+    this.#assign(seg, val)
     this.#commitEdit()
+  }
+
+  // --- min / max range (total minutes since 00:00, or null when unbounded) ---
+  #parseTotal(v: string | null): number | null {
+    const m = /^(\d{1,2}):(\d{2})$/.exec((v ?? '').trim())
+    if (!m) return null
+    return Math.min(23, Number(m[1])) * 60 + Math.min(59, Number(m[2]))
+  }
+  get #minTotal(): number | null { return this.#parseTotal(this.getAttribute('min')) }
+  get #maxTotal(): number | null { return this.#parseTotal(this.getAttribute('max')) }
+  #currentTotal(): number | null {
+    const h = this.#h24
+    if (h == null || this.#minute == null) return null
+    return h * 60 + this.#minute
+  }
+
+  /** If the value is complete and outside `min`/`max`, snap it to the nearest
+   *  bound and re-derive the segments. Returns whether it changed. */
+  #clampIfComplete(): boolean {
+    const total = this.#currentTotal()
+    if (total == null) return false
+    const lo = this.#minTotal
+    const hi = this.#maxTotal
+    let clamped = total
+    if (lo != null && clamped < lo) clamped = lo
+    if (hi != null && clamped > hi) clamped = hi
+    if (clamped === total) return false
+    this.#applyValue(`${pad2(Math.floor(clamped / 60))}:${pad2(clamped % 60)}`)
+    return true
   }
 
   #clearSeg(seg: Seg) {
@@ -485,6 +530,21 @@ export class AInputTimeElement extends HTMLElementBase {
     const i = this.#segs.indexOf(from)
     const next = this.#segs[i + dir]
     if (next) next.el.focus()
+  }
+
+  /** On losing a segment, reset the digit buffer; when focus has left the whole
+   *  group (not just hopped to a sibling segment), clamp into `min`/`max` and
+   *  fire `change`. `shadowRoot.activeElement` reliably reports the focused
+   *  segment even across the shadow boundary (blur `relatedTarget` is retargeted
+   *  to null), so defer one microtask to read where focus landed. */
+  #onSegBlur() {
+    this.#buf = ''
+    queueMicrotask(() => {
+      const active = this.shadowRoot?.activeElement
+      if (this.#segs.some((s) => s.el === active)) return
+      if (this.#clampIfComplete()) this.#commitEdit()
+      this.#dispatch('change')
+    })
   }
 
   // --- Value + rendering ---
@@ -609,8 +669,15 @@ export class AInputTimeElement extends HTMLElementBase {
     if (!this.#internals) return
     const anchor = this.#segs[0]?.el ?? this
     const required = this.hasAttribute('required')
+    const total = this.#currentTotal()
+    const lo = this.#minTotal
+    const hi = this.#maxTotal
     if (required && !this.value) {
       this.#internals.setValidity({ valueMissing: true }, 'Please enter a time.', anchor as HTMLElement)
+    } else if (total != null && lo != null && total < lo) {
+      this.#internals.setValidity({ rangeUnderflow: true }, `Time must be ${this.getAttribute('min')} or later.`, anchor as HTMLElement)
+    } else if (total != null && hi != null && total > hi) {
+      this.#internals.setValidity({ rangeOverflow: true }, `Time must be ${this.getAttribute('max')} or earlier.`, anchor as HTMLElement)
     } else if (this.getAttribute('status') === 'critical') {
       this.#internals.setValidity({ customError: true }, 'Invalid value.', anchor as HTMLElement)
     } else {

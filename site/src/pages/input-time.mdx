@@ -71,9 +71,14 @@ recolors the box and hint (only `critical` marks it invalid); `clearable` adds a
 clear button once a value is set. `disabled` and `tone` behave as they do on
 `Input`.
 
+`min` and `max` (24-hour `"HH:mm"`) bound the value: a complete time outside the
+range is clamped to the nearest bound as you step or leave the field, and flags
+`rangeUnderflow` / `rangeOverflow` for form validity in the meantime.
+
 ```tsx folded
 <InputTime label="Meeting" size="small" defaultValue="10:00" clearable />
 <InputTime label="Deadline" status="critical" hint="Pick a time in the future." />
+<InputTime label="Office hours" min="09:00" max="17:00" defaultValue="09:30" />
 ```
 
 <Disclosure title="InputTime props" open>

@@ -51,6 +51,12 @@ export interface InputTimeProps extends BaseProps, DOMEventHandlers {
   /** Force the clock: `true` = 12-hour (AM/PM), `false` = 24-hour. Omit to follow
    *  the locale. */
   hour12?: boolean
+  /** Earliest allowed time, 24-hour `"HH:mm"`. A complete value below it is
+   *  clamped up (on step / blur) and flagged `rangeUnderflow` for form validity. */
+  min?: string
+  /** Latest allowed time, 24-hour `"HH:mm"`. A complete value above it is clamped
+   *  down (on step / blur) and flagged `rangeOverflow`. */
+  max?: string
   /** Form field name — the 24-hour value submits under this key. */
   name?: string
   /** Disable the field. */
@@ -133,6 +139,8 @@ export const InputTime = ({
   defaultValue,
   locale,
   hour12,
+  min,
+  max,
   name,
   disabled,
   required,
@@ -157,6 +165,8 @@ export const InputTime = ({
       defaultvalue={defaultValue}
       locale={locale}
       hour12={hour12 === undefined ? undefined : hour12 ? 'true' : 'false'}
+      min={min}
+      max={max}
       status={statusTone}
       tone={tone || undefined}
       name={name}

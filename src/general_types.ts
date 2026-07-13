@@ -514,6 +514,12 @@ export interface AInputTimeAttributes extends BaseAttributes {
   /** Force the clock — `'true'` = 12-hour (AM/PM), `'false'` = 24-hour. Omit to
    *  follow the locale. Value-based (tri-state), not a presence boolean. */
   hour12?: 'true' | 'false'
+  /** Earliest allowed time, 24-hour `"HH:mm"` — complete values below it clamp up
+   *  and flag `rangeUnderflow`. */
+  min?: string
+  /** Latest allowed time, 24-hour `"HH:mm"` — complete values above it clamp down
+   *  and flag `rangeOverflow`. */
+  max?: string
   /** Validation/feedback tone. Only `critical` carries validity weight. */
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Custom accent colour (any literal CSS colour) — tints the resting + hover

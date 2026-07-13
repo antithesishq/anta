@@ -149,9 +149,13 @@
     text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
   }
 
-  /* Text selection — brand color at 15% alpha. */
+  /* Text selection — the focus-ring colour, tuned per theme (20% light / 30%
+     dark; the ring reads lighter on a dark surface, so it needs more presence). */
   ::selection {
-    background: color-mix(in srgb, var(--text-1-brand), transparent 85%);
+    background: color-mix(in oklch, var(--focus-ring) 20%, transparent);
+  }
+  .dark ::selection {
+    background: color-mix(in oklch, var(--focus-ring) 30%, transparent);
   }
 
   /* ───── Tables ───────────────────────────────────────────────── */

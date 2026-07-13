@@ -5,7 +5,7 @@
 // job (see comparison-data.ts). Anta's column is highlighted; the category
 // column and the header row are sticky so the wide grid stays legible while
 // it scrolls horizontally.
-import { SYSTEMS, CATEGORIES, COVERAGE, type Mark } from './comparison-data'
+import { SYSTEMS, CATEGORIES, COVERAGE, COVERAGE_URLS, type Mark } from './comparison-data'
 
 const MARK: Record<Mark | 'none', { glyph: string; label: string; cls: string }> = {
   yes: { glyph: '✓', label: 'Included', cls: 'm-yes' },
@@ -15,8 +15,13 @@ const MARK: Record<Mark | 'none', { glyph: string; label: string; cls: string }>
   none: { glyph: '·', label: 'Not shipped', cls: 'm-no' },
 }
 
-const cell = (systemId: string, catId: string) =>
-  MARK[COVERAGE[systemId]?.[catId] ?? 'none']
+// A shipped cell renders an Anta tertiary check-icon Button; its `tone` carries
+// the tier color (included / basic / paid) so the check still reads by tier.
+const MARK_TONE: Partial<Record<Mark, string>> = {
+  yes: 'success',
+  partial: 'warning',
+  paid: 'info',
+}
 
 // Category → Anta's own component doc page, for the row-label link. Only
 // categories Anta ships a page for; the rest render as plain, unlinked labels.
@@ -34,8 +39,8 @@ const ANTA_SLUG: Record<string, string> = {
       <tr>
         <th scope="col" class="cat-col">Component</th>
         {SYSTEMS.map((s) => (
-          <th scope="col" class:list={['sys-head', { anta: s.anta }]}>
-            <a href={s.docs} target="_blank" rel="noopener" class="sys-head-label">{s.name}</a>
+          <th scope="col" class:list={['sys-head', `col-${s.width ?? 'regular'}`, { anta: s.anta }]}>
+            <a href={s.docs} target="_blank" rel="noopener" class="sys-head-label">{s.short ?? s.name}</a>
           </th>
         ))}
       </tr>
@@ -50,11 +55,51 @@ const ANTA_SLUG: Record<string, string> = {
             <span class="cat-members">{c.members}</span>
           </th>
           {SYSTEMS.map((s) => {
-            const m = cell(s.id, c.id)
+            const raw = COVERAGE[s.id]?.[c.id]
+            const m = MARK[raw ?? 'none']
+            const shipped = !!raw && raw !== 'no'
+            // Link a shipped cell to that system's doc page for the job: Anta
+            // to our own component page (internal), peers to their external
+            // docs. A shipped cell with no known page renders a static check.
+            const href = shipped
+              ? s.anta
+                ? ANTA_SLUG[c.id] ? `/${ANTA_SLUG[c.id]}` : undefined
+                : COVERAGE_URLS[s.id]?.[c.id]
+              : undefined
+            const tone = MARK_TONE[raw ?? 'no']
+            const title = `${s.name} — ${c.label}: ${m.label}`
             return (
-              <td class:list={['mark', m.cls, { anta: s.anta }]} title={`${s.name} — ${c.label}: ${m.label}`}>
-                <span aria-hidden="true">{m.glyph}</span>
+              <td class:list={['mark', m.cls, { anta: s.anta }]}>
+                {shipped && href ? (
+                  // Shipped + has a doc page → an Anta tertiary check-icon Button
+                  // as an anchor (href → `<a role="button" data-anta>`), links out.
+                  <a
+                    href={href}
+                    data-anta=""
+                    role="button"
+                    priority="tertiary"
+                    tone={tone}
+                    size="large"
+                    class="mark-btn"
+                    target={s.anta ? undefined : '_blank'}
+                    rel={s.anta ? undefined : 'noopener'}
+                    aria-label={`${title} — open docs`}
+                  >
+                    <a-icon shape="check" aria-hidden="true"></a-icon>
+                  </a>
+                ) : shipped ? (
+                  // Shipped, but no doc page — the same check button with no link.
+                  <a-button priority="tertiary" tone={tone} size="large" tabindex="-1" aria-hidden="true" class="mark-btn">
+                    <a-icon shape="check" aria-hidden="true"></a-icon>
+                  </a-button>
+                ) : (
+                  // Not shipped → a critical-tone x-icon button, no link.
+                  <a-button priority="tertiary" tone="critical" size="large" tabindex="-1" aria-hidden="true" class="mark-btn">
+                    <a-icon shape="x" aria-hidden="true"></a-icon>
+                  </a-button>
+                )}
                 <span class="sr-only">{m.label}</span>
+                <a-tooltip class="mark-tip">{title}</a-tooltip>
               </td>
             )
           })}
@@ -64,28 +109,45 @@ const ANTA_SLUG: Record<string, string> = {
   </table>
 </div>
 
-<p class="cov-legend">
-  <span><b class="m-yes">✓</b> included</span>
-  <span><b class="m-partial">~</b> basic / community-only</span>
-  <span><b class="m-paid">$</b> paid tier</span>
-  <span><b class="m-no">·</b> not shipped</span>
-</p>
-
 <style>
+  /* No vertical scroll box: the wrapper grows to the table's full height, so
+     the page itself scrolls vertically. Only horizontal overflow is contained
+     (a too-wide table scrolls sideways inside this box, not the page) — so the
+     category column still pins during that horizontal scroll. The header row no
+     longer pins on vertical scroll: sticky-top needs a bounded-height scroller,
+     which whole-page scroll deliberately removes. */
   .cov-scroll {
     overflow-x: auto;
     margin-block: 24px 8px;
   }
 
+  /* Bleed to the viewport edges on narrow screens. At ≤640px DocsLayout slides
+     the nav sidebar off-canvas, so `.content` spans the whole viewport but keeps
+     an asymmetric inline padding (20px start / 12px end); negate it so the wide,
+     horizontally-scrolling matrix uses the full width edge to edge instead of
+     leaving a gap on each side. Coupled to that padding — keep in sync if the
+     mobile `.content` padding in DocsLayout changes. */
+  @media (max-width: 640px) {
+    .cov-scroll {
+      margin-inline: -20px -12px;
+    }
+  }
+
   .cov {
     border-collapse: separate;
     border-spacing: 0;
+    /* Fixed layout so each system column is a hard, per-tier width regardless
+       of header-name width (narrow 40 / regular 60 / wide reserved); the table
+       sizes to the sum of its columns (150 + the per-tier widths). */
+    table-layout: fixed;
+    width: max-content;
     font-size: 13px;
   }
 
   .cov th,
   .cov td {
-    padding: 8px 10px;
+    /* Tight side padding so a large (32px) icon button fits a 40px column. */
+    padding: 8px 4px;
     border-bottom: 1px solid var(--border-5);
     white-space: nowrap;
   }
@@ -95,6 +157,10 @@ const ANTA_SLUG: Record<string, string> = {
     position: sticky;
     top: 0;
     z-index: 2;
+    /* Per-tier hard column width (regular default below; narrow/wide override);
+       names wrap within it when they can't fit on one line. */
+    width: 60px;
+    white-space: normal;
     background: var(--bg-base);
     color: var(--text-2);
     font-weight: 550;
@@ -104,12 +170,22 @@ const ANTA_SLUG: Record<string, string> = {
   }
   .sys-head-label {
     display: inline-block;
-    font-size: 12px;
+    font-size: 11px;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
     color: inherit;
     text-decoration: none;
   }
   .sys-head-label:hover {
     text-decoration: underline;
+  }
+  /* Width tiers (fixed layout reads the header cell's width). Regular (60px) is
+     the base on `.sys-head`; these override for the other two tiers. */
+  .cov thead .sys-head.col-narrow {
+    width: 40px;
+  }
+  .cov thead .sys-head.col-wide {
+    width: 80px;
   }
 
   /* First column: the grouped category, sticky to the left on horizontal
@@ -120,10 +196,15 @@ const ANTA_SLUG: Record<string, string> = {
     z-index: 1;
     background: var(--bg-canvas);
     text-align: left;
-    min-width: 150px;
+    /* The label column keeps its own width (fixed layout reads it here). */
+    width: 150px;
     white-space: normal;
   }
   thead .cat-col {
+    /* The top-left corner: pin it to the top too (not just left) so "Component"
+       stays put on vertical scroll alongside the system-name headers. z-index 3
+       keeps it above both the sticky header row (2) and the sticky column (1). */
+    top: 0;
     z-index: 3;
     background: var(--bg-base);
   }
@@ -149,20 +230,36 @@ const ANTA_SLUG: Record<string, string> = {
   .mark {
     text-align: center;
     font-weight: 600;
-    min-width: 40px;
+    min-width: 30px;
   }
   .m-yes { color: var(--text-1-success); }
   .m-partial { color: var(--text-2-warning); }
   .m-paid { color: var(--text-2-info); }
   .m-no { color: var(--text-5); font-weight: 400; }
 
-  /* Anta column highlight — header + every cell down the column. */
+  /* Shipped cells render an Anta tertiary check-icon Button (link) or, when
+     there's no doc page, a static check icon. The Button carries its own tone
+     color; the static check inherits the cell's tier color via currentColor. */
+  .mark-btn {
+    display: inline-flex;
+  }
+
+  /* Anta's column is no longer tinted by default — only its header name keeps
+     the brand color as a light identity cue. It highlights on hover like any
+     other column. */
   .cov thead .sys-head.anta {
     color: var(--text-1-brand);
-    background: var(--bg-5-brand);
   }
-  .cov td.mark.anta {
-    background: var(--bg-5-brand);
+
+  /* Cross-highlight the hovered cell's row and column. The script toggles
+     `row-hl` on the row and `col-hl` on every cell down the column; these
+     selectors sit after the base cell backgrounds so they win on the sticky
+     header / category cells too (equal specificity, later in source). */
+  .cov tr.row-hl > th,
+  .cov tr.row-hl > td,
+  .cov th.col-hl,
+  .cov td.col-hl {
+    background: var(--bg-3);
   }
 
   .sr-only {
@@ -176,17 +273,35 @@ const ANTA_SLUG: Record<string, string> = {
     white-space: nowrap;
     border: 0;
   }
-
-  .cov-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    font-size: 12px;
-    color: var(--text-3);
-    margin-block: 4px 0;
-  }
-  .cov-legend b {
-    font-weight: 700;
-    margin-right: 3px;
-  }
 </style>
+
+<script>
+  // Cross-highlight the hovered cell's row and column. Plain class toggling on
+  // an in-DOM table (this docs component isn't worker-rendered), driven by
+  // delegated pointer events so it costs nothing until the pointer enters.
+  // `cellIndex` / `rows` / `cells` are native table APIs; the header cell in
+  // each column is included, so hovering also tints the system name on top.
+  for (const table of document.querySelectorAll<HTMLTableElement>('table.cov')) {
+    let col = -1
+    let row: HTMLTableRowElement | null = null
+    const clear = () => {
+      for (const el of table.querySelectorAll('.col-hl')) el.classList.remove('col-hl')
+      row?.classList.remove('row-hl')
+      col = -1
+      row = null
+    }
+    table.addEventListener('mouseover', (e) => {
+      const cell = (e.target as Element).closest('th, td')
+      if (!cell || !table.contains(cell)) return
+      const nextCol = (cell as HTMLTableCellElement).cellIndex
+      const nextRow = cell.parentElement as HTMLTableRowElement
+      if (nextCol === col && nextRow === row) return
+      clear()
+      col = nextCol
+      row = nextRow
+      for (const r of table.rows) r.cells[col]?.classList.add('col-hl')
+      row.classList.add('row-hl')
+    })
+    table.addEventListener('mouseleave', clear)
+  }
+</script>

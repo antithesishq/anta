@@ -64,9 +64,10 @@ const Heading = `h${level}` as const
   }
 
   /* Plain (non-anchor) variant — e.g. the top-of-page Playground. Tighter
-     top margin since it isn't a full section heading. */
+     top margin since it isn't a full section heading; a bottom margin so the
+     content after it (a heading or a bare <Preview>) doesn't abut when folded. */
   .disclosure.plain {
-    margin-block-start: 16px;
+    margin-block: 16px 32px;
   }
 
   .summary {

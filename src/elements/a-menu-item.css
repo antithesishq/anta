@@ -142,12 +142,22 @@
   /* The standalone checkbox / radio offsets its box (::before) + glyph (::after) with a
      margin-block-start to sit on a label's first-line centre (see a-checkbox.css /
      a-radio.css). In a menu the mark is label-less and the row centres it, so that
-     compensation drops it a touch low — zero it to keep the mark on the row's centre. */
+     compensation drops it a touch low — zero it to keep the mark on the row's centre.
+     The checkbox glyph (::after) is box-sized and stacks on the box, so it zeroes too.
+     The radio DOT (::after), though, is smaller than its ring: the standalone offset is
+     what keeps it concentric (ring + dot are each centred on the label line by their own
+     size, so the difference lands the dot in the ring's centre). Zeroing it too would pin
+     the dot to the ring's top edge — instead give it the offset that centres it within the
+     control box, mirroring the standalone geometry with the ring now at the row centre. */
   a-menu-item > a-checkbox::before,
   a-menu-item > a-checkbox::after,
-  a-menu-item > a-radio::before,
-  a-menu-item > a-radio::after {
+  a-menu-item > a-radio::before {
     margin-block-start: 0;
+  }
+  a-menu-item > a-radio::after {
+    margin-block-start: calc(
+      (var(--radio-control-size) - (var(--radio-dot-size) - var(--_radio-dot-adjust))) / 2
+    );
   }
 
   /* A leading mark (icon, checkbox, radio, or a custom `[data-indicator]`) reads

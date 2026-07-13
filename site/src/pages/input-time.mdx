@@ -52,7 +52,7 @@ field — a focused section is highlighted, and there's no free-text caret. In a
 12-hour field, typing a 24-hour hour converts it and flips AM/PM — `18` becomes
 `6 PM`, `0` becomes `12 AM` — so pasting a 24-hour time just works.
 
-<Preview>
+<Preview background="var(--bg-2)">
   <InputTimeDemo client:only="preact" label="Start time" defaultValue="09:30" />
 </Preview>
 
@@ -69,7 +69,7 @@ the locale too — Japanese renders the period first (`午後2:05`), Finnish sep
 with a dot (`14.05`), and 24-hour locales drop the AM/PM section entirely. Set
 `hour12` to force one clock regardless of locale.
 
-<Preview gap="24px" style="flex-wrap: wrap; align-items: flex-start;">
+<Preview background="var(--bg-2)" gap="24px" style="flex-wrap: wrap; align-items: flex-start;">
   <InputTimeDemo client:only="preact" label="US English" locale="en-US" defaultValue="14:05" />
   <InputTimeDemo client:only="preact" label="German" locale="de-DE" defaultValue="14:05" />
   <InputTimeDemo client:only="preact" label="Japanese (12h)" locale="ja-JP" hour12 defaultValue="14:05" />
@@ -94,7 +94,7 @@ placeholder dashes. `disabled` behaves as it does on `Input`.
 range is clamped to the nearest bound as you step or leave the field, and flags
 `rangeUnderflow` / `rangeOverflow` for form validity in the meantime.
 
-<Preview gap="16px" style="flex-direction: column; align-items: flex-start;">
+<Preview background="var(--bg-2)" gap="16px" style="flex-direction: column; align-items: flex-start;">
   <InputTimeDemo client:only="preact" label="Meeting" size="small" defaultValue="10:00" clearable />
   <InputTimeDemo client:only="preact" label="Deadline" status="critical" hint="Pick a time in the future." />
   <InputTimeDemo client:only="preact" label="Office hours" size="large" min="09:00" max="17:00" defaultValue="09:30" />
@@ -120,7 +120,7 @@ the host or through `::part()` — the element exposes `field`, `segments`, `lea
 `label`, `hint`, `clear`, and `trailing` parts. Don't override the internal
 `--input-time-*` output tokens directly; they recompute per state.
 
-<Preview>
+<Preview background="var(--bg-2)">
   <InputTimeDemo client:only="preact" className="my-time" label="Full width, red" defaultValue="09:30" />
   <style is:inline>{`
     .my-time { width: 100%; }
@@ -139,7 +139,7 @@ Drop the clock icon with the `icon={false}` prop, and point the `segments` part 
 a monospaced family for fixed-width digits — a small `padding-top` re-centers the
 tighter `1em` line:
 
-<Preview>
+<Preview background="var(--bg-2)">
   <InputTimeDemo client:only="preact" className="plain-time" icon={false} label="Monospaced" defaultValue="09:30" />
   <style is:inline>{`
     .plain-time::part(segments) {
@@ -166,7 +166,7 @@ For a one-off accent, `tone` takes **any literal CSS colour** (e.g. `#7c3aed`) a
 tints the resting + hover border — the focus ring stays the global ring. It's a
 colour, not a named tone; the named feedback tones live on `status`.
 
-<Preview>
+<Preview background="var(--bg-2)">
   <InputTimeDemo client:only="preact" label="Accent" tone="#7c3aed" defaultValue="09:30" />
 </Preview>
 

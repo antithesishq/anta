@@ -1,0 +1,88 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: InputAutocomplete
+---
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import { InputAutocompleteBasicDemo } from '../components/InputAutocompleteDemos'
+import inputAutocompleteDemoCode from './input-autocomplete.demo.ts'
+
+# InputAutocomplete
+
+A text field whose value is a free string, with a suggestion list that assists
+without constraining. Type anything: a value that isn't in the list is valid and
+stays as you typed it, and picking a suggestion just fills the field. For a value
+that must be one of the options, use [Select](/select/) with `filter` instead.
+
+It's a **composed component**, an [Input](/input/) stitched to a [Menu](/menu/) of
+suggestions. The field text arrives through **`onValueChange`**; `onSelect` fires
+only when a suggestion is chosen. Controlled via `value`, uncontrolled via
+`defaultValue`.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="InputAutocomplete"
+  layout="side"
+  panelHeight={420}
+  initialCode={inputAutocompleteDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; justify-content: flex-start; align-items: center; padding-top: 24px; }`}
+/>
+
+</Disclosure>
+
+## Free text is the point
+
+<Preview>
+  <InputAutocompleteBasicDemo client:load />
+</Preview>
+
+The value is always the text in the field. That's what separates this from a
+[Select](/select/): a Select constrains the value to one of its options, so a Select
+with `filter` already covers "search a fixed list". `InputAutocomplete` is for the
+case where the list only *suggests* and the user may commit something you didn't
+list.
+
+The keyboard follows that intent. No suggestion is highlighted as you type, so
+<kbd>Enter</kbd> commits the typed text and closes the list. <kbd>↓</kbd> highlights
+the first suggestion (then <kbd>↑</kbd>/<kbd>↓</kbd> move through them), and
+<kbd>Enter</kbd> on a highlighted row picks it. <kbd>Esc</kbd> or an outside click
+closes the list; clicking the field to place the caret keeps it open.
+
+## Filtering
+
+`filter` decides how suggestions match the text:
+
+- **`true`** (default) — built-in case-insensitive substring match on each option's
+  `value` / `label` / `hint`.
+- **a function** `(option, query) => boolean` — your own matcher, called per option.
+- **`false`** — show `suggestions` as-is, doing no local filtering. Use this when you
+  fetch or filter results yourself (async / remote) and feed the current set in
+  through `suggestions`.
+
+Suggestions are bare strings or `SelectOption`s — the same option shape
+[Select](/select/) uses (`value`, `label`, `hint`, `icon`, `tone`, `disabled`) — so a
+row can carry a secondary hint, a leading icon, or a tone.
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="InputAutocomplete" />
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+**The field** is styled through Input's props (`size`, `status`, `tone`, `round`,
+`leading` / `trailing`) and its `::part`s; set its width with `style` / `className`
+(forwarded to the field). **The suggestion popover** takes Menu's `::part(menu)`.
+
+```tsx folded
+// Give the field a width; tint it with a custom tone.
+<InputAutocomplete tone="info" style={{ width: '260px' }} suggestions={frameworks} />
+```
+
+</Disclosure>

@@ -684,11 +684,23 @@ export class AMenuElement extends HTMLElementBase {
 
   /* ------------------------------ combobox mode ------------------------------ */
 
-  /** The filter field slotted into THIS menu (never a submenu's), or null. Its
+  /** Combobox-anchor mode: the trigger anchor ITSELF is the filter field (it
+   *  carries `[data-menu-search]`), as in `InputAutocomplete` where an editable
+   *  `<a-input>` is the always-visible field the menu hangs under. null for the
+   *  normal case — `Select`/`SelectFaceted` slot the field as a child, so their
+   *  anchor never carries the marker and this stays inert for them. */
+  get #comboAnchor(): HTMLElement | null {
+    const a = this.triggerAnchor
+    return a?.matches('[data-menu-search]') ? a : null
+  }
+
+  /** The filter field of THIS menu, or null. A slotted child (never a submenu's)
+   *  wins; else the anchor when it's the field (combobox-anchor mode). Its
    *  presence switches the menu to the combobox keyboard. */
   get #searchField(): HTMLElement | null {
     const el = this.querySelector('[data-menu-search]') as HTMLElement | null
-    return el && el.closest('a-menu') === this ? el : null
+    if (el && el.closest('a-menu') === this) return el
+    return this.#comboAnchor
   }
 
   /** Move the combobox cursor. Sets the item's `active` **property** (off-DOM
@@ -722,6 +734,10 @@ export class AMenuElement extends HTMLElementBase {
   private resetActive() {
     const q = (this.#searchField as { value?: string } | null)?.value
     if (!q || !q.trim()) return this.setActive(null)
+    // Combobox-anchor (free-text autocomplete): never auto-seat a match, so Enter
+    // commits the typed text — the user arrows down to highlight a suggestion
+    // first. (The slotted-filter case below still seats the top match.)
+    if (this.#comboAnchor) return this.setActive(null)
     const items = this.focusableItems()
     this.setActive(items.find((it) => !it.hasAttribute('data-menu-skip-active')) ?? items[0] ?? null)
   }
@@ -1379,6 +1395,13 @@ export class AMenuElement extends HTMLElementBase {
         anchor.removeEventListener('contextmenu', onContext)
         this.listening = false
       }
+    } else if (this.#comboAnchor) {
+      // Combobox-anchor (autocomplete): the editable anchor IS the filter field.
+      // Wire NO click-toggle — clicking to place the caret or typing must not
+      // close the list. The reactive wrapper owns open state via controlled
+      // `state`; Esc / outside-click / picking a suggestion still close.
+      this.listening = true
+      return
     } else {
       const onClick = (e: MouseEvent) => {
         // detail === 0 ⇒ keyboard-synthesized click (Enter/Space on the

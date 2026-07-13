@@ -4,6 +4,7 @@
 // followed by a <Menu> of options. There is no `a-select` element — the wrapper
 // IS the coordinator (see the Select docs page: "Components composition").
 import { useState, useId } from '../jsx-runtime'
+import { matchQueryRegex, ISOLATE_HINT } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { Input } from './Input'
@@ -14,10 +15,6 @@ import { MenuGroup } from './MenuGroup'
 import { MenuSeparator } from './MenuSeparator'
 import { Tooltip } from './Tooltip'
 import styles from './Select.module.css'
-
-// macOS labels the isolate accelerator ⌥ (Option); every other platform, Alt.
-// `altKey` fires for both at runtime — only the *hint* wording differs.
-const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '')
 
 
 /** One option in a `<Select>`. Pass a bare string as shorthand for
@@ -206,9 +203,12 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  option's **value / label / hint**. Pass a **function** `(option, query) =>
    *  boolean` for custom matching (called per option; return `true` to keep it). */
   filter?: boolean | ((option: SelectOption, query: string) => boolean)
-  /** `multiple` only: add a "Select all" row at the top that toggles every enabled
+  /** `multiple` only: a "Select all" row at the top that toggles every enabled
    *  option (the currently-visible ones when a `filter` query is active); its box
-   *  shows the mixed state when only some are selected. */
+   *  shows the mixed state when only some are selected. On by default in
+   *  `multiple` mode — set `false` to drop the row (and with it the Alt/⌥-click
+   *  isolate accelerator it gates).
+   *  @defaultValue true */
   selectAll?: boolean
   /** Label for the `selectAll` row.
    *  @defaultValue Select all */
@@ -436,7 +436,7 @@ export const Select = (props: SelectProps) => {
     disabled,
     toneSelected,
     filter,
-    selectAll,
+    selectAll = true,
     selectAllLabel = 'Select all',
     clearable,
     clearLabel = 'Clear',
@@ -519,11 +519,7 @@ export const Select = (props: SelectProps) => {
   // is also the signal to skip match-highlighting.
   const filtering = filter !== undefined && filter !== false
   const q = query.trim()
-  const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const queryRe =
-    filtering && typeof filter !== 'function' && q
-      ? new RegExp(q.split(/\s+/).map(escapeRe).join('\\s+'), 'i')
-      : null
+  const queryRe = filtering && typeof filter !== 'function' ? matchQueryRegex(q) : null
   const matches = (o: SelectOption) =>
     typeof filter === 'function'
       ? filter(o, q)
@@ -640,12 +636,7 @@ export const Select = (props: SelectProps) => {
     // menu, on an enabled row — the default Alt/Option-click isolate hint. A
     // `tooltip=""` stays empty (falsy → no bubble), which is how a consumer opts a
     // row out of the default hint.
-    const isolateHint =
-      multiple && selectAll && !disabled
-        ? IS_MAC
-          ? '⌥+Click to select only this'
-          : 'Alt+Click to select only this'
-        : undefined
+    const isolateHint = multiple && selectAll && !disabled ? ISOLATE_HINT : undefined
     const tip = o.tooltip ?? isolateHint
     // The default hint teaches an accelerator, so it's unobtrusive: a longer delay
     // than the 250ms default (it shouldn't fire on a casual pass over the rows) and

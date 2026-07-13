@@ -165,6 +165,13 @@ longer close it; only the close button, the footer actions, or your own code do.
   </a-dialog>
 </Preview>
 
+A backdrop click only dismisses when the press **and** the release both land on
+the backdrop. Selecting text in the body and releasing outside the dialog won't
+close it, and neither will clicking an option in a `Menu` or `Select` whose
+dropdown overflows the dialog's box — that click targets the popover, not the
+backdrop. So a dialog can safely hold interactive content that spills past its
+edges.
+
 ```tsx folded
 <Dialog
   dismissable={false}
@@ -220,6 +227,12 @@ change. Uncontrolled, call `event.preventDefault()` to veto a dismiss (e.g.
 confirm before discarding unsaved edits). Controlled, the element never
 self-applies — apply `detail.next` to `open` to accept, or do nothing to reject.
 
+In controlled mode the element keeps the dialog in sync with your `open` value,
+even against a native close it didn't route — a `<form method="dialog">` submit,
+or calling `close()` on the underlying `<dialog>`. Such a close re-asserts your
+state: if `open` is still true the dialog reopens. Drive closing through your
+state (set `open` to `false` in `onStateChange`), not a raw native close.
+
 ```tsx
 // controlled
 const [open, setOpen] = useState(false)
@@ -230,6 +243,26 @@ const [open, setOpen] = useState(false)
 <Dialog defaultOpen onStateChange={(e, { next }) => {
   if (!next && unsaved) e.preventDefault()
 }}>…</Dialog>
+```
+
+## Focus
+
+On open, focus goes to the **dialog itself**, not the first control inside it —
+so the user Tabs to reach the first field, focus never lands on the ✕ or a
+destructive button, and it behaves the same whether or not the dialog has a
+close button or any focusable content. A screen reader announces the dialog by
+its `header` text (mirrored to the dialog's accessible name). The ✕ is the last
+tab stop.
+
+To focus a specific control on open instead — a search field, the primary
+action — put `autofocus` on it; the dialog honors it and skips the default.
+Focus returns to whatever opened the dialog when it closes (from the native
+`<dialog>`).
+
+```tsx folded
+<Dialog header="Rename" footer={…}>
+  <Input label="Name" autofocus />   {/* focus the field on open */}
+</Dialog>
 ```
 
 ## Composing the element directly

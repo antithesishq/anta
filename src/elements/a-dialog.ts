@@ -53,6 +53,42 @@ import './a-dialog.css'
  * destructive-confirm dialogs. The close button and programmatic close still
  * work.
  *
+ * A backdrop click counts only when the pointer press AND the release both land
+ * on the dialog element itself (the backdrop retargets to it). A click on
+ * slotted content — including a `Menu` / `Select` popover that overflows the
+ * dialog's box — targets that content, not the dialog, so it never dismisses;
+ * and a text-selection drag that starts inside and releases on the backdrop
+ * doesn't either (the press began on content).
+ *
+ * A native close the element did NOT route — a `<form method="dialog">` submit,
+ * a consumer calling the shadow `<dialog>`'s `close()`, bfcache — is reconciled
+ * by a `close` listener so the DOM never drifts from the contract: controlled
+ * re-asserts `state` (reopening if still `open`), uncontrolled records the
+ * closed intent. Our own closes are flagged (`#programmaticClose`) and skipped —
+ * a persistent flag, not a synchronous one, because the native `close` event
+ * fires from a queued task.
+ *
+ * ## Focus
+ *
+ * On open, initial focus goes to the dialog CONTAINER (it carries `tabindex=-1`),
+ * not the first focusable control — so the user Tabs to reach the first control,
+ * focus never lands on a destructive button, and it behaves the same with or
+ * without a ✕ or any focusable content. The container has an accessible name
+ * (the mirrored header text), so a screen reader announces the dialog by title.
+ * A consumer that wants a specific control focused instead puts `autofocus` on
+ * it — the native dialog honors that and the element skips the container
+ * override. The ✕ is the last tab stop (see the slot order). Focus return (to
+ * the opener) on close comes from the native `<dialog>`.
+ *
+ * ## Lifecycle across re-parenting
+ *
+ * The intended open state lives in `#wantOpen` (JS, not the DOM), so it survives
+ * a disconnect → reconnect (a framework moving the node). `disconnectedCallback`
+ * force-closes the native dialog to free the top layer without touching that
+ * intent; `connectedCallback` restores it. `default-state` seeds the intent only
+ * on the FIRST connect — never re-seeding — so re-parenting neither reopens a
+ * dialog the user dismissed nor drops a trigger-opened one.
+ *
  * ## Triggers (uncontrolled convenience)
  *
  * Set a unique `name`, then any element carrying `data-dialog-open="{name}"`
@@ -129,7 +165,7 @@ const SHADOW_STYLE = `
     flex-direction: column;
   }
 
-  dialog:focus-visible { outline: none; }
+  dialog:focus, dialog:focus-visible { outline: none; }
 
   dialog::backdrop {
     background: var(--dialog-overlay, color-mix(in oklch, black 40%, transparent));
@@ -277,6 +313,9 @@ export class ADialogElement extends HTMLElementBase {
 
     this.dialog = document.createElement('dialog')
     this.dialog.setAttribute('part', 'dialog')
+    // Programmatically focusable so we can land initial focus on the container
+    // itself (see #open) — not in the tab order otherwise.
+    this.dialog.tabIndex = -1
 
     this.closeSlot = document.createElement('slot')
     this.closeSlot.name = 'close'
@@ -308,10 +347,9 @@ export class ADialogElement extends HTMLElementBase {
     // is not a host / light-DOM mutation.
     this.headerSlot.addEventListener('slotchange', () => this.#syncAccessibleName())
 
-    // Close slot is appended LAST so it isn't the native dialog's first focusable
-    // child: showModal() would otherwise land initial focus on the ✕ instead of
-    // the first meaningful control. It's positioned top-right by CSS regardless
-    // of DOM order.
+    // Close slot is appended LAST so the ✕ is the LAST tab stop, not the first —
+    // Tab from the container (see #open) reaches content controls first, the ✕
+    // last. It's positioned top-right by CSS regardless of DOM order.
     this.dialog.append(this.headerSlot, bodySlot, this.footerSlot, this.closeSlot)
     shadow.append(style, this.dialog)
 
@@ -469,6 +507,13 @@ export class ADialogElement extends HTMLElementBase {
     // showModal() fires neither `close` nor `cancel`, so no suppression is needed.
     if (this.dialog.open || !this.isConnected) return
     this.dialog.showModal()
+    // showModal() lands initial focus on the first focusable descendant (the ✕
+    // or a footer button — possibly destructive). Override to focus the dialog
+    // CONTAINER instead, so the user tabs to reach the first control and a
+    // screen reader announces the dialog + its name on open (WAI-ARIA's safe
+    // default). A consumer that wants a specific control focused puts `autofocus`
+    // on it — native honors that during showModal(), so we leave it be.
+    if (!this.querySelector('[autofocus]')) this.dialog.focus()
   }
 
   /** Raw close. Records the closed intent and flags the pending `close` event as

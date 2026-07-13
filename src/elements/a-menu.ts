@@ -808,6 +808,22 @@ export class AMenuElement extends HTMLElementBase {
    *  uncontrolled and not vetoed. */
   requestClose(originEvent?: Event) {
     if (!this._shown) return
+    // Close any menus stacked ABOVE this one first — e.g. `Calendar`'s year/month
+    // jump menu, which sits inside `InputDate`'s popover: toggling that popover
+    // shut via its own anchor closes it but would otherwise leave the jump menu in
+    // the stack with its controlled consumer still holding `open === true`, so it
+    // can never be reopened. Emit a notify-only `statechange('closed')` for each
+    // (as `closeAll` / `show`'s trim do) so a controlled one resets, then hide +
+    // pop them. No-op in the common case where this IS the top of the stack.
+    const idx = openStack.indexOf(this)
+    if (idx !== -1) {
+      for (let i = openStack.length - 1; i > idx; i--) {
+        const m = openStack[i]
+        if (m.isOpen && !m._dismissNotified) m.emitChange('closed')
+        m._doHide()
+      }
+      openStack.length = idx + 1
+    }
     const ok = this.emitChange('closed', { originEvent })
     if (this.isControlled) {
       this._dismissNotified = true

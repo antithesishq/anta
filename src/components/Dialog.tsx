@@ -15,9 +15,10 @@ export interface DialogProps extends Omit<BaseProps, "title"> {
   children?: React.ReactNode;
   /** Placement. `center` (the default) is a centered modal; `left` / `right` /
    *  `top` / `bottom` turn it into an edge drawer (full height for left/right,
-   *  full width for top/bottom).
+   *  full width for top/bottom); `fullscreen` fills the whole viewport with no
+   *  edge gap or corner radius.
    *  @defaultValue 'center' */
-  position?: "center" | "left" | "right" | "top" | "bottom";
+  position?: "center" | "left" | "right" | "top" | "bottom" | "fullscreen";
   /** Show the top-right close (✕) button.
    *  @defaultValue true */
   closable?: boolean;

@@ -81,16 +81,18 @@ const [open, setOpen] = useState(false)
 ## Position
 
 `position` places the dialog. `center` (the default) is a modal centered on the
-viewport. `left`, `right`, `top`, and `bottom` turn it into an edge drawer:
-`left` / `right` run the full viewport height and slide in from the side;
-`top` / `bottom` span the full width and slide down / up. Drawers square their
-corners against the edges they touch.
+viewport, keeping a `--dialog-margin` gap (16px) from every edge. `left`,
+`right`, `top`, and `bottom` turn it into an edge drawer: `left` / `right` run
+the full viewport height and slide in from the side; `top` / `bottom` span the
+full width and slide down / up. Drawers square their corners against the edges
+they touch. `fullscreen` fills the whole viewport — no edge gap, no radius.
 
 <Preview gap="8px">
   <a-button data-dialog-open="drawer-left">Left</a-button>
   <a-button data-dialog-open="drawer-right">Right</a-button>
   <a-button data-dialog-open="drawer-top">Top</a-button>
   <a-button data-dialog-open="drawer-bottom">Bottom</a-button>
+  <a-button data-dialog-open="drawer-full">Fullscreen</a-button>
   <a-dialog name="drawer-left" position="left">
     <Title slot="header" level={4} style={{ margin: 0 }}>Filters</Title>
     <Text>A left drawer runs the full height and slides in from the left edge.</Text>
@@ -107,13 +109,22 @@ corners against the edges they touch.
     <Title slot="header" level={4} style={{ margin: 0 }}>Actions</Title>
     <Text>A bottom sheet — full width, rising from the bottom edge.</Text>
   </a-dialog>
+  <a-dialog name="drawer-full" position="fullscreen">
+    <Title slot="header" level={4} style={{ margin: 0 }}>Fullscreen</Title>
+    <Text>Fills the entire viewport — edge to edge, no gap, no corner radius.</Text>
+    <a-button slot="footer" priority="primary" data-dialog-close="drawer-full">Done</a-button>
+    <a-button slot="close" priority="tertiary" size="small" aria-label="Close" data-dialog-close="drawer-full">
+      <Icon shape="x" />
+    </a-button>
+  </a-dialog>
 </Preview>
 
 ```tsx folded
-<Dialog position="left" open={open} onStateChange={…}>…</Dialog>    {/* full-height left drawer */}
-<Dialog position="right" open={open} onStateChange={…}>…</Dialog>   {/* full-height right drawer */}
-<Dialog position="top" open={open} onStateChange={…}>…</Dialog>     {/* full-width top drawer */}
-<Dialog position="bottom" open={open} onStateChange={…}>…</Dialog>  {/* full-width bottom sheet */}
+<Dialog position="left" open={open} onStateChange={…}>…</Dialog>        {/* full-height left drawer */}
+<Dialog position="right" open={open} onStateChange={…}>…</Dialog>       {/* full-height right drawer */}
+<Dialog position="top" open={open} onStateChange={…}>…</Dialog>         {/* full-width top drawer */}
+<Dialog position="bottom" open={open} onStateChange={…}>…</Dialog>      {/* full-width bottom sheet */}
+<Dialog position="fullscreen" open={open} onStateChange={…}>…</Dialog> {/* edge-to-edge, no gap */}
 ```
 
 A drawer is sized by the same `--dialog-width` / `--dialog-height` tokens as a
@@ -308,8 +319,9 @@ hairline border.
 A handful of tokens cover the rest — set them on the host (the `<a-dialog>` / your
 own class) in plain CSS:
 
-- **`--dialog-width`** — the box's width: a centered modal (default `min(480px, 100vw − 32px)`) or a `left` / `right` drawer (default `380px`).
+- **`--dialog-width`** — the box's width: a centered modal (default `480px`, capped to the viewport minus the margin) or a `left` / `right` drawer (default `380px`).
 - **`--dialog-height`** — the box's height: a modal (default content height) or a `top` / `bottom` drawer (default content height). A drawer's cross axis fills the viewport, so these size the axis the drawer slides along.
+- **`--dialog-margin`** — the gap the centered modal keeps from every viewport edge (default `16px`); it also sets the modal's max size (`100vw`/`100dvh` minus twice this). Drawers ignore it (they sit flush), and `fullscreen` overrides it to `0`.
 - **`--dialog-overlay`** — the backdrop fill (black at 42% in light, 62% in dark).
 - **`--dialog-radius`** — the corner radius (drawers square the edges they touch regardless).
 - **`--dialog-shadow`** — the whole composed elevation (inset hairline border + drop shadows).

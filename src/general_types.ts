@@ -329,8 +329,9 @@ export interface ADialogAttributes extends BaseAttributes {
    *  once when the element connects. */
   'default-state'?: 'open' | 'closed'
   /** Placement. `center` (default, omit) is a centered modal; `left` / `right` /
-   *  `top` / `bottom` turn it into an edge drawer. */
-  position?: 'center' | 'left' | 'right' | 'top' | 'bottom'
+   *  `top` / `bottom` turn it into an edge drawer; `fullscreen` fills the whole
+   *  viewport (no edge gap, no radius). */
+  position?: 'center' | 'left' | 'right' | 'top' | 'bottom' | 'fullscreen'
   /** Disable light dismiss — Esc + backdrop click no longer close the dialog (it
    *  closes only via the close button or programmatically). For alert / confirm
    *  dialogs. Presence-based (`''` on, omit off). */

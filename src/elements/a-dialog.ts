@@ -151,9 +151,9 @@ const SHADOW_STYLE = `
     box-sizing: border-box;
     padding: 0;
     border: none;
-    max-width: calc(100vw - 32px);
-    max-height: calc(100dvh - 32px);
-    width: var(--dialog-width, min(480px, calc(100vw - 32px)));
+    max-width: calc(100vw - 2 * var(--dialog-margin, 16px));
+    max-height: calc(100dvh - 2 * var(--dialog-margin, 16px));
+    width: var(--dialog-width, 480px);
     height: var(--dialog-height, fit-content);
     overflow: visible;
     color: var(--dialog-text, inherit);
@@ -236,6 +236,15 @@ const SHADOW_STYLE = `
   }
   :host([position="top"]) dialog { margin: 0 auto auto auto; }
   :host([position="bottom"]) dialog { margin: auto auto 0 auto; }
+
+  :host([position="fullscreen"]) dialog {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+  }
 
   slot[name="header"] {
     display: none;

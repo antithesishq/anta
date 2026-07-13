@@ -129,8 +129,9 @@ const ANIM_MS = 200
 //    here with literal fallbacks, so external CSS (lower specificity than :host)
 //    can still override them. The surface is --bg-1 with a composed box-shadow
 //    whose first inset layer is the hairline border (drawn inside, so no reflow).
-//    display is flex-column when [open]; the UA centers a modal dialog, and the
-//    :host([position=…]) rules re-pin it to an edge as a drawer.
+//    display flips to flex when [open] (flex-direction:column stays on the base
+//    rule so it survives the exit — see the note there); the UA centers a modal
+//    dialog, and the :host([position=…]) rules re-pin it to an edge as a drawer.
 //  • enter / exit — opacity + transform transition with `overlay` / `display`
 //    on `allow-discrete`, and `@starting-style` so every open starts from the
 //    hidden state (fade/scale in). The exit runs because allow-discrete keeps the
@@ -158,11 +159,18 @@ const SHADOW_STYLE = `
     background: var(--dialog-bg, #fff);
     border-radius: var(--dialog-radius, 10px);
     box-shadow: var(--dialog-shadow, inset 0 0 0 1px color-mix(in oklch, black 8%, transparent), 0 10px 38px color-mix(in oklch, black 28%, transparent));
+
+    /* flex-direction lives here, NOT on dialog[open]: on close, display is held
+       at flex through the exit fade by allow-discrete, but flex-direction isn't
+       a transitioned property, so if it were [open]-scoped it would snap back to
+       row the instant [open] drops — reflowing the zones into a row for the whole
+       fade-out. Kept on the base rule it's inert while display:none and stays
+       column through the exit. */
+    flex-direction: column;
   }
 
   dialog[open] {
     display: flex;
-    flex-direction: column;
   }
 
   dialog:focus, dialog:focus-visible { outline: none; }

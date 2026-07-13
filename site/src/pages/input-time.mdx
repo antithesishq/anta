@@ -97,13 +97,13 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 <Preview gap="16px" style="flex-direction: column; align-items: flex-start;">
   <InputTimeDemo client:only="preact" label="Meeting" size="small" defaultValue="10:00" clearable />
   <InputTimeDemo client:only="preact" label="Deadline" status="critical" hint="Pick a time in the future." />
-  <InputTimeDemo client:only="preact" label="Office hours" min="09:00" max="17:00" defaultValue="09:30" />
+  <InputTimeDemo client:only="preact" label="Office hours" size="large" min="09:00" max="17:00" defaultValue="09:30" />
 </Preview>
 
 ```tsx folded
 <InputTime label="Meeting" size="small" defaultValue="10:00" clearable />
 <InputTime label="Deadline" status="critical" hint="Pick a time in the future." />
-<InputTime label="Office hours" min="09:00" max="17:00" defaultValue="09:30" />
+<InputTime label="Office hours" size="large" min="09:00" max="17:00" defaultValue="09:30" />
 ```
 
 <Disclosure title="InputTime props" open>
@@ -152,14 +152,14 @@ tighter `1em` line:
 
 ```tsx folded
 <InputTime icon={false} className="plain-time" defaultValue="09:30" />
-```
 
-```css folded
-.plain-time::part(segments) {
-  font-family: var(--monospace, ui-monospace, monospace);
-  line-height: 1em;
-  padding-top: 2px;
-}
+<style>{`
+  .plain-time::part(segments) {
+    font-family: var(--monospace, ui-monospace, monospace);
+    line-height: 1em;
+    padding-top: 2px;
+  }
+`}</style>
 ```
 
 For a one-off accent, `tone` takes **any literal CSS colour** (e.g. `#7c3aed`) and

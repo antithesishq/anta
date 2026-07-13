@@ -353,10 +353,17 @@ export const InputDate = ({
                 disabled={disabled}
                 aria-label="Time"
                 value={hasTime ? `${String(h24).padStart(2, '0')}:${curM}` : ''}
-                onValueChange={(_e: any, { value: t }: { value: string }) => {
-                  if (!t) return
+                onValueChange={(e: any, { value: t }: { value: string }) => {
+                  // Commit on blur only (`change`), not on every segment edit
+                  // (`input`) — consistent with the date field, and it keeps the
+                  // controlled `value` stable while the user edits so it doesn't
+                  // fight them. A cleared / incomplete time (`t === ''`) commits
+                  // the date alone (time undefined), so the clear sticks instead
+                  // of the stale time reappearing on the next render.
+                  const ev = 'nativeEvent' in e ? e.nativeEvent : e
+                  if (ev?.type !== 'change') return
                   const base = dateISO || Temporal.Now.plainDateISO().toString()
-                  commit(`${base}T${t}`)
+                  commit(t ? `${base}T${t}` : base)
                 }}
               />
               <Button

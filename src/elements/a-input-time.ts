@@ -215,6 +215,13 @@ export class AInputTimeElement extends HTMLElementBase {
   #segRow: HTMLDivElement
   #ready = false
   #formDisabled = false
+  // True once a value arrived via the `value` property setter — so connect
+  // doesn't re-seed from the (possibly empty) attribute and wipe it.
+  #seeded = false
+  // The canonical 24-hour "HH:mm" (or ''), kept in step with the segment state.
+  // Mode-independent, so a locale / hour12 switch re-derives display from it
+  // rather than from the now-stale display digits.
+  #iso = ''
 
   // Segment state — display units: hour is 0–23 (24h) or 1–12 (12h); period is
   // independent so it can be set/shown before the hour is. Minute is 0–59.
@@ -301,21 +308,31 @@ export class AInputTimeElement extends HTMLElementBase {
   connectedCallback() {
     if (Object.prototype.hasOwnProperty.call(this, 'value')) {
       // A `value` set as a property before upgrade shadows the accessor as an own
-      // data property — re-apply it through the seeder so it isn't lost.
+      // data property — re-apply it through the setter so it isn't lost.
       const v = (this as unknown as { value: string }).value
       delete (this as unknown as { value?: string }).value
-      this.#applyValue(v)
-    } else {
-      // Seed from the controlled `value` or the uncontrolled `defaultvalue` attr.
-      this.#applyValue(this.getAttribute('value') ?? this.getAttribute('defaultvalue') ?? '')
+      this.#seed(v)
+    } else if (!this.#seeded) {
+      // No value came in via the property setter (which sets `#seeded`), so take
+      // the controlled `value` or the uncontrolled `defaultvalue` attribute.
+      // Guarded so a property-set value isn't clobbered by an empty attribute.
+      this.#seed(this.getAttribute('value') ?? this.getAttribute('defaultvalue') ?? '')
     }
     this.#buildSegments()
     this.#ready = true
   }
 
+  /** Seed the value state + canonical cache before the segments exist. */
+  #seed(v: string) {
+    this.#applyValue(v)
+    this.#iso = this.value
+  }
+
   attributeChangedCallback(name: string, _old: string | null, value: string | null) {
     if (!this.#ready) return
-    if (name === 'value') { if (value !== null) this.#applyValue(value); this.#render(); return }
+    // Route through the setter so form value / filled / validity stay in sync
+    // (the setter touches only shadow + ElementInternals, never the host).
+    if (name === 'value') { if (value !== null) this.value = value; return }
     if (name === 'defaultvalue') return
     if (name === 'locale' || name === 'hour12') { this.#buildSegments(); return }
     if (name === 'status') { this.#syncStatus(); return }
@@ -323,9 +340,15 @@ export class AInputTimeElement extends HTMLElementBase {
     if (name === 'size') return
     if (name === 'min' || name === 'max') {
       // A tighter bound can put the current value out of range — re-clamp it and
-      // refresh validity. Only clamps a complete value; an in-progress one waits.
-      if (this.#clampIfComplete()) this.#commitEdit()
-      else this.#updateValidity()
+      // refresh form value / validity WITHOUT dispatching a user `input` (this is
+      // a programmatic attribute change; firing `input` here would re-enter the
+      // consumer's handler synchronously during a React commit).
+      this.#clampIfComplete()
+      this.#iso = this.value
+      this.#render()
+      this.#internals?.setFormValue(this.value)
+      this.#updateFilled()
+      this.#updateValidity()
       return
     }
     // Forwarded (name / aria-label / required) → the group container for a11y.
@@ -356,10 +379,11 @@ export class AInputTimeElement extends HTMLElementBase {
   #buildSegments() {
     const hour12 = this.#hour12
     const locale = this.#locale
-    // Preserve the value across a rebuild (locale / hour12 change): capture the
-    // canonical 24-hour string now, re-derive the display units in the new mode
-    // after the segments are rebuilt.
-    const keep = this.value
+    // Preserve the value across a rebuild (locale / hour12 change): re-derive the
+    // display units in the new mode from the mode-independent canonical cache —
+    // NOT from `this.value`, which would read the stale display digits through
+    // the new mode and corrupt the time.
+    const keep = this.#iso
     // Reference times: 1:05 for the AM marker, 13:05 for PM, so formatToParts
     // yields the day-period part + the locale's ordering and separators.
     let parts: Intl.DateTimeFormatPart[] = []
@@ -386,9 +410,18 @@ export class AInputTimeElement extends HTMLElementBase {
         el.className = 'seg'
         el.tabIndex = 0
         el.setAttribute('role', 'spinbutton')
+        // contentEditable so a touch device summons a soft keyboard (a focusable
+        // non-editable span never does) — numeric for hour/minute, text for AM/PM.
+        // We own the text: `beforeinput` preventDefaults every mutation and routes
+        // it, and the caret is hidden (caret-color: transparent) so it reads as a
+        // spinner, not a text box.
+        el.contentEditable = 'true'
+        el.spellcheck = false
+        el.setAttribute('autocorrect', 'off')
+        el.setAttribute('autocapitalize', 'off')
         const kind: SegKind = part.type === 'dayPeriod' ? 'period' : part.type
         el.setAttribute('aria-label', kind === 'hour' ? 'Hour' : kind === 'minute' ? 'Minute' : 'AM/PM')
-        if (kind !== 'period') el.setAttribute('inputmode', 'numeric')
+        el.setAttribute('inputmode', kind === 'period' ? 'text' : 'numeric')
         const seg: Seg =
           kind === 'hour'
             ? { kind, el, min: hour12 ? 1 : 0, max: hour12 ? 12 : 23 }
@@ -396,6 +429,7 @@ export class AInputTimeElement extends HTMLElementBase {
               ? { kind, el, min: 0, max: 59 }
               : { kind, el, min: 0, max: 1 }
         el.addEventListener('keydown', (e) => this.#onSegKeyDown(e, seg))
+        el.addEventListener('beforeinput', (e) => this.#onSegBeforeInput(e as InputEvent, seg))
         el.addEventListener('focus', () => { this.#buf = '' })
         el.addEventListener('blur', () => this.#onSegBlur())
         this.#segRow.append(el)
@@ -429,8 +463,12 @@ export class AInputTimeElement extends HTMLElementBase {
 
   // --- Keyboard ---
 
+  // Navigation + stepping only. Character entry and deletion go through
+  // `#onSegBeforeInput` (so mobile virtual keyboards, which don't fire keydown
+  // reliably, work) — these keys don't produce `beforeinput`, so there's no
+  // double handling.
   #onSegKeyDown(e: KeyboardEvent, seg: Seg) {
-    if (this.hasAttribute('disabled')) return
+    if (this.hasAttribute('disabled') || this.#formDisabled) return
     const k = e.key
     if (k === 'ArrowUp' || k === 'ArrowDown') {
       e.preventDefault()
@@ -445,20 +483,38 @@ export class AInputTimeElement extends HTMLElementBase {
     } else if (k === 'ArrowLeft' || k === 'ArrowRight') {
       e.preventDefault()
       this.#moveFocus(seg, k === 'ArrowRight' ? 1 : -1)
-    } else if (k === 'Backspace' || k === 'Delete') {
-      e.preventDefault()
+    }
+  }
+
+  // Character entry (digits, a/p) and deletion, from a physical or virtual
+  // keyboard. We never let the contentEditable mutate — preventDefault every
+  // `beforeinput` and route it, keeping the segment text under our control.
+  #onSegBeforeInput(e: InputEvent, seg: Seg) {
+    e.preventDefault()
+    if (this.hasAttribute('disabled') || this.#formDisabled) return
+    const type = e.inputType
+    if (type === 'deleteContentBackward' || type === 'deleteContentForward') {
       this.#buf = ''
       this.#clearSeg(seg)
-      if (k === 'Backspace') this.#moveFocus(seg, -1)
-    } else if (seg.kind === 'period' && (k === 'a' || k === 'A' || k === 'p' || k === 'P')) {
-      e.preventDefault()
-      this.#period = k.toLowerCase() === 'p' ? 'pm' : 'am'
-      this.#commitEdit()
-      this.#moveFocus(seg, 1)
-    } else if (seg.kind !== 'period' && /^[0-9]$/.test(k)) {
-      e.preventDefault()
-      this.#typeDigit(seg, k)
+      if (type === 'deleteContentBackward') this.#moveFocus(seg, -1)
+      return
     }
+    if (type.startsWith('insert')) {
+      for (const ch of e.data ?? '') this.#typeChar(seg, ch)
+    }
+  }
+
+  #typeChar(seg: Seg, ch: string) {
+    if (seg.kind === 'period') {
+      const c = ch.toLowerCase()
+      if (c === 'a' || c === 'p') {
+        this.#period = c === 'p' ? 'pm' : 'am'
+        this.#commitEdit()
+        this.#moveFocus(seg, 1)
+      }
+      return
+    }
+    if (/[0-9]/.test(ch)) this.#typeDigit(seg, ch)
   }
 
   /** Arrow / page / home / end increment: wraps within a segment's [min, max];
@@ -561,7 +617,15 @@ export class AInputTimeElement extends HTMLElementBase {
     if (hour12Hour) {
       // A lone 0/1/2 may still take a second digit (0x / 1x / 2x), so hold `0` as a
       // partial until it commits (1 and 2 are valid 12-hour hours on their own).
-      if (raw === 0 && !advance) { this.#renderSeg(seg, 0); return }
+      if (raw === 0 && !advance) {
+        // Held partial: a dimmed "0" (uncommitted), not a solid "00" that reads as
+        // entered — a second digit (0x) resolves it; blur drops it.
+        seg.el.textContent = '0'
+        seg.el.setAttribute('data-placeholder', '')
+        seg.el.removeAttribute('aria-valuenow')
+        seg.el.removeAttribute('aria-valuetext')
+        return
+      }
       if (raw === 0) { this.#hour = 12; this.#period = 'am' }
       else if (raw > 12) { this.#hour = raw - 12; this.#period = 'pm' }
       else { this.#hour = raw; if (this.#period == null) this.#period = 'am' }
@@ -607,6 +671,7 @@ export class AInputTimeElement extends HTMLElementBase {
 
   #commitEdit() {
     this.#render()
+    this.#iso = this.value
     this.#internals?.setFormValue(this.value)
     this.#updateFilled()
     this.#updateValidity()
@@ -695,6 +760,7 @@ export class AInputTimeElement extends HTMLElementBase {
       if (off) seg.el.setAttribute('aria-disabled', 'true')
       else seg.el.removeAttribute('aria-disabled')
       seg.el.tabIndex = off ? -1 : 0
+      seg.el.contentEditable = off ? 'false' : 'true'
     }
   }
 
@@ -742,7 +808,16 @@ export class AInputTimeElement extends HTMLElementBase {
     return `${pad2(h)}:${pad2(this.#minute)}`
   }
   set value(v: string) {
-    this.#applyValue(v ?? '')
+    this.#seeded = true
+    const next = v ?? ''
+    // Reconcile only when the incoming value differs from what the field already
+    // represents (mirrors a-input). A controlled consumer echoing `onValueChange`
+    // re-passes the same value on every edit — and while a segment is mid-entry
+    // the canonical value is '' (incomplete); without this guard, re-applying that
+    // '' would wipe the other segments the user already filled.
+    if (next === this.value) return
+    this.#applyValue(next)
+    this.#iso = this.value
     if (this.#ready) {
       this.#render()
       this.#internals?.setFormValue(this.value)
@@ -756,6 +831,7 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#hour = null
     this.#minute = null
     this.#period = null
+    this.#iso = ''
     this.#render()
     this.#internals?.setFormValue('')
     this.#updateFilled()
@@ -769,11 +845,23 @@ export class AInputTimeElement extends HTMLElementBase {
   get name(): string { return this.getAttribute('name') ?? '' }
   set name(v: string) { this.setAttribute('name', v) }
 
+  // Constraint-validation API, proxied from ElementInternals (mirrors a-input) so
+  // the host behaves like a native control and the `InputTime` wrapper can read
+  // validity for its onValueChange snapshot. Read-only mirrors — allowlisted in
+  // scripts/lint-getters.mjs (no wrapper passes them as props).
+  get validity(): ValidityState | undefined { return this.#internals?.validity }
+  get validationMessage(): string { return this.#internals?.validationMessage ?? '' }
+  get willValidate(): boolean { return this.#internals?.willValidate ?? false }
+  checkValidity(): boolean { return this.#internals?.checkValidity() ?? true }
+  reportValidity(): boolean { return this.#internals?.reportValidity() ?? true }
+
   formResetCallback() {
     this.#applyValue(this.getAttribute('defaultvalue') ?? '')
+    this.#iso = this.value
     this.#render()
     this.#internals?.setFormValue(this.value)
     this.#updateFilled()
+    this.#updateValidity()
     this.#dispatch('input')
     this.#dispatch('change')
   }

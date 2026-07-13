@@ -70,8 +70,9 @@ export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> 
  * `<Calendar>` — a single-date month grid you pick a day from, **composed from
  * Anta components in light DOM** (nothing is hidden in a shadow root): days and
  * the prev/next chevrons are `<Button>`s, so they inherit the design system's
- * states for free — a selected day is literally a `secondary` Button in its
- * `selected` state. All date math runs on the Temporal engine
+ * states for free — a selected day is literally a `tertiary` Button in its
+ * `selected` state, toned `brand` so the active date reads in the brand color.
+ * All date math runs on the Temporal engine
  * (`@antadesign/anta` exports `buildMonth` & friends), and the value is an ISO
  * `YYYY-MM-DD` string.
  *
@@ -211,30 +212,32 @@ export const Calendar = ({
   // month, the reachable range, or the locale changes. A single reachable year
   // skips the year level and lists its months directly.
   const jumpItems = useMemo(() => {
-    // One month row (`i` is 0-based): highlights the shown month (tint + check)
-    // and disables months outside `min`…`max`.
+    // One month row (`i` is 0-based): highlights the shown month (tint + a trailing
+    // dot, matching the active-year marker) and disables months outside `min`…`max`.
     const monthItem = (y: number, i: number) => {
       const m = i + 1
+      const isCurrent = y === cursor.year && m === cursor.month
       return (
         <MenuItem
           key={`${y}-${m}`}
           label={monthNames[i]}
-          selectionIndicator="check"
-          selected={y === cursor.year && m === cursor.month}
+          selected={isCurrent}
           disabled={monthOutOfRange(y, m) || undefined}
           data-menu-open=""
           onSelect={() => {
             pickMonth(y, m)
             setJumpOpen(false)
           }}
-        />
+        >
+          {isCurrent && <span className="jump-dot" aria-hidden="true" />}
+        </MenuItem>
       )
     }
     return years.length === 1
       ? monthNames.map((_, i) => monthItem(years[0], i))
       : years.map((y) => (
           <MenuItem key={y} submenu label={String(y)} selected={y === cursor.year}>
-            {y === cursor.year && <span className="year-dot" aria-hidden="true" />}
+            {y === cursor.year && <span className="jump-dot" aria-hidden="true" />}
             <Menu>{monthNames.map((_, i) => monthItem(y, i))}</Menu>
           </MenuItem>
         ))
@@ -360,12 +363,13 @@ export const Calendar = ({
         ))}
         {month.weeks.flat().map((d) => {
           // Days are `tertiary` Buttons; the selected one is a tertiary Button in
-          // its `selected` state, and today (when not selected) is a `secondary`
-          // Button — a subtle resting fill that marks it without a custom ring.
+          // its `selected` state toned `brand`, so the active date reads in the
+          // brand color. Today (when not selected) is a `secondary` Button — a
+          // subtle resting fill that marks it without a custom ring.
           const variant =
             d.today && !d.selected
               ? ({ priority: "secondary" } as const)
-              : ({ priority: "tertiary", selected: d.selected } as const)
+              : ({ priority: "tertiary", selected: d.selected, tone: d.selected ? "brand" : undefined } as const)
           return (
             <Button
               key={d.iso}

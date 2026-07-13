@@ -39,7 +39,7 @@ This is **not** a neutral normalize — these defaults make raw markup match the
 - **Lists** (`ul` / `ol`): `3ch` left padding so markers hug the text; a small bottom margin between items; markers toned to `--text-5`.
 - `menu` is stripped to a clean semantic container (no disc markers / default padding).
 - **Links** get `--link-color` with a hairline underline (75% alpha, `0.5px`); hover only thickens it to `1px` (no color repaint). Anchor-buttons (`<a role="button">`) are excluded so they keep button styling.
-- `::selection` → brand color at 15% alpha.
+- `::selection` → the focus-ring colour, tuned per theme (20% alpha in light, 30% in dark).
 - **Tables**: `border-collapse`, `tabular-nums`, and a polite cell baseline; opt into a framed look with `<table data-bordered>` (outer frame + column dividers + rounded corners).
 
 Everything above is defined in `src/reset.css`, inside `@layer anta` — read that file

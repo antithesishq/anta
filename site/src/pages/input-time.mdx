@@ -1,0 +1,175 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Time input
+---
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import timeInputDemoCode from './input-time.demo.ts'
+import InputTimeDemo from '../components/InputTimeDemo'
+
+# Time input
+
+**`InputTime`** is a segmented wall-clock field: one boxed input, like the others,
+holding separate **hour** and **minute** sections — plus an **AM/PM** section in
+12-hour locales — that behave as a single control. Each section is a spinbutton:
+<kbd>↑</kbd>/<kbd>↓</kbd> steps its value (wrapping 59 → 00), <kbd>←</kbd>/<kbd>→</kbd>
+moves between sections, and typing a digit fills the section and advances to the next
+once it can't hold more. AM/PM toggles with <kbd>↑</kbd>/<kbd>↓</kbd> or by typing
+`a` / `p`.
+
+A leading clock icon marks the affordance (change it with `icon`). Unlike a text
+`Input` (which fills its container), the field **sizes to its content** — a time
+is a small, fixed control — so set a `width` (e.g. `style={{ width: '100%' }}`) if
+you want it to fill. The value is a 24-hour `"HH:mm"` string (`''` until both hour
+and minute are set), never a `Date`. It works controlled (`value` + `onValueChange`)
+or uncontrolled (`defaultValue`), and submits under `name` via the native form APIs.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="InputTime"
+  layout="side"
+  panelHeight={360}
+  initialCode={timeInputDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; align-items: center; justify-content: center; }`}
+/>
+
+</Disclosure>
+
+## The field
+
+Focus a section and edit it with the keyboard: <kbd>↑</kbd>/<kbd>↓</kbd> to step (it
+wraps), <kbd>PageUp</kbd>/<kbd>PageDown</kbd> for a larger jump on minutes,
+<kbd>Home</kbd>/<kbd>End</kbd> for the min/max, or just type the digits. Typing
+`9` then `3` `0` lands `09:30` and moves across the sections on its own; an
+out-of-range digit (a `6` in the minutes) commits and advances immediately.
+<kbd>Backspace</kbd> clears a section and steps back. The whole thing reads as one
+field — a focused section is highlighted, and there's no free-text caret. In a
+12-hour field, typing a 24-hour hour converts it and flips AM/PM — `18` becomes
+`6 PM`, `0` becomes `12 AM` — so pasting a 24-hour time just works.
+
+<Preview background="var(--bg-2)">
+  <InputTimeDemo client:only="preact" label="Start time" defaultValue="09:30" />
+</Preview>
+
+```tsx folded
+<InputTime label="Start time" defaultValue="09:30" onValueChange={(_, { value }) => save(value)} />
+```
+
+## Locale
+
+The clock follows the locale: `en-US` shows 12-hour with an AM/PM section, most
+others show 24-hour with none. It's derived from `Intl` (the resolved `hourCycle`),
+and the section **order**, the **separator**, and the **AM/PM text** all come from
+the locale too — Japanese renders the period first (`午後2:05`), Finnish separates
+with a dot (`14.05`), and 24-hour locales drop the AM/PM section entirely. Set
+`hour12` to force one clock regardless of locale.
+
+<Preview background="var(--bg-2)" gap="24px" style="flex-wrap: wrap; align-items: flex-start;">
+  <InputTimeDemo client:only="preact" label="US English" locale="en-US" defaultValue="14:05" />
+  <InputTimeDemo client:only="preact" label="German" locale="de-DE" defaultValue="14:05" />
+  <InputTimeDemo client:only="preact" label="Japanese (12h)" locale="ja-JP" hour12 defaultValue="14:05" />
+  <InputTimeDemo client:only="preact" label="Force 24h" hour12={false} defaultValue="14:05" />
+</Preview>
+
+```tsx folded
+<InputTime label="US English" locale="en-US" defaultValue="14:05" />   {/* 12-hour: 02 : 05 PM */}
+<InputTime label="German"     locale="de-DE" defaultValue="14:05" />   {/* 24-hour: 14 : 05 */}
+<InputTime label="Japanese"   locale="ja-JP" hour12 defaultValue="14:05" />  {/* 午後 02:05 — period first */}
+<InputTime label="Force 24h"  hour12={false} defaultValue="14:05" />
+```
+
+## Size, status, and clearing
+
+`size` (`small` / `medium` / `large`) matches the other inputs' scale; `status`
+recolors the box and hint (only `critical` marks it invalid); `clearable` adds a
+clear button once a value is set — clearing empties every section back to the
+placeholder dashes. `disabled` behaves as it does on `Input`.
+
+`min` and `max` (24-hour `"HH:mm"`) bound the value: a complete time outside the
+range is clamped to the nearest bound as you step or leave the field, and flags
+`rangeUnderflow` / `rangeOverflow` for form validity in the meantime.
+
+<Preview background="var(--bg-2)" gap="16px" style="flex-direction: column; align-items: flex-start;">
+  <InputTimeDemo client:only="preact" label="Meeting" size="small" defaultValue="10:00" clearable />
+  <InputTimeDemo client:only="preact" label="Deadline" status="critical" hint="Pick a time in the future." />
+  <InputTimeDemo client:only="preact" label="Office hours" size="large" min="09:00" max="17:00" defaultValue="09:30" />
+</Preview>
+
+```tsx folded
+<InputTime label="Meeting" size="small" defaultValue="10:00" clearable />
+<InputTime label="Deadline" status="critical" hint="Pick a time in the future." />
+<InputTime label="Office hours" size="large" min="09:00" max="17:00" defaultValue="09:30" />
+```
+
+<Disclosure title="InputTime props" open>
+
+<PropsTable component="InputTime" />
+
+</Disclosure>
+
+## Styling
+
+`InputTime` renders an `<a-input-time>` whose field chrome mirrors `<a-input>`.
+Route feedback color through `status`; everything else is reachable as plain CSS on
+the host or through `::part()` — the element exposes `field`, `segments`, `leading`,
+`label`, `hint`, `clear`, and `trailing` parts. Don't override the internal
+`--input-time-*` output tokens directly; they recompute per state.
+
+<Preview background="var(--bg-2)">
+  <InputTimeDemo client:only="preact" className="my-time" label="Full width, red" defaultValue="09:30" />
+  <style is:inline>{`
+    .my-time { width: 100%; }
+    .my-time::part(segments) { color: #e5484d; }
+  `}</style>
+</Preview>
+
+```css folded
+/* Make one field fill its container (the default is content-width) and colour
+   the time red — width on the host, the colour through the segments part. */
+.my-time { width: 100%; }
+.my-time::part(segments) { color: #e5484d; }
+```
+
+Drop the clock icon with the `icon={false}` prop, and point the `segments` part at
+a monospaced family for fixed-width digits — a small `padding-top` re-centers the
+tighter `1em` line:
+
+<Preview background="var(--bg-2)">
+  <InputTimeDemo client:only="preact" className="plain-time" icon={false} label="Monospaced" defaultValue="09:30" />
+  <style is:inline>{`
+    .plain-time::part(segments) {
+      font-family: var(--monospace, ui-monospace, monospace);
+      line-height: 1em;
+      padding-top: 2px;
+    }
+  `}</style>
+</Preview>
+
+```tsx folded
+<InputTime icon={false} className="plain-time" defaultValue="09:30" />
+
+<style>{`
+  .plain-time::part(segments) {
+    font-family: var(--monospace, ui-monospace, monospace);
+    line-height: 1em;
+    padding-top: 2px;
+  }
+`}</style>
+```
+
+For a one-off accent, `tone` takes **any literal CSS colour** (e.g. `#7c3aed`) and
+tints the resting + hover border — the focus ring stays the global ring. It's a
+colour, not a named tone; the named feedback tones live on `status`.
+
+<Preview background="var(--bg-2)">
+  <InputTimeDemo client:only="preact" label="Accent" tone="#7c3aed" defaultValue="09:30" />
+</Preview>
+
+```tsx folded
+<InputTime label="Accent" tone="#7c3aed" defaultValue="09:30" />
+```

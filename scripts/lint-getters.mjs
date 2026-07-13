@@ -63,6 +63,7 @@ const READONLY_ALLOWLIST = {
   // JSX prop, so React 19 never assigns them.
   HTMLElementBase: ['view', 'doc'],
   AInputElement: ['validity', 'validationMessage', 'willValidate'],
+  AInputTimeElement: ['validity', 'validationMessage', 'willValidate'],
   AMenuElement: ['isControlled', 'isSubmenu', 'triggerAnchor', 'isOpen'],
   ARadioGroupElement: ['value'],
   ATabsElement: ['value'],

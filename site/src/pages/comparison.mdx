@@ -6,6 +6,7 @@ title: Comparison
 import ComparisonMatrix from '../components/ComparisonMatrix.astro'
 import CoverageMatrix from '../components/CoverageMatrix.astro'
 import SystemCards from '../components/SystemCards.astro'
+import Disclosure from '../components/Disclosure.astro'
 import { AS_OF } from '../components/comparison-data'
 
 # Comparison
@@ -25,11 +26,11 @@ its DOM is declarative enough to render from a Worker thread.
 Versions are a snapshot verified in {AS_OF} and move quickly; follow each
 system's link for the current release.
 
-## At a glance
+<Disclosure title="At a glance">
 
 <ComparisonMatrix />
 
-The rows that set Anta apart are **Shape** and **Styling**. Most systems here are
+What sets Anta apart here is its **Frameworks** and **Styling**. Most systems here are
 React-only and reach for a styling engine: CSS-in-JS (MUI, Ant Design,
 Atlaskit), Sass (Carbon, Blueprint), StyleX (Astryx), or Tailwind (shadcn). Anta
 ships framework-agnostic web components styled with plain CSS in a single
@@ -37,6 +38,8 @@ ships framework-agnostic web components styled with plain CSS in a single
 default without a specificity fight. The two other web-component systems sit
 closest: Polaris is locked to the Shopify look under a restricted license, and
 Web Awesome bundles a Lit runtime with a paid tier.
+
+</Disclosure>
 
 ## What Anta adds
 
@@ -68,10 +71,6 @@ combobox, avatar, or data grid yet. The headless primitives (Radix, Base UI)
 leave most cells to you by design; they ship behavior and leave the look to you.
 
 <CoverageMatrix />
-
-Anta's **Table** and **Select** are marked basic on purpose: they aren't the
-async data grid or virtualized combobox that enterprise kits like Ant Design,
-Carbon, and Blueprint are known for.
 
 ## The systems
 

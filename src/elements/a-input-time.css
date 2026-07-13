@@ -65,12 +65,13 @@
 
     --input-time-text: var(--text-1);
     --input-time-label: var(--text-3);
-    --input-time-placeholder: var(--text-4);
+    --input-time-placeholder: var(--text-3);
     --input-time-adornment: var(--text-3);
     --input-time-hint: var(--text-3);
 
-    /* Focused segment: a brand-tinted highlight (tracks the focus ring), full text. */
-    --input-time-seg-focus-bg: color-mix(in oklch, var(--focus-ring) 16%, transparent);
+    /* Focused segment: the focus-ring colour, matching the text-selection tint
+       (20% light / 30% dark) so the active sector reads as "selected". */
+    --input-time-seg-focus-bg: color-mix(in oklch, var(--focus-ring) 20%, transparent);
     --input-time-seg-focus-text: var(--text-1);
 
     /* A time is a fixed, small control (like native `<input type="time">`), so the
@@ -183,4 +184,10 @@
     --input-time-border: #49424c;
     --input-time-border-hover: #635b65;
   }
+
+  /* Focused-segment tint tracks the text-selection alpha (30% dark, per reset.css). */
+  .dark a-input-time {
+    --input-time-seg-focus-bg: color-mix(in oklch, var(--focus-ring) 30%, transparent);
+  }
+
 }

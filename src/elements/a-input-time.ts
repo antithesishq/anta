@@ -150,12 +150,23 @@ const SHADOW_STYLE = `
     font-variant-numeric: tabular-nums;
     caret-color: transparent;
   }
+  .seg[inputmode="numeric"] {
+    /* Fixed to two tabular digits so the box never reflows: neither the narrower
+       placeholder dashes nor a mid-entry single digit changes the field width. */
+    width: calc(2ch + 2px);
+  }
   .seg:focus {
     background: var(--input-time-seg-focus-bg);
     color: var(--input-time-seg-focus-text);
   }
   .seg[data-placeholder] { color: var(--input-time-placeholder); }
   .lit { white-space: pre; color: var(--input-time-text); }
+
+  /* No text-selection highlight inside the field: the segments are spinbuttons,
+     and a selection painted over the focused segment's tint compounds into an
+     unreadable block. The focus tint alone marks the active segment. Scoped to
+     the shadow, so page selection is unaffected. */
+  ::selection { background: transparent; }
 
   :host(:disabled) .segments { cursor: not-allowed; }
   :host(:disabled) .seg { cursor: not-allowed; }
@@ -499,9 +510,54 @@ export class AInputTimeElement extends HTMLElementBase {
       if (type === 'deleteContentBackward') this.#moveFocus(seg, -1)
       return
     }
+    if (type === 'insertFromPaste') {
+      // Paste (text lives in dataTransfer, not e.data): try to read a whole time
+      // and fill every segment; fall back to feeding the characters into the
+      // focused segment.
+      const text = e.dataTransfer?.getData('text/plain') || e.data || ''
+      const parsed = this.#parsePaste(text)
+      if (parsed) {
+        this.#buf = ''
+        this.#applyValue(`${pad2(parsed.h)}:${pad2(parsed.min)}`)
+        this.#clampIfComplete()
+        this.#commitEdit()
+        this.#dispatch('change')
+      } else {
+        for (const ch of text) this.#typeChar(seg, ch)
+      }
+      return
+    }
     if (type.startsWith('insert')) {
       for (const ch of e.data ?? '') this.#typeChar(seg, ch)
     }
+  }
+
+  /** Parse a pasted time to 24-hour `{ h, min }`, or null. Accepts `14:30`,
+   *  `9:5`, `2:30 pm`, `12am`, and run-together `230` / `1430` — mirrors
+   *  `calendar-core`'s `parseTimeInput` but Temporal-free, so the element's
+   *  granular import stays lean. */
+  #parsePaste(text: string): { h: number; min: number } | null {
+    let s = (text ?? '').trim().toLowerCase()
+    if (!s) return null
+    let mer: 'am' | 'pm' | null = null
+    const m = s.match(/([ap])\.?m?\.?$/)
+    if (m) { mer = m[1] === 'p' ? 'pm' : 'am'; s = s.slice(0, m.index).trim() }
+    let h: number
+    let min: number
+    if (/[:.]/.test(s)) {
+      const [hp, mp] = s.split(/[:.]/)
+      h = Number(hp); min = Number(mp ?? '0')
+    } else {
+      const d = s.replace(/\D/g, '')
+      if (!d) return null
+      if (d.length <= 2) { h = Number(d); min = 0 }
+      else { const cut = d.length - 2; h = Number(d.slice(0, cut)); min = Number(d.slice(cut)) }
+    }
+    if (!Number.isInteger(h) || !Number.isInteger(min)) return null
+    if (mer === 'pm' && h < 12) h += 12
+    if (mer === 'am' && h === 12) h = 0
+    if (h < 0 || h > 23 || min < 0 || min > 59) return null
+    return { h, min }
   }
 
   #typeChar(seg: Seg, ch: string) {

@@ -6,6 +6,11 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
+## 0.3.6 — July 13, 2026
+
+### Added
+- **`Dialog` (`<a-dialog>`)** — a modal dialog / edge drawer built on a native `<dialog>` in shadow DOM, so the top layer, focus trap, focus return, `::backdrop`, and Esc all come from the platform. Three optional zones — `header`, body (`children`), and `footer` (a right-aligned action row) — plus a top-right ✕ close button (`closable`, on by default). `position` places it: `center` (default modal) or `left` / `right` / `top` / `bottom` edge drawers that slide in (full height for left/right, full width for top/bottom). Open state follows Anta's shared contract: controlled (`open` + `onStateChange`) or uncontrolled (`defaultOpen`, or the `name` + `data-dialog-open` / `data-dialog-close` trigger convenience), with a cancelable `statechange` fired before every user open / dismiss. `dismissable={false}` disables light dismiss (Esc + backdrop) for alert / confirm dialogs. Surface is `--bg-1` above a themed `--dialog-overlay`, lifted by a composed `box-shadow` whose first inset layer is the hairline border. Enter / exit transitions (scale-fade for the modal, slide for drawers) are gated under `prefers-reduced-motion`. Exposes `dialog` / `header` / `body` / `footer` / `close` parts and `--dialog-width` / `--dialog-drawer-size` / `--dialog-overlay` / `--dialog-radius` / `--dialog-shadow` / `--dialog-bg` tokens.
+
 ## 0.3.5 — July 13, 2026
 
 ### Added

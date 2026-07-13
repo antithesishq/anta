@@ -68,6 +68,10 @@ const READONLY_ALLOWLIST = {
   ARadioGroupElement: ['value'],
   ATabsElement: ['value'],
   ACheckboxElement: ['checked', 'indeterminate'],
+  // `open` mirrors the native <dialog>.open read; the write channel is the
+  // `state` attribute / showModal(), and nothing passes `open` as a JSX prop
+  // (ADialogAttributes uses `state`), so React 19 never assigns it.
+  ADialogElement: ['open'],
 }
 
 /** Every `.ts` file under `src` (element classes are always `.ts` by

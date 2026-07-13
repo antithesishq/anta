@@ -147,9 +147,9 @@ it requests a close the same way Esc and the backdrop do.
 
 ## Dismiss
 
-By default a dialog is dismissable: clicking the backdrop or pressing Esc closes
+By default a dialog is dismissible: clicking the backdrop or pressing Esc closes
 it. For an alert or a destructive confirm — where an accidental click shouldn't
-lose the user's place — pass `dismissable={false}`. The backdrop and Esc no
+lose the user's place — pass `dismissible={false}`. The backdrop and Esc no
 longer close it; only the close button, the footer actions, or your own code do.
 
 <Preview gap="8px">
@@ -176,7 +176,7 @@ edges.
 
 ```tsx folded
 <Dialog
-  dismissable={false}
+  dismissible={false}
   header="Delete account?"
   footer={
     <>
@@ -301,7 +301,7 @@ the wrapper's `closable` injects). The element handles the rest.
 <Disclosure title="Styling">
 
 Reach for the props first: **`position`** (modal or a drawer edge), **`closable`**
-(the ✕), **`dismissable`** (light-dismiss on/off). The surface is `--bg-1` above a
+(the ✕), **`dismissible`** (light-dismiss on/off). The surface is `--bg-1` above a
 dimmed overlay, lifted by a composed `box-shadow` whose first `inset` layer is the
 hairline border.
 

@@ -3,7 +3,7 @@
  * Astro's MDX pipeline doesn't mangle the template literal's indentation (see
  * progress.demo.ts for the full rationale). Uses the uncontrolled `name`
  * trigger so the demo needs no state: the Button opens the matching Dialog, and
- * the footer Button closes it. Flip `position` / `closable` / `dismissable`
+ * the footer Button closes it. Flip `position` / `closable` / `dismissible`
  * from the props panel to explore.
  */
 export default `import { Dialog, Button, Text } from '@antadesign/anta'

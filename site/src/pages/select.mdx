@@ -112,11 +112,10 @@ canonical Select look), or **`"radio"`** (a leading radio on every row).
 
 `selection="multiple"` makes `value` a **string array**, puts a **checkbox** on
 every row, keeps the menu open as you toggle, and summarises the count in the field
-("N selected"). A **Select all** top row that toggles everything — its box goes
-mixed when only some are on — shows by default; pass **`selectAll={false}`** to drop
-it.
+("N selected"). A **Select all** top row shows by default; it toggles everything, and
+its box goes mixed when only some are on. Pass **`selectAll={false}`** to drop it.
 
-On a multi-select, **`Alt`+Click** a row (⌥+Click on macOS) to *isolate* it — clear
+On a multi-select, **`Alt`+Click** a row (⌥+Click on macOS) to *isolate* it: clear
 the rest and select only that one. A cursor-following hint teaches the accelerator;
 override it per row with `SelectOption.tooltip` (or `''` to suppress). This rides on
 the Select all row, so `selectAll={false}` drops it too.

@@ -15,7 +15,7 @@ A faceted filter: one trigger opens a menu of **facets** (dimensions), each a
 submenu flyout with its own editor. The value is a `Record<facetKey, value>`, so
 the same option value under two facets — assignee "Alice" and owner "Alice" —
 stays distinct. Each facet declares a `kind`: `single`, `multiple` (with a
-Select all row by default — `selectAll: false` drops it), `text` (free-form
+Select all row by default; `selectAll: false` drops it), `text` (free-form
 substring, applied on Enter / blur), or `custom` (bring your own editor and
 value, including an object).
 

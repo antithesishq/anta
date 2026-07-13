@@ -12,9 +12,9 @@ import inputAutocompleteDemoCode from './input-autocomplete.demo.ts'
 # InputAutocomplete
 
 A text field whose value is a free string, with a suggestion list that assists
-without constraining. Type anything: a value that isn't in the list is valid and
-stays as you typed it, and picking a suggestion just fills the field. For a value
-that must be one of the options, use [Select](/select/) with `filter` instead.
+without constraining. Type anything: a value that isn't in the list stays as you
+typed it, and picking a suggestion fills the field. For a value that must be one of
+the options, use [Select](/select/) with `filter`.
 
 It's a **composed component**, an [Input](/input/) stitched to a [Menu](/menu/) of
 suggestions. The field text arrives through **`onValueChange`**; `onSelect` fires
@@ -43,9 +43,8 @@ only when a suggestion is chosen. Controlled via `value`, uncontrolled via
 
 The value is always the text in the field. That's what separates this from a
 [Select](/select/): a Select constrains the value to one of its options, so a Select
-with `filter` already covers "search a fixed list". `InputAutocomplete` is for the
-case where the list only *suggests* and the user may commit something you didn't
-list.
+with `filter` already covers "search a fixed list". `InputAutocomplete` is for when
+the list only *suggests* and the user may commit something you didn't list.
 
 The keyboard follows that intent. No suggestion is highlighted as you type, so
 <kbd>Enter</kbd> commits the typed text and closes the list. <kbd>↓</kbd> highlights
@@ -57,16 +56,15 @@ closes the list; clicking the field to place the caret keeps it open.
 
 `filter` decides how suggestions match the text:
 
-- **`true`** (default) — built-in case-insensitive substring match on each option's
+- **`true`** (default): built-in case-insensitive substring match on each option's
   `value` / `label` / `hint`.
-- **a function** `(option, query) => boolean` — your own matcher, called per option.
-- **`false`** — show `suggestions` as-is, doing no local filtering. Use this when you
-  fetch or filter results yourself (async / remote) and feed the current set in
-  through `suggestions`.
+- **a function** `(option, query) => boolean`: your own matcher, called per option.
+- **`false`**: show `suggestions` as-is, doing no local filtering. Use this when you
+  fetch or filter results yourself (async / remote) and feed the current set through
+  `suggestions`.
 
-Suggestions are bare strings or `SelectOption`s — the same option shape
-[Select](/select/) uses (`value`, `label`, `hint`, `icon`, `tone`, `disabled`) — so a
-row can carry a secondary hint, a leading icon, or a tone.
+Suggestions are bare strings or `SelectOption`s, the same option shape
+[Select](/select/) uses: `value`, `label`, `hint`, `icon`, `tone`, `disabled`.
 
 <Disclosure title="Component props" open>
 

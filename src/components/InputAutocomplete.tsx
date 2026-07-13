@@ -24,10 +24,10 @@ const normalizeOpt = (o: string | SelectOption): SelectOption =>
   typeof o === 'string' ? { value: o, label: o } : o
 
 export interface InputAutocompleteProps extends Omit<BaseProps, 'children'> {
-  /** The suggestions — bare strings or `SelectOption`s (`value` / `label` / `hint`
-   *  / `icon` / `tone` / `disabled`). A flat list; picking one fills the field. */
+  /** The suggestions: bare strings or `SelectOption`s (`value` / `label` / `hint` /
+   *  `icon` / `tone` / `disabled`). A flat list; picking one fills the field. */
   suggestions: (string | SelectOption)[]
-  /** Controlled value — the field's text, a **free** string not constrained to a
+  /** Controlled value: the field's text, a **free** string not constrained to a
    *  suggestion. Leave undefined for uncontrolled. */
   value?: string
   /** Initial value for the uncontrolled case (the wrapper then owns it). */

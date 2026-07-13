@@ -21,11 +21,11 @@ export interface DialogProps extends Omit<BaseProps, "title"> {
   /** Show the top-right close (✕) button.
    *  @defaultValue true */
   closable?: boolean;
-  /** Allow light dismiss — closing by clicking the backdrop or pressing Esc.
-   *  Set `false` for an alert / confirm dialog that must be answered via its own
-   *  controls (the close button and programmatic close still work).
-   *  @defaultValue true */
-  dismissible?: boolean;
+  /** Keep the dialog up until an explicit control closes it — disables light
+   *  dismiss (backdrop click + Esc). For an alert / confirm that must be answered
+   *  via its own buttons; the close button and programmatic close still work.
+   *  Omit for the default dismissible behavior. */
+  persistent?: boolean;
   /** Controlled open state. When provided, the consumer owns open/close: the
    *  dialog only follows this prop, and every user dismiss (Esc, backdrop, close
    *  button) just *requests* a change via `onStateChange` (reject by not
@@ -92,7 +92,7 @@ export const Dialog = ({
   footer,
   position,
   closable,
-  dismissible,
+  persistent,
   open,
   defaultOpen,
   name,
@@ -110,8 +110,8 @@ export const Dialog = ({
       default-state={!controlled && defaultOpen ? "open" : undefined}
       // 'center' is the implicit default — emit no DOM attribute for it.
       position={position && position !== "center" ? position : undefined}
-      // dismissible defaults to true; only the false case needs the element flag.
-      persistent={dismissible === false ? "" : undefined}
+      // Positive opt-in (default off): emit the presence flag only when set.
+      persistent={persistent ? "" : undefined}
       name={!controlled ? name : undefined}
       // All-lowercase `onstatechange` is the one spelling both renderers bind to
       // the element's `statechange` event (React 19 keeps the case after `on`, so

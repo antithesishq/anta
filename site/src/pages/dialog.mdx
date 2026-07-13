@@ -411,4 +411,35 @@ a-dialog::part(body)   { padding: 12px 24px; }
 a-dialog::part(footer) { justify-content: space-between; }  /* spread the actions */
 ```
 
+### Corners
+
+`round` covers the common cases: `round={0}` for an unrounded modal (or set
+`--dialog-radius: 0`), `round="top"` for a bottom sheet's top edge, and
+`round="right"` for a left drawer's inner edge.
+
+<Preview gap="8px">
+  <a-button tabindex="0" data-dialog-open="corner-flat">Unrounded modal</a-button>
+  <a-button tabindex="0" data-dialog-open="corner-sheet">Bottom, round top</a-button>
+  <a-button tabindex="0" data-dialog-open="corner-drawer">Left, round right</a-button>
+  <a-dialog name="corner-flat" round="0">
+    <Title slot="header" level={4} style={{ margin: 0 }}>Square corners</Title>
+    <Text>A centered modal with no rounding (<code>round={0}</code>).</Text>
+    <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="corner-flat">Done</a-button>
+  </a-dialog>
+  <a-dialog name="corner-sheet" position="bottom" round="top">
+    <Title slot="header" level={4} style={{ margin: 0 }}>Bottom sheet</Title>
+    <Text>Top corners rounded (<code>round="top"</code>).</Text>
+  </a-dialog>
+  <a-dialog name="corner-drawer" position="left" round="right">
+    <Title slot="header" level={4} style={{ margin: 0 }}>Left drawer</Title>
+    <Text>The inner (right) edge rounded (<code>round="right"</code>).</Text>
+  </a-dialog>
+</Preview>
+
+```tsx folded
+<Dialog round={0}>…</Dialog>                        {/* unrounded centered modal */}
+<Dialog position="bottom" round="top">…</Dialog>    {/* round the sheet's top edge */}
+<Dialog position="left" round="right">…</Dialog>    {/* round a left drawer's inner edge */}
+```
+
 </Disclosure>

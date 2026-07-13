@@ -501,6 +501,47 @@ export interface AInputAttributes extends BaseAttributes {
   'aria-label'?: string
 }
 
+/** Attributes for the `<a-input-time>` custom element — a segmented wall-clock
+ *  time field (hour / minute / AM-PM spinbutton sections in one box). */
+export interface AInputTimeAttributes extends BaseAttributes {
+  /** Controlled value — 24-hour `"HH:mm"`, `''` when incomplete. */
+  value?: string
+  /** Initial value for the uncontrolled case (24-hour `"HH:mm"`). */
+  defaultvalue?: string
+  /** BCP-47 locale driving the clock (12h vs 24h), segment order, separator, and
+   *  the AM/PM text. Defaults to `navigator.language`. */
+  locale?: string
+  /** Force the clock — `'true'` = 12-hour (AM/PM), `'false'` = 24-hour. Omit to
+   *  follow the locale. Value-based (tri-state), not a presence boolean. */
+  hour12?: 'true' | 'false'
+  /** Validation/feedback tone. Only `critical` carries validity weight. */
+  status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Custom accent colour (any literal CSS colour) — tints the resting + hover
+   *  border via an oklch derivation; `status` overrides for validation. */
+  tone?: string
+  /** Disabled state. Presence-based. */
+  disabled?: boolean | ''
+  /** Required — drives native validity. Presence-based. */
+  required?: boolean | ''
+  /** Dim the trailing adornments at rest (0.6); brighten on hover / focus. */
+  'dim-actions'?: boolean | ''
+  /** Fully-round field, or a custom radius via a length value. Presence-based
+   *  for the boolean form. */
+  round?: boolean | number | string
+  /** Size variant. small=24px, medium (default)=28px, large=32px. */
+  size?: 'small' | 'medium' | 'large'
+  /** Form field name — the 24-hour value submits via ElementInternals. */
+  name?: string
+  /** Fires on every segment edit (`input` is composed — it reaches the host). */
+  oninput?: (e: any) => void
+  /** Fires on commit (blur). */
+  onchange?: (e: any) => void
+  /** Fires after the built-in clear button empties the field (`clearinput`). */
+  onclearinput?: (e: any) => void
+  'aria-invalid'?: 'true' | 'false' | boolean
+  'aria-label'?: string
+}
+
 /**
  * Attributes for the `<a-calendar>` custom element — a **light-DOM,
  * form-associated** month grid, and the **interaction authority** for it. The

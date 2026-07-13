@@ -1,0 +1,174 @@
+@layer anta {
+  /* Token surface — mirrors a-input's field chrome (same literal/role values) so a
+     time field reads as one of the other inputs, under `--input-time-*` names. */
+
+  /* Pre-upgrade skeleton. The segment row + field box live in the shadow, which
+     doesn't exist until upgrade; an SSR'd / not-yet-defined element would show its
+     bare light-DOM label stacked above an empty box. This makes the resting state
+     read as a populated field (same box metrics + a neutral time placeholder) so
+     the swap is invisible, then drops on `:defined`. */
+  a-input-time:not(:defined) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4px;
+  }
+  a-input-time:not(:defined) > [slot="trailing"],
+  a-input-time:not(:defined) > [slot="clear"],
+  a-input-time:not(:defined) > [slot="hint"] {
+    display: none !important;
+  }
+  a-input-time:not(:defined) > [slot="label"] {
+    display: block;
+    color: var(--input-time-label);
+    font-family: var(--sans-serif);
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 500;
+  }
+  a-input-time[size="small"]:not(:defined) > [slot="label"] { font-size: 13px; line-height: 16px; }
+  a-input-time[size="large"]:not(:defined) > [slot="label"] { font-size: 17px; line-height: 22px; }
+  a-input-time:not(:defined)::after {
+    content: "\2013\2013:\2013\2013";
+    display: block;
+    min-height: 28px;
+    line-height: 28px;
+    padding-inline: 8px;
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 0.5px var(--input-time-border);
+    color: var(--input-time-placeholder);
+    font-family: var(--sans-serif);
+    font-size: 15px;
+    font-weight: 400;
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    white-space: nowrap;
+  }
+  a-input-time[size="small"]:not(:defined)::after { min-height: 24px; line-height: 24px; font-size: 13px; }
+  a-input-time[size="large"]:not(:defined)::after { min-height: 32px; line-height: 32px; font-size: 17px; }
+  a-input-time[round]:not(:defined)::after { border-radius: var(--input-time-round, 999px); }
+
+  a-input-time {
+    transition: opacity 280ms ease-out 40ms;
+  }
+  a-input-time:not(:defined) {
+    opacity: 0.5;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    a-input-time { transition: none; }
+  }
+
+  a-input-time {
+    --input-time-bg: var(--bg-1);
+    --input-time-border: var(--border-2);
+    --input-time-border-hover: var(--border-1);
+
+    --input-time-text: var(--text-1);
+    --input-time-label: var(--text-3);
+    --input-time-placeholder: var(--text-4);
+    --input-time-adornment: var(--text-3);
+    --input-time-hint: var(--text-3);
+
+    /* Focused segment: a brand-tinted highlight (tracks the focus ring), full text. */
+    --input-time-seg-focus-bg: color-mix(in oklch, var(--focus-ring) 16%, transparent);
+    --input-time-seg-focus-text: var(--text-1);
+
+    width: 100%;
+  }
+
+  a-input-time[round] {
+    --input-time-round: attr(round type(<length>), 999px);
+  }
+
+  a-input-time[tone]:not([tone=""]) {
+    --input-time-tone-source: attr(tone type(<color>), var(--border-2));
+    --input-time-border:       oklch(from var(--input-time-tone-source) 0.7 calc(c * 0.8) h);
+    --input-time-border-hover: oklch(from var(--input-time-tone-source) 0.6 c h);
+
+    .dark & {
+      --input-time-border:       oklch(from var(--input-time-tone-source) 0.5 calc(c * 0.8) h);
+      --input-time-border-hover: oklch(from var(--input-time-tone-source) 0.6 c h);
+    }
+  }
+
+  a-input-time[status="critical"] {
+    --input-time-bg: #fefbfb;
+    --input-time-border: #de4545;
+    --input-time-border-hover: #de4545;
+    --input-time-hint: #c9302c;
+  }
+  a-input-time[status="warning"] {
+    --input-time-bg: #fefbf6;
+    --input-time-border: #ae6613;
+    --input-time-border-hover: #ae6613;
+    --input-time-hint: #995200;
+  }
+  a-input-time[status="success"] {
+    --input-time-bg: #f7fcf9;
+    --input-time-border: #329550;
+    --input-time-border-hover: #329550;
+    --input-time-hint: #2a7e43;
+  }
+  a-input-time[status="info"] {
+    --input-time-bg: #fbfcfe;
+    --input-time-border: #2686d9;
+    --input-time-border-hover: #2686d9;
+    --input-time-hint: #175082;
+  }
+  a-input-time[status="brand"] {
+    --input-time-bg: #fcfcfe;
+    --input-time-border: #7460d7;
+    --input-time-border-hover: #7460d7;
+    --input-time-hint: #5f4bc3;
+  }
+
+  .dark a-input-time[status="critical"] {
+    --input-time-bg: #1f0506;
+    --input-time-border: #c9302c;
+    --input-time-border-hover: #c9302c;
+    --input-time-hint: #e25858;
+  }
+  .dark a-input-time[status="warning"] {
+    --input-time-bg: #120a03;
+    --input-time-border: #995200;
+    --input-time-border-hover: #995200;
+    --input-time-hint: #c37416;
+  }
+  .dark a-input-time[status="success"] {
+    --input-time-bg: #041008;
+    --input-time-border: var(--border-1-success);
+    --input-time-border-hover: var(--border-1-success);
+    --input-time-hint: #3aab5c;
+  }
+  .dark a-input-time[status="info"] {
+    --input-time-bg: #040d18;
+    --input-time-border: #1f6eb2;
+    --input-time-border-hover: #1f6eb2;
+    --input-time-hint: #3e93dd;
+  }
+  .dark a-input-time[status="brand"] {
+    --input-time-bg: #0b0916;
+    --input-time-border: #5f4bc3;
+    --input-time-border-hover: #5f4bc3;
+    --input-time-hint: #8270db;
+  }
+
+  a-input-time:disabled {
+    --input-time-bg: #44374b12;
+    --input-time-border: #44374b26;
+    --input-time-border-hover: #44374b26;
+    --input-time-text: var(--text-4);
+    --input-time-label: var(--text-4);
+    --input-time-hint: var(--text-5);
+    cursor: not-allowed;
+  }
+  .dark a-input-time:disabled {
+    --input-time-bg: #e4d1ef0d;
+    --input-time-border: #e4d1ef1f;
+    --input-time-border-hover: #e4d1ef1f;
+  }
+
+  .dark a-input-time:not([status]) {
+    --input-time-border: #49424c;
+    --input-time-border-hover: #635b65;
+  }
+}

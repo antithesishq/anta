@@ -55,6 +55,8 @@ export { Calendar } from './components/Calendar'
 export type { CalendarProps, CalendarChangeAttrs } from './components/Calendar'
 export { InputDate } from './components/InputDate'
 export type { InputDateProps, InputDateChangeAttrs } from './components/InputDate'
+export { InputTime } from './components/InputTime'
+export type { InputTimeProps, InputTimeChangeAttrs } from './components/InputTime'
 export {
   buildMonth,
   getWeekdays,

@@ -85,7 +85,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AProgressAttributes, ATextAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACheckboxAttributes, ATooltipAttributes, AInputAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, BaseAttributes } from './general_types'
+import type { AProgressAttributes, ATextAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACheckboxAttributes, ATooltipAttributes, AInputAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -121,6 +121,7 @@ export interface AntaIntrinsicElements {
   'a-checkbox-hint': BaseAttributes
   'a-tooltip': ATooltipAttributes
   'a-input': AInputAttributes
+  'a-input-time': AInputTimeAttributes
   'a-calendar': ACalendarAttributes
   'a-radio': ARadioAttributes
   'a-radio-group': ARadioGroupAttributes

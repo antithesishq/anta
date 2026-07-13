@@ -212,30 +212,32 @@ export const Calendar = ({
   // month, the reachable range, or the locale changes. A single reachable year
   // skips the year level and lists its months directly.
   const jumpItems = useMemo(() => {
-    // One month row (`i` is 0-based): highlights the shown month (tint + check)
-    // and disables months outside `min`…`max`.
+    // One month row (`i` is 0-based): highlights the shown month (tint + a trailing
+    // dot, matching the active-year marker) and disables months outside `min`…`max`.
     const monthItem = (y: number, i: number) => {
       const m = i + 1
+      const isCurrent = y === cursor.year && m === cursor.month
       return (
         <MenuItem
           key={`${y}-${m}`}
           label={monthNames[i]}
-          selectionIndicator="check"
-          selected={y === cursor.year && m === cursor.month}
+          selected={isCurrent}
           disabled={monthOutOfRange(y, m) || undefined}
           data-menu-open=""
           onSelect={() => {
             pickMonth(y, m)
             setJumpOpen(false)
           }}
-        />
+        >
+          {isCurrent && <span className="jump-dot" aria-hidden="true" />}
+        </MenuItem>
       )
     }
     return years.length === 1
       ? monthNames.map((_, i) => monthItem(years[0], i))
       : years.map((y) => (
           <MenuItem key={y} submenu label={String(y)} selected={y === cursor.year}>
-            {y === cursor.year && <span className="year-dot" aria-hidden="true" />}
+            {y === cursor.year && <span className="jump-dot" aria-hidden="true" />}
             <Menu>{monthNames.map((_, i) => monthItem(y, i))}</Menu>
           </MenuItem>
         ))

@@ -6,7 +6,7 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
-## Unreleased
+## 0.3.5 — July 13, 2026
 
 ### Added
 - **`InputTime` (`<a-input-time>`)** — a segmented wall-clock time field: one boxed input (matching the other inputs' chrome) with separate hour / minute / (12-hour) AM-PM sections, each a `role="spinbutton"`. <kbd>↑</kbd>/<kbd>↓</kbd> steps with wrap, <kbd>←</kbd>/<kbd>→</kbd> moves between sections, typing digits auto-advances, and AM/PM toggles with arrows or `a`/`p`. Typing a 24-hour hour into a 12-hour field converts it and flips AM/PM (`18` → `6 PM`, `0` → `12 AM`). The clock (12h/24h), section order, separator, and AM/PM text are locale-derived via `Intl` (overridable with `hour12`); 24-hour locales drop the AM/PM section. Value is a 24-hour `"HH:mm"` string, controlled (`value` + `onValueChange`) or uncontrolled (`defaultValue`), form-associated under `name`. `min` / `max` (24-hour `"HH:mm"`) clamp a complete value to the range on step / blur and flag `rangeUnderflow` / `rangeOverflow`. A leading clock icon marks the affordance (change it with `icon`, or drop it with `icon={false}`). The field sizes to its content by default (a time is a small fixed control, unlike a text `Input` which fills its container) — set a `width` to fill. Supports `size` / `status` / `tone` / `disabled` / `clearable`, and exposes `field` / `segments` / `leading` / `label` / `hint` / `clear` / `trailing` parts. Not SSR-safe (reads `navigator.language`).

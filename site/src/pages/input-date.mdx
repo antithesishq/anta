@@ -108,7 +108,7 @@ it directly when you want the grid inline, without a field.
 
 `Calendar` is **composed from Anta components in light DOM**, with nothing hidden in
 a shadow root. The days and prev/next chevrons are `<Button>`s (a selected day is a
-`tertiary` Button in its selected state), inside a form-associated `<a-calendar>`
+`tertiary` Button in its selected state, toned `brand`), inside a form-associated `<a-calendar>`
 grid. Date math runs on the [Temporal API](https://tc39.es/proposal-temporal/docs/),
 bundled via `temporal-polyfill` and exported as `buildMonth` and friends so you can
 populate your own grid. The value is an ISO `YYYY-MM-DD` string, never a `Date`. It

@@ -20,10 +20,14 @@ import { COMPONENT_SLUGS } from '../../lib/component-slugs'
 
 interface Props {
   title?: string
-  frontmatter?: { title?: string }
+  /** Cap the "On this page" TOC at this heading level (2 = h2 only). Omit for
+   *  all levels. Set via an `.astro` page prop or MDX frontmatter. */
+  tocMaxLevel?: number
+  frontmatter?: { title?: string; tocMaxLevel?: number }
 }
 
 const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
+const tocMaxLevel = Astro.props.tocMaxLevel ?? Astro.props.frontmatter?.tocMaxLevel
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
 const isCurrent = (href: string) => {
   const h = href.replace(/\/+$/, '') || '/'
@@ -256,7 +260,7 @@ if (isComponentPage && title) {
           <li><a href="/expander/" aria-current={isCurrent('/expander/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 8 4 4-4 4"/></svg> Expander</a></li>
           <li><a href="/icon/" aria-current={isCurrent('/icon/') ? 'page' : undefined}><Icon shape="bug" size={18} /> Icon</a></li>
           <li><a href="/input/" aria-current={isCurrent('/input/') ? 'page' : undefined}><Icon shape="text-cursor-input" size={18} /> Input</a></li>
-          <li><a href="/input-autocomplete/" aria-current={isCurrent('/input-autocomplete/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13.5 8.5-5 5"/><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Input with autocomplete (combobox)</a></li>
+          <li><a href="/input-autocomplete/" aria-current={isCurrent('/input-autocomplete/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13.5 8.5-5 5"/><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> InputAutocomplete</a></li>
           <li><a href="/input-date/" aria-current={isCurrent('/input-date/') ? 'page' : undefined}><Icon shape="calendar-days" size={18} /> InputDate</a></li>
           <li><a href="/input-time/" aria-current={isCurrent('/input-time/') ? 'page' : undefined}><Icon shape="clock" size={18} /> InputTime</a></li>
           <li><a href="/menu/" aria-current={isCurrent('/menu/') ? 'page' : undefined}><Icon shape="square-menu" size={18} /> Menu</a></li>
@@ -290,7 +294,7 @@ if (isComponentPage && title) {
         <slot />
       </main>
       <aside class="toc-rail">
-        <a-toc></a-toc>
+        <a-toc max-level={tocMaxLevel}></a-toc>
       </aside>
     </div>
     <div class="backdrop" aria-hidden="true"></div>
@@ -585,6 +589,15 @@ if (isComponentPage && title) {
   .sidebar menu li a[aria-current="page"] {
     color: var(--text-1);
     text-decoration: none;
+  }
+  /* Dotted underline on hover, matching the "On this page" TOC links. The
+     GitHub / npm shields are separate anchor-buttons (not `menu li a`), so
+     they're unaffected. */
+  .sidebar menu li a:hover {
+    text-decoration: underline dotted;
+    text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
   }
   .sidebar menu li a:hover > a-icon,
   .sidebar menu li a[aria-current="page"] > a-icon,

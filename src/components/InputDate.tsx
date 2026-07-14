@@ -284,13 +284,15 @@ export const InputDate = ({
         }}
         onChange={(e: any) => resolve(e.currentTarget.value)}
         onKeyDown={(e: any) => {
-          // ArrowDown is the deliberate "enter the grid" gesture. <a-menu> opens
-          // itself on ArrowDown (its anchor keydown, since this editable field
-          // synthesizes no click of its own), so here we only step focus into the
-          // grid via `focusSignal` (bumped below). Enter stays "commit the typed
-          // date", so it isn't overloaded. Once inside, <a-calendar> owns the
-          // arrows, so this only runs while focus is in the field.
-          if (e.key === 'ArrowDown' && !disabled) {
+          // Either arrow is the "enter the grid" gesture (the calendar can open
+          // above the field, so ArrowUp reaches toward it as naturally as
+          // ArrowDown). <a-menu> opens itself on both (its anchor keydown, since
+          // this editable field synthesizes no click of its own), so here we only
+          // step focus into the grid via `focusSignal` (bumped below). Enter stays
+          // "commit the typed date", so it isn't overloaded. Once inside,
+          // <a-calendar> owns the arrows, so this only runs while focus is in the
+          // field.
+          if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !disabled) {
             e.preventDefault()
             setFocusNonce((n) => n + 1)
           }

@@ -27,9 +27,9 @@ const ANCHOR_VISIBLE_RATIO = 0.5
 const SELF_ACTIVATING =
   'a-button, button, a[href], input[type="button"], input[type="submit"], input[type="reset"], [role="button"]'
 /** Triggers that accept text entry and aren't read-only: Enter/Space belong to
- *  the field (typing, or committing a value), so only ArrowDown opens the menu —
- *  the native `<select>` gesture. A read-only field (Select's trigger) or a
- *  non-field trigger opens on Enter / Space / ArrowDown alike. */
+ *  the field (typing, or committing a value), so only the arrow keys open the
+ *  menu — the native `<select>` gesture. A read-only field (Select's trigger) or
+ *  a non-field trigger opens on Enter / Space / the arrows alike. */
 const EDITABLE_FIELD =
   'input:not([readonly]), textarea:not([readonly]), a-input:not([readonly]), a-input-time:not([readonly])'
 
@@ -1466,8 +1466,17 @@ export class AMenuElement extends HTMLElementBase {
       const onKey = (e: KeyboardEvent) => {
         if (this._shown) return // open-only; while open the surface owns the keys
         if (anchor.matches(SELF_ACTIVATING) || anchor.hasAttribute('disabled')) return
+        // Either arrow opens: the menu can flip above the trigger (a `top`
+        // placement, or an auto-flip when there's no room below), so ArrowUp is as
+        // natural a "toward the menu" gesture as ArrowDown — and native <select>
+        // opens on both. Enter/Space also open a non-editable trigger; on an
+        // editable field they stay with the text (typing / commit).
         const editable = anchor.matches(EDITABLE_FIELD)
-        if (!(e.key === 'ArrowDown' || (!editable && (e.key === 'Enter' || e.key === ' ')))) return
+        const opens =
+          e.key === 'ArrowDown' ||
+          e.key === 'ArrowUp' ||
+          (!editable && (e.key === 'Enter' || e.key === ' '))
+        if (!opens) return
         e.preventDefault()
         const coord = this.#isCoord ? this.#anchorCoord(anchor) : undefined
         this.requestOpen({ coord, viaKeyboard: true, originEvent: e })

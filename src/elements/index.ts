@@ -32,6 +32,7 @@ export { AMenuGroupElement, register_a_menu_group } from './a-menu-group'
 export { ATabElement, register_a_tab } from './a-tab'
 export { ATabsElement, register_a_tabs } from './a-tabs'
 export { ATabPanelElement, register_a_tabpanel } from './a-tabpanel'
+export { ADialogElement, register_a_dialog } from './a-dialog'
 
 // `a-title` and `a-tag` are CSS-only styled tags (no JS / no element module), so
 // their styles can't ride along on a module import — load them here directly.

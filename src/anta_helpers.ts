@@ -46,6 +46,14 @@ export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.tes
  *  so the wording stays identical across both. */
 export const ISOLATE_HINT = IS_MAC ? '⌥+Click to select only this' : 'Alt+Click to select only this'
 
+/** Parse an open/closed `state` / `default-state` attribute — the shared
+ *  open-state vocabulary (`a-dialog`, `a-expander`, …). Anything but the literal
+ *  `'open'` is `'closed'`, so an absent / malformed attribute reads closed. Kept
+ *  here so the two elements can't drift on how the token is parsed. */
+export function parseOpenState(v: string | null): 'open' | 'closed' {
+  return v === 'open' ? 'open' : 'closed'
+}
+
 /** The six named tones every toned component shares. Anything else is a literal
  *  CSS colour the element resolves through its `--{component}-tone-source` var. */
 export const NAMED_TONES = new Set([

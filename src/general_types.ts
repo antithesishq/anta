@@ -312,6 +312,51 @@ export interface AExpanderAttributes extends BaseAttributes {
 }
 
 /**
+ * Attributes for the `<a-dialog>` custom element — a modal dialog / edge drawer
+ * built on a native `<dialog>` in shadow DOM (top layer, focus trap, backdrop,
+ * Esc from the platform). Slots (light-DOM children): `header`, `footer`,
+ * `close` (the close button), and the default slot for the body. The element
+ * exposes `::part(dialog | header | body | footer | close)`. Low-level
+ * attributes; for the typed JSX wrapper use `Dialog` from `@antadesign/anta`.
+ */
+export interface ADialogAttributes extends BaseAttributes {
+  /** Controlled open state (`'open'` / `'closed'`). Present → controlled: the
+   *  attribute is the source of truth, user dismiss only dispatches the
+   *  cancelable `statechange` event, and the consumer answers by updating it.
+   *  Absent → uncontrolled (use `default-state`). See STATEFUL-COMPONENTS.md. */
+  state?: 'open' | 'closed'
+  /** Initial open state for the uncontrolled mode (`'open'` / `'closed'`); read
+   *  once when the element connects. */
+  'default-state'?: 'open' | 'closed'
+  /** Placement. `center` (default, omit) is a centered modal; `left` / `right` /
+   *  `top` / `bottom` turn it into an edge drawer; `fullscreen` fills the whole
+   *  viewport (no edge gap, no radius). */
+  position?: 'center' | 'left' | 'right' | 'top' | 'bottom' | 'fullscreen'
+  /** Corner radius. A side keyword (`top` / `right` / `bottom` / `left`) rounds
+   *  only that edge's two corners at `--dialog-radius`; a length (`round="20px"`)
+   *  or full `border-radius` shorthand rounds all corners at that value; bare
+   *  `round` rounds all corners at `--dialog-radius`. Omit for the position
+   *  default (center rounded, drawers / fullscreen square). */
+  round?: boolean | number | 'top' | 'right' | 'bottom' | 'left' | (string & {})
+  /** Disable light dismiss — Esc + backdrop click no longer close the dialog (it
+   *  closes only via the close button or programmatically). For alert / confirm
+   *  dialogs. Presence-based (`''` on, omit off). */
+  persistent?: boolean | ''
+  /** Uncontrolled trigger name. Any element with `data-dialog-open="{name}"`
+   *  opens this dialog and `data-dialog-close="{name}"` closes it, via a document
+   *  click listener. Ignored in controlled mode. */
+  name?: string
+  /** Fires before the open state changes — the element dispatches a `cancelable`
+   *  `statechange` `CustomEvent` whose `detail` is `{ next, prev }` in the
+   *  `'open'|'closed'` vocabulary. Uncontrolled, `preventDefault()` vetoes the
+   *  transition. All-lowercase so both renderers bind it (React 19 keeps the case
+   *  after `on`; Preact lowercases). */
+  onstatechange?: (
+    e: CustomEvent<{ next: 'open' | 'closed'; prev: 'open' | 'closed' }>,
+  ) => void
+}
+
+/**
  * Attributes for the `<a-icon>` custom element. `shape` is typed as
  * `IconShape` (`keyof IconShapes`); the `IconShapes` interface is
  * module-augmentable, so consumers who generate their own shape sets

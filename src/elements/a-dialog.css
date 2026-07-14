@@ -1,0 +1,65 @@
+/* Host + token definitions for <a-dialog>. The shadow <style> (in a-dialog.ts)
+   only REFERENCES these --dialog-* tokens with literal fallbacks, so these
+   host-level definitions win and stay overridable by a consumer. Everything
+   visual on the dialog surface itself lives in the shadow; this file owns the
+   tokens + the host box + dark mode. */
+
+@layer anta {
+  a-dialog {
+    /* Surface — --bg-1 (white in light, black in dark), so the dialog reads as
+       the topmost sheet above the dimmed overlay. */
+    --dialog-bg: var(--bg-1);
+    --dialog-text: var(--text-2);
+
+    /* The hairline border is drawn as the first (inset) layer of the composed
+       box-shadow below, so it sits inside the radius and never adds to layout. */
+    --dialog-border: color-mix(in oklch, black 9%, transparent);
+
+    --dialog-radius: 10px;
+
+    /* Composed elevation: an inset hairline border + three stacked drop shadows
+       (tight contact, mid, and a soft wide ambient) so the sheet lifts cleanly
+       off the overlay. */
+    --dialog-shadow:
+      inset 0 0 0 1px var(--dialog-border),
+      0 1px 3px color-mix(in oklch, black 10%, transparent),
+      0 12px 32px color-mix(in oklch, black 22%, transparent),
+      0 28px 64px color-mix(in oklch, black 14%, transparent);
+
+    /* The dimmed overlay behind the dialog — black, a touch deeper in dark mode. */
+    --dialog-overlay: color-mix(in oklch, black 42%, transparent);
+
+    /* The host itself contributes no box: the dialog renders in the top layer,
+       and its slotted children project into the shadow dialog, not the page. */
+    display: contents;
+  }
+
+  /* `round` radius: a length value (`round="20px"`, or the `Dialog` wrapper's
+     `round={20}` → inline `--dialog-round`) sets the corner radius the shadow
+     reads via `--_r`. A side keyword (`round="top"`) fails the typed attr() and
+     falls back to `--dialog-radius`, rounding only that edge's corners (the
+     shadow's per-side rules). A full shorthand (`round="5px 3px 0 0"`) comes
+     through the wrapper's inline `--dialog-round` only. */
+  a-dialog[round] {
+    --dialog-round: attr(round type(<length>), var(--dialog-radius, 10px));
+  }
+
+  /* Before the element upgrades, the light-DOM children (header / body / footer)
+     would flash inline. A dialog's content shouldn't show until it opens anyway,
+     so hide the host until it's defined. */
+  a-dialog:not(:defined) {
+    display: none;
+  }
+
+  .dark a-dialog {
+    /* A light hairline reads better than a dark one against a dark surface, and
+       the drop shadows go deeper to keep the sheet legible over the overlay. */
+    --dialog-border: color-mix(in oklch, white 14%, transparent);
+    --dialog-shadow:
+      inset 0 0 0 1px var(--dialog-border),
+      0 1px 3px color-mix(in oklch, black 40%, transparent),
+      0 12px 32px color-mix(in oklch, black 55%, transparent),
+      0 28px 64px color-mix(in oklch, black 40%, transparent);
+    --dialog-overlay: color-mix(in oklch, black 62%, transparent);
+  }
+}

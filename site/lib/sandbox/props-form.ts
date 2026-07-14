@@ -25,6 +25,10 @@ const EXCLUDED_BY_COMPONENT: Record<string, Set<string>> = {
   // Button's anchor/submit attributes are real but niche — keep the panel
   // focused on appearance + content. `href` / `target` stay (anchor mode).
   Button: new Set(['download', 'ping', 'rel', 'type', 'form']),
+  // Dialog's open-state wiring isn't a visual knob, and toggling `open` in the
+  // panel would flip the uncontrolled demo into controlled mode with no handler,
+  // trapping the modal open. Keep the panel to appearance + content.
+  Dialog: new Set(['open', 'defaultOpen', 'name', 'onStateChange']),
 }
 
 /** Explicit control order per component. Listed names lead in this order;

@@ -1,4 +1,4 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { HTMLElementBase, parseOpenState } from '../anta_helpers'
 import './a-expander.css'
 
 /**
@@ -330,7 +330,9 @@ const SHADOW_STYLE = `
 `
 
 type ExpanderState = 'open' | 'closed'
-const parseState = (v: string | null): ExpanderState => (v === 'open' ? 'open' : 'closed')
+// Shared open-state parser (also used by a-dialog) — one definition of how the
+// `open`/`closed` token is read, so the two contracts can't drift.
+const parseState = parseOpenState
 
 export class AExpanderElement extends HTMLElementBase {
   static observedAttributes = ['state', 'disabled', 'round']

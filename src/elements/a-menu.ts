@@ -19,17 +19,14 @@ const TYPEAHEAD_RESET = 500
  *  and never self-dismisses from the page nudge that opening can cause. */
 const ANCHOR_VISIBLE_RATIO = 0.5
 
-/** Trigger elements that already turn Enter/Space into a click on their own —
- *  native buttons/links (the UA does it) and their `[role=button]` / `<a-button>`
- *  equivalents (`a-button` hand-rolls it). The keyboard-open below skips these:
- *  their synthetic click already opens via the click listener, and opening again
- *  from keydown would double-fire and toggle the menu shut. */
+/** Triggers that turn Enter/Space into a click on their own — native
+ *  buttons/links, `[role=button]`, and `<a-button>`. The keyboard-open skips
+ *  them: their click already opens, so a second open would toggle shut. */
 const SELF_ACTIVATING =
   'a-button, button, a[href], input[type="button"], input[type="submit"], input[type="reset"], [role="button"]'
-/** Triggers that accept text entry and aren't read-only: Enter/Space belong to
- *  the field (typing, or committing a value), so only the arrow keys open the
- *  menu — the native `<select>` gesture. A read-only field (Select's trigger) or
- *  a non-field trigger opens on Enter / Space / the arrows alike. */
+/** Text-entry triggers that aren't read-only: Enter/Space belong to the field
+ *  (typing / commit), so only the arrows open the menu — the native `<select>`
+ *  gesture. Read-only or non-field triggers open on Enter / Space / arrows alike. */
 const EDITABLE_FIELD =
   'input:not([readonly]), textarea:not([readonly]), a-input:not([readonly]), a-input-time:not([readonly])'
 
@@ -1440,13 +1437,12 @@ export class AMenuElement extends HTMLElementBase {
       return
     } else {
       const onClick = (e: MouseEvent) => {
-        // detail === 0 ⇒ keyboard-synthesized click — a native button / <a-button>
-        // turning Enter/Space into a click ⇒ open and move focus to the first
-        // item. A trigger with no such activation (a read-only field) is handled
-        // by onKey below instead.
+        // detail === 0 ⇒ a keyboard-synthesized click (a button / <a-button>
+        // turning Enter/Space into one) ⇒ open + focus the first item. Fields with
+        // no such click go through onKey below.
         const viaKeyboard = e.detail === 0
-        // A coord menu opens at the pointer; a keyboard click reports 0,0, which
-        // would pin it to the corner — fall back to the trigger's rect.
+        // A coord menu opens at the pointer; a keyboard click reports 0,0, so fall
+        // back to the trigger's rect.
         const coord = this.#isCoord
           ? viaKeyboard
             ? this.#anchorCoord(anchor)
@@ -1455,22 +1451,15 @@ export class AMenuElement extends HTMLElementBase {
         if (this._shown) this.requestClose(e)
         else this.requestOpen({ coord, viaKeyboard, originEvent: e })
       }
-      // Keyboard open for a trigger that does NOT synthesize its own click.
-      // Native <button>/<a href>/[role=button] and <a-button> already fire a
-      // click on Enter/Space (handled by onClick), so this serves only triggers
-      // with no activation of their own — a read-only field (Select) or an
-      // editable field (InputDate). Owning it HERE, beside onClick, is what lets
-      // the wrappers stop reaching for the live DOM node to synthesize a click
-      // (`e.currentTarget.click()`), which has no live node to run against when
-      // the app DOM reconciles off the main thread.
+      // Keyboard open for a field trigger (no click of its own). Lives here, not
+      // in the wrapper, so no wrapper synthesizes a click on the live node — which
+      // breaks under worker-thread DOM.
       const onKey = (e: KeyboardEvent) => {
         if (this._shown) return // open-only; while open the surface owns the keys
         if (anchor.matches(SELF_ACTIVATING) || anchor.hasAttribute('disabled')) return
-        // Either arrow opens: the menu can flip above the trigger (a `top`
-        // placement, or an auto-flip when there's no room below), so ArrowUp is as
-        // natural a "toward the menu" gesture as ArrowDown — and native <select>
-        // opens on both. Enter/Space also open a non-editable trigger; on an
-        // editable field they stay with the text (typing / commit).
+        // Either arrow opens (the menu can flip above the trigger, and native
+        // <select> opens on both); Enter/Space also open a non-editable trigger,
+        // but stay with the text on an editable one.
         const editable = anchor.matches(EDITABLE_FIELD)
         const opens =
           e.key === 'ArrowDown' ||

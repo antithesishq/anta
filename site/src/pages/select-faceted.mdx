@@ -14,9 +14,10 @@ import { SelectFacetedBasicDemo } from '../components/SelectFacetedDemos'
 A faceted filter: one trigger opens a menu of **facets** (dimensions), each a
 submenu flyout with its own editor. The value is a `Record<facetKey, value>`, so
 the same option value under two facets — assignee "Alice" and owner "Alice" —
-stays distinct. Each facet declares a `kind`: `single`, `multiple`, `text`
-(free-form substring, applied on Enter / blur), or `custom` (bring your own
-editor and value, including an object).
+stays distinct. Each facet declares a `kind`: `single`, `multiple` (with a
+Select all row by default; `selectAll: false` drops it), `text` (free-form
+substring, applied on Enter / blur), or `custom` (bring your own editor and
+value, including an object).
 
 It's a **composed component** built from [Menu](/menu/), [Select](/select/)'s
 option model, [Input](/input/), and [Tag](/tag/) — no new element. Controlled via
@@ -97,6 +98,8 @@ function Demo() {
                   leading={`${facet.label}:`}
                   filter={facet.filter}
                   clearable
+                  // Chip sizes to its value and caps at a max-width (ellipsizing past it).
+                  style={{ width: 'fit-content', maxWidth: '240px' }}
                 />
               )
 
@@ -115,6 +118,8 @@ function Demo() {
                 onBlur={() => setFocusedKey(null)}
                 onInput={(e) => write(e.currentTarget.value)}
                 onClearInput={() => { setFocusedKey(null); setFacet(facet.key, undefined) }}
+                // Size the chip to its value, capped at a max-width.
+                style={{ width: 'fit-content', maxWidth: '240px' }}
               />
             )
           })}

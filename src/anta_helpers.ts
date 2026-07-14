@@ -38,6 +38,14 @@ export function nativeStateChange<D>(
   return { event, detail: event?.detail }
 }
 
+// macOS labels the "isolate" accelerator ⌥ (Option); every other platform, Alt.
+// `altKey` fires for both at runtime — only the hint wording differs.
+export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '')
+/** Default row hint teaching the Alt/⌥-click "select only this" accelerator on
+ *  bulk-select rows (`Select` multiple, `SelectFaceted` multiple facets). Shared
+ *  so the wording stays identical across both. */
+export const ISOLATE_HINT = IS_MAC ? '⌥+Click to select only this' : 'Alt+Click to select only this'
+
 /** Parse an open/closed `state` / `default-state` attribute — the shared
  *  open-state vocabulary (`a-dialog`, `a-expander`, …). Anything but the literal
  *  `'open'` is `'closed'`, so an absent / malformed attribute reads closed. Kept

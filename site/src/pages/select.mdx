@@ -91,10 +91,9 @@ skipped by the keyboard.
 <Select indicator="check" toneSelected="brand" options={OPTIONS} value={one} onValueChange={setOne} />
 <Select indicator="radio" toneSelected="#c026d3" options={OPTIONS} value={one} onValueChange={setOne} />
 
-// Multiple: checkboxes, count summary, Select-all row; value is a string[]
+// Multiple: checkboxes, count summary, Select-all row (default); value is a string[]
 <Select
   selection="multiple"
-  selectAll
   options={OPTIONS}
   value={many}
   onValueChange={setMany}
@@ -113,12 +112,13 @@ canonical Select look), or **`"radio"`** (a leading radio on every row).
 
 `selection="multiple"` makes `value` a **string array**, puts a **checkbox** on
 every row, keeps the menu open as you toggle, and summarises the count in the field
-("N selected"). Add **`selectAll`** for a top row that toggles everything; its box
-goes mixed when only some are on.
+("N selected"). A **Select all** top row shows by default; it toggles everything, and
+its box goes mixed when only some are on. Pass **`selectAll={false}`** to drop it.
 
-On a `selectAll` multi-select, **`Alt`+Click** a row (⌥+Click on macOS) to *isolate*
-it — clear the rest and select only that one. A cursor-following hint teaches the
-accelerator; override it per row with `SelectOption.tooltip` (or `''` to suppress).
+On a multi-select, **`Alt`+Click** a row (⌥+Click on macOS) to *isolate* it: clear
+the rest and select only that one. A cursor-following hint teaches the accelerator;
+override it per row with `SelectOption.tooltip` (or `''` to suppress). This rides on
+the Select all row, so `selectAll={false}` drops it too.
 
 Each checkable row is the control itself (`role="menuitemcheckbox"` /
 `menuitemradio`, `aria-checked`); the checkbox / radio / check is a passive indicator

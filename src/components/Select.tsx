@@ -4,6 +4,8 @@
 // followed by a <Menu> of options. There is no `a-select` element — the wrapper
 // IS the coordinator (see the Select docs page: "Components composition").
 import { useState, useId } from '../jsx-runtime'
+import { ISOLATE_HINT } from '../anta_helpers'
+import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { Input } from './Input'
@@ -14,10 +16,6 @@ import { MenuGroup } from './MenuGroup'
 import { MenuSeparator } from './MenuSeparator'
 import { Tooltip } from './Tooltip'
 import styles from './Select.module.css'
-
-// macOS labels the isolate accelerator ⌥ (Option); every other platform, Alt.
-// `altKey` fires for both at runtime — only the *hint* wording differs.
-const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '')
 
 
 /** One option in a `<Select>`. Pass a bare string as shorthand for
@@ -206,9 +204,12 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  option's **value / label / hint**. Pass a **function** `(option, query) =>
    *  boolean` for custom matching (called per option; return `true` to keep it). */
   filter?: boolean | ((option: SelectOption, query: string) => boolean)
-  /** `multiple` only: add a "Select all" row at the top that toggles every enabled
+  /** `multiple` only: a "Select all" row at the top that toggles every enabled
    *  option (the currently-visible ones when a `filter` query is active); its box
-   *  shows the mixed state when only some are selected. */
+   *  shows the mixed state when only some are selected. On by default in
+   *  `multiple` mode — set `false` to drop the row (and with it the Alt/⌥-click
+   *  isolate accelerator it gates).
+   *  @defaultValue true */
   selectAll?: boolean
   /** Label for the `selectAll` row.
    *  @defaultValue Select all */
@@ -296,9 +297,6 @@ export type SelectProps = SelectCommonProps &
       }
   )
 
-const normalize = (o: SelectOption | string): SelectOption =>
-  typeof o === 'string' ? { value: o, label: o } : o
-
 /** Rolled-up selection of a group / submenu subtree: `'none'` / `'all'` of the
  *  descendant leaves selected, or `'some'` in between. On `SelectedGroup` /
  *  `SelectedSubmenu`, for a section indicator or custom styling. */
@@ -381,7 +379,7 @@ export function optionsWithSelection(
         const total = children.reduce((n, c) => n + c.total, 0)
         return { node: { ...g, options: children.map((c) => c.node), selectionState: state(on, total) }, on, total }
       }
-      const o = normalize(raw as SelectOption | string)
+      const o = normalizeOpt(raw as SelectOption | string)
       const selected = set.has(o.value)
       return { node: { ...o, selected }, on: selected ? 1 : 0, total: 1 }
     })
@@ -436,7 +434,7 @@ export const Select = (props: SelectProps) => {
     disabled,
     toneSelected,
     filter,
-    selectAll,
+    selectAll = true,
     selectAllLabel = 'Select all',
     clearable,
     clearLabel = 'Clear',
@@ -492,7 +490,7 @@ export const Select = (props: SelectProps) => {
       if (typeof raw !== 'string' && isSubmenu(raw)) collectLeaves(raw.submenu, raw.label, disabled || !!raw.disabled, out)
       else if (typeof raw !== 'string' && isGroup(raw)) collectLeaves(raw.options, raw.label, disabled || !!raw.disabled, out)
       else {
-        const o = normalize(raw)
+        const o = normalizeOpt(raw)
         out.push({ opt: o, disabled: disabled || !!o.disabled, group })
       }
     }
@@ -519,15 +517,9 @@ export const Select = (props: SelectProps) => {
   // is also the signal to skip match-highlighting.
   const filtering = filter !== undefined && filter !== false
   const q = query.trim()
-  const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const queryRe =
-    filtering && typeof filter !== 'function' && q
-      ? new RegExp(q.split(/\s+/).map(escapeRe).join('\\s+'), 'i')
-      : null
+  const queryRe = filtering && typeof filter !== 'function' ? matchQueryRegex(q) : null
   const matches = (o: SelectOption) =>
-    typeof filter === 'function'
-      ? filter(o, q)
-      : !queryRe || [o.value, o.label ?? '', o.hint ?? ''].some((s) => queryRe.test(s))
+    typeof filter === 'function' ? filter(o, q) : matchesQuery(o, queryRe)
   // Which leaves survive the filter. A custom filter *function* prunes on every
   // render (even with an empty query), so a predicate that filters by a criterion —
   // not the typed text — always applies. The built-in matcher only prunes once
@@ -537,24 +529,6 @@ export const Select = (props: SelectProps) => {
   // A typed query flattens the tree into grouped results; with no query we render
   // the tree (inline groups + submenu flyouts). A function filter prunes in place.
   const flattening = filtering && !!q
-
-  // Bold the matched substring(s) for display — built-in matcher only.
-  const highlight = (text: string): React.ReactNode => {
-    if (!queryRe) return text
-    const re = new RegExp(queryRe.source, 'gi')
-    const out: React.ReactNode[] = []
-    let last = 0
-    let m: RegExpExecArray | null
-    while ((m = re.exec(text)) !== null) {
-      if (m.index > last) out.push(text.slice(last, m.index))
-      out.push(<b key={out.length}>{m[0]}</b>)
-      last = m.index + m[0].length
-      if (m[0].length === 0) re.lastIndex++ // guard against a zero-width match looping
-    }
-    if (out.length === 0) return text
-    if (last < text.length) out.push(text.slice(last))
-    return out
-  }
 
   // Collapse whatever selection shape we have into a lookup list.
   const selectedValues: string[] = Array.isArray(currentRaw)
@@ -640,12 +614,7 @@ export const Select = (props: SelectProps) => {
     // menu, on an enabled row — the default Alt/Option-click isolate hint. A
     // `tooltip=""` stays empty (falsy → no bubble), which is how a consumer opts a
     // row out of the default hint.
-    const isolateHint =
-      multiple && selectAll && !disabled
-        ? IS_MAC
-          ? '⌥+Click to select only this'
-          : 'Alt+Click to select only this'
-        : undefined
+    const isolateHint = multiple && selectAll && !disabled ? ISOLATE_HINT : undefined
     const tip = o.tooltip ?? isolateHint
     // The default hint teaches an accelerator, so it's unobtrusive: a longer delay
     // than the 250ms default (it shouldn't fire on a casual pass over the rows) and
@@ -658,8 +627,8 @@ export const Select = (props: SelectProps) => {
         selectionIndicator={menuItemIndicator}
         {...ariaSelectable}
         indicator={customMark ?? undefined}
-        label={custom ? undefined : queryRe ? highlight(o.label ?? o.value) : o.label ?? o.value}
-        hint={custom ? undefined : queryRe && o.hint ? highlight(o.hint) : o.hint}
+        label={custom ? undefined : highlight(o.label ?? o.value, queryRe)}
+        hint={custom ? undefined : o.hint ? highlight(o.hint, queryRe) : o.hint}
         icon={custom ? undefined : o.icon}
         tone={o.tone}
         toneSelected={toneSelected}
@@ -707,7 +676,7 @@ export const Select = (props: SelectProps) => {
         if (inner.length) out.push(<MenuGroup key={`grp-${i}-${raw.label}`} label={raw.label}>{inner}</MenuGroup>)
         return
       }
-      const o = normalize(raw)
+      const o = normalizeOpt(raw)
       if (typeof filter === 'function' && !matches(o)) return
       out.push(renderOptionRow(o, disabled || !!o.disabled))
     })

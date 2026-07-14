@@ -8,10 +8,11 @@
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
 import { useState, useMemo } from '../jsx-runtime'
-import { nativeStateChange } from '../anta_helpers'
+import { nativeStateChange, ISOLATE_HINT } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { SelectItem, SelectOption } from './Select'
+import { normalizeOpt, matchQueryRegex, matchesQuery } from './select-options'
 import { Button } from './Button'
 import { Menu } from './Menu'
 import { MenuItem } from './MenuItem'
@@ -19,6 +20,7 @@ import { MenuGroup } from './MenuGroup'
 import { MenuSeparator } from './MenuSeparator'
 import { Tag } from './Tag'
 import { Input } from './Input'
+import { Tooltip } from './Tooltip'
 import styles from './SelectFaceted.module.css'
 
 // ---- Facet config -------------------------------------------------------
@@ -61,7 +63,9 @@ export interface SelectFacetMultiple extends FacetBase {
   options: SelectItem[]
   /** Add a search field atop this facet's flyout that filters its options. */
   filter?: FacetFilter
-  /** Add a "Select all" row that toggles every option. */
+  /** A "Select all" row that toggles every option. On by default — set `false`
+   *  to drop it.
+   *  @defaultValue true */
   selectAll?: boolean
   /** Label for the `selectAll` row.
    *  @defaultValue Select all */
@@ -168,6 +172,10 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   priority?: 'primary' | 'secondary'
   /** Disable the whole control. */
   disabled?: boolean
+  /** Tone applied to a selected option row in the facet flyouts (label, selected
+   *  tint, and the check / checkbox indicator). A named tone or a custom CSS
+   *  colour, matching `Select`'s `toneSelected`. Defaults to a neutral selection. */
+  toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Add a single search field to the top of the root menu that flattens every
    *  `single` / `multiple` facet's options into one list and searches across them
    *  — typing "alice" surfaces it under both an Assignee and an Owner facet, each
@@ -195,9 +203,6 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
 
 // ---- Helpers ------------------------------------------------------------
 
-const normalizeOpt = (o: SelectOption | string): SelectOption =>
-  typeof o === 'string' ? { value: o, label: o } : o
-
 /** Flatten a facet's `options` (strings, options, groups, submenus) to leaf
  *  `SelectOption`s — v1 renders a facet's choices as a flat list. */
 const leavesOf = (items: SelectItem[]): SelectOption[] => {
@@ -217,15 +222,11 @@ const leavesOf = (items: SelectItem[]): SelectOption[] => {
 const isEmpty = (v: unknown): boolean =>
   v == null || v === '' || (Array.isArray(v) && v.length === 0)
 
-/** The built-in filter matcher — case-insensitive, with each run of whitespace in
- *  the query matching any gap (`\s+`), matching `Select`'s default matcher exactly. */
-const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-const defaultMatch = (o: SelectOption, query: string): boolean => {
-  const q = query.trim()
-  if (!q) return true
-  const re = new RegExp(q.split(/\s+/).map(escapeRe).join('\\s+'), 'i')
-  return [o.value, o.label, o.hint].some((v) => typeof v === 'string' && re.test(v))
-}
+/** The built-in `(option, query) => boolean` matcher, over the shared
+ *  `matchQueryRegex` + `matchesQuery`. Builds the regex per call — cheap, and it
+ *  keeps the per-option predicate signature the facet filters expect. */
+const defaultMatch = (o: SelectOption, query: string): boolean =>
+  matchesQuery(o, matchQueryRegex(query))
 
 /**
  * `<SelectFaceted>` — a faceted filter: one trigger opens a menu of facets
@@ -265,6 +266,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
     size,
     priority = 'secondary',
     disabled,
+    toneSelected,
     searchable,
     searchPlaceholder = 'Filter…',
     clearable = true,
@@ -391,6 +393,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
       label: opt.label ?? opt.value,
       hint: opt.hint,
       tone: opt.tone,
+      toneSelected,
       disabled: opt.disabled,
       'data-menu-open': '',
     }
@@ -407,16 +410,27 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
       )
     }
     const arr = (current[facet.key] as string[] | undefined) ?? []
+    // Alt/⌥-click isolates the row (clear the rest, select only this), mirroring
+    // Select's bulk-select accelerator. Coupled to the facet's `selectAll` (on by
+    // default) — the same gate as the "Select all" row. A default hint teaches it;
+    // an option's own `tooltip` overrides, and `''` suppresses it.
+    const isolable = facet.selectAll !== false && !opt.disabled
+    const tip = opt.tooltip ?? (isolable ? ISOLATE_HINT : undefined)
+    const hintOnly = opt.tooltip == null && isolable
     return (
       <MenuItem
         key={`${keyPrefix}${opt.value}`}
         {...shared}
         selectionIndicator="checkbox"
         selected={arr.includes(opt.value)}
-        onSelect={() =>
-          setFacet(facet, arr.includes(opt.value) ? arr.filter((v) => v !== opt.value) : [...arr, opt.value])
+        onSelect={(e: any) =>
+          isolable && e?.altKey
+            ? setFacet(facet, [opt.value])
+            : setFacet(facet, arr.includes(opt.value) ? arr.filter((v) => v !== opt.value) : [...arr, opt.value])
         }
-      />
+      >
+        {tip && <Tooltip {...(hintOnly ? { follow: true, delay: 700 } : {})}>{tip}</Tooltip>}
+      </MenuItem>
     )
   }
 
@@ -431,7 +445,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
     const someOn = enabled.some((v) => arr.includes(v))
     return (
       <>
-        {facet.selectAll && leaves.length > 0 && (
+        {facet.selectAll !== false && leaves.length > 0 && (
           <>
             <MenuItem
               selectionIndicator="checkbox"

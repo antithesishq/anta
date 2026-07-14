@@ -57,7 +57,7 @@ export const SYSTEMS: System[] = [
     name: 'Anta',
     anta: true,
     width: 'narrow',
-    version: '@antadesign/anta 0.3.3',
+    version: '@antadesign/anta 0.3.6',
     docs: 'https://anta.design',
     tagline:
       'Framework-agnostic web components with thin React/Preact wrappers, a tiny CSS-variable token set, and no style or animation runtime.',
@@ -74,9 +74,9 @@ export const SYSTEMS: System[] = [
       'Granular per-element imports keep bundles lean; the one animation dependency, Lottie, stays in the separate stickers package.',
     ],
     cons: [
-      'Young and small: ~17 components, with no modal, toast, slider, combobox, avatar, or data grid yet.',
+      'Young and small: ~19 components, with no toast, slider, avatar, or data grid yet.',
       'One organization at an early version (0.x), so a smaller ecosystem, community, and track record than the incumbents.',
-      'Table and Select stay intentionally simple, short of the data grid or async combobox in enterprise kits.',
+      'Table and Select stay intentionally simple, short of the data grid in enterprise kits.',
       'No first-party charts or form-management layer.',
     ],
   },
@@ -478,7 +478,7 @@ export const CATEGORIES: Category[] = [
  */
 export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   anta: {
-    button: 'yes', textinput: 'yes', select: 'yes', choice: 'partial',
+    button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'partial',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes',
     accordion: 'yes', table: 'partial', tag: 'yes', progress: 'partial',
     icons: 'yes', typography: 'yes',

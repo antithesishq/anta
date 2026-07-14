@@ -195,6 +195,9 @@ export class ATooltipElement extends HTMLElementBase {
   private fading = false
   private fadeTimer?: ReturnType<typeof setTimeout>
   private docMoveBound = false
+  /** Active only while shown: re-runs the empty gate when the slotted content
+   *  changes under a live bubble. See observeContent(). */
+  private contentObserver?: MutationObserver
 
   constructor() {
     super()
@@ -440,6 +443,29 @@ export class ATooltipElement extends HTMLElementBase {
     return this.children.length === 0 && (this.textContent ?? '').trim() === ''
   }
 
+  /** While shown, watch the slotted content so a bubble whose content is
+   *  cleared out from under it — a reactive re-render dropping the text /
+   *  children under one persistent anchor — self-hides. The mirror of
+   *  isEmpty()'s "populated later self-corrects": the show-time gate can't fire
+   *  again on its own once open, so this drives the reverse.
+   *
+   *  A MutationObserver, not `slotchange`, because reactive renderers update
+   *  text in place — React sets an existing text node's nodeValue rather than
+   *  replacing the node — which changes no assigned-node set and so fires no
+   *  `slotchange`; childList + characterData + subtree catches both that and
+   *  node removal. Observing our own light-DOM children is a READ (like the
+   *  truncation measurements), so it stays within the no-host-mutation rule.
+   *  Runs only while shown — attached here, disconnected by hide() / cleanup(). */
+  private observeContent() {
+    if (typeof MutationObserver === 'undefined') return
+    if (!this.contentObserver) {
+      this.contentObserver = new MutationObserver(() => {
+        if (this.shown && this.isEmpty()) this.hide()
+      })
+    }
+    this.contentObserver.observe(this, { childList: true, characterData: true, subtree: true })
+  }
+
   // --- positioning (sets only the shadow container's own transform) ---
 
   // Single pending position frame: a burst of mousemoves within one frame
@@ -565,6 +591,9 @@ export class ATooltipElement extends HTMLElementBase {
       // — so a following bubble keeps trailing the mouse instead of freezing.
       // (No-op for pinned tooltips.) Detached when the fade finishes.
       if (!this.docMoveBound) { this.doc.addEventListener('mousemove', this.onDocMove); this.docMoveBound = true }
+      // Now that the bubble is up, watch for its content being emptied out from
+      // under it so it self-hides (mirror of the show-time empty gate).
+      this.observeContent()
     }
     // Position AFTER showPopover so the bubble is laid out & measurable
     // (wrapped to max-width). Opacity is still ~0 here, so setting the
@@ -577,6 +606,7 @@ export class ATooltipElement extends HTMLElementBase {
     if (!this.shown) return
     this.shown = false
     this.touchOpen = false
+    this.contentObserver?.disconnect()
     this.container.hidePopover()
     // Keep the scroll / key / cursor-follow listeners through the exit fade (a
     // following bubble keeps trailing the pointer as it fades), then detach all.
@@ -608,6 +638,7 @@ export class ATooltipElement extends HTMLElementBase {
    *  calls it. */
   cleanup() {
     this.cancelHide()
+    this.contentObserver?.disconnect()
     if (this.shown) {
       this.shown = false
       this.touchOpen = false

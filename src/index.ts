@@ -57,6 +57,8 @@ export { InputDate } from './components/InputDate'
 export type { InputDateProps, InputDateChangeAttrs } from './components/InputDate'
 export { InputTime } from './components/InputTime'
 export type { InputTimeProps, InputTimeChangeAttrs } from './components/InputTime'
+export { InputAutocomplete } from './components/InputAutocomplete'
+export type { InputAutocompleteProps } from './components/InputAutocomplete'
 export {
   buildMonth,
   getWeekdays,

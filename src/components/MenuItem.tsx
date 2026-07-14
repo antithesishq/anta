@@ -74,6 +74,14 @@ export interface MenuItemProps extends BaseProps {
    *  selection bubbling up from a nested submenu. Receives the event plus a
    *  `{ value, label }` detail. */
   onSelect?: (event: any, detail: { value?: string | number; label?: React.ReactNode }) => void
+  /** Raw `mousedown` on the row. Mainly to `preventDefault()` so the row doesn't
+   *  take focus on a mouse press — e.g. a combobox option keeping focus in its
+   *  input field while the click still selects. */
+  onMouseDown?: (event: any) => void
+  /** ARIA role override. Defaults to the role implied by `selectionIndicator`
+   *  (`menuitem` / `menuitemcheckbox` / `menuitemradio`); set it to reparent the
+   *  row under a different container role — e.g. `option` inside a `listbox`. */
+  role?: string
   /** Item content. With `label` set, children are extra content — most
    *  notably the nested `<Menu>` for a submenu parent. */
   children?: React.ReactNode
@@ -115,6 +123,7 @@ export const MenuItem = ({
   submenu,
   value,
   onSelect,
+  role: roleOverride,
   className,
   style,
   children,
@@ -151,7 +160,7 @@ export const MenuItem = ({
   const toneAttr = effectiveTone && effectiveTone !== 'neutral' ? effectiveTone : undefined
   return (
     <a-menu-item
-      role={role}
+      role={roleOverride ?? role}
       tabIndex={0}
       disabled={disabled ? '' : undefined}
       selected={keepTint ? '' : undefined}

@@ -155,6 +155,9 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   onFocus?: (e: any) => void
   /** Fires when the field loses focus. */
   onBlur?: (e: any) => void
+  /** ARIA `role` for the field — e.g. `combobox` when the input drives a
+   *  suggestion `listbox` (see `InputAutocomplete`). Left unset by default. */
+  role?: string
   // Other standard DOM event handlers (onKeyDown, onPaste, onClick, …) come from
   // `DOMEventHandlers` and are forwarded to the field via `...rest`. Standard
   // events bubble/compose to the host (focus/blur reach it via delegatesFocus).

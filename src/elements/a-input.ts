@@ -191,7 +191,8 @@ const SHADOW_STYLE = `
   @media (hover: hover) and (pointer: fine) {
     :host(:not(:disabled)) .field:hover { --_bc: var(--input-border-hover); }
   }
-  .field:has(input:focus, textarea:focus) {
+  :host(:not([readonly])) .field:has(input:focus, textarea:focus),
+  :host([readonly]) .field:has(input:focus-visible, textarea:focus-visible) {
     --_bc: var(--input-border-hover);
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;

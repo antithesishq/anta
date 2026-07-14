@@ -18,6 +18,7 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 - **`Tooltip` closes when its content is emptied while shown.** A bubble whose slotted content is cleared out from under it (a reactive re-render) now self-hides, the mirror of the show-time empty gate. Previously it stayed up as a blank frame.
 
 ### Changed
+- **Read-only `Input` draws its focus ring on keyboard focus only.** A `readOnly` field (a `Select` / `SelectFaceted` trigger) rings via `:focus-visible` instead of `:focus`, so a mouse click that opens its menu doesn't ring the trigger; keyboard focus still does. Editable fields are unchanged (they ring on any focus — you clicked in to type). Note: engines that treat a mouse-clicked read-only `<input>` as focus-visible (current Chromium) still ring it on click; this aligns the rule with the rest of the system's `:focus-visible` components.
 - **Menu combobox filter fields — Home / End move the caret.** In a menu's search field (`Select`'s `filter`, `InputAutocomplete`), Home / End now move the text caret to the line start / end instead of jumping the option list; PageUp / PageDown jump the list to the first / last option.
 - **`SelectFaceted` gains a `toneSelected` prop.** Tones a selected option row (e.g. `brand`), matching `Select`. Defaults to a neutral selection.
 - **`SelectFaceted` `multiple` facets gain the Alt/⌥-click isolate accelerator + hint.** Alt/⌥-click a row to select only it, taught by a default tooltip — matching `Select`. Tied to the facet's `selectAll`; override the hint via a row's `tooltip`.

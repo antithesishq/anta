@@ -4,7 +4,8 @@
 // followed by a <Menu> of options. There is no `a-select` element — the wrapper
 // IS the coordinator (see the Select docs page: "Components composition").
 import { useState, useId } from '../jsx-runtime'
-import { matchQueryRegex, ISOLATE_HINT } from '../anta_helpers'
+import { ISOLATE_HINT } from '../anta_helpers'
+import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { Input } from './Input'
@@ -296,9 +297,6 @@ export type SelectProps = SelectCommonProps &
       }
   )
 
-const normalize = (o: SelectOption | string): SelectOption =>
-  typeof o === 'string' ? { value: o, label: o } : o
-
 /** Rolled-up selection of a group / submenu subtree: `'none'` / `'all'` of the
  *  descendant leaves selected, or `'some'` in between. On `SelectedGroup` /
  *  `SelectedSubmenu`, for a section indicator or custom styling. */
@@ -381,7 +379,7 @@ export function optionsWithSelection(
         const total = children.reduce((n, c) => n + c.total, 0)
         return { node: { ...g, options: children.map((c) => c.node), selectionState: state(on, total) }, on, total }
       }
-      const o = normalize(raw as SelectOption | string)
+      const o = normalizeOpt(raw as SelectOption | string)
       const selected = set.has(o.value)
       return { node: { ...o, selected }, on: selected ? 1 : 0, total: 1 }
     })
@@ -492,7 +490,7 @@ export const Select = (props: SelectProps) => {
       if (typeof raw !== 'string' && isSubmenu(raw)) collectLeaves(raw.submenu, raw.label, disabled || !!raw.disabled, out)
       else if (typeof raw !== 'string' && isGroup(raw)) collectLeaves(raw.options, raw.label, disabled || !!raw.disabled, out)
       else {
-        const o = normalize(raw)
+        const o = normalizeOpt(raw)
         out.push({ opt: o, disabled: disabled || !!o.disabled, group })
       }
     }
@@ -521,9 +519,7 @@ export const Select = (props: SelectProps) => {
   const q = query.trim()
   const queryRe = filtering && typeof filter !== 'function' ? matchQueryRegex(q) : null
   const matches = (o: SelectOption) =>
-    typeof filter === 'function'
-      ? filter(o, q)
-      : !queryRe || [o.value, o.label ?? '', o.hint ?? ''].some((s) => queryRe.test(s))
+    typeof filter === 'function' ? filter(o, q) : matchesQuery(o, queryRe)
   // Which leaves survive the filter. A custom filter *function* prunes on every
   // render (even with an empty query), so a predicate that filters by a criterion —
   // not the typed text — always applies. The built-in matcher only prunes once
@@ -533,24 +529,6 @@ export const Select = (props: SelectProps) => {
   // A typed query flattens the tree into grouped results; with no query we render
   // the tree (inline groups + submenu flyouts). A function filter prunes in place.
   const flattening = filtering && !!q
-
-  // Bold the matched substring(s) for display — built-in matcher only.
-  const highlight = (text: string): React.ReactNode => {
-    if (!queryRe) return text
-    const re = new RegExp(queryRe.source, 'gi')
-    const out: React.ReactNode[] = []
-    let last = 0
-    let m: RegExpExecArray | null
-    while ((m = re.exec(text)) !== null) {
-      if (m.index > last) out.push(text.slice(last, m.index))
-      out.push(<b key={out.length}>{m[0]}</b>)
-      last = m.index + m[0].length
-      if (m[0].length === 0) re.lastIndex++ // guard against a zero-width match looping
-    }
-    if (out.length === 0) return text
-    if (last < text.length) out.push(text.slice(last))
-    return out
-  }
 
   // Collapse whatever selection shape we have into a lookup list.
   const selectedValues: string[] = Array.isArray(currentRaw)
@@ -649,8 +627,8 @@ export const Select = (props: SelectProps) => {
         selectionIndicator={menuItemIndicator}
         {...ariaSelectable}
         indicator={customMark ?? undefined}
-        label={custom ? undefined : queryRe ? highlight(o.label ?? o.value) : o.label ?? o.value}
-        hint={custom ? undefined : queryRe && o.hint ? highlight(o.hint) : o.hint}
+        label={custom ? undefined : highlight(o.label ?? o.value, queryRe)}
+        hint={custom ? undefined : o.hint ? highlight(o.hint, queryRe) : o.hint}
         icon={custom ? undefined : o.icon}
         tone={o.tone}
         toneSelected={toneSelected}
@@ -698,7 +676,7 @@ export const Select = (props: SelectProps) => {
         if (inner.length) out.push(<MenuGroup key={`grp-${i}-${raw.label}`} label={raw.label}>{inner}</MenuGroup>)
         return
       }
-      const o = normalize(raw)
+      const o = normalizeOpt(raw)
       if (typeof filter === 'function' && !matches(o)) return
       out.push(renderOptionRow(o, disabled || !!o.disabled))
     })

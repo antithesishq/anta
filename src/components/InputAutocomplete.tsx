@@ -12,16 +12,14 @@
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
 import { useState, useMemo, useId } from '../jsx-runtime'
-import { nativeStateChange, matchQueryRegex } from '../anta_helpers'
+import { nativeStateChange } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { SelectOption } from './Select'
+import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
 import { Input } from './Input'
 import { Menu } from './Menu'
 import { MenuItem } from './MenuItem'
-
-const normalizeOpt = (o: string | SelectOption): SelectOption =>
-  typeof o === 'string' ? { value: o, label: o } : o
 
 export interface InputAutocompleteProps extends Omit<BaseProps, 'children'> {
   /** The suggestions: bare strings or `SelectOption`s (`value` / `label` / `hint` /
@@ -123,29 +121,8 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
   const queryRe = filter !== false && !custom ? matchQueryRegex(text) : null
   const visible = custom
     ? options.filter((o) => (filter as (o: SelectOption, q: string) => boolean)(o, text))
-    : queryRe
-      ? options.filter((o) => [o.value, o.label ?? '', o.hint ?? ''].some((s) => queryRe.test(s)))
-      : options
+    : options.filter((o) => matchesQuery(o, queryRe))
   const menuOpen = open && visible.length > 0
-
-  // Bold the matched substring(s) for display — built-in matcher only, same as
-  // Select. `queryRe` is global-flagged fresh so exec walks every match.
-  const highlight = (t: string): React.ReactNode => {
-    if (!queryRe) return t
-    const re = new RegExp(queryRe.source, 'gi')
-    const out: React.ReactNode[] = []
-    let last = 0
-    let m: RegExpExecArray | null
-    while ((m = re.exec(t)) !== null) {
-      if (m.index > last) out.push(t.slice(last, m.index))
-      out.push(<b key={out.length}>{m[0]}</b>)
-      last = m.index + m[0].length
-      if (m[0].length === 0) re.lastIndex++ // guard against a zero-width match looping
-    }
-    if (out.length === 0) return t
-    if (last < t.length) out.push(t.slice(last))
-    return out
-  }
 
   const setText = (next: string) => {
     if (!controlled) setInternal(next)
@@ -164,10 +141,15 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
         {...rest}
         value={text}
         // `data-menu-search` makes the menu treat THIS anchor as its combobox
-        // field (see a-menu's #comboAnchor). ARIA mirrors Select's pattern — the
-        // element never writes aria-activedescendant itself; we reflect the id.
+        // field (see a-menu's #comboAnchor). The ARIA combobox contract: the field
+        // is the `combobox` controlling a `listbox` (the Menu below), with the
+        // active option reflected onto `aria-activedescendant` (a-input delegates
+        // focus, so the role/aria ride the host — the reactive layer sets the
+        // active id; the element never writes it itself).
         data-menu-search=""
+        role="combobox"
         aria-haspopup="listbox"
+        aria-controls={`${rid}-list`}
         aria-expanded={menuOpen ? 'true' : 'false'}
         aria-autocomplete="list"
         aria-activedescendant={menuOpen && activeId ? activeId : undefined}
@@ -177,16 +159,20 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
           setOpen(true)
         }}
         onKeyDown={(e: any) => {
-          // Enter with a highlighted suggestion is handled by a-menu's combobox
-          // keyboard (capture phase) → picks it. With no highlight, Enter just
-          // confirms the typed free text and closes the list.
-          if (e.key === 'Enter' && !activeId) setOpen(false)
+          // Enter always closes the list. If a suggestion is highlighted, a-menu's
+          // combobox keyboard already picked it (capture phase, fills + closes);
+          // otherwise the typed free text is already the value, so we just close.
+          // (Not gated on activeId — that React state lags the menu's synchronous
+          // cursor, which would leave Enter a no-op on a fast edit-then-Enter.)
+          if (e.key === 'Enter') setOpen(false)
         }}
       />
       {/* Anchors to the field (its previous sibling). Controlled by `menuOpen`;
           user dismiss (Esc / outside-click) fires onStateChange, which we apply.
           `autoWidth` is omitted so the list floors to the field width. */}
       <Menu
+        id={`${rid}-list`}
+        role="listbox"
         open={menuOpen}
         onStateChange={(_e: any, { next }: { next: boolean }) => {
           setOpen(next)
@@ -198,12 +184,18 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
           <MenuItem
             key={`${rid}-${opt.value}-${i}`}
             id={`${rid}-o${i}`}
+            role="option"
+            aria-selected={activeId === `${rid}-o${i}` ? 'true' : 'false'}
             icon={opt.icon}
-            label={queryRe ? highlight(opt.label ?? opt.value) : opt.label ?? opt.value}
-            hint={queryRe && opt.hint ? highlight(opt.hint) : opt.hint}
+            label={highlight(opt.label ?? opt.value, queryRe)}
+            hint={opt.hint ? highlight(opt.hint, queryRe) : opt.hint}
             tone={opt.tone}
             disabled={opt.disabled}
             value={opt.value}
+            // Keep focus in the field on a mouse pick: preventing the row's
+            // mousedown default stops it taking focus (it's tabIndex=0), so the
+            // click still selects but focus never leaves the input.
+            onMouseDown={(e: any) => e.preventDefault()}
             onSelect={() => pick(opt)}
           />
         ))}

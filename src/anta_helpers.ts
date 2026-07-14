@@ -38,20 +38,6 @@ export function nativeStateChange<D>(
   return { event, detail: event?.detail }
 }
 
-/**
- * The built-in option-filter regex, shared by search-capable wrappers (`Select`,
- * `InputAutocomplete`): case-insensitive, and each run of whitespace in the query
- * matches any gap (`\s+`), so a typed space spans one. Returns null for an empty
- * query — the signal to match everything and to skip match-highlighting. Reuse
- * this rather than re-deriving the regex per component (the drift hazard).
- */
-export function matchQueryRegex(query: string): RegExp | null {
-  const q = query.trim()
-  if (!q) return null
-  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return new RegExp(q.split(/\s+/).map(escape).join('\\s+'), 'i')
-}
-
 // macOS labels the "isolate" accelerator ⌥ (Option); every other platform, Alt.
 // `altKey` fires for both at runtime — only the hint wording differs.
 export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '')

@@ -12,6 +12,7 @@ import { nativeStateChange, ISOLATE_HINT } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { SelectItem, SelectOption } from './Select'
+import { normalizeOpt, matchQueryRegex, matchesQuery } from './select-options'
 import { Button } from './Button'
 import { Menu } from './Menu'
 import { MenuItem } from './MenuItem'
@@ -202,9 +203,6 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
 
 // ---- Helpers ------------------------------------------------------------
 
-const normalizeOpt = (o: SelectOption | string): SelectOption =>
-  typeof o === 'string' ? { value: o, label: o } : o
-
 /** Flatten a facet's `options` (strings, options, groups, submenus) to leaf
  *  `SelectOption`s — v1 renders a facet's choices as a flat list. */
 const leavesOf = (items: SelectItem[]): SelectOption[] => {
@@ -224,15 +222,11 @@ const leavesOf = (items: SelectItem[]): SelectOption[] => {
 const isEmpty = (v: unknown): boolean =>
   v == null || v === '' || (Array.isArray(v) && v.length === 0)
 
-/** The built-in filter matcher — case-insensitive, with each run of whitespace in
- *  the query matching any gap (`\s+`), matching `Select`'s default matcher exactly. */
-const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-const defaultMatch = (o: SelectOption, query: string): boolean => {
-  const q = query.trim()
-  if (!q) return true
-  const re = new RegExp(q.split(/\s+/).map(escapeRe).join('\\s+'), 'i')
-  return [o.value, o.label, o.hint].some((v) => typeof v === 'string' && re.test(v))
-}
+/** The built-in `(option, query) => boolean` matcher, over the shared
+ *  `matchQueryRegex` + `matchesQuery`. Builds the regex per call — cheap, and it
+ *  keeps the per-option predicate signature the facet filters expect. */
+const defaultMatch = (o: SelectOption, query: string): boolean =>
+  matchesQuery(o, matchQueryRegex(query))
 
 /**
  * `<SelectFaceted>` — a faceted filter: one trigger opens a menu of facets

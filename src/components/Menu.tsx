@@ -58,6 +58,9 @@ export interface MenuProps extends BaseProps {
    *  onto its `aria-activedescendant` — the element can't write that light-DOM
    *  attribute itself. Passed straight through to the element. */
   onactivedescendant?: (e: CustomEvent<{ id: string | null }>) => void
+  /** ARIA role of the menu surface.
+   *  @defaultValue menu */
+  role?: string
   /** The menu's contents: `MenuItem`, `MenuSeparator`, `MenuGroup`, or any
    *  custom element. */
   children?: React.ReactNode
@@ -106,6 +109,7 @@ export const Menu = ({
   open,
   onStateChange,
   round,
+  role = 'menu',
   className,
   style,
   children,
@@ -143,7 +147,7 @@ export const Menu = ({
           : undefined
       }
       round={round ? '' : undefined}
-      role="menu"
+      role={role}
       aria-orientation="vertical"
       class={className}
       style={roundStyle(round, '--menu-round', style)}

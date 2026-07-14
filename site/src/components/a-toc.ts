@@ -15,7 +15,8 @@
  */
 
 /** Heading levels to include and the selector used to find them. The page
- *  title (h1) is excluded — the TOC starts at h2. */
+ *  title (h1) is excluded — the TOC starts at h2. A `max-level` attribute caps
+ *  the deepest level shown (e.g. `max-level="2"` lists only h2s). */
 const HEADING_SELECTOR = ':is(h2,h3,h4,h5,h6)[id]'
 /** Indentation step per nesting level, in px. */
 const INDENT_STEP = 12
@@ -63,9 +64,14 @@ export class ATocElement extends HTMLElement {
     const root = document.querySelector('main')
     if (!root) return
 
+    // `max-level` caps the deepest heading shown (default 6 = all). e.g. the
+    // Changelog sets `max-level="2"` so the TOC lists version headings only,
+    // not every Added / Fixed / Changed subsection under them.
+    const maxLevel = Number(this.getAttribute('max-level')) || 6
+
     this.headings = Array.from(
       root.querySelectorAll<HTMLElement>(HEADING_SELECTOR),
-    ).filter((h) => h.textContent?.trim())
+    ).filter((h) => h.textContent?.trim() && Number(h.tagName[1]) <= maxLevel)
 
     if (this.headings.length < MIN_HEADINGS) return
 

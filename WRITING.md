@@ -1,7 +1,7 @@
 # Writing
 
-One voice for everything we document: pages under `site/`, comments in source, and
-TSDoc on props and params. UI copy and commit messages are out of scope.
+One voice for everything we document: pages under `site/`, the changelog, comments in
+source, and TSDoc on props and params. UI copy and commit messages are out of scope.
 
 Write like an engineer explaining the code to another engineer who is new to it.
 State what a thing does and the values it uses, then stop. The reader doesn't need
@@ -71,6 +71,12 @@ Same voice everywhere; the length changes.
 - **TSDoc on props/params:** first sentence says what it does. Then when to reach for
   it, gotchas, interactions. `@defaultValue` owns the default; don't repeat it or the
   type in prose. A few sentences.
+- **Changelog (`CHANGELOG.md`):** one or two sentences per entry, lead with what
+  changed. A new component gets its headline — what it is and the one capability that
+  matters — not a tour of every prop, position, and part; the docs page holds that.
+  A new prop: name it and what it does, skip the edge cases. When an entry runs to
+  five clauses, cut to the one a consumer needs to decide "does this affect me".
+  Long enumerations of props, positions, or parts belong on the page, not here.
 
 ## Editing existing docs
 

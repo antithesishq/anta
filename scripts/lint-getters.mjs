@@ -88,19 +88,14 @@ const READONLY_ALLOWLIST = {
 }
 
 /**
- * PENDING, TEMPORARY opt-outs for the wrapper DOM-method rule (see the SECOND
- * RULE in the header). These are the two known keyboard-open sites that
- * synthesize a click on a read-only field's `<a-input>` trigger to open its
- * menu — tracked for a fix that moves the keyboard-open into `<a-menu>` (so the
- * wrapper stops touching the live node). Allowlisted so the guard blocks NEW
- * regressions without failing CI on these in-flight cases. **Remove an entry the
- * moment its call is gone.** Keyed by src-relative path → the method names still
- * tolerated on an event target in that file.
+ * Opt-outs for the wrapper DOM-method rule (see the SECOND RULE in the header):
+ * src-relative path → method names still tolerated on an event target there.
+ * Empty — the keyboard-open that used to synthesize a click on a read-only
+ * field's trigger (`e.currentTarget.click()` in Select / InputDate) now lives in
+ * `<a-menu>` (its anchor keydown listener), so no wrapper calls a DOM method. Add
+ * an entry only with a reviewed reason.
  */
-const WRAPPER_DOM_CALL_ALLOWLIST = {
-  'src/components/Select.tsx': ['click'],
-  'src/components/InputDate.tsx': ['click'],
-}
+const WRAPPER_DOM_CALL_ALLOWLIST = {}
 
 /** Every `.ts` file under `src` (element classes are always `.ts` by
  *  convention). `.d.ts` declares no runtime accessors, so it's skipped. */

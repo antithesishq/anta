@@ -14,6 +14,7 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 - **`Menu` / `MenuItem` / `Input` gain an optional `role` prop.** Overrides the element's default ARIA role (`Menu` `menu` → `listbox`, `MenuItem` `menuitem` → `option`), which is what lets `InputAutocomplete` present its dropdown as a combobox listbox.
 
 ### Fixed
+- **`Menu` opens from the keyboard via the element, not a synthesized click.** `<a-menu>` now binds a keydown on its trigger anchor and opens itself (Enter / Space / ArrowDown on a read-only trigger like `Select`; ArrowDown alone on an editable one like `InputDate`, so Enter/Space stay with the field). Button and link triggers are unchanged — their own Enter/Space click still opens. Removes the `Select` / `InputDate` wrappers reaching for the live trigger node to call `.click()`, which threw in runtimes that reconcile the DOM off the main thread; any custom-trigger menu now gets keyboard-open for free.
 - **`Tooltip` closes when its content is emptied while shown.** A bubble whose slotted content is cleared out from under it (a reactive re-render) now self-hides, the mirror of the show-time empty gate. Previously it stayed up as a blank frame.
 
 ### Changed

@@ -284,17 +284,14 @@ export const InputDate = ({
         }}
         onChange={(e: any) => resolve(e.currentTarget.value)}
         onKeyDown={(e: any) => {
-          // Open on ArrowDown and step focus into the grid — the deliberate "enter
-          // the grid" gesture. Enter stays "commit the typed date", so it isn't
-          // overloaded. A mouse click opens via the Menu's own anchor-click trigger
-          // (like Select) — leaving focus in the field — so there's no `onClick`
-          // here; for the keyboard we synthesize that same click, guarded on `!open`
-          // so a second ArrowDown doesn't toggle it shut. `focusSignal` (bumped
-          // below) then lands focus in the grid. Once inside, <a-calendar> owns the
+          // ArrowDown is the deliberate "enter the grid" gesture. <a-menu> opens
+          // itself on ArrowDown (its anchor keydown, since this editable field
+          // synthesizes no click of its own), so here we only step focus into the
+          // grid via `focusSignal` (bumped below). Enter stays "commit the typed
+          // date", so it isn't overloaded. Once inside, <a-calendar> owns the
           // arrows, so this only runs while focus is in the field.
           if (e.key === 'ArrowDown' && !disabled) {
             e.preventDefault()
-            if (!open) e.currentTarget.click()
             setFocusNonce((n) => n + 1)
           }
           // Enter commits the typed date (blur's `change` doesn't fire on Enter for a

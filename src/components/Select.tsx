@@ -727,18 +727,9 @@ export const Select = (props: SelectProps) => {
         round={round}
         aria-haspopup="menu"
         aria-expanded={open ? 'true' : 'false'}
-        onKeyDown={(e: any) => {
-          // Open on Enter/Space/ArrowDown, but ONLY while closed. A read-only field
-          // doesn't synthesize a click, so we click it ourselves (detail 0 → the
-          // Menu opens via keyboard and focuses the first option). Guarding on `open`
-          // matters after a *mouse* open, where focus stays on the trigger: without
-          // it, ArrowDown would re-click the still-open menu and toggle it shut.
-          // While open, the key falls through to the Menu (ArrowDown enters the list).
-          if (!open && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown')) {
-            e.preventDefault()
-            e.currentTarget.click()
-          }
-        }}
+        // Keyboard open (Enter/Space/ArrowDown on this read-only field) is owned
+        // by <a-menu>, which binds a keydown on its trigger anchor — so there's no
+        // onKeyDown here synthesizing a click on the live node.
         trailing={
           // Chevron rotates down → up when open (spacing + rotation in the CSS
           // module, matching the Input "Select dropdown" example).

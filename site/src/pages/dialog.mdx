@@ -81,13 +81,13 @@ const [open, setOpen] = useState(false)
 ## Position
 
 `position` places the dialog. `center` (the default) is a modal centered on the
-viewport, keeping a `--dialog-margin` gap (32px) from every edge. `left`,
-`right`, `top`, and `bottom` turn it into an edge drawer: `left` / `right` run
-the full viewport height and slide in from the side; `top` / `bottom` span the
-full width and slide down / up. A drawer sits flush against its edge but keeps
-that same `--dialog-margin` of overlay on the far side, so the backdrop stays
-visible however wide or tall you make it. Drawers square their corners against
-the edges they touch. `fullscreen` fills the whole viewport: no gap, no radius.
+viewport, keeping a 32px gap from every edge. `left`, `right`, `top`, and
+`bottom` turn it into an edge drawer: `left` / `right` run the full viewport
+height and slide in from the side; `top` / `bottom` span the full width and slide
+down / up. A drawer sits flush against its edge but keeps 32px of overlay on the
+far side, so the backdrop stays visible however wide or tall you make it. Drawers
+square their corners against the edges they touch. `fullscreen` fills the whole
+viewport: no gap, no radius.
 
 <Preview gap="8px">
   <a-button tabindex="0" data-dialog-open="drawer-left">Left</a-button>
@@ -129,17 +129,18 @@ the edges they touch. `fullscreen` fills the whole viewport: no gap, no radius.
 <Dialog position="fullscreen" open={open} onStateChange={…}>…</Dialog> {/* edge-to-edge, no gap */}
 ```
 
-A drawer uses the same `--dialog-width` / `--dialog-height` tokens as a modal, on
-whichever axis it slides along: `--dialog-width` for a `left` / `right` drawer,
-`--dialog-height` for a `top` / `bottom` one. The cross axis fills the viewport,
-so the far-side space is `100vw`/`100dvh` minus that size.
+A drawer's thickness is the axis it slides along: a `left` / `right` drawer's
+width (380px by default), a `top` / `bottom` drawer's height (its content). The
+cross axis fills the viewport, so the far-side space is `100vw`/`100dvh` minus
+that thickness. Resize it with a position-scoped `::part(dialog)` rule (see
+[Styling](#styling)).
 
 ## Round
 
-The centered modal is rounded by default (`--dialog-radius`, 10px) and drawers
-are square. `round` overrides that. A **side keyword** rounds only that edge's
-two corners, which pairs with a drawer's exposed edge: a bottom sheet takes
-`round="top"`, a right drawer `round="left"`.
+The centered modal is rounded by default (10px) and drawers are square. `round`
+overrides that. A **side keyword** rounds only that edge's two corners, which
+pairs with a drawer's exposed edge: a bottom sheet takes `round="top"`, a right
+drawer `round="left"`.
 
 <Preview gap="8px">
   <a-button tabindex="0" data-dialog-open="round-sheet">Rounded bottom sheet</a-button>
@@ -162,13 +163,12 @@ two corners, which pairs with a drawer's exposed edge: a bottom sheet takes
 <Dialog round="12px 12px 0 0">…</Dialog>           {/* any border-radius shorthand */}
 ```
 
-A `number` or CSS string sets the amount on all corners; the string may be a
-full `border-radius` shorthand (`"12px 12px 0 0"`). Bare `round` rounds all
-corners at `--dialog-radius`, handy to round an otherwise-square drawer. The
-side keywords take their amount from `--dialog-radius`, so raise that token for a
-bigger sweep. Authoring the raw `<a-dialog>`, a single length works through the
-typed `attr()` (`round="20px"`); shorthands need the wrapper (or set
-`--dialog-round` yourself).
+A `number` or CSS string sets the amount on all corners; the string may be a full
+`border-radius` shorthand, so `round="12px 12px 0 0"` rounds just the top by 12px
+(a side keyword with a custom amount). Bare `round` rounds all corners at the
+default 10px, handy to round an otherwise-square drawer. Authoring the raw
+`<a-dialog>`, a single length works through the typed `attr()` (`round="20px"`);
+shorthands go through the wrapper's `round` prop.
 
 ## Close button
 
@@ -353,69 +353,80 @@ tabbed to. The `<Button>` wrapper sets this for you.
 
 <Disclosure title="Styling">
 
-Reach for the props first: **`position`** (modal or a drawer edge), **`closable`**
-(the ✕), **`persistent`** (turn light-dismiss off). The surface is `--bg-1` above a
-dimmed overlay, lifted by a composed `box-shadow` whose first `inset` layer is the
-hairline border.
+Reach for the props first: **`position`** (modal, drawer edge, or fullscreen),
+**`closable`** (the ✕), **`persistent`** (light-dismiss off), **`round`** (corner
+radius). For everything else, style the shadow **parts** in plain CSS.
 
-A few tokens cover the rest. Set them on the host (the `<a-dialog>` or your own
-class) in plain CSS:
+`<a-dialog>` exposes `::part(dialog)` (the surface), `::part(header)`,
+`::part(body)`, `::part(footer)`, `::part(close)`, and `::part(dialog)::backdrop`
+(the overlay). A `::part` rule wins over the element's internal styles with no
+`!important`, so the surface, size, radius, shadow, overlay, and zone padding are
+all reachable.
 
-- **`--dialog-width`**: the box's width. A centered modal defaults to `480px` (capped to the viewport minus the margin); a `left` / `right` drawer defaults to `380px`.
-- **`--dialog-height`**: the box's height, content by default for both a modal and a `top` / `bottom` drawer. A drawer's cross axis fills the viewport, so this sizes the axis it slides along.
-- **`--dialog-margin`**: the minimum overlay kept between the dialog and the far viewport edge (default `32px`), so the backdrop stays visible. The centered modal keeps it on all four edges (max size `100vw`/`100dvh` − 2×); a drawer keeps it on its one exposed edge (slide-axis size capped at `100vw`/`100dvh` − 1×, however large you set `--dialog-width`/`--dialog-height`). `fullscreen` ignores it (0).
-- **`--dialog-overlay`**: the backdrop fill (black at 42% in light, 62% in dark).
-- **`--dialog-radius`**: the corner radius (drawers square the edges they touch regardless).
-- **`--dialog-shadow`**: the composed elevation (inset hairline border plus drop shadows).
-- **`--dialog-bg`** / **`--dialog-text`**: the surface fill and text colour.
+**Scope the rule to a position (or a class).** A bare `a-dialog::part(dialog)`
+hits every dialog, drawers included, where a `width` override would collapse a
+bottom sheet off its full-bleed edge. Target the one you mean: a class for a
+specific dialog, `[position="right"]` for a drawer edge, `:not([position])` for
+the centered modal (`center` carries no `position` attribute).
 
 <Preview gap="8px">
-  <a-button tabindex="0" data-dialog-open="styled">Wider, softer dialog</a-button>
+  <a-button tabindex="0" data-dialog-open="styled">Wider, softer modal</a-button>
   <a-dialog name="styled" class="styled-dialog">
     <Title slot="header" level={4} style={{ margin: 0 }}>Custom surface</Title>
-    <Text>A wider modal with a bigger radius and a stronger overlay, all via tokens on the host.</Text>
+    <Text>A wider centred modal with a bigger radius and a stronger overlay, all via ::part.</Text>
     <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="styled">Done</a-button>
   </a-dialog>
   <style is:inline>{`
-    a-dialog.styled-dialog {
-      --dialog-width: 640px;
-      --dialog-radius: 20px;
-      --dialog-overlay: color-mix(in oklch, black 60%, transparent);
+    a-dialog.styled-dialog::part(dialog) {
+      width: 640px;
+      border-radius: 20px;
+      background: var(--bg-2);
+    }
+    a-dialog.styled-dialog::part(dialog)::backdrop {
+      background: color-mix(in oklch, black 60%, transparent);
     }
   `}</style>
 </Preview>
 
 ```css folded
-a-dialog.styled-dialog {
-  --dialog-width: 640px;
-  --dialog-radius: 20px;
-  --dialog-overlay: color-mix(in oklch, black 60%, transparent);
+/* one dialog, via a class — nothing else is touched */
+a-dialog.styled-dialog::part(dialog) {
+  width: 640px;
+  border-radius: 20px;
+  background: var(--bg-2);
+}
+a-dialog.styled-dialog::part(dialog)::backdrop {
+  background: color-mix(in oklch, black 60%, transparent);
 }
 ```
 
-For everything else, `<a-dialog>` exposes shadow **parts**: `::part(dialog)` (the
-surface), `::part(header)`, `::part(body)`, `::part(footer)`, and `::part(close)`
-(the close button's slot). Retarget any part to restyle it.
-
-The centered modal's max size is `100vw` / `100dvh` minus twice `--dialog-margin`.
-To cap it directly instead (independent of the margin), set `max-width` /
-`max-height` on `::part(dialog)`:
+More recipes. The centered modal's max size is the viewport minus a 32px edge
+gap; set `max-width` / `max-height` on the surface to change it. A drawer's
+thickness is the axis it slides along, so scope it to that edge and the cross
+axis stays full-bleed.
 
 ```css folded
-/* cap the modal directly, overriding the --dialog-margin clamp */
-a-dialog::part(dialog) { max-width: 90vw; max-height: 85dvh; }
+/* centered modal: size + the viewport edge gap (max-*) */
+a-dialog:not([position])::part(dialog) { width: 720px; max-width: 90vw; max-height: 85dvh; }
 
-/* the zone paddings share a rhythm — retarget to change them */
+/* a drawer's thickness — scoped to its edge */
+a-dialog[position="right"]::part(dialog)  { width: 480px; }
+a-dialog[position="bottom"]::part(dialog) { height: 60dvh; }
+
+/* zone padding, shadow, overlay (unscoped → every dialog) */
 a-dialog::part(header) { padding: 24px 24px 12px; font-size: 20px; }
-a-dialog::part(body)   { padding: 12px 24px; }
-a-dialog::part(footer) { justify-content: space-between; }  /* spread the actions */
+a-dialog::part(footer) { justify-content: space-between; }
+a-dialog::part(dialog) { box-shadow: 0 20px 60px color-mix(in oklch, black 30%, transparent); }
+a-dialog::part(dialog)::backdrop { background: color-mix(in oklch, black 50%, transparent); }
 ```
+
+If you override the surface, shadow, or overlay, add a `.dark` rule to match —
+the built-in defaults track light / dark, a fixed override won't.
 
 ### Corners
 
-`round` covers the common cases: `round={0}` for an unrounded modal (or set
-`--dialog-radius: 0`), `round="top"` for a bottom sheet's top edge, and
-`round="right"` for a left drawer's inner edge.
+`round` covers the common cases: `round={0}` for an unrounded modal, `round="top"`
+for a bottom sheet's top edge, and `round="right"` for a left drawer's inner edge.
 
 <Preview gap="8px">
   <a-button tabindex="0" data-dialog-open="corner-flat">Unrounded modal</a-button>

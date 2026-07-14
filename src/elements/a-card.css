@@ -1,0 +1,177 @@
+@layer anta {
+  /* Host + token definitions for <a-card>. The visible box lives here (not in the
+     shadow) so plain consumer CSS overrides it and it paints before the element
+     upgrades; the shadow <style> owns layout + region typography and only
+     REFERENCES these --card-* tokens with literal fallbacks. Named tones use
+     Anta's theme-aware role tokens, so dark mode is mostly free (same as
+     <a-expander> / <a-tag>); only the custom-tone branch needs a .dark re-tune. */
+
+  a-card {
+    /* Text roles: title = the strong foreground, text = the body (a step softer). */
+    --card-title: var(--text-1);
+    --card-text: var(--text-2);
+
+    /* Surface pairs per priority. `secondary` (default) is a subtle fill;
+       `primary` a stronger card; `tertiary` transparent (see below). */
+    --card-bg-secondary: var(--bg-2);
+    --card-border-secondary: var(--border-5);
+    --card-bg-primary: var(--bg-4);
+    --card-border-primary: var(--border-4);
+
+    --card-bg: var(--card-bg-secondary);
+    --card-border: var(--card-border-secondary);
+
+    /* Selected ring (a 2px inset stroke) — the tone's strongest border. */
+    --card-selected-ring: var(--border-1);
+
+    /* Closed-surface hover lift for link cards: an oklch lightness bump that keeps
+       hue + chroma, so it works for every priority and tone in light and dark
+       (a transparent tertiary surface keeps zero alpha). Tune the amount here. */
+    --card-bg-hover-lift: 0.01;
+
+    --card-radius: 10px;
+    --card-padding: 16px;
+    --card-gap: 8px;
+
+    display: block;
+    box-sizing: border-box;
+    /* Fill the container (grid cell / flex item / block) so width is always
+       definite. This is also what keeps `container-type` below from collapsing
+       the card to zero width in a shrink-to-fit context (a query container can't
+       size to its own content). Same as <a-expander>. */
+    width: 100%;
+    /* Establish the card as a query container so both the shadow layout and
+       consumer slotted content can `@container card (…)` on its width. */
+    container-type: inline-size;
+    container-name: card;
+
+    color: var(--card-text);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+    /* Clip full-bleed media to the rounded corners. */
+    overflow: clip;
+  }
+
+  a-card[priority="primary"] {
+    --card-bg: var(--card-bg-primary);
+    --card-border: var(--card-border-primary);
+  }
+  a-card[priority="tertiary"] {
+    --card-bg: transparent;
+    --card-border: transparent;
+  }
+
+  /* Hover lift, link cards only — gated so it doesn't stick after a tap. */
+  @media (hover: hover) and (pointer: fine) {
+    a-card[href]:not([loading]):hover {
+      background: oklch(from var(--card-bg) calc(l + var(--card-bg-hover-lift)) c h);
+    }
+  }
+
+  /* Pre-upgrade skeleton: the host border / background / radius already paint
+     (they're defined here, not in the shadow), so only the content inset is
+     missing before the shadow's .content exists — supply it here, then the
+     shadow owns padding once :defined. */
+  a-card:not(:defined) {
+    padding: var(--card-padding);
+  }
+
+  /* Named tones — re-point the text roles + the per-priority surface pairs to the
+     matching theme tokens (which self-flip for dark mode). */
+  a-card[tone="brand"] {
+    --card-title: var(--text-1-brand);
+    --card-text: var(--text-2-brand);
+    --card-bg-secondary: var(--bg-2-brand);
+    --card-border-secondary: var(--border-5-brand);
+    --card-bg-primary: var(--bg-4-brand);
+    --card-border-primary: var(--border-4-brand);
+    --card-selected-ring: var(--border-1-brand);
+  }
+  a-card[tone="info"] {
+    --card-title: var(--text-1-info);
+    --card-text: var(--text-2-info);
+    --card-bg-secondary: var(--bg-2-info);
+    --card-border-secondary: var(--border-5-info);
+    --card-bg-primary: var(--bg-4-info);
+    --card-border-primary: var(--border-4-info);
+    --card-selected-ring: var(--border-1-info);
+  }
+  a-card[tone="success"] {
+    --card-title: var(--text-1-success);
+    --card-text: var(--text-2-success);
+    --card-bg-secondary: var(--bg-2-success);
+    --card-border-secondary: var(--border-5-success);
+    --card-bg-primary: var(--bg-4-success);
+    --card-border-primary: var(--border-4-success);
+    --card-selected-ring: var(--border-1-success);
+  }
+  a-card[tone="warning"] {
+    --card-title: var(--text-1-warning);
+    --card-text: var(--text-2-warning);
+    --card-bg-secondary: var(--bg-2-warning);
+    --card-border-secondary: var(--border-5-warning);
+    --card-bg-primary: var(--bg-4-warning);
+    --card-border-primary: var(--border-4-warning);
+    --card-selected-ring: var(--border-1-warning);
+  }
+  a-card[tone="critical"] {
+    --card-title: var(--text-1-critical);
+    --card-text: var(--text-2-critical);
+    --card-bg-secondary: var(--bg-2-critical);
+    --card-border-secondary: var(--border-5-critical);
+    --card-bg-primary: var(--bg-4-critical);
+    --card-border-primary: var(--border-4-critical);
+    --card-selected-ring: var(--border-1-critical);
+  }
+
+  /* Custom tone — any non-named `tone` value keeps the source hue while
+     lightness/chroma are pinned per token in oklch, the <a-expander> mechanism.
+     The JSX wrapper writes --card-tone-source inline; the typed attr() fallback
+     picks up raw <a-card tone="…"> on engines that support it. */
+  a-card[tone]:not(
+      [tone="neutral"],
+      [tone="brand"],
+      [tone="info"],
+      [tone="success"],
+      [tone="warning"],
+      [tone="critical"]
+    ) {
+    --card-tone-source: attr(tone type(<color>), currentColor);
+
+    --card-text:               oklch(from var(--card-tone-source) 0.41 0.15 h);
+    --card-title:              oklch(from var(--card-tone-source) 0.33 0.15 h);
+    --card-bg-secondary:       oklch(from var(--card-tone-source) 0.99 0.006 h);
+    --card-border-secondary:   oklch(from var(--card-tone-source) 0.93 0.03 h);
+    --card-bg-primary:         oklch(from var(--card-tone-source) 0.955 0.02 h);
+    --card-border-primary:     oklch(from var(--card-tone-source) 0.895 0.045 h);
+    --card-selected-ring:      oklch(from var(--card-tone-source) 0.6 0.15 h);
+  }
+
+  .dark a-card[tone]:not(
+      [tone="neutral"],
+      [tone="brand"],
+      [tone="info"],
+      [tone="success"],
+      [tone="warning"],
+      [tone="critical"]
+    ) {
+    --card-text:               oklch(from var(--card-tone-source) 0.75 0.11 h);
+    --card-title:              oklch(from var(--card-tone-source) 0.82 0.10 h);
+    --card-bg-secondary:       oklch(from var(--card-tone-source) 0.13 0.02 h);
+    --card-border-secondary:   oklch(from var(--card-tone-source) 0.22 0.05 h);
+    --card-bg-primary:         oklch(from var(--card-tone-source) 0.19 0.04 h);
+    --card-border-primary:     oklch(from var(--card-tone-source) 0.26 0.07 h);
+    --card-selected-ring:      oklch(from var(--card-tone-source) 0.7 0.13 h);
+  }
+
+  /* Size — padding scale (medium is the default, set on the base rule). */
+  a-card[size="small"] {
+    --card-padding: 12px;
+    --card-gap: 6px;
+  }
+  a-card[size="large"] {
+    --card-padding: 20px;
+    --card-gap: 10px;
+  }
+}

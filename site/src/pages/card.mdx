@@ -1,0 +1,411 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Card
+---
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
+import cardDemoCode from './card.demo.ts'
+import { Card, Text, Title, Button, Icon, Tag } from '@antadesign/anta'
+
+# Card
+
+A surface container: a bordered, toned box that groups related content. The
+`Card` JSX wrapper renders an `<a-card>`, which lays out an optional full-bleed
+`media` region plus a `header` / body / `footer` stack. Pass `href` to turn the
+whole card into a link.
+
+`header`, body (`children`), and `footer` are respected as you pass them — the
+element supplies default typography, so a string reads as a title or body text
+with no extra markup. It shares the `tone` / `priority` / `size` vocabulary with
+the rest of Anta.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="Card"
+  layout="side"
+  panelHeight={400}
+  initialCode={cardDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; align-items: flex-start; justify-content: stretch; padding: 16px; }
+.preview > * { width: 100%; }`}
+/>
+
+</Disclosure>
+
+## Anatomy
+
+A card has four content zones, each optional — an empty zone reserves no space.
+`header` sits at the top with title typography, the body (`children`) below it
+with `<Text>`-style typography, `footer` at the bottom as a left-aligned row, and
+`actions` at the top-right of the header row. Pass a string and the element styles
+it; pass your own node (`<Title>`, `<Text>`, buttons) to take over.
+
+<Preview>
+  <a-card style={{ width: '360px' }}>
+    <span slot="header">Card title</span>
+    <Button slot="actions" size="small" priority="tertiary" icon="more" aria-label="More" />
+    <span>The body sits under the header with default text styling. Every zone is optional.</span>
+    <Button slot="footer" size="small" label="Action" />
+  </a-card>
+</Preview>
+
+{/* These docs render statically, so previews with a header/actions/footer use the
+    equivalent `<a-card>` element composition — a vnode passed as a prop (e.g.
+    `header={<…>}`, `footer={<…>}`) is dropped by Astro's static SSR. In your app the
+    `<Card>` JSX props in the folded code are the API. String props + children are fine. */}
+
+```tsx folded
+<Card
+  header="Card title"
+  actions={<Button size="small" priority="tertiary" icon="more" aria-label="More" />}
+  footer={<Button size="small" label="Action" />}
+>
+  The body sits under the header with default text styling. Every zone is optional.
+</Card>
+```
+
+## Priority
+
+`priority` sets the surface, reusing `Expander`'s vocabulary. `secondary` (the
+default) is a subtle filled box; `primary` is a more pronounced card; `tertiary`
+is transparent, for grouping without a visible container.
+
+<Preview direction="column" gap="8px">
+  <Card priority="primary" header="Primary">A more pronounced card (<code>--bg-4</code> + <code>--border-4</code>).</Card>
+  <Card header="Secondary (default)">A subtle fill (<code>--bg-2</code>) with a faint border (<code>--border-5</code>).</Card>
+  <Card priority="tertiary" header="Tertiary">Transparent — no background or border.</Card>
+</Preview>
+
+```tsx folded
+<Card priority="primary" header="Primary">…</Card>
+<Card header="Secondary (default)">…</Card>      {/* secondary is the default */}
+<Card priority="tertiary" header="Tertiary">…</Card>
+```
+
+## Tones
+
+A semantic `tone` tints the surface, border, and text. The set matches the rest of
+Anta: `neutral` (the default) plus `brand`, `info`, `success`, `warning`, and
+`critical`. Color comes from the theme tokens, so every tone tracks light and dark
+mode. A toned card is how you build a **banner** or **callout** — a filled card
+with an icon, a message, and an action:
+
+<Preview direction="column" gap="8px">
+  <a-card tone="info" priority="primary">
+    <span slot="header"><Icon shape="info" /> Heads up</span>
+    <span>Deploys are paused while the migration runs. They resume automatically when it finishes.</span>
+  </a-card>
+  <a-card tone="success" priority="primary">
+    <span slot="header"><Icon shape="circle-check" /> All checks passed</span>
+    <span>Your build is green across every configuration.</span>
+  </a-card>
+  <a-card tone="warning" priority="primary">
+    <span slot="header"><Icon shape="warning-triangle" /> Approaching quota</span>
+    <span>You've used 90% of this month's compute.</span>
+    <Button slot="footer" size="small" label="Upgrade plan" />
+  </a-card>
+  <a-card tone="critical" priority="primary">
+    <span slot="header"><Icon shape="warning-diamond" /> Deployment failed</span>
+    <span>The production rollout was halted after a failing health check.</span>
+    <Button slot="footer" size="small" label="View logs" />
+  </a-card>
+</Preview>
+
+```tsx folded
+<Card tone="info" priority="primary" header={<><Icon shape="info" /> Heads up</>}>…</Card>
+<Card tone="success" priority="primary" header={…}>…</Card>
+<Card tone="warning" priority="primary" header={…} footer={<Button size="small" label="Upgrade plan" />}>…</Card>
+<Card tone="critical" priority="primary" header={…} footer={<Button size="small" label="View logs" />}>…</Card>
+```
+
+`tone` also accepts **any literal CSS color** for a one-off tint — the hue is kept
+while lightness and chroma are pinned to the named-tone curve (and re-tuned for
+dark mode), the same mechanism as `Button` / `Expander` / `Tag`:
+
+<Preview direction="column" gap="8px">
+  <Card tone="#ff1493" priority="primary" header="Magenta">Custom hue, derived surface + text.</Card>
+  <Card tone="rebeccapurple" priority="primary" header="Purple">Custom hue, derived surface + text.</Card>
+  <Card tone="#0d9488" priority="primary" header="Teal">Custom hue, derived surface + text.</Card>
+</Preview>
+
+```tsx folded
+<Card tone="#ff1493" priority="primary" header="Magenta">…</Card>
+<Card tone="rebeccapurple" priority="primary" header="Purple">…</Card>
+<Card tone="#0d9488" priority="primary" header="Teal">…</Card>
+```
+
+## Size
+
+`size` scales the padding — `small`, `medium` (the default), `large`.
+
+<Preview direction="column" gap="8px">
+  <Card size="small" header="Small">Tighter padding.</Card>
+  <Card header="Medium (default)">The default padding.</Card>
+  <Card size="large" header="Large">Roomier padding.</Card>
+</Preview>
+
+```tsx folded
+<Card size="small" header="Small">…</Card>
+<Card header="Medium (default)">…</Card>      {/* medium is the default */}
+<Card size="large" header="Large">…</Card>
+```
+
+## Actions
+
+Pass `actions` to render controls at the top-right of the header row. They sit
+outside the header text, so a long title ellipsizes first and the actions keep
+their size. This is the same slot `Expander` uses.
+
+<Preview>
+  <a-card style={{ width: '340px' }}>
+    <span slot="header">Production database</span>
+    <Button slot="actions" size="small" priority="tertiary" icon="more" aria-label="More" />
+    <Text>Region us-east-1 · 4 vCPU · 16 GB</Text>
+  </a-card>
+</Preview>
+
+{/* These docs render statically, so the preview uses the equivalent element
+    composition — passing the `actions` vnode as a prop is dropped by Astro's
+    static SSR. In your app, the JSX `actions={…}` form below is the API. */}
+
+```tsx folded
+<Card
+  header="Production database"
+  actions={<Button size="small" priority="tertiary" icon="more" aria-label="More" />}
+>
+  <Text>Region us-east-1 · 4 vCPU · 16 GB</Text>
+</Card>
+```
+
+## Footer
+
+`footer` is a **left-aligned** row (it wraps under pressure) — the opposite of
+`Dialog`'s right-aligned footer, since a card reads as left-aligned content rather
+than a decision surface. Pass several buttons as a fragment.
+
+<Preview>
+  <a-card style={{ width: '340px' }}>
+    <span slot="header">Invite teammates</span>
+    <Text>They'll get access to this project and its test runs.</Text>
+    <Button slot="footer" priority="primary" size="small" label="Send invites" />
+    <Button slot="footer" size="small" label="Copy link" />
+  </a-card>
+</Preview>
+
+```tsx folded
+<Card
+  header="Invite teammates"
+  footer={<><Button priority="primary" size="small" label="Send invites" /><Button size="small" label="Copy link" /></>}
+>
+  <Text>They'll get access to this project and its test runs.</Text>
+</Card>
+```
+
+## Media
+
+Pass `media` for a full-bleed image or illustration — it escapes the card padding
+and clips to the corners. `mediaPosition` places it on the `top` (the default),
+`bottom`, `left`, or `right` edge.
+
+<Columns colGap="8px" rowGap="16px">
+<Col min={0}>
+
+**Top** (default)
+
+<Preview>
+  <a-card style={{ width: '260px' }}>
+    <div slot="media" style={{ height: '96px', background: 'linear-gradient(115deg, var(--bg-4-brand), var(--bg-5-info))' }} />
+    <span slot="header">Top media</span>
+    <Text>Full-bleed above the content.</Text>
+  </a-card>
+</Preview>
+
+</Col>
+<Col min={0}>
+
+**Left**
+
+<Preview>
+  <a-card media-position="left" style={{ width: '300px' }}>
+    <div slot="media" style={{ width: '80px', background: 'linear-gradient(160deg, var(--bg-4-success), var(--bg-5-warning))' }} />
+    <span slot="header">Left media</span>
+    <Text>Beside the content.</Text>
+  </a-card>
+</Preview>
+
+</Col>
+</Columns>
+
+```tsx folded
+<Card media={<img src="/hero.jpg" alt="" />} header="Top media">…</Card>          {/* top is the default */}
+<Card media={<img src="/hero.jpg" alt="" />} mediaPosition="left" header="Left media">…</Card>
+{/* mediaPosition also takes "bottom" and "right" */}
+```
+
+## Link card
+
+Give a card an `href` and the whole thing becomes a link — a single focusable
+anchor, keyboard-activatable, with the `hover` lift and inset focus ring. The
+accessible name comes from the header (falling back to the body, then the URL), so
+a screen reader announces one concise link instead of the whole card's text. A
+link card is display content: keep interactive controls (buttons, nested links)
+out of it — its text is non-selectable and the whole surface navigates.
+
+<Preview direction="column" gap="8px">
+  <a-card href="https://antithesis.com/docs/using_antithesis/ci/" target="_blank" rel="noopener">
+    <span slot="header"><Icon shape="book-open" /> CI integration guide</span>
+    <span>Wire Antithesis into your pipeline in a few minutes.</span>
+  </a-card>
+  <Card href="https://github.com/antithesishq/antithesis-skills" target="_blank" rel="noopener" priority="primary" tone="brand" header="Antithesis skills for agents">
+    Use AI to bootstrap your system into Antithesis and write test properties.
+  </Card>
+</Preview>
+
+```tsx folded
+<Card
+  href="/docs/ci"
+  header={<><Icon shape="book-open" /> CI integration guide</>}
+>
+  Wire Antithesis into your pipeline in a few minutes.
+</Card>
+```
+
+Set `target` / `rel` for a new-tab link (`target="_blank" rel="noopener"`), or
+`aria-label` to override the derived link name.
+
+## Selected
+
+`selected` draws an inset ring in the tone color — for choice cards, plan pickers,
+and selected list items.
+
+<Preview direction="row" gap="8px">
+  <Card selected tone="brand" priority="primary" header="Team plan" style={{ width: '200px' }}>
+    <Text>Selected — an inset ring in the tone color.</Text>
+  </Card>
+  <Card header="Free plan" style={{ width: '200px' }}>
+    <Text>Unselected.</Text>
+  </Card>
+</Preview>
+
+```tsx folded
+<Card selected tone="brand" priority="primary" header="Team plan">…</Card>
+<Card header="Free plan">…</Card>
+```
+
+## Loading
+
+`loading` dims the card with a skeleton pulse and sets `aria-busy`. On a link card
+it also blocks navigation until the load resolves.
+
+<Preview>
+  <Card loading header="Loading…" style={{ width: '320px' }}>
+    <Text>Content is being fetched.</Text>
+  </Card>
+</Preview>
+
+```tsx folded
+<Card loading header="Loading…">
+  <Text>Content is being fetched.</Text>
+</Card>
+```
+
+## Composing the element directly
+
+Without the JSX wrapper, `slot` is the wire format: put `slot="media"` /
+`slot="header"` / `slot="actions"` / `slot="footer"` on your own elements (several
+can share `slot="footer"`); anything unslotted becomes the body.
+
+<Preview>
+  <a-card href="#" style={{ width: '340px' }}>
+    <span slot="header">Hand-authored markup</span>
+    <a-text>Everything without a <code>slot</code> attribute is the body.</a-text>
+  </a-card>
+</Preview>
+
+```html
+<a-card href="/x">
+  <img slot="media" src="/hero.jpg" alt="" />
+  <span slot="header">Hand-authored markup</span>
+  <a-text>Everything without a slot attribute is the body.</a-text>
+  <!-- several elements can share slot="footer" -->
+  <a-button slot="footer">Save</a-button>
+</a-card>
+```
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Card" />
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+Reach for the props first: **`tone`** sets the color (any CSS color for a custom
+tone — it derives the surface in oklch), **`priority`** the fill, **`size`** the
+padding. The one custom-color knob worth keeping is **`--card-tone-source`** (the
+color a custom `tone` derives from — set it to drive the palette from your own
+variable). The corner radius is **`--card-radius`**.
+
+```tsx folded
+<Card tone="#e0457b" header="Custom" />
+```
+
+For everything else, `<a-card>` exposes shadow **parts** —
+`::part(container)` (the box / anchor), `::part(media)`, `::part(content)`,
+`::part(header)`, `::part(actions)`, `::part(body)`, `::part(footer)` — which you
+style directly.
+
+Each example keeps its CSS in a `<style>` **inside** its own preview, targeting a
+demo class on that preview's card — so the rule you read is literally in the
+preview's DOM, next to the element it styles. In your app, swap the demo class for
+your own selector.
+
+**Scroll a capped body.** The card never scrolls, and the body doesn't by default.
+When you cap the card's height and want the body to scroll instead of the card
+growing, that's one line on `::part(body)`:
+
+<Preview>
+  <a-card class="scrollable" style={{ width: '320px', height: '160px' }}>
+    <span slot="header">Release notes</span>
+    <a-text>Line one. Line two. Line three. Line four. Line five. Line six. Line seven. Line eight. Line nine. Line ten. Line eleven. Line twelve.</a-text>
+    <style is:inline>{`
+      a-card.scrollable::part(body) { overflow: auto; }
+    `}</style>
+  </a-card>
+</Preview>
+
+```css folded
+/* cap the card's height, then let the body scroll */
+a-card.scrollable { height: 160px; }
+a-card.scrollable::part(body) { overflow: auto; }
+```
+
+**Separate the header** with a divider by styling `::part(header)`:
+
+<Preview>
+  <a-card class="divided" style={{ width: '320px' }}>
+    <span slot="header">With a divider</span>
+    <a-text>A hairline under the header, drawn on the part.</a-text>
+    <style is:inline>{`
+      a-card.divided::part(header) {
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-5);
+      }
+    `}</style>
+  </a-card>
+</Preview>
+
+```css folded
+a-card.divided::part(header) {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-5);
+}
+```
+
+</Disclosure>

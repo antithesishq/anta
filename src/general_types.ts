@@ -1029,3 +1029,45 @@ export interface ATabpanelAttributes extends BaseAttributes {
    *  `internals.ariaLabelledByElements`. */
   role?: 'tabpanel'
 }
+
+/**
+ * Attributes for the `<a-card>` custom element — a surface container that lays out
+ * an optional `media` region plus a `header` / body / `footer` stack, and becomes a
+ * link when given `href`. Slots (light-DOM children): `media`, `header`, `actions`,
+ * `footer`, and the default slot for the body. The element exposes
+ * `::part(container | media | content | header | actions | body | footer)`. In link
+ * mode it names the shadow anchor from `aria-label` → header text → body text →
+ * `href`. Low-level attributes; for the typed JSX wrapper use `Card` from
+ * `@antadesign/anta`.
+ */
+export interface ACardAttributes extends BaseAttributes {
+  /** Semantic tone, or any literal CSS color for a one-off custom tone. Named tones
+   *  re-point the surface + text; a custom color keeps its hue with lightness/chroma
+   *  pinned. `'neutral'` is the default (same as omitting it). */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Surface emphasis. `secondary` (default) is a subtle fill; `primary` a stronger
+   *  card; `tertiary` transparent (no fill or border). */
+  priority?: 'primary' | 'secondary' | 'tertiary'
+  /** Size variant — scales the padding. `medium` is the default. */
+  size?: 'small' | 'medium' | 'large'
+  /** Which edge the full-bleed `media` slot sits on. `top` is the default. */
+  'media-position'?: 'top' | 'bottom' | 'left' | 'right'
+  /** Selected / chosen state — an inset ring in the tone colour. Presence-based
+   *  (`''` on, omit off). */
+  selected?: boolean | ''
+  /** Loading state — skeleton pulse, `aria-busy`, and (in link mode) navigation is
+   *  blocked (the anchor drops its `href`). Presence-based (`''` on, omit off). */
+  loading?: boolean | ''
+  /** Turn the whole card into a link — the shadow container becomes a focusable
+   *  anchor with this URL. */
+  href?: string
+  /** Anchor target (only with `href`). */
+  target?: string
+  /** Anchor rel (only with `href`). */
+  rel?: string
+  /** Space-separated URLs pinged on navigation (only with `href`). */
+  ping?: string
+  /** Explicit accessible name for the link — overrides the header → body → href
+   *  chain the element derives in link mode. */
+  'aria-label'?: string
+}

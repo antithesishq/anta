@@ -57,7 +57,7 @@ export const SYSTEMS: System[] = [
     name: 'Anta',
     anta: true,
     width: 'narrow',
-    version: '@antadesign/anta 0.3.3',
+    version: '@antadesign/anta 0.3.6',
     docs: 'https://anta.design',
     tagline:
       'Framework-agnostic web components with thin React/Preact wrappers, a tiny CSS-variable token set, and no style or animation runtime.',
@@ -478,7 +478,7 @@ export const CATEGORIES: Category[] = [
  */
 export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   anta: {
-    button: 'yes', textinput: 'yes', select: 'yes', choice: 'partial',
+    button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'partial',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes',
     accordion: 'yes', table: 'partial', tag: 'yes', progress: 'partial',
     icons: 'yes', typography: 'yes',

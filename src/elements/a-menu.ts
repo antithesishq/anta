@@ -19,6 +19,17 @@ const TYPEAHEAD_RESET = 500
  *  and never self-dismisses from the page nudge that opening can cause. */
 const ANCHOR_VISIBLE_RATIO = 0.5
 
+/** Triggers that turn Enter/Space into a click on their own — native
+ *  buttons/links, `[role=button]`, and `<a-button>`. The keyboard-open skips
+ *  them: their click already opens, so a second open would toggle shut. */
+const SELF_ACTIVATING =
+  'a-button, button, a[href], input[type="button"], input[type="submit"], input[type="reset"], [role="button"]'
+/** Text-entry triggers that aren't read-only: Enter/Space belong to the field
+ *  (typing / commit), so only the arrows open the menu — the native `<select>`
+ *  gesture. Read-only or non-field triggers open on Enter / Space / arrows alike. */
+const EDITABLE_FIELD =
+  'input:not([readonly]), textarea:not([readonly]), a-input:not([readonly]), a-input-time:not([readonly])'
+
 type Placement = 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'bottom' | 'top'
 
 /** `statechange` event detail (see STATEFUL-COMPONENTS.md). `next` is the
@@ -1356,6 +1367,13 @@ export class AMenuElement extends HTMLElementBase {
 
   /* ====================== trigger listener wiring ====================== */
 
+  /** Pointer coord for a keyboard-opened `coord` menu: the trigger's own rect
+   *  (a DOM read, not a mutation) instead of the 0,0 a keyboard event reports. */
+  #anchorCoord(anchor: HTMLElement): [number, number] {
+    const r = anchorRect(anchor)
+    return [r.left, r.bottom]
+  }
+
   setupListeners() {
     if (this.listening) return
     const anchor = this.triggerAnchor
@@ -1419,28 +1437,44 @@ export class AMenuElement extends HTMLElementBase {
       return
     } else {
       const onClick = (e: MouseEvent) => {
-        // detail === 0 ⇒ keyboard-synthesized click (Enter/Space on the
-        // trigger) ⇒ open and move focus to the first item.
+        // detail === 0 ⇒ a keyboard-synthesized click (a button / <a-button>
+        // turning Enter/Space into one) ⇒ open + focus the first item. Fields with
+        // no such click go through onKey below.
         const viaKeyboard = e.detail === 0
-        // A coord menu opens at the pointer — but a keyboard click reports
-        // clientX/clientY = 0, which would pin it to the top-left corner. Fall
-        // back to the trigger's own rect (a DOM read, not a mutation) so it
-        // opens at the focused trigger instead.
-        let coord: [number, number] | undefined
-        if (this.#isCoord) {
-          if (viaKeyboard) {
-            const r = anchorRect(anchor)
-            coord = [r.left, r.bottom]
-          } else {
-            coord = [e.clientX, e.clientY]
-          }
-        }
+        // A coord menu opens at the pointer; a keyboard click reports 0,0, so fall
+        // back to the trigger's rect.
+        const coord = this.#isCoord
+          ? viaKeyboard
+            ? this.#anchorCoord(anchor)
+            : ([e.clientX, e.clientY] as [number, number])
+          : undefined
         if (this._shown) this.requestClose(e)
         else this.requestOpen({ coord, viaKeyboard, originEvent: e })
       }
+      // Keyboard open for a field trigger (no click of its own). Lives here, not
+      // in the wrapper, so no wrapper synthesizes a click on the live node — which
+      // breaks under worker-thread DOM.
+      const onKey = (e: KeyboardEvent) => {
+        if (this._shown) return // open-only; while open the surface owns the keys
+        if (anchor.matches(SELF_ACTIVATING) || anchor.hasAttribute('disabled')) return
+        // Either arrow opens (the menu can flip above the trigger, and native
+        // <select> opens on both); Enter/Space also open a non-editable trigger,
+        // but stay with the text on an editable one.
+        const editable = anchor.matches(EDITABLE_FIELD)
+        const opens =
+          e.key === 'ArrowDown' ||
+          e.key === 'ArrowUp' ||
+          (!editable && (e.key === 'Enter' || e.key === ' '))
+        if (!opens) return
+        e.preventDefault()
+        const coord = this.#isCoord ? this.#anchorCoord(anchor) : undefined
+        this.requestOpen({ coord, viaKeyboard: true, originEvent: e })
+      }
       anchor.addEventListener('click', onClick)
+      anchor.addEventListener('keydown', onKey)
       this.teardown = () => {
         anchor.removeEventListener('click', onClick)
+        anchor.removeEventListener('keydown', onKey)
         this.listening = false
       }
     }

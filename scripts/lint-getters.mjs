@@ -33,6 +33,19 @@
  *                              allowlist lives here, not as a comment on the
  *                              component, and is the explicit reviewed opt-out.
  *
+ * SECOND RULE (JSX wrappers) — a wrapper under `src/components/*.tsx` must never
+ * call a method on a DOM element, including an `e.currentTarget` / `e.target`
+ * handle taken from an event (not just a held ref). The app DOM may reconcile in
+ * a worker thread, so that handle resolves to a serialized event snapshot, not a
+ * live node: *reading* a serialized property (`e.currentTarget.value`) is fine,
+ * but an imperative *method* call (`.click()`, `.focus()`, `.showPopover()`, …)
+ * has no live node to run against and throws. Push such coordination into the web
+ * component (which lives in the DOM), or express it declaratively via an
+ * attribute/signal (see Calendar's `focusSignal`). This walk flags any
+ * `<expr>.currentTarget.method(...)` / `<expr>.target.method(...)` call; property
+ * reads and assignments are left alone. See CLAUDE.md → "JSX wrappers never hold
+ * a ref".
+ *
  * Run: `node scripts/lint-getters.mjs` (wired as `pnpm run lint`). Exits 1 with
  * a report on any violation, 0 when clean.
  */
@@ -74,6 +87,16 @@ const READONLY_ALLOWLIST = {
   ADialogElement: ['open'],
 }
 
+/**
+ * Opt-outs for the wrapper DOM-method rule (see the SECOND RULE in the header):
+ * src-relative path → method names still tolerated on an event target there.
+ * Empty — the keyboard-open that used to synthesize a click on a read-only
+ * field's trigger (`e.currentTarget.click()` in Select / InputDate) now lives in
+ * `<a-menu>` (its anchor keydown listener), so no wrapper calls a DOM method. Add
+ * an entry only with a reviewed reason.
+ */
+const WRAPPER_DOM_CALL_ALLOWLIST = {}
+
 /** Every `.ts` file under `src` (element classes are always `.ts` by
  *  convention). `.d.ts` declares no runtime accessors, so it's skipped. */
 function collectTsFiles(dir) {
@@ -84,6 +107,30 @@ function collectTsFiles(dir) {
     else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')) out.push(p)
   }
   return out
+}
+
+/** Every `.tsx` file under `src` — the JSX wrappers (subject to the SECOND
+ *  RULE: no DOM-method calls on event targets). */
+function collectTsxFiles(dir) {
+  const out = []
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name)
+    if (entry.isDirectory()) out.push(...collectTsxFiles(p))
+    else if (entry.name.endsWith('.tsx')) out.push(p)
+  }
+  return out
+}
+
+/** See through parentheses / `as T` / `!` so `(e.currentTarget as El).click()`
+ *  and `e.currentTarget!.click()` are still recognized. */
+function unwrap(node) {
+  while (
+    ts.isParenthesizedExpression(node) ||
+    ts.isAsExpression(node) ||
+    ts.isNonNullExpression(node)
+  )
+    node = node.expression
+  return node
 }
 
 /** The names a class/interface declaration `extends`, or []. */
@@ -192,6 +239,7 @@ const line = (path, node) =>
 const elements = [...classes].filter(([name]) => isElement(name))
 const getterViolations = [] // rule 1: getter with no setter (a crash)
 const collisions = [] // rule 2: an attribute name clobbers a method/field
+const domCalls = [] // rule 3: a wrapper calls a method on an event target
 
 for (const [className, { path }] of elements) {
   const readonly = new Set(READONLY_ALLOWLIST[className] ?? [])
@@ -213,8 +261,46 @@ for (const [className, { path }] of elements) {
   }
 }
 
+// Rule 3 — a JSX wrapper invoking a method on an `e.currentTarget` / `e.target`
+// handle. Parse each wrapper as TSX and flag any `CallExpression` whose callee
+// is `<obj>.method` where `<obj>` (through parens / `as` / `!`) is a property
+// access ending in `.currentTarget` or `.target`. Property *reads*
+// (`e.currentTarget.value`) aren't calls, so they're untouched.
+for (const path of collectTsxFiles(SRC).sort()) {
+  const sf = ts.createSourceFile(
+    path,
+    readFileSync(path, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  )
+  const rel = relative(ROOT, path)
+  const allowed = new Set(WRAPPER_DOM_CALL_ALLOWLIST[rel] ?? [])
+  const visit = (node) => {
+    if (ts.isCallExpression(node)) {
+      const callee = unwrap(node.expression)
+      if (ts.isPropertyAccessExpression(callee)) {
+        const obj = unwrap(callee.expression)
+        if (
+          ts.isPropertyAccessExpression(obj) &&
+          (obj.name.text === 'currentTarget' || obj.name.text === 'target')
+        ) {
+          const method = callee.name.text
+          if (!allowed.has(method)) {
+            const ln = sf.getLineAndCharacterOfPosition(callee.name.getStart(sf)).line + 1
+            domCalls.push({ rel, line: ln, target: obj.name.text, method })
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, visit)
+  }
+  ts.forEachChild(sf, visit)
+}
+
 getterViolations.sort((a, b) => a.rel.localeCompare(b.rel) || a.line - b.line)
 collisions.sort((a, b) => a.rel.localeCompare(b.rel) || a.line - b.line)
+domCalls.sort((a, b) => a.rel.localeCompare(b.rel) || a.line - b.line)
 
 for (const v of getterViolations) {
   console.error(
@@ -230,14 +316,36 @@ for (const c of collisions) {
       `Rename the ${c.kind} to \`#${c.name}\` (true private) or rename the attribute.`,
   )
 }
-
-const total = getterViolations.length + collisions.length
-if (total) {
+for (const d of domCalls) {
   console.error(
-    `\n✗ ${total} React-19 property-assignment hazard${total === 1 ? '' : 's'}. ` +
-      `React 19 assigns custom-element props as properties (\`key in el\` → \`el[key] = value\`). ` +
-      `See CLAUDE.md → "React 19 property assignment".`,
+    `${d.rel}:${d.line}  \`e.${d.target}.${d.method}()\` calls a method on a DOM element in a JSX wrapper. ` +
+      `The app DOM may render in a worker, so \`e.${d.target}\` is a serialized event snapshot, not a live node — ` +
+      `an imperative call has nothing to run against. Move the coordination into the web component, or express ` +
+      `it declaratively via an attribute/signal (see Calendar's \`focusSignal\`). ` +
+      `See CLAUDE.md → "JSX wrappers never hold a ref".`,
   )
+}
+
+const propHazards = getterViolations.length + collisions.length
+const total = propHazards + domCalls.length
+if (total) {
+  if (propHazards) {
+    console.error(
+      `\n✗ ${propHazards} React-19 property-assignment hazard${propHazards === 1 ? '' : 's'}. ` +
+        `React 19 assigns custom-element props as properties (\`key in el\` → \`el[key] = value\`). ` +
+        `See CLAUDE.md → "React 19 property assignment".`,
+    )
+  }
+  if (domCalls.length) {
+    console.error(
+      `\n✗ ${domCalls.length} DOM-method call${domCalls.length === 1 ? '' : 's'} on an event target in a JSX wrapper. ` +
+        `Wrappers must not invoke element methods — the app DOM may live in a worker. ` +
+        `See CLAUDE.md → "JSX wrappers never hold a ref".`,
+    )
+  }
   process.exit(1)
 }
-console.log(`✓ React-19 property rules: ${elements.length} element classes clean.`)
+console.log(
+  `✓ React-19 property rules: ${elements.length} element classes clean. ` +
+    `Wrapper DOM-call rule: clean.`,
+)

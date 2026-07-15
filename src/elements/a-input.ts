@@ -66,6 +66,25 @@ const FORWARDED = [
 // Presence-based among the forwarded set (toggled, not value-copied).
 const BOOL_FORWARDED = new Set(['readonly', 'required'])
 
+// --- Keyboard-vs-pointer focus tracking (a hand-rolled `:focus-visible` for the
+// read-only field) ---
+// Chromium reports `:focus-visible` as true for a focused <input> even on a mouse
+// click, so CSS alone can't tell a read-only trigger's keyboard focus from a
+// pointer one. We track the last interaction ourselves — the same heuristic the
+// platform uses natively for buttons — and expose it via the off-DOM
+// `:state(kb-focus)` custom state, which the read-only focus-ring rule keys on.
+// Read-only iff `readonly` is present; editable fields ignore the state and ring
+// on plain `:focus` (you clicked in to type). One passive listener pair per
+// document (WeakSet-guarded), read-only — no DOM mutation.
+let focusFromKeyboard = false
+const modalityDocs = new WeakSet<Document>()
+function trackFocusModality(doc: Document) {
+  if (modalityDocs.has(doc)) return
+  modalityDocs.add(doc)
+  doc.addEventListener('keydown', () => { focusFromKeyboard = true }, true)
+  doc.addEventListener('pointerdown', () => { focusFromKeyboard = false }, true)
+}
+
 // Internal trigger the clear button dispatches (via a-button's
 // `data-custom-event`) when activated by click/Enter/Space — fired with no
 // framework hydration needed. The element converts it into the public clear
@@ -191,7 +210,8 @@ const SHADOW_STYLE = `
   @media (hover: hover) and (pointer: fine) {
     :host(:not(:disabled)) .field:hover { --_bc: var(--input-border-hover); }
   }
-  .field:has(input:focus, textarea:focus) {
+  :host(:not([readonly])) .field:has(input:focus, textarea:focus),
+  :host([readonly]:state(kb-focus)) .field {
     --_bc: var(--input-border-hover);
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
@@ -434,6 +454,7 @@ export class AInputElement extends HTMLElementBase {
   }
 
   connectedCallback() {
+    trackFocusModality(this.doc)
     // A `value` set as a property before the element upgraded shadows the
     // accessor as an own data property — re-apply it through the setter so the
     // initial controlled value isn't lost when the control is built.
@@ -503,6 +524,8 @@ export class AInputElement extends HTMLElementBase {
 
     next.addEventListener('input', this.onInput)
     next.addEventListener('change', this.onChange)
+    next.addEventListener('focus', this.onFocus)
+    next.addEventListener('blur', this.onBlur)
 
     if (refocus) {
       next.focus()
@@ -592,6 +615,20 @@ export class AInputElement extends HTMLElementBase {
 
   // `change` is not composed; re-emit one on the host so it escapes the shadow.
   private onChange = () => { this.dispatchEvent(new Event('change', { bubbles: true })) }
+
+  // Stamp the off-DOM `:state(kb-focus)` when this focus arrived via the keyboard
+  // (see `trackFocusModality`), so the read-only field's ring can draw for keyboard
+  // focus but not a mouse click — the one distinction Chromium's `:focus-visible`
+  // won't make for an <input>. Editable fields ignore the state (ring on `:focus`).
+  private onFocus = () => {
+    try {
+      if (focusFromKeyboard) this.internals?.states.add('kb-focus')
+      else this.internals?.states.delete('kb-focus')
+    } catch { /* CustomStateSet unsupported */ }
+  }
+  private onBlur = () => {
+    try { this.internals?.states.delete('kb-focus') } catch { /* CustomStateSet unsupported */ }
+  }
 
   private onLabelSlotChange = () => {
     this.labelBox.classList.toggle('has-label', this.labelSlot.assignedNodes().length > 0)

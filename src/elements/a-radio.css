@@ -29,7 +29,7 @@
     --radio-border-active: #9f99a1;
 
     /* Off-white dot, matching a-checkbox's checkmark glyph (was pure white). */
-    --radio-dot: #f1eff1;
+    --radio-dot: #f6f4f6;
     --radio-dot-disabled: #c1b9c1;
     --radio-bg-disabled: color-mix(in oklch, #44374b 10%, transparent);
     --radio-border-disabled: color-mix(in oklch, #44374b 10%, transparent);
@@ -373,7 +373,7 @@
     --radio-fill-hover: #534c57;
     --radio-fill-active: #635b65;
 
-    --radio-dot: #d4ced4;
+    --radio-dot: #ece9ec;
     --radio-dot-disabled: #534c57;
     --radio-bg-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
     --radio-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);

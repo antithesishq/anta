@@ -15,7 +15,7 @@
        bg-1 in light, bg-4 in dark (see the `.dark` neutral rule), and
        bg-4-{tone} for a toned card; `secondary` is a subtle fill (bg-2);
        `tertiary` is a frosted panel (the primary surface, semi-transparent, +
-       a backdrop blur — see below). secondary + primary carry a border-5 hairline. */
+       a backdrop blur — see below). */
     --card-bg-secondary: var(--bg-2);
     --card-border-secondary: var(--border-5);
     --card-bg-primary: var(--bg-1);
@@ -23,7 +23,10 @@
 
     /* `primary` is the default surface. */
     --card-bg: var(--card-bg-primary);
-    --card-border: var(--card-border-primary);
+    /* For now the edge hairline is flat across every priority + tone: text-1 at
+       10%. (The --card-border-* tokens above are unused while it's uniform — kept
+       for an easy revert to per-priority/-tone borders.) */
+    --card-border: color-mix(in oklch, var(--text-1) 10%, transparent);
 
     /* Selected ring (a 2px inset stroke) — the tone's strongest border. */
     --card-selected-ring: var(--border-1);
@@ -64,7 +67,6 @@
 
   a-card[priority="secondary"] {
     --card-bg: var(--card-bg-secondary);
-    --card-border: var(--card-border-secondary);
   }
   a-card[priority="tertiary"] {
     /* Frosted glass: the primary surface at 40% over a backdrop blur, so the card

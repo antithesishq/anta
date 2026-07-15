@@ -142,8 +142,12 @@ export const Dialog = ({
       onstatechange={
         onStateChange
           ? (e: StateChangeEvent) => {
-              const { event, detail } = nativeStateChange<StateChangeDetail>(e);
-              if (detail)
+              const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e);
+              // Ignore a `statechange` bubbled up from a control inside the dialog
+              // (a Checkbox, a consumer's own element): its detail speaks a different
+              // vocabulary and would read as a spurious close. Only the dialog's own
+              // open/closed request counts. See nativeStateChange / STATEFUL-COMPONENTS.md.
+              if (isOwn && detail)
                 onStateChange(event, {
                   next: detail.next === "open",
                   prev: detail.prev === "open",

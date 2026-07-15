@@ -178,13 +178,13 @@ export class ATabsElement extends HTMLElementBase {
   }
 
   /** Dispatch the shared cancelable `statechange`. `next`/`prev` are values
-   *  (`null` when nothing is selected). Returns false if a listener vetoed. */
+   *  (`null` when nothing is selected). Returns false if a listener vetoed.
+   *  Neither bubbles nor composed — a point-to-point request to this element's
+   *  own wrapper, not a notification (see STATEFUL-COMPONENTS.md). */
   private emitStateChange(next: string | null, prev: string | null): boolean {
     return this.dispatchEvent(
       new CustomEvent("statechange", {
         cancelable: true,
-        bubbles: true,
-        composed: true,
         detail: { next, prev },
       }),
     );

@@ -171,6 +171,7 @@ const SHADOW_STYLE = `
     gap: 8px;
     flex-wrap: wrap;
     justify-content: flex-start;
+    padding-block-start: var(--card-padding, 16px);
   }
 
   :host([selected]) .container { box-shadow: inset 0 0 0 2px var(--card-selected-ring, var(--focus-ring)); }

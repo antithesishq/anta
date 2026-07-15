@@ -82,9 +82,10 @@ import './a-card.css'
 //    layer showing the card surface) + 1px --focus-ring, all inside the box.
 //  • Region slots are display:none until filled (a slotchange toggles has-content —
 //    CSS can't express "slot has assigned nodes"), so empty zones reserve no box.
-//    The header slot / body slot / footer slot carry DEFAULT text styles (title /
-//    Text-equivalent / muted) so raw <a-card> looks right with zero JSX; a slotted
-//    <Title> / <Text> overrides them by setting its own font/colour.
+//    The header slot / body slot / footer slot carry DEFAULT text styles (the
+//    Title level-4 scale / Text-equivalent / muted) so raw <a-card> looks right
+//    with zero JSX; a slotted <Title> / <Text> overrides them by setting its own
+//    font/colour.
 const SHADOW_STYLE = `
   .container {
     display: flex;
@@ -138,9 +139,11 @@ const SHADOW_STYLE = `
     display: block;
     flex: 1 1 auto;
     min-width: 0;
-    font-size: 16px;
-    font-weight: 560;
-    line-height: 22px;
+    font-size: 17px;
+    line-height: 20px;
+    font-weight: 584.62;
+    letter-spacing: 0;
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
     color: var(--card-title, var(--text-1));
   }
 

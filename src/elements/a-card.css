@@ -99,6 +99,17 @@
     padding: var(--card-padding);
   }
 
+  /* A slotted heading — <a-title> (any level) or a raw <h1>–<h6> — carries its own
+     document top margin (Title level 4 is 20px); zero it inside a card so a heading
+     in the header (or anywhere) adds no leading gap. The bottom margin stays for
+     rhythm to the content below. Specificity is bumped past `a-title[level="N"]`
+     (0,1,1) and the reset's `hN` (0,0,1); `@layer anta` keeps it overridable by
+     un-layered consumer CSS. */
+  a-card :is(h1, h2, h3, h4, h5, h6),
+  a-card a-title[level] {
+    margin-block-start: 0;
+  }
+
   /* Named tones — re-point the text roles + the per-priority surface pairs to the
      matching theme tokens (which self-flip for dark mode). */
   a-card[tone="brand"] {

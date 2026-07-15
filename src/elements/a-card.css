@@ -67,13 +67,13 @@
     --card-border: var(--card-border-secondary);
   }
   a-card[priority="tertiary"] {
-    /* Frosted glass: the primary surface at 65% over a backdrop blur, so the card
-       reads over busy / colored / image backgrounds. The blur only shows where
-       there's detail behind it; the translucency reads everywhere. */
-    --card-bg: color-mix(in oklch, var(--card-bg-primary) 65%, transparent);
-    --card-border: transparent;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    /* Frosted glass: the primary surface at 40% over a backdrop blur, so the card
+       reads over busy / colored / image backgrounds. It keeps the same border-5
+       ring as the other priorities (no --card-border override). The blur only
+       shows where there's detail behind it; the translucency reads everywhere. */
+    --card-bg: color-mix(in oklch, var(--card-bg-primary) 40%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   /* Neutral dark: bg-1 (primary's light surface) is pure black in dark mode, so

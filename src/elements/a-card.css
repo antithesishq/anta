@@ -11,13 +11,14 @@
     --card-title: var(--text-1);
     --card-text: var(--text-2);
 
-    /* Surface pairs per priority. `secondary` (default) is a clean sheet
-       (bg-1 in light; bg-4 in dark, since pure-black bg-1 vanishes on a dark
-       page — see the `.dark` neutral rule); `primary` a step more filled;
-       `tertiary` transparent (see below). Both carry a border-5 hairline. */
-    --card-bg-secondary: var(--bg-1);
+    /* Surface pairs per priority. `secondary` (default) is a subtle fill (bg-2);
+       `primary` is a clean sheet — bg-1 in light, bg-4 in dark (see the `.dark`
+       neutral rule), and bg-4-{tone} for a toned card; `tertiary` is a frosted
+       panel (the primary surface, semi-transparent, + a backdrop blur — see
+       below). secondary + primary carry a border-5 hairline. */
+    --card-bg-secondary: var(--bg-2);
     --card-border-secondary: var(--border-5);
-    --card-bg-primary: var(--bg-4);
+    --card-bg-primary: var(--bg-1);
     --card-border-primary: var(--border-5);
 
     --card-bg: var(--card-bg-secondary);
@@ -60,18 +61,21 @@
     --card-border: var(--card-border-primary);
   }
   a-card[priority="tertiary"] {
-    --card-bg: transparent;
+    /* Frosted glass: the primary surface at 65% over a backdrop blur, so the card
+       reads over busy / colored / image backgrounds. The blur only shows where
+       there's detail behind it; the translucency reads everywhere. */
+    --card-bg: color-mix(in oklch, var(--card-bg-primary) 65%, transparent);
     --card-border: transparent;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
-  /* Neutral dark surfaces: bg-1 is pure black in dark mode, so a neutral card
-     would vanish on a dark page. Step both priorities up — secondary to bg-4,
-     primary to bg-5 (kept one above secondary). Scoped to neutral so it never
-     touches a toned card (whose --bg-*-{tone} tokens self-flip for dark). */
+  /* Neutral dark: bg-1 (primary's light surface) is pure black in dark mode, so
+     step neutral primary up to bg-4. Secondary stays bg-2 via its token, and a
+     toned card's --bg-*-{tone} tokens self-flip, so this is scoped to neutral. */
   .dark a-card:not([tone]),
   .dark a-card[tone="neutral"] {
-    --card-bg-secondary: var(--bg-4);
-    --card-bg-primary: var(--bg-5);
+    --card-bg-primary: var(--bg-4);
   }
 
   /* Hover lift, link cards only — gated so it doesn't stick after a tap. */

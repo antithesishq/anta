@@ -46,7 +46,7 @@ with `<Text>`-style typography, `footer` at the bottom as a left-aligned row, an
 `actions` at the top-right of the header row. Pass a string and the element styles
 it; pass your own node (`<Title>`, `<Text>`, buttons) to take over.
 
-<Preview background="var(--bg-2)">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))">
   <a-card style={{ width: '360px' }}>
     <span slot="header">Card title</span>
     <Button slot="actions" size="small" priority="tertiary" icon="more" aria-label="More" />
@@ -72,16 +72,19 @@ it; pass your own node (`<Title>`, `<Text>`, buttons) to take over.
 
 ## Priority
 
-`priority` sets the surface. `secondary` (the default) is a clean sheet —
-`bg-1` in light mode, `bg-4` in dark; `primary` is a step more filled (`bg-4`,
-`bg-5` in dark); `tertiary` is transparent, for grouping without a visible
-container. Both filled priorities carry a `border-5` hairline. (The previews
-below sit on a `bg-2` panel so the light secondary sheet reads against it.)
+`priority` sets the surface. `secondary` (the default) is a subtle fill
+(`bg-2`); `primary` is a clean sheet — `bg-1` in light mode, `bg-4` in dark
+(and `bg-4-{tone}` for a toned card); `tertiary` is a frosted panel: the
+`primary` surface made semi-transparent with a backdrop blur, so it reads over
+busy, colored, or image backgrounds (the blur shows where there's detail
+behind). `secondary` and `primary` carry a `border-5` hairline. (The previews
+sit on a tinted gradient so the surfaces — and the frosted `tertiary` — read
+against it.)
 
-<Preview background="var(--bg-2)" direction="column" gap="8px">
-  <Card priority="primary" header="Primary">A step more filled (<code>--bg-4</code>, <code>--bg-5</code> in dark).</Card>
-  <Card header="Secondary (default)">A clean sheet (<code>--bg-1</code> light, <code>--bg-4</code> dark) with a <code>--border-5</code> hairline.</Card>
-  <Card priority="tertiary" header="Tertiary">Transparent — no background or border.</Card>
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))" direction="column" gap="8px">
+  <Card priority="primary" header="Primary">A clean sheet (<code>--bg-1</code> light, <code>--bg-4</code> dark).</Card>
+  <Card header="Secondary (default)">A subtle fill (<code>--bg-2</code>).</Card>
+  <Card priority="tertiary" header="Tertiary">Frosted — the primary surface, semi-transparent, over a backdrop blur.</Card>
 </Preview>
 
 ```tsx folded
@@ -98,7 +101,7 @@ Anta: `neutral` (the default) plus `brand`, `info`, `success`, `warning`, and
 mode. A toned card is how you build a **banner** or **callout** — a filled card
 with an icon, a message, and an action:
 
-<Preview background="var(--bg-2)" direction="column" gap="8px">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))" direction="column" gap="8px">
   <a-card tone="info" priority="primary">
     <span slot="header"><Icon shape="info" /> Heads up</span>
     <span>Deploys are paused while the migration runs. They resume automatically when it finishes.</span>
@@ -130,7 +133,7 @@ with an icon, a message, and an action:
 while lightness and chroma are pinned to the named-tone curve (and re-tuned for
 dark mode), the same mechanism as `Button` / `Expander` / `Tag`:
 
-<Preview background="var(--bg-2)" direction="column" gap="8px">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))" direction="column" gap="8px">
   <Card tone="#ff1493" priority="primary" header="Magenta">Custom hue, derived surface + text.</Card>
   <Card tone="rebeccapurple" priority="primary" header="Purple">Custom hue, derived surface + text.</Card>
   <Card tone="#0d9488" priority="primary" header="Teal">Custom hue, derived surface + text.</Card>
@@ -146,7 +149,7 @@ dark mode), the same mechanism as `Button` / `Expander` / `Tag`:
 
 `size` scales the padding — `small`, `medium` (the default), `large`.
 
-<Preview background="var(--bg-2)" direction="column" gap="8px">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))" direction="column" gap="8px">
   <Card size="small" header="Small">Tighter padding.</Card>
   <Card header="Medium (default)">The default padding.</Card>
   <Card size="large" header="Large">Roomier padding.</Card>
@@ -164,7 +167,7 @@ Pass `actions` to render controls at the top-right of the header row. They sit
 outside the header text, so a long title ellipsizes first and the actions keep
 their size. This is the same slot `Expander` uses.
 
-<Preview background="var(--bg-2)">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))">
   <a-card style={{ width: '340px' }}>
     <span slot="header">Production database</span>
     <Button slot="actions" size="small" priority="tertiary" icon="more" aria-label="More" />
@@ -191,7 +194,7 @@ their size. This is the same slot `Expander` uses.
 `Dialog`'s right-aligned footer, since a card reads as left-aligned content rather
 than a decision surface. Pass several buttons as a fragment.
 
-<Preview background="var(--bg-2)">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))">
   <a-card style={{ width: '340px' }}>
     <span slot="header">Invite teammates</span>
     <Text>They'll get access to this project and its test runs.</Text>
@@ -220,7 +223,7 @@ and clips to the corners. `mediaPosition` places it on the `top` (the default),
 
 **Top** (default)
 
-<Preview background="var(--bg-2)">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))">
   <a-card style={{ width: '260px' }}>
     <div slot="media" style={{ height: '96px', background: 'linear-gradient(115deg, var(--bg-4-brand), var(--bg-5-info))' }} />
     <span slot="header">Top media</span>
@@ -233,7 +236,7 @@ and clips to the corners. `mediaPosition` places it on the `top` (the default),
 
 **Left**
 
-<Preview background="var(--bg-2)">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))">
   <a-card media-position="left" style={{ width: '300px' }}>
     <div slot="media" style={{ width: '80px', background: 'linear-gradient(160deg, var(--bg-4-success), var(--bg-5-warning))' }} />
     <span slot="header">Left media</span>
@@ -259,7 +262,7 @@ a screen reader announces one concise link instead of the whole card's text. A
 link card is display content: keep interactive controls (buttons, nested links)
 out of it — its text is non-selectable and the whole surface navigates.
 
-<Preview background="var(--bg-2)" direction="column" gap="8px">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))" direction="column" gap="8px">
   <a-card href="https://antithesis.com/docs/using_antithesis/ci/" target="_blank" rel="noopener">
     <span slot="header"><Icon shape="book-open" /> CI integration guide</span>
     <span>Wire Antithesis into your pipeline in a few minutes.</span>
@@ -286,7 +289,7 @@ Set `target` / `rel` for a new-tab link (`target="_blank" rel="noopener"`), or
 `selected` draws an inset ring in the tone color — for choice cards, plan pickers,
 and selected list items.
 
-<Preview background="var(--bg-2)" direction="row" gap="8px">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))" direction="row" gap="8px">
   <Card selected tone="brand" priority="primary" header="Team plan" style={{ width: '200px' }}>
     <Text>Selected — an inset ring in the tone color.</Text>
   </Card>
@@ -305,7 +308,7 @@ and selected list items.
 `loading` dims the card with a skeleton pulse and sets `aria-busy`. On a link card
 it also blocks navigation until the load resolves.
 
-<Preview background="var(--bg-2)">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))">
   <Card loading header="Loading…" style={{ width: '320px' }}>
     <Text>Content is being fetched.</Text>
   </Card>
@@ -323,7 +326,7 @@ Without the JSX wrapper, `slot` is the wire format: put `slot="media"` /
 `slot="header"` / `slot="actions"` / `slot="footer"` on your own elements (several
 can share `slot="footer"`); anything unslotted becomes the body.
 
-<Preview background="var(--bg-2)">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))">
   <a-card href="#" style={{ width: '340px' }}>
     <span slot="header">Hand-authored markup</span>
     <a-text>Everything without a <code>slot</code> attribute is the body.</a-text>
@@ -372,7 +375,7 @@ your own selector.
 When you cap the card's height and want the body to scroll instead of the card
 growing, that's one line on `::part(body)`:
 
-<Preview background="var(--bg-2)">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))">
   <a-card class="scrollable" style={{ width: '320px', height: '160px' }}>
     <span slot="header">Release notes</span>
     <a-text>Line one. Line two. Line three. Line four. Line five. Line six. Line seven. Line eight. Line nine. Line ten. Line eleven. Line twelve.</a-text>
@@ -390,7 +393,7 @@ a-card.scrollable::part(body) { overflow: auto; }
 
 **Separate the header** with a divider by styling `::part(header)`:
 
-<Preview background="var(--bg-2)">
+<Preview background="linear-gradient(135deg, var(--bg-5-brand), var(--bg-5-info))">
   <a-card class="divided" style={{ width: '320px' }}>
     <span slot="header">With a divider</span>
     <a-text>A hairline under the header, drawn on the part.</a-text>

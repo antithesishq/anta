@@ -34,7 +34,7 @@
        (a transparent tertiary surface keeps zero alpha). Tune the amount here. */
     --card-bg-hover-lift: 0.01;
 
-    --card-radius: 9px;
+    --card-radius: 8px;
     --card-padding: 16px;
 
     display: block;

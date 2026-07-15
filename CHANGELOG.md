@@ -6,6 +6,14 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
+## 0.3.7 — July 15, 2026
+
+### Fixed
+- **`Menu` opens from the keyboard via the element, not a synthesized click.** `<a-menu>` now binds a keydown on its trigger anchor and opens itself: either arrow (ArrowUp / ArrowDown) on any field trigger, plus Enter / Space on a read-only trigger like `Select` (on an editable one like `InputDate` those stay with the field for typing / commit). Button and link triggers are unchanged — their own Enter/Space click still opens. Removes the `Select` / `InputDate` wrappers reaching for the live trigger node to call `.click()`, which threw in runtimes that reconcile the DOM off the main thread; any custom-trigger menu now gets keyboard-open for free.
+
+### Changed
+- **Read-only `Input` draws its focus ring on keyboard focus only.** A `readOnly` field (a `Select` / `SelectFaceted` trigger) rings when focused by keyboard but not by a mouse click that opens its menu. `:focus-visible` can't express this — a browser reports it `true` for a focused `<input>` on mouse click too — so `Input` tracks the focus source itself (last interaction: pointer vs. key) and rings via an off-DOM `:state(kb-focus)`. Editable fields are unchanged (they ring on any focus — you clicked in to type).
+
 ## 0.3.6 — July 13, 2026
 
 ### Added

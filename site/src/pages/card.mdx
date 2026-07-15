@@ -79,12 +79,13 @@ it; pass your own node (`<Title>`, `<Text>`, buttons) to take over.
 
 A plain-string `header` is styled as a title (the `Title` level-4 scale) but adds
 no heading to the document outline. For real outline semantics, pass a `<Title>`
-(or an `<h2>`–`<h6>`) — the card zeroes its top margin so it still sits flush:
+(or an `<h2>`–`<h6>`) — the card normalizes its margins so it spaces exactly like
+a string header:
 
 <Preview background="var(--bg-2)">
   <a-card style={{ width: '360px' }}>
     <Title slot="header" level={4}>Heading semantics</Title>
-    <span>The header is a real <code>{'<Title>'}</code> — in the page outline, with its top margin zeroed so it sits flush.</span>
+    <span>The header is a real <code>{'<Title>'}</code> — in the page outline, spaced just like a string header.</span>
   </a-card>
 </Preview>
 

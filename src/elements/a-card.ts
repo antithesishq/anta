@@ -143,7 +143,6 @@ const SHADOW_STYLE = `
     font-weight: 584.62;
     letter-spacing: 0;
     font-feature-settings: 'ss02', 'ss05', 'tnum';
-    margin-block-end: 8px;
     color: var(--card-title, var(--text-1));
   }
 

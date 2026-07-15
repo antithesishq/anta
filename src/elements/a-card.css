@@ -107,15 +107,17 @@
     padding: var(--card-padding);
   }
 
-  /* A slotted heading — <a-title> (any level) or a raw <h1>–<h6> — carries its own
-     document margins (Title level 4 is 20px top / 8px bottom); zero both inside a
-     card so the card owns the spacing: the header slot adds the 8px gap below (see
-     its margin-block-end), and a string header and a <Title> header then space
-     identically. Specificity is bumped past `a-title[level="N"]` (0,1,1) and the
-     reset's `hN` (0,0,1); `@layer anta` keeps it overridable by un-layered CSS. */
+  /* A slotted heading node — <a-title> (any level) or a raw <h1>–<h6> — carries a
+     document TOP margin (Title level 4 is 20px) that would add a leading gap in the
+     header; zero it. The BOTTOM margin stays, so a heading header keeps its gap to
+     the body. (A plain-STRING header has no margin of its own, so the `<Card>`
+     wrapper wraps it in a div with the matching 8px bottom margin — CSS can't tell
+     a string from a styled node, so that split lives in the wrapper.) Specificity
+     is bumped past `a-title[level="N"]` (0,1,1) and the reset's `hN` (0,0,1);
+     `@layer anta` keeps it overridable by un-layered CSS. */
   a-card :is(h1, h2, h3, h4, h5, h6),
   a-card a-title[level] {
-    margin-block: 0;
+    margin-block-start: 0;
   }
 
   /* Named tones — re-point the text roles + the per-priority surface pairs to the

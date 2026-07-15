@@ -146,7 +146,24 @@ export const Card = ({
       {...rest}
     >
       {media != null && <div slot="media">{media}</div>}
-      {header != null && <div slot="header">{header}</div>}
+      {header != null && (
+        // A plain-string (or number) header imitates a `<Title>`: the element's
+        // header slot supplies the level-4 type scale, and this div adds the
+        // matching 8px bottom padding (inside the box — no margin-collapse). A
+        // *node* header brings its own margin (a slotted `<Title>` keeps its
+        // bottom margin; the element zeroes only the top), so it gets no wrapper
+        // padding — otherwise the gap would double.
+        <div
+          slot="header"
+          style={
+            typeof header === "string" || typeof header === "number"
+              ? { paddingBlockEnd: "8px" }
+              : undefined
+          }
+        >
+          {header}
+        </div>
+      )}
       {actions != null && (
         <span slot="actions" style={{ display: "contents" }}>
           {actions}

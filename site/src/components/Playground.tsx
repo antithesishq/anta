@@ -615,7 +615,24 @@ export default function Playground({ component, initialCode, initialCss = '', la
                 // re-apply them on top of the freshly reset source.
                 flushFormEdits.cancel()
                 pendingEditsRef.current.clear()
-                setCode(initialCode)
+                // Reset props + code to their initial values AND reload the
+                // preview from a clean slate: re-mount into a FRESH root rather
+                // than diffing in place, so any half-committed or errored render
+                // is fully cleared (the same recovery path a thrown render uses).
+                // `renderErroredRef` makes the next bundle push reset the root; if
+                // the code is already at its initial value the compile effect won't
+                // re-fire, so push the current bundle straight into a fresh root.
+                renderErroredRef.current = true
+                if (code === initialCode) {
+                  const bs = bundleState as (typeof bundleState & { code: string }) | null
+                  if (bs && (bs as any).ok && iframeRef.current && iframeReadyRef.current) {
+                    pushBundleToIframe(iframeRef.current, bs.code, true)
+                    renderErroredRef.current = false
+                    setRuntimeError(null)
+                  }
+                } else {
+                  setCode(initialCode)
+                }
               }}
             >
               <a-icon shape="rotate-ccw" size="14" />

@@ -12,6 +12,9 @@ export interface BaseProps {
   id?: string
   /** HTML `title` attribute — native browser tooltip on hover. */
   title?: string
+  /** Assigns the element to a named `<slot>` of a parent web component (e.g.
+   *  `slot="header"` inside a `<Card>`, `slot="footer"` inside a `<Dialog>`). */
+  slot?: string
   /** Tab order. Set to `-1` to skip the element when tabbing. */
   tabIndex?: number
   /** React/Preact reconciliation key when rendered inside a list. Consumed by the
@@ -1033,9 +1036,9 @@ export interface ATabpanelAttributes extends BaseAttributes {
 /**
  * Attributes for the `<a-card>` custom element — a surface container that lays out
  * an optional `media` region plus a `header` / body / `footer` stack, and becomes a
- * link when given `href`. Slots (light-DOM children): `media`, `header`, `actions`,
- * `footer`, and the default slot for the body. The element exposes
- * `::part(container | media | content | header | actions | body | footer)`. In link
+ * link when given `href`. Slots (light-DOM children): `media`, `header`, `footer`,
+ * and the default slot for the body. The element exposes
+ * `::part(container | media | content | header | body | footer)`. In link
  * mode it names the shadow anchor from `aria-label` → header text → body text →
  * `href`. Low-level attributes; for the typed JSX wrapper use `Card` from
  * `@antadesign/anta`.

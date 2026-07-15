@@ -1,25 +1,29 @@
 import type { BaseProps } from "../general_types"
-import { toneStyle, roundStyle } from "../anta_helpers"
+import { NAMED_TONES, toneStyle, roundStyle } from "../anta_helpers"
+import { Title } from "./Title"
+import { Text } from "./Text"
 
 export interface CardProps extends BaseProps {
-  /** Header content, rendered in the top zone with the default title
-   *  typography. A string is respected as-is; pass a `<Title>` (or `<h2>`–`<h6>`)
-   *  for real heading semantics in the document outline. Omit for no header. */
+  /** Header content, in the top zone. A string is wrapped in a `<Title level={4}>`
+   *  — a real heading in the document outline, tinted to match a named `tone`.
+   *  Pass your own node (`<Title level={2}>`, an `<h2>`) for a different level or
+   *  styling. Omit for no header. */
   header?: React.ReactNode
+  /** A secondary line under the header title, rendered as smaller text
+   *  (`<Text size="small">`) in the heading section. Tinted to match a named
+   *  `tone`, like the title. Omit for no subtitle. */
+  subtitle?: React.ReactNode
   /** Footer content, usually action buttons. Rendered as a **left-aligned** row
    *  (wraps under pressure) — the opposite of `Dialog`'s right-aligned footer. */
   footer?: React.ReactNode
-  /** Controls rendered at the top-right of the header row, OUTSIDE the header
-   *  (e.g. a "more" button, a tag) — the same slot as `Expander`'s `actions`. */
-  actions?: React.ReactNode
   /** Media (image, illustration) rendered full-bleed to the card edge, clipped to
    *  its corners. Position it with `mediaPosition`. */
   media?: React.ReactNode
   /** Which edge the `media` bleeds to.
    *  @defaultValue 'top' */
   mediaPosition?: "top" | "bottom" | "left" | "right"
-  /** The card body. A string renders with the default `<Text>`-like typography;
-   *  scopes the color hierarchy for any nested content. */
+  /** The card body. A string is wrapped in a `<Text>` (tinted to match a named
+   *  `tone`); pass your own nodes to take over. */
   children?: React.ReactNode
   /** Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for
    *  a one-off custom tone. Named tones re-point the surface + text; a custom
@@ -70,11 +74,13 @@ export interface CardProps extends BaseProps {
  * region plus a `header` / body / `footer` stack. Pass `href` to turn the whole
  * card into a link.
  *
- * Renders an `<a-card>` web component. A pure, stateless pass-through — the
- * element owns layout, the link, and the accessible name — so the wrapper only
- * maps props to attributes and projects content into the `media` / `header` /
- * `actions` / body / `footer` slots. Header / body / footer are respected as
- * passed; the element supplies their default typography.
+ * Renders an `<a-card>` web component. A stateless projection — the element owns
+ * layout, the link, and the accessible name, and stylizes only its own surface
+ * (never its children's typography). The wrapper maps props to attributes,
+ * projects content into the `media` / `header` / body / `footer` sections, and
+ * supplies typography for the two text zones by wrapping a string `header` in
+ * `<Title>` and a string body in `<Text>`. There is no actions slot — lay out any
+ * header controls (buttons, tags) inside the `header` yourself.
  *
  * Requires `@antadesign/anta/elements` to be imported (client-side only) to
  * register the underlying custom element.
@@ -95,8 +101,8 @@ export interface CardProps extends BaseProps {
  */
 export const Card = ({
   header,
+  subtitle,
   footer,
-  actions,
   media,
   mediaPosition,
   tone,
@@ -123,6 +129,16 @@ export const Card = ({
     toneStyle(toneAttr, "--card-tone-source", style),
   )
 
+  // The element stylizes only its own surface, never its children, so the wrapper
+  // supplies the header/body typography by wrapping a string in <Title> / <Text>.
+  // For a named tone it forwards the tone so those tint (Title defaults to text-1,
+  // Text to text-2 — the old header/body colours); a custom CSS-colour tone can't
+  // go to Title/Text (their `tone` is a named union), so that text stays neutral.
+  const namedTone =
+    toneAttr && NAMED_TONES.has(toneAttr)
+      ? (toneAttr as "neutral" | "brand" | "info" | "success" | "warning" | "critical")
+      : undefined
+
   return (
     <a-card
       tone={toneAttr}
@@ -146,30 +162,31 @@ export const Card = ({
       {...rest}
     >
       {media != null && <div slot="media">{media}</div>}
-      {header != null && (
-        // A plain-string (or number) header imitates a `<Title>`: the element's
-        // header slot supplies the level-4 type scale, and this div adds the
-        // matching 8px bottom padding (inside the box — no margin-collapse). A
-        // *node* header brings its own margin (a slotted `<Title>` keeps its
-        // bottom margin; the element zeroes only the top), so it gets no wrapper
-        // padding — otherwise the gap would double.
-        <div
-          slot="header"
-          style={
-            typeof header === "string" || typeof header === "number"
-              ? { paddingBlockEnd: "8px" }
-              : undefined
-          }
-        >
-          {header}
-        </div>
+      {header != null &&
+        (typeof header === "string" || typeof header === "number" ? (
+          // A string header becomes a real <Title> (level 4 — the card-header
+          // scale). The header section's padding is the header→body gap; the
+          // element zeroes the slotted title's own margins so it doesn't double it.
+          // Pass a node (a `<Title level={n}>`, an `<h2>`) for a different level.
+          <Title slot="header" level={4} tone={namedTone}>
+            {header}
+          </Title>
+        ) : (
+          <div slot="header">{header}</div>
+        ))}
+      {subtitle != null && (
+        // A subtitle sits in the header section too, right under the title, as
+        // smaller text. Last header child, so its (absent) bottom margin leaves
+        // the header→body gap to the section padding, like the title above it.
+        <Text slot="header" size="small" tone={namedTone}>
+          {subtitle}
+        </Text>
       )}
-      {actions != null && (
-        <span slot="actions" style={{ display: "contents" }}>
-          {actions}
-        </span>
+      {typeof children === "string" || typeof children === "number" ? (
+        <Text tone={namedTone}>{children}</Text>
+      ) : (
+        children
       )}
-      {children}
       {footer != null && (
         <span slot="footer" style={{ display: "contents" }}>
           {footer}

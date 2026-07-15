@@ -309,16 +309,9 @@ function controlFor(p: any, root?: any): PropEntry | null {
     )
   }
   // `round` is polymorphic (`boolean | number | string` — a toggle OR a custom
-  // radius), so its union would otherwise resolve to a number input (it contains
-  // a `number` intrinsic, like `Text`'s `truncate`). In the playground we only
-  // expose the binary toggle; the custom-length form is a code/docs feature, not
-  // an interactive control. Force a boolean control here.
-  if (name === 'round') {
-    return wrap(
-      { kind: 'boolean', name, description },
-      { name, kind: 'boolean' },
-    )
-  }
+  // radius in px). Its union carries a `number` intrinsic, so it falls through to
+  // the number-input branch below (like `Text`'s `truncate`): the panel drives the
+  // custom radius; bare `round` (fully-round) stays a code/docs feature.
 
   // `intrinsic` types: string / number / boolean.
   if (t.type === 'intrinsic') {

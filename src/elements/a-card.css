@@ -7,8 +7,9 @@
      <a-expander> / <a-tag>); only the custom-tone branch needs a .dark re-tune. */
 
   a-card {
-    /* Text roles: title = the strong foreground, text = the body (a step softer). */
-    --card-title: var(--text-1);
+    /* The card's own foreground default. Slotted content inherits it, but the card
+       never sets typography on its children — a title/body gets its style from the
+       nested <a-title> / <a-text> (or the regular inherited style for bare text). */
     --card-text: var(--text-2);
 
     /* Surface pairs per priority. `primary` (the default) is a clean sheet —
@@ -35,10 +36,13 @@
     --card-bg-hover-lift: 0.01;
 
     --card-radius: 8px;
-    --card-padding: 16px;
+    --card-padding: 12px;
 
     display: block;
     box-sizing: border-box;
+    /* Positioned so a consumer can absolutely-position content inside the card
+       (a badge, a corner action) against the card box. */
+    position: relative;
     /* Fill the container (grid cell / flex item / block) so width is always
        definite. This is also what keeps `container-type` below from collapsing
        the card to zero width in a shrink-to-fit context (a query container can't
@@ -100,30 +104,65 @@
   }
 
   /* Pre-upgrade skeleton: the host border / background / radius already paint
-     (they're defined here, not in the shadow), so only the content inset is
-     missing before the shadow's .content exists — supply it here, then the
-     shadow owns padding once :defined. */
+     (they're defined here, not in the shadow), but the shadow's section layout
+     doesn't exist yet, so the light-DOM children render in document order with no
+     slotting. The host padding insets the text content, and the media breaks out to
+     full-bleed (negative margins to the border box, + a bottom gap = the header's
+     top padding) — so it matches the upgraded layout and doesn't flash from inset to
+     full-bleed on :defined. The shadow owns everything once defined. */
   a-card:not(:defined) {
     padding: var(--card-padding);
   }
+  a-card:not(:defined) > [slot="media"] {
+    display: block;
+    margin: calc(-1 * var(--card-padding)) calc(-1 * var(--card-padding)) var(--card-padding);
+  }
+
+  /* Section presence + gap rhythm. This lives HERE (the external, document-scope
+     sheet), not in the shadow <style>, because both rules key off the host's
+     light-DOM children and a shadow stylesheet's :host(:has(…)) does not match on
+     those — but a-card:has(…)::part(…) from the document does. The shadow gives each
+     section its intrinsic padding (--card-padding all round); these rules hide the
+     empty ones and collapse the body's shared edges. */
+
+  /* Hide a section with no content (:has needs an ELEMENT child — a string header /
+     body becomes <a-title> / <a-text> via the wrapper; bare text isn't detected). */
+  a-card:not(:has(> [slot="media"]))::part(media),
+  a-card:not(:has(> [slot="header"]))::part(header),
+  a-card:not(:has(> [slot="footer"]))::part(footer),
+  a-card:not(:has(> :not([slot])))::part(body) {
+    display: none;
+  }
+
+  /* Body owns only the edges a neighbour left open: a present header owns the
+     header→body gap (so drop the body's top padding), a present footer owns the
+     body→footer gap (drop the body's bottom padding). Every gap stays one
+     --card-padding, never doubled. */
+  a-card:has(> [slot="header"])::part(body) { padding-block-start: 0; }
+  a-card:has(> [slot="footer"])::part(body) { padding-block-end: 0; }
 
   /* A slotted heading node — <a-title> (any level) or a raw <h1>–<h6> — carries a
-     document TOP margin (Title level 4 is 20px) that would add a leading gap in the
-     header; zero it. The BOTTOM margin stays, so a heading header keeps its gap to
-     the body. (A plain-STRING header has no margin of its own, so the `<Card>`
-     wrapper wraps it in a div with the matching 8px bottom margin — CSS can't tell
-     a string from a styled node, so that split lives in the wrapper.) Specificity
-     is bumped past `a-title[level="N"]` (0,1,1) and the reset's `hN` (0,0,1);
-     `@layer anta` keeps it overridable by un-layered CSS. */
+     document TOP margin (Title level 4 is 20px) that would add a leading gap in any
+     section; zero it. Specificity is bumped past `a-title[level="N"]` (0,1,1) and
+     the reset's `hN` (0,0,1); `@layer anta` keeps it overridable by un-layered CSS. */
   a-card :is(h1, h2, h3, h4, h5, h6),
   a-card a-title[level] {
     margin-block-start: 0;
   }
 
+  /* In the HEADER, also zero the trailing margin: the header section's padding is
+     the sole header→body gap, so the heading's own bottom margin would double it.
+     Scoped to the direct header child (the wrapper's auto <a-title slot="header">,
+     or a hand-authored heading with slot="header"), so a heading inside the body
+     keeps its normal rhythm. */
+  a-card > :is(h1, h2, h3, h4, h5, h6)[slot="header"],
+  a-card > a-title[slot="header"] {
+    margin-block-end: 0;
+  }
+
   /* Named tones — re-point the text roles + the per-priority surface pairs to the
      matching theme tokens (which self-flip for dark mode). */
   a-card[tone="brand"] {
-    --card-title: var(--text-1-brand);
     --card-text: var(--text-2-brand);
     --card-bg-secondary: var(--bg-2-brand);
     --card-bg-primary: var(--bg-4-brand);
@@ -131,7 +170,6 @@
     --card-selected-ring: var(--border-1-brand);
   }
   a-card[tone="info"] {
-    --card-title: var(--text-1-info);
     --card-text: var(--text-2-info);
     --card-bg-secondary: var(--bg-2-info);
     --card-bg-primary: var(--bg-4-info);
@@ -139,7 +177,6 @@
     --card-selected-ring: var(--border-1-info);
   }
   a-card[tone="success"] {
-    --card-title: var(--text-1-success);
     --card-text: var(--text-2-success);
     --card-bg-secondary: var(--bg-2-success);
     --card-bg-primary: var(--bg-4-success);
@@ -147,7 +184,6 @@
     --card-selected-ring: var(--border-1-success);
   }
   a-card[tone="warning"] {
-    --card-title: var(--text-1-warning);
     --card-text: var(--text-2-warning);
     --card-bg-secondary: var(--bg-2-warning);
     --card-bg-primary: var(--bg-4-warning);
@@ -155,7 +191,6 @@
     --card-selected-ring: var(--border-1-warning);
   }
   a-card[tone="critical"] {
-    --card-title: var(--text-1-critical);
     --card-text: var(--text-2-critical);
     --card-bg-secondary: var(--bg-2-critical);
     --card-bg-primary: var(--bg-4-critical);
@@ -178,7 +213,6 @@
     --card-tone-source: attr(tone type(<color>), currentColor);
 
     --card-text:               oklch(from var(--card-tone-source) 0.41 0.15 h);
-    --card-title:              oklch(from var(--card-tone-source) 0.33 0.15 h);
     --card-bg-secondary:       oklch(from var(--card-tone-source) 0.99 0.006 h);
     --card-bg-primary:         oklch(from var(--card-tone-source) 0.955 0.02 h);
     --card-border:             oklch(from var(--card-tone-source) 0.895 0.045 h);
@@ -194,18 +228,17 @@
       [tone="critical"]
     ) {
     --card-text:               oklch(from var(--card-tone-source) 0.75 0.11 h);
-    --card-title:              oklch(from var(--card-tone-source) 0.82 0.10 h);
     --card-bg-secondary:       oklch(from var(--card-tone-source) 0.13 0.02 h);
     --card-bg-primary:         oklch(from var(--card-tone-source) 0.19 0.04 h);
     --card-border:             oklch(from var(--card-tone-source) 0.26 0.07 h);
     --card-selected-ring:      oklch(from var(--card-tone-source) 0.7 0.13 h);
   }
 
-  /* Size — padding scale (medium is the default, set on the base rule). */
+  /* Size — padding scale (medium = 12px is the default, set on the base rule). */
   a-card[size="small"] {
-    --card-padding: 12px;
+    --card-padding: 8px;
   }
   a-card[size="large"] {
-    --card-padding: 20px;
+    --card-padding: 16px;
   }
 }

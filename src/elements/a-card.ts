@@ -11,22 +11,28 @@ import './a-card.css'
  *
  *   <a-card href="/x">
  *     <img slot="media" …>                 ← full-bleed, padding-exempt
- *     <span slot="header">Title</span>      ← default title typography
- *     <a-button slot="actions" …>           ← top-right, siblings of the header
- *     …body… (the default slot)             ← default <Text>-like typography
+ *     <a-title slot="header">Title</a-title> ← nest a-title for the heading style
+ *     …body… (the default slot)             ← nest a-text for body typography
  *     <span slot="footer"><a-button>…</a-button></span>  ← LEFT-aligned action row
  *   </a-card>
+ *
+ * a-card stylizes only its own surface (box, border, radius, layout) — never the
+ * typography of slotted content, which renders at its regular inherited style
+ * unless it's an <a-title> / <a-text> that brings its own. The <Card> JSX wrapper
+ * does that wrapping for a string header / body.
  *
  * Shadow structure — every node carries a `part` so consumers can reach it:
  *
  *   <a part="container">                    ← the box; a live link only with href
- *     <slot name="media" part="media">      ← display:none until filled
- *     <div part="content">                  ← the padded region (media bleeds outside it)
- *       <div class="header-row">            ← display:none until header/actions fill
- *         <slot name="header" part="header">
- *         <slot name="actions" part="actions">
- *       <slot part="body">                  ← the default slot IS the body box
- *       <slot name="footer" part="footer">  ← display:none until filled
+ *     <slot name="media" part="media">      ← full-bleed; display:none until filled
+ *     <div part="content">                  ← unpadded flex-column group (media sits beside it)
+ *       <slot name="header" part="header">  ← padded section; display:none until filled
+ *       <slot part="body">                  ← the default slot; padded body section
+ *       <slot name="footer" part="footer">  ← padded section; display:none until filled
+ *
+ * header / body / footer are independent padded sections sharing --card-padding
+ * (see the SHADOW_STYLE rationale). There is no actions slot — lay out any header
+ * controls (buttons, tags) inside the header itself.
  *
  * ## Link mode
  *
@@ -56,11 +62,11 @@ import './a-card.css'
  *
  * ## Declarative-DOM safety
  *
- * Nothing on the *host* is mutated from JS. The element only writes shadow-internal
- * nodes (the anchor's `href` / ARIA, the `has-content` classes) and reads the host
- * attributes + slotted text — all reads / shadow writes, never a host or light-DOM
- * mutation. Host attributes (`tone`, `priority`, `size`, `media-position`,
- * `selected`) are pure CSS hooks matched via `:host([…])`.
+ * Nothing on the *host* is mutated from JS. The element only writes the shadow
+ * anchor (its `href` / ARIA) and reads the host attributes + slotted text — all
+ * reads / shadow writes, never a host or light-DOM mutation. Empty-section hiding
+ * is pure CSS (`:host(:has(…))`), no JS. Host attributes (`tone`, `priority`,
+ * `size`, `media-position`, `selected`) are pure CSS hooks matched via `:host([…])`.
  */
 
 // Shadow styles, injected verbatim into every <a-card> shadow root — kept
@@ -78,14 +84,33 @@ import './a-card.css'
 //    column-reverse (bottom) / row (left) / row-reverse (right). The container has
 //    exactly two flex children (media slot + .content), so a reverse just swaps
 //    them; an empty media slot is display:none and drops out.
+//  • .content is an UNPADDED flex-column group holding the header / body / footer
+//    sections — it exists only so media can sit beside the whole stack (the two
+//    container children above). The padding lives on each SECTION, not here.
 //  • Focus is an INSET indicator: 1px border (host) + 1px gap (a transparent inset
 //    layer showing the card surface) + 1px --focus-ring, all inside the box.
-//  • Region slots are display:none until filled (a slotchange toggles has-content —
-//    CSS can't express "slot has assigned nodes"), so empty zones reserve no box.
-//    The header slot / body slot / footer slot carry DEFAULT text styles (the
-//    Title level-4 scale / Text-equivalent / muted) so raw <a-card> looks right
-//    with zero JSX; a slotted <Title> / <Text> overrides them by setting its own
-//    font/colour.
+//  • header / body / footer are independent padded SECTIONS, each `padding:
+//    var(--card-padding)` here (their intrinsic layout). Empty-section HIDING and
+//    the body-edge COLLAPSE can't live here: they key off the host's light-DOM
+//    children, and a shadow stylesheet's :host(:has(…)) does NOT match on those
+//    (engine limitation), so they live in the EXTERNAL sheet as
+//    a-card:not(:has(> [slot="…"]))::part(…) / a-card:has(…)::part(body). See
+//    a-card.css. (:has matches an ELEMENT child, so a body must be an element — the
+//    <Card> wrapper wraps a string body in <a-text>; bare text isn't detected.)
+//  • Padding ownership (enforced by those external collapse rules): a present
+//    header owns its padding — top = the card's top inset (--card-padding), bottom
+//    = the header→body gap, deliberately HALF (--card-padding / 2) so the title
+//    sits closer to its body; a present footer owns its full padding (bottom = the
+//    card's bottom inset, top = the gap from the body); the BODY only fills the
+//    edges a neighbour left open (drops top under a header, bottom above a footer).
+//    So no gap ever doubles. Media is full-bleed, not a section.
+//  • There is no actions slot: a caller lays out anything (buttons, tags) inside
+//    the header itself.
+//  • The sections carry LAYOUT only (box + padding), never typography — a-card
+//    stylizes only its own surface, so slotted text renders at its regular
+//    inherited style. Typography comes from the nested component: the <Card>
+//    wrapper wraps a string header in <Title> and a string body in <Text>, and a
+//    raw <a-card> author slots their own <a-title> / <a-text>.
 const SHADOW_STYLE = `
   .container {
     display: flex;
@@ -112,10 +137,9 @@ const SHADOW_STYLE = `
     box-shadow: inset 0 0 0 1px transparent, inset 0 0 0 2px var(--focus-ring);
   }
 
-  [part="media"] { display: none; }
-  [part="media"].has-content { display: block; }
-  :host([media-position="left"]) [part="media"].has-content,
-  :host([media-position="right"]) [part="media"].has-content { flex: none; }
+  [part="media"] { display: block; }
+  :host([media-position="left"]) [part="media"],
+  :host([media-position="right"]) [part="media"] { flex: none; }
 
   .content {
     display: flex;
@@ -123,55 +147,28 @@ const SHADOW_STYLE = `
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
-    padding: var(--card-padding, 16px);
   }
 
-  .header-row { display: none; }
-  .header-row.has-content {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  slot[name="header"] { display: none; }
-  slot[name="header"].has-content {
+  slot[name="header"] {
     display: block;
-    flex: 1 1 auto;
     min-width: 0;
-    font-size: 17px;
-    line-height: 20px;
-    font-weight: 584.62;
-    letter-spacing: 0;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    color: var(--card-title, var(--text-1));
+    padding: var(--card-padding, 12px);
+    padding-block-end: calc(var(--card-padding, 12px) / 2);
   }
-
-  slot[name="actions"] { display: none; }
-  slot[name="actions"].has-content {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex: none;
-  }
-
   slot[part="body"] {
     display: block;
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
-    font-size: 15px;
-    line-height: 20px;
-    color: var(--card-text, var(--text-2));
+    padding: var(--card-padding, 12px);
   }
-
-  slot[name="footer"] { display: none; }
-  slot[name="footer"].has-content {
+  slot[name="footer"] {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
     justify-content: flex-start;
-    padding-block-start: var(--card-padding, 16px);
+    padding: var(--card-padding, 12px);
   }
 
   :host([selected]) .container { box-shadow: inset 0 0 0 2px var(--card-selected-ring, var(--focus-ring)); }
@@ -188,12 +185,8 @@ export class ACardElement extends HTMLElementBase {
   static observedAttributes = ['href', 'target', 'rel', 'ping', 'loading', 'aria-label']
 
   #container: HTMLAnchorElement
-  #mediaSlot: HTMLSlotElement
-  #headerRow: HTMLDivElement
   #headerSlot: HTMLSlotElement
-  #actionsSlot: HTMLSlotElement
   #bodySlot: HTMLSlotElement
-  #footerSlot: HTMLSlotElement
 
   constructor() {
     super()
@@ -207,54 +200,38 @@ export class ACardElement extends HTMLElementBase {
     this.#container.className = 'container'
     this.#container.setAttribute('part', 'container')
 
-    this.#mediaSlot = document.createElement('slot')
-    this.#mediaSlot.name = 'media'
-    this.#mediaSlot.setAttribute('part', 'media')
+    const mediaSlot = document.createElement('slot')
+    mediaSlot.name = 'media'
+    mediaSlot.setAttribute('part', 'media')
 
     const content = document.createElement('div')
     content.className = 'content'
     content.setAttribute('part', 'content')
 
-    this.#headerRow = document.createElement('div')
-    this.#headerRow.className = 'header-row'
-
     this.#headerSlot = document.createElement('slot')
     this.#headerSlot.name = 'header'
     this.#headerSlot.setAttribute('part', 'header')
 
-    this.#actionsSlot = document.createElement('slot')
-    this.#actionsSlot.name = 'actions'
-    this.#actionsSlot.setAttribute('part', 'actions')
-
-    // The default (unnamed) slot IS the body box (slot-is-the-box).
+    // The default (unnamed) slot IS the body section (slot-is-the-box).
     this.#bodySlot = document.createElement('slot')
     this.#bodySlot.setAttribute('part', 'body')
 
-    this.#footerSlot = document.createElement('slot')
-    this.#footerSlot.name = 'footer'
-    this.#footerSlot.setAttribute('part', 'footer')
+    const footerSlot = document.createElement('slot')
+    footerSlot.name = 'footer'
+    footerSlot.setAttribute('part', 'footer')
 
-    this.#headerRow.append(this.#headerSlot, this.#actionsSlot)
-    content.append(this.#headerRow, this.#bodySlot, this.#footerSlot)
-    this.#container.append(this.#mediaSlot, content)
+    content.append(this.#headerSlot, this.#bodySlot, footerSlot)
+    this.#container.append(mediaSlot, content)
     shadow.append(style, this.#container)
 
-    // CSS can't express "slot has assigned nodes", so an empty zone is
-    // display:none'd via a shadow-internal class toggled on slotchange. The
-    // header row also hides when BOTH header and actions are empty. Header / body
-    // text feed the link's accessible name, so re-derive it when they change.
-    this.#mediaSlot.addEventListener('slotchange', () => this.#syncHasContent())
-    this.#footerSlot.addEventListener('slotchange', () => this.#syncHasContent())
-    this.#actionsSlot.addEventListener('slotchange', () => this.#syncHasContent())
-    this.#headerSlot.addEventListener('slotchange', () => {
-      this.#syncHasContent()
-      this.#syncName()
-    })
+    // Empty sections hide themselves in pure CSS (:host(:has(…)), see SHADOW_STYLE).
+    // The only slot JS left: header / body text feed the link's accessible name, so
+    // re-derive it when either changes.
+    this.#headerSlot.addEventListener('slotchange', () => this.#syncName())
     this.#bodySlot.addEventListener('slotchange', () => this.#syncName())
   }
 
   connectedCallback() {
-    this.#syncHasContent()
     this.#syncLink()
   }
 
@@ -262,18 +239,6 @@ export class ACardElement extends HTMLElementBase {
     // Every observed attribute (href / target / rel / download / ping / loading /
     // aria-label) feeds the link + its name — a single cheap re-sync covers all.
     this.#syncLink()
-  }
-
-  /** Toggle the per-zone `has-content` classes (empty zones reserve no box). */
-  #syncHasContent() {
-    const set = (el: HTMLElement, has: boolean) => el.classList.toggle('has-content', has)
-    set(this.#mediaSlot, this.#mediaSlot.assignedNodes().length > 0)
-    set(this.#footerSlot, this.#footerSlot.assignedNodes().length > 0)
-    const header = this.#headerSlot.assignedNodes().length > 0
-    const actions = this.#actionsSlot.assignedNodes().length > 0
-    set(this.#headerSlot, header)
-    set(this.#actionsSlot, actions)
-    set(this.#headerRow, header || actions)
   }
 
   /** Mirror the link attributes onto the shadow anchor — but drop `href` while

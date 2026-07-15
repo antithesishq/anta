@@ -17,16 +17,13 @@
        `tertiary` is a frosted panel (the primary surface, semi-transparent, +
        a backdrop blur — see below). */
     --card-bg-secondary: var(--bg-2);
-    --card-border-secondary: var(--border-5);
     --card-bg-primary: var(--bg-1);
-    --card-border-primary: var(--border-5);
 
     /* `primary` is the default surface. */
     --card-bg: var(--card-bg-primary);
-    /* The edge hairline is text-2 at 10%, taken from --card-text so it varies by
-       tone (text-2-{tone}, or the custom-tone text) automatically. Flat across
-       priorities. (The --card-border-* / per-tone tokens above are unused — kept
-       for an easy revert to per-priority borders.) */
+    /* Neutral edge hairline: text-2 at 10% (via --card-text). Toned cards override
+       this with their border-4-{tone} in the tone rules below. Flat across
+       priorities. */
     --card-border: color-mix(in oklch, var(--card-text) 10%, transparent);
 
     /* Selected ring (a 2px inset stroke) — the tone's strongest border. */
@@ -70,13 +67,13 @@
     --card-bg: var(--card-bg-secondary);
   }
   a-card[priority="tertiary"] {
-    /* Frosted glass: the primary surface at 25% over a backdrop blur, so the card
+    /* Frosted glass: the primary surface at 5% over a backdrop blur, so the card
        reads over busy / colored / image backgrounds. It keeps the same hairline
        ring as the other priorities (no --card-border override). The blur only
        shows where there's detail behind it; the translucency reads everywhere. */
-    --card-bg: color-mix(in oklch, var(--card-bg-primary) 25%, transparent);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    --card-bg: color-mix(in oklch, var(--card-bg-primary) 5%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   /* Neutral dark: bg-1 (primary's light surface) is pure black in dark mode, so
@@ -108,45 +105,40 @@
     --card-title: var(--text-1-brand);
     --card-text: var(--text-2-brand);
     --card-bg-secondary: var(--bg-2-brand);
-    --card-border-secondary: var(--border-5-brand);
     --card-bg-primary: var(--bg-4-brand);
-    --card-border-primary: var(--border-5-brand);
+    --card-border: var(--border-4-brand);
     --card-selected-ring: var(--border-1-brand);
   }
   a-card[tone="info"] {
     --card-title: var(--text-1-info);
     --card-text: var(--text-2-info);
     --card-bg-secondary: var(--bg-2-info);
-    --card-border-secondary: var(--border-5-info);
     --card-bg-primary: var(--bg-4-info);
-    --card-border-primary: var(--border-5-info);
+    --card-border: var(--border-4-info);
     --card-selected-ring: var(--border-1-info);
   }
   a-card[tone="success"] {
     --card-title: var(--text-1-success);
     --card-text: var(--text-2-success);
     --card-bg-secondary: var(--bg-2-success);
-    --card-border-secondary: var(--border-5-success);
     --card-bg-primary: var(--bg-4-success);
-    --card-border-primary: var(--border-5-success);
+    --card-border: var(--border-4-success);
     --card-selected-ring: var(--border-1-success);
   }
   a-card[tone="warning"] {
     --card-title: var(--text-1-warning);
     --card-text: var(--text-2-warning);
     --card-bg-secondary: var(--bg-2-warning);
-    --card-border-secondary: var(--border-5-warning);
     --card-bg-primary: var(--bg-4-warning);
-    --card-border-primary: var(--border-5-warning);
+    --card-border: var(--border-4-warning);
     --card-selected-ring: var(--border-1-warning);
   }
   a-card[tone="critical"] {
     --card-title: var(--text-1-critical);
     --card-text: var(--text-2-critical);
     --card-bg-secondary: var(--bg-2-critical);
-    --card-border-secondary: var(--border-5-critical);
     --card-bg-primary: var(--bg-4-critical);
-    --card-border-primary: var(--border-5-critical);
+    --card-border: var(--border-4-critical);
     --card-selected-ring: var(--border-1-critical);
   }
 
@@ -167,9 +159,8 @@
     --card-text:               oklch(from var(--card-tone-source) 0.41 0.15 h);
     --card-title:              oklch(from var(--card-tone-source) 0.33 0.15 h);
     --card-bg-secondary:       oklch(from var(--card-tone-source) 0.99 0.006 h);
-    --card-border-secondary:   oklch(from var(--card-tone-source) 0.93 0.03 h);
     --card-bg-primary:         oklch(from var(--card-tone-source) 0.955 0.02 h);
-    --card-border-primary:     oklch(from var(--card-tone-source) 0.93 0.03 h);
+    --card-border:             oklch(from var(--card-tone-source) 0.895 0.045 h);
     --card-selected-ring:      oklch(from var(--card-tone-source) 0.6 0.15 h);
   }
 
@@ -184,9 +175,8 @@
     --card-text:               oklch(from var(--card-tone-source) 0.75 0.11 h);
     --card-title:              oklch(from var(--card-tone-source) 0.82 0.10 h);
     --card-bg-secondary:       oklch(from var(--card-tone-source) 0.13 0.02 h);
-    --card-border-secondary:   oklch(from var(--card-tone-source) 0.22 0.05 h);
     --card-bg-primary:         oklch(from var(--card-tone-source) 0.19 0.04 h);
-    --card-border-primary:     oklch(from var(--card-tone-source) 0.22 0.05 h);
+    --card-border:             oklch(from var(--card-tone-source) 0.26 0.07 h);
     --card-selected-ring:      oklch(from var(--card-tone-source) 0.7 0.13 h);
   }
 

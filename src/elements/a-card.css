@@ -36,7 +36,6 @@
 
     --card-radius: 9px;
     --card-padding: 16px;
-    --card-gap: 8px;
 
     display: block;
     box-sizing: border-box;
@@ -65,6 +64,15 @@
 
   a-card[priority="secondary"] {
     --card-bg: var(--card-bg-secondary);
+  }
+
+  /* `round` re-points --card-radius, so both the host clip-radius and the shadow
+     container's ring follow. Bare `round` → 999px (fully round, clamped to the
+     box); a length (`round="16px"`, or the wrapper's `round={16}` → inline
+     --card-round) sets a custom radius. The typed attr() covers raw-HTML authors. */
+  a-card[round] {
+    --card-round: attr(round type(<length>));
+    --card-radius: var(--card-round, 999px);
   }
   a-card[priority="tertiary"] {
     /* Frosted glass: the primary surface at 1% over a backdrop blur, so the card
@@ -194,10 +202,8 @@
   /* Size — padding scale (medium is the default, set on the base rule). */
   a-card[size="small"] {
     --card-padding: 12px;
-    --card-gap: 6px;
   }
   a-card[size="large"] {
     --card-padding: 20px;
-    --card-gap: 10px;
   }
 }

@@ -1058,6 +1058,9 @@ export interface ACardAttributes extends BaseAttributes {
   /** Loading state — skeleton pulse, `aria-busy`, and (in link mode) navigation is
    *  blocked (the anchor drops its `href`). Presence-based (`''` on, omit off). */
   loading?: boolean | ''
+  /** Fully-round corners (`border-radius: 999px`), or a custom radius via a length
+   *  value (`round="16px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
   /** Turn the whole card into a link — the shadow container becomes a focusable
    *  anchor with this URL. */
   href?: string

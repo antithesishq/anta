@@ -184,6 +184,22 @@ dark mode), the same mechanism as `Button` / `Expander` / `Tag`:
 <Card size="large" header="Large">…</Card>
 ```
 
+## Round
+
+`round` softens the corners. A `number` (px) or CSS length sets a custom radius —
+the usual choice for a card; bare `round` goes fully round (`999px`, clamped to
+the box). Omit it for the default (`--card-radius`, 9px).
+
+<Preview background="var(--bg-2)" direction="column" gap="8px">
+  <Card round={16} header="Custom radius">A 16px corner radius via <code>round={'{16}'}</code>.</Card>
+  <Card round header="Fully round">Bare <code>round</code> — clamped to the box.</Card>
+</Preview>
+
+```tsx folded
+<Card round={16} header="Custom radius">…</Card>
+<Card round header="Fully round">…</Card>
+```
+
 ## Actions
 
 Pass `actions` to render controls at the top-right of the header row. They sit

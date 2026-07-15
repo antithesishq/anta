@@ -123,7 +123,6 @@ const SHADOW_STYLE = `
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
-    gap: var(--card-gap, 8px);
     padding: var(--card-padding, 16px);
   }
 

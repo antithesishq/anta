@@ -1,5 +1,5 @@
 import type { BaseProps } from "../general_types"
-import { toneStyle } from "../anta_helpers"
+import { toneStyle, roundStyle } from "../anta_helpers"
 
 export interface CardProps extends BaseProps {
   /** Header content, rendered in the top zone with the default title
@@ -48,6 +48,10 @@ export interface CardProps extends BaseProps {
   /** Loading state — dims the card with a skeleton pulse, sets `aria-busy`, and (in
    *  link mode) blocks navigation. */
   loading?: boolean
+  /** Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a
+   *  `number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit for
+   *  the default `--card-radius`. */
+  round?: boolean | number | string
   /** Turn the whole card into a link. The card renders a focusable anchor and its
    *  accessible name comes from `header` → body → this URL (override with
    *  `aria-label`). A link card is display content — don't nest interactive
@@ -100,6 +104,7 @@ export const Card = ({
   size,
   selected,
   loading,
+  round,
   href,
   target,
   rel,
@@ -112,7 +117,11 @@ export const Card = ({
   // Empty string is "no tone" — same as omitting it. A non-named tone is a literal
   // CSS color fed to the element's oklch derivation via the inline custom property.
   const toneAttr = tone || undefined
-  const computedStyle = toneStyle(toneAttr, "--card-tone-source", style)
+  const computedStyle = roundStyle(
+    round,
+    "--card-round",
+    toneStyle(toneAttr, "--card-tone-source", style),
+  )
 
   return (
     <a-card
@@ -126,6 +135,7 @@ export const Card = ({
       // Boolean attrs: presence form (`''` on, omit off) — matched by presence in CSS.
       selected={selected ? "" : undefined}
       loading={loading ? "" : undefined}
+      round={round ? "" : undefined}
       href={href}
       // Anchor extras only mean anything alongside href.
       target={href ? target : undefined}

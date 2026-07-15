@@ -70,11 +70,11 @@
     --card-bg: var(--card-bg-secondary);
   }
   a-card[priority="tertiary"] {
-    /* Frosted glass: the primary surface at 40% over a backdrop blur, so the card
-       reads over busy / colored / image backgrounds. It keeps the same border-5
+    /* Frosted glass: the primary surface at 25% over a backdrop blur, so the card
+       reads over busy / colored / image backgrounds. It keeps the same hairline
        ring as the other priorities (no --card-border override). The blur only
        shows where there's detail behind it; the translucency reads everywhere. */
-    --card-bg: color-mix(in oklch, var(--card-bg-primary) 40%, transparent);
+    --card-bg: color-mix(in oklch, var(--card-bg-primary) 25%, transparent);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }

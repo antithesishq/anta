@@ -96,7 +96,7 @@ const SHADOW_STYLE = `
     color: inherit;
     text-decoration: none;
     cursor: default;
-    border-radius: var(--card-radius, 10px);
+    border-radius: var(--card-radius, 9px);
     -webkit-user-drag: none;
   }
   :host([media-position="bottom"]) .container { flex-direction: column-reverse; }

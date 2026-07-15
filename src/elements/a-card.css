@@ -23,10 +23,11 @@
 
     /* `primary` is the default surface. */
     --card-bg: var(--card-bg-primary);
-    /* For now the edge hairline is flat across every priority + tone: text-1 at
-       10%. (The --card-border-* tokens above are unused while it's uniform — kept
-       for an easy revert to per-priority/-tone borders.) */
-    --card-border: color-mix(in oklch, var(--text-1) 10%, transparent);
+    /* The edge hairline is text-2 at 10%, taken from --card-text so it varies by
+       tone (text-2-{tone}, or the custom-tone text) automatically. Flat across
+       priorities. (The --card-border-* / per-tone tokens above are unused — kept
+       for an easy revert to per-priority borders.) */
+    --card-border: color-mix(in oklch, var(--card-text) 10%, transparent);
 
     /* Selected ring (a 2px inset stroke) — the tone's strongest border. */
     --card-selected-ring: var(--border-1);

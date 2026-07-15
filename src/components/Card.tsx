@@ -34,9 +34,10 @@ export interface CardProps extends BaseProps {
     | "warning"
     | "critical"
     | (string & {})
-  /** Surface emphasis. `secondary` (the default) is a subtle filled box; `primary`
-   *  is a more pronounced card; `tertiary` is transparent (no fill or border).
-   *  @defaultValue 'secondary' */
+  /** Surface emphasis. `primary` (the default) is a clean sheet; `secondary` is a
+   *  subtle fill; `tertiary` is a frosted, semi-transparent panel with a backdrop
+   *  blur.
+   *  @defaultValue 'primary' */
   priority?: "primary" | "secondary" | "tertiary"
   /** Size variant — scales the padding.
    *  @defaultValue 'medium' */
@@ -117,7 +118,7 @@ export const Card = ({
     <a-card
       tone={toneAttr}
       // 'secondary' / 'medium' / 'top' are the implicit defaults — emit no attr.
-      priority={priority && priority !== "secondary" ? priority : undefined}
+      priority={priority && priority !== "primary" ? priority : undefined}
       size={size && size !== "medium" ? size : undefined}
       media-position={
         mediaPosition && mediaPosition !== "top" ? mediaPosition : undefined

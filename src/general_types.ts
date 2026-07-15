@@ -1045,8 +1045,8 @@ export interface ACardAttributes extends BaseAttributes {
    *  re-point the surface + text; a custom color keeps its hue with lightness/chroma
    *  pinned. `'neutral'` is the default (same as omitting it). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Surface emphasis. `secondary` (default) is a subtle fill; `primary` a stronger
-   *  card; `tertiary` transparent (no fill or border). */
+  /** Surface emphasis. `primary` (default) is a clean sheet; `secondary` a subtle
+   *  fill; `tertiary` a frosted, semi-transparent panel with a backdrop blur. */
   priority?: 'primary' | 'secondary' | 'tertiary'
   /** Size variant — scales the padding. `medium` is the default. */
   size?: 'small' | 'medium' | 'large'

@@ -32,7 +32,14 @@ the rest of Anta.
   panelHeight={400}
   initialCode={cardDemoCode}
   initialCss={`html, body { height: 100%; }
-.preview { min-height: 100%; align-items: flex-start; justify-content: stretch; padding: 16px; }
+.preview {
+  --pattern: color-mix(in srgb, var(--text-5), transparent 90%);
+  background:
+    repeating-linear-gradient(45deg, var(--pattern) 0px, var(--pattern) 2px, transparent 2px, transparent 40px),
+    repeating-linear-gradient(135deg, var(--pattern) 0px, var(--pattern) 2px, transparent 2px, transparent 40px),
+    transparent;
+  min-height: 100%; align-items: flex-start; justify-content: stretch; padding: 16px;
+}
 .preview > * { width: 100%; }`}
 />
 
@@ -72,22 +79,22 @@ it; pass your own node (`<Title>`, `<Text>`, buttons) to take over.
 
 ## Priority
 
-`priority` sets the surface. `secondary` (the default) is a subtle fill
-(`bg-2`); `primary` is a clean sheet — `bg-1` in light mode, `bg-4` in dark
-(and `bg-4-{tone}` for a toned card); `tertiary` is a frosted panel: the
-`primary` surface made semi-transparent with a backdrop blur, so it reads over
-busy, colored, or image backgrounds (the blur shows where there's detail
-behind). `secondary` and `primary` carry a `border-5` hairline.
+`priority` sets the surface. `primary` (the default) is a clean sheet — `bg-1`
+in light mode, `bg-4` in dark (and `bg-4-{tone}` for a toned card); `secondary`
+is a subtle fill (`bg-2`); `tertiary` is a frosted panel: the `primary` surface
+made semi-transparent with a backdrop blur, so it reads over busy, colored, or
+image backgrounds (the blur shows where there's detail behind). `primary` and
+`secondary` carry a `border-5` hairline.
 
-<Preview background="var(--bg-2)" direction="column" gap="8px">
-  <Card priority="primary" header="Primary">A clean sheet (<code>--bg-1</code> light, <code>--bg-4</code> dark).</Card>
-  <Card header="Secondary (default)">A subtle fill (<code>--bg-2</code>).</Card>
-  <Card priority="tertiary" header="Tertiary">Frosted — the primary surface, semi-transparent, over a backdrop blur.</Card>
+<Preview align="stretch" gap="16px" background="repeating-linear-gradient(45deg, color-mix(in srgb, var(--text-5), transparent 90%) 0px, color-mix(in srgb, var(--text-5), transparent 90%) 2px, transparent 2px, transparent 40px), repeating-linear-gradient(135deg, color-mix(in srgb, var(--text-5), transparent 90%) 0px, color-mix(in srgb, var(--text-5), transparent 90%) 2px, transparent 2px, transparent 40px), transparent">
+  <Card style={{ flex: '1 1 160px', minWidth: '160px', width: 'auto' }} header="Primary (default)">A clean sheet (<code>--bg-1</code> light, <code>--bg-4</code> dark).</Card>
+  <Card style={{ flex: '1 1 160px', minWidth: '160px', width: 'auto' }} priority="secondary" header="Secondary">A subtle fill (<code>--bg-2</code>).</Card>
+  <Card style={{ flex: '1 1 160px', minWidth: '160px', width: 'auto' }} priority="tertiary" header="Tertiary">Frosted — the primary surface, semi-transparent, over a backdrop blur.</Card>
 </Preview>
 
 ```tsx folded
-<Card priority="primary" header="Primary">…</Card>
-<Card header="Secondary (default)">…</Card>      {/* secondary is the default */}
+<Card header="Primary (default)">…</Card>              {/* primary is the default */}
+<Card priority="secondary" header="Secondary">…</Card>
 <Card priority="tertiary" header="Tertiary">…</Card>
 ```
 

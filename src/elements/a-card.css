@@ -11,18 +11,19 @@
     --card-title: var(--text-1);
     --card-text: var(--text-2);
 
-    /* Surface pairs per priority. `secondary` (default) is a subtle fill (bg-2);
-       `primary` is a clean sheet — bg-1 in light, bg-4 in dark (see the `.dark`
-       neutral rule), and bg-4-{tone} for a toned card; `tertiary` is a frosted
-       panel (the primary surface, semi-transparent, + a backdrop blur — see
-       below). secondary + primary carry a border-5 hairline. */
+    /* Surface pairs per priority. `primary` (the default) is a clean sheet —
+       bg-1 in light, bg-4 in dark (see the `.dark` neutral rule), and
+       bg-4-{tone} for a toned card; `secondary` is a subtle fill (bg-2);
+       `tertiary` is a frosted panel (the primary surface, semi-transparent, +
+       a backdrop blur — see below). secondary + primary carry a border-5 hairline. */
     --card-bg-secondary: var(--bg-2);
     --card-border-secondary: var(--border-5);
     --card-bg-primary: var(--bg-1);
     --card-border-primary: var(--border-5);
 
-    --card-bg: var(--card-bg-secondary);
-    --card-border: var(--card-border-secondary);
+    /* `primary` is the default surface. */
+    --card-bg: var(--card-bg-primary);
+    --card-border: var(--card-border-primary);
 
     /* Selected ring (a 2px inset stroke) — the tone's strongest border. */
     --card-selected-ring: var(--border-1);
@@ -61,9 +62,9 @@
     overflow: clip;
   }
 
-  a-card[priority="primary"] {
-    --card-bg: var(--card-bg-primary);
-    --card-border: var(--card-border-primary);
+  a-card[priority="secondary"] {
+    --card-bg: var(--card-bg-secondary);
+    --card-border: var(--card-border-secondary);
   }
   a-card[priority="tertiary"] {
     /* Frosted glass: the primary surface at 65% over a backdrop blur, so the card

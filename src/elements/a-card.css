@@ -50,7 +50,12 @@
 
     color: var(--card-text);
     background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    /* The edge is a 1px OUTSET shadow ring (spread 1px, no blur), not a border:
+       it sits outside the box so full-bleed media reaches the very edge (no 1px
+       border inset) and it never adds to layout. `overflow: clip` doesn't clip an
+       element's own outset shadow, so the ring shows while the media still clips
+       to the rounded corners. */
+    box-shadow: 0 0 0 1px var(--card-border);
     border-radius: var(--card-radius);
     /* Clip full-bleed media to the rounded corners. */
     overflow: clip;

@@ -153,12 +153,18 @@ const SHADOW_STYLE = `
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
+    /* Base type for the content zone, matching the body <a-text> at this size. The
+       title / subtitle / body all set their own font, so this changes nothing
+       visible — it defines the em/ch base so the header gap (in ch) resolves against
+       the body's type size. */
+    font-size: var(--card-content-fs, 15px);
+    line-height: var(--card-content-lh, 20px);
   }
 
   .header {
     display: flex;
     align-items: center;
-    gap: calc(var(--card-padding, 12px) / 2);
+    gap: 2ch;
     padding: var(--card-padding, 12px);
     padding-block-start: calc(var(--card-padding, 12px) - var(--card-header-nudge, 1px));
     padding-block-end: calc(var(--card-padding, 12px) / 2);

@@ -39,6 +39,11 @@
 
     --card-radius: 8px;
     --card-padding: 12px;
+    /* Base type for the content zone — matches the body <a-text> at this size
+       (medium = 15/20; overridden per size below), so nothing renders differently
+       and the header's ch-based gap resolves against the body's type size. */
+    --card-content-fs: 15px;
+    --card-content-lh: 20px;
     /* Size of the circular chip the <Card> wrapper wraps a string `icon` in
        (medium; overridden per size below). A node icon ignores this. */
     --card-icon-size: 40px;
@@ -294,10 +299,14 @@
     --card-padding: 8px;
     --card-header-nudge: 1px;
     --card-icon-size: 32px;
+    --card-content-fs: 13px;
+    --card-content-lh: 16px;
   }
   a-card[size="large"] {
     --card-padding: 16px;
     --card-header-nudge: 4px;
     --card-icon-size: 44px;
+    --card-content-fs: 17px;
+    --card-content-lh: 24px;
   }
 }

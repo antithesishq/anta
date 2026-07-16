@@ -383,6 +383,30 @@ function controlFor(p: any, root?: any): PropEntry | null {
         { name, kind: 'number' },
       )
     }
+    // Does this union take an open string (a raw `string` intrinsic, or the
+    // `(string & {})` intersection trick)? Computed up here because the node check
+    // just below needs it too.
+    const hasOpenString = t.types.some((x: any) => {
+      if (x.type === 'intrinsic' && x.name === 'string') return true
+      if (x.type === 'intersection' && Array.isArray(x.types)) {
+        return x.types.some((y: any) => y.type === 'intrinsic' && y.name === 'string')
+      }
+      return false
+    })
+    // A union that accepts a JSX node — TypeDoc leaves a `ReactElement` /
+    // `ReactPortal` reference in it — is a node prop, NOT a number field. This must
+    // be checked BEFORE the number-intrinsic branch: Card's `icon: IconShape |
+    // (string & {}) | ReactNode` expands (via ReactNode) into ReactElement + string
+    // + number + boolean + …, so the `number` would otherwise win and give a field
+    // you can't type a shape name into. If it also takes an open string (a shape
+    // like `icon`), emit a plain string attr; otherwise a JSX expression.
+    const acceptsNode = t.types.some((x: any) => x.type === 'reference' && (x.name === 'ReactElement' || x.name === 'ReactPortal'))
+    if (acceptsNode) {
+      return wrap(
+        { kind: 'text', name, defaultValue: readDefaultValueTag(p.comment), description: description || 'An icon-shape name, or a JSX expression.' },
+        { name, kind: hasOpenString ? 'string' : 'expression' },
+      )
+    }
     // Mixed union that includes a number intrinsic (e.g. Text's
     // `truncate?: boolean | number`) — render as a number input. Empty
     // value means the prop is absent.
@@ -397,15 +421,7 @@ function controlFor(p: any, root?: any): PropEntry | null {
     // TypeScript trick used by e.g. Button's `tone` to keep literal
     // autocomplete while accepting any CSS color). Surface as a plain
     // text input so the user can type either a literal name or a custom
-    // value. The `string` can appear raw or wrapped in an intersection
-    // with a reflection (TypeDoc's representation of `string & {}`).
-    const hasOpenString = t.types.some((x: any) => {
-      if (x.type === 'intrinsic' && x.name === 'string') return true
-      if (x.type === 'intersection' && Array.isArray(x.types)) {
-        return x.types.some((y: any) => y.type === 'intrinsic' && y.name === 'string')
-      }
-      return false
-    })
+    // value. (`hasOpenString` computed above.)
     if (hasOpenString && literals.length > 0) {
       // `tone` gets a richer control: named-tone tabs + a "custom" tab with a
       // color input. Any other open-string union stays a plain text input.

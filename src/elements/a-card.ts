@@ -11,6 +11,7 @@ import './a-card.css'
  *
  *   <a-card href="/x">
  *     <img slot="media" …>                 ← full-bleed, padding-exempt
+ *     <a-icon slot="icon" …>                ← leading visual, aligned to the title
  *     <a-title slot="header">Title</a-title> ← nest a-title for the heading style
  *     …body… (the default slot)             ← nest a-text for body typography
  *     <span slot="footer"><a-button>…</a-button></span>  ← LEFT-aligned action row
@@ -26,13 +27,18 @@ import './a-card.css'
  *   <a part="container">                    ← the box; a live link only with href
  *     <slot name="media" part="media">      ← full-bleed; display:none until filled
  *     <div part="content">                  ← unpadded flex-column group (media sits beside it)
- *       <slot name="header" part="header">  ← padded section; display:none until filled
+ *       <div part="header">                 ← padded section: a row of…
+ *         <slot name="icon" part="icon">    ← leading visual (flex:none)
+ *         <slot name="header" part="title"> ← the title / subtitle text column
  *       <slot part="body">                  ← the default slot; padded body section
  *       <slot name="footer" part="footer">  ← padded section; display:none until filled
  *
  * header / body / footer are independent padded sections sharing --card-padding
- * (see the SHADOW_STYLE rationale). There is no actions slot — lay out any header
- * controls (buttons, tags) inside the header itself.
+ * (see the SHADOW_STYLE rationale). The header section is a flex row that unites an
+ * optional leading `icon` with the title / subtitle column, so a leading icon /
+ * image aligns as a unit with the heading instead of sitting inline in the title.
+ * There is no actions slot — lay out any header controls (buttons, tags) inside the
+ * header itself.
  *
  * ## Link mode
  *
@@ -149,11 +155,23 @@ const SHADOW_STYLE = `
     min-height: 0;
   }
 
+  .header {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--card-padding, 12px) / 2);
+    padding: var(--card-padding, 12px);
+    padding-block-start: calc(var(--card-padding, 12px) - var(--card-header-nudge, 1px));
+    padding-block-end: calc(var(--card-padding, 12px) / 2);
+  }
+  slot[name="icon"] {
+    flex: none;
+    display: flex;
+    align-items: center;
+  }
   slot[name="header"] {
     display: block;
+    flex: 1 1 auto;
     min-width: 0;
-    padding: var(--card-padding, 12px);
-    padding-block-end: calc(var(--card-padding, 12px) / 2);
   }
   slot[part="body"] {
     display: block;
@@ -177,14 +195,8 @@ const SHADOW_STYLE = `
   :host([loading]) .container { pointer-events: none; }
   @media (prefers-reduced-motion: no-preference) {
     :host([loading]) [part="content"] { animation: card-pulse 1.4s ease-in-out infinite; }
-    /* Entrance: the shadow only exists once the element upgrades, so this runs
-       exactly once — fading the content in over the (already-painted) box. The
-       light-DOM content is hidden pre-upgrade (a-card.css :not(:defined)), so this
-       is the first time it's shown, laid out correctly, with no flash. */
-    .container { animation: card-enter 180ms ease both; }
   }
   @keyframes card-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
-  @keyframes card-enter { from { opacity: 0; } to { opacity: 1; } }
 `
 
 export class ACardElement extends HTMLElementBase {
@@ -214,9 +226,26 @@ export class ACardElement extends HTMLElementBase {
     content.className = 'content'
     content.setAttribute('part', 'content')
 
+    // Header SECTION: a padded row uniting an optional leading `icon` with the
+    // title / subtitle column (the header slot). `part="header"` is on the section
+    // (so ::part(header) styles the whole zone); the header slot is the text column,
+    // reachable on its own as `part="title"`.
+    const headerSection = document.createElement('div')
+    headerSection.className = 'header'
+    headerSection.setAttribute('part', 'header')
+
+    const iconSlot = document.createElement('slot')
+    iconSlot.name = 'icon'
+    iconSlot.setAttribute('part', 'icon')
+
     this.#headerSlot = document.createElement('slot')
     this.#headerSlot.name = 'header'
-    this.#headerSlot.setAttribute('part', 'header')
+    // The text column (title + subtitle) gets its own part so consumers can reach
+    // it — `::part(header)` is the whole zone (icon + text), `::part(title)` just
+    // the text column beside the icon.
+    this.#headerSlot.setAttribute('part', 'title')
+
+    headerSection.append(iconSlot, this.#headerSlot)
 
     // The default (unnamed) slot IS the body section (slot-is-the-box).
     this.#bodySlot = document.createElement('slot')
@@ -226,7 +255,7 @@ export class ACardElement extends HTMLElementBase {
     footerSlot.name = 'footer'
     footerSlot.setAttribute('part', 'footer')
 
-    content.append(this.#headerSlot, this.#bodySlot, footerSlot)
+    content.append(headerSection, this.#bodySlot, footerSlot)
     this.#container.append(mediaSlot, content)
     shadow.append(style, this.#container)
 

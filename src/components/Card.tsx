@@ -1,18 +1,27 @@
 import type { BaseProps } from "../general_types"
-import { NAMED_TONES, toneStyle, roundStyle } from "../anta_helpers"
+import type { IconShape } from "../elements/a-icon.shapes"
+import { toneStyle, roundStyle } from "../anta_helpers"
 import { Title } from "./Title"
 import { Text } from "./Text"
+import { Icon } from "./Icon"
 
 export interface CardProps extends BaseProps {
-  /** Header content, in the top zone. A string is wrapped in a `<Title level={4}>`
-   *  — a real heading in the document outline, tinted to match a named `tone`.
-   *  Pass your own node (`<Title level={2}>`, an `<h2>`) for a different level or
-   *  styling. Omit for no header. */
+  /** Header content, in the top zone. A string is wrapped in a `<Title>` — a real
+   *  heading in the document outline, tinted to match `tone`, at a level that
+   *  tracks `size` (small → 5, medium → 4, large → 3). Pass your own node
+   *  (`<Title level={2}>`, an `<h2>`) for a different level or styling. Omit for
+   *  no header. */
   header?: React.ReactNode
   /** A secondary line under the header title, rendered as smaller text
-   *  (`<Text size="small">`) in the heading section. Tinted to match a named
-   *  `tone`, like the title. Omit for no subtitle. */
+   *  (`<Text size="small">`) in the heading section. Tinted to match `tone`, like
+   *  the title. Omit for no subtitle. */
   subtitle?: React.ReactNode
+  /** Leading visual for the header, laid out to the left of the `header` /
+   *  `subtitle` as one aligned row (so it doesn't sit inline in the title, where it
+   *  mis-aligns). A **string** is an icon shape, rendered as an `<Icon>` inside a
+   *  circular chip (sized per the card via `--card-icon-size`); pass an `<img>`,
+   *  initials (`<Text>`), or any node to use it as-is. Omit for none. */
+  icon?: IconShape | (string & {}) | React.ReactNode
   /** Footer content, usually action buttons. Rendered as a **left-aligned** row
    *  (wraps under pressure) — the opposite of `Dialog`'s right-aligned footer. */
   footer?: React.ReactNode
@@ -22,8 +31,8 @@ export interface CardProps extends BaseProps {
   /** Which edge the `media` bleeds to.
    *  @defaultValue 'top' */
   mediaPosition?: "top" | "bottom" | "left" | "right"
-  /** The card body. A string is wrapped in a `<Text>` (tinted to match a named
-   *  `tone`); pass your own nodes to take over. */
+  /** The card body. A string is wrapped in a `<Text>` at secondary priority,
+   *  following the card's `tone` and `size`; pass your own nodes to take over. */
   children?: React.ReactNode
   /** Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for
    *  a one-off custom tone. Named tones re-point the surface + text; a custom
@@ -77,10 +86,12 @@ export interface CardProps extends BaseProps {
  * Renders an `<a-card>` web component. A stateless projection — the element owns
  * layout, the link, and the accessible name, and stylizes only its own surface
  * (never its children's typography). The wrapper maps props to attributes,
- * projects content into the `media` / `header` / body / `footer` sections, and
- * supplies typography for the two text zones by wrapping a string `header` in
- * `<Title>` and a string body in `<Text>`. There is no actions slot — lay out any
- * header controls (buttons, tags) inside the `header` yourself.
+ * projects content into the `media` / `icon` / `header` / body / `footer`
+ * sections, and supplies typography for the two text zones by wrapping a string
+ * `header` in `<Title>` and a string body in `<Text>`. A leading `icon` (a shape
+ * string, or any node) is laid out beside the title / subtitle by the element.
+ * There is no actions slot — lay out any header controls (buttons, tags) inside
+ * the `header` yourself.
  *
  * Requires `@antadesign/anta/elements` to be imported (client-side only) to
  * register the underlying custom element.
@@ -102,6 +113,7 @@ export interface CardProps extends BaseProps {
 export const Card = ({
   header,
   subtitle,
+  icon,
   footer,
   media,
   mediaPosition,
@@ -130,14 +142,14 @@ export const Card = ({
   )
 
   // The element stylizes only its own surface, never its children, so the wrapper
-  // supplies the header/body typography by wrapping a string in <Title> / <Text>.
-  // For a named tone it forwards the tone so those tint (Title defaults to text-1,
-  // Text to text-2 — the old header/body colours); a custom CSS-colour tone can't
-  // go to Title/Text (their `tone` is a named union), so that text stays neutral.
-  const namedTone =
-    toneAttr && NAMED_TONES.has(toneAttr)
-      ? (toneAttr as "neutral" | "brand" | "info" | "success" | "warning" | "critical")
-      : undefined
+  // supplies the header/body typography by wrapping a string in <Title> / <Text>
+  // and forwarding the card's `tone` to them so they tint to match. Title / Text
+  // both take a custom CSS-colour tone (same oklch derivation as the card), so this
+  // works for named *and* custom tones — passed straight through as `toneAttr`.
+
+  // A string header becomes a <Title> whose level tracks the card size, so the
+  // heading type scale matches the padding scale: small → 5, medium → 4, large → 3.
+  const titleLevel = size === "small" ? 5 : size === "large" ? 3 : 4
 
   return (
     <a-card
@@ -162,13 +174,37 @@ export const Card = ({
       {...rest}
     >
       {media != null && <div slot="media">{media}</div>}
+      {icon != null &&
+        // Leading visual for the header — carried in a slot div (like `media` /
+        // `header`); the element lays it out beside the title / subtitle (see the
+        // `icon` slot in a-card.ts).
+        (typeof icon === "string" ? (
+          // A shape string → the icon centered in a circular chip, sized per the
+          // card via --card-icon-size (32 / 40 / 48 for small / medium / large).
+          <div
+            slot="icon"
+            style={{
+              width: "var(--card-icon-size, 40px)",
+              height: "var(--card-icon-size, 40px)",
+              borderRadius: "50%",
+              background: "var(--bg-4)",
+              display: "grid",
+              placeItems: "center",
+            }}
+          >
+            <Icon shape={icon as IconShape} />
+          </div>
+        ) : (
+          // Any node → used as-is (no chip).
+          <div slot="icon">{icon}</div>
+        ))}
       {header != null &&
         (typeof header === "string" || typeof header === "number" ? (
-          // A string header becomes a real <Title> (level 4 — the card-header
-          // scale). The header section's padding is the header→body gap; the
+          // A string header becomes a real <Title> at the size-mapped level (see
+          // titleLevel). The header section's padding is the header→body gap; the
           // element zeroes the slotted title's own margins so it doesn't double it.
           // Pass a node (a `<Title level={n}>`, an `<h2>`) for a different level.
-          <Title slot="header" level={4} tone={namedTone}>
+          <Title slot="header" level={titleLevel} tone={toneAttr}>
             {header}
           </Title>
         ) : (
@@ -178,12 +214,18 @@ export const Card = ({
         // A subtitle sits in the header section too, right under the title, as
         // smaller text. Last header child, so its (absent) bottom margin leaves
         // the header→body gap to the section padding, like the title above it.
-        <Text slot="header" size="small" priority="tertiary" tone={namedTone}>
+        <Text slot="header" size="small" priority="tertiary" tone={toneAttr}>
           {subtitle}
         </Text>
       )}
       {typeof children === "string" || typeof children === "number" ? (
-        <Text tone={namedTone}>{children}</Text>
+        // A string / number body becomes a <Text> at secondary priority (text-2,
+        // the body colour) — stated explicitly rather than leaning on the default —
+        // following the card's tone and size. Anything else is a node the caller
+        // owns, passed through untouched.
+        <Text priority="secondary" tone={toneAttr} size={size}>
+          {children}
+        </Text>
       ) : (
         children
       )}

@@ -20,9 +20,9 @@ whole card into a link.
 
 A card stylizes only its own surface, never its content's typography. Pass
 `header` and body (`children`) as strings and the wrapper wraps them in a
-`<Title>` and a `<Text>` (tinted to match a named `tone`); pass your own nodes to
-take over. It shares the `tone` / `priority` / `size` vocabulary with the rest of
-Anta.
+`<Title>` and a `<Text>` that follow the card's `tone` and `size`; pass your own
+nodes to take over. It shares the `tone` / `priority` / `size` vocabulary with the
+rest of Anta.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -61,6 +61,7 @@ no dedicated actions slot: lay out header controls (a button, a tag) inside the
 <Preview background="var(--bg-2)" gap="16px" align="stretch">
   <a-card style={{ width: '340px' }}>
     <div slot="media" style={{ height: '112px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'linear-gradient(135deg, var(--bg-4-brand), var(--bg-4-info))' }}>Media</div>
+    <div slot="icon" style={{ width: 'var(--card-icon-size)', height: 'var(--card-icon-size)', borderRadius: '50%', background: 'var(--bg-4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon shape="book-open" /></div>
     <Title slot="header" level={4}>Card title</Title>
     <Text slot="header" size="small" priority="tertiary">A short supporting subtitle</Text>
     <Text>The body sits under the header. Every section is optional.</Text>
@@ -69,6 +70,7 @@ no dedicated actions slot: lay out header controls (a button, a tag) inside the
   </a-card>
   <a-card media-position="left" style={{ width: '400px' }}>
     <div slot="media" style={{ width: '104px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'linear-gradient(160deg, var(--bg-4-brand), var(--bg-4-info))' }}>Media</div>
+    <div slot="icon" style={{ width: 'var(--card-icon-size)', height: 'var(--card-icon-size)', borderRadius: '50%', background: 'var(--bg-4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon shape="book-open" /></div>
     <Title slot="header" level={4}>Card title</Title>
     <Text slot="header" size="small" priority="tertiary">A short supporting subtitle</Text>
     <Text>The same four zones, with the media bleeding to the left edge instead of the top.</Text>
@@ -85,6 +87,7 @@ no dedicated actions slot: lay out header controls (a button, a tag) inside the
 ```tsx folded
 <Card
   media={<img src="/hero.jpg" alt="" />}
+  icon="book-open"        {/* a string shape → an <Icon> in a circular chip */}
   header="Card title"
   subtitle="A short supporting subtitle"
   footer={<><Button priority="secondary" label="Launch" /><Button priority="tertiary" label="Edit" /></>}
@@ -135,42 +138,49 @@ with an icon, a message, and an action:
 
 <Preview background="var(--bg-2)" direction="column" gap="8px">
   <a-card tone="info" priority="primary">
-    <Title slot="header" level={4} tone="info"><Icon shape="info" /> Heads up</Title>
+    <Icon slot="icon" shape="info" />
+    <Title slot="header" level={4} tone="info">Heads up</Title>
     <a-text tone="info">Deploys are paused while the migration runs. They resume automatically when it finishes.</a-text>
   </a-card>
   <a-card tone="success" priority="primary">
-    <Title slot="header" level={4} tone="success"><Icon shape="circle-check" /> All checks passed</Title>
+    <Icon slot="icon" shape="circle-check" />
+    <Title slot="header" level={4} tone="success">All checks passed</Title>
     <a-text tone="success">Your build is green across every configuration.</a-text>
   </a-card>
   <a-card tone="warning" priority="primary">
-    <Title slot="header" level={4} tone="warning"><Icon shape="warning-triangle" /> Approaching quota</Title>
+    <Icon slot="icon" shape="warning-triangle" />
+    <Title slot="header" level={4} tone="warning">Approaching quota</Title>
     <a-text tone="warning">You've used 90% of this month's compute.</a-text>
     <Button slot="footer" size="small" label="Upgrade plan" />
   </a-card>
   <a-card tone="critical" priority="primary">
-    <Title slot="header" level={4} tone="critical"><Icon shape="warning-diamond" /> Deployment failed</Title>
+    <Icon slot="icon" shape="warning-diamond" />
+    <Title slot="header" level={4} tone="critical">Deployment failed</Title>
     <a-text tone="critical">The production rollout was halted after a failing health check.</a-text>
     <Button slot="footer" size="small" label="View logs" />
   </a-card>
 </Preview>
 
 ```tsx folded
-<Card tone="info" priority="primary" header={<Title level={4} tone="info"><Icon shape="info" /> Heads up</Title>}>…</Card>
-<Card tone="success" priority="primary" header={…}>…</Card>
-<Card tone="warning" priority="primary" header={…} footer={<Button size="small" label="Upgrade plan" />}>…</Card>
-<Card tone="critical" priority="primary" header={…} footer={<Button size="small" label="View logs" />}>…</Card>
+{/* A string `icon` gets the circular chip; pass a bare <Icon> node for a plain
+    tinted glyph, as these banners do. */}
+<Card tone="info" priority="primary" icon={<Icon shape="info" />} header="Heads up">…</Card>
+<Card tone="success" priority="primary" icon={<Icon shape="circle-check" />} header="All checks passed">…</Card>
+<Card tone="warning" priority="primary" icon={<Icon shape="warning-triangle" />} header="Approaching quota" footer={<Button size="small" label="Upgrade plan" />}>…</Card>
+<Card tone="critical" priority="primary" icon={<Icon shape="warning-diamond" />} header="Deployment failed" footer={<Button size="small" label="View logs" />}>…</Card>
 ```
 
 `tone` also accepts **any literal CSS color** for a one-off tint — the hue is kept
 while lightness and chroma are pinned to the named-tone curve (and re-tuned for
-dark mode), the same mechanism as `Button` / `Expander` / `Tag`. The surface and
-border derive from the color; a string `header` / body stays neutral, since only
-the six named tones tint the `<Title>` / `<Text>` the wrapper adds:
+dark mode), the same mechanism as `Button` / `Expander` / `Tag`. The surface,
+border, and the `<Title>` / `<Text>` the wrapper adds all derive from the color —
+`Title` and `Text` take a custom tone too, so a string `header` / body tints to
+match:
 
 <Preview background="var(--bg-2)" direction="column" gap="8px">
-  <Card tone="#ff1493" priority="primary" header="Magenta"><Text>Custom hue, derived surface.</Text></Card>
-  <Card tone="rebeccapurple" priority="primary" header="Purple"><Text>Custom hue, derived surface.</Text></Card>
-  <Card tone="#0d9488" priority="primary" header="Teal"><Text>Custom hue, derived surface.</Text></Card>
+  <Card tone="#ff1493" priority="primary" header="Magenta"><Text tone="#ff1493">Custom hue, derived surface.</Text></Card>
+  <Card tone="rebeccapurple" priority="primary" header="Purple"><Text tone="rebeccapurple">Custom hue, derived surface.</Text></Card>
+  <Card tone="#0d9488" priority="primary" header="Teal"><Text tone="#0d9488">Custom hue, derived surface.</Text></Card>
 </Preview>
 
 ```tsx folded
@@ -181,12 +191,13 @@ the six named tones tint the `<Title>` / `<Text>` the wrapper adds:
 
 ## Size
 
-`size` scales the padding — `small`, `medium` (the default), `large`.
+`size` scales the padding, the auto-wrapped body text, and the icon chip —
+`small`, `medium` (the default), `large`.
 
 <Preview background="var(--bg-2)" direction="column" gap="8px">
-  <Card size="small" header="Small"><Text>Tighter padding.</Text></Card>
-  <Card header="Medium (default)"><Text>The default padding.</Text></Card>
-  <Card size="large" header="Large"><Text>Roomier padding.</Text></Card>
+  <Card size="small" icon="book-open" header="Small"><Text size="small">Tighter padding, smaller text.</Text></Card>
+  <Card icon="book-open" header="Medium (default)"><Text>The default padding and text.</Text></Card>
+  <Card size="large" icon="book-open" header="Large"><Text size="large">Roomier padding, larger text.</Text></Card>
 </Preview>
 
 ```tsx folded
@@ -387,7 +398,7 @@ the heading / body styling the `<Card>` wrapper adds for you.
 
 <Preview background="var(--bg-2)">
   <a-card href="#" style={{ width: '340px' }}>
-    <a-title slot="header" level="4">Hand-authored markup</a-title>
+    <a-title slot="header" level="5">Hand-authored markup</a-title>
     <a-text>Everything without a <code>slot</code> attribute is the body.</a-text>
   </a-card>
 </Preview>
@@ -395,7 +406,7 @@ the heading / body styling the `<Card>` wrapper adds for you.
 ```html
 <a-card href="/x">
   <img slot="media" src="/hero.jpg" alt="" />
-  <a-title slot="header" level="4">Hand-authored markup</a-title>
+  <a-title slot="header" level="5">Hand-authored markup</a-title>
   <a-text>Everything without a slot attribute is the body.</a-text>
   <!-- several elements can share slot="footer" -->
   <a-button slot="footer">Save</a-button>
@@ -420,10 +431,11 @@ variable). The corner radius is **`--card-radius`**.
 <Card tone="#e0457b" header="Custom" />
 ```
 
-**Header heading level.** A string `header` becomes a `<Title level={4}>` — a real
-heading in the document outline. For a different level or your own styling, pass a
-`<Title level={n}>` (or an `<h2>`–`<h6>`) as the header; the card zeroes its top
-margin so it spaces the same either way:
+**Header heading level.** A string `header` becomes a `<Title>` whose level tracks
+`size` — small → 5, medium → 4, large → 3 — a real heading in the document outline.
+For a different level or your own styling, pass a `<Title level={n}>` (or an
+`<h2>`–`<h6>`) as the header; the card zeroes its top margin so it spaces the same
+either way:
 
 <Preview background="var(--bg-2)">
   <a-card style={{ width: '360px' }}>
@@ -440,9 +452,10 @@ margin so it spaces the same either way:
 
 For everything else, `<a-card>` exposes shadow **parts** —
 `::part(container)` (the box / anchor), `::part(media)`, `::part(content)`,
-`::part(header)`, `::part(body)`, `::part(footer)` — which you style directly. Each
-section carries its own `--card-padding`, so a divider on `::part(header)` reads as
-a true section rule.
+`::part(header)` (the icon + text zone), `::part(icon)`, `::part(title)` (the
+title / subtitle text column), `::part(body)`, `::part(footer)` — which you style
+directly. Each section carries its own `--card-padding`, so a divider on
+`::part(header)` reads as a true section rule.
 
 Each example keeps its CSS in a `<style>` **inside** its own preview, targeting a
 demo class on that preview's card — so the rule you read is literally in the
@@ -455,7 +468,7 @@ growing, that's one line on `::part(body)`:
 
 <Preview background="var(--bg-2)">
   <a-card class="scrollable" style={{ width: '320px', height: '160px' }}>
-    <a-title slot="header" level="4">Release notes</a-title>
+    <a-title slot="header" level="5">Release notes</a-title>
     <a-text>Line one. Line two. Line three. Line four. Line five. Line six. Line seven. Line eight. Line nine. Line ten. Line eleven. Line twelve.</a-text>
     <style is:inline>{`
       a-card.scrollable::part(body) { overflow: auto; }
@@ -473,7 +486,7 @@ a-card.scrollable::part(body) { overflow: auto; }
 
 <Preview background="var(--bg-2)">
   <a-card class="divided" style={{ width: '320px' }}>
-    <a-title slot="header" level="4">With a divider</a-title>
+    <a-title slot="header" level="5">With a divider</a-title>
     <a-text>A hairline under the header, drawn on the part.</a-text>
     <style is:inline>{`
       a-card.divided::part(header) {

@@ -191,9 +191,10 @@ export interface AProgressAttributes extends BaseAttributes {
 export interface ATextAttributes extends BaseAttributes {
   /** Visual priority. Maps to text-1..text-5. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale;
-   *  the others apply the matching `--text-{N}-{tone}` palette. */
-  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale; a named
+   *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
+   *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Type scale. `small` = 13/16, `medium` (default) = 15/20, `large` = 17/24. */
   size?: 'small' | 'medium' | 'large'
   /** Render as inline-block instead of the default block. */
@@ -226,9 +227,10 @@ export interface ATitleAttributes extends BaseAttributes {
   level?: string
   /** Visual priority. Maps to text-1..text-5. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale;
-   *  the others apply the matching `--text-{N}-{tone}` palette. */
-  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale; a named
+   *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
+   *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** ARIA role — the JSX wrapper sets this to `'heading'`. */
   role?: string
   /** ARIA heading level — the JSX wrapper sets this to match `level`. */
@@ -1036,9 +1038,9 @@ export interface ATabpanelAttributes extends BaseAttributes {
 /**
  * Attributes for the `<a-card>` custom element — a surface container that lays out
  * an optional `media` region plus a `header` / body / `footer` stack, and becomes a
- * link when given `href`. Slots (light-DOM children): `media`, `header`, `footer`,
- * and the default slot for the body. The element exposes
- * `::part(container | media | content | header | body | footer)`. In link
+ * link when given `href`. Slots (light-DOM children): `media`, `icon`, `header`,
+ * `footer`, and the default slot for the body. The element exposes
+ * `::part(container | media | content | icon | header | body | footer)`. In link
  * mode it names the shadow anchor from `aria-label` → header text → body text →
  * `href`. Low-level attributes; for the typed JSX wrapper use `Card` from
  * `@antadesign/anta`.

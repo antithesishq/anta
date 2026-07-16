@@ -1,4 +1,5 @@
 import type { BaseProps } from "../general_types"
+import { toneStyle } from "../anta_helpers"
 
 /** Truncation / expansion axis. `expandable` only takes effect with `truncate`;
  *  `collapsible` only with `expandable` — so the type forbids `collapsible`
@@ -24,10 +25,12 @@ export type TextProps = BaseProps & {
    *  step softer than the strongest foreground; pass `primary` for emphasis.
    *  @defaultValue secondary */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale;
-   *  the others apply the matching `--text-{N}-{tone}` palette.
+  /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a
+   *  named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS
+   *  color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is
+   *  kept while lightness/chroma are pinned per priority in oklch.
    *  @defaultValue neutral */
-  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Type scale. `small` = 13/16, `medium` = 15/20, `large` = 17/24.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
@@ -68,9 +71,13 @@ export const Text = ({ priority, tone, size, inline, truncate, expandable, colla
   // (which would hide all the text). `true` → 1, any integer ≥ 1 → that count.
   const n = typeof truncate === 'number' ? truncate : truncate ? 1 : null
   const lineCount = n != null && n >= 1 ? n : null
-  const computedStyle = lineCount != null
-    ? { ...style, ['--line-clamp' as string]: lineCount }
-    : style
+  // A custom (non-named) tone writes --text-tone-source inline for the element's
+  // oklch derivation; the line-clamp count rides along in the same style object.
+  const computedStyle = toneStyle(
+    tone,
+    "--text-tone-source",
+    lineCount != null ? { ...style, ['--line-clamp' as string]: lineCount } : style,
+  )
   // expandable/collapsible only mean anything once the text is actually clamped.
   const canExpand = expandable && lineCount != null
   return (

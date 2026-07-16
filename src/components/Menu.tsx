@@ -132,13 +132,14 @@ export const Menu = ({
       onstatechange={
         onStateChange
           ? (e: StateChangeEvent) => {
-              const { event, detail } = nativeStateChange<StateChangeDetail>(e)
+              const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e)
               // Only the menu's own `statechange` (open/closed) counts. A stateful
-              // component slotted inside the menu — a `Calendar`, `Tabs`, … —
-              // dispatches its *own* bubbling `statechange` (detail.next is a date, a
-              // tab value, …) that reaches this ancestor listener; ignore those, or
-              // they'd read as a spurious close.
-              if (detail && (detail.next === 'open' || detail.next === 'closed'))
+              // component slotted inside the menu — a `Calendar`, `Tabs`, … — could
+              // dispatch its *own* bubbling `statechange` that reaches this ancestor
+              // listener; `isOwn` (target === currentTarget) drops those, or they'd
+              // read as a spurious close. More robust than matching the open/closed
+              // vocabulary, which a nested `Expander` would also satisfy.
+              if (isOwn && detail)
                 onStateChange(event, {
                   next: detail.next === 'open',
                   prev: detail.prev === 'open',

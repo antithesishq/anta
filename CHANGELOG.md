@@ -6,6 +6,11 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
+## Unreleased
+
+### Fixed
+- **A stateful control inside a controlled `Dialog` no longer closes it.** `Checkbox`, `Tabs`, and `RadioGroup` fired their `statechange` with `bubbles: true` / `composed: true`, so the event climbed to an enclosing `<a-dialog>` (or any ancestor listening for `statechange`), which read the descendant's payload in its own vocabulary — `next: "unchecked"` looked like a close request — and dismissed the dialog. Two layers: `statechange` is now point-to-point (neither bubbling nor composed) on every stateful element, matching `Menu` / `Dialog` / `Expander` / `Calendar`, which already were; and the container wrappers (`Dialog`, `Menu`, `Expander`) now ignore any `statechange` that bubbled from a descendant (`event.target !== event.currentTarget`), so a consumer's own or third-party bubbling control can't dismiss them either. The post-apply `change` event still bubbles like a native form control.
+
 ## 0.3.7 — July 15, 2026
 
 ### Fixed

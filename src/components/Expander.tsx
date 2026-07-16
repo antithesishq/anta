@@ -152,8 +152,11 @@ export const Expander = ({
       onstatechange={
         onStateChange
           ? (e: StateChangeEvent) => {
-              const { event, detail } = nativeStateChange<StateChangeDetail>(e);
-              if (detail)
+              const { event, detail, isOwn } = nativeStateChange<StateChangeDetail>(e);
+              // Ignore a `statechange` bubbled from a control inside the expander;
+              // only the expander's own open/closed request counts. See
+              // nativeStateChange / STATEFUL-COMPONENTS.md.
+              if (isOwn && detail)
                 onStateChange(event, {
                   next: detail.next === "open",
                   prev: detail.prev === "open",

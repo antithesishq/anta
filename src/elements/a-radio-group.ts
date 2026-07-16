@@ -199,7 +199,9 @@ export class ARadioGroupElement extends HTMLElementBase {
 
   /** Dispatch the shared `statechange` event. `reason` lets a controller tell a
    *  user pick (cancelable) apart from a form `reset` / bfcache `restore` (not).
-   *  `next` is `null` when nothing is selected (no default / reset-to-none). */
+   *  `next` is `null` when nothing is selected (no default / reset-to-none).
+   *  Neither bubbles nor composed — a point-to-point request to this element's
+   *  own wrapper, not a notification (see STATEFUL-COMPONENTS.md). */
   private emitStateChange(
     next: string | null,
     prev: string | null,
@@ -209,8 +211,6 @@ export class ARadioGroupElement extends HTMLElementBase {
     return this.dispatchEvent(
       new CustomEvent("statechange", {
         cancelable,
-        bubbles: true,
-        composed: true,
         detail: { next, prev, reason },
       }),
     );

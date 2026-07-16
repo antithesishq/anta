@@ -204,6 +204,11 @@
   a-card > :is(h1, h2, h3, h4, h5, h6)[slot="header"] + a-text[slot="header"] {
     margin-block-start: 1px;
   }
+  /* A large card's roomier type scale wants a touch more air here. */
+  a-card[size="large"] > a-title[slot="header"] + a-text[slot="header"],
+  a-card[size="large"] > :is(h1, h2, h3, h4, h5, h6)[slot="header"] + a-text[slot="header"] {
+    margin-block-start: 2px;
+  }
 
   /* Named tones — re-point the text roles + the per-priority surface pairs to the
      matching theme tokens (which self-flip for dark mode). */
@@ -289,6 +294,6 @@
   a-card[size="large"] {
     --card-padding: 16px;
     --card-header-nudge: 4px;
-    --card-icon-size: 48px;
+    --card-icon-size: 44px;
   }
 }

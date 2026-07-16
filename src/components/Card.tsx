@@ -180,7 +180,7 @@ export const Card = ({
         // `icon` slot in a-card.ts).
         (typeof icon === "string" ? (
           // A shape string → the icon centered in a circular chip, sized per the
-          // card via --card-icon-size (32 / 40 / 48 for small / medium / large).
+          // card via --card-icon-size (32 / 40 / 44 for small / medium / large).
           <div
             slot="icon"
             style={{

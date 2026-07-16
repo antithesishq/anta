@@ -1,5 +1,5 @@
 import type { BaseProps } from "../general_types"
-import { hasChildren, toneStyle, roundStyle } from "../anta_helpers"
+import { hasChildren, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
 
 export interface ProgressProps extends BaseProps {
   /** Current progress value. Negative values are clamped to 0. */
@@ -70,7 +70,7 @@ export const Progress = ({ value, max = 100, tone, round, label, hint, className
       value={value}
       max={max}
       tone={tone && tone !== 'neutral' ? tone : undefined}
-      round={round ? '' : undefined}
+      round={roundAttr(round)}
       role="progressbar"
       aria-valuenow={clampedValue}
       aria-valuemin={0}

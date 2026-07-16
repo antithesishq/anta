@@ -1,4 +1,4 @@
-import { nativeStateChange, roundStyle } from '../anta_helpers'
+import { nativeStateChange, roundStyle, roundAttr } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 
 export interface MenuProps extends BaseProps {
@@ -147,7 +147,7 @@ export const Menu = ({
             }
           : undefined
       }
-      round={round ? '' : undefined}
+      round={roundAttr(round)}
       role={role}
       aria-orientation="vertical"
       class={className}

@@ -71,10 +71,13 @@ export const Text = ({ priority, tone, size, inline, truncate, expandable, colla
   // (which would hide all the text). `true` → 1, any integer ≥ 1 → that count.
   const n = typeof truncate === 'number' ? truncate : truncate ? 1 : null
   const lineCount = n != null && n >= 1 ? n : null
+  // Empty string is "no tone" — normalize so it doesn't hit the custom-tone path
+  // (an empty `--text-tone-source` would break the oklch derivation).
+  const toneAttr = tone || undefined
   // A custom (non-named) tone writes --text-tone-source inline for the element's
   // oklch derivation; the line-clamp count rides along in the same style object.
   const computedStyle = toneStyle(
-    tone,
+    toneAttr,
     "--text-tone-source",
     lineCount != null ? { ...style, ['--line-clamp' as string]: lineCount } : style,
   )
@@ -83,7 +86,7 @@ export const Text = ({ priority, tone, size, inline, truncate, expandable, colla
   return (
     <a-text
       priority={priority}
-      tone={tone}
+      tone={toneAttr}
       size={size}
       inline={inline ? '' : undefined}
       truncate={lineCount != null ? String(lineCount) : undefined}

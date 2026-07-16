@@ -57,15 +57,17 @@ export interface TitleProps extends BaseProps {
  * ```
  */
 export const Title = ({ level = 2, priority, tone, className, style, children, ...rest }: TitleProps) => {
+  // Empty string is "no tone" — normalize so it doesn't hit the custom-tone path.
+  const toneAttr = tone || undefined
   return (
     <a-title
       level={String(level)}
       priority={priority}
-      tone={tone}
+      tone={toneAttr}
       role="heading"
       aria-level={level}
       class={className}
-      style={toneStyle(tone, "--title-tone-source", style)}
+      style={toneStyle(toneAttr, "--title-tone-source", style)}
       {...rest}
     >
       {children}

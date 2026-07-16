@@ -1,4 +1,4 @@
-import { nativeStateChange, roundStyle } from "../anta_helpers";
+import { nativeStateChange, roundStyle, roundAttr } from "../anta_helpers";
 import type { BaseProps } from "../general_types";
 import { Button } from "./Button";
 
@@ -134,7 +134,7 @@ export const Dialog = ({
       position={position && position !== "center" ? position : undefined}
       // Positive opt-in (default off): emit the presence flag only when set.
       persistent={persistent ? "" : undefined}
-      round={roundSide ?? (round ? "" : undefined)}
+      round={roundSide ?? roundAttr(round)}
       name={!controlled ? name : undefined}
       // All-lowercase `onstatechange` is the one spelling both renderers bind to
       // the element's `statechange` event (React 19 keeps the case after `on`, so

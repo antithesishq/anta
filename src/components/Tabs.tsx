@@ -6,7 +6,7 @@
 // (no `Children`/Fragment scan, no component-identity matching), which keeps it robust
 // across React / Preact / custom runtimes and static SSR.
 import { useState } from "../jsx-runtime"
-import { nativeStateChange, toneStyle, roundStyle, wrapLabel } from "../anta_helpers"
+import { nativeStateChange, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
 import { Tooltip } from "./Tooltip"
@@ -239,7 +239,7 @@ export const Tabs = ({
       size={size && size !== "medium" ? size : undefined}
       orientation={vertical ? "vertical" : undefined}
       noslide={noslide ? "" : undefined}
-      round={round ? "" : undefined}
+      round={roundAttr(round)}
       disabled={disabled ? "" : undefined}
       onstatechange={onstatechange}
       onchange={onchange}
@@ -271,7 +271,7 @@ export const Tabs = ({
             // panel `aria-labelledby` link are published off-DOM by the elements.
             tabIndex={tabDisabled && !isSelected ? -1 : 0}
             disabled={tabDisabled ? "" : undefined}
-            round={round || p.round ? "" : undefined}
+            round={roundAttr(round) ?? roundAttr(p.round)}
           >
             {p.icon && <a-icon shape={p.icon} aria-hidden="true" />}
             {wrapLabel(p.label != null ? p.label : p.children, "a-tab-label")}

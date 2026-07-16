@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
-import { toneStyle, roundStyle } from "../anta_helpers"
+import { toneStyle, roundStyle, roundAttr } from "../anta_helpers"
 import { Title } from "./Title"
 import { Text } from "./Text"
 import { Icon } from "./Icon"
@@ -163,7 +163,7 @@ export const Card = ({
       // Boolean attrs: presence form (`''` on, omit off) — matched by presence in CSS.
       selected={selected ? "" : undefined}
       loading={loading ? "" : undefined}
-      round={round ? "" : undefined}
+      round={roundAttr(round)}
       href={href}
       // Anchor extras only mean anything alongside href.
       target={href ? target : undefined}

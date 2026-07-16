@@ -43,7 +43,7 @@ import './a-card.css'
  * ## Link mode
  *
  * `.container` is always an `<a>`, but only carries `href` (and `target` / `rel` /
- * `download` / `ping`) — and thus becomes a focusable link — when the host has an
+ * `ping`) — and thus becomes a focusable link — when the host has an
  * `href`. Without it the anchor is an inert box, so there's no node-type branching
  * and a card ⇄ link is a pure attribute flip. `container-type: inline-size` on the
  * host (external CSS) also makes the card a query container.
@@ -280,7 +280,7 @@ export class ACardElement extends HTMLElementBase {
   }
 
   attributeChangedCallback() {
-    // Every observed attribute (href / target / rel / download / ping / loading /
+    // Every observed attribute (href / target / rel / ping / loading /
     // aria-label) feeds the link + its name — a single cheap re-sync covers all.
     this.#syncLink()
   }

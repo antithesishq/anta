@@ -16,6 +16,8 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 
 ### Fixed
 - **A stateful control inside a controlled `Dialog` no longer closes it.** `Checkbox`, `Tabs`, and `RadioGroup` fired their `statechange` with `bubbles: true` / `composed: true`, so the event climbed to an enclosing `<a-dialog>` (or any ancestor listening for `statechange`), which read the descendant's payload in its own vocabulary — `next: "unchecked"` looked like a close request — and dismissed the dialog. Two layers: `statechange` is now point-to-point (neither bubbling nor composed) on every stateful element, matching `Menu` / `Dialog` / `Expander` / `Calendar`, which already were; and the container wrappers (`Dialog`, `Menu`, `Expander`) now ignore any `statechange` that bubbled from a descendant (`event.target !== event.currentTarget`), so a consumer's own or third-party bubbling control can't dismiss them either. The post-apply `change` event still bubbles like a native form control.
+- **`round={0}` now squares the corners instead of being ignored.** Every wrapper with a `round` prop (`Button`, `Tag`, `Input`, `Menu`, `Tooltip`, `Dialog`, `Expander`, `Checkbox`, `Progress`, `InputTime`, `Tabs`, `Card`) treated `0` as falsy and dropped the attribute, falling back to the default radius; `round={0}` now applies a 0px radius. Centralized in a shared `roundAttr` helper.
+- **An empty-string `tone` on `Text` / `Title` / `Tag` renders neutral.** Now that `tone` accepts any CSS colour, `tone=""` had started taking the custom-colour path (empty `--*-tone-source` → invalid oklch → `currentColor`); it normalizes to the untinted default again.
 
 ## 0.3.7 — July 15, 2026
 

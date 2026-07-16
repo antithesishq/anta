@@ -1,4 +1,4 @@
-import { nativeStateChange, toneStyle, roundStyle } from "../anta_helpers"
+import { nativeStateChange, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
 
 /** The wrapper-level checked value: a boolean for the binary axis, the string
@@ -208,7 +208,7 @@ export const Checkbox = ({
       tone={tone && tone !== 'neutral' ? tone : undefined}
       tone-selected={toneSelected && toneSelected !== 'neutral' ? toneSelected : undefined}
       size={size && size !== 'medium' ? size : undefined}
-      round={round ? '' : undefined}
+      round={roundAttr(round)}
       tabIndex={disabled ? -1 : (tabIndex ?? 0)}
       // All-lowercase `onstatechange` is the one event-prop spelling both
       // renderers bind to our custom `statechange` event: React 19 keeps the

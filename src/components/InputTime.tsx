@@ -1,6 +1,6 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { nativeStateChange, toneStyle, roundStyle } from '../anta_helpers'
+import { nativeStateChange, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
 
@@ -165,7 +165,7 @@ export const InputTime = ({
   return (
     <a-input-time
       size={size && size !== 'medium' ? size : undefined}
-      round={round ? '' : undefined}
+      round={roundAttr(round)}
       value={value}
       defaultvalue={defaultValue}
       locale={locale}

@@ -134,7 +134,7 @@ A semantic `tone` tints the surface, border, and text. The set matches the rest 
 Anta: `neutral` (the default) plus `brand`, `info`, `success`, `warning`, and
 `critical`. Color comes from the theme tokens, so every tone tracks light and dark
 mode. A toned card is how you build a **banner** or **callout** — a filled card
-with an icon, a message, and an action:
+with an icon and a message (add a `footer` for an action):
 
 <Preview background="var(--bg-2)" direction="column" gap="8px">
   <a-card tone="info" priority="primary">
@@ -151,13 +151,11 @@ with an icon, a message, and an action:
     <Icon slot="icon" shape="warning-triangle" />
     <Title slot="header" level={4} tone="warning">Approaching quota</Title>
     <a-text tone="warning">You've used 90% of this month's compute.</a-text>
-    <Button slot="footer" size="small" label="Upgrade plan" />
   </a-card>
   <a-card tone="critical" priority="primary">
     <Icon slot="icon" shape="warning-diamond" />
     <Title slot="header" level={4} tone="critical">Deployment failed</Title>
     <a-text tone="critical">The production rollout was halted after a failing health check.</a-text>
-    <Button slot="footer" size="small" label="View logs" />
   </a-card>
 </Preview>
 
@@ -166,8 +164,8 @@ with an icon, a message, and an action:
     tinted glyph, as these banners do. */}
 <Card tone="info" priority="primary" icon={<Icon shape="info" />} header="Heads up">…</Card>
 <Card tone="success" priority="primary" icon={<Icon shape="circle-check" />} header="All checks passed">…</Card>
-<Card tone="warning" priority="primary" icon={<Icon shape="warning-triangle" />} header="Approaching quota" footer={<Button size="small" label="Upgrade plan" />}>…</Card>
-<Card tone="critical" priority="primary" icon={<Icon shape="warning-diamond" />} header="Deployment failed" footer={<Button size="small" label="View logs" />}>…</Card>
+<Card tone="warning" priority="primary" icon={<Icon shape="warning-triangle" />} header="Approaching quota">…</Card>
+<Card tone="critical" priority="primary" icon={<Icon shape="warning-diamond" />} header="Deployment failed">…</Card>
 ```
 
 `tone` also accepts **any literal CSS color** for a one-off tint — the hue is kept

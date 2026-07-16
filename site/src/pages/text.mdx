@@ -21,8 +21,9 @@ contents. `priority` sets the emphasis from `primary` (`--text-1`) to
 `quinary` (`--text-5`). It defaults to `secondary` (`--text-2`), so body
 text reads a step softer than the strongest foreground; pass `primary`
 for emphasis. `tone` adds a tint (`brand`, `success`, `critical`,
-`warning`, `info`); the default `neutral` leaves it untinted. `inline`
-renders it `inline-block` for use mid-sentence.
+`warning`, `info`, or any literal CSS color for a one-off custom tone); the
+default `neutral` leaves it untinted. `inline` renders it `inline-block` for use
+mid-sentence.
 
 Links nested inside `<Text>` take Anta's prose-link styling from the
 design system, with no per-page overrides to maintain.
@@ -127,13 +128,15 @@ more" and "Show less". `collapsible` takes effect only with `expandable`.
 <Disclosure title="Styling">
 
 Colour comes from **`priority`** (the neutral text level) and **`tone`** (the tint);
-`size` and the type props set the rest. `Text` exposes no tokens of its own. It
-consumes the global **text role tokens** (`--text-1` … `--text-5`, the `-{tone}`
-tints, `--link-color`), so retuning those once on `:root` / `.dark` shifts text
-colour everywhere (see [Colors](/colors/)).
+`size` and the type props set the rest. For a named tone, `Text` consumes the
+global **text role tokens** (`--text-1` … `--text-5`, the `-{tone}` tints,
+`--link-color`), so retuning those once on `:root` / `.dark` shifts text colour
+everywhere (see [Colors](/colors/)). A custom `tone` (any CSS color) is derived in
+oklch from **`--text-tone-source`** — the same one-off knob as `Button` / `Tag`.
 
 ```tsx folded
 <Text priority="secondary" tone="brand">Tinted secondary text</Text>
+<Text tone="#0d9488">Custom-tone body copy</Text>
 ```
 
 `<a-text>` is light-DOM, so one-offs are plain CSS on the element or its prose

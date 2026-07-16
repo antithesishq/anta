@@ -1,6 +1,6 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { nativeStateChange, toneStyle, roundStyle } from '../anta_helpers'
+import { nativeStateChange, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
 
@@ -282,7 +282,7 @@ export const Input = ({
   return (
     <a-input
       size={size && size !== 'medium' ? size : undefined}
-      round={round ? '' : undefined}
+      round={roundAttr(round)}
       value={value}
       // Pass `defaultvalue` even when controlled, so a <form> reset has a target
       // (the element resets to it and fires change → controlled state re-syncs).

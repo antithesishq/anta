@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle, roundStyle, wrapLabel } from "../anta_helpers"
+import { toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
 
 /** Always-allowed props, independent of content/submit/priority mode. */
 export type BaseButtonProps = {
@@ -190,7 +190,7 @@ export const Button = ({
     // presence (`[disabled]`, not `[disabled="true"]`), so any present form
     // works. (ARIA attributes below stay string-valued — ARIA needs "true".)
     paddingless: paddingless ? '' : undefined,
-    round: round ? '' : undefined,
+    round: roundAttr(round),
     loading: loading ? '' : undefined,
     disabled: disabled ? '' : undefined,
     selected: selected ? '' : undefined,

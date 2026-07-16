@@ -6,10 +6,18 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
-## Unreleased
+## 0.3.8 — July 16, 2026
+
+### Added
+- **`Card` (`<a-card>`)** — a surface container: a bordered, toned box that lays out an optional full-bleed `media` region (`mediaPosition` `top` / `bottom` / `left` / `right`) plus three stacked sections — `header`, body, **left-aligned** `footer` — each an independently padded section sharing one `--card-padding` (the outer inset and body→footer gap are a full `--card-padding`; the header→body gap is half; no gap doubles). Lay out any header controls (buttons, tags) inside the `header` itself — there's no separate actions slot. `tone` (named or any CSS colour) and `priority` (`secondary` / `primary` / `tertiary`) drive the surface; `size` scales padding, the wrapped body text, and the icon chip; `selected` draws an inset ring; `loading` shows a skeleton pulse. Pass `href` to turn the whole card into a link — the shadow container becomes a focusable anchor whose accessible name comes from the header → body → URL. The card stylizes only its own surface (never its content's typography) and is `position: relative` so content can be absolutely positioned inside it. The wrapper wraps a string `header` in a `<Title>` (level tracks `size`: small → 5, medium → 4, large → 3) and a string body in a `<Text>`, both following the card's `tone` (named *or* custom) and `size`; a string `icon` renders in a tone-aware circular chip (`--card-icon-size` / `--card-icon-bg`). Pass your own nodes to override any of them. `::part(container | media | content | header | icon | title | body | footer)`. Exports `CardProps`.
+
+### Changed
+- **`Text` and `Title` accept a custom tone.** `tone` now takes any literal CSS colour (`'#ff1493'`, `'rebeccapurple'`), not just the six named tones, derived in oklch across the full priority scale in light and dark from `--text-tone-source` / `--title-tone-source` — the same mechanism as `Button` / `Tag` / `Card`.
 
 ### Fixed
 - **A stateful control inside a controlled `Dialog` no longer closes it.** `Checkbox`, `Tabs`, and `RadioGroup` fired their `statechange` with `bubbles: true` / `composed: true`, so the event climbed to an enclosing `<a-dialog>` (or any ancestor listening for `statechange`), which read the descendant's payload in its own vocabulary — `next: "unchecked"` looked like a close request — and dismissed the dialog. Two layers: `statechange` is now point-to-point (neither bubbling nor composed) on every stateful element, matching `Menu` / `Dialog` / `Expander` / `Calendar`, which already were; and the container wrappers (`Dialog`, `Menu`, `Expander`) now ignore any `statechange` that bubbled from a descendant (`event.target !== event.currentTarget`), so a consumer's own or third-party bubbling control can't dismiss them either. The post-apply `change` event still bubbles like a native form control.
+- **`round={0}` now squares the corners instead of being ignored.** Every wrapper with a `round` prop (`Button`, `Tag`, `Input`, `Menu`, `Tooltip`, `Dialog`, `Expander`, `Checkbox`, `Progress`, `InputTime`, `Tabs`, `Card`) treated `0` as falsy and dropped the attribute, falling back to the default radius; `round={0}` now applies a 0px radius. Centralized in a shared `roundAttr` helper.
+- **An empty-string `tone` on `Text` / `Title` / `Tag` renders neutral.** Now that `tone` accepts any CSS colour, `tone=""` had started taking the custom-colour path (empty `--*-tone-source` → invalid oklch → `currentColor`); it normalizes to the untinted default again.
 
 ## 0.3.7 — July 15, 2026
 

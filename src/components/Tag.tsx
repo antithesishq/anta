@@ -106,7 +106,9 @@ export const Tag = ({
 }: TagProps) => {
   // A non-named tone is a literal CSS color: feed it to the element's oklch
   // derivation via the inline custom property (shared helper — see anta_helpers).
-  const computedStyle = toneStyle(tone, '--tag-tone-source', style)
+  // Empty string is "no tone" — normalize so it doesn't hit the custom-tone path.
+  const toneAttr = tone || undefined
+  const computedStyle = toneStyle(toneAttr, '--tag-tone-source', style)
 
   // `value` is the primary text. A label only becomes the dim/bold "key"
   // when it has a value to sit before; a lone label is the primary text,
@@ -122,7 +124,7 @@ export const Tag = ({
 
   return (
     <a-tag
-      tone={tone}
+      tone={toneAttr}
       aria-label={isIconOnly ? `${icon} tag` : undefined}
       // 'secondary' (and unset) is the implicit default — emit no DOM attr.
       priority={priority && priority !== 'secondary' ? priority : undefined}

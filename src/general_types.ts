@@ -12,6 +12,9 @@ export interface BaseProps {
   id?: string
   /** HTML `title` attribute — native browser tooltip on hover. */
   title?: string
+  /** Assigns the element to a named `<slot>` of a parent web component (e.g.
+   *  `slot="header"` inside a `<Card>`, `slot="footer"` inside a `<Dialog>`). */
+  slot?: string
   /** Tab order. Set to `-1` to skip the element when tabbing. */
   tabIndex?: number
   /** React/Preact reconciliation key when rendered inside a list. Consumed by the
@@ -188,9 +191,10 @@ export interface AProgressAttributes extends BaseAttributes {
 export interface ATextAttributes extends BaseAttributes {
   /** Visual priority. Maps to text-1..text-5. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale;
-   *  the others apply the matching `--text-{N}-{tone}` palette. */
-  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale; a named
+   *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
+   *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Type scale. `small` = 13/16, `medium` (default) = 15/20, `large` = 17/24. */
   size?: 'small' | 'medium' | 'large'
   /** Render as inline-block instead of the default block. */
@@ -223,9 +227,10 @@ export interface ATitleAttributes extends BaseAttributes {
   level?: string
   /** Visual priority. Maps to text-1..text-5. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
-  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale;
-   *  the others apply the matching `--text-{N}-{tone}` palette. */
-  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
+  /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale; a named
+   *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
+   *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** ARIA role — the JSX wrapper sets this to `'heading'`. */
   role?: string
   /** ARIA heading level — the JSX wrapper sets this to match `level`. */
@@ -1028,4 +1033,49 @@ export interface ATabpanelAttributes extends BaseAttributes {
    *  attribute here: the element points at its tab off-DOM via
    *  `internals.ariaLabelledByElements`. */
   role?: 'tabpanel'
+}
+
+/**
+ * Attributes for the `<a-card>` custom element — a surface container that lays out
+ * an optional `media` region plus a `header` / body / `footer` stack, and becomes a
+ * link when given `href`. Slots (light-DOM children): `media`, `icon`, `header`,
+ * `footer`, and the default slot for the body. The element exposes
+ * `::part(container | media | content | icon | header | body | footer)`. In link
+ * mode it names the shadow anchor from `aria-label` → header text → body text →
+ * `href`. Low-level attributes; for the typed JSX wrapper use `Card` from
+ * `@antadesign/anta`.
+ */
+export interface ACardAttributes extends BaseAttributes {
+  /** Semantic tone, or any literal CSS color for a one-off custom tone. Named tones
+   *  re-point the surface + text; a custom color keeps its hue with lightness/chroma
+   *  pinned. `'neutral'` is the default (same as omitting it). */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Surface emphasis. `primary` (default) is a clean sheet; `secondary` a subtle
+   *  fill; `tertiary` a frosted, semi-transparent panel with a backdrop blur. */
+  priority?: 'primary' | 'secondary' | 'tertiary'
+  /** Size variant — scales the padding. `medium` is the default. */
+  size?: 'small' | 'medium' | 'large'
+  /** Which edge the full-bleed `media` slot sits on. `top` is the default. */
+  'media-position'?: 'top' | 'bottom' | 'left' | 'right'
+  /** Selected / chosen state — an inset ring in the tone colour. Presence-based
+   *  (`''` on, omit off). */
+  selected?: boolean | ''
+  /** Loading state — skeleton pulse, `aria-busy`, and (in link mode) navigation is
+   *  blocked (the anchor drops its `href`). Presence-based (`''` on, omit off). */
+  loading?: boolean | ''
+  /** Fully-round corners (`border-radius: 999px`), or a custom radius via a length
+   *  value (`round="16px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
+  /** Turn the whole card into a link — the shadow container becomes a focusable
+   *  anchor with this URL. */
+  href?: string
+  /** Anchor target (only with `href`). */
+  target?: string
+  /** Anchor rel (only with `href`). */
+  rel?: string
+  /** Space-separated URLs pinged on navigation (only with `href`). */
+  ping?: string
+  /** Explicit accessible name for the link — overrides the header → body → href
+   *  chain the element derives in link mode. */
+  'aria-label'?: string
 }

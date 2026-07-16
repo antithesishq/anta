@@ -1,5 +1,5 @@
 import type { BaseProps } from "../general_types"
-import { roundStyle } from "../anta_helpers"
+import { roundStyle, roundAttr } from "../anta_helpers"
 
 export interface TooltipProps extends BaseProps {
   /** Tooltip content. Renders anything — text, markup, an icon + text.
@@ -98,7 +98,7 @@ export const Tooltip = ({
       // 'bottom' is the implicit default — emit no DOM attribute for it.
       placement={placement === 'top' ? 'top' : undefined}
       // Boolean attributes: presence form when on, omitted when off.
-      round={round ? '' : undefined}
+      round={roundAttr(round)}
       follow={follow ? '' : undefined}
       interactive={interactive ? '' : undefined}
       truncated-only={truncatedOnly ? '' : undefined}

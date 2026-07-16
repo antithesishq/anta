@@ -1,4 +1,4 @@
-import { nativeStateChange, toneStyle, roundStyle } from "../anta_helpers";
+import { nativeStateChange, toneStyle, roundStyle, roundAttr } from "../anta_helpers";
 import type { BaseProps } from "../general_types";
 
 /** Public props for the `<Expander>` disclosure. `title` is the always-
@@ -143,7 +143,7 @@ export const Expander = ({
       tone={tone && tone !== "neutral" ? tone : undefined}
       priority={priority && priority !== "secondary" ? priority : undefined}
       outdent={outdent ? "" : undefined}
-      round={round ? "" : undefined}
+      round={roundAttr(round)}
       disabled={disabled ? "" : undefined}
       // All-lowercase `onstatechange` is the one event-prop spelling both
       // renderers bind to our `statechange` event: React 19 keeps the case of

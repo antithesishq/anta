@@ -115,6 +115,16 @@ export function roundStyle(
 }
 
 /**
+ * Presence flag for a `round` attribute: `''` when a radius applies, else
+ * `undefined`. A bare `round ? '' : undefined` wrongly drops `round={0}` — the
+ * caller asking for square corners — since `0` is falsy; this keeps it (and drops
+ * `false` / `undefined` / `''`). Mirrors what `roundStyle` emits a variable for.
+ */
+export function roundAttr(round: boolean | number | string | undefined): '' | undefined {
+  return round || round === 0 ? '' : undefined
+}
+
+/**
  * The rect a floating-element anchor advertises for positioning. Any element may
  * implement `getAnchorRect(): DOMRect` to point positioners (`a-menu`,
  * `a-tooltip`) at a sub-region of itself — e.g. `a-input` returns its `.field`

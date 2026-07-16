@@ -1,0 +1,369 @@
+@layer anta {
+  /* Host + token definitions for <a-card>. The visible box lives here (not in the
+     shadow) so plain consumer CSS overrides it and it paints before the element
+     upgrades; the shadow <style> owns layout + region typography and only
+     REFERENCES these --card-* tokens with literal fallbacks. Named tones use
+     Anta's theme-aware role tokens, so dark mode is mostly free (same as
+     <a-expander> / <a-tag>); only the custom-tone branch needs a .dark re-tune. */
+
+  a-card {
+    /* The card's own foreground default. Slotted content inherits it, but the card
+       never sets typography on its children — a title/body gets its style from the
+       nested <a-title> / <a-text> (or the regular inherited style for bare text). */
+    --card-text: var(--text-2);
+
+    /* Surface pairs per priority. `primary` (the default) is a clean sheet —
+       bg-1 in light, bg-4 in dark (see the `.dark` neutral rule); a toned card's
+       primary is likewise the cleanest tint (bg-2-{tone} light / bg-4-{tone} dark,
+       set in the tone rules + their `.dark` overrides). `secondary` is a subtle
+       fill (bg-2, or the deeper tint for a toned card); `tertiary` is a frosted
+       panel (the primary surface, semi-transparent, + a backdrop blur — see below). */
+    --card-bg-secondary: var(--bg-2);
+    --card-bg-primary: var(--bg-1);
+
+    /* `primary` is the default surface. */
+    --card-bg: var(--card-bg-primary);
+    /* Neutral edge hairline: the border-4 role token. Toned cards override this
+       with their border-4-{tone} in the tone rules below. Flat across priorities. */
+    --card-border: var(--border-4);
+    /* One step stronger, for hover: the border-3 role token (re-pointed per tone
+       below, so the edge steps border-4 → border-3 on hover). */
+    --card-border-hover: var(--border-3);
+
+    /* Selected ring (a 2px inset stroke) — the tone's strongest border. */
+    --card-selected-ring: var(--border-1);
+
+    /* Closed-surface hover lift for link cards: an oklch lightness bump that keeps
+       hue + chroma, so it works for every priority and tone in light and dark
+       (a transparent tertiary surface keeps zero alpha). Tune the amount here. */
+    --card-bg-hover-lift: 0.01;
+
+    --card-radius: 8px;
+    --card-padding: 12px;
+    /* Base type for the content zone — matches the body <a-text> at this size
+       (medium = 15/20; overridden per size below), so nothing renders differently
+       and the header's ch-based gap resolves against the body's type size. */
+    --card-content-fs: 15px;
+    --card-content-lh: 20px;
+    /* Size of the circular chip the <Card> wrapper wraps a string `icon` in
+       (medium; overridden per size below). A node icon ignores this. */
+    --card-icon-size: 40px;
+    /* Chip background: bg-4 for a neutral card. Toned cards re-point this to
+       bg-3-{tone} below — NOT bg-4-{tone}, which is the toned card's own surface
+       (the chip would vanish into it). A node icon ignores this. */
+    --card-icon-bg: var(--bg-4);
+    /* Optical correction: subtracted from the header's TOP padding to raise the
+       header a hair (the title's line-box sits low against the card edge). Positive
+       lifts it up; set 0 for none. Scales with size (see the size rules): 1 / 2 / 4
+       for small / medium / large. */
+    --card-header-nudge: 2px;
+
+    display: block;
+    box-sizing: border-box;
+    /* Positioned so a consumer can absolutely-position content inside the card
+       (a badge, a corner action) against the card box. */
+    position: relative;
+    /* Fill the container (grid cell / flex item / block) so width is always
+       definite. This is also what keeps `container-type` below from collapsing
+       the card to zero width in a shrink-to-fit context (a query container can't
+       size to its own content). Same as <a-expander>. */
+    width: 100%;
+    /* Establish the card as a query container so both the shadow layout and
+       consumer slotted content can `@container card (…)` on its width. */
+    container-type: inline-size;
+    container-name: card;
+
+    color: var(--card-text);
+    background: var(--card-bg);
+    /* The edge is a 1px OUTSET shadow ring (spread 1px, no blur), not a border:
+       it sits outside the box so full-bleed media reaches the very edge (no 1px
+       border inset) and it never adds to layout. `overflow: clip` doesn't clip an
+       element's own outset shadow, so the ring shows while the media still clips
+       to the rounded corners. */
+    box-shadow: 0 0 0 1px var(--card-border);
+    border-radius: var(--card-radius);
+    /* Clip full-bleed media to the rounded corners. */
+    overflow: clip;
+    /* Smooth the surface + edge (and any drop-shadow — the edge IS a box-shadow)
+       across rest / hover / active, and fade the card in on :defined (see the
+       pre-upgrade rule below). Gated off under reduced motion. */
+    transition: background-color 150ms ease, box-shadow 150ms ease, opacity 180ms ease;
+  }
+
+  a-card[priority="secondary"] {
+    --card-bg: var(--card-bg-secondary);
+    /* Light only: multiply the icon chip into the deeper secondary surface so it
+       doesn't sit as a separate lighter disc (dark uses exclusion — see below). */
+    --card-icon-blend: multiply;
+  }
+  /* Dark: primary + secondary blend their bg-5 chip into the surface via exclusion;
+     tertiary stays un-blended (it uses a lightened bg-5 colour instead). */
+  .dark a-card:not([priority="tertiary"]) {
+    --card-icon-blend: exclusion;
+  }
+
+  /* `round` re-points --card-radius, so both the host clip-radius and the shadow
+     container's ring follow. Bare `round` → 999px (fully round, clamped to the
+     box); a length (`round="16px"`, or the wrapper's `round={16}` → inline
+     --card-round) sets a custom radius. The typed attr() covers raw-HTML authors. */
+  a-card[round] {
+    --card-round: attr(round type(<length>));
+    --card-radius: var(--card-round, 999px);
+  }
+  a-card[priority="tertiary"] {
+    /* Frosted glass: the primary surface at 1% over a backdrop blur, so the card
+       reads over busy / colored / image backgrounds. It keeps the same hairline
+       ring as the other priorities (no --card-border override). The blur only
+       shows where there's detail behind it; the translucency reads everywhere. */
+    --card-bg: color-mix(in oklch, var(--card-bg-primary) 1%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Neutral dark: bg-1 (primary's light surface) is pure black in dark mode, so
+     step neutral primary up to bg-4. Secondary stays bg-2 via its token, and a
+     toned card's --bg-*-{tone} tokens self-flip, so this is scoped to neutral. */
+  .dark a-card:not([tone]),
+  .dark a-card[tone="neutral"] {
+    --card-bg-primary: var(--bg-4);
+    /* Neutral's dark surface is bg-4; the chip steps to bg-5 (one lighter) so it
+       reads, blended via exclusion (tertiary overrides with a lightened bg-5). */
+    --card-icon-bg: var(--bg-5);
+  }
+
+  /* Hover — gated so it doesn't stick after a tap. */
+  @media (hover: hover) and (pointer: fine) {
+    /* Background lift, link cards only. */
+    a-card[href]:not([loading]):hover {
+      background: oklch(from var(--card-bg) calc(l + var(--card-bg-hover-lift)) c h);
+    }
+    /* Edge steps up one level on hover (any non-loading card). */
+    a-card:not([loading]):hover {
+      box-shadow: 0 0 0 1px var(--card-border-hover);
+    }
+  }
+  /* A pressed LINK card settles its edge back to the rest colour — only link cards
+     have a meaningful active state. Higher specificity than the hover rule above,
+     so it wins while the card is both hovered and active. */
+  a-card[href]:not([loading]):active {
+    box-shadow: 0 0 0 1px var(--card-border);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a-card { transition: none; }
+  }
+
+  /* Pre-upgrade: before the element JS registers there's no shadow, so the flat,
+     un-slotted light-DOM children would render mislaid + unstyled and flash on
+     :defined. Rather than re-create the shadow's layout here (it can't match
+     exactly → a jump), hold the whole card at `opacity: 0` — the children stay in
+     flow so it still reserves a size, and the padding gives that box its inset —
+     then let the host `opacity` transition fade it in on :defined, once the shadow
+     has laid the content out correctly. (A shadow entrance *animation* would freeze
+     at opacity 0 when the card is created inside a display:none subtree — e.g. a
+     collapsed disclosure or the playground iframe — so the fade lives on the host as
+     a state transition instead: robust, and in an already-registered context the
+     card is :defined from creation so it's simply visible.) */
+  a-card:not(:defined) {
+    padding: var(--card-padding);
+    opacity: 0;
+  }
+
+  /* Section presence + gap rhythm. This lives HERE (the external, document-scope
+     sheet), not in the shadow <style>, because both rules key off the host's
+     light-DOM children and a shadow stylesheet's :host(:has(…)) does not match on
+     those — but a-card:has(…)::part(…) from the document does. The shadow gives each
+     section its intrinsic padding (--card-padding all round); these rules hide the
+     empty ones and collapse the body's shared edges. */
+
+  /* Hide a section with no content (:has needs an ELEMENT child — a string header /
+     body becomes <a-title> / <a-text> via the wrapper; bare text isn't detected).
+     The header section shows for a header OR an icon; the empty icon slot is
+     hidden so its row gap doesn't add a leading space before the title. */
+  a-card:not(:has(> [slot="media"]))::part(media),
+  a-card:not(:has(> [slot="header"])):not(:has(> [slot="icon"]))::part(header),
+  a-card:not(:has(> [slot="icon"]))::part(icon),
+  a-card:not(:has(> [slot="footer"]))::part(footer),
+  a-card:not(:has(> :not([slot])))::part(body) {
+    display: none;
+  }
+
+  /* Body owns only the edges a neighbour left open: a present header (or icon)
+     owns the header→body gap (so drop the body's top padding), a present footer
+     owns the body→footer gap (drop the body's bottom padding). Every gap stays one
+     --card-padding, never doubled. */
+  a-card:is(:has(> [slot="header"]), :has(> [slot="icon"]))::part(body) { padding-block-start: 0; }
+  a-card:has(> [slot="footer"])::part(body) { padding-block-end: 0; }
+
+  /* A slotted heading node — <a-title> (any level) or a raw <h1>–<h6> — carries a
+     document TOP margin (Title level 4 is 20px) that would add a leading gap in any
+     section; zero it. Specificity is bumped past `a-title[level="N"]` (0,1,1) and
+     the reset's `hN` (0,0,1); `@layer anta` keeps it overridable by un-layered CSS. */
+  a-card :is(h1, h2, h3, h4, h5, h6),
+  a-card a-title[level] {
+    margin-block-start: 0;
+  }
+
+  /* In the HEADER, also zero the trailing margin: the header section's padding is
+     the sole header→body gap, so the heading's own bottom margin would double it.
+     Scoped to the direct header child (the wrapper's auto <a-title slot="header">,
+     or a hand-authored heading with slot="header"), so a heading inside the body
+     keeps its normal rhythm. */
+  a-card > :is(h1, h2, h3, h4, h5, h6)[slot="header"],
+  a-card > a-title[slot="header"] {
+    margin-block-end: 0;
+  }
+
+  /* The subtitle (a small <a-text slot="header"> under the title) sits tight to the
+     title by default; a 1px top margin gives it a hair of separation. Scoped to an
+     a-text that FOLLOWS a title/heading — a header a-text with no title above it is
+     acting as the header itself and needs no leading margin. */
+  a-card > a-title[slot="header"] + a-text[slot="header"],
+  a-card > :is(h1, h2, h3, h4, h5, h6)[slot="header"] + a-text[slot="header"] {
+    margin-block-start: 1px;
+  }
+  /* A large card's roomier type scale wants a touch more air here. */
+  a-card[size="large"] > a-title[slot="header"] + a-text[slot="header"],
+  a-card[size="large"] > :is(h1, h2, h3, h4, h5, h6)[slot="header"] + a-text[slot="header"] {
+    margin-block-start: 2px;
+  }
+
+  /* Named tones — re-point the text roles + the per-priority surface pairs to the
+     matching theme tokens (which self-flip for dark mode). */
+  a-card[tone="brand"] {
+    --card-text: var(--text-2-brand);
+    --card-bg-secondary: var(--bg-4-brand);
+    --card-bg-primary: var(--bg-2-brand);
+    --card-border: var(--border-4-brand);
+    --card-border-hover: var(--border-3-brand);
+    --card-icon-bg: var(--bg-5-brand);
+    --card-selected-ring: var(--border-1-brand);
+  }
+  a-card[tone="info"] {
+    --card-text: var(--text-2-info);
+    --card-bg-secondary: var(--bg-4-info);
+    --card-bg-primary: var(--bg-2-info);
+    --card-border: var(--border-4-info);
+    --card-border-hover: var(--border-3-info);
+    --card-icon-bg: var(--bg-5-info);
+    --card-selected-ring: var(--border-1-info);
+  }
+  a-card[tone="success"] {
+    --card-text: var(--text-2-success);
+    --card-bg-secondary: var(--bg-4-success);
+    --card-bg-primary: var(--bg-2-success);
+    --card-border: var(--border-4-success);
+    --card-border-hover: var(--border-3-success);
+    --card-icon-bg: var(--bg-5-success);
+    --card-selected-ring: var(--border-1-success);
+  }
+  a-card[tone="warning"] {
+    --card-text: var(--text-2-warning);
+    --card-bg-secondary: var(--bg-4-warning);
+    --card-bg-primary: var(--bg-2-warning);
+    --card-border: var(--border-4-warning);
+    --card-border-hover: var(--border-3-warning);
+    --card-icon-bg: var(--bg-5-warning);
+    --card-selected-ring: var(--border-1-warning);
+  }
+  a-card[tone="critical"] {
+    --card-text: var(--text-2-critical);
+    --card-bg-secondary: var(--bg-4-critical);
+    --card-bg-primary: var(--bg-2-critical);
+    --card-border: var(--border-4-critical);
+    --card-border-hover: var(--border-3-critical);
+    --card-icon-bg: var(--bg-5-critical);
+    --card-selected-ring: var(--border-1-critical);
+  }
+
+  /* Toned surfaces in dark: primary is the lighter (elevated) tint, secondary the
+     deeper one — the reverse of the light mapping above, matching how neutral steps
+     primary up to bg-4 in dark. (Light: primary is the cleanest tint, like neutral's
+     bg-1; the base tone rules hold those light values.) */
+  .dark a-card[tone="brand"]    { --card-bg-primary: var(--bg-4-brand);    --card-bg-secondary: var(--bg-2-brand); }
+  .dark a-card[tone="info"]     { --card-bg-primary: var(--bg-4-info);     --card-bg-secondary: var(--bg-2-info); }
+  .dark a-card[tone="success"]  { --card-bg-primary: var(--bg-4-success);  --card-bg-secondary: var(--bg-2-success); }
+  .dark a-card[tone="warning"]  { --card-bg-primary: var(--bg-4-warning);  --card-bg-secondary: var(--bg-2-warning); }
+  .dark a-card[tone="critical"] { --card-bg-primary: var(--bg-4-critical); --card-bg-secondary: var(--bg-2-critical); }
+
+  /* Custom tone — any non-named `tone` value keeps the source hue while
+     lightness/chroma are pinned per token in oklch, the <a-expander> mechanism.
+     The JSX wrapper writes --card-tone-source inline; the typed attr() fallback
+     picks up raw <a-card tone="…"> on engines that support it. */
+  a-card[tone]:not(
+      [tone="neutral"],
+      [tone="brand"],
+      [tone="info"],
+      [tone="success"],
+      [tone="warning"],
+      [tone="critical"]
+    ) {
+    --card-tone-source: attr(tone type(<color>), currentColor);
+
+    --card-text:               oklch(from var(--card-tone-source) 0.41 0.15 h);
+    --card-bg-secondary:       oklch(from var(--card-tone-source) 0.955 0.02 h);
+    --card-bg-primary:         oklch(from var(--card-tone-source) 0.99 0.006 h);
+    --card-icon-bg:            oklch(from var(--card-tone-source) 0.925 0.03 h);
+    --card-border:             oklch(from var(--card-tone-source) 0.895 0.045 h);
+    --card-border-hover:       oklch(from var(--card-tone-source) 0.85 0.06 h);
+    --card-selected-ring:      oklch(from var(--card-tone-source) 0.6 0.15 h);
+  }
+
+  .dark a-card[tone]:not(
+      [tone="neutral"],
+      [tone="brand"],
+      [tone="info"],
+      [tone="success"],
+      [tone="warning"],
+      [tone="critical"]
+    ) {
+    --card-text:               oklch(from var(--card-tone-source) 0.75 0.11 h);
+    --card-bg-secondary:       oklch(from var(--card-tone-source) 0.13 0.02 h);
+    --card-bg-primary:         oklch(from var(--card-tone-source) 0.19 0.04 h);
+    --card-icon-bg:            oklch(from var(--card-tone-source) 0.22 0.05 h);
+    --card-border:             oklch(from var(--card-tone-source) 0.26 0.07 h);
+    --card-border-hover:       oklch(from var(--card-tone-source) 0.32 0.09 h);
+    --card-selected-ring:      oklch(from var(--card-tone-source) 0.7 0.13 h);
+  }
+
+  /* Tertiary is a frosted, near-transparent panel — the icon chip reads better a
+     step lighter than on the solid primary/secondary surfaces. In LIGHT that step
+     is bg-3 / bg-3-{tone}; in dark the lighter chip is still the bg-5 level (the bg
+     scale inverts), so tertiary keeps the default there — only light is re-pointed. */
+  a-card[priority="tertiary"]                  { --card-icon-bg: var(--bg-3); }
+  a-card[tone="brand"][priority="tertiary"]    { --card-icon-bg: var(--bg-3-brand); }
+  a-card[tone="info"][priority="tertiary"]     { --card-icon-bg: var(--bg-3-info); }
+  a-card[tone="success"][priority="tertiary"]  { --card-icon-bg: var(--bg-3-success); }
+  a-card[tone="warning"][priority="tertiary"]  { --card-icon-bg: var(--bg-3-warning); }
+  a-card[tone="critical"][priority="tertiary"] { --card-icon-bg: var(--bg-3-critical); }
+  a-card[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="tertiary"] {
+    --card-icon-bg: oklch(from var(--card-tone-source) 0.97 0.014 h);
+  }
+  .dark a-card[tone="brand"][priority="tertiary"]    { --card-icon-bg: color-mix(in oklch, var(--bg-5-brand), white 10%); }
+  .dark a-card[tone="info"][priority="tertiary"]     { --card-icon-bg: color-mix(in oklch, var(--bg-5-info), white 10%); }
+  .dark a-card[tone="success"][priority="tertiary"]  { --card-icon-bg: color-mix(in oklch, var(--bg-5-success), white 10%); }
+  .dark a-card[tone="warning"][priority="tertiary"]  { --card-icon-bg: color-mix(in oklch, var(--bg-5-warning), white 10%); }
+  .dark a-card[tone="critical"][priority="tertiary"] { --card-icon-bg: color-mix(in oklch, var(--bg-5-critical), white 10%); }
+  .dark a-card:not([tone])[priority="tertiary"],
+  .dark a-card[tone="neutral"][priority="tertiary"] { --card-icon-bg: color-mix(in oklch, var(--bg-5), white 10%); }
+  .dark a-card[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="tertiary"] {
+    --card-icon-bg: color-mix(in oklch, oklch(from var(--card-tone-source) 0.22 0.05 h), white 10%);
+  }
+
+  /* Size — padding scale (medium = 12px is the default, set on the base rule) +
+     the header optical nudge, which grows with the title's type scale. */
+  a-card[size="small"] {
+    --card-padding: 8px;
+    --card-header-nudge: 1px;
+    --card-icon-size: 32px;
+    --card-content-fs: 13px;
+    --card-content-lh: 16px;
+  }
+  a-card[size="large"] {
+    --card-padding: 16px;
+    --card-header-nudge: 4px;
+    --card-icon-size: 44px;
+    --card-content-fs: 17px;
+    --card-content-lh: 24px;
+  }
+}

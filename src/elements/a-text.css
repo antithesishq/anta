@@ -68,6 +68,42 @@
   a-text[tone="info"][priority="quaternary"]        { --text-color: var(--text-4-info); --text-link-hover: var(--text-3-info); }
   a-text[tone="info"][priority="quinary"]           { --text-color: var(--text-5-info); --text-link-hover: var(--text-4-info); }
 
+  /* Custom tone — any non-named `tone` keeps the source hue while lightness/chroma
+     are pinned in oklch (the <a-tag>/<a-card> mechanism). --_text-tone is the base
+     (text-2 equivalent); the fainter priorities are that base at reduced alpha,
+     mirroring the named --text-N-{tone} tokens (text-3/4/5 = text-2 @ 80/60/40%).
+     The wrapper writes --text-tone-source inline; the typed attr() fallback picks up
+     a raw <a-text tone="…">. */
+  a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --text-tone-source: attr(tone type(<color>), currentColor);
+    --_text-tone: oklch(from var(--text-tone-source) 0.41 0.15 h);
+    --text-color: var(--_text-tone);
+    --text-link-color: currentColor;
+    --text-link-hover: oklch(from var(--text-tone-source) 0.33 0.15 h);
+  }
+  a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="primary"] {
+    --text-color: oklch(from var(--text-tone-source) 0.33 0.15 h);
+  }
+  a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="tertiary"] {
+    --text-color: color-mix(in oklch, var(--_text-tone) 80%, transparent);
+    --text-link-hover: var(--_text-tone);
+  }
+  a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="quaternary"] {
+    --text-color: color-mix(in oklch, var(--_text-tone) 60%, transparent);
+  }
+  a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="quinary"] {
+    --text-color: color-mix(in oklch, var(--_text-tone) 40%, transparent);
+  }
+  /* Dark: only the base + the distinct primary need re-tuning; secondary is
+     var(--_text-tone) and the fainter steps are color-mix of it, so they follow. */
+  .dark a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --_text-tone: oklch(from var(--text-tone-source) 0.75 0.11 h);
+    --text-link-hover: oklch(from var(--text-tone-source) 0.82 0.10 h);
+  }
+  .dark a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="primary"] {
+    --text-color: oklch(from var(--text-tone-source) 0.82 0.10 h);
+  }
+
   a-text a, a-text a:link, a-text a:visited { color: var(--text-link-color); }
 
   @media (hover: hover) and (pointer: fine) {

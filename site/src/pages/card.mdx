@@ -61,7 +61,7 @@ no dedicated actions slot: lay out header controls (a button, a tag) inside the
 <Preview background="var(--bg-2)" gap="16px" align="stretch">
   <a-card style={{ width: '340px' }}>
     <div slot="media" style={{ height: '112px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'linear-gradient(135deg, var(--bg-4-brand), var(--bg-4-info))' }}>Media</div>
-    <div slot="icon" style={{ width: 'var(--card-icon-size)', height: 'var(--card-icon-size)', borderRadius: '50%', background: 'var(--bg-4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon shape="book-open" /></div>
+    <div slot="icon" style={{ width: 'var(--card-icon-size)', height: 'var(--card-icon-size)', borderRadius: '50%', background: 'var(--card-icon-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon shape="book-open" /></div>
     <Title slot="header" level={4}>Card title</Title>
     <Text slot="header" size="small" priority="tertiary">A short supporting subtitle</Text>
     <Text>The body sits under the header. Every section is optional.</Text>
@@ -70,7 +70,7 @@ no dedicated actions slot: lay out header controls (a button, a tag) inside the
   </a-card>
   <a-card media-position="left" style={{ width: '400px' }}>
     <div slot="media" style={{ width: '104px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'linear-gradient(160deg, var(--bg-4-brand), var(--bg-4-info))' }}>Media</div>
-    <div slot="icon" style={{ width: 'var(--card-icon-size)', height: 'var(--card-icon-size)', borderRadius: '50%', background: 'var(--bg-4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon shape="book-open" /></div>
+    <div slot="icon" style={{ width: 'var(--card-icon-size)', height: 'var(--card-icon-size)', borderRadius: '50%', background: 'var(--card-icon-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon shape="book-open" /></div>
     <Title slot="header" level={4}>Card title</Title>
     <Text slot="header" size="small" priority="tertiary">A short supporting subtitle</Text>
     <Text>The same four zones, with the media bleeding to the left edge instead of the top.</Text>
@@ -109,12 +109,13 @@ no dedicated actions slot: lay out header controls (a button, a tag) inside the
 ## Priority
 
 `priority` sets the surface. `primary` (the default) is a clean sheet — `bg-1`
-in light mode, `bg-4` in dark (and `bg-4-{tone}` for a toned card); `secondary`
-is a subtle fill (`bg-2`); `tertiary` is a frosted panel: the `primary` surface
+in light mode, `bg-4` in dark (and a toned card's cleanest tint: `bg-2-{tone}`
+light, `bg-4-{tone}` dark); `secondary` is a subtle fill (`bg-2`, or the deeper
+tint for a toned card); `tertiary` is a frosted panel: the `primary` surface
 made semi-transparent with a backdrop blur, so it reads over busy, colored, or
 image backgrounds (the blur shows where there's detail behind). All three carry
-a hairline ring — `text-2` at 10% for a neutral card, or the tone's `border-4`
-when toned.
+a hairline ring — `border-4` for a neutral card, or the tone's `border-4-{tone}`
+when toned (stepping to `border-3` on hover).
 
 <Preview align="stretch" gap="16px" background="repeating-linear-gradient(45deg, color-mix(in srgb, var(--text-5), transparent 90%) 0px, color-mix(in srgb, var(--text-5), transparent 90%) 2px, transparent 2px, var(--bg-5-brand) 40px), repeating-linear-gradient(135deg, color-mix(in srgb, var(--text-5), transparent 90%) 0px, color-mix(in srgb, var(--text-5), transparent 90%) 2px, transparent 2px, var(--bg-5-brand) 40px), transparent">
   <Card style={{ flex: '1 1 160px', minWidth: '160px', width: 'auto' }} header="Primary (default)"><Text>A clean sheet (<code>--bg-1</code> light, <code>--bg-4</code> dark).</Text></Card>

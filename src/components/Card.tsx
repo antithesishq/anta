@@ -187,7 +187,7 @@ export const Card = ({
               width: "var(--card-icon-size, 40px)",
               height: "var(--card-icon-size, 40px)",
               borderRadius: "50%",
-              background: "var(--bg-4)",
+              background: "var(--card-icon-bg)",
               display: "grid",
               placeItems: "center",
             }}

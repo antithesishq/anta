@@ -164,7 +164,7 @@ const SHADOW_STYLE = `
   .header {
     display: flex;
     align-items: center;
-    gap: 2ch;
+    gap: 1ch;
     padding: var(--card-padding, 12px);
     padding-block-start: calc(var(--card-padding, 12px) - var(--card-header-nudge, 1px));
     padding-block-end: calc(var(--card-padding, 12px) / 2);
@@ -173,6 +173,9 @@ const SHADOW_STYLE = `
     flex: none;
     display: flex;
     align-items: center;
+    /* Off by default; secondary cards in light multiply the chip into the deeper
+       surface (see --card-icon-blend in the external sheet). */
+    mix-blend-mode: var(--card-icon-blend, normal);
   }
   slot[name="header"] {
     display: block;

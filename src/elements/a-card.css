@@ -13,10 +13,11 @@
     --card-text: var(--text-2);
 
     /* Surface pairs per priority. `primary` (the default) is a clean sheet —
-       bg-1 in light, bg-4 in dark (see the `.dark` neutral rule), and
-       bg-4-{tone} for a toned card; `secondary` is a subtle fill (bg-2);
-       `tertiary` is a frosted panel (the primary surface, semi-transparent, +
-       a backdrop blur — see below). */
+       bg-1 in light, bg-4 in dark (see the `.dark` neutral rule); a toned card's
+       primary is likewise the cleanest tint (bg-2-{tone} light / bg-4-{tone} dark,
+       set in the tone rules + their `.dark` overrides). `secondary` is a subtle
+       fill (bg-2, or the deeper tint for a toned card); `tertiary` is a frosted
+       panel (the primary surface, semi-transparent, + a backdrop blur — see below). */
     --card-bg-secondary: var(--bg-2);
     --card-bg-primary: var(--bg-1);
 
@@ -47,6 +48,10 @@
     /* Size of the circular chip the <Card> wrapper wraps a string `icon` in
        (medium; overridden per size below). A node icon ignores this. */
     --card-icon-size: 40px;
+    /* Chip background: bg-4 for a neutral card. Toned cards re-point this to
+       bg-3-{tone} below — NOT bg-4-{tone}, which is the toned card's own surface
+       (the chip would vanish into it). A node icon ignores this. */
+    --card-icon-bg: var(--bg-4);
     /* Optical correction: subtracted from the header's TOP padding to raise the
        header a hair (the title's line-box sits low against the card edge). Positive
        lifts it up; set 0 for none. Scales with size (see the size rules): 1 / 2 / 4
@@ -87,6 +92,14 @@
 
   a-card[priority="secondary"] {
     --card-bg: var(--card-bg-secondary);
+    /* Light only: multiply the icon chip into the deeper secondary surface so it
+       doesn't sit as a separate lighter disc (dark uses exclusion — see below). */
+    --card-icon-blend: multiply;
+  }
+  /* Dark: primary + secondary blend their bg-5 chip into the surface via exclusion;
+     tertiary stays un-blended (it uses a lightened bg-5 colour instead). */
+  .dark a-card:not([priority="tertiary"]) {
+    --card-icon-blend: exclusion;
   }
 
   /* `round` re-points --card-radius, so both the host clip-radius and the shadow
@@ -113,6 +126,9 @@
   .dark a-card:not([tone]),
   .dark a-card[tone="neutral"] {
     --card-bg-primary: var(--bg-4);
+    /* Neutral's dark surface is bg-4; the chip steps to bg-5 (one lighter) so it
+       reads, blended via exclusion (tertiary overrides with a lightened bg-5). */
+    --card-icon-bg: var(--bg-5);
   }
 
   /* Hover — gated so it doesn't stick after a tap. */
@@ -216,44 +232,59 @@
      matching theme tokens (which self-flip for dark mode). */
   a-card[tone="brand"] {
     --card-text: var(--text-2-brand);
-    --card-bg-secondary: var(--bg-2-brand);
-    --card-bg-primary: var(--bg-4-brand);
+    --card-bg-secondary: var(--bg-4-brand);
+    --card-bg-primary: var(--bg-2-brand);
     --card-border: var(--border-4-brand);
     --card-border-hover: var(--border-3-brand);
+    --card-icon-bg: var(--bg-5-brand);
     --card-selected-ring: var(--border-1-brand);
   }
   a-card[tone="info"] {
     --card-text: var(--text-2-info);
-    --card-bg-secondary: var(--bg-2-info);
-    --card-bg-primary: var(--bg-4-info);
+    --card-bg-secondary: var(--bg-4-info);
+    --card-bg-primary: var(--bg-2-info);
     --card-border: var(--border-4-info);
     --card-border-hover: var(--border-3-info);
+    --card-icon-bg: var(--bg-5-info);
     --card-selected-ring: var(--border-1-info);
   }
   a-card[tone="success"] {
     --card-text: var(--text-2-success);
-    --card-bg-secondary: var(--bg-2-success);
-    --card-bg-primary: var(--bg-4-success);
+    --card-bg-secondary: var(--bg-4-success);
+    --card-bg-primary: var(--bg-2-success);
     --card-border: var(--border-4-success);
     --card-border-hover: var(--border-3-success);
+    --card-icon-bg: var(--bg-5-success);
     --card-selected-ring: var(--border-1-success);
   }
   a-card[tone="warning"] {
     --card-text: var(--text-2-warning);
-    --card-bg-secondary: var(--bg-2-warning);
-    --card-bg-primary: var(--bg-4-warning);
+    --card-bg-secondary: var(--bg-4-warning);
+    --card-bg-primary: var(--bg-2-warning);
     --card-border: var(--border-4-warning);
     --card-border-hover: var(--border-3-warning);
+    --card-icon-bg: var(--bg-5-warning);
     --card-selected-ring: var(--border-1-warning);
   }
   a-card[tone="critical"] {
     --card-text: var(--text-2-critical);
-    --card-bg-secondary: var(--bg-2-critical);
-    --card-bg-primary: var(--bg-4-critical);
+    --card-bg-secondary: var(--bg-4-critical);
+    --card-bg-primary: var(--bg-2-critical);
     --card-border: var(--border-4-critical);
     --card-border-hover: var(--border-3-critical);
+    --card-icon-bg: var(--bg-5-critical);
     --card-selected-ring: var(--border-1-critical);
   }
+
+  /* Toned surfaces in dark: primary is the lighter (elevated) tint, secondary the
+     deeper one — the reverse of the light mapping above, matching how neutral steps
+     primary up to bg-4 in dark. (Light: primary is the cleanest tint, like neutral's
+     bg-1; the base tone rules hold those light values.) */
+  .dark a-card[tone="brand"]    { --card-bg-primary: var(--bg-4-brand);    --card-bg-secondary: var(--bg-2-brand); }
+  .dark a-card[tone="info"]     { --card-bg-primary: var(--bg-4-info);     --card-bg-secondary: var(--bg-2-info); }
+  .dark a-card[tone="success"]  { --card-bg-primary: var(--bg-4-success);  --card-bg-secondary: var(--bg-2-success); }
+  .dark a-card[tone="warning"]  { --card-bg-primary: var(--bg-4-warning);  --card-bg-secondary: var(--bg-2-warning); }
+  .dark a-card[tone="critical"] { --card-bg-primary: var(--bg-4-critical); --card-bg-secondary: var(--bg-2-critical); }
 
   /* Custom tone — any non-named `tone` value keeps the source hue while
      lightness/chroma are pinned per token in oklch, the <a-expander> mechanism.
@@ -270,8 +301,9 @@
     --card-tone-source: attr(tone type(<color>), currentColor);
 
     --card-text:               oklch(from var(--card-tone-source) 0.41 0.15 h);
-    --card-bg-secondary:       oklch(from var(--card-tone-source) 0.99 0.006 h);
-    --card-bg-primary:         oklch(from var(--card-tone-source) 0.955 0.02 h);
+    --card-bg-secondary:       oklch(from var(--card-tone-source) 0.955 0.02 h);
+    --card-bg-primary:         oklch(from var(--card-tone-source) 0.99 0.006 h);
+    --card-icon-bg:            oklch(from var(--card-tone-source) 0.925 0.03 h);
     --card-border:             oklch(from var(--card-tone-source) 0.895 0.045 h);
     --card-border-hover:       oklch(from var(--card-tone-source) 0.85 0.06 h);
     --card-selected-ring:      oklch(from var(--card-tone-source) 0.6 0.15 h);
@@ -288,9 +320,34 @@
     --card-text:               oklch(from var(--card-tone-source) 0.75 0.11 h);
     --card-bg-secondary:       oklch(from var(--card-tone-source) 0.13 0.02 h);
     --card-bg-primary:         oklch(from var(--card-tone-source) 0.19 0.04 h);
+    --card-icon-bg:            oklch(from var(--card-tone-source) 0.22 0.05 h);
     --card-border:             oklch(from var(--card-tone-source) 0.26 0.07 h);
     --card-border-hover:       oklch(from var(--card-tone-source) 0.32 0.09 h);
     --card-selected-ring:      oklch(from var(--card-tone-source) 0.7 0.13 h);
+  }
+
+  /* Tertiary is a frosted, near-transparent panel — the icon chip reads better a
+     step lighter than on the solid primary/secondary surfaces. In LIGHT that step
+     is bg-3 / bg-3-{tone}; in dark the lighter chip is still the bg-5 level (the bg
+     scale inverts), so tertiary keeps the default there — only light is re-pointed. */
+  a-card[priority="tertiary"]                  { --card-icon-bg: var(--bg-3); }
+  a-card[tone="brand"][priority="tertiary"]    { --card-icon-bg: var(--bg-3-brand); }
+  a-card[tone="info"][priority="tertiary"]     { --card-icon-bg: var(--bg-3-info); }
+  a-card[tone="success"][priority="tertiary"]  { --card-icon-bg: var(--bg-3-success); }
+  a-card[tone="warning"][priority="tertiary"]  { --card-icon-bg: var(--bg-3-warning); }
+  a-card[tone="critical"][priority="tertiary"] { --card-icon-bg: var(--bg-3-critical); }
+  a-card[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="tertiary"] {
+    --card-icon-bg: oklch(from var(--card-tone-source) 0.97 0.014 h);
+  }
+  .dark a-card[tone="brand"][priority="tertiary"]    { --card-icon-bg: color-mix(in oklch, var(--bg-5-brand), white 10%); }
+  .dark a-card[tone="info"][priority="tertiary"]     { --card-icon-bg: color-mix(in oklch, var(--bg-5-info), white 10%); }
+  .dark a-card[tone="success"][priority="tertiary"]  { --card-icon-bg: color-mix(in oklch, var(--bg-5-success), white 10%); }
+  .dark a-card[tone="warning"][priority="tertiary"]  { --card-icon-bg: color-mix(in oklch, var(--bg-5-warning), white 10%); }
+  .dark a-card[tone="critical"][priority="tertiary"] { --card-icon-bg: color-mix(in oklch, var(--bg-5-critical), white 10%); }
+  .dark a-card:not([tone])[priority="tertiary"],
+  .dark a-card[tone="neutral"][priority="tertiary"] { --card-icon-bg: color-mix(in oklch, var(--bg-5), white 10%); }
+  .dark a-card[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="tertiary"] {
+    --card-icon-bg: color-mix(in oklch, oklch(from var(--card-tone-source) 0.22 0.05 h), white 10%);
   }
 
   /* Size — padding scale (medium = 12px is the default, set on the base rule) +

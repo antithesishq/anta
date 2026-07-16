@@ -62,7 +62,7 @@ no dedicated actions slot: lay out header controls (a button, a tag) inside the
   <a-card style={{ width: '340px' }}>
     <div slot="media" style={{ height: '112px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'linear-gradient(135deg, var(--bg-4-brand), var(--bg-4-info))' }}>Media</div>
     <Title slot="header" level={4}>Card title</Title>
-    <Text slot="header" size="small">A short supporting subtitle</Text>
+    <Text slot="header" size="small" priority="tertiary">A short supporting subtitle</Text>
     <Text>The body sits under the header. Every section is optional.</Text>
     <Button slot="footer" priority="secondary" label="Launch" />
     <Button slot="footer" priority="tertiary" label="Edit" />
@@ -70,6 +70,7 @@ no dedicated actions slot: lay out header controls (a button, a tag) inside the
   <a-card media-position="left" style={{ width: '400px' }}>
     <div slot="media" style={{ width: '104px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-4)', fontSize: '13px', letterSpacing: '0.06em', textTransform: 'uppercase', background: 'linear-gradient(160deg, var(--bg-4-brand), var(--bg-4-info))' }}>Media</div>
     <Title slot="header" level={4}>Card title</Title>
+    <Text slot="header" size="small" priority="tertiary">A short supporting subtitle</Text>
     <Text>The same four zones, with the media bleeding to the left edge instead of the top.</Text>
     <Button slot="footer" priority="secondary" label="Launch" />
     <Button slot="footer" priority="tertiary" label="Edit" />
@@ -99,24 +100,6 @@ no dedicated actions slot: lay out header controls (a button, a tag) inside the
   footer={<><Button priority="secondary" label="Launch" /><Button priority="tertiary" label="Edit" /></>}
 >
   The same four zones, with the media bleeding to the left edge instead of the top.
-</Card>
-```
-
-A string `header` becomes a `<Title level={4}>` — a real heading in the document
-outline. For a different level or your own styling, pass a `<Title level={n}>` (or
-an `<h2>`–`<h6>`) as the header; the card zeroes its top margin so it spaces the
-same either way:
-
-<Preview background="var(--bg-2)">
-  <a-card style={{ width: '360px' }}>
-    <Title slot="header" level={2}>Heading semantics</Title>
-    <a-text>The header is a level-2 <code>{'<Title>'}</code>, in the page outline.</a-text>
-  </a-card>
-</Preview>
-
-```tsx folded
-<Card header={<Title level={2}>Heading semantics</Title>}>
-  The header is a level-2 heading node, in the page outline.
 </Card>
 ```
 
@@ -435,6 +418,24 @@ variable). The corner radius is **`--card-radius`**.
 
 ```tsx folded
 <Card tone="#e0457b" header="Custom" />
+```
+
+**Header heading level.** A string `header` becomes a `<Title level={4}>` — a real
+heading in the document outline. For a different level or your own styling, pass a
+`<Title level={n}>` (or an `<h2>`–`<h6>`) as the header; the card zeroes its top
+margin so it spaces the same either way:
+
+<Preview background="var(--bg-2)">
+  <a-card style={{ width: '360px' }}>
+    <Title slot="header" level={2}>Heading semantics</Title>
+    <a-text>The header is a level-2 <code>{'<Title>'}</code>, in the page outline.</a-text>
+  </a-card>
+</Preview>
+
+```tsx folded
+<Card header={<Title level={2}>Heading semantics</Title>}>
+  The header is a level-2 heading node, in the page outline.
+</Card>
 ```
 
 For everything else, `<a-card>` exposes shadow **parts** —

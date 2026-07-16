@@ -26,6 +26,11 @@
        this with their border-4-{tone} in the tone rules below. Flat across
        priorities. */
     --card-border: color-mix(in oklch, var(--card-text) 10%, transparent);
+    /* One step stronger, for hover: the rest border with its opacity bumped 5%
+       (e.g. the neutral text-2 hairline 10% → 15%). Derived from --card-border
+       (re-pointed per tone below), so this single definition tracks every tone. An
+       already-opaque border — the toned tokens — is unchanged (alpha clamps at 1). */
+    --card-border-hover: oklch(from var(--card-border) l c h / calc(alpha + 0.05));
 
     /* Selected ring (a 2px inset stroke) — the tone's strongest border. */
     --card-selected-ring: var(--border-1);
@@ -64,6 +69,10 @@
     border-radius: var(--card-radius);
     /* Clip full-bleed media to the rounded corners. */
     overflow: clip;
+    /* Smooth the surface + edge (and any drop-shadow — the edge IS a box-shadow)
+       as they change across rest / hover / active. Gated off under reduced motion
+       below. */
+    transition: background-color 150ms ease, box-shadow 150ms ease;
   }
 
   a-card[priority="secondary"] {
@@ -96,26 +105,41 @@
     --card-bg-primary: var(--bg-4);
   }
 
-  /* Hover lift, link cards only — gated so it doesn't stick after a tap. */
+  /* Hover — gated so it doesn't stick after a tap. */
   @media (hover: hover) and (pointer: fine) {
+    /* Background lift, link cards only. */
     a-card[href]:not([loading]):hover {
       background: oklch(from var(--card-bg) calc(l + var(--card-bg-hover-lift)) c h);
     }
+    /* Edge steps up one level on hover (any non-loading card). */
+    a-card:not([loading]):hover {
+      box-shadow: 0 0 0 1px var(--card-border-hover);
+    }
+  }
+  /* A pressed LINK card settles its edge back to the rest colour — only link cards
+     have a meaningful active state. Higher specificity than the hover rule above,
+     so it wins while the card is both hovered and active. */
+  a-card[href]:not([loading]):active {
+    box-shadow: 0 0 0 1px var(--card-border);
   }
 
-  /* Pre-upgrade skeleton: the host border / background / radius already paint
-     (they're defined here, not in the shadow), but the shadow's section layout
-     doesn't exist yet, so the light-DOM children render in document order with no
-     slotting. The host padding insets the text content, and the media breaks out to
-     full-bleed (negative margins to the border box, + a bottom gap = the header's
-     top padding) — so it matches the upgraded layout and doesn't flash from inset to
-     full-bleed on :defined. The shadow owns everything once defined. */
+  @media (prefers-reduced-motion: reduce) {
+    a-card { transition: none; }
+  }
+
+  /* Pre-upgrade: before the element JS registers there's no shadow, so the flat,
+     un-slotted light-DOM children would render mislaid + unstyled and flash on
+     :defined. Rather than re-create the shadow's layout here (it can't match
+     exactly → a jump), keep the card's own box (border / bg / radius, which already
+     paint) and HIDE the content until the shadow lays it out. `visibility: hidden`
+     keeps the children in flow so the box still reserves a size; the padding gives
+     that reserved box the card's inset. On :defined the shadow takes over and fades
+     the content in (see the `card-enter` animation in the shadow <style>). */
   a-card:not(:defined) {
     padding: var(--card-padding);
   }
-  a-card:not(:defined) > [slot="media"] {
-    display: block;
-    margin: calc(-1 * var(--card-padding)) calc(-1 * var(--card-padding)) var(--card-padding);
+  a-card:not(:defined) > * {
+    visibility: hidden;
   }
 
   /* Section presence + gap rhythm. This lives HERE (the external, document-scope
@@ -158,6 +182,15 @@
   a-card > :is(h1, h2, h3, h4, h5, h6)[slot="header"],
   a-card > a-title[slot="header"] {
     margin-block-end: 0;
+  }
+
+  /* The subtitle (a small <a-text slot="header"> under the title) sits tight to the
+     title by default; a 2px top margin gives it a hair of separation. Scoped to an
+     a-text that FOLLOWS a title/heading — a header a-text with no title above it is
+     acting as the header itself and needs no leading margin. */
+  a-card > a-title[slot="header"] + a-text[slot="header"],
+  a-card > :is(h1, h2, h3, h4, h5, h6)[slot="header"] + a-text[slot="header"] {
+    margin-block-start: 2px;
   }
 
   /* Named tones — re-point the text roles + the per-priority surface pairs to the

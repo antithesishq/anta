@@ -178,7 +178,7 @@ export const Card = ({
         // A subtitle sits in the header section too, right under the title, as
         // smaller text. Last header child, so its (absent) bottom margin leaves
         // the header→body gap to the section padding, like the title above it.
-        <Text slot="header" size="small" tone={namedTone}>
+        <Text slot="header" size="small" priority="tertiary" tone={namedTone}>
           {subtitle}
         </Text>
       )}

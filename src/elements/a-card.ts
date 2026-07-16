@@ -177,8 +177,14 @@ const SHADOW_STYLE = `
   :host([loading]) .container { pointer-events: none; }
   @media (prefers-reduced-motion: no-preference) {
     :host([loading]) [part="content"] { animation: card-pulse 1.4s ease-in-out infinite; }
+    /* Entrance: the shadow only exists once the element upgrades, so this runs
+       exactly once — fading the content in over the (already-painted) box. The
+       light-DOM content is hidden pre-upgrade (a-card.css :not(:defined)), so this
+       is the first time it's shown, laid out correctly, with no flash. */
+    .container { animation: card-enter 180ms ease both; }
   }
   @keyframes card-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+  @keyframes card-enter { from { opacity: 0; } to { opacity: 1; } }
 `
 
 export class ACardElement extends HTMLElementBase {

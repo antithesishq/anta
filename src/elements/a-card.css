@@ -22,15 +22,12 @@
 
     /* `primary` is the default surface. */
     --card-bg: var(--card-bg-primary);
-    /* Neutral edge hairline: text-2 at 10% (via --card-text). Toned cards override
-       this with their border-4-{tone} in the tone rules below. Flat across
-       priorities. */
-    --card-border: color-mix(in oklch, var(--card-text) 10%, transparent);
-    /* One step stronger, for hover: the rest border with its opacity bumped 5%
-       (e.g. the neutral text-2 hairline 10% → 15%). Derived from --card-border
-       (re-pointed per tone below), so this single definition tracks every tone. An
-       already-opaque border — the toned tokens — is unchanged (alpha clamps at 1). */
-    --card-border-hover: oklch(from var(--card-border) l c h / calc(alpha + 0.05));
+    /* Neutral edge hairline: the border-4 role token. Toned cards override this
+       with their border-4-{tone} in the tone rules below. Flat across priorities. */
+    --card-border: var(--border-4);
+    /* One step stronger, for hover: the border-3 role token (re-pointed per tone
+       below, so the edge steps border-4 → border-3 on hover). */
+    --card-border-hover: var(--border-3);
 
     /* Selected ring (a 2px inset stroke) — the tone's strongest border. */
     --card-selected-ring: var(--border-1);
@@ -217,6 +214,7 @@
     --card-bg-secondary: var(--bg-2-brand);
     --card-bg-primary: var(--bg-4-brand);
     --card-border: var(--border-4-brand);
+    --card-border-hover: var(--border-3-brand);
     --card-selected-ring: var(--border-1-brand);
   }
   a-card[tone="info"] {
@@ -224,6 +222,7 @@
     --card-bg-secondary: var(--bg-2-info);
     --card-bg-primary: var(--bg-4-info);
     --card-border: var(--border-4-info);
+    --card-border-hover: var(--border-3-info);
     --card-selected-ring: var(--border-1-info);
   }
   a-card[tone="success"] {
@@ -231,6 +230,7 @@
     --card-bg-secondary: var(--bg-2-success);
     --card-bg-primary: var(--bg-4-success);
     --card-border: var(--border-4-success);
+    --card-border-hover: var(--border-3-success);
     --card-selected-ring: var(--border-1-success);
   }
   a-card[tone="warning"] {
@@ -238,6 +238,7 @@
     --card-bg-secondary: var(--bg-2-warning);
     --card-bg-primary: var(--bg-4-warning);
     --card-border: var(--border-4-warning);
+    --card-border-hover: var(--border-3-warning);
     --card-selected-ring: var(--border-1-warning);
   }
   a-card[tone="critical"] {
@@ -245,6 +246,7 @@
     --card-bg-secondary: var(--bg-2-critical);
     --card-bg-primary: var(--bg-4-critical);
     --card-border: var(--border-4-critical);
+    --card-border-hover: var(--border-3-critical);
     --card-selected-ring: var(--border-1-critical);
   }
 
@@ -266,6 +268,7 @@
     --card-bg-secondary:       oklch(from var(--card-tone-source) 0.99 0.006 h);
     --card-bg-primary:         oklch(from var(--card-tone-source) 0.955 0.02 h);
     --card-border:             oklch(from var(--card-tone-source) 0.895 0.045 h);
+    --card-border-hover:       oklch(from var(--card-tone-source) 0.85 0.06 h);
     --card-selected-ring:      oklch(from var(--card-tone-source) 0.6 0.15 h);
   }
 
@@ -281,6 +284,7 @@
     --card-bg-secondary:       oklch(from var(--card-tone-source) 0.13 0.02 h);
     --card-bg-primary:         oklch(from var(--card-tone-source) 0.19 0.04 h);
     --card-border:             oklch(from var(--card-tone-source) 0.26 0.07 h);
+    --card-border-hover:       oklch(from var(--card-tone-source) 0.32 0.09 h);
     --card-selected-ring:      oklch(from var(--card-tone-source) 0.7 0.13 h);
   }
 

@@ -129,11 +129,15 @@ export class ACheckboxElement extends HTMLElementBase {
     const prev = this.currentState;
     // Indeterminate resolves to checked; otherwise flip (native convention).
     const next: CheckboxState = prev === "checked" ? "unchecked" : "checked";
+    // `statechange` neither bubbles nor is composed: it's a point-to-point
+    // request to this element's own wrapper (which binds the listener on the
+    // host), not a notification. The name is shared across every stateful
+    // element but the `detail` vocabulary is per-component, so a bubbling one
+    // would reach an ancestor listener (e.g. a wrapping <a-dialog>) that reads
+    // it in the wrong vocabulary. See STATEFUL-COMPONENTS.md.
     const ok = this.dispatchEvent(
       new CustomEvent("statechange", {
         cancelable: true,
-        bubbles: true,
-        composed: true,
         detail: { next, prev },
       }),
     );

@@ -53,6 +53,20 @@ CustomEvent<{ next: State; prev: State }>   // cancelable: true; State = the att
 - `preventDefault()` vetoes the transition (see the control model). The element
   gates its own application on `dispatchEvent(evt)` returning `true`.
 - No booleans in the payload — never make a handler translate `true` into `"open"`.
+- **Neither bubbles nor composed.** `statechange` is a point-to-point *request*
+  to the element's own wrapper — which binds the listener on the host itself, in
+  the same light tree — not a notification meant for delegation. The name is
+  shared across every stateful element but the `detail` vocabulary is
+  per-component (`"open"` vs `"checked"` vs a value), so a bubbling event would
+  reach an ancestor listener that reads it in the wrong vocabulary: toggling a
+  `<Checkbox>` inside a controlled `<Dialog>` would surface as `next: "unchecked"`
+  on the dialog's handler, `!== "open"`, and dismiss the dialog. `composed: true`
+  is the shadow-boundary form of the same over-propagation and comes off with it.
+  This matches the native precedent — `<dialog>`'s `cancel` / `close` don't bubble
+  either, so a nested dialog's close isn't misread by an outer one.
+- The **post-apply `change`** event (checkbox / tabs / radio-group) is the
+  opposite: it *does* bubble (not composed), like a native form control's
+  `change` — that one is a notification, not a request.
 
 This mirrors the native cancelable-before pattern (`beforetoggle`, dialog
 `cancel`): fire before, let a handler veto, then apply — so a veto never flickers.

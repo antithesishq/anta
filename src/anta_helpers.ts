@@ -30,12 +30,24 @@ export function wrapLabel(kids: React.ReactNode, tag: string): React.ReactNode {
  * the native event directly. Returns the native event and its `detail`. Shared by
  * every stateful wrapper (`Menu`, `Expander`, `Checkbox`, `RadioGroup`) — don't
  * re-implement it per component.
+ *
+ * `isOwn` is `true` when the event was dispatched on the element the listener is
+ * bound to (`target === currentTarget`), `false` when it bubbled up from a
+ * descendant. `statechange` is a shared event name with a per-component `detail`
+ * vocabulary, so a container wrapper (`Dialog`, `Menu`, `Expander`) that projects
+ * arbitrary children must gate on `isOwn` before acting: a foreign bubbling
+ * `statechange` from a nested control would otherwise be read in the wrong
+ * vocabulary (a checkbox toggle looking like a dialog close). Anta's own controls
+ * no longer bubble `statechange`, so this is defense-in-depth against consumer /
+ * third-party elements that do. Read synchronously during dispatch, so
+ * `currentTarget` is still live. (Read as `true` for the falsy-event guard so a
+ * missing event never spuriously reads as bubbled.)
  */
 export function nativeStateChange<D>(
   e: CustomEvent<D> | { nativeEvent: CustomEvent<D> },
-): { event: CustomEvent<D>; detail?: D } {
+): { event: CustomEvent<D>; detail?: D; isOwn: boolean } {
   const event = ('nativeEvent' in e ? e.nativeEvent : e) as CustomEvent<D>
-  return { event, detail: event?.detail }
+  return { event, detail: event?.detail, isOwn: !event || event.target === event.currentTarget }
 }
 
 // macOS labels the "isolate" accelerator ⌥ (Option); every other platform, Alt.

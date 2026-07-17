@@ -6,6 +6,16 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
+## 0.3.9 — July 17, 2026
+
+### Added
+- **New `settings` icon** — the Lucide gear, for `<Icon shape="settings" />` and any `icon` prop.
+- **`MenuItem` renders as a link when given `href`.** A `MenuItem` with `href` renders a native `<a role="menuitem" data-anta-menu-item>` instead of `<a-menu-item>` — a real link with native navigation, `download` (`true` / filename), `target`, `rel`, `ping`, ⌘/middle-click "open in new tab", and "copy link address". The parent `Menu` treats it as a first-class row: arrow-key navigation, Enter / Space activation, and close-on-select all work, mixed freely with regular items. `onSelect` fires alongside the navigation; `disabled` drops the `href` (inert, out of the tab order); `selected` marks a current link via `aria-current`. Link mode and the checkable / `submenu` props are mutually exclusive in the types. Consumers styling items should match both shapes — `:is(a-menu-item, a[data-anta-menu-item])`.
+- **Native `<button data-anta>` gets the Anta button styling.** The button CSS now attaches to three element shapes — `<a-button>`, `<a role="button" data-anta>` (link), and `<button data-anta>` (native form control) — so a real `<button>` can wear the look while keeping native form submission, `disabled`, and Enter / Space activation. `data-anta` is the opt-in marker (it keeps Anta off `role="button"` / buttons it doesn't own). `tone` / `priority` / `size` are plain attributes.
+
+### Fixed
+- **Buttons no longer collapse inside a height-constrained flex container.** `<a-button>` (and the `<a role="button" data-anta>` anchor variant) carried `max-height: 100%`, a percentage that resolves once the button is a shrinkable flex item in a definite-height line — e.g. an anchor-button in a flex menu row — letting the flex algorithm squeeze it below its content and overlap its neighbors. Dropped `max-height` (button height is anchored by the per-size `min-height` floor); `max-width: 100%` stays as a plain literal so long labels still truncate. Also removed the unused `--button-max-width` / `--button-max-height` variables, orphaned from a since-removed explicit-sizing API.
+
 ## 0.3.8 — July 16, 2026
 
 ### Added

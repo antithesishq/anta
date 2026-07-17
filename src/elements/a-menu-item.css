@@ -3,7 +3,19 @@
     display: none;
   }
 
-  a-menu-item {
+  /* Native anchor menu item (`<a data-anta-menu-item href>`): a real link, so
+     it keeps native navigation, download, middle-click, ⌘-click, and "copy link
+     address" — things a custom element can't offer. The shared rules below give
+     it the row look; this only strips the UA anchor underline (colour comes from
+     --menu-item-color, set in the base rule). What the `MenuItem` wrapper renders
+     when given `href`; the parent `<a-menu>` treats it as a first-class item
+     (arrow nav, Space activation, close-on-select). */
+  a[data-anta-menu-item] {
+    text-decoration: none;
+  }
+
+  a-menu-item,
+  a[data-anta-menu-item] {
     --menu-item-color: var(--text-2);
     --menu-item-icon-color: var(--text-3);
     --menu-item-hint-color: var(--text-3);
@@ -45,12 +57,15 @@
   /* Items go fully round when their menu is `round` (the container itself only
      softens to 20px — see a-menu.css). Driven off the ancestor attribute so a
      consumer sets `round` once on the menu. */
-  a-menu[round] a-menu-item {
+  a-menu[round] a-menu-item,
+  a-menu[round] a[data-anta-menu-item] {
     border-radius: 999px;
   }
 
   a-menu-item:hover,
   a-menu-item:focus-visible,
+  a[data-anta-menu-item]:hover,
+  a[data-anta-menu-item]:focus-visible,
   /* An open submenu keeps its parent row lit: the nested `a-menu` carries its own
      off-DOM `:state(open)` while the flyout is open, so the branch you're in reads
      as hovered even after the pointer moves into it. Keyed off the child's state
@@ -64,7 +79,8 @@
     /* Hover-enter easing (moderate, shorter). */
     transition: background-color var(--menu-item-timing-in);
   }
-  a-menu-item:active {
+  a-menu-item:active,
+  a[data-anta-menu-item]:active {
     background: color-mix(in oklch, currentColor var(--menu-item-active), transparent);
     /* Press is instant — no transition. */
     transition: none;
@@ -74,11 +90,16 @@
      doesn't change on hover / press. This rule sits after the hover / active
      rules (equal specificity) so it wins the tie; the keyboard focus ring is a
      separate `outline` rule below, so it still shows. */
-  a-menu-item[selected] {
+  /* The link variant flags a "current" row via `aria-current` (the wrapper's
+     `selected` maps to it) — a native anchor can't reflect a bare `selected`
+     boolean across renderers, and `aria-current` is the meaningful ARIA for it. */
+  a-menu-item[selected],
+  a[data-anta-menu-item][aria-current="true"] {
     background: color-mix(in oklch, currentColor var(--menu-item-selected), transparent);
   }
 
-  a-menu-item:focus-visible {
+  a-menu-item:focus-visible,
+  a[data-anta-menu-item]:focus-visible {
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
   }
@@ -87,11 +108,14 @@
      (a-menu-item-text). Either way it takes the row's slack so trailing content
      right-aligns. */
   a-menu-item > a-menu-item-label,
-  a-menu-item > a-menu-item-text {
+  a-menu-item > a-menu-item-text,
+  a[data-anta-menu-item] > a-menu-item-label,
+  a[data-anta-menu-item] > a-menu-item-text {
     flex: 1 1 auto;
     min-width: 0;
   }
-  a-menu-item > a-menu-item-text {
+  a-menu-item > a-menu-item-text,
+  a[data-anta-menu-item] > a-menu-item-text {
     display: flex;
     flex-direction: column;
   }
@@ -99,7 +123,8 @@
      on the label's first line instead of centering against the two-line block; the
      hint then flows below, aligned under the label (it's inside the text column, so
      it never extends under the leading icon or the trailing content). */
-  a-menu-item:has(> a-menu-item-text) {
+  a-menu-item:has(> a-menu-item-text),
+  a[data-anta-menu-item]:has(> a-menu-item-text) {
     align-items: flex-start;
   }
   /* Ellipsis on the label wherever it sits — direct child or inside the column. */
@@ -120,7 +145,8 @@
     line-height: 15px;
   }
 
-  a-menu-item > a-icon {
+  a-menu-item > a-icon,
+  a[data-anta-menu-item] > a-icon {
     flex: none;
     --icon-size: 16px;
     color: var(--menu-item-icon-color);
@@ -130,7 +156,8 @@
      leading edge. The row is the actual control (see MenuItem), so zero the
      control's own label gap (no label here) and let the row's flex `gap` space it,
      and drop pointer events so a click lands on the row (a-checkbox self-toggles on
-     click otherwise). 16px box aligns with the 16px leading icon. */
+     click otherwise). 16px box aligns with the 16px leading icon. Selection is a
+     stateful-row affordance, so it's not mirrored onto the link variant. */
   a-menu-item > a-checkbox,
   a-menu-item > a-radio {
     flex: none;
@@ -163,18 +190,21 @@
   /* A leading mark (icon, checkbox, radio, or a custom `[data-indicator]`) reads
      better with the left padding pulled in to equal the vertical padding, so the mark
      hugs the corner symmetrically instead of floating in the wider inline inset. */
-  a-menu-item:has(> :is(a-icon, a-checkbox, a-radio, [data-indicator]):first-child:not(:only-child)) {
+  a-menu-item:has(> :is(a-icon, a-checkbox, a-radio, [data-indicator]):first-child:not(:only-child)),
+  a[data-anta-menu-item]:has(> :is(a-icon, [data-indicator]):first-child:not(:only-child)) {
     padding-inline-start: var(--menu-item-padding-y);
   }
   /* Trim the end padding when a trailing icon is the last child — but not on a
      submenu item: its chevron is now the last child (children, incl. the nested
      <a-menu>, render before it), and submenu items keep symmetric padding, the
      chevron nudged instead (see the [submenu] rules below). */
-  a-menu-item:not([submenu]):has(> a-icon:last-child:not(:only-child)) {
+  a-menu-item:not([submenu]):has(> a-icon:last-child:not(:only-child)),
+  a[data-anta-menu-item]:has(> a-icon:last-child:not(:only-child)) {
     padding-inline-end: max(0px, var(--menu-item-padding-x) - 2px);
   }
 
-  a-menu-item > kbd {
+  a-menu-item > kbd,
+  a[data-anta-menu-item] > kbd {
     flex: none;
     margin-left: auto;
     padding-left: 12px;
@@ -190,7 +220,8 @@
   }
 
   a-menu-item[submenu] > a-icon:last-of-type,
-  a-menu-item > a-icon:last-child:not(:only-child) {
+  a-menu-item > a-icon:last-child:not(:only-child),
+  a[data-anta-menu-item] > a-icon:last-child:not(:only-child) {
     position: relative;
     inset-inline-end: -2px;
   }
@@ -199,14 +230,19 @@
   a-menu-item[tone="info"],
   a-menu-item[tone="success"],
   a-menu-item[tone="warning"],
-  a-menu-item[tone="critical"] {
+  a-menu-item[tone="critical"],
+  a[data-anta-menu-item][tone="brand"],
+  a[data-anta-menu-item][tone="info"],
+  a[data-anta-menu-item][tone="success"],
+  a[data-anta-menu-item][tone="warning"],
+  a[data-anta-menu-item][tone="critical"] {
     --menu-item-icon-color: var(--menu-item-color);
   }
-  a-menu-item[tone="brand"]    { --menu-item-color: var(--text-2-brand);    --menu-item-hint-color: var(--text-3-brand); }
-  a-menu-item[tone="info"]     { --menu-item-color: var(--text-2-info);     --menu-item-hint-color: var(--text-3-info); }
-  a-menu-item[tone="success"]  { --menu-item-color: var(--text-2-success);  --menu-item-hint-color: var(--text-3-success); }
-  a-menu-item[tone="warning"]  { --menu-item-color: var(--text-2-warning);  --menu-item-hint-color: var(--text-3-warning); }
-  a-menu-item[tone="critical"] { --menu-item-color: var(--text-2-critical); --menu-item-hint-color: var(--text-3-critical); }
+  a-menu-item[tone="brand"],    a[data-anta-menu-item][tone="brand"]    { --menu-item-color: var(--text-2-brand);    --menu-item-hint-color: var(--text-3-brand); }
+  a-menu-item[tone="info"],     a[data-anta-menu-item][tone="info"]     { --menu-item-color: var(--text-2-info);     --menu-item-hint-color: var(--text-3-info); }
+  a-menu-item[tone="success"],  a[data-anta-menu-item][tone="success"]  { --menu-item-color: var(--text-2-success);  --menu-item-hint-color: var(--text-3-success); }
+  a-menu-item[tone="warning"],  a[data-anta-menu-item][tone="warning"]  { --menu-item-color: var(--text-2-warning);  --menu-item-hint-color: var(--text-3-warning); }
+  a-menu-item[tone="critical"], a[data-anta-menu-item][tone="critical"] { --menu-item-color: var(--text-2-critical); --menu-item-hint-color: var(--text-3-critical); }
 
   /* Custom tone — any non-named `tone` is a literal CSS color; the label / icon /
      hint colours are derived in oklch (keeping the custom hue + chroma, pinning the
@@ -215,6 +251,15 @@
      type(<color>)) would fail to parse them. The wrapper also sets
      --menu-item-tone-source inline for engines without typed attr(). */
   a-menu-item[tone]:not(
+      [tone=""],
+      [tone="brand"],
+      [tone="neutral"],
+      [tone="info"],
+      [tone="success"],
+      [tone="warning"],
+      [tone="critical"]
+    ),
+  a[data-anta-menu-item][tone]:not(
       [tone=""],
       [tone="brand"],
       [tone="neutral"],
@@ -235,7 +280,13 @@
     }
   }
 
-  a-menu-item[disabled] {
+  /* `a-menu-item` reflects `disabled` as an attribute (it's a custom element, so
+     the wrapper's `disabled=""` sticks); a native anchor can't (React drops the
+     empty string on the known `disabled` boolean), so the link variant is keyed
+     off `aria-disabled` — which the wrapper sets on both, and a disabled link
+     also drops its `href` so it's inert and out of the focusable set. */
+  a-menu-item[disabled],
+  a[data-anta-menu-item][aria-disabled="true"] {
     --menu-item-color: var(--text-5);
     --menu-item-icon-color: var(--text-5);
     --menu-item-hint-color: var(--text-5);
@@ -243,7 +294,8 @@
     pointer-events: none;
   }
 
-  .dark a-menu-item {
+  .dark a-menu-item,
+  .dark a[data-anta-menu-item] {
     --menu-item-hover: 10%;
     --menu-item-active: 14%;
     --menu-item-selected: 14%;

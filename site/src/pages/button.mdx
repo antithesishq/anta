@@ -706,4 +706,36 @@ Don't reach for the resolved `--button-fg` / `--button-bg`: they're recomputed p
 state, so setting one only catches a single state — restyle per state as above, or
 use `tone` for a full custom-colour curve.
 
+### Wearing the look on your own markup
+
+The styling attaches to three element shapes, so you can adopt the button look on
+markup you already own instead of routing through `<Button>`. `data-anta` is the
+opt-in marker — it stops anta restyling a `role="button"` element it doesn't own
+(a third-party menu, an embedded editor's toolbar):
+
+| Element | For |
+| --- | --- |
+| `<a-button>` | the component's own tag, always styled — what `<Button>` renders |
+| `<a role="button" data-anta>` | a link — what `<Button href>` renders (see [Link mode](#link-mode)) |
+| `<button data-anta>` | a native form control — keeps native form submission, `disabled`, and Enter / Space activation |
+
+`tone` / `priority` / `size` are plain attributes on the element (the `<Button>`
+wrapper sets them for you). A native `<button>` also carries its own default
+`type="submit"`, so inside a `<form>` it submits without any extra wiring:
+
+<Preview>
+  <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+    <button data-anta tone="brand" priority="primary">Save changes</button>
+    <button data-anta priority="secondary">Cancel</button>
+    <button data-anta tone="critical" priority="tertiary">Delete</button>
+  </div>
+</Preview>
+
+```html folded
+<!-- A real <button>: submits forms and toggles `disabled` natively. -->
+<button data-anta tone="brand" priority="primary">Save changes</button>
+<button data-anta priority="secondary">Cancel</button>
+<button data-anta tone="critical" priority="tertiary">Delete</button>
+```
+
 </Disclosure>

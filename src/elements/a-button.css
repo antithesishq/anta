@@ -8,7 +8,8 @@
      (e.g. a routing-library `<Link role="button">`) adds the attribute
      itself. Absent the marker, `a[role="button"]` is left untouched. */
   a-button,
-  a[role="button"][data-anta] {
+  a[role="button"][data-anta],
+  button[data-anta] {
     --button-primary-fg: #ffffff;
 
     --bg-primary-disabled: #ece9ec;
@@ -60,8 +61,6 @@
     --_pb: 1px;
     --button-padding-x: 9px;
     --button-padding-y: calc((8px - var(--_pb)) / 2);
-    --button-max-width: 100%;
-    --button-max-height: 100%;
 
     --button-timing-in: 75ms ease-in;
     --button-timing-active: 50ms linear;
@@ -77,13 +76,15 @@
      wrapper sets `--button-round` inline for portability — same dual mechanism as
      the custom-tone `--button-tone-source`. */
   a-button[round],
-  a[role="button"][data-anta][round] {
+  a[role="button"][data-anta][round],
+  button[data-anta][round] {
     --button-round: attr(round type(<length>), 999px);
     border-radius: var(--button-round, 999px);
   }
 
   a-button[tone="brand"],
-  a[role="button"][data-anta][tone="brand"] {
+  a[role="button"][data-anta][tone="brand"],
+  button[data-anta][tone="brand"] {
     --button-bg-primary-rest: #5f4bc3;
     --button-bg-primary-hover: #503cb4;
     --button-bg-primary-active: #483493;
@@ -105,7 +106,8 @@
   }
 
   a-button[tone="critical"],
-  a[role="button"][data-anta][tone="critical"] {
+  a[role="button"][data-anta][tone="critical"],
+  button[data-anta][tone="critical"] {
     --button-bg-primary-rest: #c9302c;
     --button-bg-primary-hover: #b02120;
     --button-bg-primary-active: #a01c1c;
@@ -127,7 +129,8 @@
   }
 
   a-button[tone="info"],
-  a[role="button"][data-anta][tone="info"] {
+  a[role="button"][data-anta][tone="info"],
+  button[data-anta][tone="info"] {
     --button-bg-primary-rest: #1f6eb2;
     --button-bg-primary-hover: #1a5b93;
     --button-bg-primary-active: #175082;
@@ -149,7 +152,8 @@
   }
 
   a-button[tone="success"],
-  a[role="button"][data-anta][tone="success"] {
+  a[role="button"][data-anta][tone="success"],
+  button[data-anta][tone="success"] {
     --button-bg-primary-rest: #2a7e43;
     --button-bg-primary-hover: #226737;
     --button-bg-primary-active: #1f5c31;
@@ -171,7 +175,8 @@
   }
 
   a-button[tone="warning"],
-  a[role="button"][data-anta][tone="warning"] {
+  a[role="button"][data-anta][tone="warning"],
+  button[data-anta][tone="warning"] {
     --button-bg-primary-rest: #c37416;
     --button-bg-primary-hover: #ae6613;
     --button-bg-primary-active: #995200;
@@ -193,7 +198,8 @@
   }
 
   .dark a-button,
-  .dark a[role="button"][data-anta] {
+  .dark a[role="button"][data-anta],
+  .dark button[data-anta] {
     --bg-primary-disabled: #272329;
     --bg-secondary-disabled: #1d1a1e;
     --fg-disabled-primary: #776e77;
@@ -221,7 +227,8 @@
   }
 
   .dark a-button[tone="brand"],
-  .dark a[role="button"][data-anta][tone="brand"] {
+  .dark a[role="button"][data-anta][tone="brand"],
+  .dark button[data-anta][tone="brand"] {
     --button-bg-primary-rest: #503cb4;
     --button-bg-primary-hover: #5f4bc3;
     --button-bg-primary-active: #7460d7;
@@ -242,7 +249,8 @@
   }
 
   .dark a-button[tone="critical"],
-  .dark a[role="button"][data-anta][tone="critical"] {
+  .dark a[role="button"][data-anta][tone="critical"],
+  .dark button[data-anta][tone="critical"] {
     --button-bg-primary-rest: #b02120;
     --button-bg-primary-hover: #c9302c;
     --button-bg-primary-active: #de4545;
@@ -263,7 +271,8 @@
   }
 
   .dark a-button[tone="info"],
-  .dark a[role="button"][data-anta][tone="info"] {
+  .dark a[role="button"][data-anta][tone="info"],
+  .dark button[data-anta][tone="info"] {
     --button-bg-primary-rest: #1a5b93;
     --button-bg-primary-hover: #1f6eb2;
     --button-bg-primary-active: #2686d9;
@@ -284,7 +293,8 @@
   }
 
   .dark a-button[tone="success"],
-  .dark a[role="button"][data-anta][tone="success"] {
+  .dark a[role="button"][data-anta][tone="success"],
+  .dark button[data-anta][tone="success"] {
     --button-bg-primary-rest: #226737;
     --button-bg-primary-hover: #2a7e43;
     --button-bg-primary-active: #329550;
@@ -305,7 +315,8 @@
   }
 
   .dark a-button[tone="warning"],
-  .dark a[role="button"][data-anta][tone="warning"] {
+  .dark a[role="button"][data-anta][tone="warning"],
+  .dark button[data-anta][tone="warning"] {
     --button-bg-primary-rest: #7f410b;
     --button-bg-primary-hover: #995200;
     --button-bg-primary-active: #ae6613;
@@ -325,8 +336,24 @@
     --button-fg-quaternary-hover: #f0bf75;
   }
 
+  /* Native <button> opt-in (`<button data-anta>`): the shared base rule below
+     styles it alongside `<a-button>` / `<a role="button" data-anta>`, but a
+     native button carries UA chrome those two lack. Neutralize just that delta —
+     appearance + border, plus the box-sizing / margin that reset.css would supply
+     but a consumer may not have loaded (the reset is opt-in; element CSS is
+     unconditional). Font, background, padding, radius, and the ring are already
+     set by the shared base rule. */
+  button[data-anta] {
+    box-sizing: border-box;
+    margin: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+  }
+
   a-button,
-  a[role="button"][data-anta] {
+  a[role="button"][data-anta],
+  button[data-anta] {
     user-select: none;
     display: inline-flex;
     align-items: center;
@@ -361,8 +388,7 @@
     text-wrap: nowrap;
     white-space: nowrap;
 
-    max-width: var(--button-max-width);
-    max-height: var(--button-max-height);
+    max-width: 100%;
     padding-inline: var(--button-padding-x);
     padding-block: var(--button-padding-y);
 

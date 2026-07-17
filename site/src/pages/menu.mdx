@@ -444,6 +444,51 @@ and call `.open()` / `.close()` / `.toggle()`.
 </Col>
 </Columns>
 
+## Links
+
+<Columns>
+<Col>
+
+Give a `MenuItem` an **`href`** and it renders a native `<a>` instead of the
+custom element — a real link. It navigates on click, opens in a new tab on
+⌘ / middle-click, offers "copy link address", and takes the anchor attributes:
+`target`, `rel`, `ping`, and **`download`** (`true` for the resource's default
+filename, a string to rename it). The parent `Menu` treats it as a first-class
+row — arrow-key navigation, Enter / Space activation, and close-on-select — mixed
+freely with regular items. `onSelect` fires alongside the navigation; `disabled`
+drops the `href` so it can't navigate; `selected` marks a current link
+(`aria-current`).
+
+Under the hood it's `<a role="menuitem" data-anta-menu-item href>`, the same
+opt-in-marker pattern as [`Button`'s link mode](/button/#link-mode).
+
+</Col>
+<Col>
+
+<Preview>
+  <Button>Resources</Button>
+  <Menu>
+    <MenuItem icon="file" label="Documentation" href="/menu" target="_blank" iconTrailing="external-link" />
+    <MenuItem icon="download" label="Download report" href="/menu" download="report.pdf" />
+    <MenuSeparator />
+    <MenuItem icon="settings" label="Preferences" onSelect={() => {}} />
+  </Menu>
+</Preview>
+
+```tsx folded
+<Menu>
+  {/* Real links — open in a new tab, or download */}
+  <MenuItem icon="file" label="Documentation" href="/docs" target="_blank" iconTrailing="external-link" />
+  <MenuItem icon="download" label="Download report" href="/report.pdf" download="report.pdf" />
+  <MenuSeparator />
+  {/* A regular action row, mixed in */}
+  <MenuItem icon="settings" label="Preferences" onSelect={openPrefs} />
+</Menu>
+```
+
+</Col>
+</Columns>
+
 ## Selected
 
 <Columns reverse>
@@ -581,15 +626,18 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 
 The popover surface lives in shadow DOM and is exposed as a **part** — style its
 chrome (background, frost, border, radius, shadow, padding, min-width) with
-`::part(menu)`. Menu items are light DOM, so style `a-menu-item` (and its
-`a-icon` / `kbd` / `a-menu-item-label` children) directly. **Click the trigger** to
-open the styled menu; the `.fancy` class is just for the demo:
+`::part(menu)`. Menu items are light DOM, so style them (and their
+`a-icon` / `kbd` / `a-menu-item-label` children) directly. Match **both** item
+shapes — the `a-menu-item` custom element and the `a[data-anta-menu-item]` link —
+with `:is(a-menu-item, a[data-anta-menu-item])`, or a link row skips your item
+rule. **Click the trigger** to open the styled menu; the `.fancy` class is just
+for the demo:
 
 <Preview>
   <Button>Actions</Button>
   <Menu className="fancy">
     <MenuItem icon="edit" label="Edit" />
-    <MenuItem icon="copy" label="Duplicate" />
+    <MenuItem icon="file" label="Open docs" href="/menu" target="_blank" iconTrailing="external-link" />
     <MenuItem tone="critical" icon="trash" label="Delete" />
   </Menu>
   <style is:inline>{`
@@ -601,7 +649,7 @@ open the styled menu; the `.fancy` class is just for the demo:
       backdrop-filter: blur(28px) saturate(180%);
       -webkit-backdrop-filter: blur(28px) saturate(180%);
     }
-    a-menu.fancy a-menu-item {
+    a-menu.fancy :is(a-menu-item, a[data-anta-menu-item]) {
       border-radius: 999px;
       padding: 10px 16px;
       font-size: 15px;
@@ -620,7 +668,9 @@ a-menu.fancy::part(menu) {
   background: light-dark(rgba(255,255,255,0.55), rgba(28,26,32,0.5));
   backdrop-filter: blur(28px) saturate(180%);
 }
-a-menu.fancy a-menu-item {     /* items are light DOM — style them directly */
+/* Items are light DOM — style them directly. `:is()` catches both an
+   <a-menu-item> and a link row (<a data-anta-menu-item>). */
+a-menu.fancy :is(a-menu-item, a[data-anta-menu-item]) {
   border-radius: 999px;
   padding: 10px 16px;
   font-size: 15px;

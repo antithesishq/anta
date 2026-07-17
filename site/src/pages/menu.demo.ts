@@ -26,6 +26,10 @@ export default `import { Menu, MenuItem, MenuSeparator, Button } from '@antadesi
     </Menu>
   </MenuItem>
   <MenuSeparator />
+  {/* A real link: href renders a native <a>, so it navigates, opens in a new
+      tab on ⌘/middle-click, and offers "copy link address". */}
+  <MenuItem icon="file" label="Documentation" href="/menu" target="_blank" iconTrailing="external-link" />
+  <MenuSeparator />
   <MenuItem tone="critical" icon="trash" label="Delete" kbd="⌘⌫" />
 </Menu>
 `

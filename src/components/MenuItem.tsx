@@ -2,7 +2,8 @@ import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { toneStyle } from '../anta_helpers'
 
-export interface MenuItemProps extends BaseProps {
+/** Props shared by every menu item, link or not. */
+export interface MenuItemCommonProps extends BaseProps {
   /** Leading icon shape. */
   icon?: IconShape
   /** The item's text. Usually a string, but any node is accepted — e.g. a filtered
@@ -19,13 +20,80 @@ export interface MenuItemProps extends BaseProps {
    *  chevron (omit it to keep the chevron); on a normal item it's the trailing
    *  glyph (omit for none). */
   iconTrailing?: IconShape
-  /** Disable the item: greyed out, not focusable for activation, no close. */
+  /** Disable the item: greyed out, not focusable for activation, no close. A
+   *  disabled link also drops its `href`, so it can't navigate. */
   disabled?: boolean
   /** Mark the item as selected. On a plain row (no `selectionIndicator`) this is
-   *  a persistent background tint, the same resting fill a pressed row shows. On a
-   *  checkable row (`selectionIndicator` set) it instead drives the leading
-   *  `checkbox` / `radio` indicator and the row's `aria-checked`. */
+   *  a persistent background tint, the same resting fill a pressed row shows —
+   *  also the way to flag the current page on a link item. On a checkable row
+   *  (`selectionIndicator` set) it instead drives the leading `checkbox` / `radio`
+   *  indicator and the row's `aria-checked`. */
   selected?: boolean
+  /** Semantic tone — colors the label, icon, and hover/selected tint (and the
+   *  `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal
+   *  CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose
+   *  hue + chroma are kept while the lightness is pinned to match the brand text.
+   *  `critical` is the destructive action; `neutral` (the default) is the standard
+   *  gray.
+   *  @defaultValue neutral */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Like `tone`, but applied only while the row is `selected` — an unselected row
+   *  stays neutral. The whole selected row (label, icon, tint, and the `checkbox` /
+   *  `radio` indicator) takes the tone. Same value set as `tone`; on a selected row
+   *  `toneSelected` wins over `tone` when both are set.
+   *  @defaultValue neutral */
+  toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** An opaque value identifying this item, handed back in `onSelect`'s detail
+   *  so a shared handler can tell which row was chosen without a per-item
+   *  closure. */
+  value?: string | number
+  /** Activation handler — fires when *this* item is chosen (click / Enter /
+   *  Space), unless it's `disabled`. It does **not** fire for a submenu parent
+   *  (clicking that opens the flyout, which isn't a selection) nor for a
+   *  selection bubbling up from a nested submenu. On a link item it fires
+   *  alongside the navigation. Receives the event plus a `{ value, label }`
+   *  detail. */
+  onSelect?: (event: any, detail: { value?: string | number; label?: React.ReactNode }) => void
+  /** Raw `mousedown` on the row. Mainly to `preventDefault()` so the row doesn't
+   *  take focus on a mouse press — e.g. a combobox option keeping focus in its
+   *  input field while the click still selects. */
+  onMouseDown?: (event: any) => void
+  /** ARIA role override. Defaults to the role implied by `selectionIndicator`
+   *  (`menuitem` / `menuitemcheckbox` / `menuitemradio`); set it to reparent the
+   *  row under a different container role — e.g. `option` inside a `listbox`. */
+  role?: string
+  /** Item content. With `label` set, children are extra content — most
+   *  notably the nested `<Menu>` for a submenu parent. */
+  children?: React.ReactNode
+}
+
+export type MenuItemLinkMode = {
+  /** Renders the item as `<a role="menuitem" data-anta-menu-item href>`. */
+  href: string
+  /** Anchor target, e.g. `'_blank'`. */
+  target?: string
+  /** Anchor rel. */
+  rel?: string
+  /** Download the resource instead of navigating: `true` / `''` uses the
+   *  resource's default filename, a string overrides it. */
+  download?: string | boolean
+  /** Space-separated URLs the browser pings on navigation. */
+  ping?: string
+  submenu?: never
+  selectionIndicator?: never
+  indeterminate?: never
+  indicator?: never
+}
+
+export type MenuItemActionMode = {
+  href?: never
+  target?: never
+  rel?: never
+  download?: never
+  ping?: never
+  /** Marks this item as a submenu parent: adds the trailing chevron and
+   *  `aria-haspopup="menu"`. Nest the flyout as a `<Menu>` child. */
+  submenu?: boolean
   /** Turn the row into a checkable item, driven by `selected` (the row stays the
    *  control and carries `aria-checked`):
    *  - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>`
@@ -46,46 +114,9 @@ export interface MenuItemProps extends BaseProps {
    *  built-in checkbox / radio and the trailing `check` glyph. The node is made
    *  passive (aria-hidden, no pointer events) so the row owns the click. */
   indicator?: React.ReactNode
-  /** Semantic tone — colors the label, icon, and hover/selected tint (and the
-   *  `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal
-   *  CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose
-   *  hue + chroma are kept while the lightness is pinned to match the brand text.
-   *  `critical` is the destructive action; `neutral` (the default) is the standard
-   *  gray.
-   *  @defaultValue neutral */
-  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but applied only while the row is `selected` — an unselected row
-   *  stays neutral. The whole selected row (label, icon, tint, and the `checkbox` /
-   *  `radio` indicator) takes the tone. Same value set as `tone`; on a selected row
-   *  `toneSelected` wins over `tone` when both are set.
-   *  @defaultValue neutral */
-  toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Marks this item as a submenu parent: adds the trailing chevron,
-   *  `aria-haspopup="menu"`, and an `aria-expanded` baseline (kept in sync by
-   *  the nested menu). Nest the flyout as a `<Menu>` child. */
-  submenu?: boolean
-  /** An opaque value identifying this item, handed back in `onSelect`'s detail
-   *  so a shared handler can tell which row was chosen without a per-item
-   *  closure. */
-  value?: string | number
-  /** Activation handler — fires when *this* item is chosen (click / Enter /
-   *  Space), unless it's `disabled`. It does **not** fire for a submenu parent
-   *  (clicking that opens the flyout, which isn't a selection) nor for a
-   *  selection bubbling up from a nested submenu. Receives the event plus a
-   *  `{ value, label }` detail. */
-  onSelect?: (event: any, detail: { value?: string | number; label?: React.ReactNode }) => void
-  /** Raw `mousedown` on the row. Mainly to `preventDefault()` so the row doesn't
-   *  take focus on a mouse press — e.g. a combobox option keeping focus in its
-   *  input field while the click still selects. */
-  onMouseDown?: (event: any) => void
-  /** ARIA role override. Defaults to the role implied by `selectionIndicator`
-   *  (`menuitem` / `menuitemcheckbox` / `menuitemradio`); set it to reparent the
-   *  row under a different container role — e.g. `option` inside a `listbox`. */
-  role?: string
-  /** Item content. With `label` set, children are extra content — most
-   *  notably the nested `<Menu>` for a submenu parent. */
-  children?: React.ReactNode
 }
+
+export type MenuItemProps = MenuItemCommonProps & (MenuItemLinkMode | MenuItemActionMode)
 
 /**
  * MenuItem — a single selectable row inside a `Menu`. Composes a leading
@@ -123,6 +154,11 @@ export const MenuItem = ({
   submenu,
   value,
   onSelect,
+  href,
+  target,
+  rel,
+  download,
+  ping,
   role: roleOverride,
   className,
   style,
@@ -158,6 +194,48 @@ export const MenuItem = ({
   // resolves on newer engines) — for the host and, so it adopts the row's tone,
   // the checkbox/radio indicator.
   const toneAttr = effectiveTone && effectiveTone !== 'neutral' ? effectiveTone : undefined
+
+  // Label block — shared by the element and link renders. A hint stacks under
+  // the label in a column; without it the label is a bare row child.
+  const labelNode =
+    label != null &&
+    (hint != null ? (
+      <a-menu-item-text>
+        <a-menu-item-label>{label}</a-menu-item-label>
+        <a-menu-item-hint>{hint}</a-menu-item-hint>
+      </a-menu-item-text>
+    ) : (
+      <a-menu-item-label>{label}</a-menu-item-label>
+    ))
+
+  if (href != null) {
+    const linkAttrs = {
+      'data-anta-menu-item': '',
+      role: roleOverride ?? 'menuitem',
+      href: disabled ? undefined : href,
+      target,
+      rel,
+      download: download === true ? '' : download || undefined,
+      ping,
+      tabIndex: disabled ? -1 : 0,
+      'aria-disabled': disabled ? 'true' : undefined,
+      'aria-current': selected ? 'true' : undefined,
+      tone: toneAttr,
+      style: toneStyle(effectiveTone, '--menu-item-tone-source', style),
+      onClick: onSelect && !disabled ? (e: any) => onSelect(e, { value, label }) : undefined,
+      class: className,
+    } as any
+    return (
+      <a {...linkAttrs} {...rest}>
+        {icon && <a-icon shape={icon} aria-hidden="true" />}
+        {labelNode}
+        {children}
+        {kbd && <kbd>{kbd}</kbd>}
+        {iconTrailing && <a-icon shape={iconTrailing} aria-hidden="true" />}
+      </a>
+    )
+  }
+
   return (
     <a-menu-item
       role={roleOverride ?? role}
@@ -224,18 +302,7 @@ export const MenuItem = ({
         />
       ) : null}
       {icon && <a-icon shape={icon} aria-hidden="true" />}
-      {label != null &&
-        (hint != null ? (
-          // A hint stacks under the label in a column; the icon / kbd / trailing
-          // icon stay in the row (the item's `align-items: center` centers them
-          // against the two-line block).
-          <a-menu-item-text>
-            <a-menu-item-label>{label}</a-menu-item-label>
-            <a-menu-item-hint>{hint}</a-menu-item-hint>
-          </a-menu-item-text>
-        ) : (
-          <a-menu-item-label>{label}</a-menu-item-label>
-        ))}
+      {labelNode}
       {/* Children sit after the label but before `kbd` and the trailing icon, so
           a slotted badge / counter (a `<Tag>`) lands just left of the shortcut
           hint / chevron rather than past it. The label's `flex: 1` right-aligns

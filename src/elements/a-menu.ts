@@ -1,5 +1,5 @@
 import { HTMLElementBase, anchorRect, setMenuPresence } from '../anta_helpers'
-import { AMenuItemElement } from './a-menu-item'
+import { AMenuItemElement, isMenuItemEl, ensureMenuItemKeyListener } from './a-menu-item'
 import './a-menu.css'
 
 /** Gap (px) the surface keeps from the anchor / viewport edge. */
@@ -461,6 +461,10 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   connectedCallback() {
+    // Ensure Enter/Space activation works even for a menu built only from link
+    // items (`<a data-anta-menu-item>`), where no `<a-menu-item>` ever upgrades
+    // to install the listener itself. Idempotent per document.
+    ensureMenuItemKeyListener(this.doc)
     const anchor = this.triggerAnchor
     if (anchor) {
       anchorToMenu.set(anchor, this)
@@ -619,6 +623,15 @@ export class AMenuElement extends HTMLElementBase {
     )
   }
 
+  /** The rows the arrow keys / Home / End / initial-focus step between:
+   *  `focusableItems()` PLUS native-anchor link items (`<a data-anta-menu-item>`),
+   *  in DOM order, of THIS menu. Broader than `focusableItems()`, which stays
+   *  custom-element-only because the combobox cursor (`setActive`) and selection
+   *  seating are `a-menu-item` affordances a plain link doesn't carry. */
+  private navigableItems(): HTMLElement[] {
+    return this.focusables().filter((el) => isMenuItemEl(el))
+  }
+
   /** Every tabbable element belonging to THIS menu (items + nested controls
    *  like inputs / sliders / buttons), in DOM order, visible and enabled —
    *  used to trap Tab within the open menu. Submenu contents are excluded
@@ -647,7 +660,7 @@ export class AMenuElement extends HTMLElementBase {
    *  THIS menu, so a leaf buried in a closed submenu (not visible) is skipped and
    *  a multi-select lands on its topmost checked row. */
   private seatInitialFocus(viaKeyboard: boolean) {
-    const items = this.focusableItems()
+    const items = this.navigableItems()
     const selected = items.find(
       (el) =>
         el.hasAttribute('selected') ||
@@ -1218,6 +1231,13 @@ export class AMenuElement extends HTMLElementBase {
         return this.closeSystem(e)
       }
 
+      // A native-anchor link item closes the system on activation, like an
+      // `<a-menu-item>` choice — it matters for a link that doesn't navigate the
+      // current document (target="_blank" / download); a same-tab link unloads
+      // the page anyway. Disabled links carry pointer-events:none, so a click
+      // never lands on them to reach here.
+      if (node.matches('a[data-anta-menu-item]')) return this.closeSystem(e)
+
       // Custom content opts into closing with `data-menu-close`.
       if (node.hasAttribute('data-menu-close')) return this.closeSystem(e)
     }
@@ -1295,10 +1315,10 @@ export class AMenuElement extends HTMLElementBase {
     // the user has Tabbed onto a NESTED control in this menu (input, slider,
     // button), hand the keys back to it.
     const within = active?.closest('a-menu') === this
-    if (within && !(active instanceof AMenuItemElement)) return
+    if (within && !isMenuItemEl(active)) return
 
-    const items = this.focusableItems()
-    const idx = active ? items.indexOf(active as AMenuItemElement) : -1
+    const items = this.navigableItems()
+    const idx = active ? items.indexOf(active as HTMLElement) : -1
 
     switch (e.key) {
       case 'ArrowDown':
@@ -1348,7 +1368,7 @@ export class AMenuElement extends HTMLElementBase {
     return item.querySelector('a-menu') as AMenuElement | null
   }
 
-  private typeahead(ch: string, items: AMenuItemElement[]) {
+  private typeahead(ch: string, items: HTMLElement[]) {
     this.typeBuffer += ch.toLowerCase()
     clearTimeout(this.typeTimer)
     this.typeTimer = setTimeout(() => (this.typeBuffer = ''), TYPEAHEAD_RESET)
@@ -1360,7 +1380,7 @@ export class AMenuElement extends HTMLElementBase {
    *  `<a-menu-item-label>` text so it excludes a trailing `kbd` hint AND — for
    *  a submenu parent — the entire nested `<a-menu>` flyout's text (which is a
    *  light-DOM descendant, so it'd otherwise be folded into `textContent`). */
-  private itemLabel(it: AMenuItemElement): string {
+  private itemLabel(it: HTMLElement): string {
     const label = it.querySelector('a-menu-item-label')
     return ((label ?? it).textContent ?? '').trim().toLowerCase()
   }

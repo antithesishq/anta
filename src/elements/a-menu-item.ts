@@ -77,21 +77,47 @@ export class AMenuItemElement extends HTMLElementBase {
     // iframe (the docs playground), and a-menu binds its own listeners through
     // `this.doc`/`this.view` too — a parent-frame listener here would leave
     // Enter/Space activation dead for items rendered in another frame.
-    const doc = this.doc
-    if (!doc.hasKeyListenerForAMenuItem) {
-      doc.addEventListener('keydown', handleKeyDown, true)
-      doc.hasKeyListenerForAMenuItem = true
-    }
+    ensureMenuItemKeyListener(this.doc)
   }
+}
+
+/** Both menu-item shapes the parent `<a-menu>` treats as one row: the
+ *  `<a-menu-item>` custom element, and the native-anchor link variant
+ *  (`<a data-anta-menu-item href>`) that `MenuItem` renders when given an `href`.
+ *  Used for hit-testing (Enter/Space activation, arrow nav, close-on-select). */
+export const MENU_ITEM_SELECTOR = 'a-menu-item, a[data-anta-menu-item]'
+
+/** True for either menu-item shape (see `MENU_ITEM_SELECTOR`). Narrows an
+ *  `EventTarget` / focused node to the row element. */
+export function isMenuItemEl(el: EventTarget | null | undefined): el is HTMLElement {
+  return (
+    el instanceof AMenuItemElement ||
+    (el instanceof HTMLElement && el.matches('a[data-anta-menu-item]'))
+  )
+}
+
+/** Install the one-per-document Enter/Space activation listener. Called from
+ *  both `AMenuItemElement` and `AMenuElement` on connect, so a menu built only
+ *  from link items (no `<a-menu-item>` ever upgrades) still gets keyboard
+ *  activation. Idempotent per document. */
+export function ensureMenuItemKeyListener(doc: Document) {
+  if (doc.hasKeyListenerForAMenuItem) return
+  doc.addEventListener('keydown', handleKeyDown, true)
+  doc.hasKeyListenerForAMenuItem = true
 }
 
 function handleKeyDown(e: KeyboardEvent) {
   if (e.key !== 'Enter' && e.key !== ' ') return
-  const el = (e.target as HTMLElement)?.closest?.('a-menu-item') as AMenuItemElement | null
+  const el = (e.target as HTMLElement)?.closest?.(MENU_ITEM_SELECTOR) as HTMLElement | null
   if (!el) return
+  // preventDefault cancels the anchor's own native Enter → click too, so a link
+  // item activates exactly once (through the click below), never twice.
   e.preventDefault()
   // Disabled items swallow the key without activating.
   if (el.hasAttribute('disabled')) return
+  // `.click()` on a link item navigates natively (honouring download / target)
+  // and fires its click handler; on the custom element it routes through the
+  // menu's click delegation. One path for both.
   el.click()
 }
 

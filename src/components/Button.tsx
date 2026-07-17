@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+import { toneStyle, roundStyle, roundAttr, wrapLabel, nativeStateChange } from "../anta_helpers"
 
 /** Always-allowed props, independent of content/submit/priority mode. */
 export type BaseButtonProps = {
@@ -118,7 +118,31 @@ export type PriorityMode =
       paddingless?: boolean
     }
 
-export type ButtonProps = BaseButtonProps & PriorityMode & ContentMode & SubmitMode & BaseProps
+/** Copy axis — turns the button into a copy control that writes to the clipboard
+ *  on click and flashes a success / failure state (see `<a-button>`'s copy
+ *  behavior). Set `copy` for a literal string, or `copyNode` to copy a DOM node.
+ *  For the batteries-included preset, use `ButtonCopy`. */
+export type CopyMode = {
+  /** Text copied on click. When omitted with `copyLazy`, the content is
+   *  requested via `onCopyRequest` at click time. */
+  copy?: string
+  /** Copy a DOM node as rich text instead of a string. `true` copies the nearest
+   *  ancestor marked `data-copy-source`; a string is a CSS selector for an
+   *  ancestor region (resolved with `closest`). The copy control itself is
+   *  stripped from the copied output. */
+  copyNode?: boolean | string
+  /** Lazy copy: keep `copy` empty and provide the content from `onCopyRequest`
+   *  when the click fires — the write completes when you set `copy` back, inside
+   *  the click's activation window. Keeps large content out of the DOM until
+   *  it's needed. */
+  copyLazy?: boolean
+  /** Fires after a copy attempt with whether it succeeded. */
+  onCopied?: (ok: boolean) => void
+  /** Fires on a lazy-copy click so you can compute + supply the `copy` value. */
+  onCopyRequest?: () => void
+}
+
+export type ButtonProps = BaseButtonProps & PriorityMode & ContentMode & SubmitMode & CopyMode & BaseProps
 
 /**
  * Action button.
@@ -156,11 +180,20 @@ export const Button = ({
   href,
   type,
   form,
+  copy,
+  copyNode,
+  copyLazy,
+  onCopied,
+  onCopyRequest,
   className,
   style,
   children,
   ...rest
 }: ButtonProps) => {
+  // A copy control when any copy prop is set. The leading glyph becomes a stack
+  // (idle / success / failure) the element's `:state()` picks from — see
+  // a-button.css and copy-behavior.ts.
+  const isCopy = copy != null || copyNode != null || copyLazy === true
   // Empty string is "no tone" — same as omitting the prop: neutral base.
   // Don't emit a bare `tone=""` (it matched the custom-tone branch and
   // resolved to a `transparent` source, rendering an invisible button).
@@ -169,8 +202,12 @@ export const Button = ({
   // derivation via the inline custom property (shared helper — see anta_helpers).
   const computedStyle = roundStyle(round, '--button-round', toneStyle(toneAttr, '--button-tone-source', style))
 
+  // Leading icon: a copy control defaults to the `copy` glyph when no icon is
+  // given (ButtonCopy swaps this to check / ✕ on the copy result).
+  const leadingIcon = icon ?? (isCopy ? 'copy' : undefined)
+  // Icon-only: a leading icon and no text content.
   const isIconOnly =
-    icon != null && label == null && children == null && iconTrailing == null
+    leadingIcon != null && label == null && children == null && iconTrailing == null
 
   const sharedAttrs = {
     // `<a-button>` is a custom element with no implicit ARIA role, so AT would
@@ -201,16 +238,29 @@ export const Button = ({
     'aria-disabled': disabled || loading ? 'true' : undefined,
     'aria-busy': loading ? 'true' : undefined,
     'aria-pressed': selected ? 'true' : undefined,
-    // Icon-only buttons get an accessible name from the icon shape;
-    // consumer's own `aria-label` (via ...rest) wins by spread order.
-    'aria-label': isIconOnly ? icon : undefined,
+    // Icon-only buttons get an accessible name: "Copy" for a copy control (its
+    // glyph carries no text), else the icon shape. Consumer's own `aria-label`
+    // (via ...rest) wins by spread order.
+    'aria-label': isIconOnly ? (isCopy ? 'Copy' : icon) : undefined,
+    // Copy behavior — the element reads these and performs the write itself.
+    // `copy=""` + `copy-lazy` is the lazy path; a value copies eagerly.
+    copy: copy != null ? copy : copyLazy ? '' : undefined,
+    'copy-node': copyNode === true ? '' : typeof copyNode === 'string' ? copyNode : undefined,
+    'copy-lazy': copyLazy ? '' : undefined,
+    // Marks the control so `copy-node` serialization strips it from the copied
+    // node (a copy button inside the copied region shouldn't paste itself).
+    'data-copy-node-button': copyNode != null && copyNode !== false ? '' : undefined,
+    oncopydone: onCopied
+      ? (e: any) => onCopied(nativeStateChange<{ ok: boolean }>(e).detail?.ok ?? false)
+      : undefined,
+    oncopyrequest: onCopyRequest ? () => onCopyRequest() : undefined,
     class: className,
     style: computedStyle,
   } as const
 
   const inner = (
     <>
-      {icon && <a-icon shape={icon} aria-hidden="true" />}
+      {leadingIcon && <a-icon shape={leadingIcon} aria-hidden="true" />}
       {label != null && <a-button-label>{label}</a-button-label>}
       {wrapLabel(children, 'a-button-label')}
       {iconTrailing && <a-icon shape={iconTrailing} aria-hidden="true" />}

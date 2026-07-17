@@ -1,4 +1,5 @@
 import { HTMLElementBase } from '../anta_helpers'
+import { runCopy, notifyCopyAttrChanged } from './copy-behavior'
 import './a-menu-item.css'
 
 declare global {
@@ -50,11 +51,23 @@ declare global {
 export class AMenuItemElement extends HTMLElementBase {
   private internals?: ElementInternals
 
+  // Observe `copy` so a lazily-provided value can complete a pending copy.
+  static observedAttributes = ['copy']
+
   constructor() {
     super()
     // Custom-state carrier for the combobox cursor (see `active` below). No form
     // association — `attachInternals` is used only for `states`.
     this.internals = this.attachInternals?.()
+    // A copy item writes to the clipboard when the parent `a-menu` reports its
+    // activation (`menuselect`, dispatched on this item). runCopy no-ops on a
+    // non-copy item, so binding unconditionally is cheap; the outcome rides a
+    // bubbling `copydone` the wrapper reflects.
+    this.addEventListener('menuselect', () => runCopy(this))
+  }
+
+  attributeChangedCallback(name: string) {
+    if (name === 'copy') notifyCopyAttrChanged(this)
   }
 
   /** The active (combobox) cursor. `a-menu` sets this **property** (never an

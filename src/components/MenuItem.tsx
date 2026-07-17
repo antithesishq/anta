@@ -1,6 +1,6 @@
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle } from '../anta_helpers'
+import { toneStyle, nativeStateChange } from '../anta_helpers'
 
 /** Props shared by every menu item, link or not. */
 export interface MenuItemCommonProps extends BaseProps {
@@ -83,6 +83,11 @@ export type MenuItemLinkMode = {
   selectionIndicator?: never
   indeterminate?: never
   indicator?: never
+  copy?: never
+  copyNode?: never
+  copyLazy?: never
+  onCopied?: never
+  onCopyRequest?: never
 }
 
 export type MenuItemActionMode = {
@@ -114,6 +119,22 @@ export type MenuItemActionMode = {
    *  built-in checkbox / radio and the trailing `check` glyph. The node is made
    *  passive (aria-hidden, no pointer events) so the row owns the click. */
   indicator?: React.ReactNode
+  /** Text copied to the clipboard when the row is chosen (a "copying menu item").
+   *  The element performs the write itself; the menu closes on select as usual
+   *  (add `data-menu-open` to linger on the success state). For the preset, use
+   *  `MenuItemCopy`. */
+  copy?: string
+  /** Copy a DOM node as rich text instead of a string. `true` copies the nearest
+   *  ancestor marked `data-copy-source`; a string is a CSS selector for an
+   *  ancestor region (resolved with `closest`). */
+  copyNode?: boolean | string
+  /** Lazy copy: keep `copy` empty and supply the content from `onCopyRequest`
+   *  when the row is chosen — the write completes when you set `copy` back. */
+  copyLazy?: boolean
+  /** Fires after a copy attempt with whether it succeeded. */
+  onCopied?: (ok: boolean) => void
+  /** Fires on a lazy-copy activation so you can compute + supply the `copy` value. */
+  onCopyRequest?: () => void
 }
 
 export type MenuItemProps = MenuItemCommonProps & (MenuItemLinkMode | MenuItemActionMode)
@@ -159,12 +180,22 @@ export const MenuItem = ({
   rel,
   download,
   ping,
+  copy,
+  copyNode,
+  copyLazy,
+  onCopied,
+  onCopyRequest,
   role: roleOverride,
   className,
   style,
   children,
   ...rest
 }: MenuItemProps) => {
+  // A copy row when any copy prop is set. The element performs the write on
+  // `menuselect` and announces it via `copydone`; the leading glyph defaults to
+  // `copy` (MenuItemCopy swaps it on the result).
+  const isCopy = copy != null || copyNode != null || copyLazy === true
+  const leadingIcon = icon ?? (isCopy ? 'copy' : undefined)
   // A checkable row is the control itself: it flips role to menuitem{checkbox,radio}
   // and carries aria-checked. The leading `checkbox`/`radio` styles render a passive
   // <a-checkbox>/<a-radio> and drop the tint (the mark conveys state); the `check`
@@ -261,6 +292,13 @@ export const MenuItem = ({
       // clicks). It's a MouseEvent, so `onSelect` still sees the modifier keys
       // (e.g. `Select`'s Alt/Option-click isolate reads `altKey`).
       onmenuselect={onSelect ? (e: any) => onSelect(e, { value, label }) : undefined}
+      // Copy behavior — the element writes to the clipboard on `menuselect`.
+      copy={copy != null ? copy : copyLazy ? '' : undefined}
+      copy-node={copyNode === true ? '' : typeof copyNode === 'string' ? copyNode : undefined}
+      copy-lazy={copyLazy ? '' : undefined}
+      data-copy-node-button={copyNode != null && copyNode !== false ? '' : undefined}
+      oncopydone={onCopied ? (e: any) => onCopied(nativeStateChange<{ ok: boolean }>(e).detail?.ok ?? false) : undefined}
+      oncopyrequest={onCopyRequest ? () => onCopyRequest() : undefined}
       class={className}
       {...rest}
     >
@@ -301,7 +339,7 @@ export const MenuItem = ({
           style={toneStyle(effectiveTone, '--radio-tone-source')}
         />
       ) : null}
-      {icon && <a-icon shape={icon} aria-hidden="true" />}
+      {leadingIcon && <a-icon shape={leadingIcon} aria-hidden="true" />}
       {labelNode}
       {/* Children sit after the label but before `kbd` and the trailing icon, so
           a slotted badge / counter (a `<Tag>`) lands just left of the shortcut

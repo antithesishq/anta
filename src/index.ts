@@ -33,7 +33,10 @@ export type {
   ContentMode,
   SubmitMode,
   PriorityMode,
+  CopyMode,
 } from './components/Button'
+export { ButtonCopy } from './components/ButtonCopy'
+export type { ButtonCopyProps } from './components/ButtonCopy'
 export { ICON_SHAPES, ICON_SYNONYMS } from './elements/a-icon.shapes'
 export { Tooltip } from './components/Tooltip'
 export type { TooltipProps } from './components/Tooltip'
@@ -43,6 +46,8 @@ export { Menu } from './components/Menu'
 export type { MenuProps } from './components/Menu'
 export { MenuItem } from './components/MenuItem'
 export type { MenuItemProps } from './components/MenuItem'
+export { MenuItemCopy } from './components/MenuItemCopy'
+export type { MenuItemCopyProps } from './components/MenuItemCopy'
 export { MenuSeparator } from './components/MenuSeparator'
 export type { MenuSeparatorProps } from './components/MenuSeparator'
 export { MenuGroup } from './components/MenuGroup'

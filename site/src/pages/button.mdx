@@ -9,6 +9,9 @@ import Disclosure from '../components/Disclosure.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import buttonDemoCode from './button.demo.ts'
+import ButtonCopyDemo from '../components/ButtonCopyDemo'
+import ButtonCopyNodeDemo from '../components/ButtonCopyNodeDemo'
+import ButtonCopyLazyDemo from '../components/ButtonCopyLazyDemo'
 import { Button } from '@antadesign/anta'
 
 # Button
@@ -420,6 +423,106 @@ underline stylistically, it supports three styles — `solid`, `dashed`,
   Beats inline `--button-bg` overrides.
 - **`selected`** — toggled-on / pressed visual; shares the active
   state's look. Useful for filter chips and icon toggles.
+
+</Col>
+</Columns>
+
+## Copy to clipboard
+
+`ButtonCopy` is a copy button: the `<a-button>` element writes to the clipboard
+itself on click, and the wrapper flips the leading icon to a check and retones to
+`success` for ~2s (✕ / `critical` on failure). Set `copy` for a literal string,
+or drop the label for an icon-only copy button.
+
+<Columns>
+<Col>
+
+<Preview minHeight={70}>
+  <ButtonCopyDemo client:visible />
+</Preview>
+
+```tsx folded
+<ButtonCopy copy="npm i @antadesign/anta" label="Copy install command" />
+<ButtonCopy copy="https://anta.design" priority="tertiary" /> // icon-only
+```
+
+</Col>
+<Col>
+
+The copy logic lives in the web component, so the button works the same whether
+you render `<ButtonCopy>`, plain `<Button copy=…>`, or author `<a-button copy=…>`
+by hand — only the icon / tone feedback needs the wrapper. `onCopied(ok)` fires
+after each attempt. Override the resting glyph with `icon`; the check / ✕ swap in
+only during the feedback window.
+
+</Col>
+</Columns>
+
+### Copy a DOM node
+
+Pass `copyNode` to copy a rendered region as rich text (`text/html`) plus plain
+text, instead of a string. Bare `copyNode` copies the nearest ancestor marked
+`data-copy-source`; a string is a CSS selector for an ancestor region. The copy
+button itself is stripped from what's copied.
+
+<Columns>
+<Col>
+
+<Preview minHeight={110}>
+  <ButtonCopyNodeDemo client:visible />
+</Preview>
+
+```tsx folded
+<div data-copy-source>
+  <Text>The quick brown fox jumps over the lazy dog.</Text>
+  <ButtonCopy copyNode label="Copy card" size="small" priority="tertiary" />
+</div>
+```
+
+</Col>
+<Col>
+
+Copying rich text lets a paste target keep formatting (bold, links, list
+structure) while a plain-text target still gets clean text. Paste the copied
+card into a rich editor and a plain one to see both.
+
+</Col>
+</Columns>
+
+### Lazy content
+
+With `copyLazy`, the content isn't computed or held in the DOM until the click:
+the button fires `onCopyRequest`, you compute the value and set `copy`, and the
+write completes inside the click's activation window. Useful when the payload is
+large or expensive, or arrives from another thread.
+
+<Columns>
+<Col>
+
+<Preview minHeight={90}>
+  <ButtonCopyLazyDemo client:visible />
+</Preview>
+
+```tsx folded
+const [payload, setPayload] = useState('')
+
+<ButtonCopy
+  copy={payload}
+  copyLazy
+  label="Copy report"
+  onCopyRequest={() => setPayload(generateReport())} // computed on click
+  onCopied={() => setPayload('')}                     // reset for next click
+/>
+```
+
+</Col>
+<Col>
+
+The `copy` value starts empty, so nothing large sits in the DOM. On click the
+element asks for it (`onCopyRequest`), you set it, and the pending write flushes
+once the value lands — the clipboard API's user-gesture requirement is preserved
+because the activation is still live. Resetting `copy` on `onCopied` keeps every
+click a fresh request.
 
 </Col>
 </Columns>

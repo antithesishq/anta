@@ -746,6 +746,24 @@ export interface AMenuItemAttributes extends BaseAttributes {
    *  a `MouseEvent`, carrying the modifier keys (e.g. `altKey`). All-lowercase so
    *  React/Preact bind it to the CustomEvent. */
   onmenuselect?: (e: MouseEvent) => void
+  /** Text copied to the clipboard when the row is chosen (a "copying menu item").
+   *  The element performs the write itself on `menuselect`. */
+  copy?: string
+  /** Copy a DOM node instead of a string (rich `text/html` + plain text). Bare
+   *  `copy-node` copies the nearest ancestor marked `[data-copy-source]`; a value
+   *  is a CSS selector resolved with `closest()`. Presence-based for the boolean
+   *  form. */
+  'copy-node'?: boolean | string
+  /** Lazy copy: with an empty `copy`, activation dispatches `copyrequest` and the
+   *  write completes once `copy` is set back (within the activation window).
+   *  Presence-based. */
+  'copy-lazy'?: boolean | ''
+  /** Fired after a copy attempt (bubbling `copydone`, `detail: { ok }`).
+   *  All-lowercase so it binds in React *and* Preact. */
+  oncopydone?: (e: CustomEvent<{ ok: boolean }>) => void
+  /** Fired on a lazy copy activation to request the content (bubbling
+   *  `copyrequest`). Answer by setting the `copy` attribute. All-lowercase. */
+  oncopyrequest?: (e: CustomEvent) => void
 }
 
 /**
@@ -798,6 +816,24 @@ export interface AButtonAttributes extends BaseAttributes {
   form?: string
   /** Custom event name dispatched (bubbling) on click. */
   'data-custom-event'?: string
+  /** Text copied to the clipboard on activation (the "copy button"). The element
+   *  performs the write itself and flashes a success / failure state. */
+  copy?: string
+  /** Copy a DOM node instead of a string (rich `text/html` + plain text). Bare
+   *  `copy-node` copies the nearest ancestor marked `[data-copy-source]`; a value
+   *  is a CSS selector resolved with `closest()` (an ancestor region). Presence-
+   *  based for the boolean form. */
+  'copy-node'?: boolean | string
+  /** Lazy copy: with an empty `copy`, activation dispatches `copyrequest` and the
+   *  write completes once `copy` is set back (within the click's activation
+   *  window) — the content stays out of the DOM until it's needed. Presence-based. */
+  'copy-lazy'?: boolean | ''
+  /** Fired after a copy attempt (bubbling `copydone`, `detail: { ok }`).
+   *  All-lowercase so it binds in React *and* Preact. */
+  oncopydone?: (e: CustomEvent<{ ok: boolean }>) => void
+  /** Fired on a lazy copy activation to request the content (bubbling
+   *  `copyrequest`). Answer by setting the `copy` attribute. All-lowercase. */
+  oncopyrequest?: (e: CustomEvent) => void
   'aria-disabled'?: 'true' | 'false' | boolean
   'aria-busy'?: 'true' | 'false' | boolean
 }

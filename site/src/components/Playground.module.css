@@ -447,6 +447,12 @@
   font-style: italic;
 }
 
+.docNote {
+  font-size: 12px;
+  color: var(--text-4);
+  font-style: italic;
+}
+
 .slider {
   width: 100%;
   appearance: none;

@@ -67,11 +67,6 @@ export interface MenuItemCommonProps extends BaseProps {
   children?: React.ReactNode
 }
 
-/** Link mode — `href` renders the item as a native `<a>` (so it navigates,
- *  downloads, opens in a new tab on ⌘/middle-click, and offers "copy link
- *  address"), styled as a menu row and treated as a first-class item by the
- *  parent `Menu` (arrow nav, Enter/Space, close-on-select). Anchors don't take
- *  the checkable / submenu props. */
 export type MenuItemLinkMode = {
   /** Renders the item as `<a role="menuitem" data-anta-menu-item href>`. */
   href: string
@@ -90,8 +85,6 @@ export type MenuItemLinkMode = {
   indicator?: never
 }
 
-/** Action mode (the default) — a non-navigating row: a plain action, a submenu
- *  parent, or a checkable option. */
 export type MenuItemActionMode = {
   href?: never
   target?: never
@@ -215,19 +208,7 @@ export const MenuItem = ({
       <a-menu-item-label>{label}</a-menu-item-label>
     ))
 
-  // Link mode — a real anchor styled as a menu row (`href` set). It carries no
-  // submenu / selection semantics (the prop type forbids them), so the content
-  // is just icon → label → children → kbd → trailing icon. `data-anta-menu-item`
-  // opts it into the row styling AND marks it as a menu item for `<a-menu>`
-  // (arrow nav, Enter/Space activation, close-on-select). onSelect rides the
-  // native click (Enter/Space route through the element's synthesized click);
-  // the `menuselect` event the custom element uses can't bind on a plain `<a>`
-  // portably. A "current" link uses `selected` → `aria-current`. A disabled link
-  // drops `href` (inert, out of the tab order) and rings off `aria-disabled` —
-  // React drops a bare `disabled`/`selected` boolean on a native anchor.
   if (href != null) {
-    // `tone` / `class` / `data-anta-menu-item` aren't in the native anchor's JSX
-    // types; cast the attrs bag (same pattern as `Button`'s anchor branch).
     const linkAttrs = {
       'data-anta-menu-item': '',
       role: roleOverride ?? 'menuitem',

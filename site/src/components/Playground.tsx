@@ -1135,9 +1135,12 @@ function FieldControl({
       )
     }
     case 'documentation':
-      // Read-only documentation row — no input, just the type
-      // string so the panel doubles as a prop reference.
-      return (
+      // Read-only documentation row — no input. A `note` renders as a plain
+      // prose line (e.g. a compound component's `children`, edited in the Code
+      // tab); otherwise the type string, so the panel doubles as a prop reference.
+      return control.note ? (
+        <div class={s.docNote}>{control.note}</div>
+      ) : (
         <div class={s.docType}>
           <code>{control.type}</code>
         </div>

@@ -31,6 +31,17 @@ const EXCLUDED_BY_COMPONENT: Record<string, Set<string>> = {
   Dialog: new Set(['open', 'defaultOpen', 'name', 'onStateChange']),
 }
 
+/** Components whose `children` are structural sub-elements (a tree of other
+ *  Anta components), not simple text. For these the panel can't offer a useful
+ *  one-line editor, and a raw serialized-markup text box just duplicates the
+ *  Code tab confusingly — so the `children` row becomes a read-only note
+ *  pointing at the Code tab instead. (Text-children components like Button /
+ *  Text / Title / Tag keep the editable field — there it edits the label.)
+ *  A later iteration replaces this with per-child visual config panels. */
+const STRUCTURAL_CHILDREN = new Set([
+  'Menu', 'Tabs', 'RadioGroup', 'Select', 'SelectFaceted',
+])
+
 /** Explicit control order per component. Listed names lead in this order;
  *  any prop not listed keeps its natural (flatten) position after them. The
  *  discriminated-union prop types can't express this order at the type level
@@ -87,8 +98,10 @@ export type Control =
   /** Read-only entry for props we can't drive with a generic input
    *  — `children`, `style`, `ReactNode`, named references, etc. The
    *  form renders the name + type + description so the prop is
-   *  documented in place, without offering an edit affordance. */
-  | { kind: 'documentation'; name: string; type: string; description?: string }
+   *  documented in place, without offering an edit affordance. `note`,
+   *  when set, replaces the type pill with a plain-prose line (e.g.
+   *  "Set in the Code tab." for a compound component's `children`). */
+  | { kind: 'documentation'; name: string; type: string; note?: string; description?: string }
 
 export interface PropEntry {
   control: Control
@@ -133,6 +146,23 @@ export function controlsFor(componentName: string): PropEntry[] {
     const ctl = controlFor(p, root)
     if (!ctl) continue
     entries.push(ctl)
+  }
+
+  // For components whose children are structural (see STRUCTURAL_CHILDREN),
+  // demote the editable `children` field to a read-only note that points at
+  // the Code tab — a serialized-markup text box for a tree of sub-components is
+  // a confusing duplicate of the code.
+  if (STRUCTURAL_CHILDREN.has(componentName)) {
+    const ce = entries.find((e) => e.control.name === 'children')
+    if (ce) {
+      ce.control = {
+        kind: 'documentation',
+        name: 'children',
+        type: ce.control.kind === 'documentation' ? ce.control.type : 'ReactNode',
+        note: 'Set in the Code tab.',
+        description: ce.control.description,
+      }
+    }
   }
 
   // Apply the explicit display order, if any. Listed names sort to the front

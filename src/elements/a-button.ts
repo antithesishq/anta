@@ -1,4 +1,5 @@
 import { HTMLElementBase } from "../anta_helpers";
+import { runCopy } from "./copy-behavior";
 import "./a-button.css";
 
 declare global {
@@ -85,6 +86,13 @@ export class AButtonElement extends HTMLElementBase {
     // frame the element actually lives in (parent page or playground iframe).
     installDocumentHandlers(this.doc);
   }
+
+  /** Perform a copy if this button is a copy control (`copy` / `copy-node` /
+   *  `copy-lazy`). Called from the delegated click handler on activation. The
+   *  outcome is announced via a `copydone` event the wrapper reflects. */
+  performCopy(): boolean {
+    return runCopy(this);
+  }
 }
 
 function findForm(el: HTMLElement): HTMLFormElement | null {
@@ -127,6 +135,11 @@ function handleClick(e: MouseEvent) {
       new CustomEvent(customEvent, { bubbles: true, cancelable: true }),
     );
   }
+
+  // Copy controls (`copy` / `copy-node`) write to the clipboard on this same
+  // activation and reflect the outcome as feedback state — independent of the
+  // form logic below (a copy button is a plain `type="button"`).
+  el.performCopy();
 
   const type = el.getAttribute("type") || "button";
   const form = findForm(el);

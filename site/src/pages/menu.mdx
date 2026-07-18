@@ -10,6 +10,7 @@ import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import menuDemoCode from './menu.demo.ts'
 import MenuNestedDemo from '../components/MenuNestedDemo'
+import MenuCopyDemo from '../components/MenuCopyDemo'
 import { Menu, MenuItem, MenuSeparator, MenuGroup, Button, Tag } from '@antadesign/anta'
 
 # Menu
@@ -572,6 +573,39 @@ chevron stay centered on the row, so it composes with a trailing counter.
   <MenuItem icon="folder-open" label="Active" hint="12 open items"><Tag size="small" tone="info">12</Tag></MenuItem>
   <MenuItem icon="folder-close" label="Archived" hint="Read-only" />
   <MenuItem icon="trash" label="Trash"><Tag size="small">3</Tag></MenuItem>
+</Menu>
+```
+
+</Col>
+</Columns>
+
+## Copy items
+
+<Columns reverse>
+<Col>
+
+`MenuItemCopy` is a row that copies to the clipboard when chosen — `copy` for a
+literal string, `copyNode` for a DOM region. The `<a-menu-item>` element performs
+the write itself; the row closes on select as usual. Add `data-menu-open` to keep
+the menu open and show the check / retone feedback, or `onCopied(ok)` to react.
+
+Copy sits alongside normal items, so a "Share" menu can mix a copy-link row with
+navigating links.
+
+</Col>
+<Col>
+
+<Preview minHeight={70}>
+  <MenuCopyDemo client:visible />
+</Preview>
+
+```tsx folded
+<Button icon="share" iconTrailing="chevron-down" label="Share" />
+<Menu>
+  <MenuItemCopy copy={pageUrl} label="Copy link" kbd="⌘C" data-menu-open />
+  <MenuItemCopy copy={embedHtml} icon="braces" label="Copy embed" data-menu-open />
+  <MenuSeparator />
+  <MenuItem icon="external-link" label="Open in new tab" href="/menu" target="_blank" />
 </Menu>
 ```
 

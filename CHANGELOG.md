@@ -6,6 +6,11 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
+## 0.3.10 — July 17, 2026
+
+### Added
+- **Copy button & copying menu item.** `ButtonCopy` and `MenuItemCopy` copy to the clipboard on activation. Exactly one mode (enforced by the `CopyMode` discriminated union): `copy` for a literal string; `copyNode` (bare → nearest `data-copy-source` ancestor; a selector → `closest()`) to copy a DOM region as rich text (`text/html`) + plain text with the copy control stripped from the output; or `copyLazy`, where the content stays out of the DOM until the click fires `onCopyRequest(provide)` and you call `provide(text)` (sync or after an `await`, within the click's activation window). The write lives in the web component (`<a-button>` / `<a-menu-item>`); it reports the result on a non-bubbling `copydone` event, and the wrapper flips the leading icon to a check / ✕ and retones to `success` / `critical` for ~2s. `onCopied(ok)` callback. The `copy` / `copy-node` / `copy-lazy` attributes also work on plain `<Button>` / `<MenuItem>` and hand-authored `<a-button>` / `<a-menu-item>` (the icon/tone feedback is the preset wrappers' part). Exports `ButtonCopy`, `MenuItemCopy`, `ButtonCopyProps`, `MenuItemCopyProps`, and `CopyMode`.
+
 ## 0.3.9 — July 17, 2026
 
 ### Added

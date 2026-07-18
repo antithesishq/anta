@@ -120,27 +120,51 @@ export type PriorityMode =
 
 /** Copy axis — turns the button into a copy control that writes to the clipboard
  *  on click and flashes a success / failure state (see `<a-button>`'s copy
- *  behavior). Set `copy` for a literal string, or `copyNode` to copy a DOM node.
- *  For the batteries-included preset, use `ButtonCopy`. */
-export type CopyMode = {
-  /** Text copied on click. When omitted with `copyLazy`, the content is
-   *  requested via `onCopyRequest` at click time. */
-  copy?: string
-  /** Copy a DOM node as rich text instead of a string. `true` copies the nearest
-   *  ancestor marked `data-copy-source`; a string is a CSS selector for an
-   *  ancestor region (resolved with `closest`). The copy control itself is
-   *  stripped from the copied output. */
-  copyNode?: boolean | string
-  /** Lazy copy: keep `copy` empty and provide the content from `onCopyRequest`
-   *  when the click fires — the write completes when you set `copy` back, inside
-   *  the click's activation window. Keeps large content out of the DOM until
-   *  it's needed. */
-  copyLazy?: boolean
-  /** Fires after a copy attempt with whether it succeeded. */
-  onCopied?: (ok: boolean) => void
-  /** Fires on a lazy-copy click so you can compute + supply the `copy` value. */
-  onCopyRequest?: () => void
-}
+ *  behavior). **Exactly one** of `copy`, `copyNode`, or `copyLazy` may be set;
+ *  the union makes the others `never` in each mode. For the batteries-included
+ *  preset, use `ButtonCopy`. */
+export type CopyMode =
+  | {
+      copy?: never
+      copyNode?: never
+      copyLazy?: never
+      onCopied?: never
+      onCopyRequest?: never
+    }
+  | {
+      /** Text copied to the clipboard on click. */
+      copy: string
+      copyNode?: never
+      copyLazy?: never
+      onCopyRequest?: never
+      /** Fires after the copy attempt with whether it succeeded. */
+      onCopied?: (ok: boolean) => void
+    }
+  | {
+      /** Copy a DOM node as rich text instead of a string. `true` copies the
+       *  nearest ancestor marked `data-copy-source`; a string is a CSS selector
+       *  for an ancestor region (`closest`). The copy control is stripped from
+       *  the copied output. */
+      copyNode: boolean | string
+      copy?: never
+      copyLazy?: never
+      onCopyRequest?: never
+      /** Fires after the copy attempt with whether it succeeded. */
+      onCopied?: (ok: boolean) => void
+    }
+  | {
+      /** Lazy copy: the content isn't computed or held in the DOM until the
+       *  click. The click fires `onCopyRequest(provide)`; call `provide(text)`
+       *  with the value — synchronously, or after an `await` (the browser's
+       *  transient-activation window still covers the write). */
+      copyLazy: true
+      copy?: never
+      copyNode?: never
+      /** Supplies the lazily-computed content on click: call `provide(text)`. */
+      onCopyRequest: (provide: (text: string) => void) => void
+      /** Fires after the copy attempt with whether it succeeded. */
+      onCopied?: (ok: boolean) => void
+    }
 
 export type ButtonProps = BaseButtonProps & PriorityMode & ContentMode & SubmitMode & CopyMode & BaseProps
 
@@ -243,8 +267,7 @@ export const Button = ({
     // (via ...rest) wins by spread order.
     'aria-label': isIconOnly ? (isCopy ? 'Copy' : icon) : undefined,
     // Copy behavior — the element reads these and performs the write itself.
-    // `copy=""` + `copy-lazy` is the lazy path; a value copies eagerly.
-    copy: copy != null ? copy : copyLazy ? '' : undefined,
+    copy: copy != null ? copy : undefined,
     'copy-node': copyNode === true ? '' : typeof copyNode === 'string' ? copyNode : undefined,
     'copy-lazy': copyLazy ? '' : undefined,
     // Marks the control so `copy-node` serialization strips it from the copied
@@ -253,7 +276,11 @@ export const Button = ({
     oncopydone: onCopied
       ? (e: any) => onCopied(nativeStateChange<{ ok: boolean }>(e).detail?.ok ?? false)
       : undefined,
-    oncopyrequest: onCopyRequest ? () => onCopyRequest() : undefined,
+    // The element hands `provide` on the request event; forward it so the
+    // consumer supplies the lazily-computed content.
+    oncopyrequest: onCopyRequest
+      ? (e: any) => onCopyRequest(nativeStateChange<{ provide: (text: string) => void }>(e).detail!.provide)
+      : undefined,
     class: className,
     style: computedStyle,
   } as const

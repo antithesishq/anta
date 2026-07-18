@@ -492,9 +492,9 @@ card into a rich editor and a plain one to see both.
 ### Lazy content
 
 With `copyLazy`, the content isn't computed or held in the DOM until the click:
-the button fires `onCopyRequest`, you compute the value and set `copy`, and the
-write completes inside the click's activation window. Useful when the payload is
-large or expensive, or arrives from another thread.
+the button fires `onCopyRequest(provide)`, you compute the value and call
+`provide(text)`, and the element writes it. Useful when the payload is large or
+expensive, or arrives from another thread.
 
 <Columns>
 <Col>
@@ -504,25 +504,21 @@ large or expensive, or arrives from another thread.
 </Preview>
 
 ```tsx folded
-const [payload, setPayload] = useState('')
-
 <ButtonCopy
-  copy={payload}
   copyLazy
   label="Copy report"
-  onCopyRequest={() => setPayload(generateReport())} // computed on click
-  onCopied={() => setPayload('')}                     // reset for next click
+  onCopyRequest={(provide) => provide(generateReport())} // computed on click
 />
 ```
 
 </Col>
 <Col>
 
-The `copy` value starts empty, so nothing large sits in the DOM. On click the
-element asks for it (`onCopyRequest`), you set it, and the pending write flushes
-once the value lands — the clipboard API's user-gesture requirement is preserved
-because the activation is still live. Resetting `copy` on `onCopied` keeps every
-click a fresh request.
+Nothing large sits in the DOM — there's no bound `copy` value. On click the
+element hands you a `provide` callback; call it with the content, synchronously or
+after an `await` (fetching, a worker round-trip). The clipboard API's user-gesture
+requirement is preserved because the click's activation window is still live.
+Every click is a fresh request, with no state to reset.
 
 </Col>
 </Columns>

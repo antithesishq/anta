@@ -824,16 +824,18 @@ export interface AButtonAttributes extends BaseAttributes {
    *  is a CSS selector resolved with `closest()` (an ancestor region). Presence-
    *  based for the boolean form. */
   'copy-node'?: boolean | string
-  /** Lazy copy: with an empty `copy`, activation dispatches `copyrequest` and the
-   *  write completes once `copy` is set back (within the click's activation
-   *  window) — the content stays out of the DOM until it's needed. Presence-based. */
+  /** Lazy copy: activation dispatches `copyrequest`; the consumer calls
+   *  `detail.provide(text)` with the content, which stays out of the DOM until
+   *  then. Takes precedence over `copy`. Presence-based. */
   'copy-lazy'?: boolean | ''
-  /** Fired after a copy attempt (bubbling `copydone`, `detail: { ok }`).
-   *  All-lowercase so it binds in React *and* Preact. */
+  /** Fired after a copy attempt (`copydone`, `detail: { ok }`, non-bubbling so a
+   *  nested copy row can't flip an ancestor's feedback). All-lowercase so it
+   *  binds in React *and* Preact. */
   oncopydone?: (e: CustomEvent<{ ok: boolean }>) => void
-  /** Fired on a lazy copy activation to request the content (bubbling
-   *  `copyrequest`). Answer by setting the `copy` attribute. All-lowercase. */
-  oncopyrequest?: (e: CustomEvent) => void
+  /** Fired on a lazy copy activation (`copyrequest`, non-bubbling). Supply the
+   *  content by calling `detail.provide(text)` — synchronously or within the
+   *  click's activation window. All-lowercase. */
+  oncopyrequest?: (e: CustomEvent<{ provide: (text: string) => void }>) => void
   'aria-disabled'?: 'true' | 'false' | boolean
   'aria-busy'?: 'true' | 'false' | boolean
 }

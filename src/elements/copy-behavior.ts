@@ -2,33 +2,32 @@
  * Shared copy-to-clipboard behavior for `<a-button>` and `<a-menu-item>` — the
  * write half of the productized "copy button" / "copying menu item". The element
  * performs the clipboard write itself (rather than a UI-thread callback) and
- * reports the outcome with a bubbling `copydone` event; the JSX wrapper listens
- * and orchestrates the visual feedback (icon + tone swap). Nothing here touches
- * the DOM — no light-DOM mutation, no host attributes, no ElementInternals.
+ * reports the outcome with a `copydone` event; the JSX wrapper listens and
+ * orchestrates the visual feedback (icon + tone swap). Nothing here touches the
+ * DOM — no light-DOM mutation, no host attributes, no ElementInternals.
  *
- * Two modes, chosen by attribute:
+ * Events are dispatched non-bubbling (`bubbles: false`): the wrapper binds on the
+ * host itself, so it catches them in the target phase, and not bubbling keeps a
+ * nested copy row's `copydone` from flipping an ancestor copy row's feedback
+ * (the same point-to-point rule Anta's `statechange` follows).
+ *
+ * Three modes, chosen by attribute:
  * - `copy="<text>"` — copy the literal string on activation.
  * - `copy-node` / `copy-node="<selector>"` — copy a DOM node as rich text
  *   (`text/html`) + plain text. Bare `copy-node` copies the nearest ancestor
  *   marked `[data-copy-source]`; a value is a selector resolved with `closest()`
  *   (an ancestor region). The copy control is stripped from the serialized
  *   output (`[data-copy-node-button]`).
+ * - `copy-lazy` — the content isn't known until the click. Activation dispatches
+ *   `copyrequest` whose `detail.provide(text)` the consumer calls with the value
+ *   (synchronously, or after an `await` — the browser's transient-activation
+ *   window still covers the write). Nothing lands in the DOM, and there's no
+ *   attribute round-trip to reset. Takes precedence over any `copy` value.
  *
- * Lazy content (`copy-lazy`): the string isn't known until the click. On
- * activation with an empty `copy`, the element dispatches a bubbling
- * `copyrequest` and arms a pending write; when the reactive layer sets `copy`
- * back (an async round-trip, e.g. to a worker), `notifyCopyAttrChanged` completes
- * the write — as long as it lands inside the transient user-activation window the
- * click opened. This keeps the content out of the DOM until it's actually needed,
- * without losing the gesture the clipboard API requires.
+ * Precedence when several are set (the discriminated-union prop types make this
+ * unreachable from the wrappers, but hand-authored markup can): node → lazy →
+ * literal `copy`.
  */
-
-/** How long after activation a lazily-provided `copy` value is still written —
- *  the transient user-activation window the click opened. */
-const LAZY_WINDOW_MS = 5000
-
-/** Timestamp of a lazy activation still waiting for its `copy` value. */
-const armedAt = new WeakMap<Element, number>()
 
 /** Write plain text to the clipboard. Resolves `true` on success. */
 async function writeText(text: string): Promise<boolean> {
@@ -75,11 +74,11 @@ function resolveNodeTarget(el: Element): Element | null {
   return el.closest(sel === '' ? '[data-copy-source]' : sel)
 }
 
-/** Run a copy `work` promise and announce the outcome (bubbling `copydone`,
+/** Run a copy `work` promise and announce the outcome (non-bubbling `copydone`,
  *  `detail: { ok }`) so the wrapper can render feedback. */
 function run(el: HTMLElement, work: Promise<boolean>): void {
   void work.then((ok) => {
-    el.dispatchEvent(new CustomEvent('copydone', { bubbles: true, detail: { ok } }))
+    el.dispatchEvent(new CustomEvent('copydone', { bubbles: false, detail: { ok } }))
   })
 }
 
@@ -94,30 +93,25 @@ export function runCopy(el: HTMLElement): boolean {
     run(el, target ? writeNode(target) : Promise.resolve(false))
     return true
   }
-  if (!el.hasAttribute('copy')) return false
-
-  const text = el.getAttribute('copy') ?? ''
-  if (text === '' && el.hasAttribute('copy-lazy')) {
-    // Lazy: ask for the content and arm a pending write. `notifyCopyAttrChanged`
-    // finishes once the value lands (within the activation window).
-    armedAt.set(el, Date.now())
-    el.dispatchEvent(new CustomEvent('copyrequest', { bubbles: true }))
+  if (el.hasAttribute('copy-lazy')) {
+    // Ask for the content via a one-shot `provide` callback; the consumer calls
+    // it with the value (sync or after an await, within the activation window).
+    let done = false
+    el.dispatchEvent(
+      new CustomEvent('copyrequest', {
+        bubbles: false,
+        detail: {
+          provide(text: string) {
+            if (done) return
+            done = true
+            run(el, writeText(String(text ?? '')))
+          },
+        },
+      }),
+    )
     return true
   }
-  run(el, writeText(text))
+  if (!el.hasAttribute('copy')) return false
+  run(el, writeText(el.getAttribute('copy') ?? ''))
   return true
-}
-
-/**
- * Call from the element's `attributeChangedCallback` for `copy`. Completes a
- * pending lazy copy when the value arrives inside the activation window.
- */
-export function notifyCopyAttrChanged(el: HTMLElement): void {
-  const at = armedAt.get(el)
-  if (at == null) return
-  const text = el.getAttribute('copy') ?? ''
-  if (text === '') return
-  armedAt.delete(el)
-  if (Date.now() - at > LAZY_WINDOW_MS) return
-  run(el, writeText(text))
 }

@@ -1,5 +1,6 @@
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
+import type { CopyMode } from './Button'
 import { toneStyle, nativeStateChange } from '../anta_helpers'
 
 /** Props shared by every menu item, link or not. */
@@ -119,25 +120,14 @@ export type MenuItemActionMode = {
    *  built-in checkbox / radio and the trailing `check` glyph. The node is made
    *  passive (aria-hidden, no pointer events) so the row owns the click. */
   indicator?: React.ReactNode
-  /** Text copied to the clipboard when the row is chosen (a "copying menu item").
-   *  The element performs the write itself; the menu closes on select as usual
-   *  (add `data-menu-open` to linger on the success state). For the preset, use
-   *  `MenuItemCopy`. */
-  copy?: string
-  /** Copy a DOM node as rich text instead of a string. `true` copies the nearest
-   *  ancestor marked `data-copy-source`; a string is a CSS selector for an
-   *  ancestor region (resolved with `closest`). */
-  copyNode?: boolean | string
-  /** Lazy copy: keep `copy` empty and supply the content from `onCopyRequest`
-   *  when the row is chosen — the write completes when you set `copy` back. */
-  copyLazy?: boolean
-  /** Fires after a copy attempt with whether it succeeded. */
-  onCopied?: (ok: boolean) => void
-  /** Fires on a lazy-copy activation so you can compute + supply the `copy` value. */
-  onCopyRequest?: () => void
 }
 
-export type MenuItemProps = MenuItemCommonProps & (MenuItemLinkMode | MenuItemActionMode)
+// Copy props (a "copying menu item") live on the action branch only — a link
+// item can't copy. The shared `CopyMode` union enforces that exactly one of
+// `copy` / `copyNode` / `copyLazy` is set; `MenuItemCopy` is the preset. The menu
+// closes on select as usual (add `data-menu-open` to linger on the success state).
+export type MenuItemProps = MenuItemCommonProps &
+  (MenuItemLinkMode | (MenuItemActionMode & CopyMode))
 
 /**
  * MenuItem — a single selectable row inside a `Menu`. Composes a leading
@@ -293,12 +283,16 @@ export const MenuItem = ({
       // (e.g. `Select`'s Alt/Option-click isolate reads `altKey`).
       onmenuselect={onSelect ? (e: any) => onSelect(e, { value, label }) : undefined}
       // Copy behavior — the element writes to the clipboard on `menuselect`.
-      copy={copy != null ? copy : copyLazy ? '' : undefined}
+      copy={copy != null ? copy : undefined}
       copy-node={copyNode === true ? '' : typeof copyNode === 'string' ? copyNode : undefined}
       copy-lazy={copyLazy ? '' : undefined}
       data-copy-node-button={copyNode != null && copyNode !== false ? '' : undefined}
       oncopydone={onCopied ? (e: any) => onCopied(nativeStateChange<{ ok: boolean }>(e).detail?.ok ?? false) : undefined}
-      oncopyrequest={onCopyRequest ? () => onCopyRequest() : undefined}
+      oncopyrequest={
+        onCopyRequest
+          ? (e: any) => onCopyRequest(nativeStateChange<{ provide: (text: string) => void }>(e).detail!.provide)
+          : undefined
+      }
       class={className}
       {...rest}
     >

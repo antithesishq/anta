@@ -1,5 +1,5 @@
 import { HTMLElementBase } from "../anta_helpers";
-import { runCopy, notifyCopyAttrChanged } from "./copy-behavior";
+import { runCopy } from "./copy-behavior";
 import "./a-button.css";
 
 declare global {
@@ -81,22 +81,15 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   mid-resolve.
  */
 export class AButtonElement extends HTMLElementBase {
-  // Observe `copy` so a lazily-provided value can complete a pending copy.
-  static observedAttributes = ["copy"];
-
   connectedCallback() {
     // Install on the button's OWN document so activation works in whatever
     // frame the element actually lives in (parent page or playground iframe).
     installDocumentHandlers(this.doc);
   }
 
-  attributeChangedCallback(name: string) {
-    if (name === "copy") notifyCopyAttrChanged(this);
-  }
-
-  /** Perform a copy if this button is a copy control (`copy` / `copy-node`).
-   *  Called from the delegated click handler on activation. The outcome is
-   *  announced via a bubbling `copydone` event the wrapper reflects. */
+  /** Perform a copy if this button is a copy control (`copy` / `copy-node` /
+   *  `copy-lazy`). Called from the delegated click handler on activation. The
+   *  outcome is announced via a `copydone` event the wrapper reflects. */
   performCopy(): boolean {
     return runCopy(this);
   }

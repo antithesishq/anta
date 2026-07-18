@@ -1,4 +1,5 @@
-import { jsx } from "./jsx-runtime"
+import { jsx, useState, useMemo } from "./jsx-runtime"
+import type { IconShape } from "./elements/a-icon.shapes"
 
 export function hasChildren(children: React.ReactNode): boolean {
   return Array.isArray(children) ? children.length > 0 : children != null
@@ -122,6 +123,44 @@ export function roundStyle(
  */
 export function roundAttr(round: boolean | number | string | undefined): '' | undefined {
   return round || round === 0 ? '' : undefined
+}
+
+/** How long the copy success / failure feedback stays on the control (ms). */
+const COPY_FEEDBACK_MS = 2000
+
+/**
+ * Copy-feedback state for `ButtonCopy` / `MenuItemCopy` (and any future copy
+ * preset). The `<a-button>` / `<a-menu-item>` element performs the clipboard
+ * write and fires a `copydone` event; this hook holds the transient result and
+ * maps it to the icon + tone the wrapper renders: a `check` / `success` on
+ * success, an `x` / `critical` on failure, otherwise the caller's own values.
+ * Returns the `handleCopied` listener the wrapper wires to `onCopied`.
+ *
+ * Kept here (not duplicated per preset) so the timing, glyph choice, and timer
+ * cleanup live in one place. Hooks come through the `jsx-runtime` indirection, so
+ * a custom non-React runtime supplies its own via `configure()`.
+ */
+export function useCopyFeedback(
+  icon: IconShape | undefined,
+  tone: string | undefined,
+  onCopied?: (ok: boolean) => void,
+): { shownIcon: IconShape | undefined; shownTone: string | undefined; handleCopied: (ok: boolean) => void } {
+  const [status, setStatus] = useState<'idle' | 'ok' | 'fail'>('idle')
+  // useMemo with [] deps is a stable per-instance holder — a useRef stand-in the
+  // jsx-runtime indirection doesn't re-export.
+  const box = useMemo(() => ({ timer: undefined as ReturnType<typeof setTimeout> | undefined }), [])
+
+  const handleCopied = (ok: boolean) => {
+    clearTimeout(box.timer)
+    setStatus(ok ? 'ok' : 'fail')
+    box.timer = setTimeout(() => setStatus('idle'), COPY_FEEDBACK_MS)
+    onCopied?.(ok)
+  }
+
+  // Swap only during the feedback window; otherwise the caller's own icon / tone.
+  const shownIcon: IconShape | undefined = status === 'ok' ? 'check' : status === 'fail' ? 'x' : icon
+  const shownTone = status === 'ok' ? 'success' : status === 'fail' ? 'critical' : tone
+  return { shownIcon, shownTone, handleCopied }
 }
 
 /**

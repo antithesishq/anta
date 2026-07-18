@@ -23,7 +23,7 @@
     /* Per-tone hue anchors (neutral defaults here; the tone rules below
        re-point them). The priority rules read these:
          --tag-tint  vivid hue → secondary fill tint + secondary/primary border
-         --tag-fill  solid hue → primary fill
+         --tag-bg-solid  solid hue → primary fill
          --tag-edge  deep hue  → tertiary border (= --text-2-{tone}; neutral
                                  reuses the tint, which flips light↔dark)
        Neutral's tint is a plum-gray that flips light↔dark (see the `.dark`
@@ -31,7 +31,7 @@
        alpha for dark mode. */
     --tag-text: var(--text-3);
     --tag-tint: #44374b;        /* neutral tint hue (light) */
-    --tag-fill: #776e77;        /* neutral primary fill (light) */
+    --tag-bg-solid: #776e77;        /* neutral primary fill (light) */
     --tag-edge: var(--tag-tint);/* neutral tertiary border reuses the tint */
 
     --_tag-bg-alpha: 7%;        /* neutral fill is fainter than the colored tones */
@@ -131,16 +131,16 @@
 
   /* Named tones — text uses the theme-aware `--text-3-{tone}` (self-themes
      for dark). Each tone re-points the three hue anchors: `--tag-tint`
-     (vivid, for the secondary fill + secondary/primary border), `--tag-fill`
+     (vivid, for the secondary fill + secondary/primary border), `--tag-bg-solid`
      (the solid primary fill — light value; the `.dark` block re-points it),
      and `--tag-edge` (the deep tertiary-border hue = `--text-2-{tone}`, which
      already flips for dark). Colored fill alpha is 10% (vs neutral's 7%) and
      the tertiary edge alpha is 20% (vs neutral's 25%); dark deepens them. */
-  a-tag[tone="brand"]    { --tag-text: var(--text-3-brand);    --tag-tint: #7460d7; --tag-fill: #7460d7; --tag-edge: var(--text-2-brand);    --_tag-bg-alpha: 10%; --_tag-edge-alpha: 20%; }
-  a-tag[tone="info"]     { --tag-text: var(--text-3-info);     --tag-tint: #2686d9; --tag-fill: #2686d9; --tag-edge: var(--text-2-info);     --_tag-bg-alpha: 10%; --_tag-edge-alpha: 20%; }
-  a-tag[tone="success"]  { --tag-text: var(--text-3-success);  --tag-tint: #329550; --tag-fill: #329550; --tag-edge: var(--text-2-success);  --_tag-bg-alpha: 10%; --_tag-edge-alpha: 20%; }
-  a-tag[tone="warning"]  { --tag-text: var(--text-3-warning);  --tag-tint: #c37416; --tag-fill: #ae6613; --tag-edge: var(--text-2-warning);  --_tag-bg-alpha: 10%; --_tag-edge-alpha: 20%; }
-  a-tag[tone="critical"] { --tag-text: var(--text-3-critical); --tag-tint: #de4545; --tag-fill: #de4545; --tag-edge: var(--text-2-critical); --_tag-bg-alpha: 10%; --_tag-edge-alpha: 20%; }
+  a-tag[tone="brand"]    { --tag-text: var(--text-3-brand);    --tag-tint: #7460d7; --tag-bg-solid: #7460d7; --tag-edge: var(--text-2-brand);    --_tag-bg-alpha: 10%; --_tag-edge-alpha: 20%; }
+  a-tag[tone="info"]     { --tag-text: var(--text-3-info);     --tag-tint: #2686d9; --tag-bg-solid: #2686d9; --tag-edge: var(--text-2-info);     --_tag-bg-alpha: 10%; --_tag-edge-alpha: 20%; }
+  a-tag[tone="success"]  { --tag-text: var(--text-3-success);  --tag-tint: #329550; --tag-bg-solid: #329550; --tag-edge: var(--text-2-success);  --_tag-bg-alpha: 10%; --_tag-edge-alpha: 20%; }
+  a-tag[tone="warning"]  { --tag-text: var(--text-3-warning);  --tag-tint: #c37416; --tag-bg-solid: #ae6613; --tag-edge: var(--text-2-warning);  --_tag-bg-alpha: 10%; --_tag-edge-alpha: 20%; }
+  a-tag[tone="critical"] { --tag-text: var(--text-3-critical); --tag-tint: #de4545; --tag-bg-solid: #de4545; --tag-edge: var(--text-2-critical); --_tag-bg-alpha: 10%; --_tag-edge-alpha: 20%; }
 
   /* Neutral, dark — the tint flips to a light plum so it still reads as a
      tint on the dark surface; the solid primary fill darkens; the fill alpha
@@ -149,13 +149,13 @@
   .dark a-tag:not([tone]),
   .dark a-tag[tone="neutral"] {
     --tag-tint: #e4d1ef;
-    --tag-fill: #635b65;
+    --tag-bg-solid: #635b65;
     --_tag-bg-alpha: 12%;
   }
 
   /* Colored tones, dark — same vivid tint, deeper alphas (fill ≈20%, border
      ≈25%, tertiary edge ≈30%). `--tag-edge` (= `--text-2-{tone}`) and
-     `--tag-text` flip via their tokens; only `--tag-fill` needs a literal
+     `--tag-text` flip via their tokens; only `--tag-bg-solid` needs a literal
      dark value per tone. */
   .dark a-tag[tone="brand"],
   .dark a-tag[tone="info"],
@@ -166,11 +166,11 @@
     --_tag-border-alpha: 25%;
     --_tag-edge-alpha: 30%;
   }
-  .dark a-tag[tone="brand"]    { --tag-fill: #5f4bc3; }
-  .dark a-tag[tone="info"]     { --tag-fill: #1f6eb2; }
-  .dark a-tag[tone="success"]  { --tag-fill: #2a7e43; }
-  .dark a-tag[tone="warning"]  { --tag-fill: #995200; }
-  .dark a-tag[tone="critical"] { --tag-fill: #c9302c; }
+  .dark a-tag[tone="brand"]    { --tag-bg-solid: #5f4bc3; }
+  .dark a-tag[tone="info"]     { --tag-bg-solid: #1f6eb2; }
+  .dark a-tag[tone="success"]  { --tag-bg-solid: #2a7e43; }
+  .dark a-tag[tone="warning"]  { --tag-bg-solid: #995200; }
+  .dark a-tag[tone="critical"] { --tag-bg-solid: #c9302c; }
 
   /* Custom tone — any non-named `tone` value. Built like the named
      secondary tones (the "brand secondary" recipe): the fill + border are
@@ -203,8 +203,8 @@
 
     /* Solid primary fill — same hue, pinned to a Brand-like fill lightness so
        white text stays legible on any input (the `.dark` block lowers it). */
-    --_tag-fill-l: 0.50;
-    --tag-fill: oklch(from var(--tag-tone-source) var(--_tag-fill-l) var(--_tag-tint-c) h);
+    --_tag-bg-solid-l: 0.50;
+    --tag-bg-solid: oklch(from var(--tag-tone-source) var(--_tag-bg-solid-l) var(--_tag-tint-c) h);
 
     --_tag-text-l: 0.40;   /* fg lightness — matches --text-2-brand (light) */
     --_tag-text-c: 0.15;   /* fg chroma */
@@ -219,7 +219,7 @@
   /* Custom tone, dark mode — deeper tint / edge alphas (fill ≈20%, border
      ≈25%, edge ≈30%), a lighter foreground, and a slightly darker solid fill,
      mirroring the colored tones' dark bump and the dark `--text-3-{tone}`
-     base. (`--tag-edge`/`--tag-fill` recompute from the re-tuned knobs.) */
+     base. (`--tag-edge`/`--tag-bg-solid` recompute from the re-tuned knobs.) */
   .dark a-tag[tone]:not(
       [tone="neutral"],
       [tone="brand"],
@@ -232,7 +232,7 @@
     --_tag-border-alpha: 25%;
     --_tag-edge-alpha: 30%;
     --_tag-tint-l: 0.58;   /* tint lifts a touch to read against a dark page */
-    --_tag-fill-l: 0.45;   /* solid primary fill darkens, like the named tones */
+    --_tag-bg-solid-l: 0.45;   /* solid primary fill darkens, like the named tones */
     --_tag-text-l: 0.75;   /* matches --text-2-brand dark base */
     --_tag-text-c: 0.11;
   }
@@ -243,10 +243,10 @@
      they sit after the tone rules so their equal-specificity `--tag-bg` /
      `--tag-text` overrides win the cascade. */
 
-  /* Primary — solid `--tag-fill` with white text. The hairline border keeps
+  /* Primary — solid `--tag-bg-solid` with white text. The hairline border keeps
      the vivid `--tag-tint` edge (= the secondary border). */
   a-tag[priority="primary"] {
-    --tag-bg: var(--tag-fill);
+    --tag-bg: var(--tag-bg-solid);
     --tag-text: #fff;
   }
   /* Custom-tone primary needs the white text re-stated at higher specificity

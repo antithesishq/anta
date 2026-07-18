@@ -88,9 +88,9 @@
     --radio-border: var(--radio-border-disabled);
     --radio-border-hover: var(--radio-border-disabled);
     --radio-border-active: var(--radio-border-disabled);
-    --radio-fill: var(--radio-bg-disabled);
-    --radio-fill-hover: var(--radio-bg-disabled);
-    --radio-fill-active: var(--radio-bg-disabled);
+    --radio-bg-selected: var(--radio-bg-disabled);
+    --radio-bg-selected-hover: var(--radio-bg-disabled);
+    --radio-bg-selected-active: var(--radio-bg-disabled);
     --radio-dot: var(--radio-dot-disabled);
   }
 }

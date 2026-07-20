@@ -1,38 +1,32 @@
-import { useState } from 'preact/hooks'
-import { Card, Button, Checkbox, Input } from '@antadesign/anta'
+import { useEffect, useState } from 'preact/hooks'
+import { Card, Button, Checkbox, Input, Tooltip } from '@antadesign/anta'
 import ColorPicker from './ColorPicker'
 
 /**
- * Theming-lab harness: compares the hand-tuned brand (`tone="brand"`, today's
- * shipped literals) against the generative derivation from a source color
- * (`tone={seed}`, which routes through the existing custom-tone oklch formula).
+ * Theming-lab harness. Wide two-column layout: the examples stack on the left
+ * (hand-tuned brand over the generative one), and the title, prose, and all
+ * configuration sit on the right.
  *
- * The formula constants (the `--_tone-*` lightness / chroma / alpha stops the
- * button's custom-tone branch reads) are exposed as number inputs and applied
- * inline on the generative buttons, so you're tuning the *real* CSS formula —
- * not a JS reimplementation. The live formula is printed below the inputs.
- *
- * No package CSS changes and no `:root` writes: the source color and the
- * `--_tone-*` overrides are set per element, so nothing leaks into the site.
+ * Compares the hand-tuned brand (`tone="brand"`, today's shipped literals)
+ * against the generative derivation from a source color (`tone={seed}`, routed
+ * through the existing custom-tone oklch formula). Follows the *page* theme —
+ * Anta theming is page-level, so an opposite-theme island can't fully re-theme;
+ * toggle the site theme to check the other mode. The `--_tone-*` formula stops
+ * are number inputs applied inline on the generative buttons, tuning the real
+ * CSS formula.
  */
 
-// Formula constants → the CSS custom properties the button reads. Defaults
-// mirror a-button.css's light custom-tone block.
-const CONSTS = {
-  plRest: '0.5',
-  plHover: '0.45',
-  plActive: '0.4',
-  fgL: '0.46',
-  fgStrongL: '0.4',
-  fgC: '0.17',
-  fgShift: '0.05',
-  bgL: '0.54',
-  bgC: '0.16',
-  aRest: '0.1',
-  aHover: '0.15',
-  aActive: '0.2',
+const LIGHT = {
+  plRest: '0.5', plHover: '0.45', plActive: '0.4',
+  fgL: '0.46', fgStrongL: '0.4', fgC: '0.17', fgShift: '0.05',
+  bgL: '0.54', bgC: '0.16', aRest: '0.1', aHover: '0.15', aActive: '0.2',
 }
-type Consts = typeof CONSTS
+const DARK = {
+  plRest: '0.45', plHover: '0.5', plActive: '0.57',
+  fgL: '0.78', fgStrongL: '0.85', fgC: '0.11', fgShift: '0',
+  bgL: '0.58', bgC: '0.16', aRest: '0.23', aHover: '0.28', aActive: '0.33',
+}
+type Consts = typeof LIGHT
 
 const VAR_OF: Record<keyof Consts, string> = {
   plRest: '--_tone-primary-l-rest',
@@ -78,30 +72,29 @@ function BrandCard({ tone, cardTone, btnStyle }: { tone: string; cardTone: strin
 export default function BrandComparison() {
   const [seed, setSeed] = useState('#5f4bc3')
   const [deriveCard, setDeriveCard] = useState(false)
-  const [k, setK] = useState<Consts>(CONSTS)
+  const [kLight, setKLight] = useState<Consts>(LIGHT)
+  const [kDark, setKDark] = useState<Consts>(DARK)
+  const [isDark, setIsDark] = useState(false)
 
-  const set = (key: keyof Consts, v: string) => setK((p) => ({ ...p, [key]: v }))
+  useEffect(() => {
+    const el = document.documentElement
+    const read = () => setIsDark(el.classList.contains('dark'))
+    read()
+    const obs = new MutationObserver(read)
+    obs.observe(el, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
 
-  // The inline formula-constant overrides applied to the generative buttons.
+  const k = isDark ? kDark : kLight
+  const setK = (key: keyof Consts, v: string) =>
+    (isDark ? setKDark : setKLight)((p) => ({ ...p, [key]: v }))
+
   const toneVars: Record<string, string> = {}
   ;(Object.keys(VAR_OF) as (keyof Consts)[]).forEach((key) => {
     toneVars[VAR_OF[key]] = k[key]
   })
 
   const derivedCardTone = deriveCard ? seed : 'brand'
-
-  const columns = (dark: boolean) => (
-    <div className={dark ? 'dark' : 'light'} style={{ display: 'flex', gap: 24, padding: 24, borderRadius: 12, background: 'var(--bg-2)', flexWrap: 'wrap' }}>
-      <div style={{ flex: '1 1 280px', minWidth: 280 }}>
-        <p style={labelStyle}>Anta theme · hand-tuned <code>tone="brand"</code></p>
-        <BrandCard tone="brand" cardTone="brand" />
-      </div>
-      <div style={{ flex: '1 1 280px', minWidth: 280 }}>
-        <p style={labelStyle}>Generative · <code>tone={'{seed}'}</code> + tuned formula</p>
-        <BrandCard tone={seed} cardTone={derivedCardTone} btnStyle={toneVars} />
-      </div>
-    </div>
-  )
 
   const formula = [
     `Deploy · primary bg`,
@@ -120,47 +113,69 @@ export default function BrandComparison() {
   ].join('\n')
 
   return (
-    <div style={{ display: 'grid', gap: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
-        <ColorPicker value={seed} onChange={setSeed} />
-        <Checkbox checked={deriveCard} onStateChange={(_e, { next }) => setDeriveCard(next === true)} label="Also derive the card surface" />
-      </div>
-
-      <div style={{ border: '1px solid var(--border-4)', borderRadius: 10, padding: 16, background: 'var(--bg-2)', display: 'grid', gap: 16 }}>
-        {GROUPS.map((g) => (
-          <div key={g.title}>
-            <p style={{ ...labelStyle, margin: '0 0 8px' }}>{g.title}</p>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {g.keys.map(([key, lbl]) => (
-                <div key={key} style={{ width: 96 }}>
-                  <Input
-                    type="number"
-                    size="small"
-                    label={lbl}
-                    value={k[key]}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    onValueChange={(_e, a) => set(key, a.value)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+    <div className="full-bleed" style={{ display: 'flex', gap: 40, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      {/* LEFT — examples stacked */}
+      <div style={{ flex: '1 1 340px', minWidth: 300, display: 'grid', gap: 24, position: 'sticky', top: 24 }}>
         <div>
-          <p style={{ ...labelStyle, margin: '0 0 8px' }}>Actual formula (applied to the generative buttons)</p>
-          <pre style={{ margin: 0, padding: 12, borderRadius: 8, background: 'var(--bg-1)', color: 'var(--text-2)', fontSize: 12, fontFamily: 'var(--monospace)', overflowX: 'auto', border: '1px solid var(--border-4)' }}>
-            {formula}
-          </pre>
-          <p style={{ ...labelStyle, margin: '8px 0 0', fontSize: 11 }}>
-            <code>c</code> / <code>h</code> inherit from the source color. These constants override both light and dark (the shipped formula uses different dark stops).
-          </p>
+          <p style={labelStyle}>Anta theme · hand-tuned <code>tone="brand"</code></p>
+          <BrandCard tone="brand" cardTone="brand" />
+        </div>
+        <div>
+          <p style={labelStyle}>Generative · <code>tone={'{seed}'}</code> + tuned formula</p>
+          <BrandCard tone={seed} cardTone={derivedCardTone} btnStyle={toneVars} />
         </div>
       </div>
 
-      {columns(false)}
-      {columns(true)}
+      {/* RIGHT — title, prose, configuration */}
+      <div style={{ flex: '1 1 440px', minWidth: 320, display: 'grid', gap: 16 }}>
+        <div>
+          <h1 style={{ marginTop: 0 }}>Theming — brand</h1>
+          <p style={{ margin: 0, color: 'var(--text-2)' }}>
+            An experiment, not a shipped feature. The examples on the left put the hand-tuned brand
+            (<code>tone="brand"</code>, today's literals) next to a generative brand derived from the
+            source color below (<code>tone={'{seed}'}</code>), which runs through the existing
+            custom-tone oklch formula — no new CSS. At <code>#5f4bc3</code> they should read
+            identically. Change the source or the formula constants and only the generative example
+            follows; the hand-tuned one can't theme. It follows the site theme — toggle light / dark
+            top-right.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
+          <ColorPicker value={seed} onChange={setSeed} />
+          <Checkbox checked={deriveCard} onStateChange={(_e, { next }) => setDeriveCard(next === true)} label="Also derive the card surface" />
+        </div>
+
+        <div style={{ border: '1px solid var(--border-4)', borderRadius: 10, padding: 16, background: 'var(--bg-2)', display: 'grid', gap: 16 }}>
+          <p style={{ ...labelStyle, margin: 0 }}>
+            Editing the <strong>{isDark ? 'dark' : 'light'}</strong> formula — follows the site theme (toggle it top-right to switch).
+          </p>
+          {GROUPS.map((g) => (
+            <div key={g.title}>
+              <p style={{ ...labelStyle, margin: '0 0 8px' }}>{g.title}</p>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {g.keys.map(([key, lbl]) => (
+                  <div key={key} style={{ width: 96, position: 'relative' }}>
+                    <Input type="number" size="small" label={lbl} value={k[key]} min={0} max={1} step={0.01} onValueChange={(_e, a) => setK(key, a.value)} />
+                    {key === 'fgShift' ? (
+                      <Tooltip>
+                        Darkens the secondary button's text: subtracted from its OKLCH lightness so
+                        the label reads one step stronger than the fill tint behind it.
+                      </Tooltip>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div>
+            <p style={{ ...labelStyle, margin: '0 0 8px' }}>Actual formula (applied to the generative buttons)</p>
+            <pre style={{ margin: 0, padding: 12, borderRadius: 8, background: 'var(--bg-1)', color: 'var(--text-2)', fontSize: 12, fontFamily: 'var(--monospace)', overflowX: 'auto', border: '1px solid var(--border-4)' }}>
+              {formula}
+            </pre>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

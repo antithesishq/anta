@@ -5,10 +5,4 @@ title: Theming
 
 import BrandComparison from '../components/BrandComparison.tsx'
 
-# Theming — brand
-
-An experiment, not a shipped feature. It compares the **hand-tuned brand** (`tone="brand"`, today's literals) against the **generative brand** derived from a source color (`tone={seed}`, which runs through the existing custom-tone oklch formula — no new CSS).
-
-At `#5f4bc3` the two columns should read as identical: that's the check on whether the formula can replace the hand-tuning. Drag the picker to any other color and only the generative side follows; the hand-tuned side stays fixed, since it can't theme. The checkbox extends the derivation to the card surface itself.
-
 <BrandComparison client:load />

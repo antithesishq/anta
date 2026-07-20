@@ -1,27 +1,22 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import chroma from 'chroma-js'
-import { Button } from '@antadesign/anta'
+import { Button, Menu, Tabs, TabPanel, Input, Tooltip } from '@antadesign/anta'
 
 /**
- * Custom color picker for the theming lab. Lets you express a color in OKLCH,
- * HSL, RGB, or hex, and — in OKLCH mode — renders the sRGB gamut: a lightness ×
- * chroma plane for the current hue with the out-of-gamut region dimmed, the
- * chroma track marked at its in-gamut limit, and an explicit note when the
- * current color falls outside sRGB (so you can see what "the limits" are).
- *
- * OKLCH `[l, c, h]` is the single source of truth; the other models are views
- * that convert back to it on edit (via chroma-js). Gamut math is done directly
- * (Björn Ottosson's OKLab matrices) so the boundary matches what the browser
- * renders, independent of chroma's clamping.
+ * Color picker built entirely from Anta components. A swatch Button opens a Menu
+ * holding the picker: color models (OKLCH / HSL / RGB / HEX) as Anta Tabs, each
+ * channel an Anta Input (no sliders). In OKLCH, an L×C gamut plane for the
+ * current hue is drawn to a device-pixel-ratio-scaled canvas (sharp on retina),
+ * clickable to set L/C; the in-gamut chroma limit lives in a Tooltip on the C
+ * input. OKLCH `[l, c, h]` is the source of truth; other models convert back via
+ * chroma-js. Gamut math is done directly so the boundary matches the browser.
  */
 
 type Triple = [number, number, number]
-
-const CMAX = 0.4 // chroma axis ceiling for the plane + slider
-const PW = 260
+const CMAX = 0.4
+const PW = 264
 const PH = 150
 
-// --- OKLab / OKLCH → linear sRGB (unclamped) -------------------------------
 function oklchToLinear(L: number, C: number, H: number): Triple {
   const hr = (H * Math.PI) / 180
   const a = C * Math.cos(hr)
@@ -40,7 +35,7 @@ function inGamut(L: number, C: number, H: number): boolean {
   const e = 0.0008
   return r >= -e && r <= 1 + e && g >= -e && g <= 1 + e && b >= -e && b <= 1 + e
 }
-function gamma(c: number): number {
+const gamma = (c: number) => {
   c = Math.max(0, Math.min(1, c))
   return c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055
 }
@@ -54,24 +49,19 @@ function maxChroma(L: number, H: number): number {
   }
   return lo
 }
-
-function safeOklch(arr: number[], fallbackH: number): Triple {
-  const [l, c, h] = arr
-  return [l, c, Number.isNaN(h) ? fallbackH : h]
+const safeOklch = (arr: number[], fh: number): Triple => [arr[0], arr[1], Number.isNaN(arr[2]) ? fh : arr[2]]
+const num = (v: string, fallback = 0) => {
+  const n = parseFloat(v)
+  return Number.isFinite(n) ? n : fallback
 }
+const fx = (x: number, d: number) => (Math.round(x * 10 ** d) / 10 ** d).toString()
 
-const rowStyle = { display: 'flex', alignItems: 'center', gap: 10, margin: '6px 0' }
-const chanLabel = { width: 18, fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--monospace)' }
-const numStyle = {
-  width: 62,
-  fontSize: 12,
-  fontFamily: 'var(--monospace)',
-  padding: '2px 4px',
-  background: 'var(--bg-1)',
-  color: 'var(--text-2)',
-  border: '1px solid var(--border-4)',
-  borderRadius: 4,
-}
+const MODELS = [
+  { value: 'oklch', label: 'OKLCH' },
+  { value: 'hsl', label: 'HSL' },
+  { value: 'rgb', label: 'RGB' },
+  { value: 'hex', label: 'HEX' },
+]
 
 export default function ColorPicker({
   value = '#5f4bc3',
@@ -87,10 +77,9 @@ export default function ColorPicker({
       return [0.5, 0.15, 285]
     }
   })
-  const [model, setModel] = useState<'oklch' | 'hsl' | 'rgb' | 'hex'>('oklch')
   const [hexDraft, setHexDraft] = useState(value)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const planeCache = useRef<{ hue: number; data: ImageData } | null>(null)
+  const planeCache = useRef<{ hue: number; w: number; data: ImageData } | null>(null)
 
   const hex = chroma.oklch(l, c, h).hex()
   const outOfGamut = !inGamut(l, c, h)
@@ -102,20 +91,23 @@ export default function ColorPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hex])
 
-  // Draw the L×C gamut plane for the current hue, then the marker on top.
   useEffect(() => {
-    if (model !== 'oklch') return
     const cv = canvasRef.current
     const ctx = cv?.getContext('2d')
     if (!cv || !ctx) return
+    const dpr = window.devicePixelRatio || 1
+    const W = Math.round(PW * dpr)
+    const H2 = Math.round(PH * dpr)
+    if (cv.width !== W) cv.width = W
+    if (cv.height !== H2) cv.height = H2
     const hue = Math.round(h)
-    if (planeCache.current?.hue !== hue) {
-      const img = ctx.createImageData(PW, PH)
-      for (let y = 0; y < PH; y++) {
-        const cc = (1 - y / (PH - 1)) * CMAX
-        for (let x = 0; x < PW; x++) {
-          const ll = x / (PW - 1)
-          const i = (y * PW + x) * 4
+    if (planeCache.current?.hue !== hue || planeCache.current?.w !== W) {
+      const img = ctx.createImageData(W, H2)
+      for (let y = 0; y < H2; y++) {
+        const cc = (1 - y / (H2 - 1)) * CMAX
+        for (let x = 0; x < W; x++) {
+          const ll = x / (W - 1)
+          const i = (y * W + x) * 4
           if (inGamut(ll, cc, hue)) {
             const [r, g, b] = oklchToLinear(ll, cc, hue)
             img.data[i] = gamma(r) * 255
@@ -123,28 +115,28 @@ export default function ColorPicker({
             img.data[i + 2] = gamma(b) * 255
             img.data[i + 3] = 255
           } else {
-            const chk = ((x >> 3) + (y >> 3)) & 1 ? 28 : 20
+            const chk = (((x / dpr) >> 3) + ((y / dpr) >> 3)) & 1 ? 28 : 20
             img.data[i] = img.data[i + 1] = img.data[i + 2] = chk
             img.data[i + 3] = 255
           }
         }
       }
-      planeCache.current = { hue, data: img }
+      planeCache.current = { hue, w: W, data: img }
     }
     ctx.putImageData(planeCache.current.data, 0, 0)
-    const mx = l * (PW - 1)
-    const my = (1 - Math.min(c, CMAX) / CMAX) * (PH - 1)
+    const mx = l * (W - 1)
+    const my = (1 - Math.min(c, CMAX) / CMAX) * (H2 - 1)
     ctx.beginPath()
-    ctx.arc(mx, my, 6, 0, Math.PI * 2)
+    ctx.arc(mx, my, 6 * dpr, 0, Math.PI * 2)
     ctx.strokeStyle = '#000'
-    ctx.lineWidth = 3
+    ctx.lineWidth = 3 * dpr
     ctx.stroke()
     ctx.beginPath()
-    ctx.arc(mx, my, 6, 0, Math.PI * 2)
+    ctx.arc(mx, my, 6 * dpr, 0, Math.PI * 2)
     ctx.strokeStyle = '#fff'
-    ctx.lineWidth = 1.5
+    ctx.lineWidth = 1.5 * dpr
     ctx.stroke()
-  }, [l, c, h, model])
+  }, [l, c, h])
 
   const pickFromPlane = (e: { clientX: number; clientY: number }) => {
     const cv = canvasRef.current
@@ -155,157 +147,100 @@ export default function ColorPicker({
     setOklch([ll, cc, h])
   }
 
-  // Channel views for the non-oklch models (computed from the canonical oklch).
   const hsl = chroma.oklch(l, c, h).hsl()
-  const rgb = chroma.oklch(l, c, h).rgb()
   const hslH = Number.isNaN(hsl[0]) ? 0 : hsl[0]
+  const rgb = chroma.oklch(l, c, h).rgb()
 
-  const slider = (
-    label: string,
-    v: number,
-    min: number,
-    max: number,
-    step: number,
-    set: (n: number) => void,
-    trackBg?: string,
-  ) => (
-    <div style={rowStyle}>
-      <span style={chanLabel}>{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={v}
-        onInput={(e) => set(Number((e.target as HTMLInputElement).value))}
-        style={{ flex: 1, ...(trackBg ? { background: trackBg, borderRadius: 4, height: 8, appearance: 'auto' } : {}) }}
-      />
-      <input
-        type="number"
-        min={min}
-        max={max}
-        step={step}
-        value={Number(v.toFixed(step < 0.01 ? 3 : step < 1 ? 2 : 0))}
-        onChange={(e) => set(Number((e.target as HTMLInputElement).value))}
-        style={numStyle}
-      />
-    </div>
-  )
-
-  const setHsl = (i: number, n: number) => {
+  const setHsl = (i: number, v: string) => {
     const next = [hslH, hsl[1], hsl[2]]
-    next[i] = n
+    next[i] = i === 0 ? num(v) : num(v) / 100
     setOklch(safeOklch(chroma.hsl(next[0], next[1], next[2]).oklch(), h))
   }
-  const setRgb = (i: number, n: number) => {
+  const setRgb = (i: number, v: string) => {
     const next = [rgb[0], rgb[1], rgb[2]]
-    next[i] = n
+    next[i] = num(v)
     setOklch(safeOklch(chroma.rgb(next[0], next[1], next[2]).oklch(), h))
   }
 
-  const MODELS = ['oklch', 'hsl', 'rgb', 'hex'] as const
+  const chan = (label: string, val: string, min: number, max: number, step: number, onVal: (v: string) => void, tip?: any) => (
+    <div style={{ width: 78, position: 'relative' }}>
+      <Input type="number" size="small" label={label} value={val} min={min} max={max} step={step} onValueChange={(_e: any, a: any) => onVal(a.value)} />
+      {tip ? <Tooltip>{tip}</Tooltip> : null}
+    </div>
+  )
+
+  const row = { display: 'flex', gap: 8, flexWrap: 'wrap' as const }
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gap: 12,
-        maxWidth: 380,
-        padding: 14,
-        border: '1px solid var(--border-4)',
-        borderRadius: 10,
-        background: 'var(--bg-2)',
-        fontFamily: 'var(--sans-serif)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 8,
-            background: hex,
-            border: '1px solid var(--border-3)',
-            flex: 'none',
-          }}
-        />
-        <div style={{ display: 'grid', gap: 2, minWidth: 0 }}>
-          <code style={{ fontSize: 13, color: 'var(--text-1)' }}>{hex}</code>
-          <code style={{ fontSize: 11, color: 'var(--text-4)' }}>
-            oklch({l.toFixed(3)} {c.toFixed(3)} {h.toFixed(1)})
-          </code>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: 4 }}>
-        {MODELS.map((m) =>
-          model === m ? (
-            <Button key={m} size="small" priority="secondary" selected label={m.toUpperCase()} onClick={() => setModel(m)} />
-          ) : (
-            <Button key={m} size="small" priority="quaternary" label={m.toUpperCase()} onClick={() => setModel(m)} />
-          ),
-        )}
-      </div>
-
-      {model === 'oklch' && (
-        <>
-          <div style={{ position: 'relative' }}>
-            <canvas
-              ref={canvasRef}
-              width={PW}
-              height={PH}
-              onClick={pickFromPlane}
-              style={{ width: '100%', height: 'auto', borderRadius: 6, cursor: 'crosshair', display: 'block' }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-4)', marginTop: 2 }}>
-              <span>L → 0…1 · C ↑ 0…{CMAX} · hue {h.toFixed(0)}°</span>
-              <span>dimmed = outside sRGB</span>
+    <div style={{ display: 'inline-block' }}>
+      <Button priority="secondary" size="small">
+        <span style={{ width: 14, height: 14, borderRadius: 4, background: hex, display: 'inline-block', border: '1px solid var(--border-3)' }} />
+        {hex}
+      </Button>
+      <Menu placement="bottom-start" autoWidth>
+        <div style={{ padding: 12, width: 300, display: 'grid', gap: 12, fontFamily: 'var(--sans-serif)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ width: 34, height: 34, borderRadius: 8, background: hex, border: '1px solid var(--border-3)', flex: 'none' }} />
+            <div style={{ display: 'grid', gap: 2, minWidth: 0 }}>
+              <code style={{ fontSize: 13, color: 'var(--text-1)' }}>{hex}</code>
+              <code style={{ fontSize: 11, color: 'var(--text-4)' }}>
+                oklch({fx(l, 3)} {fx(c, 3)} {fx(h, 1)})
+              </code>
             </div>
           </div>
-          {slider('L', l, 0, 1, 0.001, (n) => setOklch([n, c, h]))}
-          {slider('C', c, 0, CMAX, 0.001, (n) => setOklch([l, n, h]))}
-          <div style={{ fontSize: 11, color: 'var(--text-4)', margin: '-2px 0 0 28px' }}>
-            in-gamut chroma limit at this L/hue: <code>{cLimit.toFixed(3)}</code>
-          </div>
-          {slider('H', h, 0, 360, 0.1, (n) => setOklch([l, c, n]))}
-        </>
-      )}
 
-      {model === 'hsl' && (
-        <>
-          {slider('H', hslH, 0, 360, 1, (n) => setHsl(0, n))}
-          {slider('S', hsl[1], 0, 1, 0.01, (n) => setHsl(1, n))}
-          {slider('L', hsl[2], 0, 1, 0.01, (n) => setHsl(2, n))}
-        </>
-      )}
+          <Tabs options={MODELS} defaultValue="oklch" size="small">
+            <TabPanel value="oklch">
+              <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
+                <canvas
+                  ref={canvasRef}
+                  onClick={pickFromPlane}
+                  style={{ width: '100%', height: 'auto', borderRadius: 6, cursor: 'crosshair', display: 'block' }}
+                />
+                <div style={row}>
+                  {chan('L', fx(l, 3), 0, 1, 0.01, (v) => setOklch([Math.max(0, Math.min(1, num(v))), c, h]))}
+                  {chan('C', fx(c, 3), 0, CMAX, 0.005, (v) => setOklch([l, Math.max(0, Math.min(CMAX, num(v))), h]), `in-gamut chroma limit at this L / hue: ${fx(cLimit, 3)}`)}
+                  {chan('H', fx(h, 1), 0, 360, 1, (v) => setOklch([l, c, ((num(v) % 360) + 360) % 360]))}
+                </div>
+              </div>
+            </TabPanel>
+            <TabPanel value="hsl">
+              <div style={{ ...row, marginTop: 10 }}>
+                {chan('H', fx(hslH, 0), 0, 360, 1, (v) => setHsl(0, v))}
+                {chan('S %', fx(hsl[1] * 100, 0), 0, 100, 1, (v) => setHsl(1, v))}
+                {chan('L %', fx(hsl[2] * 100, 0), 0, 100, 1, (v) => setHsl(2, v))}
+              </div>
+            </TabPanel>
+            <TabPanel value="rgb">
+              <div style={{ ...row, marginTop: 10 }}>
+                {chan('R', fx(rgb[0], 0), 0, 255, 1, (v) => setRgb(0, v))}
+                {chan('G', fx(rgb[1], 0), 0, 255, 1, (v) => setRgb(1, v))}
+                {chan('B', fx(rgb[2], 0), 0, 255, 1, (v) => setRgb(2, v))}
+              </div>
+            </TabPanel>
+            <TabPanel value="hex">
+              <div style={{ marginTop: 10, maxWidth: 160 }}>
+                <Input
+                  size="small"
+                  label="Hex"
+                  value={hexDraft}
+                  placeholder="#rrggbb"
+                  onValueChange={(_e: any, a: any) => {
+                    setHexDraft(a.value)
+                    if (chroma.valid(a.value)) setOklch(safeOklch(chroma(a.value).oklch(), h))
+                  }}
+                />
+              </div>
+            </TabPanel>
+          </Tabs>
 
-      {model === 'rgb' && (
-        <>
-          {slider('R', rgb[0], 0, 255, 1, (n) => setRgb(0, n))}
-          {slider('G', rgb[1], 0, 255, 1, (n) => setRgb(1, n))}
-          {slider('B', rgb[2], 0, 255, 1, (n) => setRgb(2, n))}
-        </>
-      )}
-
-      {model === 'hex' && (
-        <input
-          type="text"
-          value={hexDraft}
-          onInput={(e) => {
-            const v = (e.target as HTMLInputElement).value
-            setHexDraft(v)
-            if (chroma.valid(v)) setOklch(safeOklch(chroma(v).oklch(), h))
-          }}
-          style={{ ...numStyle, width: '100%', fontSize: 14, padding: '6px 8px' }}
-          placeholder="#rrggbb"
-        />
-      )}
-
-      {outOfGamut && (
-        <div style={{ fontSize: 11, color: 'var(--text-2-warning)' }}>
-          Outside sRGB — clips to <code>{hex}</code> when rendered.
+          {outOfGamut ? (
+            <div style={{ fontSize: 11, color: 'var(--text-2-warning)' }}>
+              Outside sRGB — clips to <code>{hex}</code> when rendered.
+            </div>
+          ) : null}
         </div>
-      )}
+      </Menu>
     </div>
   )
 }

@@ -25,6 +25,15 @@ running prose. Reach for a real heading tag when SEO matters or you want
 that built-in rhythm and don't need the `tone` / `priority` props; use
 `<Title>` when you do.
 
+> **`<Title>` has no margins.** Spacing between a heading and what
+> follows is the container's job — put a `gap` on the parent (or
+> padding), exactly as with `<Text>`. That keeps a heading neutral so it
+> drops into a card, toolbar, or grid cell without leaking margin or
+> pushing off the container's own padding. For a one-off, add spacing
+> inline (`style={{ marginBlock: '…' }}`). Want the classic document
+> rhythm instead? Reach for a raw `<h1>`–`<h6>`, which keep per-level
+> margins via the reset.
+
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
@@ -93,7 +102,7 @@ here comes from the container's `gap`.
 `icon` / `iconTrailing` props because children are the API. Drop any
 inline content beside the title text.
 
-<Title level={3}>
+<Title level={3} style={{ marginBottom: '12px' }}>
   <Icon shape="book-open" /> Section with a leading icon
 </Title>
 
@@ -105,7 +114,7 @@ inline content beside the title text.
   x-height, which lands visually low in headings.
 </Text>
 
-<Title level={3}>
+<Title level={3} style={{ marginBlock: '20px 12px' }}>
   <Icon shape="info" /> Mix it all — title text and <span style={{ color: 'var(--text-1-brand)' }}>accents</span>
 </Title>
 

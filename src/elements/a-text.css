@@ -5,6 +5,10 @@
     --text-link-hover: var(--link-color-hover);
 
     display: block;
+    /* Pin the family so a consumer's font-family on an ancestor can't reach in
+       and restyle body copy — same reasoning as font-feature-settings below: the
+       property replaces, it doesn't merge. */
+    font-family: var(--sans-serif);
     color: var(--text-color);
     font-size: 15px;
     line-height: 20px;

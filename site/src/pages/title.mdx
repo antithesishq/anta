@@ -10,17 +10,29 @@ import titleDemoCode from './title.demo.ts'
 
 # Title
 
-A block-level heading at one of six `level`s. The `level` drives both
-the type scale (font-size + line-height) and the vertical rhythm
-(margins above and below); it's also surfaced to assistive tech via
-`aria-level`. Pair with `priority` (`primary` → `quinary`, mapping to
-`--text-1` … `--text-5`) and `tone` (`neutral` (default, untinted),
-`brand`, `success`, `critical`, `warning`, `info`, or any literal CSS
-color for a one-off custom tone) exactly as you would on `Text`.
+A block-level heading at one of six `level`s. The `level` drives the
+type scale (font-size + line-height); it's also surfaced to assistive
+tech via `aria-level`. `<Title>` carries no vertical margins — it drops
+into any container and the parent owns spacing (a `gap` or padding).
+Pair with `priority` (`primary` → `quinary`, mapping to `--text-1` …
+`--text-5`) and `tone` (`neutral` (default, untinted), `brand`,
+`success`, `critical`, `warning`, `info`, or any literal CSS color for a
+one-off custom tone) exactly as you would on `Text`.
 
-Raw `<h1>`–`<h6>` get the same default styling via anta's reset, so
-reach for a real heading tag when SEO matters and you don't need the
-`tone` / `priority` props. Use `<Title>` when you do.
+Raw `<h1>`–`<h6>` share that type scale via anta's reset, plus the
+document vertical rhythm (per-level top/bottom margins) that suits
+running prose. Reach for a real heading tag when SEO matters or you want
+that built-in rhythm and don't need the `tone` / `priority` props; use
+`<Title>` when you do.
+
+> **`<Title>` has no margins.** Spacing between a heading and what
+> follows is the container's job — put a `gap` on the parent (or
+> padding), exactly as with `<Text>`. That keeps a heading neutral so it
+> drops into a card, toolbar, or grid cell without leaking margin or
+> pushing off the container's own padding. For a one-off, add spacing
+> inline (`style={{ marginBlock: '…' }}`). Want the classic document
+> rhythm instead? Reach for a raw `<h1>`–`<h6>`, which keep per-level
+> margins via the reset.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -37,10 +49,11 @@ reach for a real heading tag when SEO matters and you don't need the
 ## Levels in context
 
 Six levels interleaved with paragraphs of `<Text>`, all rendered with
-`tone="brand"` against a branded surface so the type scale and
-vertical rhythm read clearly.
+`tone="brand"` against a branded surface so the type scale reads
+clearly. `<Title>` and `<Text>` are both margin-free, so the spacing
+here comes from the container's `gap`.
 
-<div style={{ background: 'var(--bg-pane-brand)', padding: '24px 32px', borderRadius: '8px', border: '1px solid var(--border-4-brand)' }}>
+<div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--bg-pane-brand)', padding: '24px 32px', borderRadius: '8px', border: '1px solid var(--border-4-brand)' }}>
   <Title level={1} tone="brand">Level 1 — page title</Title>
   <Text tone="brand">
     Donec a tincidunt elit. Mauris vehicula, est nec porta cursus,
@@ -89,7 +102,7 @@ vertical rhythm read clearly.
 `icon` / `iconTrailing` props because children are the API. Drop any
 inline content beside the title text.
 
-<Title level={3}>
+<Title level={3} style={{ marginBottom: '12px' }}>
   <Icon shape="book-open" /> Section with a leading icon
 </Title>
 
@@ -101,7 +114,7 @@ inline content beside the title text.
   x-height, which lands visually low in headings.
 </Text>
 
-<Title level={3}>
+<Title level={3} style={{ marginBlock: '20px 12px' }}>
   <Icon shape="info" /> Mix it all — title text and <span style={{ color: 'var(--text-1-brand)' }}>accents</span>
 </Title>
 
@@ -124,20 +137,18 @@ heading elements should hold inline phrasing content only.
 
 ## Level reference
 
-| level | font-size | line-height | margin-block-start | margin-block-end |
-|------:|----------:|------------:|-------------------:|-----------------:|
-| 1     | 28px      | 32px        | 0                  | 16px             |
-| 2     | 24px      | 28px        | 32px               | 12px             |
-| 3     | 20px      | 24px        | 24px               | 12px             |
-| 4     | 17px      | 20px        | 20px               | 8px              |
-| 5     | 15px      | 20px        | 16px               | 8px              |
-| 6     | 13px      | 16px        | 16px               | 4px              |
+| level | font-size | line-height |
+|------:|----------:|------------:|
+| 1     | 28px      | 32px        |
+| 2     | 24px      | 28px        |
+| 3     | 20px      | 24px        |
+| 4     | 17px      | 20px        |
+| 5     | 15px      | 20px        |
+| 6     | 13px      | 16px        |
 
-Level 1 is the only level with a zero `margin-block-start` baked in.
-For the rest, expect a top margin even when the heading is the first
-thing inside its container — wrap the container in something with its
-own padding or zero the heading's margin yourself when you need it
-flush.
+`<Title>` adds no vertical margin at any level — space it with the
+parent's `gap` or padding. Raw `<h1>`–`<h6>` do carry per-level
+top/bottom margins (via `src/reset.css`) for document prose rhythm.
 
 ## Tone × priority
 

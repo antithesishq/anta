@@ -1,6 +1,10 @@
 @layer anta {
   a-title {
     display: block;
+    /* Pin the family so a consumer's font-family on an ancestor can't reach in
+       and restyle headings — same reasoning as font-feature-settings below: the
+       property replaces, it doesn't merge. */
+    font-family: var(--sans-serif);
     color: var(--text-1);
     font-weight: 584.62;
     letter-spacing: 0;
@@ -10,18 +14,21 @@
        so a consumer's font-feature-settings on an ancestor can't drop them — the
        property replaces, not merges. */
     font-feature-settings: 'ss02', 'ss05', 'tnum';
+    /* No vertical margins: <Title> is a spacing-neutral atom that drops into any
+       container, so the parent owns spacing (gap/padding). Raw <h1>-<h6> keep the
+       document prose rhythm via src/reset.css. */
   }
 
   a-title a-icon {
     transform: translateY(-0.05em);
   }
 
-  a-title[level="1"] { font-size: 28px; line-height: 32px; margin-block-start: 0;    margin-block-end: 16px; }
-  a-title[level="2"] { font-size: 24px; line-height: 28px; margin-block-start: 32px; margin-block-end: 12px; }
-  a-title[level="3"] { font-size: 20px; line-height: 24px; margin-block-start: 24px; margin-block-end: 12px; }
-  a-title[level="4"] { font-size: 17px; line-height: 20px; margin-block-start: 20px; margin-block-end: 8px;  }
-  a-title[level="5"] { font-size: 15px; line-height: 20px; margin-block-start: 16px; margin-block-end: 8px;  }
-  a-title[level="6"] { font-size: 13px; line-height: 16px; margin-block-start: 16px; margin-block-end: 4px;  }
+  a-title[level="1"] { font-size: 28px; line-height: 32px; }
+  a-title[level="2"] { font-size: 24px; line-height: 28px; }
+  a-title[level="3"] { font-size: 20px; line-height: 24px; }
+  a-title[level="4"] { font-size: 17px; line-height: 20px; }
+  a-title[level="5"] { font-size: 15px; line-height: 20px; }
+  a-title[level="6"] { font-size: 13px; line-height: 16px; }
 
   a-title[priority="secondary"]  { color: var(--text-2); }
   a-title[priority="tertiary"]   { color: var(--text-3); }

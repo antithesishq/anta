@@ -27,18 +27,22 @@ export interface TitleProps extends BaseProps {
  * — so there are no `icon` / `iconTrailing` props; just compose
  * inside.
  *
- * Raw `<h1>`-`<h6>` get the same visual styling via `src/reset.css`,
- * so use a real heading tag if SEO matters and you don't need the
- * `tone` / `priority` props.
+ * `<Title>` carries no vertical margins: it's a spacing-neutral atom
+ * that drops into any container, and the parent owns spacing (a `gap`
+ * or padding). Raw `<h1>`-`<h6>` do keep per-level top/bottom margins
+ * (via `src/reset.css`) for document prose rhythm — so use a real
+ * heading tag if SEO matters or you want that built-in rhythm and don't
+ * need the `tone` / `priority` props.
  *
  * Styling notes (`a-title.css` ships comment-free): `<a-title>` is
  * intentionally CSS-only — no JS, no shadow DOM, not even
  * `customElements.define`; the browser treats it as a generic unknown
  * element and the CSS gives it block layout, the demi-bold variable-font
- * weight, and the per-level type scale + vertical rhythm. The matching
- * `h1`–`h6` rules in `src/reset.css` are kept in lockstep so raw markup
- * looks the same as `<Title level={n}>`. The tone × priority color matrix
- * has the same shape as `a-text`'s.
+ * weight, and the per-level type scale. The matching `h1`–`h6` rules in
+ * `src/reset.css` share that type scale and weight, so raw markup reads
+ * the same as `<Title level={n}>` — they diverge only on margins: raw
+ * headings carry the document vertical rhythm, `<a-title>` is margin-free.
+ * The tone × priority color matrix has the same shape as `a-text`'s.
  *
  * Requires `@antadesign/anta/elements` to be imported (client-side only)
  * so the CSS ships with the page.

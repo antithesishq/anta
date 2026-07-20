@@ -33,7 +33,7 @@ import '@antadesign/anta/elements'      // web components (client-side only)
 
 This is **not** a neutral normalize — these defaults make raw markup match the components.
 
-- **Headings** adopt the exact scale of `<Title level={n}>` — `h1`–`h6` sizes, line-heights, and block margins, weight `≈585`, `letter-spacing: 0`, color `--text-1`. (Kept in lockstep with `a-title.css`.)
+- **Headings** adopt the exact scale of `<Title level={n}>` — `h1`–`h6` sizes, line-heights, weight `≈585`, `letter-spacing: 0`, color `--text-1` (kept in lockstep with `a-title.css`) — plus per-level block margins for document rhythm. Those margins live only on the raw headings: `<Title>` itself is margin-free and leaves spacing to its container, so running prose gets the rhythm while the component stays neutral.
 - `strong` → `font-weight: 600`.
 - Inline `code` → `line-height: 1em` so it doesn't inflate the line box of surrounding prose.
 - **Lists** (`ul` / `ol`): `3ch` left padding so markers hug the text; a small bottom margin between items; markers toned to `--text-5`.

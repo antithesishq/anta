@@ -6,7 +6,7 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
-## 0.3.10 — Unreleased
+## 0.3.10 — July 20, 2026
 
 ### Changed
 - **`Title` is now margin-free.** `<a-title>` (and `<Title>`) dropped the per-level `margin-block-start` / `margin-block-end` it baked in at every level, so it's a spacing-neutral atom that drops into cards, toolbars, and flex/grid cells without leaking margin or fighting the container's `gap` / `padding` — the parent owns spacing. Matches the margin-free `Text` and the primitives in Radix, Mantine, Chakra, and Polaris. Raw `<h1>`–`<h6>` still carry the per-level vertical rhythm via `src/reset.css` for document prose, so heading markup in running copy is unchanged; only the component diverges. Migration: where you relied on a `<Title>`'s built-in margin, add spacing on the surrounding container (a `gap` on the stack, or padding) — or use a raw heading tag for prose.

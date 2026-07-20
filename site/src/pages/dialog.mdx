@@ -44,7 +44,7 @@ row.
 <Preview>
   <a-button tabindex="0" data-dialog-open="zones">Open dialog</a-button>
   <a-dialog name="zones">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Enable telemetry?</Title>
+    <Title slot="header" level={4}>Enable telemetry?</Title>
     <Text>
       Anonymous usage data helps us find the bugs that matter. You can change
       this any time in settings.
@@ -96,23 +96,23 @@ viewport: no gap, no radius.
   <a-button tabindex="0" data-dialog-open="drawer-bottom">Bottom</a-button>
   <a-button tabindex="0" data-dialog-open="drawer-full">Fullscreen</a-button>
   <a-dialog name="drawer-left" position="left">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Filters</Title>
+    <Title slot="header" level={4}>Filters</Title>
     <Text>A left drawer runs the full height and slides in from the left edge.</Text>
   </a-dialog>
   <a-dialog name="drawer-right" position="right">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Details</Title>
+    <Title slot="header" level={4}>Details</Title>
     <Text>A right drawer, the common inspector / detail-panel placement.</Text>
   </a-dialog>
   <a-dialog name="drawer-top" position="top">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Notice</Title>
+    <Title slot="header" level={4}>Notice</Title>
     <Text>A top drawer spans the full width and drops down from the top edge.</Text>
   </a-dialog>
   <a-dialog name="drawer-bottom" position="bottom">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Actions</Title>
+    <Title slot="header" level={4}>Actions</Title>
     <Text>A bottom sheet, full width, rising from the bottom edge.</Text>
   </a-dialog>
   <a-dialog name="drawer-full" position="fullscreen">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Fullscreen</Title>
+    <Title slot="header" level={4}>Fullscreen</Title>
     <Text>Fills the entire viewport, edge to edge with no gap or corner radius.</Text>
     <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="drawer-full">Done</a-button>
     <a-button tabindex="0" slot="close" priority="tertiary" size="large" aria-label="Close" data-dialog-close="drawer-full">
@@ -146,11 +146,11 @@ drawer `round="left"`.
   <a-button tabindex="0" data-dialog-open="round-sheet">Rounded bottom sheet</a-button>
   <a-button tabindex="0" data-dialog-open="round-modal">Rounded modal</a-button>
   <a-dialog name="round-sheet" position="bottom" round="top">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Share</Title>
+    <Title slot="header" level={4}>Share</Title>
     <Text>A bottom sheet with its exposed top edge rounded (<code>round="top"</code>).</Text>
   </a-dialog>
   <a-dialog name="round-modal" round="24px">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Softer corners</Title>
+    <Title slot="header" level={4}>Softer corners</Title>
     <Text>A centered modal with all four corners at 24px (<code>round="24px"</code>).</Text>
     <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="round-modal">Done</a-button>
   </a-dialog>
@@ -183,7 +183,7 @@ backdrop do.
 <Preview gap="8px">
   <a-button tabindex="0" data-dialog-open="no-x">No close button</a-button>
   <a-dialog name="no-x">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Rename file</Title>
+    <Title slot="header" level={4}>Rename file</Title>
     <Text>No ✕ here; dismiss with the footer buttons, Esc, or the backdrop.</Text>
     <span slot="footer" style={{ display: 'contents' }}>
       <Button data-dialog-close="no-x">Cancel</Button>
@@ -208,7 +208,7 @@ that should be answered deliberately.
 <Preview gap="8px">
   <a-button tabindex="0" data-dialog-open="persistent">Delete account</a-button>
   <a-dialog name="persistent" persistent>
-    <Title slot="header" level={4} style={{ margin: 0 }}>Delete account?</Title>
+    <Title slot="header" level={4}>Delete account?</Title>
     <Text>
       This permanently removes your account and all its data. This can't be
       undone.
@@ -372,7 +372,7 @@ the centered modal (`center` carries no `position` attribute).
 <Preview gap="8px">
   <a-button tabindex="0" data-dialog-open="styled">Wider, softer modal</a-button>
   <a-dialog name="styled" class="styled-dialog">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Custom surface</Title>
+    <Title slot="header" level={4}>Custom surface</Title>
     <Text>A wider centred modal with a bigger radius and a stronger overlay, all via ::part.</Text>
     <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="styled">Done</a-button>
   </a-dialog>
@@ -433,16 +433,16 @@ for a bottom sheet's top edge, and `round="right"` for a left drawer's inner edg
   <a-button tabindex="0" data-dialog-open="corner-sheet">Bottom, round top</a-button>
   <a-button tabindex="0" data-dialog-open="corner-drawer">Left, round right</a-button>
   <a-dialog name="corner-flat" round="0">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Square corners</Title>
+    <Title slot="header" level={4}>Square corners</Title>
     <Text>A centered modal with no rounding (<code>round={0}</code>).</Text>
     <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="corner-flat">Done</a-button>
   </a-dialog>
   <a-dialog name="corner-sheet" position="bottom" round="top">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Bottom sheet</Title>
+    <Title slot="header" level={4}>Bottom sheet</Title>
     <Text>Top corners rounded (<code>round="top"</code>).</Text>
   </a-dialog>
   <a-dialog name="corner-drawer" position="left" round="right">
-    <Title slot="header" level={4} style={{ margin: 0 }}>Left drawer</Title>
+    <Title slot="header" level={4}>Left drawer</Title>
     <Text>The inner (right) edge rounded (<code>round="right"</code>).</Text>
   </a-dialog>
 </Preview>

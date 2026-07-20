@@ -6,15 +6,13 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
-## 0.3.11 — July 19, 2026
+## 0.3.10 — Unreleased
 
 ### Changed
 - **`Title` is now margin-free.** `<a-title>` (and `<Title>`) dropped the per-level `margin-block-start` / `margin-block-end` it baked in at every level, so it's a spacing-neutral atom that drops into cards, toolbars, and flex/grid cells without leaking margin or fighting the container's `gap` / `padding` — the parent owns spacing. Matches the margin-free `Text` and the primitives in Radix, Mantine, Chakra, and Polaris. Raw `<h1>`–`<h6>` still carry the per-level vertical rhythm via `src/reset.css` for document prose, so heading markup in running copy is unchanged; only the component diverges. Migration: where you relied on a `<Title>`'s built-in margin, add spacing on the surrounding container (a `gap` on the stack, or padding) — or use a raw heading tag for prose.
 
 ### Fixed
 - **`Text` and `Title` pin their `font-family`.** Both now set `font-family: var(--sans-serif)` on the host instead of relying on inheritance, so a consumer's `font-family` on an ancestor container can no longer reach in and restyle body copy or headings — the same defensive restatement they already do for `font-feature-settings`, and the same pin every shadow-DOM control (`Button`, `Input`, `Tag`, …) already carries. No change where `--sans-serif` is undefined (falls back to inherited, as before).
-
-## 0.3.10 — July 17, 2026
 
 ### Added
 - **Copy button & copying menu item.** `ButtonCopy` and `MenuItemCopy` copy to the clipboard on activation. Exactly one mode (enforced by the `CopyMode` discriminated union): `copy` for a literal string; `copyNode` (bare → nearest `data-copy-source` ancestor; a selector → `closest()`) to copy a DOM region as rich text (`text/html`) + plain text with the copy control stripped from the output; or `copyLazy`, where the content stays out of the DOM until the click fires `onCopyRequest(provide)` and you call `provide(text)` (sync or after an `await`, within the click's activation window). The write lives in the web component (`<a-button>` / `<a-menu-item>`); it reports the result on a non-bubbling `copydone` event, and the wrapper flips the leading icon to a check / ✕ and retones to `success` / `critical` for ~2s. `onCopied(ok)` callback. The `copy` / `copy-node` / `copy-lazy` attributes also work on plain `<Button>` / `<MenuItem>` and hand-authored `<a-button>` / `<a-menu-item>` (the icon/tone feedback is the preset wrappers' part). Exports `ButtonCopy`, `MenuItemCopy`, `ButtonCopyProps`, `MenuItemCopyProps`, and `CopyMode`.

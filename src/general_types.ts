@@ -754,15 +754,17 @@ export interface AMenuItemAttributes extends BaseAttributes {
    *  is a CSS selector resolved with `closest()`. Presence-based for the boolean
    *  form. */
   'copy-node'?: boolean | string
-  /** Lazy copy: with an empty `copy`, activation dispatches `copyrequest` and the
-   *  write completes once `copy` is set back (within the activation window).
+  /** Copy the current page URL (`location.href`) instead of a `copy` string.
    *  Presence-based. */
-  'copy-lazy'?: boolean | ''
+  'copy-url'?: boolean | ''
+  /** Prefix the copied `copy` string with `// URL: <href>`. Presence-based. */
+  'copy-with-url'?: boolean | ''
   /** Fired after a copy attempt (bubbling `copydone`, `detail: { ok }`).
    *  All-lowercase so it binds in React *and* Preact. */
   oncopydone?: (e: CustomEvent<{ ok: boolean }>) => void
-  /** Fired on a lazy copy activation to request the content (bubbling
-   *  `copyrequest`). Answer by setting the `copy` attribute. All-lowercase. */
+  /** Fired on **pointerdown** for a string-copy row (`copyrequest`, non-bubbling).
+   *  Answer by setting the `copy` attribute to the freshly-computed value; the
+   *  chosen row copies it. All-lowercase. */
   oncopyrequest?: (e: CustomEvent) => void
 }
 
@@ -824,18 +826,20 @@ export interface AButtonAttributes extends BaseAttributes {
    *  is a CSS selector resolved with `closest()` (an ancestor region). Presence-
    *  based for the boolean form. */
   'copy-node'?: boolean | string
-  /** Lazy copy: activation dispatches `copyrequest`; the consumer calls
-   *  `detail.provide(text)` with the content, which stays out of the DOM until
-   *  then. Takes precedence over `copy`. Presence-based. */
-  'copy-lazy'?: boolean | ''
+  /** Copy the current page URL (`location.href`) instead of a `copy` string; no
+   *  `copy` needed. Presence-based. */
+  'copy-url'?: boolean | ''
+  /** Prefix the copied `copy` string with `// URL: <href>`. Presence-based. */
+  'copy-with-url'?: boolean | ''
   /** Fired after a copy attempt (`copydone`, `detail: { ok }`, non-bubbling so a
    *  nested copy row can't flip an ancestor's feedback). All-lowercase so it
    *  binds in React *and* Preact. */
   oncopydone?: (e: CustomEvent<{ ok: boolean }>) => void
-  /** Fired on a lazy copy activation (`copyrequest`, non-bubbling). Supply the
-   *  content by calling `detail.provide(text)` — synchronously or within the
-   *  click's activation window. All-lowercase. */
-  oncopyrequest?: (e: CustomEvent<{ provide: (text: string) => void }>) => void
+  /** Fired on **pointerdown** for a string-copy button (`copyrequest`,
+   *  non-bubbling). Answer by setting the `copy` attribute to the freshly-computed
+   *  value; the click then copies it. The pointerdown→click gap lets an
+   *  off-UI-thread handler set `copy` in time. All-lowercase. */
+  oncopyrequest?: (e: CustomEvent) => void
   'aria-disabled'?: 'true' | 'false' | boolean
   'aria-busy'?: 'true' | 'false' | boolean
 }

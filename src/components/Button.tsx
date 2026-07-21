@@ -66,7 +66,10 @@ export type ContentMode = {
 }
 
 /** Submit axis — anchors (href) don't carry form-submission props; buttons
- *  don't carry anchor props. */
+ *  don't carry anchor props. A link (`href`) also can't be a copy control, so the
+ *  copy props live only on the non-link branch (via `CopyMode`) and are `never`
+ *  on the link branch — a `<ButtonCopy href=…>` or `<Button href=… copy=…>` is a
+ *  type error, not a silently-ignored attribute. */
 export type SubmitMode =
   | {
       /** Renders as `<a role="button">` instead of `<a-button>`. */
@@ -81,8 +84,14 @@ export type SubmitMode =
       ping?: string
       type?: never
       form?: never
+      copy?: never
+      copyNode?: never
+      copyUrl?: never
+      copyWithUrl?: never
+      onCopyRequest?: never
+      onCopied?: never
     }
-  | {
+  | ({
       href?: never
       target?: never
       rel?: never
@@ -92,7 +101,7 @@ export type SubmitMode =
       type?: 'button' | 'submit' | 'reset'
       /** Form id when the button isn't a descendant of its form. */
       form?: string
-    }
+    } & CopyMode)
 
 /** Priority axis — `underline` only on `tertiary` / `quaternary`,
  *  `paddingless` only on `quaternary`. */
@@ -120,23 +129,31 @@ export type PriorityMode =
 
 /** Copy axis — turns the button into a copy control that writes to the clipboard
  *  on click and flashes a success / failure state (see `<a-button>`'s copy
- *  behavior). **Exactly one** of `copy`, `copyNode`, or `copyLazy` may be set;
+ *  behavior). **Exactly one** of `copy`, `copyNode`, or `copyUrl` may be set;
  *  the union makes the others `never` in each mode. For the batteries-included
  *  preset, use `ButtonCopy`. */
 export type CopyMode =
   | {
       copy?: never
       copyNode?: never
-      copyLazy?: never
+      copyUrl?: never
+      copyWithUrl?: never
       onCopied?: never
       onCopyRequest?: never
     }
   | {
       /** Text copied to the clipboard on click. */
       copy: string
+      /** Prefix the copied text with `// URL: <current page URL>`. */
+      copyWithUrl?: boolean
+      /** Compute the copy content lazily. Fires on **pointerdown**; update `copy`
+       *  (a state change) here and the click copies the latest value. The
+       *  pointerdown→click gap lets the update land even when this handler runs
+       *  off the UI thread (a worker-rendered app) — only the serializable `copy`
+       *  string crosses, via the normal re-render. */
+      onCopyRequest?: () => void
       copyNode?: never
-      copyLazy?: never
-      onCopyRequest?: never
+      copyUrl?: never
       /** Fires after the copy attempt with whether it succeeded. */
       onCopied?: (ok: boolean) => void
     }
@@ -147,26 +164,27 @@ export type CopyMode =
        *  the copied output. */
       copyNode: boolean | string
       copy?: never
-      copyLazy?: never
+      copyUrl?: never
+      copyWithUrl?: never
       onCopyRequest?: never
       /** Fires after the copy attempt with whether it succeeded. */
       onCopied?: (ok: boolean) => void
     }
   | {
-      /** Lazy copy: the content isn't computed or held in the DOM until the
-       *  click. The click fires `onCopyRequest(provide)`; call `provide(text)`
-       *  with the value — synchronously, or after an `await` (the browser's
-       *  transient-activation window still covers the write). */
-      copyLazy: true
+      /** Copy the current page URL (`location.href`). */
+      copyUrl: true
       copy?: never
       copyNode?: never
-      /** Supplies the lazily-computed content on click: call `provide(text)`. */
-      onCopyRequest: (provide: (text: string) => void) => void
+      copyWithUrl?: never
+      onCopyRequest?: never
       /** Fires after the copy attempt with whether it succeeded. */
       onCopied?: (ok: boolean) => void
     }
 
-export type ButtonProps = BaseButtonProps & PriorityMode & ContentMode & SubmitMode & CopyMode & BaseProps
+// `SubmitMode` already carries `CopyMode` on its non-link branch (and `never`s it
+// on the link branch), so copy props are excluded in link mode — don't intersect
+// `CopyMode` again here or the link `never`s would be overridden.
+export type ButtonProps = BaseButtonProps & PriorityMode & ContentMode & SubmitMode & BaseProps
 
 /**
  * Action button.
@@ -206,7 +224,8 @@ export const Button = ({
   form,
   copy,
   copyNode,
-  copyLazy,
+  copyUrl,
+  copyWithUrl,
   onCopied,
   onCopyRequest,
   className,
@@ -217,7 +236,7 @@ export const Button = ({
   // A copy control when any copy prop is set. The leading glyph becomes a stack
   // (idle / success / failure) the element's `:state()` picks from — see
   // a-button.css and copy-behavior.ts.
-  const isCopy = copy != null || copyNode != null || copyLazy === true
+  const isCopy = copy != null || copyNode != null || copyUrl === true
   // Empty string is "no tone" — same as omitting the prop: neutral base.
   // Don't emit a bare `tone=""` (it matched the custom-tone branch and
   // resolved to a `transparent` source, rendering an invisible button).
@@ -269,18 +288,17 @@ export const Button = ({
     // Copy behavior — the element reads these and performs the write itself.
     copy: copy != null ? copy : undefined,
     'copy-node': copyNode === true ? '' : typeof copyNode === 'string' ? copyNode : undefined,
-    'copy-lazy': copyLazy ? '' : undefined,
+    'copy-url': copyUrl ? '' : undefined,
+    'copy-with-url': copyWithUrl ? '' : undefined,
     // Marks the control so `copy-node` serialization strips it from the copied
     // node (a copy button inside the copied region shouldn't paste itself).
     'data-copy-node-button': copyNode != null && copyNode !== false ? '' : undefined,
     oncopydone: onCopied
       ? (e: any) => onCopied(nativeStateChange<{ ok: boolean }>(e).detail?.ok ?? false)
       : undefined,
-    // The element hands `provide` on the request event; forward it so the
-    // consumer supplies the lazily-computed content.
-    oncopyrequest: onCopyRequest
-      ? (e: any) => onCopyRequest(nativeStateChange<{ provide: (text: string) => void }>(e).detail!.provide)
-      : undefined,
+    // Fired on pointerdown for a lazy copy — the consumer updates `copy` here
+    // (a state change) and the click copies the latest value. No payload crosses.
+    oncopyrequest: onCopyRequest ? () => onCopyRequest() : undefined,
     class: className,
     style: computedStyle,
   } as const

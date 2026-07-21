@@ -14,7 +14,7 @@ import type { IconShape } from '../elements/a-icon.shapes'
 import type { SelectItem, SelectOption } from './Select'
 import { normalizeOpt, matchQueryRegex, matchesQuery } from './select-options'
 import { Button } from './Button'
-import { Menu } from './Menu'
+import { Menu, type MenuProps } from './Menu'
 import { MenuItem } from './MenuItem'
 import { MenuGroup } from './MenuGroup'
 import { MenuSeparator } from './MenuSeparator'
@@ -149,6 +149,13 @@ export interface SelectFacetedTriggerState {
 export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   /** The facets (dimensions) to filter across, each with its own editor kind. */
   facets: SelectFacet[]
+  /** Preferred placement of the root filter menu relative to its trigger. The
+   *  menu auto-flips vertically and clamps horizontally when needed.
+   *  @defaultValue bottom-start */
+  placement?: MenuProps['placement']
+  /** Gap in pixels between the trigger and the filter menu.
+   *  @defaultValue 4 */
+  offset?: number
   /** Controlled value — the facet-keyed record. When provided, the consumer
    *  owns state: a pick only *requests* a change via `onValueChange` (reject by
    *  not updating). Leave undefined for uncontrolled. */
@@ -258,6 +265,8 @@ const defaultMatch = (o: SelectOption, query: string): boolean =>
 export const SelectFaceted = (props: SelectFacetedProps) => {
   const {
     facets,
+    placement,
+    offset,
     value,
     defaultValue,
     onValueChange,
@@ -614,6 +623,8 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           so `custom` facets can `close()` it; user dismiss (Esc / outside-click)
           fires onStateChange, which we apply — and clears the global search. */}
       <Menu
+        placement={placement}
+        offset={offset}
         open={open}
         onStateChange={(_e, { next }) => {
           setOpen(next)

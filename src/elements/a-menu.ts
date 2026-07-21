@@ -1,5 +1,6 @@
 import { HTMLElementBase, anchorRect, setMenuPresence } from '../anta_helpers'
 import { AMenuItemElement, isMenuItemEl, ensureMenuItemKeyListener } from './a-menu-item'
+import { emitCopyRequest } from './copy-behavior'
 import './a-menu.css'
 
 /** Gap (px) the surface keeps from the anchor / viewport edge. */
@@ -67,6 +68,7 @@ function bindDocListeners(doc: Document, view: Window & typeof globalThis) {
   if (docBound) return
   doc.addEventListener('pointerdown', onDocPointerDown, true)
   doc.addEventListener('keydown', onDocKeyDown, true)
+  doc.addEventListener('keyup', onDocKeyUp, true)
   doc.addEventListener('contextmenu', onDocContextMenu, true)
   view.addEventListener('resize', onResize)
   boundDoc = doc
@@ -78,6 +80,7 @@ function unbindDocListeners() {
   if (!docBound) return
   boundDoc?.removeEventListener('pointerdown', onDocPointerDown, true)
   boundDoc?.removeEventListener('keydown', onDocKeyDown, true)
+  boundDoc?.removeEventListener('keyup', onDocKeyUp, true)
   boundDoc?.removeEventListener('contextmenu', onDocContextMenu, true)
   boundView?.removeEventListener('resize', onResize)
   removePosTracker?.()
@@ -152,6 +155,18 @@ function pathHitsMenus(e: Event, primaryClick = false): boolean {
   return false
 }
 
+function pathCrossesTopLayerBeforeAnchor(e: Event, anchor: HTMLElement): boolean {
+  for (const node of e.composedPath()) {
+    if (node === anchor) return false
+    if (
+      (node instanceof HTMLDialogElement && node.matches(':modal')) ||
+      (node instanceof HTMLElement && node.matches(':popover-open'))
+    )
+      return true
+  }
+  return false
+}
+
 /** Node-based sibling of `pathHitsMenus`: is `node` inside any open menu's
  *  surface, its slotted light-DOM content (menu items), or its trigger anchor?
  *  Published to `anta_helpers` so `a-tooltip` can suppress a tooltip anchored
@@ -193,6 +208,12 @@ function onDocKeyDown(e: KeyboardEvent) {
   const menu = openStack[openStack.length - 1]
   if (!menu) return
   menu.handleKey(e)
+}
+
+function onDocKeyUp(e: KeyboardEvent) {
+  const menu = openStack[openStack.length - 1]
+  if (!menu) return
+  menu.handleKeyUp(e)
 }
 
 /** Dismiss the open system (outside-click / resize / anchor scrolled out of
@@ -794,12 +815,31 @@ export class AMenuElement extends HTMLElementBase {
       case 'Enter':
         if (this.activeItem) {
           e.preventDefault()
-          this.activeItem.click()
+          // Activate on keyup (see handleKeyUp), not here — the keydown→keyup gap
+          // lets a lazy copy row refresh `copy` between press and release, the
+          // same contract as the roving path (key-activation) and pointer. The
+          // pre-request fires now; no-ops on a non-copy item.
+          emitCopyRequest(this.activeItem)
+          this.#pendingComboActivate = this.activeItem
         }
         return true
       default:
         return false
     }
+  }
+
+  /** The combobox cursor armed by an Enter keydown in the filter field, consumed
+   *  on the matching keyup. Only the combobox path arms this — the roving Enter/
+   *  Space activation is `<a-menu-item>`'s (also keyup, via key-activation). */
+  #pendingComboActivate: HTMLElement | null = null
+
+  /** Combobox keyup: activate the item a filter-field Enter armed. Paired with the
+   *  keydown pre-request in `handleComboKey` so lazy content resolves in the gap. */
+  handleKeyUp(e: KeyboardEvent) {
+    if (e.key !== 'Enter') return
+    const el = this.#pendingComboActivate
+    this.#pendingComboActivate = null
+    el?.click()
   }
 
   /* ============================ open / close ============================ */
@@ -1253,8 +1293,9 @@ export class AMenuElement extends HTMLElementBase {
   /* ============================ keyboard ============================ */
 
   /** Called by the coordinator on the topmost open menu. Handles navigation;
-   *  Enter / Space activation is handled by a-menu-item's own global keydown
-   *  (which synthesizes a click → routed through onSurfaceClick). */
+   *  roving Enter / Space activation is `<a-menu-item>`'s own delegated keyup
+   *  (synthesizes a click → routed through onSurfaceClick). Combobox Enter (focus
+   *  in the filter field) is handled here via handleComboKey / handleKeyUp. */
   handleKey(e: KeyboardEvent) {
     const active = this.doc.activeElement as HTMLElement | null
 
@@ -1436,6 +1477,7 @@ export class AMenuElement extends HTMLElementBase {
       }
     } else if (this.#isContext) {
       const onContext = (e: MouseEvent) => {
+        if (pathCrossesTopLayerBeforeAnchor(e, anchor)) return
         e.preventDefault()
         this.requestOpen({ coord: [e.clientX, e.clientY], originEvent: e })
       }

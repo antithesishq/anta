@@ -138,6 +138,7 @@
        so plain text in the body doesn't inherit a roomy consumer body
        line-height; a nested <Text> overrides it with the same value. */
     line-height: 20px;
+    overflow-x: auto;
   }
 
   a-expander[priority="primary"] {

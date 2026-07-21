@@ -142,6 +142,10 @@ import './a-expander.css'
  *   instantly on open, so expanding content paints outside the still-
  *   animating region for `ANIM_MS` — accepted, it's a one-frame-class
  *   cosmetic on a progressive-enhancement property.
+ *   The region's single column is `minmax(0, 1fr)`, not the implicit `auto`:
+ *   `auto` grows to the content's max-content, so wide body content would
+ *   balloon the box and overflow; capping at the host width lets
+ *   `a-expander-details` (overflow-x: auto) be the scrollport instead.
  *
  * - **Disabled** (`disabled`, presence-based): the shadow button gets the
  *   native `disabled` — unfocusable, unclickable, no hover affordance
@@ -350,6 +354,7 @@ const SHADOW_STYLE = `
   .region {
     display: grid;
     grid-template-rows: 0fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .header:has(button[aria-expanded="true"]) + .region { grid-template-rows: 1fr; }
 

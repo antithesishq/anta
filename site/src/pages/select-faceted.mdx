@@ -26,10 +26,11 @@ option model, [Input](/input/), and [Tag](/tag/) — no new element. Controlled 
 
 Pass `placement` to control where the root facet menu opens relative to its
 trigger. It uses the same values as `Menu` and still flips or clamps when space
-is limited:
+is limited. `offset` sets the gap in pixels between the trigger and the menu
+(default `4`):
 
 ```tsx
-<SelectFaceted placement="top-end" facets={FACETS} />
+<SelectFaceted placement="top-end" offset={8} facets={FACETS} />
 ```
 
 <Disclosure title="Playground" anchor={false} brand>

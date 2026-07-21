@@ -163,6 +163,9 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  auto-flips vertically and clamps horizontally when needed.
    *  @defaultValue bottom-start */
   placement?: MenuProps['placement']
+  /** Gap in pixels between the trigger and the options menu.
+   *  @defaultValue 4 */
+  offset?: number
   /** The per-row mark for **single**-select: `'none'` (a tint-only highlight),
    *  `'check'` (a trailing checkmark on the selected row, keeping the tint — the
    *  canonical Select look), or `'radio'` (a leading radio on every row).
@@ -422,6 +425,7 @@ export const Select = (props: SelectProps) => {
   const {
     options,
     placement,
+    offset,
     selection,
     indicator,
     value,
@@ -755,6 +759,7 @@ export const Select = (props: SelectProps) => {
           and to reset the filter when the menu closes. */}
       <Menu
         placement={placement}
+        offset={offset}
         onStateChange={(_e, { next }) => {
           setOpen(next)
           if (!next) { setQuery(''); setActiveId(null) } // closed → clear filter + cursor

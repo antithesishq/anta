@@ -153,6 +153,9 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
    *  menu auto-flips vertically and clamps horizontally when needed.
    *  @defaultValue bottom-start */
   placement?: MenuProps['placement']
+  /** Gap in pixels between the trigger and the filter menu.
+   *  @defaultValue 4 */
+  offset?: number
   /** Controlled value — the facet-keyed record. When provided, the consumer
    *  owns state: a pick only *requests* a change via `onValueChange` (reject by
    *  not updating). Leave undefined for uncontrolled. */
@@ -263,6 +266,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   const {
     facets,
     placement,
+    offset,
     value,
     defaultValue,
     onValueChange,
@@ -620,6 +624,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           fires onStateChange, which we apply — and clears the global search. */}
       <Menu
         placement={placement}
+        offset={offset}
         open={open}
         onStateChange={(_e, { next }) => {
           setOpen(next)

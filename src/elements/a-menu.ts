@@ -155,6 +155,18 @@ function pathHitsMenus(e: Event, primaryClick = false): boolean {
   return false
 }
 
+function pathCrossesTopLayerBeforeAnchor(e: Event, anchor: HTMLElement): boolean {
+  for (const node of e.composedPath()) {
+    if (node === anchor) return false
+    if (
+      (node instanceof HTMLDialogElement && node.matches(':modal')) ||
+      (node instanceof HTMLElement && node.matches(':popover-open'))
+    )
+      return true
+  }
+  return false
+}
+
 /** Node-based sibling of `pathHitsMenus`: is `node` inside any open menu's
  *  surface, its slotted light-DOM content (menu items), or its trigger anchor?
  *  Published to `anta_helpers` so `a-tooltip` can suppress a tooltip anchored
@@ -1465,6 +1477,7 @@ export class AMenuElement extends HTMLElementBase {
       }
     } else if (this.#isContext) {
       const onContext = (e: MouseEvent) => {
+        if (pathCrossesTopLayerBeforeAnchor(e, anchor)) return
         e.preventDefault()
         this.requestOpen({ coord: [e.clientX, e.clientY], originEvent: e })
       }

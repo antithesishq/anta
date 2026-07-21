@@ -27,13 +27,6 @@
   flex-wrap: wrap;
 }
 
-.seedNote {
-  margin: 0;
-  color: var(--text-3);
-  font-family: var(--sans-serif);
-  font-size: 13px;
-}
-
 /* One component block: previews in a fixed 420px column, controls take the rest. */
 .block {
   display: grid;
@@ -122,6 +115,20 @@
   border-start-start-radius: 0;
   border-start-end-radius: 0;
   margin-top: -1px;
+}
+
+/* Background & Borders block: the two tab strips, stacked at the top of the top
+   preview card (the .preview grid supplies the row gap). */
+.surfaceTabs {
+  display: grid;
+  gap: 8px;
+}
+/* The empty swatch that fills a preview card (which supplies the padding) and
+   carries the selected background + border. */
+.surfaceSwatch {
+  min-height: 96px;
+  border: 1px solid;
+  border-radius: 8px;
 }
 
 .previewLabel {

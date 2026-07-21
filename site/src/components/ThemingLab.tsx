@@ -111,7 +111,7 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
     case 'tag':
       return (
         <div className={styles.row}>
-          {(['secondary', 'primary', 'tertiary'] as const).map((p) => (
+          {(['primary', 'secondary', 'tertiary'] as const).map((p) => (
             <Tag key={p} priority={p} tone={toneVal}>
               Tag · {p}
             </Tag>
@@ -127,7 +127,6 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
               key={p}
               priority={p}
               tone={toneVal}
-              size="small"
               label={`${p} tabs`}
               defaultValue="b"
               options={[
@@ -165,8 +164,8 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
     case 'expander':
       return (
         <div className={styles.col}>
-          {(['secondary', 'primary', 'tertiary'] as const).map((p, i) => (
-            <Expander key={p} priority={p} tone={toneVal} title={`${p} expander`} defaultOpen={i === 0}>
+          {(['primary', 'secondary', 'tertiary'] as const).map((p) => (
+            <Expander key={p} priority={p} tone={toneVal} title={`${p} expander`}>
               <Text priority="tertiary" size="small">
                 Body of the {p} expander.
               </Text>
@@ -276,6 +275,81 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, onVar }: BlockProps) {
   )
 }
 
+/** The "Background & Borders" block. Same left/right layout as `Block`, but the
+ *  preview is a single empty swatch driven by Background / Border tabs above both
+ *  previews: the top swatch reads Anta's real role tokens (with the current tone),
+ *  the bottom reads the seed-derived tokens injected onto it. One pair of tab
+ *  selections drives both, so the two read the same bg×border combination. */
+function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar }: BlockProps) {
+  const v = isDark ? vDark : vLight
+  const [bg, setBg] = useState(2)
+  const [border, setBorder] = useState(4)
+  const genClass = `tl-gen-${tone}-surface`
+
+  // Inject the seed-derived --bg-*/--border-* onto the GEN swatch only (not the
+  // card — the card keeps its own --bg-2 chrome). Both themes, un-layered.
+  const swatchSel = `.${genClass} .${styles.surfaceSwatch}`
+  const inject = spec.css(swatchSel, seed, vLight) + '\n' + spec.css(`.dark ${swatchSel}`, seed, vDark)
+  const display = spec.css(':root', seed, v)
+
+  // Anta side: named tones use the -{tone} token variant; neutral has none.
+  // bg-1 is neutral-only (no toned variant), so it never takes the suffix.
+  const suffix = tone === 'neutral' ? '' : `-${tone}`
+  const refBg = `var(--bg-${bg}${bg === 1 ? '' : suffix})`
+  const refBorder = `var(--border-${border}${suffix})`
+
+  const opts = (base: string) => [1, 2, 3, 4, 5].map((n) => ({ value: `${base}-${n}`, label: `${base}-${n}` }))
+  const pick = (set: (n: number) => void) => (_e: any, { next }: { next: string | null }) => {
+    if (next) set(Number(next.split('-').pop()))
+  }
+
+  return (
+    <section className={styles.block}>
+      {/* LEFT — tabs, then the two swatch previews */}
+      <div className={styles.previews}>
+        <div className={styles.preview}>
+          <div className={styles.surfaceTabs}>
+            <Tabs value={`bg-${bg}`} label="Background" size="small" options={opts('bg')} onStateChange={pick(setBg)} />
+            <Tabs value={`border-${border}`} label="Border" size="small" options={opts('border')} onStateChange={pick(setBorder)} />
+          </div>
+          <p className={styles.previewLabel}>
+            Anta hand-tuned · <code>--bg-{bg}{bg === 1 ? '' : suffix}</code> · <code>--border-{border}{suffix}</code>
+          </p>
+          <div className={styles.surfaceSwatch} style={{ background: refBg, borderColor: refBorder }} />
+        </div>
+        <div className={`${styles.preview} ${genClass}`}>
+          <p className={styles.previewLabel}>
+            Generative · <code>tone={`{${seed}}`}</code>
+          </p>
+          <div className={styles.surfaceSwatch} style={{ background: `var(--bg-${bg})`, borderColor: `var(--border-${border})` }} />
+          <style dangerouslySetInnerHTML={{ __html: inject }} />
+        </div>
+      </div>
+
+      {/* RIGHT — header, formula variables (per group), CSS output */}
+      <div className={styles.controls}>
+        <Title level={2}>{spec.title}</Title>
+        <p className={styles.blurb}>{spec.blurb}</p>
+
+        {groupsOf(spec).map((g) => (
+          <Expander key={g.label} title={`${g.label} variables`} priority="tertiary" outdent>
+            {g.note ? <p className={styles.groupNote}>{g.note}</p> : null}
+            <div className={styles.varGrid}>
+              {g.vars.map((d) => (
+                <VarInput key={d.key} spec={spec} d={d} v={v} onVar={onVar} />
+              ))}
+            </div>
+          </Expander>
+        ))}
+
+        <Expander title="CSS output" priority="tertiary" outdent>
+          <pre className={styles.pre}>{display}</pre>
+        </Expander>
+      </div>
+    </section>
+  )
+}
+
 function TonePanel({ tone, seed, isDark }: { tone: Tone; seed: string; isDark: boolean }) {
   const [vLight, setVLight] = useState<Record<string, Vals>>(() =>
     Object.fromEntries(SPECS.map((s) => [s.id, defaults(s, false, tone)])),
@@ -293,18 +367,21 @@ function TonePanel({ tone, seed, isDark }: { tone: Tone; seed: string; isDark: b
 
   return (
     <>
-      {SPECS.map((spec) => (
-        <Block
-          key={spec.id}
-          spec={spec}
-          tone={tone}
-          seed={seed}
-          isDark={isDark}
-          vLight={vLight[spec.id]}
-          vDark={vDark[spec.id]}
-          onVar={setVar}
-        />
-      ))}
+      {SPECS.map((spec) => {
+        const Comp = spec.id === 'surface' ? SurfaceBlock : Block
+        return (
+          <Comp
+            key={spec.id}
+            spec={spec}
+            tone={tone}
+            seed={seed}
+            isDark={isDark}
+            vLight={vLight[spec.id]}
+            vDark={vDark[spec.id]}
+            onVar={setVar}
+          />
+        )
+      })}
     </>
   )
 }
@@ -337,9 +414,6 @@ export default function ThemingLab() {
         <div className={styles.seedRow}>
           {/* Remount per tone so the picker re-seeds from that tone's colour. */}
           <ColorPicker key={active} value={seeds[active]} label="Seed" onChange={(hex: string) => setSeeds((s) => ({ ...s, [active]: hex }))} />
-          <p className={styles.seedNote}>
-            Pinned per tone. Tune a variable to diverge the generative side.
-          </p>
         </div>
       </div>
 

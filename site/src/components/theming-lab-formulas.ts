@@ -91,6 +91,50 @@ const pct = { min: 0, max: 100, step: 1 }
 
 export const SPECS: ComponentSpec[] = [
   {
+    id: 'surface',
+    title: 'Background & Borders',
+    blurb:
+      'The container background and border role scales, derived from the source hue. Backgrounds sit near the page lightness with a faint tint that grows per step; borders step down in lightness from a saturated edge (border-1) to the faint bg-5, chroma easing off as they lighten. Neutral zeroes chroma to stay grey.',
+    vars: [
+      { key: 'bg1L', label: 'bg-1 L', light: 1, dark: 0, ...v3() },
+      { key: 'bg2L', label: 'bg-2 L', light: 0.99, dark: 0.14, ...v3() },
+      { key: 'bg2C', label: 'bg-2 C', light: 0.004, dark: 0.015, ...v3(0, 0.4) },
+      { key: 'bg3L', label: 'bg-3 L', light: 0.972, dark: 0.175, ...v3() },
+      { key: 'bg3C', label: 'bg-3 C', light: 0.011, dark: 0.03, ...v3(0, 0.4) },
+      { key: 'bg4L', label: 'bg-4 L', light: 0.955, dark: 0.195, ...v3() },
+      { key: 'bg4C', label: 'bg-4 C', light: 0.02, dark: 0.035, ...v3(0, 0.4) },
+      { key: 'bg5L', label: 'bg-5 L', light: 0.935, dark: 0.22, ...v3() },
+      { key: 'bg5C', label: 'bg-5 C', light: 0.03, dark: 0.045, ...v3(0, 0.4) },
+      { key: 'bd1L', label: 'border-1 L', light: 0.67, dark: 0.52, ...v3() },
+      { key: 'bd1C', label: 'border-1 C', light: 0.13, dark: 0.15, ...v3(0, 0.4) },
+      { key: 'bd2L', label: 'border-2 L', light: 0.8, dark: 0.41, ...v3() },
+      { key: 'bd2C', label: 'border-2 C', light: 0.09, dark: 0.12, ...v3(0, 0.4) },
+      { key: 'bd3L', label: 'border-3 L', light: 0.86, dark: 0.33, ...v3() },
+      { key: 'bd3C', label: 'border-3 C', light: 0.055, dark: 0.09, ...v3(0, 0.4) },
+      { key: 'bd4L', label: 'border-4 L', light: 0.9, dark: 0.26, ...v3() },
+      { key: 'bd4C', label: 'border-4 C', light: 0.04, dark: 0.06, ...v3(0, 0.4) },
+      { key: 'bd5L', label: 'border-5 L', light: 0.935, dark: 0.21, ...v3() },
+      { key: 'bd5C', label: 'border-5 C', light: 0.028, dark: 0.045, ...v3(0, 0.4) },
+    ],
+    groups: [
+      { label: 'Background', keys: ['bg1L', 'bg2L', 'bg2C', 'bg3L', 'bg3C', 'bg4L', 'bg4C', 'bg5L', 'bg5C'] },
+      { label: 'Border', keys: ['bd1L', 'bd1C', 'bd2L', 'bd2C', 'bd3L', 'bd3C', 'bd4L', 'bd4C', 'bd5L', 'bd5C'] },
+    ],
+    css: (sel, seed, v) => `${sel} {
+  --bg-1: ${ok(seed, v.bg1L, 0)};
+  --bg-2: ${ok(seed, v.bg2L, v.bg2C)};
+  --bg-3: ${ok(seed, v.bg3L, v.bg3C)};
+  --bg-4: ${ok(seed, v.bg4L, v.bg4C)};
+  --bg-5: ${ok(seed, v.bg5L, v.bg5C)};
+  --border-1: ${ok(seed, v.bd1L, v.bd1C)};
+  --border-2: ${ok(seed, v.bd2L, v.bd2C)};
+  --border-3: ${ok(seed, v.bd3L, v.bd3C)};
+  --border-4: ${ok(seed, v.bd4L, v.bd4C)};
+  --border-5: ${ok(seed, v.bd5L, v.bd5C)};
+}`,
+  },
+
+  {
     id: 'title',
     title: 'Title',
     blurb:
@@ -373,6 +417,7 @@ ${sel}[priority="quinary"]     { --text-color: color-mix(in oklch, var(--_text-t
 
 /** Element selector each spec's `css()` targets (bare, no container prefix). */
 export const EL_SELECTOR: Record<string, string> = {
+  surface: '.tl-surface-swatch',
   title: 'a-title',
   text: 'a-text',
   button: 'a-button',

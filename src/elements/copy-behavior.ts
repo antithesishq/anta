@@ -11,22 +11,31 @@
  * nested copy row's `copydone` from flipping an ancestor copy row's feedback
  * (the same point-to-point rule Anta's `statechange` follows).
  *
- * Three modes, chosen by attribute:
+ * Modes, chosen by attribute:
  * - `copy="<text>"` — copy the literal string on activation.
+ * - `copy-url` — copy the current page URL (`location.href`); no `copy` needed.
+ * - `copy-with-url` — prefix the copied `copy` string with `// URL: <href>`.
  * - `copy-node` / `copy-node="<selector>"` — copy a DOM node as rich text
  *   (`text/html`) + plain text. Bare `copy-node` copies the nearest ancestor
  *   marked `[data-copy-source]`; a value is a selector resolved with `closest()`
  *   (an ancestor region). The copy control is stripped from the serialized
  *   output (`[data-copy-node-button]`).
- * - `copy-lazy` — the content isn't known until the click. Activation dispatches
- *   `copyrequest` whose `detail.provide(text)` the consumer calls with the value
- *   (synchronously, or after an `await` — the browser's transient-activation
- *   window still covers the write). Nothing lands in the DOM, and there's no
- *   attribute round-trip to reset. Takes precedence over any `copy` value.
+ *
+ * ## Lazy content (off-UI-thread safe)
+ *
+ * When the content isn't known ahead of time, the element emits a `copyrequest`
+ * event on **pointerdown** (`emitCopyRequest`, fired whenever a `copy` attribute
+ * is present). The consumer answers by setting the `copy` attribute to the
+ * freshly-computed value; the **click** then reads that value and writes it. The
+ * pointerdown→click gap absorbs the round-trip, so this works even when the
+ * consumer's handler runs off the UI thread (e.g. a worker-rendered app): only a
+ * serializable string crosses the boundary via the normal reconcile — no
+ * callback, and the write stays inside the click's transient activation. This is
+ * why there is no `provide`-function handoff and no `copy-lazy` marker.
  *
  * Precedence when several are set (the discriminated-union prop types make this
- * unreachable from the wrappers, but hand-authored markup can): node → lazy →
- * literal `copy`.
+ * unreachable from the wrappers, but hand-authored markup can): node → url →
+ * literal `copy` (with the optional URL prefix).
  */
 
 /** Write plain text to the clipboard. Resolves `true` on success. */
@@ -82,6 +91,38 @@ function run(el: HTMLElement, work: Promise<boolean>): void {
   })
 }
 
+/** The current page URL, or '' outside a document (SSR). */
+function currentUrl(): string {
+  return typeof location !== 'undefined' ? location.href : ''
+}
+
+/** Resolve the text a string-copy control writes: the page URL for `copy-url`,
+ *  otherwise the `copy` value, optionally prefixed with the URL (`copy-with-url`). */
+function resolveText(el: Element): string {
+  if (el.hasAttribute('copy-url')) return currentUrl()
+  const base = el.getAttribute('copy') ?? ''
+  if (el.hasAttribute('copy-with-url')) return `// URL: ${currentUrl()}\n${base}`
+  return base
+}
+
+/** True when `el` copies a string (vs a node) — `copy`, `copy-url`, or a
+ *  URL-prefixed `copy`. */
+function isTextCopy(el: Element): boolean {
+  return el.hasAttribute('copy') || el.hasAttribute('copy-url')
+}
+
+/**
+ * Ask a lazy consumer to refresh the copy content, on pointerdown — dispatch a
+ * non-bubbling, payload-free `copyrequest`. The consumer answers by setting the
+ * `copy` attribute to the freshly-computed value before the click reads it (see
+ * the "Lazy content" note above). Fires only for string-copy controls; node/url
+ * modes resolve themselves at click time and need no request. No-op otherwise.
+ */
+export function emitCopyRequest(el: HTMLElement): void {
+  if (!el.hasAttribute('copy')) return
+  el.dispatchEvent(new CustomEvent('copyrequest', { bubbles: false }))
+}
+
 /**
  * Perform a copy on activation (click / Enter / Space / menu select). Returns
  * `true` if the element is a copy control (so the caller knows the copy path
@@ -93,25 +134,7 @@ export function runCopy(el: HTMLElement): boolean {
     run(el, target ? writeNode(target) : Promise.resolve(false))
     return true
   }
-  if (el.hasAttribute('copy-lazy')) {
-    // Ask for the content via a one-shot `provide` callback; the consumer calls
-    // it with the value (sync or after an await, within the activation window).
-    let done = false
-    el.dispatchEvent(
-      new CustomEvent('copyrequest', {
-        bubbles: false,
-        detail: {
-          provide(text: string) {
-            if (done) return
-            done = true
-            run(el, writeText(String(text ?? '')))
-          },
-        },
-      }),
-    )
-    return true
-  }
-  if (!el.hasAttribute('copy')) return false
-  run(el, writeText(el.getAttribute('copy') ?? ''))
+  if (!isTextCopy(el)) return false
+  run(el, writeText(resolveText(el)))
   return true
 }

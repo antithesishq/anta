@@ -86,7 +86,8 @@ export type MenuItemLinkMode = {
   indicator?: never
   copy?: never
   copyNode?: never
-  copyLazy?: never
+  copyUrl?: never
+  copyWithUrl?: never
   onCopied?: never
   onCopyRequest?: never
 }
@@ -124,7 +125,7 @@ export type MenuItemActionMode = {
 
 // Copy props (a "copying menu item") live on the action branch only — a link
 // item can't copy. The shared `CopyMode` union enforces that exactly one of
-// `copy` / `copyNode` / `copyLazy` is set; `MenuItemCopy` is the preset. The menu
+// `copy` / `copyNode` / `copyUrl` is set; `MenuItemCopy` is the preset. The menu
 // closes on select as usual (add `data-menu-open` to linger on the success state).
 export type MenuItemProps = MenuItemCommonProps &
   (MenuItemLinkMode | (MenuItemActionMode & CopyMode))
@@ -172,7 +173,8 @@ export const MenuItem = ({
   ping,
   copy,
   copyNode,
-  copyLazy,
+  copyUrl,
+  copyWithUrl,
   onCopied,
   onCopyRequest,
   role: roleOverride,
@@ -184,7 +186,7 @@ export const MenuItem = ({
   // A copy row when any copy prop is set. The element performs the write on
   // `menuselect` and announces it via `copydone`; the leading glyph defaults to
   // `copy` (MenuItemCopy swaps it on the result).
-  const isCopy = copy != null || copyNode != null || copyLazy === true
+  const isCopy = copy != null || copyNode != null || copyUrl === true
   const leadingIcon = icon ?? (isCopy ? 'copy' : undefined)
   // A checkable row is the control itself: it flips role to menuitem{checkbox,radio}
   // and carries aria-checked. The leading `checkbox`/`radio` styles render a passive
@@ -285,14 +287,13 @@ export const MenuItem = ({
       // Copy behavior — the element writes to the clipboard on `menuselect`.
       copy={copy != null ? copy : undefined}
       copy-node={copyNode === true ? '' : typeof copyNode === 'string' ? copyNode : undefined}
-      copy-lazy={copyLazy ? '' : undefined}
+      copy-url={copyUrl ? '' : undefined}
+      copy-with-url={copyWithUrl ? '' : undefined}
       data-copy-node-button={copyNode != null && copyNode !== false ? '' : undefined}
       oncopydone={onCopied ? (e: any) => onCopied(nativeStateChange<{ ok: boolean }>(e).detail?.ok ?? false) : undefined}
-      oncopyrequest={
-        onCopyRequest
-          ? (e: any) => onCopyRequest(nativeStateChange<{ provide: (text: string) => void }>(e).detail!.provide)
-          : undefined
-      }
+      // Fired on pointerdown for a lazy copy row — update `copy` here; the chosen
+      // row copies the latest value. No payload crosses the worker boundary.
+      oncopyrequest={onCopyRequest ? () => onCopyRequest() : undefined}
       class={className}
       {...rest}
     >

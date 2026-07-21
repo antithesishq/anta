@@ -9,7 +9,7 @@ import Disclosure from '../components/Disclosure.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import expanderDemoCode from './expander.demo.ts'
-import { Expander, Text, Button, Icon, Title } from '@antadesign/anta'
+import { Expander, Text, Button, ButtonCopy, Icon, Title } from '@antadesign/anta'
 import { AccordionDemo } from '../components/AccordionDemo'
 
 # Expander
@@ -260,6 +260,46 @@ them in the header:
 <style>{`
   a-expander a-title { margin: 0; }
 `}</style>
+```
+
+## Controls in the title
+
+A control placed **inside** the `title` — a copy button next to the
+heading text, an inline link, an inline `Input` — copies or activates
+without toggling the section. The header refuses to toggle when the click
+landed on any Anta control (`Button` / `ButtonCopy`, `Checkbox`, `Radio`,
+`Input`, `Select`, `InputDate`, `Calendar`, a `Menu` item, a `Tab`) or a
+native control (`button` / `a[href]` / `input` / `select` / `textarea` /
+`label` / editable), so a `ButtonCopy` beside the title works with no
+extra wiring:
+
+<Preview direction="column" gap="8px">
+  <a-expander default-state="open">
+    <a-expander-summary slot="title">Debug timeline <ButtonCopy copy="2026-07-20T12:00:00Z — event log" icon="copy" size="small" priority="tertiary" /></a-expander-summary>
+    <a-expander-details><Text>Clicking the copy button copies the timeline; the section stays open.</Text></a-expander-details>
+  </a-expander>
+</Preview>
+
+```tsx folded
+{/* A ButtonCopy in the title copies without toggling — no stopPropagation needed. */}
+<Expander title={<>Debug timeline <ButtonCopy copy={moment} icon="copy" size="small" priority="tertiary" /></>}>
+  …
+</Expander>
+```
+
+The decision is read from the click's composed path synchronously in the
+element, so it holds even where event handlers run off the UI thread (a
+consumer's `stopPropagation()` can arrive too late to beat the toggle) —
+the same contract as `Menu`'s close-on-outside-click.
+
+A **disabled** control is inert, so its click toggles the section like the
+title text does — the exclusion applies only to live controls. For a
+control the detection can't recognize (a non-interactive custom widget
+with its own handler), mark it `data-expander-ignore` to opt it out of the
+toggle:
+
+```tsx folded
+<Expander title={<>Report <MyWidget data-expander-ignore /></>}>…</Expander>
 ```
 
 ## Actions

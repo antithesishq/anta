@@ -8,12 +8,13 @@ import { useCopyFeedback } from '../anta_helpers'
 export type MenuItemCopyProps = MenuItemCommonProps &
   MenuItemActionMode &
   CopyMode &
-  ({ copy: string } | { copyNode: boolean | string } | { copyLazy: true })
+  ({ copy: string } | { copyNode: boolean | string } | { copyUrl: true })
 
 /**
  * Copying menu item — a `MenuItem` preset for copy-to-clipboard rows inside a
  * `Menu`. Set `copy` for a literal string, `copyNode` to copy a DOM region, or
- * `copyLazy` + `onCopyRequest` to compute the content on select. The
+ * `copyUrl` to copy the current page URL. For content computed on demand, keep
+ * `copy` reactive and refresh it in `onCopyRequest` (fired on pointerdown). The
  * `<a-menu-item>` element performs the write when the row is chosen; this wrapper
  * flips the leading icon to a check / ✕ and retones for ~2s (see `useCopyFeedback`).
  *

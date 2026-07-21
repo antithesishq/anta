@@ -1,5 +1,6 @@
 import { HTMLElementBase } from "../anta_helpers";
-import { runCopy } from "./copy-behavior";
+import { emitCopyRequest, runCopy } from "./copy-behavior";
+import { installKeyActivation } from "./key-activation";
 import "./a-button.css";
 
 declare global {
@@ -19,7 +20,21 @@ declare global {
  *  `document` (best-effort, before the first connect). */
 function installDocumentHandlers(doc: Document | undefined) {
   if (!doc || doc.hasKeyListenerForAButton) return;
-  doc.addEventListener("keydown", handleKeyDown, true);
+  // Enter/Space activate on keyup (shared with a-menu-item) — keydown arms the
+  // release and issues the lazy-copy pre-request; keyup clicks. See key-activation.
+  installKeyActivation(doc, {
+    keys: ["Enter", " "],
+    resolve: (t) =>
+      (t as HTMLElement)?.closest?.("a-button") as AButtonElement | null,
+    blocked: (el) =>
+      el.hasAttribute("disabled") || el.hasAttribute("loading"),
+    preflight: (el) => (el as AButtonElement).requestCopy(),
+    activate: (el) => el.click(),
+  });
+  // Lazy copy: ask the consumer for fresh content on pointerdown so a
+  // worker-thread handler has the pointerdown→click gap to set `copy` before
+  // the click reads it (see copy-behavior's "Lazy content" note).
+  doc.addEventListener("pointerdown", handlePointerDown, true);
   doc.addEventListener("click", handleClick, true);
   doc.hasKeyListenerForAButton = true;
 }
@@ -88,10 +103,16 @@ export class AButtonElement extends HTMLElementBase {
   }
 
   /** Perform a copy if this button is a copy control (`copy` / `copy-node` /
-   *  `copy-lazy`). Called from the delegated click handler on activation. The
+   *  `copy-url`). Called from the delegated click handler on activation. The
    *  outcome is announced via a `copydone` event the wrapper reflects. */
   performCopy(): boolean {
     return runCopy(this);
+  }
+
+  /** Ask a lazy consumer to refresh the `copy` value on pointerdown (fires a
+   *  `copyrequest` event); the click then copies whatever `copy` holds. */
+  requestCopy(): void {
+    emitCopyRequest(this);
   }
 }
 
@@ -103,20 +124,13 @@ function findForm(el: HTMLElement): HTMLFormElement | null {
   return el.closest("form");
 }
 
-function handleKeyDown(e: KeyboardEvent) {
-  if (e.key !== "Enter" && e.key !== " ") return;
-  // Ignore OS key-repeat — holding Enter must not fire repeated activations
-  // (e.g. a submit button re-submitting once per repeat tick).
-  if (e.repeat) return;
+function handlePointerDown(e: PointerEvent) {
   const el = (e.target as HTMLElement).closest(
     "a-button",
   ) as AButtonElement | null;
   if (!el) return;
-  // A disabled / loading button must not activate from the keyboard either —
-  // the CSS `pointer-events: none` only blocks the mouse, so guard here too.
   if (el.hasAttribute("disabled") || el.hasAttribute("loading")) return;
-  e.preventDefault();
-  el.click();
+  el.requestCopy();
 }
 
 function handleClick(e: MouseEvent) {
@@ -136,9 +150,9 @@ function handleClick(e: MouseEvent) {
     );
   }
 
-  // Copy controls (`copy` / `copy-node`) write to the clipboard on this same
-  // activation and reflect the outcome as feedback state — independent of the
-  // form logic below (a copy button is a plain `type="button"`).
+  // Copy controls (`copy` / `copy-node` / `copy-url`) write to the clipboard on
+  // this same activation and reflect the outcome as feedback state — independent
+  // of the form logic below (a copy button is a plain `type="button"`).
   el.performCopy();
 
   const type = el.getAttribute("type") || "button";

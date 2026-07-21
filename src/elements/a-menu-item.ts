@@ -1,5 +1,6 @@
 import { HTMLElementBase } from '../anta_helpers'
-import { runCopy } from './copy-behavior'
+import { emitCopyRequest, runCopy } from './copy-behavior'
+import { installKeyActivation } from './key-activation'
 import './a-menu-item.css'
 
 declare global {
@@ -61,6 +62,10 @@ export class AMenuItemElement extends HTMLElementBase {
     // non-copy item, so binding unconditionally is cheap; the outcome rides a
     // `copydone` event the wrapper reflects.
     this.addEventListener('menuselect', () => runCopy(this))
+    // Lazy copy: ask the consumer for fresh content on pointerdown — the
+    // pointerdown→menuselect gap lets a worker-thread handler set `copy` before
+    // the write reads it (see copy-behavior's "Lazy content" note).
+    this.addEventListener('pointerdown', () => emitCopyRequest(this))
   }
 
   /** The active (combobox) cursor. `a-menu` sets this **property** (never an
@@ -105,26 +110,24 @@ export function isMenuItemEl(el: EventTarget | null | undefined): el is HTMLElem
 /** Install the one-per-document Enter/Space activation listener. Called from
  *  both `AMenuItemElement` and `AMenuElement` on connect, so a menu built only
  *  from link items (no `<a-menu-item>` ever upgrades) still gets keyboard
- *  activation. Idempotent per document. */
+ *  activation. Idempotent per document.
+ *
+ *  Shares `installKeyActivation` with `<a-button>`: activation is on keyup, with
+ *  a keydown pre-request (`emitCopyRequest`) so a lazy copy row can refresh its
+ *  `copy` during the hold. `.click()` on a link item navigates natively (honoring
+ *  download / target); on the custom element it routes through the menu's click
+ *  delegation — one path for both. (The combobox-filter Enter is a separate path
+ *  handled by `a-menu`, which uses the same keyup pre-request.) */
 export function ensureMenuItemKeyListener(doc: Document) {
   if (doc.hasKeyListenerForAMenuItem) return
-  doc.addEventListener('keydown', handleKeyDown, true)
+  installKeyActivation(doc, {
+    keys: ['Enter', ' '],
+    resolve: (t) => (t as HTMLElement)?.closest?.(MENU_ITEM_SELECTOR) as HTMLElement | null,
+    blocked: (el) => el.hasAttribute('disabled'),
+    preflight: (el) => emitCopyRequest(el),
+    activate: (el) => el.click(),
+  })
   doc.hasKeyListenerForAMenuItem = true
-}
-
-function handleKeyDown(e: KeyboardEvent) {
-  if (e.key !== 'Enter' && e.key !== ' ') return
-  const el = (e.target as HTMLElement)?.closest?.(MENU_ITEM_SELECTOR) as HTMLElement | null
-  if (!el) return
-  // preventDefault cancels the anchor's own native Enter → click too, so a link
-  // item activates exactly once (through the click below), never twice.
-  e.preventDefault()
-  // Disabled items swallow the key without activating.
-  if (el.hasAttribute('disabled')) return
-  // `.click()` on a link item navigates natively (honouring download / target)
-  // and fires its click handler; on the custom element it routes through the
-  // menu's click delegation. One path for both.
-  el.click()
 }
 
 export function register_a_menu_item() {

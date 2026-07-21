@@ -265,11 +265,13 @@ them in the header:
 ## Controls in the title
 
 A control placed **inside** the `title` — a copy button next to the
-heading text, an inline link — copies or activates without toggling the
-section. The header refuses to toggle when the click landed on an
-interactive control (`<a-button>` / `ButtonCopy`, `[data-anta][role="button"]`,
-a native `button` / `a[href]` / `input` / `select` / `textarea` / `label` /
-editable), so a `ButtonCopy` beside the title works with no extra wiring:
+heading text, an inline link, an inline `Input` — copies or activates
+without toggling the section. The header refuses to toggle when the click
+landed on any Anta control (`Button` / `ButtonCopy`, `Checkbox`, `Radio`,
+`Input`, `Select`, `InputDate`, `Calendar`, a `Menu` item, a `Tab`) or a
+native control (`button` / `a[href]` / `input` / `select` / `textarea` /
+`label` / editable), so a `ButtonCopy` beside the title works with no
+extra wiring:
 
 <Preview direction="column" gap="8px">
   <a-expander default-state="open">
@@ -288,9 +290,13 @@ editable), so a `ButtonCopy` beside the title works with no extra wiring:
 The decision is read from the click's composed path synchronously in the
 element, so it holds even where event handlers run off the UI thread (a
 consumer's `stopPropagation()` can arrive too late to beat the toggle) —
-the same contract as `Menu`'s close-on-outside-click. For a control the
-detection can't recognize (a non-interactive custom widget with its own
-handler), mark it `data-expander-ignore` to opt it out of the toggle:
+the same contract as `Menu`'s close-on-outside-click.
+
+A **disabled** control is inert, so its click toggles the section like the
+title text does — the exclusion applies only to live controls. For a
+control the detection can't recognize (a non-interactive custom widget
+with its own handler), mark it `data-expander-ignore` to opt it out of the
+toggle:
 
 ```tsx folded
 <Expander title={<>Report <MyWidget data-expander-ignore /></>}>…</Expander>

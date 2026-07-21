@@ -23,11 +23,15 @@ interface Props {
   /** Cap the "On this page" TOC at this heading level (2 = h2 only). Omit for
    *  all levels. Set via an `.astro` page prop or MDX frontmatter. */
   tocMaxLevel?: number
-  frontmatter?: { title?: string; tocMaxLevel?: number }
+  /** Drop the right "On this page" rail so the content spans the full width.
+   *  For pages that manage their own wide layout (e.g. the theming lab). */
+  hideToc?: boolean
+  frontmatter?: { title?: string; tocMaxLevel?: number; hideToc?: boolean }
 }
 
 const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
 const tocMaxLevel = Astro.props.tocMaxLevel ?? Astro.props.frontmatter?.tocMaxLevel
+const hideToc = Astro.props.hideToc ?? Astro.props.frontmatter?.hideToc ?? false
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
 const isCurrent = (href: string) => {
   const h = href.replace(/\/+$/, '') || '/'
@@ -288,18 +292,22 @@ if (isComponentPage && title) {
         {/* Mobile-only: opens the "On this page" TOC as a right-side
             slide-out (the .toc-rail is hidden on mobile otherwise).
             Absolutely positioned in the content's top-right corner. */}
-        <Button
-          class="toc-toggle"
-          priority="tertiary"
-          underline="dotted"
-          label="On this page"
-          aria-label="Open table of contents"
-        />
+        {!hideToc && (
+          <Button
+            class="toc-toggle"
+            priority="tertiary"
+            underline="dotted"
+            label="On this page"
+            aria-label="Open table of contents"
+          />
+        )}
         <slot />
       </main>
-      <aside class="toc-rail">
-        <a-toc max-level={tocMaxLevel}></a-toc>
-      </aside>
+      {!hideToc && (
+        <aside class="toc-rail">
+          <a-toc max-level={tocMaxLevel}></a-toc>
+        </aside>
+      )}
     </div>
     <div class="backdrop" aria-hidden="true"></div>
 

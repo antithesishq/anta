@@ -1,0 +1,164 @@
+/* Layout for the theming lab (ThemingLab.tsx). Structure only — every colour the
+   page compares is set by the components themselves or the injected formula CSS.
+   Desktop-first; mobile is out of scope for this tool. */
+
+.lab {
+  display: block;
+}
+
+/* Sticky header: tone switcher + seed picker, both pinned while scrolling. The docs
+   topbar is display:none on desktop, so top:0 is flush under the viewport. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-2);
+  padding: 14px 0 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-4);
+  display: grid;
+  gap: 12px;
+}
+
+.seedRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.seedNote {
+  margin: 0;
+  color: var(--text-3);
+  font-family: var(--sans-serif);
+  font-size: 13px;
+}
+
+/* One component block: previews in a fixed 420px column, controls take the rest. */
+.block {
+  display: grid;
+  grid-template-columns: 420px minmax(420px, 1fr);
+  gap: 32px;
+  align-items: start;
+  padding: 28px 0 0;
+}
+
+/* Previews stack as one seamless unit (no gap; borders overlap). */
+.previews {
+  min-width: 0;
+}
+/* Controls carry no container gap — the title, blurb, and expanders own their
+   own spacing. */
+.controls {
+  min-width: 0;
+  display: grid;
+  gap: 0;
+  align-items: start;
+}
+.previews > *,
+.controls > * {
+  min-width: 0;
+}
+
+.blurb {
+  margin: 0 0 12px;
+  color: var(--text-3);
+  font-family: var(--sans-serif);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.groupNote {
+  margin: 0 0 8px;
+  color: var(--text-4);
+  font-family: var(--sans-serif);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.varGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  padding: 4px 0 6px;
+}
+
+.var {
+  width: 88px;
+  position: relative;
+}
+
+.pre {
+  margin: 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg-1);
+  color: var(--text-2);
+  border: 1px solid var(--border-4);
+  font-family: var(--monospace);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.preview {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-4);
+  background: var(--bg-2);
+}
+/* The two previews read as one stacked unit: square the touching corners and
+   overlap the shared 1px border. */
+.preview:first-child {
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+}
+.preview:last-child {
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+  margin-top: -1px;
+}
+
+.previewLabel {
+  margin: 0;
+  font-family: var(--sans-serif);
+  font-size: 12px;
+  color: var(--text-4);
+}
+
+.previewLabel code {
+  font-family: var(--monospace);
+  color: var(--text-3);
+}
+
+/* Rows of samples inside a preview (buttons, tags, tabs strips, …). */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.col {
+  display: grid;
+  gap: 10px;
+  align-items: start;
+}
+
+/* A stand-in for a-menu's popover surface, so the MenuItem rows read as an open
+   menu inline in the preview (rather than a floating popover). */
+.menuSurface {
+  width: max-content;
+  min-width: 220px;
+  max-width: 100%;
+  padding: 4px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-3);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px color-mix(in oklch, #000 12%, transparent);
+}

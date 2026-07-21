@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import chroma from 'chroma-js'
-import { Button, Menu, Tabs, TabPanel, Input, Tooltip } from '@antadesign/anta'
+import { Menu, Tabs, TabPanel, Input, Tooltip } from '@antadesign/anta'
 
 /**
  * Color picker built entirely from Anta components. A swatch Button opens a Menu
@@ -66,9 +66,11 @@ const MODELS = [
 export default function ColorPicker({
   value = '#5f4bc3',
   onChange,
+  label = 'Color',
 }: {
   value?: string
   onChange?: (hex: string) => void
+  label?: string
 }) {
   const [[l, c, h], setOklch] = useState<Triple>(() => {
     try {
@@ -173,10 +175,25 @@ export default function ColorPicker({
 
   return (
     <div style={{ display: 'inline-block' }}>
-      <Button priority="secondary" size="small">
-        <span style={{ width: 14, height: 14, borderRadius: 4, background: hex, display: 'inline-block', border: '1px solid var(--border-3)' }} />
-        {hex}
-      </Button>
+      {/* Re-template the host grid (the element supports this) to put the field's
+          own label to the left of the box, and monospace the label + value. */}
+      <style>{`
+        .acp-trigger { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px; width: 230px; }
+        .acp-trigger::part(label) { margin: 0; }
+        .acp-trigger::part(label), .acp-trigger::part(input) { font-family: var(--monospace); letter-spacing: 0; }
+      `}</style>
+      <Input
+        className="acp-trigger"
+        size="small"
+        label={label}
+        value={hex}
+        readOnly
+        style={{ cursor: 'pointer' }}
+        leading={
+          <span style={{ width: 13, height: 13, borderRadius: 2, background: hex, display: 'block', border: '1px solid var(--border-3)' }} />
+        }
+      />
+      {/* Anchor the picker to the field's box. */}
       <Menu placement="bottom-start" autoWidth>
         <div style={{ padding: 12, width: 300, display: 'grid', gap: 12, fontFamily: 'var(--sans-serif)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

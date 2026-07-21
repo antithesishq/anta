@@ -316,6 +316,13 @@ the glyph and, for `critical`, validity. See the
 
 Select is a composed wrapper with open seams. Rebuild it from the raw elements, or keep the wrapper and swap a row's **content** (`renderOption`) or its **selection mark** (`renderIndicator`) for your own nodes.
 
+Pass `placement` to control where the options menu opens relative to its field. It
+uses the same values as `Menu` and still flips or clamps when space is limited:
+
+```tsx
+<Select placement="top-end" options={OPTIONS} label="Field" />
+```
+
 ### Components composition
 
 `Select` has no `<a-select>` element; the wrapper *is* the coordinator. It renders

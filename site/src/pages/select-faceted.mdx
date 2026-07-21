@@ -24,6 +24,14 @@ option model, [Input](/input/), and [Tag](/tag/) — no new element. Controlled 
 `value`, uncontrolled via `defaultValue`; changes arrive through one
 **`onValueChange`**.
 
+Pass `placement` to control where the root facet menu opens relative to its
+trigger. It uses the same values as `Menu` and still flips or clamps when space
+is limited:
+
+```tsx
+<SelectFaceted placement="top-end" facets={FACETS} />
+```
+
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground

@@ -10,7 +10,7 @@ import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { Input } from './Input'
 import { Icon } from './Icon'
-import { Menu } from './Menu'
+import { Menu, type MenuProps } from './Menu'
 import { MenuItem } from './MenuItem'
 import { MenuGroup } from './MenuGroup'
 import { MenuSeparator } from './MenuSeparator'
@@ -159,6 +159,10 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  logical pick (both rows toggle together; the trigger resolves to the last). Dev
    *  builds `console.warn` on a duplicate. */
   options: SelectItem[]
+  /** Preferred placement of the options menu relative to the trigger. The menu
+   *  auto-flips vertically and clamps horizontally when needed.
+   *  @defaultValue bottom-start */
+  placement?: MenuProps['placement']
   /** The per-row mark for **single**-select: `'none'` (a tint-only highlight),
    *  `'check'` (a trailing checkmark on the selected row, keeping the tint — the
    *  canonical Select look), or `'radio'` (a leading radio on every row).
@@ -417,6 +421,7 @@ export const Select = (props: SelectProps) => {
   // we treat it loosely — `multiple` branches at runtime.
   const {
     options,
+    placement,
     selection,
     indicator,
     value,
@@ -749,6 +754,7 @@ export const Select = (props: SelectProps) => {
           the menu open. We observe onStateChange to flip the chevron / aria-expanded
           and to reset the filter when the menu closes. */}
       <Menu
+        placement={placement}
         onStateChange={(_e, { next }) => {
           setOpen(next)
           if (!next) { setQuery(''); setActiveId(null) } // closed → clear filter + cursor

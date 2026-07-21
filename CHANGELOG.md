@@ -1,12 +1,8 @@
 # Changelog
 
-All notable changes to the `@antadesign/anta` package.
+This page tracks what ships to npm. Documentation website changes are not tracked here.
 
-This file tracks what ships to npm consumers: anything under `src/`, `dist/`, the build and generator scripts, and the root files in the published tarball. Documentation-site updates at `anta.design` aren't consumer-facing and stay out of the changelog; the commit history covers the site.
-
-Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
-
-## 0.3.11 — July 20, 2026
+## 0.3.11 — July 21, 2026
 
 ### Changed
 - **Lazy copy is now off-UI-thread safe, and `copyLazy` is gone.** The lazy path no longer hands the consumer a `provide` callback on click — a function can't cross a worker boundary, and the async round-trip missed the click's activation window, so `copyLazy` never worked in a worker-rendered app. Instead, a copy control emits a **serializable `copyrequest`** on **pointerdown** (keyboard: on keydown) whenever it has a `copy` attribute; the consumer refreshes the reactive `copy` value in response, and the **activation** copies whatever `copy` then holds. The pointerdown→click (and keydown→keyup) gap absorbs the round-trip, and only a string crosses the boundary via the normal re-render. Migration: drop `copyLazy`, keep `copy` reactive, and change `onCopyRequest={(provide) => provide(text)}` to `onCopyRequest={() => setCopy(text)}` (a state update that feeds `copy`). The `copy-lazy` element attribute and the `copyrequest` `detail.provide` are removed. (Content that can only be produced by a bare programmatic `.click()`, with no preceding pointer/keyboard event — e.g. some assistive-tech activations — can't be resolved this way; use an eager `copy` there.)

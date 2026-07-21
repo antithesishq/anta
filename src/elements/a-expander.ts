@@ -21,11 +21,13 @@ import './a-expander.css'
  *     <button part="summary">  the summary; chevron is its ::before; the
  *       <slot name="title">    title is projected here — INSIDE the button, so
  *                              a control here bubbles to the toggle. A click
- *                              that hits an interactive control or a
+ *                              that hits an enabled interactive control (any Anta
+ *                              control or a native one) or a
  *                              `[data-expander-ignore]` node in the title does
- *                              NOT toggle (see IGNORE_TOGGLE_SELECTOR): e.g. a
+ *                              NOT toggle (see INTERACTIVE_SELECTOR): e.g. a
  *                              `<ButtonCopy>` next to the title text copies
- *                              without opening/closing the section.
+ *                              without opening/closing the section. A *disabled*
+ *                              control is inert, so its click toggles normally.
  *     <slot name="actions">    header actions — SIBLINGS of the button,
  *                              never inside it: clicks on them don't
  *                              toggle (no propagation path through the
@@ -191,22 +193,39 @@ const ANIM_MS = 200
 
 // Controls a header click must NOT toggle on. A click inside the projected
 // `title` bubbles to the summary <button> (the title slot lives inside it), so
-// a copy button / link / form control sitting in the title would otherwise
-// toggle the section on every activation. We refuse to toggle when the click
-// originated on an interactive control or an explicit `[data-expander-ignore]`
-// node — decided synchronously by walking the composed path in the element
+// an interactive control sitting in the title would otherwise toggle the section
+// on every activation. We refuse to toggle when the click originated on an Anta
+// control — `a-button`/`a-checkbox`/`a-radio`/`a-radio-group`/`a-input`/
+// `a-input-time`/`a-calendar`/`a-menu-item`/`a-tab`, which transitively covers
+// Select / InputDate / InputAutocomplete (compose `a-input`), Menu (`a-menu-item`)
+// and Tabs (`a-tab`) — on a wrapped anchor-button (`[data-anta][role="button"]`),
+// on a native control, or on an explicit `[data-expander-ignore]` node. The
+// decision is read synchronously by walking the composed path in the element
 // itself, so it holds even when a consumer's own handlers run off the UI thread
 // (the notebook renders this tree in a worker; a light-DOM `stopPropagation()`
 // round-trips too late to beat the synchronous toggle). Same design as a-menu's
 // dismiss contract. Actions never reach here — they're siblings of the button,
 // so their clicks don't fire its click handler at all.
-const IGNORE_TOGGLE_SELECTOR =
-  '[data-expander-ignore],a-button,[data-anta][role="button"],button,a[href],input,select,textarea,label,[contenteditable=""],[contenteditable="true"]'
+const INTERACTIVE_SELECTOR =
+  'a-button,a-checkbox,a-radio,a-radio-group,a-input,a-input-time,a-calendar,a-menu-item,a-tab,[data-anta][role="button"],button,a[href],input,select,textarea,label,[contenteditable=""],[contenteditable="true"]'
+
+// A disabled control is inert, so it shouldn't swallow the toggle — clicking a
+// disabled control in the title toggles the section like the title text does.
+// The three forms cover every control above: `:disabled` for native form
+// controls AND form-associated custom elements (a-input/a-checkbox/a-calendar/
+// a-input-time/a-radio-group, including an ancestor `<fieldset disabled>`);
+// `[disabled]` for attribute-based custom controls (a-button/a-tab/a-menu-item/
+// a-radio); `[aria-disabled="true"]` — the uniform signal every Anta wrapper
+// sets when disabled (and what a loading button sets on its own).
+const DISABLED_SELECTOR = ':disabled,[disabled],[aria-disabled="true"]'
 
 /** True when this element should suppress the toggle for a click that hit it —
- *  an interactive control or an explicit opt-out marker. */
+ *  an *enabled* interactive control, or an explicit opt-out marker. A disabled
+ *  control is inert and does NOT suppress (its click toggles like the title
+ *  text); the `[data-expander-ignore]` hatch always suppresses. */
 function ignoresToggle(el: Element): boolean {
-  return el.matches(IGNORE_TOGGLE_SELECTOR)
+  if (el.matches('[data-expander-ignore]')) return true
+  return el.matches(INTERACTIVE_SELECTOR) && !el.matches(DISABLED_SELECTOR)
 }
 
 // Mirrors the h1–h6 scale in a-title.css (font-size / line-height, px).
@@ -533,10 +552,10 @@ export class AExpanderElement extends HTMLElementBase {
 
   /** Refuse to toggle when the click landed on a control inside the projected
    *  title — walk the composed path up to (not including) the summary button and
-   *  check each element against `IGNORE_TOGGLE_SELECTOR`. Synchronous and read
-   *  here in the element, so it stands in off-UI-thread runtimes. Suppressing
-   *  before the dispatch also keeps a *controlled* consumer from toggling (no
-   *  `statechange` fires). */
+   *  test each element with `ignoresToggle` (enabled interactive control or the
+   *  opt-out marker). Synchronous and read here in the element, so it stands in
+   *  off-UI-thread runtimes. Suppressing before the dispatch also keeps a
+   *  *controlled* consumer from toggling (no `statechange` fires). */
   #clickIgnoresToggle(e: Event): boolean {
     const path = e.composedPath()
     const end = path.indexOf(this.summary)

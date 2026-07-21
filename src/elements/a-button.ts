@@ -19,7 +19,10 @@ declare global {
  *  `document` (best-effort, before the first connect). */
 function installDocumentHandlers(doc: Document | undefined) {
   if (!doc || doc.hasKeyListenerForAButton) return;
+  // Keyboard activation fires on keyup (see pendingKeyActivation) — keydown
+  // arms it and issues the lazy-copy pre-request; keyup activates.
   doc.addEventListener("keydown", handleKeyDown, true);
+  doc.addEventListener("keyup", handleKeyUp, true);
   // Lazy copy: ask the consumer for fresh content on pointerdown so a
   // worker-thread handler has the pointerdown→click gap to set `copy` before
   // the click reads it (see copy-behavior's "Lazy content" note).
@@ -113,10 +116,18 @@ function findForm(el: HTMLElement): HTMLFormElement | null {
   return el.closest("form");
 }
 
+// The button waiting for its keyup to activate — set on an Enter/Space keydown,
+// consumed on the matching keyup. Activating on keyup (not keydown) matches the
+// native button (Space already activates on release), makes activation
+// cancelable (move focus before release → no fire), and — the reason it's
+// uniform across Enter and Space here — opens a keydown→keyup gap so the
+// pointerdown-style copy pre-request has time to resolve fresh `copy` content
+// before the write. One pending element is enough (a keyboard has one focus).
+let pendingKeyActivation: AButtonElement | null = null;
+
 function handleKeyDown(e: KeyboardEvent) {
   if (e.key !== "Enter" && e.key !== " ") return;
-  // Ignore OS key-repeat — holding Enter must not fire repeated activations
-  // (e.g. a submit button re-submitting once per repeat tick).
+  // Ignore OS key-repeat — holding a key must not queue repeated activations.
   if (e.repeat) return;
   const el = (e.target as HTMLElement).closest(
     "a-button",
@@ -125,12 +136,27 @@ function handleKeyDown(e: KeyboardEvent) {
   // A disabled / loading button must not activate from the keyboard either —
   // the CSS `pointer-events: none` only blocks the mouse, so guard here too.
   if (el.hasAttribute("disabled") || el.hasAttribute("loading")) return;
-  // Best-effort for keyboard lazy copy: request before the synchronous click.
-  // Keyboard has no pointerdown→click gap, so a worker round-trip can't land in
-  // time — the reliable lazy path is pointer. A UI-thread consumer that sets
-  // `copy` synchronously here still benefits.
-  el.requestCopy();
+  // Prevent the default keydown action (Space scrolling the page) and arm the
+  // release. The copy pre-request fires now so a lazy consumer can refresh
+  // `copy` during the hold, before keyup reads it (mirrors pointerdown→click).
   e.preventDefault();
+  pendingKeyActivation = el;
+  el.requestCopy();
+}
+
+function handleKeyUp(e: KeyboardEvent) {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const el = (e.target as HTMLElement).closest(
+    "a-button",
+  ) as AButtonElement | null;
+  // Only activate the same button the keydown armed — a focus move between
+  // press and release cancels, like a native button.
+  if (!el || el !== pendingKeyActivation) {
+    pendingKeyActivation = null;
+    return;
+  }
+  pendingKeyActivation = null;
+  if (el.hasAttribute("disabled") || el.hasAttribute("loading")) return;
   el.click();
 }
 

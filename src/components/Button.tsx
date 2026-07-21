@@ -66,7 +66,10 @@ export type ContentMode = {
 }
 
 /** Submit axis — anchors (href) don't carry form-submission props; buttons
- *  don't carry anchor props. */
+ *  don't carry anchor props. A link (`href`) also can't be a copy control, so the
+ *  copy props live only on the non-link branch (via `CopyMode`) and are `never`
+ *  on the link branch — a `<ButtonCopy href=…>` or `<Button href=… copy=…>` is a
+ *  type error, not a silently-ignored attribute. */
 export type SubmitMode =
   | {
       /** Renders as `<a role="button">` instead of `<a-button>`. */
@@ -81,8 +84,14 @@ export type SubmitMode =
       ping?: string
       type?: never
       form?: never
+      copy?: never
+      copyNode?: never
+      copyUrl?: never
+      copyWithUrl?: never
+      onCopyRequest?: never
+      onCopied?: never
     }
-  | {
+  | ({
       href?: never
       target?: never
       rel?: never
@@ -92,7 +101,7 @@ export type SubmitMode =
       type?: 'button' | 'submit' | 'reset'
       /** Form id when the button isn't a descendant of its form. */
       form?: string
-    }
+    } & CopyMode)
 
 /** Priority axis — `underline` only on `tertiary` / `quaternary`,
  *  `paddingless` only on `quaternary`. */
@@ -172,7 +181,10 @@ export type CopyMode =
       onCopied?: (ok: boolean) => void
     }
 
-export type ButtonProps = BaseButtonProps & PriorityMode & ContentMode & SubmitMode & CopyMode & BaseProps
+// `SubmitMode` already carries `CopyMode` on its non-link branch (and `never`s it
+// on the link branch), so copy props are excluded in link mode — don't intersect
+// `CopyMode` again here or the link `never`s would be overridden.
+export type ButtonProps = BaseButtonProps & PriorityMode & ContentMode & SubmitMode & BaseProps
 
 /**
  * Action button.

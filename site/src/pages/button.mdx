@@ -489,12 +489,22 @@ card into a rich editor and a plain one to see both.
 </Col>
 </Columns>
 
+### Copy the page URL
+
+`copyUrl` copies the current page URL (`location.href`) — no `copy` value needed.
+`copyWithUrl` prefixes a `copy` string with `// URL: <href>`, so a copied snippet
+carries a link back to where it came from.
+
+```tsx folded
+<ButtonCopy copyUrl label="Copy link" />
+<ButtonCopy copy={snippet} copyWithUrl label="Copy snippet" />  {/* snippet + source URL */}
+```
+
 ### Lazy content
 
-With `copyLazy`, the content isn't computed or held in the DOM until the click:
-the button fires `onCopyRequest(provide)`, you compute the value and call
-`provide(text)`, and the element writes it. Useful when the payload is large or
-expensive, or arrives from another thread.
+When the content is expensive to compute or changes over time, keep `copy`
+reactive and refresh it in **`onCopyRequest`**, which fires on **pointerdown** —
+the click that follows copies the latest value.
 
 <Columns>
 <Col>
@@ -504,21 +514,24 @@ expensive, or arrives from another thread.
 </Preview>
 
 ```tsx folded
+const [report, setReport] = useState('')
+
 <ButtonCopy
-  copyLazy
+  copy={report}
   label="Copy report"
-  onCopyRequest={(provide) => provide(generateReport())} // computed on click
+  onCopyRequest={() => setReport(generateReport())} // recomputed on pointerdown
 />
 ```
 
 </Col>
 <Col>
 
-Nothing large sits in the DOM — there's no bound `copy` value. On click the
-element hands you a `provide` callback; call it with the content, synchronously or
-after an `await` (fetching, a worker round-trip). The clipboard API's user-gesture
-requirement is preserved because the click's activation window is still live.
-Every click is a fresh request, with no state to reset.
+The value is recomputed on pointerdown and read on the click a moment later, so
+the pointerdown→click gap absorbs the work — including an update that arrives from
+another thread. Only the serializable `copy` string crosses, through the normal
+re-render, so this holds in off-UI-thread runtimes (a worker-rendered app) where a
+callback couldn't. The clipboard API's user-gesture requirement is preserved
+because the write happens on the click.
 
 </Col>
 </Columns>

@@ -1,5 +1,5 @@
 import { HTMLElementBase } from '../anta_helpers'
-import { runCopy } from './copy-behavior'
+import { emitCopyRequest, runCopy } from './copy-behavior'
 import './a-menu-item.css'
 
 declare global {
@@ -61,6 +61,10 @@ export class AMenuItemElement extends HTMLElementBase {
     // non-copy item, so binding unconditionally is cheap; the outcome rides a
     // `copydone` event the wrapper reflects.
     this.addEventListener('menuselect', () => runCopy(this))
+    // Lazy copy: ask the consumer for fresh content on pointerdown — the
+    // pointerdown→menuselect gap lets a worker-thread handler set `copy` before
+    // the write reads it (see copy-behavior's "Lazy content" note).
+    this.addEventListener('pointerdown', () => emitCopyRequest(this))
   }
 
   /** The active (combobox) cursor. `a-menu` sets this **property** (never an

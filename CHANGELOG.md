@@ -8,6 +8,12 @@ Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main rele
 
 ## 0.3.11 — July 20, 2026
 
+### Changed
+- **Lazy copy is now off-UI-thread safe, and `copyLazy` is gone.** The lazy path no longer hands the consumer a `provide` callback on click — a function can't cross a worker boundary, and the async round-trip missed the click's activation window, so `copyLazy` never worked in a worker-rendered app. Instead, a copy control emits a **serializable `copyrequest`** on **pointerdown** whenever it has a `copy` attribute; the consumer refreshes the reactive `copy` value in response, and the **click** copies whatever `copy` then holds. The pointerdown→click gap absorbs the round-trip, and only a string crosses the boundary via the normal re-render. Migration: drop `copyLazy`, keep `copy` reactive, and change `onCopyRequest={(provide) => provide(text)}` to `onCopyRequest={() => setCopy(text)}` (a state update that feeds `copy`). The `copy-lazy` element attribute and the `copyrequest` `detail.provide` are removed.
+
+### Added
+- **`copyUrl` / `copyWithUrl` on copy controls.** `copyUrl` (element: `copy-url`) copies the current page URL (`location.href`) with no `copy` value; `copyWithUrl` (element: `copy-with-url`) prefixes a `copy` string with `// URL: <href>` so a copied snippet links back to its source. Available on `Button` / `ButtonCopy` / `MenuItem` / `MenuItemCopy` and the underlying `<a-button>` / `<a-menu-item>`.
+
 ### Fixed
 - **A control in an `Expander`'s title no longer toggles the section.** The `title` slot projects *inside* the header button, so a click on a `ButtonCopy` / link / form control placed next to the title text bubbled to the toggle and opened/closed the section on every activation. `<a-expander>` now refuses to toggle when the click landed on an interactive control (`<a-button>`, `[data-anta][role="button"]`, native `button` / `a[href]` / `input` / `select` / `textarea` / `label` / editable) or on an explicit `[data-expander-ignore]` node — so a copy button beside the title copies without opening the section, with no consumer setup. The decision is made synchronously in the element by walking the click's composed path (like `Menu`'s dismiss contract), so it holds in runtimes where consumer event handlers run off the UI thread and a light-DOM `stopPropagation()` would arrive too late. Suppressing before the dispatch also means a *controlled* consumer sees no `statechange`, so the section stays put. Header `actions` were already immune (they're siblings of the button, not inside it).
 

@@ -1,5 +1,5 @@
 import { HTMLElementBase } from "../anta_helpers";
-import { runCopy } from "./copy-behavior";
+import { emitCopyRequest, runCopy } from "./copy-behavior";
 import "./a-button.css";
 
 declare global {
@@ -20,6 +20,10 @@ declare global {
 function installDocumentHandlers(doc: Document | undefined) {
   if (!doc || doc.hasKeyListenerForAButton) return;
   doc.addEventListener("keydown", handleKeyDown, true);
+  // Lazy copy: ask the consumer for fresh content on pointerdown so a
+  // worker-thread handler has the pointerdown→click gap to set `copy` before
+  // the click reads it (see copy-behavior's "Lazy content" note).
+  doc.addEventListener("pointerdown", handlePointerDown, true);
   doc.addEventListener("click", handleClick, true);
   doc.hasKeyListenerForAButton = true;
 }
@@ -88,10 +92,16 @@ export class AButtonElement extends HTMLElementBase {
   }
 
   /** Perform a copy if this button is a copy control (`copy` / `copy-node` /
-   *  `copy-lazy`). Called from the delegated click handler on activation. The
+   *  `copy-url`). Called from the delegated click handler on activation. The
    *  outcome is announced via a `copydone` event the wrapper reflects. */
   performCopy(): boolean {
     return runCopy(this);
+  }
+
+  /** Ask a lazy consumer to refresh the `copy` value on pointerdown (fires a
+   *  `copyrequest` event); the click then copies whatever `copy` holds. */
+  requestCopy(): void {
+    emitCopyRequest(this);
   }
 }
 
@@ -115,8 +125,22 @@ function handleKeyDown(e: KeyboardEvent) {
   // A disabled / loading button must not activate from the keyboard either —
   // the CSS `pointer-events: none` only blocks the mouse, so guard here too.
   if (el.hasAttribute("disabled") || el.hasAttribute("loading")) return;
+  // Best-effort for keyboard lazy copy: request before the synchronous click.
+  // Keyboard has no pointerdown→click gap, so a worker round-trip can't land in
+  // time — the reliable lazy path is pointer. A UI-thread consumer that sets
+  // `copy` synchronously here still benefits.
+  el.requestCopy();
   e.preventDefault();
   el.click();
+}
+
+function handlePointerDown(e: PointerEvent) {
+  const el = (e.target as HTMLElement).closest(
+    "a-button",
+  ) as AButtonElement | null;
+  if (!el) return;
+  if (el.hasAttribute("disabled") || el.hasAttribute("loading")) return;
+  el.requestCopy();
 }
 
 function handleClick(e: MouseEvent) {
@@ -136,9 +160,9 @@ function handleClick(e: MouseEvent) {
     );
   }
 
-  // Copy controls (`copy` / `copy-node`) write to the clipboard on this same
-  // activation and reflect the outcome as feedback state — independent of the
-  // form logic below (a copy button is a plain `type="button"`).
+  // Copy controls (`copy` / `copy-node` / `copy-url`) write to the clipboard on
+  // this same activation and reflect the outcome as feedback state — independent
+  // of the form logic below (a copy button is a plain `type="button"`).
   el.performCopy();
 
   const type = el.getAttribute("type") || "button";

@@ -19,7 +19,13 @@ import './a-expander.css'
  *
  *   <div class="header">       flex row: the trigger + header actions
  *     <button part="summary">  the summary; chevron is its ::before; the
- *       <slot name="title">    title is projected here
+ *       <slot name="title">    title is projected here — INSIDE the button, so
+ *                              a control here bubbles to the toggle. A click
+ *                              that hits an interactive control or a
+ *                              `[data-expander-ignore]` node in the title does
+ *                              NOT toggle (see IGNORE_TOGGLE_SELECTOR): e.g. a
+ *                              `<ButtonCopy>` next to the title text copies
+ *                              without opening/closing the section.
  *     <slot name="actions">    header actions — SIBLINGS of the button,
  *                              never inside it: clicks on them don't
  *                              toggle (no propagation path through the
@@ -182,6 +188,26 @@ import './a-expander.css'
  */
 
 const ANIM_MS = 200
+
+// Controls a header click must NOT toggle on. A click inside the projected
+// `title` bubbles to the summary <button> (the title slot lives inside it), so
+// a copy button / link / form control sitting in the title would otherwise
+// toggle the section on every activation. We refuse to toggle when the click
+// originated on an interactive control or an explicit `[data-expander-ignore]`
+// node — decided synchronously by walking the composed path in the element
+// itself, so it holds even when a consumer's own handlers run off the UI thread
+// (the notebook renders this tree in a worker; a light-DOM `stopPropagation()`
+// round-trips too late to beat the synchronous toggle). Same design as a-menu's
+// dismiss contract. Actions never reach here — they're siblings of the button,
+// so their clicks don't fire its click handler at all.
+const IGNORE_TOGGLE_SELECTOR =
+  '[data-expander-ignore],a-button,[data-anta][role="button"],button,a[href],input,select,textarea,label,[contenteditable=""],[contenteditable="true"]'
+
+/** True when this element should suppress the toggle for a click that hit it —
+ *  an interactive control or an explicit opt-out marker. */
+function ignoresToggle(el: Element): boolean {
+  return el.matches(IGNORE_TOGGLE_SELECTOR)
+}
 
 // Mirrors the h1–h6 scale in a-title.css (font-size / line-height, px).
 // Level 5 is the default summary typography; the weight matches <Title>.
@@ -505,11 +531,25 @@ export class AExpanderElement extends HTMLElementBase {
     } catch {}
   }
 
+  /** Refuse to toggle when the click landed on a control inside the projected
+   *  title — walk the composed path up to (not including) the summary button and
+   *  check each element against `IGNORE_TOGGLE_SELECTOR`. Synchronous and read
+   *  here in the element, so it stands in off-UI-thread runtimes. Suppressing
+   *  before the dispatch also keeps a *controlled* consumer from toggling (no
+   *  `statechange` fires). */
+  #clickIgnoresToggle(e: Event): boolean {
+    const path = e.composedPath()
+    const end = path.indexOf(this.summary)
+    const scope = end === -1 ? path : path.slice(0, end)
+    return scope.some((n) => n instanceof Element && ignoresToggle(n))
+  }
+
   /** Compute the requested next state, announce it (cancelable, *before*
    *  applying), then — uncontrolled only, and only if not vetoed — apply it.
    *  Controlled: never self-apply; the consumer answers via the `state`
    *  attribute. See STATEFUL-COMPONENTS.md. */
-  private onSummaryClick = () => {
+  private onSummaryClick = (e: MouseEvent) => {
+    if (this.#clickIgnoresToggle(e)) return
     const prev = this.#current
     const next: ExpanderState = prev === 'open' ? 'closed' : 'open'
     const ok = this.dispatchEvent(

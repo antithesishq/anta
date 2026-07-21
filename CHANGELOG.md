@@ -6,6 +6,11 @@ This file tracks what ships to npm consumers: anything under `src/`, `dist/`, th
 
 Versions ending in `-dev.N` are prereleases on the npm `dev` dist-tag; main releases drop the suffix. Pin a specific version (`"@antadesign/anta": "0.1.1-dev.1"`) rather than the floating `"dev"` tag, which changes between installs.
 
+## 0.3.11 — July 20, 2026
+
+### Fixed
+- **A control in an `Expander`'s title no longer toggles the section.** The `title` slot projects *inside* the header button, so a click on a `ButtonCopy` / link / form control placed next to the title text bubbled to the toggle and opened/closed the section on every activation. `<a-expander>` now refuses to toggle when the click landed on an interactive control (`<a-button>`, `[data-anta][role="button"]`, native `button` / `a[href]` / `input` / `select` / `textarea` / `label` / editable) or on an explicit `[data-expander-ignore]` node — so a copy button beside the title copies without opening the section, with no consumer setup. The decision is made synchronously in the element by walking the click's composed path (like `Menu`'s dismiss contract), so it holds in runtimes where consumer event handlers run off the UI thread and a light-DOM `stopPropagation()` would arrive too late. Suppressing before the dispatch also means a *controlled* consumer sees no `statechange`, so the section stays put. Header `actions` were already immune (they're siblings of the button, not inside it).
+
 ## 0.3.10 — July 20, 2026
 
 ### Changed

@@ -58,6 +58,8 @@ const MENU_ITEMS: { icon: 'book-open' | 'chat' | 'file' | 'edit'; label: string;
   { icon: 'edit', label: 'Rename' },
 ]
 
+const PRIORITIES = ['primary', 'secondary', 'tertiary', 'quaternary', 'quinary'] as const
+
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 /** Format a CSS color string as an `oklch(l c h)` triple via chroma-js; '' on
@@ -136,29 +138,27 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
   const statusVal = ref ? named : undefined
 
   switch (spec.id) {
-    case 'title':
+    // Title + Text share the `--text-1..5` role scale, so one section previews
+    // both. The generative samples render UNTONED so they read the seed-derived
+    // tokens injected on the container; the hand-tuned samples are toned and read
+    // Anta's real `--text-*-{tone}` (with the resolved oklch label).
+    case 'text':
       return (
         <div className={styles.col}>
-          {(['primary', 'secondary', 'tertiary', 'quaternary', 'quinary'] as const).map((p) =>
+          {PRIORITIES.map((p) =>
             ref ? (
-              <TypeSample key={p} kind="title" priority={p} tone={named} isDark={isDark} />
+              <TypeSample key={`ti-${p}`} kind="title" priority={p} tone={named} isDark={isDark} />
             ) : (
-              <Title key={p} level={4} priority={p} tone={toneVal}>
+              <Title key={`ti-${p}`} level={4} priority={p}>
                 Title · {p}
               </Title>
             ),
           )}
-        </div>
-      )
-
-    case 'text':
-      return (
-        <div className={styles.col}>
-          {(['primary', 'secondary', 'tertiary', 'quaternary', 'quinary'] as const).map((p) =>
+          {PRIORITIES.map((p) =>
             ref ? (
-              <TypeSample key={p} kind="text" priority={p} tone={named} isDark={isDark} />
+              <TypeSample key={`tx-${p}`} kind="text" priority={p} tone={named} isDark={isDark} />
             ) : (
-              <Text key={p} priority={p} tone={toneVal}>
+              <Text key={`tx-${p}`} priority={p}>
                 The quick brown fox — {p}
               </Text>
             ),
@@ -342,11 +342,15 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap, onExpa
   const v = isDark ? vDark : vLight
   const el = EL_SELECTOR[spec.id]
   const genClass = `tl-gen-${tone}-${spec.id}`
-  const display = spec.css(el, seed, v)
+  // A role-token spec (e.g. Text → `--text-*`) emits tokens the sample components
+  // inherit: inject on the container and display at `:root`. Others style the
+  // element directly, so scope the selector to the element inside the container.
+  const injectSel = spec.tokens ? `.${genClass}` : `.${genClass} ${el}`
+  const display = spec.css(spec.tokens ? ':root' : el, seed, v)
   const inject =
-    spec.css(`.${genClass} ${el}`, seed, vLight) +
+    spec.css(injectSel, seed, vLight) +
     '\n' +
-    spec.css(`.dark .${genClass} ${el}`, seed, vDark)
+    spec.css(`.dark ${injectSel}`, seed, vDark)
 
   return (
     <section className={styles.block}>

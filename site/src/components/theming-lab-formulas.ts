@@ -58,9 +58,17 @@ export interface ComponentSpec {
   /** How the constants split into per-priority / per-role expanders. */
   groups: VarGroup[]
   /**
+   * Role-token spec: the formula emits global role tokens (e.g. `--text-*`) that
+   * the sample components inherit, rather than styling one element. `Block` then
+   * scopes injection to the preview container (`.tl-gen-…`) and displays it at
+   * `:root`, and the generative samples render untoned so they read the tokens.
+   */
+  tokens?: boolean
+  /**
    * The generative-driving CSS. `sel` is the element selector (bare `a-title` for
    * the displayed code, the scoped `.tl-gen-… a-title` / `.dark .tl-gen-… a-title`
    * for injection); `seed` is the source colour; `v` the current theme's values.
+   * For a `tokens` spec, `sel` is `:root` (display) or the container (injection).
    */
   css: (sel: string, seed: string, v: Vals) => string
 }
@@ -140,66 +148,34 @@ export const SPECS: ComponentSpec[] = [
   },
 
   {
-    id: 'title',
-    title: 'Title',
-    blurb:
-      'A custom tone deepens the source hue to a strong heading colour (primary) and a text-2 base (secondary); tertiary → quinary alpha-step down from that base.',
-    vars: [
-      { key: 'priL', label: 'primary L', light: 0.33, dark: 0.82, ...v3() },
-      { key: 'priC', label: 'primary C', light: 0.15, dark: 0.1, ...v3(0, 0.4) },
-      { key: 'baseL', label: 'base L', light: 0.41, dark: 0.75, ...v3() },
-      { key: 'baseC', label: 'base C', light: 0.15, dark: 0.11, ...v3(0, 0.4) },
-      { key: 'tertA', label: 'base α %', light: 80, dark: 80, ...pct },
-      { key: 'quatA', label: 'base α %', light: 60, dark: 60, ...pct },
-      { key: 'quinA', label: 'base α %', light: 40, dark: 40, ...pct },
-    ],
-    groups: [
-      { label: 'Primary', keys: ['priL', 'priC'] },
-      { label: 'Secondary', keys: ['baseL', 'baseC'] },
-      { label: 'Tertiary', keys: ['tertA'], note: 'Secondary base at this alpha.' },
-      { label: 'Quaternary', keys: ['quatA'], note: 'Secondary base at this alpha.' },
-      { label: 'Quinary', keys: ['quinA'], note: 'Secondary base at this alpha.' },
-    ],
-    css: (sel, seed, v) => `${sel} {
-  --_title-tone: ${ok(seed, v.baseL, v.baseC)};
-  color: ${ok(seed, v.priL, v.priC)};
-}
-${sel}[priority="secondary"]  { color: var(--_title-tone); }
-${sel}[priority="tertiary"]   { color: color-mix(in oklch, var(--_title-tone) ${v.tertA}%, transparent); }
-${sel}[priority="quaternary"] { color: color-mix(in oklch, var(--_title-tone) ${v.quatA}%, transparent); }
-${sel}[priority="quinary"]    { color: color-mix(in oklch, var(--_title-tone) ${v.quinA}%, transparent); }`,
-  },
-
-  {
     id: 'text',
     title: 'Text',
     blurb:
-      'Same curve as Title, but the default is the text-2 base (secondary); primary deepens, and tertiary → quinary alpha-step down.',
+      'The text colour role scale, derived from the source hue. text-1 is the strong primary; text-2 the base (secondary); text-3 → text-5 step text-2 down by alpha. Title and Text both read this scale, so one formula drives both.',
     vars: [
-      { key: 'priL', label: 'primary L', light: 0.33, dark: 0.82, ...v3() },
-      { key: 'priC', label: 'primary C', light: 0.15, dark: 0.1, ...v3(0, 0.4) },
-      { key: 'baseL', label: 'base L', light: 0.41, dark: 0.75, ...v3() },
-      { key: 'baseC', label: 'base C', light: 0.15, dark: 0.11, ...v3(0, 0.4) },
-      { key: 'tertA', label: 'base α %', light: 80, dark: 80, ...pct },
-      { key: 'quatA', label: 'base α %', light: 60, dark: 60, ...pct },
-      { key: 'quinA', label: 'base α %', light: 40, dark: 40, ...pct },
+      { key: 'priL', label: 'text-1 L', light: 0.4, dark: 0.85, neutral: { light: 0.1, dark: 0.94 }, ...v3() },
+      { key: 'priC', label: 'text-1 C', light: 0.11, dark: 0.1, neutral: { light: 0.01, dark: 0.008 }, ...v3(0, 0.4) },
+      { key: 'baseL', label: 'text-2 L', light: 0.5, dark: 0.77, neutral: { light: 0.3, dark: 0.8 }, ...v3() },
+      { key: 'baseC', label: 'text-2 C', light: 0.125, dark: 0.11, neutral: { light: 0.015, dark: 0.015 }, ...v3(0, 0.4) },
+      { key: 'tertA', label: 'text-3 α %', light: 80, dark: 80, ...pct },
+      { key: 'quatA', label: 'text-4 α %', light: 60, dark: 60, ...pct },
+      { key: 'quinA', label: 'text-5 α %', light: 40, dark: 40, ...pct },
     ],
     groups: [
-      { label: 'Primary', keys: ['priL', 'priC'] },
-      { label: 'Secondary', keys: ['baseL', 'baseC'] },
-      { label: 'Tertiary', keys: ['tertA'], note: 'Secondary base at this alpha.' },
-      { label: 'Quaternary', keys: ['quatA'], note: 'Secondary base at this alpha.' },
-      { label: 'Quinary', keys: ['quinA'], note: 'Secondary base at this alpha.' },
+      { label: 'Primary', keys: ['priL', 'priC'], note: 'text-1.' },
+      { label: 'Secondary', keys: ['baseL', 'baseC'], note: 'text-2 base.' },
+      { label: 'Tertiary', keys: ['tertA'], note: 'text-2 base at this alpha (→ text-3).' },
+      { label: 'Quaternary', keys: ['quatA'], note: 'text-2 base at this alpha (→ text-4).' },
+      { label: 'Quinary', keys: ['quinA'], note: 'text-2 base at this alpha (→ text-5).' },
     ],
+    tokens: true,
     css: (sel, seed, v) => `${sel} {
-  --_text-tone: ${ok(seed, v.baseL, v.baseC)};
-  --text-color: var(--_text-tone);
-  --text-link-hover: ${ok(seed, v.priL, v.priC)};
-}
-${sel}[priority="primary"]     { --text-color: ${ok(seed, v.priL, v.priC)}; }
-${sel}[priority="tertiary"]    { --text-color: color-mix(in oklch, var(--_text-tone) ${v.tertA}%, transparent); --text-link-hover: var(--_text-tone); }
-${sel}[priority="quaternary"]  { --text-color: color-mix(in oklch, var(--_text-tone) ${v.quatA}%, transparent); }
-${sel}[priority="quinary"]     { --text-color: color-mix(in oklch, var(--_text-tone) ${v.quinA}%, transparent); }`,
+  --text-1: ${ok(seed, v.priL, v.priC)};
+  --text-2: ${ok(seed, v.baseL, v.baseC)};
+  --text-3: color-mix(in oklch, var(--text-2) ${v.tertA}%, transparent);
+  --text-4: color-mix(in oklch, var(--text-2) ${v.quatA}%, transparent);
+  --text-5: color-mix(in oklch, var(--text-2) ${v.quinA}%, transparent);
+}`,
   },
 
   {
@@ -423,7 +399,6 @@ ${sel}[priority="quinary"]     { --text-color: color-mix(in oklch, var(--_text-t
 /** Element selector each spec's `css()` targets (bare, no container prefix). */
 export const EL_SELECTOR: Record<string, string> = {
   surface: '.tl-surface-swatch',
-  title: 'a-title',
   text: 'a-text',
   button: 'a-button',
   tag: 'a-tag',

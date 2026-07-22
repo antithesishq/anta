@@ -579,15 +579,16 @@ chevron stay centered on the row, so it composes with a trailing counter.
 </Col>
 </Columns>
 
-## Copy items
+<Disclosure title="MenuItemCopy">
 
 <Columns reverse>
 <Col>
 
 `MenuItemCopy` is a row that copies to the clipboard when chosen — `copy` for a
-literal string, `copyNode` for a DOM region. The `<a-menu-item>` element performs
-the write itself; the row closes on select as usual. Add `data-menu-open` to keep
-the menu open and show the check / retone feedback, or `onCopied(ok)` to react.
+literal string, `copyNode` for a DOM region. It composes a `<MenuItem>` with a
+slotted `<a-copy>` element that performs the write, and keeps the menu open on
+select so the check / retone feedback shows. `onCopied(ok)` fires after each
+attempt.
 
 Copy sits alongside normal items, so a "Share" menu can mix a copy-link row with
 navigating links.
@@ -602,8 +603,8 @@ navigating links.
 ```tsx folded
 <Button icon="share" iconTrailing="chevron-down" label="Share" />
 <Menu>
-  <MenuItemCopy copy={pageUrl} label="Copy link" kbd="⌘C" data-menu-open />
-  <MenuItemCopy copy={embedHtml} icon="braces" label="Copy embed" data-menu-open />
+  <MenuItemCopy copy={pageUrl} label="Copy link" kbd="⌘C" />
+  <MenuItemCopy copy={embedHtml} icon="braces" label="Copy embed" />
   <MenuSeparator />
   <MenuItem icon="external-link" label="Open in new tab" href="/menu" target="_blank" />
 </Menu>
@@ -611,6 +612,12 @@ navigating links.
 
 </Col>
 </Columns>
+
+### Props
+
+<PropsTable component="MenuItemCopy" />
+
+</Disclosure>
 
 ## Keyboard
 

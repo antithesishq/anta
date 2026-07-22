@@ -1,39 +1,102 @@
 import { Button, type ButtonProps } from './Button'
 import { useCopyFeedback } from '../anta_helpers'
+import { type CopyTarget, copyElementProps, isNodeCopy } from './copy-props'
+import type { IconShape } from '../elements/a-icon.shapes'
 
-/** `ButtonProps` narrowed so a copy target is required — a copy button must copy
- *  something. Intersecting with the target union drops the "no copy prop" member
- *  of `CopyMode` (its `copy?: never` makes each combination `never`). */
-export type ButtonCopyProps = ButtonProps &
-  ({ copy: string } | { copyNode: boolean | string } | { copyUrl: true })
+/** `Button` props minus the pieces `ButtonCopy` owns: it manages one icon (the
+ *  copy glyph) and its placement, so it takes `href` / `iconTrailing` off the
+ *  table (`href` — a link can't copy; `iconTrailing` — `iconPlacement` decides the
+ *  slot). Plus a required copy target and the placement knob. */
+export type ButtonCopyProps = ButtonProps & { href?: never; iconTrailing?: never } & CopyTarget & {
+    /** Where the copy glyph sits relative to the label — or `'none'` to omit it,
+     *  in which case the feedback is a ghost of the label floating up (`toast`)
+     *  plus a brief success / failure tone flash.
+     *  @defaultValue 'leading' */
+    iconPlacement?: 'leading' | 'trailing' | 'none'
+  }
 
 /**
  * Copy button — a `Button` preset for copy-to-clipboard. Set `copy` for a literal
  * string, `copyNode` to copy a DOM region, or `copyUrl` to copy the current page
  * URL. For content computed on demand, keep `copy` reactive and refresh it in
- * `onCopyRequest` (fired on pointerdown). The `<a-button>` element performs the
- * write and reports the result; this wrapper flips the leading icon to a check
- * (success) or ✕ (failure) and retones to `success` / `critical` for ~2s — a JSX
- * re-render, no element state (see `useCopyFeedback`).
+ * `onCopyRequest` (fired on pointerdown / keydown).
  *
- * With a `label` it's a labeled button; without one it's an icon-only copy button.
- * Everything else is a normal `Button` prop — `tone`, `priority`, `size`, `icon`
- * (the resting glyph), `onCopied`.
+ * It composes a plain `<Button>` with a slotted `<a-copy>` child that performs
+ * the write — the button itself carries no copy behavior. This wrapper flips the
+ * copy glyph to a check (success) or ✕ (failure) and retones to `success` /
+ * `critical` for ~2s (a re-render, no element state — see `useCopyFeedback`).
+ * `iconPlacement` puts that glyph leading (default), trailing, or `'none'`; with
+ * `'none'` the `<a-copy>` floats a ghost of the label upward instead.
+ *
+ * With a `label` it's a labeled button; without one it's an icon-only copy button
+ * (named "Copy" for assistive tech). Everything else is a normal `Button` prop —
+ * `tone`, `priority`, `size`, `icon` (the resting glyph), `onCopied`.
  *
  * @example
  * ```tsx
  * <ButtonCopy copy="npm i @antadesign/anta" label="Copy install" />
- * <ButtonCopy copy="https://anta.design" />          // icon-only
+ * <ButtonCopy copy="https://anta.design" />                     // icon-only
+ * <ButtonCopy copy={code} label="Copy" iconPlacement="trailing" />
+ * <ButtonCopy copy={code} label="Copy snippet" iconPlacement="none" />  // ghost feedback
  * <ButtonCopy copyNode=".snippet" label="Copy block" priority="tertiary" />
- * <ButtonCopy copyUrl label="Copy link" />           // copies location.href
- * <ButtonCopy copy={code} copyWithUrl label="Copy snippet" />  // code + source URL
- *
- * // Lazy: compute on pointerdown, copied on the click that follows.
- * const [report, setReport] = useState('')
- * <ButtonCopy copy={report} onCopyRequest={() => setReport(buildReport())} label="Copy report" />
+ * <ButtonCopy copyUrl label="Copy link" />                      // copies location.href
  * ```
  */
-export const ButtonCopy = ({ icon, tone, onCopied, ...rest }: ButtonCopyProps) => {
-  const { shownIcon, shownTone, handleCopied } = useCopyFeedback(icon, tone, onCopied)
-  return <Button icon={shownIcon} tone={shownTone} onCopied={handleCopied} {...rest} />
+export const ButtonCopy = ({
+  icon,
+  iconPlacement = 'leading',
+  tone,
+  onCopied,
+  onCopyRequest,
+  copy,
+  copyNode,
+  copyUrl,
+  copyWithUrl,
+  label,
+  children,
+  'aria-label': ariaLabel,
+  ...rest
+}: ButtonCopyProps) => {
+  // Resting glyph: the copy icon by default, a consumer `icon` overrides it, and
+  // `'none'` drops it entirely (the ghost + tone flash are the feedback then).
+  const restingIcon: IconShape | undefined = iconPlacement === 'none' ? undefined : (icon ?? 'copy')
+  const { shownIcon, shownTone, handleCopied } = useCopyFeedback(restingIcon, tone, onCopied)
+
+  // Feed the (swapping) glyph into the chosen slot; `'none'` uses neither.
+  const iconSlot =
+    iconPlacement === 'trailing'
+      ? { iconTrailing: shownIcon }
+      : iconPlacement === 'none'
+        ? {}
+        : { icon: shownIcon }
+
+  const hasText = label != null || children != null
+  const copyAttrs = copyElementProps({
+    copy,
+    copyNode,
+    copyUrl,
+    copyWithUrl,
+    onCopyRequest,
+    onCopied: handleCopied,
+    // Ghost feedback only makes sense when there's no glyph to swap.
+    toast: iconPlacement === 'none',
+  } as CopyTarget & { toast: boolean })
+
+  return (
+    <Button
+      {...iconSlot}
+      label={label}
+      tone={shownTone}
+      // Icon-only (no visible text) gets an accessible name; a consumer's own
+      // `aria-label` wins.
+      aria-label={ariaLabel ?? (hasText ? undefined : 'Copy')}
+      // For `copyNode`, mark the whole button so the serializer strips it (and
+      // its `<a-copy>` child) from the copied region.
+      data-copy-node-button={isNodeCopy({ copyNode }) ? '' : undefined}
+      {...rest}
+    >
+      {children}
+      <a-copy {...copyAttrs} />
+    </Button>
+  )
 }

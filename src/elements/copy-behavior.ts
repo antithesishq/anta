@@ -1,9 +1,10 @@
 /**
- * Shared copy-to-clipboard behavior for `<a-button>` and `<a-menu-item>` — the
- * write half of the productized "copy button" / "copying menu item". The element
- * performs the clipboard write itself (rather than a UI-thread callback) and
- * reports the outcome with a `copydone` event; the JSX wrapper listens and
- * orchestrates the visual feedback (icon + tone swap). Nothing here touches the
+ * Copy-to-clipboard behavior for the `<a-copy>` element — the write half of the
+ * productized "copy button" / "copying menu item". `<a-copy>` (slotted inside a
+ * button or menu row) calls these on the host's activation: it performs the
+ * clipboard write itself (rather than a UI-thread callback) and reports the
+ * outcome with a `copydone` event; the JSX wrapper (`ButtonCopy` / `MenuItemCopy`)
+ * listens and orchestrates the visual feedback (icon + tone swap). Nothing here touches the
  * DOM — no light-DOM mutation, no host attributes, no ElementInternals.
  *
  * Events are dispatched non-bubbling (`bubbles: false`): the wrapper binds on the

@@ -1,5 +1,4 @@
 import { HTMLElementBase } from '../anta_helpers'
-import { emitCopyRequest, runCopy } from './copy-behavior'
 import { installKeyActivation } from './key-activation'
 import './a-menu-item.css'
 
@@ -57,15 +56,6 @@ export class AMenuItemElement extends HTMLElementBase {
     // Custom-state carrier for the combobox cursor (see `active` below). No form
     // association — `attachInternals` is used only for `states`.
     this.internals = this.attachInternals?.()
-    // A copy item writes to the clipboard when the parent `a-menu` reports its
-    // activation (`menuselect`, dispatched on this item). runCopy no-ops on a
-    // non-copy item, so binding unconditionally is cheap; the outcome rides a
-    // `copydone` event the wrapper reflects.
-    this.addEventListener('menuselect', () => runCopy(this))
-    // Lazy copy: ask the consumer for fresh content on pointerdown — the
-    // pointerdown→menuselect gap lets a worker-thread handler set `copy` before
-    // the write reads it (see copy-behavior's "Lazy content" note).
-    this.addEventListener('pointerdown', () => emitCopyRequest(this))
   }
 
   /** The active (combobox) cursor. `a-menu` sets this **property** (never an
@@ -112,19 +102,18 @@ export function isMenuItemEl(el: EventTarget | null | undefined): el is HTMLElem
  *  from link items (no `<a-menu-item>` ever upgrades) still gets keyboard
  *  activation. Idempotent per document.
  *
- *  Shares `installKeyActivation` with `<a-button>`: activation is on keyup, with
- *  a keydown pre-request (`emitCopyRequest`) so a lazy copy row can refresh its
- *  `copy` during the hold. `.click()` on a link item navigates natively (honoring
- *  download / target); on the custom element it routes through the menu's click
- *  delegation — one path for both. (The combobox-filter Enter is a separate path
- *  handled by `a-menu`, which uses the same keyup pre-request.) */
+ *  Shares `installKeyActivation` with `<a-button>`: activation is on keyup.
+ *  `.click()` on a link item navigates natively (honoring download / target);
+ *  on the custom element it routes through the menu's click delegation — one
+ *  path for both. (The combobox-filter Enter is a separate path handled by
+ *  `a-menu`.) A slotted `<a-copy>` adds its own keydown pre-request when a row
+ *  is a copy control — the menu item itself no longer carries copy behavior. */
 export function ensureMenuItemKeyListener(doc: Document) {
   if (doc.hasKeyListenerForAMenuItem) return
   installKeyActivation(doc, {
     keys: ['Enter', ' '],
     resolve: (t) => (t as HTMLElement)?.closest?.(MENU_ITEM_SELECTOR) as HTMLElement | null,
     blocked: (el) => el.hasAttribute('disabled'),
-    preflight: (el) => emitCopyRequest(el),
     activate: (el) => el.click(),
   })
   doc.hasKeyListenerForAMenuItem = true

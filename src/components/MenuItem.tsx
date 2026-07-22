@@ -1,7 +1,6 @@
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import type { CopyMode } from './Button'
-import { toneStyle, nativeStateChange } from '../anta_helpers'
+import { toneStyle } from '../anta_helpers'
 
 /** Props shared by every menu item, link or not. */
 export interface MenuItemCommonProps extends BaseProps {
@@ -84,12 +83,6 @@ export type MenuItemLinkMode = {
   selectionIndicator?: never
   indeterminate?: never
   indicator?: never
-  copy?: never
-  copyNode?: never
-  copyUrl?: never
-  copyWithUrl?: never
-  onCopied?: never
-  onCopyRequest?: never
 }
 
 export type MenuItemActionMode = {
@@ -123,12 +116,11 @@ export type MenuItemActionMode = {
   indicator?: React.ReactNode
 }
 
-// Copy props (a "copying menu item") live on the action branch only — a link
-// item can't copy. The shared `CopyMode` union enforces that exactly one of
-// `copy` / `copyNode` / `copyUrl` is set; `MenuItemCopy` is the preset. The menu
-// closes on select as usual (add `data-menu-open` to linger on the success state).
+// Copy is no longer a MenuItem concern — `MenuItemCopy` composes an `<a-copy>`
+// child (see `copy-props.ts`) and keeps the menu open via `data-menu-open` so its
+// feedback shows.
 export type MenuItemProps = MenuItemCommonProps &
-  (MenuItemLinkMode | (MenuItemActionMode & CopyMode))
+  (MenuItemLinkMode | MenuItemActionMode)
 
 /**
  * MenuItem — a single selectable row inside a `Menu`. Composes a leading
@@ -171,23 +163,15 @@ export const MenuItem = ({
   rel,
   download,
   ping,
-  copy,
-  copyNode,
-  copyUrl,
-  copyWithUrl,
-  onCopied,
-  onCopyRequest,
   role: roleOverride,
   className,
   style,
   children,
   ...rest
 }: MenuItemProps) => {
-  // A copy row when any copy prop is set. The element performs the write on
-  // `menuselect` and announces it via `copydone`; the leading glyph defaults to
-  // `copy` (MenuItemCopy swaps it on the result).
-  const isCopy = copy != null || copyNode != null || copyUrl === true
-  const leadingIcon = icon ?? (isCopy ? 'copy' : undefined)
+  // MenuItem draws the leading icon only when one is passed — it's agnostic to
+  // copy. `MenuItemCopy` supplies the `copy` glyph and swaps it on the result.
+  const leadingIcon = icon
   // A checkable row is the control itself: it flips role to menuitem{checkbox,radio}
   // and carries aria-checked. The leading `checkbox`/`radio` styles render a passive
   // <a-checkbox>/<a-radio> and drop the tint (the mark conveys state); the `check`
@@ -284,16 +268,6 @@ export const MenuItem = ({
       // clicks). It's a MouseEvent, so `onSelect` still sees the modifier keys
       // (e.g. `Select`'s Alt/Option-click isolate reads `altKey`).
       onmenuselect={onSelect ? (e: any) => onSelect(e, { value, label }) : undefined}
-      // Copy behavior — the element writes to the clipboard on `menuselect`.
-      copy={copy != null ? copy : undefined}
-      copy-node={copyNode === true ? '' : typeof copyNode === 'string' ? copyNode : undefined}
-      copy-url={copyUrl ? '' : undefined}
-      copy-with-url={copyWithUrl ? '' : undefined}
-      data-copy-node-button={copyNode != null && copyNode !== false ? '' : undefined}
-      oncopydone={onCopied ? (e: any) => onCopied(nativeStateChange<{ ok: boolean }>(e).detail?.ok ?? false) : undefined}
-      // Fired on pointerdown for a lazy copy row — update `copy` here; the chosen
-      // row copies the latest value. No payload crosses the worker boundary.
-      oncopyrequest={onCopyRequest ? () => onCopyRequest() : undefined}
       class={className}
       {...rest}
     >

@@ -1,5 +1,4 @@
 import { HTMLElementBase } from "../anta_helpers";
-import { emitCopyRequest, runCopy } from "./copy-behavior";
 import { installKeyActivation } from "./key-activation";
 import "./a-button.css";
 
@@ -21,20 +20,17 @@ declare global {
 function installDocumentHandlers(doc: Document | undefined) {
   if (!doc || doc.hasKeyListenerForAButton) return;
   // Enter/Space activate on keyup (shared with a-menu-item) — keydown arms the
-  // release and issues the lazy-copy pre-request; keyup clicks. See key-activation.
+  // release, keyup clicks. See key-activation. (Copy — including the lazy
+  // pointerdown pre-request — now lives on a slotted `<a-copy>`, which runs its
+  // own delegation; the button no longer knows about it.)
   installKeyActivation(doc, {
     keys: ["Enter", " "],
     resolve: (t) =>
       (t as HTMLElement)?.closest?.("a-button") as AButtonElement | null,
     blocked: (el) =>
       el.hasAttribute("disabled") || el.hasAttribute("loading"),
-    preflight: (el) => (el as AButtonElement).requestCopy(),
     activate: (el) => el.click(),
   });
-  // Lazy copy: ask the consumer for fresh content on pointerdown so a
-  // worker-thread handler has the pointerdown→click gap to set `copy` before
-  // the click reads it (see copy-behavior's "Lazy content" note).
-  doc.addEventListener("pointerdown", handlePointerDown, true);
   doc.addEventListener("click", handleClick, true);
   doc.hasKeyListenerForAButton = true;
 }
@@ -101,19 +97,6 @@ export class AButtonElement extends HTMLElementBase {
     // frame the element actually lives in (parent page or playground iframe).
     installDocumentHandlers(this.doc);
   }
-
-  /** Perform a copy if this button is a copy control (`copy` / `copy-node` /
-   *  `copy-url`). Called from the delegated click handler on activation. The
-   *  outcome is announced via a `copydone` event the wrapper reflects. */
-  performCopy(): boolean {
-    return runCopy(this);
-  }
-
-  /** Ask a lazy consumer to refresh the `copy` value on pointerdown (fires a
-   *  `copyrequest` event); the click then copies whatever `copy` holds. */
-  requestCopy(): void {
-    emitCopyRequest(this);
-  }
 }
 
 function findForm(el: HTMLElement): HTMLFormElement | null {
@@ -122,15 +105,6 @@ function findForm(el: HTMLElement): HTMLFormElement | null {
     return el.ownerDocument.getElementById(formId) as HTMLFormElement | null;
   }
   return el.closest("form");
-}
-
-function handlePointerDown(e: PointerEvent) {
-  const el = (e.target as HTMLElement).closest(
-    "a-button",
-  ) as AButtonElement | null;
-  if (!el) return;
-  if (el.hasAttribute("disabled") || el.hasAttribute("loading")) return;
-  el.requestCopy();
 }
 
 function handleClick(e: MouseEvent) {
@@ -150,10 +124,6 @@ function handleClick(e: MouseEvent) {
     );
   }
 
-  // Copy controls (`copy` / `copy-node` / `copy-url`) write to the clipboard on
-  // this same activation and reflect the outcome as feedback state — independent
-  // of the form logic below (a copy button is a plain `type="button"`).
-  el.performCopy();
 
   const type = el.getAttribute("type") || "button";
   const form = findForm(el);

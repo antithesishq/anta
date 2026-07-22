@@ -2,6 +2,19 @@
 
 This page tracks what ships to npm. Documentation website changes are not tracked here.
 
+## Unreleased
+
+### Changed
+- **Copy-to-clipboard is now a standalone `<a-copy>` element — `Button` / `MenuItem` (and `<a-button>` / `<a-menu-item>`) no longer carry copy props.** The `copy` / `copy-node` / `copy-url` / `copy-with-url` attributes, `onCopyRequest` / `onCopied`, and the `copydone` / `copyrequest` events moved off the base controls onto `<a-copy>`, which you slot as a child of any activatable control (a button, a menu row, a native `button` / `[role]`). It performs the write and — with `toast` — floats a ghost of the host's content upward as feedback. The base controls stay copy-agnostic; the write, the lazy pre-request, and the feedback are all the child's job. One document-delegated listener set (no per-control listeners) drives it, and it only mutates its own shadow, so it holds where the app tree renders off the UI thread. **Migration:** replace `<Button copy=…>` with `<ButtonCopy copy=…>` (or compose `<Button><a-copy copy=… /></Button>`); same for `<MenuItem copy=…>` → `<MenuItemCopy>`. `ButtonCopy` / `MenuItemCopy` keep the same prop API (`copy` / `copyNode` / `copyUrl` / `copyWithUrl` / `onCopyRequest` / `onCopied`), so code using the presets is unchanged.
+
+### Added
+- **`iconPlacement` on `ButtonCopy`** — `'leading'` (default), `'trailing'`, or `'none'`. `'leading'` / `'trailing'` place the copy glyph (which swaps to a check / ✕ on the result); `'none'` drops the glyph and gives feedback as a ghost of the label floating up (`<a-copy toast>`) plus the success / failure tone flash.
+- **`<a-copy>` element**, its `ACopyAttributes` type, and the `CopyTarget` prop type (the shared copy-target union consumed by `ButtonCopy` / `MenuItemCopy`).
+- **`MenuItemCopy` keeps its menu open on select** (`data-menu-open`) so the copy feedback is visible instead of tearing down with the closing menu.
+
+### Fixed
+- **An `Expander`'s heading type scale no longer leaks onto a custom (node) `title`.** The `level` typography (font-size, line-height, and the heading font-weight) moved off the shadow header `<button>` — where it inherited into whatever the `title` slot projected — onto `a-expander-summary`, the element the wrapper wraps a *string* `title` in. A string `title` renders exactly as before; a node `title` (a `<Title>`, a `<Button>`, arbitrary markup) now inherits nothing from the header and keeps its own typography, and the header button renders at the plain inherited font. As a side effect the pre-upgrade header skeleton picks up the correct per-level font, removing a font-size flash on element upgrade.
+
 ## 0.3.11 — July 21, 2026
 
 ### Changed

@@ -25,6 +25,11 @@ export interface VarDef {
   label: string
   light: number
   dark: number
+  /** Neutral-tone default overrides. Neutral is hand-authored grey, not a
+   *  formula-derived tone, so it can want per-key values the colored tones don't
+   *  share. When set, it wins over `light`/`dark` (and the `NEUTRAL_CHROMA`
+   *  fallback) for the neutral panel only. */
+  neutral?: { light?: number; dark?: number }
   min: number
   max: number
   step: number
@@ -97,14 +102,14 @@ export const SPECS: ComponentSpec[] = [
       'The container background and border role scales, derived from the source hue. Backgrounds sit near the page lightness with a faint tint that grows per step; borders step down in lightness from a saturated edge (border-1) to the faint bg-5, chroma easing off as they lighten. Neutral zeroes chroma to stay grey.',
     vars: [
       { key: 'bg1L', label: 'bg-1 L', light: 1, dark: 0, ...v3() },
-      { key: 'bg2L', label: 'bg-2 L', light: 0.99, dark: 0.16, ...v3() },
-      { key: 'bg2C', label: 'bg-2 C', light: 0.004, dark: 0.002, ...v3(0, 0.4) },
-      { key: 'bg3L', label: 'bg-3 L', light: 0.972, dark: 0.177, ...v3() },
-      { key: 'bg3C', label: 'bg-3 C', light: 0.011, dark: 0.005, ...v3(0, 0.4) },
-      { key: 'bg4L', label: 'bg-4 L', light: 0.955, dark: 0.191, ...v3() },
-      { key: 'bg4C', label: 'bg-4 C', light: 0.02, dark: 0.006, ...v3(0, 0.4) },
-      { key: 'bg5L', label: 'bg-5 L', light: 0.935, dark: 0.2, ...v3() },
-      { key: 'bg5C', label: 'bg-5 C', light: 0.03, dark: 0.009, ...v3(0, 0.4) },
+      { key: 'bg2L', label: 'bg-2 L', light: 0.99, dark: 0.13, neutral: { dark: 0.16 }, ...v3() },
+      { key: 'bg2C', label: 'bg-2 C', light: 0.004, dark: 0.02, neutral: { dark: 0.002 }, ...v3(0, 0.4) },
+      { key: 'bg3L', label: 'bg-3 L', light: 0.972, dark: 0.17, neutral: { dark: 0.177 }, ...v3() },
+      { key: 'bg3C', label: 'bg-3 C', light: 0.011, dark: 0.035, neutral: { dark: 0.005 }, ...v3(0, 0.4) },
+      { key: 'bg4L', label: 'bg-4 L', light: 0.955, dark: 0.185, neutral: { dark: 0.191 }, ...v3() },
+      { key: 'bg4C', label: 'bg-4 C', light: 0.02, dark: 0.05, neutral: { dark: 0.006 }, ...v3(0, 0.4) },
+      { key: 'bg5L', label: 'bg-5 L', light: 0.935, dark: 0.205, neutral: { dark: 0.2 }, ...v3() },
+      { key: 'bg5C', label: 'bg-5 C', light: 0.03, dark: 0.055, neutral: { dark: 0.009 }, ...v3(0, 0.4) },
       { key: 'bd1L', label: 'border-1 L', light: 0.67, dark: 0.52, ...v3() },
       { key: 'bd1C', label: 'border-1 C', light: 0.13, dark: 0.15, ...v3(0, 0.4) },
       { key: 'bd2L', label: 'border-2 L', light: 0.8, dark: 0.41, ...v3() },
@@ -453,7 +458,13 @@ export const defaults = (spec: ComponentSpec, dark: boolean, tone?: Tone): Vals 
   Object.fromEntries(
     spec.vars.map((d) => {
       const base = dark ? d.dark : d.light
-      const val = tone === 'neutral' && d.key.endsWith('C') ? NEUTRAL_CHROMA : base
-      return [d.key, val]
+      if (tone === 'neutral') {
+        // A per-key neutral override wins outright; else chroma keys fall back to
+        // the flat near-grey so a fixed chroma doesn't over-saturate the seed.
+        const override = dark ? d.neutral?.dark : d.neutral?.light
+        if (override != null) return [d.key, override]
+        if (d.key.endsWith('C')) return [d.key, NEUTRAL_CHROMA]
+      }
+      return [d.key, base]
     }),
   )

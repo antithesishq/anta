@@ -81,25 +81,19 @@
   position: relative;
 }
 
+/* Resolved oklch value shown after each token name in the surface label. */
+.oklch {
+  margin-left: 4px;
+  color: var(--text-4);
+  font-family: var(--monospace);
+  font-size: 0.9em;
+}
+
 /* Copy / paste icon buttons in each variable expander's header actions. */
 .groupActions {
   display: inline-flex;
   gap: 2px;
   align-items: center;
-}
-
-/* The paste button carries a raw lucide SVG (not an a-icon), so it misses the
-   element's icon-only square styling — replicate the small icon-only metrics. */
-.pasteBtn {
-  min-width: 24px;
-  --button-padding-x: 3px;
-  --button-padding-y: 3px;
-}
-
-.pasteBtn svg {
-  display: block;
-  width: 16px;
-  height: 16px;
 }
 
 /* Surface (Background & Borders) groups: L channels on the top row, C channels

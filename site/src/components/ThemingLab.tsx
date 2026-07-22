@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useRef, useState } from 'preact/hooks'
+import chroma from 'chroma-js'
 import {
   Tabs,
   Title,
@@ -9,6 +10,7 @@ import {
   Checkbox,
   RadioGroup,
   Expander,
+  Icon,
   Input,
   InputDate,
   MenuItem,
@@ -250,16 +252,8 @@ function GroupActions({
         priority="tertiary"
         onClick={onPaste}
         aria-label="Paste values from JSON"
-        className={styles.pasteBtn}
       >
-        {/* lucide clipboard-copy */}
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-          <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-          <path d="M16 4h2a2 2 0 0 1 2 2v4" />
-          <path d="M21 14H11" />
-          <path d="m15 10-4 4 4 4" />
-        </svg>
+        <Icon shape="clipboard-paste" />
       </Button>
     </span>
   )
@@ -375,6 +369,26 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
     if (next) set(Number(next.split('-').pop()))
   }
 
+  // Resolve the hand-tuned swatch's actual background / border colour (the token
+  // computed for the current theme) and show it as oklch via chroma-js. Read from
+  // the live element so it reflects whatever `--bg-*` / `--border-*` resolves to.
+  const swatchRef = useRef<HTMLDivElement>(null)
+  const [okl, setOkl] = useState({ bg: '', border: '' })
+  useEffect(() => {
+    const el = swatchRef.current
+    if (!el) return
+    const cs = getComputedStyle(el)
+    const fmt = (color: string) => {
+      try {
+        const [l, c, h] = chroma(color).oklch()
+        return `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${(Number.isNaN(h) ? 0 : h).toFixed(1)})`
+      } catch {
+        return ''
+      }
+    }
+    setOkl({ bg: fmt(cs.backgroundColor), border: fmt(cs.borderTopColor) })
+  }, [refBg, refBorder, isDark])
+
   return (
     <section className={styles.block}>
       {/* LEFT — tabs, then the two swatch previews */}
@@ -385,9 +399,15 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
             <Tabs value={`border-${border}`} label="Border" size="small" options={opts('border')} onStateChange={pick(setBorder)} />
           </div>
           <p className={styles.previewLabel}>
-            Anta hand-tuned · <code>--bg-{bg}{bg === 1 ? '' : suffix}</code> · <code>--border-{border}{suffix}</code>
+            Anta hand-tuned
+            <br />
+            <code>--bg-{bg}{bg === 1 ? '' : suffix}</code>
+            {okl.bg ? <span className={styles.oklch}>{okl.bg}</span> : null}
+            <br />
+            <code>--border-{border}{suffix}</code>
+            {okl.border ? <span className={styles.oklch}>{okl.border}</span> : null}
           </p>
-          <div className={styles.surfaceSwatch} style={{ background: refBg, borderColor: refBorder }} />
+          <div ref={swatchRef} className={styles.surfaceSwatch} style={{ background: refBg, borderColor: refBorder }} />
         </div>
         <div className={`${styles.preview} ${genClass}`}>
           <p className={styles.previewLabel}>

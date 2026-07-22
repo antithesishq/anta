@@ -7,6 +7,7 @@ export const ICON_SHAPES = [
   'chevrons-up-down-square',
   'circle-pause',
   'circle-play',
+  'clipboard-paste',
   'octagon-pause',
   'sticker',
   'tabs',
@@ -21,6 +22,7 @@ declare module '@antadesign/anta' {
     'chevrons-up-down-square': true
     'circle-pause': true
     'circle-play': true
+    'clipboard-paste': true
     'octagon-pause': true
     'sticker': true
     'tabs': true

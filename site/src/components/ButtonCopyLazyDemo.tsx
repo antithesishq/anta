@@ -14,7 +14,7 @@ export default function ButtonCopyLazyDemo() {
   const [status, setStatus] = useState<string | null>(null)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
       <ButtonCopy
         copy={report}
         tone="brand"

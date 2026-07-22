@@ -9,6 +9,7 @@ This page tracks what ships to npm. Documentation website changes are not tracke
 
 ### Added
 - **`iconPlacement` on `ButtonCopy`** — `'leading'` (default), `'trailing'`, or `'none'`. `'leading'` / `'trailing'` place the copy glyph (which swaps to a check / ✕ on the result); `'none'` drops the glyph and gives feedback as a ghost of the label floating up (`<a-copy toast>`) plus the success / failure tone flash.
+- **`ButtonCopy`'s prop surface is trimmed to what a copy button uses.** It no longer accepts `selected` (it isn't a toggle), the link/submit axis (`href` / `target` / `rel` / `download` / `ping` / `type` / `form` — a copy button neither navigates nor submits), or a public `iconTrailing` (the glyph's side is `iconPlacement`'s job). The tone / size / priority / `disabled` / `loading` / `round` / `icon` / `label` styling axes are unchanged.
 - **`<a-copy>` element**, its `ACopyAttributes` type, and the `CopyTarget` prop type (the shared copy-target union consumed by `ButtonCopy` / `MenuItemCopy`).
 - **`MenuItemCopy` keeps its menu open on select** (`data-menu-open`) so the copy feedback is visible instead of tearing down with the closing menu.
 

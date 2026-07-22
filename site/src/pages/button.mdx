@@ -514,6 +514,11 @@ card into a rich editor and a plain one to see both.
 `copyWithUrl` prefixes a `copy` string with `// URL: <href>`, so a copied snippet
 carries a link back to where it came from.
 
+<Preview>
+  <ButtonCopy copyUrl label="Copy link" />
+  <ButtonCopy copy="npm i @antadesign/anta" copyWithUrl label="Copy snippet" priority="tertiary" />
+</Preview>
+
 ```tsx folded
 <ButtonCopy copyUrl label="Copy link" />
 <ButtonCopy copy={snippet} copyWithUrl label="Copy snippet" />  {/* snippet + source URL */}
@@ -528,7 +533,7 @@ the click that follows copies the latest value.
 <Columns>
 <Col>
 
-<Preview minHeight={90}>
+<Preview minHeight={90} align="flex-start">
   <ButtonCopyLazyDemo client:visible />
 </Preview>
 

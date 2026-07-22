@@ -3,11 +3,26 @@ import { useCopyFeedback } from '../anta_helpers'
 import { type CopyTarget, copyElementProps, isNodeCopy } from './copy-props'
 import type { IconShape } from '../elements/a-icon.shapes'
 
-/** `Button` props minus the pieces `ButtonCopy` owns: it manages one icon (the
- *  copy glyph) and its placement, so it takes `href` / `iconTrailing` off the
- *  table (`href` — a link can't copy; `iconTrailing` — `iconPlacement` decides the
- *  slot). Plus a required copy target and the placement knob. */
-export type ButtonCopyProps = ButtonProps & { href?: never; iconTrailing?: never } & CopyTarget & {
+/** A copy button is a plain action control, so `ButtonCopy` keeps the `Button`
+ *  axes that fit — tone / size / priority styling, `disabled` / `loading`, a
+ *  leading `icon` + `label` — and pins the ones that don't to `never`: `selected`
+ *  (it isn't a toggle), the whole submit/link axis (`href` / `target` / `rel` /
+ *  `download` / `ping` / `type` / `form` — a copy button neither navigates nor
+ *  submits), and the public `iconTrailing` (the glyph's side is `iconPlacement`'s
+ *  job). Plus a required copy target and the placement knob. (Pinning to `never`
+ *  keeps the intersection expanding fully in the docs props table, which `Omit`
+ *  wouldn't.) */
+export type ButtonCopyProps = ButtonProps & {
+  selected?: never
+  href?: never
+  target?: never
+  rel?: never
+  download?: never
+  ping?: never
+  type?: never
+  form?: never
+  iconTrailing?: never
+} & CopyTarget & {
     /** Where the copy glyph sits relative to the label — or `'none'` to omit it,
      *  in which case the feedback is a ghost of the label floating up (`toast`)
      *  plus a brief success / failure tone flash.

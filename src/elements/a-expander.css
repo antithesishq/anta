@@ -190,6 +190,19 @@
     line-height: 20px;
   }
 
+  /* Outdent zeroes the left gutter, so a flush-left control sits hard against the
+     body's inline-start edge — and a focus ring that paints outside its box (an
+     <Input>'s ring is 2px out: 1px outline + 1px offset) would be clipped by a
+     body that contains wide content (horizontal `overflow`). The block's 4px
+     right padding already gives the trailing edge that room; mirror it on the
+     leading edge here, with an equal negative margin so the body stays visually
+     flush while the clip/scroll box gains 4px of ring room. Outdent only — every
+     other mode keeps the gutter, which is room enough. */
+  a-expander[priority="tertiary"][outdent] a-expander-details {
+    padding-inline-start: 4px;
+    margin-inline-start: -4px;
+  }
+
   a-expander[priority="primary"] {
     --expander-bg: var(--expander-bg-primary);
     --expander-border: var(--expander-border-primary);

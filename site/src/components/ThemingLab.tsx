@@ -222,9 +222,13 @@ interface BlockProps {
   vLight: Vals
   vDark: Vals
   onVar: (id: string, key: string, value: string) => void
+  /** Shared open state for this section's expanders, keyed `${spec.id}:${label}`,
+   *  so the same expander tracks across every tone panel. */
+  openMap: Record<string, boolean>
+  onExpanderToggle: (key: string, next: boolean) => void
 }
 
-function Block({ spec, tone, seed, isDark, vLight, vDark, onVar }: BlockProps) {
+function Block({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap, onExpanderToggle }: BlockProps) {
   const v = isDark ? vDark : vLight
   const el = EL_SELECTOR[spec.id]
   const genClass = `tl-gen-${tone}-${spec.id}`
@@ -256,18 +260,34 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, onVar }: BlockProps) {
         <Title level={2}>{spec.title}</Title>
         <p className={styles.blurb}>{spec.blurb}</p>
 
-        {groupsOf(spec).map((g) => (
-          <Expander key={g.label} title={`${g.label} variables`} priority="tertiary" outdent>
-            {g.note ? <p className={styles.groupNote}>{g.note}</p> : null}
-            <div className={styles.varGrid}>
-              {g.vars.map((d) => (
-                <VarInput key={d.key} spec={spec} d={d} v={v} onVar={onVar} />
-              ))}
-            </div>
-          </Expander>
-        ))}
+        {groupsOf(spec).map((g) => {
+          const key = `${spec.id}:${g.label}`
+          return (
+            <Expander
+              key={g.label}
+              title={`${g.label} variables`}
+              priority="tertiary"
+              outdent
+              open={!!openMap[key]}
+              onStateChange={(_e, { next }) => onExpanderToggle(key, next)}
+            >
+              {g.note ? <p className={styles.groupNote}>{g.note}</p> : null}
+              <div className={styles.varGrid}>
+                {g.vars.map((d) => (
+                  <VarInput key={d.key} spec={spec} d={d} v={v} onVar={onVar} />
+                ))}
+              </div>
+            </Expander>
+          )
+        })}
 
-        <Expander title="CSS output" priority="tertiary" outdent>
+        <Expander
+          title="CSS output"
+          priority="tertiary"
+          outdent
+          open={!!openMap[`${spec.id}:css`]}
+          onStateChange={(_e, { next }) => onExpanderToggle(`${spec.id}:css`, next)}
+        >
           <pre className={styles.pre}>{display}</pre>
         </Expander>
       </div>
@@ -280,7 +300,7 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, onVar }: BlockProps) {
  *  previews: the top swatch reads Anta's real role tokens (with the current tone),
  *  the bottom reads the seed-derived tokens injected onto it. One pair of tab
  *  selections drives both, so the two read the same bg×border combination. */
-function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar }: BlockProps) {
+function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap, onExpanderToggle }: BlockProps) {
   const v = isDark ? vDark : vLight
   const [bg, setBg] = useState(2)
   const [border, setBorder] = useState(4)
@@ -331,18 +351,34 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar }: BlockP
         <Title level={2}>{spec.title}</Title>
         <p className={styles.blurb}>{spec.blurb}</p>
 
-        {groupsOf(spec).map((g) => (
-          <Expander key={g.label} title={`${g.label} variables`} priority="tertiary" outdent>
-            {g.note ? <p className={styles.groupNote}>{g.note}</p> : null}
-            <div className={styles.varGrid}>
-              {g.vars.map((d) => (
-                <VarInput key={d.key} spec={spec} d={d} v={v} onVar={onVar} />
-              ))}
-            </div>
-          </Expander>
-        ))}
+        {groupsOf(spec).map((g) => {
+          const key = `${spec.id}:${g.label}`
+          return (
+            <Expander
+              key={g.label}
+              title={`${g.label} variables`}
+              priority="tertiary"
+              outdent
+              open={!!openMap[key]}
+              onStateChange={(_e, { next }) => onExpanderToggle(key, next)}
+            >
+              {g.note ? <p className={styles.groupNote}>{g.note}</p> : null}
+              <div className={styles.varGrid}>
+                {g.vars.map((d) => (
+                  <VarInput key={d.key} spec={spec} d={d} v={v} onVar={onVar} />
+                ))}
+              </div>
+            </Expander>
+          )
+        })}
 
-        <Expander title="CSS output" priority="tertiary" outdent>
+        <Expander
+          title="CSS output"
+          priority="tertiary"
+          outdent
+          open={!!openMap[`${spec.id}:css`]}
+          onStateChange={(_e, { next }) => onExpanderToggle(`${spec.id}:css`, next)}
+        >
           <pre className={styles.pre}>{display}</pre>
         </Expander>
       </div>
@@ -350,7 +386,19 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar }: BlockP
   )
 }
 
-function TonePanel({ tone, seed, isDark }: { tone: Tone; seed: string; isDark: boolean }) {
+function TonePanel({
+  tone,
+  seed,
+  isDark,
+  openMap,
+  onExpanderToggle,
+}: {
+  tone: Tone
+  seed: string
+  isDark: boolean
+  openMap: Record<string, boolean>
+  onExpanderToggle: (key: string, next: boolean) => void
+}) {
   const [vLight, setVLight] = useState<Record<string, Vals>>(() =>
     Object.fromEntries(SPECS.map((s) => [s.id, defaults(s, false, tone)])),
   )
@@ -379,6 +427,8 @@ function TonePanel({ tone, seed, isDark }: { tone: Tone; seed: string; isDark: b
             vLight={vLight[spec.id]}
             vDark={vDark[spec.id]}
             onVar={setVar}
+            openMap={openMap}
+            onExpanderToggle={onExpanderToggle}
           />
         )
       })}
@@ -390,6 +440,12 @@ export default function ThemingLab() {
   const [isDark, setIsDark] = useState(false)
   const [active, setActive] = useState<Tone>('neutral')
   const [seeds, setSeeds] = useState<Record<Tone, string>>(() => ({ ...SEED }))
+  // Expander open state, shared across every tone panel: keyed by section +
+  // expander so opening "CSS output" (or a variable group) in one tone opens
+  // the same expander in all of them.
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({})
+  const onExpanderToggle = (key: string, next: boolean) =>
+    setOpenMap((m) => ({ ...m, [key]: next }))
 
   useEffect(() => {
     const el = document.documentElement
@@ -419,7 +475,7 @@ export default function ThemingLab() {
 
       {TONES.map((t) => (
         <div key={t} hidden={t !== active}>
-          <TonePanel tone={t} seed={seeds[t]} isDark={isDark} />
+          <TonePanel tone={t} seed={seeds[t]} isDark={isDark} openMap={openMap} onExpanderToggle={onExpanderToggle} />
         </div>
       ))}
     </div>

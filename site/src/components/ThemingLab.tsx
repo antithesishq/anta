@@ -346,10 +346,16 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap, onExpa
  *  previews: the top swatch reads Anta's real role tokens (with the current tone),
  *  the bottom reads the seed-derived tokens injected onto it. One pair of tab
  *  selections drives both, so the two read the same bg×border combination. */
-function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap, onExpanderToggle }: BlockProps) {
+interface SurfaceBlockProps extends BlockProps {
+  /** bg-N / border-N selection, lifted so it persists across tone switches. */
+  bg: number
+  border: number
+  onBg: (n: number) => void
+  onBorder: (n: number) => void
+}
+
+function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap, onExpanderToggle, bg, border, onBg, onBorder }: SurfaceBlockProps) {
   const v = isDark ? vDark : vLight
-  const [bg, setBg] = useState(2)
-  const [border, setBorder] = useState(4)
   const genClass = `tl-gen-${tone}-surface`
 
   // Inject the seed-derived --bg-*/--border-* onto the GEN swatch only (not the
@@ -395,8 +401,8 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
       <div className={styles.previews}>
         <div className={styles.preview}>
           <div className={styles.surfaceTabs}>
-            <Tabs value={`bg-${bg}`} label="Background" size="small" options={opts('bg')} onStateChange={pick(setBg)} />
-            <Tabs value={`border-${border}`} label="Border" size="small" options={opts('border')} onStateChange={pick(setBorder)} />
+            <Tabs value={`bg-${bg}`} label="Background" size="small" options={opts('bg')} onStateChange={pick(onBg)} />
+            <Tabs value={`border-${border}`} label="Border" size="small" options={opts('border')} onStateChange={pick(onBorder)} />
           </div>
           <p className={styles.previewLabel}>
             Anta hand-tuned
@@ -479,12 +485,20 @@ function TonePanel({
   isDark,
   openMap,
   onExpanderToggle,
+  surfaceBg,
+  surfaceBorder,
+  onSurfaceBg,
+  onSurfaceBorder,
 }: {
   tone: Tone
   seed: string
   isDark: boolean
   openMap: Record<string, boolean>
   onExpanderToggle: (key: string, next: boolean) => void
+  surfaceBg: number
+  surfaceBorder: number
+  onSurfaceBg: (n: number) => void
+  onSurfaceBorder: (n: number) => void
 }) {
   const [vLight, setVLight] = useState<Record<string, Vals>>(() =>
     Object.fromEntries(SPECS.map((s) => [s.id, defaults(s, false, tone)])),
@@ -503,20 +517,28 @@ function TonePanel({
   return (
     <>
       {SPECS.map((spec) => {
-        const Comp = spec.id === 'surface' ? SurfaceBlock : Block
-        return (
-          <Comp
+        const common = {
+          spec,
+          tone,
+          seed,
+          isDark,
+          vLight: vLight[spec.id],
+          vDark: vDark[spec.id],
+          onVar: setVar,
+          openMap,
+          onExpanderToggle,
+        }
+        return spec.id === 'surface' ? (
+          <SurfaceBlock
             key={spec.id}
-            spec={spec}
-            tone={tone}
-            seed={seed}
-            isDark={isDark}
-            vLight={vLight[spec.id]}
-            vDark={vDark[spec.id]}
-            onVar={setVar}
-            openMap={openMap}
-            onExpanderToggle={onExpanderToggle}
+            {...common}
+            bg={surfaceBg}
+            border={surfaceBorder}
+            onBg={onSurfaceBg}
+            onBorder={onSurfaceBorder}
           />
+        ) : (
+          <Block key={spec.id} {...common} />
         )
       })}
     </>
@@ -533,6 +555,10 @@ export default function ThemingLab() {
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({})
   const onExpanderToggle = (key: string, next: boolean) =>
     setOpenMap((m) => ({ ...m, [key]: next }))
+  // Surface preview's bg/border tab selection, shared across every tone panel so
+  // switching tone keeps the same bg-N/border-N chosen (like `openMap`).
+  const [surfaceBg, setSurfaceBg] = useState(2)
+  const [surfaceBorder, setSurfaceBorder] = useState(4)
 
   useEffect(() => {
     const el = document.documentElement
@@ -562,7 +588,17 @@ export default function ThemingLab() {
 
       {TONES.map((t) => (
         <div key={t} hidden={t !== active}>
-          <TonePanel tone={t} seed={seeds[t]} isDark={isDark} openMap={openMap} onExpanderToggle={onExpanderToggle} />
+          <TonePanel
+            tone={t}
+            seed={seeds[t]}
+            isDark={isDark}
+            openMap={openMap}
+            onExpanderToggle={onExpanderToggle}
+            surfaceBg={surfaceBg}
+            surfaceBorder={surfaceBorder}
+            onSurfaceBg={setSurfaceBg}
+            onSurfaceBorder={setSurfaceBorder}
+          />
         </div>
       ))}
     </div>

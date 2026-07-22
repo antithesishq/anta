@@ -89,6 +89,28 @@
   font-size: 0.9em;
 }
 
+/* Per-priority resting bg/text oklch readout under the Button/Tag hand-tuned
+   samples. */
+.restingList {
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+}
+.restingRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+.restingRow > code {
+  min-width: 78px;
+  font-family: var(--monospace);
+  color: var(--text-3);
+}
+.restingRow .oklch {
+  margin-left: 0;
+}
+
 /* Copy / paste icon buttons in each variable expander's header actions. */
 .groupActions {
   display: inline-flex;

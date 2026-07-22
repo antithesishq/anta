@@ -62,12 +62,17 @@ const PRIORITIES = ['primary', 'secondary', 'tertiary', 'quaternary', 'quinary']
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
-/** Format a CSS color string as an `oklch(l c h)` triple via chroma-js; '' on
- *  parse failure. Shared by the surface swatch readout and the type samples. */
+/** Format a CSS color string as `oklch(l c h)` (with ` / a` when translucent,
+ *  `transparent` when fully clear) via chroma-js; '' on parse failure. Shared by
+ *  the surface swatch, type samples, and button/tag resting readouts. */
 function toOklch(color: string): string {
   try {
-    const [l, c, h] = chroma(color).oklch()
-    return `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${(Number.isNaN(h) ? 0 : h).toFixed(1)})`
+    const px = chroma(color)
+    const a = px.alpha()
+    if (a === 0) return 'transparent'
+    const [l, c, h] = px.oklch()
+    const triple = `${l.toFixed(3)} ${c.toFixed(3)} ${(Number.isNaN(h) ? 0 : h).toFixed(1)}`
+    return a < 1 ? `oklch(${triple} / ${a.toFixed(2)})` : `oklch(${triple})`
   } catch {
     return ''
   }
@@ -114,6 +119,61 @@ function TypeSample({
         </Text>
       )}
     </span>
+  )
+}
+
+/** Hand-tuned Button/Tag samples plus a per-priority readout of the resolved
+ *  resting background + text colour in oklch. Both elements are light-DOM hosts
+ *  that paint `background`/`color` directly (`--button-*` / `--tag-*` tokens), so
+ *  the colours are read from each host's computed style, re-read on tone/theme
+ *  change. */
+function RestingSamples({
+  kind,
+  tone,
+  isDark,
+}: {
+  kind: 'button' | 'tag'
+  tone: Tone | undefined
+  isDark: boolean
+}) {
+  const priorities = kind === 'button' ? (['primary', 'secondary', 'tertiary', 'quaternary'] as const) : (['primary', 'secondary', 'tertiary'] as const)
+  const rowRef = useRef<HTMLDivElement>(null)
+  const [rows, setRows] = useState<{ p: string; bg: string; fg: string }[]>([])
+  useEffect(() => {
+    const el = rowRef.current
+    if (!el) return
+    const nodes = Array.from(el.querySelectorAll(kind === 'button' ? 'a-button' : 'a-tag')) as HTMLElement[]
+    setRows(
+      nodes.map((n, i) => {
+        const cs = getComputedStyle(n)
+        return { p: priorities[i], bg: toOklch(cs.backgroundColor), fg: toOklch(cs.color) }
+      }),
+    )
+  }, [tone, isDark])
+
+  return (
+    <div className={styles.col}>
+      <div ref={rowRef} className={styles.row}>
+        {priorities.map((p) =>
+          kind === 'button' ? (
+            <Button key={p} priority={p as any} tone={tone} label={p} />
+          ) : (
+            <Tag key={p} priority={p as any} tone={tone}>
+              Tag · {p}
+            </Tag>
+          ),
+        )}
+      </div>
+      <div className={styles.restingList}>
+        {rows.map((r) => (
+          <div key={r.p} className={styles.restingRow}>
+            <code>{cap(r.p)}</code>
+            {r.bg ? <span className={styles.oklch}>bg {r.bg}</span> : null}
+            {r.fg ? <span className={styles.oklch}>text {r.fg}</span> : null}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -166,8 +226,12 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
         </div>
       )
 
+    // Hand-tuned lists each priority's resolved resting background + text oklch;
+    // the generative preview stays the plain sample row (seed-driven).
     case 'button':
-      return (
+      return ref ? (
+        <RestingSamples kind="button" tone={named} isDark={isDark} />
+      ) : (
         <div className={styles.row}>
           {(['primary', 'secondary', 'tertiary', 'quaternary'] as const).map((p) => (
             // priority is a discriminated union on Button; the value is dynamic here.
@@ -177,7 +241,9 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
       )
 
     case 'tag':
-      return (
+      return ref ? (
+        <RestingSamples kind="tag" tone={named} isDark={isDark} />
+      ) : (
         <div className={styles.row}>
           {(['primary', 'secondary', 'tertiary'] as const).map((p) => (
             <Tag key={p} priority={p} tone={toneVal}>

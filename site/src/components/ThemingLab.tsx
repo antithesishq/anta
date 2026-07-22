@@ -4,6 +4,7 @@ import {
   Title,
   Text,
   Button,
+  ButtonCopy,
   Tag,
   Checkbox,
   RadioGroup,
@@ -214,6 +215,56 @@ function VarInput({ spec, d, v, onVar }: { spec: ComponentSpec; d: VarDef; v: Va
   )
 }
 
+/** Copy / paste the current values of one variable group as JSON, so a set of
+ *  tunings can be shared (e.g. with a designer) and applied in one click. Copy
+ *  serializes just this group's keys at the current theme; paste reads the
+ *  clipboard, and `onVar` ignores any key that isn't a finite number. */
+function GroupActions({
+  specId,
+  vars,
+  v,
+  onVar,
+}: {
+  specId: string
+  vars: VarDef[]
+  v: Vals
+  onVar: BlockProps['onVar']
+}) {
+  const json = JSON.stringify(Object.fromEntries(vars.map((d) => [d.key, v[d.key]])), null, 2)
+
+  const onPaste = async () => {
+    try {
+      const obj = JSON.parse(await navigator.clipboard.readText())
+      if (obj && typeof obj === 'object')
+        for (const d of vars) if (d.key in obj) onVar(specId, d.key, String(obj[d.key]))
+    } catch {
+      // Invalid JSON, denied clipboard permission, or an empty clipboard — no-op.
+    }
+  }
+
+  return (
+    <span className={styles.groupActions}>
+      <ButtonCopy copy={json} size="small" priority="tertiary" aria-label="Copy values as JSON" />
+      <Button
+        size="small"
+        priority="tertiary"
+        onClick={onPaste}
+        aria-label="Paste values from JSON"
+        className={styles.pasteBtn}
+      >
+        {/* lucide clipboard-copy */}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+          <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+          <path d="M16 4h2a2 2 0 0 1 2 2v4" />
+          <path d="M21 14H11" />
+          <path d="m15 10-4 4 4 4" />
+        </svg>
+      </Button>
+    </span>
+  )
+}
+
 interface BlockProps {
   spec: ComponentSpec
   tone: Tone
@@ -270,6 +321,7 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap, onExpa
               outdent
               open={!!openMap[key]}
               onStateChange={(_e, { next }) => onExpanderToggle(key, next)}
+              actions={<GroupActions specId={spec.id} vars={g.vars} v={v} onVar={onVar} />}
             >
               {g.note ? <p className={styles.groupNote}>{g.note}</p> : null}
               <div className={styles.varGrid}>
@@ -361,13 +413,28 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
               outdent
               open={!!openMap[key]}
               onStateChange={(_e, { next }) => onExpanderToggle(key, next)}
+              actions={<GroupActions specId={spec.id} vars={g.vars} v={v} onVar={onVar} />}
             >
               {g.note ? <p className={styles.groupNote}>{g.note}</p> : null}
-              <div className={styles.varGrid}>
-                {g.vars.map((d) => (
-                  <VarInput key={d.key} spec={spec} d={d} v={v} onVar={onVar} />
-                ))}
-              </div>
+              {(() => {
+                // Two aligned rows: L channels on top, C beneath. Each input's
+                // grid column is its N index (bg-2/border-2 → col 2), so a C sits
+                // directly under its L; the row is 1 for L, 2 for C.
+                const cols = Math.max(...g.vars.map((d) => Number(d.key.match(/\d+/)?.[0] ?? 1)))
+                return (
+                  <div className={styles.varRows} style={{ gridTemplateColumns: `repeat(${cols}, 88px)` }}>
+                    {g.vars.map((d) => {
+                      const col = Number(d.key.match(/\d+/)?.[0] ?? 1)
+                      const row = d.key.endsWith('C') ? 2 : 1
+                      return (
+                        <div key={d.key} style={{ gridColumn: col, gridRow: row }}>
+                          <VarInput spec={spec} d={d} v={v} onVar={onVar} />
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </Expander>
           )
         })}

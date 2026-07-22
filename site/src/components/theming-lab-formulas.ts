@@ -86,7 +86,7 @@ export const SEED: Record<Tone, string> = {
 const ok = (seed: string, l: number | string, c: number | string) =>
   `oklch(from ${seed} ${l} ${c} h)`
 
-const v3 = (min = 0, max = 1, step = 0.005) => ({ min, max, step })
+const v3 = (min = 0, max = 1, step = 0.01) => ({ min, max, step })
 const pct = { min: 0, max: 100, step: 1 }
 
 export const SPECS: ComponentSpec[] = [

@@ -584,10 +584,10 @@ chevron stay centered on the row, so it composes with a trailing counter.
 <Columns reverse>
 <Col>
 
-`MenuItemCopy` is a row that copies to the clipboard when chosen — `copy` for a
-literal string, `copyNode` for a DOM region. The `<a-menu-item>` element performs
-the write itself; the row closes on select as usual. Add `data-menu-open` to keep
-the menu open and show the check / retone feedback, or `onCopied(ok)` to react.
+`MenuItemCopy` is a row that copies to the clipboard when chosen: `copy` for a
+literal string, `copyNode` for a DOM region. It composes a `<MenuItem>` with a
+slotted `<a-copy>` child that performs the write. The row keeps the menu open
+automatically, so the check / retone feedback shows; pass `onCopied(ok)` to react.
 
 Copy sits alongside normal items, so a "Share" menu can mix a copy-link row with
 navigating links.
@@ -602,8 +602,8 @@ navigating links.
 ```tsx folded
 <Button icon="share" iconTrailing="chevron-down" label="Share" />
 <Menu>
-  <MenuItemCopy copy={pageUrl} label="Copy link" kbd="⌘C" data-menu-open />
-  <MenuItemCopy copy={embedHtml} icon="braces" label="Copy embed" data-menu-open />
+  <MenuItemCopy copy={pageUrl} label="Copy link" kbd="⌘C" />
+  <MenuItemCopy copy={embedHtml} icon="braces" label="Copy embed" />
   <MenuSeparator />
   <MenuItem icon="external-link" label="Open in new tab" href="/menu" target="_blank" />
 </Menu>

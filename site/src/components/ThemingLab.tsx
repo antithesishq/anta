@@ -58,6 +58,63 @@ const MENU_ITEMS: { icon: 'book-open' | 'chat' | 'file' | 'edit'; label: string;
   { icon: 'edit', label: 'Rename' },
 ]
 
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+/** Format a CSS color string as an `oklch(l c h)` triple via chroma-js; '' on
+ *  parse failure. Shared by the surface swatch readout and the type samples. */
+function toOklch(color: string): string {
+  try {
+    const [l, c, h] = chroma(color).oklch()
+    return `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${(Number.isNaN(h) ? 0 : h).toFixed(1)})`
+  } catch {
+    return ''
+  }
+}
+
+/** One hand-tuned Title/Text priority sample, labelled with its priority and the
+ *  resolved oklch of its colour. The colour is Anta's real `--text-*` token (not
+ *  the formula), so it's read from the live host's computed `color` — via a
+ *  `display:contents` wrapper (the wrappers don't forward a DOM ref), re-read
+ *  when tone or theme changes. */
+function TypeSample({
+  kind,
+  priority,
+  tone,
+  isDark,
+}: {
+  kind: 'title' | 'text'
+  priority: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
+  tone: Tone | undefined
+  isDark: boolean
+}) {
+  const hostRef = useRef<HTMLSpanElement>(null)
+  const [okl, setOkl] = useState('')
+  useEffect(() => {
+    const host = hostRef.current?.firstElementChild as HTMLElement | null
+    if (host) setOkl(toOklch(getComputedStyle(host).color))
+  }, [tone, isDark, priority])
+
+  const content = (
+    <>
+      {cap(priority)}
+      {okl ? <span className={styles.oklch}>{okl}</span> : null}
+    </>
+  )
+  return (
+    <span ref={hostRef} style={{ display: 'contents' }}>
+      {kind === 'title' ? (
+        <Title level={4} priority={priority} tone={tone}>
+          {content}
+        </Title>
+      ) : (
+        <Text priority={priority} tone={tone}>
+          {content}
+        </Text>
+      )}
+    </span>
+  )
+}
+
 /** The hand-tuned reference's tone attribute, as a code label. */
 function refLabel(id: string, tone: Tone) {
   if (tone === 'neutral') return <code>default</code>
@@ -71,7 +128,7 @@ function refLabel(id: string, tone: Tone) {
 /** The samples for one component, in either the hand-tuned (`ref`) or generative
  *  (`gen`) mode. `gen` gets the seed; `ref` the named tone (or the neutral default).
  *  The generative container class is applied by `Block`. */
-function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: string) {
+function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: string, isDark: boolean) {
   const ref = mode === 'ref'
   const named = tone === 'neutral' ? undefined : tone
   const toneVal = ref ? named : seed
@@ -82,22 +139,30 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
     case 'title':
       return (
         <div className={styles.col}>
-          {(['primary', 'secondary', 'tertiary', 'quaternary', 'quinary'] as const).map((p) => (
-            <Title key={p} level={4} priority={p} tone={toneVal}>
-              Title · {p}
-            </Title>
-          ))}
+          {(['primary', 'secondary', 'tertiary', 'quaternary', 'quinary'] as const).map((p) =>
+            ref ? (
+              <TypeSample key={p} kind="title" priority={p} tone={named} isDark={isDark} />
+            ) : (
+              <Title key={p} level={4} priority={p} tone={toneVal}>
+                Title · {p}
+              </Title>
+            ),
+          )}
         </div>
       )
 
     case 'text':
       return (
         <div className={styles.col}>
-          {(['primary', 'secondary', 'tertiary', 'quaternary', 'quinary'] as const).map((p) => (
-            <Text key={p} priority={p} tone={toneVal}>
-              The quick brown fox — {p}
-            </Text>
-          ))}
+          {(['primary', 'secondary', 'tertiary', 'quaternary', 'quinary'] as const).map((p) =>
+            ref ? (
+              <TypeSample key={p} kind="text" priority={p} tone={named} isDark={isDark} />
+            ) : (
+              <Text key={p} priority={p} tone={toneVal}>
+                The quick brown fox — {p}
+              </Text>
+            ),
+          )}
         </div>
       )
 
@@ -289,13 +354,13 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap, onExpa
       <div className={styles.previews}>
         <div className={styles.preview}>
           <p className={styles.previewLabel}>Anta hand-tuned · {refLabel(spec.id, tone)}</p>
-          {preview(spec, 'ref', tone, seed)}
+          {preview(spec, 'ref', tone, seed, isDark)}
         </div>
         <div className={`${styles.preview} ${genClass}`}>
           <p className={styles.previewLabel}>
             Generative · <code>tone={`{${seed}}`}</code>
           </p>
-          {preview(spec, 'gen', tone, seed)}
+          {preview(spec, 'gen', tone, seed, isDark)}
           <style dangerouslySetInnerHTML={{ __html: inject }} />
         </div>
       </div>
@@ -384,15 +449,7 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
     const el = swatchRef.current
     if (!el) return
     const cs = getComputedStyle(el)
-    const fmt = (color: string) => {
-      try {
-        const [l, c, h] = chroma(color).oklch()
-        return `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${(Number.isNaN(h) ? 0 : h).toFixed(1)})`
-      } catch {
-        return ''
-      }
-    }
-    setOkl({ bg: fmt(cs.backgroundColor), border: fmt(cs.borderTopColor) })
+    setOkl({ bg: toOklch(cs.backgroundColor), border: toOklch(cs.borderTopColor) })
   }, [refBg, refBorder, isDark])
 
   return (

@@ -429,10 +429,11 @@ underline stylistically, it supports three styles — `solid`, `dashed`,
 
 ## Copy to clipboard
 
-`ButtonCopy` is a copy button: the `<a-button>` element writes to the clipboard
-itself on click, and the wrapper flips the leading icon to a check and retones to
-`success` for ~2s (✕ / `critical` on failure). Set `copy` for a literal string,
-or drop the label for an icon-only copy button.
+`ButtonCopy` is a copy button. It composes a plain `<Button>` with a slotted
+`<a-copy>` child that writes to the clipboard on the button's activation, and the
+wrapper flips the leading icon to a check and retones to `success` for ~2s (✕ /
+`critical` on failure). Set `copy` for a literal string, or drop the label for an
+icon-only copy button.
 
 <Columns>
 <Col>
@@ -449,11 +450,15 @@ or drop the label for an icon-only copy button.
 </Col>
 <Col>
 
-The copy logic lives in the web component, so the button works the same whether
-you render `<ButtonCopy>`, plain `<Button copy=…>`, or author `<a-button copy=…>`
-by hand — only the icon / tone feedback needs the wrapper. `onCopied(ok)` fires
-after each attempt. Override the resting glyph with `icon`; the check / ✕ swap in
-only during the feedback window.
+The copy logic lives in the standalone `<a-copy>` element. `ButtonCopy` composes
+it for you; to build the same thing by hand, slot an `<a-copy copy=…>` into a
+`<Button>` or `<a-button>`. `onCopied(ok)` fires after each attempt. Override the
+resting glyph with `icon`; the check / ✕ swap in only during the feedback window.
+
+`iconPlacement` sets where the copy glyph sits: `'leading'` (default) or
+`'trailing'`. Pass `'none'` to drop the glyph, at which point the feedback is the
+`<a-copy toast>` ghost floating up from the button plus the success / failure tone
+flash.
 
 </Col>
 </Columns>

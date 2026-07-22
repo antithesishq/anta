@@ -3,8 +3,18 @@ import { useCopyFeedback } from '../anta_helpers'
 import { type CopyTarget, copyElementProps, isNodeCopy } from './copy-props'
 
 /** Action-mode menu-item props plus a required copy target (a copying row must
- *  copy something). */
-export type MenuItemCopyProps = MenuItemCommonProps & MenuItemActionMode & CopyTarget
+ *  copy something). The action-mode props that don't fit a copy row are pinned to
+ *  `never`: `submenu` (a copy row has no flyout) and the selection-indicator axis
+ *  (`selectionIndicator` / `indeterminate` / `indicator` — a copy row isn't a
+ *  checkable option). Pinning (not `Omit`) keeps the intersection expanding fully
+ *  in the docs props table. */
+export type MenuItemCopyProps = MenuItemCommonProps &
+  MenuItemActionMode & {
+    submenu?: never
+    selectionIndicator?: never
+    indeterminate?: never
+    indicator?: never
+  } & CopyTarget
 
 /**
  * Copying menu item — a `MenuItem` preset for copy-to-clipboard rows inside a

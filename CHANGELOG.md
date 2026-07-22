@@ -2,6 +2,14 @@
 
 This page tracks what ships to npm. Documentation website changes are not tracked here.
 
+## Unreleased
+
+### Changed
+- **`<a-expander>` contains wide body content instead of overflowing.** `<a-expander-details>` is now a horizontal scroll container (`overflow-x: auto`), and the shadow region grid caps its column at `minmax(0, 1fr)` rather than the implicit `auto` track. Wide body content — a `<pre>`, a table — scrolls within the body instead of stretching the box past the surrounding layout. Normal bodies are unchanged: no scrollbar, and no vertical scroll since the body has no height cap. Both parts are needed — `overflow-x` alone let the body balloon to the content's max-content because the `auto` column grew with it; capping the column is what makes the body the scrollport. Top-layer popovers (`Menu` / `Tooltip` / `Select`) nested in the body still escape the clip.
+
+### Fixed
+- **Selecting a tab no longer scrolls the page.** `<a-tabs>` revealed the selected tab with `scrollIntoView()` and focused it without `preventScroll`; both walk up to every scroll ancestor, so a strip inside a `position: sticky` header (with `scroll-behavior: smooth`) nudged the whole document a few pixels on each switch. Selection now scrolls only the strip's own scrollport, and focus uses `preventScroll` — the active tab still stays visible within a scrollable or vertical strip, without moving the page.
+
 ## 0.3.11 — July 21, 2026
 
 ### Changed

@@ -2,11 +2,13 @@
 // `InputAutocomplete`. Kept in one focused module (imported only by those three)
 // rather than the broad `anta_helpers`, so option normalization, the filter regex,
 // the match predicate, and match-highlighting can't drift between the components.
-import type { SelectOption } from './Select'
+import type { OptionValue, SelectOption } from './Select'
 
-/** Coerce a bare string option to `{ value, label }`; pass an object through. */
-export const normalizeOpt = (o: string | SelectOption): SelectOption =>
-  typeof o === 'string' ? { value: o, label: o } : o
+/** Coerce a bare string option to `{ value, label }`; pass an object through. The
+ *  string shorthand only occurs when `V` admits strings (the default), so casting the
+ *  bare string to `V` is sound there; a `number` / `boolean` select passes objects. */
+export const normalizeOpt = <V extends OptionValue = string>(o: string | SelectOption<V>): SelectOption<V> =>
+  typeof o === 'string' ? { value: o as unknown as V, label: o } : o
 
 /** The built-in filter regex: case-insensitive, with each run of whitespace in the
  *  query matching any gap (`\s+`). Returns null for an empty query — the signal to
@@ -19,9 +21,10 @@ export function matchQueryRegex(query: string): RegExp | null {
 }
 
 /** Whether an option matches the built-in query regex, testing value / label /
- *  hint. A null regex (empty query) matches everything. */
-export const matchesQuery = (o: SelectOption, queryRe: RegExp | null): boolean =>
-  !queryRe || [o.value, o.label ?? '', o.hint ?? ''].some((s) => queryRe.test(s))
+ *  hint. A null regex (empty query) matches everything. The value is stringified so a
+ *  numeric / boolean value still matches on its text form. */
+export const matchesQuery = <V extends OptionValue = string>(o: SelectOption<V>, queryRe: RegExp | null): boolean =>
+  !queryRe || [String(o.value), o.label ?? '', o.hint ?? ''].some((s) => queryRe.test(s))
 
 /** Bold the matched substring(s) of `text` for display (built-in matcher only).
  *  A null regex returns the text unchanged. The regex is re-created global so

@@ -11,7 +11,7 @@ import { useState, useMemo } from '../jsx-runtime'
 import { nativeStateChange, ISOLATE_HINT } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import type { SelectItem, SelectOption } from './Select'
+import type { OptionValue, SelectItem, SelectOption } from './Select'
 import { normalizeOpt, matchQueryRegex, matchesQuery } from './select-options'
 import { Button } from './Button'
 import { Menu, type MenuProps } from './Menu'
@@ -39,28 +39,30 @@ interface FacetBase {
 /** A per-facet option-list filter (like `Select`'s `filter`): `true` uses the
  *  built-in case-insensitive substring match on an option's value / label /
  *  hint; a function `(option, query) => boolean` does custom matching. */
-export type FacetFilter = boolean | ((option: SelectOption, query: string) => boolean)
+export type FacetFilter = boolean | ((option: SelectOption<OptionValue>, query: string) => boolean)
 
-/** Pick **one** option. Value: the chosen option's `value` string (or
- *  `undefined` when cleared). Re-picking the selected option clears it. Options
- *  are `Select`'s `SelectItem`s — bare strings or `SelectOption`s carrying the
- *  same fields (`value`, `label`, `hint`, `icon`, `tone`, `disabled`). */
+/** Pick **one** option. Value: the chosen option's `value` (or `undefined` when
+ *  cleared). Re-picking the selected option clears it. Options are `Select`'s
+ *  `SelectItem`s — bare strings or `SelectOption`s carrying the same fields
+ *  (`value`, `label`, `hint`, `icon`, `tone`, `disabled`). Option `value`s may be
+ *  `string` / `number` / `boolean` and round-trip unchanged through the value record
+ *  (compared with `===`, stringified only for row keys). */
 export interface SelectFacetSingle extends FacetBase {
   kind: 'single'
   /** The options — bare strings or `SelectOption`s (groups / submenus are
    *  flattened to their leaves). */
-  options: SelectItem[]
+  options: SelectItem<OptionValue>[]
   /** Add a search field atop this facet's flyout that filters its options. */
   filter?: FacetFilter
 }
 
-/** Pick **any number** of options. Value: an array of the chosen `value`
- *  strings (empty array clears the facet). Options are the same `SelectItem`s
- *  as `single`. */
+/** Pick **any number** of options. Value: an array of the chosen `value`s
+ *  (empty array clears the facet). Options are the same `SelectItem`s as `single`,
+ *  with the same `string` / `number` / `boolean` value support. */
 export interface SelectFacetMultiple extends FacetBase {
   kind: 'multiple'
   /** The options — bare strings or `SelectOption`s (groups / submenus flattened). */
-  options: SelectItem[]
+  options: SelectItem<OptionValue>[]
   /** Add a search field atop this facet's flyout that filters its options. */
   filter?: FacetFilter
   /** A "Select all" row that toggles every option. On by default — set `false`
@@ -110,9 +112,13 @@ export type SelectFacet =
   | SelectFacetText
   | SelectFacetCustom
 
-/** The filter value: a facet key → that facet's value. Per kind the value is a
- *  `string` (single / text), a `string[]` (multiple), or your own `V` (custom).
- *  A cleared facet is absent from the record (not a falsy entry). */
+/** The filter value: a facet key → that facet's value. Per kind the value is an
+ *  option value — `string` / `number` / `boolean` (single), a `string` (text), an
+ *  array of option values (multiple), or your own `V` (custom). Values are stored and
+ *  reported unchanged, so a `number` option round-trips as a `number`. Typed loosely
+ *  as `unknown` because facets in one control can hold different value types; narrow
+ *  per facet when you read it. A cleared facet is absent from the record (not a falsy
+ *  entry). */
 export type SelectFacetedValue = Record<string, unknown>
 
 /** Second argument to `onValueChange` — what changed. A single-facet edit
@@ -212,14 +218,14 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
 
 /** Flatten a facet's `options` (strings, options, groups, submenus) to leaf
  *  `SelectOption`s — v1 renders a facet's choices as a flat list. */
-const leavesOf = (items: SelectItem[]): SelectOption[] => {
-  const out: SelectOption[] = []
+const leavesOf = (items: SelectItem<OptionValue>[]): SelectOption<OptionValue>[] => {
+  const out: SelectOption<OptionValue>[] = []
   for (const it of items) {
     if (typeof it !== 'string' && Array.isArray((it as { submenu?: unknown }).submenu))
-      out.push(...leavesOf((it as { submenu: SelectItem[] }).submenu))
+      out.push(...leavesOf((it as { submenu: SelectItem<OptionValue>[] }).submenu))
     else if (typeof it !== 'string' && Array.isArray((it as { options?: unknown }).options))
-      out.push(...leavesOf((it as { options: SelectItem[] }).options))
-    else out.push(normalizeOpt(it as SelectOption | string))
+      out.push(...leavesOf((it as { options: SelectItem<OptionValue>[] }).options))
+    else out.push(normalizeOpt(it as SelectOption<OptionValue> | string))
   }
   return out
 }
@@ -232,7 +238,7 @@ const isEmpty = (v: unknown): boolean =>
 /** The built-in `(option, query) => boolean` matcher, over the shared
  *  `matchQueryRegex` + `matchesQuery`. Builds the regex per call — cheap, and it
  *  keeps the per-option predicate signature the facet filters expect. */
-const defaultMatch = (o: SelectOption, query: string): boolean =>
+const defaultMatch = (o: SelectOption<OptionValue>, query: string): boolean =>
   matchesQuery(o, matchQueryRegex(query))
 
 /**
@@ -337,7 +343,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   // leavesOf() on every render / global-search keystroke.
   const leavesByKey = useMemo(
     () =>
-      new Map<string, SelectOption[]>(
+      new Map<string, SelectOption<OptionValue>[]>(
         facets.map((f) => [
           f.key,
           f.kind === 'single' || f.kind === 'multiple' ? leavesOf(f.options) : [],
@@ -364,7 +370,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   // ---- Per-kind editors -------------------------------------------------
 
   // Leaves of an options facet, narrowed by its filter query when `filter` is on.
-  const visibleLeavesOf = (facet: SelectFacetSingle | SelectFacetMultiple): SelectOption[] => {
+  const visibleLeavesOf = (facet: SelectFacetSingle | SelectFacetMultiple): SelectOption<OptionValue>[] => {
     const leaves = leavesByKey.get(facet.key) ?? []
     if (!facet.filter) return leaves
     const q = queries[facet.key] ?? ''
@@ -396,10 +402,10 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   // flattened global-search results. Single uses a trailing check (re-pick clears);
   // multiple uses a checkbox (toggles). `keyPrefix` namespaces the React key so the
   // same option value under two facets stays a distinct row in the flat list.
-  const optionRow = (facet: SelectFacetSingle | SelectFacetMultiple, opt: SelectOption, keyPrefix = '') => {
+  const optionRow = (facet: SelectFacetSingle | SelectFacetMultiple, opt: SelectOption<OptionValue>, keyPrefix = '') => {
     const shared = {
       icon: opt.icon,
-      label: opt.label ?? opt.value,
+      label: opt.label ?? String(opt.value),
       hint: opt.hint,
       tone: opt.tone,
       toneSelected,
@@ -407,7 +413,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
       'data-menu-open': '',
     }
     if (facet.kind === 'single') {
-      const cur = current[facet.key] as string | undefined
+      const cur = current[facet.key] as OptionValue | undefined
       return (
         <MenuItem
           key={`${keyPrefix}${opt.value}`}
@@ -418,7 +424,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
         />
       )
     }
-    const arr = (current[facet.key] as string[] | undefined) ?? []
+    const arr = (current[facet.key] as OptionValue[] | undefined) ?? []
     // Alt/⌥-click isolates the row (clear the rest, select only this), mirroring
     // Select's bulk-select accelerator. Coupled to the facet's `selectAll` (on by
     // default) — the same gate as the "Select all" row. A default hint teaches it;
@@ -446,7 +452,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   const renderSingle = (facet: SelectFacetSingle) => visibleLeavesOf(facet).map((opt) => optionRow(facet, opt))
 
   const renderMultiple = (facet: SelectFacetMultiple) => {
-    const arr = (current[facet.key] as string[] | undefined) ?? []
+    const arr = (current[facet.key] as OptionValue[] | undefined) ?? []
     const leaves = visibleLeavesOf(facet)
     // "Select all" acts on the *visible* (filtered) enabled options, like Select.
     const enabled = leaves.filter((o) => !o.disabled).map((o) => o.value)
@@ -580,7 +586,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
         return opt?.label ?? String(v)
       }
       case 'multiple':
-        return String((v as string[]).length)
+        return String((v as OptionValue[]).length)
       case 'text':
         return String(v)
       case 'custom':

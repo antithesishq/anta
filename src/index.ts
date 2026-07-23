@@ -93,6 +93,7 @@ export { Select, optionsWithSelection } from './components/Select'
 export type {
   SelectProps,
   SelectCommonProps,
+  OptionValue,
   SelectOption,
   SelectGroup,
   SelectSubmenu,

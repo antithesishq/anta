@@ -82,7 +82,7 @@ skipped by the keyboard.
 </Preview>
 
 ```tsx folded
-// Single-select marks (value is a string)
+// Single-select marks (single value)
 <Select indicator="check" options={OPTIONS} value={one} onValueChange={setOne} />  // trailing ✓ + tint
 <Select indicator="radio" options={OPTIONS} value={one} onValueChange={setOne} />  // leading radio
 <Select options={OPTIONS} value={one} onValueChange={setOne} />                    // tint only (default)
@@ -91,7 +91,7 @@ skipped by the keyboard.
 <Select indicator="check" toneSelected="brand" options={OPTIONS} value={one} onValueChange={setOne} />
 <Select indicator="radio" toneSelected="#c026d3" options={OPTIONS} value={one} onValueChange={setOne} />
 
-// Multiple: checkboxes, count summary, Select-all row (default); value is a string[]
+// Multiple: checkboxes, count summary, Select-all row (default); value is an array
 <Select
   selection="multiple"
   options={OPTIONS}
@@ -105,12 +105,12 @@ skipped by the keyboard.
 
 `selection` sets **behaviour**, `indicator` sets the single-select **mark**.
 
-`selection="single"` (the default) keeps `value` a string and closes on pick.
+`selection="single"` (the default) keeps `value` a single value and closes on pick.
 `indicator` then picks the row mark: **`"none"`** (default; a tint-only highlight),
 **`"check"`** (a trailing checkmark on the chosen row that keeps the tint, the
 canonical Select look), or **`"radio"`** (a leading radio on every row).
 
-`selection="multiple"` makes `value` a **string array**, puts a **checkbox** on
+`selection="multiple"` makes `value` an **array**, puts a **checkbox** on
 every row, keeps the menu open as you toggle, and summarises the count in the field
 ("N selected"). A **Select all** top row shows by default; it toggles everything, and
 its box goes mixed when only some are on. Pass **`selectAll={false}`** to drop it.
@@ -197,20 +197,30 @@ const [field, setField] = useState('stream')
 </Col>
 <Col>
 
-The value is the **option's `value` string** — `value="stream"` in single mode, an
-array like `value={['stream', 'container']}` in `multiple`. That string is the
-option's identity: it's what `value` / `defaultValue` name and what `onValueChange`
-reports, so keep each option's `value` **unique across the whole tree**. Selection is
-value-keyed and global across groups / submenus, so a value repeated in two sections
-is one logical pick (both rows toggle together; the trigger resolves to the last).
-Dev builds `console.warn` on a duplicate.
+The value is the **option's `value`** — `value="stream"` in single mode, an array
+like `value={['stream', 'container']}` in `multiple`. It's the option's identity:
+what `value` / `defaultValue` name and what `onValueChange` reports, so keep each
+option's `value` **unique across the whole tree**. Selection is value-keyed and
+global across groups / submenus, so a value repeated in two sections is one logical
+pick (both rows toggle together; the trigger resolves to the last). Dev builds
+`console.warn` on a duplicate.
+
+Values aren't limited to strings. `Select` **infers its value type from your
+options** — pass `options={[{ value: 365 }, { value: 90 }]}` and `value`,
+`onValueChange`'s value, and `attrs.value` are all `number`; the same holds for
+`boolean`. Values compare with `===`, so there's no stringify-in / rehydrate-out
+dance, and `365` and `"365"` stay distinct picks. A value is stringified only for the
+row key, the option's DOM id, filtering, and the display fallback, so two values that
+stringify alike (`365` and `"365"`) collide as row keys and trip the same dev warning.
+Object-shaped values stay out of scope: attach a `data` field to the option and read
+it back off `attrs.option`.
 
 Leave `value` off and pass `defaultValue` for an **uncontrolled** select (the
 wrapper owns the value). Pass `value` to **control** it: the field follows the prop,
 and a pick only requests a change that you apply in `onValueChange`.
 
 **`onValueChange(value, attrs)`** is the single selection callback. The new value
-comes first (a string, or a string array in `multiple` mode), with a snapshot
+comes first (a single value, or an array in `multiple` mode), with a snapshot
 second: `{ value, option }` for the changed row, plus `selected` in `multiple` mode
 (or `{ all: true }` for the Select-all row). There's **no `onStateChange`**: Select
 has no discrete element state to veto (Checkbox and RadioGroup do), so it follows

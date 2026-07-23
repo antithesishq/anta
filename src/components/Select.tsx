@@ -18,15 +18,28 @@ import { Tooltip } from './Tooltip'
 import styles from './Select.module.css'
 
 
+/** The type an option `value` may take. Selection compares values with `===`, so
+ *  the identity layer works on any primitive; a value is stringified only where a
+ *  string is structurally required (the React key, the option's DOM id, the filter
+ *  match, and the display fallback). Object-shaped values are out of scope — reach
+ *  for the `SelectOption` index signature (attach a `data` field and read it back off
+ *  `attrs.option`) or, in `SelectFaceted`, a `custom` facet. */
+export type OptionValue = string | number | boolean
+
 /** One option in a `<Select>`. Pass a bare string as shorthand for
  *  `{ value: s, label: s }`. Carries an index signature so you can attach
  *  arbitrary fields (a `ranAt` date, a `status`, …) and read them back in
- *  `renderOption`; the built-in filter still matches on `value`/`label`/`hint`. */
-export interface SelectOption {
+ *  `renderOption`; the built-in filter still matches on `value`/`label`/`hint`.
+ *
+ *  Generic in the value type `V` (defaults to `string`): `Select` infers `V` from the
+ *  `options` you pass, so `{ value: 365 }` round-trips as `number` through
+ *  `onValueChange` — no stringify-in / rehydrate-out dance. */
+export interface SelectOption<V extends OptionValue = string> {
   /** The option's value — its identity, what `value` / `defaultValue` name, and what
    *  `onValueChange` reports. Unique across the whole `options` tree (selection is
-   *  value-keyed and global across groups / submenus). */
-  value: string
+   *  value-keyed and global across groups / submenus). Typed `V` — a `string` by
+   *  default, or the `number` / `boolean` inferred from your `options`. */
+  value: V
   /** Visible label. Defaults to `value`. */
   label?: string
   /** Secondary text under the label (the option row's `hint`). */
@@ -50,11 +63,11 @@ export interface SelectOption {
 /** A titled group of options rendered **inline** under a heading (like `MenuGroup`).
  *  Selection stays global — a group only organizes; its heading isn't selectable.
  *  `disabled` cascades to every descendant. Nest groups / submenus freely. */
-export interface SelectGroup {
+export interface SelectGroup<V extends OptionValue = string> {
   /** The section heading (non-interactive). */
   label: string
   /** The grouped items — options, or further groups / submenus. */
-  options: SelectItem[]
+  options: SelectItem<V>[]
   /** Disable the whole group (cascades to all descendants). */
   disabled?: boolean
 }
@@ -63,13 +76,13 @@ export interface SelectGroup {
  *  Navigation only — the parent row opens the submenu and is never itself selectable.
  *  While a filter query is active the tree flattens and a submenu collapses into a
  *  group (its `label` becomes the heading). `disabled` cascades to descendants. */
-export interface SelectSubmenu {
+export interface SelectSubmenu<V extends OptionValue = string> {
   /** The parent row's label — and the group heading when filtering flattens it. */
   label: string
   /** Leading icon on the parent row. */
   icon?: IconShape
   /** The submenu's items — options, or further groups / submenus. */
-  submenu: SelectItem[]
+  submenu: SelectItem<V>[]
   /** Disable the whole branch (cascades to all descendants). */
   disabled?: boolean
 }
@@ -78,14 +91,18 @@ export interface SelectSubmenu {
  *  inline `SelectGroup`, or a flyout `SelectSubmenu`. Discriminated by shape — an
  *  `options` array is a group, a `submenu` array is a submenu, else it's an option.
  *  (`options` / `submenu` are therefore reserved keys on an option object.) */
-export type SelectItem = string | SelectOption | SelectGroup | SelectSubmenu
+export type SelectItem<V extends OptionValue = string> =
+  | string
+  | SelectOption<V>
+  | SelectGroup<V>
+  | SelectSubmenu<V>
 
 /** Per-row snapshot passed to `renderOption` / `renderIndicator`. Everything here
  *  is known at render time; the combobox "active" cursor is deliberately absent
  *  (it's a live element state the DOM owns, not a render-time value). */
-export interface OptionState {
+export interface OptionState<V extends OptionValue = string> {
   /** The option's value. */
-  value: string
+  value: V
   /** Whether this row is currently selected. */
   selected: boolean
   /** Whether this row is disabled. */
@@ -104,15 +121,15 @@ export interface EmptyState {
 
 /** Snapshot passed to `renderTrigger` so a custom trigger can reflect the current
  *  selection and open state. */
-export interface TriggerState {
+export interface TriggerState<V extends OptionValue = string> {
   /** Whether the menu is open — use it for `aria-expanded` and a chevron. */
   open: boolean
-  /** The current selection: a string (single), a string array (`multiple`), or
+  /** The current selection: a single value (single), an array (`multiple`), or
    *  `undefined` when nothing is chosen. */
-  value: string | string[] | undefined
+  value: V | V[] | undefined
   /** The resolved option objects for the current selection (empty when none).
    *  `selected.length` is the multi-select count. */
-  selected: SelectOption[]
+  selected: SelectOption<V>[]
   /** Whether the whole select is disabled. */
   disabled: boolean
   /** The `icon` shape passed to `Select`, if any — hand it to your trigger
@@ -126,13 +143,13 @@ export interface TriggerState {
  *  row, or the `clearable` "Clear" footer) carries `all: true` instead. **Always
  *  narrow on `'all' in attrs` before reading `option`** — the `all` variant fires
  *  for single-select too (via `clearable`), not just multiple. */
-export type SelectChangeAttrs =
+export type SelectChangeAttrs<V extends OptionValue = string> =
   | {
       /** The option value that changed — the chosen value (single) or the toggled
        *  row (multiple). */
-      value: string
+      value: V
       /** The resolved option object for `value`. */
-      option: SelectOption
+      option: SelectOption<V>
       /** Multiple only: whether the change turned selection **on** (true) or off. */
       selected?: boolean
     }
@@ -148,17 +165,22 @@ export type SelectChangeAttrs =
 /** Props shared by both selection modes, intersected into `SelectProps`. Exported
  *  (and kept as an interface intersected — not a union base via `extends`) so its
  *  members read as `Select`'s *own* props in the generated docs, not inherited. */
-export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
+export interface SelectCommonProps<V extends OptionValue = string> extends Omit<BaseProps, 'children'> {
   /** The options to choose from — bare strings, `SelectOption` objects, `SelectGroup`s
    *  (inline titled sections), or `SelectSubmenu`s (flyout branches). Groups and
    *  submenus nest and mix with plain options. Selection stays global (one `value`,
    *  leaf options only); a filter query flattens the tree into grouped results.
    *
+   *  `Select` infers its value type `V` from these options — pass `{ value: 365 }` and
+   *  `onValueChange` reports `number`. Homogeneous options infer a precise type; mix
+   *  types and `V` widens to the union.
+   *
    *  Each leaf `value` is the option's identity and must be **unique across the whole
    *  tree** — selection is value-keyed, so a value repeated in two sections is one
-   *  logical pick (both rows toggle together; the trigger resolves to the last). Dev
-   *  builds `console.warn` on a duplicate. */
-  options: SelectItem[]
+   *  logical pick (both rows toggle together; the trigger resolves to the last). Two
+   *  values that stringify alike (`365` and `"365"`) collide as row keys; dev builds
+   *  `console.warn` on either kind of collision. */
+  options: SelectItem<V>[]
   /** Preferred placement of the options menu relative to the trigger. The menu
    *  auto-flips vertically and clamps horizontally when needed.
    *  @defaultValue bottom-start */
@@ -210,7 +232,7 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  type. `true` uses the built-in matcher — a case-insensitive substring of the
    *  option's **value / label / hint**. Pass a **function** `(option, query) =>
    *  boolean` for custom matching (called per option; return `true` to keep it). */
-  filter?: boolean | ((option: SelectOption, query: string) => boolean)
+  filter?: boolean | ((option: SelectOption<V>, query: string) => boolean)
   /** `multiple` only: a "Select all" row at the top that toggles every enabled
    *  option (the currently-visible ones when a `filter` query is active); its box
    *  shows the mixed state when only some are selected. On by default in
@@ -235,13 +257,13 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  `OptionState` (`value`/`selected`/`disabled`). Filtering still works (it
    *  matches the option's `value`/`label`/`hint`), but match-highlighting is
    *  skipped — your content owns its own display. */
-  renderOption?: (option: SelectOption, state: OptionState) => React.ReactNode
+  renderOption?: (option: SelectOption<V>, state: OptionState<V>) => React.ReactNode
   /** Replace each row's selection **mark** with your own node, drawn at the
    *  leading edge. The row stays the control (`role` + `aria-checked` from
    *  `indicator` / `selection`); only the drawn mark changes, so pair it with an
    *  `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the
    *  semantics. Composes with `renderOption`. */
-  renderIndicator?: (state: OptionState) => React.ReactNode
+  renderIndicator?: (state: OptionState<V>) => React.ReactNode
   /** Render your own trigger in place of the default field. Receives a
    *  `TriggerState` (`open` / `value` / `selected` / `disabled` / `icon`) to drive
    *  its look. **Return exactly one focusable element** (an Anta `Button`, say) —
@@ -252,7 +274,7 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
    *  trigger owns its own styling: the field props (`label`, `hint`, `size`, `status`,
    *  `placeholder`, `round`) and `className` / `style` apply to the *default* trigger
    *  only — put your own on the element you return. */
-  renderTrigger?: (state: TriggerState) => React.ReactNode
+  renderTrigger?: (state: TriggerState<V>) => React.ReactNode
   /** Render content in the menu body when the (filtered) option list is empty —
    *  a "no results" message, a loading indicator (gated on your own external
    *  loading state), or a "create from the query" row. Receives an `EmptyState`
@@ -267,40 +289,40 @@ export interface SelectCommonProps extends Omit<BaseProps, 'children'> {
  * `<Select>` props. `selection` discriminates the value shape: single mode
  * (`value: string`) or `multiple` (`value: string[]`).
  */
-export type SelectProps = SelectCommonProps &
+export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
   (
     | {
-        /** Selection mode. `'single'` (the default) keeps `value` a string and
+        /** Selection mode. `'single'` (the default) keeps `value` a single value and
          *  closes the menu on pick. Switch to `'multiple'` for checkboxes + an
          *  array value.
          *  @defaultValue single */
         selection?: 'single'
-        /** Controlled value — the `value` string of the selected option. When
-         *  provided, the consumer owns selection: the field follows this prop and a
-         *  pick only *requests* a change via `onValueChange` (reject by not updating).
-         *  Leave undefined for uncontrolled. */
-        value?: string
-        /** Initial value (an option's `value` string) for the uncontrolled case — the
+        /** Controlled value — the `value` of the selected option. When provided, the
+         *  consumer owns selection: the field follows this prop and a pick only
+         *  *requests* a change via `onValueChange` (reject by not updating). Leave
+         *  undefined for uncontrolled. */
+        value?: V
+        /** Initial value (an option's `value`) for the uncontrolled case — the
          *  wrapper then owns it. */
-        defaultValue?: string
+        defaultValue?: V
         /** Fires after the selection changes, with the new value and a
          *  `{ value, option }` snapshot. Select has no discrete element state, so
          *  there is no cancelable `onStateChange` (see the Input event-model note). */
-        onValueChange?: (value: string, attrs: SelectChangeAttrs) => void
+        onValueChange?: (value: V, attrs: SelectChangeAttrs<V>) => void
       }
     | {
         /** Multi-select: checkboxes on every row, the menu stays open while
          *  toggling, the field shows an "N selected" count, and `value` is an array. */
         selection: 'multiple'
-        /** Controlled values — the `value` strings of the selected options (see the
+        /** Controlled values — the `value`s of the selected options (see the
          *  single-select `value` note). */
-        value?: string[]
-        /** Initial values (option `value` strings) for the uncontrolled case. */
-        defaultValue?: string[]
+        value?: V[]
+        /** Initial values (option `value`s) for the uncontrolled case. */
+        defaultValue?: V[]
         /** Fires after any toggle, with the new value array and a `{ value, option,
          *  selected }` snapshot of the row that changed (or `{ all: true }` for the
          *  Select-all row). */
-        onValueChange?: (value: string[], attrs: SelectChangeAttrs) => void
+        onValueChange?: (value: V[], attrs: SelectChangeAttrs<V>) => void
       }
   )
 
@@ -311,19 +333,19 @@ export type SelectionState = 'none' | 'some' | 'all'
 
 /** A leaf option annotated with its current selection — a `SelectOption` plus
  *  `selected`. Returned by {@link optionsWithSelection}. */
-export type SelectedOption = SelectOption & { selected: boolean }
+export type SelectedOption<V extends OptionValue = string> = SelectOption<V> & { selected: boolean }
 
 /** A group with its descendants annotated and a rolled-up `selectionState`.
  *  Returned by {@link optionsWithSelection}. */
-export interface SelectedGroup extends Omit<SelectGroup, 'options'> {
-  options: SelectedItem[]
+export interface SelectedGroup<V extends OptionValue = string> extends Omit<SelectGroup<V>, 'options'> {
+  options: SelectedItem<V>[]
   selectionState: SelectionState
 }
 
 /** A submenu with its descendants annotated and a rolled-up `selectionState`.
  *  Returned by {@link optionsWithSelection}. */
-export interface SelectedSubmenu extends Omit<SelectSubmenu, 'submenu'> {
-  submenu: SelectedItem[]
+export interface SelectedSubmenu<V extends OptionValue = string> extends Omit<SelectSubmenu<V>, 'submenu'> {
+  submenu: SelectedItem<V>[]
   selectionState: SelectionState
 }
 
@@ -331,7 +353,10 @@ export interface SelectedSubmenu extends Omit<SelectSubmenu, 'submenu'> {
  *  (with `selected`), or a `SelectedGroup` / `SelectedSubmenu` (annotated children
  *  + rolled-up `selectionState`). Mirrors `SelectItem` minus the bare-string
  *  shorthand — strings are normalized to `SelectedOption`. */
-export type SelectedItem = SelectedOption | SelectedGroup | SelectedSubmenu
+export type SelectedItem<V extends OptionValue = string> =
+  | SelectedOption<V>
+  | SelectedGroup<V>
+  | SelectedSubmenu<V>
 
 /**
  * Project a `Select` `options` tree onto a set of selected values: returns a mirror
@@ -355,11 +380,11 @@ export type SelectedItem = SelectedOption | SelectedGroup | SelectedSubmenu
  * //   { value: 'eng-fe', label: 'Frontend', selected: false }, … ] }
  * ```
  */
-export function optionsWithSelection(
-  options: SelectItem[],
-  values: string | string[] | undefined,
-): SelectedItem[] {
-  const set = new Set<string>(values == null ? [] : Array.isArray(values) ? values : [values])
+export function optionsWithSelection<V extends OptionValue = string>(
+  options: SelectItem<V>[],
+  values: V | V[] | undefined,
+): SelectedItem<V>[] {
+  const set = new Set<V>(values == null ? [] : Array.isArray(values) ? values : [values])
 
   const state = (on: number, total: number): SelectionState =>
     on === 0 ? 'none' : on === total ? 'all' : 'some'
@@ -369,24 +394,24 @@ export function optionsWithSelection(
   // once, not re-descended once per enclosing ancestor (the old rollUp was
   // O(n·depth)). Summing tallies matches leaf-counting exactly, including empty
   // groups (total 0 → 'none').
-  type Counted = { node: SelectedItem; on: number; total: number }
-  const walk = (items: SelectItem[]): Counted[] =>
+  type Counted = { node: SelectedItem<V>; on: number; total: number }
+  const walk = (items: SelectItem<V>[]): Counted[] =>
     items.map((raw): Counted => {
-      if (typeof raw !== 'string' && Array.isArray((raw as SelectSubmenu).submenu)) {
-        const sm = raw as SelectSubmenu
+      if (typeof raw !== 'string' && Array.isArray((raw as SelectSubmenu<V>).submenu)) {
+        const sm = raw as SelectSubmenu<V>
         const children = walk(sm.submenu)
         const on = children.reduce((n, c) => n + c.on, 0)
         const total = children.reduce((n, c) => n + c.total, 0)
         return { node: { ...sm, submenu: children.map((c) => c.node), selectionState: state(on, total) }, on, total }
       }
-      if (typeof raw !== 'string' && Array.isArray((raw as SelectGroup).options)) {
-        const g = raw as SelectGroup
+      if (typeof raw !== 'string' && Array.isArray((raw as SelectGroup<V>).options)) {
+        const g = raw as SelectGroup<V>
         const children = walk(g.options)
         const on = children.reduce((n, c) => n + c.on, 0)
         const total = children.reduce((n, c) => n + c.total, 0)
         return { node: { ...g, options: children.map((c) => c.node), selectionState: state(on, total) }, on, total }
       }
-      const o = normalizeOpt(raw as SelectOption | string)
+      const o = normalizeOpt(raw as SelectOption<V> | string)
       const selected = set.has(o.value)
       return { node: { ...o, selected }, on: selected ? 1 : 0, total: 1 }
     })
@@ -419,7 +444,7 @@ export function optionsWithSelection(
  * />
  * ```
  */
-export const Select = (props: SelectProps) => {
+export const Select = <V extends OptionValue = string>(props: SelectProps<V>) => {
   // External API is a discriminated union (value typed by `selection`); internally
   // we treat it loosely — `multiple` branches at runtime.
   const {
@@ -464,12 +489,12 @@ export const Select = (props: SelectProps) => {
   // prop ('none' → no per-row mark, just the tint).
   const mark = multiple ? 'checkbox' : indicator ?? 'none'
   const menuItemIndicator = mark === 'none' ? undefined : mark
-  const emit = onValueChange as ((value: any, attrs: SelectChangeAttrs) => void) | undefined
+  const emit = onValueChange as ((value: any, attrs: SelectChangeAttrs<V>) => void) | undefined
 
   const controlled = value !== undefined
   // Uncontrolled selection lives here (component state re-render is allowed where
   // element DOM mutation isn't). `open` drives the chevron + aria-expanded.
-  const [internal, setInternal] = useState<string | string[] | undefined>(defaultValue)
+  const [internal, setInternal] = useState<V | V[] | undefined>(defaultValue)
   const currentRaw = controlled ? value : internal
   const [open, setOpen] = useState(false)
   // Filter query (reset when the menu closes — see the Menu's onStateChange).
@@ -483,18 +508,18 @@ export const Select = (props: SelectProps) => {
 
   // Discriminate an `options` entry by shape: a `submenu` array → flyout branch, an
   // `options` array → inline group, otherwise a leaf option.
-  const isSubmenu = (it: SelectItem): it is SelectSubmenu =>
-    typeof it === 'object' && Array.isArray((it as SelectSubmenu).submenu)
-  const isGroup = (it: SelectItem): it is SelectGroup =>
-    typeof it === 'object' && Array.isArray((it as SelectGroup).options)
+  const isSubmenu = (it: SelectItem<V>): it is SelectSubmenu<V> =>
+    typeof it === 'object' && Array.isArray((it as SelectSubmenu<V>).submenu)
+  const isGroup = (it: SelectItem<V>): it is SelectGroup<V> =>
+    typeof it === 'object' && Array.isArray((it as SelectGroup<V>).options)
 
   // Flatten the tree to its leaf options once, carrying each leaf's *effective*
   // disabled (cascaded from any group/submenu ancestor) and its immediate parent's
   // label (the heading a filter query flattens it under). Everything value-shaped —
   // `byValue`, the selection count, Select-all — reads this flat list; only
   // rendering walks the tree.
-  interface Leaf { opt: SelectOption; disabled: boolean; group?: string }
-  const collectLeaves = (items: SelectItem[], group: string | undefined, disabled: boolean, out: Leaf[]) => {
+  interface Leaf { opt: SelectOption<V>; disabled: boolean; group?: string }
+  const collectLeaves = (items: SelectItem<V>[], group: string | undefined, disabled: boolean, out: Leaf[]) => {
     for (const raw of items) {
       if (typeof raw !== 'string' && isSubmenu(raw)) collectLeaves(raw.submenu, raw.label, disabled || !!raw.disabled, out)
       else if (typeof raw !== 'string' && isGroup(raw)) collectLeaves(raw.options, raw.label, disabled || !!raw.disabled, out)
@@ -510,14 +535,17 @@ export const Select = (props: SelectProps) => {
   // value repeated in two sections is one logical pick. Warn on duplicates (like
   // <Tabs> / RadioGroup, a bare console.warn that only fires on the bug): they collapse
   // into a single selection — `byValue` keeps the last, and every row sharing the value
-  // selects/toggles together.
+  // selects/toggles together. The seen-set is keyed on the *stringified* value, so it
+  // also catches two distinct values that collide once stringified (`365` and `"365"`) —
+  // harmless to selection (compared with `===`) but a clash for the React key / DOM id.
   const seenValues = new Set<string>()
   for (const l of allLeaves) {
-    if (seenValues.has(l.opt.value))
-      console.warn(`[anta] <Select> duplicate option value=${JSON.stringify(l.opt.value)} — values must be unique.`)
-    seenValues.add(l.opt.value)
+    const key = String(l.opt.value)
+    if (seenValues.has(key))
+      console.warn(`[anta] <Select> duplicate option value=${JSON.stringify(l.opt.value)} — values must be unique (compared as strings for row keys).`)
+    seenValues.add(key)
   }
-  const byValue = new Map(allLeaves.map((l) => [l.opt.value, l.opt]))
+  const byValue = new Map<V, SelectOption<V>>(allLeaves.map((l) => [l.opt.value, l.opt]))
 
   // `filter`: which options the menu shows. The built-in matcher is a regex that's
   // case-insensitive and treats each run of whitespace in the query as "one or more
@@ -527,7 +555,7 @@ export const Select = (props: SelectProps) => {
   const filtering = filter !== undefined && filter !== false
   const q = query.trim()
   const queryRe = filtering && typeof filter !== 'function' ? matchQueryRegex(q) : null
-  const matches = (o: SelectOption) =>
+  const matches = (o: SelectOption<V>) =>
     typeof filter === 'function' ? filter(o, q) : matchesQuery(o, queryRe)
   // Which leaves survive the filter. A custom filter *function* prunes on every
   // render (even with an empty query), so a predicate that filters by a criterion —
@@ -539,29 +567,30 @@ export const Select = (props: SelectProps) => {
   // the tree (inline groups + submenu flyouts). A function filter prunes in place.
   const flattening = filtering && !!q
 
-  // Collapse whatever selection shape we have into a lookup list.
-  const selectedValues: string[] = Array.isArray(currentRaw)
+  // Collapse whatever selection shape we have into a lookup list. Values compare by
+  // `===`, so this works for any primitive `V` without stringifying.
+  const selectedValues: V[] = Array.isArray(currentRaw)
     ? currentRaw
     : currentRaw != null
-      ? [currentRaw as string]
+      ? [currentRaw as V]
       : []
-  const isSelected = (v: string) => selectedValues.includes(v)
+  const isSelected = (v: V) => selectedValues.includes(v)
   // Only values that map to a real option row count toward the trigger — a stale or
   // unknown value contributes nothing rather than corrupting the label or the count.
-  const selectedOptions = selectedValues.map((v) => byValue.get(v)).filter(Boolean) as SelectOption[]
+  const selectedOptions = selectedValues.map((v) => byValue.get(v)).filter(Boolean) as SelectOption<V>[]
 
   // Trigger text: single shows the chosen label; multiple shows the one label or a
   // count summary; nothing selectable falls through to the placeholder.
   let display = ''
   if (multiple) {
-    if (selectedOptions.length === 1) display = selectedOptions[0].label ?? selectedOptions[0].value
+    if (selectedOptions.length === 1) display = selectedOptions[0].label ?? String(selectedOptions[0].value)
     else if (selectedOptions.length > 1) display = `${selectedOptions.length} selected`
   } else if (currentRaw != null) {
-    const o = byValue.get(currentRaw as string)
-    display = o ? (o.label ?? o.value) : ''
+    const o = byValue.get(currentRaw as V)
+    display = o ? (o.label ?? String(o.value)) : ''
   }
 
-  const choose = (o: SelectOption, e?: any) => {
+  const choose = (o: SelectOption<V>, e?: any) => {
     if (multiple) {
       // Alt/Option-click isolates the row: clear the rest and select only this
       // one — the inverse of Select all, with no visible affordance (the row's
@@ -604,12 +633,12 @@ export const Select = (props: SelectProps) => {
   const clear = () => {
     const next = multiple ? [] : undefined
     if (!controlled) setInternal(next)
-    emit?.(next as string | string[], { all: true, selected: false })
+    emit?.(next as V | V[], { all: true, selected: false })
   }
 
   // One option row. `disabled` is the leaf's *effective* disabled (cascaded).
-  const renderOptionRow = (o: SelectOption, disabled: boolean) => {
-    const optState: OptionState = { value: o.value, selected: isSelected(o.value), disabled }
+  const renderOptionRow = (o: SelectOption<V>, disabled: boolean) => {
+    const optState: OptionState<V> = { value: o.value, selected: isSelected(o.value), disabled }
     const custom = renderOption?.(o, optState)
     const customMark = renderIndicator?.(optState)
     // Default single-select (`indicator="none"`) has no checkable role, so expose the
@@ -631,12 +660,12 @@ export const Select = (props: SelectProps) => {
     const hintOnly = o.tooltip == null && isolateHint != null
     return (
       <MenuItem
-        key={o.value}
+        key={String(o.value)}
         id={`${uid}-opt-${o.value}`}
         selectionIndicator={menuItemIndicator}
         {...ariaSelectable}
         indicator={customMark ?? undefined}
-        label={custom ? undefined : highlight(o.label ?? o.value, queryRe)}
+        label={custom ? undefined : highlight(o.label ?? String(o.value), queryRe)}
         hint={custom ? undefined : o.hint ? highlight(o.hint, queryRe) : o.hint}
         icon={custom ? undefined : o.icon}
         tone={o.tone}
@@ -658,7 +687,7 @@ export const Select = (props: SelectProps) => {
   // flyouts (`MenuItem submenu` + nested `Menu`). A function filter prunes leaves in
   // place; a container with no surviving descendant is dropped so no empty flyout
   // or heading shows.
-  const renderTree = (items: SelectItem[], disabled: boolean): React.ReactNode[] => {
+  const renderTree = (items: SelectItem<V>[], disabled: boolean): React.ReactNode[] => {
     const out: React.ReactNode[] = []
     items.forEach((raw, i) => {
       if (typeof raw !== 'string' && isSubmenu(raw)) {

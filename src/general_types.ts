@@ -189,8 +189,8 @@ export interface AProgressAttributes extends BaseAttributes {
  * from `@antadesign/anta`.
  */
 export interface ATextAttributes extends BaseAttributes {
-  /** Visual priority. Maps to text-1..text-5. */
-  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
+  /** Visual priority. Maps to text-1..text-4. */
+  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale; a named
    *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
    *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
@@ -225,8 +225,8 @@ export interface ATextAttributes extends BaseAttributes {
 export interface ATitleAttributes extends BaseAttributes {
   /** Heading level as a string attribute, '1'-'6'. */
   level?: string
-  /** Visual priority. Maps to text-1..text-5. */
-  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
+  /** Visual priority. Maps to text-1..text-4. */
+  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale; a named
    *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
    *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */

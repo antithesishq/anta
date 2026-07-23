@@ -209,6 +209,12 @@
   width: max-content;
   min-width: 220px;
   max-width: 100%;
+  /* Match a real <a-menu>'s shadow body: items stack with a 1px inter-item gap
+     (a-menu.ts sets `flex-direction: column; gap: 1px`). The preview renders bare
+     <MenuItem>s in this div rather than a live <a-menu>, so reproduce it here. */
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   padding: 4px;
   background: var(--bg-1);
   border: 1px solid var(--border-3);

@@ -151,11 +151,11 @@ export const SPECS: ComponentSpec[] = [
     id: 'text',
     title: 'Text',
     blurb:
-      'The text colour role scale, derived from the source hue. text-1 is the strong primary; text-2 the base (secondary); text-3 → text-5 step text-2 down by alpha. Title and Text both read this scale, so one formula drives both.',
+      'The text colour role scale, derived from the source hue. text-1 is the strong primary; text-2 the base (secondary); text-3/4 step text-2 down by alpha — Title and Text read text-1..4 as their priorities. text-5 is the faintest step (text-2 at a lower alpha), used for disabled / hint text across components, not a Title/Text priority.',
     vars: [
-      { key: 'priL', label: 'text-1 L', light: 0.4, dark: 0.85, neutral: { light: 0.1, dark: 0.94 }, ...v3() },
+      { key: 'priL', label: 'text-1 L', light: 0.38, dark: 0.85, neutral: { light: 0.1, dark: 0.94 }, ...v3() },
       { key: 'priC', label: 'text-1 C', light: 0.11, dark: 0.1, neutral: { light: 0.01, dark: 0.008 }, ...v3(0, 0.4) },
-      { key: 'baseL', label: 'text-2 L', light: 0.5, dark: 0.77, neutral: { light: 0.3, dark: 0.8 }, ...v3() },
+      { key: 'baseL', label: 'text-2 L', light: 0.42, dark: 0.77, neutral: { light: 0.3, dark: 0.8 }, ...v3() },
       { key: 'baseC', label: 'text-2 C', light: 0.125, dark: 0.11, neutral: { light: 0.015, dark: 0.015 }, ...v3(0, 0.4) },
       { key: 'tertA', label: 'text-3 α %', light: 80, dark: 80, ...pct },
       { key: 'quatA', label: 'text-4 α %', light: 60, dark: 60, ...pct },
@@ -166,7 +166,7 @@ export const SPECS: ComponentSpec[] = [
       { label: 'Secondary', keys: ['baseL', 'baseC'], note: 'text-2 base.' },
       { label: 'Tertiary', keys: ['tertA'], note: 'text-2 base at this alpha (→ text-3).' },
       { label: 'Quaternary', keys: ['quatA'], note: 'text-2 base at this alpha (→ text-4).' },
-      { label: 'Quinary', keys: ['quinA'], note: 'text-2 base at this alpha (→ text-5).' },
+      { label: 'Faint (text-5)', keys: ['quinA'], note: 'text-2 base at this alpha (→ text-5) — the disabled / hint step, not a Title/Text priority.' },
     ],
     tokens: true,
     css: (sel, seed, v) => `${sel} {
@@ -231,7 +231,7 @@ export const SPECS: ComponentSpec[] = [
     id: 'tag',
     title: 'Tags',
     blurb:
-      'Primary is a solid fill; secondary an alpha tint of the tint hue; tertiary an outline in the deep foreground hue. The tint, solid fill, and edge each resolve from the seed; alphas set each priority’s strength.',
+      'Primary is a solid fill; secondary an alpha tint of the tint hue; tertiary an outline. The label and edge are the Text scale — edge = --text-2, label = --text-2 at the label α (80 → --text-3), tunable per Tag (e.g. raise it for small-text contrast). The tint and solid fill are the Tag’s own (source hue at these L/C); alphas set each priority’s strength.',
     vars: [
       { key: 'bgSolidL', label: 'solid L', light: 0.58, dark: 0.46, neutral: { light: 0.55, dark: 0.48 }, ...v3() },
       { key: 'bgSolidC', label: 'solid C', light: 0.175, dark: 0.165, neutral: { light: 0.015, dark: 0.015 }, ...v3(0, 0.4), tip: 'Chroma of the primary solid fill, independent of the secondary tint’s C. Neutral pins it near-grey.' },
@@ -239,20 +239,20 @@ export const SPECS: ComponentSpec[] = [
       { key: 'tintC', label: 'tint C', light: 0.16, dark: 0.17, neutral: { light: 0.03, dark: 0.04 }, ...v3(0, 0.4) },
       { key: 'bgAlpha', label: 'fill α %', light: 10, dark: 20, ...pct },
       { key: 'borderAlpha', label: 'border α %', light: 15, dark: 25, ...pct },
-      { key: 'textL', label: 'text L', light: 0.34, dark: 0.75, ...v3() },
-      { key: 'textC', label: 'text C', light: 0.15, dark: 0.11, neutral: { light: 0.02 }, ...v3(0, 0.4) },
       { key: 'edgeAlpha', label: 'edge α %', light: 20, dark: 30, ...pct },
+      { key: 'textA', label: 'label α %', light: 80, dark: 80, ...pct },
     ],
     groups: [
       { label: 'Primary', keys: ['bgSolidL', 'bgSolidC'], note: 'Solid fill; white label.' },
       { label: 'Secondary', keys: ['tintL', 'tintC', 'bgAlpha', 'borderAlpha'] },
-      { label: 'Tertiary', keys: ['textL', 'textC', 'edgeAlpha'], note: 'Outline in the deep foreground hue.' },
+      { label: 'Tertiary', keys: ['edgeAlpha'], note: 'Outline alpha; the edge colour is --text-2.' },
+      { label: 'Label', keys: ['textA'], note: 'Label = --text-2 at this alpha (80 → --text-3). Raise for small-text contrast.' },
     ],
     css: (sel, seed, v) => `${sel} {
   --tag-tint:     ${ok(seed, v.tintL, v.tintC)};
   --tag-bg-solid: ${ok(seed, v.bgSolidL, v.bgSolidC)};
-  --tag-edge:     ${ok(seed, v.textL, v.textC)};
-  --tag-text:     oklch(from ${seed} ${v.textL} ${v.textC} h / 0.8);
+  --tag-edge:     var(--text-2);
+  --tag-text:     color-mix(in oklch, var(--text-2) ${v.textA}%, transparent);
   --_tag-bg-alpha:     ${v.bgAlpha}%;
   --_tag-border-alpha: ${v.borderAlpha}%;
   --_tag-edge-alpha:   ${v.edgeAlpha}%;
@@ -264,31 +264,24 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'tabs',
     title: 'Tabs',
     blurb:
-      'The strip’s primary/secondary/tertiary differ structurally (filled track vs subtle vs underline); the tone tokens below are shared across all three. Label colours track the global --text-* role scale — rest is --text-3, hover and selected --text-1, tertiary hover --text-2 — themed per tone, so the label/rest L·C here are generative stand-ins for those tokens. Grouped by strip part.',
+      'The strip’s primary/secondary/tertiary differ structurally (filled track vs subtle vs underline). Labels and rings are the role scale: selected/hover = --text-1, rest = --text-2 at the rest α (80 → --text-3), tertiary hover = --text-2, track ring = --border-4, selected ring = --border-2, selected pill = --bg-1. Only the recessed track tint, secondary fill, and the rest α are the Tabs’ own — the knobs below.',
     vars: [
-      { key: 'selTextL', label: 'label L', light: 0.35, dark: 0.86, ...v3() },
-      { key: 'selTextC', label: 'label C', light: 0.13, dark: 0.1, ...v3(0, 0.4) },
-      { key: 'selBorderL', label: 'ring L', light: 0.8, dark: 0.4, ...v3() },
-      { key: 'selBorderC', label: 'ring C', light: 0.09, dark: 0.11, ...v3(0, 0.4) },
-      { key: 'restL', label: 'rest L', light: 0.4, dark: 0.79, ...v3() },
-      { key: 'restC', label: 'rest C', light: 0.13, dark: 0.11, ...v3(0, 0.4) },
-      { key: 'trackBorderL', label: 'border L', light: 0.9, dark: 0.26, ...v3() },
-      { key: 'trackBorderC', label: 'border C', light: 0.045, dark: 0.055, ...v3(0, 0.4) },
       { key: 'trackL', label: 'fill L', light: 0.55, dark: 0.8, ...v3() },
       { key: 'trackC', label: 'fill C', light: 0.14, dark: 0.12, ...v3(0, 0.4) },
       { key: 'trackA', label: 'track α', light: 0.06, dark: 0.07, ...v3() },
       { key: 'secA', label: 'fill α', light: 0.03, dark: 0.08, ...v3() },
+      { key: 'restA', label: 'rest α %', light: 80, dark: 80, ...pct },
     ],
     groups: [
-      { label: 'Selected', keys: ['selTextL', 'selTextC', 'selBorderL', 'selBorderC'] },
-      { label: 'Track & rest', keys: ['restL', 'restC', 'trackBorderL', 'trackBorderC', 'trackL', 'trackC', 'trackA', 'secA'] },
+      { label: 'Track & fill', keys: ['trackL', 'trackC', 'trackA', 'secA'], note: 'The recessed track tint (primary) and the selected secondary fill — a faint overlay of the source hue.' },
+      { label: 'Rest label', keys: ['restA'], note: 'Non-selected label = --text-2 at this alpha (80 → --text-3). Selected/hover use full --text-1.' },
     ],
     css: (sel, seed, v) => `${sel} {
-  --tab-selected-text: ${ok(seed, v.selTextL, v.selTextC)};
-  --tab-text-2: ${ok(seed, v.restL, v.restC)};
-  --tab-rest-tone: oklch(from ${seed} ${v.restL} ${v.restC} h / 0.8);
-  --tabs-track-border: ${ok(seed, v.trackBorderL, v.trackBorderC)};
-  --tab-selected-border: ${ok(seed, v.selBorderL, v.selBorderC)};
+  --tab-selected-text: var(--text-1);
+  --tab-text-2: var(--text-2);
+  --tab-rest-tone: color-mix(in oklch, var(--text-2) ${v.restA}%, transparent);
+  --tabs-track-border: var(--border-4);
+  --tab-selected-border: var(--border-2);
   --tabs-track-bg: oklch(from ${seed} ${v.trackL} ${v.trackC} h / ${v.trackA});
   --tab-secondary-bg: oklch(from ${seed} ${v.trackL} ${v.trackC} h / ${v.secA});
 }`,
@@ -300,9 +293,9 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     blurb:
       'Hoisted to --_tone-l-* inputs: the checked fill is the source at three lightnesses. The off-state box border ramps off that fill mixed toward neutral grey. On = toneSelected; off = tone.',
     vars: [
-      { key: 'lRest', label: 'L rest', light: 0.5, dark: 0.45, ...v3() },
-      { key: 'lHover', label: 'L hover', light: 0.45, dark: 0.5, ...v3() },
-      { key: 'lActive', label: 'L active', light: 0.4, dark: 0.57, ...v3() },
+      { key: 'lRest', label: 'L rest', light: 0.5, dark: 0.45, neutral: { light: 0.6, dark: 0.42 }, ...v3() },
+      { key: 'lHover', label: 'L hover', light: 0.45, dark: 0.5, neutral: { dark: 0.45 }, ...v3() },
+      { key: 'lActive', label: 'L active', light: 0.4, dark: 0.57, neutral: { dark: 0.5 }, ...v3() },
     ],
     groups: [{ label: 'Fill', keys: ['lRest', 'lHover', 'lActive'] }],
     css: (sel, _seed, v) => `${sel} {
@@ -318,9 +311,9 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     blurb:
       'Identical fill curve to Checkbox: --_tone-l-* set the selected dot at three lightnesses, and the off-ring border ramps off it. Group toneSelected drives the picked option.',
     vars: [
-      { key: 'lRest', label: 'L rest', light: 0.5, dark: 0.45, ...v3() },
-      { key: 'lHover', label: 'L hover', light: 0.45, dark: 0.5, ...v3() },
-      { key: 'lActive', label: 'L active', light: 0.4, dark: 0.57, ...v3() },
+      { key: 'lRest', label: 'L rest', light: 0.5, dark: 0.45, neutral: { light: 0.6, dark: 0.42 }, ...v3() },
+      { key: 'lHover', label: 'L hover', light: 0.45, dark: 0.5, neutral: { dark: 0.45 }, ...v3() },
+      { key: 'lActive', label: 'L active', light: 0.4, dark: 0.57, neutral: { dark: 0.5 }, ...v3() },
     ],
     groups: [{ label: 'Fill', keys: ['lRest', 'lHover', 'lActive'] }],
     css: (sel, _seed, v) => `${sel} {
@@ -334,33 +327,18 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'expander',
     title: 'Expander',
     blurb:
-      'The header text (rest + hover) is shared by all priorities; secondary and primary each add a faint surface fill and a slightly deeper border. Tertiary is text only.',
-    vars: [
-      { key: 'textL', label: 'text L', light: 0.41, dark: 0.75, ...v3() },
-      { key: 'textC', label: 'text C', light: 0.15, dark: 0.11, ...v3(0, 0.4) },
-      { key: 'textHoverL', label: 'hover L', light: 0.33, dark: 0.82, ...v3() },
-      { key: 'textHoverC', label: 'hover C', light: 0.15, dark: 0.1, ...v3(0, 0.4) },
-      { key: 'bgSecL', label: 'fill L', light: 0.99, dark: 0.13, ...v3() },
-      { key: 'bgSecC', label: 'fill C', light: 0.006, dark: 0.02, ...v3(0, 0.4) },
-      { key: 'borderSecL', label: 'border L', light: 0.93, dark: 0.22, ...v3() },
-      { key: 'borderSecC', label: 'border C', light: 0.03, dark: 0.05, ...v3(0, 0.4) },
-      { key: 'bgPriL', label: 'fill L', light: 0.955, dark: 0.19, ...v3() },
-      { key: 'bgPriC', label: 'fill C', light: 0.02, dark: 0.04, ...v3(0, 0.4) },
-      { key: 'borderPriL', label: 'border L', light: 0.895, dark: 0.26, ...v3() },
-      { key: 'borderPriC', label: 'border C', light: 0.045, dark: 0.07, ...v3(0, 0.4) },
-    ],
-    groups: [
-      { label: 'Primary', keys: ['textL', 'textC', 'textHoverL', 'textHoverC', 'bgPriL', 'bgPriC', 'borderPriL', 'borderPriC'] },
-      { label: 'Secondary', keys: ['textL', 'textC', 'textHoverL', 'textHoverC', 'bgSecL', 'bgSecC', 'borderSecL', 'borderSecC'] },
-      { label: 'Tertiary', keys: ['textL', 'textC', 'textHoverL', 'textHoverC'], note: 'Header text only — no surface fill or border.' },
-    ],
-    css: (sel, seed, v) => `${sel} {
-  --expander-text: ${ok(seed, v.textL, v.textC)};
-  --expander-text-hover: ${ok(seed, v.textHoverL, v.textHoverC)};
-  --expander-bg-secondary: ${ok(seed, v.bgSecL, v.bgSecC)};
-  --expander-border-secondary: ${ok(seed, v.borderSecL, v.borderSecC)};
-  --expander-bg-primary: ${ok(seed, v.bgPriL, v.bgPriC)};
-  --expander-border-primary: ${ok(seed, v.borderPriL, v.borderPriC)};
+      'Every colour is a role token; the Expander defines none of its own. Label: rest --text-2, hover --text-1 (Title’s secondary/primary). Fill and border are the surface scale (secondary --bg-2 / --border-5, primary --bg-4 / --border-4), and the fill lightens a step on hover. Tertiary is text only, all themed per tone.',
+    // The Expander has no colours of its own — every output is a role token, so
+    // there are no knobs. It follows the Text and Background & Borders specs live.
+    vars: [],
+    groups: [],
+    css: (sel) => `${sel} {
+  --expander-text: var(--text-2);
+  --expander-text-hover: var(--text-1);
+  --expander-bg-secondary: var(--bg-2);
+  --expander-border-secondary: var(--border-5);
+  --expander-bg-primary: var(--bg-4);
+  --expander-border-primary: var(--border-4);
 }`,
   },
 
@@ -368,16 +346,15 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'input',
     title: 'Input',
     blurb:
-      'The resting and hover field border are the source hue at two lightnesses, with chroma scaled down at rest. Applies to Input and the InputDate trigger (both compose <a-input>).',
+      'One border colour from the seed hue at a tunable L/C — the goal is a single L/C per theme that works across every tone. Rest = hover; hover thickens the edge 0.5→1px. Neutral overrides pin it grey (≈ --border-2). Applies to Input and the InputDate trigger (both compose <a-input>).',
     vars: [
-      { key: 'borderL', label: 'border L', light: 0.7, dark: 0.5, ...v3() },
-      { key: 'borderHoverL', label: 'hover L', light: 0.6, dark: 0.6, ...v3() },
-      { key: 'chromaScale', label: 'C scale', light: 0.8, dark: 0.8, min: 0, max: 1, step: 0.05 },
+      { key: 'borderL', label: 'border L', light: 0.59, dark: 0.52, neutral: { light: 0.8, dark: 0.39 }, ...v3() },
+      { key: 'borderC', label: 'border C', light: 0.157, dark: 0.149, neutral: { light: 0.015, dark: 0.019 }, ...v3(0, 0.4) },
     ],
-    groups: [{ label: 'Border', keys: ['borderL', 'borderHoverL', 'chromaScale'] }],
+    groups: [{ label: 'Border', keys: ['borderL', 'borderC'], note: 'Seed hue at this L/C (rest = hover; hover thickens). Toned starts at the average of today’s per-status literals; neutral pins grey ≈ --border-2.' }],
     css: (sel, seed, v) => `${sel} {
-  --input-border: ${ok(seed, v.borderL, `calc(c * ${v.chromaScale})`)};
-  --input-border-hover: ${ok(seed, v.borderHoverL, 'c')};
+  --input-border: ${ok(seed, v.borderL, v.borderC)};
+  --input-border-hover: ${ok(seed, v.borderL, v.borderC)};
 }`,
   },
 
@@ -385,19 +362,19 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'menuitem',
     title: 'Menu items',
     blurb:
-      'A custom tone colours the item label, icon, and hint from the source hue; the selected row holds a persistent tint of that colour. Uses the source chroma, so neutral stays grey.',
+      'The item label is --text-2; the hint and icon are --text-2 at the hint α (80 → --text-3), so the text follows the Text spec while the hint strength stays tunable. The selected row holds a persistent tint of the label colour — its alpha is the Menu’s own knob too.',
     vars: [
-      { key: 'colorL', label: 'text L', light: 0.45, dark: 0.78, ...v3() },
+      { key: 'hintA', label: 'hint α %', light: 80, dark: 80, ...pct },
       { key: 'selectedA', label: 'selected α %', light: 8, dark: 8, ...pct },
     ],
     groups: [
-      { label: 'Text', keys: ['colorL'], note: 'Label at full opacity; the hint reuses it at 0.8 alpha (--text-3 = --text-2 @ 0.8α).' },
-      { label: 'Selected', keys: ['selectedA'], note: 'Tint held on the selected row — a % of the item colour.' },
+      { label: 'Text', keys: ['hintA'], note: 'Label is full --text-2; hint + icon are --text-2 at this alpha (80 → --text-3).' },
+      { label: 'Selected', keys: ['selectedA'], note: 'Tint held on the selected row — a % of the item colour (--text-2).' },
     ],
-    css: (sel, seed, v) => `${sel} {
-  --menu-item-color: ${ok(seed, v.colorL, 'c')};
-  --menu-item-icon-color: var(--menu-item-color);
-  --menu-item-hint-color: oklch(from ${seed} ${v.colorL} c h / 0.8);
+    css: (sel, _seed, v) => `${sel} {
+  --menu-item-color: var(--text-2);
+  --menu-item-hint-color: color-mix(in oklch, var(--text-2) ${v.hintA}%, transparent);
+  --menu-item-icon-color: var(--menu-item-hint-color);
   --menu-item-selected: ${v.selectedA}%;
 }`,
   },

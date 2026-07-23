@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks'
 import { Text } from '@antadesign/anta'
 
-const priorities = ['primary', 'secondary', 'tertiary', 'quaternary', 'quinary'] as const
+const priorities = ['primary', 'secondary', 'tertiary', 'quaternary'] as const
 const tones = ['brand', 'success', 'critical', 'warning', 'info'] as const
 
 export default function TextDemo() {

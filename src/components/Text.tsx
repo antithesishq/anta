@@ -20,11 +20,11 @@ export type ExpandMode =
     }
 
 export type TextProps = BaseProps & {
-  /** Visual priority. Maps to text-1..text-5 (`primary` = text-1, the
+  /** Visual priority. Maps to text-1..text-4 (`primary` = text-1, the
    *  strongest). The default is `secondary` (text-2) — body text reads a
    *  step softer than the strongest foreground; pass `primary` for emphasis.
    *  @defaultValue secondary */
-  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
+  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a
    *  named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS
    *  color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is

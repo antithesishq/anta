@@ -51,14 +51,14 @@ import {
 const usesStatus = (id: string) => id === 'input'
 
 /** Four rows for the menu-item preview; the second is the selected one. */
-const MENU_ITEMS: { icon: 'book-open' | 'chat' | 'file' | 'edit'; label: string; kbd?: string; sel?: boolean }[] = [
-  { icon: 'book-open', label: 'Overview' },
-  { icon: 'chat', label: 'Comments', sel: true },
+const MENU_ITEMS: { icon: 'book-open' | 'chat' | 'file' | 'edit'; label: string; kbd?: string; sel?: boolean; hint?: string }[] = [
+  { icon: 'book-open', label: 'Overview', hint: 'Project summary' },
+  { icon: 'chat', label: 'Comments', sel: true, hint: '3 unread' },
   { icon: 'file', label: 'Files', kbd: '⌘S' },
   { icon: 'edit', label: 'Rename' },
 ]
 
-const PRIORITIES = ['primary', 'secondary', 'tertiary', 'quaternary', 'quinary'] as const
+const PRIORITIES = ['primary', 'secondary', 'tertiary', 'quaternary'] as const
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -90,7 +90,7 @@ function TypeSample({
   isDark,
 }: {
   kind: 'title' | 'text'
-  priority: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
+  priority: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   tone: Tone | undefined
   isDark: boolean
 }) {
@@ -177,6 +177,33 @@ function RestingSamples({
   )
 }
 
+/** Input + InputDate samples, with the resolved border colour read from the host's
+ *  `--input-border` and shown in oklch. Hand-tuned statuses set a literal (resolves
+ *  cleanly); the generative side sets a relative `oklch(from …)` that chroma can't
+ *  parse, so the readout naturally appears only under the hand-tuned reference. */
+function InputSamples({ status, isDark }: { status: string | undefined; isDark: boolean }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [border, setBorder] = useState('')
+  useEffect(() => {
+    const host = ref.current?.querySelector('a-input') as HTMLElement | null
+    setBorder(host ? toOklch(getComputedStyle(host).getPropertyValue('--input-border')) : '')
+  }, [status, isDark])
+  return (
+    <div className={styles.col}>
+      <div ref={ref} className={styles.col}>
+        <Input label="Text input" placeholder="Type…" status={status as any} hint="Helper text under the field" />
+        <InputDate label="Date" defaultValue="2026-06-15" status={status as any} hint="Pick a date" />
+      </div>
+      {border ? (
+        <div className={styles.restingRow}>
+          <code>border</code>
+          <span className={styles.oklch}>{border}</span>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 /** The hand-tuned reference's tone attribute, as a code label. */
 function refLabel(id: string, tone: Tone) {
   if (tone === 'neutral') return <code>default</code>
@@ -195,7 +222,11 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
   const named = tone === 'neutral' ? undefined : tone
   const toneVal = ref ? named : seed
   const selVal = ref ? named : seed
-  const statusVal = ref ? named : undefined
+  // Both sides carry the status so the generative input shows the same 1px status
+  // treatment as the hand-tuned reference — only the border colour differs (the
+  // injected generative `--input-border` vs the hand-tuned status literal). Without
+  // this the generative input was a plain 0.5px field and read far fainter.
+  const statusVal = named
 
   switch (spec.id) {
     // Title + Text share the `--text-1..5` role scale, so one section previews
@@ -309,18 +340,14 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
       )
 
     case 'input':
-      return (
-        <div className={styles.col}>
-          <Input label="Text input" placeholder="Type…" status={statusVal} />
-          <InputDate label="Date" defaultValue="2026-06-15" status={statusVal} />
-        </div>
-      )
+      return <InputSamples status={statusVal} isDark={isDark} />
+
 
     case 'menuitem':
       return (
         <div className={styles.menuSurface} role="menu" aria-label={`${mode} menu`}>
           {MENU_ITEMS.map((it, i) => (
-            <MenuItem key={i} icon={it.icon} label={it.label} kbd={it.kbd} selected={it.sel} tone={toneVal} />
+            <MenuItem key={i} icon={it.icon} label={it.label} hint={it.hint} kbd={it.kbd} selected={it.sel} tone={toneVal} />
           ))}
         </div>
       )
@@ -390,6 +417,14 @@ function GroupActions({
   )
 }
 
+/** Specs whose colours are role tokens (text, bg, border scales), not bespoke
+ *  per-component values. Their generative preview gets the Text + Surface scales
+ *  injected on its container, so `var(--text-1)` etc. resolve to the tuned scale
+ *  and follow the Text / Background & Borders panels live. */
+const ROLE_TOKEN_SPECS = new Set(['tabs', 'tag', 'menuitem', 'expander'])
+const TEXT_SPEC = SPECS.find((s) => s.id === 'text')!
+const SURFACE_SPEC = SPECS.find((s) => s.id === 'surface')!
+
 interface BlockProps {
   spec: ComponentSpec
   tone: Tone
@@ -397,6 +432,10 @@ interface BlockProps {
   isDark: boolean
   vLight: Vals
   vDark: Vals
+  /** Every spec's current values, keyed by id — a role-token component injects the
+   *  Text + Surface scales (`allV*.text` / `allV*.surface`) on its own container. */
+  allVLight: Record<string, Vals>
+  allVDark: Record<string, Vals>
   onVar: (id: string, key: string, value: string) => void
   /** Shared open state for this section's expanders, keyed `${spec.id}:${label}`,
    *  so the same expander tracks across every tone panel. */
@@ -404,7 +443,7 @@ interface BlockProps {
   onExpanderToggle: (key: string, next: boolean) => void
 }
 
-function Block({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap, onExpanderToggle }: BlockProps) {
+function Block({ spec, tone, seed, isDark, vLight, vDark, allVLight, allVDark, onVar, openMap, onExpanderToggle }: BlockProps) {
   const v = isDark ? vDark : vLight
   const el = EL_SELECTOR[spec.id]
   const genClass = `tl-gen-${tone}-${spec.id}`
@@ -413,7 +452,18 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap, onExpa
   // element directly, so scope the selector to the element inside the container.
   const injectSel = spec.tokens ? `.${genClass}` : `.${genClass} ${el}`
   const display = spec.css(spec.tokens ? ':root' : el, seed, v)
+  // A role-token component resolves --text-*/--bg-*/--border-* from the Text +
+  // Surface scales, injected on the ELEMENT (not the container) so only the
+  // component's own fills/text tint per tone — the preview backdrop keeps the
+  // page's real (neutral) tokens. Tuning the Text/Surface panels updates it live.
+  const rolePreamble = ROLE_TOKEN_SPECS.has(spec.id)
+    ? SURFACE_SPEC.css(injectSel, seed, allVLight.surface) +
+      '\n' + TEXT_SPEC.css(injectSel, seed, allVLight.text) +
+      '\n' + SURFACE_SPEC.css(`.dark ${injectSel}`, seed, allVDark.surface) +
+      '\n' + TEXT_SPEC.css(`.dark ${injectSel}`, seed, allVDark.text) + '\n'
+    : ''
   const inject =
+    rolePreamble +
     spec.css(injectSel, seed, vLight) +
     '\n' +
     spec.css(`.dark ${injectSel}`, seed, vDark)
@@ -651,6 +701,8 @@ function TonePanel({
           isDark,
           vLight: vLight[spec.id],
           vDark: vDark[spec.id],
+          allVLight: vLight,
+          allVDark: vDark,
           onVar: setVar,
           openMap,
           onExpanderToggle,

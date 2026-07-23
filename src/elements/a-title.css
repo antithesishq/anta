@@ -33,7 +33,6 @@
   a-title[priority="secondary"]  { color: var(--text-2); }
   a-title[priority="tertiary"]   { color: var(--text-3); }
   a-title[priority="quaternary"] { color: var(--text-4); }
-  a-title[priority="quinary"]    { color: var(--text-5); }
 
   /* tone="neutral" has no rule on purpose — it is the untinted default, resolved
      by the base + priority rules above (the --text-N scale). */
@@ -41,31 +40,26 @@
   a-title[tone="brand"][priority="secondary"]    { color: var(--text-2-brand);    }
   a-title[tone="brand"][priority="tertiary"]     { color: var(--text-3-brand);    }
   a-title[tone="brand"][priority="quaternary"]   { color: var(--text-4-brand);    }
-  a-title[tone="brand"][priority="quinary"]      { color: var(--text-5-brand);    }
 
   a-title[tone="success"]                        { color: var(--text-1-success);  }
   a-title[tone="success"][priority="secondary"]  { color: var(--text-2-success);  }
   a-title[tone="success"][priority="tertiary"]   { color: var(--text-3-success);  }
   a-title[tone="success"][priority="quaternary"] { color: var(--text-4-success);  }
-  a-title[tone="success"][priority="quinary"]    { color: var(--text-5-success);  }
 
   a-title[tone="critical"]                          { color: var(--text-1-critical); }
   a-title[tone="critical"][priority="secondary"]    { color: var(--text-2-critical); }
   a-title[tone="critical"][priority="tertiary"]     { color: var(--text-3-critical); }
   a-title[tone="critical"][priority="quaternary"]   { color: var(--text-4-critical); }
-  a-title[tone="critical"][priority="quinary"]      { color: var(--text-5-critical); }
 
   a-title[tone="warning"]                           { color: var(--text-1-warning);  }
   a-title[tone="warning"][priority="secondary"]     { color: var(--text-2-warning);  }
   a-title[tone="warning"][priority="tertiary"]      { color: var(--text-3-warning);  }
   a-title[tone="warning"][priority="quaternary"]    { color: var(--text-4-warning);  }
-  a-title[tone="warning"][priority="quinary"]       { color: var(--text-5-warning);  }
 
   a-title[tone="info"]                              { color: var(--text-1-info);     }
   a-title[tone="info"][priority="secondary"]        { color: var(--text-2-info);     }
   a-title[tone="info"][priority="tertiary"]         { color: var(--text-3-info);     }
   a-title[tone="info"][priority="quaternary"]       { color: var(--text-4-info);     }
-  a-title[tone="info"][priority="quinary"]          { color: var(--text-5-info);     }
 
   /* Custom tone — see a-text.css for the mechanism. Titles default to primary
      (text-1, the distinct strong shade); --_title-tone is the text-2 base that
@@ -78,7 +72,6 @@
   a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="secondary"]  { color: var(--_title-tone); }
   a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="tertiary"]   { color: color-mix(in oklch, var(--_title-tone) 80%, transparent); }
   a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="quaternary"] { color: color-mix(in oklch, var(--_title-tone) 60%, transparent); }
-  a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="quinary"]    { color: color-mix(in oklch, var(--_title-tone) 40%, transparent); }
   /* Dark: re-tune the base + the distinct primary; the others follow --_title-tone. */
   .dark a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
     --_title-tone: oklch(from var(--title-tone-source) 0.75 0.11 h);

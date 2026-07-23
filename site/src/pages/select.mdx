@@ -212,8 +212,26 @@ options** — pass `options={[{ value: 365 }, { value: 90 }]}` and `value`,
 dance, and `365` and `"365"` stay distinct picks. A value is stringified only for the
 row key, the option's DOM id, filtering, and the display fallback, so two values that
 stringify alike (`365` and `"365"`) collide as row keys and trip the same dev warning.
-Object-shaped values stay out of scope: attach a `data` field to the option and read
-it back off `attrs.option`.
+
+**A value must be a `string`, `number`, or `boolean`** (the exported `OptionValue`
+type). For anything richer — a date, an object, a record — give `value` a **stable
+primitive key** and carry the full value on the option, then read it back off
+`attrs.option`. A date's key is its ISO string (comparable and URL-friendly); a
+record's is its id.
+
+```tsx
+// Rich value: id is the key, the full record rides on the option.
+<Select
+  options={runs.map((r) => ({ value: r.id, label: r.name, run: r }))}
+  onValueChange={(id, attrs) => { if (!('all' in attrs)) openRun(attrs.option.run) }}
+/>
+
+// Date filter: the ISO string is the value — round-trips as text, rebuild on read.
+<Select
+  options={days.map((d) => ({ value: d.toISOString(), label: fmt(d) }))}
+  onValueChange={(iso) => setDay(new Date(iso))}
+/>
+```
 
 Leave `value` off and pass `defaultValue` for an **uncontrolled** select (the
 wrapper owns the value). Pass `value` to **control** it: the field follows the prop,

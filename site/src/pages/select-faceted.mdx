@@ -153,6 +153,18 @@ The trigger opens the facet menu; each **active** facet's result renders below a
 own [Select](/select/) — editable in place, with the facet key piped into the trigger's
 `leading` slot as a prefix.
 
+### Value types
+
+A `single` / `multiple` facet's option values follow [Select](/select/#value--changes):
+`string`, `number`, or `boolean` (the `OptionValue` type), compared with `===` and
+returned through the value record unchanged — a `number` column stays a `number`, no
+stringify converter. For a value that isn't a primitive, take the same route as Select:
+give the option `value` a **stable primitive key** (a date's ISO string, a record's id)
+and read the full value back from your own options by that key. When the whole facet is
+object-shaped — a date range, a numeric comparator — use a **`custom`** facet instead:
+it owns its editor and its value type `V`, so it holds any shape and reports it back
+untouched.
+
 <Disclosure title="Component props" open>
 
 <PropsTable component="SelectFaceted" />

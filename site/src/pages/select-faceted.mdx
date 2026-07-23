@@ -165,6 +165,79 @@ object-shaped — a date range, a numeric comparator — use a **`custom`** face
 it owns its editor and its value type `V`, so it holds any shape and reports it back
 untouched.
 
+### Custom facet
+
+A `custom` facet has **no option list**. You draw the editor and you choose the value
+it holds — the escape hatch for a number, a date, a range, or any object. Beyond the
+base `key` / `label` / `icon`, provide two functions:
+
+- **`render(ctx)`** — your editor. `ctx.value` is the current value (`undefined` when
+  unset), `ctx.onChange(next)` sets it, and `ctx.close()` dismisses the whole menu.
+  **Whatever you pass to `onChange` lands in `value[key]` unchanged**; `onChange(undefined)`
+  clears the facet.
+- **`summary(value)`** — the chip shown on the facet's row while a value is set.
+
+Nothing is compared or filtered inside the component — it stores the value and reports
+it through `onValueChange`. Applying it to your rows is your code. Type the facet with
+the value shape you store, `SelectFacetCustom<V>`, so `ctx.value` and `summary` are typed.
+
+A number — "min duration". The editor is one `Input`; the value is a `number`:
+
+```tsx
+import type { SelectFacetCustom } from '@antadesign/anta'
+
+const duration: SelectFacetCustom<number> = {
+  key: 'duration',
+  label: 'Min duration',
+  kind: 'custom',
+  render: (ctx) => (
+    <Input
+      type="number"
+      size="small"
+      placeholder="seconds"
+      value={ctx.value ?? ''}
+      onInput={(e) => ctx.onChange(Number(e.currentTarget.value) || undefined)}
+    />
+  ),
+  summary: (v) => `≥ ${v}s`,
+}
+
+// user types 30  →  value.duration === 30   (a number, returned unchanged)
+// you apply it:
+rows.filter((r) => value.duration == null || r.seconds >= value.duration)
+```
+
+A date, cast through a helper. `InputDate` speaks ISO strings; the value you store is a
+`Date`, so two helpers bridge them:
+
+```tsx
+import type { SelectFacetCustom } from '@antadesign/anta'
+
+const toISO = (d: Date) => d.toISOString().slice(0, 10)         // Date → "2026-01-01"
+const fromISO = (s: string) => (s ? new Date(s) : undefined)    // ISO  → Date | undefined
+
+const since: SelectFacetCustom<Date> = {
+  key: 'since',
+  label: 'Created after',
+  kind: 'custom',
+  render: (ctx) => (
+    <InputDate
+      value={ctx.value ? toISO(ctx.value) : ''}
+      onValueChange={(iso) => ctx.onChange(fromISO(iso))}
+    />
+  ),
+  summary: (d) => d.toLocaleDateString(),
+}
+
+// user picks a day  →  value.since is a Date, returned unchanged
+// you apply it:
+rows.filter((r) => value.since == null || r.createdAt >= value.since)
+```
+
+A `custom` facet holds the value whole, so a `Date` object is fine here: it isn't
+compared by `===` the way a `single` / `multiple` option value is, so there's no
+identity pitfall. (In a `single` facet, use a date's ISO string as the value.)
+
 <Disclosure title="Component props" open>
 
 <PropsTable component="SelectFaceted" />

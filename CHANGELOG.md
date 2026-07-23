@@ -2,7 +2,7 @@
 
 This page tracks what ships to npm. Documentation website changes are not tracked here.
 
-## 0.3.13 — July 23, 2026
+## Unreleased
 
 ### Changed
 - **`Tooltip`'s default show delay is now 300ms** (was 250ms) — the wait before a hovered / focused tooltip appears. Pass `delay` to override per tooltip (`~50` for near-instant; never `0`).

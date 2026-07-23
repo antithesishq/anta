@@ -59,7 +59,7 @@ export const MenuItemCopy = ({
     copyWithUrl,
     onCopyRequest,
     onCopied: handleCopied,
-  } as CopyTarget)
+  })
 
   return (
     <MenuItem

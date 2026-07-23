@@ -49,10 +49,11 @@ declare global {
  * feedback element rendered inside it can't animate up and out — it'd be clipped.
  * With `toast`, `<a-copy>` renders the ghost in the **top layer** (a `popover`,
  * which no ancestor's overflow clips) and JS-positions it over the host, cloning
- * the host's text so it reads as a ghost of the button lifting away. Purely
- * visual (no localized string), reduced-motion-gated. `ButtonCopy` opts in;
- * `MenuItemCopy` does not (its menu is kept open via `data-menu-open`, so the
- * icon/tone swap is the feedback).
+ * the host's text so it reads as a ghost of the button lifting away. It's a
+ * functional cue (it conveys "copied"), not decorative motion, so it plays
+ * regardless of `prefers-reduced-motion`. `ButtonCopy` opts in; `MenuItemCopy`
+ * does not (its menu is kept open via `data-menu-open`, so the icon/tone swap is
+ * the feedback).
  *
  * Declarative-DOM-safe: mutates only its own shadow, reads the host with
  * `closest` / `getBoundingClientRect`, and adds listeners (never attributes) to
@@ -107,7 +108,7 @@ function installCopyDelegation(doc: Document | undefined) {
     (e) => {
       const host = (e.target as HTMLElement)?.closest?.(BUTTON_HOST);
       if (!host || hostBlocked(host)) return;
-      copyChild(host)?.activate(host);
+      copyChild(host)?.activate();
     },
     true,
   );
@@ -118,7 +119,7 @@ function installCopyDelegation(doc: Document | undefined) {
     (e) => {
       const host = (e.target as HTMLElement)?.closest?.(MENU_HOST);
       if (!host || hostBlocked(host)) return;
-      copyChild(host)?.activate(host);
+      copyChild(host)?.activate();
     },
     true,
   );
@@ -127,7 +128,7 @@ function installCopyDelegation(doc: Document | undefined) {
 }
 
 /** How long the ghost lives before it's pulled from the top layer (ms). Matches
- *  the rise animation; also the fallback timer under reduced motion (no anim). */
+ *  the rise animation, then dismisses the popover. */
 const GHOST_MS = 650;
 
 export class ACopyElement extends HTMLElementBase {
@@ -136,15 +137,25 @@ export class ACopyElement extends HTMLElementBase {
 
   connectedCallback() {
     installCopyDelegation(this.doc);
-    if (!this.shadowRoot) this.#buildShadow();
+    // The ghost follows a *successful* write — the element's own `copydone` —
+    // not activation: the write is async and can fail, and eager feedback would
+    // lie on a rejected copy. Only `toast` mode shows it, and the shadow is built
+    // lazily on first show, so non-toast copies allocate nothing.
+    this.addEventListener("copydone", this.#onCopyDone);
   }
 
-  /** Run the copy for the given activated host and, on success, float the ghost.
-   *  Called from the delegated click / menuselect handlers. */
-  activate(host: Element): void {
-    if (!runCopy(this)) return; // not a copy control — nothing to do
-    if (this.hasAttribute("toast")) this.#showGhost(host);
+  /** Run the copy for the activated host. Called from the delegated click /
+   *  menuselect handlers; the ghost (if any) follows on `copydone`. */
+  activate(): void {
+    runCopy(this);
   }
+
+  #onCopyDone = (e: Event) => {
+    if (!this.hasAttribute("toast")) return;
+    if (!(e as CustomEvent<{ ok: boolean }>).detail?.ok) return;
+    const host = this.closest(ANY_HOST);
+    if (host) this.#showGhost(host);
+  };
 
   #buildShadow() {
     const root = this.attachShadow({ mode: "open" });
@@ -171,14 +182,12 @@ export class ACopyElement extends HTMLElementBase {
     from { opacity: 1; transform: translateY(0); }
     to { opacity: 0; transform: translateY(-1.5em); }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .ghost[data-show] { animation: none; opacity: 0; }
-  }
 </style><div class="ghost" part="ghost" popover="manual"></div>`;
     this.#ghost = root.querySelector(".ghost") as HTMLElement;
   }
 
   #showGhost(host: Element) {
+    if (!this.#ghost) this.#buildShadow(); // lazy — only toast mode ever needs it
     const ghost = this.#ghost;
     // Feature-gate on the Popover API — without the top layer the ghost would be
     // clipped by the button's overflow, so skip rather than paint a clipped one.
@@ -195,8 +204,13 @@ export class ACopyElement extends HTMLElementBase {
 
     clearTimeout(this.#ghostTimer);
     ghost.removeAttribute("data-show");
+    // hidePopover() throws when the popover isn't showing, so only call it when
+    // it is — otherwise it would throw past showPopover() and the ghost would
+    // never appear on the first (or any idle) copy.
+    if (ghost.matches(":popover-open")) {
+      try { (ghost as any).hidePopover(); } catch { /* not open */ }
+    }
     try {
-      (ghost as any).hidePopover?.();
       (ghost as any).showPopover();
     } catch {
       return;
@@ -206,16 +220,15 @@ export class ACopyElement extends HTMLElementBase {
     ghost.setAttribute("data-show", "");
     this.#ghostTimer = setTimeout(() => {
       ghost.removeAttribute("data-show");
-      try {
-        (ghost as any).hidePopover?.();
-      } catch {
-        /* already closed */
+      if (ghost.matches(":popover-open")) {
+        try { (ghost as any).hidePopover(); } catch { /* already closed */ }
       }
     }, GHOST_MS);
   }
 
   disconnectedCallback() {
     clearTimeout(this.#ghostTimer);
+    this.removeEventListener("copydone", this.#onCopyDone);
   }
 }
 

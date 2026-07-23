@@ -95,7 +95,7 @@ export const ButtonCopy = ({
     onCopied: handleCopied,
     // Ghost feedback only makes sense when there's no glyph to swap.
     toast: iconPlacement === 'none',
-  } as CopyTarget & { toast: boolean })
+  })
 
   return (
     <Button

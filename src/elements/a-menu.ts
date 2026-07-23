@@ -818,8 +818,12 @@ export class AMenuElement extends HTMLElementBase {
           // Activate on keyup (see handleKeyUp), not here — the keydown→keyup gap
           // lets a lazy copy row refresh `copy` between press and release, the
           // same contract as the roving path (key-activation) and pointer. The
-          // pre-request fires now; no-ops on a non-copy item.
-          emitCopyRequest(this.activeItem)
+          // copy attribute now lives on the row's slotted `<a-copy>` child, so
+          // fire the pre-request there (the child's own delegated keydown can't
+          // reach it on this path — focus is on the filter, not the row). No-ops
+          // on a non-copy row.
+          const copyEl = this.activeItem.querySelector(':scope > a-copy')
+          if (copyEl) emitCopyRequest(copyEl as HTMLElement)
           this.#pendingComboActivate = this.activeItem
         }
         return true

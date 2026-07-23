@@ -395,7 +395,7 @@ export interface AIconAttributes extends BaseAttributes {
  * `Tooltip` from `@antadesign/anta`.
  */
 export interface ATooltipAttributes extends BaseAttributes {
-  /** Show delay in milliseconds. Never use `0` — use ~`50`. Defaults to 250. */
+  /** Show delay in milliseconds. Never use `0` — use ~`50`. Defaults to 300. */
   delay?: number | string
   /** Preferred side; auto-flips when there's no room. Defaults to `'bottom'`. */
   placement?: 'top' | 'bottom'

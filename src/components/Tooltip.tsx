@@ -7,7 +7,7 @@ export interface TooltipProps extends BaseProps {
   children?: React.ReactNode
   /** Show delay in milliseconds after hover / focus. Never use `0` — use
    *  ~`50` for a near-instant tooltip (0 has caused issues in practice).
-   *  @defaultValue 250 */
+   *  @defaultValue 300 */
   delay?: number
   /** Which side of the anchor the bubble prefers. Auto-flips to the other
    *  side when there isn't room.

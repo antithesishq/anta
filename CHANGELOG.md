@@ -2,6 +2,12 @@
 
 This page tracks what ships to npm. Documentation website changes are not tracked here.
 
+## 0.3.13 — July 23, 2026
+
+### Changed
+- **`Tooltip`'s default show delay is now 300ms** (was 250ms) — the wait before a hovered / focused tooltip appears. Pass `delay` to override per tooltip (`~50` for near-instant; never `0`).
+- **`Select` and `SelectFaceted` option-row tooltips now follow the cursor.** A `SelectOption.tooltip` used to pin under the row while only the auto-generated multi-select "select only this" (Alt/⌥-click) hint followed the pointer. Now every option-row tooltip tracks the cursor, so it reads as attached to the pointer rather than detached under a wide row; the isolate hint keeps its longer 700ms delay, a consumer's own `tooltip` uses the standard delay.
+
 ## 0.3.12 — July 23, 2026
 
 ### Changed

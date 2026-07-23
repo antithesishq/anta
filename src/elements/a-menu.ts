@@ -542,10 +542,13 @@ export class AMenuElement extends HTMLElementBase {
 
 
   /* --- config getters --- */
-  /** A submenu is an `<a-menu>` nested inside an `<a-menu-item>` — derived from
-   *  structure, no `submenu` attribute needed (the parent item is the anchor). */
+  /** A submenu is an `<a-menu>` that is a DIRECT child of an `<a-menu-item>` —
+   *  derived from structure, no `submenu` attribute needed (the parent item is the
+   *  anchor). A menu merely *nested somewhere inside* an item's subtree (a composed
+   *  control — `Select` / `InputDate` — slotted into a flyout) is NOT a submenu: it
+   *  anchors to its own previous sibling and nests as a child of its container. */
   get isSubmenu(): boolean {
-    return !!this.closest('a-menu-item')
+    return !!this.parentElement && isMenuItemEl(this.parentElement)
   }
   get #isContext(): boolean {
     return this.hasAttribute('context')
@@ -575,12 +578,17 @@ export class AMenuElement extends HTMLElementBase {
   /** Root menu: the previous element sibling is the trigger. Submenu: the
    *  enclosing menu item. One deterministic rule per case — no ambiguity. */
   get triggerAnchor(): HTMLElement | null {
-    // Nested in an item → submenu (anchor = that item); otherwise a root menu
-    // (anchor = its previous element sibling).
-    return (
-      (this.closest('a-menu-item') as HTMLElement | null) ??
-      (this.previousElementSibling as HTMLElement | null)
-    )
+    // A DIRECT child of an `<a-menu-item>` is that item's submenu (anchor = the
+    // item). Otherwise it's a root / composed menu whose anchor is its explicit
+    // previous element sibling — e.g. `Select`'s field, `InputDate`'s field.
+    // This holds even when the menu sits deep inside another item's subtree (a
+    // composed control slotted into a flyout): its anchor is still the sibling
+    // control it was authored next to, NOT the enclosing menu-item. (Using
+    // `closest('a-menu-item')` here bound such a menu to the wrong ancestor item,
+    // so it never opened from its real trigger.)
+    const parent = this.parentElement
+    if (parent && isMenuItemEl(parent)) return parent
+    return this.previousElementSibling as HTMLElement | null
   }
 
   /** The focusable element to hand focus back to — the anchor itself if it's
@@ -945,7 +953,18 @@ export class AMenuElement extends HTMLElementBase {
       // close-then-reopen, which would run closeAll() → a spurious
       // statechange('closed') that dismisses a controlled menu instead of moving it.
       const anchor = this.triggerAnchor
-      const container = anchor ? openStack.find((m) => m !== this && m.contains(anchor)) : undefined
+      // The INNERMOST open menu that contains our anchor — walk the stack from the
+      // top so a control nested inside a flyout (which is itself inside the root)
+      // nests on top of the *flyout*, not the root. `find` returns the outermost
+      // (the root also `contains()` the anchor), which would trim away the flyout.
+      let container: AMenuElement | undefined
+      if (anchor)
+        for (let i = openStack.length - 1; i >= 0; i--) {
+          if (openStack[i] !== this && openStack[i].contains(anchor)) {
+            container = openStack[i]
+            break
+          }
+        }
       if (container) {
         const idx = openStack.indexOf(container)
         // Trim everything stacked above the container. Emit a notify-only
@@ -1573,6 +1592,13 @@ export class AMenuElement extends HTMLElementBase {
     // (Esc, ArrowLeft, outside-click, focus leaving on Tab) still close it, and a
     // deeper flyout keeps its ancestors open (they `contains()` it too).
     if (this.#hasKeyboardFocusInside) return
+    // A menu nested inside this flyout is open — a composed control's own popup
+    // (an `InputDate` calendar, a `Select`), or a deeper submenu. The user is
+    // mid-interaction with it, so a mouse hover-away must not collapse this
+    // flyout and take that popup with it. It closes on the explicit paths once
+    // its descendants are gone.
+    if (openStack.some((m) => m !== this && (this.contains(m) || (m.triggerAnchor != null && this.contains(m.triggerAnchor)))))
+      return
     this.cancelCloseTimer()
     this.closeTimer = setTimeout(() => {
       this.closeTimer = undefined

@@ -4,15 +4,13 @@
  *
  * Activation fires on **keyup**, not keydown. This matches the native `<button>`
  * (Space already activates on release), makes activation **cancelable** (move
- * focus between press and release → no fire), and — the reason it's uniform
- * across Enter and Space here — opens a **keydown→keyup gap** so a lazy copy
- * control can refresh its `copy` value between press and release before the write
- * (the keyboard analog of the pointerdown→click gap; see copy-behavior's "Lazy
- * content" note).
+ * focus between press and release → no fire), and opens a **keydown→keyup gap**.
+ * A slotted `<a-copy>` uses that gap for its own lazy pre-request (it runs its
+ * own keydown listener); this module just synthesizes the click on release.
  *
  * keydown: `preventDefault()` (stop Space scrolling the page and a link's own
- * native Enter→click), run `preflight(el)` — the copy pre-request — and arm the
- * release. keyup: `activate(el)` only if the same element is still armed.
+ * native Enter→click) and arm the release. keyup: `activate(el)` only if the
+ * same element is still armed.
  *
  * Idempotency is the caller's job (each guards with its own per-document flag);
  * this just wires one keydown/keyup pair.
@@ -24,8 +22,6 @@ export interface KeyActivation {
   resolve(target: EventTarget | null): HTMLElement | null
   /** Blocked (disabled / loading) — swallow the key without activating. */
   blocked?(el: HTMLElement): boolean
-  /** Runs on keydown, before the release: the lazy copy pre-request. */
-  preflight?(el: HTMLElement): void
   /** Runs on keyup: the actual activation (a synthesized `click()`). */
   activate(el: HTMLElement): void
 }
@@ -43,7 +39,6 @@ export function installKeyActivation(doc: Document, config: KeyActivation): void
       if (!el) return
       e.preventDefault()
       armed = config.blocked?.(el) ? null : el
-      if (armed) config.preflight?.(armed)
     },
     true,
   )

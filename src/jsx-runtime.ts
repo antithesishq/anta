@@ -85,7 +85,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AProgressAttributes, ATextAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACheckboxAttributes, ATooltipAttributes, AInputAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, BaseAttributes } from './general_types'
+import type { AProgressAttributes, ATextAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ATooltipAttributes, AInputAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -116,6 +116,7 @@ export interface AntaIntrinsicElements {
   'a-icon': AIconAttributes
   'a-button': AButtonAttributes
   'a-button-label': BaseAttributes
+  'a-copy': ACopyAttributes
   'a-checkbox': ACheckboxAttributes
   'a-checkbox-label': BaseAttributes
   'a-checkbox-hint': BaseAttributes

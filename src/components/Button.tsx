@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle, roundStyle, roundAttr, wrapLabel, nativeStateChange } from "../anta_helpers"
+import { toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
 
 /** Always-allowed props, independent of content/submit/priority mode. */
 export type BaseButtonProps = {
@@ -66,10 +66,8 @@ export type ContentMode = {
 }
 
 /** Submit axis — anchors (href) don't carry form-submission props; buttons
- *  don't carry anchor props. A link (`href`) also can't be a copy control, so the
- *  copy props live only on the non-link branch (via `CopyMode`) and are `never`
- *  on the link branch — a `<ButtonCopy href=…>` or `<Button href=… copy=…>` is a
- *  type error, not a silently-ignored attribute. */
+ *  don't carry anchor props. (Copy is no longer a Button concern — `ButtonCopy`
+ *  composes a `<a-copy>` child; see `copy-props.ts`.) */
 export type SubmitMode =
   | {
       /** Renders as `<a role="button">` instead of `<a-button>`. */
@@ -84,14 +82,8 @@ export type SubmitMode =
       ping?: string
       type?: never
       form?: never
-      copy?: never
-      copyNode?: never
-      copyUrl?: never
-      copyWithUrl?: never
-      onCopyRequest?: never
-      onCopied?: never
     }
-  | ({
+  | {
       href?: never
       target?: never
       rel?: never
@@ -101,7 +93,7 @@ export type SubmitMode =
       type?: 'button' | 'submit' | 'reset'
       /** Form id when the button isn't a descendant of its form. */
       form?: string
-    } & CopyMode)
+    }
 
 /** Priority axis — `underline` only on `tertiary` / `quaternary`,
  *  `paddingless` only on `quaternary`. */
@@ -127,63 +119,6 @@ export type PriorityMode =
       paddingless?: boolean
     }
 
-/** Copy axis — turns the button into a copy control that writes to the clipboard
- *  on click and flashes a success / failure state (see `<a-button>`'s copy
- *  behavior). **Exactly one** of `copy`, `copyNode`, or `copyUrl` may be set;
- *  the union makes the others `never` in each mode. For the batteries-included
- *  preset, use `ButtonCopy`. */
-export type CopyMode =
-  | {
-      copy?: never
-      copyNode?: never
-      copyUrl?: never
-      copyWithUrl?: never
-      onCopied?: never
-      onCopyRequest?: never
-    }
-  | {
-      /** Text copied to the clipboard on click. */
-      copy: string
-      /** Prefix the copied text with `// URL: <current page URL>`. */
-      copyWithUrl?: boolean
-      /** Compute the copy content lazily. Fires on **pointerdown**; update `copy`
-       *  (a state change) here and the click copies the latest value. The
-       *  pointerdown→click gap lets the update land even when this handler runs
-       *  off the UI thread (a worker-rendered app) — only the serializable `copy`
-       *  string crosses, via the normal re-render. */
-      onCopyRequest?: () => void
-      copyNode?: never
-      copyUrl?: never
-      /** Fires after the copy attempt with whether it succeeded. */
-      onCopied?: (ok: boolean) => void
-    }
-  | {
-      /** Copy a DOM node as rich text instead of a string. `true` copies the
-       *  nearest ancestor marked `data-copy-source`; a string is a CSS selector
-       *  for an ancestor region (`closest`). The copy control is stripped from
-       *  the copied output. */
-      copyNode: boolean | string
-      copy?: never
-      copyUrl?: never
-      copyWithUrl?: never
-      onCopyRequest?: never
-      /** Fires after the copy attempt with whether it succeeded. */
-      onCopied?: (ok: boolean) => void
-    }
-  | {
-      /** Copy the current page URL (`location.href`). */
-      copyUrl: true
-      copy?: never
-      copyNode?: never
-      copyWithUrl?: never
-      onCopyRequest?: never
-      /** Fires after the copy attempt with whether it succeeded. */
-      onCopied?: (ok: boolean) => void
-    }
-
-// `SubmitMode` already carries `CopyMode` on its non-link branch (and `never`s it
-// on the link branch), so copy props are excluded in link mode — don't intersect
-// `CopyMode` again here or the link `never`s would be overridden.
 export type ButtonProps = BaseButtonProps & PriorityMode & ContentMode & SubmitMode & BaseProps
 
 /**
@@ -222,21 +157,11 @@ export const Button = ({
   href,
   type,
   form,
-  copy,
-  copyNode,
-  copyUrl,
-  copyWithUrl,
-  onCopied,
-  onCopyRequest,
   className,
   style,
   children,
   ...rest
 }: ButtonProps) => {
-  // A copy control when any copy prop is set. The leading glyph becomes a stack
-  // (idle / success / failure) the element's `:state()` picks from — see
-  // a-button.css and copy-behavior.ts.
-  const isCopy = copy != null || copyNode != null || copyUrl === true
   // Empty string is "no tone" — same as omitting the prop: neutral base.
   // Don't emit a bare `tone=""` (it matched the custom-tone branch and
   // resolved to a `transparent` source, rendering an invisible button).
@@ -245,12 +170,12 @@ export const Button = ({
   // derivation via the inline custom property (shared helper — see anta_helpers).
   const computedStyle = roundStyle(round, '--button-round', toneStyle(toneAttr, '--button-tone-source', style))
 
-  // Leading icon: a copy control defaults to the `copy` glyph when no icon is
-  // given (ButtonCopy swaps this to check / ✕ on the copy result).
-  const leadingIcon = icon ?? (isCopy ? 'copy' : undefined)
+  // Button draws an icon only when one is passed — it stays agnostic to the copy
+  // feature. `ButtonCopy` is the preset that supplies the `copy` glyph, places it
+  // (leading / trailing), and swaps it to check / ✕ on the result.
   // Icon-only: a leading icon and no text content.
   const isIconOnly =
-    leadingIcon != null && label == null && children == null && iconTrailing == null
+    icon != null && label == null && children == null && iconTrailing == null
 
   const sharedAttrs = {
     // `<a-button>` is a custom element with no implicit ARIA role, so AT would
@@ -281,31 +206,17 @@ export const Button = ({
     'aria-disabled': disabled || loading ? 'true' : undefined,
     'aria-busy': loading ? 'true' : undefined,
     'aria-pressed': selected ? 'true' : undefined,
-    // Icon-only buttons get an accessible name: "Copy" for a copy control (its
-    // glyph carries no text), else the icon shape. Consumer's own `aria-label`
-    // (via ...rest) wins by spread order.
-    'aria-label': isIconOnly ? (isCopy ? 'Copy' : icon) : undefined,
-    // Copy behavior — the element reads these and performs the write itself.
-    copy: copy != null ? copy : undefined,
-    'copy-node': copyNode === true ? '' : typeof copyNode === 'string' ? copyNode : undefined,
-    'copy-url': copyUrl ? '' : undefined,
-    'copy-with-url': copyWithUrl ? '' : undefined,
-    // Marks the control so `copy-node` serialization strips it from the copied
-    // node (a copy button inside the copied region shouldn't paste itself).
-    'data-copy-node-button': copyNode != null && copyNode !== false ? '' : undefined,
-    oncopydone: onCopied
-      ? (e: any) => onCopied(nativeStateChange<{ ok: boolean }>(e).detail?.ok ?? false)
-      : undefined,
-    // Fired on pointerdown for a lazy copy — the consumer updates `copy` here
-    // (a state change) and the click copies the latest value. No payload crosses.
-    oncopyrequest: onCopyRequest ? () => onCopyRequest() : undefined,
+    // Icon-only buttons get an accessible name from the icon shape. Consumer's
+    // own `aria-label` (via ...rest) wins by spread order — that's the channel
+    // ButtonCopy uses to name an icon-only copy button "Copy".
+    'aria-label': isIconOnly ? icon : undefined,
     class: className,
     style: computedStyle,
   } as const
 
   const inner = (
     <>
-      {leadingIcon && <a-icon shape={leadingIcon} aria-hidden="true" />}
+      {icon && <a-icon shape={icon} aria-hidden="true" />}
       {label != null && <a-button-label>{label}</a-button-label>}
       {wrapLabel(children, 'a-button-label')}
       {iconTrailing && <a-icon shape={iconTrailing} aria-hidden="true" />}

@@ -182,40 +182,47 @@ export const SPECS: ComponentSpec[] = [
     id: 'button',
     title: 'Buttons',
     blurb:
-      'Hoisted to --_tone-* inputs. Primary is the source fill at three lightnesses; secondary/tertiary/quaternary share one foreground + alpha-tint set. Anta recomputes every output.',
+      'Primary is the source fill at three lightnesses. Secondary, tertiary, and quaternary share one foreground; secondary and tertiary share an alpha-tinted fill (tertiary a step softer, transparent at rest), quaternary has none. Secondary’s label subtracts an l-shift to read a step stronger than its tint.',
     vars: [
-      { key: 'plRest', label: 'L rest', light: 0.5, dark: 0.45, ...v3() },
-      { key: 'plHover', label: 'L hover', light: 0.45, dark: 0.5, ...v3() },
-      { key: 'plActive', label: 'L active', light: 0.4, dark: 0.57, ...v3() },
-      { key: 'fgL', label: 'fg L', light: 0.46, dark: 0.78, ...v3() },
-      { key: 'fgStrongL', label: 'fg L hover', light: 0.4, dark: 0.85, ...v3() },
-      { key: 'fgC', label: 'fg C', light: 0.17, dark: 0.11, ...v3(0, 0.4) },
+      { key: 'plRest', label: 'L rest', light: 0.51, dark: 0.4, neutral: { light: 0.5 }, ...v3() },
+      { key: 'plHover', label: 'L hover', light: 0.46, dark: 0.44, neutral: { light: 0.45 }, ...v3() },
+      { key: 'plActive', label: 'L active', light: 0.41, dark: 0.48, neutral: { light: 0.4 }, ...v3() },
+      { key: 'plC', label: 'fill C', light: 0.17, dark: 0.16, neutral: { light: 0.02, dark: 0.015 }, ...v3(0, 0.4), tip: 'One chroma for the primary fill across rest/hover/active. Neutral pins it near-grey; toned versions set the saturation here instead of inheriting the seed’s own chroma.' },
+      { key: 'fgL', label: 'fg L', light: 0.46, dark: 0.86, ...v3() },
+      { key: 'fgStrongL', label: 'fg L hover', light: 0.4, dark: 0.86, ...v3() },
+      { key: 'fgC', label: 'fg C', light: 0.17, dark: 0.13, neutral: { light: 0.008, dark: 0.015 }, ...v3(0, 0.4) },
       { key: 'fgShift', label: 'fg l-shift', light: 0.05, dark: 0, ...v3(0, 0.3), tip: 'Subtracted from the secondary label’s OKLCH lightness so it reads one step stronger than the tint behind it.' },
-      { key: 'bgL', label: 'tint L', light: 0.54, dark: 0.58, ...v3() },
-      { key: 'bgC', label: 'tint C', light: 0.16, dark: 0.16, ...v3(0, 0.4) },
-      { key: 'aRest', label: 'α rest', light: 0.1, dark: 0.23, ...v3() },
-      { key: 'aHover', label: 'α hover', light: 0.15, dark: 0.28, ...v3() },
-      { key: 'aActive', label: 'α active', light: 0.2, dark: 0.33, ...v3() },
+      { key: 'bgL', label: 'tint L', light: 0.54, dark: 0.58, neutral: { dark: 0.44 }, ...v3() },
+      { key: 'bgC', label: 'tint C', light: 0.17, dark: 0.16, neutral: { light: 0.03, dark: 0.01 }, ...v3(0, 0.4) },
+      { key: 'aRest', label: 'α rest', light: 0.1, dark: 0.215, neutral: { dark: 0.24 }, ...v3() },
+      { key: 'aHover', label: 'α hover', light: 0.15, dark: 0.29, neutral: { dark: 0.34 }, ...v3() },
+      { key: 'aActive', label: 'α active', light: 0.2, dark: 0.34, neutral: { dark: 0.44 }, ...v3() },
+      { key: 'quatHoverL', label: 'hover L', light: 0.4, dark: 0.86, ...v3(), tip: 'Quaternary hover lightness, detached from tertiary — its own value, not the shared secondary fg-hover. Rest/hover/active all carry 0.8 alpha.' },
     ],
     groups: [
-      { label: 'Primary', keys: ['plRest', 'plHover', 'plActive'] },
+      { label: 'Primary', keys: ['plRest', 'plHover', 'plActive', 'plC'] },
       { label: 'Secondary', keys: ['fgL', 'fgStrongL', 'fgC', 'fgShift', 'bgL', 'bgC', 'aRest', 'aHover', 'aActive'] },
       { label: 'Tertiary', keys: ['fgL', 'fgStrongL', 'fgC', 'bgL', 'bgC', 'aRest', 'aHover'], note: 'Reuses the secondary foreground + tint (no separate Anta constant).' },
-      { label: 'Quaternary', keys: ['fgL', 'fgStrongL', 'fgC'], note: 'Reuses the secondary foreground; no fill.' },
+      { label: 'Quaternary', keys: ['fgL', 'fgC', 'quatHoverL'], note: 'Rest (and active) is the tertiary foreground at 0.8 alpha; hover uses its own detached lightness. No fill.' },
     ],
-    css: (sel, _seed, v) => `${sel} {
-  --_tone-primary-l-rest: ${v.plRest};
-  --_tone-primary-l-hover: ${v.plHover};
-  --_tone-primary-l-active: ${v.plActive};
-  --_tone-fg-l: ${v.fgL};
-  --_tone-fg-strong-l: ${v.fgStrongL};
-  --_tone-fg-c: ${v.fgC};
+    css: (sel, seed, v) => `${sel} {
+  --button-bg-primary-rest:   ${ok(seed, v.plRest, v.plC)};
+  --button-bg-primary-hover:  ${ok(seed, v.plHover, v.plC)};
+  --button-bg-primary-active: ${ok(seed, v.plActive, v.plC)};
+
+  --button-fg-secondary-rest:   ${ok(seed, v.fgL, v.fgC)};
+  --button-fg-secondary-hover:  ${ok(seed, v.fgStrongL, v.fgC)};
+  --button-fg-tertiary-rest:    ${ok(seed, v.fgL, v.fgC)};
+  --button-fg-tertiary-hover:   ${ok(seed, v.fgStrongL, v.fgC)};
+  --button-fg-quaternary-rest:  oklch(from ${seed} ${v.fgL} ${v.fgC} h / 0.8);
+  --button-fg-quaternary-hover: oklch(from ${seed} ${v.quatHoverL} ${v.fgC} h / 0.8);
   --button-fg-secondary-l-shift: ${v.fgShift};
-  --_tone-bg-l: ${v.bgL};
-  --_tone-bg-c: ${v.bgC};
-  --_tone-bg-a-rest: ${v.aRest};
-  --_tone-bg-a-hover: ${v.aHover};
-  --_tone-bg-a-active: ${v.aActive};
+
+  --button-bg-secondary-rest:   oklch(from ${seed} ${v.bgL} ${v.bgC} h / ${v.aRest});
+  --button-bg-secondary-hover:  oklch(from ${seed} ${v.bgL} ${v.bgC} h / ${v.aHover});
+  --button-bg-secondary-active: oklch(from ${seed} ${v.bgL} ${v.bgC} h / ${v.aActive});
+  --button-bg-tertiary-hover:   oklch(from ${seed} ${v.bgL} ${v.bgC} h / ${v.aRest});
+  --button-bg-tertiary-active:  oklch(from ${seed} ${v.bgL} ${v.bgC} h / ${v.aHover});
 }`,
   },
 
@@ -223,9 +230,10 @@ export const SPECS: ComponentSpec[] = [
     id: 'tag',
     title: 'Tags',
     blurb:
-      'Hoisted to --_tag-* inputs. Primary is a solid fill; secondary an alpha tint of the tint hue; tertiary an outline in the deep text hue. Alphas set each look.',
+      'Primary is a solid fill; secondary an alpha tint of the tint hue; tertiary an outline in the deep foreground hue. The tint, solid fill, and edge each resolve from the seed; alphas set each priority’s strength.',
     vars: [
       { key: 'bgSolidL', label: 'solid L', light: 0.5, dark: 0.45, ...v3() },
+      { key: 'bgSolidC', label: 'solid C', light: 0.16, dark: 0.16, ...v3(0, 0.4), tip: 'Chroma of the primary solid fill, independent of the secondary tint’s C. Neutral pins it near-grey.' },
       { key: 'tintL', label: 'tint L', light: 0.54, dark: 0.58, ...v3() },
       { key: 'tintC', label: 'tint C', light: 0.16, dark: 0.16, ...v3(0, 0.4) },
       { key: 'bgAlpha', label: 'fill α %', light: 10, dark: 20, ...pct },
@@ -235,20 +243,20 @@ export const SPECS: ComponentSpec[] = [
       { key: 'edgeAlpha', label: 'edge α %', light: 20, dark: 30, ...pct },
     ],
     groups: [
-      { label: 'Primary', keys: ['bgSolidL'], note: 'Solid fill; white label.' },
+      { label: 'Primary', keys: ['bgSolidL', 'bgSolidC'], note: 'Solid fill; white label.' },
       { label: 'Secondary', keys: ['tintL', 'tintC', 'bgAlpha', 'borderAlpha'] },
-      { label: 'Tertiary', keys: ['textL', 'textC', 'edgeAlpha'], note: 'Outline in the deep text hue.' },
+      { label: 'Tertiary', keys: ['textL', 'textC', 'edgeAlpha'], note: 'Outline in the deep foreground hue.' },
     ],
-    css: (sel, _seed, v) => `${sel} {
-  --_tag-tint-l: ${v.tintL};
-  --_tag-tint-c: ${v.tintC};
-  --_tag-bg-solid-l: ${v.bgSolidL};
-  --_tag-text-l: ${v.textL};
-  --_tag-text-c: ${v.textC};
-  --_tag-bg-alpha: ${v.bgAlpha}%;
+    css: (sel, seed, v) => `${sel} {
+  --tag-tint:     ${ok(seed, v.tintL, v.tintC)};
+  --tag-bg-solid: ${ok(seed, v.bgSolidL, v.bgSolidC)};
+  --tag-edge:     ${ok(seed, v.textL, v.textC)};
+  --tag-text:     oklch(from ${seed} ${v.textL} ${v.textC} h / 0.8);
+  --_tag-bg-alpha:     ${v.bgAlpha}%;
   --_tag-border-alpha: ${v.borderAlpha}%;
-  --_tag-edge-alpha: ${v.edgeAlpha}%;
-}`,
+  --_tag-edge-alpha:   ${v.edgeAlpha}%;
+}
+${sel}[priority="primary"] { --tag-text: #fff; }`,
   },
 
   {

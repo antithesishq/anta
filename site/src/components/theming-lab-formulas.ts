@@ -233,14 +233,14 @@ export const SPECS: ComponentSpec[] = [
     blurb:
       'Primary is a solid fill; secondary an alpha tint of the tint hue; tertiary an outline in the deep foreground hue. The tint, solid fill, and edge each resolve from the seed; alphas set each priority’s strength.',
     vars: [
-      { key: 'bgSolidL', label: 'solid L', light: 0.5, dark: 0.45, ...v3() },
-      { key: 'bgSolidC', label: 'solid C', light: 0.16, dark: 0.16, ...v3(0, 0.4), tip: 'Chroma of the primary solid fill, independent of the secondary tint’s C. Neutral pins it near-grey.' },
-      { key: 'tintL', label: 'tint L', light: 0.54, dark: 0.58, ...v3() },
-      { key: 'tintC', label: 'tint C', light: 0.16, dark: 0.16, ...v3(0, 0.4) },
+      { key: 'bgSolidL', label: 'solid L', light: 0.58, dark: 0.46, neutral: { light: 0.55, dark: 0.48 }, ...v3() },
+      { key: 'bgSolidC', label: 'solid C', light: 0.175, dark: 0.165, neutral: { light: 0.015, dark: 0.015 }, ...v3(0, 0.4), tip: 'Chroma of the primary solid fill, independent of the secondary tint’s C. Neutral pins it near-grey.' },
+      { key: 'tintL', label: 'tint L', light: 0.57, dark: 0.63, neutral: { light: 0.55 }, ...v3() },
+      { key: 'tintC', label: 'tint C', light: 0.16, dark: 0.17, neutral: { light: 0.03, dark: 0.04 }, ...v3(0, 0.4) },
       { key: 'bgAlpha', label: 'fill α %', light: 10, dark: 20, ...pct },
       { key: 'borderAlpha', label: 'border α %', light: 15, dark: 25, ...pct },
-      { key: 'textL', label: 'text L', light: 0.4, dark: 0.75, ...v3() },
-      { key: 'textC', label: 'text C', light: 0.15, dark: 0.11, ...v3(0, 0.4) },
+      { key: 'textL', label: 'text L', light: 0.34, dark: 0.75, ...v3() },
+      { key: 'textC', label: 'text C', light: 0.15, dark: 0.11, neutral: { light: 0.02 }, ...v3(0, 0.4) },
       { key: 'edgeAlpha', label: 'edge α %', light: 20, dark: 30, ...pct },
     ],
     groups: [
@@ -264,16 +264,16 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'tabs',
     title: 'Tabs',
     blurb:
-      'The strip’s primary/secondary/tertiary differ structurally (filled track vs subtle vs underline); the tone tokens below are shared across all three. Grouped by strip part.',
+      'The strip’s primary/secondary/tertiary differ structurally (filled track vs subtle vs underline); the tone tokens below are shared across all three. Label colours track the global --text-* role scale — rest is --text-3, hover and selected --text-1, tertiary hover --text-2 — themed per tone, so the label/rest L·C here are generative stand-ins for those tokens. Grouped by strip part.',
     vars: [
-      { key: 'selTextL', label: 'label L', light: 0.38, dark: 0.83, ...v3() },
+      { key: 'selTextL', label: 'label L', light: 0.35, dark: 0.86, ...v3() },
       { key: 'selTextC', label: 'label C', light: 0.13, dark: 0.1, ...v3(0, 0.4) },
       { key: 'selBorderL', label: 'ring L', light: 0.8, dark: 0.4, ...v3() },
       { key: 'selBorderC', label: 'ring C', light: 0.09, dark: 0.11, ...v3(0, 0.4) },
-      { key: 'restL', label: 'rest L', light: 0.45, dark: 0.76, ...v3() },
+      { key: 'restL', label: 'rest L', light: 0.4, dark: 0.79, ...v3() },
       { key: 'restC', label: 'rest C', light: 0.13, dark: 0.11, ...v3(0, 0.4) },
-      { key: 'trackBorderL', label: 'border L', light: 0.86, dark: 0.33, ...v3() },
-      { key: 'trackBorderC', label: 'border C', light: 0.06, dark: 0.08, ...v3(0, 0.4) },
+      { key: 'trackBorderL', label: 'border L', light: 0.9, dark: 0.26, ...v3() },
+      { key: 'trackBorderC', label: 'border C', light: 0.045, dark: 0.055, ...v3(0, 0.4) },
       { key: 'trackL', label: 'fill L', light: 0.55, dark: 0.8, ...v3() },
       { key: 'trackC', label: 'fill C', light: 0.14, dark: 0.12, ...v3(0, 0.4) },
       { key: 'trackA', label: 'track α', light: 0.06, dark: 0.07, ...v3() },
@@ -286,7 +286,7 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     css: (sel, seed, v) => `${sel} {
   --tab-selected-text: ${ok(seed, v.selTextL, v.selTextC)};
   --tab-text-2: ${ok(seed, v.restL, v.restC)};
-  --tab-rest-tone: ${ok(seed, v.restL, v.restC)};
+  --tab-rest-tone: oklch(from ${seed} ${v.restL} ${v.restC} h / 0.8);
   --tabs-track-border: ${ok(seed, v.trackBorderL, v.trackBorderC)};
   --tab-selected-border: ${ok(seed, v.selBorderL, v.selBorderC)};
   --tabs-track-bg: oklch(from ${seed} ${v.trackL} ${v.trackC} h / ${v.trackA});
@@ -388,18 +388,16 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
       'A custom tone colours the item label, icon, and hint from the source hue; the selected row holds a persistent tint of that colour. Uses the source chroma, so neutral stays grey.',
     vars: [
       { key: 'colorL', label: 'text L', light: 0.45, dark: 0.78, ...v3() },
-      { key: 'hintL', label: 'hint L', light: 0.55, dark: 0.68, ...v3() },
-      { key: 'hintCScale', label: 'hint C scale', light: 0.85, dark: 0.85, min: 0, max: 1, step: 0.05 },
       { key: 'selectedA', label: 'selected α %', light: 8, dark: 8, ...pct },
     ],
     groups: [
-      { label: 'Text', keys: ['colorL', 'hintL', 'hintCScale'] },
+      { label: 'Text', keys: ['colorL'], note: 'Label at full opacity; the hint reuses it at 0.8 alpha (--text-3 = --text-2 @ 0.8α).' },
       { label: 'Selected', keys: ['selectedA'], note: 'Tint held on the selected row — a % of the item colour.' },
     ],
     css: (sel, seed, v) => `${sel} {
   --menu-item-color: ${ok(seed, v.colorL, 'c')};
   --menu-item-icon-color: var(--menu-item-color);
-  --menu-item-hint-color: ${ok(seed, v.hintL, `calc(c * ${v.hintCScale})`)};
+  --menu-item-hint-color: oklch(from ${seed} ${v.colorL} c h / 0.8);
   --menu-item-selected: ${v.selectedA}%;
 }`,
   },

@@ -183,12 +183,12 @@
     /* No --*-<tone> tokens to lean on, so derive each from the literal colour's HUE at the
        fixed L/C the named tone tokens use at that step (measured average across the five
        named tones in oklch) — so a custom colour gets the same treatment a named tone would.
-       text-3 (rest) == text-2, matching the named token scale. */
+       text-3 (rest) = text-2 at 0.8 alpha, matching the named token scale (--text-3 = --text-2 @ 0.8α). */
     --tabs-tone-source: attr(tone type(<color>), #635b65);
     --tab-selected-text: oklch(from var(--tabs-tone-source) 0.38 0.13 h);
     --tab-text-2: oklch(from var(--tabs-tone-source) 0.45 0.13 h);
-    --tab-rest-tone: oklch(from var(--tabs-tone-source) 0.45 0.13 h);
-    --tabs-track-border: oklch(from var(--tabs-tone-source) 0.86 0.06 h);
+    --tab-rest-tone: oklch(from var(--tabs-tone-source) 0.45 0.13 h / 0.8);
+    --tabs-track-border: oklch(from var(--tabs-tone-source) 0.9 0.045 h);
     --tab-selected-border: oklch(from var(--tabs-tone-source) 0.8 0.09 h);
   }
 
@@ -485,8 +485,8 @@
     /* Same step L/C as the named -<tone> tokens' dark values (measured average). */
     --tab-selected-text: oklch(from var(--tabs-tone-source) 0.83 0.1 h);
     --tab-text-2: oklch(from var(--tabs-tone-source) 0.76 0.11 h);
-    --tab-rest-tone: oklch(from var(--tabs-tone-source) 0.76 0.11 h);
-    --tabs-track-border: oklch(from var(--tabs-tone-source) 0.33 0.08 h);
+    --tab-rest-tone: oklch(from var(--tabs-tone-source) 0.76 0.11 h / 0.8);
+    --tabs-track-border: oklch(from var(--tabs-tone-source) 0.26 0.055 h);
     --tab-selected-border: oklch(from var(--tabs-tone-source) 0.4 0.11 h);
   }
 }

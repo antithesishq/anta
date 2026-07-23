@@ -7,7 +7,7 @@ import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 import selectFacetedDemoCode from './select-faceted.demo.ts'
-import { SelectFacetedBasicDemo, SelectFacetedRecencyDemo, SelectFacetedDurationDemo, SelectFacetedDateDemo } from '../components/SelectFacetedDemos'
+import { SelectFacetedBasicDemo, SelectFacetedRecencyDemo, SelectFacetedDurationDemo, SelectFacetedDateDemo, SelectFacetedRecencyMenuDemo } from '../components/SelectFacetedDemos'
 
 # Faceted select
 
@@ -311,6 +311,55 @@ const recency: SelectFacet = {
 
 <SelectFaceted facets={[recency]} value={value} onValueChange={setValue} />
 // value.recency is { preset: 'last14' } or { from, to } — apply resolveRange(value.recency) to your rows
+```
+
+#### Menu-item presets, calendar on the right
+
+The same filter with the presets as `MenuItem` rows (a check marks the active one) and
+a single **Custom day** that reveals one `InputDate`, its calendar opening to the
+**right** via `placement="right-start"`. That helps when the trigger sits on the left of
+a wide layout. `placement` (and `offset`) forward to the calendar's `Menu`; `right` /
+`left` are new alongside the existing `top` / `bottom`.
+
+<Preview background="var(--bg-base)">
+  <SelectFacetedRecencyMenuDemo client:load />
+</Preview>
+
+```tsx folded
+type Recency = { preset: 'today' | 'yesterday' | 'last14' | 'last30' } | { day: string }
+
+const recency: SelectFacetCustom<Recency> = {
+  key: 'recency',
+  label: 'Recency',
+  kind: 'custom',
+  icon: 'calendar',
+  summary: (v) => ('preset' in v ? PRESET_LABELS[v.preset] : v.day || 'Custom day'),
+  render: ({ value, onChange }) => {
+    const mode = value == null ? '' : 'preset' in value ? value.preset : 'custom'
+    const day = value && 'day' in value ? value.day : ''
+    return (
+      <>
+        {DAY_PRESETS.map((p) => (        // Today / Yesterday / Last 14 / Last 30 / Custom day
+          <MenuItem
+            key={p.value}
+            label={p.label}
+            selectionIndicator="check"
+            selected={mode === p.value}
+            data-menu-open
+            onSelect={() => onChange(p.value === 'custom' ? { day } : { preset: p.value })}
+          />
+        ))}
+        {mode === 'custom' && (
+          <div data-menu-open style={{ padding: 8 }}>
+            {/* opens the calendar to the right of the field */}
+            <InputDate size="small" label="Day" placement="right-start" value={day}
+              onValueChange={(d) => onChange({ day: d })} />
+          </div>
+        )}
+      </>
+    )
+  },
+}
 ```
 
 <Disclosure title="Component props" open>

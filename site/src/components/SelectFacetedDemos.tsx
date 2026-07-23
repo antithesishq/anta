@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { SelectFaceted, Select, Input, Button, RadioGroup, InputDate, Calendar } from '@antadesign/anta'
+import { SelectFaceted, Select, Input, Button, RadioGroup, InputDate, Calendar, MenuItem } from '@antadesign/anta'
 import type { SelectFacet } from '@antadesign/anta'
 
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
@@ -287,7 +287,11 @@ const DURATION_FACETS: SelectFacet[] = [
           placeholder="seconds"
           style={{ width: '120px' }}
           value={value != null ? String(value) : ''}
-          onInput={(e: any) => onChange(Number(e.currentTarget.value) || undefined)}
+          onInput={(e: any) => {
+            const raw = e.currentTarget.value
+            const n = Number(raw)
+            onChange(raw === '' || Number.isNaN(n) ? undefined : n) // keep a real 0
+          }}
         />
       </div>
     ),
@@ -347,6 +351,79 @@ export function SelectFacetedDateDemo() {
       <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
         {since ? `Created after ${since.toLocaleDateString()}` : 'No date filter'}
       </span>
+    </div>
+  )
+}
+
+// --- Recency, menu-item variant: presets as MenuItems, plus a single "Custom day"
+// whose InputDate calendar opens to the right (placement="right-start").
+
+type RecencyDay = { preset: 'today' | 'yesterday' | 'last14' | 'last30' } | { day: string }
+
+const DAY_PRESETS = [
+  { value: 'today', label: 'Today' },
+  { value: 'yesterday', label: 'Yesterday' },
+  { value: 'last14', label: 'Last 14 days' },
+  { value: 'last30', label: 'Last 30 days' },
+  { value: 'custom', label: 'Custom day' },
+]
+
+const RECENCY_MENU_FACETS: SelectFacet[] = [
+  {
+    key: 'recency',
+    label: 'Recency',
+    kind: 'custom',
+    icon: 'calendar',
+    summary: (v: any) => ('preset' in v ? PRESET_LABELS[v.preset] : v.day || 'Custom day'),
+    render: ({ value, onChange }: any) => {
+      const v = value as RecencyDay | undefined
+      const mode = v == null ? '' : 'preset' in v ? v.preset : 'custom'
+      const day = v && 'day' in v ? v.day : ''
+      return (
+        <>
+          {DAY_PRESETS.map((p) => (
+            <MenuItem
+              key={p.value}
+              label={p.label}
+              selectionIndicator="check"
+              selected={mode === p.value}
+              data-menu-open=""
+              onSelect={() => onChange(p.value === 'custom' ? (v && 'day' in v ? v : { day: '' }) : { preset: p.value })}
+            />
+          ))}
+          {mode === 'custom' && (
+            <div data-menu-open="" style={{ padding: '8px' }}>
+              {/* placement="right-start" opens the calendar to the right of the field */}
+              <InputDate
+                size="small"
+                label="Day"
+                placement="right-start"
+                value={day}
+                onValueChange={(d: string) => onChange({ day: d })}
+              />
+            </div>
+          )}
+        </>
+      )
+    },
+  },
+]
+
+export function SelectFacetedRecencyMenuDemo() {
+  useElements()
+  const [value, setValue] = useState<Record<string, unknown>>({ recency: { preset: 'last14' } })
+  const v = value.recency as RecencyDay | undefined
+  let readout = 'No recency filter'
+  if (v && 'preset' in v) {
+    const r = resolveRange({ preset: v.preset } as Recency)
+    readout = `Filtering ${r.from} → ${r.to}`
+  } else if (v && 'day' in v) {
+    readout = v.day ? `On ${v.day}` : 'Pick a day'
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start', width: '100%' }}>
+      <SelectFaceted facets={RECENCY_MENU_FACETS} value={value} onValueChange={setValue} />
+      <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>{readout}</span>
     </div>
   )
 }

@@ -31,7 +31,9 @@ const SELF_ACTIVATING =
 const EDITABLE_FIELD =
   'input:not([readonly]), textarea:not([readonly]), a-input:not([readonly]), a-input-time:not([readonly])'
 
-type Placement = 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'bottom' | 'top'
+type Placement =
+  | 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'bottom' | 'top'
+  | 'right-start' | 'right-end' | 'left-start' | 'left-end' | 'right' | 'left'
 
 /** `statechange` event detail (see STATEFUL-COMPONENTS.md). `next` is the
  *  requested state, `prev` the current one — both in the `'open'|'closed'`
@@ -327,6 +329,9 @@ export class AMenuElement extends HTMLElementBase {
   // (filtering changes height) keeps this side rather than re-deciding — a shrunk
   // menu shouldn't hop back under the trigger.
   private _flippedTop: boolean | null = null
+  // The horizontal side chosen at open for a `right`/`left` placement (true =
+  // flipped to the left of the anchor). Same reanchor-stability role as `_flippedTop`.
+  private _flippedSide: boolean | null = null
 
   constructor() {
     super()
@@ -569,7 +574,9 @@ export class AMenuElement extends HTMLElementBase {
     const p = this.getAttribute('placement')
     if (
       p === 'bottom-end' || p === 'top-start' || p === 'top-end' ||
-      p === 'bottom' || p === 'top'
+      p === 'bottom' || p === 'top' ||
+      p === 'right-start' || p === 'right-end' || p === 'left-start' ||
+      p === 'left-end' || p === 'right' || p === 'left'
     )
       return p
     return 'bottom-start'
@@ -1054,6 +1061,7 @@ export class AMenuElement extends HTMLElementBase {
     this.comboObserver = undefined
     this.setActive(null)
     this._flippedTop = null // re-decide the side on the next open
+    this._flippedSide = null
     const idx = openStack.indexOf(this)
     if (idx === -1) {
       if (this._shown) this._doHide()
@@ -1174,46 +1182,74 @@ export class AMenuElement extends HTMLElementBase {
         if (this.hasAttribute('autowidth')) surface.style.removeProperty('--_anchor-width')
         else surface.style.setProperty('--_anchor-width', `${Math.ceil(a.width)}px`)
         const p = this.#placement
-        const spaceBelow = vh - a.bottom - 2 * MARGIN
-        const spaceAbove = a.top - 2 * MARGIN
 
-        // Decide the vertical side: honor the placement, flip if the preferred
-        // side lacks room and the other side has more.
-        let onTop = p.startsWith('top')
-        // The body scrolls (not the surface), so a capped surface no longer reports
-        // its natural height. Drop the cap, read the full height, then re-cap below.
-        // Synchronous, so the unconstrained layout never paints.
-        surface.style.maxHeight = ''
-        const natural = surface.scrollHeight
-        if (reanchor && this._flippedTop !== null) {
-          // Keep the side chosen at open — don't let a shrunk (filtered) menu hop
-          // back under the trigger just because it now fits there.
-          onTop = this._flippedTop
+        if (p.startsWith('right') || p.startsWith('left')) {
+          // Place BESIDE the anchor (primary axis horizontal, cross axis vertical),
+          // like a submenu flyout. Flip to the other side when the preferred one
+          // lacks room and the other has more. Cross axis: `-start` top-aligns to the
+          // anchor, `-end` bottom-aligns, no suffix centers.
+          surface.style.removeProperty('--_anchor-width') // a side menu sizes to content
+          surface.style.maxHeight = `${Math.max(MIN_HEIGHT, vh - 2 * MARGIN)}px`
+          const box = surface.getBoundingClientRect()
+          const spaceRight = vw - a.right - 2 * MARGIN
+          const spaceLeft = a.left - 2 * MARGIN
+          let onLeft = p.startsWith('left')
+          if (reanchor && this._flippedSide !== null) onLeft = this._flippedSide
+          else if (onLeft && spaceLeft < box.width && spaceRight > spaceLeft) onLeft = false
+          else if (!onLeft && spaceRight < box.width && spaceLeft > spaceRight) onLeft = true
+          this._flippedSide = onLeft
+
+          left = onLeft ? a.left - box.width - this.#offset : a.right + this.#offset
+          left = Math.max(MARGIN, Math.min(left, vw - box.width - MARGIN))
+          const valign = p.endsWith('end') ? 'end' : p.endsWith('start') ? 'start' : 'center'
+          top =
+            valign === 'center' ? a.top + a.height / 2 - box.height / 2
+            : valign === 'end' ? a.bottom - box.height
+            : a.top
+          if (top + box.height > vh - MARGIN) top = vh - box.height - MARGIN
+          top = Math.max(MARGIN, top)
         } else {
-          if (onTop && spaceAbove < natural && spaceBelow > spaceAbove) onTop = false
-          else if (!onTop && spaceBelow < natural && spaceAbove > spaceBelow) onTop = true
+          const spaceBelow = vh - a.bottom - 2 * MARGIN
+          const spaceAbove = a.top - 2 * MARGIN
+
+          // Decide the vertical side: honor the placement, flip if the preferred
+          // side lacks room and the other side has more.
+          let onTop = p.startsWith('top')
+          // The body scrolls (not the surface), so a capped surface no longer reports
+          // its natural height. Drop the cap, read the full height, then re-cap below.
+          // Synchronous, so the unconstrained layout never paints.
+          surface.style.maxHeight = ''
+          const natural = surface.scrollHeight
+          if (reanchor && this._flippedTop !== null) {
+            // Keep the side chosen at open — don't let a shrunk (filtered) menu hop
+            // back under the trigger just because it now fits there.
+            onTop = this._flippedTop
+          } else {
+            if (onTop && spaceAbove < natural && spaceBelow > spaceAbove) onTop = false
+            else if (!onTop && spaceBelow < natural && spaceAbove > spaceBelow) onTop = true
+          }
+          this._flippedTop = onTop
+
+          // Cap the surface to the chosen side's space (it scrolls if taller).
+          const space = onTop ? spaceAbove : spaceBelow
+          surface.style.maxHeight = `${Math.max(MIN_HEIGHT, Math.floor(space))}px`
+
+          const box = surface.getBoundingClientRect()
+          // Cross axis: align the surface's own edge to the trigger's — `-start`
+          // left-to-left, `-end` right-to-right, and no suffix (`bottom` / `top`)
+          // centers the menu on the trigger. The box edge meets the trigger edge
+          // (no padding compensation).
+          const align = p.endsWith('end') ? 'end' : p.endsWith('start') ? 'start' : 'center'
+          left =
+            align === 'center' ? a.left + a.width / 2 - box.width / 2
+            : align === 'end' ? a.right - box.width
+            : a.left
+          if (left + box.width > vw - MARGIN) left = vw - box.width - MARGIN
+          left = Math.max(MARGIN, left)
+
+          top = onTop ? a.top - box.height - this.#offset : a.bottom + this.#offset
+          top = Math.max(MARGIN, top)
         }
-        this._flippedTop = onTop
-
-        // Cap the surface to the chosen side's space (it scrolls if taller).
-        const space = onTop ? spaceAbove : spaceBelow
-        surface.style.maxHeight = `${Math.max(MIN_HEIGHT, Math.floor(space))}px`
-
-        const box = surface.getBoundingClientRect()
-        // Cross axis: align the surface's own edge to the trigger's — `-start`
-        // left-to-left, `-end` right-to-right, and no suffix (`bottom` / `top`)
-        // centers the menu on the trigger. The box edge meets the trigger edge
-        // (no padding compensation).
-        const align = p.endsWith('end') ? 'end' : p.endsWith('start') ? 'start' : 'center'
-        left =
-          align === 'center' ? a.left + a.width / 2 - box.width / 2
-          : align === 'end' ? a.right - box.width
-          : a.left
-        if (left + box.width > vw - MARGIN) left = vw - box.width - MARGIN
-        left = Math.max(MARGIN, left)
-
-        top = onTop ? a.top - box.height - this.#offset : a.bottom + this.#offset
-        top = Math.max(MARGIN, top)
       }
 
       surface.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`
@@ -1258,7 +1294,7 @@ export class AMenuElement extends HTMLElementBase {
     for (const node of e.composedPath()) {
       if (node === this.surface) break
       if (node instanceof AMenuItemElement) {
-        if (!node.hasAttribute('disabled') && !node.querySelector('a-menu') && node.closest('a-menu') === this) {
+        if (!node.hasAttribute('disabled') && !node.querySelector(':scope > a-menu') && node.closest('a-menu') === this) {
           node.dispatchEvent(
             new MouseEvent('menuselect', {
               bubbles: false,
@@ -1287,11 +1323,13 @@ export class AMenuElement extends HTMLElementBase {
           return
         }
         // Submenu parent → its own handler opens the submenu; don't close.
-        // Detected STRUCTURALLY (a nested `<a-menu>`), matching `isSubmenu` —
-        // not the `submenu` attribute, which the wrapper only emits when the
-        // consumer passes `submenu` (so a bare nested `<Menu>` would otherwise
-        // open then immediately get dismissed by closeSystem here).
-        if (node.querySelector('a-menu')) return
+        // Detected structurally by a DIRECT-child `<a-menu>` (matching `isSubmenu`),
+        // not the `submenu` attribute, which the wrapper only emits when the consumer
+        // passes `submenu` (so a bare nested `<Menu>` would otherwise open then get
+        // dismissed by closeSystem here). Direct-child (`:scope >`) so a composed
+        // control slotted deeper (a `Select` / `InputDate` with its own menu) is a
+        // normal selectable/plain node, not mistaken for a submenu parent.
+        if (node.querySelector(':scope > a-menu')) return
         return this.closeSystem(e)
       }
 
@@ -1426,11 +1464,12 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   private submenuOf(item: HTMLElement | null): AMenuElement | null {
-    // Structural detection (a nested `<a-menu>`), matching `isSubmenu` — so
-    // ArrowRight opens the flyout whether or not the `submenu` attribute is set
-    // (the wrapper only emits it when the consumer passes `submenu`).
+    // A DIRECT-child `<a-menu>` (matching `isSubmenu`), so ArrowRight opens the flyout
+    // whether or not the `submenu` attribute is set (the wrapper only emits it when the
+    // consumer passes `submenu`). Direct-child so a composed control slotted deeper (a
+    // `Select` / `InputDate` with its own menu) isn't opened as if it were a submenu.
     if (!item || !(item instanceof AMenuItemElement)) return null
-    return item.querySelector('a-menu') as AMenuElement | null
+    return item.querySelector(':scope > a-menu') as AMenuElement | null
   }
 
   private typeahead(ch: string, items: HTMLElement[]) {

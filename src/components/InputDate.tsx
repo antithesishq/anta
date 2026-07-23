@@ -20,7 +20,7 @@ import {
   usesHour12,
 } from '../calendar-core'
 import { Input } from './Input'
-import { Menu } from './Menu'
+import { Menu, type MenuProps } from './Menu'
 import { Calendar } from './Calendar'
 import { Button } from './Button'
 import { Icon } from './Icon'
@@ -71,6 +71,13 @@ export interface InputDateProps extends Omit<BaseProps, 'children'> {
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Round the field corners — `true` for fully round, or a number / CSS length. */
   round?: boolean | number | string
+  /** Preferred placement of the calendar menu relative to the field. Same values as
+   *  `Menu`; it auto-flips and clamps when space runs out.
+   *  @defaultValue bottom-start */
+  placement?: MenuProps['placement']
+  /** Gap in pixels between the field and the calendar menu.
+   *  @defaultValue 4 */
+  offset?: number
   /** Show a clear button once the field has a value. */
   clearable?: boolean
   /** Leading icon at the start of the field — the calendar affordance. Pass
@@ -130,6 +137,8 @@ export const InputDate = ({
   placeholder,
   status,
   round,
+  placement,
+  offset,
   clearable,
   icon,
   time,
@@ -315,7 +324,8 @@ export const InputDate = ({
           grid via `focusSignal`. Controlled so a day pick / Done can close it. */}
       <Menu
         open={open}
-        placement="bottom-start"
+        placement={placement ?? 'bottom-start'}
+        offset={offset}
         autoWidth
         className={styles.calendarMenu}
         onStateChange={(_e, { next }) => setOpen(next)}

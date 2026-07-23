@@ -4,9 +4,11 @@
 // the match predicate, and match-highlighting can't drift between the components.
 import type { OptionValue, SelectOption } from './Select'
 
-/** Coerce a bare string option to `{ value, label }`; pass an object through. The
- *  string shorthand only occurs when `V` admits strings (the default), so casting the
- *  bare string to `V` is sound there; a `number` / `boolean` select passes objects. */
+/** Coerce a bare string option to `{ value, label }`; pass an object through.
+ *  `SelectItem<V>` keeps the bare-`string` member for every `V` (so `V` still infers
+ *  cleanly from object options), which makes this cast **unchecked**: a bare string in
+ *  a `number` / `boolean` select round-trips as a string. That mixed-type footgun is on
+ *  the consumer (the docs steer numeric / boolean lists to object options). */
 export const normalizeOpt = <V extends OptionValue = string>(o: string | SelectOption<V>): SelectOption<V> =>
   typeof o === 'string' ? { value: o as unknown as V, label: o } : o
 

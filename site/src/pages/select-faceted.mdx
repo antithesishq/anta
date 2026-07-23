@@ -7,7 +7,7 @@ import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 import selectFacetedDemoCode from './select-faceted.demo.ts'
-import { SelectFacetedBasicDemo, SelectFacetedRecencyDemo, SelectFacetedDurationDemo } from '../components/SelectFacetedDemos'
+import { SelectFacetedBasicDemo, SelectFacetedRecencyDemo, SelectFacetedDurationDemo, SelectFacetedDateDemo } from '../components/SelectFacetedDemos'
 
 # Faceted select
 
@@ -212,28 +212,54 @@ const duration: SelectFacetCustom<number> = {
 rows.filter((r) => value.duration == null || r.seconds >= value.duration)
 ```
 
-Inline editors like `Input`, `RadioGroup`, or `Checkbox` work directly in the flyout —
-they have no popup of their own. A **calendar-based** editor is the exception: `InputDate`
-(and even the bare `Calendar`, which embeds a menu for its month jump) opens a menu that
-can't open while nested inside the facet's menu. Edit a date **beside the trigger**
-instead — the [Recency](#a-recency-filter-presets-plus-a-range) example below does exactly
-this, holding `Date`s in the facet value and rendering its `InputDate` fields in the
-result area. (A `custom` facet holds the value whole, so a `Date` is fine — it isn't
-compared by `===` like a `single` / `multiple` option value, so there's no identity
-pitfall.)
+A date, cast through a helper. Editors that open **their own popup** — the inline
+`Calendar`, `InputDate`, `Select` — work in the flyout too: each opens its menu stacked
+on top, and the flyout stays open while you use it. This example uses the inline
+`Calendar` grid; two helpers bridge its ISO strings and the `Date` you store.
+
+<Preview background="var(--bg-base)">
+  <SelectFacetedDateDemo client:load />
+</Preview>
+
+```tsx folded
+import type { SelectFacetCustom } from '@antadesign/anta'
+
+const toISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` // Date → "2026-01-01"
+const fromISO = (s: string | null) => (s ? new Date(`${s}T00:00:00`) : undefined)            // ISO  → Date | undefined
+
+const since: SelectFacetCustom<Date> = {
+  key: 'since',
+  label: 'Created after',
+  kind: 'custom',
+  icon: 'calendar',
+  render: (ctx) => (
+    <Calendar
+      size="small"
+      value={ctx.value ? toISO(ctx.value) : ''}
+      // Controlled: apply the pick in onStateChange (onValueChange fires only after
+      // value changes, so it can't drive a controlled Calendar).
+      onStateChange={(_e, { next }) => ctx.onChange(fromISO(next))}
+    />
+  ),
+  summary: (d) => d.toLocaleDateString(),
+}
+
+// user picks a day  →  value.since is a Date, returned unchanged
+// you apply it:
+rows.filter((r) => value.since == null || r.createdAt >= value.since)
+```
+
+A `custom` facet holds the value whole, so a `Date` is fine — it isn't compared by
+`===` like a `single` / `multiple` option value, so there's no identity pitfall.
 
 #### A recency filter: presets plus a range
 
-A compound editor: a `RadioGroup` of presets (Today, Yesterday, Last 14 / 30 days) and
-a **Custom range**. The facet value is either `{ preset }` or `{ from, to }`, and a
-`resolveRange` helper turns whichever one into the concrete `{ from, to }` you filter
-rows with (shown in the readout under the trigger).
-
-The flyout holds **only the presets**. When "Custom range" is picked, the two
-`InputDate` fields render **beside the trigger**, not inside the flyout — a menu-based
-editor like `InputDate` opens its calendar in its own menu, which can't open while
-nested inside the facet's menu. Editing the active value in the result area is the same
-pattern the demo above uses for its `Select` chips.
+A compound editor in one flyout: a `RadioGroup` of presets (Today, Yesterday, Last
+14 / 30 days) and a **Custom range** that reveals two `InputDate` fields. The facet
+value is either `{ preset }` or `{ from, to }`, and a `resolveRange` helper turns
+whichever one into the concrete `{ from, to }` you filter rows with (shown in the
+readout under the trigger). Each `InputDate` opens its calendar stacked on top of the
+flyout, which stays open throughout.
 
 <Preview background="var(--bg-base)">
   <SelectFacetedRecencyDemo client:load />
@@ -254,7 +280,6 @@ const resolveRange = (r: Recency): { from: string; to: string } => {
   }
 }
 
-// The flyout: presets only. Picking "Custom range" sets an empty { from, to }.
 const recency: SelectFacet = {
   key: 'recency',
   label: 'Recency',
@@ -265,33 +290,29 @@ const recency: SelectFacet = {
     const mode = value == null ? '' : 'preset' in value ? value.preset : 'custom'
     const range = value && 'from' in value ? value : { from: '', to: '' }
     return (
-      // Controlled group: apply the pick in onStateChange (onValueChange fires only
-      // after `value` changes, so it can't drive a controlled RadioGroup).
-      <RadioGroup
-        size="small"
-        options={PRESETS}                         // Today / Yesterday / Last 14 / Last 30 / Custom range
-        value={mode}
-        onStateChange={(_e, { next }) => onChange(next === 'custom' ? range : { preset: next })}
-      />
+      <div style={{ display: 'grid', gap: 8 }}>
+        <RadioGroup
+          size="small"
+          options={PRESETS}                       // Today / Yesterday / Last 14 / Last 30 / Custom range
+          value={mode}
+          // Controlled group: apply the pick in onStateChange (onValueChange fires
+          // only after `value` changes, so it can't drive a controlled RadioGroup).
+          onStateChange={(_e, { next }) => onChange(next === 'custom' ? range : { preset: next })}
+        />
+        {mode === 'custom' && (
+          <>
+            <InputDate size="small" label="From" value={range.from}
+              onValueChange={(from) => onChange({ from, to: range.to })} />
+            <InputDate size="small" label="To" value={range.to} min={range.from || undefined}
+              onValueChange={(to) => onChange({ from: range.from, to })} />
+          </>
+        )}
+      </div>
     )
   },
 }
 
-// The custom range's date fields live beside the trigger — outside the menu, so their
-// calendars open. They edit value.recency directly.
-const range = value.recency && 'from' in value.recency ? value.recency : null
-
-<>
-  <SelectFaceted facets={[recency]} value={value} onValueChange={setValue} />
-  {range && (
-    <>
-      <InputDate size="small" label="From" value={range.from}
-        onValueChange={(from) => setRecency({ from, to: range.to })} />
-      <InputDate size="small" label="To" value={range.to} min={range.from || undefined}
-        onValueChange={(to) => setRecency({ from: range.from, to })} />
-    </>
-  )}
-</>
+<SelectFaceted facets={[recency]} value={value} onValueChange={setValue} />
 // value.recency is { preset: 'last14' } or { from, to } — apply resolveRange(value.recency) to your rows
 ```
 

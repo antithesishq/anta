@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { SelectFaceted, Select, Input, Button, RadioGroup, InputDate } from '@antadesign/anta'
+import { SelectFaceted, Select, Input, Button, RadioGroup, InputDate, Calendar } from '@antadesign/anta'
 import type { SelectFacet } from '@antadesign/anta'
 
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
@@ -213,14 +213,15 @@ const RECENCY_FACETS: SelectFacet[] = [
     // The row chip: the preset's label, or the picked range.
     summary: (v: any) =>
       'preset' in v ? PRESET_LABELS[v.preset] : v.from && v.to ? `${v.from} → ${v.to}` : 'Custom range',
-    // The flyout holds only the preset RadioGroup. The custom range's date fields
-    // live BESIDE the trigger (below), not in here — InputDate opens its calendar
-    // in its own menu, which can't open nested inside this facet's menu flyout.
+    // Presets plus — when "Custom range" is picked — two InputDate fields, all in
+    // the flyout. Each InputDate opens its own calendar in its own menu, which now
+    // stacks on top of this flyout (the flyout stays open) rather than fighting it.
     render: ({ value, onChange }: any) => {
       const v = value as Recency | undefined
       const mode = v == null ? '' : 'preset' in v ? v.preset : 'custom'
+      const range = v && 'from' in v ? v : { from: '', to: '' }
       return (
-        <div data-menu-open style={{ padding: '8px', minWidth: '190px' }}>
+        <div data-menu-open style={{ padding: '8px', minWidth: '190px', display: 'grid', gap: '8px' }}>
           <RadioGroup
             size="small"
             options={PRESETS}
@@ -231,6 +232,23 @@ const RECENCY_FACETS: SelectFacet[] = [
               onChange(next === 'custom' ? (v && 'from' in v ? v : { from: '', to: '' }) : { preset: next })
             }
           />
+          {mode === 'custom' && (
+            <div style={{ display: 'grid', gap: '6px' }}>
+              <InputDate
+                size="small"
+                label="From"
+                value={range.from}
+                onValueChange={(from: string) => onChange({ from, to: range.to })}
+              />
+              <InputDate
+                size="small"
+                label="To"
+                value={range.to}
+                min={range.from || undefined}
+                onValueChange={(to: string) => onChange({ from: range.from, to })}
+              />
+            </div>
+          )}
         </div>
       )
     },
@@ -240,40 +258,11 @@ const RECENCY_FACETS: SelectFacet[] = [
 export function SelectFacetedRecencyDemo() {
   useElements()
   const [value, setValue] = useState<Record<string, unknown>>({ recency: { preset: 'last14' } })
-  const setRecency = (r: Recency | undefined) =>
-    setValue((prev) => {
-      const next = { ...prev }
-      if (r) next.recency = r
-      else delete next.recency
-      return next
-    })
   const recency = value.recency as Recency | undefined
-  const range = recency && 'from' in recency ? recency : null
   const resolved = recency ? resolveRange(recency) : null
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start', width: '100%' }}>
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-        <SelectFaceted facets={RECENCY_FACETS} value={value} onValueChange={setValue} />
-        {/* Custom range chosen → edit the two dates beside the trigger (calendars
-            open here because these fields are outside the facet menu). */}
-        {range && (
-          <>
-            <InputDate
-              size="small"
-              label="From"
-              value={range.from}
-              onValueChange={(from: string) => setRecency({ from, to: range.to })}
-            />
-            <InputDate
-              size="small"
-              label="To"
-              value={range.to}
-              min={range.from || undefined}
-              onValueChange={(to: string) => setRecency({ from: range.from, to })}
-            />
-          </>
-        )}
-      </div>
+      <SelectFaceted facets={RECENCY_FACETS} value={value} onValueChange={setValue} />
       <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
         {resolved ? `Filtering ${resolved.from} → ${resolved.to}` : 'No recency filter'}
       </span>
@@ -314,6 +303,49 @@ export function SelectFacetedDurationDemo() {
       <SelectFaceted facets={DURATION_FACETS} value={value} onValueChange={setValue} />
       <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
         {d != null ? `≥ ${d}s` : 'No duration filter'}
+      </span>
+    </div>
+  )
+}
+
+// --- Created after: a Date, edited by the inline Calendar grid inside the flyout.
+// Calendar renders in place; picking a day fires its own onStateChange. Two helpers
+// bridge Calendar's ISO strings and the Date we store.
+
+const toISODay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const fromISODay = (s: string | null) => (s ? new Date(`${s}T00:00:00`) : undefined)
+
+const DATE_FACETS: SelectFacet[] = [
+  {
+    key: 'since',
+    label: 'Created after',
+    kind: 'custom',
+    icon: 'calendar',
+    summary: (v: any) => (v as Date).toLocaleDateString(),
+    render: ({ value, onChange }: any) => (
+      <div data-menu-open style={{ padding: '4px' }}>
+        <Calendar
+          size="small"
+          value={value ? toISODay(value) : ''}
+          // Controlled: apply the pick in onStateChange (onValueChange fires only
+          // after value changes). Cast the ISO string to the Date we store.
+          onStateChange={(_e: any, { next }: any) => onChange(fromISODay(next))}
+        />
+      </div>
+    ),
+  },
+]
+
+export function SelectFacetedDateDemo() {
+  useElements()
+  const [value, setValue] = useState<Record<string, unknown>>({})
+  const since = value.since as Date | undefined
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start', width: '100%' }}>
+      <SelectFaceted facets={DATE_FACETS} value={value} onValueChange={setValue} />
+      <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
+        {since ? `Created after ${since.toLocaleDateString()}` : 'No date filter'}
       </span>
     </div>
   )

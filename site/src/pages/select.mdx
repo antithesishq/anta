@@ -205,19 +205,13 @@ global across groups / submenus, so a value repeated in two sections is one logi
 pick (both rows toggle together; the trigger resolves to the last). Dev builds
 `console.warn` on a duplicate.
 
-Values aren't limited to strings. `Select` **infers its value type from your
-options** — pass `options={[{ value: 365 }, { value: 90 }]}` and `value`,
-`onValueChange`'s value, and `attrs.value` are all `number`; the same holds for
-`boolean`. Values compare with `===`, so there's no stringify-in / rehydrate-out
-dance, and `365` and `"365"` stay distinct picks. A value is stringified only for the
-row key, the option's DOM id, filtering, and the display fallback, so two values that
-stringify alike (`365` and `"365"`) collide as row keys and trip the same dev warning.
-
-**A value must be a `string`, `number`, or `boolean`** (the exported `OptionValue`
-type). For anything richer — a date, an object, a record — give `value` a **stable
-primitive key** and carry the full value on the option, then read it back off
-`attrs.option`. A date's key is its ISO string (comparable and URL-friendly); a
-record's is its id.
+Values aren't limited to strings. `Select` **infers its value type from `options`**:
+pass `options={[{ value: 365 }, { value: 90 }]}` and `value`, `onValueChange`'s value,
+and `attrs.value` are all `number` (the same for `boolean`). Values compare with `===`,
+so `365` and `"365"` stay distinct and no string conversion is needed. The exported
+`OptionValue` type is `string | number | boolean`; for anything richer (a date, an
+object), give `value` a **stable primitive key** (a date's ISO string, a record's id)
+and read the full value back off `attrs.option`.
 
 ```tsx
 // Rich value: id is the key, the full record rides on the option.

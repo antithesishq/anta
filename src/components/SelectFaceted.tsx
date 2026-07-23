@@ -45,8 +45,7 @@ export type FacetFilter = boolean | ((option: SelectOption<OptionValue>, query: 
  *  cleared). Re-picking the selected option clears it. Options are `Select`'s
  *  `SelectItem`s — bare strings or `SelectOption`s carrying the same fields
  *  (`value`, `label`, `hint`, `icon`, `tone`, `disabled`). Option `value`s may be
- *  `string` / `number` / `boolean` and round-trip unchanged through the value record
- *  (compared with `===`, stringified only for row keys). */
+ *  `string` / `number` / `boolean` and round-trip unchanged. */
 export interface SelectFacetSingle extends FacetBase {
   kind: 'single'
   /** The options — bare strings or `SelectOption`s (groups / submenus are
@@ -112,13 +111,11 @@ export type SelectFacet =
   | SelectFacetText
   | SelectFacetCustom
 
-/** The filter value: a facet key → that facet's value. Per kind the value is an
- *  option value — `string` / `number` / `boolean` (single), a `string` (text), an
- *  array of option values (multiple), or your own `V` (custom). Values are stored and
- *  reported unchanged, so a `number` option round-trips as a `number`. Typed loosely
- *  as `unknown` because facets in one control can hold different value types; narrow
- *  per facet when you read it. A cleared facet is absent from the record (not a falsy
- *  entry). */
+/** The filter value: a facet key → that facet's value. Per kind: an option value
+ *  (`string` / `number` / `boolean`) for `single`, a `string` for `text`, an array for
+ *  `multiple`, or your own `V` for `custom`. Values are stored and reported unchanged.
+ *  Typed loosely as `unknown` since facets in one control can hold different value
+ *  types; narrow per facet when you read it. A cleared facet is absent from the record. */
 export type SelectFacetedValue = Record<string, unknown>
 
 /** Second argument to `onValueChange` — what changed. A single-facet edit

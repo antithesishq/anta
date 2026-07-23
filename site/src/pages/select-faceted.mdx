@@ -157,32 +157,29 @@ own [Select](/select/) — editable in place, with the facet key piped into the 
 
 A `single` / `multiple` facet's option values follow [Select](/select/#value--changes):
 `string`, `number`, or `boolean` (the `OptionValue` type), compared with `===` and
-returned through the value record unchanged — a `number` column stays a `number`, no
-stringify converter. For a value that isn't a primitive, take the same route as Select:
-give the option `value` a **stable primitive key** (a date's ISO string, a record's id)
-and read the full value back from your own options by that key. When the whole facet is
-object-shaped — a date range, a numeric comparator — use a **`custom`** facet instead:
-it owns its editor and its value type `V`, so it holds any shape and reports it back
-untouched.
+returned through the value record unchanged. For a value that isn't a primitive, give the
+option `value` a **stable primitive key** (a date's ISO string, a record's id) and read
+the full value back by that key. When the whole facet is object-shaped (a date range, a
+numeric comparator), use a **`custom`** facet: it owns its editor and value type `V`, so
+it holds any shape and reports it back untouched.
 
 ### Custom facet
 
-A `custom` facet has **no option list**. You draw the editor and you choose the value
-it holds — the escape hatch for a number, a date, a range, or any object. Beyond the
-base `key` / `label` / `icon`, provide two functions:
+A `custom` facet has **no option list**: you draw the editor and choose the value it
+holds — a number, a date, a range, any object. Beyond the base `key` / `label` / `icon`,
+provide two functions:
 
-- **`render(ctx)`** — your editor. `ctx.value` is the current value (`undefined` when
-  unset), `ctx.onChange(next)` sets it, and `ctx.close()` dismisses the whole menu.
-  **Whatever you pass to `onChange` lands in `value[key]` unchanged**; `onChange(undefined)`
-  clears the facet.
-- **`summary(value)`** — the chip shown on the facet's row while a value is set.
+- **`render(ctx)`** — your editor. `ctx.value` is the current value, `ctx.onChange(next)`
+  sets it (`undefined` clears the facet), `ctx.close()` dismisses the menu. Whatever you
+  pass to `onChange` lands in `value[key]` unchanged.
+- **`summary(value)`** — the chip on the facet's row while a value is set.
 
-Nothing is compared or filtered inside the component — it stores the value and reports
-it through `onValueChange`. Applying it to your rows is your code. Type the facet with
-the value shape you store, `SelectFacetCustom<V>`, so `ctx.value` and `summary` are typed.
+Nothing is compared or filtered inside the component; it stores the value and reports it
+via `onValueChange`, and applying it to your rows is your code. Type the facet
+`SelectFacetCustom<V>` so `ctx.value` and `summary` are typed.
 
-A number — "min duration". The editor is one `Input`, which has no popup of its own,
-so it sits directly in the flyout; the value is a `number`.
+A number, "min duration": the editor is one `Input`, which has no popup of its own, so it
+sits directly in the flyout.
 
 <Preview background="var(--bg-base)">
   <SelectFacetedDurationDemo client:load />
@@ -212,10 +209,10 @@ const duration: SelectFacetCustom<number> = {
 rows.filter((r) => value.duration == null || r.seconds >= value.duration)
 ```
 
-A date, cast through a helper. Editors that open **their own popup** — the inline
-`Calendar`, `InputDate`, `Select` — work in the flyout too: each opens its menu stacked
-on top, and the flyout stays open while you use it. This example uses the inline
-`Calendar` grid; two helpers bridge its ISO strings and the `Date` you store.
+A date, cast through a helper. Editors with **their own popup** (the inline `Calendar`,
+`InputDate`, `Select`) work in the flyout too: each opens its menu stacked on top while
+the flyout stays open. This one uses the inline `Calendar` grid; two helpers bridge its
+ISO strings and the `Date` you store.
 
 <Preview background="var(--bg-base)">
   <SelectFacetedDateDemo client:load />
@@ -249,7 +246,7 @@ const since: SelectFacetCustom<Date> = {
 rows.filter((r) => value.since == null || r.createdAt >= value.since)
 ```
 
-A `custom` facet holds the value whole, so a `Date` is fine — it isn't compared by
+A `custom` facet holds the value whole, so a `Date` works here: it isn't compared by
 `===` like a `single` / `multiple` option value, so there's no identity pitfall.
 
 #### A recency filter: presets plus a range

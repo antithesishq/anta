@@ -18,12 +18,10 @@ import { Tooltip } from './Tooltip'
 import styles from './Select.module.css'
 
 
-/** The type an option `value` may take. Selection compares values with `===`, so
- *  the identity layer works on any primitive; a value is stringified only where a
- *  string is structurally required (the React key, the option's DOM id, the filter
- *  match, and the display fallback). Object-shaped values are out of scope — reach
- *  for the `SelectOption` index signature (attach a `data` field and read it back off
- *  `attrs.option`) or, in `SelectFaceted`, a `custom` facet. */
+/** The type an option `value` may take: `string`, `number`, or `boolean`. Selection
+ *  compares values with `===`. Object-shaped values are out of scope; give the option a
+ *  stable primitive `value` and read the object back off `attrs.option` (or, in
+ *  `SelectFaceted`, use a `custom` facet). */
 export type OptionValue = string | number | boolean
 
 /** One option in a `<Select>`. Pass a bare string as shorthand for
@@ -31,14 +29,12 @@ export type OptionValue = string | number | boolean
  *  arbitrary fields (a `ranAt` date, a `status`, …) and read them back in
  *  `renderOption`; the built-in filter still matches on `value`/`label`/`hint`.
  *
- *  Generic in the value type `V` (defaults to `string`): `Select` infers `V` from the
- *  `options` you pass, so `{ value: 365 }` round-trips as `number` through
- *  `onValueChange` — no stringify-in / rehydrate-out dance. */
+ *  Generic in the value type `V` (defaults to `string`): `Select` infers `V` from your
+ *  `options`, so `{ value: 365 }` round-trips as `number` through `onValueChange`. */
 export interface SelectOption<V extends OptionValue = string> {
-  /** The option's value — its identity, what `value` / `defaultValue` name, and what
-   *  `onValueChange` reports. Unique across the whole `options` tree (selection is
-   *  value-keyed and global across groups / submenus). Typed `V` — a `string` by
-   *  default, or the `number` / `boolean` inferred from your `options`. */
+  /** The option's value (`V`) — its identity, what `value` / `defaultValue` name, and
+   *  what `onValueChange` reports. Unique across the whole `options` tree (selection is
+   *  value-keyed and global across groups / submenus). */
   value: V
   /** Visible label. Defaults to `value`. */
   label?: string
@@ -171,15 +167,14 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  submenus nest and mix with plain options. Selection stays global (one `value`,
    *  leaf options only); a filter query flattens the tree into grouped results.
    *
-   *  `Select` infers its value type `V` from these options — pass `{ value: 365 }` and
-   *  `onValueChange` reports `number`. Homogeneous options infer a precise type; mix
-   *  types and `V` widens to the union.
+   *  `Select` infers its value type `V` from these options: `{ value: 365 }` makes
+   *  `onValueChange` report `number`. A mix of value types widens `V` to the union.
    *
    *  Each leaf `value` is the option's identity and must be **unique across the whole
-   *  tree** — selection is value-keyed, so a value repeated in two sections is one
-   *  logical pick (both rows toggle together; the trigger resolves to the last). Two
-   *  values that stringify alike (`365` and `"365"`) collide as row keys; dev builds
-   *  `console.warn` on either kind of collision. */
+   *  tree** (selection is value-keyed, so a value repeated in two sections is one logical
+   *  pick: both rows toggle together, the trigger resolves to the last). Values that
+   *  stringify alike (`365` and `"365"`) also collide as row keys; dev builds
+   *  `console.warn` on either. */
   options: SelectItem<V>[]
   /** Preferred placement of the options menu relative to the trigger. The menu
    *  auto-flips vertically and clamps horizontally when needed.

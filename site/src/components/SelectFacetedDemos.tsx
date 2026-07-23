@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { SelectFaceted, Select, Input, Button } from '@antadesign/anta'
+import { SelectFaceted, Select, Input, Button, RadioGroup, InputDate } from '@antadesign/anta'
 import type { SelectFacet } from '@antadesign/anta'
 
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
@@ -162,6 +162,121 @@ export function SelectFacetedBasicDemo() {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// --- Recency: presets + a custom date range, in one custom facet -----------
+
+// The facet's value: a chosen preset, or a concrete { from, to } range.
+type Recency = { preset: 'today' | 'yesterday' | 'last14' | 'last30' } | { from: string; to: string }
+
+const PRESETS = [
+  { value: 'today', label: 'Today' },
+  { value: 'yesterday', label: 'Yesterday' },
+  { value: 'last14', label: 'Last 14 days' },
+  { value: 'last30', label: 'Last 30 days' },
+  { value: 'custom', label: 'Custom range' },
+]
+const PRESET_LABELS: Record<string, string> = {
+  today: 'Today', yesterday: 'Yesterday', last14: 'Last 14 days', last30: 'Last 30 days',
+}
+
+// Local ISO YYYY-MM-DD (what InputDate speaks).
+const isoDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const daysAgo = (n: number) => {
+  const x = new Date()
+  x.setHours(0, 0, 0, 0)
+  x.setDate(x.getDate() - n)
+  return x
+}
+
+// Resolve any Recency to a concrete { from, to } — this is what you'd filter rows with.
+const resolveRange = (r: Recency): { from: string; to: string } => {
+  if ('from' in r) return r
+  const today = isoDay(daysAgo(0))
+  switch (r.preset) {
+    case 'today': return { from: today, to: today }
+    case 'yesterday': { const y = isoDay(daysAgo(1)); return { from: y, to: y } }
+    case 'last14': return { from: isoDay(daysAgo(13)), to: today }
+    case 'last30': return { from: isoDay(daysAgo(29)), to: today }
+  }
+}
+
+const RECENCY_FACETS: SelectFacet[] = [
+  {
+    key: 'recency',
+    label: 'Recency',
+    kind: 'custom',
+    icon: 'calendar',
+    // The row chip: the preset's label, or the picked range.
+    summary: (v: any) =>
+      'preset' in v ? PRESET_LABELS[v.preset] : v.from && v.to ? `${v.from} → ${v.to}` : 'Custom range',
+    // The flyout holds only the preset RadioGroup. The custom range's date fields
+    // live BESIDE the trigger (below), not in here — InputDate opens its calendar
+    // in its own menu, which can't open nested inside this facet's menu flyout.
+    render: ({ value, onChange }: any) => {
+      const v = value as Recency | undefined
+      const mode = v == null ? '' : 'preset' in v ? v.preset : 'custom'
+      return (
+        <div data-menu-open style={{ padding: '8px', minWidth: '190px' }}>
+          <RadioGroup
+            size="small"
+            options={PRESETS}
+            value={mode}
+            // Controlled: apply the pick in onStateChange (onValueChange fires only
+            // after `value` changes, so it can't drive a controlled group).
+            onStateChange={(_e: any, { next }: any) =>
+              onChange(next === 'custom' ? (v && 'from' in v ? v : { from: '', to: '' }) : { preset: next })
+            }
+          />
+        </div>
+      )
+    },
+  },
+]
+
+export function SelectFacetedRecencyDemo() {
+  useElements()
+  const [value, setValue] = useState<Record<string, unknown>>({ recency: { preset: 'last14' } })
+  const setRecency = (r: Recency | undefined) =>
+    setValue((prev) => {
+      const next = { ...prev }
+      if (r) next.recency = r
+      else delete next.recency
+      return next
+    })
+  const recency = value.recency as Recency | undefined
+  const range = recency && 'from' in recency ? recency : null
+  const resolved = recency ? resolveRange(recency) : null
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start', width: '100%' }}>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <SelectFaceted facets={RECENCY_FACETS} value={value} onValueChange={setValue} />
+        {/* Custom range chosen → edit the two dates beside the trigger (calendars
+            open here because these fields are outside the facet menu). */}
+        {range && (
+          <>
+            <InputDate
+              size="small"
+              label="From"
+              value={range.from}
+              onValueChange={(from: string) => setRecency({ from, to: range.to })}
+            />
+            <InputDate
+              size="small"
+              label="To"
+              value={range.to}
+              min={range.from || undefined}
+              onValueChange={(to: string) => setRecency({ from: range.from, to })}
+            />
+          </>
+        )}
+      </div>
+      <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
+        {resolved ? `Filtering ${resolved.from} → ${resolved.to}` : 'No recency filter'}
+      </span>
     </div>
   )
 }

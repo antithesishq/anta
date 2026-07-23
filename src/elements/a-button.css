@@ -720,12 +720,8 @@
         --button-fg: var(--button-fg-quaternary-hover);
       }
 
-      &:active {
-        --button-fg: oklch(from var(--button-fg-quaternary-rest) calc(l + 0.05) c h);
-      }
-      .dark &:active {
-        --button-fg: var(--button-fg-quaternary-rest);
-      }
+      /* No active state — quaternary holds its rest foreground when pressed
+         (it falls through to the rest `--button-fg` above). */
     }
 
     &[selected] {

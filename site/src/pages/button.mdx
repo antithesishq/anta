@@ -10,9 +10,11 @@ import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import buttonDemoCode from './button.demo.ts'
 import ButtonCopyDemo from '../components/ButtonCopyDemo'
+import ButtonCopyPlacementDemo from '../components/ButtonCopyPlacementDemo'
+import ButtonCopyUrlDemo from '../components/ButtonCopyUrlDemo'
 import ButtonCopyNodeDemo from '../components/ButtonCopyNodeDemo'
 import ButtonCopyLazyDemo from '../components/ButtonCopyLazyDemo'
-import { Button, ButtonCopy } from '@antadesign/anta'
+import { Button } from '@antadesign/anta'
 
 # Button
 
@@ -465,10 +467,8 @@ during the feedback window.
 `trailing`. Pass `none` to drop the glyph — the feedback is then a ghost of the
 label floating up plus the success / failure tone flash.
 
-<Preview>
-  <ButtonCopy copy="npm i @antadesign/anta" label="Leading" />
-  <ButtonCopy copy="npm i @antadesign/anta" label="Trailing" iconPlacement="trailing" />
-  <ButtonCopy copy="npm i @antadesign/anta" label="No icon" iconPlacement="none" />
+<Preview minHeight={70}>
+  <ButtonCopyPlacementDemo client:visible />
 </Preview>
 
 ```tsx folded
@@ -514,9 +514,8 @@ card into a rich editor and a plain one to see both.
 `copyWithUrl` prefixes a `copy` string with `// URL: <href>`, so a copied snippet
 carries a link back to where it came from.
 
-<Preview>
-  <ButtonCopy copyUrl label="Copy link" />
-  <ButtonCopy copy="npm i @antadesign/anta" copyWithUrl label="Copy snippet" priority="tertiary" />
+<Preview minHeight={70}>
+  <ButtonCopyUrlDemo client:visible />
 </Preview>
 
 ```tsx folded

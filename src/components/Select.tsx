@@ -625,11 +625,6 @@ export const Select = (props: SelectProps) => {
     // row out of the default hint.
     const isolateHint = multiple && selectAll && !disabled ? ISOLATE_HINT : undefined
     const tip = o.tooltip ?? isolateHint
-    // Every option tooltip follows the cursor (a row's box is wide, so a pinned
-    // bubble reads as detached from the pointer). The default isolate hint teaches
-    // an accelerator, so it stays unobtrusive with a longer delay than the 300ms
-    // default (it shouldn't fire on a casual pass over the rows); a consumer's own
-    // `tooltip` uses the standard delay.
     const hintOnly = o.tooltip == null && isolateHint != null
     return (
       <MenuItem

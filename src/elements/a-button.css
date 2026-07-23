@@ -360,6 +360,14 @@
     gap: 0.5ch;
     overflow: hidden;
     cursor: pointer;
+    /* A copy button with no icon (ButtonCopy iconPlacement="none") looks like a
+       plain button — no glyph to cue that it copies — so the copy cursor is its
+       affordance. A copy button *with* an icon keeps `pointer`: the glyph is the
+       cue. `a-copy` is the copy behavior child; `display:contents` doesn't stop
+       it matching `:has(> a-copy)`. */
+    &:has(> a-copy):not(:has(> a-icon)) {
+      cursor: copy;
+    }
 
     flex-shrink: 0;
 

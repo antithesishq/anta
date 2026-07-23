@@ -7,7 +7,7 @@ import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 import selectFacetedDemoCode from './select-faceted.demo.ts'
-import { SelectFacetedBasicDemo, SelectFacetedRecencyDemo } from '../components/SelectFacetedDemos'
+import { SelectFacetedBasicDemo, SelectFacetedRecencyDemo, SelectFacetedDurationDemo } from '../components/SelectFacetedDemos'
 
 # Faceted select
 
@@ -181,9 +181,14 @@ Nothing is compared or filtered inside the component — it stores the value and
 it through `onValueChange`. Applying it to your rows is your code. Type the facet with
 the value shape you store, `SelectFacetCustom<V>`, so `ctx.value` and `summary` are typed.
 
-A number — "min duration". The editor is one `Input`; the value is a `number`:
+A number — "min duration". The editor is one `Input`, which has no popup of its own,
+so it sits directly in the flyout; the value is a `number`.
 
-```tsx
+<Preview background="var(--bg-base)">
+  <SelectFacetedDurationDemo client:load />
+</Preview>
+
+```tsx folded
 import type { SelectFacetCustom } from '@antadesign/anta'
 
 const duration: SelectFacetCustom<number> = {
@@ -195,7 +200,7 @@ const duration: SelectFacetCustom<number> = {
       type="number"
       size="small"
       placeholder="seconds"
-      value={ctx.value ?? ''}
+      value={ctx.value != null ? String(ctx.value) : ''}
       onInput={(e) => ctx.onChange(Number(e.currentTarget.value) || undefined)}
     />
   ),
@@ -207,36 +212,15 @@ const duration: SelectFacetCustom<number> = {
 rows.filter((r) => value.duration == null || r.seconds >= value.duration)
 ```
 
-A date, cast through a helper. `InputDate` speaks ISO strings; the value you store is a
-`Date`, so two helpers bridge them:
-
-```tsx
-import type { SelectFacetCustom } from '@antadesign/anta'
-
-const toISO = (d: Date) => d.toISOString().slice(0, 10)         // Date → "2026-01-01"
-const fromISO = (s: string) => (s ? new Date(s) : undefined)    // ISO  → Date | undefined
-
-const since: SelectFacetCustom<Date> = {
-  key: 'since',
-  label: 'Created after',
-  kind: 'custom',
-  render: (ctx) => (
-    <InputDate
-      value={ctx.value ? toISO(ctx.value) : ''}
-      onValueChange={(iso) => ctx.onChange(fromISO(iso))}
-    />
-  ),
-  summary: (d) => d.toLocaleDateString(),
-}
-
-// user picks a day  →  value.since is a Date, returned unchanged
-// you apply it:
-rows.filter((r) => value.since == null || r.createdAt >= value.since)
-```
-
-A `custom` facet holds the value whole, so a `Date` object is fine here: it isn't
-compared by `===` the way a `single` / `multiple` option value is, so there's no
-identity pitfall. (In a `single` facet, use a date's ISO string as the value.)
+Inline editors like `Input`, `RadioGroup`, or `Checkbox` work directly in the flyout —
+they have no popup of their own. A **calendar-based** editor is the exception: `InputDate`
+(and even the bare `Calendar`, which embeds a menu for its month jump) opens a menu that
+can't open while nested inside the facet's menu. Edit a date **beside the trigger**
+instead — the [Recency](#a-recency-filter-presets-plus-a-range) example below does exactly
+this, holding `Date`s in the facet value and rendering its `InputDate` fields in the
+result area. (A `custom` facet holds the value whole, so a `Date` is fine — it isn't
+compared by `===` like a `single` / `multiple` option value, so there's no identity
+pitfall.)
 
 #### A recency filter: presets plus a range
 

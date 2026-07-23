@@ -280,3 +280,42 @@ export function SelectFacetedRecencyDemo() {
     </div>
   )
 }
+
+// --- Min duration: a number, edited by a plain Input inside the flyout --------
+// An Input has no popup of its own, so it lives directly in the custom facet.
+
+const DURATION_FACETS: SelectFacet[] = [
+  {
+    key: 'duration',
+    label: 'Min duration',
+    kind: 'custom',
+    summary: (v: any) => `≥ ${v}s`,
+    render: ({ value, onChange }: any) => (
+      <div data-menu-open style={{ padding: '8px' }}>
+        <Input
+          type="number"
+          size="small"
+          placeholder="seconds"
+          style={{ width: '120px' }}
+          value={value != null ? String(value) : ''}
+          onInput={(e: any) => onChange(Number(e.currentTarget.value) || undefined)}
+        />
+      </div>
+    ),
+  },
+]
+
+export function SelectFacetedDurationDemo() {
+  useElements()
+  const [value, setValue] = useState<Record<string, unknown>>({})
+  const d = value.duration as number | undefined
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start', width: '100%' }}>
+      <SelectFaceted facets={DURATION_FACETS} value={value} onValueChange={setValue} />
+      <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
+        {d != null ? `≥ ${d}s` : 'No duration filter'}
+      </span>
+    </div>
+  )
+}
+

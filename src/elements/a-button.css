@@ -716,12 +716,15 @@
           --button-fg: var(--button-fg-quaternary-hover);
         }
       }
+      /* Active is exactly rest. Placed after the hover block so it wins the
+         source-order tie while a pressed button is also `:hover`, keeping the
+         hover foreground from bleeding through the press. */
+      &:active {
+        --button-fg: var(--button-fg-quaternary-rest);
+      }
       &[selected] {
         --button-fg: var(--button-fg-quaternary-hover);
       }
-
-      /* No active state — quaternary holds its rest foreground when pressed
-         (it falls through to the rest `--button-fg` above). */
     }
 
     &[selected] {

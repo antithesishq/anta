@@ -197,13 +197,14 @@ export const SPECS: ComponentSpec[] = [
       { key: 'aRest', label: 'α rest', light: 0.1, dark: 0.215, neutral: { dark: 0.24 }, ...v3() },
       { key: 'aHover', label: 'α hover', light: 0.15, dark: 0.29, neutral: { dark: 0.34 }, ...v3() },
       { key: 'aActive', label: 'α active', light: 0.2, dark: 0.34, neutral: { dark: 0.44 }, ...v3() },
-      { key: 'quatHoverL', label: 'hover L', light: 0.4, dark: 0.86, ...v3(), tip: 'Quaternary hover lightness, detached from tertiary — its own value, not the shared secondary fg-hover. Rest/hover/active all carry 0.8 alpha.' },
+      { key: 'quatHoverL', label: 'hover L', light: 0.38, dark: 0.9, ...v3(), tip: 'Quaternary hover lightness, detached from tertiary — its own value, not the shared secondary fg-hover. Rest and active carry the rest α; hover is opaque.' },
+      { key: 'quatRestA', label: 'α rest', light: 0.85, dark: 0.85, ...v3(), tip: 'Alpha on the quaternary rest (and active) foreground. Light-mode neutral needs ≈0.83 to clear WCAG AA (4.5:1) over bg-2.' },
     ],
     groups: [
       { label: 'Primary', keys: ['plRest', 'plHover', 'plActive', 'plC'] },
       { label: 'Secondary', keys: ['fgL', 'fgStrongL', 'fgC', 'fgShift', 'bgL', 'bgC', 'aRest', 'aHover', 'aActive'] },
       { label: 'Tertiary', keys: ['fgL', 'fgStrongL', 'fgC', 'bgL', 'bgC', 'aRest', 'aHover'], note: 'Reuses the secondary foreground + tint (no separate Anta constant).' },
-      { label: 'Quaternary', keys: ['fgL', 'fgC', 'quatHoverL'], note: 'Rest (and active) is the tertiary foreground at 0.8 alpha; hover uses its own detached lightness. No fill.' },
+      { label: 'Quaternary', keys: ['fgL', 'fgC', 'quatHoverL', 'quatRestA'], note: 'Rest (and active) is the tertiary foreground at the rest α; hover uses its own detached lightness at full opacity. No fill.' },
     ],
     css: (sel, seed, v) => `${sel} {
   --button-bg-primary-rest:   ${ok(seed, v.plRest, v.plC)};
@@ -214,8 +215,8 @@ export const SPECS: ComponentSpec[] = [
   --button-fg-secondary-hover:  ${ok(seed, v.fgStrongL, v.fgC)};
   --button-fg-tertiary-rest:    ${ok(seed, v.fgL, v.fgC)};
   --button-fg-tertiary-hover:   ${ok(seed, v.fgStrongL, v.fgC)};
-  --button-fg-quaternary-rest:  oklch(from ${seed} ${v.fgL} ${v.fgC} h / 0.8);
-  --button-fg-quaternary-hover: oklch(from ${seed} ${v.quatHoverL} ${v.fgC} h / 0.8);
+  --button-fg-quaternary-rest:  oklch(from ${seed} ${v.fgL} ${v.fgC} h / ${v.quatRestA});
+  --button-fg-quaternary-hover: oklch(from ${seed} ${v.quatHoverL} ${v.fgC} h);
   --button-fg-secondary-l-shift: ${v.fgShift};
 
   --button-bg-secondary-rest:   oklch(from ${seed} ${v.bgL} ${v.bgC} h / ${v.aRest});

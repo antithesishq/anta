@@ -14,7 +14,7 @@ export default `import { Tooltip, Button } from '@antadesign/anta'
 
 <div className="container">
   <Button label="Hover me">
-    <Tooltip delay={250}>Edit my props on the right →</Tooltip>
+    <Tooltip delay={300}>Edit my props on the right →</Tooltip>
   </Button>
 </div>
 `

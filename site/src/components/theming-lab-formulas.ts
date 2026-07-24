@@ -155,9 +155,9 @@ export const SPECS: ComponentSpec[] = [
     vars: [
       { key: 'priL', label: 'text-1 L', light: 0.38, dark: 0.85, neutral: { light: 0.1, dark: 0.94 }, ...v3() },
       { key: 'priC', label: 'text-1 C', light: 0.11, dark: 0.1, neutral: { light: 0.01, dark: 0.008 }, ...v3(0, 0.4) },
-      { key: 'baseL', label: 'text-2 L', light: 0.42, dark: 0.77, neutral: { light: 0.3, dark: 0.8 }, ...v3() },
-      { key: 'baseC', label: 'text-2 C', light: 0.125, dark: 0.11, neutral: { light: 0.015, dark: 0.015 }, ...v3(0, 0.4) },
-      { key: 'tertA', label: 'text-3 α %', light: 80, dark: 80, ...pct },
+      { key: 'baseL', label: 'text-2 L', light: 0.43, dark: 0.77, neutral: { light: 0.3, dark: 0.8 }, ...v3() },
+      { key: 'baseC', label: 'text-2 C', light: 0.15, dark: 0.11, neutral: { light: 0.015, dark: 0.015 }, ...v3(0, 0.4) },
+      { key: 'tertA', label: 'text-3 α %', light: 82, dark: 80, ...pct },
       { key: 'quatA', label: 'text-4 α %', light: 60, dark: 60, ...pct },
       { key: 'quinA', label: 'text-5 α %', light: 40, dark: 40, ...pct },
     ],
@@ -348,8 +348,8 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     blurb:
       'One border colour from the seed hue at a tunable L/C — the goal is a single L/C per theme that works across every tone. Rest = hover; hover thickens the edge 0.5→1px. Neutral overrides pin it grey (≈ --border-2). Applies to Input and the InputDate trigger (both compose <a-input>).',
     vars: [
-      { key: 'borderL', label: 'border L', light: 0.59, dark: 0.52, neutral: { light: 0.8, dark: 0.39 }, ...v3() },
-      { key: 'borderC', label: 'border C', light: 0.157, dark: 0.149, neutral: { light: 0.015, dark: 0.019 }, ...v3(0, 0.4) },
+      { key: 'borderL', label: 'border L', light: 0.58, dark: 0.52, neutral: { light: 0.8, dark: 0.4 }, ...v3() },
+      { key: 'borderC', label: 'border C', light: 0.18, dark: 0.15, neutral: { light: 0.015, dark: 0.019 }, ...v3(0, 0.4) },
     ],
     groups: [{ label: 'Border', keys: ['borderL', 'borderC'], note: 'Seed hue at this L/C (rest = hover; hover thickens). Toned starts at the average of today’s per-status literals; neutral pins grey ≈ --border-2.' }],
     css: (sel, seed, v) => `${sel} {
@@ -365,7 +365,7 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
       'The item label is --text-2; the hint and icon are --text-2 at the hint α (80 → --text-3), so the text follows the Text spec while the hint strength stays tunable. The selected row holds a persistent tint of the label colour — its alpha is the Menu’s own knob too.',
     vars: [
       { key: 'hintA', label: 'hint α %', light: 80, dark: 80, ...pct },
-      { key: 'selectedA', label: 'selected α %', light: 8, dark: 8, ...pct },
+      { key: 'selectedA', label: 'selected α %', light: 9, dark: 12, ...pct },
     ],
     groups: [
       { label: 'Text', keys: ['hintA'], note: 'Label is full --text-2; hint + icon are --text-2 at this alpha (80 → --text-3).' },

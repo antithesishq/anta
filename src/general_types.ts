@@ -659,8 +659,10 @@ export interface ACalendarAttributes extends BaseAttributes {
  */
 export interface AMenuAttributes extends BaseAttributes {
   /** Preferred placement relative to the trigger; auto-flips / clamps.
-   *  Defaults to `'bottom-start'`. */
-  placement?: 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'bottom' | 'top'
+   *  Defaults to `'bottom-start'`. `right` / `left` place the menu beside the trigger. */
+  placement?:
+    | 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'bottom' | 'top'
+    | 'right-start' | 'right-end' | 'left-start' | 'left-end' | 'right' | 'left'
   /** Open on right-click of the trigger region, positioned at the pointer.
    *  Presence-based (`''` on, omit off). */
   context?: boolean | ''

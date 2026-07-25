@@ -2,12 +2,15 @@ import { nativeStateChange, roundStyle, roundAttr } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 
 export interface MenuProps extends BaseProps {
-  /** Preferred placement relative to the trigger. The cross-axis suffix
-   *  (`-start` / `-end`) aligns the left / right edges; no suffix (`bottom` /
-   *  `top`) centers the menu on the trigger. The menu auto-flips vertically and
-   *  clamps horizontally when there isn't room.
+  /** Preferred placement relative to the trigger. `bottom` / `top` place the menu
+   *  below / above; `right` / `left` place it beside (like a submenu flyout). The
+   *  cross-axis suffix (`-start` / `-end`) aligns the near / far edges, and no suffix
+   *  centers on the trigger. The menu flips to the opposite side when the preferred
+   *  one lacks room, and clamps to the viewport.
    *  @defaultValue bottom-start */
-  placement?: 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'bottom' | 'top'
+  placement?:
+    | 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'bottom' | 'top'
+    | 'right-start' | 'right-end' | 'left-start' | 'left-end' | 'right' | 'left'
   /** Open on right-click (the `contextmenu` event) of the trigger region
    *  instead of a left click, positioned at the pointer. */
   context?: boolean

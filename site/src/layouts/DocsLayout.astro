@@ -329,29 +329,6 @@ if (isComponentPage && title) {
     <div class="backdrop" aria-hidden="true"></div>
 
     <script>
-      // Interface Kit — DEV-ONLY visual styling tool, mounted on every docs page
-      // during local development as a plain paintbrush bubble in the top-right
-      // corner. interface-kit is a React 19 tool run under preact/compat via the
-      // `useEffectEvent` shim wired up in astro.config.mjs; it renders nothing
-      // inline and injects its own floating bubble + editor panel into the page.
-      //
-      // The `import.meta.env.DEV` guard is statically `false` in the production
-      // build, so Vite dead-code-eliminates this whole block — interface-kit (and
-      // its ~420 KB React→preact chunk) never enters the deployed bundle, and the
-      // public site can't summon the editor. (That's also why `interface-kit` is
-      // a devDependency.) `enabled: true` keeps the kit on regardless of NODE_ENV.
-      if (import.meta.env.DEV) {
-        const [{ render, createElement }, { InterfaceKit }] = await Promise.all([
-          import('preact/compat'),
-          import('interface-kit/react'),
-        ])
-        const mount = document.createElement('div')
-        document.body.appendChild(mount)
-        render(createElement(InterfaceKit, { enabled: true }), mount)
-      }
-    </script>
-
-    <script>
       const backdrop = document.querySelector('.backdrop')
       // Two mobile slide-outs share the backdrop: the nav sidebar (menu)
       // and the "On this page" TOC. Opening one closes the other so they

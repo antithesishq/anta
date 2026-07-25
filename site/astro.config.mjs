@@ -15,13 +15,6 @@ import rehypeTableWrap from './lib/rehype-table-wrap.mjs';
 import remarkUnwrapJsxParagraph from './lib/remark-unwrap-jsx-paragraph.mjs';
 import remarkUnwrapImages from './lib/remark-unwrap-images.mjs';
 import ecFoldable from './lib/ec-foldable.mjs';
-import { fileURLToPath } from 'node:url';
-
-// React→preact/compat shim that adds the `useEffectEvent` hook (see
-// lib/react-compat-shim.mjs). interface-kit imports useEffectEvent from
-// "react", which preact/compat 10.29 doesn't export, so we route `react`
-// through the shim — overriding the bare alias @astrojs/preact installs.
-const reactCompatShim = fileURLToPath(new URL('./lib/react-compat-shim.mjs', import.meta.url));
 
 export default defineConfig({
   site: 'https://anta.design',
@@ -39,11 +32,9 @@ export default defineConfig({
   // parsed bundle makes dev and prod render identically.
   build: { inlineStylesheets: 'never' },
   integrations: [
-    // compat:false — we install the react→preact/compat aliases ourselves in
-    // `vite.resolve.alias` below (so the interface-kit useEffectEvent shim
-    // wins). Leaving the preset's compat on would re-add a competing `react`
-    // alias that bypasses the shim.
-    preact({ compat: false }),
+    // compat:true aliases react / react-dom → preact/compat so Anta's JSX
+    // wrappers (typed against React) run under Preact without calling configure().
+    preact({ compat: true }),
     astroExpressiveCode({
       plugins: [ecFoldable()],
       themes: ['github-light', 'tokyo-night'],
@@ -106,40 +97,6 @@ export default defineConfig({
     mdx(),
     sitemap(),
   ],
-  vite: {
-    // With the preset's compat off, replicate the dedupe/SSR-bundling it would
-    // otherwise set up so the react-aliased modules resolve to a single preact
-    // instance on both client and server.
-    ssr: {
-      noExternal: ['react', 'react-dom', 'react-dom/test-utils', 'react/jsx-runtime'],
-    },
-    resolve: {
-      dedupe: ['preact', 'preact/compat'],
-      // We own the full react→preact alias set here (and set `compat: false`
-      // on @astrojs/preact) instead of letting the preset install it. The
-      // preset's `react` → `preact/compat` alias would otherwise win over ours
-      // and interface-kit's `useEffectEvent` import would resolve to raw compat
-      // (which lacks it). Routing `react` through the shim closes that gap;
-      // the rest mirror what the preset normally provides.
-      alias: [
-        { find: /^react$/, replacement: reactCompatShim },
-        { find: /^react\/jsx-runtime$/, replacement: 'preact/jsx-runtime' },
-        { find: /^react\/jsx-dev-runtime$/, replacement: 'preact/jsx-dev-runtime' },
-        { find: /^react-dom\/client$/, replacement: 'preact/compat/client' },
-        { find: /^react-dom\/test-utils$/, replacement: 'preact/test-utils' },
-        { find: /^react-dom$/, replacement: 'preact/compat' },
-      ],
-    },
-    // Vite pre-bundles deps with esbuild, where the `react` Vite alias above is
-    // NOT applied — so a pre-bundled `react` chunk would be raw preact/compat
-    // (no useEffectEvent) and interface-kit's import would fail at runtime.
-    // Excluding these routes every `react`/`react-dom`/interface-kit import
-    // through Vite's normal resolve pipeline, where the alias (and thus the
-    // shim) takes effect.
-    optimizeDeps: {
-      exclude: ['interface-kit', 'react', 'react-dom', 'react-dom/client'],
-    },
-  },
   trailingSlash: 'always',
   markdown: {
     remarkPlugins: [

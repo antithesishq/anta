@@ -67,11 +67,24 @@ export type ContentMode = {
 
 /** Submit axis — anchors (href) don't carry form-submission props; buttons
  *  don't carry anchor props. (Copy is no longer a Button concern — `ButtonCopy`
- *  composes a `<a-copy>` child; see `copy-props.ts`.) */
+ *  composes a `<a-copy>` child; see `copy-props.ts`.)
+ *
+ *  `href` is **optional** so a conditional URL just works: `href={maybeUrl}`
+ *  (`string | undefined`) type-checks, and a falsy href degrades to a plain
+ *  button — a definite string renders `<a role="button">`, an absent / `undefined`
+ *  href renders `<a-button>`, mirroring the `href != null` runtime check. Keeping
+ *  it required forced a two-render (`href ? … : …`) or a conditional spread, and
+ *  made TypeScript blame the wrong prop: with `href: string | undefined` matching
+ *  neither branch, the intersection fell through to `PriorityMode` and reported a
+ *  spurious "`priority` is missing". The anchor props (`href` / `target` / `rel` /
+ *  `download` / `ping`) still can't combine with the button props (`type` /
+ *  `form`). */
 export type SubmitMode =
   | {
-      /** Renders as `<a role="button">` instead of `<a-button>`. */
-      href: string
+      /** URL to link to. A definite string renders `<a role="button">`; omit it
+       *  (or pass `undefined`) to render `<a-button>`, so `href={maybeUrl}`
+       *  degrades to a plain button when the URL is absent. */
+      href?: string
       /** Anchor target. */
       target?: string
       /** Anchor rel. */
@@ -155,6 +168,10 @@ export const Button = ({
   selected,
   round,
   href,
+  target,
+  rel,
+  download,
+  ping,
   type,
   form,
   className,
@@ -236,6 +253,10 @@ export const Button = ({
       <a
         href={href}
         data-anta=""
+        target={target}
+        rel={rel}
+        download={download}
+        ping={ping}
         {...sharedAttrs as any}
         {...rest}
       >

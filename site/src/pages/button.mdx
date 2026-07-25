@@ -585,6 +585,17 @@ Setting `href` switches the rendered tag from `<a-button>` to
 `<a role="button" data-anta>`. Styling is identical — both selectors share
 the same CSS rules. `<Button>` adds the `data-anta` marker for you.
 
+**`href` is optional**, so a conditional URL needs no branching. Pass
+`href={maybeUrl}` (a `string | undefined`): a definite string links out, an
+absent / `undefined` href renders a plain `<a-button>`. Pair it with `disabled`
+for a link that's live when the URL exists and inert otherwise — no two-render
+split or conditional spread:
+
+```tsx
+// Links out when there's a URL; a plain, disabled button when there isn't.
+<Button href={reportUrl} disabled={!reportUrl} iconTrailing="external-link" label="View report" />
+```
+
 </Col>
 </Columns>
 

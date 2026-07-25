@@ -4,6 +4,8 @@ This page tracks what ships to npm. Documentation website changes are not tracke
 
 ## Unreleased
 
+## 0.3.13 — July 25, 2026
+
 ### Added
 - **`reset.css` now styles raw `<dfn>`** (defined term): non-italic, with a dotted underline at half the surrounding text's strength — `3px` offset, `currentColor` at 50% via `color-mix(in oklch, …)` — in place of the UA italic. No `cursor: help` is added (a `<dfn>` marks a term, not necessarily an interactive tooltip; layer the help cursor on where the term is hoverable). Lives in `@layer anta`, so any unlayered rule overrides it.
 - **Six tone seeds drive the whole colour system, and the default palette is now derived from them.** `tokens.css` ships `--anta-seed-{neutral,brand,info,success,warning,critical}` and derives every role token from them with relative colour — `--bg-4-brand`, `--text-2-info`, `--border-1`, and so on are `oklch(from var(--anta-seed-<tone>) L C h)`, taking the seed's hue and pinning lightness/chroma per role and theme. Every component's tones (Button fills, Checkbox/Radio marks, Tag tint/solid, Tabs track, Input `status`, and the role-token components) derive from the same seeds. **Override one seed on any ancestor and its entire scale — tokens and components — re-derives live.** Light and dark share the seeds and differ only in the pinned L/C.

@@ -63,7 +63,7 @@ export default function ThemeSwitcher() {
       }}
       options={[
         { value: 'none', label: 'Default' },
-        { value: 'anta', label: 'Anta' },
+        { value: 'anta', label: 'Anta', tooltip: 'Hand-tuned default colors ("invisible" to non-designers)' },
       ]}
     />
   )

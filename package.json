@@ -36,6 +36,7 @@
     },
     "./tokens.css": "./dist/tokens.css",
     "./reset.css": "./dist/reset.css",
+    "./theme-anta.css": "./dist/theme-anta.css",
     "./generate-icons.mjs": "./dist/generate-icons.mjs",
     "./*": {
       "types": "./dist/*.d.ts",

@@ -378,6 +378,24 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
   --menu-item-selected: ${v.selectedA}%;
 }`,
   },
+
+  {
+    id: 'progress',
+    title: 'Progress',
+    blurb:
+      'Every colour is a role token; Progress defines none of its own. Track = --bg-4, border = --border-4, the fill indicator = --bg-5, the label = --text-2, and the right-aligned hint = --text-3. Named tones swap in the matching -{tone} role variant (so dark mode is free), and the fill’s right-edge fades from --bg-5 to --border-4. Follows the Text and Background & Borders panels live.',
+    // Like the Expander, Progress has no colours of its own — every output is a
+    // role token, so there are no knobs. It tracks the Text + Surface specs.
+    vars: [],
+    groups: [],
+    css: (sel) => `${sel} {
+  --progress-bg: var(--bg-4);
+  --progress-border-color: var(--border-4);
+  --progress-indicator-bg: var(--bg-5);
+  --progress-text-color: var(--text-2);
+  --progress-hint-color: var(--text-3);
+}`,
+  },
 ]
 
 /** Element selector each spec's `css()` targets (bare, no container prefix). */
@@ -392,6 +410,7 @@ export const EL_SELECTOR: Record<string, string> = {
   expander: 'a-expander',
   input: 'a-input',
   menuitem: 'a-menu-item',
+  progress: 'a-progress',
 }
 
 /** Resolve a spec's display groups to their `VarDef`s (a key may repeat across groups). */

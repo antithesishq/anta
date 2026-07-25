@@ -4,6 +4,18 @@ This page tracks what ships to npm. Documentation website changes are not tracke
 
 ## Unreleased
 
+### Added
+- **Six tone seeds drive the whole colour system, and the default palette is now derived from them.** `tokens.css` ships `--anta-seed-{neutral,brand,info,success,warning,critical}` and derives every role token from them with relative colour — `--bg-4-brand`, `--text-2-info`, `--border-1`, and so on are `oklch(from var(--anta-seed-<tone>) L C h)`, taking the seed's hue and pinning lightness/chroma per role and theme. Every component's tones (Button fills, Checkbox/Radio marks, Tag tint/solid, Tabs track, Input `status`, and the role-token components) derive from the same seeds. **Override one seed on any ancestor and its entire scale — tokens and components — re-derives live.** Light and dark share the seeds and differ only in the pinned L/C.
+- **`@antadesign/anta/theme-anta.css` — an opt-in theme that restores the previous hand-tuned palette.** The seed-derived default is close to but not pixel-identical to the values that shipped before. Import this stylesheet after `tokens.css` and the element CSS to get the exact prior palette back (it re-supplies the role scale + the per-component tone ramps as literals; it's intentionally unlayered so it overrides the generated defaults while a consumer's own overrides still win):
+  ```js
+  import '@antadesign/anta/tokens.css'
+  import '@antadesign/anta/reset.css'
+  import '@antadesign/anta/theme-anta.css' // ← restores the hand-tuned palette
+  ```
+
+### Changed
+- **Default colours are seed-derived (generative), a visible shift from the previous hand-tuned literals.** Out of the box the palette now comes from the six seeds via the formulas above rather than the fixed hex that shipped before, so most tones move slightly. This also puts `oklch(from …)` relative colour on the *default* code path (it was already used in components' custom-tone CSS), raising the browser floor to current Chrome / Safari / Firefox. To keep the old palette exactly, import `theme-anta.css` (above); to reskin, override the `--anta-seed-*` properties.
+
 ### Removed
 - **`Title` / `Text` drop the `quinary` priority.** Both now go `primary` → `quaternary` (`--text-1` … `--text-4`); `priority="quinary"` is no longer a valid value and its `a-title` / `a-text` CSS rules are gone. The `--text-5` **token stays** — it's the faintest step, still used for disabled and hint text across components (input/input-time hints, calendar, menu, radio-group disabled, reset scaffolding). Migration: a `quinary` heading/text becomes `quaternary`, or use a raw element with `color: var(--text-5)` if you specifically need the faintest step.
 

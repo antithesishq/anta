@@ -14,6 +14,7 @@ import {
   Input,
   InputDate,
   MenuItem,
+  Progress,
   Tooltip,
 } from '@antadesign/anta'
 import ColorPicker from './ColorPicker'
@@ -38,6 +39,14 @@ import {
  * colour, exposes the formula's constants as live inputs (grouped by priority),
  * and shows the resolved CSS. Where the generic formula matches the hand-tuned
  * literals the two previews read alike; where it diverges you can see and re-tune it.
+ *
+ * FOLLOW-UP: Anta's shipped default is now itself seed-derived (tokens.css +
+ * components use `oklch(from var(--anta-seed-*) …)`), and the opt-in
+ * `theme-anta.css` carries the old hand-tuned literals. So the "Anta hand-tuned"
+ * column (which reads the LIVE shipped tokens via getComputedStyle) now reads the
+ * *generative* default unless `theme-anta.css` is loaded — the two columns no
+ * longer contrast at default seeds. Rework this to read the hand-tuned side from
+ * `theme-anta.css` (or drop the comparison framing).
  *
  * One page, six tone panels (Neutral first), all mounted — the tone tabs only
  * toggle visibility, so each panel keeps its own per-theme edits. The seed picker
@@ -352,6 +361,14 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
         </div>
       )
 
+    case 'progress':
+      return (
+        <div className={styles.col}>
+          <Progress value={72} tone={toneVal} label="Uploading files" hint="5 of 7" />
+          <Progress value={40} tone={toneVal} round label="Syncing" hint="40%" />
+        </div>
+      )
+
     default:
       return null
   }
@@ -421,7 +438,7 @@ function GroupActions({
  *  per-component values. Their generative preview gets the Text + Surface scales
  *  injected on its container, so `var(--text-1)` etc. resolve to the tuned scale
  *  and follow the Text / Background & Borders panels live. */
-const ROLE_TOKEN_SPECS = new Set(['tabs', 'tag', 'menuitem', 'expander'])
+const ROLE_TOKEN_SPECS = new Set(['tabs', 'tag', 'menuitem', 'expander', 'progress'])
 const TEXT_SPEC = SPECS.find((s) => s.id === 'text')!
 const SURFACE_SPEC = SPECS.find((s) => s.id === 'surface')!
 

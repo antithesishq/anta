@@ -103,66 +103,21 @@
     }
   }
 
-  a-input-time[status="critical"] {
-    --input-time-bg: #fefbfb;
-    --input-time-border: #de4545;
-    --input-time-border-hover: #de4545;
-    --input-time-hint: #c9302c;
+  /* Status — mirrors a-input: border derives in oklch from the tone's seed
+     (rest = hover), bg tint + message are the tone's role tokens (both themes
+     free). */
+  a-input-time[status="critical"] { --input-time-tone-source: var(--anta-seed-critical); --input-time-bg: var(--bg-2-critical); --input-time-hint: var(--text-2-critical); }
+  a-input-time[status="warning"]  { --input-time-tone-source: var(--anta-seed-warning);  --input-time-bg: var(--bg-2-warning);  --input-time-hint: var(--text-2-warning); }
+  a-input-time[status="success"]  { --input-time-tone-source: var(--anta-seed-success);  --input-time-bg: var(--bg-2-success);  --input-time-hint: var(--text-2-success); }
+  a-input-time[status="info"]     { --input-time-tone-source: var(--anta-seed-info);     --input-time-bg: var(--bg-2-info);     --input-time-hint: var(--text-2-info); }
+  a-input-time[status="brand"]    { --input-time-tone-source: var(--anta-seed-brand);    --input-time-bg: var(--bg-2-brand);    --input-time-hint: var(--text-2-brand); }
+  a-input-time[status] {
+    --input-time-border:       oklch(from var(--input-time-tone-source) 0.58 c h);
+    --input-time-border-hover: oklch(from var(--input-time-tone-source) 0.58 c h);
   }
-  a-input-time[status="warning"] {
-    --input-time-bg: #fefbf6;
-    --input-time-border: #ae6613;
-    --input-time-border-hover: #ae6613;
-    --input-time-hint: #995200;
-  }
-  a-input-time[status="success"] {
-    --input-time-bg: #f7fcf9;
-    --input-time-border: #329550;
-    --input-time-border-hover: #329550;
-    --input-time-hint: #2a7e43;
-  }
-  a-input-time[status="info"] {
-    --input-time-bg: #fbfcfe;
-    --input-time-border: #2686d9;
-    --input-time-border-hover: #2686d9;
-    --input-time-hint: #175082;
-  }
-  a-input-time[status="brand"] {
-    --input-time-bg: #fcfcfe;
-    --input-time-border: #7460d7;
-    --input-time-border-hover: #7460d7;
-    --input-time-hint: #5f4bc3;
-  }
-
-  .dark a-input-time[status="critical"] {
-    --input-time-bg: #1f0506;
-    --input-time-border: #c9302c;
-    --input-time-border-hover: #c9302c;
-    --input-time-hint: #e25858;
-  }
-  .dark a-input-time[status="warning"] {
-    --input-time-bg: #120a03;
-    --input-time-border: #995200;
-    --input-time-border-hover: #995200;
-    --input-time-hint: #c37416;
-  }
-  .dark a-input-time[status="success"] {
-    --input-time-bg: #041008;
-    --input-time-border: var(--border-1-success);
-    --input-time-border-hover: var(--border-1-success);
-    --input-time-hint: #3aab5c;
-  }
-  .dark a-input-time[status="info"] {
-    --input-time-bg: #040d18;
-    --input-time-border: #1f6eb2;
-    --input-time-border-hover: #1f6eb2;
-    --input-time-hint: #3e93dd;
-  }
-  .dark a-input-time[status="brand"] {
-    --input-time-bg: #0b0916;
-    --input-time-border: #5f4bc3;
-    --input-time-border-hover: #5f4bc3;
-    --input-time-hint: #8270db;
+  .dark a-input-time[status] {
+    --input-time-border:       oklch(from var(--input-time-tone-source) 0.52 c h);
+    --input-time-border-hover: oklch(from var(--input-time-tone-source) 0.52 c h);
   }
 
   a-input-time:disabled {
@@ -180,10 +135,8 @@
     --input-time-border-hover: #e4d1ef1f;
   }
 
-  .dark a-input-time:not([status]) {
-    --input-time-border: #49424c;
-    --input-time-border-hover: #635b65;
-  }
+  /* Neutral dark border needs no override: base points at --border-2 / --border-1
+     (seed-derived dark values). */
 
   /* Focused-segment tint tracks the text-selection alpha (30% dark, per reset.css). */
   .dark a-input-time {

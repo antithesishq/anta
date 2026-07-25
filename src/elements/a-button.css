@@ -28,26 +28,51 @@
     --button-loading-opacity: 0.15;
     --button-loading-blur: 2.5px;
 
-    --button-bg-primary-rest: #635b65;
-    --button-bg-primary-hover: #534c57;
-    --button-bg-primary-active: #49424c;
+    /* Tone — every priority/state is derived in oklch from --_src (the tone's
+       seed, or a custom literal colour) with the per-tone --_tone-* constants
+       below. Neutral is the base: its seed is near-grey, so the same formula
+       greys out. Named tones point --_src at their seed and saturate the
+       constants; a custom `tone="<color>"` points --_src at the literal. The
+       constants come from the theming lab's Button spec (the generative source
+       of truth). */
+    --_src: var(--anta-seed-neutral);
+
+    --_tone-pl-rest: 0.5;
+    --_tone-pl-hover: 0.45;
+    --_tone-pl-active: 0.4;
+    --_tone-pl-c: 0.02;
+    --_tone-fg-l: 0.46;
+    --_tone-fg-strong-l: 0.4;
+    --_tone-fg-c: 0.008;
+    --_tone-fg-shift: 0.05;
+    --_tone-bg-l: 0.54;
+    --_tone-bg-c: 0.03;
+    --_tone-a-rest: 0.1;
+    --_tone-a-hover: 0.15;
+    --_tone-a-active: 0.2;
+    --_tone-quat-hover-l: 0.38;
+    --_tone-quat-rest-a: 0.85;
+
+    --button-bg-primary-rest:   oklch(from var(--_src) var(--_tone-pl-rest) var(--_tone-pl-c) h);
+    --button-bg-primary-hover:  oklch(from var(--_src) var(--_tone-pl-hover) var(--_tone-pl-c) h);
+    --button-bg-primary-active: oklch(from var(--_src) var(--_tone-pl-active) var(--_tone-pl-c) h);
     --button-fg-primary-rest: var(--button-primary-fg);
 
-    --button-bg-secondary-rest: #45374c12;
-    --button-bg-secondary-hover: #44374b1a;
-    --button-bg-secondary-active: #44374b26;
-    --button-fg-secondary-rest: #534c57;
-    --button-fg-secondary-hover: #49424c;
+    --button-fg-secondary-rest:   oklch(from var(--_src) var(--_tone-fg-l) var(--_tone-fg-c) h);
+    --button-fg-secondary-hover:  oklch(from var(--_src) var(--_tone-fg-strong-l) var(--_tone-fg-c) h);
+    --button-fg-secondary-l-shift: var(--_tone-fg-shift);
 
-    --button-fg-secondary-l-shift: 0.05;
+    --button-fg-tertiary-rest:  oklch(from var(--_src) var(--_tone-fg-l) var(--_tone-fg-c) h);
+    --button-fg-tertiary-hover: oklch(from var(--_src) var(--_tone-fg-strong-l) var(--_tone-fg-c) h);
+    --button-bg-tertiary-hover:  oklch(from var(--_src) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-a-rest));
+    --button-bg-tertiary-active: oklch(from var(--_src) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-a-hover));
 
-    --button-fg-tertiary-rest: #635b65;
-    --button-fg-tertiary-hover: #534c57;
-    --button-bg-tertiary-hover: #44374b0d;
-    --button-bg-tertiary-active: #44374b1a;
+    --button-fg-quaternary-rest:  oklch(from var(--_src) var(--_tone-fg-l) var(--_tone-fg-c) h / var(--_tone-quat-rest-a));
+    --button-fg-quaternary-hover: oklch(from var(--_src) var(--_tone-quat-hover-l) var(--_tone-fg-c) h);
 
-    --button-fg-quaternary-rest: #635b65;
-    --button-fg-quaternary-hover: #49424c;
+    --button-bg-secondary-rest:   oklch(from var(--_src) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-a-rest));
+    --button-bg-secondary-hover:  oklch(from var(--_src) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-a-hover));
+    --button-bg-secondary-active: oklch(from var(--_src) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-a-active));
 
     /* Type scale by size (small 13/16 · medium 15/20 · large 17/24); --_fs/--_lh
        carry it. The label gets an optical `padding-bottom` (--_pb) that scales
@@ -82,119 +107,44 @@
     border-radius: var(--button-round, 999px);
   }
 
-  a-button[tone="brand"],
-  a[role="button"][data-anta][tone="brand"],
-  button[data-anta][tone="brand"] {
-    --button-bg-primary-rest: #5f4bc3;
-    --button-bg-primary-hover: #503cb4;
-    --button-bg-primary-active: #483493;
-    --button-fg-primary-rest: var(--button-primary-fg);
-
-    --button-bg-secondary-rest: #7460d71a;
-    --button-bg-secondary-hover: #7460d726;
-    --button-bg-secondary-active: #7460d733;
-    --button-fg-secondary-rest: #5f4bc3;
-    --button-fg-secondary-hover: #503cb4;
-
-    --button-fg-tertiary-rest: #5f4bc3;
-    --button-fg-tertiary-hover: #503cb4;
-    --button-bg-tertiary-hover: #7460d71a;
-    --button-bg-tertiary-active: #7460d726;
-
-    --button-fg-quaternary-rest: #5f4bc3;
-    --button-fg-quaternary-hover: #483493;
+  /* Colored tones — saturate the fill/tint and nudge the primary lightness.
+     Full constant set (not deltas) so the highest-specificity matching rule
+     across the neutral/colored × light/dark matrix fully determines every
+     constant. */
+  a-button[tone]:not([tone=""], [tone="neutral"]),
+  a[role="button"][data-anta][tone]:not([tone=""], [tone="neutral"]),
+  button[data-anta][tone]:not([tone=""], [tone="neutral"]) {
+    --_tone-pl-rest: 0.51;
+    --_tone-pl-hover: 0.46;
+    --_tone-pl-active: 0.41;
+    --_tone-pl-c: 0.17;
+    --_tone-fg-l: 0.46;
+    --_tone-fg-strong-l: 0.4;
+    --_tone-fg-c: 0.17;
+    --_tone-fg-shift: 0.05;
+    --_tone-bg-l: 0.54;
+    --_tone-bg-c: 0.17;
+    --_tone-a-rest: 0.1;
+    --_tone-a-hover: 0.15;
+    --_tone-a-active: 0.2;
+    --_tone-quat-hover-l: 0.38;
+    --_tone-quat-rest-a: 0.85;
   }
 
-  a-button[tone="critical"],
-  a[role="button"][data-anta][tone="critical"],
-  button[data-anta][tone="critical"] {
-    --button-bg-primary-rest: #c9302c;
-    --button-bg-primary-hover: #b02120;
-    --button-bg-primary-active: #a01c1c;
-    --button-fg-primary-rest: var(--button-primary-fg);
+  /* Named tones point --_src at their seed; the constants above apply. */
+  a-button[tone="brand"],   a[role="button"][data-anta][tone="brand"],   button[data-anta][tone="brand"]   { --_src: var(--anta-seed-brand); }
+  a-button[tone="info"],    a[role="button"][data-anta][tone="info"],    button[data-anta][tone="info"]    { --_src: var(--anta-seed-info); }
+  a-button[tone="success"], a[role="button"][data-anta][tone="success"], button[data-anta][tone="success"] { --_src: var(--anta-seed-success); }
+  a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[data-anta][tone="warning"] { --_src: var(--anta-seed-warning); }
+  a-button[tone="critical"],a[role="button"][data-anta][tone="critical"],button[data-anta][tone="critical"] { --_src: var(--anta-seed-critical); }
 
-    --button-bg-secondary-rest: #de45451a;
-    --button-bg-secondary-hover: #de454526;
-    --button-bg-secondary-active: #de454533;
-    --button-fg-secondary-rest: #c9302c;
-    --button-fg-secondary-hover: #b02120;
-
-    --button-fg-tertiary-rest: #c9302c;
-    --button-fg-tertiary-hover: #b02120;
-    --button-bg-tertiary-hover: #de45451a;
-    --button-bg-tertiary-active: #de454533;
-
-    --button-fg-quaternary-rest: #c9302c;
-    --button-fg-quaternary-hover: #a01c1c;
-  }
-
-  a-button[tone="info"],
-  a[role="button"][data-anta][tone="info"],
-  button[data-anta][tone="info"] {
-    --button-bg-primary-rest: #1f6eb2;
-    --button-bg-primary-hover: #1a5b93;
-    --button-bg-primary-active: #175082;
-    --button-fg-primary-rest: var(--button-primary-fg);
-
-    --button-bg-secondary-rest: #2686d91a;
-    --button-bg-secondary-hover: #2686d926;
-    --button-bg-secondary-active: #2686d933;
-    --button-fg-secondary-rest: #1f6eb2;
-    --button-fg-secondary-hover: #1a5b93;
-
-    --button-fg-tertiary-rest: #1f6eb2;
-    --button-fg-tertiary-hover: #1a5b93;
-    --button-bg-tertiary-hover: #2686d91a;
-    --button-bg-tertiary-active: #2686d926;
-
-    --button-fg-quaternary-rest: #1f6eb2;
-    --button-fg-quaternary-hover: #175082;
-  }
-
-  a-button[tone="success"],
-  a[role="button"][data-anta][tone="success"],
-  button[data-anta][tone="success"] {
-    --button-bg-primary-rest: #2a7e43;
-    --button-bg-primary-hover: #226737;
-    --button-bg-primary-active: #1f5c31;
-    --button-fg-primary-rest: var(--button-primary-fg);
-
-    --button-bg-secondary-rest: #3295501a;
-    --button-bg-secondary-hover: #32955026;
-    --button-bg-secondary-active: #32955033;
-    --button-fg-secondary-rest: #2a7e43;
-    --button-fg-secondary-hover: #226737;
-
-    --button-fg-tertiary-rest: #2a7e43;
-    --button-fg-tertiary-hover: #226737;
-    --button-bg-tertiary-hover: #3295501a;
-    --button-bg-tertiary-active: #32955026;
-
-    --button-fg-quaternary-rest: #2a7e43;
-    --button-fg-quaternary-hover: #1f5c31;
-  }
-
-  a-button[tone="warning"],
-  a[role="button"][data-anta][tone="warning"],
-  button[data-anta][tone="warning"] {
-    --button-bg-primary-rest: #c37416;
-    --button-bg-primary-hover: #ae6613;
-    --button-bg-primary-active: #995200;
-    --button-fg-primary-rest: var(--button-primary-fg);
-
-    --button-bg-secondary-rest: #c374161a;
-    --button-bg-secondary-hover: #c3741626;
-    --button-bg-secondary-active: #c3741633;
-    --button-fg-secondary-rest: #c37416;
-    --button-fg-secondary-hover: #ae6613;
-
-    --button-fg-tertiary-rest: #c37416;
-    --button-fg-tertiary-hover: #ae6613;
-    --button-bg-tertiary-hover: #c374161a;
-    --button-bg-tertiary-active: #c3741633;
-
-    --button-fg-quaternary-rest: #c37416;
-    --button-fg-quaternary-hover: #995200;
+  /* Custom tone — any non-named value is a literal colour; --_src reads it (the
+     wrapper also sets --button-tone-source inline for engines without typed
+     attr()). Colored constants apply via the rule above. */
+  a-button[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
+  a[role="button"][data-anta][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
+  button[data-anta][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --_src: var(--button-tone-source, attr(tone type(<color>), transparent));
   }
 
   .dark a-button,
@@ -205,135 +155,43 @@
     --fg-disabled-primary: #776e77;
     --fg-disabled: #635b65;
 
-    --button-bg-primary-rest: #534c57;
-    --button-bg-primary-hover: #635b65;
-    --button-bg-primary-active: #938d96;
-
-    --button-bg-secondary-rest: #e4d1ef1c;
-    --button-bg-secondary-hover: #e4d1ef24;
-    --button-bg-secondary-active: #e4d1ef2e;
-    --button-fg-secondary-rest: #c1b9c1;
-    --button-fg-secondary-hover: #d4ced4;
-
-    --button-fg-secondary-l-shift: 0;
-
-    --button-fg-tertiary-rest: #afa9b1;
-    --button-fg-tertiary-hover: #afa9b1;
-    --button-bg-tertiary-hover: #e4d1ef14;
-    --button-bg-tertiary-active: #e4d1ef21;
-
-    --button-fg-quaternary-rest: #afa9b1;
-    --button-fg-quaternary-hover: #cac4ca;
+    /* Dark neutral tone constants */
+    --_tone-pl-rest: 0.4;
+    --_tone-pl-hover: 0.44;
+    --_tone-pl-active: 0.48;
+    --_tone-pl-c: 0.015;
+    --_tone-fg-l: 0.86;
+    --_tone-fg-strong-l: 0.86;
+    --_tone-fg-c: 0.015;
+    --_tone-fg-shift: 0;
+    --_tone-bg-l: 0.44;
+    --_tone-bg-c: 0.01;
+    --_tone-a-rest: 0.24;
+    --_tone-a-hover: 0.34;
+    --_tone-a-active: 0.44;
+    --_tone-quat-hover-l: 0.9;
+    --_tone-quat-rest-a: 0.85;
   }
 
-  .dark a-button[tone="brand"],
-  .dark a[role="button"][data-anta][tone="brand"],
-  .dark button[data-anta][tone="brand"] {
-    --button-bg-primary-rest: #503cb4;
-    --button-bg-primary-hover: #5f4bc3;
-    --button-bg-primary-active: #7460d7;
-
-    --button-bg-secondary-rest: #7460d73b;
-    --button-bg-secondary-hover: #7460d747;
-    --button-bg-secondary-active: #7460d754;
-    --button-fg-secondary-rest: #c5baff;
-    --button-fg-secondary-hover: #d2cbf6;
-
-    --button-fg-tertiary-rest: #ada0ee;
-    --button-fg-tertiary-hover: #bcb1f1;
-    --button-bg-tertiary-hover: #7460d73b;
-    --button-bg-tertiary-active: #7460d747;
-
-    --button-fg-quaternary-rest: #ada0ee;
-    --button-fg-quaternary-hover: #c7bef4;
-  }
-
-  .dark a-button[tone="critical"],
-  .dark a[role="button"][data-anta][tone="critical"],
-  .dark button[data-anta][tone="critical"] {
-    --button-bg-primary-rest: #b02120;
-    --button-bg-primary-hover: #c9302c;
-    --button-bg-primary-active: #de4545;
-
-    --button-bg-secondary-rest: #de45453b;
-    --button-bg-secondary-hover: #de454547;
-    --button-bg-secondary-active: #de454554;
-    --button-fg-secondary-rest: #ffabac;
-    --button-fg-secondary-hover: #f4c2c2;
-
-    --button-fg-tertiary-rest: #e78e90;
-    --button-fg-tertiary-hover: #efa4a4;
-    --button-bg-tertiary-hover: #de45453b;
-    --button-bg-tertiary-active: #de454547;
-
-    --button-fg-quaternary-rest: #e78e90;
-    --button-fg-quaternary-hover: #ffabac;
-  }
-
-  .dark a-button[tone="info"],
-  .dark a[role="button"][data-anta][tone="info"],
-  .dark button[data-anta][tone="info"] {
-    --button-bg-primary-rest: #1a5b93;
-    --button-bg-primary-hover: #1f6eb2;
-    --button-bg-primary-active: #2686d9;
-
-    --button-bg-secondary-rest: #2686d93b;
-    --button-bg-secondary-hover: #2686d947;
-    --button-bg-secondary-active: #2686d954;
-    --button-fg-secondary-rest: #9ed2ff;
-    --button-fg-secondary-hover: #bad6f3;
-
-    --button-fg-tertiary-rest: #7db6e8;
-    --button-fg-tertiary-hover: #93c5ec;
-    --button-bg-tertiary-hover: #2686d93b;
-    --button-bg-tertiary-active: #2686d947;
-
-    --button-fg-quaternary-rest: #7db6e8;
-    --button-fg-quaternary-hover: #a6cdef;
-  }
-
-  .dark a-button[tone="success"],
-  .dark a[role="button"][data-anta][tone="success"],
-  .dark button[data-anta][tone="success"] {
-    --button-bg-primary-rest: #226737;
-    --button-bg-primary-hover: #2a7e43;
-    --button-bg-primary-active: #329550;
-
-    --button-bg-secondary-rest: #3295503b;
-    --button-bg-secondary-hover: #32955047;
-    --button-bg-secondary-active: #32955054;
-    --button-fg-secondary-rest: #8ceca9;
-    --button-fg-secondary-hover: #b3e5c2;
-
-    --button-fg-tertiary-rest: #74cd8e;
-    --button-fg-tertiary-hover: #88d7a0;
-    --button-bg-tertiary-hover: #3295503b;
-    --button-bg-tertiary-active: #32955047;
-
-    --button-fg-quaternary-rest: #74cd8e;
-    --button-fg-quaternary-hover: #9ddeb1;
-  }
-
-  .dark a-button[tone="warning"],
-  .dark a[role="button"][data-anta][tone="warning"],
-  .dark button[data-anta][tone="warning"] {
-    --button-bg-primary-rest: #7f410b;
-    --button-bg-primary-hover: #995200;
-    --button-bg-primary-active: #ae6613;
-
-    --button-bg-secondary-rest: #c374163b;
-    --button-bg-secondary-hover: #c3741647;
-    --button-bg-secondary-active: #c3741654;
-    --button-fg-secondary-rest: #f7c06e;
-    --button-fg-secondary-hover: #f3cc91;
-
-    --button-fg-tertiary-rest: #e1a452;
-    --button-fg-tertiary-hover: #edb25a;
-    --button-bg-tertiary-hover: #c374163b;
-    --button-bg-tertiary-active: #c3741647;
-
-    --button-fg-quaternary-rest: #e1a452;
-    --button-fg-quaternary-hover: #f0bf75;
+  /* Dark colored tone constants */
+  .dark a-button[tone]:not([tone=""], [tone="neutral"]),
+  .dark a[role="button"][data-anta][tone]:not([tone=""], [tone="neutral"]),
+  .dark button[data-anta][tone]:not([tone=""], [tone="neutral"]) {
+    --_tone-pl-rest: 0.4;
+    --_tone-pl-hover: 0.44;
+    --_tone-pl-active: 0.48;
+    --_tone-pl-c: 0.16;
+    --_tone-fg-l: 0.86;
+    --_tone-fg-strong-l: 0.86;
+    --_tone-fg-c: 0.13;
+    --_tone-fg-shift: 0;
+    --_tone-bg-l: 0.58;
+    --_tone-bg-c: 0.16;
+    --_tone-a-rest: 0.215;
+    --_tone-a-hover: 0.29;
+    --_tone-a-active: 0.34;
+    --_tone-quat-hover-l: 0.9;
+    --_tone-quat-rest-a: 0.85;
   }
 
   /* Native <button> opt-in (`<button data-anta>`): the shared base rule below
@@ -584,70 +442,6 @@
 
         animation-delay: -9999s;
       }
-    }
-
-    &[tone]:not(
-        [tone=""],
-        [tone="brand"],
-        [tone="neutral"],
-        [tone="critical"],
-        [tone="info"],
-        [tone="success"],
-        [tone="warning"]
-      ) {
-      --button-tone-source: attr(tone type(<color>), transparent);
-
-      --_tone-fg-l: 0.46;
-      --_tone-fg-strong-l: 0.40;
-      --_tone-fg-c: 0.17;
-      --_tone-bg-l: 0.54;
-      --_tone-bg-c: 0.16;
-      --_tone-bg-a-rest: 0.10;
-      --_tone-bg-a-hover: 0.15;
-      --_tone-bg-a-active: 0.20;
-      --_tone-primary-l-rest: 0.5;
-      --_tone-primary-l-hover: 0.45;
-      --_tone-primary-l-active: 0.4;
-
-      --button-bg-primary-rest:   oklch(from var(--button-tone-source) var(--_tone-primary-l-rest) c h);
-      --button-bg-primary-hover:  oklch(from var(--button-tone-source) var(--_tone-primary-l-hover) c h);
-      --button-bg-primary-active: oklch(from var(--button-tone-source) var(--_tone-primary-l-active) c h);
-      --button-fg-primary-rest: var(--button-primary-fg);
-
-      --button-fg-secondary-rest:   oklch(from var(--button-tone-source) var(--_tone-fg-l) var(--_tone-fg-c) h);
-      --button-fg-secondary-hover:  oklch(from var(--button-tone-source) var(--_tone-fg-strong-l) var(--_tone-fg-c) h);
-      --button-fg-tertiary-rest:    oklch(from var(--button-tone-source) var(--_tone-fg-l) var(--_tone-fg-c) h);
-      --button-fg-tertiary-hover:   oklch(from var(--button-tone-source) var(--_tone-fg-strong-l) var(--_tone-fg-c) h);
-      --button-fg-quaternary-rest:  oklch(from var(--button-tone-source) var(--_tone-fg-l) var(--_tone-fg-c) h);
-      --button-fg-quaternary-hover: oklch(from var(--button-tone-source) var(--_tone-fg-strong-l) var(--_tone-fg-c) h);
-
-      --button-bg-secondary-rest:   oklch(from var(--button-tone-source) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-bg-a-rest));
-      --button-bg-secondary-hover:  oklch(from var(--button-tone-source) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-bg-a-hover));
-      --button-bg-secondary-active: oklch(from var(--button-tone-source) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-bg-a-active));
-      --button-bg-tertiary-hover:   oklch(from var(--button-tone-source) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-bg-a-rest));
-      --button-bg-tertiary-active:  oklch(from var(--button-tone-source) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-bg-a-hover));
-    }
-
-    .dark &[tone]:not(
-        [tone=""],
-        [tone="brand"],
-        [tone="neutral"],
-        [tone="critical"],
-        [tone="info"],
-        [tone="success"],
-        [tone="warning"]
-      ) {
-      --_tone-fg-l: 0.78;
-      --_tone-fg-strong-l: 0.85;
-      --_tone-fg-c: 0.11;
-      --_tone-bg-l: 0.58;
-      --_tone-bg-a-rest: 0.23;
-      --_tone-bg-a-hover: 0.28;
-      --_tone-bg-a-active: 0.33;
-
-      --_tone-primary-l-rest: 0.45;
-      --_tone-primary-l-hover: 0.5;
-      --_tone-primary-l-active: 0.57;
     }
 
     --button-fg: oklch(from var(--button-fg-secondary-rest) calc(l - var(--button-fg-secondary-l-shift)) c h);

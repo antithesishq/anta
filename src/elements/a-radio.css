@@ -17,16 +17,24 @@
 
     --radio-bg: var(--bg-1);
 
-    /* Default tone is neutral; brand and the rest are explicit opt-ins. Colours mirror a-checkbox. */
-    --radio-bg-selected: #878089;
-    --radio-bg-selected-hover: #776e77;
-    --radio-bg-selected-active: #635b65;
+    /* Tone — the selected mark (ring + dot) derives in oklch from
+       --radio-tone-source at three lightnesses; the seed's own chroma (`c`) keeps
+       neutral grey. Mirrors a-checkbox; constants from the lab. Named tones and a
+       custom colour point the source elsewhere (rules below). Default is neutral. */
+    --radio-tone-source: var(--anta-seed-neutral);
+    --_tone-l-rest: 0.6;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.4;
+    --radio-bg-selected:        oklch(from var(--radio-tone-source) var(--_tone-l-rest) c h);
+    --radio-bg-selected-hover:  oklch(from var(--radio-tone-source) var(--_tone-l-hover) c h);
+    --radio-bg-selected-active: oklch(from var(--radio-tone-source) var(--_tone-l-active) c h);
 
-    /* Unselected ring border: neutral grey by default. Named tinted tones override the resting fill + border to mirror the Input field (rules below); a custom-colour tone derives its border from the fill. */
-    --radio-border-neutral: #d4ced4;
+    /* Unselected ring border: neutral role-token greys by default. Named tinted
+       tones + a custom colour derive it from the tone (rules below). */
+    --radio-border-neutral: var(--border-3);
     --radio-border: var(--radio-border-neutral);
-    --radio-border-hover: #c1b9c1;
-    --radio-border-active: #9f99a1;
+    --radio-border-hover: var(--border-2);
+    --radio-border-active: var(--border-1);
 
     /* Off-white dot, matching a-checkbox's checkmark glyph (was pure white). */
     --radio-dot: #f6f4f6;
@@ -204,111 +212,34 @@
      theme-aware --text-N-{tone} tokens (a `color` rule on a-radio-label /
      a-radio-hint). `neutral` keeps the base greys; the
      default (no attribute) is untouched — the wrapper omits the neutral value. */
-  a-radio[tone="brand"],
-  a-radio[tone-selected="brand"],
-  a-radio-group[tone="brand"] a-radio:not([tone]),
-  a-radio-group[tone-selected="brand"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #5f4bc3;
-    --radio-bg-selected-hover: #503cb4;
-    --radio-bg-selected-active: #483493;
+  /* Colored mark-fill lightnesses (standalone + group-cascaded, tone + tone-selected). */
+  a-radio[tone]:not([tone=""], [tone="neutral"]),
+  a-radio[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]),
+  a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone]),
+  a-radio-group[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) a-radio:not([tone-selected]) {
+    --_tone-l-rest: 0.5;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.4;
   }
-  a-radio[tone="neutral"],
-  a-radio[tone-selected="neutral"],
-  a-radio-group[tone="neutral"] a-radio:not([tone]),
-  a-radio-group[tone-selected="neutral"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #878089;
-    --radio-bg-selected-hover: #776e77;
-    --radio-bg-selected-active: #635b65;
-  }
-  a-radio[tone="info"],
-  a-radio[tone-selected="info"],
-  a-radio-group[tone="info"] a-radio:not([tone]),
-  a-radio-group[tone-selected="info"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #1f6eb2;
-    --radio-bg-selected-hover: #1a5b93;
-    --radio-bg-selected-active: #175082;
-  }
-  a-radio[tone="success"],
-  a-radio[tone-selected="success"],
-  a-radio-group[tone="success"] a-radio:not([tone]),
-  a-radio-group[tone-selected="success"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #2a7e43;
-    --radio-bg-selected-hover: #226737;
-    --radio-bg-selected-active: #1f5c31;
-  }
-  a-radio[tone="warning"],
-  a-radio[tone-selected="warning"],
-  a-radio-group[tone="warning"] a-radio:not([tone]),
-  a-radio-group[tone-selected="warning"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #c37416;
-    --radio-bg-selected-hover: #ae6613;
-    --radio-bg-selected-active: #995200;
-  }
-  a-radio[tone="critical"],
-  a-radio[tone-selected="critical"],
-  a-radio-group[tone="critical"] a-radio:not([tone]),
-  a-radio-group[tone-selected="critical"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #c9302c;
-    --radio-bg-selected-hover: #b02120;
-    --radio-bg-selected-active: #a01c1c;
-  }
+  /* Named tones → seed. */
+  a-radio[tone="brand"],    a-radio[tone-selected="brand"],    a-radio-group[tone="brand"] a-radio:not([tone]),    a-radio-group[tone-selected="brand"] a-radio:not([tone-selected])    { --radio-tone-source: var(--anta-seed-brand); }
+  a-radio[tone="info"],     a-radio[tone-selected="info"],     a-radio-group[tone="info"] a-radio:not([tone]),     a-radio-group[tone-selected="info"] a-radio:not([tone-selected])     { --radio-tone-source: var(--anta-seed-info); }
+  a-radio[tone="success"],  a-radio[tone-selected="success"],  a-radio-group[tone="success"] a-radio:not([tone]),  a-radio-group[tone-selected="success"] a-radio:not([tone-selected])  { --radio-tone-source: var(--anta-seed-success); }
+  a-radio[tone="warning"],  a-radio[tone-selected="warning"],  a-radio-group[tone="warning"] a-radio:not([tone]),  a-radio-group[tone-selected="warning"] a-radio:not([tone-selected])  { --radio-tone-source: var(--anta-seed-warning); }
+  a-radio[tone="critical"], a-radio[tone-selected="critical"], a-radio-group[tone="critical"] a-radio:not([tone]), a-radio-group[tone-selected="critical"] a-radio:not([tone-selected]) { --radio-tone-source: var(--anta-seed-critical); }
+  a-radio[tone="neutral"],  a-radio[tone-selected="neutral"],  a-radio-group[tone="neutral"] a-radio:not([tone]),  a-radio-group[tone-selected="neutral"] a-radio:not([tone-selected])  { --radio-tone-source: var(--anta-seed-neutral); }
 
-  /* Named tinted tones: unselected ring gets a faint tone fill under a tone border ramp (rest/hover/active), same colours as a-checkbox. Keyed to [tone] only (standalone or group-cascaded); tone-selected keeps a neutral off-state ring. */
-  a-radio[tone="brand"],
-  a-radio-group[tone="brand"] a-radio:not([tone]) {
-    --radio-bg: #fcfcfe;
-    --radio-border: #bcb1f1;
-    --radio-border-hover: #9e8eeb;
-    --radio-border-active: #9081df;
-  }
-  a-radio[tone="info"],
-  a-radio-group[tone="info"] a-radio:not([tone]) {
-    --radio-bg: #fbfcfe;
-    --radio-border: #93c5ec;
-    --radio-border-hover: #69ace5;
-    --radio-border-active: #56a1e1;
-  }
-  a-radio[tone="success"],
-  a-radio-group[tone="success"] a-radio:not([tone]) {
-    --radio-bg: #f7fcf9;
-    --radio-border: #88d7a0;
-    --radio-border-hover: #5bc87b;
-    --radio-border-active: #44c169;
-  }
-  a-radio[tone="warning"],
-  a-radio-group[tone="warning"] a-radio:not([tone]) {
-    --radio-bg: #fefbf6;
-    --radio-border: #edb25a;
-    --radio-border-hover: #e09127;
-    --radio-border-active: #d88118;
-  }
-  a-radio[tone="critical"],
-  a-radio-group[tone="critical"] a-radio:not([tone]) {
-    --radio-bg: #fefbfb;
-    --radio-border: #efa4a4;
-    --radio-border-hover: #e87f7f;
-    --radio-border-active: #e56c6c;
-  }
-
-  /* Custom tone (non-named colour): derive the unselected ring in oklch like a-checkbox — a faint fill (near-white light, near-black dark, chroma scaled down) under a border ramped off the fill. Covers standalone + group-cascaded. */
-  a-radio[tone]:not(
-      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]),
-  a-radio-group[tone]:not(
-      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]) a-radio:not([tone]) {
+  /* `tone` (not tone-selected) also derives the unselected tinted ring from the
+     tone in oklch: a whisper-tint fill (chroma scaled down) under a border ramp
+     stepped off the fill. Named + custom, standalone + group-cascaded; neutral
+     and every tone-selected keep the neutral off-ring border. */
+  a-radio[tone]:not([tone=""], [tone="neutral"]),
+  a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone]) {
     --radio-bg: oklch(from var(--radio-tone-source) 0.99 calc(c * 0.03) h);
     --_radio-border-base: color-mix(in oklch, var(--radio-bg-selected) 70%, var(--radio-border-neutral));
     --radio-border:        oklch(from var(--_radio-border-base) calc(l + 0.17) c h);
     --radio-border-hover:  oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
     --radio-border-active: var(--_radio-border-base);
-
-    .dark & {
-      --radio-bg: oklch(from var(--radio-tone-source) 0.15 calc(c * 0.18) h);
-      --radio-border:        var(--_radio-border-base);
-      --radio-border-hover:  oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
-      --radio-border-active: oklch(from var(--_radio-border-base) calc(l + 0.17) c h);
-    }
   }
 
   /* Custom mark tone — a non-named `tone` / `tone-selected` is a literal CSS color;
@@ -329,138 +260,38 @@
       [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
     --radio-tone-source: attr(tone-selected type(<color>), transparent);
   }
-  a-radio[tone]:not(
-      [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]),
-  a-radio[tone-selected]:not(
-      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
-      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]),
-  a-radio-group[tone]:not(
-      [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]) a-radio:not([tone]),
-  a-radio-group[tone-selected]:not(
-      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
-      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) a-radio:not([tone-selected]) {
-    --_tone-l-rest: 0.5;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.4;
-
-    --radio-bg-selected:        oklch(from var(--radio-tone-source) var(--_tone-l-rest) c h);
-    --radio-bg-selected-hover:  oklch(from var(--radio-tone-source) var(--_tone-l-hover) c h);
-    --radio-bg-selected-active: oklch(from var(--radio-tone-source) var(--_tone-l-active) c h);
-
-    /* Dark — same formulas, brighter fill on a dark page. */
-    .dark & {
-      --_tone-l-rest: 0.45;
-      --_tone-l-hover: 0.5;
-      --_tone-l-active: 0.57;
-    }
-  }
-
+  /* Dark — neutral chrome + brighter fill/tinted-ring lightnesses. Constants from
+     the lab; the fill + tinted-ring formulas (above) recompute against them. */
   .dark a-radio {
     --_radio-dot-adjust: 1px;
 
     /* Dark only: a 1px halo (black at 40%) defines the dot against the darker fill; light mode keeps a plain dot. */
     &::after { box-shadow: 0 0 1px 1px color-mix(in oklch, black 40%, transparent); }
 
-    /* Neutral grey border (tinted tones mix the fill toward this). */
-    --radio-border-neutral: #49424c;
-    --radio-border-hover: #635b65;
-    --radio-border-active: #776e77;
-
-    /* Neutral default — brand and the rest are explicit opt-ins. */
-    --radio-bg-selected: #49424c;
-    --radio-bg-selected-hover: #534c57;
-    --radio-bg-selected-active: #635b65;
-
+    --radio-border-neutral: var(--border-3);
+    --radio-border-hover: var(--border-2);
+    --radio-border-active: var(--border-1);
     --radio-dot: #ece9ec;
     --radio-dot-disabled: #534c57;
     --radio-bg-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
     --radio-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
+    --_tone-l-rest: 0.42;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.5;
   }
-  .dark a-radio[tone="brand"],
-  .dark a-radio[tone-selected="brand"],
-  .dark a-radio-group[tone="brand"] a-radio:not([tone]),
-  .dark a-radio-group[tone-selected="brand"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #503cb4;
-    --radio-bg-selected-hover: #5f4bc3;
-    --radio-bg-selected-active: #7460d7;
+  .dark a-radio[tone]:not([tone=""], [tone="neutral"]),
+  .dark a-radio[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]),
+  .dark a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone]),
+  .dark a-radio-group[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) a-radio:not([tone-selected]) {
+    --_tone-l-rest: 0.45;
+    --_tone-l-hover: 0.5;
+    --_tone-l-active: 0.57;
   }
-  .dark a-radio[tone="neutral"],
-  .dark a-radio[tone-selected="neutral"],
-  .dark a-radio-group[tone="neutral"] a-radio:not([tone]),
-  .dark a-radio-group[tone-selected="neutral"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #49424c;
-    --radio-bg-selected-hover: #534c57;
-    --radio-bg-selected-active: #635b65;
-  }
-  .dark a-radio[tone="info"],
-  .dark a-radio[tone-selected="info"],
-  .dark a-radio-group[tone="info"] a-radio:not([tone]),
-  .dark a-radio-group[tone-selected="info"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #1a5b93;
-    --radio-bg-selected-hover: #1f6eb2;
-    --radio-bg-selected-active: #2686d9;
-  }
-  .dark a-radio[tone="success"],
-  .dark a-radio[tone-selected="success"],
-  .dark a-radio-group[tone="success"] a-radio:not([tone]),
-  .dark a-radio-group[tone-selected="success"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #226737;
-    --radio-bg-selected-hover: #2a7e43;
-    --radio-bg-selected-active: #329550;
-  }
-  .dark a-radio[tone="warning"],
-  .dark a-radio[tone-selected="warning"],
-  .dark a-radio-group[tone="warning"] a-radio:not([tone]),
-  .dark a-radio-group[tone-selected="warning"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #7f410b;
-    --radio-bg-selected-hover: #995200;
-    --radio-bg-selected-active: #ae6613;
-  }
-  .dark a-radio[tone="critical"],
-  .dark a-radio[tone-selected="critical"],
-  .dark a-radio-group[tone="critical"] a-radio:not([tone]),
-  .dark a-radio-group[tone-selected="critical"] a-radio:not([tone-selected]) {
-    --radio-bg-selected: #b02120;
-    --radio-bg-selected-hover: #c9302c;
-    --radio-bg-selected-active: #de4545;
-  }
-
-  /* Named tinted tones: unselected ring, dark values. */
-  .dark a-radio[tone="brand"],
-  .dark a-radio-group[tone="brand"] a-radio:not([tone]) {
-    --radio-bg: #0b0916;
-    --radio-border: #483493;
-    --radio-border-hover: #5f4bc3;
-    --radio-border-active: #7460d7;
-  }
-  .dark a-radio[tone="info"],
-  .dark a-radio-group[tone="info"] a-radio:not([tone]) {
-    --radio-bg: #040d18;
-    --radio-border: #175082;
-    --radio-border-hover: #1f6eb2;
-    --radio-border-active: #2686d9;
-  }
-  .dark a-radio[tone="success"],
-  .dark a-radio-group[tone="success"] a-radio:not([tone]) {
-    --radio-bg: #041008;
-    --radio-border: #1f5c31;
-    --radio-border-hover: #2a7e43;
-    --radio-border-active: #329550;
-  }
-  .dark a-radio[tone="warning"],
-  .dark a-radio-group[tone="warning"] a-radio:not([tone]) {
-    --radio-bg: #120a03;
-    --radio-border: #6a3b0c;
-    --radio-border-hover: #995200;
-    --radio-border-active: #ae6613;
-  }
-  .dark a-radio[tone="critical"],
-  .dark a-radio-group[tone="critical"] a-radio:not([tone]) {
-    --radio-bg: #190405;
-    --radio-border: #a01c1c;
-    --radio-border-hover: #c9302c;
-    --radio-border-active: #de4545;
+  .dark a-radio[tone]:not([tone=""], [tone="neutral"]),
+  .dark a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone]) {
+    --radio-bg: oklch(from var(--radio-tone-source) 0.15 calc(c * 0.18) h);
+    --radio-border:        var(--_radio-border-base);
+    --radio-border-hover:  oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
+    --radio-border-active: oklch(from var(--_radio-border-base) calc(l + 0.17) c h);
   }
 }

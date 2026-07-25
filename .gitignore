@@ -15,6 +15,7 @@ site/src/pages/index.mdx
 site/src/generated/
 site/public/esbuild.wasm
 site/public/iframe-anta-runtime.js
+site/public/theme-anta.css
 .DS_Store
 **/.DS_Store
 .dev.pid

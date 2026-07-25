@@ -24,7 +24,7 @@
        selected ring (--tab-selected-border, which defaults to the track border), so a toned
        strip's well/border/fill/ring carry the tone across all priorities. Only the selected
        fill (--tab-selected-bg = --bg-1) + neutral selected label stay tone-free. */
-    --tabs-tone-source: #635b65;
+    --tabs-tone-source: var(--anta-seed-neutral);
     --tab-fg-rest: var(--text-3);
     --tab-selected-text: var(--text-1);
     /* Tertiary's hover label uses a softer --text-2 step (toned variants set per tone below). */
@@ -33,7 +33,11 @@
     /* Primary track (recessed well) — a faint independent tint (6% light / 7% dark neutral;
        toned + dark values below), a touch stronger than the secondary fill in light. The
        raised pill is --bg-1 (theme-aware), like the docs segmented control. */
-    --tabs-track-bg: color-mix(in oklch, #44374b 6%, transparent);
+    --_track-l: 0.55;
+    --_track-c: 0.008;
+    --_track-a: 0.06;
+    --_sec-a: 0.03;
+    --tabs-track-bg: oklch(from var(--tabs-tone-source) var(--_track-l) var(--_track-c) h / var(--_track-a));
     --tabs-track-border: var(--border-4);
     /* A 0.5px inset ring (no blur) for the primary/secondary treatment. Inset because the
        strip has no padding — an outset ring would be clipped / overlap the track edge. The
@@ -45,9 +49,8 @@
     --tab-selected-border: var(--border-2);
     --tab-selected-shadow: inset 0 0 0px 0.5px var(--tab-selected-border);
 
-    /* Secondary's selected fill — an independent faint overlay (3% light / 8% dark; toned +
-       dark values below). Its ring reuses --tab-selected-shadow. */
-    --tab-secondary-bg: color-mix(in oklch, #44374b 3%, transparent);
+    /* Secondary's selected fill — the same track tint at a lower alpha. */
+    --tab-secondary-bg: oklch(from var(--tabs-tone-source) var(--_track-l) var(--_track-c) h / var(--_sec-a));
 
     display: flex;
     flex-direction: row;
@@ -107,31 +110,31 @@
      track tint is unused; the label vars + --tabs-track-border (the ring colour) feed that
      tab's label/icons and its noslide indicator. */
   a-tabs[tone="brand"], a-tab[tone="brand"] {
-    --tabs-tone-source: #5f4bc3;
+    --tabs-tone-source: var(--anta-seed-brand);
     --tab-selected-text: var(--text-1-brand); --tab-text-2: var(--text-2-brand);
     --tab-rest-tone: var(--text-3-brand);
     --tabs-track-border: var(--border-4-brand); --tab-selected-border: var(--border-2-brand);
   }
   a-tabs[tone="info"], a-tab[tone="info"] {
-    --tabs-tone-source: #1f6eb2;
+    --tabs-tone-source: var(--anta-seed-info);
     --tab-selected-text: var(--text-1-info); --tab-text-2: var(--text-2-info);
     --tab-rest-tone: var(--text-3-info);
     --tabs-track-border: var(--border-4-info); --tab-selected-border: var(--border-2-info);
   }
   a-tabs[tone="success"], a-tab[tone="success"] {
-    --tabs-tone-source: #2a7e43;
+    --tabs-tone-source: var(--anta-seed-success);
     --tab-selected-text: var(--text-1-success); --tab-text-2: var(--text-2-success);
     --tab-rest-tone: var(--text-3-success);
     --tabs-track-border: var(--border-4-success); --tab-selected-border: var(--border-2-success);
   }
   a-tabs[tone="warning"], a-tab[tone="warning"] {
-    --tabs-tone-source: #c37416;
+    --tabs-tone-source: var(--anta-seed-warning);
     --tab-selected-text: var(--text-1-warning); --tab-text-2: var(--text-2-warning);
     --tab-rest-tone: var(--text-3-warning);
     --tabs-track-border: var(--border-4-warning); --tab-selected-border: var(--border-2-warning);
   }
   a-tabs[tone="critical"], a-tab[tone="critical"] {
-    --tabs-tone-source: #c9302c;
+    --tabs-tone-source: var(--anta-seed-critical);
     --tab-selected-text: var(--text-1-critical); --tab-text-2: var(--text-2-critical);
     --tab-rest-tone: var(--text-3-critical);
     --tabs-track-border: var(--border-4-critical); --tab-selected-border: var(--border-2-critical);
@@ -139,11 +142,9 @@
 
   a-tabs[tone]:not([tone=""], [tone="neutral"]),
   a-tab[tone]:not([tone=""], [tone="neutral"]) {
-    /* Toned track tint — a touch stronger than the secondary fill (mirroring neutral's 6% vs
-       3%), both derived from the tone. The rings ride the toned border tokens set above
-       (--border-4-<tone> track, --border-2-<tone> selected). */
-    --tabs-track-bg: oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.06);
-    --tab-secondary-bg: oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.03);
+    /* Colored tones bump the track chroma; the base track/secondary formulas
+       (which read --_track-c) recompute. Rings ride the toned border tokens. */
+    --_track-c: 0.14;
   }
 
   /* ── Per-tab tone on the SELECTED tab drives the shared sliding indicator (::before),
@@ -152,13 +153,13 @@
      ring colour (--tab-selected-border — the track ring stays the strip's own, so only the
      active tab's ring tones). A custom literal per-tab tone can't be enumerated, so its
      label + noslide indicator tone but the slider keeps the strip tone. */
-  a-tabs:has(> a-tab[tone="brand"]:state(selected))    { --tabs-tone-source: #5f4bc3; --tab-selected-text: var(--text-1-brand);    --tab-selected-border: var(--border-2-brand); }
-  a-tabs:has(> a-tab[tone="info"]:state(selected))     { --tabs-tone-source: #1f6eb2; --tab-selected-text: var(--text-1-info);     --tab-selected-border: var(--border-2-info); }
-  a-tabs:has(> a-tab[tone="success"]:state(selected))  { --tabs-tone-source: #2a7e43; --tab-selected-text: var(--text-1-success);  --tab-selected-border: var(--border-2-success); }
-  a-tabs:has(> a-tab[tone="warning"]:state(selected))  { --tabs-tone-source: #c37416; --tab-selected-text: var(--text-1-warning);  --tab-selected-border: var(--border-2-warning); }
-  a-tabs:has(> a-tab[tone="critical"]:state(selected)) { --tabs-tone-source: #c9302c; --tab-selected-text: var(--text-1-critical); --tab-selected-border: var(--border-2-critical); }
+  a-tabs:has(> a-tab[tone="brand"]:state(selected))    { --tabs-tone-source: var(--anta-seed-brand); --tab-selected-text: var(--text-1-brand);    --tab-selected-border: var(--border-2-brand); }
+  a-tabs:has(> a-tab[tone="info"]:state(selected))     { --tabs-tone-source: var(--anta-seed-info); --tab-selected-text: var(--text-1-info);     --tab-selected-border: var(--border-2-info); }
+  a-tabs:has(> a-tab[tone="success"]:state(selected))  { --tabs-tone-source: var(--anta-seed-success); --tab-selected-text: var(--text-1-success);  --tab-selected-border: var(--border-2-success); }
+  a-tabs:has(> a-tab[tone="warning"]:state(selected))  { --tabs-tone-source: var(--anta-seed-warning); --tab-selected-text: var(--text-1-warning);  --tab-selected-border: var(--border-2-warning); }
+  a-tabs:has(> a-tab[tone="critical"]:state(selected)) { --tabs-tone-source: var(--anta-seed-critical); --tab-selected-text: var(--text-1-critical); --tab-selected-border: var(--border-2-critical); }
   a-tabs:has(> a-tab[tone]:state(selected):not([tone=""], [tone="neutral"])) {
-    --tab-secondary-bg: oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.03);
+    --_track-c: 0.14;
   }
   /* Custom literal-colour tone (anything not a named tone): derive the source from the
      attribute via typed attr(), and the selected label by oklch (no --text-1-<tone>). */
@@ -445,22 +446,22 @@
      values); the coloured label gets a lift; the rings ride their theme-aware tokens already
      (--border-4 track / --border-2 selected carry their own dark values). ── */
   .dark a-tabs {
-    --tabs-track-bg: color-mix(in oklch, #e4d1ef 7%, transparent);
-    --tab-secondary-bg: color-mix(in oklch, #e4d1ef 8%, transparent);
+    --_track-l: 0.8;
+    --_track-a: 0.07;
+    --_sec-a: 0.08;
   }
   .dark a-tabs[tone]:not([tone=""], [tone="neutral"]),
   .dark a-tab[tone]:not([tone=""], [tone="neutral"]) {
-    /* Lighter tone (higher L) so the tint/fill/ring lighten the dark surface like the neutral
-       dark overlay does. (Named tones' --text-1-<tone> labels are theme-aware, so only the
-       custom tone needs a dark selected-label lift, below.) The track tint is set explicitly
-       here (dark-appropriate L) to override the light toned literal above. */
-    --tabs-track-bg: oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.07);
-    --tab-secondary-bg: oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.08);
+    /* Lighter tone (higher L, from .dark above) so the tint/fill lighten the dark
+       surface like the neutral dark overlay; deeper chroma. Named tones'
+       --text-1-<tone> labels are theme-aware; only the custom tone needs a dark
+       selected-label lift (below). */
+    --_track-c: 0.12;
   }
-  /* Dark override for the per-tab slide indicator (:has above) — the dark strip tint. The
-     ring rides the theme-aware --border-2-<tone> already, so only the fill needs lifting. */
+  /* Dark per-tab slide indicator (:has above) — the dark strip tint. The ring
+     rides the theme-aware --border-2-<tone>, so only the fill chroma lifts. */
   .dark a-tabs:has(> a-tab[tone]:state(selected):not([tone=""], [tone="neutral"])) {
-    --tab-secondary-bg: oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.08);
+    --_track-c: 0.12;
   }
   /* Custom literal tone has no theme-aware --text-*-<tone> tokens, so lift its derived
      label colours for dark (named tones' tokens already carry their dark values). */

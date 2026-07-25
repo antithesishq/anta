@@ -11,16 +11,26 @@
 
     --checkbox-bg: var(--bg-1);
 
-    /* Default tone is neutral — `brand` (and the rest) are explicit opt-ins. */
-    --checkbox-bg-selected: #878089;
-    --checkbox-bg-selected-hover: #776e77;
-    --checkbox-bg-selected-active: #635b65;
+    /* Tone — the checked mark fill derives in oklch from --checkbox-tone-source
+       (the tone's seed, or a custom literal colour) at three lightnesses. The
+       seed's own chroma (`c`) keeps neutral grey. Constants come from the lab's
+       Checkbox spec; named tones and a custom colour point the source elsewhere
+       (rules below). Default tone is neutral. */
+    --checkbox-tone-source: var(--anta-seed-neutral);
+    --_tone-l-rest: 0.6;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.4;
+    --checkbox-bg-selected:        oklch(from var(--checkbox-tone-source) var(--_tone-l-rest) c h);
+    --checkbox-bg-selected-hover:  oklch(from var(--checkbox-tone-source) var(--_tone-l-hover) c h);
+    --checkbox-bg-selected-active: oklch(from var(--checkbox-tone-source) var(--_tone-l-active) c h);
 
-    /* Unselected box border: neutral grey by default (1.5px). Named tinted tones override the resting fill + border to mirror the Input field (rules below); a custom-colour tone derives its border from the fill. */
-    --checkbox-border-neutral: #d4ced4;
+    /* Unselected box border: neutral role-token greys by default (1.5px). Named
+       tinted tones + a custom colour derive the resting fill + border from the
+       tone (rules below). */
+    --checkbox-border-neutral: var(--border-3);
     --checkbox-border: var(--checkbox-border-neutral);
-    --checkbox-border-hover: #c1b9c1;
-    --checkbox-border-active: #9f99a1;
+    --checkbox-border-hover: var(--border-2);
+    --checkbox-border-active: var(--border-1);
 
     --checkbox-icon: #f6f4f6;
     --checkbox-icon-disabled: #c1b9c1;
@@ -214,92 +224,35 @@
     margin-block-start: 2px;
   }
 
-  /* `tone` and `tone-selected` both set the checked mark fill; they differ in the off state: `tone` tints the unselected box (faint fill + tone border, like the Input field), `tone-selected` leaves it neutral. Label + hint are never toned (recolour in plain CSS via --text-N-{tone}). `neutral` keeps the base greys; the default omits the attribute. */
-  a-checkbox[tone="brand"],
-  a-checkbox[tone-selected="brand"] {
-    --checkbox-bg-selected: #5f4bc3;
-    --checkbox-bg-selected-hover: #503cb4;
-    --checkbox-bg-selected-active: #483493;
+  /* `tone` and `tone-selected` both set the checked mark fill; they differ in
+     the off state: `tone` tints the unselected box (rule further down),
+     `tone-selected` leaves it neutral. Label + hint are never toned (recolour in
+     plain CSS via --text-N-{tone}). Both point --checkbox-tone-source at the
+     tone's seed; the fill formula in the base rule derives from it. `neutral`
+     keeps the base greys; the default omits the attribute. */
+  a-checkbox[tone]:not([tone=""], [tone="neutral"]),
+  a-checkbox[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
+    --_tone-l-rest: 0.5;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.4;
   }
-  a-checkbox[tone="neutral"],
-  a-checkbox[tone-selected="neutral"] {
-    --checkbox-bg-selected: #878089;
-    --checkbox-bg-selected-hover: #776e77;
-    --checkbox-bg-selected-active: #635b65;
-  }
-  a-checkbox[tone="info"],
-  a-checkbox[tone-selected="info"] {
-    --checkbox-bg-selected: #1f6eb2;
-    --checkbox-bg-selected-hover: #1a5b93;
-    --checkbox-bg-selected-active: #175082;
-  }
-  a-checkbox[tone="success"],
-  a-checkbox[tone-selected="success"] {
-    --checkbox-bg-selected: #2a7e43;
-    --checkbox-bg-selected-hover: #226737;
-    --checkbox-bg-selected-active: #1f5c31;
-  }
-  a-checkbox[tone="warning"],
-  a-checkbox[tone-selected="warning"] {
-    --checkbox-bg-selected: #c37416;
-    --checkbox-bg-selected-hover: #ae6613;
-    --checkbox-bg-selected-active: #995200;
-  }
-  a-checkbox[tone="critical"],
-  a-checkbox[tone-selected="critical"] {
-    --checkbox-bg-selected: #c9302c;
-    --checkbox-bg-selected-hover: #b02120;
-    --checkbox-bg-selected-active: #a01c1c;
-  }
+  a-checkbox[tone="brand"],    a-checkbox[tone-selected="brand"]    { --checkbox-tone-source: var(--anta-seed-brand); }
+  a-checkbox[tone="info"],     a-checkbox[tone-selected="info"]     { --checkbox-tone-source: var(--anta-seed-info); }
+  a-checkbox[tone="success"],  a-checkbox[tone-selected="success"]  { --checkbox-tone-source: var(--anta-seed-success); }
+  a-checkbox[tone="warning"],  a-checkbox[tone-selected="warning"]  { --checkbox-tone-source: var(--anta-seed-warning); }
+  a-checkbox[tone="critical"], a-checkbox[tone-selected="critical"] { --checkbox-tone-source: var(--anta-seed-critical); }
+  a-checkbox[tone="neutral"],  a-checkbox[tone-selected="neutral"]  { --checkbox-tone-source: var(--anta-seed-neutral); }
 
-  /* Named tinted tones: unselected box gets a faint tone fill (--checkbox-bg) under a tone border ramp (rest/hover/active), per tone (light here, dark below). Keyed to [tone] only, so tone-selected keeps a neutral off-state box. */
-  a-checkbox[tone="brand"] {
-    --checkbox-bg: #fcfcfe;
-    --checkbox-border: #bcb1f1;
-    --checkbox-border-hover: #9e8eeb;
-    --checkbox-border-active: #9081df;
-  }
-  a-checkbox[tone="info"] {
-    --checkbox-bg: #fbfcfe;
-    --checkbox-border: #93c5ec;
-    --checkbox-border-hover: #69ace5;
-    --checkbox-border-active: #56a1e1;
-  }
-  a-checkbox[tone="success"] {
-    --checkbox-bg: #f7fcf9;
-    --checkbox-border: #88d7a0;
-    --checkbox-border-hover: #5bc87b;
-    --checkbox-border-active: #44c169;
-  }
-  a-checkbox[tone="warning"] {
-    --checkbox-bg: #fefbf6;
-    --checkbox-border: #edb25a;
-    --checkbox-border-hover: #e09127;
-    --checkbox-border-active: #d88118;
-  }
-  a-checkbox[tone="critical"] {
-    --checkbox-bg: #fefbfb;
-    --checkbox-border: #efa4a4;
-    --checkbox-border-hover: #e87f7f;
-    --checkbox-border-active: #e56c6c;
-  }
-
-  /* Custom tone (non-named colour): derive the unselected box in oklch. Fill pins lightness near-white in light / near-black in dark with chroma scaled down (~3% light, ~18% dark) so it reads as a whisper of the colour; the border ramps off the fill (lightest at rest, darkening to active; dark inverts). Named tones and neutral never reach this. */
-  a-checkbox[tone]:not(
-      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]) {
+  /* `tone` (not tone-selected) also derives the unselected tinted box from the
+     tone in oklch: a whisper-tint fill (chroma scaled down) under a border ramp
+     stepped off the fill. Named tones + custom colours reach this; neutral and
+     every tone-selected keep the neutral off-box border. */
+  a-checkbox[tone]:not([tone=""], [tone="neutral"]) {
     --checkbox-bg: oklch(from var(--checkbox-tone-source) 0.99 calc(c * 0.03) h);
     --_checkbox-border-base: color-mix(in oklch, var(--checkbox-bg-selected) 70%, var(--checkbox-border-neutral));
     --checkbox-border:        oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
     --checkbox-border-hover:  oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
     --checkbox-border-active: var(--_checkbox-border-base);
-
-    .dark & {
-      --checkbox-bg: oklch(from var(--checkbox-tone-source) 0.15 calc(c * 0.18) h);
-      --checkbox-border:        var(--_checkbox-border-base);
-      --checkbox-border-hover:  oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
-      --checkbox-border-active: oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
-    }
   }
 
   /* Custom mark tone — a non-named `tone` / `tone-selected` is a literal CSS color;
@@ -319,110 +272,31 @@
       [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
     --checkbox-tone-source: attr(tone-selected type(<color>), transparent);
   }
-  a-checkbox[tone]:not(
-      [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]),
-  a-checkbox[tone-selected]:not(
-      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
-      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
-    --_tone-l-rest: 0.5;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.4;
 
-    --checkbox-bg-selected:        oklch(from var(--checkbox-tone-source) var(--_tone-l-rest) c h);
-    --checkbox-bg-selected-hover:  oklch(from var(--checkbox-tone-source) var(--_tone-l-hover) c h);
-    --checkbox-bg-selected-active: oklch(from var(--checkbox-tone-source) var(--_tone-l-active) c h);
-
-    /* Dark — same formulas, brighter fill on a dark page. */
-    .dark & {
-      --_tone-l-rest: 0.45;
-      --_tone-l-hover: 0.5;
-      --_tone-l-active: 0.57;
-    }
-  }
-
+  /* Dark — neutral chrome + brighter fill/tinted-box lightnesses. Constants from
+     the lab; the fill + tinted-box formulas (above) recompute against them. */
   .dark a-checkbox {
-    /* Neutral grey border (tinted tones mix the fill toward this). */
-    --checkbox-border-neutral: #49424c;
-    --checkbox-border-hover: #635b65;
-    --checkbox-border-active: #776e77;
-
-    /* Neutral default. */
-    --checkbox-bg-selected: #49424c;
-    --checkbox-bg-selected-hover: #534c57;
-    --checkbox-bg-selected-active: #635b65;
-
+    --checkbox-border-neutral: var(--border-3);
+    --checkbox-border-hover: var(--border-2);
+    --checkbox-border-active: var(--border-1);
     --checkbox-icon: #ece9ec;
     --checkbox-icon-disabled: #534c57;
     --checkbox-bg-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
     --checkbox-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
+    --_tone-l-rest: 0.42;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.5;
   }
-  .dark a-checkbox[tone="brand"],
-  .dark a-checkbox[tone-selected="brand"] {
-    --checkbox-bg-selected: #503cb4;
-    --checkbox-bg-selected-hover: #5f4bc3;
-    --checkbox-bg-selected-active: #7460d7;
+  .dark a-checkbox[tone]:not([tone=""], [tone="neutral"]),
+  .dark a-checkbox[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
+    --_tone-l-rest: 0.45;
+    --_tone-l-hover: 0.5;
+    --_tone-l-active: 0.57;
   }
-  .dark a-checkbox[tone="neutral"],
-  .dark a-checkbox[tone-selected="neutral"] {
-    --checkbox-bg-selected: #49424c;
-    --checkbox-bg-selected-hover: #534c57;
-    --checkbox-bg-selected-active: #635b65;
-  }
-  .dark a-checkbox[tone="info"],
-  .dark a-checkbox[tone-selected="info"] {
-    --checkbox-bg-selected: #1a5b93;
-    --checkbox-bg-selected-hover: #1f6eb2;
-    --checkbox-bg-selected-active: #2686d9;
-  }
-  .dark a-checkbox[tone="success"],
-  .dark a-checkbox[tone-selected="success"] {
-    --checkbox-bg-selected: #226737;
-    --checkbox-bg-selected-hover: #2a7e43;
-    --checkbox-bg-selected-active: #329550;
-  }
-  .dark a-checkbox[tone="warning"],
-  .dark a-checkbox[tone-selected="warning"] {
-    --checkbox-bg-selected: #7f410b;
-    --checkbox-bg-selected-hover: #995200;
-    --checkbox-bg-selected-active: #ae6613;
-  }
-  .dark a-checkbox[tone="critical"],
-  .dark a-checkbox[tone-selected="critical"] {
-    --checkbox-bg-selected: #b02120;
-    --checkbox-bg-selected-hover: #c9302c;
-    --checkbox-bg-selected-active: #de4545;
-  }
-
-  /* Named tinted tones: unselected box, dark values. */
-  .dark a-checkbox[tone="brand"] {
-    --checkbox-bg: #0b0916;
-    --checkbox-border: #483493;
-    --checkbox-border-hover: #5f4bc3;
-    --checkbox-border-active: #7460d7;
-  }
-  .dark a-checkbox[tone="info"] {
-    --checkbox-bg: #040d18;
-    --checkbox-border: #175082;
-    --checkbox-border-hover: #1f6eb2;
-    --checkbox-border-active: #2686d9;
-  }
-  .dark a-checkbox[tone="success"] {
-    --checkbox-bg: #041008;
-    --checkbox-border: #1f5c31;
-    --checkbox-border-hover: #2a7e43;
-    --checkbox-border-active: #329550;
-  }
-  .dark a-checkbox[tone="warning"] {
-    --checkbox-bg: #120a03;
-    --checkbox-border: #6a3b0c;
-    --checkbox-border-hover: #995200;
-    --checkbox-border-active: #ae6613;
-  }
-  .dark a-checkbox[tone="critical"] {
-    --checkbox-bg: #190405;
-    --checkbox-border: #a01c1c;
-    --checkbox-border-hover: #c9302c;
-    --checkbox-border-active: #de4545;
+  .dark a-checkbox[tone]:not([tone=""], [tone="neutral"]) {
+    --checkbox-bg: oklch(from var(--checkbox-tone-source) 0.15 calc(c * 0.18) h);
+    --checkbox-border:        var(--_checkbox-border-base);
+    --checkbox-border-hover:  oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
+    --checkbox-border-active: oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
   }
 }

@@ -17,6 +17,7 @@ import '../styles/base.css'
 import '../icons/docs-icons.css'
 import { Button, Icon } from '@antadesign/anta'
 import { COMPONENT_SLUGS } from '../../lib/component-slugs'
+import ThemeSwitcher from '../components/ThemeSwitcher.tsx'
 
 interface Props {
   title?: string
@@ -200,6 +201,19 @@ if (isComponentPage && title) {
         })
       }
     </script>
+    <script is:inline>
+      // Palette (color theme) before paint — separate axis from light/dark above.
+      // Default is Anta's seed-derived generative palette; "anta" loads the
+      // hand-tuned theme-anta.css. `document.write` here (during head parse)
+      // inserts a render-blocking <link> so there's no flash of the generative
+      // palette before the theme applies. The sidebar ThemeSwitcher island reads
+      // the same key and toggles the link on change.
+      try {
+        if (localStorage.getItem('anta-palette') === 'anta') {
+          document.write('<link id="anta-palette-link" rel="stylesheet" href="/theme-anta.css">')
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <header class="topbar">
@@ -259,6 +273,9 @@ if (isComponentPage && title) {
           <li><a href="/changelog/" aria-current={isCurrent('/changelog/') ? 'page' : undefined}><Icon shape="scroll-text" size={18} /> Changelog</a></li>
           <li><a href="/credits/" aria-current={isCurrent('/credits/') ? 'page' : undefined}><Icon shape="heart-handshake" size={18} /> Credits</a></li>
         </menu>
+        <div class="theme-switcher">
+          <ThemeSwitcher client:load />
+        </div>
         <h4>Components</h4>
         <menu>
           <li><a href="/button/" aria-current={isCurrent('/button/') ? 'page' : undefined}><Icon shape="pointer" size={18} /> Button</a></li>
@@ -579,6 +596,11 @@ if (isComponentPage && title) {
     letter-spacing: 0.08em;
     color: var(--text-3-brand);
     margin: 24px 0 8px;
+  }
+
+  /* Palette switcher sits above the Components list. */
+  .theme-switcher {
+    margin-top: 16px;
   }
 
   /* Anta's global stylesheet already strips list-style, padding, and

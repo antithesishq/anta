@@ -1,29 +1,16 @@
 ---
-// Static shell for the Colors page. Renders the tone tabs (plain links), the
-// Background / Text / Border section headings, descriptions and theme-row
-// layout — no hydration. The only interactive part is each swatch grid, which
-// is a small Preact island (<SwatchGrid client:load>) so the hex labels can be
-// read live from the rendered colours. One island per theme example.
+// Static shell for the Colors page. Renders the Background / Text / Border
+// section headings, descriptions and theme-row layout — all tone-independent,
+// so one page serves every tone. The interactive parts are islands: ToneTabs
+// holds the picked tone (pure client state — switching never navigates or
+// scrolls) and broadcasts `anta-colors-tone`; each SwatchGrid listens and
+// re-renders its token names in place, reading the hex labels live from the
+// rendered colours. One grid island per theme example.
 import s from './Swatches.module.css'
 import SwatchGrid from './SwatchGrid.tsx'
-import NavTabs from './NavTabs'
+import ToneTabs from './ToneTabs'
 
-type Tone = 'neutral' | 'brand' | 'info' | 'success' | 'critical' | 'warning'
 type Kind = 'bg' | 'text' | 'border'
-
-interface Props {
-  tone?: Tone
-}
-const { tone = 'neutral' } = Astro.props
-
-const TONES: { id: Tone; label: string }[] = [
-  { id: 'neutral', label: 'Neutral' },
-  { id: 'brand', label: 'Brand' },
-  { id: 'info', label: 'Info' },
-  { id: 'success', label: 'Success' },
-  { id: 'critical', label: 'Critical' },
-  { id: 'warning', label: 'Warning' },
-]
 
 const KINDS: Kind[] = ['bg', 'text', 'border']
 const TITLES: Record<Kind, string> = { bg: 'Background', text: 'Text', border: 'Border' }
@@ -41,19 +28,12 @@ const TEXT_LINES: { token: string; copy: string }[] = [
   { token: 'text-5', copy: 'Placeholder text, for hints and non-critical information.' },
 ]
 
-const toneHref = (t: Tone) => (t === 'neutral' ? '/colors/' : `/colors/${t}/`)
 const slug = (k: Kind) => TITLES[k].toLowerCase()
 ---
 
 <div class:list={[s.page, 'full-bleed']}>
   <div class={s.toneTabs}>
-    <NavTabs
-      client:load
-      label="Colour tones"
-      active={toneHref(tone)}
-      tabs={TONES.map((t) => ({ value: toneHref(t.id), label: t.label }))}
-      preserveScroll
-    />
+    <ToneTabs client:load />
   </div>
 
   {KINDS.map((kind) => (
@@ -74,7 +54,7 @@ const slug = (k: Kind) => TITLES[k].toLowerCase()
             </svg>
             <span>Light theme</span>
           </div>
-          <SwatchGrid kind={kind} tone={tone} client:load />
+          <SwatchGrid kind={kind} client:load />
         </div>
 
         <div class:list={[s.themeRow, s.themeRowDark, 'dark']}>
@@ -86,7 +66,7 @@ const slug = (k: Kind) => TITLES[k].toLowerCase()
             </svg>
             <span>Dark theme</span>
           </div>
-          <SwatchGrid kind={kind} tone={tone} client:load />
+          <SwatchGrid kind={kind} client:load />
         </div>
       </div>
 

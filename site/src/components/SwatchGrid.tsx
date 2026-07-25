@@ -69,15 +69,25 @@ function Swatch({ kind, token, rev }: { kind: Kind; token: string; rev: number }
 
 // One swatch grid — a single "theme example". The themed `.light`/`.dark`
 // ancestor (rendered by the static Swatches.astro shell) supplies the per-mode
-// token values; each Swatch reads them live for its hex label.
-export default function SwatchGrid({ kind, tone }: { kind: Kind; tone: Tone }) {
+// token values; each Swatch reads them live for its hex label. The tone is
+// client state: the Colors page is a single page for all six tones, and the
+// ToneTabs island broadcasts `anta-colors-tone` when the user picks one — the
+// grid re-renders its token names in place (cells are keyed by token, so each
+// fresh cell re-reads its computed hex).
+export default function SwatchGrid({ kind, tone: initialTone = 'neutral' }: { kind: Kind; tone?: Tone }) {
+  const [tone, setTone] = useState<Tone>(initialTone)
   // Bump on a palette switch so each Swatch re-reads its computed hex (the
   // ThemeSwitcher dispatches `anta-palette-change` when theme-anta toggles).
   const [rev, setRev] = useState(0)
   useEffect(() => {
-    const onChange = () => setRev((r) => r + 1)
-    window.addEventListener('anta-palette-change', onChange)
-    return () => window.removeEventListener('anta-palette-change', onChange)
+    const onPalette = () => setRev((r) => r + 1)
+    const onTone = (e: Event) => setTone((e as CustomEvent<{ tone: Tone }>).detail.tone)
+    window.addEventListener('anta-palette-change', onPalette)
+    window.addEventListener('anta-colors-tone', onTone)
+    return () => {
+      window.removeEventListener('anta-palette-change', onPalette)
+      window.removeEventListener('anta-colors-tone', onTone)
+    }
   }, [])
   return (
     <div class={s.swatchGrid}>

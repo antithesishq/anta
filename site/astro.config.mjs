@@ -21,7 +21,16 @@ export default defineConfig({
   devToolbar: { enabled: false },
   // Stickers moved from the "Sticker" component page to the Packages section
   // (route /sticker/ → /stickers/). Keep the old URL resolving for external links.
-  redirects: { '/sticker': '/stickers' },
+  // The per-tone colors pages collapsed into the single /colors/ page (tone is
+  // client state, mirrored as ?tone=); keep the old sub-page URLs resolving.
+  redirects: {
+    '/sticker': '/stickers',
+    '/colors/brand': '/colors/?tone=brand',
+    '/colors/info': '/colors/?tone=info',
+    '/colors/success': '/colors/?tone=success',
+    '/colors/critical': '/colors/?tone=critical',
+    '/colors/warning': '/colors/?tone=warning',
+  },
   // Never inline component styles into the page `<head>`. Astro's default
   // (`'auto'`) inlines small scoped style sets — but for a component used
   // inside MDX that wraps a hydrated island (e.g. <Disclosure> around the

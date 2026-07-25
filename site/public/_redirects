@@ -1,2 +1,11 @@
 # Component docs moved from /components/<name>/ to the site root /<name>/.
 /components/* /:splat 301
+
+# The per-tone colors pages collapsed into the single /colors/ page (tone is
+# client state, mirrored as ?tone=). Mirrors the astro.config.mjs redirects so
+# Cloudflare serves real 301s instead of the meta-refresh stubs.
+/colors/brand /colors/?tone=brand 301
+/colors/info /colors/?tone=info 301
+/colors/success /colors/?tone=success 301
+/colors/critical /colors/?tone=critical 301
+/colors/warning /colors/?tone=warning 301

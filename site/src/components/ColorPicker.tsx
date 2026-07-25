@@ -87,8 +87,13 @@ export default function ColorPicker({
   const outOfGamut = !inGamut(l, c, h)
   const cLimit = maxChroma(l, h)
 
+  const mounted = useRef(false)
   useEffect(() => {
-    onChange?.(hex)
+    // Skip the mount pass: `hex` is the oklch round-trip of the incoming `value`,
+    // so propagating it would overwrite the parent's exact seed literal with its
+    // round-tripped form. Only a real edit (a later `hex` change) should call up.
+    if (mounted.current) onChange?.(hex)
+    else mounted.current = true
     setHexDraft(hex)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hex])
@@ -242,9 +247,13 @@ export default function ColorPicker({
                   label="Hex"
                   value={hexDraft}
                   placeholder="#rrggbb"
-                  onValueChange={(_e: any, a: any) => {
+                  onValueChange={(e: any, a: any) => {
+                    // Draft tracks every keystroke so the field shows what's typed,
+                    // but the colour commits only on `change` (blur / Enter). Committing
+                    // on each keystroke let a valid intermediate (e.g. `#5f4`) round-trip
+                    // through `hex` and rewrite the field mid-edit.
                     setHexDraft(a.value)
-                    if (chroma.valid(a.value)) setOklch(safeOklch(chroma(a.value).oklch(), h))
+                    if (e.type === 'change' && chroma.valid(a.value)) setOklch(safeOklch(chroma(a.value).oklch(), h))
                   }}
                 />
               </div>

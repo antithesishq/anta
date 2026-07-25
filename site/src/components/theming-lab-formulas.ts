@@ -346,15 +346,14 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'input',
     title: 'Input',
     blurb:
-      'One border colour from the seed hue at a tunable L/C — the goal is a single L/C per theme that works across every tone. Rest = hover; hover thickens the edge 0.5→1px. Neutral overrides pin it grey (≈ --border-2). Applies to Input and the InputDate trigger (both compose <a-input>).',
+      'One border colour from the seed hue at a tunable L/C — the goal is a single L/C per theme that works across every tone. Hover thickens the edge 0.5→1px (no recolour). Neutral overrides pin it grey (≈ --border-2). Applies to Input and the InputDate trigger (both compose <a-input>).',
     vars: [
       { key: 'borderL', label: 'border L', light: 0.58, dark: 0.52, neutral: { light: 0.8, dark: 0.4 }, ...v3() },
       { key: 'borderC', label: 'border C', light: 0.18, dark: 0.15, neutral: { light: 0.015, dark: 0.019 }, ...v3(0, 0.4) },
     ],
-    groups: [{ label: 'Border', keys: ['borderL', 'borderC'], note: 'Seed hue at this L/C (rest = hover; hover thickens). Toned starts at the average of today’s per-status literals; neutral pins grey ≈ --border-2.' }],
+    groups: [{ label: 'Border', keys: ['borderL', 'borderC'], note: 'Seed hue at this L/C (hover thickens the edge, no recolour). Toned starts at the average of today’s per-status literals; neutral pins grey ≈ --border-2.' }],
     css: (sel, seed, v) => `${sel} {
   --input-border: ${ok(seed, v.borderL, v.borderC)};
-  --input-border-hover: ${ok(seed, v.borderL, v.borderC)};
 }`,
   },
 

@@ -801,99 +801,82 @@ a-tag[tone="critical"] {
 a-input {
   --input-bg: var(--bg-1);
   --input-border: var(--border-2);
-  --input-border-hover: var(--border-1);
   --input-hint: var(--text-3);
 }
 a-input[status="critical"] {
   --input-bg: #fefbfb;
   --input-border: #de4545;
-  --input-border-hover: #de4545;
   --input-hint: #c9302c;
 }
 a-input[status="warning"] {
   --input-bg: #fefbf6;
   --input-border: #ae6613;
-  --input-border-hover: #ae6613;
   --input-hint: #995200;
 }
 a-input[status="success"] {
   --input-bg: #f7fcf9;
   --input-border: #329550;
-  --input-border-hover: #329550;
   --input-hint: #2a7e43;
 }
 a-input[status="info"] {
   --input-bg: #fbfcfe;
   --input-border: #2686d9;
-  --input-border-hover: #2686d9;
   --input-hint: #175082;
 }
 a-input[status="brand"] {
   --input-bg: #fcfcfe;
   --input-border: #7460d7;
-  --input-border-hover: #7460d7;
   --input-hint: #5f4bc3;
 }
 .dark a-input[status="critical"] {
   --input-bg: #1f0506;
   --input-border: #c9302c;
-  --input-border-hover: #c9302c;
   --input-hint: #e25858;
 }
 .dark a-input[status="warning"] {
   --input-bg: #120a03;
   --input-border: #995200;
-  --input-border-hover: #995200;
   --input-hint: #c37416;
 }
 .dark a-input[status="success"] {
   --input-bg: #041008;
   --input-border: #2a7e43;
-  --input-border-hover: #2a7e43;
   --input-hint: #3aab5c;
 }
 .dark a-input[status="info"] {
   --input-bg: #040d18;
   --input-border: #1f6eb2;
-  --input-border-hover: #1f6eb2;
   --input-hint: #3e93dd;
 }
 .dark a-input[status="brand"] {
   --input-bg: #0b0916;
   --input-border: #5f4bc3;
-  --input-border-hover: #5f4bc3;
   --input-hint: #8270db;
 }
 a-input:disabled {
   --input-bg: #44374b12;
   --input-border: #44374b26;
-  --input-border-hover: #44374b26;
   --input-hint: var(--text-5);
 }
 a-input[status]:disabled {
   --input-bg: #44374b12;
   --input-border: #44374b26;
-  --input-border-hover: #44374b26;
   --input-hint: var(--text-5);
 }
 .dark a-input:disabled {
   --input-bg: #e4d1ef0d;
   --input-border: #e4d1ef1f;
-  --input-border-hover: #e4d1ef1f;
 }
 .dark a-input[status]:disabled {
   --input-bg: #e4d1ef0d;
   --input-border: #e4d1ef1f;
-  --input-border-hover: #e4d1ef1f;
   --input-hint: var(--text-5);
 }
 .dark a-input:not([status]) {
   --input-border: #49424c;
-  --input-border-hover: #635b65;
 }
 .dark a-input[status="success"] {
   --input-border: var(--border-1-success);
-  --input-border-hover: var(--border-1-success);
 }
 
 /* ===== input-time ===== */

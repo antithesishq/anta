@@ -86,6 +86,21 @@ function toOklch(color: string): string {
   }
 }
 
+/** Re-read trigger for the live "Default" readouts. `ThemeSwitcher` dispatches
+ *  `anta-palette-change` when the opt-in theme-anta palette toggles, repainting the
+ *  components without touching `tone` / `isDark`. Bump a counter on the event and
+ *  fold it into each readout effect's deps so the oklch labels re-read the new
+ *  tokens (mirrors `SwatchGrid`, which listens for the same event). */
+function usePaletteRev() {
+  const [rev, setRev] = useState(0)
+  useEffect(() => {
+    const bump = () => setRev((r) => r + 1)
+    window.addEventListener('anta-palette-change', bump)
+    return () => window.removeEventListener('anta-palette-change', bump)
+  }, [])
+  return rev
+}
+
 /** One hand-tuned Title/Text priority sample, labelled with its priority and the
  *  resolved oklch of its colour. The colour is Anta's real `--text-*` token (not
  *  the formula), so it's read from the live host's computed `color` — via a
@@ -104,10 +119,11 @@ function TypeSample({
 }) {
   const hostRef = useRef<HTMLSpanElement>(null)
   const [okl, setOkl] = useState('')
+  const rev = usePaletteRev()
   useEffect(() => {
     const host = hostRef.current?.firstElementChild as HTMLElement | null
     if (host) setOkl(toOklch(getComputedStyle(host).color))
-  }, [tone, isDark, priority])
+  }, [tone, isDark, priority, rev])
 
   const content = (
     <>
@@ -147,6 +163,7 @@ function RestingSamples({
   const priorities = kind === 'button' ? (['primary', 'secondary', 'tertiary', 'quaternary'] as const) : (['primary', 'secondary', 'tertiary'] as const)
   const rowRef = useRef<HTMLDivElement>(null)
   const [rows, setRows] = useState<{ p: string; bg: string; fg: string }[]>([])
+  const rev = usePaletteRev()
   useEffect(() => {
     const el = rowRef.current
     if (!el) return
@@ -157,7 +174,7 @@ function RestingSamples({
         return { p: priorities[i], bg: toOklch(cs.backgroundColor), fg: toOklch(cs.color) }
       }),
     )
-  }, [tone, isDark])
+  }, [tone, isDark, rev])
 
   return (
     <div className={styles.col}>
@@ -192,10 +209,11 @@ function RestingSamples({
 function InputSamples({ status, isDark }: { status: string | undefined; isDark: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   const [border, setBorder] = useState('')
+  const rev = usePaletteRev()
   useEffect(() => {
     const host = ref.current?.querySelector('a-input') as HTMLElement | null
     setBorder(host ? toOklch(getComputedStyle(host).getPropertyValue('--input-border')) : '')
-  }, [status, isDark])
+  }, [status, isDark, rev])
   return (
     <div className={styles.col}>
       <div ref={ref} className={styles.col}>
@@ -581,12 +599,13 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
   // the live element so it reflects whatever `--bg-*` / `--border-*` resolves to.
   const swatchRef = useRef<HTMLDivElement>(null)
   const [okl, setOkl] = useState({ bg: '', border: '' })
+  const rev = usePaletteRev()
   useEffect(() => {
     const el = swatchRef.current
     if (!el) return
     const cs = getComputedStyle(el)
     setOkl({ bg: toOklch(cs.backgroundColor), border: toOklch(cs.borderTopColor) })
-  }, [refBg, refBorder, isDark])
+  }, [refBg, refBorder, isDark, rev])
 
   return (
     <section className={styles.block}>

@@ -116,7 +116,6 @@
   a-input {
     --input-bg: var(--bg-1);
     --input-border: var(--border-2);
-    --input-border-hover: var(--border-1);
 
     --input-text: var(--text-1);
     --input-label: var(--text-3);
@@ -136,51 +135,46 @@
     --input-round: attr(round type(<length>), 999px);
   }
 
-  /* Custom tone — a literal CSS colour tints the resting + hover border (the focus
-     ring stays the global `--focus-ring`). Declared *before* `[status]` so a
-     validation status still wins the border on the specificity tie. FIRST-PASS
+  /* Custom tone — a literal CSS colour tints the resting border (hover thickens
+     it; the focus ring stays the global `--focus-ring`). Gated off when a `status`
+     is set (`:not([status])`) so validation always owns the border: the status
+     rules below derive from their own `--input-status-source`, and dropping tone
+     from the cascade here keeps a custom hue out of a validation border. FIRST-PASS
      lightness values — review. */
-  a-input[tone]:not([tone=""]) {
+  a-input[tone]:not([tone=""]):not([status]) {
     /* Fallback is the default border (not transparent) so a non-colour value —
        e.g. a stray `tone="brand"` (named tones live on `status`, not `tone`) —
        degrades to the normal border instead of vanishing. */
     --input-tone-source: attr(tone type(<color>), var(--border-2));
 
     --input-border:       oklch(from var(--input-tone-source) 0.7 calc(c * 0.8) h);
-    --input-border-hover: oklch(from var(--input-tone-source) 0.6 c h);
 
     .dark & {
       --input-border:       oklch(from var(--input-tone-source) 0.5 calc(c * 0.8) h);
-      --input-border-hover: oklch(from var(--input-tone-source) 0.6 c h);
     }
   }
 
-  /* Status: the border + message (and the wrapper-slotted glyph, via
-     currentColor) take the matching tone's role tokens, so dark mode is free.
-     The 1px width bump and the glyph are handled in the shadow off the same
-     `[status]` host attribute; only `critical` also drives validity. The border
-     stops reacting to hover (hover == border, so pin it to the status color). */
-  /* Status — the border derives in oklch from the matching tone's seed (rest =
-     hover; hover thickens the edge, doesn't recolour); the bg tint + message
-     colour are the tone's role tokens, so both themes come for free. */
-  a-input[status="critical"] { --input-tone-source: var(--anta-seed-critical); --input-bg: var(--bg-2-critical); --input-hint: var(--text-2-critical); }
-  a-input[status="warning"]  { --input-tone-source: var(--anta-seed-warning);  --input-bg: var(--bg-2-warning);  --input-hint: var(--text-2-warning); }
-  a-input[status="success"]  { --input-tone-source: var(--anta-seed-success);  --input-bg: var(--bg-2-success);  --input-hint: var(--text-2-success); }
-  a-input[status="info"]     { --input-tone-source: var(--anta-seed-info);     --input-bg: var(--bg-2-info);     --input-hint: var(--text-2-info); }
-  a-input[status="brand"]    { --input-tone-source: var(--anta-seed-brand);    --input-bg: var(--bg-2-brand);    --input-hint: var(--text-2-brand); }
+  /* Status — the border derives in oklch from the matching tone's seed through
+     `--input-status-source`, its own channel (a custom `tone`'s inline
+     `--input-tone-source` never reaches it); the bg tint + message colour are the
+     tone's role tokens, so both themes come for free. The 1px width bump and the
+     glyph are handled in the shadow off the same `[status]` host attribute (hover
+     just thickens the edge, it doesn't recolour); only `critical` drives validity. */
+  a-input[status="critical"] { --input-status-source: var(--anta-seed-critical); --input-bg: var(--bg-2-critical); --input-hint: var(--text-2-critical); }
+  a-input[status="warning"]  { --input-status-source: var(--anta-seed-warning);  --input-bg: var(--bg-2-warning);  --input-hint: var(--text-2-warning); }
+  a-input[status="success"]  { --input-status-source: var(--anta-seed-success);  --input-bg: var(--bg-2-success);  --input-hint: var(--text-2-success); }
+  a-input[status="info"]     { --input-status-source: var(--anta-seed-info);     --input-bg: var(--bg-2-info);     --input-hint: var(--text-2-info); }
+  a-input[status="brand"]    { --input-status-source: var(--anta-seed-brand);    --input-bg: var(--bg-2-brand);    --input-hint: var(--text-2-brand); }
   a-input[status] {
-    --input-border:       oklch(from var(--input-tone-source) 0.58 c h);
-    --input-border-hover: oklch(from var(--input-tone-source) 0.58 c h);
+    --input-border:       oklch(from var(--input-status-source) 0.58 c h);
   }
   .dark a-input[status] {
-    --input-border:       oklch(from var(--input-tone-source) 0.52 c h);
-    --input-border-hover: oklch(from var(--input-tone-source) 0.52 c h);
+    --input-border:       oklch(from var(--input-status-source) 0.52 c h);
   }
 
   a-input:disabled {
     --input-bg: #44374b12;
     --input-border: #44374b26;
-    --input-border-hover: #44374b26;
     --input-text: var(--text-4);
     --input-label: var(--text-4);
     --input-hint: var(--text-5);
@@ -190,20 +184,17 @@
   a-input[status]:disabled {
     --input-bg: #44374b12;
     --input-border: #44374b26;
-    --input-border-hover: #44374b26;
     --input-hint: var(--text-5);
   }
 
   .dark a-input:disabled {
     --input-bg: #e4d1ef0d;
     --input-border: #e4d1ef1f;
-    --input-border-hover: #e4d1ef1f;
   }
 
   .dark a-input[status]:disabled {
     --input-bg: #e4d1ef0d;
     --input-border: #e4d1ef1f;
-    --input-border-hover: #e4d1ef1f;
     --input-hint: var(--text-5);
   }
 
@@ -221,7 +212,7 @@
   a-input[size="small"] [slot="hint"] > a-icon { margin-block-start: 0.5px; }
   a-input[size="large"] [slot="hint"] > a-icon { margin-block-start: 1.5px; }
 
-  /* Neutral dark border needs no override: the base --input-border /
-     --input-border-hover point at --border-2 / --border-1, which carry their own
-     seed-derived dark values. Status borders derive from the seed (rule above). */
+  /* Neutral dark border needs no override: the base --input-border points at
+     --border-2, which carries its own seed-derived dark values. Status borders
+     derive from the seed (rule above). */
 }

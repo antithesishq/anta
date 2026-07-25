@@ -188,7 +188,15 @@
        so plain text in the body doesn't inherit a roomy consumer body
        line-height; a nested <Text> overrides it with the same value. */
     line-height: 20px;
-    overflow-x: auto;
+    /* Scroll container so wide content (a <pre>, a table) scrolls within the body
+       instead of stretching the box past the surrounding layout. `overflow: auto`
+       (not `overflow-x`) is honest about the clip: a scroll container on one axis
+       is a clip on both (setting `overflow-x: auto` alone computes `overflow-y` to
+       `auto` anyway), so both axes are stated. The body has no height cap, so a
+       normal body grows to fit with no vertical scrollbar; a height-capped body
+       scrolls vertically. The gutter/padding around the content give a focus ring
+       room inside the clip (see the outdent rule below). */
+    overflow: auto;
   }
 
   /* Outdent zeroes the left gutter, so a flush-left control sits hard against the

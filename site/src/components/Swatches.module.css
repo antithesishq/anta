@@ -252,8 +252,8 @@
 }
 .card {
   position: relative;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
+  background: var(--bg-my-card);
+  border: 1px solid var(--bg-my-card-border);
   border-radius: 8px;
   padding: 14px 16px 30px;
   max-width: 200px;

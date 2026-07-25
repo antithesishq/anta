@@ -1,0 +1,3 @@
+/* Default palette — intentionally empty (the default ships in tokens.css).
+   The stub gives DocsLayout's stable palette <link> a valid target; picking a
+   theme swaps the href, e.g. to /themes/anta.css. */

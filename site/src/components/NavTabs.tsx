@@ -1,3 +1,4 @@
+import { navigate } from 'astro:transitions/client'
 import { Tabs } from '@antadesign/anta'
 
 interface NavTab {
@@ -16,9 +17,9 @@ interface Props {
 
 /**
  * Anta `<Tabs>` used as page navigation: each tab's `value` is a URL, and
- * picking a tab navigates there. The strip is controlled to the current page's
- * URL, so it never flickers to the clicked tab before the load fires. Used for
- * the changelog (main / dev) and the Colors tone sub-pages.
+ * picking a tab navigates there via the ClientRouter (client-side swap). The
+ * strip is controlled to the current page's URL, so it never flickers to the
+ * clicked tab before the swap lands. Used for the changelog (main / dev).
  *
  * Navigation runs on `onStateChange` (the pre-apply pick), not `onValueChange`:
  * in controlled mode we deliberately don't update `value`, so the post-apply
@@ -32,7 +33,7 @@ export default function NavTabs({ tabs, active, label }: Props) {
       label={label}
       options={tabs}
       onStateChange={(_event, { next }) => {
-        if (next && next !== active) window.location.href = next
+        if (next && next !== active) navigate(next)
       }}
     />
   )

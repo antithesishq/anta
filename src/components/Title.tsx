@@ -7,9 +7,9 @@ export interface TitleProps extends BaseProps {
    *  (h1 is typically reserved for the page title).
    *  @defaultValue 2 */
   level?: 1 | 2 | 3 | 4 | 5 | 6
-  /** Visual priority. Maps to text-1..text-5 (`primary` = text-1).
+  /** Visual priority. Maps to text-1..text-4 (`primary` = text-1).
    *  @defaultValue primary */
-  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
+  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a
    *  named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS
    *  color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is

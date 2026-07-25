@@ -272,11 +272,13 @@
 
     --menu-item-color:      oklch(from var(--menu-item-tone-source) 0.45 c h);
     --menu-item-icon-color: var(--menu-item-color);
-    --menu-item-hint-color: oklch(from var(--menu-item-tone-source) 0.55 calc(c * 0.85) h);
+    /* Hint = the label at 0.8 alpha, mirroring the named token scale
+       (--menu-item-hint-color = --text-3-{tone} = --text-2-{tone} @ 0.8α). */
+    --menu-item-hint-color: oklch(from var(--menu-item-tone-source) 0.45 c h / 0.8);
 
     .dark & {
       --menu-item-color:      oklch(from var(--menu-item-tone-source) 0.78 c h);
-      --menu-item-hint-color: oklch(from var(--menu-item-tone-source) 0.68 calc(c * 0.85) h);
+      --menu-item-hint-color: oklch(from var(--menu-item-tone-source) 0.78 c h / 0.8);
     }
   }
 

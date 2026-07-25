@@ -1,0 +1,1012 @@
+/* theme-anta.css — Anta's hand-tuned reference palette.
+ *
+ * Anta's default colors are derived live from six tone seeds (see tokens.css:
+ * `--anta-seed-*` + `oklch(from …)`). This optional theme restores the
+ * hand-tuned literals that shipped before the seed-derived default — the
+ * refined per-tone values that a formula can't reproduce exactly.
+ *
+ * Load it AFTER tokens.css and the element CSS:
+ *   import '@antadesign/anta/tokens.css'
+ *   import '@antadesign/anta/reset.css'
+ *   import '@antadesign/anta/theme-anta.css'   // ← restores the hand-tuned palette
+ *
+ * Two parts, layered differently on purpose:
+ *
+ * (1) The global role scale (`--text-*` / `--bg-*` / `--border-*`, below) is
+ *     UNLAYERED (so it beats the components' `@layer anta` seed-derived tokens and
+ *     replaces the role scale wholesale) and uses DOUBLED `:root:root` / `.light.light`
+ *     / `.dark.dark` selectors, so it out-SPECIFIES tokens.css's equally-unlayered
+ *     `:root` / `.light` / `.dark` role tokens no matter which file loads first (and
+ *     matches the same set, including scoped `.light` / `.dark`). Plain source order
+ *     isn't enough:
+ *     a host may inject this file before tokens.css (the docs site does, and Astro
+ *     controls where the bundled tokens.css `<link>` lands), which would otherwise
+ *     let tokens.css win the `:root`-vs-`:root` tie.
+ *
+ * (2) The bespoke component ramps that don't flow from role tokens (Button /
+ *     Checkbox / Radio / Input status / Tag / Tabs) live in `@layer anta`, so the
+ *     cascade — not layer precedence — sorts them against the element CSS (same
+ *     layer). Neutral base rules carry `:not([tone])` (and `:not([tone-selected])`
+ *     for Checkbox / Radio) so they out-SPECIFY the element's bare base and win the
+ *     neutral case regardless of load order (the element CSS is re-injected by JS
+ *     registration, so source order isn't reliable). Named-tone rules out-specify
+ *     the base too. But a component's own even-higher-specificity CUSTOM-tone rule
+ *     (`[tone]:not(…named)`, derived in oklch) wins for a literal colour — so a
+ *     custom `tone` keeps deriving instead of flattening to neutral.
+ *
+ * Overriding: part 2's component ramps are beaten by any unlayered consumer rule.
+ * Part 1's role tokens sit at `:root:root` specificity, so a consumer override must
+ * match it — `:root:root { --text-1: … }` (or higher) — rather than a plain `:root`.
+ */
+
+/* ── 1. Global role scale — hand-tuned literals ───────────────────────────── */
+/* Doubled `:root:root` / `.light.light` — out-specifies tokens.css's `:root, .light`
+   role tokens regardless of load order (see the header note), while matching the
+   same set (root, plus any scoped `.light`). */
+:root:root, .light.light {
+  /* Backgrounds — light, neutral */
+  --bg-1: #ffffff;
+  --bg-2: #fbfafb;
+  --bg-3: #f6f4f6;
+  --bg-4: #f1eff1;
+  --bg-5: #ece9ec;
+
+  /* Backgrounds — light, Brand (no --bg-1-brand; bg-1 is neutral-only) */
+  --bg-2-brand: #fcfcfe;
+  --bg-3-brand: #f7f6fd;
+  --bg-4-brand: #efeefc;
+  --bg-5-brand: #e9e5fa;
+
+  /* Backgrounds — light, Success */
+  --bg-2-success: #f7fcf9;
+  --bg-3-success: #ecf9f0;
+  --bg-4-success: #e2f5e8;
+  --bg-5-success: #d9f2e0;
+
+  /* Backgrounds — light, Critical */
+  --bg-2-critical: #fefbfb;
+  --bg-3-critical: #fdf2f2;
+  --bg-4-critical: #fcebeb;
+  --bg-5-critical: #fae5e5;
+
+  /* Backgrounds — light, Warning */
+  --bg-2-warning: #fefbf6;
+  --bg-3-warning: #fcf4e8;
+  --bg-4-warning: #fbeeda;
+  --bg-5-warning: #f9e7cd;
+
+  /* Backgrounds — light, Info */
+  --bg-2-info: #fbfcfe;
+  --bg-3-info: #f2f7fd;
+  --bg-4-info: #e9f3fb;
+  --bg-5-info: #e1eefa;
+
+  /* Text — light, neutral */
+  --text-1: #050306;
+  --text-2: #302b31;
+  --text-3: #635b65;
+  --text-4: #878089;
+  --text-5: #9f99a1;
+
+  /* Text — light, Brand */
+  --text-1-brand: #2e1e7b;
+  --text-2-brand: #483493;
+  --text-3-brand: #483493cc;
+  --text-4-brand: #48349399;
+  --text-5-brand: #48349366;
+
+  /* Text — light, Success */
+  --text-1-success: #004618;
+  --text-2-success: #1f5c31;
+  --text-3-success: #1f5c31cc;
+  --text-4-success: #1f5c3199;
+  --text-5-success: #1f5c3166;
+
+  /* Text — light, Critical */
+  --text-1-critical: #8f1014;
+  --text-2-critical: #a01c1c;
+  --text-3-critical: #a01c1ccc;
+  --text-4-critical: #a01c1c99;
+  --text-5-critical: #a01c1c66;
+
+  /* Text — light, Warning */
+  --text-1-warning: #7f410b;
+  --text-2-warning: #995200;
+  --text-3-warning: #995200cc;
+  --text-4-warning: #99520099;
+  --text-5-warning: #99520066;
+
+  /* Text — light, Info */
+  --text-1-info: #003969;
+  --text-2-info: #175082;
+  --text-3-info: #175082cc;
+  --text-4-info: #175082b2;
+  --text-5-info: #17508280;
+
+  /* Borders — light, neutral */
+  --border-1: #938d96;
+  --border-2: #c1b9c1;
+  --border-3: #d4ced4;
+  --border-4: #e0dce0;
+  --border-5: #ece9ec;
+
+  /* Borders — light, Brand */
+  --border-1-brand: #9081df;
+  --border-2-brand: #bcb1f1;
+  --border-3-brand: #d2cbf6;
+  --border-4-brand: #ddd8f8;
+  --border-5-brand: #e9e5fa;
+
+  /* Borders — light, Success */
+  --border-1-success: #44c169;
+  --border-2-success: #88d7a0;
+  --border-3-success: #b3e5c2;
+  --border-4-success: #c6ecd1;
+  --border-5-success: #d9f2e0;
+
+  /* Borders — light, Critical */
+  --border-1-critical: #e56c6c;
+  --border-2-critical: #efa4a4;
+  --border-3-critical: #f4c2c2;
+  --border-4-critical: #f7d4d4;
+  --border-5-critical: #fae5e5;
+
+  /* Borders — light, Warning */
+  --border-1-warning: #d88118;
+  --border-2-warning: #edb25a;
+  --border-3-warning: #f3cc91;
+  --border-4-warning: #f6dbb1;
+  --border-5-warning: #f9e7cd;
+
+  /* Borders — light, Info */
+  --border-1-info: #56a1e1;
+  --border-2-info: #93c5ec;
+  --border-3-info: #bad6f3;
+  --border-4-info: #cfe3f7;
+  --border-5-info: #e1eefa;
+}
+
+/* Doubled `.dark.dark` — mirrors tokens.css's `.dark` (any scoped dark region)
+   at +1 specificity so it wins regardless of load order. */
+.dark.dark {
+  /* Backgrounds — dark, neutral */
+  --bg-1: #000000;
+  --bg-2: #0e0d0f;
+  --bg-3: #121014;
+  --bg-4: #161316;
+  --bg-5: #1a171b;
+
+  /* Backgrounds — dark, Brand */
+  --bg-2-brand: #08060e;
+  --bg-3-brand: #0f0c1d;
+  --bg-4-brand: #130f24;
+  --bg-5-brand: #16132b;
+
+  /* Backgrounds — dark, Success */
+  --bg-2-success: #030b06;
+  --bg-3-success: #051209;
+  --bg-4-success: #06160b;
+  --bg-5-success: #081b0e;
+
+  /* Backgrounds — dark, Critical */
+  --bg-2-critical: #120303;
+  --bg-3-critical: #210606;
+  --bg-4-critical: #260808;
+  --bg-5-critical: #2e0a0b;
+
+  /* Backgrounds — dark, Warning */
+  --bg-2-warning: #110a03;
+  --bg-3-warning: #1c1105;
+  --bg-4-warning: #231406;
+  --bg-5-warning: #2b1a08;
+
+  /* Backgrounds — dark, Info */
+  --bg-2-info: #020a12;
+  --bg-3-info: #05131f;
+  --bg-4-info: #071725;
+  --bg-5-info: #0c2337;
+
+  /* Text — dark, neutral */
+  --text-1: #ece9ec;
+  --text-2: #c1b9c1;
+  --text-3: #9f99a1;
+  --text-4: #776e77;
+  --text-5: #635b65;
+
+  /* Text — dark, Brand */
+  --text-1-brand: #c5baff;
+  --text-2-brand: #ada0ee;
+  --text-3-brand: #ada0eecc;
+  --text-4-brand: #ada0ee99;
+  --text-5-brand: #ada0ee66;
+
+  /* Text — dark, Success */
+  --text-1-success: #9ddeb1;
+  --text-2-success: #74cd8e;
+  --text-3-success: #74cd8ecc;
+  --text-4-success: #74cd8e99;
+  --text-5-success: #74cd8e66;
+
+  /* Text — dark, Critical */
+  --text-1-critical: #ffabac;
+  --text-2-critical: #e78e90;
+  --text-3-critical: #e78e90cc;
+  --text-4-critical: #e78e9099;
+  --text-5-critical: #e78e9066;
+
+  /* Text — dark, Warning */
+  --text-1-warning: #f0bf75;
+  --text-2-warning: #e1a452;
+  --text-3-warning: #e1a452cc;
+  --text-4-warning: #e1a45299;
+  --text-5-warning: #e1a45266;
+
+  /* Text — dark, Info */
+  --text-1-info: #9ed2ff;
+  --text-2-info: #7db6e8;
+  --text-3-info: #7db6e8cc;
+  --text-4-info: #7db6e899;
+  --text-5-info: #7db6e866;
+
+  /* Borders — dark, neutral */
+  --border-1: hsl(288deg 5.21% 42%);
+  --border-2: hsl(282deg 7.04% 28%);
+  --border-3: hsl(277.5deg 6.56% 20%);
+  --border-4: hsl(290deg 6.52% 14%);
+  --border-5: hsl(285deg 7.14% 10%);
+
+  /* Borders — dark, Brand */
+  --border-1-brand: hsl(250.08deg 59.8% 58%);
+  --border-2-brand: hsl(250deg 50% 42%);
+  --border-3-brand: hsl(252.63deg 47.74% 30%);
+  --border-4-brand: hsl(249.8deg 39.84% 19%);
+  --border-5-brand: hsl(249deg 39.22% 14%);
+
+  /* Borders — dark, Success */
+  --border-1-success: hsl(138.18deg 49.75% 29%);
+  --border-2-success: hsl(138.26deg 50.36% 20%);
+  --border-3-success: hsl(137.7deg 49.59% 16%);
+  --border-4-success: hsl(138.46deg 52% 10%);
+  --border-5-success: hsl(138.86deg 53.85% 7.5%);
+
+  /* Borders — dark, Critical */
+  --border-1-critical: hsl(0deg 56% 46%);
+  --border-2-critical: hsl(0.42deg 63% 30%);
+  --border-3-critical: hsl(0deg 62.21% 23%);
+  --border-4-critical: hsl(359.13deg 59% 15%);
+  --border-5-critical: hsl(359.06deg 63% 11%);
+
+  /* Borders — dark, Warning */
+  --border-1-warning: hsl(32.13deg 80.31% 34%);
+  --border-2-warning: hsl(27.93deg 84.06% 24%);
+  --border-3-warning: hsl(30deg 79.66% 17%);
+  --border-4-warning: hsl(28.75deg 63.16% 12%);
+  --border-5-warning: hsl(28.64deg 66.67% 9%);
+
+  /* Borders — dark, Info */
+  --border-1-info: hsl(207.82deg 70.2% 40%);
+  --border-2-info: hsl(207.77deg 69.94% 29%);
+  --border-3-info: hsl(208.04deg 69.93% 21%);
+  --border-4-info: hsl(208.52deg 62.89% 14%);
+  --border-5-info: hsl(207.78deg 65.85% 10.5%);
+}
+
+/* ── 2. Bespoke component ramps — hand-tuned literals ─────────────────────── */
+/* Components whose tone treatment doesn't flow from the role scale re-supply
+   their pre-seed literal outputs here. Role-token components (Progress,
+   Expander, Text, Card, Menu, …) need nothing — restoring the role scale above
+   restores them.
+
+   This whole section is in `@layer anta` (unlike part 1) so it cooperates with the
+   cascade instead of steamrolling it: neutral bases carry `:not([tone])` (plus
+   `:not([tone-selected])` for checkbox/radio) so they out-specify the element's
+   bare base (order-independent); named tones win by specificity too; and each
+   component's own higher-specificity custom-tone rule (in the element CSS, same
+   layer) still wins for a literal `tone`. Rules keep their original indentation;
+   the layer just wraps them. */
+@layer anta {
+
+/* Button ------------------------------------------------------------------- */
+/* Neutral base — `:not([tone])` out-specifies the element's bare `a-button` base
+   (order-independent) while a custom `tone` falls through to the element's
+   higher-specificity `[tone]:not(…named)` rule. Named tones override via their
+   own [tone="…"] rules below. */
+a-button:not([tone]),
+a[role="button"][data-anta]:not([tone]),
+button[data-anta]:not([tone]) {
+  --button-bg-primary-rest: #635b65;
+  --button-bg-primary-hover: #534c57;
+  --button-bg-primary-active: #49424c;
+  --button-bg-secondary-rest: #45374c12;
+  --button-bg-secondary-hover: #44374b1a;
+  --button-bg-secondary-active: #44374b26;
+  --button-fg-secondary-rest: #534c57;
+  --button-fg-secondary-hover: #49424c;
+  --button-fg-secondary-l-shift: 0.05;
+  --button-fg-tertiary-rest: #635b65;
+  --button-fg-tertiary-hover: #534c57;
+  --button-bg-tertiary-hover: #44374b0d;
+  --button-bg-tertiary-active: #44374b1a;
+  --button-fg-quaternary-rest: #635b65;
+  --button-fg-quaternary-hover: #49424c;
+}
+a-button[tone="brand"], a[role="button"][data-anta][tone="brand"], button[data-anta][tone="brand"] {
+  --button-bg-primary-rest: #5f4bc3; --button-bg-primary-hover: #503cb4; --button-bg-primary-active: #483493;
+  --button-bg-secondary-rest: #7460d71a; --button-bg-secondary-hover: #7460d726; --button-bg-secondary-active: #7460d733;
+  --button-fg-secondary-rest: #5f4bc3; --button-fg-secondary-hover: #503cb4;
+  --button-fg-tertiary-rest: #5f4bc3; --button-fg-tertiary-hover: #503cb4; --button-bg-tertiary-hover: #7460d71a; --button-bg-tertiary-active: #7460d726;
+  --button-fg-quaternary-rest: #5f4bc3; --button-fg-quaternary-hover: #483493;
+}
+a-button[tone="critical"], a[role="button"][data-anta][tone="critical"], button[data-anta][tone="critical"] {
+  --button-bg-primary-rest: #c9302c; --button-bg-primary-hover: #b02120; --button-bg-primary-active: #a01c1c;
+  --button-bg-secondary-rest: #de45451a; --button-bg-secondary-hover: #de454526; --button-bg-secondary-active: #de454533;
+  --button-fg-secondary-rest: #c9302c; --button-fg-secondary-hover: #b02120;
+  --button-fg-tertiary-rest: #c9302c; --button-fg-tertiary-hover: #b02120; --button-bg-tertiary-hover: #de45451a; --button-bg-tertiary-active: #de454533;
+  --button-fg-quaternary-rest: #c9302c; --button-fg-quaternary-hover: #a01c1c;
+}
+a-button[tone="info"], a[role="button"][data-anta][tone="info"], button[data-anta][tone="info"] {
+  --button-bg-primary-rest: #1f6eb2; --button-bg-primary-hover: #1a5b93; --button-bg-primary-active: #175082;
+  --button-bg-secondary-rest: #2686d91a; --button-bg-secondary-hover: #2686d926; --button-bg-secondary-active: #2686d933;
+  --button-fg-secondary-rest: #1f6eb2; --button-fg-secondary-hover: #1a5b93;
+  --button-fg-tertiary-rest: #1f6eb2; --button-fg-tertiary-hover: #1a5b93; --button-bg-tertiary-hover: #2686d91a; --button-bg-tertiary-active: #2686d926;
+  --button-fg-quaternary-rest: #1f6eb2; --button-fg-quaternary-hover: #175082;
+}
+a-button[tone="success"], a[role="button"][data-anta][tone="success"], button[data-anta][tone="success"] {
+  --button-bg-primary-rest: #2a7e43; --button-bg-primary-hover: #226737; --button-bg-primary-active: #1f5c31;
+  --button-bg-secondary-rest: #3295501a; --button-bg-secondary-hover: #32955026; --button-bg-secondary-active: #32955033;
+  --button-fg-secondary-rest: #2a7e43; --button-fg-secondary-hover: #226737;
+  --button-fg-tertiary-rest: #2a7e43; --button-fg-tertiary-hover: #226737; --button-bg-tertiary-hover: #3295501a; --button-bg-tertiary-active: #32955026;
+  --button-fg-quaternary-rest: #2a7e43; --button-fg-quaternary-hover: #1f5c31;
+}
+a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[data-anta][tone="warning"] {
+  --button-bg-primary-rest: #c37416; --button-bg-primary-hover: #ae6613; --button-bg-primary-active: #995200;
+  --button-bg-secondary-rest: #c374161a; --button-bg-secondary-hover: #c3741626; --button-bg-secondary-active: #c3741633;
+  --button-fg-secondary-rest: #c37416; --button-fg-secondary-hover: #ae6613;
+  --button-fg-tertiary-rest: #c37416; --button-fg-tertiary-hover: #ae6613; --button-bg-tertiary-hover: #c374161a; --button-bg-tertiary-active: #c3741633;
+  --button-fg-quaternary-rest: #c37416; --button-fg-quaternary-hover: #995200;
+}
+.dark a-button:not([tone]), .dark a[role="button"][data-anta]:not([tone]), .dark button[data-anta]:not([tone]) {
+  --button-bg-primary-rest: #534c57; --button-bg-primary-hover: #635b65; --button-bg-primary-active: #938d96;
+  --button-bg-secondary-rest: #e4d1ef1c; --button-bg-secondary-hover: #e4d1ef24; --button-bg-secondary-active: #e4d1ef2e;
+  --button-fg-secondary-rest: #c1b9c1; --button-fg-secondary-hover: #d4ced4; --button-fg-secondary-l-shift: 0;
+  --button-fg-tertiary-rest: #afa9b1; --button-fg-tertiary-hover: #afa9b1; --button-bg-tertiary-hover: #e4d1ef14; --button-bg-tertiary-active: #e4d1ef21;
+  --button-fg-quaternary-rest: #afa9b1; --button-fg-quaternary-hover: #cac4ca;
+}
+.dark a-button[tone="brand"], .dark a[role="button"][data-anta][tone="brand"], .dark button[data-anta][tone="brand"] {
+  --button-bg-primary-rest: #503cb4; --button-bg-primary-hover: #5f4bc3; --button-bg-primary-active: #7460d7;
+  --button-bg-secondary-rest: #7460d73b; --button-bg-secondary-hover: #7460d747; --button-bg-secondary-active: #7460d754;
+  --button-fg-secondary-rest: #c5baff; --button-fg-secondary-hover: #d2cbf6;
+  --button-fg-tertiary-rest: #ada0ee; --button-fg-tertiary-hover: #bcb1f1; --button-bg-tertiary-hover: #7460d73b; --button-bg-tertiary-active: #7460d747;
+  --button-fg-quaternary-rest: #ada0ee; --button-fg-quaternary-hover: #c7bef4;
+}
+.dark a-button[tone="critical"], .dark a[role="button"][data-anta][tone="critical"], .dark button[data-anta][tone="critical"] {
+  --button-bg-primary-rest: #b02120; --button-bg-primary-hover: #c9302c; --button-bg-primary-active: #de4545;
+  --button-bg-secondary-rest: #de45453b; --button-bg-secondary-hover: #de454547; --button-bg-secondary-active: #de454554;
+  --button-fg-secondary-rest: #ffabac; --button-fg-secondary-hover: #f4c2c2;
+  --button-fg-tertiary-rest: #e78e90; --button-fg-tertiary-hover: #efa4a4; --button-bg-tertiary-hover: #de45453b; --button-bg-tertiary-active: #de454547;
+  --button-fg-quaternary-rest: #e78e90; --button-fg-quaternary-hover: #ffabac;
+}
+.dark a-button[tone="info"], .dark a[role="button"][data-anta][tone="info"], .dark button[data-anta][tone="info"] {
+  --button-bg-primary-rest: #1a5b93; --button-bg-primary-hover: #1f6eb2; --button-bg-primary-active: #2686d9;
+  --button-bg-secondary-rest: #2686d93b; --button-bg-secondary-hover: #2686d947; --button-bg-secondary-active: #2686d954;
+  --button-fg-secondary-rest: #9ed2ff; --button-fg-secondary-hover: #bad6f3;
+  --button-fg-tertiary-rest: #7db6e8; --button-fg-tertiary-hover: #93c5ec; --button-bg-tertiary-hover: #2686d93b; --button-bg-tertiary-active: #2686d947;
+  --button-fg-quaternary-rest: #7db6e8; --button-fg-quaternary-hover: #a6cdef;
+}
+.dark a-button[tone="success"], .dark a[role="button"][data-anta][tone="success"], .dark button[data-anta][tone="success"] {
+  --button-bg-primary-rest: #226737; --button-bg-primary-hover: #2a7e43; --button-bg-primary-active: #329550;
+  --button-bg-secondary-rest: #3295503b; --button-bg-secondary-hover: #32955047; --button-bg-secondary-active: #32955054;
+  --button-fg-secondary-rest: #8ceca9; --button-fg-secondary-hover: #b3e5c2;
+  --button-fg-tertiary-rest: #74cd8e; --button-fg-tertiary-hover: #88d7a0; --button-bg-tertiary-hover: #3295503b; --button-bg-tertiary-active: #32955047;
+  --button-fg-quaternary-rest: #74cd8e; --button-fg-quaternary-hover: #9ddeb1;
+}
+.dark a-button[tone="warning"], .dark a[role="button"][data-anta][tone="warning"], .dark button[data-anta][tone="warning"] {
+  --button-bg-primary-rest: #7f410b; --button-bg-primary-hover: #995200; --button-bg-primary-active: #ae6613;
+  --button-bg-secondary-rest: #c374163b; --button-bg-secondary-hover: #c3741647; --button-bg-secondary-active: #c3741654;
+  --button-fg-secondary-rest: #f7c06e; --button-fg-secondary-hover: #f3cc91;
+  --button-fg-tertiary-rest: #e1a452; --button-fg-tertiary-hover: #edb25a; --button-bg-tertiary-hover: #c374163b; --button-bg-tertiary-active: #c3741647;
+  --button-fg-quaternary-rest: #e1a452; --button-fg-quaternary-hover: #f0bf75;
+}
+
+
+/* ===== checkbox ===== */
+a-checkbox[tone="brand"],
+  a-checkbox[tone-selected="brand"] {
+  --checkbox-bg-selected: #5f4bc3;
+  --checkbox-bg-selected-hover: #503cb4;
+  --checkbox-bg-selected-active: #483493;
+}
+a-checkbox[tone="neutral"],
+  a-checkbox[tone-selected="neutral"] {
+  --checkbox-bg-selected: #878089;
+  --checkbox-bg-selected-hover: #776e77;
+  --checkbox-bg-selected-active: #635b65;
+}
+a-checkbox[tone="info"],
+  a-checkbox[tone-selected="info"] {
+  --checkbox-bg-selected: #1f6eb2;
+  --checkbox-bg-selected-hover: #1a5b93;
+  --checkbox-bg-selected-active: #175082;
+}
+a-checkbox[tone="success"],
+  a-checkbox[tone-selected="success"] {
+  --checkbox-bg-selected: #2a7e43;
+  --checkbox-bg-selected-hover: #226737;
+  --checkbox-bg-selected-active: #1f5c31;
+}
+a-checkbox[tone="warning"],
+  a-checkbox[tone-selected="warning"] {
+  --checkbox-bg-selected: #c37416;
+  --checkbox-bg-selected-hover: #ae6613;
+  --checkbox-bg-selected-active: #995200;
+}
+a-checkbox[tone="critical"],
+  a-checkbox[tone-selected="critical"] {
+  --checkbox-bg-selected: #c9302c;
+  --checkbox-bg-selected-hover: #b02120;
+  --checkbox-bg-selected-active: #a01c1c;
+}
+a-checkbox[tone="brand"] {
+  --checkbox-bg: #fcfcfe;
+  --checkbox-border: #bcb1f1;
+  --checkbox-border-hover: #9e8eeb;
+  --checkbox-border-active: #9081df;
+}
+a-checkbox[tone="info"] {
+  --checkbox-bg: #fbfcfe;
+  --checkbox-border: #93c5ec;
+  --checkbox-border-hover: #69ace5;
+  --checkbox-border-active: #56a1e1;
+}
+a-checkbox[tone="success"] {
+  --checkbox-bg: #f7fcf9;
+  --checkbox-border: #88d7a0;
+  --checkbox-border-hover: #5bc87b;
+  --checkbox-border-active: #44c169;
+}
+a-checkbox[tone="warning"] {
+  --checkbox-bg: #fefbf6;
+  --checkbox-border: #edb25a;
+  --checkbox-border-hover: #e09127;
+  --checkbox-border-active: #d88118;
+}
+a-checkbox[tone="critical"] {
+  --checkbox-bg: #fefbfb;
+  --checkbox-border: #efa4a4;
+  --checkbox-border-hover: #e87f7f;
+  --checkbox-border-active: #e56c6c;
+}
+.dark a-checkbox:not([tone]):not([tone-selected]) {
+  --checkbox-border-neutral: #49424c;
+  --checkbox-border-hover: #635b65;
+  --checkbox-border-active: #776e77;
+  --checkbox-bg-selected: #49424c;
+  --checkbox-bg-selected-hover: #534c57;
+  --checkbox-bg-selected-active: #635b65;
+  --checkbox-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
+}
+.dark a-checkbox[tone="brand"],
+  .dark a-checkbox[tone-selected="brand"] {
+  --checkbox-bg-selected: #503cb4;
+  --checkbox-bg-selected-hover: #5f4bc3;
+  --checkbox-bg-selected-active: #7460d7;
+}
+.dark a-checkbox[tone="neutral"],
+  .dark a-checkbox[tone-selected="neutral"] {
+  --checkbox-bg-selected: #49424c;
+  --checkbox-bg-selected-hover: #534c57;
+  --checkbox-bg-selected-active: #635b65;
+}
+.dark a-checkbox[tone="info"],
+  .dark a-checkbox[tone-selected="info"] {
+  --checkbox-bg-selected: #1a5b93;
+  --checkbox-bg-selected-hover: #1f6eb2;
+  --checkbox-bg-selected-active: #2686d9;
+}
+.dark a-checkbox[tone="success"],
+  .dark a-checkbox[tone-selected="success"] {
+  --checkbox-bg-selected: #226737;
+  --checkbox-bg-selected-hover: #2a7e43;
+  --checkbox-bg-selected-active: #329550;
+}
+.dark a-checkbox[tone="warning"],
+  .dark a-checkbox[tone-selected="warning"] {
+  --checkbox-bg-selected: #7f410b;
+  --checkbox-bg-selected-hover: #995200;
+  --checkbox-bg-selected-active: #ae6613;
+}
+.dark a-checkbox[tone="critical"],
+  .dark a-checkbox[tone-selected="critical"] {
+  --checkbox-bg-selected: #b02120;
+  --checkbox-bg-selected-hover: #c9302c;
+  --checkbox-bg-selected-active: #de4545;
+}
+.dark a-checkbox[tone="brand"] {
+  --checkbox-bg: #0b0916;
+  --checkbox-border: #483493;
+  --checkbox-border-hover: #5f4bc3;
+  --checkbox-border-active: #7460d7;
+}
+.dark a-checkbox[tone="info"] {
+  --checkbox-bg: #040d18;
+  --checkbox-border: #175082;
+  --checkbox-border-hover: #1f6eb2;
+  --checkbox-border-active: #2686d9;
+}
+.dark a-checkbox[tone="success"] {
+  --checkbox-bg: #041008;
+  --checkbox-border: #1f5c31;
+  --checkbox-border-hover: #2a7e43;
+  --checkbox-border-active: #329550;
+}
+.dark a-checkbox[tone="warning"] {
+  --checkbox-bg: #120a03;
+  --checkbox-border: #6a3b0c;
+  --checkbox-border-hover: #995200;
+  --checkbox-border-active: #ae6613;
+}
+.dark a-checkbox[tone="critical"] {
+  --checkbox-bg: #190405;
+  --checkbox-border: #a01c1c;
+  --checkbox-border-hover: #c9302c;
+  --checkbox-border-active: #de4545;
+}
+
+/* ===== radio ===== */
+/* Neutral base — `:not([tone]):not([tone-selected])` keeps it off a DIRECT custom
+   tone (a per-option / standalone `<a-radio tone|tone-selected="#…">`), which then
+   derives via the element's own custom rule. Named-tone rows (incl. group-cascaded
+   ones) are covered by theme-anta's higher-specificity `[tone="…"]` rules below.
+   NOTE: a RadioGroup-*level* custom colour doesn't reach children in any theme —
+   the element sets `--radio-tone-source` locally (a-radio.css), shadowing the
+   group's inherited value — a pre-existing limitation, separate from this theme. */
+a-radio:not([tone]):not([tone-selected]) {
+  --radio-border-width: 1.5px;
+  --radio-bg: var(--bg-1);
+  --radio-bg-selected: #878089;
+  --radio-bg-selected-hover: #776e77;
+  --radio-bg-selected-active: #635b65;
+  --radio-border-neutral: #d4ced4;
+  --radio-border: var(--radio-border-neutral);
+  --radio-border-hover: #c1b9c1;
+  --radio-border-active: #9f99a1;
+  --radio-border-disabled: color-mix(in oklch, #44374b 10%, transparent);
+}
+a-radio[tone="brand"],
+  a-radio[tone-selected="brand"],
+  a-radio-group[tone="brand"] a-radio:not([tone]),
+  a-radio-group[tone-selected="brand"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #5f4bc3;
+  --radio-bg-selected-hover: #503cb4;
+  --radio-bg-selected-active: #483493;
+}
+a-radio[tone="neutral"],
+  a-radio[tone-selected="neutral"],
+  a-radio-group[tone="neutral"] a-radio:not([tone]),
+  a-radio-group[tone-selected="neutral"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #878089;
+  --radio-bg-selected-hover: #776e77;
+  --radio-bg-selected-active: #635b65;
+}
+a-radio[tone="info"],
+  a-radio[tone-selected="info"],
+  a-radio-group[tone="info"] a-radio:not([tone]),
+  a-radio-group[tone-selected="info"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #1f6eb2;
+  --radio-bg-selected-hover: #1a5b93;
+  --radio-bg-selected-active: #175082;
+}
+a-radio[tone="success"],
+  a-radio[tone-selected="success"],
+  a-radio-group[tone="success"] a-radio:not([tone]),
+  a-radio-group[tone-selected="success"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #2a7e43;
+  --radio-bg-selected-hover: #226737;
+  --radio-bg-selected-active: #1f5c31;
+}
+a-radio[tone="warning"],
+  a-radio[tone-selected="warning"],
+  a-radio-group[tone="warning"] a-radio:not([tone]),
+  a-radio-group[tone-selected="warning"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #c37416;
+  --radio-bg-selected-hover: #ae6613;
+  --radio-bg-selected-active: #995200;
+}
+a-radio[tone="critical"],
+  a-radio[tone-selected="critical"],
+  a-radio-group[tone="critical"] a-radio:not([tone]),
+  a-radio-group[tone-selected="critical"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #c9302c;
+  --radio-bg-selected-hover: #b02120;
+  --radio-bg-selected-active: #a01c1c;
+}
+a-radio[tone="brand"],
+  a-radio-group[tone="brand"] a-radio:not([tone]) {
+  --radio-bg: #fcfcfe;
+  --radio-border: #bcb1f1;
+  --radio-border-hover: #9e8eeb;
+  --radio-border-active: #9081df;
+}
+a-radio[tone="info"],
+  a-radio-group[tone="info"] a-radio:not([tone]) {
+  --radio-bg: #fbfcfe;
+  --radio-border: #93c5ec;
+  --radio-border-hover: #69ace5;
+  --radio-border-active: #56a1e1;
+}
+a-radio[tone="success"],
+  a-radio-group[tone="success"] a-radio:not([tone]) {
+  --radio-bg: #f7fcf9;
+  --radio-border: #88d7a0;
+  --radio-border-hover: #5bc87b;
+  --radio-border-active: #44c169;
+}
+a-radio[tone="warning"],
+  a-radio-group[tone="warning"] a-radio:not([tone]) {
+  --radio-bg: #fefbf6;
+  --radio-border: #edb25a;
+  --radio-border-hover: #e09127;
+  --radio-border-active: #d88118;
+}
+a-radio[tone="critical"],
+  a-radio-group[tone="critical"] a-radio:not([tone]) {
+  --radio-bg: #fefbfb;
+  --radio-border: #efa4a4;
+  --radio-border-hover: #e87f7f;
+  --radio-border-active: #e56c6c;
+}
+.dark a-radio:not([tone]):not([tone-selected]) {
+  --radio-border-hover: #635b65;
+  --radio-border-active: #776e77;
+  --radio-bg-selected: #49424c;
+  --radio-bg-selected-hover: #534c57;
+  --radio-bg-selected-active: #635b65;
+  --radio-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
+}
+.dark a-radio[tone="brand"],
+  .dark a-radio[tone-selected="brand"],
+  .dark a-radio-group[tone="brand"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="brand"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #503cb4;
+  --radio-bg-selected-hover: #5f4bc3;
+  --radio-bg-selected-active: #7460d7;
+}
+.dark a-radio[tone="neutral"],
+  .dark a-radio[tone-selected="neutral"],
+  .dark a-radio-group[tone="neutral"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="neutral"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #49424c;
+  --radio-bg-selected-hover: #534c57;
+  --radio-bg-selected-active: #635b65;
+}
+.dark a-radio[tone="info"],
+  .dark a-radio[tone-selected="info"],
+  .dark a-radio-group[tone="info"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="info"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #1a5b93;
+  --radio-bg-selected-hover: #1f6eb2;
+  --radio-bg-selected-active: #2686d9;
+}
+.dark a-radio[tone="success"],
+  .dark a-radio[tone-selected="success"],
+  .dark a-radio-group[tone="success"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="success"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #226737;
+  --radio-bg-selected-hover: #2a7e43;
+  --radio-bg-selected-active: #329550;
+}
+.dark a-radio[tone="warning"],
+  .dark a-radio[tone-selected="warning"],
+  .dark a-radio-group[tone="warning"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="warning"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #7f410b;
+  --radio-bg-selected-hover: #995200;
+  --radio-bg-selected-active: #ae6613;
+}
+.dark a-radio[tone="critical"],
+  .dark a-radio[tone-selected="critical"],
+  .dark a-radio-group[tone="critical"] a-radio:not([tone]),
+  .dark a-radio-group[tone-selected="critical"] a-radio:not([tone-selected]) {
+  --radio-bg-selected: #b02120;
+  --radio-bg-selected-hover: #c9302c;
+  --radio-bg-selected-active: #de4545;
+}
+.dark a-radio[tone="brand"],
+  .dark a-radio-group[tone="brand"] a-radio:not([tone]) {
+  --radio-bg: #0b0916;
+  --radio-border: #483493;
+  --radio-border-hover: #5f4bc3;
+  --radio-border-active: #7460d7;
+}
+.dark a-radio[tone="info"],
+  .dark a-radio-group[tone="info"] a-radio:not([tone]) {
+  --radio-bg: #040d18;
+  --radio-border: #175082;
+  --radio-border-hover: #1f6eb2;
+  --radio-border-active: #2686d9;
+}
+.dark a-radio[tone="success"],
+  .dark a-radio-group[tone="success"] a-radio:not([tone]) {
+  --radio-bg: #041008;
+  --radio-border: #1f5c31;
+  --radio-border-hover: #2a7e43;
+  --radio-border-active: #329550;
+}
+.dark a-radio[tone="warning"],
+  .dark a-radio-group[tone="warning"] a-radio:not([tone]) {
+  --radio-bg: #120a03;
+  --radio-border: #6a3b0c;
+  --radio-border-hover: #995200;
+  --radio-border-active: #ae6613;
+}
+.dark a-radio[tone="critical"],
+  .dark a-radio-group[tone="critical"] a-radio:not([tone]) {
+  --radio-bg: #190405;
+  --radio-border: #a01c1c;
+  --radio-border-hover: #c9302c;
+  --radio-border-active: #de4545;
+}
+
+/* ===== tag ===== */
+a-tag:not([tone]) {
+  --tag-tint: #44374b;
+  --tag-bg-solid: #776e77;
+  --tag-edge: var(--tag-tint);
+  --_tag-bg-alpha: 7%;
+  --_tag-border-alpha: 15%;
+  --_tag-edge-alpha: 25%;
+}
+a-tag[tone="brand"] {
+  --tag-tint: #7460d7;
+  --tag-bg-solid: #7460d7;
+  --tag-edge: var(--text-2-brand);
+  --_tag-bg-alpha: 10%;
+  --_tag-edge-alpha: 20%;
+}
+a-tag[tone="info"] {
+  --tag-tint: #2686d9;
+  --tag-bg-solid: #2686d9;
+  --tag-edge: var(--text-2-info);
+  --_tag-bg-alpha: 10%;
+  --_tag-edge-alpha: 20%;
+}
+a-tag[tone="success"] {
+  --tag-tint: #329550;
+  --tag-bg-solid: #329550;
+  --tag-edge: var(--text-2-success);
+  --_tag-bg-alpha: 10%;
+  --_tag-edge-alpha: 20%;
+}
+a-tag[tone="warning"] {
+  --tag-tint: #c37416;
+  --tag-bg-solid: #ae6613;
+  --tag-edge: var(--text-2-warning);
+  --_tag-bg-alpha: 10%;
+  --_tag-edge-alpha: 20%;
+}
+a-tag[tone="critical"] {
+  --tag-tint: #de4545;
+  --tag-bg-solid: #de4545;
+  --tag-edge: var(--text-2-critical);
+  --_tag-bg-alpha: 10%;
+  --_tag-edge-alpha: 20%;
+}
+.dark a-tag:not([tone]),
+  .dark a-tag[tone="neutral"] {
+  --tag-tint: #e4d1ef;
+  --tag-bg-solid: #635b65;
+  --_tag-bg-alpha: 12%;
+}
+.dark a-tag[tone="brand"],
+  .dark a-tag[tone="info"],
+  .dark a-tag[tone="success"],
+  .dark a-tag[tone="warning"],
+  .dark a-tag[tone="critical"] {
+  --_tag-bg-alpha: 20%;
+  --_tag-border-alpha: 25%;
+  --_tag-edge-alpha: 30%;
+}
+.dark a-tag[tone="brand"] {
+  --tag-bg-solid: #5f4bc3;
+}
+.dark a-tag[tone="info"] {
+  --tag-bg-solid: #1f6eb2;
+}
+.dark a-tag[tone="success"] {
+  --tag-bg-solid: #2a7e43;
+}
+.dark a-tag[tone="warning"] {
+  --tag-bg-solid: #995200;
+}
+.dark a-tag[tone="critical"] {
+  --tag-bg-solid: #c9302c;
+}
+.dark a-tag[tone]:not(
+      [tone="neutral"],
+      [tone="brand"],
+      [tone="info"],
+      [tone="success"],
+      [tone="warning"],
+      [tone="critical"]
+    ) {
+  --_tag-bg-alpha: 20%;
+  --_tag-border-alpha: 25%;
+  --_tag-edge-alpha: 30%;
+}
+
+/* ===== tabs ===== */
+.dark a-tabs {
+  --tabs-track-bg: color-mix(in oklch, #e4d1ef 7%, transparent);
+  --tab-secondary-bg: color-mix(in oklch, #e4d1ef 8%, transparent);
+}
+
+/* ===== input ===== */
+/* `tone` on Input is custom-only (named tones live on `status`), so `:not([tone])`
+   lets any custom-tone field fall through to the element's border derivation while
+   the neutral base still out-specifies the element base. `status` rules below are
+   unaffected. */
+a-input:not([tone]) {
+  --input-bg: var(--bg-1);
+  --input-border: var(--border-2);
+  --input-hint: var(--text-3);
+}
+a-input[status="critical"] {
+  --input-bg: #fefbfb;
+  --input-border: #de4545;
+  --input-hint: #c9302c;
+}
+a-input[status="warning"] {
+  --input-bg: #fefbf6;
+  --input-border: #ae6613;
+  --input-hint: #995200;
+}
+a-input[status="success"] {
+  --input-bg: #f7fcf9;
+  --input-border: #329550;
+  --input-hint: #2a7e43;
+}
+a-input[status="info"] {
+  --input-bg: #fbfcfe;
+  --input-border: #2686d9;
+  --input-hint: #175082;
+}
+a-input[status="brand"] {
+  --input-bg: #fcfcfe;
+  --input-border: #7460d7;
+  --input-hint: #5f4bc3;
+}
+.dark a-input[status="critical"] {
+  --input-bg: #1f0506;
+  --input-border: #c9302c;
+  --input-hint: #e25858;
+}
+.dark a-input[status="warning"] {
+  --input-bg: #120a03;
+  --input-border: #995200;
+  --input-hint: #c37416;
+}
+.dark a-input[status="success"] {
+  --input-bg: #041008;
+  --input-border: #2a7e43;
+  --input-hint: #3aab5c;
+}
+.dark a-input[status="info"] {
+  --input-bg: #040d18;
+  --input-border: #1f6eb2;
+  --input-hint: #3e93dd;
+}
+.dark a-input[status="brand"] {
+  --input-bg: #0b0916;
+  --input-border: #5f4bc3;
+  --input-hint: #8270db;
+}
+a-input:disabled {
+  --input-bg: #44374b12;
+  --input-border: #44374b26;
+  --input-hint: var(--text-5);
+}
+a-input[status]:disabled {
+  --input-bg: #44374b12;
+  --input-border: #44374b26;
+  --input-hint: var(--text-5);
+}
+.dark a-input:disabled {
+  --input-bg: #e4d1ef0d;
+  --input-border: #e4d1ef1f;
+}
+.dark a-input[status]:disabled {
+  --input-bg: #e4d1ef0d;
+  --input-border: #e4d1ef1f;
+  --input-hint: var(--text-5);
+}
+.dark a-input:not([status]):not([tone]) {
+  --input-border: #49424c;
+}
+.dark a-input[status="success"] {
+  --input-border: var(--border-1-success);
+}
+
+/* ===== input-time ===== */
+a-input-time {
+  --input-time-bg: var(--bg-1);
+  --input-time-border: var(--border-2);
+  --input-time-border-hover: var(--border-1);
+  --input-time-hint: var(--text-3);
+}
+a-input-time[status="critical"] {
+  --input-time-bg: #fefbfb;
+  --input-time-border: #de4545;
+  --input-time-border-hover: #de4545;
+  --input-time-hint: #c9302c;
+}
+a-input-time[status="warning"] {
+  --input-time-bg: #fefbf6;
+  --input-time-border: #ae6613;
+  --input-time-border-hover: #ae6613;
+  --input-time-hint: #995200;
+}
+a-input-time[status="success"] {
+  --input-time-bg: #f7fcf9;
+  --input-time-border: #329550;
+  --input-time-border-hover: #329550;
+  --input-time-hint: #2a7e43;
+}
+a-input-time[status="info"] {
+  --input-time-bg: #fbfcfe;
+  --input-time-border: #2686d9;
+  --input-time-border-hover: #2686d9;
+  --input-time-hint: #175082;
+}
+a-input-time[status="brand"] {
+  --input-time-bg: #fcfcfe;
+  --input-time-border: #7460d7;
+  --input-time-border-hover: #7460d7;
+  --input-time-hint: #5f4bc3;
+}
+.dark a-input-time[status="critical"] {
+  --input-time-bg: #1f0506;
+  --input-time-border: #c9302c;
+  --input-time-border-hover: #c9302c;
+  --input-time-hint: #e25858;
+}
+.dark a-input-time[status="warning"] {
+  --input-time-bg: #120a03;
+  --input-time-border: #995200;
+  --input-time-border-hover: #995200;
+  --input-time-hint: #c37416;
+}
+.dark a-input-time[status="success"] {
+  --input-time-bg: #041008;
+  --input-time-border: var(--border-1-success);
+  --input-time-border-hover: var(--border-1-success);
+  --input-time-hint: #3aab5c;
+}
+.dark a-input-time[status="info"] {
+  --input-time-bg: #040d18;
+  --input-time-border: #1f6eb2;
+  --input-time-border-hover: #1f6eb2;
+  --input-time-hint: #3e93dd;
+}
+.dark a-input-time[status="brand"] {
+  --input-time-bg: #0b0916;
+  --input-time-border: #5f4bc3;
+  --input-time-border-hover: #5f4bc3;
+  --input-time-hint: #8270db;
+}
+a-input-time:disabled {
+  --input-time-bg: #44374b12;
+  --input-time-border: #44374b26;
+  --input-time-border-hover: #44374b26;
+  --input-time-hint: var(--text-5);
+}
+.dark a-input-time:disabled {
+  --input-time-bg: #e4d1ef0d;
+  --input-time-border: #e4d1ef1f;
+  --input-time-border-hover: #e4d1ef1f;
+}
+.dark a-input-time:not([status]) {
+  --input-time-border: #49424c;
+  --input-time-border-hover: #635b65;
+}
+
+} /* @layer anta — end of part 2 (bespoke component ramps) */

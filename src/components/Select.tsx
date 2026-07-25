@@ -649,9 +649,6 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     // row out of the default hint.
     const isolateHint = multiple && selectAll && !disabled ? ISOLATE_HINT : undefined
     const tip = o.tooltip ?? isolateHint
-    // The default hint teaches an accelerator, so it's unobtrusive: a longer delay
-    // than the 250ms default (it shouldn't fire on a casual pass over the rows) and
-    // it follows the cursor. A consumer's own `tooltip` keeps the default pinned look.
     const hintOnly = o.tooltip == null && isolateHint != null
     return (
       <MenuItem
@@ -672,7 +669,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
       >
         {custom}
         {tip && (
-          <Tooltip {...(hintOnly ? { follow: true, delay: 700 } : {})}>{tip}</Tooltip>
+          <Tooltip follow {...(hintOnly ? { delay: 700 } : {})}>{tip}</Tooltip>
         )}
       </MenuItem>
     )

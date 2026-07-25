@@ -441,7 +441,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
             : setFacet(facet, arr.includes(opt.value) ? arr.filter((v) => v !== opt.value) : [...arr, opt.value])
         }
       >
-        {tip && <Tooltip {...(hintOnly ? { follow: true, delay: 700 } : {})}>{tip}</Tooltip>}
+        {tip && <Tooltip follow {...(hintOnly ? { delay: 700 } : {})}>{tip}</Tooltip>}
       </MenuItem>
     )
   }

@@ -2,9 +2,12 @@ import type { IconShape } from './elements/a-icon.shapes'
 
 /** Common props for JSX component wrappers. */
 export interface BaseProps {
-  /** CSS class name. Merged with any internal classes by the component. */
+  /** CSS class on the component's root element (merged with the component's own
+   *  classes). Use it directly for layout and positioning — grid/flex placement,
+   *  margins, alignment — rather than wrapping the component in a `<div>`/`<span>`. */
   className?: string
-  /** Inline styles applied to the root element. */
+  /** Inline styles on the component's root element. Set layout/positioning here
+   *  (or via `className`) directly on the component instead of adding a wrapper. */
   style?: React.CSSProperties
   /** Child elements. When provided, replaces the component's default label/content. */
   children?: React.ReactNode
@@ -189,8 +192,8 @@ export interface AProgressAttributes extends BaseAttributes {
  * from `@antadesign/anta`.
  */
 export interface ATextAttributes extends BaseAttributes {
-  /** Visual priority. Maps to text-1..text-5. */
-  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
+  /** Visual priority. Maps to text-1..text-4. */
+  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale; a named
    *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
    *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
@@ -225,8 +228,8 @@ export interface ATextAttributes extends BaseAttributes {
 export interface ATitleAttributes extends BaseAttributes {
   /** Heading level as a string attribute, '1'-'6'. */
   level?: string
-  /** Visual priority. Maps to text-1..text-5. */
-  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'quinary'
+  /** Visual priority. Maps to text-1..text-4. */
+  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Color tint. `neutral` (default) is the untinted `--text-{N}` scale; a named
    *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
    *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
@@ -395,7 +398,7 @@ export interface AIconAttributes extends BaseAttributes {
  * `Tooltip` from `@antadesign/anta`.
  */
 export interface ATooltipAttributes extends BaseAttributes {
-  /** Show delay in milliseconds. Never use `0` — use ~`50`. Defaults to 250. */
+  /** Show delay in milliseconds. Never use `0` — use ~`50`. Defaults to 300. */
   delay?: number | string
   /** Preferred side; auto-flips when there's no room. Defaults to `'bottom'`. */
   placement?: 'top' | 'bottom'

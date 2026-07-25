@@ -37,7 +37,9 @@ const header = `# Anta
 
 > Portable React/Preact UI component library. Works out of the box in React,
 > in Preact via compat aliasing, and in custom runtimes via \`configure()\`.
-> Published as \`@antadesign/anta\` on npm. Source: ${SITE}/llms.txt`
+> Published as \`@antadesign/anta\` on npm. Source: ${SITE}/llms.txt
+
+Every component forwards \`className\` and \`style\` to its rendered root element. Put layout and positioning — grid/flex placement, margins, width, alignment — directly on the component (\`<Button className="toolbar-end" />\`). Prefer not to wrap it in a \`<div>\`/\`<span>\`. Extra wrappers fight the clean DOM Anta is designed for. Refer to each component's documentation page to learn about configuration, customization, and styling.`
 
 const sections: string[] = []
 

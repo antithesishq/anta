@@ -11,7 +11,7 @@ const CURSOR_SIZE = 16
  *  cursor lands at the start of the text, not to the left of the whole bubble. */
 const PADDING_X = 8
 /** Default show delay (ms) when nothing else is open. Never use 0 — use ~50. */
-const DEFAULT_DELAY = 250
+const DEFAULT_DELAY = 300
 /** Enter/exit fade duration (ms). Mirrors `--_dur` in the shadow style. */
 const FADE_MS = 150
 /**

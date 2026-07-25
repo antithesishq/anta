@@ -34,27 +34,26 @@ import {
 } from './theming-lab-formulas'
 
 /**
- * Theming lab — a comparison tool. For every toned Anta component it puts the
- * shipped hand-tuned tone next to the generative oklch derivation from a seed
- * colour, exposes the formula's constants as live inputs (grouped by priority),
- * and shows the resolved CSS. Where the generic formula matches the hand-tuned
- * literals the two previews read alike; where it diverges you can see and re-tune it.
+ * Theming lab. Anta's default palette is itself seed-derived — tokens.css and
+ * every component compute their colours from six tone seeds via
+ * `oklch(from var(--anta-seed-*) …)`. This page shows, for each toned component,
+ * the shipped **Default** next to a **Custom** preview driven by the seed picker
+ * (and the formula's constants, exposed as live inputs grouped by priority),
+ * plus the resolved CSS.
  *
- * FOLLOW-UP: Anta's shipped default is now itself seed-derived (tokens.css +
- * components use `oklch(from var(--anta-seed-*) …)`), and the opt-in
- * `theme-anta.css` carries the old hand-tuned literals. So the "Anta hand-tuned"
- * column (which reads the LIVE shipped tokens via getComputedStyle) now reads the
- * *generative* default unless `theme-anta.css` is loaded — the two columns no
- * longer contrast at default seeds. Rework this to read the hand-tuned side from
- * `theme-anta.css` (or drop the comparison framing).
+ * At the default seed the two columns are identical — Custom reproduces the
+ * Default. Change the seed (or a constant) and only Custom moves, so you can see
+ * exactly what overriding `--anta-seed-{tone}` (or a formula knob) does to the
+ * whole tone. The Default column reads the LIVE shipped tokens/components, so it
+ * always reflects what ships.
  *
  * One page, six tone panels (Neutral first), all mounted — the tone tabs only
  * toggle visibility, so each panel keeps its own per-theme edits. The seed picker
  * sits with the tabs in the sticky header, so both stay pinned while scrolling.
- * The generative preview is driven by an un-layered `<style>` (beating `@layer
- * anta`) scoped to `.tl-gen-{tone}-{id}`; at the default values it reproduces
- * Anta's own output, so only an edit makes it diverge. Follows the page theme
- * (`.dark` on the document element) — toggle light/dark to compare the other mode.
+ * The Custom preview is driven by an un-layered `<style>` (beating `@layer anta`)
+ * scoped to `.tl-gen-{tone}-{id}`; at the default seed it reproduces Anta's own
+ * output, so only an edit makes it diverge. Follows the page theme (`.dark` on
+ * the document element) — toggle light/dark to compare the other mode.
  */
 
 const usesStatus = (id: string) => id === 'input'
@@ -490,12 +489,12 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, allVLight, allVDark, o
       {/* LEFT — previews */}
       <div className={styles.previews}>
         <div className={styles.preview}>
-          <p className={styles.previewLabel}>Anta hand-tuned · {refLabel(spec.id, tone)}</p>
+          <p className={styles.previewLabel}>Default · {refLabel(spec.id, tone)}</p>
           {preview(spec, 'ref', tone, seed, isDark)}
         </div>
         <div className={`${styles.preview} ${genClass}`}>
           <p className={styles.previewLabel}>
-            Generative · <code>tone={`{${seed}}`}</code>
+            Custom · <code>{seed}</code>
           </p>
           {preview(spec, 'gen', tone, seed, isDark)}
           <style dangerouslySetInnerHTML={{ __html: inject }} />
@@ -599,7 +598,7 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
             <Tabs value={`border-${border}`} label="Border" size="small" options={opts('border')} onStateChange={pick(onBorder)} />
           </div>
           <p className={styles.previewLabel}>
-            Anta hand-tuned
+            Default
             <br />
             <code>--bg-{bg}{bg === 1 ? '' : suffix}</code>
             {okl.bg ? <span className={styles.oklch}>{okl.bg}</span> : null}
@@ -611,7 +610,7 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
         </div>
         <div className={`${styles.preview} ${genClass}`}>
           <p className={styles.previewLabel}>
-            Generative · <code>tone={`{${seed}}`}</code>
+            Custom · <code>{seed}</code>
           </p>
           <div className={styles.surfaceSwatch} style={{ background: `var(--bg-${bg})`, borderColor: `var(--border-${border})` }} />
           <style dangerouslySetInnerHTML={{ __html: inject }} />

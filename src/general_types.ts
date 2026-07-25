@@ -2,9 +2,12 @@ import type { IconShape } from './elements/a-icon.shapes'
 
 /** Common props for JSX component wrappers. */
 export interface BaseProps {
-  /** CSS class name. Merged with any internal classes by the component. */
+  /** CSS class on the component's root element (merged with the component's own
+   *  classes). Use it directly for layout and positioning — grid/flex placement,
+   *  margins, alignment — rather than wrapping the component in a `<div>`/`<span>`. */
   className?: string
-  /** Inline styles applied to the root element. */
+  /** Inline styles on the component's root element. Set layout/positioning here
+   *  (or via `className`) directly on the component instead of adding a wrapper. */
   style?: React.CSSProperties
   /** Child elements. When provided, replaces the component's default label/content. */
   children?: React.ReactNode

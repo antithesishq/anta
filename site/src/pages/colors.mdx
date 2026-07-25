@@ -32,7 +32,7 @@ Because the numeric tokens are role-free, the convenient pattern is to alias the
 
 This keeps your components readable (`var(--bg-pane)` says more than `var(--bg-3)`) and lets you re-map a role to a different step later in one place.
 
-A semantic token doesn’t have to point at the same numeric step in both themes. A card sitting on `bg-2` can use the recessed `bg-1` in light, but in dark it often reads better a little *lighter* than the page — so the same `--bg-card` maps to `bg-4` instead. The border follows suit: `border-5` in light, `border-4` in dark.
+A semantic token doesn’t have to point at the same numeric step in both themes. A card sitting on `bg-2` can use the recessed `bg-1` in light, but in dark it often reads better a little *lighter* than the page — so the same `--bg-my-card` maps to `bg-4` instead. The border follows suit: `border-5` in light, `border-4` in dark.
 
 <Preview>
   <CardThemeExample />
@@ -40,18 +40,18 @@ A semantic token doesn’t have to point at the same numeric step in both themes
 
 ```css
 :root {
-  background: var(--bg-2);          /* Anta's token */
+  background:          var(--bg-2);     /* Anta's token */
 
-  --bg-card:     var(--bg-1);       /* Custom token */
-  --border-card: var(--border-5);   /* Custom token */
+  --bg-my-card:        var(--bg-1);     /* Custom token */
+  --bg-my-card-border: var(--border-5); /* Custom token */
 }
 .dark {
-  --bg-card:     var(--bg-4);
-  --border-card: var(--border-4);
+  --bg-my-card:        var(--bg-4);
+  --bg-my-card-border: var(--border-4);
 }
 
 .card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
+  background: var(--bg-my-card);
+  border: 1px solid var(--bg-my-card-border);
 }
 ```

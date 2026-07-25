@@ -8,36 +8,28 @@ import { StickerThumbsUpAnimated } from '@antadesign/stickers'
   <h1>Overview</h1>
 
   <div class="overview-intro">
-    <div class="overview-sticker">
-      <StickerThumbsUpAnimated size={256} />
-    </div>
-    <div class="overview-copy">
-      <Text size="large">
-        <p>The <a href="https://antithesis.com" target="_blank">Antithesis</a> design system, <b>Anta</b>, is pretty cool because:</p>
-        <ul>
-          <li>it's carefully made <dfn>for web apps<Tooltip follow>Import the whole library (~100kb gzipped)<br />or selected components to minimize your bundle.<br />There is <b>no CSS-in-JS runtime</b>.</Tooltip></dfn></li>
-          <li>has a <dfn>clean, attribute-driven DOM<Tooltip follow><b>No piles of utility classes and wrapping containers</b>.<br />Variants, tones, and behavior are attributes: <code>tone="critical"</code>, <code>size="large"</code>.</Tooltip></dfn></li>
-          <li>is <dfn>easy to override<Tooltip follow>Global CSS tokens (auto-switching default light/dark styles) with <b>an optional theme</b>.<br />Customizable with attributes or plain CSS at the per-component level.</Tooltip></dfn></li>
-          <li>has framework-agnostic <dfn>web components<Tooltip follow>The web components are fully declarative: they never change their own attributes<br />(an Antithesis architecture requirement related to worker-thread UI rendering).</Tooltip></dfn></li>
-          <li>uses <dfn>JSX wrappers<Tooltip follow>For dynamic state and conditional composition.</Tooltip></dfn> for <dfn>React or Preact<Tooltip>React is a default runtime.<br />Preact works via compat.<br />Use custom runtime via <code>configure()</code>.</Tooltip></dfn></li>
-          <li>it's well documented, typed, and AI-ready</li>
-        </ul>
-      </Text>
-    </div>
+    <StickerThumbsUpAnimated size={256} className="overview-sticker" />
+    <Text size="large" className="overview-copy">
+      <p>The <a href="https://antithesis.com" target="_blank">Antithesis</a> design system, <b>Anta</b>, is pretty cool because:</p>
+      <ul>
+        <li>it's carefully made <dfn>for web apps<Tooltip follow>Import the whole library (~100kb gzipped)<br />or selected components to minimize your bundle.<br />There is <b>no CSS-in-JS runtime</b>.</Tooltip></dfn></li>
+        <li>it has a <dfn>clean, attribute-driven DOM<Tooltip follow><b>No piles of utility classes and wrapping containers</b>.<br />Variants, tones, and behavior are attributes: <code>tone="critical"</code>, <code>size="large"</code>.</Tooltip></dfn></li>
+        <li>it's <dfn>easy to override<Tooltip follow>Global CSS tokens (auto-switching default light/dark styles) with <b>an optional theme</b>.<br />Customizable with attributes or plain CSS at the per-component level.</Tooltip></dfn></li>
+        <li>it has framework-agnostic <dfn>web components<Tooltip follow>The web components are fully declarative: they never change their own attributes<br />(an Antithesis architecture requirement related to worker-thread UI rendering).</Tooltip></dfn></li>
+        <li>it uses <dfn>JSX wrappers<Tooltip follow>For dynamic state and conditional composition.</Tooltip></dfn> for <dfn>React or Preact<Tooltip>React is a default runtime.<br />Preact works via compat.<br />Use custom runtime via <code>configure()</code>.</Tooltip></dfn></li>
+        <li>it's well documented, typed, and AI-ready</li>
+      </ul>
+    </Text>
   </div>
 </DocsLayout>
 
 <style>
   .overview-intro {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 24px;
+    gap: 12px;
   }
   .overview-sticker { flex: none; }
-  .overview-copy { flex: 1 1 auto; min-width: 0; }
-
-  /* Stack on narrow screens — sticker first (it leads the source order). */
-  @media (max-width: 640px) {
-    .overview-intro { flex-direction: column; align-items: flex-start; }
-  }
+  .overview-copy { flex: 1 1 auto; min-width: min(100%, 28rem); }
 </style>

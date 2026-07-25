@@ -81,6 +81,9 @@ const slug = (k: Kind) => TITLES[k].toLowerCase()
               <code>{l.token}</code> — {l.copy}
             </p>
           ))}
+
+          <h3 id="link-color"><a href="#link-color" class="header-anchor muted">Link color</a></h3>
+          <p>Links carry their own color, separate from the <code>text-*</code> scale: <code>--link-color</code> at rest and <code>--link-color-hover</code> on hover, each pairing light and dark. <a href="https://antithesis.com" target="_blank">This link</a> renders in the resting color.</p>
         </div>
       )}
 

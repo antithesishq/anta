@@ -267,6 +267,16 @@ export class SelectableChildElement extends HTMLElementBase {
   private internals? = this.attachInternals?.()
 
   connectedCallback() {
+    // Re-plumb a pre-upgrade property write through the accessor (the standard
+    // lazy-upgrade pattern): if `selected` was assigned while this element was
+    // not yet upgraded — an inert-parsed subtree adopted before its upgrade,
+    // with some writer racing ahead — the write landed as an own data property
+    // that would shadow the class accessor forever.
+    if (Object.prototype.hasOwnProperty.call(this, 'selected')) {
+      const v = this.selected
+      delete (this as { selected?: boolean }).selected
+      this.selected = v
+    }
     if (this.hasAttribute('selected')) this.applyState(true)
   }
 

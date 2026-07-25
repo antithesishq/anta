@@ -48,6 +48,16 @@ export class ATabsElement extends HTMLElementBase {
   // True after the first connect — gates the native `change` event so it never fires
   // for the initial seed, and gates scroll-into-view so mounting doesn't jump the page.
   private alive = false;
+  // True once the child <a-tab>s are guaranteed upgraded — set a microtask after
+  // connect. Gates sync(): when this subtree was parsed inert and then adopted
+  // (Astro's ClientRouter body swap, any innerHTML/DOMParser insertion), upgrades
+  // run in tree order — parent first — and the upgrade-time attributeChangedCallback
+  // and connectedCallback both fire while the children still lack their accessors.
+  // A sync() then reads `t.value` as undefined (nothing matches) and its
+  // `t.selected = …` writes own data properties that permanently shadow the class
+  // accessors once the children upgrade. All reactions of the adopting task drain
+  // before microtasks run, so deferring the first sync past them is sufficient.
+  private childrenReady = false;
 
   /** The selected tab's value, or `null` when nothing is selected. */
   get value(): string | null {
@@ -86,8 +96,15 @@ export class ATabsElement extends HTMLElementBase {
     });
     this.observer.observe(this, { childList: true, subtree: true });
 
-    this.sync();
-    this.alive = true;
+    // First sync a microtask later — see `childrenReady`. `alive` flips only
+    // after that sync so the initial apply still never scrolls or fires
+    // `change`, exactly as before.
+    queueMicrotask(() => {
+      if (!this.isConnected) return;
+      this.childrenReady = true;
+      this.sync();
+      this.alive = true;
+    });
   }
 
   disconnectedCallback() {
@@ -130,6 +147,7 @@ export class ATabsElement extends HTMLElementBase {
   }
 
   private sync = () => {
+    if (!this.childrenReady) return; // children may not be upgraded yet — the deferred first sync covers this
     const value = this.#currentValue;
     const tabs = this.#tabs;
     // `null` (attribute absent) means "nothing selected"; an empty string is a *real*

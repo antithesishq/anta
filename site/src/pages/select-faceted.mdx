@@ -200,10 +200,14 @@ A `custom` facet has **no option list**: you draw the editor and choose the valu
 holds — a number, a date, a range, any object. Beyond the base `key` / `label` / `icon`,
 provide two functions:
 
-- **`render(ctx)`** — your editor. `ctx.value` is the current value, `ctx.onChange(next)`
-  sets it (`undefined` clears the facet), `ctx.close()` dismisses the menu. Whatever you
-  pass to `onChange` lands in `value[key]` unchanged.
-- **`summary(value)`** — the chip on the facet's row while a value is set.
+- **`render(ctx)`** — your editor, and the **only** place the value is produced.
+  `ctx.value` is the current value, `ctx.onChange(next)` sets it (`undefined` clears the
+  facet), `ctx.close()` dismisses the menu. Whatever you pass to `onChange` lands in
+  `value[key]` unchanged and comes back as `ctx.value` next render.
+- **`summary(value)`** — the chip on the facet's row while a value is set. It's
+  **display-only** and decoupled from the value: the value round-trips through
+  `onChange` / `ctx.value`, so `summary` can return any node (or `null`) without changing
+  what you read from `value[key]`.
 
 Nothing is compared or filtered inside the component; it stores the value and reports it
 via `onValueChange`, and applying it to your rows is your code. Type the facet
@@ -234,6 +238,8 @@ const duration: SelectFacetCustom<number> = {
   ),
   summary: (v) => `≥ ${v}s`,
 }
+
+<SelectFaceted facets={[duration]} value={value} onValueChange={setValue} />
 
 // user types 30  →  value.duration === 30   (a number, returned unchanged)
 // you apply it:
@@ -271,6 +277,8 @@ const since: SelectFacetCustom<Date> = {
   ),
   summary: (d) => d.toLocaleDateString(),
 }
+
+<SelectFaceted facets={[since]} value={value} onValueChange={setValue} />
 
 // user picks a day  →  value.since is a Date, returned unchanged
 // you apply it:
@@ -393,6 +401,10 @@ const recency: SelectFacetCustom<Recency> = {
     )
   },
 }
+
+<SelectFaceted facets={[recency]} value={value} onValueChange={setValue} />
+// value.recency is { preset: 'last14' } or { day: '2026-07-20' } — resolve a preset to a
+// concrete date (or take the day as-is) and filter your rows with it
 ```
 
 <Disclosure title="Component props" open>
@@ -403,6 +415,13 @@ const recency: SelectFacetCustom<Recency> = {
 
 `facets` takes a `SelectFacet[]`. Each facet is discriminated by **`kind`** and shares a
 base of `key` / `label` / `icon`:
+
+A `single` / `multiple` facet is [Select](/select/)'s option model under a `key` — the same
+`options` (`SelectItem[]`), `filter`, and `selectAll` you'd pass to a `Select`, with `kind`
+where Select has `selection`. Know `Select` and you know these two facets; `text` and
+`custom` are the kinds with no `Select` counterpart. The value each facet stores follows
+the same rule: a `single`/`multiple` facet reports the chosen option's `value` (or an array
+of them), exactly as [Select](/select/#value--changes) does under its own key.
 
 | Field | Type | Description |
 |---|---|---|

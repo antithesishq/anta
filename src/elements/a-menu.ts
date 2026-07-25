@@ -167,15 +167,16 @@ function pathCrossesTopLayerBeforeAnchor(e: Event, anchor: HTMLElement): boolean
   return false
 }
 
-/** Node-based sibling of `pathHitsMenus`: is `node` inside any open menu's
- *  surface, its slotted light-DOM content (menu items), or its trigger anchor?
- *  Published to `anta_helpers` so `a-tooltip` can suppress a tooltip anchored
- *  outside the open menu system (it would otherwise paint over the menu). */
+/** Is `node` part of any open menu — its shadow surface or its slotted
+ *  light-DOM content (the menu items)? Published to `anta_helpers` so
+ *  `a-tooltip` suppresses every tooltip that isn't part of an open menu (it
+ *  would otherwise paint over the menu). The trigger anchor is deliberately
+ *  NOT counted: a context menu's anchor is the whole right-clicked region, and
+ *  even a dropdown's trigger sits outside the menu, so their tooltips must stay
+ *  suppressed while the menu is open. */
 function nodeHitsMenus(node: Node): boolean {
   for (const m of openStack) {
     if (m.contains(node) || m.surface.contains(node)) return true
-    const anchor = m.triggerAnchor
-    if (anchor && anchor.contains(node)) return true
   }
   return false
 }
@@ -818,8 +819,12 @@ export class AMenuElement extends HTMLElementBase {
           // Activate on keyup (see handleKeyUp), not here — the keydown→keyup gap
           // lets a lazy copy row refresh `copy` between press and release, the
           // same contract as the roving path (key-activation) and pointer. The
-          // pre-request fires now; no-ops on a non-copy item.
-          emitCopyRequest(this.activeItem)
+          // copy attribute now lives on the row's slotted `<a-copy>` child, so
+          // fire the pre-request there (the child's own delegated keydown can't
+          // reach it on this path — focus is on the filter, not the row). No-ops
+          // on a non-copy row.
+          const copyEl = this.activeItem.querySelector(':scope > a-copy')
+          if (copyEl) emitCopyRequest(copyEl as HTMLElement)
           this.#pendingComboActivate = this.activeItem
         }
         return true

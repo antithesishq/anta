@@ -395,7 +395,7 @@ export interface AIconAttributes extends BaseAttributes {
  * `Tooltip` from `@antadesign/anta`.
  */
 export interface ATooltipAttributes extends BaseAttributes {
-  /** Show delay in milliseconds. Never use `0` — use ~`50`. Defaults to 250. */
+  /** Show delay in milliseconds. Never use `0` — use ~`50`. Defaults to 300. */
   delay?: number | string
   /** Preferred side; auto-flips when there's no room. Defaults to `'bottom'`. */
   placement?: 'top' | 'bottom'
@@ -746,26 +746,6 @@ export interface AMenuItemAttributes extends BaseAttributes {
    *  a `MouseEvent`, carrying the modifier keys (e.g. `altKey`). All-lowercase so
    *  React/Preact bind it to the CustomEvent. */
   onmenuselect?: (e: MouseEvent) => void
-  /** Text copied to the clipboard when the row is chosen (a "copying menu item").
-   *  The element performs the write itself on `menuselect`. */
-  copy?: string
-  /** Copy a DOM node instead of a string (rich `text/html` + plain text). Bare
-   *  `copy-node` copies the nearest ancestor marked `[data-copy-source]`; a value
-   *  is a CSS selector resolved with `closest()`. Presence-based for the boolean
-   *  form. */
-  'copy-node'?: boolean | string
-  /** Copy the current page URL (`location.href`) instead of a `copy` string.
-   *  Presence-based. */
-  'copy-url'?: boolean | ''
-  /** Prefix the copied `copy` string with `// URL: <href>`. Presence-based. */
-  'copy-with-url'?: boolean | ''
-  /** Fired after a copy attempt (bubbling `copydone`, `detail: { ok }`).
-   *  All-lowercase so it binds in React *and* Preact. */
-  oncopydone?: (e: CustomEvent<{ ok: boolean }>) => void
-  /** Fired on **pointerdown** for a string-copy row (`copyrequest`, non-bubbling).
-   *  Answer by setting the `copy` attribute to the freshly-computed value; the
-   *  chosen row copies it. All-lowercase. */
-  oncopyrequest?: (e: CustomEvent) => void
 }
 
 /**
@@ -818,30 +798,41 @@ export interface AButtonAttributes extends BaseAttributes {
   form?: string
   /** Custom event name dispatched (bubbling) on click. */
   'data-custom-event'?: string
-  /** Text copied to the clipboard on activation (the "copy button"). The element
-   *  performs the write itself and flashes a success / failure state. */
+  'aria-disabled'?: 'true' | 'false' | boolean
+  'aria-busy'?: 'true' | 'false' | boolean
+}
+
+/** `<a-copy>` — the copy-to-clipboard behavior, slotted inside an activatable
+ *  control (`<a-button>`, `<a-menu-item>`, native `button`/`[role]`). It owns
+ *  the whole feature; the base controls carry no copy knowledge. `ButtonCopy` /
+ *  `MenuItemCopy` are the presets that drop it in. */
+export interface ACopyAttributes extends BaseAttributes {
+  /** Text copied to the clipboard when the host control is activated. */
   copy?: string
   /** Copy a DOM node instead of a string (rich `text/html` + plain text). Bare
    *  `copy-node` copies the nearest ancestor marked `[data-copy-source]`; a value
-   *  is a CSS selector resolved with `closest()` (an ancestor region). Presence-
-   *  based for the boolean form. */
+   *  is a CSS selector resolved with `closest()` (an ancestor region). The copy
+   *  control is stripped from the serialized output. Presence-based for the
+   *  boolean form. */
   'copy-node'?: boolean | string
   /** Copy the current page URL (`location.href`) instead of a `copy` string; no
    *  `copy` needed. Presence-based. */
   'copy-url'?: boolean | ''
   /** Prefix the copied `copy` string with `// URL: <href>`. Presence-based. */
   'copy-with-url'?: boolean | ''
+  /** Float a ghost of the host's content upward as visual feedback on a
+   *  successful copy (rendered in the top layer so the host's overflow can't clip
+   *  it). Presence-based. Opt-in — `ButtonCopy` sets it. */
+  toast?: boolean | ''
   /** Fired after a copy attempt (`copydone`, `detail: { ok }`, non-bubbling so a
-   *  nested copy row can't flip an ancestor's feedback). All-lowercase so it
+   *  nested copy control can't flip an ancestor's feedback). All-lowercase so it
    *  binds in React *and* Preact. */
   oncopydone?: (e: CustomEvent<{ ok: boolean }>) => void
-  /** Fired on **pointerdown** for a string-copy button (`copyrequest`,
+  /** Fired on **pointerdown** / keydown for a string-copy control (`copyrequest`,
    *  non-bubbling). Answer by setting the `copy` attribute to the freshly-computed
-   *  value; the click then copies it. The pointerdown→click gap lets an
-   *  off-UI-thread handler set `copy` in time. All-lowercase. */
+   *  value; the activation then copies it. The gap lets an off-UI-thread handler
+   *  set `copy` in time. All-lowercase. */
   oncopyrequest?: (e: CustomEvent) => void
-  'aria-disabled'?: 'true' | 'false' | boolean
-  'aria-busy'?: 'true' | 'false' | boolean
 }
 
 /**

@@ -10,6 +10,8 @@ import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import buttonDemoCode from './button.demo.ts'
 import ButtonCopyDemo from '../components/ButtonCopyDemo'
+import ButtonCopyPlacementDemo from '../components/ButtonCopyPlacementDemo'
+import ButtonCopyUrlDemo from '../components/ButtonCopyUrlDemo'
 import ButtonCopyNodeDemo from '../components/ButtonCopyNodeDemo'
 import ButtonCopyLazyDemo from '../components/ButtonCopyLazyDemo'
 import { Button } from '@antadesign/anta'
@@ -427,13 +429,13 @@ underline stylistically, it supports three styles — `solid`, `dashed`,
 </Col>
 </Columns>
 
-## Copy to clipboard
+<Disclosure title="ButtonCopy">
 
-`ButtonCopy` is a copy button. It composes a plain `<Button>` with a slotted
-`<a-copy>` child that writes to the clipboard on the button's activation, and the
-wrapper flips the leading icon to a check and retones to `success` for ~2s (✕ /
-`critical` on failure). Set `copy` for a literal string, or drop the label for an
-icon-only copy button.
+`ButtonCopy` is a copy button — a `Button` preset for copy-to-clipboard. It
+composes a plain `<Button>` with a slotted `<a-copy>` element that writes to the
+clipboard when the button is activated, and flips the copy glyph to a check while
+retoning to `success` for ~2s (✕ / `critical` on failure). Set `copy` for a
+literal string, or drop the `label` for an icon-only copy button.
 
 <Columns>
 <Col>
@@ -450,18 +452,30 @@ icon-only copy button.
 </Col>
 <Col>
 
-The copy logic lives in the standalone `<a-copy>` element. `ButtonCopy` composes
-it for you; to build the same thing by hand, slot an `<a-copy copy=…>` into a
-`<Button>` or `<a-button>`. `onCopied(ok)` fires after each attempt. Override the
-resting glyph with `icon`; the check / ✕ swap in only during the feedback window.
-
-`iconPlacement` sets where the copy glyph sits: `'leading'` (default) or
-`'trailing'`. Pass `'none'` to drop the glyph, at which point the feedback is the
-`<a-copy toast>` ghost floating up from the button plus the success / failure tone
-flash.
+The write lives in the standalone `<a-copy>` element, so the button stays a plain
+button. `ButtonCopy` slots it in for you; to build the same by hand, drop an
+`<a-copy copy=…>` into a `<Button>` or `<a-button>`. `onCopied(ok)` fires after
+each attempt. Override the resting glyph with `icon`; the check / ✕ swap in only
+during the feedback window.
 
 </Col>
 </Columns>
+
+### Icon placement
+
+`iconPlacement` sets where the copy glyph sits: `leading` (the default) or
+`trailing`. Pass `none` to drop the glyph — the feedback is then a ghost of the
+label floating up plus the success / failure tone flash.
+
+<Preview minHeight={70}>
+  <ButtonCopyPlacementDemo client:visible />
+</Preview>
+
+```tsx folded
+<ButtonCopy copy={value} label="Leading" />                              // default
+<ButtonCopy copy={value} label="Trailing" iconPlacement="trailing" />
+<ButtonCopy copy={value} label="No icon" iconPlacement="none" />         // ghost + tone flash
+```
 
 ### Copy a DOM node
 
@@ -500,6 +514,10 @@ card into a rich editor and a plain one to see both.
 `copyWithUrl` prefixes a `copy` string with `// URL: <href>`, so a copied snippet
 carries a link back to where it came from.
 
+<Preview minHeight={70}>
+  <ButtonCopyUrlDemo client:visible />
+</Preview>
+
 ```tsx folded
 <ButtonCopy copyUrl label="Copy link" />
 <ButtonCopy copy={snippet} copyWithUrl label="Copy snippet" />  {/* snippet + source URL */}
@@ -514,7 +532,7 @@ the click that follows copies the latest value.
 <Columns>
 <Col>
 
-<Preview minHeight={90}>
+<Preview minHeight={90} align="flex-start">
   <ButtonCopyLazyDemo client:visible />
 </Preview>
 
@@ -540,6 +558,12 @@ because the write happens on the click.
 
 </Col>
 </Columns>
+
+### Props
+
+<PropsTable component="ButtonCopy" />
+
+</Disclosure>
 
 ## Link mode
 

@@ -68,6 +68,13 @@
     border-radius: var(--expander-round, var(--_expander-round-radius, 999px));
   }
 
+  /* The wrapper's `actions` slot span is layout-neutral post-upgrade: its buttons
+     project as flex children of the shadow `slot[name="actions"]` row, so the
+     span itself must generate no box. (Formerly an inline `display:contents` on
+     the span; moved here so the `:not(:defined)` skeleton below can lay it out
+     without `!important`.) */
+  a-expander > [slot="actions"] { display: contents; }
+
   /* FOUC guard for the gap before the custom element upgrades. Until `a-expander`
      is `:defined`, there is no shadow DOM to collapse the region, so the light-DOM
      body (`<a-expander-details>`, `display:block`) would paint fully open and then
@@ -109,12 +116,47 @@
     opacity: 0.6;
   }
 
+  /* Reproduce the shadow `.header` row pre-upgrade. Without a shadow the
+     light-DOM children stack in document order, so the actions span would drop
+     to its own row below the title and snap up on upgrade. A two-column grid
+     mirrors the shadow header — [ summary (flex:1, ellipsizes) | actions (auto,
+     right) ] — and the actions column mirrors the shadow `slot[name="actions"]`
+     box metrics (flex, gap, insets) exactly, so upgrade is a pure content swap
+     with zero reflow. `:defined` drops this and the shadow header owns it. */
+  a-expander:not(:defined) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  a-expander:not(:defined) a-expander-summary { grid-column: 1; }
+  a-expander:not(:defined) > [slot="actions"] {
+    grid-column: 2;
+    display: flex; /* overrides the base `display: contents` above */
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    margin-inline-start: 8px;
+    margin-inline-end: 4px;
+  }
+  a-expander:not(:defined) a-expander-details { grid-column: 1 / -1; }
+
   a-expander-summary {
     display: block;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    /* Heading type scale, mirroring <Title> (a-title.css). Level 5 is the
+       default; the weight matches <Title>. This lives on the summary — the
+       element the wrapper wraps a *string* title in — NOT the shadow button,
+       so a custom title node (passed through the wrapper's display:contents
+       span) inherits nothing from us and keeps its own typography. Because the
+       summary is light DOM, this also styles the pre-upgrade skeleton in step,
+       so the header font doesn't flash on upgrade. */
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 584.62;
+    letter-spacing: 0;
     /* No explicit color: the title inherits `color` from the shadow
        `::part(summary)` button across the slot boundary. That's what lets the
        built-in hover/active recolour (driven on the button) AND a consumer's
@@ -127,6 +169,14 @@
     text-underline-offset: 3px;
     transition: color 150ms ease;
   }
+  /* Per-level type scale (level 5 is the base above). Keyed off the host's
+     reflected `level` attribute; a light-DOM selector, so it applies pre- and
+     post-upgrade alike. */
+  a-expander[level="1"] a-expander-summary { font-size: 28px; line-height: 32px; }
+  a-expander[level="2"] a-expander-summary { font-size: 24px; line-height: 28px; }
+  a-expander[level="3"] a-expander-summary { font-size: 20px; line-height: 24px; }
+  a-expander[level="4"] a-expander-summary { font-size: 17px; line-height: 20px; }
+  a-expander[level="6"] a-expander-summary { font-size: 13px; line-height: 16px; }
   a-expander-details {
     display: block;
     /* Left padding = the same `--expander-gutter` the header uses, so the body
@@ -139,6 +189,19 @@
        line-height; a nested <Text> overrides it with the same value. */
     line-height: 20px;
     overflow-x: auto;
+  }
+
+  /* Outdent zeroes the left gutter, so a flush-left control sits hard against the
+     body's inline-start edge — and a focus ring that paints outside its box (an
+     <Input>'s ring is 2px out: 1px outline + 1px offset) would be clipped by a
+     body that contains wide content (horizontal `overflow`). The block's 4px
+     right padding already gives the trailing edge that room; mirror it on the
+     leading edge here, with an equal negative margin so the body stays visually
+     flush while the clip/scroll box gains 4px of ring room. Outdent only — every
+     other mode keeps the gutter, which is room enough. */
+  a-expander[priority="tertiary"][outdent] a-expander-details {
+    padding-inline-start: 4px;
+    margin-inline-start: -4px;
   }
 
   a-expander[priority="primary"] {

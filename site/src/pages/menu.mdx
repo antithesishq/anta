@@ -579,15 +579,16 @@ chevron stay centered on the row, so it composes with a trailing counter.
 </Col>
 </Columns>
 
-## Copy items
+<Disclosure title="MenuItemCopy">
 
 <Columns reverse>
 <Col>
 
-`MenuItemCopy` is a row that copies to the clipboard when chosen: `copy` for a
+`MenuItemCopy` is a row that copies to the clipboard when chosen — `copy` for a
 literal string, `copyNode` for a DOM region. It composes a `<MenuItem>` with a
-slotted `<a-copy>` child that performs the write. The row keeps the menu open
-automatically, so the check / retone feedback shows; pass `onCopied(ok)` to react.
+slotted `<a-copy>` element that performs the write, and keeps the menu open on
+select so the check / retone feedback shows. `onCopied(ok)` fires after each
+attempt.
 
 Copy sits alongside normal items, so a "Share" menu can mix a copy-link row with
 navigating links.
@@ -611,6 +612,12 @@ navigating links.
 
 </Col>
 </Columns>
+
+### Props
+
+<PropsTable component="MenuItemCopy" />
+
+</Disclosure>
 
 ## Keyboard
 

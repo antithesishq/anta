@@ -3,7 +3,7 @@ import { Menu, MenuItem, MenuItemCopy, MenuSeparator, Button } from '@antadesign
 /**
  * Copy-menu demo for the Menu docs — a Share menu mixing copying rows
  * (`MenuItemCopy`) with a link. Hydrated as an island so the rows' icon / tone
- * feedback runs; `MenuItemCopy` keeps the menu up long enough to see it.
+ * feedback runs; `MenuItemCopy` keeps the menu open on select on its own.
  */
 export default function MenuCopyDemo() {
   return (

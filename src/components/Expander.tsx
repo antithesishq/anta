@@ -169,11 +169,7 @@ export const Expander = ({
       {...rest}
     >
       {titleNode}
-      {actions != null && (
-        <span slot="actions" style={{ display: "contents" }}>
-          {actions}
-        </span>
-      )}
+      {actions != null && <span slot="actions">{actions}</span>}
       <a-expander-details>{children}</a-expander-details>
     </a-expander>
   );

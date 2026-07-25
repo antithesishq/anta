@@ -84,15 +84,20 @@ import './a-expander.css'
  * ## Shadow style notes (the sheet itself ships comment-free)
  *
  * - **Summary**: a real `<button>` (free focus + Enter/Space), reset to
- *   inherit the host's box/text so it reads as a plain header row. Its
- *   typography (default + per-`[level]` rules) is generated from
- *   `SUMMARY_TYPE_SCALE` below — the one place to keep in sync with the
- *   `a-title.css` type scale (`a-title` is CSS-only, so there is no
- *   shared constant to import). Deliberately NOT exposed as
- *   `--expander-summary-*` tokens: `level` covers the supported
- *   variation, the weight never varies, and `::part(summary)` is the
- *   escape hatch for bespoke restyling — component tokens are reserved
- *   for values external CSS must re-point (tone, surface, dark mode).
+ *   inherit the host's box/text so it reads as a plain header row. The
+ *   button imposes NO typography of its own — it keeps `font: inherit`, so
+ *   a custom title node (projected through the wrapper's `display:contents`
+ *   span) inherits nothing from us and keeps its own type. The heading type
+ *   scale (default + per-`[level]` rules, weight, letter-spacing) lives on
+ *   `a-expander-summary` in `a-expander.css` — the CSS-only element the
+ *   wrapper wraps a *string* title in — so it applies to string titles only,
+ *   and styles the pre-upgrade skeleton in step. Keep that scale in sync with
+ *   the `a-title.css` type scale (both are CSS-only, so there is no shared
+ *   constant to import). Deliberately NOT exposed as `--expander-summary-*`
+ *   tokens: `level` covers the supported variation, the weight never varies,
+ *   and `::part(summary)` is the escape hatch for bespoke restyling —
+ *   component tokens are reserved for values external CSS must re-point
+ *   (tone, surface, dark mode).
  * - **Chevron**: the button's `::before` — a mask painting with
  *   `currentColor` (the inherited, possibly toned `--expander-text`); dimmed at
  *   rest, full on hover/open, rotated 90° when open (the rotate composes with
@@ -232,25 +237,6 @@ function ignoresToggle(el: Element): boolean {
   return el.matches(INTERACTIVE_SELECTOR) && !el.matches(DISABLED_SELECTOR)
 }
 
-// Mirrors the h1–h6 scale in a-title.css (font-size / line-height, px).
-// Level 5 is the default summary typography; the weight matches <Title>.
-const SUMMARY_TYPE_SCALE: Record<string, [number, number]> = {
-  '1': [28, 32],
-  '2': [24, 28],
-  '3': [20, 24],
-  '4': [17, 20],
-  '5': [15, 20],
-  '6': [13, 16],
-}
-const SUMMARY_FONT_WEIGHT = 584.62
-
-const SUMMARY_LEVEL_RULES = Object.entries(SUMMARY_TYPE_SCALE)
-  .map(
-    ([level, [size, line]]) =>
-      `:host([level="${level}"]) button { font-size: ${size}px; line-height: ${line}px; }`,
-  )
-  .join('\n  ')
-
 const SHADOW_STYLE = `
   :host { display: block; }
 
@@ -299,18 +285,12 @@ const SHADOW_STYLE = `
     user-select: none;
     border-radius: 2px;
     outline: none;
-    font-size: ${SUMMARY_TYPE_SCALE['5'][0]}px;
-    line-height: ${SUMMARY_TYPE_SCALE['5'][1]}px;
-    font-weight: ${SUMMARY_FONT_WEIGHT};
-    letter-spacing: 0;
   }
 
   button:focus-visible {
     outline: 1px solid var(--focus-ring);
     outline-offset: 0px;
   }
-
-  ${SUMMARY_LEVEL_RULES}
 
   /* The chevron sits absolutely INSIDE the gutter — out of flow, so it never
      pushes the title. Its right edge lands 2px before the gutter (left = gutter

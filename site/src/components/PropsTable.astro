@@ -130,14 +130,26 @@ function mergeTypes(a: string, b: string): string {
 function collect(decl: any) {
   const out = new Map<string, any>()
   const seen = new Set<any>()
+  // Props a *non-union* intersection member pins to `never` — a deliberate
+  // exclusion (e.g. `ButtonCopy` intersecting `Button & { selected?: never }` to
+  // drop `selected` / the link+submit axis). Dropped for good, unlike a `never`
+  // from a union *branch* (a discriminant the other branch types), which is just
+  // skipped so the branch that defines it still contributes the row.
+  const overridden = new Set<string>()
 
   // `fromUnion` = the prop lives inside a discriminated-union branch, so
   // it's conditional and reads as optional even if its branch declares it
   // required (e.g. `href` in the anchor branch of SubmitMode).
   function addProp(c: any, fromBase: boolean, fromUnion: boolean) {
-    if (!c?.name || EXCLUDED.has(c.name)) return
+    if (!c?.name || EXCLUDED.has(c.name) || overridden.has(c.name)) return
     if (c.kind !== 1024) return // properties only
-    if (isNever(c.type)) return // union-branch exclusions (`type?: never`)
+    if (isNever(c.type)) {
+      if (!fromUnion) {
+        overridden.add(c.name) // deliberate intersection exclusion — drop the row
+        out.delete(c.name)
+      }
+      return // (a union-branch `never` is just skipped)
+    }
     const base = fromBase || !!c.inheritedFrom
     const optional = !!c.flags?.isOptional || fromUnion
     const type = renderType(c.type)
@@ -187,14 +199,16 @@ function collect(decl: any) {
 }
 
 const all = root ? collect(root) : []
+// Source-declaration order — the order `collect` visited the type's
+// intersection / union members (which the `union-source-order` typedoc plugin
+// keeps faithful to how the props are written). Required props are hoisted
+// above optional ones; `Array.prototype.sort` is stable, so within each group
+// props keep their source order. This is why a Button's copy props — declared
+// last, in `CopyMode` — render last, instead of being pulled alphabetically to
+// the top of the table.
 const props = all
   .filter((p) => !p.fromBase)
-  .sort((a, b) => {
-    const aOpt = a.optional ? 1 : 0
-    const bOpt = b.optional ? 1 : 0
-    if (aOpt !== bOpt) return aOpt - bOpt // required first
-    return a.name.localeCompare(b.name)
-  })
+  .sort((a, b) => (a.optional ? 1 : 0) - (b.optional ? 1 : 0))
 // DOM `on*` event handlers are inherited too, but listing all ~50 as rows
 // drowns the table — they're called out in the note under it instead.
 const inherited = all

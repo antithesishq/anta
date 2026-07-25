@@ -218,6 +218,14 @@
     gap: 0.5ch;
     overflow: hidden;
     cursor: pointer;
+    /* A copy button with no icon (ButtonCopy iconPlacement="none") looks like a
+       plain button — no glyph to cue that it copies — so the copy cursor is its
+       affordance. A copy button *with* an icon keeps `pointer`: the glyph is the
+       cue. `a-copy` is the copy behavior child; `display:contents` doesn't stop
+       it matching `:has(> a-copy)`. */
+    &:has(> a-copy):not(:has(> a-icon)) {
+      cursor: copy;
+    }
 
     flex-shrink: 0;
 
@@ -386,7 +394,12 @@
       min-height: 0;
     }
 
-    &:has(> a-icon):not(:has(> a-icon ~ a-icon)):not(:has(> :not(a-icon):not(a-tooltip))) {
+    /* Icon-only: exactly one leading icon and no other content. The child
+       guards ignore `a-tooltip` (a wrapper, not content) and `a-copy` (a
+       zero-box behavior child `ButtonCopy` always slots in) so a `<ButtonCopy>`
+       with just an icon still reads as icon-only and gets the square/circular
+       box, not text-button padding. */
+    &:has(> a-icon):not(:has(> a-icon ~ a-icon)):not(:has(> :not(a-icon):not(a-tooltip):not(a-copy))) {
       --button-padding-y: 5px;
       --button-padding-x: 5px;
       min-width: 28px;
@@ -404,10 +417,10 @@
       }
     }
 
-    &:is(:has(> a-icon:first-child), :has(> a-tooltip:first-child + a-icon)):is(:has(> a-icon ~ a-icon), :has(> :not(a-icon):not(a-tooltip))) {
+    &:is(:has(> a-icon:first-child), :has(> a-tooltip:first-child + a-icon)):is(:has(> a-icon ~ a-icon), :has(> :not(a-icon):not(a-tooltip):not(a-copy))) {
       padding-inline-start: max(0px, var(--button-padding-x) - 2px);
     }
-    &:is(:has(> a-icon:last-child), :has(> a-icon + a-tooltip:last-child)):is(:has(> a-icon ~ a-icon), :has(> :not(a-icon):not(a-tooltip))) {
+    &:is(:has(> a-icon:last-child), :has(> a-icon + a-tooltip:last-child)):is(:has(> a-icon ~ a-icon), :has(> :not(a-icon):not(a-tooltip):not(a-copy))) {
       padding-inline-end: max(0px, var(--button-padding-x) - 2px);
     }
 

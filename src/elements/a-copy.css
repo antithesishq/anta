@@ -1,0 +1,11 @@
+@layer anta {
+  /* A pure behavior child: it must never occupy a slot box in its host, or the
+     host's flex `gap` would reserve space for an empty element (a phantom gap
+     next to the label). `display: contents` removes its box in every state —
+     before and after upgrade — while its shadow ghost still renders in the top
+     layer when shown. It has no visible resting state of its own. */
+  a-copy,
+  a-copy:not(:defined) {
+    display: contents;
+  }
+}

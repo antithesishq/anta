@@ -791,7 +791,7 @@ the same thing):
 
 | Field | Type | Description |
 |---|---|---|
-| `value` | `string` | The option's identity — what `value` / `defaultValue` name and `onValueChange` reports. Required, unique across the tree. |
+| `value` | `OptionValue` | The option's identity: `string`, `number`, or `boolean` (`Select` infers the type from your `options`, compared with `===`). What `value` / `defaultValue` name and `onValueChange` reports. Required, unique across the tree. See [Value & changes](#value--changes) for non-string values and rich data. |
 | `label` | `string` | Visible label. Defaults to `value`. |
 | `hint` | `string` | Secondary line under the label. |
 | `icon` | `IconShape` | Leading icon, after the selection indicator. |

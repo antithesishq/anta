@@ -165,8 +165,10 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   value?: SelectFacetedValue
   /** Initial value for the uncontrolled case (the wrapper then owns it). */
   defaultValue?: SelectFacetedValue
-  /** Fires after any facet changes, with the new full value record and an
-   *  attrs snapshot of what changed. */
+  /** Fires after any facet changes. `value` is the whole new record (a facet key →
+   *  that facet's value; a cleared facet is absent). `attrs` says what changed:
+   *  `{ facet, kind, value }` for a single facet edit, or `{ all: true }` for the
+   *  "Clear all" row — narrow on `'all' in attrs` before reading `facet`. */
   onValueChange?: (value: SelectFacetedValue, attrs: SelectFacetedChangeAttrs) => void
   /** Default trigger's button label.
    *  @defaultValue Filter */

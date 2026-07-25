@@ -153,6 +153,37 @@ The trigger opens the facet menu; each **active** facet's result renders below a
 own [Select](/select/) — editable in place, with the facet key piped into the trigger's
 `leading` slot as a prefix.
 
+### Value & changes
+
+The value is a **record keyed by facet key** — `{ [facetKey]: value }` — so each facet's
+selection lives under its own `key`. The shape per facet follows its `kind`: an option
+value for `single`, an array for `multiple`, a string for `text`, your own `V` for
+`custom`. A **cleared** facet is absent from the record (not `undefined`), and the
+trigger's badge counts the present keys. Control it with `value` (+ `onValueChange`) or
+seed `defaultValue` for the uncontrolled case.
+
+Because one control mixes facets that hold different value types, the record is typed
+`Record<string, unknown>`; narrow per facet when you read it.
+
+**`onValueChange(value, attrs)`** fires after any change:
+
+- **`value`** — the whole new record, e.g. `{ assignee: ['Alice'], status: 'open', title: 'crash' }`.
+- **`attrs`** — what changed: `{ facet, kind, value }` for a single facet edit (the
+  facet's `key`, its `kind`, and its new value, `undefined` when that facet was cleared),
+  or `{ all: true }` for the **Clear all** row. Narrow on `'all' in attrs` before reading
+  `facet`.
+
+```tsx
+<SelectFaceted
+  facets={FACETS}
+  onValueChange={(value, attrs) => {
+    if ('all' in attrs) return clearFilters()      // the Clear all row
+    // `value` is the full record; `attrs.facet` / `attrs.value` is the one that changed
+    applyFilter(attrs.facet, attrs.value)
+  }}
+/>
+```
+
 ### Value types
 
 A `single` / `multiple` facet's option values follow [Select](/select/#value--changes):
@@ -277,7 +308,9 @@ const resolveRange = (r: Recency): { from: string; to: string } => {
   }
 }
 
-const recency: SelectFacet = {
+import type { SelectFacetCustom } from '@antadesign/anta'
+
+const recency: SelectFacetCustom<Recency> = {
   key: 'recency',
   label: 'Recency',
   kind: 'custom',
@@ -365,5 +398,53 @@ const recency: SelectFacetCustom<Recency> = {
 <Disclosure title="Component props" open>
 
 <PropsTable component="SelectFaceted" />
+
+### The `SelectFacet` type
+
+`facets` takes a `SelectFacet[]`. Each facet is discriminated by **`kind`** and shares a
+base of `key` / `label` / `icon`:
+
+| Field | Type | Description |
+|---|---|---|
+| `key` | `string` | The facet's namespace — the key its value is stored under in the record, and what `attrs.facet` reports. Unique across `facets`. |
+| `label` | `string` | The facet's row label in the menu. |
+| `icon` | `IconShape` | Leading icon on the facet's row. |
+
+**`single`** (`SelectFacetSingle`) — pick one. Value: the chosen option's `value`, or
+absent when cleared (re-picking the selected option clears it).
+
+| Field | Type | Description |
+|---|---|---|
+| `kind` | `'single'` | Discriminant. |
+| `options` | `SelectItem[]` | The choices — bare strings or `SelectOption`s (groups / submenus flatten to their leaves). Option `value`s may be `string` / `number` / `boolean`. |
+| `filter` | `FacetFilter` | Search field over this facet's options: `true` for the built-in substring match, or `(option, query) => boolean`. |
+
+**`multiple`** (`SelectFacetMultiple`) — pick any number. Value: an array of the chosen
+`value`s (empty array clears it).
+
+| Field | Type | Description |
+|---|---|---|
+| `kind` | `'multiple'` | Discriminant. |
+| `options` | `SelectItem[]` | As `single`. |
+| `filter` | `FacetFilter` | As `single`. |
+| `selectAll` | `boolean` | A "Select all" row toggling every visible option. Default `true`. |
+| `selectAllLabel` | `string` | Label for that row. Default `Select all`. |
+
+**`text`** (`SelectFacetText`) — free-form substring. Value: the typed string, applied on
+Enter / blur (absent when empty).
+
+| Field | Type | Description |
+|---|---|---|
+| `kind` | `'text'` | Discriminant. |
+| `placeholder` | `string` | Placeholder for the text field. |
+
+**`custom`** (`SelectFacetCustom<V>`) — bring your own editor and value type `V`, including
+object-shaped values (a date range, a numeric comparator).
+
+| Field | Type | Description |
+|---|---|---|
+| `kind` | `'custom'` | Discriminant. |
+| `render` | `(ctx) => ReactNode` | Your editor. `ctx.value` is the current `V`, `ctx.onChange(next)` sets it (`undefined` clears the facet), `ctx.close()` dismisses the menu. |
+| `summary` | `(value: V) => ReactNode` | The chip on the facet's row while a value is set. |
 
 </Disclosure>

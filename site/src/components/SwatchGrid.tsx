@@ -67,13 +67,11 @@ function Swatch({ kind, token, rev }: { kind: Kind; token: string; rev: number }
   )
 }
 
-// One swatch grid — a single "theme example". The themed `.light`/`.dark`
-// ancestor (rendered by the static Swatches.astro shell) supplies the per-mode
-// token values; each Swatch reads them live for its hex label. The tone is
-// client state: the Colors page is a single page for all six tones, and the
-// ToneTabs island broadcasts `anta-colors-tone` when the user picks one — the
-// grid re-renders its token names in place (cells are keyed by token, so each
-// fresh cell re-reads its computed hex).
+// One swatch grid — a single "theme example". The `.light`/`.dark` ancestor
+// (from the static Swatches.astro shell) supplies the per-mode token values;
+// each Swatch reads them live for its hex label. Tone is client state: the
+// ToneTabs island broadcasts `anta-colors-tone` and the grid re-renders in
+// place (cells key by token, so fresh cells re-read their computed hex).
 export default function SwatchGrid({ kind, tone: initialTone = 'neutral' }: { kind: Kind; tone?: Tone }) {
   const [tone, setTone] = useState<Tone>(initialTone)
   // Bump on a palette switch so each Swatch re-reads its computed hex (the

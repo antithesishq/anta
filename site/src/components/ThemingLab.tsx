@@ -70,19 +70,15 @@ const PRIORITIES = ['primary', 'secondary', 'tertiary', 'quaternary'] as const
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
-/* In-progress lab edits survive navigation via sessionStorage. The island
- * unmounts on any client-side navigation and `transition:persist` can't carry
- * it over (no other page renders the island), so each state atom restores from
- * the snapshot and writes back on change. Restore happens in a mount effect,
- * NOT in the useState initializer: the island is SSR'd with defaults, and
- * Preact skips attribute patching during hydration, so initializer-restored
- * state desyncs from the server DOM (stale `hidden` / `value` attributes). A
- * post-mount setState is a normal update and patches everything. The restore
- * effect must be declared BEFORE the persist effects so it reads the snapshot
- * before their first run writes the defaults into it (that first write is then
- * healed by the re-render the restore triggers). Stored values merge OVER the
- * computed defaults, so a snapshot from before a SPECS/vars change still
- * yields complete state. */
+/* Lab edits survive navigation via sessionStorage (the island unmounts on any
+ * client-side nav; transition:persist can't help since no other page renders
+ * it). Each atom restores from the snapshot in a mount effect and writes back
+ * on change. Restore in an effect, never the useState initializer: Preact
+ * skips attribute patching during hydration, so initializer state desyncs
+ * from the SSR DOM. Declare the restore effect before the persist effects so
+ * it reads the snapshot before their first run writes defaults into it.
+ * Stored values merge over computed defaults, so an old snapshot still yields
+ * complete state. */
 const LAB_KEY = 'anta-theming-lab'
 
 type LabPanelVals = { vLight: Record<string, Vals>; vDark: Record<string, Vals> }

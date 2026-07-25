@@ -48,15 +48,11 @@ export class ATabsElement extends HTMLElementBase {
   // True after the first connect — gates the native `change` event so it never fires
   // for the initial seed, and gates scroll-into-view so mounting doesn't jump the page.
   private alive = false;
-  // True once the child <a-tab>s are guaranteed upgraded — set a microtask after
-  // connect. Gates sync(): when this subtree was parsed inert and then adopted
-  // (Astro's ClientRouter body swap, any innerHTML/DOMParser insertion), upgrades
-  // run in tree order — parent first — and the upgrade-time attributeChangedCallback
-  // and connectedCallback both fire while the children still lack their accessors.
-  // A sync() then reads `t.value` as undefined (nothing matches) and its
-  // `t.selected = …` writes own data properties that permanently shadow the class
-  // accessors once the children upgrade. All reactions of the adopting task drain
-  // before microtasks run, so deferring the first sync past them is sufficient.
+  // Gates sync() until the child <a-tab>s are upgraded (set a microtask after
+  // connect). Adopted HTML (a ClientRouter swap, innerHTML) upgrades the parent
+  // first, so an eager sync() reads `t.value` as undefined and writes
+  // `t.selected` as own properties that shadow the accessors after upgrade.
+  // Microtasks run after the adopting task's upgrades, so deferring is enough.
   private childrenReady = false;
 
   /** The selected tab's value, or `null` when nothing is selected. */
@@ -96,9 +92,8 @@ export class ATabsElement extends HTMLElementBase {
     });
     this.observer.observe(this, { childList: true, subtree: true });
 
-    // First sync a microtask later — see `childrenReady`. `alive` flips only
-    // after that sync so the initial apply still never scrolls or fires
-    // `change`, exactly as before.
+    // First sync deferred to a microtask (see childrenReady). `alive` flips
+    // after it, so the initial apply never scrolls or fires `change`.
     queueMicrotask(() => {
       if (!this.isConnected) return;
       this.childrenReady = true;
@@ -147,7 +142,7 @@ export class ATabsElement extends HTMLElementBase {
   }
 
   private sync = () => {
-    if (!this.childrenReady) return; // children may not be upgraded yet — the deferred first sync covers this
+    if (!this.childrenReady) return; // deferred first sync covers this
     const value = this.#currentValue;
     const tabs = this.#tabs;
     // `null` (attribute absent) means "nothing selected"; an empty string is a *real*

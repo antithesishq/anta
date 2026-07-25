@@ -1,11 +1,9 @@
 ---
-// Static shell for the Colors page. Renders the Background / Text / Border
-// section headings, descriptions and theme-row layout — all tone-independent,
-// so one page serves every tone. The interactive parts are islands: ToneTabs
-// holds the picked tone (pure client state — switching never navigates or
-// scrolls) and broadcasts `anta-colors-tone`; each SwatchGrid listens and
-// re-renders its token names in place, reading the hex labels live from the
-// rendered colours. One grid island per theme example.
+// Static shell for the Colors page: section headings, descriptions, and
+// theme-row layout, all tone-independent, so one page serves every tone.
+// ToneTabs holds the picked tone and broadcasts `anta-colors-tone`; each
+// SwatchGrid island re-renders its tokens in place. Switching never navigates
+// or scrolls.
 import s from './Swatches.module.css'
 import SwatchGrid from './SwatchGrid.tsx'
 import ToneTabs from './ToneTabs'

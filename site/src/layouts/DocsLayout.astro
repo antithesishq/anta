@@ -111,11 +111,9 @@ if (isComponentPage && title) {
         content clear of the notch; the insets are 0 everywhere else, so this
         is a no-op on non-notched screens. */}
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    {/* Client-side navigation (view transitions): pages swap in place, so the
-        custom-element registry, fonts, and loaded CSS survive navigation and
-        `a-*` elements upgrade instantly on every page. Swap rules that every
-        layout/page script must respect are documented in site/CLAUDE.md
-        ("ClientRouter doctrine"). */}
+    {/* Client-side navigation: pages swap in place, so the custom-element
+        registry, fonts, and loaded CSS survive and `a-*` elements upgrade
+        instantly. Script rules live in site/CLAUDE.md ("ClientRouter"). */}
     <ClientRouter />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
@@ -177,9 +175,7 @@ if (isComponentPage && title) {
         background. Driven from the theme script below (the theme is a
         manual `.dark` class, not prefers-color-scheme, so a media-based
         meta can't track it). Default is the light value. */}
-    {/* data-astro-transition-persist: the theme script mutates this meta's
-        content at runtime; the persist id makes ClientRouter keep the mutated
-        node across swaps (the incoming page's copy is discarded), so the
+    {/* The persist id keeps this runtime-mutated meta across swaps, so the
         toolbar tint doesn't snap back to light on navigation. */}
     <meta name="theme-color" content="#fbfafb" data-astro-transition-persist="theme-color" />
     <script is:inline>
@@ -212,13 +208,10 @@ if (isComponentPage && title) {
         })
       }
     </script>
-    {/* Palette (color theme) — separate axis from light/dark above. One stable
-        <link> whose href is the single switch point: /themes/default.css is an
-        empty stub (the default palette ships in tokens.css); picking a theme
-        swaps the href (e.g. /themes/anta.css). The element itself never gets
-        created or removed at runtime, and the persist id makes ClientRouter
-        carry the mutated node across swaps — navigation needs zero JS for the
-        palette. The sidebar ThemeSwitcher island swaps the href on change. */}
+    {/* Palette — separate axis from light/dark above. One stable <link>; its
+        href is the switch point (/themes/default.css is an empty stub, the
+        ThemeSwitcher island swaps in e.g. /themes/anta.css). The persist id
+        carries the mutated node across swaps, so navigation needs no JS. */}
     <link
       rel="stylesheet"
       id="palette-link"
@@ -226,10 +219,9 @@ if (isComponentPage && title) {
       data-astro-transition-persist="palette"
     />
     <script is:inline>
-      // Apply the stored palette before paint. This runs during head parse,
-      // right after the palette <link>, so rewriting the href here makes the
-      // theme stylesheet render-blocking — no flash of the generative palette
-      // on a cold load. Keep the URL map in sync with ThemeSwitcher.tsx.
+      // Apply the stored palette before paint: rewriting the href during head
+      // parse keeps the stylesheet render-blocking, so a cold load never
+      // flashes the default palette. Keep URLs in sync with ThemeSwitcher.tsx.
       try {
         const palette = localStorage.getItem('anta-palette')
         if (palette === 'anta') {
@@ -253,11 +245,9 @@ if (isComponentPage && title) {
       />
     </header>
     <div class="layout">
-      {/* transition:persist: ClientRouter moves this exact node into every new
-          page instead of re-rendering it — sidebar scroll position, the
-          hydrated ThemeSwitcher island (and its state), and any listeners
-          survive navigation. The server-rendered aria-current goes stale as a
-          result; the astro:page-load hook in the script below re-points it. */}
+      {/* Persisted: ClientRouter moves this exact node into each new page, so
+          sidebar scroll and the ThemeSwitcher island survive navigation. The
+          stale aria-current is re-pointed on astro:page-load below. */}
       <aside class="sidebar" transition:persist="sidebar">
         <span class="logo">
           <a class="logo-home" href="https://anta.design/" aria-label="Anta home">
@@ -359,16 +349,13 @@ if (isComponentPage && title) {
     <script>
       import type { TransitionBeforeSwapEvent } from 'astro:transitions/client'
 
-      // This module runs once per session (ClientRouter never re-runs a script
-      // it has seen), so nothing here may hold a reference to a specific
-      // page's DOM: every element-facing behavior is document-delegated, and
-      // per-navigation work hangs off the astro:* lifecycle events.
+      // Runs once per session (ClientRouter never re-runs a seen script), so
+      // handlers are document-delegated and per-page work hangs off astro:*
+      // events; never hold a reference to one page's DOM.
 
-      // Two mobile slide-outs share the backdrop: the nav sidebar (menu)
-      // and the "On this page" TOC. Opening one closes the other so they
-      // never overlap (both slide in from the right). State lives in
-      // body.dataset, which the body swap resets on navigation — so drawers
-      // close on nav for free.
+      // Two mobile slide-outs share the backdrop: the nav sidebar and the
+      // "On this page" TOC; opening one closes the other. State lives in
+      // body.dataset, which the body swap resets, closing drawers on nav.
       const setMenu = (open: boolean) => {
         document.body.dataset.menuOpen = open ? 'true' : 'false'
         if (open) document.body.dataset.tocOpen = 'false'
@@ -391,9 +378,8 @@ if (isComponentPage && title) {
         } else if (target.closest('.backdrop')) {
           closeAll()
         } else if (target.closest('.toc-rail')) {
-          // Tapping a TOC entry navigates via hash — close the panel. The
-          // hashchange listener below covers native hash jumps; this covers
-          // router-handled ones (pushState fires no hashchange).
+          // Tapping a TOC entry closes the panel (router hash navs fire no
+          // hashchange; the listener below covers native jumps).
           setToc(false)
         }
       })
@@ -402,11 +388,9 @@ if (isComponentPage && title) {
       })
       window.addEventListener('hashchange', () => setToc(false))
 
-      // Theme toggle — flips the `.dark` class on <html> (and the
-      // theme-color meta) via the shared `apply` from the inline head
-      // script, then persists the choice. The inline head script handles
-      // the no-flash application on cold loads; the astro:before-swap hook
-      // below carries the class across client-side navigations.
+      // Theme toggle: flip `.dark` (and the theme-color meta) via the head
+      // script's shared apply, then persist the choice. Cold loads apply
+      // pre-paint in the head script; swaps re-stamp below.
       const THEME_KEY = 'anta-theme'
       const applyTheme = (window as any).__antaApplyTheme
         ?? ((m: boolean) => document.documentElement.classList.toggle('dark', m))
@@ -417,13 +401,10 @@ if (isComponentPage && title) {
         localStorage.setItem(THEME_KEY, nextDark ? 'dark' : 'light')
       })
 
-      // ClientRouter replaces <html>'s attributes wholesale on every swap
-      // (swapRootAttributes), which would wipe the runtime `.dark` class —
-      // stamp it onto the incoming document before it's shown. The theme-color
-      // meta and the palette <link> need nothing here: both carry
-      // data-astro-transition-persist, so the router keeps the live nodes.
-      // The sidebar node is persisted too, but the browser zeroes an
-      // element's scroll offset when the swap detaches and re-inserts it —
+      // Swaps replace <html>'s attributes wholesale, wiping the runtime
+      // `.dark`: stamp it onto the incoming document. (The theme-color meta
+      // and palette <link> persist by attribute and need nothing here.) The
+      // sidebar node persists too, but the move zeroes its scroll offset, so
       // carry scrollTop across by hand.
       let sidebarScroll = 0
       document.addEventListener('astro:before-swap', (e) => {
@@ -438,10 +419,8 @@ if (isComponentPage && title) {
         if (sidebar) sidebar.scrollTop = sidebarScroll
       })
 
-      // The sidebar is persisted across swaps (transition:persist), so its
-      // server-rendered aria-current goes stale — re-point it at the link
-      // matching the new URL. Also fires on the initial load, where it
-      // matches what the server rendered (idempotent).
+      // The persisted sidebar keeps the previous page's aria-current:
+      // re-point it at the new URL. Idempotent on the initial load.
       document.addEventListener('astro:page-load', () => {
         const here = location.pathname.replace(/\/+$/, '') || '/'
         for (const a of document.querySelectorAll<HTMLAnchorElement>('.sidebar menu a')) {

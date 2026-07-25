@@ -2,20 +2,16 @@ import { useEffect, useState } from 'preact/hooks'
 import { Select } from '@antadesign/anta'
 
 /**
- * Sidebar palette switcher. Anta's default colors are seed-derived (generative);
- * picking "Anta" points the palette <link> at `/themes/anta.css` to restore the
- * hand-tuned palette. The link itself is a stable element rendered by
- * DocsLayout.astro on every page (persisted across ClientRouter swaps via
- * `data-astro-transition-persist="palette"`); switching a theme only swaps its
- * href. The choice persists in localStorage under `anta-palette`, and a
- * no-flash inline script in DocsLayout.astro applies it before paint (this
- * island only reflects the current value in the dropdown and handles changes).
+ * Sidebar palette switcher. Switching a theme swaps the href of the stable
+ * palette <link> that DocsLayout.astro renders on every page (persisted across
+ * ClientRouter swaps). The choice lives in localStorage under `anta-palette`;
+ * DocsLayout's inline head script applies it before paint on cold loads, so
+ * this island only reflects the value and handles changes.
  */
 const KEY = 'anta-palette'
 const LINK_ID = 'palette-link'
-// Stored value → stylesheet URL. Future themes are new files under
-// site/public/themes/ plus an entry here and in the options below. Keep in
-// sync with the inline palette script in DocsLayout.astro.
+// Stored value → stylesheet URL. A new theme is a file under public/themes/
+// plus entries here, in the options below, and in DocsLayout's inline script.
 const THEME_HREF: Record<string, string> = {
   none: '/themes/default.css',
   anta: '/themes/anta.css',

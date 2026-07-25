@@ -282,10 +282,8 @@ const ANTA_SLUG: Record<string, string> = {
   // delegated pointer events so it costs nothing until the pointer enters.
   // `cellIndex` / `rows` / `cells` are native table APIs; the header cell in
   // each column is included, so hovering also tints the system name on top.
-  // Bound on astro:page-load (fires on the initial load and after every
-  // ClientRouter swap): this module runs once per session, while the tables
-  // are re-rendered on each navigation, so a load-time scan would only ever
-  // see the first page's tables.
+  // Scanned on astro:page-load (the initial load and every swap): the module
+  // runs once per session while the tables re-render on each navigation.
   document.addEventListener('astro:page-load', () => {
     for (const table of document.querySelectorAll<HTMLTableElement>('table.cov')) {
       let col = -1

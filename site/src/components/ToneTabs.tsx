@@ -15,14 +15,12 @@ const TONES: { value: Tone; label: string }[] = [
 const isTone = (v: string | null): v is Tone => TONES.some((t) => t.value === v)
 
 /**
- * Tone switcher for the Colors page. All six tones live on the one page and
- * picking a tab is pure client state: the SwatchGrid islands listen for the
- * `anta-colors-tone` event and re-render their token names in place, so a
- * switch never navigates and never moves the scroll position. The choice is
- * mirrored into the URL (`/colors/?tone=brand`) with replaceState so a tone
- * stays shareable; the mount effect applies an incoming `?tone=` deep link.
- * (A mount effect, not the useState initializer — the island is SSR'd and
- * Preact skips attribute patching during hydration; see site/CLAUDE.md.)
+ * Tone switcher for the Colors page. Picking a tab is client state: the
+ * SwatchGrid islands listen for `anta-colors-tone` and re-render in place, so
+ * a switch never navigates or scrolls. The tone mirrors into the URL
+ * (`?tone=brand`) via replaceState, and a `?tone=` deep link applies in the
+ * mount effect (not the useState initializer: Preact skips attribute patching
+ * during hydration; see site/CLAUDE.md).
  */
 export default function ToneTabs() {
   const [tone, setTone] = useState<Tone>('neutral')

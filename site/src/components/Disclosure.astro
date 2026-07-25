@@ -193,10 +193,9 @@ const Heading = `h${level}` as const
     return target
   }
 
-  // Deep links (shared URL, in-page nav): expand + scroll to the target.
-  // Runs on astro:page-load — the initial load AND every ClientRouter swap —
-  // because the router can't scroll to a target inside a closed <details>;
-  // this opens it and finishes the scroll.
+  // Deep links: expand + scroll to the target. Runs on astro:page-load (the
+  // initial load and every swap); the router can't scroll into a closed
+  // <details>, so this opens it and finishes the scroll.
   function syncFromHash() {
     const target = openContaining(decodeURIComponent(location.hash.slice(1)))
     if (target) target.scrollIntoView({ block: 'start' })
@@ -204,14 +203,12 @@ const Heading = `h${level}` as const
   document.addEventListener('astro:page-load', syncFromHash)
   window.addEventListener('hashchange', syncFromHash)
 
-  // Header-link click: own the interaction so the section opens rather
-  // than relying on the native <summary> toggle (which doesn't fire for
-  // a nested link). stopPropagation keeps it from toggling closed; the
-  // chevron / summary still toggles normally for collapsing. Delegated on
-  // document (not bound per anchor) so it survives ClientRouter swaps —
-  // this module runs once per session while the anchors are re-rendered
-  // on every navigation. Capture phase so preventDefault lands before the
-  // router's own click listener would treat the hash link as a navigation.
+  // Header-link click: own the interaction so the section opens rather than
+  // relying on the native <summary> toggle (which doesn't fire for a nested
+  // link); stopPropagation keeps it from toggling closed. Document-delegated
+  // in the capture phase: this module runs once per session while anchors
+  // re-render on every swap, and preventDefault must land before the router's
+  // click listener treats the hash link as a navigation.
   const ANCHOR_SEL = 'details.disclosure > summary :is(h2,h3,h4,h5,h6) > a.header-anchor'
   document.addEventListener('click', (e) => {
     const a = (e.target as HTMLElement)?.closest?.('a.header-anchor') as HTMLAnchorElement | null

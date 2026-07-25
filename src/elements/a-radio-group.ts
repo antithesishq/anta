@@ -51,12 +51,9 @@ export class ARadioGroupElement extends HTMLElementBase {
   // True after the first connect — gates the native `change` event so it never
   // fires for the initial seed (only for real, post-connect selection changes).
   private alive = false;
-  // True once the child <a-radio>s are guaranteed upgraded — set a microtask
-  // after connect. Gates sync(); see a-tabs' `childrenReady` for the full story
-  // (inert-parsed subtrees adopted by e.g. Astro's ClientRouter body swap
-  // upgrade parent-first, and a sync() against un-upgraded children reads
-  // `r.value` as undefined and clobbers their `selected` accessors with own
-  // data properties).
+  // Gates sync() until the child <a-radio>s are upgraded (set a microtask
+  // after connect) — same hazard as a-tabs' childrenReady: adopted HTML
+  // upgrades the parent first, and an eager sync() clobbers the children.
   private childrenReady = false;
 
   /** The selected option's value, or `null` when nothing is selected. */
@@ -99,8 +96,8 @@ export class ARadioGroupElement extends HTMLElementBase {
     });
     this.observer.observe(this, { childList: true, subtree: true });
 
-    // First sync a microtask later — see `childrenReady`. `alive` flips only
-    // after that sync so the initial apply still never fires `change`.
+    // First sync deferred to a microtask (see childrenReady). `alive` flips
+    // after it, so the initial apply never fires `change`.
     queueMicrotask(() => {
       if (!this.isConnected) return;
       this.childrenReady = true;
@@ -164,7 +161,7 @@ export class ARadioGroupElement extends HTMLElementBase {
   }
 
   private sync = () => {
-    if (!this.childrenReady) return; // children may not be upgraded yet — the deferred first sync covers this
+    if (!this.childrenReady) return; // deferred first sync covers this
     const value = this.#currentValue;
     const radios = this.#radios;
     // `null` (attribute absent) means "nothing selected"; an empty string is a

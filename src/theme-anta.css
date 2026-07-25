@@ -10,19 +10,40 @@
  *   import '@antadesign/anta/reset.css'
  *   import '@antadesign/anta/theme-anta.css'   // ← restores the hand-tuned palette
  *
- * It is intentionally UNLAYERED: unlayered rules beat `@layer anta` (so it
- * overrides the components' seed-derived tone rules), and its later source order
- * beats the equally-unlayered base token blocks in tokens.css. A consumer's own
- * unlayered overrides loaded after this file still win.
+ * Two parts, layered differently on purpose:
  *
- * Two parts: (1) the global role scale (below), and (2) the bespoke component
- * ramps that don't flow from role tokens (Button / Checkbox / Radio / Input
- * status / Tag / Tabs), appended in the components section further down.
+ * (1) The global role scale (`--text-*` / `--bg-*` / `--border-*`, below) is
+ *     UNLAYERED (so it beats the components' `@layer anta` seed-derived tokens and
+ *     replaces the role scale wholesale) and uses DOUBLED `:root:root` / `.light.light`
+ *     / `.dark.dark` selectors, so it out-SPECIFIES tokens.css's equally-unlayered
+ *     `:root` / `.light` / `.dark` role tokens no matter which file loads first (and
+ *     matches the same set, including scoped `.light` / `.dark`). Plain source order
+ *     isn't enough:
+ *     a host may inject this file before tokens.css (the docs site does, and Astro
+ *     controls where the bundled tokens.css `<link>` lands), which would otherwise
+ *     let tokens.css win the `:root`-vs-`:root` tie.
+ *
+ * (2) The bespoke component ramps that don't flow from role tokens (Button /
+ *     Checkbox / Radio / Input status / Tag / Tabs) live in `@layer anta`, so the
+ *     cascade — not layer precedence — sorts them against the element CSS (same
+ *     layer). Neutral base rules carry `:not([tone])` (and `:not([tone-selected])`
+ *     for Checkbox / Radio) so they out-SPECIFY the element's bare base and win the
+ *     neutral case regardless of load order (the element CSS is re-injected by JS
+ *     registration, so source order isn't reliable). Named-tone rules out-specify
+ *     the base too. But a component's own even-higher-specificity CUSTOM-tone rule
+ *     (`[tone]:not(…named)`, derived in oklch) wins for a literal colour — so a
+ *     custom `tone` keeps deriving instead of flattening to neutral.
+ *
+ * Overriding: part 2's component ramps are beaten by any unlayered consumer rule.
+ * Part 1's role tokens sit at `:root:root` specificity, so a consumer override must
+ * match it — `:root:root { --text-1: … }` (or higher) — rather than a plain `:root`.
  */
 
 /* ── 1. Global role scale — hand-tuned literals ───────────────────────────── */
-
-:root, .light {
+/* Doubled `:root:root` / `.light.light` — out-specifies tokens.css's `:root, .light`
+   role tokens regardless of load order (see the header note), while matching the
+   same set (root, plus any scoped `.light`). */
+:root:root, .light.light {
   /* Backgrounds — light, neutral */
   --bg-1: #ffffff;
   --bg-2: #fbfafb;
@@ -145,7 +166,9 @@
   --border-5-info: #e1eefa;
 }
 
-.dark {
+/* Doubled `.dark.dark` — mirrors tokens.css's `.dark` (any scoped dark region)
+   at +1 specificity so it wins regardless of load order. */
+.dark.dark {
   /* Backgrounds — dark, neutral */
   --bg-1: #000000;
   --bg-2: #0e0d0f;
@@ -272,12 +295,25 @@
 /* Components whose tone treatment doesn't flow from the role scale re-supply
    their pre-seed literal outputs here. Role-token components (Progress,
    Expander, Text, Card, Menu, …) need nothing — restoring the role scale above
-   restores them. */
+   restores them.
+
+   This whole section is in `@layer anta` (unlike part 1) so it cooperates with the
+   cascade instead of steamrolling it: neutral bases carry `:not([tone])` (plus
+   `:not([tone-selected])` for checkbox/radio) so they out-specify the element's
+   bare base (order-independent); named tones win by specificity too; and each
+   component's own higher-specificity custom-tone rule (in the element CSS, same
+   layer) still wins for a literal `tone`. Rules keep their original indentation;
+   the layer just wraps them. */
+@layer anta {
 
 /* Button ------------------------------------------------------------------- */
-a-button,
-a[role="button"][data-anta],
-button[data-anta] {
+/* Neutral base — `:not([tone])` out-specifies the element's bare `a-button` base
+   (order-independent) while a custom `tone` falls through to the element's
+   higher-specificity `[tone]:not(…named)` rule. Named tones override via their
+   own [tone="…"] rules below. */
+a-button:not([tone]),
+a[role="button"][data-anta]:not([tone]),
+button[data-anta]:not([tone]) {
   --button-bg-primary-rest: #635b65;
   --button-bg-primary-hover: #534c57;
   --button-bg-primary-active: #49424c;
@@ -329,7 +365,7 @@ a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[da
   --button-fg-tertiary-rest: #c37416; --button-fg-tertiary-hover: #ae6613; --button-bg-tertiary-hover: #c374161a; --button-bg-tertiary-active: #c3741633;
   --button-fg-quaternary-rest: #c37416; --button-fg-quaternary-hover: #995200;
 }
-.dark a-button, .dark a[role="button"][data-anta], .dark button[data-anta] {
+.dark a-button:not([tone]), .dark a[role="button"][data-anta]:not([tone]), .dark button[data-anta]:not([tone]) {
   --button-bg-primary-rest: #534c57; --button-bg-primary-hover: #635b65; --button-bg-primary-active: #938d96;
   --button-bg-secondary-rest: #e4d1ef1c; --button-bg-secondary-hover: #e4d1ef24; --button-bg-secondary-active: #e4d1ef2e;
   --button-fg-secondary-rest: #c1b9c1; --button-fg-secondary-hover: #d4ced4; --button-fg-secondary-l-shift: 0;
@@ -440,7 +476,7 @@ a-checkbox[tone="critical"] {
   --checkbox-border-hover: #e87f7f;
   --checkbox-border-active: #e56c6c;
 }
-.dark a-checkbox {
+.dark a-checkbox:not([tone]):not([tone-selected]) {
   --checkbox-border-neutral: #49424c;
   --checkbox-border-hover: #635b65;
   --checkbox-border-active: #776e77;
@@ -517,7 +553,14 @@ a-checkbox[tone="critical"] {
 }
 
 /* ===== radio ===== */
-a-radio {
+/* Neutral base — `:not([tone]):not([tone-selected])` keeps it off a DIRECT custom
+   tone (a per-option / standalone `<a-radio tone|tone-selected="#…">`), which then
+   derives via the element's own custom rule. Named-tone rows (incl. group-cascaded
+   ones) are covered by theme-anta's higher-specificity `[tone="…"]` rules below.
+   NOTE: a RadioGroup-*level* custom colour doesn't reach children in any theme —
+   the element sets `--radio-tone-source` locally (a-radio.css), shadowing the
+   group's inherited value — a pre-existing limitation, separate from this theme. */
+a-radio:not([tone]):not([tone-selected]) {
   --radio-border-width: 1.5px;
   --radio-bg: var(--bg-1);
   --radio-bg-selected: #878089;
@@ -612,7 +655,7 @@ a-radio[tone="critical"],
   --radio-border-hover: #e87f7f;
   --radio-border-active: #e56c6c;
 }
-.dark a-radio {
+.dark a-radio:not([tone]):not([tone-selected]) {
   --radio-border-hover: #635b65;
   --radio-border-active: #776e77;
   --radio-bg-selected: #49424c;
@@ -705,7 +748,7 @@ a-radio[tone="critical"],
 }
 
 /* ===== tag ===== */
-a-tag {
+a-tag:not([tone]) {
   --tag-tint: #44374b;
   --tag-bg-solid: #776e77;
   --tag-edge: var(--tag-tint);
@@ -798,7 +841,11 @@ a-tag[tone="critical"] {
 }
 
 /* ===== input ===== */
-a-input {
+/* `tone` on Input is custom-only (named tones live on `status`), so `:not([tone])`
+   lets any custom-tone field fall through to the element's border derivation while
+   the neutral base still out-specifies the element base. `status` rules below are
+   unaffected. */
+a-input:not([tone]) {
   --input-bg: var(--bg-1);
   --input-border: var(--border-2);
   --input-hint: var(--text-3);
@@ -872,7 +919,7 @@ a-input[status]:disabled {
   --input-border: #e4d1ef1f;
   --input-hint: var(--text-5);
 }
-.dark a-input:not([status]) {
+.dark a-input:not([status]):not([tone]) {
   --input-border: #49424c;
 }
 .dark a-input[status="success"] {
@@ -961,3 +1008,5 @@ a-input-time:disabled {
   --input-time-border: #49424c;
   --input-time-border-hover: #635b65;
 }
+
+} /* @layer anta — end of part 2 (bespoke component ramps) */

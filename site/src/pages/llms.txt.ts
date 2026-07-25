@@ -20,6 +20,7 @@ const componentLinks = Object.entries(componentModules)
   })
 
 const otherLinks = [
+  `- [Install & Config](${SITE}/install/)`,
   `- [Colors](${SITE}/colors/)`,
   `- [Normalization](${SITE}/normalization/)`,
   `- [Changelog](${SITE}/changelog/)`,

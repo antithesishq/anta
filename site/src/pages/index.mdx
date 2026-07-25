@@ -1,0 +1,48 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Overview
+---
+
+import { Expander, Tooltip } from '@antadesign/anta'
+
+# Overview
+
+<a href="https://antithesis.com" target="_blank" rel="noopener noreferrer">Antithesis</a> design system, **Anta**, has three layers:
+
+- global CSS tokens with an optional theme
+- framework-agnostic <dfn>web components<Tooltip>The web components are fully declarative: they never change their own attributes<br />(an Antithesis architecture requirement related to worker-thread UI rendering).</Tooltip></dfn> that work in plain HTML
+- <dfn>JSX wrappers<Tooltip>Dynamic state and conditional composition live in the JSX wrappers.</Tooltip></dfn> for React or Preact
+
+{/* <dfn> marks a term defined in place — here the definition rides in the
+    tooltip. Swap the UA italic for the hover-hint affordance. */}
+<style is:inline>{`
+  dfn {
+    font-style: normal;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    text-decoration-color: color-mix(in oklch, currentColor 50%, transparent);
+    cursor: help;
+  }
+`}</style>
+
+## Why Anta
+
+<Expander priority="tertiary" style={{ marginBottom: 12 }} title="Built for web apps">
+  The components initialize on the client, which suits an app you open and use for a while. A content site that needs instant first paint is not the target. React is the primary runtime, with typed JSX wrappers; Preact works via compat, and `configure()` plugs in a custom runtime. Core components also work in plain HTML, while composed ones like `Select` and `InputDate` come as JSX wrappers.
+</Expander>
+
+<Expander priority="tertiary" style={{ marginBottom: 12 }} title="The look and feel is yours">
+  Each of the six tones (neutral, brand, info, …) comes from one seed color. Change the seed and the whole tone follows, in light and dark at once (see [Theming](/theming/)). For finer control, every component takes attributes for its variants and plain CSS for everything else.
+</Expander>
+
+<Expander priority="tertiary" style={{ marginBottom: 12 }} title="Attribute-driven, clean DOM">
+  Variants, tones, and behavior are attributes: `tone="critical"`, `size="large"`. There are no class lists to assemble, and the inspector shows what you wrote — one element per component, internals in shadow DOM, no wrapper divs, no piles of utility classes.
+</Expander>
+
+<Expander priority="tertiary" style={{ marginBottom: 12 }} title="Easy to override">
+  Anta's styles live in `@layer anta`, so any plain rule you write beats them without `!important`. Shadow-DOM components expose `::part(...)` hooks, and the [reset](/normalization/) coexists with Tailwind or your own layers.
+</Expander>
+
+<Expander priority="tertiary" style={{ marginBottom: 12 }} title="Light footprint">
+  Import per element (`@antadesign/anta/elements/a-tooltip`) and unused components stay out of your bundle. There is no CSS-in-JS runtime and there are no font binaries. Dark mode is one `.dark` class on any ancestor: the whole page or a single corner of it.
+</Expander>

@@ -282,27 +282,33 @@ const ANTA_SLUG: Record<string, string> = {
   // delegated pointer events so it costs nothing until the pointer enters.
   // `cellIndex` / `rows` / `cells` are native table APIs; the header cell in
   // each column is included, so hovering also tints the system name on top.
-  for (const table of document.querySelectorAll<HTMLTableElement>('table.cov')) {
-    let col = -1
-    let row: HTMLTableRowElement | null = null
-    const clear = () => {
-      for (const el of table.querySelectorAll('.col-hl')) el.classList.remove('col-hl')
-      row?.classList.remove('row-hl')
-      col = -1
-      row = null
+  // Bound on astro:page-load (fires on the initial load and after every
+  // ClientRouter swap): this module runs once per session, while the tables
+  // are re-rendered on each navigation, so a load-time scan would only ever
+  // see the first page's tables.
+  document.addEventListener('astro:page-load', () => {
+    for (const table of document.querySelectorAll<HTMLTableElement>('table.cov')) {
+      let col = -1
+      let row: HTMLTableRowElement | null = null
+      const clear = () => {
+        for (const el of table.querySelectorAll('.col-hl')) el.classList.remove('col-hl')
+        row?.classList.remove('row-hl')
+        col = -1
+        row = null
+      }
+      table.addEventListener('mouseover', (e) => {
+        const cell = (e.target as Element).closest('th, td')
+        if (!cell || !table.contains(cell)) return
+        const nextCol = (cell as HTMLTableCellElement).cellIndex
+        const nextRow = cell.parentElement as HTMLTableRowElement
+        if (nextCol === col && nextRow === row) return
+        clear()
+        col = nextCol
+        row = nextRow
+        for (const r of table.rows) r.cells[col]?.classList.add('col-hl')
+        row.classList.add('row-hl')
+      })
+      table.addEventListener('mouseleave', clear)
     }
-    table.addEventListener('mouseover', (e) => {
-      const cell = (e.target as Element).closest('th, td')
-      if (!cell || !table.contains(cell)) return
-      const nextCol = (cell as HTMLTableCellElement).cellIndex
-      const nextRow = cell.parentElement as HTMLTableRowElement
-      if (nextCol === col && nextRow === row) return
-      clear()
-      col = nextCol
-      row = nextRow
-      for (const r of table.rows) r.cells[col]?.classList.add('col-hl')
-      row.classList.add('row-hl')
-    })
-    table.addEventListener('mouseleave', clear)
-  }
+  })
 </script>

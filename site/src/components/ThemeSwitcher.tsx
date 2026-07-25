@@ -3,14 +3,23 @@ import { Select } from '@antadesign/anta'
 
 /**
  * Sidebar palette switcher. Anta's default colors are seed-derived (generative);
- * picking "Anta" loads `/theme-anta.css` to restore the hand-tuned palette.
- * The choice persists in localStorage under `anta-palette`, and a no-flash inline
- * script in DocsLayout.astro applies it before paint (this island only reflects
- * the current value in the dropdown and handles changes).
+ * picking "Anta" points the palette <link> at `/themes/anta.css` to restore the
+ * hand-tuned palette. The link itself is a stable element rendered by
+ * DocsLayout.astro on every page (persisted across ClientRouter swaps via
+ * `data-astro-transition-persist="palette"`); switching a theme only swaps its
+ * href. The choice persists in localStorage under `anta-palette`, and a
+ * no-flash inline script in DocsLayout.astro applies it before paint (this
+ * island only reflects the current value in the dropdown and handles changes).
  */
 const KEY = 'anta-palette'
-const LINK_ID = 'anta-palette-link'
-const HREF = '/theme-anta.css'
+const LINK_ID = 'palette-link'
+// Stored value → stylesheet URL. Future themes are new files under
+// site/public/themes/ plus an entry here and in the options below. Keep in
+// sync with the inline palette script in DocsLayout.astro.
+const THEME_HREF: Record<string, string> = {
+  none: '/themes/default.css',
+  anta: '/themes/anta.css',
+}
 
 // Announce a palette change so live token readouts (e.g. the Colors page
 // swatches) can re-read their computed values — CSS repaints on its own, but
@@ -18,23 +27,15 @@ const HREF = '/theme-anta.css'
 const notify = () => window.dispatchEvent(new Event('anta-palette-change'))
 
 function applyPalette(v: string) {
-  const existing = document.getElementById(LINK_ID) as HTMLLinkElement | null
-  if (v === 'anta') {
-    if (existing) {
-      notify()
-    } else {
-      const link = document.createElement('link')
-      link.id = LINK_ID
-      link.rel = 'stylesheet'
-      link.href = HREF
-      // Wait for the stylesheet to apply before re-reading computed values.
-      link.addEventListener('load', notify, { once: true })
-      document.head.appendChild(link)
-    }
-  } else {
-    existing?.remove() // removal is synchronous
+  const link = document.getElementById(LINK_ID) as HTMLLinkElement | null
+  const href = THEME_HREF[v] ?? THEME_HREF.none
+  if (!link || link.getAttribute('href') === href) {
     notify()
+    return
   }
+  // Wait for the stylesheet to apply before re-reading computed values.
+  link.addEventListener('load', notify, { once: true })
+  link.href = href
 }
 
 export default function ThemeSwitcher() {

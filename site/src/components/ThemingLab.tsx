@@ -70,6 +70,50 @@ const PRIORITIES = ['primary', 'secondary', 'tertiary', 'quaternary'] as const
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
+/* In-progress lab edits survive navigation via sessionStorage. The island
+ * unmounts on any client-side navigation and `transition:persist` can't carry
+ * it over (no other page renders the island), so each state atom restores from
+ * the snapshot and writes back on change. Restore happens in a mount effect,
+ * NOT in the useState initializer: the island is SSR'd with defaults, and
+ * Preact skips attribute patching during hydration, so initializer-restored
+ * state desyncs from the server DOM (stale `hidden` / `value` attributes). A
+ * post-mount setState is a normal update and patches everything. The restore
+ * effect must be declared BEFORE the persist effects so it reads the snapshot
+ * before their first run writes the defaults into it (that first write is then
+ * healed by the re-render the restore triggers). Stored values merge OVER the
+ * computed defaults, so a snapshot from before a SPECS/vars change still
+ * yields complete state. */
+const LAB_KEY = 'anta-theming-lab'
+
+type LabPanelVals = { vLight: Record<string, Vals>; vDark: Record<string, Vals> }
+type LabSnapshot = {
+  active?: Tone
+  seeds?: Partial<Record<Tone, string>>
+  openMap?: Record<string, boolean>
+  surfaceBg?: number
+  surfaceBorder?: number
+  panels?: Partial<Record<Tone, LabPanelVals>>
+}
+
+const labSnapshot: LabSnapshot = (() => {
+  try {
+    if (typeof sessionStorage === 'undefined') return {}
+    return JSON.parse(sessionStorage.getItem(LAB_KEY) ?? '{}')
+  } catch {
+    return {}
+  }
+})()
+
+function persistLab<K extends keyof LabSnapshot>(key: K, value: LabSnapshot[K]) {
+  labSnapshot[key] = value
+  try {
+    sessionStorage.setItem(LAB_KEY, JSON.stringify(labSnapshot))
+  } catch {}
+}
+
+const persistPanel = (tone: Tone, vals: LabPanelVals) =>
+  persistLab('panels', { ...labSnapshot.panels, [tone]: vals })
+
 /** Format a CSS color string as `oklch(l c h)` (with ` / a` when translucent,
  *  `transparent` when fully clear) via chroma-js; '' on parse failure. Shared by
  *  the surface swatch, type samples, and button/tag resting readouts. */
@@ -718,6 +762,18 @@ function TonePanel({
   const [vDark, setVDark] = useState<Record<string, Vals>>(() =>
     Object.fromEntries(SPECS.map((s) => [s.id, defaults(s, true, tone)])),
   )
+  // Restore before the persist effect below (see the labSnapshot comment).
+  useEffect(() => {
+    const stored = labSnapshot.panels?.[tone]
+    if (!stored) return
+    const merge = (prev: Record<string, Vals>, saved?: Record<string, Vals>) =>
+      Object.fromEntries(SPECS.map((s) => [s.id, { ...prev[s.id], ...saved?.[s.id] }]))
+    if (stored.vLight) setVLight((prev) => merge(prev, stored.vLight))
+    if (stored.vDark) setVDark((prev) => merge(prev, stored.vDark))
+  }, [tone])
+  useEffect(() => {
+    persistPanel(tone, { vLight, vDark })
+  }, [tone, vLight, vDark])
 
   const setVar = (id: string, key: string, value: string) => {
     const n = parseFloat(value)
@@ -774,6 +830,25 @@ export default function ThemingLab() {
   const [surfaceBg, setSurfaceBg] = useState(2)
   const [surfaceBorder, setSurfaceBorder] = useState(4)
 
+  // Restore before the persist effects below (see the labSnapshot comment).
+  // `restoreRev` keys the seed ColorPicker: it reads `value` only at mount, so
+  // a restored seed for an unchanged tone needs one remount to show up.
+  const [restoreRev, setRestoreRev] = useState(0)
+  useEffect(() => {
+    if (TONES.includes(labSnapshot.active as Tone)) setActive(labSnapshot.active as Tone)
+    if (labSnapshot.seeds) setSeeds((s) => ({ ...s, ...labSnapshot.seeds }))
+    if (labSnapshot.openMap) setOpenMap({ ...labSnapshot.openMap })
+    if (typeof labSnapshot.surfaceBg === 'number') setSurfaceBg(labSnapshot.surfaceBg)
+    if (typeof labSnapshot.surfaceBorder === 'number') setSurfaceBorder(labSnapshot.surfaceBorder)
+    setRestoreRev(1)
+  }, [])
+
+  useEffect(() => persistLab('active', active), [active])
+  useEffect(() => persistLab('seeds', seeds), [seeds])
+  useEffect(() => persistLab('openMap', openMap), [openMap])
+  useEffect(() => persistLab('surfaceBg', surfaceBg), [surfaceBg])
+  useEffect(() => persistLab('surfaceBorder', surfaceBorder), [surfaceBorder])
+
   useEffect(() => {
     const el = document.documentElement
     const read = () => setIsDark(el.classList.contains('dark'))
@@ -795,8 +870,9 @@ export default function ThemingLab() {
           }}
         />
         <div className={styles.seedRow}>
-          {/* Remount per tone so the picker re-seeds from that tone's colour. */}
-          <ColorPicker key={active} value={seeds[active]} label="Seed" onChange={(hex: string) => setSeeds((s) => ({ ...s, [active]: hex }))} />
+          {/* Remount per tone (and once after the sessionStorage restore) so
+              the picker re-seeds from that tone's colour. */}
+          <ColorPicker key={`${active}:${restoreRev}`} value={seeds[active]} label="Seed" onChange={(hex: string) => setSeeds((s) => ({ ...s, [active]: hex }))} />
         </div>
       </div>
 

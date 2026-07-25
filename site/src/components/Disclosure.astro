@@ -194,32 +194,38 @@ const Heading = `h${level}` as const
   }
 
   // Deep links (shared URL, in-page nav): expand + scroll to the target.
+  // Runs on astro:page-load — the initial load AND every ClientRouter swap —
+  // because the router can't scroll to a target inside a closed <details>;
+  // this opens it and finishes the scroll.
   function syncFromHash() {
     const target = openContaining(decodeURIComponent(location.hash.slice(1)))
     if (target) target.scrollIntoView({ block: 'start' })
   }
-  syncFromHash()
+  document.addEventListener('astro:page-load', syncFromHash)
   window.addEventListener('hashchange', syncFromHash)
 
   // Header-link click: own the interaction so the section opens rather
   // than relying on the native <summary> toggle (which doesn't fire for
   // a nested link). stopPropagation keeps it from toggling closed; the
-  // chevron / summary still toggles normally for collapsing.
-  for (const a of document.querySelectorAll<HTMLAnchorElement>(
-    'details.disclosure > summary :is(h2,h3,h4,h5,h6) > a.header-anchor',
-  )) {
-    a.addEventListener('click', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      const headingId = a.closest('[id]')?.id
-      if (!headingId) return
-      // Open instantly (`openContaining` adds `.no-anim`) so the layout is
-      // final, update the URL without firing a scroll race, then scroll on
-      // the next frame. Doing this directly (not via `hashchange`) keeps the
-      // smooth scroll from being cancelled by the expand animation.
-      const target = openContaining(headingId)
-      history.replaceState(null, '', '#' + headingId)
-      if (target) target.scrollIntoView({ block: 'start' })
-    })
-  }
+  // chevron / summary still toggles normally for collapsing. Delegated on
+  // document (not bound per anchor) so it survives ClientRouter swaps —
+  // this module runs once per session while the anchors are re-rendered
+  // on every navigation. Capture phase so preventDefault lands before the
+  // router's own click listener would treat the hash link as a navigation.
+  const ANCHOR_SEL = 'details.disclosure > summary :is(h2,h3,h4,h5,h6) > a.header-anchor'
+  document.addEventListener('click', (e) => {
+    const a = (e.target as HTMLElement)?.closest?.('a.header-anchor') as HTMLAnchorElement | null
+    if (!a || !a.matches(ANCHOR_SEL)) return
+    e.preventDefault()
+    e.stopPropagation()
+    const headingId = a.closest('[id]')?.id
+    if (!headingId) return
+    // Open instantly (`openContaining` adds `.no-anim`) so the layout is
+    // final, update the URL without firing a scroll race, then scroll on
+    // the next frame. Doing this directly (not via `hashchange`) keeps the
+    // smooth scroll from being cancelled by the expand animation.
+    const target = openContaining(headingId)
+    history.replaceState(null, '', '#' + headingId)
+    if (target) target.scrollIntoView({ block: 'start' })
+  }, true)
 </script>

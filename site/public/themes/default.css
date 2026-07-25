@@ -1,0 +1,6 @@
+/* Default palette — intentionally empty. Anta's default colors are the
+   seed-derived generative palette shipped in tokens.css; there is nothing to
+   override. This stub exists so the palette <link> in DocsLayout.astro always
+   has a valid target: the link is a stable element (persisted across
+   ClientRouter navigations) whose href is the single switch point — picking a
+   theme swaps the URL, e.g. to /themes/anta.css. */

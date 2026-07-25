@@ -52,6 +52,7 @@ const slug = (k: Kind) => TITLES[k].toLowerCase()
       label="Colour tones"
       active={toneHref(tone)}
       tabs={TONES.map((t) => ({ value: toneHref(t.id), label: t.label }))}
+      preserveScroll
     />
   </div>
 

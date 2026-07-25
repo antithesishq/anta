@@ -72,6 +72,17 @@
     font-weight: 600;
   }
 
+  /* Defined term — a dotted underline at half the surrounding text's
+     strength stands in for the UA italic (normalized off). No `cursor: help`:
+     <dfn> marks a term, not necessarily an interactive tooltip; add the help
+     cursor where the term is actually hoverable. */
+  dfn {
+    font-style: normal;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    text-decoration-color: color-mix(in oklch, currentColor 50%, transparent);
+  }
+
   /* Keep inline `<code>` from inflating the line box of the prose it
      sits in — `1em` pins its line height to its own font size. */
   code {

@@ -35,6 +35,7 @@ This is **not** a neutral normalize — these defaults make raw markup match the
 
 - **Headings** adopt the exact scale of `<Title level={n}>` — `h1`–`h6` sizes, line-heights, weight `≈585`, `letter-spacing: 0`, color `--text-1` (kept in lockstep with `a-title.css`) — plus per-level block margins for document rhythm. Those margins live only on the raw headings: `<Title>` itself is margin-free and leaves spacing to its container, so running prose gets the rhythm while the component stays neutral.
 - `strong` → `font-weight: 600`.
+- `dfn` (defined term) → non-italic, with a dotted underline at half the surrounding text's strength (`3px` offset) in place of the UA italic. No `cursor: help` — that's for where the term is actually hoverable.
 - Inline `code` → `line-height: 1em` so it doesn't inflate the line box of surrounding prose.
 - **Lists** (`ul` / `ol`): `3ch` left padding so markers hug the text; a small bottom margin between items; markers toned to `--text-5`.
 - `menu` is stripped to a clean semantic container (no disc markers / default padding).

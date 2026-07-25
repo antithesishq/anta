@@ -11,64 +11,53 @@ import { AS_OF } from '../components/comparison-data'
 
 # Comparison
 
-How Anta relates to the design systems it takes cues from. This page is written
-from Anta's point of view, so it says plainly where Anta is smaller or younger
-than the incumbents. A comparison that only flattered wouldn't be useful.
-
-Every system here is a serious tool. They cluster into a few shapes:
-**styled React libraries** you install and theme (MUI, Ant Design, Mantine,
-Carbon, Atlaskit, Blueprint, Astryx), **headless React primitives** you style
-yourself (Radix, Base UI), a **copy-paste-and-own** model (shadcn/ui), and
-**framework-agnostic web components** (Web Awesome, Shopify Polaris, and Anta).
-Anta sits in that last group, with an extra constraint the others don't carry:
-its DOM is declarative enough to render from a Worker thread.
-
-Versions are a snapshot verified in {AS_OF} and move quickly; follow each
-system's link for the current release.
+The systems cluster into a few shapes: **styled React libraries** you install
+and theme (MUI, Ant Design, Mantine, Carbon, Atlaskit, Blueprint, Astryx,
+Gravity), **headless primitives** you style yourself (Radix, Base UI),
+**copy-paste collections** you own in your repo (shadcn/ui, Untitled UI), and
+**framework-agnostic web components** (Web Awesome, Polaris, Anta). Versions
+are a snapshot from {AS_OF}; follow each system's link for the current
+release.
 
 <Disclosure title="At a glance">
 
 <ComparisonMatrix />
 
-What sets Anta apart here is its **Frameworks** and **Styling**. Most systems here are
-React-only and reach for a styling engine: CSS-in-JS (MUI, Ant Design,
-Atlaskit), Sass (Carbon, Blueprint), StyleX (Astryx), or Tailwind (shadcn). Anta
-ships framework-agnostic web components styled with plain CSS in a single
-`@layer`, so there's no style runtime to load and any consumer rule overrides a
-default without a specificity fight. The two other web-component systems sit
-closest: Polaris is locked to the Shopify look under a restricted license, and
-Web Awesome bundles a Lit runtime with a paid tier.
+Most systems here are React-only and style through a runtime or a build step:
+CSS-in-JS (MUI, Ant Design, Atlaskit), Sass (Carbon, Blueprint), StyleX
+(Astryx), Tailwind (shadcn, Untitled UI). Anta ships web components styled
+with plain CSS in a single `@layer`, so there is no style runtime and any
+consumer rule overrides a default without a specificity fight.
 
 </Disclosure>
 
 ## What Anta adds
 
-A few of these are Anta-specific enough to spell out.
-
-- **Runs anywhere, including a Worker.** The web components never mutate their
-  own host attributes; internal state changes stay inside shadow DOM. That keeps
-  them in sync when the UI is driven from a Worker thread or a non-React reactive
-  engine. Anta was built around that constraint, so the React and Preact wrappers
-  stay a thin convenience.
-- **No style runtime, no animation runtime.** Nothing ships to parse styles at
-  runtime. The one animation dependency, Lottie, lives in the separate
-  `@antadesign/stickers` package, so the core carries no animation engine.
-- **A tiny token set.** The only global tokens are color roles for text,
-  background, and border, each with tones that pair light and dark, plus fonts
-  and a single focus ring. Everything else is a per-component CSS variable with a
-  literal value, kept local so each part stays independently tunable.
-- **oklch color throughout.** Tone tuning and alpha happen in oklch via
-  `color-mix`, so lightness and hue stay perceptually stable. The wider drift
-  toward CSS variables and `color-mix()` (MUI v9) and oklch tokens (shadcn)
-  lands where Anta already is.
+- **Runs anywhere, including a Worker.** The web components never mutate
+  their own host attributes; internal state stays inside shadow DOM. They
+  stay in sync when the UI renders from a Worker thread or a non-React
+  reactive engine, and the React/Preact wrappers stay a thin convenience.
+- **No style runtime, no animation runtime.** Nothing ships to parse styles
+  at runtime. The one animation dependency, Lottie, lives in the separate
+  `@antadesign/stickers` package.
+- **A tiny token set.** The global tokens are color roles for text,
+  background, and border, plus fonts and one focus ring. Everything else is
+  a per-component CSS variable, kept local so each part stays independently
+  tunable.
+- **oklch color throughout.** Role tokens and each component's
+  rest/hover/active curve derive from a seed color with
+  `oklch(from <seed> l c h)`; alpha tuning runs through `color-mix` in oklch.
+  Lightness and hue stay perceptually stable, and newer systems are drifting
+  the same way: MUI v9 derives shades with `color-mix()`, shadcn themes in
+  oklch.
 
 ## Component coverage
 
-Grouped by job, so a Dialog / Modal / Drawer family counts as one row. This is
-the honest view of Anta's size: it covers the common controls but is younger and
-narrower than the batteries-included kits, with no toast, slider, avatar, or
-data grid yet. The headless primitives (Radix, Base UI)
-leave most cells to you by design; they ship behavior and leave the look to you.
+Grouped by job, so a Dialog / Modal / Drawer family counts as one row. Anta
+covers the common controls and is narrower than the batteries-included kits:
+no toast, slider, or avatar yet, and the table and plot libraries are still
+upcoming. Radix and Base UI leave most visual cells empty by design; they
+ship behavior.
 
 <CoverageMatrix />
 
@@ -78,20 +67,18 @@ leave most cells to you by design; they ship behavior and leave the look to you.
 
 ## Choosing between them
 
-- **Building a React app and want everything now.** Ant Design or Mantine for
+- **A React app that needs everything now.** Ant Design or Mantine for
   breadth, MUI for ecosystem and hiring, Carbon or Atlaskit for enterprise
   rigor, Blueprint for dense desktop tools.
-- **You want full control of the markup and styling.** Radix or Base UI for
-  headless primitives, shadcn/ui if you'd rather own the code outright (and
-  already use Tailwind).
-- **You need components outside React, in plain HTML, Preact, or several
-  frameworks.** A web-component system: Web Awesome for breadth (mind the paid
-  tier), Polaris only inside Shopify, and **Anta** for an open, plainly-styled,
-  runtime-free set with a tiny token surface, especially when some of your UI
-  renders off the main thread.
+- **Full control of markup and styling.** Base UI or Radix for headless
+  primitives; shadcn/ui or Untitled UI to own the styled code outright (both
+  need Tailwind).
+- **Components outside React: plain HTML, Preact, several frameworks.** A
+  web-component system. Web Awesome has the widest set (some controls are
+  paid), Polaris works only inside Shopify, and Anta is the open, plain-CSS,
+  runtime-free option, built for UIs that render off the main thread.
 
-Anta is the youngest and smallest system on this page. It is the right pick when
-its constraints are yours: framework portability, a declarative worker-safe DOM,
-no styling runtime, and a color model tuned in oklch. When you need a data grid,
-a date-range picker, or a decade of ecosystem tomorrow, one of the incumbents
-above will serve you better today.
+Anta is the youngest system on this page. Pick it when its constraints are
+yours: framework portability, a worker-safe declarative DOM, no style
+runtime, oklch color. If you need a data grid or a decade of ecosystem
+today, one of the incumbents will serve you better.

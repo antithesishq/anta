@@ -1,2 +1,10 @@
 # Component docs moved from /components/<name>/ to the site root /<name>/.
 /components/* /:splat 301
+
+# Per-tone colors pages collapsed into /colors/ (?tone=). Mirrors the
+# astro.config.mjs redirects as real 301s (vs the meta-refresh stubs).
+/colors/brand /colors/?tone=brand 301
+/colors/info /colors/?tone=info 301
+/colors/success /colors/?tone=success 301
+/colors/critical /colors/?tone=critical 301
+/colors/warning /colors/?tone=warning 301

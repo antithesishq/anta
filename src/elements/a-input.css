@@ -116,7 +116,6 @@
   a-input {
     --input-bg: var(--bg-1);
     --input-border: var(--border-2);
-    --input-border-hover: var(--border-1);
 
     --input-text: var(--text-1);
     --input-label: var(--text-3);
@@ -136,96 +135,46 @@
     --input-round: attr(round type(<length>), 999px);
   }
 
-  /* Custom tone — a literal CSS colour tints the resting + hover border (the focus
-     ring stays the global `--focus-ring`). Declared *before* `[status]` so a
-     validation status still wins the border on the specificity tie. FIRST-PASS
+  /* Custom tone — a literal CSS colour tints the resting border (hover thickens
+     it; the focus ring stays the global `--focus-ring`). Gated off when a `status`
+     is set (`:not([status])`) so validation always owns the border: the status
+     rules below derive from their own `--input-status-source`, and dropping tone
+     from the cascade here keeps a custom hue out of a validation border. FIRST-PASS
      lightness values — review. */
-  a-input[tone]:not([tone=""]) {
+  a-input[tone]:not([tone=""]):not([status]) {
     /* Fallback is the default border (not transparent) so a non-colour value —
        e.g. a stray `tone="brand"` (named tones live on `status`, not `tone`) —
        degrades to the normal border instead of vanishing. */
     --input-tone-source: attr(tone type(<color>), var(--border-2));
 
     --input-border:       oklch(from var(--input-tone-source) 0.7 calc(c * 0.8) h);
-    --input-border-hover: oklch(from var(--input-tone-source) 0.6 c h);
 
     .dark & {
       --input-border:       oklch(from var(--input-tone-source) 0.5 calc(c * 0.8) h);
-      --input-border-hover: oklch(from var(--input-tone-source) 0.6 c h);
     }
   }
 
-  /* Status: the border + message (and the wrapper-slotted glyph, via
-     currentColor) take the matching tone's role tokens, so dark mode is free.
-     The 1px width bump and the glyph are handled in the shadow off the same
-     `[status]` host attribute; only `critical` also drives validity. The border
-     stops reacting to hover (hover == border, so pin it to the status color). */
-  a-input[status="critical"] {
-    --input-bg: #fefbfb;
-    --input-border: #de4545;
-    --input-border-hover: #de4545;
-    --input-hint: #c9302c;
+  /* Status — the border derives in oklch from the matching tone's seed through
+     `--input-status-source`, its own channel (a custom `tone`'s inline
+     `--input-tone-source` never reaches it); the bg tint + message colour are the
+     tone's role tokens, so both themes come for free. The 1px width bump and the
+     glyph are handled in the shadow off the same `[status]` host attribute (hover
+     just thickens the edge, it doesn't recolour); only `critical` drives validity. */
+  a-input[status="critical"] { --input-status-source: var(--anta-seed-critical); --input-bg: var(--bg-2-critical); --input-hint: var(--text-2-critical); }
+  a-input[status="warning"]  { --input-status-source: var(--anta-seed-warning);  --input-bg: var(--bg-2-warning);  --input-hint: var(--text-2-warning); }
+  a-input[status="success"]  { --input-status-source: var(--anta-seed-success);  --input-bg: var(--bg-2-success);  --input-hint: var(--text-2-success); }
+  a-input[status="info"]     { --input-status-source: var(--anta-seed-info);     --input-bg: var(--bg-2-info);     --input-hint: var(--text-2-info); }
+  a-input[status="brand"]    { --input-status-source: var(--anta-seed-brand);    --input-bg: var(--bg-2-brand);    --input-hint: var(--text-2-brand); }
+  a-input[status] {
+    --input-border:       oklch(from var(--input-status-source) 0.58 c h);
   }
-  a-input[status="warning"] {
-    --input-bg: #fefbf6;
-    --input-border: #ae6613;
-    --input-border-hover: #ae6613;
-    --input-hint: #995200;
-  }
-  a-input[status="success"] {
-    --input-bg: #f7fcf9;
-    --input-border: #329550;
-    --input-border-hover: #329550;
-    --input-hint: #2a7e43;
-  }
-  a-input[status="info"] {
-    --input-bg: #fbfcfe;
-    --input-border: #2686d9;
-    --input-border-hover: #2686d9;
-    --input-hint: #175082;
-  }
-  a-input[status="brand"] {
-    --input-bg: #fcfcfe;
-    --input-border: #7460d7;
-    --input-border-hover: #7460d7;
-    --input-hint: #5f4bc3;
-  }
-
-  .dark a-input[status="critical"] {
-    --input-bg: #1f0506;
-    --input-border: #c9302c;
-    --input-border-hover: #c9302c;
-    --input-hint: #e25858;
-  }
-  .dark a-input[status="warning"] {
-    --input-bg: #120a03;
-    --input-border: #995200;
-    --input-border-hover: #995200;
-    --input-hint: #c37416;
-  }
-  .dark a-input[status="success"] {
-    --input-bg: #041008;
-    --input-border: #2a7e43;
-    --input-border-hover: #2a7e43;
-    --input-hint: #3aab5c;
-  }
-  .dark a-input[status="info"] {
-    --input-bg: #040d18;
-    --input-border: #1f6eb2;
-    --input-border-hover: #1f6eb2;
-    --input-hint: #3e93dd;
-  }
-  .dark a-input[status="brand"] {
-    --input-bg: #0b0916;
-    --input-border: #5f4bc3;
-    --input-border-hover: #5f4bc3;
-    --input-hint: #8270db;
+  .dark a-input[status] {
+    --input-border:       oklch(from var(--input-status-source) 0.52 c h);
   }
 
   a-input:disabled {
     --input-bg: #44374b12;
     --input-border: #44374b26;
-    --input-border-hover: #44374b26;
     --input-text: var(--text-4);
     --input-label: var(--text-4);
     --input-hint: var(--text-5);
@@ -235,20 +184,17 @@
   a-input[status]:disabled {
     --input-bg: #44374b12;
     --input-border: #44374b26;
-    --input-border-hover: #44374b26;
     --input-hint: var(--text-5);
   }
 
   .dark a-input:disabled {
     --input-bg: #e4d1ef0d;
     --input-border: #e4d1ef1f;
-    --input-border-hover: #e4d1ef1f;
   }
 
   .dark a-input[status]:disabled {
     --input-bg: #e4d1ef0d;
     --input-border: #e4d1ef1f;
-    --input-border-hover: #e4d1ef1f;
     --input-hint: var(--text-5);
   }
 
@@ -266,19 +212,7 @@
   a-input[size="small"] [slot="hint"] > a-icon { margin-block-start: 0.5px; }
   a-input[size="large"] [slot="hint"] > a-icon { margin-block-start: 1.5px; }
 
-  /* `:not([status])` so this neutral dark border doesn't clobber a status
-     border — same specificity as the per-status rules above, but later in
-     source, so without the guard it would win in dark mode and the status color
-     would show only on hover. Status borders use tone role tokens, which carry
-     their own dark variants, so they need no dark override here. */
-  .dark a-input:not([status]) {
-    --input-border: #49424c;
-    --input-border-hover: #635b65;
-  }
-  /* The success border's light-mode deepening would read muddy against the dark
-     surface — fall back to the muted dark role token there. */
-  .dark a-input[status="success"] {
-    --input-border: var(--border-1-success);
-    --input-border-hover: var(--border-1-success);
-  }
+  /* Neutral dark border needs no override: the base --input-border points at
+     --border-2, which carries its own seed-derived dark values. Status borders
+     derive from the seed (rule above). */
 }

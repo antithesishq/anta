@@ -188,6 +188,15 @@
        so plain text in the body doesn't inherit a roomy consumer body
        line-height; a nested <Text> overrides it with the same value. */
     line-height: 20px;
+    /* Scroll container so wide content (a <pre>, a table) scrolls within the body
+       instead of stretching the box past the surrounding layout. `overflow: auto`
+       (not `overflow-x`) is honest about the clip: a scroll container on one axis
+       is a clip on both (setting `overflow-x: auto` alone computes `overflow-y` to
+       `auto` anyway), so both axes are stated. The body has no height cap, so a
+       normal body grows to fit with no vertical scrollbar; a height-capped body
+       scrolls vertically. The gutter/padding around the content give a focus ring
+       room inside the clip (see the outdent rule below). */
+    overflow: auto;
   }
 
   /* Outdent zeroes the left gutter, so a flush-left control sits hard against the
@@ -284,12 +293,12 @@
     ) {
     --expander-tone-source: attr(tone type(<color>), currentColor);
 
-    --expander-text:             oklch(from var(--expander-tone-source) 0.41 0.15 h);
-    --expander-text-hover:       oklch(from var(--expander-tone-source) 0.33 0.15 h);
-    --expander-bg-secondary:     oklch(from var(--expander-tone-source) 0.99 0.006 h);
-    --expander-border-secondary: oklch(from var(--expander-tone-source) 0.93 0.03 h);
+    --expander-text:             oklch(from var(--expander-tone-source) 0.5 0.125 h);
+    --expander-text-hover:       oklch(from var(--expander-tone-source) 0.4 0.11 h);
+    --expander-bg-secondary:     oklch(from var(--expander-tone-source) 0.99 0.004 h);
+    --expander-border-secondary: oklch(from var(--expander-tone-source) 0.935 0.028 h);
     --expander-bg-primary:       oklch(from var(--expander-tone-source) 0.955 0.02 h);
-    --expander-border-primary:   oklch(from var(--expander-tone-source) 0.895 0.045 h);
+    --expander-border-primary:   oklch(from var(--expander-tone-source) 0.9 0.04 h);
   }
 
   .dark a-expander[tone]:not(
@@ -300,12 +309,12 @@
       [tone="warning"],
       [tone="critical"]
     ) {
-    --expander-text:             oklch(from var(--expander-tone-source) 0.75 0.11 h);
-    --expander-text-hover:       oklch(from var(--expander-tone-source) 0.82 0.10 h);
+    --expander-text:             oklch(from var(--expander-tone-source) 0.77 0.11 h);
+    --expander-text-hover:       oklch(from var(--expander-tone-source) 0.85 0.10 h);
     --expander-bg-secondary:     oklch(from var(--expander-tone-source) 0.13 0.02 h);
-    --expander-border-secondary: oklch(from var(--expander-tone-source) 0.22 0.05 h);
-    --expander-bg-primary:       oklch(from var(--expander-tone-source) 0.19 0.04 h);
-    --expander-border-primary:   oklch(from var(--expander-tone-source) 0.26 0.07 h);
+    --expander-border-secondary: oklch(from var(--expander-tone-source) 0.21 0.045 h);
+    --expander-bg-primary:       oklch(from var(--expander-tone-source) 0.185 0.05 h);
+    --expander-border-primary:   oklch(from var(--expander-tone-source) 0.26 0.06 h);
   }
 
   a-expander[disabled],

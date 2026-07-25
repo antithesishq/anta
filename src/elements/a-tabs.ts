@@ -21,8 +21,8 @@ import "./a-tabs.css";
 //     on them, so this reference is simply inert. `.focus()` is a no-op on a tab with
 //     no tabindex (raw mode) and a real move on one that has it (wrapper mode) —
 //     neither writes the DOM.
-//   • Scroll — the selected tab is scrolled into view (`block/inline: nearest`), like
-//     `.focus()`: it moves the viewport, not the DOM.
+//   • Scroll — the selected tab is revealed within the strip's OWN scrollport (never the
+//     document): it moves this element's scroll offset, not the DOM. See #revealTab.
 //
 // Panels live OUTSIDE this element (they're siblings managed by the `Tabs` wrapper,
 // which shows/hides them from the value it mirrors via `statechange`) — <a-tabs> is
@@ -48,6 +48,12 @@ export class ATabsElement extends HTMLElementBase {
   // True after the first connect — gates the native `change` event so it never fires
   // for the initial seed, and gates scroll-into-view so mounting doesn't jump the page.
   private alive = false;
+  // Gates sync() until the child <a-tab>s are upgraded (set a microtask after
+  // connect). Adopted HTML (a ClientRouter swap, innerHTML) upgrades the parent
+  // first, so an eager sync() reads `t.value` as undefined and writes
+  // `t.selected` as own properties that shadow the accessors after upgrade.
+  // Microtasks run after the adopting task's upgrades, so deferring is enough.
+  private childrenReady = false;
 
   /** The selected tab's value, or `null` when nothing is selected. */
   get value(): string | null {
@@ -86,8 +92,14 @@ export class ATabsElement extends HTMLElementBase {
     });
     this.observer.observe(this, { childList: true, subtree: true });
 
-    this.sync();
-    this.alive = true;
+    // First sync deferred to a microtask (see childrenReady). `alive` flips
+    // after it, so the initial apply never scrolls or fires `change`.
+    queueMicrotask(() => {
+      if (!this.isConnected) return;
+      this.childrenReady = true;
+      this.sync();
+      this.alive = true;
+    });
   }
 
   disconnectedCallback() {
@@ -130,6 +142,7 @@ export class ATabsElement extends HTMLElementBase {
   }
 
   private sync = () => {
+    if (!this.childrenReady) return; // deferred first sync covers this
     const value = this.#currentValue;
     const tabs = this.#tabs;
     // `null` (attribute absent) means "nothing selected"; an empty string is a *real*
@@ -147,15 +160,33 @@ export class ATabsElement extends HTMLElementBase {
       this.internals.ariaActiveDescendantElement = selectedEl;
     }
 
-    // Keep the selected tab visible in the scrolling strip — but only when the SELECTION
+    // Keep the selected tab visible WITHIN the strip — but only when the SELECTION
     // actually changed, so an orientation / disabled toggle (which also runs sync())
-    // never yanks the viewport. Guarded by `alive` so the initial seed never scrolls;
-    // `nearest` moves the viewport minimally.
+    // never yanks anything. Guarded by `alive` so the initial seed never scrolls.
     if (this.alive && selectedEl && selectedEl !== this.lastSelected) {
-      selectedEl.scrollIntoView({ block: "nearest", inline: "nearest" });
+      this.#revealTab(selectedEl);
     }
     this.lastSelected = selectedEl;
   };
+
+  // Reveal a tab inside the strip's OWN scrollport — never the document. `scrollIntoView()`
+  // walks up and scrolls every scroll ancestor, so inside a `position: sticky` header with
+  // `scroll-behavior: smooth` it glides the whole page a few px on every switch. Scrolling
+  // only this element's scrollLeft/scrollTop keeps the correction where it belongs: a no-op
+  // when the strip fits (the default horizontal strip is `overflow: hidden` and ellipsizes),
+  // a real move for a vertical (`overflow-y: auto`) or opt-in scrollable strip. Reads layout,
+  // writes only this element's scroll offset (declarative-DOM safe: scroll, not a DOM mutation).
+  #revealTab(tab: ATabElement) {
+    const s = this.getBoundingClientRect();
+    const t = tab.getBoundingClientRect();
+    if (this.#isVertical) {
+      if (t.top < s.top) this.scrollTop -= s.top - t.top;
+      else if (t.bottom > s.bottom) this.scrollTop += t.bottom - s.bottom;
+    } else {
+      if (t.left < s.left) this.scrollLeft -= s.left - t.left;
+      else if (t.right > s.right) this.scrollLeft += t.right - s.right;
+    }
+  }
 
   // The shared state algorithm: fire the cancelable `statechange` *before* applying.
   // Controlled never self-applies; uncontrolled applies unless vetoed.
@@ -196,7 +227,10 @@ export class ATabsElement extends HTMLElementBase {
     if (!tab || tab.hasAttribute("disabled")) return;
     // Move real focus to the clicked tab. A no-op in raw/aria-activedescendant mode
     // (the tab has no tabindex); a real move in the wrapper's focusable-tabs mode.
-    tab.focus();
+    // preventScroll so focus never nudges the page — the strip reveals the tab itself
+    // (#revealTab). Without it, focus scrolls the document a px or two, which a sticky
+    // header + scroll-behavior:smooth turns into a visible glide on every switch.
+    tab.focus({ preventScroll: true });
     this.requestSelect(tab.value);
   };
 
@@ -218,7 +252,7 @@ export class ATabsElement extends HTMLElementBase {
     if (e.key === "Home" || e.key === "End") {
       e.preventDefault();
       const target = e.key === "Home" ? enabled[0] : enabled[enabled.length - 1];
-      target.focus();
+      target.focus({ preventScroll: true });
       this.requestSelect(target.value);
       return;
     }
@@ -237,8 +271,9 @@ export class ATabsElement extends HTMLElementBase {
     const next = enabled[(i + (forward ? 1 : -1) + enabled.length) % enabled.length];
     // Selection follows focus (automatic activation): move focus, then request the
     // pick. `.focus()` moves real focus when tabs are focusable; in raw mode it no-ops and the
-    // sync()'d aria-activedescendant is what advances for AT.
-    next.focus();
+    // sync()'d aria-activedescendant is what advances for AT. preventScroll for the same
+    // reason as the click path — the strip self-reveals the tab via #revealTab.
+    next.focus({ preventScroll: true });
     this.requestSelect(next.value);
   };
 }

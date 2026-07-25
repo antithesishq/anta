@@ -208,11 +208,11 @@ const SHADOW_STYLE = `
   :host([round]) .field { border-radius: var(--input-round, 999px); }
 
   @media (hover: hover) and (pointer: fine) {
-    :host(:not(:disabled)) .field:hover { --_bc: var(--input-border-hover); }
+    :host(:not(:disabled)) .field:hover { --_bw: 1px; }
   }
   :host(:not([readonly])) .field:has(input:focus, textarea:focus),
   :host([readonly]:state(kb-focus)) .field {
-    --_bc: var(--input-border-hover);
+    --_bw: 1px;
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
   }

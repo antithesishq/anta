@@ -15,19 +15,25 @@ import '../styles/base.css'
 // Docs-site-only extra icon shapes (generated via Anta's generate-icons
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
 import '../icons/docs-icons.css'
+import { ClientRouter } from 'astro:transitions'
 import { Button, Icon } from '@antadesign/anta'
 import { COMPONENT_SLUGS } from '../../lib/component-slugs'
+import ThemeSwitcher from '../components/ThemeSwitcher.tsx'
 
 interface Props {
   title?: string
   /** Cap the "On this page" TOC at this heading level (2 = h2 only). Omit for
    *  all levels. Set via an `.astro` page prop or MDX frontmatter. */
   tocMaxLevel?: number
-  frontmatter?: { title?: string; tocMaxLevel?: number }
+  /** Drop the right "On this page" rail so the content spans the full width.
+   *  For pages that manage their own wide layout (e.g. the theming lab). */
+  hideToc?: boolean
+  frontmatter?: { title?: string; tocMaxLevel?: number; hideToc?: boolean }
 }
 
 const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
 const tocMaxLevel = Astro.props.tocMaxLevel ?? Astro.props.frontmatter?.tocMaxLevel
+const hideToc = Astro.props.hideToc ?? Astro.props.frontmatter?.hideToc ?? false
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
 const isCurrent = (href: string) => {
   const h = href.replace(/\/+$/, '') || '/'
@@ -105,6 +111,10 @@ if (isComponentPage && title) {
         content clear of the notch; the insets are 0 everywhere else, so this
         is a no-op on non-notched screens. */}
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    {/* Client-side navigation: pages swap in place, so the custom-element
+        registry, fonts, and loaded CSS survive and `a-*` elements upgrade
+        instantly. Script rules live in site/CLAUDE.md ("ClientRouter"). */}
+    <ClientRouter />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={pageUrl} />
@@ -165,7 +175,9 @@ if (isComponentPage && title) {
         background. Driven from the theme script below (the theme is a
         manual `.dark` class, not prefers-color-scheme, so a media-based
         meta can't track it). Default is the light value. */}
-    <meta name="theme-color" content="#fbfafb" />
+    {/* The persist id keeps this runtime-mutated meta across swaps, so the
+        toolbar tint doesn't snap back to light on navigation. */}
+    <meta name="theme-color" content="#fbfafb" data-astro-transition-persist="theme-color" />
     <script is:inline>
       // Apply the theme before paint so there's no flash. Preference
       // order: explicit user choice in localStorage → OS-level
@@ -196,6 +208,27 @@ if (isComponentPage && title) {
         })
       }
     </script>
+    {/* Palette — separate axis from light/dark above. One stable <link>; its
+        href is the switch point (/themes/default.css is an empty stub, the
+        ThemeSwitcher island swaps in e.g. /themes/anta.css). The persist id
+        carries the mutated node across swaps, so navigation needs no JS. */}
+    <link
+      rel="stylesheet"
+      id="palette-link"
+      href="/themes/default.css"
+      data-astro-transition-persist="palette"
+    />
+    <script is:inline>
+      // Apply the stored palette before paint: rewriting the href during head
+      // parse keeps the stylesheet render-blocking, so a cold load never
+      // flashes the default palette. Keep URLs in sync with ThemeSwitcher.tsx.
+      try {
+        const palette = localStorage.getItem('anta-palette')
+        if (palette === 'anta') {
+          document.getElementById('palette-link').href = '/themes/anta.css'
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <header class="topbar">
@@ -212,7 +245,10 @@ if (isComponentPage && title) {
       />
     </header>
     <div class="layout">
-      <aside class="sidebar">
+      {/* Persisted: ClientRouter moves this exact node into each new page, so
+          sidebar scroll and the ThemeSwitcher island survive navigation. The
+          stale aria-current is re-pointed on astro:page-load below. */}
+      <aside class="sidebar" transition:persist="sidebar">
         <span class="logo">
           <a class="logo-home" href="https://anta.design/" aria-label="Anta home">
             <img src="/anta-logo.svg" alt="" width="32" height="32" />
@@ -247,13 +283,18 @@ if (isComponentPage && title) {
         </div>
         <menu>
           <li><a href="/" aria-current={isCurrent('/') ? 'page' : undefined}><Icon shape="info" size={18} /> Overview</a></li>
-          <li><a href="/colors/" aria-current={isCurrent('/colors/') ? 'page' : undefined}><Icon shape="swatch-book" size={18} /> Colors</a></li>
-          <li><a href="/normalization/" aria-current={isCurrent('/normalization/') ? 'page' : undefined}><Icon shape="book-a" size={18} /> Normalization</a></li>
-          <li><a href="/accessibility/" aria-current={isCurrent('/accessibility/') ? 'page' : undefined}><Icon shape="hat-glasses" size={18} /> Accessibility</a></li>
           <li><a href="/comparison/" aria-current={isCurrent('/comparison/') ? 'page' : undefined}><Icon shape="table-2" size={18} /> Comparison</a></li>
+          <li><a href="/install/" aria-current={isCurrent('/install/') ? 'page' : undefined}><Icon shape="download" size={18} /> Install &amp; Config</a></li>
+          <li><a href="/normalization/" aria-current={isCurrent('/normalization/') ? 'page' : undefined}><Icon shape="book-a" size={18} /> Normalization</a></li>
+          <li><a href="/colors/" aria-current={isCurrent('/colors/') ? 'page' : undefined}><Icon shape="swatch-book" size={18} /> Colors</a></li>
+          <li><a href="/theming/" aria-current={isCurrent('/theming/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2v2"/><path d="M14 2v4"/><path d="M17 2a1 1 0 0 1 1 1v9H6V3a1 1 0 0 1 1-1z"/><path d="M6 12a1 1 0 0 0-1 1v1a2 2 0 0 0 2 2h2a1 1 0 0 1 1 1v2.9a2 2 0 1 0 4 0V17a1 1 0 0 1 1-1h2a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1"/></svg> Theming</a></li>
+          <li><a href="/accessibility/" aria-current={isCurrent('/accessibility/') ? 'page' : undefined}><Icon shape="hat-glasses" size={18} /> Accessibility</a></li>
           <li><a href="/changelog/" aria-current={isCurrent('/changelog/') ? 'page' : undefined}><Icon shape="scroll-text" size={18} /> Changelog</a></li>
           <li><a href="/credits/" aria-current={isCurrent('/credits/') ? 'page' : undefined}><Icon shape="heart-handshake" size={18} /> Credits</a></li>
         </menu>
+        <div class="theme-switcher">
+          <ThemeSwitcher client:load />
+        </div>
         <h4>Components</h4>
         <menu>
           <li><a href="/button/" aria-current={isCurrent('/button/') ? 'page' : undefined}><Icon shape="pointer" size={18} /> Button</a></li>
@@ -287,49 +328,35 @@ if (isComponentPage && title) {
         {/* Mobile-only: opens the "On this page" TOC as a right-side
             slide-out (the .toc-rail is hidden on mobile otherwise).
             Absolutely positioned in the content's top-right corner. */}
-        <Button
-          class="toc-toggle"
-          priority="tertiary"
-          underline="dotted"
-          label="On this page"
-          aria-label="Open table of contents"
-        />
+        {!hideToc && (
+          <Button
+            class="toc-toggle"
+            priority="tertiary"
+            underline="dotted"
+            label="On this page"
+            aria-label="Open table of contents"
+          />
+        )}
         <slot />
       </main>
-      <aside class="toc-rail">
-        <a-toc max-level={tocMaxLevel}></a-toc>
-      </aside>
+      {!hideToc && (
+        <aside class="toc-rail">
+          <a-toc max-level={tocMaxLevel}></a-toc>
+        </aside>
+      )}
     </div>
     <div class="backdrop" aria-hidden="true"></div>
 
     <script>
-      // Interface Kit — DEV-ONLY visual styling tool, mounted on every docs page
-      // during local development as a plain paintbrush bubble in the top-right
-      // corner. interface-kit is a React 19 tool run under preact/compat via the
-      // `useEffectEvent` shim wired up in astro.config.mjs; it renders nothing
-      // inline and injects its own floating bubble + editor panel into the page.
-      //
-      // The `import.meta.env.DEV` guard is statically `false` in the production
-      // build, so Vite dead-code-eliminates this whole block — interface-kit (and
-      // its ~420 KB React→preact chunk) never enters the deployed bundle, and the
-      // public site can't summon the editor. (That's also why `interface-kit` is
-      // a devDependency.) `enabled: true` keeps the kit on regardless of NODE_ENV.
-      if (import.meta.env.DEV) {
-        const [{ render, createElement }, { InterfaceKit }] = await Promise.all([
-          import('preact/compat'),
-          import('interface-kit/react'),
-        ])
-        const mount = document.createElement('div')
-        document.body.appendChild(mount)
-        render(createElement(InterfaceKit, { enabled: true }), mount)
-      }
-    </script>
+      import type { TransitionBeforeSwapEvent } from 'astro:transitions/client'
 
-    <script>
-      const backdrop = document.querySelector('.backdrop')
-      // Two mobile slide-outs share the backdrop: the nav sidebar (menu)
-      // and the "On this page" TOC. Opening one closes the other so they
-      // never overlap (both slide in from the right).
+      // Runs once per session (ClientRouter never re-runs a seen script), so
+      // handlers are document-delegated and per-page work hangs off astro:*
+      // events; never hold a reference to one page's DOM.
+
+      // Two mobile slide-outs share the backdrop: the nav sidebar and the
+      // "On this page" TOC; opening one closes the other. State lives in
+      // body.dataset, which the body swap resets, closing drawers on nav.
       const setMenu = (open: boolean) => {
         document.body.dataset.menuOpen = open ? 'true' : 'false'
         if (open) document.body.dataset.tocOpen = 'false'
@@ -338,34 +365,70 @@ if (isComponentPage && title) {
         document.body.dataset.tocOpen = open ? 'true' : 'false'
         if (open) document.body.dataset.menuOpen = 'false'
       }
-      const toggleMenu = () => setMenu(document.body.dataset.menuOpen !== 'true')
-      const toggleToc = () => setToc(document.body.dataset.tocOpen !== 'true')
       const closeAll = () => {
         setMenu(false)
         setToc(false)
       }
-      document.querySelectorAll('.menu-toggle, .topbar-title').forEach((el) => {
-        el.addEventListener('click', toggleMenu)
+      document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement
+        if (!target.closest) return
+        if (target.closest('.menu-toggle, .topbar-title')) {
+          setMenu(document.body.dataset.menuOpen !== 'true')
+        } else if (target.closest('.toc-toggle')) {
+          setToc(document.body.dataset.tocOpen !== 'true')
+        } else if (target.closest('.backdrop')) {
+          closeAll()
+        } else if (target.closest('.toc-rail')) {
+          // Tapping a TOC entry closes the panel (router hash navs fire no
+          // hashchange; the listener below covers native jumps).
+          setToc(false)
+        }
       })
-      document.querySelector('.toc-toggle')?.addEventListener('click', toggleToc)
-      backdrop?.addEventListener('click', closeAll)
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeAll()
       })
-      // Tapping a TOC entry navigates via hash — close the panel after.
       window.addEventListener('hashchange', () => setToc(false))
 
-      // Theme toggle — flips the `.dark` class on <html> (and the
-      // theme-color meta) via the shared `apply` from the inline head
-      // script, then persists the choice. The inline head script handles
-      // the no-flash application on subsequent page loads.
+      // Theme toggle: flip `.dark` (and the theme-color meta) via the head
+      // script's shared apply, then persist the choice. Cold loads apply
+      // pre-paint in the head script; swaps re-stamp below.
       const THEME_KEY = 'anta-theme'
       const applyTheme = (window as any).__antaApplyTheme
         ?? ((m: boolean) => document.documentElement.classList.toggle('dark', m))
-      document.querySelector('.theme-toggle')?.addEventListener('click', () => {
+      document.addEventListener('click', (e) => {
+        if (!(e.target as HTMLElement).closest?.('.theme-toggle')) return
         const nextDark = !document.documentElement.classList.contains('dark')
         applyTheme(nextDark)
         localStorage.setItem(THEME_KEY, nextDark ? 'dark' : 'light')
+      })
+
+      // Swaps replace <html>'s attributes wholesale, wiping the runtime
+      // `.dark`: stamp it onto the incoming document. (The theme-color meta
+      // and palette <link> persist by attribute and need nothing here.) The
+      // sidebar node persists too, but the move zeroes its scroll offset, so
+      // carry scrollTop across by hand.
+      let sidebarScroll = 0
+      document.addEventListener('astro:before-swap', (e) => {
+        sidebarScroll = document.querySelector('.sidebar')?.scrollTop ?? 0
+        ;(e as TransitionBeforeSwapEvent).newDocument.documentElement.classList.toggle(
+          'dark',
+          document.documentElement.classList.contains('dark'),
+        )
+      })
+      document.addEventListener('astro:after-swap', () => {
+        const sidebar = document.querySelector('.sidebar')
+        if (sidebar) sidebar.scrollTop = sidebarScroll
+      })
+
+      // The persisted sidebar keeps the previous page's aria-current:
+      // re-point it at the new URL. Idempotent on the initial load.
+      document.addEventListener('astro:page-load', () => {
+        const here = location.pathname.replace(/\/+$/, '') || '/'
+        for (const a of document.querySelectorAll<HTMLAnchorElement>('.sidebar menu a')) {
+          const linkPath = new URL(a.href).pathname.replace(/\/+$/, '') || '/'
+          if (linkPath === here) a.setAttribute('aria-current', 'page')
+          else a.removeAttribute('aria-current')
+        }
       })
     </script>
 
@@ -425,40 +488,6 @@ if (isComponentPage && title) {
         toggleFold(header)
       })
 
-      // Anchor-based "scroll preservation" for tone-tab navigation.
-      // When the user clicks a link tagged `data-preserve-scroll`, find
-      // the heading representing the section they're currently reading
-      // and append its id as a hash to the destination URL. The browser
-      // then scrolls to that anchor on the next page (with
-      // `--scroll-padding-top` accounting for the topbar), so the user
-      // lands at the same section across tones.
-      //
-      // "Reading" is defined as the last heading in DOM order whose top
-      // is at or above 40 % of viewport height. That captures both
-      // "scrolled past" headings and headings that are currently
-      // visible in the upper portion of the screen — which is what the
-      // user would expect when they've moved beyond the previous
-      // section even if the new heading isn't pinned to the very top.
-      function topmostPassedHeadingId(): string | null {
-        const fold = Math.max(80, window.innerHeight * 0.4)
-        const headings = document.querySelectorAll<HTMLElement>('main :is(h1, h2, h3)[id]')
-        let last: string | null = null
-        for (const h of headings) {
-          if (h.getBoundingClientRect().top <= fold) last = h.id
-        }
-        return last
-      }
-      document.addEventListener('click', (e) => {
-        const link = (e.target as HTMLElement)?.closest?.('a[data-preserve-scroll]') as HTMLAnchorElement | null
-        if (!link) return
-        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || (e as MouseEvent).button !== 0) return
-        const id = topmostPassedHeadingId()
-        if (!id) return  // user is above all headings — let normal nav happen, lands at page top
-        e.preventDefault()
-        const url = new URL(link.href, window.location.href)
-        url.hash = id
-        window.location.assign(url.toString())
-      })
     </script>
   </body>
 </html>
@@ -570,6 +599,12 @@ if (isComponentPage && title) {
     letter-spacing: 0.08em;
     color: var(--text-3-brand);
     margin: 24px 0 8px;
+  }
+
+  /* Palette switcher sits above the Components list. */
+  .theme-switcher {
+    margin-top: 16px;
+    width: calc(100% - 16px);
   }
 
   /* Anta's global stylesheet already strips list-style, padding, and

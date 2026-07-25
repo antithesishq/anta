@@ -38,7 +38,6 @@
   a-text[priority="primary"]    { --text-color: var(--text-1); }
   a-text[priority="tertiary"]   { --text-color: var(--text-3); --text-link-color: currentColor; --text-link-hover: var(--text-2); }
   a-text[priority="quaternary"] { --text-color: var(--text-4); --text-link-color: currentColor; --text-link-hover: var(--text-3); }
-  a-text[priority="quinary"]    { --text-color: var(--text-5); --text-link-color: currentColor; --text-link-hover: var(--text-4); }
 
   /* tone="neutral" has no rule on purpose — it is the untinted default, resolved
      by the base + priority rules above (the --text-N scale). */
@@ -46,36 +45,31 @@
   a-text[tone="brand"][priority="primary"]          { --text-color: var(--text-1-brand); }
   a-text[tone="brand"][priority="tertiary"]         { --text-color: var(--text-3-brand); --text-link-hover: var(--text-2-brand); }
   a-text[tone="brand"][priority="quaternary"]       { --text-color: var(--text-4-brand); --text-link-hover: var(--text-3-brand); }
-  a-text[tone="brand"][priority="quinary"]          { --text-color: var(--text-5-brand); --text-link-hover: var(--text-4-brand); }
 
   a-text[tone="success"]                            { --text-color: var(--text-2-success); --text-link-color: currentColor; --text-link-hover: var(--text-1-success); }
   a-text[tone="success"][priority="primary"]        { --text-color: var(--text-1-success); }
   a-text[tone="success"][priority="tertiary"]       { --text-color: var(--text-3-success); --text-link-hover: var(--text-2-success); }
   a-text[tone="success"][priority="quaternary"]     { --text-color: var(--text-4-success); --text-link-hover: var(--text-3-success); }
-  a-text[tone="success"][priority="quinary"]        { --text-color: var(--text-5-success); --text-link-hover: var(--text-4-success); }
 
   a-text[tone="critical"]                           { --text-color: var(--text-2-critical); --text-link-color: currentColor; --text-link-hover: var(--text-1-critical); }
   a-text[tone="critical"][priority="primary"]       { --text-color: var(--text-1-critical); }
   a-text[tone="critical"][priority="tertiary"]      { --text-color: var(--text-3-critical); --text-link-hover: var(--text-2-critical); }
   a-text[tone="critical"][priority="quaternary"]    { --text-color: var(--text-4-critical); --text-link-hover: var(--text-3-critical); }
-  a-text[tone="critical"][priority="quinary"]       { --text-color: var(--text-5-critical); --text-link-hover: var(--text-4-critical); }
 
   a-text[tone="warning"]                            { --text-color: var(--text-2-warning); --text-link-color: currentColor; --text-link-hover: var(--text-1-warning); }
   a-text[tone="warning"][priority="primary"]        { --text-color: var(--text-1-warning); }
   a-text[tone="warning"][priority="tertiary"]       { --text-color: var(--text-3-warning); --text-link-hover: var(--text-2-warning); }
   a-text[tone="warning"][priority="quaternary"]     { --text-color: var(--text-4-warning); --text-link-hover: var(--text-3-warning); }
-  a-text[tone="warning"][priority="quinary"]        { --text-color: var(--text-5-warning); --text-link-hover: var(--text-4-warning); }
 
   a-text[tone="info"]                               { --text-color: var(--text-2-info); --text-link-color: currentColor; --text-link-hover: var(--text-1-info); }
   a-text[tone="info"][priority="primary"]           { --text-color: var(--text-1-info); }
   a-text[tone="info"][priority="tertiary"]          { --text-color: var(--text-3-info); --text-link-hover: var(--text-2-info); }
   a-text[tone="info"][priority="quaternary"]        { --text-color: var(--text-4-info); --text-link-hover: var(--text-3-info); }
-  a-text[tone="info"][priority="quinary"]           { --text-color: var(--text-5-info); --text-link-hover: var(--text-4-info); }
 
   /* Custom tone — any non-named `tone` keeps the source hue while lightness/chroma
      are pinned in oklch (the <a-tag>/<a-card> mechanism). --_text-tone is the base
      (text-2 equivalent); the fainter priorities are that base at reduced alpha,
-     mirroring the named --text-N-{tone} tokens (text-3/4/5 = text-2 @ 80/60/40%).
+     mirroring the named --text-N-{tone} tokens (text-3/4 = text-2 @ 80/60%).
      The wrapper writes --text-tone-source inline; the typed attr() fallback picks up
      a raw <a-text tone="…">. */
   a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
@@ -94,9 +88,6 @@
   }
   a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="quaternary"] {
     --text-color: color-mix(in oklch, var(--_text-tone) 60%, transparent);
-  }
-  a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="quinary"] {
-    --text-color: color-mix(in oklch, var(--_text-tone) 40%, transparent);
   }
   /* Dark: only the base + the distinct primary need re-tuning; secondary is
      var(--_text-tone) and the fainter steps are color-mix of it, so they follow. */

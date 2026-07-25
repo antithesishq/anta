@@ -19,6 +19,15 @@
    are still settling. Don't add new role families here without an
    explicit decision that the values have stabilized across components. */
 
+/* The whole role scale is DERIVED from six tone seeds via oklch relative
+   color: each token is `oklch(from var(--anta-seed-{tone}) L C h)`, taking the
+   seed's hue and pinning lightness/chroma per role and theme. Override one seed
+   (e.g. `--anta-seed-brand`) on any ancestor and its entire scale re-derives.
+   The neutral seed is near-grey, so neutral tokens stay grey with the same
+   formula. Light and dark share the seeds and differ only in the pinned L/C.
+   The hand-tuned literals that shipped before this are available as the opt-in
+   `@antadesign/anta/theme-anta.css`. L/C constants mirror the theming lab. */
+
 :root, .light {
   --sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   --monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -27,131 +36,137 @@
   font-weight: 400;
   font-feature-settings: 'ss02' on, 'ss05' on, 'tnum' on;
 
-  /* Colors imported from Figma library "Anta 0.2" → "Dynamic colors" collection.
-     See FIGMA.md for the full extraction procedure (figma.variables Plugin
-     API + alias resolution). */
+  /* Tone seeds — the single source each scale derives from. Hues from the
+     Anta 0.2 primaries; override any of these to reskin a whole tone. */
+  --anta-seed-neutral: #635b65;
+  --anta-seed-brand: #5f4bc3;
+  --anta-seed-info: #1f6eb2;
+  --anta-seed-success: #2a7e43;
+  --anta-seed-warning: #c37416;
+  --anta-seed-critical: #c9302c;
 
-  /* Backgrounds — light, neutral. Numeric elevation scale: 1 = deepest /
-     recessed (was bg-section), 5 = most raised (was bg-spot). */
-  --bg-1: #ffffff;
-  --bg-2: #fbfafb;
-  --bg-3: #f6f4f6;
-  --bg-4: #f1eff1;
-  --bg-5: #ece9ec;
+  /* Backgrounds — light. Numeric elevation scale: 1 = deepest / recessed,
+     5 = most raised. No --bg-1-{tone}; bg-1 is neutral-only. */
+  /* Backgrounds — light, neutral */
+  --bg-1: oklch(from var(--anta-seed-neutral) 1 0 h);
+  --bg-2: oklch(from var(--anta-seed-neutral) 0.985 0.002 h);
+  --bg-3: oklch(from var(--anta-seed-neutral) 0.97 0.004 h);
+  --bg-4: oklch(from var(--anta-seed-neutral) 0.954 0.004 h);
+  --bg-5: oklch(from var(--anta-seed-neutral) 0.935 0.006 h);
 
-  /* Backgrounds — light, Brand (no --bg-1-brand; bg-1 is neutral-only) */
-  --bg-2-brand: #fcfcfe;
-  --bg-3-brand: #f7f6fd;
-  --bg-4-brand: #efeefc;
-  --bg-5-brand: #e9e5fa;
+  /* Backgrounds — light, brand */
+  --bg-2-brand: oklch(from var(--anta-seed-brand) 0.99 0.004 h);
+  --bg-3-brand: oklch(from var(--anta-seed-brand) 0.972 0.011 h);
+  --bg-4-brand: oklch(from var(--anta-seed-brand) 0.955 0.02 h);
+  --bg-5-brand: oklch(from var(--anta-seed-brand) 0.935 0.03 h);
 
-  /* Backgrounds — light, Success */
-  --bg-2-success: #f7fcf9;
-  --bg-3-success: #ecf9f0;
-  --bg-4-success: #e2f5e8;
-  --bg-5-success: #d9f2e0;
+  /* Backgrounds — light, info */
+  --bg-2-info: oklch(from var(--anta-seed-info) 0.99 0.004 h);
+  --bg-3-info: oklch(from var(--anta-seed-info) 0.972 0.011 h);
+  --bg-4-info: oklch(from var(--anta-seed-info) 0.955 0.02 h);
+  --bg-5-info: oklch(from var(--anta-seed-info) 0.935 0.03 h);
 
-  /* Backgrounds — light, Critical */
-  --bg-2-critical: #fefbfb;
-  --bg-3-critical: #fdf2f2;
-  --bg-4-critical: #fcebeb;
-  --bg-5-critical: #fae5e5;
+  /* Backgrounds — light, success */
+  --bg-2-success: oklch(from var(--anta-seed-success) 0.99 0.004 h);
+  --bg-3-success: oklch(from var(--anta-seed-success) 0.972 0.011 h);
+  --bg-4-success: oklch(from var(--anta-seed-success) 0.955 0.02 h);
+  --bg-5-success: oklch(from var(--anta-seed-success) 0.935 0.03 h);
 
-  /* Backgrounds — light, Warning */
-  --bg-2-warning: #fefbf6;
-  --bg-3-warning: #fcf4e8;
-  --bg-4-warning: #fbeeda;
-  --bg-5-warning: #f9e7cd;
+  /* Backgrounds — light, warning */
+  --bg-2-warning: oklch(from var(--anta-seed-warning) 0.99 0.004 h);
+  --bg-3-warning: oklch(from var(--anta-seed-warning) 0.972 0.011 h);
+  --bg-4-warning: oklch(from var(--anta-seed-warning) 0.955 0.02 h);
+  --bg-5-warning: oklch(from var(--anta-seed-warning) 0.935 0.03 h);
 
-  /* Backgrounds — light, Info */
-  --bg-2-info: #fbfcfe;
-  --bg-3-info: #f2f7fd;
-  --bg-4-info: #e9f3fb;
-  --bg-5-info: #e1eefa;
+  /* Backgrounds — light, critical */
+  --bg-2-critical: oklch(from var(--anta-seed-critical) 0.99 0.004 h);
+  --bg-3-critical: oklch(from var(--anta-seed-critical) 0.972 0.011 h);
+  --bg-4-critical: oklch(from var(--anta-seed-critical) 0.955 0.02 h);
+  --bg-5-critical: oklch(from var(--anta-seed-critical) 0.935 0.03 h);
 
   /* Text — light, neutral */
-  --text-1: #050306;
-  --text-2: #302b31;
-  --text-3: #635b65;
-  --text-4: #878089;
-  --text-5: #9f99a1;
+  --text-1: oklch(from var(--anta-seed-neutral) 0.1 0.01 h);
+  --text-2: oklch(from var(--anta-seed-neutral) 0.3 0.015 h);
+  --text-3: color-mix(in oklch, var(--text-2) 82%, transparent);
+  --text-4: color-mix(in oklch, var(--text-2) 60%, transparent);
+  --text-5: color-mix(in oklch, var(--text-2) 40%, transparent);
 
-  /* Text — light, Brand */
-  --text-1-brand: #2e1e7b;
-  --text-2-brand: #483493;
-  --text-3-brand: #483493cc;
-  --text-4-brand: #48349399;
-  --text-5-brand: #48349366;
+  /* Text — light, brand */
+  --text-1-brand: oklch(from var(--anta-seed-brand) 0.38 0.11 h);
+  --text-2-brand: oklch(from var(--anta-seed-brand) 0.43 0.15 h);
+  --text-3-brand: color-mix(in oklch, var(--text-2-brand) 82%, transparent);
+  --text-4-brand: color-mix(in oklch, var(--text-2-brand) 60%, transparent);
+  --text-5-brand: color-mix(in oklch, var(--text-2-brand) 40%, transparent);
 
-  /* Text — light, Success */
-  --text-1-success: #004618;
-  --text-2-success: #1f5c31;
-  --text-3-success: #1f5c31cc;
-  --text-4-success: #1f5c3199;
-  --text-5-success: #1f5c3166;
+  /* Text — light, info */
+  --text-1-info: oklch(from var(--anta-seed-info) 0.38 0.11 h);
+  --text-2-info: oklch(from var(--anta-seed-info) 0.43 0.15 h);
+  --text-3-info: color-mix(in oklch, var(--text-2-info) 82%, transparent);
+  --text-4-info: color-mix(in oklch, var(--text-2-info) 60%, transparent);
+  --text-5-info: color-mix(in oklch, var(--text-2-info) 40%, transparent);
 
-  /* Text — light, Critical */
-  --text-1-critical: #8f1014;
-  --text-2-critical: #a01c1c;
-  --text-3-critical: #a01c1ccc;
-  --text-4-critical: #a01c1c99;
-  --text-5-critical: #a01c1c66;
+  /* Text — light, success */
+  --text-1-success: oklch(from var(--anta-seed-success) 0.38 0.11 h);
+  --text-2-success: oklch(from var(--anta-seed-success) 0.43 0.15 h);
+  --text-3-success: color-mix(in oklch, var(--text-2-success) 82%, transparent);
+  --text-4-success: color-mix(in oklch, var(--text-2-success) 60%, transparent);
+  --text-5-success: color-mix(in oklch, var(--text-2-success) 40%, transparent);
 
-  /* Text — light, Warning */
-  --text-1-warning: #7f410b;
-  --text-2-warning: #995200;
-  --text-3-warning: #995200cc;
-  --text-4-warning: #99520099;
-  --text-5-warning: #99520066;
+  /* Text — light, warning */
+  --text-1-warning: oklch(from var(--anta-seed-warning) 0.38 0.11 h);
+  --text-2-warning: oklch(from var(--anta-seed-warning) 0.43 0.15 h);
+  --text-3-warning: color-mix(in oklch, var(--text-2-warning) 82%, transparent);
+  --text-4-warning: color-mix(in oklch, var(--text-2-warning) 60%, transparent);
+  --text-5-warning: color-mix(in oklch, var(--text-2-warning) 40%, transparent);
 
-  /* Text — light, Info */
-  --text-1-info: #003969;
-  --text-2-info: #175082;
-  --text-3-info: #175082cc;
-  --text-4-info: #175082b2;
-  --text-5-info: #17508280;
+  /* Text — light, critical */
+  --text-1-critical: oklch(from var(--anta-seed-critical) 0.38 0.11 h);
+  --text-2-critical: oklch(from var(--anta-seed-critical) 0.43 0.15 h);
+  --text-3-critical: color-mix(in oklch, var(--text-2-critical) 82%, transparent);
+  --text-4-critical: color-mix(in oklch, var(--text-2-critical) 60%, transparent);
+  --text-5-critical: color-mix(in oklch, var(--text-2-critical) 40%, transparent);
 
   /* Borders — light, neutral */
-  --border-1: #938d96;
-  --border-2: #c1b9c1;
-  --border-3: #d4ced4;
-  --border-4: #e0dce0;
-  --border-5: #ece9ec;
+  --border-1: oklch(from var(--anta-seed-neutral) 0.67 0.008 h);
+  --border-2: oklch(from var(--anta-seed-neutral) 0.8 0.008 h);
+  --border-3: oklch(from var(--anta-seed-neutral) 0.86 0.008 h);
+  --border-4: oklch(from var(--anta-seed-neutral) 0.9 0.008 h);
+  --border-5: oklch(from var(--anta-seed-neutral) 0.935 0.008 h);
 
-  /* Borders — light, Brand */
-  --border-1-brand: #9081df;
-  --border-2-brand: #bcb1f1;
-  --border-3-brand: #d2cbf6;
-  --border-4-brand: #ddd8f8;
-  --border-5-brand: #e9e5fa;
+  /* Borders — light, brand */
+  --border-1-brand: oklch(from var(--anta-seed-brand) 0.67 0.13 h);
+  --border-2-brand: oklch(from var(--anta-seed-brand) 0.8 0.09 h);
+  --border-3-brand: oklch(from var(--anta-seed-brand) 0.86 0.055 h);
+  --border-4-brand: oklch(from var(--anta-seed-brand) 0.9 0.04 h);
+  --border-5-brand: oklch(from var(--anta-seed-brand) 0.935 0.028 h);
 
-  /* Borders — light, Success */
-  --border-1-success: #44c169;
-  --border-2-success: #88d7a0;
-  --border-3-success: #b3e5c2;
-  --border-4-success: #c6ecd1;
-  --border-5-success: #d9f2e0;
+  /* Borders — light, info */
+  --border-1-info: oklch(from var(--anta-seed-info) 0.67 0.13 h);
+  --border-2-info: oklch(from var(--anta-seed-info) 0.8 0.09 h);
+  --border-3-info: oklch(from var(--anta-seed-info) 0.86 0.055 h);
+  --border-4-info: oklch(from var(--anta-seed-info) 0.9 0.04 h);
+  --border-5-info: oklch(from var(--anta-seed-info) 0.935 0.028 h);
 
-  /* Borders — light, Critical */
-  --border-1-critical: #e56c6c;
-  --border-2-critical: #efa4a4;
-  --border-3-critical: #f4c2c2;
-  --border-4-critical: #f7d4d4;
-  --border-5-critical: #fae5e5;
+  /* Borders — light, success */
+  --border-1-success: oklch(from var(--anta-seed-success) 0.67 0.13 h);
+  --border-2-success: oklch(from var(--anta-seed-success) 0.8 0.09 h);
+  --border-3-success: oklch(from var(--anta-seed-success) 0.86 0.055 h);
+  --border-4-success: oklch(from var(--anta-seed-success) 0.9 0.04 h);
+  --border-5-success: oklch(from var(--anta-seed-success) 0.935 0.028 h);
 
-  /* Borders — light, Warning */
-  --border-1-warning: #d88118;
-  --border-2-warning: #edb25a;
-  --border-3-warning: #f3cc91;
-  --border-4-warning: #f6dbb1;
-  --border-5-warning: #f9e7cd;
+  /* Borders — light, warning */
+  --border-1-warning: oklch(from var(--anta-seed-warning) 0.67 0.13 h);
+  --border-2-warning: oklch(from var(--anta-seed-warning) 0.8 0.09 h);
+  --border-3-warning: oklch(from var(--anta-seed-warning) 0.86 0.055 h);
+  --border-4-warning: oklch(from var(--anta-seed-warning) 0.9 0.04 h);
+  --border-5-warning: oklch(from var(--anta-seed-warning) 0.935 0.028 h);
 
-  /* Borders — light, Info */
-  --border-1-info: #56a1e1;
-  --border-2-info: #93c5ec;
-  --border-3-info: #bad6f3;
-  --border-4-info: #cfe3f7;
-  --border-5-info: #e1eefa;
+  /* Borders — light, critical */
+  --border-1-critical: oklch(from var(--anta-seed-critical) 0.67 0.13 h);
+  --border-2-critical: oklch(from var(--anta-seed-critical) 0.8 0.09 h);
+  --border-3-critical: oklch(from var(--anta-seed-critical) 0.86 0.055 h);
+  --border-4-critical: oklch(from var(--anta-seed-critical) 0.9 0.04 h);
+  --border-5-critical: oklch(from var(--anta-seed-critical) 0.935 0.028 h);
 
   /* Prose link colors — used by <a-text> for priorities 1 & 2 and by
      consumers wiring their own prose contexts. */
@@ -168,130 +183,126 @@
 .dark {
   font-weight: 400;
 
-  /* Backgrounds — dark, neutral. Numeric elevation scale: 1 = deepest /
-     recessed (was bg-section), 5 = most raised (was bg-spot). */
-  --bg-1: #000000;
-  --bg-2: #0e0d0f;
-  --bg-3: #121014;
-  --bg-4: #161316;
-  --bg-5: #1a171b;
+  /* Backgrounds — dark, neutral */
+  --bg-1: oklch(from var(--anta-seed-neutral) 0 0 h);
+  --bg-2: oklch(from var(--anta-seed-neutral) 0.16 0.002 h);
+  --bg-3: oklch(from var(--anta-seed-neutral) 0.177 0.005 h);
+  --bg-4: oklch(from var(--anta-seed-neutral) 0.191 0.006 h);
+  --bg-5: oklch(from var(--anta-seed-neutral) 0.2 0.009 h);
 
-  /* Backgrounds — dark, tinted. The Anta 0.2 values,
-     each a touch deeper for dark mode. (No --bg-1-tone; bg-1 is neutral-only.) */
+  /* Backgrounds — dark, brand */
+  --bg-2-brand: oklch(from var(--anta-seed-brand) 0.13 0.02 h);
+  --bg-3-brand: oklch(from var(--anta-seed-brand) 0.17 0.035 h);
+  --bg-4-brand: oklch(from var(--anta-seed-brand) 0.185 0.05 h);
+  --bg-5-brand: oklch(from var(--anta-seed-brand) 0.205 0.055 h);
 
-  /* Backgrounds — dark, Brand */
-  --bg-2-brand: #08060e;
-  --bg-3-brand: #0f0c1d;
-  --bg-4-brand: #130f24;
-  --bg-5-brand: #16132b;
+  /* Backgrounds — dark, info */
+  --bg-2-info: oklch(from var(--anta-seed-info) 0.13 0.02 h);
+  --bg-3-info: oklch(from var(--anta-seed-info) 0.17 0.035 h);
+  --bg-4-info: oklch(from var(--anta-seed-info) 0.185 0.05 h);
+  --bg-5-info: oklch(from var(--anta-seed-info) 0.205 0.055 h);
 
-  /* Backgrounds — dark, Success */
-  --bg-2-success: #030b06;
-  --bg-3-success: #051209;
-  --bg-4-success: #06160b;
-  --bg-5-success: #081b0e;
+  /* Backgrounds — dark, success */
+  --bg-2-success: oklch(from var(--anta-seed-success) 0.13 0.02 h);
+  --bg-3-success: oklch(from var(--anta-seed-success) 0.17 0.035 h);
+  --bg-4-success: oklch(from var(--anta-seed-success) 0.185 0.05 h);
+  --bg-5-success: oklch(from var(--anta-seed-success) 0.205 0.055 h);
 
-  /* Backgrounds — dark, Critical */
-  --bg-2-critical: #120303;
-  --bg-3-critical: #210606;
-  --bg-4-critical: #260808;
-  --bg-5-critical: #2e0a0b;
+  /* Backgrounds — dark, warning */
+  --bg-2-warning: oklch(from var(--anta-seed-warning) 0.13 0.02 h);
+  --bg-3-warning: oklch(from var(--anta-seed-warning) 0.17 0.035 h);
+  --bg-4-warning: oklch(from var(--anta-seed-warning) 0.185 0.05 h);
+  --bg-5-warning: oklch(from var(--anta-seed-warning) 0.205 0.055 h);
 
-  /* Backgrounds — dark, Warning */
-  --bg-2-warning: #110a03;
-  --bg-3-warning: #1c1105;
-  --bg-4-warning: #231406;
-  --bg-5-warning: #2b1a08;
-
-  /* Backgrounds — dark, Info */
-  --bg-2-info: #020a12;
-  --bg-3-info: #05131f;
-  --bg-4-info: #071725;
-  --bg-5-info: #0c2337;
+  /* Backgrounds — dark, critical */
+  --bg-2-critical: oklch(from var(--anta-seed-critical) 0.13 0.02 h);
+  --bg-3-critical: oklch(from var(--anta-seed-critical) 0.17 0.035 h);
+  --bg-4-critical: oklch(from var(--anta-seed-critical) 0.185 0.05 h);
+  --bg-5-critical: oklch(from var(--anta-seed-critical) 0.205 0.055 h);
 
   /* Text — dark, neutral */
-  --text-1: #ece9ec;
-  --text-2: #c1b9c1;
-  --text-3: #9f99a1;
-  --text-4: #776e77;
-  --text-5: #635b65;
+  --text-1: oklch(from var(--anta-seed-neutral) 0.94 0.008 h);
+  --text-2: oklch(from var(--anta-seed-neutral) 0.8 0.015 h);
+  --text-3: color-mix(in oklch, var(--text-2) 80%, transparent);
+  --text-4: color-mix(in oklch, var(--text-2) 60%, transparent);
+  --text-5: color-mix(in oklch, var(--text-2) 40%, transparent);
 
-  /* Text — dark, Brand */
-  --text-1-brand: #c5baff;
-  --text-2-brand: #ada0ee;
-  --text-3-brand: #ada0eecc;
-  --text-4-brand: #ada0ee99;
-  --text-5-brand: #ada0ee66;
+  /* Text — dark, brand */
+  --text-1-brand: oklch(from var(--anta-seed-brand) 0.85 0.1 h);
+  --text-2-brand: oklch(from var(--anta-seed-brand) 0.77 0.11 h);
+  --text-3-brand: color-mix(in oklch, var(--text-2-brand) 80%, transparent);
+  --text-4-brand: color-mix(in oklch, var(--text-2-brand) 60%, transparent);
+  --text-5-brand: color-mix(in oklch, var(--text-2-brand) 40%, transparent);
 
-  /* Text — dark, Success */
-  --text-1-success: #9ddeb1;
-  --text-2-success: #74cd8e;
-  --text-3-success: #74cd8ecc;
-  --text-4-success: #74cd8e99;
-  --text-5-success: #74cd8e66;
+  /* Text — dark, info */
+  --text-1-info: oklch(from var(--anta-seed-info) 0.85 0.1 h);
+  --text-2-info: oklch(from var(--anta-seed-info) 0.77 0.11 h);
+  --text-3-info: color-mix(in oklch, var(--text-2-info) 80%, transparent);
+  --text-4-info: color-mix(in oklch, var(--text-2-info) 60%, transparent);
+  --text-5-info: color-mix(in oklch, var(--text-2-info) 40%, transparent);
 
-  /* Text — dark, Critical */
-  --text-1-critical: #ffabac;
-  --text-2-critical: #e78e90;
-  --text-3-critical: #e78e90cc;
-  --text-4-critical: #e78e9099;
-  --text-5-critical: #e78e9066;
+  /* Text — dark, success */
+  --text-1-success: oklch(from var(--anta-seed-success) 0.85 0.1 h);
+  --text-2-success: oklch(from var(--anta-seed-success) 0.77 0.11 h);
+  --text-3-success: color-mix(in oklch, var(--text-2-success) 80%, transparent);
+  --text-4-success: color-mix(in oklch, var(--text-2-success) 60%, transparent);
+  --text-5-success: color-mix(in oklch, var(--text-2-success) 40%, transparent);
 
-  /* Text — dark, Warning */
-  --text-1-warning: #f0bf75;
-  --text-2-warning: #e1a452;
-  --text-3-warning: #e1a452cc;
-  --text-4-warning: #e1a45299;
-  --text-5-warning: #e1a45266;
+  /* Text — dark, warning */
+  --text-1-warning: oklch(from var(--anta-seed-warning) 0.85 0.1 h);
+  --text-2-warning: oklch(from var(--anta-seed-warning) 0.77 0.11 h);
+  --text-3-warning: color-mix(in oklch, var(--text-2-warning) 80%, transparent);
+  --text-4-warning: color-mix(in oklch, var(--text-2-warning) 60%, transparent);
+  --text-5-warning: color-mix(in oklch, var(--text-2-warning) 40%, transparent);
 
-  /* Text — dark, Info */
-  --text-1-info: #9ed2ff;
-  --text-2-info: #7db6e8;
-  --text-3-info: #7db6e8cc;
-  --text-4-info: #7db6e899;
-  --text-5-info: #7db6e866;
+  /* Text — dark, critical */
+  --text-1-critical: oklch(from var(--anta-seed-critical) 0.85 0.1 h);
+  --text-2-critical: oklch(from var(--anta-seed-critical) 0.77 0.11 h);
+  --text-3-critical: color-mix(in oklch, var(--text-2-critical) 80%, transparent);
+  --text-4-critical: color-mix(in oklch, var(--text-2-critical) 60%, transparent);
+  --text-5-critical: color-mix(in oklch, var(--text-2-critical) 40%, transparent);
 
   /* Borders — dark, neutral */
-  --border-1: hsl(288deg 5.21% 42%);
-  --border-2: hsl(282deg 7.04% 28%);
-  --border-3: hsl(277.5deg 6.56% 20%);
-  --border-4: hsl(290deg 6.52% 14%);
-  --border-5: hsl(285deg 7.14% 10%);
+  --border-1: oklch(from var(--anta-seed-neutral) 0.52 0.008 h);
+  --border-2: oklch(from var(--anta-seed-neutral) 0.41 0.008 h);
+  --border-3: oklch(from var(--anta-seed-neutral) 0.33 0.008 h);
+  --border-4: oklch(from var(--anta-seed-neutral) 0.26 0.008 h);
+  --border-5: oklch(from var(--anta-seed-neutral) 0.21 0.008 h);
 
-  /* Borders — dark, Brand */
-  --border-1-brand: hsl(250.08deg 59.8% 58%);
-  --border-2-brand: hsl(250deg 50% 42%);
-  --border-3-brand: hsl(252.63deg 47.74% 30%);
-  --border-4-brand: hsl(249.8deg 39.84% 19%);
-  --border-5-brand: hsl(249deg 39.22% 14%);
+  /* Borders — dark, brand */
+  --border-1-brand: oklch(from var(--anta-seed-brand) 0.52 0.15 h);
+  --border-2-brand: oklch(from var(--anta-seed-brand) 0.41 0.12 h);
+  --border-3-brand: oklch(from var(--anta-seed-brand) 0.33 0.09 h);
+  --border-4-brand: oklch(from var(--anta-seed-brand) 0.26 0.06 h);
+  --border-5-brand: oklch(from var(--anta-seed-brand) 0.21 0.045 h);
 
-  /* Borders — dark, Success */
-  --border-1-success: hsl(138.18deg 49.75% 29%);
-  --border-2-success: hsl(138.26deg 50.36% 20%);
-  --border-3-success: hsl(137.7deg 49.59% 16%);
-  --border-4-success: hsl(138.46deg 52% 10%);
-  --border-5-success: hsl(138.86deg 53.85% 7.5%);
+  /* Borders — dark, info */
+  --border-1-info: oklch(from var(--anta-seed-info) 0.52 0.15 h);
+  --border-2-info: oklch(from var(--anta-seed-info) 0.41 0.12 h);
+  --border-3-info: oklch(from var(--anta-seed-info) 0.33 0.09 h);
+  --border-4-info: oklch(from var(--anta-seed-info) 0.26 0.06 h);
+  --border-5-info: oklch(from var(--anta-seed-info) 0.21 0.045 h);
 
-  /* Borders — dark, Critical */
-  --border-1-critical: hsl(0deg 56% 46%);
-  --border-2-critical: hsl(0.42deg 63% 30%);
-  --border-3-critical: hsl(0deg 62.21% 23%);
-  --border-4-critical: hsl(359.13deg 59% 15%);
-  --border-5-critical: hsl(359.06deg 63% 11%);
+  /* Borders — dark, success */
+  --border-1-success: oklch(from var(--anta-seed-success) 0.52 0.15 h);
+  --border-2-success: oklch(from var(--anta-seed-success) 0.41 0.12 h);
+  --border-3-success: oklch(from var(--anta-seed-success) 0.33 0.09 h);
+  --border-4-success: oklch(from var(--anta-seed-success) 0.26 0.06 h);
+  --border-5-success: oklch(from var(--anta-seed-success) 0.21 0.045 h);
 
-  /* Borders — dark, Warning */
-  --border-1-warning: hsl(32.13deg 80.31% 34%);
-  --border-2-warning: hsl(27.93deg 84.06% 24%);
-  --border-3-warning: hsl(30deg 79.66% 17%);
-  --border-4-warning: hsl(28.75deg 63.16% 12%);
-  --border-5-warning: hsl(28.64deg 66.67% 9%);
+  /* Borders — dark, warning */
+  --border-1-warning: oklch(from var(--anta-seed-warning) 0.52 0.15 h);
+  --border-2-warning: oklch(from var(--anta-seed-warning) 0.41 0.12 h);
+  --border-3-warning: oklch(from var(--anta-seed-warning) 0.33 0.09 h);
+  --border-4-warning: oklch(from var(--anta-seed-warning) 0.26 0.06 h);
+  --border-5-warning: oklch(from var(--anta-seed-warning) 0.21 0.045 h);
 
-  /* Borders — dark, Info */
-  --border-1-info: hsl(207.82deg 70.2% 40%);
-  --border-2-info: hsl(207.77deg 69.94% 29%);
-  --border-3-info: hsl(208.04deg 69.93% 21%);
-  --border-4-info: hsl(208.52deg 62.89% 14%);
-  --border-5-info: hsl(207.78deg 65.85% 10.5%);
+  /* Borders — dark, critical */
+  --border-1-critical: oklch(from var(--anta-seed-critical) 0.52 0.15 h);
+  --border-2-critical: oklch(from var(--anta-seed-critical) 0.41 0.12 h);
+  --border-3-critical: oklch(from var(--anta-seed-critical) 0.33 0.09 h);
+  --border-4-critical: oklch(from var(--anta-seed-critical) 0.26 0.06 h);
+  --border-5-critical: oklch(from var(--anta-seed-critical) 0.21 0.045 h);
 
   /* Prose link colors — dark mode */
   --link-color: #7baee9;
@@ -299,4 +310,3 @@
 
   --focus-ring: #a897fc;
 }
-

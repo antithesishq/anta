@@ -4,16 +4,21 @@ import s from './Swatches.module.css'
 type Tone = 'neutral' | 'brand' | 'info' | 'success' | 'critical' | 'warning'
 type Kind = 'bg' | 'text' | 'border'
 
-// Normalize a computed `rgb()` / `rgba()` color string to hex (8-digit when
-// the token carries alpha), so the live label reads like the hex authored in
-// tokens.css.
+// Resolve any computed CSS color to hex (8-digit when it carries alpha) via a
+// 1×1 canvas. The role tokens are now `oklch(from <seed> …)`, so the computed
+// value comes back as `oklch(…)` rather than `rgb(…)` — painting it and reading
+// the pixel converts any format (oklch, color(), rgb) uniformly to sRGB hex.
 function toHex(color: string): string {
-  const n = color.match(/[\d.]+/g)?.map(Number)
-  if (!n || n.length < 3) return color
-  const h = (x: number) => Math.round(x).toString(16).padStart(2, '0')
-  let out = `#${h(n[0])}${h(n[1])}${h(n[2])}`
-  if (n.length >= 4 && n[3] < 1) out += h(n[3] * 255)
-  return out
+  if (!color) return color
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 1
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return color
+  ctx.fillStyle = color
+  ctx.fillRect(0, 0, 1, 1)
+  const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data
+  const h = (x: number) => x.toString(16).padStart(2, '0')
+  return a < 255 ? `#${h(r)}${h(g)}${h(b)}${h(a)}` : `#${h(r)}${h(g)}${h(b)}`
 }
 
 // Token NAMES only — values are never hardcoded. Backgrounds use a numeric
@@ -30,10 +35,11 @@ function tokenNames(kind: Kind, tone: Tone): string[] {
   return [1, 2, 3, 4, 5].map((n) => `${kind}-${n}${sfx(tone)}`)
 }
 
-function Swatch({ kind, token }: { kind: Kind; token: string }) {
+function Swatch({ kind, token, rev }: { kind: Kind; token: string; rev: number }) {
   // Read the live computed color off the rendered preview (which resolves
   // `var(--token)` within its themed `.light`/`.dark` row) and show it as hex
-  // — so the label always tracks tokens.css, no hardcoded values.
+  // — so the label always tracks tokens.css, no hardcoded values. `rev` bumps
+  // on a palette switch (theme-anta on/off) so the readout re-reads.
   const previewRef = useRef<HTMLDivElement>(null)
   const [value, setValue] = useState('')
   useEffect(() => {
@@ -41,7 +47,7 @@ function Swatch({ kind, token }: { kind: Kind; token: string }) {
     if (!el) return
     const cs = getComputedStyle(el)
     setValue(toHex(kind === 'bg' ? cs.backgroundColor : cs.color))
-  }, [kind, token])
+  }, [kind, token, rev])
   return (
     <div class={s.swatch}>
       {kind === 'bg' && (
@@ -61,14 +67,30 @@ function Swatch({ kind, token }: { kind: Kind; token: string }) {
   )
 }
 
-// One swatch grid — a single "theme example". The themed `.light`/`.dark`
-// ancestor (rendered by the static Swatches.astro shell) supplies the per-mode
-// token values; each Swatch reads them live for its hex label.
-export default function SwatchGrid({ kind, tone }: { kind: Kind; tone: Tone }) {
+// One swatch grid — a single "theme example". The `.light`/`.dark` ancestor
+// (from the static Swatches.astro shell) supplies the per-mode token values;
+// each Swatch reads them live for its hex label. Tone is client state: the
+// ToneTabs island broadcasts `anta-colors-tone` and the grid re-renders in
+// place (cells key by token, so fresh cells re-read their computed hex).
+export default function SwatchGrid({ kind, tone: initialTone = 'neutral' }: { kind: Kind; tone?: Tone }) {
+  const [tone, setTone] = useState<Tone>(initialTone)
+  // Bump on a palette switch so each Swatch re-reads its computed hex (the
+  // ThemeSwitcher dispatches `anta-palette-change` when theme-anta toggles).
+  const [rev, setRev] = useState(0)
+  useEffect(() => {
+    const onPalette = () => setRev((r) => r + 1)
+    const onTone = (e: Event) => setTone((e as CustomEvent<{ tone: Tone }>).detail.tone)
+    window.addEventListener('anta-palette-change', onPalette)
+    window.addEventListener('anta-colors-tone', onTone)
+    return () => {
+      window.removeEventListener('anta-palette-change', onPalette)
+      window.removeEventListener('anta-colors-tone', onTone)
+    }
+  }, [])
   return (
     <div class={s.swatchGrid}>
       {tokenNames(kind, tone).map((name) => (
-        <Swatch key={name} kind={kind} token={name} />
+        <Swatch key={name} kind={kind} token={name} rev={rev} />
       ))}
     </div>
   )

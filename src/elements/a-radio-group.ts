@@ -51,6 +51,10 @@ export class ARadioGroupElement extends HTMLElementBase {
   // True after the first connect — gates the native `change` event so it never
   // fires for the initial seed (only for real, post-connect selection changes).
   private alive = false;
+  // Gates sync() until the child <a-radio>s are upgraded (set a microtask
+  // after connect) — same hazard as a-tabs' childrenReady: adopted HTML
+  // upgrades the parent first, and an eager sync() clobbers the children.
+  private childrenReady = false;
 
   /** The selected option's value, or `null` when nothing is selected. */
   get value(): string | null {
@@ -92,8 +96,14 @@ export class ARadioGroupElement extends HTMLElementBase {
     });
     this.observer.observe(this, { childList: true, subtree: true });
 
-    this.sync();
-    this.alive = true;
+    // First sync deferred to a microtask (see childrenReady). `alive` flips
+    // after it, so the initial apply never fires `change`.
+    queueMicrotask(() => {
+      if (!this.isConnected) return;
+      this.childrenReady = true;
+      this.sync();
+      this.alive = true;
+    });
   }
 
   disconnectedCallback() {
@@ -151,6 +161,7 @@ export class ARadioGroupElement extends HTMLElementBase {
   }
 
   private sync = () => {
+    if (!this.childrenReady) return; // deferred first sync covers this
     const value = this.#currentValue;
     const radios = this.#radios;
     // `null` (attribute absent) means "nothing selected"; an empty string is a

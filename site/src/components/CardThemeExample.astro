@@ -1,6 +1,6 @@
 ---
 // Static preview for the Colors page, meant to sit inside a <Preview>. The
-// semantic `--bg-card` / `--border-card` map to different numeric steps per
+// semantic `--bg-my-card` / `--bg-my-card-border` map to different numeric steps per
 // theme — bg-1 + border-5 in light, lifted bg-4 + border-4 in dark. Split into two themed
 // halves (forced via the global .light / .dark class) so both render at once
 // regardless of the page theme. Styles live in Swatches.module.css (a scoped
@@ -9,7 +9,7 @@ import s from './Swatches.module.css'
 ---
 
 <div class={s.cardSplit}>
-  <div class:list={[s.cardCell, 'light']} style="--bg-card: var(--bg-1); --border-card: var(--border-5)">
+  <div class:list={[s.cardCell, 'light']} style="--bg-my-card: var(--bg-1); --bg-my-card-border: var(--border-5)">
     <span class={s.cellTag}>--bg-2</span>
     <div class={s.card}>
       <div class={s.cardTitle}>Card title</div>
@@ -17,7 +17,7 @@ import s from './Swatches.module.css'
       <span class={s.cardTag}>--bg-1</span>
     </div>
   </div>
-  <div class:list={[s.cardCell, 'dark']} style="--bg-card: var(--bg-4); --border-card: var(--border-4)">
+  <div class:list={[s.cardCell, 'dark']} style="--bg-my-card: var(--bg-4); --bg-my-card-border: var(--border-4)">
     <span class={s.cellTag}>--bg-2</span>
     <div class={s.card}>
       <div class={s.cardTitle}>Card title</div>

@@ -14,8 +14,8 @@ A block-level heading at one of six `level`s. The `level` drives the
 type scale (font-size + line-height); it's also surfaced to assistive
 tech via `aria-level`. `<Title>` carries no vertical margins — it drops
 into any container and the parent owns spacing (a `gap` or padding).
-Pair with `priority` (`primary` → `quinary`, mapping to `--text-1` …
-`--text-5`) and `tone` (`neutral` (default, untinted), `brand`,
+Pair with `priority` (`primary` → `quaternary`, mapping to `--text-1` …
+`--text-4`) and `tone` (`neutral` (default, untinted), `brand`,
 `success`, `critical`, `warning`, `info`, or any literal CSS color for a
 one-off custom tone) exactly as you would on `Text`.
 
@@ -164,37 +164,31 @@ horizontally on narrow viewports.
     <Title level={3} priority="secondary">Secondary</Title>
     <Title level={3} priority="tertiary">Tertiary</Title>
     <Title level={3} priority="quaternary">Quaternary</Title>
-    <Title level={3} priority="quinary">Quinary</Title>
 
     <Title level={3} tone="brand">Brand primary</Title>
     <Title level={3} tone="brand" priority="secondary">Secondary</Title>
     <Title level={3} tone="brand" priority="tertiary">Tertiary</Title>
     <Title level={3} tone="brand" priority="quaternary">Quaternary</Title>
-    <Title level={3} tone="brand" priority="quinary">Quinary</Title>
 
     <Title level={3} tone="success">Success primary</Title>
     <Title level={3} tone="success" priority="secondary">Secondary</Title>
     <Title level={3} tone="success" priority="tertiary">Tertiary</Title>
     <Title level={3} tone="success" priority="quaternary">Quaternary</Title>
-    <Title level={3} tone="success" priority="quinary">Quinary</Title>
 
     <Title level={3} tone="critical">Critical primary</Title>
     <Title level={3} tone="critical" priority="secondary">Secondary</Title>
     <Title level={3} tone="critical" priority="tertiary">Tertiary</Title>
     <Title level={3} tone="critical" priority="quaternary">Quaternary</Title>
-    <Title level={3} tone="critical" priority="quinary">Quinary</Title>
 
     <Title level={3} tone="warning">Warning primary</Title>
     <Title level={3} tone="warning" priority="secondary">Secondary</Title>
     <Title level={3} tone="warning" priority="tertiary">Tertiary</Title>
     <Title level={3} tone="warning" priority="quaternary">Quaternary</Title>
-    <Title level={3} tone="warning" priority="quinary">Quinary</Title>
 
     <Title level={3} tone="info">Info primary</Title>
     <Title level={3} tone="info" priority="secondary">Secondary</Title>
     <Title level={3} tone="info" priority="tertiary">Tertiary</Title>
     <Title level={3} tone="info" priority="quaternary">Quaternary</Title>
-    <Title level={3} tone="info" priority="quinary">Quinary</Title>
   </div>
 </div>
 

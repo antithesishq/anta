@@ -1,4 +1,4 @@
-import { nativeStateChange, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
+import { nativeStateChange, toneStyle, roundStyle, roundAttr, type StateChangeEvent } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
 import { Button } from "./Button"
 
@@ -35,24 +35,28 @@ export interface BannerProps extends BaseProps {
    *  It doesn't make the banner un-dismissible, it just drops the built-in ✕.
    *  @defaultValue true */
   closable?: boolean
+  /** ARIA role for the strip host. `'status'` (a polite live region, so the notice
+   *  reaches assistive tech) by default; pass `'alert'` for an urgent notice that
+   *  should interrupt, or a landmark role.
+   *  @defaultValue 'status' */
+  role?: string
   /** Controlled dismissed state. When provided, the consumer owns visibility: the
-   *  banner only follows this prop, and clicking ✕ *requests* dismissal via
-   *  `onDismiss` (reject by not updating). Leave undefined for uncontrolled. */
+   *  banner follows this prop only, and clicking ✕ *requests* dismissal (reject by
+   *  not updating). **Requires `onDismiss`** — controlled mode never self-hides, so
+   *  without a handler to set `dismissed` the ✕ can't close the banner. Leave
+   *  undefined for uncontrolled. */
   dismissed?: boolean
-  /** Initial dismissed state for the uncontrolled case (read once on mount).
-   *  @defaultValue false */
+  /** Initial dismissed state for the uncontrolled case (read once on mount). */
   defaultDismissed?: boolean
   /** Fired when the user dismisses the banner (clicks ✕). Uncontrolled, the banner
-   *  hides itself and this just notifies; controlled, set `dismissed` to `true` to
-   *  apply, or ignore it to reject. */
+   *  hides itself and this just notifies. Controlled, it's how you accept the
+   *  request — set `dismissed` to `true` (or ignore to reject); pair it with
+   *  `dismissed`, or the banner can't be closed. */
   onDismiss?: () => void
 }
 
 /** The element's `statechange` payload, in the `'open'|'closed'` vocabulary. */
 type StateChangeDetail = { next: "open" | "closed"; prev: "open" | "closed" }
-type StateChangeEvent =
-  | CustomEvent<StateChangeDetail>
-  | { nativeEvent: CustomEvent<StateChangeDetail> }
 
 /**
  * `<Banner>` — a full-width, dismissible message strip with a bottom border.
@@ -92,6 +96,7 @@ export const Banner = ({
   tone,
   round,
   closable,
+  role = "status",
   dismissed,
   defaultDismissed,
   onDismiss,
@@ -100,7 +105,10 @@ export const Banner = ({
   children,
   ...rest
 }: BannerProps) => {
-  const controlled = dismissed !== undefined
+  // `!= null` (not `!== undefined`) so a `dismissed={null}` from optional
+  // chaining / JSON reads as uncontrolled rather than locking the banner open —
+  // React's own controlled-prop convention.
+  const controlled = dismissed != null
 
   // A non-named tone is a literal CSS color: feed it to the element's oklch
   // derivation via an inline custom property; a valued `round` likewise feeds
@@ -132,12 +140,16 @@ export const Banner = ({
       default-state={!controlled ? (defaultDismissed ? "closed" : "open") : undefined}
       tone={tone && tone !== "neutral" ? tone : undefined}
       round={roundAttr(round)}
+      // ARIA lives in the wrapper (the element stays engine-agnostic). Default the
+      // strip to `role="status"` — a polite live region — so a notice reaches AT;
+      // `role={undefined}` opts out, `role="alert"` makes it assertive.
+      role={role}
       // All-lowercase `onstatechange` is the one spelling both renderers bind to
       // the element's `statechange` event (React 19 keeps the case after `on`, so
       // `onStateChange` would listen for "StateChange"; Preact lowercases).
       onstatechange={
         onDismiss
-          ? (e: StateChangeEvent) => {
+          ? (e: StateChangeEvent<StateChangeDetail>) => {
               const { detail, isOwn } = nativeStateChange<StateChangeDetail>(e)
               // Only the banner's own dismiss counts (a foreign bubbling
               // `statechange` speaks a different vocabulary). next is always

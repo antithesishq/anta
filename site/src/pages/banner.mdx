@@ -244,10 +244,12 @@ The one Banner-specific detail is the ✕: it's an `<a-button>` carrying
 **`data-custom-event="dismissrequest"`**. That makes the button dispatch the bubbling
 `dismissrequest` event the banner listens for, so the dismiss works with no framework
 hydration — a hand-authored banner closes on its own. Give the ✕ a `tone` to match the
-strip and an `aria-label`.
+strip and an `aria-label`. The `<Banner>` wrapper also adds `role="status"` (a polite
+live region) for you; hand-authoring, set it yourself so the notice reaches assistive
+tech (`role="alert"` for an urgent one).
 
 <Preview direction="column" gap="8px">
-  <a-banner tone="info">
+  <a-banner role="status" tone="info">
     <a-banner-message slot="message">A new version is ready to install.</a-banner-message>
     <Button slot="actions" size="small" priority="primary" tone="info" label="Update now" />
     <Button slot="close" priority="quaternary" icon="x" tone="info" aria-label="Dismiss" data-custom-event="dismissrequest" />
@@ -255,7 +257,7 @@ strip and an `aria-label`.
 </Preview>
 
 ```html
-<a-banner tone="info">
+<a-banner role="status" tone="info">
   <a-banner-message slot="message">A new version is ready to install.</a-banner-message>
   <a-button slot="actions" size="small" priority="primary" tone="info">Update now</a-button>
   <!-- the ✕: data-custom-event="dismissrequest" wires up the dismiss -->

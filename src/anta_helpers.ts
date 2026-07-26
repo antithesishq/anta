@@ -44,8 +44,17 @@ export function wrapLabel(kids: React.ReactNode, tag: string): React.ReactNode {
  * `currentTarget` is still live. (Read as `true` for the falsy-event guard so a
  * missing event never spuriously reads as bubbled.)
  */
+/**
+ * The event a cross-renderer `statechange` handler receives: React wraps the native
+ * `CustomEvent` in a synthetic event (`.nativeEvent`); Preact passes it directly. `D`
+ * is the per-component `detail` vocabulary. Pair with `nativeStateChange` to unwrap.
+ * Exported so the stateful wrappers (`Banner`, and future ones) don't each re-declare
+ * this union — the CLAUDE.md "reuse shared wrapper helpers" rule.
+ */
+export type StateChangeEvent<D> = CustomEvent<D> | { nativeEvent: CustomEvent<D> }
+
 export function nativeStateChange<D>(
-  e: CustomEvent<D> | { nativeEvent: CustomEvent<D> },
+  e: StateChangeEvent<D>,
 ): { event: CustomEvent<D>; detail?: D; isOwn: boolean } {
   const event = ('nativeEvent' in e ? e.nativeEvent : e) as CustomEvent<D>
   return { event, detail: event?.detail, isOwn: !event || event.target === event.currentTarget }

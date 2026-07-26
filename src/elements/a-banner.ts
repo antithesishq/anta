@@ -72,7 +72,11 @@ const DISMISS_TRIGGER = 'dismissrequest'
 // The host is the flex bar (styled in a-banner.css); the shadow only projects the
 // slots. The message / content slots are display:contents so their nodes ARE the
 // host's flex items; actions is a nested flex row; close is a 40px-wide, full-height
-// ✕ strip on the right edge (its glyph vertically centered).
+// ✕ strip on the right edge (its glyph vertically centered). The close slot is dimmed
+// at rest (opacity 0.65) and brightens only when the ✕ itself is hovered/focused (not
+// the whole banner) — the a-input dim-actions affordance, scoped tight.
+// NOTE: this string is injected verbatim into every instance's shadow root and isn't
+// minified, so it stays comment-free (rationale lives here in TS instead).
 const SHADOW_STYLE = `
   slot[name="message"], slot:not([name]) { display: contents; }
 
@@ -89,8 +93,6 @@ const SHADOW_STYLE = `
     inset-block: 0;
     display: grid;
     place-items: center;
-    /* Dim the ✕ at rest; brighten only when the ✕ itself is hovered or focused
-       (not the whole banner) — the a-input dim-actions affordance, scoped tight. */
     opacity: 0.65;
     transition: opacity 150ms ease;
   }
@@ -110,9 +112,19 @@ export class ABannerElement extends HTMLElementBase {
 
   // Visibility is held here as a custom state (`:state(open)` / `:state(closed)`),
   // NOT a host attribute — declarative-DOM safe (no host mutation, no reconcile
-  // churn). Guarded for engines without attachInternals (no-op there; the banner
-  // then simply never self-hides, matching every other element's :state() hook).
+  // churn). This is the ONLY declarative-safe self-hide channel, so a runtime
+  // (uncontrolled) ✕ dismiss needs CustomStateSet + the CSS `:state()` selector
+  // (Chrome 90+, Safari 17.4+, Firefox 126+); below that the ✕ can't self-hide (an
+  // attribute fallback would violate the no-host-mutation rule). Controlled mode
+  // degrades everywhere — the `state="closed"` attribute the wrapper sets has the
+  // `[state="closed"]` CSS fallback, which needs no custom-state support.
   #internals?: ElementInternals
+
+  // `default-state` seeds the uncontrolled intent ONCE, on the first connect; a
+  // re-parent (disconnect → reconnect) then keeps the applied state (which lives
+  // off-DOM in #internals and survives the move) instead of re-seeding `open` over a
+  // banner the user already dismissed. Mirrors a-dialog's #seeded.
+  #seeded = false
 
   constructor() {
     super()
@@ -142,8 +154,15 @@ export class ABannerElement extends HTMLElementBase {
     // the flex bar (see a-banner.css).
     shadow.append(style, messageSlot, contentSlot, actionsSlot, closeSlot)
 
-    // The ✕ dispatches DISMISS_TRIGGER on activation; turn it into a dismiss request.
-    this.addEventListener(DISMISS_TRIGGER, () => this.#requestDismiss())
+    // The ✕ dispatches DISMISS_TRIGGER (bubbling) on activation; turn it into a
+    // dismiss request and stop it here, at the nearest banner — otherwise a Banner
+    // nested in another Banner's content would dismiss the outer one too (the
+    // banner-specific name only shields Dialog/Card/Expander ancestors, not another
+    // a-banner up the tree).
+    this.addEventListener(DISMISS_TRIGGER, (e) => {
+      e.stopPropagation()
+      this.#requestDismiss()
+    })
   }
 
   /** Controlled mode: the `state` attribute is present and owns visibility. */
@@ -152,22 +171,31 @@ export class ABannerElement extends HTMLElementBase {
   }
 
   /** The currently *applied* state (read from the custom state — the source of
-   *  truth for what's painted). Reads open until the element has applied a state. */
+   *  truth for what's painted). Reads open until the element has applied a state.
+   *  Both `?.` guard engines with ElementInternals but no CustomStateSet (`.states`
+   *  undefined), where reading it would otherwise throw inside the ✕ click. */
   get #current(): BannerState {
-    return this.#internals?.states.has('closed') ? 'closed' : 'open'
+    return this.#internals?.states?.has('closed') ? 'closed' : 'open'
   }
 
   connectedCallback() {
-    this.#applyState(this.#seedState())
+    // Controlled: the `state` attribute is the source of truth — reflect it on every
+    // (re)connect. Uncontrolled: seed from `default-state` only on the FIRST connect;
+    // a later re-parent preserves what the user last had (see #seeded) rather than
+    // re-showing a banner they already dismissed.
+    if (this.#controlled) {
+      this.#applyState(parseState(this.getAttribute('state')))
+    } else if (!this.#seeded) {
+      this.#applyState(this.#seedState())
+      this.#seeded = true
+    }
   }
 
-  /** The state to apply at connect. Controlled → reflect `state`. Uncontrolled → a
-   *  banner is shown by DEFAULT, so seed `open` unless `default-state="closed"` is
-   *  explicit. (Unlike a-dialog / a-expander, whose absent default-state means
-   *  closed — a banner is the inverse, so it can't share `parseState` for the
-   *  uncontrolled seed. A hand-authored `<a-banner>` with no attributes shows.) */
+  /** The uncontrolled initial state. A banner is shown by DEFAULT, so `open` unless
+   *  `default-state="closed"` is explicit. (Unlike a-dialog / a-expander, whose
+   *  absent default-state means closed — a banner is the inverse, so it can't share
+   *  `parseState` here. A hand-authored `<a-banner>` with no attributes shows.) */
   #seedState(): BannerState {
-    if (this.#controlled) return parseState(this.getAttribute('state'))
     return this.getAttribute('default-state') === 'closed' ? 'closed' : 'open'
   }
 

@@ -29,6 +29,10 @@ const EXCLUDED_BY_COMPONENT: Record<string, Set<string>> = {
   // panel would flip the uncontrolled demo into controlled mode with no handler,
   // trapping the modal open. Keep the panel to appearance + content.
   Dialog: new Set(['open', 'defaultOpen', 'name', 'onStateChange']),
+  // Banner's dismiss-state wiring is the same story: toggling `dismissed` would flip
+  // the uncontrolled demo into controlled mode with no `onDismiss`, so the ✕ could
+  // never reopen it. `role` is an a11y attribute, not an appearance knob.
+  Banner: new Set(['dismissed', 'defaultDismissed', 'onDismiss', 'role']),
 }
 
 /** Components whose `children` are structural sub-elements (a tree of other

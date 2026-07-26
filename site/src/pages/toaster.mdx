@@ -2,7 +2,8 @@
 layout: ../layouts/DocsLayout.astro
 title: Toaster
 ---
-import ToasterDemo from '../components/ToasterDemo'
+import Playground from '../components/Playground'
+import toasterDemoCode from './toaster.demo.ts'
 import Disclosure from '../components/Disclosure.astro'
 import PropsTable from '../components/PropsTable.astro'
 
@@ -22,7 +23,13 @@ to go if no `<Toaster>` is mounted.
 
 <Disclosure title="Playground" anchor={false} brand>
 
-<ToasterDemo client:load />
+<Playground
+  client:visible
+  component="Toaster"
+  layout="side"
+  panelHeight={380}
+  initialCode={toasterDemoCode}
+/>
 
 </Disclosure>
 

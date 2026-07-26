@@ -4,6 +4,9 @@ This page tracks what ships to npm. Documentation website changes are not tracke
 
 ## Unreleased
 
+### Added
+- **`Banner` (`<a-banner>`) — a full-width, dismissible message strip.** A centered row of `message`, `children`, and `actions` with a ✕ at the right edge; `actions` wrap below the message when the row can't fit. `tone` (named or any CSS colour) tints the surface, text, and ✕. Borderless by default — add `border-bottom-width` / `border-width` for a rule or outline; `round` makes a standalone bar. Closable by default, following Anta's open/closed state contract as `dismissed` / `defaultDismissed` / `onDismiss` (`closable={false}` drops the ✕); dismiss animates a height + opacity collapse. Defaults to `role="status"`. `::part(message | content | actions | close)`. Exports `BannerProps`.
+
 ## 0.3.13 — July 25, 2026
 
 ### Added

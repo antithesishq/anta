@@ -36,6 +36,8 @@ export { ATabPanelElement, register_a_tabpanel } from './a-tabpanel'
 export { ADialogElement, register_a_dialog } from './a-dialog'
 export { ACardElement, register_a_card } from './a-card'
 export { ABannerElement, register_a_banner } from './a-banner'
+export { AToasterElement, register_a_toaster } from './a-toaster'
+export { AToastElement, register_a_toast } from './a-toast'
 
 // `a-title` and `a-tag` are CSS-only styled tags (no JS / no element module), so
 // their styles can't ride along on a module import — load them here directly.

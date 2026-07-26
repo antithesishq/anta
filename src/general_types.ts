@@ -1157,3 +1157,39 @@ export interface ABannerAttributes extends BaseAttributes {
     e: CustomEvent<{ next: 'open' | 'closed'; prev: 'open' | 'closed' }>,
   ) => void
 }
+
+/**
+ * Attributes for the `<a-toaster>` custom element — a viewport-anchored
+ * notification region. One instance hosts all six placement zones; each
+ * `<a-toast>` routes to a corner/edge by its `slot` attribute. Keep one mounted
+ * (the `<Toaster>` wrapper, or by hand); the toast manager (`Toaster.manager` /
+ * `createToaster`) renders `<a-toast>` nodes into it. Exposes `::part(region)`.
+ * Low-level attributes; for the typed JSX wrapper use `Toaster` from
+ * `@antadesign/anta`.
+ */
+export interface AToasterAttributes extends BaseAttributes {
+  /** Coordinator name — binds this region to a `createToaster(name)`. Omit for the
+   *  default region (`Toaster.manager`). */
+  name?: string
+  /** Accessible name for the region landmark. */
+  'aria-label'?: string
+}
+
+/**
+ * Attributes for the `<a-toast>` custom element — one item inside an
+ * `<a-toaster>`. A thin holder around arbitrary slotted content; it owns the
+ * enter/exit animation, the auto-dismiss timer (paused on hover / focus), and an
+ * optional ✕. Route it to a placement zone with `slot` (`slot="bottom-right"`,
+ * …). Exposes `::part(toast | close)`. It never removes itself — on dismiss it
+ * animates out then emits a bubbling `dismiss`, and the owner removes the node.
+ */
+export interface AToastAttributes extends BaseAttributes {
+  /** Auto-dismiss delay in ms; `0` keeps it until dismissed. Defaults to 5000. */
+  duration?: number | string
+  /** Show the ✕ dismiss button. Presence-based (`''` on, omit off). */
+  closable?: boolean | ''
+  /** Fires after the exit animation, when the toast has dismissed — a bubbling
+   *  `CustomEvent`. The owner removes the node in response. All-lowercase so both
+   *  renderers bind it (React 19 keeps the case after `on`; Preact lowercases). */
+  ondismiss?: (e: CustomEvent) => void
+}

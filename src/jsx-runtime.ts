@@ -85,7 +85,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AProgressAttributes, ATextAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ATooltipAttributes, AInputAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, BaseAttributes } from './general_types'
+import type { AProgressAttributes, ATextAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ATooltipAttributes, AInputAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -147,4 +147,6 @@ export interface AntaIntrinsicElements {
   'a-card': ACardAttributes
   'a-banner': ABannerAttributes
   'a-banner-message': BaseAttributes
+  'a-toaster': AToasterAttributes
+  'a-toast': AToastAttributes
 }

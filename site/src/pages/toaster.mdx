@@ -1,0 +1,205 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Toaster
+---
+import ToasterDemo from '../components/ToasterDemo'
+import Disclosure from '../components/Disclosure.astro'
+import PropsTable from '../components/PropsTable.astro'
+
+# Toaster
+
+A viewport-anchored region that shows toasts — short, self-dismissing notices
+stacked in a corner. It isn't a fixed "toast card": you toast **any element** — a
+`Banner`, a `Card`, a `Sticker`, a bespoke `<div>` — and the region handles
+placement, stacking, and the auto-dismiss timer.
+
+Two pieces work together. **`<Toaster>`** is the region; you mount one and keep it
+mounted (a portal is fine). **`Toaster.manager`** is the controller you drive from
+anywhere: `Toaster.manager.add(node)` renders `node` into the mounted region. The
+manager holds no DOM of its own — it renders into whatever region is currently
+mounted, so with no `<Toaster>` on the page there's nowhere for a toast to go.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<ToasterDemo client:load />
+
+</Disclosure>
+
+## Mount the region, drive the manager
+
+Mount one `<Toaster>` at a stable spot in your tree and leave it there:
+
+```tsx
+import { Toaster } from '@antadesign/anta'
+
+function App() {
+  return (
+    <>
+      <YourApp />
+      <Toaster />        {/* keep it mounted — the manager renders here */}
+    </>
+  )
+}
+```
+
+Then, from anywhere, hand the manager a DOM node:
+
+```ts
+import { Toaster } from '@antadesign/anta'
+
+const el = document.createElement('a-banner')
+el.setAttribute('tone', 'success')
+el.setAttribute('round', '')
+el.textContent = 'Your changes were saved.'
+
+Toaster.manager.add(el, { placement: 'bottom-right' })
+```
+
+`add` takes a DOM **element or a string** — the framework-neutral currency, so the
+same call works in React, Preact, or plain JS. Calling `add` before a `<Toaster>`
+has mounted queues the toast; it appears once a region mounts. If the region
+unmounts and a new one mounts later, still-live toasts repaint into it.
+
+## Toast anything
+
+Anta components are custom elements, so you build them with `document.createElement`
+and toast the result. A `Banner` gives you a toned strip with a message; a `Card` a
+titled surface; a `Sticker` an illustration; a plain `<div>` whatever you want.
+
+```ts
+// A Card
+const card = document.createElement('a-card')
+card.setAttribute('tone', 'info')
+card.setAttribute('size', 'small')
+const title = document.createElement('a-title')
+title.setAttribute('slot', 'header')
+title.setAttribute('level', '5')
+title.textContent = 'Deployment ready'
+const body = document.createElement('a-text')
+body.textContent = 'Your build passed all checks.'
+card.append(title, body)
+Toaster.manager.add(card, { placement: 'top-right', closable: true })
+
+// A Sticker (import the raw SVG for the one you want)
+import { svg } from '@antadesign/stickers/clap'
+const sticker = document.createElement('a-sticker')
+sticker.setAttribute('svg', svg)
+sticker.style.setProperty('--sticker-size', '96px')
+Toaster.manager.add(sticker)
+
+// Anything
+const box = document.createElement('div')
+box.textContent = '🎉 Anything can be a toast'
+Toaster.manager.add(box)
+```
+
+To toast a **JSX component**, render it to a detached node first and pass that node
+— `render(<Banner … />, node)` (Preact) or a React root — then `Toaster.manager.add(node)`.
+
+## Placement
+
+`placement` picks the corner or edge; the default is `bottom-right`. Bottom zones
+grow upward (newest nearest the edge), top zones grow downward. Six values:
+
+`top-left`, `top-center`, `top-right`, `bottom-left`, `bottom-center`, `bottom-right`.
+
+One `<Toaster>` serves every placement — each toast routes to its own zone, so a
+single mounted region and manager can drop notices in any corner.
+
+## Timing and dismissal
+
+Each toast auto-dismisses after `duration` (ms), 5000 by default; the countdown
+pauses while the pointer is over the toast or focus is inside it. `duration: 0`
+keeps it until dismissed. `closable: true` adds a ✕. On dismiss the toast animates
+out and the manager removes it.
+
+```ts
+Toaster.manager.add(el, { duration: 0, closable: true })   // sticks until closed
+```
+
+Drive dismissal yourself with the returned id:
+
+```ts
+const id = Toaster.manager.add(el)
+Toaster.manager.dismiss(id)          // dismiss this one
+Toaster.manager.update(id, other)    // swap its content in place
+Toaster.manager.clear()              // dismiss all
+```
+
+Pass your own `id` to **upsert** — a second `add` with the same id replaces the
+live toast's content and restarts its timer, instead of stacking a duplicate. Good
+for a step that reports progress, or to dedupe a repeated event:
+
+```ts
+Toaster.manager.add(saving, { id: 'save' })    // "Saving…"
+Toaster.manager.add(saved, { id: 'save' })     // same slot → "Saved", in place
+```
+
+## Multiple regions
+
+`Toaster.manager` is the default region. For an isolated region (a distinct corner
+group, or a scoped surface), create your own and bind it by `name`:
+
+```tsx
+import { createToaster, Toaster } from '@antadesign/anta'
+
+export const alerts = createToaster('alerts')
+
+// mount its region:
+<Toaster name="alerts" />
+
+// drive it:
+alerts.add(el, { placement: 'top-center' })
+```
+
+One store drives one region — mounting two `<Toaster>`s with the same `name` would
+duplicate every toast. Use a `name` per region.
+
+## Vanilla HTML
+
+No framework needed. Place an `<a-toaster>` in your markup and drive the default
+manager (or a `createToaster()`):
+
+```html
+<a-toaster></a-toaster>
+<script type="module">
+  import '@antadesign/anta/elements'
+  import { Toaster } from '@antadesign/anta'
+
+  const note = document.createElement('a-banner')
+  note.setAttribute('tone', 'info')
+  note.setAttribute('round', '')
+  note.textContent = 'A new version is available.'
+  Toaster.manager.add(note, { placement: 'bottom-right', closable: true })
+</script>
+```
+
+The `<a-toaster>` element registers itself as the region; `Toaster.manager` finds
+it and renders into it, the same as the `<Toaster>` wrapper does.
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Toaster" />
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+The region and item are plain custom elements — style them with ordinary CSS
+(`@layer anta`, so an un-layered rule of yours wins without `!important`).
+
+Region spacing lives on `a-toaster` as tokens: **`--toaster-inset`** (gap from the
+viewport edge), **`--toaster-gap`** (space between stacked toasts), and
+**`--toaster-width`** (column width). Item elevation and timing live on `a-toast`:
+**`--toast-shadow`** and **`--toast-dur`**.
+
+```css
+a-toaster { --toaster-width: 420px; --toaster-gap: 10px; }
+a-toast { --toast-shadow: 0 6px 20px rgba(0, 0, 0, 0.22); }
+```
+
+`<a-toast>` exposes `::part(toast)` (the holder that carries the elevation) and
+`::part(close)` (the ✕). The content keeps its own styling — a toned `Banner`
+brings its surface, a `Card` its border.
+
+</Disclosure>

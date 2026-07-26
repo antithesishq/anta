@@ -275,9 +275,10 @@ strip and an `aria-label`.
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the surface, text, and border colour in oklch), **`round`** the
-corners. Two knobs are worth keeping: **`--banner-tone-source`** (the color a custom
-`tone` derives from — set it to drive the palette from your own variable) and
-**`--banner-min-height`** (the bar's resting height, `40px` by default).
+corners. The one knob worth keeping is **`--banner-tone-source`** — the color a
+custom `tone` derives from, so set it to drive the palette from your own variable.
+Everything else is plain CSS on the host: `min-height` for a taller bar, a
+`border-*-width` for a rule or outline (below).
 
 ```tsx folded
 <Banner tone="#e0457b" message="Custom" />
@@ -290,26 +291,17 @@ a full outline. The colour is already tone-aware (`--banner-border`), so a toned
 banner's border matches its tone with no extra work.
 
 <Preview direction="column" gap="8px">
-  <a-banner class="ruled" tone="info">
+  <a-banner style="border-bottom-width: 1px" tone="info">
     <a-banner-message slot="message">A rule under the strip — border-bottom-width.</a-banner-message>
   </a-banner>
-  <a-banner class="outlined" round tone="success">
+  <a-banner style="border-width: 1px" round tone="success">
     <a-banner-message slot="message">A full outline on a round banner — border-width.</a-banner-message>
   </a-banner>
-  <style is:inline>{`
-    a-banner.ruled { border-bottom-width: 1px; }
-    a-banner.outlined { border-width: 1px; }
-  `}</style>
 </Preview>
 
 ```tsx folded
-<Banner className="ruled" tone="info" message="A rule under the strip — border-bottom-width." />
-<Banner className="outlined" round tone="success" message="A full outline on a round banner — border-width." />
-```
-
-```css folded
-a-banner.ruled { border-bottom-width: 1px; }   /* a divider under the strip */
-a-banner.outlined { border-width: 1px; }        /* a full outline (pairs with round) */
+<Banner tone="info" message="A rule under the strip." style={{ borderBottomWidth: 1 }} />
+<Banner round tone="success" message="A full outline on a round banner." style={{ borderWidth: 1 }} />
 ```
 
 The host `a-banner` **is** the centered bar — its surface, text, border, and layout
@@ -318,20 +310,13 @@ without `!important`). For the individual regions, `<a-banner>` exposes
 `::part(message)` / `::part(content)` / `::part(actions)` / `::part(close)`.
 
 <Preview direction="column" gap="8px">
-  <a-banner class="tall-banner" tone="info">
-    <a-banner-message slot="message">A taller bar (--banner-min-height).</a-banner-message>
+  <a-banner style="min-height: 56px" tone="info">
+    <a-banner-message slot="message">A taller bar — min-height: 56px.</a-banner-message>
   </a-banner>
-  <style is:inline>{`
-    a-banner.tall-banner { --banner-min-height: 56px; }
-  `}</style>
 </Preview>
 
 ```tsx folded
-<Banner className="tall-banner" tone="info" message="A taller bar (--banner-min-height)." />
-```
-
-```css folded
-a-banner.tall-banner { --banner-min-height: 56px; }   /* taller bar (default 40px) */
+<Banner tone="info" message="A taller bar." style={{ minHeight: 56 }} />
 ```
 
 </Disclosure>

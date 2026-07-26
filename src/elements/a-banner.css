@@ -14,8 +14,6 @@
     --banner-border: var(--border-4);
     --banner-text: var(--text-2);
 
-    --banner-min-height: 40px;
-
     /* The host IS the centered bar — the slots (message / content / actions / close)
        project as its flex items, no wrapper element. Layout lives here (not a shadow
        node) so it paints before upgrade and consumers can override it in plain CSS.
@@ -32,7 +30,9 @@
     position: relative;
     box-sizing: border-box;
     width: 100%;
-    min-height: var(--banner-min-height);
+    /* Resting height. A plain host property, not a token: `a-banner` is light DOM,
+       so a consumer just sets `min-height` (plain CSS beats @layer, or inline). */
+    min-height: 40px;
     /* Symmetric inline padding reserves the right zone for the full-height ✕ (so
        the centered content never runs under it) and keeps the group centered. */
     padding: 6px 52px;

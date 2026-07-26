@@ -4,6 +4,8 @@ title: Toaster
 ---
 import Playground from '../components/Playground'
 import toasterDemoCode from './toaster.demo.ts'
+import ToasterDemo from '../components/ToasterDemo'
+import Preview from '../components/Preview.astro'
 import Disclosure from '../components/Disclosure.astro'
 import PropsTable from '../components/PropsTable.astro'
 
@@ -21,13 +23,21 @@ returning the content. The store holds no DOM — the mounted `<Toaster>` subscr
 to it and renders each toast through React/Preact, so there's nowhere for a toast
 to go if no `<Toaster>` is mounted.
 
+<Preview>
+  <ToasterDemo client:visible />
+</Preview>
+
+Configure one toast and fire it — the playground shows the render function plus the
+options object you pass to `add`. Edit the `Banner` in the code (or the props panel)
+and the `{ placement, duration, closable }` it's toasted with.
+
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
   client:visible
-  component="Toaster"
+  component="Banner"
   layout="side"
-  panelHeight={380}
+  panelHeight={300}
   initialCode={toasterDemoCode}
 />
 

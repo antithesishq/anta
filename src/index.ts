@@ -137,6 +137,8 @@ export type {
   ToasterManager,
   ToastOptions,
   ToastPlacement,
+  ToastContent,
+  ToastRender,
 } from './components/Toaster'
 export type { BaseProps, BaseAttributes } from './general_types'
 export { configure } from './jsx-runtime'

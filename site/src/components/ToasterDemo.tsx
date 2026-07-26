@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'preact/hooks'
-import { Toaster, Button, RadioGroup } from '@antadesign/anta'
+import { Toaster, Button, Banner, Card, Text, RadioGroup } from '@antadesign/anta'
 import type { ToastPlacement } from '@antadesign/anta'
-import { svg as clapSvg } from '@antadesign/stickers/clap'
+import { StickerClap } from '@antadesign/stickers'
 
 const PLACEMENTS: ToastPlacement[] = [
   'top-left', 'top-center', 'top-right',
@@ -10,10 +10,9 @@ const PLACEMENTS: ToastPlacement[] = [
 
 /**
  * Interactive demo for the Toaster docs page. A mounted `<Toaster>` region plus
- * buttons that build a DOM node and hand it to `Toaster.manager.add(...)` — the
- * imperative path the Playground can't express. Content is constructed as real
- * elements (a raw `<a-banner>`, `<a-card>`, an `<a-sticker>`, a bespoke `<div>`),
- * dogfooding "toast anything".
+ * buttons that hand `Toaster.manager.add(...)` a render function. The returns
+ * cover the range: a `<Banner>` / `<Card>` (JSX), a `<StickerClap>` (JSX), a
+ * plain string, and a bespoke DOM node — all through the one `add`.
  */
 export default function ToasterDemo() {
   const [placement, setPlacement] = useState<ToastPlacement>('bottom-right')
@@ -21,57 +20,47 @@ export default function ToasterDemo() {
   // Register the elements client-side (idempotent; the layout also does anta's).
   useEffect(() => {
     import('@antadesign/anta/elements')
+    import('@antadesign/stickers/elements')
   }, [])
 
-  const toastBanner = () => {
-    const el = document.createElement('a-banner')
-    el.setAttribute('tone', 'success')
-    el.setAttribute('round', '')
-    const msg = document.createElement('a-banner-message')
-    msg.setAttribute('slot', 'message')
-    msg.textContent = 'Your changes were saved.'
-    el.append(msg)
-    Toaster.manager.add(el, { placement, closable: true })
-  }
+  const toastBanner = () =>
+    Toaster.manager.add(
+      () => <Banner tone="success" round message="Your changes were saved." closable={false} />,
+      { placement, closable: true },
+    )
 
-  const toastCard = () => {
-    const card = document.createElement('a-card')
-    card.setAttribute('tone', 'info')
-    card.setAttribute('size', 'small')
-    const title = document.createElement('a-title')
-    title.setAttribute('slot', 'header')
-    title.setAttribute('level', '5')
-    title.textContent = 'Deployment ready'
-    const body = document.createElement('a-text')
-    body.textContent = 'Your build passed all checks and is ready to ship.'
-    card.append(title, body)
-    Toaster.manager.add(card, { placement, closable: true, duration: 8000 })
-  }
+  const toastCard = () =>
+    Toaster.manager.add(
+      () => (
+        <Card tone="info" size="small" header="Deployment ready">
+          Your build passed all checks and is ready to ship.
+        </Card>
+      ),
+      { placement, closable: true, duration: 8000 },
+    )
 
-  const toastSticker = async () => {
-    // Registering the sticker element pulls in its runtime; do it lazily, only
-    // when a sticker is actually toasted.
-    await import('@antadesign/stickers/elements')
-    const sticker = document.createElement('a-sticker')
-    sticker.setAttribute('svg', clapSvg)
-    sticker.setAttribute('role', 'img')
-    sticker.setAttribute('aria-label', 'Nice work')
-    sticker.style.setProperty('--sticker-size', '96px')
-    Toaster.manager.add(sticker, { placement, closable: true })
-  }
+  const toastSticker = () =>
+    Toaster.manager.add(() => <StickerClap size={96} label="Nice work" />, {
+      placement,
+      closable: true,
+    })
+
+  const toastString = () =>
+    Toaster.manager.add(() => <Text>Just a plain string, toasted.</Text>, { placement, closable: true })
 
   const toastCustom = () => {
+    // A bespoke DOM node — created once so the render function returns a stable ref.
     const box = document.createElement('div')
     box.textContent = '🎉 Anything can be a toast'
     box.style.cssText =
       'padding:14px 18px;border-radius:14px;color:#fff;font:500 14px/1.3 system-ui,sans-serif;' +
       'background:linear-gradient(135deg,#7c3aed,#db2777);'
-    Toaster.manager.add(box, { placement, closable: true })
+    Toaster.manager.add(() => box, { placement, closable: true })
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* The region — kept mounted for the manager to render into. */}
+      {/* The region — kept mounted for the store to render into. */}
       <Toaster />
 
       <RadioGroup
@@ -85,7 +74,8 @@ export default function ToasterDemo() {
         <Button priority="secondary" tone="success" label="Toast a Banner" onClick={toastBanner} />
         <Button priority="secondary" tone="info" label="Toast a Card" onClick={toastCard} />
         <Button priority="secondary" tone="brand" label="Toast a Sticker" onClick={toastSticker} />
-        <Button priority="secondary" label="Toast anything" onClick={toastCustom} />
+        <Button priority="secondary" label="Toast a string" onClick={toastString} />
+        <Button priority="secondary" label="Toast a DOM node" onClick={toastCustom} />
         <Button priority="quaternary" tone="critical" label="Clear all" onClick={() => Toaster.manager.clear()} />
       </div>
     </div>

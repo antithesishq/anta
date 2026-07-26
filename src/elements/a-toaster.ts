@@ -1,5 +1,4 @@
 import { HTMLElementBase } from '../anta_helpers'
-import { registerToasterTarget, unregisterToasterTarget } from '../toaster'
 import './a-toaster.css'
 
 /** Placement zones, in the order their `<slot name>` appears in the shadow. */
@@ -15,12 +14,10 @@ const ZONES = [
 /**
  * `<a-toaster>` — a viewport-anchored notification region. One instance hosts all
  * six placement zones; each `<a-toast>` routes to a corner/edge by its `slot`
- * attribute (`slot="bottom-right"`, …). The consumer keeps one mounted (via the
- * `<Toaster>` wrapper, or by hand in HTML); the toast manager
- * (`Toaster.manager` / `createToaster`) finds it through the in-memory
- * coordinator this element registers with on connect and appends `<a-toast>`
- * nodes into it. This element itself only touches its own shadow, reads its
- * children, and calls the coordinator — never a host or light-DOM write.
+ * attribute (`slot="bottom-right"`, …). The `<Toaster>` wrapper keeps it mounted
+ * and renders its `<a-toast>` children through the reconciler; this element only
+ * lays them out — it touches its own shadow and reads its children, never a host
+ * or light-DOM write.
  *
  * Shadow structure:
  *
@@ -32,8 +29,8 @@ const ZONES = [
  * transformed / clipping ancestor of wherever `<Toaster>` is mounted. It's shown
  * only while it holds at least one toast (`showPopover`) and hidden when empty
  * (`hidePopover`), so it never sits in the top layer for nothing. Natural
- * top-layer ordering stands: a dialog or menu opened after it can cover it, and a
- * fresh toast re-shows above.
+ * top-layer ordering stands: a dialog or menu opened afterward can cover it (by
+ * design — toasts don't force themselves above modals).
  */
 export class AToasterElement extends HTMLElementBase {
   #region: HTMLElement
@@ -65,13 +62,11 @@ export class AToasterElement extends HTMLElementBase {
   }
 
   connectedCallback() {
-    registerToasterTarget(this.getAttribute('name') ?? 'default', this)
-    // Children may already be present (a repaint into a freshly-connected region).
+    // Children may already be present (the wrapper renders them into the region).
     this.#syncVisibility()
   }
 
   disconnectedCallback() {
-    unregisterToasterTarget(this.getAttribute('name') ?? 'default', this)
     // The popover goes away with the shadow; drop our own state so a reconnect
     // re-shows cleanly.
     this.#shown = false

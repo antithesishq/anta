@@ -1,14 +1,14 @@
 @layer anta {
   /* Tokens on the host, inherited into the shadow. --toast-shadow is the
      elevation (a drop-shadow hugging the content silhouette), --toast-dur the
-     enter/exit timing. */
+     enter/exit timing. Alpha is tuned with color-mix(in oklch, …) per CLAUDE.md. */
   a-toast {
-    --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    --toast-shadow: 0 4px 12px color-mix(in oklch, black 18%, transparent);
     --toast-dur: 220ms;
   }
 
   .dark a-toast {
-    --toast-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    --toast-shadow: 0 4px 14px color-mix(in oklch, black 50%, transparent);
   }
 
   /* Before upgrade the host is an unknown block; its content would flash. Hide

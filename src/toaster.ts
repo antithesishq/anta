@@ -1,25 +1,24 @@
 /**
- * Toaster manager — the imperative controller behind `<Toaster>` and
- * `Toaster.manager`.
+ * Toaster store — the data behind `<Toaster>` / `Toaster.manager`.
  *
- * It renders toasts into a **consumer-mounted** `<a-toaster>` region and never
- * creates or mutates `document.body`. The `<a-toaster>` element self-registers
- * here on connect (`registerToasterTarget`) and unregisters on disconnect — the
- * in-memory coordinator pattern of `a-menu`/`a-tooltip` (`setMenuPresence` /
- * `isMenuOpen`), not DOM mutation. `add()` looks up the registered region and
- * appends an `<a-toast>` into it. With no region connected, `add` queues; the
- * queue flushes — and any still-active toasts repaint — when a region
- * (re)connects, covering "placed, removed, re-placed".
+ * A pure, renderer-agnostic store: it holds a list of toast entries and notifies
+ * subscribers when it changes. It never touches the DOM. A mounted `<Toaster>`
+ * subscribes to it (via `useSyncExternalStore`) and renders each entry through
+ * the reconciler, so React/Preact owns every toast node — no imperative append,
+ * no coordinator, no node refs.
  *
- * The one place light DOM is written is the manager appending into the
- * already-mounted region: the manager is a standalone imperative controller (not
- * a wrapper or element) and runs in the app's own realm, so it stays worker-safe.
- * The elements themselves only touch their own shadow.
+ * A toast's content is a **render function** `(id) => …`. Return a string, a JSX
+ * node, or a real DOM `Node`; the `<Toaster>` renders a string / JSX through the
+ * reconciler and hands a DOM node to the `<a-toast>` element to slot. The `id`
+ * lets the content wire its own dismiss button (`() => manager.dismiss(id)`).
  *
- * SSR-safe: no `HTMLElement` reference and no top-level `document` access, so it's
- * importable from the package barrel. Requires `@antadesign/anta/elements`
- * imported client-side to register `<a-toaster>` / `<a-toast>`, like every
- * component.
+ * Dismissal is two-phase so the exit animation plays: `dismiss(id)` marks the
+ * entry `leaving` (it stays rendered), the `<a-toast>` element animates out and
+ * fires `dismiss`, and only then is the entry removed. `remove` is the second
+ * phase, called by the wrapper on that event.
+ *
+ * SSR-safe: no `HTMLElement` reference and no top-level DOM access; `getServerSnapshot`
+ * returns an empty list, so nothing renders server-side.
  */
 
 /** Where a toast is anchored in the viewport. */
@@ -31,12 +30,19 @@ export type ToastPlacement =
   | 'bottom-center'
   | 'bottom-right'
 
-/** The default corner — matches `Toaster` / `<a-toast>`'s own default. */
+/** The default corner. */
 const DEFAULT_PLACEMENT: ToastPlacement = 'bottom-right'
+
+/** What a toast's render function may return: a string / JSX (rendered through
+ *  the reconciler) or a live DOM node (slotted by the element). */
+export type ToastContent = React.ReactNode | Node
+
+/** A toast's content, as a function of its id (so content can dismiss itself). */
+export type ToastRender = (id: string) => ToastContent
 
 /** Per-toast options for {@link Toaster.add}. */
 export interface ToastOptions {
-  /** Stable id. Reuse it to update a live toast in place (upsert), or to target
+  /** Stable id. Reuse it to update a live toast in place (upsert) or to target
    *  it with `dismiss` / `update`. Auto-generated when omitted. */
   id?: string
   /** Which corner / edge to show it in.
@@ -51,163 +57,147 @@ export interface ToastOptions {
   closable?: boolean
 }
 
-/** Imperative toast controller returned by {@link createToaster}. */
+/** One live toast, as the mounted `<Toaster>` reads it. */
+export interface ToastEntry {
+  id: string
+  render: ToastRender
+  placement: ToastPlacement
+  duration?: number
+  closable: boolean
+  /** True once dismissal has been requested — the entry stays rendered so the
+   *  element can animate out, then `remove` drops it. */
+  leaving: boolean
+  /** Bumped on every add/update for an existing id, so the element restarts its
+   *  timer (and the wrapper recomputes the content) on an in-place change. */
+  rev: number
+}
+
+/** The toast controller returned by {@link createToaster}. */
 export interface Toaster {
-  /** Show `content` (a DOM element or a string) as a toast; returns its id.
-   *  Reusing an existing `id` replaces that toast's content in place and restarts
-   *  its timer. */
-  add(content: Element | string, opts?: ToastOptions): string
-  /** Dismiss the toast with this id (plays the exit animation, then removes it). */
+  /** Show `render()` as a toast; returns its id. Reusing an existing `id`
+   *  replaces that toast in place and restarts its timer. */
+  add(render: ToastRender, opts?: ToastOptions): string
+  /** Request dismissal: the toast animates out, then leaves. */
   dismiss(id: string): void
-  /** Replace the content of a live toast without restarting its timer. */
-  update(id: string, content: Element | string): void
-  /** Dismiss every toast this manager owns. */
+  /** Replace a live toast's content in place. */
+  update(id: string, render: ToastRender): void
+  /** Dismiss every toast. */
   clear(): void
+  /** Drop an entry now (no animation) — the wrapper calls this once the element
+   *  reports it finished animating out. Rarely needed directly. */
+  remove(id: string): void
+  /** Subscribe to changes; returns an unsubscribe. For `useSyncExternalStore`. */
+  subscribe(onChange: () => void): () => void
+  /** Current entries (a stable reference until the next change). */
+  getSnapshot(): readonly ToastEntry[]
+  /** Server snapshot — always empty (toasts don't render server-side). */
+  getServerSnapshot(): readonly ToastEntry[]
 }
 
-/* ------------------------------------------------------------------ *
- * Coordinator — a live `<a-toaster>` publishes itself here per `name`,
- * so a manager can find the consumer-mounted region without a ref and
- * without importing the element module. PURE IN-MEMORY JS, no DOM.
- * ------------------------------------------------------------------ */
-
-type TargetListener = (target: Element | null) => void
-
-const targets = new Map<string, Element>()
-const targetListeners = new Map<string, Set<TargetListener>>()
-
-/** Called by `<a-toaster>` on connect: publish it as the region for `name`. */
-export function registerToasterTarget(name: string, el: Element): void {
-  targets.set(name, el)
-  targetListeners.get(name)?.forEach((fn) => fn(el))
-}
-
-/** Called by `<a-toaster>` on disconnect: retract it if it's still the current
- *  region for `name`. */
-export function unregisterToasterTarget(name: string, el: Element): void {
-  if (targets.get(name) !== el) return
-  targets.delete(name)
-  targetListeners.get(name)?.forEach((fn) => fn(null))
-}
-
-function subscribeTarget(name: string, fn: TargetListener): void {
-  let set = targetListeners.get(name)
-  if (!set) {
-    set = new Set()
-    targetListeners.set(name, set)
-  }
-  set.add(fn)
-}
-
-/** The `<a-toast>` runtime surface the manager drives (public methods on the
- *  element). */
-type ToastNode = HTMLElement & { dismiss(): void; restart(): void }
-
-interface Descriptor {
-  content: Element | string
-  opts: ToastOptions
-  /** The live `<a-toast>` when a region is showing it; cleared when the region
-   *  unmounts so a future region repaints it fresh. */
-  node?: ToastNode
-}
+/** Shared stable empty snapshot for SSR (a fresh array each call would loop
+ *  `useSyncExternalStore`). */
+const EMPTY: readonly ToastEntry[] = Object.freeze([])
 
 let uid = 0
 
 /**
- * Create a toast manager bound to the `<a-toaster>` region registered under
- * `name` (default `'default'`). Export one as your app singleton and drive it
- * from anywhere; a `<Toaster name={name} />` (or a hand-placed `<a-toaster
- * name="…">`) must be mounted for toasts to appear.
+ * Create a toast store. Export one as your app singleton and drive it from
+ * anywhere; bind it to a mounted region with `<Toaster toaster={…} />`. Most apps
+ * use the built-in default, `Toaster.manager`, and a bare `<Toaster />`.
  *
  * @example
  * ```ts
  * export const toaster = createToaster()
- * // …later, anywhere:
- * const el = document.createElement('a-banner')
- * el.textContent = 'Saved'
- * toaster.add(el, { placement: 'bottom-right' })
+ * toaster.add(() => <Card>Saved</Card>, { placement: 'bottom-right' })
  * ```
  */
-export function createToaster(name = 'default'): Toaster {
-  // Active toasts in insertion order (Map preserves it), keyed by id.
-  const descriptors = new Map<string, Descriptor>()
+export function createToaster(): Toaster {
+  // Immutable snapshot, replaced on every mutation (so getSnapshot can hand back
+  // a stable reference between changes — the useSyncExternalStore contract).
+  let snapshot: readonly ToastEntry[] = EMPTY
+  const listeners = new Set<() => void>()
+  const emit = () => listeners.forEach((fn) => fn())
 
-  // Repaint into a region when one (re)connects; drop node refs when it leaves.
-  subscribeTarget(name, (target) => {
-    if (!target) {
-      for (const d of descriptors.values()) d.node = undefined
-      return
+  function add(render: ToastRender, opts: ToastOptions = {}): string {
+    const id = opts.id ?? `t${++uid}`
+    const i = snapshot.findIndex((e) => e.id === id)
+    const next: ToastEntry = {
+      id,
+      render,
+      placement: opts.placement ?? DEFAULT_PLACEMENT,
+      duration: opts.duration,
+      closable: opts.closable ?? false,
+      leaving: false,
+      rev: i === -1 ? 0 : snapshot[i].rev + 1,
     }
-    for (const [id, d] of descriptors) {
-      if (!d.node || !d.node.isConnected) render(target, id, d)
-    }
-  })
-
-  function setContent(node: Element, content: Element | string): void {
-    const doc = node.ownerDocument
-    node.replaceChildren(typeof content === 'string' ? doc.createTextNode(content) : content)
-  }
-
-  function render(target: Element, id: string, d: Descriptor): void {
-    const node = target.ownerDocument.createElement('a-toast') as ToastNode
-    node.slot = d.opts.placement ?? DEFAULT_PLACEMENT
-    if (d.opts.duration != null) node.setAttribute('duration', String(d.opts.duration))
-    if (d.opts.closable) node.setAttribute('closable', '')
-    setContent(node, d.content)
-    // The element plays its own exit animation and emits `dismiss` when done; the
-    // manager (which appended the node) is what removes it — the element never
-    // removes itself.
-    node.addEventListener(
-      'dismiss',
-      () => {
-        node.remove()
-        descriptors.delete(id)
-      },
-      { once: true },
-    )
-    target.appendChild(node)
-    d.node = node
+    snapshot = i === -1 ? [...snapshot, next] : snapshot.map((e, j) => (j === i ? next : e))
+    emit()
+    return id
   }
 
   function dismiss(id: string): void {
-    const d = descriptors.get(id)
-    if (!d) return
-    if (d.node?.isConnected) d.node.dismiss()
-    else descriptors.delete(id)
+    let changed = false
+    snapshot = snapshot.map((e) => {
+      if (e.id === id && !e.leaving) {
+        changed = true
+        return { ...e, leaving: true }
+      }
+      return e
+    })
+    if (changed) emit()
+  }
+
+  function update(id: string, render: ToastRender): void {
+    let changed = false
+    snapshot = snapshot.map((e) => {
+      // Skip a toast that's already dismissing — updating a dying node would just
+      // flash and vanish. Re-add with the same id to revive + replace instead.
+      if (e.id === id && !e.leaving) {
+        changed = true
+        return { ...e, render, rev: e.rev + 1 }
+      }
+      return e
+    })
+    if (changed) emit()
+  }
+
+  function remove(id: string): void {
+    const next = snapshot.filter((e) => e.id !== id)
+    if (next.length !== snapshot.length) {
+      snapshot = next
+      emit()
+    }
+  }
+
+  function clear(): void {
+    let changed = false
+    snapshot = snapshot.map((e) => {
+      if (!e.leaving) {
+        changed = true
+        return { ...e, leaving: true }
+      }
+      return e
+    })
+    if (changed) emit()
   }
 
   return {
-    add(content, opts = {}) {
-      const id = opts.id ?? `t${++uid}`
-      const existing = descriptors.get(id)
-      if (existing) {
-        // Upsert: same id replaces content + options in place and restarts the timer.
-        existing.content = content
-        existing.opts = { ...existing.opts, ...opts }
-        const node = existing.node
-        if (node?.isConnected) {
-          if (opts.placement) node.slot = opts.placement
-          if (opts.duration != null) node.setAttribute('duration', String(opts.duration))
-          setContent(node, content)
-          node.restart()
-        }
-        return id
-      }
-      const d: Descriptor = { content, opts }
-      descriptors.set(id, d)
-      const target = targets.get(name)
-      if (target) render(target, id, d)
-      return id
-    },
+    add,
     dismiss,
-    update(id, content) {
-      const d = descriptors.get(id)
-      if (!d) return
-      d.content = content
-      if (d.node?.isConnected) setContent(d.node, content)
+    update,
+    remove,
+    clear,
+    subscribe(onChange) {
+      listeners.add(onChange)
+      return () => {
+        listeners.delete(onChange)
+      }
     },
-    clear() {
-      for (const id of [...descriptors.keys()]) dismiss(id)
+    getSnapshot() {
+      return snapshot
+    },
+    getServerSnapshot() {
+      return EMPTY
     },
   }
 }

@@ -4,6 +4,9 @@ This page tracks what ships to npm. Documentation website changes are not tracke
 
 ## Unreleased
 
+### Added
+- **`Banner` — a full-width, dismissible message strip** (`<a-banner>`). A small horizontal payload centered in the bar: `message` (a string or node) leads, `children` sit between it and `actions`, and a 40px-wide, full-height ✕ fills the right edge (glyph vertically centered) without shifting the centered group. When the row can't fit, `actions` wrap to their own line below the message rather than squeezing it into a narrow column. Toned like `Expander`'s primary surface — a semantic `tone` (or any literal CSS colour, derived in oklch) re-points the surface, text, and border colour, tracking light/dark, and the ✕ adopts the same tone. **Borderless by default** — the border style/colour are preset at `0` width (the `Progress` reset), so a consumer opts into a rule or outline by setting only `border-bottom-width` / `border-width`. `round` makes a standalone rounded banner (a stadium by default, or a custom radius). Closable by default; the ✕ dismisses it in both control modes via Anta's shared state contract, presented on the wrapper as `dismissed` / `defaultDismissed` / `onDismiss` (closed = dismissed) with `closable` to drop the built-in ✕. On dismiss the bar animates its height and opacity down to collapse, clipped to the box (`interpolate-size` where supported, instant under `prefers-reduced-motion`), driven by an off-DOM `:state(closed)` custom state (declarative-DOM safe; the host is never mutated). A hand-authored `<a-banner>` with no attributes shows by default.
+
 ## 0.3.13 — July 25, 2026
 
 ### Added

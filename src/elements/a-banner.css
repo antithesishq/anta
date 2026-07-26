@@ -1,0 +1,184 @@
+@layer anta {
+  /* Host + token definitions for <a-banner>. The visible box (surface, bottom
+     border) lives here so plain consumer CSS overrides it and it paints before the
+     element upgrades; the shadow <style> owns only the bar layout and REFERENCES
+     these --banner-* tokens with literal fallbacks. Named tones use Anta's
+     theme-aware role tokens, so dark mode is mostly free (same as <a-card> /
+     <a-progress>); only the custom-tone branch needs a .dark re-tune. */
+
+  a-banner {
+    /* Surface / text / border mirror <a-expander>'s PRIMARY look, so a banner reads
+       as the same pronounced toned box: bg-4 fill, border-4 edge, text-2 text — and
+       the named / custom tones below track it. */
+    --banner-bg: var(--bg-4);
+    --banner-border: var(--border-4);
+    --banner-text: var(--text-2);
+
+    --banner-min-height: 40px;
+
+    /* The host IS the centered bar — the slots (message / content / actions / close)
+       project as its flex items, no wrapper element. Layout lives here (not a shadow
+       node) so it paints before upgrade and consumers can override it in plain CSS.
+       `position: relative` anchors the absolutely-positioned close ✕. */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Wrap when the row can't fit: the actions slot is one atomic flex item
+       (flex-shrink: 0), so it drops to its own line below the message instead of
+       squeezing the message into a tall narrow column. `gap: <row> <column>` — a
+       tight 4px between wrapped lines, and a font-relative 1ch between inline items. */
+    flex-wrap: wrap;
+    gap: 4px 1ch;
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: var(--banner-min-height);
+    /* Symmetric inline padding reserves the right zone for the full-height ✕ (so
+       the centered content never runs under it) and keeps the group centered. */
+    padding: 6px 52px;
+
+    color: var(--banner-text);
+    background: var(--banner-bg);
+    /* No border by default — style + colour are preset at 0 width (the same
+       per-component reset <a-progress> uses), so a consumer opts into a rule / edge
+       by setting only `border-bottom-width` (a divider under the strip) or
+       `border-width` (a full outline). The width is the single knob; the colour is
+       already tone-aware via --banner-border. */
+    border: 0 solid var(--banner-border);
+    border-radius: 0;
+
+    /* Clip content to the box: the full-height ✕ (and any wide content) never
+       spill past the edges, and the dismiss collapse below has a clean edge.
+       A little clip-margin keeps the edge ✕'s focus ring from being cut. */
+    overflow: clip;
+    overflow-clip-margin: 3px;
+
+    /* Two transitions on the host:
+       1. Fade in on :defined so the pre-upgrade layout doesn't flash.
+       2. Collapse on dismiss — block-size + block padding + border + opacity
+          animate to 0, then `display` flips to none (allow-discrete keeps the
+          box rendered through the animation). `interpolate-size: allow-keywords`
+          lets the intrinsic `height: auto` animate down to 0 (Chromium; other
+          engines fade + collapse the padding, then hide). Both are disabled
+          under prefers-reduced-motion below. */
+    interpolate-size: allow-keywords;
+    transition:
+      opacity 160ms ease,
+      block-size 200ms ease,
+      padding-block 200ms ease,
+      border-block-width 200ms ease,
+      display 200ms allow-discrete;
+  }
+
+  /* `round` — rounded corners for a standalone, floating banner (still borderless
+     by default; add `border-width` for an outline). Bare `round` clamps to a stadium
+     (half the height); a length value (`round="12px"`, or the wrapper's `round={12}`
+     → inline --banner-round) sets a custom radius. */
+  a-banner[round] {
+    --banner-round: attr(round type(<length>));
+
+    border-radius: var(--banner-round, 999px);
+  }
+
+  /* The dismiss ✕ is a fixed 40px-wide strip that fills the full bar height (the
+     close slot spans it — see a-banner.ts), so its glyph sits vertically centered.
+     On a taller or wrapped (multi-line) banner it spans the whole right edge rather
+     than a corner. Quaternary, so it's a bare glyph until hover. Covers the wrapper's
+     <span slot="close"><a-button></span> and a hand-authored <a-button slot="close">. */
+  a-banner [slot="close"] a-button,
+  a-banner a-button[slot="close"] {
+    height: 100%;
+    width: 40px;
+  }
+
+  /* A string `message` is wrapped in <a-banner-message> by the <Banner> wrapper;
+     it carries the message type scale. A node message keeps its own type. */
+  a-banner-message {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 475;
+    text-align: center;
+  }
+
+  /* Named tones — mirror <a-expander>'s primary surface per tone: bg-4-{tone} fill,
+     border-4-{tone} edge, text-2-{tone} text (theme tokens that self-flip for dark
+     mode). `neutral` is the base. */
+  a-banner[tone="brand"] {
+    --banner-bg: var(--bg-4-brand);
+    --banner-border: var(--border-4-brand);
+    --banner-text: var(--text-2-brand);
+  }
+  a-banner[tone="info"] {
+    --banner-bg: var(--bg-4-info);
+    --banner-border: var(--border-4-info);
+    --banner-text: var(--text-2-info);
+  }
+  a-banner[tone="success"] {
+    --banner-bg: var(--bg-4-success);
+    --banner-border: var(--border-4-success);
+    --banner-text: var(--text-2-success);
+  }
+  a-banner[tone="warning"] {
+    --banner-bg: var(--bg-4-warning);
+    --banner-border: var(--border-4-warning);
+    --banner-text: var(--text-2-warning);
+  }
+  a-banner[tone="critical"] {
+    --banner-bg: var(--bg-4-critical);
+    --banner-border: var(--border-4-critical);
+    --banner-text: var(--text-2-critical);
+  }
+
+  /* Custom tone — any non-named `tone` is a literal CSS colour; the surface, border,
+     and text are derived from it in oklch, using the SAME primary-surface curve as
+     <a-expander>'s custom tone (text deep, fill light, border mid), re-tuned for
+     dark. */
+  a-banner[tone]:not(
+      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]) {
+    --banner-tone-source: attr(tone type(<color>), currentColor);
+
+    --banner-text:   oklch(from var(--banner-tone-source) 0.5 0.125 h);
+    --banner-bg:     oklch(from var(--banner-tone-source) 0.955 0.02 h);
+    --banner-border: oklch(from var(--banner-tone-source) 0.9 0.04 h);
+
+    .dark & {
+      --banner-text:   oklch(from var(--banner-tone-source) 0.77 0.11 h);
+      --banner-bg:     oklch(from var(--banner-tone-source) 0.185 0.05 h);
+      --banner-border: oklch(from var(--banner-tone-source) 0.26 0.06 h);
+    }
+  }
+
+  /* Pre-upgrade: the host is already the flex bar (above), so the un-slotted
+     light-DOM children lay out as the row without a shadow — only the close ✕ sits
+     inline (its absolute pin lives in the shadow) instead of pinned right. Hold the
+     host at opacity:0 and let the `opacity` transition fade it in on :defined, once
+     the shadow's slot layout takes over. */
+  a-banner:not(:defined) {
+    opacity: 0;
+  }
+
+  /* Dismissed — the element mirrors :state(closed) off-DOM; collapse the host.
+     The attribute forms catch the pre-upgrade (controlled / pre-dismissed) paint
+     before the element sets the custom state. Placed last so display:none wins
+     over the pre-upgrade rule for a banner that starts dismissed. */
+  a-banner[state="closed"],
+  a-banner[default-state="closed"],
+  a-banner:state(closed) {
+    display: none;
+    /* Collapse the box so a dismiss animates height → 0 (see the host transition
+       above). `min-block-size: 0` overrides the base min-height so the bar can
+       reach 0. A banner that STARTS closed (`[default-state="closed"]` /
+       controlled `[state="closed"]`) paints display:none from first frame, so
+       there's nothing to animate from — it just stays hidden. */
+    block-size: 0;
+    min-block-size: 0;
+    padding-block: 0;
+    border-block-width: 0;
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a-banner { transition: none; }
+  }
+}

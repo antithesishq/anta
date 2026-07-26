@@ -1117,3 +1117,43 @@ export interface ACardAttributes extends BaseAttributes {
    *  chain the element derives in link mode. */
   'aria-label'?: string
 }
+
+/**
+ * Attributes for the `<a-banner>` custom element — a full-width, dismissible
+ * message strip (borderless by default; opt into a rule via `border-bottom-width` /
+ * `border-width`, the Progress pattern). Slots (light-DOM children): `message`
+ * (leading), the default slot (middle content), `actions` (trailing), and `close`
+ * (the ✕ button). The element exposes `::part(message | content | actions | close)`,
+ * and `:state(open)` / `:state(closed)` as visibility hooks (the external
+ * sheet collapses the host on `:state(closed)`). Low-level attributes; for the
+ * typed JSX wrapper use `Banner` from `@antadesign/anta`.
+ */
+export interface ABannerAttributes extends BaseAttributes {
+  /** Controlled visibility (`'open'` / `'closed'`). Present → controlled: the
+   *  attribute is the source of truth, the ✕ dismiss only dispatches the cancelable
+   *  `statechange` event, and the consumer answers by updating it. Absent →
+   *  uncontrolled (use `default-state`). The `<Banner>` wrapper presents this as
+   *  `dismissed` (closed = dismissed). See STATEFUL-COMPONENTS.md. */
+  state?: 'open' | 'closed'
+  /** Initial visibility for the uncontrolled mode (`'open'` / `'closed'`), read
+   *  once at connect. A banner is shown by default, so omit / `'open'` shows it;
+   *  `'closed'` starts it dismissed. */
+  'default-state'?: 'open' | 'closed'
+  /** Semantic tone, or any literal CSS color for a one-off custom tone. Named tones
+   *  re-point the surface + text + border colour (used if you opt into a border); a
+   *  custom color keeps its hue with lightness/chroma pinned. `'neutral'` is the
+   *  default (same as omitting it). */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Rounded corners for a standalone banner — `border-radius: 999px` (clamps to a
+   *  stadium), or a custom radius via a length value (`round="12px"`). Borderless
+   *  like the default. Presence-based for the boolean form. */
+  round?: boolean | number | string
+  /** Fires before visibility changes — the element dispatches a `cancelable`
+   *  `statechange` `CustomEvent` whose `detail` is `{ next, prev }` in the
+   *  `'open'|'closed'` vocabulary (a dismiss is always `next: 'closed'`).
+   *  Uncontrolled, `preventDefault()` vetoes the transition. All-lowercase so both
+   *  renderers bind it (React 19 keeps the case after `on`; Preact lowercases). */
+  onstatechange?: (
+    e: CustomEvent<{ next: 'open' | 'closed'; prev: 'open' | 'closed' }>,
+  ) => void
+}

@@ -123,6 +123,9 @@ export default function Playground({ component, initialCode, initialCss = '', la
   const applyingExternalRef = useRef(false)
   const tsxHostRef = useRef<HTMLDivElement | null>(null)
   const cssHostRef = useRef<HTMLDivElement | null>(null)
+  // Fires playground_code_edited once per playground instance so repeated
+  // keystrokes don't flood PostHog with events.
+  const hasTrackedEditRef = useRef(false)
 
   // Parse JSDoc-headed JSX blocks out of the user's source. Each
   // headed block becomes one entry in the Props accordion; the
@@ -480,6 +483,10 @@ export default function Playground({ component, initialCode, initialCss = '', la
       editorChangePendingRef.current = true
       return next
     })
+    if (!hasTrackedEditRef.current) {
+      hasTrackedEditRef.current = true
+      ;(window as any).posthog?.capture('playground_code_edited', { component })
+    }
   }
 
   // Sync EXTERNAL `code` changes (form-control edits, the Reset button)

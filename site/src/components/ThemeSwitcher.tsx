@@ -56,6 +56,7 @@ export default function ThemeSwitcher() {
           // storage blocked (private mode) — apply for the session anyway
         }
         applyPalette(v)
+        ;(window as any).posthog?.capture('theme_switched', { theme: v })
       }}
       options={[
         { value: 'none', label: 'Default' },

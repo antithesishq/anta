@@ -49,6 +49,15 @@ import './a-banner.css'
  * vocabulary. The `<Banner>` wrapper presents this as `dismissed` / `onDismiss`
  * (closed = dismissed). See STATEFUL-COMPONENTS.md.
  *
+ * ## Dismiss from an action — `data-banner-dismiss`
+ *
+ * Any element inside the banner carrying `data-banner-dismiss` requests dismissal
+ * on click, through the same `statechange` contract as the ✕ — for an action
+ * button or dropdown item that closes the banner as it acts. Handled by a click
+ * listener, so it works for any activated control (button, `<a>`, `<a-menu-item>`)
+ * and from the keyboard (Enter/Space synthesizes a click). Put it on the terminal
+ * control, not a dropdown *trigger* (which would dismiss on open).
+ *
  * ## How a dismissed banner disappears (declarative-DOM safe)
  *
  * The element never mutates the host. Visibility lives OFF the DOM as a custom
@@ -68,6 +77,12 @@ import './a-banner.css'
 // name — NOT a-dialog's `closerequest` — so a Banner nested inside a Dialog
 // doesn't also close the dialog when its own ✕ is clicked.
 const DISMISS_TRIGGER = 'dismissrequest'
+
+// Presence-based dismiss trigger (the `<a-dialog>` `data-dialog-close` family):
+// any element inside the banner carrying this attribute requests dismissal on
+// click, so an action button / dropdown item can close the banner without wiring
+// the `dismissrequest` event above.
+const DISMISS_ATTR = 'data-banner-dismiss'
 
 // The host is the flex bar (styled in a-banner.css); the shadow only projects the
 // slots. The message / content slots are display:contents so their nodes ARE the
@@ -162,6 +177,16 @@ export class ABannerElement extends HTMLElementBase {
     this.addEventListener(DISMISS_TRIGGER, (e) => {
       e.stopPropagation()
       this.#requestDismiss()
+    })
+
+    // A `data-banner-dismiss` click requests dismissal — a read-only light-DOM
+    // walk (no host mutation). Guarded so the trigger's nearest banner is THIS
+    // one, so a nested banner's dismiss control doesn't also close the outer.
+    this.addEventListener('click', (e) => {
+      const target = e.target
+      if (!(target instanceof Element)) return
+      const trigger = target.closest(`[${DISMISS_ATTR}]`)
+      if (trigger && trigger.closest('a-banner') === this) this.#requestDismiss()
     })
   }
 

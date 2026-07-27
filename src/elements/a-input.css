@@ -123,9 +123,24 @@
     --input-adornment: var(--text-3);
     --input-hint: var(--text-3);
 
+    /* Inset of the trailing slot from the field edge, mirroring the leading slot.
+       A static adornment (text, an indicator icon) keeps it; a trailing BUTTON
+       drops it to 0 below so the control reaches the edge for a bigger hit target.
+       The var inherits into the shadow, where the trailing slot's margin reads it. */
+    --input-trailing-inset: 7px;
+
     /* `display` is owned by the shadow `:host` (a grid) so consumer CSS can
        re-template it; we only set the box width here. */
     width: 100%;
+  }
+
+  /* A trailing button reaches the edge (matches the `:has()` content-conditional
+     padding a-button does): flush when the trailing slot holds a button, whether
+     the button is the slotted node or wrapped (the `Input` wrapper's display:contents
+     span). Static trailing content keeps --input-trailing-inset. */
+  a-input:has([slot="trailing"] :is(a-button, button)),
+  a-input:has([slot="trailing"]:is(a-button, button)) {
+    --input-trailing-inset: 0;
   }
 
   /* `round` field radius: presence → 999px pill; a value (`round="20px"`, or the

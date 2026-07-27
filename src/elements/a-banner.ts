@@ -53,16 +53,10 @@ import './a-banner.css'
  *
  * Any element inside the banner carrying `data-banner-dismiss` requests dismissal
  * on click, through the same `statechange` contract as the ✕ — for an action
- * button (or a dropdown item) that should close the banner as it acts. Put it on
- * the terminal control, not a dropdown *trigger* (which would dismiss on open):
- *
- *   <a-button slot="actions" data-banner-dismiss>Undo</a-button>
- *
- * It's a click listener (a light-DOM READ), so it catches any activated control —
- * native `<button>`, `<a>`, `<a-menu-item>` — and keyboard activation for free
- * (Enter/Space synthesizes a `click()`). A menu item works because `<a-menu>`
- * keeps its items in the light DOM (only the surface is top-layer), so the click
- * bubbles to the banner.
+ * button or dropdown item that closes the banner as it acts. Handled by a click
+ * listener, so it works for any activated control (button, `<a>`, `<a-menu-item>`)
+ * and from the keyboard (Enter/Space synthesizes a click). Put it on the terminal
+ * control, not a dropdown *trigger* (which would dismiss on open).
  *
  * ## How a dismissed banner disappears (declarative-DOM safe)
  *
@@ -84,15 +78,10 @@ import './a-banner.css'
 // doesn't also close the dialog when its own ✕ is clicked.
 const DISMISS_TRIGGER = 'dismissrequest'
 
-// Presence-based dismiss trigger: any element inside the banner carrying this
-// attribute requests dismissal on click — the `<a-dialog>` `data-dialog-close`
-// family, scoped to the nearest banner. A convenience for an action button (or a
-// dropdown item) that should close the banner as it acts, without the consumer
-// hand-wiring the `dismissrequest` event above. Handled via a click listener (a
-// light-DOM READ, declarative-safe) rather than that event so it catches ANY
-// activated control — native `<button>`, `<a>`, `<a-menu-item>` — not only an
-// `<a-button>` (only a-button dispatches `data-custom-event`). Keyboard activation
-// works for free: Enter/Space synthesizes a real `click()` on every one of those.
+// Presence-based dismiss trigger (the `<a-dialog>` `data-dialog-close` family):
+// any element inside the banner carrying this attribute requests dismissal on
+// click, so an action button / dropdown item can close the banner without wiring
+// the `dismissrequest` event above.
 const DISMISS_ATTR = 'data-banner-dismiss'
 
 // The host is the flex bar (styled in a-banner.css); the shadow only projects the
@@ -190,14 +179,9 @@ export class ABannerElement extends HTMLElementBase {
       this.#requestDismiss()
     })
 
-    // A click on any element carrying `data-banner-dismiss` requests dismissal.
-    // Read-only walk of the light DOM (no host / tree mutation). The nearest
-    // `a-banner` to the trigger must be THIS one, so a dismiss button inside a
-    // banner nested in another banner's content doesn't also dismiss the outer
-    // one (the `dismissrequest` path shields nesting via stopPropagation; a plain
-    // click can't stop-propagate without breaking other click handlers, so it's
-    // guarded here instead). Menu items work because `<a-menu>` keeps them in the
-    // light DOM — only its surface is top-layer — so the click bubbles here.
+    // A `data-banner-dismiss` click requests dismissal — a read-only light-DOM
+    // walk (no host mutation). Guarded so the trigger's nearest banner is THIS
+    // one, so a nested banner's dismiss control doesn't also close the outer.
     this.addEventListener('click', (e) => {
       const target = e.target
       if (!(target instanceof Element)) return

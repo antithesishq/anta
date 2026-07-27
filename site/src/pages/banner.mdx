@@ -195,6 +195,48 @@ drive dismissal from your own control.
 <Banner tone="warning" message="A permanent notice — no dismiss button." closable={false} />
 ```
 
+## Dismiss from an action
+
+Give any control inside the banner **`data-banner-dismiss`** and it dismisses the
+banner on click, through the same state contract as the ✕ — for an action that
+closes the banner as it runs (an "Undo", a "Got it"). Try it:
+
+<Preview direction="column" gap="8px">
+  <a-banner tone="success">
+    <a-banner-message slot="message">Draft saved.</a-banner-message>
+    <Button slot="actions" size="small" priority="secondary" tone="success" label="Undo" data-banner-dismiss />
+    <Button slot="close" priority="quaternary" icon="x" tone="success" aria-label="Dismiss" data-custom-event="dismissrequest" />
+  </a-banner>
+</Preview>
+
+```tsx folded
+<Banner
+  tone="success"
+  message="Draft saved."
+  actions={<Button size="small" priority="secondary" tone="success" label="Undo" onClick={undo} data-banner-dismiss />}
+/>
+```
+
+It's matched by presence on the nearest banner, so it works on any activated
+control — `Button`, a plain `<a>`, or a `MenuItem` inside a dropdown — and from the
+keyboard, since Enter/Space activation is a real click. Put it on the **terminal**
+control, not a dropdown *trigger* (which would dismiss the banner as the menu opens):
+
+```tsx folded
+<Banner
+  message="Export ready."
+  actions={
+    <Menu trigger={<Button size="small" label="Download" iconTrailing="chevron-down" />}>
+      <MenuItem label="As CSV" onClick={csv} data-banner-dismiss />
+      <MenuItem label="As JSON" onClick={json} data-banner-dismiss />
+    </Menu>
+  }
+/>
+```
+
+In controlled mode the click *requests* a dismiss like the ✕ does — drive the
+result through `dismissed` (below).
+
 ## Controlled vs uncontrolled
 
 Dismissal follows Anta's shared **state contract**. Leave it *uncontrolled* (seed

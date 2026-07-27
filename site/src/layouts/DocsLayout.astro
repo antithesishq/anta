@@ -17,6 +17,7 @@ import '../styles/base.css'
 import '../icons/docs-icons.css'
 import { ClientRouter } from 'astro:transitions'
 import { Button, Icon } from '@antadesign/anta'
+import PostHog from '../components/posthog.astro'
 import { COMPONENT_SLUGS } from '../../lib/component-slugs'
 import ThemeSwitcher from '../components/ThemeSwitcher.tsx'
 
@@ -115,6 +116,7 @@ if (isComponentPage && title) {
         registry, fonts, and loaded CSS survive and `a-*` elements upgrade
         instantly. Script rules live in site/CLAUDE.md ("ClientRouter"). */}
     <ClientRouter />
+    <PostHog />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={pageUrl} />
@@ -402,6 +404,7 @@ if (isComponentPage && title) {
         const nextDark = !document.documentElement.classList.contains('dark')
         applyTheme(nextDark)
         localStorage.setItem(THEME_KEY, nextDark ? 'dark' : 'light')
+        ;(window as any).posthog?.capture('dark_mode_toggled', { mode: nextDark ? 'dark' : 'light' })
       })
 
       // Swaps replace <html>'s attributes wholesale, wiping the runtime
@@ -448,7 +451,21 @@ if (isComponentPage && title) {
         navigator.clipboard.writeText(text).then(() => {
           target.addEventListener('animationend', () => delete target.dataset.copied, { once: true })
           target.dataset.copied = text
+          ;(window as any).posthog?.capture('code_snippet_copied', { snippet_length: text.length })
         }).catch(() => {})
+      })
+
+      document.addEventListener('click', (e) => {
+        const anchor = (e.target as HTMLElement)?.closest?.('a') as HTMLAnchorElement | null
+        if (!anchor) return
+        if (anchor.closest('.brand-links')) {
+          const href = anchor.href ?? ''
+          if (href.includes('github.com')) {
+            ;(window as any).posthog?.capture('github_link_clicked')
+          } else if (href.includes('npmjs.com')) {
+            ;(window as any).posthog?.capture('npm_link_clicked')
+          }
+        }
       })
 
       // Expressive-code copy buttons: instead of EC's "Copied!" tooltip

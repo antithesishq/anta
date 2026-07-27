@@ -1168,8 +1168,6 @@ export interface ABannerAttributes extends BaseAttributes {
 export interface AToasterAttributes extends BaseAttributes {
   /** Accessible name for the region landmark. */
   'aria-label'?: string
-  /** Live-region politeness for announcing new toasts to assistive tech. */
-  'aria-live'?: 'polite' | 'assertive' | 'off'
 }
 
 /**
@@ -1190,6 +1188,9 @@ export interface AToastAttributes extends BaseAttributes {
   leaving?: boolean | ''
   /** Bumped on an in-place update so the element restarts its auto-dismiss timer. */
   rev?: number | string
+  /** Opt-in `aria-live` politeness — the toast announces its content to assistive
+   *  tech when set. Omit for no announcement. */
+  'aria-live'?: 'polite' | 'assertive' | 'off'
   /** A live DOM node to show as the content (the wrapper's DOM-node branch);
    *  set as a property, not a string attribute. String / JSX content is slotted
    *  as children instead. */

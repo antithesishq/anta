@@ -162,10 +162,16 @@ One store drives one `<Toaster>`.
 
 ## Announcements
 
-The region carries `aria-live="polite"` so a new toast is announced to assistive
-tech. Pass `politeness="assertive"` for urgent notices (or `"off"` to silence the
-region and let the content own its live semantics — a `Banner` defaults to
-`role="status"`).
+Announcement is opt-in **per toast**: pass `politeness` to give that toast an
+`aria-live` region — `'polite'` waits for a pause, `'assertive'` interrupts. Omit
+it for no announcement, which is right when the content carries its own live
+semantics (a `Banner` defaults to `role="status"`).
+
+```tsx
+Toaster.manager.add(() => <Banner tone="critical" message="Connection lost" />, {
+  politeness: 'assertive',
+})
+```
 
 ## Vanilla HTML
 
@@ -174,8 +180,8 @@ framework, use the `<a-toaster>` / `<a-toast>` elements directly — build the t
 in markup and listen for the element's `dismiss` event to remove it:
 
 ```html
-<a-toaster aria-live="polite">
-  <a-toast slot="bottom-right" closable>
+<a-toaster>
+  <a-toast slot="bottom-right" closable aria-live="polite">
     <a-banner tone="info" round>
       <a-banner-message slot="message">A new version is available.</a-banner-message>
     </a-banner>
@@ -201,16 +207,18 @@ The region and item are plain custom elements — style them with ordinary CSS
 
 Region spacing lives on `a-toaster` as tokens: **`--toaster-inset`** (gap from the
 viewport edge), **`--toaster-gap`** (space between stacked toasts), and
-**`--toaster-width`** (column width). Item elevation and timing live on `a-toast`:
-**`--toast-shadow`** and **`--toast-dur`**.
+**`--toaster-width`** (column width). The item's enter/exit timing lives on
+`a-toast`: **`--toast-dur`**. The holder is style-neutral by default — no elevation
+of its own — so a toast looks like exactly the content you pass; add a shadow with
+plain CSS if you want one.
 
 ```css
 a-toaster { --toaster-width: 420px; --toaster-gap: 10px; }
-a-toast { --toast-shadow: 0 6px 20px color-mix(in oklch, black 22%, transparent); }
+a-toast::part(toast) { filter: drop-shadow(0 6px 20px color-mix(in oklch, black 22%, transparent)); }
 ```
 
-`<a-toast>` exposes `::part(toast)` (the holder that carries the elevation) and
-`::part(close)` (the ✕). The content keeps its own styling — a toned `Banner`
-brings its surface, a `Card` its border.
+`<a-toast>` exposes `::part(toast)` (the content holder) and `::part(close)` (the
+✕). The content keeps its own styling — a toned `Banner` brings its surface, a
+`Card` its border.
 
 </Disclosure>

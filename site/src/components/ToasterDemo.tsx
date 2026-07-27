@@ -28,7 +28,7 @@ export default function ToasterDemo() {
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
         <Input
           leading="Duration"
-          trailing="ms"
+          trailing={<span style={{ paddingInlineEnd: 6 }}>ms</span>}
           type="number"
           defaultValue="4000"
           onValueChange={(_e, a) => setDuration(a.value)}

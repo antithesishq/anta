@@ -258,13 +258,12 @@ export class AToastElement extends HTMLElementBase {
 //  • .outer is a 1fr grid row that collapses to 0fr on exit (the a-expander
 //    trick), so a dismissing toast shrinks its height and the stack reflows; .clip
 //    hides the overflow during the collapse.
-//  • .toast carries the elevation (drop-shadow hugs the content silhouette, so a
-//    rounded Banner floats cleanly) and the enter/exit fade + slide. @starting-style
+//  • .toast carries the enter/exit fade + slide (no elevation of its own — the
+//    holder is style-neutral, the content brings its own look). @starting-style
 //    gives every freshly-inserted toast a from-opacity:0 / translated start; the
 //    transition (and the collapse) are gated under prefers-reduced-motion.
-//  • Elevation + the ✕ chip tune alpha with color-mix(in oklch, …) per CLAUDE.md.
-//  • The ✕ is shadow-internal, shown only with [closable]; content usually brings
-//    its own controls, so it's opt-in.
+//  • The ✕ chip tunes alpha with color-mix(in oklch, …) per CLAUDE.md; it's
+//    shadow-internal, shown only with [closable] (content usually brings its own).
 const SHADOW_STYLE = `
   :host { display: block; }
 
@@ -281,7 +280,6 @@ const SHADOW_STYLE = `
 
   .toast {
     position: relative;
-    filter: drop-shadow(var(--toast-shadow, 0 4px 12px color-mix(in oklch, black 18%, transparent)));
     opacity: 1;
     translate: 0 0;
   }

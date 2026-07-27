@@ -9,9 +9,6 @@ export interface ToasterProps extends BaseProps {
   /** Accessible label for the region landmark.
    *  @defaultValue 'Notifications' */
   label?: string
-  /** Live-region politeness for announcing new toasts to assistive tech.
-   *  @defaultValue 'polite' */
-  politeness?: "polite" | "assertive" | "off"
 }
 
 /** One rendered toast. Calls the entry's render function and routes the result:
@@ -30,6 +27,8 @@ const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore })
     closable: entry.closable ? "" : undefined,
     leaving: entry.leaving ? "" : undefined,
     rev: entry.rev,
+    // Opt-in per-toast announcement — omitted (no live region) unless requested.
+    "aria-live": entry.politeness,
     // Fires after the exit animation; that's when the entry actually leaves.
     ondismiss: () => store.remove(entry.id),
   } as const
@@ -48,6 +47,9 @@ const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore })
  * subscribes to the store and renders each toast through the reconciler, so
  * React/Preact owns the toast nodes.
  *
+ * Announcement is opt-in **per toast** (`add(render, { politeness })`), not a
+ * blanket live region on the whole toaster.
+ *
  * Requires `@antadesign/anta/elements` to be imported (client-side only) to
  * register the underlying custom elements.
  *
@@ -65,7 +67,6 @@ const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore })
 const ToasterImpl = ({
   toaster,
   label = "Notifications",
-  politeness = "polite",
   className,
   style,
   // The region's children come from the store, not from JSX.
@@ -76,14 +77,7 @@ const ToasterImpl = ({
   const entries = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot)
 
   return (
-    <a-toaster
-      role="region"
-      aria-label={label}
-      aria-live={politeness}
-      class={className}
-      style={style}
-      {...rest}
-    >
+    <a-toaster role="region" aria-label={label} class={className} style={style} {...rest}>
       {entries.map((entry) => (
         <ToastItem key={entry.id} entry={entry} store={store} />
       ))}

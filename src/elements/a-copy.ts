@@ -14,7 +14,7 @@ declare global {
  * Slot it inside an activatable control (`<a-button>`, `<a-menu-item>`, or a
  * native `button` / `[role]`) and it turns that control into a copy control:
  * on activation it writes to the clipboard and reports the outcome via a
- * `copydone` event; on `toast` it also floats a ghost of the host's content
+ * `copydone` event; on `toast` it also floats a ghost of the host's visible label
  * upward as visual feedback. The base controls carry NO copy knowledge — this
  * element owns the whole feature, so `<Button>` / `<MenuItem>` stay clean and
  * `<ButtonCopy>` / `<MenuItemCopy>` are thin composers that drop it in.
@@ -48,8 +48,9 @@ declare global {
  * `<a-button>` sets `overflow: hidden` (label ellipsis + loading stripe), so a
  * feedback element rendered inside it can't animate up and out — it'd be clipped.
  * With `toast`, `<a-copy>` renders the ghost in the **top layer** (a `popover`,
- * which no ancestor's overflow clips) and JS-positions it over the host, cloning
- * the host's text so it reads as a ghost of the button lifting away. It's a
+ * which no ancestor's overflow clips) and JS-positions it over the rendered
+ * label, copying its text and wrapping shape so it reads as a ghost of the
+ * button lifting away. It's a
  * functional cue (it conveys "copied"), not decorative motion, so it plays
  * regardless of `prefers-reduced-motion`. `ButtonCopy` opts in; `MenuItemCopy`
  * does not (its menu is kept open via `data-menu-open`, so the icon/tone swap is
@@ -131,6 +132,50 @@ function installCopyDelegation(doc: Document | undefined) {
  *  the rise animation, then dismisses the popover. */
 const GHOST_MS = 650;
 
+/** CSS that determines the text's rendered shape. The ghost lives in this
+ * element's shadow/top layer, so it can't inherit the document's label rules;
+ * copy the computed values from the source label instead. Layout properties
+ * such as `display` / `overflow` deliberately stay local: the measured width
+ * and height below are authoritative, and the ghost must remain unclipped. */
+const GHOST_TEXT_PROPERTIES = [
+  "padding",
+  "font-family",
+  "font-size",
+  "font-style",
+  "font-weight",
+  "font-stretch",
+  "font-variation-settings",
+  "font-feature-settings",
+  "line-height",
+  "letter-spacing",
+  "word-spacing",
+  "white-space",
+  "text-wrap",
+  "overflow-wrap",
+  "word-break",
+  "line-break",
+  "hyphens",
+  "text-align",
+  "text-indent",
+  "text-transform",
+  "text-decoration",
+  "text-decoration-color",
+  "text-decoration-style",
+  "text-decoration-thickness",
+  "text-underline-offset",
+  "direction",
+  "writing-mode",
+] as const;
+
+/** Prefer the one direct Anta label when there is one. A native/composed host
+ * still works: its own box and inherited typography are the closest available
+ * rendering source. Two labels are intentionally treated as host content — a
+ * single text ghost cannot faithfully map two independently positioned boxes. */
+function ghostSource(host: Element): HTMLElement {
+  const labels = host.querySelectorAll<HTMLElement>(":scope > a-button-label");
+  return labels.length === 1 ? labels[0] : (host as HTMLElement);
+}
+
 export class ACopyElement extends HTMLElementBase {
   #ghost?: HTMLElement;
   #ghostTimer?: ReturnType<typeof setTimeout>;
@@ -170,11 +215,11 @@ export class ACopyElement extends HTMLElementBase {
     background: none;
     overflow: visible;
     pointer-events: none;
-    display: grid;
-    place-items: center;
+    display: block;
+    box-sizing: border-box;
     font: inherit;
     color: inherit;
-    white-space: nowrap;
+    white-space: normal;
   }
   .ghost:not(:popover-open) { display: none; }
   .ghost[data-show] { animation: a-copy-rise ${GHOST_MS - 50}ms ease-out forwards; }
@@ -192,11 +237,18 @@ export class ACopyElement extends HTMLElementBase {
     // Feature-gate on the Popover API — without the top layer the ghost would be
     // clipped by the button's overflow, so skip rather than paint a clipped one.
     if (!ghost || typeof (ghost as any).showPopover !== "function") return;
-    const text = (host.textContent ?? "").trim();
+    const source = ghostSource(host);
+    const text = (source.textContent ?? "").trim();
     if (!text) return; // nothing to ghost (icon-only) — the icon/tone swap is the feedback
 
-    const r = host.getBoundingClientRect();
+    const r = source.getBoundingClientRect();
+    const style = source.ownerDocument.defaultView?.getComputedStyle(source);
     ghost.textContent = text;
+    if (style) {
+      for (const property of GHOST_TEXT_PROPERTIES) {
+        ghost.style.setProperty(property, style.getPropertyValue(property));
+      }
+    }
     ghost.style.left = `${r.left}px`;
     ghost.style.top = `${r.top}px`;
     ghost.style.width = `${r.width}px`;

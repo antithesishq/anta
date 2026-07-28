@@ -12,6 +12,9 @@ This page tracks what ships to npm. Documentation website changes are not tracke
 ### Changed
 - **`<a-input>`'s trailing slot is now inset from the edge for static adornments, staying flush for a button.** A static trailing adornment (`Input` `trailing`, a unit label like `ms`, an indicator icon) gets the same `7px` breathing room the leading slot already had, instead of sitting flush; a trailing **button** stays flush so the control reaches the edge for a bigger hit target. The distinction is CSS-only — a `:has([slot="trailing"] :is(a-button, button))` rule zeroes `--input-trailing-inset`, mirroring the content-conditional padding `a-button` already does. `Select`'s chevron sources its inset from the slot now (its own `margin-inline-end` is removed), so it sits in the same place as before. The clear button (its own slot) is unchanged.
 
+### Fixed
+- **A wrapping no-icon `ButtonCopy` now ghosts its rendered label rather than the outer button.** The `iconPlacement="none"` feedback takes the label's measured box and its computed typography / wrapping rules into the top layer, so a constrained quaternary button's ghost keeps the same width, line breaks, and full label shape instead of becoming one unwrapped line.
+
 ## 0.3.14 — July 28, 2026
 
 ### Added

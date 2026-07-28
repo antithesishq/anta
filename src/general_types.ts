@@ -686,6 +686,11 @@ export interface AMenuAttributes extends BaseAttributes {
    *  under a wide trigger, e.g. InputDate's calendar below a full-width field.
    *  Presence-based (`''` on, omit off). */
   autowidth?: boolean | ''
+  /** Tween the surface's width when its content changes size while open (a badge
+   *  appearing on a row, a summary clearing), instead of snapping. Falls back to
+   *  an instant change under `prefers-reduced-motion`. Presence-based (`''` on,
+   *  omit off). */
+  animatewidth?: boolean | ''
   /** Controlled open state (`'open'` / `'closed'`). Omit for uncontrolled;
    *  present → visibility follows this value, and the element never writes it
    *  (the consumer owns it). Listen to `statechange` to keep it in sync. See

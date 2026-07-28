@@ -333,6 +333,16 @@ export class AMenuElement extends HTMLElementBase {
   // flipped to the left of the anchor). Same reanchor-stability role as `_flippedTop`.
   private _flippedSide: boolean | null = null
 
+  // Width animation (opt-in via `animatewidth`) — smooths the surface's width when
+  // its content changes size while open (e.g. a badge appearing on a row), instead
+  // of snapping. The surface stays auto-width; a WAAPI animation only overrides the
+  // rendered width while it runs, so each change measures the natural width cleanly.
+  #widthObserver?: ResizeObserver
+  #widthAnimation?: Animation
+  #widthReady = false
+  #lastWidth: number | null = null
+  #suppressWidthObserver = false
+
   constructor() {
     super()
     // Off-DOM state only (`:state(open)`); guarded for non-standard runtimes.
@@ -1087,6 +1097,7 @@ export class AMenuElement extends HTMLElementBase {
     // now — no fade-skip needed; the CSS transition + @starting-style handle the
     // enter, and a brief fade-in over an existing menu reads fine.
     this.position(coord, instant)
+    if (this.hasAttribute('animatewidth')) this.#startWidthObserver()
   }
 
   /** Dismiss any tooltip on the trigger as the menu opens, so the trigger's
@@ -1107,6 +1118,64 @@ export class AMenuElement extends HTMLElementBase {
     this.reflectOpen(false)
     this.cancelOpenTimer()
     this.cancelCloseTimer()
+    this.#stopWidthObserver()
+  }
+
+  /** Observe the surface while open and, when `animatewidth` is set, tween its
+   *  width from the previous measure to the new natural one (WAAPI) so a content
+   *  size change (a badge appearing / clearing on a row) glides instead of
+   *  snapping. The surface stays auto-width; the animation only overrides the
+   *  rendered width while it runs, so the next change re-measures cleanly. */
+  #startWidthObserver() {
+    this.#stopWidthObserver()
+    const RO = this.view.ResizeObserver
+    if (!RO) return
+    this.#widthObserver = new RO(() => this.#onWidthResize())
+    this.#widthObserver.observe(this.surface)
+    // Only animate once the open has settled — the enter (0 → full width) shouldn't
+    // tween. Seed the baseline two frames in, after position() has laid out.
+    this.view.requestAnimationFrame(() =>
+      this.view.requestAnimationFrame(() => {
+        if (!this._shown) return
+        this.#lastWidth = this.surface.offsetWidth
+        this.#widthReady = true
+      }),
+    )
+  }
+
+  #stopWidthObserver() {
+    this.#widthObserver?.disconnect()
+    this.#widthObserver = undefined
+    this.#widthAnimation?.cancel()
+    this.#widthAnimation = undefined
+    this.#widthReady = false
+    this.#lastWidth = null
+    this.#suppressWidthObserver = false
+  }
+
+  #onWidthResize() {
+    // Ignore our own animation frames (the WAAPI tween resizes the surface too).
+    if (!this._shown || !this.#widthReady || this.#suppressWidthObserver) return
+    const next = this.surface.offsetWidth
+    const prev = this.#lastWidth
+    this.#lastWidth = next
+    if (prev == null || prev === next) return
+    if (this.view.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return
+    this.#suppressWidthObserver = true
+    const anim = this.surface.animate(
+      [{ width: `${prev}px` }, { width: `${next}px` }],
+      { duration: 170, easing: 'ease-out' },
+    )
+    this.#widthAnimation = anim
+    const settle = () => {
+      if (this.#widthAnimation === anim) this.#widthAnimation = undefined
+      this.#suppressWidthObserver = false
+      // Re-baseline to the natural width now (absorbs any change that landed while
+      // the tween ran), so the next resize measures from the real current width.
+      if (this._shown) this.#lastWidth = this.surface.offsetWidth
+    }
+    anim.addEventListener('finish', settle)
+    anim.addEventListener('cancel', settle)
   }
 
   /** Expose the menu's OWN open state as an off-DOM custom state (`:state(open)`),

@@ -207,7 +207,8 @@ provide two functions:
 - **`summary(value)`** — the chip on the facet's row while a value is set. It's
   **display-only** and decoupled from the value: the value round-trips through
   `onChange` / `ctx.value`, so `summary` can return any node (or `null`) without changing
-  what you read from `value[key]`.
+  what you read from `value[key]`. The chip caps its width and ellipsizes a long
+  summary, and the menu tweens its width as chips appear or clear rather than snapping.
 
 Nothing is compared or filtered inside the component; it stores the value and reports it
 via `onValueChange`, and applying it to your rows is your code. Type the facet

@@ -506,9 +506,12 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
     const applied = (current[facet.key] as string | undefined) ?? ''
     const draft = drafts[facet.key] ?? applied
     // Commit only when the draft actually differs from the committed value, so a
-    // focus/blur with no edit doesn't fire a spurious onValueChange.
+    // focus/blur with no edit doesn't fire a spurious onValueChange. The value is
+    // stored verbatim — a trailing space and all — so the field can hold one;
+    // trimming belongs to the consumer at match time, not to the stored state. An
+    // all-blank draft still clears the facet.
     const apply = () => {
-      const next = draft.trim() || undefined
+      const next = draft.trim() === '' ? undefined : draft
       if (next !== (applied || undefined)) setFacet(facet, next)
     }
     return (
@@ -631,6 +634,9 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
         placement={placement}
         offset={offset}
         open={open}
+        // A facet's summary badge appears / grows / clears as you edit while the
+        // menu is open — tween the width so the panel glides instead of snapping.
+        animateWidth
         onStateChange={(_e, { next }) => {
           setOpen(next)
           if (!next) setRootQuery('')
@@ -662,7 +668,9 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
                   const s = summaryOf(facet)
                   return s != null ? (
                     <Tag size="small" tone="brand">
-                      {s}
+                      {/* Cap + ellipsize a long summary (a long `text` value, many
+                          picks) so one facet's chip can't stretch the whole menu. */}
+                      <span className={styles.summary}>{s}</span>
                     </Tag>
                   ) : null
                 })()}

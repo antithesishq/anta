@@ -573,11 +573,12 @@ const [a, setA] = useState(['eng', 'design', 'ops'])
 const [b, setB] = useState(['eng', 'design'])
 
 // verbose: the count summary lists the picks
-<Select selection="multiple" options={teams} value={a} onValueChange={setA} verbose />
+<Select selection="multiple" placeholder="Pick teams" options={teams} value={a} onValueChange={setA} verbose />
 
 // renderSummary: build the text yourself
 <Select
   selection="multiple"
+  placeholder="Pick teams"
   options={teams}
   value={b}
   onValueChange={setB}

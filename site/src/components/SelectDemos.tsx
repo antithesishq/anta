@@ -337,11 +337,12 @@ export function SelectSummaryDemo() {
   return (
     <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
       <div style={{ width: '240px' }}>
-        <Select label="verbose" selection="multiple" options={TEAMS} value={a} onValueChange={setA} verbose />
+        <Select label="verbose" placeholder="Pick teams" selection="multiple" options={TEAMS} value={a} onValueChange={setA} verbose />
       </div>
       <div style={{ width: '240px' }}>
         <Select
           label="renderSummary"
+          placeholder="Pick teams"
           selection="multiple"
           options={TEAMS}
           value={b}

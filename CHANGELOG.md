@@ -2,7 +2,7 @@
 
 This page tracks what ships to npm. Documentation website changes are not tracked here.
 
-## Unreleased
+## 0.3.15 — July 28, 2026
 
 ### Added
 - **`Toaster` (`<a-toaster>` / `<a-toast>`) — a notification region that shows anything as a toast.** Mount one `<Toaster>` and drive it through `Toaster.manager` (or a `createToaster()` bound with `<Toaster toaster={…} />`). `manager.add(render, { id?, placement?, duration?, politeness? })` takes a render function returning a string (auto-wrapped in a dismissible `Banner`), JSX (`<Banner>` / `<Card>` / `<Sticker>` / …), or a live DOM node, and returns an `id` for `dismiss(id)` / `update(id, render)` / `clear()` (reusing an id upserts in place). Six placements (default `bottom-right`); `duration` ms auto-dismisses (default 5000; `Infinity` = sticky), pausing on hover / focus; `politeness` opts into a `role="status"` / `role="alert"` announcement. `<a-toast>` is a style-neutral container with no ✕ of its own — dismissal comes from the content: any control with **`data-toast-dismiss`** (no wiring, mirroring `data-banner-dismiss` / `data-dialog-close`) or a toasted `Banner`'s `onDismiss`. It also publishes **`--toast-remaining`** (`1` → `0`, tracking the timer and pausing with it) so content can draw a "time left" bar in one CSS rule. Tokens `--toaster-inset` / `--toaster-gap` / `--toaster-width` / `--toast-dur`. Exports `Toaster`, `createToaster`, `ToasterProps`, `ToasterManager`, `ToastOptions`, `ToastPlacement`, `ToastContent`, `ToastRender`.

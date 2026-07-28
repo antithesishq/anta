@@ -20,7 +20,7 @@ const isTone = (v: string | null): v is Tone => TONES.some((t) => t.value === v)
  * a switch never navigates or scrolls. The tone mirrors into the URL
  * (`?tone=brand`) via replaceState, and a `?tone=` deep link applies in the
  * mount effect (not the useState initializer: Preact skips attribute patching
- * during hydration; see site/CLAUDE.md).
+ * during hydration; see site/AGENTS.md).
  */
 export default function ToneTabs() {
   const [tone, setTone] = useState<Tone>('neutral')

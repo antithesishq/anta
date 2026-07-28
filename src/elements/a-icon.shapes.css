@@ -138,6 +138,10 @@
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3E%0A  %3Cpath stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.3' d='M13.7 4.9 8 8m0 0L2.3 4.9M8 8v6.3m6-3.6V4.8l-.2-.2-.3-.2-5-2.8-.4-.2H8l-.4.2-5 2.8c-.2 0-.3.1-.3.2l-.2.2v6.4l.2.2.3.2 5 2.8.4.2h0l.4-.2 5-2.8c.2 0 .3-.1.3-.2l.2-.2v-.5Z'/%3E%0A%3C/svg%3E%0A");
   }
 
+  a-icon[shape="dollar-sign"] {
+    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' x2='12' y1='2' y2='22'/%3E%3Cpath d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/%3E%3C/svg%3E%0A");
+  }
+
   a-icon[shape="dots-vertical"] {
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%0A  %3Cpath d='M8.00004 8.6665C8.36823 8.6665 8.66671 8.36803 8.66671 7.99984C8.66671 7.63165 8.36823 7.33317 8.00004 7.33317C7.63185 7.33317 7.33337 7.63165 7.33337 7.99984C7.33337 8.36803 7.63185 8.6665 8.00004 8.6665Z' stroke='currentColor' stroke-width='1.33333' stroke-linecap='round' stroke-linejoin='round'/%3E%0A  %3Cpath d='M8.00004 3.99984C8.36823 3.99984 8.66671 3.70136 8.66671 3.33317C8.66671 2.96498 8.36823 2.6665 8.00004 2.6665C7.63185 2.6665 7.33337 2.96498 7.33337 3.33317C7.33337 3.70136 7.63185 3.99984 8.00004 3.99984Z' stroke='currentColor' stroke-width='1.33333' stroke-linecap='round' stroke-linejoin='round'/%3E%0A  %3Cpath d='M8.00004 13.3332C8.36823 13.3332 8.66671 13.0347 8.66671 12.6665C8.66671 12.2983 8.36823 11.9998 8.00004 11.9998C7.63185 11.9998 7.33337 12.2983 7.33337 12.6665C7.33337 13.0347 7.63185 13.3332 8.00004 13.3332Z' stroke='currentColor' stroke-width='1.33333' stroke-linecap='round' stroke-linejoin='round'/%3E%0A%3C/svg%3E");
   }

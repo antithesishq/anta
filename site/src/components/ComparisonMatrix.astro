@@ -37,8 +37,22 @@ import { SYSTEMS } from './comparison-data'
 
 <style>
   .matrix-scroll {
-    overflow-x: auto;
+    /* At compact widths this is a real two-axis data-grid viewport, so the
+       header has a vertical scrollport to stick within. On wide tracks the
+       container becomes non-scrolling below and the header sticks to the page. */
+    max-block-size: min(720px, calc(100dvh - 32px));
+    overflow: auto;
+    scrollbar-gutter: stable;
     margin-block: 24px;
+  }
+
+  /* The matrix itself needs 720px. Once that fits, let the page own vertical
+     scrolling again and keep only the document-level sticky header. */
+  @container (min-width: 720px) {
+    .matrix-scroll {
+      max-block-size: none;
+      overflow: visible;
+    }
   }
 
   .matrix {

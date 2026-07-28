@@ -59,7 +59,7 @@ export const Progress = ({ value, max = 100, tone, round, label, hint, className
   // clamped bar and the percentage shown in the label.
   const clampedValue = max > 0 ? Math.min(max, Math.max(0, value)) : 0
   // ARIA wiring is added here in the wrapper, not in the web component
-  // (see CLAUDE.md "ARIA goes in JSX wrappers"). The aria-label echoes
+  // (see AGENTS.md "ARIA goes in JSX wrappers"). The aria-label echoes
   // every visible piece — label text, percentage, and hint — so screen
   // readers announce what sighted users see, in one phrase. The role
   // and aria-value* attributes are still set independently for tooling

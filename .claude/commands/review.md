@@ -12,9 +12,10 @@ Pass the subagent this scope: **$ARGUMENTS**
 - If it names a ref (e.g. `HEAD~3`, a branch) or paths, tell it to scope the
   diff accordingly.
 
-Instruct the subagent to read `.github/anta-review.md` and `CLAUDE.md` first and
-to return its standard format (verdict · findings by severity · design assessment
-for a substantial component change · not-checked).
+Instruct the subagent to read `.github/anta-review.md`, the root `AGENTS.md`,
+and the closest scoped `AGENTS.md` files first, then return its standard format
+(verdict · findings by severity · design assessment for a substantial component
+change · not-checked).
 
 When it returns, relay its findings **verbatim** — do not re-review, soften, or
 re-rank them. If you want, offer to apply the must-fix items afterward.

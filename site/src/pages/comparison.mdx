@@ -1,6 +1,7 @@
 ---
 layout: ../layouts/DocsLayout.astro
 title: Comparison
+hideToc: true
 ---
 
 import ComparisonMatrix from '../components/ComparisonMatrix.astro'
@@ -31,6 +32,12 @@ consumer rule overrides a default without a specificity fight.
 
 </Disclosure>
 
+<Disclosure title="The systems">
+
+<SystemCards />
+
+</Disclosure>
+
 ## Component coverage
 
 Grouped by job, so a Dialog / Modal / Drawer family counts as one row. Anta
@@ -40,7 +47,3 @@ upcoming. Radix and Base UI leave most visual cells empty by design; they
 ship behavior.
 
 <CoverageMatrix />
-
-## The systems
-
-<SystemCards />

@@ -119,7 +119,7 @@ const ANIM_MS = 200
 
 // Shadow styles, injected verbatim into every <a-dialog> shadow root — kept
 // COMMENT-FREE (it ships + re-injects per instance; see the "no comments inside
-// shadow-<style> strings" rule in CLAUDE.md). Rationale lives here instead:
+// shadow-<style> strings" rule in AGENTS.md). Rationale lives here instead:
 //
 //  • :host — display:contents so the host itself contributes no box; the dialog
 //    renders in the top layer. a-dialog.css hides the host until :defined to

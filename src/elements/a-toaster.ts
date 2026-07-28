@@ -99,7 +99,7 @@ export class AToasterElement extends HTMLElementBase {
 
 // Shadow styles, injected verbatim into every <a-toaster> shadow root — kept
 // COMMENT-FREE (it ships + re-injects per instance; see the "no comments inside
-// shadow-<style> strings" rule in CLAUDE.md). Rationale:
+// shadow-<style> strings" rule in AGENTS.md). Rationale:
 //
 //  • :host is display:contents — the host takes no layout box; the fixed popover
 //    region does all the positioning. The tokens (--toaster-*) are defined on the

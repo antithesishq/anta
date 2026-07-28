@@ -117,7 +117,7 @@ const SUPPORTS_FIELD_SIZING =
 
 // Shadow styles, injected verbatim into every <a-input> shadow root, so this
 // string is kept COMMENT-FREE (it ships + re-injects per instance — see the
-// "no comments inside shadow-<style> strings" rule in CLAUDE.md).
+// "no comments inside shadow-<style> strings" rule in AGENTS.md).
 //
 // Styling notes (what the rules below do, by region):
 //  • :host — a grid of the three ::part regions (label / field / hint) in one

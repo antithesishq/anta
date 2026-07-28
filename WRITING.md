@@ -64,7 +64,7 @@ Same voice everywhere; the length changes.
 
 - **Pages (`.mdx`):** one or two sentences, then a code block, then the caveats.
   `PropsTable` and the `## Styling` disclosure hold the reference detail (see
-  `site/CLAUDE.md`).
+  `site/AGENTS.md`).
 - **Source comments:** the why, one line above the code. The code shows the what.
   Comment volume tracks the code's subtlety, not its line count: a one-line change
   rarely needs more than one line of comment, and most need none. Add a comment only

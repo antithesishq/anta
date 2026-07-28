@@ -348,7 +348,7 @@ export class AToastElement extends HTMLElementBase {
 }
 
 // Shadow styles, injected verbatim into every <a-toast> shadow root — kept
-// COMMENT-FREE (ships + re-injects per instance; see CLAUDE.md). Rationale:
+// COMMENT-FREE (ships + re-injects per instance; see AGENTS.md). Rationale:
 //
 //  • :host is the box: a display:block flex item the zone (in a-toaster) stretches
 //    to the column width. It carries the enter/exit fade + slide itself — no

@@ -56,6 +56,35 @@ const num = (v: string, fallback = 0) => {
 }
 const fx = (x: number, d: number) => (Math.round(x * 10 ** d) / 10 ** d).toString()
 
+// A channel field. Its value round-trips through the colour state and is reformatted
+// by fx, so it holds a raw string draft — a fractional oklch value ("0.", "0.55")
+// types cleanly. Re-seed only when the external value diverges numerically (a canvas
+// pick, another channel), never mid-keystroke.
+function Chan({ label, val, onVal, tip }: { label: string; val: string; onVal: (v: string) => void; tip?: any }) {
+  const [draft, setDraft] = useState(val)
+  const [seen, setSeen] = useState(val)
+  if (seen !== val) {
+    setSeen(val)
+    if (num(draft) !== num(val)) setDraft(val)
+  }
+  return (
+    <div style={{ width: 78, position: 'relative' }}>
+      <Input
+        type="text"
+        inputMode="decimal"
+        size="small"
+        label={label}
+        value={draft}
+        onValueChange={(_e: any, a: any) => {
+          setDraft(a.value)
+          onVal(a.value)
+        }}
+      />
+      {tip ? <Tooltip>{tip}</Tooltip> : null}
+    </div>
+  )
+}
+
 const MODELS = [
   { value: 'oklch', label: 'OKLCH' },
   { value: 'hsl', label: 'HSL' },
@@ -169,11 +198,9 @@ export default function ColorPicker({
     setOklch(safeOklch(chroma.rgb(next[0], next[1], next[2]).oklch(), h))
   }
 
-  const chan = (label: string, val: string, min: number, max: number, step: number, onVal: (v: string) => void, tip?: any) => (
-    <div style={{ width: 78, position: 'relative' }}>
-      <Input type="number" size="small" label={label} value={val} min={min} max={max} step={step} onValueChange={(_e: any, a: any) => onVal(a.value)} />
-      {tip ? <Tooltip>{tip}</Tooltip> : null}
-    </div>
+  // min/max/step were native number-input attrs; clamping now lives in each onVal.
+  const chan = (label: string, val: string, _min: number, _max: number, _step: number, onVal: (v: string) => void, tip?: any) => (
+    <Chan label={label} val={val} onVal={onVal} tip={tip} />
   )
 
   const row = { display: 'flex', gap: 8, flexWrap: 'wrap' as const }

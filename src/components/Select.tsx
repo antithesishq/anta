@@ -259,6 +259,13 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the
    *  semantics. Composes with `renderOption`. */
   renderIndicator?: (state: OptionState<V>) => React.ReactNode
+  /** `multiple` only: spell the picks out in the count summary — `3 selected:
+   *  A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies
+   *  to the multi-count case only: `All` stays `All`, a single pick stays its
+   *  own label, and an empty selection stays the `placeholder`. The list flows
+   *  into the read-only field, so it ellipsizes at the field's width when long
+   *  (`3 selected: Engineering, Des… `). `renderSummary` overrides this. */
+  verbose?: boolean
   /** `multiple` only: build the trigger's selection summary text yourself,
    *  replacing the built-in "`All` / one label / `N selected`" logic. Receives
    *  the resolved selected options (`selected.length` is the count) and runs only
@@ -480,6 +487,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     clearLabel = 'Clear',
     renderOption,
     renderIndicator,
+    verbose,
     renderSummary,
     renderTrigger,
     renderEmpty,
@@ -598,6 +606,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   // Trigger text: single shows the chosen label; multiple shows "All" when everything
   // is selected, else the one label or a count; nothing selected falls through to the
   // placeholder.
+  const labelOf = (o: SelectOption<V>) => o.label ?? String(o.value)
   let display = ''
   if (multiple) {
     // Consumer summary first (when something's selected); '' / undefined falls
@@ -605,11 +614,15 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     const custom = selectedOptions.length > 0 ? renderSummary?.(selectedOptions) : undefined
     if (custom != null && custom !== '') display = custom
     else if (everythingSelected) display = 'All'
-    else if (selectedOptions.length === 1) display = selectedOptions[0].label ?? String(selectedOptions[0].value)
-    else if (selectedOptions.length > 1) display = `${selectedOptions.length} selected`
+    else if (selectedOptions.length === 1) display = labelOf(selectedOptions[0])
+    else if (selectedOptions.length > 1) {
+      const count = `${selectedOptions.length} selected`
+      // `verbose` spells the picks out; the field ellipsizes the list when long.
+      display = verbose ? `${count}: ${selectedOptions.map(labelOf).join(', ')}` : count
+    }
   } else if (currentRaw != null) {
     const o = byValue.get(currentRaw as V)
-    display = o ? (o.label ?? String(o.value)) : ''
+    display = o ? labelOf(o) : ''
   }
 
   const choose = (o: SelectOption<V>, e?: any) => {

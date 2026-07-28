@@ -113,7 +113,8 @@ canonical Select look), or **`"radio"`** (a leading radio on every row).
 `selection="multiple"` makes `value` an **array**, puts a **checkbox** on
 every row, keeps the menu open as you toggle, and summarises the selection in the
 field: **`All`** when every option is on, the single label for one, else **"N
-selected"** (override the text with [`renderSummary`](#selection-summary); an empty
+selected"** (pass **`verbose`** to spell the picks out — `3 selected: A, B, C`; or
+take over the text entirely with [`renderSummary`](#selection-summary); an empty
 selection shows the `placeholder`). A
 **Select all** top row shows by default; it toggles everything, and
 its box goes mixed when only some are on. Pass **`selectAll={false}`** to drop it.
@@ -594,6 +595,10 @@ Return a **string**: it flows into the same read-only field the default uses, so
 long summary **ellipsizes at the field's width** the way a long value does
 (`Engineering, Design, … `). For rich content — chips, several nodes — reach for
 `renderTrigger` below, which replaces the whole field.
+
+For the common case of just listing the picks, skip `renderSummary` and pass
+**`verbose`**: the count summary becomes `3 selected: A, B, C` (labels comma-joined),
+ellipsizing at the field width like any long value. `renderSummary` overrides it.
 
 </Col>
 </Columns>

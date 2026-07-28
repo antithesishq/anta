@@ -719,4 +719,13 @@ a-menu.fancy :is(a-menu-item, a[data-anta-menu-item]) {
 }
 ```
 
+When an open menu's content changes size (a badge appears on a row, a summary
+clears), the surface tweens to the new width instead of snapping. Tune or turn
+it off with `--menu-width-duration` (`0` disables) — set it per menu via
+`::part(menu)`. It's zeroed under `prefers-reduced-motion`.
+
+```css
+a-menu.snappy::part(menu) { --menu-width-duration: 0; }   /* no width tween */
+```
+
 </Disclosure>

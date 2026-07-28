@@ -32,11 +32,6 @@ export interface MenuProps extends BaseProps {
    *  content menu under a wide trigger (e.g. a calendar below a full-width field)
    *  so it wraps its content and left-aligns under the trigger. */
   autoWidth?: boolean
-  /** Tween the menu's width when its content changes size **while open** — a
-   *  badge appearing on a row, a summary clearing — instead of snapping to the
-   *  new width. Off by default; the enter / exit are unaffected either way. Falls
-   *  back to an instant change under `prefers-reduced-motion`. */
-  animateWidth?: boolean
   /** Controlled open state. Omit for the default **uncontrolled** menu (it
    *  opens/closes itself via its triggers). Pass a boolean to **control** it:
    *  the menu's visibility follows `open`, and user dismiss (Esc, outside-click,
@@ -114,7 +109,6 @@ export const Menu = ({
   nohover,
   offset,
   autoWidth,
-  animateWidth,
   open,
   onStateChange,
   round,
@@ -133,7 +127,6 @@ export const Menu = ({
       nohover={nohover ? '' : undefined}
       offset={offset != null ? String(offset) : undefined}
       autowidth={autoWidth ? '' : undefined}
-      animatewidth={animateWidth ? '' : undefined}
       // Controlled lever — boolean prop → 'open'/'closed' enum; omit ⇒ uncontrolled.
       state={open === undefined ? undefined : open ? 'open' : 'closed'}
       // All-lowercase `onstatechange` is the one event-prop spelling both React

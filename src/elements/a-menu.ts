@@ -333,7 +333,9 @@ export class AMenuElement extends HTMLElementBase {
   // flipped to the left of the anchor). Same reanchor-stability role as `_flippedTop`.
   private _flippedSide: boolean | null = null
 
-  // Width animation, opt-in via `animatewidth` (see #startWidthObserver).
+  // Width animation, on by default (see #startWidthObserver). Duration/off-switch:
+  // the `--menu-width-duration` custom property (0 disables), overridable per menu
+  // via `::part(menu)`.
   #widthObserver?: ResizeObserver
   #widthAnimation?: Animation
   #widthReady = false
@@ -1094,7 +1096,7 @@ export class AMenuElement extends HTMLElementBase {
     // now — no fade-skip needed; the CSS transition + @starting-style handle the
     // enter, and a brief fade-in over an existing menu reads fine.
     this.position(coord, instant)
-    if (this.hasAttribute('animatewidth')) this.#startWidthObserver()
+    this.#startWidthObserver()
   }
 
   /** Dismiss any tooltip on the trigger as the menu opens, so the trigger's
@@ -1121,7 +1123,8 @@ export class AMenuElement extends HTMLElementBase {
   /** Tween the surface width (WAAPI) when its content changes size while open, so a
    *  badge appearing / clearing on a row glides instead of snapping. The surface
    *  stays auto-width; the animation only overrides the rendered width while it runs,
-   *  so the next change re-measures cleanly. */
+   *  so the next change re-measures cleanly. CSS can't transition a content-driven
+   *  `auto` width, so this is JS; `--menu-width-duration` (read below) is the knob. */
   #startWidthObserver() {
     this.#stopWidthObserver()
     const RO = this.view.ResizeObserver
@@ -1156,11 +1159,15 @@ export class AMenuElement extends HTMLElementBase {
     const prev = this.#lastWidth
     this.#lastWidth = next
     if (prev == null || prev === next) return
-    if (this.view.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return
+    // Duration/off-switch from CSS (`--menu-width-duration`, 0 disables); the sheet
+    // also zeroes it under prefers-reduced-motion.
+    const raw = this.view.getComputedStyle(this.surface).getPropertyValue('--menu-width-duration').trim()
+    const duration = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : NaN
+    if (!(duration > 0)) return
     this.#suppressWidthObserver = true
     const anim = this.surface.animate(
       [{ width: `${prev}px` }, { width: `${next}px` }],
-      { duration: 170, easing: 'ease-out' },
+      { duration, easing: 'ease-out' },
     )
     this.#widthAnimation = anim
     const settle = () => {

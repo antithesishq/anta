@@ -13,6 +13,14 @@
     --menu-padding: 4px;
     --menu-min-width: 88px;
     --menu-backdrop-filter: blur(20px);
+    /* Width tween when the open menu's content changes size (JS reads this — CSS
+       can't transition a content-driven auto width). 0 disables; override per menu
+       with `a-menu::part(menu) { --menu-width-duration: 0 }`. */
+    --menu-width-duration: 170ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a-menu { --menu-width-duration: 0; }
   }
 
   /* `round` softens the menu container to a 20px radius (a full pill would be

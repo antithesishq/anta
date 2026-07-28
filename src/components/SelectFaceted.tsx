@@ -631,8 +631,6 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
         placement={placement}
         offset={offset}
         open={open}
-        // Summary badges appear / clear as you edit — tween the width, don't snap.
-        animateWidth
         onStateChange={(_e, { next }) => {
           setOpen(next)
           if (!next) setRootQuery('')

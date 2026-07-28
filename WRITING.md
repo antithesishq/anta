@@ -66,8 +66,12 @@ Same voice everywhere; the length changes.
   `PropsTable` and the `## Styling` disclosure hold the reference detail (see
   `site/CLAUDE.md`).
 - **Source comments:** the why, one line above the code. The code shows the what.
-  Shadow `<style>` strings stay comment-free; put the reason in a TS comment above
-  the string.
+  Comment volume tracks the code's subtlety, not its line count: a one-line change
+  rarely needs more than one line of comment, and most need none. Add a comment only
+  where the reason isn't visible in the code (a workaround, a non-obvious ordering, a
+  browser quirk); don't restate what the next line already says, and don't spread one
+  reason across a paragraph. Shadow `<style>` strings stay comment-free; put the
+  reason in a TS comment above the string.
 - **TSDoc on props/params:** first sentence says what it does. Then when to reach for
   it, gotchas, interactions. `@defaultValue` owns the default; don't repeat it or the
   type in prose. A few sentences.

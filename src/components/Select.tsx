@@ -259,6 +259,24 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the
    *  semantics. Composes with `renderOption`. */
   renderIndicator?: (state: OptionState<V>) => React.ReactNode
+  /** `multiple` only: spell the picks out in the count summary — `3 selected:
+   *  A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies
+   *  to the multi-count case only: `All` stays `All`, a single pick stays its
+   *  own label, and an empty selection stays the `placeholder`. The list flows
+   *  into the read-only field, so it ellipsizes at the field's width when long
+   *  (`3 selected: Engineering, Des… `). `renderSummary` overrides this. */
+  verbose?: boolean
+  /** `multiple` only: build the trigger's selection summary text yourself,
+   *  replacing the built-in "`All` / one label / `N selected`" logic. Receives
+   *  the resolved selected options (`selected.length` is the count) and runs only
+   *  while something is selected — an empty selection still shows the
+   *  `placeholder`. Return a **string**: it flows into the default trigger's
+   *  read-only field, so a long summary ellipsizes at the field's width just
+   *  like a long value (`Engineering, Design, … `). Return `undefined` to fall
+   *  back to the default for that case (e.g. customize only the count, keeping
+   *  the single-label case built-in). For rich content (chips, multiple nodes)
+   *  use `renderTrigger`, which replaces the whole field. */
+  renderSummary?: (selected: SelectOption<V>[]) => string | undefined
   /** Render your own trigger in place of the default field. Receives a
    *  `TriggerState` (`open` / `value` / `selected` / `disabled` / `icon`) to drive
    *  its look. **Return exactly one focusable element** (an Anta `Button`, say) —
@@ -469,6 +487,8 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     clearLabel = 'Clear',
     renderOption,
     renderIndicator,
+    verbose,
+    renderSummary,
     renderTrigger,
     renderEmpty,
     className,
@@ -574,15 +594,28 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   // unknown value contributes nothing rather than corrupting the label or the count.
   const selectedOptions = selectedValues.map((v) => byValue.get(v)).filter(Boolean) as SelectOption<V>[]
 
-  // Trigger text: single shows the chosen label; multiple shows the one label or a
-  // count summary; nothing selectable falls through to the placeholder.
+  // "All" reads from `allLeaves`, not the filter-scoped `visibleLeaves`, so a filter
+  // query can't make the trigger claim "All" over a visible subset. Gated on >1 option
+  // so a lone selected option still reads as its own label.
+  const allEnabledValues = allLeaves.filter((l) => !l.disabled).map((l) => l.opt.value)
+  const everythingSelected =
+    multiple && allEnabledValues.length > 1 && allEnabledValues.every((v) => selectedValues.includes(v))
+
+  const labelOf = (o: SelectOption<V>) => o.label ?? String(o.value)
   let display = ''
   if (multiple) {
-    if (selectedOptions.length === 1) display = selectedOptions[0].label ?? String(selectedOptions[0].value)
-    else if (selectedOptions.length > 1) display = `${selectedOptions.length} selected`
+    // Consumer summary wins; '' / undefined falls through to the built-in text.
+    const custom = selectedOptions.length > 0 ? renderSummary?.(selectedOptions) : undefined
+    if (custom != null && custom !== '') display = custom
+    else if (everythingSelected) display = 'All'
+    else if (selectedOptions.length === 1) display = labelOf(selectedOptions[0])
+    else if (selectedOptions.length > 1) {
+      const count = `${selectedOptions.length} selected`
+      display = verbose ? `${count}: ${selectedOptions.map(labelOf).join(', ')}` : count
+    }
   } else if (currentRaw != null) {
     const o = byValue.get(currentRaw as V)
-    display = o ? (o.label ?? String(o.value)) : ''
+    display = o ? labelOf(o) : ''
   }
 
   const choose = (o: SelectOption<V>, e?: any) => {

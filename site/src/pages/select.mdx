@@ -9,7 +9,7 @@ import Disclosure from '../components/Disclosure.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
-import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGroupsDemo, SelectGhostDemo, SelectSelectionTreeDemo } from '../components/SelectDemos'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectSummaryDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGroupsDemo, SelectGhostDemo, SelectSelectionTreeDemo } from '../components/SelectDemos'
 
 # Select
 
@@ -111,8 +111,12 @@ skipped by the keyboard.
 canonical Select look), or **`"radio"`** (a leading radio on every row).
 
 `selection="multiple"` makes `value` an **array**, puts a **checkbox** on
-every row, keeps the menu open as you toggle, and summarises the count in the field
-("N selected"). A **Select all** top row shows by default; it toggles everything, and
+every row, keeps the menu open as you toggle, and summarises the selection in the
+field: **`All`** when every option is on, the single label for one, else **"N
+selected"** (pass **`verbose`** to spell the picks out — `3 selected: A, B, C`; or
+take over the text entirely with [`renderSummary`](#selection-summary); an empty
+selection shows the `placeholder`). A
+**Select all** top row shows by default; it toggles everything, and
 its box goes mixed when only some are on. Pass **`selectAll={false}`** to drop it.
 
 On a multi-select, **`Alt`+Click** a row (⌥+Click on macOS) to *isolate* it: clear
@@ -551,6 +555,62 @@ semantics, and only the drawn glyph changes. `state` gives you `value` / `select
 `disabled`, so the mark can reflect selection (here, an outline ring that fills when
 chosen). It composes with `renderOption`, so you can override the content, the mark,
 both, or neither.
+
+</Col>
+</Columns>
+
+### Selection summary
+
+<Columns>
+<Col>
+
+<Preview>
+  <SelectSummaryDemo client:load />
+</Preview>
+
+```tsx folded
+const teams = ['Engineering', 'Design', 'Operations', 'Sales', 'Support']
+const [a, setA] = useState(['eng', 'design', 'ops'])
+const [b, setB] = useState(['eng', 'design'])
+
+// verbose: the count summary lists the picks
+<Select selection="multiple" placeholder="Pick teams" options={teams} value={a} onValueChange={setA} verbose />
+
+// renderSummary: build the text yourself
+<Select
+  selection="multiple"
+  placeholder="Pick teams"
+  options={teams}
+  value={b}
+  onValueChange={setB}
+  // one label; a count past that; every option → "All teams"
+  renderSummary={(selected) =>
+    selected.length === teams.length
+      ? 'All teams'
+      : selected.length > 1
+        ? `${selected.length} teams`
+        : undefined // fall back to the single label
+  }
+/>
+```
+
+</Col>
+<Col>
+
+**`renderSummary(selected)`** builds the multi-select field text in place of the
+built-in "`All` / one label / `N selected`". It runs while something is selected — an
+empty selection still shows the `placeholder` — and takes the resolved `selected`
+options (`selected.length` is the count). Return `undefined` for any case you'd rather
+leave to the default, as above for the single-label case.
+
+Return a **string**: it flows into the same read-only field the default uses, so a
+long summary **ellipsizes at the field's width** the way a long value does
+(`Engineering, Design, … `). For rich content — chips, several nodes — reach for
+`renderTrigger` below, which replaces the whole field.
+
+For the common case of just listing the picks, skip `renderSummary` and pass
+**`verbose`**: the count summary becomes `3 selected: A, B, C` (labels comma-joined),
+ellipsizing at the field width like any long value. `renderSummary` overrides it.
 
 </Col>
 </Columns>

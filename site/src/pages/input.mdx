@@ -505,6 +505,14 @@ restores the field to its `defaultValue` via `formResetCallback`.
 constraint validation. (`search` is omitted on purpose — see above.)
 `number` also takes `min` / `max` / `step`.
 
+For a **controlled** numeric field — one whose `value` you hold in state — prefer
+`type="text"` with `inputMode="decimal"` (or `"numeric"`) over `type="number"`. A
+number input runs value sanitization, so a mid-typing `"1."` or `"1.0"` reports an
+empty `value` and can't be entered; storing the parsed `Number` and rendering it
+back drops the decimal for the same reason. Keep the raw string in state and parse
+to a number where you use it — `inputMode` still brings up the numeric keypad. An
+**uncontrolled** `type="number"` (no bound `value`) has neither problem.
+
 Every type carries its native constraints (`required`, the `type` itself,
 `pattern`, `min`/`max`, `min`/`maxLength`). The field reports them to the
 surrounding `<form>` automatically (via `ElementInternals`), so submission is

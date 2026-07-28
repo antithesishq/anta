@@ -112,7 +112,15 @@ export function ensureMenuItemKeyListener(doc: Document) {
   if (doc.hasKeyListenerForAMenuItem) return
   installKeyActivation(doc, {
     keys: ['Enter', ' '],
-    resolve: (t) => (t as HTMLElement)?.closest?.(MENU_ITEM_SELECTOR) as HTMLElement | null,
+    resolve: (t) => {
+      const el = t as HTMLElement | null
+      // A text-entry control nested in a row (a facet's <Input> in its flyout, a
+      // slotted Select) owns Enter / Space — typing a space must reach it, not
+      // activate the row. Retargeting lands the a-input host on `t`, so match it.
+      if (el?.closest?.('input, textarea, select, a-input, a-input-time, [contenteditable]:not([contenteditable="false"])'))
+        return null
+      return el?.closest?.(MENU_ITEM_SELECTOR) as HTMLElement | null
+    },
     blocked: (el) => el.hasAttribute('disabled'),
     activate: (el) => el.click(),
   })

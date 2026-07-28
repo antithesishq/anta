@@ -207,7 +207,8 @@ provide two functions:
 - **`summary(value)`** — the chip on the facet's row while a value is set. It's
   **display-only** and decoupled from the value: the value round-trips through
   `onChange` / `ctx.value`, so `summary` can return any node (or `null`) without changing
-  what you read from `value[key]`.
+  what you read from `value[key]`. The chip caps its width and ellipsizes a long
+  summary so it can't stretch the menu.
 
 Nothing is compared or filtered inside the component; it stores the value and reports it
 via `onValueChange`, and applying it to your rows is your code. Type the facet
@@ -223,17 +224,20 @@ sits directly in the flyout.
 ```tsx folded
 import type { SelectFacetCustom } from '@antadesign/anta'
 
-const duration: SelectFacetCustom<number> = {
+const duration: SelectFacetCustom<string> = {
   key: 'duration',
   label: 'Min duration',
   kind: 'custom',
   render: (ctx) => (
     <Input
-      type="number"
+      // Controlled numeric field: type="text" + inputMode, not type="number"
+      // (which sanitizes "1." / "1.0" to empty). Keep the raw string; parse it below.
+      type="text"
+      inputMode="decimal"
       size="small"
       placeholder="seconds"
-      value={ctx.value != null ? String(ctx.value) : ''}
-      onInput={(e) => ctx.onChange(Number(e.currentTarget.value) || undefined)}
+      value={ctx.value ?? ''}
+      onInput={(e) => ctx.onChange(e.currentTarget.value || undefined)}
     />
   ),
   summary: (v) => `≥ ${v}s`,
@@ -241,9 +245,9 @@ const duration: SelectFacetCustom<number> = {
 
 <SelectFaceted facets={[duration]} value={value} onValueChange={setValue} />
 
-// user types 30  →  value.duration === 30   (a number, returned unchanged)
-// you apply it:
-rows.filter((r) => value.duration == null || r.seconds >= value.duration)
+// user types 1.5  →  value.duration === "1.5"   (the raw string, returned unchanged)
+// parse it where you apply the filter, so partial input ("1.", "1.0") types cleanly:
+rows.filter((r) => value.duration == null || r.seconds >= Number(value.duration))
 ```
 
 A date, cast through a helper. Editors with **their own popup** (the inline `Calendar`,

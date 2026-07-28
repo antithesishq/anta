@@ -13,6 +13,11 @@
     --menu-padding: 4px;
     --menu-min-width: 88px;
     --menu-backdrop-filter: blur(20px);
+    --menu-width-duration: 160ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a-menu { --menu-width-duration: 0; }
   }
 
   /* `round` softens the menu container to a 20px radius (a full pill would be

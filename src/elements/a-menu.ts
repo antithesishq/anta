@@ -395,6 +395,7 @@ export class AMenuElement extends HTMLElementBase {
         transition:
           opacity 140ms ease-out,
           translate 140ms ease-out,
+          width var(--menu-width-duration, 160ms) ease,
           display 140ms allow-discrete,
           overlay 140ms allow-discrete;
       }
@@ -406,6 +407,7 @@ export class AMenuElement extends HTMLElementBase {
         transition:
           opacity 100ms ease-out,
           translate 100ms ease-out,
+          width var(--menu-width-duration, 160ms) ease,
           display 100ms allow-discrete,
           overlay 100ms allow-discrete;
       }

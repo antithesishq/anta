@@ -259,6 +259,17 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the
    *  semantics. Composes with `renderOption`. */
   renderIndicator?: (state: OptionState<V>) => React.ReactNode
+  /** `multiple` only: build the trigger's selection summary text yourself,
+   *  replacing the built-in "one label / `N selected`" logic. Receives the
+   *  resolved selected options (`selected.length` is the count) and runs only
+   *  while something is selected — an empty selection still shows the
+   *  `placeholder`. Return a **string**: it flows into the default trigger's
+   *  read-only field, so a long summary ellipsizes at the field's width just
+   *  like a long value (`Engineering, Design, … `). Return `undefined` to fall
+   *  back to the default for that case (e.g. customize only the count, keeping
+   *  the single-label case built-in). For rich content (chips, multiple nodes)
+   *  use `renderTrigger`, which replaces the whole field. */
+  renderSummary?: (selected: SelectOption<V>[]) => string | undefined
   /** Render your own trigger in place of the default field. Receives a
    *  `TriggerState` (`open` / `value` / `selected` / `disabled` / `icon`) to drive
    *  its look. **Return exactly one focusable element** (an Anta `Button`, say) —
@@ -469,6 +480,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     clearLabel = 'Clear',
     renderOption,
     renderIndicator,
+    renderSummary,
     renderTrigger,
     renderEmpty,
     className,
@@ -578,7 +590,11 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   // count summary; nothing selectable falls through to the placeholder.
   let display = ''
   if (multiple) {
-    if (selectedOptions.length === 1) display = selectedOptions[0].label ?? String(selectedOptions[0].value)
+    // Consumer summary first (when something's selected); '' / undefined falls
+    // through to the built-in one-label / N-selected text.
+    const custom = selectedOptions.length > 0 ? renderSummary?.(selectedOptions) : undefined
+    if (custom != null && custom !== '') display = custom
+    else if (selectedOptions.length === 1) display = selectedOptions[0].label ?? String(selectedOptions[0].value)
     else if (selectedOptions.length > 1) display = `${selectedOptions.length} selected`
   } else if (currentRaw != null) {
     const o = byValue.get(currentRaw as V)

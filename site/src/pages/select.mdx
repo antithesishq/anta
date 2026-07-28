@@ -111,8 +111,10 @@ skipped by the keyboard.
 canonical Select look), or **`"radio"`** (a leading radio on every row).
 
 `selection="multiple"` makes `value` an **array**, puts a **checkbox** on
-every row, keeps the menu open as you toggle, and summarises the count in the field
-("N selected" — override the text with [`renderSummary`](#selection-summary)). A
+every row, keeps the menu open as you toggle, and summarises the selection in the
+field: **`All`** when every option is on, the single label for one, else **"N
+selected"** (override the text with [`renderSummary`](#selection-summary); an empty
+selection shows the `placeholder`). A
 **Select all** top row shows by default; it toggles everything, and
 its box goes mixed when only some are on. Pass **`selectAll={false}`** to drop it.
 
@@ -583,10 +585,10 @@ const [value, setValue] = useState(['eng', 'design', 'ops'])
 <Col>
 
 **`renderSummary(selected)`** builds the multi-select field text in place of the
-built-in "one label / `N selected`". It runs while something is selected — an empty
-selection still shows the `placeholder` — and takes the resolved `selected` options
-(`selected.length` is the count). Return `undefined` for any case you'd rather leave
-to the default, as above for the single-label case.
+built-in "`All` / one label / `N selected`". It runs while something is selected — an
+empty selection still shows the `placeholder` — and takes the resolved `selected`
+options (`selected.length` is the count). Return `undefined` for any case you'd rather
+leave to the default, as above for the single-label case.
 
 Return a **string**: it flows into the same read-only field the default uses, so a
 long summary **ellipsizes at the field's width** the way a long value does

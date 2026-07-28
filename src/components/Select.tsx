@@ -260,8 +260,8 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  semantics. Composes with `renderOption`. */
   renderIndicator?: (state: OptionState<V>) => React.ReactNode
   /** `multiple` only: build the trigger's selection summary text yourself,
-   *  replacing the built-in "one label / `N selected`" logic. Receives the
-   *  resolved selected options (`selected.length` is the count) and runs only
+   *  replacing the built-in "`All` / one label / `N selected`" logic. Receives
+   *  the resolved selected options (`selected.length` is the count) and runs only
    *  while something is selected — an empty selection still shows the
    *  `placeholder`. Return a **string**: it flows into the default trigger's
    *  read-only field, so a long summary ellipsizes at the field's width just
@@ -586,14 +586,25 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   // unknown value contributes nothing rather than corrupting the label or the count.
   const selectedOptions = selectedValues.map((v) => byValue.get(v)).filter(Boolean) as SelectOption<V>[]
 
-  // Trigger text: single shows the chosen label; multiple shows the one label or a
-  // count summary; nothing selectable falls through to the placeholder.
+  // "All" for the trigger: every enabled option across the whole tree is selected —
+  // read from `allLeaves`, not the filter-scoped `visibleLeaves` the Select-all row
+  // uses, so an active filter query can't make the trigger claim "All" while the menu
+  // shows a subset. Gated on more than one option so a lone selected option still
+  // reads as its own label rather than "All".
+  const allEnabledValues = allLeaves.filter((l) => !l.disabled).map((l) => l.opt.value)
+  const everythingSelected =
+    multiple && allEnabledValues.length > 1 && allEnabledValues.every((v) => selectedValues.includes(v))
+
+  // Trigger text: single shows the chosen label; multiple shows "All" when everything
+  // is selected, else the one label or a count; nothing selected falls through to the
+  // placeholder.
   let display = ''
   if (multiple) {
     // Consumer summary first (when something's selected); '' / undefined falls
-    // through to the built-in one-label / N-selected text.
+    // through to the built-in All / one-label / N-selected text.
     const custom = selectedOptions.length > 0 ? renderSummary?.(selectedOptions) : undefined
     if (custom != null && custom !== '') display = custom
+    else if (everythingSelected) display = 'All'
     else if (selectedOptions.length === 1) display = selectedOptions[0].label ?? String(selectedOptions[0].value)
     else if (selectedOptions.length > 1) display = `${selectedOptions.length} selected`
   } else if (currentRaw != null) {

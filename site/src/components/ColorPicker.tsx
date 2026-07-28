@@ -248,8 +248,10 @@ export default function ColorPicker({
                   style={{ width: '100%', height: 'auto', borderRadius: 6, cursor: 'crosshair', display: 'block' }}
                 />
                 <div style={row}>
-                  {chan('L', fx(l, 3), 0, 1, 0.01, (v) => setOklch([Math.max(0, Math.min(1, num(v))), c, h]))}
-                  {chan('C', fx(c, 3), 0, CMAX, 0.005, (v) => setOklch([l, Math.max(0, Math.min(CMAX, num(v))), h]), `in-gamut chroma limit at this L / hue: ${fx(cLimit, 3)}`)}
+                  {/* L / C carry 5 decimals so a fine oklch value types without the
+                      draft snapping (H stays 1 — 0.1° is finer than perception). */}
+                  {chan('L', fx(l, 5), 0, 1, 0.01, (v) => setOklch([Math.max(0, Math.min(1, num(v))), c, h]))}
+                  {chan('C', fx(c, 5), 0, CMAX, 0.005, (v) => setOklch([l, Math.max(0, Math.min(CMAX, num(v))), h]), `in-gamut chroma limit at this L / hue: ${fx(cLimit, 3)}`)}
                   {chan('H', fx(h, 1), 0, 360, 1, (v) => setOklch([l, c, ((num(v) % 360) + 360) % 360]))}
                 </div>
               </div>

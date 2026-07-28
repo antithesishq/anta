@@ -505,11 +505,8 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   const renderText = (facet: SelectFacetText) => {
     const applied = (current[facet.key] as string | undefined) ?? ''
     const draft = drafts[facet.key] ?? applied
-    // Commit only when the draft actually differs from the committed value, so a
-    // focus/blur with no edit doesn't fire a spurious onValueChange. The value is
-    // stored verbatim — a trailing space and all — so the field can hold one;
-    // trimming belongs to the consumer at match time, not to the stored state. An
-    // all-blank draft still clears the facet.
+    // Store the draft verbatim (a trailing space and all — trimming is the consumer's
+    // at match time); an all-blank draft clears. The diff-check skips a no-edit blur.
     const apply = () => {
       const next = draft.trim() === '' ? undefined : draft
       if (next !== (applied || undefined)) setFacet(facet, next)
@@ -634,8 +631,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
         placement={placement}
         offset={offset}
         open={open}
-        // A facet's summary badge appears / grows / clears as you edit while the
-        // menu is open — tween the width so the panel glides instead of snapping.
+        // Summary badges appear / clear as you edit — tween the width, don't snap.
         animateWidth
         onStateChange={(_e, { next }) => {
           setOpen(next)
@@ -668,8 +664,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
                   const s = summaryOf(facet)
                   return s != null ? (
                     <Tag size="small" tone="brand">
-                      {/* Cap + ellipsize a long summary (a long `text` value, many
-                          picks) so one facet's chip can't stretch the whole menu. */}
+                      {/* Capped + ellipsized so a long summary can't stretch the menu. */}
                       <span className={styles.summary}>{s}</span>
                     </Tag>
                   ) : null

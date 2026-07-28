@@ -333,10 +333,7 @@ export class AMenuElement extends HTMLElementBase {
   // flipped to the left of the anchor). Same reanchor-stability role as `_flippedTop`.
   private _flippedSide: boolean | null = null
 
-  // Width animation (opt-in via `animatewidth`) — smooths the surface's width when
-  // its content changes size while open (e.g. a badge appearing on a row), instead
-  // of snapping. The surface stays auto-width; a WAAPI animation only overrides the
-  // rendered width while it runs, so each change measures the natural width cleanly.
+  // Width animation, opt-in via `animatewidth` (see #startWidthObserver).
   #widthObserver?: ResizeObserver
   #widthAnimation?: Animation
   #widthReady = false
@@ -1121,19 +1118,18 @@ export class AMenuElement extends HTMLElementBase {
     this.#stopWidthObserver()
   }
 
-  /** Observe the surface while open and, when `animatewidth` is set, tween its
-   *  width from the previous measure to the new natural one (WAAPI) so a content
-   *  size change (a badge appearing / clearing on a row) glides instead of
-   *  snapping. The surface stays auto-width; the animation only overrides the
-   *  rendered width while it runs, so the next change re-measures cleanly. */
+  /** Tween the surface width (WAAPI) when its content changes size while open, so a
+   *  badge appearing / clearing on a row glides instead of snapping. The surface
+   *  stays auto-width; the animation only overrides the rendered width while it runs,
+   *  so the next change re-measures cleanly. */
   #startWidthObserver() {
     this.#stopWidthObserver()
     const RO = this.view.ResizeObserver
     if (!RO) return
     this.#widthObserver = new RO(() => this.#onWidthResize())
     this.#widthObserver.observe(this.surface)
-    // Only animate once the open has settled — the enter (0 → full width) shouldn't
-    // tween. Seed the baseline two frames in, after position() has laid out.
+    // Seed the baseline two frames in (after position() lays out) so the enter
+    // (0 → full width) doesn't tween.
     this.view.requestAnimationFrame(() =>
       this.view.requestAnimationFrame(() => {
         if (!this._shown) return
@@ -1154,7 +1150,7 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   #onWidthResize() {
-    // Ignore our own animation frames (the WAAPI tween resizes the surface too).
+    // Suppress while our own tween runs — it resizes the surface too.
     if (!this._shown || !this.#widthReady || this.#suppressWidthObserver) return
     const next = this.surface.offsetWidth
     const prev = this.#lastWidth
@@ -1170,8 +1166,7 @@ export class AMenuElement extends HTMLElementBase {
     const settle = () => {
       if (this.#widthAnimation === anim) this.#widthAnimation = undefined
       this.#suppressWidthObserver = false
-      // Re-baseline to the natural width now (absorbs any change that landed while
-      // the tween ran), so the next resize measures from the real current width.
+      // Re-baseline to the natural width, absorbing any change that landed mid-tween.
       if (this._shown) this.#lastWidth = this.surface.offsetWidth
     }
     anim.addEventListener('finish', settle)

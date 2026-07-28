@@ -594,30 +594,23 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   // unknown value contributes nothing rather than corrupting the label or the count.
   const selectedOptions = selectedValues.map((v) => byValue.get(v)).filter(Boolean) as SelectOption<V>[]
 
-  // "All" for the trigger: every enabled option across the whole tree is selected —
-  // read from `allLeaves`, not the filter-scoped `visibleLeaves` the Select-all row
-  // uses, so an active filter query can't make the trigger claim "All" while the menu
-  // shows a subset. Gated on more than one option so a lone selected option still
-  // reads as its own label rather than "All".
+  // "All" reads from `allLeaves`, not the filter-scoped `visibleLeaves`, so a filter
+  // query can't make the trigger claim "All" over a visible subset. Gated on >1 option
+  // so a lone selected option still reads as its own label.
   const allEnabledValues = allLeaves.filter((l) => !l.disabled).map((l) => l.opt.value)
   const everythingSelected =
     multiple && allEnabledValues.length > 1 && allEnabledValues.every((v) => selectedValues.includes(v))
 
-  // Trigger text: single shows the chosen label; multiple shows "All" when everything
-  // is selected, else the one label or a count; nothing selected falls through to the
-  // placeholder.
   const labelOf = (o: SelectOption<V>) => o.label ?? String(o.value)
   let display = ''
   if (multiple) {
-    // Consumer summary first (when something's selected); '' / undefined falls
-    // through to the built-in All / one-label / N-selected text.
+    // Consumer summary wins; '' / undefined falls through to the built-in text.
     const custom = selectedOptions.length > 0 ? renderSummary?.(selectedOptions) : undefined
     if (custom != null && custom !== '') display = custom
     else if (everythingSelected) display = 'All'
     else if (selectedOptions.length === 1) display = labelOf(selectedOptions[0])
     else if (selectedOptions.length > 1) {
       const count = `${selectedOptions.length} selected`
-      // `verbose` spells the picks out; the field ellipsizes the list when long.
       display = verbose ? `${count}: ${selectedOptions.map(labelOf).join(', ')}` : count
     }
   } else if (currentRaw != null) {

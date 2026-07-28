@@ -230,9 +230,8 @@ const duration: SelectFacetCustom<string> = {
   kind: 'custom',
   render: (ctx) => (
     <Input
-      // A controlled numeric field uses type="text" + inputMode="decimal", not
-      // type="number": a number input sanitizes intermediate values, so "1." /
-      // "1.0" report empty and can't be typed. Keep the raw string; parse it below.
+      // Controlled numeric field: type="text" + inputMode, not type="number"
+      // (which sanitizes "1." / "1.0" to empty). Keep the raw string; parse it below.
       type="text"
       inputMode="decimal"
       size="small"

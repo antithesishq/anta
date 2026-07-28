@@ -282,11 +282,8 @@ const DURATION_FACETS: SelectFacet[] = [
     render: ({ value, onChange }: any) => (
       <div data-menu-open style={{ padding: '8px' }}>
         <Input
-          // A controlled numeric field uses type="text" + inputMode="decimal", NOT
-          // type="number": a number input sanitizes intermediate values, so "1." /
-          // "1.0" report an empty value and can't be typed — and round-tripping the
-          // state through Number() drops the decimal too. Keep the raw string in
-          // state; parse to a number where you apply the filter.
+          // Controlled numeric field: type="text" + inputMode, not type="number"
+          // (which sanitizes "1." / "1.0" to empty). Store the raw string, parse below.
           type="text"
           inputMode="decimal"
           size="small"

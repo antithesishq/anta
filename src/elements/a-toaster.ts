@@ -1,15 +1,12 @@
 import { HTMLElementBase } from '../anta_helpers'
+import { TOAST_PLACEMENTS } from '../toaster'
 import './a-toaster.css'
 
-/** Placement zones, in the order their `<slot name>` appears in the shadow. */
-const ZONES = [
-  'top-left',
-  'top-center',
-  'top-right',
-  'bottom-left',
-  'bottom-center',
-  'bottom-right',
-] as const
+/** Placement zones, in the order their `<slot name>` appears in the shadow.
+ *  Sourced from the store's `TOAST_PLACEMENTS` so the slots and the
+ *  `ToastPlacement` type can't drift (an unmatched placement would render no
+ *  toast). `../toaster` is a pure, SSR-safe module — no element code. */
+const ZONES = TOAST_PLACEMENTS
 
 /**
  * `<a-toaster>` — a viewport-anchored notification region. One instance hosts all

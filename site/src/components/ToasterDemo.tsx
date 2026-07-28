@@ -20,7 +20,8 @@ export default function ToasterDemo() {
     import('@antadesign/stickers/elements')
   }, [])
 
-  const opts = () => ({ placement: 'bottom-right' as const, duration: Number(duration) || 0 })
+  // Empty / zero / non-numeric → the 5000ms default (0 is not sticky; sticky is Infinity).
+  const opts = () => ({ placement: 'bottom-right' as const, duration: Number(duration) || 5000 })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -100,8 +101,7 @@ export default function ToasterDemo() {
           priority="secondary"
           label="Toast with countdown"
           onClick={() => {
-            // A countdown needs a positive duration — fall back if the input is sticky.
-            const ms = Number(duration) || 6000
+            const ms = Number(duration) || 5000
             Toaster.manager.add(
               (id) => (
                 <div className="countdown-toast">

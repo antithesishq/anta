@@ -362,10 +362,11 @@ a working select:
 ```html folded
 <!-- `.select` is your own wrapper class; everything below is scoped to it. -->
 <div class="select" style="width: 240px">
-  <!-- Read-only field trigger; `dim-actions` dims the chevron at rest. The 7px
-       inline margin + transition on the chevron match <Select>. -->
+  <!-- Read-only field trigger; `dim-actions` dims the chevron at rest. The
+       trailing slot supplies the inline inset (--input-trailing-inset); the
+       transition on the chevron matches <Select>. -->
   <a-input readonly dim-actions value="stream" aria-haspopup="menu">
-    <a-icon slot="trailing" shape="chevron-down" style="margin-inline-end: 7px; transition: transform 150ms ease"></a-icon>
+    <a-icon slot="trailing" shape="chevron-down" style="transition: transform 150ms ease"></a-icon>
   </a-input>
   <a-menu>
     <a-menu-item value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>

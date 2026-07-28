@@ -30,8 +30,11 @@ const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore })
     duration: entry.duration,
     leaving: entry.leaving ? "" : undefined,
     rev: entry.rev,
-    // Opt-in per-toast announcement — omitted (no live region) unless requested.
-    "aria-live": entry.politeness,
+    // Opt-in per-toast announcement. role=status/alert (not a bare aria-live) so
+    // it announces when inserted — a plain aria-live region must pre-exist before
+    // its content changes, which a freshly-added toast can't satisfy. Omitted (no
+    // announcement) unless requested.
+    role: entry.politeness === "assertive" ? "alert" : entry.politeness === "polite" ? "status" : undefined,
     // Fires after the exit animation; that's when the entry actually leaves.
     ondismiss: () => store.remove(entry.id),
   } as const

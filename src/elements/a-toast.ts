@@ -1,4 +1,4 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { HTMLElementBase, installDismissTrigger } from '../anta_helpers'
 import './a-toast.css'
 
 /** Exit animation duration (ms). Mirrors `--toast-dur` in the shadow style. */
@@ -74,6 +74,9 @@ export class AToastElement extends HTMLElementBase {
   /** A DOM node handed in via the `content` property (the wrapper's DOM-node
    *  branch). String / JSX content arrives as slotted children instead. */
   #content?: Node
+  /** The content node we last slotted, so an in-place update can swap or clear it
+   *  without touching the reconciler's own children. */
+  #slotted?: Node
   #timer?: ReturnType<typeof setTimeout>
   #exitTimer?: ReturnType<typeof setTimeout>
   /** Time left on the auto-dismiss timer (ms), tracked across pause/resume. */
@@ -104,16 +107,9 @@ export class AToastElement extends HTMLElementBase {
 
     shadow.append(style, this.#slot)
 
-    // A click on any element carrying `data-toast-dismiss` dismisses the toast.
-    // Read-only walk of the light DOM (no host / tree mutation). The nearest
-    // `a-toast` to the trigger must be THIS one, so a dismiss control inside a
-    // toast nested in another toast's content doesn't also dismiss the outer one.
-    this.addEventListener('click', (e) => {
-      const target = e.target
-      if (!(target instanceof Element)) return
-      const trigger = target.closest(`[${DISMISS_ATTR}]`)
-      if (trigger && trigger.closest('a-toast') === this) this.dismiss()
-    })
+    // A control carrying `data-toast-dismiss` dismisses the toast on click (shared
+    // helper — see a-banner's `data-banner-dismiss`).
+    installDismissTrigger(this, DISMISS_ATTR, () => this.dismiss())
   }
 
   connectedCallback() {
@@ -179,19 +175,28 @@ export class AToastElement extends HTMLElementBase {
     this.#applyContent()
   }
 
-  /** Slot the content node into our own light DOM. Only ever touches THIS
-   *  element's subtree, and only with the node the wrapper handed us; string /
-   *  JSX content comes as reconciler-owned children and this is a no-op. */
+  /** Slot the content node into our own light DOM. Only ever touches the node WE
+   *  slotted (tracked in `#slotted`), never the reconciler's children: it removes
+   *  the previous node and appends the new one, or removes it when `content` goes
+   *  null (an in-place update swapping DOM-node content for a string / JSX — else
+   *  the stale node would stack under the new content). String / JSX content
+   *  arrives as reconciler-owned children, so `#content` is undefined and this
+   *  only clears any node we had slotted. */
   #applyContent() {
-    if (this.#content) this.replaceChildren(this.#content)
+    if (this.#content === this.#slotted) return
+    if (this.#slotted?.parentNode === this) this.removeChild(this.#slotted)
+    this.#slotted = this.#content
+    if (this.#content) this.append(this.#content)
   }
 
-  /** ms before auto-dismiss; `0` disables it. */
+  /** Auto-dismiss delay in ms. Empty / non-positive falls back to the 5000ms
+   *  default; `Infinity` is sticky (never auto-dismisses). */
   get #duration(): number {
     const a = this.getAttribute('duration')
     if (a == null) return DEFAULT_DURATION
-    const n = parseInt(a, 10)
-    return Number.isFinite(n) ? Math.max(0, n) : DEFAULT_DURATION
+    const n = Number(a)
+    if (n === Infinity) return Infinity
+    return Number.isFinite(n) && n > 0 ? n : DEFAULT_DURATION
   }
 
   /** Paused while either hold is active. */
@@ -209,15 +214,18 @@ export class AToastElement extends HTMLElementBase {
    *  1 → 0 on the slot over `duration`; slotted content inherits it. It's display
    *  only — the auto-dismiss above is the real JS timer — so it degrades to a
    *  static full bar where custom-property animation is unsupported. Sticky
-   *  (`duration <= 0`) runs no countdown; the var stays at its initial 1. */
+   *  (`Infinity` duration) runs no countdown; the var stays at its initial 1. */
   #startCountdown() {
-    if (this.#duration > 0) {
+    if (Number.isFinite(this.#duration)) {
       this.#slot.style.animation = `toast-remaining ${this.#duration}ms linear forwards`
       // Restart from the beginning even when the animation string is unchanged
       // (a same-duration `rev` restart wouldn't otherwise re-trigger it).
       this.#eachCountdown((a) => {
         a.currentTime = 0
       })
+      // A restart while paused (hover / focus) or already leaving must not let the
+      // fresh, auto-playing animation run ahead of the stopped dismiss timer.
+      if (this.#paused || this.#leaving) this.#pauseCountdown()
     } else {
       this.#slot.style.animation = ''
     }
@@ -243,10 +251,11 @@ export class AToastElement extends HTMLElementBase {
     this.#eachCountdown((a) => a.play())
   }
 
-  /** Start (or resume) the countdown only when it should be running: a positive
-   *  duration, not leaving, not paused, not already running. */
+  /** Start (or resume) the dismiss timer only when it should be running: a finite
+   *  duration (a non-finite one is sticky), not leaving, not paused, not already
+   *  running. */
   #armIfActive() {
-    if (this.#timer != null || this.#leaving || this.#paused || this.#duration <= 0) return
+    if (this.#timer != null || this.#leaving || this.#paused || !Number.isFinite(this.#duration)) return
     if (this.#remaining <= 0) {
       this.dismiss()
       return
@@ -297,6 +306,21 @@ export class AToastElement extends HTMLElementBase {
     return this.view.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
   }
 
+  /** How long to wait after starting the exit before emitting `dismiss` (node
+   *  removal). Read from the computed `--toast-dur` token so it tracks a consumer
+   *  override and the removal fires exactly when the fade ends — instead of a
+   *  fixed 220ms that desyncs from a changed `--toast-dur`. 0 under reduced motion
+   *  (the shadow transition is gated off there); `EXIT_MS` if it can't be read. */
+  #exitDuration(): number {
+    if (this.#reducedMotion()) return 0
+    const raw = this.view.getComputedStyle?.(this).getPropertyValue('--toast-dur').trim()
+    if (raw) {
+      const n = parseFloat(raw)
+      if (Number.isFinite(n)) return raw.endsWith('ms') ? n : n * 1000
+    }
+    return EXIT_MS
+  }
+
   /** Restart the auto-dismiss timer from the current `duration` (an in-place
    *  update). If the toast is currently paused, the fresh time is banked and the
    *  countdown stays paused until hover / focus releases. */
@@ -315,7 +339,7 @@ export class AToastElement extends HTMLElementBase {
     this.#clearTimer()
     this.#pauseCountdown()
     this.#internals?.states.add('leaving')
-    const wait = this.#reducedMotion() ? 0 : EXIT_MS
+    const wait = this.#exitDuration()
     this.#exitTimer = this.view.setTimeout(() => {
       this.#exitTimer = undefined
       this.dispatchEvent(new CustomEvent('dismiss', { bubbles: true, composed: true }))

@@ -76,6 +76,24 @@ export function parseOpenState(v: string | null): 'open' | 'closed' {
   return v === 'open' ? 'open' : 'closed'
 }
 
+/** Install a delegated "dismiss from an action" click handler: any element inside
+ *  `host` carrying `[attr]` runs `onDismiss` on click, scoped to the nearest host
+ *  of `host`'s own tag (so a control inside a nested same-tag element doesn't also
+ *  dismiss the outer one). A read-only light-DOM walk — no host / tree mutation —
+ *  that catches any activated control (native `<button>`, `<a>`, `<a-button>`,
+ *  `<a-menu-item>`) with keyboard activation for free. Shared by `a-toast`
+ *  (`data-toast-dismiss`) and `a-banner` (`data-banner-dismiss`), mirroring
+ *  `a-dialog`'s `data-dialog-close` family; keep the one copy here so a future fix
+ *  (e.g. skipping `[disabled]` triggers) lands for every element at once. */
+export function installDismissTrigger(host: HTMLElement, attr: string, onDismiss: () => void): void {
+  host.addEventListener('click', (e) => {
+    const target = e.target
+    if (!(target instanceof Element)) return
+    const trigger = target.closest(`[${attr}]`)
+    if (trigger && trigger.closest(host.localName) === host) onDismiss()
+  })
+}
+
 /** The six named tones every toned component shares. Anything else is a literal
  *  CSS colour the element resolves through its `--{component}-tone-source` var. */
 export const NAMED_TONES = new Set([

@@ -21,14 +21,20 @@
  * returns an empty list, so nothing renders server-side.
  */
 
+/** The placement zones, in the order their `<slot name>` appears in the toaster
+ *  shadow. Single source of truth: `a-toaster` builds its zones from this list, so
+ *  a placement can't drift between the type here and the element's slots. */
+export const TOAST_PLACEMENTS = [
+  'top-left',
+  'top-center',
+  'top-right',
+  'bottom-left',
+  'bottom-center',
+  'bottom-right',
+] as const
+
 /** Where a toast is anchored in the viewport. */
-export type ToastPlacement =
-  | 'top-left'
-  | 'top-center'
-  | 'top-right'
-  | 'bottom-left'
-  | 'bottom-center'
-  | 'bottom-right'
+export type ToastPlacement = (typeof TOAST_PLACEMENTS)[number]
 
 /** The default corner. */
 const DEFAULT_PLACEMENT: ToastPlacement = 'bottom-right'
@@ -48,8 +54,8 @@ export interface ToastOptions {
   /** Which corner / edge to show it in.
    *  @defaultValue 'bottom-right' */
   placement?: ToastPlacement
-  /** Auto-dismiss delay in ms; `0` keeps it until dismissed. Omit to use the
-   *  element default.
+  /** Auto-dismiss delay in ms. Empty or non-positive values fall back to the
+   *  default; pass `Infinity` to keep the toast until it's dismissed (sticky).
    *  @defaultValue 5000 */
   duration?: number
   /** Announce this toast to assistive tech via `aria-live` on the toast. Opt-in
@@ -76,8 +82,9 @@ export interface ToastEntry {
 
 /** The toast controller returned by {@link createToaster}. */
 export interface Toaster {
-  /** Show `render()` as a toast; returns its id. Reusing an existing `id`
-   *  replaces that toast in place and restarts its timer. */
+  /** Show `render()` as a toast; returns its id. Reusing an existing `id` replaces
+   *  that toast's content in place and restarts its timer; options omitted on the
+   *  upsert are kept from the live toast. */
   add(render: ToastRender, opts?: ToastOptions): string
   /** Request dismissal: the toast animates out, then leaves. */
   dismiss(id: string): void
@@ -123,16 +130,21 @@ export function createToaster(): Toaster {
   function add(render: ToastRender, opts: ToastOptions = {}): string {
     const id = opts.id ?? `t${++uid}`
     const i = snapshot.findIndex((e) => e.id === id)
+    const prev = i === -1 ? undefined : snapshot[i]
     const next: ToastEntry = {
       id,
       render,
-      placement: opts.placement ?? DEFAULT_PLACEMENT,
-      duration: opts.duration,
-      politeness: opts.politeness,
+      // On an upsert (existing id), keep the live toast's placement / duration /
+      // politeness when the caller omits them — so replacing the content doesn't
+      // silently reset a sticky toast to auto-dismiss or move it to another
+      // corner. Pass the option explicitly (incl. `undefined`) to change it.
+      placement: opts.placement ?? prev?.placement ?? DEFAULT_PLACEMENT,
+      duration: 'duration' in opts ? opts.duration : prev?.duration,
+      politeness: opts.politeness ?? prev?.politeness,
       leaving: false,
-      rev: i === -1 ? 0 : snapshot[i].rev + 1,
+      rev: prev ? prev.rev + 1 : 0,
     }
-    snapshot = i === -1 ? [...snapshot, next] : snapshot.map((e, j) => (j === i ? next : e))
+    snapshot = prev ? snapshot.map((e, j) => (j === i ? next : e)) : [...snapshot, next]
     emit()
     return id
   }

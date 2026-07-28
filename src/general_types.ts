@@ -1172,23 +1172,23 @@ export interface AToasterAttributes extends BaseAttributes {
 
 /**
  * Attributes for the `<a-toast>` custom element — one item inside an
- * `<a-toaster>`. A thin holder around slotted content; it owns the enter/exit
- * animation, the auto-dismiss timer (paused on hover / focus), and an optional ✕.
- * Route it to a placement zone with `slot` (`slot="bottom-right"`, …). Exposes
- * `::part(toast | close)`. It never removes itself — on dismiss it animates out
- * then emits a bubbling `dismiss`, and the owner removes the node.
+ * `<a-toaster>`. A style-neutral container around slotted content: it owns the
+ * enter/exit animation and the auto-dismiss timer (paused on hover / focus), with
+ * no chrome of its own (no ✕, no surface — the content brings its own look and its
+ * own dismiss affordance). Route it to a placement zone with `slot`
+ * (`slot="bottom-right"`, …). It never removes itself — on dismiss it animates out
+ * then emits a bubbling `dismiss`, and the owner removes the node. For an
+ * announcement, give it `role="status"` (polite) or `role="alert"` (assertive).
  */
 export interface AToastAttributes extends BaseAttributes {
-  /** Auto-dismiss delay in ms; `0` keeps it until dismissed. Defaults to 5000. */
+  /** Auto-dismiss delay in ms (default 5000). Empty / non-positive uses the
+   *  default; `Infinity` keeps it until dismissed (sticky). */
   duration?: number | string
   /** Set by the wrapper to request dismissal (a programmatic `dismiss`): the
    *  element plays its exit and emits `dismiss`. Presence-based (`''` on, omit off). */
   leaving?: boolean | ''
   /** Bumped on an in-place update so the element restarts its auto-dismiss timer. */
   rev?: number | string
-  /** Opt-in `aria-live` politeness — the toast announces its content to assistive
-   *  tech when set. Omit for no announcement. */
-  'aria-live'?: 'polite' | 'assertive' | 'off'
   /** A live DOM node to show as the content (the wrapper's DOM-node branch);
    *  set as a property, not a string attribute. String / JSX content is slotted
    *  as children instead. */

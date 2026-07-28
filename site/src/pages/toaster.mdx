@@ -113,11 +113,12 @@ single mounted region drops notices in any corner.
 ## Timing and dismissal
 
 Each toast auto-dismisses after `duration` (ms), 5000 by default; the countdown
-pauses while the pointer is over the toast **or** focus is inside it. `duration: 0`
-keeps it until dismissed. On dismiss the toast animates out and then leaves.
+pauses while the pointer is over the toast **or** focus is inside it. `duration:
+Infinity` keeps it until dismissed (empty, zero, and non-positive values fall back
+to the default). On dismiss the toast animates out and then leaves.
 
 ```tsx
-Toaster.manager.add(() => 'Still here until you close it', { duration: 0 })   // sticky
+Toaster.manager.add(() => 'Still here until you close it', { duration: Infinity })   // sticky
 ```
 
 The toast itself carries **no ✕** — dismissal comes from the content. Three ways,
@@ -151,7 +152,7 @@ depending on what you toast:
 Or drive dismissal from anywhere with the returned id:
 
 ```tsx
-const id = Toaster.manager.add(() => 'Saving…', { duration: 0 })
+const id = Toaster.manager.add(() => 'Saving…', { duration: Infinity })
 Toaster.manager.dismiss(id)                     // animate out, then remove
 Toaster.manager.update(id, () => 'Saved')       // swap content in place
 Toaster.manager.clear()                         // dismiss all
@@ -209,7 +210,12 @@ exposing the value keeps one source of truth.
 
 `--toast-remaining` is display only — the real dismissal is the toast's own timer — so
 where a browser can't animate a custom property it simply stays full. A **sticky**
-(`duration: 0`) toast has no countdown; the value stays `1`.
+(`duration: Infinity`) toast has no countdown; the value stays `1`.
+
+The bar is motion — if you draw one, gate it under `prefers-reduced-motion` yourself
+(e.g. `@media (prefers-reduced-motion: reduce) { .countdown-bar { display: none } }`).
+`a-toast`'s own enter/exit fades are already suppressed there; `--toast-remaining`
+keeps ticking so non-visual uses still work, and the toast still auto-dismisses.
 
 ## Multiple regions
 

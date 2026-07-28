@@ -1,7 +1,7 @@
-/* The trailing chevron is a plain <Icon> in the field's trailing slot; space it
-   from the edge and rotate it 180° (down → up) when the menu opens. */
+/* The trailing chevron is a plain <Icon> in the field's trailing slot; the slot's
+   own inset spaces it from the edge (a-input insets trailing like leading), so it
+   just rotates 180° (down → up) when the menu opens. */
 .chevron {
-  margin-inline-end: 7px;
   transition: transform 150ms ease;
 }
 .chevron.open {

@@ -1157,3 +1157,44 @@ export interface ABannerAttributes extends BaseAttributes {
     e: CustomEvent<{ next: 'open' | 'closed'; prev: 'open' | 'closed' }>,
   ) => void
 }
+
+/**
+ * Attributes for the `<a-toaster>` custom element — a viewport-anchored
+ * notification region. One instance hosts all six placement zones; each
+ * `<a-toast>` routes to a corner/edge by its `slot` attribute. Keep one mounted
+ * (the `<Toaster>` wrapper, or by hand). Exposes `::part(region)`. Low-level
+ * attributes; for the typed JSX wrapper use `Toaster` from `@antadesign/anta`.
+ */
+export interface AToasterAttributes extends BaseAttributes {
+  /** Accessible name for the region landmark. */
+  'aria-label'?: string
+}
+
+/**
+ * Attributes for the `<a-toast>` custom element — one item inside an
+ * `<a-toaster>`. A style-neutral container around slotted content: it owns the
+ * enter/exit animation and the auto-dismiss timer (paused on hover / focus), with
+ * no chrome of its own (no ✕, no surface — the content brings its own look and its
+ * own dismiss affordance). Route it to a placement zone with `slot`
+ * (`slot="bottom-right"`, …). It never removes itself — on dismiss it animates out
+ * then emits a bubbling `dismiss`, and the owner removes the node. For an
+ * announcement, give it `role="status"` (polite) or `role="alert"` (assertive).
+ */
+export interface AToastAttributes extends BaseAttributes {
+  /** Auto-dismiss delay in ms (default 5000). Empty / non-positive uses the
+   *  default; `Infinity` keeps it until dismissed (sticky). */
+  duration?: number | string
+  /** Set by the wrapper to request dismissal (a programmatic `dismiss`): the
+   *  element plays its exit and emits `dismiss`. Presence-based (`''` on, omit off). */
+  leaving?: boolean | ''
+  /** Bumped on an in-place update so the element restarts its auto-dismiss timer. */
+  rev?: number | string
+  /** A live DOM node to show as the content (the wrapper's DOM-node branch);
+   *  set as a property, not a string attribute. String / JSX content is slotted
+   *  as children instead. */
+  content?: Node
+  /** Fires after the exit animation, when the toast has dismissed — a bubbling
+   *  `CustomEvent`. The owner removes the node in response. All-lowercase so both
+   *  renderers bind it (React 19 keeps the case after `on`; Preact lowercases). */
+  ondismiss?: (e: CustomEvent) => void
+}

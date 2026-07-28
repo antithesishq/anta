@@ -11,6 +11,11 @@ type JsxFunction = {
 type UseState = <S>(initial: S | (() => S)) => [S, (next: S | ((prev: S) => S)) => void]
 type UseId = () => string
 type UseMemo = <T>(factory: () => T, deps: unknown[]) => T
+type UseSyncExternalStore = <T>(
+  subscribe: (onChange: () => void) => () => void,
+  getSnapshot: () => T,
+  getServerSnapshot?: () => T,
+) => T
 
 let _jsx: JsxFunction = React.createElement as JsxFunction
 let _Fragment: ComponentType = React.Fragment as ComponentType
@@ -21,6 +26,7 @@ let _Fragment: ComponentType = React.Fragment as ComponentType
 let _useState: UseState = React.useState as UseState
 let _useId: UseId = React.useId as UseId
 let _useMemo: UseMemo = React.useMemo as UseMemo
+let _useSyncExternalStore: UseSyncExternalStore = React.useSyncExternalStore as UseSyncExternalStore
 
 /**
  * Swap the underlying JSX factory (and, optionally, the hooks) used by all anta
@@ -44,13 +50,19 @@ let _useMemo: UseMemo = React.useMemo as UseMemo
 export function configure(
   jsx: JsxFunction,
   Fragment?: ComponentType,
-  hooks?: { useState?: UseState; useId?: UseId; useMemo?: UseMemo },
+  hooks?: {
+    useState?: UseState
+    useId?: UseId
+    useMemo?: UseMemo
+    useSyncExternalStore?: UseSyncExternalStore
+  },
 ) {
   _jsx = jsx
   if (Fragment !== undefined) _Fragment = Fragment
   if (hooks?.useState) _useState = hooks.useState
   if (hooks?.useId) _useId = hooks.useId
   if (hooks?.useMemo) _useMemo = hooks.useMemo
+  if (hooks?.useSyncExternalStore) _useSyncExternalStore = hooks.useSyncExternalStore
 }
 
 /** Hooks indirection so wrappers depend on the configured renderer, not a hard
@@ -63,6 +75,13 @@ export function useId(): string {
 }
 export function useMemo<T>(factory: () => T, deps: unknown[]): T {
   return _useMemo(factory, deps)
+}
+export function useSyncExternalStore<T>(
+  subscribe: (onChange: () => void) => () => void,
+  getSnapshot: () => T,
+  getServerSnapshot?: () => T,
+): T {
+  return _useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 }
 
 export function jsx(type: ComponentType, props: Record<string, unknown> | null, key?: string | number): unknown {
@@ -85,7 +104,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AProgressAttributes, ATextAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ATooltipAttributes, AInputAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, BaseAttributes } from './general_types'
+import type { AProgressAttributes, ATextAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ATooltipAttributes, AInputAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -147,4 +166,6 @@ export interface AntaIntrinsicElements {
   'a-card': ACardAttributes
   'a-banner': ABannerAttributes
   'a-banner-message': BaseAttributes
+  'a-toaster': AToasterAttributes
+  'a-toast': AToastAttributes
 }

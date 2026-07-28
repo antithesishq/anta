@@ -299,6 +299,7 @@ const SHADOW_STYLE = `
   :host([readonly]) slot[name="clear"] { display: none; }
 
   .field.has-leading slot[name="leading"] { margin-inline-start: 7px; }
+  .field.has-trailing slot[name="trailing"] { margin-inline-end: var(--input-trailing-inset, 7px); }
   .field.has-leading input,
   .field.has-leading textarea { padding-inline-start: 5px; }
   :host([multiline]) .field.has-leading slot[name="leading"],

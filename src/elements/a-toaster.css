@@ -1,0 +1,18 @@
+@layer anta {
+  /* Tokens live on the host and inherit across the shadow boundary into the
+     region + zones. --toaster-inset is the gap from the viewport edge,
+     --toaster-gap the space between stacked toasts, --toaster-width the column
+     width (clamped to the viewport in the shadow). */
+  a-toaster {
+    --toaster-inset: 16px;
+    --toaster-gap: 12px;
+    --toaster-width: 380px;
+  }
+
+  /* Before upgrade the host is an unknown inline element; its slotted toast
+     children would flash in normal page flow. Hide until defined — once defined
+     the shadow's :host { display: contents } governs. */
+  a-toaster:not(:defined) {
+    display: none;
+  }
+}

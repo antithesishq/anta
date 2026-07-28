@@ -9,5 +9,5 @@ export const COMPONENT_SLUGS = [
   'banner', 'button', 'card', 'checkbox', 'dialog', 'expander', 'icon', 'input',
   'input-autocomplete', 'input-date', 'input-time',
   'menu', 'progress', 'radio', 'select', 'select-faceted', 'stickers', 'table',
-  'tabs', 'tag', 'text', 'title', 'tooltip',
+  'tabs', 'tag', 'text', 'title', 'toaster', 'tooltip',
 ]

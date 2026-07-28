@@ -31,7 +31,6 @@ export default function InputSelectDemo() {
           <Icon
             shape="chevron-down"
             className={open ? `${styles.chevron} ${styles.open}` : styles.chevron}
-            style={{ marginInlineEnd: '7px' }}
           />
         }
       />

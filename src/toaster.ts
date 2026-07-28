@@ -1,0 +1,217 @@
+/**
+ * Toaster store — the data behind `<Toaster>` / `Toaster.manager`.
+ *
+ * A pure, renderer-agnostic store: it holds a list of toast entries and notifies
+ * subscribers when it changes. It never touches the DOM. A mounted `<Toaster>`
+ * subscribes to it (via `useSyncExternalStore`) and renders each entry through
+ * the reconciler, so React/Preact owns every toast node — no imperative append,
+ * no coordinator, no node refs.
+ *
+ * A toast's content is a **render function** `(id) => …`. Return a string, a JSX
+ * node, or a real DOM `Node`; the `<Toaster>` renders a string / JSX through the
+ * reconciler and hands a DOM node to the `<a-toast>` element to slot. The `id`
+ * lets the content wire its own dismiss button (`() => manager.dismiss(id)`).
+ *
+ * Dismissal is two-phase so the exit animation plays: `dismiss(id)` marks the
+ * entry `leaving` (it stays rendered), the `<a-toast>` element animates out and
+ * fires `dismiss`, and only then is the entry removed. `remove` is the second
+ * phase, called by the wrapper on that event.
+ *
+ * SSR-safe: no `HTMLElement` reference and no top-level DOM access; `getServerSnapshot`
+ * returns an empty list, so nothing renders server-side.
+ */
+
+/** The placement zones, in the order their `<slot name>` appears in the toaster
+ *  shadow. Single source of truth: `a-toaster` builds its zones from this list, so
+ *  a placement can't drift between the type here and the element's slots. */
+export const TOAST_PLACEMENTS = [
+  'top-left',
+  'top-center',
+  'top-right',
+  'bottom-left',
+  'bottom-center',
+  'bottom-right',
+] as const
+
+/** Where a toast is anchored in the viewport. */
+export type ToastPlacement = (typeof TOAST_PLACEMENTS)[number]
+
+/** The default corner. */
+const DEFAULT_PLACEMENT: ToastPlacement = 'bottom-right'
+
+/** What a toast's render function may return: a string / JSX (rendered through
+ *  the reconciler) or a live DOM node (slotted by the element). */
+export type ToastContent = React.ReactNode | Node
+
+/** A toast's content, as a function of its id (so content can dismiss itself). */
+export type ToastRender = (id: string) => ToastContent
+
+/** Per-toast options for {@link Toaster.add}. */
+export interface ToastOptions {
+  /** Stable id. Reuse it to update a live toast in place (upsert) or to target
+   *  it with `dismiss` / `update`. Auto-generated when omitted. */
+  id?: string
+  /** Which corner / edge to show it in.
+   *  @defaultValue 'bottom-right' */
+  placement?: ToastPlacement
+  /** Auto-dismiss delay in ms. Empty or non-positive values fall back to the
+   *  default; pass `Infinity` to keep the toast until it's dismissed (sticky).
+   *  @defaultValue 5000 */
+  duration?: number
+  /** Announce this toast to assistive tech via `aria-live` on the toast. Opt-in
+   *  per toast — omit for no announcement (the content may carry its own live
+   *  semantics, e.g. a `Banner`'s `role="status"`). `'assertive'` interrupts. */
+  politeness?: 'polite' | 'assertive'
+}
+
+/** One live toast, as the mounted `<Toaster>` reads it. */
+export interface ToastEntry {
+  id: string
+  render: ToastRender
+  placement: ToastPlacement
+  duration?: number
+  /** `aria-live` politeness for this toast, or undefined for no announcement. */
+  politeness?: 'polite' | 'assertive'
+  /** True once dismissal has been requested — the entry stays rendered so the
+   *  element can animate out, then `remove` drops it. */
+  leaving: boolean
+  /** Bumped on every add/update for an existing id, so the element restarts its
+   *  timer (and the wrapper recomputes the content) on an in-place change. */
+  rev: number
+}
+
+/** The toast controller returned by {@link createToaster}. */
+export interface Toaster {
+  /** Show `render()` as a toast; returns its id. Reusing an existing `id` replaces
+   *  that toast's content in place and restarts its timer; options omitted on the
+   *  upsert are kept from the live toast. */
+  add(render: ToastRender, opts?: ToastOptions): string
+  /** Request dismissal: the toast animates out, then leaves. */
+  dismiss(id: string): void
+  /** Replace a live toast's content in place. */
+  update(id: string, render: ToastRender): void
+  /** Dismiss every toast. */
+  clear(): void
+  /** Drop an entry now (no animation) — the wrapper calls this once the element
+   *  reports it finished animating out. Rarely needed directly. */
+  remove(id: string): void
+  /** Subscribe to changes; returns an unsubscribe. For `useSyncExternalStore`. */
+  subscribe(onChange: () => void): () => void
+  /** Current entries (a stable reference until the next change). */
+  getSnapshot(): readonly ToastEntry[]
+  /** Server snapshot — always empty (toasts don't render server-side). */
+  getServerSnapshot(): readonly ToastEntry[]
+}
+
+/** Shared stable empty snapshot for SSR (a fresh array each call would loop
+ *  `useSyncExternalStore`). */
+const EMPTY: readonly ToastEntry[] = Object.freeze([])
+
+let uid = 0
+
+/**
+ * Create a toast store. Export one as your app singleton and drive it from
+ * anywhere; bind it to a mounted region with `<Toaster toaster={…} />`. Most apps
+ * use the built-in default, `Toaster.manager`, and a bare `<Toaster />`.
+ *
+ * @example
+ * ```ts
+ * export const toaster = createToaster()
+ * toaster.add(() => <Card>Saved</Card>, { placement: 'bottom-right' })
+ * ```
+ */
+export function createToaster(): Toaster {
+  // Immutable snapshot, replaced on every mutation (so getSnapshot can hand back
+  // a stable reference between changes — the useSyncExternalStore contract).
+  let snapshot: readonly ToastEntry[] = EMPTY
+  const listeners = new Set<() => void>()
+  const emit = () => listeners.forEach((fn) => fn())
+
+  function add(render: ToastRender, opts: ToastOptions = {}): string {
+    const id = opts.id ?? `t${++uid}`
+    const i = snapshot.findIndex((e) => e.id === id)
+    const prev = i === -1 ? undefined : snapshot[i]
+    const next: ToastEntry = {
+      id,
+      render,
+      // On an upsert (existing id), keep the live toast's placement / duration /
+      // politeness when the caller omits them — so replacing the content doesn't
+      // silently reset a sticky toast to auto-dismiss or move it to another
+      // corner. Pass the option explicitly (incl. `undefined`) to change it.
+      placement: opts.placement ?? prev?.placement ?? DEFAULT_PLACEMENT,
+      duration: 'duration' in opts ? opts.duration : prev?.duration,
+      politeness: opts.politeness ?? prev?.politeness,
+      leaving: false,
+      rev: prev ? prev.rev + 1 : 0,
+    }
+    snapshot = prev ? snapshot.map((e, j) => (j === i ? next : e)) : [...snapshot, next]
+    emit()
+    return id
+  }
+
+  function dismiss(id: string): void {
+    let changed = false
+    snapshot = snapshot.map((e) => {
+      if (e.id === id && !e.leaving) {
+        changed = true
+        return { ...e, leaving: true }
+      }
+      return e
+    })
+    if (changed) emit()
+  }
+
+  function update(id: string, render: ToastRender): void {
+    let changed = false
+    snapshot = snapshot.map((e) => {
+      // Skip a toast that's already dismissing — updating a dying node would just
+      // flash and vanish. Re-add with the same id to revive + replace instead.
+      if (e.id === id && !e.leaving) {
+        changed = true
+        return { ...e, render, rev: e.rev + 1 }
+      }
+      return e
+    })
+    if (changed) emit()
+  }
+
+  function remove(id: string): void {
+    const next = snapshot.filter((e) => e.id !== id)
+    if (next.length !== snapshot.length) {
+      snapshot = next
+      emit()
+    }
+  }
+
+  function clear(): void {
+    let changed = false
+    snapshot = snapshot.map((e) => {
+      if (!e.leaving) {
+        changed = true
+        return { ...e, leaving: true }
+      }
+      return e
+    })
+    if (changed) emit()
+  }
+
+  return {
+    add,
+    dismiss,
+    update,
+    remove,
+    clear,
+    subscribe(onChange) {
+      listeners.add(onChange)
+      return () => {
+        listeners.delete(onChange)
+      }
+    },
+    getSnapshot() {
+      return snapshot
+    },
+    getServerSnapshot() {
+      return EMPTY
+    },
+  }
+}

@@ -131,6 +131,15 @@ export { Card } from './components/Card'
 export type { CardProps } from './components/Card'
 export { Banner } from './components/Banner'
 export type { BannerProps } from './components/Banner'
+export { Toaster, createToaster } from './components/Toaster'
+export type {
+  ToasterProps,
+  ToasterManager,
+  ToastOptions,
+  ToastPlacement,
+  ToastContent,
+  ToastRender,
+} from './components/Toaster'
 export type { BaseProps, BaseAttributes } from './general_types'
 export { configure } from './jsx-runtime'
 export type { AntaIntrinsicElements } from './jsx-runtime'

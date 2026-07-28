@@ -1,0 +1,24 @@
+/* Registered so a countdown animation interpolates it smoothly (an unregistered
+   custom property animates discretely). The element animates it 1 -> 0 on the
+   shadow slot over the toast's duration; slotted content inherits the live value
+   and can draw a "time left" indicator, e.g. transform: scaleX(var(--toast-remaining)).
+   inherits:true is what carries it across the slot to the content. */
+@property --toast-remaining {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@layer anta {
+  /* --toast-dur is the enter/exit timing. The holder is style-neutral by
+     default (no elevation) — the toasted content brings its own look. */
+  a-toast {
+    --toast-dur: 220ms;
+  }
+
+  /* Before upgrade the host is an unknown block; its content would flash. Hide
+     until defined — once defined the shadow's :host { display: block } governs. */
+  a-toast:not(:defined) {
+    display: none;
+  }
+}

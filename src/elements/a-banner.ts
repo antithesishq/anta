@@ -1,4 +1,4 @@
-import { HTMLElementBase, parseOpenState } from '../anta_helpers'
+import { HTMLElementBase, installDismissTrigger, parseOpenState } from '../anta_helpers'
 import './a-banner.css'
 
 /**
@@ -179,15 +179,9 @@ export class ABannerElement extends HTMLElementBase {
       this.#requestDismiss()
     })
 
-    // A `data-banner-dismiss` click requests dismissal — a read-only light-DOM
-    // walk (no host mutation). Guarded so the trigger's nearest banner is THIS
-    // one, so a nested banner's dismiss control doesn't also close the outer.
-    this.addEventListener('click', (e) => {
-      const target = e.target
-      if (!(target instanceof Element)) return
-      const trigger = target.closest(`[${DISMISS_ATTR}]`)
-      if (trigger && trigger.closest('a-banner') === this) this.#requestDismiss()
-    })
+    // A `data-banner-dismiss` click requests dismissal (shared helper — see
+    // a-toast's `data-toast-dismiss` and a-dialog's `data-dialog-close`).
+    installDismissTrigger(this, DISMISS_ATTR, () => this.#requestDismiss())
   }
 
   /** Controlled mode: the `state` attribute is present and owns visibility. */

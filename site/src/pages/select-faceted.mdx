@@ -224,17 +224,21 @@ sits directly in the flyout.
 ```tsx folded
 import type { SelectFacetCustom } from '@antadesign/anta'
 
-const duration: SelectFacetCustom<number> = {
+const duration: SelectFacetCustom<string> = {
   key: 'duration',
   label: 'Min duration',
   kind: 'custom',
   render: (ctx) => (
     <Input
-      type="number"
+      // A controlled numeric field uses type="text" + inputMode="decimal", not
+      // type="number": a number input sanitizes intermediate values, so "1." /
+      // "1.0" report empty and can't be typed. Keep the raw string; parse it below.
+      type="text"
+      inputMode="decimal"
       size="small"
       placeholder="seconds"
-      value={ctx.value != null ? String(ctx.value) : ''}
-      onInput={(e) => ctx.onChange(Number(e.currentTarget.value) || undefined)}
+      value={ctx.value ?? ''}
+      onInput={(e) => ctx.onChange(e.currentTarget.value || undefined)}
     />
   ),
   summary: (v) => `≥ ${v}s`,
@@ -242,9 +246,9 @@ const duration: SelectFacetCustom<number> = {
 
 <SelectFaceted facets={[duration]} value={value} onValueChange={setValue} />
 
-// user types 30  →  value.duration === 30   (a number, returned unchanged)
-// you apply it:
-rows.filter((r) => value.duration == null || r.seconds >= value.duration)
+// user types 1.5  →  value.duration === "1.5"   (the raw string, returned unchanged)
+// parse it where you apply the filter, so partial input ("1.", "1.0") types cleanly:
+rows.filter((r) => value.duration == null || r.seconds >= Number(value.duration))
 ```
 
 A date, cast through a helper. Editors with **their own popup** (the inline `Calendar`,

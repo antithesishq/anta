@@ -38,7 +38,7 @@ export class AStickerAnimatedElement extends HTMLElementBase {
 
     const style = document.createElement('style')
     style.textContent = `
-      :host { display: inline-block; }
+      :host { display: inline-grid; place-items: center; }
       div { width: var(--sticker-size, 256px); height: var(--sticker-size, 256px); }
       div > svg { display: block; width: 100%; height: 100%; }
     `

@@ -14,6 +14,10 @@ import './a-sticker.css'
  * specificity), which was collapsing the sticker to its intrinsic size.
  * Shadow descendants are unreachable by document CSS, so this holds.
  *
+ * The host is a `place-items: center` grid, so when its box differs
+ * from `--sticker-size` (a consumer sizing the host directly), the
+ * fixed-size shadow box stays centered rather than anchoring top-left.
+ *
  * The animated counterpart is `<a-sticker-animated>`.
  */
 export class AStickerElement extends HTMLElementBase {
@@ -26,7 +30,7 @@ export class AStickerElement extends HTMLElementBase {
 
     const style = document.createElement('style')
     style.textContent = `
-      :host { display: inline-block; }
+      :host { display: inline-grid; place-items: center; }
       div { width: var(--sticker-size, 256px); height: var(--sticker-size, 256px); }
       div > svg { display: block; width: 100%; height: 100%; }
     `

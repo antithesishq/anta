@@ -9,7 +9,7 @@ import Disclosure from '../components/Disclosure.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
-import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGroupsDemo, SelectGhostDemo, SelectSelectionTreeDemo } from '../components/SelectDemos'
+import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDemo, SelectSizeStatusDemo, SelectFilterDemo, SelectRenderOptionDemo, SelectTruncateDemo, SelectRenderIndicatorDemo, SelectSummaryDemo, SelectTriggerDemo, SelectColumnsDemo, SelectEmptyDemo, SelectGroupsDemo, SelectGhostDemo, SelectSelectionTreeDemo } from '../components/SelectDemos'
 
 # Select
 
@@ -563,14 +563,24 @@ both, or neither.
 <Columns>
 <Col>
 
-```tsx folded
-const [value, setValue] = useState(['eng', 'design', 'ops'])
+<Preview>
+  <SelectSummaryDemo client:load />
+</Preview>
 
+```tsx folded
+const teams = ['Engineering', 'Design', 'Operations', 'Sales', 'Support']
+const [a, setA] = useState(['eng', 'design', 'ops'])
+const [b, setB] = useState(['eng', 'design'])
+
+// verbose: the count summary lists the picks
+<Select selection="multiple" options={teams} value={a} onValueChange={setA} verbose />
+
+// renderSummary: build the text yourself
 <Select
   selection="multiple"
   options={teams}
-  value={value}
-  onValueChange={setValue}
+  value={b}
+  onValueChange={setB}
   // one label; a count past that; every option → "All teams"
   renderSummary={(selected) =>
     selected.length === teams.length

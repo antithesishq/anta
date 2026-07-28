@@ -56,6 +56,35 @@ const num = (v: string, fallback = 0) => {
 }
 const fx = (x: number, d: number) => (Math.round(x * 10 ** d) / 10 ** d).toString()
 
+// A channel field. Its value round-trips through the colour state and is reformatted
+// by fx, so it holds a raw string draft — a fractional oklch value ("0.", "0.55")
+// types cleanly. Re-seed only when the external value diverges numerically (a canvas
+// pick, another channel), never mid-keystroke.
+function Chan({ label, val, onVal, tip }: { label: string; val: string; onVal: (v: string) => void; tip?: any }) {
+  const [draft, setDraft] = useState(val)
+  const [seen, setSeen] = useState(val)
+  if (seen !== val) {
+    setSeen(val)
+    if (num(draft) !== num(val)) setDraft(val)
+  }
+  return (
+    <div style={{ width: 78, position: 'relative' }}>
+      <Input
+        type="text"
+        inputMode="decimal"
+        size="small"
+        label={label}
+        value={draft}
+        onValueChange={(_e: any, a: any) => {
+          setDraft(a.value)
+          onVal(a.value)
+        }}
+      />
+      {tip ? <Tooltip>{tip}</Tooltip> : null}
+    </div>
+  )
+}
+
 const MODELS = [
   { value: 'oklch', label: 'OKLCH' },
   { value: 'hsl', label: 'HSL' },
@@ -169,11 +198,10 @@ export default function ColorPicker({
     setOklch(safeOklch(chroma.rgb(next[0], next[1], next[2]).oklch(), h))
   }
 
-  const chan = (label: string, val: string, min: number, max: number, step: number, onVal: (v: string) => void, tip?: any) => (
-    <div style={{ width: 78, position: 'relative' }}>
-      <Input type="number" size="small" label={label} value={val} min={min} max={max} step={step} onValueChange={(_e: any, a: any) => onVal(a.value)} />
-      {tip ? <Tooltip>{tip}</Tooltip> : null}
-    </div>
+  // min/max/step were native number-input attrs (spinner + validation, never a clamp
+  // on typed input); values now bound via the oklch onVals / the chroma round-trip.
+  const chan = (label: string, val: string, _min: number, _max: number, _step: number, onVal: (v: string) => void, tip?: any) => (
+    <Chan label={label} val={val} onVal={onVal} tip={tip} />
   )
 
   const row = { display: 'flex', gap: 8, flexWrap: 'wrap' as const }
@@ -220,8 +248,10 @@ export default function ColorPicker({
                   style={{ width: '100%', height: 'auto', borderRadius: 6, cursor: 'crosshair', display: 'block' }}
                 />
                 <div style={row}>
-                  {chan('L', fx(l, 3), 0, 1, 0.01, (v) => setOklch([Math.max(0, Math.min(1, num(v))), c, h]))}
-                  {chan('C', fx(c, 3), 0, CMAX, 0.005, (v) => setOklch([l, Math.max(0, Math.min(CMAX, num(v))), h]), `in-gamut chroma limit at this L / hue: ${fx(cLimit, 3)}`)}
+                  {/* L / C carry 5 decimals so a fine oklch value types without the
+                      draft snapping (H stays 1 — 0.1° is finer than perception). */}
+                  {chan('L', fx(l, 5), 0, 1, 0.01, (v) => setOklch([Math.max(0, Math.min(1, num(v))), c, h]))}
+                  {chan('C', fx(c, 5), 0, CMAX, 0.005, (v) => setOklch([l, Math.max(0, Math.min(CMAX, num(v))), h]), `in-gamut chroma limit at this L / hue: ${fx(cLimit, 3)}`)}
                   {chan('H', fx(h, 1), 0, 360, 1, (v) => setOklch([l, c, ((num(v) % 360) + 360) % 360]))}
                 </div>
               </div>

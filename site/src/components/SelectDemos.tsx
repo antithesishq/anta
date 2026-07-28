@@ -322,6 +322,44 @@ export function SelectRenderIndicatorDemo() {
   )
 }
 
+const TEAMS: SelectOption[] = [
+  { value: 'eng', label: 'Engineering' },
+  { value: 'design', label: 'Design' },
+  { value: 'ops', label: 'Operations' },
+  { value: 'sales', label: 'Sales' },
+  { value: 'support', label: 'Support' },
+]
+
+export function SelectSummaryDemo() {
+  useElements()
+  const [a, setA] = useState<string[]>(['eng', 'design', 'ops'])
+  const [b, setB] = useState<string[]>(['eng', 'design'])
+  return (
+    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div style={{ width: '240px' }}>
+        <Select label="verbose" placeholder="Pick teams" selection="multiple" options={TEAMS} value={a} onValueChange={setA} verbose />
+      </div>
+      <div style={{ width: '240px' }}>
+        <Select
+          label="renderSummary"
+          placeholder="Pick teams"
+          selection="multiple"
+          options={TEAMS}
+          value={b}
+          onValueChange={setB}
+          renderSummary={(selected) =>
+            selected.length === TEAMS.length
+              ? 'All teams'
+              : selected.length > 1
+                ? `${selected.length} teams`
+                : undefined
+          }
+        />
+      </div>
+    </div>
+  )
+}
+
 export function SelectTriggerDemo() {
   useElements()
   const [value, setValue] = useState<string[]>(['stream', 'message'])

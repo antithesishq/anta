@@ -505,10 +505,10 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   const renderText = (facet: SelectFacetText) => {
     const applied = (current[facet.key] as string | undefined) ?? ''
     const draft = drafts[facet.key] ?? applied
-    // Commit only when the draft actually differs from the committed value, so a
-    // focus/blur with no edit doesn't fire a spurious onValueChange.
+    // Store the draft verbatim (a trailing space and all — trimming is the consumer's
+    // at match time); an all-blank draft clears. The diff-check skips a no-edit blur.
     const apply = () => {
-      const next = draft.trim() || undefined
+      const next = draft.trim() === '' ? undefined : draft
       if (next !== (applied || undefined)) setFacet(facet, next)
     }
     return (
@@ -662,7 +662,8 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
                   const s = summaryOf(facet)
                   return s != null ? (
                     <Tag size="small" tone="brand">
-                      {s}
+                      {/* Capped + ellipsized so a long summary can't stretch the menu. */}
+                      <span className={styles.summary}>{s}</span>
                     </Tag>
                   ) : null
                 })()}

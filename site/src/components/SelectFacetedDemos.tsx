@@ -282,16 +282,15 @@ const DURATION_FACETS: SelectFacet[] = [
     render: ({ value, onChange }: any) => (
       <div data-menu-open style={{ padding: '8px' }}>
         <Input
-          type="number"
+          // Controlled numeric field: type="text" + inputMode, not type="number"
+          // (which sanitizes "1." / "1.0" to empty). Store the raw string, parse below.
+          type="text"
+          inputMode="decimal"
           size="small"
           placeholder="seconds"
           style={{ width: '120px' }}
-          value={value != null ? String(value) : ''}
-          onInput={(e: any) => {
-            const raw = e.currentTarget.value
-            const n = Number(raw)
-            onChange(raw === '' || Number.isNaN(n) ? undefined : n) // keep a real 0
-          }}
+          value={(value as string | undefined) ?? ''}
+          onInput={(e: any) => onChange(e.currentTarget.value || undefined)}
         />
       </div>
     ),
@@ -301,12 +300,13 @@ const DURATION_FACETS: SelectFacet[] = [
 export function SelectFacetedDurationDemo() {
   useElements()
   const [value, setValue] = useState<Record<string, unknown>>({})
-  const d = value.duration as number | undefined
+  const raw = value.duration as string | undefined
+  const seconds = raw != null && raw.trim() !== '' && !Number.isNaN(Number(raw)) ? Number(raw) : null
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start', width: '100%' }}>
       <SelectFaceted facets={DURATION_FACETS} value={value} onValueChange={setValue} />
       <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
-        {d != null ? `≥ ${d}s` : 'No duration filter'}
+        {seconds != null ? `≥ ${seconds}s` : 'No duration filter'}
       </span>
     </div>
   )

@@ -432,17 +432,31 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
 }
 
 function VarInput({ spec, d, v, onVar }: { spec: ComponentSpec; d: VarDef; v: Vals; onVar: BlockProps['onVar'] }) {
+  // The committed value is a number, but the field holds a raw string draft so a
+  // fractional oklch value types cleanly — "0.", "0.5", "0.50" all survive (a
+  // type="number" input, or rendering String(number) back, would eat them). onVar
+  // writes parseFloat(draft) back on every keystroke, so `stored` changes as you
+  // type; reseed only when it diverges in VALUE (reset, paste, tone switch), never
+  // mid-edit — else backspacing "0.5" to "0." would snap the draft to "0".
+  const stored = String(v[d.key])
+  const [draft, setDraft] = useState(stored)
+  const [seen, setSeen] = useState(stored)
+  if (seen !== stored) {
+    setSeen(stored)
+    if (parseFloat(draft) !== parseFloat(stored)) setDraft(stored)
+  }
   return (
     <div className={styles.var}>
       <Input
-        type="number"
+        type="text"
+        inputMode="decimal"
         size="small"
         label={d.label}
-        value={String(v[d.key])}
-        min={d.min}
-        max={d.max}
-        step={d.step}
-        onValueChange={(_e: any, a: any) => onVar(spec.id, d.key, a.value)}
+        value={draft}
+        onValueChange={(_e: any, a: any) => {
+          setDraft(a.value)
+          onVar(spec.id, d.key, a.value)
+        }}
       />
       {d.tip ? <Tooltip>{d.tip}</Tooltip> : null}
     </div>

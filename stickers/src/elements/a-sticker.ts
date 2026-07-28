@@ -6,8 +6,13 @@ import './a-sticker.css'
  *
  * Receives SVG markup as the `svg` attribute. On change, drops it into
  * a shadow-DOM container so the host's light DOM stays untouched.
- * Sizing comes from external CSS reading `--sticker-size` (set by the
- * JSX wrapper, or by the consumer directly).
+ *
+ * The shadow container is sized from `--sticker-size` (set by the JSX
+ * wrapper's `size` prop, or by the consumer), with a 256px fallback. The
+ * size lives on the shadow node, not the host: a light-DOM rule sizing
+ * the host loses to unlayered consumer styles (tree-of-origin outranks
+ * specificity), which was collapsing the sticker to its intrinsic size.
+ * Shadow descendants are unreachable by document CSS, so this holds.
  *
  * The animated counterpart is `<a-sticker-animated>`.
  */
@@ -22,7 +27,7 @@ export class AStickerElement extends HTMLElementBase {
     const style = document.createElement('style')
     style.textContent = `
       :host { display: inline-block; }
-      div { width: 100%; height: 100%; }
+      div { width: var(--sticker-size, 256px); height: var(--sticker-size, 256px); }
       div > svg { display: block; width: 100%; height: 100%; }
     `
 

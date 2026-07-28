@@ -19,8 +19,9 @@ import './a-sticker-animated.css'
  *  - `paused` — present: freeze at current frame. Numeric value
  *    (seconds): seek to that time, then freeze. Absent: play.
  *
- * Sizing comes from external CSS reading `--sticker-size` (set by the
- * JSX wrapper or the consumer).
+ * The shadow container is sized from `--sticker-size` (set by the JSX
+ * wrapper's `size` prop or the consumer), with a 256px fallback — see
+ * `<a-sticker>` for why sizing lives on the shadow node, not the host.
  *
  * The static counterpart is `<a-sticker>`.
  */
@@ -38,7 +39,7 @@ export class AStickerAnimatedElement extends HTMLElementBase {
     const style = document.createElement('style')
     style.textContent = `
       :host { display: inline-block; }
-      div { width: 100%; height: 100%; }
+      div { width: var(--sticker-size, 256px); height: var(--sticker-size, 256px); }
       div > svg { display: block; width: 100%; height: 100%; }
     `
 

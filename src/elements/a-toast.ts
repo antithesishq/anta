@@ -6,39 +6,71 @@ const EXIT_MS = 220
 /** Auto-dismiss delay (ms) when `duration` is absent. `duration="0"` disables it. */
 const DEFAULT_DURATION = 5000
 
+// Presence-based dismiss trigger: any element inside the toast carrying this
+// attribute dismisses it on click. Mirrors `<a-banner>`'s `data-banner-dismiss`
+// and `<a-dialog>`'s `data-dialog-close`. A click listener (a light-DOM READ,
+// declarative-safe) rather than a bespoke event, so it catches ANY activated
+// control — native `<button>`, `<a>`, `<a-button>`, `<a-menu-item>` — with
+// keyboard activation for free (Enter/Space synthesizes a real click).
+const DISMISS_ATTR = 'data-toast-dismiss'
+
 /**
- * `<a-toast>` — one item inside an `<a-toaster>`. A thin holder around slotted
- * content (a `Banner`, `Card`, `Sticker`, a string, or a raw DOM node): it owns
- * the enter / exit animation, the auto-dismiss timer (paused while hovered or
- * focused), and an optional ✕. Its `slot` attribute (`slot="bottom-right"`, …)
- * routes it to a placement zone.
+ * `<a-toast>` — one item inside an `<a-toaster>`. A style-neutral container around
+ * slotted content (a `Banner`, `Card`, `Sticker`, a string, or a raw DOM node):
+ * it owns the enter / exit animation and the auto-dismiss timer (paused while
+ * hovered or focused), nothing else. No chrome of its own — no ✕, no surface; the
+ * toasted content brings its own look and its own dismiss affordance. Its `slot`
+ * attribute (`slot="bottom-right"`, …) routes it to a placement zone.
  *
  * Content arrives one of two ways: as slotted light-DOM children (a string / JSX
  * the `<Toaster>` renders through the reconciler), or as a live DOM node set on
  * the `content` property (the wrapper's DOM-node branch), which the element slots
  * into its own light DOM. Either way it projects through the shadow `<slot>`.
  *
- * It **never removes itself**. Dismissal — from the timer, the ✕, or the
- * `leaving` attribute the wrapper sets for a programmatic `dismiss` — plays the
- * exit in its own shadow, then emits a bubbling **`dismiss`**; the owner removes
- * the node on that event. So the element writes only its own shadow, reads its
- * own attributes, appends only its own (wrapper-supplied) content node, and
- * dispatches events.
+ * ## Time left — `--toast-remaining`
  *
- * Shadow structure (`part` on the styling hooks):
+ * While the auto-dismiss timer runs, the element animates `--toast-remaining` from
+ * `1` to `0` on the slot (paused in lockstep with the timer on hover / focus).
+ * It's a registered `@property` (see `a-toast.css`) with `inherits: true`, so
+ * slotted content inherits the live value and can draw a countdown with one CSS
+ * rule — `transform: scaleX(var(--toast-remaining))` — with no timer of its own
+ * and no re-render. Display only: the real dismiss is the JS timer, so it degrades
+ * to a full bar where custom-property animation is unsupported. Sticky
+ * (`duration="0"`) runs no countdown; the var stays `1`.
  *
- *   <div class="outer">              ← height collapser for the exit
- *     <div class="clip">             ← clips content during collapse
- *       <div class="toast" part="toast">   ← the visual holder (elevation) + fade
- *         <slot>                     ← the content
- *         <button class="close" part="close">  ← ✕, shown only with [closable]
+ * ## Dismiss from an action — `data-toast-dismiss`
+ *
+ * Any element inside the toast carrying `data-toast-dismiss` dismisses it on click
+ * — the same convention as `<a-banner>`'s `data-banner-dismiss` and `<a-dialog>`'s
+ * `data-dialog-close`. It's a click listener (a light-DOM READ, declarative-safe),
+ * so it catches any activated control — native `<button>`, `<a>`, `<a-button>`,
+ * `<a-menu-item>` — and keyboard activation for free. A toasted `<Banner>` instead
+ * dismisses through its own `onDismiss` (wire it to `manager.dismiss(id)`); its
+ * built-in ✕ and any `data-banner-dismiss` action ride that channel.
+ *
+ * It **never removes itself**. Dismissal — from the timer, a `data-toast-dismiss`
+ * control, or the `leaving` attribute the wrapper sets for a programmatic
+ * `dismiss` — fades the host out (an off-DOM `:state(leaving)`), then emits a
+ * bubbling **`dismiss`**; the owner removes the node on that event. So the element
+ * writes only its own shadow + internals, reads its own attributes (and, read-only,
+ * the light DOM for the dismiss trigger), appends only its own (wrapper-supplied)
+ * content node, and dispatches events.
+ *
+ * Shadow structure — the host IS the box (no wrappers):
+ *
+ *   :host                            ← the fade/slide layer
+ *     <slot>                         ← the content
  */
 export class AToastElement extends HTMLElementBase {
   // `leaving` triggers the exit; `rev` (bumped on an in-place update) restarts
-  // the timer. `duration` / `closable` are read on demand, not observed.
+  // the timer. `duration` is read on demand, not observed.
   static observedAttributes = ['leaving', 'rev']
 
-  #outer: HTMLDivElement
+  /** Off-DOM state channel — drives `:state(leaving)` for the exit fade. */
+  #internals?: ElementInternals
+  /** The content slot. Also the element the `--toast-remaining` countdown
+   *  animates on, so slotted content can inherit the value (see SHADOW_STYLE). */
+  #slot: HTMLSlotElement
   /** A DOM node handed in via the `content` property (the wrapper's DOM-node
    *  branch). String / JSX content arrives as slotted children instead. */
   #content?: Node
@@ -55,36 +87,33 @@ export class AToastElement extends HTMLElementBase {
 
   constructor() {
     super()
+    // Off-DOM state for the exit fade. Guarded because the element may be built
+    // in a runtime where `attachInternals` is missing or throws (worker DOM,
+    // partial polyfill); degrade to no fade rather than break construction.
+    try {
+      this.#internals = this.attachInternals?.()
+    } catch (err) {
+      console.warn('a-toast: ElementInternals unavailable — exit fade disabled.', err)
+    }
     const shadow = this.attachShadow({ mode: 'open' })
 
     const style = document.createElement('style')
     style.textContent = SHADOW_STYLE
 
-    this.#outer = document.createElement('div')
-    this.#outer.className = 'outer'
+    this.#slot = document.createElement('slot')
 
-    const clip = document.createElement('div')
-    clip.className = 'clip'
+    shadow.append(style, this.#slot)
 
-    const toast = document.createElement('div')
-    toast.className = 'toast'
-    toast.setAttribute('part', 'toast')
-
-    const slot = document.createElement('slot')
-
-    const close = document.createElement('button')
-    close.className = 'close'
-    close.type = 'button'
-    close.setAttribute('part', 'close')
-    close.setAttribute('aria-label', 'Dismiss')
-    close.innerHTML =
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'
-    close.addEventListener('click', () => this.dismiss())
-
-    toast.append(slot, close)
-    clip.append(toast)
-    this.#outer.append(clip)
-    shadow.append(style, this.#outer)
+    // A click on any element carrying `data-toast-dismiss` dismisses the toast.
+    // Read-only walk of the light DOM (no host / tree mutation). The nearest
+    // `a-toast` to the trigger must be THIS one, so a dismiss control inside a
+    // toast nested in another toast's content doesn't also dismiss the outer one.
+    this.addEventListener('click', (e) => {
+      const target = e.target
+      if (!(target instanceof Element)) return
+      const trigger = target.closest(`[${DISMISS_ATTR}]`)
+      if (trigger && trigger.closest('a-toast') === this) this.dismiss()
+    })
   }
 
   connectedCallback() {
@@ -136,7 +165,7 @@ export class AToastElement extends HTMLElementBase {
       this.#exitTimer = undefined
     }
     this.#leaving = false
-    this.#outer.classList.remove('leaving')
+    this.#internals?.states.delete('leaving')
     this.#startTimer()
   }
 
@@ -172,7 +201,46 @@ export class AToastElement extends HTMLElementBase {
 
   #startTimer() {
     this.#remaining = this.#duration
+    this.#startCountdown()
     this.#armIfActive()
+  }
+
+  /** Set up (or restart) the display countdown that drives `--toast-remaining`
+   *  1 → 0 on the slot over `duration`; slotted content inherits it. It's display
+   *  only — the auto-dismiss above is the real JS timer — so it degrades to a
+   *  static full bar where custom-property animation is unsupported. Sticky
+   *  (`duration <= 0`) runs no countdown; the var stays at its initial 1. */
+  #startCountdown() {
+    if (this.#duration > 0) {
+      this.#slot.style.animation = `toast-remaining ${this.#duration}ms linear forwards`
+      // Restart from the beginning even when the animation string is unchanged
+      // (a same-duration `rev` restart wouldn't otherwise re-trigger it).
+      this.#eachCountdown((a) => {
+        a.currentTime = 0
+      })
+    } else {
+      this.#slot.style.animation = ''
+    }
+  }
+
+  /** Run `fn` for the `--toast-remaining` animation on the slot, if present.
+   *  Guarded — `getAnimations` / animation control may be absent in a partial
+   *  runtime, and the countdown is non-essential (never let it break the toast). */
+  #eachCountdown(fn: (a: Animation) => void) {
+    try {
+      for (const a of this.#slot.getAnimations?.() ?? []) {
+        if ((a as CSSAnimation).animationName === 'toast-remaining') fn(a)
+      }
+    } catch {
+      /* display-only */
+    }
+  }
+
+  #pauseCountdown() {
+    this.#eachCountdown((a) => a.pause())
+  }
+  #playCountdown() {
+    this.#eachCountdown((a) => a.play())
   }
 
   /** Start (or resume) the countdown only when it should be running: a positive
@@ -188,6 +256,8 @@ export class AToastElement extends HTMLElementBase {
       this.#timer = undefined
       this.dismiss()
     }, this.#remaining)
+    // Keep the display countdown in lockstep with the dismiss timer.
+    this.#playCountdown()
   }
 
   #clearTimer() {
@@ -197,11 +267,13 @@ export class AToastElement extends HTMLElementBase {
     }
   }
 
-  /** Freeze the countdown, banking the time left. Idempotent. */
+  /** Freeze the timer, banking the time left, and freeze the display countdown
+   *  with it. Idempotent. */
   #pause() {
     if (this.#timer == null) return
     this.#remaining -= Date.now() - this.#startedAt
     this.#clearTimer()
+    this.#pauseCountdown()
   }
 
   #onPointerEnter = () => {
@@ -241,7 +313,8 @@ export class AToastElement extends HTMLElementBase {
     if (this.#leaving) return
     this.#leaving = true
     this.#clearTimer()
-    this.#outer.classList.add('leaving')
+    this.#pauseCountdown()
+    this.#internals?.states.add('leaving')
     const wait = this.#reducedMotion() ? 0 : EXIT_MS
     this.#exitTimer = this.view.setTimeout(() => {
       this.#exitTimer = undefined
@@ -253,45 +326,26 @@ export class AToastElement extends HTMLElementBase {
 // Shadow styles, injected verbatim into every <a-toast> shadow root — kept
 // COMMENT-FREE (ships + re-injects per instance; see CLAUDE.md). Rationale:
 //
-//  • :host is a display:block flex item; the zone (in a-toaster) stretches it to
-//    the column width.
-//  • .outer is a 1fr grid row that collapses to 0fr on exit (the a-expander
-//    trick), so a dismissing toast shrinks its height and the stack reflows; .clip
-//    hides the overflow during the collapse.
-//  • .toast carries the enter/exit fade + slide (no elevation of its own — the
-//    holder is style-neutral, the content brings its own look). @starting-style
-//    gives every freshly-inserted toast a from-opacity:0 / translated start; the
-//    transition (and the collapse) are gated under prefers-reduced-motion.
-//  • The ✕ chip tunes alpha with color-mix(in oklch, …) per CLAUDE.md; it's
-//    shadow-internal, shown only with [closable] (content usually brings its own).
+//  • :host is the box: a display:block flex item the zone (in a-toaster) stretches
+//    to the column width. It carries the enter/exit fade + slide itself — no
+//    wrapper element, no chrome. Style-neutral (no elevation; the content brings
+//    its own look). @starting-style gives every freshly-inserted toast a
+//    from-opacity:0 / translated start; :state(leaving) (set off-DOM on dismiss)
+//    fades it back out. Both transitions gate under prefers-reduced-motion.
+//  • The toast-remaining keyframes animate --toast-remaining 1 → 0 on the slot
+//    (the element sets the matching duration inline + pauses it with the timer);
+//    slotted content inherits the live value to draw a "time left" indicator.
+//    --toast-remaining is registered @property in a-toast.css so it interpolates.
 const SHADOW_STYLE = `
-  :host { display: block; }
-
-  .outer {
-    display: grid;
-    grid-template-rows: 1fr;
-  }
-  .outer.leaving { grid-template-rows: 0fr; }
-
-  .clip {
-    overflow: hidden;
-    min-height: 0;
-  }
-
-  .toast {
-    position: relative;
-    opacity: 1;
-    translate: 0 0;
-  }
-  .outer.leaving .toast { opacity: 0; }
+  :host { display: block; opacity: 1; translate: 0 0; }
+  :host(:state(leaving)) { opacity: 0; }
 
   @starting-style {
-    .toast { opacity: 0; translate: 0 12px; }
+    :host { opacity: 0; translate: 0 12px; }
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .outer { transition: grid-template-rows var(--toast-dur, 220ms) ease; }
-    .toast {
+    :host {
       transition:
         opacity var(--toast-dur, 220ms) ease,
         translate var(--toast-dur, 220ms) ease;
@@ -300,31 +354,10 @@ const SHADOW_STYLE = `
 
   slot { display: block; }
 
-  .close {
-    position: absolute;
-    top: 6px;
-    inset-inline-end: 6px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    padding: 0;
-    border: 0;
-    border-radius: 999px;
-    background: var(--toast-close-bg, color-mix(in oklch, CanvasText 8%, transparent));
-    color: inherit;
-    cursor: pointer;
-    opacity: 0.7;
+  @keyframes toast-remaining {
+    from { --toast-remaining: 1; }
+    to { --toast-remaining: 0; }
   }
-  .close:hover { opacity: 1; }
-  .close:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 1px;
-  }
-  .close svg { width: 14px; height: 14px; }
-
-  :host([closable]) .close { display: inline-flex; }
 `
 
 export function register_a_toast() {

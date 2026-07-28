@@ -1181,8 +1181,6 @@ export interface AToasterAttributes extends BaseAttributes {
 export interface AToastAttributes extends BaseAttributes {
   /** Auto-dismiss delay in ms; `0` keeps it until dismissed. Defaults to 5000. */
   duration?: number | string
-  /** Show the ✕ dismiss button. Presence-based (`''` on, omit off). */
-  closable?: boolean | ''
   /** Set by the wrapper to request dismissal (a programmatic `dismiss`): the
    *  element plays its exit and emits `dismiss`. Presence-based (`''` on, omit off). */
   leaving?: boolean | ''

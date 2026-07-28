@@ -52,9 +52,6 @@ export interface ToastOptions {
    *  element default.
    *  @defaultValue 5000 */
   duration?: number
-  /** Show a ✕ dismiss button on the toast.
-   *  @defaultValue false */
-  closable?: boolean
   /** Announce this toast to assistive tech via `aria-live` on the toast. Opt-in
    *  per toast — omit for no announcement (the content may carry its own live
    *  semantics, e.g. a `Banner`'s `role="status"`). `'assertive'` interrupts. */
@@ -67,7 +64,6 @@ export interface ToastEntry {
   render: ToastRender
   placement: ToastPlacement
   duration?: number
-  closable: boolean
   /** `aria-live` politeness for this toast, or undefined for no announcement. */
   politeness?: 'polite' | 'assertive'
   /** True once dismissal has been requested — the entry stays rendered so the
@@ -132,7 +128,6 @@ export function createToaster(): Toaster {
       render,
       placement: opts.placement ?? DEFAULT_PLACEMENT,
       duration: opts.duration,
-      closable: opts.closable ?? false,
       politeness: opts.politeness,
       leaving: false,
       rev: i === -1 ? 0 : snapshot[i].rev + 1,

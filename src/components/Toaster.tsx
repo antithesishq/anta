@@ -1,6 +1,7 @@
 import type { BaseProps } from "../general_types"
 import { useMemo, useSyncExternalStore } from "../jsx-runtime"
 import { createToaster, type Toaster as ToasterStore, type ToastEntry } from "../toaster"
+import { Banner } from "./Banner"
 
 export interface ToasterProps extends BaseProps {
   /** The store this region renders. Omit to bind the default store driven by
@@ -11,20 +12,22 @@ export interface ToasterProps extends BaseProps {
   label?: string
 }
 
-/** One rendered toast. Calls the entry's render function and routes the result:
- *  a real DOM node goes to the element via the `content` property (the element
- *  slots it), everything else (a string / JSX) is rendered as a child by the
- *  reconciler. Memoized on `rev` so the render runs once per in-place change
- *  (stable identity for a DOM node, no churn for JSX). */
+/** One rendered toast. Calls the entry's render function and routes the result by
+ *  type: a real DOM node goes to the element via the `content` property (the
+ *  element slots it); a bare string / number is wrapped in a dismissible `Banner`
+ *  (so a plain-text toast gets a surface and a working ✕ for free); everything
+ *  else (JSX) is rendered as a child by the reconciler. Memoized on `rev` so the
+ *  render runs once per in-place change (stable identity for a DOM node, no churn
+ *  for JSX). */
 const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- content is a function of id+rev only
   const content = useMemo(() => entry.render(entry.id), [entry.id, entry.rev])
   const isNode = typeof Node !== "undefined" && content instanceof Node
+  const isText = typeof content === "string" || typeof content === "number"
 
   const common = {
     slot: entry.placement,
     duration: entry.duration,
-    closable: entry.closable ? "" : undefined,
     leaving: entry.leaving ? "" : undefined,
     rev: entry.rev,
     // Opt-in per-toast announcement — omitted (no live region) unless requested.
@@ -33,11 +36,22 @@ const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore })
     ondismiss: () => store.remove(entry.id),
   } as const
 
-  return isNode ? (
-    <a-toast {...common} content={content as Node} />
-  ) : (
-    <a-toast {...common}>{content as React.ReactNode}</a-toast>
-  )
+  if (isNode) return <a-toast {...common} content={content as Node} />
+  if (isText)
+    // Controlled (`dismissed={false}`) so the ✕ only *requests* — the toast owns
+    // the exit animation, no double collapse. onDismiss (fired by the ✕ or any
+    // `data-banner-dismiss` action) removes the toast.
+    return (
+      <a-toast {...common}>
+        <Banner
+          round
+          message={content as string | number}
+          dismissed={false}
+          onDismiss={() => store.dismiss(entry.id)}
+        />
+      </a-toast>
+    )
+  return <a-toast {...common}>{content as React.ReactNode}</a-toast>
 }
 
 /**
@@ -57,11 +71,13 @@ const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore })
  * ```tsx
  * <Toaster />   // mount once, keep it mounted
  *
- * // then from anywhere:
- * Toaster.manager.add((id) => <Banner tone="success" message="Saved" closable={false} />, {
- *   placement: 'bottom-right',
- *   closable: true,
- * })
+ * // A bare string is auto-wrapped in a dismissible Banner:
+ * Toaster.manager.add(() => 'Saved', { placement: 'bottom-right' })
+ *
+ * // Or toast a Banner yourself and wire its dismiss to the toast:
+ * Toaster.manager.add((id) => (
+ *   <Banner tone="success" message="Saved" onDismiss={() => Toaster.manager.dismiss(id)} />
+ * ))
  * ```
  */
 const ToasterImpl = ({

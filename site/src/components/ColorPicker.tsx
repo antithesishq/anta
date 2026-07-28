@@ -198,7 +198,8 @@ export default function ColorPicker({
     setOklch(safeOklch(chroma.rgb(next[0], next[1], next[2]).oklch(), h))
   }
 
-  // min/max/step were native number-input attrs; clamping now lives in each onVal.
+  // min/max/step were native number-input attrs (spinner + validation, never a clamp
+  // on typed input); values now bound via the oklch onVals / the chroma round-trip.
   const chan = (label: string, val: string, _min: number, _max: number, _step: number, onVal: (v: string) => void, tip?: any) => (
     <Chan label={label} val={val} onVal={onVal} tip={tip} />
   )

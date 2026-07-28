@@ -13,10 +13,11 @@
     --menu-padding: 4px;
     --menu-min-width: 88px;
     --menu-backdrop-filter: blur(20px);
-    /* Width tween when the open menu's content changes size (JS reads this — CSS
-       can't transition a content-driven auto width). 0 disables; override per menu
-       with `a-menu::part(menu) { --menu-width-duration: 0 }`. */
-    --menu-width-duration: 170ms;
+    /* Duration of the container's `width` transition (in the shadow style). Override
+       per menu with `a-menu::part(menu) { --menu-width-duration: 0 }`; 0 disables.
+       A content-driven `auto` width change (a badge appearing on a row) isn't
+       transitionable in CSS — only length-driven width changes ease. */
+    --menu-width-duration: 160ms;
   }
 
   @media (prefers-reduced-motion: reduce) {

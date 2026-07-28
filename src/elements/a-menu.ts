@@ -333,15 +333,6 @@ export class AMenuElement extends HTMLElementBase {
   // flipped to the left of the anchor). Same reanchor-stability role as `_flippedTop`.
   private _flippedSide: boolean | null = null
 
-  // Width animation, on by default (see #startWidthObserver). Duration/off-switch:
-  // the `--menu-width-duration` custom property (0 disables), overridable per menu
-  // via `::part(menu)`.
-  #widthObserver?: ResizeObserver
-  #widthAnimation?: Animation
-  #widthReady = false
-  #lastWidth: number | null = null
-  #suppressWidthObserver = false
-
   constructor() {
     super()
     // Off-DOM state only (`:state(open)`); guarded for non-standard runtimes.
@@ -404,6 +395,7 @@ export class AMenuElement extends HTMLElementBase {
         transition:
           opacity 140ms ease-out,
           translate 140ms ease-out,
+          width var(--menu-width-duration, 160ms) ease,
           display 140ms allow-discrete,
           overlay 140ms allow-discrete;
       }
@@ -415,6 +407,7 @@ export class AMenuElement extends HTMLElementBase {
         transition:
           opacity 100ms ease-out,
           translate 100ms ease-out,
+          width var(--menu-width-duration, 160ms) ease,
           display 100ms allow-discrete,
           overlay 100ms allow-discrete;
       }
@@ -1096,7 +1089,6 @@ export class AMenuElement extends HTMLElementBase {
     // now — no fade-skip needed; the CSS transition + @starting-style handle the
     // enter, and a brief fade-in over an existing menu reads fine.
     this.position(coord, instant)
-    this.#startWidthObserver()
   }
 
   /** Dismiss any tooltip on the trigger as the menu opens, so the trigger's
@@ -1117,67 +1109,6 @@ export class AMenuElement extends HTMLElementBase {
     this.reflectOpen(false)
     this.cancelOpenTimer()
     this.cancelCloseTimer()
-    this.#stopWidthObserver()
-  }
-
-  /** Tween the surface width (WAAPI) when its content changes size while open, so a
-   *  badge appearing / clearing on a row glides instead of snapping. The surface
-   *  stays auto-width; the animation only overrides the rendered width while it runs,
-   *  so the next change re-measures cleanly. CSS can't transition a content-driven
-   *  `auto` width, so this is JS; `--menu-width-duration` (read below) is the knob. */
-  #startWidthObserver() {
-    this.#stopWidthObserver()
-    const RO = this.view.ResizeObserver
-    if (!RO) return
-    this.#widthObserver = new RO(() => this.#onWidthResize())
-    this.#widthObserver.observe(this.surface)
-    // Seed the baseline two frames in (after position() lays out) so the enter
-    // (0 → full width) doesn't tween.
-    this.view.requestAnimationFrame(() =>
-      this.view.requestAnimationFrame(() => {
-        if (!this._shown) return
-        this.#lastWidth = this.surface.offsetWidth
-        this.#widthReady = true
-      }),
-    )
-  }
-
-  #stopWidthObserver() {
-    this.#widthObserver?.disconnect()
-    this.#widthObserver = undefined
-    this.#widthAnimation?.cancel()
-    this.#widthAnimation = undefined
-    this.#widthReady = false
-    this.#lastWidth = null
-    this.#suppressWidthObserver = false
-  }
-
-  #onWidthResize() {
-    // Suppress while our own tween runs — it resizes the surface too.
-    if (!this._shown || !this.#widthReady || this.#suppressWidthObserver) return
-    const next = this.surface.offsetWidth
-    const prev = this.#lastWidth
-    this.#lastWidth = next
-    if (prev == null || prev === next) return
-    // Duration/off-switch from CSS (`--menu-width-duration`, 0 disables); the sheet
-    // also zeroes it under prefers-reduced-motion.
-    const raw = this.view.getComputedStyle(this.surface).getPropertyValue('--menu-width-duration').trim()
-    const duration = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : NaN
-    if (!(duration > 0)) return
-    this.#suppressWidthObserver = true
-    const anim = this.surface.animate(
-      [{ width: `${prev}px` }, { width: `${next}px` }],
-      { duration, easing: 'ease-out' },
-    )
-    this.#widthAnimation = anim
-    const settle = () => {
-      if (this.#widthAnimation === anim) this.#widthAnimation = undefined
-      this.#suppressWidthObserver = false
-      // Re-baseline to the natural width, absorbing any change that landed mid-tween.
-      if (this._shown) this.#lastWidth = this.surface.offsetWidth
-    }
-    anim.addEventListener('finish', settle)
-    anim.addEventListener('cancel', settle)
   }
 
   /** Expose the menu's OWN open state as an off-DOM custom state (`:state(open)`),

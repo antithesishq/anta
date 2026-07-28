@@ -5,10 +5,15 @@ This page tracks what ships to npm. Documentation website changes are not tracke
 ## 0.3.15 — July 28, 2026
 
 ### Added
+- **New `dollar-sign` icon** — Lucide's Dollar Sign, available through
+  `<Icon shape="dollar-sign" />` and any `icon` prop.
 - **`Toaster` (`<a-toaster>` / `<a-toast>`) — a notification region that shows anything as a toast.** Mount one `<Toaster>` and drive it through `Toaster.manager` (or a `createToaster()` bound with `<Toaster toaster={…} />`). `manager.add(render, { id?, placement?, duration?, politeness? })` takes a render function returning a string (auto-wrapped in a dismissible `Banner`), JSX (`<Banner>` / `<Card>` / `<Sticker>` / …), or a live DOM node, and returns an `id` for `dismiss(id)` / `update(id, render)` / `clear()` (reusing an id upserts in place). Six placements (default `bottom-right`); `duration` ms auto-dismisses (default 5000; `Infinity` = sticky), pausing on hover / focus; `politeness` opts into a `role="status"` / `role="alert"` announcement. `<a-toast>` is a style-neutral container with no ✕ of its own — dismissal comes from the content: any control with **`data-toast-dismiss`** (no wiring, mirroring `data-banner-dismiss` / `data-dialog-close`) or a toasted `Banner`'s `onDismiss`. It also publishes **`--toast-remaining`** (`1` → `0`, tracking the timer and pausing with it) so content can draw a "time left" bar in one CSS rule. Tokens `--toaster-inset` / `--toaster-gap` / `--toaster-width` / `--toast-dur`. Exports `Toaster`, `createToaster`, `ToasterProps`, `ToasterManager`, `ToastOptions`, `ToastPlacement`, `ToastContent`, `ToastRender`.
 
 ### Changed
 - **`<a-input>`'s trailing slot is now inset from the edge for static adornments, staying flush for a button.** A static trailing adornment (`Input` `trailing`, a unit label like `ms`, an indicator icon) gets the same `7px` breathing room the leading slot already had, instead of sitting flush; a trailing **button** stays flush so the control reaches the edge for a bigger hit target. The distinction is CSS-only — a `:has([slot="trailing"] :is(a-button, button))` rule zeroes `--input-trailing-inset`, mirroring the content-conditional padding `a-button` already does. `Select`'s chevron sources its inset from the slot now (its own `margin-inline-end` is removed), so it sits in the same place as before. The clear button (its own slot) is unchanged.
+
+### Fixed
+- **A wrapping no-icon `ButtonCopy` now ghosts its rendered label rather than the outer button.** The `iconPlacement="none"` feedback takes the label's measured box and its computed typography / wrapping rules into the top layer, so a constrained quaternary button's ghost keeps the same width, line breaks, and full label shape instead of becoming one unwrapped line.
 
 ## 0.3.14 — July 28, 2026
 
@@ -538,7 +543,7 @@ This page tracks what ships to npm. Documentation website changes are not tracke
 - `general_types.ts`: `AProgressAttributes` and `AIconAttributes` declare typed ARIA attributes so JSX type-checks the wrapper's pass-through.
 
 ### Changed
-- **Convention strengthened (no API impact):** ARIA wiring (`role`, `aria-*`, `tabindex`) lives in the `src/components/<Name>.tsx` wrappers as attribute pass-through, never inside the web component class. Web components stay pure declarative DOM. Documented in `CLAUDE.md`.
+- **Convention strengthened (no API impact):** ARIA wiring (`role`, `aria-*`, `tabindex`) lives in the `src/components/<Name>.tsx` wrappers as attribute pass-through, never inside the web component class. Web components stay pure declarative DOM. Documented in `src/AGENTS.md`.
 - Default body `font-weight` in `anta_global_tokens.css` changed to `400` for `:root, .light` (was `390`) and `.dark` (was `350`). The old values applied a small optical offset so dark text rendered thinner; the new values are uniform. Apps overriding `font-weight` on `:root` or `.dark` are unaffected.
 
 ## 0.1.1-dev.1 — May 3, 2026

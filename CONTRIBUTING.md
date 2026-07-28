@@ -28,7 +28,7 @@ When in doubt: would a consumer who installs this version see this change in the
 
 ### Style and conventions
 
-The repo's `CLAUDE.md` documents the architecture and conventions in detail (file layout, web-component pattern, color manipulation rules, naming, etc.). The short version:
+The repo's `AGENTS.md` hierarchy documents the architecture and conventions in detail. Read the root file, then the closest scoped guide for the area you change (for example, `src/AGENTS.md` for the component library). The short version:
 
 - Two tiers per component: web component under `src/elements/a-*` (declarative, attribute-driven, no JS-set host attributes) and JSX wrapper under `src/components/<Name>.tsx`.
 - `color-mix(in oklch, …)` is the standard way to tune any color's alpha. Never `rgba()` or `#rrggbbaa`.

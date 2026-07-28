@@ -29,7 +29,7 @@ interface StickerInternalProps extends StickerProps {
  * inline SVG markup. The `<a-sticker>` element renders the SVG into
  * its shadow DOM; sizing is composed into the host's inline `style` as
  * `--sticker-size` (the element doesn't mutate its own host — see the
- * declarative-DOM rule in CLAUDE.md).
+ * declarative-DOM rule in ../src/AGENTS.md).
  */
 export const Sticker = ({
   svg,

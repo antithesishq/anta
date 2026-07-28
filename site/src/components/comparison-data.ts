@@ -22,10 +22,6 @@ export interface System {
   /** Compact label for the matrix column headers, where horizontal space is
    *  tight. Falls back to `name` (used verbatim on the pros/cons cards). */
   short?: string
-  /** Coverage-column width tier: `narrow` (40px), `regular` (60px, the
-   *  default when omitted), or `wide` (reserved). Short-named systems go
-   *  `narrow`; the rest stay `regular`. */
-  width?: 'narrow' | 'regular' | 'wide'
   /** True for Anta; drives the highlight styling in both matrices. */
   anta?: boolean
   /** Package + version string, e.g. "@mui/material 9.2.0". */
@@ -56,7 +52,6 @@ export const SYSTEMS: System[] = [
     id: 'anta',
     name: 'Anta',
     anta: true,
-    width: 'narrow',
     version: '@antadesign/anta 0.3.12',
     docs: 'https://anta.design',
     tagline:
@@ -83,7 +78,6 @@ export const SYSTEMS: System[] = [
     id: 'webawesome',
     name: 'Web Awesome',
     short: 'WA',
-    width: 'narrow',
     version: '@awesome.me/webawesome 3.10.0',
     docs: 'https://webawesome.com',
     tagline:
@@ -135,7 +129,6 @@ export const SYSTEMS: System[] = [
     id: 'mui',
     name: 'MUI (Material UI)',
     short: 'MUI',
-    width: 'narrow',
     version: '@mui/material 9.2.0',
     docs: 'https://mui.com/material-ui/',
     tagline:
@@ -160,7 +153,6 @@ export const SYSTEMS: System[] = [
     id: 'antd',
     name: 'Ant Design',
     short: 'Ant',
-    width: 'narrow',
     version: 'antd 6.5.2',
     docs: 'https://ant.design',
     tagline:
@@ -330,7 +322,6 @@ export const SYSTEMS: System[] = [
     id: 'radix',
     name: 'Radix UI',
     short: 'Radix',
-    width: 'narrow',
     version: 'radix-ui 1.6.7',
     docs: 'https://www.radix-ui.com/primitives',
     tagline:

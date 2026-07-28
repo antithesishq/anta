@@ -12,7 +12,7 @@ import './a-input-time.css'
  * per-segment spinbuttons, not a text `<input>` and not N inputs. The element owns
  * focus, increment/wrap, and digit auto-advance — coordination that needs a live
  * element, so it lives here (the wrapper holds no DOM ref) and only ever mutates
- * its OWN shadow nodes, never the host or light DOM (worker-safe, per CLAUDE.md).
+ * its OWN shadow nodes, never the host or light DOM (worker-safe, per AGENTS.md).
  *
  * Localization is derived from `Intl`: the clock (12h vs 24h) from the resolved
  * `hourCycle`, the segment ORDER + separator + whether an AM/PM segment exists at

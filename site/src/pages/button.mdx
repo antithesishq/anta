@@ -447,6 +447,18 @@ literal string, or drop the `label` for an icon-only copy button.
 ```tsx folded
 <ButtonCopy copy="npm i @antadesign/anta" label="Copy install command" />
 <ButtonCopy copy="https://anta.design" priority="tertiary" /> // icon-only
+
+<ButtonCopy
+  copy="npm i @antadesign/anta"
+  iconPlacement="none"
+  priority="quaternary"
+  paddingless
+  style={{ width: '108px' }}
+>
+  <a-button-label style={{ whiteSpace: 'normal', textWrap: 'wrap', textOverflow: 'clip' }}>
+    Copy install command
+  </a-button-label>
+</ButtonCopy>
 ```
 
 </Col>

@@ -1,6 +1,6 @@
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — so a custom runtime resolves them, not whatever
-// `react` maps to. See CLAUDE.md (stateless-wrapper exception for RadioGroup).
+// `react` maps to. See AGENTS.md (stateless-wrapper exception for RadioGroup).
 import { useId, useState } from "../jsx-runtime"
 import { nativeStateChange, toneStyle } from "../anta_helpers"
 import type { BaseProps } from "../general_types"

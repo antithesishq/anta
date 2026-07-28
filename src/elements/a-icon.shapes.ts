@@ -37,6 +37,7 @@ export const ICON_SHAPES = [
   'copy',
   'corner-down-right',
   'cube',
+  'dollar-sign',
   'dots-vertical',
   'download',
   'edit',
@@ -138,6 +139,7 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'move-horizontal': ['resize', 'swap', 'horizontal'],
   'external-link': ['open', 'link', 'share', 'outbound'],
   'check': ['tick', 'ok', 'done', 'confirm', 'approve'],
+  'dollar-sign': ['currency', 'money', 'payment'],
   'circle-check': ['success', 'ok', 'done'],
   'x': ['close', 'cancel', 'dismiss', 'remove', 'no'],
   'plus': ['add', 'new', 'create'],
@@ -244,6 +246,7 @@ declare module '@antadesign/anta' {
     'copy': true
     'corner-down-right': true
     'cube': true
+    'dollar-sign': true
     'dots-vertical': true
     'download': true
     'edit': true

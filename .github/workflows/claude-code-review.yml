@@ -53,8 +53,7 @@ jobs:
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
           # Layer Anta's project-specific review rubric on top of the default
-          # code-review behavior (CLAUDE.md is already auto-loaded as context).
+          # The CLAUDE.md shim auto-loads the canonical AGENTS.md guidance.
           claude_args: '--append-system-prompt-file ./.github/anta-review.md'
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
-

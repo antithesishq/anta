@@ -23,6 +23,7 @@
   "move-horizontal": ["resize", "swap", "horizontal"],
   "external-link": ["open", "link", "share", "outbound"],
   "check": ["tick", "ok", "done", "confirm", "approve"],
+  "dollar-sign": ["currency", "money", "payment"],
   "circle-check": ["success", "ok", "done"],
   "x": ["close", "cancel", "dismiss", "remove", "no"],
   "plus": ["add", "new", "create"],

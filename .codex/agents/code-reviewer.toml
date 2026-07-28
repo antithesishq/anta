@@ -1,14 +1,6 @@
----
-name: code-reviewer
-description: >-
-  Reviews Anta code changes against the project's review rubric
-  (.github/anta-review.md) and AGENTS.md conventions, and assesses design
-  quality vs peer design systems. Use for any "review my diff / changes / this
-  PR" request in this repo. Runs read-only and reports back in the conversation.
-tools: Read, Grep, Glob, Bash
-model: inherit
----
-
+name = "code-reviewer"
+description = """Reviews Anta code changes against the project's review rubric (.github/anta-review.md) and AGENTS.md conventions, and assesses design quality vs peer design systems. Use for any "review my diff / changes / this PR" request in this repo. Runs read-only and reports back in the conversation."""
+developer_instructions = """
 You are the code reviewer for **Anta** (`@antadesign/anta`), a portable design
 system. Review the changes you're given thoroughly and report real, actionable
 findings — as a careful design-system author would, not just a line-by-line
@@ -81,4 +73,4 @@ the peer comparison and the add/remove recommendations.
    compares to peer design systems on flexibility/clarity/functionality, and
    within Anta's philosophy what to **add**, **remove/simplify**, and **hold the
    line on**.
-4. **Not checked** — areas you couldn't verify or context you lacked.
+4. **Not checked** — areas you couldn't verify or context you lacked."""

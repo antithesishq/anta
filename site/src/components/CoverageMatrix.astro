@@ -40,8 +40,8 @@ const ANTA_SLUG: Record<string, string> = {
       <tr>
         <th scope="col" class="cat-col">Component</th>
         {SYSTEMS.map((s) => (
-          <th scope="col" class:list={['sys-head', `col-${s.width ?? 'regular'}`, { anta: s.anta }]}>
-            <a href={s.docs} target="_blank" rel="noopener" class="sys-head-label">{s.short ?? s.name}</a>
+          <th scope="col" class:list={['sys-head', { anta: s.anta }]}>
+            <a href={s.docs} target="_blank" rel="noopener" class="sys-head-label" aria-label={s.name} title={s.name}>{s.short ?? s.name}</a>
           </th>
         ))}
       </tr>
@@ -68,11 +68,12 @@ const ANTA_SLUG: Record<string, string> = {
                 : COVERAGE_URLS[s.id]?.[c.id]
               : undefined
             const tone = MARK_TONE[raw ?? 'no']
+            const iconShape = raw === 'paid' ? 'dollar-sign' : 'check'
             const title = `${s.name} — ${c.label}: ${m.label}`
             return (
               <td class:list={['mark', m.cls, { anta: s.anta }]}>
                 {shipped && href ? (
-                  // Shipped + has a doc page → an Anta tertiary check-icon Button
+                  // Shipped + has a doc page → an Anta tertiary tier-icon Button
                   // as an anchor (href → `<a role="button" data-anta>`), links out.
                   <a
                     href={href}
@@ -86,12 +87,12 @@ const ANTA_SLUG: Record<string, string> = {
                     rel={s.anta ? undefined : 'noopener'}
                     aria-label={`${title} — open docs`}
                   >
-                    <a-icon shape="check" aria-hidden="true"></a-icon>
+                    <a-icon shape={iconShape} aria-hidden="true"></a-icon>
                   </a>
                 ) : shipped ? (
-                  // Shipped, but no doc page — the same check button with no link.
+                  // Shipped, but no doc page — the same tier icon with no link.
                   <a-button priority="tertiary" tone={tone} size="large" tabindex="-1" aria-hidden="true" class="mark-btn">
-                    <a-icon shape="check" aria-hidden="true"></a-icon>
+                    <a-icon shape={iconShape} aria-hidden="true"></a-icon>
                   </a-button>
                 ) : (
                   // Not shipped → a critical-tone x-icon button, no link.
@@ -111,37 +112,35 @@ const ANTA_SLUG: Record<string, string> = {
 </div>
 
 <style>
-  /* No vertical scroll box: the wrapper grows to the table's full height, so
-     the page itself scrolls vertically. Only horizontal overflow is contained
-     (a too-wide table scrolls sideways inside this box, not the page) — so the
-     category column still pins during that horizontal scroll. The header row no
-     longer pins on vertical scroll: sticky-top needs a bounded-height scroller,
-     which whole-page scroll deliberately removes. */
+  /* Compact tracks use a genuine two-axis data-grid viewport. That gives the
+     sticky header a vertical scrollport and keeps horizontal movement local.
+     The wide-track rule below removes the scrollport, so the header instead
+     sticks to the document while the full table is visible. */
   .cov-scroll {
-    overflow-x: auto;
+    max-block-size: min(720px, calc(100dvh - 32px));
+    overflow: auto;
+    scrollbar-gutter: stable;
     margin-block: 24px 8px;
   }
 
-  /* Bleed to the viewport edges on narrow screens. At ≤640px DocsLayout slides
-     the nav sidebar off-canvas, so `.content` spans the whole viewport but keeps
-     an asymmetric inline padding (20px start / 12px end); negate it so the wide,
-     horizontally-scrolling matrix uses the full width edge to edge instead of
-     leaving a gap on each side. Coupled to that padding — keep in sync if the
-     mobile `.content` padding in DocsLayout changes. */
-  @media (max-width: 640px) {
+  /* The 855px table minimum leaves 675px after the 180px category column:
+     45px for each of the 15 equal system columns. Keep the viewport
+     only while that minimum needs horizontal scrolling. */
+  @container (min-width: 855px) {
     .cov-scroll {
-      margin-inline: -20px -12px;
+      max-block-size: none;
+      overflow: visible;
     }
   }
 
   .cov {
     border-collapse: separate;
     border-spacing: 0;
-    /* Fixed layout so each system column is a hard, per-tier width regardless
-       of header-name width (narrow 40 / regular 60 / wide reserved); the table
-       sizes to the sum of its columns (150 + the per-tier widths). */
+    /* Fixed layout gives the category its 180px measure and divides all
+       remaining room evenly between the 15 system columns. */
     table-layout: fixed;
-    width: max-content;
+    width: max(100%, 855px);
+    min-width: 100%;
     font-size: 13px;
   }
 
@@ -158,10 +157,9 @@ const ANTA_SLUG: Record<string, string> = {
     position: sticky;
     top: 0;
     z-index: 2;
-    /* Per-tier hard column width (regular default below; narrow/wide override);
-       names wrap within it when they can't fit on one line. */
-    width: 60px;
-    white-space: normal;
+    /* With no width of its own, each system header receives an equal share of
+       the table width after the fixed category column is accounted for. */
+    white-space: nowrap;
     background: var(--bg-base);
     color: var(--text-2);
     font-weight: 550;
@@ -170,19 +168,14 @@ const ANTA_SLUG: Record<string, string> = {
     vertical-align: bottom;
   }
   .sys-head-label {
-    display: inline-block;
+    display: block;
+    min-width: 0;
     font-size: 11px;
     letter-spacing: -0.01em;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: inherit;
-  }
-  /* Width tiers (fixed layout reads the header cell's width). Regular (60px) is
-     the base on `.sys-head`; these override for the other two tiers. */
-  .cov thead .sys-head.col-narrow {
-    width: 40px;
-  }
-  .cov thead .sys-head.col-wide {
-    width: 80px;
   }
 
   /* First column: the grouped category, sticky to the left on horizontal
@@ -191,10 +184,14 @@ const ANTA_SLUG: Record<string, string> = {
     position: sticky;
     left: 0;
     z-index: 1;
-    background: var(--bg-canvas);
+    background: var(--bg-base);
+    border-inline-end: 1px solid var(--border-4);
     text-align: left;
-    /* The label column keeps its own width (fixed layout reads it here). */
-    width: 150px;
+    /* The label column keeps a generous fixed measure; its contents wrap and
+       clip inside the sticky track rather than painting across its divider. */
+    width: 180px;
+    overflow: hidden;
+    overflow-wrap: anywhere;
     white-space: normal;
   }
   thead .cat-col {
@@ -221,6 +218,7 @@ const ANTA_SLUG: Record<string, string> = {
     margin-top: 1px;
     font-size: 11px;
     color: var(--text-4);
+    overflow-wrap: anywhere;
   }
 
   /* Mark cells. */
@@ -234,9 +232,9 @@ const ANTA_SLUG: Record<string, string> = {
   .m-paid { color: var(--text-2-info); }
   .m-no { color: var(--text-5); font-weight: 400; }
 
-  /* Shipped cells render an Anta tertiary check-icon Button (link) or, when
-     there's no doc page, a static check icon. The Button carries its own tone
-     color; the static check inherits the cell's tier color via currentColor. */
+  /* Shipped cells render an Anta tertiary tier-icon Button (link) or, when
+     there's no doc page, a static tier icon. The Button carries its own tone
+     color; the static icon inherits the cell's tier color via currentColor. */
   .mark-btn {
     display: inline-flex;
   }
@@ -257,6 +255,15 @@ const ANTA_SLUG: Record<string, string> = {
   .cov th.col-hl,
   .cov td.col-hl {
     background: var(--bg-3);
+  }
+
+  /* Keep availability tiers visible even when a row or column is being
+     cross-highlighted. */
+  .cov td.m-partial {
+    background: var(--bg-3-warning);
+  }
+  .cov td.m-no {
+    background: var(--bg-4-critical);
   }
 
   .sr-only {

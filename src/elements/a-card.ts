@@ -77,7 +77,7 @@ import './a-card.css'
 
 // Shadow styles, injected verbatim into every <a-card> shadow root — kept
 // COMMENT-FREE (it ships + re-injects per instance; see the "no comments inside
-// shadow-<style> strings" rule in CLAUDE.md). Rationale lives here instead:
+// shadow-<style> strings" rule in AGENTS.md). Rationale lives here instead:
 //
 //  • The visible box (border / background / radius / overflow-clip) lives on the
 //    HOST in a-card.css so plain consumer CSS can override it and it paints before

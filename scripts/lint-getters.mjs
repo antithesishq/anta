@@ -43,7 +43,7 @@
  * component (which lives in the DOM), or express it declaratively via an
  * attribute/signal (see Calendar's `focusSignal`). This walk flags any
  * `<expr>.currentTarget.method(...)` / `<expr>.target.method(...)` call; property
- * reads and assignments are left alone. See CLAUDE.md → "JSX wrappers never hold
+ * reads and assignments are left alone. See src/AGENTS.md → "JSX wrappers never hold
  * a ref".
  *
  * Run: `node scripts/lint-getters.mjs` (wired as `pnpm run lint`). Exits 1 with
@@ -322,7 +322,7 @@ for (const d of domCalls) {
       `The app DOM may render in a worker, so \`e.${d.target}\` is a serialized event snapshot, not a live node — ` +
       `an imperative call has nothing to run against. Move the coordination into the web component, or express ` +
       `it declaratively via an attribute/signal (see Calendar's \`focusSignal\`). ` +
-      `See CLAUDE.md → "JSX wrappers never hold a ref".`,
+      `See src/AGENTS.md → "JSX wrappers never hold a ref".`,
   )
 }
 
@@ -333,14 +333,14 @@ if (total) {
     console.error(
       `\n✗ ${propHazards} React-19 property-assignment hazard${propHazards === 1 ? '' : 's'}. ` +
         `React 19 assigns custom-element props as properties (\`key in el\` → \`el[key] = value\`). ` +
-        `See CLAUDE.md → "React 19 property assignment".`,
+        `See src/AGENTS.md → "React 19 property assignment".`,
     )
   }
   if (domCalls.length) {
     console.error(
       `\n✗ ${domCalls.length} DOM-method call${domCalls.length === 1 ? '' : 's'} on an event target in a JSX wrapper. ` +
         `Wrappers must not invoke element methods — the app DOM may live in a worker. ` +
-        `See CLAUDE.md → "JSX wrappers never hold a ref".`,
+        `See src/AGENTS.md → "JSX wrappers never hold a ref".`,
     )
   }
   process.exit(1)

@@ -49,7 +49,7 @@ export function wrapLabel(kids: React.ReactNode, tag: string): React.ReactNode {
  * `CustomEvent` in a synthetic event (`.nativeEvent`); Preact passes it directly. `D`
  * is the per-component `detail` vocabulary. Pair with `nativeStateChange` to unwrap.
  * Exported so the stateful wrappers (`Banner`, and future ones) don't each re-declare
- * this union — the CLAUDE.md "reuse shared wrapper helpers" rule.
+ * this union — the AGENTS.md "reuse shared wrapper helpers" rule.
  */
 export type StateChangeEvent<D> = CustomEvent<D> | { nativeEvent: CustomEvent<D> }
 

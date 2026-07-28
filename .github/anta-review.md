@@ -3,10 +3,11 @@
 You are reviewing a PR for **Anta**, a portable design system (`@antadesign/anta`):
 framework-agnostic `<a-*>` web components (`src/elements/`) plus JSX wrappers
 (`src/components/`), and an Astro + Preact docs site (`site/`). The project's
-`CLAUDE.md` is already in your context — read it. The checks below are the
-project-specific invariants that matter most here and that a generic reviewer
-would miss. **Treat violations of these as real findings, not nits**, and cite
-the offending file/line. Skip a section when the diff doesn't touch it.
+The root `AGENTS.md` is loaded through `CLAUDE.md` — read it, then the closest
+scoped `AGENTS.md` for every touched area. The checks below are the project-specific
+invariants that matter most here and that a generic reviewer would miss. **Treat
+violations of these as real findings, not nits**, and cite the offending file/line.
+Skip a section when the diff doesn't touch it.
 
 **Know which rules apply where — this is critical:**
 

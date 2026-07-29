@@ -5,8 +5,10 @@
  * `id`, which `rehype-slug` adds to every heading) and renders a nested,
  * indented `<nav>` of links entirely in shadow DOM. Clicking a link
  * smooth-scrolls to the section (native fragment navigation + the page's
- * `scroll-behavior: smooth` / `scroll-padding-top`); an IntersectionObserver
- * marks the link for the section currently in view with `aria-current="true"`.
+ * `scroll-behavior: smooth` / `scroll-padding-top`) and reports its id to
+ * folded disclosures before the router processes the fragment. An
+ * IntersectionObserver marks the link for the section currently in view with
+ * `aria-current="true"`.
  *
  * This is NOT part of the published `@antadesign/anta` package — it lives in
  * the docs site only. It styles itself purely from Anta's global design
@@ -127,7 +129,17 @@ export class ATocElement extends HTMLElement {
       a.style.setProperty('--_depth', String(entry.level - minLevel))
       // Reflect the active link immediately on click; the observer would
       // otherwise lag the smooth-scroll by a frame or two.
-      a.addEventListener('click', () => this.setActive(entry.id))
+      a.addEventListener('click', () => {
+        // The ClientRouter handles fragment links without firing `hashchange`.
+        // This composed event crosses the TOC's shadow boundary so a matching
+        // folded Disclosure can open before the router scrolls to its heading.
+        this.dispatchEvent(new CustomEvent('anta-tocnavigate', {
+          bubbles: true,
+          composed: true,
+          detail: { id: entry.id },
+        }))
+        this.setActive(entry.id)
+      })
       li.append(a)
       list.append(li)
       this.links.set(entry.id, a)

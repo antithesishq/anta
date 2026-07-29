@@ -11,6 +11,7 @@ import Col from '../components/Col.astro'
 import dateInputDemoCode from './input-date.demo.ts'
 import CalendarDemo from '../components/CalendarDemo'
 import InputDateDemo from '../components/InputDateDemo'
+import WebComponentComposition from '../components/WebComponentComposition.astro'
 
 # Date input
 
@@ -436,23 +437,70 @@ which uses the same `Menu` composition shown on the [Menu](/menu/) page.
 
 <Disclosure title="Composing web component">
 
-`InputDate` has no host element. Compose a calendar from controls and an
-`<a-calendar>` day grid; the grid owns selection and keyboard movement.
+`InputDate` has no host element. Put an `<a-input>` directly before an `<a-menu>`:
+the menu uses its previous sibling as the trigger and positions the calendar below
+it. The calendar owns the selected date and keyboard movement; the small listener
+copies the picked ISO date into the input.
 
-<Preview>
-  <a-calendar role="group" name="due-date">
-    <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-27"><a-button-label>27</a-button-label></a-button>
-    <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-28"><a-button-label>28</a-button-label></a-button>
-    <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-29"><a-button-label>29</a-button-label></a-button>
-  </a-calendar>
+<Preview align="stretch">
+  <WebComponentComposition kind="date">
+    <div style={{ display: 'grid', gap: '4px', width: '280px' }}>
+      <a-input value="2026-06-15">
+        <span slot="label">Due date</span>
+        <span slot="leading"><a-icon shape="calendar" aria-hidden="true"></a-icon></span>
+      </a-input>
+      <a-menu>
+        <a-calendar role="group" name="due-date" defaultvalue="2026-06-15">
+          <span data-part="weekday">M</span><span data-part="weekday">T</span><span data-part="weekday">W</span><span data-part="weekday">T</span><span data-part="weekday">F</span><span data-part="weekday" data-weekend>S</span><span data-part="weekday" data-weekend>S</span>
+          <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-15" selected><a-button-label>15</a-button-label></a-button>
+          <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-16"><a-button-label>16</a-button-label></a-button>
+          <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-17"><a-button-label>17</a-button-label></a-button>
+          <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-18"><a-button-label>18</a-button-label></a-button>
+          <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-19"><a-button-label>19</a-button-label></a-button>
+          <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-20"><a-button-label>20</a-button-label></a-button>
+          <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-21"><a-button-label>21</a-button-label></a-button>
+        </a-calendar>
+      </a-menu>
+    </div>
+  </WebComponentComposition>
 </Preview>
 
-```html folded
-<a-calendar role="group" name="due-date">
-  <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-27"><a-button-label>27</a-button-label></a-button>
-  <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-28"><a-button-label>28</a-button-label></a-button>
-  <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-29"><a-button-label>29</a-button-label></a-button>
-</a-calendar>
+```html
+<div data-anta-composition="date" style="display: grid; gap: 4px; width: 280px">
+  <a-input value="2026-06-15">
+    <span slot="label">Due date</span>
+    <span slot="leading"><a-icon shape="calendar" aria-hidden="true"></a-icon></span>
+  </a-input>
+  <a-menu>
+    <a-calendar role="group" name="due-date" defaultvalue="2026-06-15">
+      <span data-part="weekday">M</span><span data-part="weekday">T</span><span data-part="weekday">W</span><span data-part="weekday">T</span><span data-part="weekday">F</span><span data-part="weekday" data-weekend>S</span><span data-part="weekday" data-weekend>S</span>
+      <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-15" selected><a-button-label>15</a-button-label></a-button>
+      <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-16"><a-button-label>16</a-button-label></a-button>
+      <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-17"><a-button-label>17</a-button-label></a-button>
+      <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-18"><a-button-label>18</a-button-label></a-button>
+      <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-19"><a-button-label>19</a-button-label></a-button>
+      <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-20"><a-button-label>20</a-button-label></a-button>
+      <a-button role="button" tabindex="-1" priority="tertiary" data-part="day-cell" data-date="2026-06-21"><a-button-label>21</a-button-label></a-button>
+    </a-calendar>
+  </a-menu>
+</div>
+<script type="module">
+  import '@antadesign/anta/elements'
+
+  const root = document.querySelector('[data-anta-composition="date"]')
+  const field = root.querySelector('a-input')
+  const menu = root.querySelector('a-menu')
+  const calendar = root.querySelector('a-calendar')
+  const cells = [...calendar.querySelectorAll('[data-part="day-cell"]')]
+
+  calendar.addEventListener('statechange', (event) => {
+    const date = event.detail.next
+    if (!date) return
+    field.value = date
+    cells.forEach((cell) => cell.toggleAttribute('selected', cell.dataset.date === date))
+    menu.close()
+  })
+</script>
 ```
 
 </Disclosure>

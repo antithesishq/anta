@@ -519,7 +519,7 @@ value from `<a-tabs>`.
 
 <Preview align="stretch">
   <div style={{ display: 'grid', gap: '12px', width: '320px' }}>
-    <a-tabs role="tablist" defaultvalue="account">
+    <a-tabs role="tablist" default-state="account">
       <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
       <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
     </a-tabs>
@@ -528,9 +528,9 @@ value from `<a-tabs>`.
   </div>
 </Preview>
 
-```html folded
+```html
 <div>
-  <a-tabs role="tablist" defaultvalue="account">
+  <a-tabs role="tablist" default-state="account">
     <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
     <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
   </a-tabs>

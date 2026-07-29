@@ -665,19 +665,25 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 
 <Disclosure title="Composing web component">
 
-An open menu is an `<a-menu>` with light-DOM `<a-menu-item>` rows.
+Put a focusable trigger immediately before `<a-menu>` and omit `state` for an
+uncontrolled menu. Its light-DOM `<a-menu-item>` rows need their own `tabindex`
+values.
 
 <Preview>
-  <a-menu role="menu" state="open">
-    <a-menu-item role="menuitem" value="settings"><a-menu-item-label>Settings</a-menu-item-label></a-menu-item>
-    <a-menu-item role="menuitem" value="members"><a-menu-item-label>Members</a-menu-item-label></a-menu-item>
+  <a-button role="button" tabindex="0" aria-haspopup="menu"><a-button-label>Actions</a-button-label></a-button>
+  <a-menu role="menu">
+    <a-menu-item role="menuitem" tabindex="0" value="settings"><a-menu-item-label>Settings</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitem" tabindex="0" value="members"><a-menu-item-label>Members</a-menu-item-label></a-menu-item>
   </a-menu>
 </Preview>
 
-```html folded
-<a-menu role="menu" state="open">
-  <a-menu-item role="menuitem" value="settings"><a-menu-item-label>Settings</a-menu-item-label></a-menu-item>
-  <a-menu-item role="menuitem" value="members"><a-menu-item-label>Members</a-menu-item-label></a-menu-item>
+```html
+<a-button role="button" tabindex="0" aria-haspopup="menu">
+  <a-button-label>Actions</a-button-label>
+</a-button>
+<a-menu role="menu">
+  <a-menu-item role="menuitem" tabindex="0" value="settings"><a-menu-item-label>Settings</a-menu-item-label></a-menu-item>
+  <a-menu-item role="menuitem" tabindex="0" value="members"><a-menu-item-label>Members</a-menu-item-label></a-menu-item>
 </a-menu>
 ```
 

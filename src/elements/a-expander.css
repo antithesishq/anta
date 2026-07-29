@@ -73,7 +73,7 @@
      span itself must generate no box. (Formerly an inline `display:contents` on
      the span; moved here so the `:not(:defined)` skeleton below can lay it out
      without `!important`.) */
-  a-expander > [slot="actions"] { display: contents; }
+  a-expander > span[slot="actions"] { display: contents; }
 
   /* FOUC guard for the gap before the custom element upgrades. Until `a-expander`
      is `:defined`, there is no shadow DOM to collapse the region, so the light-DOM

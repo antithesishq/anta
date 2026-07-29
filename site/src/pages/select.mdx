@@ -6,6 +6,7 @@ import Playground from '../components/Playground'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
+import WebComponentComposition from '../components/WebComponentComposition.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import selectDemoCode from './select.demo.ts'
@@ -372,10 +373,10 @@ a working select:
   <a-input readonly dim-actions value="stream" aria-haspopup="menu">
     <a-icon slot="trailing" shape="chevron-down" style="transition: transform 150ms ease"></a-icon>
   </a-input>
-  <a-menu>
-    <a-menu-item value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
-    <a-menu-item value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
-    <a-menu-item value="container"><a-menu-item-label>container</a-menu-item-label></a-menu-item>
+  <a-menu role="menu">
+    <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="container"><a-menu-item-label>container</a-menu-item-label></a-menu-item>
   </a-menu>
 </div>
 <script type="module">
@@ -392,7 +393,11 @@ a working select:
   menu.addEventListener('click', (e) => {
     const item = e.target.closest('a-menu-item')
     if (!item) return
-    menu.querySelectorAll('a-menu-item').forEach((el) => el.toggleAttribute('selected', el === item))
+    menu.querySelectorAll('a-menu-item').forEach((el) => {
+      const selected = el === item
+      el.toggleAttribute('selected', selected)
+      el.setAttribute('aria-checked', String(selected))
+    })
     field.value = item.querySelector('a-menu-item-label').textContent
   })
 </script>
@@ -912,30 +917,56 @@ inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
 <Disclosure title="Composing web component">
 
 `Select` has no host element. Compose a read-only `<a-input>` trigger with an
-`<a-menu>` of options.
+`<a-menu>` of options. The menu owns opening and dismissal; the short controller
+reflects a picked option into the field and radio rows.
 
 <Preview align="stretch">
-  <div style={{ display: 'grid', gap: '4px', width: '280px' }}>
-    <a-input readonly value="stream" aria-haspopup="menu" aria-expanded="true">
-      <span slot="label">Output</span>
-      <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
-    </a-input>
-    <a-menu role="menu" state="open">
-      <a-menu-item role="menuitemradio" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
-      <a-menu-item role="menuitemradio" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
-    </a-menu>
-  </div>
+  <WebComponentComposition kind="select">
+    <div style={{ display: 'grid', gap: '4px', width: '280px' }}>
+      <a-input readonly value="stream" aria-haspopup="menu" aria-expanded="false">
+        <span slot="label">Output</span>
+        <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
+      </a-input>
+      <a-menu role="menu">
+        <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
+        <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
+      </a-menu>
+    </div>
+  </WebComponentComposition>
 </Preview>
 
-```html folded
-<a-input readonly value="stream" aria-haspopup="menu" aria-expanded="true">
-  <span slot="label">Output</span>
-  <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
-</a-input>
-<a-menu role="menu" state="open">
-  <a-menu-item role="menuitemradio" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
-  <a-menu-item role="menuitemradio" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
-</a-menu>
+```html
+<div data-anta-composition="select" style="display: grid; gap: 4px; width: 280px">
+  <a-input readonly value="stream" aria-haspopup="menu" aria-expanded="false">
+    <span slot="label">Output</span>
+    <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
+  </a-input>
+  <a-menu role="menu">
+    <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
+  </a-menu>
+</div>
+<script type="module">
+  import '@antadesign/anta/elements'
+
+  const root = document.querySelector('[data-anta-composition="select"]')
+  const field = root.querySelector('a-input')
+  const menu = root.querySelector('a-menu')
+
+  menu.addEventListener('statechange', (event) => {
+    field.setAttribute('aria-expanded', String(event.detail.next === 'open'))
+  })
+  menu.addEventListener('click', (event) => {
+    const item = event.target instanceof Element ? event.target.closest('a-menu-item') : null
+    if (!item || item.closest('a-menu') !== menu) return
+    menu.querySelectorAll(':scope > a-menu-item').forEach((option) => {
+      const selected = option === item
+      option.toggleAttribute('selected', selected)
+      option.setAttribute('aria-checked', String(selected))
+    })
+    field.value = item.querySelector('a-menu-item-label').textContent.trim()
+  })
+</script>
 ```
 
 </Disclosure>

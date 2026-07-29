@@ -1,0 +1,141 @@
+---
+interface Props {
+  kind: 'autocomplete' | 'date' | 'faceted-select' | 'select' | 'toaster'
+}
+
+const { kind } = Astro.props
+---
+
+<div data-anta-composition={kind}>
+  <slot />
+</div>
+
+<script>
+  type MenuStateEvent = CustomEvent<{ next: 'open' | 'closed' }>
+  type CalendarStateEvent = CustomEvent<{ next: string | null }>
+  type InputElement = HTMLElement & { value: string }
+  type MenuElement = HTMLElement & { close?: () => void; open?: () => void }
+
+  const itemFrom = (event: Event) =>
+    event.target instanceof Element ? event.target.closest<HTMLElement>('a-menu-item') : null
+
+  function syncExpanded(trigger: HTMLElement, menu: HTMLElement) {
+    menu.addEventListener('statechange', (event) => {
+      const { next } = (event as MenuStateEvent).detail
+      trigger.setAttribute('aria-expanded', String(next === 'open'))
+    })
+  }
+
+  function bindSelect(root: HTMLElement) {
+    const field = root.querySelector<InputElement>('a-input')
+    const menu = root.querySelector<HTMLElement>('a-menu')
+    if (!field || !menu) return
+
+    syncExpanded(field, menu)
+    menu.addEventListener('click', (event) => {
+      const item = itemFrom(event)
+      if (!item || item.closest('a-menu') !== menu) return
+      for (const option of menu.querySelectorAll<HTMLElement>(':scope > a-menu-item')) {
+        const selected = option === item
+        option.toggleAttribute('selected', selected)
+        option.setAttribute('aria-checked', String(selected))
+      }
+      field.value = item.querySelector('a-menu-item-label')?.textContent?.trim() ?? ''
+    })
+  }
+
+  function bindAutocomplete(root: HTMLElement) {
+    const field = root.querySelector<InputElement>('a-input')
+    const menu = root.querySelector<MenuElement>('a-menu')
+    if (!field || !menu) return
+
+    const items = Array.from(menu.querySelectorAll<HTMLElement>(':scope > a-menu-item'))
+    const filter = () => {
+      const query = field.value.trim().toLocaleLowerCase()
+      for (const item of items) {
+        item.hidden = !!query && !item.textContent?.toLocaleLowerCase().includes(query)
+      }
+    }
+
+    const update = () => {
+      filter()
+      menu.open?.()
+    }
+    field.addEventListener('input', update)
+    menu.addEventListener('click', (event) => {
+      const item = itemFrom(event)
+      if (!item || item.closest('a-menu') !== menu) return
+      field.value = item.querySelector('a-menu-item-label')?.textContent?.trim() ?? ''
+    })
+  }
+
+  function bindDate(root: HTMLElement) {
+    const field = root.querySelector<InputElement>('a-input')
+    const menu = root.querySelector<MenuElement>('a-menu')
+    const calendar = root.querySelector<HTMLElement>('a-calendar')
+    if (!field || !menu || !calendar) return
+
+    calendar.addEventListener('statechange', (event) => {
+      const { next } = (event as CalendarStateEvent).detail
+      if (!next) return
+      field.value = next
+      for (const cell of calendar.querySelectorAll<HTMLElement>('[data-part="day-cell"]')) {
+        cell.toggleAttribute('selected', cell.dataset.date === next)
+      }
+      menu.close?.()
+    })
+  }
+
+  function bindFacetedSelect(root: HTMLElement) {
+    const trigger = root.querySelector<HTMLElement>('a-button')
+    const menu = root.querySelector<HTMLElement>('a-menu')
+    if (!trigger || !menu) return
+
+    syncExpanded(trigger, menu)
+    root.addEventListener('click', (event) => {
+      const item = itemFrom(event)
+      if (!item || item.getAttribute('role') !== 'menuitemradio') return
+      const owner = item.closest<HTMLElement>('a-menu')
+      if (!owner) return
+      for (const option of owner.querySelectorAll<HTMLElement>(':scope > a-menu-item[role="menuitemradio"]')) {
+        const selected = option === item
+        option.toggleAttribute('selected', selected)
+        option.setAttribute('aria-checked', String(selected))
+      }
+      const facet = owner.parentElement
+      const label = facet?.querySelector(':scope > a-menu-item-label')
+      if (label) {
+        const name = facet?.getAttribute('data-facet-label') ?? ''
+        const value = item.querySelector('a-menu-item-label')?.textContent?.trim() ?? ''
+        label.textContent = `${name}: ${value}`
+      }
+      const count = root.querySelectorAll('a-menu-item[role="menuitemradio"][selected]').length
+      const triggerLabel = trigger.querySelector('a-button-label')
+      if (triggerLabel) triggerLabel.textContent = count ? `Filters (${count})` : 'Filters'
+    })
+  }
+
+  function bindToaster(root: HTMLElement) {
+    root.addEventListener('dismiss', (event) => {
+      const toast = event.target
+      if (toast instanceof HTMLElement && toast.matches('a-toast')) toast.remove()
+    })
+  }
+
+  function bindCompositions() {
+    for (const root of document.querySelectorAll<HTMLElement>('[data-anta-composition]')) {
+      if (root.dataset.antaCompositionBound) continue
+      root.dataset.antaCompositionBound = 'true'
+      switch (root.dataset.antaComposition) {
+        case 'autocomplete': bindAutocomplete(root); break
+        case 'date': bindDate(root); break
+        case 'faceted-select': bindFacetedSelect(root); break
+        case 'select': bindSelect(root); break
+        case 'toaster': bindToaster(root); break
+      }
+    }
+  }
+
+  bindCompositions()
+  document.addEventListener('astro:page-load', bindCompositions)
+</script>

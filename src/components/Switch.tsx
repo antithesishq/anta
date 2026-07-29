@@ -32,7 +32,7 @@ export interface SwitchProps extends BaseProps {
   /** Disables interaction and removes the switch from the tab order. */
   disabled?: boolean
   /** Fully round the thumb and track. Pass a `number` (px) or CSS length string
-   * for a custom track radius; the thumb radius is 2px smaller. */
+   * for a custom track radius; the thumb radius is 4px smaller, with a 1px minimum. */
   round?: boolean | number | string
   /** Form field name. A checked switch submits `value` under this name. */
   name?: string

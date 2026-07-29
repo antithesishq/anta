@@ -976,8 +976,12 @@ and optgroups for styling. Anta styles every supported part; browsers without th
 model retain their regular native select. Use `Select` for filtering, multiple
 selection, nested menus, or custom option coordination.
 
+Use `data-anta-size="small"` or `"large"` for the field size. Native selects
+own their `size` attribute, and `round` gives the trigger matching rounded
+corners.
+
 <Preview>
-  <select data-anta style={{ marginBottom: '8px' }} name="native-output">
+  <select data-anta data-anta-size="small" round style={{ marginBottom: '8px' }} name="native-output">
     <button>
       <selectedcontent></selectedcontent>
       <a-icon shape="chevron-down" aria-hidden="true"></a-icon>
@@ -993,7 +997,7 @@ selection, nested menus, or custom option coordination.
 </Preview>
 
 ```html
-<select data-anta name="output">
+<select data-anta data-anta-size="small" round name="output">
   <!-- The native trigger; selectedcontent mirrors the chosen option. -->
   <button>
     <selectedcontent></selectedcontent>

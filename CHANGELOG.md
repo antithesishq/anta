@@ -8,8 +8,16 @@ changes are not listed.
 ### Added
 
 - Native HTML form controls opt into Anta chrome with `data-anta`, including
-  text-like and date/time inputs, submit/reset buttons, checkboxes, radios,
-  details disclosures, and customizable selects.
+  text-like and date/time inputs, file pickers, submit/reset buttons, checkboxes,
+  radios, details disclosures, and customizable selects.
+- Native `data-anta` controls accept matching visual variants, including choice
+  control sizes and tones, field sizing and rounding, and Expander surfaces and
+  levels.
+
+### Fixed
+
+- Native HTML radio labels use Anta's 8px control gap and vertically centred
+  alignment.
 
 ## 0.3.16 — July 29, 2026
 

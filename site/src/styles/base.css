@@ -157,13 +157,15 @@ summary::-webkit-details-marker { display: none; }
    <a-icon shape="chevron-right">: the same glyph via CSS mask, --text-3
    (→ --text-1 on hover), rotating 90° when the <details> is open. <Disclosure>
    renders its own <a-icon class="chevron"> (with the gutter-hang / marker
-   variants), so its `.summary` opts out here to avoid a double marker. */
-summary:not(.summary) {
+   variants), so its `.summary` opts out here to avoid a double marker. A native
+   Anta disclosure owns its marker in the package stylesheet, so leave it out of
+   this unlayered docs fallback. */
+details:not([data-anta]) > summary:not(.summary) {
   display: flex;
   align-items: center;
   gap: 4px;
 }
-summary:not(.summary)::before {
+details:not([data-anta]) > summary:not(.summary)::before {
   content: "";
   flex-shrink: 0;
   width: 16px;
@@ -173,10 +175,10 @@ summary:not(.summary)::before {
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 4l4 4-4 4'/%3E%3C/svg%3E%0A") center / contain no-repeat;
   transition: transform 150ms ease-out, background-color 120ms ease-out;
 }
-summary:not(.summary):hover::before {
+details:not([data-anta]) > summary:not(.summary):hover::before {
   background-color: var(--text-1);
 }
-details[open] > summary:not(.summary)::before {
+details:not([data-anta])[open] > summary:not(.summary)::before {
   transform: rotate(90deg);
 }
 

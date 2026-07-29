@@ -298,30 +298,100 @@
   /* A native radio can opt into the same compact control surface with
      `data-anta`. It remains a real input, so the shared name group, labels,
      checked value, and form submission stay browser-native. */
+  /* A wrapping label matches a-radio's 16px control / 20px text row. Using a
+     flex gap rather than input margin prevents source whitespace from making
+     the visible gap wider. */
+  label:has(> input[data-anta][type="radio"]) {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-2);
+    font-family: var(--sans-serif);
+    font-feature-settings: "ss02", "ss05", "tnum";
+    font-size: 15px;
+    line-height: 20px;
+  }
   input[data-anta][type="radio"] {
+    --native-choice-size: 16px;
+    --native-choice-dot-core: 3px;
+    --native-choice-dot-edge: 3.5px;
     --native-choice-bg: var(--bg-1);
-    --native-choice-border: var(--border-3);
+    --native-choice-border-neutral: var(--border-3);
+    --native-choice-border: var(--native-choice-border-neutral);
     --native-choice-border-hover: var(--border-2);
     --native-choice-border-active: var(--border-1);
-    --native-choice-selected: oklch(from var(--anta-seed-neutral) 0.6 c h);
-    --native-choice-selected-hover: oklch(from var(--anta-seed-neutral) 0.45 c h);
-    --native-choice-selected-active: oklch(from var(--anta-seed-neutral) 0.4 c h);
+    --native-choice-tone-source: var(--anta-seed-neutral);
+    --_native-choice-l-rest: 0.6;
+    --_native-choice-l-hover: 0.45;
+    --_native-choice-l-active: 0.4;
+    --native-choice-selected: oklch(from var(--native-choice-tone-source) var(--_native-choice-l-rest) c h);
+    --native-choice-selected-hover: oklch(from var(--native-choice-tone-source) var(--_native-choice-l-hover) c h);
+    --native-choice-selected-active: oklch(from var(--native-choice-tone-source) var(--_native-choice-l-active) c h);
     --native-choice-dot: #f6f4f6;
 
     box-sizing: border-box;
-    inline-size: 16px;
-    block-size: 16px;
-    margin: 0 8px 0 0;
+    flex: 0 0 var(--native-choice-size);
+    inline-size: var(--native-choice-size);
+    block-size: var(--native-choice-size);
+    margin: 0;
     appearance: none;
     -webkit-appearance: none;
     border: 1.5px solid var(--native-choice-border);
     border-radius: 50%;
     background-color: var(--native-choice-bg);
     cursor: pointer;
-    vertical-align: -3px;
+    vertical-align: middle;
     transition:
       background-color 150ms ease-out,
       border-color 150ms ease-out;
+  }
+  label:has(> input[data-anta][type="radio"][size="small"]) {
+    gap: 6px;
+    font-size: 13px;
+    line-height: 16px;
+  }
+  label:has(> input[data-anta][type="radio"][size="large"]) {
+    font-size: 17px;
+    line-height: 22px;
+  }
+  input[data-anta][type="radio"][size="small"] {
+    --native-choice-size: 14px;
+    --native-choice-dot-core: 2.5px;
+    --native-choice-dot-edge: 3px;
+  }
+  input[data-anta][type="radio"][size="large"] {
+    --native-choice-size: 18px;
+    --native-choice-dot-core: 3.5px;
+    --native-choice-dot-edge: 4px;
+  }
+  input[data-anta][type="radio"][tone]:not([tone=""], [tone="neutral"]),
+  input[data-anta][type="radio"][tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
+    --_native-choice-l-rest: 0.5;
+    --_native-choice-l-hover: 0.45;
+    --_native-choice-l-active: 0.4;
+  }
+  input[data-anta][type="radio"][tone="brand"],    input[data-anta][type="radio"][tone-selected="brand"]    { --native-choice-tone-source: var(--anta-seed-brand); }
+  input[data-anta][type="radio"][tone="info"],     input[data-anta][type="radio"][tone-selected="info"]     { --native-choice-tone-source: var(--anta-seed-info); }
+  input[data-anta][type="radio"][tone="success"],  input[data-anta][type="radio"][tone-selected="success"]  { --native-choice-tone-source: var(--anta-seed-success); }
+  input[data-anta][type="radio"][tone="warning"],  input[data-anta][type="radio"][tone-selected="warning"]  { --native-choice-tone-source: var(--anta-seed-warning); }
+  input[data-anta][type="radio"][tone="critical"], input[data-anta][type="radio"][tone-selected="critical"] { --native-choice-tone-source: var(--anta-seed-critical); }
+  input[data-anta][type="radio"][tone="neutral"],  input[data-anta][type="radio"][tone-selected="neutral"]  { --native-choice-tone-source: var(--anta-seed-neutral); }
+  input[data-anta][type="radio"][tone]:not([tone=""], [tone="neutral"]) {
+    --native-choice-bg: oklch(from var(--native-choice-tone-source) 0.99 calc(c * 0.03) h);
+    --_native-choice-border-base: color-mix(in oklch, var(--native-choice-selected) 70%, var(--native-choice-border-neutral));
+    --native-choice-border: oklch(from var(--_native-choice-border-base) calc(l + 0.17) c h);
+    --native-choice-border-hover: oklch(from var(--_native-choice-border-base) calc(l + 0.1) c h);
+    --native-choice-border-active: var(--_native-choice-border-base);
+  }
+  input[data-anta][type="radio"][tone]:not(
+      [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]) {
+    --native-choice-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
+  }
+  input[data-anta][type="radio"][tone-selected]:not(
+      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
+      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
+    --native-choice-tone-source: attr(tone-selected type(<color>), var(--anta-seed-neutral));
   }
   @media (hover: hover) and (pointer: fine) {
     input[data-anta][type="radio"]:not(:disabled):hover {
@@ -329,7 +399,7 @@
     }
     input[data-anta][type="radio"]:not(:disabled):hover:checked {
       border-color: var(--native-choice-selected-hover);
-      background: radial-gradient(circle, var(--native-choice-dot) 0 3px, var(--native-choice-selected-hover) 3.5px);
+      background: radial-gradient(circle, var(--native-choice-dot) 0 var(--native-choice-dot-core), var(--native-choice-selected-hover) var(--native-choice-dot-edge));
     }
   }
   input[data-anta][type="radio"]:not(:disabled):active {
@@ -337,11 +407,11 @@
   }
   input[data-anta][type="radio"]:not(:disabled):active:checked {
     border-color: var(--native-choice-selected-active);
-    background: radial-gradient(circle, var(--native-choice-dot) 0 3px, var(--native-choice-selected-active) 3.5px);
+    background: radial-gradient(circle, var(--native-choice-dot) 0 var(--native-choice-dot-core), var(--native-choice-selected-active) var(--native-choice-dot-edge));
   }
   input[data-anta][type="radio"]:checked {
     border-color: var(--native-choice-selected);
-    background: radial-gradient(circle, var(--native-choice-dot) 0 3px, var(--native-choice-selected) 3.5px);
+    background: radial-gradient(circle, var(--native-choice-dot) 0 var(--native-choice-dot-core), var(--native-choice-selected) var(--native-choice-dot-edge));
   }
   input[data-anta][type="radio"]:focus-visible {
     outline: 1px solid var(--focus-ring);
@@ -354,12 +424,24 @@
   }
   input[data-anta][type="radio"]:disabled:checked {
     border-color: color-mix(in oklch, var(--text-1) 10%, transparent);
-    background: radial-gradient(circle, var(--text-4) 0 3px, color-mix(in oklch, var(--text-1) 10%, transparent) 3.5px);
+    background: radial-gradient(circle, var(--text-4) 0 var(--native-choice-dot-core), color-mix(in oklch, var(--text-1) 10%, transparent) var(--native-choice-dot-edge));
   }
   .dark input[data-anta][type="radio"] {
-    --native-choice-selected: oklch(from var(--anta-seed-neutral) 0.42 c h);
-    --native-choice-selected-hover: oklch(from var(--anta-seed-neutral) 0.45 c h);
-    --native-choice-selected-active: oklch(from var(--anta-seed-neutral) 0.5 c h);
+    --_native-choice-l-rest: 0.42;
+    --_native-choice-l-hover: 0.45;
+    --_native-choice-l-active: 0.5;
     --native-choice-dot: #ece9ec;
+  }
+  .dark input[data-anta][type="radio"][tone]:not([tone=""], [tone="neutral"]),
+  .dark input[data-anta][type="radio"][tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
+    --_native-choice-l-rest: 0.45;
+    --_native-choice-l-hover: 0.5;
+    --_native-choice-l-active: 0.57;
+  }
+  .dark input[data-anta][type="radio"][tone]:not([tone=""], [tone="neutral"]) {
+    --native-choice-bg: oklch(from var(--native-choice-tone-source) 0.15 calc(c * 0.18) h);
+    --native-choice-border: var(--_native-choice-border-base);
+    --native-choice-border-hover: oklch(from var(--_native-choice-border-base) calc(l + 0.1) c h);
+    --native-choice-border-active: oklch(from var(--_native-choice-border-base) calc(l + 0.17) c h);
   }
 }

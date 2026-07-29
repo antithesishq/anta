@@ -518,17 +518,20 @@ Slots hold the title and actions. The details element contains the collapsible b
 
 For a simple disclosure, add `data-anta` to native `<details>`. It keeps the
 browser's opening, keyboard, and accessibility behaviour while taking on the
-neutral tertiary Expander treatment.
+neutral tertiary Expander treatment. Add `priority="secondary"` or `"primary"`
+for a filled surface. `round`, `tone`, tertiary `outdent`, and `level="1"`–`"6"`
+use the matching Expander visual treatments. `level` changes visual type only;
+use a heading inside the summary when you need heading semantics.
 
 <Preview align="center">
-  <details data-anta open>
+  <details data-anta priority="secondary" tone="info" round level="3" open>
     <summary>Build artifacts</summary>
     <div>Everything inside <code>&lt;details&gt;</code> is the collapsible body.</div>
   </details>
 </Preview>
 
 ```html
-<details data-anta open>
+<details data-anta priority="secondary" tone="info" round level="3" open>
   <summary>Build artifacts</summary>
   <div>Everything inside &lt;details&gt; is the collapsible body.</div>
 </details>

@@ -769,30 +769,40 @@ Slots hold the label, hint, and controls around the native field.
 
 ### Native HTML inputs
 
-For a standard HTML form, add `data-anta` to a text-like input. Text, email,
-telephone, URL, password, and number inputs keep their native editing, password
-masking, keyboard, validation, and form behavior while using Anta's field chrome.
-`submit` and `reset` inputs use the matching Anta button chrome; set
-`priority="primary"` on a submit control when it is the form's main action.
+For a standard HTML form, add `data-anta` to a native input. Text, search,
+email, telephone, URL, password, and number inputs keep their native editing,
+keyboard, validation, and form behavior while using Anta's field chrome. Search
+keeps its browser-supplied affordances; file keeps its native chooser and selected
+file name, with an Anta-styled chooser button. `submit` and `reset` inputs use the
+matching Anta button chrome; set `priority="primary"` on a submit control when it
+is the form's main action.
+
+Use `data-anta-size="small"` or `"large"` for field sizing. Native inputs own
+their `size` attribute, so Anta does not reuse it. `round` and a custom-color
+`tone` work the same way as Input.
 
 <Preview gap="16px">
-  <input data-anta style={{ marginBottom: '8px' }} type="text" name="name" placeholder="Text" />
+  <input data-anta data-anta-size="small" style={{ marginBottom: '8px' }} type="text" name="name" placeholder="Small text" />
+  <input data-anta style={{ marginBottom: '8px' }} type="search" name="search" placeholder="Search" />
   <input data-anta style={{ marginBottom: '8px' }} type="email" name="email" placeholder="Email" />
   <input data-anta style={{ marginBottom: '8px' }} type="tel" name="phone" placeholder="Telephone" />
-  <input data-anta style={{ marginBottom: '8px' }} type="url" name="site" placeholder="URL" />
+  <input data-anta round style={{ marginBottom: '8px' }} type="url" name="site" placeholder="Rounded URL" />
   <input data-anta style={{ marginBottom: '8px' }} type="password" name="password" value="password" />
-  <input data-anta style={{ marginBottom: '8px' }} type="number" name="seats" value="3" min="1" />
+  <input data-anta tone="rebeccapurple" style={{ marginBottom: '8px' }} type="number" name="seats" value="3" min="1" />
+  <input data-anta style={{ marginBottom: '8px' }} type="file" name="attachment" accept=".pdf,.docx" />
   <input data-anta style={{ marginBottom: '8px' }} type="submit" value="Submit" priority="primary" />
   <input data-anta style={{ marginBottom: '8px' }} type="reset" value="Reset" />
 </Preview>
 
 ```html
-<input data-anta type="text" name="name" placeholder="Text">
+<input data-anta data-anta-size="small" type="text" name="name" placeholder="Small text">
+<input data-anta type="search" name="search" placeholder="Search">
 <input data-anta type="email" name="email" placeholder="Email">
 <input data-anta type="tel" name="phone" placeholder="Telephone">
-<input data-anta type="url" name="site" placeholder="URL">
+<input data-anta round type="url" name="site" placeholder="Rounded URL">
 <input data-anta type="password" name="password" value="password">
-<input data-anta type="number" name="seats" value="3" min="1">
+<input data-anta tone="rebeccapurple" type="number" name="seats" value="3" min="1">
+<input data-anta type="file" name="attachment" accept=".pdf,.docx">
 
 <input data-anta type="submit" value="Submit" priority="primary">
 <input data-anta type="reset" value="Reset">

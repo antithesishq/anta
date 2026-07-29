@@ -477,17 +477,22 @@ For a standard HTML form, add `data-anta` to each native radio. Radios that shar
 a `name` retain the browser's selection, keyboard behavior, labels, and form
 submission while using Anta's control surface.
 
+`size`, `tone`, and `tone-selected` use the matching RadioGroup option
+treatments.
+
 <Preview>
   <div style={{ display: 'grid', gap: '8px', marginBottom: '8px' }}>
-    <label><input data-anta type="radio" name="native-plan" value="starter" /> Starter</label>
-    <label><input data-anta type="radio" name="native-plan" value="pro" checked /> Pro</label>
+    <label><input data-anta type="radio" name="native-plan" value="starter" size="small" tone="brand" /> Starter</label>
+    <label><input data-anta type="radio" name="native-plan" value="pro" tone-selected="success" checked /> Pro</label>
+    <label><input data-anta type="radio" name="native-plan" value="enterprise" size="large" tone="warning" /> Enterprise</label>
   </div>
 </Preview>
 
 ```html
 <div style="display: grid; gap: 8px">
-  <label><input data-anta type="radio" name="plan" value="starter"> Starter</label>
-  <label><input data-anta type="radio" name="plan" value="pro" checked> Pro</label>
+  <label><input data-anta type="radio" name="plan" value="starter" size="small" tone="brand"> Starter</label>
+  <label><input data-anta type="radio" name="plan" value="pro" tone-selected="success" checked> Pro</label>
+  <label><input data-anta type="radio" name="plan" value="enterprise" size="large" tone="warning"> Enterprise</label>
 </div>
 ```
 

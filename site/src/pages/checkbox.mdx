@@ -276,15 +276,23 @@ For a standard HTML form, add `data-anta` to a native checkbox. It keeps the
 browser's label behavior, checked and indeterminate states, and form submission
 while using Anta's control surface.
 
+`size`, `tone`, `tone-selected`, and `round` use the matching Checkbox visual
+treatments.
+
 <Preview>
-  <label style={{ marginBottom: '8px' }}><input data-anta type="checkbox" name="updates" checked /> Email updates</label>
+  <div style={{ display: 'grid', gap: '8px', marginBottom: '8px' }}>
+    <label><input data-anta type="checkbox" name="updates" size="small" tone="brand" /> Product updates</label>
+    <label><input data-anta type="checkbox" name="security" tone-selected="success" checked /> Security notices</label>
+    <label><input data-anta type="checkbox" name="billing" size="large" round tone="warning" checked /> Billing alerts</label>
+  </div>
 </Preview>
 
 ```html
-<label>
-  <input data-anta type="checkbox" name="updates" checked>
-  Email updates
-</label>
+<div style="display: grid; gap: 8px">
+  <label><input data-anta type="checkbox" name="updates" size="small" tone="brand"> Product updates</label>
+  <label><input data-anta type="checkbox" name="security" tone-selected="success" checked> Security notices</label>
+  <label><input data-anta type="checkbox" name="billing" size="large" round tone="warning" checked> Billing alerts</label>
+</div>
 ```
 
 </Disclosure>

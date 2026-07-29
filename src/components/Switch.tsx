@@ -21,6 +21,9 @@ const switchAttrsOf = (element: any): SwitchChangeAttrs => ({
 export interface SwitchProps extends BaseProps {
   /** Visible, stable label for the setting. Use `children` for richer label content. */
   label?: string
+  /** Secondary text rendered under the label. It does not become part of the
+   * accessible name. */
+  hint?: React.ReactNode
   /** Controlled checked value. In controlled mode, update this in `onStateChange`. */
   checked?: boolean
   /** Initial checked value for an uncontrolled switch.
@@ -33,21 +36,22 @@ export interface SwitchProps extends BaseProps {
   /** Value submitted while checked.
    * @defaultValue "on" */
   value?: string
-  /** Colour of the checked track. The off track remains neutral.
+  /** Colour of the track and thumb. A tinted tone also colours the unchecked
+   * track border and thumb; use `toneSelected` to colour only the checked track.
    * @defaultValue 'brand' */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Size variant. small=30×14px, medium=30×18px, large=42×22px.
+  /** Like `tone`, but applies only while the switch is checked. The unchecked
+   * track and thumb stay neutral. If both are set, `tone` colours the unchecked
+   * state and `toneSelected` colours the checked track.
+   * @defaultValue 'brand' */
+  toneSelected?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Size variant. small=26×16px, medium=30×18px, large=34×20px.
    * @defaultValue 'medium' */
   size?: 'small' | 'medium' | 'large'
   /** Put the visible label before or after the control. Grid layout changes only
    * the visual order, preserving DOM/source order for assistive technologies.
    * @defaultValue 'end' */
   labelPosition?: 'start' | 'end'
-  /** Content rendered in the free space of the checked track. It is decorative
-   * (`aria-hidden`); keep the accessible label stable with `label` or `children`. */
-  checkedChildren?: React.ReactNode
-  /** Content rendered in the free space of the unchecked track. Decorative only. */
-  unCheckedChildren?: React.ReactNode
   /** Fired before a user toggle applies. Call `event.preventDefault()` to veto an
    * uncontrolled change; controlled consumers accept by updating `checked`. */
   onStateChange?: (event: StateChangeEvent, detail: { next: boolean; prev: boolean }) => void
@@ -67,21 +71,31 @@ export const Switch = ({
   defaultChecked,
   disabled,
   tone,
+  toneSelected,
   size,
   labelPosition,
-  checkedChildren,
-  unCheckedChildren,
   onStateChange,
   onChange,
   onValueChange,
   label,
+  hint,
   className,
   style,
   children,
   tabIndex,
   ...rest
 }: SwitchProps) => {
-  const computedStyle = toneStyle(tone, '--switch-tone-source', style)
+  const computedStyle = toneStyle(
+    toneSelected,
+    '--switch-tone-source',
+    toneStyle(
+      tone,
+      '--switch-off-tone-source',
+      toneSelected == null
+        ? toneStyle(tone, '--switch-tone-source', style)
+        : style,
+    ),
+  )
   const explicitAriaLabel = rest['aria-label']
   const ariaLabel =
     (typeof explicitAriaLabel === 'string' ? explicitAriaLabel : undefined) ??
@@ -123,7 +137,8 @@ export const Switch = ({
       state={stateAttr}
       default-state={defaultStateAttr}
       disabled={disabled ? '' : undefined}
-      tone={tone && tone !== 'brand' ? tone : undefined}
+      tone={tone}
+      tone-selected={toneSelected}
       size={size && size !== 'medium' ? size : undefined}
       label-position={labelPosition && labelPosition !== 'end' ? labelPosition : undefined}
       tabIndex={disabled ? -1 : (tabIndex ?? 0)}
@@ -132,13 +147,8 @@ export const Switch = ({
       class={className}
       style={computedStyle}
     >
-      {checkedChildren != null && (
-        <a-switch-checked-content aria-hidden="true">{checkedChildren}</a-switch-checked-content>
-      )}
-      {unCheckedChildren != null && (
-        <a-switch-unchecked-content aria-hidden="true">{unCheckedChildren}</a-switch-unchecked-content>
-      )}
       {hasLabel && <a-switch-label>{label}{children}</a-switch-label>}
+      {hint != null && <a-switch-hint>{hint}</a-switch-hint>}
     </a-switch>
   )
 }

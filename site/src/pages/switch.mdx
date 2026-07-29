@@ -1,62 +1,224 @@
 ---
 layout: ../layouts/DocsLayout.astro
-title: Switch
+title: Switch (toggle)
 description: A binary control for an immediate setting.
 ---
 import Preview from '../components/Preview.astro'
-import SwitchPreview from '../components/SwitchPreview'
 import Disclosure from '../components/Disclosure.astro'
 import PropsTable from '../components/PropsTable.astro'
-import { Checkbox, Switch } from '@antadesign/anta'
+import Playground from '../components/Playground'
+import switchDemoCode from './switch.demo.ts'
+import { Switch } from '@antadesign/anta'
 
-# Switch
+# Switch (toggle)
 
 Switches change a single setting immediately. Use a checkbox when people select one or more values to submit together.
 
-<Preview minHeight={176} align="center">
-  <SwitchPreview client:load />
-</Preview>
+The `Switch` wrapper renders a form-associated `<a-switch>` element. It works uncontrolled with `defaultChecked`, or controlled with `checked` and `onStateChange`.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="Switch"
+  layout="side"
+  panelHeight={400}
+  initialCode={switchDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; align-items: center; justify-content: center; }`}
+/>
+
+</Disclosure>
 
 ## Tone
 
-`tone` colours the checked track; the off track stays neutral. Use `neutral` when a setting should not claim semantic importance.
+`tone` colours the whole control: the checked track, plus the unchecked track border and thumb. Six named tones are available, or pass any CSS color for a custom tone. The label and hint stay neutral.
 
 <Preview gap="16px">
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="neutral" label="Neutral" /><Checkbox defaultChecked tone="neutral" label="Checkbox" /></div>
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="brand" label="Brand" /><Checkbox defaultChecked tone="brand" label="Checkbox" /></div>
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="info" label="Info" /><Checkbox defaultChecked tone="info" label="Checkbox" /></div>
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="success" label="Success" /><Checkbox defaultChecked tone="success" label="Checkbox" /></div>
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="warning" label="Warning" /><Checkbox defaultChecked tone="warning" label="Checkbox" /></div>
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="critical" label="Critical" /><Checkbox defaultChecked tone="critical" label="Checkbox" /></div>
+  <Switch defaultChecked tone="neutral" label="Neutral" />
+  <Switch defaultChecked tone="brand" label="Brand" />
+  <Switch defaultChecked tone="info" label="Info" />
+  <Switch defaultChecked tone="success" label="Success" />
+  <Switch defaultChecked tone="warning" label="Warning" />
+  <Switch defaultChecked tone="critical" label="Critical" />
+  <Switch defaultChecked tone="mediumaquamarine" label="Custom" />
 </Preview>
 
-```tsx
+```tsx folded
 <Switch defaultChecked tone="neutral" label="Neutral" />
 <Switch defaultChecked tone="brand" label="Brand" />
-<Switch defaultChecked tone="info" label="Info" />
-<Switch defaultChecked tone="success" label="Success" />
-<Switch defaultChecked tone="warning" label="Warning" />
 <Switch defaultChecked tone="critical" label="Critical" />
+<Switch defaultChecked tone="mediumaquamarine" label="Custom color" />
+```
+
+## Selected-only tone
+
+`toneSelected` colours the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state. It accepts the same values as `tone`.
+
+<Preview gap="16px">
+  <Switch toneSelected="brand" label="Off — neutral" />
+  <Switch defaultChecked toneSelected="brand" label="On — brand" />
+  <Switch defaultChecked toneSelected="critical" label="On — critical" />
+</Preview>
+
+```tsx folded
+<Switch toneSelected="brand" label="Off stays neutral" />
+<Switch defaultChecked toneSelected="critical" label="Checked track tinted" />
+```
+
+## Colouring the text
+
+There is no text-tone prop. To tint the label, set `color` on the switch with a theme-aware `--text-N-{tone}` token; to tint the hint, target `a-switch-hint`. Pair either with `tone` or `toneSelected` to colour the whole control.
+
+<Preview gap="16px">
+  <Switch className="toned-text" defaultChecked tone="critical" label="Delete workspace" hint="This cannot be undone." />
+  <style is:inline>{`
+    a-switch.toned-text { color: var(--text-1-critical); }
+    a-switch.toned-text a-switch-hint { color: var(--text-3-critical); }
+  `}</style>
+</Preview>
+
+```css folded
+/* The class is only for the demo — use your own selector. */
+a-switch.toned-text { color: var(--text-1-critical); }
+a-switch.toned-text a-switch-hint { color: var(--text-3-critical); }
 ```
 
 ## Size
 
-`small`, `medium` (the default), and `large` scale the track, thumb, free-area icon, and label together.
+Three sizes scale the track, thumb, and label together: `small` (26×16px track), `medium` (30×18px, the default), and `large` (34×20px).
 
 <Preview gap="16px">
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked size="small" label="Small" /><Checkbox defaultChecked size="small" label="Checkbox" /></div>
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked label="Medium" /><Checkbox defaultChecked label="Checkbox" /></div>
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked size="large" label="Large" /><Checkbox defaultChecked size="large" label="Checkbox" /></div>
+  <Switch defaultChecked size="small" label="Small" />
+  <Switch defaultChecked label="Medium" />
+  <Switch defaultChecked size="large" label="Large" />
 </Preview>
 
-```tsx
+```tsx folded
 <Switch defaultChecked size="small" label="Small" />
 <Switch defaultChecked label="Medium" />
 <Switch defaultChecked size="large" label="Large" />
 ```
 
+## Label & hint
+
+Pass a plain label through `label`, or pass richer label content as children. Add `hint` for a secondary line beneath. `labelPosition="start"` places the label and hint before the control visually while source order remains stable. For a label-less switch, pass `aria-label`.
+
+<Preview gap="16px">
+  <Switch defaultChecked label="Email notifications" hint="Weekly digest, never marketing." />
+  <Switch defaultChecked label="Automatic updates" hint="Downloads in the background." labelPosition="start" />
+</Preview>
+
+```tsx folded
+<Switch defaultChecked label="Email notifications" hint="Weekly digest, never marketing." />
+<Switch defaultChecked label="Automatic updates" labelPosition="start" />
+```
+
+## States
+
+Switches are either unchecked or checked.
+
+<Preview gap="16px">
+  <Switch label="Unchecked" />
+  <Switch defaultChecked label="Checked" />
+</Preview>
+
+```tsx folded
+<Switch label="Unchecked" />
+<Switch defaultChecked label="Checked" />
+```
+
+## Disabled
+
+The `disabled` attribute dims the switch and removes it from the tab order.
+
+<Preview gap="16px">
+  <Switch disabled label="Disabled" />
+  <Switch disabled defaultChecked label="Disabled checked" />
+</Preview>
+
+```tsx folded
+<Switch disabled label="Disabled" />
+<Switch disabled defaultChecked label="Disabled checked" />
+```
+
+## Controlled
+
+Uncontrolled by default: pass `defaultChecked` and read the value from `onStateChange` or at form submit. Make it controlled with `checked` and `onStateChange` to drive it from your store.
+
+```tsx folded
+const [enabled, setEnabled] = useState(false)
+
+<Switch
+  checked={enabled}
+  onStateChange={(_e, { next }) => setEnabled(next)}
+  label="Enable notifications"
+/>
+```
+
+`onStateChange` fires before the element applies a user toggle, with `(event, { next, prev })`. Call `event.preventDefault()` to veto an uncontrolled change. A controlled switch with no `onStateChange` is read-only.
+
+## Events
+
+Three callbacks, in firing order:
+
+| Callback | When | Cancelable | Payload |
+|---|---|---|---|
+| `onStateChange(e, { next, prev })` | **before** the toggle applies | ✅ `e.preventDefault()` vetoes | next / previous boolean |
+| `onChange(e)` | **after** it applies | — | native `change` event |
+| `onValueChange(e, attrs)` | **after** it applies | — | `{ checked, name, value }` |
+
+Use **`onStateChange`** to intercept a toggle or drive a controlled switch. Use **`onValueChange`** when you only need the new form value.
+
+```tsx folded
+<Switch
+  name="notifications"
+  onValueChange={(_e, { checked }) => saveNotificationPreference(checked)}
+  label="Email notifications"
+/>
+```
+
+## Accessibility
+
+The wrapper sets `role="switch"` and keeps `aria-checked` in sync with the current value. It derives the accessible name from `label` or text children. For a label-less switch, pass `aria-label`.
+
+Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w3.org/WAI/ARIA/apg/patterns/switch/).
+
 <Disclosure title="Component props" open>
 
 <PropsTable component="Switch" />
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+Reach for the props first: **`tone`** colours the checked track plus the unchecked chrome, while **`toneSelected`** colours only the checked track. Both accept any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).
+
+```tsx folded
+<Switch tone="#e0457b" defaultChecked label="Custom colour" />
+```
+
+`<a-switch>` is light DOM. The **track is `::before`**, the **thumb is `::after`**, and the label / hint are `a-switch-label` / `a-switch-hint` children. Target them with plain CSS. The classes below are only for the demos.
+
+<Preview gap="20px">
+  <Switch className="square-track" defaultChecked label="Square track" />
+  <Switch className="strong-label" defaultChecked label="Strong label" />
+  <style is:inline>{`
+    a-switch.square-track::before { border-radius: 4px; }
+    a-switch.square-track::after { border-radius: 3px; }
+    a-switch.strong-label { color: var(--text-1-brand); font-weight: 700; }
+  `}</style>
+</Preview>
+
+```css folded
+/* The class is only for the demo. Replace it with your own selector. */
+a-switch.square-track::before { border-radius: 4px; }
+a-switch.square-track::after { border-radius: 3px; }
+
+a-switch.strong-label {
+  color: var(--text-1-brand);
+  font-weight: 700;
+}
+```
 
 </Disclosure>

@@ -141,8 +141,7 @@ export interface AntaIntrinsicElements {
   'a-checkbox-hint': BaseAttributes
   'a-switch': ASwitchAttributes
   'a-switch-label': BaseAttributes
-  'a-switch-checked-content': BaseAttributes
-  'a-switch-unchecked-content': BaseAttributes
+  'a-switch-hint': BaseAttributes
   'a-tooltip': ATooltipAttributes
   'a-input': AInputAttributes
   'a-input-time': AInputTimeAttributes

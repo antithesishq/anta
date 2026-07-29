@@ -488,9 +488,11 @@ export interface ACheckboxAttributes extends BaseAttributes {
  * wrapper supplies both.
  */
 export interface ASwitchAttributes extends BaseAttributes {
-  /** Checked-track colour. Default is `'brand'`; the off track is neutral. */
+  /** Track and thumb colour. A tinted tone also colours the unchecked chrome. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Size variant. `small` = 30×14px, `medium` (default) = 30×18px, `large` = 42×22px. */
+  /** Checked-track-only colour. The unchecked track and thumb stay neutral. */
+  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Size variant. `small` = 26×16px, `medium` (default) = 30×18px, `large` = 34×20px. */
   size?: 'small' | 'medium' | 'large'
   /** Visual placement of the label. The source / accessibility order stays stable. */
   'label-position'?: 'start' | 'end'

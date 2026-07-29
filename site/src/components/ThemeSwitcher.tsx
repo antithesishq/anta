@@ -45,8 +45,9 @@ export default function ThemeSwitcher() {
 
   return (
     <Select
+      aria-label="Theme"
+      className="theming-select"
       size="small"
-      leading="Theme:"
       value={value}
       onValueChange={(v: string) => {
         setValue(v)

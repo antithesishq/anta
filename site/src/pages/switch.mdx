@@ -100,19 +100,20 @@ Three sizes scale the track, thumb, and label together: `small` (26×16px track)
 <Switch defaultChecked size="large" label="Large" />
 ```
 
-## Corners
+## Round or square
 
 Switches are fully rounded by default. Pass `round` with a number (pixels) or CSS length to set the track radius; the thumb radius is 3px smaller. Pass `round={0}` for square track corners.
 
-<Preview gap="16px">
+<Preview cols={3} gap="16px" align="stretch">
   <Switch defaultChecked round={6} label="6px round" />
   <Switch defaultChecked round={2} label="2px round" />
   <Switch defaultChecked round={0} label="Square" />
 </Preview>
 
 ```tsx folded
-<Switch defaultChecked round={6} label="Custom corners" />
-<Switch defaultChecked round={0} label="Square corners" />
+<Switch defaultChecked round={6} label="6px round" />
+<Switch defaultChecked round={2} label="2px round" />
+<Switch defaultChecked round={0} label="Square" />
 ```
 
 ## Label & hint

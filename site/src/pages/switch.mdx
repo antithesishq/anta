@@ -100,6 +100,20 @@ Three sizes scale the track, thumb, and label together: `small` (26×16px track)
 <Switch defaultChecked size="large" label="Large" />
 ```
 
+## Corners
+
+Switches are fully rounded by default. Pass `round` with a number (pixels) or CSS length to set the thumb radius; the track is 2px less rounded, matching its inset around the thumb. Pass `round={0}` for square corners.
+
+<Preview gap="16px">
+  <Switch defaultChecked round={4} label="4px thumb / 2px track" />
+  <Switch defaultChecked round={0} label="Square" />
+</Preview>
+
+```tsx folded
+<Switch defaultChecked round={4} label="Custom corners" />
+<Switch defaultChecked round={0} label="Square corners" />
+```
+
 ## Label & hint
 
 Pass a plain label through `label`, or pass richer label content as children. Add `hint` for a secondary line beneath. `labelPosition="start"` places the label and hint before the control visually while source order remains stable. For a label-less switch, pass `aria-label`.
@@ -203,10 +217,16 @@ Reach for the props first: **`tone`** colours the checked track plus the uncheck
 <Preview gap="20px">
   <Switch className="square-track" defaultChecked label="Square track" />
   <Switch className="strong-label" defaultChecked label="Strong label" />
+  <Switch className="track-marks" defaultChecked label="Checked mark on the track" />
+  <Switch className="track-marks" label="× mark on the track" />
   <style is:inline>{`
     a-switch.square-track::before { border-radius: 4px; }
     a-switch.square-track::after { border-radius: 3px; }
     a-switch.strong-label { color: var(--text-1-brand); font-weight: 700; }
+
+    a-switch.track-marks::before { display: flex; align-items: center; font-size: 10px; font-weight: 700; line-height: 1; }
+    a-switch.track-marks:state(checked)::before { content: "✓"; justify-content: flex-start; padding-inline-start: 4px; color: var(--switch-thumb); }
+    a-switch.track-marks:not(:state(checked))::before { content: "×"; justify-content: flex-end; padding-inline-end: 4px; color: var(--switch-track-off-stroke); }
   `}</style>
 </Preview>
 
@@ -218,6 +238,27 @@ a-switch.square-track::after { border-radius: 3px; }
 a-switch.strong-label {
   color: var(--text-1-brand);
   font-weight: 700;
+}
+
+/* A CSS-only check / × in the free part of the track. */
+a-switch.track-marks::before {
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+a-switch.track-marks:state(checked)::before {
+  content: "✓";
+  justify-content: flex-start;
+  padding-inline-start: 4px;
+  color: var(--switch-thumb);
+}
+a-switch.track-marks:not(:state(checked))::before {
+  content: "×";
+  justify-content: flex-end;
+  padding-inline-end: 4px;
+  color: var(--switch-track-off-stroke);
 }
 ```
 

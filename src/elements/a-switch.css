@@ -11,6 +11,8 @@
     --switch-thumb-inset: 2px;
     --switch-thumb-inset-off: 4px;
     --switch-thumb-travel: 13px;
+    --switch-track-round: 999px;
+    --switch-thumb-round: 999px;
     --switch-label-fs: 15px;
     --switch-label-lh: 20px;
 
@@ -71,7 +73,7 @@
       inline-size: var(--switch-track-inline-size);
       block-size: var(--switch-track-block-size);
       margin-block-start: calc((var(--switch-label-lh) - var(--switch-track-block-size)) / 2);
-      border-radius: 999px;
+      border-radius: var(--switch-track-round);
       background: transparent;
       box-shadow: inset 0 0 0 1px var(--switch-track-off-stroke);
       transition:
@@ -86,7 +88,7 @@
       block-size: var(--switch-thumb-size-off);
       margin-inline-start: var(--switch-thumb-inset-off);
       margin-block-start: calc((var(--switch-label-lh) - var(--switch-thumb-size-off)) / 2);
-      border-radius: 999px;
+      border-radius: var(--switch-thumb-round);
       background: var(--switch-thumb-off);
       box-shadow: none;
       transition:
@@ -105,6 +107,11 @@
       &::after { grid-column: 2; }
       a-switch-label,
       a-switch-hint { grid-column: 1; }
+    }
+
+    &[round] {
+      --switch-thumb-round: var(--switch-round, attr(round type(<length>), 999px));
+      --switch-track-round: max(0px, calc(var(--switch-thumb-round) - 2px));
     }
 
     &:state(checked) {

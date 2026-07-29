@@ -1,4 +1,4 @@
-import { nativeStateChange, toneStyle } from "../anta_helpers"
+import { nativeStateChange, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
 
 type SwitchState = 'checked' | 'unchecked'
@@ -31,6 +31,9 @@ export interface SwitchProps extends BaseProps {
   defaultChecked?: boolean
   /** Disables interaction and removes the switch from the tab order. */
   disabled?: boolean
+  /** Fully round the thumb and track. Pass a `number` (px) or CSS length string
+   * for a custom radius; the track radius is 2px smaller than the thumb. */
+  round?: boolean | number | string
   /** Form field name. A checked switch submits `value` under this name. */
   name?: string
   /** Value submitted while checked.
@@ -73,6 +76,7 @@ export const Switch = ({
   tone,
   toneSelected,
   size,
+  round,
   labelPosition,
   onStateChange,
   onChange,
@@ -85,15 +89,19 @@ export const Switch = ({
   tabIndex,
   ...rest
 }: SwitchProps) => {
-  const computedStyle = toneStyle(
-    toneSelected,
-    '--switch-tone-source',
+  const computedStyle = roundStyle(
+    round,
+    '--switch-round',
     toneStyle(
-      tone,
-      '--switch-off-tone-source',
-      toneSelected == null
-        ? toneStyle(tone, '--switch-tone-source', style)
-        : style,
+      toneSelected,
+      '--switch-tone-source',
+      toneStyle(
+        tone,
+        '--switch-off-tone-source',
+        toneSelected == null
+          ? toneStyle(tone, '--switch-tone-source', style)
+          : style,
+      ),
     ),
   )
   const explicitAriaLabel = rest['aria-label']
@@ -140,6 +148,7 @@ export const Switch = ({
       tone={tone}
       tone-selected={toneSelected}
       size={size && size !== 'medium' ? size : undefined}
+      round={roundAttr(round)}
       label-position={labelPosition && labelPosition !== 'end' ? labelPosition : undefined}
       tabIndex={disabled ? -1 : (tabIndex ?? 0)}
       onstatechange={onstatechange}

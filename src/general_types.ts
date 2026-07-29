@@ -494,6 +494,10 @@ export interface ASwitchAttributes extends BaseAttributes {
   'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. `small` = 26×16px, `medium` (default) = 30×18px, `large` = 34×20px. */
   size?: 'small' | 'medium' | 'large'
+  /** Fully round the thumb and track, or pass a custom thumb radius via a length
+   * value (`round="6px"`). The track radius is 2px smaller. Presence-based for the
+   * boolean form. */
+  round?: boolean | number | string
   /** Visual placement of the label. The source / accessibility order stays stable. */
   'label-position'?: 'start' | 'end'
   /** Controlled checked state. Use `default-state` for an uncontrolled switch. */

@@ -495,7 +495,7 @@ export interface ASwitchAttributes extends BaseAttributes {
   /** Size variant. `small` = 26×16px, `medium` (default) = 30×18px, `large` = 34×20px. */
   size?: 'small' | 'medium' | 'large'
   /** Fully round the thumb and track, or pass a custom track radius via a length
-   * value (`round="6px"`). The thumb radius is 4px smaller. Presence-based for the
+   * value (`round="6px"`). The thumb radius is 2px smaller. Presence-based for the
    * boolean form. */
   round?: boolean | number | string
   /** Visual placement of the label. The source / accessibility order stays stable. */

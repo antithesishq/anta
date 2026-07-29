@@ -70,15 +70,16 @@
 
     &::before {
       z-index: 0;
+      box-sizing: border-box;
       inline-size: var(--switch-track-inline-size);
       block-size: var(--switch-track-block-size);
       margin-block-start: calc((var(--switch-label-lh) - var(--switch-track-block-size)) / 2);
       border-radius: var(--switch-track-round);
       background: transparent;
-      box-shadow: inset 0 0 0 1px var(--switch-track-off-stroke);
+      border: 1.5px solid var(--switch-track-off-stroke);
       transition:
         background-color 150ms ease-out,
-        box-shadow 150ms ease-out;
+        border-color 150ms ease-out;
     }
 
     &::after {
@@ -117,7 +118,7 @@
     &:state(checked) {
       &::before {
         background: var(--switch-track-on);
-        box-shadow: none;
+        border-color: transparent;
       }
       &::after {
         inline-size: var(--switch-thumb-size);
@@ -132,12 +133,12 @@
 
     @media (hover: hover) and (pointer: fine) {
       &:not(:disabled):not(:state(checked)):hover::before {
-        box-shadow: inset 0 0 0 1px var(--switch-track-off-stroke-hover);
+        border-color: var(--switch-track-off-stroke-hover);
       }
       &:not(:disabled):hover:state(checked)::before { background: var(--switch-track-on-hover); }
     }
     &:not(:disabled):not(:state(checked)):active::before {
-      box-shadow: inset 0 0 0 1px var(--switch-track-off-stroke-active);
+      border-color: var(--switch-track-off-stroke-active);
     }
     &:not(:disabled):active:state(checked)::before { background: var(--switch-track-on-active); }
 
@@ -151,7 +152,7 @@
       color: var(--switch-label-color-disabled);
       &::before {
         background: var(--switch-track-disabled);
-        box-shadow: inset 0 0 0 1px var(--switch-track-disabled);
+        border-color: var(--switch-track-disabled);
         transition: none;
       }
       &::after {
@@ -161,7 +162,7 @@
       &:state(checked) {
         &::before {
           background: color-mix(in oklch, var(--switch-track-on) 50%, transparent);
-          box-shadow: none;
+          border-color: transparent;
         }
         &::after {
           background: color-mix(in oklch, var(--switch-thumb) 50%, transparent);

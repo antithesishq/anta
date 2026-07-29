@@ -471,3 +471,30 @@ object-shaped values (a date range, a numeric comparator).
 | `summary` | `(value: V) => ReactNode` | The chip on the facet's row while a value is set. |
 
 </Disclosure>
+
+<Disclosure title="Composing web component">
+
+`SelectFaceted` has no host element. It coordinates a trigger and nested menus; use
+the raw elements when you need a bespoke facet tree.
+
+<Preview align="stretch">
+  <div style={{ display: 'grid', gap: '4px', width: '280px' }}>
+    <a-button role="button" tabindex="0" aria-haspopup="menu" aria-expanded="true"><a-button-label>Filters</a-button-label></a-button>
+    <a-menu role="menu" state="open">
+      <a-menu-item role="menuitem" value="status"><a-menu-item-label>Status</a-menu-item-label></a-menu-item>
+      <a-menu-item role="menuitem" value="owner"><a-menu-item-label>Owner</a-menu-item-label></a-menu-item>
+    </a-menu>
+  </div>
+</Preview>
+
+```html folded
+<a-button role="button" tabindex="0" aria-haspopup="menu" aria-expanded="true">
+  <a-button-label>Filters</a-button-label>
+</a-button>
+<a-menu role="menu" state="open">
+  <a-menu-item role="menuitem" value="status"><a-menu-item-label>Status</a-menu-item-label></a-menu-item>
+  <a-menu-item role="menuitem" value="owner"><a-menu-item-label>Owner</a-menu-item-label></a-menu-item>
+</a-menu>
+```
+
+</Disclosure>

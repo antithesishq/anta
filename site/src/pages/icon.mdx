@@ -3,6 +3,7 @@ layout: ../layouts/DocsLayout.astro
 title: Icon
 ---
 import IconDemo from '../components/IconDemo'
+import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 
@@ -26,6 +27,26 @@ any custom icons you generate yourself.
 <Disclosure title="Component props">
 
 <PropsTable component="Icon" />
+
+</Disclosure>
+
+<Disclosure title="Composing web component">
+
+Set the accessible name on the raw element. Use `--icon-size` for a portable custom
+size.
+
+<Preview>
+  <a-icon shape="warning-triangle" role="img" aria-label="Warning" style={{ '--icon-size': '24px' }}></a-icon>
+</Preview>
+
+```html folded
+<a-icon
+  shape="warning-triangle"
+  role="img"
+  aria-label="Warning"
+  style="--icon-size: 24px"
+></a-icon>
+```
 
 </Disclosure>
 

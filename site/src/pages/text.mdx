@@ -124,6 +124,22 @@ more" and "Show less". `collapsible` takes effect only with `expandable`.
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+Use `<a-text>` directly for a block that carries the text priority and tone.
+
+<Preview>
+  <a-text priority="secondary">Read the <a href="/colors/">color guidance</a>.</a-text>
+</Preview>
+
+```html folded
+<a-text priority="secondary">
+  Read the <a href="/colors/">color guidance</a>.
+</a-text>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Colour comes from **`priority`** (the neutral text level) and **`tone`** (the tint);

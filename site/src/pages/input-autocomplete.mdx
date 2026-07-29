@@ -72,6 +72,35 @@ Suggestions are bare strings or `SelectOption`s, the same option shape
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+`InputAutocomplete` has no single host element. Compose an `<a-input>` combobox
+with an `<a-menu>` listbox.
+
+<Preview align="stretch">
+  <div style={{ display: 'grid', gap: '4px', width: '280px' }}>
+    <a-input data-menu-search="" aria-haspopup="listbox" aria-expanded="true" placeholder="Search people">
+      <span slot="label">Assignee</span>
+    </a-input>
+    <a-menu role="listbox" state="open">
+      <a-menu-item role="option" value="maya"><a-menu-item-label>Maya Chen</a-menu-item-label></a-menu-item>
+      <a-menu-item role="option" value="noah"><a-menu-item-label>Noah Williams</a-menu-item-label></a-menu-item>
+    </a-menu>
+  </div>
+</Preview>
+
+```html folded
+<a-input data-menu-search aria-haspopup="listbox" aria-expanded="true" placeholder="Search people">
+  <span slot="label">Assignee</span>
+</a-input>
+<a-menu role="listbox" state="open">
+  <a-menu-item role="option" value="maya"><a-menu-item-label>Maya Chen</a-menu-item-label></a-menu-item>
+  <a-menu-item role="option" value="noah"><a-menu-item-label>Noah Williams</a-menu-item-label></a-menu-item>
+</a-menu>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 **The field** is styled through Input's props (`size`, `status`, `tone`, `round`,

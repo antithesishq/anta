@@ -909,6 +909,37 @@ inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+`Select` has no host element. Compose a read-only `<a-input>` trigger with an
+`<a-menu>` of options.
+
+<Preview align="stretch">
+  <div style={{ display: 'grid', gap: '4px', width: '280px' }}>
+    <a-input readonly value="stream" aria-haspopup="menu" aria-expanded="true">
+      <span slot="label">Output</span>
+      <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
+    </a-input>
+    <a-menu role="menu" state="open">
+      <a-menu-item role="menuitemradio" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
+      <a-menu-item role="menuitemradio" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
+    </a-menu>
+  </div>
+</Preview>
+
+```html folded
+<a-input readonly value="stream" aria-haspopup="menu" aria-expanded="true">
+  <span slot="label">Output</span>
+  <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
+</a-input>
+<a-menu role="menu" state="open">
+  <a-menu-item role="menuitemradio" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
+  <a-menu-item role="menuitemradio" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
+</a-menu>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Select is an [Input](/input/) plus a [Menu](/menu/), so it

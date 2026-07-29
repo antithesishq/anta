@@ -434,6 +434,29 @@ which uses the same `Menu` composition shown on the [Menu](/menu/) page.
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+`InputDate` has no host element. Compose a calendar from controls and an
+`<a-calendar>` day grid; the grid owns selection and keyboard movement.
+
+<Preview>
+  <a-calendar role="group" name="due-date">
+    <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-27"><a-button-label>27</a-button-label></a-button>
+    <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-28"><a-button-label>28</a-button-label></a-button>
+    <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-29"><a-button-label>29</a-button-label></a-button>
+  </a-calendar>
+</Preview>
+
+```html folded
+<a-calendar role="group" name="due-date">
+  <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-27"><a-button-label>27</a-button-label></a-button>
+  <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-28"><a-button-label>28</a-button-label></a-button>
+  <a-button role="button" tabindex="0" priority="tertiary" data-part="day-cell" data-date="2026-06-29"><a-button-label>29</a-button-label></a-button>
+</a-calendar>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 The calendar is **light DOM**, so everything is plain CSS, with no shadow parts or

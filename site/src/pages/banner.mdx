@@ -275,43 +275,35 @@ applies anything, so a vanilla `<a-banner>` listener can `preventDefault()` a
 dismiss. The `<Banner>` wrapper's `onDismiss` is notification-only — drive rejection
 through `dismissed` instead.
 
-## Composing the element directly
-
-Without the `<Banner>` wrapper, the `slot` attribute is the wire format: put
-`slot="message"`, `slot="actions"`, or `slot="close"` directly on your own elements
-(several can share `slot="actions"`), and anything unslotted becomes the middle
-content. A string message goes in an `<a-banner-message>` for the banner type scale.
-
-The one Banner-specific detail is the ✕: it's an `<a-button>` carrying
-**`data-custom-event="dismissrequest"`**. That makes the button dispatch the bubbling
-`dismissrequest` event the banner listens for, so the dismiss works with no framework
-hydration — a hand-authored banner closes on its own. Give the ✕ a `tone` to match the
-strip and an `aria-label`. The `<Banner>` wrapper also adds `role="status"` (a polite
-live region) for you; hand-authoring, set it yourself so the notice reaches assistive
-tech (`role="alert"` for an urgent one).
-
-<Preview direction="column" gap="8px">
-  <a-banner role="status" tone="info">
-    <a-banner-message slot="message">A new version is ready to install.</a-banner-message>
-    <Button slot="actions" size="small" priority="primary" tone="info" label="Update now" />
-    <Button slot="close" priority="quaternary" icon="x" tone="info" aria-label="Dismiss" data-custom-event="dismissrequest" />
-  </a-banner>
-</Preview>
-
-```html
-<a-banner role="status" tone="info">
-  <a-banner-message slot="message">A new version is ready to install.</a-banner-message>
-  <a-button slot="actions" size="small" priority="primary" tone="info">Update now</a-button>
-  <!-- the ✕: data-custom-event="dismissrequest" wires up the dismiss -->
-  <a-button slot="close" priority="quaternary" tone="info" aria-label="Dismiss" data-custom-event="dismissrequest">
-    <a-icon shape="x"></a-icon>
-  </a-button>
-</a-banner>
-```
-
 <Disclosure title="Component props" open>
 
 <PropsTable component="Banner" />
+
+</Disclosure>
+
+<Disclosure title="Composing web component">
+
+Slots hold the message, actions, and close control. A close button dispatches
+`dismissrequest` through `data-custom-event`.
+
+<Preview align="stretch">
+  <a-banner role="status" tone="info">
+    <a-banner-message slot="message">A new version is ready to install.</a-banner-message>
+    <a-button slot="actions" role="button" tabindex="0" size="small" priority="primary" tone="info"><a-button-label>Update now</a-button-label></a-button>
+    <a-button slot="close" role="button" tabindex="0" priority="quaternary" tone="info" aria-label="Dismiss" data-custom-event="dismissrequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
+  </a-banner>
+</Preview>
+
+```html folded
+<a-banner role="status" tone="info">
+  <a-banner-message slot="message">A new version is ready to install.</a-banner-message>
+  <a-button slot="actions" role="button" tabindex="0" size="small" priority="primary" tone="info">
+    <a-button-label>Update now</a-button-label>
+  </a-button>
+  <a-button slot="close" role="button" tabindex="0" priority="quaternary" tone="info"
+    aria-label="Dismiss" data-custom-event="dismissrequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
+</a-banner>
+```
 
 </Disclosure>
 

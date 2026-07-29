@@ -3,6 +3,8 @@ layout: ../layouts/DocsLayout.astro
 title: Stickers
 ---
 import StickerDemo from '../components/StickerDemo'
+import Preview from '../components/Preview.astro'
+import Disclosure from '../components/Disclosure.astro'
 
 # Stickers
 
@@ -49,6 +51,32 @@ Same as the static base, plus:
 | Prop | Type | Description |
 |---|---|---|
 | `paused?` | `boolean \| number` | `true` freezes at the current frame; a number freezes at that time in seconds. Omit (or pass `false`) to play. |
+
+<Disclosure title="Composing web component">
+
+Pass the generated SVG payload to `<a-sticker>` and set a size through
+`--sticker-size`. The animated element takes its generated Lottie JSON through
+`animation` instead.
+
+<Preview>
+  <a-sticker
+    role="img"
+    aria-label="Purple circle"
+    svg={'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor"/></svg>'}
+    style={{ '--sticker-size': '96px', color: 'var(--text-1-brand)' }}
+  ></a-sticker>
+</Preview>
+
+```html folded
+<a-sticker
+  role="img"
+  aria-label="Purple circle"
+  svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor"/></svg>'
+  style="--sticker-size: 96px; color: var(--text-1-brand)"
+></a-sticker>
+```
+
+</Disclosure>
 
 ## Sizing
 

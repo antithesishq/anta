@@ -206,6 +206,26 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+The focusable host carries the state. Label and hint are light-DOM children.
+
+<Preview>
+  <a-switch role="switch" tabindex="0" name="updates" default-state="checked">
+    <a-switch-label>Email updates</a-switch-label>
+    <a-switch-hint>Product and security notices.</a-switch-hint>
+  </a-switch>
+</Preview>
+
+```html folded
+<a-switch role="switch" tabindex="0" name="updates" default-state="checked">
+  <a-switch-label>Email updates</a-switch-label>
+  <a-switch-hint>Product and security notices.</a-switch-hint>
+</a-switch>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Reach for the props first: **`tone`** colours the checked track plus the unchecked chrome, while **`toneSelected`** colours only the checked track. Both accept any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).

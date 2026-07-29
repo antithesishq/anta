@@ -112,6 +112,26 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+Slots supply the field label and leading icon.
+
+<Preview>
+  <a-input-time name="start-time" defaultvalue="09:30">
+    <span slot="label">Start time</span>
+    <span slot="leading"><a-icon shape="clock" aria-hidden="true"></a-icon></span>
+  </a-input-time>
+</Preview>
+
+```html folded
+<a-input-time name="start-time" defaultvalue="09:30">
+  <span slot="label">Start time</span>
+  <span slot="leading"><a-icon shape="clock" aria-hidden="true"></a-icon></span>
+</a-input-time>
+```
+
+</Disclosure>
+
 ## Styling
 
 `InputTime` renders an `<a-input-time>` whose field chrome mirrors `<a-input>`.

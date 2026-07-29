@@ -387,34 +387,33 @@ it also blocks navigation until the load resolves.
 </Card>
 ```
 
-## Composing the element directly
-
-Without the JSX wrapper, `slot` is the wire format: put `slot="media"` /
-`slot="header"` / `slot="footer"` on your own elements (several can share
-`slot="footer"`); anything unslotted becomes the body. The card gives
-its content no typography, so reach for `<a-title>` / `<a-text>` where you want
-the heading / body styling the `<Card>` wrapper adds for you.
-
-<Preview background="var(--bg-2)">
-  <a-card href="#" style={{ width: '340px' }}>
-    <a-title slot="header" level="5">Hand-authored markup</a-title>
-    <a-text>Everything without a <code>slot</code> attribute is the body.</a-text>
-  </a-card>
-</Preview>
-
-```html
-<a-card href="/x">
-  <img slot="media" src="/hero.jpg" alt="" />
-  <a-title slot="header" level="5">Hand-authored markup</a-title>
-  <a-text>Everything without a slot attribute is the body.</a-text>
-  <!-- several elements can share slot="footer" -->
-  <a-button slot="footer">Save</a-button>
-</a-card>
-```
-
 <Disclosure title="Component props" open>
 
 <PropsTable component="Card" />
+
+</Disclosure>
+
+<Disclosure title="Composing web component">
+
+Slots hold media, header, and footer content. Unslotted content is the card body.
+
+<Preview background="var(--bg-2)">
+  <a-card style={{ width: '300px' }}>
+    <a-title slot="header" level="5" role="heading" aria-level="5">Release notes</a-title>
+    <a-text>Everything without a slot attribute becomes the body.</a-text>
+    <a-button slot="footer" role="button" tabindex="0" size="small"><a-button-label>Read more</a-button-label></a-button>
+  </a-card>
+</Preview>
+
+```html folded
+<a-card>
+  <a-title slot="header" level="5" role="heading" aria-level="5">Release notes</a-title>
+  <a-text>Everything without a slot attribute becomes the body.</a-text>
+  <a-button slot="footer" role="button" tabindex="0" size="small">
+    <a-button-label>Read more</a-button-label>
+  </a-button>
+</a-card>
+```
 
 </Disclosure>
 

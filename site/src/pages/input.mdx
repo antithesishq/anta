@@ -747,6 +747,26 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+Slots hold the label, hint, and controls around the native field.
+
+<Preview>
+  <a-input name="email" placeholder="you@example.com">
+    <span slot="label">Email</span>
+    <span slot="hint">We only use it for account notices.</span>
+  </a-input>
+</Preview>
+
+```html folded
+<a-input name="email" placeholder="you@example.com">
+  <span slot="label">Email</span>
+  <span slot="hint">We only use it for account notices.</span>
+</a-input>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Reach for the props first: **`status`** sets a validation tone (border + message),

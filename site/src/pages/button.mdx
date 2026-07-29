@@ -727,6 +727,26 @@ without taking ownership of `onClick`.
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+Set `role="button"` and `tabindex="0"` when authoring `<a-button>` directly.
+
+<Preview>
+  <a-button role="button" tabindex="0" priority="primary">
+    <a-icon shape="plus" aria-hidden="true"></a-icon>
+    <a-button-label>Create project</a-button-label>
+  </a-button>
+</Preview>
+
+```html folded
+<a-button role="button" tabindex="0" priority="primary">
+  <a-icon shape="plus" aria-hidden="true"></a-icon>
+  <a-button-label>Create project</a-button-label>
+</a-button>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Reach for the props first: **`tone`** sets the colour (any CSS colour for a custom

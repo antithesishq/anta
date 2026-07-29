@@ -322,34 +322,35 @@ returns to whatever opened the dialog, from the native `<dialog>`.
 
 </Disclosure>
 
-## Web component
+<Disclosure title="Composing web component">
 
-Without the JSX wrapper, the `slot` attribute is the wire format: `slot="header"`
-and `slot="footer"` on your own elements, and anything unslotted is the body. The
-element has no `closable` attribute; the ✕ is a `Button` you slot into
-`slot="close"` with `data-custom-event="closerequest"` (what the wrapper's
-`closable` injects). The element handles the rest.
+Slots hold the header, footer, and close control. Add `tabindex="0"` to every
+raw `<a-button>`.
 
-Add `tabindex="0"` to every `<a-button>` you author by hand: `<a-button>` isn't
-keyboard-focusable on its own, so a button without it can be clicked but not
-tabbed to. The `<Button>` wrapper sets this for you.
+<Preview>
+  <a-button role="button" tabindex="0" data-dialog-open="invite"><a-button-label>Invite teammates</a-button-label></a-button>
+  <a-dialog name="invite">
+    <h2 slot="header">Invite teammates</h2>
+    <p>Send an invite link to your team.</p>
+    <a-button slot="footer" role="button" tabindex="0" data-dialog-close="invite"><a-button-label>Cancel</a-button-label></a-button>
+    <a-button slot="footer" role="button" tabindex="0" priority="primary" data-dialog-close="invite"><a-button-label>Send</a-button-label></a-button>
+    <a-button slot="close" role="button" tabindex="0" priority="tertiary" size="large" aria-label="Close" data-custom-event="closerequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
+  </a-dialog>
+</Preview>
 
-```html
+```html folded
+<a-button role="button" tabindex="0" data-dialog-open="invite"><a-button-label>Invite teammates</a-button-label></a-button>
 <a-dialog name="invite">
   <h2 slot="header">Invite teammates</h2>
-
   <p>Send an invite link to your team.</p>
-
-  <a-button tabindex="0" slot="footer" data-dialog-close="invite">Cancel</a-button>
-  <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="invite">Send</a-button>
-
-  <!-- the close button (what the wrapper's `closable` injects for you) -->
-  <a-button tabindex="0" slot="close" priority="tertiary" size="large"
-            aria-label="Close" data-custom-event="closerequest">
-    <a-icon shape="x"></a-icon>
-  </a-button>
+  <a-button slot="footer" role="button" tabindex="0" data-dialog-close="invite"><a-button-label>Cancel</a-button-label></a-button>
+  <a-button slot="footer" role="button" tabindex="0" priority="primary" data-dialog-close="invite"><a-button-label>Send</a-button-label></a-button>
+  <a-button slot="close" role="button" tabindex="0" priority="tertiary" size="large"
+    aria-label="Close" data-custom-event="closerequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
 </a-dialog>
 ```
+
+</Disclosure>
 
 <Disclosure title="Styling">
 

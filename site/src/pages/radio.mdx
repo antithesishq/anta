@@ -445,6 +445,32 @@ element — `Input`, and the composed `Select` — skip it and expose only
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+The group owns selection and the single tab stop. Put options in `<a-radio-list>`.
+
+<Preview>
+  <a-radio-group role="radiogroup" tabindex="0" name="plan" defaultvalue="pro">
+    <a-radio-group-label>Plan</a-radio-group-label>
+    <a-radio-list>
+      <a-radio role="radio" value="starter"><a-radio-label>Starter</a-radio-label></a-radio>
+      <a-radio role="radio" value="pro"><a-radio-label>Pro</a-radio-label></a-radio>
+    </a-radio-list>
+  </a-radio-group>
+</Preview>
+
+```html folded
+<a-radio-group role="radiogroup" tabindex="0" name="plan" defaultvalue="pro">
+  <a-radio-group-label>Plan</a-radio-group-label>
+  <a-radio-list>
+    <a-radio role="radio" value="starter"><a-radio-label>Starter</a-radio-label></a-radio>
+    <a-radio role="radio" value="pro"><a-radio-label>Pro</a-radio-label></a-radio>
+  </a-radio-list>
+</a-radio-group>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Reach for the props first: **`tone`** colours the mark in every state,

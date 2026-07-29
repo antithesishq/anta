@@ -443,8 +443,8 @@ export const CATEGORIES: Category[] = [
  */
 export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   anta: {
-    button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'partial',
-    datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes',
+    button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes',
+    datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes',
     accordion: 'yes', table: 'partial', tag: 'yes', card: 'yes', progress: 'partial',
     icons: 'yes', typography: 'yes',
   },

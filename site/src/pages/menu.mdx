@@ -663,6 +663,26 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+An open menu is an `<a-menu>` with light-DOM `<a-menu-item>` rows.
+
+<Preview>
+  <a-menu role="menu" state="open">
+    <a-menu-item role="menuitem" value="settings"><a-menu-item-label>Settings</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitem" value="members"><a-menu-item-label>Members</a-menu-item-label></a-menu-item>
+  </a-menu>
+</Preview>
+
+```html folded
+<a-menu role="menu" state="open">
+  <a-menu-item role="menuitem" value="settings"><a-menu-item-label>Settings</a-menu-item-label></a-menu-item>
+  <a-menu-item role="menuitem" value="members"><a-menu-item-label>Members</a-menu-item-label></a-menu-item>
+</a-menu>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 The popover surface lives in shadow DOM and is exposed as a **part** — style its

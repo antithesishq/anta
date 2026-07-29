@@ -224,6 +224,28 @@ down 1px, since caps read larger than mixed case at the same size.
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+Use `a-tag-label` for the key and `a-tag-value` for its value.
+
+<Preview>
+  <a-tag tone="success">
+    <a-icon shape="check" aria-hidden="true"></a-icon>
+    <a-tag-label>Build</a-tag-label>
+    <a-tag-value>Passed</a-tag-value>
+  </a-tag>
+</Preview>
+
+```html folded
+<a-tag tone="success">
+  <a-icon shape="check" aria-hidden="true"></a-icon>
+  <a-tag-label>Build</a-tag-label>
+  <a-tag-value>Passed</a-tag-value>
+</a-tag>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Reach for the props first: **`tone`** sets the colour (any CSS colour for a custom

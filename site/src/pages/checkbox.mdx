@@ -250,6 +250,26 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+The focusable host carries the state. Label and hint are light-DOM children.
+
+<Preview>
+  <a-checkbox role="checkbox" tabindex="0" name="updates" default-state="checked">
+    <a-checkbox-label>Email updates</a-checkbox-label>
+    <a-checkbox-hint>Product and security notices.</a-checkbox-hint>
+  </a-checkbox>
+</Preview>
+
+```html folded
+<a-checkbox role="checkbox" tabindex="0" name="updates" default-state="checked">
+  <a-checkbox-label>Email updates</a-checkbox-label>
+  <a-checkbox-hint>Product and security notices.</a-checkbox-hint>
+</a-checkbox>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Reach for the props first: **`tone`** colours the mark in every state,

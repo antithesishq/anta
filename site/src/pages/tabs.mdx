@@ -512,6 +512,35 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 
 </Disclosure>
 
+<Disclosure title="Composing web component">
+
+Keep the tab strip and panels as siblings under one parent. Panels read the active
+value from `<a-tabs>`.
+
+<Preview align="stretch">
+  <div style={{ display: 'grid', gap: '12px', width: '320px' }}>
+    <a-tabs role="tablist" defaultvalue="account">
+      <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
+      <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
+    </a-tabs>
+    <a-tabpanel role="tabpanel" value="account">Account settings</a-tabpanel>
+    <a-tabpanel role="tabpanel" value="security">Security settings</a-tabpanel>
+  </div>
+</Preview>
+
+```html folded
+<div>
+  <a-tabs role="tablist" defaultvalue="account">
+    <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
+    <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
+  </a-tabs>
+  <a-tabpanel role="tabpanel" value="account">Account settings</a-tabpanel>
+  <a-tabpanel role="tabpanel" value="security">Security settings</a-tabpanel>
+</div>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Reach for the props first: **`tone`**, **`size`**, **`priority`**. The focus ring is

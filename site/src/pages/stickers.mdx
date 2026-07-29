@@ -52,7 +52,9 @@ Same as the static base, plus:
 |---|---|---|
 | `paused?` | `boolean \| number` | `true` freezes at the current frame; a number freezes at that time in seconds. Omit (or pass `false`) to play. |
 
-<Disclosure title="Composing web component">
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
 
 Pass the generated SVG payload to `<a-sticker>` and set a size through
 `--sticker-size`. The animated element takes its generated Lottie JSON through

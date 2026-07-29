@@ -914,22 +914,24 @@ inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
 
 </Disclosure>
 
-<Disclosure title="Composing web component">
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
 
 `Select` has no host element. Compose a read-only `<a-input>` trigger with an
 `<a-menu>` of options. The menu owns opening and dismissal; the short controller
-reflects a picked option into the field and radio rows.
+reflects a picked option into the field and selected row.
 
 <Preview align="stretch">
   <WebComponentComposition kind="select">
     <div style={{ display: 'grid', gap: '4px', width: '280px' }}>
-      <a-input readonly value="stream" aria-haspopup="menu" aria-expanded="false">
+      <a-input readonly value="stream">
         <span slot="label">Output</span>
         <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
       </a-input>
       <a-menu role="menu">
-        <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
-        <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
+        <a-menu-item role="menuitem" tabindex="0" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
+        <a-menu-item role="menuitem" tabindex="0" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
       </a-menu>
     </div>
   </WebComponentComposition>
@@ -937,13 +939,13 @@ reflects a picked option into the field and radio rows.
 
 ```html
 <div data-anta-composition="select" style="display: grid; gap: 4px; width: 280px">
-  <a-input readonly value="stream" aria-haspopup="menu" aria-expanded="false">
+  <a-input readonly value="stream">
     <span slot="label">Output</span>
     <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
   </a-input>
   <a-menu role="menu">
-    <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
-    <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitem" tabindex="0" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitem" tabindex="0" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
   </a-menu>
 </div>
 <script type="module">
@@ -953,16 +955,12 @@ reflects a picked option into the field and radio rows.
   const field = root.querySelector('a-input')
   const menu = root.querySelector('a-menu')
 
-  menu.addEventListener('statechange', (event) => {
-    field.setAttribute('aria-expanded', String(event.detail.next === 'open'))
-  })
   menu.addEventListener('click', (event) => {
     const item = event.target instanceof Element ? event.target.closest('a-menu-item') : null
     if (!item || item.closest('a-menu') !== menu) return
     menu.querySelectorAll(':scope > a-menu-item').forEach((option) => {
       const selected = option === item
       option.toggleAttribute('selected', selected)
-      option.setAttribute('aria-checked', String(selected))
     })
     field.value = item.querySelector('a-menu-item-label').textContent.trim()
   })

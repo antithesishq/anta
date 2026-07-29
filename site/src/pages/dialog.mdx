@@ -334,7 +334,9 @@ returns to whatever opened the dialog, from the native `<dialog>`.
 
 </Disclosure>
 
-<Disclosure title="Composing web component">
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
 
 Slots hold the header, footer, and close control. Add `tabindex="0"` to every
 raw `<a-button>`.
@@ -342,8 +344,8 @@ raw `<a-button>`.
 <Preview>
   <a-button role="button" tabindex="0" data-dialog-open="invite"><a-button-label>Invite teammates</a-button-label></a-button>
   <a-dialog name="invite">
-    <h2 slot="header">Invite teammates</h2>
-    <p>Send an invite link to your team.</p>
+    <a-title slot="header" level="4" role="heading" aria-level="4">Invite teammates</a-title>
+    <a-text>Send an invite link to your team.</a-text>
     <a-button slot="footer" role="button" tabindex="0" data-dialog-close="invite"><a-button-label>Cancel</a-button-label></a-button>
     <a-button slot="footer" role="button" tabindex="0" priority="primary" data-dialog-close="invite"><a-button-label>Send</a-button-label></a-button>
     <a-button slot="close" role="button" tabindex="0" priority="tertiary" size="large" aria-label="Close" data-custom-event="closerequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
@@ -353,8 +355,8 @@ raw `<a-button>`.
 ```html
 <a-button role="button" tabindex="0" data-dialog-open="invite"><a-button-label>Invite teammates</a-button-label></a-button>
 <a-dialog name="invite">
-  <h2 slot="header">Invite teammates</h2>
-  <p>Send an invite link to your team.</p>
+  <a-title slot="header" level="4" role="heading" aria-level="4">Invite teammates</a-title>
+  <a-text>Send an invite link to your team.</a-text>
   <a-button slot="footer" role="button" tabindex="0" data-dialog-close="invite"><a-button-label>Cancel</a-button-label></a-button>
   <a-button slot="footer" role="button" tabindex="0" priority="primary" data-dialog-close="invite"><a-button-label>Send</a-button-label></a-button>
   <a-button slot="close" role="button" tabindex="0" priority="tertiary" size="large"

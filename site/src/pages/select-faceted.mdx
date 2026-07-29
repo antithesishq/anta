@@ -6,7 +6,6 @@ import Playground from '../components/Playground'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
-import WebComponentComposition from '../components/WebComponentComposition.astro'
 import selectFacetedDemoCode from './select-faceted.demo.ts'
 import { SelectFacetedBasicDemo, SelectFacetedRecencyDemo, SelectFacetedDurationDemo, SelectFacetedDateDemo, SelectFacetedRecencyMenuDemo } from '../components/SelectFacetedDemos'
 
@@ -470,89 +469,5 @@ object-shaped values (a date range, a numeric comparator).
 | `kind` | `'custom'` | Discriminant. |
 | `render` | `(ctx) => ReactNode` | Your editor. `ctx.value` is the current `V`, `ctx.onChange(next)` sets it (`undefined` clears the facet), `ctx.close()` dismisses the menu. |
 | `summary` | `(value: V) => ReactNode` | The chip on the facet's row while a value is set. |
-
-</Disclosure>
-
-<Disclosure title="Composing web component">
-
-`SelectFaceted` has no host element. Each facet row anchors its own nested menu of
-choices. The controller keeps one selected option per facet and reflects the number
-of active facets in the trigger.
-
-<Preview align="stretch">
-  <WebComponentComposition kind="faceted-select">
-    <div style={{ display: 'grid', gap: '4px', width: '280px' }}>
-      <a-button role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false"><a-button-label>Filters</a-button-label></a-button>
-      <a-menu role="menu">
-        <a-menu-item role="menuitem" tabindex="0" aria-haspopup="menu" data-facet-label="Status">
-          <a-menu-item-label>Status</a-menu-item-label>
-          <a-menu role="menu">
-            <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="open"><a-menu-item-label>Open</a-menu-item-label></a-menu-item>
-            <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="closed"><a-menu-item-label>Closed</a-menu-item-label></a-menu-item>
-          </a-menu>
-        </a-menu-item>
-        <a-menu-item role="menuitem" tabindex="0" aria-haspopup="menu" data-facet-label="Owner">
-          <a-menu-item-label>Owner</a-menu-item-label>
-          <a-menu role="menu">
-            <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="maya"><a-menu-item-label>Maya Chen</a-menu-item-label></a-menu-item>
-            <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="noah"><a-menu-item-label>Noah Williams</a-menu-item-label></a-menu-item>
-          </a-menu>
-        </a-menu-item>
-      </a-menu>
-    </div>
-  </WebComponentComposition>
-</Preview>
-
-```html
-<div data-anta-composition="faceted-select" style="display: grid; gap: 4px; width: 280px">
-  <a-button role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
-    <a-button-label>Filters</a-button-label>
-  </a-button>
-  <a-menu role="menu">
-    <a-menu-item role="menuitem" tabindex="0" aria-haspopup="menu" data-facet-label="Status">
-      <a-menu-item-label>Status</a-menu-item-label>
-      <a-menu role="menu">
-        <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="open"><a-menu-item-label>Open</a-menu-item-label></a-menu-item>
-        <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="closed"><a-menu-item-label>Closed</a-menu-item-label></a-menu-item>
-      </a-menu>
-    </a-menu-item>
-    <a-menu-item role="menuitem" tabindex="0" aria-haspopup="menu" data-facet-label="Owner">
-      <a-menu-item-label>Owner</a-menu-item-label>
-      <a-menu role="menu">
-        <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="maya"><a-menu-item-label>Maya Chen</a-menu-item-label></a-menu-item>
-        <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="noah"><a-menu-item-label>Noah Williams</a-menu-item-label></a-menu-item>
-      </a-menu>
-    </a-menu-item>
-  </a-menu>
-</div>
-<script type="module">
-  import '@antadesign/anta/elements'
-
-  const root = document.querySelector('[data-anta-composition="faceted-select"]')
-  const trigger = root.querySelector('a-button')
-  const menu = root.querySelector('a-menu')
-
-  menu.addEventListener('statechange', (event) => {
-    trigger.setAttribute('aria-expanded', String(event.detail.next === 'open'))
-  })
-  root.addEventListener('click', (event) => {
-    const item = event.target instanceof Element
-      ? event.target.closest('a-menu-item[role="menuitemradio"]')
-      : null
-    if (!item) return
-    const choices = item.closest('a-menu')
-    choices.querySelectorAll(':scope > a-menu-item[role="menuitemradio"]').forEach((option) => {
-      const selected = option === item
-      option.toggleAttribute('selected', selected)
-      option.setAttribute('aria-checked', String(selected))
-    })
-    const facet = choices.parentElement
-    const label = facet.querySelector(':scope > a-menu-item-label')
-    label.textContent = `${facet.dataset.facetLabel}: ${item.querySelector('a-menu-item-label').textContent.trim()}`
-    const count = root.querySelectorAll('a-menu-item[role="menuitemradio"][selected]').length
-    trigger.querySelector('a-button-label').textContent = count ? `Filters (${count})` : 'Filters'
-  })
-</script>
-```
 
 </Disclosure>

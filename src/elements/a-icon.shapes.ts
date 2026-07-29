@@ -104,6 +104,7 @@ export const ICON_SHAPES = [
   'text-highlight',
   'text-initial',
   'timer',
+  'toggle-right',
   'trash',
   'trello-logo',
   'view',
@@ -175,6 +176,7 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'calendar': ['date', 'schedule'],
   'clock': ['time'],
   'timer': ['stopwatch', 'countdown', 'time'],
+  'toggle-right': ['toggle', 'switch', 'on', 'off', 'boolean'],
   'history': ['log', 'past'],
   'history-tree': ['log', 'past'],
   'runs-history': ['log', 'past'],
@@ -313,6 +315,7 @@ declare module '@antadesign/anta' {
     'text-highlight': true
     'text-initial': true
     'timer': true
+    'toggle-right': true
     'trash': true
     'trello-logo': true
     'view': true

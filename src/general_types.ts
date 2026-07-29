@@ -481,6 +481,41 @@ export interface ACheckboxAttributes extends BaseAttributes {
 }
 
 /**
+ * Attributes for the `<a-switch>` custom element. It is a binary,
+ * form-associated immediate-setting control. Its visual checked state is stored
+ * in ElementInternals and styled through `:state(checked)`. `role="switch"`
+ * and the accessible name remain the consumer's responsibility; the `Switch`
+ * wrapper supplies both.
+ */
+export interface ASwitchAttributes extends BaseAttributes {
+  /** Checked-track colour. Default is `'brand'`; the off track is neutral. */
+  tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Size variant. `small` = 30×14px, `medium` (default) = 30×18px, `large` = 42×22px. */
+  size?: 'small' | 'medium' | 'large'
+  /** Visual placement of the label. The source / accessibility order stays stable. */
+  'label-position'?: 'start' | 'end'
+  /** Controlled checked state. Use `default-state` for an uncontrolled switch. */
+  state?: 'checked' | 'unchecked'
+  /** Uncontrolled initial checked state, read once at connect / form reset. */
+  'default-state'?: 'checked' | 'unchecked'
+  /** Disables interaction. Presence-based (`''` on, omit off). */
+  disabled?: boolean | ''
+  /** Form field name. */
+  name?: string
+  /** Value submitted when the switch is checked. Defaults to `"on"`. */
+  value?: string
+  /** Cancelable pre-change request. `detail` contains `{ next, prev }`. */
+  onstatechange?: (
+    e: CustomEvent<{ next: 'checked' | 'unchecked'; prev: 'checked' | 'unchecked' }>,
+  ) => void
+  /** Native post-change event. */
+  onchange?: (e: Event) => void
+  'aria-checked'?: 'true' | 'false'
+  'aria-disabled'?: 'true' | 'false'
+  'aria-label'?: string
+}
+
+/**
  * Attributes for the `<a-input>` custom element — a form-associated text
  * field whose real `<input>` / `<textarea>` lives in shadow DOM. For the
  * typed JSX wrapper use `Input` from `@antadesign/anta`.

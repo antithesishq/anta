@@ -1,0 +1,229 @@
+@layer anta {
+  /* A light-DOM binary control. The track and thumb are pseudo-elements so the
+     element stays small and all authored label / free-area content is ordinary
+     light DOM. The checked state lives in ElementInternals. */
+  a-switch {
+    --switch-gap: 8px;
+    --switch-track-inline-size: 30px;
+    --switch-track-block-size: 18px;
+    --switch-thumb-size: 12px;
+    --switch-thumb-size-off: 10px;
+    --switch-thumb-inset: 2px;
+    --switch-thumb-inset-off: 3px;
+    --switch-thumb-travel: 13px;
+    --switch-label-fs: 15px;
+    --switch-label-lh: 20px;
+    --switch-content-fs: 10px;
+
+    --switch-track-off-stroke: var(--border-3);
+    --switch-track-off-stroke-hover: var(--border-2);
+    --switch-track-off-stroke-active: var(--border-1);
+    --switch-track-disabled: color-mix(in oklch, #44374b 10%, transparent);
+    --switch-thumb: var(--bg-1);
+    --switch-thumb-off: var(--switch-track-off-stroke);
+    --switch-thumb-disabled: color-mix(in oklch, #f6f4f6 70%, transparent);
+
+    /* Brand is the default. The track changes hue on its checked state only;
+       the resting off state deliberately remains neutral. */
+    --switch-tone-source: var(--anta-seed-brand);
+    --_switch-tone-l-rest: 0.56;
+    --_switch-tone-l-hover: 0.48;
+    --_switch-tone-l-active: 0.42;
+    --switch-track-on: oklch(from var(--switch-tone-source) var(--_switch-tone-l-rest) c h);
+    --switch-track-on-hover: oklch(from var(--switch-tone-source) var(--_switch-tone-l-hover) c h);
+    --switch-track-on-active: oklch(from var(--switch-tone-source) var(--_switch-tone-l-active) c h);
+
+    --switch-label-color: var(--text-2);
+    --switch-label-color-disabled: var(--text-4);
+    --switch-content-color: color-mix(in oklch, var(--switch-thumb) 92%, transparent);
+    --switch-content-off-color: var(--text-4);
+
+    display: inline-grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "control label";
+    align-items: center;
+    column-gap: var(--switch-gap);
+    min-inline-size: 0;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-drag: none;
+    outline: none;
+
+    color: var(--switch-label-color);
+    font-family: var(--sans-serif);
+    font-size: var(--switch-label-fs);
+    line-height: var(--switch-label-lh);
+    font-feature-settings: "ss02", "ss05", "tnum";
+
+    &::before,
+    &::after {
+      grid-area: control;
+      align-self: center;
+      box-sizing: border-box;
+      content: "";
+      position: relative;
+    }
+
+    &::before {
+      z-index: 0;
+      inline-size: var(--switch-track-inline-size);
+      block-size: var(--switch-track-block-size);
+      border-radius: 999px;
+      background: transparent;
+      box-shadow: inset 0 0 0 1px var(--switch-track-off-stroke);
+      transition:
+        background-color 150ms ease-out,
+        box-shadow 150ms ease-out;
+    }
+
+    &::after {
+      z-index: 2;
+      justify-self: start;
+      inline-size: var(--switch-thumb-size-off);
+      block-size: var(--switch-thumb-size-off);
+      margin-inline-start: var(--switch-thumb-inset-off);
+      border-radius: 999px;
+      background: var(--switch-thumb-off);
+      box-shadow: none;
+      transition:
+        transform 150ms ease-out,
+        inline-size 150ms ease-out,
+        block-size 150ms ease-out,
+        margin-inline-start 150ms ease-out,
+        background-color 150ms ease-out,
+        box-shadow 150ms ease-out;
+    }
+
+    &[label-position="start"] {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "label control";
+    }
+
+    &:state(checked) {
+      &::before {
+        background: var(--switch-track-on);
+        box-shadow: none;
+      }
+      &::after {
+        inline-size: var(--switch-thumb-size);
+        block-size: var(--switch-thumb-size);
+        margin-inline-start: var(--switch-thumb-inset);
+        transform: translateX(var(--switch-thumb-travel));
+        background: var(--switch-thumb);
+        box-shadow: 0 1px 2px color-mix(in oklch, #44374b 25%, transparent);
+      }
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:not(:disabled):not(:state(checked)):hover::before {
+        box-shadow: inset 0 0 0 1px var(--switch-track-off-stroke-hover);
+      }
+      &:not(:disabled):hover:state(checked)::before { background: var(--switch-track-on-hover); }
+    }
+    &:not(:disabled):not(:state(checked)):active::before {
+      box-shadow: inset 0 0 0 1px var(--switch-track-off-stroke-active);
+    }
+    &:not(:disabled):active:state(checked)::before { background: var(--switch-track-on-active); }
+
+    &:focus-visible::before {
+      outline: 1px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      color: var(--switch-label-color-disabled);
+      &::before {
+        background: var(--switch-track-disabled);
+        box-shadow: none;
+        transition: none;
+      }
+      &::after {
+        background: var(--switch-thumb-disabled);
+        box-shadow: none;
+        transition: none;
+      }
+    }
+
+    &[size="small"] {
+      --switch-gap: 6px;
+      --switch-track-inline-size: 30px;
+      --switch-track-block-size: 14px;
+      --switch-thumb-size: 10px;
+      --switch-thumb-size-off: 8px;
+      --switch-thumb-inset-off: 3px;
+      --switch-thumb-travel: 16px;
+      --switch-label-fs: 13px;
+      --switch-label-lh: 16px;
+      --switch-content-fs: 8px;
+    }
+    &[size="large"] {
+      --switch-track-inline-size: 42px;
+      --switch-track-block-size: 22px;
+      --switch-thumb-size: 18px;
+      --switch-thumb-size-off: 16px;
+      --switch-thumb-travel: 20px;
+      --switch-label-fs: 17px;
+      --switch-label-lh: 22px;
+      --switch-content-fs: 12px;
+    }
+  }
+
+  a-switch-label {
+    grid-area: label;
+    min-inline-size: 0;
+  }
+
+  a-switch-checked-content,
+  a-switch-unchecked-content {
+    display: grid;
+    grid-area: control;
+    z-index: 1;
+    align-items: center;
+    block-size: var(--switch-track-block-size);
+    inline-size: calc((var(--switch-track-inline-size) - var(--switch-thumb-size)) / 2);
+    overflow: hidden;
+    color: var(--switch-content-color);
+    font-size: var(--switch-content-fs);
+    line-height: 1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 100ms ease-out;
+  }
+  a-switch-checked-content { justify-self: start; justify-items: center; }
+  a-switch-unchecked-content {
+    justify-self: end;
+    justify-items: center;
+    color: var(--switch-content-off-color);
+  }
+  a-switch:state(checked) a-switch-checked-content { opacity: 1; }
+  a-switch:not(:state(checked)) a-switch-unchecked-content { opacity: 1; }
+
+  a-switch-content a-icon,
+  a-switch-checked-content a-icon,
+  a-switch-unchecked-content a-icon {
+    --icon-size: var(--switch-content-fs);
+  }
+
+  a-switch[tone="neutral"] { --switch-tone-source: var(--anta-seed-neutral); }
+  a-switch[tone="info"] { --switch-tone-source: var(--anta-seed-info); }
+  a-switch[tone="success"] { --switch-tone-source: var(--anta-seed-success); }
+  a-switch[tone="warning"] { --switch-tone-source: var(--anta-seed-warning); }
+  a-switch[tone="critical"] { --switch-tone-source: var(--anta-seed-critical); }
+  a-switch[tone]:not(
+      [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]) {
+    --switch-tone-source: attr(tone type(<color>), transparent);
+  }
+
+  .dark a-switch {
+    --switch-track-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
+    --switch-thumb: #ece9ec;
+    --switch-thumb-off: var(--switch-track-off-stroke);
+    --switch-thumb-disabled: color-mix(in oklch, #ece9ec 30%, transparent);
+    --_switch-tone-l-rest: 0.47;
+    --_switch-tone-l-hover: 0.53;
+    --_switch-tone-l-active: 0.58;
+  }
+}

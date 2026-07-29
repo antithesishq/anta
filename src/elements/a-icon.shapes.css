@@ -406,6 +406,10 @@
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='10' x2='14' y1='2' y2='2'/%3E%3Cline x1='12' x2='15' y1='14' y2='11'/%3E%3Ccircle cx='12' cy='14' r='8'/%3E%3C/svg%3E%0A");
   }
 
+  a-icon[shape="toggle-right"] {
+    --icon: url("data:image/svg+xml,%3Csvg%0A  xmlns='http://www.w3.org/2000/svg'%0A %0A %0A  viewBox='0 0 24 24'%0A  fill='none'%0A  stroke='currentColor'%0A  stroke-width='2'%0A  stroke-linecap='round'%0A  stroke-linejoin='round'%0A%3E%0A  %3Ccircle cx='15' cy='12' r='3' /%3E%0A  %3Crect width='20' height='14' x='2' y='5' rx='7' /%3E%0A%3C/svg%3E%0A");
+  }
+
   a-icon[shape="trash"] {
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 11v6'/%3E%3Cpath d='M14 11v6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'/%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E%0A");
   }

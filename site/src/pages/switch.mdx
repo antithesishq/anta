@@ -1,0 +1,62 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Switch
+description: A binary control for an immediate setting.
+---
+import Preview from '../components/Preview.astro'
+import SwitchPreview from '../components/SwitchPreview'
+import Disclosure from '../components/Disclosure.astro'
+import PropsTable from '../components/PropsTable.astro'
+import { Checkbox, Switch } from '@antadesign/anta'
+
+# Switch
+
+Switches change a single setting immediately. Use a checkbox when people select one or more values to submit together.
+
+<Preview minHeight={176} align="center">
+  <SwitchPreview client:load />
+</Preview>
+
+## Tone
+
+`tone` colours the checked track; the off track stays neutral. Use `neutral` when a setting should not claim semantic importance.
+
+<Preview gap="16px">
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="neutral" label="Neutral" /><Checkbox defaultChecked tone="neutral" label="Checkbox" /></div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="brand" label="Brand" /><Checkbox defaultChecked tone="brand" label="Checkbox" /></div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="info" label="Info" /><Checkbox defaultChecked tone="info" label="Checkbox" /></div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="success" label="Success" /><Checkbox defaultChecked tone="success" label="Checkbox" /></div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="warning" label="Warning" /><Checkbox defaultChecked tone="warning" label="Checkbox" /></div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked tone="critical" label="Critical" /><Checkbox defaultChecked tone="critical" label="Checkbox" /></div>
+</Preview>
+
+```tsx
+<Switch defaultChecked tone="neutral" label="Neutral" />
+<Switch defaultChecked tone="brand" label="Brand" />
+<Switch defaultChecked tone="info" label="Info" />
+<Switch defaultChecked tone="success" label="Success" />
+<Switch defaultChecked tone="warning" label="Warning" />
+<Switch defaultChecked tone="critical" label="Critical" />
+```
+
+## Size
+
+`small`, `medium` (the default), and `large` scale the track, thumb, free-area icon, and label together.
+
+<Preview gap="16px">
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked size="small" label="Small" /><Checkbox defaultChecked size="small" label="Checkbox" /></div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked label="Medium" /><Checkbox defaultChecked label="Checkbox" /></div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Switch defaultChecked size="large" label="Large" /><Checkbox defaultChecked size="large" label="Checkbox" /></div>
+</Preview>
+
+```tsx
+<Switch defaultChecked size="small" label="Small" />
+<Switch defaultChecked label="Medium" />
+<Switch defaultChecked size="large" label="Large" />
+```
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Switch" />
+
+</Disclosure>

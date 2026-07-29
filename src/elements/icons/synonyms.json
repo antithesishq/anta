@@ -59,6 +59,7 @@
   "calendar": ["date", "schedule"],
   "clock": ["time"],
   "timer": ["stopwatch", "countdown", "time"],
+  "toggle-right": ["toggle", "switch", "on", "off", "boolean"],
   "history": ["log", "past"],
   "history-tree": ["log", "past"],
   "runs-history": ["log", "past"],

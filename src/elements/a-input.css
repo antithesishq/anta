@@ -230,4 +230,233 @@
   /* Neutral dark border needs no override: the base --input-border points at
      --border-2, which carries its own seed-derived dark values. Status borders
      derive from the seed (rule above). */
+
+  /* Native form fields opt into Input's resting field chrome with `data-anta`.
+     Keep their native appearance and picker affordance intact: unlike a text
+     input, removing it can stop a date/time picker from opening. This is a
+     visual bridge for native controls, not an Input or InputDate replacement. */
+  input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  ) {
+    box-sizing: border-box;
+    block-size: 28px;
+    margin: 0;
+    padding-block: 4px;
+    padding-inline: 7px;
+    border: 0;
+    border-radius: 4px;
+    outline: 0;
+    background: var(--bg-1);
+    box-shadow: inset 0 0 0 0.5px var(--border-2);
+    color: var(--text-1);
+    caret-color: currentColor;
+    color-scheme: light;
+    font-family: var(--sans-serif);
+    font-size: 15px;
+    font-weight: 400;
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    line-height: 20px;
+    transition: box-shadow 120ms ease;
+  }
+  .dark input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  ) {
+    color-scheme: dark;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    input[data-anta]:is(
+      :not([type]),
+      [type="text"],
+      [type="email"],
+      [type="number"],
+      [type="password"],
+      [type="tel"],
+      [type="url"],
+      [type="date"],
+      [type="datetime-local"],
+      [type="month"],
+      [type="time"],
+      [type="week"]
+    ):not(:disabled):hover {
+      box-shadow: inset 0 0 0 1px var(--border-2);
+    }
+  }
+  input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  ):focus {
+    box-shadow: inset 0 0 0 1px var(--border-2);
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  ):disabled {
+    background: color-mix(in oklch, var(--text-1) 4%, var(--bg-1));
+    box-shadow: inset 0 0 0 0.5px color-mix(in oklch, var(--text-1) 15%, transparent);
+    color: var(--text-4);
+    cursor: not-allowed;
+  }
+  /* Anta's Input has no incrementer buttons. Hide the Chromium/WebKit ones so a
+     native number field has the same surface; arrow keys and native validation
+     remain available. */
+  input[data-anta][type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  input[data-anta][type="number"]::-webkit-inner-spin-button,
+  input[data-anta][type="number"]::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  /* Native selects opt into the same field chrome with `data-anta`. Browsers
+     that support customizable selects also receive a styled trigger, picker,
+     selected-content slot, options, and optgroups — with no selection JS. */
+  select[data-anta] {
+    box-sizing: border-box;
+    block-size: 28px;
+    margin: 0;
+    padding-block: 4px;
+    padding-inline: 7px;
+    border: 0;
+    border-radius: 4px;
+    outline: 0;
+    background: var(--bg-1);
+    box-shadow: inset 0 0 0 0.5px var(--border-2);
+    color: var(--text-1);
+    color-scheme: light;
+    font-family: var(--sans-serif);
+    font-size: 15px;
+    font-weight: 400;
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    line-height: 20px;
+    transition: box-shadow 120ms ease;
+  }
+  .dark select[data-anta] { color-scheme: dark; }
+  @media (hover: hover) and (pointer: fine) {
+    select[data-anta]:not(:disabled):hover {
+      box-shadow: inset 0 0 0 1px var(--border-2);
+    }
+  }
+  select[data-anta]:focus {
+    box-shadow: inset 0 0 0 1px var(--border-2);
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  select[data-anta]:disabled {
+    background: color-mix(in oklch, var(--text-1) 4%, var(--bg-1));
+    box-shadow: inset 0 0 0 0.5px color-mix(in oklch, var(--text-1) 15%, transparent);
+    color: var(--text-4);
+    cursor: not-allowed;
+  }
+  @supports (appearance: base-select) {
+    select[data-anta],
+    select[data-anta]::picker(select) {
+      appearance: base-select;
+      -webkit-appearance: base-select;
+    }
+    select[data-anta] {
+      padding: 0;
+    }
+    select[data-anta] > button {
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      inline-size: 100%;
+      min-block-size: 28px;
+      padding-block: 4px;
+      padding-inline: 7px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font: inherit;
+      text-align: start;
+    }
+    select[data-anta] > button > selectedcontent {
+      min-inline-size: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    select[data-anta]::picker-icon {
+      color: var(--text-3);
+      transition: rotate 120ms ease;
+    }
+    select[data-anta]:open::picker-icon { rotate: 180deg; }
+    select[data-anta]::picker(select) {
+      box-sizing: border-box;
+      margin-block-start: 4px;
+      padding: 4px;
+      border: 0;
+      border-radius: 4px;
+      background: var(--bg-1);
+      box-shadow: inset 0 0 0 0.5px var(--border-2), 0 4px 12px color-mix(in oklch, black 12%, transparent);
+      color: var(--text-1);
+    }
+    select[data-anta] option {
+      border-radius: 3px;
+      color: var(--text-2);
+      font: inherit;
+      padding-block: 4px;
+      padding-inline: 7px;
+    }
+    select[data-anta] option:checked {
+      background: color-mix(in oklch, var(--anta-seed-brand) 13%, transparent);
+      color: var(--text-1-brand);
+    }
+    select[data-anta] optgroup {
+      color: var(--text-3);
+      font: inherit;
+      font-weight: 500;
+    }
+  }
+
 }

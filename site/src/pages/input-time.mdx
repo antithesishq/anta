@@ -132,6 +132,20 @@ Slots supply the field label and leading icon.
 </a-input-time>
 ```
 
+### Native HTML time input
+
+For a form that can use the browser's time picker, add `data-anta` to a regular
+time input. It gives the field Anta's resting chrome while the browser keeps its
+own picker, validation, and keyboard behavior.
+
+<Preview>
+  <input data-anta style={{ marginBottom: '8px' }} type="time" name="reminder-at" value="09:00" />
+</Preview>
+
+```html
+<input data-anta type="time" name="reminder-at" value="09:00">
+```
+
 </Disclosure>
 
 ## Styling

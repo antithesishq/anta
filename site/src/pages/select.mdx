@@ -967,6 +967,47 @@ reflects a picked option into the field and selected row.
 </script>
 ```
 
+### Native HTML select
+
+When a native single-value select is enough, add `data-anta` to `<select>`. The
+modern customizable-select model keeps native selection, keyboard behavior, and
+form submission while exposing its trigger `button`, `selectedcontent`, options,
+and optgroups for styling. Anta styles every supported part; browsers without that
+model retain their regular native select. Use `Select` for filtering, multiple
+selection, nested menus, or custom option coordination.
+
+<Preview>
+  <select data-anta style={{ marginBottom: '8px' }} name="native-output">
+    <button>
+      <selectedcontent></selectedcontent>
+    </button>
+    <option value="" selected disabled>Choose an output</option>
+    <option value="stream">Stream</option>
+    <option value="output_text">Output text</option>
+    <optgroup label="Metadata">
+      <option value="container">Container</option>
+      <option value="file_path">File path</option>
+    </optgroup>
+  </select>
+</Preview>
+
+```html
+<select data-anta name="output">
+  <!-- The native trigger; selectedcontent mirrors the chosen option. -->
+  <button>
+    <selectedcontent></selectedcontent>
+  </button>
+
+  <option value="" selected disabled>Choose an output</option>
+  <option value="stream">Stream</option>
+  <option value="output_text">Output text</option>
+  <optgroup label="Metadata">
+    <option value="container">Container</option>
+    <option value="file_path">File path</option>
+  </optgroup>
+</select>
+```
+
 </Disclosure>
 
 <Disclosure title="Styling">

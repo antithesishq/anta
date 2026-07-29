@@ -313,7 +313,8 @@
    own [tone="…"] rules below. */
 a-button:not([tone]),
 a[role="button"][data-anta]:not([tone]),
-button[data-anta]:not([tone]) {
+button[data-anta]:not([tone]),
+input[data-anta]:is([type="reset"], [type="submit"]):not([tone]) {
   --button-bg-primary-rest: #635b65;
   --button-bg-primary-hover: #534c57;
   --button-bg-primary-active: #49424c;
@@ -330,77 +331,77 @@ button[data-anta]:not([tone]) {
   --button-fg-quaternary-rest: #635b65;
   --button-fg-quaternary-hover: #49424c;
 }
-a-button[tone="brand"], a[role="button"][data-anta][tone="brand"], button[data-anta][tone="brand"] {
+a-button[tone="brand"], a[role="button"][data-anta][tone="brand"], button[data-anta][tone="brand"], input[data-anta]:is([type="reset"], [type="submit"])[tone="brand"] {
   --button-bg-primary-rest: #5f4bc3; --button-bg-primary-hover: #503cb4; --button-bg-primary-active: #483493;
   --button-bg-secondary-rest: #7460d71a; --button-bg-secondary-hover: #7460d726; --button-bg-secondary-active: #7460d733;
   --button-fg-secondary-rest: #5f4bc3; --button-fg-secondary-hover: #503cb4;
   --button-fg-tertiary-rest: #5f4bc3; --button-fg-tertiary-hover: #503cb4; --button-bg-tertiary-hover: #7460d71a; --button-bg-tertiary-active: #7460d726;
   --button-fg-quaternary-rest: #5f4bc3; --button-fg-quaternary-hover: #483493;
 }
-a-button[tone="critical"], a[role="button"][data-anta][tone="critical"], button[data-anta][tone="critical"] {
+a-button[tone="critical"], a[role="button"][data-anta][tone="critical"], button[data-anta][tone="critical"], input[data-anta]:is([type="reset"], [type="submit"])[tone="critical"] {
   --button-bg-primary-rest: #c9302c; --button-bg-primary-hover: #b02120; --button-bg-primary-active: #a01c1c;
   --button-bg-secondary-rest: #de45451a; --button-bg-secondary-hover: #de454526; --button-bg-secondary-active: #de454533;
   --button-fg-secondary-rest: #c9302c; --button-fg-secondary-hover: #b02120;
   --button-fg-tertiary-rest: #c9302c; --button-fg-tertiary-hover: #b02120; --button-bg-tertiary-hover: #de45451a; --button-bg-tertiary-active: #de454533;
   --button-fg-quaternary-rest: #c9302c; --button-fg-quaternary-hover: #a01c1c;
 }
-a-button[tone="info"], a[role="button"][data-anta][tone="info"], button[data-anta][tone="info"] {
+a-button[tone="info"], a[role="button"][data-anta][tone="info"], button[data-anta][tone="info"], input[data-anta]:is([type="reset"], [type="submit"])[tone="info"] {
   --button-bg-primary-rest: #1f6eb2; --button-bg-primary-hover: #1a5b93; --button-bg-primary-active: #175082;
   --button-bg-secondary-rest: #2686d91a; --button-bg-secondary-hover: #2686d926; --button-bg-secondary-active: #2686d933;
   --button-fg-secondary-rest: #1f6eb2; --button-fg-secondary-hover: #1a5b93;
   --button-fg-tertiary-rest: #1f6eb2; --button-fg-tertiary-hover: #1a5b93; --button-bg-tertiary-hover: #2686d91a; --button-bg-tertiary-active: #2686d926;
   --button-fg-quaternary-rest: #1f6eb2; --button-fg-quaternary-hover: #175082;
 }
-a-button[tone="success"], a[role="button"][data-anta][tone="success"], button[data-anta][tone="success"] {
+a-button[tone="success"], a[role="button"][data-anta][tone="success"], button[data-anta][tone="success"], input[data-anta]:is([type="reset"], [type="submit"])[tone="success"] {
   --button-bg-primary-rest: #2a7e43; --button-bg-primary-hover: #226737; --button-bg-primary-active: #1f5c31;
   --button-bg-secondary-rest: #3295501a; --button-bg-secondary-hover: #32955026; --button-bg-secondary-active: #32955033;
   --button-fg-secondary-rest: #2a7e43; --button-fg-secondary-hover: #226737;
   --button-fg-tertiary-rest: #2a7e43; --button-fg-tertiary-hover: #226737; --button-bg-tertiary-hover: #3295501a; --button-bg-tertiary-active: #32955026;
   --button-fg-quaternary-rest: #2a7e43; --button-fg-quaternary-hover: #1f5c31;
 }
-a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[data-anta][tone="warning"] {
+a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[data-anta][tone="warning"], input[data-anta]:is([type="reset"], [type="submit"])[tone="warning"] {
   --button-bg-primary-rest: #c37416; --button-bg-primary-hover: #ae6613; --button-bg-primary-active: #995200;
   --button-bg-secondary-rest: #c374161a; --button-bg-secondary-hover: #c3741626; --button-bg-secondary-active: #c3741633;
   --button-fg-secondary-rest: #c37416; --button-fg-secondary-hover: #ae6613;
   --button-fg-tertiary-rest: #c37416; --button-fg-tertiary-hover: #ae6613; --button-bg-tertiary-hover: #c374161a; --button-bg-tertiary-active: #c3741633;
   --button-fg-quaternary-rest: #c37416; --button-fg-quaternary-hover: #995200;
 }
-.dark a-button:not([tone]), .dark a[role="button"][data-anta]:not([tone]), .dark button[data-anta]:not([tone]) {
+.dark a-button:not([tone]), .dark a[role="button"][data-anta]:not([tone]), .dark button[data-anta]:not([tone]), .dark input[data-anta]:is([type="reset"], [type="submit"]):not([tone]) {
   --button-bg-primary-rest: #534c57; --button-bg-primary-hover: #635b65; --button-bg-primary-active: #938d96;
   --button-bg-secondary-rest: #e4d1ef1c; --button-bg-secondary-hover: #e4d1ef24; --button-bg-secondary-active: #e4d1ef2e;
   --button-fg-secondary-rest: #c1b9c1; --button-fg-secondary-hover: #d4ced4; --button-fg-secondary-l-shift: 0;
   --button-fg-tertiary-rest: #afa9b1; --button-fg-tertiary-hover: #afa9b1; --button-bg-tertiary-hover: #e4d1ef14; --button-bg-tertiary-active: #e4d1ef21;
   --button-fg-quaternary-rest: #afa9b1; --button-fg-quaternary-hover: #cac4ca;
 }
-.dark a-button[tone="brand"], .dark a[role="button"][data-anta][tone="brand"], .dark button[data-anta][tone="brand"] {
+.dark a-button[tone="brand"], .dark a[role="button"][data-anta][tone="brand"], .dark button[data-anta][tone="brand"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="brand"] {
   --button-bg-primary-rest: #503cb4; --button-bg-primary-hover: #5f4bc3; --button-bg-primary-active: #7460d7;
   --button-bg-secondary-rest: #7460d73b; --button-bg-secondary-hover: #7460d747; --button-bg-secondary-active: #7460d754;
   --button-fg-secondary-rest: #c5baff; --button-fg-secondary-hover: #d2cbf6;
   --button-fg-tertiary-rest: #ada0ee; --button-fg-tertiary-hover: #bcb1f1; --button-bg-tertiary-hover: #7460d73b; --button-bg-tertiary-active: #7460d747;
   --button-fg-quaternary-rest: #ada0ee; --button-fg-quaternary-hover: #c7bef4;
 }
-.dark a-button[tone="critical"], .dark a[role="button"][data-anta][tone="critical"], .dark button[data-anta][tone="critical"] {
+.dark a-button[tone="critical"], .dark a[role="button"][data-anta][tone="critical"], .dark button[data-anta][tone="critical"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="critical"] {
   --button-bg-primary-rest: #b02120; --button-bg-primary-hover: #c9302c; --button-bg-primary-active: #de4545;
   --button-bg-secondary-rest: #de45453b; --button-bg-secondary-hover: #de454547; --button-bg-secondary-active: #de454554;
   --button-fg-secondary-rest: #ffabac; --button-fg-secondary-hover: #f4c2c2;
   --button-fg-tertiary-rest: #e78e90; --button-fg-tertiary-hover: #efa4a4; --button-bg-tertiary-hover: #de45453b; --button-bg-tertiary-active: #de454547;
   --button-fg-quaternary-rest: #e78e90; --button-fg-quaternary-hover: #ffabac;
 }
-.dark a-button[tone="info"], .dark a[role="button"][data-anta][tone="info"], .dark button[data-anta][tone="info"] {
+.dark a-button[tone="info"], .dark a[role="button"][data-anta][tone="info"], .dark button[data-anta][tone="info"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="info"] {
   --button-bg-primary-rest: #1a5b93; --button-bg-primary-hover: #1f6eb2; --button-bg-primary-active: #2686d9;
   --button-bg-secondary-rest: #2686d93b; --button-bg-secondary-hover: #2686d947; --button-bg-secondary-active: #2686d954;
   --button-fg-secondary-rest: #9ed2ff; --button-fg-secondary-hover: #bad6f3;
   --button-fg-tertiary-rest: #7db6e8; --button-fg-tertiary-hover: #93c5ec; --button-bg-tertiary-hover: #2686d93b; --button-bg-tertiary-active: #2686d947;
   --button-fg-quaternary-rest: #7db6e8; --button-fg-quaternary-hover: #a6cdef;
 }
-.dark a-button[tone="success"], .dark a[role="button"][data-anta][tone="success"], .dark button[data-anta][tone="success"] {
+.dark a-button[tone="success"], .dark a[role="button"][data-anta][tone="success"], .dark button[data-anta][tone="success"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="success"] {
   --button-bg-primary-rest: #226737; --button-bg-primary-hover: #2a7e43; --button-bg-primary-active: #329550;
   --button-bg-secondary-rest: #3295503b; --button-bg-secondary-hover: #32955047; --button-bg-secondary-active: #32955054;
   --button-fg-secondary-rest: #8ceca9; --button-fg-secondary-hover: #b3e5c2;
   --button-fg-tertiary-rest: #74cd8e; --button-fg-tertiary-hover: #88d7a0; --button-bg-tertiary-hover: #3295503b; --button-bg-tertiary-active: #32955047;
   --button-fg-quaternary-rest: #74cd8e; --button-fg-quaternary-hover: #9ddeb1;
 }
-.dark a-button[tone="warning"], .dark a[role="button"][data-anta][tone="warning"], .dark button[data-anta][tone="warning"] {
+.dark a-button[tone="warning"], .dark a[role="button"][data-anta][tone="warning"], .dark button[data-anta][tone="warning"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="warning"] {
   --button-bg-primary-rest: #7f410b; --button-bg-primary-hover: #995200; --button-bg-primary-active: #ae6613;
   --button-bg-secondary-rest: #c374163b; --button-bg-secondary-hover: #c3741647; --button-bg-secondary-active: #c3741654;
   --button-fg-secondary-rest: #f7c06e; --button-fg-secondary-hover: #f3cc91;

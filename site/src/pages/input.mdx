@@ -767,6 +767,37 @@ Slots hold the label, hint, and controls around the native field.
 </a-input>
 ```
 
+### Native HTML inputs
+
+For a standard HTML form, add `data-anta` to a text-like input. Text, email,
+telephone, URL, password, and number inputs keep their native editing, password
+masking, keyboard, validation, and form behavior while using Anta's field chrome.
+`submit` and `reset` inputs use the matching Anta button chrome; set
+`priority="primary"` on a submit control when it is the form's main action.
+
+<Preview gap="16px">
+  <input data-anta style={{ marginBottom: '8px' }} type="text" name="name" placeholder="Text" />
+  <input data-anta style={{ marginBottom: '8px' }} type="email" name="email" placeholder="Email" />
+  <input data-anta style={{ marginBottom: '8px' }} type="tel" name="phone" placeholder="Telephone" />
+  <input data-anta style={{ marginBottom: '8px' }} type="url" name="site" placeholder="URL" />
+  <input data-anta style={{ marginBottom: '8px' }} type="password" name="password" value="password" />
+  <input data-anta style={{ marginBottom: '8px' }} type="number" name="seats" value="3" min="1" />
+  <input data-anta style={{ marginBottom: '8px' }} type="submit" value="Submit" priority="primary" />
+  <input data-anta style={{ marginBottom: '8px' }} type="reset" value="Reset" />
+</Preview>
+
+```html
+<input data-anta type="text" name="name" placeholder="Text">
+<input data-anta type="email" name="email" placeholder="Email">
+<input data-anta type="tel" name="phone" placeholder="Telephone">
+<input data-anta type="url" name="site" placeholder="URL">
+<input data-anta type="password" name="password" value="password">
+<input data-anta type="number" name="seats" value="3" min="1">
+
+<input data-anta type="submit" value="Submit" priority="primary">
+<input data-anta type="reset" value="Reset">
+```
+
 </Disclosure>
 
 <Disclosure title="Styling">

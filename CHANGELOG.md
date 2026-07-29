@@ -3,6 +3,14 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- Native HTML form controls opt into Anta chrome with `data-anta`, including
+  text-like and date/time inputs, submit/reset buttons, checkboxes, radios, and
+  customizable selects.
+
 ## 0.3.16 — July 29, 2026
 
 ### Added

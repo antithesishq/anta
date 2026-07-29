@@ -299,4 +299,78 @@
     --checkbox-border-hover:  oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
     --checkbox-border-active: oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
   }
+
+  /* A native checkbox can opt into the same compact control surface with
+     `data-anta`. It remains a real input: labels, form submission, checked,
+     indeterminate, and browser validation keep their normal semantics. */
+  input[data-anta][type="checkbox"] {
+    --native-choice-bg: var(--bg-1);
+    --native-choice-border: var(--border-3);
+    --native-choice-border-hover: var(--border-2);
+    --native-choice-border-active: var(--border-1);
+    --native-choice-selected: oklch(from var(--anta-seed-neutral) 0.6 c h);
+    --native-choice-selected-hover: oklch(from var(--anta-seed-neutral) 0.45 c h);
+    --native-choice-selected-active: oklch(from var(--anta-seed-neutral) 0.4 c h);
+
+    box-sizing: border-box;
+    inline-size: 16px;
+    block-size: 16px;
+    margin: 0 8px 0 0;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1.5px solid var(--native-choice-border);
+    border-radius: 4px;
+    background-color: var(--native-choice-bg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 12px;
+    cursor: pointer;
+    vertical-align: -3px;
+    transition:
+      background-color 150ms ease-out,
+      border-color 150ms ease-out;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    input[data-anta][type="checkbox"]:not(:disabled):hover {
+      border-color: var(--native-choice-border-hover);
+    }
+    input[data-anta][type="checkbox"]:not(:disabled):hover:is(:checked, :indeterminate) {
+      background-color: var(--native-choice-selected-hover);
+      border-color: var(--native-choice-selected-hover);
+    }
+  }
+  input[data-anta][type="checkbox"]:not(:disabled):active {
+    border-color: var(--native-choice-border-active);
+  }
+  input[data-anta][type="checkbox"]:not(:disabled):active:is(:checked, :indeterminate) {
+    background-color: var(--native-choice-selected-active);
+    border-color: var(--native-choice-selected-active);
+  }
+  input[data-anta][type="checkbox"]:is(:checked, :indeterminate) {
+    background-color: var(--native-choice-selected);
+    border-color: var(--native-choice-selected);
+  }
+  input[data-anta][type="checkbox"]:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f6f4f6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+  }
+  input[data-anta][type="checkbox"]:indeterminate {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f6f4f6' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E");
+  }
+  input[data-anta][type="checkbox"]:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  input[data-anta][type="checkbox"]:disabled {
+    border-color: color-mix(in oklch, var(--text-1) 10%, transparent);
+    background-color: color-mix(in oklch, var(--text-1) 10%, transparent);
+    cursor: not-allowed;
+  }
+  input[data-anta][type="checkbox"]:disabled:is(:checked, :indeterminate) {
+    background-color: color-mix(in oklch, var(--text-1) 10%, transparent);
+  }
+  .dark input[data-anta][type="checkbox"] {
+    --native-choice-selected: oklch(from var(--anta-seed-neutral) 0.42 c h);
+    --native-choice-selected-hover: oklch(from var(--anta-seed-neutral) 0.45 c h);
+    --native-choice-selected-active: oklch(from var(--anta-seed-neutral) 0.5 c h);
+  }
 }

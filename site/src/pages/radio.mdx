@@ -471,6 +471,22 @@ The group owns selection and the single tab stop. Put options in `<a-radio-list>
 </a-radio-group>
 ```
 
+### Native HTML radio inputs
+
+For a standard HTML form, add `data-anta` to each native radio. Radios that share
+a `name` retain the browser's selection, keyboard behavior, labels, and form
+submission while using Anta's control surface.
+
+<Preview style="flex-direction: column; align-items: flex-start;">
+  <label><input data-anta type="radio" name="native-plan" value="starter" /> Starter</label>
+  <label style={{ marginBottom: '8px' }}><input data-anta type="radio" name="native-plan" value="pro" checked /> Pro</label>
+</Preview>
+
+```html
+<label><input data-anta type="radio" name="plan" value="starter"> Starter</label>
+<label><input data-anta type="radio" name="plan" value="pro" checked> Pro</label>
+```
+
 </Disclosure>
 
 <Disclosure title="Styling">

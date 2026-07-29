@@ -270,6 +270,23 @@ The focusable host carries the state. Label and hint are light-DOM children.
 </a-checkbox>
 ```
 
+### Native HTML checkbox
+
+For a standard HTML form, add `data-anta` to a native checkbox. It keeps the
+browser's label behavior, checked and indeterminate states, and form submission
+while using Anta's control surface.
+
+<Preview>
+  <label style={{ marginBottom: '8px' }}><input data-anta type="checkbox" name="updates" checked /> Email updates</label>
+</Preview>
+
+```html
+<label>
+  <input data-anta type="checkbox" name="updates" checked>
+  Email updates
+</label>
+```
+
 </Disclosure>
 
 <Disclosure title="Styling">

@@ -439,13 +439,35 @@ which uses the same `Menu` composition shown on the [Menu](/menu/) page.
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+`InputDate` has no host element. Rebuilding its text parsing, dropdown calendar,
+localized day grid, month navigation, keyboard navigation, and focus management
+in vanilla JavaScript is significant work, even with Anta's `buildMonth` and
+`parseISODate` helpers. Use the `InputDate` wrapper when React or Preact is an
+option. Otherwise, a native HTML date input is the practical baseline.
 
-`InputDate` has no host element. Although Anta exposes `buildMonth` and
-`parseISODate`, building the equivalent vanilla field still means managing the
-popup, localized day grid, keyboard navigation, roving focus, selection, and text
-parsing yourself. Use the `InputDate` wrapper in React or Preact. For a vanilla
-form, use the native `<input type="date">` control instead.
+### Native HTML date input
+
+Add `data-anta` to a `date`, `datetime-local`, `month`, `time`, or `week` input.
+Nothing else is required: Anta styles the field while the browser keeps its picker,
+icon, validation, and keyboard model. The picker itself and its date/time
+formatting remain browser- and OS-owned.
+
+<Preview gap="16px">
+  <input data-anta style={{ marginBottom: '8px' }} type="date" name="due-date" value="2026-06-15" />
+  <input data-anta style={{ marginBottom: '8px' }} type="datetime-local" name="starts-at" value="2026-06-15T09:00" />
+  <input data-anta style={{ marginBottom: '8px' }} type="month" name="billing-month" value="2026-06" />
+  <input data-anta style={{ marginBottom: '8px' }} type="time" name="reminder-at" value="09:00" />
+  <input data-anta style={{ marginBottom: '8px' }} type="week" name="sprint-week" value="2026-W25" />
+</Preview>
+
+```html
+<!-- `data-anta` styles the field, not the native picker. -->
+<input data-anta type="date" name="due-date" value="2026-06-15">
+<input data-anta type="datetime-local" name="starts-at" value="2026-06-15T09:00">
+<input data-anta type="month" name="billing-month" value="2026-06">
+<input data-anta type="time" name="reminder-at" value="09:00">
+<input data-anta type="week" name="sprint-week" value="2026-W25">
+```
 
 </Disclosure>
 

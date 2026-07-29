@@ -280,7 +280,7 @@ without `!important`). The classes below are just for the demos:
 
     a-checkbox.customized { font-weight: 700; }
     a-checkbox.customized::before,
-    a-checkbox.customized::after { inline-size: 24px; block-size: 24px; }
+    a-checkbox.customized::after { inline-size: 24px; block-size: 24px; margin-block-start: -2px; }
     a-checkbox.customized::before { border-radius: 50%; border-width: 2px; }
     a-checkbox.customized::after { -webkit-mask-size: 16px; mask-size: 16px; }
     a-checkbox.customized:state(checked)::before { background: light-dark(#1f6e5f, #2f9c84); border-color: light-dark(#1f6e5f, #2f9c84); }
@@ -307,7 +307,7 @@ a-checkbox.outlined:state(checked)::after {
    Colours use light-dark() so they're tuned for both themes at once. */
 a-checkbox.customized { font-weight: 700; }
 a-checkbox.customized::before,
-a-checkbox.customized::after { inline-size: 24px; block-size: 24px; }
+a-checkbox.customized::after { inline-size: 24px; block-size: 24px; margin-block-start: -2px; }
 a-checkbox.customized::before { border-radius: 50%; border-width: 2px; }
 a-checkbox.customized::after { mask-size: 16px; }                /* bigger mark */
 a-checkbox.customized:state(checked)::before {

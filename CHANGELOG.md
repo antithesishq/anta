@@ -8,8 +8,8 @@ changes are not listed.
 ### Added
 
 - Native HTML form controls opt into Anta chrome with `data-anta`, including
-  text-like and date/time inputs, submit/reset buttons, checkboxes, radios, and
-  customizable selects.
+  text-like and date/time inputs, submit/reset buttons, checkboxes, radios,
+  details disclosures, and customizable selects.
 
 ## 0.3.16 — July 29, 2026
 

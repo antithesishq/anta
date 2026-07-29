@@ -325,4 +325,75 @@
   .dark a-expander[disabled][tone] {
     --expander-text: #635b65;
   }
+
+  /* A native disclosure can opt into the neutral, tertiary expander treatment
+     without giving up the platform's built-in keyboard and accessibility
+     behaviour. The native `open` attribute remains the state source. */
+  details[data-anta] {
+    --native-expander-gutter: 24px;
+
+    display: block;
+    box-sizing: border-box;
+    color: var(--text-2);
+    font-family: var(--sans-serif);
+    font-size: 15px;
+    font-feature-settings: "ss02", "ss05", "tnum";
+    line-height: 20px;
+  }
+  details[data-anta] > summary {
+    position: relative;
+    box-sizing: border-box;
+    display: block;
+    min-width: 0;
+    padding: 6px 4px 6px var(--native-expander-gutter);
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 584.62;
+    letter-spacing: 0;
+    list-style: none;
+    text-decoration-line: none;
+    transition: color 150ms ease;
+  }
+  details[data-anta] > summary::-webkit-details-marker { display: none; }
+  details[data-anta] > summary::marker { content: ""; }
+  details[data-anta] > summary::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--native-expander-gutter) - 16px - 2px);
+    /* The down chevron's visible stroke sits lower than its 16px mask box;
+       lift it one pixel to center it optically against summary text. */
+    top: calc(50% - 1px);
+    width: 16px;
+    height: 16px;
+    background-color: currentColor;
+    -webkit-mask: var(--_expander-chevron) center / contain no-repeat;
+            mask: var(--_expander-chevron) center / contain no-repeat;
+    opacity: 0.6;
+    transform: translateY(-50%);
+    transition: transform 150ms ease, opacity 150ms ease, background-color 150ms ease;
+  }
+  details[data-anta][open] > summary::before {
+    opacity: 1;
+    transform: translateY(-50%) rotate(90deg);
+  }
+  details[data-anta] > summary:hover {
+    color: var(--text-1);
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: color-mix(in oklch, currentColor 75%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  details[data-anta] > summary:hover::before { opacity: 1; }
+  details[data-anta] > summary:active { color: var(--text-2); }
+  details[data-anta] > summary:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  details[data-anta] > :not(summary) {
+    display: block;
+    padding: 2px 4px 6px var(--native-expander-gutter);
+    line-height: 20px;
+  }
 }

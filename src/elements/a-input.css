@@ -421,16 +421,21 @@
       text-align: start;
     }
     select[data-anta] > button > selectedcontent {
+      flex: 1;
       min-inline-size: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    select[data-anta]::picker-icon {
+    /* The markup supplies Anta's own chevron in the native trigger. Hide the
+       browser indicator so its platform alignment never competes with it. */
+    select[data-anta]::picker-icon { display: none; }
+    select[data-anta] > button > a-icon {
+      margin-inline-start: auto;
       color: var(--text-3);
-      transition: rotate 120ms ease;
+      transition: transform 120ms ease;
     }
-    select[data-anta]:open::picker-icon { rotate: 180deg; }
+    select[data-anta]:open > button > a-icon { transform: rotate(180deg); }
     select[data-anta]::picker(select) {
       box-sizing: border-box;
       margin-block-start: 4px;

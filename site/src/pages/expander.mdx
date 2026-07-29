@@ -514,6 +514,26 @@ Slots hold the title and actions. The details element contains the collapsible b
 </a-expander>
 ```
 
+### Native HTML details
+
+For a simple disclosure, add `data-anta` to native `<details>`. It keeps the
+browser's opening, keyboard, and accessibility behaviour while taking on the
+neutral tertiary Expander treatment.
+
+<Preview align="center">
+  <details data-anta open>
+    <summary>Build artifacts</summary>
+    <div>Everything inside <code>&lt;details&gt;</code> is the collapsible body.</div>
+  </details>
+</Preview>
+
+```html
+<details data-anta open>
+  <summary>Build artifacts</summary>
+  <div>Everything inside &lt;details&gt; is the collapsible body.</div>
+</details>
+```
+
 </Disclosure>
 
 <Disclosure title="Styling">

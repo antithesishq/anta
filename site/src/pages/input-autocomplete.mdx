@@ -72,6 +72,23 @@ Suggestions are bare strings or `SelectOption`s, the same option shape
 
 </Disclosure>
 
+<Disclosure title="Vanilla web component">
+
+`InputAutocomplete` combines an input with a Menu. Reproducing its filtering,
+selection, focus, and popup coordination without the React or Preact wrapper is
+a substantial amount of code. If you only need people to enter a value, use a
+native input with `data-anta` for the same field appearance.
+
+<Preview>
+  <input data-anta type="text" placeholder="Search people" />
+</Preview>
+
+```html
+<input data-anta type="text" placeholder="Search people" />
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 **The field** is styled through Input's props (`size`, `status`, `tone`, `round`,

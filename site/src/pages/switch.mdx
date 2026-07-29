@@ -216,13 +216,10 @@ Reach for the props first: **`tone`** colours the checked track plus the uncheck
 `<a-switch>` is light DOM. The **track is `::before`**, the **thumb is `::after`**, and the label / hint are `a-switch-label` / `a-switch-hint` children. Target them with plain CSS. The classes below are only for the demos.
 
 <Preview gap="20px">
-  <Switch className="square-track" defaultChecked label="Square track" />
   <Switch className="strong-label" defaultChecked label="Strong label" />
   <Switch className="track-marks" defaultChecked label="Checked mark on the track" />
   <Switch className="track-marks" label="× mark on the track" />
   <style is:inline>{`
-    a-switch.square-track::before { border-radius: 4px; }
-    a-switch.square-track::after { border-radius: 3px; }
     a-switch.strong-label { color: var(--text-1-brand); font-weight: 700; }
 
     a-switch.track-marks::before { display: flex; align-items: center; font-size: 10px; font-weight: 700; line-height: 1; }
@@ -232,10 +229,6 @@ Reach for the props first: **`tone`** colours the checked track plus the uncheck
 </Preview>
 
 ```css folded
-/* The class is only for the demo. Replace it with your own selector. */
-a-switch.square-track::before { border-radius: 4px; }
-a-switch.square-track::after { border-radius: 3px; }
-
 a-switch.strong-label {
   color: var(--text-1-brand);
   font-weight: 700;

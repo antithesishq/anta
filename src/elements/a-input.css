@@ -92,6 +92,9 @@
   }
   a-input[size="small"]:not(:defined)::after { min-height: 24px; line-height: 24px; font-size: 13px; }
   a-input[size="large"]:not(:defined)::after { min-height: 32px; line-height: 32px; font-size: 17px; }
+  @media (forced-colors: active) {
+    a-input:not(:defined)::after { border: 1px solid ButtonBorder; }
+  }
   a-input[round]:not(:defined)::after { border-radius: var(--input-round, 999px); }
 
   /* Fade the whole field up as it upgrades: the skeleton rests slightly
@@ -487,6 +490,26 @@
     box-shadow: inset 0 0 0 0.5px color-mix(in oklch, var(--text-1) 15%, transparent);
     color: var(--text-4);
     cursor: not-allowed;
+  }
+  @media (forced-colors: active) {
+    input[data-anta]:is(
+      :not([type]),
+      [type="text"],
+      [type="search"],
+      [type="email"],
+      [type="number"],
+      [type="password"],
+      [type="tel"],
+      [type="url"],
+      [type="date"],
+      [type="datetime-local"],
+      [type="month"],
+      [type="time"],
+      [type="week"]
+    ),
+    select[data-anta] {
+      border: 1px solid ButtonBorder;
+    }
   }
   /* Input and select own a semantic `size` attribute, so the Anta size variant
      uses a namespaced data attribute. `round` and custom-color `tone` have no

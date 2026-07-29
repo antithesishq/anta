@@ -1,6 +1,6 @@
 ---
 interface Props {
-  kind: 'date' | 'select' | 'toaster'
+  kind: 'select' | 'toaster'
 }
 
 const { kind } = Astro.props
@@ -11,9 +11,7 @@ const { kind } = Astro.props
 </div>
 
 <script>
-  type CalendarStateEvent = CustomEvent<{ next: string | null }>
   type InputElement = HTMLElement & { value: string }
-  type MenuElement = HTMLElement & { close?: () => void }
 
   const itemFrom = (event: Event) =>
     event.target instanceof Element ? event.target.closest<HTMLElement>('a-menu-item') : null
@@ -31,23 +29,6 @@ const { kind } = Astro.props
         option.toggleAttribute('selected', selected)
       }
       field.value = item.querySelector('a-menu-item-label')?.textContent?.trim() ?? ''
-    })
-  }
-
-  function bindDate(root: HTMLElement) {
-    const field = root.querySelector<InputElement>('a-input')
-    const menu = root.querySelector<MenuElement>('a-menu')
-    const calendar = root.querySelector<HTMLElement>('a-calendar')
-    if (!field || !menu || !calendar) return
-
-    calendar.addEventListener('statechange', (event) => {
-      const { next } = (event as CalendarStateEvent).detail
-      if (!next) return
-      field.value = next
-      for (const cell of calendar.querySelectorAll<HTMLElement>('[data-part="day-cell"]')) {
-        cell.toggleAttribute('selected', cell.dataset.date === next)
-      }
-      menu.close?.()
     })
   }
 
@@ -69,7 +50,6 @@ const { kind } = Astro.props
       if (root.dataset.antaCompositionBound) continue
       root.dataset.antaCompositionBound = 'true'
       switch (root.dataset.antaComposition) {
-        case 'date': bindDate(root); break
         case 'select': bindSelect(root); break
         case 'toaster': bindToaster(root); break
       }

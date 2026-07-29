@@ -10,45 +10,51 @@ One constraint shapes the architecture. Antithesis runs most of its UI in a Work
 npm install @antadesign/anta   # or pnpm / bun
 ```
 
-Pin an exact version in your `package.json` (`"@antadesign/anta": "0.3.12"`) rather than a floating tag like `"latest"`, which can change between installs.
+Pin an exact version in `package.json` (`"@antadesign/anta": "0.3.16"`) instead
+of a floating tag such as `"latest"`.
 
 ### Usage
 
 ```tsx
-import '@antadesign/anta/tokens.css'  // CSS custom properties (colors, sizes, fonts)
-import '@antadesign/anta/reset.css'   // small reset + Anta's typography opinions
-import '@antadesign/anta/elements'    // registers <a-progress> et al.
+import '@antadesign/anta/tokens.css'  // CSS custom properties
+import '@antadesign/anta/reset.css'   // reset and typography defaults
+import '@antadesign/anta/elements'    // registers <a-*> elements
 import { Progress } from '@antadesign/anta'
 
-<Progress value={42} label="uploaded.." hint="3 of 7" />
+<Progress value={42} label="Uploaded" hint="3 of 7" />
 ```
 
 ### What you import (and why)
 
-Five imports, listed in the order you'd add them. Tokens + elements + the JSX layer render a styled component; the reset is recommended; the theme is opt-in.
+Tokens, elements, and the JSX layer render a styled component. The reset is
+recommended; the reference theme is optional.
 
 | Import | Provides | Skip if… |
 |---|---|---|
-| `@antadesign/anta/tokens.css` | The CSS custom properties: six tone seeds (`--anta-seed-neutral`, `--anta-seed-brand`, …), the role scales derived from them (`--bg-1…5`, `--text-1…5`, `--border-1…5`), the `.dark` ancestor toggle, and the base `font-size: 15px`. Also declares the `@layer base, anta, components, utilities` order. Override a seed to reskin its whole tone. | You're supplying your own values for the same variables. |
-| `@antadesign/anta/reset.css` | Small modern reset (box-sizing, margins, form-control font inheritance) plus Anta's typography for headings, lists, and links. Lives in `@layer anta`. | You already have a reset and don't want Anta's typography defaults. |
-| `@antadesign/anta/elements` | Side-effect import: registers every `<a-*>` element and attaches its CSS (also `@layer anta`). Per-element entries register just one — see [Registering elements](#registering-elements). | You render only on the server, or you import per-element entries instead. |
-| `@antadesign/anta` | The JSX wrappers (`Progress`, `Text`, `Icon`, …): typed React/Preact components that emit `<a-*>` tags. | You write the `<a-*>` elements by hand. |
-| `@antadesign/anta/theme-anta.css` *(optional)* | Anta's hand-tuned reference palette. The default palette is seed-derived; import this last for the exact hand-tuned values. | The seed-derived default, or your own palette, is what you want. |
+| `@antadesign/anta/tokens.css` | Six seed tokens, derived role scales (`--bg-1…5`, `--text-1…5`, `--border-1…5`), `.dark`, the 15px root size, and layer order. Override a seed to reskin its tone. | You provide those variables. |
+| `@antadesign/anta/reset.css` | A small reset plus Anta's heading, list, and link typography in `@layer anta`. | You use another reset and typography. |
+| `@antadesign/anta/elements` | Registers every `<a-*>` element and its CSS. Per-element entries register one; see [Registering elements](#registering-elements). | You render only on the server or register elements individually. |
+| `@antadesign/anta` | Typed React/Preact wrappers such as `Progress`, `Text`, and `Icon`. | You write `<a-*>` elements directly. |
+| `@antadesign/anta/theme-anta.css` *(optional)* | The hand-tuned reference palette. Import last to replace the seed-derived default. | You want the seed-derived or your own palette. |
 
-The order matters at the top: the element CSS reads `var(--text-1)`, `var(--bg-2)`, and friends, and only `tokens.css` defines them. Skip the tokens import and components render unstyled.
+Load `tokens.css` before element CSS. Elements read its variables; without it,
+they render unstyled.
 
 ### Cascade layers
 
-Anta's reset and element CSS live in `@layer anta`. `tokens.css` pre-declares `@layer base, anta, components, utilities;`: Anta's defaults sit above preflight resets (Tailwind's `@layer base`, Normalize) and below your `@layer components` rules and utility frameworks.
+Anta's reset and element CSS live in `@layer anta`. `tokens.css` declares
+`@layer base, anta, components, utilities`, placing Anta above preflight resets
+and below your component and utility layers.
 
-For a different order, declare it in your own CSS loaded **before** `tokens.css` — the first mention of each layer name fixes its position:
+To change that order, declare it in CSS loaded **before** `tokens.css`. The
+first declaration fixes a layer's position:
 
 ```css
 /* your global.css, loaded before anta */
 @layer reset, anta, my-components, utilities;
 ```
 
-CSS custom properties (the `:root { --… }` declarations in `tokens.css`) stay unlayered so they take effect everywhere unconditionally.
+Token custom properties stay unlayered so they apply everywhere.
 
 > **Gotcha: an unlayered hard reset defeats Anta's element rules.**
 >
@@ -57,26 +63,32 @@ CSS custom properties (the `:root { --… }` declarations in `tokens.css`) stay 
 > * { margin: 0; }
 > ```
 >
-> Unlayered styles beat layered ones regardless of specificity, so this common copy-paste outranks every per-element default Anta ships (`p` margins, list padding, and the rest). `reset.css` already does the same universal reset inside `@layer anta` — delete the duplicate from your global CSS, or wrap your own reset in `@layer base { … }` so Anta's element rules still win.
+> Unlayered styles beat layered ones regardless of specificity. This reset
+> overrides Anta's element defaults. Delete the duplicate, or put your reset in
+> `@layer base { … }`; `reset.css` already applies the same universal reset in
+> `@layer anta`.
 
 ## Registering elements
 
-The JSX wrappers render `<a-*>` tags, and the classes behind those tags must be registered **before** they appear in the DOM. Registration needs `HTMLElement`, which exists only in the UI thread of a real browser; in Node.js (SSR) and Worker threads the import is a silent no-op that costs nothing but bundle size.
+JSX wrappers render `<a-*>` tags. Register their classes before those tags reach
+the DOM. Registration needs `HTMLElement`, so the import is a no-op in Node.js
+and Worker threads.
 
 ```ts
 import '@antadesign/anta/elements'  // auto-registers all elements
 ```
 
-**Register only what you use.** `/elements` registers everything; per-element entry points register one element and load just its CSS, keeping unused elements (and their dependencies) out of your bundle:
+`/elements` registers everything. Per-element entries register one element and
+load only its CSS:
 
 ```ts
 import '@antadesign/anta/elements/a-tooltip'  // only <a-tooltip> + its CSS
 import '@antadesign/anta/elements/a-button'   // only <a-button> + its CSS
 ```
 
-Both forms are side-effect imports, idempotent, and SSR-safe.
+Both are idempotent, side-effect imports and safe during SSR.
 
-The cleanest pattern is a static import at your app's entry file, outside any component or hook:
+Use a static import in your app entry, outside components and hooks:
 
 ```ts
 // src/main.tsx (or wherever your root render lives)
@@ -86,18 +98,22 @@ import App from './App'
 createRoot(document.getElementById('root')!).render(<App />)
 ```
 
-Bundlers resolve this at module-init time, so the element classes are registered before anything renders: no flash of un-upgraded elements.
+Module initialisation registers the classes before the first render, avoiding a
+flash of un-upgraded elements.
 
 > **Why not `useEffect(() => import('@antadesign/anta/elements'), [])`?**
-> `useEffect` fires after paint and the dynamic import resolves later still, so the browser paints unregistered elements (which collapse to nothing) until the upgrade catches up. `useLayoutEffect` doesn't help: the import is still async, and it warns during SSR hydration.
+> `useEffect` runs after paint and the import resolves later. The browser can
+> paint unregistered elements first. `useLayoutEffect` is still asynchronous and
+> warns during SSR hydration.
 
-Where the static import goes depends on the runtime:
+Choose the entry point for your runtime:
 
-**Plain HTML / static sites** — a `<script type="module">` tag in the document head.
-
-**SSR frameworks (Astro, Next.js)** — a script the framework ships only to the client. In Astro: `<script>import '@antadesign/anta/elements'</script>` (Astro `<script>` tags are client-side by default). In Next.js: a top-level import in a `'use client'` file, which only enters the client chunk.
-
-**UI in a Worker thread (the Antithesis setup)** — the UI-thread bootstrap, the script that owns the real DOM. The Worker has no `HTMLElement`, so the import must not run there.
+- **Plain HTML or static sites:** a `<script type="module">` in the document head.
+- **Astro or Next.js:** a client-only script. In Astro, use
+  `<script>import '@antadesign/anta/elements'</script>`; in Next.js, import it
+  from a `'use client'` file.
+- **Worker-rendered UI:** the UI-thread bootstrap that owns the DOM. A Worker
+  has no `HTMLElement`.
 
 ## Framework setup
 
@@ -107,7 +123,7 @@ Works out of the box.
 
 ### Preact with compat
 
-If your bundler aliases `react` → `preact/compat`, anta works automatically — no extra setup.
+If your bundler aliases `react` to `preact/compat`, Anta works without setup.
 
 ### Preact without compat
 
@@ -121,17 +137,21 @@ configure(h, Fragment)
 
 ### TypeScript: typing raw `<a-*>` tags in JSX
 
-If you only use the JSX wrappers (`<Button>`, `<Progress>`, …) you need no setup — they're typed like any React component. This section is only for writing the raw `<a-*>` tags directly in JSX.
+JSX wrappers such as `<Button>` and `<Progress>` need no extra typing. Configure
+JSX only when you write raw `<a-*>` tags.
 
-**Option A (preferred)** — point your JSX types at anta in `tsconfig.json`:
+**Option A (preferred)** — point JSX types at Anta in `tsconfig.json`:
 
 ```jsonc
 { "compilerOptions": { "jsx": "react-jsx", "jsxImportSource": "@antadesign/anta" } }
 ```
 
-Every `a-*` tag type-checks, all standard HTML tags keep working, and importing anything from `@antadesign/stickers` adds the sticker tags automatically.
+Every `a-*` tag type-checks, standard HTML tags keep working, and importing
+`@antadesign/stickers` adds its tags automatically.
 
-**Option B** — if you can't change `jsxImportSource` (a shared tsconfig, Emotion's `@emotion/react` source), merge anta's tag map into your JSX namespace yourself: anta exports it as `AntaIntrinsicElements` (and `@antadesign/stickers` as `StickerIntrinsicElements`), one `extends` in any `.d.ts` your tsconfig covers:
+**Option B** — if `jsxImportSource` cannot change, merge Anta's tag map into
+your JSX namespace with `AntaIntrinsicElements` (and `StickerIntrinsicElements`
+when needed):
 
 ```ts
 import type { AntaIntrinsicElements } from '@antadesign/anta'
@@ -144,7 +164,8 @@ declare global {
 }
 ```
 
-On modern `@types/react` (≥18) with `jsx: "react-jsx"`, the JSX namespace is module-scoped and the global declaration above is silently ignored — target the `react` module instead:
+With `@types/react` 18+ and `jsx: "react-jsx"`, JSX is module-scoped. Extend
+the `react` module instead:
 
 ```ts
 import type { AntaIntrinsicElements } from '@antadesign/anta'
@@ -156,11 +177,13 @@ declare module 'react' {
 }
 ```
 
-Either way the tags stay fully typed — unknown `a-*` tags and wrong prop types are still errors. New tags arrive automatically when you upgrade anta; there's no per-tag list to maintain.
+Both options reject unknown tags and invalid props. New tags arrive with Anta
+upgrades; there is no per-tag list to maintain.
 
 ### Raw web components (no JSX)
 
-The elements work in plain HTML; registering them also loads their CSS. The bare specifier needs a bundler or an import map to resolve.
+Elements also work in plain HTML. Registration loads their CSS; resolve the bare
+specifier with a bundler or import map.
 
 ```html
 <script type="module">
@@ -182,7 +205,7 @@ Add the `dark` class to any ancestor element:
 
 ## Fonts
 
-Anta is designed for a customized <a href="https://typetype.org/fonts/tt-interphases-pro" target="_blank" rel="noopener noreferrer">TT Interphases Pro</a> but ships no font binaries. Components reference families through the `--sans-serif` and `--monospace` variables and fall back to system stacks. The base size is `font-size: 15px` on `:root` (so `1rem = 15px`), a deliberate step down from the browser's 16px for Antithesis's information-dense layouts. Both live in `tokens.css`.
+Anta is designed for a customized <a href="https://typetype.org/fonts/tt-interphases-pro" target="_blank" rel="noopener noreferrer">TT Interphases Pro</a>, but ships no font binaries. Components use `--sans-serif` and `--monospace` with system fallbacks. `tokens.css` sets a 15px root size (`1rem = 15px`).
 
 To use the Antithesis fonts, register your own `@font-face` declarations and override the variables:
 
@@ -201,7 +224,7 @@ To use the Antithesis fonts, register your own `@font-face` declarations and ove
 
 ## Browser support
 
-Anta targets evergreen browsers and ships **no polyfills and no feature detection** for its baseline. The floor is set by the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API) (used by `<a-menu>` and `<a-tooltip>` for top-layer rendering):
+Anta targets evergreen browsers and ships **no baseline polyfills or feature detection**. Its floor is the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API), used by `<a-menu>` and `<a-tooltip>`:
 
 | Browser | Minimum version |
 | --- | --- |
@@ -209,6 +232,12 @@ Anta targets evergreen browsers and ships **no polyfills and no feature detectio
 | Safari | 17 (Sep 2023) |
 | Firefox | 125 (Apr 2024) |
 
-This corresponds roughly to [Baseline 2024](https://web.dev/baseline). Within that floor, anta freely relies on: `popover` / `showPopover()` / `:popover-open`, `color-mix(in oklch, …)` and relative `oklch(from …)` colors, `:has()`, `dvh` units, CSS cascade layers, and constructable shadow DOM. On an older browser these fail hard (e.g. `showPopover()` throws) — there is no degraded mode by design; gate anta usage on your own support matrix instead.
+This is roughly [Baseline 2024](https://web.dev/baseline). Anta also relies on
+relative OKLCH, `:has()`, `dvh`, cascade layers, and constructable shadow DOM.
+Older browsers can fail hard, including `showPopover()` throwing. Gate Anta on
+your own support matrix when you support older browsers.
 
-Two features are used as **progressive enhancement** with explicit fallbacks: `checkVisibility()` (falls back to `getClientRects()`), and CSS typed `attr()` for `<a-icon size>` (Chrome 133+ / Safari 18.2+; elsewhere use the `<Icon size>` wrapper or the `--icon-size` variable, see the `a-icon` docs).
+Two features progressively enhance with fallbacks: `checkVisibility()` falls
+back to `getClientRects()`, and typed CSS `attr()` supports raw
+`<a-icon size>` in Chrome 133+ and Safari 18.2+. Elsewhere use `<Icon size>`
+or `--icon-size`.

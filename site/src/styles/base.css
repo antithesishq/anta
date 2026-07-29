@@ -277,7 +277,7 @@ pre, figure, hr, .expressive-code { margin: 0 0 1.5em; }
 }
 .title-tone-grid-inner {
   display: grid;
-  grid-template-columns: repeat(5, max-content);
+  grid-template-columns: repeat(4, max-content);
   column-gap: 32px;
   row-gap: 8px;
   min-width: max-content;

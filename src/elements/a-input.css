@@ -278,6 +278,10 @@
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
+  /* Browsers commonly add a list-picker chevron to an input with `list`. The
+     datalist remains available while typing or focusing the field, but the
+     control keeps the same quiet field surface as an Anta Input. */
+  input[data-anta][list] { appearance: none; }
   .dark input[data-anta]:is(
     :not([type]),
     [type="text"],

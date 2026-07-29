@@ -278,10 +278,13 @@
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
-  /* Browsers commonly add a list-picker chevron to an input with `list`. The
-     datalist remains available while typing or focusing the field, but the
-     control keeps the same quiet field surface as an Anta Input. */
-  input[data-anta][list] { appearance: none; }
+  /* Chrome exposes a datalist's hover chevron through this proprietary picker
+     part. Its user-agent style switches the part's opacity on hover, so retain
+     an explicit override for Anta's native-autocomplete opt-in. */
+  input[data-anta][list]::-webkit-calendar-picker-indicator {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
   .dark input[data-anta]:is(
     :not([type]),
     [type="text"],

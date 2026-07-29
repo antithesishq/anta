@@ -159,12 +159,13 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
           setOpen(true)
         }}
         onKeyDown={(e: any) => {
-          // Enter always closes the list. If a suggestion is highlighted, a-menu's
-          // combobox keyboard already picked it (capture phase, fills + closes);
-          // otherwise the typed free text is already the value, so we just close.
-          // (Not gated on activeId — that React state lags the menu's synchronous
-          // cursor, which would leave Enter a no-op on a fast edit-then-Enter.)
-          if (e.key === 'Enter') setOpen(false)
+          // An active suggestion is armed by a-menu during keydown and clicked on
+          // keyup. It prevents the keydown so this controlled menu stays mounted
+          // long enough for that click to reach the row and call `pick`. A plain
+          // Enter is not prevented: free text is already the value, so close it.
+          // This uses the synchronous DOM event rather than `activeId`, whose
+          // reactive update can lag the menu cursor after a fast ArrowDown + Enter.
+          if (e.key === 'Enter' && !e.defaultPrevented) setOpen(false)
         }}
       />
       {/* Anchors to the field (its previous sibling). Controlled by `menuOpen`;

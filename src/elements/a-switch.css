@@ -111,7 +111,7 @@
 
     &[round] {
       --switch-track-round: var(--switch-round, attr(round type(<length>), 999px));
-      --switch-thumb-round: max(1px, calc(var(--switch-track-round) - 4px));
+      --switch-thumb-round: max(0px, calc(var(--switch-track-round) - 3px));
     }
 
     &:state(checked) {

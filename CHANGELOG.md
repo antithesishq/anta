@@ -3,10 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.16 — July 29, 2026
 
 ### Added
 
+- `Switch`, a binary control with `tone`, `toneSelected`, `hint`, and `round`.
+- The `dollar-sign` icon.
 - Native HTML form controls opt into Anta chrome with `data-anta`, including
   text-like and date/time inputs, file pickers, submit/reset buttons, checkboxes,
   radios, details disclosures, and customizable selects.
@@ -14,21 +16,25 @@ changes are not listed.
   control sizes and tones, field sizing and rounding, and Expander surfaces and
   levels.
 
-### Fixed
+### Changed
 
-- Native HTML radio labels use Anta's 8px control gap and vertically centred
-  alignment.
-
-## 0.3.16 — July 29, 2026
-
-### Added
-
-- `Switch`, a binary control with `tone`, `toneSelected`, `hint`, and `round`.
-- The `dollar-sign` icon.
+- In forced-colors mode, Anta controls and surfaces use system colours and
+  visible borders for their interactive, selected, and disabled states,
+  including icons, inputs, buttons, tags, choice controls, tabs, Expanders,
+  Cards, Dialogs, Banners, Progress, and Tooltips.
+- Switch tracks use a real 1.5px border instead of an inset shadow.
 
 ### Fixed
 
 - No-icon `ButtonCopy` feedback now keeps a wrapping label's width and line breaks.
+- Native HTML radio labels use Anta's 8px control gap and vertically centred
+  alignment.
+- `InputAutocomplete` now commits the highlighted suggestion when users press
+  Arrow keys then Enter.
+- `a-input` forwards its native `input` event across the shadow boundary in
+  browsers that do not compose it automatically.
+- Direct controls in an Expander's `actions` slot retain their Anta styling.
+- A Banner's built-in dismiss button now follows the Banner's `round` setting.
 
 ## 0.3.15 — July 28, 2026
 

@@ -30,10 +30,6 @@ import './a-input-time.css'
  * own territory) or off-DOM via `ElementInternals` — never on the host or light DOM.
  */
 
-// Slots forwarded straight through (same set a-input accepts, minus the ones
-// that only make sense for a free-text control).
-const FORWARDED = ['name', 'aria-label', 'required'] as const
-
 // Kept in sync with the `data-custom-event` the `<InputTime>` wrapper sets on its
 // clear <Button> (mirrors a-input's CLEAR_TRIGGER; duplicated, not shared, because
 // the wrapper can't import this module without self-registering the element).
@@ -282,7 +278,7 @@ const INPUT_TIME_TEMPLATE = typeof document === 'undefined' ? undefined : (() =>
 export class AInputTimeElement extends HTMLElementBase {
   static formAssociated = true
   static observedAttributes = [
-    ...FORWARDED, 'value', 'defaultvalue', 'locale', 'hour12', 'status', 'disabled', 'size', 'min', 'max',
+    'value', 'defaultvalue', 'locale', 'hour12', 'status', 'disabled', 'min', 'max', 'aria-label', 'required',
   ]
 
   #internals?: ElementInternals
@@ -393,14 +389,8 @@ export class AInputTimeElement extends HTMLElementBase {
     if (name === 'locale' || name === 'hour12') { this.#buildSegments(); return }
     if (name === 'status') { this.#syncStatus(); return }
     if (name === 'disabled') { this.#syncDisabled(); return }
-    if (name === 'size') return
     if (name === 'min' || name === 'max') {
-      // A tighter bound can put the current value out of range — re-clamp it and
-      // refresh form value / validity WITHOUT dispatching a user `input` (this is
-      // a programmatic attribute change; firing `input` here would re-enter the
-      // consumer's handler synchronously during a React commit).
-      this.#clampIfComplete()
-      this.#commitEdit({ dispatch: false })
+      this.#updateValidity()
       return
     }
     // Forwarded (name / aria-label / required) → the group container for a11y.
@@ -557,7 +547,6 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #onKeyDown = (e: KeyboardEvent) => {
-    if (this.hasAttribute('disabled') || this.#formDisabled) return
     const seg = this.#segFromTarget(e.target)
     if (!seg) return
     const { el } = seg
@@ -598,20 +587,17 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #onPaste = (e: ClipboardEvent) => {
-    if (this.hasAttribute('disabled') || this.#formDisabled) return
-    const parsed = this.#parsePaste(e.clipboardData?.getData('text/plain') ?? '')
-    // Let ordinary segment text paste naturally. A complete pasted time is a
-    // field-level operation, so retain the established fill-all-segments behavior.
-    if (!parsed) return
+    const text = e.clipboardData?.getData('text/plain').trim() ?? ''
+    // Let native inputs handle segment paste. A canonical complete time fills the
+    // field because it cannot fit into one two-character numeric segment.
+    if (!/^(?:[01]?\d|2[0-3]):[0-5]\d$/.test(text)) return
     e.preventDefault()
-    this.#applyValue(`${pad2(parsed.h)}:${pad2(parsed.min)}`)
-    this.#clampIfComplete()
+    this.#applyValue(text)
     this.#commitEdit()
     this.#dispatch('change')
   }
 
   #onInput = (e: Event) => {
-    if (this.hasAttribute('disabled') || this.#formDisabled) return
     const seg = this.#segFromTarget(e.target)
     if (!seg || (e as InputEvent).isComposing) return
     if (seg.kind === 'period') this.#onPeriodInput(e, seg)
@@ -652,7 +638,6 @@ export class AInputTimeElement extends HTMLElementBase {
       this.#assign(seg, Math.max(seg.min, value))
     }
 
-    if (this.#clampIfComplete()) normalized = true
     // Native input already owns the in-progress text and selection. Repaint only
     // when normalization / conversion changes the active value, or before focus
     // moves away and the committed two-digit form should be shown.
@@ -693,34 +678,6 @@ export class AInputTimeElement extends HTMLElementBase {
     el.value = this.#period === 'pm' ? this.#pmText : this.#period === 'am' ? this.#amText : ''
   }
 
-  /** Parse a pasted time to 24-hour `{ h, min }`, or null. Accepts `14:30`,
-   *  `9:5`, `2:30 pm`, `12am`, and run-together `230` / `1430` — mirrors
-   *  `calendar-core`'s `parseTimeInput` but Temporal-free, so the element's
-   *  granular import stays lean. */
-  #parsePaste(text: string): TimeParts | null {
-    let s = (text ?? '').trim().toLowerCase()
-    if (!s) return null
-    let mer: 'am' | 'pm' | null = null
-    const m = s.match(/([ap])\.?m?\.?$/)
-    if (m) { mer = m[1] === 'p' ? 'pm' : 'am'; s = s.slice(0, m.index).trim() }
-    let h: number
-    let min: number
-    if (/[:.]/.test(s)) {
-      const [hp, mp] = s.split(/[:.]/)
-      h = Number(hp); min = Number(mp ?? '0')
-    } else {
-      const d = s.replace(/\D/g, '')
-      if (!d) return null
-      if (d.length <= 2) { h = Number(d); min = 0 }
-      else { const cut = d.length - 2; h = Number(d.slice(0, cut)); min = Number(d.slice(cut)) }
-    }
-    if (!Number.isInteger(h) || !Number.isInteger(min)) return null
-    if (mer === 'pm' && h < 12) h += 12
-    if (mer === 'am' && h === 12) h = 0
-    if (h < 0 || h > 23 || min < 0 || min > 59) return null
-    return { h, min }
-  }
-
   /** Arrow / page increments wrap within a segment's [min, max];
    *  from empty, ↑ lands on min and ↓ on max. Clamps the resulting complete value
    *  into the field's `min`/`max` range (so ↑ can't step past `max`). */
@@ -742,9 +699,8 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#commitEdit()
   }
 
-  /** Mutate a segment's state without committing (so callers can clamp first). */
+  /** Mutate a numeric segment without committing (so callers can clamp first). */
   #assign(seg: Seg, val: number) {
-    if (seg.kind === 'period') return
     if (seg.kind === 'hour') this.#hour = val
     else this.#minute = val
     // Setting the hour with no meridiem yet defaults it to AM so a 12-hour value

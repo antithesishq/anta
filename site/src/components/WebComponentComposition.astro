@@ -1,0 +1,61 @@
+---
+interface Props {
+  kind: 'select' | 'toaster'
+}
+
+const { kind } = Astro.props
+---
+
+<div data-anta-composition={kind}>
+  <slot />
+</div>
+
+<script>
+  type InputElement = HTMLElement & { value: string }
+
+  const itemFrom = (event: Event) =>
+    event.target instanceof Element ? event.target.closest<HTMLElement>('a-menu-item') : null
+
+  function bindSelect(root: HTMLElement) {
+    const field = root.querySelector<InputElement>('a-input')
+    const menu = root.querySelector<HTMLElement>('a-menu')
+    if (!field || !menu) return
+
+    menu.addEventListener('click', (event) => {
+      const item = itemFrom(event)
+      if (!item || item.closest('a-menu') !== menu) return
+      for (const option of menu.querySelectorAll<HTMLElement>(':scope > a-menu-item')) {
+        const selected = option === item
+        option.toggleAttribute('selected', selected)
+      }
+      field.value = item.querySelector('a-menu-item-label')?.textContent?.trim() ?? ''
+    })
+  }
+
+  function bindToaster(root: HTMLElement) {
+    const trigger = root.querySelector<HTMLElement>('[data-toast-add]')
+    const template = root.querySelector<HTMLTemplateElement>('template[data-toast-template]')
+    const toaster = root.querySelector<HTMLElement>('a-toaster')
+    if (!trigger || !template || !toaster) return
+
+    trigger.addEventListener('click', () => toaster.append(template.content.cloneNode(true)))
+    root.addEventListener('dismiss', (event) => {
+      const toast = event.target
+      if (toast instanceof HTMLElement && toast.matches('a-toast')) toast.remove()
+    })
+  }
+
+  function bindCompositions() {
+    for (const root of document.querySelectorAll<HTMLElement>('[data-anta-composition]')) {
+      if (root.dataset.antaCompositionBound) continue
+      root.dataset.antaCompositionBound = 'true'
+      switch (root.dataset.antaComposition) {
+        case 'select': bindSelect(root); break
+        case 'toaster': bindToaster(root); break
+      }
+    }
+  }
+
+  bindCompositions()
+  document.addEventListener('astro:page-load', bindCompositions)
+</script>

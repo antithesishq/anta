@@ -445,6 +445,59 @@ element — `Input`, and the composed `Select` — skip it and expose only
 
 </Disclosure>
 
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+
+The group owns selection and the single tab stop. Put options in `<a-radio-list>`.
+
+<Preview>
+  <a-radio-group role="radiogroup" tabindex="0" name="plan" default-state="pro">
+    <a-radio-group-label>Plan</a-radio-group-label>
+    <a-radio-list>
+      <a-radio role="radio" value="starter"><a-radio-label>Starter</a-radio-label></a-radio>
+      <a-radio role="radio" value="pro"><a-radio-label>Pro</a-radio-label></a-radio>
+    </a-radio-list>
+  </a-radio-group>
+</Preview>
+
+```html
+<a-radio-group role="radiogroup" tabindex="0" name="plan" default-state="pro">
+  <a-radio-group-label>Plan</a-radio-group-label>
+  <a-radio-list>
+    <a-radio role="radio" value="starter"><a-radio-label>Starter</a-radio-label></a-radio>
+    <a-radio role="radio" value="pro"><a-radio-label>Pro</a-radio-label></a-radio>
+  </a-radio-list>
+</a-radio-group>
+```
+
+### Native HTML radio inputs
+
+For a standard HTML form, add `data-anta` to each native radio. Radios that share
+a `name` retain the browser's selection, keyboard behavior, labels, and form
+submission while using Anta's control surface.
+
+`size`, `tone`, and `tone-selected` use the matching RadioGroup option
+treatments.
+
+<Preview>
+  <div style={{ display: 'grid', gap: '8px', marginBottom: '8px' }}>
+    <label><input data-anta type="radio" name="native-plan" value="starter" size="small" tone="brand" /> Starter</label>
+    <label><input data-anta type="radio" name="native-plan" value="pro" tone-selected="success" checked /> Pro</label>
+    <label><input data-anta type="radio" name="native-plan" value="enterprise" size="large" tone="warning" /> Enterprise</label>
+  </div>
+</Preview>
+
+```html
+<div style="display: grid; gap: 8px">
+  <label><input data-anta type="radio" name="plan" value="starter" size="small" tone="brand"> Starter</label>
+  <label><input data-anta type="radio" name="plan" value="pro" tone-selected="success" checked> Pro</label>
+  <label><input data-anta type="radio" name="plan" value="enterprise" size="large" tone="warning"> Enterprise</label>
+</div>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Reach for the props first: **`tone`** colours the mark in every state,

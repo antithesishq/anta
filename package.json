@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/anta",
-  "version": "0.3.15",
+  "version": "0.3.16",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -50,7 +50,7 @@
     "build:css:dev": "find src -name '*.css' | while IFS= read -r f; do d=\"dist/${f#src/}\"; mkdir -p \"$(dirname \"$d\")\"; cp \"$f\" \"$d\"; done && cp scripts/generate-icons.mjs dist/",
     "build:js": "esbuild $(find src \\( -name '*.ts' -o -name '*.tsx' \\) ! -name '*.d.ts') --outdir=dist --outbase=src --jsx=automatic --jsx-import-source=@antadesign/anta --format=esm --target=ES2022 --loader:.module.css=local-css --loader:.css=global-css",
     "build:types": "tsc -p src/tsconfig.json",
-    "dev": "echo $$ > .dev.pid; trap 'rm -f .dev.pid' EXIT; nodemon -w src -w stickers/src -e ts,tsx,css -x 'pnpm run build:dev && pnpm --filter @antadesign/stickers run build:dev && pnpm --filter anta-site run docs' & pnpm --filter anta-site run dev & wait",
+    "dev": "echo $$ > .dev.pid; trap 'rm -f .dev.pid' EXIT; pnpm run build:dev && pnpm --filter @antadesign/stickers run build:dev && pnpm --filter anta-site run docs && (node scripts/dev-watch.mjs & pnpm --filter anta-site run dev:server & wait)",
     "stop": "node scripts/dev-stop.mjs",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "lint": "node scripts/lint-getters.mjs",

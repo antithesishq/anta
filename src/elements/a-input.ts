@@ -130,7 +130,8 @@ const SUPPORTS_FIELD_SIZING =
 //  • .field — min-height (24/28/32) matches the same-size Button. The border is a
 //    box-shadow (inset), not a real border, so the rest→status width bump
 //    (0.5px→1px, thickened for emphasis; colour from a-input.css per-status
-//    tokens) never reflows. The focus ring shows only when the *control* is
+//    tokens) never reflows. Forced-colors supplies a real system border because
+//    it suppresses shadows. The focus ring shows only when the *control* is
 //    focused (:has), not when a slotted button holds focus.
 //  • input / textarea — only the control carries the horizontal text inset; edge
 //    slots + clear sit flush. appearance:none and the ::-webkit/::-ms resets strip
@@ -216,6 +217,7 @@ const SHADOW_STYLE = `
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
   }
+  @media (forced-colors: active) { .field { border: 1px solid ButtonBorder; } }
 
   input, textarea {
     flex: 1 1 auto;
@@ -605,13 +607,15 @@ export class AInputElement extends HTMLElementBase {
     try { critical ? this.internals?.states.add('invalid') : this.internals?.states.delete('invalid') } catch {}
   }
 
-  private onInput = () => {
+  private onInput = (event: Event) => {
     const v = this.control?.value ?? ''
     this.internals?.setFormValue(v)
     this.updateValidity()
     this.updateFilled()
     this.syncAutoHeight()
-    // `input` is composed — it reaches the host (and consumers) on its own.
+    // Most browsers compose native input events out of a shadow tree. Re-emit in
+    // the ones that do not, so the host always exposes the native input contract.
+    if (!event.composed) this.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
   // `change` is not composed; re-emit one on the host so it escapes the shadow.

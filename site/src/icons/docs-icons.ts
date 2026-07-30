@@ -3,14 +3,22 @@
 import type { IconShapes } from '@antadesign/anta'
 
 export const ICON_SHAPES = [
+  'banner',
   'book-a',
+  'card',
   'chevrons-up-down-square',
   'circle-pause',
   'circle-play',
   'clipboard-paste',
+  'dialog',
   'octagon-pause',
+  'search-slash',
+  'square-chevron-down',
+  'square-chevron-right',
   'sticker',
   'tabs',
+  'theme',
+  'toaster',
 ] as const
 
 export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
@@ -18,14 +26,22 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
 
 declare module '@antadesign/anta' {
   interface IconShapes {
+    'banner': true
     'book-a': true
+    'card': true
     'chevrons-up-down-square': true
     'circle-pause': true
     'circle-play': true
     'clipboard-paste': true
+    'dialog': true
     'octagon-pause': true
+    'search-slash': true
+    'square-chevron-down': true
+    'square-chevron-right': true
     'sticker': true
     'tabs': true
+    'theme': true
+    'toaster': true
   }
 }
 

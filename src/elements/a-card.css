@@ -188,6 +188,17 @@
     display: none;
   }
 
+  /* A string `Card` icon is wrapped in this circular chip by the JSX wrapper.
+     A hand-authored icon slot is otherwise left untouched. */
+  a-card > a-card-icon-chip[slot="icon"] {
+    display: grid;
+    place-items: center;
+    width: var(--card-icon-size);
+    height: var(--card-icon-size);
+    border-radius: 50%;
+    background: var(--card-icon-bg);
+  }
+
   /* Body owns only the edges a neighbour left open: a present header (or icon)
      owns the header→body gap (so drop the body's top padding), a present footer
      owns the body→footer gap (drop the body's bottom padding). Every gap stays one
@@ -348,6 +359,20 @@
   .dark a-card[tone="neutral"][priority="tertiary"] { --card-icon-bg: color-mix(in oklch, var(--bg-5), white 10%); }
   .dark a-card[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="tertiary"] {
     --card-icon-bg: color-mix(in oklch, oklch(from var(--card-tone-source) 0.22 0.05 h), white 10%);
+  }
+
+  /* The normal edge is an outset shadow so full-bleed media stays flush. Shadows
+     do not reliably survive forced colors, so use a real system-colour border. */
+  @media (forced-colors: active) {
+    a-card {
+      border: 1px solid CanvasText;
+      box-shadow: none;
+    }
+    a-card[href] { border-color: LinkText; }
+    a-card > a-card-icon-chip[slot="icon"] {
+      box-sizing: border-box;
+      border: 1px dotted CanvasText;
+    }
   }
 
   /* Size — padding scale (medium = 12px is the default, set on the base rule) +

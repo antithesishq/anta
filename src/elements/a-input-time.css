@@ -46,6 +46,9 @@
   }
   a-input-time[size="small"]:not(:defined)::after { min-height: 24px; line-height: 24px; font-size: 13px; }
   a-input-time[size="large"]:not(:defined)::after { min-height: 32px; line-height: 32px; font-size: 17px; }
+  @media (forced-colors: active) {
+    a-input-time:not(:defined)::after { border: 1px solid ButtonBorder; }
+  }
   a-input-time[round]:not(:defined)::after { border-radius: var(--input-time-round, 999px); }
 
   a-input-time {

@@ -12,23 +12,17 @@ import { AS_OF } from '../components/comparison-data'
 
 # Comparison
 
-The systems cluster into a few shapes: **styled React libraries** you install
-and theme (MUI, Ant Design, Mantine, Carbon, Atlaskit, Blueprint, Astryx,
-Gravity), **headless primitives** you style yourself (Radix, Base UI),
-**copy-paste collections** you own in your repo (shadcn/ui, Untitled UI), and
-**framework-agnostic web components** (Web Awesome, Polaris, Anta). Versions
-are a snapshot from {AS_OF}; follow each system's link for the current
-release.
+Compare four delivery models: styled React libraries, headless primitives,
+copy-paste source, and framework-agnostic web components. Versions are a
+snapshot from {AS_OF}; use each system's link for the current release.
 
 <Disclosure title="Frameworks, styling, license">
 
 <ComparisonMatrix />
 
-Most systems here are React-only and style through a runtime or a build step:
-CSS-in-JS (MUI, Ant Design, Atlaskit), Sass (Carbon, Blueprint), StyleX
-(Astryx), Tailwind (shadcn, Untitled UI). Anta ships web components styled
-with plain CSS in a single `@layer`, so there is no style runtime and any
-consumer rule overrides a default without a specificity fight.
+Most systems are React-only and use CSS-in-JS, Sass, StyleX, or Tailwind.
+Anta ships web components with plain CSS in one `@layer`, without a style
+runtime. Consumer CSS overrides its defaults normally.
 
 </Disclosure>
 
@@ -40,10 +34,8 @@ consumer rule overrides a default without a specificity fight.
 
 ## Component coverage
 
-Grouped by job, so a Dialog / Modal / Drawer family counts as one row. Anta
-covers the common controls and is narrower than the batteries-included kits:
-no toast, slider, or avatar yet, and the table and plot libraries are still
-upcoming. Radix and Base UI leave most visual cells empty by design; they
-ship behavior.
+Rows group components by job, so Dialog, Modal, and Drawer share one mark.
+Anta covers the common controls but remains narrower than full suites. Radix
+and Base UI intentionally focus on behaviour rather than styled components.
 
 <CoverageMatrix />

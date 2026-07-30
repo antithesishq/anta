@@ -112,6 +112,45 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 
 </Disclosure>
 
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+
+Slots supply the field label and leading icon.
+
+<Preview>
+  <a-input-time name="start-time" defaultvalue="09:30">
+    <span slot="label">Start time</span>
+    <a-icon slot="leading" shape="clock" aria-hidden="true"></a-icon>
+  </a-input-time>
+</Preview>
+
+```html
+<a-input-time name="start-time" defaultvalue="09:30">
+  <span slot="label">Start time</span>
+  <a-icon slot="leading" shape="clock" aria-hidden="true"></a-icon>
+</a-input-time>
+```
+
+### Native HTML time input
+
+For a form that can use the browser's time picker, add `data-anta` to a regular
+time input. It gives the field Anta's resting chrome while the browser keeps its
+own picker, validation, and keyboard behavior.
+
+`data-anta-size`, `round`, and a custom-color `tone` use the matching Input
+field treatments.
+
+<Preview>
+  <input data-anta style={{ marginBottom: '8px' }} type="time" name="reminder-at" value="09:00" />
+</Preview>
+
+```html
+<input data-anta type="time" name="reminder-at" value="09:00">
+```
+
+</Disclosure>
+
 ## Styling
 
 `InputTime` renders an `<a-input-time>` whose field chrome mirrors `<a-input>`.

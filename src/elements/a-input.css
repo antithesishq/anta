@@ -92,6 +92,9 @@
   }
   a-input[size="small"]:not(:defined)::after { min-height: 24px; line-height: 24px; font-size: 13px; }
   a-input[size="large"]:not(:defined)::after { min-height: 32px; line-height: 32px; font-size: 17px; }
+  @media (forced-colors: active) {
+    a-input:not(:defined)::after { border: 1px solid ButtonBorder; }
+  }
   a-input[round]:not(:defined)::after { border-radius: var(--input-round, 999px); }
 
   /* Fade the whole field up as it upgrades: the skeleton rests slightly
@@ -230,4 +233,449 @@
   /* Neutral dark border needs no override: the base --input-border points at
      --border-2, which carries its own seed-derived dark values. Status borders
      derive from the seed (rule above). */
+
+  /* Native form fields opt into Input's resting field chrome with `data-anta`.
+     Keep their native appearance and picker affordance intact: unlike a text
+     input, removing it can stop a date/time picker from opening. This is a
+     visual bridge for native controls, not an Input or InputDate replacement. */
+  input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="search"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  ) {
+    --native-field-block-size: 28px;
+    --native-field-padding-block: 4px;
+    --native-field-font-size: 15px;
+    --native-field-line-height: 20px;
+    --native-field-round: 4px;
+    --native-field-border: var(--border-2);
+
+    box-sizing: border-box;
+    block-size: var(--native-field-block-size);
+    margin: 0;
+    padding-block: var(--native-field-padding-block);
+    padding-inline: 7px;
+    border: 0;
+    border-radius: var(--native-field-round);
+    outline: 0;
+    background: var(--bg-1);
+    box-shadow: inset 0 0 0 0.5px var(--native-field-border);
+    color: var(--text-1);
+    caret-color: currentColor;
+    color-scheme: light;
+    font-family: var(--sans-serif);
+    font-size: var(--native-field-font-size);
+    font-weight: 400;
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    line-height: var(--native-field-line-height);
+    transition: box-shadow 120ms ease;
+  }
+  /* Chrome exposes a datalist's hover chevron through this proprietary picker
+     part. Its user-agent style switches the part's opacity on hover, so retain
+     an explicit override for Anta's native-autocomplete opt-in. */
+  input[data-anta][list]::-webkit-calendar-picker-indicator {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  .dark input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="search"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  ) {
+    color-scheme: dark;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    input[data-anta]:is(
+      :not([type]),
+      [type="text"],
+      [type="search"],
+      [type="email"],
+      [type="number"],
+      [type="password"],
+      [type="tel"],
+      [type="url"],
+      [type="date"],
+      [type="datetime-local"],
+      [type="month"],
+      [type="time"],
+      [type="week"]
+    ):not(:disabled):hover {
+      box-shadow: inset 0 0 0 1px var(--native-field-border);
+    }
+  }
+  input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="search"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  ):focus {
+    box-shadow: inset 0 0 0 1px var(--native-field-border);
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="search"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  ):disabled {
+    background: color-mix(in oklch, var(--text-1) 4%, var(--bg-1));
+    box-shadow: inset 0 0 0 0.5px color-mix(in oklch, var(--text-1) 15%, transparent);
+    color: var(--text-4);
+    cursor: not-allowed;
+  }
+  /* Anta's Input has no incrementer buttons. Hide the Chromium/WebKit ones so a
+     native number field has the same surface; arrow keys and native validation
+     remain available. */
+  input[data-anta][type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  input[data-anta][type="number"]::-webkit-inner-spin-button,
+  input[data-anta][type="number"]::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  /* A native file picker keeps the browser's chooser and selected-file text,
+     but its chooser button uses the same compact neutral treatment as Anta's
+     default button. The pseudo-element is the platform-provided activation
+     target, so file selection, keyboard access, and form submission remain
+     entirely native. */
+  input[data-anta][type="file"] {
+    --native-file-block-size: 28px;
+    --native-file-padding-block: 4px;
+    --native-file-font-size: 15px;
+    --native-file-line-height: 20px;
+
+    box-sizing: border-box;
+    min-block-size: var(--native-file-block-size);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: var(--text-2);
+    color-scheme: light;
+    font-family: var(--sans-serif);
+    font-size: var(--native-file-font-size);
+    font-weight: 400;
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    line-height: var(--native-file-line-height);
+  }
+  .dark input[data-anta][type="file"] { color-scheme: dark; }
+  input[data-anta][type="file"]::file-selector-button {
+    box-sizing: border-box;
+    min-block-size: var(--native-file-block-size);
+    margin: 0 8px 0 0;
+    padding: var(--native-file-padding-block) 9px;
+    border: 0;
+    border-radius: 4px;
+    color: var(--text-2);
+    background: color-mix(in oklch, var(--text-1) 10%, transparent);
+    box-shadow: inset 0 0 1px color-mix(in oklch, currentColor, transparent 90%);
+    font: inherit;
+    font-weight: 450;
+    letter-spacing: 0.05ch;
+    line-height: var(--native-file-line-height);
+    cursor: pointer;
+    transition: color 150ms ease-out, background-color 150ms ease-out;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    input[data-anta][type="file"]:not(:disabled):hover::file-selector-button {
+      color: var(--text-1);
+      background: color-mix(in oklch, var(--text-1) 15%, transparent);
+    }
+  }
+  input[data-anta][type="file"]:not(:disabled):active::file-selector-button {
+    color: var(--text-1);
+    background: color-mix(in oklch, var(--text-1) 20%, transparent);
+  }
+  input[data-anta][type="file"]:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  input[data-anta][type="file"]:disabled {
+    color: var(--text-4);
+    cursor: not-allowed;
+  }
+  input[data-anta][type="file"]:disabled::file-selector-button {
+    color: var(--text-4);
+    background: color-mix(in oklch, var(--text-1) 4%, var(--bg-1));
+    cursor: not-allowed;
+  }
+
+  /* Native selects opt into the same field chrome with `data-anta`. Browsers
+     that support customizable selects also receive a styled trigger, picker,
+     selected-content slot, options, and optgroups — with no selection JS. */
+  select[data-anta] {
+    --native-field-block-size: 28px;
+    --native-field-padding-block: 4px;
+    --native-field-font-size: 15px;
+    --native-field-line-height: 20px;
+    --native-field-round: 4px;
+    --native-field-border: var(--border-2);
+
+    box-sizing: border-box;
+    block-size: var(--native-field-block-size);
+    margin: 0;
+    padding-block: var(--native-field-padding-block);
+    padding-inline: 7px;
+    border: 0;
+    border-radius: var(--native-field-round);
+    outline: 0;
+    background: var(--bg-1);
+    box-shadow: inset 0 0 0 0.5px var(--native-field-border);
+    color: var(--text-1);
+    color-scheme: light;
+    font-family: var(--sans-serif);
+    font-size: var(--native-field-font-size);
+    font-weight: 400;
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    line-height: var(--native-field-line-height);
+    transition: box-shadow 120ms ease;
+  }
+  .dark select[data-anta] { color-scheme: dark; }
+  @media (hover: hover) and (pointer: fine) {
+    select[data-anta]:not(:disabled):hover {
+      box-shadow: inset 0 0 0 1px var(--native-field-border);
+    }
+  }
+  select[data-anta]:focus {
+    box-shadow: inset 0 0 0 1px var(--native-field-border);
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  select[data-anta]:disabled {
+    background: color-mix(in oklch, var(--text-1) 4%, var(--bg-1));
+    box-shadow: inset 0 0 0 0.5px color-mix(in oklch, var(--text-1) 15%, transparent);
+    color: var(--text-4);
+    cursor: not-allowed;
+  }
+  @media (forced-colors: active) {
+    input[data-anta]:is(
+      :not([type]),
+      [type="text"],
+      [type="search"],
+      [type="email"],
+      [type="number"],
+      [type="password"],
+      [type="tel"],
+      [type="url"],
+      [type="date"],
+      [type="datetime-local"],
+      [type="month"],
+      [type="time"],
+      [type="week"]
+    ),
+    select[data-anta] {
+      border: 1px solid ButtonBorder;
+    }
+  }
+  /* Input and select own a semantic `size` attribute, so the Anta size variant
+     uses a namespaced data attribute. `round` and custom-color `tone` have no
+     native meaning and keep the same spelling as their component counterparts. */
+  input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="search"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  )[data-anta-size="small"],
+  select[data-anta][data-anta-size="small"] {
+    --native-field-block-size: 24px;
+    --native-field-padding-block: 2px;
+    --native-field-font-size: 13px;
+    --native-field-line-height: 16px;
+  }
+  input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="search"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  )[data-anta-size="large"],
+  select[data-anta][data-anta-size="large"] {
+    --native-field-block-size: 32px;
+    --native-field-padding-block: 5px;
+    --native-field-font-size: 17px;
+    --native-field-line-height: 22px;
+  }
+  input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="search"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  )[round],
+  select[data-anta][round] {
+    --native-field-round: attr(round type(<length>), 999px);
+  }
+  input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="search"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  )[tone]:not([tone=""]) {
+    --native-field-tone: attr(tone type(<color>), var(--border-2));
+    --native-field-border: oklch(from var(--native-field-tone) 0.7 calc(c * 0.8) h);
+  }
+  .dark input[data-anta]:is(
+    :not([type]),
+    [type="text"],
+    [type="search"],
+    [type="email"],
+    [type="number"],
+    [type="password"],
+    [type="tel"],
+    [type="url"],
+    [type="date"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="time"],
+    [type="week"]
+  )[tone]:not([tone=""]) {
+    --native-field-border: oklch(from var(--native-field-tone) 0.5 calc(c * 0.8) h);
+  }
+  @supports (appearance: base-select) {
+    select[data-anta],
+    select[data-anta]::picker(select) {
+      appearance: base-select;
+      -webkit-appearance: base-select;
+    }
+    select[data-anta] {
+      padding: 0;
+    }
+    select[data-anta] > button {
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      inline-size: 100%;
+      min-block-size: var(--native-field-block-size);
+      padding-block: var(--native-field-padding-block);
+      padding-inline: 7px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font: inherit;
+      text-align: start;
+    }
+    select[data-anta] > button > selectedcontent {
+      flex: 1;
+      min-inline-size: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* The markup supplies Anta's own chevron in the native trigger. Hide the
+       browser indicator so its platform alignment never competes with it. */
+    select[data-anta]::picker-icon { display: none; }
+    select[data-anta] > button > a-icon {
+      margin-inline-start: auto;
+      color: var(--text-3);
+      transition: transform 120ms ease;
+    }
+    select[data-anta]:open > button > a-icon { transform: rotate(180deg); }
+    select[data-anta]::picker(select) {
+      box-sizing: border-box;
+      margin-block-start: 4px;
+      padding: 4px;
+      border: 0;
+      border-radius: 4px;
+      background: var(--bg-1);
+      box-shadow: inset 0 0 0 0.5px var(--border-2), 0 4px 12px color-mix(in oklch, black 12%, transparent);
+      color: var(--text-1);
+    }
+    select[data-anta] option {
+      border-radius: 3px;
+      color: var(--text-2);
+      font: inherit;
+      padding-block: 4px;
+      padding-inline: 7px;
+    }
+    select[data-anta] option:checked {
+      background: color-mix(in oklch, var(--anta-seed-brand) 13%, transparent);
+      color: var(--text-1-brand);
+    }
+    select[data-anta] optgroup {
+      color: var(--text-3);
+      font: inherit;
+      font-weight: 500;
+    }
+  }
+
 }

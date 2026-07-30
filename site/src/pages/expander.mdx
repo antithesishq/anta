@@ -358,32 +358,6 @@ section whether it's open or not (the same convention as GitHub's file
 headers). If an action only makes sense while open, drive the expander
 in controlled mode and swap the `actions` node on toggle.
 
-## Composing the element directly
-
-Without the JSX wrapper, the `slot` attribute is the wire format: put
-`slot="title"` / `slot="actions"` directly on your own elements
-(several elements can share `slot="actions"`); anything unslotted
-becomes the collapsible body.
-
-<Preview direction="column" gap="8px">
-  <a-expander>
-    <a-expander-summary slot="title">Hand-authored markup</a-expander-summary>
-    <Button slot="actions" size="small" label="Share" />
-    <Button slot="actions" size="small" label="Download" />
-    <a-expander-details><Text>The body — everything without a <code>slot</code> attribute.</Text></a-expander-details>
-  </a-expander>
-</Preview>
-
-```html
-<a-expander>
-  <a-expander-summary slot="title">Hand-authored markup</a-expander-summary>
-  <!-- several elements can share slot="actions" -->
-  <a-button slot="actions" size="small" label="Share"></a-button>
-  <a-button slot="actions" size="small" label="Download"></a-button>
-  <a-expander-details>The body — everything without a slot attribute.</a-expander-details>
-</a-expander>
-```
-
 ## Disabled
 
 `disabled` freezes the expander: the header is no longer clickable or
@@ -513,6 +487,55 @@ function Accordion() {
 <Disclosure title="Component props" open>
 
 <PropsTable component="Expander" />
+
+</Disclosure>
+
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+
+Slots hold the title and actions. The details element contains the collapsible body.
+
+<Preview align="stretch">
+  <a-expander default-state="open">
+    <a-expander-summary slot="title">Build artifacts</a-expander-summary>
+    <a-button slot="actions" role="button" tabindex="0" size="small"><a-button-label>Share</a-button-label></a-button>
+    <a-expander-details>Everything without a slot attribute is the body.</a-expander-details>
+  </a-expander>
+</Preview>
+
+```html
+<a-expander default-state="open">
+  <a-expander-summary slot="title">Build artifacts</a-expander-summary>
+  <a-button slot="actions" role="button" tabindex="0" size="small">
+    <a-button-label>Share</a-button-label>
+  </a-button>
+  <a-expander-details>Everything without a slot attribute is the body.</a-expander-details>
+</a-expander>
+```
+
+### Native HTML details
+
+For a simple disclosure, add `data-anta` to native `<details>`. It keeps the
+browser's opening, keyboard, and accessibility behaviour while taking on the
+neutral tertiary Expander treatment. Add `priority="secondary"` or `"primary"`
+for a filled surface. `round`, `tone`, tertiary `outdent`, and `level="1"`–`"6"`
+use the matching Expander visual treatments. `level` changes visual type only;
+use a heading inside the summary when you need heading semantics.
+
+<Preview align="center">
+  <details data-anta priority="secondary" tone="info" round level="3" open>
+    <summary>Build artifacts</summary>
+    <div>Everything inside <code>&lt;details&gt;</code> is the collapsible body.</div>
+  </details>
+</Preview>
+
+```html
+<details data-anta priority="secondary" tone="info" round level="3" open>
+  <summary>Build artifacts</summary>
+  <div>Everything inside &lt;details&gt; is the collapsible body.</div>
+</details>
+```
 
 </Disclosure>
 

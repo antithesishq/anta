@@ -105,6 +105,7 @@ const SHADOW_STYLE = `
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
   }
+  @media (forced-colors: active) { .field { border: 1px solid ButtonBorder; } }
 
   slot[name="leading"] {
     display: none;

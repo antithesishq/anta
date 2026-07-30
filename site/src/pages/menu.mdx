@@ -663,6 +663,34 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 
 </Disclosure>
 
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+
+Put a focusable trigger immediately before `<a-menu>` and omit `state` for an
+uncontrolled menu. Its light-DOM `<a-menu-item>` rows need their own `tabindex`
+values.
+
+<Preview>
+  <a-button role="button" tabindex="0" aria-haspopup="menu"><a-button-label>Actions</a-button-label></a-button>
+  <a-menu role="menu">
+    <a-menu-item role="menuitem" tabindex="0" value="settings"><a-menu-item-label>Settings</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitem" tabindex="0" value="members"><a-menu-item-label>Members</a-menu-item-label></a-menu-item>
+  </a-menu>
+</Preview>
+
+```html
+<a-button role="button" tabindex="0" aria-haspopup="menu">
+  <a-button-label>Actions</a-button-label>
+</a-button>
+<a-menu role="menu">
+  <a-menu-item role="menuitem" tabindex="0" value="settings"><a-menu-item-label>Settings</a-menu-item-label></a-menu-item>
+  <a-menu-item role="menuitem" tabindex="0" value="members"><a-menu-item-label>Members</a-menu-item-label></a-menu-item>
+</a-menu>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 The popover surface lives in shadow DOM and is exposed as a **part** — style its

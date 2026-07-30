@@ -217,6 +217,28 @@ shows.
 
 </Disclosure>
 
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+
+Place `<a-tooltip>` inside the element it describes.
+
+<Preview>
+  <a-button role="button" tabindex="0" priority="secondary">
+    <a-button-label>Publish</a-button-label>
+    <a-tooltip>Make the draft public</a-tooltip>
+  </a-button>
+</Preview>
+
+```html
+<a-button role="button" tabindex="0" priority="secondary">
+  <a-button-label>Publish</a-button-label>
+  <a-tooltip>Make the draft public</a-tooltip>
+</a-button>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 The bubble lives in shadow DOM and is exposed as a single **part** — style the box

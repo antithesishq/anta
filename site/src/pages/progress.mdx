@@ -74,6 +74,33 @@ function AnimatedProgress({ speed = 1 }) {
 
 </Disclosure>
 
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+
+Add the progressbar semantics and label structure when using the element directly.
+
+<Preview>
+  <a-progress style={{ width: '100%' }} value="42" max="100" role="progressbar" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
+    <a-progress-label>
+      <a-progress-number>42%</a-progress-number>
+      <a-progress-text>Upload</a-progress-text>
+    </a-progress-label>
+  </a-progress>
+</Preview>
+
+```html
+<a-progress style="width: 100%" value="42" max="100" role="progressbar"
+  aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
+  <a-progress-label>
+    <a-progress-number>42%</a-progress-number>
+    <a-progress-text>Upload</a-progress-text>
+  </a-progress-label>
+</a-progress>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Reach for **`tone`** first — a named tone (`brand` / `info` / `success` / `warning`

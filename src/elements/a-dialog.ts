@@ -155,7 +155,7 @@ const SHADOW_STYLE = `
     position: fixed;
     box-sizing: border-box;
     padding: 0;
-    border: none;
+    border: var(--dialog-outline, none);
     max-width: calc(100vw - 2 * var(--dialog-margin, 32px));
     max-height: calc(100dvh - 2 * var(--dialog-margin, 32px));
     width: var(--dialog-width, 480px);

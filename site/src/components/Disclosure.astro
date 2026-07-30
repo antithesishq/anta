@@ -203,6 +203,14 @@ const Heading = `h${level}` as const
   document.addEventListener('astro:page-load', syncFromHash)
   window.addEventListener('hashchange', syncFromHash)
 
+  // The in-page TOC lives in shadow DOM. Its links report their destination
+  // before the ClientRouter handles the fragment, which lets us expand a
+  // folded disclosure in time for the router's scroll.
+  document.addEventListener('anta-tocnavigate', (e) => {
+    const id = (e as CustomEvent<{ id?: string }>).detail?.id
+    if (id) openContaining(id)
+  })
+
   // Header-link click: own the interaction so the section opens rather than
   // relying on the native <summary> toggle (which doesn't fire for a nested
   // link); stopPropagation keeps it from toggling closed. Document-delegated

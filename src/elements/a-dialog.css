@@ -62,4 +62,13 @@
       0 28px 64px color-mix(in oklch, black 40%, transparent);
     --dialog-overlay: color-mix(in oklch, black 62%, transparent);
   }
+
+  /* The usual inset edge is part of the elevation shadow. Forced colors can
+     suppress shadows, so move that edge to the native dialog border instead. */
+  @media (forced-colors: active) {
+    a-dialog {
+      --dialog-outline: 1px solid CanvasText;
+      --dialog-shadow: none;
+    }
+  }
 }

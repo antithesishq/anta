@@ -512,6 +512,37 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 
 </Disclosure>
 
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+
+Keep the tab strip and panels as siblings under one parent. Panels read the active
+value from `<a-tabs>`.
+
+<Preview align="stretch">
+  <div style={{ display: 'grid', gap: '12px', width: '320px' }}>
+    <a-tabs role="tablist" default-state="account">
+      <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
+      <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
+    </a-tabs>
+    <a-tabpanel role="tabpanel" value="account">Account settings</a-tabpanel>
+    <a-tabpanel role="tabpanel" value="security">Security settings</a-tabpanel>
+  </div>
+</Preview>
+
+```html
+<div>
+  <a-tabs role="tablist" default-state="account">
+    <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
+    <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
+  </a-tabs>
+  <a-tabpanel role="tabpanel" value="account">Account settings</a-tabpanel>
+  <a-tabpanel role="tabpanel" value="security">Security settings</a-tabpanel>
+</div>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Reach for the props first: **`tone`**, **`size`**, **`priority`**. The focus ring is

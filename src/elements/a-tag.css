@@ -280,4 +280,35 @@
   a-tag[size="large"][allcaps] {
     font-size: 12px;
   }
+
+  /* Tones are intentionally not re-created in forced colors: a status still
+     needs a readable label or icon, because colour alone cannot carry that
+     meaning. Priority remains useful, so map it to structure with system
+     colors: primary is inverted, secondary is a standard outlined pill, and
+     tertiary is a lighter dashed outline. The icon foreground follows the
+     paired system text color through --anta-forced-foreground. */
+  @media (forced-colors: active) {
+    a-tag {
+      --anta-forced-foreground: CanvasText;
+
+      color: CanvasText;
+      background-color: Canvas;
+      border: 1px solid CanvasText;
+    }
+    a-tag[priority="primary"] {
+      --anta-forced-foreground: ButtonFace;
+
+      color: ButtonFace;
+      background-color: ButtonText;
+      border-color: ButtonText;
+    }
+    /* Tag labels and values are generic custom elements. Keep them transparent
+       so forced colors does not paint Canvas rectangles over the filled pill. */
+    a-tag[priority="primary"] {
+      forced-color-adjust: none;
+    }
+    a-tag[priority="tertiary"] {
+      border-style: dashed;
+    }
+  }
 }

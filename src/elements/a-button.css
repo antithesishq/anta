@@ -9,7 +9,8 @@
      itself. Absent the marker, `a[role="button"]` is left untouched. */
   a-button,
   a[role="button"][data-anta],
-  button[data-anta] {
+  button[data-anta],
+  input[data-anta]:is([type="reset"], [type="submit"]) {
     --button-primary-fg: #ffffff;
 
     --bg-primary-disabled: #ece9ec;
@@ -102,7 +103,8 @@
      the custom-tone `--button-tone-source`. */
   a-button[round],
   a[role="button"][data-anta][round],
-  button[data-anta][round] {
+  button[data-anta][round],
+  input[data-anta]:is([type="reset"], [type="submit"])[round] {
     --button-round: attr(round type(<length>), 999px);
     border-radius: var(--button-round, 999px);
   }
@@ -113,7 +115,8 @@
      constant. */
   a-button[tone]:not([tone=""], [tone="neutral"]),
   a[role="button"][data-anta][tone]:not([tone=""], [tone="neutral"]),
-  button[data-anta][tone]:not([tone=""], [tone="neutral"]) {
+  button[data-anta][tone]:not([tone=""], [tone="neutral"]),
+  input[data-anta]:is([type="reset"], [type="submit"])[tone]:not([tone=""], [tone="neutral"]) {
     --_tone-pl-rest: 0.51;
     --_tone-pl-hover: 0.46;
     --_tone-pl-active: 0.41;
@@ -132,24 +135,26 @@
   }
 
   /* Named tones point --_src at their seed; the constants above apply. */
-  a-button[tone="brand"],   a[role="button"][data-anta][tone="brand"],   button[data-anta][tone="brand"]   { --_src: var(--anta-seed-brand); }
-  a-button[tone="info"],    a[role="button"][data-anta][tone="info"],    button[data-anta][tone="info"]    { --_src: var(--anta-seed-info); }
-  a-button[tone="success"], a[role="button"][data-anta][tone="success"], button[data-anta][tone="success"] { --_src: var(--anta-seed-success); }
-  a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[data-anta][tone="warning"] { --_src: var(--anta-seed-warning); }
-  a-button[tone="critical"],a[role="button"][data-anta][tone="critical"],button[data-anta][tone="critical"] { --_src: var(--anta-seed-critical); }
+  a-button[tone="brand"],   a[role="button"][data-anta][tone="brand"],   button[data-anta][tone="brand"],   input[data-anta]:is([type="reset"], [type="submit"])[tone="brand"] { --_src: var(--anta-seed-brand); }
+  a-button[tone="info"],    a[role="button"][data-anta][tone="info"],    button[data-anta][tone="info"],    input[data-anta]:is([type="reset"], [type="submit"])[tone="info"] { --_src: var(--anta-seed-info); }
+  a-button[tone="success"], a[role="button"][data-anta][tone="success"], button[data-anta][tone="success"], input[data-anta]:is([type="reset"], [type="submit"])[tone="success"] { --_src: var(--anta-seed-success); }
+  a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[data-anta][tone="warning"], input[data-anta]:is([type="reset"], [type="submit"])[tone="warning"] { --_src: var(--anta-seed-warning); }
+  a-button[tone="critical"],a[role="button"][data-anta][tone="critical"],button[data-anta][tone="critical"],input[data-anta]:is([type="reset"], [type="submit"])[tone="critical"] { --_src: var(--anta-seed-critical); }
 
   /* Custom tone — any non-named value is a literal colour; --_src reads it (the
      wrapper also sets --button-tone-source inline for engines without typed
      attr()). Colored constants apply via the rule above. */
   a-button[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
   a[role="button"][data-anta][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
-  button[data-anta][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+  button[data-anta][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
+  input[data-anta]:is([type="reset"], [type="submit"])[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
     --_src: var(--button-tone-source, attr(tone type(<color>), transparent));
   }
 
   .dark a-button,
   .dark a[role="button"][data-anta],
-  .dark button[data-anta] {
+  .dark button[data-anta],
+  .dark input[data-anta]:is([type="reset"], [type="submit"]) {
     --bg-primary-disabled: #272329;
     --bg-secondary-disabled: #1d1a1e;
     --fg-disabled-primary: #776e77;
@@ -176,7 +181,8 @@
   /* Dark colored tone constants */
   .dark a-button[tone]:not([tone=""], [tone="neutral"]),
   .dark a[role="button"][data-anta][tone]:not([tone=""], [tone="neutral"]),
-  .dark button[data-anta][tone]:not([tone=""], [tone="neutral"]) {
+  .dark button[data-anta][tone]:not([tone=""], [tone="neutral"]),
+  .dark input[data-anta]:is([type="reset"], [type="submit"])[tone]:not([tone=""], [tone="neutral"]) {
     --_tone-pl-rest: 0.4;
     --_tone-pl-hover: 0.44;
     --_tone-pl-active: 0.48;
@@ -194,14 +200,12 @@
     --_tone-quat-rest-a: 0.85;
   }
 
-  /* Native <button> opt-in (`<button data-anta>`): the shared base rule below
-     styles it alongside `<a-button>` / `<a role="button" data-anta>`, but a
-     native button carries UA chrome those two lack. Neutralize just that delta —
-     appearance + border, plus the box-sizing / margin that reset.css would supply
-     but a consumer may not have loaded (the reset is opt-in; element CSS is
-     unconditional). Font, background, padding, radius, and the ring are already
-     set by the shared base rule. */
-  button[data-anta] {
+  /* Native buttons and submit/reset inputs opt in with `data-anta`. The shared
+     base rule styles them alongside `<a-button>` / `<a role="button" data-anta>`;
+     remove their UA chrome so the shared padding, type, radius, and focus ring
+     determine the surface even when the optional reset.css is absent. */
+  button[data-anta],
+  input[data-anta]:is([type="reset"], [type="submit"]) {
     box-sizing: border-box;
     margin: 0;
     appearance: none;
@@ -211,7 +215,8 @@
 
   a-button,
   a[role="button"][data-anta],
-  button[data-anta] {
+  button[data-anta],
+  input[data-anta]:is([type="reset"], [type="submit"]) {
     user-select: none;
     display: inline-flex;
     align-items: center;
@@ -550,6 +555,110 @@
         background-color: transparent;
         color: var(--fg-disabled);
       }
+    }
+  }
+
+  /* Forced colors deliberately remove Anta's fills, tints, and shadows. Rebuild
+     the priority hierarchy with the user's system palette instead: primary is
+     an inverted button, secondary keeps the standard button surface, and
+     tertiary is a quieter text action that gains an outline on pointer hover.
+     `selected` is distinct from priority, so it alone uses the selection pair.
+     Explicit system colors survive forced-colors without opting the control out
+     of the user's palette; --anta-forced-foreground also gives a masked a-icon
+     the correct paired foreground. */
+  @media (forced-colors: active) {
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    ) {
+      --anta-forced-foreground: ButtonText;
+
+      color: ButtonText;
+      background-color: ButtonFace;
+      border: 1px solid ButtonText;
+      box-shadow: none;
+    }
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    )[priority="primary"] {
+      --anta-forced-foreground: ButtonFace;
+
+      color: ButtonFace;
+      background-color: ButtonText;
+      border-color: ButtonText;
+    }
+    /* `a-button-label` is a generic custom element. The UA otherwise assigns
+       it the Canvas background in forced colors, which paints a light rectangle
+       over a filled primary or selected button. System colours still follow the
+       user's palette; this only keeps the label transparent and inheriting. */
+    a-button:is([priority="primary"], [selected]) {
+      forced-color-adjust: none;
+    }
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    )[priority="tertiary"] {
+      --anta-forced-foreground: CanvasText;
+
+      color: CanvasText;
+      background-color: Canvas;
+      border: 0;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      :is(
+        a-button,
+        a[role="button"][data-anta],
+        button[data-anta],
+        input[data-anta]:is([type="reset"], [type="submit"])
+      )[priority="tertiary"]:hover:not(:focus-visible) {
+        outline: 1px solid ButtonText;
+        outline-offset: 0;
+      }
+    }
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    )[priority="quaternary"] {
+      --anta-forced-foreground: LinkText;
+
+      color: LinkText;
+      background-color: ButtonFace;
+      border: 0;
+      text-decoration: none;
+    }
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    )[selected] {
+      --anta-forced-foreground: HighlightText;
+
+      color: HighlightText;
+      background-color: Highlight;
+      border-color: Highlight;
+    }
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    )[disabled] {
+      --anta-forced-foreground: GrayText;
+
+      color: GrayText;
+      background-color: Canvas;
+      border-color: GrayText;
+      text-decoration-color: GrayText;
     }
   }
 }

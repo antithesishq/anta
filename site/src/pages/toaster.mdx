@@ -8,6 +8,7 @@ import ToasterDemo from '../components/ToasterDemo'
 import Preview from '../components/Preview.astro'
 import Disclosure from '../components/Disclosure.astro'
 import PropsTable from '../components/PropsTable.astro'
+import WebComponentComposition from '../components/WebComponentComposition.astro'
 import { Tag, Tooltip, Text } from '@antadesign/anta'
 
 # Toaster <Tag tone="critical" size="large" allcaps label="Alpha" style={{ verticalAlign: 'middle', marginInlineStart: '0.4em' }} /><Tooltip delay={0}><Text size="large">Early in the development, it might just not work!</Text></Tooltip>
@@ -250,32 +251,65 @@ Toaster.manager.add(() => <Banner tone="critical" message="Connection lost" />, 
 })
 ```
 
-## Vanilla HTML
-
-The render-function store needs a reconciler, so it's React/Preact. Without a
-framework, use the `<a-toaster>` / `<a-toast>` elements directly — build the toast
-in markup, add a `data-toast-dismiss` control, and listen for the element's
-`dismiss` event to remove it:
-
-```html
-<a-toaster>
-  <a-toast slot="bottom-right" aria-live="polite">
-    <a-banner tone="info" round>
-      <a-banner-message slot="message">A new version is available.</a-banner-message>
-      <a-button slot="actions" data-toast-dismiss>Dismiss</a-button>
-    </a-banner>
-  </a-toast>
-</a-toaster>
-<script type="module">
-  import '@antadesign/anta/elements'
-  document.querySelector('a-toast')
-    .addEventListener('dismiss', (e) => e.currentTarget.remove())
-</script>
-```
-
 <Disclosure title="Component props" open>
 
 <PropsTable component="Toaster" />
+
+</Disclosure>
+
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+
+Place each `<a-toast>` in a positional slot. This button clones the toast template
+into the toaster. `data-toast-dismiss` requests removal; listen for `dismiss` and
+remove the toast from the DOM.
+
+<Preview minHeight={96}>
+  <WebComponentComposition kind="toaster">
+    <a-button data-toast-add="" role="button" tabindex="0"><a-button-label>Show update</a-button-label></a-button>
+    <a-toaster role="region" aria-label="Notifications" style={{ position: 'relative', inset: 'auto', width: '100%' }}>
+    </a-toaster>
+    <template data-toast-template="">
+      <a-toast slot="bottom-center" aria-live="polite">
+        <a-banner tone="info" round>
+          <a-banner-message slot="message">A new version is available.</a-banner-message>
+          <a-button slot="actions" role="button" tabindex="0" data-toast-dismiss><a-button-label>Dismiss</a-button-label></a-button>
+        </a-banner>
+      </a-toast>
+    </template>
+  </WebComponentComposition>
+</Preview>
+
+```html
+<div data-anta-composition="toaster">
+  <a-button data-toast-add role="button" tabindex="0"><a-button-label>Show update</a-button-label></a-button>
+  <a-toaster role="region" aria-label="Notifications">
+  </a-toaster>
+  <template data-toast-template>
+    <a-toast slot="bottom-center" aria-live="polite">
+      <a-banner tone="info" round>
+        <a-banner-message slot="message">A new version is available.</a-banner-message>
+        <a-button slot="actions" role="button" tabindex="0" data-toast-dismiss><a-button-label>Dismiss</a-button-label></a-button>
+      </a-banner>
+    </a-toast>
+  </template>
+</div>
+<script type="module">
+  import '@antadesign/anta/elements'
+
+  const root = document.querySelector('[data-anta-composition="toaster"]')
+  const trigger = root.querySelector('[data-toast-add]')
+  const template = root.querySelector('template[data-toast-template]')
+  const toaster = root.querySelector('a-toaster')
+
+  trigger.addEventListener('click', () => toaster.append(template.content.cloneNode(true)))
+  // A dismissed toast finishes its exit animation, but stays in the DOM until its owner removes it.
+  root.addEventListener('dismiss', (event) => {
+    if (event.target instanceof HTMLElement && event.target.matches('a-toast')) event.target.remove()
+  })
+</script>
+```
 
 </Disclosure>
 

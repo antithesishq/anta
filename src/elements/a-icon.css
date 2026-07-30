@@ -18,6 +18,13 @@
     mask-size: contain;
   }
 
+  @media (forced-colors: active) {
+    a-icon {
+      forced-color-adjust: none;
+      background-color: var(--anta-forced-foreground, CanvasText);
+    }
+  }
+
   @supports (width: attr(size px, 16px)) {
     a-icon[size] {
       --icon-size: attr(size px, 16px);

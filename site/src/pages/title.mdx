@@ -2,37 +2,26 @@
 layout: ../layouts/DocsLayout.astro
 title: Title
 ---
-import { Title, Text, Icon } from '@antadesign/anta'
+import { Title, Icon } from '@antadesign/anta'
 import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 import titleDemoCode from './title.demo.ts'
 
 # Title
 
-A block-level heading at one of six `level`s. The `level` drives the
-type scale (font-size + line-height); it's also surfaced to assistive
-tech via `aria-level`. `<Title>` carries no vertical margins — it drops
-into any container and the parent owns spacing (a `gap` or padding).
-Pair with `priority` (`primary` → `quaternary`, mapping to `--text-1` …
-`--text-4`) and `tone` (`neutral` (default, untinted), `brand`,
-`success`, `critical`, `warning`, `info`, or any literal CSS color for a
-one-off custom tone) exactly as you would on `Text`.
+A margin-free heading with six `level`s. `level` sets the type scale and the
+`aria-level` exposed to assistive technology. `priority` runs from `primary`
+through `quaternary` (`--text-1` through `--text-4`); `tone` accepts `neutral`
+(the default), a named tone, or a literal CSS color.
 
-Raw `<h1>`–`<h6>` share that type scale via anta's reset, plus the
-document vertical rhythm (per-level top/bottom margins) that suits
-running prose. Reach for a real heading tag when SEO matters or you want
-that built-in rhythm and don't need the `tone` / `priority` props; use
-`<Title>` when you do.
+Use a raw `<h1>`–`<h6>` for document-outline or SEO semantics. Anta's reset
+gives those headings the same type scale and document margins. Use `<Title>` in
+component layouts when you need tone, priority, or parent-controlled spacing.
 
-> **`<Title>` has no margins.** Spacing between a heading and what
-> follows is the container's job — put a `gap` on the parent (or
-> padding), exactly as with `<Text>`. That keeps a heading neutral so it
-> drops into a card, toolbar, or grid cell without leaking margin or
-> pushing off the container's own padding. For a one-off, add spacing
-> inline (`style={{ marginBlock: '…' }}`). Want the classic document
-> rhythm instead? Reach for a raw `<h1>`–`<h6>`, which keep per-level
-> margins via the reset.
+> **`<Title>` has no margins.** Space it with the parent’s `gap` or padding. For
+> a one-off, add `marginBlock` to the title itself.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -46,94 +35,39 @@ that built-in rhythm and don't need the `tone` / `priority` props; use
 
 </Disclosure>
 
-## Levels in context
+## Levels
 
-Six levels interleaved with paragraphs of `<Text>`, all rendered with
-`tone="brand"` against a branded surface so the type scale reads
-clearly. `<Title>` and `<Text>` are both margin-free, so the spacing
-here comes from the container's `gap`.
+The parent supplies the `16px` gap between these titles.
 
 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--bg-pane-brand)', padding: '24px 32px', borderRadius: '8px', border: '1px solid var(--border-4-brand)' }}>
-  <Title level={1} tone="brand">Level 1 — page title</Title>
-  <Text tone="brand">
-    Donec a tincidunt elit. Mauris vehicula, est nec porta cursus,
-    tellus eros vestibulum lectus, vitae luctus turpis enim sed nibh.
-    Vestibulum ante ipsum primis in faucibus orci luctus et ultrices
-    posuere cubilia curae.
-  </Text>
-
-  <Title level={2} tone="brand">Level 2 — section heading</Title>
-  <Text tone="brand">
-    Curabitur sodales ligula in libero. Sed dignissim lacinia nunc.
-    Curabitur tortor. Pellentesque nibh. Aenean quam. In scelerisque
-    sem at dolor. Maecenas mattis. Sed convallis tristique sem.
-  </Text>
-
-  <Title level={3} tone="brand">Level 3 — subsection</Title>
-  <Text tone="brand">
-    Proin ut ligula vel nunc egestas porttitor. Morbi lectus risus,
-    iaculis vel, suscipit quis, luctus non, massa. Fusce ac turpis quis
-    ligula lacinia aliquet. Mauris ipsum.
-  </Text>
-
-  <Title level={4} tone="brand">Level 4</Title>
-  <Text tone="brand">
-    Nulla quis sem at nibh elementum imperdiet. Duis sagittis ipsum.
-    Praesent mauris. Fusce nec tellus sed augue semper porta.
-  </Text>
-
-  <Title level={5} tone="brand">Level 5</Title>
-  <Text tone="brand">
-    Mauris massa. Vestibulum lacinia arcu eget nulla. Class aptent
-    taciti sociosqu ad litora torquent per conubia nostra, per inceptos
-    himenaeos.
-  </Text>
-
-  <Title level={6} tone="brand">Level 6</Title>
-  <Text tone="brand">
-    Curabitur sodales ligula in libero. Sed dignissim lacinia nunc.
-    Curabitur tortor.
-  </Text>
+  <Title level={1} tone="brand">Level 1: Workspace settings</Title>
+  <Title level={2} tone="brand">Level 2: Recent activity</Title>
+  <Title level={3} tone="brand">Level 3: Security alerts</Title>
+  <Title level={4} tone="brand">Level 4: Sign-in policy</Title>
+  <Title level={5} tone="brand">Level 5: Session timeout</Title>
+  <Title level={6} tone="brand">Level 6: Updated five minutes ago</Title>
 </div>
 
-## Children
+## Inline content
 
-`<Title>` accepts arbitrary children — there are intentionally no
-`icon` / `iconTrailing` props because children are the API. Drop any
-inline content beside the title text.
+Pass icons and inline elements as children. Icons are optically aligned with
+the title text.
 
-<Title level={3} style={{ marginBottom: '12px' }}>
-  <Icon shape="book-open" /> Section with a leading icon
-</Title>
+<Preview>
+  <Title level={3}>
+    <Icon shape="book-open" /> Saved items <span style={{ color: 'var(--text-1-brand)' }}>(3)</span>
+  </Title>
+</Preview>
 
-<Text>
-  Icons inside `<Title>` get a small upward nudge via
-  `transform: translateY(-0.05em)` so they sit at the optical middle of
-  the title's uppercase text. Default `vertical-align: middle` aligns
-  the icon's center with the middle of the parent text's lowercase
-  x-height, which lands visually low in headings.
-</Text>
-
-<Title level={3} style={{ marginBlock: '20px 12px' }}>
-  <Icon shape="info" /> Mix it all — title text and <span style={{ color: 'var(--text-1-brand)' }}>accents</span>
-</Title>
-
-```tsx
+```tsx folded
 <Title level={3}>
-  <Icon shape="book-open" /> Section with a leading icon
-</Title>
-
-<Title level={3}>
-  Mix it all — title text and{' '}
-  <span style={{ color: 'var(--text-1-brand)' }}>accents</span>
+  <Icon shape="book-open" /> Saved items{' '}
+  <span style={{ color: 'var(--text-1-brand)' }}>(3)</span>
 </Title>
 ```
 
-To tint a portion of a title's text, drop a `<span>` with `color:
-var(--text-{1-5}-{tone})` inline. Don't nest another `<Text>` /
-`<a-text>` inside a `<Title>` — `<a-text>` is a block-level
-text-container with its own color hierarchy and link rules, and
-heading elements should hold inline phrasing content only.
+Use a span for a small inline accent. Don't nest `<Text>` or `<a-text>` inside a
+title: they are block containers, while heading content should remain inline.
 
 ## Level reference
 
@@ -146,17 +80,10 @@ heading elements should hold inline phrasing content only.
 | 5     | 15px      | 20px        |
 | 6     | 13px      | 16px        |
 
-`<Title>` adds no vertical margin at any level — space it with the
-parent's `gap` or padding. Raw `<h1>`–`<h6>` do carry per-level
-top/bottom margins (via `src/reset.css`) for document prose rhythm.
-
 ## Tone × priority
 
-All five priorities (columns) crossed with all six tones (rows,
-starting with neutral), demonstrated at `level={3}`. Neutral (no
-`tone`) shifts through `--text-1` → `--text-5`; each tone remaps the
-same priority steps onto its tinted scale. The grid scrolls
-horizontally on narrow viewports.
+The four priorities are shown across every named tone at `level={3}`. Omit
+`tone` for the neutral scale. The grid scrolls horizontally on narrow screens.
 
 <div className="title-tone-grid">
   <div className="title-tone-grid-inner">
@@ -194,15 +121,68 @@ horizontally on narrow viewports.
 
 ## Accessibility
 
-`<Title>` renders an `<a-title>` styled tag (not a real `<h*>`) and
-attaches `role="heading"` with `aria-level={level}` so screen readers
-announce it correctly. Search-engine crawlers, however, generally
-ignore ARIA headings — if SEO matters, write raw `<h{level}>` instead
-(it gets the same visual treatment from the reset) and skip the
-component.
+`<Title>` renders an `<a-title>` tag with `role="heading"` and
+`aria-level={level}`. It is not a real `<h*>`. Use a raw heading when the HTML
+document outline or SEO needs heading elements; the reset applies the same type
+scale.
 
 <Disclosure title="Component props" open>
 
 <PropsTable component="Title" />
+
+</Disclosure>
+
+<Disclosure title="Vanilla web component">
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+
+Set the heading role and level when writing `<a-title>` directly.
+
+<Preview>
+  <a-title level="2" tone="brand" role="heading" aria-level="2">Release notes</a-title>
+</Preview>
+
+```html
+<a-title level="2" tone="brand" role="heading" aria-level="2">
+  Release notes
+</a-title>
+```
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+`priority` selects a neutral text level. Named `tone`s use the matching global
+text tokens. A literal `tone` is stored in `--title-tone-source` and resolved
+into the four priority levels.
+
+```tsx folded
+<Title priority="secondary">Supporting heading</Title>
+<Title tone="#0d9488">Custom-tone heading</Title>
+```
+
+`<a-title>` is light DOM, so local type treatment is ordinary CSS. The class is
+only for this example.
+
+<Preview>
+  <Title className="release-heading" level={3}>Release notes</Title>
+  <style is:inline>{`
+    a-title.release-heading {
+      font-size: 18px;
+      line-height: 24px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+  `}</style>
+</Preview>
+
+```css folded
+a-title.release-heading {
+  font-size: 18px;
+  line-height: 24px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+```
 
 </Disclosure>

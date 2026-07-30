@@ -110,9 +110,12 @@ it directly when you want the grid inline, without a field.
 a shadow root. The days and prev/next chevrons are `<Button>`s (a selected day is a
 `tertiary` Button in its selected state, toned `brand`), inside a form-associated `<a-calendar>`
 grid. Date math runs on the [Temporal API](https://tc39.es/proposal-temporal/docs/),
-bundled via `temporal-polyfill` and exported as `buildMonth` and friends so you can
-populate your own grid. The value is an ISO `YYYY-MM-DD` string, never a `Date`. It
-works controlled (`value` + `onStateChange`) or uncontrolled (`defaultValue`), and
+bundled via `temporal-polyfill`. For a raw grid, import `buildMonth` from
+`@antadesign/anta`: it returns localized weekday headers and every day record you
+need to render — ISO value, accessible label, and selected, disabled, today, and
+outside-month state. It does not coordinate navigation, roving focus, selection, or
+re-renders for you. The value is an ISO `YYYY-MM-DD` string, never a `Date`. It works
+controlled (`value` + `onStateChange`) or uncontrolled (`defaultValue`), and
 participates in forms under `name`.
 
 **Not SSR-safe.** `Calendar` (and `InputDate`, which embeds it) reads the current
@@ -431,6 +434,43 @@ which uses the same `Menu` composition shown on the [Menu](/menu/) page.
 <Disclosure title="Calendar props" open>
 
 <PropsTable component="Calendar" />
+
+</Disclosure>
+
+<Disclosure title="Vanilla web component">
+
+`InputDate` has no host element. Rebuilding its text parsing, dropdown calendar,
+localized day grid, month navigation, keyboard navigation, and focus management
+in vanilla JavaScript is significant work, even with Anta's `buildMonth` and
+`parseISODate` helpers. Use the `InputDate` wrapper when React or Preact is an
+option. Otherwise, a native HTML date input is the practical baseline.
+
+### Native HTML date input
+
+Add `data-anta` to a `date`, `datetime-local`, `month`, `time`, or `week` input.
+Nothing else is required: Anta styles the field while the browser keeps its picker,
+icon, validation, and keyboard model. The picker itself and its date/time
+formatting remain browser- and OS-owned.
+
+`data-anta-size`, `round`, and a custom-color `tone` use the matching Input
+field treatments.
+
+<Preview gap="16px">
+  <input data-anta style={{ marginBottom: '8px' }} type="date" name="due-date" value="2026-06-15" />
+  <input data-anta style={{ marginBottom: '8px' }} type="datetime-local" name="starts-at" value="2026-06-15T09:00" />
+  <input data-anta style={{ marginBottom: '8px' }} type="month" name="billing-month" value="2026-06" />
+  <input data-anta style={{ marginBottom: '8px' }} type="time" name="reminder-at" value="09:00" />
+  <input data-anta style={{ marginBottom: '8px' }} type="week" name="sprint-week" value="2026-W25" />
+</Preview>
+
+```html
+<!-- `data-anta` styles the field, not the native picker. -->
+<input data-anta type="date" name="due-date" value="2026-06-15">
+<input data-anta type="datetime-local" name="starts-at" value="2026-06-15T09:00">
+<input data-anta type="month" name="billing-month" value="2026-06">
+<input data-anta type="time" name="reminder-at" value="09:00">
+<input data-anta type="week" name="sprint-week" value="2026-W25">
+```
 
 </Disclosure>
 

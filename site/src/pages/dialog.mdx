@@ -135,7 +135,7 @@ cross axis fills the viewport, so the far-side space is `100vw`/`100dvh` minus
 that thickness. Resize it with a position-scoped `::part(dialog)` rule (see
 [Styling](#styling)).
 
-## Round
+## Rounding corners
 
 The centered modal is rounded by default (10px) and drawers are square. `round`
 overrides that. A **side keyword** rounds only that edge's two corners, which
@@ -143,22 +143,34 @@ pairs with a drawer's exposed edge: a bottom sheet takes `round="top"`, a right
 drawer `round="left"`.
 
 <Preview gap="8px">
-  <a-button tabindex="0" data-dialog-open="round-sheet">Rounded bottom sheet</a-button>
+  <a-button tabindex="0" data-dialog-open="round-flat">Unrounded modal</a-button>
+  <a-button tabindex="0" data-dialog-open="round-sheet">Bottom, round top</a-button>
+  <a-button tabindex="0" data-dialog-open="round-drawer">Left, round right</a-button>
   <a-button tabindex="0" data-dialog-open="round-modal">Rounded modal</a-button>
+  <a-dialog name="round-flat" round="0">
+    <Title slot="header" level={4}>Square corners</Title>
+    <Text>A centered modal with no rounding.</Text>
+    <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="round-flat">Done</a-button>
+  </a-dialog>
   <a-dialog name="round-sheet" position="bottom" round="top">
     <Title slot="header" level={4}>Share</Title>
-    <Text>A bottom sheet with its exposed top edge rounded (<code>round="top"</code>).</Text>
+    <Text>A bottom sheet with its exposed top edge rounded.</Text>
+  </a-dialog>
+  <a-dialog name="round-drawer" position="left" round="right">
+    <Title slot="header" level={4}>Filters</Title>
+    <Text>A left drawer with its exposed right edge rounded.</Text>
   </a-dialog>
   <a-dialog name="round-modal" round="24px">
     <Title slot="header" level={4}>Softer corners</Title>
-    <Text>A centered modal with all four corners at 24px (<code>round="24px"</code>).</Text>
+    <Text>A centered modal with all four corners at 24px.</Text>
     <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="round-modal">Done</a-button>
   </a-dialog>
 </Preview>
 
 ```tsx folded
-<Dialog position="bottom" round="top">…</Dialog>   {/* round the sheet's top edge */}
-<Dialog position="right" round="left">…</Dialog>   {/* round a right drawer's inner edge */}
+<Dialog round={0}>…</Dialog>                        {/* unrounded centered modal */}
+<Dialog position="bottom" round="top">…</Dialog>  {/* round the sheet's top edge */}
+<Dialog position="left" round="right">…</Dialog>  {/* round a left drawer's inner edge */}
 <Dialog round={24}>…</Dialog>                      {/* all corners, 24px */}
 <Dialog round="12px 12px 0 0">…</Dialog>           {/* any border-radius shorthand */}
 ```
@@ -322,34 +334,37 @@ returns to whatever opened the dialog, from the native `<dialog>`.
 
 </Disclosure>
 
-## Web component
+<Disclosure title="Vanilla web component">
 
-Without the JSX wrapper, the `slot` attribute is the wire format: `slot="header"`
-and `slot="footer"` on your own elements, and anything unslotted is the body. The
-element has no `closable` attribute; the ✕ is a `Button` you slot into
-`slot="close"` with `data-custom-event="closerequest"` (what the wrapper's
-`closable` injects). The element handles the rest.
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
 
-Add `tabindex="0"` to every `<a-button>` you author by hand: `<a-button>` isn't
-keyboard-focusable on its own, so a button without it can be clicked but not
-tabbed to. The `<Button>` wrapper sets this for you.
+Slots hold the header, footer, and close control. Add `tabindex="0"` to every
+raw `<a-button>`.
+
+<Preview>
+  <a-button role="button" tabindex="0" data-dialog-open="invite"><a-button-label>Invite teammates</a-button-label></a-button>
+  <a-dialog name="invite">
+    <a-title slot="header" level="4" role="heading" aria-level="4">Invite teammates</a-title>
+    <a-text>Send an invite link to your team.</a-text>
+    <a-button slot="footer" role="button" tabindex="0" data-dialog-close="invite"><a-button-label>Cancel</a-button-label></a-button>
+    <a-button slot="footer" role="button" tabindex="0" priority="primary" data-dialog-close="invite"><a-button-label>Send</a-button-label></a-button>
+    <a-button slot="close" role="button" tabindex="0" priority="tertiary" size="large" aria-label="Close" data-custom-event="closerequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
+  </a-dialog>
+</Preview>
 
 ```html
+<a-button role="button" tabindex="0" data-dialog-open="invite"><a-button-label>Invite teammates</a-button-label></a-button>
 <a-dialog name="invite">
-  <h2 slot="header">Invite teammates</h2>
-
-  <p>Send an invite link to your team.</p>
-
-  <a-button tabindex="0" slot="footer" data-dialog-close="invite">Cancel</a-button>
-  <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="invite">Send</a-button>
-
-  <!-- the close button (what the wrapper's `closable` injects for you) -->
-  <a-button tabindex="0" slot="close" priority="tertiary" size="large"
-            aria-label="Close" data-custom-event="closerequest">
-    <a-icon shape="x"></a-icon>
-  </a-button>
+  <a-title slot="header" level="4" role="heading" aria-level="4">Invite teammates</a-title>
+  <a-text>Send an invite link to your team.</a-text>
+  <a-button slot="footer" role="button" tabindex="0" data-dialog-close="invite"><a-button-label>Cancel</a-button-label></a-button>
+  <a-button slot="footer" role="button" tabindex="0" priority="primary" data-dialog-close="invite"><a-button-label>Send</a-button-label></a-button>
+  <a-button slot="close" role="button" tabindex="0" priority="tertiary" size="large"
+    aria-label="Close" data-custom-event="closerequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
 </a-dialog>
 ```
+
+</Disclosure>
 
 <Disclosure title="Styling">
 
@@ -422,35 +437,5 @@ a-dialog::part(dialog)::backdrop { background: color-mix(in oklch, black 50%, tr
 
 If you override the surface, shadow, or overlay, add a `.dark` rule to match —
 the built-in defaults track light / dark, a fixed override won't.
-
-### Corners
-
-`round` covers the common cases: `round={0}` for an unrounded modal, `round="top"`
-for a bottom sheet's top edge, and `round="right"` for a left drawer's inner edge.
-
-<Preview gap="8px">
-  <a-button tabindex="0" data-dialog-open="corner-flat">Unrounded modal</a-button>
-  <a-button tabindex="0" data-dialog-open="corner-sheet">Bottom, round top</a-button>
-  <a-button tabindex="0" data-dialog-open="corner-drawer">Left, round right</a-button>
-  <a-dialog name="corner-flat" round="0">
-    <Title slot="header" level={4}>Square corners</Title>
-    <Text>A centered modal with no rounding (<code>round={0}</code>).</Text>
-    <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="corner-flat">Done</a-button>
-  </a-dialog>
-  <a-dialog name="corner-sheet" position="bottom" round="top">
-    <Title slot="header" level={4}>Bottom sheet</Title>
-    <Text>Top corners rounded (<code>round="top"</code>).</Text>
-  </a-dialog>
-  <a-dialog name="corner-drawer" position="left" round="right">
-    <Title slot="header" level={4}>Left drawer</Title>
-    <Text>The inner (right) edge rounded (<code>round="right"</code>).</Text>
-  </a-dialog>
-</Preview>
-
-```tsx folded
-<Dialog round={0}>…</Dialog>                        {/* unrounded centered modal */}
-<Dialog position="bottom" round="top">…</Dialog>    {/* round the sheet's top edge */}
-<Dialog position="left" round="right">…</Dialog>    {/* round a left drawer's inner edge */}
-```
 
 </Disclosure>

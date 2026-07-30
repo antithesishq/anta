@@ -481,6 +481,47 @@ export interface ACheckboxAttributes extends BaseAttributes {
 }
 
 /**
+ * Attributes for the `<a-switch>` custom element. It is a binary,
+ * form-associated immediate-setting control. Its visual checked state is stored
+ * in ElementInternals and styled through `:state(checked)`. `role="switch"`
+ * and the accessible name remain the consumer's responsibility; the `Switch`
+ * wrapper supplies both.
+ */
+export interface ASwitchAttributes extends BaseAttributes {
+  /** Track and thumb colour. A tinted tone also colours the unchecked chrome. */
+  tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Checked-track-only colour. The unchecked track and thumb stay neutral. */
+  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Size variant. `small` = 26×16px, `medium` (default) = 30×18px, `large` = 34×20px. */
+  size?: 'small' | 'medium' | 'large'
+  /** Fully round the thumb and track, or pass a custom track radius via a length
+   * value (`round="6px"`). The thumb radius is 3px smaller. Presence-based for the
+   * boolean form. */
+  round?: boolean | number | string
+  /** Visual placement of the label. The source / accessibility order stays stable. */
+  'label-position'?: 'start' | 'end'
+  /** Controlled checked state. Use `default-state` for an uncontrolled switch. */
+  state?: 'checked' | 'unchecked'
+  /** Uncontrolled initial checked state, read once at connect / form reset. */
+  'default-state'?: 'checked' | 'unchecked'
+  /** Disables interaction. Presence-based (`''` on, omit off). */
+  disabled?: boolean | ''
+  /** Form field name. */
+  name?: string
+  /** Value submitted when the switch is checked. Defaults to `"on"`. */
+  value?: string
+  /** Cancelable pre-change request. `detail` contains `{ next, prev }`. */
+  onstatechange?: (
+    e: CustomEvent<{ next: 'checked' | 'unchecked'; prev: 'checked' | 'unchecked' }>,
+  ) => void
+  /** Native post-change event. */
+  onchange?: (e: Event) => void
+  'aria-checked'?: 'true' | 'false'
+  'aria-disabled'?: 'true' | 'false'
+  'aria-label'?: string
+}
+
+/**
  * Attributes for the `<a-input>` custom element — a form-associated text
  * field whose real `<input>` / `<textarea>` lives in shadow DOM. For the
  * typed JSX wrapper use `Input` from `@antadesign/anta`.

@@ -9,7 +9,8 @@
     "docs:theme": "node scripts/copy-theme-anta.mjs",
     "docs:iframe-runtime": "node scripts/build-iframe-runtime.mjs",
     "docs": "pnpm run docs:api && pnpm run docs:pages && pnpm run docs:wasm && pnpm run docs:theme && pnpm run docs:iframe-runtime",
-    "dev": "pnpm run docs && astro dev",
+    "dev": "pnpm run docs && pnpm run dev:server",
+    "dev:server": "astro dev",
     "build": "pnpm run docs && astro build",
     "preview": "astro preview",
     "lint:css": "stylelint \"src/**/*.{css,astro}\""

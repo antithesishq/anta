@@ -1,4 +1,12 @@
 @layer anta {
+  /* The component and the native disclosure use the same chevron mask. Keeping
+     it at this scope lets a native summary render the Anta glyph rather than a
+     browser marker. */
+  a-expander,
+  details[data-anta] {
+    --_expander-chevron: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m9 18 6-6-6-6'/%3e%3c/svg%3e");
+  }
+
   a-expander {
     --expander-text: var(--text-2);
     --expander-text-hover: var(--text-1);
@@ -26,12 +34,6 @@
        24px = 6px edge + 16px chevron + 2px gap. (The docs site's foldable
        code-block header mirrors this spacing.) */
     --expander-gutter: 24px;
-
-    /* The chevron glyph, shared so the shadow `button::before` AND the
-       pre-upgrade light-DOM placeholder (the `:not(:defined)` rule below) paint
-       the same mask without duplicating the SVG. Used as a mask, so only its
-       alpha matters. */
-    --_expander-chevron: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m9 18 6-6-6-6'/%3e%3c/svg%3e");
 
     display: block;
     width: 100%;
@@ -73,7 +75,7 @@
      span itself must generate no box. (Formerly an inline `display:contents` on
      the span; moved here so the `:not(:defined)` skeleton below can lay it out
      without `!important`.) */
-  a-expander > [slot="actions"] { display: contents; }
+  a-expander > span[slot="actions"] { display: contents; }
 
   /* FOUC guard for the gap before the custom element upgrades. Until `a-expander`
      is `:defined`, there is no shadow DOM to collapse the region, so the light-DOM
@@ -324,5 +326,244 @@
   .dark a-expander[disabled],
   .dark a-expander[disabled][tone] {
     --expander-text: #635b65;
+  }
+
+  /* A native disclosure can opt into Expander's visual variants without giving
+     up the platform's built-in keyboard and accessibility behaviour. The native
+     `open` attribute remains the state source. */
+  details[data-anta] {
+    --native-expander-gutter: 24px;
+    --native-expander-summary-padding-block: 6px;
+    --native-expander-summary-font-size: 15px;
+    --native-expander-summary-line-height: 20px;
+    --native-expander-chevron-size: 16px;
+    --native-expander-text: var(--text-2);
+    --native-expander-text-hover: var(--text-1);
+    --native-expander-bg-secondary: var(--bg-2);
+    --native-expander-border-secondary: var(--border-5);
+    --native-expander-bg-primary: var(--bg-4);
+    --native-expander-border-primary: var(--border-4);
+    --native-expander-round-size: 16px;
+    --native-expander-round: 4px;
+    /* Native details keep the established transparent presentation unless a
+       filled priority is requested. */
+    --native-expander-bg: transparent;
+    --native-expander-border: transparent;
+
+    display: block;
+    inline-size: 100%;
+    box-sizing: border-box;
+    border: 0 solid var(--native-expander-border);
+    border-radius: var(--native-expander-round);
+    color: var(--native-expander-text);
+    background: var(--native-expander-bg);
+    font-family: var(--sans-serif);
+    font-size: 15px;
+    font-feature-settings: "ss02", "ss05", "tnum";
+    line-height: var(--native-expander-summary-line-height);
+    transition: background-color 100ms ease;
+  }
+  details[data-anta][priority="secondary"] {
+    --native-expander-bg: var(--native-expander-bg-secondary);
+    --native-expander-border: var(--native-expander-border-secondary);
+    border-width: 1px;
+  }
+  details[data-anta][priority="primary"] {
+    --native-expander-bg: var(--native-expander-bg-primary);
+    --native-expander-border: var(--native-expander-border-primary);
+    border-width: 1px;
+  }
+  /* A native `level` changes the summary's visual type scale only, matching
+     Expander. It remains a platform summary rather than becoming a semantic
+     heading. The chevron reads the same line-height variable, so it stays
+     centred at every level. */
+  details[data-anta][level="1"] {
+    --native-expander-summary-font-size: 28px;
+    --native-expander-summary-line-height: 32px;
+    --native-expander-round-size: 22px;
+  }
+  details[data-anta][level="2"] {
+    --native-expander-summary-font-size: 24px;
+    --native-expander-summary-line-height: 28px;
+    --native-expander-round-size: 20px;
+  }
+  details[data-anta][level="3"] {
+    --native-expander-summary-font-size: 20px;
+    --native-expander-summary-line-height: 24px;
+    --native-expander-round-size: 18px;
+  }
+  details[data-anta][level="4"] {
+    --native-expander-summary-font-size: 17px;
+    --native-expander-summary-line-height: 20px;
+  }
+  details[data-anta][level="6"] {
+    --native-expander-summary-font-size: 13px;
+    --native-expander-summary-line-height: 16px;
+    --native-expander-round-size: 14px;
+  }
+  /* The folded radius follows the header height: line-height + 12px padding,
+     divided by two. A literal `round` value continues to override the default. */
+  details[data-anta][round] {
+    --native-expander-round: var(--native-expander-round-size);
+  }
+  details[data-anta][round]:not([round=""]) {
+    --native-expander-round: attr(round type(<length>), var(--native-expander-round-size));
+  }
+  details[data-anta][priority="tertiary"][outdent] {
+    --native-expander-gutter: 0px;
+  }
+  details[data-anta][tone="brand"] {
+    --native-expander-text: var(--text-2-brand);
+    --native-expander-text-hover: var(--text-1-brand);
+    --native-expander-bg-secondary: var(--bg-2-brand);
+    --native-expander-border-secondary: var(--border-5-brand);
+    --native-expander-bg-primary: var(--bg-4-brand);
+    --native-expander-border-primary: var(--border-4-brand);
+  }
+  details[data-anta][tone="info"] {
+    --native-expander-text: var(--text-2-info);
+    --native-expander-text-hover: var(--text-1-info);
+    --native-expander-bg-secondary: var(--bg-2-info);
+    --native-expander-border-secondary: var(--border-5-info);
+    --native-expander-bg-primary: var(--bg-4-info);
+    --native-expander-border-primary: var(--border-4-info);
+  }
+  details[data-anta][tone="success"] {
+    --native-expander-text: var(--text-2-success);
+    --native-expander-text-hover: var(--text-1-success);
+    --native-expander-bg-secondary: var(--bg-2-success);
+    --native-expander-border-secondary: var(--border-5-success);
+    --native-expander-bg-primary: var(--bg-4-success);
+    --native-expander-border-primary: var(--border-4-success);
+  }
+  details[data-anta][tone="warning"] {
+    --native-expander-text: var(--text-2-warning);
+    --native-expander-text-hover: var(--text-1-warning);
+    --native-expander-bg-secondary: var(--bg-2-warning);
+    --native-expander-border-secondary: var(--border-5-warning);
+    --native-expander-bg-primary: var(--bg-4-warning);
+    --native-expander-border-primary: var(--border-4-warning);
+  }
+  details[data-anta][tone="critical"] {
+    --native-expander-text: var(--text-2-critical);
+    --native-expander-text-hover: var(--text-1-critical);
+    --native-expander-bg-secondary: var(--bg-2-critical);
+    --native-expander-border-secondary: var(--border-5-critical);
+    --native-expander-bg-primary: var(--bg-4-critical);
+    --native-expander-border-primary: var(--border-4-critical);
+  }
+  details[data-anta][tone]:not(
+      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]
+    ) {
+    --native-expander-tone-source: attr(tone type(<color>), currentColor);
+    --native-expander-text: oklch(from var(--native-expander-tone-source) 0.5 0.125 h);
+    --native-expander-text-hover: oklch(from var(--native-expander-tone-source) 0.4 0.11 h);
+    --native-expander-bg-secondary: oklch(from var(--native-expander-tone-source) 0.99 0.004 h);
+    --native-expander-border-secondary: oklch(from var(--native-expander-tone-source) 0.935 0.028 h);
+    --native-expander-bg-primary: oklch(from var(--native-expander-tone-source) 0.955 0.02 h);
+    --native-expander-border-primary: oklch(from var(--native-expander-tone-source) 0.9 0.04 h);
+  }
+  .dark details[data-anta][tone]:not(
+      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]
+    ) {
+    --native-expander-text: oklch(from var(--native-expander-tone-source) 0.77 0.11 h);
+    --native-expander-text-hover: oklch(from var(--native-expander-tone-source) 0.85 0.1 h);
+    --native-expander-bg-secondary: oklch(from var(--native-expander-tone-source) 0.13 0.02 h);
+    --native-expander-border-secondary: oklch(from var(--native-expander-tone-source) 0.21 0.045 h);
+    --native-expander-bg-primary: oklch(from var(--native-expander-tone-source) 0.185 0.05 h);
+    --native-expander-border-primary: oklch(from var(--native-expander-tone-source) 0.26 0.06 h);
+  }
+  details[data-anta] > summary {
+    position: relative;
+    box-sizing: border-box;
+    display: block;
+    min-width: 0;
+    padding: var(--native-expander-summary-padding-block) 4px
+      var(--native-expander-summary-padding-block) var(--native-expander-gutter);
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--native-expander-summary-font-size);
+    line-height: var(--native-expander-summary-line-height);
+    font-weight: 584.62;
+    letter-spacing: 0;
+    list-style: none;
+    text-decoration-line: none;
+    transition: color 150ms ease;
+  }
+  details[data-anta] > summary::-webkit-details-marker { display: none; }
+  details[data-anta] > summary::marker { content: ""; }
+  details[data-anta] > summary::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--native-expander-gutter) - var(--native-expander-chevron-size) - 2px);
+    /* Use a first-line-height box instead of centering in the whole summary.
+       A wrapped or opened disclosure then keeps its chevron aligned with the
+       first line, and rotation does not move it vertically. */
+    top: var(--native-expander-summary-padding-block);
+    width: var(--native-expander-chevron-size);
+    height: var(--native-expander-summary-line-height);
+    background-color: currentColor;
+    -webkit-mask: var(--_expander-chevron) center / var(--native-expander-chevron-size) no-repeat;
+            mask: var(--_expander-chevron) center / var(--native-expander-chevron-size) no-repeat;
+    opacity: 0.6;
+    transform: rotate(0deg);
+    transition: transform 150ms ease, opacity 150ms ease, background-color 150ms ease;
+  }
+  details[data-anta][open] > summary::before {
+    opacity: 1;
+    transform: rotate(90deg);
+  }
+  details[data-anta]:is([priority="primary"], [priority="secondary"]):not([open]):hover {
+    background: oklch(from var(--native-expander-bg) calc(l + 0.01) c h);
+  }
+  details[data-anta]:is([priority="primary"], [priority="secondary"]):not([open]):active {
+    background: var(--native-expander-bg);
+  }
+  details[data-anta] > summary:hover {
+    color: var(--native-expander-text-hover);
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: color-mix(in oklch, currentColor 75%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  details[data-anta] > summary:hover::before { opacity: 1; }
+  details[data-anta] > summary:active { color: var(--native-expander-text); }
+  details[data-anta] > summary:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  details[data-anta] > :not(summary) {
+    display: block;
+    padding: 2px 4px 6px var(--native-expander-gutter);
+    line-height: 20px;
+  }
+
+  /* The Expander chevron is a mask on the summary's pseudo-element. Give that
+     paint an explicit system foreground so forced colors cannot remap it away. */
+  @media (forced-colors: active) {
+    :is(a-expander, details[data-anta]) {
+      border-color: CanvasText;
+    }
+    :is(a-expander, details[data-anta]):not([priority="primary"], [priority="tertiary"]) {
+      border-style: dashed;
+    }
+    /* Keep the transparent tertiary border's geometry for the shadow outdent
+       correction, but paint it as Canvas so the border is visually absent. */
+    :is(a-expander, details[data-anta])[priority="tertiary"] {
+      border-color: Canvas;
+    }
+    a-expander::part(summary)::before,
+    a-expander:not(:defined) a-expander-summary::before,
+    details[data-anta] > summary::before {
+      forced-color-adjust: none;
+      background-color: CanvasText;
+    }
+    a-expander[disabled]::part(summary)::before {
+      background-color: GrayText;
+    }
   }
 }

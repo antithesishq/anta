@@ -1,0 +1,303 @@
+@layer anta {
+  /* A light-DOM binary control. The track and thumb are pseudo-elements, while
+     the authored label stays ordinary light DOM. The checked state lives in
+     ElementInternals. */
+  a-switch {
+    --switch-gap: 8px;
+    --switch-track-inline-size: 30px;
+    --switch-track-block-size: 18px;
+    --switch-thumb-size: 12px;
+    --switch-thumb-size-off: 10px;
+    --switch-thumb-inset: 2px;
+    --switch-thumb-inset-off: 4px;
+    --switch-thumb-travel: 13px;
+    --switch-track-round: 999px;
+    --switch-thumb-round: 999px;
+    --switch-label-fs: 15px;
+    --switch-label-lh: 20px;
+
+    --switch-track-off-stroke-neutral: var(--border-3);
+    --switch-track-off-stroke: var(--switch-track-off-stroke-neutral);
+    --switch-track-off-stroke-hover: var(--border-2);
+    --switch-track-off-stroke-active: var(--border-1);
+    --switch-track-disabled: color-mix(in oklch, #44374b 10%, transparent);
+    --switch-thumb: var(--bg-1);
+    --switch-thumb-off: var(--switch-track-off-stroke);
+
+    /* Brand is the default checked-track tone. `tone` also points the off-state
+       chrome at its seed; `tone-selected` leaves that chrome neutral. */
+    --switch-tone-source: var(--anta-seed-brand);
+    --switch-off-tone-source: var(--anta-seed-brand);
+    --_switch-tone-l-rest: 0.56;
+    --_switch-tone-l-hover: 0.48;
+    --_switch-tone-l-active: 0.42;
+    --switch-track-on: oklch(from var(--switch-tone-source) var(--_switch-tone-l-rest) c h);
+    --switch-track-on-hover: oklch(from var(--switch-tone-source) var(--_switch-tone-l-hover) c h);
+    --switch-track-on-active: oklch(from var(--switch-tone-source) var(--_switch-tone-l-active) c h);
+
+    --switch-label-color: var(--text-2);
+    --switch-label-color-disabled: var(--text-4);
+    --switch-hint-color: var(--text-3);
+    --switch-hint-fs: 13px;
+    --switch-hint-lh: 16px;
+
+    display: inline-grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    column-gap: var(--switch-gap);
+    min-inline-size: 0;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-drag: none;
+    outline: none;
+
+    color: var(--switch-label-color);
+    font-family: var(--sans-serif);
+    font-size: var(--switch-label-fs);
+    line-height: var(--switch-label-lh);
+    font-feature-settings: "ss02", "ss05", "tnum";
+
+    &::before,
+    &::after {
+      grid-column: 1;
+      grid-row: 1 / -1;
+      align-self: start;
+      box-sizing: border-box;
+      content: "";
+      position: relative;
+    }
+
+    &::before {
+      z-index: 0;
+      box-sizing: border-box;
+      inline-size: var(--switch-track-inline-size);
+      block-size: var(--switch-track-block-size);
+      margin-block-start: calc((var(--switch-label-lh) - var(--switch-track-block-size)) / 2);
+      border-radius: var(--switch-track-round);
+      background: transparent;
+      border: 1.5px solid var(--switch-track-off-stroke);
+      transition:
+        background-color 150ms ease-out,
+        border-color 150ms ease-out;
+    }
+
+    &::after {
+      z-index: 2;
+      justify-self: start;
+      inline-size: var(--switch-thumb-size-off);
+      block-size: var(--switch-thumb-size-off);
+      margin-inline-start: var(--switch-thumb-inset-off);
+      margin-block-start: calc((var(--switch-label-lh) - var(--switch-thumb-size-off)) / 2);
+      border-radius: var(--switch-thumb-round);
+      background: var(--switch-thumb-off);
+      box-shadow: none;
+      transition:
+        transform 150ms ease-out,
+        inline-size 150ms ease-out,
+        block-size 150ms ease-out,
+        margin-inline-start 150ms ease-out,
+        margin-block-start 150ms ease-out,
+        background-color 150ms ease-out,
+        box-shadow 150ms ease-out;
+    }
+
+    &[label-position="start"] {
+      grid-template-columns: minmax(0, 1fr) auto;
+      &::before,
+      &::after { grid-column: 2; }
+      a-switch-label,
+      a-switch-hint { grid-column: 1; }
+    }
+
+    &[round] {
+      --switch-track-round: var(--switch-round, attr(round type(<length>), 999px));
+      --switch-thumb-round: max(0px, calc(var(--switch-track-round) - 3px));
+    }
+
+    &:state(checked) {
+      &::before {
+        background: var(--switch-track-on);
+        border-color: transparent;
+      }
+      &::after {
+        inline-size: var(--switch-thumb-size);
+        block-size: var(--switch-thumb-size);
+        margin-inline-start: var(--switch-thumb-inset);
+        margin-block-start: calc((var(--switch-label-lh) - var(--switch-thumb-size)) / 2);
+        transform: translateX(var(--switch-thumb-travel));
+        background: var(--switch-thumb);
+        box-shadow: 0 1px 2px color-mix(in oklch, #44374b 25%, transparent);
+      }
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:not(:disabled):not(:state(checked)):hover::before {
+        border-color: var(--switch-track-off-stroke-hover);
+      }
+      &:not(:disabled):hover:state(checked)::before { background: var(--switch-track-on-hover); }
+    }
+    &:not(:disabled):not(:state(checked)):active::before {
+      border-color: var(--switch-track-off-stroke-active);
+    }
+    &:not(:disabled):active:state(checked)::before { background: var(--switch-track-on-active); }
+
+    &:focus-visible::before {
+      outline: 1px solid var(--focus-ring);
+      outline-offset: 1px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      color: var(--switch-label-color-disabled);
+      &::before {
+        background: var(--switch-track-disabled);
+        border-color: var(--switch-track-disabled);
+        transition: none;
+      }
+      &::after {
+        box-shadow: none;
+        transition: none;
+      }
+      &:state(checked) {
+        &::before {
+          background: color-mix(in oklch, var(--switch-track-on) 50%, transparent);
+          border-color: transparent;
+        }
+        &::after {
+          background: color-mix(in oklch, var(--switch-thumb) 50%, transparent);
+          box-shadow: 0 1px 2px color-mix(in oklch, #44374b 12.5%, transparent);
+        }
+      }
+      a-switch-hint { color: var(--switch-label-color-disabled); }
+    }
+
+    &[size="small"] {
+      --switch-gap: 6px;
+      --switch-track-inline-size: 26px;
+      --switch-track-block-size: 16px;
+      --switch-thumb-size: 10px;
+      --switch-thumb-size-off: 8px;
+      --switch-thumb-inset-off: 4px;
+      --switch-thumb-travel: 11px;
+      --switch-label-fs: 13px;
+      --switch-label-lh: 16px;
+      --switch-hint-fs: 12px;
+      --switch-hint-lh: 14px;
+    }
+    &[size="large"] {
+      --switch-track-inline-size: 34px;
+      --switch-track-block-size: 20px;
+      --switch-thumb-size: 14px;
+      --switch-thumb-size-off: 11px;
+      --switch-thumb-inset-off: 5px;
+      --switch-thumb-travel: 15px;
+      --switch-label-fs: 17px;
+      --switch-label-lh: 22px;
+      --switch-hint-fs: 15px;
+      --switch-hint-lh: 19px;
+    }
+  }
+
+  a-switch-label,
+  a-switch-hint {
+    display: block;
+    grid-column: 2;
+    min-inline-size: 0;
+  }
+  a-switch-hint {
+    color: var(--switch-hint-color);
+    font-size: var(--switch-hint-fs);
+    line-height: var(--switch-hint-lh);
+    margin-block-start: 2px;
+  }
+
+  a-switch[tone="brand"] { --switch-tone-source: var(--anta-seed-brand); --switch-off-tone-source: var(--anta-seed-brand); }
+  a-switch[tone="neutral"] { --switch-tone-source: var(--anta-seed-neutral); --switch-off-tone-source: var(--anta-seed-neutral); }
+  a-switch[tone="info"] { --switch-tone-source: var(--anta-seed-info); --switch-off-tone-source: var(--anta-seed-info); }
+  a-switch[tone="success"] { --switch-tone-source: var(--anta-seed-success); --switch-off-tone-source: var(--anta-seed-success); }
+  a-switch[tone="warning"] { --switch-tone-source: var(--anta-seed-warning); --switch-off-tone-source: var(--anta-seed-warning); }
+  a-switch[tone="critical"] { --switch-tone-source: var(--anta-seed-critical); --switch-off-tone-source: var(--anta-seed-critical); }
+  /* A regular `tone` also colours the unchecked border and thumb. The track
+     keeps a whisper-light border at rest, then steps through the same ramp as
+     the neutral chrome. `tone-selected` deliberately does not participate. */
+  a-switch[tone]:not([tone=""], [tone="neutral"]) {
+    --_switch-off-track: oklch(from var(--switch-off-tone-source) var(--_switch-tone-l-rest) c h);
+    --_switch-off-chrome: color-mix(in oklch, var(--_switch-off-track) 70%, var(--switch-track-off-stroke-neutral));
+    --switch-track-off-stroke: oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h);
+    --switch-track-off-stroke-hover: oklch(from var(--_switch-off-chrome) calc(l + 0.1) c h);
+    --switch-track-off-stroke-active: var(--_switch-off-chrome);
+    --switch-thumb-off: var(--_switch-off-chrome);
+  }
+
+  a-switch[tone]:not(
+      [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]) {
+    --switch-tone-source: attr(tone type(<color>), transparent);
+    --switch-off-tone-source: attr(tone type(<color>), transparent);
+  }
+  a-switch[tone-selected="brand"] { --switch-tone-source: var(--anta-seed-brand); }
+  a-switch[tone-selected="neutral"] { --switch-tone-source: var(--anta-seed-neutral); }
+  a-switch[tone-selected="info"] { --switch-tone-source: var(--anta-seed-info); }
+  a-switch[tone-selected="success"] { --switch-tone-source: var(--anta-seed-success); }
+  a-switch[tone-selected="warning"] { --switch-tone-source: var(--anta-seed-warning); }
+  a-switch[tone-selected="critical"] { --switch-tone-source: var(--anta-seed-critical); }
+  a-switch[tone-selected]:not(
+      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
+      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
+    --switch-tone-source: attr(tone-selected type(<color>), transparent);
+  }
+
+  .dark a-switch {
+    --switch-track-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
+    --switch-thumb: #ece9ec;
+    --switch-thumb-off: var(--switch-track-off-stroke);
+    --_switch-tone-l-rest: 0.47;
+    --_switch-tone-l-hover: 0.53;
+    --_switch-tone-l-active: 0.58;
+  }
+  .dark a-switch[tone]:not([tone=""], [tone="neutral"]) {
+    --switch-track-off-stroke: var(--_switch-off-chrome);
+    --switch-track-off-stroke-hover: oklch(from var(--_switch-off-chrome) calc(l + 0.1) c h);
+    --switch-track-off-stroke-active: oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h);
+  }
+
+  /* The track and thumb are both author-painted pseudo-elements. Keep their
+     forced-colors pairing explicit: off is a Canvas track with a CanvasText
+     thumb, while on swaps those two colours. */
+  @media (forced-colors: active) {
+    a-switch::before,
+    a-switch::after {
+      forced-color-adjust: none;
+    }
+    a-switch::before {
+      background-color: Canvas;
+      border-color: CanvasText;
+    }
+    a-switch::after {
+      background-color: CanvasText;
+      box-shadow: none;
+    }
+    a-switch:state(checked)::before {
+      background-color: CanvasText;
+      border-color: CanvasText;
+    }
+    a-switch:state(checked)::after {
+      background-color: Canvas;
+    }
+    a-switch:disabled::before {
+      background-color: Canvas;
+      border-color: GrayText;
+    }
+    a-switch:disabled::after {
+      background-color: GrayText;
+    }
+    a-switch:disabled:state(checked)::before {
+      background-color: GrayText;
+      border-color: GrayText;
+    }
+    a-switch:disabled:state(checked)::after {
+      background-color: Canvas;
+    }
+  }
+}

@@ -596,7 +596,7 @@ export interface AInputAttributes extends BaseAttributes {
 }
 
 /** Attributes for the `<a-input-time>` custom element — a segmented wall-clock
- *  time field (hour / minute / AM-PM spinbutton sections in one box). */
+ *  time field (hour / minute / AM-PM native text-input sections in one box). */
 export interface AInputTimeAttributes extends BaseAttributes {
   /** Controlled value — 24-hour `"HH:mm"`, `''` when incomplete. */
   value?: string

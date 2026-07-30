@@ -72,11 +72,6 @@
     --input-time-adornment: var(--text-3);
     --input-time-hint: var(--text-3);
 
-    /* Focused segment: the focus-ring colour, matching the text-selection tint
-       (20% light / 30% dark) so the active sector reads as "selected". */
-    --input-time-seg-focus-bg: color-mix(in oklch, var(--focus-ring) 20%, transparent);
-    --input-time-seg-focus-text: var(--text-1);
-
     /* A time is a fixed, small control (like native `<input type="time">`), so the
        field wraps its content — the icon + segments — rather than filling the
        container the way a text `<a-input>` does (`width: 100%`). A consumer that
@@ -140,10 +135,5 @@
 
   /* Neutral dark border needs no override: base points at --border-2 / --border-1
      (seed-derived dark values). */
-
-  /* Focused-segment tint tracks the text-selection alpha (30% dark, per reset.css). */
-  .dark a-input-time {
-    --input-time-seg-focus-bg: color-mix(in oklch, var(--focus-ring) 30%, transparent);
-  }
 
 }

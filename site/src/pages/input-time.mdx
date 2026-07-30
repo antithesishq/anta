@@ -13,10 +13,11 @@ import InputTimeDemo from '../components/InputTimeDemo'
 
 **`InputTime`** is a segmented wall-clock field: one boxed input, like the others,
 holding separate **hour** and **minute** sections — plus an **AM/PM** section in
-12-hour locales — that behave as a single control. Each section is a spinbutton:
+12-hour locales — that behave as a single control. Each section is a native text
+input:
 <kbd>↑</kbd>/<kbd>↓</kbd> steps its value (wrapping 59 → 00), <kbd>←</kbd>/<kbd>→</kbd>
-moves between sections, and typing a digit fills the section and advances to the next
-once it can't hold more. AM/PM toggles with <kbd>↑</kbd>/<kbd>↓</kbd> or by typing
+moves between sections at the caret boundary, and typing a digit fills the section
+and advances to the next once it can't hold more. AM/PM accepts its locale text or
 `a` / `p`.
 
 A leading clock icon marks the affordance (change it with `icon`). Unlike a text
@@ -44,13 +45,14 @@ or uncontrolled (`defaultValue`), and submits under `name` via the native form A
 
 Focus a section and edit it with the keyboard: <kbd>↑</kbd>/<kbd>↓</kbd> to step (it
 wraps), <kbd>PageUp</kbd>/<kbd>PageDown</kbd> for a larger jump on minutes,
-<kbd>Home</kbd>/<kbd>End</kbd> for the min/max, or just type the digits. Typing
+or just type the digits. <kbd>Home</kbd>/<kbd>End</kbd>, selection, deletion, and
+paste behave as they do in a native text input. Typing
 `9` then `3` `0` lands `09:30` and moves across the sections on its own; an
 out-of-range digit (a `6` in the minutes) commits and advances immediately.
-<kbd>Backspace</kbd> clears a section and steps back. The whole thing reads as one
-field — a focused section is highlighted, and there's no free-text caret. In a
+<kbd>Backspace</kbd> on an empty section selects the previous one. The whole thing
+reads as one field while preserving native caret behavior. In a
 12-hour field, typing a 24-hour hour converts it and flips AM/PM — `18` becomes
-`6 PM`, `0` becomes `12 AM` — so pasting a 24-hour time just works.
+`6 PM` — so pasting a 24-hour time just works.
 
 <Preview background="var(--bg-2)">
   <InputTimeDemo client:only="preact" label="Start time" defaultValue="09:30" />
@@ -155,8 +157,8 @@ field treatments.
 
 `InputTime` renders an `<a-input-time>` whose field chrome mirrors `<a-input>`.
 Route feedback color through `status`; everything else is reachable as plain CSS on
-the host or through `::part()` — the element exposes `field`, `segments`, `leading`,
-`label`, `hint`, `clear`, and `trailing` parts. Don't override the internal
+the host or through `::part()` — the element exposes `field`, `segments`, `segment`,
+`leading`, `label`, `hint`, `clear`, and `trailing` parts. Don't override the internal
 `--input-time-*` output tokens directly; they recompute per state.
 
 <Preview background="var(--bg-2)">

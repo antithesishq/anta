@@ -23,6 +23,9 @@ changes are not listed.
   including icons, inputs, buttons, tags, choice controls, tabs, Expanders,
   Cards, Dialogs, Banners, Progress, and Tooltips.
 - Switch tracks use a real 1.5px border instead of an inset shadow.
+- `InputTime` segments now use native text inputs. They retain native caret,
+  selection, paste, and IME behavior while keeping Anta's locale-aware layout
+  and cross-segment navigation.
 
 ### Fixed
 

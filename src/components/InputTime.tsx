@@ -113,10 +113,11 @@ const STATUS_ICON: Record<string, IconShape> = {
 /**
  * `<InputTime>` — a segmented wall-clock time field. One boxed input (matching
  * the other inputs) with separate hour / minute / (12-hour) AM-PM sections that
- * behave as one control: each is a `role="spinbutton"` — ↑/↓ steps with wrap,
- * ←/→ moves between them, typing digits auto-advances, and AM/PM toggles with
- * ↑/↓ or `a`/`p`. Renders an `<a-input-time>` web component that owns the
- * segments, keyboard, and form value (via `ElementInternals`).
+ * behave as one control: each is a native text input — ↑/↓ steps with wrap,
+ * ←/→ crosses segments at caret boundaries, typing digits auto-advances, and
+ * AM/PM accepts its locale text or `a`/`p`. Renders an `<a-input-time>` web
+ * component that owns the segments, navigation, and form value (via
+ * `ElementInternals`).
  *
  * The clock and layout follow the locale (`en-US` → 12-hour, most others 24),
  * overridable with `hour12`. The value is a 24-hour `"HH:mm"` string; controlled

@@ -157,23 +157,29 @@ field treatments.
 
 `InputTime` renders an `<a-input-time>` whose field chrome mirrors `<a-input>`.
 Route feedback color through `status`; everything else is reachable as plain CSS on
-the host or through `::part()` — the element exposes `field`, `segments`, `segment`,
-`leading`, `label`, `hint`, `clear`, and `trailing` parts. Don't override the internal
-`--input-time-*` output tokens directly; they recompute per state.
+the host or through `::part()`. `segment` targets every editable input. `hour`,
+`minute`, and `period` target one segment type regardless of locale order. `literal`
+targets the localized separator. The element also exposes `field`, `segments`,
+`leading`, `label`, `hint`, `clear`, and `trailing`. Don't override the internal
+`--input-time-*` values directly; they are defaults, not a styling API.
 
 <Preview background="var(--bg-2)">
   <InputTimeDemo client:only="preact" className="my-time" label="Full width, red" defaultValue="09:30" />
   <style is:inline>{`
     .my-time { width: 100%; }
     .my-time::part(segments) { color: #e5484d; }
+    .my-time::part(period) { color: var(--text-3); }
+    .my-time::part(literal) { color: var(--text-4); }
   `}</style>
 </Preview>
 
 ```css folded
-/* Make one field fill its container (the default is content-width) and colour
-   the time red — width on the host, the colour through the segments part. */
+/* Make one field fill its container (the default is content-width). Style all
+   editable segments, then keep AM/PM and the locale separator quieter. */
 .my-time { width: 100%; }
 .my-time::part(segments) { color: #e5484d; }
+.my-time::part(period) { color: var(--text-3); }
+.my-time::part(literal) { color: var(--text-4); }
 ```
 
 Drop the clock icon with the `icon={false}` prop, and point the `segments` part at

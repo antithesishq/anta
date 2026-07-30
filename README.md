@@ -224,18 +224,19 @@ To use the Antithesis fonts, register your own `@font-face` declarations and ove
 
 ## Browser support
 
-Anta targets evergreen browsers and ships **no baseline polyfills or feature detection**. Its floor is the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API), used by `<a-menu>` and `<a-tooltip>`:
+Anta targets evergreen browsers and ships **no baseline polyfills**. Its floor is [custom-element states](https://developer.mozilla.org/en-US/docs/Web/API/CustomStateSet), used throughout the components for their internal CSS state, alongside the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API):
 
 | Browser | Minimum version |
 | --- | --- |
-| Chrome / Edge | 114 (May 2023) |
-| Safari | 17 (Sep 2023) |
-| Firefox | 125 (Apr 2024) |
+| Chrome / Edge | 125 (May 2024) |
+| Safari | 17.4 (Mar 2024) |
+| Firefox | 126 (May 2024) |
 
-This is roughly [Baseline 2024](https://web.dev/baseline). Anta also relies on
-relative OKLCH, `:has()`, `dvh`, cascade layers, and constructable shadow DOM.
-Older browsers can fail hard, including `showPopover()` throwing. Gate Anta on
-your own support matrix when you support older browsers.
+This is [Baseline 2024](https://web.dev/baseline). Anta also relies on relative
+OKLCH, `:has()`, `dvh`, cascade layers, and constructable shadow DOM. Older
+browsers can fail hard, including `:state()` being unrecognized or
+`showPopover()` throwing. Gate Anta on your own support matrix when you support
+older browsers.
 
 Two features progressively enhance with fallbacks: `checkVisibility()` falls
 back to `getClientRects()`, and typed CSS `attr()` supports raw

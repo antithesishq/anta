@@ -69,9 +69,6 @@ interface Seg {
 // input width. The layout mirrors a-input's label, field, and hint chrome.
 const SHADOW_STYLE = `
   :host {
-    --_fs: 15px;
-    --_lh: 20px;
-
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     row-gap: 4px;
@@ -82,11 +79,10 @@ const SHADOW_STYLE = `
     display: none;
     color: var(--input-time-label);
     font-family: var(--sans-serif);
-    font-size: var(--_fs);
-    line-height: var(--_lh);
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
     font-weight: 500;
   }
-  .label.has-label { display: block; }
 
   .field {
     --_bc: var(--input-time-border);
@@ -95,18 +91,13 @@ const SHADOW_STYLE = `
     display: flex;
     align-items: center;
     box-sizing: border-box;
-    min-height: 28px;
+    min-height: var(--input-time-field-height);
     background: var(--input-time-bg);
-    border-radius: 4px;
+    border-radius: var(--input-time-field-radius);
     box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
     transition: box-shadow 120ms ease;
   }
   :host([status]) .field { --_bw: 1px; }
-  :host([size="small"]) { --_fs: 13px; --_lh: 16px; }
-  :host([size="large"]) { --_fs: 17px; --_lh: 22px; }
-  :host([size="small"]) .field { min-height: 24px; }
-  :host([size="large"]) .field { min-height: 32px; }
-  :host([round]) .field { border-radius: var(--input-time-round, 999px); }
 
   @media (hover: hover) and (pointer: fine) {
     :host(:not(:disabled)) .field:hover {
@@ -125,16 +116,9 @@ const SHADOW_STYLE = `
   slot[name="leading"] {
     display: none;
     color: var(--input-time-adornment);
-    font-size: var(--_fs);
-    line-height: var(--_lh);
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
   }
-  .field.has-leading slot[name="leading"] {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    margin-inline-start: 7px;
-  }
-  .field.has-leading .segments { padding-inline-start: 4px; }
   :host([dim-actions]) slot[name="leading"] { opacity: 0.6; transition: opacity 120ms ease; }
   :host([dim-actions]:not(:disabled)) .field:hover slot[name="leading"],
   :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="leading"] { opacity: 1; }
@@ -150,8 +134,8 @@ const SHADOW_STYLE = `
     font-family: var(--sans-serif);
     font-feature-settings: 'ss02', 'ss05', 'tnum';
     font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
-    font-size: var(--_fs);
-    line-height: var(--_lh);
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
     font-weight: 400;
   }
 
@@ -178,7 +162,7 @@ const SHADOW_STYLE = `
   .seg--period {
     field-sizing: content;
     width: auto;
-    color: var(--text-3);
+    color: var(--input-time-period-color);
   }
   .seg::placeholder {
     color: var(--input-time-placeholder);
@@ -194,14 +178,6 @@ const SHADOW_STYLE = `
   :host(:disabled) .seg { cursor: not-allowed; }
 
   slot[name="trailing"] { display: none; }
-  .field.has-trailing slot[name="trailing"] {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    flex-shrink: 0;
-    color: var(--input-time-adornment);
-    font-size: var(--_fs);
-  }
   :host([dim-actions]) slot[name="trailing"],
   :host([dim-actions]) slot[name="clear"] { opacity: 0.6; transition: opacity 120ms ease; }
   :host([dim-actions]:not(:disabled)) .field:hover slot[name="trailing"],
@@ -215,7 +191,7 @@ const SHADOW_STYLE = `
     flex-shrink: 0;
     visibility: hidden;
   }
-  .field.is-filled slot[name="clear"] { visibility: visible; }
+  :host(:state(filled)) slot[name="clear"] { visibility: visible; }
   :host(:disabled) slot[name="clear"] { display: none; }
 
   .hint {
@@ -225,10 +201,9 @@ const SHADOW_STYLE = `
     padding-inline-start: 1px;
     color: var(--input-time-hint);
     font-family: var(--sans-serif);
-    font-size: calc(var(--_fs) - 1px);
-    line-height: calc(var(--_lh) - 2px);
+    font-size: calc(var(--input-time-font-size) - 1px);
+    line-height: calc(var(--input-time-line-height) - 2px);
   }
-  .hint.has-hint { display: flex; }
 `
 
 // The shell never changes. Keeping it in one declarative template makes the
@@ -239,12 +214,10 @@ const INPUT_TIME_TEMPLATE = typeof document === 'undefined' ? undefined : (() =>
   const style = document.createElement('style')
   style.textContent = SHADOW_STYLE
 
-  const label = document.createElement('div')
+  const label = document.createElement('slot')
   label.className = 'label'
   label.part.add('label')
-  const labelSlot = document.createElement('slot')
-  labelSlot.name = 'label'
-  label.append(labelSlot)
+  label.name = 'label'
 
   const field = document.createElement('div')
   field.className = 'field'
@@ -264,12 +237,10 @@ const INPUT_TIME_TEMPLATE = typeof document === 'undefined' ? undefined : (() =>
   trailingSlot.part.add('trailing')
   field.append(leadingSlot, segments, clearSlot, trailingSlot)
 
-  const hint = document.createElement('div')
+  const hint = document.createElement('slot')
   hint.className = 'hint'
   hint.part.add('hint')
-  const hintSlot = document.createElement('slot')
-  hintSlot.name = 'hint'
-  hint.append(hintSlot)
+  hint.name = 'hint'
 
   template.content.append(style, label, field, document.createElement('slot'), hint)
   return template
@@ -283,12 +254,7 @@ export class AInputTimeElement extends HTMLElementBase {
 
   #internals?: ElementInternals
   #field: HTMLDivElement
-  #labelBox: HTMLDivElement
   #labelSlot: HTMLSlotElement
-  #hintBox: HTMLDivElement
-  #hintSlot: HTMLSlotElement
-  #leadingSlot: HTMLSlotElement
-  #trailingSlot: HTMLSlotElement
   #segRow: HTMLDivElement
   #ready = false
   #formDisabled = false
@@ -324,8 +290,7 @@ export class AInputTimeElement extends HTMLElementBase {
     if (!INPUT_TIME_TEMPLATE) throw new Error('a-input-time requires a DOM document')
     shadow.append(INPUT_TIME_TEMPLATE.content.cloneNode(true))
 
-    this.#labelBox = shadow.querySelector<HTMLDivElement>('.label')!
-    this.#labelSlot = shadow.querySelector<HTMLSlotElement>('slot[name="label"]')!
+    this.#labelSlot = shadow.querySelector<HTMLSlotElement>('.label')!
     this.#labelSlot.addEventListener('click', () => this.#segs[0]?.el.focus())
     this.#labelSlot.addEventListener('slotchange', this.#onLabelSlotChange)
 
@@ -338,19 +303,7 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#segRow.addEventListener('focusout', this.#onFocusOut)
     this.#segRow.addEventListener('paste', this.#onPaste)
 
-    this.#leadingSlot = shadow.querySelector<HTMLSlotElement>('slot[name="leading"]')!
-    this.#leadingSlot.addEventListener('slotchange', () =>
-      this.#field.classList.toggle('has-leading', this.#leadingSlot.assignedNodes().length > 0))
-
-    this.#trailingSlot = shadow.querySelector<HTMLSlotElement>('slot[name="trailing"]')!
-    this.#trailingSlot.addEventListener('slotchange', () =>
-      this.#field.classList.toggle('has-trailing', this.#trailingSlot.assignedNodes().length > 0))
-
     this.addEventListener(CLEAR_TRIGGER, () => this.clear())
-
-    this.#hintBox = shadow.querySelector<HTMLDivElement>('.hint')!
-    this.#hintSlot = shadow.querySelector<HTMLSlotElement>('slot[name="hint"]')!
-    this.#hintSlot.addEventListener('slotchange', this.#onHintSlotChange)
   }
 
   getAnchorRect(): DOMRect {
@@ -458,7 +411,7 @@ export class AInputTimeElement extends HTMLElementBase {
         el.className = `seg seg--${kind}`
         el.type = 'text'
         el.spellcheck = false
-        el.setAttribute('part', 'segment')
+        el.part.add('segment', kind)
         el.autocomplete = 'off'
         el.autocorrect = false
         el.autocapitalize = 'off'
@@ -486,6 +439,7 @@ export class AInputTimeElement extends HTMLElementBase {
         if (!part.value.trim()) continue
         const lit = document.createElement('span')
         lit.className = 'lit'
+        lit.part.add('literal')
         lit.setAttribute('aria-hidden', 'true')
         lit.textContent = part.value
         this.#segRow.append(lit)
@@ -819,11 +773,7 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #onLabelSlotChange = () => {
-    this.#labelBox.classList.toggle('has-label', this.#labelSlot.assignedNodes().length > 0)
     this.#applyGroupLabel()
-  }
-  #onHintSlotChange = () => {
-    this.#hintBox.classList.toggle('has-hint', this.#hintSlot.assignedNodes().length > 0)
   }
 
   #syncDisabled() {
@@ -838,12 +788,8 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #updateFilled() {
-    const filled = !!this.value
-    this.#field.classList.toggle('is-filled', filled)
-    try {
-      if (filled) this.#internals?.states.add('filled')
-      else this.#internals?.states.delete('filled')
-    } catch {}
+    if (this.value) this.#internals?.states.add('filled')
+    else this.#internals?.states.delete('filled')
   }
 
   #updateValidity() {

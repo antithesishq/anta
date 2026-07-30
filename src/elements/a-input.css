@@ -137,6 +137,28 @@
     width: 100%;
   }
 
+  /* Named slots are light-DOM state, so the host derives their visibility and
+     spacing with :has() instead of mirroring them into shadow-only classes. */
+  a-input:has(> [slot="label"])::part(label) { display: block; }
+  a-input:has(> [slot="leading"])::part(leading),
+  a-input:has(> [slot="trailing"])::part(trailing) {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  a-input:has(> [slot="leading"])::part(leading) { margin-inline-start: 7px; }
+  a-input:has(> [slot="trailing"])::part(trailing) {
+    gap: 2px;
+    margin-inline-end: var(--input-trailing-inset, 7px);
+  }
+  a-input:has(> [slot="leading"])::part(input) { padding-inline-start: 5px; }
+  a-input:has(> [slot="hint"])::part(hint) { display: flex; }
+  a-input[multiline]:has(> [slot="leading"])::part(leading),
+  a-input[multiline]:has(> [slot="trailing"])::part(trailing) {
+    align-self: flex-start;
+    height: calc(var(--_lh) + var(--_pad-block) * 2);
+  }
+
   /* A trailing button reaches the edge (matches the `:has()` content-conditional
      padding a-button does): flush when the trailing slot holds a button, whether
      the button is the slotted node or wrapped (the `Input` wrapper's display:contents

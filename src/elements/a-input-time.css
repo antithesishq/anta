@@ -22,34 +22,29 @@
     display: block;
     color: var(--input-time-label);
     font-family: var(--sans-serif);
-    font-size: 15px;
-    line-height: 20px;
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
     font-weight: 500;
   }
-  a-input-time[size="small"]:not(:defined) > [slot="label"] { font-size: 13px; line-height: 16px; }
-  a-input-time[size="large"]:not(:defined) > [slot="label"] { font-size: 17px; line-height: 22px; }
   a-input-time:not(:defined)::after {
     content: "\2013\2013:\2013\2013";
     display: block;
-    min-height: 28px;
-    line-height: 28px;
+    min-height: var(--input-time-field-height);
+    line-height: var(--input-time-field-height);
     padding-inline: 8px;
-    border-radius: 4px;
+    border-radius: var(--input-time-field-radius);
     box-shadow: inset 0 0 0 0.5px var(--input-time-border);
     color: var(--input-time-placeholder);
     font-family: var(--sans-serif);
-    font-size: 15px;
+    font-size: var(--input-time-font-size);
     font-weight: 400;
     font-feature-settings: 'ss02', 'ss05', 'tnum';
     font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
     white-space: nowrap;
   }
-  a-input-time[size="small"]:not(:defined)::after { min-height: 24px; line-height: 24px; font-size: 13px; }
-  a-input-time[size="large"]:not(:defined)::after { min-height: 32px; line-height: 32px; font-size: 17px; }
   @media (forced-colors: active) {
     a-input-time:not(:defined)::after { border: 1px solid ButtonBorder; }
   }
-  a-input-time[round]:not(:defined)::after { border-radius: var(--input-time-round, 999px); }
 
   a-input-time {
     transition: opacity 280ms ease-out 40ms;
@@ -65,12 +60,16 @@
     --input-time-bg: var(--bg-1);
     --input-time-border: var(--border-2);
     --input-time-border-hover: var(--border-1);
-
     --input-time-text: var(--text-1);
     --input-time-label: var(--text-3);
     --input-time-placeholder: var(--text-3);
     --input-time-adornment: var(--text-3);
     --input-time-hint: var(--text-3);
+    --input-time-period-color: var(--text-3);
+    --input-time-font-size: 15px;
+    --input-time-line-height: 20px;
+    --input-time-field-height: 28px;
+    --input-time-field-radius: 4px;
 
     /* A time is a fixed, small control (like native `<input type="time">`), so the
        field wraps its content — the icon + segments — rather than filling the
@@ -81,8 +80,38 @@
     max-width: 100%;
   }
 
+  a-input-time:has(> [slot="label"])::part(label) { display: block; }
+  a-input-time:has(> [slot="leading"])::part(leading) {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-inline-start: 7px;
+  }
+  a-input-time:has(> [slot="leading"])::part(segments) { padding-inline-start: 4px; }
+  a-input-time:has(> [slot="trailing"])::part(trailing) {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    color: var(--input-time-adornment);
+    font-size: var(--input-time-font-size);
+  }
+  a-input-time:has(> [slot="hint"])::part(hint) { display: flex; }
+
+  a-input-time[size="small"] {
+    --input-time-font-size: 13px;
+    --input-time-line-height: 16px;
+    --input-time-field-height: 24px;
+  }
+  a-input-time[size="large"] {
+    --input-time-font-size: 17px;
+    --input-time-line-height: 22px;
+    --input-time-field-height: 32px;
+  }
+
   a-input-time[round] {
     --input-time-round: attr(round type(<length>), 999px);
+    --input-time-field-radius: var(--input-time-round, 999px);
   }
 
   /* Leading icon size tracks the field size — small 14 / medium 16 / large 18,

@@ -49,6 +49,16 @@ const inputColumns = (value: string) => Array.from(value).reduce((columns, char)
 const to24 = (h12: number, period: 'am' | 'pm') =>
   period === 'pm' ? (h12 % 12) + 12 : h12 % 12
 
+interface TimeParts {
+  h: number
+  min: number
+}
+
+const parseTime = (value: string | null): TimeParts | null => {
+  const match = /^(\d{1,2}):(\d{2})$/.exec((value ?? '').trim())
+  return match ? { h: Math.min(23, Number(match[1])), min: Math.min(59, Number(match[2])) } : null
+}
+
 type SegKind = 'hour' | 'minute' | 'period'
 
 interface Seg {
@@ -390,11 +400,7 @@ export class AInputTimeElement extends HTMLElementBase {
       // a programmatic attribute change; firing `input` here would re-enter the
       // consumer's handler synchronously during a React commit).
       this.#clampIfComplete()
-      this.#iso = this.value
-      this.#render()
-      this.#internals?.setFormValue(this.value)
-      this.#updateFilled()
-      this.#updateValidity()
+      this.#commitEdit({ dispatch: false })
       return
     }
     // Forwarded (name / aria-label / required) → the group container for a11y.
@@ -500,13 +506,7 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#applyGroupLabel()
     this.#syncStatus()
     this.#syncDisabled()
-    this.#render()
-    // Sync the initial filled state (gates the clear button), form value, and
-    // validity — a field mounted with a `defaultValue` is filled on the first
-    // paint, not only after an edit.
-    this.#internals?.setFormValue(this.value)
-    this.#updateFilled()
-    this.#updateValidity()
+    this.#commitEdit({ dispatch: false })
   }
 
   #amText = 'AM'
@@ -697,7 +697,7 @@ export class AInputTimeElement extends HTMLElementBase {
    *  `9:5`, `2:30 pm`, `12am`, and run-together `230` / `1430` — mirrors
    *  `calendar-core`'s `parseTimeInput` but Temporal-free, so the element's
    *  granular import stays lean. */
-  #parsePaste(text: string): { h: number; min: number } | null {
+  #parsePaste(text: string): TimeParts | null {
     let s = (text ?? '').trim().toLowerCase()
     if (!s) return null
     let mer: 'am' | 'pm' | null = null
@@ -754,9 +754,8 @@ export class AInputTimeElement extends HTMLElementBase {
 
   // --- min / max range (total minutes since 00:00, or null when unbounded) ---
   #parseTotal(v: string | null): number | null {
-    const m = /^(\d{1,2}):(\d{2})$/.exec((v ?? '').trim())
-    if (!m) return null
-    return Math.min(23, Number(m[1])) * 60 + Math.min(59, Number(m[2]))
+    const time = parseTime(v)
+    return time ? time.h * 60 + time.min : null
   }
   get #minTotal(): number | null { return this.#parseTotal(this.getAttribute('min')) }
   get #maxTotal(): number | null { return this.#parseTotal(this.getAttribute('max')) }
@@ -840,16 +839,14 @@ export class AInputTimeElement extends HTMLElementBase {
 
   /** Parse a `"HH:mm"` value into the display segments (24h → display units). */
   #applyValue(v: string) {
-    const m = /^(\d{1,2}):(\d{2})$/.exec((v ?? '').trim())
-    if (!m) { this.#hour = null; this.#minute = null; this.#period = null; return }
-    const h = Math.min(23, Number(m[1]))
-    const min = Math.min(59, Number(m[2]))
-    this.#minute = min
+    const time = parseTime(v)
+    if (!time) { this.#hour = null; this.#minute = null; this.#period = null; return }
+    this.#minute = time.min
     if (this.#hour12) {
-      this.#hour = ((h + 11) % 12) + 1
-      this.#period = h < 12 ? 'am' : 'pm'
+      this.#hour = ((time.h + 11) % 12) + 1
+      this.#period = time.h < 12 ? 'am' : 'pm'
     } else {
-      this.#hour = h
+      this.#hour = time.h
       this.#period = null
     }
   }
@@ -931,12 +928,10 @@ export class AInputTimeElement extends HTMLElementBase {
     // '' would wipe the other segments the user already filled.
     if (next === this.value) return
     this.#applyValue(next)
-    this.#iso = this.value
     if (this.#ready) {
-      this.#render()
-      this.#internals?.setFormValue(this.value)
-      this.#updateFilled()
-      this.#updateValidity()
+      this.#commitEdit({ dispatch: false })
+    } else {
+      this.#iso = this.value
     }
   }
 
@@ -945,12 +940,7 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#hour = null
     this.#minute = null
     this.#period = null
-    this.#iso = ''
-    this.#render()
-    this.#internals?.setFormValue('')
-    this.#updateFilled()
-    this.#updateValidity()
-    this.#dispatch('input')
+    this.#commitEdit()
     this.#dispatch('change')
     this.dispatchEvent(new CustomEvent(CLEAR_INPUT_EVENT, { bubbles: true }))
     this.#segs[0]?.el.focus()
@@ -971,12 +961,7 @@ export class AInputTimeElement extends HTMLElementBase {
 
   formResetCallback() {
     this.#applyValue(this.getAttribute('defaultvalue') ?? '')
-    this.#iso = this.value
-    this.#render()
-    this.#internals?.setFormValue(this.value)
-    this.#updateFilled()
-    this.#updateValidity()
-    this.#dispatch('input')
+    this.#commitEdit()
     this.#dispatch('change')
   }
   formDisabledCallback(disabled: boolean) { this.#formDisabled = disabled; this.#syncDisabled() }

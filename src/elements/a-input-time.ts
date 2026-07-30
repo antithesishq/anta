@@ -58,9 +58,9 @@ interface Seg {
   max: number
 }
 
-// Shadow styles — injected verbatim per instance, so KEPT COMMENT-FREE (the
-// rationale lives here in TS). Mirrors a-input's label / field / hint chrome so
-// the box reads as one of the other inputs; the segment row replaces the control.
+// Shadow styles are injected verbatim per instance, so they stay comment-free.
+// Content sizing lets locale-specific day-period glyphs determine the period
+// input width. The layout mirrors a-input's label, field, and hint chrome.
 const SHADOW_STYLE = `
   :host {
     --_fs: 15px;
@@ -160,6 +160,8 @@ const SHADOW_STYLE = `
     background: transparent;
     color: inherit;
     font: inherit;
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
     line-height: inherit;
     text-align: center;
     white-space: nowrap;
@@ -168,9 +170,6 @@ const SHADOW_STYLE = `
     font-variant-numeric: tabular-nums;
   }
   .seg--period {
-    /* Native inputs otherwise size from their size attribute, whose character
-       columns can't account for locale glyph widths. Content sizing keeps the
-       segment flush with its displayed AM/PM text. */
     field-sizing: content;
     width: auto;
     color: var(--text-3);
@@ -231,18 +230,42 @@ const SHADOW_STYLE = `
 // segments are the only dynamic children, rendered into `.segments` below.
 const INPUT_TIME_TEMPLATE = typeof document === 'undefined' ? undefined : (() => {
   const template = document.createElement('template')
-  template.innerHTML = `
-    <style>${SHADOW_STYLE}</style>
-    <div class="label" part="label"><slot name="label"></slot></div>
-    <div class="field" part="field">
-      <slot name="leading" part="leading"></slot>
-      <div class="segments" part="segments" role="group"></div>
-      <slot name="clear" part="clear"></slot>
-      <slot name="trailing" part="trailing"></slot>
-    </div>
-    <slot></slot>
-    <div class="hint" part="hint"><slot name="hint"></slot></div>
-  `
+  const style = document.createElement('style')
+  style.textContent = SHADOW_STYLE
+
+  const label = document.createElement('div')
+  label.className = 'label'
+  label.part.add('label')
+  const labelSlot = document.createElement('slot')
+  labelSlot.name = 'label'
+  label.append(labelSlot)
+
+  const field = document.createElement('div')
+  field.className = 'field'
+  field.part.add('field')
+  const leadingSlot = document.createElement('slot')
+  leadingSlot.name = 'leading'
+  leadingSlot.part.add('leading')
+  const segments = document.createElement('div')
+  segments.className = 'segments'
+  segments.part.add('segments')
+  segments.setAttribute('role', 'group')
+  const clearSlot = document.createElement('slot')
+  clearSlot.name = 'clear'
+  clearSlot.part.add('clear')
+  const trailingSlot = document.createElement('slot')
+  trailingSlot.name = 'trailing'
+  trailingSlot.part.add('trailing')
+  field.append(leadingSlot, segments, clearSlot, trailingSlot)
+
+  const hint = document.createElement('div')
+  hint.className = 'hint'
+  hint.part.add('hint')
+  const hintSlot = document.createElement('slot')
+  hintSlot.name = 'hint'
+  hint.append(hintSlot)
+
+  template.content.append(style, label, field, document.createElement('slot'), hint)
   return template
 })()
 

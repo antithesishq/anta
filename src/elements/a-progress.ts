@@ -45,7 +45,9 @@ export class AProgressElement extends HTMLElementBase {
         right: 0;
         bottom: 0;
         width: 90px;
+        box-sizing: border-box;
         background: var(--progress-indicator-edge);
+        border-right: var(--progress-indicator-edge-border, none);
       }
       slot {
         display: block;

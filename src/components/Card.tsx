@@ -181,19 +181,9 @@ export const Card = ({
         (typeof icon === "string" ? (
           // A shape string → the icon centered in a circular chip, sized per the
           // card via --card-icon-size (32 / 40 / 44 for small / medium / large).
-          <div
-            slot="icon"
-            style={{
-              width: "var(--card-icon-size, 40px)",
-              height: "var(--card-icon-size, 40px)",
-              borderRadius: "50%",
-              background: "var(--card-icon-bg)",
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
+          <a-card-icon-chip slot="icon">
             <Icon shape={icon as IconShape} />
-          </div>
+          </a-card-icon-chip>
         ) : (
           // Any node → used as-is (no chip).
           <div slot="icon">{icon}</div>

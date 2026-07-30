@@ -119,4 +119,37 @@
     margin-left: auto;
     color: var(--progress-hint-color);
   }
+
+  /* The track stays a Canvas surface with a dotted edge. Light forced-colour
+     palettes use the selected-item pair for the completed part. */
+  @media (forced-colors: active) {
+    a-progress {
+      forced-color-adjust: none;
+      --progress-bg: Canvas !important;
+      --progress-border-color: CanvasText !important;
+      --progress-indicator-bg: SelectedItem !important;
+      --progress-indicator-edge: SelectedItem !important;
+      --progress-indicator-edge-border: 1px solid SelectedItemText !important;
+      --progress-text-color: CanvasText !important;
+      --progress-hint-color: CanvasText !important;
+      border: 1px dotted CanvasText !important;
+    }
+
+    /* Dark palettes use the text-selection pair for the completed part. The
+       class covers Anta's explicit theme; the media query covers a system-dark
+       forced-colours palette without that class. */
+    .dark a-progress {
+      --progress-indicator-bg: Highlight !important;
+      --progress-indicator-edge: Highlight !important;
+      --progress-indicator-edge-border: 1px solid HighlightText !important;
+    }
+  }
+
+  @media (forced-colors: active) and (prefers-color-scheme: dark) {
+    a-progress {
+      --progress-indicator-bg: Highlight !important;
+      --progress-indicator-edge: Highlight !important;
+      --progress-indicator-edge-border: 1px solid HighlightText !important;
+    }
+  }
 }

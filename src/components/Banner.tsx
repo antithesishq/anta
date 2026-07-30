@@ -182,8 +182,10 @@ export const Banner = ({
           <Button
             priority="quaternary"
             icon="x"
+            round={round}
             // The ✕ adopts the banner's tone (named or a custom CSS color), so it
             // reads as part of the strip rather than a neutral control on top of it.
+            // It shares the banner's corner treatment for a standalone round bar.
             tone={tone}
             aria-label="Dismiss"
             data-custom-event="dismissrequest"

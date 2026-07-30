@@ -40,4 +40,10 @@
       0 2px 16px color-mix(in oklch, black 70%, transparent),
       inset 0 0 0 1px color-mix(in oklch, white 15%, transparent);
   }
+
+  @media (forced-colors: active) {
+    a-tooltip {
+      --tooltip-border: 1px dotted CanvasText;
+    }
+  }
 }

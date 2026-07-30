@@ -167,6 +167,7 @@ export interface AntaIntrinsicElements {
   'a-tabpanel': ATabpanelAttributes
   'a-dialog': ADialogAttributes
   'a-card': ACardAttributes
+  'a-card-icon-chip': BaseAttributes
   'a-banner': ABannerAttributes
   'a-banner-message': BaseAttributes
   'a-toaster': AToasterAttributes

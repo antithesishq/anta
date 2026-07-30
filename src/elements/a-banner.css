@@ -178,6 +178,13 @@
     opacity: 0;
   }
 
+  @media (forced-colors: active) {
+    a-banner {
+      border-width: 1px;
+      border-color: CanvasText;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     a-banner { transition: none; }
   }

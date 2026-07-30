@@ -1,0 +1,96 @@
+---
+const rows = [
+  { colors: ['Canvas', 'CanvasText'], use: 'Document background and text', background: 'Canvas', foreground: 'CanvasText', label: 'Document text' },
+  { colors: ['ButtonFace', 'ButtonText', 'ButtonBorder'], use: 'Control surface, text, and edge', background: 'ButtonFace', foreground: 'ButtonText', border: 'ButtonBorder', label: 'Control label' },
+  { colors: ['Field', 'FieldText'], use: 'Input field background and text', background: 'Field', foreground: 'FieldText', label: 'Field value' },
+  { colors: ['Highlight', 'HighlightText'], use: 'Selected text', background: 'Highlight', foreground: 'HighlightText', label: 'Selected text' },
+  { colors: ['SelectedItem', 'SelectedItemText'], use: 'Selected control or list item', background: 'SelectedItem', foreground: 'SelectedItemText', label: 'Selected item' },
+  { colors: ['Mark', 'MarkText'], use: 'Marked text, such as <mark>', background: 'Mark', foreground: 'MarkText', label: 'Marked text' },
+  { colors: ['AccentColor', 'AccentColorText'], use: 'Accented control', background: 'AccentColor', foreground: 'AccentColorText', label: 'Accent control' },
+  { colors: ['LinkText'], use: 'Unvisited link text', background: 'Canvas', foreground: 'LinkText', label: 'Unvisited link' },
+  { colors: ['VisitedText'], use: 'Visited link text', background: 'Canvas', foreground: 'VisitedText', label: 'Visited link' },
+  { colors: ['ActiveText'], use: 'Active link text', background: 'Canvas', foreground: 'ActiveText', label: 'Active link' },
+  { colors: ['GrayText'], use: 'Disabled text', background: 'Canvas', foreground: 'GrayText', label: 'Disabled text' },
+] as const
+---
+
+<div class="system-color-table-wrap">
+  <table class="system-color-table">
+    <thead>
+      <tr>
+        <th scope="col">System colors</th>
+        <th scope="col">Use</th>
+        <th scope="col">Live sample</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((row) => (
+        <tr>
+          <th scope="row">
+            {row.colors.map((color) => <code>{color}</code>)}
+          </th>
+          <td>{row.use}</td>
+          <td>
+            <span
+              class="sample"
+              style={`--sample-bg: ${row.background}; --sample-fg: ${row.foreground}; --sample-border: ${row.border ?? 'transparent'}`}
+            >
+              {row.label}
+            </span>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .system-color-table-wrap {
+    overflow-x: auto;
+    margin-block: 20px;
+  }
+
+  .system-color-table {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .system-color-table :is(th, td) {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-4);
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .system-color-table thead th {
+    color: var(--text-3);
+    font-size: 12px;
+    font-weight: 560;
+  }
+
+  .system-color-table tbody th {
+    width: 34%;
+    font-weight: 475;
+  }
+
+  .system-color-table code + code::before {
+    content: ' / ';
+    color: var(--text-4);
+  }
+
+  .sample {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding-inline: 10px;
+    border: 1px solid var(--sample-border);
+    border-radius: 4px;
+    background: var(--sample-bg);
+    color: var(--sample-fg);
+    font-size: 13px;
+    font-weight: 520;
+    white-space: nowrap;
+  }
+</style>

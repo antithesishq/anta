@@ -182,6 +182,19 @@ details:not([data-anta])[open] > summary:not(.summary)::before {
   transform: rotate(90deg);
 }
 
+/* The bare-summary marker is a CSS mask, so forced colors can remap its
+   background to Canvas and erase it. Keep only this paint under our control;
+   the system foreground and link colours still follow the user's palette. */
+@media (forced-colors: active) {
+  details:not([data-anta]) > summary:not(.summary)::before {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+  }
+  details:not([data-anta]) > summary:not(.summary):hover::before {
+    background-color: LinkText;
+  }
+}
+
 /* Heading sizes / weight / margins live in anta's reset
    (`src/reset.css`); the docs site no longer needs its own overrides. */
 

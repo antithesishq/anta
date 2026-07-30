@@ -557,6 +557,110 @@
       }
     }
   }
+
+  /* Forced colors deliberately remove Anta's fills, tints, and shadows. Rebuild
+     the priority hierarchy with the user's system palette instead: primary is
+     an inverted button, secondary keeps the standard button surface, and
+     tertiary is a quieter text action that gains an outline on pointer hover.
+     `selected` is distinct from priority, so it alone uses the selection pair.
+     Explicit system colors survive forced-colors without opting the control out
+     of the user's palette; --anta-forced-foreground also gives a masked a-icon
+     the correct paired foreground. */
+  @media (forced-colors: active) {
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    ) {
+      --anta-forced-foreground: ButtonText;
+
+      color: ButtonText;
+      background-color: ButtonFace;
+      border: 1px solid ButtonText;
+      box-shadow: none;
+    }
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    )[priority="primary"] {
+      --anta-forced-foreground: ButtonFace;
+
+      color: ButtonFace;
+      background-color: ButtonText;
+      border-color: ButtonText;
+    }
+    /* `a-button-label` is a generic custom element. The UA otherwise assigns
+       it the Canvas background in forced colors, which paints a light rectangle
+       over a filled primary or selected button. System colours still follow the
+       user's palette; this only keeps the label transparent and inheriting. */
+    a-button:is([priority="primary"], [selected]) {
+      forced-color-adjust: none;
+    }
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    )[priority="tertiary"] {
+      --anta-forced-foreground: CanvasText;
+
+      color: CanvasText;
+      background-color: Canvas;
+      border: 0;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      :is(
+        a-button,
+        a[role="button"][data-anta],
+        button[data-anta],
+        input[data-anta]:is([type="reset"], [type="submit"])
+      )[priority="tertiary"]:hover:not(:focus-visible) {
+        outline: 1px solid ButtonText;
+        outline-offset: 0;
+      }
+    }
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    )[priority="quaternary"] {
+      --anta-forced-foreground: LinkText;
+
+      color: LinkText;
+      background-color: ButtonFace;
+      border: 0;
+      text-decoration: none;
+    }
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    )[selected] {
+      --anta-forced-foreground: HighlightText;
+
+      color: HighlightText;
+      background-color: Highlight;
+      border-color: Highlight;
+    }
+    :is(
+      a-button,
+      a[role="button"][data-anta],
+      button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])
+    )[disabled] {
+      --anta-forced-foreground: GrayText;
+
+      color: GrayText;
+      background-color: Canvas;
+      border-color: GrayText;
+      text-decoration-color: GrayText;
+    }
+  }
 }
 
 @keyframes btn-loading-slide {

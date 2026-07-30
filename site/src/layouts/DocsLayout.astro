@@ -271,7 +271,7 @@ if (isComponentPage && title) {
         <menu>
           <li><a href="/colors/" aria-current={isCurrent('/colors/') ? 'page' : undefined}><Icon shape="swatch-book" size={18} /> Colors</a></li>
           <li class="theming-nav-item">
-            <a href="/theming/" aria-current={isCurrent('/theming/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2v2"/><path d="M14 2v4"/><path d="M17 2a1 1 0 0 1 1 1v9H6V3a1 1 0 0 1 1-1z"/><path d="M6 12a1 1 0 0 0-1 1v1a2 2 0 0 0 2 2h2a1 1 0 0 1 1 1v2.9a2 2 0 1 0 4 0V17a1 1 0 0 1 1-1h2a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1"/></svg> Theming</a>
+            <a href="/theming/" aria-current={isCurrent('/theming/') ? 'page' : undefined}><Icon shape="theme" size={18} /> Theming</a>
             <div class="theming-switcher"><ThemeSwitcher client:load /></div>
           </li>
           <li><a href="/accessibility/" aria-current={isCurrent('/accessibility/') ? 'page' : undefined}><Icon shape="hat-glasses" size={18} /> Accessibility</a></li>
@@ -319,25 +319,25 @@ if (isComponentPage && title) {
         </menu>
         <hr class="sidebar-separator" />
         <menu>
-          <li><a href="/expander/" aria-current={isCurrent('/expander/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 8 4 4-4 4"/></svg> Expander</a></li>
+          <li><a href="/expander/" aria-current={isCurrent('/expander/') ? 'page' : undefined}><Icon shape="square-chevron-right" size={18} /> Expander</a></li>
           <li><a href="/menu/" aria-current={isCurrent('/menu/') ? 'page' : undefined}><Icon shape="square-menu" size={18} /> Menu</a></li>
         </menu>
         <hr class="sidebar-separator" />
         <menu>
           <li><a href="/input/" aria-current={isCurrent('/input/') ? 'page' : undefined}><Icon shape="text-cursor-input" size={18} /> Input</a></li>
-          <li><a href="/input-autocomplete/" aria-current={isCurrent('/input-autocomplete/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13.5 8.5-5 5"/><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> InputAutocomplete</a></li>
+          <li><a href="/input-autocomplete/" aria-current={isCurrent('/input-autocomplete/') ? 'page' : undefined}><Icon shape="search-slash" size={18} /> InputAutocomplete</a></li>
           <li><a href="/input-date/" aria-current={isCurrent('/input-date/') ? 'page' : undefined}><Icon shape="calendar-days" size={18} /> InputDate</a></li>
           <li><a href="/input-time/" aria-current={isCurrent('/input-time/') ? 'page' : undefined}><Icon shape="clock" size={18} /> InputTime</a></li>
-          <li><a href="/select/" aria-current={isCurrent('/select/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m8 10 4 4 4-4"/></svg> Select</a></li>
+          <li><a href="/select/" aria-current={isCurrent('/select/') ? 'page' : undefined}><Icon shape="square-chevron-down" size={18} /> Select</a></li>
           <li><a href="/select-faceted/" aria-current={isCurrent('/select-faceted/') ? 'page' : undefined}><Icon shape="filter" size={18} /> SelectFaceted</a></li>
         </menu>
         <hr class="sidebar-separator" />
         <menu>
-          <li><a href="/banner/" aria-current={isCurrent('/banner/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg> Banner</a></li>
-          <li><a href="/card/" aria-current={isCurrent('/card/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg> Card</a></li>
-          <li><a href="/dialog/" aria-current={isCurrent('/dialog/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg> Dialog</a></li>
+          <li><a href="/banner/" aria-current={isCurrent('/banner/') ? 'page' : undefined}><Icon shape="banner" size={18} /> Banner</a></li>
+          <li><a href="/card/" aria-current={isCurrent('/card/') ? 'page' : undefined}><Icon shape="card" size={18} /> Card</a></li>
+          <li><a href="/dialog/" aria-current={isCurrent('/dialog/') ? 'page' : undefined}><Icon shape="dialog" size={18} /> Dialog</a></li>
           <li><a href="/progress/" aria-current={isCurrent('/progress/') ? 'page' : undefined}><Icon shape="hourglass" size={18} /> Progress</a></li>
-          <li><a href="/toaster/" aria-current={isCurrent('/toaster/') ? 'page' : undefined}><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.7 3H4a2 2 0 0 0-2 2v16.286a.71.71 0 0 0 1.212.502l2.202-2.202A2 2 0 0 1 6.828 19H20a2 2 0 0 0 2-2v-4.7"/><circle cx="19" cy="6" r="3"/></svg> Toaster</a></li>
+          <li><a href="/toaster/" aria-current={isCurrent('/toaster/') ? 'page' : undefined}><Icon shape="toaster" size={18} /> Toaster</a></li>
         </menu>
         <h4>Packages</h4>
         <menu>
@@ -667,7 +667,6 @@ if (isComponentPage && title) {
     font-size: 12px;
   }
   .sidebar menu li a > a-icon,
-  .sidebar menu li a > svg,
   .package-link > a-icon {
     color: var(--text-4-brand);
     flex-shrink: 0;
@@ -700,8 +699,6 @@ if (isComponentPage && title) {
   }
   .sidebar menu li a:hover > a-icon,
   .sidebar menu li a[aria-current="page"] > a-icon,
-  .sidebar menu li a:hover > svg,
-  .sidebar menu li a[aria-current="page"] > svg,
   .package-link:hover > a-icon {
     color: var(--text-1-brand);
   }

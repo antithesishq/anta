@@ -455,4 +455,26 @@
     --native-choice-border-hover: oklch(from var(--_native-choice-border-base) calc(l + 0.1) c h);
     --native-choice-border-active: oklch(from var(--_native-choice-border-base) calc(l + 0.17) c h);
   }
+
+  /* The custom checkmark is a mask painted by ::after. In forced colors, pair
+     the selected box with HighlightText explicitly so the glyph cannot be
+     remapped to the same colour as its Highlight fill. */
+  @media (forced-colors: active) {
+    a-checkbox:is(:state(checked), :state(indeterminate))::before {
+      forced-color-adjust: none;
+      background-color: Highlight;
+      border-color: Highlight;
+    }
+    a-checkbox:is(:state(checked), :state(indeterminate))::after {
+      forced-color-adjust: none;
+      background-color: HighlightText;
+    }
+    a-checkbox:disabled::before {
+      background-color: Canvas;
+      border-color: GrayText;
+    }
+    a-checkbox:disabled:is(:state(checked), :state(indeterminate))::after {
+      background-color: GrayText;
+    }
+  }
 }

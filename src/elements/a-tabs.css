@@ -490,4 +490,71 @@
     --tabs-track-border: oklch(from var(--tabs-tone-source) 0.26 0.055 h);
     --tab-selected-border: oklch(from var(--tabs-tone-source) 0.4 0.11 h);
   }
+
+  /* Forced colors do not retain the primary track's inset-shadow hierarchy.
+     Rebuild it with real system-colour structure: the primary track has an
+     outer edge and its active tab uses the same inverted pair as a primary
+     Button; secondary keeps only an active-tab edge. */
+  @media (forced-colors: active) {
+    a-tabs:not([priority="secondary"], [priority="tertiary"]) {
+      background-color: Canvas;
+      border: 1px solid CanvasText;
+      box-shadow: none;
+    }
+    a-tabs[priority="tertiary"] a-tab {
+      --tab-underline-size: 0px;
+      --tab-underline-color: transparent;
+    }
+    a-tabs[priority="tertiary"] a-tab:state(selected) {
+      --tab-underline-size: 2px;
+      --tab-underline-color: CanvasText;
+    }
+    a-tabs:not([priority="secondary"], [priority="tertiary"]) a-tab:state(selected) {
+      --anta-forced-foreground: ButtonFace;
+
+      forced-color-adjust: none;
+      color: ButtonFace;
+      background-color: ButtonText;
+      border: 1px solid ButtonText;
+      box-shadow: none;
+    }
+    a-tabs[priority="secondary"] a-tab:state(selected) {
+      background-color: Canvas;
+      border: 1px solid CanvasText;
+      box-shadow: none;
+    }
+    @supports (anchor-scope: all) {
+      /* With the slider, its pseudo-element paints the selected tab's border.
+         Keep the anchored tab itself borderless so the two do not double up. */
+      a-tabs:not([noslide], [priority="tertiary"]) a-tab:state(selected) {
+        background-color: transparent;
+        border: 0;
+      }
+      a-tabs:not([noslide])[priority="tertiary"] a-tab:state(selected) {
+        --tab-underline-size: 0px;
+        --tab-underline-color: transparent;
+      }
+      a-tabs:not([noslide], [priority="secondary"], [priority="tertiary"])::before {
+        forced-color-adjust: none;
+        background-color: ButtonText;
+        border: 1px solid ButtonText;
+        box-shadow: none;
+      }
+      a-tabs:not([noslide])[priority="secondary"]::before {
+        forced-color-adjust: none;
+        background-color: Canvas;
+        border: 1px solid CanvasText;
+        box-shadow: none;
+      }
+      a-tabs:not([noslide])[priority="tertiary"]::before {
+        forced-color-adjust: none;
+        border-bottom-width: 2px;
+        border-bottom-color: CanvasText;
+      }
+      a-tabs[orientation="vertical"]:not([noslide])[priority="tertiary"]::before {
+        border-inline-end-width: 2px;
+        border-inline-end-color: CanvasText;
+      }
+    }
+  }
 }

@@ -541,4 +541,29 @@
     padding: 2px 4px 6px var(--native-expander-gutter);
     line-height: 20px;
   }
+
+  /* The Expander chevron is a mask on the summary's pseudo-element. Give that
+     paint an explicit system foreground so forced colors cannot remap it away. */
+  @media (forced-colors: active) {
+    :is(a-expander, details[data-anta]) {
+      border-color: CanvasText;
+    }
+    :is(a-expander, details[data-anta]):not([priority="primary"], [priority="tertiary"]) {
+      border-style: dashed;
+    }
+    /* Keep the transparent tertiary border's geometry for the shadow outdent
+       correction, but paint it as Canvas so the border is visually absent. */
+    :is(a-expander, details[data-anta])[priority="tertiary"] {
+      border-color: Canvas;
+    }
+    a-expander::part(summary)::before,
+    a-expander:not(:defined) a-expander-summary::before,
+    details[data-anta] > summary::before {
+      forced-color-adjust: none;
+      background-color: CanvasText;
+    }
+    a-expander[disabled]::part(summary)::before {
+      background-color: GrayText;
+    }
+  }
 }

@@ -444,4 +444,26 @@
     --native-choice-border-hover: oklch(from var(--_native-choice-border-base) calc(l + 0.1) c h);
     --native-choice-border-active: oklch(from var(--_native-choice-border-base) calc(l + 0.17) c h);
   }
+
+  /* The selected ring and dot are author-painted pseudo-elements. Keep their
+     system-colour pair together so the dot stays visible over the selection. */
+  @media (forced-colors: active) {
+    a-radio:state(selected)::before {
+      forced-color-adjust: none;
+      background-color: Highlight;
+      border-color: Highlight;
+    }
+    a-radio:state(selected)::after {
+      forced-color-adjust: none;
+      background-color: HighlightText;
+      box-shadow: none;
+    }
+    a-radio[disabled]::before {
+      background-color: Canvas;
+      border-color: GrayText;
+    }
+    a-radio[disabled]:state(selected)::after {
+      background-color: GrayText;
+    }
+  }
 }

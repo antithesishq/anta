@@ -261,4 +261,43 @@
     --switch-track-off-stroke-hover: oklch(from var(--_switch-off-chrome) calc(l + 0.1) c h);
     --switch-track-off-stroke-active: oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h);
   }
+
+  /* The track and thumb are both author-painted pseudo-elements. Keep their
+     forced-colors pairing explicit: off is a Canvas track with a CanvasText
+     thumb, while on swaps those two colours. */
+  @media (forced-colors: active) {
+    a-switch::before,
+    a-switch::after {
+      forced-color-adjust: none;
+    }
+    a-switch::before {
+      background-color: Canvas;
+      border-color: CanvasText;
+    }
+    a-switch::after {
+      background-color: CanvasText;
+      box-shadow: none;
+    }
+    a-switch:state(checked)::before {
+      background-color: CanvasText;
+      border-color: CanvasText;
+    }
+    a-switch:state(checked)::after {
+      background-color: Canvas;
+    }
+    a-switch:disabled::before {
+      background-color: Canvas;
+      border-color: GrayText;
+    }
+    a-switch:disabled::after {
+      background-color: GrayText;
+    }
+    a-switch:disabled:state(checked)::before {
+      background-color: GrayText;
+      border-color: GrayText;
+    }
+    a-switch:disabled:state(checked)::after {
+      background-color: Canvas;
+    }
+  }
 }

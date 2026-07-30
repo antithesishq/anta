@@ -302,6 +302,11 @@
       background-color: ButtonText;
       border-color: ButtonText;
     }
+    /* Tag labels and values are generic custom elements. Keep them transparent
+       so forced colors does not paint Canvas rectangles over the filled pill. */
+    a-tag[priority="primary"] {
+      forced-color-adjust: none;
+    }
     a-tag[priority="tertiary"] {
       border-style: dashed;
     }

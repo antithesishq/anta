@@ -3,6 +3,21 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Breaking
+
+- Anta now requires Chrome or Edge 125, Safari 17.4, or Firefox 126 for
+  custom-element states and the `:state()` selector.
+
+### Changed
+
+- `InputTime` segments now use native text inputs. They retain native caret,
+  selection, paste, and IME behavior while keeping Anta's locale-aware layout
+  and cross-segment navigation.
+- No-icon `ButtonCopy` leaves its button unchanged and shows a cursor-near
+  success label. Set `copiedLabel` to change the label text.
+
 ## 0.3.16 — July 29, 2026
 
 ### Added
@@ -23,14 +38,10 @@ changes are not listed.
   including icons, inputs, buttons, tags, choice controls, tabs, Expanders,
   Cards, Dialogs, Banners, Progress, and Tooltips.
 - Switch tracks use a real 1.5px border instead of an inset shadow.
-- `InputTime` segments now use native text inputs. They retain native caret,
-  selection, paste, and IME behavior while keeping Anta's locale-aware layout
-  and cross-segment navigation.
-- No-icon `ButtonCopy` leaves its button unchanged and shows a cursor-near
-  success label. Set `copiedLabel` to change the label text.
 
 ### Fixed
 
+- No-icon `ButtonCopy` feedback now keeps a wrapping label's width and line breaks.
 - Native HTML radio labels use Anta's 8px control gap and vertically centred
   alignment.
 - `InputAutocomplete` now commits the highlighted suggestion when users press

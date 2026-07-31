@@ -40,6 +40,13 @@ export interface System {
   styling: string
   /** License, short. */
   license: string
+  /** Indicative minified, gzip-compressed download for the broadest useful
+   *  import. This is context, not a component-level benchmark. */
+  bundleSize: string
+  /** What the size includes and excludes. */
+  bundleIncludes: string
+  /** Browser policy for this version. */
+  browsers: string
   pros: string[]
   cons: string[]
 }
@@ -59,6 +66,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'React/Preact wrappers of Web components',
     styling: 'Plain CSS + CSS-variable tokens',
     license: 'MIT',
+    bundleSize: "≈200 KB",
+    bundleIncludes: "All components, JSX wrappers, icons, tokens, and component CSS; excludes React and stickers.",
+    browsers: "Current Chrome, Edge, Firefox, and Safari. Requires custom elements, ElementInternals, Popover, and modern CSS.",
     pros: [
       'Runs in React, Preact, and plain HTML; JSX wrappers are optional.',
       'Components do not mutate host attributes, so they work with worker-thread and reactive renderers.',
@@ -85,6 +95,9 @@ export const SYSTEMS: System[] = [
     frameworksNote: 'React, Vue, Angular, Svelte guides',
     styling: 'CSS framework + ::part() + CSS variables',
     license: 'MIT core + paid Pro tier',
+    bundleSize: "≈180 KB",
+    bundleIncludes: "Free component bundle, Lit runtime, base styles, and icons; excludes Pro components and web fonts.",
+    browsers: "Chrome and Edge 94+, Firefox 93+, and Safari 16.4+.",
     pros: [
       'Works in any stack or plain HTML without a build step.',
       'Broad components, utility and layout CSS, and Font Awesome icons.',
@@ -109,6 +122,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'Web components',
     styling: 'Locked to the Shopify look',
     license: 'Restricted (Shopify apps)',
+    bundleSize: "Not published",
+    bundleIncludes: "Shopify serves one managed CDN runtime; there is no pinned package or stable standalone total to measure.",
+    browsers: "Browsers supported by the current Shopify Admin. The CDN is updated in place.",
     pros: [
       'Framework-agnostic web components from a major platform.',
       'One script tag matches Shopify Admin and merchant brand settings.',
@@ -133,6 +149,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     styling: 'CSS-in-JS (Emotion)',
     license: 'MIT core + paid MUI X',
+    bundleSize: "≈95 KB",
+    bundleIncludes: "Material UI core baseline with Emotion; excludes React, icons, MUI X, date adapters, and application code.",
+    browsers: "Latest Chrome, Edge, Firefox, and Safari. Internet Explorer is unsupported.",
     pros: [
       'A large component set, plus MUI X data grid, charts, and date pickers.',
       'The largest ecosystem here: documentation, themes, templates, and hiring.',
@@ -157,6 +176,9 @@ export const SYSTEMS: System[] = [
     frameworksNote: 'Angular, Vue community ports',
     styling: 'CSS-in-JS + CSS variables (v6)',
     license: 'MIT',
+    bundleSize: "≈390 KB",
+    bundleIncludes: "Broad `antd` import with component styles; excludes React, the optional icon set, charts, and application code.",
+    browsers: "Last two Chrome, Edge, Firefox, and Safari releases. Internet Explorer is unsupported in v5+.",
     pros: [
       'One of the largest component sets, including Table, Form, Transfer, and Cascader.',
       'Built for admin and data-heavy apps, often without a separate form library.',
@@ -180,6 +202,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     styling: 'CSS Modules + CSS variables',
     license: 'MIT',
+    bundleSize: "≈155 KB",
+    bundleIncludes: "Full `@mantine/core` import and core CSS; excludes React and separate dates, charts, forms, and notifications packages.",
+    browsers: "Modern Chrome, Edge, Firefox, and Safari; v9 requires the browser features targeted by React 19.2.",
     pros: [
       '142 components and 82 hooks; forms, dates, charts, notifications, and rich text are official packages.',
       'CSS Modules and CSS variables avoid runtime CSS-in-JS.',
@@ -204,6 +229,9 @@ export const SYSTEMS: System[] = [
     frameworksNote: 'Angular, Vue, Svelte community',
     styling: 'Sass + CSS variables',
     license: 'Apache-2.0',
+    bundleSize: "≈230 KB",
+    bundleIncludes: "Broad `@carbon/react` import plus compiled component CSS; excludes React, icons, charts, and web components.",
+    browsers: "Current and previous Chrome, Edge, Firefox, and Safari releases.",
     pros: [
       'Publishes component accessibility results, including manual screen-reader checks mapped to WCAG.',
       'Strong for data-dense enterprise UIs, with data-table and app-shell components.',
@@ -228,6 +256,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     styling: 'Compiled CSS-in-JS + tokens',
     license: 'Apache-2.0 code, Atlassian-scoped terms',
+    bundleSize: "No single total",
+    bundleIncludes: "Components are independently versioned packages. A total only exists for the Atlaskit packages an app imports.",
+    browsers: "Current Chrome, Edge, Firefox, and Safari releases. Internet Explorer is unsupported.",
     pros: [
       'Proven in Atlassian products, with tokens and Figma libraries aligned to the code.',
       'Build-time Compiled CSS-in-JS keeps the style runtime near zero.',
@@ -251,6 +282,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     styling: 'Sass-compiled CSS (bp6- classes)',
     license: 'Apache-2.0',
+    bundleSize: "≈160 KB",
+    bundleIncludes: "Core React components and compiled core CSS; excludes React and the separate Table, Select, and Datetime packages.",
+    browsers: "Current Chrome, Edge, Firefox, and Safari. Internet Explorer is unsupported in v5+.",
     pros: [
       'Built for dense desktop tools: a virtualized Table, Omnibar, and dual-calendar date picker.',
       'Maintained by a Palantir team and in production there since 2016.',
@@ -272,6 +306,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     styling: 'StyleX (precompiled atomic CSS)',
     license: 'MIT',
+    bundleSize: "Not published",
+    bundleIncludes: "The project does not publish a full-import gzip figure; optional source compilation changes StyleX tree-shaking.",
+    browsers: "Modern browsers supported by React 19. No narrower browser matrix is published.",
     pros: [
       'About 100 stable components, including an enterprise Table and WebGL chart primitive.',
       'Precompiled CSS needs no StyleX build step; source compilation is optional for tree-shaking.',
@@ -295,6 +332,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     styling: 'CSS (BEM classes) + CSS variables',
     license: 'MIT',
+    bundleSize: "≈180 KB",
+    bundleIncludes: "Broad `@gravity-ui/uikit` import and UIKit CSS; excludes React, icons, dates, charts, and data-table packages.",
+    browsers: "Last two Chrome, Edge, Firefox, and Safari releases.",
     pros: [
       'A broad core plus packages for dates, icons, charts, navigation, and a headless data table.',
       'Built-in light, dark, and high-contrast themes, with CSS variables and a hosted theme editor.',
@@ -318,6 +358,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     styling: 'Unstyled; bring your own',
     license: 'MIT',
+    bundleSize: "≈80 KB",
+    bundleIncludes: "All `radix-ui` primitives and Floating UI code; excludes React, styling, and icons. Per-primitive imports are much smaller.",
+    browsers: "Current Chrome, Edge, Firefox, and Safari. Styling may raise the floor through your own CSS.",
     pros: [
       'Interaction and accessibility behaviour used as a reference by other libraries.',
       'Unstyled primitives do not constrain your design.',
@@ -340,6 +383,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     styling: 'Unstyled; bring your own',
     license: 'MIT',
+    bundleSize: "≈55 KB",
+    bundleIncludes: "All Base UI primitives and positioning code; excludes React, styling, and icons. Per-component imports are smaller.",
+    browsers: "Current Chrome, Edge, Firefox, and Safari, including current iOS Safari.",
     pros: [
       'Adds primitives Radix lacks: Combobox, Autocomplete, Number Field, Meter, and Field/Fieldset.',
       "MUI's top investment; Material UI v9 already builds new components on it.",
@@ -363,6 +409,9 @@ export const SYSTEMS: System[] = [
     frameworksNote: 'Vue, Svelte community ports',
     styling: 'Tailwind + CSS variables',
     license: 'MIT',
+    bundleSize: "No fixed size",
+    bundleIncludes: "Only copied components ship. The result includes your chosen primitives and Tailwind output, not the CLI.",
+    browsers: "Depends on the selected primitives. Tailwind CSS 4 requires Safari 16.4+, Chrome 111+, and Firefox 128+.",
     pros: [
       'The source lives in your repo, with no black-box dependency or version lock.',
       'Accessibility comes from the primitive layer you choose: Base UI, Radix, or React Aria.',
@@ -386,6 +435,9 @@ export const SYSTEMS: System[] = [
     frameworks: 'React',
     styling: 'Tailwind CSS + React Aria',
     license: 'MIT core + paid Pro tier',
+    bundleSize: "No fixed size",
+    bundleIncludes: "Only copied components ship. The result depends on chosen React Aria components, icons, and generated Tailwind CSS.",
+    browsers: "Safari 16.4+, Chrome 111+, and Firefox 128+ from Tailwind CSS 4; React Aria may add feature-specific requirements.",
     pros: [
       'A broad React Aria component set copied into your repo without a runtime dependency.',
       'Tailwind v4 styling and a synced Figma kit keep design and code aligned.',

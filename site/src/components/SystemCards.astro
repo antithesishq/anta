@@ -15,6 +15,16 @@ import { SYSTEMS } from './comparison-data'
         <span class="card-ver">{s.version}</span>
       </header>
       <p class="card-tagline">{s.tagline}</p>
+      <dl class="card-facts">
+        <div>
+          <dt>Gzipped size</dt>
+          <dd><strong>{s.bundleSize}</strong><span>{s.bundleIncludes}</span></dd>
+        </div>
+        <div>
+          <dt>Browser support</dt>
+          <dd>{s.browsers}</dd>
+        </div>
+      </dl>
       <div class="card-cols">
         <div class="col-pros">
           <h4><a-icon shape="circle-check" class="head-icon"></a-icon>Strengths</h4>
@@ -77,10 +87,55 @@ import { SYSTEMS } from './comparison-data'
   }
 
   .card-tagline {
-    margin: 8px 0 16px;
+    margin: 8px 0 14px;
     color: var(--text-2);
     font-size: 14px;
     line-height: 1.5;
+  }
+
+  .card-facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1px;
+    margin: 0 0 18px;
+    overflow: hidden;
+    border: 1px solid var(--border-5);
+    border-radius: 7px;
+    background: var(--border-5);
+  }
+  .card-facts > div {
+    padding: 10px 12px;
+    background: var(--bg-canvas);
+  }
+  .card.anta .card-facts > div {
+    background: var(--bg-5-brand);
+  }
+  .card-facts dt {
+    margin-bottom: 3px;
+    color: var(--text-3);
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .card-facts dd {
+    margin: 0;
+    color: var(--text-2);
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+  .card-facts strong {
+    color: var(--text-1);
+    font-family: var(--monospace, ui-monospace, monospace);
+    font-size: 12px;
+    font-weight: 550;
+  }
+  .card-facts strong::after {
+    content: " · ";
+    color: var(--text-4);
+  }
+  .card-facts span {
+    color: var(--text-3);
   }
 
   .card-cols {
@@ -89,6 +144,7 @@ import { SYSTEMS } from './comparison-data'
     gap: 12px 32px;
   }
   @container (max-width: 640px) {
+    .card-facts,
     .card-cols {
       grid-template-columns: 1fr;
     }

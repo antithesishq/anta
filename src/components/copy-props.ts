@@ -57,19 +57,21 @@ type CopyElementInput = {
   onCopyRequest?: () => void
   onCopied?: (ok: boolean) => void
   toast?: boolean
+  copiedLabel?: string
 }
 
 /** Project the copy-target props onto `<a-copy>` attributes + event handlers.
  *  Shared by `ButtonCopy` / `MenuItemCopy` so the mapping (and the cross-renderer
  *  `copydone` detail unwrap) lives in one place. */
 export function copyElementProps(p: CopyElementInput) {
-  const { copy, copyNode, copyUrl, copyWithUrl, onCopyRequest, onCopied, toast } = p
+  const { copy, copyNode, copyUrl, copyWithUrl, onCopyRequest, onCopied, toast, copiedLabel } = p
   return {
     copy: copy != null ? copy : undefined,
     'copy-node': copyNode === true ? '' : typeof copyNode === 'string' ? copyNode : undefined,
     'copy-url': copyUrl ? '' : undefined,
     'copy-with-url': copyWithUrl ? '' : undefined,
     toast: toast ? '' : undefined,
+    'copied-label': copiedLabel,
     oncopydone: onCopied
       ? (e: any) => onCopied(nativeStateChange<{ ok: boolean }>(e).detail?.ok ?? false)
       : undefined,

@@ -4,15 +4,16 @@ import './a-input-time.css'
 /**
  * `<a-input-time>` — a segmented wall-clock time field. One visual box (matching
  * `<a-input>`'s chrome) holding separate **hour** / **minute** / (12-hour only)
- * **AM-PM** sections that behave as one control. Each editable section is a
- * focusable `role="spinbutton"` node in the element's shadow DOM; the `:` (or the
+ * **AM-PM** sections that behave as one control. Each editable section is an
+ * ordinary native text input in the element's shadow DOM; the `:` (or the
  * locale's separator) between them is inert text.
  *
- * This follows the cross-system model (React Aria, MUI X, native `<input type=time>`):
- * per-segment spinbuttons, not a text `<input>` and not N inputs. The element owns
- * focus, increment/wrap, and digit auto-advance — coordination that needs a live
- * element, so it lives here (the wrapper holds no DOM ref) and only ever mutates
- * its OWN shadow nodes, never the host or light DOM (worker-safe, per AGENTS.md).
+ * This follows the cross-system segmented-field model while letting native inputs
+ * own caret, selection, paste, and mobile keyboard behavior. The element owns
+ * cross-segment focus, increment/wrap, and digit auto-advance — coordination that
+ * needs a live element, so it lives here (the wrapper holds no DOM ref) and only
+ * ever mutates its OWN shadow nodes, never the host or light DOM (worker-safe,
+ * per AGENTS.md).
  *
  * Localization is derived from `Intl`: the clock (12h vs 24h) from the resolved
  * `hourCycle`, the segment ORDER + separator + whether an AM/PM segment exists at
@@ -24,14 +25,10 @@ import './a-input-time.css'
  * incomplete. Controlled via the `value` attribute, uncontrolled via `defaultvalue`.
  *
  * ## Declarative-DOM safety
- * The host is never mutated from JS. Per-segment `aria-value*` / `role` and the
+ * The host is never mutated from JS. Per-segment input state and the
  * `:state(filled)` / `:state(invalid)` hooks are set shadow-internal (the element's
  * own territory) or off-DOM via `ElementInternals` — never on the host or light DOM.
  */
-
-// Slots forwarded straight through (same set a-input accepts, minus the ones
-// that only make sense for a free-text control).
-const FORWARDED = ['name', 'aria-label', 'required'] as const
 
 // Kept in sync with the `data-custom-event` the `<InputTime>` wrapper sets on its
 // clear <Button> (mirrors a-input's CLEAR_TRIGGER; duplicated, not shared, because
@@ -40,27 +37,38 @@ const CLEAR_TRIGGER = 'clearrequest'
 const CLEAR_INPUT_EVENT = 'clearinput'
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
+// Native input `size` counts Latin-character columns. East Asian wide glyphs
+// occupy two columns, so account for them when sizing locale day-period inputs.
+const inputColumns = (value: string) => Array.from(value).reduce((columns, char) =>
+  columns + (/[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︐-﹯！-｠￠-￦]/u.test(char) ? 2 : 1), 0)
 // A 12-hour display hour (1–12) + meridiem → the canonical 0–23 hour.
 const to24 = (h12: number, period: 'am' | 'pm') =>
   period === 'pm' ? (h12 % 12) + 12 : h12 % 12
+
+interface TimeParts {
+  h: number
+  min: number
+}
+
+const parseTime = (value: string | null): TimeParts | null => {
+  const match = /^(\d{1,2}):(\d{2})$/.exec((value ?? '').trim())
+  return match ? { h: Math.min(23, Number(match[1])), min: Math.min(59, Number(match[2])) } : null
+}
 
 type SegKind = 'hour' | 'minute' | 'period'
 
 interface Seg {
   kind: SegKind
-  el: HTMLSpanElement
+  el: HTMLInputElement
   min: number
   max: number
 }
 
-// Shadow styles — injected verbatim per instance, so KEPT COMMENT-FREE (the
-// rationale lives here in TS). Mirrors a-input's label / field / hint chrome so
-// the box reads as one of the other inputs; the segment row replaces the control.
+// Shadow styles are injected verbatim per instance, so they stay comment-free.
+// Content sizing lets locale-specific day-period glyphs determine the period
+// input width. The layout mirrors a-input's label, field, and hint chrome.
 const SHADOW_STYLE = `
   :host {
-    --_fs: 15px;
-    --_lh: 20px;
-
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     row-gap: 4px;
@@ -71,11 +79,10 @@ const SHADOW_STYLE = `
     display: none;
     color: var(--input-time-label);
     font-family: var(--sans-serif);
-    font-size: var(--_fs);
-    line-height: var(--_lh);
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
     font-weight: 500;
   }
-  .label.has-label { display: block; }
 
   .field {
     --_bc: var(--input-time-border);
@@ -84,24 +91,23 @@ const SHADOW_STYLE = `
     display: flex;
     align-items: center;
     box-sizing: border-box;
-    min-height: 28px;
+    min-height: var(--input-time-field-height);
     background: var(--input-time-bg);
-    border-radius: 4px;
+    border-radius: var(--input-time-field-radius);
     box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
     transition: box-shadow 120ms ease;
   }
   :host([status]) .field { --_bw: 1px; }
-  :host([size="small"]) { --_fs: 13px; --_lh: 16px; }
-  :host([size="large"]) { --_fs: 17px; --_lh: 22px; }
-  :host([size="small"]) .field { min-height: 24px; }
-  :host([size="large"]) .field { min-height: 32px; }
-  :host([round]) .field { border-radius: var(--input-time-round, 999px); }
 
   @media (hover: hover) and (pointer: fine) {
-    :host(:not(:disabled)) .field:hover { --_bc: var(--input-time-border-hover); }
+    :host(:not(:disabled)) .field:hover {
+      --_bc: var(--input-time-border-hover);
+      --_bw: 1px;
+    }
   }
-  .field:has(.seg:focus) {
+  .field:focus-within {
     --_bc: var(--input-time-border-hover);
+    --_bw: 1px;
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
   }
@@ -110,16 +116,9 @@ const SHADOW_STYLE = `
   slot[name="leading"] {
     display: none;
     color: var(--input-time-adornment);
-    font-size: var(--_fs);
-    line-height: var(--_lh);
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
   }
-  .field.has-leading slot[name="leading"] {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    margin-inline-start: 7px;
-  }
-  .field.has-leading .segments { padding-inline-start: 5px; }
   :host([dim-actions]) slot[name="leading"] { opacity: 0.6; transition: opacity 120ms ease; }
   :host([dim-actions]:not(:disabled)) .field:hover slot[name="leading"],
   :host([dim-actions]:not(:disabled)) .field:focus-within slot[name="leading"] { opacity: 1; }
@@ -135,53 +134,50 @@ const SHADOW_STYLE = `
     font-family: var(--sans-serif);
     font-feature-settings: 'ss02', 'ss05', 'tnum';
     font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
-    font-size: var(--_fs);
-    line-height: var(--_lh);
+    font-size: var(--input-time-font-size);
+    line-height: var(--input-time-line-height);
     font-weight: 400;
   }
 
   .seg {
+    appearance: none;
     display: inline-block;
     box-sizing: border-box;
+    min-width: 0;
     padding-inline: 1px;
+    border: 0;
     border-radius: 2px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    line-height: inherit;
     text-align: center;
     white-space: nowrap;
     outline: none;
-    cursor: default;
+    cursor: text;
     font-variant-numeric: tabular-nums;
-    caret-color: transparent;
   }
-  .seg[inputmode="numeric"] {
-    /* Fixed to two tabular digits so the box never reflows: neither the narrower
-       placeholder dashes nor a mid-entry single digit changes the field width. */
-    width: calc(2ch + 4px);
+  .seg--period {
+    field-sizing: content;
+    width: auto;
+    color: var(--input-time-period-color);
   }
-  .seg:focus {
-    background: var(--input-time-seg-focus-bg);
-    color: var(--input-time-seg-focus-text);
+  .seg::placeholder {
+    color: var(--input-time-placeholder);
+    opacity: 1;
   }
-  .seg[data-placeholder] { color: var(--input-time-placeholder); }
-  .lit { white-space: pre; color: var(--input-time-text); }
-
-  /* No text-selection highlight inside the field: the segments are spinbuttons,
-     and a selection painted over the focused segment's tint compounds into an
-     unreadable block. The focus tint alone marks the active segment. Scoped to
-     the shadow, so page selection is unaffected. */
-  ::selection { background: transparent; }
+  .lit {
+    margin-inline: -1px;
+    white-space: pre;
+    color: var(--input-time-text);
+  }
 
   :host(:disabled) .segments { cursor: not-allowed; }
   :host(:disabled) .seg { cursor: not-allowed; }
 
   slot[name="trailing"] { display: none; }
-  .field.has-trailing slot[name="trailing"] {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    flex-shrink: 0;
-    color: var(--input-time-adornment);
-    font-size: var(--_fs);
-  }
   :host([dim-actions]) slot[name="trailing"],
   :host([dim-actions]) slot[name="clear"] { opacity: 0.6; transition: opacity 120ms ease; }
   :host([dim-actions]:not(:disabled)) .field:hover slot[name="trailing"],
@@ -195,7 +191,7 @@ const SHADOW_STYLE = `
     flex-shrink: 0;
     visibility: hidden;
   }
-  .field.is-filled slot[name="clear"] { visibility: visible; }
+  :host(:state(filled)) slot[name="clear"] { visibility: visible; }
   :host(:disabled) slot[name="clear"] { display: none; }
 
   .hint {
@@ -205,26 +201,60 @@ const SHADOW_STYLE = `
     padding-inline-start: 1px;
     color: var(--input-time-hint);
     font-family: var(--sans-serif);
-    font-size: calc(var(--_fs) - 1px);
-    line-height: calc(var(--_lh) - 2px);
+    font-size: calc(var(--input-time-font-size) - 1px);
+    line-height: calc(var(--input-time-line-height) - 2px);
   }
-  .hint.has-hint { display: flex; }
 `
+
+// The shell never changes. Keeping it in one declarative template makes the
+// slots, parts, and field composition visible together; locale-dependent
+// segments are the only dynamic children, rendered into `.segments` below.
+const INPUT_TIME_TEMPLATE = typeof document === 'undefined' ? undefined : (() => {
+  const template = document.createElement('template')
+  const style = document.createElement('style')
+  style.textContent = SHADOW_STYLE
+
+  const label = document.createElement('slot')
+  label.className = 'label'
+  label.part.add('label')
+  label.name = 'label'
+
+  const field = document.createElement('div')
+  field.className = 'field'
+  field.part.add('field')
+  const leadingSlot = document.createElement('slot')
+  leadingSlot.name = 'leading'
+  leadingSlot.part.add('leading')
+  const segments = document.createElement('div')
+  segments.className = 'segments'
+  segments.part.add('segments')
+  segments.setAttribute('role', 'group')
+  const clearSlot = document.createElement('slot')
+  clearSlot.name = 'clear'
+  clearSlot.part.add('clear')
+  const trailingSlot = document.createElement('slot')
+  trailingSlot.name = 'trailing'
+  trailingSlot.part.add('trailing')
+  field.append(leadingSlot, segments, clearSlot, trailingSlot)
+
+  const hint = document.createElement('slot')
+  hint.className = 'hint'
+  hint.part.add('hint')
+  hint.name = 'hint'
+
+  template.content.append(style, label, field, document.createElement('slot'), hint)
+  return template
+})()
 
 export class AInputTimeElement extends HTMLElementBase {
   static formAssociated = true
   static observedAttributes = [
-    ...FORWARDED, 'value', 'defaultvalue', 'locale', 'hour12', 'status', 'disabled', 'size', 'min', 'max',
+    'value', 'defaultvalue', 'locale', 'hour12', 'status', 'disabled', 'min', 'max', 'aria-label', 'required',
   ]
 
   #internals?: ElementInternals
   #field: HTMLDivElement
-  #labelBox: HTMLDivElement
   #labelSlot: HTMLSlotElement
-  #hintBox: HTMLDivElement
-  #hintSlot: HTMLSlotElement
-  #leadingSlot: HTMLSlotElement
-  #trailingSlot: HTMLSlotElement
   #segRow: HTMLDivElement
   #ready = false
   #formDisabled = false
@@ -242,9 +272,10 @@ export class AInputTimeElement extends HTMLElementBase {
   #minute: number | null = null
   #period: 'am' | 'pm' | null = null
   #segs: Seg[] = []
-  // In-progress typed digits for the focused numeric segment (reset on blur /
-  // segment change / commit), so `1` then `2` builds `12`.
-  #buf = ''
+  #literals: string[] = []
+  // Pointer-focused inputs keep the browser's caret placement. Keyboard focus
+  // selects the segment so a new value can be typed immediately.
+  #pointerSegment?: HTMLInputElement
 
   constructor() {
     super()
@@ -254,64 +285,25 @@ export class AInputTimeElement extends HTMLElementBase {
       console.warn('a-input-time: ElementInternals unavailable — form association disabled.', err)
     }
     const shadow = this.attachShadow({ mode: 'open', delegatesFocus: true })
+    // `document` is available whenever a custom element can be constructed. The
+    // guard only keeps importing this module harmless in non-DOM environments.
+    if (!INPUT_TIME_TEMPLATE) throw new Error('a-input-time requires a DOM document')
+    shadow.append(INPUT_TIME_TEMPLATE.content.cloneNode(true))
 
-    const style = document.createElement('style')
-    style.textContent = SHADOW_STYLE
-
-    this.#labelBox = document.createElement('div')
-    this.#labelBox.className = 'label'
-    this.#labelBox.setAttribute('part', 'label')
-    this.#labelSlot = document.createElement('slot')
-    this.#labelSlot.name = 'label'
-    this.#labelBox.append(this.#labelSlot)
+    this.#labelSlot = shadow.querySelector<HTMLSlotElement>('.label')!
     this.#labelSlot.addEventListener('click', () => this.#segs[0]?.el.focus())
     this.#labelSlot.addEventListener('slotchange', this.#onLabelSlotChange)
 
-    this.#field = document.createElement('div')
-    this.#field.className = 'field'
-    this.#field.setAttribute('part', 'field')
-
-    this.#segRow = document.createElement('div')
-    this.#segRow.className = 'segments'
-    this.#segRow.setAttribute('part', 'segments')
-    this.#segRow.setAttribute('role', 'group')
-    // Clicking the padding (not a segment) lands focus on the first segment.
-    this.#field.addEventListener('mousedown', (e) => {
-      if (e.target === this.#field || e.target === this.#segRow) {
-        e.preventDefault()
-        this.#segs[0]?.el.focus()
-      }
-    })
-
-    this.#leadingSlot = document.createElement('slot')
-    this.#leadingSlot.name = 'leading'
-    this.#leadingSlot.setAttribute('part', 'leading')
-    this.#leadingSlot.addEventListener('slotchange', () =>
-      this.#field.classList.toggle('has-leading', this.#leadingSlot.assignedNodes().length > 0))
-
-    const clearSlot = document.createElement('slot')
-    clearSlot.name = 'clear'
-    clearSlot.setAttribute('part', 'clear')
-    this.#trailingSlot = document.createElement('slot')
-    this.#trailingSlot.name = 'trailing'
-    this.#trailingSlot.setAttribute('part', 'trailing')
-    this.#trailingSlot.addEventListener('slotchange', () =>
-      this.#field.classList.toggle('has-trailing', this.#trailingSlot.assignedNodes().length > 0))
-
-    this.#field.append(this.#leadingSlot, this.#segRow, clearSlot, this.#trailingSlot)
+    this.#field = shadow.querySelector<HTMLDivElement>('.field')!
+    this.#segRow = shadow.querySelector<HTMLDivElement>('.segments')!
+    this.#field.addEventListener('mousedown', this.#onFieldMouseDown)
+    this.#segRow.addEventListener('input', this.#onInput)
+    this.#segRow.addEventListener('keydown', this.#onKeyDown)
+    this.#segRow.addEventListener('focusin', this.#onFocusIn)
+    this.#segRow.addEventListener('focusout', this.#onFocusOut)
+    this.#segRow.addEventListener('paste', this.#onPaste)
 
     this.addEventListener(CLEAR_TRIGGER, () => this.clear())
-
-    this.#hintBox = document.createElement('div')
-    this.#hintBox.className = 'hint'
-    this.#hintBox.setAttribute('part', 'hint')
-    this.#hintSlot = document.createElement('slot')
-    this.#hintSlot.name = 'hint'
-    this.#hintSlot.addEventListener('slotchange', this.#onHintSlotChange)
-    this.#hintBox.append(this.#hintSlot)
-
-    const extrasSlot = document.createElement('slot')
-    shadow.append(style, this.#labelBox, this.#field, extrasSlot, this.#hintBox)
   }
 
   getAnchorRect(): DOMRect {
@@ -350,17 +342,7 @@ export class AInputTimeElement extends HTMLElementBase {
     if (name === 'locale' || name === 'hour12') { this.#buildSegments(); return }
     if (name === 'status') { this.#syncStatus(); return }
     if (name === 'disabled') { this.#syncDisabled(); return }
-    if (name === 'size') return
     if (name === 'min' || name === 'max') {
-      // A tighter bound can put the current value out of range — re-clamp it and
-      // refresh form value / validity WITHOUT dispatching a user `input` (this is
-      // a programmatic attribute change; firing `input` here would re-enter the
-      // consumer's handler synchronously during a React commit).
-      this.#clampIfComplete()
-      this.#iso = this.value
-      this.#render()
-      this.#internals?.setFormValue(this.value)
-      this.#updateFilled()
       this.#updateValidity()
       return
     }
@@ -415,171 +397,245 @@ export class AInputTimeElement extends HTMLElementBase {
       ]
     }
 
+    // Stash the resolved day-period strings before creating their input so its
+    // maxlength and placeholder follow the active locale.
+    this.#amText = amText
+    this.#pmText = pmText
     this.#segRow.replaceChildren()
     this.#segs = []
+    this.#literals = []
     for (const part of parts) {
       if (part.type === 'hour' || part.type === 'minute' || part.type === 'dayPeriod') {
-        const el = document.createElement('span')
-        el.className = 'seg'
-        el.tabIndex = 0
-        el.setAttribute('role', 'spinbutton')
-        // contentEditable so a touch device summons a soft keyboard (a focusable
-        // non-editable span never does) — numeric for hour/minute, text for AM/PM.
-        // We own the text: `beforeinput` preventDefaults every mutation and routes
-        // it, and the caret is hidden (caret-color: transparent) so it reads as a
-        // spinner, not a text box.
-        el.contentEditable = 'true'
-        el.spellcheck = false
-        el.setAttribute('autocorrect', 'off')
-        el.setAttribute('autocapitalize', 'off')
+        const el = document.createElement('input')
         const kind: SegKind = part.type === 'dayPeriod' ? 'period' : part.type
+        el.className = `seg seg--${kind}`
+        el.type = 'text'
+        el.spellcheck = false
+        el.part.add('segment', kind)
+        el.autocomplete = 'off'
+        el.autocorrect = false
+        el.autocapitalize = 'off'
         el.setAttribute('aria-label', kind === 'hour' ? 'Hour' : kind === 'minute' ? 'Minute' : 'AM/PM')
-        el.setAttribute('inputmode', kind === 'period' ? 'text' : 'numeric')
+        el.inputMode = kind === 'period' ? 'text' : 'numeric'
+        if (kind === 'period') {
+          const length = Math.max(2, inputColumns(this.#amText), inputColumns(this.#pmText))
+          el.maxLength = length
+          el.size = length
+        } else {
+          el.maxLength = 2
+          el.size = 2
+        }
         const seg: Seg =
           kind === 'hour'
             ? { kind, el, min: hour12 ? 1 : 0, max: hour12 ? 12 : 23 }
             : kind === 'minute'
               ? { kind, el, min: 0, max: 59 }
               : { kind, el, min: 0, max: 1 }
-        el.addEventListener('keydown', (e) => this.#onSegKeyDown(e, seg))
-        el.addEventListener('beforeinput', (e) => this.#onSegBeforeInput(e as InputEvent, seg))
-        el.addEventListener('focus', () => { this.#buf = '' })
-        el.addEventListener('blur', () => this.#onSegBlur())
         this.#segRow.append(el)
         this.#segs.push(seg)
       } else {
+        // Numeric inputs include their own inline padding, so a whitespace-only
+        // locale literal adds no useful separation and can make the row too wide.
+        if (!part.value.trim()) continue
         const lit = document.createElement('span')
         lit.className = 'lit'
+        lit.part.add('literal')
         lit.setAttribute('aria-hidden', 'true')
         lit.textContent = part.value
         this.#segRow.append(lit)
+        this.#literals.push(part.value)
       }
     }
-    // Stash the resolved AM/PM strings for display + typing.
-    this.#amText = amText
-    this.#pmText = pmText
     this.#applyValue(keep)
     this.#applyGroupLabel()
     this.#syncStatus()
     this.#syncDisabled()
-    this.#render()
-    // Sync the initial filled state (gates the clear button), form value, and
-    // validity — a field mounted with a `defaultValue` is filled on the first
-    // paint, not only after an edit.
-    this.#internals?.setFormValue(this.value)
-    this.#updateFilled()
-    this.#updateValidity()
+    this.#commitEdit({ dispatch: false })
   }
 
   #amText = 'AM'
   #pmText = 'PM'
 
-  // --- Keyboard ---
+  // --- Native segment editing + navigation ---
 
-  // Navigation + stepping only. Character entry and deletion go through
-  // `#onSegBeforeInput` (so mobile virtual keyboards, which don't fire keydown
-  // reliably, work) — these keys don't produce `beforeinput`, so there's no
-  // double handling.
-  #onSegKeyDown(e: KeyboardEvent, seg: Seg) {
-    if (this.hasAttribute('disabled') || this.#formDisabled) return
-    const k = e.key
-    if (k === 'ArrowUp' || k === 'ArrowDown') {
+  #segFromTarget(target: EventTarget | null): Seg | undefined {
+    if (!(target instanceof HTMLInputElement)) return undefined
+    return this.#segs.find((seg) => seg.el === target)
+  }
+
+  // Clicking the field's padding (rather than a native input) moves focus into
+  // the editor. A real pointer interaction leaves caret placement to the browser.
+  #onFieldMouseDown = (e: MouseEvent) => {
+    const seg = this.#segFromTarget(e.target)
+    if (seg) {
+      this.#pointerSegment = seg.el
+      return
+    }
+    if (e.target === this.#field || e.target === this.#segRow) {
       e.preventDefault()
-      this.#step(seg, k === 'ArrowUp' ? 1 : -1)
-    } else if (k === 'PageUp' || k === 'PageDown') {
-      e.preventDefault()
-      this.#step(seg, (k === 'PageUp' ? 1 : -1) * (seg.kind === 'minute' ? 5 : 1))
-    } else if (k === 'Home') {
-      e.preventDefault(); this.#set(seg, seg.min)
-    } else if (k === 'End') {
-      e.preventDefault(); this.#set(seg, seg.max)
-    } else if (k === 'ArrowLeft' || k === 'ArrowRight') {
-      e.preventDefault()
-      this.#moveFocus(seg, k === 'ArrowRight' ? 1 : -1)
+      this.#focusSegment(this.#segs[0])
     }
   }
 
-  // Character entry (digits, a/p) and deletion, from a physical or virtual
-  // keyboard. We never let the contentEditable mutate — preventDefault every
-  // `beforeinput` and route it, keeping the segment text under our control.
-  #onSegBeforeInput(e: InputEvent, seg: Seg) {
+  #onFocusIn = (e: FocusEvent) => {
+    const seg = this.#segFromTarget(e.target)
+    if (!seg) return
+    const pointerFocused = this.#pointerSegment === seg.el
+    this.#pointerSegment = undefined
+    if (!pointerFocused) {
+      queueMicrotask(() => {
+        if (this.shadowRoot?.activeElement === seg.el) seg.el.select()
+      })
+    }
+  }
+
+  #onFocusOut = (_e: FocusEvent) => {
+    // `focusout` fires for hops within the row too. Defer until focus settles,
+    // then commit the group only when it has genuinely lost focus.
+    queueMicrotask(() => {
+      const active = this.shadowRoot?.activeElement
+      if (this.#segs.some((seg) => seg.el === active)) return
+      if (this.#clampIfComplete()) this.#commitEdit()
+      this.#dispatch('change')
+    })
+  }
+
+  #onKeyDown = (e: KeyboardEvent) => {
+    const seg = this.#segFromTarget(e.target)
+    if (!seg) return
+    const { el } = seg
+    const key = e.key
+    if (key === 'ArrowUp' || key === 'ArrowDown') {
+      e.preventDefault()
+      this.#step(seg, key === 'ArrowUp' ? 1 : -1)
+      return
+    }
+    if (key === 'PageUp' || key === 'PageDown') {
+      e.preventDefault()
+      this.#step(seg, (key === 'PageUp' ? 1 : -1) * (seg.kind === 'minute' ? 5 : 1))
+      return
+    }
+    if (key === 'ArrowLeft' || key === 'ArrowRight') {
+      const start = el.selectionStart ?? 0
+      const end = el.selectionEnd ?? start
+      const boundary = key === 'ArrowLeft'
+        ? start === 0 && end === 0
+        : start === el.value.length && end === el.value.length
+      if (boundary) {
+        e.preventDefault()
+        this.#render()
+        this.#moveFocus(seg, key === 'ArrowRight' ? 1 : -1)
+      }
+      return
+    }
+    if (key === 'Backspace' && el.value === '') {
+      e.preventDefault()
+      this.#moveFocus(seg, -1)
+      return
+    }
+    if (seg.kind !== 'period' && this.#literals.some((literal) => literal.includes(key))) {
+      e.preventDefault()
+      this.#render()
+      this.#moveFocus(seg, 1, { numeric: true })
+    }
+  }
+
+  #onPaste = (e: ClipboardEvent) => {
+    const text = e.clipboardData?.getData('text/plain').trim() ?? ''
+    // Let native inputs handle segment paste. A canonical complete time fills the
+    // field because it cannot fit into one two-character numeric segment.
+    if (!/^(?:[01]?\d|2[0-3]):[0-5]\d$/.test(text)) return
     e.preventDefault()
-    if (this.hasAttribute('disabled') || this.#formDisabled) return
-    const type = e.inputType
-    if (type === 'deleteContentBackward' || type === 'deleteContentForward') {
-      this.#buf = ''
-      this.#clearSeg(seg)
-      if (type === 'deleteContentBackward') this.#moveFocus(seg, -1)
-      return
-    }
-    if (type === 'insertFromPaste') {
-      // Paste (text lives in dataTransfer, not e.data): try to read a whole time
-      // and fill every segment; fall back to feeding the characters into the
-      // focused segment.
-      const text = e.dataTransfer?.getData('text/plain') || e.data || ''
-      const parsed = this.#parsePaste(text)
-      if (parsed) {
-        this.#buf = ''
-        this.#applyValue(`${pad2(parsed.h)}:${pad2(parsed.min)}`)
-        this.#clampIfComplete()
-        this.#commitEdit()
-        this.#dispatch('change')
-      } else {
-        for (const ch of text) this.#typeChar(seg, ch)
-      }
-      return
-    }
-    if (type.startsWith('insert')) {
-      for (const ch of e.data ?? '') this.#typeChar(seg, ch)
-    }
+    this.#applyValue(text)
+    this.#commitEdit()
+    this.#dispatch('change')
   }
 
-  /** Parse a pasted time to 24-hour `{ h, min }`, or null. Accepts `14:30`,
-   *  `9:5`, `2:30 pm`, `12am`, and run-together `230` / `1430` — mirrors
-   *  `calendar-core`'s `parseTimeInput` but Temporal-free, so the element's
-   *  granular import stays lean. */
-  #parsePaste(text: string): { h: number; min: number } | null {
-    let s = (text ?? '').trim().toLowerCase()
-    if (!s) return null
-    let mer: 'am' | 'pm' | null = null
-    const m = s.match(/([ap])\.?m?\.?$/)
-    if (m) { mer = m[1] === 'p' ? 'pm' : 'am'; s = s.slice(0, m.index).trim() }
-    let h: number
-    let min: number
-    if (/[:.]/.test(s)) {
-      const [hp, mp] = s.split(/[:.]/)
-      h = Number(hp); min = Number(mp ?? '0')
+  #onInput = (e: Event) => {
+    const seg = this.#segFromTarget(e.target)
+    if (!seg || (e as InputEvent).isComposing) return
+    if (seg.kind === 'period') this.#onPeriodInput(e, seg)
+    else this.#onNumericInput(seg)
+  }
+
+  #onNumericInput(seg: Seg) {
+    const { el } = seg
+    const typed = el.value.replace(/\D/g, '')
+    if (typed !== el.value) el.value = typed
+    const hour12Hour = seg.kind === 'hour' && this.#hour12
+    const typeMax = hour12Hour ? 23 : seg.max
+    if (typed === '') {
+      if (seg.kind === 'hour') this.#hour = null
+      else this.#minute = null
+      this.#commitEdit({ dispatch: false, preserve: el })
+      return
+    }
+
+    let raw = typed.slice(0, 2)
+    let value = Number(raw)
+    let normalized = false
+    if (value > typeMax) {
+      raw = raw.at(-1)!
+      value = Number(raw)
+      normalized = true
+    }
+    const advance = raw.length === 2 || Number(`${value}0`) > typeMax
+
+    if (hour12Hour) {
+      // A first `0` is a real in-progress text value, not `12 AM`; wait for its
+      // second digit before converting the 24-hour entry into display units.
+      if (value === 0 && raw.length === 1) this.#hour = null
+      else if (value === 0) { this.#hour = 12; this.#period = 'am' }
+      else if (value > 12) { this.#hour = value - 12; this.#period = 'pm' }
+      else { this.#hour = value; if (this.#period == null) this.#period = 'am' }
     } else {
-      const d = s.replace(/\D/g, '')
-      if (!d) return null
-      if (d.length <= 2) { h = Number(d); min = 0 }
-      else { const cut = d.length - 2; h = Number(d.slice(0, cut)); min = Number(d.slice(cut)) }
+      this.#assign(seg, Math.max(seg.min, value))
     }
-    if (!Number.isInteger(h) || !Number.isInteger(min)) return null
-    if (mer === 'pm' && h < 12) h += 12
-    if (mer === 'am' && h === 12) h = 0
-    if (h < 0 || h > 23 || min < 0 || min > 59) return null
-    return { h, min }
+
+    // Native input already owns the in-progress text and selection. Repaint only
+    // when normalization / conversion changes the active value, or before focus
+    // moves away and the committed two-digit form should be shown.
+    this.#commitEdit({ dispatch: false, preserve: normalized || advance ? undefined : el })
+    if (advance) this.#moveFocus(seg, 1)
   }
 
-  #typeChar(seg: Seg, ch: string) {
-    if (seg.kind === 'period') {
-      const c = ch.toLowerCase()
-      if (c === 'a' || c === 'p') {
-        this.#period = c === 'p' ? 'pm' : 'am'
-        this.#commitEdit()
-        this.#moveFocus(seg, 1)
-      }
+  #onPeriodInput(e: Event, seg: Seg) {
+    const { el } = seg
+    const raw = el.value.trim()
+    if (!raw) {
+      this.#period = null
+      this.#commitEdit({ dispatch: false, preserve: el })
       return
     }
-    if (/[0-9]/.test(ch)) this.#typeDigit(seg, ch)
+    const lower = raw.toLowerCase()
+    const am = this.#amText.toLowerCase()
+    const pm = this.#pmText.toLowerCase()
+    const period = lower === 'a' || lower === 'am' || lower === am
+      ? 'am'
+      : lower === 'p' || lower === 'pm' || lower === pm
+        ? 'pm'
+        : null
+    if (period) {
+      this.#period = period
+      this.#commitEdit({ dispatch: false })
+      this.#moveFocus(seg, 1)
+      return
+    }
+    // Keep an unambiguous localized prefix editable; reject unrelated text while
+    // allowing IME composition to finish before this method runs.
+    if (am.startsWith(lower) || pm.startsWith(lower)) {
+      this.#period = null
+      this.#commitEdit({ dispatch: false, preserve: el })
+      return
+    }
+    e.stopPropagation()
+    el.value = this.#period === 'pm' ? this.#pmText : this.#period === 'am' ? this.#amText : ''
   }
 
-  /** Arrow / page / home / end increment: wraps within a segment's [min, max];
+  /** Arrow / page increments wrap within a segment's [min, max];
    *  from empty, ↑ lands on min and ↓ on max. Clamps the resulting complete value
    *  into the field's `min`/`max` range (so ↑ can't step past `max`). */
   #step(seg: Seg, delta: number) {
-    this.#buf = ''
     if (seg.kind === 'period') {
       // From empty, land on AM; otherwise toggle.
       this.#period = this.#period == null ? 'am' : this.#period === 'am' ? 'pm' : 'am'
@@ -597,9 +653,8 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#commitEdit()
   }
 
-  /** Mutate a segment's state without committing (so callers can clamp first). */
+  /** Mutate a numeric segment without committing (so callers can clamp first). */
   #assign(seg: Seg, val: number) {
-    if (seg.kind === 'period') return
     if (seg.kind === 'hour') this.#hour = val
     else this.#minute = val
     // Setting the hour with no meridiem yet defaults it to AM so a 12-hour value
@@ -607,16 +662,10 @@ export class AInputTimeElement extends HTMLElementBase {
     if (seg.kind === 'hour' && this.#hour12 && this.#period == null) this.#period = 'am'
   }
 
-  #set(seg: Seg, val: number) {
-    this.#assign(seg, val)
-    this.#commitEdit()
-  }
-
   // --- min / max range (total minutes since 00:00, or null when unbounded) ---
   #parseTotal(v: string | null): number | null {
-    const m = /^(\d{1,2}):(\d{2})$/.exec((v ?? '').trim())
-    if (!m) return null
-    return Math.min(23, Number(m[1])) * 60 + Math.min(59, Number(m[2]))
+    const time = parseTime(v)
+    return time ? time.h * 60 + time.min : null
   }
   get #minTotal(): number | null { return this.#parseTotal(this.getAttribute('min')) }
   get #maxTotal(): number | null { return this.#parseTotal(this.getAttribute('max')) }
@@ -641,80 +690,21 @@ export class AInputTimeElement extends HTMLElementBase {
     return true
   }
 
-  #clearSeg(seg: Seg) {
-    if (seg.kind === 'hour') this.#hour = null
-    else if (seg.kind === 'minute') this.#minute = null
-    else this.#period = null
-    this.#commitEdit()
+  #focusSegment(seg: Seg | undefined) {
+    if (!seg) return
+    seg.el.focus()
+    seg.el.select()
   }
 
-  /** Type a digit into a numeric segment, accumulating and auto-advancing once the
-   *  segment can't take another digit (the `Number(v + '0') > max` heuristic). */
-  #typeDigit(seg: Seg, d: string) {
-    // A 12-hour hour accepts a 24-hour entry while typing (up to 23) and converts
-    // it — `18` → `6 PM`, `0` → `12 AM` — so pasting/typing a 24-hour time just
-    // works. Arrows still wrap the display range (1–12); only typing converts.
-    const hour12Hour = seg.kind === 'hour' && this.#hour12
-    const typeMax = hour12Hour ? 23 : seg.max
-    const candidate = Number(this.#buf + d)
-    let raw: number
-    let advance = false
-    if (candidate > typeMax) {
-      // The running value can't hold this digit — start fresh from it.
-      raw = Number(d)
-      this.#buf = d
-    } else {
-      raw = candidate
-      this.#buf += d
-    }
-    // Advance when a further digit is impossible or the segment is 2 digits wide.
-    if (Number(`${raw}0`) > typeMax || this.#buf.length >= String(typeMax).length) {
-      advance = true
-      this.#buf = ''
-    }
-    if (hour12Hour) {
-      // A lone 0/1/2 may still take a second digit (0x / 1x / 2x), so hold `0` as a
-      // partial until it commits (1 and 2 are valid 12-hour hours on their own).
-      if (raw === 0 && !advance) {
-        // Held partial: a dimmed "0" (uncommitted), not a solid "00" that reads as
-        // entered — a second digit (0x) resolves it; blur drops it.
-        seg.el.textContent = '0'
-        seg.el.setAttribute('data-placeholder', '')
-        seg.el.removeAttribute('aria-valuenow')
-        seg.el.removeAttribute('aria-valuetext')
+  #moveFocus(from: Seg, dir: 1 | -1, options: { numeric?: boolean } = {}) {
+    const index = this.#segs.indexOf(from)
+    for (let i = index + dir; i >= 0 && i < this.#segs.length; i += dir) {
+      const next = this.#segs[i]
+      if (!options.numeric || next.kind !== 'period') {
+        this.#focusSegment(next)
         return
       }
-      if (raw === 0) { this.#hour = 12; this.#period = 'am' }
-      else if (raw > 12) { this.#hour = raw - 12; this.#period = 'pm' }
-      else { this.#hour = raw; if (this.#period == null) this.#period = 'am' }
-      this.#commitEdit()
-      if (advance) this.#moveFocus(seg, 1)
-      return
     }
-    this.#assign(seg, Math.max(seg.min, raw))
-    this.#commitEdit()
-    if (advance) this.#moveFocus(seg, 1)
-  }
-
-  #moveFocus(from: Seg, dir: 1 | -1) {
-    const i = this.#segs.indexOf(from)
-    const next = this.#segs[i + dir]
-    if (next) next.el.focus()
-  }
-
-  /** On losing a segment, reset the digit buffer; when focus has left the whole
-   *  group (not just hopped to a sibling segment), clamp into `min`/`max` and
-   *  fire `change`. `shadowRoot.activeElement` reliably reports the focused
-   *  segment even across the shadow boundary (blur `relatedTarget` is retargeted
-   *  to null), so defer one microtask to read where focus landed. */
-  #onSegBlur() {
-    this.#buf = ''
-    queueMicrotask(() => {
-      const active = this.shadowRoot?.activeElement
-      if (this.#segs.some((s) => s.el === active)) return
-      if (this.#clampIfComplete()) this.#commitEdit()
-      this.#dispatch('change')
-    })
   }
 
   // --- Value + rendering ---
@@ -727,68 +717,46 @@ export class AInputTimeElement extends HTMLElementBase {
     return to24(this.#hour, this.#period)
   }
 
-  #commitEdit() {
-    this.#render()
+  #commitEdit({ dispatch = true, preserve }: { dispatch?: boolean; preserve?: HTMLInputElement } = {}) {
+    this.#render(preserve)
     this.#iso = this.value
     this.#internals?.setFormValue(this.value)
     this.#updateFilled()
     this.#updateValidity()
-    this.#dispatch('input')
+    if (dispatch) this.#dispatch('input')
   }
 
-  #render() {
+  #render(preserve?: HTMLInputElement) {
     for (const seg of this.#segs) {
-      if (seg.kind === 'period') this.#renderSeg(seg, null)
-      else this.#renderSeg(seg, seg.kind === 'hour' ? this.#hour : this.#minute)
+      this.#renderSeg(seg, preserve === seg.el)
     }
   }
 
-  /** Paint one segment: its value (or placeholder) as text, plus the spinbutton
-   *  ARIA values. `override` lets `#typeDigit` show a partial value mid-entry. */
-  #renderSeg(seg: Seg, override: number | null) {
+  /** Paint a segment's committed value without disturbing a focused native input
+   *  that already owns valid in-progress text and selection. */
+  #renderSeg(seg: Seg, preserve: boolean) {
     const el = seg.el
     if (seg.kind === 'period') {
-      const set = this.#period != null
-      el.textContent = set ? (this.#period === 'pm' ? this.#pmText : this.#amText) : this.#amText
-      el.toggleAttribute('data-placeholder', !set)
-      el.setAttribute('aria-valuemin', '0')
-      el.setAttribute('aria-valuemax', '1')
-      if (set) {
-        el.setAttribute('aria-valuenow', this.#period === 'pm' ? '1' : '0')
-        el.setAttribute('aria-valuetext', this.#period === 'pm' ? this.#pmText : this.#amText)
-      } else {
-        el.removeAttribute('aria-valuenow')
-        el.removeAttribute('aria-valuetext')
-      }
+      const value = this.#period === 'pm' ? this.#pmText : this.#period === 'am' ? this.#amText : ''
+      if (!preserve) el.value = value
+      el.placeholder = this.#amText
       return
     }
-    const val = override
-    const set = val != null
-    el.textContent = set ? pad2(val) : '––'
-    el.toggleAttribute('data-placeholder', !set)
-    el.setAttribute('aria-valuemin', String(seg.min))
-    el.setAttribute('aria-valuemax', String(seg.max))
-    if (set) {
-      el.setAttribute('aria-valuenow', String(val))
-      el.setAttribute('aria-valuetext', pad2(val))
-    } else {
-      el.removeAttribute('aria-valuenow')
-      el.removeAttribute('aria-valuetext')
-    }
+    const value = seg.kind === 'hour' ? this.#hour : this.#minute
+    if (!preserve) el.value = value == null ? '' : pad2(value)
+    el.placeholder = '––'
   }
 
   /** Parse a `"HH:mm"` value into the display segments (24h → display units). */
   #applyValue(v: string) {
-    const m = /^(\d{1,2}):(\d{2})$/.exec((v ?? '').trim())
-    if (!m) { this.#hour = null; this.#minute = null; this.#period = null; return }
-    const h = Math.min(23, Number(m[1]))
-    const min = Math.min(59, Number(m[2]))
-    this.#minute = min
+    const time = parseTime(v)
+    if (!time) { this.#hour = null; this.#minute = null; this.#period = null; return }
+    this.#minute = time.min
     if (this.#hour12) {
-      this.#hour = ((h + 11) % 12) + 1
-      this.#period = h < 12 ? 'am' : 'pm'
+      this.#hour = ((time.h + 11) % 12) + 1
+      this.#period = time.h < 12 ? 'am' : 'pm'
     } else {
-      this.#hour = h
+      this.#hour = time.h
       this.#period = null
     }
   }
@@ -805,21 +773,12 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #onLabelSlotChange = () => {
-    this.#labelBox.classList.toggle('has-label', this.#labelSlot.assignedNodes().length > 0)
     this.#applyGroupLabel()
-  }
-  #onHintSlotChange = () => {
-    this.#hintBox.classList.toggle('has-hint', this.#hintSlot.assignedNodes().length > 0)
   }
 
   #syncDisabled() {
     const off = this.hasAttribute('disabled') || this.#formDisabled
-    for (const seg of this.#segs) {
-      if (off) seg.el.setAttribute('aria-disabled', 'true')
-      else seg.el.removeAttribute('aria-disabled')
-      seg.el.tabIndex = off ? -1 : 0
-      seg.el.contentEditable = off ? 'false' : 'true'
-    }
+    for (const seg of this.#segs) seg.el.disabled = off
   }
 
   #syncStatus() {
@@ -829,12 +788,8 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #updateFilled() {
-    const filled = !!this.value
-    this.#field.classList.toggle('is-filled', filled)
-    try {
-      if (filled) this.#internals?.states.add('filled')
-      else this.#internals?.states.delete('filled')
-    } catch {}
+    if (this.value) this.#internals?.states.add('filled')
+    else this.#internals?.states.delete('filled')
   }
 
   #updateValidity() {
@@ -875,12 +830,10 @@ export class AInputTimeElement extends HTMLElementBase {
     // '' would wipe the other segments the user already filled.
     if (next === this.value) return
     this.#applyValue(next)
-    this.#iso = this.value
     if (this.#ready) {
-      this.#render()
-      this.#internals?.setFormValue(this.value)
-      this.#updateFilled()
-      this.#updateValidity()
+      this.#commitEdit({ dispatch: false })
+    } else {
+      this.#iso = this.value
     }
   }
 
@@ -889,12 +842,7 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#hour = null
     this.#minute = null
     this.#period = null
-    this.#iso = ''
-    this.#render()
-    this.#internals?.setFormValue('')
-    this.#updateFilled()
-    this.#updateValidity()
-    this.#dispatch('input')
+    this.#commitEdit()
     this.#dispatch('change')
     this.dispatchEvent(new CustomEvent(CLEAR_INPUT_EVENT, { bubbles: true }))
     this.#segs[0]?.el.focus()
@@ -915,12 +863,7 @@ export class AInputTimeElement extends HTMLElementBase {
 
   formResetCallback() {
     this.#applyValue(this.getAttribute('defaultvalue') ?? '')
-    this.#iso = this.value
-    this.#render()
-    this.#internals?.setFormValue(this.value)
-    this.#updateFilled()
-    this.#updateValidity()
-    this.#dispatch('input')
+    this.#commitEdit()
     this.#dispatch('change')
   }
   formDisabledCallback(disabled: boolean) { this.#formDisabled = disabled; this.#syncDisabled() }

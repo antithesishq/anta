@@ -101,7 +101,7 @@ if (isComponentPage && title) {
 }
 ---
 
-<html lang="en">
+<html lang="en" transition:animate="none">
   <head>
     <meta charset="utf-8" />
     {/* viewport-fit=cover so the layout spans the whole screen on notched /
@@ -233,6 +233,9 @@ if (isComponentPage && title) {
     </script>
   </head>
   <body>
+    {/* The router fetches the destination before it can swap the document.
+        This small bar makes that wait visible without delaying the swap. */}
+    <div class="navigation-progress" aria-hidden="true"></div>
     <header class="topbar">
       <span class="topbar-title">
         Anta{title && <Fragment><span class="crumb-sep">›</span>{title}</Fragment>}
@@ -390,6 +393,18 @@ if (isComponentPage && title) {
         setMenu(false)
         setToc(false)
       }
+
+      // Show immediate acknowledgement while ClientRouter prepares the next
+      // document. The incoming <html> replaces this attribute during the swap;
+      // clear it explicitly as well for the current document and accessibility
+      // tree.
+      const setNavigationPending = (pending: boolean) => {
+        document.documentElement.toggleAttribute('data-navigation-pending', pending)
+        document.documentElement.setAttribute('aria-busy', pending ? 'true' : 'false')
+      }
+      document.addEventListener('astro:before-preparation', () => setNavigationPending(true))
+      document.addEventListener('astro:after-swap', () => setNavigationPending(false))
+
       document.addEventListener('click', (e) => {
         const target = e.target as HTMLElement
         if (!target.closest) return
@@ -529,6 +544,46 @@ if (isComponentPage && title) {
 </html>
 
 <style>
+  .navigation-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    height: 2px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 120ms ease-out;
+    z-index: 100;
+  }
+
+  .navigation-progress::before {
+    display: block;
+    width: 100%;
+    height: 100%;
+    content: '';
+    background: var(--text-2-brand);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  :global(html[data-navigation-pending] .navigation-progress) {
+    opacity: 1;
+  }
+
+  :global(html[data-navigation-pending] .navigation-progress::before) {
+    animation: navigation-progress 1.2s ease-out forwards;
+  }
+
+  @keyframes navigation-progress {
+    from { transform: scaleX(0.08); }
+    to { transform: scaleX(0.85); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(html[data-navigation-pending] .navigation-progress::before) {
+      animation: none;
+      transform: scaleX(0.65);
+    }
+  }
+
   .layout {
     display: flex;
     min-height: 100vh;

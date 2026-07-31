@@ -596,7 +596,7 @@ export interface AInputAttributes extends BaseAttributes {
 }
 
 /** Attributes for the `<a-input-time>` custom element — a segmented wall-clock
- *  time field (hour / minute / AM-PM spinbutton sections in one box). */
+ *  time field (hour / minute / AM-PM native text-input sections in one box). */
 export interface AInputTimeAttributes extends BaseAttributes {
   /** Controlled value — 24-hour `"HH:mm"`, `''` when incomplete. */
   value?: string
@@ -866,10 +866,13 @@ export interface ACopyAttributes extends BaseAttributes {
   'copy-url'?: boolean | ''
   /** Prefix the copied `copy` string with `// URL: <href>`. Presence-based. */
   'copy-with-url'?: boolean | ''
-  /** Float a ghost of the host's content upward as visual feedback on a
-   *  successful copy (rendered in the top layer so the host's overflow can't clip
-   *  it). Presence-based. Opt-in — `ButtonCopy` sets it. */
+  /** Show a short confirmation label after a successful copy. It renders in the
+   *  top layer so the host's overflow cannot clip it. Presence-based. `ButtonCopy`
+   *  sets it when `iconPlacement="none"`. */
   toast?: boolean | ''
+  /** Text in the success confirmation shown by `toast`.
+   *  @defaultValue Copied */
+  'copied-label'?: string
   /** Fired after a copy attempt (`copydone`, `detail: { ok }`, non-bubbling so a
    *  nested copy control can't flip an ancestor's feedback). All-lowercase so it
    *  binds in React *and* Preact. */

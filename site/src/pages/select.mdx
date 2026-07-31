@@ -44,7 +44,7 @@ through one **`onValueChange`**. Controlled via `value`, uncontrolled via
 <Col>
 
 <Preview>
-  <SelectOptionsDemo client:load />
+  <SelectOptionsDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -79,7 +79,7 @@ skipped by the keyboard.
 <Col>
 
 <Preview>
-  <SelectModesDemo client:load />
+  <SelectModesDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -144,7 +144,7 @@ row tint, so it tones the label and indicator only.
 <Col>
 
 <Preview>
-  <SelectFilterDemo client:load />
+  <SelectFilterDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -185,7 +185,7 @@ matches shows a "No matches" row, and the query resets when the menu closes. In
 <Col>
 
 <Preview>
-  <SelectControlledDemo client:load />
+  <SelectControlledDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -262,7 +262,7 @@ The panel on the right is that projection, re-derived on every pick. Toggle scop
 watch the leaf checks and the section `Tag`s (`some` / `all`) update:
 
 <Preview>
-  <SelectSelectionTreeDemo client:load />
+  <SelectSelectionTreeDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -309,7 +309,7 @@ section marks the leaf everywhere it occurs (selection is value-keyed).
 <Col>
 
 <Preview>
-  <SelectSizeStatusDemo client:load />
+  <SelectSizeStatusDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -361,7 +361,7 @@ the menu anchors to its previous sibling, so a field, a menu, and a little glue 
 a working select:
 
 <Preview>
-  <SelectBasicDemo client:load />
+  <SelectBasicDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```html folded
@@ -412,7 +412,7 @@ the React `Select` packages.
 <Col>
 
 <Preview>
-  <SelectRenderOptionDemo client:load />
+  <SelectRenderOptionDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -477,7 +477,7 @@ too with `renderIndicator` (see [Custom indicators](#custom-indicators)).
 <Col>
 
 <Preview>
-  <SelectTruncateDemo client:load />
+  <SelectTruncateDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -527,7 +527,7 @@ cap is what does the work.
 <Col>
 
 <Preview>
-  <SelectRenderIndicatorDemo client:load />
+  <SelectRenderIndicatorDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -570,7 +570,7 @@ both, or neither.
 <Col>
 
 <Preview>
-  <SelectSummaryDemo client:load />
+  <SelectSummaryDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -626,7 +626,7 @@ ellipsizing at the field width like any long value. `renderSummary` overrides it
 <Col>
 
 <Preview>
-  <SelectTriggerDemo client:load />
+  <SelectTriggerDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -652,7 +652,7 @@ const [value, setValue] = useState(['stream', 'message'])
 ```
 
 <Preview>
-  <SelectColumnsDemo client:load />
+  <SelectColumnsDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -710,7 +710,7 @@ same `selected` list `renderTrigger` hands it, so the `Tag` stays empty until yo
 <Col>
 
 <Preview>
-  <SelectEmptyDemo client:load />
+  <SelectEmptyDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -768,7 +768,7 @@ here, which arrow-keys and Enter reach like any option — to make it selectable
 <Col>
 
 <Preview>
-  <SelectGroupsDemo client:load />
+  <SelectGroupsDemo client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -1042,7 +1042,7 @@ until you reach for it. Hide the chevron by targeting the trailing `a-icon` (its
 wrapper is inline-`display:contents`, so hit the icon itself).
 
 <Preview>
-  <SelectGhostDemo client:load />
+  <SelectGhostDemo client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     /* '.ghost-select' is this demo's wrapper; swap your own selector. */
     .ghost-select a-input:not(:hover):not(:focus-within)::part(field) {

@@ -3,6 +3,21 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Breaking
+
+- Anta now requires Chrome or Edge 125, Safari 17.4, or Firefox 126 for
+  custom-element states and the `:state()` selector.
+
+### Changed
+
+- `InputTime` segments now use native text inputs. They retain native caret,
+  selection, paste, and IME behavior while keeping Anta's locale-aware layout
+  and cross-segment navigation.
+- No-icon `ButtonCopy` leaves its button unchanged and shows a cursor-near
+  success label. Set `copiedLabel` to change the label text.
+
 ## 0.3.16 — July 29, 2026
 
 ### Added

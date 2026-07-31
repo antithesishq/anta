@@ -175,6 +175,7 @@
     --anta-native-range-thumb-size: var(--anta-slider-thumb-size);
     --anta-native-range-thumb-border-width: var(--anta-slider-thumb-border-width);
     --anta-native-range-thumb-radius: 50%;
+    --anta-native-range-fill-clip-edge: 2px;
     --anta-native-range-track: var(--border-4);
     --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
     --anta-native-range-fill: var(--anta-native-range-interactive-rest);
@@ -263,6 +264,11 @@
     --anta-native-range-track-radius: attr(round type(<length>), 999px);
     --anta-native-range-thumb-radius: attr(round type(<length>), 999px);
   }
+  /* The fill clip's circular-thumb seam would cut a smaller custom radius.
+     A valued raw `round` keeps the entire thumb silhouette instead. */
+  input[data-anta][type="range"][round]:not([round=""]) {
+    --anta-native-range-fill-clip-edge: 0px;
+  }
   input[data-anta][type="range"]::-webkit-slider-container {
     block-size: var(--anta-native-range-control-size);
     overflow: hidden;
@@ -297,12 +303,12 @@
       calc(-100vmax - var(--anta-native-range-thumb-size)) 0 0 100vmax var(--anta-native-range-fill);
     clip-path: polygon(
       100% -1px,
-      2px -1px,
+      var(--anta-native-range-fill-clip-edge) -1px,
       0 var(--anta-native-range-fill-clip-top),
       -100vmax var(--anta-native-range-fill-clip-top),
       -100vmax var(--anta-native-range-fill-clip-bottom),
       0 var(--anta-native-range-fill-clip-bottom),
-      2px 100%,
+      var(--anta-native-range-fill-clip-edge) 100%,
       calc(100% + 1px) calc(100% + 1px)
     );
     transition: background-color 75ms ease-out, box-shadow 75ms ease-out;
@@ -358,7 +364,7 @@
   @media (forced-colors: active) {
     input[data-anta][type="range"] {
       forced-color-adjust: none;
-      --anta-native-range-track: Canvas;
+      --anta-native-range-track: CanvasText;
       --anta-native-range-fill: Highlight;
       --anta-native-range-thumb: Canvas;
       --anta-native-range-thumb-border: CanvasText;

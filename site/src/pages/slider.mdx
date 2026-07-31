@@ -201,10 +201,10 @@ treatment while retaining the browser's form, keyboard, and pointer behavior.
 Use `size="small"` or `"large"` for the 24px and 32px control sizes.
 `track-size` accepts a CSS length and changes both rail segments. `tone`,
 `thumb-tone`, `thumb-fill`, `thumb-size`, and `round` use the same attributes
-as `Slider`.
+as `Slider`. In raw HTML, `round` needs a CSS length such as `"4px"`; JSX
+`round={4}` remains a numeric pixel value.
 
 <Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
-  <Slider label="Anta Slider" defaultValue={48} />
   <input
     data-anta
     type="range"
@@ -247,7 +247,7 @@ as `Slider`.
     value="72"
     size="large"
     tone="success"
-    round="4"
+    round="4px"
     aria-label="Large rounded success native range"
     style={{ width: '100%' }}
   />
@@ -257,7 +257,7 @@ as `Slider`.
 <input data-anta type="range" min="0" max="100" value="48" aria-label="Native range">
 <input data-anta type="range" min="0" max="100" value="32" size="small" tone="info" aria-label="Small info native range">
 <input data-anta type="range" min="0" max="100" value="52" tone="brand" thumb-tone="success" track-size="4px" thumb-fill thumb-size="20px" aria-label="Brand native range with a large filled success thumb">
-<input data-anta type="range" min="0" max="100" value="72" size="large" tone="success" round="4" aria-label="Large rounded success native range">
+<input data-anta type="range" min="0" max="100" value="72" size="large" tone="success" round="4px" aria-label="Large rounded success native range">
 ```
 
 </Disclosure>

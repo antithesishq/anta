@@ -74,7 +74,7 @@ export class ASliderElement extends HTMLElementBase {
       :host {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
-        gap: var(--slider-gap);
+        gap: 1px;
         outline: none;
       }
       [hidden] { display: none !important; }
@@ -119,8 +119,8 @@ export class ASliderElement extends HTMLElementBase {
       :host([value-display="none"]) .end-value { display: none; }
       .control {
         position: relative;
-        block-size: var(--slider-control-size);
-        border-radius: var(--slider-control-radius);
+        block-size: var(--anta-slider-control-size);
+        border-radius: 4px;
         cursor: grab;
         touch-action: none;
         user-select: none;
@@ -129,14 +129,14 @@ export class ASliderElement extends HTMLElementBase {
       .control[data-dragging] { cursor: grabbing; }
       .control[data-dragging] .thumb { background: var(--slider-thumb-active); }
       :host(:focus-visible) .control:not([data-pointer-focus]) {
-        outline: var(--slider-focus-width) solid var(--slider-focus);
+        outline: 1px solid var(--focus-ring);
         outline-offset: 0;
       }
       .rail-area {
         position: absolute;
         inset-block-start: 50%;
-        inset-inline: calc(var(--slider-thumb-size) / 2);
-        block-size: var(--slider-track-size);
+        inset-inline: calc(var(--anta-slider-thumb-size) / 2);
+        block-size: var(--anta-slider-track-size);
         transform: translateY(-50%);
       }
       .rail,
@@ -147,13 +147,13 @@ export class ASliderElement extends HTMLElementBase {
         transition: background-color 75ms ease-out;
       }
       .rail {
-        inset-inline: calc(var(--slider-track-inset) - var(--slider-thumb-size) / 2);
+        inset-inline: calc(var(--slider-track-inset) - var(--anta-slider-thumb-size) / 2);
         background: var(--slider-track);
       }
       .fill {
-        inset-inline-start: calc(var(--slider-track-inset) - var(--slider-thumb-size) / 2);
+        inset-inline-start: calc(var(--slider-track-inset) - var(--anta-slider-thumb-size) / 2);
         inset-inline-end: auto;
-        inline-size: calc(var(--_percent, 0%) + var(--slider-thumb-size) / 2 - var(--slider-track-inset));
+        inline-size: calc(var(--_percent, 0%) + var(--anta-slider-thumb-size) / 2 - var(--slider-track-inset));
         background: var(--slider-fill);
       }
       .thumb {
@@ -161,9 +161,9 @@ export class ASliderElement extends HTMLElementBase {
         inset-block-start: 50%;
         inset-inline-start: var(--_percent, 0%);
         box-sizing: border-box;
-        inline-size: var(--slider-thumb-size);
-        block-size: var(--slider-thumb-size);
-        border: var(--slider-thumb-border-width) solid var(--slider-thumb-border);
+        inline-size: var(--anta-slider-thumb-size);
+        block-size: var(--anta-slider-thumb-size);
+        border: var(--anta-slider-thumb-border-width) solid var(--slider-thumb-border);
         border-radius: var(--slider-thumb-radius);
         background: var(--slider-thumb);
         transition: background-color 75ms ease-out, border-color 75ms ease-out;
@@ -175,19 +175,19 @@ export class ASliderElement extends HTMLElementBase {
         inset-inline-start: var(--_percent, 0%);
         inset-block-start: 50%;
         min-inline-size: max-content;
-        color: var(--slider-thumb-value);
+        color: var(--slider-value);
         font-family: var(--sans-serif);
         font-feature-settings: 'ss02', 'ss05', 'tnum';
-        font-size: var(--slider-thumb-value-size);
+        font-size: var(--slider-value-size);
         font-variant-numeric: tabular-nums;
-        line-height: var(--slider-thumb-value-line-height);
+        line-height: var(--slider-value-line-height);
         padding-inline: 6px;
         background: var(--bg-2);
         border: 1px solid var(--border-3);
         border-radius: 4px;
         text-align: center;
         transform: translate(-50%, calc(
-          -50% - var(--slider-control-size) / 2 - var(--slider-gap) - var(--slider-value-line-height) / 2
+          -50% - var(--anta-slider-control-size) / 2 - 1px - var(--slider-value-line-height) / 2
         ));
       }
       :host([value-display="thumb"]) .thumb-value { display: block; }

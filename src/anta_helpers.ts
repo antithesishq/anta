@@ -120,26 +120,31 @@ export function toneStyle(
     : base
 }
 
-/**
- * Inline-style helper for a valued `round` — the polymorphic corner-radius prop
- * (`true` = fully round, a `number`/length = a custom radius). Mirrors `toneStyle`:
- * a custom value is handed to the element via `varName` (e.g. `--button-round`), so
- * the element's CSS resolves `border-radius: var(--{c}-round, <default>)`. This is
- * the portable path — the element's `attr(round type(<length>), …)` default only
- * resolves on newer engines, exactly like the tone-source `attr()`.
- *
- * A `number` becomes `<n>px`; a non-empty `string` is used verbatim (so `'1rem'` /
- * `'50%'` work). `true` / `false` / `undefined` add nothing (presence alone → the
- * element's default full-round). Returns `base` unchanged when there's no value.
- */
+/** Converts a numeric or string length to CSS text. Numbers become pixels. */
+export function cssLength(length: number | string | undefined): string | undefined {
+  if (typeof length === 'number') return `${length}px`
+  return length || undefined
+}
+
+/** Adds a CSS length to an inline custom property. Numbers become pixels; a
+ * non-empty string is used verbatim. Returns `base` unchanged when absent. */
+export function lengthStyle(
+  length: number | string | undefined,
+  varName: string,
+  base?: React.CSSProperties,
+): React.CSSProperties | undefined {
+  const value = cssLength(length)
+  return value ? { ...base, [varName]: value } : base
+}
+
+/** Inline-style helper for a valued `round`. Its boolean form leaves the
+ * element's default full-round radius in place. */
 export function roundStyle(
   round: boolean | number | string | undefined,
   varName: string,
   base?: React.CSSProperties,
 ): React.CSSProperties | undefined {
-  if (typeof round === 'number') return { ...base, [varName]: `${round}px` }
-  if (typeof round === 'string' && round !== '') return { ...base, [varName]: round }
-  return base
+  return lengthStyle(typeof round === 'number' || typeof round === 'string' ? round : undefined, varName, base)
 }
 
 /**

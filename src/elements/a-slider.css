@@ -1,27 +1,42 @@
 @layer anta {
+  /* Shared slider geometry keeps the custom element and the opt-in native
+     range aligned. Their presentation remains independent below. */
+  :where(a-slider, input[data-anta][type="range"]) {
+    --anta-slider-control-size: 28px;
+    --anta-slider-track-size: 2px;
+    --anta-slider-thumb-size: 18px;
+    --anta-slider-thumb-border-width: 1.5px;
+  }
+  :where(a-slider, input[data-anta][type="range"])[size="small"] {
+    --anta-slider-control-size: 24px;
+    --anta-slider-thumb-size: 16px;
+  }
+  :where(a-slider, input[data-anta][type="range"])[size="large"] {
+    --anta-slider-control-size: 32px;
+    --anta-slider-thumb-size: 20px;
+  }
+  :where(a-slider, input[data-anta][type="range"])[track-size] {
+    --anta-slider-track-size: attr(track-size type(<length>), 2px);
+  }
+  :where(a-slider, input[data-anta][type="range"])[thumb-size] {
+    --anta-slider-thumb-size: attr(thumb-size type(<length>), 18px);
+  }
+
   a-slider {
-    --slider-gap: 1px;
-    --slider-control-size: 28px;
-    --slider-control-radius: 4px;
-    --slider-track-size: 2px;
     --slider-track-inset: 1px;
     --slider-track-radius: 999px;
-    --slider-thumb-size: 18px;
-    --slider-thumb-border-width: 1.5px;
     --slider-thumb-radius: 50%;
-    --slider-focus-width: 1px;
     --slider-track: var(--border-4);
     --slider-interactive-rest: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
     --slider-fill: var(--slider-interactive-rest);
     --slider-fill-hover: var(--border-1);
     --slider-thumb: var(--bg-1);
     --slider-thumb-active: var(--bg-3);
-    --slider-thumb-border: var(--slider-interactive-rest);
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
+    --slider-thumb-border: var(--slider-thumb-interactive-rest);
     --slider-thumb-border-active: var(--border-1);
-    --slider-focus: var(--focus-ring);
     --slider-label: var(--text-3);
     --slider-value: var(--text-1);
-    --slider-thumb-value: var(--text-1);
     --slider-value-affix: var(--text-3);
     --slider-marker: var(--text-3);
 
@@ -29,38 +44,28 @@
     --slider-label-line-height: 20px;
     --slider-value-size: 15px;
     --slider-value-line-height: 20px;
-    --slider-thumb-value-size: 15px;
-    --slider-thumb-value-line-height: 20px;
     --slider-marker-size: 13px;
     --slider-marker-line-height: 16px;
 
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--slider-gap);
+    gap: 1px;
     width: 100%;
   }
 
   a-slider[size="small"] {
-    --slider-control-size: 24px;
-    --slider-thumb-size: 16px;
     --slider-label-size: 13px;
     --slider-label-line-height: 16px;
     --slider-value-size: 13px;
     --slider-value-line-height: 16px;
-    --slider-thumb-value-size: 13px;
-    --slider-thumb-value-line-height: 16px;
     --slider-marker-size: 12px;
     --slider-marker-line-height: 14px;
   }
   a-slider[size="large"] {
-    --slider-control-size: 32px;
-    --slider-thumb-size: 20px;
     --slider-label-size: 17px;
     --slider-label-line-height: 22px;
     --slider-value-size: 17px;
     --slider-value-line-height: 22px;
-    --slider-thumb-value-size: 17px;
-    --slider-thumb-value-line-height: 22px;
     --slider-marker-size: 15px;
     --slider-marker-line-height: 19px;
   }
@@ -73,32 +78,27 @@
     --slider-thumb-radius: var(--slider-round, attr(round type(<length>), 999px));
   }
 
-  /* Tones are an accent only: the neutral unfilled rail stays quiet, while the
-     fill and thumb outline use the selected colour scale. */
+  /* `tone` affects the filled rail only. `tone-thumb` separately controls the
+     thumb outline; the neutral unfilled rail stays quiet in both cases. */
   a-slider[tone="brand"] {
     --slider-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
     --slider-fill-hover: var(--border-1-brand);
-    --slider-thumb-border-active: var(--border-1-brand);
   }
   a-slider[tone="info"] {
     --slider-interactive-rest: color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info));
     --slider-fill-hover: var(--border-1-info);
-    --slider-thumb-border-active: var(--border-1-info);
   }
   a-slider[tone="success"] {
     --slider-interactive-rest: color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success));
     --slider-fill-hover: var(--border-1-success);
-    --slider-thumb-border-active: var(--border-1-success);
   }
   a-slider[tone="warning"] {
     --slider-interactive-rest: color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning));
     --slider-fill-hover: var(--border-1-warning);
-    --slider-thumb-border-active: var(--border-1-warning);
   }
   a-slider[tone="critical"] {
     --slider-interactive-rest: color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical));
     --slider-fill-hover: var(--border-1-critical);
-    --slider-thumb-border-active: var(--border-1-critical);
   }
   a-slider[tone]:not(
       [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
@@ -106,7 +106,37 @@
     --slider-tone-source: attr(tone type(<color>), transparent);
     --slider-interactive-rest: color-mix(in oklch, var(--slider-tone-source) 65%, var(--border-2));
     --slider-fill-hover: color-mix(in oklch, var(--slider-tone-source) 80%, var(--border-1));
-    --slider-thumb-border-active: var(--slider-fill-hover);
+  }
+  a-slider[tone-thumb="brand"] {
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
+    --slider-thumb-border-active: var(--border-1-brand);
+  }
+  a-slider[tone-thumb="info"] {
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info));
+    --slider-thumb-border-active: var(--border-1-info);
+  }
+  a-slider[tone-thumb="success"] {
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success));
+    --slider-thumb-border-active: var(--border-1-success);
+  }
+  a-slider[tone-thumb="warning"] {
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning));
+    --slider-thumb-border-active: var(--border-1-warning);
+  }
+  a-slider[tone-thumb="critical"] {
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical));
+    --slider-thumb-border-active: var(--border-1-critical);
+  }
+  a-slider[tone-thumb]:not(
+      [tone-thumb=""], [tone-thumb="neutral"], [tone-thumb="brand"], [tone-thumb="info"],
+      [tone-thumb="success"], [tone-thumb="warning"], [tone-thumb="critical"]) {
+    --slider-thumb-tone-source: attr(tone-thumb type(<color>), transparent);
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--slider-thumb-tone-source) 65%, var(--border-2));
+    --slider-thumb-border-active: color-mix(in oklch, var(--slider-thumb-tone-source) 80%, var(--border-1));
+  }
+  a-slider[thumb-fill] {
+    --slider-thumb: var(--slider-thumb-border);
+    --slider-thumb-active: var(--slider-thumb-border-active);
   }
 
   a-slider[track-click="jump"] { cursor: pointer; }
@@ -136,11 +166,218 @@
     }
   }
 
+  /* Native ranges retain their native form and keyboard semantics. Chromium
+     lacks a filled-track pseudo-element, so the clipped thumb shadow paints it. */
+  input[data-anta][type="range"] {
+    --anta-native-range-control-size: var(--anta-slider-control-size);
+    --anta-native-range-track-size: var(--anta-slider-track-size);
+    --anta-native-range-track-radius: 999px;
+    --anta-native-range-thumb-size: var(--anta-slider-thumb-size);
+    --anta-native-range-thumb-border-width: var(--anta-slider-thumb-border-width);
+    --anta-native-range-thumb-radius: 50%;
+    --anta-native-range-track: var(--border-4);
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
+    --anta-native-range-fill: var(--anta-native-range-interactive-rest);
+    --anta-native-range-fill-hover: var(--border-1);
+    --anta-native-range-thumb: var(--bg-1);
+    --anta-native-range-thumb-active: var(--bg-3);
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
+    --anta-native-range-thumb-border: var(--anta-native-range-thumb-interactive-rest);
+    --anta-native-range-thumb-border-active: var(--border-1);
+
+    box-sizing: border-box;
+    display: block;
+    inline-size: 100%;
+    block-size: var(--anta-native-range-control-size);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: transparent;
+    cursor: pointer;
+    overflow: hidden;
+    vertical-align: middle;
+    box-shadow: none;
+  }
+  input[data-anta][type="range"][tone="brand"] {
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
+    --anta-native-range-fill-hover: var(--border-1-brand);
+  }
+  input[data-anta][type="range"][tone="info"] {
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info));
+    --anta-native-range-fill-hover: var(--border-1-info);
+  }
+  input[data-anta][type="range"][tone="success"] {
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success));
+    --anta-native-range-fill-hover: var(--border-1-success);
+  }
+  input[data-anta][type="range"][tone="warning"] {
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning));
+    --anta-native-range-fill-hover: var(--border-1-warning);
+  }
+  input[data-anta][type="range"][tone="critical"] {
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical));
+    --anta-native-range-fill-hover: var(--border-1-critical);
+  }
+  input[data-anta][type="range"][tone]:not(
+      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]) {
+    --anta-native-range-tone-source: attr(tone type(<color>), transparent);
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--anta-native-range-tone-source) 65%, var(--border-2));
+    --anta-native-range-fill-hover: color-mix(in oklch, var(--anta-native-range-tone-source) 80%, var(--border-1));
+  }
+  input[data-anta][type="range"][tone-thumb="brand"] {
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
+    --anta-native-range-thumb-border-active: var(--border-1-brand);
+  }
+  input[data-anta][type="range"][tone-thumb="info"] {
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info));
+    --anta-native-range-thumb-border-active: var(--border-1-info);
+  }
+  input[data-anta][type="range"][tone-thumb="success"] {
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success));
+    --anta-native-range-thumb-border-active: var(--border-1-success);
+  }
+  input[data-anta][type="range"][tone-thumb="warning"] {
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning));
+    --anta-native-range-thumb-border-active: var(--border-1-warning);
+  }
+  input[data-anta][type="range"][tone-thumb="critical"] {
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical));
+    --anta-native-range-thumb-border-active: var(--border-1-critical);
+  }
+  input[data-anta][type="range"][tone-thumb]:not(
+      [tone-thumb=""], [tone-thumb="neutral"], [tone-thumb="brand"], [tone-thumb="info"],
+      [tone-thumb="success"], [tone-thumb="warning"], [tone-thumb="critical"]) {
+    --anta-native-range-thumb-tone-source: attr(tone-thumb type(<color>), transparent);
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--anta-native-range-thumb-tone-source) 65%, var(--border-2));
+    --anta-native-range-thumb-border-active: color-mix(in oklch, var(--anta-native-range-thumb-tone-source) 80%, var(--border-1));
+  }
+  input[data-anta][type="range"][thumb-fill] {
+    --anta-native-range-thumb: var(--anta-native-range-thumb-border);
+    --anta-native-range-thumb-active: var(--anta-native-range-thumb-border-active);
+  }
+  input[data-anta][type="range"][round] {
+    --anta-native-range-track-radius: attr(round type(<length>), 999px);
+    --anta-native-range-thumb-radius: attr(round type(<length>), 999px);
+  }
+  input[data-anta][type="range"]::-webkit-slider-container {
+    block-size: var(--anta-native-range-control-size);
+    overflow: hidden;
+  }
+  input[data-anta][type="range"]::-webkit-slider-runnable-track {
+    position: relative;
+    box-sizing: border-box;
+    block-size: var(--anta-native-range-thumb-size);
+    border: 0;
+    border-radius: var(--anta-native-range-track-radius);
+    appearance: none;
+    -webkit-appearance: none;
+    background: linear-gradient(var(--anta-native-range-track) 0 0) center / 100% var(--anta-native-range-track-size) no-repeat;
+    transition: background-color 75ms ease-out;
+  }
+  input[data-anta][type="range"]::-webkit-slider-thumb {
+    --anta-native-range-fill-clip-top: calc((var(--anta-native-range-thumb-size) - var(--anta-native-range-track-size)) / 2);
+    --anta-native-range-fill-clip-bottom: calc(100% - var(--anta-native-range-fill-clip-top));
+
+    position: relative;
+    box-sizing: border-box;
+    inline-size: var(--anta-native-range-thumb-size);
+    block-size: var(--anta-native-range-thumb-size);
+    margin-block-start: 0;
+    border: 0;
+    border-radius: var(--anta-native-range-thumb-radius);
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--anta-native-range-thumb);
+    box-shadow:
+      inset 0 0 0 var(--anta-native-range-thumb-border-width) var(--anta-native-range-thumb-border),
+      calc(-100vmax - var(--anta-native-range-thumb-size)) 0 0 100vmax var(--anta-native-range-fill);
+    clip-path: polygon(
+      100% -1px,
+      2px -1px,
+      0 var(--anta-native-range-fill-clip-top),
+      -100vmax var(--anta-native-range-fill-clip-top),
+      -100vmax var(--anta-native-range-fill-clip-bottom),
+      0 var(--anta-native-range-fill-clip-bottom),
+      2px 100%,
+      calc(100% + 1px) calc(100% + 1px)
+    );
+    transition: background-color 75ms ease-out, box-shadow 75ms ease-out;
+  }
+  input[data-anta][type="range"]::-moz-range-track {
+    box-sizing: border-box;
+    block-size: var(--anta-native-range-track-size);
+    border: 0;
+    border-radius: var(--anta-native-range-track-radius);
+    background: var(--anta-native-range-track);
+    transition: background-color 75ms ease-out;
+  }
+  input[data-anta][type="range"]::-moz-range-progress {
+    block-size: var(--anta-native-range-track-size);
+    border: 0;
+    border-radius: var(--anta-native-range-track-radius);
+    background: var(--anta-native-range-fill);
+    transition: background-color 75ms ease-out;
+  }
+  input[data-anta][type="range"]::-moz-range-thumb {
+    box-sizing: border-box;
+    inline-size: var(--anta-native-range-thumb-size);
+    block-size: var(--anta-native-range-thumb-size);
+    border: 0;
+    border-radius: var(--anta-native-range-thumb-radius);
+    background: var(--anta-native-range-thumb);
+    box-shadow: inset 0 0 0 var(--anta-native-range-thumb-border-width) var(--anta-native-range-thumb-border);
+    transition: background-color 75ms ease-out, box-shadow 75ms ease-out;
+  }
+  input[data-anta][type="range"]:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 0;
+    --anta-native-range-fill: var(--anta-native-range-fill-hover);
+    --anta-native-range-thumb-border: var(--anta-native-range-thumb-border-active);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    input[data-anta][type="range"]:not(:disabled):hover {
+      --anta-native-range-fill: var(--anta-native-range-fill-hover);
+      --anta-native-range-thumb-border: var(--anta-native-range-thumb-border-active);
+    }
+  }
+  input[data-anta][type="range"]:not(:disabled):active {
+    cursor: grabbing;
+    --anta-native-range-thumb: var(--anta-native-range-thumb-active);
+  }
+  input[data-anta][type="range"]:disabled {
+    --anta-native-range-track: color-mix(in oklch, var(--border-4) 55%, transparent);
+    --anta-native-range-fill: color-mix(in oklch, var(--border-2) 45%, transparent);
+    --anta-native-range-thumb: var(--bg-2);
+    --anta-native-range-thumb-border: var(--border-3);
+    cursor: not-allowed;
+  }
+  @media (forced-colors: active) {
+    input[data-anta][type="range"] {
+      forced-color-adjust: none;
+      --anta-native-range-track: Canvas;
+      --anta-native-range-fill: Highlight;
+      --anta-native-range-thumb: Canvas;
+      --anta-native-range-thumb-border: CanvasText;
+    }
+    input[data-anta][type="range"]:focus-visible { outline: 2px solid Highlight; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    input[data-anta][type="range"]::-webkit-slider-runnable-track,
+    input[data-anta][type="range"]::-webkit-slider-thumb,
+    input[data-anta][type="range"]::-moz-range-track,
+    input[data-anta][type="range"]::-moz-range-progress,
+    input[data-anta][type="range"]::-moz-range-thumb { transition: none; }
+  }
+
   a-slider:not(:defined) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     column-gap: 1px;
-    row-gap: var(--slider-gap);
+    row-gap: 1px;
     opacity: 0.5;
     transition: opacity 280ms ease-out 40ms;
   }
@@ -162,14 +399,14 @@
     grid-column: 1 / -1;
     grid-row: 2;
     content: '';
-    block-size: var(--slider-control-size);
-    border-radius: var(--slider-control-radius);
+    block-size: var(--anta-slider-control-size);
+    border-radius: 4px;
     background: linear-gradient(
       to right,
       transparent var(--slider-track-inset),
       var(--slider-track) var(--slider-track-inset) calc(100% - var(--slider-track-inset)),
       transparent calc(100% - var(--slider-track-inset))
-    ) center / 100% var(--slider-track-size) no-repeat;
+    ) center / 100% var(--anta-slider-track-size) no-repeat;
   }
   a-slider:not(:defined)::after {
     grid-column: 2;

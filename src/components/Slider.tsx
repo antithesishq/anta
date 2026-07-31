@@ -1,5 +1,5 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
-import { toneStyle, roundStyle, roundAttr } from '../anta_helpers'
+import { toneStyle, roundStyle, roundAttr, lengthStyle, cssLength } from '../anta_helpers'
 
 /** A text marker displayed below the slider rail. Markers are labels only; they
  * do not add dots or ticks to the rail. */
@@ -39,13 +39,29 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   name?: string
   /** Disables pointer and keyboard interaction. */
   disabled?: boolean
-  /** Colour of the filled rail and thumb stroke. Pass a named tone or a literal
-   * CSS colour for a one-off custom tone. The unfilled rail stays neutral.
+  /** Colour of the filled rail. Pass a named tone or a literal CSS colour for a
+   * one-off custom tone. The unfilled rail stays neutral.
    * @defaultValue 'neutral' */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Colour of the thumb stroke. Pass a named tone or a literal CSS colour for a
+   * one-off custom tone. Omit it to keep the thumb neutral.
+   * @defaultValue 'neutral' */
+  toneThumb?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=24px, medium=28px, large=32px tall.
    * @defaultValue 'medium' */
   size?: 'small' | 'medium' | 'large'
+  /** Thickness of both rail segments. Numbers use pixels; strings are CSS
+   * lengths. Keep it no larger than the thumb diameter.
+   * @defaultValue 2 */
+  trackSize?: number | string
+  /** Diameter of the thumb. Numbers use pixels; strings are CSS lengths. Keep
+   * it at least as large as `trackSize`.
+   * @defaultValue 18 */
+  thumbSize?: number | string
+  /** Fill the thumb with its resolved border colour. This follows `toneThumb`
+   * and interactive states.
+   * @defaultValue false */
+  thumbFill?: boolean
   /** Fully round the rail and thumb. Pass a number (px) or CSS length string
    * for a shared custom radius. */
   round?: boolean | number | string
@@ -104,7 +120,11 @@ export const Slider = ({
   name,
   disabled,
   tone,
+  toneThumb,
   size,
+  trackSize,
+  thumbSize,
+  thumbFill,
   round,
   valueDisplay = 'end',
   valuePrefix,
@@ -121,7 +141,21 @@ export const Slider = ({
   tabIndex,
   ...rest
 }: SliderProps) => {
-  const computedStyle = roundStyle(round, '--slider-round', toneStyle(tone, '--slider-tone-source', style))
+  const trackSizeValue = cssLength(trackSize)
+  const thumbSizeValue = cssLength(thumbSize)
+  const computedStyle = lengthStyle(
+    thumbSize,
+    '--anta-slider-thumb-size',
+    lengthStyle(
+      trackSize,
+      '--anta-slider-track-size',
+      roundStyle(
+        round,
+        '--slider-round',
+        toneStyle(toneThumb, '--slider-thumb-tone-source', toneStyle(tone, '--slider-tone-source', style)),
+      ),
+    ),
+  )
   const { min, max } = bounds(minProp, maxProp)
   const step = number(stepProp, 1) > 0 ? number(stepProp, 1) : 1
   const explicitAriaLabel = rest['aria-label']
@@ -133,7 +167,7 @@ export const Slider = ({
     if (marker.value <= min) return '0%'
     if (marker.value >= max) return '100%'
     const ratio = (marker.value - min) / (max - min)
-    return `calc((100% - var(--slider-thumb-size)) * ${ratio} + var(--slider-thumb-size) / 2)`
+    return `calc((100% - var(--anta-slider-thumb-size)) * ${ratio} + var(--anta-slider-thumb-size) / 2)`
   }
   const markerAlignment = (marker: SliderMarker) =>
     marker.value <= min ? 'start' : marker.value >= max ? 'end' : undefined
@@ -168,7 +202,11 @@ export const Slider = ({
       name={name}
       disabled={disabled ? '' : undefined}
       tone={tone && tone !== 'neutral' ? tone : undefined}
+      tone-thumb={toneThumb && toneThumb !== 'neutral' ? toneThumb : undefined}
       size={size && size !== 'medium' ? size : undefined}
+      track-size={trackSizeValue}
+      thumb-size={thumbSizeValue}
+      thumb-fill={thumbFill ? '' : undefined}
       round={roundAttr(round)}
       track-click={trackClick === 'jump' ? 'jump' : undefined}
       value-display={resolvedValueDisplay === 'end' ? undefined : resolvedValueDisplay}

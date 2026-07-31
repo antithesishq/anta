@@ -5,6 +5,11 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- `Slider`, a single-value form control with relative rail dragging, configurable
+  value placement, text markers, and CSS parts for thumb and track styling.
+
 ### Breaking
 
 - Anta now requires Chrome or Edge 125, Safari 17.4, or Firefox 126 for

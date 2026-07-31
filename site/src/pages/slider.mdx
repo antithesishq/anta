@@ -1,0 +1,147 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Slider
+description: A single-value range control with relative rail dragging.
+---
+import Preview from '../components/Preview.astro'
+import Disclosure from '../components/Disclosure.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Playground from '../components/Playground'
+import sliderDemoCode from './slider.demo.ts'
+import { Slider } from '@antadesign/anta'
+
+# Slider
+
+**`Slider`** selects one numeric value from a range. Its label sits above the rail, and the value appears at the label row’s right edge by default. It works controlled with `value` and `onValueChange`, or uncontrolled with `defaultValue`.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="Slider"
+  layout="side"
+  panelHeight={390}
+  initialCode={sliderDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; align-items: center; justify-content: center; }`}
+/>
+
+</Disclosure>
+
+## Relative dragging
+
+Pressing the rail starts a grab from its current value. Moving right increases the value; moving left decreases it. The thumb does not jump to the press position. This is the default `trackClick="drag-only"` behaviour.
+
+Set `trackClick="jump"` for the conventional range-input interaction, where pressing the rail first moves the thumb to that position.
+
+<Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
+  <Slider label="Relative drag" defaultValue={35} hint="Press anywhere, then drag." />
+  <Slider label="Jump on press" defaultValue={35} trackClick="jump" hint="Pressing the rail changes the value immediately." />
+</Preview>
+
+```tsx folded
+<Slider label="Relative drag" defaultValue={35} />
+<Slider label="Jump on press" defaultValue={35} trackClick="jump" />
+```
+
+Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum and maximum. <kbd>PageUp</kbd> and <kbd>PageDown</kbd> move by one tenth of the range.
+
+## Value placement
+
+`valueDisplay="end"` is the default. Use `inline` for `Label: value`, `thumb` to keep a value above the thumb, or `none` to omit it. `valuePrefix` and `valueSuffix` add text to every live value display.
+
+<Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
+  <Slider label="End" defaultValue={48} valueSuffix="%" />
+  <Slider label="Inline" defaultValue={48} valueDisplay="inline" valueSuffix="%" />
+  <Slider label="Thumb" defaultValue={48} valueDisplay="thumb" valueSuffix="%" />
+</Preview>
+
+```tsx folded
+<Slider label="Volume" defaultValue={48} valueSuffix="%" />
+<Slider label="Volume" defaultValue={48} valueDisplay="inline" valueSuffix="%" />
+<Slider label="Volume" defaultValue={48} valueDisplay="thumb" valueSuffix="%" />
+```
+
+## Markers and hint
+
+`markers` places text below the rail and before `hint`. Markers do not add dots or ticks to the rail.
+
+<Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
+  <Slider
+    label="Playback speed"
+    min={0.5}
+    max={2}
+    step={0.25}
+    defaultValue={1}
+    valueSuffix="×"
+    markers={[
+      { value: 0.5, label: '0.5×' },
+      { value: 1, label: 'Normal' },
+      { value: 2, label: '2×' },
+    ]}
+    hint="Changes playback without changing pitch."
+  />
+</Preview>
+
+```tsx folded
+<Slider
+  label="Playback speed"
+  min={0.5}
+  max={2}
+  step={0.25}
+  defaultValue={1}
+  markers={[
+    { value: 0.5, label: '0.5×' },
+    { value: 1, label: 'Normal' },
+    { value: 2, label: '2×' },
+  ]}
+/>
+```
+
+<Disclosure title="Slider props" open>
+
+<PropsTable component="Slider" />
+
+</Disclosure>
+
+<Disclosure title="Vanilla web component">
+
+Use `<a-slider>` when you are not using React or Preact. Add its `role` and accessible name yourself, then register it from `@antadesign/anta/elements`.
+
+```html
+<a-slider
+  role="slider"
+  tabindex="0"
+  aria-label="Volume"
+  name="volume"
+  defaultvalue="50"
+></a-slider>
+```
+
+</Disclosure>
+
+## Styling
+
+`Slider` renders an `<a-slider>` with a circular thumb. Target its shadow parts to change the thumb or rail without taking on the interaction code. The element exposes `header`, `label`, `value`, `control`, `track`, `fill`, `thumb`, `thumb-value`, `markers`, `extras`, and `hint`.
+
+<Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
+  <Slider className="warm-slider" label="Warm color" defaultValue={62} valueDisplay="thumb" valueSuffix="°" />
+  <style is:inline>{`
+    .warm-slider::part(fill) { background: #e5484d; }
+    .warm-slider::part(thumb) {
+      background: #fff7ed;
+      border-color: #e5484d;
+      border-radius: 4px;
+    }
+  `}</style>
+</Preview>
+
+```css folded
+/* The class is only for the demo. Use your own selector. */
+.warm-slider::part(fill) { background: #e5484d; }
+.warm-slider::part(thumb) {
+  background: #fff7ed;
+  border-color: #e5484d;
+  border-radius: 4px;
+}
+```

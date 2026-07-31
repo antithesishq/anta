@@ -595,6 +595,43 @@ export interface AInputAttributes extends BaseAttributes {
   'aria-label'?: string
 }
 
+/** Attributes for the `<a-slider>` custom element. For the typed JSX wrapper,
+ * display formatting, and marker layout use `Slider` from `@antadesign/anta`. */
+export interface ASliderAttributes extends BaseAttributes {
+  /** Controlled numeric value. */
+  value?: number | string
+  /** Initial uncontrolled value and form-reset baseline. */
+  defaultvalue?: number | string
+  /** Lowest permitted value. Defaults to 0. */
+  min?: number | string
+  /** Highest permitted value. Defaults to 100. */
+  max?: number | string
+  /** Smallest permitted increment. Defaults to 1. */
+  step?: number | string
+  /** Form field name — submitted through ElementInternals. */
+  name?: string
+  /** Disables pointer and keyboard interaction. Presence-based. */
+  disabled?: boolean | ''
+  /** `jump` moves to a pressed rail position. Omit for relative dragging. */
+  'track-click'?: 'jump'
+  /** `inline`, `thumb`, or `none`; omit for a value at the label row's end. */
+  'value-display'?: 'inline' | 'thumb' | 'none'
+  /** Text inserted before the live numeric value. */
+  'value-prefix'?: string
+  /** Text inserted after the live numeric value. */
+  'value-suffix'?: string
+  /** Fires on each value change. */
+  oninput?: (e: any) => void
+  /** Fires when a drag ends or a keyboard value change completes. */
+  onchange?: (e: any) => void
+  role?: string
+  'aria-label'?: string
+  'aria-valuenow'?: number | string
+  'aria-valuemin'?: number | string
+  'aria-valuemax'?: number | string
+  'aria-valuetext'?: string
+}
+
 /** Attributes for the `<a-input-time>` custom element — a segmented wall-clock
  *  time field (hour / minute / AM-PM native text-input sections in one box). */
 export interface AInputTimeAttributes extends BaseAttributes {

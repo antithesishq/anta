@@ -6,7 +6,10 @@ description: A single-value range control with relative rail dragging.
 import Preview from '../components/Preview.astro'
 import Disclosure from '../components/Disclosure.astro'
 import PropsTable from '../components/PropsTable.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
 import Playground from '../components/Playground'
+import NativeRangeDemo from '../components/NativeRangeDemo'
 import sliderDemoCode from './slider.demo.ts'
 import { Slider } from '@antadesign/anta'
 
@@ -17,7 +20,7 @@ import { Slider } from '@antadesign/anta'
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
+  client:load
   component="Slider"
   layout="side"
   panelHeight={390}
@@ -30,13 +33,21 @@ import { Slider } from '@antadesign/anta'
 
 ## Relative dragging
 
+<Columns reverse>
+<Col>
+
 Pressing the rail starts a grab from its current value. Moving right increases the value; moving left decreases it. The thumb does not jump to the press position. This is the default `trackClick="drag-only"` behaviour.
 
 Set `trackClick="jump"` for the conventional range-input interaction, where pressing the rail first moves the thumb to that position.
 
+Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum and maximum. <kbd>PageUp</kbd> and <kbd>PageDown</kbd> move by one tenth of the range.
+
+</Col>
+<Col>
+
 <Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
-  <Slider label="Relative drag" defaultValue={35} hint="Press anywhere, then drag." />
-  <Slider label="Jump on press" defaultValue={35} trackClick="jump" hint="Pressing the rail changes the value immediately." />
+  <Slider label="Relative drag" defaultValue={35} />
+  <Slider label="Jump on press" defaultValue={35} trackClick="jump" />
 </Preview>
 
 ```tsx folded
@@ -44,11 +55,18 @@ Set `trackClick="jump"` for the conventional range-input interaction, where pres
 <Slider label="Jump on press" defaultValue={35} trackClick="jump" />
 ```
 
-Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum and maximum. <kbd>PageUp</kbd> and <kbd>PageDown</kbd> move by one tenth of the range.
+</Col>
+</Columns>
 
 ## Value placement
 
+<Columns reverse>
+<Col>
+
 `valueDisplay="end"` is the default. Use `inline` for `Label: value`, `thumb` to keep a value above the thumb, or `none` to omit it. `valuePrefix` and `valueSuffix` add text to every live value display.
+
+</Col>
+<Col>
 
 <Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
   <Slider label="End" defaultValue={48} valueSuffix="%" />
@@ -62,9 +80,43 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
 <Slider label="Volume" defaultValue={48} valueDisplay="thumb" valueSuffix="%" />
 ```
 
-## Markers and hint
+</Col>
+</Columns>
 
-`markers` places text below the rail and before `hint`. Markers do not add dots or ticks to the rail.
+## Size, tone, and radius
+
+<Columns reverse>
+<Col>
+
+`size` follows the input height scale: 24px, 28px, and 32px. `tone` colours the filled rail and thumb stroke while the unfilled rail stays neutral. `round` shapes both the rail and thumb. Pass `true` for fully round corners or a number or CSS length for a shared custom radius.
+
+</Col>
+<Col>
+
+<Preview background="var(--bg-2)" gap="20px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
+  <Slider size="small" tone="info" label="Small" defaultValue={32} />
+  <Slider tone="brand" label="Medium" defaultValue={52} />
+  <Slider size="large" tone="success" round={4} label="Large, 4px corners" defaultValue={72} />
+</Preview>
+
+```tsx folded
+<Slider size="small" tone="info" label="Small" defaultValue={32} />
+<Slider tone="brand" label="Medium" defaultValue={52} />
+<Slider size="large" tone="success" round={4} label="Large, 4px corners" defaultValue={72} />
+```
+
+</Col>
+</Columns>
+
+## Markers
+
+<Columns reverse>
+<Col>
+
+`markers` places compact, muted labels below the rail. Values at or below `min` align left; values at or above `max` align right. Markers do not add dots or ticks to the rail.
+
+</Col>
+<Col>
 
 <Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
   <Slider
@@ -79,7 +131,6 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
       { value: 1, label: 'Normal' },
       { value: 2, label: '2×' },
     ]}
-    hint="Changes playback without changing pitch."
   />
 </Preview>
 
@@ -98,6 +149,9 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
 />
 ```
 
+</Col>
+</Columns>
+
 <Disclosure title="Slider props" open>
 
 <PropsTable component="Slider" />
@@ -108,6 +162,19 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
 
 Use `<a-slider>` when you are not using React or Preact. Add its `role` and accessible name yourself, then register it from `@antadesign/anta/elements`.
 
+<Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
+  <a-slider
+    role="slider"
+    tabindex="0"
+    aria-label="Volume"
+    name="volume"
+    defaultvalue="50"
+    value-suffix="%"
+  >
+    <span slot="label">Volume</span>
+  </a-slider>
+</Preview>
+
 ```html
 <a-slider
   role="slider"
@@ -115,14 +182,106 @@ Use `<a-slider>` when you are not using React or Preact. Add its `role` and acce
   aria-label="Volume"
   name="volume"
   defaultvalue="50"
-></a-slider>
+  value-suffix="%"
+>
+  <span slot="label">Volume</span>
+</a-slider>
 ```
 
 </Disclosure>
 
+## Native HTML range input
+
+<Columns reverse>
+<Col>
+
+A native range input keeps the browser’s position-based press behaviour. This example resets the WebKit and Firefox track and thumb pseudo-elements, then calculates the filled endpoint from the current fraction. The calculation uses the input’s own width, so the thumb and fill stay aligned at any available width.
+
+</Col>
+<Col>
+
+<Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
+  <NativeRangeDemo client:load />
+</Preview>
+
+```tsx folded
+const [value, setValue] = useState(48)
+const fillEnd = `calc((100% - 18px) * ${value / 100} + 9px)`
+
+<input
+  className="native-range"
+  type="range"
+  min="0"
+  max="100"
+  value={value}
+  style={{ '--native-range-fill-end': fillEnd }}
+  onInput={(event) => setValue(Number(event.currentTarget.value))}
+/>
+```
+
+```css folded
+.native-range {
+  --fill: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
+  --thumb-border: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: linear-gradient(
+    to right,
+    transparent 1px,
+    var(--fill) 1px var(--native-range-fill-end),
+    var(--border-4) var(--native-range-fill-end) calc(100% - 1px),
+    transparent calc(100% - 1px)
+  ) center / 100% 2px no-repeat;
+}
+
+.native-range::-moz-range-track {
+  height: 2px;
+  border: 0;
+  background: transparent;
+}
+
+.native-range::-webkit-slider-runnable-track {
+  height: 2px;
+  border: 0;
+  background: transparent;
+}
+
+.native-range::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--thumb-border);
+  border-radius: 50%;
+  background: var(--bg-1);
+}
+
+.native-range::-webkit-slider-thumb {
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--thumb-border);
+  border-radius: 50%;
+  appearance: none;
+  margin-top: -8px;
+  background: var(--bg-1);
+}
+```
+
+</Col>
+</Columns>
+
 ## Styling
 
-`Slider` renders an `<a-slider>` with a circular thumb. Target its shadow parts to change the thumb or rail without taking on the interaction code. The element exposes `header`, `label`, `value`, `control`, `track`, `fill`, `thumb`, `thumb-value`, `markers`, `extras`, and `hint`.
+<Columns reverse>
+<Col>
+
+`Slider` renders an `<a-slider>` with a circular thumb. `tone` accepts named or custom CSS colours; custom values use the public `--slider-tone-source` knob. Use `round` to shape the rail and thumb together. Target its shadow parts to change their presentation without taking on the interaction code. The element exposes `header`, `label`, `value`, `control`, `track`, `fill`, `thumb`, `thumb-value`, `markers`, and `extras`.
+
+</Col>
+<Col>
 
 <Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
   <Slider className="warm-slider" label="Warm color" defaultValue={62} valueDisplay="thumb" valueSuffix="°" />
@@ -145,3 +304,6 @@ Use `<a-slider>` when you are not using React or Preact. Add its `role` and acce
   border-radius: 4px;
 }
 ```
+
+</Col>
+</Columns>

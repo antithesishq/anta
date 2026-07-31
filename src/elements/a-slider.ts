@@ -27,16 +27,22 @@ export class ASliderElement extends HTMLElementBase {
 
   #internals?: ElementInternals
   #control: HTMLDivElement
+  #railArea: HTMLDivElement
   #fill: HTMLDivElement
   #thumb: HTMLDivElement
   #header: HTMLDivElement
   #label: HTMLSlotElement
   #inlineValue: HTMLSpanElement
+  #inlineValuePrefix: HTMLSpanElement
+  #inlineValueSuffix: HTMLSpanElement
   #endValue: HTMLSpanElement
+  #endValuePrefix: HTMLSpanElement
+  #endValueSuffix: HTMLSpanElement
   #thumbValue: HTMLSpanElement
+  #thumbValuePrefix: HTMLSpanElement
+  #thumbValueSuffix: HTMLSpanElement
   #markers: HTMLSlotElement
   #extras: HTMLSlotElement
-  #hint: HTMLSlotElement
   #value = 0
   #seeded = false
   #dirty = false
@@ -75,7 +81,7 @@ export class ASliderElement extends HTMLElementBase {
       .header {
         display: flex;
         align-items: baseline;
-        gap: 12px;
+        gap: 1px;
         min-width: 0;
       }
       slot[name="label"] {
@@ -96,12 +102,15 @@ export class ASliderElement extends HTMLElementBase {
         font-variant-numeric: tabular-nums;
         line-height: var(--slider-value-line-height);
       }
+      .value-affix { color: var(--slider-value-affix); }
       .inline-separator,
       .inline-value { display: none; }
+      .inline-value { margin-inline-start: 0.5ch; }
       .end-value {
         display: block;
         flex: 0 0 auto;
         margin-inline-start: auto;
+        padding-inline-start: 1ch;
       }
       :host([value-display="inline"]) .inline-separator,
       :host([value-display="inline"]) .inline-value { display: block; }
@@ -110,27 +119,41 @@ export class ASliderElement extends HTMLElementBase {
       :host([value-display="none"]) .end-value { display: none; }
       .control {
         position: relative;
-        block-size: var(--slider-thumb-size);
-        margin-inline: calc(var(--slider-thumb-size) / 2);
+        block-size: var(--slider-control-size);
+        border-radius: var(--slider-control-radius);
         cursor: grab;
         touch-action: none;
         user-select: none;
       }
+      :host([track-click="jump"]) .control { cursor: pointer; }
       .control[data-dragging] { cursor: grabbing; }
+      .control[data-dragging] .thumb { background: var(--slider-thumb-active); }
+      :host(:focus-visible) .control:not([data-pointer-focus]) {
+        outline: var(--slider-focus-width) solid var(--slider-focus);
+        outline-offset: 0;
+      }
+      .rail-area {
+        position: absolute;
+        inset-block-start: 50%;
+        inset-inline: calc(var(--slider-thumb-size) / 2);
+        block-size: var(--slider-track-size);
+        transform: translateY(-50%);
+      }
       .rail,
       .fill {
         position: absolute;
-        inset-inline-start: 0;
-        inset-inline-end: 0;
-        inset-block-start: 50%;
-        block-size: var(--slider-track-size);
-        border-radius: 999px;
-        transform: translateY(-50%);
+        inset: 0;
+        border-radius: var(--slider-track-radius);
+        transition: background-color 75ms ease-out;
       }
-      .rail { background: var(--slider-track); }
+      .rail {
+        inset-inline: calc(var(--slider-track-inset) - var(--slider-thumb-size) / 2);
+        background: var(--slider-track);
+      }
       .fill {
+        inset-inline-start: calc(var(--slider-track-inset) - var(--slider-thumb-size) / 2);
         inset-inline-end: auto;
-        inline-size: var(--_percent, 0%);
+        inline-size: calc(var(--_percent, 0%) + var(--slider-thumb-size) / 2 - var(--slider-track-inset));
         background: var(--slider-fill);
       }
       .thumb {
@@ -141,19 +164,16 @@ export class ASliderElement extends HTMLElementBase {
         inline-size: var(--slider-thumb-size);
         block-size: var(--slider-thumb-size);
         border: var(--slider-thumb-border-width) solid var(--slider-thumb-border);
-        border-radius: 50%;
+        border-radius: var(--slider-thumb-radius);
         background: var(--slider-thumb);
-        box-shadow: var(--slider-thumb-shadow);
+        transition: background-color 75ms ease-out, border-color 75ms ease-out;
         transform: translate(-50%, -50%);
-      }
-      :host(:focus-visible) .thumb {
-        box-shadow: 0 0 0 var(--slider-focus-width) var(--slider-focus), var(--slider-thumb-shadow);
       }
       .thumb-value {
         display: none;
         position: absolute;
-        inset-inline-start: 50%;
-        inset-block-end: calc(100% + var(--slider-thumb-value-gap));
+        inset-inline-start: var(--_percent, 0%);
+        inset-block-start: 50%;
         min-inline-size: max-content;
         color: var(--slider-thumb-value);
         font-family: var(--sans-serif);
@@ -161,35 +181,50 @@ export class ASliderElement extends HTMLElementBase {
         font-size: var(--slider-thumb-value-size);
         font-variant-numeric: tabular-nums;
         line-height: var(--slider-thumb-value-line-height);
+        padding-inline: 6px;
+        background: var(--bg-2);
+        border: 1px solid var(--border-3);
+        border-radius: 4px;
         text-align: center;
-        transform: translateX(-50%);
+        transform: translate(-50%, calc(
+          -50% - var(--slider-control-size) / 2 - var(--slider-gap) - var(--slider-value-line-height) / 2
+        ));
       }
       :host([value-display="thumb"]) .thumb-value { display: block; }
       slot[name="markers"] {
         display: block;
-        min-block-size: var(--slider-marker-line-height);
-        margin-inline: calc(var(--slider-thumb-size) / 2);
-      }
-      slot[name="markers"]::slotted(*) {
-        display: block;
         position: relative;
         min-block-size: var(--slider-marker-line-height);
       }
-      slot:not([name]) { display: block; }
-      slot[name="hint"] {
-        display: block;
-        color: var(--slider-hint);
+      slot[name="markers"]::slotted(*) {
+        position: absolute;
+        inset-inline-start: var(--slider-marker-position);
+        max-inline-size: min(12rem, 50vw);
+        color: var(--slider-marker);
         font-family: var(--sans-serif);
-        font-size: var(--slider-hint-size);
-        line-height: var(--slider-hint-line-height);
+        font-feature-settings: 'ss02', 'ss05', 'tnum';
+        font-size: var(--slider-marker-size);
+        font-variant-numeric: tabular-nums;
+        line-height: var(--slider-marker-line-height);
+        text-align: center;
+        transform: translateX(-50%);
+        white-space: nowrap;
       }
+      slot[name="markers"]::slotted([data-slider-marker-start]) { text-align: start; transform: translateX(0); }
+      slot[name="markers"]::slotted([data-slider-marker-end]) { text-align: end; transform: translateX(-100%); }
+      slot:not([name]) { display: block; }
       :host([disabled]) .control,
       :host(:disabled) .control { cursor: not-allowed; }
       @media (forced-colors: active) {
         .rail { background: Canvas; border: 1px solid CanvasText; }
         .fill { background: Highlight; }
         .thumb { background: Canvas; border-color: CanvasText; }
-        :host(:focus-visible) .thumb { box-shadow: 0 0 0 2px Highlight; }
+        :host(:focus-visible) .control { outline: 2px solid Highlight; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .rail,
+        .fill,
+        .thumb { transition: none; }
       }
     `
 
@@ -206,14 +241,26 @@ export class ASliderElement extends HTMLElementBase {
     this.#inlineValue = document.createElement('span')
     this.#inlineValue.className = 'inline-value'
     this.#inlineValue.part.add('value')
+    this.#inlineValuePrefix = document.createElement('span')
+    this.#inlineValuePrefix.className = 'value-affix'
+    this.#inlineValueSuffix = document.createElement('span')
+    this.#inlineValueSuffix.className = 'value-affix'
+    this.#inlineValue.append(this.#inlineValuePrefix, this.#inlineValueSuffix)
     this.#endValue = document.createElement('span')
     this.#endValue.className = 'end-value'
     this.#endValue.part.add('value')
+    this.#endValuePrefix = document.createElement('span')
+    this.#endValuePrefix.className = 'value-affix'
+    this.#endValueSuffix = document.createElement('span')
+    this.#endValueSuffix.className = 'value-affix'
+    this.#endValue.append(this.#endValuePrefix, this.#endValueSuffix)
     this.#header.append(this.#label, separator, this.#inlineValue, this.#endValue)
 
     this.#control = document.createElement('div')
     this.#control.className = 'control'
     this.#control.part.add('control')
+    this.#railArea = document.createElement('div')
+    this.#railArea.className = 'rail-area'
     const rail = document.createElement('div')
     rail.className = 'rail'
     rail.part.add('track')
@@ -226,19 +273,21 @@ export class ASliderElement extends HTMLElementBase {
     this.#thumbValue = document.createElement('span')
     this.#thumbValue.className = 'thumb-value'
     this.#thumbValue.part.add('thumb-value')
-    this.#thumb.append(this.#thumbValue)
-    this.#control.append(rail, this.#fill, this.#thumb)
+    this.#thumbValuePrefix = document.createElement('span')
+    this.#thumbValuePrefix.className = 'value-affix'
+    this.#thumbValueSuffix = document.createElement('span')
+    this.#thumbValueSuffix.className = 'value-affix'
+    this.#thumbValue.append(this.#thumbValuePrefix, this.#thumbValueSuffix)
+    this.#railArea.append(rail, this.#fill, this.#thumb, this.#thumbValue)
+    this.#control.append(this.#railArea)
 
     this.#markers = document.createElement('slot')
     this.#markers.name = 'markers'
     this.#markers.part.add('markers')
     this.#extras = document.createElement('slot')
     this.#extras.part.add('extras')
-    this.#hint = document.createElement('slot')
-    this.#hint.name = 'hint'
-    this.#hint.part.add('hint')
 
-    for (const slot of [this.#label, this.#markers, this.#extras, this.#hint]) {
+    for (const slot of [this.#label, this.#markers, this.#extras]) {
       slot.addEventListener('slotchange', () => this.#syncSlotVisibility())
     }
     this.#control.addEventListener('pointerdown', (event) => this.#beginDrag(event))
@@ -246,8 +295,9 @@ export class ASliderElement extends HTMLElementBase {
     this.#control.addEventListener('pointerup', (event) => this.#finishDrag(event))
     this.#control.addEventListener('pointercancel', (event) => this.#finishDrag(event))
     this.addEventListener('keydown', (event) => this.#handleKeydown(event))
+    this.addEventListener('blur', () => delete this.#control.dataset.pointerFocus)
 
-    shadow.append(style, this.#header, this.#control, this.#markers, this.#extras, this.#hint)
+    shadow.append(style, this.#header, this.#control, this.#markers, this.#extras)
   }
 
   connectedCallback() {
@@ -336,12 +386,22 @@ export class ASliderElement extends HTMLElementBase {
 
   #paint() {
     const percent = `${this.#percent()}%`
-    this.#fill.style.setProperty('--_percent', percent)
-    this.#thumb.style.setProperty('--_percent', percent)
+    this.#railArea.style.setProperty('--_percent', percent)
     const value = this.#displayValue()
-    this.#inlineValue.textContent = value
-    this.#endValue.textContent = value
-    this.#thumbValue.textContent = value
+    const displayedValue = String(this.#value)
+    const prefix = this.getAttribute('value-prefix') ?? ''
+    const suffix = this.getAttribute('value-suffix') ?? ''
+    for (const [element, prefixElement, suffixElement] of [
+      [this.#inlineValue, this.#inlineValuePrefix, this.#inlineValueSuffix],
+      [this.#endValue, this.#endValuePrefix, this.#endValueSuffix],
+      [this.#thumbValue, this.#thumbValuePrefix, this.#thumbValueSuffix],
+    ]) {
+      element.textContent = displayedValue
+      prefixElement.textContent = prefix
+      suffixElement.textContent = suffix
+      element.prepend(prefixElement)
+      element.append(suffixElement)
+    }
 
     const internals = this.#internals
     if (!internals) return
@@ -361,7 +421,6 @@ export class ASliderElement extends HTMLElementBase {
     this.#header.hidden = !assigned(this.#label) && this.getAttribute('value-display') === 'none'
     this.#markers.hidden = !assigned(this.#markers)
     this.#extras.hidden = !assigned(this.#extras)
-    this.#hint.hidden = !assigned(this.#hint)
   }
 
   #setValue(value: number) {
@@ -380,19 +439,20 @@ export class ASliderElement extends HTMLElementBase {
   }
 
   #valueAt(clientX: number) {
-    const rect = this.#control.getBoundingClientRect()
+    const rect = this.#railArea.getBoundingClientRect()
     if (rect.width <= 0) return this.#value
     return this.#min + ((clientX - rect.left) / rect.width) * (this.#max - this.#min)
   }
 
   #beginDrag(event: PointerEvent) {
     if (this.#isDisabled || event.button !== 0) return
-    const rect = this.#control.getBoundingClientRect()
+    const rect = this.#railArea.getBoundingClientRect()
     if (rect.width <= 0) return
 
     this.#drag = { pointerId: event.pointerId, startX: event.clientX, startValue: this.#value }
     this.#control.setPointerCapture(event.pointerId)
     this.#control.dataset.dragging = ''
+    this.#control.dataset.pointerFocus = ''
     this.focus({ preventScroll: true })
 
     if (this.getAttribute('track-click') === 'jump') this.#setValue(this.#valueAt(event.clientX))
@@ -405,7 +465,7 @@ export class ASliderElement extends HTMLElementBase {
 
     const next = this.getAttribute('track-click') === 'jump'
       ? this.#valueAt(event.clientX)
-      : drag.startValue + ((event.clientX - drag.startX) / this.#control.getBoundingClientRect().width) * (this.#max - this.#min)
+      : drag.startValue + ((event.clientX - drag.startX) / this.#railArea.getBoundingClientRect().width) * (this.#max - this.#min)
     this.#setValue(next)
     event.preventDefault()
   }
@@ -421,6 +481,7 @@ export class ASliderElement extends HTMLElementBase {
 
   #handleKeydown(event: KeyboardEvent) {
     if (event.target !== this || this.#isDisabled) return
+    delete this.#control.dataset.pointerFocus
 
     const page = Math.max(this.#step, (this.#max - this.#min) / 10)
     let next: number | undefined

@@ -612,6 +612,12 @@ export interface ASliderAttributes extends BaseAttributes {
   name?: string
   /** Disables pointer and keyboard interaction. Presence-based. */
   disabled?: boolean | ''
+  /** Colour of the filled rail and thumb stroke. Named tones or a literal CSS colour. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Size variant. small=24px, medium=28px, large=32px tall. */
+  size?: 'small' | 'medium' | 'large'
+  /** Fully round the rail and thumb, or set both to a custom radius. */
+  round?: boolean | number | string
   /** `jump` moves to a pressed rail position. Omit for relative dragging. */
   'track-click'?: 'jump'
   /** `inline`, `thumb`, or `none`; omit for a value at the label row's end. */

@@ -11,7 +11,6 @@ export default `import { Slider } from '@antadesign/anta'
     { value: 50, label: 'Comfortable' },
     { value: 100, label: 'Maximum' },
   ]}
-  hint="Drag from any point on the rail."
   onValueChange={(_, { value }) => console.log('volume', value)}
 />
 `

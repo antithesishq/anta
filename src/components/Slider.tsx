@@ -1,4 +1,5 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
+import { toneStyle, roundStyle, roundAttr } from '../anta_helpers'
 
 /** A text marker displayed below the slider rail. Markers are labels only; they
  * do not add dots or ticks to the rail. */
@@ -20,8 +21,6 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   /** Visible field label, shown above the rail. A string supplies the slider's
    * accessible name; give a rich label an explicit `aria-label`. */
   label?: React.ReactNode
-  /** Helper text shown below markers. */
-  hint?: React.ReactNode
   /** Controlled value. Update it from `onValueChange`. */
   value?: number
   /** Initial uncontrolled value.
@@ -40,6 +39,16 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   name?: string
   /** Disables pointer and keyboard interaction. */
   disabled?: boolean
+  /** Colour of the filled rail and thumb stroke. Pass a named tone or a literal
+   * CSS colour for a one-off custom tone. The unfilled rail stays neutral.
+   * @defaultValue 'neutral' */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Size variant. small=24px, medium=28px, large=32px tall.
+   * @defaultValue 'medium' */
+  size?: 'small' | 'medium' | 'large'
+  /** Fully round the rail and thumb. Pass a number (px) or CSS length string
+   * for a shared custom radius. */
+  round?: boolean | number | string
   /** Where the live value appears. `end` puts it at the right edge of the label
    * row. `inline` renders `Label: value`. `thumb` keeps it above the thumb.
    * @defaultValue 'end' */
@@ -48,7 +57,8 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   valuePrefix?: string
   /** Text inserted after the live numeric value, such as `%` or `°C`. */
   valueSuffix?: string
-  /** Text labels positioned below the rail, before `hint`. */
+  /** Compact text labels positioned below the rail. They do not add dots or
+   * ticks to the rail. */
   markers?: SliderMarker[]
   /** Track press behaviour. `drag-only` starts a relative grab from the current
    * value; `jump` first moves to the press position.
@@ -61,6 +71,7 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
 }
 
 const number = (value: number | undefined, fallback: number) => Number.isFinite(value) ? value! : fallback
+const isStringish = (node: React.ReactNode) => typeof node === 'string' || typeof node === 'number'
 
 const bounds = (min: number | undefined, max: number | undefined) => {
   const low = number(min, 0)
@@ -85,7 +96,6 @@ const attrsOf = (event: any): SliderChangeAttrs => {
  */
 export const Slider = ({
   label,
-  hint,
   value,
   defaultValue,
   min: minProp,
@@ -93,6 +103,9 @@ export const Slider = ({
   step: stepProp,
   name,
   disabled,
+  tone,
+  size,
+  round,
   valueDisplay = 'end',
   valuePrefix,
   valueSuffix,
@@ -108,6 +121,7 @@ export const Slider = ({
   tabIndex,
   ...rest
 }: SliderProps) => {
+  const computedStyle = roundStyle(round, '--slider-round', toneStyle(tone, '--slider-tone-source', style))
   const { min, max } = bounds(minProp, maxProp)
   const step = number(stepProp, 1) > 0 ? number(stepProp, 1) : 1
   const explicitAriaLabel = rest['aria-label']
@@ -115,7 +129,14 @@ export const Slider = ({
     (typeof explicitAriaLabel === 'string' ? explicitAriaLabel : undefined) ??
     (typeof label === 'string' || typeof label === 'number' ? String(label) : undefined)
   const resolvedValueDisplay = valueDisplay === 'inline' && label == null ? 'end' : valueDisplay
-  const markerPosition = (marker: SliderMarker) => `${max === min ? 0 : ((Math.min(max, Math.max(min, marker.value)) - min) / (max - min)) * 100}%`
+  const markerPosition = (marker: SliderMarker) => {
+    if (marker.value <= min) return '0%'
+    if (marker.value >= max) return '100%'
+    const ratio = (marker.value - min) / (max - min)
+    return `calc((100% - var(--slider-thumb-size)) * ${ratio} + var(--slider-thumb-size) / 2)`
+  }
+  const markerAlignment = (marker: SliderMarker) =>
+    marker.value <= min ? 'start' : marker.value >= max ? 'end' : undefined
   const markerStyle = (marker: SliderMarker) => {
     const markerStyle: React.CSSProperties = {}
     Object.assign(markerStyle, { '--slider-marker-position': markerPosition(marker) })
@@ -146,6 +167,9 @@ export const Slider = ({
       step={step}
       name={name}
       disabled={disabled ? '' : undefined}
+      tone={tone && tone !== 'neutral' ? tone : undefined}
+      size={size && size !== 'medium' ? size : undefined}
+      round={roundAttr(round)}
       track-click={trackClick === 'jump' ? 'jump' : undefined}
       value-display={resolvedValueDisplay === 'end' ? undefined : resolvedValueDisplay}
       value-prefix={valuePrefix}
@@ -156,25 +180,30 @@ export const Slider = ({
       oninput={handleInput}
       onchange={handleChange}
       class={className}
-      style={style}
+      style={computedStyle}
       {...rest}
     >
-      {label != null && (
-        <span slot="label">
-          {label}
-        </span>
-      )}
-      {markers?.length ? (
-        <span slot="markers">
-          {markers.map((marker, index) => (
-            <span key={`${marker.value}-${index}`} style={markerStyle(marker)}>
-              {marker.label}
-            </span>
-          ))}
-        </span>
-      ) : undefined}
+      {label != null &&
+        (isStringish(label) ? (
+          <span slot="label">{label}</span>
+        ) : (
+          <span slot="label" style={{ display: 'contents' }}>{label}</span>
+        ))}
+      {markers?.map((marker, index) => {
+        const alignment = markerAlignment(marker)
+        return (
+          <span
+            key={`${marker.value}-${index}`}
+            slot="markers"
+            style={markerStyle(marker)}
+            data-slider-marker-start={alignment === 'start' ? '' : undefined}
+            data-slider-marker-end={alignment === 'end' ? '' : undefined}
+          >
+            {marker.label}
+          </span>
+        )
+      })}
       {children}
-      {hint != null && <span slot="hint">{hint}</span>}
     </a-slider>
   )
 }

@@ -1,7 +1,0 @@
-/* The chevron is the trailing <Icon> itself; rotate it when the menu is open. */
-.chevron {
-  transition: transform 150ms ease;
-}
-.chevron.open {
-  transform: rotate(180deg);
-}

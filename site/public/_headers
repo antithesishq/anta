@@ -1,0 +1,17 @@
+# Browser caching for Astro's prefetched documents. A short freshness window
+# lets a hover prefetch satisfy the subsequent navigation, while limiting the
+# time a visitor can see docs from just before a deployment.
+/*
+  Cache-Control: public, max-age=300, stale-while-revalidate=60
+
+# Vite fingerprints these files, so a changed asset has a new URL. Remove the
+# inherited document policy before setting their long-lived immutable policy.
+/_astro/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
+# The playground runtime uses a content hash in its filename for the same
+# reason. Other iframe files (and esbuild.wasm) retain the short default above.
+/iframe/iframe-app.*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable

@@ -23,11 +23,14 @@ export type ButtonCopyProps = ButtonProps & {
   form?: never
   iconTrailing?: never
 } & CopyTarget & {
-    /** Where the copy glyph sits relative to the label — or `'none'` to omit it,
-     *  in which case the feedback is a ghost of the label floating up (`toast`)
-     *  plus a brief success / failure tone flash.
+    /** Where the copy glyph sits relative to the label — or `'none'` to omit it.
+     *  Without a glyph, a successful copy shows a small confirmation label near
+     *  the pointer and leaves the button unchanged.
      *  @defaultValue 'leading' */
     iconPlacement?: 'leading' | 'trailing' | 'none'
+    /** Text in the successful no-icon confirmation.
+     *  @defaultValue Copied */
+    copiedLabel?: string
   }
 
 /**
@@ -41,7 +44,7 @@ export type ButtonCopyProps = ButtonProps & {
  * copy glyph to a check (success) or ✕ (failure) and retones to `success` /
  * `critical` for ~2s (a re-render, no element state — see `useCopyFeedback`).
  * `iconPlacement` puts that glyph leading (default), trailing, or `'none'`; with
- * `'none'` the `<a-copy>` floats a ghost of the label upward instead.
+ * `'none'`, `<a-copy>` shows its `Copied` confirmation instead.
  *
  * With a `label` it's a labeled button; without one it's an icon-only copy button
  * (named "Copy" for assistive tech). Everything else is a normal `Button` prop —
@@ -52,7 +55,7 @@ export type ButtonCopyProps = ButtonProps & {
  * <ButtonCopy copy="npm i @antadesign/anta" label="Copy install" />
  * <ButtonCopy copy="https://anta.design" />                     // icon-only
  * <ButtonCopy copy={code} label="Copy" iconPlacement="trailing" />
- * <ButtonCopy copy={code} label="Copy snippet" iconPlacement="none" />  // ghost feedback
+ * <ButtonCopy copy={code} label="Copy snippet" iconPlacement="none" copiedLabel="Copied" />
  * <ButtonCopy copyNode=".snippet" label="Copy block" priority="tertiary" />
  * <ButtonCopy copyUrl label="Copy link" />                      // copies location.href
  * ```
@@ -60,6 +63,7 @@ export type ButtonCopyProps = ButtonProps & {
 export const ButtonCopy = ({
   icon,
   iconPlacement = 'leading',
+  copiedLabel,
   tone,
   onCopied,
   onCopyRequest,
@@ -73,7 +77,7 @@ export const ButtonCopy = ({
   ...rest
 }: ButtonCopyProps) => {
   // Resting glyph: the copy icon by default, a consumer `icon` overrides it, and
-  // `'none'` drops it entirely (the ghost + tone flash are the feedback then).
+  // `'none'` drops it entirely (the confirmation label is the feedback then).
   const restingIcon: IconShape | undefined = iconPlacement === 'none' ? undefined : (icon ?? 'copy')
   const { shownIcon, shownTone, handleCopied } = useCopyFeedback(restingIcon, tone, onCopied)
 
@@ -93,15 +97,16 @@ export const ButtonCopy = ({
     copyWithUrl,
     onCopyRequest,
     onCopied: handleCopied,
-    // Ghost feedback only makes sense when there's no glyph to swap.
+    // The top-layer confirmation only appears when there is no glyph to swap.
     toast: iconPlacement === 'none',
+    copiedLabel,
   })
 
   return (
     <Button
       {...iconSlot}
       label={label}
-      tone={shownTone}
+      tone={iconPlacement === 'none' ? tone : shownTone}
       // Icon-only (no visible text) gets an accessible name; a consumer's own
       // `aria-label` wins.
       aria-label={ariaLabel ?? (hasText ? undefined : 'Copy')}

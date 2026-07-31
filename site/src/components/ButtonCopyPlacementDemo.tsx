@@ -2,9 +2,8 @@ import { ButtonCopy } from '@antadesign/anta'
 
 /**
  * Icon-placement demo for the Button docs — the copy glyph leading (default),
- * trailing, or dropped (`none`, feedback is the ghost + tone flash). Hydrated as
- * an island so the wrapper's check / tone swap runs on click (a static
- * `<Preview>` renders the markup but never hydrates it, so the swap wouldn't show).
+ * trailing, or omitted (`none`, with a confirmation label). Hydrated as an
+ * island so copy feedback runs on click.
  */
 export default function ButtonCopyPlacementDemo() {
   return (

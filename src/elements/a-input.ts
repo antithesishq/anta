@@ -20,12 +20,12 @@ import './a-input.css'
  * Shadow structure — every node carries a `part` so consumers can reach it
  * without piercing the boundary blindly:
  *
- *   <div class="label" part="label"><slot name="label">    ← display:none until filled
+ *   <slot class="label" part="label" name="label">         ← display:none until a label is slotted
  *   <div class="field" part="field">                        ← the bordered box; :focus-within ring
  *     <slot name="leading" part="leading">
  *     <input|textarea part="input">                         ← created in JS per multiline/rows
  *     <slot name="trailing" part="trailing">
- *   <div class="hint" part="hint"><slot name="hint">       ← message; wrapper slots a status <Icon> here too when [status]
+ *   <slot class="hint" part="hint" name="hint">           ← message; the JSX wrapper may slot a status <Icon> here too when [status]
  *
  * ## Value — controlled vs uncontrolled (mirrors a native input)
  *
@@ -149,8 +149,9 @@ const SUPPORTS_FIELD_SIZING =
 //    resets the variable-font axes to normal — without this the control renders at
 //    the font's default-instance width while the label / hint / pre-upgrade skeleton
 //    sit at wdth 100, so the value's character width jumps on upgrade.
-//  • slots — leading/trailing/clear are display:none until they hold content
-//    (toggled via slotchange), so an empty slot reserves no box or phantom gap.
+//  • slots — leading/trailing/clear are display:none until they hold content,
+//    so an empty slot reserves no box or phantom gap. The host stylesheet derives
+//    named-slot presence with `:has(> [slot])` and styles the matching part.
 //    Adornments are muted (--input-adornment) and inherit currentColor; a slotted
 //    <a-button> keeps its own colour. Slotted TEXT gets the field's type scale
 //    (--_fs/--_lh) plus a condensed wdth 88, so a key prefix lines up with the value
@@ -184,7 +185,6 @@ const SHADOW_STYLE = `
     line-height: var(--_lh);
     font-weight: 500;
   }
-  .label.has-label { display: block; }
 
   .field {
     --_bc: var(--input-border);
@@ -269,14 +269,6 @@ const SHADOW_STYLE = `
     line-height: var(--_lh);
     font-variation-settings: "wdth" 88, "slnt" 0, "ital" 0;
   }
-  .field.has-leading slot[name="leading"],
-  .field.has-trailing slot[name="trailing"] {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-  }
-  .field.has-trailing slot[name="trailing"] { gap: 2px; }
-
   :host([dim-actions]) slot[name="leading"],
   :host([dim-actions]) slot[name="trailing"],
   :host([dim-actions]) slot[name="clear"] {
@@ -296,17 +288,11 @@ const SHADOW_STYLE = `
   :host(:disabled) slot[name="trailing"] { opacity: 0.5; pointer-events: none; }
 
   slot[name="clear"] { display: none; flex-shrink: 0; }
-  .field.is-filled slot[name="clear"] { display: flex; align-items: center; }
+  :host(:state(filled)) slot[name="clear"] { display: flex; align-items: center; }
   :host(:disabled) slot[name="clear"],
   :host([readonly]) slot[name="clear"] { display: none; }
 
-  .field.has-leading slot[name="leading"] { margin-inline-start: 7px; }
-  .field.has-trailing slot[name="trailing"] { margin-inline-end: var(--input-trailing-inset, 7px); }
-  .field.has-leading input,
-  .field.has-leading textarea { padding-inline-start: 5px; }
-  :host([multiline]) .field.has-leading slot[name="leading"],
-  :host([multiline]) .field.has-trailing slot[name="trailing"],
-  :host([multiline]) .field.is-filled slot[name="clear"] {
+  :host([multiline]:state(filled)) slot[name="clear"] {
     align-self: flex-start;
     height: calc(var(--_lh) + var(--_pad-block) * 2);
   }
@@ -321,7 +307,6 @@ const SHADOW_STYLE = `
     font-size: calc(var(--_fs) - 1px);
     line-height: calc(var(--_lh) - 2px);
   }
-  .hint.has-hint { display: flex; }
 `
 
 type Control = HTMLInputElement | HTMLTextAreaElement
@@ -334,12 +319,9 @@ export class AInputElement extends HTMLElementBase {
 
   private internals?: ElementInternals
   private field: HTMLDivElement
-  private labelBox: HTMLDivElement
-  private hintBox: HTMLDivElement
   private labelSlot: HTMLSlotElement
   private hintSlot: HTMLSlotElement
   private leadingSlot: HTMLSlotElement
-  private trailingSlot: HTMLSlotElement
   private control?: Control
   // The intended value, captured even before the control exists (a framework
   // may set the `value` property before the element connects), so the initial
@@ -371,12 +353,10 @@ export class AInputElement extends HTMLElementBase {
     const style = document.createElement('style')
     style.textContent = SHADOW_STYLE
 
-    this.labelBox = document.createElement('div')
-    this.labelBox.className = 'label'
-    this.labelBox.setAttribute('part', 'label')
     this.labelSlot = document.createElement('slot')
+    this.labelSlot.className = 'label'
+    this.labelSlot.setAttribute('part', 'label')
     this.labelSlot.name = 'label'
-    this.labelBox.append(this.labelSlot)
     // Clicking the (light-DOM) label focuses the (shadow) control — the native
     // <label for> association can't cross the boundary, so we wire it here.
     this.labelSlot.addEventListener('click', () => this.control?.focus())
@@ -390,15 +370,9 @@ export class AInputElement extends HTMLElementBase {
     this.leadingSlot = document.createElement('slot')
     this.leadingSlot.name = 'leading'
     this.leadingSlot.setAttribute('part', 'leading')
-    this.trailingSlot = document.createElement('slot')
-    this.trailingSlot.name = 'trailing'
-    this.trailingSlot.setAttribute('part', 'trailing')
-    // CSS can't express "slot has assigned nodes", so toggle a class per edge
-    // slot — an empty slot then reserves no box and no phantom flex gap.
-    this.leadingSlot.addEventListener('slotchange', () =>
-      this.field.classList.toggle('has-leading', this.leadingSlot.assignedNodes().length > 0))
-    this.trailingSlot.addEventListener('slotchange', () =>
-      this.field.classList.toggle('has-trailing', this.trailingSlot.assignedNodes().length > 0))
+    const trailingSlot = document.createElement('slot')
+    trailingSlot.name = 'trailing'
+    trailingSlot.setAttribute('part', 'trailing')
     // The clear button is projected here (rightmost). The element gates its
     // visibility via shadow CSS off the filled state — see updateFilled.
     const clearSlot = document.createElement('slot')
@@ -407,7 +381,7 @@ export class AInputElement extends HTMLElementBase {
 
     // Leading, then (control inserted after leading on build), then clear, then
     // trailing — so the clear button sits to the LEFT of any trailing actions.
-    this.field.append(this.leadingSlot, clearSlot, this.trailingSlot)
+    this.field.append(this.leadingSlot, clearSlot, trailingSlot)
 
     // The clear button (an <a-button data-custom-event="clearrequest"> in the
     // `clear` slot) fires CLEAR_TRIGGER on click/Enter/Space — without needing
@@ -424,18 +398,15 @@ export class AInputElement extends HTMLElementBase {
       if (proceed) this.clear()
     })
 
-    this.hintBox = document.createElement('div')
-    this.hintBox.className = 'hint'
-    this.hintBox.setAttribute('part', 'hint')
     this.hintSlot = document.createElement('slot')
+    this.hintSlot.className = 'hint'
+    this.hintSlot.setAttribute('part', 'hint')
     this.hintSlot.name = 'hint'
     // Mirror the hint/error text into the control's aria-description (unless the
     // host already carries one) — IDREFs can't cross the shadow boundary, so the
     // string-valued aria-description is how the message reaches the focused
     // control. Same approach as the label → aria-label mirror above.
     this.hintSlot.addEventListener('slotchange', this.onHintSlotChange)
-    this.hintBox.append(this.hintSlot)
-
     // Default (unnamed) slot for projecting extra children. It sits *between*
     // the field and the hint, so a plain child renders directly under the field
     // and pushes the hint/error message down. A no-box child like an Anta
@@ -445,7 +416,7 @@ export class AInputElement extends HTMLElementBase {
     // element do the same.
     const extrasSlot = document.createElement('slot')
 
-    shadow.append(style, this.labelBox, this.field, extrasSlot, this.hintBox)
+    shadow.append(style, this.labelSlot, this.field, extrasSlot, this.hintSlot)
   }
 
   /** Floating-element anchor protocol (see `anchorRect` in anta_helpers): point
@@ -636,7 +607,6 @@ export class AInputElement extends HTMLElementBase {
   }
 
   private onLabelSlotChange = () => {
-    this.labelBox.classList.toggle('has-label', this.labelSlot.assignedNodes().length > 0)
     this.applyLabelAria()
   }
 
@@ -650,7 +620,6 @@ export class AInputElement extends HTMLElementBase {
   }
 
   private onHintSlotChange = () => {
-    this.hintBox.classList.toggle('has-hint', this.hintSlot.assignedNodes().length > 0)
     this.applyDescriptionAria()
   }
 
@@ -664,14 +633,8 @@ export class AInputElement extends HTMLElementBase {
   }
 
   private updateFilled() {
-    const filled = !!this.value
-    // Shadow-internal class gates the clear slot's visibility; the custom state
-    // is the public CSS hook (`:state(filled)`).
-    this.field.classList.toggle('is-filled', filled)
-    try {
-      if (filled) this.internals?.states.add('filled')
-      else this.internals?.states.delete('filled')
-    } catch {}
+    if (this.value) this.internals?.states.add('filled')
+    else this.internals?.states.delete('filled')
   }
 
   private updateValidity() {

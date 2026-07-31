@@ -9,7 +9,6 @@ import Disclosure from '../components/Disclosure.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import inputDemoCode from './input.demo.ts'
-import InputSelectDemo from '../components/InputSelectDemo'
 import InputPasswordDemo from '../components/InputPasswordDemo'
 import InputValidationDemo from '../components/InputValidationDemo'
 import { Input, Icon, Button, Tooltip } from '@antadesign/anta'
@@ -253,57 +252,6 @@ Note: there's no `type="search"` — that type makes browsers inject their own
 clear button and magnifier (and style them inconsistently). Anta owns every
 in-field control, and the element resets the native search/number/reveal
 decorations across browsers.
-
-</Col>
-</Columns>
-
-## Trailing-control patterns
-
-The `trailing` slot takes any node, so common field affordances are just
-compositions — no dedicated props needed. Two examples: a select-style dropdown,
-and a password reveal toggle.
-
-### Select dropdown
-
-<Columns>
-<Col>
-
-<Preview>
-  <InputSelectDemo client:load />
-</Preview>
-
-```tsx folded
-// A select-like field: <Input readOnly> + a <Menu> of options.
-const OPTIONS = ['Brand', 'Critical', 'Info', 'Success', 'Warning']
-const [open, setOpen] = useState(false)   // only to rotate the chevron
-const [value, setValue] = useState('')
-
-<Input
-  label="Tone"
-  placeholder="Select a tone…"
-  value={value}
-  readOnly
-  dimActions
-  trailing={<Icon shape="chevron-down" className={open ? 'chevron open' : 'chevron'} />}
-/>
-{/* Anchors to the field (its previous sibling), opens on click, closes on
-    select; it sets aria-expanded on the field itself. */}
-<Menu style={{ '--menu-min-width': '280px' }} onStateChange={(e, { next }) => setOpen(next)}>
-  {OPTIONS.map(o => <MenuItem key={o} label={o} onSelect={() => setValue(o)} />)}
-</Menu>
-```
-
-</Col>
-<Col>
-
-A dropdown is a small composition: a **`readOnly`** (not `clearable`) `<Input>`
-showing the value, followed by a **`<Menu>`** of **`<MenuItem>`** options. The
-menu anchors to the field, opens on click, closes on select, and reflects
-`aria-expanded` on the field — so most of the wiring is free. The chevron rotates
-via the observed open state.
-
-A dedicated `<Select>` (full keyboard nav, type-ahead, listbox ARIA) is still
-coming; this shows the field already provides the trigger and the value display.
 
 </Col>
 </Columns>

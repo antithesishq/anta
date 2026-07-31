@@ -433,9 +433,10 @@ underline stylistically, it supports three styles — `solid`, `dashed`,
 
 `ButtonCopy` is a copy button — a `Button` preset for copy-to-clipboard. It
 composes a plain `<Button>` with a slotted `<a-copy>` element that writes to the
-clipboard when the button is activated, and flips the copy glyph to a check while
-retoning to `success` for ~2s (✕ / `critical` on failure). Set `copy` for a
-literal string, or drop the `label` for an icon-only copy button.
+clipboard when the button is activated. A button with a copy glyph changes the
+glyph to a check and retones to `success` for ~2s (✕ / `critical` on failure).
+Set `copy` for a literal string, or drop the `label` for an icon-only copy
+button.
 
 <Columns>
 <Col>
@@ -450,15 +451,10 @@ literal string, or drop the `label` for an icon-only copy button.
 
 <ButtonCopy
   copy="npm i @antadesign/anta"
+  label="Copy install command"
   iconPlacement="none"
-  priority="quaternary"
-  paddingless
-  style={{ width: '108px' }}
->
-  <a-button-label style={{ whiteSpace: 'normal', textWrap: 'wrap', textOverflow: 'clip' }}>
-    Copy install command
-  </a-button-label>
-</ButtonCopy>
+  copiedLabel="Copied to clipboard"
+/>
 ```
 
 </Col>
@@ -470,14 +466,19 @@ button. `ButtonCopy` slots it in for you; to build the same by hand, drop an
 each attempt. Override the resting glyph with `icon`; the check / ✕ swap in only
 during the feedback window.
 
+With `iconPlacement="none"`, the button stays unchanged. A successful pointer
+copy shows `✓ Copied` beside the pointer. A keyboard copy shows it at the
+button's inline start. Use `copiedLabel` to change the text.
+
 </Col>
 </Columns>
 
 ### Icon placement
 
 `iconPlacement` sets where the copy glyph sits: `leading` (the default) or
-`trailing`. Pass `none` to drop the glyph — the feedback is then a ghost of the
-label floating up plus the success / failure tone flash.
+`trailing`. Pass `none` to omit the glyph. A successful copy then shows the
+confirmation label without changing the button. Set `copiedLabel` to change the
+label text.
 
 <Preview minHeight={70}>
   <ButtonCopyPlacementDemo client:visible />
@@ -486,7 +487,7 @@ label floating up plus the success / failure tone flash.
 ```tsx folded
 <ButtonCopy copy={value} label="Leading" />                              // default
 <ButtonCopy copy={value} label="Trailing" iconPlacement="trailing" />
-<ButtonCopy copy={value} label="No icon" iconPlacement="none" />         // ghost + tone flash
+<ButtonCopy copy={value} label="No icon" iconPlacement="none" />
 ```
 
 ### Copy a DOM node

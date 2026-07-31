@@ -26,10 +26,11 @@ changes are not listed.
 - `InputTime` segments now use native text inputs. They retain native caret,
   selection, paste, and IME behavior while keeping Anta's locale-aware layout
   and cross-segment navigation.
+- No-icon `ButtonCopy` leaves its button unchanged and shows a cursor-near
+  success label. Set `copiedLabel` to change the label text.
 
 ### Fixed
 
-- No-icon `ButtonCopy` feedback now keeps a wrapping label's width and line breaks.
 - Native HTML radio labels use Anta's 8px control gap and vertically centred
   alignment.
 - `InputAutocomplete` now commits the highlighted suggestion when users press

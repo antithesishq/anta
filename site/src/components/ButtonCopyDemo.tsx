@@ -2,9 +2,7 @@ import { ButtonCopy } from '@antadesign/anta'
 
 /**
  * Basic copy-button demo for the Button docs — a labeled, an icon-only, and a
- * wrapping no-icon `ButtonCopy`. Hydrated as an island so the ghost / tone
- * feedback runs on click (a static `<Preview>` renders the wrapper's markup but
- * never hydrates it, so the feedback wouldn't show).
+ * no-icon `ButtonCopy`. Hydrated as an island so copy feedback runs on click.
  */
 export default function ButtonCopyDemo() {
   return (
@@ -13,15 +11,11 @@ export default function ButtonCopyDemo() {
       <ButtonCopy copy="https://anta.design" priority="tertiary" />
       <ButtonCopy
         copy="npm i @antadesign/anta"
+        label="Copy install command"
         iconPlacement="none"
         priority="quaternary"
-        paddingless
-        style={{ width: '108px' }}
-      >
-        <a-button-label style={{ whiteSpace: 'normal', textWrap: 'wrap', textOverflow: 'clip' }}>
-          Copy install command
-        </a-button-label>
-      </ButtonCopy>
+        copiedLabel="Copied to clipboard"
+      />
     </div>
   )
 }

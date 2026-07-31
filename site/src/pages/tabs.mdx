@@ -48,7 +48,7 @@ a-tabs[priority="tertiary"] ~ a-tabpanel {
 <Col>
 
 <Preview background="var(--bg-base)">
-  <Priorities client:load />
+  <Priorities client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -82,7 +82,7 @@ custom colour); columns are priorities.
 **Primary**
 
 <Preview background="var(--bg-base)">
-  <TonesColumn client:load priority="primary" />
+  <TonesColumn client:visible={{ rootMargin: '200px' }} priority="primary" />
 </Preview>
 
 </Col>
@@ -91,7 +91,7 @@ custom colour); columns are priorities.
 **Secondary**
 
 <Preview background="var(--bg-base)">
-  <TonesColumn client:load priority="secondary" />
+  <TonesColumn client:visible={{ rootMargin: '200px' }} priority="secondary" />
 </Preview>
 
 </Col>
@@ -100,7 +100,7 @@ custom colour); columns are priorities.
 **Tertiary**
 
 <Preview background="var(--bg-base)">
-  <TonesColumn client:load priority="tertiary" />
+  <TonesColumn client:visible={{ rootMargin: '200px' }} priority="tertiary" />
 </Preview>
 
 </Col>
@@ -118,7 +118,7 @@ everywhere but the indicator only under `noslide` (the single shared sliding ele
 read a descendant's colour).
 
 <Preview background="var(--bg-base)">
-  <PerTabTone client:load />
+  <PerTabTone client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -140,7 +140,7 @@ read a descendant's colour).
 <Col>
 
 <Preview background="var(--bg-base)">
-  <Sizes client:load />
+  <Sizes client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -170,7 +170,7 @@ and panels are siblings; see [Panels](#panels)). Vertical works at every priorit
 **Primary**
 
 <Preview background="var(--bg-base)">
-  <VerticalStrip client:load priority="primary" />
+  <VerticalStrip client:visible={{ rootMargin: '200px' }} priority="primary" />
 </Preview>
 
 </Col>
@@ -179,7 +179,7 @@ and panels are siblings; see [Panels](#panels)). Vertical works at every priorit
 **Secondary**
 
 <Preview background="var(--bg-base)">
-  <VerticalStrip client:load priority="secondary" />
+  <VerticalStrip client:visible={{ rootMargin: '200px' }} priority="secondary" />
 </Preview>
 
 </Col>
@@ -188,7 +188,7 @@ and panels are siblings; see [Panels](#panels)). Vertical works at every priorit
 **Tertiary**
 
 <Preview background="var(--bg-base)">
-  <VerticalStrip client:load priority="tertiary" />
+  <VerticalStrip client:visible={{ rootMargin: '200px' }} priority="tertiary" />
 </Preview>
 
 </Col>
@@ -217,7 +217,7 @@ instead of `label`, like a [Tag](/tag/) counter.
 <Col>
 
 <Preview background="var(--bg-base)">
-  <IconsContent client:load />
+  <IconsContent client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 </Col>
@@ -244,7 +244,7 @@ instead of `label`, like a [Tag](/tag/) counter.
 <Col>
 
 <Preview background="var(--bg-base)">
-  <Overflow client:load />
+  <Overflow client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 </Col>
@@ -279,7 +279,7 @@ tabs above to see it.
 <Col>
 
 <Preview background="var(--bg-base)">
-  <Basic client:load />
+  <Basic client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -561,7 +561,7 @@ same-size button tall. For a gap around the selected pill (the classic "well" lo
 with the tabs' 4px. The strip grows 2Ã—the padding taller.
 
 <Preview background="var(--bg-base)">
-  <RoomyTabs client:load />
+  <RoomyTabs client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     a-tabs.roomy-1 { padding: 1px; border-radius: 5px; }
     a-tabs.roomy-3 { padding: 3px; border-radius: 7px; }
@@ -578,7 +578,7 @@ border or ring on the strip (`box-shadow: none` drops the default track ring) â€
 square ring on the raised pill. The track is `<a-tabs>`, the sliding pill its `::before`:
 
 <Preview background="var(--bg-base)">
-  <SquareTabs client:load />
+  <SquareTabs client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     a-tabs.square-tabs { border-radius: 0; padding: 4px; box-shadow: none; }
     .square-tabs a-tab { border-radius: 0; font-weight: 600; }
@@ -599,7 +599,7 @@ glow **slides with the line** between tabs, with no `noslide` and no separate pe
 background.
 
 <Preview background="var(--bg-base)">
-  <TertiaryGlow client:load />
+  <TertiaryGlow client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     a-tabs.glow-tabs::before {
       border-bottom-color: light-dark(#8067ff, #907aff);
@@ -626,7 +626,7 @@ horizontally: pin each tab to its content width (`flex: none`) and make the stri
 scrollable.
 
 <Preview background="var(--bg-base)">
-  <ScrollTabs client:load />
+  <ScrollTabs client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     .scroll-tabs a-tabs { overflow-x: auto; scrollbar-width: thin; }
     .scroll-tabs a-tab { flex: none; }
@@ -643,7 +643,7 @@ when the strip overflows). For a segmented-control look where every tab is the s
 width, let them fill the strip from a zero basis:
 
 <Preview background="var(--bg-base)">
-  <EqualWidth client:load />
+  <EqualWidth client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     .equal-tabs a-tabs { width: 100%; }
     .equal-tabs a-tab { flex: 1 1 0; max-width: none; }
@@ -658,7 +658,7 @@ width, let them fill the strip from a zero basis:
 **Wrap labels.** Let long labels wrap so the tabs grow taller instead of truncating:
 
 <Preview background="var(--bg-base)">
-  <WrapTabs client:load />
+  <WrapTabs client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     .wrap-tabs a-tab,
     .wrap-tabs a-tab-label { white-space: normal; text-overflow: clip; overflow: visible; text-align: center; }
@@ -676,7 +676,7 @@ instead, so the highlight snaps with no movement. It's also the automatic fallba
 where anchor positioning isn't supported.
 
 <Preview background="var(--bg-base)">
-  <NoSlide client:load />
+  <NoSlide client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded
@@ -688,7 +688,7 @@ the sliding pill to `999px` in one flag, no CSS needed (it drives `--tab-radius`
 the tabs, the moving indicator, and the primary track well):
 
 <Preview background="var(--bg-base)">
-  <PillTabs client:load />
+  <PillTabs client:visible={{ rootMargin: '200px' }} />
 </Preview>
 
 ```tsx folded

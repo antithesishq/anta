@@ -615,7 +615,7 @@ export interface ASliderAttributes extends BaseAttributes {
   /** Colour of the filled rail. Named tones or a literal CSS colour. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Colour of the thumb stroke. Named tones or a literal CSS colour. */
-  'tone-thumb'?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  'thumb-tone'?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=24px, medium=28px, large=32px tall. */
   size?: 'small' | 'medium' | 'large'
   /** Thickness of both rail segments as a CSS length, such as `'4px'`. */

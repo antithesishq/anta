@@ -46,7 +46,7 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   /** Colour of the thumb stroke. Pass a named tone or a literal CSS colour for a
    * one-off custom tone. Omit it to keep the thumb neutral.
    * @defaultValue 'neutral' */
-  toneThumb?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  thumbTone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=24px, medium=28px, large=32px tall.
    * @defaultValue 'medium' */
   size?: 'small' | 'medium' | 'large'
@@ -58,7 +58,7 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
    * it at least as large as `trackSize`.
    * @defaultValue 18 */
   thumbSize?: number | string
-  /** Fill the thumb with its resolved border colour. This follows `toneThumb`
+  /** Fill the thumb with its resolved border colour. This follows `thumbTone`
    * and interactive states.
    * @defaultValue false */
   thumbFill?: boolean
@@ -120,7 +120,7 @@ export const Slider = ({
   name,
   disabled,
   tone,
-  toneThumb,
+  thumbTone,
   size,
   trackSize,
   thumbSize,
@@ -152,7 +152,7 @@ export const Slider = ({
       roundStyle(
         round,
         '--slider-round',
-        toneStyle(toneThumb, '--slider-thumb-tone-source', toneStyle(tone, '--slider-tone-source', style)),
+        toneStyle(thumbTone, '--slider-thumb-tone-source', toneStyle(tone, '--slider-tone-source', style)),
       ),
     ),
   )
@@ -202,7 +202,7 @@ export const Slider = ({
       name={name}
       disabled={disabled ? '' : undefined}
       tone={tone && tone !== 'neutral' ? tone : undefined}
-      tone-thumb={toneThumb && toneThumb !== 'neutral' ? toneThumb : undefined}
+      thumb-tone={thumbTone && thumbTone !== 'neutral' ? thumbTone : undefined}
       size={size && size !== 'medium' ? size : undefined}
       track-size={trackSizeValue}
       thumb-size={thumbSizeValue}

@@ -78,7 +78,7 @@
     --slider-thumb-radius: var(--slider-round, attr(round type(<length>), 999px));
   }
 
-  /* `tone` affects the filled rail only. `tone-thumb` separately controls the
+  /* `tone` affects the filled rail only. `thumb-tone` separately controls the
      thumb outline; the neutral unfilled rail stays quiet in both cases. */
   a-slider[tone="brand"] {
     --slider-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
@@ -107,30 +107,30 @@
     --slider-interactive-rest: color-mix(in oklch, var(--slider-tone-source) 65%, var(--border-2));
     --slider-fill-hover: color-mix(in oklch, var(--slider-tone-source) 80%, var(--border-1));
   }
-  a-slider[tone-thumb="brand"] {
+  a-slider[thumb-tone="brand"] {
     --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
     --slider-thumb-border-active: var(--border-1-brand);
   }
-  a-slider[tone-thumb="info"] {
+  a-slider[thumb-tone="info"] {
     --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info));
     --slider-thumb-border-active: var(--border-1-info);
   }
-  a-slider[tone-thumb="success"] {
+  a-slider[thumb-tone="success"] {
     --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success));
     --slider-thumb-border-active: var(--border-1-success);
   }
-  a-slider[tone-thumb="warning"] {
+  a-slider[thumb-tone="warning"] {
     --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning));
     --slider-thumb-border-active: var(--border-1-warning);
   }
-  a-slider[tone-thumb="critical"] {
+  a-slider[thumb-tone="critical"] {
     --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical));
     --slider-thumb-border-active: var(--border-1-critical);
   }
-  a-slider[tone-thumb]:not(
-      [tone-thumb=""], [tone-thumb="neutral"], [tone-thumb="brand"], [tone-thumb="info"],
-      [tone-thumb="success"], [tone-thumb="warning"], [tone-thumb="critical"]) {
-    --slider-thumb-tone-source: attr(tone-thumb type(<color>), transparent);
+  a-slider[thumb-tone]:not(
+      [thumb-tone=""], [thumb-tone="neutral"], [thumb-tone="brand"], [thumb-tone="info"],
+      [thumb-tone="success"], [thumb-tone="warning"], [thumb-tone="critical"]) {
+    --slider-thumb-tone-source: attr(thumb-tone type(<color>), transparent);
     --slider-thumb-interactive-rest: color-mix(in oklch, var(--slider-thumb-tone-source) 65%, var(--border-2));
     --slider-thumb-border-active: color-mix(in oklch, var(--slider-thumb-tone-source) 80%, var(--border-1));
   }
@@ -228,30 +228,30 @@
     --anta-native-range-interactive-rest: color-mix(in oklch, var(--anta-native-range-tone-source) 65%, var(--border-2));
     --anta-native-range-fill-hover: color-mix(in oklch, var(--anta-native-range-tone-source) 80%, var(--border-1));
   }
-  input[data-anta][type="range"][tone-thumb="brand"] {
+  input[data-anta][type="range"][thumb-tone="brand"] {
     --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
     --anta-native-range-thumb-border-active: var(--border-1-brand);
   }
-  input[data-anta][type="range"][tone-thumb="info"] {
+  input[data-anta][type="range"][thumb-tone="info"] {
     --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info));
     --anta-native-range-thumb-border-active: var(--border-1-info);
   }
-  input[data-anta][type="range"][tone-thumb="success"] {
+  input[data-anta][type="range"][thumb-tone="success"] {
     --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success));
     --anta-native-range-thumb-border-active: var(--border-1-success);
   }
-  input[data-anta][type="range"][tone-thumb="warning"] {
+  input[data-anta][type="range"][thumb-tone="warning"] {
     --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning));
     --anta-native-range-thumb-border-active: var(--border-1-warning);
   }
-  input[data-anta][type="range"][tone-thumb="critical"] {
+  input[data-anta][type="range"][thumb-tone="critical"] {
     --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical));
     --anta-native-range-thumb-border-active: var(--border-1-critical);
   }
-  input[data-anta][type="range"][tone-thumb]:not(
-      [tone-thumb=""], [tone-thumb="neutral"], [tone-thumb="brand"], [tone-thumb="info"],
-      [tone-thumb="success"], [tone-thumb="warning"], [tone-thumb="critical"]) {
-    --anta-native-range-thumb-tone-source: attr(tone-thumb type(<color>), transparent);
+  input[data-anta][type="range"][thumb-tone]:not(
+      [thumb-tone=""], [thumb-tone="neutral"], [thumb-tone="brand"], [thumb-tone="info"],
+      [thumb-tone="success"], [thumb-tone="warning"], [thumb-tone="critical"]) {
+    --anta-native-range-thumb-tone-source: attr(thumb-tone type(<color>), transparent);
     --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--anta-native-range-thumb-tone-source) 65%, var(--border-2));
     --anta-native-range-thumb-border-active: color-mix(in oklch, var(--anta-native-range-thumb-tone-source) 80%, var(--border-1));
   }

@@ -30,73 +30,6 @@ import { Slider } from '@antadesign/anta'
 
 </Disclosure>
 
-## Native HTML range input
-
-Add `data-anta` to a native range input for Anta's rail, fill, thumb, and focus
-treatment while retaining the browser's form, keyboard, and pointer behavior.
-
-Use `size="small"` or `"large"` for the 24px and 32px control sizes.
-`track-size` accepts a CSS length and changes both rail segments. `tone`,
-`tone-thumb`, `thumb-fill`, `thumb-size`, and `round` use the same attributes
-as `Slider`.
-
-<Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
-  <Slider label="Anta Slider" defaultValue={48} />
-  <input
-    data-anta
-    type="range"
-    min="0"
-    max="100"
-    value="48"
-    aria-label="Native range"
-    style={{ width: '100%' }}
-  />
-  <input
-    data-anta
-    type="range"
-    min="0"
-    max="100"
-    value="32"
-    size="small"
-    tone="info"
-    aria-label="Small info native range"
-    style={{ width: '100%' }}
-  />
-  <input
-    data-anta
-    type="range"
-    min="0"
-    max="100"
-    value="52"
-    tone="brand"
-    tone-thumb="success"
-    track-size="4px"
-    thumb-fill
-    thumb-size="20px"
-    aria-label="Brand native range with a large filled success thumb"
-    style={{ width: '100%' }}
-  />
-  <input
-    data-anta
-    type="range"
-    min="0"
-    max="100"
-    value="72"
-    size="large"
-    tone="success"
-    round="4"
-    aria-label="Large rounded success native range"
-    style={{ width: '100%' }}
-  />
-</Preview>
-
-```html
-<input data-anta type="range" min="0" max="100" value="48" aria-label="Native range">
-<input data-anta type="range" min="0" max="100" value="32" size="small" tone="info" aria-label="Small info native range">
-<input data-anta type="range" min="0" max="100" value="52" tone="brand" tone-thumb="success" track-size="4px" thumb-fill thumb-size="20px" aria-label="Brand native range with a large filled success thumb">
-<input data-anta type="range" min="0" max="100" value="72" size="large" tone="success" round="4" aria-label="Large rounded success native range">
-```
-
 ## Relative dragging
 
 <Columns reverse>
@@ -154,20 +87,20 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
 <Columns reverse>
 <Col>
 
-`size` follows the input height scale: 24px, 28px, and 32px. `trackSize` sets the thickness of both rail segments without changing the control height; numbers use pixels and strings accept CSS lengths. `thumbSize` controls the thumb diameter, and `thumbFill` fills it with its resolved border colour. `tone` colours the filled rail. `toneThumb` separately colours the thumb stroke. The unfilled rail stays neutral. `round` shapes both the rail and thumb. Pass `true` for fully round corners or a number or CSS length for a shared custom radius.
+`size` follows the input height scale: 24px, 28px, and 32px. `trackSize` sets the thickness of both rail segments without changing the control height; numbers use pixels and strings accept CSS lengths. `thumbSize` controls the thumb diameter, and `thumbFill` fills it with its resolved border colour. `tone` colours the filled rail. `thumbTone` separately colours the thumb stroke. The unfilled rail stays neutral. `round` shapes both the rail and thumb. Pass `true` for fully round corners or a number or CSS length for a shared custom radius.
 
 </Col>
 <Col>
 
 <Preview background="var(--bg-2)" gap="20px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
   <Slider size="small" tone="info" label="Small" defaultValue={32} />
-  <Slider tone="brand" toneThumb="success" trackSize={4} thumbSize={20} thumbFill label="Medium, filled thumb" defaultValue={52} />
+  <Slider tone="brand" thumbTone="success" trackSize={4} thumbSize={20} thumbFill label="Medium, filled thumb" defaultValue={52} />
   <Slider size="large" tone="success" round={4} label="Large, 4px corners" defaultValue={72} />
 </Preview>
 
 ```tsx folded
 <Slider size="small" tone="info" label="Small" defaultValue={32} />
-<Slider tone="brand" toneThumb="success" trackSize={4} thumbSize={20} thumbFill label="Medium, filled thumb" defaultValue={52} />
+<Slider tone="brand" thumbTone="success" trackSize={4} thumbSize={20} thumbFill label="Medium, filled thumb" defaultValue={52} />
 <Slider size="large" tone="success" round={4} label="Large, 4px corners" defaultValue={72} />
 ```
 
@@ -260,6 +193,73 @@ Use `<a-slider>` when you are not using React or Preact. Add its `role` and acce
 </a-slider>
 ```
 
+### Native HTML range input
+
+Add `data-anta` to a native range input for Anta's rail, fill, thumb, and focus
+treatment while retaining the browser's form, keyboard, and pointer behavior.
+
+Use `size="small"` or `"large"` for the 24px and 32px control sizes.
+`track-size` accepts a CSS length and changes both rail segments. `tone`,
+`thumb-tone`, `thumb-fill`, `thumb-size`, and `round` use the same attributes
+as `Slider`.
+
+<Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
+  <Slider label="Anta Slider" defaultValue={48} />
+  <input
+    data-anta
+    type="range"
+    min="0"
+    max="100"
+    value="48"
+    aria-label="Native range"
+    style={{ width: '100%' }}
+  />
+  <input
+    data-anta
+    type="range"
+    min="0"
+    max="100"
+    value="32"
+    size="small"
+    tone="info"
+    aria-label="Small info native range"
+    style={{ width: '100%' }}
+  />
+  <input
+    data-anta
+    type="range"
+    min="0"
+    max="100"
+    value="52"
+    tone="brand"
+    thumb-tone="success"
+    track-size="4px"
+    thumb-fill
+    thumb-size="20px"
+    aria-label="Brand native range with a large filled success thumb"
+    style={{ width: '100%' }}
+  />
+  <input
+    data-anta
+    type="range"
+    min="0"
+    max="100"
+    value="72"
+    size="large"
+    tone="success"
+    round="4"
+    aria-label="Large rounded success native range"
+    style={{ width: '100%' }}
+  />
+</Preview>
+
+```html
+<input data-anta type="range" min="0" max="100" value="48" aria-label="Native range">
+<input data-anta type="range" min="0" max="100" value="32" size="small" tone="info" aria-label="Small info native range">
+<input data-anta type="range" min="0" max="100" value="52" tone="brand" thumb-tone="success" track-size="4px" thumb-fill thumb-size="20px" aria-label="Brand native range with a large filled success thumb">
+<input data-anta type="range" min="0" max="100" value="72" size="large" tone="success" round="4" aria-label="Large rounded success native range">
+```
+
 </Disclosure>
 
 ## Styling
@@ -267,7 +267,7 @@ Use `<a-slider>` when you are not using React or Preact. Add its `role` and acce
 <Columns reverse>
 <Col>
 
-`Slider` renders an `<a-slider>` with a circular thumb. `tone` and `toneThumb` accept named or custom CSS colours; custom values use the public `--slider-tone-source` and `--slider-thumb-tone-source` knobs. Use `round` to shape the rail and thumb together. Target its shadow parts to change their presentation without taking on the interaction code: `::part(thumb)` customises the thumb’s surface and stroke. The element exposes `header`, `label`, `value`, `control`, `track`, `fill`, `thumb`, `thumb-value`, `markers`, and `extras`.
+`Slider` renders an `<a-slider>` with a circular thumb. `tone` and `thumbTone` accept named or custom CSS colours; custom values use the public `--slider-tone-source` and `--slider-thumb-tone-source` knobs. Use `round` to shape the rail and thumb together. Target its shadow parts to change their presentation without taking on the interaction code: `::part(thumb)` customises the thumb’s surface and stroke. The element exposes `header`, `label`, `value`, `control`, `track`, `fill`, `thumb`, `thumb-value`, `markers`, and `extras`.
 
 </Col>
 <Col>

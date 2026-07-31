@@ -8,6 +8,7 @@
     "docs:wasm": "node scripts/copy-esbuild-wasm.mjs",
     "docs:theme": "node scripts/copy-theme-anta.mjs",
     "docs:iframe-runtime": "node scripts/build-iframe-runtime.mjs",
+    "comparison:measure": "node scripts/measure-comparison-bundles.mjs",
     "docs": "pnpm run docs:api && pnpm run docs:pages && pnpm run docs:wasm && pnpm run docs:theme && pnpm run docs:iframe-runtime",
     "dev": "pnpm run docs && pnpm run dev:server",
     "dev:server": "astro dev",

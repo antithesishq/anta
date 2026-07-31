@@ -28,10 +28,18 @@ runtime. Consumer CSS overrides its defaults normally.
 
 <Disclosure title="The systems">
 
-Sizes are indicative minified and gzipped downloads for a broad import. The
-line below each figure states what it counts. Tree-shaking, peer dependencies,
-icons, styles, and copied source make the numbers different shapes. Use them to
-estimate an order of magnitude, then measure the imports in your application.
+Fixed-package sizes are measured from the version named on each card. Each npm
+artifact was downloaded, bundled as a full ESM import with esbuild, minified,
+and gzipped. React and React DOM are external. When a library ships base CSS,
+the total adds its separately gzipped CSS bundle. The line below each figure
+states what it counts.
+
+Tree-shaking, peer dependencies, icons, styles, and copied source still make
+the numbers different shapes. Polaris is a dated CDN snapshot, not a
+release-based package figure. Independently versioned packages and copied-source
+systems need an explicit component boundary; each card names it. Every browser
+version includes its release year. Rolling policies are pinned to the current
+stable releases in this snapshot.
 
 <SystemCards />
 

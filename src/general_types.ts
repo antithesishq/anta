@@ -163,8 +163,8 @@ export interface BaseAttributes extends DOMEventHandlers {
  * typed props and computed labels, use `Progress` from `@antadesign/anta`.
  */
 export interface AProgressAttributes extends BaseAttributes {
-  /** Current progress value. */
-  value?: number | string
+  /** Current progress value. Omit this attribute for indeterminate progress. */
+  value?: number | string | false
   /** Maximum value. Defaults to 100. */
   max?: number | string
   /** Colour variant, or any literal CSS colour for a custom tone (derived in

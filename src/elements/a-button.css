@@ -20,14 +20,16 @@
 
     --button-loading-stripe: 14px;
     --button-loading-stripe-gap: 16px;
-    --button-loading-period: 30px;
+    --button-loading-period: calc(
+      var(--button-loading-stripe) + var(--button-loading-stripe-gap)
+    );
     --button-loading-angle: 125deg;
 
     --button-loading-x-period: calc(
       var(--button-loading-period) / cos(var(--button-loading-angle) - 90deg)
     );
     --button-loading-opacity: 0.15;
-    --button-loading-blur: 2.5px;
+    --button-loading-blur: 5px;
 
     /* Tone — every priority/state is derived in oklch from --_src (the tone's
        seed, or a custom literal colour) with the per-tone --_tone-* constants

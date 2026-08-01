@@ -3,6 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- `Progress` shows an indeterminate loading animation when `value` is omitted
+  or set to `false`.
+
 ## 0.3.17 — July 31, 2026
 
 ### Added

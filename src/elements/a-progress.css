@@ -11,6 +11,16 @@
     );
     --progress-text-color: var(--text-2);
     --progress-hint-color: var(--text-3);
+    --progress-loading-angle: 125deg;
+    --progress-loading-x-period: calc(40px + 5cqi);
+    --progress-loading-period: calc(
+      var(--progress-loading-x-period) * cos(var(--progress-loading-angle) - 90deg)
+    );
+    --progress-loading-stripe: calc(var(--progress-loading-period) * 2 / 5);
+    --progress-loading-stripe-gap: calc(var(--progress-loading-period) * 3 / 5);
+    --progress-loading-opacity: 0.15;
+    --progress-loading-blur: clamp(8px, 2cqi, 16px);
+    --progress-loading-duration: 0.5s;
 
     display: block;
     container-type: inline-size;

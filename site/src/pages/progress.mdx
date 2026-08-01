@@ -17,8 +17,8 @@ import progressDemoCode from './progress.demo.ts'
 
 # Progress
 
-A progress indicator for displaying task completion. Consists of a track
-(background bar), an indicator (filled portion), and an optional label area.
+`Progress` shows task completion. Pass `value` for known progress. Omit it, or
+pass `false`, while work is underway without a known duration.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -40,6 +40,7 @@ A progress indicator for displaying task completion. Consists of a track
     <Progress value={75} tone="info" label="Processing" />
     <Progress value={60} tone="warning" label="Uploading" hint="3 of 5" style={{ borderBottomWidth: '1px' }} />
     <AnimatedProgress client:visible speed={2} tone="critical" />
+    <Progress label="Preparing upload…" />
   </div>
 </Preview>
 
@@ -66,6 +67,9 @@ function AnimatedProgress({ speed = 1 }) {
   }, [speed])
   return <Progress value={v} label="Animated" />
 }
+
+// Omit value, or pass false, while the duration is unknown.
+<Progress label="Preparing upload…" />
 ```
 
 <Disclosure title="Component props" open>
@@ -87,6 +91,12 @@ Add the progressbar semantics and label structure when using the element directl
       <a-progress-text>Upload</a-progress-text>
     </a-progress-label>
   </a-progress>
+
+  <a-progress style={{ width: '100%' }} role="progressbar" aria-label="Preparing upload">
+    <a-progress-label>
+      <a-progress-text>Preparing upload</a-progress-text>
+    </a-progress-label>
+  </a-progress>
 </Preview>
 
 ```html
@@ -95,6 +105,13 @@ Add the progressbar semantics and label structure when using the element directl
   <a-progress-label>
     <a-progress-number>42%</a-progress-number>
     <a-progress-text>Upload</a-progress-text>
+  </a-progress-label>
+</a-progress>
+
+<!-- Omit value for indeterminate progress. -->
+<a-progress style="width: 100%" role="progressbar" aria-label="Preparing upload">
+  <a-progress-label>
+    <a-progress-text>Preparing upload</a-progress-text>
   </a-progress-label>
 </a-progress>
 ```

@@ -66,6 +66,8 @@ const ogImage = new URL('/og-image.png', Astro.site).href
 const pageUrl = new URL(Astro.url.pathname, Astro.site).href
 const pageTitle = title ? `${title} — Anta` : 'Anta'
 const description = "Antithesis design system: global CSS tokens, framework-agnostic web components, and JSX wrappers for React and Preact."
+// Keep local development free of analytics traffic and token configuration.
+const shouldLoadPostHog = import.meta.env.PROD
 
 // JSON-LD structured data. Every page declares the WebSite; component
 // pages add a breadcrumb trail so search results show the site hierarchy.
@@ -116,7 +118,7 @@ if (isComponentPage && title) {
         registry, fonts, and loaded CSS survive and `a-*` elements upgrade
         instantly. Script rules live in site/AGENTS.md ("ClientRouter"). */}
     <ClientRouter />
-    <PostHog />
+    {shouldLoadPostHog && <PostHog />}
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={pageUrl} />

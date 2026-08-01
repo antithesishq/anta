@@ -66,8 +66,8 @@ label identifies indeterminate work and the loading animation takes the track.
 
 ## Size
 
-`size` scales the track and the default label row together. `medium` is the
-default.
+<Columns>
+<Col>
 
 <Preview gap="8px">
   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
@@ -83,10 +83,19 @@ default.
 <Progress size="large" tone="info" value={60} label="Large" hint="~ 3 minutes left" />
 ```
 
+</Col>
+<Col>
+
+`size` scales the track and the default label row together. `medium` is the
+default.
+
+</Col>
+</Columns>
+
 ## Tone
 
-`tone` colors the track, indicator, and label row. Use `neutral` for the
-default, a named semantic tone, or any CSS color.
+<Columns>
+<Col>
 
 <Preview gap="12px">
   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
@@ -108,11 +117,19 @@ default, a named semantic tone, or any CSS color.
 <Progress value={60} tone="#e0457b" label="Custom" />
 ```
 
+</Col>
+<Col>
+
+`tone` colors the track, indicator, and label row. Use `neutral` for the
+default, a named semantic tone, or any CSS color.
+
+</Col>
+</Columns>
+
 ## Border
 
-The track starts borderless. Set a border width to reveal its tone-aware border
-color. A bottom edge works for an indicator at the top of an app. A top edge
-works for one at the bottom.
+<Columns>
+<Col>
 
 <Preview gap="12px">
   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
@@ -150,10 +167,20 @@ works for one at the bottom.
 />
 ```
 
+</Col>
+<Col>
+
+The track starts borderless. Set a border width to reveal its tone-aware border
+color. A bottom edge works for an indicator at the top of an app. A top edge
+works for one at the bottom.
+
+</Col>
+</Columns>
+
 ## Round
 
-`round` makes the track fully round. Pass a number or CSS length for a custom
-radius.
+<Columns>
+<Col>
 
 <Preview gap="12px">
   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
@@ -167,6 +194,15 @@ radius.
 <Progress value={60} round={4} label="4px radius" />
 ```
 
+</Col>
+<Col>
+
+`round` makes the track fully round. Pass a number or CSS length for a custom
+radius.
+
+</Col>
+</Columns>
+
 <Disclosure title="Component props" open>
 
 <PropsTable component="Progress" />
@@ -175,9 +211,8 @@ radius.
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
-
-Add the progressbar semantics and label structure when using the element directly.
+<Columns>
+<Col>
 
 <Preview>
   <a-progress style={{ width: '100%' }} value="42" max="100" tone="info" role="progressbar" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
@@ -211,13 +246,23 @@ Add the progressbar semantics and label structure when using the element directl
 </a-progress>
 ```
 
+</Col>
+<Col>
+
+Use this when you are not using the React or Preact wrapper and a native HTML
+control does not fit: construct the equivalent Anta web component from the
+elements below.
+
+Add the progressbar semantics and label structure when using the element
+directly.
+
+</Col>
+</Columns>
+
 ### Native HTML progress
 
-For a plain HTML progress indicator, add `data-anta` to `<progress>`. It keeps
-the browser's native semantics, including indeterminate progress when `value`
-is absent, while using Anta's track, fill, tone, and size treatments. Native
-progress does not render Anta's label or hint structure; give it an accessible
-name instead.
+<Columns>
+<Col>
 
 <Preview gap="12px">
   <progress data-anta value="42" max="100" tone="info" aria-label="Uploading, 42%" style={{ width: '100%' }} />
@@ -238,13 +283,24 @@ name instead.
 <progress data-anta round="50px" aria-label="Preparing upload" style="width: 100%"></progress>
 ```
 
+</Col>
+<Col>
+
+For a plain HTML progress indicator, add `data-anta` to `<progress>`. It keeps
+the browser's native semantics, including indeterminate progress when `value`
+is absent, while using Anta's track, fill, tone, and size treatments. Native
+progress does not render Anta's label or hint structure; give it an accessible
+name instead.
+
+</Col>
+</Columns>
+
 </Disclosure>
 
 <Disclosure title="Styling">
 
-For one-offs, the **track** is the host (style `a-progress` directly) and the
-**indicator** (fill bar) is a shadow **part** — `::part(indicator)`. The `.fancy`
-class is just for the demo:
+<Columns>
+<Col>
 
 <Preview>
   <div style={{ width: '100%' }}>
@@ -285,5 +341,15 @@ a-progress.fancy a-progress-number,
 a-progress.fancy a-progress-text { color: #fff; }
 a-progress.fancy a-progress-hint { color: var(--text-2); }
 ```
+
+</Col>
+<Col>
+
+For one-offs, the **track** is the host (style `a-progress` directly) and the
+**indicator** (fill bar) is a shadow **part** — `::part(indicator)`. The `.fancy`
+class is just for the demo.
+
+</Col>
+</Columns>
 
 </Disclosure>

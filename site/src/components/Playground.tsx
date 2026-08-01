@@ -17,7 +17,7 @@
  * See site/lib/sandbox/* for the moving parts.
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
-import { Input, Tooltip, Text, Checkbox, Tabs } from '@antadesign/anta'
+import { Input, Tooltip, Text, Checkbox, Select, Tabs } from '@antadesign/anta'
 import { marked } from 'marked'
 import s from './Playground.module.css'
 // Monaco ships its structural CSS as ~110 separate `import './x.css'`
@@ -66,11 +66,14 @@ interface Props {
    *  playground doesn't grow with form content and so switching tabs
    *  doesn't reflow. Defaults to 400. */
   panelHeight?: number
+  /** Whether the Code editor initially folds every foldable region.
+   *  Defaults to false so source opens expanded. */
+  codeInitiallyFolded?: boolean
 }
 
 type Tab = 'props' | 'code' | 'css'
 
-export default function Playground({ component, initialCode, initialCss = '', layout = 'stacked', panelHeight = 400 }: Props) {
+export default function Playground({ component, initialCode, initialCss = '', layout = 'stacked', panelHeight = 400, codeInitiallyFolded = false }: Props) {
   const [code, setCode] = useState(initialCode)
   // CSS state is independent of the code — the user owns it. The CSS
   // tab is unconditionally available; no auto-seed from any className
@@ -720,16 +723,13 @@ export default function Playground({ component, initialCode, initialCss = '', la
                     onMonacoMount(editor, monaco)
                     installJsxAwareCommentToggle(editor, monaco)
                     editor.layout()
-                    // Collapse every foldable region on first mount.
-                    // The authoring convention is to put the `# Heading`
-                    // on the opening `/​**` line, which Monaco keeps
-                    // visible when the comment is folded — so the
-                    // example label stays readable while the body
-                    // collapses away. Deferred so the language service
-                    // has time to compute fold ranges before we run.
-                    setTimeout(() => {
-                      editor.getAction('editor.foldAll')?.run()
-                    }, 400)
+                    if (codeInitiallyFolded) {
+                      // Deferred so Monaco's language service has time to
+                      // compute fold ranges before we collapse them.
+                      setTimeout(() => {
+                        editor.getAction('editor.foldAll')?.run()
+                      }, 400)
+                    }
                   }}
                   options={editorOptions(monoFontFamily)}
                 />
@@ -924,22 +924,22 @@ function FormField({
   }
 
   if (c.kind === 'boolean') {
-    // Dogfood Anta's <Checkbox> (small) for boolean controls — the prop name is
-    // its label (kept in the monospace field-name style); the description rides
-    // along as a native title. aria-label is set explicitly since the label is a
-    // vnode, not a plain string the wrapper could derive a name from.
+    // Keep booleans in the same label/control grid as the other props. The
+    // checkbox takes its accessible name explicitly because its visual label is
+    // rendered in the shared left-hand column.
     return (
-      <div class={s.fieldBoolean}>
+      <div class={s.field}>
+        <div class={s.fieldLabel}>
+          <span><FieldName name={c.name} description={c.description} /></span>
+          {fromExpression ? <span class={s.fieldExpressionBadge}>set by code</span> : null}
+        </div>
         <Checkbox
           size="small"
           checked={value === true}
           disabled={fromExpression}
           aria-label={c.name}
           onStateChange={(_e, { next }) => handle(next === true)}
-        >
-          <FieldName name={c.name} description={c.description} />
-        </Checkbox>
-        {fromExpression ? <span class={s.fieldExpressionBadge}>set by code</span> : null}
+        />
       </div>
     )
   }
@@ -1076,13 +1076,30 @@ function FieldControl({
         />
       )
     case 'segmented': {
-      // Dogfood Anta <Tabs> (primary = segmented-control look, small) as the enum
-      // picker. Controlled via `value`; a pick requests the change through
-      // `onStateChange`, which we forward to the form. When no literal is set in
-      // code we fall back to the control's default so the implicit choice still
-      // reads as active. `clearable` adds a leading "none" tab that omits the attr.
+      // A short enum is clearest as Anta <Tabs>; longer lists become an Anta
+      // <Select> so labels do not crowd or overflow the fixed-size panel. When no
+      // literal is set in code, fall back to the control's default so the implicit
+      // choice still reads as selected. `clearable` adds a leading "none" option
+      // that omits the attribute.
       const selected = value !== undefined ? value : control.defaultValue
       const active = selected === undefined ? '__none' : String(selected)
+      const options = [
+        ...(control.clearable ? [{ value: '__none', label: 'none', tooltip: 'none' }] : []),
+        ...control.options.map((opt) => ({ value: opt, label: opt, tooltip: opt })),
+      ]
+      if (options.length > 4) {
+        return (
+          <Select
+            className={s.selectControl}
+            size="small"
+            aria-label={control.name}
+            value={active}
+            disabled={disabled}
+            onValueChange={(next) => onChange(next === '__none' ? null : next)}
+            options={options}
+          />
+        )
+      }
       return (
         <Tabs
           className={s.segTabs}
@@ -1092,18 +1109,15 @@ function FieldControl({
           value={active}
           disabled={disabled}
           onStateChange={(_e, { next }) => onChange(next === '__none' ? null : next)}
-          options={[
-            ...(control.clearable ? [{ value: '__none', label: 'none', tooltip: 'none' }] : []),
-            ...control.options.map((opt) => ({ value: opt, label: opt, tooltip: opt })),
-          ]}
+          options={options}
         />
       )
     }
     case 'tone': {
-      // Named-tone tabs + a "custom" tab, as Anta <Tabs> (small). A value outside
-      // `options` (a colour literal) means custom → reveal the colour picker. The
-      // picker only reflects valid hex; a hand-typed `oklch(…)` stays in the code
-      // and shows beside the picker without being overwritten.
+      // Named tones are a seven-item choice, so use Anta <Select> rather than tabs.
+      // A value outside `options` (a colour literal) means custom → reveal the colour
+      // picker. The picker only reflects valid hex; a hand-typed `oklch(…)` stays in
+      // the code and shows beside the picker without being overwritten.
       const v = typeof value === 'string' ? value : undefined
       const selected = v ?? control.defaultValue
       const isCustom = v !== undefined && !control.options.includes(v)
@@ -1111,14 +1125,13 @@ function FieldControl({
       const active = isCustom ? 'custom' : String(selected)
       return (
         <div class={`${s.toneControl} ${cls}`}>
-          <Tabs
-            className={s.segTabs}
-            priority="primary"
+          <Select
+            className={s.selectControl}
             size="small"
-            label={control.name}
+            aria-label={control.name}
             value={active}
             disabled={disabled}
-            onStateChange={(_e, { next }) =>
+            onValueChange={(next) =>
               onChange(next === 'custom' ? (isCustom ? (v as string) : '#ff1493') : next)
             }
             options={[

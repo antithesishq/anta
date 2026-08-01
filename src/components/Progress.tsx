@@ -13,6 +13,9 @@ export interface ProgressProps extends BaseProps {
    *  light/dark automatically.
    *  @defaultValue 'neutral' */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Size variant. Scales the track and the default label row together.
+   *  @defaultValue medium */
+  size?: 'small' | 'medium' | 'large'
   /** Fully-round track (`border-radius: 999px`); the fill is clipped to it. Pass a
    *  `number` (px) or a CSS length string for a custom radius. */
   round?: boolean | number | string
@@ -58,7 +61,7 @@ export interface ProgressProps extends BaseProps {
  * <Progress value={75} tone="info" label="Processing" />
  * ```
  */
-export const Progress = ({ value, max = 100, tone, round, label, hint, className, style, children, ...rest }: ProgressProps) => {
+export const Progress = ({ value, max = 100, tone, size, round, label, hint, className, style, children, ...rest }: ProgressProps) => {
   const indeterminate = value == null || value === false
   const numericValue = typeof value === 'number' ? value : 0
   const percent = max > 0 ? Math.round(Math.min(100, Math.max(0, (numericValue / max) * 100))) : 0
@@ -78,6 +81,7 @@ export const Progress = ({ value, max = 100, tone, round, label, hint, className
       value={indeterminate ? false : numericValue}
       max={max}
       tone={tone && tone !== 'neutral' ? tone : undefined}
+      size={size && size !== 'medium' ? size : undefined}
       round={roundAttr(round)}
       role="progressbar"
       aria-valuenow={indeterminate ? undefined : clampedValue}

@@ -27,6 +27,8 @@ import '@antadesign/anta/elements'      // web components (client-side only)
 - `margin: 0` on everything — apps build spacing from explicit values.
 - Replaced elements (`img`, `picture`, `video`, `canvas`, `svg`) → `display: block` + `max-width: 100%`, so a stray large asset can't blow out the layout.
 - Form controls (`input`, `button`, `textarea`, `select`) → `font: inherit`.
+- Keyboard-focused elements → a 1px `--focus-ring` outline. Component-specific
+  focus styles keep their own geometry.
 - `overflow-wrap: break-word` on paragraphs + headings; `text-wrap: pretty` on `<p>` and `text-wrap: balance` on headings.
 
 ### Typography (Anta's opinion)

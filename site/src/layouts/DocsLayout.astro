@@ -712,6 +712,10 @@ if (isComponentPage && title) {
     align-items: center;
     gap: 0.75ch;
     padding: 4px 0;
+    /* Match the compact corner treatment of Anta menu rows. It also gives
+       the shared focus outline a rounded shape without changing the sidebar's
+       text alignment. */
+    border-radius: var(--radius-sm, 4px);
     color: var(--text-3);
     font-size: 14px;
     font-weight: 400;
@@ -757,6 +761,10 @@ if (isComponentPage && title) {
   .sidebar menu li a[aria-current="page"] > a-icon,
   .package-link:hover > a-icon {
     color: var(--text-1-brand);
+  }
+  .sidebar a:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 2px;
   }
 
   /* Fill the whole track between the sidebars. The 960px prose measure

@@ -499,8 +499,8 @@ pre code { background: none; padding: 0; }
   cursor: pointer;
 }
 .content .expressive-code .frame .header:focus-visible {
-  outline: 2px solid var(--border-2);
-  outline-offset: -2px;
+  outline: 1px solid var(--focus-ring);
+  outline-offset: -1px;
 }
 /* Bar tint — the chevron (currentColor) and label (inherit) follow this:
    text-4 at rest → text-2 on hover → back to text-4 while pressed. */

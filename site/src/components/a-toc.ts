@@ -291,7 +291,10 @@ export class ATocElement extends HTMLElement {
       .toc-title:hover,
       .toc-title:focus-visible {
         color: var(--text-1-brand);
-        outline: none;
+      }
+      .toc-title:focus-visible {
+        outline: 1px solid var(--focus-ring);
+        outline-offset: 2px;
       }
       .list-wrap {
         position: relative;
@@ -331,11 +334,14 @@ export class ATocElement extends HTMLElement {
       a:hover,
       a:focus-visible {
         color: var(--text-1);
-        outline: none;
         text-decoration: underline dotted;
         text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
         text-decoration-thickness: 1px;
         text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 1px solid var(--focus-ring);
+        outline-offset: 2px;
       }
       a[aria-current="true"] {
         color: var(--text-1);

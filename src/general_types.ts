@@ -170,6 +170,8 @@ export interface AProgressAttributes extends BaseAttributes {
   /** Colour variant, or any literal CSS colour for a custom tone (derived in
    *  oklch). Named tones track light/dark automatically. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Size variant. `medium` is the default. */
+  size?: 'small' | 'medium' | 'large'
   /** Fully-round track (`border-radius: 999px`), or a custom radius via a length
    *  value (`round="6px"`). Presence-based for the boolean form. */
   round?: boolean | number | string

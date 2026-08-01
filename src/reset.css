@@ -37,6 +37,14 @@
     font: inherit;
   }
 
+  /* Give plain, keyboard-focusable HTML the same focus colour and hairline as
+     Anta controls. Component rules are more specific, so an <a-*> element or
+     an opt-in native control keeps its own focus geometry and offset. */
+  :focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
   /* Wrap long words rather than overflow; `text-wrap: pretty`
      balances widows on paragraphs, `text-wrap: balance` evens
      headlines across lines. */

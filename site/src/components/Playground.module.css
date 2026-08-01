@@ -331,7 +331,10 @@
 .exampleHeader:hover,
 .exampleHeader:focus-visible {
   color: var(--text-1);
-  outline: none;
+}
+.exampleHeader:focus-visible {
+  outline: 1px solid var(--focus-ring);
+  outline-offset: -1px;
 }
 
 .exampleHeaderOpen {
@@ -366,9 +369,11 @@
 
 .form {
   padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  /* Match Input's "label column" pattern: each row adopts these shared
+     tracks, so every control begins at one stable right-hand edge. */
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px;
   flex: 1;
   min-height: 0;
   min-width: 0;
@@ -376,15 +381,18 @@
 }
 
 .field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  row-gap: 4px;
   min-width: 0;
 }
 
 .fieldLabel {
   display: flex;
-  align-items: flex-start;
+  grid-column: 1;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
   font-size: 13px;
@@ -401,28 +409,32 @@
 }
 
 .fieldHint {
+  grid-column: 1 / -1;
   font-size: 12px;
   line-height: 1.2;
   color: var(--text-4);
 }
 
-/* Inline layout for boolean fields: checkbox + label on one row so
-   the prop reads like a regular settings toggle. */
-.fieldBoolean {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 13px;
-  cursor: pointer;
+/* Inputs with an own label join the form's tracks through their shadow parts,
+   following the documented Input "label column" recipe. Other controls are
+   the second child of `.field` and occupy the right track below. */
+.field > a-input {
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+.field > a-input::part(label) {
+  grid-column: 1;
+  margin: 0;
+}
+.field > a-input::part(field),
+.field > a-input::part(hint) {
+  grid-column: 2;
   min-width: 0;
 }
-.fieldBoolean > span {
+.field > :nth-child(2) {
+  grid-column: 2;
   min-width: 0;
-  overflow-wrap: anywhere;
-}
-.fieldBoolean input[type="checkbox"] {
-  flex-shrink: 0;
-  margin: 0.25em 0 0;
 }
 
 .fieldValueLabel {
@@ -465,12 +477,13 @@
   pointer-events: none;
 }
 
-/* Enum / tone pickers are Anta <Tabs> (primary, small). A long option set (e.g. tone)
-   ellipsizes its labels (default a-tabs behaviour) rather than widening the panel; each
-   option carries a truncatedOnly tooltip (set in the control JSX), so a clipped label
-   reveals its full text on hover — like the Tabs Overflow example. */
+/* Short enum pickers use Anta <Tabs> (primary, small). Longer lists, including
+   tone, use Anta <Select> so their labels never crowd the panel. */
 .segTabs {
   max-width: 100%;
+}
+.selectControl {
+  width: 100%;
 }
 
 /* Prop name — plain monospace value, not a copyable code pill. Inherits its
@@ -479,6 +492,12 @@
   font-family: var(--monospace);
   letter-spacing: 0;
   font-size: 12px;
+}
+
+/* Playground prop descriptions often span several lines. Give their tooltip
+   bubbles a little more inset than the compact component default. */
+.root a-tooltip {
+  --tooltip-padding: 8px 12px;
 }
 
 /* `children` / ReactNode fields hold JSX/markup — monospace, code-style value text.
@@ -490,7 +509,7 @@
   font-size: 12px;
 }
 
-/* Tone control: the named/Custom tab row plus, when Custom is active, a
+/* Tone control: the named/Custom picker plus, when Custom is active, a
    color input + the current value beneath. */
 .toneControl {
   display: flex;

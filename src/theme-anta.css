@@ -12,7 +12,7 @@
  *
  * Two parts, layered differently on purpose:
  *
- * (1) The global role scale (`--text-*` / `--bg-*` / `--border-*`, below) is
+ * (1) The global role scale (`--text-*` / `--bg-*` / `--border-*` / `--focus-ring`, below) is
  *     UNLAYERED (so it beats the components' `@layer anta` seed-derived tokens and
  *     replaces the role scale wholesale) and uses DOUBLED `:root:root` / `.light.light`
  *     / `.dark.dark` selectors, so it out-SPECIFIES tokens.css's equally-unlayered
@@ -164,6 +164,8 @@
   --border-3-info: #bad6f3;
   --border-4-info: #cfe3f7;
   --border-5-info: #e1eefa;
+
+  --focus-ring: var(--text-2-brand);
 }
 
 /* Doubled `.dark.dark` — mirrors tokens.css's `.dark` (any scoped dark region)
@@ -289,6 +291,8 @@
   --border-3-info: hsl(208.04deg 69.93% 21%);
   --border-4-info: hsl(208.52deg 62.89% 14%);
   --border-5-info: hsl(207.78deg 65.85% 10.5%);
+
+  --focus-ring: var(--text-2-brand);
 }
 
 /* ── 2. Bespoke component ramps — hand-tuned literals ─────────────────────── */

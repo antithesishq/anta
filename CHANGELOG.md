@@ -5,10 +5,23 @@ changes are not listed.
 
 ## Unreleased
 
+### Changed
+
+- The Anta theme's `--focus-ring` now follows its brand text color.
+- `reset.css` gives plain keyboard-focused HTML the 1px Anta focus ring.
+
 ### Added
 
 - `Progress` shows an indeterminate loading animation when `value` is omitted
   or set to `false`.
+- `Progress` supports `small`, `medium`, and `large` sizes.
+- Native HTML `<progress>` elements opt into the Progress appearance with
+  `data-anta`.
+
+### Fixed
+
+- Custom `Progress` tones now use the same track, fill, and edge progression as
+  named tones in light and dark themes.
 
 ## 0.3.17 — July 31, 2026
 

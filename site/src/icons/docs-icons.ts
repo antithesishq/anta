@@ -13,6 +13,7 @@ export const ICON_SHAPES = [
   'dialog',
   'octagon-pause',
   'search-slash',
+  'settings-2',
   'square-chevron-down',
   'square-chevron-right',
   'sticker',
@@ -36,6 +37,7 @@ declare module '@antadesign/anta' {
     'dialog': true
     'octagon-pause': true
     'search-slash': true
+    'settings-2': true
     'square-chevron-down': true
     'square-chevron-right': true
     'sticker': true

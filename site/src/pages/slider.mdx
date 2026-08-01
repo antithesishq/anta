@@ -6,6 +6,8 @@ description: A single-value range control with relative rail dragging.
 import Preview from '../components/Preview.astro'
 import Disclosure from '../components/Disclosure.astro'
 import PropsTable from '../components/PropsTable.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
 import Playground from '../components/Playground'
 import sliderDemoCode from './slider.demo.ts'
 import { Slider } from '@antadesign/anta'
@@ -17,7 +19,7 @@ import { Slider } from '@antadesign/anta'
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
+  client:load
   component="Slider"
   layout="side"
   panelHeight={390}
@@ -30,13 +32,21 @@ import { Slider } from '@antadesign/anta'
 
 ## Relative dragging
 
+<Columns reverse>
+<Col>
+
 Pressing the rail starts a grab from its current value. Moving right increases the value; moving left decreases it. The thumb does not jump to the press position. This is the default `trackClick="drag-only"` behaviour.
 
 Set `trackClick="jump"` for the conventional range-input interaction, where pressing the rail first moves the thumb to that position.
 
+Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum and maximum. <kbd>PageUp</kbd> and <kbd>PageDown</kbd> move by one tenth of the range.
+
+</Col>
+<Col>
+
 <Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
-  <Slider label="Relative drag" defaultValue={35} hint="Press anywhere, then drag." />
-  <Slider label="Jump on press" defaultValue={35} trackClick="jump" hint="Pressing the rail changes the value immediately." />
+  <Slider label="Relative drag" defaultValue={35} />
+  <Slider label="Jump on press" defaultValue={35} trackClick="jump" />
 </Preview>
 
 ```tsx folded
@@ -44,11 +54,18 @@ Set `trackClick="jump"` for the conventional range-input interaction, where pres
 <Slider label="Jump on press" defaultValue={35} trackClick="jump" />
 ```
 
-Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum and maximum. <kbd>PageUp</kbd> and <kbd>PageDown</kbd> move by one tenth of the range.
+</Col>
+</Columns>
 
 ## Value placement
 
+<Columns reverse>
+<Col>
+
 `valueDisplay="end"` is the default. Use `inline` for `Label: value`, `thumb` to keep a value above the thumb, or `none` to omit it. `valuePrefix` and `valueSuffix` add text to every live value display.
+
+</Col>
+<Col>
 
 <Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
   <Slider label="End" defaultValue={48} valueSuffix="%" />
@@ -62,9 +79,43 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
 <Slider label="Volume" defaultValue={48} valueDisplay="thumb" valueSuffix="%" />
 ```
 
-## Markers and hint
+</Col>
+</Columns>
 
-`markers` places text below the rail and before `hint`. Markers do not add dots or ticks to the rail.
+## Size, tones, and radius
+
+<Columns reverse>
+<Col>
+
+`size` follows the input height scale: 24px, 28px, and 32px. `trackSize` sets the thickness of both rail segments without changing the control height; numbers use pixels and strings accept CSS lengths. `thumbSize` controls the thumb diameter, and `thumbFill` fills it with its resolved border colour. `tone` colours the filled rail. `thumbTone` separately colours the thumb stroke. The unfilled rail stays neutral. `round` shapes both the rail and thumb. Pass `true` for fully round corners or a number or CSS length for a shared custom radius.
+
+</Col>
+<Col>
+
+<Preview background="var(--bg-2)" gap="20px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
+  <Slider size="small" tone="info" label="Small" defaultValue={32} />
+  <Slider tone="brand" thumbTone="success" trackSize={4} thumbSize={20} thumbFill label="Medium, filled thumb" defaultValue={52} />
+  <Slider size="large" tone="success" round={4} label="Large, 4px corners" defaultValue={72} />
+</Preview>
+
+```tsx folded
+<Slider size="small" tone="info" label="Small" defaultValue={32} />
+<Slider tone="brand" thumbTone="success" trackSize={4} thumbSize={20} thumbFill label="Medium, filled thumb" defaultValue={52} />
+<Slider size="large" tone="success" round={4} label="Large, 4px corners" defaultValue={72} />
+```
+
+</Col>
+</Columns>
+
+## Markers
+
+<Columns reverse>
+<Col>
+
+`markers` places compact, muted labels below the rail. Values at or below `min` align left; values at or above `max` align right. Markers do not add dots or ticks to the rail.
+
+</Col>
+<Col>
 
 <Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
   <Slider
@@ -79,7 +130,6 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
       { value: 1, label: 'Normal' },
       { value: 2, label: '2×' },
     ]}
-    hint="Changes playback without changing pitch."
   />
 </Preview>
 
@@ -98,7 +148,10 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
 />
 ```
 
-<Disclosure title="Slider props" open>
+</Col>
+</Columns>
+
+<Disclosure title="Component props" open>
 
 <PropsTable component="Slider" />
 
@@ -108,6 +161,22 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
 
 Use `<a-slider>` when you are not using React or Preact. Add its `role` and accessible name yourself, then register it from `@antadesign/anta/elements`.
 
+<Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
+  <a-slider
+    role="slider"
+    tabindex="0"
+    aria-label="Volume"
+    name="volume"
+    defaultvalue="50"
+    track-size="4px"
+    thumb-fill
+    thumb-size="20px"
+    value-suffix="%"
+  >
+    <span slot="label">Volume</span>
+  </a-slider>
+</Preview>
+
 ```html
 <a-slider
   role="slider"
@@ -115,14 +184,93 @@ Use `<a-slider>` when you are not using React or Preact. Add its `role` and acce
   aria-label="Volume"
   name="volume"
   defaultvalue="50"
-></a-slider>
+  track-size="4px"
+  thumb-fill
+  thumb-size="20px"
+  value-suffix="%"
+>
+  <span slot="label">Volume</span>
+</a-slider>
+```
+
+### Native HTML range input
+
+Add `data-anta` to a native range input for Anta's rail, fill, thumb, and focus
+treatment while retaining the browser's form, keyboard, and pointer behavior.
+
+Use `size="small"` or `"large"` for the 24px and 32px control sizes.
+`track-size` accepts a CSS length and changes both rail segments. `tone`,
+`thumb-tone`, `thumb-fill`, `thumb-size`, and `round` use the same attributes
+as `Slider`. In raw HTML, `round` needs a CSS length such as `"4px"`; JSX
+`round={4}` remains a numeric pixel value.
+
+<Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
+  <input
+    data-anta
+    type="range"
+    min="0"
+    max="100"
+    value="48"
+    aria-label="Native range"
+    style={{ width: '100%' }}
+  />
+  <input
+    data-anta
+    type="range"
+    min="0"
+    max="100"
+    value="32"
+    size="small"
+    tone="info"
+    aria-label="Small info native range"
+    style={{ width: '100%' }}
+  />
+  <input
+    data-anta
+    type="range"
+    min="0"
+    max="100"
+    value="52"
+    tone="brand"
+    thumb-tone="success"
+    track-size="4px"
+    thumb-fill
+    thumb-size="20px"
+    aria-label="Brand native range with a large filled success thumb"
+    style={{ width: '100%' }}
+  />
+  <input
+    data-anta
+    type="range"
+    min="0"
+    max="100"
+    value="72"
+    size="large"
+    tone="success"
+    round="4px"
+    aria-label="Large rounded success native range"
+    style={{ width: '100%' }}
+  />
+</Preview>
+
+```html
+<input data-anta type="range" min="0" max="100" value="48" aria-label="Native range">
+<input data-anta type="range" min="0" max="100" value="32" size="small" tone="info" aria-label="Small info native range">
+<input data-anta type="range" min="0" max="100" value="52" tone="brand" thumb-tone="success" track-size="4px" thumb-fill thumb-size="20px" aria-label="Brand native range with a large filled success thumb">
+<input data-anta type="range" min="0" max="100" value="72" size="large" tone="success" round="4px" aria-label="Large rounded success native range">
 ```
 
 </Disclosure>
 
 ## Styling
 
-`Slider` renders an `<a-slider>` with a circular thumb. Target its shadow parts to change the thumb or rail without taking on the interaction code. The element exposes `header`, `label`, `value`, `control`, `track`, `fill`, `thumb`, `thumb-value`, `markers`, `extras`, and `hint`.
+<Columns reverse>
+<Col>
+
+`Slider` renders an `<a-slider>` with a circular thumb. `tone` and `thumbTone` accept named or custom CSS colours; custom values use the public `--slider-tone-source` and `--slider-thumb-tone-source` knobs. Use `round` to shape the rail and thumb together. Target its shadow parts to change their presentation without taking on the interaction code: `::part(thumb)` customises the thumb’s surface and stroke. The element exposes `header`, `label`, `value`, `control`, `track`, `fill`, `thumb`, `thumb-value`, `markers`, and `extras`.
+
+</Col>
+<Col>
 
 <Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
   <Slider className="warm-slider" label="Warm color" defaultValue={62} valueDisplay="thumb" valueSuffix="°" />
@@ -145,3 +293,6 @@ Use `<a-slider>` when you are not using React or Preact. Add its `role` and acce
   border-radius: 4px;
 }
 ```
+
+</Col>
+</Columns>

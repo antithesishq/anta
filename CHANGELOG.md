@@ -3,12 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.17 — July 31, 2026
 
 ### Added
 
 - `Slider`, a single-value form control with relative rail dragging, configurable
-  value placement, text markers, and CSS parts for thumb and track styling.
+  value placement, text markers, sizes, tones, shared corner radii, CSS parts for
+  thumb and track styling, and an opt-in `data-anta` treatment for native ranges.
 
 ### Breaking
 

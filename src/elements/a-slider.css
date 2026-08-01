@@ -1,83 +1,400 @@
 @layer anta {
-  a-slider {
-    --slider-gap: 6px;
-    --slider-track-size: 4px;
-    --slider-thumb-size: 16px;
-    --slider-thumb-border-width: 1px;
-    --slider-focus-width: 3px;
-    --slider-thumb-value-gap: 6px;
+  /* Shared slider geometry keeps the custom element and the opt-in native
+     range aligned. Their presentation remains independent below. */
+  :where(a-slider, input[data-anta][type="range"]) {
+    --anta-slider-control-size: 28px;
+    --anta-slider-track-size: 2px;
+    --anta-slider-thumb-size: 18px;
+    --anta-slider-thumb-border-width: 1.5px;
+  }
+  :where(a-slider, input[data-anta][type="range"])[size="small"] {
+    --anta-slider-control-size: 24px;
+    --anta-slider-thumb-size: 16px;
+  }
+  :where(a-slider, input[data-anta][type="range"])[size="large"] {
+    --anta-slider-control-size: 32px;
+    --anta-slider-thumb-size: 20px;
+  }
+  :where(a-slider, input[data-anta][type="range"])[track-size] {
+    --anta-slider-track-size: attr(track-size type(<length>), 2px);
+  }
+  :where(a-slider, input[data-anta][type="range"])[thumb-size] {
+    --anta-slider-thumb-size: attr(thumb-size type(<length>), 18px);
+  }
 
-    --slider-track: var(--bg-4);
-    --slider-fill: var(--bg-5-brand);
+  a-slider {
+    --slider-track-inset: 1px;
+    --slider-track-radius: 999px;
+    --slider-thumb-radius: 50%;
+    --slider-track: var(--border-4);
+    --slider-interactive-rest: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
+    --slider-fill: var(--slider-interactive-rest);
+    --slider-fill-hover: var(--border-1);
     --slider-thumb: var(--bg-1);
-    --slider-thumb-border: var(--border-2);
-    --slider-thumb-shadow: 0 1px 2px color-mix(in oklch, var(--text-1) 16%, transparent);
-    --slider-focus: var(--focus-ring);
+    --slider-thumb-active: var(--bg-3);
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
+    --slider-thumb-border: var(--slider-thumb-interactive-rest);
+    --slider-thumb-border-active: var(--border-1);
     --slider-label: var(--text-3);
-    --slider-value: var(--text-2);
-    --slider-thumb-value: var(--text-2);
-    --slider-hint: var(--text-3);
+    --slider-value: var(--text-1);
+    --slider-value-affix: var(--text-3);
+    --slider-marker: var(--text-3);
 
     --slider-label-size: 15px;
     --slider-label-line-height: 20px;
     --slider-value-size: 15px;
     --slider-value-line-height: 20px;
-    --slider-thumb-value-size: 13px;
-    --slider-thumb-value-line-height: 16px;
     --slider-marker-size: 13px;
     --slider-marker-line-height: 16px;
-    --slider-hint-size: 13px;
-    --slider-hint-line-height: 16px;
 
-    display: block;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
     width: 100%;
+  }
+
+  a-slider[size="small"] {
+    --slider-label-size: 13px;
+    --slider-label-line-height: 16px;
+    --slider-value-size: 13px;
+    --slider-value-line-height: 16px;
+    --slider-marker-size: 12px;
+    --slider-marker-line-height: 14px;
+  }
+  a-slider[size="large"] {
+    --slider-label-size: 17px;
+    --slider-label-line-height: 22px;
+    --slider-value-size: 17px;
+    --slider-value-line-height: 22px;
+    --slider-marker-size: 15px;
+    --slider-marker-line-height: 19px;
+  }
+
+  /* The default is a round rail with a circular thumb. `round` keeps that
+     shape for its boolean form, and gives both pieces the same custom radius
+     when passed a number or CSS length through the wrapper. */
+  a-slider[round] {
+    --slider-track-radius: var(--slider-round, attr(round type(<length>), 999px));
+    --slider-thumb-radius: var(--slider-round, attr(round type(<length>), 999px));
+  }
+
+  /* `tone` affects the filled rail only. `thumb-tone` separately controls the
+     thumb outline; the neutral unfilled rail stays quiet in both cases. */
+  a-slider[tone="brand"] {
+    --slider-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
+    --slider-fill-hover: var(--border-1-brand);
+  }
+  a-slider[tone="info"] {
+    --slider-interactive-rest: color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info));
+    --slider-fill-hover: var(--border-1-info);
+  }
+  a-slider[tone="success"] {
+    --slider-interactive-rest: color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success));
+    --slider-fill-hover: var(--border-1-success);
+  }
+  a-slider[tone="warning"] {
+    --slider-interactive-rest: color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning));
+    --slider-fill-hover: var(--border-1-warning);
+  }
+  a-slider[tone="critical"] {
+    --slider-interactive-rest: color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical));
+    --slider-fill-hover: var(--border-1-critical);
+  }
+  a-slider[tone]:not(
+      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]) {
+    --slider-tone-source: attr(tone type(<color>), transparent);
+    --slider-interactive-rest: color-mix(in oklch, var(--slider-tone-source) 65%, var(--border-2));
+    --slider-fill-hover: color-mix(in oklch, var(--slider-tone-source) 80%, var(--border-1));
+  }
+  a-slider[thumb-tone="brand"] {
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
+    --slider-thumb-border-active: var(--border-1-brand);
+  }
+  a-slider[thumb-tone="info"] {
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info));
+    --slider-thumb-border-active: var(--border-1-info);
+  }
+  a-slider[thumb-tone="success"] {
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success));
+    --slider-thumb-border-active: var(--border-1-success);
+  }
+  a-slider[thumb-tone="warning"] {
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning));
+    --slider-thumb-border-active: var(--border-1-warning);
+  }
+  a-slider[thumb-tone="critical"] {
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical));
+    --slider-thumb-border-active: var(--border-1-critical);
+  }
+  a-slider[thumb-tone]:not(
+      [thumb-tone=""], [thumb-tone="neutral"], [thumb-tone="brand"], [thumb-tone="info"],
+      [thumb-tone="success"], [thumb-tone="warning"], [thumb-tone="critical"]) {
+    --slider-thumb-tone-source: attr(thumb-tone type(<color>), transparent);
+    --slider-thumb-interactive-rest: color-mix(in oklch, var(--slider-thumb-tone-source) 65%, var(--border-2));
+    --slider-thumb-border-active: color-mix(in oklch, var(--slider-thumb-tone-source) 80%, var(--border-1));
+  }
+  a-slider[thumb-fill] {
+    --slider-thumb: var(--slider-thumb-border);
+    --slider-thumb-active: var(--slider-thumb-border-active);
   }
 
   a-slider[track-click="jump"] { cursor: pointer; }
 
   a-slider[disabled],
   a-slider:disabled {
-    --slider-track: color-mix(in oklch, var(--bg-4) 55%, transparent);
-    --slider-fill: color-mix(in oklch, var(--bg-5-brand) 45%, transparent);
+    --slider-track: color-mix(in oklch, var(--border-4) 55%, transparent);
+    --slider-fill: color-mix(in oklch, var(--border-2) 45%, transparent);
     --slider-thumb: var(--bg-2);
     --slider-thumb-border: var(--border-3);
     --slider-label: var(--text-4);
     --slider-value: var(--text-4);
-    --slider-hint: var(--text-5);
+    --slider-value-affix: var(--text-4);
+    --slider-marker: var(--text-5);
 
     cursor: not-allowed;
   }
 
-  a-slider [slot="markers"] {
-    color: var(--slider-marker, var(--text-4));
-    font-family: var(--sans-serif);
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-size: var(--slider-marker-size);
-    font-variant-numeric: tabular-nums;
-    line-height: var(--slider-marker-line-height);
+  a-slider:not([disabled]):not(:disabled):focus-visible {
+    --slider-thumb-border: var(--slider-thumb-border-active);
+    --slider-fill: var(--slider-fill-hover);
   }
-  a-slider [slot="markers"] > * {
-    position: absolute;
-    inset-inline-start: var(--slider-marker-position);
-    max-inline-size: min(12rem, 50vw);
-    text-align: center;
-    transform: translateX(-50%);
-    white-space: nowrap;
+  @media (hover: hover) and (pointer: fine) {
+    a-slider:not([disabled]):not(:disabled):hover {
+      --slider-thumb-border: var(--slider-thumb-border-active);
+      --slider-fill: var(--slider-fill-hover);
+    }
   }
-  a-slider [slot="markers"] > :first-child { text-align: start; transform: translateX(0); }
-  a-slider [slot="markers"] > :last-child { text-align: end; transform: translateX(-100%); }
+
+  /* Native ranges retain their native form and keyboard semantics. Chromium
+     lacks a filled-track pseudo-element, so the clipped thumb shadow paints it. */
+  input[data-anta][type="range"] {
+    --anta-native-range-control-size: var(--anta-slider-control-size);
+    --anta-native-range-track-size: var(--anta-slider-track-size);
+    --anta-native-range-track-radius: 999px;
+    --anta-native-range-thumb-size: var(--anta-slider-thumb-size);
+    --anta-native-range-thumb-border-width: var(--anta-slider-thumb-border-width);
+    --anta-native-range-thumb-radius: 50%;
+    --anta-native-range-fill-clip-edge: 2px;
+    --anta-native-range-track: var(--border-4);
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
+    --anta-native-range-fill: var(--anta-native-range-interactive-rest);
+    --anta-native-range-fill-hover: var(--border-1);
+    --anta-native-range-thumb: var(--bg-1);
+    --anta-native-range-thumb-active: var(--bg-3);
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2) 50%, var(--border-1));
+    --anta-native-range-thumb-border: var(--anta-native-range-thumb-interactive-rest);
+    --anta-native-range-thumb-border-active: var(--border-1);
+
+    box-sizing: border-box;
+    display: block;
+    inline-size: 100%;
+    block-size: var(--anta-native-range-control-size);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: transparent;
+    cursor: pointer;
+    overflow: hidden;
+    vertical-align: middle;
+    box-shadow: none;
+  }
+  input[data-anta][type="range"][tone="brand"] {
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
+    --anta-native-range-fill-hover: var(--border-1-brand);
+  }
+  input[data-anta][type="range"][tone="info"] {
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info));
+    --anta-native-range-fill-hover: var(--border-1-info);
+  }
+  input[data-anta][type="range"][tone="success"] {
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success));
+    --anta-native-range-fill-hover: var(--border-1-success);
+  }
+  input[data-anta][type="range"][tone="warning"] {
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning));
+    --anta-native-range-fill-hover: var(--border-1-warning);
+  }
+  input[data-anta][type="range"][tone="critical"] {
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical));
+    --anta-native-range-fill-hover: var(--border-1-critical);
+  }
+  input[data-anta][type="range"][tone]:not(
+      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]) {
+    --anta-native-range-tone-source: attr(tone type(<color>), transparent);
+    --anta-native-range-interactive-rest: color-mix(in oklch, var(--anta-native-range-tone-source) 65%, var(--border-2));
+    --anta-native-range-fill-hover: color-mix(in oklch, var(--anta-native-range-tone-source) 80%, var(--border-1));
+  }
+  input[data-anta][type="range"][thumb-tone="brand"] {
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
+    --anta-native-range-thumb-border-active: var(--border-1-brand);
+  }
+  input[data-anta][type="range"][thumb-tone="info"] {
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info));
+    --anta-native-range-thumb-border-active: var(--border-1-info);
+  }
+  input[data-anta][type="range"][thumb-tone="success"] {
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success));
+    --anta-native-range-thumb-border-active: var(--border-1-success);
+  }
+  input[data-anta][type="range"][thumb-tone="warning"] {
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning));
+    --anta-native-range-thumb-border-active: var(--border-1-warning);
+  }
+  input[data-anta][type="range"][thumb-tone="critical"] {
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical));
+    --anta-native-range-thumb-border-active: var(--border-1-critical);
+  }
+  input[data-anta][type="range"][thumb-tone]:not(
+      [thumb-tone=""], [thumb-tone="neutral"], [thumb-tone="brand"], [thumb-tone="info"],
+      [thumb-tone="success"], [thumb-tone="warning"], [thumb-tone="critical"]) {
+    --anta-native-range-thumb-tone-source: attr(thumb-tone type(<color>), transparent);
+    --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--anta-native-range-thumb-tone-source) 65%, var(--border-2));
+    --anta-native-range-thumb-border-active: color-mix(in oklch, var(--anta-native-range-thumb-tone-source) 80%, var(--border-1));
+  }
+  input[data-anta][type="range"][thumb-fill] {
+    --anta-native-range-thumb: var(--anta-native-range-thumb-border);
+    --anta-native-range-thumb-active: var(--anta-native-range-thumb-border-active);
+  }
+  input[data-anta][type="range"][round] {
+    --anta-native-range-track-radius: attr(round type(<length>), 999px);
+    --anta-native-range-thumb-radius: attr(round type(<length>), 999px);
+  }
+  /* The fill clip's circular-thumb seam would cut a smaller custom radius.
+     A valued raw `round` keeps the entire thumb silhouette instead. */
+  input[data-anta][type="range"][round]:not([round=""]) {
+    --anta-native-range-fill-clip-edge: 0px;
+  }
+  input[data-anta][type="range"]::-webkit-slider-container {
+    block-size: var(--anta-native-range-control-size);
+    overflow: hidden;
+  }
+  input[data-anta][type="range"]::-webkit-slider-runnable-track {
+    position: relative;
+    box-sizing: border-box;
+    block-size: var(--anta-native-range-thumb-size);
+    border: 0;
+    border-radius: var(--anta-native-range-track-radius);
+    appearance: none;
+    -webkit-appearance: none;
+    background: linear-gradient(var(--anta-native-range-track) 0 0) center / 100% var(--anta-native-range-track-size) no-repeat;
+    transition: background-color 75ms ease-out;
+  }
+  input[data-anta][type="range"]::-webkit-slider-thumb {
+    --anta-native-range-fill-clip-top: calc((var(--anta-native-range-thumb-size) - var(--anta-native-range-track-size)) / 2);
+    --anta-native-range-fill-clip-bottom: calc(100% - var(--anta-native-range-fill-clip-top));
+
+    position: relative;
+    box-sizing: border-box;
+    inline-size: var(--anta-native-range-thumb-size);
+    block-size: var(--anta-native-range-thumb-size);
+    margin-block-start: 0;
+    border: 0;
+    border-radius: var(--anta-native-range-thumb-radius);
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--anta-native-range-thumb);
+    box-shadow:
+      inset 0 0 0 var(--anta-native-range-thumb-border-width) var(--anta-native-range-thumb-border),
+      calc(-100vmax - var(--anta-native-range-thumb-size)) 0 0 100vmax var(--anta-native-range-fill);
+    clip-path: polygon(
+      100% -1px,
+      var(--anta-native-range-fill-clip-edge) -1px,
+      0 var(--anta-native-range-fill-clip-top),
+      -100vmax var(--anta-native-range-fill-clip-top),
+      -100vmax var(--anta-native-range-fill-clip-bottom),
+      0 var(--anta-native-range-fill-clip-bottom),
+      var(--anta-native-range-fill-clip-edge) 100%,
+      calc(100% + 1px) calc(100% + 1px)
+    );
+    transition: background-color 75ms ease-out, box-shadow 75ms ease-out;
+  }
+  input[data-anta][type="range"]::-moz-range-track {
+    box-sizing: border-box;
+    block-size: var(--anta-native-range-track-size);
+    border: 0;
+    border-radius: var(--anta-native-range-track-radius);
+    background: var(--anta-native-range-track);
+    transition: background-color 75ms ease-out;
+  }
+  input[data-anta][type="range"]::-moz-range-progress {
+    block-size: var(--anta-native-range-track-size);
+    border: 0;
+    border-radius: var(--anta-native-range-track-radius);
+    background: var(--anta-native-range-fill);
+    transition: background-color 75ms ease-out;
+  }
+  input[data-anta][type="range"]::-moz-range-thumb {
+    box-sizing: border-box;
+    inline-size: var(--anta-native-range-thumb-size);
+    block-size: var(--anta-native-range-thumb-size);
+    border: 0;
+    border-radius: var(--anta-native-range-thumb-radius);
+    background: var(--anta-native-range-thumb);
+    box-shadow: inset 0 0 0 var(--anta-native-range-thumb-border-width) var(--anta-native-range-thumb-border);
+    transition: background-color 75ms ease-out, box-shadow 75ms ease-out;
+  }
+  input[data-anta][type="range"]:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 0;
+    --anta-native-range-fill: var(--anta-native-range-fill-hover);
+    --anta-native-range-thumb-border: var(--anta-native-range-thumb-border-active);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    input[data-anta][type="range"]:not(:disabled):hover {
+      --anta-native-range-fill: var(--anta-native-range-fill-hover);
+      --anta-native-range-thumb-border: var(--anta-native-range-thumb-border-active);
+    }
+  }
+  input[data-anta][type="range"]:not(:disabled):active {
+    cursor: grabbing;
+    --anta-native-range-thumb: var(--anta-native-range-thumb-active);
+  }
+  input[data-anta][type="range"]:disabled {
+    --anta-native-range-track: color-mix(in oklch, var(--border-4) 55%, transparent);
+    --anta-native-range-fill: color-mix(in oklch, var(--border-2) 45%, transparent);
+    --anta-native-range-thumb: var(--bg-2);
+    --anta-native-range-thumb-border: var(--border-3);
+    cursor: not-allowed;
+  }
+  @media (forced-colors: active) {
+    input[data-anta][type="range"] {
+      forced-color-adjust: none;
+      --anta-native-range-track: CanvasText;
+      --anta-native-range-fill: Highlight;
+      --anta-native-range-thumb: Canvas;
+      --anta-native-range-thumb-border: CanvasText;
+    }
+    input[data-anta][type="range"]:focus-visible { outline: 2px solid Highlight; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    input[data-anta][type="range"]::-webkit-slider-runnable-track,
+    input[data-anta][type="range"]::-webkit-slider-thumb,
+    input[data-anta][type="range"]::-moz-range-track,
+    input[data-anta][type="range"]::-moz-range-progress,
+    input[data-anta][type="range"]::-moz-range-thumb { transition: none; }
+  }
 
   a-slider:not(:defined) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: 12px;
-    row-gap: var(--slider-gap);
+    column-gap: 1px;
+    row-gap: 1px;
     opacity: 0.5;
     transition: opacity 280ms ease-out 40ms;
   }
   a-slider:not(:defined) > [slot="label"] {
+    /* Rich JSX labels use `display: contents` once they are slotted. Before
+       upgrade this node must remain a grid item, otherwise the skeleton cannot
+       reserve the label row. */
+    display: block !important;
     grid-column: 1;
     grid-row: 1;
+    min-width: 0;
     color: var(--slider-label);
     font-family: var(--sans-serif);
     font-size: var(--slider-label-size);
@@ -88,10 +405,14 @@
     grid-column: 1 / -1;
     grid-row: 2;
     content: '';
-    block-size: var(--slider-track-size);
-    margin-inline: calc(var(--slider-thumb-size) / 2);
-    border-radius: 999px;
-    background: var(--slider-track);
+    block-size: var(--anta-slider-control-size);
+    border-radius: 4px;
+    background: linear-gradient(
+      to right,
+      transparent var(--slider-track-inset),
+      var(--slider-track) var(--slider-track-inset) calc(100% - var(--slider-track-inset)),
+      transparent calc(100% - var(--slider-track-inset))
+    ) center / 100% var(--anta-slider-track-size) no-repeat;
   }
   a-slider:not(:defined)::after {
     grid-column: 2;
@@ -103,6 +424,7 @@
     font-size: var(--slider-value-size);
     font-variant-numeric: tabular-nums;
     line-height: var(--slider-value-line-height);
+    padding-inline-start: 1ch;
   }
   a-slider[defaultvalue]:not([value]):not(:defined)::after {
     content: attr(value-prefix) attr(defaultvalue) attr(value-suffix);
@@ -110,18 +432,48 @@
   a-slider[value]:not(:defined)::after {
     content: attr(value-prefix) attr(value) attr(value-suffix);
   }
-  a-slider[value-display="inline"]:not(:defined)::after,
   a-slider[value-display="thumb"]:not(:defined)::after,
   a-slider[value-display="none"]:not(:defined)::after { display: none; }
+  /* Keep the inline value in the skeleton. Besides avoiding a blank header,
+     this reserves its width so a label does not wrap only after the element
+     upgrades into its shadow-DOM header. */
+  a-slider[value-display="inline"]:not(:defined)::after {
+    content: ': ' attr(value-prefix) attr(min) attr(value-suffix);
+    display: block;
+    white-space: nowrap;
+  }
+  a-slider[value-display="inline"][defaultvalue]:not([value]):not(:defined)::after {
+    content: ': ' attr(value-prefix) attr(defaultvalue) attr(value-suffix);
+  }
+  a-slider[value-display="inline"][value]:not(:defined)::after {
+    content: ': ' attr(value-prefix) attr(value) attr(value-suffix);
+  }
+  /* A value-less slider has no header after upgrade. Put its skeleton control
+     in the first grid row too, avoiding an otherwise empty row-gap. */
+  a-slider[value-display="none"]:not(:defined):not(:has(> [slot="label"]))::before {
+    grid-row: 1;
+  }
   a-slider:not(:defined) > [slot="markers"] {
     grid-column: 1 / -1;
     grid-row: 3;
-    margin-inline: calc(var(--slider-thumb-size) / 2);
+    position: relative;
+    inset-inline-start: var(--slider-marker-position);
+    max-inline-size: min(12rem, 50vw);
+    color: var(--slider-marker, var(--text-4));
+    font-family: var(--sans-serif);
+    font-feature-settings: 'ss02', 'ss05', 'tnum';
+    font-size: var(--slider-marker-size);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--slider-marker-line-height);
+    text-align: center;
+    transform: translateX(-50%);
+    white-space: nowrap;
   }
-  a-slider:not(:defined) > [slot="hint"],
+  a-slider:not(:defined) > [slot="markers"][data-slider-marker-start] { text-align: start; transform: translateX(0); }
+  a-slider:not(:defined) > [slot="markers"][data-slider-marker-end] { text-align: end; transform: translateX(-100%); }
   a-slider:not(:defined) > :not([slot]) {
     grid-column: 1 / -1;
-    grid-row: 4;
+    grid-row: 3;
   }
   a-slider:defined { opacity: 1; transition: opacity 280ms ease-out 40ms; }
   @media (prefers-reduced-motion: reduce) {

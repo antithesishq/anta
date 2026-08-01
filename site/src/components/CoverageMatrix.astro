@@ -27,7 +27,7 @@ const MARK_TONE: Partial<Record<Mark, string>> = {
 // categories Anta ships a page for; the rest render as plain, unlinked labels.
 const ANTA_SLUG: Record<string, string> = {
   button: 'button', textinput: 'input', select: 'select', combobox: 'input-autocomplete',
-  choice: 'checkbox',
+  choice: 'checkbox', slider: 'slider',
   datetime: 'input-date', tabs: 'tabs', menu: 'menu', tooltip: 'tooltip',
   dialog: 'dialog', toast: 'toaster', accordion: 'expander', table: 'table', tag: 'tag', card: 'card', progress: 'progress',
   icons: 'icon', typography: 'text',
@@ -246,19 +246,16 @@ const ANTA_SLUG: Record<string, string> = {
     color: var(--text-1-brand);
   }
 
-  /* Cross-highlight the hovered cell's row and column. The script toggles
-     `row-hl` on the row and `col-hl` on every cell down the column; these
-     selectors sit after the base cell backgrounds so they win on the sticky
-     header / category cells too (equal specificity, later in source). */
-  .cov tr.row-hl > th,
-  .cov tr.row-hl > td,
+  /* Highlight the hovered cell's column. The script toggles `col-hl` on
+     every cell in the column; these selectors sit after the base cell
+     backgrounds so they win on the sticky header and category cells too
+     (equal specificity, later in source). */
   .cov th.col-hl,
   .cov td.col-hl {
     background: var(--bg-3);
   }
 
-  /* Keep availability tiers visible even when a row or column is being
-     cross-highlighted. */
+  /* Keep availability tiers visible when a column is highlighted. */
   .cov td.m-partial {
     background: var(--bg-3-warning);
   }
@@ -280,34 +277,28 @@ const ANTA_SLUG: Record<string, string> = {
 </style>
 
 <script>
-  // Cross-highlight the hovered cell's row and column. Plain class toggling on
-  // an in-DOM table (this docs component isn't worker-rendered), driven by
-  // delegated pointer events so it costs nothing until the pointer enters.
-  // `cellIndex` / `rows` / `cells` are native table APIs; the header cell in
-  // each column is included, so hovering also tints the system name on top.
+  // Highlight the hovered cell's column. Plain class toggling on an in-DOM
+  // table (this docs component isn't worker-rendered), driven by delegated
+  // pointer events so it costs nothing until the pointer enters. `cellIndex`
+  // / `rows` / `cells` are native table APIs; the header cell in each column
+  // is included, so hovering also tints the system name on top.
   // Scanned on astro:page-load (the initial load and every swap): the module
   // runs once per session while the tables re-render on each navigation.
   document.addEventListener('astro:page-load', () => {
     for (const table of document.querySelectorAll<HTMLTableElement>('table.cov')) {
       let col = -1
-      let row: HTMLTableRowElement | null = null
       const clear = () => {
         for (const el of table.querySelectorAll('.col-hl')) el.classList.remove('col-hl')
-        row?.classList.remove('row-hl')
         col = -1
-        row = null
       }
       table.addEventListener('mouseover', (e) => {
         const cell = (e.target as Element).closest('th, td')
         if (!cell || !table.contains(cell)) return
         const nextCol = (cell as HTMLTableCellElement).cellIndex
-        const nextRow = cell.parentElement as HTMLTableRowElement
-        if (nextCol === col && nextRow === row) return
+        if (nextCol === col) return
         clear()
         col = nextCol
-        row = nextRow
         for (const r of table.rows) r.cells[col]?.classList.add('col-hl')
-        row.classList.add('row-hl')
       })
       table.addEventListener('mouseleave', clear)
     }

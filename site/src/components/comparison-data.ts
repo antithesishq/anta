@@ -68,7 +68,7 @@ export const SYSTEMS: System[] = [
     id: 'anta',
     name: 'Anta',
     anta: true,
-    version: '@antadesign/anta 0.3.16',
+    version: '@antadesign/anta 0.3.17',
     docs: 'https://anta.design',
     tagline: 'Framework-agnostic web components with optional React/Preact wrappers and no style runtime.',
     kind: 'Styled web components + JSX wrappers',
@@ -87,7 +87,7 @@ export const SYSTEMS: System[] = [
       'Per-element imports register only the component you use. Lottie lives in the separate stickers package.',
     ],
     cons: [
-      'Young and small: about 20 components, with no slider or avatar yet.',
+      'Young and small: about 20 components, with no avatar yet.',
       'Table and plotting libraries are planned companion packages.',
       'A 0.x release from one organization has a shorter track record than established systems.',
     ],
@@ -504,7 +504,7 @@ export const CATEGORIES: Category[] = [
  */
 export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   anta: {
-    button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes',
+    button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes', slider: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes',
     accordion: 'yes', table: 'partial', tag: 'yes', card: 'yes', progress: 'partial',
     icons: 'yes', typography: 'yes',

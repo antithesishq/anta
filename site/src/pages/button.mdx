@@ -921,6 +921,68 @@ a-button.glass a-button-label {               /* beautified label — gradient t
 }
 ```
 
+<Columns>
+<Col>
+
+<Preview>
+  <Button className="custom" tone="brand" loading label="Saving changes" />
+  <style is:inline>{`
+    /* Replace the standard loading stripes with the loader's rotating field. */
+    a-button.custom[loading]::before {
+      inset: -200%;
+      border-radius: 100%;
+      background: conic-gradient(
+        from 0deg,
+        color-mix(in oklch, currentColor 0%, transparent),
+        color-mix(in oklch, currentColor 10%, transparent)
+      );
+      opacity: 1;
+      filter: none;
+      animation: button-loader-field-spin 1s linear infinite;
+      animation-delay: -9999s;
+    }
+
+    @keyframes button-loader-field-spin {
+      to { transform: rotate(1turn); }
+    }
+  `}</style>
+</Preview>
+
+```tsx folded
+<Button className="custom" tone="brand" loading label="Saving changes" />
+
+<style>{`
+  /* Keep loading's blocked interaction; replace only its stripe overlay. */
+  a-button.custom[loading]::before {
+    inset: -200%;
+    border-radius: 100%;
+    background: conic-gradient(
+      from 0deg,
+      color-mix(in oklch, currentColor 0%, transparent),
+      color-mix(in oklch, currentColor 10%, transparent)
+    );
+    opacity: 1;
+    filter: none;
+    animation: button-loader-field-spin 1s linear infinite;
+    animation-delay: -9999s;
+  }
+
+  @keyframes button-loader-field-spin {
+    to { transform: rotate(1turn); }
+  }
+`}</style>
+```
+
+</Col>
+<Col>
+
+**Loader field.** `loading` still blocks pointer and keyboard activation. This
+only replaces its default stripe overlay with the Loader’s conic field, scaled
+beyond the button so it can rotate behind the label without exposing an edge.
+
+</Col>
+</Columns>
+
 Don't reach for the resolved `--button-fg` / `--button-bg`: they're recomputed per
 state, so setting one only catches a single state — restyle per state as above, or
 use `tone` for a full custom-colour curve.

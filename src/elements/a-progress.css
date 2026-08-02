@@ -57,8 +57,14 @@
      fill indicator to the rounded shape, so only the host radius is needed. A
      value (`round="6px"`, or the wrapper's `round={6}`) sets a custom radius. */
   a-progress[round] {
-    --progress-round: attr(round type(<length>), 999px);
-    border-radius: var(--progress-round, 999px);
+    --progress-round: 999px;
+    border-radius: var(--progress-round);
+  }
+
+  @supports (border-radius: attr(round type(<length>), 999px)) {
+    a-progress[round] {
+      --progress-round: attr(round type(<length>), 999px);
+    }
   }
 
   /* Named tones — each re-aliases the surface/indicator/text to the matching
@@ -101,23 +107,25 @@
 
   /* Custom tone — mirror the corresponding named color roles so the track,
      fill, and right edge retain their `bg-4` → `bg-5` → `border-4` order. */
-  :where(a-progress, progress[data-anta])[tone]:not(
-      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]) {
-    --progress-tone-source: attr(tone type(<color>), transparent);
+  @supports (color: attr(tone type(<color>), transparent)) {
+    :where(a-progress, progress[data-anta])[tone]:not(
+        [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
+        [tone="success"], [tone="warning"], [tone="critical"]) {
+      --progress-tone-source: attr(tone type(<color>), transparent);
 
-    --progress-bg:             oklch(from var(--progress-tone-source) 0.955 0.02 h);
-    --progress-border-color:   oklch(from var(--progress-tone-source) 0.9 0.04 h);
-    --progress-indicator-bg:   oklch(from var(--progress-tone-source) 0.935 0.03 h);
-    --progress-text-color:     oklch(from var(--progress-tone-source) 0.43 0.15 h);
-    --progress-hint-color:     color-mix(in oklch, var(--progress-text-color) 82%, transparent);
+      --progress-bg:             oklch(from var(--progress-tone-source) 0.955 0.02 h);
+      --progress-border-color:   oklch(from var(--progress-tone-source) 0.9 0.04 h);
+      --progress-indicator-bg:   oklch(from var(--progress-tone-source) 0.935 0.03 h);
+      --progress-text-color:     oklch(from var(--progress-tone-source) 0.43 0.15 h);
+      --progress-hint-color:     color-mix(in oklch, var(--progress-text-color) 82%, transparent);
 
-    .dark & {
-      --progress-bg:           oklch(from var(--progress-tone-source) 0.185 0.05 h);
-      --progress-border-color: oklch(from var(--progress-tone-source) 0.26 0.06 h);
-      --progress-indicator-bg: oklch(from var(--progress-tone-source) 0.205 0.055 h);
-      --progress-text-color:   oklch(from var(--progress-tone-source) 0.77 0.11 h);
-      --progress-hint-color:   color-mix(in oklch, var(--progress-text-color) 80%, transparent);
+      .dark & {
+        --progress-bg:           oklch(from var(--progress-tone-source) 0.185 0.05 h);
+        --progress-border-color: oklch(from var(--progress-tone-source) 0.26 0.06 h);
+        --progress-indicator-bg: oklch(from var(--progress-tone-source) 0.205 0.055 h);
+        --progress-text-color:   oklch(from var(--progress-tone-source) 0.77 0.11 h);
+        --progress-hint-color:   color-mix(in oklch, var(--progress-text-color) 80%, transparent);
+      }
     }
   }
 
@@ -183,7 +191,12 @@
     vertical-align: middle;
   }
   progress[data-anta][round] {
-    --anta-native-progress-radius: attr(round type(<length>), 999px);
+    --anta-native-progress-radius: 999px;
+  }
+  @supports (border-radius: attr(round type(<length>), 999px)) {
+    progress[data-anta][round] {
+      --anta-native-progress-radius: attr(round type(<length>), 999px);
+    }
   }
   progress[data-anta]::-webkit-progress-bar {
     border-radius: var(--anta-native-progress-radius);

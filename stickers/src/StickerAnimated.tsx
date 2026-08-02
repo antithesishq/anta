@@ -38,8 +38,9 @@ export const StickerAnimated = ({
   label,
   ...rest
 }: StickerAnimatedInternalProps) => {
+  const canReplay = playOnce && replayOnClick;
   const a11y: StickerA11y | { role: 'button'; 'aria-label': string; tabIndex: number } =
-    replayOnClick
+    canReplay
       ? { role: 'button', 'aria-label': label ?? 'Replay animation', tabIndex: 0 }
       : label != null
         ? { role: "img", "aria-label": label }
@@ -68,7 +69,7 @@ export const StickerAnimated = ({
       paused={pausedAttr}
       delay={delayAttr}
       play-once={playOnce ? '' : undefined}
-      replay-on-click={replayOnClick ? '' : undefined}
+      replay-on-click={canReplay ? '' : undefined}
       {...a11y}
       {...rest}
       style={style}

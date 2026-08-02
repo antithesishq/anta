@@ -12,6 +12,8 @@ changes are not listed.
 
 ### Added
 
+- `Loader` provides animated icon-sized feedback, determinate circular progress,
+  a `speed` prop, and the `loader` icon-shape alias for string-only icon props.
 - `Progress` shows an indeterminate loading animation when `value` is omitted
   or set to `false`.
 - `Progress` supports `small`, `medium`, and `large` sizes.

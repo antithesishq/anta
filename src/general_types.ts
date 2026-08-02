@@ -188,6 +188,28 @@ export interface AProgressAttributes extends BaseAttributes {
 }
 
 /**
+ * Attributes for the `<a-loader>` custom element. For the JSX wrapper with
+ * cross-browser sizing and accessible progress semantics, use `Loader` from
+ * `@antadesign/anta`.
+ */
+export interface ALoaderAttributes extends BaseAttributes {
+  /** Presence selects the static, determinate gradient. Set `--loader-value`
+   * in `style` to its percentage. Omit this attribute for the rotating
+   * indeterminate gradient. */
+  value?: number | string | false
+  /** ARIA accessible name. */
+  'aria-label'?: string
+  /** Hides a decorative loader from screen readers. */
+  'aria-hidden'?: 'true' | 'false' | boolean
+  /** ARIA value-now for determinate progress. */
+  'aria-valuenow'?: number | string
+  /** ARIA value-min. */
+  'aria-valuemin'?: number | string
+  /** ARIA value-max. */
+  'aria-valuemax'?: number | string
+}
+
+/**
  * Attributes for the `<a-text>` custom element.
  *
  * Low-level web component attributes; for the JSX wrapper use `Text`

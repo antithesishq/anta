@@ -14,6 +14,10 @@ Inline-block icon rendered via CSS `mask-image`. Color follows
 `shape`. The set of valid shapes is the union of Anta's built-ins plus
 any custom icons you generate yourself.
 
+`shape="loader"` is the exception: it is Anta's animated loading alias for
+string-only icon props. Use `Loader` when you need a progress value, speed, or
+accessible loading status.
+
 > In practice you'll rarely reach for `<Icon>` directly. Most Anta
 > components that need an icon expose an `icon` prop that's typed
 > against `IconShape` — autocomplete and type-checking work the same

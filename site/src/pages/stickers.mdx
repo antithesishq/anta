@@ -33,7 +33,7 @@ The full set is also published as a [Telegram sticker pack](https://t.me/addstic
 
 ## Props
 
-Both flavors share the same base props; the animated flavor adds `paused`.
+Both flavors share the same base props; the animated flavor adds playback props.
 
 ### `Sticker{Name}` (static)
 
@@ -51,6 +51,9 @@ Same as the static base, plus:
 | Prop | Type | Description |
 |---|---|---|
 | `paused?` | `boolean \| number` | `true` freezes at the current frame; a number freezes at that time in seconds. Omit (or pass `false`) to play. |
+| `delay?` | `number` | Seconds to wait at the first frame before playing. |
+| `playOnce?` | `boolean` | Plays once and holds the final frame instead of looping. |
+| `replayOnClick?` | `boolean` | With `playOnce`, lets people click or press Enter/Space to replay the animation. The sticker becomes a labeled button. |
 
 <Disclosure title="Vanilla web component">
 
@@ -104,14 +107,18 @@ sticker size too:
 
 ## Animation control
 
-`paused` only applies to `Sticker{Name}Animated`. It maps to the
-element's observed `paused` attribute:
+`paused`, `delay`, `playOnce`, and `replayOnClick` only apply to
+`Sticker{Name}Animated`.
+They map to observed element attributes:
 
 ```tsx
 <StickerCodingAnimated />                  // autoplay, looping
 <StickerCodingAnimated paused />           // freeze at the current frame
 <StickerCodingAnimated paused={1.5} />     // freeze at 1.5 seconds
 <StickerCodingAnimated paused={false} />   // explicitly play (same as omitted)
+<StickerCodingAnimated delay={0.5} />      // wait half a second, then play
+<StickerCodingAnimated playOnce />         // play once, then hold the final frame
+<StickerCodingAnimated playOnce replayOnClick label="Replay coding sticker" />
 ```
 
 ## Adding your own stickers

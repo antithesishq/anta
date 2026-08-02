@@ -362,6 +362,7 @@ if (isComponentPage && title) {
             underline="dotted"
             label="On this page"
             aria-label="Open table of contents"
+            data-toc-pending
           />
         )}
         <slot />
@@ -427,6 +428,17 @@ if (isComponentPage && title) {
         if (e.key === 'Escape') closeAll()
       })
       window.addEventListener('hashchange', () => setToc(false))
+
+      // `<a-toc>` only renders when the page has enough headings to navigate.
+      // Keep the mobile trigger hidden until it reports that it has entries,
+      // so overview-style pages never open an empty panel.
+      document.addEventListener('anta-tocchange', (e) => {
+        const target = e.target
+        if (!(target instanceof HTMLElement) || target.localName !== 'a-toc') return
+        const hasEntries = Boolean((e as CustomEvent<{ hasEntries?: boolean }>).detail?.hasEntries)
+        document.querySelector('.toc-toggle')?.toggleAttribute('data-toc-pending', !hasEntries)
+        if (!hasEntries) setToc(false)
+      })
 
       // Theme toggle: flip `.dark` (and the theme-color meta) via the head
       // script's shared apply, then persist the choice. Cold loads apply
@@ -784,6 +796,10 @@ if (isComponentPage && title) {
   /* The in-content "On this page" TOC trigger is mobile-only; on desktop
      the .toc-rail is always visible, so the button is hidden. */
   .toc-toggle {
+    display: none;
+  }
+
+  .toc-toggle[data-toc-pending] {
     display: none;
   }
 

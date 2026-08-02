@@ -75,7 +75,14 @@ export class ATocElement extends HTMLElement {
       root.querySelectorAll<HTMLElement>(HEADING_SELECTOR),
     ).filter((h) => h.textContent?.trim() && Number(h.tagName[1]) <= maxLevel)
 
-    if (this.headings.length < MIN_HEADINGS) return
+    const hasEntries = this.headings.length >= MIN_HEADINGS
+    this.toggleAttribute('data-empty', !hasEntries)
+    this.dispatchEvent(new CustomEvent('anta-tocchange', {
+      bubbles: true,
+      composed: true,
+      detail: { hasEntries },
+    }))
+    if (!hasEntries) return
 
     const entries: Entry[] = this.headings.map((h) => ({
       id: h.id,

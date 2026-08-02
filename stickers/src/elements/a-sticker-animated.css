@@ -6,4 +6,13 @@
     width: var(--sticker-size);
     height: var(--sticker-size);
   }
+
+  a-sticker-animated[replay-on-click] {
+    cursor: pointer;
+  }
+
+  a-sticker-animated[replay-on-click]:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
 }

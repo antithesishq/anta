@@ -235,4 +235,52 @@ opening stop faint so the rotating hand still has a readable leading edge.
 </Col>
 </Columns>
 
+<Columns>
+<Col>
+
+<Preview background="var(--bg-2)">
+  <Loader className="ring-loader" size={32} label="Loading results" />
+  <style is:inline>{`
+    a-loader.ring-loader {
+      position: relative;
+      color: var(--anta-seed-brand);
+    }
+
+    a-loader.ring-loader::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border-radius: 100%;
+      background: var(--bg-2);
+      pointer-events: none;
+    }
+  `}</style>
+</Preview>
+
+```css folded
+a-loader.ring-loader {
+  position: relative;
+  color: var(--anta-seed-brand);
+}
+
+a-loader.ring-loader::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 100%;
+  background: var(--bg-2); /* the known surface behind the Loader */
+  pointer-events: none;
+}
+```
+
+</Col>
+<Col>
+
+**Known surface.** This paints a `--bg-2` circle over the Loader, matching
+this preview’s explicit background and making a visual hole. Use the same
+approach only when your Loader sits on a known opaque surface.
+
+</Col>
+</Columns>
+
 </Disclosure>

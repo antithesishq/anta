@@ -20,7 +20,7 @@
     background: conic-gradient(
       from 0deg,
       color-mix(in oklch, currentColor 6%, transparent),
-      color-mix(in oklch, currentColor 75%, transparent)
+      color-mix(in oklch, currentColor 70%, transparent)
     );
   }
 
@@ -31,7 +31,7 @@
     -webkit-mask-image: conic-gradient(
       from 0deg,
       color-mix(in oklch, #000 6%, transparent),
-      color-mix(in oklch, #000 75%, transparent)
+      color-mix(in oklch, #000 70%, transparent)
     );
     mask-image: conic-gradient(
       from 0deg,

@@ -123,10 +123,10 @@ const ANTA_SLUG: Record<string, string> = {
     margin-block: 24px 8px;
   }
 
-  /* The 855px table minimum leaves 675px after the 180px category column:
-     45px for each of the 15 equal system columns. Keep the viewport
+  /* The 810px table minimum leaves 630px after the 180px category column:
+     45px for each of the 14 equal system columns. Keep the viewport
      only while that minimum needs horizontal scrolling. */
-  @container (min-width: 855px) {
+  @container (min-width: 810px) {
     .cov-scroll {
       max-block-size: none;
       overflow: visible;
@@ -139,7 +139,7 @@ const ANTA_SLUG: Record<string, string> = {
     /* Fixed layout gives the category its 180px measure and divides all
        remaining room evenly between the 15 system columns. */
     table-layout: fixed;
-    width: max(100%, 855px);
+    width: max(100%, 810px);
     min-width: 100%;
     font-size: 13px;
   }

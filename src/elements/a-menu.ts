@@ -342,8 +342,8 @@ export class AMenuElement extends HTMLElementBase {
     const shadow = this.attachShadow({ mode: 'open' })
     const style = document.createElement('style')
     // Shadow surface CSS (kept comment-free — this string ships into every
-    // consumer document). The shadow root holds exactly one element, the
-    // surface div with a <slot> inside, so the bare `div` selector is
+    // consumer document). The shadow root holds the surface div and its slots, so
+    // the bare `div` selector is
     // unambiguous; slotted light DOM isn't matched by shadow selectors.
     // Two non-obvious rules, learned the hard way:
     // - `display` is set ONLY on `:popover-open`. Any author display on the
@@ -414,6 +414,18 @@ export class AMenuElement extends HTMLElementBase {
       /* Enter: start from the closed state and transition in. */
       @starting-style {
         .container:popover-open { opacity: 0; translate: 0 -4px; }
+      }
+      slot[name="header"],
+      slot[name="footer"] {
+        display: block;
+        flex: none;
+      }
+      slot[name="header"]::slotted(a-menu-header),
+      slot[name="header"]::slotted(a-select-header),
+      slot[name="footer"]::slotted(a-menu-footer),
+      slot[name="footer"]::slotted(a-select-footer) {
+        display: block;
+        padding: var(--menu-padding, 4px);
       }
       /* The scrolling body — only the items scroll; the header / footer slots stay
          fixed above and below it. min-height:0 lets it shrink so its own scrollbar

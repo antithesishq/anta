@@ -152,6 +152,7 @@
     margin-inline-end: var(--input-trailing-inset, 7px);
   }
   a-input:has(> [slot="leading"])::part(input) { padding-inline-start: 5px; }
+  a-input[truncate]:not([multiline])::part(input) { text-overflow: ellipsis; }
   a-input:has(> [slot="hint"])::part(hint) { display: flex; }
   a-input[multiline]:has(> [slot="leading"])::part(leading),
   a-input[multiline]:has(> [slot="trailing"])::part(trailing) {

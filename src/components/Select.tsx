@@ -15,7 +15,7 @@ import { MenuItem } from './MenuItem'
 import { MenuGroup } from './MenuGroup'
 import { MenuSeparator } from './MenuSeparator'
 import { Tooltip } from './Tooltip'
-import styles from './Select.module.css'
+import './select-parts.css'
 
 
 /** The type an option `value` may take: `string`, `number`, or `boolean`. Selection
@@ -794,13 +794,11 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         // by <a-menu>, which binds a keydown on its trigger anchor — so there's no
         // onKeyDown here synthesizing a click on the live node.
         trailing={
-          // Chevron rotates down → up when open (spacing + rotation in the CSS
-          // module, matching the Input "Select dropdown" example).
-          <Icon
-            shape="chevron-down"
-            className={open ? `${styles.chevron} ${styles.open}` : styles.chevron}
-            style={statusColor ? { color: statusColor } : undefined}
-          />
+          // The named tag owns the select-specific rotation while the icon remains
+          // a normal currentColor glyph.
+          <a-select-chevron open={open ? '' : undefined} style={statusColor ? { color: statusColor } : undefined}>
+            <Icon shape="chevron-down" />
+          </a-select-chevron>
         }
         className={className}
         style={style}
@@ -824,7 +822,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
           // `slot="header"` pins the field in the Menu's fixed header region (above
           // the scrolling options); `data-menu-search` puts the menu in combobox
           // mode — it focuses this field on open and drives an active-option cursor.
-          <div className={styles.filter} slot="header" data-menu-open="">
+          <a-select-header slot="header" data-menu-open="">
             <Input
               data-menu-search=""
               size="small"
@@ -837,7 +835,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
               aria-activedescendant={open && activeId ? activeId : undefined}
               onInput={(e: any) => setQuery(e.currentTarget.value)}
             />
-          </div>
+          </a-select-header>
         )}
         {multiple && selectAll && visibleLeaves.length > 0 && (
           <>
@@ -865,9 +863,12 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
             : renderTree(options, false)}
         {clearable && selectedValues.length > 0 && (
           // Pinned in the footer so it never scrolls away in a long / filtered list.
-          <div slot="footer" className={styles.footer}>
-            <MenuItem icon="x" label={clearLabel} data-menu-open="" onSelect={clear} />
-          </div>
+          <>
+            <MenuSeparator slot="footer" />
+            <a-select-footer slot="footer">
+              <MenuItem icon="x" label={clearLabel} data-menu-open="" onSelect={clear} />
+            </a-select-footer>
+          </>
         )}
       </Menu>
     </>

@@ -101,6 +101,9 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   name?: string
   /** Placeholder shown when empty. */
   placeholder?: string
+  /** Ellipsize an overflowing single-line value. Read-only inputs already do
+   * this; use `truncate` when an editable field should keep the same treatment. */
+  truncate?: boolean
   /** Disable the field. */
   disabled?: boolean
   /** Make the field read-only. */
@@ -244,6 +247,7 @@ export const Input = ({
   inputMode,
   name,
   placeholder,
+  truncate,
   disabled,
   readOnly,
   required,
@@ -296,6 +300,7 @@ export const Input = ({
       type={!multiline && rows == null ? nativeType : undefined}
       name={name}
       placeholder={placeholder}
+      truncate={presence(truncate)}
       disabled={presence(disabled)}
       readonly={presence(readOnly)}
       required={presence(required)}

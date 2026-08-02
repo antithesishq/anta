@@ -161,6 +161,12 @@ export interface AntaIntrinsicElements {
   'a-menu-item-hint': BaseAttributes
   'a-menu-item-text': BaseAttributes
   'a-menu-separator': BaseAttributes
+  'a-menu-header': BaseAttributes
+  'a-menu-footer': BaseAttributes
+  'a-select-header': BaseAttributes
+  'a-select-footer': BaseAttributes
+  'a-select-chevron': BaseAttributes & { open?: boolean | '' }
+  'a-select-faceted-summary': BaseAttributes
   'a-menu-group': AMenuGroupAttributes
   'a-menu-group-label': BaseAttributes
   'a-tabs': ATabsAttributes
@@ -170,6 +176,7 @@ export interface AntaIntrinsicElements {
   'a-dialog': ADialogAttributes
   'a-card': ACardAttributes
   'a-card-icon-chip': BaseAttributes
+  'a-input-date-time-container': BaseAttributes
   'a-banner': ABannerAttributes
   'a-banner-message': BaseAttributes
   'a-toaster': AToasterAttributes

@@ -4,7 +4,6 @@
 // it to an ISO date (or date-time) on commit, plus a <Menu> holding a <Calendar>
 // that opens from the field itself (click or ArrowDown), anchored to it like
 // Select. There is no `a-inputdate` element; the wrapper is the coordinator.
-import cn from 'clsx'
 import { useMemo, useState } from '../jsx-runtime'
 import { Temporal } from 'temporal-polyfill'
 import type { BaseProps } from '../general_types'
@@ -25,7 +24,7 @@ import { Calendar } from './Calendar'
 import { Button } from './Button'
 import { Icon } from './Icon'
 import { InputTime } from './InputTime'
-import styles from './InputDate.module.css'
+import './InputDate.css'
 
 /** Snapshot passed as the 2nd argument to `onValueChange` — the new ISO value
  *  (`''` when cleared) plus the field name (mirrors `Input` / `Calendar`). */
@@ -313,7 +312,8 @@ export const InputDate = ({
             if (resolve(e.currentTarget.value)) setOpen(false)
           }
         }}
-        className={cn(styles.dateField, className)}
+        truncate
+        className={className}
         style={style}
         {...rest}
       />
@@ -327,7 +327,7 @@ export const InputDate = ({
         placement={placement ?? 'bottom-start'}
         offset={offset}
         autoWidth
-        className={styles.calendarMenu}
+        inset={8}
         onStateChange={(_e, { next }) => setOpen(next)}
       >
         {/* `data-menu-open` keeps the menu open through calendar + time
@@ -350,7 +350,7 @@ export const InputDate = ({
             }}
           />
           {time && (
-            <div className={styles.timeRow}>
+            <a-input-date-time-container>
               {/* The time half is the standalone InputTime — a segmented hour /
                   minute / (AM-PM) field. It owns the 12h/24h clock, the AM/PM
                   toggle, and 24h→12h conversion; we just splice its `HH:mm` onto
@@ -382,7 +382,7 @@ export const InputDate = ({
                 aria-label="Done"
                 onClick={() => setOpen(false)}
               />
-            </div>
+            </a-input-date-time-container>
           )}
         </div>
       </Menu>

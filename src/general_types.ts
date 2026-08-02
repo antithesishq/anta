@@ -594,6 +594,8 @@ export interface AInputAttributes extends BaseAttributes {
   name?: string
   /** Placeholder shown when empty. */
   placeholder?: string
+  /** Ellipsize an overflowing single-line value. Presence-based. */
+  truncate?: boolean | ''
   autocomplete?: string
   inputmode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url'
   maxlength?: number | string

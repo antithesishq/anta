@@ -6,7 +6,8 @@ import Playground from '../components/Playground'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 import Preview from '../components/Preview.astro'
-import AnimatedProgress from '../components/AnimatedProgress'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
 import { Progress } from '@antadesign/anta'
 // The demo source lives in a sibling `.ts` file rather than inline
 // here because Astro's MDX pipeline trims leading whitespace from
@@ -17,8 +18,8 @@ import progressDemoCode from './progress.demo.ts'
 
 # Progress
 
-A progress indicator for displaying task completion. Consists of a track
-(background bar), an indicator (filled portion), and an optional label area.
+`Progress` shows task completion. Pass `value` for known progress. Omit it, or
+pass `false`, while work is underway without a known duration.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -26,47 +27,181 @@ A progress indicator for displaying task completion. Consists of a track
   client:visible
   component="Progress"
   layout="side"
+  codeInitiallyFolded
   initialCode={progressDemoCode}
 />
 
 </Disclosure>
 
-## Examples
+## Value, label and hint
 
-<Preview>
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+<Columns>
+<Col>
+
+<Preview gap="12px">
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
     <Progress value={60} />
-    <Progress value={42} tone="brand" label="Uploading files…" hint="3 of 7" />
-    <Progress value={75} tone="info" label="Processing" />
-    <Progress value={60} tone="warning" label="Uploading" hint="3 of 5" style={{ borderBottomWidth: '1px' }} />
-    <AnimatedProgress client:visible speed={2} tone="critical" />
+    <Progress value={42} label="Uploading files…" hint="3 of 7" />
+    <Progress label="Preparing upload…" hint="~ 3 minutes left" />
   </div>
 </Preview>
 
-```tsx
-// Minimum invocation — just a value.
+```tsx folded
 <Progress value={60} />
+<Progress value={42} label="Uploading files…" hint="3 of 7" />
 
-// Pair the value with a descriptive label and a right-aligned hint.
-<Progress value={42} tone="brand" label="Uploading files…" hint="3 of 7" />
-
-// A named tone re-tints every internal color via the --*-{tone} token cascade.
-<Progress value={75} tone="info" label="Processing" />
-
-// The host pre-declares border colour + style with width 0 — give it any
-// width to opt in; the colour auto-tracks the tone.
-<Progress value={60} tone="warning" label="Uploading" hint="3 of 5" style={{ borderBottomWidth: '1px' }} />
-
-// Animate by driving `value` over time.
-function AnimatedProgress({ speed = 1 }) {
-  const [v, setV] = useState(0)
-  useEffect(() => {
-    const id = setInterval(() => setV((x) => (x + speed) % 101), 50)
-    return () => clearInterval(id)
-  }, [speed])
-  return <Progress value={v} label="Animated" />
-}
+// Omit value, or pass false, while the duration is unknown.
+<Progress label="Preparing upload…" hint="~ 3 minutes left" />
 ```
+
+</Col>
+<Col>
+
+`value` sets known completion relative to `max`, which defaults to `100`.
+`label` follows the percentage. `hint` is right-aligned. With no `value`, the
+label identifies indeterminate work and the loading animation takes the track.
+
+</Col>
+</Columns>
+
+## Size
+
+<Columns>
+<Col>
+
+<Preview gap="8px">
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+    <Progress size="small" tone="info" value={60} label="Small" hint="~ 3 minutes left" />
+    <Progress tone="info" value={60} label="Medium" hint="~ 3 minutes left" />
+    <Progress size="large" tone="info" value={60} label="Large" hint="~ 3 minutes left" />
+  </div>
+</Preview>
+
+```tsx folded
+<Progress size="small" tone="info" value={60} label="Small" hint="~ 3 minutes left" />
+<Progress tone="info" value={60} label="Medium" hint="~ 3 minutes left" />
+<Progress size="large" tone="info" value={60} label="Large" hint="~ 3 minutes left" />
+```
+
+</Col>
+<Col>
+
+`size` scales the track and the default label row together. `medium` is the
+default.
+
+</Col>
+</Columns>
+
+## Tone
+
+<Columns>
+<Col>
+
+<Preview gap="12px">
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+    <Progress value={60} tone="brand" label="Brand" />
+    <Progress value={60} tone="info" label="Info" />
+    <Progress value={60} tone="success" label="Success" />
+    <Progress value={60} tone="warning" label="Warning" />
+    <Progress value={60} tone="critical" label="Critical" />
+    <Progress value={60} tone="#e0457b" label="Custom" />
+  </div>
+</Preview>
+
+```tsx folded
+<Progress value={60} tone="brand" label="Brand" />
+<Progress value={60} tone="info" label="Info" />
+<Progress value={60} tone="success" label="Success" />
+<Progress value={60} tone="warning" label="Warning" />
+<Progress value={60} tone="critical" label="Critical" />
+<Progress value={60} tone="#e0457b" label="Custom" />
+```
+
+</Col>
+<Col>
+
+`tone` colors the track, indicator, and label row. Use `neutral` for the
+default, a named semantic tone, or any CSS color.
+
+</Col>
+</Columns>
+
+## Border
+
+<Columns>
+<Col>
+
+<Preview gap="12px">
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+    <Progress value={60} tone="warning" label="Border on every edge" hint="3 of 5" style={{ borderWidth: '2px' }} />
+    <Progress value={60} tone="info" label="Top-mounted indicator" hint="3 of 5" style={{ borderWidth: '0 0 1px' }} />
+    <Progress value={60} tone="brand" label="Bottom-mounted indicator" hint="3 of 5" style={{ borderTopWidth: '1px' }} />
+  </div>
+</Preview>
+
+```tsx folded
+<Progress
+  value={60}
+  tone="warning"
+  label="Border on every edge"
+  hint="3 of 5"
+  style={{ borderWidth: '2px' }}
+/>
+
+// A bottom border works when the indicator is at the top of the app.
+<Progress
+  value={60}
+  tone="info"
+  label="Top-mounted indicator"
+  hint="3 of 5"
+  style={{ borderWidth: '0 0 1px' }}
+/>
+
+// A top border works when the indicator is at the bottom of the app.
+<Progress
+  value={60}
+  tone="brand"
+  label="Bottom-mounted indicator"
+  hint="3 of 5"
+  style={{ borderTopWidth: '1px' }}
+/>
+```
+
+</Col>
+<Col>
+
+The track starts borderless. Set a border width to reveal its tone-aware border
+color. A bottom edge works for an indicator at the top of an app. A top edge
+works for one at the bottom.
+
+</Col>
+</Columns>
+
+## Round
+
+<Columns>
+<Col>
+
+<Preview gap="12px">
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+    <Progress value={60} round label="Fully round" />
+    <Progress value={60} round={4} label="4px radius" />
+  </div>
+</Preview>
+
+```tsx folded
+<Progress value={60} round label="Fully round" />
+<Progress value={60} round={4} label="4px radius" />
+```
+
+</Col>
+<Col>
+
+`round` makes the track fully round. Pass a number or CSS length for a custom
+radius.
+
+</Col>
+</Columns>
 
 <Disclosure title="Component props" open>
 
@@ -76,45 +211,96 @@ function AnimatedProgress({ speed = 1 }) {
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
-
-Add the progressbar semantics and label structure when using the element directly.
+<Columns>
+<Col>
 
 <Preview>
-  <a-progress style={{ width: '100%' }} value="42" max="100" role="progressbar" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
+  <a-progress style={{ width: '100%' }} value="42" max="100" tone="info" role="progressbar" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
     <a-progress-label>
       <a-progress-number>42%</a-progress-number>
       <a-progress-text>Upload</a-progress-text>
     </a-progress-label>
   </a-progress>
+
+  <a-progress style={{ width: '100%' }} round="50px" role="progressbar" aria-label="Preparing upload">
+    <a-progress-label>
+      <a-progress-text>Preparing upload</a-progress-text>
+    </a-progress-label>
+  </a-progress>
 </Preview>
 
 ```html
-<a-progress style="width: 100%" value="42" max="100" role="progressbar"
+<a-progress style="width: 100%" value="42" max="100" tone="info" role="progressbar"
   aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Upload, 42%">
   <a-progress-label>
     <a-progress-number>42%</a-progress-number>
     <a-progress-text>Upload</a-progress-text>
   </a-progress-label>
 </a-progress>
+
+<!-- Omit value for indeterminate progress. -->
+<a-progress style="width: 100%" round="50px" role="progressbar" aria-label="Preparing upload">
+  <a-progress-label>
+    <a-progress-text>Preparing upload</a-progress-text>
+  </a-progress-label>
+</a-progress>
 ```
+
+</Col>
+<Col>
+
+Use this when you are not using the React or Preact wrapper and a native HTML
+control does not fit: construct the equivalent Anta web component from the
+elements below.
+
+Add the progressbar semantics and label structure when using the element
+directly.
+
+</Col>
+</Columns>
+
+### Native HTML progress
+
+<Columns>
+<Col>
+
+<Preview gap="12px">
+  <progress data-anta value="42" max="100" tone="info" aria-label="Uploading, 42%" style={{ width: '100%' }} />
+  <progress data-anta round="50px" aria-label="Preparing upload" style={{ width: '100%' }} />
+</Preview>
+
+```html
+<progress
+  data-anta
+  value="42"
+  max="100"
+  tone="info"
+  aria-label="Uploading, 42%"
+  style="width: 100%"
+></progress>
+
+<!-- Omit value for native indeterminate progress. -->
+<progress data-anta round="50px" aria-label="Preparing upload" style="width: 100%"></progress>
+```
+
+</Col>
+<Col>
+
+For a plain HTML progress indicator, add `data-anta` to `<progress>`. It keeps
+the browser's native semantics, including indeterminate progress when `value`
+is absent, while using Anta's track, fill, tone, and size treatments. Native
+progress does not render Anta's label or hint structure; give it an accessible
+name instead.
+
+</Col>
+</Columns>
 
 </Disclosure>
 
 <Disclosure title="Styling">
 
-Reach for **`tone`** first — a named tone (`brand` / `info` / `success` / `warning`
-/ `critical`) or any CSS colour for a custom tone (it derives the track, indicator,
-and text in oklch):
-
-```tsx folded
-<Progress value={60} tone="success" />
-<Progress value={60} tone="#e0457b" />
-```
-
-For one-offs, the **track** is the host (style `a-progress` directly) and the
-**indicator** (fill bar) is a shadow **part** — `::part(indicator)`. The `.fancy`
-class is just for the demo:
+<Columns>
+<Col>
 
 <Preview>
   <div style={{ width: '100%' }}>
@@ -155,5 +341,15 @@ a-progress.fancy a-progress-number,
 a-progress.fancy a-progress-text { color: #fff; }
 a-progress.fancy a-progress-hint { color: var(--text-2); }
 ```
+
+</Col>
+<Col>
+
+For one-offs, the **track** is the host (style `a-progress` directly) and the
+**indicator** (fill bar) is a shadow **part** — `::part(indicator)`. The `.fancy`
+class is just for the demo.
+
+</Col>
+</Columns>
 
 </Disclosure>

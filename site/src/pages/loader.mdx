@@ -1,0 +1,286 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Loader
+---
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
+import AnimatedLoader from '../components/AnimatedLoader'
+import InputLoaderDemo from '../components/InputLoaderDemo'
+import loaderDemoCode from './loader.demo.ts'
+import { Button, Loader, Tag } from '@antadesign/anta'
+
+# Loader
+
+`Loader` is an animated, icon-sized indicator for active work. It rotates while
+the duration is unknown. Pass `value` when the current proportion is known.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="Loader"
+  layout="side"
+  initialCode={loaderDemoCode}
+/>
+
+</Disclosure>
+
+## Indeterminate and determinate work
+
+<Columns>
+<Col>
+
+<Preview gap="20px">
+  <Loader label="Loading results" />
+  <Loader value={42} label="Uploading files" />
+  <AnimatedLoader client:visible />
+</Preview>
+
+```tsx folded
+// No value: the gradient communicates active work.
+<Loader label="Loading results" />
+
+// A value fills the circle through the current proportion.
+<Loader value={42} label="Uploading files" />
+```
+
+</Col>
+<Col>
+
+Without `value`, the faded gradient rotates. With `value`, the filled section
+starts at 12 o’clock, has a sharp edge at the current proportion, and stays
+still. The final preview is a slow, docs-only 0–100% cycle. `max` defaults to
+`100`.
+
+</Col>
+</Columns>
+
+## Size and speed
+
+<Columns>
+<Col>
+
+<Preview gap="20px">
+  <Loader size={14} speed={1} label="Slow loading" />
+  <Loader label="Loading" />
+  <Loader size={32} label="Loading" />
+</Preview>
+
+```tsx folded
+<Loader size={14} speed={1} label="Slow loading" />
+<Loader label="Loading" />                       // 16px, 0.75 seconds
+<Loader size={32} label="Loading" />
+```
+
+</Col>
+<Col>
+
+`size` is a pixel value, matching `Icon`. `speed` is seconds per rotation. All
+loaders with the same speed share a rotation phase.
+
+</Col>
+</Columns>
+
+## Icon-shape alias
+
+Use `loader` where an Anta component accepts an `IconShape` string. The alias
+is indeterminate and follows the surrounding icon size and color.
+
+<Columns>
+<Col>
+
+<Preview>
+  <Button tone="brand" icon="loader" label="Saving" />
+  <Tag tone="info" icon="loader" label="Syncing" />
+  <InputLoaderDemo client:load />
+</Preview>
+
+```tsx
+<Button tone="brand" icon="loader" label="Saving" />
+<Tag tone="info" icon="loader" label="Syncing" />
+<Input
+  label="Workspace"
+  defaultValue="Anta"
+  hint="Checking availability"
+  dimActions
+  trailing={<Icon shape="loader" aria-hidden="true" />}
+/>
+```
+
+</Col>
+<Col>
+
+The alias uses the same conic field as an alpha mask, keeping the icon slot's
+own color. It is decorative; the surrounding control or field provides its
+label, state, and semantics.
+
+</Col>
+</Columns>
+
+Use `<Loader>` when you need a value, speed, or accessible loading status.
+
+<Disclosure title="Component props">
+
+<PropsTable component="Loader" />
+
+</Disclosure>
+
+<Disclosure title="Vanilla web component">
+
+Use a raw `<a-loader>` when you are not using the JSX wrapper. Set its size,
+speed, and determinate percentage with CSS custom properties. `value` selects
+the static ring; `--loader-value` is the percentage it shows.
+
+<Preview gap="20px">
+  <a-loader role="progressbar" aria-label="Loading files" style={{ '--loader-size': '24px', '--loader-speed': '1s' }}></a-loader>
+  <a-loader value="42" role="progressbar" aria-label="Uploading files" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" style={{ '--loader-size': '24px', '--loader-value': '42%' }}></a-loader>
+</Preview>
+
+```html
+<!-- Indeterminate -->
+<a-loader
+  role="progressbar"
+  aria-label="Loading files"
+  style="--loader-size: 24px; --loader-speed: 1s"
+></a-loader>
+
+<!-- Determinate -->
+<a-loader
+  value="42"
+  role="progressbar"
+  aria-label="Uploading files"
+  aria-valuenow="42"
+  aria-valuemin="0"
+  aria-valuemax="100"
+  style="--loader-size: 24px; --loader-value: 42%"
+></a-loader>
+```
+
+When the value is unknown, omit `value` and give a standalone loader an
+accessible name. Mark a loader beside visible status text with `aria-hidden`.
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+The standalone Loader uses the quiet `--text-3` color by default. Set `color`
+directly when it needs a deliberate semantic or one-off color; the `loader`
+icon alias inherits its parent control’s color.
+
+<Columns>
+<Col>
+
+<Preview>
+  <Loader className="loader-demo" label="Saving" />
+  <style is:inline>{`
+    .loader-demo { color: mediumaquamarine; }
+  `}</style>
+</Preview>
+
+```css folded
+.loader-demo { color: mediumaquamarine; }
+```
+
+</Col>
+<Col>
+
+The `.loader-demo` class is only for this preview. Use a color on a parent or
+your own selector in an application stylesheet.
+
+</Col>
+</Columns>
+
+<Columns>
+<Col>
+
+<Preview>
+  <Loader className="rainbow-loader" label="Loading colors" />
+  <style is:inline>{`
+    a-loader.rainbow-loader:not([value]) {
+      background: conic-gradient(
+        from 0deg,
+        color-mix(in oklch, #ff5d8f 8%, transparent),
+        #ff5d8f 25%,
+        #9b6cf5 50%,
+        #55b8e8 75%,
+        #45ca9f
+      );
+    }
+  `}</style>
+</Preview>
+
+```css folded
+a-loader.rainbow-loader:not([value]) {
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in oklch, #ff5d8f 8%, transparent),
+    #ff5d8f 25%,
+    #9b6cf5 50%,
+    #55b8e8 75%,
+    #45ca9f
+  );
+}
+```
+
+</Col>
+<Col>
+
+Override `background` to tune an indeterminate gradient field. Keep the
+opening stop faint so the rotating hand still has a readable leading edge.
+
+</Col>
+</Columns>
+
+<Columns>
+<Col>
+
+<Preview background="var(--bg-2)">
+  <Loader className="ring-loader" size={32} label="Loading results" />
+  <style is:inline>{`
+    a-loader.ring-loader {
+      position: relative;
+      color: var(--anta-seed-brand);
+    }
+
+    a-loader.ring-loader::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border-radius: 100%;
+      background: var(--bg-2);
+      pointer-events: none;
+    }
+  `}</style>
+</Preview>
+
+```css folded
+a-loader.ring-loader {
+  position: relative;
+  color: var(--anta-seed-brand);
+}
+
+a-loader.ring-loader::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 100%;
+  background: var(--bg-2); /* the known surface behind the Loader */
+  pointer-events: none;
+}
+```
+
+</Col>
+<Col>
+
+**Known surface.** This paints a `--bg-2` circle over the Loader, matching
+this preview’s explicit background and making a visual hole. Use the same
+approach only when your Loader sits on a known opaque surface.
+
+</Col>
+</Columns>
+
+</Disclosure>

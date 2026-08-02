@@ -3,6 +3,28 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Changed
+
+- The Anta theme's `--focus-ring` now follows its brand text color.
+- `reset.css` gives plain keyboard-focused HTML the 1px Anta focus ring.
+
+### Added
+
+- `Loader` provides animated icon-sized feedback, determinate circular progress,
+  a `speed` prop, and the `loader` icon-shape alias for string-only icon props.
+- `Progress` shows an indeterminate loading animation when `value` is omitted
+  or set to `false`.
+- `Progress` supports `small`, `medium`, and `large` sizes.
+- Native HTML `<progress>` elements opt into the Progress appearance with
+  `data-anta`.
+
+### Fixed
+
+- Custom `Progress` tones now use the same track, fill, and edge progression as
+  named tones in light and dark themes.
+
 ## 0.3.17 — July 31, 2026
 
 ### Added

@@ -163,13 +163,15 @@ export interface BaseAttributes extends DOMEventHandlers {
  * typed props and computed labels, use `Progress` from `@antadesign/anta`.
  */
 export interface AProgressAttributes extends BaseAttributes {
-  /** Current progress value. */
-  value?: number | string
+  /** Current progress value. Omit this attribute for indeterminate progress. */
+  value?: number | string | false
   /** Maximum value. Defaults to 100. */
   max?: number | string
   /** Colour variant, or any literal CSS colour for a custom tone (derived in
    *  oklch). Named tones track light/dark automatically. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Size variant. `medium` is the default. */
+  size?: 'small' | 'medium' | 'large'
   /** Fully-round track (`border-radius: 999px`), or a custom radius via a length
    *  value (`round="6px"`). Presence-based for the boolean form. */
   round?: boolean | number | string
@@ -183,6 +185,28 @@ export interface AProgressAttributes extends BaseAttributes {
   'aria-valuemin'?: number | string
   /** ARIA accessible name. */
   'aria-label'?: string
+}
+
+/**
+ * Attributes for the `<a-loader>` custom element. For the JSX wrapper with
+ * cross-browser sizing and accessible progress semantics, use `Loader` from
+ * `@antadesign/anta`.
+ */
+export interface ALoaderAttributes extends BaseAttributes {
+  /** Presence selects the static, determinate gradient. Set `--loader-value`
+   * in `style` to its percentage. Omit this attribute for the rotating
+   * indeterminate gradient. */
+  value?: number | string | false
+  /** ARIA accessible name. */
+  'aria-label'?: string
+  /** Hides a decorative loader from screen readers. */
+  'aria-hidden'?: 'true' | 'false' | boolean
+  /** ARIA value-now for determinate progress. */
+  'aria-valuenow'?: number | string
+  /** ARIA value-min. */
+  'aria-valuemin'?: number | string
+  /** ARIA value-max. */
+  'aria-valuemax'?: number | string
 }
 
 /**

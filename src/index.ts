@@ -18,6 +18,8 @@
  */
 export { Progress } from './components/Progress'
 export type { ProgressProps } from './components/Progress'
+export { Loader } from './components/Loader'
+export type { LoaderProps } from './components/Loader'
 export { Text } from './components/Text'
 export type { TextProps, ExpandMode } from './components/Text'
 export { Title } from './components/Title'
@@ -152,7 +154,11 @@ export type { AntaIntrinsicElements } from './jsx-runtime'
  * Seed interface for the icon shape registry. The generated
  * `a-icon.shapes.d.ts` augments this interface with one key per
  * available shape; consumers can do the same with their own generated
- * .d.ts files (TypeScript merges them by interface name).
+ * .d.ts files (TypeScript merges them by interface name). `loader` is the
+ * animated string-shape alias; its CSS lives with the Loader component rather
+ * than the generated static SVG set.
  */
-export interface IconShapes {}
+export interface IconShapes {
+  loader: true
+}
 export type IconShape = keyof IconShapes

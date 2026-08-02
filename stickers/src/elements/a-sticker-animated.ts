@@ -18,6 +18,10 @@ import './a-sticker-animated.css'
  *    tears the player down.
  *  - `paused` — present: freeze at current frame. Numeric value
  *    (seconds): seek to that time, then freeze. Absent: play.
+ *  - `delay` — seconds to wait at the first frame before playing.
+ *  - `play-once` — present: play once, then hold the final frame.
+ *  - `replay-on-click` — present with `play-once`: clicking or pressing
+ *    Enter/Space restarts the animation from its first frame.
  *
  * The shadow container is sized from `--sticker-size` (set by the JSX
  * wrapper's `size` prop or the consumer), with a 256px fallback — see
@@ -26,11 +30,22 @@ import './a-sticker-animated.css'
  * The static counterpart is `<a-sticker>`.
  */
 export class AStickerAnimatedElement extends HTMLElementBase {
-  static observedAttributes = ['animation', 'paused']
+  static observedAttributes = ['animation', 'paused', 'delay', 'play-once', 'replay-on-click']
 
   container: HTMLDivElement
   player: AnimationItem | null = null
   _animation: Record<string, unknown> | null = null
+  #startTimer: ReturnType<typeof setTimeout> | null = null
+  #replay = () => {
+    if (!this.player || !this.hasAttribute('play-once') || !this.hasAttribute('replay-on-click')) return
+    this.#clearStartTimer()
+    this.player.goToAndPlay(0, true)
+  }
+  #onKeyDown = (event: KeyboardEvent) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return
+    event.preventDefault()
+    this.#replay()
+  }
 
   constructor() {
     super()
@@ -49,10 +64,14 @@ export class AStickerAnimatedElement extends HTMLElementBase {
   }
 
   connectedCallback() {
+    this.addEventListener('click', this.#replay)
+    this.addEventListener('keydown', this.#onKeyDown)
     if (this._animation != null && this.player == null) this.rebuild()
   }
 
   disconnectedCallback() {
+    this.removeEventListener('click', this.#replay)
+    this.removeEventListener('keydown', this.#onKeyDown)
     this.teardown()
   }
 
@@ -61,8 +80,10 @@ export class AStickerAnimatedElement extends HTMLElementBase {
       const value = this.getAttribute('animation')
       this._animation = value ? JSON.parse(value) : null
       if (this.isConnected) this.rebuild()
-    } else if (name === 'paused') {
-      this.applyPaused()
+    } else if (name === 'play-once') {
+      if (this.isConnected) this.rebuild()
+    } else if (name !== 'replay-on-click') {
+      this.syncPlayback()
     }
   }
 
@@ -73,22 +94,34 @@ export class AStickerAnimatedElement extends HTMLElementBase {
     this.player = lottie.loadAnimation({
       container: this.container,
       renderer: 'svg',
-      loop: true,
-      autoplay: !this.hasAttribute('paused'),
+      loop: !this.hasAttribute('play-once'),
+      autoplay: false,
       animationData: this._animation,
     })
 
-    // Apply any pre-existing `paused` value as soon as the player is
-    // constructed. `lottie-web` accepts play / pause / goToAndStop
-    // calls immediately; they're queued until DOM is ready.
-    this.applyPaused()
+    this.player.addEventListener('complete', () => {
+      if (this.hasAttribute('play-once')) {
+        this.player?.goToAndStop(this.player.totalFrames - 1, true)
+      }
+    })
+    this.syncPlayback()
   }
 
-  applyPaused() {
+  syncPlayback() {
+    this.#clearStartTimer()
     if (!this.player) return
     const attr = this.getAttribute('paused')
     if (attr === null) {
-      this.player.play()
+      const delay = Number(this.getAttribute('delay'))
+      if (Number.isFinite(delay) && delay > 0) {
+        this.player.goToAndStop(0, true)
+        this.#startTimer = setTimeout(() => {
+          this.#startTimer = null
+          if (!this.hasAttribute('paused')) this.player?.play()
+        }, delay * 1000)
+      } else {
+        this.player.play()
+      }
       return
     }
     const seconds = Number(attr)
@@ -101,7 +134,15 @@ export class AStickerAnimatedElement extends HTMLElementBase {
     }
   }
 
+  #clearStartTimer() {
+    if (this.#startTimer != null) {
+      clearTimeout(this.#startTimer)
+      this.#startTimer = null
+    }
+  }
+
   teardown() {
+    this.#clearStartTimer()
     if (this.player) {
       this.player.destroy()
       this.player = null

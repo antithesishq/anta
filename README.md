@@ -32,7 +32,7 @@ recommended; the reference theme is optional.
 | Import | Provides | Skip if… |
 |---|---|---|
 | `@antadesign/anta/tokens.css` | Six seed tokens, derived role scales (`--bg-1…5`, `--text-1…5`, `--border-1…5`), `.dark`, the 15px root size, and layer order. Override a seed to reskin its tone. | You provide those variables. |
-| `@antadesign/anta/reset.css` | A small reset plus Anta's heading, list, and link typography in `@layer anta`. | You use another reset and typography. |
+| `@antadesign/anta/reset.css` | A small reset plus Anta's focus, heading, list, and link typography in `@layer anta`. | You use another reset and typography. |
 | `@antadesign/anta/elements` | Registers every `<a-*>` element and its CSS. Per-element entries register one; see [Registering elements](#registering-elements). | You render only on the server or register elements individually. |
 | `@antadesign/anta` | Typed React/Preact wrappers such as `Progress`, `Text`, and `Icon`. | You write `<a-*>` elements directly. |
 | `@antadesign/anta/theme-anta.css` *(optional)* | The hand-tuned reference palette. Import last to replace the seed-derived default. | You want the seed-derived or your own palette. |

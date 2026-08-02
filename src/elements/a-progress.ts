@@ -49,6 +49,31 @@ export class AProgressElement extends HTMLElementBase {
         background: var(--progress-indicator-edge);
         border-right: var(--progress-indicator-edge-border, none);
       }
+      :host(:not([value])) .indicator {
+        left: calc(0px - var(--progress-loading-x-period));
+        width: calc(100% + var(--progress-loading-x-period));
+        background: repeating-linear-gradient(
+          var(--progress-loading-angle),
+          transparent 0,
+          transparent var(--progress-loading-stripe-gap),
+          var(--progress-text-color) var(--progress-loading-stripe-gap),
+          var(--progress-text-color) calc(var(--progress-loading-stripe-gap) + var(--progress-loading-stripe))
+        );
+        filter: blur(var(--progress-loading-blur));
+        opacity: var(--progress-loading-opacity);
+        transition: none;
+      }
+      :host(:not([value])) .indicator::after { display: none; }
+      @media (prefers-reduced-motion: no-preference) {
+        :host(:not([value])) .indicator {
+          will-change: transform;
+          animation: progress-loading-slide var(--progress-loading-duration) linear infinite;
+          animation-delay: -9999s;
+        }
+      }
+      @keyframes progress-loading-slide {
+        to { transform: translateX(var(--progress-loading-x-period)); }
+      }
       slot {
         display: block;
         position: relative;
@@ -76,9 +101,16 @@ export class AProgressElement extends HTMLElementBase {
   }
 
   update() {
-    const value = Number(this.getAttribute('value') ?? 0)
+    const valueAttr = this.getAttribute('value')
+    if (valueAttr == null) {
+      this.indicator.style.removeProperty('--_percent')
+      return
+    }
+    const value = Number(valueAttr)
     const max = Number(this.getAttribute('max') ?? 100)
-    const percent = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0
+    const percent = Number.isFinite(value) && Number.isFinite(max) && max > 0
+      ? Math.min(100, Math.max(0, (value / max) * 100))
+      : 0
     this.indicator.style.setProperty('--_percent', `${percent}%`)
   }
 }

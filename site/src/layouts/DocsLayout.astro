@@ -66,6 +66,8 @@ const ogImage = new URL('/og-image.png', Astro.site).href
 const pageUrl = new URL(Astro.url.pathname, Astro.site).href
 const pageTitle = title ? `${title} — Anta` : 'Anta'
 const description = "Antithesis design system: global CSS tokens, framework-agnostic web components, and JSX wrappers for React and Preact."
+// Keep local development free of analytics traffic and token configuration.
+const shouldLoadPostHog = import.meta.env.PROD
 
 // JSON-LD structured data. Every page declares the WebSite; component
 // pages add a breadcrumb trail so search results show the site hierarchy.
@@ -116,7 +118,7 @@ if (isComponentPage && title) {
         registry, fonts, and loaded CSS survive and `a-*` elements upgrade
         instantly. Script rules live in site/AGENTS.md ("ClientRouter"). */}
     <ClientRouter />
-    <PostHog />
+    {shouldLoadPostHog && <PostHog />}
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={pageUrl} />
@@ -311,6 +313,8 @@ if (isComponentPage && title) {
           <li><a href="/tag/" aria-current={isCurrent('/tag/') ? 'page' : undefined}><Icon shape="tag" size={18} /> Tag</a></li>
           <li><a href="/tooltip/" aria-current={isCurrent('/tooltip/') ? 'page' : undefined}><Icon shape="chat" size={18} /> Tooltip</a></li>
           <li><a href="/icon/" aria-current={isCurrent('/icon/') ? 'page' : undefined}><Icon shape="bug" size={18} /> Icon</a></li>
+          <li><a href="/loader/" aria-current={isCurrent('/loader/') ? 'page' : undefined}><Icon shape="loader-docs" size={18} /> Loader</a></li>
+          <li><a href="/progress/" aria-current={isCurrent('/progress/') ? 'page' : undefined}><Icon shape="hourglass" size={18} /> Progress</a></li>
         </menu>
         <hr class="sidebar-separator" />
         <menu>
@@ -340,7 +344,6 @@ if (isComponentPage && title) {
           <li><a href="/banner/" aria-current={isCurrent('/banner/') ? 'page' : undefined}><Icon shape="banner" size={18} /> Banner</a></li>
           <li><a href="/card/" aria-current={isCurrent('/card/') ? 'page' : undefined}><Icon shape="card" size={18} /> Card</a></li>
           <li><a href="/dialog/" aria-current={isCurrent('/dialog/') ? 'page' : undefined}><Icon shape="dialog" size={18} /> Dialog</a></li>
-          <li><a href="/progress/" aria-current={isCurrent('/progress/') ? 'page' : undefined}><Icon shape="hourglass" size={18} /> Progress</a></li>
           <li><a href="/toaster/" aria-current={isCurrent('/toaster/') ? 'page' : undefined}><Icon shape="toaster" size={18} /> Toaster</a></li>
         </menu>
         <h4>Packages</h4>
@@ -360,6 +363,7 @@ if (isComponentPage && title) {
             underline="dotted"
             label="On this page"
             aria-label="Open table of contents"
+            data-toc-pending
           />
         )}
         <slot />
@@ -425,6 +429,17 @@ if (isComponentPage && title) {
         if (e.key === 'Escape') closeAll()
       })
       window.addEventListener('hashchange', () => setToc(false))
+
+      // `<a-toc>` only renders when the page has enough headings to navigate.
+      // Keep the mobile trigger hidden until it reports that it has entries,
+      // so overview-style pages never open an empty panel.
+      document.addEventListener('anta-tocchange', (e) => {
+        const target = e.target
+        if (!(target instanceof HTMLElement) || target.localName !== 'a-toc') return
+        const hasEntries = Boolean((e as CustomEvent<{ hasEntries?: boolean }>).detail?.hasEntries)
+        document.querySelector('.toc-toggle')?.toggleAttribute('data-toc-pending', !hasEntries)
+        if (!hasEntries) setToc(false)
+      })
 
       // Theme toggle: flip `.dark` (and the theme-color meta) via the head
       // script's shared apply, then persist the choice. Cold loads apply
@@ -712,6 +727,10 @@ if (isComponentPage && title) {
     align-items: center;
     gap: 0.75ch;
     padding: 4px 0;
+    /* Match the compact corner treatment of Anta menu rows. It also gives
+       the shared focus outline a rounded shape without changing the sidebar's
+       text alignment. */
+    border-radius: var(--radius-sm, 4px);
     color: var(--text-3);
     font-size: 14px;
     font-weight: 400;
@@ -758,6 +777,10 @@ if (isComponentPage && title) {
   .package-link:hover > a-icon {
     color: var(--text-1-brand);
   }
+  .sidebar a:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
 
   /* Fill the whole track between the sidebars. The 960px prose measure
      is applied per-child in base.css (`.content > *`) so wide blocks
@@ -774,6 +797,10 @@ if (isComponentPage && title) {
   /* The in-content "On this page" TOC trigger is mobile-only; on desktop
      the .toc-rail is always visible, so the button is hidden. */
   .toc-toggle {
+    display: none;
+  }
+
+  .toc-toggle[data-toc-pending] {
     display: none;
   }
 

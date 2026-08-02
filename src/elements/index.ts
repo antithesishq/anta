@@ -14,6 +14,7 @@
  * `customElements` (SSR), but there's no reason to load it server-side.
  */
 export { AProgressElement, register_a_progress } from './a-progress'
+export { ALoaderElement, register_a_loader } from './a-loader'
 export { ATextElement, register_a_text } from './a-text'
 export { AIconElement, register_a_icon } from './a-icon'
 export { AButtonElement, register_a_button } from './a-button'

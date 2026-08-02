@@ -1,0 +1,65 @@
+@layer anta {
+  /* A standalone loader begins at the legacy text-3 colour. The icon alias
+     intentionally inherits its parent control's colour instead. */
+  a-loader {
+    color: var(--text-3);
+  }
+
+  :where(a-loader, a-icon[shape="loader"]) {
+    display: inline-block;
+    inline-size: var(--loader-size, var(--icon-size, 16px));
+    block-size: var(--loader-size, var(--icon-size, 16px));
+    flex: none;
+    vertical-align: middle;
+    border-radius: 50%;
+    animation: loader-spin var(--loader-speed, 0.75s) linear infinite;
+    animation-delay: -9999s;
+  }
+
+  a-loader {
+    background: conic-gradient(
+      from 0deg,
+      color-mix(in oklch, currentColor 6%, transparent),
+      color-mix(in oklch, currentColor 70%, transparent)
+    );
+  }
+
+  /* `a-icon[shape="loader"]` is the string-shape alias for APIs such as
+     `<Button icon="loader">`. Its normal currentColor background stays in
+     place; the conic field is its alpha mask. */
+  a-icon[shape="loader"] {
+    -webkit-mask-image: conic-gradient(
+      from 0deg,
+      color-mix(in oklch, #000 6%, transparent),
+      color-mix(in oklch, #000 70%, transparent)
+    );
+    mask-image: conic-gradient(
+      from 0deg,
+      color-mix(in oklch, #000 6%, transparent),
+      color-mix(in oklch, #000 75%, transparent)
+    );
+  }
+
+  /* The wrapper resolves the number into --loader-value. A raw element can do
+     the same in inline CSS. Determinate progress deliberately stays still. */
+  a-loader[value] {
+    background: conic-gradient(
+      from 0deg,
+      color-mix(in oklch, currentColor 60%, transparent) 0,
+      color-mix(in oklch, currentColor 75%, transparent) var(--loader-value, 0%),
+      color-mix(in oklch, currentColor 6%, transparent) var(--loader-value, 0%) 100%
+    );
+    animation: none;
+  }
+
+  @keyframes loader-spin {
+    to { transform: rotate(1turn); }
+  }
+
+  @media (forced-colors: active) {
+    a-loader {
+      forced-color-adjust: none;
+      color: CanvasText;
+    }
+  }
+}

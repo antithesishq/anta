@@ -1,6 +1,7 @@
 import { HTMLElementBase } from '../anta_helpers'
 import './a-icon.css'
 import './a-icon.shapes.css'
+import './a-loader.css'
 
 /**
  * `<a-icon shape="…">` — pure declarative icon element.

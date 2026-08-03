@@ -3,6 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Sliding Tab indicators no longer animate through stale geometry while their
+  strip is resized.
+
 ## 0.3.19 — August 3, 2026
 
 ### Changed

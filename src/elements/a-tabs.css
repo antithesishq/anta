@@ -391,6 +391,12 @@
         bottom var(--tab-timing),
         left var(--tab-timing);
     }
+    /* A full-width strip changes the anchored far edge during a container resize.
+       The element holds this internal state through each resize burst, so only a
+       selection change animates the shared indicator. */
+    a-tabs:state(resizing):not([noslide])::before {
+      transition: none;
+    }
     /* Nothing selected → no anchor → keep the indicator out of view. */
     a-tabs:not([noslide]):not(:has(a-tab:state(selected)))::before {
       display: none;

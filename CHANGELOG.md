@@ -3,6 +3,19 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.19 — August 3, 2026
+
+### Changed
+
+- Native `data-anta` select popups now follow Menu styling for their surface,
+  option sizing, colours, and 1px item spacing when customizable selects are
+  supported.
+
+### Fixed
+
+- Slider focus rings now surround only the range control, rather than the
+  complete Slider host.
+
 ## 0.3.18 — August 1, 2026
 
 ### Changed

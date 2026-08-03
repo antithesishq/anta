@@ -156,6 +156,10 @@
   }
 
   a-slider:not([disabled]):not(:disabled):focus-visible {
+    /* The interactive rail gets its focus ring from the shadow control. Keep
+       the reset's generic focus outline off the host, which also contains the
+       label, value, and markers. */
+    outline: none;
     --slider-thumb-border: var(--slider-thumb-border-active);
     --slider-fill: var(--slider-fill-hover);
   }

@@ -476,6 +476,18 @@
     --native-field-line-height: 20px;
     --native-field-round: 4px;
     --native-field-border: var(--border-2);
+    --native-select-picker-bg: color-mix(in oklch, var(--bg-1) 90%, transparent);
+    --native-select-picker-radius: var(--radius-md, 8px);
+    --native-select-picker-border: 1px solid var(--border-3);
+    --native-select-picker-shadow:
+      0 2px 6px color-mix(in oklch, var(--text-1) 8%, transparent),
+      0 8px 24px color-mix(in oklch, var(--text-1) 10%, transparent);
+    --native-select-option-color: var(--text-2);
+    --native-select-option-hover: 5%;
+    --native-select-option-active: 8%;
+    --native-select-option-selected: 8%;
+    --native-select-option-padding-x: 8px;
+    --native-select-option-padding-y: 6px;
 
     box-sizing: border-box;
     block-size: var(--native-field-block-size);
@@ -497,7 +509,15 @@
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
-  .dark select[data-anta] { color-scheme: dark; }
+  .dark select[data-anta] {
+    --native-select-picker-bg: color-mix(in oklch, var(--bg-1) 78%, transparent);
+    --native-select-picker-shadow:
+      0 2px 8px color-mix(in oklch, black 50%, transparent),
+      0 12px 32px color-mix(in oklch, black 40%, transparent),
+      inset 0 0 0 1px color-mix(in oklch, white 8%, transparent);
+
+    color-scheme: dark;
+  }
   @media (hover: hover) and (pointer: fine) {
     select[data-anta]:not(:disabled):hover {
       box-shadow: inset 0 0 0 1px var(--native-field-border);
@@ -675,29 +695,68 @@
     select[data-anta]:open > button > a-icon { transform: rotate(180deg); }
     select[data-anta]::picker(select) {
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
       margin-block-start: 4px;
       padding: 4px;
-      border: 0;
-      border-radius: 4px;
-      background: var(--bg-1);
-      box-shadow: inset 0 0 0 0.5px var(--border-2), 0 4px 12px color-mix(in oklch, black 12%, transparent);
-      color: var(--text-1);
+      border: var(--native-select-picker-border);
+      border-radius: var(--native-select-picker-radius);
+      background: var(--native-select-picker-bg);
+      box-shadow: var(--native-select-picker-shadow);
+      color: var(--native-select-option-color);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
     }
     select[data-anta] option {
-      border-radius: 3px;
-      color: var(--text-2);
-      font: inherit;
-      padding-block: 4px;
-      padding-inline: 7px;
+      box-sizing: border-box;
+      min-block-size: 28px;
+      padding-block: var(--native-select-option-padding-y);
+      padding-inline: var(--native-select-option-padding-x);
+      border-radius: var(--radius-sm, 4px);
+      background: transparent;
+      color: var(--native-select-option-color);
+      cursor: pointer;
+      font-family: var(--sans-serif);
+      font-feature-settings: 'ss02', 'ss05', 'tnum';
+      font-size: 14px;
+      font-weight: 400;
+      font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+      letter-spacing: normal;
+      line-height: 16px;
+      text-transform: none;
+      transition: background-color 280ms ease-out;
+    }
+    select[data-anta] option:is(:hover, :focus-visible) {
+      background: color-mix(in oklch, currentColor var(--native-select-option-hover), transparent);
+      transition: background-color 60ms ease-in-out;
+    }
+    select[data-anta] option:focus-visible {
+      outline: 1px solid var(--focus-ring);
+      outline-offset: 1px;
+    }
+    select[data-anta] option:active {
+      background: color-mix(in oklch, currentColor var(--native-select-option-active), transparent);
+      transition: none;
     }
     select[data-anta] option:checked {
-      background: color-mix(in oklch, var(--anta-seed-brand) 13%, transparent);
-      color: var(--text-1-brand);
+      background: color-mix(in oklch, currentColor var(--native-select-option-selected), transparent);
+      transition: background-color 280ms ease-out;
+    }
+    select[data-anta] option:disabled {
+      color: var(--text-5);
+      cursor: default;
     }
     select[data-anta] optgroup {
-      color: var(--text-3);
-      font: inherit;
-      font-weight: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      color: var(--text-5);
+      font-family: var(--sans-serif);
+      font-size: 0.75em;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
   }
 

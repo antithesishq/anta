@@ -1,9 +1,5 @@
 # Credits
 
-## Consumers
-
-Anta is the design system behind Antithesis, its primary and main consumer.
-
 ## Maintainers
 
 - Vlad Korobov — designer, engineer, manager

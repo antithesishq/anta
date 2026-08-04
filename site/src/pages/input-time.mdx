@@ -45,14 +45,14 @@ or uncontrolled (`defaultValue`), and submits under `name` via the native form A
 
 Focus a section and edit it with the keyboard: <kbd>↑</kbd>/<kbd>↓</kbd> to step (it
 wraps), <kbd>PageUp</kbd>/<kbd>PageDown</kbd> for a larger jump on minutes,
-or just type the digits. <kbd>Home</kbd>/<kbd>End</kbd>, selection, deletion, and
+or enter the digits. <kbd>Home</kbd>/<kbd>End</kbd>, selection, deletion, and
 paste behave as they do in a native text input. Typing
 `9` then `3` `0` lands `09:30` and moves across the sections on its own; an
 out-of-range digit (a `6` in the minutes) commits and advances immediately.
 <kbd>Backspace</kbd> on an empty section selects the previous one. The whole thing
 reads as one field while preserving native caret behavior. In a
 12-hour field, typing a 24-hour hour converts it and flips AM/PM — `18` becomes
-`6 PM` — so pasting a 24-hour time just works.
+`6 PM`, so pasted 24-hour times work.
 
 <Preview background="var(--bg-2)">
   <InputTimeDemo client:only="preact" label="Start time" defaultValue="09:30" />
@@ -116,7 +116,7 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots supply the field label and leading icon.
 
@@ -209,9 +209,9 @@ tighter `1em` line:
 `}</style>
 ```
 
-For a one-off accent, `tone` takes **any literal CSS colour** (e.g. `#7c3aed`) and
+For a one-off accent, `tone` takes **any literal CSS color** (e.g. `#7c3aed`) and
 tints the resting + hover border — the focus ring stays the global ring. It's a
-colour, not a named tone; the named feedback tones live on `status`.
+color, not a named tone; the named feedback tones live on `status`.
 
 <Preview background="var(--bg-2)">
   <InputTimeDemo client:only="preact" label="Accent" tone="#7c3aed" defaultValue="09:30" />

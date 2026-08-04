@@ -31,7 +31,7 @@ accessible loading status.
  noise alongside neighbouring text. |
 | `size?` | number | 16 | Width and height in pixels. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Set the accessible name on the raw element. Use `--icon-size` for a portable custom
 size.

@@ -6,7 +6,7 @@ The `Checkbox` wrapper renders an `<a-checkbox>` element that manages its own st
 
 ## Tone
 
-`tone` colours the **mark** — the checked-box fill and, for a tinted tone, the
+`tone` colors the **mark** — the checked-box fill and, for a tinted tone, the
 unselected box border (a light shade of the fill that darkens on hover and active,
 like the neutral border; `neutral` keeps a grey border). The label and hint stay
 neutral. Six named tones (`neutral` default), or pass any CSS color for a custom tone.
@@ -29,7 +29,7 @@ read as a validation error. Same value set as `tone`.
 <Checkbox defaultChecked toneSelected="critical">Checked mark tinted</Checkbox>
 ```
 
-## Colouring the text
+## Coloring the text
 
 There's no text-tone prop. To tint the **label**, set `color` on the checkbox with a
 theme-aware `--text-N-{tone}` token (the label inherits it); for the **hint**, add a
@@ -38,7 +38,7 @@ to tint the whole control.
 
 ```css
 /* Mark via the prop, text via a plain color rule — the label inherits the host
-   colour, the hint is targeted directly. The class is just for the demo — swap
+   color, the hint is targeted directly. The class is just for the demo — swap
    your own selector. */
 a-checkbox.toned-text { color: var(--text-1-critical); }
 a-checkbox.toned-text a-checkbox-hint { color: var(--text-3-critical); }
@@ -56,7 +56,7 @@ Three sizes scale the box **and** the label + hint type together: `small`
 <Checkbox defaultChecked size="large">Large</Checkbox>
 ```
 
-## Label & hint
+## Label and hint
 
 Pass the label as `children` or the `label` prop. Add a `hint` for a secondary line beneath. For a label-less checkbox (e.g. a table "select all"), pass `aria-label`.
 
@@ -177,7 +177,7 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
  uncontrolled checkbox. `'indeterminate'` shows the minus glyph and takes
  visual precedence; clicking it requests `true`. |
 | `defaultChecked?` | CheckboxValue | false | Initial checked state for an uncontrolled checkbox. Read once; later
- changes ignored (the element then owns the state). |
+ changes are ignored and the element updates its state after interaction. |
 | `disabled?` | boolean | — | Disable the checkbox (no interaction, dropped from the tab order). |
 | `hint?` | ReactNode | — | Secondary text rendered under the label — explanatory copy, like
  Input's hint. Not part of the accessible name. |
@@ -196,25 +196,24 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
  `detail` carries `{ next, prev }`. In controlled mode the element never
  self-applies — answer by updating `checked`, reject by doing nothing. |
 | `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ checked, indeterminate, name, value }` snapshot
- as the 2nd argument — the ergonomic "just give me the new value" callback
- (mirrors `Input`'s `onValueChange`). |
+ as the second argument, matching `Input`'s `onValueChange`. |
 | `round?` | boolean \| number \| string | — | Round the checkbox mark to a circle (`border-radius: 999px` on the box). Pass
  a `number` (px) or a CSS length string for a rounded-square mark instead. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant. small=14px, medium=16px, large=18px box. |
-| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Colour of the **mark** in every state — the checked-box fill *and* the
+| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the **mark** in every state — the checked-box fill *and* the
  unselected box border. A named tone or any literal CSS color (`'#ff1493'`,
  `'rebeccapurple'`) for a one-off custom tone. Named tones track light/dark mode
- automatically; a custom colour keeps its hue + chroma and pins lightness to the
+ automatically; a custom color keeps its hue + chroma and pins lightness to the
  fill curve. Use `toneSelected` instead to tone only the checked mark and leave
- the empty box neutral. The label + hint stay neutral — recolour them in plain
+ the empty box neutral. The label + hint stay neutral — recolor them in plain
  CSS via the theme-aware `--text-N-{tone}` tokens. |
-| `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Like `tone`, but coloured onto the **checked mark only** — the empty box stays
+| `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Like `tone`, but colored onto the **checked mark only** — the empty box stays
  neutral grey until it's checked. Prefer this over `tone` when a resting tinted
  border would read as a validation state. Same value set as `tone`; if both are
  set, `tone` governs the off-state border and `toneSelected` the checked fill. |
 | `value?` | string | "on" | Value submitted with the form when checked — like a native checkbox. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 The focusable host carries the state. Label and hint are light-DOM children.
 
@@ -242,8 +241,8 @@ treatments.
 </div>
 ```
 
-Reach for the props first: **`tone`** colours the mark in every state,
-**`toneSelected`** only the checked mark (any CSS colour for a custom tone — it
+Reach for the props first: **`tone`** colors the mark in every state,
+**`toneSelected`** only the checked mark (any CSS color for a custom tone — it
 derives the full rest/hover/active curve in oklch), **`size`** the dimensions + type.
 To tint the label + hint, add a `color` rule (on the host for the label, on
 `a-checkbox-hint` for the hint) with the `--text-N-{tone}` tokens — there's no
@@ -251,7 +250,7 @@ text-tone prop. The focus ring is the global
 [`--focus-ring`](../colors.md#focus-ring).
 
 ```tsx
-<Checkbox tone="#e0457b" defaultChecked>Custom colour</Checkbox>
+<Checkbox tone="#e0457b" defaultChecked>Custom color</Checkbox>
 ```
 
 For anything else, `<a-checkbox>` is light-DOM — the **box is `::before`**, the
@@ -262,7 +261,7 @@ without `!important`). The classes below are just for the demos:
 
 ```css
 /* Outlined — an unfilled box: the checked box keeps its background and paints the
-   border + checkmark in the tone colour (light-dark() tunes both themes at once). */
+   border + checkmark in the tone color (light-dark() tunes both themes at once). */
 a-checkbox.outlined:state(checked)::before {
   background: var(--checkbox-bg);
   border-color: light-dark(#5f4bc3, #7460d7);
@@ -272,7 +271,7 @@ a-checkbox.outlined:state(checked)::after {
 }
 
 /* Customized — bold label, bigger circular box, bigger checkmark.
-   Colours use light-dark() so they're tuned for both themes at once. */
+   Colors use light-dark() so they're tuned for both themes at once. */
 a-checkbox.customized { font-weight: 700; }
 a-checkbox.customized::before,
 a-checkbox.customized::after { inline-size: 24px; block-size: 24px; margin-block-start: -2px; }
@@ -284,7 +283,7 @@ a-checkbox.customized:state(checked)::before {
 }
 
 /* Beautified — a full white heart mark swapped in via --checkbox-mask-check
-   (centred by the default mask-position), sized down a touch, on a pink fill */
+   (centered by the default mask-position), sized down a touch, on a pink fill */
 a-checkbox.beautified {
   --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z'/%3E%3C/svg%3E");
 }

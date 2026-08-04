@@ -1,4 +1,4 @@
-# Anta — Antithesis Design System
+# Anta design system
 
 Anta is a portable UI component library, published as `@antadesign/anta`. It works in React, Preact through `preact/compat`, and custom JSX runtimes through `configure()`.
 
@@ -41,7 +41,7 @@ CI runs build, custom linting, anta and sticker type checks, the stickers build,
 
 ## Shared conventions
 
-- Use `color-mix(in oklch, <color> <percent>%, transparent)` to adjust colour alpha or interpolate colours. Do not use `rgba()`, hex alpha, or parent `opacity` for a one-property alpha change.
+- Use `color-mix(in oklch, <color> <percent>%, transparent)` to adjust color alpha or interpolate colors. Do not use `rgba()`, hex alpha, or parent `opacity` for a one-property alpha change.
 - Follow `WRITING.md` for docs prose, source comments, and TSDoc.
 - When extracting from Figma, read the full variable list directly from its collection; do not infer tokens from one node.
 

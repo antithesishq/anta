@@ -50,7 +50,7 @@
 /* ─── Full-bleed layout ──────────────────────────────────────────────────
    `.page` carries the global `full-bleed` class, so it spans the whole
    content track. Theme rows fill that track; prose blocks are capped to the
-   960 readable measure and centred so they line up with the page <h1>. */
+   960 readable measure and centered so they line up with the page <h1>. */
 .page .blockHeading,
 .page .description {
   max-width: 960px;

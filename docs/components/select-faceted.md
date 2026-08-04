@@ -1,17 +1,18 @@
 # SelectFaceted
 
-A faceted filter: one trigger opens a menu of **facets** (dimensions), each a
-submenu flyout with its own editor. The value is a `Record<facetKey, value>`, so
-the same option value under two facets — assignee "Alice" and owner "Alice" —
-stays distinct. Each facet declares a `kind`: `single`, `multiple` (with a
-Select all row by default; `selectAll: false` drops it), `text` (free-form
-substring, applied on Enter / blur), or `custom` (bring your own editor and
-value, including an object).
+A faceted filter lets people filter a result set by several categories. Anta
+calls each category a **facet**. The trigger opens a menu of facets, and each
+facet opens a control for choosing its value.
 
-It's a **composed component** built from [Menu](./menu.md), [Select](./select.md)'s
-option model, [Input](./input.md), and [Tag](./tag.md) — no new element. Controlled via
-`value`, uncontrolled via `defaultValue`; changes arrive through one
-**`onValueChange`**.
+The value is a `Record<facetKey, value>`. This keeps values separate when two
+facets use the same option. For example, `assignee` and `owner` below are
+application-defined facet keys, not Anta terms. Each facet has one of four
+`kind` values: `single`, `multiple`, `text`, or `custom`.
+
+`SelectFaceted` uses [Menu](./menu.md), [Select](./select.md)'s option model,
+[Input](./input.md), and [Tag](./tag.md). It does not create a custom element.
+Use `value` with `onValueChange` to control it, or use `defaultValue` for an
+uncontrolled filter.
 
 Pass `placement` to control where the root facet menu opens relative to its
 trigger. It uses the same values as `Menu` and still flips or clamps when space
@@ -55,7 +56,8 @@ function Demo() {
 
       {active.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-          {/* Each active facet's result is its own control, the key piped into `leading`. */}
+          {/* Show one editable control for each active facet. Its label becomes
+              the control's `leading` prefix. */}
           {active.map((facet) => {
             // Options facets → an editable Select (single shows the trailing check;
             // both are filterable + have a clearable footer).
@@ -114,18 +116,18 @@ function Demo() {
 }
 ```
 
-The trigger opens the facet menu; each **active** facet's result renders below as its
-own [Select](./select.md) — editable in place, with the facet key piped into the trigger's
-`leading` slot as a prefix.
+The trigger opens the facet menu. The example renders one editable
+[Select](./select.md) below it for each active facet. Each Select receives the
+facet label through `leading`, which displays it as a prefix.
 
-### Value & changes
+### Value and changes
 
-The value is a **record keyed by facet key** — `{ [facetKey]: value }` — so each facet's
-selection lives under its own `key`. The shape per facet follows its `kind`: an option
-value for `single`, an array for `multiple`, a string for `text`, your own `V` for
-`custom`. A **cleared** facet is absent from the record (not `undefined`), and the
-trigger's badge counts the present keys. Control it with `value` (+ `onValueChange`) or
-seed `defaultValue` for the uncontrolled case.
+The value is a record keyed by facet key: `{ [facetKey]: value }`. Its shape
+depends on `kind`: an option value for `single`, an array for `multiple`, a
+string for `text`, and a value of type `V` for `custom`. A cleared facet is
+absent from the record, rather than set to `undefined`. The trigger badge counts
+the keys that remain. Use `value` with `onValueChange` to control the filter, or
+use `defaultValue` for the uncontrolled case.
 
 Because one control mixes facets that hold different value types, the record is typed
 `Record<string, unknown>`; narrow per facet when you read it.
@@ -151,36 +153,34 @@ Because one control mixes facets that hold different value types, the record is 
 
 ### Value types
 
-A `single` / `multiple` facet's option values follow [Select](./select.md#value--changes):
-`string`, `number`, or `boolean` (the `OptionValue` type), compared with `===` and
-returned through the value record unchanged. For a value that isn't a primitive, give the
-option `value` a **stable primitive key** (a date's ISO string, a record's id) and read
-the full value back by that key. When the whole facet is object-shaped (a date range, a
-numeric comparator), use a **`custom`** facet: it owns its editor and value type `V`, so
-it holds any shape and reports it back untouched.
+`single` and `multiple` facets use [Select](./select.md#value-and-changes) option
+values: `string`, `number`, or `boolean` (`OptionValue`). Anta compares them
+with `===` and returns them unchanged. For a non-primitive value, use a stable
+primitive key such as a date's ISO string or a record ID. Look up the full value
+with that key. Use a `custom` facet when the facet value is an object, such as a
+date range or numeric comparison. Its editor can return any value of type `V`.
 
 ### Custom facet
 
-A `custom` facet has **no option list**: you draw the editor and choose the value it
-holds — a number, a date, a range, any object. Beyond the base `key` / `label` / `icon`,
-provide two functions:
+A `custom` facet has no option list. Provide its editor and choose the value it
+returns: a number, date, range, or any other object. In addition to `key`,
+`label`, and `icon`, provide two functions:
 
-- **`render(ctx)`** — your editor, and the **only** place the value is produced.
-  `ctx.value` is the current value, `ctx.onChange(next)` sets it (`undefined` clears the
-  facet), `ctx.close()` dismisses the menu. Whatever you pass to `onChange` lands in
-  `value[key]` unchanged and comes back as `ctx.value` next render.
-- **`summary(value)`** — the chip on the facet's row while a value is set. It's
-  **display-only** and decoupled from the value: the value round-trips through
-  `onChange` / `ctx.value`, so `summary` can return any node (or `null`) without changing
-  what you read from `value[key]`. The chip caps its width and ellipsizes a long
-  summary so it can't stretch the menu.
+- **`render(ctx)`** renders the editor. `ctx.value` is the current value.
+  `ctx.onChange(next)` sets it, and `undefined` clears the facet. `ctx.close()`
+  closes the menu. Anta stores the value passed to `onChange` at `value[key]`
+  without changing it.
+- **`summary(value)`** renders the chip on the facet row when a value is set.
+  It does not change the stored value. It can return any node or `null`. Long
+  summaries are truncated so that they do not widen the menu.
 
-Nothing is compared or filtered inside the component; it stores the value and reports it
-via `onValueChange`, and applying it to your rows is your code. Type the facet
-`SelectFacetCustom<V>` so `ctx.value` and `summary` are typed.
+`SelectFaceted` does not filter application data. It stores the facet values and
+reports them through `onValueChange`. Filter the application's rows from that
+value. Type the facet as `SelectFacetCustom<V>` so `ctx.value` and `summary`
+use the same value type.
 
-A number, "min duration": the editor is one `Input`, which has no popup of its own, so it
-sits directly in the flyout.
+For a minimum-duration filter, the editor is one `Input`. Because that Input
+does not open a popup, it appears directly in the facet menu.
 
 ```tsx
 import type { SelectFacetCustom } from '@antadesign/anta'
@@ -211,10 +211,9 @@ const duration: SelectFacetCustom<string> = {
 rows.filter((r) => value.duration == null || r.seconds >= Number(value.duration))
 ```
 
-A date, cast through a helper. Editors with **their own popup** (the inline `Calendar`,
-`InputDate`, `Select`) work in the flyout too: each opens its menu stacked on top while
-the flyout stays open. This one uses the inline `Calendar` grid; two helpers bridge its
-ISO strings and the `Date` you store.
+For dates, the example converts between the Calendar's ISO strings and a stored
+`Date`. Editors that open a menu, including `InputDate` and `Select`, also work
+inside a custom facet. Their menu opens above the facet menu, which remains open.
 
 ```tsx
 import type { SelectFacetCustom } from '@antadesign/anta'
@@ -246,17 +245,16 @@ const since: SelectFacetCustom<Date> = {
 rows.filter((r) => value.since == null || r.createdAt >= value.since)
 ```
 
-A `custom` facet holds the value whole, so a `Date` works here: it isn't compared by
-`===` like a `single` / `multiple` option value, so there's no identity pitfall.
+A custom facet stores a `Date` directly. Unlike the value of a `single` or
+`multiple` facet, it is not compared with `===` to find an option.
 
 #### A recency filter: presets plus a range
 
-A compound editor in one flyout: a `RadioGroup` of presets (Today, Yesterday, Last
-14 / 30 days) and a **Custom range** that reveals two `InputDate` fields. The facet
-value is either `{ preset }` or `{ from, to }`, and a `resolveRange` helper turns
-whichever one into the concrete `{ from, to }` you filter rows with (shown in the
-readout under the trigger). Each `InputDate` opens its calendar stacked on top of the
-flyout, which stays open throughout.
+This editor combines a `RadioGroup` of presets with a **Custom range** option
+that reveals two `InputDate` fields. Its value is either `{ preset }` or
+`{ from, to }`. The `resolveRange` helper converts either shape into the date
+range used to filter the result set. Each InputDate calendar opens above the
+facet menu without closing it.
 
 ```tsx
 type Recency = { preset: 'today' | 'yesterday' | 'last14' | 'last30' } | { from: string; to: string }
@@ -313,11 +311,11 @@ const recency: SelectFacetCustom<Recency> = {
 
 #### Menu-item presets, calendar on the right
 
-The same filter with the presets as `MenuItem` rows (a check marks the active one) and
-a single **Custom day** that reveals one `InputDate`, its calendar opening to the
-**right** via `placement="right-start"`. That helps when the trigger sits on the left of
-a wide layout. `placement` (and `offset`) forward to the calendar's `Menu`; `right` /
-`left` are new alongside the existing `top` / `bottom`.
+This version renders the presets as `MenuItem` rows and marks the selected row
+with a check. **Custom day** reveals one `InputDate`. Its calendar opens to the
+right with `placement="right-start"`, which is useful when the trigger is on the
+left side of a wide layout. `placement` and `offset` are passed to the
+calendar's Menu.
 
 ```tsx
 type Recency = { preset: 'today' | 'yesterday' | 'last14' | 'last30' } | { day: string }
@@ -364,10 +362,10 @@ const recency: SelectFacetCustom<Recency> = {
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `facets` | SelectFacet[] | — | The facets (dimensions) to filter across, each with its own editor kind. |
+| `facets` | SelectFacet[] | — | Categories to filter by. Each facet has a `kind` that determines its editor. |
 | `clearable?` | boolean | true | Show the per-facet "Clear" row and the "Clear all" row. |
 | `clearAllLabel?` | string | Clear all | Label for the "Clear all" row. |
-| `defaultValue?` | SelectFacetedValue | — | Initial value for the uncontrolled case (the wrapper then owns it). |
+| `defaultValue?` | SelectFacetedValue | — | Initial value for uncontrolled use. |
 | `disabled?` | boolean | — | Disable the whole control. |
 | `icon?` | IconShape | filter | Default trigger's leading icon. |
 | `label?` | string | Filter | Default trigger's button label. |
@@ -379,47 +377,44 @@ const recency: SelectFacetCustom<Recency> = {
 | `placement?` | 'left' \| 'right' \| 'bottom' \| 'top' \| 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' | bottom-start | Preferred placement of the root filter menu relative to its trigger. The
  menu auto-flips vertically and clamps horizontally when needed. |
 | `priority?` | 'primary' \| 'secondary' | secondary | Default trigger's button priority. |
-| `renderTrigger?` | (state) => ReactNode | — | Render your own trigger in place of the default `Button`. Receives a
- `SelectFacetedTriggerState`; **return exactly one focusable element** (the
- menu anchors to it as its previous sibling and opens it on click). Give it
- `aria-haspopup="menu"` plus `aria-expanded={state.open}`. The custom trigger
- owns its own styling — `className` / `style` / other props apply to the
- *default* trigger only, so put your own on the element you return. |
-| `searchable?` | boolean | — | Add a single search field to the top of the root menu that flattens every
- `single` / `multiple` facet's options into one list and searches across them
- — typing "alice" surfaces it under both an Assignee and an Owner facet, each
- selectable in place. `text` / `custom` facets are reachable when the search is
- empty. Matching uses each facet's `filter` function if it has one, else the
- built-in substring match. |
+| `renderTrigger?` | (state) => ReactNode | — | Replaces the default `Button` with a trigger returned from this function.
+ Receives a `SelectFacetedTriggerState`. Return exactly one focusable element:
+ the menu is positioned relative to that element and opens when it is clicked.
+ Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned
+ element. `className`, `style`, and other trigger props apply only to the
+ default Button, so add styling and attributes to the returned element. |
+| `searchable?` | boolean | — | Adds a search field at the top of the root menu. It searches the options of
+ every `single` and `multiple` facet in one list. For example, "alice" can
+ appear under application-defined Assignee and Owner facets. `text` and
+ `custom` facets remain available when the search is empty. Each facet uses
+ its `filter` function when supplied, or the built-in substring match. |
 | `searchPlaceholder?` | string | Filter… | Placeholder for the global search field. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Default trigger's button size. |
 | `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Tone applied to a selected option row in the facet flyouts (label, selected
  tint, and the check / checkbox indicator). A named tone or a custom CSS
- colour, matching `Select`'s `toneSelected`. Defaults to a neutral selection. |
-| `value?` | SelectFacetedValue | — | Controlled value — the facet-keyed record. When provided, the consumer
- owns state: a pick only *requests* a change via `onValueChange` (reject by
- not updating). Leave undefined for uncontrolled. |
+ color, matching `Select`'s `toneSelected`. Defaults to a neutral selection. |
+| `value?` | SelectFacetedValue | — | Controlled value record, keyed by facet. When provided, update it through
+ `onValueChange`. Leave it undefined for uncontrolled use. |
 
 ### The `SelectFacet` type
 
-`facets` takes a `SelectFacet[]`. Each facet is discriminated by **`kind`** and shares a
-base of `key` / `label` / `icon`:
+`facets` takes a `SelectFacet[]`. Every facet has a `key`, `label`, and optional
+`icon`. The `kind` field selects one of the shapes below.
 
-A `single` / `multiple` facet is [Select](./select.md)'s option model under a `key` — the same
-`options` (`SelectItem[]`), `filter`, and `selectAll` you'd pass to a `Select`, with `kind`
-where Select has `selection`. Know `Select` and you know these two facets; `text` and
-`custom` are the kinds with no `Select` counterpart. The value each facet stores follows
-the same rule: a `single`/`multiple` facet reports the chosen option's `value` (or an array
-of them), exactly as [Select](./select.md#value--changes) does under its own key.
+`single` and `multiple` facets use the same `options`, `filter`, and `selectAll`
+properties as [Select](./select.md). They use `kind` in place of Select's
+`selection`. `text` and `custom` do not use Select options. A `single` facet
+returns one option value; a `multiple` facet returns an array of option values.
 
 | Field | Type | Description |
 |---|---|---|
-| `key` | `string` | The facet's namespace — the key its value is stored under in the record, and what `attrs.facet` reports. Unique across `facets`. |
+| `key` | `string` | The key for this facet's value in the record. `attrs.facet` returns it. It must be unique in `facets`. |
 | `label` | `string` | The facet's row label in the menu. |
 | `icon` | `IconShape` | Leading icon on the facet's row. |
 
-**`single`** (`SelectFacetSingle`) — pick one. Value: the chosen option's `value`, or
-absent when cleared (re-picking the selected option clears it).
+**`single`** (`SelectFacetSingle`) selects one option. Its value is the selected
+option's `value`, or is absent when cleared. Selecting the current option again
+clears it.
 
 | Field | Type | Description |
 |---|---|---|
@@ -427,8 +422,8 @@ absent when cleared (re-picking the selected option clears it).
 | `options` | `SelectItem[]` | The choices — bare strings or `SelectOption`s (groups / submenus flatten to their leaves). Option `value`s may be `string` / `number` / `boolean`. |
 | `filter` | `FacetFilter` | Search field over this facet's options: `true` for the built-in substring match, or `(option, query) => boolean`. |
 
-**`multiple`** (`SelectFacetMultiple`) — pick any number. Value: an array of the chosen
-`value`s (empty array clears it).
+**`multiple`** (`SelectFacetMultiple`) selects any number of options. Its value
+is an array of the selected option values. An empty array clears it.
 
 | Field | Type | Description |
 |---|---|---|
@@ -438,19 +433,19 @@ absent when cleared (re-picking the selected option clears it).
 | `selectAll` | `boolean` | A "Select all" row toggling every visible option. Default `true`. |
 | `selectAllLabel` | `string` | Label for that row. Default `Select all`. |
 
-**`text`** (`SelectFacetText`) — free-form substring. Value: the typed string, applied on
-Enter / blur (absent when empty).
+**`text`** (`SelectFacetText`) accepts a free-form string. It applies on Enter or
+blur and is absent when empty.
 
 | Field | Type | Description |
 |---|---|---|
 | `kind` | `'text'` | Discriminant. |
 | `placeholder` | `string` | Placeholder for the text field. |
 
-**`custom`** (`SelectFacetCustom<V>`) — bring your own editor and value type `V`, including
-object-shaped values (a date range, a numeric comparator).
+**`custom`** (`SelectFacetCustom<V>`) renders the editor supplied by `render`.
+It can store a value of type `V`, including an object such as a date range.
 
 | Field | Type | Description |
 |---|---|---|
 | `kind` | `'custom'` | Discriminant. |
-| `render` | `(ctx) => ReactNode` | Your editor. `ctx.value` is the current `V`, `ctx.onChange(next)` sets it (`undefined` clears the facet), `ctx.close()` dismisses the menu. |
+| `render` | `(ctx) => ReactNode` | Renders the editor. `ctx.value` is the current `V`; `ctx.onChange(next)` sets it, and `undefined` clears the facet. `ctx.close()` closes the menu. |
 | `summary` | `(value: V) => ReactNode` | The chip on the facet's row while a value is set. |

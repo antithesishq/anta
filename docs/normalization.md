@@ -5,8 +5,8 @@ HTML (`<h2>`, `<ul>`, `<a>`, `<table>`…) renders in the same visual language a
 components — no per-page restyling to make prose match a `<Title>` or a `<Table>`.
 
 It's a **separate import**, and every rule lives in a single cascade layer
-(`@layer anta`), so it's easy to layer your own reset around it or override any
-piece. If you'd rather bring your own reset, just don't import this one.
+(`@layer anta`), so it is easy to override individual rules or use a different
+reset. Omit this import when another reset provides the baseline.
 
 ```js
 import '@antadesign/anta/tokens.css'   // design tokens
@@ -37,7 +37,7 @@ This is **not** a neutral normalize — these defaults make raw markup match the
 - **Lists** (`ul` / `ol`): `3ch` left padding so markers hug the text; a small bottom margin between items; markers toned to `--text-5`.
 - `menu` is stripped to a clean semantic container (no disc markers / default padding).
 - **Links** get `--link-color` with a hairline underline (75% alpha, `0.5px`); hover only thickens it to `1px` (no color repaint). Anchor-buttons (`<a role="button">`) are excluded so they keep button styling.
-- `::selection` → the focus-ring colour, tuned per theme (20% alpha in light, 30% in dark).
+- `::selection` → the focus-ring color, tuned per theme (20% alpha in light, 30% in dark).
 - **Tables**: `border-collapse`, `tabular-nums`, and a polite cell baseline; opt into a framed look with `<table data-bordered>` (outer frame + column dividers + rounded corners).
 
 Everything above is defined in `src/reset.css`, inside `@layer anta` — read that file
@@ -77,10 +77,9 @@ Write the rule unlayered (or in a layer after `anta`) — targeting a **specific
 h2 { letter-spacing: -0.01em; }
 ```
 
-### Bring your own reset
+### Use a different reset
 
-Because `reset.css` is a separate import, you can simply **not import it** and let your
-own reset govern typography — keep the tokens and elements:
+Because `reset.css` is a separate import, omit it when your own reset governs typography. Keep the tokens and elements:
 
 ```js
 import '@antadesign/anta/tokens.css'   // keep — tokens
@@ -90,9 +89,7 @@ import '@antadesign/anta/elements'      // keep — components
 
 **One dependency to keep:** Anta's elements don't set their own `box-sizing` — they
 assume the global `* { box-sizing: border-box }` that this reset provides. Every common
-reset (normalize.css, Tailwind's preflight, etc.) sets it too, so swapping resets is
-normally seamless; but if yours doesn't, keep that one rule or component padding,
-`max-width`, and icon-button sizing will be slightly off.
+reset (normalize.css, Tailwind's preflight, and others) sets it too. If yours does not, keep that rule or component padding, `max-width`, and icon-button sizing will be slightly off.
 
 Or import both and override only the pieces you want (unlayered, or in a later layer).
 

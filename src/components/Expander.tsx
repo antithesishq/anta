@@ -53,10 +53,9 @@ export interface ExpanderProps extends Omit<BaseProps, "title"> {
    *  `number` (px) or CSS length string for a *fixed* radius that overrides the
    *  measurement (and skips it) in both states. */
   round?: boolean | number | string;
-  /** Controlled open state. When provided, the consumer owns open/close:
-   *  the expander only follows this prop, and clicking the summary just
-   *  requests a change via `onStateChange` (so a toggle can be rejected by
-   *  not updating). Leave undefined for uncontrolled. */
+  /** Controlled open state. When provided, the consumer owns open/close. Selecting
+   *  the summary requests a change through `onStateChange`; omit `open` for
+   *  uncontrolled use. */
   open?: boolean;
   /** Initial open state for the uncontrolled case. */
   defaultOpen?: boolean;
@@ -81,12 +80,12 @@ type StateChangeEvent =
 /**
  * `<Expander>` — a collapsible disclosure section.
  *
- * A pure, stateless pass-through to `<a-expander>`: the element owns all
+ * A pure, stateless pass-through to `<a-expander>`: the element handles all
  * interaction (toggle, keyboard, ARIA, animation), so the wrapper holds
  * no state and grabs no ref — it only maps props to attributes (safe
  * wherever the host DOM is reconciled, incl. off the UI thread).
  *
- * Uncontrolled (`defaultOpen`): the element owns its open state. The wrapper
+ * Uncontrolled (`defaultOpen`): the element updates its open state. The wrapper
  * emits `default-state="open"` — never `state` — so the DOM carries no stale
  * controlled attribute. Controlled (`open` + `onStateChange`): the wrapper
  * emits `state="open" | "closed"`; the element treats the attribute as the

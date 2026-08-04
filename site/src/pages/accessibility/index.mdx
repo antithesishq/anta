@@ -9,11 +9,11 @@ import SystemColorTable from '../../components/SystemColorTable.astro'
 
 # Accessibility
 
-A few pieces of guidance for designers and engineers using Anta.
+A few guidelines for designers and engineers using Anta.
 
 ## Colors
 
-The matrix below renders every text level on every background for the selected tone, in the current theme. Each cell shows the WCAG 2 contrast ratio (with AA / AAA pass marks for the chosen size and weight) and the APCA Lc value. The toggles change rendering only — the underlying ratios are properties of the color pair and don't shift with size or weight; what shifts is the threshold used for pass/fail. The vision tabs apply CVD or other-condition simulations via SVG filters and CSS masks; numbers reflect normal-vision math.
+The matrix renders every text level on every background for the selected tone and theme. Each cell shows the WCAG 2 contrast ratio, AA or AAA result for the selected size and weight, and APCA Lc value. The controls change rendering and pass thresholds, not the color-pair ratios. Vision tabs apply SVG-filter and CSS-mask simulations; the numbers use normal-vision math.
 
 <AccessibilityMatrix client:load />
 
@@ -28,9 +28,9 @@ forced-colors palette, so it shows the values a component can use in that mode.
 
 ## Color is not a unique communication channel
 
-Communicating something with just a color is an accessibility problem — the message is lost under color blindness, low contrast, low brightness, monochrome printing, sun glare, and OS dark/light flips.
+A color-only message fails when a reader cannot distinguish its color. This includes color blindness, low contrast, low brightness, monochrome printing, glare, and theme changes.
 
-Anta's `tone` prop on `Progress` and `Text` (and tinted backgrounds, borders, etc.) is a **secondary** signal. Pair it with words and, when possible, with shape distinctions (icons that are visually distinct, not just colored differently — e.g. checkmark vs. cross, not green-circle vs. red-circle).
+`tone` on `Progress`, `Text`, backgrounds, and borders is a secondary signal. Pair it with text and, where useful, a distinct icon shape such as a checkmark or cross.
 
 The simulator above makes it easy to check a candidate combination across the most common color-vision deficiencies and a handful of other vision conditions.
 

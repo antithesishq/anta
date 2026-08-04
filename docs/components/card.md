@@ -116,10 +116,9 @@ round (`999px`, clamped to the box). Omit it for the default (`--card-radius`, 8
 
 ## Header controls
 
-There's no dedicated actions slot. For a control at the top-right of the header — a
-"more" button, a tag — pass a laid-out node as the `header` and put the title and
-the control in it yourself (a flex row). You own the layout, so the title and
-control sit exactly where you place them.
+There is no dedicated actions slot. To place a control in the top-right of the
+header, pass a layout node as `header`. For example, use a flex row containing
+the title and a "more" button. That layout determines where both items appear.
 
 ```tsx
 <Card
@@ -179,7 +178,7 @@ out of it — its text is non-selectable and the whole surface navigates.
   href="/docs/ci"
   header={<><Icon shape="book-open" /> CI integration guide</>}
 >
-  Wire Antithesis into your pipeline in a few minutes.
+  Connect your CI pipeline in a few minutes.
 </Card>
 ```
 
@@ -254,7 +253,7 @@ it also blocks navigation until the load resolves.
  color keeps its hue while lightness/chroma are pinned. `'neutral'` (the
  default) is the same as omitting it. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold media, header, and footer content. Unslotted content is the card body.
 

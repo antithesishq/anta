@@ -10,7 +10,7 @@ html, body {
 
 /* Brand fonts (temporary Uploadcare hosting) */
 @font-face {
-  font-family: "Antithesis sans";
+  font-family: "Anta sans";
   src: url("https://ucarecdn.com/af38fa86-199f-44f5-82d2-3ea2a690dd6c/") format("woff2");
   font-style: normal;
   font-weight: 100 900;
@@ -20,7 +20,7 @@ html, body {
   font-display: optional;
 }
 @font-face {
-  font-family: "Antithesis mono";
+  font-family: "Anta mono";
   src: url("https://ucarecdn.com/61bd3320-3787-4a92-887e-a5ff7bd6e051/") format("woff2");
   font-style: normal;
   font-weight: 400 700;
@@ -28,7 +28,7 @@ html, body {
   font-display: optional;
 }
 @font-face {
-  font-family: "Antithesis mono";
+  font-family: "Anta mono";
   src: url("https://ucarecdn.com/03e90df9-d945-4837-b177-cdc408e94bb4/") format("woff2");
   font-style: italic;
   font-weight: 400 700;
@@ -38,8 +38,8 @@ html, body {
 
 /* Brand variable overrides */
 :root {
-  --sans-serif: "Antithesis sans", sans-serif;
-  --monospace: "Antithesis mono", "Roboto Mono", monospace;
+  --sans-serif: "Anta sans", sans-serif;
+  --monospace: "Anta mono", "Roboto Mono", monospace;
   /* Distance from the top of the viewport to use when scrolling an
      anchor target into view (e.g. clicking a heading link). On
      desktop a small breathing room; on mobile, enough to clear the
@@ -115,7 +115,7 @@ html.dark {
 
 html, body {
   font-family: var(--sans-serif);
-  /* "Antithesis sans" is a variable font whose `slnt` and `wdth` axes
+  /* The sans variable font has `slnt` and `wdth` axes that
      don't default to 0 / 100 inside the file. Chrome normalizes them
      under `font-style: normal` / `font-stretch: normal`; Safari leaves
      them at the file defaults, so the body renders slanted or at an
@@ -184,7 +184,7 @@ details:not([data-anta])[open] > summary:not(.summary)::before {
 
 /* The bare-summary marker is a CSS mask, so forced colors can remap its
    background to Canvas and erase it. Keep only this paint under our control;
-   the system foreground and link colours still follow the user's palette. */
+   the system foreground and link colors still follow the user's palette. */
 @media (forced-colors: active) {
   details:not([data-anta]) > summary:not(.summary)::before {
     forced-color-adjust: none;
@@ -847,7 +847,7 @@ code[data-copied]::after {
    *inside* the column instead of the whole page picking up a
    horizontal scrollbar. The table itself keeps default `display:
    table` semantics. */
-/* Wraps stay within the 960px prose measure and centre by default (via
+/* Wraps stay within the 960px prose measure and center by default (via
    `.content > *`); to let a table use the full content track, wrap it in
    a `.full-bleed` element. `overflow-x: auto` keeps a too-wide table
    scrolling inside its column rather than the whole page. */

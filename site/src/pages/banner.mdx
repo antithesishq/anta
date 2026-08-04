@@ -40,7 +40,7 @@ same opt-in as `Progress` ([Styling](#styling)).
 ## Tones
 
 Pick a semantic `tone` to tint the surface and text together — and the ✕ adopts the
-same tone (it also sets the border colour, used if you opt into a border). The set
+same tone (it also sets the border color, used if you opt into a border). The set
 matches `Expander` / `Tag`: `neutral` (the default) plus `brand`, `info`, `success`,
 `warning`, and `critical`. Color comes from the theme tokens, so every tone tracks
 light and dark mode automatically.
@@ -94,7 +94,7 @@ pass a `number` (px) or a CSS length string for a custom radius.
 <Banner round={12} tone="success" message="A custom 12px radius." />
 ```
 
-## Message & content
+## Message and content
 
 `message` is the leading content — a string (rendered at the banner type scale) or
 any node. `children` sit between the message and the actions, for a chip, a link,
@@ -239,17 +239,17 @@ result through `dismissed` (below).
 
 ## Controlled vs uncontrolled
 
-Dismissal follows Anta's shared **state contract**. Leave it *uncontrolled* (seed
-with `defaultDismissed`) and the banner owns its visibility — the ✕ self-dismisses.
-Pass `dismissed` + `onDismiss` to *control* it: the banner follows `dismissed` only,
-and clicking the ✕ *requests* a dismissal you apply to accept or ignore to reject.
-The wrapper takes booleans, the element takes a `state` string enum (closed =
-dismissed), and the wrapper maps between them:
+Dismissal follows Anta's shared **state contract**. For uncontrolled use, pass
+`defaultDismissed`; clicking ✕ then dismisses the banner. For controlled use,
+pass `dismissed` and `onDismiss`. The banner follows `dismissed` and reports a
+dismissal request when ✕ is clicked. Update `dismissed` to accept the request,
+or leave it unchanged to reject it. The wrapper uses booleans, while the element
+uses a `state` string (`closed` means dismissed):
 
 | | `<Banner>` (JSX) | `<a-banner>` (element) |
 |---|---|---|
-| **Uncontrolled** (element owns it) | `defaultDismissed` | `default-state="open" \| "closed"` |
-| **Controlled** (you own it) | `dismissed` + `onDismiss` | `state="open" \| "closed"` + `statechange` |
+| **Uncontrolled** | `defaultDismissed` | `default-state="open" \| "closed"` |
+| **Controlled** | `dismissed` + `onDismiss` | `state="open" \| "closed"` + `statechange` |
 | **Change signal** | `onDismiss()`, fired on a dismiss request | `statechange`, a cancelable `CustomEvent<{ next, prev }>` of `'open'` / `'closed'` |
 
 Controlling it is how you persist a dismissal (write it to storage) or re-show the
@@ -283,7 +283,7 @@ through `dismissed` instead.
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the message, actions, and close control. A close button dispatches
 `dismissrequest` through `data-custom-event`.
@@ -312,7 +312,7 @@ Slots hold the message, actions, and close control. A close button dispatches
 <Disclosure title="Styling">
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
-tone — it derives the surface, text, and border colour in oklch), **`round`** the
+tone — it derives the surface, text, and border color in oklch), **`round`** the
 corners. The one knob worth keeping is **`--banner-tone-source`** — the color a
 custom `tone` derives from, so set it to drive the palette from your own variable.
 Everything else is plain CSS on the host: `min-height` for a taller bar, a
@@ -323,9 +323,9 @@ Everything else is plain CSS on the host: `min-height` for a taller bar, a
 ```
 
 **Add a border.** The banner is borderless by default, but its border style and
-colour are preset at `0` width (the `Progress` reset), so you opt in by setting only
+color are preset at `0` width (the `Progress` reset), so you opt in by setting only
 the **width** — `border-bottom-width` for a rule under the strip, `border-width` for
-a full outline. The colour is already tone-aware (`--banner-border`), so a toned
+a full outline. The color is already tone-aware (`--banner-border`), so a toned
 banner's border matches its tone with no extra work.
 
 <Preview direction="column" gap="8px">

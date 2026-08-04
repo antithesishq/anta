@@ -61,7 +61,7 @@ export interface MenuProps extends BaseProps {
   /** Combobox-mode cursor report (raw element event). Fires when the active
    *  option changes as arrow keys move the cursor while focus stays in a
    *  `[data-menu-search]` filter field; `detail.id` is the active option's `id`
-   *  (`null` when none). The reactive layer that owns the field reflects this
+   *  (`null` when none). The reactive layer that renders the field reflects this
    *  onto its `aria-activedescendant` — the element can't write that light-DOM
    *  attribute itself. Passed straight through to the element. */
   onactivedescendant?: (e: CustomEvent<{ id: string | null }>) => void
@@ -88,7 +88,7 @@ type StateChangeEvent =
  *
  * Open state is uncontrolled by default — listen for `onStateChange`
  * (`detail: { next, prev }`) to observe it, or pass `open` to control it. You
- * can also grab a `ref` and call `.open()` / `.close()` / `.toggle()`.
+ * can also keep a `ref` and call `.open()` / `.close()` / `.toggle()`.
  * Selecting a `MenuItem` closes the menu;
  * arbitrary injected content does not. Add `data-menu-open` to any item /
  * container to keep it open, or `data-menu-close` to a custom element to let it

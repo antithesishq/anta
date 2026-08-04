@@ -1,4 +1,4 @@
-# Install & Config
+# Install and configure
 
 ## Installation
 
@@ -108,8 +108,8 @@ Choose the entry point for your runtime:
 - **Astro or Next.js:** a client-only script. In Astro, use
   `<script>import '@antadesign/anta/elements'</script>`; in Next.js, import it
   from a `'use client'` file.
-- **Worker-rendered UI:** the UI-thread bootstrap that owns the DOM. A Worker
-  has no `HTMLElement`.
+- **Worker-rendered UI:** code that runs on the UI thread and initializes the
+  DOM. A Worker has no `HTMLElement`.
 
 ## Framework setup
 
@@ -203,18 +203,18 @@ Add the `dark` class to any ancestor element:
 
 Anta is designed for a customized TT Interphases Pro, but ships no font binaries. Components use `--sans-serif` and `--monospace` with system fallbacks. `tokens.css` sets a 15px root size (`1rem = 15px`).
 
-To use the Antithesis fonts, register your own `@font-face` declarations and override the variables:
+To use your own fonts, register `@font-face` declarations and override the variables:
 
 ```css
 @font-face {
-  font-family: "Antithesis sans";
+  font-family: "App Sans";
   src: url("/path/to/your/sans.woff2") format("woff2");
   /* ... */
 }
 
 :root {
-  --sans-serif: "Antithesis sans", sans-serif;
-  --monospace: "Antithesis mono", monospace;
+  --sans-serif: "App Sans", sans-serif;
+  --monospace: ui-monospace, monospace;
 }
 ```
 

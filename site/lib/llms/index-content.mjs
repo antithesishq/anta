@@ -5,7 +5,7 @@ export const llmsGuidance = "Anta is designed for a clean DOM. Prefer the props 
 export const documentationLinks = [
   ['Overview', '/'],
   ['Comparison', '/comparison/'],
-  ['Install & Config', '/install/'],
+  ['Install and configure', '/install/'],
   ['Normalization', '/normalization/'],
   ['Colors', '/colors/'],
   ['Theming', '/theming/'],
@@ -48,7 +48,7 @@ export const packageLinks = [['Table', '/table/'], ['Stickers', '/stickers/']]
 
 export const overview = `# Overview
 
-Anta is Antithesis's design system. It combines global CSS tokens,
+Anta is an opinionated design system. It combines global CSS tokens,
 framework-agnostic declarative web components, and JSX wrappers for dynamic
 state and conditional composition.
 
@@ -63,7 +63,7 @@ function renderLinks(links) {
 
 export const llmsIndex = `# Anta
 
-> Anta is Antithesis's design system for building product interfaces. It provides
+> Anta is an opinionated design system for building product interfaces. It provides
 > design tokens, declarative web components, and typed JSX wrappers. Use the same
 > components in React, Preact via compat, plain HTML, and custom JSX runtimes via \`configure()\`.
 > Published as \`@antadesign/anta\` on npm.

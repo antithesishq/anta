@@ -32,7 +32,7 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 
 ## Tone
 
-`tone` colours the whole control: the checked track, plus the unchecked track border and thumb. Six named tones are available, or pass any CSS color for a custom tone. The label and hint stay neutral.
+`tone` colors the whole control: the checked track, plus the unchecked track border and thumb. Six named tones are available, or pass any CSS color for a custom tone. The label and hint stay neutral.
 
 <Preview gap="16px">
   <Switch defaultChecked tone="neutral" label="Neutral" />
@@ -53,7 +53,7 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 
 ## Selected-only tone
 
-`toneSelected` colours the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state. It accepts the same values as `tone`.
+`toneSelected` colors the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state. It accepts the same values as `tone`.
 
 <Preview gap="16px">
   <Switch toneSelected="brand" label="Off — neutral" />
@@ -66,9 +66,9 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 <Switch defaultChecked toneSelected="critical" label="Checked track tinted" />
 ```
 
-## Colouring the text
+## Coloring the text
 
-There is no text-tone prop. To tint the label, set `color` on the switch with a theme-aware `--text-N-{tone}` token; to tint the hint, target `a-switch-hint`. Pair either with `tone` or `toneSelected` to colour the whole control.
+There is no text-tone prop. To tint the label, set `color` on the switch with a theme-aware `--text-N-{tone}` token; to tint the hint, target `a-switch-hint`. Pair either with `tone` or `toneSelected` to color the whole control.
 
 <Preview gap="16px">
   <Switch className="toned-text" defaultChecked tone="critical" label="Delete workspace" hint="This cannot be undone." />
@@ -116,7 +116,7 @@ Switches are fully rounded by default. Pass `round` with a number (pixels) or CS
 <Switch defaultChecked round={0} label="Square" />
 ```
 
-## Label & hint
+## Label and hint
 
 Pass a plain label through `label`, or pass richer label content as children. Add `hint` for a secondary line beneath. `labelPosition="start"` places the label and hint before the control visually while source order remains stable. For a label-less switch, pass `aria-label`.
 
@@ -208,7 +208,7 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 The focusable host carries the state. Label and hint are light-DOM children.
 
@@ -230,13 +230,13 @@ The focusable host carries the state. Label and hint are light-DOM children.
 
 <Disclosure title="Styling">
 
-Reach for the props first: **`tone`** colours the checked track plus the unchecked chrome, while **`toneSelected`** colours only the checked track. Both accept any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).
+Reach for the props first: **`tone`** colors the checked track plus the unchecked chrome, while **`toneSelected`** colors only the checked track. Both accept any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).
 
 ```tsx folded
-<Switch tone="#e0457b" defaultChecked label="Custom colour" />
+<Switch tone="#e0457b" defaultChecked label="Custom color" />
 ```
 
-`<a-switch>` is light DOM. The **track is `::before`**, the **thumb is `::after`**, and the label / hint are `a-switch-label` / `a-switch-hint` children. Target them with plain CSS. The classes below are only for the demos.
+`<a-switch>` is light DOM. The **track is `::before`**, the **thumb is `::after`**, and the label / hint are `a-switch-label` / `a-switch-hint` children. Target them with plain CSS. The classes in these examples are demo hooks. Replace them with a selector you own.
 
 <Preview gap="20px">
   <Switch className="strong-label" defaultChecked label="Strong label" />

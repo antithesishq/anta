@@ -18,7 +18,7 @@ export interface TooltipProps extends BaseProps {
   round?: boolean | number | string
   /** Follow the cursor instead of pinning under the anchor. The bubble is
    *  pinned (anchored beneath the target) by default; pass `follow` for the
-   *  cursor-tracking behaviour, which fades by distance as the cursor leaves. */
+   *  cursor-tracking behavior, which fades by distance as the cursor leaves. */
   follow?: boolean
   /** Make the bubble hoverable and clickable — enables pointer events and
    *  keeps it open while the cursor is over it, so its content (links,

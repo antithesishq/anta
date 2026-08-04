@@ -1,6 +1,6 @@
 # Overview
 
-Anta is Antithesis's design system. It combines global CSS tokens,
+Anta is an opinionated design system. It combines global CSS tokens,
 framework-agnostic declarative web components, and JSX wrappers for dynamic
 state and conditional composition.
 

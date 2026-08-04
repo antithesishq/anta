@@ -30,10 +30,10 @@
        rule); the colored tones keep one tint hue and just deepen their
        alpha for dark mode. */
     /* Tone — the vivid tint and solid fill derive in oklch from
-       --tag-tone-source (the tone's seed, or a custom literal colour); text +
+       --tag-tone-source (the tone's seed, or a custom literal color); text +
        edge are role tokens that already track the seed (--text-3 / --text-2).
        Constants come from the lab's Tag spec. Neutral is the base; named tones
-       and a custom colour re-point the source + role tokens (rules below). */
+       and a custom color re-point the source + role tokens (rules below). */
     --tag-tone-source: var(--anta-seed-neutral);
     --_tag-tint-l: 0.55;
     --_tag-tint-c: 0.03;
@@ -190,7 +190,7 @@
 
   /* Custom tone — any non-named `tone` value. Tint + solid fill come from the
      shared colored constants + the base formula (the source pinned near Brand's
-     L/C). A custom colour has no role token, so text + tertiary edge derive from
+     L/C). A custom color has no role token, so text + tertiary edge derive from
      the source at the --text-2 lightness/chroma (text at 80%, matching --text-3).
      The wrapper writes --tag-tone-source inline; the typed attr() fallback picks
      up raw `<a-tag tone="…">`. (oklch relative color: Chrome 119+, Safari 16.4+,
@@ -282,7 +282,7 @@
   }
 
   /* Tones are intentionally not re-created in forced colors: a status still
-     needs a readable label or icon, because colour alone cannot carry that
+     needs a readable label or icon, because color alone cannot carry that
      meaning. Priority remains useful, so map it to structure with system
      colors: primary is inverted, secondary is a standard outlined pill, and
      tertiary is a lighter dashed outline. The icon foreground follows the

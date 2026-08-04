@@ -106,7 +106,7 @@ radius.
 | `round?` | boolean \| number \| string | — | Fully-round track (`border-radius: 999px`); the fill is clipped to it. Pass a
  `number` (px) or a CSS length string for a custom radius. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. Scales the track and the default label row together. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Colour variant, or any literal CSS colour for a one-off custom tone (the
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color variant, or any literal CSS color for a one-off custom tone (the
  surface / indicator / text are derived from it in oklch). Named tones track
  light/dark automatically. |
 | `value?` | number \| false | — | Current progress value. Omit this prop, or pass `false`, to show
@@ -171,7 +171,7 @@ a-progress.fancy::part(indicator) {
 }
 a-progress.fancy::part(indicator)::after { background: none; }   /* hard right edge */
 
-/* the percentage / label / hint are light-DOM children — recolour for the bar */
+/* the percentage / label / hint are light-DOM children — recolor for the bar */
 a-progress.fancy a-progress-number,
 a-progress.fancy a-progress-text { color: #fff; }
 a-progress.fancy a-progress-hint { color: var(--text-2); }

@@ -23,9 +23,9 @@ selectable strip that emits the chosen value; add matching `<TabPanel>` children
 ## Tones
 
 Six named tones: `neutral` (default), `brand`, `info`, `success`, `warning`,
-`critical`. Any CSS colour works for a one-off custom tone. The tone runs through the
+`critical`. Any CSS color works for a one-off custom tone. The tone runs through the
 strip's labels, indicator, and track at every priority. Rows are tones (the last is a
-custom colour); columns are priorities.
+custom color); columns are priorities.
 
 **Primary**
 
@@ -35,14 +35,14 @@ custom colour); columns are priorities.
 
 ```tsx
 <Tabs tone="brand" priority="secondary" defaultValue="a">…</Tabs>
-<Tabs tone="#e0457b" priority="tertiary" defaultValue="a">…</Tabs>  {/* any CSS colour */}
+<Tabs tone="#e0457b" priority="tertiary" defaultValue="a">…</Tabs>  {/* any CSS color */}
 ```
 
 **Per-tab tone.** A `tone` on an individual option overrides the strip's tone for that one
-tab: it colours the label and icons in every mode, and the indicator when it's the active tab.
-A named tone colours the sliding indicator too; a custom literal colour tones the label
+tab: it colors the label and icons in every mode, and the indicator when it's the active tab.
+A named tone colors the sliding indicator too; a custom literal color tones the label
 everywhere but the indicator only under `noslide` (the single shared sliding element can't
-read a descendant's colour).
+read a descendant's color).
 
 ```tsx
 <Tabs
@@ -93,7 +93,7 @@ and panels are siblings; see [Panels](#panels)). Vertical works at every priorit
 />
 ```
 
-## Icons & content
+## Icons and content
 
 A tab option takes a leading **`icon`** and a trailing **`iconTrailing`**; here the
 trailing dot flags an unsaved file. For more than text, give the option **`children`**
@@ -137,7 +137,7 @@ tabs above to see it.
 
 ```tsx
 {/* The strip and panels are flat siblings — you arrange them. A flex column gaps
-    them; the strip centres itself (a <Tabs> `style` lands on <a-tabs>). */}
+    them; the strip centers itself (a <Tabs> `style` lands on <a-tabs>). */}
 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
   <Tabs
     defaultValue="account"
@@ -160,7 +160,7 @@ Add a `<TabPanel value="…">` child for each option; each panel shows itself wh
 its value is active. The panel names its tab as its accessible label
 (`aria-labelledby`, off-DOM). Panel content is arbitrary React, so it renders normally.
 
-Panels are **optional**. With none, `Tabs` is just the strip: listen to
+Panels are **optional**. Without panels, `Tabs` renders the strip. Listen to
 `onStateChange` / `onValueChange` and render the content yourself.
 
 The strip renders from the `options` array; each `<TabPanel>` renders a
@@ -228,12 +228,12 @@ content wherever you like, switching on the value yourself.
 
 ## Controlled vs. uncontrolled
 
-The active tab is named by a single **value string**, the `value` of one of your
-`options`. Whatever value is active, `Tabs` marks that tab selected and reveals the
-`<TabPanel value="…">` that shares it (if any). You choose who owns that value:
+The active tab is identified by one option's **value string**. Tabs marks the
+matching tab selected and shows the corresponding `<TabPanel value="…">`, when
+one exists. Choose either uncontrolled or controlled state:
 
-**Uncontrolled.** Pass `defaultValue` (an option's `value`) and let `Tabs` own the
-active tab from there:
+**Uncontrolled.** Pass `defaultValue` (an option's `value`). Tabs then updates
+the active tab after interaction:
 
 ```tsx
 <Tabs
@@ -245,9 +245,9 @@ active tab from there:
 />
 ```
 
-**Controlled.** Pass `value` (an option's `value`) + `onStateChange` and own it
-yourself. `onStateChange` fires *before* the pick applies: set `value` to the new tab
-to accept, or do nothing to reject.
+**Controlled.** Pass `value` (an option's `value`) and `onStateChange`.
+`onStateChange` fires before the change applies. Set `value` to the new tab to
+accept it, or leave it unchanged to reject it.
 
 ```tsx
 const [tab, setTab] = useState('overview')
@@ -347,7 +347,7 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'primary' | Visual priority. `primary` is the raised pill on a recessed track (the
  segmented-control look); `secondary` keeps that sizing but drops the track, marking
  the selected tab with a subtle active background fill; `tertiary` is a bottom-underline
- indicator under the selected tab (no track, no rest line). `tone` colours `secondary` +
+ indicator under the selected tab (no track, no rest line). `tone` colors `secondary` +
  `tertiary`; `primary` stays neutral. |
 | `round?` | boolean \| number \| string | — | Fully-round the tabs and the sliding indicator (and the primary track
  well). Applies strip-wide; a single tab's `round` rounds just that tab. A
@@ -363,7 +363,7 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
  *requests* a change via `onStateChange` — apply it by updating this prop.
  Leave undefined (and use `defaultValue`) for uncontrolled. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Keep the tab strip and panels as siblings under one parent. Panels read the active
 value from `<a-tabs>`.
@@ -387,7 +387,7 @@ tab (its text wrapped in `<a-tab-label>`), `<a-tabpanel>` a panel, and the movin
 indicator is `<a-tabs>`'s `::before`. Target them with ordinary CSS (an un-layered rule
 beats `@layer anta` without `!important`) and reach for real properties
 (`border-radius`, `padding`, `background`, …), **not** the internal `--*` output tokens.
-The demo classes below (`.square-tabs`, `.glow-tabs`, …) are just hooks; swap your own.
+The demo classes (`.square-tabs`, `.glow-tabs`, …) are hooks. Replace them with selectors you own.
 
 **Roomier track.** The strip hugs its tabs by default (0 padding), so it's exactly a
 same-size button tall. For a gap around the selected pill (the classic "well" look), add
@@ -409,7 +409,7 @@ a-tabs.square-tabs         { border-radius: 0; padding: 4px; box-shadow: none; }
 a-tabs.square-tabs::before { border-radius: 0; box-shadow: 0 0 0 1px light-dark(#cfcfd6, #46464e); }  /* 1px square pill ring */
 ```
 
-**Tertiary glowing underline.** Recolour the sliding underline and add a radial highlight
+**Tertiary glowing underline.** Recolor the sliding underline and add a radial highlight
 rising from it. The slider is a full-cover box whose `border-bottom` is the line, so a
 `background` gradient on it fills the tab behind the label. Because it's one element, the
 glow **slides with the line** between tabs, with no `noslide` and no separate per-tab
@@ -417,11 +417,11 @@ background.
 
 ```css
 /* The class is on the <a-tabs> element itself, so target a-tabs.glow-tabs (not a descendant).
-   The tertiary slider is a full-cover box with a border-bottom line — recolour the border and
+   The tertiary slider is a full-cover box with a border-bottom line — recolor the border and
    fill it with a gradient; both slide together. Where CSS anchor positioning isn't supported
    there's no slider — tertiary falls back to the per-tab ::after underline (a plain line). */
 a-tabs.glow-tabs::before {
-  border-bottom-color: light-dark(#8067ff, #907aff);   /* recolour the sliding line */
+  border-bottom-color: light-dark(#8067ff, #907aff);   /* recolor the sliding line */
   background:                                          /* highlight rising from the line, slides with it */
     radial-gradient(80% 100% at 50% 100%,
       color-mix(in oklch, light-dark(#8067ff, #907aff) 30%, transparent), transparent 70%);

@@ -6,7 +6,7 @@
  * set + injects every element's CSS. Importing this barrel for side effects —
  * `import '@antadesign/anta/elements'` — gives you everything.
  *
- * For a SMALLER footprint, import just the element(s) you use instead:
+ * To reduce bundle size, import only the element(s) you use:
  *   import '@antadesign/anta/elements/a-tooltip'   // registers a-tooltip + its CSS, nothing else
  * That granular path pulls in only that element's code and CSS, nothing else.
  *

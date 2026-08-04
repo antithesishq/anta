@@ -22,8 +22,8 @@ export interface CalendarChangeAttrs {
 
 /** Public props for `<Calendar>` — the single-date month grid. */
 export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> {
-  /** Controlled selected date — ISO `YYYY-MM-DD`. When provided, the consumer owns
-   *  selection: the grid follows this prop and a pick only *requests* a change via
+  /** Controlled selected date — ISO `YYYY-MM-DD`. When provided, the application
+   *  controls selection: the grid follows this prop and a pick only *requests* a change via
    *  `onStateChange`. Leave undefined for uncontrolled. */
   value?: string
   /** Initial selected date for the uncontrolled case (ISO `YYYY-MM-DD`). */
@@ -61,24 +61,23 @@ export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> 
   /** Fired *after* the selection changes (post-apply). Not cancelable; for a
    *  controlled calendar it fires once you've updated `value`. */
   onChange?: (event: Event) => void
-  /** Like `onChange`, but with a `{ value, name }` snapshot — the ergonomic
-   *  "just give me the new date" callback (mirrors `Input`). */
+  /** Like `onChange`, but with a `{ value, name }` snapshot as the second argument,
+   *  matching `Input`. */
   onValueChange?: (event: Event, attrs: CalendarChangeAttrs) => void
 }
 
 /**
- * `<Calendar>` — a single-date month grid you pick a day from, **composed from
- * Anta components in light DOM** (nothing is hidden in a shadow root): days and
- * the prev/next chevrons are `<Button>`s, so they inherit the design system's
- * states for free — a selected day is literally a `tertiary` Button in its
- * `selected` state, toned `brand` so the active date reads in the brand color.
+ * `<Calendar>` is a single-date month grid. It uses Anta components in light DOM.
+ * Days and the previous/next chevrons are `<Button>`s, so they use the design
+ * system's button states. A selected day is a `tertiary` Button in its `selected`
+ * state, using the `brand` tone so the active date uses the brand color.
  * All date math runs on the Temporal engine
  * (`@antadesign/anta` exports `buildMonth` & friends), and the value is an ISO
  * `YYYY-MM-DD` string.
  *
- * The grid lives in a form-associated `<a-calendar>` element (which owns the
- * submitted value + reset/restore); the wrapper owns view-month, selection,
- * keyboard, and roving `tabindex` — the `RadioGroup` model. The month switcher
+ * The grid lives in a form-associated `<a-calendar>` element, which manages the
+ * submitted value, reset, and restore. The wrapper manages view month, selection,
+ * keyboard, and roving `tabindex`. The month switcher
  * is a sibling rendered *outside* the grid, so it can be extended (month/year
  * pickers) independently.
  *
@@ -247,8 +246,8 @@ export const Calendar = ({
   // The `<a-calendar>` element is the interaction authority: it dispatches
   // `statechange` (picks + reset/restore) and `change`. We forward both to the
   // consumer and, in uncontrolled mode, mirror the new selection into render
-  // state (the element owns the form value; the wrapper owns only the visual +
-  // the roving cursor). A user pick is cancelable — respect `preventDefault`.
+  // state. The element manages the form value; the wrapper manages the view and
+  // roving cursor. A user pick is cancelable, so respect `preventDefault`.
   const onElementStateChange = (raw: StateChangeEvent) => {
     const { event, detail } = nativeStateChange<StateDetail>(raw)
     if (!detail) return

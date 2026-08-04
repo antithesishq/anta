@@ -196,7 +196,7 @@ it's a no-op there. Use it where the expander sits in a content column
 with room to its left (a prose measure); in a full-width / edge-to-edge
 container the chevron would overhang the edge.
 
-## Title & level
+## Title and level
 
 `title` takes a string or any node. For a string, `level` (1–6) applies
 the matching heading **type scale** — the same scale as `<Title>` —
@@ -225,10 +225,10 @@ horizontally.
 
 When you need real heading **semantics** — so the title lands in a
 page's table of contents (and assistive tech announces it as a heading) —
-pass a `<Title>` (or your own `<h2>`–`<h6>`) as the `title` instead of a
-string. The node owns its own type scale, so set the level on it, not on
-`<Expander>`; a slotted heading keeps its block-rhythm margins, so zero
-them in the header:
+pass a `<Title>` (or an application `<h2>`–`<h6>`) as the `title` instead of a
+string. The heading's `level` sets its type scale, so set it on the heading,
+not on `<Expander>`. A slotted heading keeps its block margins, so reset them
+in the header:
 
 <Preview direction="column" gap="8px">
   <a-expander class="heading-title" default-state="open">
@@ -249,8 +249,8 @@ them in the header:
 </Preview>
 
 ```tsx folded
-{/* A node title owns its own scale + heading semantics: set the level on
-   the <Title>, not on <Expander>. (The preview uses element composition
+{/* A Title supplies its type scale and heading semantics. Set the level on
+   the Title, not on Expander. (The preview uses element composition
    because these docs render statically; the title-prop form is identical.) */}
 <Expander title={<Title level={2}>Title level 2 example</Title>}>…</Expander>
 <Expander title={<Title level={4}>Title level 4 example</Title>}>…</Expander>
@@ -381,12 +381,11 @@ state stays as-is — disabling an open expander keeps it open. Header
 
 ## Open state
 
-Leave it uncontrolled and pass `defaultOpen` for the initial state — the
-element owns open/close from there. To drive it yourself, pass `open`
-and handle `onStateChange` (controlled): the expander then only follows
-the prop, and clicking the summary just *requests* a change — apply
-`detail.next` to your state to accept, or ignore it to reject. If you pass
-`open`, you own it.
+For uncontrolled use, pass `defaultOpen` for the initial state. The element
+then updates its open state after interaction. For controlled use, pass `open`
+and handle `onStateChange`. The expander follows the `open` prop and reports a
+requested change. Update application state with `detail.next` to accept it, or
+leave the state unchanged to reject it.
 
 `onStateChange` is event-first: `(event, { next, prev })`, where `next`/`prev`
 are booleans (the requested / previous open state). `statechange` fires
@@ -410,16 +409,15 @@ const [open, setOpen] = useState(false)
 
 ## Controlled vs Uncontrolled
 
-Open state follows Anta's shared **state contract**. Leave it *uncontrolled* and
-the expander owns open/close; pass the controlled prop and *you* own it. The two
-layers speak different idioms — the `<Expander>` wrapper takes booleans, the
-`<a-expander>` element takes a `state` string enum — and the wrapper maps between
-them:
+Open state follows Anta's shared **state contract**. In uncontrolled use, the
+element updates open state. In controlled use, the application supplies it. The
+`<Expander>` wrapper uses booleans; the `<a-expander>` element uses a `state`
+string. The wrapper maps between them:
 
 | | `<Expander>` (JSX) | `<a-expander>` (element) |
 |---|---|---|
-| **Uncontrolled** — element owns it | `defaultOpen` | `default-state="open" \| "closed"` |
-| **Controlled** — you own it | `open` + `onStateChange` | `state="open" \| "closed"` + `statechange` |
+| **Uncontrolled** | `defaultOpen` | `default-state="open" \| "closed"` |
+| **Controlled** | `open` + `onStateChange` | `state="open" \| "closed"` + `statechange` |
 | **Change event** | `onStateChange(event, { next, prev })` — `next` / `prev` are **booleans** | `statechange`, a `CustomEvent<{ next, prev }>` — `'open'` / `'closed'` |
 
 `statechange` is **cancelable** and fires *before* the element applies the
@@ -492,7 +490,7 @@ function Accordion() {
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the title and actions. The details element contains the collapsible body.
 
@@ -517,7 +515,7 @@ Slots hold the title and actions. The details element contains the collapsible b
 ### Native HTML details
 
 For a simple disclosure, add `data-anta` to native `<details>`. It keeps the
-browser's opening, keyboard, and accessibility behaviour while taking on the
+browser's opening, keyboard, and accessibility behavior while taking on the
 neutral tertiary Expander treatment. Add `priority="secondary"` or `"primary"`
 for a filled surface. `round`, `tone`, tertiary `outdent`, and `level="1"`–`"6"`
 use the matching Expander visual treatments. `level` changes visual type only;
@@ -541,9 +539,9 @@ use a heading inside the summary when you need heading semantics.
 
 <Disclosure title="Styling">
 
-Reach for the props first: **`tone`** sets the colour (any CSS colour for a custom
+Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the surface in oklch), **`priority`** the fill, **`level`** the
-heading. Two knobs are worth keeping: **`--expander-tone-source`** (the colour a
+heading. Two knobs are worth keeping: **`--expander-tone-source`** (the color a
 custom `tone` derives from — set it to drive the palette from your own variable) and
 **`--expander-gutter`** (the shared left inset that re-insets header + body + chevron
 in lockstep; `outdent` sets it to `0`).
@@ -626,7 +624,7 @@ a-expander.hover-tint::part(summary):active { background: var(--bg-2); }
 ```
 
 **Highlight the title on hover.** The title inherits its `color` from `::part(summary)`,
-so recolour the part on hover and the title (and the `currentColor` chevron) follow — a
+so recolor the part on hover and the title (and the `currentColor` chevron) follow — a
 custom title node that sets its own `color` opts out. Here we also drop the tertiary
 hover underline on the light-DOM `a-expander-summary`:
 
@@ -641,7 +639,7 @@ hover underline on the light-DOM `a-expander-summary`:
 </Preview>
 
 ```css folded
-a-expander.title-highlight::part(summary):hover { color: #e5484d; }       /* title colour on hover */
+a-expander.title-highlight::part(summary):hover { color: #e5484d; }       /* title color on hover */
 a-expander.title-highlight a-expander-summary { text-decoration: none; }  /* drop the hover underline */
 ```
 

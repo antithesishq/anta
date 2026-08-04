@@ -11,15 +11,15 @@ import inputAutocompleteDemoCode from './input-autocomplete.demo.ts'
 
 # Input with autocomplete (combobox)
 
-`InputAutocomplete` — a text field whose value is a free string, with a suggestion list that assists
-without constraining. Type anything: a value that isn't in the list stays as you
-typed it, and picking a suggestion fills the field. For a value that must be one of
-the options, use [Select](/select/) with `filter`.
+`InputAutocomplete` is a text field with a suggestion list. Its value remains a
+free-form string: text that is not in the list stays in the field, and selecting
+a suggestion fills the field. Use [Select](/select/) with `filter` when the
+value must be one of the options.
 
-It's a **composed component**, an [Input](/input/) stitched to a [Menu](/menu/) of
-suggestions. The field text arrives through **`onValueChange`**; `onSelect` fires
-only when a suggestion is chosen. Controlled via `value`, uncontrolled via
-`defaultValue`.
+InputAutocomplete uses an [Input](/input/) for the field and a [Menu](/menu/)
+for suggestions. **`onValueChange`** reports field text. `onSelect` runs only
+after someone chooses a suggestion. Use `value` to control it, or `defaultValue`
+for uncontrolled use.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -58,7 +58,7 @@ closes the list; clicking the field to place the caret keeps it open.
 
 - **`true`** (default): built-in case-insensitive substring match on each option's
   `value` / `label` / `hint`.
-- **a function** `(option, query) => boolean`: your own matcher, called per option.
+- **a function** `(option, query) => boolean`: a custom matcher, called for each option.
 - **`false`**: show `suggestions` as-is, doing no local filtering. Use this when you
   fetch or filter results yourself (async / remote) and feed the current set through
   `suggestions`.
@@ -84,9 +84,8 @@ For browser-native suggestions, pair a native input with a `<datalist>`. It
 keeps free-form entry and lets the browser filter and fill matching options,
 while `data-anta` supplies the field appearance.
 
-The suggestions popup is owned by the browser, so use `InputAutocomplete` when
-you need custom option content, popup styling, or consistent interaction across
-browsers.
+The browser renders the suggestions popup. Use `InputAutocomplete` for custom
+option content, popup styling, or consistent behavior across browsers.
 
 <Preview>
   <input data-anta type="text" list="people" placeholder="Search people" />

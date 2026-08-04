@@ -62,7 +62,7 @@ clipped.
 <Tag allcaps tone="info" size="large" label="Large" />
 ```
 
-## Icon, label & value
+## Icon, label, and value
 
 Set `icon` / `iconTrailing` for a leading or trailing glyph (scaled to
 the pill), and pair `label` with `value` for a two-part tag. `value` is
@@ -145,7 +145,7 @@ down 1px, since caps read larger than mixed case at the same size.
  Rendered in the default color and weight, with no divider from the
  label; the color + weight contrast does the separating. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Use `a-tag-label` for the key and `a-tag-value` for its value.
 
@@ -157,7 +157,7 @@ Use `a-tag-label` for the key and `a-tag-value` for its value.
 </a-tag>
 ```
 
-Reach for the props first: **`tone`** sets the colour (any CSS colour for a custom
+Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the fill / border / text in oklch), **`priority`** the fill style,
 **`size`** the dimensions.
 
@@ -167,7 +167,7 @@ tone — it derives the fill / border / text in oklch), **`priority`** the fill 
 
 `<a-tag>` is light-DOM, so for anything a tone can't give you it's plain CSS (an
 un-layered rule beats `@layer anta` without `!important`). The `.badge` class below
-takes a **gradient** background (impossible from `tone`, which is a solid colour),
+takes a **gradient** background (impossible from `tone`, which is a solid color),
 **1px** corners, and taller vertical padding so it reads completely differently:
 
 ```css
@@ -181,5 +181,5 @@ a-tag.badge {
 a-tag.badge a-tag-label { font-weight: 600; letter-spacing: 0.15ch; }
 ```
 
-For a *solid* recolour, prefer `tone` / `priority` — don't reach for the resolved
+For a *solid* recolor, prefer `tone` / `priority` — don't reach for the resolved
 `--tag-bg` / `--tag-border` / `--tag-text` (they're recomputed per priority and tone).

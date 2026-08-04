@@ -91,7 +91,7 @@
 }
 
 /* Resize handle: an 8px-wide invisible hit area straddling the Preview/panel
-   seam (centred on the panel's left edge). Absolutely positioned so it sits
+   seam (centered on the panel's left edge). Absolutely positioned so it sits
    on the seam without occupying a grid column, keeping the two halves flush.
    On hover / active a 1px rail overlays the seam (Preview's right border)
    exactly — full height, no top/bottom gaps — so the separator just brightens.
@@ -100,7 +100,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  /* Seam sits at (panel width) from the right edge; centre the 8px hit
+  /* Seam sits at (panel width) from the right edge; center the 8px hit
      area on it. */
   right: calc(var(--demo-panel-w, 400px) - 4px);
   width: 8px;
@@ -116,7 +116,7 @@
   /* Edge to edge — match the full-height seam, no top/bottom gaps. */
   top: 0;
   bottom: 0;
-  /* The 8px handle is centred on the seam (local x=4); Preview's right border
+  /* The 8px handle is centered on the seam (local x=4); Preview's right border
      is the 1px just left of it (local x=[3,4]). `right: 50%` lands the rail on
      exactly that pixel so it overlays the separator instead of sitting 1px in. */
   right: 50%;
@@ -223,7 +223,7 @@
 
 /* Match the tab labels to the PREVIEW header's static label — uppercase,
    12px / 500 with the same letter-spacing — so the two panel headers read
-   as a matched pair. The tertiary tab states still drive the colour (muted
+   as a matched pair. The tertiary tab states still drive the color (muted
    at rest, brightening when active); we only override the typography.
    Unlayered, so it beats a-tab-label's @layer anta defaults. */
 .tabs a-tab-label {
@@ -249,8 +249,8 @@
 }
 
 /* Reset control — a quaternary <a-button> (no bg/border) holding the
-   rotate-ccw icon. Anta's button styling owns the colour/hover; we only
-   push it to the end of the header row, centre it against the strip,
+   rotate-ccw icon. Anta's button styling owns the color/hover; we only
+   push it to the end of the header row, center it against the strip,
    and give it 8px inline padding. */
 .resetBtn {
   margin-inline-start: auto;
@@ -487,7 +487,7 @@
 }
 
 /* Prop name — plain monospace value, not a copyable code pill. Inherits its
-   colour from the control's own label (Input / Checkbox) rather than forcing one. */
+   color from the control's own label (Input / Checkbox) rather than forcing one. */
 .fieldName {
   font-family: var(--monospace);
   letter-spacing: 0;

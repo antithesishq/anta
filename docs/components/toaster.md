@@ -100,7 +100,7 @@ depending on what you toast:
 - **A string** auto-wraps in a `Banner`, so its ✕ is there for free.
 - **Any control carrying `data-toast-dismiss`** dismisses the toast on click. This is
   the simplest path — no handler, no `id`, no `onDismiss`; the render function doesn't
-  even take an argument. Just add the attribute to a button, link, or menu item inside
+  even take an argument. Add the attribute to a button, link, or menu item inside
   the content (the same convention as `<a-banner>`'s `data-banner-dismiss` and
   `<a-dialog>`'s `data-dialog-close`):
 
@@ -178,8 +178,8 @@ whole toast — the Banner, its ✕, everything — many times a second, which c
 focus, text selection, or an in-progress animation inside the content. `--toast-remaining`
 updates a single inherited value the browser interpolates on the compositor: the
 content renders **once**, nothing reconciles, and it's smooth at display refresh rate
-instead of your tick interval. The toast already owns the timer and its pause, so
-exposing the value keeps one source of truth.
+instead of the application's tick interval. The toast already tracks its timer
+and pause state, so exposing the value keeps one source of truth.
 
 `--toast-remaining` is display only — the real dismissal is the toast's own timer — so
 where a browser can't animate a custom property it simply stays full. A **sticky**
@@ -230,7 +230,7 @@ Toaster.manager.add(() => <Banner tone="critical" message="Connection lost" />, 
 | `toaster?` | Toaster | — | The store this region renders. Omit to bind the default store driven by
  `Toaster.manager`; pass a `createToaster()` for an isolated region. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Place each `<a-toast>` in a positional slot. This button clones the toast template
 into the toaster. `data-toast-dismiss` requests removal; listen for `dismiss` and

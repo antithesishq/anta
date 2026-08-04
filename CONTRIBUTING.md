@@ -1,12 +1,12 @@
 # Contributing to Anta
 
-Thanks for your interest! Anta is in early development and contributions are currently **limited to Antithesis employees**. The repository is public so the design system can be browsed and consumed (`@antadesign/anta` on npm), but we're not yet accepting external contributions.
+Thanks for your interest! Anta is in early development and contributions are currently **limited to project maintainers**. The repository is public so the design system can be browsed and consumed (`@antadesign/anta` on npm), but we're not yet accepting external contributions.
 
-If you find a bug or have a question and you're outside Antithesis, please don't open a PR — open an issue and we'll respond when we can. Issues from non-collaborators are subject to interaction limits.
+If you find a bug or have a question and you're outside the maintainer group, please don't open a PR — open an issue and we'll respond when we can. Issues from non-collaborators are subject to interaction limits.
 
-## For Antithesis employees
+## For maintainers
 
-Every member of the [`antithesishq`](https://github.com/antithesishq) GitHub organization already has access to this repository through the org's base role — no additional invite needed. Your usual `git clone` against `git@github.com:antithesishq/anta.git` should just work.
+Every member of the [project's GitHub organization](https://github.com/antithesishq) already has access to this repository through the org's base role — no additional invite needed. Use the repository's SSH URL when cloning.
 
 ### Workflow
 

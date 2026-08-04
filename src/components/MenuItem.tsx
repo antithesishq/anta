@@ -112,7 +112,7 @@ export type MenuItemActionMode = {
    *  `selectionIndicator` to keep the semantics — the row stays the control and
    *  carries `role` + `aria-checked`; only the drawn mark changes. Suppresses the
    *  built-in checkbox / radio and the trailing `check` glyph. The node is made
-   *  passive (aria-hidden, no pointer events) so the row owns the click. */
+   *  passive (aria-hidden, no pointer events) so the row receives the click. */
   indicator?: React.ReactNode
 }
 
@@ -196,7 +196,7 @@ export const MenuItem = ({
   // `toneSelected` tones the whole row (text, icon, tint, indicator) only while the
   // row is selected; `tone` tones it always. On a selected row toneSelected wins.
   const effectiveTone = (selected && toneSelected) || tone
-  // A named tone travels as the attribute; a custom colour also needs its
+  // A named tone travels as the attribute; a custom color also needs its
   // `--{component}-tone-source` var set inline (the typed `attr()` path only
   // resolves on newer engines) — for the host and, so it adopts the row's tone,
   // the checkbox/radio indicator.
@@ -278,7 +278,7 @@ export const MenuItem = ({
           otherwise reuse the checkbox/radio *element* visuals (no role, no focus,
           no form value). a-menu-item.css handles the built-ins' gap/pointer-events. */}
       {indicator != null ? (
-        // `min-height: 1lh` makes the wrapper one text line tall and centres the node
+        // `min-height: 1lh` makes the wrapper one text line tall and centers the node
         // in it, so a small indicator aligns with the label's first line in a hinted
         // (top-aligned) row instead of riding at the top.
         <span

@@ -223,10 +223,9 @@ round (`999px`, clamped to the box). Omit it for the default (`--card-radius`, 8
 
 ## Header controls
 
-There's no dedicated actions slot. For a control at the top-right of the header — a
-"more" button, a tag — pass a laid-out node as the `header` and put the title and
-the control in it yourself (a flex row). You own the layout, so the title and
-control sit exactly where you place them.
+There is no dedicated actions slot. To place a control in the top-right of the
+header, pass a layout node as `header`. For example, use a flex row containing
+the title and a "more" button. That layout determines where both items appear.
 
 <Preview background="var(--bg-2)">
   <a-card style={{ width: '340px' }}>
@@ -330,12 +329,12 @@ link card is display content: keep interactive controls (buttons, nested links)
 out of it — its text is non-selectable and the whole surface navigates.
 
 <Preview background="var(--bg-2)" direction="column" gap="8px">
-  <a-card href="https://antithesis.com/docs/using_antithesis/ci/" target="_blank" rel="noopener">
+  <a-card href="/install/">
     <Title slot="header" level={4}><Icon shape="book-open" /> CI integration guide</Title>
-    <a-text>Wire Antithesis into your pipeline in a few minutes.</a-text>
+    <a-text>Connect your CI pipeline in a few minutes.</a-text>
   </a-card>
-  <Card href="https://github.com/antithesishq/antithesis-skills" target="_blank" rel="noopener" priority="primary" tone="brand" header="Antithesis skills for agents">
-    <Text tone="brand">Use AI to bootstrap your system into Antithesis and write test properties.</Text>
+  <Card href="/install/" priority="primary" tone="brand" header="Set up your project">
+    <Text tone="brand">Install Anta, register the elements, and start composing your interface.</Text>
   </Card>
 </Preview>
 
@@ -344,7 +343,7 @@ out of it — its text is non-selectable and the whole surface navigates.
   href="/docs/ci"
   header={<><Icon shape="book-open" /> CI integration guide</>}
 >
-  Wire Antithesis into your pipeline in a few minutes.
+  Connect your CI pipeline in a few minutes.
 </Card>
 ```
 
@@ -395,7 +394,7 @@ it also blocks navigation until the load resolves.
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold media, header, and footer content. Unslotted content is the card body.
 

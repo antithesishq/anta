@@ -1,6 +1,6 @@
 ---
 import DocsLayout from '../layouts/DocsLayout.astro'
-import { Text, Tooltip } from '@antadesign/anta'
+import { Card, Text, Title, Tooltip } from '@antadesign/anta'
 import { StickerThumbsUpAnimated } from '@antadesign/stickers'
 ---
 
@@ -9,21 +9,34 @@ import { StickerThumbsUpAnimated } from '@antadesign/stickers'
 
   <div class="overview-intro">
     <Text size="large" className="overview-copy">
-      <p><b>Anta</b> is <a href="https://antithesis.com" target="_blank">Antithesis</a> design system.<br />Here is why you might like it:</p>
+      <p><b>Anta</b> is an opinionated design system.<br />Here is why you might like it:</p>
       <ul>
         <li>it's carefully made <dfn>for web apps<Tooltip follow>Import the whole library (~200kb gzipped)<br />or selected components to minimize your bundle.<br />There is <b>no CSS-in-JS runtime</b>.</Tooltip></dfn></li>
         <li>it has a <dfn>clean, attribute-driven DOM<Tooltip follow><b>No piles of utility classes and wrapping containers</b>.<br />Variants, tones, and behavior are attributes: <code>tone="critical"</code>, <code>size="large"</code>.</Tooltip></dfn></li>
         <li>it's <dfn>easy to override<Tooltip follow>Global CSS tokens (auto-switching default light/dark styles) with <b>an optional theme</b>.<br />Customizable with attributes or plain CSS at the per-component level.</Tooltip></dfn></li>
-        <li>it has framework-agnostic <dfn>web components<Tooltip follow>The web components are fully declarative: they never change their own attributes<br />(an Antithesis architecture requirement related to worker-thread UI rendering).</Tooltip></dfn></li>
+        <li>it has framework-agnostic <dfn>web components<Tooltip follow>The web components are fully declarative: they never change their own attributes<br />(a requirement for worker-thread UI rendering).</Tooltip></dfn></li>
         <li>it uses <dfn>JSX wrappers<Tooltip follow>For dynamic state and conditional composition.</Tooltip></dfn> for <dfn>React or Preact<Tooltip>React is a default runtime.<br />Preact works via compat.<br />Use custom runtime via <code>configure()</code>.</Tooltip></dfn></li>
         <li>it's well documented, typed, and AI-ready</li>
       </ul>
     </Text>
     <StickerThumbsUpAnimated size={256} delay={0.5} playOnce replayOnClick label="Replay thumbs-up animation" className="overview-sticker" />
   </div>
+
+  <Card
+    className="overview-notice"
+    tone="warning"
+    icon="warning-triangle"
+  >
+    <Title slot="header" level={3} tone="warning">Warning</Title>
+    <Text tone="warning">
+      <p>Much of this documentation was generated with AI.<br />We plan a careful human editorial pass in September–October 2026.</p>
+      <p>If AI-authored technical documentation is a concern for you, do not judge Anta solely by this first draft. The <a href="/comparison/">comparison page</a> can help you decide whether it fits your project.</p>
+    </Text>
+  </Card>
 </DocsLayout>
 
 <style>
+  .overview-notice { margin-block: 1rem 2rem; margin-inline: 0; max-width: 62ch; }
   .overview-intro {
     display: flex;
     flex-wrap: wrap;

@@ -9,7 +9,7 @@ transitively.
 This package follows the shared root [`../AGENTS.md`](../AGENTS.md) conventions.
 Before changing sticker elements or JSX wrappers, also read
 [`../src/AGENTS.md`](../src/AGENTS.md): the two-tier architecture, declarative
-DOM, boolean-attribute presence matching, colour treatment, and docs-in-sync
+DOM, boolean-attribute presence matching, color treatment, and docs-in-sync
 rules apply here too. Only package-specific notes live here.
 
 ## Layout

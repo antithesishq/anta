@@ -12,9 +12,9 @@
     --checkbox-bg: var(--bg-1);
 
     /* Tone — the checked mark fill derives in oklch from --checkbox-tone-source
-       (the tone's seed, or a custom literal colour) at three lightnesses. The
+       (the tone's seed, or a custom literal color) at three lightnesses. The
        seed's own chroma (`c`) keeps neutral grey. Constants come from the lab's
-       Checkbox spec; named tones and a custom colour point the source elsewhere
+       Checkbox spec; named tones and a custom color point the source elsewhere
        (rules below). Default tone is neutral. */
     --checkbox-tone-source: var(--anta-seed-neutral);
     --_tone-l-rest: 0.6;
@@ -25,7 +25,7 @@
     --checkbox-bg-selected-active: oklch(from var(--checkbox-tone-source) var(--_tone-l-active) c h);
 
     /* Unselected box border: neutral role-token greys by default (1.5px). Named
-       tinted tones + a custom colour derive the resting fill + border from the
+       tinted tones + a custom color derive the resting fill + border from the
        tone (rules below). */
     --checkbox-border-neutral: var(--border-3);
     --checkbox-border: var(--checkbox-border-neutral);
@@ -79,7 +79,7 @@
       grid-column: 1;
       grid-row: 1 / -1;
       align-self: start;
-      /* Sit the box on the label's first-line centre; offset on the box so the row keeps the label's line-height. */
+      /* Sit the box on the label's first-line center; offset on the box so the row keeps the label's line-height. */
       margin-block-start: calc((var(--checkbox-label-lh) - var(--checkbox-box-size)) / 2);
       box-sizing: border-box;
       inline-size: 16px;
@@ -102,7 +102,7 @@
       border-radius: var(--checkbox-round, 999px);
     }
 
-    /* Glyph, stacked on the box (same cell). Shares the box's grid-row + align-self + margin so it stays centred on the box. Transparent until a filled state masks + colours it. */
+    /* Glyph, stacked on the box (same cell). Shares the box's grid-row + align-self + margin so it stays centered on the box. Transparent until a filled state masks + colors it. */
     &::after {
       content: "";
       grid-column: 1;
@@ -226,7 +226,7 @@
 
   /* `tone` and `tone-selected` both set the checked mark fill; they differ in
      the off state: `tone` tints the unselected box (rule further down),
-     `tone-selected` leaves it neutral. Label + hint are never toned (recolour in
+     `tone-selected` leaves it neutral. Label + hint are never toned (recolor in
      plain CSS via --text-N-{tone}). Both point --checkbox-tone-source at the
      tone's seed; the fill formula in the base rule derives from it. `neutral`
      keeps the base greys; the default omits the attribute. */
@@ -245,7 +245,7 @@
 
   /* `tone` (not tone-selected) also derives the unselected tinted box from the
      tone in oklch: a whisper-tint fill (chroma scaled down) under a border ramp
-     stepped off the fill. Named tones + custom colours reach this; neutral and
+     stepped off the fill. Named tones + custom colors reach this; neutral and
      every tone-selected keep the neutral off-box border. */
   a-checkbox[tone]:not([tone=""], [tone="neutral"]) {
     --checkbox-bg: oklch(from var(--checkbox-tone-source) 0.99 calc(c * 0.03) h);
@@ -458,7 +458,7 @@
 
   /* The custom checkmark is a mask painted by ::after. In forced colors, pair
      the selected box with HighlightText explicitly so the glyph cannot be
-     remapped to the same colour as its Highlight fill. */
+     remapped to the same color as its Highlight fill. */
   @media (forced-colors: active) {
     a-checkbox:is(:state(checked), :state(indeterminate))::before {
       forced-color-adjust: none;

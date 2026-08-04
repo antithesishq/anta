@@ -336,7 +336,7 @@ returns to whatever opened the dialog, from the native `<dialog>`.
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the header, footer, and close control. Add `tabindex="0"` to every
 raw `<a-button>`.
@@ -388,7 +388,7 @@ the centered modal (`center` carries no `position` attribute).
   <a-button tabindex="0" data-dialog-open="styled">Wider, softer modal</a-button>
   <a-dialog name="styled" class="styled-dialog">
     <Title slot="header" level={4}>Custom surface</Title>
-    <Text>A wider centred modal with a bigger radius and a stronger overlay, all via ::part.</Text>
+    <Text>A wider centered modal with a bigger radius and a stronger overlay, all via ::part.</Text>
     <a-button tabindex="0" slot="footer" priority="primary" data-dialog-close="styled">Done</a-button>
   </a-dialog>
   <style is:inline>{`

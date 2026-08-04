@@ -730,7 +730,7 @@ without taking ownership of `onClick`.
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Set `role="button"` and `tabindex="0"` when authoring `<a-button>` directly.
 
@@ -784,7 +784,7 @@ wrapper sets them for you). A native `<button>` also carries its own default
 
 <Disclosure title="Styling">
 
-Reach for the props first: **`tone`** sets the colour (any CSS colour for a custom
+Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the whole tone × priority × state curve in oklch), **`priority`**
 the emphasis, **`size`** the dimensions. The focus ring is the global
 [`--focus-ring`](/colors/#focus-ring).
@@ -798,7 +798,7 @@ CSS (an un-layered rule beats `@layer anta` without `!important`). Set
 `background-color` / `color` **per state**, plus full type control (size,
 line-height, letter-spacing, `font-feature-settings`), padding, radius, even a
 frosted `backdrop-filter` — no need to touch a single token. **`light-dark()`** works
-too (Anta sets `color-scheme` from its theme toggle), so colours adapt to dark mode
+too (Anta sets `color-scheme` from its theme toggle), so colors adapt to dark mode
 with no `.dark` selector. The classes below are just for the demos:
 
 <Preview>
@@ -833,7 +833,7 @@ with no `.dark` selector. The classes below are just for the demos:
     }
     a-button.checkout:hover  { background: linear-gradient(140deg, light-dark(#3a3a42, #ffffff), light-dark(#161618, #cacace)); }
     a-button.checkout:active { background: linear-gradient(140deg, light-dark(#000000, #ececf0), light-dark(#1a1a1c, #ffffff)); }
-    /* customised label — uppercase, wide tracking */
+    /* customized label — uppercase, wide tracking */
     a-button.checkout a-button-label {
       text-transform: uppercase;
       letter-spacing: 0.14em;
@@ -889,14 +889,14 @@ a-button.checkout {
 }
 a-button.checkout:hover  { background: linear-gradient(140deg, light-dark(#3a3a42, #fff), light-dark(#161618, #cacace)); }
 a-button.checkout:active { background: linear-gradient(140deg, light-dark(#000, #ececf0), light-dark(#1a1a1c, #fff)); }
-a-button.checkout a-button-label {            /* customised label */
+a-button.checkout a-button-label {            /* customized label */
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-weight: 600;
 }
 
 /* Second — liquid glass: frost + translucent tint + a diagonal specular sheen,
-   a top/bottom bevel, and a soft lift. Sits on a colourful backdrop so it reads. */
+   a top/bottom bevel, and a soft lift. Sits on a colorful backdrop so it reads. */
 a-button.glass {
   color: #fff;
   background-color: rgba(255, 255, 255, 0.12);
@@ -985,6 +985,6 @@ beyond the button so it can rotate behind the label without exposing an edge.
 
 Don't reach for the resolved `--button-fg` / `--button-bg`: they're recomputed per
 state, so setting one only catches a single state — restyle per state as above, or
-use `tone` for a full custom-colour curve.
+use `tone` for a full custom-color curve.
 
 </Disclosure>

@@ -24,7 +24,7 @@ export interface InputChangeAttrs {
 export interface InputProps extends BaseProps, DOMEventHandlers {
   /** Extra content rendered directly under the field, above the hint/error (it
    *  pushes the message down). A no-box child like an Anta `<Tooltip>` takes no
-   *  space and just anchors to the field — consistent with how tooltips attach
+   *  space and anchors to the field — consistent with how tooltips attach
    *  to any other element. Use the named `leading` / `trailing` props for
    *  in-field content. */
   children?: React.ReactNode
@@ -46,7 +46,7 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    *  success → `circle-check`, info → `info`, brand → `circle-small-solid`); pass a
    *  shape to override, or `false` to drop it. `neutral` has no default glyph. */
   statusIcon?: IconShape | (string & {}) | false
-  /** Custom accent colour — any literal CSS colour tints the resting + hover
+  /** Custom accent color — any literal CSS color tints the resting + hover
    *  border (focus ring stays the global `--focus-ring`). For consistency with the
    *  other controls' custom-tone knob; a `status` still overrides for validation. */
   tone?: string
@@ -340,7 +340,7 @@ export const Input = ({
 
       {resolvedClearable && (
         // A real <a-button> (light DOM → fully styled, keyboard-focusable) in
-        // the element's `clear` slot — the element owns its visibility (shown
+        // the element's `clear` slot — the element controls its visibility (shown
         // only when filled + editable). It fires the bubbling `clearrequest`
         // event via a-button's global listener, so clearing works even without
         // framework hydration; the element turns that into clearclick→clear().

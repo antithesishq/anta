@@ -40,7 +40,7 @@ export default function ToneTabs() {
   return (
     <Tabs
       value={tone}
-      label="Colour tones"
+      label="Color tones"
       options={TONES}
       onStateChange={(_event, { next }: { next: string | null }) => {
         if (next && next !== tone) apply(next as Tone)

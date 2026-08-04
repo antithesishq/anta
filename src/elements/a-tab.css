@@ -26,7 +26,7 @@
        strip-wide (incl. the sliding indicator) via a-tabs.css. */
     &[round] { --tab-radius: 999px; }
     /* Inset zero-spread transparent baseline so the selected tab's ring (--tab-selected-shadow,
-       inset) animates in (spread 0→0.5px, transparent→colour) instead of popping from `none`.
+       inset) animates in (spread 0→0.5px, transparent→color) instead of popping from `none`.
        Inset matches the ring so the transition doesn't flip inset↔outset mid-way. */
     box-shadow: inset 0 0 0 0 transparent;
 
@@ -42,7 +42,7 @@
     text-wrap: nowrap;
 
     /* Height is prescribed, not derived: `min-height` = --tab-height (24/28/32), the same
-       scale as Button's min-height, and align-items:center centres the label. Block padding
+       scale as Button's min-height, and align-items:center centers the label. Block padding
        mirrors Button's `(8px − --_pb)/2` — for a single-line label it stays under the
        min-height floor, so the box is exactly --tab-height (and a strip, also unpadded,
        matches it at every priority); once a label wraps, it gives the extra lines their
@@ -51,10 +51,10 @@
     padding-block: calc((8px - var(--_pb)) / 2);
     padding-inline: var(--tab-padding-x);
 
-    /* The text/icon `color` is INSTANT (not transitioned) — hover/select recolour the
+    /* The text/icon `color` is INSTANT (not transitioned) — hover/select recolor the
        label immediately. Background and shadow still ease in/out, so the active fill +
        pill ring animate while the text snaps. (The tertiary underline is the ::after
-       overlay in a-tabs.css; it eases its own size + colour.) */
+       overlay in a-tabs.css; it eases its own size + color.) */
     transition:
       background-color var(--tab-timing),
       box-shadow var(--tab-timing);

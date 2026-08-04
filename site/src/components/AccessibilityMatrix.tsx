@@ -317,7 +317,7 @@ function cellGlowUrl(bgName: string, condition: Condition, dark: boolean): strin
 }
 
 // Approximate prevalence by region. These are rough public-health
-// estimates synthesised from WHO, CDC, Colour Blind Awareness, and
+// estimates synthesised from WHO, CDC, Color Blind Awareness, and
 // peer-reviewed reviews; exact numbers vary by source, age band, and
 // definition. Treat them as orders of magnitude, not precise figures.
 type RegionStats = Partial<Record<
@@ -402,7 +402,7 @@ const DESCRIPTIONS: Partial<Record<CVD | Condition, string>> = {
   achromatopsia:     'Total color blindness: no functional color cones; the world appears in shades of grey.',
   'low-vision':      'Reduced visual acuity not fully correctable by glasses; details and edges appear soft.',
   cataracts:         'Clouding of the eye\'s natural lens; vision becomes hazy, washed out, and slightly yellow.',
-  'tunnel-vision':   'Loss of peripheral vision (advanced glaucoma, retinitis pigmentosa); only the centre of view remains.',
+  'tunnel-vision':   'Loss of peripheral vision (advanced glaucoma, retinitis pigmentosa); only the center of view remains.',
   macular:           'Loss of central vision from the macula (age-related macular degeneration, AMD); a blind spot covers what you focus on.',
   astigmatism:       'Irregular curvature of the cornea or lens; uncorrected, text and edges appear blurred along one axis. Most cases are corrected by glasses or contacts; the figures below are an estimate of the population currently experiencing the uncorrected effect.',
   diplopia:          'Double vision: the same object appears twice, often from eye-muscle imbalance or neurological issues.',

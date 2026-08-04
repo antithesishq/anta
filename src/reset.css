@@ -37,7 +37,7 @@
     font: inherit;
   }
 
-  /* Give plain, keyboard-focusable HTML the same focus colour and hairline as
+  /* Give plain, keyboard-focusable HTML the same focus color and hairline as
      Anta controls. Component rules are more specific, so an <a-*> element or
      an opt-in native control keeps its own focus geometry and offset. */
   :focus-visible {
@@ -138,7 +138,7 @@
      `:not(:where([role="button"]))` excludes anchor-buttons (`<a role="button">`,
      e.g. `<Button href>`): `a:link`/`a:visited` are pseudo-classes with the
      same (0,1,1) specificity as `a[role="button"]`, so without the exclusion
-     they'd tie and win on source order, giving buttons link colour +
+     they'd tie and win on source order, giving buttons link color +
      underline. The `:where()` keeps the exclusion specificity-neutral so this
      base rule stays at (0,0,1)/(0,1,1) — a bare `:not([role="button"])` would
      add an attribute selector's weight and out-specify prose-link overrides
@@ -168,7 +168,7 @@
     text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
   }
 
-  /* Text selection — the focus-ring colour, tuned per theme (20% light / 30%
+  /* Text selection — the focus-ring color, tuned per theme (20% light / 30%
      dark; the ring reads lighter on a dark surface, so it needs more presence). */
   ::selection {
     background: color-mix(in oklch, var(--focus-ring) 20%, transparent);

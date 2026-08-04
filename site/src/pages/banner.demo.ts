@@ -7,7 +7,7 @@ export default `import { Banner, Button } from '@antadesign/anta'
 
 <Banner
   tone="info"
-  message="Antithesis found a new bug in your latest build."
+  message="A new bug was found in your latest build."
   actions={<Button size="small" priority="tertiary" tone="info" label="View report" />}
 />
 `

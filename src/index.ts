@@ -1,5 +1,5 @@
 /**
- * @antadesign/anta — Antithesis Design System
+ * @antadesign/anta — Anta design system
  *
  * Portable UI components with web component internals and JSX wrappers.
  * Works with React, Preact (via compat or `configure()`), or any custom JSX runtime.

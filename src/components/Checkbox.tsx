@@ -67,16 +67,16 @@ export interface CheckboxProps extends BaseProps {
   /** Value submitted with the form when checked — like a native checkbox.
    *  @defaultValue "on" */
   value?: string
-  /** Colour of the **mark** in every state — the checked-box fill *and* the
+  /** Color of the **mark** in every state — the checked-box fill *and* the
    *  unselected box border. A named tone or any literal CSS color (`'#ff1493'`,
    *  `'rebeccapurple'`) for a one-off custom tone. Named tones track light/dark mode
-   *  automatically; a custom colour keeps its hue + chroma and pins lightness to the
+   *  automatically; a custom color keeps its hue + chroma and pins lightness to the
    *  fill curve. Use `toneSelected` instead to tone only the checked mark and leave
-   *  the empty box neutral. The label + hint stay neutral — recolour them in plain
+   *  the empty box neutral. The label + hint stay neutral — recolor them in plain
    *  CSS via the theme-aware `--text-N-{tone}` tokens.
    *  @defaultValue 'neutral' */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but coloured onto the **checked mark only** — the empty box stays
+  /** Like `tone`, but colored onto the **checked mark only** — the empty box stays
    *  neutral grey until it's checked. Prefer this over `tone` when a resting tinted
    *  border would read as a validation state. Same value set as `tone`; if both are
    *  set, `tone` governs the off-state border and `toneSelected` the checked fill.
@@ -98,8 +98,7 @@ export interface CheckboxProps extends BaseProps {
    *  checkbox this fires once you've updated `checked`. */
   onChange?: (event: Event) => void
   /** Like `onChange`, but with a `{ checked, indeterminate, name, value }` snapshot
-   *  as the 2nd argument — the ergonomic "just give me the new value" callback
-   *  (mirrors `Input`'s `onValueChange`). */
+   *  as the second argument, matching `Input`'s `onValueChange`. */
   onValueChange?: (event: Event, attrs: CheckboxChangeAttrs) => void
 }
 

@@ -45,7 +45,7 @@ export default function ProgressDemo() {
         <h4 style={{ margin: '0 0 8px' }}>With bottom border</h4>
         <p style={{ margin: '0 0 8px', fontSize: '13px', color: 'var(--text-3)' }}>
           The component pre-declares <code>border: 0px solid var(--progress-border-color)</code>;
-          set <code>border-bottom-width</code> (or any side) to enable the border. Colour
+          set <code>border-bottom-width</code> (or any side) to enable the border. Color
           tracks the tone token automatically.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

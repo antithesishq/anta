@@ -8,7 +8,7 @@ export interface ProgressProps extends BaseProps {
   /** Upper bound of the range.
    *  @defaultValue 100 */
   max?: number
-  /** Colour variant, or any literal CSS colour for a one-off custom tone (the
+  /** Color variant, or any literal CSS color for a one-off custom tone (the
    *  surface / indicator / text are derived from it in oklch). Named tones track
    *  light/dark automatically.
    *  @defaultValue 'neutral' */

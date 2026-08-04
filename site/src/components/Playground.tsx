@@ -427,7 +427,7 @@ export default function Playground({ component, initialCode, initialCss = '', la
   }
 
   // Bottom-right corner grip — resizes the whole widget. Width grows
-  // symmetrically about the widget's centre (it's centered in the lane),
+  // symmetrically about the widget's center (it's centered in the lane),
   // so the grip tracks the right edge while the widget stays aligned;
   // capped at the available track and snapped to "full" (sticks) at the
   // edge. Height grows downward, capped at 90vh.
@@ -1115,7 +1115,7 @@ function FieldControl({
     }
     case 'tone': {
       // Named tones are a seven-item choice, so use Anta <Select> rather than tabs.
-      // A value outside `options` (a colour literal) means custom → reveal the colour
+      // A value outside `options` (a color literal) means custom → reveal the color
       // picker. The picker only reflects valid hex; a hand-typed `oklch(…)` stays in
       // the code and shows beside the picker without being overwritten.
       const v = typeof value === 'string' ? value : undefined
@@ -1395,7 +1395,7 @@ function pushBundleToIframe(iframe: HTMLIFrameElement, code: string, resetRoot =
   // `_children` property on the parent DOM node; clearing innerHTML removes the
   // visible nodes but leaves preact's bookkeeping pointing at stale references,
   // so the next `render()` call silently does nothing. Letting preact diff in
-  // place is also the right behaviour — typical "re-render with new props"
+  // place is also the right behavior — typical "re-render with new props"
   // patches the existing tree (and preserves focus / DOM state across edits).
   //
   // The exception is recovering from a thrown render (`resetRoot`): a render

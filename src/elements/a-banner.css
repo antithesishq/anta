@@ -39,10 +39,10 @@
 
     color: var(--banner-text);
     background: var(--banner-bg);
-    /* No border by default — style + colour are preset at 0 width (the same
+    /* No border by default — style + color are preset at 0 width (the same
        per-component reset <a-progress> uses), so a consumer opts into a rule / edge
        by setting only `border-bottom-width` (a divider under the strip) or
-       `border-width` (a full outline). The width is the single knob; the colour is
+       `border-width` (a full outline). The width is the single knob; the color is
        already tone-aware via --banner-border. */
     border: 0 solid var(--banner-border);
     border-radius: 0;
@@ -129,7 +129,7 @@
     --banner-text: var(--text-2-critical);
   }
 
-  /* Custom tone — any non-named `tone` is a literal CSS colour; the surface, border,
+  /* Custom tone — any non-named `tone` is a literal CSS color; the surface, border,
      and text are derived from it in oklch, using the SAME primary-surface curve as
      <a-expander>'s custom tone (text deep, fill light, border mid), re-tuned for
      dark. */

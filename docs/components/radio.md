@@ -5,7 +5,7 @@ A single-select control. `RadioGroup` is the whole component — you pass it an
 navigation, and the form value. There's no separate `Radio` component: options
 are data, not markup.
 
-## Options, label & hint
+## Options, label, and hint
 
 ```tsx
 <RadioGroup
@@ -42,12 +42,12 @@ The group's own `label` and `hint` form a header **above** the options: the
 ```
 
 Six named tones — `neutral` (default), `brand`, `info`, `success`, `warning`,
-`critical`. `tone` colours the **mark** in every state — the selected-ring fill + dot
+`critical`. `tone` colors the **mark** in every state — the selected-ring fill + dot
 and (for a tinted tone) the unselected ring border (a light shade of the fill that
 darkens on hover and active; `neutral` keeps a grey ring). The label and hint stay
-neutral — colour them in plain CSS with the `--text-N-{tone}` tokens. Set `tone` on
-the `RadioGroup` to colour every option, or on a single option to override just that
-one. Any literal CSS colour works too, for a one-off custom tone.
+neutral — color them in plain CSS with the `--text-N-{tone}` tokens. Set `tone` on
+the `RadioGroup` to color every option, or on a single option to override just that
+one. Any literal CSS color works too, for a one-off custom tone.
 
 ## Selected-only tone
 
@@ -67,7 +67,7 @@ neutral grey. Reach for it instead of `tone` when a resting tinted border would 
 as a validation error. Same tone set; set it on the group, or on a single option to
 override one.
 
-To colour the **label and hint**, there's no prop — add a `color` rule on the
+To color the **label and hint**, there's no prop — add a `color` rule on the
 option's `a-radio-label` / `a-radio-hint` with a `--text-N-{tone}` value.
 
 ## Size
@@ -89,7 +89,7 @@ Three sizes scale the control circle **and** the label + hint type together:
 `large` (18px / 17px). Set it on the `RadioGroup`, or on a single option to
 override one.
 
-## Orientation & layout
+## Orientation and layout
 
 ```tsx
 <RadioGroup
@@ -145,11 +145,11 @@ navigation and dropped from the tab order.
 />
 ```
 
-`status` recolours the group `hint` for feedback — the same tone set as
+`status` recolors the group `hint` for feedback — the same tone set as
 [`Input`](./input.md): `critical`, `warning`, `success`, `info`, `brand`
 (omit for neutral). It styles the message only; drive it from your own validation.
 
-## Keyboard & accessibility
+## Keyboard and accessibility
 
 The group is one Tab stop: `Tab` moves into the selected option (or the first
 enabled one), the arrow keys (`↑`/`↓`/`←`/`→`) move the selection between enabled
@@ -271,19 +271,19 @@ element — `Input`, and the composed `Select` — skip it and expose only
  (uncontrolled), or in controlled mode answer by updating `value` (reject by
  doing nothing). `'reset'` (form reset) and `'restore'` (bfcache / autofill) are
  not cancelable — filter on `reason` if you only track user picks. |
-| `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value, name }` snapshot as the 2nd argument —
- the ergonomic "just give me the new value" callback (mirrors `Input`). |
+| `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value, name }` snapshot as the second argument,
+ matching `Input`. |
 | `orientation?` | 'vertical' \| 'horizontal' | 'vertical' | Layout + arrow-key axis. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size applied to every option (an option's own `size` wins). |
-| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | 'neutral' | Validation/feedback tone for the group `hint` — recolours it (same tone set
+| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | 'neutral' | Validation/feedback tone for the group `hint` — recolors it (same tone set
  as `Input`'s `status`). Use `critical` for an error message, etc.; omit for
  the neutral default. |
 | `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Mark tone applied to every option (an option's own `tone` wins), or any literal
- CSS color for a one-off custom tone. Colours the selected-ring fill + dot *and*
+ CSS color for a one-off custom tone. Colors the selected-ring fill + dot *and*
  the unselected ring border. Named tones track light/dark mode. Use `toneSelected`
  instead to tone only the selected option and leave the rest neutral. The option
- text stays neutral — recolour it in plain CSS via the `--text-N-{tone}` tokens. |
-| `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Like `tone`, but coloured onto the **selected option only** — every unselected
+ text stays neutral — recolor it in plain CSS via the `--text-N-{tone}` tokens. |
+| `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Like `tone`, but colored onto the **selected option only** — every unselected
  ring stays neutral grey. Applied to every option (an option's own `toneSelected`
  wins). Prefer this over `tone` when a resting tinted border would read as a
  validation state. |
@@ -291,7 +291,7 @@ element — `Input`, and the composed `Select` — skip it and expose only
  requested change through `onStateChange`. Leave it undefined for
  uncontrolled use. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 The group owns selection and the single tab stop. Put options in `<a-radio-list>`.
 
@@ -322,8 +322,8 @@ treatments.
 </div>
 ```
 
-Reach for the props first: **`tone`** colours the mark in every state,
-**`toneSelected`** only the selected option (any CSS colour for a custom tone, set on
+Reach for the props first: **`tone`** colors the mark in every state,
+**`toneSelected`** only the selected option (any CSS color for a custom tone, set on
 the group or a single option — derives the full curve in oklch), **`size`** the
 dimensions + type. To tint the label + hint, add a `color` rule on the option's
 `a-radio-label` / `a-radio-hint` with the `--text-N-{tone}` values — there's no
@@ -342,7 +342,7 @@ masked — same heart as the checkbox):
 
 ```css
 /* Outlined — an unfilled selected ring: keep the ring background and paint the
-   border + dot in the tone colour (light-dark() tunes both themes at once). */
+   border + dot in the tone color (light-dark() tunes both themes at once). */
 a-radio-group.outlined a-radio:state(selected)::before {
   background: var(--radio-bg);
   border-color: light-dark(#5f4bc3, #7460d7);
@@ -356,7 +356,7 @@ a-radio-group.square a-radio:state(selected)::before { background: light-dark(#0
 a-radio-group.square a-radio:state(selected)::after { background: light-dark(#fff, #000); }   /* contrasting dot */
 
 /* Heart — a bigger ring with a heart mark (the dot ::after, masked) on a pink fill.
-   Same heart SVG as the checkbox; mask-size: contain centres it in the bigger ring. */
+   Same heart SVG as the checkbox; mask-size: contain centers it in the bigger ring. */
 a-radio-group.heart a-radio::before { inline-size: 22px; block-size: 22px; }   /* bigger ring */
 a-radio-group.heart a-radio::after {
   inline-size: 13px; block-size: 13px; border-radius: 0;

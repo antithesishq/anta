@@ -61,8 +61,8 @@ export interface CalendarProps extends Omit<BaseProps, "children" | "onChange"> 
   /** Fired *after* the selection changes (post-apply). Not cancelable; for a
    *  controlled calendar it fires once you've updated `value`. */
   onChange?: (event: Event) => void
-  /** Like `onChange`, but with a `{ value, name }` snapshot — the ergonomic
-   *  "just give me the new date" callback (mirrors `Input`). */
+  /** Like `onChange`, but with a `{ value, name }` snapshot as the second argument,
+   *  matching `Input`. */
   onValueChange?: (event: Event, attrs: CalendarChangeAttrs) => void
 }
 

@@ -24,7 +24,7 @@ Anta's text scale, so a field lines up with same-size `Text` / `Button`.
 | `medium` | 28px | 15 / 20 | 16px |
 | `large` | 32px | 17 / 22 | 18px |
 
-## Label & hint
+## Label and hint
 
 ```tsx
 <Input label="Display name" defaultValue="Ada Lovelace" />
@@ -75,8 +75,8 @@ recolors it.
 
 It reuses the tone palette but isn't `tone`: **`status` is a validation *state*** (it
 also carries the glyph and, for `critical`, validity), whereas `tone` — elsewhere in
-Anta — is decorative colour. On `Input` the named tones live on `status`; `tone` is
-reserved for a one-off custom border colour.
+Anta — is decorative color. On `Input` the named tones live on `status`; `tone` is
+reserved for a one-off custom border color.
 
 Only `status="critical"` carries validity — it sets `aria-invalid`, flips the
 `:state(invalid)` hook, and reports invalid to a surrounding `<form>` through
@@ -87,7 +87,7 @@ Each status has a default glyph (`critical` → `warning-diamond`, `warning` →
 `circle-small-solid`). Override it with **`statusIcon`** (any shape), or drop it
 with `statusIcon={false}`.
 
-## Leading, trailing & clear
+## Leading, trailing, and clear
 
 ```tsx
 {/* clearable — the clear button shows once there's a value */}
@@ -191,7 +191,7 @@ Autogrow uses CSS `field-sizing` where supported (Chromium, Safari ≥ 26.2) and
 built-in JS resize everywhere else (Firefox, older Safari), so it grows in every
 browser.
 
-## Controlled & uncontrolled
+## Controlled and uncontrolled
 
 ```tsx
 // Uncontrolled: the element updates its value after input.
@@ -251,7 +251,7 @@ Because `<a-input>` is form-associated, it submits with the surrounding
 needed. `required` participates in native validity, and `<Button type="reset">`
 restores the field to its `defaultValue` via `formResetCallback`.
 
-## Types & validation
+## Types and validation
 
 ```tsx
 <Input type="text"     label="Text" />
@@ -263,7 +263,7 @@ restores the field to its `defaultValue` via `formResetCallback`.
 ```
 
 `type` accepts `text` (default), `email`, `password`, `tel`, `url`, and
-`number` — each gets the right mobile keyboard, autofill behaviour, and native
+`number` — each gets the right mobile keyboard, autofill behavior, and native
 constraint validation. (`search` is omitted on purpose — see above.)
 `number` also takes `min` / `max` / `step`.
 
@@ -433,7 +433,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
  `username`, `current-password`, `new-password`, `one-time-code`, or `off`. |
 | `children?` | ReactNode | — | Extra content rendered directly under the field, above the hint/error (it
  pushes the message down). A no-box child like an Anta `<Tooltip>` takes no
- space and just anchors to the field — consistent with how tooltips attach
+ space and anchors to the field — consistent with how tooltips attach
  to any other element. Use the named `leading` / `trailing` props for
  in-field content. |
 | `clearable?` | boolean | — | Show a clear button as the first trailing item once the field has a
@@ -508,7 +508,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
  success → `circle-check`, info → `info`, brand → `circle-small-solid`); pass a
  shape to override, or `false` to drop it. `neutral` has no default glyph. |
 | `step?` | number \| string | — |  |
-| `tone?` | string | — | Custom accent colour — any literal CSS colour tints the resting + hover
+| `tone?` | string | — | Custom accent color — any literal CSS color tints the resting + hover
  border (focus ring stays the global `--focus-ring`). For consistency with the
  other controls' custom-tone knob; a `status` still overrides for validation. |
 | `trailing?` | ReactNode | — | Content pinned to the end of the field (e.g. icons, buttons), after the
@@ -523,7 +523,7 @@ this; use `truncate` when an editable field should keep the same treatment. |
  clear/search affordances never appear — Anta owns that chrome. |
 | `value?` | string | — | Controlled value. Pair with `onChange` / `onInput`. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the label, hint, and controls around the native field.
 
@@ -563,7 +563,7 @@ their `size` attribute, so Anta does not reuse it. `round` and a custom-color
 ```
 
 Reach for the props first: **`status`** sets a validation tone (border + message),
-**`tone`** a custom accent colour for the border (any CSS colour), **`size`** the
+**`tone`** a custom accent color for the border (any CSS color), **`size`** the
 dimensions. The focus ring is the global [`--focus-ring`](../colors.md#focus-ring).
 
 ```tsx
@@ -587,7 +587,7 @@ The border is drawn as an **inset `box-shadow`**, not a real `border`, so its wi
 (`0.5px` → `1px` when a `status` is set) and placement never change the box size —
 the field height stays locked to the matching Button. Drop the leading `inset` to
 draw the border as an outset ring instead. You can also re-point an `--input-*`
-colour token on one instance (`style={{ '--input-border': 'var(--border-1)' }}`)
+color token on one instance (`style={{ '--input-border': 'var(--border-1)' }}`)
 or a wrapping selector; the resolver lives in `@layer anta`, so any un-layered rule
 of yours wins.
 

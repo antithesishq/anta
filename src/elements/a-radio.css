@@ -20,7 +20,7 @@
     /* Tone — the selected mark (ring + dot) derives in oklch from
        --radio-tone-source at three lightnesses; the seed's own chroma (`c`) keeps
        neutral grey. Mirrors a-checkbox; constants from the lab. Named tones and a
-       custom colour point the source elsewhere (rules below). Default is neutral. */
+       custom color point the source elsewhere (rules below). Default is neutral. */
     --radio-tone-source: var(--anta-seed-neutral);
     --_tone-l-rest: 0.6;
     --_tone-l-hover: 0.45;
@@ -30,7 +30,7 @@
     --radio-bg-selected-active: oklch(from var(--radio-tone-source) var(--_tone-l-active) c h);
 
     /* Unselected ring border: neutral role-token greys by default. Named tinted
-       tones + a custom colour derive it from the tone (rules below). */
+       tones + a custom color derive it from the tone (rules below). */
     --radio-border-neutral: var(--border-3);
     --radio-border: var(--radio-border-neutral);
     --radio-border-hover: var(--border-2);
@@ -53,7 +53,7 @@
     --radio-hint-fs: 14px;
     --radio-hint-lh: 17px;
 
-    /* Inline-grid: ring + dot in column 1, label/hint in column 2. Ring and dot top-align to the label's first line (align-self: start plus a margin offset on the control, so the row keeps the label's line-height); the dot's offset differs by half a dot so it stays centred on the ring. Column 2 is 1fr so a stretched radio's slack goes to the label, keeping the ring column content-sized. */
+    /* Inline-grid: ring + dot in column 1, label/hint in column 2. Ring and dot top-align to the label's first line (align-self: start plus a margin offset on the control, so the row keeps the label's line-height); the dot's offset differs by half a dot so it stays centered on the ring. Column 2 is 1fr so a stretched radio's slack goes to the label, keeping the ring column content-sized. */
     display: inline-grid;
     grid-template-columns: auto 1fr;
     align-items: start;
@@ -75,7 +75,7 @@
       grid-column: 1;
       grid-row: 1 / -1;
       align-self: start;
-      /* Sit the ring on the label's first-line centre; offset on the control so the row keeps the label's line-height. */
+      /* Sit the ring on the label's first-line center; offset on the control so the row keeps the label's line-height. */
       margin-block-start: calc((var(--radio-label-lh) - var(--radio-control-size)) / 2);
       box-sizing: border-box;
       inline-size: var(--radio-control-size);
@@ -94,7 +94,7 @@
       grid-row: 1 / -1;
       align-self: start;
       justify-self: center;
-      /* Centre the dot on the first line like the ring, using its rendered size (minus the dark-mode shrink) so it stays centred on the ring in both themes. */
+      /* Center the dot on the first line like the ring, using its rendered size (minus the dark-mode shrink) so it stays centered on the ring in both themes. */
       margin-block-start: calc((var(--radio-label-lh) - (var(--radio-dot-size) - var(--_radio-dot-adjust))) / 2);
       inline-size: calc(var(--radio-dot-size) - var(--_radio-dot-adjust));
       block-size: calc(var(--radio-dot-size) - var(--_radio-dot-adjust));
@@ -208,7 +208,7 @@
      `tone-selected` both set the MARK fill (selected ring + dot); they differ only in
      the OFF state — `tone` also tints the unselected ring border (the ramp rule below,
      keyed [tone]), `tone-selected` leaves it neutral so the tone shows only once
-     selected. Label + hint are never toned — recolour them in plain CSS via the
+     selected. Label + hint are never toned — recolor them in plain CSS via the
      theme-aware --text-N-{tone} tokens (a `color` rule on a-radio-label /
      a-radio-hint). `neutral` keeps the base greys; the
      default (no attribute) is untouched — the wrapper omits the neutral value. */
@@ -446,7 +446,7 @@
   }
 
   /* The selected ring and dot are author-painted pseudo-elements. Keep their
-     system-colour pair together so the dot stays visible over the selection. */
+     system-color pair together so the dot stays visible over the selection. */
   @media (forced-colors: active) {
     a-radio:state(selected)::before {
       forced-color-adjust: none;

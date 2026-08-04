@@ -36,7 +36,7 @@ underline to full alpha.
 
 ## Demo
 
-## Truncation & expansion
+## Truncation and expansion
 
 `truncate` takes `true` (or `1`) for a single-line ellipsis, any integer
 ≥ 2 for multi-line clamping, and `0` or a negative value for no
@@ -102,7 +102,7 @@ more" and "Show less". `collapsible` takes effect only with `expandable`.
  technique, supported in all major browsers (Firefox 68+, Chrome,
  Safari, Edge). |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Use `<a-text>` directly for a block that carries the text priority and tone.
 
@@ -112,10 +112,10 @@ Use `<a-text>` directly for a block that carries the text priority and tone.
 </a-text>
 ```
 
-Colour comes from **`priority`** (the neutral text level) and **`tone`** (the tint);
+Color comes from **`priority`** (the neutral text level) and **`tone`** (the tint);
 `size` and the type props set the rest. For a named tone, `Text` consumes the
 global **text role tokens** (`--text-1` … `--text-5`, the `-{tone}` tints,
-`--link-color`), so retuning those once on `:root` / `.dark` shifts text colour
+`--link-color`), so retuning those once on `:root` / `.dark` shifts text color
 everywhere (see [Colors](../colors.md)). A custom `tone` (any CSS color) is derived in
 oklch from **`--text-tone-source`** — the same one-off knob as `Button` / `Tag`.
 

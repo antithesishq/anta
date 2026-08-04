@@ -120,7 +120,7 @@ The trigger opens the facet menu. The example renders one editable
 [Select](./select.md) below it for each active facet. Each Select receives the
 facet label through `leading`, which displays it as a prefix.
 
-### Value & changes
+### Value and changes
 
 The value is a record keyed by facet key: `{ [facetKey]: value }`. Its shape
 depends on `kind`: an option value for `single`, an array for `multiple`, a
@@ -153,7 +153,7 @@ Because one control mixes facets that hold different value types, the record is 
 
 ### Value types
 
-`single` and `multiple` facets use [Select](./select.md#value--changes) option
+`single` and `multiple` facets use [Select](./select.md#value-and-changes) option
 values: `string`, `number`, or `boolean` (`OptionValue`). Anta compares them
 with `===` and returns them unchanged. For a non-primitive value, use a stable
 primitive key such as a date's ISO string or a record ID. Look up the full value
@@ -392,7 +392,7 @@ const recency: SelectFacetCustom<Recency> = {
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Default trigger's button size. |
 | `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Tone applied to a selected option row in the facet flyouts (label, selected
  tint, and the check / checkbox indicator). A named tone or a custom CSS
- colour, matching `Select`'s `toneSelected`. Defaults to a neutral selection. |
+ color, matching `Select`'s `toneSelected`. Defaults to a neutral selection. |
 | `value?` | SelectFacetedValue | — | Controlled value record, keyed by facet. When provided, update it through
  `onValueChange`. Leave it undefined for uncontrolled use. |
 

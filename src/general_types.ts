@@ -167,7 +167,7 @@ export interface AProgressAttributes extends BaseAttributes {
   value?: number | string | false
   /** Maximum value. Defaults to 100. */
   max?: number | string
-  /** Colour variant, or any literal CSS colour for a custom tone (derived in
+  /** Color variant, or any literal CSS color for a custom tone (derived in
    *  oklch). Named tones track light/dark automatically. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. `medium` is the default. */
@@ -458,12 +458,12 @@ export interface ATooltipAttributes extends BaseAttributes {
  * `@antadesign/anta`.
  */
 export interface ACheckboxAttributes extends BaseAttributes {
-  /** Mark colour in every state — checked fill *and* unselected box border — or any
+  /** Mark color in every state — checked fill *and* unselected box border — or any
    *  literal CSS color for a one-off custom tone. Named tones track light/dark mode
    *  automatically. `'neutral'` is the default (same as omitting it). The label + hint
-   *  stay neutral — recolour them in plain CSS via the `--text-N-{tone}` tokens. */
+   *  stay neutral — recolor them in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but coloured onto the checked mark only — the empty box stays
+  /** Like `tone`, but colored onto the checked mark only — the empty box stays
    *  neutral grey. Same value set as `tone`; if both are set, `tone` governs the
    *  off-state border and `tone-selected` the checked fill. */
   'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
@@ -512,9 +512,9 @@ export interface ACheckboxAttributes extends BaseAttributes {
  * wrapper supplies both.
  */
 export interface ASwitchAttributes extends BaseAttributes {
-  /** Track and thumb colour. A tinted tone also colours the unchecked chrome. */
+  /** Track and thumb color. A tinted tone also colors the unchecked chrome. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Checked-track-only colour. The unchecked track and thumb stay neutral. */
+  /** Checked-track-only color. The unchecked track and thumb stay neutral. */
   'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. `small` = 26×16px, `medium` (default) = 30×18px, `large` = 34×20px. */
   size?: 'small' | 'medium' | 'large'
@@ -570,7 +570,7 @@ export interface AInputAttributes extends BaseAttributes {
    *  wrapper) the glyph. Only `critical` carries validity weight (`aria-invalid`
    *  + `:state(invalid)`); the others are advisory. Omit for the neutral field. */
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
-  /** Custom accent colour (any literal CSS colour) — tints the resting + hover
+  /** Custom accent color (any literal CSS color) — tints the resting + hover
    *  border via an oklch derivation. `status` overrides it for validation. */
   tone?: string
   /** Disabled state. Presence-based. */
@@ -638,9 +638,9 @@ export interface ASliderAttributes extends BaseAttributes {
   name?: string
   /** Disables pointer and keyboard interaction. Presence-based. */
   disabled?: boolean | ''
-  /** Colour of the filled rail. Named tones or a literal CSS colour. */
+  /** Color of the filled rail. Named tones or a literal CSS color. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Colour of the thumb stroke. Named tones or a literal CSS colour. */
+  /** Color of the thumb stroke. Named tones or a literal CSS color. */
   'thumb-tone'?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=24px, medium=28px, large=32px tall. */
   size?: 'small' | 'medium' | 'large'
@@ -648,7 +648,7 @@ export interface ASliderAttributes extends BaseAttributes {
   'track-size'?: string
   /** Diameter of the thumb as a CSS length, such as `'20px'`. */
   'thumb-size'?: string
-  /** Fill the thumb with its resolved border colour. Presence-based. */
+  /** Fill the thumb with its resolved border color. Presence-based. */
   'thumb-fill'?: boolean | ''
   /** Fully round the rail and thumb, or set both to a custom radius. */
   round?: boolean | number | string
@@ -693,7 +693,7 @@ export interface AInputTimeAttributes extends BaseAttributes {
   max?: string
   /** Validation/feedback tone. Only `critical` carries validity weight. */
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
-  /** Custom accent colour (any literal CSS colour) — tints the resting + hover
+  /** Custom accent color (any literal CSS color) — tints the resting + hover
    *  border via an oklch derivation; `status` overrides for validation. */
   tone?: string
   /** Disabled state. Presence-based. */
@@ -972,12 +972,12 @@ export interface ACopyAttributes extends BaseAttributes {
 export interface ARadioAttributes extends BaseAttributes {
   /** This option's identity / submitted value. */
   value?: string
-  /** Mark colour in every state — selected ring fill + dot *and* unselected ring
+  /** Mark color in every state — selected ring fill + dot *and* unselected ring
    *  border — or any literal CSS color for a one-off custom tone. Named tones track
    *  light/dark mode. `'neutral'` is the default. The label + hint stay neutral —
-   *  recolour them in plain CSS via the `--text-N-{tone}` tokens. */
+   *  recolor them in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but coloured onto the selected mark only — an unselected ring stays
+  /** Like `tone`, but colored onto the selected mark only — an unselected ring stays
    *  neutral grey. Same value set as `tone`; if both are set, `tone` governs the
    *  off-state border and `tone-selected` the selected fill. */
   'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
@@ -1024,17 +1024,17 @@ export interface ARadioGroupAttributes extends BaseAttributes {
   /** Form field name — the group submits `name=value`. */
   name?: string
   /** Mark tone cascaded to children that don't set their own, or any literal CSS
-   *  color for a one-off custom tone. Colours every child's ring fill + dot *and*
-   *  unselected border. The option text stays neutral — recolour it in plain CSS via
+   *  color for a one-off custom tone. Colors every child's ring fill + dot *and*
+   *  unselected border. The option text stays neutral — recolor it in plain CSS via
    *  the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but coloured onto the selected option only — every unselected ring
+  /** Like `tone`, but colored onto the selected option only — every unselected ring
    *  stays neutral grey. Cascaded to children that don't set their own. */
   'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size cascaded to children that don't set their own. */
   size?: 'small' | 'medium' | 'large'
   /** Validation/feedback tone for the group hint — same set as `<a-input>`'s
-   *  `status`. Recolours `<a-radio-group-hint>`; omit for the neutral default. */
+   *  `status`. Recolors `<a-radio-group-hint>`; omit for the neutral default. */
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Disable the whole group. Presence-based. */
   disabled?: boolean | ''
@@ -1082,9 +1082,9 @@ export interface ARadioGroupAttributes extends BaseAttributes {
 export interface ATabAttributes extends BaseAttributes {
   /** This tab's identity / the value reported when it's selected. */
   value?: string
-  /** Per-tab tone override (same vocabulary as `<a-tabs tone>`): colours this tab's
+  /** Per-tab tone override (same vocabulary as `<a-tabs tone>`): colors this tab's
    *  label + icons and, when selected, its indicator. Named tones tone the sliding
-   *  indicator too; a custom literal colour tones the indicator only in `noslide`.
+   *  indicator too; a custom literal color tones the indicator only in `noslide`.
    *  Custom tones also set `--tabs-tone-source` on the tab (via the wrapper's style). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Selected state — connect-time seed for the standalone render path (no tablist).
@@ -1216,7 +1216,7 @@ export interface ACardAttributes extends BaseAttributes {
   size?: 'small' | 'medium' | 'large'
   /** Which edge the full-bleed `media` slot sits on. `top` is the default. */
   'media-position'?: 'top' | 'bottom' | 'left' | 'right'
-  /** Selected / chosen state — an inset ring in the tone colour. Presence-based
+  /** Selected / chosen state — an inset ring in the tone color. Presence-based
    *  (`''` on, omit off). */
   selected?: boolean | ''
   /** Loading state — skeleton pulse, `aria-busy`, and (in link mode) navigation is
@@ -1261,7 +1261,7 @@ export interface ABannerAttributes extends BaseAttributes {
    *  `'closed'` starts it dismissed. */
   'default-state'?: 'open' | 'closed'
   /** Semantic tone, or any literal CSS color for a one-off custom tone. Named tones
-   *  re-point the surface + text + border colour (used if you opt into a border); a
+   *  re-point the surface + text + border color (used if you opt into a border); a
    *  custom color keeps its hue with lightness/chroma pinned. `'neutral'` is the
    *  default (same as omitting it). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})

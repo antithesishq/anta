@@ -1,6 +1,6 @@
 @layer anta {
-  /* A standalone loader begins at the legacy text-3 colour. The icon alias
-     intentionally inherits its parent control's colour instead. */
+  /* A standalone loader begins at the legacy text-3 color. The icon alias
+     intentionally inherits its parent control's color instead. */
   a-loader {
     color: var(--text-3);
   }

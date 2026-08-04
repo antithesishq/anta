@@ -129,7 +129,7 @@ const SUPPORTS_FIELD_SIZING =
 //    medium 15/20 · large 17/22); label, control, and hint all read them.
 //  • .field — min-height (24/28/32) matches the same-size Button. The border is a
 //    box-shadow (inset), not a real border, so the rest→status width bump
-//    (0.5px→1px, thickened for emphasis; colour from a-input.css per-status
+//    (0.5px→1px, thickened for emphasis; color from a-input.css per-status
 //    tokens) never reflows. Forced-colors supplies a real system border because
 //    it suppresses shadows. The focus ring shows only when the *control* is
 //    focused (:has), not when a slotted button holds focus.
@@ -153,7 +153,7 @@ const SUPPORTS_FIELD_SIZING =
 //    so an empty slot reserves no box or phantom gap. The host stylesheet derives
 //    named-slot presence with `:has(> [slot])` and styles the matching part.
 //    Adornments are muted (--input-adornment) and inherit currentColor; a slotted
-//    <a-button> keeps its own colour. Slotted TEXT gets the field's type scale
+//    <a-button> keeps its own color. Slotted TEXT gets the field's type scale
 //    (--_fs/--_lh) plus a condensed wdth 88, so a key prefix lines up with the value
 //    and reads as a compact label; icons carry their own explicit size + width.
 //    `dim-actions` rests them at 0.6 and brightens
@@ -164,7 +164,7 @@ const SUPPORTS_FIELD_SIZING =
 //    (--_lh + 2·--_pad-block) so they stay centered on the first text line — same
 //    vertical position as single-line, no jump when `multiline` toggles.
 //  • .hint — reads quieter (1px smaller, tighter line, --input-hint), 1px off the
-//    left edge; a status recolours the whole row (message + glyph) via the
+//    left edge; a status recolors the whole row (message + glyph) via the
 //    per-status --input-hint override in a-input.css.
 const SHADOW_STYLE = `
   :host {

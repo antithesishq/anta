@@ -45,7 +45,7 @@ Same as the static base, plus:
 | `playOnce?` | `boolean` | Plays once and holds the final frame instead of looping. |
 | `replayOnClick?` | `boolean` | With `playOnce`, lets people click or press Enter/Space to replay the animation. The sticker becomes a labeled button. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Pass the generated SVG payload to `<a-sticker>` and set a size through
 `--sticker-size`. The animated element takes its generated Lottie JSON through

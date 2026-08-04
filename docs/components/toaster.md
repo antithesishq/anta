@@ -100,7 +100,7 @@ depending on what you toast:
 - **A string** auto-wraps in a `Banner`, so its ✕ is there for free.
 - **Any control carrying `data-toast-dismiss`** dismisses the toast on click. This is
   the simplest path — no handler, no `id`, no `onDismiss`; the render function doesn't
-  even take an argument. Just add the attribute to a button, link, or menu item inside
+  even take an argument. Add the attribute to a button, link, or menu item inside
   the content (the same convention as `<a-banner>`'s `data-banner-dismiss` and
   `<a-dialog>`'s `data-dialog-close`):
 
@@ -230,7 +230,7 @@ Toaster.manager.add(() => <Banner tone="critical" message="Connection lost" />, 
 | `toaster?` | Toaster | — | The store this region renders. Omit to bind the default store driven by
  `Toaster.manager`; pass a `createToaster()` for an isolated region. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Place each `<a-toast>` in a positional slot. This button clones the toast template
 into the toaster. `data-toast-dismiss` requests removal; listen for `dismiss` and

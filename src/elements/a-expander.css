@@ -161,9 +161,9 @@
     letter-spacing: 0;
     /* No explicit color: the title inherits `color` from the shadow
        `::part(summary)` button across the slot boundary. That's what lets the
-       built-in hover/active recolour (driven on the button) AND a consumer's
+       built-in hover/active recolor (driven on the button) AND a consumer's
        `::part(summary):hover { color }` both reach the title. A custom title
-       node with its own `color` opts out of the recolour by overriding it. */
+       node with its own `color` opts out of the recolor by overriding it. */
     text-decoration-line: var(--_summary-underline, none);
     text-decoration-style: dotted;
     text-decoration-color: color-mix(in oklch, currentColor 75%, transparent);
@@ -329,7 +329,7 @@
   }
 
   /* A native disclosure can opt into Expander's visual variants without giving
-     up the platform's built-in keyboard and accessibility behaviour. The native
+     up the platform's built-in keyboard and accessibility behavior. The native
      `open` attribute remains the state source. */
   details[data-anta] {
     --native-expander-gutter: 24px;
@@ -376,7 +376,7 @@
   /* A native `level` changes the summary's visual type scale only, matching
      Expander. It remains a platform summary rather than becoming a semantic
      heading. The chevron reads the same line-height variable, so it stays
-     centred at every level. */
+     centered at every level. */
   details[data-anta][level="1"] {
     --native-expander-summary-font-size: 28px;
     --native-expander-summary-line-height: 32px;

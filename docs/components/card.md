@@ -253,7 +253,7 @@ it also blocks navigation until the load resolves.
  color keeps its hue while lightness/chroma are pinned. `'neutral'` (the
  default) is the same as omitting it. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold media, header, and footer content. Unslotted content is the card body.
 

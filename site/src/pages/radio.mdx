@@ -32,7 +32,7 @@ are data, not markup.
 
 </Disclosure>
 
-## Options, label & hint
+## Options, label, and hint
 
 <Columns>
 <Col>
@@ -114,12 +114,12 @@ The group's own `label` and `hint` form a header **above** the options: the
 <Col>
 
 Six named tones — `neutral` (default), `brand`, `info`, `success`, `warning`,
-`critical`. `tone` colours the **mark** in every state — the selected-ring fill + dot
+`critical`. `tone` colors the **mark** in every state — the selected-ring fill + dot
 and (for a tinted tone) the unselected ring border (a light shade of the fill that
 darkens on hover and active; `neutral` keeps a grey ring). The label and hint stay
-neutral — colour them in plain CSS with the `--text-N-{tone}` tokens. Set `tone` on
-the `RadioGroup` to colour every option, or on a single option to override just that
-one. Any literal CSS colour works too, for a one-off custom tone.
+neutral — color them in plain CSS with the `--text-N-{tone}` tokens. Set `tone` on
+the `RadioGroup` to color every option, or on a single option to override just that
+one. Any literal CSS color works too, for a one-off custom tone.
 
 </Col>
 </Columns>
@@ -161,7 +161,7 @@ neutral grey. Reach for it instead of `tone` when a resting tinted border would 
 as a validation error. Same tone set; set it on the group, or on a single option to
 override one.
 
-To colour the **label and hint**, there's no prop — add a `color` rule on the
+To color the **label and hint**, there's no prop — add a `color` rule on the
 option's `a-radio-label` / `a-radio-hint` with a `--text-N-{tone}` value.
 
 </Col>
@@ -208,7 +208,7 @@ override one.
 </Col>
 </Columns>
 
-## Orientation & layout
+## Orientation and layout
 
 <Columns>
 <Col>
@@ -326,14 +326,14 @@ navigation and dropped from the tab order.
 </Col>
 <Col>
 
-`status` recolours the group `hint` for feedback — the same tone set as
+`status` recolors the group `hint` for feedback — the same tone set as
 [`Input`](/input/): `critical`, `warning`, `success`, `info`, `brand`
 (omit for neutral). It styles the message only; drive it from your own validation.
 
 </Col>
 </Columns>
 
-## Keyboard & accessibility
+## Keyboard and accessibility
 
 The group is one Tab stop: `Tab` moves into the selected option (or the first
 enabled one), the arrow keys (`↑`/`↓`/`←`/`→`) move the selection between enabled
@@ -447,7 +447,7 @@ element — `Input`, and the composed `Select` — skip it and expose only
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 The group owns selection and the single tab stop. Put options in `<a-radio-list>`.
 
@@ -500,8 +500,8 @@ treatments.
 
 <Disclosure title="Styling">
 
-Reach for the props first: **`tone`** colours the mark in every state,
-**`toneSelected`** only the selected option (any CSS colour for a custom tone, set on
+Reach for the props first: **`tone`** colors the mark in every state,
+**`toneSelected`** only the selected option (any CSS color for a custom tone, set on
 the group or a single option — derives the full curve in oklch), **`size`** the
 dimensions + type. To tint the label + hint, add a `color` rule on the option's
 `a-radio-label` / `a-radio-hint` with the `--text-N-{tone}` values — there's no
@@ -550,7 +550,7 @@ masked — same heart as the checkbox):
 
 ```css folded
 /* Outlined — an unfilled selected ring: keep the ring background and paint the
-   border + dot in the tone colour (light-dark() tunes both themes at once). */
+   border + dot in the tone color (light-dark() tunes both themes at once). */
 a-radio-group.outlined a-radio:state(selected)::before {
   background: var(--radio-bg);
   border-color: light-dark(#5f4bc3, #7460d7);
@@ -564,7 +564,7 @@ a-radio-group.square a-radio:state(selected)::before { background: light-dark(#0
 a-radio-group.square a-radio:state(selected)::after { background: light-dark(#fff, #000); }   /* contrasting dot */
 
 /* Heart — a bigger ring with a heart mark (the dot ::after, masked) on a pink fill.
-   Same heart SVG as the checkbox; mask-size: contain centres it in the bigger ring. */
+   Same heart SVG as the checkbox; mask-size: contain centers it in the bigger ring. */
 a-radio-group.heart a-radio::before { inline-size: 22px; block-size: 22px; }   /* bigger ring */
 a-radio-group.heart a-radio::after {
   inline-size: 13px; block-size: 13px; border-radius: 0;

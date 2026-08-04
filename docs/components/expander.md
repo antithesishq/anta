@@ -94,7 +94,7 @@ it's a no-op there. Use it where the expander sits in a content column
 with room to its left (a prose measure); in a full-width / edge-to-edge
 container the chevron would overhang the edge.
 
-## Title & level
+## Title and level
 
 `title` takes a string or any node. For a string, `level` (1–6) applies
 the matching heading **type scale** — the same scale as `<Title>` —
@@ -328,10 +328,9 @@ function Accordion() {
  toggle (e.g. confirm before closing). `detail.next` is the requested
  open state, `detail.prev` the current one (booleans). In controlled
  mode, apply `detail.next` to `open` to accept, or do nothing to reject. |
-| `open?` | boolean | — | Controlled open state. When provided, the consumer owns open/close:
- the expander only follows this prop, and clicking the summary just
- requests a change via `onStateChange` (so a toggle can be rejected by
- not updating). Leave undefined for uncontrolled. |
+| `open?` | boolean | — | Controlled open state. When provided, the consumer owns open/close. Selecting
+ the summary requests a change through `onStateChange`; omit `open` for
+ uncontrolled use. |
 | `outdent?` | boolean | — | Outdent the chevron into the left gutter so the title and body sit
  flush with surrounding content (the docs-header layout). Only takes
  effect with `priority="tertiary"` — on the filled priorities the
@@ -350,7 +349,7 @@ function Accordion() {
  its hue while lightness/chroma are pinned. `'neutral'` (the default) is
  the same as omitting it. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the title and actions. The details element contains the collapsible body.
 
@@ -367,7 +366,7 @@ Slots hold the title and actions. The details element contains the collapsible b
 ### Native HTML details
 
 For a simple disclosure, add `data-anta` to native `<details>`. It keeps the
-browser's opening, keyboard, and accessibility behaviour while taking on the
+browser's opening, keyboard, and accessibility behavior while taking on the
 neutral tertiary Expander treatment. Add `priority="secondary"` or `"primary"`
 for a filled surface. `round`, `tone`, tertiary `outdent`, and `level="1"`–`"6"`
 use the matching Expander visual treatments. `level` changes visual type only;
@@ -380,9 +379,9 @@ use a heading inside the summary when you need heading semantics.
 </details>
 ```
 
-Reach for the props first: **`tone`** sets the colour (any CSS colour for a custom
+Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the surface in oklch), **`priority`** the fill, **`level`** the
-heading. Two knobs are worth keeping: **`--expander-tone-source`** (the colour a
+heading. Two knobs are worth keeping: **`--expander-tone-source`** (the color a
 custom `tone` derives from — set it to drive the palette from your own variable) and
 **`--expander-gutter`** (the shared left inset that re-insets header + body + chevron
 in lockstep; `outdent` sets it to `0`).
@@ -433,12 +432,12 @@ a-expander.hover-tint::part(summary):active { background: var(--bg-2); }
 ```
 
 **Highlight the title on hover.** The title inherits its `color` from `::part(summary)`,
-so recolour the part on hover and the title (and the `currentColor` chevron) follow — a
+so recolor the part on hover and the title (and the `currentColor` chevron) follow — a
 custom title node that sets its own `color` opts out. Here we also drop the tertiary
 hover underline on the light-DOM `a-expander-summary`:
 
 ```css
-a-expander.title-highlight::part(summary):hover { color: #e5484d; }       /* title colour on hover */
+a-expander.title-highlight::part(summary):hover { color: #e5484d; }       /* title color on hover */
 a-expander.title-highlight a-expander-summary { text-decoration: none; }  /* drop the hover underline */
 ```
 

@@ -3,7 +3,7 @@
 // only to render the strip's roving tabindex (like RadioGroup); the PANELS are
 // self-managing `<a-tabpanel>` elements that read the active value from `<a-tabs>` and
 // hide themselves — Tabs never reads or toggles them, so there's no child introspection
-// (no `Children`/Fragment scan, no component-identity matching), which keeps it robust
+// (no `Children`/Fragment scan or component-identity matching), which keeps it compatible
 // across React / Preact / custom runtimes and static SSR.
 import { useState } from "../jsx-runtime"
 import { nativeStateChange, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
@@ -40,12 +40,12 @@ export interface TabOption {
   /** Fully-round just this tab's box. `<Tabs round>` rounds the whole strip
    *  (tabs + sliding indicator) instead. */
   round?: boolean
-  /** Per-tab tone override, same vocabulary as `<Tabs tone>` — colours this one tab's
-   *  label + icons (all priorities/modes, named or custom colour) and, when it's the
-   *  active tab, its indicator. For a **custom literal colour** the sliding indicator can't
-   *  adopt it (the shared moving element can't read a descendant's colour), so a custom tone
-   *  colours the label everywhere and the indicator only in `noslide`; the six **named**
-   *  tones colour both in every mode. Overrides the strip's `tone` for this tab.
+  /** Per-tab tone override, same vocabulary as `<Tabs tone>` — colors this one tab's
+   *  label + icons (all priorities/modes, named or custom color) and, when it's the
+   *  active tab, its indicator. For a **custom literal color** the sliding indicator can't
+   *  adopt it (the shared moving element can't read a descendant's color), so a custom tone
+   *  colors the label everywhere and the indicator only in `noslide`; the six **named**
+   *  tones color both in every mode. Overrides the strip's `tone` for this tab.
    *  @defaultValue inherits the strip's `tone` */
   tone?: "neutral" | "brand" | "info" | "success" | "warning" | "critical" | (string & {})
   /** Disable just this tab — skipped by keyboard nav and dropped from the tab order
@@ -98,7 +98,7 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
   /** Visual priority. `primary` is the raised pill on a recessed track (the
    *  segmented-control look); `secondary` keeps that sizing but drops the track, marking
    *  the selected tab with a subtle active background fill; `tertiary` is a bottom-underline
-   *  indicator under the selected tab (no track, no rest line). `tone` colours `secondary` +
+   *  indicator under the selected tab (no track, no rest line). `tone` colors `secondary` +
    *  `tertiary`; `primary` stays neutral.
    *  @defaultValue 'primary' */
   priority?: "primary" | "secondary" | "tertiary"
@@ -260,7 +260,7 @@ export const Tabs = ({
             role="tab"
             value={p.value}
             // Per-tab tone override: named/custom pass the attribute (CSS keys off it),
-            // and a custom literal colour also sets --tabs-tone-source on the tab.
+            // and a custom literal color also sets --tabs-tone-source on the tab.
             tone={p.tone && p.tone !== "neutral" ? p.tone : undefined}
             style={toneStyle(p.tone, "--tabs-tone-source", undefined)}
             aria-disabled={tabDisabled ? "true" : undefined}

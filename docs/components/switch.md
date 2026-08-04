@@ -6,7 +6,7 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 
 ## Tone
 
-`tone` colours the whole control: the checked track, plus the unchecked track border and thumb. Six named tones are available, or pass any CSS color for a custom tone. The label and hint stay neutral.
+`tone` colors the whole control: the checked track, plus the unchecked track border and thumb. Six named tones are available, or pass any CSS color for a custom tone. The label and hint stay neutral.
 
 ```tsx
 <Switch defaultChecked tone="neutral" label="Neutral" />
@@ -17,16 +17,16 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 
 ## Selected-only tone
 
-`toneSelected` colours the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state. It accepts the same values as `tone`.
+`toneSelected` colors the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state. It accepts the same values as `tone`.
 
 ```tsx
 <Switch toneSelected="brand" label="Off stays neutral" />
 <Switch defaultChecked toneSelected="critical" label="Checked track tinted" />
 ```
 
-## Colouring the text
+## Coloring the text
 
-There is no text-tone prop. To tint the label, set `color` on the switch with a theme-aware `--text-N-{tone}` token; to tint the hint, target `a-switch-hint`. Pair either with `tone` or `toneSelected` to colour the whole control.
+There is no text-tone prop. To tint the label, set `color` on the switch with a theme-aware `--text-N-{tone}` token; to tint the hint, target `a-switch-hint`. Pair either with `tone` or `toneSelected` to color the whole control.
 
 ```css
 /* The class is only for the demo — use your own selector. */
@@ -54,7 +54,7 @@ Switches are fully rounded by default. Pass `round` with a number (pixels) or CS
 <Switch defaultChecked round={0} label="Square" />
 ```
 
-## Label & hint
+## Label and hint
 
 Pass a plain label through `label`, or pass richer label content as children. Add `hint` for a secondary line beneath. `labelPosition="start"` places the label and hint before the control visually while source order remains stable. For a label-less switch, pass `aria-label`.
 
@@ -143,14 +143,14 @@ uncontrolled change; controlled consumers accept by updating `checked`. |
 | `round?` | boolean \| number \| string | — | Fully round the thumb and track. Pass a `number` (px) or CSS length string
 for a custom track radius; the thumb radius is 3px smaller. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant. small=26×16px, medium=30×18px, large=34×20px. |
-| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Colour of the track and thumb. A tinted tone also colours the unchecked
-track border and thumb; use `toneSelected` to colour only the checked track. |
+| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Color of the track and thumb. A tinted tone also colors the unchecked
+track border and thumb; use `toneSelected` to color only the checked track. |
 | `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Like `tone`, but applies only while the switch is checked. The unchecked
-track and thumb stay neutral. If both are set, `tone` colours the unchecked
-state and `toneSelected` colours the checked track. |
+track and thumb stay neutral. If both are set, `tone` colors the unchecked
+state and `toneSelected` colors the checked track. |
 | `value?` | string | "on" | Value submitted while checked. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 The focusable host carries the state. Label and hint are light-DOM children.
 
@@ -161,13 +161,13 @@ The focusable host carries the state. Label and hint are light-DOM children.
 </a-switch>
 ```
 
-Reach for the props first: **`tone`** colours the checked track plus the unchecked chrome, while **`toneSelected`** colours only the checked track. Both accept any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](../colors.md#focus-ring).
+Reach for the props first: **`tone`** colors the checked track plus the unchecked chrome, while **`toneSelected`** colors only the checked track. Both accept any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](../colors.md#focus-ring).
 
 ```tsx
-<Switch tone="#e0457b" defaultChecked label="Custom colour" />
+<Switch tone="#e0457b" defaultChecked label="Custom color" />
 ```
 
-`<a-switch>` is light DOM. The **track is `::before`**, the **thumb is `::after`**, and the label / hint are `a-switch-label` / `a-switch-hint` children. Target them with plain CSS. The classes below are only for the demos.
+`<a-switch>` is light DOM. The **track is `::before`**, the **thumb is `::after`**, and the label / hint are `a-switch-label` / `a-switch-hint` children. Target them with plain CSS. The classes in these examples are demo hooks. Replace them with a selector you own.
 
 ```css
 a-switch.strong-label {

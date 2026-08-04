@@ -39,11 +39,11 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   name?: string
   /** Disables pointer and keyboard interaction. */
   disabled?: boolean
-  /** Colour of the filled rail. Pass a named tone or a literal CSS colour for a
+  /** Color of the filled rail. Pass a named tone or a literal CSS color for a
    * one-off custom tone. The unfilled rail stays neutral.
    * @defaultValue 'neutral' */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Colour of the thumb stroke. Pass a named tone or a literal CSS colour for a
+  /** Color of the thumb stroke. Pass a named tone or a literal CSS color for a
    * one-off custom tone. Omit it to keep the thumb neutral.
    * @defaultValue 'neutral' */
   thumbTone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
@@ -58,7 +58,7 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
    * it at least as large as `trackSize`.
    * @defaultValue 18 */
   thumbSize?: number | string
-  /** Fill the thumb with its resolved border colour. This follows `thumbTone`
+  /** Fill the thumb with its resolved border color. This follows `thumbTone`
    * and interactive states.
    * @defaultValue false */
   thumbFill?: boolean

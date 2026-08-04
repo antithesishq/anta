@@ -95,7 +95,7 @@ export function installDismissTrigger(host: HTMLElement, attr: string, onDismiss
 }
 
 /** The six named tones every toned component shares. Anything else is a literal
- *  CSS colour the element resolves through its `--{component}-tone-source` var. */
+ *  CSS color the element resolves through its `--{component}-tone-source` var. */
 export const NAMED_TONES = new Set([
   'brand',
   'neutral',
@@ -106,7 +106,7 @@ export const NAMED_TONES = new Set([
 ])
 
 /**
- * Inline-style helper for a custom (non-named) tone: hands the literal colour to
+ * Inline-style helper for a custom (non-named) tone: hands the literal color to
  * the element via `varName` (e.g. `--radio-tone-source`) so the element's CSS
  * derives the fill/text/border curve in oklch. Named tones return `base` unchanged.
  */

@@ -35,7 +35,7 @@ import {
 
 /**
  * Theming lab. Anta's default palette is itself seed-derived — tokens.css and
- * every component compute their colours from six tone seeds via
+ * every component compute their colors from six tone seeds via
  * `oklch(from var(--anta-seed-*) …)`. This page shows, for each toned component,
  * the shipped **Default** next to a **Custom** preview driven by the seed picker
  * (and the formula's constants, exposed as live inputs grouped by priority),
@@ -142,7 +142,7 @@ function usePaletteRev() {
 }
 
 /** One hand-tuned Title/Text priority sample, labelled with its priority and the
- *  resolved oklch of its colour. The colour is Anta's real `--text-*` token (not
+ *  resolved oklch of its color. The color is Anta's real `--text-*` token (not
  *  the formula), so it's read from the live host's computed `color` — via a
  *  `display:contents` wrapper (the wrappers don't forward a DOM ref), re-read
  *  when tone or theme changes. */
@@ -187,9 +187,9 @@ function TypeSample({
 }
 
 /** Hand-tuned Button/Tag samples plus a per-priority readout of the resolved
- *  resting background + text colour in oklch. Both elements are light-DOM hosts
+ *  resting background + text color in oklch. Both elements are light-DOM hosts
  *  that paint `background`/`color` directly (`--button-*` / `--tag-*` tokens), so
- *  the colours are read from each host's computed style, re-read on tone/theme
+ *  the colors are read from each host's computed style, re-read on tone/theme
  *  change. */
 function RestingSamples({
   kind,
@@ -242,7 +242,7 @@ function RestingSamples({
   )
 }
 
-/** Input + InputDate samples, with the resolved border colour read from the host's
+/** Input + InputDate samples, with the resolved border color read from the host's
  *  `--input-border` and shown in oklch. Hand-tuned statuses set a literal (resolves
  *  cleanly); the generative side sets a relative `oklch(from …)` that chroma can't
  *  parse, so the readout naturally appears only under the hand-tuned reference. */
@@ -289,7 +289,7 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
   const toneVal = ref ? named : seed
   const selVal = ref ? named : seed
   // Both sides carry the status so the generative input shows the same 1px status
-  // treatment as the hand-tuned reference — only the border colour differs (the
+  // treatment as the hand-tuned reference — only the border color differs (the
   // injected generative `--input-border` vs the hand-tuned status literal). Without
   // this the generative input was a plain 0.5px field and read far fainter.
   const statusVal = named
@@ -505,7 +505,7 @@ function GroupActions({
   )
 }
 
-/** Specs whose colours are role tokens (text, bg, border scales), not bespoke
+/** Specs whose colors are role tokens (text, bg, border scales), not bespoke
  *  per-component values. Their generative preview gets the Text + Surface scales
  *  injected on its container, so `var(--text-1)` etc. resolve to the tuned scale
  *  and follow the Text / Background & Borders panels live. */
@@ -648,7 +648,7 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
     if (next) set(Number(next.split('-').pop()))
   }
 
-  // Resolve the hand-tuned swatch's actual background / border colour (the token
+  // Resolve the hand-tuned swatch's actual background / border color (the token
   // computed for the current theme) and show it as oklch via chroma-js. Read from
   // the live element so it reflects whatever `--bg-*` / `--border-*` resolves to.
   const swatchRef = useRef<HTMLDivElement>(null)
@@ -881,7 +881,7 @@ export default function ThemingLab() {
         />
         <div className={styles.seedRow}>
           {/* Remount per tone (and once after the sessionStorage restore) so
-              the picker re-seeds from that tone's colour. */}
+              the picker re-seeds from that tone's color. */}
           <ColorPicker key={`${active}:${restoreRev}`} value={seeds[active]} label="Seed" onChange={(hex: string) => setSeeds((s) => ({ ...s, [active]: hex }))} />
         </div>
       </div>

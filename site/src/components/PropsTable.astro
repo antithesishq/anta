@@ -22,7 +22,7 @@ const root = (api as any).children?.find((c: any) => c.name === propsName)
 // A union member is a *value* (string / number / boolean literal) → render
 // it as a copyable code pill. Everything else (type keywords like `string`,
 // `boolean`, `number`, and named types like `IconShape`) is a *type* →
-// render as plain tertiary-coloured monospace text, no pill.
+// render as plain tertiary-colored monospace text, no pill.
 function isLiteralValue(part: string): boolean {
   const s = part.trim()
   return /^'.*'$/.test(s) || /^-?\d+(\.\d+)?$/.test(s) || s === 'true' || s === 'false'

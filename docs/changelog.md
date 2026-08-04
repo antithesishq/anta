@@ -13,7 +13,7 @@ changes are not listed.
 ### Changed
 
 - Native `data-anta` select popups now follow Menu styling for their surface,
-  option sizing, colours, and 1px item spacing when customizable selects are
+  option sizing, colors, and 1px item spacing when customizable selects are
   supported.
 
 ### Fixed
@@ -81,7 +81,7 @@ changes are not listed.
 
 ### Changed
 
-- In forced-colors mode, Anta controls and surfaces use system colours and
+- In forced-colors mode, Anta controls and surfaces use system colors and
   visible borders for their interactive, selected, and disabled states,
   including icons, inputs, buttons, tags, choice controls, tabs, Expanders,
   Cards, Dialogs, Banners, Progress, and Tooltips.
@@ -90,7 +90,7 @@ changes are not listed.
 ### Fixed
 
 - No-icon `ButtonCopy` feedback now keeps a wrapping label's width and line breaks.
-- Native HTML radio labels use Anta's 8px control gap and vertically centred
+- Native HTML radio labels use Anta's 8px control gap and vertically centered
   alignment.
 - `InputAutocomplete` now commits the highlighted suggestion when users press
   Arrow keys then Enter.
@@ -133,7 +133,7 @@ changes are not listed.
 ### Added
 
 - Seed tokens for the neutral, brand, info, success, warning, and critical
-  colour scales.
+  color scales.
 - `theme-anta.css`, an opt-in stylesheet that restores the former palette.
 - Default styling for raw `dfn` elements.
 
@@ -160,7 +160,7 @@ changes are not listed.
 
 ### Breaking
 
-- Copy behaviour moved from `Button` and `MenuItem` to `a-copy`. Replace
+- Copy behavior moved from `Button` and `MenuItem` to `a-copy`. Replace
   `<Button copy={value}>` with `<ButtonCopy copy={value}>`, or compose
   `<a-copy>` inside a control.
 
@@ -232,7 +232,7 @@ changes are not listed.
 
 ### Changed
 
-- `Text` and `Title` accept custom CSS colours as `tone` values.
+- `Text` and `Title` accept custom CSS colors as `tone` values.
 
 ### Fixed
 
@@ -315,7 +315,7 @@ changes are not listed.
 ### Added
 
 - `InputDate`, `Calendar`, and `Select`.
-- Searchable Menu combobox behaviour, selectable MenuItem rows, and Menu header
+- Searchable Menu combobox behavior, selectable MenuItem rows, and Menu header
   and footer slots.
 - `round` across core components, `Tabs.options`, `toneSelected` for selection
   controls, `Input type="search"`, and more icon shapes.
@@ -334,7 +334,7 @@ changes are not listed.
 
 ### Fixed
 
-- Menus, Select, and Inputs retain keyboard and focus behaviour in iframes,
+- Menus, Select, and Inputs retain keyboard and focus behavior in iframes,
   flyouts, and grouped rows.
 - Empty tooltips do not open. Buttons keep their configured size with non-text
   content.
@@ -354,7 +354,7 @@ changes are not listed.
 ### Changed
 
 - Checkbox and RadioGroup `tone` styles their mark. `toneText` controls label
-  colour.
+  color.
 - Components use tabular figures by default. Button exposes `role="button"`.
 
 ### Fixed
@@ -495,11 +495,11 @@ changes are not listed.
 
 - Button defaults to `tone="neutral"`. Pass `tone="brand"` to preserve the
   former default.
-- `tone="custom"` is removed. Pass a CSS colour directly to `tone`.
+- `tone="custom"` is removed. Pass a CSS color directly to `tone`.
 
 ### Changed
 
-- Button accepts custom CSS colour tones and holds its width in flex layouts.
+- Button accepts custom CSS color tones and holds its width in flex layouts.
 
 ## 0.1.1-dev.4 — May 6, 2026
 

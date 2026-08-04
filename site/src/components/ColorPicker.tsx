@@ -56,7 +56,7 @@ const num = (v: string, fallback = 0) => {
 }
 const fx = (x: number, d: number) => (Math.round(x * 10 ** d) / 10 ** d).toString()
 
-// A channel field. Its value round-trips through the colour state and is reformatted
+// A channel field. Its value round-trips through the color state and is reformatted
 // by fx, so it holds a raw string draft — a fractional oklch value ("0.", "0.55")
 // types cleanly. Re-seed only when the external value diverges numerically (a canvas
 // pick, another channel), never mid-keystroke.
@@ -279,7 +279,7 @@ export default function ColorPicker({
                   placeholder="#rrggbb"
                   onValueChange={(e: any, a: any) => {
                     // Draft tracks every keystroke so the field shows what's typed,
-                    // but the colour commits only on `change` (blur / Enter). Committing
+                    // but the color commits only on `change` (blur / Enter). Committing
                     // on each keystroke let a valid intermediate (e.g. `#5f4`) round-trip
                     // through `hex` and rewrite the field mid-edit.
                     setHexDraft(a.value)

@@ -49,7 +49,7 @@ export interface InputAutocompleteProps extends Omit<BaseProps, 'children'> {
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Status icon override, or `false` to drop it. */
   statusIcon?: IconShape | (string & {}) | false
-  /** Custom accent colour — a named tone or any CSS colour. */
+  /** Custom accent color — a named tone or any CSS color. */
   tone?: string
   /** Show a clear button while the field has text. */
   clearable?: boolean

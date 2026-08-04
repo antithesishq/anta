@@ -8,7 +8,7 @@
  * registration; they can't be linked because they live in a runtime <style>.
  *
  * These are the same `@layer anta` files each element module pulls in via
- * `import './a-*.css'`; linking them here just front-loads them. Imported by
+ * `import './a-*.css'`; linking them here front-loads them. Imported by
  * relative path through the workspace symlink (the package's exports map
  * doesn't expose the per-element CSS as subpaths). The list mirrors
  * `dist/elements/*.css` — keep it in sync when adding a component (the same

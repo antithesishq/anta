@@ -39,7 +39,7 @@ skipped by the keyboard.
 <Select indicator="radio" options={OPTIONS} value={one} onValueChange={setOne} />  // leading radio
 <Select options={OPTIONS} value={one} onValueChange={setOne} />                    // tint only (default)
 
-// Tone the selected row: named tone or custom colour (the indicator adopts it)
+// Tone the selected row: named tone or custom color (the indicator adopts it)
 <Select indicator="check" toneSelected="brand" options={OPTIONS} value={one} onValueChange={setOne} />
 <Select indicator="radio" toneSelected="#c026d3" options={OPTIONS} value={one} onValueChange={setOne} />
 
@@ -52,7 +52,7 @@ skipped by the keyboard.
 />
 ```
 
-`selection` sets **behaviour**, `indicator` sets the single-select **mark**.
+`selection` sets **behavior**, `indicator` sets the single-select **mark**.
 
 `selection="single"` (the default) keeps `value` a single value and closes on pick.
 `indicator` then picks the row mark: **`"none"`** (default; a tint-only highlight),
@@ -112,7 +112,7 @@ closes the menu. The search field stays visible while the results scroll. A
 "No matches" row appears when nothing matches, and the query resets when the
 menu closes. In `multiple` mode, `selectAll` affects only the visible matches.
 
-## Value & changes
+## Value and changes
 
 ```tsx
 const [field, setField] = useState('stream')
@@ -219,7 +219,7 @@ annotated tree for rendering.
 Bare-string options normalize to `{ value, label }`; a value under more than one
 section marks the leaf everywhere it occurs (selection is value-keyed).
 
-## Size & status
+## Size and status
 
 ```tsx
 <Select label="Small · info"    size="small"  status="info"     hint="Lowercase & dashes only" options={OPTIONS} defaultValue="stream" />
@@ -581,7 +581,7 @@ The returned content replaces the option rows. A `MenuSeparator` with text is a
 muted caption and an `aria-live="polite"` region. Return a `MenuItem`, such as
 the `Create "…"` row, when the content must be selectable by keyboard.
 
-### Groups & submenus
+### Groups and submenus
 
 ```tsx
 // The same tree drives both modes — selection is global, so `selection` is the
@@ -769,7 +769,7 @@ the same thing):
 
 | Field | Type | Description |
 |---|---|---|
-| `value` | `OptionValue` | The option's identity: `string`, `number`, or `boolean` (`Select` infers the type from your `options`, compared with `===`). What `value` / `defaultValue` name and `onValueChange` reports. Required, unique across the tree. See [Value & changes](#value--changes) for non-string values and rich data. |
+| `value` | `OptionValue` | The option's identity: `string`, `number`, or `boolean` (`Select` infers the type from your `options`, compared with `===`). What `value` / `defaultValue` name and `onValueChange` reports. Required, unique across the tree. See [Value and changes](#value-and-changes) for non-string values and rich data. |
 | `label` | `string` | Visible label. Defaults to `value`. |
 | `hint` | `string` | Secondary line under the label. |
 | `icon` | `IconShape` | Leading icon, after the selection indicator. |
@@ -824,7 +824,7 @@ inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
 />
 ```
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 `Select` has no host element. Compose a read-only `<a-input>` trigger with an
 `<a-menu>` of options. The menu owns opening and dismissal; the short controller
@@ -895,7 +895,7 @@ Select is an [Input](./input.md) plus a [Menu](./menu.md), so it
 inherits both surfaces' hooks. Reach for props first, then plain CSS or `::part` for
 the rest. Don't override an element's internal `--*` output tokens.
 
-**Selection colour** routes through the props: a per-option `tone`, or `toneSelected`
+**Selection color** routes through the props: a per-option `tone`, or `toneSelected`
 for the chosen row(s). Both take a named tone or any CSS color (a custom color keeps
 its hue, with lightness pinned to the brand text).
 
@@ -919,7 +919,7 @@ wrapper is inline-`display:contents`, so hit the icon itself).
 .ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
   box-shadow: none;
 }
-/* Centre the chosen label in the field. */
+/* Center the chosen label in the field. */
 .ghost-select a-input::part(input) { text-align: center; }
 /* The chevron's slot wrapper is inline display:contents; hide the icon itself. */
 .ghost-select a-input [slot="trailing"] a-icon { display: none; }

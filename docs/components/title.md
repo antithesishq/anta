@@ -106,7 +106,7 @@ scale.
  color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is
  kept while lightness/chroma are pinned per priority in oklch. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Set the heading role and level when writing `<a-title>` directly.
 

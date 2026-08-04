@@ -144,7 +144,7 @@ export const Card = ({
   // The element stylizes only its own surface, never its children, so the wrapper
   // supplies the header/body typography by wrapping a string in <Title> / <Text>
   // and forwarding the card's `tone` to them so they tint to match. Title / Text
-  // both take a custom CSS-colour tone (same oklch derivation as the card), so this
+  // both take a custom CSS-color tone (same oklch derivation as the card), so this
   // works for named *and* custom tones — passed straight through as `toneAttr`.
 
   // A string header becomes a <Title> whose level tracks the card size, so the
@@ -210,7 +210,7 @@ export const Card = ({
       )}
       {typeof children === "string" || typeof children === "number" ? (
         // A string / number body becomes a <Text> at secondary priority (text-2,
-        // the body colour) — stated explicitly rather than leaning on the default —
+        // the body color) — stated explicitly rather than leaning on the default —
         // following the card's tone and size. Anything else is a node the caller
         // owns, passed through untouched.
         <Text priority="secondary" tone={toneAttr} size={size}>

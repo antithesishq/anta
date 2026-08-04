@@ -1,6 +1,6 @@
 # Menu
 
-A dropdown or context menu that anchors to any target and just works. Place
+A dropdown or context menu that anchors to a target. Place
 `<Menu>` immediately after the trigger — a button, an icon, a whole region —
 and it opens on click, positions itself with room-aware flipping, and dismisses
 on outside-click, `Escape`, or scroll. Rows are dedicated **`MenuItem`s** (not
@@ -92,7 +92,7 @@ instead of its full border box. Anta's `Input` does this — it reports its fiel
 box — so a `Menu` placed after an `<Input>` (as in `Select`) lines up with the
 field, not the whole component (whose box also spans the label and hint).
 
-## Right-click & at-cursor
+## Open at the pointer
 
 Pass `context` to open on right-click (the `contextmenu` event) of the region
 the menu follows, positioned at the pointer — ideal for content surfaces like a
@@ -203,7 +203,7 @@ empty-state message (what `Select`'s `renderEmpty` uses).
 </Menu>
 ```
 
-## Pinned header & footer
+## Pinned header and footer
 
 `a-menu-header` and `a-menu-footer` name fixed regions around the scrolling
 items. Put `a-select-header` or `a-select-footer` in the same slots when a
@@ -225,7 +225,7 @@ footer stays the menu's divider.
 </Menu>
 ```
 
-## Custom content & the close contract
+## Custom content and the close behavior
 
 The close decision is read straight from the DOM on click — never from whether a
 handler called `preventDefault` — so it's safe in runtimes where event handlers
@@ -313,7 +313,7 @@ a checkable menu.
 <MenuItem selectionIndicator="checkbox" label="Show archived" selected data-menu-open />
 ```
 
-## Badges, counters & hints
+## Badges, counters, and hints
 
 Drop a `<Tag>` (or any element) as a **child** of a `MenuItem` for a trailing
 counter or badge. Children render after the label but before the `kbd` hint and
@@ -401,7 +401,7 @@ call `event.preventDefault()` to keep the menu as-is (e.g. block a dismiss).
 Controlled, the menu never self-moves — apply `detail.next` to `open` to accept,
 or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`.)
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Put a focusable trigger immediately before `<a-menu>` and omit `state` for an
 uncontrolled menu. Its light-DOM `<a-menu-item>` rows need their own `tabindex`

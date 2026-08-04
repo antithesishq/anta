@@ -126,7 +126,7 @@ import './a-expander.css'
  *   `::part(summary):hover { color }` reach the title — the outer `::part`
  *   rule overrides this inner one and inheritance carries it through. The
  *   tradeoff: a custom title node with no explicit `color` now inherits the
- *   hover recolour too (set `color` on it to opt out). The tertiary surface
+ *   hover recolor too (set `color` on it to opt out). The tertiary surface
  *   adds the docs-header dotted underline via `--_summary-underline`, the
  *   one bit still scoped to `a-expander-summary` (text-decoration doesn't
  *   inherit usefully here). Press eases title + (closed) chevron back to the

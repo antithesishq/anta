@@ -5,7 +5,7 @@ export const llmsGuidance = "Anta is designed for a clean DOM. Prefer the props 
 export const documentationLinks = [
   ['Overview', '/'],
   ['Comparison', '/comparison/'],
-  ['Install & Config', '/install/'],
+  ['Install and configure', '/install/'],
   ['Normalization', '/normalization/'],
   ['Colors', '/colors/'],
   ['Theming', '/theming/'],

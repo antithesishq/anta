@@ -69,7 +69,7 @@ export type ContentMode = {
  *  don't carry anchor props. (Copy is no longer a Button concern — `ButtonCopy`
  *  composes a `<a-copy>` child; see `copy-props.ts`.)
  *
- *  `href` is **optional** so a conditional URL just works: `href={maybeUrl}`
+ *  `href` is **optional**, so you can pass a conditional URL: `href={maybeUrl}`
  *  (`string | undefined`) type-checks, and a falsy href degrades to a plain
  *  button — a definite string renders `<a role="button">`, an absent / `undefined`
  *  href renders `<a-button>`, mirroring the `href != null` runtime check. Keeping

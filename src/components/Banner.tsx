@@ -15,7 +15,7 @@ export interface BannerProps extends BaseProps {
   children?: React.ReactNode
   /** Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for
    *  a one-off custom tone. Named tones re-point the surface, text, and border
-   *  colour (used if you opt into a border); a custom color keeps its hue while
+   *  color (used if you opt into a border); a custom color keeps its hue while
    *  lightness/chroma are pinned. `'neutral'` (the default) is the same as omitting it.
    *  @defaultValue 'neutral' */
   tone?:
@@ -32,7 +32,7 @@ export interface BannerProps extends BaseProps {
   round?: boolean | number | string
   /** Whether the trailing ✕ dismiss button is present. `false` removes it — drive
    *  dismissal yourself (a controlled `dismissed`, or your own control) instead.
-   *  It doesn't make the banner un-dismissible, it just drops the built-in ✕.
+   *  It removes the built-in ✕ without making the banner un-dismissible.
    *  @defaultValue true */
   closable?: boolean
   /** ARIA role for the strip host. `'status'` (a polite live region, so the notice
@@ -49,7 +49,7 @@ export interface BannerProps extends BaseProps {
   /** Initial dismissed state for the uncontrolled case (read once on mount). */
   defaultDismissed?: boolean
   /** Fired when the user dismisses the banner (clicks ✕). Uncontrolled, the banner
-   *  hides itself and this just notifies. Controlled, it's how you accept the
+   *  hides itself and this notifies. Controlled, use it to accept the
    *  request — set `dismissed` to `true` (or ignore to reject); pair it with
    *  `dismissed`, or the banner can't be closed. */
   onDismiss?: () => void

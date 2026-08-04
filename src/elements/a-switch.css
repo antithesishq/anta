@@ -218,7 +218,7 @@
   a-switch[tone="success"] { --switch-tone-source: var(--anta-seed-success); --switch-off-tone-source: var(--anta-seed-success); }
   a-switch[tone="warning"] { --switch-tone-source: var(--anta-seed-warning); --switch-off-tone-source: var(--anta-seed-warning); }
   a-switch[tone="critical"] { --switch-tone-source: var(--anta-seed-critical); --switch-off-tone-source: var(--anta-seed-critical); }
-  /* A regular `tone` also colours the unchecked border and thumb. The track
+  /* A regular `tone` also colors the unchecked border and thumb. The track
      keeps a whisper-light border at rest, then steps through the same ramp as
      the neutral chrome. `tone-selected` deliberately does not participate. */
   a-switch[tone]:not([tone=""], [tone="neutral"]) {
@@ -264,7 +264,7 @@
 
   /* The track and thumb are both author-painted pseudo-elements. Keep their
      forced-colors pairing explicit: off is a Canvas track with a CanvasText
-     thumb, while on swaps those two colours. */
+     thumb, while on swaps those two colors. */
   @media (forced-colors: active) {
     a-switch::before,
     a-switch::after {

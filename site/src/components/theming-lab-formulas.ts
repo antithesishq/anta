@@ -67,7 +67,7 @@ export interface ComponentSpec {
   /**
    * The generative-driving CSS. `sel` is the element selector (bare `a-title` for
    * the displayed code, the scoped `.tl-gen-… a-title` / `.dark .tl-gen-… a-title`
-   * for injection); `seed` is the source colour; `v` the current theme's values.
+   * for injection); `seed` is the source color; `v` the current theme's values.
    * For a `tokens` spec, `sel` is `:root` (display) or the container (injection).
    */
   css: (sel: string, seed: string, v: Vals) => string
@@ -151,7 +151,7 @@ export const SPECS: ComponentSpec[] = [
     id: 'text',
     title: 'Text',
     blurb:
-      'The text colour role scale, derived from the source hue. text-1 is the strong primary; text-2 the base (secondary); text-3/4 step text-2 down by alpha — Title and Text read text-1..4 as their priorities. text-5 is the faintest step (text-2 at a lower alpha), used for disabled / hint text across components, not a Title/Text priority.',
+      'The text color role scale, derived from the source hue. text-1 is the strong primary; text-2 the base (secondary); text-3/4 step text-2 down by alpha — Title and Text read text-1..4 as their priorities. text-5 is the faintest step (text-2 at a lower alpha), used for disabled / hint text across components, not a Title/Text priority.',
     vars: [
       { key: 'priL', label: 'text-1 L', light: 0.38, dark: 0.85, neutral: { light: 0.1, dark: 0.94 }, ...v3() },
       { key: 'priC', label: 'text-1 C', light: 0.11, dark: 0.1, neutral: { light: 0.01, dark: 0.008 }, ...v3(0, 0.4) },
@@ -245,7 +245,7 @@ export const SPECS: ComponentSpec[] = [
     groups: [
       { label: 'Primary', keys: ['bgSolidL', 'bgSolidC'], note: 'Solid fill; white label.' },
       { label: 'Secondary', keys: ['tintL', 'tintC', 'bgAlpha', 'borderAlpha'] },
-      { label: 'Tertiary', keys: ['edgeAlpha'], note: 'Outline alpha; the edge colour is --text-2.' },
+      { label: 'Tertiary', keys: ['edgeAlpha'], note: 'Outline alpha; the edge color is --text-2.' },
       { label: 'Label', keys: ['textA'], note: 'Label = --text-2 at this alpha (80 → --text-3). Raise for small-text contrast.' },
     ],
     css: (sel, seed, v) => `${sel} {
@@ -327,8 +327,8 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'expander',
     title: 'Expander',
     blurb:
-      'Every colour is a role token; the Expander defines none of its own. Label: rest --text-2, hover --text-1 (Title’s secondary/primary). Fill and border are the surface scale (secondary --bg-2 / --border-5, primary --bg-4 / --border-4), and the fill lightens a step on hover. Tertiary is text only, all themed per tone.',
-    // The Expander has no colours of its own — every output is a role token, so
+      'Every color is a role token; the Expander defines none of its own. Label: rest --text-2, hover --text-1 (Title’s secondary/primary). Fill and border are the surface scale (secondary --bg-2 / --border-5, primary --bg-4 / --border-4), and the fill lightens a step on hover. Tertiary is text only, all themed per tone.',
+    // The Expander has no colors of its own — every output is a role token, so
     // there are no knobs. It follows the Text and Background & Borders specs live.
     vars: [],
     groups: [],
@@ -346,12 +346,12 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'input',
     title: 'Input',
     blurb:
-      'One border colour from the seed hue at a tunable L/C — the goal is a single L/C per theme that works across every tone. Hover thickens the edge 0.5→1px (no recolour). Neutral overrides pin it grey (≈ --border-2). Applies to Input and the InputDate trigger (both compose <a-input>).',
+      'One border color from the seed hue at a tunable L/C — the goal is a single L/C per theme that works across every tone. Hover thickens the edge 0.5→1px (no recolor). Neutral overrides pin it grey (≈ --border-2). Applies to Input and the InputDate trigger (both compose <a-input>).',
     vars: [
       { key: 'borderL', label: 'border L', light: 0.58, dark: 0.52, neutral: { light: 0.8, dark: 0.4 }, ...v3() },
       { key: 'borderC', label: 'border C', light: 0.18, dark: 0.15, neutral: { light: 0.015, dark: 0.019 }, ...v3(0, 0.4) },
     ],
-    groups: [{ label: 'Border', keys: ['borderL', 'borderC'], note: 'Seed hue at this L/C (hover thickens the edge, no recolour). Toned starts at the average of today’s per-status literals; neutral pins grey ≈ --border-2.' }],
+    groups: [{ label: 'Border', keys: ['borderL', 'borderC'], note: 'Seed hue at this L/C (hover thickens the edge, no recolor). Toned starts at the average of today’s per-status literals; neutral pins grey ≈ --border-2.' }],
     css: (sel, seed, v) => `${sel} {
   --input-border: ${ok(seed, v.borderL, v.borderC)};
 }`,
@@ -361,14 +361,14 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'menuitem',
     title: 'Menu items',
     blurb:
-      'The item label is --text-2; the hint and icon are --text-2 at the hint α (80 → --text-3), so the text follows the Text spec while the hint strength stays tunable. The selected row holds a persistent tint of the label colour — its alpha is the Menu’s own knob too.',
+      'The item label is --text-2; the hint and icon are --text-2 at the hint α (80 → --text-3), so the text follows the Text spec while the hint strength stays tunable. The selected row holds a persistent tint of the label color — its alpha is the Menu’s own knob too.',
     vars: [
       { key: 'hintA', label: 'hint α %', light: 80, dark: 80, ...pct },
       { key: 'selectedA', label: 'selected α %', light: 9, dark: 12, ...pct },
     ],
     groups: [
       { label: 'Text', keys: ['hintA'], note: 'Label is full --text-2; hint + icon are --text-2 at this alpha (80 → --text-3).' },
-      { label: 'Selected', keys: ['selectedA'], note: 'Tint held on the selected row — a % of the item colour (--text-2).' },
+      { label: 'Selected', keys: ['selectedA'], note: 'Tint held on the selected row — a % of the item color (--text-2).' },
     ],
     css: (sel, _seed, v) => `${sel} {
   --menu-item-color: var(--text-2);
@@ -382,8 +382,8 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'progress',
     title: 'Progress',
     blurb:
-      'Every colour is a role token; Progress defines none of its own. Track = --bg-4, border = --border-4, the fill indicator = --bg-5, the label = --text-2, and the right-aligned hint = --text-3. Named tones swap in the matching -{tone} role variant (so dark mode is free), and the fill’s right-edge fades from --bg-5 to --border-4. Follows the Text and Background & Borders panels live.',
-    // Like the Expander, Progress has no colours of its own — every output is a
+      'Every color is a role token; Progress defines none of its own. Track = --bg-4, border = --border-4, the fill indicator = --bg-5, the label = --text-2, and the right-aligned hint = --text-3. Named tones swap in the matching -{tone} role variant (so dark mode is free), and the fill’s right-edge fades from --bg-5 to --border-4. Follows the Text and Background & Borders panels live.',
+    // Like the Expander, Progress has no colors of its own — every output is a
     // role token, so there are no knobs. It tracks the Text + Surface specs.
     vars: [],
     groups: [],

@@ -14,7 +14,7 @@ same opt-in as `Progress` ([Styling](#styling)).
 ## Tones
 
 Pick a semantic `tone` to tint the surface and text together — and the ✕ adopts the
-same tone (it also sets the border colour, used if you opt into a border). The set
+same tone (it also sets the border color, used if you opt into a border). The set
 matches `Expander` / `Tag`: `neutral` (the default) plus `brand`, `info`, `success`,
 `warning`, and `critical`. Color comes from the theme tokens, so every tone tracks
 light and dark mode automatically.
@@ -49,7 +49,7 @@ pass a `number` (px) or a CSS length string for a custom radius.
 <Banner round={12} tone="success" message="A custom 12px radius." />
 ```
 
-## Message & content
+## Message and content
 
 `message` is the leading content — a string (rendered at the banner type scale) or
 any node. `children` sit between the message and the actions, for a chip, a link,
@@ -195,7 +195,7 @@ through `dismissed` instead.
 | `children?` | ReactNode | — | Free content placed BETWEEN the message and the actions. |
 | `closable?` | boolean | true | Whether the trailing ✕ dismiss button is present. `false` removes it — drive
  dismissal yourself (a controlled `dismissed`, or your own control) instead.
- It doesn't make the banner un-dismissible, it just drops the built-in ✕. |
+ It removes the built-in ✕ without making the banner un-dismissible. |
 | `defaultDismissed?` | boolean | — | Initial dismissed state for the uncontrolled case (read once on mount). |
 | `dismissed?` | boolean | — | Controlled dismissed state. When provided, the consumer owns visibility: the
  banner follows this prop only, and clicking ✕ *requests* dismissal (reject by
@@ -205,7 +205,7 @@ through `dismissed` instead.
 | `message?` | ReactNode | — | Leading message — a string (rendered at the banner type scale) or any node.
  Centered in the bar, followed by `children` and then `actions`. |
 | `onDismiss?` | () => void | — | Fired when the user dismisses the banner (clicks ✕). Uncontrolled, the banner
- hides itself and this just notifies. Controlled, it's how you accept the
+ hides itself and this notifies. Controlled, use it to accept the
  request — set `dismissed` to `true` (or ignore to reject); pair it with
  `dismissed`, or the banner can't be closed. |
 | `role?` | string | 'status' | ARIA role for the strip host. `'status'` (a polite live region, so the notice
@@ -216,10 +216,10 @@ through `dismissed` instead.
  by default. Pass a `number` (px) or a CSS length string for a custom radius. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for
  a one-off custom tone. Named tones re-point the surface, text, and border
- colour (used if you opt into a border); a custom color keeps its hue while
+ color (used if you opt into a border); a custom color keeps its hue while
  lightness/chroma are pinned. `'neutral'` (the default) is the same as omitting it. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the message, actions, and close control. A close button dispatches
 `dismissrequest` through `data-custom-event`.
@@ -236,7 +236,7 @@ Slots hold the message, actions, and close control. A close button dispatches
 ```
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
-tone — it derives the surface, text, and border colour in oklch), **`round`** the
+tone — it derives the surface, text, and border color in oklch), **`round`** the
 corners. The one knob worth keeping is **`--banner-tone-source`** — the color a
 custom `tone` derives from, so set it to drive the palette from your own variable.
 Everything else is plain CSS on the host: `min-height` for a taller bar, a
@@ -247,9 +247,9 @@ Everything else is plain CSS on the host: `min-height` for a taller bar, a
 ```
 
 **Add a border.** The banner is borderless by default, but its border style and
-colour are preset at `0` width (the `Progress` reset), so you opt in by setting only
+color are preset at `0` width (the `Progress` reset), so you opt in by setting only
 the **width** — `border-bottom-width` for a rule under the strip, `border-width` for
-a full outline. The colour is already tone-aware (`--banner-border`), so a toned
+a full outline. The color is already tone-aware (`--banner-border`), so a toned
 banner's border matches its tone with no extra work.
 
 ```tsx

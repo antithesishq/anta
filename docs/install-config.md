@@ -1,4 +1,4 @@
-# Install & Config
+# Install and configure
 
 ## Installation
 

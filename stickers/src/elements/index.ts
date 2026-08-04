@@ -6,7 +6,7 @@
  * + injects their CSS. Importing this barrel for side effects —
  * `import '@antadesign/stickers/elements'` — gives you both.
  *
- * For a SMALLER footprint, import just the element you use instead:
+ * To reduce bundle size, import only the element you use:
  *   import '@antadesign/stickers/elements/a-sticker'   // static only — no lottie-web
  * The animated element is the only one that pulls in `lottie-web`, so the
  * granular static path keeps it out of your bundle entirely.

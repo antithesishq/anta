@@ -24,7 +24,7 @@ export interface DialogProps extends Omit<BaseProps, "title"> {
   position?: "center" | "left" | "right" | "top" | "bottom" | "fullscreen";
   /** Whether the top-right ✕ button is present. It's one way to close the dialog,
    *  alongside Esc, the backdrop, a `data-dialog-close` / footer action, and your
-   *  own code; `false` just removes the ✕, it doesn't make the dialog un-closable.
+   *  own code; `false` removes the ✕ without making the dialog unclosable.
    *  @defaultValue true */
   closable?: boolean;
   /** Turn off light-dismiss: a backdrop click and Esc no longer close the dialog.

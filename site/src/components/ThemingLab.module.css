@@ -1,4 +1,4 @@
-/* Layout for the theming lab (ThemingLab.tsx). Structure only — every colour the
+/* Layout for the theming lab (ThemingLab.tsx). Structure only — every color the
    page compares is set by the components themselves or the injected formula CSS.
    Desktop-first; mobile is out of scope for this tool. */
 
@@ -36,7 +36,7 @@
   padding: 28px 0 0;
 }
 
-/* Previews stack as one seamless unit (no gap; borders overlap). */
+/* Previews stack as one unit with no gap; borders overlap. */
 .previews {
   min-width: 0;
 }

@@ -65,8 +65,8 @@ export interface RadioGroupProps extends Omit<BaseProps, "children" | "onChange"
    *  counterpart to `onStateChange`). Not cancelable; for a controlled group it
    *  fires once you've updated `value`. */
   onChange?: (event: Event) => void
-  /** Like `onChange`, but with a `{ value, name }` snapshot as the 2nd argument —
-   *  the ergonomic "just give me the new value" callback (mirrors `Input`). */
+  /** Like `onChange`, but with a `{ value, name }` snapshot as the second argument,
+   *  matching `Input`. */
   onValueChange?: (event: Event, attrs: RadioChangeAttrs) => void
   /** Fired when focus enters the group (any option) — wired to `focusin`, since
    *  focus lands on an individual option, not the group element itself. */
@@ -82,19 +82,19 @@ export interface RadioGroupProps extends Omit<BaseProps, "children" | "onChange"
    *  the options) — typically instructional copy. Per-option helper text goes on
    *  the option's own `hint` instead. */
   hint?: string
-  /** Validation/feedback tone for the group `hint` — recolours it (same tone set
+  /** Validation/feedback tone for the group `hint` — recolors it (same tone set
    *  as `Input`'s `status`). Use `critical` for an error message, etc.; omit for
    *  the neutral default.
    *  @defaultValue 'neutral' */
   status?: "neutral" | "brand" | "info" | "success" | "warning" | "critical"
   /** Mark tone applied to every option (an option's own `tone` wins), or any literal
-   *  CSS color for a one-off custom tone. Colours the selected-ring fill + dot *and*
+   *  CSS color for a one-off custom tone. Colors the selected-ring fill + dot *and*
    *  the unselected ring border. Named tones track light/dark mode. Use `toneSelected`
    *  instead to tone only the selected option and leave the rest neutral. The option
-   *  text stays neutral — recolour it in plain CSS via the `--text-N-{tone}` tokens.
+   *  text stays neutral — recolor it in plain CSS via the `--text-N-{tone}` tokens.
    *  @defaultValue 'neutral' */
   tone?: "brand" | "neutral" | "info" | "success" | "warning" | "critical" | (string & {})
-  /** Like `tone`, but coloured onto the **selected option only** — every unselected
+  /** Like `tone`, but colored onto the **selected option only** — every unselected
    *  ring stays neutral grey. Applied to every option (an option's own `toneSelected`
    *  wins). Prefer this over `tone` when a resting tinted border would read as a
    *  validation state.

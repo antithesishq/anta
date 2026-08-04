@@ -82,7 +82,7 @@ export const SYSTEMS: System[] = [
       'Runs in React, Preact, and plain HTML; JSX wrappers are optional.',
       'Components do not mutate host attributes, so they work with worker-thread and reactive renderers.',
       'Plain CSS in one @layer avoids a style runtime and specificity fights.',
-      'Global tokens cover colour roles, fonts, and focus. Components expose their remaining CSS variables locally.',
+      'Global tokens cover color roles, fonts, and focus. Components expose their remaining CSS variables locally.',
       'OKLCH tones use the same token system in light and dark mode.',
       'Per-element imports register only the component you use. Lottie lives in the separate stickers package.',
     ],
@@ -197,7 +197,7 @@ export const SYSTEMS: System[] = [
     cons: [
       'Accessibility lacks a consolidated target and documentation; fixes land component by component.',
       'Imports need care to limit the icons, dayjs, and rc-component payload.',
-      "Themes change colour, radius, and density, but the result still reads as Ant Design.",
+      "Themes change color, radius, and density, but the result still reads as Ant Design.",
       'React-only; Vue and Angular versions are separate community projects.',
     ],
   },
@@ -297,7 +297,7 @@ export const SYSTEMS: System[] = [
     pros: [
       'Built for dense desktop tools: a virtualized Table, Omnibar, and dual-calendar date picker.',
       'Maintained by a Palantir team and in production there since 2016.',
-      'Thorough documentation and consistent keyboard behaviour.',
+      'Thorough documentation and consistent keyboard behavior.',
     ],
     cons: [
       'Desktop-first by design; touch and mobile are out of scope.',

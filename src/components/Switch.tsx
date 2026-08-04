@@ -39,13 +39,13 @@ export interface SwitchProps extends BaseProps {
   /** Value submitted while checked.
    * @defaultValue "on" */
   value?: string
-  /** Colour of the track and thumb. A tinted tone also colours the unchecked
-   * track border and thumb; use `toneSelected` to colour only the checked track.
+  /** Color of the track and thumb. A tinted tone also colors the unchecked
+   * track border and thumb; use `toneSelected` to color only the checked track.
    * @defaultValue 'brand' */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Like `tone`, but applies only while the switch is checked. The unchecked
-   * track and thumb stay neutral. If both are set, `tone` colours the unchecked
-   * state and `toneSelected` colours the checked track.
+   * track and thumb stay neutral. If both are set, `tone` colors the unchecked
+   * state and `toneSelected` colors the checked track.
    * @defaultValue 'brand' */
   toneSelected?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Size variant. small=26×16px, medium=30×18px, large=34×20px.

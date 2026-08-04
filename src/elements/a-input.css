@@ -23,9 +23,9 @@
          collapsing to the label width.
        • The `::after` stands in for the shadow `.field`: same min-height and
          inset border, and the same text as the shadow control would show — the
-         `value` in the text colour when filled (the Select trigger's chosen
+         `value` in the text color when filled (the Select trigger's chosen
          label, an InputDate's date, a controlled input's text), otherwise the
-         `placeholder` in the placeholder colour. It mirrors the control's
+         `placeholder` in the placeholder color. It mirrors the control's
          per-size type scale, weight, feature settings, 7px inset, and readonly
          ellipsis, so upgrade is a pure content swap with no reflow.
        • The in-field adornments (leading, trailing, clear) are hidden until
@@ -83,7 +83,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  /* Filled: the value in the text colour. Excludes password so a value is never
+  /* Filled: the value in the text color. Excludes password so a value is never
      painted as plaintext pre-upgrade — a password field falls back to the
      placeholder branch above, keeping the secret in the shadow control. */
   a-input[value]:not([value=""]):not([type="password"]):not(:defined)::after {
@@ -176,14 +176,14 @@
     --input-round: attr(round type(<length>), 999px);
   }
 
-  /* Custom tone — a literal CSS colour tints the resting border (hover thickens
+  /* Custom tone — a literal CSS color tints the resting border (hover thickens
      it; the focus ring stays the global `--focus-ring`). Gated off when a `status`
      is set (`:not([status])`) so validation always owns the border: the status
      rules below derive from their own `--input-status-source`, and dropping tone
      from the cascade here keeps a custom hue out of a validation border. FIRST-PASS
      lightness values — review. */
   a-input[tone]:not([tone=""]):not([status]) {
-    /* Fallback is the default border (not transparent) so a non-colour value —
+    /* Fallback is the default border (not transparent) so a non-color value —
        e.g. a stray `tone="brand"` (named tones live on `status`, not `tone`) —
        degrades to the normal border instead of vanishing. */
     --input-tone-source: attr(tone type(<color>), var(--border-2));
@@ -197,10 +197,10 @@
 
   /* Status — the border derives in oklch from the matching tone's seed through
      `--input-status-source`, its own channel (a custom `tone`'s inline
-     `--input-tone-source` never reaches it); the bg tint + message colour are the
+     `--input-tone-source` never reaches it); the bg tint + message color are the
      tone's role tokens, so both themes come for free. The 1px width bump and the
      glyph are handled in the shadow off the same `[status]` host attribute (hover
-     just thickens the edge, it doesn't recolour); only `critical` drives validity. */
+     just thickens the edge, it doesn't recolor); only `critical` drives validity. */
   a-input[status="critical"] { --input-status-source: var(--anta-seed-critical); --input-bg: var(--bg-2-critical); --input-hint: var(--text-2-critical); }
   a-input[status="warning"]  { --input-status-source: var(--anta-seed-warning);  --input-bg: var(--bg-2-warning);  --input-hint: var(--text-2-warning); }
   a-input[status="success"]  { --input-status-source: var(--anta-seed-success);  --input-bg: var(--bg-2-success);  --input-hint: var(--text-2-success); }

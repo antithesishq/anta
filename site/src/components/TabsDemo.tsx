@@ -27,7 +27,7 @@ const panel = { margin: 0, paddingTop: '4px', minHeight: '48px', width: '100%', 
 export function Basic() {
   useElements()
   // The strip and panels are flat siblings; laying them out is the consumer's job. Here
-  // a flex column gaps them and centres the strip (`alignSelf` on the strip, since a
+  // a flex column gaps them and centers the strip (`alignSelf` on the strip, since a
   // `<Tabs>` `style` lands on `<a-tabs>`) while the panels stay full width.
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
@@ -66,7 +66,7 @@ export function Priorities() {
   )
 }
 
-// All named tones except neutral, plus a one-off custom colour as the last row.
+// All named tones except neutral, plus a one-off custom color as the last row.
 const TONE_ROWS = ['brand', 'info', 'success', 'warning', 'critical', '#0d9488'] as const
 
 /** One column of the Tones matrix: every tone at a single priority (2 tabs each). */
@@ -89,7 +89,7 @@ export function TonesColumn({ priority }: { priority?: 'primary' | 'secondary' |
 }
 
 /** Per-tab tone: a neutral strip where individual tabs override the tone (success /
- *  warning / critical), colouring their label + icon and — when active — their indicator. */
+ *  warning / critical), coloring their label + icon and — when active — their indicator. */
 export function PerTabTone() {
   useElements()
   return (
@@ -260,7 +260,7 @@ export function SquareTabs() {
   return <Tabs className="square-tabs" defaultValue="a" label="Sections" options={triad} />
 }
 
-/** Styling: a tertiary strip whose sliding underline is recoloured, thinned to 1px, and
+/** Styling: a tertiary strip whose sliding underline is recolored, thinned to 1px, and
  *  given a glowing box-shadow — the glow rides the `::before` slider, so it slides with the
  *  line (no noslide). */
 export function TertiaryGlow() {

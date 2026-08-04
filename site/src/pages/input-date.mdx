@@ -472,7 +472,7 @@ field treatments.
 <Disclosure title="Styling">
 
 The calendar is **light DOM**, so everything is plain CSS, with no shadow parts or
-hidden internals. The days and chevrons are real `<a-button>`s, so their colours,
+hidden internals. The days and chevrons are real `<a-button>`s, so their colors,
 hover, focus ring, and selected look come from the Button styles and theme
 themselves; they sit inside the `<a-calendar>` grid, and the switcher header sits in
 the `.anta-calendar` shell. An un-layered consumer rule beats `@layer anta` without
@@ -497,7 +497,7 @@ the `.anta-calendar` shell. An un-layered consumer rule beats `@layer anta` with
 Each day is a `<a-button data-part="day-cell" data-date="YYYY-MM-DD">`, so a
 specific date is addressable by its `data-date`: tint it, or hang an event marker
 off a `::after` (give the cell `position: relative` first). Below, three days carry a
-brand dot and one is flagged in the critical colour.
+brand dot and one is flagged in the critical color.
 
 <Preview background="var(--bg-2)" minHeight={282}>
   <CalendarDemo client:only="preact" className="events" defaultValue="2026-06-15" />

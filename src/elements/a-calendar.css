@@ -1,7 +1,7 @@
 @layer anta {
   /* The calendar is composed in LIGHT DOM from Anta components, so its styling is
      ordinary CSS targeting those elements — nothing is hidden in a shadow root.
-     Day cells are real <a-button>s, so their colours/states (hover, focus ring,
+     Day cells are real <a-button>s, so their colors/states (hover, focus ring,
      and the selected look) come from a-button.css for free and theme themselves;
      we only square them off here. The few tokens below point at role tokens, so
      dark mode needs no override. */
@@ -25,7 +25,7 @@
     gap: 0;
   }
   /* The heading is a <Button> (year-menu trigger); it styles its own text, so we
-     only handle layout: fill the space between the chevrons and centre the label. */
+     only handle layout: fill the space between the chevrons and center the label. */
   .anta-calendar [data-part="heading"] {
     flex: 1 1 auto;
     justify-content: center;
@@ -89,7 +89,7 @@
     color: var(--text-5);
   }
 
-  /* Day cells are <a-button>s — sized to the cell box, number centred. The colour
+  /* Day cells are <a-button>s — sized to the cell box, number centered. The color
      curve (rest/hover/active, the `selected` fill + ring, disabled) all comes
      from a-button.css. */
   a-calendar a-button[data-part="day-cell"] {
@@ -106,7 +106,7 @@
   }
   /* Day labels are uniform digits, so drop Button's optical bottom padding (it
      compensates for text glyphs sitting low in the line-box) — it would otherwise
-     nudge the centred number off-centre. */
+     nudge the centered number off-center. */
   a-calendar a-button[data-part="day-cell"] a-button-label {
     padding-bottom: 0;
   }

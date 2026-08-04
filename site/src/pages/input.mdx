@@ -80,7 +80,7 @@ Anta's text scale, so a field lines up with same-size `Text` / `Button`.
 </Col>
 </Columns>
 
-## Label & hint
+## Label and hint
 
 <Columns>
 <Col>
@@ -175,8 +175,8 @@ recolors it.
 
 It reuses the tone palette but isn't `tone`: **`status` is a validation *state*** (it
 also carries the glyph and, for `critical`, validity), whereas `tone` — elsewhere in
-Anta — is decorative colour. On `Input` the named tones live on `status`; `tone` is
-reserved for a one-off custom border colour.
+Anta — is decorative color. On `Input` the named tones live on `status`; `tone` is
+reserved for a one-off custom border color.
 
 Only `status="critical"` carries validity — it sets `aria-invalid`, flips the
 `:state(invalid)` hook, and reports invalid to a surrounding `<form>` through
@@ -190,7 +190,7 @@ with `statusIcon={false}`.
 </Col>
 </Columns>
 
-## Leading, trailing & clear
+## Leading, trailing, and clear
 
 <Columns>
 <Col>
@@ -334,7 +334,7 @@ browser.
 </Col>
 </Columns>
 
-## Controlled & uncontrolled
+## Controlled and uncontrolled
 
 <Columns>
 <Col>
@@ -422,7 +422,7 @@ restores the field to its `defaultValue` via `formResetCallback`.
 </Col>
 </Columns>
 
-## Types & validation
+## Types and validation
 
 <Columns>
 <Col>
@@ -449,7 +449,7 @@ restores the field to its `defaultValue` via `formResetCallback`.
 <Col>
 
 `type` accepts `text` (default), `email`, `password`, `tel`, `url`, and
-`number` — each gets the right mobile keyboard, autofill behaviour, and native
+`number` — each gets the right mobile keyboard, autofill behavior, and native
 constraint validation. (`search` is omitted on purpose — see above.)
 `number` also takes `min` / `max` / `step`.
 
@@ -697,7 +697,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 
 <Disclosure title="Vanilla web component">
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the label, hint, and controls around the native field.
 
@@ -761,7 +761,7 @@ their `size` attribute, so Anta does not reuse it. `round` and a custom-color
 <Disclosure title="Styling">
 
 Reach for the props first: **`status`** sets a validation tone (border + message),
-**`tone`** a custom accent colour for the border (any CSS colour), **`size`** the
+**`tone`** a custom accent color for the border (any CSS color), **`size`** the
 dimensions. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).
 
 ```tsx folded
@@ -785,7 +785,7 @@ The border is drawn as an **inset `box-shadow`**, not a real `border`, so its wi
 (`0.5px` → `1px` when a `status` is set) and placement never change the box size —
 the field height stays locked to the matching Button. Drop the leading `inset` to
 draw the border as an outset ring instead. You can also re-point an `--input-*`
-colour token on one instance (`style={{ '--input-border': 'var(--border-1)' }}`)
+color token on one instance (`style={{ '--input-border': 'var(--border-1)' }}`)
 or a wrapping selector; the resolver lives in `@layer anta`, so any un-layered rule
 of yours wins.
 

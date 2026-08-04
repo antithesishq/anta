@@ -127,7 +127,7 @@ shows.
  ~`50` for a near-instant tooltip (0 has caused issues in practice). |
 | `follow?` | boolean | — | Follow the cursor instead of pinning under the anchor. The bubble is
  pinned (anchored beneath the target) by default; pass `follow` for the
- cursor-tracking behaviour, which fades by distance as the cursor leaves. |
+ cursor-tracking behavior, which fades by distance as the cursor leaves. |
 | `interactive?` | boolean | — | Make the bubble hoverable and clickable — enables pointer events and
  keeps it open while the cursor is over it, so its content (links,
  buttons) can be interacted with. Always pinned (an interactive bubble
@@ -144,7 +144,7 @@ shows.
 | `truncatedSelector?` | string | — | CSS selector (resolved within the anchor) for the element whose overflow
  decides whether a `truncatedOnly` tooltip shows. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Place `<a-tooltip>` inside the element it describes.
 

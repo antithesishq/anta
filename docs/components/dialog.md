@@ -210,7 +210,7 @@ returns to whatever opened the dialog, from the native `<dialog>`.
 | `children?` | ReactNode | — | The dialog body. Scrolls when it overflows the available height. |
 | `closable?` | boolean | true | Whether the top-right ✕ button is present. It's one way to close the dialog,
  alongside Esc, the backdrop, a `data-dialog-close` / footer action, and your
- own code; `false` just removes the ✕, it doesn't make the dialog un-closable. |
+ own code; `false` removes the ✕ without making the dialog unclosable. |
 | `defaultOpen?` | boolean | — | Initial open state for the uncontrolled case (read once on mount). |
 | `footer?` | ReactNode | — | Footer content, usually the action buttons. Rendered in the bottom zone as
  a right-aligned row (wraps under pressure). Omit for none. |
@@ -245,7 +245,7 @@ returns to whatever opened the dialog, from the native `<dialog>`.
  corners at `--dialog-radius`. Omit for the position default: `center` is
  rounded, drawers and `fullscreen` are square. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the header, footer, and close control. Add `tabindex="0"` to every
 raw `<a-button>`.

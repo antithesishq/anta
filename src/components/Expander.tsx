@@ -53,10 +53,9 @@ export interface ExpanderProps extends Omit<BaseProps, "title"> {
    *  `number` (px) or CSS length string for a *fixed* radius that overrides the
    *  measurement (and skips it) in both states. */
   round?: boolean | number | string;
-  /** Controlled open state. When provided, the consumer owns open/close:
-   *  the expander only follows this prop, and clicking the summary just
-   *  requests a change via `onStateChange` (so a toggle can be rejected by
-   *  not updating). Leave undefined for uncontrolled. */
+  /** Controlled open state. When provided, the consumer owns open/close. Selecting
+   *  the summary requests a change through `onStateChange`; omit `open` for
+   *  uncontrolled use. */
   open?: boolean;
   /** Initial open state for the uncontrolled case. */
   defaultOpen?: boolean;

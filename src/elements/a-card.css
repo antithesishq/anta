@@ -97,7 +97,7 @@
     --card-icon-blend: multiply;
   }
   /* Dark: primary + secondary blend their bg-5 chip into the surface via exclusion;
-     tertiary stays un-blended (it uses a lightened bg-5 colour instead). */
+     tertiary stays un-blended (it uses a lightened bg-5 color instead). */
   .dark a-card:not([priority="tertiary"]) {
     --card-icon-blend: exclusion;
   }
@@ -142,7 +142,7 @@
       box-shadow: 0 0 0 1px var(--card-border-hover);
     }
   }
-  /* A pressed LINK card settles its edge back to the rest colour — only link cards
+  /* A pressed LINK card settles its edge back to the rest color — only link cards
      have a meaningful active state. Higher specificity than the hover rule above,
      so it wins while the card is both hovered and active. */
   a-card[href]:not([loading]):active {
@@ -362,7 +362,7 @@
   }
 
   /* The normal edge is an outset shadow so full-bleed media stays flush. Shadows
-     do not reliably survive forced colors, so use a real system-colour border. */
+     do not reliably survive forced colors, so use a real system-color border. */
   @media (forced-colors: active) {
     a-card {
       border: 1px solid CanvasText;

@@ -31,7 +31,7 @@
  *     neutral case regardless of load order (the element CSS is re-injected by JS
  *     registration, so source order isn't reliable). Named-tone rules out-specify
  *     the base too. But a component's own even-higher-specificity CUSTOM-tone rule
- *     (`[tone]:not(…named)`, derived in oklch) wins for a literal colour — so a
+ *     (`[tone]:not(…named)`, derived in oklch) wins for a literal color — so a
  *     custom `tone` keeps deriving instead of flattening to neutral.
  *
  * Overriding: part 2's component ramps are beaten by any unlayered consumer rule.
@@ -562,7 +562,7 @@ a-checkbox[tone="critical"] {
    tone (a per-option / standalone `<a-radio tone|tone-selected="#…">`), which then
    derives via the element's own custom rule. Named-tone rows (incl. group-cascaded
    ones) are covered by theme-anta's higher-specificity `[tone="…"]` rules below.
-   NOTE: a RadioGroup-*level* custom colour doesn't reach children in any theme —
+   NOTE: a RadioGroup-*level* custom color doesn't reach children in any theme —
    the element sets `--radio-tone-source` locally (a-radio.css), shadowing the
    group's inherited value — a pre-existing limitation, separate from this theme. */
 a-radio:not([tone]):not([tone-selected]) {

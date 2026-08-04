@@ -8,7 +8,7 @@
  * common leading whitespace from JSX-attribute template literals.
  *
  * The props panel binds to the `<Tooltip>` (delay / placement / follow /
- * interactive); the `<Button>` is just the anchor it's attached to.
+ * interactive); the `<Button>` is its anchor.
  */
 export default `import { Tooltip, Button } from '@antadesign/anta'
 

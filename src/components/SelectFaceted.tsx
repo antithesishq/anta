@@ -181,7 +181,7 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   disabled?: boolean
   /** Tone applied to a selected option row in the facet flyouts (label, selected
    *  tint, and the check / checkbox indicator). A named tone or a custom CSS
-   *  colour, matching `Select`'s `toneSelected`. Defaults to a neutral selection. */
+   *  color, matching `Select`'s `toneSelected`. Defaults to a neutral selection. */
   toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Adds a search field at the top of the root menu. It searches the options of
    *  every `single` and `multiple` facet in one list. For example, "alice" can

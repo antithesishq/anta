@@ -61,7 +61,7 @@ Suggestions are bare strings or `SelectOption`s, the same option shape
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Field size. |
 | `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | — | Validation status. |
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Status icon override, or `false` to drop it. |
-| `tone?` | string | — | Custom accent colour — a named tone or any CSS colour. |
+| `tone?` | string | — | Custom accent color — a named tone or any CSS color. |
 | `trailing?` | ReactNode | — | Trailing adornment inside the field. |
 | `value?` | string | — | Controlled value: the field's text, a **free** string not constrained to a
  suggestion. Leave undefined for uncontrolled. |

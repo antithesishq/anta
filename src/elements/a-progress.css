@@ -240,7 +240,7 @@
     to { transform: translateX(var(--progress-loading-x-period)); }
   }
 
-  /* The track stays a Canvas surface with a dotted edge. Light forced-colour
+  /* The track stays a Canvas surface with a dotted edge. Light forced-color
      palettes use the selected-item pair for the completed part. */
   @media (forced-colors: active) {
     :where(a-progress, progress[data-anta]) {
@@ -257,7 +257,7 @@
 
     /* Dark palettes use the text-selection pair for the completed part. The
        class covers Anta's explicit theme; the media query covers a system-dark
-       forced-colours palette without that class. */
+       forced-colors palette without that class. */
     .dark :where(a-progress, progress[data-anta]) {
       --progress-indicator-bg: Highlight !important;
       --progress-indicator-edge: Highlight !important;

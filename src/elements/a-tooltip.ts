@@ -116,7 +116,7 @@ function releaseOpen(el: ATooltipElement) {
 /* ------------------------------------------------------------------ *
  * Lazy-listener observer: attach the (relatively heavy) hover/focus
  * listeners only while the anchor is actually on-screen, mirroring the
- * legacy behaviour. One observer for every <a-tooltip> on the page.
+ * legacy behavior. One observer for every <a-tooltip> on the page.
  * ------------------------------------------------------------------ */
 const anchorToTooltip = new WeakMap<Element, ATooltipElement>()
 
@@ -535,7 +535,7 @@ export class ATooltipElement extends HTMLElementBase {
 
   /** Opacity for the inner bubble from the cursor's distance to the anchor rect
    *  (0 inside the rect): 1 within PROX_NEAR, a linear ramp to 0 at PROX_FAR.
-   *  Cursor-follow only — drives the "fade as you move away" behaviour. */
+   *  Cursor-follow only — drives the "fade as you move away" behavior. */
   private proximityOpacity(e: MouseEvent): number {
     if (!this.anchor) return 1
     const r = anchorRect(this.anchor)

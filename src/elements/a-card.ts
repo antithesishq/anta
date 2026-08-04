@@ -82,7 +82,7 @@ import './a-card.css'
 //  • The visible box (border / background / radius / overflow-clip) lives on the
 //    HOST in a-card.css so plain consumer CSS can override it and it paints before
 //    upgrade; the shadow owns only layout + the anchor reset + the region defaults.
-//  • .container is an <a> reset to behave as a div (display:flex, inherit colour,
+//  • .container is an <a> reset to behave as a div (display:flex, inherit color,
 //    no underline, default cursor, no drag) until [href] makes it a link (pointer
 //    cursor, non-selectable content). Its border-radius mirrors --card-radius only
 //    so the inset focus ring is rounded.

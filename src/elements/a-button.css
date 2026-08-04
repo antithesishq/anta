@@ -32,7 +32,7 @@
     --button-loading-blur: 5px;
 
     /* Tone — every priority/state is derived in oklch from --_src (the tone's
-       seed, or a custom literal colour) with the per-tone --_tone-* constants
+       seed, or a custom literal color) with the per-tone --_tone-* constants
        below. Neutral is the base: its seed is near-grey, so the same formula
        greys out. Named tones point --_src at their seed and saturate the
        constants; a custom `tone="<color>"` points --_src at the literal. The
@@ -143,7 +143,7 @@
   a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[data-anta][tone="warning"], input[data-anta]:is([type="reset"], [type="submit"])[tone="warning"] { --_src: var(--anta-seed-warning); }
   a-button[tone="critical"],a[role="button"][data-anta][tone="critical"],button[data-anta][tone="critical"],input[data-anta]:is([type="reset"], [type="submit"])[tone="critical"] { --_src: var(--anta-seed-critical); }
 
-  /* Custom tone — any non-named value is a literal colour; --_src reads it (the
+  /* Custom tone — any non-named value is a literal color; --_src reads it (the
      wrapper also sets --button-tone-source inline for engines without typed
      attr()). Colored constants apply via the rule above. */
   a-button[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
@@ -596,7 +596,7 @@
     }
     /* `a-button-label` is a generic custom element. The UA otherwise assigns
        it the Canvas background in forced colors, which paints a light rectangle
-       over a filled primary or selected button. System colours still follow the
+       over a filled primary or selected button. System colors still follow the
        user's palette; this only keeps the label transparent and inheriting. */
     a-button:is([priority="primary"], [selected]) {
       forced-color-adjust: none;

@@ -20,14 +20,14 @@ or uncontrolled (`defaultValue`), and submits under `name` via the native form A
 
 Focus a section and edit it with the keyboard: ↑/↓ to step (it
 wraps), PageUp/PageDown for a larger jump on minutes,
-or just type the digits. Home/End, selection, deletion, and
+or enter the digits. Home/End, selection, deletion, and
 paste behave as they do in a native text input. Typing
 `9` then `3` `0` lands `09:30` and moves across the sections on its own; an
 out-of-range digit (a `6` in the minutes) commits and advances immediately.
 Backspace on an empty section selects the previous one. The whole thing
 reads as one field while preserving native caret behavior. In a
 12-hour field, typing a 24-hour hour converts it and flips AM/PM — `18` becomes
-`6 PM` — so pasting a 24-hour time just works.
+`6 PM`, so pasted 24-hour times work.
 
 ```tsx
 <InputTime label="Start time" defaultValue="09:30" onValueChange={(_, { value }) => save(value)} />
@@ -69,7 +69,7 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `children?` | ReactNode | — | Extra content rendered under the field, above the hint (a no-box child like
- a `<Tooltip>` takes no space and just anchors to the field). |
+ a `<Tooltip>` takes no space and anchors to the field). |
 | `clearable?` | boolean | — | Show a clear button once the field has a value. |
 | `defaultValue?` | string | — | Initial value for the uncontrolled case (24-hour `"HH:mm"`). |
 | `dimActions?` | boolean | — | Dim the trailing adornments at rest; they brighten on hover / focus. |
@@ -101,12 +101,12 @@ range is clamped to the nearest bound as you step or leave the field, and flags
  others are advisory. Omit (or `neutral`) for a plain field. |
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph before the `hint` when `status` is set (per-status default; pass a
  shape to override, or `false` to drop it). |
-| `tone?` | string | — | Custom accent colour — any literal CSS colour tints the resting + hover
+| `tone?` | string | — | Custom accent color — any literal CSS color tints the resting + hover
  border (focus ring stays `--focus-ring`); `status` overrides for validation. |
 | `trailing?` | ReactNode | — | Content pinned to the end of the field (after the clear button). |
 | `value?` | string | — | Controlled value — 24-hour `"HH:mm"`. Pair with `onValueChange`. |
 
-Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots supply the field label and leading icon.
 
@@ -165,9 +165,9 @@ tighter `1em` line:
 `}</style>
 ```
 
-For a one-off accent, `tone` takes **any literal CSS colour** (e.g. `#7c3aed`) and
+For a one-off accent, `tone` takes **any literal CSS color** (e.g. `#7c3aed`) and
 tints the resting + hover border — the focus ring stays the global ring. It's a
-colour, not a named tone; the named feedback tones live on `status`.
+color, not a named tone; the named feedback tones live on `status`.
 
 ```tsx
 <InputTime label="Accent" tone="#7c3aed" defaultValue="09:30" />

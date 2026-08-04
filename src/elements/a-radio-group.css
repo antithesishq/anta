@@ -3,7 +3,7 @@
      <a-radio-list> is the radios' flex box. Both are plain selectors a consumer
      can override (e.g. `a-radio-group a-radio-list { display: grid }`). */
   a-radio-group {
-    /* Group-hint colour token — neutral by default, recoloured per `status`
+    /* Group-hint color token — neutral by default, recolored per `status`
        below (mirrors <a-input>'s --input-hint). */
     --radio-group-hint: var(--text-3);
 
@@ -38,7 +38,7 @@
     line-height: 20px;
     font-weight: 500;
   }
-  /* Input-style hint: 14px/17px, --text-3 by default, recoloured per `status`
+  /* Input-style hint: 14px/17px, --text-3 by default, recolored per `status`
      (the same tone set as Input). */
   a-radio-group-hint {
     display: block;
@@ -48,7 +48,7 @@
     margin-block-start: 2px;
   }
 
-  /* Status tones — recolour the group hint, same set as <a-input>'s status. */
+  /* Status tones — recolor the group hint, same set as <a-input>'s status. */
   a-radio-group[status="critical"] { --radio-group-hint: var(--text-2-critical); }
   a-radio-group[status="warning"]  { --radio-group-hint: var(--text-2-warning); }
   a-radio-group[status="success"]  { --radio-group-hint: var(--text-2-success); }

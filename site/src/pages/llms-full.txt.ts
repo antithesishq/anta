@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs'
 import type { APIRoute } from 'astro'
-import { renderPropsTable } from '../../lib/llms/props-from-api.ts'
-import { parseMdx } from '../../lib/llms/parse-mdx.ts'
+import { renderPropsTable } from '../../lib/llms/props-from-api.mjs'
+import { parseMdx } from '../../lib/llms/parse-mdx.mjs'
 import {
   componentGroups,
   documentationLinks,
   llmsIndex,
+  overview,
   packageLinks,
 } from '../../lib/llms/index-content.mjs'
 
@@ -21,17 +22,6 @@ const rawMdx = {
 const demoModules = import.meta.glob('./*.demo.ts', {
   eager: true,
 }) as Record<string, { default: string }>
-
-const overview = `# Overview
-
-Anta is Antithesis's design system. It combines global CSS tokens,
-framework-agnostic declarative web components, and JSX wrappers for dynamic
-state and conditional composition.
-
-Components use an attribute-driven DOM instead of utility-class stacks and
-wrapper elements. Web components never mutate their own attributes, so they
-work with Worker-driven UIs and other reactive renderers. JSX wrappers provide
-the React and Preact integration layer.`
 
 function modulePath(path: string) {
   return path === '/accessibility/'

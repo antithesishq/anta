@@ -1,0 +1,42 @@
+# Colors
+
+Anta doesn't offer a global color palette — there are no raw scales like `blue-500` or `gray-900` to pick from. Color ships only as a small set of **role tokens**, grouped by where they apply — background, text, and border — each with a neutral set plus five tones (brand, info, success, critical, warning) that already pair light and dark. You compose from these roles instead of arbitrary swatches; anything app-specific lives in component tokens or your own [semantic aliases](#custom-semantic-tokens).
+
+## Custom semantic tokens
+
+Because the numeric tokens are role-free, the convenient pattern is to alias them to **semantic tokens** that describe how *your* app uses each surface. Define the names once, then reference those instead of the raw numbers. For example:
+
+```css
+:root {
+  --bg-canvas: var(--bg-1);
+  --bg-base:   var(--bg-2);
+  --bg-pane:   var(--bg-3);
+  --bg-block:  var(--bg-4);
+  --bg-spot:   var(--bg-5);
+
+  /* tinted variants work the same way */
+  --bg-spot-info: var(--bg-5-info);
+}
+```
+
+This keeps your components readable (`var(--bg-pane)` says more than `var(--bg-3)`) and lets you re-map a role to a different step later in one place.
+
+A semantic token doesn’t have to point at the same numeric step in both themes. A card sitting on `bg-2` can use the recessed `bg-1` in light, but in dark it often reads better a little *lighter* than the page — so the same `--bg-my-card` maps to `bg-4` instead. The border follows suit: `border-5` in light, `border-4` in dark.
+
+```css
+:root {
+  background:          var(--bg-2);     /* Anta's token */
+
+  --bg-my-card:        var(--bg-1);     /* Custom token */
+  --bg-my-card-border: var(--border-5); /* Custom token */
+}
+.dark {
+  --bg-my-card:        var(--bg-4);
+  --bg-my-card-border: var(--border-4);
+}
+
+.card {
+  background: var(--bg-my-card);
+  border: 1px solid var(--bg-my-card-border);
+}
+```

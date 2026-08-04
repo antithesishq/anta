@@ -1,0 +1,931 @@
+# Select
+
+A single- or multi-select dropdown: a read-only field showing the chosen value(s)
+over a menu of options. Click to open; it anchors to the field, dismisses on
+outside-click or `Esc`, and highlights the chosen row.
+
+It's a **composed component**, an [Input](./input.md) trigger stitched to a
+[Menu](./menu.md). Options are a JSON array of strings or objects, like
+[RadioGroup](./radio.md) and [Tabs](./tabs.md); changes arrive
+through one **`onValueChange`**. Controlled via `value`, uncontrolled via
+`defaultValue`.
+
+## Options
+
+```tsx
+<Select
+  label="Field"
+  options={[
+    { value: 'output_text', hint: 'Raw log message or event payload', icon: 'file' },
+    { value: 'stream', hint: 'Log level: error · info · internal', icon: 'braces' },
+    { value: 'container', hint: 'Host where the event occurred', icon: 'cube' },
+    { value: 'archived', hint: 'Read-only snapshot', icon: 'folder-close', disabled: true },
+    { value: 'flagged', hint: 'Needs review', icon: 'warning-triangle', tone: 'warning' },
+    { value: 'custom', hint: 'Your own field path', icon: 'asterisk', tone: '#c026d3' },
+  ]}
+/>
+```
+
+`options` takes bare strings or objects. A string is shorthand for
+`{ value, label: value }`. An object adds a `label`, a `hint` (the secondary line),
+a leading `icon`, a per-option `tone` (a named tone or a custom CSS color), or
+`disabled`. Open the field: the chosen row is highlighted, and the disabled row is
+skipped by the keyboard.
+
+## Selection modes
+
+```tsx
+// Single-select marks (single value)
+<Select indicator="check" options={OPTIONS} value={one} onValueChange={setOne} />  // trailing ✓ + tint
+<Select indicator="radio" options={OPTIONS} value={one} onValueChange={setOne} />  // leading radio
+<Select options={OPTIONS} value={one} onValueChange={setOne} />                    // tint only (default)
+
+// Tone the selected row: named tone or custom colour (the indicator adopts it)
+<Select indicator="check" toneSelected="brand" options={OPTIONS} value={one} onValueChange={setOne} />
+<Select indicator="radio" toneSelected="#c026d3" options={OPTIONS} value={one} onValueChange={setOne} />
+
+// Multiple: checkboxes, count summary, Select-all row (default); value is an array
+<Select
+  selection="multiple"
+  options={OPTIONS}
+  value={many}
+  onValueChange={setMany}
+/>
+```
+
+`selection` sets **behaviour**, `indicator` sets the single-select **mark**.
+
+`selection="single"` (the default) keeps `value` a single value and closes on pick.
+`indicator` then picks the row mark: **`"none"`** (default; a tint-only highlight),
+**`"check"`** (a trailing checkmark on the chosen row that keeps the tint, the
+canonical Select look), or **`"radio"`** (a leading radio on every row).
+
+`selection="multiple"` makes `value` an **array**, puts a **checkbox** on
+every row, keeps the menu open as you toggle, and summarises the selection in the
+field: **`All`** when every option is on, the single label for one, else **"N
+selected"** (pass **`verbose`** to spell the picks out — `3 selected: A, B, C`; or
+take over the text entirely with [`renderSummary`](#selection-summary); an empty
+selection shows the `placeholder`). A
+**Select all** top row shows by default; it toggles everything, and
+its box goes mixed when only some are on. Pass **`selectAll={false}`** to drop it.
+
+On a multi-select, **`Alt`+Click** a row (⌥+Click on macOS) to *isolate* it: clear
+the rest and select only that one. A cursor-following hint teaches the accelerator;
+override it per row with `SelectOption.tooltip` (or `''` to suppress). This rides on
+the Select all row, so `selectAll={false}` drops it too.
+
+Each checkable row is the control itself (`role="menuitemcheckbox"` /
+`menuitemradio`, `aria-checked`); the checkbox / radio / check is a passive indicator
+the row drives.
+
+**`toneSelected`** tones the selected row(s): the whole row takes the tone, including
+label, icon, indicator, and tint. Pass a named tone or any CSS color (a custom color
+keeps its hue, with lightness pinned to the brand text). It reads strongest with
+`indicator` `none` / `check`, which show the row tint; `radio` / `checkbox` have no
+row tint, so it tones the label and indicator only.
+
+## Filter
+
+```tsx
+// Built-in matcher: case-insensitive substring of value / label / hint
+<Select filter indicator="check" options={OPTIONS} value={v} onValueChange={setV} />
+
+// Custom matcher: a per-option predicate
+<Select
+  filter={(option, query) => option.value.startsWith(query)}
+  options={OPTIONS}
+  value={v}
+  onValueChange={setV}
+/>
+```
+
+Add **`filter`** for a search field at the top of the menu that narrows the options
+as you type. `true` uses the built-in matcher: a case-insensitive substring of the
+option's **value, label, or hint**. It's **whitespace-flexible** (a typed space
+matches any run of whitespace) and **bolds the matched substring** in the results.
+Pass a **function** `(option, query) => boolean` for custom matching (no highlight).
+
+The menu becomes a **combobox**: opening focuses the search field, `↑`/`↓` move a
+cursor through the matches (focus stays in the field, so you keep typing), `Enter`
+picks the active one, and `Esc` closes. The field stays **pinned** while the matches
+scroll beneath it, and the menu re-anchors to the trigger as the list shrinks. No
+matches shows a "No matches" row, and the query resets when the menu closes. In
+`multiple` mode, `selectAll` acts on the currently-visible matches.
+
+## Value & changes
+
+```tsx
+const [field, setField] = useState('stream')
+
+<Select
+  label="Field"
+  options={['output_text', 'stream', 'container', 'vtime', 'custom']}
+  value={field}
+  onValueChange={(v) => setField(v)}
+/>
+```
+
+The value is the **option's `value`** — `value="stream"` in single mode, an array
+like `value={['stream', 'container']}` in `multiple`. It's the option's identity:
+what `value` / `defaultValue` name and what `onValueChange` reports, so keep each
+option's `value` **unique across the whole tree**. Selection is value-keyed and
+global across groups / submenus, so a value repeated in two sections is one logical
+pick (both rows toggle together; the trigger resolves to the last). Dev builds
+`console.warn` on a duplicate.
+
+Values aren't limited to strings. `Select` **infers its value type from `options`**:
+pass `options={[{ value: 365 }, { value: 90 }]}` and `value`, `onValueChange`'s value,
+and `attrs.value` are all `number` (the same for `boolean`). Values compare with `===`,
+so `365` and `"365"` stay distinct and no string conversion is needed. The exported
+`OptionValue` type is `string | number | boolean`; for anything richer (a date, an
+object), give `value` a **stable primitive key** (a date's ISO string, a record's id)
+and read the full value back off `attrs.option`.
+
+```tsx
+// Rich value: id is the key, the full record rides on the option.
+<Select
+  options={runs.map((r) => ({ value: r.id, label: r.name, run: r }))}
+  onValueChange={(id, attrs) => { if (!('all' in attrs)) openRun(attrs.option.run) }}
+/>
+
+// Date filter: the ISO string is the value — round-trips as text, rebuild on read.
+<Select
+  options={days.map((d) => ({ value: d.toISOString(), label: fmt(d) }))}
+  onValueChange={(iso) => setDay(new Date(iso))}
+/>
+```
+
+Leave `value` off and pass `defaultValue` for an **uncontrolled** select (the
+wrapper owns the value). Pass `value` to **control** it: the field follows the prop,
+and a pick only requests a change that you apply in `onValueChange`.
+
+**`onValueChange(value, attrs)`** is the single selection callback. The new value
+comes first (a single value, or an array in `multiple` mode), with a snapshot
+second: `{ value, option }` for the changed row, plus `selected` in `multiple` mode
+(or `{ all: true }` for the Select-all row). There's **no `onStateChange`**: Select
+has no discrete element state to veto (Checkbox and RadioGroup do), so it follows
+Input's model of one value callback, and a controlled consumer rejects a pick by not
+updating `value`. See the [event-model note on Input](./input.md#events) for
+the rationale.
+
+### Deriving the selection tree
+
+The callback hands you the new value (and the one row that changed); to read the
+whole selection back against your hierarchy, use **`optionsWithSelection(options,
+values)`**. It returns your `options` tree with every leaf marked `selected` and
+every group / submenu carrying a rolled-up `selectionState` — `'all'`, `'none'`, or
+`'some'` of its descendants. It's a pure function (no `Select` instance, reads
+nothing off the event), so it behaves the same controlled or uncontrolled: hand it
+your current `value` and render a grouped summary, a section indicator, or a diff.
+
+The panel on the right is that projection, re-derived on every pick. Toggle scopes and
+watch the leaf checks and the section `Tag`s (`some` / `all`) update:
+
+```tsx
+import { Select, optionsWithSelection } from '@antadesign/anta'
+
+const [values, setValues] = useState<string[]>(['repo.read', 'billing.view'])
+
+// `values` drives the Select; the tree is derived from it and rendered read-only.
+const tree = optionsWithSelection(scopes, values)
+// tree: [ { label: 'Repositories', selectionState: 'some', options: [
+//           { value: 'repo.read',  label: 'Read',  selected: true  },
+//           { value: 'repo.write', label: 'Write', selected: false }, … ] },
+//         { label: 'Members', selectionState: 'some', options: [ …,
+//           { label: 'Billing', selectionState: 'all', submenu: [
+//             { value: 'billing.view',   label: 'View invoices', selected: true },
+//             { value: 'billing.manage', label: 'Manage plan',   selected: true } ] } ] },
+//         { value: 'audit.read', label: 'Audit log', selected: false } ]
+
+<Select selection="multiple" options={scopes} value={values} onValueChange={setValues} />
+{/* render `tree` however you like — a summary, section indicators, a diff */}
+```
+
+**Don't feed the tree back into `options` to control selection.** The projection
+flows one way: `value` controls the `Select`, and the tree is a derived, read-only
+view of it. `Select` resolves selection purely from `value` and never reads a
+`selected` flag off `options`, so a `selected: true` in the tree changes nothing — it
+rides along as inert data. Control the `Select` with the value array; keep the
+annotated tree for rendering.
+
+```tsx
+// ✗ Wrong — `selected` is ignored, so the Select isn't controlled by this
+<Select options={optionsWithSelection(scopes, values)} />
+
+// ✓ Right — selection is value-keyed; drive it with `value`
+<Select options={scopes} value={values} onValueChange={setValues} />
+```
+
+Bare-string options normalize to `{ value, label }`; a value under more than one
+section marks the leaf everywhere it occurs (selection is value-keyed).
+
+## Size & status
+
+```tsx
+<Select label="Small · info"    size="small"  status="info"     hint="Lowercase & dashes only" options={OPTIONS} defaultValue="stream" />
+<Select label="Medium · success" size="medium" status="success"  hint="Field is valid" options={OPTIONS} defaultValue="stream" />
+<Select label="Large · critical" size="large"  status="critical" hint="Pick a field" options={OPTIONS} placeholder="Required…" />
+{/* statusIcon overrides the per-status glyph, or `false` drops it, as on Input */}
+<Select status="info" statusIcon="sparkles" hint="Custom glyph" options={OPTIONS} defaultValue="stream" />
+```
+
+The trigger is an [Input](./input.md), so it inherits the field props.
+**`size`** (`small` · `medium` · `large`) sets the height and type scale.
+**`status`** paints a validation tone on the border, `hint`, and chevron, and
+prefixes a glyph (`info` / `success` / `warning` / `critical`); **`statusIcon`**
+overrides that glyph (any shape, or `false` to drop it), as on Input. The message
+rides in `hint`.
+
+`status` is a validation *state* over the same palette as `tone`: it also carries
+the glyph and, for `critical`, validity. See the
+[Input status note](./input.md#status). The field also takes `label`,
+`placeholder`, `round`, and `disabled`, and fills its container; set a width via
+`style` / `className` (both forwarded to the field).
+
+## Customization
+
+Select is a composed wrapper with open seams. Rebuild it from the raw elements, or keep the wrapper and swap a row's **content** (`renderOption`) or its **selection mark** (`renderIndicator`) for your own nodes.
+
+Pass `placement` to control where the options menu opens relative to its field. It
+uses the same values as `Menu` and still flips or clamps when space is limited.
+`offset` sets the gap in pixels between the field and the menu:
+
+```tsx
+<Select placement="top-end" offset={8} options={OPTIONS} label="Field" />
+```
+
+### Components composition
+
+`Select` has no `<a-select>` element; the wrapper *is* the coordinator. It renders
+`<Input readOnly>` + `<Menu>`, reflects the value into the field and each option's
+`selected`, and turns a pick into `onValueChange`. Positioning, dismissal, and
+in-menu keyboard come from `Menu`. The same result is reachable **without React**:
+the menu anchors to its previous sibling, so a field, a menu, and a little glue make
+a working select:
+
+```html
+<!-- `.select` is your own wrapper class; everything below is scoped to it. -->
+<div class="select" style="width: 240px">
+  <!-- Read-only field trigger; `dim-actions` dims the chevron at rest. The
+       trailing slot supplies the inline inset (--input-trailing-inset); the
+       transition on the chevron matches <Select>. -->
+  <a-input readonly dim-actions value="stream" aria-haspopup="menu">
+    <a-icon slot="trailing" shape="chevron-down" style="transition: transform 150ms ease"></a-icon>
+  </a-input>
+  <a-menu role="menu">
+    <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="container"><a-menu-item-label>container</a-menu-item-label></a-menu-item>
+  </a-menu>
+</div>
+<script type="module">
+  import '@antadesign/anta/elements'
+  const root = document.querySelector('.select')
+  const field = root.querySelector('a-input')
+  const menu = root.querySelector('a-menu')
+  const chevron = field.querySelector('a-icon')
+  // Flip the chevron with the menu's open state (as <Select> does).
+  menu.addEventListener('statechange', (e) => {
+    chevron.style.transform = e.detail.next === 'open' ? 'rotate(180deg)' : ''
+  })
+  // On pick: mark the row selected + reflect its label into the field.
+  menu.addEventListener('click', (e) => {
+    const item = e.target.closest('a-menu-item')
+    if (!item) return
+    menu.querySelectorAll('a-menu-item').forEach((el) => {
+      const selected = el === item
+      el.toggleAttribute('selected', selected)
+      el.setAttribute('aria-checked', String(selected))
+    })
+    field.value = item.querySelector('a-menu-item-label').textContent
+  })
+</script>
+```
+
+That glue (tracking `selected`, flipping the chevron, updating the field) is what
+the React `Select` packages.
+
+### Custom option rendering
+
+```tsx
+const TONE = { in_progress: 'info', completed: 'neutral', incomplete: 'critical' }
+const LABEL = { in_progress: 'In progress', completed: 'Completed', incomplete: 'Incomplete' }
+
+// The field fills its container, so the wrapper's width bounds the trigger.
+// (<Select style={{ width: 260 }} …> works too; style forwards to the field.)
+<div style={{ width: 260 }}>
+  <Select
+    label="Test run"
+    filter                                     // name / date stay searchable
+    options={runs}                             // { value, label, name, ranAt, status }[]
+    value={run}
+    onValueChange={setRun}
+    renderOption={(option) => {
+      const run = option as Run                 // index-signature fields are `unknown`
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, gap: 2 }}>
+          {/* The ellipsized name is the anchor; the nested Tooltip (its children are the
+              bubble) reveals the full name when the name is clipped. */}
+          <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {run.name}
+            <Tooltip truncatedOnly>{run.name}</Tooltip>
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ color: 'var(--text-3)', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>{run.ranAt}</span>
+            <Tag size="small" tone={TONE[run.status]} style={{ marginInlineStart: 'auto' }}>{LABEL[run.status]}</Tag>
+          </div>
+        </div>
+      )
+    }}
+  />
+</div>
+```
+
+**`renderOption(option, state)`** replaces a row's **content** (the
+`label`/`hint`/`icon` layout) with your own node. Select still supplies the row box,
+click, ARIA, and the selection indicator; you return what goes *inside*. It styles
+the menu **rows**. Set each option's `label` for the closed trigger text.
+
+Attach your own fields to each option (`SelectOption` carries an index signature) and
+read them back off `option`; those extra fields are typed `unknown`, so cast once at
+the top. `state` gives you `value` / `selected` / `disabled` for the row. Give your
+root `flex: 1; min-width: 0` so it fills the row (an inner `margin-inline-start: auto`
+right-aligns a trailing element, like the status `Tag` here).
+
+It **composes** with everything else: `filter` still matches the option's
+`value` / `label` / `hint` (match-highlighting is skipped, since your content owns
+its display), and `indicator` / `selection` still draw the mark. Replace that mark
+too with `renderIndicator` (see [Custom indicators](#custom-indicators)).
+
+### Limiting the width
+
+```tsx
+// Same ellipsis-ready row for both; it truncates once the menu is capped.
+const renderPath = (o) => (
+  <span style={{ display: 'block', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+    {o.label}
+    <Tooltip truncatedOnly>{o.label}</Tooltip>   {/* reveals the full path when clipped */}
+  </span>
+)
+
+// First: no cap, so the widest row stretches the menu past the trigger.
+<div style={{ width: 220 }}>
+  <Select label="No cap · grows to fit" options={paths} value={a} onValueChange={setA} renderOption={renderPath} />
+</div>
+
+// Second: cap the popover so the same rows truncate to the trigger width.
+<style>{`.path-capped a-menu::part(menu) { max-width: 220px }`}</style>
+<div className="path-capped" style={{ width: 220 }}>
+  <Select label="Capped · ellipsizes" options={paths} value={b} onValueChange={setB} renderOption={renderPath} />
+</div>
+```
+
+A menu **grows to fit its widest row**. The trigger width sets the floor; the
+viewport sets the ceiling. Built-in `label`s stay bounded (they wrap), but **custom
+`renderOption` content does whatever your CSS says**, so wide content stretches the
+whole menu. Open both dropdowns: same rows, yet the first grows past its 220px field
+while the second (capped) stays put and ellipsizes.
+
+Enforce the limit on the **menu**: cap it with **`::part(menu) { max-width }`**. Only
+then does ellipsis-ready content truncate, so give the row a shrinkable box
+(`min-width: 0`) and single-line ellipsis (`overflow: hidden; text-overflow:
+ellipsis; white-space: nowrap`). Nest a **`Tooltip truncatedOnly`** in that element
+to reveal the full text on hover, only when it's clipped. `min-width: 0` alone won't
+bound it: a shrink-to-fit popover grows to its content's max-content width, so the
+cap is what does the work.
+
+### Custom indicators
+
+```tsx
+<Select
+  label="Log level"
+  indicator="check"                     // keeps the semantics (role + aria-checked)
+  options={levels}                       // { value, label, dot }[]
+  value={level}
+  onValueChange={setLevel}
+  renderIndicator={(state) => {
+    const dot = levels.find((l) => l.value === state.value).dot
+    return (
+      <span style={{
+        width: 10, height: 10, borderRadius: '50%', display: 'inline-block',
+        boxShadow: `inset 0 0 0 2px ${dot}`,
+        background: state.selected ? dot : 'transparent',
+      }} />
+    )
+  }}
+/>
+```
+
+**`renderIndicator(state)`** replaces the row's selection **mark** with your own
+node, drawn at the **leading** edge. The row stays the control: keep an `indicator`
+(`'check'` / `'radio'`) or `selection="multiple"` for the `role` + `aria-checked`
+semantics, and only the drawn glyph changes. `state` gives you `value` / `selected` /
+`disabled`, so the mark can reflect selection (here, an outline ring that fills when
+chosen). It composes with `renderOption`, so you can override the content, the mark,
+both, or neither.
+
+### Selection summary
+
+```tsx
+const teams = ['Engineering', 'Design', 'Operations', 'Sales', 'Support']
+const [a, setA] = useState(['eng', 'design', 'ops'])
+const [b, setB] = useState(['eng', 'design'])
+
+// verbose: the count summary lists the picks
+<Select selection="multiple" placeholder="Pick teams" options={teams} value={a} onValueChange={setA} verbose />
+
+// renderSummary: build the text yourself
+<Select
+  selection="multiple"
+  placeholder="Pick teams"
+  options={teams}
+  value={b}
+  onValueChange={setB}
+  // one label; a count past that; every option → "All teams"
+  renderSummary={(selected) =>
+    selected.length === teams.length
+      ? 'All teams'
+      : selected.length > 1
+        ? `${selected.length} teams`
+        : undefined // fall back to the single label
+  }
+/>
+```
+
+**`renderSummary(selected)`** builds the multi-select field text in place of the
+built-in "`All` / one label / `N selected`". It runs while something is selected — an
+empty selection still shows the `placeholder` — and takes the resolved `selected`
+options (`selected.length` is the count). Return `undefined` for any case you'd rather
+leave to the default, as above for the single-label case.
+
+Return a **string**: it flows into the same read-only field the default uses, so a
+long summary **ellipsizes at the field's width** the way a long value does
+(`Engineering, Design, … `). For rich content — chips, several nodes — reach for
+`renderTrigger` below, which replaces the whole field.
+
+For the common case of just listing the picks, skip `renderSummary` and pass
+**`verbose`**: the count summary becomes `3 selected: A, B, C` (labels comma-joined),
+ellipsizing at the field width like any long value. `renderSummary` overrides it.
+
+### Custom trigger
+
+```tsx
+const [value, setValue] = useState(['stream', 'message'])
+
+<Select
+  selection="multiple"
+  options={fields}
+  value={value}
+  onValueChange={setValue}
+  renderTrigger={({ open, selected }) => (
+    // one focusable element the menu anchors to; it carries its own ARIA
+    <Button icon="filter" label="Filter" priority="secondary"
+      aria-haspopup="menu" aria-expanded={open ? 'true' : 'false'}>
+      {selected.length > 0 && (
+        <Tag size="small" priority="primary" tone="brand">
+          {selected.length === fields.length ? 'All' : selected.length}
+        </Tag>
+      )}
+    </Button>
+  )}
+/>
+```
+
+```tsx
+const columns = ['Name', 'Status', 'Owner', 'Created', 'Duration', 'Environment', 'Branch', 'Commit']
+const [hidden, setHidden] = useState([])
+
+<Select
+  selection="multiple"
+  options={columns}
+  value={hidden}
+  onValueChange={setHidden}
+  // selecting a column hides it: eye by default, eye-closed once hidden
+  renderIndicator={({ selected }) => (
+    <Icon shape={selected ? 'eye-closed' : 'eye'} />
+  )}
+  renderTrigger={({ open, selected }) => (
+    <Button icon="columns-3-cog" priority="tertiary" aria-label="Configure columns"
+      aria-haspopup="menu" aria-expanded={open ? 'true' : 'false'}>
+      {selected.length > 0 && (
+        <Tag size="small" priority="secondary" tone="neutral">{selected.length}</Tag>
+      )}
+    </Button>
+  )}
+/>
+```
+
+**`renderTrigger(state)`** swaps the default field for your own trigger. Return
+**exactly one focusable element** (an Anta `Button` here) — the menu anchors to it (its
+own previous DOM sibling) and opens it on click, so a fragment or a wrapping `<div>`
+misanchors (the menu logs a console warning if the trigger has no focusable element).
+It leaves ARIA to you, so add `aria-haspopup="menu"` and `aria-expanded={state.open}`.
+
+`state` carries `open`, `value`, `selected`, `disabled`, and `icon`. `selected` is the
+resolved option list, so the multi-select count is `selected.length` (rendered here
+in a `Tag`, or `All` once every option is chosen). The field props (`label`, `size`,
+`status`, …) don't apply, since you own the element — except `icon`, which is handed
+through as `state.icon` so a custom trigger can place the same leading glyph (e.g. a
+`Button`'s `icon`).
+
+The second example pairs a custom trigger with `renderIndicator` for a **column
+visibility** control: an icon-only `Button` (`columns-3-cog`, tertiary), and options
+that are bare column names. Here selection means *hidden* — the mark reads `eye` while
+a column shows and flips to `eye-closed` once it's selected off. The trigger reads its count off the
+same `selected` list `renderTrigger` hands it, so the `Tag` stays empty until you turn a column off.
+
+### Empty state
+
+```tsx
+const [options, setOptions] = useState(['bug', 'feature', 'chore', 'docs'])
+const [value, setValue] = useState()
+const [loading, setLoading] = useState(false) // your own fetch state
+
+<Select
+  label="Tag"
+  filter
+  placeholder="Filter or create…"
+  options={loading ? [] : options}
+  value={value}
+  onValueChange={setValue}
+  renderEmpty={({ query }) =>
+    loading ? (
+      <MenuSeparator>Loading…</MenuSeparator>
+    ) : (
+      <>
+        <MenuSeparator>No options are matching the filter</MenuSeparator>
+        <MenuItem
+          icon="plus"
+          label={`Create "${query}"`}
+          onSelect={() => { setOptions((o) => [...o, query]); setValue(query) }}
+        />
+      </>
+    )
+  }
+/>
+```
+
+**`renderEmpty({ query })`** fills the menu body when the option list is empty after
+the filter runs — a "no results" line, a loading indicator, or a create-from-query
+row. `query` is the current filter text: non-empty means the filter hid everything,
+empty means there were no options to begin with.
+
+There's **no built-in empty message** — omit `renderEmpty` and an empty list shows
+nothing. Loading isn't a Select prop either: you already own the fetch, so gate a
+`'Loading…'` branch on your own state (here a checkbox stands in for it).
+
+Whatever you return renders where the rows would. Wrap a message in a `MenuSeparator`
+— given text it renders a small muted caption and becomes an `aria-live="polite"`
+region, so the message is announced. Return a `MenuItem` — like the `Create "…"` row
+here, which arrow-keys and Enter reach like any option — to make it selectable.
+
+### Groups & submenus
+
+```tsx
+// The same tree drives both modes — selection is global, so `selection` is the
+// only difference between the two selects below.
+const fields = [
+  'output_text',                                         // a plain option
+  { label: 'Log', options: ['stream', 'message'] },      // an inline group
+  {
+    label: 'Metadata',                                   // a submenu (flyout)
+    icon: 'braces',
+    submenu: [
+      'metadata.host',
+      { label: 'Tags', options: ['tag.env', 'tag.team'] }, // group inside submenu
+      { label: 'Custom', submenu: ['custom.a', 'custom.b'] }, // submenu inside submenu
+    ],
+  },
+  { label: 'Time', submenu: ['vtime'], disabled: true }, // disabled → cascades
+]
+
+<Select label="Field · single" filter options={fields} value={one} onValueChange={setOne} />
+
+<Select label="Fields · multiple" selection="multiple" filter options={fields} value={many} onValueChange={setMany} />
+```
+
+An `options` entry is a plain option, a **group** (`{ label, options }`, an inline
+titled section), or a **submenu** (`{ label, submenu }`, a flyout). They nest and mix
+freely. Discriminated by shape — an `options` array is a group, a `submenu` array is a
+submenu, everything else is an option (so those two keys are reserved on an option).
+
+**Selection stays global.** The Select's `selection` (single / multiple) applies to
+every leaf wherever it sits; group headings and submenu parents organize but aren't
+selectable. One `value`, one `onValueChange`, one count — unchanged. The two selects
+above share the exact same `fields` tree and differ only by `selection`. `disabled` on
+a group or submenu cascades to all its descendants. Because selection is global, a
+leaf's `value` must be **unique across the whole tree** — the same value under two
+sections is one pick (dev builds warn).
+
+**A query flattens the tree.** With `filter`, typing collapses submenus into inline
+groups (their label becomes the heading) and drops empty ones, so results read as one
+scannable list instead of hiding matches behind flyouts.
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `options` | SelectItem[] | — | The options to choose from — bare strings, `SelectOption` objects, `SelectGroup`s
+ (inline titled sections), or `SelectSubmenu`s (flyout branches). Groups and
+ submenus nest and mix with plain options. Selection stays global (one `value`,
+ leaf options only); a filter query flattens the tree into grouped results.
+
+ `Select` infers its value type `V` from these options: `{ value: 365 }` makes
+ `onValueChange` report `number`. A mix of value types widens `V` to the union.
+
+ Each leaf `value` is the option's identity and must be **unique across the whole
+ tree** (selection is value-keyed, so a value repeated in two sections is one logical
+ pick: both rows toggle together, the trigger resolves to the last). Values that
+ stringify alike (`365` and `"365"`) also collide as row keys; dev builds
+ `console.warn` on either. |
+| `clearable?` | boolean | — | Add a "Clear" row pinned in the menu **footer** that empties the selection
+ (single → none, multiple → `[]`). Shown only while something is selected, so
+ it never scrolls away in a long or filtered list. |
+| `clearLabel?` | string | Clear | Label for the `clearable` footer row. |
+| `defaultValue?` | V \| V[] | — | Initial value (an option's `value`) for the uncontrolled case — the
+ wrapper then owns it. |
+| `disabled?` | boolean | — | Disable the whole select. |
+| `filter?` | boolean \| (option, query) => boolean | — | Add a search field at the top of the menu that filters the options as you
+ type. `true` uses the built-in matcher — a case-insensitive substring of the
+ option's **value / label / hint**. Pass a **function** `(option, query) =>
+ boolean` for custom matching (called per option; return `true` to keep it). |
+| `hint?` | string | — | Helper text under the field (Input's `hint`). |
+| `icon?` | IconShape | — | Leading icon shown at the left of the field (the default trigger's `Input`
+ `leading` slot). With a custom `renderTrigger`, it's passed through as
+ `state.icon` instead — the consumer places it. |
+| `indicator?` | 'none' \| 'check' \| 'radio' | none | The per-row mark for **single**-select: `'none'` (a tint-only highlight),
+ `'check'` (a trailing checkmark on the selected row, keeping the tint — the
+ canonical Select look), or `'radio'` (a leading radio on every row).
+ Multi-select always uses checkboxes. |
+| `label?` | string | — | Field label, above the trigger (Input's `label`). |
+| `leading?` | ReactNode | — | Arbitrary content for the default trigger's leading slot (piped straight to
+ `Input`'s `leading`) — e.g. a key prefix before the value. Overrides the
+ `icon`-derived glyph when both are set; include your own `<Icon>` if you want
+ one alongside. Ignored with a custom `renderTrigger`. |
+| `offset?` | number | 4 | Gap in pixels between the trigger and the options menu. |
+| `onValueChange?` | (value, attrs) => void | — | Fires after the selection changes, with the new value and a
+ `{ value, option }` snapshot. Select has no discrete element state, so
+ there is no cancelable `onStateChange` (see the Input event-model note). |
+| `placeholder?` | string | — | Text shown when nothing is selected. |
+| `placement?` | 'left' \| 'right' \| 'bottom' \| 'top' \| 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' | bottom-start | Preferred placement of the options menu relative to the trigger. The menu
+ auto-flips vertically and clamps horizontally when needed. |
+| `renderEmpty?` | (state) => ReactNode | — | Render content in the menu body when the (filtered) option list is empty —
+ a "no results" message, a loading indicator (gated on your own external
+ loading state), or a "create from the query" row. Receives an `EmptyState`
+ (`query`, trimmed). There is no built-in empty message: when omitted, an empty
+ list renders nothing. Whatever you return goes where the option rows would —
+ a plain node is inert; return a `MenuItem` (e.g. a "Create" row) to make it
+ focusable and selectable. |
+| `renderIndicator?` | (state) => ReactNode | — | Replace each row's selection **mark** with your own node, drawn at the
+ leading edge. The row stays the control (`role` + `aria-checked` from
+ `indicator` / `selection`); only the drawn mark changes, so pair it with an
+ `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the
+ semantics. Composes with `renderOption`. |
+| `renderOption?` | (option, state) => ReactNode | — | Render the **content** of each option row yourself, replacing the built-in
+ `label`/`hint`/`icon` layout. Select still supplies the row box, click, ARIA,
+ and the selection indicator — you return only what goes *inside*. Read extra
+ fields off the option (see `SelectOption`'s index signature) plus an
+ `OptionState` (`value`/`selected`/`disabled`). Filtering still works (it
+ matches the option's `value`/`label`/`hint`), but match-highlighting is
+ skipped — your content owns its own display. |
+| `renderSummary?` | (selected) => string \| undefined | — | `multiple` only: build the trigger's selection summary text yourself,
+ replacing the built-in "`All` / one label / `N selected`" logic. Receives
+ the resolved selected options (`selected.length` is the count) and runs only
+ while something is selected — an empty selection still shows the
+ `placeholder`. Return a **string**: it flows into the default trigger's
+ read-only field, so a long summary ellipsizes at the field's width just
+ like a long value (`Engineering, Design, … `). Return `undefined` to fall
+ back to the default for that case (e.g. customize only the count, keeping
+ the single-label case built-in). For rich content (chips, multiple nodes)
+ use `renderTrigger`, which replaces the whole field. |
+| `renderTrigger?` | (state) => ReactNode | — | Render your own trigger in place of the default field. Receives a
+ `TriggerState` (`open` / `value` / `selected` / `disabled` / `icon`) to drive
+ its look. **Return exactly one focusable element** (an Anta `Button`, say) —
+ the menu anchors to it (its own previous DOM sibling) and opens it on click,
+ so a fragment, multiple siblings, or a non-focusable wrapper will misanchor
+ (the menu warns in the console if the trigger has no focusable element). Give
+ the element `aria-haspopup="menu"` plus `aria-expanded={state.open}`. The custom
+ trigger owns its own styling: the field props (`label`, `hint`, `size`, `status`,
+ `placeholder`, `round`) and `className` / `style` apply to the *default* trigger
+ only — put your own on the element you return. |
+| `round?` | boolean \| number \| string | — | Round the field corners — `true` for fully round, or a number / CSS length. |
+| `selectAll?` | boolean | true | `multiple` only: a "Select all" row at the top that toggles every enabled
+ option (the currently-visible ones when a `filter` query is active); its box
+ shows the mixed state when only some are selected. On by default in
+ `multiple` mode — set `false` to drop the row (and with it the Alt/⌥-click
+ isolate accelerator it gates). |
+| `selectAllLabel?` | string | Select all | Label for the `selectAll` row. |
+| `selection?` | 'single' \| 'multiple' | single | Selection mode. `'single'` (the default) keeps `value` a single value and
+ closes the menu on pick. Switch to `'multiple'` for checkboxes + an
+ array value. |
+| `size?` | 'small' \| 'medium' \| 'large' | medium | Field size. |
+| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | neutral | Validation/feedback tone for the field (Input's `status`). |
+| `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set (Input's `statusIcon`).
+ Each status has a default; pass a shape to override, or `false` to drop it. |
+| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Tone applied to the **selected** row(s) — the whole row takes this tone
+ (label, icon, indicator, and the background tint), like passing `tone` to just
+ the chosen option. A named tone or a custom CSS color. Most visible with the
+ tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` /
+ `'checkbox'` it tones the label + indicator (those modes have no row tint). |
+| `value?` | V \| V[] | — | Controlled value — the `value` of the selected option. When provided, the
+ consumer owns selection: the field follows this prop and a pick only
+ *requests* a change via `onValueChange` (reject by not updating). Leave
+ undefined for uncontrolled. |
+| `verbose?` | boolean | — | `multiple` only: spell the picks out in the count summary — `3 selected:
+ A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies
+ to the multi-count case only: `All` stays `All`, a single pick stays its
+ own label, and an empty selection stays the `placeholder`. The list flows
+ into the read-only field, so it ellipsizes at the field's width when long
+ (`3 selected: Engineering, Des… `). `renderSummary` overrides this. |
+
+### The `SelectItem` type
+
+`options` takes a `SelectItem[]`. Each entry is one of four shapes, discriminated by
+its keys — an `options` array is a group, a `submenu` array is a submenu, and a bare
+string or a plain object is a single option:
+
+| Shape | Renders as |
+|---|---|
+| `string` | One option; shorthand for `{ value: s, label: s }`. |
+| `SelectOption` | One option with a label, hint, icon, tone, tooltip, or your own fields. |
+| `SelectGroup` | A titled group of items, **inline** under a heading. |
+| `SelectSubmenu` | A titled branch of items behind a **flyout**. |
+
+`value` is unique across the whole tree — selection is value-keyed and global, so a
+group or submenu only organizes (its heading isn't selectable), and a `disabled`
+group or submenu cascades to every descendant.
+
+The smallest form is three options, each carrying only a `value` (a bare string is
+the same thing):
+
+```tsx
+<Select
+  label="Priority"
+  options={[
+    { value: 'low' },
+    { value: 'medium' },
+    { value: 'high' },
+  ]}
+/>
+// equivalent: options={['low', 'medium', 'high']}
+```
+
+**`SelectOption`** — one selectable row.
+
+| Field | Type | Description |
+|---|---|---|
+| `value` | `OptionValue` | The option's identity: `string`, `number`, or `boolean` (`Select` infers the type from your `options`, compared with `===`). What `value` / `defaultValue` name and `onValueChange` reports. Required, unique across the tree. See [Value & changes](#value--changes) for non-string values and rich data. |
+| `label` | `string` | Visible label. Defaults to `value`. |
+| `hint` | `string` | Secondary line under the label. |
+| `icon` | `IconShape` | Leading icon, after the selection indicator. |
+| `disabled` | `boolean` | Disable just this option. |
+| `tone` | `string` | The row's color across label, icon, hint, selected tint, and indicator. A named tone (`neutral` / `brand` / `info` / `success` / `warning` / `critical`) or any CSS color. |
+| `tooltip` | `React.ReactNode` | Row tooltip. In a `multiple` select with `selectAll`, a row with no `tooltip` shows the default "select only this" (Alt/⌥-click) hint; set it to override, or `''` to suppress. |
+| `[key: string]` | `unknown` | Your own data — attach anything and read it back in `renderOption`. |
+
+**`SelectGroup`** — a heading with items rendered inline beneath it.
+
+| Field | Type | Description |
+|---|---|---|
+| `label` | `string` | The section heading (non-interactive). |
+| `options` | `SelectItem[]` | The grouped items — options, or nested groups / submenus. |
+| `disabled` | `boolean` | Disable the whole group (cascades to all descendants). |
+
+**`SelectSubmenu`** — a parent row whose items live behind a flyout.
+
+| Field | Type | Description |
+|---|---|---|
+| `label` | `string` | The parent row's label, and the group heading when a filter query flattens the tree. |
+| `icon` | `IconShape` | Leading icon on the parent row. |
+| `submenu` | `SelectItem[]` | The branch's items — options, or nested groups / submenus. |
+| `disabled` | `boolean` | Disable the whole branch (cascades to all descendants). |
+
+All four shapes mix in one `options` array — a bare string, a full `SelectOption`, an
+inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
+`SelectItem`s, so groups and submenus nest freely):
+
+```tsx
+<Select
+  label="Field"
+  options={[
+    'output_text',                                             // string shorthand
+    { value: 'stream', label: 'Stream', hint: 'Log level', icon: 'braces' }, // SelectOption
+    {                                                          // SelectGroup — inline heading
+      label: 'Metadata',
+      options: [
+        { value: 'container', icon: 'cube' },
+        { value: 'file_path', icon: 'file' },
+      ],
+    },
+    {                                                          // SelectSubmenu — flyout branch
+      label: 'Advanced',
+      icon: 'folder-close',
+      submenu: [
+        'raw_bytes',
+        { value: 'custom', hint: 'Your own field path', icon: 'asterisk', disabled: true },
+      ],
+    },
+  ]}
+/>
+```
+
+Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
+
+`Select` has no host element. Compose a read-only `<a-input>` trigger with an
+`<a-menu>` of options. The menu owns opening and dismissal; the short controller
+reflects a picked option into the field and selected row.
+
+```html
+<div data-anta-composition="select" style="display: grid; gap: 4px; width: 280px">
+  <a-input readonly value="stream">
+    <span slot="label">Output</span>
+    <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
+  </a-input>
+  <a-menu role="menu">
+    <a-menu-item role="menuitem" tabindex="0" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
+    <a-menu-item role="menuitem" tabindex="0" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
+  </a-menu>
+</div>
+<script type="module">
+  import '@antadesign/anta/elements'
+
+  const root = document.querySelector('[data-anta-composition="select"]')
+  const field = root.querySelector('a-input')
+  const menu = root.querySelector('a-menu')
+
+  menu.addEventListener('click', (event) => {
+    const item = event.target instanceof Element ? event.target.closest('a-menu-item') : null
+    if (!item || item.closest('a-menu') !== menu) return
+    menu.querySelectorAll(':scope > a-menu-item').forEach((option) => {
+      const selected = option === item
+      option.toggleAttribute('selected', selected)
+    })
+    field.value = item.querySelector('a-menu-item-label').textContent.trim()
+  })
+</script>
+```
+
+### Native HTML select
+
+When a native single-value select is enough, add `data-anta` to `<select>`. The
+modern customizable-select model keeps native selection, keyboard behavior, and
+form submission while exposing its trigger `button`, `selectedcontent`, options,
+and optgroups for styling. Anta styles every supported part; browsers without that
+model retain their regular native select. Use `Select` for filtering, multiple
+selection, nested menus, or custom option coordination.
+
+Use `data-anta-size="small"` or `"large"` for the field size. Native selects
+own their `size` attribute, and `round` gives the trigger matching rounded
+corners.
+
+```html
+<select data-anta data-anta-size="small" round name="output">
+  <!-- The native trigger; selectedcontent mirrors the chosen option. -->
+  <button>
+    <selectedcontent></selectedcontent>
+    <a-icon shape="chevron-down" aria-hidden="true"></a-icon>
+  </button>
+
+  <option value="" selected disabled>Choose an output</option>
+  <option value="stream">Stream</option>
+  <option value="output_text">Output text</option>
+  <optgroup label="Metadata">
+    <option value="container">Container</option>
+    <option value="file_path">File path</option>
+  </optgroup>
+</select>
+```
+
+Select is an [Input](./input.md) plus a [Menu](./menu.md), so it
+inherits both surfaces' hooks. Reach for props first, then plain CSS or `::part` for
+the rest. Don't override an element's internal `--*` output tokens.
+
+**Selection colour** routes through the props: a per-option `tone`, or `toneSelected`
+for the chosen row(s). Both take a named tone or any CSS color (a custom color keeps
+its hue, with lightness pinned to the brand text).
+
+**The field** is styled through Input's props (`size`, `status`, `round`) and its
+`::part`s; set its width with `style` / `className` (forwarded to the field). **The
+popover** takes Menu's `::part(menu)`.
+
+```tsx
+// Tone the selection; give the trigger a width.
+<Select toneSelected="brand" style={{ width: '220px' }} options={OPTIONS} />
+```
+
+**Borderless trigger.** The field's border is an inset `box-shadow`, so you can drop
+it *at rest* and let the standard hover / focus shadow return on its own; no need to
+re-declare it. Pair that with hiding the chevron for a field that reads as plain text
+until you reach for it. Hide the chevron by targeting the trailing `a-icon` (its slot
+wrapper is inline-`display:contents`, so hit the icon itself).
+
+```css
+/* Drop the resting border-shadow; the standard hover / focus shadow still shows. */
+.ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
+  box-shadow: none;
+}
+/* Centre the chosen label in the field. */
+.ghost-select a-input::part(input) { text-align: center; }
+/* The chevron's slot wrapper is inline display:contents; hide the icon itself. */
+.ghost-select a-input [slot="trailing"] a-icon { display: none; }
+```

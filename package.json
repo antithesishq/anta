@@ -57,6 +57,7 @@
     "stop": "node scripts/dev-stop.mjs",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "lint": "node scripts/lint-getters.mjs",
+    "verify": "pnpm run lint && pnpm run typecheck && pnpm --filter anta-site run docs:api",
     "icons": "node scripts/generate-icons.mjs --input src/elements/icons --output src/elements --name a-icon.shapes --internal",
     "clean": "rm -rf dist",
     "prepare": "pnpm run build",

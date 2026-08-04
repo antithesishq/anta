@@ -53,7 +53,7 @@ export interface CheckboxProps extends BaseProps {
    *  visual precedence; clicking it requests `true`. */
   checked?: CheckboxValue
   /** Initial checked state for an uncontrolled checkbox. Read once; later
-   *  changes ignored (the element then owns the state).
+   *  changes are ignored and the element updates its state after interaction.
    *  @defaultValue false */
   defaultChecked?: CheckboxValue
   /** Disable the checkbox (no interaction, dropped from the tab order). */
@@ -104,8 +104,8 @@ export interface CheckboxProps extends BaseProps {
 }
 
 /**
- * Checkbox. Renders an `<a-checkbox>` web component that owns the visual
- * state; controlled via `checked` + `onStateChange`, or uncontrolled via
+ * Checkbox. Renders an `<a-checkbox>` web component that provides visual
+ * state; use `checked` with `onStateChange` for controlled use, or
  * `defaultChecked`. Label is `label` (or `children`); `hint` adds secondary
  * text under the label. Requires `@antadesign/anta/elements`.
  *

@@ -340,10 +340,10 @@ browser.
 <Col>
 
 ```tsx
-// Uncontrolled — the element owns the value
+// Uncontrolled: the element updates its value after input.
 <Input label="Name" defaultValue="Ada" onChange={(e) => log(e.target.value)} />
 
-// Controlled — you own the value
+// Controlled: application state supplies the value.
 const [v, setV] = useState('')
 <Input label="Name" value={v} onInput={(e) => setV(e.target.value)} />
 ```

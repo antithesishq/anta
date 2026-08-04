@@ -1,14 +1,14 @@
 # InputAutocomplete
 
-`InputAutocomplete` — a text field whose value is a free string, with a suggestion list that assists
-without constraining. Type anything: a value that isn't in the list stays as you
-typed it, and picking a suggestion fills the field. For a value that must be one of
-the options, use [Select](./select.md) with `filter`.
+`InputAutocomplete` is a text field with a suggestion list. Its value remains a
+free-form string: text that is not in the list stays in the field, and selecting
+a suggestion fills the field. Use [Select](./select.md) with `filter` when the
+value must be one of the options.
 
-It's a **composed component**, an [Input](./input.md) stitched to a [Menu](./menu.md) of
-suggestions. The field text arrives through **`onValueChange`**; `onSelect` fires
-only when a suggestion is chosen. Controlled via `value`, uncontrolled via
-`defaultValue`.
+InputAutocomplete uses an [Input](./input.md) for the field and a [Menu](./menu.md)
+for suggestions. **`onValueChange`** reports field text. `onSelect` runs only
+after someone chooses a suggestion. Use `value` to control it, or `defaultValue`
+for uncontrolled use.
 
 ## Free text is the point
 
@@ -29,7 +29,7 @@ closes the list; clicking the field to place the caret keeps it open.
 
 - **`true`** (default): built-in case-insensitive substring match on each option's
   `value` / `label` / `hint`.
-- **a function** `(option, query) => boolean`: your own matcher, called per option.
+- **a function** `(option, query) => boolean`: a custom matcher, called for each option.
 - **`false`**: show `suggestions` as-is, doing no local filtering. Use this when you
   fetch or filter results yourself (async / remote) and feed the current set through
   `suggestions`.
@@ -44,12 +44,12 @@ Suggestions are bare strings or `SelectOption`s, the same option shape
 | `suggestions` | string \| SelectOption[] | — | The suggestions: bare strings or `SelectOption`s (`value` / `label` / `hint` /
  `icon` / `tone` / `disabled`). A flat list; picking one fills the field. |
 | `clearable?` | boolean | — | Show a clear button while the field has text. |
-| `defaultValue?` | string | — | Initial value for the uncontrolled case (the wrapper then owns it). |
+| `defaultValue?` | string | — | Initial value for uncontrolled use. |
 | `disabled?` | boolean | — | Disable the field. |
 | `filter?` | boolean \| (option, query) => boolean | true | How suggestions match the text. `true` uses the built-in case-insensitive
  substring match on `value` / `label` / `hint`; a function `(option, query) =>
- boolean` does custom matching; `false` shows `suggestions` verbatim so you
- can filter them yourself (async / remote). |
+ boolean` uses a custom matcher; `false` shows `suggestions` unchanged for
+ application-provided async or remote filtering. |
 | `hint?` | ReactNode | — | Hint under the field. |
 | `label?` | ReactNode | — | Field label. |
 | `leading?` | ReactNode | — | Leading adornment inside the field. |
@@ -76,9 +76,8 @@ For browser-native suggestions, pair a native input with a `<datalist>`. It
 keeps free-form entry and lets the browser filter and fill matching options,
 while `data-anta` supplies the field appearance.
 
-The suggestions popup is owned by the browser, so use `InputAutocomplete` when
-you need custom option content, popup styling, or consistent interaction across
-browsers.
+The browser renders the suggestions popup. Use `InputAutocomplete` for custom
+option content, popup styling, or consistent behavior across browsers.
 
 ```html
 <input data-anta type="text" list="people" placeholder="Search people">

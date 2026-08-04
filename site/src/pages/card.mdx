@@ -223,10 +223,9 @@ round (`999px`, clamped to the box). Omit it for the default (`--card-radius`, 8
 
 ## Header controls
 
-There's no dedicated actions slot. For a control at the top-right of the header — a
-"more" button, a tag — pass a laid-out node as the `header` and put the title and
-the control in it yourself (a flex row). You own the layout, so the title and
-control sit exactly where you place them.
+There is no dedicated actions slot. To place a control in the top-right of the
+header, pass a layout node as `header`. For example, use a flex row containing
+the title and a "more" button. That layout determines where both items appear.
 
 <Preview background="var(--bg-2)">
   <a-card style={{ width: '340px' }}>

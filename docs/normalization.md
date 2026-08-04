@@ -5,8 +5,8 @@ HTML (`<h2>`, `<ul>`, `<a>`, `<table>`…) renders in the same visual language a
 components — no per-page restyling to make prose match a `<Title>` or a `<Table>`.
 
 It's a **separate import**, and every rule lives in a single cascade layer
-(`@layer anta`), so it's easy to layer your own reset around it or override any
-piece. If you'd rather bring your own reset, just don't import this one.
+(`@layer anta`), so it is easy to override individual rules or use a different
+reset. Omit this import when another reset provides the baseline.
 
 ```js
 import '@antadesign/anta/tokens.css'   // design tokens
@@ -77,7 +77,7 @@ Write the rule unlayered (or in a layer after `anta`) — targeting a **specific
 h2 { letter-spacing: -0.01em; }
 ```
 
-### Bring your own reset
+### Use a different reset
 
 Because `reset.css` is a separate import, you can simply **not import it** and let your
 own reset govern typography — keep the tokens and elements:

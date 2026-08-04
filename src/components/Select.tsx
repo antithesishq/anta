@@ -1,8 +1,6 @@
-// Hooks come from the jsx-runtime indirection (configurable via `configure()`),
-// not a hard `react` import — same rule as RadioGroup. Select is a *composed*
-// component: it holds selection + open state and renders an <Input> trigger
-// followed by a <Menu> of options. There is no `a-select` element — the wrapper
-// IS the coordinator (see the Select docs page: "Components composition").
+// Hooks come from the jsx-runtime indirection configured through `configure()`,
+// as in RadioGroup. Select keeps its selection and open state, then renders an
+// Input trigger followed by a Menu of options. There is no `a-select` element.
 import { useState, useId } from '../jsx-runtime'
 import { ISOLATE_HINT } from '../anta_helpers'
 import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
@@ -52,7 +50,7 @@ export interface SelectOption<V extends OptionValue = string> {
    *  hint for the Alt/Option-click "select only this" accelerator; set `tooltip`
    *  to override that, or `''` to suppress it. */
   tooltip?: React.ReactNode
-  /** Your own data — attach anything and read it in `renderOption`. */
+  /** Additional application data. Read it in `renderOption`. */
   [key: string]: unknown
 }
 
@@ -195,10 +193,9 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  `leading` slot). With a custom `renderTrigger`, it's passed through as
    *  `state.icon` instead — the consumer places it. */
   icon?: IconShape
-  /** Arbitrary content for the default trigger's leading slot (piped straight to
-   *  `Input`'s `leading`) — e.g. a key prefix before the value. Overrides the
-   *  `icon`-derived glyph when both are set; include your own `<Icon>` if you want
-   *  one alongside. Ignored with a custom `renderTrigger`. */
+  /** Content for the default trigger's `leading` slot, such as a key prefix
+   *  before the value. It replaces the icon derived from `icon`. Include an
+   *  `<Icon>` in this content when both are needed. Ignored by `renderTrigger`. */
   leading?: React.ReactNode
   /** Field label, above the trigger (Input's `label`). */
   label?: string
@@ -228,11 +225,10 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  option's **value / label / hint**. Pass a **function** `(option, query) =>
    *  boolean` for custom matching (called per option; return `true` to keep it). */
   filter?: boolean | ((option: SelectOption<V>, query: string) => boolean)
-  /** `multiple` only: a "Select all" row at the top that toggles every enabled
-   *  option (the currently-visible ones when a `filter` query is active); its box
-   *  shows the mixed state when only some are selected. On by default in
-   *  `multiple` mode — set `false` to drop the row (and with it the Alt/⌥-click
-   *  isolate accelerator it gates).
+  /** `multiple` only: shows a "Select all" row that toggles every enabled option,
+   *  or only the visible options when a filter query is active. Its checkbox is
+   *  mixed when some options are selected. It is on by default. Set it to `false`
+   *  to remove the row and the Alt/Option-click shortcut that selects only one row.
    *  @defaultValue true */
   selectAll?: boolean
   /** Label for the `selectAll` row.
@@ -245,13 +241,12 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
   /** Label for the `clearable` footer row.
    *  @defaultValue Clear */
   clearLabel?: string
-  /** Render the **content** of each option row yourself, replacing the built-in
-   *  `label`/`hint`/`icon` layout. Select still supplies the row box, click, ARIA,
-   *  and the selection indicator — you return only what goes *inside*. Read extra
-   *  fields off the option (see `SelectOption`'s index signature) plus an
-   *  `OptionState` (`value`/`selected`/`disabled`). Filtering still works (it
-   *  matches the option's `value`/`label`/`hint`), but match-highlighting is
-   *  skipped — your content owns its own display. */
+  /** Replaces the built-in `label`, `hint`, and `icon` layout for each option row.
+   *  Select still supplies the row container, click handling, ARIA attributes, and
+   *  selection indicator. Read extra option fields through `SelectOption`'s index
+   *  signature. `state` contains `value`, `selected`, and `disabled`. Filtering
+   *  still matches the option's `value`, `label`, and `hint`, but Select cannot
+   *  highlight matches within the returned content. */
   renderOption?: (option: SelectOption<V>, state: OptionState<V>) => React.ReactNode
   /** Replace each row's selection **mark** with your own node, drawn at the
    *  leading edge. The row stays the control (`role` + `aria-checked` from
@@ -277,16 +272,15 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  the single-label case built-in). For rich content (chips, multiple nodes)
    *  use `renderTrigger`, which replaces the whole field. */
   renderSummary?: (selected: SelectOption<V>[]) => string | undefined
-  /** Render your own trigger in place of the default field. Receives a
-   *  `TriggerState` (`open` / `value` / `selected` / `disabled` / `icon`) to drive
-   *  its look. **Return exactly one focusable element** (an Anta `Button`, say) —
-   *  the menu anchors to it (its own previous DOM sibling) and opens it on click,
-   *  so a fragment, multiple siblings, or a non-focusable wrapper will misanchor
-   *  (the menu warns in the console if the trigger has no focusable element). Give
-   *  the element `aria-haspopup="menu"` plus `aria-expanded={state.open}`. The custom
-   *  trigger owns its own styling: the field props (`label`, `hint`, `size`, `status`,
-   *  `placeholder`, `round`) and `className` / `style` apply to the *default* trigger
-   *  only — put your own on the element you return. */
+  /** Replaces the default field with a trigger returned from this function.
+   *  Receives `open`, `value`, `selected`, `disabled`, and `icon`. Return exactly
+   *  one focusable element, such as an Anta `Button`. The menu is positioned
+   *  relative to that element and opens when it is clicked. Do not return a
+   *  fragment, multiple siblings, or a non-focusable wrapper. Add
+   *  `aria-haspopup="menu"` and `aria-expanded={state.open}` to the element.
+   *  Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and
+   *  `className` / `style` apply only to the default field. Add styling and
+   *  attributes to the returned element instead. */
   renderTrigger?: (state: TriggerState<V>) => React.ReactNode
   /** Render content in the menu body when the (filtered) option list is empty —
    *  a "no results" message, a loading indicator (gated on your own external
@@ -310,13 +304,10 @@ export type SelectProps<V extends OptionValue = string> = SelectCommonProps<V> &
          *  array value.
          *  @defaultValue single */
         selection?: 'single'
-        /** Controlled value — the `value` of the selected option. When provided, the
-         *  consumer owns selection: the field follows this prop and a pick only
-         *  *requests* a change via `onValueChange` (reject by not updating). Leave
-         *  undefined for uncontrolled. */
+        /** Controlled value: the selected option's `value`. Update it through
+         *  `onValueChange`. Leave it undefined for uncontrolled use. */
         value?: V
-        /** Initial value (an option's `value`) for the uncontrolled case — the
-         *  wrapper then owns it. */
+        /** Initial selected option value for uncontrolled use. */
         defaultValue?: V
         /** Fires after the selection changes, with the new value and a
          *  `{ value, option }` snapshot. Select has no discrete element state, so
@@ -433,17 +424,17 @@ export function optionsWithSelection<V extends OptionValue = string>(
 }
 
 /**
- * `<Select>` — a single- or multi-select dropdown, composed from `<Input>` (a
- * read-only trigger) and `<Menu>` (the options). `selection` sets behaviour:
+ * `<Select>` lets people choose one or more options from a dropdown. It uses an
+ * `<Input>` as its read-only trigger and a `<Menu>` for its options. `selection` sets behavior:
  * `'single'` (default; `value` is a string, menu closes on pick) or `'multiple'`
  * (checkboxes, `value` is a string array, menu stays open while toggling, the
  * field shows an "N selected" count). For single-select, `indicator` picks the
  * per-row mark: `'none'` (tint only, default), `'check'` (trailing checkmark), or
  * `'radio'` (leading radio).
  *
- * Controlled (`value` + `onValueChange`) or uncontrolled (`defaultValue`). There
- * is no `a-select` element — this wrapper is the coordinator; for a non-React
- * equivalent, hand-compose the same pieces (see the docs).
+ * Use `value` with `onValueChange` to control the selection, or use
+ * `defaultValue` for uncontrolled use. There is no `a-select` element. See the
+ * docs for the equivalent markup without React or Preact.
  *
  * Requires `@antadesign/anta/elements` (client-side only).
  *
@@ -515,7 +506,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   // Filter query (reset when the menu closes — see the Menu's onStateChange).
   const [query, setQuery] = useState('')
   // Combobox active-option id, reported by the menu's `activedescendant` event.
-  // Select (the reactive layer that owns the filter field) reflects it onto the
+  // Select, the reactive layer that renders the filter field, reflects it onto the
   // field's `aria-activedescendant` — the element must not write that light-DOM
   // attribute itself.
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -620,11 +611,10 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
 
   const choose = (o: SelectOption<V>, e?: any) => {
     if (multiple) {
-      // Alt/Option-click isolates the row: clear the rest and select only this
-      // one — the inverse of Select all, with no visible affordance (the row's
-      // hint tooltip below teaches it). Gated on `selectAll`, the bulk-selection
-      // context where "isolate" is the natural companion. `altKey` covers Alt and
-      // macOS Option, and sidesteps the Ctrl-click / context-menu clash.
+      // Alt/Option-click clears every other selection and selects this row. The
+      // default row tooltip describes the shortcut. It is available only when
+      // `selectAll` is enabled. `altKey` covers Alt and macOS Option while
+      // avoiding the Ctrl-click/context-menu conflict.
       if (selectAll && e?.altKey) {
         const next = [o.value]
         if (!controlled) setInternal(next)
@@ -790,11 +780,11 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         round={round}
         aria-haspopup="menu"
         aria-expanded={open ? 'true' : 'false'}
-        // Keyboard open (Enter/Space/ArrowDown on this read-only field) is owned
-        // by <a-menu>, which binds a keydown on its trigger anchor — so there's no
+        // <a-menu> handles Enter, Space, and ArrowDown on this read-only field by
+        // binding keydown on its trigger anchor, so there is no
         // onKeyDown here synthesizing a click on the live node.
         trailing={
-          // The named tag owns the select-specific rotation while the icon remains
+          // The named tag applies the Select-specific rotation while the icon remains
           // a normal currentColor glyph.
           <a-select-chevron open={open ? '' : undefined} style={statusColor ? { color: statusColor } : undefined}>
             <Icon shape="chevron-down" />

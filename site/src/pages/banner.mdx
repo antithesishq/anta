@@ -239,17 +239,17 @@ result through `dismissed` (below).
 
 ## Controlled vs uncontrolled
 
-Dismissal follows Anta's shared **state contract**. Leave it *uncontrolled* (seed
-with `defaultDismissed`) and the banner owns its visibility — the ✕ self-dismisses.
-Pass `dismissed` + `onDismiss` to *control* it: the banner follows `dismissed` only,
-and clicking the ✕ *requests* a dismissal you apply to accept or ignore to reject.
-The wrapper takes booleans, the element takes a `state` string enum (closed =
-dismissed), and the wrapper maps between them:
+Dismissal follows Anta's shared **state contract**. For uncontrolled use, pass
+`defaultDismissed`; clicking ✕ then dismisses the banner. For controlled use,
+pass `dismissed` and `onDismiss`. The banner follows `dismissed` and reports a
+dismissal request when ✕ is clicked. Update `dismissed` to accept the request,
+or leave it unchanged to reject it. The wrapper uses booleans, while the element
+uses a `state` string (`closed` means dismissed):
 
 | | `<Banner>` (JSX) | `<a-banner>` (element) |
 |---|---|---|
-| **Uncontrolled** (element owns it) | `defaultDismissed` | `default-state="open" \| "closed"` |
-| **Controlled** (you own it) | `dismissed` + `onDismiss` | `state="open" \| "closed"` + `statechange` |
+| **Uncontrolled** | `defaultDismissed` | `default-state="open" \| "closed"` |
+| **Controlled** | `dismissed` + `onDismiss` | `state="open" \| "closed"` + `statechange` |
 | **Change signal** | `onDismiss()`, fired on a dismiss request | `statechange`, a cancelable `CustomEvent<{ next, prev }>` of `'open'` / `'closed'` |
 
 Controlling it is how you persist a dismissal (write it to storage) or re-show the

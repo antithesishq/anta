@@ -24,6 +24,15 @@ State the fact, its consequence, and stop.
 - **Use active, plain language.** “Pass `open` to control it” is clearer than
   “Control is enabled through the `open` property.” Use contractions where they
   sound natural.
+- **Use the reader's vocabulary.** Name the component, prop, value, or DOM
+  relationship directly. Do not replace it with an implementation metaphor such
+  as “stitched”, “piped”, “rides on”, “owns”, “glue”, or “grab”. Explain a
+  specialised term before relying on it, and say when names in an example are
+  application-defined rather than Anta terms.
+- **Make responsibility explicit.** Say “the application filters the rows” or
+  “pass a custom renderer” instead of “your code” or “bring your own”. Use
+  second person for direct instructions, but do not switch between second person
+  and impersonal phrasing within the same explanation.
 
 ## Sound like a person
 
@@ -38,18 +47,22 @@ State the fact, its consequence, and stop.
 - Use em dashes sparingly. A period or colon is usually clearer.
 - Do not turn implementation history into prose. Readers need the current
   behaviour, not the sequence of internal fixes that produced it.
+- Do not compress several behaviours, exceptions, and implementation details
+  into one paragraph. State the common behaviour first. Put conditions in a
+  following sentence or a short list. Parentheses should clarify a brief term,
+  not carry part of the contract.
 
 ## Length by surface
 
 - **Pages (`.mdx`):** State the purpose in one or two sentences, show the common
   case, then cover only the interactions or constraints a reader can act on.
-  `PropsTable` owns types and defaults; the `## Styling` disclosure owns the
-  styling surface.
+  `PropsTable` provides types and defaults; the `## Styling` disclosure
+  documents the styling surface.
 - **Source comments:** Explain a non-obvious reason, browser limitation, or
   ordering constraint immediately above the code. Do not describe code that is
   already readable. Most changes need no comment.
 - **TSDoc:** Start with what the prop or function does. Add when to use it and a
-  material interaction or pitfall. `@defaultValue` owns the default.
+  material interaction or pitfall. `@defaultValue` documents the default.
 - **Changelog:** Use one bullet per consumer-visible change and one or two short
   sentences per bullet. Lead with the API, component, or behaviour that changed.
   Include breaking changes, migrations, new public APIs, and bug fixes that alter

@@ -14,7 +14,9 @@ import { Slider } from '@antadesign/anta'
 
 # Slider
 
-**`Slider`** selects one numeric value from a range. Its label sits above the rail, and the value appears at the label row’s right edge by default. It works controlled with `value` and `onValueChange`, or uncontrolled with `defaultValue`.
+**`Slider`** selects one numeric value from a range. Its label sits above the
+rail, and the value appears at the right side of the label row by default. Use
+`value` with `onValueChange` to control it, or `defaultValue` for uncontrolled use.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -35,9 +37,12 @@ import { Slider } from '@antadesign/anta'
 <Columns reverse>
 <Col>
 
-Pressing the rail starts a grab from its current value. Moving right increases the value; moving left decreases it. The thumb does not jump to the press position. This is the default `trackClick="drag-only"` behaviour.
+With the default `trackClick="drag-only"`, pressing the rail starts dragging
+from the current value. Moving right increases the value, and moving left
+decreases it. The thumb does not move to the point where the rail was pressed.
 
-Set `trackClick="jump"` for the conventional range-input interaction, where pressing the rail first moves the thumb to that position.
+Set `trackClick="jump"` to move the thumb to the pressed position before
+dragging, as a native range input does.
 
 Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum and maximum. <kbd>PageUp</kbd> and <kbd>PageDown</kbd> move by one tenth of the range.
 

@@ -228,12 +228,12 @@ content wherever you like, switching on the value yourself.
 
 ## Controlled vs. uncontrolled
 
-The active tab is named by a single **value string**, the `value` of one of your
-`options`. Whatever value is active, `Tabs` marks that tab selected and reveals the
-`<TabPanel value="…">` that shares it (if any). You choose who owns that value:
+The active tab is identified by one option's **value string**. Tabs marks the
+matching tab selected and shows the corresponding `<TabPanel value="…">`, when
+one exists. Choose either uncontrolled or controlled state:
 
-**Uncontrolled.** Pass `defaultValue` (an option's `value`) and let `Tabs` own the
-active tab from there:
+**Uncontrolled.** Pass `defaultValue` (an option's `value`). Tabs then updates
+the active tab after interaction:
 
 ```tsx
 <Tabs
@@ -245,9 +245,9 @@ active tab from there:
 />
 ```
 
-**Controlled.** Pass `value` (an option's `value`) + `onStateChange` and own it
-yourself. `onStateChange` fires *before* the pick applies: set `value` to the new tab
-to accept, or do nothing to reject.
+**Controlled.** Pass `value` (an option's `value`) and `onStateChange`.
+`onStateChange` fires before the change applies. Set `value` to the new tab to
+accept it, or leave it unchanged to reject it.
 
 ```tsx
 const [tab, setTab] = useState('overview')

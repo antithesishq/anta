@@ -207,8 +207,8 @@ whole toast — the Banner, its ✕, everything — many times a second, which c
 focus, text selection, or an in-progress animation inside the content. `--toast-remaining`
 updates a single inherited value the browser interpolates on the compositor: the
 content renders **once**, nothing reconciles, and it's smooth at display refresh rate
-instead of your tick interval. The toast already owns the timer and its pause, so
-exposing the value keeps one source of truth.
+instead of the application's tick interval. The toast already tracks its timer
+and pause state, so exposing the value keeps one source of truth.
 
 `--toast-remaining` is display only — the real dismissal is the toast's own timer — so
 where a browser can't animate a custom property it simply stays full. A **sticky**

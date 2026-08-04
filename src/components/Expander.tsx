@@ -81,12 +81,12 @@ type StateChangeEvent =
 /**
  * `<Expander>` — a collapsible disclosure section.
  *
- * A pure, stateless pass-through to `<a-expander>`: the element owns all
+ * A pure, stateless pass-through to `<a-expander>`: the element handles all
  * interaction (toggle, keyboard, ARIA, animation), so the wrapper holds
  * no state and grabs no ref — it only maps props to attributes (safe
  * wherever the host DOM is reconciled, incl. off the UI thread).
  *
- * Uncontrolled (`defaultOpen`): the element owns its open state. The wrapper
+ * Uncontrolled (`defaultOpen`): the element updates its open state. The wrapper
  * emits `default-state="open"` — never `state` — so the DOM carries no stale
  * controlled attribute. Controlled (`open` + `onStateChange`): the wrapper
  * emits `state="open" | "closed"`; the element treats the attribute as the

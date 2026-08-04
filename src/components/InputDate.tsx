@@ -298,7 +298,7 @@ export const InputDate = ({
           // this editable field synthesizes no click of its own), so here we only
           // step focus into the grid via `focusSignal` (bumped below). Enter stays
           // "commit the typed date", so it isn't overloaded. Once inside,
-          // <a-calendar> owns the arrows, so this only runs while focus is in the
+          // <a-calendar> handles the arrows, so this only runs while focus is in the
           // field.
           if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !disabled) {
             e.preventDefault()
@@ -352,8 +352,8 @@ export const InputDate = ({
           {time && (
             <a-input-date-time-container>
               {/* The time half is the standalone InputTime — a segmented hour /
-                  minute / (AM-PM) field. It owns the 12h/24h clock, the AM/PM
-                  toggle, and 24h→12h conversion; we just splice its `HH:mm` onto
+                  minute / (AM-PM) field. It manages the 12h/24h clock, the AM/PM
+                  toggle, and 24h→12h conversion; this wrapper adds its `HH:mm` to
                   the picked (or today's) date. */}
               <InputTime
                 size={size}

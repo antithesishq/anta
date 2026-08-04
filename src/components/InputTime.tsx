@@ -116,7 +116,7 @@ const STATUS_ICON: Record<string, IconShape> = {
  * behave as one control: each is a native text input — ↑/↓ steps with wrap,
  * ←/→ crosses segments at caret boundaries, typing digits auto-advances, and
  * AM/PM accepts its locale text or `a`/`p`. Renders an `<a-input-time>` web
- * component that owns the segments, navigation, and form value (via
+ * component that manages the segments, navigation, and form value (via
  * `ElementInternals`).
  *
  * The clock and layout follow the locale (`en-US` → 12-hour, most others 24),
@@ -203,7 +203,7 @@ export const InputTime = ({
       )}
 
       {clearable && (
-        // Real <a-button> in the element's `clear` slot; the element owns its
+        // Real <a-button> in the element's `clear` slot; the element controls its
         // visibility (shown only when filled). It fires `clearrequest`, which the
         // element turns into clear(). CONTRACT: `data-custom-event` MUST match
         // CLEAR_TRIGGER in src/elements/a-input-time.ts (string duplicated, not

@@ -112,8 +112,8 @@ Choose the entry point for your runtime:
 - **Astro or Next.js:** a client-only script. In Astro, use
   `<script>import '@antadesign/anta/elements'</script>`; in Next.js, import it
   from a `'use client'` file.
-- **Worker-rendered UI:** the UI-thread bootstrap that owns the DOM. A Worker
-  has no `HTMLElement`.
+- **Worker-rendered UI:** code that runs on the UI thread and initializes the
+  DOM. A Worker has no `HTMLElement`.
 
 ## Framework setup
 

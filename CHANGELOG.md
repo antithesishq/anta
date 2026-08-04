@@ -413,8 +413,8 @@ changes are not listed.
 ### Breaking
 
 - Rename `list-detail-view` to `list-collapse`.
-- Tooltips are pinned by default. Remove `static`; pass `follow` for
-  cursor-following behaviour.
+- Tooltips are pinned by default. Remove `static`; pass `follow` to position a
+  tooltip next to the pointer.
 
 ### Added
 

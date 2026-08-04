@@ -1,12 +1,17 @@
 # Slider
 
-**`Slider`** selects one numeric value from a range. Its label sits above the rail, and the value appears at the label row’s right edge by default. It works controlled with `value` and `onValueChange`, or uncontrolled with `defaultValue`.
+**`Slider`** selects one numeric value from a range. Its label sits above the
+rail, and the value appears at the right side of the label row by default. Use
+`value` with `onValueChange` to control it, or `defaultValue` for uncontrolled use.
 
 ## Relative dragging
 
-Pressing the rail starts a grab from its current value. Moving right increases the value; moving left decreases it. The thumb does not jump to the press position. This is the default `trackClick="drag-only"` behaviour.
+With the default `trackClick="drag-only"`, pressing the rail starts dragging
+from the current value. Moving right increases the value, and moving left
+decreases it. The thumb does not move to the point where the rail was pressed.
 
-Set `trackClick="jump"` for the conventional range-input interaction, where pressing the rail first moves the thumb to that position.
+Set `trackClick="jump"` to move the thumb to the pressed position before
+dragging, as a native range input does.
 
 Arrow keys change by `step`. Home and End set the minimum and maximum. PageUp and PageDown move by one tenth of the range.
 
@@ -81,8 +86,8 @@ it at least as large as `trackSize`. |
 one-off custom tone. Omit it to keep the thumb neutral. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Colour of the filled rail. Pass a named tone or a literal CSS colour for a
 one-off custom tone. The unfilled rail stays neutral. |
-| `trackClick?` | 'drag-only' \| 'jump' | 'drag-only' | Track press behaviour. `drag-only` starts a relative grab from the current
-value; `jump` first moves to the press position. |
+| `trackClick?` | 'drag-only' \| 'jump' | 'drag-only' | Controls what happens when the rail is pressed. `drag-only` starts dragging
+from the current value. `jump` first moves to the pressed position. |
 | `trackSize?` | number \| string | 2 | Thickness of both rail segments. Numbers use pixels; strings are CSS
 lengths. Keep it no larger than the thumb diameter. |
 | `value?` | number | — | Controlled value. Update it from `onValueChange`. |

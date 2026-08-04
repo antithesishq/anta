@@ -3,11 +3,10 @@
 // reason it's separate from `Select`: a value CONSTRAINED to an option is
 // `Select` with `filter` (search); this is for free text with hints.
 //
-// Composed from `Input` (the always-visible anchor) + `Menu` (the suggestions),
-// reusing a-menu's combobox mode: `data-menu-search` on the anchor engages the
-// combobox keyboard (typed query → off-DOM active cursor, arrow-nav, Enter picks
-// the highlight). There is no `a-input-autocomplete` element — this wrapper is
-// the coordinator.
+// The wrapper renders an Input and a Menu of suggestions. `data-menu-search`
+// on the Input enables combobox keyboard behavior: typing updates the query,
+// arrow keys move the active option, and Enter selects it. There is no
+// `a-input-autocomplete` element.
 //
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
@@ -28,7 +27,7 @@ export interface InputAutocompleteProps extends Omit<BaseProps, 'children'> {
   /** Controlled value: the field's text, a **free** string not constrained to a
    *  suggestion. Leave undefined for uncontrolled. */
   value?: string
-  /** Initial value for the uncontrolled case (the wrapper then owns it). */
+  /** Initial value for uncontrolled use. */
   defaultValue?: string
   /** Fires as the text changes (typing, picking a suggestion, or clearing) with
    *  the new field text. */
@@ -37,8 +36,8 @@ export interface InputAutocompleteProps extends Omit<BaseProps, 'children'> {
   onSelect?: (option: SelectOption) => void
   /** How suggestions match the text. `true` uses the built-in case-insensitive
    *  substring match on `value` / `label` / `hint`; a function `(option, query) =>
-   *  boolean` does custom matching; `false` shows `suggestions` verbatim so you
-   *  can filter them yourself (async / remote).
+   *  boolean` uses a custom matcher; `false` shows `suggestions` unchanged for
+   *  application-provided async or remote filtering.
    *  @defaultValue true */
   filter?: boolean | ((option: SelectOption, query: string) => boolean)
   /** Placeholder text. */
@@ -69,10 +68,10 @@ export interface InputAutocompleteProps extends Omit<BaseProps, 'children'> {
 }
 
 /**
- * `<InputAutocomplete>` — a text field whose value is a free string, with a
- * suggestion dropdown that assists without constraining. Typing something not in
- * the list is valid and stays the value; picking a suggestion just fills the
- * field. For a value that MUST be one of the options, use `Select` with `filter`.
+ * `<InputAutocomplete>` is a text field with a suggestion dropdown. Its value is
+ * a free-form string. Text not in the list remains valid, and choosing a
+ * suggestion fills the field. Use `Select` with `filter` when the value must be
+ * one of the options.
  *
  * Controlled (`value` + `onValueChange`) or uncontrolled (`defaultValue`).
  * Requires `@antadesign/anta/elements` (client-side only).

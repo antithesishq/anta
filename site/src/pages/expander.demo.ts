@@ -5,11 +5,10 @@
  */
 export default `import { Expander, Text, Button, Tag } from '@antadesign/anta'
 
-<Expander title="What is Antithesis?" defaultOpen>
+<Expander title="What is automated testing?" defaultOpen>
   <Text>
-    Antithesis is an autonomous testing platform that hunts for the bugs
-    in your software — running it inside a deterministic simulation so any
-    failure it finds can be replayed exactly.
+    Automated testing runs checks against your software and reports failures
+    that you can investigate and reproduce.
   </Text>
 </Expander>
 `

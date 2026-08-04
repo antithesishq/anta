@@ -1283,7 +1283,7 @@ function buildSrcdoc(): string {
     document.documentElement.style.colorScheme = d ? 'dark' : 'light';
   } catch (e) {}
 </script><link rel="stylesheet" href="${iframeAssetUrl(A.css)}"><script type="module" src="${iframeAssetUrl(A.js)}"></script><style>
-  /* Pin the Antithesis-sans variable font's slnt / ital axes to 0.
+  /* Pin the sans variable font's slnt / ital axes to 0.
      Safari leaves variable-font axes at the font file's internal
      defaults unless they're explicitly set — and our font ships
      with non-zero defaults — so without this the preview iframe

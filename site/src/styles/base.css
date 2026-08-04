@@ -10,7 +10,7 @@ html, body {
 
 /* Brand fonts (temporary Uploadcare hosting) */
 @font-face {
-  font-family: "Antithesis sans";
+  font-family: "Anta sans";
   src: url("https://ucarecdn.com/af38fa86-199f-44f5-82d2-3ea2a690dd6c/") format("woff2");
   font-style: normal;
   font-weight: 100 900;
@@ -20,7 +20,7 @@ html, body {
   font-display: optional;
 }
 @font-face {
-  font-family: "Antithesis mono";
+  font-family: "Anta mono";
   src: url("https://ucarecdn.com/61bd3320-3787-4a92-887e-a5ff7bd6e051/") format("woff2");
   font-style: normal;
   font-weight: 400 700;
@@ -28,7 +28,7 @@ html, body {
   font-display: optional;
 }
 @font-face {
-  font-family: "Antithesis mono";
+  font-family: "Anta mono";
   src: url("https://ucarecdn.com/03e90df9-d945-4837-b177-cdc408e94bb4/") format("woff2");
   font-style: italic;
   font-weight: 400 700;
@@ -38,8 +38,8 @@ html, body {
 
 /* Brand variable overrides */
 :root {
-  --sans-serif: "Antithesis sans", sans-serif;
-  --monospace: "Antithesis mono", "Roboto Mono", monospace;
+  --sans-serif: "Anta sans", sans-serif;
+  --monospace: "Anta mono", "Roboto Mono", monospace;
   /* Distance from the top of the viewport to use when scrolling an
      anchor target into view (e.g. clicking a heading link). On
      desktop a small breathing room; on mobile, enough to clear the
@@ -115,7 +115,7 @@ html.dark {
 
 html, body {
   font-family: var(--sans-serif);
-  /* "Antithesis sans" is a variable font whose `slnt` and `wdth` axes
+  /* The sans variable font has `slnt` and `wdth` axes that
      don't default to 0 / 100 inside the file. Chrome normalizes them
      under `font-style: normal` / `font-stretch: normal`; Safari leaves
      them at the file defaults, so the body renders slanted or at an

@@ -1,5 +1,5 @@
 /**
- * @antadesign/stickers — Antithesis sticker pack.
+ * @antadesign/stickers — Anta sticker pack.
  *
  * Square illustrated stickers, two flavors per name: a lightweight
  * static SVG (`Sticker{Name}`) and a Lottie-driven animated version

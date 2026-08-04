@@ -207,18 +207,18 @@ Add the `dark` class to any ancestor element:
 
 Anta is designed for a customized <a href="https://typetype.org/fonts/tt-interphases-pro" target="_blank" rel="noopener noreferrer">TT Interphases Pro</a>, but ships no font binaries. Components use `--sans-serif` and `--monospace` with system fallbacks. `tokens.css` sets a 15px root size (`1rem = 15px`).
 
-To use the Antithesis fonts, register your own `@font-face` declarations and override the variables:
+To use your own fonts, register `@font-face` declarations and override the variables:
 
 ```css
 @font-face {
-  font-family: "Antithesis sans";
+  font-family: "App Sans";
   src: url("/path/to/your/sans.woff2") format("woff2");
   /* ... */
 }
 
 :root {
-  --sans-serif: "Antithesis sans", sans-serif;
-  --monospace: "Antithesis mono", monospace;
+  --sans-serif: "App Sans", sans-serif;
+  --monospace: ui-monospace, monospace;
 }
 ```
 

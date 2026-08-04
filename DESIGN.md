@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Anta
-description: Antithesis Design System — portable UI components with a component-token-first architecture
+description: Opinionated design system — portable UI components with a component-token-first architecture
 
 colors: {}
 

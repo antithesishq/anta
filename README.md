@@ -1,6 +1,6 @@
 # @antadesign/anta
 
-**Anta** is [Antithesis](https://antithesis.com)'s design system. It provides
+**Anta** is an opinionated design system. It provides
 design tokens, declarative web components, and typed JSX wrappers. Use the same
 components in React, Preact via compat, plain HTML, and custom JSX runtimes via
 `configure()`.

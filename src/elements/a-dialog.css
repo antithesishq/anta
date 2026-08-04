@@ -72,3 +72,10 @@
     }
   }
 }
+
+/* The scrollable body owns its final inset. Keep this unlayered so a document
+   paragraph margin cannot add a second gap at the dialog's lower edge. */
+a-dialog > p:last-child,
+a-dialog > :not([slot]) > p:last-child {
+  margin-block-end: 0;
+}

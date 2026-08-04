@@ -392,3 +392,10 @@
     --card-content-lh: 24px;
   }
 }
+
+/* The body section owns the final inset. This stays unlayered so it beats a
+   document-wide, unlayered paragraph margin; nested layouts keep their spacing. */
+a-card > p:last-child,
+a-card > :not([slot]) > p:last-child {
+  margin-block-end: 0;
+}

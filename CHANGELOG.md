@@ -3,6 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Expander titles can be selected without toggling the disclosure.
+
 ## 0.3.19 — August 3, 2026
 
 ### Added

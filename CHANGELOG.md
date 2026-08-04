@@ -5,18 +5,12 @@ changes are not listed.
 
 ## Unreleased
 
-### Fixed
-
-- Sliding Tab indicators no longer animate through stale geometry while their
-  strip is resized.
-
 ## 0.3.19 — August 3, 2026
 
 ### Added
 
-- The package now ships `llms.txt` and version-specific Markdown documentation
-  under `docs/`. Its README directs coding agents to the installed documentation
-  index.
+- The package now ships version-specific Markdown documentation under `docs/`.
+  Its README directs coding agents to the installed documentation index.
 
 ### Changed
 
@@ -26,6 +20,8 @@ changes are not listed.
 
 ### Fixed
 
+- Sliding Tab indicators no longer animate through stale geometry while their
+  strip is resized.
 - Slider focus rings now surround only the range control, rather than the
   complete Slider host.
 

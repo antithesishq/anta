@@ -56,5 +56,6 @@ function schedule() {
 for (const path of ['src', 'stickers/src']) {
   watch(path, { recursive: true }, schedule)
 }
+watch('CHANGELOG.md', schedule)
 
-console.log('[dev-watch] watching src and stickers/src')
+console.log('[dev-watch] watching src, stickers/src, and CHANGELOG.md')

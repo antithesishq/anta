@@ -11,7 +11,7 @@
     "comparison:measure": "node scripts/measure-comparison-bundles.mjs",
     "docs": "pnpm run docs:api && pnpm run docs:pages && pnpm run docs:wasm && pnpm run docs:theme && pnpm run docs:iframe-runtime",
     "dev": "pnpm run docs && pnpm run dev:server",
-    "dev:server": "astro dev",
+    "dev:server": "astro dev --port ${ANTA_DEV_PORT:-4321}",
     "build": "pnpm run docs && astro build && pnpm run sitemap:root",
     "sitemap:root": "node scripts/copy-sitemap-index.mjs",
     "preview": "astro preview",

@@ -18,4 +18,5 @@ site/public/themes/anta.css
 .DS_Store
 **/.DS_Store
 .dev.pid
+.dev.parallel.pid
 site/public/iframe/

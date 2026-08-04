@@ -7,7 +7,6 @@
   "files": [
     "dist",
     "docs",
-    "llms.txt",
     "NOTICES.md"
   ],
   "packageManager": "pnpm@8.13.1",
@@ -46,15 +45,15 @@
     }
   },
   "scripts": {
-    "build": "pnpm run build:js && pnpm run build:css && pnpm run build:types && pnpm run build:docs && pnpm run build:llms",
+    "build": "pnpm run build:js && pnpm run build:css && pnpm run build:types && pnpm run build:docs",
     "build:dev": "pnpm run build:js && pnpm run build:css:dev && pnpm run build:types",
     "build:css": "esbuild $(find src -name '*.css') --minify --outdir=dist --outbase=src && cp scripts/generate-icons.mjs dist/",
     "build:css:dev": "find src -name '*.css' | while IFS= read -r f; do d=\"dist/${f#src/}\"; mkdir -p \"$(dirname \"$d\")\"; cp \"$f\" \"$d\"; done && cp scripts/generate-icons.mjs dist/",
     "build:js": "esbuild $(find src \\( -name '*.ts' -o -name '*.tsx' \\) ! -name '*.d.ts') --outdir=dist --outbase=src --jsx=automatic --jsx-import-source=@antadesign/anta --format=esm --target=ES2022 --loader:.css=global-css",
     "build:types": "tsc -p src/tsconfig.json",
     "build:docs": "pnpm --filter anta-site run docs:api && pnpm --filter anta-site run docs:pages && node scripts/generate-package-docs.mjs",
-    "build:llms": "node scripts/generate-llms.mjs",
-    "dev": "echo $$ > .dev.pid; trap 'rm -f .dev.pid' EXIT; pnpm run build:dev && pnpm --filter @antadesign/stickers run build:dev && pnpm --filter anta-site run docs && (node scripts/dev-watch.mjs & pnpm --filter anta-site run dev:server & wait)",
+    "dev": "node scripts/dev.mjs",
+    "dev:run": "echo $$ > \"$ANTA_DEV_PID_FILE\"; trap 'rm -f \"$ANTA_DEV_PID_FILE\"' EXIT; pnpm run build:dev && pnpm --filter @antadesign/stickers run build:dev && pnpm --filter anta-site run docs && (node scripts/dev-watch.mjs & pnpm --filter anta-site run dev:server & wait)",
     "stop": "node scripts/dev-stop.mjs",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "lint": "node scripts/lint-getters.mjs",
@@ -62,7 +61,7 @@
     "clean": "rm -rf dist",
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
-    "prepack": "pnpm run build:docs && pnpm run build:llms"
+    "prepack": "pnpm run build:docs"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

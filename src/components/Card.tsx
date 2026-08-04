@@ -106,7 +106,7 @@ export interface CardProps extends BaseProps {
  * @example Link card
  * ```tsx
  * <Card href="/docs/ci" header="CI integration guide">
- *   Wire Antithesis into your pipeline in a few minutes.
+ *   Connect your CI pipeline in a few minutes.
  * </Card>
  * ```
  */

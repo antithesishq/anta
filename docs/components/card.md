@@ -178,7 +178,7 @@ out of it — its text is non-selectable and the whole surface navigates.
   href="/docs/ci"
   header={<><Icon shape="book-open" /> CI integration guide</>}
 >
-  Wire Antithesis into your pipeline in a few minutes.
+  Connect your CI pipeline in a few minutes.
 </Card>
 ```
 

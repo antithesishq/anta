@@ -1,6 +1,6 @@
 # @antadesign/stickers
 
-Part of [Antithesis](https://antithesis.com)' design system, **Anta** — the sticker pack companion to [`@antadesign/anta`](https://www.npmjs.com/package/@antadesign/anta).
+Part of the **Anta** design system, this sticker pack is the companion to [`@antadesign/anta`](https://www.npmjs.com/package/@antadesign/anta).
 
 Square illustrated stickers, two flavors per name: a lightweight static SVG (`Sticker{Name}`) and a Lottie-driven animated version (`Sticker{Name}Animated`). Each one is its own named export, so your bundler ships only the stickers you actually use.
 

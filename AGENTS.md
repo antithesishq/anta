@@ -1,4 +1,4 @@
-# Anta — Antithesis Design System
+# Anta design system
 
 Anta is a portable UI component library, published as `@antadesign/anta`. It works in React, Preact through `preact/compat`, and custom JSX runtimes through `configure()`.
 

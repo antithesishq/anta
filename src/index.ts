@@ -49,7 +49,12 @@ export type { SwitchProps, SwitchChangeAttrs } from './components/Switch'
 export { Menu } from './components/Menu'
 export type { MenuProps } from './components/Menu'
 export { MenuItem } from './components/MenuItem'
-export type { MenuItemProps } from './components/MenuItem'
+export type {
+  MenuItemProps,
+  MenuItemCommonProps,
+  MenuItemLinkMode,
+  MenuItemActionMode,
+} from './components/MenuItem'
 export { MenuItemCopy } from './components/MenuItemCopy'
 export type { MenuItemCopyProps } from './components/MenuItemCopy'
 export { MenuSeparator } from './components/MenuSeparator'
@@ -123,6 +128,7 @@ export type {
   SelectFacetText,
   SelectFacetCustom,
   SelectFacetCustomContext,
+  FacetFilter,
   SelectFacetedValue,
   SelectFacetedChangeAttrs,
   SelectFacetedTriggerState,

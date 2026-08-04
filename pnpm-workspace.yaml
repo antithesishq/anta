@@ -1,3 +1,7 @@
 packages:
   - "stickers"
   - "site"
+
+onlyBuiltDependencies:
+  - "esbuild"
+  - "sharp"

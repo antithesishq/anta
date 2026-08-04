@@ -3,7 +3,11 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.20 — August 4, 2026
+
+### Changed
+
+- Package documentation and source comments use clearer, more concise language.
 
 ### Fixed
 

@@ -340,7 +340,7 @@ export const Input = ({
 
       {resolvedClearable && (
         // A real <a-button> (light DOM → fully styled, keyboard-focusable) in
-        // the element's `clear` slot — the element owns its visibility (shown
+        // the element's `clear` slot — the element controls its visibility (shown
         // only when filled + editable). It fires the bubbling `clearrequest`
         // event via a-button's global listener, so clearing works even without
         // framework hydration; the element turns that into clearclick→clear().

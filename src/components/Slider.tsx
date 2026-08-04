@@ -76,8 +76,8 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   /** Compact text labels positioned below the rail. They do not add dots or
    * ticks to the rail. */
   markers?: SliderMarker[]
-  /** Track press behaviour. `drag-only` starts a relative grab from the current
-   * value; `jump` first moves to the press position.
+  /** Controls what happens when the rail is pressed. `drag-only` starts dragging
+   * from the current value. `jump` first moves to the pressed position.
    * @defaultValue 'drag-only' */
   trackClick?: 'drag-only' | 'jump'
   /** Fires on every keyboard or pointer value change. */

@@ -250,8 +250,7 @@ element — `Input`, and the composed `Select` — skip it and expose only
 |------|------|---------|-------------|
 | `options` | RadioOption[] | — | The options. The wrapper renders one `<a-radio>` per entry and computes its
  `selected` / roving `tabindex` / `role` declaratively. |
-| `defaultValue?` | string | — | Initial selected value for the uncontrolled case (the wrapper then owns the
- selection in local state). |
+| `defaultValue?` | string | — | Initial selected value for uncontrolled use. |
 | `disabled?` | boolean | — | Disable the whole group. |
 | `hint?` | string | — | Plain-text description for the group, rendered directly under `label` (above
  the options) — typically instructional copy. Per-option helper text goes on
@@ -288,9 +287,9 @@ element — `Input`, and the composed `Select` — skip it and expose only
  ring stays neutral grey. Applied to every option (an option's own `toneSelected`
  wins). Prefer this over `tone` when a resting tinted border would read as a
  validation state. |
-| `value?` | string | — | Controlled selected value. When provided, the consumer owns selection: the
- group follows this prop and a pick only *requests* a change via
- `onStateChange` (reject by not updating). Leave undefined for uncontrolled. |
+| `value?` | string | — | Controlled selected value. The group follows this prop and reports a
+ requested change through `onStateChange`. Leave it undefined for
+ uncontrolled use. |
 
 Use this when you are not using the React or Preact wrapper and a native HTML control does not fit: construct the equivalent Anta web component from the elements below.
 

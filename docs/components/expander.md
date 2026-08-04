@@ -114,14 +114,14 @@ horizontally.
 
 When you need real heading **semantics** — so the title lands in a
 page's table of contents (and assistive tech announces it as a heading) —
-pass a `<Title>` (or your own `<h2>`–`<h6>`) as the `title` instead of a
-string. The node owns its own type scale, so set the level on it, not on
-`<Expander>`; a slotted heading keeps its block-rhythm margins, so zero
-them in the header:
+pass a `<Title>` (or an application `<h2>`–`<h6>`) as the `title` instead of a
+string. The heading's `level` sets its type scale, so set it on the heading,
+not on `<Expander>`. A slotted heading keeps its block margins, so reset them
+in the header:
 
 ```tsx
-{/* A node title owns its own scale + heading semantics: set the level on
-   the <Title>, not on <Expander>. (The preview uses element composition
+{/* A Title supplies its type scale and heading semantics. Set the level on
+   the Title, not on Expander. (The preview uses element composition
    because these docs render statically; the title-prop form is identical.) */}
 <Expander title={<Title level={2}>Title level 2 example</Title>}>…</Expander>
 <Expander title={<Title level={4}>Title level 4 example</Title>}>…</Expander>
@@ -214,12 +214,11 @@ state stays as-is — disabling an open expander keeps it open. Header
 
 ## Open state
 
-Leave it uncontrolled and pass `defaultOpen` for the initial state — the
-element owns open/close from there. To drive it yourself, pass `open`
-and handle `onStateChange` (controlled): the expander then only follows
-the prop, and clicking the summary just *requests* a change — apply
-`detail.next` to your state to accept, or ignore it to reject. If you pass
-`open`, you own it.
+For uncontrolled use, pass `defaultOpen` for the initial state. The element
+then updates its open state after interaction. For controlled use, pass `open`
+and handle `onStateChange`. The expander follows the `open` prop and reports a
+requested change. Update application state with `detail.next` to accept it, or
+leave the state unchanged to reject it.
 
 `onStateChange` is event-first: `(event, { next, prev })`, where `next`/`prev`
 are booleans (the requested / previous open state). `statechange` fires
@@ -243,16 +242,15 @@ const [open, setOpen] = useState(false)
 
 ## Controlled vs Uncontrolled
 
-Open state follows Anta's shared **state contract**. Leave it *uncontrolled* and
-the expander owns open/close; pass the controlled prop and *you* own it. The two
-layers speak different idioms — the `<Expander>` wrapper takes booleans, the
-`<a-expander>` element takes a `state` string enum — and the wrapper maps between
-them:
+Open state follows Anta's shared **state contract**. In uncontrolled use, the
+element updates open state. In controlled use, the application supplies it. The
+`<Expander>` wrapper uses booleans; the `<a-expander>` element uses a `state`
+string. The wrapper maps between them:
 
 | | `<Expander>` (JSX) | `<a-expander>` (element) |
 |---|---|---|
-| **Uncontrolled** — element owns it | `defaultOpen` | `default-state="open" \| "closed"` |
-| **Controlled** — you own it | `open` + `onStateChange` | `state="open" \| "closed"` + `statechange` |
+| **Uncontrolled** | `defaultOpen` | `default-state="open" \| "closed"` |
+| **Controlled** | `open` + `onStateChange` | `state="open" \| "closed"` + `statechange` |
 | **Change event** | `onStateChange(event, { next, prev })` — `next` / `prev` are **booleans** | `statechange`, a `CustomEvent<{ next, prev }>` — `'open'` / `'closed'` |
 
 `statechange` is **cancelable** and fires *before* the element applies the

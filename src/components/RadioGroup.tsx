@@ -47,12 +47,11 @@ export interface RadioGroupProps extends Omit<BaseProps, "children" | "onChange"
   /** The options. The wrapper renders one `<a-radio>` per entry and computes its
    *  `selected` / roving `tabindex` / `role` declaratively. */
   options: RadioOption[]
-  /** Controlled selected value. When provided, the consumer owns selection: the
-   *  group follows this prop and a pick only *requests* a change via
-   *  `onStateChange` (reject by not updating). Leave undefined for uncontrolled. */
+  /** Controlled selected value. The group follows this prop and reports a
+   *  requested change through `onStateChange`. Leave it undefined for
+   *  uncontrolled use. */
   value?: string
-  /** Initial selected value for the uncontrolled case (the wrapper then owns the
-   *  selection in local state). */
+  /** Initial selected value for uncontrolled use. */
   defaultValue?: string
   /** Fired whenever selection changes — event-first. `detail` is
    *  `{ next, prev, reason }`: `next`/`prev` are values (`null` = nothing selected);
@@ -115,8 +114,8 @@ export interface RadioGroupProps extends Omit<BaseProps, "children" | "onChange"
  * `<RadioGroup>` — a single-select radio control, rendered from `options`.
  *
  * This wrapper is convenience over the web components: it renders an `<a-radio>`
- * per option and, crucially, owns the two **declarative** DOM concerns the
- * elements deliberately don't touch — the roving **`tabindex`** (so keyboard Tab
+ * per option and manages the two **declarative** DOM concerns the elements
+ * deliberately do not touch: the roving **`tabindex`** (so keyboard Tab
  * lands on the right option) and each radio's **`role`**. Selection itself lives
  * in `<a-radio-group>` off-DOM (it sets each radio's `selected` property), so the
  * elements never mutate the DOM; this wrapper just reflects the current value into

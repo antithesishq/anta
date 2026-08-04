@@ -112,7 +112,7 @@ export type MenuItemActionMode = {
    *  `selectionIndicator` to keep the semantics — the row stays the control and
    *  carries `role` + `aria-checked`; only the drawn mark changes. Suppresses the
    *  built-in checkbox / radio and the trailing `check` glyph. The node is made
-   *  passive (aria-hidden, no pointer events) so the row owns the click. */
+   *  passive (aria-hidden, no pointer events) so the row receives the click. */
   indicator?: React.ReactNode
 }
 

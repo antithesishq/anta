@@ -27,7 +27,7 @@ Open state is uncontrolled by default — pass **`onStateChange`** (event-first:
 observe it, or pass **`open`** to control it, applying `detail.next` to `open`
 from your `onStateChange` handler (submenus stay uncontrolled). `statechange` is
 **cancelable** and fires before the menu moves, so uncontrolled you can keep it
-open with `event.preventDefault()`. You can also grab a `ref` and call
+open with `event.preventDefault()`. You can also keep a `ref` and call
 `.open()` / `.close()` / `.toggle()`.
 
 <Disclosure title="Playground" anchor={false} brand>
@@ -442,7 +442,7 @@ run off the UI thread. Walking out from the click, the nearest marker wins:
   menu without being a `MenuItem`.
 
 For programmatic open/close from app state, drive the `open` prop (the `state`
-attribute, `"open"` / `"closed"`) and react via `onStateChange`, or grab a `ref`
+attribute, `"open"` / `"closed"`) and react via `onStateChange`, or keep a `ref`
 and call `.open()` / `.close()` / `.toggle()`.
 
 </Col>

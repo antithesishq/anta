@@ -62,7 +62,7 @@ const ToastItem = ({ entry, store }: { entry: ToastEntry; store: ToasterStore })
  * your app (a portal is fine); toasts are added imperatively through the store
  * (`Toaster.manager`, or a `createToaster()` you pass as `toaster`). It
  * subscribes to the store and renders each toast through the reconciler, so
- * React/Preact owns the toast nodes.
+ * React or Preact renders the toast nodes.
  *
  * Announcement is opt-in **per toast** (`add(render, { politeness })`), not a
  * blanket live region on the whole toaster.

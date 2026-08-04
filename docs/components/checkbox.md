@@ -177,7 +177,7 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
  uncontrolled checkbox. `'indeterminate'` shows the minus glyph and takes
  visual precedence; clicking it requests `true`. |
 | `defaultChecked?` | CheckboxValue | false | Initial checked state for an uncontrolled checkbox. Read once; later
- changes ignored (the element then owns the state). |
+ changes are ignored and the element updates its state after interaction. |
 | `disabled?` | boolean | — | Disable the checkbox (no interaction, dropped from the tab order). |
 | `hint?` | ReactNode | — | Secondary text rendered under the label — explanatory copy, like
  Input's hint. Not part of the accessible name. |

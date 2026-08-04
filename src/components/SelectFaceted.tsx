@@ -1,9 +1,7 @@
-// SelectFaceted — a faceted filter control. Composed like `Select` (there is no
-// `a-select-faceted` element): a trigger `Button` followed by a `Menu` whose rows
-// are per-facet submenu flyouts, each carrying its own editor (single / multiple /
-// text / custom). The value is a `Record<facetKey, perKindValue>`, so the same
-// option value can live under two facets (assignee "alice", owner "alice") without
-// colliding — identity is (facetKey, value), not the bare value.
+// SelectFaceted renders a trigger Button followed by a Menu. The menu has one
+// category, or facet, per row. Each facet opens an editor for a single, multiple,
+// text, or custom value. The value record uses a facet key, so the same option
+// value can appear in separate application categories without colliding.
 //
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
@@ -26,9 +24,8 @@ import './select-parts.css'
 // ---- Facet config -------------------------------------------------------
 
 interface FacetBase {
-  /** The facet's namespace — the key its value is stored under in the value
-   *  record, and what `onValueChange`'s `attrs.facet` reports. Unique across
-   *  `facets`. */
+  /** The key for this facet's value in the record. `onValueChange` reports it as
+   *  `attrs.facet`. It must be unique across `facets`. */
   key: string
   /** The facet's row label in the menu. */
   label: string
@@ -91,9 +88,8 @@ export interface SelectFacetCustomContext<V> {
   close: () => void
 }
 
-/** Bring your own editor and value type — the escape hatch for anything the
- *  built-in kinds don't cover, including object-shaped values (a date range, a
- *  numeric comparator, …). */
+/** A custom editor and value type for values the built-in kinds do not cover,
+ *  including objects such as date ranges and numeric comparisons. */
 export interface SelectFacetCustom<V = unknown> extends FacetBase {
   kind: 'custom'
   /** Render the facet's editor inside its flyout. The returned node stays
@@ -104,7 +100,7 @@ export interface SelectFacetCustom<V = unknown> extends FacetBase {
   summary: (value: V) => React.ReactNode
 }
 
-/** One facet (dimension) of the filter, discriminated by `kind`. */
+/** One filter category, discriminated by `kind`. */
 export type SelectFacet =
   | SelectFacetSingle
   | SelectFacetMultiple
@@ -113,7 +109,7 @@ export type SelectFacet =
 
 /** The filter value: a facet key → that facet's value. Per kind: an option value
  *  (`string` / `number` / `boolean`) for `single`, a `string` for `text`, an array for
- *  `multiple`, or your own `V` for `custom`. Values are stored and reported unchanged.
+ *  `multiple`, or a `V` value for `custom`. Values are stored and reported unchanged.
  *  Typed loosely as `unknown` since facets in one control can hold different value
  *  types; narrow per facet when you read it. A cleared facet is absent from the record. */
 export type SelectFacetedValue = Record<string, unknown>
@@ -150,7 +146,7 @@ export interface SelectFacetedTriggerState {
 }
 
 export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
-  /** The facets (dimensions) to filter across, each with its own editor kind. */
+  /** Categories to filter by. Each facet has a `kind` that determines its editor. */
   facets: SelectFacet[]
   /** Preferred placement of the root filter menu relative to its trigger. The
    *  menu auto-flips vertically and clamps horizontally when needed.
@@ -159,11 +155,10 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   /** Gap in pixels between the trigger and the filter menu.
    *  @defaultValue 4 */
   offset?: number
-  /** Controlled value — the facet-keyed record. When provided, the consumer
-   *  owns state: a pick only *requests* a change via `onValueChange` (reject by
-   *  not updating). Leave undefined for uncontrolled. */
+  /** Controlled value record, keyed by facet. When provided, update it through
+   *  `onValueChange`. Leave it undefined for uncontrolled use. */
   value?: SelectFacetedValue
-  /** Initial value for the uncontrolled case (the wrapper then owns it). */
+  /** Initial value for uncontrolled use. */
   defaultValue?: SelectFacetedValue
   /** Fires after any facet changes. `value` is the whole new record (a facet key →
    *  that facet's value; a cleared facet is absent). `attrs` says what changed:
@@ -188,12 +183,11 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
    *  tint, and the check / checkbox indicator). A named tone or a custom CSS
    *  colour, matching `Select`'s `toneSelected`. Defaults to a neutral selection. */
   toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Add a single search field to the top of the root menu that flattens every
-   *  `single` / `multiple` facet's options into one list and searches across them
-   *  — typing "alice" surfaces it under both an Assignee and an Owner facet, each
-   *  selectable in place. `text` / `custom` facets are reachable when the search is
-   *  empty. Matching uses each facet's `filter` function if it has one, else the
-   *  built-in substring match. */
+  /** Adds a search field at the top of the root menu. It searches the options of
+   *  every `single` and `multiple` facet in one list. For example, "alice" can
+   *  appear under application-defined Assignee and Owner facets. `text` and
+   *  `custom` facets remain available when the search is empty. Each facet uses
+   *  its `filter` function when supplied, or the built-in substring match. */
   searchable?: boolean
   /** Placeholder for the global search field.
    *  @defaultValue Filter… */
@@ -204,12 +198,12 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   /** Label for the "Clear all" row.
    *  @defaultValue Clear all */
   clearAllLabel?: string
-  /** Render your own trigger in place of the default `Button`. Receives a
-   *  `SelectFacetedTriggerState`; **return exactly one focusable element** (the
-   *  menu anchors to it as its previous sibling and opens it on click). Give it
-   *  `aria-haspopup="menu"` plus `aria-expanded={state.open}`. The custom trigger
-   *  owns its own styling — `className` / `style` / other props apply to the
-   *  *default* trigger only, so put your own on the element you return. */
+  /** Replaces the default `Button` with a trigger returned from this function.
+   *  Receives a `SelectFacetedTriggerState`. Return exactly one focusable element:
+   *  the menu is positioned relative to that element and opens when it is clicked.
+   *  Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned
+   *  element. `className`, `style`, and other trigger props apply only to the
+   *  default Button, so add styling and attributes to the returned element. */
   renderTrigger?: (state: SelectFacetedTriggerState) => React.ReactNode
 }
 
@@ -241,13 +235,11 @@ const defaultMatch = (o: SelectOption<OptionValue>, query: string): boolean =>
   matchesQuery(o, matchQueryRegex(query))
 
 /**
- * `<SelectFaceted>` — a faceted filter: one trigger opens a menu of facets
- * (dimensions), each a submenu flyout with its own editor. Facet kinds:
- * `'single'` (pick one), `'multiple'` (pick many), `'text'` (free-form
- * substring, applied on Enter / blur), and `'custom'` (bring your own editor +
- * value, including object-shaped values). The value is a
- * `Record<facetKey, value>`, so the same option value under two facets stays
- * distinct.
+ * `<SelectFaceted>` filters a result set by categories called facets. Its
+ * trigger opens a facet menu, and each facet opens a control for its value.
+ * The available kinds are `'single'`, `'multiple'`, `'text'`, and `'custom'`.
+ * The value is a `Record<facetKey, value>`, so values under different facet
+ * keys stay distinct.
  *
  * Controlled (`value` + `onValueChange`) or uncontrolled (`defaultValue`).
  * There is no `a-select-faceted` element — this wrapper is the coordinator.
@@ -424,10 +416,9 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
       )
     }
     const arr = (current[facet.key] as OptionValue[] | undefined) ?? []
-    // Alt/⌥-click isolates the row (clear the rest, select only this), mirroring
-    // Select's bulk-select accelerator. Coupled to the facet's `selectAll` (on by
-    // default) — the same gate as the "Select all" row. A default hint teaches it;
-    // an option's own `tooltip` overrides, and `''` suppresses it.
+    // Alt/Option-click clears every other value and selects this row. The shortcut
+    // is available when this facet shows its "Select all" row. An option tooltip
+    // replaces the standard hint, and `''` hides it.
     const isolable = facet.selectAll !== false && !opt.disabled
     const tip = opt.tooltip ?? (isolable ? ISOLATE_HINT : undefined)
     const hintOnly = opt.tooltip == null && isolable
@@ -483,10 +474,10 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
     )
   }
 
-  // Global search: flatten every options facet into one grouped, searchable list.
-  // Each facet with matches becomes a MenuGroup (heading = facet label); a match
-  // under two facets shows once per facet, selectable in place. A facet's own
-  // `filter` function matches if set, else the built-in substring match.
+  // Global search creates one grouped list from every option-list facet. Each
+  // matching facet becomes a MenuGroup. The same option can appear in several
+  // facets. A facet uses its `filter` function when provided, otherwise the
+  // built-in substring match.
   const renderFlatResults = () => {
     const groups = facets
       .filter((f): f is SelectFacetSingle | SelectFacetMultiple => f.kind === 'single' || f.kind === 'multiple')

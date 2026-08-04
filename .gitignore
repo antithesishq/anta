@@ -11,7 +11,6 @@ stickers/dist/
 site/dist/
 site/.astro/
 site/src/api.json
-site/src/pages/install.mdx
 site/src/generated/
 site/public/esbuild.wasm
 site/public/iframe-anta-runtime.js
@@ -19,4 +18,5 @@ site/public/themes/anta.css
 .DS_Store
 **/.DS_Store
 .dev.pid
+.dev.parallel.pid
 site/public/iframe/

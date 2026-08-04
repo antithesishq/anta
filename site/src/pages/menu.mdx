@@ -11,7 +11,7 @@ import Col from '../components/Col.astro'
 import menuDemoCode from './menu.demo.ts'
 import MenuNestedDemo from '../components/MenuNestedDemo'
 import MenuCopyDemo from '../components/MenuCopyDemo'
-import { Menu, MenuItem, MenuSeparator, MenuGroup, Button, Tag } from '@antadesign/anta'
+import { Menu, MenuItem, MenuSeparator, MenuGroup, Button, Input, Tag } from '@antadesign/anta'
 
 # Menu
 
@@ -385,6 +385,43 @@ empty-state message (what `Select`'s `renderEmpty` uses).
 
 </Col>
 </Columns>
+
+## Pinned header & footer
+
+`a-menu-header` and `a-menu-footer` name fixed regions around the scrolling
+items. Put `a-select-header` or `a-select-footer` in the same slots when a
+composed Select needs its own DOM anatomy. A `MenuSeparator` slotted into the
+footer stays the menu's divider.
+
+<Preview>
+  <Button>Filter</Button>
+  <Menu inset={8}>
+    <a-menu-header slot="header" data-menu-open>
+      <Input size="small" placeholder="Filter…" aria-label="Filter items" />
+    </a-menu-header>
+    <MenuItem label="Design" />
+    <MenuItem label="Engineering" />
+    <MenuSeparator slot="footer" />
+    <a-menu-footer slot="footer">
+      <MenuItem icon="x" label="Clear filters" data-menu-open />
+    </a-menu-footer>
+  </Menu>
+</Preview>
+
+```tsx folded
+<Button>Filter</Button>
+<Menu inset={8}>
+  <a-menu-header slot="header" data-menu-open>
+    <Input size="small" placeholder="Filter…" />
+  </a-menu-header>
+  <MenuItem label="Design" />
+  <MenuItem label="Engineering" />
+  <MenuSeparator slot="footer" />
+  <a-menu-footer slot="footer">
+    <MenuItem icon="x" label="Clear filters" data-menu-open />
+  </a-menu-footer>
+</Menu>
+```
 
 ## Custom content & the close contract
 

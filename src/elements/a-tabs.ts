@@ -36,12 +36,15 @@ import "./a-tabs.css";
 // re-assert `state`, uncontrolled callers can veto with `preventDefault()`.
 // ─────────────────────────────────────────────────────────────────────────────
 export class ATabsElement extends HTMLElementBase {
-  static observedAttributes = ["state", "disabled", "orientation"];
+  static observedAttributes = ["state", "disabled", "orientation", "noslide"];
 
   private internals?: ElementInternals;
   private uncontrolledValue: string | null = null;
   private seeded = false;
   private observer?: MutationObserver;
+  private resizeObserver?: ResizeObserver;
+  private resizeTimer?: number;
+  private resizeFrame?: number;
   // The tab last scrolled into view — so scroll-into-view fires only when the SELECTION
   // changes, not on every sync() (orientation / disabled changes call sync() too).
   private lastSelected: ATabElement | null = null;
@@ -91,6 +94,7 @@ export class ATabsElement extends HTMLElementBase {
       if (touchedTabs) this.sync();
     });
     this.observer.observe(this, { childList: true, subtree: true });
+    this.#syncResizeObserver();
 
     // First sync deferred to a microtask (see childrenReady). `alive` flips
     // after it, so the initial apply never scrolls or fires `change`.
@@ -104,9 +108,12 @@ export class ATabsElement extends HTMLElementBase {
 
   disconnectedCallback() {
     this.observer?.disconnect();
+    this.resizeObserver?.disconnect();
+    this.#clearResizeTransitionPause();
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+    if (name === "noslide" && this.isConnected) this.#syncResizeObserver();
     this.sync();
     // Controlled apply: a changed `state` is the consumer's accepted value — fire
     // `change` on the real transition (the post-apply counterpart to statechange).
@@ -139,6 +146,44 @@ export class ATabsElement extends HTMLElementBase {
 
   get #tabs() {
     return Array.from(this.querySelectorAll("a-tab")) as ATabElement[];
+  }
+
+  #syncResizeObserver() {
+    const canSlide =
+      !this.hasAttribute("noslide") &&
+      typeof this.view.ResizeObserver === "function" &&
+      this.view.CSS.supports("anchor-scope: all");
+    if (!canSlide) {
+      this.resizeObserver?.disconnect();
+      this.#clearResizeTransitionPause();
+      return;
+    }
+    this.resizeObserver ??= new this.view.ResizeObserver(this.#pauseIndicatorTransition);
+    this.resizeObserver.observe(this);
+  }
+
+  // The anchored indicator's far edge changes when its strip resizes. Pause its
+  // edge transition through a resize burst so it cannot stretch between layouts.
+  #pauseIndicatorTransition = () => {
+    this.internals?.states.add("resizing");
+    if (this.resizeTimer != null) this.view.clearTimeout(this.resizeTimer);
+    if (this.resizeFrame != null) this.view.cancelAnimationFrame(this.resizeFrame);
+    this.resizeFrame = undefined;
+    this.resizeTimer = this.view.setTimeout(() => {
+      this.resizeTimer = undefined;
+      this.resizeFrame = this.view.requestAnimationFrame(() => {
+        this.resizeFrame = undefined;
+        this.internals?.states.delete("resizing");
+      });
+    }, 120);
+  };
+
+  #clearResizeTransitionPause() {
+    if (this.resizeTimer != null) this.view.clearTimeout(this.resizeTimer);
+    if (this.resizeFrame != null) this.view.cancelAnimationFrame(this.resizeFrame);
+    this.resizeTimer = undefined;
+    this.resizeFrame = undefined;
+    this.internals?.states.delete("resizing");
   }
 
   private sync = () => {

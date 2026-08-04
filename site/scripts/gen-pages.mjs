@@ -1,24 +1,5 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 
-// ─── /install.mdx ←  README.md ────────────────────────────────────────────
-// README.md stays the complete document for npm readers; the site renders its
-// reference half ("## Installation" down) at /install/. The pitch paragraphs
-// above it stay npm-only — the hand-authored index.mdx owns the site's intro.
-const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8')
-const installStart = readme.search(/^## Installation$/m)
-if (installStart === -1) throw new Error('README.md: "## Installation" heading not found')
-writeFileSync(
-  new URL('../src/pages/install.mdx', import.meta.url),
-  `---
-layout: ../layouts/DocsLayout.astro
-title: Install & Config
----
-# Install & Config
-
-${readme.slice(installStart)}`
-)
-console.log('Generated src/pages/install.mdx from README.md')
-
 // ─── /changelog/dev/  ←  CHANGELOG.md ─────────────────────────────────────
 // The single repo-root CHANGELOG.md is the source of truth (it ships to npm)
 // and carries the full per-version detail. The /changelog/dev/ page ("Dev

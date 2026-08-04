@@ -21,7 +21,7 @@ import { MenuSeparator } from './MenuSeparator'
 import { Tag } from './Tag'
 import { Input } from './Input'
 import { Tooltip } from './Tooltip'
-import styles from './SelectFaceted.module.css'
+import './select-parts.css'
 
 // ---- Facet config -------------------------------------------------------
 
@@ -381,7 +381,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   // Pinned above the scrolling options, like Select's filter.
   const filterHeader = (facet: SelectFacetSingle | SelectFacetMultiple) =>
     facet.filter ? (
-      <div slot="header" data-menu-open="" style={{ padding: '4px' }}>
+      <a-select-header slot="header" data-menu-open="">
         <Input
           // `data-menu-search` puts this flyout in combobox mode: a typed query
           // pseudo-focuses the first match (arrow-nav, Enter selects), same as Select.
@@ -394,7 +394,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           aria-activedescendant={activeIds[facet.key] ?? undefined}
           onInput={(e: any) => setQueries((s) => ({ ...s, [facet.key]: e.currentTarget.value }))}
         />
-      </div>
+      </a-select-header>
     ) : null
 
   // One option row — the same whether it renders in a facet's flyout or in the
@@ -559,17 +559,19 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
         {isOptions && filterHeader(facet)}
         {body}
         {/* Clear rides the pinned `footer` slot, so it never scrolls away in a
-            long (or filtered) option list. Wrapped in a slotted div (MenuItem has
-            no `slot` prop) — the same pattern as Select's slot="header" filter. */}
+            long (or filtered) option list. */}
         {clearable && hasValue && (
-          <div slot="footer" className={styles.footer}>
-            <MenuItem
-              icon="x"
-              label="Clear"
-              data-menu-open=""
-              onSelect={() => setFacet(facet, undefined)}
-            />
-          </div>
+          <>
+            <MenuSeparator slot="footer" />
+            <a-select-footer slot="footer">
+              <MenuItem
+                icon="x"
+                label="Clear"
+                data-menu-open=""
+                onSelect={() => setFacet(facet, undefined)}
+              />
+            </a-select-footer>
+          </>
         )}
       </Menu>
     )
@@ -639,7 +641,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
       >
         {searchable && (
           // Pinned global search: flattens all options facets while a query is active.
-          <div slot="header" data-menu-open="" className={styles.search}>
+          <a-select-header slot="header" data-menu-open="">
             <Input
               // Combobox mode: a typed query pseudo-focuses the first flattened match
               // (arrow-nav, Enter selects), same as Select's filter.
@@ -652,7 +654,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
               aria-activedescendant={activeIds['__root__'] ?? undefined}
               onInput={(e: any) => setRootQuery(e.currentTarget.value)}
             />
-          </div>
+          </a-select-header>
         )}
         {searchable && rootQuery.trim()
           ? renderFlatResults()
@@ -663,7 +665,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
                   return s != null ? (
                     <Tag size="small" tone="brand">
                       {/* Capped + ellipsized so a long summary can't stretch the menu. */}
-                      <span className={styles.summary}>{s}</span>
+                      <a-select-faceted-summary>{s}</a-select-faceted-summary>
                     </Tag>
                   ) : null
                 })()}
@@ -671,15 +673,18 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
               </MenuItem>
             ))}
         {clearable && (
-          <div slot="footer" className={styles.footer}>
-            <MenuItem
-              icon="filter-x"
-              label={clearAllLabel}
-              disabled={activeCount === 0}
-              data-menu-open=""
-              onSelect={clearAll}
-            />
-          </div>
+          <>
+            <MenuSeparator slot="footer" />
+            <a-select-footer slot="footer">
+              <MenuItem
+                icon="filter-x"
+                label={clearAllLabel}
+                disabled={activeCount === 0}
+                data-menu-open=""
+                onSelect={clearAll}
+              />
+            </a-select-footer>
+          </>
         )}
       </Menu>
     </>

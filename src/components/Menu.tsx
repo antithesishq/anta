@@ -1,4 +1,4 @@
-import { nativeStateChange, roundStyle, roundAttr } from '../anta_helpers'
+import { nativeStateChange, lengthStyle, roundStyle, roundAttr } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 
 export interface MenuProps extends BaseProps {
@@ -32,6 +32,10 @@ export interface MenuProps extends BaseProps {
    *  content menu under a wide trigger (e.g. a calendar below a full-width field)
    *  so it wraps its content and left-aligns under the trigger. */
   autoWidth?: boolean
+  /** Inner inset for the scroll body and named header/footer content. A number is
+   * pixels; a CSS length string is used as written.
+   * @defaultValue 4 */
+  inset?: number | string
   /** Controlled open state. Omit for the default **uncontrolled** menu (it
    *  opens/closes itself via its triggers). Pass a boolean to **control** it:
    *  the menu's visibility follows `open`, and user dismiss (Esc, outside-click,
@@ -109,6 +113,7 @@ export const Menu = ({
   nohover,
   offset,
   autoWidth,
+  inset,
   open,
   onStateChange,
   round,
@@ -154,7 +159,7 @@ export const Menu = ({
       role={role}
       aria-orientation="vertical"
       class={className}
-      style={roundStyle(round, '--menu-round', style)}
+      style={lengthStyle(inset, '--menu-padding', roundStyle(round, '--menu-round', style))}
       {...rest}
     >
       {children}

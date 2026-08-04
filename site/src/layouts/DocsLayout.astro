@@ -122,7 +122,8 @@ if (isComponentPage && title) {
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={pageUrl} />
-    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="sitemap" href="/sitemap.xml" />
+    <link rel="alternate" type="application/rss+xml" title="Anta changelog" href="/changelog.rss" />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <link rel="icon" type="image/svg+xml" href="/anta-favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />

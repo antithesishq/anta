@@ -1,0 +1,18 @@
+@layer anta {
+  a-select-chevron {
+    display: inline-flex;
+    transition: transform 150ms ease;
+  }
+
+  a-select-chevron[open] {
+    transform: rotate(180deg);
+  }
+
+  a-select-faceted-summary {
+    display: block;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

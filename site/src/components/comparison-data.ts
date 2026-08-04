@@ -102,7 +102,7 @@ export const SYSTEMS: System[] = [
     kind: 'Styled web components',
     frameworks: 'Web components',
     frameworksNote: 'React, Vue, Angular, Svelte guides',
-    styling: 'CSS framework + ::part() + CSS variables',
+    styling: 'CSS framework + CSS variables',
     license: 'MIT core + paid Pro tier',
     bundleSize: "185 KiB",
     bundleIncludes: "All free components, Lit runtime, and base CSS; Pro components and web fonts excluded. Selective imports are smaller.",
@@ -357,37 +357,11 @@ export const SYSTEMS: System[] = [
     ],
   },
   {
-    id: 'radix',
-    name: 'Radix UI',
-    short: 'Radix',
-    version: 'radix-ui 1.6.7',
-    docs: 'https://www.radix-ui.com/primitives',
-    tagline: 'The reference unstyled React primitives: behaviour and accessibility, with your own CSS.',
-    kind: 'Headless React primitives',
-    frameworks: 'React',
-    styling: 'Unstyled; bring your own',
-    license: 'MIT',
-    bundleSize: "76 KiB",
-    bundleIncludes: "All `radix-ui` primitives and Floating UI code; React, styling, and icons excluded. Selective imports are smaller.",
-    browsers: `Radix publishes no fixed browser floor. This snapshot's current-browser reference is ${CURRENT_BROWSERS}; your CSS can raise the floor.`,
-    pros: [
-      'Interaction and accessibility behaviour used as a reference by other libraries.',
-      'Unstyled primitives do not constrain your design.',
-      'One `radix-ui` package with per-primitive imports and `asChild` composition.',
-      'The most widely deployed headless layer, including years of shadcn production use.',
-    ],
-    cons: [
-      'No combobox, table, or date-picker primitive; compose them from other primitives or third parties.',
-      'React-only.',
-      'shadcn/ui moved its new-project default to Base UI in July 2026, though Radix remains supported.',
-    ],
-  },
-  {
     id: 'baseui',
     name: 'Base UI',
     version: '@base-ui/react 1.6.0',
     docs: 'https://base-ui.com',
-    tagline: 'A second-generation unstyled React library from the teams behind Radix, Floating UI, and MUI.',
+    tagline: 'An unstyled React library for accessible, composable interface primitives.',
     kind: 'Headless React primitives',
     frameworks: 'React',
     styling: 'Unstyled; bring your own',
@@ -396,13 +370,13 @@ export const SYSTEMS: System[] = [
     bundleIncludes: "All Base UI primitives and positioning code; React, styling, and icons excluded. Selective imports are smaller.",
     browsers: `Base UI publishes no fixed browser floor. This snapshot's current-browser reference is ${CURRENT_BROWSERS}, including iOS Safari 26.6 (2026).`,
     pros: [
-      'Adds primitives Radix lacks: Combobox, Autocomplete, Number Field, Meter, and Field/Fieldset.',
+      'Includes Combobox, Autocomplete, Number Field, Meter, and Field/Fieldset primitives.',
       "MUI's top investment; Material UI v9 already builds new components on it.",
       'The default base for new shadcn/ui projects since July 2026.',
       'One package with a render-prop API instead of `asChild`.',
     ],
     cons: [
-      'Newer than Radix, with fewer third-party examples and answers.',
+      'Newer, with fewer third-party examples and answers.',
       'React-only.',
     ],
   },
@@ -412,7 +386,7 @@ export const SYSTEMS: System[] = [
     short: 'shadcn',
     version: 'Base UI registry @ 705ce59',
     docs: 'https://ui.shadcn.com',
-    tagline: 'Tailwind-styled source copied into your repo by CLI, on Base UI, Radix, or React Aria.',
+    tagline: 'Tailwind-styled source copied into your repo by CLI, on an accessible primitive layer.',
     kind: 'Copy-paste React source',
     frameworks: 'React',
     frameworksNote: 'Vue, Svelte community ports',
@@ -423,7 +397,7 @@ export const SYSTEMS: System[] = [
     browsers: "Depends on the selected primitives. Tailwind CSS 4 requires Safari 16.4 (2023), Chrome 111 (2023), and Firefox 128 (2024), or later.",
     pros: [
       'The source lives in your repo, with no black-box dependency or version lock.',
-      'Accessibility comes from the primitive layer you choose: Base UI, Radix, or React Aria.',
+      'Accessibility comes from the primitive layer you choose.',
       'AI tools such as v0 and Cursor commonly generate shadcn-style code.',
       'A large ecosystem of themes, blocks, and community registries.',
     ],
@@ -482,7 +456,7 @@ export const CATEGORIES: Category[] = [
   { id: 'tooltip', label: 'Tooltip / Popover', members: 'Hover + click surfaces' },
   { id: 'dialog', label: 'Dialog', members: 'Modal, drawer, sheet' },
   { id: 'toast', label: 'Notification', members: 'Toast, banner, inline alert' },
-  { id: 'accordion', label: 'Accordion', members: 'Collapse / expander / disclosure' },
+  { id: 'accordion', label: 'Expander', members: 'Disclosure / Accordion' },
   { id: 'table', label: 'Table', members: 'Table / data grid' },
   { id: 'tag', label: 'Tag / Badge', members: 'Tag, badge, chip, lozenge' },
   { id: 'progress', label: 'Progress', members: 'Bar, spinner, skeleton' },
@@ -499,14 +473,14 @@ export const CATEGORIES: Category[] = [
  * Coverage marks per system, keyed by category id. Absent keys default to
  * 'no'. Honest, grouped-by-job marks; see the module header. `partial` =
  * basic, simple, or community-only; `paid` = behind a commercial tier.
- * headless primitives (Radix, Base UI) get marks only where they ship an
+ * headless primitives such as Base UI get marks only where they ship an
  * actual primitive, so their empty cells reflect "you build the visual".
  */
 export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   anta: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes', slider: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes',
-    accordion: 'yes', table: 'partial', tag: 'yes', card: 'yes', progress: 'partial',
+    accordion: 'yes', table: 'partial', tag: 'yes', card: 'yes', progress: 'yes',
     icons: 'yes', typography: 'yes',
   },
   webawesome: {
@@ -572,12 +546,6 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
     nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial',
   },
-  radix: {
-    button: 'partial', select: 'yes', combobox: 'no', choice: 'yes',
-    slider: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes',
-    toast: 'yes', accordion: 'yes', progress: 'yes', avatar: 'yes',
-    nav: 'partial', icons: 'yes',
-  },
   baseui: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes',
@@ -594,7 +562,7 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   untitledui: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
-    tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'partial',
+    tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'partial',
     steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes',
   },
@@ -830,22 +798,6 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     icons: 'https://astryx.atmeta.com/components/Icon',
     typography: 'https://astryx.atmeta.com/components/Text',
   },
-  radix: {
-    button: 'https://www.radix-ui.com/primitives/docs/components/toggle',
-    select: 'https://www.radix-ui.com/primitives/docs/components/select',
-    choice: 'https://www.radix-ui.com/primitives/docs/components/checkbox',
-    slider: 'https://www.radix-ui.com/primitives/docs/components/slider',
-    tabs: 'https://www.radix-ui.com/primitives/docs/components/tabs',
-    menu: 'https://www.radix-ui.com/primitives/docs/components/dropdown-menu',
-    tooltip: 'https://www.radix-ui.com/primitives/docs/components/tooltip',
-    dialog: 'https://www.radix-ui.com/primitives/docs/components/dialog',
-    toast: 'https://www.radix-ui.com/primitives/docs/components/toast',
-    accordion: 'https://www.radix-ui.com/primitives/docs/components/accordion',
-    progress: 'https://www.radix-ui.com/primitives/docs/components/progress',
-    avatar: 'https://www.radix-ui.com/primitives/docs/components/avatar',
-    nav: 'https://www.radix-ui.com/primitives/docs/components/navigation-menu',
-    icons: 'https://www.radix-ui.com/icons',
-  },
   baseui: {
     button: 'https://base-ui.com/react/components/toggle-group',
     textinput: 'https://base-ui.com/react/components/input',
@@ -898,6 +850,7 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     tooltip: 'https://www.untitledui.com/react/components/tooltips',
     dialog: 'https://www.untitledui.com/react/components/modals',
     toast: 'https://www.untitledui.com/react/components/notifications',
+    accordion: 'https://www.untitledui.com/react/marketing/faq-sections/faq-accordion-04-brand',
     table: 'https://www.untitledui.com/react/components/tables',
     tag: 'https://www.untitledui.com/react/components/tags',
     progress: 'https://www.untitledui.com/react/components/progress-indicators',

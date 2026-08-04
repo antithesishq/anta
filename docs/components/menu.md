@@ -356,6 +356,8 @@ navigating links.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
+| `children?` | ReactNode | — | Item content. With `label` set, children are extra content — most
+ notably the nested `<Menu>` for a submenu parent. |
 | `copy?` | string | — | Text copied to the clipboard on activation. |
 | `copyNode?` | boolean \| string | — | Copy a DOM node as rich text (`text/html`) + plain text. `true` copies
  the nearest ancestor marked `data-copy-source`; a string is a CSS
@@ -363,11 +365,73 @@ navigating links.
  from the copied output. |
 | `copyUrl?` | true | — | Copy the current page URL (`location.href`). |
 | `copyWithUrl?` | boolean | — | Prefix the copied text with `// URL: <current page URL>`. |
+| `disabled?` | boolean | — | Disable the item: greyed out, not focusable for activation, no close. A
+ disabled link also drops its `href`, so it can't navigate. |
+| `hint?` | ReactNode | — | Secondary text under the label — explanatory copy, like `RadioGroup`'s
+ option `hint`. Requires `label` (it stacks in a column beneath it). Muted
+ (`--text-3`) and tracks the row's `tone`. A string, or any node. |
+| `icon?` | IconShape | — | Leading icon shape. |
+| `iconTrailing?` | IconShape | — | A trailing icon. On a `submenu` item this **overrides** the default
+ chevron (omit it to keep the chevron); on a normal item it's the trailing
+ glyph (omit for none). |
+| `indeterminate?` | boolean | — | Only meaningful with `selectionIndicator="checkbox"`: render the box in the
+ mixed state (`aria-checked="mixed"`) — e.g. a "Select all" row when some but
+ not all of its options are selected. |
+| `indicator?` | React.ReactNode | — | Replace the built-in selection-indicator *visual* with your own node,
+ rendered at the **leading** edge (where the checkbox / radio sit). Pair with
+ `selectionIndicator` to keep the semantics — the row stays the control and
+ carries `role` + `aria-checked`; only the drawn mark changes. Suppresses the
+ built-in checkbox / radio and the trailing `check` glyph. The node is made
+ passive (aria-hidden, no pointer events) so the row receives the click. |
+| `kbd?` | string | — | A trailing keyboard-shortcut hint, e.g. `"⌘E"`. |
+| `label?` | ReactNode | — | The item's text. Usually a string, but any node is accepted — e.g. a filtered
+ `Select` bolds the matched substring. Omit and pass `children` for richer
+ content. |
 | `onCopied?` | (ok) => void | — | Fires after the copy attempt with whether it succeeded. |
 | `onCopyRequest?` | () => void | — | Compute the copy content lazily. Fires on pointerdown / keydown; update
  `copy` (a state change) here and the activation copies the latest value.
  The gap lets the update land even off the UI thread — only the
  serializable `copy` string crosses. |
+| `onMouseDown?` | (event) => void | — | Raw `mousedown` on the row. Mainly to `preventDefault()` so the row doesn't
+ take focus on a mouse press — e.g. a combobox option keeping focus in its
+ input field while the click still selects. |
+| `onSelect?` | (event, detail) => void | — | Activation handler — fires when *this* item is chosen (click / Enter /
+ Space), unless it's `disabled`. It does **not** fire for a submenu parent
+ (clicking that opens the flyout, which isn't a selection) nor for a
+ selection bubbling up from a nested submenu. On a link item it fires
+ alongside the navigation. Receives the event plus a `{ value, label }`
+ detail. |
+| `role?` | string | — | ARIA role override. Defaults to the role implied by `selectionIndicator`
+ (`menuitem` / `menuitemcheckbox` / `menuitemradio`); set it to reparent the
+ row under a different container role — e.g. `option` inside a `listbox`. |
+| `selected?` | boolean | — | Mark the item as selected. On a plain row (no `selectionIndicator`) this is
+ a persistent background tint, the same resting fill a pressed row shows —
+ also the way to flag the current page on a link item. On a checkable row
+ (`selectionIndicator` set) it instead drives the leading `checkbox` / `radio`
+ indicator and the row's `aria-checked`. |
+| `selectionIndicator?` | 'checkbox' \| 'radio' \| 'check' | — | Turn the row into a checkable item, driven by `selected` (the row stays the
+ control and carries `aria-checked`):
+ - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>`
+   (before `icon`); the tint is dropped (the box carries state).
+ - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped.
+ - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected
+   row *and* the background tint (the canonical single-select look).
+ Omit for a plain row (the default). |
+| `submenu?` | boolean | — | Marks this item as a submenu parent: adds the trailing chevron and
+ `aria-haspopup="menu"`. Nest the flyout as a `<Menu>` child. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone — colors the label, icon, and hover/selected tint (and the
+ `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal
+ CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose
+ hue + chroma are kept while the lightness is pinned to match the brand text.
+ `critical` is the destructive action; `neutral` (the default) is the standard
+ gray. |
+| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Like `tone`, but applied only while the row is `selected` — an unselected row
+ stays neutral. The whole selected row (label, icon, tint, and the `checkbox` /
+ `radio` indicator) takes the tone. Same value set as `tone`; on a selected row
+ `toneSelected` wins over `tone` when both are set. |
+| `value?` | string \| number | — | An opaque value identifying this item, handed back in `onSelect`'s detail
+ so a shared handler can tell which row was chosen without a per-item
+ closure. |
 
 ## Keyboard
 

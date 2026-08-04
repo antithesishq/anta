@@ -567,3 +567,12 @@
     }
   }
 }
+
+/* The disclosure body owns its final inset. Apply the same rule to the native
+   disclosure styling, while leaving nested layouts to control their spacing. */
+a-expander-details > p:last-child,
+a-expander-details > :not([slot]) > p:last-child,
+details[data-anta] > p:last-child,
+details[data-anta] > :not(summary) > p:last-child {
+  margin-block-end: 0;
+}

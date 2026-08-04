@@ -1,6 +1,6 @@
 ---
 import DocsLayout from '../layouts/DocsLayout.astro'
-import { Text, Tooltip } from '@antadesign/anta'
+import { Card, Text, Title, Tooltip } from '@antadesign/anta'
 import { StickerThumbsUpAnimated } from '@antadesign/stickers'
 ---
 
@@ -21,9 +21,22 @@ import { StickerThumbsUpAnimated } from '@antadesign/stickers'
     </Text>
     <StickerThumbsUpAnimated size={256} delay={0.5} playOnce replayOnClick label="Replay thumbs-up animation" className="overview-sticker" />
   </div>
+
+  <Card
+    className="overview-notice"
+    tone="warning"
+    icon="warning-triangle"
+  >
+    <Title slot="header" level={3} tone="warning">Warning</Title>
+    <Text tone="warning">
+      <p>Much of this documentation was generated with AI.<br />We plan a careful human editorial pass in September–October 2026.</p>
+      <p>If AI-authored technical documentation is a concern for you, do not judge Anta solely by this first draft. The <a href="/comparison/">comparison page</a> can help you decide whether it fits your project.</p>
+    </Text>
+  </Card>
 </DocsLayout>
 
 <style>
+  .overview-notice { margin-block: 1rem 2rem; margin-inline: 0; max-width: 62ch; }
   .overview-intro {
     display: flex;
     flex-wrap: wrap;

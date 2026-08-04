@@ -273,3 +273,10 @@
     }
   }
 }
+
+/* The track's padding closes a custom label row. Its final paragraph should not
+   add an extra gap below the row. */
+a-progress > p:last-child,
+a-progress > :not([slot]) > p:last-child {
+  margin-block-end: 0;
+}

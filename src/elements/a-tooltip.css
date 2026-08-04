@@ -47,3 +47,10 @@
     }
   }
 }
+
+/* The bubble padding closes the content block, so a final paragraph does not
+   add document rhythm beneath it. */
+a-tooltip > p:last-child,
+a-tooltip > :not([slot]) > p:last-child {
+  margin-block-end: 0;
+}

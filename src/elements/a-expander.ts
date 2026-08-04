@@ -282,7 +282,7 @@ const SHADOW_STYLE = `
     align-items: center;
     gap: 0;
     cursor: pointer;
-    user-select: none;
+    user-select: text;
     border-radius: 2px;
     outline: none;
   }
@@ -368,6 +368,7 @@ export class AExpanderElement extends HTMLElementBase {
   static observedAttributes = ['state', 'disabled', 'round']
 
   private summary: HTMLButtonElement
+  private titleSlot: HTMLSlotElement
   private region: HTMLDivElement
   private header: HTMLDivElement
   // A dedicated shadow <style> the element rewrites to publish the measured
@@ -403,6 +404,7 @@ export class AExpanderElement extends HTMLElementBase {
     this.summary.setAttribute('part', 'summary')
     const titleSlot = document.createElement('slot')
     titleSlot.name = 'title'
+    this.titleSlot = titleSlot
     this.summary.append(titleSlot)
     this.summary.addEventListener('click', this.onSummaryClick)
 
@@ -548,12 +550,23 @@ export class AExpanderElement extends HTMLElementBase {
     return scope.some((n) => n instanceof Element && ignoresToggle(n))
   }
 
+  /** A selection that reaches projected title content came from a drag. Keep it
+   *  selected instead of treating its release as an activation. */
+  #titleHasSelection(): boolean {
+    const selection = this.ownerDocument.getSelection()
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) return false
+    const range = selection.getRangeAt(0)
+    return this.titleSlot.assignedNodes().some((node) => range.intersectsNode(node))
+  }
+
   /** Compute the requested next state, announce it (cancelable, *before*
    *  applying), then — uncontrolled only, and only if not vetoed — apply it.
    *  Controlled: never self-apply; the consumer answers via the `state`
    *  attribute. See STATEFUL-COMPONENTS.md. */
   private onSummaryClick = (e: MouseEvent) => {
-    if (this.#clickIgnoresToggle(e)) return
+    // A keyboard-initiated click has detail 0 and should always retain normal
+    // button activation, even if text happens to be selected.
+    if (this.#clickIgnoresToggle(e) || (e.detail !== 0 && this.#titleHasSelection())) return
     const prev = this.#current
     const next: ExpanderState = prev === 'open' ? 'closed' : 'open'
     const ok = this.dispatchEvent(

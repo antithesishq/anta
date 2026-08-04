@@ -3,6 +3,16 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.20 — August 4, 2026
+
+### Changed
+
+- Package documentation and source comments use clearer, more concise language.
+
+### Fixed
+
+- Expander titles can be selected without toggling the disclosure.
+
 ## 0.3.19 — August 3, 2026
 
 ### Added

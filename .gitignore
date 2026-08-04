@@ -1,5 +1,6 @@
 node_modules/
 node-compile-cache/
+.pnpm-store/
 # Ignore local Claude state (settings.local.json, worktrees/) but track the
 # shared, committed team config: review agent + slash commands.
 .claude/*

@@ -5,6 +5,10 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- The package now ships `llms.txt`, an LLM-ready index of Anta's documentation.
+
 ### Fixed
 
 - Sliding Tab indicators no longer animate through stale geometry while their

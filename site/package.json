@@ -12,7 +12,8 @@
     "docs": "pnpm run docs:api && pnpm run docs:pages && pnpm run docs:wasm && pnpm run docs:theme && pnpm run docs:iframe-runtime",
     "dev": "pnpm run docs && pnpm run dev:server",
     "dev:server": "astro dev",
-    "build": "pnpm run docs && astro build",
+    "build": "pnpm run docs && astro build && pnpm run sitemap:root",
+    "sitemap:root": "node scripts/copy-sitemap-index.mjs",
     "preview": "astro preview",
     "lint:css": "stylelint \"src/**/*.{css,astro}\""
   },

@@ -1,75 +1,100 @@
+import { readFileSync } from 'node:fs'
 import type { APIRoute } from 'astro'
 import { renderPropsTable } from '../../lib/llms/props-from-api.ts'
 import { parseMdx } from '../../lib/llms/parse-mdx.ts'
-import { COMPONENT_SLUGS } from '../../lib/component-slugs'
+import {
+  componentGroups,
+  documentationLinks,
+  llmsIndex,
+  packageLinks,
+} from '../../lib/llms/index-content.mjs'
 
-const SITE = 'https://anta.design'
+type NavigationLink = readonly [title: string, path: string]
 
-// Component pages now live at the site root; glob every root `.mdx`/`.demo.ts`
-// and keep only the component slugs (Colors/Changelog/index are also here).
-const componentModules = import.meta.glob('./*.mdx', {
-  eager: true,
-}) as Record<string, { frontmatter: { title?: string } }>
+const CHANGELOG = readFileSync(new URL('../../../CHANGELOG.md', import.meta.url), 'utf8').trim()
 
-const rawMdx = import.meta.glob('./*.mdx', {
-  eager: true,
-  as: 'raw',
-}) as Record<string, string>
+const rawMdx = {
+  ...(import.meta.glob('./*.mdx', { eager: true, as: 'raw' }) as Record<string, string>),
+  ...(import.meta.glob('./accessibility/*.mdx', { eager: true, as: 'raw' }) as Record<string, string>),
+}
 
 const demoModules = import.meta.glob('./*.demo.ts', {
   eager: true,
 }) as Record<string, { default: string }>
+
+const overview = `# Overview
+
+Anta is Antithesis's design system. It combines global CSS tokens,
+framework-agnostic declarative web components, and JSX wrappers for dynamic
+state and conditional composition.
+
+Components use an attribute-driven DOM instead of utility-class stacks and
+wrapper elements. Web components never mutate their own attributes, so they
+work with Worker-driven UIs and other reactive renderers. JSX wrappers provide
+the React and Preact integration layer.`
+
+function modulePath(path: string) {
+  return path === '/accessibility/'
+    ? './accessibility/index.mdx'
+    : `.${path.slice(0, -1)}.mdx`
+}
 
 function extractComponentName(raw: string): string | null {
   const m = raw.match(/<PropsTable\s+component="([^"]+)"/)
   return m ? m[1] : null
 }
 
-function extractDemoCode(raw: string, slug: string): string | null {
-  const key = `./${slug}.demo.ts`
-  const mod = demoModules[key]
+function extractDemoCode(slug: string): string | null {
+  const mod = demoModules[`./${slug}.demo.ts`]
   if (!mod?.default) return null
-  // Strip `export default \`...\`` wrapper, keep the bare TSX string
   return mod.default.replace(/^\s*export\s+default\s+`/, '').replace(/`\s*$/, '').trim()
 }
 
-const header = `# Anta
-
-> Portable React/Preact UI component library. Works out of the box in React,
-> in Preact via compat aliasing, and in custom runtimes via \`configure()\`.
-> Published as \`@antadesign/anta\` on npm. Source: ${SITE}/llms.txt
-
-Every component forwards \`className\` and \`style\` to its rendered root element. Put layout and positioning — grid/flex placement, margins, width, alignment — directly on the component (\`<Button className="toolbar-end" />\`). Prefer not to wrap it in a \`<div>\`/\`<span>\`. Extra wrappers fight the clean DOM Anta is designed for. Refer to each component's documentation page to learn about configuration, customization, and styling.`
-
-const sections: string[] = []
-
-const sortedPaths = Object.keys(componentModules)
-  .filter((p) => COMPONENT_SLUGS.includes(p.replace('./', '').replace('.mdx', '')))
-  .sort()
-
-for (const path of sortedPaths) {
-  const slug = path.replace('./', '').replace('.mdx', '')
-  let raw = rawMdx[path] ?? ''
-
-  // Replace <PropsTable component="X" /> with the rendered markdown table
-  // before parseMdx runs, so the surrounding Disclosure can wrap it correctly.
-  const compName = extractComponentName(raw)
-  if (compName) {
-    const table = renderPropsTable(compName)
-    raw = raw.replace(/<PropsTable\s+component="[^"]+"\s*\/>/, table)
+function renderMdx(raw: string, title: string, slug?: string) {
+  const componentName = extractComponentName(raw)
+  if (componentName) {
+    raw = raw.replace(
+      /<PropsTable\s+component="[^"]+"\s*\/>/,
+      () => renderPropsTable(componentName),
+    )
   }
 
   let body = parseMdx(raw)
-
-  const demo = extractDemoCode(raw, slug)
-  if (demo) {
-    body += `\n\n### Example\n\n\`\`\`tsx\n${demo}\n\`\`\``
-  }
-
-  sections.push(body)
+  body = body.replace(/^# .+$/m, `# ${title}`)
+  const demo = slug ? extractDemoCode(slug) : null
+  if (demo) body += `\n\n### Example\n\n\`\`\`tsx\n${demo}\n\`\`\``
+  return body
 }
 
-const fullBody = [header, ...sections].join('\n\n---\n\n') + '\n'
+function documentationBody([title, path]: NavigationLink) {
+  if (path === '/') return overview
+  if (path === '/changelog/') return CHANGELOG
+
+  const raw = rawMdx[modulePath(path)]
+  return raw ? renderMdx(raw, title) : `# ${title}\n\nRead the documentation at https://anta.design${path}`
+}
+
+function componentBody([title, path]: NavigationLink) {
+  const raw = rawMdx[modulePath(path)]
+  if (!raw) return `# ${title}\n\nRead the documentation at https://anta.design${path}`
+
+  const slug = path.slice(1, -1)
+  return renderMdx(raw, title, slug)
+}
+
+const documentationSections = documentationLinks.map(documentationBody)
+const componentSections = componentGroups.flat().map(componentBody)
+const packageSections = packageLinks.map(componentBody)
+
+const fullBody = [
+  llmsIndex.trim(),
+  '---\n\n## Documentation details',
+  documentationSections.join('\n\n---\n\n'),
+  '---\n\n## Component details',
+  componentSections.join('\n\n---\n\n'),
+  '---\n\n## Package details',
+  packageSections.join('\n\n---\n\n'),
+].join('\n\n') + '\n'
 
 export const GET: APIRoute = () =>
   new Response(fullBody, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })

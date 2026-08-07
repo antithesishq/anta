@@ -30,6 +30,7 @@ Anta is designed for a clean DOM. Prefer the props and attributes exposed by eac
 - [Switch](./components/switch.md)
 - [Slider](./components/slider.md)
 - [Tabs](./components/tabs.md)
+- [ProgressTabs](./components/progress-tabs.md)
 
 - [Expander](./components/expander.md)
 - [Menu](./components/menu.md)

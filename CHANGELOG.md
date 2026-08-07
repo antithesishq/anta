@@ -3,6 +3,16 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- `ProgressTabs` provides controlled and uncontrolled process navigation with
+  incomplete, loading, completed, and error statuses; three sizes; horizontal
+  and vertical layouts; optional panels; accessible tab semantics; and
+  customizable Previous and Next controls. Vertical layouts place panels and
+  tertiary brand navigation controls inside the active step's flow.
+
 ## 0.3.20 — August 4, 2026
 
 ### Changed

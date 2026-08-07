@@ -135,6 +135,13 @@ export type {
 } from './components/SelectFaceted'
 export { Tabs } from './components/Tabs'
 export type { TabsProps, TabOption, TabsChangeAttrs } from './components/Tabs'
+export { ProgressTabs } from './components/ProgressTabs'
+export type {
+  ProgressTabsProps,
+  ProgressTabOption,
+  ProgressTabStatus,
+  ProgressTabsNavigationButtonProps,
+} from './components/ProgressTabs'
 export { TabPanel } from './components/TabPanel'
 export type { TabPanelProps } from './components/TabPanel'
 export { Dialog } from './components/Dialog'

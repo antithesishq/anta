@@ -31,6 +31,7 @@ export const componentGroups = [
     ['Switch', '/switch/'],
     ['Slider', '/slider/'],
     ['Tabs', '/tabs/'],
+    ['ProgressTabs', '/progress-tabs/'],
   ],
   [['Expander', '/expander/'], ['Menu', '/menu/']],
   [

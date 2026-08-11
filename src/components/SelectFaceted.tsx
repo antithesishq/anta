@@ -6,7 +6,7 @@
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
 import { useState, useMemo } from '../jsx-runtime'
-import { nativeStateChange, ISOLATE_HINT } from '../anta_helpers'
+import { nativeStateChange, ISOLATE_HINT, optionPresentationAttrs } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { OptionValue, SelectItem, SelectOption } from './Select'
@@ -394,13 +394,17 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   // multiple uses a checkbox (toggles). `keyPrefix` namespaces the React key so the
   // same option value under two facets stays a distinct row in the flat list.
   const optionRow = (facet: SelectFacetSingle | SelectFacetMultiple, opt: SelectOption<OptionValue>, keyPrefix = '') => {
+    const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(opt, true)
     const shared = {
+      ...optionAttrs,
       icon: opt.icon,
       label: opt.label ?? String(opt.value),
       hint: opt.hint,
       tone: opt.tone,
       toneSelected,
       disabled: opt.disabled,
+      className: optionClassName,
+      style: optionStyle,
       'data-menu-open': '',
     }
     if (facet.kind === 'single') {

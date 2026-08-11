@@ -29,6 +29,18 @@ export interface BaseProps {
   [key: `aria-${string}`]: unknown
 }
 
+/** Safe presentation attributes for a data-rendered option. They land on the
+ * option's rendered row, rather than on the enclosing control. Menu-based
+ * components reserve `data-menu-*` for their own selection and focus behavior. */
+export interface OptionPresentationProps {
+  /** CSS class on the option's rendered row. */
+  className?: string
+  /** Inline styles on the option's rendered row. */
+  style?: React.CSSProperties
+  /** Additional data attributes on the option's rendered row. */
+  [key: `data-${string}`]: unknown
+}
+
 /**
  * Standard DOM event handlers Anta forwards to the rendered element. These are
  * **enumerated on purpose** — rather than an open `on${string}` index signature

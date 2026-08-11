@@ -19,6 +19,7 @@ of a floating tag such as `"latest"`.
 import '@antadesign/anta/tokens.css'  // CSS custom properties
 import '@antadesign/anta/reset.css'   // reset and typography defaults
 import '@antadesign/anta/elements'    // registers <a-*> elements
+import '@antadesign/anta/theme-anta.css' // optional hand-tuned reference palette
 import { Progress } from '@antadesign/anta'
 
 <Progress value={42} label="Uploaded" hint="3 of 7" />
@@ -39,6 +40,10 @@ recommended; the reference theme is optional.
 
 Load `tokens.css` before element CSS. Elements read its variables; without it,
 they render unstyled.
+
+To use the optional reference palette, import `theme-anta.css` after the element
+registration import. It ships in `@antadesign/anta`; omit it to keep the
+seed-derived default palette or provide your own theme.
 
 ### Cascade layers
 

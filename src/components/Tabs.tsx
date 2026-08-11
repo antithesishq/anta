@@ -6,8 +6,8 @@
 // (no `Children`/Fragment scan or component-identity matching), which keeps it compatible
 // across React / Preact / custom runtimes and static SSR.
 import { useState } from "../jsx-runtime"
-import { nativeStateChange, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
-import type { BaseProps } from "../general_types"
+import { nativeStateChange, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+import type { BaseProps, OptionPresentationProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
 import { Tooltip } from "./Tooltip"
 
@@ -24,7 +24,7 @@ export interface TabsChangeAttrs {
  *  renders its strip from (like `RadioGroup`'s `options`). `Tabs` reads these fields to
  *  render the underlying `<a-tab>` (`tabindex`, `role`, and selection are all `Tabs`'
  *  job, published off-DOM by the element). */
-export interface TabOption {
+export interface TabOption extends OptionPresentationProps {
   /** This tab's identity — pairs it with the `<TabPanel value="…">` of the same
    *  value, and the value reported by `onStateChange` / `onChange`. Unique per strip. */
   value: string
@@ -254,15 +254,16 @@ export const Tabs = ({
       {tabs.map((p) => {
         const tabDisabled = disabled || p.disabled
         const isSelected = p.value === currentValue
+        const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(p)
         return (
           <a-tab
             key={p.value}
+            {...optionAttrs}
             role="tab"
             value={p.value}
             // Per-tab tone override: named/custom pass the attribute (CSS keys off it),
             // and a custom literal color also sets --tabs-tone-source on the tab.
             tone={p.tone && p.tone !== "neutral" ? p.tone : undefined}
-            style={toneStyle(p.tone, "--tabs-tone-source", undefined)}
             aria-disabled={tabDisabled ? "true" : undefined}
             // Every enabled tab is its own tab stop (not a roving single stop) — Tab /
             // Shift+Tab step through them; arrows move + select via the element. A
@@ -272,6 +273,8 @@ export const Tabs = ({
             tabIndex={tabDisabled && !isSelected ? -1 : 0}
             disabled={tabDisabled ? "" : undefined}
             round={roundAttr(round) ?? roundAttr(p.round)}
+            class={optionClassName}
+            style={toneStyle(p.tone, "--tabs-tone-source", optionStyle)}
           >
             {p.icon && <a-icon shape={p.icon} aria-hidden="true" />}
             {wrapLabel(p.label != null ? p.label : p.children, "a-tab-label")}

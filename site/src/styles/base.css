@@ -757,6 +757,7 @@ code[data-copied]::after {
   max-width: 960px;
   margin-inline: auto;
 }
+
 .content > .full-bleed,
 .disclosure > .body > .full-bleed {
   max-width: none;

@@ -2,9 +2,9 @@
 // as in RadioGroup. Select keeps its selection and open state, then renders an
 // Input trigger followed by a Menu of options. There is no `a-select` element.
 import { useState, useId } from '../jsx-runtime'
-import { ISOLATE_HINT } from '../anta_helpers'
+import { ISOLATE_HINT, optionPresentationAttrs } from '../anta_helpers'
 import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
-import type { BaseProps } from '../general_types'
+import type { BaseProps, OptionPresentationProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { Input } from './Input'
 import { Icon } from './Icon'
@@ -29,7 +29,7 @@ export type OptionValue = string | number | boolean
  *
  *  Generic in the value type `V` (defaults to `string`): `Select` infers `V` from your
  *  `options`, so `{ value: 365 }` round-trips as `number` through `onValueChange`. */
-export interface SelectOption<V extends OptionValue = string> {
+export interface SelectOption<V extends OptionValue = string> extends OptionPresentationProps {
   /** The option's value (`V`) — its identity, what `value` / `defaultValue` name, and
    *  what `onValueChange` reports. Unique across the whole `options` tree (selection is
    *  value-keyed and global across groups / submenus). */
@@ -656,6 +656,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
 
   // One option row. `disabled` is the leaf's *effective* disabled (cascaded).
   const renderOptionRow = (o: SelectOption<V>, disabled: boolean) => {
+    const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(o, true)
     const optState: OptionState<V> = { value: o.value, selected: isSelected(o.value), disabled }
     const custom = renderOption?.(o, optState)
     const customMark = renderIndicator?.(optState)
@@ -676,6 +677,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     return (
       <MenuItem
         key={String(o.value)}
+        {...optionAttrs}
         id={`${uid}-opt-${o.value}`}
         selectionIndicator={menuItemIndicator}
         {...ariaSelectable}
@@ -689,6 +691,8 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         disabled={disabled || undefined}
         data-menu-open={multiple ? '' : undefined}
         onSelect={(e: any) => choose(o, e)}
+        className={optionClassName}
+        style={optionStyle}
       >
         {custom}
         {tip && (

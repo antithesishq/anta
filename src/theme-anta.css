@@ -165,7 +165,7 @@
   --border-4-info: #cfe3f7;
   --border-5-info: #e1eefa;
 
-  --focus-ring: var(--text-2-brand);
+  --focus-ring: oklch(0.55 0.2 284.15);
 }
 
 /* Doubled `.dark.dark` — mirrors tokens.css's `.dark` (any scoped dark region)

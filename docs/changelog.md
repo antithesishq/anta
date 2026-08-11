@@ -16,6 +16,9 @@ changes are not listed.
 - Tab panels no longer add a default tab stop.
 - Menus no longer dismiss when their visible trigger changes size. They request
   dismissal only after the trigger leaves the viewport.
+- JSX `Text` now shows its clipped content in a tooltip by default. A nested
+  `Tooltip` replaces it, and expandable text does not add one.
+- The Anta light palette now uses the shared focus-ring color.
 
 ## 0.3.20 — August 4, 2026
 

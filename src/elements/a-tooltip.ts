@@ -54,6 +54,9 @@ const ENTER_TOUCH_DELAY = 500
  * anchor itself. Append future ellipsizing parts here.
  */
 const TRUNCATING_PARTS = 'a-tab-label, a-button-label'
+/** Internal marker emitted by JSX `<Text truncate>`. Its tooltip reads the
+ * anchor's rendered text instead of duplicating React children. */
+const AUTOMATIC_TEXT_TOOLTIP = 'data-anta-text-tooltip'
 /**
  * How long (ms) a touch-opened tooltip lingers after the finger lifts, so it
  * stays readable once the anchor is no longer occluded by the fingertip.
@@ -405,6 +408,41 @@ export class ATooltipElement extends HTMLElementBase {
     return this.hasAttribute('truncated-only')
   }
 
+  /** JSX `<Text truncate>` emits an empty marked tooltip. It takes its content
+   * from the anchor, while a consumer-provided sibling tooltip takes precedence
+   * even when that sibling is empty. */
+  get #isAutomaticTextTooltip(): boolean {
+    return this.hasAttribute(AUTOMATIC_TEXT_TOOLTIP)
+  }
+
+  private hasExplicitTextTooltip(): boolean {
+    const anchor = this.anchor
+    if (!this.#isAutomaticTextTooltip || !anchor) return false
+    return Array.from(anchor.children).some(
+      (child) =>
+        child !== this &&
+        child.localName === 'a-tooltip' &&
+        !child.hasAttribute(AUTOMATIC_TEXT_TOOLTIP),
+    )
+  }
+
+  /** Text rendered by the anchor, excluding every tooltip's light-DOM content.
+   *  An automatic text tooltip has no light children itself, but nested custom
+   *  tooltips might; including their hidden content would produce a misleading
+   *  fallback string. */
+  private anchorText(): string {
+    const read = (node: Node): string => {
+      if (node.nodeType === 3) return node.textContent ?? ''
+      if (node.nodeType === 1 && (node as Element).localName === 'a-tooltip') return ''
+      return Array.from(node.childNodes).map(read).join('')
+    }
+    return this.anchor ? Array.from(this.anchor.childNodes).map(read).join('').trim() : ''
+  }
+
+  private syncAutomaticTextContent() {
+    if (this.#isAutomaticTextTooltip) this.bubble.textContent = this.anchorText()
+  }
+
   /** The element whose overflow decides whether the tooltip shows: a
    *  `truncated-selector` resolved within the anchor wins; else the first of
    *  Anta's ellipsizing label parts inside the anchor; else the anchor itself
@@ -431,6 +469,10 @@ export class ATooltipElement extends HTMLElementBase {
   private isTargetTruncated(): boolean {
     const t = this.resolveTruncationTarget()
     if (!t) return false
+    // `a-text` owns the clamping box in shadow DOM. Its host itself does not
+    // overflow, so consume the element's read-only UI-thread measurement first.
+    const reported = (t as HTMLElement & { isTruncated?: unknown }).isTruncated
+    if (typeof reported === 'boolean') return reported
     if (t.clientWidth === 0 && t.clientHeight === 0) return false
     return t.scrollWidth - t.clientWidth > 1 || t.scrollHeight - t.clientHeight > 1
   }
@@ -440,6 +482,7 @@ export class ATooltipElement extends HTMLElementBase {
    *  (so formatting whitespace / an empty conditional doesn't open a blank bubble).
    *  Re-checked on every show(), so a tooltip populated later self-corrects. */
   private isEmpty(): boolean {
+    if (this.#isAutomaticTextTooltip) return this.anchorText() === ''
     return this.children.length === 0 && (this.textContent ?? '').trim() === ''
   }
 
@@ -460,10 +503,16 @@ export class ATooltipElement extends HTMLElementBase {
     if (typeof MutationObserver === 'undefined') return
     if (!this.contentObserver) {
       this.contentObserver = new MutationObserver(() => {
-        if (this.shown && this.isEmpty()) this.hide()
+        if (!this.shown) return
+        this.syncAutomaticTextContent()
+        if (this.isEmpty()) this.hide()
       })
     }
-    this.contentObserver.observe(this, { childList: true, characterData: true, subtree: true })
+    this.contentObserver.observe(this.#isAutomaticTextTooltip ? this.anchor ?? this : this, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    })
   }
 
   // --- positioning (sets only the shadow container's own transform) ---
@@ -557,12 +606,14 @@ export class ATooltipElement extends HTMLElementBase {
     // tooltip (anchor inside the menu) still shows, above the menu. Mirrors the
     // menu dismissing its own trigger's tooltip on open.
     if (isMenuOpen() && !isInsideOpenMenu(this.anchor)) return
+    if (this.hasExplicitTextTooltip()) return
     // Nothing to show → don't open a blank bubble (checked here so every show
     // path — hot-path, focus, touch long-press — is covered).
     if (this.isEmpty()) return
     // truncated-only: bail unless the target is actually clipped (covers the
     // hot-path, focus, and touch long-press, which call show() directly).
     if (this.#truncatedOnly && !this.isTargetTruncated()) return
+    this.syncAutomaticTextContent()
     this.cancelHide() // re-showing (or a hand-off) cancels any pending close
     // Nested anchors: if this anchor *contains* the currently-open tooltip's
     // anchor, an inner (descendant) tooltip is showing — defer to it instead
@@ -702,6 +753,7 @@ export class ATooltipElement extends HTMLElementBase {
    *  show with the latest cursor event. */
   private trigger(e?: MouseEvent) {
     // Don't even arm the delayed show for an empty or non-truncated target.
+    if (this.hasExplicitTextTooltip()) return
     if (this.isEmpty()) return
     if (this.#truncatedOnly && !this.isTargetTruncated()) return
     if (isHot()) {

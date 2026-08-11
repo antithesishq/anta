@@ -757,6 +757,10 @@ code[data-copied]::after {
   max-width: 960px;
   margin-inline: auto;
 }
+
+.content > :is(h1, .changelog) {
+  margin-inline-start: 0;
+}
 .content > .full-bleed,
 .disclosure > .body > .full-bleed {
   max-width: none;

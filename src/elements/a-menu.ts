@@ -12,14 +12,6 @@ const SUBMENU_OPEN_DELAY = 130
 const SUBMENU_CLOSE_DELAY = 130
 /** Typeahead buffer reset window (ms). */
 const TYPEAHEAD_RESET = 500
-/** The open system dismisses once its trigger has scrolled so that less than this
- *  fraction of it still overlaps the spot it occupied when the menu opened — a
- *  size-proportional delta (an IntersectionObserver threshold), not a fixed px.
- *  See trackPosition: this replaces a raw scroll listener, so it reacts to the
- *  anchor moving for ANY reason (page scroll, a scroll container, a layout shift)
- *  and never self-dismisses from the page nudge that opening can cause. */
-const ANCHOR_VISIBLE_RATIO = 0.5
-
 /** Triggers that turn Enter/Space into a click on their own — native
  *  buttons/links, `[role=button]`, and `<a-button>`. The keyboard-open skips
  *  them: their click already opens, so a second open would toggle shut. */
@@ -61,10 +53,6 @@ const openStack: AMenuElement[] = []
 let docBound = false
 let boundDoc: Document | null = null
 let boundView: (Window & typeof globalThis) | null = null
-/** Disconnect for the open system's anchor position tracker (see trackPosition /
- *  armPositionTracker). The system dismisses when the root trigger scrolls out of
- *  the spot it held at open, instead of on raw scroll events. */
-let removePosTracker: (() => void) | null = null
 
 function bindDocListeners(doc: Document, view: Window & typeof globalThis) {
   if (docBound) return
@@ -85,54 +73,9 @@ function unbindDocListeners() {
   boundDoc?.removeEventListener('keyup', onDocKeyUp, true)
   boundDoc?.removeEventListener('contextmenu', onDocContextMenu, true)
   boundView?.removeEventListener('resize', onResize)
-  removePosTracker?.()
-  removePosTracker = null
   boundDoc = null
   boundView = null
   docBound = false
-}
-
-/** Fire `onEscape` once `el` has moved so that less than ANCHOR_VISIBLE_RATIO of
- *  it still overlaps the rect it occupied at setup. An IntersectionObserver whose
- *  root is shrunk (via negative rootMargin) to el's current rect; el sliding past
- *  the threshold drops `isIntersecting`. Read-only (no DOM mutation). Returns a
- *  disconnect fn. (Ported from the prior menu's browser_utils.trackPosition.) */
-function trackPosition(el: HTMLElement, onEscape: () => void): () => void {
-  if (typeof IntersectionObserver === 'undefined') return () => {}
-  const doc = el.ownerDocument
-  // Window the observer to el's OWN box — it's the element we observe, so the
-  // intersection ratio is (el ∩ window) / el, ≈1 at rest and only dropping as el
-  // scrolls away. Do NOT use anchorRect here: getAnchorRect may advertise a
-  // sub-region (a-input returns its `.field`, excluding the label + hint), and
-  // windowing the full host to that smaller rect starts the ratio below the
-  // threshold — a tall label+hint field would self-dismiss the instant it opened.
-  // (Positioning still uses anchorRect elsewhere, to align the menu to the field.)
-  const rect = el.getBoundingClientRect()
-  const vw = doc.documentElement.clientWidth
-  const vh = doc.documentElement.clientHeight
-  // Negative margins shrink the viewport root down to el's current rect.
-  const rootMargin = `${-rect.top}px ${-(vw - rect.right)}px ${-(vh - rect.bottom)}px ${-rect.left}px`
-  // Root choice depends on the frame context:
-  //   • Top level: `null` (the viewport). The negative rootMargin windows the
-  //     viewport to el's open-time rect, so scrolling el out of view drops the
-  //     ratio and dismisses — what we want. A pinned `documentElement` root
-  //     scrolls together with el, so its ratio never drops and the menu floats
-  //     detached, which is wrong here.
-  //   • Inside an iframe: a `null` root resolves against the TOP-LEVEL viewport,
-  //     so the iframe-relative rootMargin windows the wrong region and reports the
-  //     at-rest anchor out-of-view, dismissing a frame after it opens.
-  //     `documentElement` keeps the measurement iframe-local (and, scrolling with
-  //     el, leaves an embedded preview's menu open as the outer page scrolls).
-  const win = doc.defaultView
-  const root = win && win !== win.top ? doc.documentElement : null
-  const io = new IntersectionObserver(
-    ([entry]) => {
-      if (!entry.isIntersecting) onEscape()
-    },
-    { root, rootMargin, threshold: ANCHOR_VISIBLE_RATIO },
-  )
-  io.observe(el)
-  return () => io.disconnect()
 }
 
 /** A node is "inside the open menu system" if the event path crosses any
@@ -1016,7 +959,6 @@ export class AMenuElement extends HTMLElementBase {
     openStack.push(this)
     if (wasEmpty) {
       bindDocListeners(this.doc, this.view)
-      this.armPositionTracker()
     }
 
     const search = this.#searchField
@@ -1050,21 +992,6 @@ export class AMenuElement extends HTMLElementBase {
       this.position(undefined, false, true)
     })
     this.comboObserver.observe(this, { childList: true })
-  }
-
-  /** Watch the root trigger and dismiss the system once it scrolls out of the
-   *  spot it held at open (see trackPosition). Deferred a frame so the trigger's
-   *  post-open layout has settled before the rect is snapshotted; guarded in case
-   *  the menu closed in between. Tracks the root anchor only — submenus ride
-   *  inside it, so if the root anchor goes, the whole system should go. */
-  private armPositionTracker() {
-    const anchor = this.triggerAnchor
-    if (!anchor) return
-    this.view.requestAnimationFrame(() => {
-      if (!this._shown || openStack[0] !== this) return
-      removePosTracker?.()
-      removePosTracker = trackPosition(anchor, () => dismiss())
-    })
   }
 
   /** Apply CLOSE to the DOM (no event). Closes this menu and everything stacked

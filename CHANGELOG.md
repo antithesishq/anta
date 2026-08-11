@@ -3,6 +3,20 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- `Select`, `SelectFaceted`, `InputAutocomplete`, `RadioGroup`, and `Tabs`
+  option objects accept `className`, `style`, `title`, and safe `data-*`
+  attributes on their rendered rows. `data-menu-*` remains component-owned.
+
+### Fixed
+
+- Tab panels no longer add a default tab stop.
+- Menus no longer dismiss when their visible trigger changes size. They request
+  dismissal only after the trigger leaves the viewport.
+
 ## 0.3.20 — August 4, 2026
 
 ### Changed

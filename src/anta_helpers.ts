@@ -1,8 +1,34 @@
 import { jsx, useState, useMemo } from "./jsx-runtime"
 import type { IconShape } from "./elements/a-icon.shapes"
+import type { OptionPresentationProps } from "./general_types"
 
 export function hasChildren(children: React.ReactNode): boolean {
   return Array.isArray(children) ? children.length > 0 : children != null
+}
+
+/**
+ * Select the safe presentation attributes from a data-rendered option. Option
+ * objects often carry application data, so wrappers must never spread them onto
+ * their rendered element. Menu rows also own `data-menu-*`: those attributes
+ * control closing and combobox navigation, and letting an option replace them
+ * would desynchronize its selection behavior.
+ */
+export function optionPresentationAttrs(
+  option: OptionPresentationProps,
+  menu = false,
+): OptionPresentationProps {
+  const attrs: Record<string, unknown> = {}
+  for (const [name, value] of Object.entries(option)) {
+    if (
+      name === 'className' ||
+      name === 'style' ||
+      name === 'title' ||
+      (name.startsWith('data-') &&
+        (!menu || (!name.startsWith('data-menu-') && name !== 'data-anta-menu-item')))
+    )
+      attrs[name] = value
+  }
+  return attrs as OptionPresentationProps
 }
 
 /**

@@ -11,7 +11,7 @@
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
 import { useState, useMemo, useId } from '../jsx-runtime'
-import { nativeStateChange } from '../anta_helpers'
+import { nativeStateChange, optionPresentationAttrs } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { SelectOption } from './Select'
@@ -180,25 +180,31 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
         }}
         onactivedescendant={(e: any) => setActiveId(nativeStateChange<{ id: string | null }>(e).detail?.id ?? null)}
       >
-        {visible.map((opt, i) => (
-          <MenuItem
-            key={`${rid}-${opt.value}-${i}`}
-            id={`${rid}-o${i}`}
-            role="option"
-            aria-selected={activeId === `${rid}-o${i}` ? 'true' : 'false'}
-            icon={opt.icon}
-            label={highlight(opt.label ?? opt.value, queryRe)}
-            hint={opt.hint ? highlight(opt.hint, queryRe) : opt.hint}
-            tone={opt.tone}
-            disabled={opt.disabled}
-            value={opt.value}
-            // Keep focus in the field on a mouse pick: preventing the row's
-            // mousedown default stops it taking focus (it's tabIndex=0), so the
-            // click still selects but focus never leaves the input.
-            onMouseDown={(e: any) => e.preventDefault()}
-            onSelect={() => pick(opt)}
-          />
-        ))}
+        {visible.map((opt, i) => {
+          const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(opt, true)
+          return (
+            <MenuItem
+              key={`${rid}-${opt.value}-${i}`}
+              {...optionAttrs}
+              id={`${rid}-o${i}`}
+              role="option"
+              aria-selected={activeId === `${rid}-o${i}` ? 'true' : 'false'}
+              icon={opt.icon}
+              label={highlight(opt.label ?? opt.value, queryRe)}
+              hint={opt.hint ? highlight(opt.hint, queryRe) : opt.hint}
+              tone={opt.tone}
+              disabled={opt.disabled}
+              value={opt.value}
+              // Keep focus in the field on a mouse pick: preventing the row's
+              // mousedown default stops it taking focus (it's tabIndex=0), so the
+              // click still selects but focus never leaves the input.
+              onMouseDown={(e: any) => e.preventDefault()}
+              onSelect={() => pick(opt)}
+              className={optionClassName}
+              style={optionStyle}
+            />
+          )
+        })}
       </Menu>
     </>
   )

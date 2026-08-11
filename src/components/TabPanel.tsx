@@ -3,8 +3,7 @@
  * finds its `<a-tabs>` (its flat sibling under the same parent — `Tabs` renders the
  * strip and panels with no wrapper), matches by `value`, and shows/hides itself
  * off-DOM. This wrapper is a pure projection: it sets the static ARIA (`role`,
- * `tabindex`, `value`) and passes `children` straight through; `Tabs` never reads
- * or toggles it.
+ * `value`) and passes `children` straight through; `Tabs` never reads or toggles it.
  *
  * Use it as a direct child of `<Tabs>`, paired to an `options` entry by `value`.
  * For a strip and panels in different layout regions (no shared parent), or to
@@ -32,7 +31,6 @@ export const TabPanel = ({ value, children, hideMode, className, style }: TabPan
   <a-tabpanel
     value={value}
     role="tabpanel"
-    tabIndex={0}
     // 'display' is the implicit default — only the visibility variant needs the attr.
     hide-mode={hideMode === "visibility" ? "visibility" : undefined}
     class={className}

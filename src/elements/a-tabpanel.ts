@@ -14,8 +14,8 @@ import "./a-tabpanel.css";
 //
 // It never writes a light-DOM attribute (on itself or anything else): a web
 // component mutating light DOM would desync the worker-thread reactive model that
-// owns the light tree. The `Tabs` wrapper only renders it — `role` / `tabindex` /
-// `value` / `hide-mode` are static, JSX-set — and never toggles it.
+// owns the light tree. The `Tabs` wrapper only renders it — `role` / `value` /
+// `hide-mode` are static, JSX-set — and never toggles it.
 //
 // Coordination is by DOM scope: the panel and its <a-tabs> are flat siblings under
 // one parent (`this.parentElement`) — `Tabs` renders them with no wrapper element —

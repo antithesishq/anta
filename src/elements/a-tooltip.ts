@@ -119,19 +119,56 @@ function releaseOpen(el: ATooltipElement) {
 /* ------------------------------------------------------------------ *
  * Lazy-listener observer: attach the (relatively heavy) hover/focus
  * listeners only while the anchor is actually on-screen, mirroring the
- * legacy behavior. One observer for every <a-tooltip> on the page.
+ * legacy behavior. An anchor may own more than one tooltip: JSX <Text>
+ * appends an automatic truncated-text tooltip after a consumer-provided one.
+ * The consumer tooltip wins, and the registry keeps the automatic tooltip
+ * ready to take over again if that consumer tooltip is removed.
  * ------------------------------------------------------------------ */
-const anchorToTooltip = new WeakMap<Element, ATooltipElement>()
+type TooltipRegistry = {
+  tooltips: Set<ATooltipElement>
+  intersecting: boolean
+}
+
+const anchorToTooltips = new WeakMap<Element, TooltipRegistry>()
+
+/** Last connected explicit tooltip wins, preserving the prior last-write-wins
+ * behavior for multiple consumer tooltips while letting it take precedence
+ * over Text's trailing automatic tooltip. */
+function preferredTooltip(registry: TooltipRegistry): ATooltipElement | undefined {
+  let automatic: ATooltipElement | undefined
+  let explicit: ATooltipElement | undefined
+  for (const tooltip of registry.tooltips) {
+    if (tooltip.hasAttribute(AUTOMATIC_TEXT_TOOLTIP)) automatic = tooltip
+    else explicit = tooltip
+  }
+  return explicit ?? automatic
+}
+
+/** Keep listener ownership with the preferred tooltip for an anchor. The
+ * observer state is shared so a tooltip that takes over after a sibling is
+ * added or removed follows the same off-screen lazy-listening rule. */
+function syncAnchorListeners(anchor: Element, registry: TooltipRegistry) {
+  const preferred = preferredTooltip(registry)
+  for (const tooltip of registry.tooltips) {
+    if (tooltip !== preferred) tooltip.teardownListeners()
+  }
+  if (!preferred || !registry.intersecting) {
+    preferred?.teardownListeners()
+    return
+  }
+  requestAnimationFrame(() => {
+    const current = anchorToTooltips.get(anchor)
+    if (current !== registry || !current.intersecting || preferredTooltip(current) !== preferred) return
+    preferred.setupListeners()
+  })
+}
 
 function handleIntersection(entries: IntersectionObserverEntry[]) {
   for (const entry of entries) {
-    const tooltip = anchorToTooltip.get(entry.target)
-    if (!tooltip) continue
-    if (!tooltip.listening && entry.isIntersecting) {
-      requestAnimationFrame(() => tooltip.setupListeners())
-    } else if (tooltip.listening && !entry.isIntersecting) {
-      requestAnimationFrame(() => tooltip.teardownListeners())
-    }
+    const registry = anchorToTooltips.get(entry.target)
+    if (!registry) continue
+    registry.intersecting = entry.isIntersecting
+    syncAnchorListeners(entry.target, registry)
   }
 }
 
@@ -342,8 +379,14 @@ export class ATooltipElement extends HTMLElementBase {
     const parent = this.parentElement
     if (!parent) return
     this.anchor = parent
-    anchorToTooltip.set(parent, this)
-    lazyObserver?.observe(parent)
+    let registry = anchorToTooltips.get(parent)
+    if (!registry) {
+      registry = { tooltips: new Set(), intersecting: false }
+      anchorToTooltips.set(parent, registry)
+      lazyObserver?.observe(parent)
+    }
+    registry.tooltips.add(this)
+    syncAnchorListeners(parent, registry)
   }
 
   disconnectedCallback() {
@@ -352,9 +395,14 @@ export class ATooltipElement extends HTMLElementBase {
     // coordinator slot. (Don't wait out the fade — the element is going away.)
     this.cleanup()
     if (this.anchor) {
-      if (anchorToTooltip.get(this.anchor) === this) {
-        anchorToTooltip.delete(this.anchor)
+      const anchor = this.anchor
+      const registry = anchorToTooltips.get(anchor)
+      registry?.tooltips.delete(this)
+      if (registry && registry.tooltips.size === 0) {
+        anchorToTooltips.delete(anchor)
         lazyObserver?.unobserve(this.anchor)
+      } else if (registry) {
+        syncAnchorListeners(anchor, registry)
       }
       this.anchor = null
     }

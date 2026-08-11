@@ -778,7 +778,6 @@ the same thing):
 | `tooltip` | `React.ReactNode` | Row tooltip. In a `multiple` select with `selectAll`, a row with no `tooltip` shows the default "select only this" (Alt/⌥-click) hint; set it to override, or `''` to suppress. |
 | `className` | `string` | CSS class on the rendered menu row. |
 | `style` | `React.CSSProperties` | Inline styles on the rendered menu row. |
-| `title` | `string` | Native browser tooltip on the rendered menu row. |
 | `data-*` | `unknown` | Data attributes on the rendered menu row. `data-menu-*` is reserved for Select's selection and keyboard behavior. |
 | `[key: string]` | `unknown` | Your own data — attach anything and read it back in `renderOption`. |
 

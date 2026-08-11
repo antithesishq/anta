@@ -292,7 +292,7 @@
   --border-4-info: hsl(208.52deg 62.89% 14%);
   --border-5-info: hsl(207.78deg 65.85% 10.5%);
 
-  --focus-ring: var(--text-2-brand);
+  --focus-ring: #a897fc;
 }
 
 /* ── 2. Bespoke component ramps — hand-tuned literals ─────────────────────── */

@@ -8,7 +8,7 @@ changes are not listed.
 ### Added
 
 - `Select`, `SelectFaceted`, `InputAutocomplete`, `RadioGroup`, and `Tabs`
-  option objects accept `className`, `style`, `title`, and safe `data-*`
+  option objects accept `className`, `style`, and safe `data-*`
   attributes on their rendered rows. `data-menu-*` remains component-owned.
 
 ### Fixed
@@ -18,7 +18,7 @@ changes are not listed.
   dismissal only after the trigger leaves the viewport.
 - JSX `Text` now shows its clipped content in a tooltip by default. A nested
   `Tooltip` replaces it, and expandable text does not add one.
-- The Anta light palette now uses the shared focus-ring color.
+- The Anta theme now uses the shared focus-ring colors in light and dark modes.
 
 ## 0.3.20 — August 4, 2026
 

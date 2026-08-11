@@ -162,10 +162,9 @@ function onDocKeyUp(e: KeyboardEvent) {
   menu.handleKeyUp(e)
 }
 
-/** Dismiss the open system (outside-click / resize / anchor scrolled out of
- *  view). Routed through the root's `requestClose`, so it emits `statechange` and
- *  respects a controlled root (which stays open until the consumer flips
- *  `state`). */
+/** Dismiss the open system after an outside interaction or resize. Routed through
+ *  the root's `requestClose`, so it emits `statechange` and respects a controlled
+ *  root (which stays open until the consumer flips `state`). */
 function dismiss(originEvent?: Event) {
   openStack[0]?.requestClose(originEvent)
 }
@@ -662,18 +661,14 @@ export class AMenuElement extends HTMLElementBase {
         el.getAttribute('aria-selected') === 'true',
     )
     if (selected) this.scrollItemIntoView(selected)
-    // `preventScroll`: the surface is already positioned in-view, so letting the
-    // browser scroll the document to the freshly-focused item is redundant — and
-    // when the item sits near a viewport edge that programmatic scroll fires the
-    // just-bound scroll-dismiss listener, closing the menu the instant it opens.
-    // scrollItemIntoView (above) handles bringing a selected row into view by
-    // touching only the internal scroll container.
+    // `preventScroll`: the surface is already positioned in view. When needed,
+    // scrollItemIntoView (above) brings the selected row into view by touching
+    // only the internal scroll container.
     if (viaKeyboard) (selected ?? items[0])?.focus({ preventScroll: true })
   }
 
   /** Scroll THIS menu's body so `item` sits inside the visible scroll viewport,
-   *  touching only the internal `.scroll` container — never the document, whose
-   *  scroll would trip the anchor-scrolled-out dismiss. No-op for a menu short
+   *  touching only the internal `.scroll` container. No-op for a menu short
    *  enough not to scroll. */
   private scrollItemIntoView(item: HTMLElement) {
     const c = this.scrollEl

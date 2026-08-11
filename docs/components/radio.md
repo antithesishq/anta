@@ -27,6 +27,10 @@ styled like `Input`'s hint.
 The group's own `label` and `hint` form a header **above** the options: the
 `label` first, the `hint` (an instruction for the whole set) directly under it.
 
+Each option can also set `className`, `style`, and `data-*`.
+`RadioGroup` forwards them to that option's `<a-radio>` so you can add
+per-option presentation and application metadata.
+
 ## Tones
 
 ```tsx

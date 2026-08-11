@@ -37,8 +37,6 @@ export interface OptionPresentationProps {
   className?: string
   /** Inline styles on the option's rendered row. */
   style?: React.CSSProperties
-  /** Native browser tooltip on the option's rendered row. */
-  title?: string
   /** Additional data attributes on the option's rendered row. */
   [key: `data-${string}`]: unknown
 }

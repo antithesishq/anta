@@ -22,7 +22,6 @@ export function optionPresentationAttrs(
     if (
       name === 'className' ||
       name === 'style' ||
-      name === 'title' ||
       (name.startsWith('data-') &&
         (!menu || (!name.startsWith('data-menu-') && name !== 'data-anta-menu-item')))
     )

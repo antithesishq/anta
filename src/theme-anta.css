@@ -311,9 +311,7 @@
 @layer anta {
 
 /* Button ------------------------------------------------------------------- */
-/* Neutral base — omitted and explicit `tone="neutral"` both out-specify the
-   element's bare `a-button` base (order-independent). A custom `tone` falls
-   through to the element's higher-specificity `[tone]:not(…named)` rule. */
+/* Neutral literals apply when tone is omitted or explicitly neutral. */
 a-button:is(:not([tone]), [tone="neutral"]),
 a[role="button"][data-anta]:is(:not([tone]), [tone="neutral"]),
 button[data-anta]:is(:not([tone]), [tone="neutral"]),

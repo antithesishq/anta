@@ -3,6 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Buttons with an explicit `tone="neutral"` now receive their neutral theme
+  colors in light and dark modes.
+
 ## 0.3.21 — August 11, 2026
 
 ### Added

@@ -541,9 +541,6 @@
       }
     }
 
-    &[selected] {
-      box-shadow: inset 0 0 0 0.5px currentColor;
-    }
 
     &[disabled] {
       background-color: var(--bg-secondary-disabled);

@@ -1,0 +1,24 @@
+{
+  "id": "077",
+  "behavior": {
+    "mode": "form",
+    "type": "submit",
+    "outsideForm": false
+  },
+  "content": {
+    "kind": "icon-label",
+    "icon": "filter",
+    "label": "Delete"
+  },
+  "priority": "quaternary",
+  "tone": "neutral",
+  "size": "small",
+  "disabled": false,
+  "loading": true,
+  "selected": true,
+  "round": false,
+  "inherited": {
+    "id": "button-77",
+    "slot": "actions"
+  }
+}

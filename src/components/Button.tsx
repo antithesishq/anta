@@ -227,7 +227,6 @@ export const Button = ({
     // own `aria-label` (via ...rest) wins by spread order — that's the channel
     // ButtonCopy uses to name an icon-only copy button "Copy".
     'aria-label': isIconOnly ? icon : undefined,
-    class: className,
     style: computedStyle,
   } as const
 
@@ -257,6 +256,7 @@ export const Button = ({
         rel={rel}
         download={download}
         ping={ping}
+        className={className}
         {...sharedAttrs as any}
         {...rest}
       >
@@ -269,6 +269,7 @@ export const Button = ({
     <a-button
       type={type}
       form={form}
+      class={className}
       {...sharedAttrs}
       {...rest}
     >

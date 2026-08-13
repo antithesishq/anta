@@ -1,0 +1,23 @@
+{
+  "id": "050",
+  "behavior": {
+    "mode": "form",
+    "type": "button",
+    "outsideForm": false
+  },
+  "content": {
+    "kind": "children-text",
+    "children": "Filter"
+  },
+  "priority": "tertiary",
+  "tone": "brand",
+  "size": "medium",
+  "disabled": false,
+  "loading": false,
+  "selected": true,
+  "round": true,
+  "inherited": {
+    "slot": "actions",
+    "className": "harness-button"
+  }
+}

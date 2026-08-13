@@ -1,0 +1,24 @@
+{
+  "id": "008",
+  "behavior": {
+    "mode": "form",
+    "type": "reset",
+    "outsideForm": false
+  },
+  "content": {
+    "kind": "children-text",
+    "children": "Save"
+  },
+  "priority": "primary",
+  "tone": "critical",
+  "size": "medium",
+  "disabled": true,
+  "loading": false,
+  "selected": false,
+  "round": 0,
+  "inherited": {
+    "id": "button-8",
+    "slot": "actions",
+    "className": "harness-button"
+  }
+}

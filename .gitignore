@@ -21,3 +21,4 @@ site/public/themes/anta.css
 .dev.pid
 .dev.parallel.pid
 site/public/iframe/
+tests/bombadil-output/

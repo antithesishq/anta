@@ -1,0 +1,23 @@
+{
+  "id": "021",
+  "behavior": {
+    "mode": "href",
+    "href": "#target"
+  },
+  "content": {
+    "kind": "label",
+    "label": "Résumé"
+  },
+  "priority": "primary",
+  "tone": "neutral",
+  "size": "small",
+  "disabled": true,
+  "loading": true,
+  "selected": false,
+  "round": 10,
+  "inherited": {
+    "id": "button-21",
+    "title": "Generated Button",
+    "slot": "actions"
+  }
+}

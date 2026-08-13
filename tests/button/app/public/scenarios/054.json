@@ -1,0 +1,23 @@
+{
+  "id": "054",
+  "behavior": {
+    "mode": "form",
+    "type": "reset",
+    "outsideForm": false
+  },
+  "content": {
+    "kind": "children-text",
+    "children": "Open"
+  },
+  "priority": "primary",
+  "tone": "info",
+  "size": "small",
+  "disabled": true,
+  "loading": false,
+  "selected": false,
+  "round": 0,
+  "inherited": {
+    "id": "button-54",
+    "className": "harness-button"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "029",
+  "behavior": {
+    "mode": "form",
+    "type": "submit",
+    "outsideForm": true
+  },
+  "content": {
+    "kind": "children-text",
+    "children": "Filter"
+  },
+  "priority": "primary",
+  "tone": "success",
+  "size": "medium",
+  "disabled": false,
+  "loading": false,
+  "selected": true,
+  "round": 10,
+  "inherited": {
+    "title": "Generated Button",
+    "slot": "actions",
+    "className": "harness-button"
+  }
+}

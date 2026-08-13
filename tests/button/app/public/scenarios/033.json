@@ -1,0 +1,22 @@
+{
+  "id": "033",
+  "behavior": {
+    "mode": "plain"
+  },
+  "content": {
+    "kind": "label-trailing-icon",
+    "label": "Continue",
+    "iconTrailing": "dots-vertical"
+  },
+  "priority": "secondary",
+  "tone": "brand",
+  "size": "small",
+  "disabled": false,
+  "loading": true,
+  "selected": true,
+  "round": 0,
+  "inherited": {
+    "id": "button-33",
+    "slot": "actions"
+  }
+}

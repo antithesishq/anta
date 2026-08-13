@@ -1,0 +1,23 @@
+:root { color-scheme: light; font-family: var(--sans-serif, system-ui); background: var(--bg-1, #f7f5f7); color: var(--text-1, #242126); }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button { font: inherit; }
+.harness { height: 100vh; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 38vw); grid-template-rows: auto minmax(0, 1fr) auto; background: var(--bg-1, #f7f5f7); color: var(--text-1, #242126); }
+header { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border-2, #ddd8de); background: var(--bg-1, white); font-weight: 600; }
+header a-tag:first-of-type { margin-left: auto; }
+.theme-toggle, .scenario-control { border: 1px solid var(--border-3, #c9c2ca); border-radius: 5px; color: inherit; background: transparent; cursor: pointer; }
+.theme-toggle { padding: 5px 8px; }
+.theme-toggle:hover, .scenario-control:hover { background: var(--bg-2, #f1eef2); }
+.stage { display: grid; place-items: center; min-height: 0; padding: 32px; background: var(--bg-2, #f1eef2); }
+.stage-card { min-width: min(100%, 420px); min-height: 180px; display: grid; place-items: center; gap: 16px; padding: 32px; border: 1px solid var(--border-2, #ddd8de); border-radius: 12px; background: var(--bg-1, white); box-shadow: 0 16px 48px color-mix(in oklch, #1e1920 12%, transparent); }
+.stage-card p { margin: 0; color: var(--text-3, #706a72); font-size: 13px; }
+.stage-card form { display: grid; justify-items: center; gap: 12px; }
+.stage-card input { width: 180px; padding: 6px 8px; border: 1px solid var(--border-3, #c9c2ca); border-radius: 4px; }
+aside { min-height: 0; overflow: hidden; border-left: 1px solid var(--border-2, #ddd8de); background: var(--bg-1, white); }
+.inspector-editor { height: 100%; }
+footer { grid-column: 1 / -1; display: flex; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--border-2, #ddd8de); background: var(--bg-1, white); }
+.scenario-control { padding: 6px 10px; }
+.scenario-control:last-child { margin-left: auto; }
+.loading { padding: 32px; }
+.dark { color-scheme: dark; }
+@media (max-width: 700px) { .harness { grid-template-columns: 1fr; grid-template-rows: auto minmax(320px, 1fr) minmax(240px, 38vh) auto; } aside { border-left: 0; border-top: 1px solid var(--border-2, #ddd8de); } }

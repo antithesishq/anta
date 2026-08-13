@@ -1,0 +1,20 @@
+{
+  "id": "003",
+  "behavior": {
+    "mode": "href",
+    "href": "/test-path"
+  },
+  "content": {
+    "kind": "empty-children",
+    "children": ""
+  },
+  "priority": "quaternary",
+  "tone": "brand",
+  "disabled": false,
+  "loading": true,
+  "selected": false,
+  "round": false,
+  "inherited": {
+    "id": "button-3"
+  }
+}

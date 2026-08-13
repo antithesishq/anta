@@ -1,0 +1,25 @@
+{
+  "id": "004",
+  "behavior": {
+    "mode": "href",
+    "href": "#target"
+  },
+  "content": {
+    "kind": "icon-label",
+    "icon": "trash",
+    "label": "Open"
+  },
+  "priority": "tertiary",
+  "tone": "info",
+  "size": "small",
+  "disabled": false,
+  "loading": true,
+  "selected": true,
+  "round": true,
+  "inherited": {
+    "id": "button-4",
+    "title": "Generated Button",
+    "slot": "actions",
+    "className": "harness-button"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "056",
+  "behavior": {
+    "mode": "href",
+    "href": "/test-path"
+  },
+  "content": {
+    "kind": "label-trailing-icon",
+    "label": "Save",
+    "iconTrailing": "check"
+  },
+  "priority": "secondary",
+  "tone": "warning",
+  "size": "medium",
+  "disabled": false,
+  "loading": false,
+  "selected": true,
+  "round": 0,
+  "inherited": {
+    "id": "button-56",
+    "slot": "actions"
+  }
+}

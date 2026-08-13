@@ -1,0 +1,22 @@
+{
+  "id": "093",
+  "behavior": {
+    "mode": "form",
+    "type": "reset",
+    "outsideForm": false
+  },
+  "content": {
+    "kind": "icon-only",
+    "icon": "check"
+  },
+  "priority": "secondary",
+  "tone": "info",
+  "size": "large",
+  "disabled": false,
+  "loading": true,
+  "selected": false,
+  "round": true,
+  "inherited": {
+    "slot": "actions"
+  }
+}

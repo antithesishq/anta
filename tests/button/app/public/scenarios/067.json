@@ -1,0 +1,23 @@
+{
+  "id": "067",
+  "behavior": {
+    "mode": "form",
+    "type": "submit",
+    "outsideForm": true
+  },
+  "content": {
+    "kind": "icon-only",
+    "icon": "check"
+  },
+  "priority": "secondary",
+  "tone": "info",
+  "size": "small",
+  "disabled": false,
+  "loading": false,
+  "selected": false,
+  "round": 10,
+  "inherited": {
+    "title": "Generated Button",
+    "className": "harness-button"
+  }
+}

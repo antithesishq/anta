@@ -1,0 +1,22 @@
+{
+  "id": "020",
+  "behavior": {
+    "mode": "href",
+    "href": "#target"
+  },
+  "content": {
+    "kind": "label",
+    "label": "Résumé"
+  },
+  "priority": "primary",
+  "tone": "neutral",
+  "size": "small",
+  "disabled": true,
+  "loading": true,
+  "selected": false,
+  "round": 10,
+  "inherited": {
+    "title": "Generated Button",
+    "slot": "actions"
+  }
+}

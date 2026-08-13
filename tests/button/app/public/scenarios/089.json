@@ -1,0 +1,23 @@
+{
+  "id": "089",
+  "behavior": {
+    "mode": "href",
+    "href": "/test-path"
+  },
+  "content": {
+    "kind": "children-number",
+    "children": 74
+  },
+  "priority": "secondary",
+  "tone": "success",
+  "size": "medium",
+  "disabled": false,
+  "loading": false,
+  "selected": false,
+  "round": false,
+  "inherited": {
+    "title": "Generated Button",
+    "slot": "actions",
+    "className": "harness-button"
+  }
+}

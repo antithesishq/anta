@@ -1,0 +1,22 @@
+{
+  "id": "041",
+  "behavior": {
+    "mode": "form",
+    "type": "reset",
+    "outsideForm": true
+  },
+  "content": {
+    "kind": "children-text",
+    "children": "Delete"
+  },
+  "priority": "quaternary",
+  "tone": "brand",
+  "size": "medium",
+  "disabled": false,
+  "loading": false,
+  "selected": false,
+  "round": 0,
+  "inherited": {
+    "slot": "actions"
+  }
+}

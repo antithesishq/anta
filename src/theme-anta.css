@@ -311,11 +311,11 @@
 @layer anta {
 
 /* Button ------------------------------------------------------------------- */
-/* Neutral literals apply when tone is omitted or explicitly neutral. */
-a-button:is(:not([tone]), [tone="neutral"]),
-a[role="button"][data-anta]:is(:not([tone]), [tone="neutral"]),
-button[data-anta]:is(:not([tone]), [tone="neutral"]),
-input[data-anta]:is([type="reset"], [type="submit"]):is(:not([tone]), [tone="neutral"]) {
+/* Neutral base. */
+a-button:not([tone]),
+a[role="button"][data-anta]:not([tone]),
+button[data-anta]:not([tone]),
+input[data-anta]:is([type="reset"], [type="submit"]):not([tone]) {
   --button-bg-primary-rest: #635b65;
   --button-bg-primary-hover: #534c57;
   --button-bg-primary-active: #49424c;
@@ -331,6 +331,13 @@ input[data-anta]:is([type="reset"], [type="submit"]):is(:not([tone]), [tone="neu
   --button-bg-tertiary-active: #44374b1a;
   --button-fg-quaternary-rest: #635b65;
   --button-fg-quaternary-hover: #49424c;
+}
+a-button[tone="neutral"], a[role="button"][data-anta][tone="neutral"], button[data-anta][tone="neutral"], input[data-anta]:is([type="reset"], [type="submit"])[tone="neutral"] {
+  --button-bg-primary-rest: #635b65; --button-bg-primary-hover: #534c57; --button-bg-primary-active: #49424c;
+  --button-bg-secondary-rest: #45374c12; --button-bg-secondary-hover: #44374b1a; --button-bg-secondary-active: #44374b26;
+  --button-fg-secondary-rest: #534c57; --button-fg-secondary-hover: #49424c; --button-fg-secondary-l-shift: 0.05;
+  --button-fg-tertiary-rest: #635b65; --button-fg-tertiary-hover: #534c57; --button-bg-tertiary-hover: #44374b0d; --button-bg-tertiary-active: #44374b1a;
+  --button-fg-quaternary-rest: #635b65; --button-fg-quaternary-hover: #49424c;
 }
 a-button[tone="brand"], a[role="button"][data-anta][tone="brand"], button[data-anta][tone="brand"], input[data-anta]:is([type="reset"], [type="submit"])[tone="brand"] {
   --button-bg-primary-rest: #5f4bc3; --button-bg-primary-hover: #503cb4; --button-bg-primary-active: #483493;
@@ -367,7 +374,14 @@ a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[da
   --button-fg-tertiary-rest: #c37416; --button-fg-tertiary-hover: #ae6613; --button-bg-tertiary-hover: #c374161a; --button-bg-tertiary-active: #c3741633;
   --button-fg-quaternary-rest: #c37416; --button-fg-quaternary-hover: #995200;
 }
-.dark a-button:is(:not([tone]), [tone="neutral"]), .dark a[role="button"][data-anta]:is(:not([tone]), [tone="neutral"]), .dark button[data-anta]:is(:not([tone]), [tone="neutral"]), .dark input[data-anta]:is([type="reset"], [type="submit"]):is(:not([tone]), [tone="neutral"]) {
+.dark a-button:not([tone]), .dark a[role="button"][data-anta]:not([tone]), .dark button[data-anta]:not([tone]), .dark input[data-anta]:is([type="reset"], [type="submit"]):not([tone]) {
+  --button-bg-primary-rest: #534c57; --button-bg-primary-hover: #635b65; --button-bg-primary-active: #938d96;
+  --button-bg-secondary-rest: #e4d1ef1c; --button-bg-secondary-hover: #e4d1ef24; --button-bg-secondary-active: #e4d1ef2e;
+  --button-fg-secondary-rest: #c1b9c1; --button-fg-secondary-hover: #d4ced4; --button-fg-secondary-l-shift: 0;
+  --button-fg-tertiary-rest: #afa9b1; --button-fg-tertiary-hover: #afa9b1; --button-bg-tertiary-hover: #e4d1ef14; --button-bg-tertiary-active: #e4d1ef21;
+  --button-fg-quaternary-rest: #afa9b1; --button-fg-quaternary-hover: #cac4ca;
+}
+.dark a-button[tone="neutral"], .dark a[role="button"][data-anta][tone="neutral"], .dark button[data-anta][tone="neutral"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="neutral"] {
   --button-bg-primary-rest: #534c57; --button-bg-primary-hover: #635b65; --button-bg-primary-active: #938d96;
   --button-bg-secondary-rest: #e4d1ef1c; --button-bg-secondary-hover: #e4d1ef24; --button-bg-secondary-active: #e4d1ef2e;
   --button-fg-secondary-rest: #c1b9c1; --button-fg-secondary-hover: #d4ced4; --button-fg-secondary-l-shift: 0;

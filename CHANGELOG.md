@@ -3,6 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Tags with an explicit `tone="neutral"` now receive the reference theme's neutral values.
+
 ## 0.3.21 — August 11, 2026
 
 ### Added

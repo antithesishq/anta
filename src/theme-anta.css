@@ -753,7 +753,8 @@ a-radio[tone="critical"],
 }
 
 /* ===== tag ===== */
-a-tag:not([tone]) {
+a-tag:not([tone]),
+a-tag[tone="neutral"] {
   --tag-tint: #44374b;
   --tag-bg-solid: #776e77;
   --tag-edge: var(--tag-tint);

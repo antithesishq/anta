@@ -3,6 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Checkbox, Radio, and Switch now show one focus ring around their visual control.
+
 ## 0.3.21 — August 11, 2026
 
 ### Added

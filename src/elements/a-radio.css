@@ -138,6 +138,7 @@
 
     /* Focus ring, roving-tabindex mode (the JSX wrapper path): real focus lands
        on the radio itself. See a-radio-group.ts for the two focus models. */
+    &:focus-visible { outline: none; }
     &:focus-visible::before {
       outline: 1px solid var(--focus-ring);
       outline-offset: 1px;

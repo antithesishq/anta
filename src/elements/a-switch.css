@@ -142,6 +142,7 @@
     }
     &:not(:disabled):active:state(checked)::before { background: var(--switch-track-on-active); }
 
+    &:focus-visible { outline: none; }
     &:focus-visible::before {
       outline: 1px solid var(--focus-ring);
       outline-offset: 1px;

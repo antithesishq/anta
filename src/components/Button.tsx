@@ -167,6 +167,7 @@ export const Button = ({
   disabled,
   selected,
   round,
+  onClick,
   href,
   target,
   rel,
@@ -183,6 +184,7 @@ export const Button = ({
   // Don't emit a bare `tone=""` (it matched the custom-tone branch and
   // resolved to a `transparent` source, rendering an invisible button).
   const toneAttr = tone || undefined
+  const unavailable = disabled || loading
   // A non-named tone is a literal CSS color: feed it to the element's oklch
   // derivation via the inline custom property (shared helper — see anta_helpers).
   const computedStyle = roundStyle(round, '--button-round', toneStyle(toneAttr, '--button-tone-source', style))
@@ -219,8 +221,8 @@ export const Button = ({
     // Disabled AND loading both leave the keyboard tab order — a loading
     // button blocks the mouse (pointer-events), so it must block Enter/Space
     // activation too, else the loading guard would be mouse-only.
-    tabIndex: disabled || loading ? -1 : 0,
-    'aria-disabled': disabled || loading ? 'true' : undefined,
+    tabIndex: unavailable ? -1 : 0,
+    'aria-disabled': unavailable ? 'true' : undefined,
     'aria-busy': loading ? 'true' : undefined,
     'aria-pressed': selected ? 'true' : undefined,
     // Icon-only buttons get an accessible name from the icon shape. Consumer's
@@ -229,6 +231,7 @@ export const Button = ({
     'aria-label': isIconOnly ? icon : undefined,
     class: className,
     style: computedStyle,
+    onClick,
   } as const
 
   const inner = (
@@ -241,6 +244,20 @@ export const Button = ({
   )
 
   if (href != null) {
+    // A native anchor has no disabled behavior. React also drops `disabled=""`
+    // on it, so this branch uses a boolean to retain the CSS presence attribute.
+    const anchorAttrs = {
+      ...sharedAttrs,
+      disabled: unavailable || undefined,
+      onClick: (event: any) => {
+        if (unavailable) {
+          event.preventDefault()
+          event.stopPropagation()
+          return
+        }
+        onClick?.(event)
+      },
+    }
     // type / form intentionally omitted — anchors don't submit forms.
     // `data-anta` opts this anchor into Anta's `a[role="button"]` styling.
     // The role is generic (any widget emits `role="button"`), so the CSS
@@ -257,7 +274,7 @@ export const Button = ({
         rel={rel}
         download={download}
         ping={ping}
-        {...sharedAttrs as any}
+        {...anchorAttrs as any}
         {...rest}
       >
         {inner}

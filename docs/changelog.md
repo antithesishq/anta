@@ -3,6 +3,15 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Buttons and Tags with an explicit `tone="neutral"` now receive the reference
+  theme's neutral values.
+- Disabled and loading Buttons with `href` now use the disabled palette and block
+  activation.
+
 ## 0.3.21 — August 11, 2026
 
 ### Added

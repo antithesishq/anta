@@ -311,14 +311,15 @@
 @layer anta {
 
 /* Button ------------------------------------------------------------------- */
-/* Neutral base — `:not([tone])` out-specifies the element's bare `a-button` base
-   (order-independent) while a custom `tone` falls through to the element's
-   higher-specificity `[tone]:not(…named)` rule. Named tones override via their
-   own [tone="…"] rules below. */
+/* Neutral literals apply when tone is omitted or explicitly neutral. */
 a-button:not([tone]),
+a-button[tone="neutral"],
 a[role="button"][data-anta]:not([tone]),
+a[role="button"][data-anta][tone="neutral"],
 button[data-anta]:not([tone]),
-input[data-anta]:is([type="reset"], [type="submit"]):not([tone]) {
+button[data-anta][tone="neutral"],
+input[data-anta]:is([type="reset"], [type="submit"]):not([tone]),
+input[data-anta]:is([type="reset"], [type="submit"])[tone="neutral"] {
   --button-bg-primary-rest: #635b65;
   --button-bg-primary-hover: #534c57;
   --button-bg-primary-active: #49424c;
@@ -370,7 +371,7 @@ a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[da
   --button-fg-tertiary-rest: #c37416; --button-fg-tertiary-hover: #ae6613; --button-bg-tertiary-hover: #c374161a; --button-bg-tertiary-active: #c3741633;
   --button-fg-quaternary-rest: #c37416; --button-fg-quaternary-hover: #995200;
 }
-.dark a-button:not([tone]), .dark a[role="button"][data-anta]:not([tone]), .dark button[data-anta]:not([tone]), .dark input[data-anta]:is([type="reset"], [type="submit"]):not([tone]) {
+.dark a-button:not([tone]), .dark a-button[tone="neutral"], .dark a[role="button"][data-anta]:not([tone]), .dark a[role="button"][data-anta][tone="neutral"], .dark button[data-anta]:not([tone]), .dark button[data-anta][tone="neutral"], .dark input[data-anta]:is([type="reset"], [type="submit"]):not([tone]), .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="neutral"] {
   --button-bg-primary-rest: #534c57; --button-bg-primary-hover: #635b65; --button-bg-primary-active: #938d96;
   --button-bg-secondary-rest: #e4d1ef1c; --button-bg-secondary-hover: #e4d1ef24; --button-bg-secondary-active: #e4d1ef2e;
   --button-fg-secondary-rest: #c1b9c1; --button-fg-secondary-hover: #d4ced4; --button-fg-secondary-l-shift: 0;
@@ -753,7 +754,8 @@ a-radio[tone="critical"],
 }
 
 /* ===== tag ===== */
-a-tag:not([tone]) {
+a-tag:not([tone]),
+a-tag[tone="neutral"] {
   --tag-tint: #44374b;
   --tag-bg-solid: #776e77;
   --tag-edge: var(--tag-tint);

@@ -11,6 +11,7 @@ changes are not listed.
   theme's neutral values.
 - Disabled and loading Buttons with `href` now use the disabled palette and block
   activation.
+- Checkbox, Radio, and Switch now show one focus ring around their visual control.
 
 ## 0.3.21 — August 11, 2026
 

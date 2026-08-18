@@ -12,6 +12,12 @@ changes are not listed.
 - Disabled and loading Buttons with `href` now use the disabled palette and block
   activation.
 - Checkbox, Radio, and Switch now show one focus ring around their visual control.
+- Checkboxes without a tone now receive the Anta neutral reference values;
+  `tone="neutral"` remains equivalent.
+- Checkbox and Radio `toneSelected` now consistently overrides `tone`, including
+  explicit neutral selected tones and custom `RadioGroup` tones.
+- `a-input` and `a-input-time` now treat `status="neutral"` like their default
+  status.
 
 ## 0.3.21 — August 11, 2026
 

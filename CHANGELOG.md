@@ -9,8 +9,10 @@ changes are not listed.
 
 - JSX `Input` now truncates overflowing single-line values by default. Pass
   `truncate={false}` to show the full value.
-- Clicks inside a `Menu` no longer bubble to ancestor or document handlers.
-- Open menus now follow their trigger as it moves or resizes.
+- Selecting a `Menu` item no longer bubbles the click to ancestor handlers (e.g. a
+  clickable row the menu sits in). Set `stopPropagation` to contain more event types.
+- Open menus follow their trigger vertically as it scrolls or shifts, keeping the
+  side chosen at open.
 
 ### Fixed
 

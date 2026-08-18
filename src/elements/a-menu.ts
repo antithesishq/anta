@@ -267,6 +267,11 @@ export class AMenuElement extends HTMLElementBase {
   // event, which the reactive layer reflects onto the field's `aria-activedescendant`.
   private activeItem: AMenuItemElement | null = null
   private comboObserver?: MutationObserver
+  // An open menu follows its anchor through scrolling, transforms, and layout
+  // shifts. Those movements do not all produce a DOM observer callback, so this
+  // frame is active only while the menu is visible.
+  #anchorTrackingFrame?: number
+  #lastAnchorRect?: readonly number[]
   // The vertical side chosen at open (true = flipped above the anchor). A re-anchor
   // (filtering changes height) keeps this side rather than re-deciding — a shrunk
   // menu shouldn't hop back under the trigger.
@@ -1023,6 +1028,7 @@ export class AMenuElement extends HTMLElementBase {
     // now — no fade-skip needed; the CSS transition + @starting-style handle the
     // enter, and a brief fade-in over an existing menu reads fine.
     this.position(coord, instant)
+    this.#startAnchorTracking(coord)
   }
 
   /** Dismiss any tooltip on the trigger as the menu opens, so the trigger's
@@ -1038,6 +1044,7 @@ export class AMenuElement extends HTMLElementBase {
 
   /** Shadow-only hide. */
   _doHide() {
+    this.#stopAnchorTracking()
     if (this.surface.isConnected && this._shown) this.surface.hidePopover()
     this._shown = false
     this.reflectOpen(false)
@@ -1061,6 +1068,56 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   /* ============================ positioning ============================ */
+
+  /** Keep an anchor-positioned menu aligned as its target moves. Pointer- and
+   * keyboard-coordinate menus intentionally remain at their opening point. */
+  #startAnchorTracking(coord?: [number, number]) {
+    this.#stopAnchorTracking()
+    if (coord || this.#isCoord) return
+
+    const anchor = this.triggerAnchor
+    if (!anchor) return
+    this.#lastAnchorRect = this.#anchorRectValues(anchor)
+
+    const track = () => {
+      if (!this._shown) {
+        this.#anchorTrackingFrame = undefined
+        return
+      }
+      const currentAnchor = this.triggerAnchor
+      if (!currentAnchor) {
+        this.#anchorTrackingFrame = undefined
+        return
+      }
+      const next = this.#anchorRectValues(currentAnchor)
+      if (!this.#sameAnchorRect(next)) {
+        this.#lastAnchorRect = next
+        // Re-evaluate placement as the anchor crosses an edge: a menu may need
+        // to flip to the other side of its target.
+        this.position(undefined, true)
+      }
+      this.#anchorTrackingFrame = this.view.requestAnimationFrame(track)
+    }
+    this.#anchorTrackingFrame = this.view.requestAnimationFrame(track)
+  }
+
+  #stopAnchorTracking() {
+    if (this.#anchorTrackingFrame !== undefined) {
+      this.view.cancelAnimationFrame(this.#anchorTrackingFrame)
+      this.#anchorTrackingFrame = undefined
+    }
+    this.#lastAnchorRect = undefined
+  }
+
+  #anchorRectValues(anchor: Element): readonly number[] {
+    const { left, top, right, bottom, width, height } = anchorRect(anchor)
+    return [left, top, right, bottom, width, height]
+  }
+
+  #sameAnchorRect(next: readonly number[]): boolean {
+    const prev = this.#lastAnchorRect
+    return !!prev && prev.length === next.length && prev.every((value, index) => value === next[index])
+  }
 
   private position(coord?: [number, number], sync = false, reanchor = false) {
     const run = () => {
@@ -1202,8 +1259,9 @@ export class AMenuElement extends HTMLElementBase {
   /**
    * Fully declarative close contract — decided synchronously from the DOM, so
    * it never depends on the consumer's click handler (which in a worker-thread
-   * runtime can't `preventDefault` on the UI thread). The menu never
-   * stops/prevents the click, so the consumer's selection handler always runs.
+   * runtime can't `preventDefault` on the UI thread). The menu stops the click
+   * before it leaves its surface, but never prevents it: item handlers still run
+   * and link items retain their native navigation.
    *
    * Walk the click's composedPath outward to the surface; the NEAREST marker
    * wins:
@@ -1213,6 +1271,11 @@ export class AMenuElement extends HTMLElementBase {
    *   - nothing → keep open (plain custom content doesn't dismiss).
    */
   private onSurfaceClick = (e: MouseEvent) => {
+    // Keep menu activations contained. This runs after a clicked item's own
+    // handler, so a link can still navigate and custom content keeps its normal
+    // click behavior; only ancestor/document bubbling is suppressed.
+    e.stopPropagation()
+
     // Selection pass — do the "which item was actually activated?" walk HERE, on
     // the UI thread where the composed path is real, and emit a pre-filtered
     // `menuselect` on that item. The `MenuItem` wrapper then reacts with a pure

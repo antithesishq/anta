@@ -5,6 +5,13 @@ changes are not listed.
 
 ## Unreleased
 
+### Changed
+
+- JSX `Input` now truncates overflowing single-line values by default. Pass
+  `truncate={false}` to show the full value.
+- Clicks inside a `Menu` no longer bubble to ancestor or document handlers.
+- Open menus now follow their trigger as it moves or resizes.
+
 ### Fixed
 
 - Checkbox, Radio, and Switch now show one focus ring around their visual control.

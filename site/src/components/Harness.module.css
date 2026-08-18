@@ -1,0 +1,203 @@
+.harness {
+  --top-bar-height: 34px;
+
+  position: relative;
+  display: flex;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-0);
+}
+
+.codeTrigger {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  display: flex;
+  height: var(--top-bar-height);
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.showEditorButton {
+  box-sizing: border-box;
+  width: var(--top-bar-height);
+  min-width: var(--top-bar-height);
+  height: var(--top-bar-height);
+  min-height: var(--top-bar-height);
+  padding: 0;
+  border: 1px solid var(--border-2);
+  border-left: 0;
+  border-radius: 0 100% 100% 0;
+  background: var(--bg-1);
+  box-shadow: none;
+}
+
+.editor {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 240px;
+  max-width: 60vw;
+  border-right: 1px solid var(--border-2);
+  background: var(--bg-1);
+}
+
+.editorHeader {
+  display: flex;
+  min-height: 45px;
+  align-items: center;
+  box-sizing: border-box;
+  gap: 12px;
+  padding: 8px 48px 8px 10px;
+  border-bottom: 1px solid var(--border-2);
+}
+
+.editorTabs { flex: 0 0 auto; }
+
+.editorActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.closeButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+}
+
+.editorHost {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.editorLoading {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.navigation {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border-2);
+}
+
+.navigation > :first-child { justify-self: start; }
+.navigation > :last-child { justify-self: end; }
+
+.stageNavigation {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 9;
+  width: max-content;
+  padding: 8px;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  background: var(--bg-1);
+  box-shadow: 0 4px 16px color-mix(in oklch, var(--text-1) 8%, transparent);
+}
+
+.navigation span {
+  color: var(--text-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  z-index: 3;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.resizeHandle::after {
+  position: absolute;
+  inset-block: 0;
+  left: 4px;
+  width: 2px;
+  background: var(--focus-ring);
+  content: '';
+  opacity: 0;
+  transform: scaleY(0.96);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.resizeHandle:hover::after,
+.resizeHandleActive::after {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.resizeHandle:focus-visible { outline: 2px solid var(--focus-ring); }
+
+.editorResizing {
+  box-shadow: 4px 0 14px color-mix(in oklch, var(--focus-ring) 12%, transparent);
+}
+
+.harnessResizing,
+.harnessResizing * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+.harnessResizing .editorHost { pointer-events: none; }
+
+.stage {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: auto;
+  padding: clamp(24px, 5vw, 72px);
+}
+
+.stage > :global(a-card) { max-width: 760px; }
+
+.preview { isolation: isolate; }
+
+.compileStatus {
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.compileError {
+  max-width: 760px;
+  margin: 0;
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--border-2-critical);
+  border-radius: 8px;
+  background: var(--bg-2-critical);
+  color: var(--text-2-critical);
+  font-family: var(--monospace);
+  font-size: 13px;
+  line-height: 20px;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+  .stage { padding: 64px 16px 24px; }
+}

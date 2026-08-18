@@ -62,9 +62,14 @@
     "clean": "rm -rf dist",
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
-    "prepack": "pnpm run build:docs"
+    "prepack": "pnpm run build:docs",
+    "test": "node scripts/test-harness.mjs",
+    "generate-corpus": "node tests/generate-corpus.mjs",
+    "bombadil:inspect": "node scripts/inspect-harness.mjs"
   },
   "devDependencies": {
+    "@antithesishq/bombadil": "0.7.0",
+    "@hegeldev/hegel": "^0.4.5",
     "@types/react": "^19.0.0",
     "esbuild": "^0.25.0",
     "nodemon": "^3.1.0",

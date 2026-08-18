@@ -15,6 +15,7 @@ import rehypeTableWrap from './lib/rehype-table-wrap.mjs';
 import remarkUnwrapJsxParagraph from './lib/remark-unwrap-jsx-paragraph.mjs';
 import remarkUnwrapImages from './lib/remark-unwrap-images.mjs';
 import ecFoldable from './lib/ec-foldable.mjs';
+import harnessCorpusPlugin from './lib/harness-corpus-plugin.mjs';
 
 export default defineConfig({
   site: 'https://anta.design',
@@ -45,6 +46,7 @@ export default defineConfig({
   // dev looks fine. Forcing every component's CSS into the linked, always-
   // parsed bundle makes dev and prod render identically.
   build: { inlineStylesheets: 'never' },
+  vite: { plugins: [harnessCorpusPlugin()] },
   integrations: [
     // compat:true aliases react / react-dom → preact/compat so Anta's JSX
     // wrappers (typed against React) run under Preact without calling configure().

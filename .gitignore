@@ -21,3 +21,5 @@ site/public/themes/anta.css
 .dev.pid
 .dev.parallel.pid
 site/public/iframe/
+.hegel/
+tests/.test-output/

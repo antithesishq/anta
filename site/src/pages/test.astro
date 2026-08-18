@@ -1,0 +1,23 @@
+---
+import '@antadesign/anta/tokens.css'
+import '@antadesign/anta/reset.css'
+import '../layouts/element-host-styles.css'
+import '../styles/base.css'
+import Harness from '../components/Harness'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Anta harness</title>
+    <link rel="stylesheet" href="/themes/default.css" />
+    <link rel="stylesheet" href="/themes/anta.css" />
+    <link rel="stylesheet" href="/fonts.css" />
+  </head>
+  <body>
+    <Harness client:only="preact" />
+    <script>import '@antadesign/anta/elements'</script>
+  </body>
+</html>

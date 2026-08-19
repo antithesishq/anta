@@ -513,8 +513,8 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
  other controls' custom-tone knob; a `status` still overrides for validation. |
 | `trailing?` | ReactNode | — | Content pinned to the end of the field (e.g. icons, buttons), after the
  clear button when `clearable`. |
-| `truncate?` | boolean | — | Ellipsize an overflowing single-line value. Read-only inputs already do
-this; use `truncate` when an editable field should keep the same treatment. |
+| `truncate?` | boolean | true | Ellipsize an overflowing single-line value. Read-only inputs already do
+this; pass `false` when an editable field should show the full value. |
 | `type?` | 'text' \| 'search' \| 'email' \| 'password' \| 'tel' \| 'url' \| 'number' | text | Single-line input type. Ignored when `multiline`. `search` is a
  **wrapper-only** shorthand: it defaults a leading search icon and a clear
  button (both overridable — pass your own `leading`, or `clearable={false}`)

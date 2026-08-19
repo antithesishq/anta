@@ -231,7 +231,7 @@ export const Button = ({
     'aria-label': isIconOnly ? icon : undefined,
     class: className,
     style: computedStyle,
-    onClick,
+    onClick: unavailable ? undefined : onClick,
   } as const
 
   const inner = (
@@ -244,19 +244,9 @@ export const Button = ({
   )
 
   if (href != null) {
-    // A native anchor has no disabled behavior. React also drops `disabled=""`
-    // on it, so this branch uses a boolean to retain the CSS presence attribute.
     const anchorAttrs = {
       ...sharedAttrs,
       disabled: unavailable || undefined,
-      onClick: (event: any) => {
-        if (unavailable) {
-          event.preventDefault()
-          event.stopPropagation()
-          return
-        }
-        onClick?.(event)
-      },
     }
     // type / form intentionally omitted — anchors don't submit forms.
     // `data-anta` opts this anchor into Anta's `a[role="button"]` styling.
@@ -268,7 +258,7 @@ export const Button = ({
     // Anta owns that tag and styles it unconditionally.
     return (
       <a
-        href={href}
+        href={unavailable ? undefined : href}
         data-anta=""
         target={target}
         rel={rel}

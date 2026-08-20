@@ -22,6 +22,7 @@
        neutral grey. Mirrors a-checkbox; constants from the lab. Named tones and a
        custom color point the source elsewhere (rules below). Default is neutral. */
     --radio-tone-source: var(--anta-seed-neutral);
+    --radio-off-tone-source: var(--anta-seed-neutral);
     --_tone-l-rest: 0.6;
     --_tone-l-hover: 0.45;
     --_tone-l-active: 0.4;
@@ -211,55 +212,89 @@
      keyed [tone]), `tone-selected` leaves it neutral so the tone shows only once
      selected. Label + hint are never toned — recolor them in plain CSS via the
      theme-aware --text-N-{tone} tokens (a `color` rule on a-radio-label /
-     a-radio-hint). `neutral` keeps the base greys; the
-     default (no attribute) is untouched — the wrapper omits the neutral value. */
+     a-radio-hint). `tone` sets both the checked and off-state sources;
+     `tone-selected` changes only the checked source. `neutral` keeps the base
+     greys; the default (no attribute) is untouched. */
   /* Colored mark-fill lightnesses (standalone + group-cascaded, tone + tone-selected). */
   a-radio[tone]:not([tone=""], [tone="neutral"]),
   a-radio[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]),
-  a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone]),
-  a-radio-group[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) a-radio:not([tone-selected]) {
+  a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone], [tone-selected]),
+  a-radio-group[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) a-radio:not([tone], [tone-selected]) {
     --_tone-l-rest: 0.5;
     --_tone-l-hover: 0.45;
     --_tone-l-active: 0.4;
   }
-  /* Named tones → seed. */
-  a-radio[tone="brand"],    a-radio[tone-selected="brand"],    a-radio-group[tone="brand"] a-radio:not([tone]),    a-radio-group[tone-selected="brand"] a-radio:not([tone-selected])    { --radio-tone-source: var(--anta-seed-brand); }
-  a-radio[tone="info"],     a-radio[tone-selected="info"],     a-radio-group[tone="info"] a-radio:not([tone]),     a-radio-group[tone-selected="info"] a-radio:not([tone-selected])     { --radio-tone-source: var(--anta-seed-info); }
-  a-radio[tone="success"],  a-radio[tone-selected="success"],  a-radio-group[tone="success"] a-radio:not([tone]),  a-radio-group[tone-selected="success"] a-radio:not([tone-selected])  { --radio-tone-source: var(--anta-seed-success); }
-  a-radio[tone="warning"],  a-radio[tone-selected="warning"],  a-radio-group[tone="warning"] a-radio:not([tone]),  a-radio-group[tone-selected="warning"] a-radio:not([tone-selected])  { --radio-tone-source: var(--anta-seed-warning); }
-  a-radio[tone="critical"], a-radio[tone-selected="critical"], a-radio-group[tone="critical"] a-radio:not([tone]), a-radio-group[tone-selected="critical"] a-radio:not([tone-selected]) { --radio-tone-source: var(--anta-seed-critical); }
-  a-radio[tone="neutral"],  a-radio[tone-selected="neutral"],  a-radio-group[tone="neutral"] a-radio:not([tone]),  a-radio-group[tone-selected="neutral"] a-radio:not([tone-selected])  { --radio-tone-source: var(--anta-seed-neutral); }
+  /* Named normal tones → seed. */
+  a-radio[tone="brand"],    a-radio-group[tone="brand"] a-radio:not([tone], [tone-selected])    { --radio-tone-source: var(--anta-seed-brand); --radio-off-tone-source: var(--anta-seed-brand); }
+  a-radio[tone="info"],     a-radio-group[tone="info"] a-radio:not([tone], [tone-selected])     { --radio-tone-source: var(--anta-seed-info); --radio-off-tone-source: var(--anta-seed-info); }
+  a-radio[tone="success"],  a-radio-group[tone="success"] a-radio:not([tone], [tone-selected])  { --radio-tone-source: var(--anta-seed-success); --radio-off-tone-source: var(--anta-seed-success); }
+  a-radio[tone="warning"],  a-radio-group[tone="warning"] a-radio:not([tone], [tone-selected])  { --radio-tone-source: var(--anta-seed-warning); --radio-off-tone-source: var(--anta-seed-warning); }
+  a-radio[tone="critical"], a-radio-group[tone="critical"] a-radio:not([tone], [tone-selected]) { --radio-tone-source: var(--anta-seed-critical); --radio-off-tone-source: var(--anta-seed-critical); }
+  a-radio[tone="neutral"],  a-radio-group[tone="neutral"] a-radio:not([tone], [tone-selected])  { --radio-tone-source: var(--anta-seed-neutral); --radio-off-tone-source: var(--anta-seed-neutral); }
 
   /* `tone` (not tone-selected) also derives the unselected tinted ring from the
      tone in oklch: a whisper-tint fill (chroma scaled down) under a border ramp
      stepped off the fill. Named + custom, standalone + group-cascaded; neutral
      and every tone-selected keep the neutral off-ring border. */
   a-radio[tone]:not([tone=""], [tone="neutral"]),
-  a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone]) {
-    --radio-bg: oklch(from var(--radio-tone-source) 0.99 calc(c * 0.03) h);
-    --_radio-border-base: color-mix(in oklch, var(--radio-bg-selected) 70%, var(--radio-border-neutral));
+  a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone], [tone-selected]) {
+    --radio-bg: oklch(from var(--radio-off-tone-source) 0.99 calc(c * 0.03) h);
+    --_radio-off-bg-selected: oklch(from var(--radio-off-tone-source) var(--_tone-l-rest) c h);
+    --_radio-border-base: color-mix(in oklch, var(--_radio-off-bg-selected) 70%, var(--radio-border-neutral));
     --radio-border:        oklch(from var(--_radio-border-base) calc(l + 0.17) c h);
     --radio-border-hover:  oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
     --radio-border-active: var(--_radio-border-base);
   }
 
-  /* Custom mark tone — a non-named `tone` / `tone-selected` is a literal CSS color;
-     both feed the same --radio-tone-source and the fill curve is derived from it in
-     oklch. Every named value must be listed in the :not(), or attr(… type(<color>))
-     would parse `info` / `success` / etc as colors and render transparent. A
-     standalone radio reads its own attr(); a group-cascaded child inherits
-     --radio-tone-source from the group (the wrapper sets it inline). `tone` still
-     tints the off-ring border (the ramp above, keyed [tone]); `tone-selected` does
-     not. Focus ring stays brand across every tone. */
+  /* A non-named `tone` is a literal CSS color. The group resolves a raw custom
+     attribute on itself and its unoverridden children explicitly inherit it. */
   a-radio[tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
     --radio-tone-source: attr(tone type(<color>), transparent);
+    --radio-off-tone-source: attr(tone type(<color>), transparent);
+  }
+  a-radio-group[tone]:not(
+      [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"]) {
+    --radio-tone-source: attr(tone type(<color>), transparent);
+    --radio-off-tone-source: attr(tone type(<color>), transparent);
+  }
+  a-radio-group[tone]:where(:not(
+      [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
+      [tone="success"], [tone="warning"], [tone="critical"])) a-radio:not([tone], [tone-selected]) {
+    --radio-tone-source: inherit;
+    --radio-off-tone-source: inherit;
+  }
+
+  /* Selected-tone mappings follow `tone`, so a selected tone wins the checked
+     fill. An explicit neutral selected tone resets a colored normal tone. */
+  a-radio[tone-selected="brand"],    a-radio-group[tone-selected="brand"] a-radio:not([tone], [tone-selected])    { --radio-tone-source: var(--anta-seed-brand); }
+  a-radio[tone-selected="info"],     a-radio-group[tone-selected="info"] a-radio:not([tone], [tone-selected])     { --radio-tone-source: var(--anta-seed-info); }
+  a-radio[tone-selected="success"],  a-radio-group[tone-selected="success"] a-radio:not([tone], [tone-selected])  { --radio-tone-source: var(--anta-seed-success); }
+  a-radio[tone-selected="warning"],  a-radio-group[tone-selected="warning"] a-radio:not([tone], [tone-selected])  { --radio-tone-source: var(--anta-seed-warning); }
+  a-radio[tone-selected="critical"], a-radio-group[tone-selected="critical"] a-radio:not([tone], [tone-selected]) { --radio-tone-source: var(--anta-seed-critical); }
+  a-radio[tone-selected="neutral"],
+  a-radio-group[tone-selected="neutral"] a-radio:not([tone], [tone-selected]) {
+    --radio-tone-source: var(--anta-seed-neutral);
+    --_tone-l-rest: 0.6;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.4;
   }
   a-radio[tone-selected]:not(
       [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
       [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
     --radio-tone-source: attr(tone-selected type(<color>), transparent);
+  }
+  a-radio-group[tone-selected]:not(
+      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
+      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
+    --radio-tone-source: attr(tone-selected type(<color>), transparent);
+  }
+  a-radio-group[tone-selected]:not(
+      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
+      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) a-radio:not([tone], [tone-selected]) {
+    --radio-tone-source: inherit;
   }
   /* Dark — neutral chrome + brighter fill/tinted-ring lightnesses. Constants from
      the lab; the fill + tinted-ring formulas (above) recompute against them. */
@@ -282,18 +317,24 @@
   }
   .dark a-radio[tone]:not([tone=""], [tone="neutral"]),
   .dark a-radio[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]),
-  .dark a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone]),
-  .dark a-radio-group[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) a-radio:not([tone-selected]) {
+  .dark a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone], [tone-selected]),
+  .dark a-radio-group[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) a-radio:not([tone], [tone-selected]) {
     --_tone-l-rest: 0.45;
     --_tone-l-hover: 0.5;
     --_tone-l-active: 0.57;
   }
   .dark a-radio[tone]:not([tone=""], [tone="neutral"]),
-  .dark a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone]) {
-    --radio-bg: oklch(from var(--radio-tone-source) 0.15 calc(c * 0.18) h);
+  .dark a-radio-group[tone]:not([tone=""], [tone="neutral"]) a-radio:not([tone], [tone-selected]) {
+    --radio-bg: oklch(from var(--radio-off-tone-source) 0.15 calc(c * 0.18) h);
     --radio-border:        var(--_radio-border-base);
     --radio-border-hover:  oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
     --radio-border-active: oklch(from var(--_radio-border-base) calc(l + 0.17) c h);
+  }
+  .dark a-radio[tone-selected="neutral"],
+  .dark a-radio-group[tone-selected="neutral"] a-radio:not([tone], [tone-selected]) {
+    --_tone-l-rest: 0.42;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.5;
   }
 
   /* A native radio can opt into the same compact control surface with
@@ -322,6 +363,7 @@
     --native-choice-border-hover: var(--border-2);
     --native-choice-border-active: var(--border-1);
     --native-choice-tone-source: var(--anta-seed-neutral);
+    --native-choice-off-tone-source: var(--anta-seed-neutral);
     --_native-choice-l-rest: 0.6;
     --_native-choice-l-hover: 0.45;
     --_native-choice-l-active: 0.4;
@@ -371,15 +413,16 @@
     --_native-choice-l-hover: 0.45;
     --_native-choice-l-active: 0.4;
   }
-  input[data-anta][type="radio"][tone="brand"],    input[data-anta][type="radio"][tone-selected="brand"]    { --native-choice-tone-source: var(--anta-seed-brand); }
-  input[data-anta][type="radio"][tone="info"],     input[data-anta][type="radio"][tone-selected="info"]     { --native-choice-tone-source: var(--anta-seed-info); }
-  input[data-anta][type="radio"][tone="success"],  input[data-anta][type="radio"][tone-selected="success"]  { --native-choice-tone-source: var(--anta-seed-success); }
-  input[data-anta][type="radio"][tone="warning"],  input[data-anta][type="radio"][tone-selected="warning"]  { --native-choice-tone-source: var(--anta-seed-warning); }
-  input[data-anta][type="radio"][tone="critical"], input[data-anta][type="radio"][tone-selected="critical"] { --native-choice-tone-source: var(--anta-seed-critical); }
-  input[data-anta][type="radio"][tone="neutral"],  input[data-anta][type="radio"][tone-selected="neutral"]  { --native-choice-tone-source: var(--anta-seed-neutral); }
+  input[data-anta][type="radio"][tone="brand"]    { --native-choice-tone-source: var(--anta-seed-brand); --native-choice-off-tone-source: var(--anta-seed-brand); }
+  input[data-anta][type="radio"][tone="info"]     { --native-choice-tone-source: var(--anta-seed-info); --native-choice-off-tone-source: var(--anta-seed-info); }
+  input[data-anta][type="radio"][tone="success"]  { --native-choice-tone-source: var(--anta-seed-success); --native-choice-off-tone-source: var(--anta-seed-success); }
+  input[data-anta][type="radio"][tone="warning"]  { --native-choice-tone-source: var(--anta-seed-warning); --native-choice-off-tone-source: var(--anta-seed-warning); }
+  input[data-anta][type="radio"][tone="critical"] { --native-choice-tone-source: var(--anta-seed-critical); --native-choice-off-tone-source: var(--anta-seed-critical); }
+  input[data-anta][type="radio"][tone="neutral"]  { --native-choice-tone-source: var(--anta-seed-neutral); --native-choice-off-tone-source: var(--anta-seed-neutral); }
   input[data-anta][type="radio"][tone]:not([tone=""], [tone="neutral"]) {
-    --native-choice-bg: oklch(from var(--native-choice-tone-source) 0.99 calc(c * 0.03) h);
-    --_native-choice-border-base: color-mix(in oklch, var(--native-choice-selected) 70%, var(--native-choice-border-neutral));
+    --native-choice-bg: oklch(from var(--native-choice-off-tone-source) 0.99 calc(c * 0.03) h);
+    --_native-choice-off-selected: oklch(from var(--native-choice-off-tone-source) var(--_native-choice-l-rest) c h);
+    --_native-choice-border-base: color-mix(in oklch, var(--_native-choice-off-selected) 70%, var(--native-choice-border-neutral));
     --native-choice-border: oklch(from var(--_native-choice-border-base) calc(l + 0.17) c h);
     --native-choice-border-hover: oklch(from var(--_native-choice-border-base) calc(l + 0.1) c h);
     --native-choice-border-active: var(--_native-choice-border-base);
@@ -388,6 +431,18 @@
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
     --native-choice-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
+    --native-choice-off-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
+  }
+  input[data-anta][type="radio"][tone-selected="brand"]    { --native-choice-tone-source: var(--anta-seed-brand); }
+  input[data-anta][type="radio"][tone-selected="info"]     { --native-choice-tone-source: var(--anta-seed-info); }
+  input[data-anta][type="radio"][tone-selected="success"]  { --native-choice-tone-source: var(--anta-seed-success); }
+  input[data-anta][type="radio"][tone-selected="warning"]  { --native-choice-tone-source: var(--anta-seed-warning); }
+  input[data-anta][type="radio"][tone-selected="critical"] { --native-choice-tone-source: var(--anta-seed-critical); }
+  input[data-anta][type="radio"][tone-selected="neutral"] {
+    --native-choice-tone-source: var(--anta-seed-neutral);
+    --_native-choice-l-rest: 0.6;
+    --_native-choice-l-hover: 0.45;
+    --_native-choice-l-active: 0.4;
   }
   input[data-anta][type="radio"][tone-selected]:not(
       [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
@@ -440,10 +495,15 @@
     --_native-choice-l-active: 0.57;
   }
   .dark input[data-anta][type="radio"][tone]:not([tone=""], [tone="neutral"]) {
-    --native-choice-bg: oklch(from var(--native-choice-tone-source) 0.15 calc(c * 0.18) h);
+    --native-choice-bg: oklch(from var(--native-choice-off-tone-source) 0.15 calc(c * 0.18) h);
     --native-choice-border: var(--_native-choice-border-base);
     --native-choice-border-hover: oklch(from var(--_native-choice-border-base) calc(l + 0.1) c h);
     --native-choice-border-active: oklch(from var(--_native-choice-border-base) calc(l + 0.17) c h);
+  }
+  .dark input[data-anta][type="radio"][tone-selected="neutral"] {
+    --_native-choice-l-rest: 0.42;
+    --_native-choice-l-hover: 0.45;
+    --_native-choice-l-active: 0.5;
   }
 
   /* The selected ring and dot are author-painted pseudo-elements. Keep their

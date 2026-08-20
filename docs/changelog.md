@@ -3,7 +3,7 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.22 — August 20, 2026
 
 ### Changed
 
@@ -20,6 +20,9 @@ changes are not listed.
   theme's neutral values.
 - Disabled and loading Buttons with `href` now use the disabled palette and block
   activation.
+- `Select` and `InputDate` triggers carry a `combobox` role, so their
+  `aria-expanded` is valid (WCAG 4.1.2 / `aria-allowed-attr`) — it was previously
+  set on an element with no supporting role.
 - Checkbox, Radio, and Switch now show one focus ring around their visual control.
 - Checkboxes without a tone now receive the Anta neutral reference values;
   `tone="neutral"` remains equivalent.

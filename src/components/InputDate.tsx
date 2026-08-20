@@ -284,6 +284,9 @@ export const InputDate = ({
         placeholder={pattern}
         inputMode={time ? 'text' : 'numeric'}
         autoComplete="off"
+        // `combobox` role keeps `aria-expanded` valid on the field (it isn't a global
+        // attr); it pops the calendar dialog — the APG date-picker-combobox pattern.
+        role="combobox"
         aria-haspopup="dialog"
         aria-expanded={open ? 'true' : 'false'}
         onInput={(e: any) => {

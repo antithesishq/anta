@@ -202,8 +202,10 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
    *  Receives a `SelectFacetedTriggerState`. Return exactly one focusable element:
    *  the menu is positioned relative to that element and opens when it is clicked.
    *  Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned
-   *  element. `className`, `style`, and other trigger props apply only to the
-   *  default Button, so add styling and attributes to the returned element. */
+   *  element, on a role that supports them (an Anta `Button` already carries
+   *  `role="button"`; otherwise add `role="combobox"`). `className`, `style`, and
+   *  other trigger props apply only to the default Button, so add styling and
+   *  attributes to the returned element. */
   renderTrigger?: (state: SelectFacetedTriggerState) => React.ReactNode
 }
 

@@ -47,6 +47,11 @@ export interface MenuProps extends BaseProps {
    *  fully round. A `number` (px) or CSS length string tunes the container radius
    *  only — items stay full pills. */
   round?: boolean | number | string
+  /** Contain events so they don't bubble out of the menu to ancestor handlers
+   *  (e.g. a clickable row the menu sits in). Selecting an item is always
+   *  contained; this extends it to whole event types. `true` contains `click`;
+   *  pass an event name or list (`"click pointerdown"`) to contain those. */
+  stopPropagation?: boolean | string | string[]
   /** Fired before the open state changes — on open, and on every dismiss (Esc,
    *  outside-click, scroll, selecting an item). `event` is the cancelable
    *  `statechange`; `detail.next`/`detail.prev` are the requested/previous open
@@ -117,6 +122,7 @@ export const Menu = ({
   open,
   onStateChange,
   round,
+  stopPropagation,
   role = 'menu',
   className,
   style,
@@ -156,6 +162,17 @@ export const Menu = ({
           : undefined
       }
       round={roundAttr(round)}
+      // `true` → bare attribute (element defaults to `click`); a string / list is
+      // passed through; omit ⇒ only the built-in menu-item containment applies.
+      stop-propagation={
+        stopPropagation === undefined || stopPropagation === false
+          ? undefined
+          : stopPropagation === true
+            ? ''
+            : Array.isArray(stopPropagation)
+              ? stopPropagation.join(' ')
+              : stopPropagation
+      }
       role={role}
       aria-orientation="vertical"
       class={className}

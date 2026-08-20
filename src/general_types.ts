@@ -836,6 +836,12 @@ export interface AMenuAttributes extends BaseAttributes {
    *  layer that owns the field (e.g. `Select`) listens here and reflects it.
    *  All-lowercase so React/Preact bind it to the CustomEvent. */
   onactivedescendant?: (e: CustomEvent<{ id: string | null }>) => void
+  /** Contain events so they don't bubble out of the menu surface to ancestor /
+   *  document handlers. Space- or comma-separated event names
+   *  (`stop-propagation="click pointerdown"`); a bare / empty attribute defaults to
+   *  `click`. Menu-item / `data-menu-close` selections are always contained; this
+   *  extends containment to whole event types. */
+  'stop-propagation'?: string
   /** ARIA role — the JSX wrapper sets this to `'menu'`. */
   role?: string
   'aria-orientation'?: 'vertical' | 'horizontal'

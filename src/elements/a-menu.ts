@@ -22,6 +22,12 @@ const SELF_ACTIVATING =
  *  gesture. Read-only or non-field triggers open on Enter / Space / arrows alike. */
 const EDITABLE_FIELD =
   'input:not([readonly]), textarea:not([readonly]), a-input:not([readonly]), a-input-time:not([readonly])'
+/** Declarative triggers that fire via a document / host-level bubble listener
+ *  (`a-dialog`'s `data-dialog-open` / `-close`, `a-toast` / `a-banner`
+ *  `data-*-dismiss`). A click on one must reach that listener, so surgical click
+ *  containment lets it through even when it sits on a menu item. */
+const DECLARATIVE_TRIGGER =
+  '[data-dialog-open], [data-dialog-close], [data-toast-dismiss], [data-banner-dismiss]'
 
 type Placement =
   | 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'bottom' | 'top'
@@ -232,7 +238,7 @@ const lazyObserver: IntersectionObserver | null =
  *   slotted light DOM (see `a-menu-item.css`), directly styleable.
  */
 export class AMenuElement extends HTMLElementBase {
-  static observedAttributes = ['placement', 'context', 'coord', 'offset', 'nohover', 'state']
+  static observedAttributes = ['placement', 'context', 'coord', 'offset', 'nohover', 'state', 'stop-propagation']
 
   /** Shadow-internal popover surface — the only thing we ever mutate. */
   surface!: HTMLDivElement
@@ -267,6 +273,21 @@ export class AMenuElement extends HTMLElementBase {
   // event, which the reactive layer reflects onto the field's `aria-activedescendant`.
   private activeItem: AMenuItemElement | null = null
   private comboObserver?: MutationObserver
+  // An open menu follows its anchor vertically through scrolling, transforms, and
+  // layout shifts. Those movements do not all produce a DOM observer callback, so
+  // this frame is active only while the menu is visible.
+  #anchorTrackingFrame?: number
+  #lastAnchorRect?: readonly number[]
+  // Vertical-follow baseline captured on each full position(): the frozen
+  // horizontal offset and the gap to the anchor's top. Tracking translates to hold
+  // this gap as the anchor moves; it never re-flips or chases the anchor sideways.
+  #followLeft?: number
+  #followGap?: number
+  // Opt-in event containment (`stop-propagation`): event types whose bubbling out
+  // of the surface is suppressed. Selecting an item is always contained (see
+  // onSurfaceClick); this is the broad, configurable lever on top of that.
+  #stopEvents = new Set<string>()
+  #stopHandler = (e: Event) => e.stopPropagation()
   // The vertical side chosen at open (true = flipped above the anchor). A re-anchor
   // (filtering changes height) keeps this side rather than re-deciding — a shrunk
   // menu shouldn't hop back under the trigger.
@@ -448,6 +469,7 @@ export class AMenuElement extends HTMLElementBase {
     // items (`<a data-anta-menu-item>`), where no `<a-menu-item>` ever upgrades
     // to install the listener itself. Idempotent per document.
     ensureMenuItemKeyListener(this.doc)
+    this.#syncStopPropagation()
     const anchor = this.triggerAnchor
     if (anchor) {
       anchorToMenu.set(anchor, this)
@@ -478,6 +500,10 @@ export class AMenuElement extends HTMLElementBase {
     // back into their own handler; that silence is what prevents a loop).
     if (name === 'state') {
       this.syncState()
+      return
+    }
+    if (name === 'stop-propagation') {
+      this.#syncStopPropagation()
       return
     }
     // Trigger-shaping attributes changed — rewire the anchor listeners.
@@ -1023,6 +1049,7 @@ export class AMenuElement extends HTMLElementBase {
     // now — no fade-skip needed; the CSS transition + @starting-style handle the
     // enter, and a brief fade-in over an existing menu reads fine.
     this.position(coord, instant)
+    this.#startAnchorTracking(coord)
   }
 
   /** Dismiss any tooltip on the trigger as the menu opens, so the trigger's
@@ -1038,6 +1065,7 @@ export class AMenuElement extends HTMLElementBase {
 
   /** Shadow-only hide. */
   _doHide() {
+    this.#stopAnchorTracking()
     if (this.surface.isConnected && this._shown) this.surface.hidePopover()
     this._shown = false
     this.reflectOpen(false)
@@ -1061,6 +1089,72 @@ export class AMenuElement extends HTMLElementBase {
   }
 
   /* ============================ positioning ============================ */
+
+  /** Follow an anchor-positioned menu on the vertical axis as its target moves
+   *  (scroll, transform, layout shift). The side chosen at open never flips and the
+   *  horizontal position stays put — a re-flip would fight the open-time placement,
+   *  and chasing the anchor sideways isn't wanted. Coordinate menus keep their
+   *  opening point. */
+  #startAnchorTracking(coord?: [number, number]) {
+    this.#stopAnchorTracking()
+    if (coord || this.#isCoord) return
+
+    const anchor = this.triggerAnchor
+    if (!anchor) return
+    this.#lastAnchorRect = this.#anchorRectValues(anchor)
+
+    const track = () => {
+      if (!this._shown) {
+        this.#anchorTrackingFrame = undefined
+        return
+      }
+      const currentAnchor = this.triggerAnchor
+      if (!currentAnchor) {
+        this.#anchorTrackingFrame = undefined
+        return
+      }
+      const next = this.#anchorRectValues(currentAnchor)
+      if (!this.#sameAnchorRect(next)) {
+        this.#lastAnchorRect = next
+        this.#followVertically(currentAnchor)
+      }
+      this.#anchorTrackingFrame = this.view.requestAnimationFrame(track)
+    }
+    this.#anchorTrackingFrame = this.view.requestAnimationFrame(track)
+  }
+
+  /** Hold the vertical gap captured at the last full position() as the anchor
+   *  moves — a pure translate, so no reflow. Horizontal stays frozen and the side
+   *  never flips; the menu clamps within the viewport. */
+  #followVertically(anchor: Element) {
+    if (this.#followGap === undefined || this.#followLeft === undefined) return
+    const box = this.surface.getBoundingClientRect()
+    let top = anchorRect(anchor).top + this.#followGap
+    top = Math.min(top, this.view.innerHeight - box.height - MARGIN)
+    top = Math.max(MARGIN, top)
+    this.surface.style.transform = `translate(${this.#followLeft}px, ${Math.round(top)}px)`
+    this.updateScrollFade()
+  }
+
+  #stopAnchorTracking() {
+    if (this.#anchorTrackingFrame !== undefined) {
+      this.view.cancelAnimationFrame(this.#anchorTrackingFrame)
+      this.#anchorTrackingFrame = undefined
+    }
+    this.#lastAnchorRect = undefined
+    this.#followLeft = undefined
+    this.#followGap = undefined
+  }
+
+  #anchorRectValues(anchor: Element): readonly number[] {
+    const { left, top, right, bottom, width, height } = anchorRect(anchor)
+    return [left, top, right, bottom, width, height]
+  }
+
+  #sameAnchorRect(next: readonly number[]): boolean {
+    const prev = this.#lastAnchorRect
+    return !!prev && prev.length === next.length && prev.every((value, index) => value === next[index])
+  }
 
   private position(coord?: [number, number], sync = false, reanchor = false) {
     const run = () => {
@@ -1188,8 +1282,17 @@ export class AMenuElement extends HTMLElementBase {
         }
       }
 
-      surface.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`
+      const appliedLeft = Math.round(left)
+      const appliedTop = Math.round(top)
+      surface.style.transform = `translate(${appliedLeft}px, ${appliedTop}px)`
       this.updateScrollFade()
+      // Capture the vertical-follow baseline for anchor tracking: the frozen
+      // horizontal offset and the gap to the anchor's top. Coordinate menus don't
+      // track, so they don't need it.
+      if (!coord && !this.#isCoord && this.triggerAnchor) {
+        this.#followLeft = appliedLeft
+        this.#followGap = appliedTop - anchorRect(this.triggerAnchor).top
+      }
     }
     // Sync (instant open atop an already-open menu) avoids both the rAF delay
     // and the unpositioned first frame; otherwise position next frame.
@@ -1202,8 +1305,10 @@ export class AMenuElement extends HTMLElementBase {
   /**
    * Fully declarative close contract — decided synchronously from the DOM, so
    * it never depends on the consumer's click handler (which in a worker-thread
-   * runtime can't `preventDefault` on the UI thread). The menu never
-   * stops/prevents the click, so the consumer's selection handler always runs.
+   * runtime can't `preventDefault` on the UI thread). A menu-item / `data-menu-close`
+   * activation stops the click at the surface so it doesn't leak to an ancestor (a
+   * clickable row the menu sits in); it never prevents it, so item handlers and link
+   * navigation still run. Other clicks bubble unless `stop-propagation` opts in.
    *
    * Walk the click's composedPath outward to the surface; the NEAREST marker
    * wins:
@@ -1213,6 +1318,24 @@ export class AMenuElement extends HTMLElementBase {
    *   - nothing → keep open (plain custom content doesn't dismiss).
    */
   private onSurfaceClick = (e: MouseEvent) => {
+    // Contain the click so activating an item doesn't also register as a click on
+    // whatever the menu is nested in (a clickable row / card). Scoped to genuine
+    // `<a-menu-item>` / `[data-menu-close]` activations: their `onSelect` rides the
+    // `menuselect` event, not this click, so stopping it loses nothing. Link items
+    // and plain content keep bubbling (a link's `onSelect` IS its delegated click);
+    // the `stop-propagation` attribute contains those too when asked. A declarative
+    // trigger in the path is exempt — its own click must reach the document / host
+    // listener that acts on it, even when it rides on a menu item.
+    let contain = false
+    let exemptTrigger = false
+    for (const node of e.composedPath()) {
+      if (node === this.surface) break
+      if (!(node instanceof Element)) continue
+      if (node.matches(DECLARATIVE_TRIGGER)) exemptTrigger = true
+      if (node instanceof AMenuItemElement || node.hasAttribute('data-menu-close')) contain = true
+    }
+    if (contain && !exemptTrigger) e.stopPropagation()
+
     // Selection pass — do the "which item was actually activated?" walk HERE, on
     // the UI thread where the composed path is real, and emit a pre-filtered
     // `menuselect` on that item. The `MenuItem` wrapper then reacts with a pure
@@ -1286,6 +1409,27 @@ export class AMenuElement extends HTMLElementBase {
   private closeSystem(e?: Event) {
     const root = openStack[0] ?? this
     root.requestClose(e)
+  }
+
+  /** Event types the `stop-propagation` attribute contains at the surface. A bare
+   *  or empty attribute defaults to `click`; a value is a space / comma list. */
+  #parseStopEvents(): Set<string> {
+    if (!this.hasAttribute('stop-propagation')) return new Set()
+    const raw = (this.getAttribute('stop-propagation') ?? '').trim()
+    return new Set(raw ? raw.split(/[\s,]+/) : ['click'])
+  }
+
+  /** Reconcile the surface's containment listeners with the `stop-propagation`
+   *  attribute. Each listed type gets a bubble listener that stops it at the
+   *  surface, so it never reaches an ancestor / document handler. Selecting an item
+   *  is already contained by onSurfaceClick; this is the broad, opt-in lever. */
+  #syncStopPropagation() {
+    const next = this.#parseStopEvents()
+    for (const type of this.#stopEvents)
+      if (!next.has(type)) this.surface.removeEventListener(type, this.#stopHandler)
+    for (const type of next)
+      if (!this.#stopEvents.has(type)) this.surface.addEventListener(type, this.#stopHandler)
+    this.#stopEvents = next
   }
 
   /* ============================ keyboard ============================ */

@@ -16,6 +16,9 @@ changes are not listed.
 
 ### Fixed
 
+- `Select` and `InputDate` triggers carry a `combobox` role, so their
+  `aria-expanded` is valid (WCAG 4.1.2 / `aria-allowed-attr`) — it was previously
+  set on an element with no supporting role.
 - Checkbox, Radio, and Switch now show one focus ring around their visual control.
 
 ## 0.3.21 — August 11, 2026

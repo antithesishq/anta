@@ -277,7 +277,9 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  one focusable element, such as an Anta `Button`. The menu is positioned
    *  relative to that element and opens when it is clicked. Do not return a
    *  fragment, multiple siblings, or a non-focusable wrapper. Add
-   *  `aria-haspopup="menu"` and `aria-expanded={state.open}` to the element.
+   *  `aria-haspopup="menu"` and `aria-expanded={state.open}` to the element, on a
+   *  role that supports them (an Anta `Button` already carries `role="button"`;
+   *  otherwise add `role="combobox"`).
    *  Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and
    *  `className` / `style` apply only to the default field. Add styling and
    *  attributes to the returned element instead. */
@@ -782,6 +784,10 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         status={status}
         statusIcon={statusIcon}
         round={round}
+        // `combobox` role keeps `aria-expanded` valid here (it isn't a global attr);
+        // `button` would make a-menu treat the trigger as self-activating and drop
+        // the keyboard-open this read-only field relies on.
+        role="combobox"
         aria-haspopup="menu"
         aria-expanded={open ? 'true' : 'false'}
         // <a-menu> handles Enter, Space, and ArrowDown on this read-only field by

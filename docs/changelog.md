@@ -16,10 +16,20 @@ changes are not listed.
 
 ### Fixed
 
+- Buttons and Tags with an explicit `tone="neutral"` now receive the reference
+  theme's neutral values.
+- Disabled and loading Buttons with `href` now use the disabled palette and block
+  activation.
 - `Select` and `InputDate` triggers carry a `combobox` role, so their
   `aria-expanded` is valid (WCAG 4.1.2 / `aria-allowed-attr`) — it was previously
   set on an element with no supporting role.
 - Checkbox, Radio, and Switch now show one focus ring around their visual control.
+- Checkboxes without a tone now receive the Anta neutral reference values;
+  `tone="neutral"` remains equivalent.
+- Checkbox and Radio `toneSelected` now consistently overrides `tone`, including
+  explicit neutral selected tones and custom `RadioGroup` tones.
+- `a-input` and `a-input-time` now treat `status="neutral"` like their default
+  status.
 
 ## 0.3.21 — August 11, 2026
 

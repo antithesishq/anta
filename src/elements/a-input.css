@@ -206,10 +206,10 @@
   a-input[status="success"]  { --input-status-source: var(--anta-seed-success);  --input-bg: var(--bg-2-success);  --input-hint: var(--text-2-success); }
   a-input[status="info"]     { --input-status-source: var(--anta-seed-info);     --input-bg: var(--bg-2-info);     --input-hint: var(--text-2-info); }
   a-input[status="brand"]    { --input-status-source: var(--anta-seed-brand);    --input-bg: var(--bg-2-brand);    --input-hint: var(--text-2-brand); }
-  a-input[status] {
+  a-input[status]:not([status="neutral"]) {
     --input-border:       oklch(from var(--input-status-source) 0.58 c h);
   }
-  .dark a-input[status] {
+  .dark a-input[status]:not([status="neutral"]) {
     --input-border:       oklch(from var(--input-status-source) 0.52 c h);
   }
 

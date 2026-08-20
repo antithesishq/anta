@@ -97,7 +97,7 @@ const SHADOW_STYLE = `
     box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
     transition: box-shadow 120ms ease;
   }
-  :host([status]) .field { --_bw: 1px; }
+  :host([status]:not([status="neutral"])) .field { --_bw: 1px; }
 
   @media (hover: hover) and (pointer: fine) {
     :host(:not(:disabled)) .field:hover {

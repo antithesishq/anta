@@ -702,7 +702,9 @@ scannable list instead of hiding matches behind flyouts.
  one focusable element, such as an Anta `Button`. The menu is positioned
  relative to that element and opens when it is clicked. Do not return a
  fragment, multiple siblings, or a non-focusable wrapper. Add
- `aria-haspopup="menu"` and `aria-expanded={state.open}` to the element.
+ `aria-haspopup="menu"` and `aria-expanded={state.open}` to the element, on a
+ role that supports them (an Anta `Button` already carries `role="button"`;
+ otherwise add `role="combobox"`).
  Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and
  `className` / `style` apply only to the default field. Add styling and
  attributes to the returned element instead. |
@@ -776,6 +778,9 @@ the same thing):
 | `disabled` | `boolean` | Disable just this option. |
 | `tone` | `string` | The row's color across label, icon, hint, selected tint, and indicator. A named tone (`neutral` / `brand` / `info` / `success` / `warning` / `critical`) or any CSS color. |
 | `tooltip` | `React.ReactNode` | Row tooltip. In a `multiple` select with `selectAll`, a row with no `tooltip` shows the default "select only this" (Alt/⌥-click) hint; set it to override, or `''` to suppress. |
+| `className` | `string` | CSS class on the rendered menu row. |
+| `style` | `React.CSSProperties` | Inline styles on the rendered menu row. |
+| `data-*` | `unknown` | Data attributes on the rendered menu row. `data-menu-*` is reserved for Select's selection and keyboard behavior. |
 | `[key: string]` | `unknown` | Your own data — attach anything and read it back in `renderOption`. |
 
 **`SelectGroup`** — a heading with items rendered inline beneath it.

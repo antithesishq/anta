@@ -424,10 +424,11 @@ export const SYSTEMS: System[] = [
     pros: [
       'A broad React Aria component set copied into your repo without a runtime dependency.',
       'Tailwind v4 styling and a synced Figma kit keep design and code aligned.',
-      'The MIT core covers base components; charts and toasts use Recharts and Sonner.',
+      'Charts use Recharts rather than native chart components.',
     ],
     cons: [
       'React-only, with React 19 and Tailwind CSS 4 required.',
+      'Tables render as regular HTML tables with horizontal scrolling, not virtualized data grids.',
       'Full-page examples, extra icon styles, and the Figma kit require paid tiers.',
       'You own consistency and upgrades across copied files.',
     ],
@@ -562,9 +563,9 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   untitledui: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
-    tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
+    tooltip: 'yes', dialog: 'yes', toast: 'paid', accordion: 'paid',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'partial',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes',
+    steps: 'paid', nav: 'paid', icons: 'yes', typography: 'yes', charts: 'yes',
   },
   gravity: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'partial',

@@ -45,6 +45,11 @@ truncation. Both modes use `-webkit-line-clamp` inside
 prefix (Firefox 68+, Chrome, Safari, Edge). The host gets `min-width: 0`
 so truncation works inside flex and grid containers.
 
+JSX `Text` adds a `truncatedOnly` tooltip containing its text content. It
+opens only when the text clips. Nest a `<Tooltip>` to replace that tooltip;
+an empty nested tooltip suppresses it. `expandable` text has no automatic
+tooltip because its own control reveals the content.
+
 ```tsx
 {/* Single line */}
 <Text truncate>{longSentence}</Text>
@@ -53,6 +58,23 @@ so truncation works inside flex and grid containers.
 <Text truncate={2}>{longSentence}</Text>
 <Text truncate={3}>{longSentence}</Text>
 ```
+
+### Use a tooltip with the web component
+
+`<a-text>` does not add a tooltip. Nest `<a-tooltip truncated-only>` and pass
+the full text as its content:
+
+```html
+<a-text truncate="1" style="max-width: 260px; cursor: help">
+  A long status message that is clipped until you hover it.
+  <a-tooltip truncated-only>
+    A long status message that is clipped until you hover it.
+  </a-tooltip>
+</a-text>
+```
+
+`a-text.isTruncated` is a read-only layout measurement. Read it on the UI
+thread when you compose custom truncation behavior.
 
 Pair `expandable` with `truncate` to let the reader reveal the full text.
 The fade and chevron appear only when the clamped content overflows; text
@@ -98,9 +120,11 @@ more" and "Show less". `collapsible` takes effect only with `expandable`.
  kept while lightness/chroma are pinned per priority in oklch. |
 | `truncate?` | boolean \| number | — | Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
  single line; any integer ≥ 2 clamps to that many lines; `0` or a
- negative value means no truncation. Uses the `-webkit-line-clamp`
- technique, supported in all major browsers (Firefox 68+, Chrome,
- Safari, Edge). |
+ negative value means no truncation. A clipped, non-expandable JSX
+ `Text` shows its text content in a tooltip by default. Nest a
+ `<Tooltip>` to provide your own tooltip instead. Uses the
+ `-webkit-line-clamp` technique, supported in all major browsers
+ (Firefox 68+, Chrome, Safari, Edge). |
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

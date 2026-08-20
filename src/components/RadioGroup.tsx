@@ -2,8 +2,8 @@
 // not a hard `react` import — so a custom runtime resolves them, not whatever
 // `react` maps to. See AGENTS.md (stateless-wrapper exception for RadioGroup).
 import { useId, useState } from "../jsx-runtime"
-import { nativeStateChange, toneStyle } from "../anta_helpers"
-import type { BaseProps } from "../general_types"
+import { nativeStateChange, optionPresentationAttrs, toneStyle } from "../anta_helpers"
+import type { BaseProps, OptionPresentationProps } from "../general_types"
 
 /** The element's `statechange` payload. `next`/`prev` are values (`null` = nothing
  *  selected); `reason` distinguishes a user pick from a form reset / bfcache restore. */
@@ -24,7 +24,7 @@ const radioAttrsOf = (el: any): RadioChangeAttrs => ({
 })
 
 /** One option in a `<RadioGroup>`. The wrapper renders an `<a-radio>` per entry. */
-export interface RadioOption {
+export interface RadioOption extends OptionPresentationProps {
   /** This option's identity and the value submitted when it's selected.
    *  Must be unique within the group (a dev-only warning fires on duplicates). */
   value: string
@@ -217,7 +217,9 @@ export const RadioGroup = ({
       name={name}
       status={status && status !== "neutral" ? status : undefined}
       tone={tone && tone !== "neutral" ? tone : undefined}
-      tone-selected={toneSelected && toneSelected !== "neutral" ? toneSelected : undefined}
+      // Unlike the group tone, an explicit neutral selected tone can reset a
+      // colored group tone, so it remains a DOM attribute.
+      tone-selected={toneSelected || undefined}
       size={size && size !== "medium" ? size : undefined}
       disabled={disabled ? "" : undefined}
       orientation={orientation && orientation !== "vertical" ? orientation : undefined}
@@ -230,19 +232,28 @@ export const RadioGroup = ({
       onfocusin={onFocus}
       onfocusout={onBlur}
       class={className}
-      // A custom mark tone flows to children via the group's inherited
-      // `--radio-tone-source` (both `tone` and `toneSelected` feed it — chained so
-      // whichever is custom sets it); named tones cascade through the CSS instead.
-      style={toneStyle(toneSelected, "--radio-tone-source", toneStyle(tone, "--radio-tone-source", style))}
+      // Custom normal and selected tones flow to children through separate sources;
+      // named tones cascade through the CSS instead.
+      style={toneStyle(
+        toneSelected,
+        "--radio-tone-source",
+        toneStyle(
+          tone,
+          "--radio-off-tone-source",
+          toneSelected == null ? toneStyle(tone, "--radio-tone-source", style) : style,
+        ),
+      )}
     >
       {label && <a-radio-group-label id={labelId}>{label}</a-radio-group-label>}
       {hint && <a-radio-group-hint id={hintId}>{hint}</a-radio-group-hint>}
       <a-radio-list>
         {options.map((o) => {
           const optDisabled = disabled || o.disabled
+          const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(o)
           return (
             <a-radio
               key={o.value}
+              {...optionAttrs}
               role="radio"
               value={o.value}
               aria-disabled={optDisabled ? "true" : undefined}
@@ -251,11 +262,24 @@ export const RadioGroup = ({
               // disabled-but-selected option (focusable-disabled). `aria-checked` is
               // NOT set here — the element publishes it off-DOM via internals.
               tabIndex={o.value === tabStopValue ? 0 : -1}
-              tone={o.tone && o.tone !== "neutral" ? o.tone : undefined}
-              tone-selected={o.toneSelected && o.toneSelected !== "neutral" ? o.toneSelected : undefined}
+              // An option's explicit neutral tone is an override of the group
+              // tone, rather than the same as an omitted option tone.
+              tone={o.tone || undefined}
+              tone-selected={o.toneSelected || undefined}
               size={o.size && o.size !== "medium" ? o.size : undefined}
               disabled={o.disabled ? "" : undefined}
-              style={toneStyle(o.toneSelected, "--radio-tone-source", toneStyle(o.tone, "--radio-tone-source"))}
+              class={optionClassName}
+              style={toneStyle(
+                o.toneSelected,
+                "--radio-tone-source",
+                toneStyle(
+                  o.tone,
+                  "--radio-off-tone-source",
+                  o.toneSelected == null
+                    ? toneStyle(o.tone, "--radio-tone-source", optionStyle)
+                    : optionStyle,
+                ),
+              )}
             >
               <a-radio-label>{o.label}</a-radio-label>
               {o.hint != null && <a-radio-hint>{o.hint}</a-radio-hint>}

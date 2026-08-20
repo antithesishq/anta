@@ -29,6 +29,18 @@ export interface BaseProps {
   [key: `aria-${string}`]: unknown
 }
 
+/** Safe presentation attributes for a data-rendered option. They land on the
+ * option's rendered row, rather than on the enclosing control. Menu-based
+ * components reserve `data-menu-*` for their own selection and focus behavior. */
+export interface OptionPresentationProps {
+  /** CSS class on the option's rendered row. */
+  className?: string
+  /** Inline styles on the option's rendered row. */
+  style?: React.CSSProperties
+  /** Additional data attributes on the option's rendered row. */
+  [key: `data-${string}`]: unknown
+}
+
 /**
  * Standard DOM event handlers Anta forwards to the rendered element. These are
  * **enumerated on purpose** — rather than an open `on${string}` index signature
@@ -824,6 +836,12 @@ export interface AMenuAttributes extends BaseAttributes {
    *  layer that owns the field (e.g. `Select`) listens here and reflects it.
    *  All-lowercase so React/Preact bind it to the CustomEvent. */
   onactivedescendant?: (e: CustomEvent<{ id: string | null }>) => void
+  /** Contain events so they don't bubble out of the menu surface to ancestor /
+   *  document handlers. Space- or comma-separated event names
+   *  (`stop-propagation="click pointerdown"`); a bare / empty attribute defaults to
+   *  `click`. Menu-item / `data-menu-close` selections are always contained; this
+   *  extends containment to whole event types. */
+  'stop-propagation'?: string
   /** ARIA role — the JSX wrapper sets this to `'menu'`. */
   role?: string
   'aria-orientation'?: 'vertical' | 'horizontal'

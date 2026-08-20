@@ -1,5 +1,6 @@
 import type { BaseProps } from "../general_types"
 import { toneStyle } from "../anta_helpers"
+import { Tooltip } from "./Tooltip"
 
 /** Truncation / expansion axis. `expandable` only takes effect with `truncate`;
  *  `collapsible` only with `expandable` — so the type forbids `collapsible`
@@ -38,9 +39,11 @@ export type TextProps = BaseProps & {
   inline?: boolean
   /** Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
    *  single line; any integer ≥ 2 clamps to that many lines; `0` or a
-   *  negative value means no truncation. Uses the `-webkit-line-clamp`
-   *  technique, supported in all major browsers (Firefox 68+, Chrome,
-   *  Safari, Edge). */
+   *  negative value means no truncation. A clipped, non-expandable JSX
+   *  `Text` shows its text content in a tooltip by default. Nest a
+   *  `<Tooltip>` to provide your own tooltip instead. Uses the
+   *  `-webkit-line-clamp` technique, supported in all major browsers
+   *  (Firefox 68+, Chrome, Safari, Edge). */
   truncate?: boolean | number
 } & ExpandMode
 
@@ -97,6 +100,9 @@ export const Text = ({ priority, tone, size, inline, truncate, expandable, colla
       {...rest}
     >
       {children}
+      {lineCount != null && !canExpand && (
+        <Tooltip truncatedOnly data-anta-text-tooltip="" />
+      )}
     </a-text>
   )
 }

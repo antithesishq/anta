@@ -180,6 +180,16 @@ export class ATextElement extends HTMLElementBase {
     return this.hasAttribute('collapsible')
   }
 
+  /** True when `truncate` currently hides some of the slotted content. This is
+   *  a UI-thread layout read, used by a nested `a-tooltip`; it never writes to
+   *  the host or light DOM. */
+  get isTruncated(): boolean {
+    if (!this.hasAttribute('truncate') || this.expanded) return false
+    const s = this.slotEl
+    if (s.clientWidth === 0 && s.clientHeight === 0) return false
+    return s.scrollHeight > s.clientHeight + 1 || s.scrollWidth > s.clientWidth + 1
+  }
+
   /** Create or remove the chevron to match `expandable`, then refresh it. */
   private syncExpandButton() {
     if (this.#isExpandable && !this.expandBtn) {
@@ -227,9 +237,7 @@ export class ATextElement extends HTMLElementBase {
    *  clips. Frozen on while expanded; height catches wrapped text, width a long word. */
   private measureOverflow() {
     if (!this.#isExpandable || this.expanded) return
-    const s = this.slotEl
-    const over = s.scrollHeight > s.clientHeight + 1 || s.scrollWidth > s.clientWidth + 1
-    s.classList.toggle('overflowing', over)
+    this.slotEl.classList.toggle('overflowing', this.isTruncated)
   }
 
   /** Reflect state onto the button (label + `aria-expanded` + `.expanded`); a

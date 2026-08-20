@@ -13,6 +13,51 @@ changes are not listed.
   customizable Previous and Next controls. Vertical layouts place panels and
   tertiary brand navigation controls inside the active step's flow.
 
+## 0.3.22 — August 20, 2026
+
+### Changed
+
+- JSX `Input` now truncates overflowing single-line values by default. Pass
+  `truncate={false}` to show the full value.
+- Selecting a `Menu` item no longer bubbles the click to ancestor handlers (e.g. a
+  clickable row the menu sits in). Set `stopPropagation` to contain more event types.
+- Open menus follow their trigger vertically as it scrolls or shifts, keeping the
+  side chosen at open.
+
+### Fixed
+
+- Buttons and Tags with an explicit `tone="neutral"` now receive the reference
+  theme's neutral values.
+- Disabled and loading Buttons with `href` now use the disabled palette and block
+  activation.
+- `Select` and `InputDate` triggers carry a `combobox` role, so their
+  `aria-expanded` is valid (WCAG 4.1.2 / `aria-allowed-attr`) — it was previously
+  set on an element with no supporting role.
+- Checkbox, Radio, and Switch now show one focus ring around their visual control.
+- Checkboxes without a tone now receive the Anta neutral reference values;
+  `tone="neutral"` remains equivalent.
+- Checkbox and Radio `toneSelected` now consistently overrides `tone`, including
+  explicit neutral selected tones and custom `RadioGroup` tones.
+- `a-input` and `a-input-time` now treat `status="neutral"` like their default
+  status.
+
+## 0.3.21 — August 11, 2026
+
+### Added
+
+- `Select`, `SelectFaceted`, `InputAutocomplete`, `RadioGroup`, and `Tabs`
+  option objects accept `className`, `style`, and safe `data-*`
+  attributes on their rendered rows. `data-menu-*` remains component-owned.
+
+### Fixed
+
+- Tab panels no longer add a default tab stop.
+- Menus no longer dismiss when their visible trigger changes size. They request
+  dismissal only after the trigger leaves the viewport.
+- JSX `Text` now shows its clipped content in a tooltip by default. A nested
+  `Tooltip` replaces it, and expandable text does not add one.
+- The Anta theme now uses the shared focus-ring colors in light and dark modes.
+
 ## 0.3.20 — August 4, 2026
 
 ### Changed

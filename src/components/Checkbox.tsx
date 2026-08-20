@@ -139,17 +139,21 @@ export const Checkbox = ({
   // publishes it off-DOM via `ElementInternals`, so it stays live through
   // uncontrolled self-toggles (a wrapper-set value would go stale there).
 
-  // A non-named tone/toneSelected is a custom CSS color — `toneStyle` hands it to the
-  // element via the shared `--checkbox-tone-source` var (both drive the same fill
-  // curve; they differ only in whether the off-state border tints, which the CSS keys
-  // off the attribute name). Chained so whichever is custom sets the source.
+  // A non-named tone/toneSelected is a custom CSS color. The normal tone owns the
+  // off-state source, while toneSelected owns the checked-fill source.
   const computedStyle = roundStyle(
     round,
     '--checkbox-round',
     toneStyle(
       toneSelected,
       '--checkbox-tone-source',
-      toneStyle(tone, '--checkbox-tone-source', style),
+      toneStyle(
+        tone,
+        '--checkbox-off-tone-source',
+        toneSelected == null
+          ? toneStyle(tone, '--checkbox-tone-source', style)
+          : style,
+      ),
     ),
   )
 
@@ -205,7 +209,9 @@ export const Checkbox = ({
       default-state={defaultStateAttr}
       disabled={disabled ? '' : undefined}
       tone={tone && tone !== 'neutral' ? tone : undefined}
-      tone-selected={toneSelected && toneSelected !== 'neutral' ? toneSelected : undefined}
+      // `toneSelected="neutral"` is an explicit reset when `tone` is colored,
+      // so it must reach the element instead of collapsing to the default.
+      tone-selected={toneSelected || undefined}
       size={size && size !== 'medium' ? size : undefined}
       round={roundAttr(round)}
       tabIndex={disabled ? -1 : (tabIndex ?? 0)}

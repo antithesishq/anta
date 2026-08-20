@@ -381,8 +381,10 @@ const recency: SelectFacetCustom<Recency> = {
  Receives a `SelectFacetedTriggerState`. Return exactly one focusable element:
  the menu is positioned relative to that element and opens when it is clicked.
  Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned
- element. `className`, `style`, and other trigger props apply only to the
- default Button, so add styling and attributes to the returned element. |
+ element, on a role that supports them (an Anta `Button` already carries
+ `role="button"`; otherwise add `role="combobox"`). `className`, `style`, and
+ other trigger props apply only to the default Button, so add styling and
+ attributes to the returned element. |
 | `searchable?` | boolean | — | Adds a search field at the top of the root menu. It searches the options of
  every `single` and `multiple` facet in one list. For example, "alice" can
  appear under application-defined Assignee and Owner facets. `text` and

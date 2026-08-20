@@ -240,6 +240,11 @@ run off the UI thread. Walking out from the click, the nearest marker wins:
   element (or a "Done" button inside a `data-menu-open` region) can dismiss the
   menu without being a `MenuItem`.
 
+Selecting an item won't also click the region the menu sits in — the activation
+click stops at the surface, so a `<Menu>` inside a clickable row or card is safe.
+Other events still bubble; pass `stopPropagation` (`true` for clicks, or event
+names like `"click pointerdown"`) to contain those too.
+
 For programmatic open/close from app state, drive the `open` prop (the `state`
 attribute, `"open"` / `"closed"`) and react via `onStateChange`, or keep a `ref`
 and call `.open()` / `.close()` / `.toggle()`.

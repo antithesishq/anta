@@ -1,0 +1,220 @@
+@layer anta {
+  a-steps {
+    --steps-ring-size: 28px;
+    --steps-ring-border-width: 1.5px;
+    --steps-item-gap: 6px;
+    --steps-gap: 4px;
+    --steps-connector-color: var(--text-4);
+    --steps-tab-padding-x: 9px;
+    --steps-tab-padding-block: 3.5px;
+    --steps-hint-leading: 16px;
+
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+  }
+
+  a-steps:has(> a-tabs[size="small"]) {
+    --steps-ring-size: 24px;
+    --steps-tab-padding-x: 7px;
+    --steps-tab-padding-block: 3.75px;
+    --steps-hint-leading: 14px;
+  }
+
+  a-steps:has(> a-tabs[size="large"]) {
+    --steps-ring-size: 32px;
+    --steps-tab-padding-x: 13px;
+    --steps-tab-padding-block: 3.25px;
+    --steps-hint-leading: 20px;
+  }
+
+  a-tabs[data-steps] {
+    --steps-connector-size: 12px;
+    --tabs-gap: calc(
+      var(--steps-gap) * 2 + var(--steps-connector-size)
+    );
+
+    align-items: center;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  a-tabs[data-steps] > a-tab {
+    position: relative;
+    flex: none;
+    min-height: 0;
+    justify-content: flex-start;
+    gap: var(--steps-item-gap);
+  }
+
+  /* Steps uses Tabs for its interaction model, but selection belongs to
+     the status ring rather than a pill around the complete tab label. */
+  a-tabs[data-steps][priority="secondary"] a-tab:state(selected) {
+    --tab-bg: transparent;
+
+    box-shadow: none;
+  }
+
+  a-step-copy {
+    display: inline-flex;
+    flex-direction: column;
+  }
+
+  a-step-copy > a-tab-label {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 500;
+  }
+
+  a-step-hint {
+    color: var(--text-4);
+    font-size: calc(1em - 2px);
+    font-weight: 400;
+    line-height: var(--steps-hint-leading);
+  }
+
+  a-step-ring {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--steps-ring-size);
+    height: var(--steps-ring-size);
+    box-sizing: border-box;
+    color: var(--text-4);
+    border: var(--steps-ring-border-width) solid var(--border-5);
+    border-radius: 999px;
+  }
+
+  /* Reuse secondary Tabs' selected curve so marker and label states share the
+     same tone derivation in light and dark themes. A status tone keeps this
+     selected marker treatment even when its tab is not selected. */
+  a-tabs[data-steps] > a-tab[tone] {
+    --tab-secondary-bg: oklch(
+      from var(--tabs-tone-source)
+      var(--_track-l) var(--_track-c) h / var(--_sec-a)
+    );
+  }
+
+  a-tabs[data-steps] a-tab:is(:state(selected), [tone]) a-step-ring {
+    color: var(--tab-selected-text);
+    background-color: var(--tab-secondary-bg);
+    border-color: var(--tab-selected-border);
+  }
+
+
+  a-tabs[data-steps] a-tab:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-end: calc(
+      -1 * (var(--steps-gap) + var(--steps-connector-size))
+    );
+    width: var(--steps-connector-size);
+    height: 1px;
+    background: var(--steps-connector-color);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  a-tabs[data-steps] a-tab[disabled] {
+    --tab-fg: var(--text-5);
+
+    opacity: 1;
+  }
+
+  a-steps[data-orientation="vertical"] {
+    --steps-content-indent: calc(
+      var(--steps-tab-padding-x) + var(--steps-ring-size) +
+      var(--steps-item-gap)
+    );
+    --steps-vertical-gap: calc(var(--steps-gap) + 4px);
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--steps-vertical-gap);
+  }
+
+  a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] {
+    display: contents;
+  }
+
+  a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] > a-tab {
+    grid-column: 1;
+    width: max-content;
+    max-width: 100%;
+  }
+
+  a-steps[data-orientation="vertical"]
+    a-tab:not(:last-child)::before {
+    inset-block-start: calc(
+      var(--steps-tab-padding-block) + var(--steps-ring-size)
+    );
+    inset-inline-start: calc(
+      var(--tab-padding-x) + var(--steps-ring-size) / 2 -
+      0.5px
+    );
+    inset-inline-end: auto;
+    width: 1px;
+    height: calc(
+      var(--steps-tab-padding-block) * 2 + var(--steps-vertical-gap)
+    );
+    transform: none;
+  }
+
+  a-steps[data-orientation="vertical"][data-connects-next]
+    a-tab:state(selected)::before {
+    height: calc(
+      var(--steps-tab-padding-block) + var(--steps-vertical-gap)
+    );
+  }
+
+  a-steps[data-orientation="vertical"][data-has-selection]
+    > a-tabpanel {
+    grid-column: 1;
+    grid-row: var(--steps-panel-row);
+    width: calc(100% - var(--steps-content-indent));
+    margin-inline-start: var(--steps-content-indent);
+  }
+
+  a-steps[data-orientation="vertical"][data-connects-next]::after {
+    content: "";
+    grid-column: 1;
+    grid-row: var(--steps-panel-row);
+    align-self: stretch;
+    justify-self: start;
+    width: 1px;
+    min-height: var(--steps-ring-size);
+    margin-inline-start: calc(
+      var(--steps-tab-padding-x) +
+      var(--steps-ring-size) / 2 - 0.5px
+    );
+    margin-block-end: calc(
+      -1 * (
+        var(--steps-vertical-gap) + var(--steps-tab-padding-block)
+      )
+    );
+    background: var(--steps-connector-color);
+    pointer-events: none;
+  }
+
+
+  @media (forced-colors: active) {
+    a-tabs[data-steps][priority="secondary"] a-tab:state(selected) {
+      background-color: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+
+    a-step-ring {
+      color: CanvasText;
+      background-color: Canvas;
+      border-color: CanvasText;
+    }
+
+    a-tabs[data-steps] a-tab:state(selected) a-step-ring {
+      border-color: Highlight;
+    }
+  }
+}

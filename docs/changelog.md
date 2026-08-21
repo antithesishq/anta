@@ -7,11 +7,9 @@ changes are not listed.
 
 ### Added
 
-- `ProgressTabs` provides controlled and uncontrolled process navigation with
-  incomplete, loading, completed, and error statuses; three sizes; horizontal
-  and vertical layouts; optional panels; accessible tab semantics; and
-  customizable Previous and Next controls. Vertical layouts place panels and
-  tertiary brand navigation controls inside the active step's flow.
+- `Steps` provides controlled and uncontrolled process navigation with optional
+  panels, horizontal and vertical layouts, accessible tab semantics, process
+  statuses and custom markers, labels and hints, and a sequence-wide tone.
 
 ## 0.3.22 — August 20, 2026
 

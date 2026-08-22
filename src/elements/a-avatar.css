@@ -1,0 +1,47 @@
+@layer anta {
+  a-avatar {
+    --avatar-size: 44px;
+    --avatar-radius: 22%;
+    --avatar-placeholder-bg: var(--bg-3);
+
+    --avatar-status-size: 30%;
+    --avatar-status-ring-width: 2px;
+    --avatar-status-ring: var(--bg-1);
+    --avatar-status-color: var(--border-3);
+    --avatar-status-online: oklch(0.72 0.16 150);
+    --avatar-status-busy: oklch(0.62 0.19 25);
+    --avatar-status-away: oklch(0.76 0.14 75);
+    --avatar-status-offline: var(--border-3);
+
+    display: inline-block;
+    inline-size: var(--avatar-size);
+    block-size: var(--avatar-size);
+    vertical-align: middle;
+  }
+
+  a-avatar[size='small'] {
+    --avatar-size: 32px;
+    --avatar-status-ring-width: 1.5px;
+  }
+
+  a-avatar[size='large'] {
+    --avatar-size: 64px;
+    --avatar-status-ring-width: 2.5px;
+  }
+
+  /* Pre-upgrade skeleton: before the element registers there is no shadow, so
+     paint a neutral disc at the right size and shape to avoid a flash. */
+  a-avatar:not(:defined) {
+    display: inline-block;
+    inline-size: var(--avatar-size);
+    block-size: var(--avatar-size);
+    border-radius: var(--avatar-radius);
+    background: var(--avatar-placeholder-bg);
+    vertical-align: middle;
+  }
+
+  .dark a-avatar {
+    --avatar-status-ring: var(--bg-2);
+    --avatar-status-offline: var(--border-2);
+  }
+}

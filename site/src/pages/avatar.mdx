@@ -1,0 +1,236 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Avatar
+---
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
+import AvatarLab from '../components/AvatarLab.tsx'
+import { Avatar } from '@antadesign/anta'
+
+export const photo = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f97362'/%3E%3Cstop offset='1' stop-color='%236c5ce7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='128' height='128' fill='url(%23g)'/%3E%3Ccircle cx='64' cy='52' r='24' fill='%23ffffff' opacity='0.85'/%3E%3Crect x='28' y='84' width='72' height='48' rx='24' fill='%23ffffff' opacity='0.85'/%3E%3C/svg%3E"
+
+# Avatar
+
+A userpic container. `Avatar` shows one of three things, in priority order: a
+supplied image, a seed-generated placeholder figure, or initials. The generated
+figure imitates a framed portrait — a head and shoulders over a colored
+background — with no face or gender indicators, so an app can fill an empty slot
+with a distinct, on-brand picture per user without an uploaded photo.
+
+An alphanumeric `seed` drives the result deterministically: the same seed always
+renders the same avatar, and different seeds are distinguishable. A `generator`
+config caps each dimension to your brand.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<AvatarLab client:visible />
+
+</Disclosure>
+
+## Generated userpic
+
+Pass a `seed` (a stable user id) and a `name`. With no `generator`, each seed
+draws a varied figure: background, head, and body colors, the figure's scale, the
+head and shoulder angles, and the corner radius of each shape all move with the
+seed, while the head and body hues stay coordinated with the background.
+
+<Preview gap="12px">
+  <Avatar seed="user-42" name="Vlad Korobov" size={56} />
+  <Avatar seed="lena-r" name="Lena Rossi" size={56} />
+  <Avatar seed="8f21ac" name="Sam Okafor" size={56} />
+  <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} />
+  <Avatar seed="marie-c" name="Marie Curie" size={56} />
+  <Avatar seed="q-jones" name="Quincy Jones" size={56} />
+</Preview>
+
+```tsx folded
+<Avatar seed="user-42" name="Vlad Korobov" />
+<Avatar seed="lena-r" name="Lena Rossi" />
+<Avatar seed="8f21ac" name="Sam Okafor" />
+```
+
+## Initials
+
+Turn both shape dimensions off in the `generator` and the avatar falls back to
+initials — the first letter of each of the first three words of `name` — over the
+generated background. The background color still varies with the seed.
+
+<Preview gap="12px">
+  <Avatar name="Vlad Korobov" size={56} generator={{ headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
+  <Avatar name="Marie Skłodowska Curie" size={56} generator={{ headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
+  <Avatar name="Madonna" size={56} generator={{ headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
+  <Avatar name="Ada Lovelace" size={56} generator={{ headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
+</Preview>
+
+```tsx folded
+const initials = {
+  headBorderRadius: { mode: 'off' },
+  bodyBorderRadius: { mode: 'off' },
+}
+
+<Avatar name="Vlad Korobov" generator={initials} />
+<Avatar name="Marie Skłodowska Curie" generator={initials} />
+<Avatar name="Madonna" generator={initials} />
+```
+
+## Image and status
+
+Set `src` to show an uploaded photo instead of a generated figure, cropped to
+fill the container. `status` adds a corner presence indicator that works on any
+avatar — image or generated.
+
+<Preview gap="12px">
+  <Avatar src={photo} name="Vlad Korobov" size={56} status="online" />
+  <Avatar seed="lena-r" name="Lena Rossi" size={56} status="busy" />
+  <Avatar seed="8f21ac" name="Sam Okafor" size={56} status="away" />
+  <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} status="offline" />
+</Preview>
+
+```tsx folded
+<Avatar src="/team/vlad.jpg" name="Vlad Korobov" status="online" />
+<Avatar seed="lena-r" name="Lena Rossi" status="busy" />
+<Avatar seed="8f21ac" name="Sam Okafor" status="away" />
+<Avatar seed="k-tanaka" name="Kenji Tanaka" status="offline" />
+```
+
+## Size
+
+`size` is `small` (32px), `medium` (44px, the default), or `large` (64px). Pass a
+number for a pixel size.
+
+<Preview gap="12px">
+  <Avatar seed="user-42" name="Vlad Korobov" size="small" />
+  <Avatar seed="user-42" name="Vlad Korobov" size="medium" />
+  <Avatar seed="user-42" name="Vlad Korobov" size="large" />
+  <Avatar seed="user-42" name="Vlad Korobov" size={96} />
+</Preview>
+
+```tsx folded
+<Avatar seed="user-42" name="Vlad Korobov" size="small" />
+<Avatar seed="user-42" name="Vlad Korobov" size="large" />
+<Avatar seed="user-42" name="Vlad Korobov" size={96} />
+```
+
+## Brand constraints
+
+The `generator` config caps the space so every avatar sits on your brand. Each of
+the ten dimensions takes one of four modes: `off` (excluded, a fixed default),
+`any` (its full natural range), `range` (an explicit range), or `list` (a set of
+values the seed picks from).
+
+<Columns>
+<Col>
+
+**Color ranges** cap OKLCH per channel — lightness, chroma, and hue. Narrow the
+hue to your brand's, keep chroma modest, and every generated color stays in band
+(chroma is clamped into sRGB, so it never clips). `harmony` ties the head and
+body hue to the background.
+
+<Preview gap="12px" background="var(--bg-4)">
+  <Avatar seed="a1" name="A" size={52} generator={{ bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] }, harmony: true }} />
+  <Avatar seed="b2" name="B" size={52} generator={{ bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] }, harmony: true }} />
+  <Avatar seed="c3" name="C" size={52} generator={{ bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] }, harmony: true }} />
+  <Avatar seed="d4" name="D" size={52} generator={{ bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] }, harmony: true }} />
+</Preview>
+
+```tsx folded
+const brand = {
+  bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] },
+  harmony: true,
+}
+
+<Avatar seed={user.id} name={user.name} generator={brand} />
+```
+
+</Col>
+<Col>
+
+**Color lists** pass an explicit palette — a scheme the seed picks from at
+random. Combine with `off` shapes for a classic initials avatar restricted to
+your palette.
+
+<Preview gap="12px" background="var(--bg-4)">
+  <Avatar name="Ann Lee" size={52} generator={{ bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
+  <Avatar name="Bo Qi" size={52} generator={{ bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
+  <Avatar name="Cy Vance" size={52} generator={{ bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
+  <Avatar name="Di Xu" size={52} generator={{ bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
+</Preview>
+
+```tsx folded
+const palette = {
+  bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] },
+  headBorderRadius: { mode: 'off' },
+  bodyBorderRadius: { mode: 'off' },
+}
+
+<Avatar name={user.name} generator={palette} />
+```
+
+</Col>
+</Columns>
+
+The ten dimensions are `bgColor`, `headColor`, `bodyColor`, `figureScale`,
+`figureTranslate`, `figureAngle`, `headAngle`, `bodyAngle`, `headBorderRadius`,
+and `bodyBorderRadius`. Explore every mode and range in the playground, then copy
+the config it exports.
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Avatar" />
+
+</Disclosure>
+
+<Disclosure title="Vanilla web component">
+
+Use the web component directly when you are not using React or Preact. The
+generation config rides the `config` attribute as a JSON string, so the element
+generates from plain markup with no JavaScript of your own.
+
+<Preview gap="12px">
+  <a-avatar seed="user-42" name="Vlad Korobov" style="--avatar-size: 56px"></a-avatar>
+  <a-avatar name="Vlad Korobov" style="--avatar-size: 56px" config='{"headBorderRadius":{"mode":"off"},"bodyBorderRadius":{"mode":"off"}}'></a-avatar>
+</Preview>
+
+```html
+<a-avatar seed="user-42" name="Vlad Korobov"></a-avatar>
+
+<a-avatar
+  name="Vlad Korobov"
+  config='{"headBorderRadius":{"mode":"off"},"bodyBorderRadius":{"mode":"off"}}'
+></a-avatar>
+```
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+Reach for the props first: **`size`** sets the dimensions and **`generator`** the
+generated look. Everything else is `--avatar-*` custom properties on the host and
+`::part()` on the shadow content.
+
+The container is a rounded square by default. Set `--avatar-radius: 50%` for a
+circle, and tune the status indicator with `--avatar-status-*`.
+
+<Preview gap="12px">
+  <Avatar className="round" seed="user-42" name="Vlad Korobov" size={56} status="online" />
+  <Avatar className="round" seed="lena-r" name="Lena Rossi" size={56} status="busy" />
+  <style is:inline>{`
+    a-avatar.round { --avatar-radius: 50%; --avatar-status-size: 26%; }
+  `}</style>
+</Preview>
+
+```css folded
+a-avatar.round {
+  --avatar-radius: 50%;      /* circle instead of rounded square */
+  --avatar-status-size: 26%;
+}
+```
+
+The shadow content exposes `::part(frame)` (the clipped container), `::part(image)`
+(the `src` image), and `::part(status)` (the corner indicator) for anything the
+custom properties do not cover.
+
+</Disclosure>

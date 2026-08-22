@@ -3,6 +3,17 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- `Avatar` — a userpic container that shows an image, a seed-generated placeholder
+  figure, or initials. A `generator` config caps each dimension (colors, scale,
+  translate, angles, corner radii) to OFF / ANY / RANGE / LIST, with OKLCH color
+  ranges or an explicit palette, so generated avatars stay on-brand. The
+  `avatar-core` generation helpers (`resolveAvatar`, `avatarToSvg`, `getInitials`,
+  and the seed PRNG) ship as named exports.
+
 ## 0.3.22 — August 20, 2026
 
 ### Changed

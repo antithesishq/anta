@@ -200,6 +200,34 @@ export interface AProgressAttributes extends BaseAttributes {
 }
 
 /**
+ * Attributes for the `<a-avatar>` custom element.
+ *
+ * These are the low-level web component attributes. For the typed JSX wrapper,
+ * use `Avatar` from `@antadesign/anta`.
+ */
+export interface AAvatarAttributes extends BaseAttributes {
+  /** Alphanumeric seed driving the generated userpic. Falls back to `name`. */
+  seed?: string
+  /** Name — supplies the initials fallback and accessible name, and seeds
+   *  generation when `seed` is absent. */
+  name?: string
+  /** Image URL. Shown instead of a generated userpic when present. */
+  src?: string
+  /** Size of the square container. `medium` is the default; set a pixel size via
+   *  the `--avatar-size` custom property. */
+  size?: 'small' | 'medium' | 'large'
+  /** Corner presence indicator. */
+  status?: 'online' | 'offline' | 'busy' | 'away'
+  /** Brand generation constraints as a JSON string (an `AvatarGenConfig`). With
+   *  the `Avatar` wrapper, pass the object as `generator` and it is serialized. */
+  config?: string
+  /** ARIA role — the JSX wrapper sets this to `'img'`. */
+  role?: string
+  /** ARIA accessible name. */
+  'aria-label'?: string
+}
+
+/**
  * Attributes for the `<a-loader>` custom element. For the JSX wrapper with
  * cross-browser sizing and accessible progress semantics, use `Loader` from
  * `@antadesign/anta`.

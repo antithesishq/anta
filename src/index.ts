@@ -16,6 +16,32 @@
  *
  * @packageDocumentation
  */
+export { Avatar } from './components/Avatar'
+export type { AvatarProps } from './components/Avatar'
+export {
+  resolveAvatar,
+  avatarToSvg,
+  getInitials,
+  hashSeed,
+  mulberry32,
+  rngFromSeed,
+  maxChroma,
+  oklchString,
+  colorLightness,
+  hasFigure,
+  DEFAULT_CONFIG,
+} from './avatar-core'
+export type {
+  AvatarGenConfig,
+  DimMode,
+  ScalarDim,
+  Vec2Dim,
+  ColorDim,
+  ResolvedAvatar,
+  ResolvedHead,
+  ResolvedBody,
+  SvgOptions,
+} from './avatar-core'
 export { Progress } from './components/Progress'
 export type { ProgressProps } from './components/Progress'
 export { Loader } from './components/Loader'

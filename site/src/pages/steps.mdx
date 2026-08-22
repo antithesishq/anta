@@ -366,7 +366,7 @@ background with a dotted border:
 ```
 
 `className` and `style` on `Steps` apply to `a-steps`. These properties adjust
-density: `--steps-ring-size`, `--steps-ring-border-width`, `--steps-item-gap`, and
+density: `--steps-marker-size`, `--steps-marker-border-width`, `--steps-item-gap`, and
 `--steps-gap`.
 
 **Roomier markers.** This example increases the marker and connector spacing:
@@ -375,7 +375,7 @@ density: `--steps-ring-size`, `--steps-ring-border-width`, `--steps-item-gap`, a
   <RoomySteps client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     .roomy-steps {
-      --steps-ring-size: 30px;
+      --steps-marker-size: 30px;
       --steps-item-gap: 8px;
       --steps-gap: 6px;
     }
@@ -384,7 +384,7 @@ density: `--steps-ring-size`, `--steps-ring-border-width`, `--steps-item-gap`, a
 
 ```css folded
 .roomy-steps {
-  --steps-ring-size: 30px;
+  --steps-marker-size: 30px;
   --steps-item-gap: 8px;
   --steps-gap: 6px;
 }

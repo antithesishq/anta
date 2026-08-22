@@ -1,8 +1,8 @@
 @layer anta {
   a-steps {
-    --steps-ring-size: 28px;
-    --steps-ring-border-width: 1.5px;
-    --steps-ring-rest-border: var(--border-4);
+    --steps-marker-size: 28px;
+    --steps-marker-border-width: 1.5px;
+    --steps-marker-rest-border: var(--border-4);
     --steps-item-gap: 6px;
     --steps-gap: 4px;
     --steps-connector-color: var(--border-3);
@@ -17,14 +17,14 @@
   }
 
   a-steps:has(> a-tabs[size="small"]) {
-    --steps-ring-size: 24px;
+    --steps-marker-size: 24px;
     --steps-tab-padding-x: 7px;
     --steps-tab-padding-block: 3.75px;
     --steps-hint-leading: 14px;
   }
 
   a-steps:has(> a-tabs[size="large"]) {
-    --steps-ring-size: 32px;
+    --steps-marker-size: 32px;
     --steps-tab-padding-x: 13px;
     --steps-tab-padding-block: 3.25px;
     --steps-hint-leading: 20px;
@@ -129,11 +129,11 @@
     flex: none;
     align-items: center;
     justify-content: center;
-    width: var(--steps-ring-size);
-    height: var(--steps-ring-size);
+    width: var(--steps-marker-size);
+    height: var(--steps-marker-size);
     box-sizing: border-box;
     color: var(--text-4);
-    border: var(--steps-ring-border-width) solid var(--steps-ring-rest-border);
+    border: var(--steps-marker-border-width) solid var(--steps-marker-rest-border);
     border-radius: 999px;
     transition:
       color var(--tab-timing),
@@ -179,7 +179,7 @@
     order: 3;
     flex: 1 1 auto;
     align-self: center;
-    min-width: var(--steps-ring-size);
+    min-width: calc(var(--steps-marker-size) / 2);
     height: 1px;
     margin-inline-start: calc(1ch - var(--steps-item-gap));
     margin-inline-end: calc(1ch - 2 * var(--steps-tab-padding-x));
@@ -199,7 +199,7 @@
 
   a-steps[data-orientation="vertical"] {
     --steps-content-indent: calc(
-      var(--steps-tab-padding-x) + var(--steps-ring-size) +
+      var(--steps-tab-padding-x) + var(--steps-marker-size) +
       var(--steps-item-gap)
     );
     --steps-vertical-gap: calc(var(--steps-gap) + 4px);
@@ -226,15 +226,15 @@
     content: "";
     position: absolute;
     inset-block-start: calc(
-      var(--steps-tab-padding-block) + var(--steps-ring-size)
+      var(--steps-tab-padding-block) + var(--steps-marker-size)
     );
     inset-inline-start: calc(
-      var(--tab-padding-x) + var(--steps-ring-size) / 2 -
+      var(--tab-padding-x) + var(--steps-marker-size) / 2 -
       0.5px
     );
     inset-inline-end: auto;
     width: 1px;
-    height: calc(100% - var(--steps-ring-size) + var(--steps-vertical-gap));
+    height: calc(100% - var(--steps-marker-size) + var(--steps-vertical-gap));
     background: var(--steps-connector-color);
     transform: none;
     pointer-events: none;
@@ -255,10 +255,10 @@
     align-self: stretch;
     justify-self: start;
     width: 1px;
-    min-height: var(--steps-ring-size);
+    min-height: var(--steps-marker-size);
     margin-inline-start: calc(
       var(--steps-tab-padding-x) +
-      var(--steps-ring-size) / 2 - 0.5px
+      var(--steps-marker-size) / 2 - 0.5px
     );
     margin-block-end: calc(
       -1 * (

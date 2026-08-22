@@ -47,8 +47,8 @@ export interface StepOption extends OptionPresentationProps {
   /** Replaces the marker derived from `status`. A number is shown directly; an
    * Anta icon shape is rendered as an `<Icon>`. */
   marker?: StepMarker
-  /** Disables this phase. By default it keeps an empty marker ring; a custom
-   * `marker` or `renderMarker` result can still supply its center. */
+  /** Disables this phase. A custom `marker` or `renderMarker` result is kept;
+   * otherwise it uses the incomplete marker. */
   disabled?: boolean
 }
 
@@ -152,7 +152,7 @@ export const Steps = ({
       disabled: !!option.disabled,
     })
     const builtInMarker = option.disabled
-      ? null
+      ? <Icon shape={STATUS_ICON.incomplete} />
       : option.status === "loading"
         ? <Loader tone={tone} />
         : <Icon shape={STATUS_ICON[option.status]} />

@@ -13,7 +13,7 @@ controls access.
 - `loading` — loader
 - `completed` — check
 - `error` — critical ×
-- `disabled` — empty ring
+- `disabled` — incomplete marker by default
 
 ```tsx
 const options = [
@@ -33,7 +33,8 @@ const options = [
 ```
 
 An incomplete step can still be selected. Add `disabled` only when it is locked;
-disabled steps keep their layout space and show an empty ring by default. Use
+disabled steps keep their layout space and use the incomplete marker by default.
+Pass `marker` or return a value from `renderMarker` to keep a custom marker. Use
 `loading` for work running in the background.
 
 ### Markers and hints

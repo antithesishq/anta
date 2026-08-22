@@ -1,7 +1,9 @@
 import { optionPresentationAttrs } from "../anta_helpers"
+import type { IconShape } from "../elements/a-icon.shapes"
 import type { OptionPresentationProps } from "../general_types"
 import { useState } from "../jsx-runtime"
 import { Icon } from "./Icon"
+import { Loader } from "./Loader"
 import type { TabOption, TabsProps } from "./Tabs"
 import { Tabs } from "./Tabs"
 import "./Steps.css"
@@ -18,6 +20,19 @@ export type StepTone =
 /** Process state shown by one step. */
 export type StepStatus = "incomplete" | "loading" | "completed" | "error"
 
+/** A static step marker: a number or any registered Anta icon shape. */
+export type StepMarker = number | IconShape
+
+/** Snapshot passed to `renderMarker` for a step. */
+export interface StepMarkerState {
+  /** This step's application-owned process state. */
+  status: StepStatus
+  /** Whether this step is the selected tab. */
+  selected: boolean
+  /** Whether this step cannot be selected. */
+  disabled: boolean
+}
+
 /** One phase rendered by `<Steps>`. */
 export interface StepOption extends OptionPresentationProps {
   /** Stable phase identity. Values must be unique within the sequence. */
@@ -27,12 +42,13 @@ export interface StepOption extends OptionPresentationProps {
   /** Secondary text shown below the label. */
   hint?: React.ReactNode
   /** Application-owned process state. Selection and availability are separate;
-   * `error` keeps its critical marker while resting and selected. */
+   * `error` keeps a critical icon and outline, and selection adds the fill. */
   status: StepStatus
-  /** Replaces the marker derived from `status`. Accepts an icon, number, letter,
-   * or any node. Pass `null` to render an empty ring. */
-  marker?: React.ReactNode
-  /** Disables this phase. Use it to lock an incomplete future phase. */
+  /** Replaces the marker derived from `status`. A number is shown directly; an
+   * Anta icon shape is rendered as an `<Icon>`. */
+  marker?: StepMarker
+  /** Disables this phase. By default it keeps an empty marker ring; a custom
+   * `marker` or `renderMarker` result can still supply its center. */
   disabled?: boolean
 }
 
@@ -47,15 +63,20 @@ export interface StepsProps extends Omit<
   /** Tone for the selected step. An error step always uses critical.
    * @defaultValue brand */
   tone?: StepTone
+  /** Builds a custom marker from a step and its current state. A returned node
+   * replaces `marker` and the built-in status marker; return `undefined` to use
+   * those fallbacks, or `null` for an empty ring. */
+  renderMarker?: (
+    option: StepOption,
+    state: StepMarkerState,
+  ) => React.ReactNode
 }
 
 type StateDetail = { next: string | null; prev: string | null }
 type StateChangeEvent = CustomEvent<StateDetail>
 
-const STATUS_ICON: Partial<
-  Record<StepStatus, "circle-large" | "check" | "x">
-> = {
-  loading: "circle-large",
+const STATUS_ICON: Record<Exclude<StepStatus, "loading">, IconShape> = {
+  incomplete: "circle-large",
   completed: "check",
   error: "x",
 }
@@ -97,6 +118,7 @@ export const Steps = ({
   onBlur,
   label,
   tone = "brand",
+  renderMarker,
   size,
   orientation,
   disabled,
@@ -121,28 +143,44 @@ export const Steps = ({
   }
 
   const tabs: TabOption[] = options.map((option) => {
-    const builtInIcon = STATUS_ICON[option.status]
     const { className: optionClassName, style: optionStyle, ...optionAttrs } =
       optionPresentationAttrs(option)
+
+    const customMarker = renderMarker?.(option, {
+      status: option.status,
+      selected: option.value === currentValue,
+      disabled: !!option.disabled,
+    })
+    const builtInMarker = option.disabled
+      ? null
+      : option.status === "loading"
+        ? <Loader tone={tone} />
+        : <Icon shape={STATUS_ICON[option.status]} />
+    const marker =
+      customMarker !== undefined
+        ? customMarker
+        : option.marker !== undefined
+          ? typeof option.marker === "number"
+            ? option.marker
+            : <Icon shape={option.marker} />
+          : builtInMarker
 
     return {
       ...optionAttrs,
       value: option.value,
       disabled: option.disabled,
-      tone: option.status === "error" ? "critical" : undefined,
+      tone: !option.disabled && option.status === "error" ? "critical" : undefined,
       className: optionClassName,
       style: optionStyle,
       children: (
         <>
-          <a-step-ring aria-hidden="true">
-            {option.marker !== undefined
-              ? option.marker
-              : builtInIcon && <Icon shape={builtInIcon} />}
-          </a-step-ring>
-          <a-step-copy>
+          <a-step-marker aria-hidden="true">
+            {marker}
+          </a-step-marker>
+          <a-step-desc>
             <a-tab-label>{option.label}</a-tab-label>
             {option.hint != null && <a-step-hint>{option.hint}</a-step-hint>}
-          </a-step-copy>
+          </a-step-desc>
         </>
       ),
     }

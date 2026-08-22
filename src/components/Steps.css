@@ -2,9 +2,10 @@
   a-steps {
     --steps-ring-size: 28px;
     --steps-ring-border-width: 1.5px;
+    --steps-ring-rest-border: var(--border-4);
     --steps-item-gap: 6px;
     --steps-gap: 4px;
-    --steps-connector-color: var(--text-4);
+    --steps-connector-color: var(--border-3);
     --steps-tab-padding-x: 9px;
     --steps-tab-padding-block: 3.5px;
     --steps-hint-leading: 16px;
@@ -31,6 +32,7 @@
 
   a-tabs[data-steps] {
     --steps-connector-size: 12px;
+    --steps-active-border: var(--border-1);
     --tabs-gap: calc(
       var(--steps-gap) * 2 + var(--steps-connector-size)
     );
@@ -40,30 +42,65 @@
     scrollbar-width: thin;
   }
 
+  a-tabs[data-steps][tone="brand"],
+  a-tabs[data-steps] > a-tab[tone="brand"] {
+    --steps-active-border: var(--border-1-brand);
+  }
+
+  a-tabs[data-steps][tone="info"],
+  a-tabs[data-steps] > a-tab[tone="info"] {
+    --steps-active-border: var(--border-1-info);
+  }
+
+  a-tabs[data-steps][tone="success"],
+  a-tabs[data-steps] > a-tab[tone="success"] {
+    --steps-active-border: var(--border-1-success);
+  }
+
+  a-tabs[data-steps][tone="warning"],
+  a-tabs[data-steps] > a-tab[tone="warning"] {
+    --steps-active-border: var(--border-1-warning);
+  }
+
+  a-tabs[data-steps][tone="critical"],
+  a-tabs[data-steps] > a-tab[tone="critical"] {
+    --steps-active-border: var(--border-1-critical);
+  }
+
   a-tabs[data-steps] > a-tab {
     position: relative;
     flex: none;
     min-height: 0;
     justify-content: flex-start;
     gap: var(--steps-item-gap);
+    transition:
+      color var(--tab-timing),
+      background-color var(--tab-timing),
+      box-shadow var(--tab-timing);
   }
 
   /* Steps uses Tabs for its interaction model, but selection belongs to
-     the status ring rather than a pill around the complete tab label. */
+     the status marker rather than a pill around the complete tab label. */
   a-tabs[data-steps][priority="secondary"] a-tab:state(selected) {
     --tab-bg: transparent;
 
     box-shadow: none;
   }
 
-  a-step-copy {
+  a-step-desc {
     display: inline-flex;
+    flex: 1 1 auto;
     flex-direction: column;
+    min-width: 0;
+    max-width: 100%;
   }
 
-  a-step-copy > a-tab-label {
-    display: inline-flex;
-    align-items: center;
+  a-step-desc > a-tab-label {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-weight: 500;
   }
 
@@ -74,7 +111,7 @@
     line-height: var(--steps-hint-leading);
   }
 
-  a-step-ring {
+  a-step-marker {
     display: inline-flex;
     flex: none;
     align-items: center;
@@ -83,13 +120,16 @@
     height: var(--steps-ring-size);
     box-sizing: border-box;
     color: var(--text-4);
-    border: var(--steps-ring-border-width) solid var(--border-5);
+    border: var(--steps-ring-border-width) solid var(--steps-ring-rest-border);
     border-radius: 999px;
+    transition:
+      color var(--tab-timing),
+      background-color var(--tab-timing),
+      border-color var(--tab-timing);
   }
 
-  /* Reuse secondary Tabs' selected curve so marker and label states share the
-     same tone derivation in light and dark themes. A status tone keeps this
-     selected marker treatment even when its tab is not selected. */
+  /* A per-step status tone recomputes the secondary fill from that step's
+     source. The fill appears only when the error step is selected. */
   a-tabs[data-steps] > a-tab[tone] {
     --tab-secondary-bg: oklch(
       from var(--tabs-tone-source)
@@ -97,12 +137,25 @@
     );
   }
 
-  a-tabs[data-steps] a-tab:is(:state(selected), [tone]) a-step-ring {
+  /* Errors remain critical while resting, but only selection fills the ring. */
+  a-tabs[data-steps] > a-tab[tone] a-step-marker {
     color: var(--tab-selected-text);
-    background-color: var(--tab-secondary-bg);
     border-color: var(--tab-selected-border);
   }
 
+  a-tabs[data-steps] a-tab:state(selected):not([disabled]) a-step-marker {
+    color: var(--tab-selected-text);
+    background-color: var(--tab-secondary-bg);
+    border-color: var(--steps-active-border);
+  }
+
+  a-tabs[data-steps] a-step-marker > a-loader {
+    transition: color var(--tab-timing);
+  }
+
+  a-tabs[data-steps] a-tab:state(selected):not([disabled]) a-step-marker > a-loader {
+    color: var(--tab-selected-text);
+  }
 
   a-tabs[data-steps] a-tab:not(:last-child)::before {
     content: "";
@@ -199,7 +252,6 @@
     pointer-events: none;
   }
 
-
   @media (forced-colors: active) {
     a-tabs[data-steps][priority="secondary"] a-tab:state(selected) {
       background-color: transparent;
@@ -207,13 +259,13 @@
       box-shadow: none;
     }
 
-    a-step-ring {
+    a-step-marker {
       color: CanvasText;
       background-color: Canvas;
       border-color: CanvasText;
     }
 
-    a-tabs[data-steps] a-tab:state(selected) a-step-ring {
+    a-tabs[data-steps] a-tab:state(selected):not([disabled]) a-step-marker {
       border-color: Highlight;
     }
   }

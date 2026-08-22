@@ -481,7 +481,7 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   anta: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes', slider: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes',
-    accordion: 'yes', table: 'partial', tag: 'yes', card: 'yes', progress: 'yes',
+    accordion: 'yes', table: 'partial', tag: 'yes', card: 'yes', progress: 'yes', steps: 'yes',
     icons: 'yes', typography: 'yes',
   },
   webawesome: {

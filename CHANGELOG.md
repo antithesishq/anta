@@ -9,7 +9,10 @@ changes are not listed.
 
 - `Steps` provides controlled and uncontrolled process navigation with optional
   panels, horizontal and vertical layouts, accessible tab semantics, process
-  statuses and custom markers, labels and hints, and a sequence-wide tone.
+  statuses, number and icon-shape markers, state-aware `renderMarker`, labels
+  and hints, and a sequence-wide tone.
+- `Loader` accepts a named `tone`; the loading Steps status forwards the
+  sequence tone to it.
 
 ## 0.3.22 — August 20, 2026
 

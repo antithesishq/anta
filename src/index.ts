@@ -136,7 +136,14 @@ export type {
 export { Tabs } from './components/Tabs'
 export type { TabsProps, TabOption, TabsChangeAttrs } from './components/Tabs'
 export { Steps } from './components/Steps'
-export type { StepsProps, StepOption, StepStatus, StepTone } from './components/Steps'
+export type {
+  StepsProps,
+  StepMarker,
+  StepMarkerState,
+  StepOption,
+  StepStatus,
+  StepTone,
+} from './components/Steps'
 export { TabPanel } from './components/TabPanel'
 export type { TabPanelProps } from './components/TabPanel'
 export { Dialog } from './components/Dialog'

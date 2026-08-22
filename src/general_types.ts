@@ -205,6 +205,8 @@ export interface AProgressAttributes extends BaseAttributes {
  * `@antadesign/anta`.
  */
 export interface ALoaderAttributes extends BaseAttributes {
+  /** Color tone for the loader. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Presence selects the static, determinate gradient. Set `--loader-value`
    * in `style` to its percentage. Omit this attribute for the rotating
    * indeterminate gradient. */

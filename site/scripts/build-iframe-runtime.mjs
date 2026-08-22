@@ -16,6 +16,7 @@ import { build } from 'esbuild'
 import { writeFile, mkdir, readdir, unlink } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
+import { createRequire } from 'node:module'
 
 const root = new URL('../..', import.meta.url)
 const tokensCss = fileURLToPath(new URL('src/tokens.css', root))
@@ -26,6 +27,12 @@ const iframeDir = fileURLToPath(new URL('site/public/iframe', root))
 const manifestFile = fileURLToPath(new URL('site/src/generated/iframe-assets.ts', root))
 // Bare specifiers (`preact`) resolve from the site's node_modules.
 const siteDir = fileURLToPath(new URL('..', import.meta.url))
+const require = createRequire(import.meta.url)
+// Anta's generated JSX runtime imports `react`. Resolve the Preact compatibility
+// entries to absolute files: an alias to bare `preact/compat` would otherwise
+// resolve from `dist/`, where pnpm intentionally has no direct Preact link.
+const preactCompat = require.resolve('preact/compat')
+const preactJsxRuntime = require.resolve('preact/jsx-runtime')
 
 await mkdir(iframeDir, { recursive: true })
 
@@ -59,9 +66,9 @@ const out = await build({
   // Anta's JSX runtime resolves `react` — map it to Preact's compat (bundled in,
   // so there's a single Preact instance shared with the demo).
   alias: {
-    react: 'preact/compat',
-    'react-dom': 'preact/compat',
-    'react/jsx-runtime': 'preact/jsx-runtime',
+    react: preactCompat,
+    'react-dom': preactCompat,
+    'react/jsx-runtime': preactJsxRuntime,
   },
   loader: { '.svg': 'text' },
 })

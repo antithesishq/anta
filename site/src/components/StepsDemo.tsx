@@ -19,6 +19,7 @@ const statusExamples: StepOption[] = [
   { value: 'loading', label: 'Loading', status: 'loading' },
   { value: 'error', label: 'Error', status: 'error' },
   { value: 'incomplete', label: 'Incomplete', status: 'incomplete' },
+  { value: 'disabled', label: 'Disabled', hint: 'Unavailable', status: 'incomplete', disabled: true },
 ]
 
 const toneExamples: Array<{ tone: StepTone; label: string }> = [
@@ -43,14 +44,13 @@ const customExamples: StepOption[] = [
     label: 'Approval',
     hint: 'Waiting for review',
     status: 'loading',
-    marker: <Icon shape="hourglass" />,
   },
   {
     value: 'publish',
     label: 'Publish',
     hint: 'Not started',
     status: 'incomplete',
-    marker: 'P',
+    marker: 'send',
   },
 ]
 
@@ -66,24 +66,16 @@ const panelText = (children: React.ReactNode) => (
   <Text size="small">{children}</Text>
 )
 
-export function Basic() {
-  useElements()
-  return (
-    <div style={{ width: '100%', maxWidth: '560px' }}>
-      <Steps defaultValue="setup" label="Deployment progress" options={phases}>
-        <TabPanel value="build" style={panel}>{panelText('Build output and artifacts.')}</TabPanel>
-        <TabPanel value="setup" style={panel}>{panelText('Configure the deployment environment.')}</TabPanel>
-        <TabPanel value="next" style={panel}>{panelText('Share the deployment and review results.')}</TabPanel>
-      </Steps>
-    </div>
-  )
-}
-
 export function Statuses() {
   useElements()
   return (
-    <div style={{ width: '100%' }}>
-      <Steps label="Status examples" options={statusExamples} />
+    <div style={{ width: '100%', maxWidth: '640px' }}>
+      <Steps defaultValue="loading" label="Task status" options={statusExamples}>
+        <TabPanel value="completed" style={panel}>{panelText('This work is complete and ready to use.')}</TabPanel>
+        <TabPanel value="loading" style={panel}>{panelText('This work is currently running.')}</TabPanel>
+        <TabPanel value="error" style={panel}>{panelText('Resolve this error before continuing.')}</TabPanel>
+        <TabPanel value="incomplete" style={panel}>{panelText('This work has not started yet.')}</TabPanel>
+      </Steps>
     </div>
   )
 }
@@ -117,6 +109,11 @@ export function Customization() {
         defaultValue="approval"
         label="Custom step markers"
         options={customExamples}
+        renderMarker={(option, { selected }) =>
+          option.status === 'loading' ? (
+            <Icon shape={selected ? 'refresh-ccw-dot' : 'hourglass'} />
+          ) : undefined
+        }
       />
     </div>
   )
@@ -226,6 +223,34 @@ export function ComposedNavigation() {
           onClick={() => setValue(options[index + 1].value)}
         />
       </div>
+    </div>
+  )
+}
+
+export function DottedConnectorStyle() {
+  useElements()
+  return (
+    <div style={{ width: '100%', maxWidth: '560px' }}>
+      <Steps
+        className="dotted-steps"
+        defaultValue="setup"
+        label="Deployment progress"
+        options={phases}
+      />
+    </div>
+  )
+}
+
+export function RoomySteps() {
+  useElements()
+  return (
+    <div style={{ width: '100%', maxWidth: '560px' }}>
+      <Steps
+        className="roomy-steps"
+        defaultValue="setup"
+        label="Deployment progress"
+        options={phases}
+      />
     </div>
   )
 }

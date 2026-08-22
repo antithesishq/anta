@@ -179,7 +179,7 @@
     order: 3;
     flex: 1 1 auto;
     align-self: center;
-    min-width: 0;
+    min-width: 16px;
     height: 1px;
     margin-inline-start: calc(-1 * var(--steps-item-gap));
     margin-inline-end: calc(-2 * var(--steps-tab-padding-x));
@@ -223,6 +223,8 @@
 
   a-steps[data-orientation="vertical"]
     a-tab:not(:last-child)::before {
+    content: "";
+    position: absolute;
     inset-block-start: calc(
       var(--steps-tab-padding-block) + var(--steps-ring-size)
     );
@@ -232,17 +234,10 @@
     );
     inset-inline-end: auto;
     width: 1px;
-    height: calc(
-      var(--steps-tab-padding-block) * 2 + var(--steps-vertical-gap)
-    );
+    height: calc(100% - var(--steps-ring-size) + var(--steps-vertical-gap));
+    background: var(--steps-connector-color);
     transform: none;
-  }
-
-  a-steps[data-orientation="vertical"][data-connects-next]
-    a-tab:state(selected)::before {
-    height: calc(
-      var(--steps-tab-padding-block) + var(--steps-vertical-gap)
-    );
+    pointer-events: none;
   }
 
   a-steps[data-orientation="vertical"][data-has-selection]

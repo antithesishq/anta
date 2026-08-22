@@ -7,11 +7,13 @@
     --avatar-status-size: 30%;
     --avatar-status-ring-width: 2px;
     --avatar-status-ring: var(--bg-1);
-    --avatar-status-color: var(--border-3);
-    --avatar-status-online: oklch(0.72 0.16 150);
-    --avatar-status-busy: oklch(0.62 0.19 25);
-    --avatar-status-away: oklch(0.76 0.14 75);
-    --avatar-status-offline: var(--border-3);
+
+    /* The dot is a solid fill of the status tone. One formula derives it from
+       the tone source, so a named tone and a literal CSS color take the same
+       path (the JSX wrapper writes the source inline for a custom color). */
+    --avatar-status-tone-source: var(--anta-seed-neutral);
+    --avatar-status-chroma: 0.17;
+    --avatar-status-color: oklch(from var(--avatar-status-tone-source) 0.62 var(--avatar-status-chroma) h);
 
     display: inline-block;
     inline-size: var(--avatar-size);
@@ -40,8 +42,30 @@
     vertical-align: middle;
   }
 
+  /* Named tones point the source at the matching seed, so each dot tracks the
+     theme's tone and dark mode comes from the formula below. Neutral drops the
+     chroma so it reads grey rather than a tinted color. */
+  a-avatar[status="neutral"] { --avatar-status-chroma: 0.005; }
+  a-avatar[status="brand"] { --avatar-status-tone-source: var(--anta-seed-brand); }
+  a-avatar[status="info"] { --avatar-status-tone-source: var(--anta-seed-info); }
+  a-avatar[status="success"] { --avatar-status-tone-source: var(--anta-seed-success); }
+  a-avatar[status="warning"] { --avatar-status-tone-source: var(--anta-seed-warning); }
+  a-avatar[status="critical"] { --avatar-status-tone-source: var(--anta-seed-critical); }
+
+  /* A raw `status="#ff1493"` on hand-authored markup, where typed attr() is
+     supported; the wrapper's inline custom property covers every browser. */
+  @supports (color: attr(status type(<color>), transparent)) {
+    a-avatar[status]:not(
+        [status=""], [status="neutral"], [status="brand"], [status="info"],
+        [status="success"], [status="warning"], [status="critical"]) {
+      --avatar-status-tone-source: attr(status type(<color>), transparent);
+    }
+  }
+
   .dark a-avatar {
     --avatar-status-ring: var(--bg-2);
-    --avatar-status-offline: var(--border-2);
+    --avatar-status-color: oklch(from var(--avatar-status-tone-source) 0.68 var(--avatar-status-chroma) h);
   }
+
+  .dark a-avatar[status="neutral"] { --avatar-status-chroma: 0.008; }
 }

@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { AvatarGenConfig } from "../avatar-core"
-import { lengthStyle } from "../anta_helpers"
+import { lengthStyle, toneStyle } from "../anta_helpers"
 
 // `children` is omitted: the element has no slot, so anything passed would land
 // in its light DOM and never render (mirrors RadioGroup omitting it).
@@ -19,8 +19,10 @@ export interface AvatarProps extends Omit<BaseProps, 'children'> {
   /** Size of the square container. A number is a pixel size.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large' | number
-  /** Presence indicator shown in the bottom-right corner. Omit for none. */
-  status?: 'online' | 'offline' | 'busy' | 'away'
+  /** Corner indicator, colored by tone. Pass a named tone or any literal CSS
+   *  color; the application decides what each tone means (`success` for online,
+   *  `critical` for busy, `neutral` for offline). Omit for no indicator. */
+  status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Brand generation constraints — each dimension is OFF / ANY / RANGE / LIST.
    *  Colors cap OKLCH ranges or pass an explicit palette. Omit for the default
    *  varied figure. Define one config for the app and reuse it across avatars. */
@@ -65,7 +67,10 @@ export const Avatar = ({ seed, name, src, size, status, generator, className, st
   // A numeric size feeds the pixel value through `--avatar-size` (computed key
   // via the shared helper — a literal `--avatar-size` key trips the excess-
   // property check on React.CSSProperties).
-  const mergedStyle = numericSize ? lengthStyle(size, '--avatar-size', style) : style
+  // A custom (non-named) status color reaches the element's oklch derivation
+  // through the inline tone-source property (shared helper — see anta_helpers).
+  const sized = numericSize ? lengthStyle(size, '--avatar-size', style) : style
+  const mergedStyle = toneStyle(status, '--avatar-status-tone-source', sized)
   return (
     <a-avatar
       seed={seed}

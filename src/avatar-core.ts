@@ -187,10 +187,12 @@ export interface AvatarGenConfig {
   bodyAngle?: ScalarDim
   /** Space between head and body, as a fraction of head height (0 to 1). */
   figureGap?: ScalarDim
-  /** Head top corner radius, 0 (square) to 1 (fully round). Pairing a round top
-   *  with a squarer bottom (or the reverse) gives an egg-shaped head. */
+  /** Head top corner radius. 0 is a square corner and 1 is fully round; above 1
+   *  the head elongates upward into an oval. */
   headRadiusTop?: ScalarDim
-  /** Head bottom corner radius, 0 (square) to 1 (fully round). */
+  /** Head bottom corner radius, on the same 0-to-1-and-beyond scale. The bottom
+   *  is never rounded less than the top — a head reads with its jaw at least as
+   *  round as its crown — so a smaller value here is raised to match the top. */
   headRadiusBottom?: ScalarDim
   /** Shoulder corner radius, 0 (square) to 1 (fully round). */
   bodyBorderRadius?: ScalarDim
@@ -214,8 +216,8 @@ const NATURAL = {
   headAngle: { range: [-14, 14] as const, off: 0 },
   bodyAngle: { range: [-10, 10] as const, off: 0 },
   figureGap: { range: [0, 0.3] as const, off: 0.15 },
-  headRadiusTop: { range: [0.45, 1] as const, off: 1, bias: 0.55 },
-  headRadiusBottom: { range: [0.45, 1] as const, off: 1, bias: 0.55 },
+  headRadiusTop: { range: [0.5, 1.15] as const, off: 1, bias: 0.6 },
+  headRadiusBottom: { range: [0.6, 1.35] as const, off: 1, bias: 0.6 },
   bodyBorderRadius: { range: [0.45, 1] as const, off: 1 },
 }
 
@@ -317,6 +319,11 @@ export interface ResolvedHead {
   radiusTop: number
   /** Bottom corner radius in user units. */
   radiusBottom: number
+  /** How far the head's top edge extends past the base box, in user units. A
+   *  radius above 1 spends the excess here, elongating the head into an oval. */
+  extendTop: number
+  /** How far the head's bottom edge extends past the base box. */
+  extendBottom: number
   angle: number
 }
 export interface ResolvedBody {
@@ -380,6 +387,18 @@ export function resolveAvatar(config: AvatarGenConfig, seed: string): ResolvedAv
   const headUnit = HEAD_SIZE / 2
   const bodyUnit = Math.min(BODY_W, BODY_H) / 2
 
+  // A head is never rounded less at the bottom than at the top: a rounder crown
+  // over a squarer jaw reads mechanical, so raise the bottom to meet the top.
+  const topFrac = headTop
+  const bottomFrac = Math.max(headTop, headBottom)
+
+  // Up to 1 the fraction rounds the corners; the excess above 1 elongates that
+  // half of the head away from center, turning a circle into an oval.
+  const cornerTop = Math.min(topFrac, 1) * headUnit
+  const cornerBottom = Math.min(bottomFrac, 1) * headUnit
+  const extendTop = Math.max(0, topFrac - 1) * headUnit
+  const extendBottom = Math.max(0, bottomFrac - 1) * headUnit
+
   return {
     figure: hasFigure(config),
     bg: bg.color,
@@ -387,8 +406,17 @@ export function resolveAvatar(config: AvatarGenConfig, seed: string): ResolvedAv
     scale,
     translate,
     angle,
-    gap: gapFrac * HEAD_SIZE,
-    head: { color: head.color, radiusTop: headTop * headUnit, radiusBottom: headBottom * headUnit, angle: headAngle },
+    // The gap tracks the head's rendered height, so an elongated head keeps the
+    // same proportional distance from the shoulders.
+    gap: gapFrac * (HEAD_SIZE + extendTop + extendBottom),
+    head: {
+      color: head.color,
+      radiusTop: cornerTop,
+      radiusBottom: cornerBottom,
+      extendTop,
+      extendBottom,
+      angle: headAngle,
+    },
     body: { color: body.color, radius: bodyRadiusFrac * bodyUnit, angle: bodyAngle },
   }
 }
@@ -439,13 +467,22 @@ export function avatarToSvg(resolved: ResolvedAvatar, opts: SvgOptions = {}): st
     `rotate(${round(resolved.angle, 2)} 50 50) ` +
     `translate(50 50) scale(${round(resolved.scale, 3)}) translate(-50 -50)`
 
-  const hs = HEAD_SIZE
-  const headPath = roundedRectPath(CENTER - hs / 2, CENTER - hs / 2, hs, hs, resolved.head.radiusTop, resolved.head.radiusBottom)
+  const { extendTop, extendBottom } = resolved.head
+  const headTopEdge = CENTER - HEAD_SIZE / 2 - extendTop
+  const headHeight = HEAD_SIZE + extendTop + extendBottom
+  const headPath = roundedRectPath(
+    CENTER - HEAD_SIZE / 2,
+    headTopEdge,
+    HEAD_SIZE,
+    headHeight,
+    resolved.head.radiusTop,
+    resolved.head.radiusBottom,
+  )
   const headShape =
     `<g transform="rotate(${round(resolved.head.angle, 2)} 50 50)">` +
     `<path d="${headPath}" fill="${esc(resolved.head.color)}"/></g>`
 
-  const bodyTop = CENTER + hs / 2 + resolved.gap
+  const bodyTop = headTopEdge + headHeight + resolved.gap
   const bodyPath = roundedRectPath(CENTER - BODY_W / 2, bodyTop, BODY_W, BODY_H, resolved.body.radius, resolved.body.radius)
   const bodyShape =
     `<g transform="rotate(${round(resolved.body.angle, 2)} 50 ${round(bodyTop, 2)})">` +

@@ -216,8 +216,9 @@ export interface AAvatarAttributes extends BaseAttributes {
   /** Size of the square container. `medium` is the default; set a pixel size via
    *  the `--avatar-size` custom property. */
   size?: 'small' | 'medium' | 'large'
-  /** Corner presence indicator. */
-  status?: 'online' | 'offline' | 'busy' | 'away'
+  /** Corner indicator, colored by tone — a named tone or any literal CSS color
+   *  (derived in oklch). Omit for no indicator. */
+  status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Brand generation constraints as a JSON string (an `AvatarGenConfig`). With
    *  the `Avatar` wrapper, pass the object as `generator` and it is serialized. */
   config?: string

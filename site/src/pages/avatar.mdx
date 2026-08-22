@@ -95,21 +95,41 @@ const initials = {
 ## Image and status
 
 Set `src` to show an uploaded photo instead of a generated figure, cropped to
-fill the container. `status` adds a corner presence indicator that works on any
-avatar — image or generated.
+fill the container.
+
+`status` adds a corner indicator, colored by tone, on any avatar — image or
+generated. It takes any named tone, so the application decides what each one
+means: `success` for online, `critical` for busy, `warning` for idle, `neutral`
+for offline. Named tones track light and dark mode automatically.
 
 <Preview gap="12px">
-  <Avatar src={photo} name="Vlad Korobov" size={56} status="online" />
-  <Avatar seed="lena-r" name="Lena Rossi" size={56} status="busy" />
-  <Avatar seed="8f21ac" name="Sam Okafor" size={56} status="away" />
-  <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} status="offline" />
+  <Avatar src={photo} name="Vlad Korobov" size={56} status="success" />
+  <Avatar seed="lena-r" name="Lena Rossi" size={56} status="critical" />
+  <Avatar seed="8f21ac" name="Sam Okafor" size={56} status="warning" />
+  <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} status="info" />
+  <Avatar seed="marie-c" name="Marie Curie" size={56} status="brand" />
+  <Avatar seed="q-jones" name="Quincy Jones" size={56} status="neutral" />
 </Preview>
 
 ```tsx folded
-<Avatar src="/team/vlad.jpg" name="Vlad Korobov" status="online" />
-<Avatar seed="lena-r" name="Lena Rossi" status="busy" />
-<Avatar seed="8f21ac" name="Sam Okafor" status="away" />
-<Avatar seed="k-tanaka" name="Kenji Tanaka" status="offline" />
+<Avatar src="/team/vlad.jpg" name="Vlad Korobov" status="success" />
+<Avatar seed="lena-r" name="Lena Rossi" status="critical" />
+<Avatar seed="8f21ac" name="Sam Okafor" status="warning" />
+<Avatar seed="k-tanaka" name="Kenji Tanaka" status="info" />
+```
+
+`status` also accepts any literal CSS color for a one-off indicator, derived in
+oklch the same way a named tone is.
+
+<Preview gap="12px">
+  <Avatar seed="a-lee" name="Ann Lee" size={56} status="#ff1493" />
+  <Avatar seed="b-qi" name="Bo Qi" size={56} status="rebeccapurple" />
+  <Avatar seed="c-v" name="Cy Vance" size={56} status="#0d9488" />
+</Preview>
+
+```tsx folded
+<Avatar seed="a-lee" name="Ann Lee" status="#ff1493" />
+<Avatar seed="b-qi" name="Bo Qi" status="rebeccapurple" />
 ```
 
 ## Size
@@ -199,14 +219,19 @@ const palette = {
 | `figureAngle` | Rotation of the whole figure |
 | `headAngle`, `bodyAngle` | Rotation of each part within the figure |
 | `figureGap` | Space between head and body, `0` to `1` of head height |
-| `headRadiusTop`, `headRadiusBottom` | `0` square to `1` fully round, per half of the head |
+| `headRadiusTop`, `headRadiusBottom` | `0` square, `1` fully round, above `1` elongated |
 | `bodyBorderRadius` | `0` square to `1` fully round shoulders |
 
 Corner radius is normalized: `0` is a square corner and `1` is fully round, so a
-head with both radii at `1` is a circle. Splitting the head into a top and a
-bottom radius is what gives it an egg shape — a round top over a squarer bottom
-reads as a head, and the reverse reads as a jaw. Under `any` the head radii
-average near `1`, so heads read round unless you narrow them yourself.
+head with both radii at `1` is a circle. **Above `1` the head elongates** into an
+oval, spending the excess on that half's height — `1.3` on both radii is a tall
+oval, and more at the bottom than the top is an egg.
+
+Two rules keep the head reading as a head. The bottom is never rounded less than
+the top, so a value below the top radius is raised to match it: a rounder crown
+over a squarer jaw reads mechanical, and the reverse reads natural. And under
+`any` both radii average near or above `1`, so heads read round to oval unless
+you narrow them yourself.
 
 <Disclosure title="Component props" open>
 
@@ -243,11 +268,14 @@ generated look. Everything else is `--avatar-*` custom properties on the host an
 `::part()` on the shadow content.
 
 The container is a rounded square by default. Set `--avatar-radius: 50%` for a
-circle, and tune the status indicator with `--avatar-status-*`.
+circle. The indicator's size and ring are `--avatar-status-size`,
+`--avatar-status-ring-width`, and `--avatar-status-ring`; its color comes from
+`status`, so route color through the prop rather than overriding
+`--avatar-status-color`.
 
 <Preview gap="12px">
-  <Avatar className="round" seed="user-42" name="Vlad Korobov" size={56} status="online" />
-  <Avatar className="round" seed="lena-r" name="Lena Rossi" size={56} status="busy" />
+  <Avatar className="round" seed="user-42" name="Vlad Korobov" size={56} status="success" />
+  <Avatar className="round" seed="lena-r" name="Lena Rossi" size={56} status="critical" />
   <style is:inline>{`
     a-avatar.round { --avatar-radius: 50%; --avatar-status-size: 26%; }
   `}</style>

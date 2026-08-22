@@ -11,8 +11,11 @@ changes are not listed.
   figure, or initials. A `generator` config caps each dimension (colors, scale,
   translate, angles, the head-to-body gap, and corner radii) to OFF / ANY / RANGE /
   LIST, with OKLCH color ranges or an explicit palette, so generated avatars stay
-  on-brand. Corner radius runs 0 (square) to 1 (fully round), split into
-  `headRadiusTop` and `headRadiusBottom` so the head can take an egg shape. The
+  on-brand. Corner radius runs 0 (square) through 1 (fully round) to above 1,
+  where the head elongates into an oval; it is split into `headRadiusTop` and
+  `headRadiusBottom` so the head can take an egg shape, with the bottom never
+  rounded less than the top. `status` colors its corner indicator with any named
+  tone or literal CSS color. The
   `avatar-core` generation helpers (`resolveAvatar`, `avatarToSvg`, `getInitials`,
   and the seed PRNG) ship as named exports.
 

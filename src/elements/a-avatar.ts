@@ -67,14 +67,10 @@ export class AAvatarElement extends HTMLElementBase {
   }
 
   #render() {
+    // The dot's color comes from the host CSS (the status tone); the element
+    // only decides whether it shows.
     const status = this.getAttribute('status')
-    if (status && status !== 'none') {
-      this.#status.dataset.status = status
-      this.#status.style.display = ''
-    } else {
-      delete this.#status.dataset.status
-      this.#status.style.display = 'none'
-    }
+    this.#status.style.display = status && status !== 'none' ? '' : 'none'
 
     const name = this.getAttribute('name') ?? undefined
     const src = this.getAttribute('src')
@@ -120,10 +116,6 @@ const SHADOW_STYLE = `
     background: var(--avatar-status-color);
     box-shadow: 0 0 0 var(--avatar-status-ring-width) var(--avatar-status-ring);
   }
-  .status[data-status='online'] { background: var(--avatar-status-online); }
-  .status[data-status='busy'] { background: var(--avatar-status-busy); }
-  .status[data-status='away'] { background: var(--avatar-status-away); }
-  .status[data-status='offline'] { background: var(--avatar-status-offline); }
 `
 
 export function register_a_avatar() {

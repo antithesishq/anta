@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { AvatarGenConfig } from "../avatar-core"
-import { lengthStyle, toneStyle } from "../anta_helpers"
+import { lengthStyle, roundStyle, roundAttr, toneStyle } from "../anta_helpers"
 
 // `children` is omitted: the element has no slot, so anything passed would land
 // in its light DOM and never render (mirrors RadioGroup omitting it).
@@ -23,6 +23,9 @@ export interface AvatarProps extends Omit<BaseProps, 'children'> {
    *  color; the application decides what each tone means (`success` for online,
    *  `critical` for busy, `neutral` for offline). Omit for no indicator. */
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Fully-round (circular) frame. Pass a `number` (px) or a CSS length string
+   *  for a custom radius instead. */
+  round?: boolean | number | string
   /** Brand generation constraints — each dimension is OFF / ANY / RANGE / LIST.
    *  Colors cap OKLCH ranges or pass an explicit palette. Omit for the default
    *  varied figure. Define one config for the app and reuse it across avatars. */
@@ -62,7 +65,7 @@ export interface AvatarProps extends Omit<BaseProps, 'children'> {
  * />
  * ```
  */
-export const Avatar = ({ seed, name, src, size, status, generator, className, style, ...rest }: AvatarProps) => {
+export const Avatar = ({ seed, name, src, size, status, round, generator, className, style, ...rest }: AvatarProps) => {
   const numericSize = typeof size === 'number'
   // A numeric size feeds the pixel value through `--avatar-size` (computed key
   // via the shared helper — a literal `--avatar-size` key trips the excess-
@@ -70,7 +73,8 @@ export const Avatar = ({ seed, name, src, size, status, generator, className, st
   // A custom (non-named) status color reaches the element's oklch derivation
   // through the inline tone-source property (shared helper — see anta_helpers).
   const sized = numericSize ? lengthStyle(size, '--avatar-size', style) : style
-  const mergedStyle = toneStyle(status, '--avatar-status-tone-source', sized)
+  const rounded = roundStyle(round, '--avatar-radius', sized)
+  const mergedStyle = toneStyle(status, '--avatar-status-tone-source', rounded)
   return (
     <a-avatar
       seed={seed}
@@ -79,6 +83,7 @@ export const Avatar = ({ seed, name, src, size, status, generator, className, st
       // 'medium' (and unset) is the implicit default — emit no DOM attribute.
       size={!numericSize && size && size !== 'medium' ? size : undefined}
       status={status}
+      round={roundAttr(round)}
       // Serialize the config to the JSON `config` attribute — the element parses
       // it, so generation is declarative (works in SSR and hand-authored markup).
       config={generator ? JSON.stringify(generator) : undefined}

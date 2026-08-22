@@ -307,10 +307,11 @@ function sampleColor(
 // figureTranslate is 0 — the anchor the spec defines).
 // ---------------------------------------------------------------------------
 
-const CENTER = 50
+/** The square frame's side, in viewBox units. */
+const FRAME = 100
+const CENTER = FRAME / 2
 const HEAD_SIZE = 40
 const BODY_W = 74
-const BODY_H = 58
 
 export interface ResolvedHead {
   color: string
@@ -328,8 +329,12 @@ export interface ResolvedHead {
 }
 export interface ResolvedBody {
   color: string
-  /** Corner radius in user units (half the short side is fully round). */
+  /** Corner radius in user units (half the body's width is fully round). */
   radius: number
+  /** Body height in user units — one frame height as *rendered*, so the
+   *  silhouette always runs past the bottom edge however far down its top starts
+   *  (a wide gap, an elongated head) and however much the figure shrinks. */
+  height: number
   angle: number
 }
 
@@ -385,7 +390,12 @@ export function resolveAvatar(config: AvatarGenConfig, seed: string): ResolvedAv
   // Radii are fractions of "fully round": half the head's side, and half the
   // body's short side. So 1 is a circle (head) or a stadium (body), 0 is square.
   const headUnit = HEAD_SIZE / 2
-  const bodyUnit = Math.min(BODY_W, BODY_H) / 2
+  const bodyUnit = BODY_W / 2 // fully round shoulders are a half-width semicircle
+
+  // The body is one frame height as rendered: dividing by the figure's scale
+  // keeps it frame-tall after the group transform shrinks it, so a small scale
+  // can't lift its bottom edge inside the frame and cut the silhouette short.
+  const bodyHeight = FRAME / Math.min(1, scale)
 
   // A head is never rounded less at the bottom than at the top: a rounder crown
   // over a squarer jaw reads mechanical, so raise the bottom to meet the top.
@@ -417,7 +427,7 @@ export function resolveAvatar(config: AvatarGenConfig, seed: string): ResolvedAv
       extendBottom,
       angle: headAngle,
     },
-    body: { color: body.color, radius: bodyRadiusFrac * bodyUnit, angle: bodyAngle },
+    body: { color: body.color, radius: bodyRadiusFrac * bodyUnit, height: bodyHeight, angle: bodyAngle },
   }
 }
 
@@ -449,7 +459,7 @@ export function avatarToSvg(resolved: ResolvedAvatar, opts: SvgOptions = {}): st
   // (a palette) or from `oklchString`, so escaping is defense in depth.
   const bg = esc(resolved.bg)
   const title = opts.title ? `<title>${esc(opts.title)}</title>` : ''
-  const bgRect = `<rect x="0" y="0" width="100" height="100" fill="${bg}"/>`
+  const bgRect = `<rect x="0" y="0" width="${FRAME}" height="${FRAME}" fill="${bg}"/>`
 
   if (!resolved.figure) {
     const text = opts.initials
@@ -483,7 +493,7 @@ export function avatarToSvg(resolved: ResolvedAvatar, opts: SvgOptions = {}): st
     `<path d="${headPath}" fill="${esc(resolved.head.color)}"/></g>`
 
   const bodyTop = headTopEdge + headHeight + resolved.gap
-  const bodyPath = roundedRectPath(CENTER - BODY_W / 2, bodyTop, BODY_W, BODY_H, resolved.body.radius, resolved.body.radius)
+  const bodyPath = roundedRectPath(CENTER - BODY_W / 2, bodyTop, BODY_W, resolved.body.height, resolved.body.radius, resolved.body.radius)
   const bodyShape =
     `<g transform="rotate(${round(resolved.body.angle, 2)} 50 ${round(bodyTop, 2)})">` +
     `<path d="${bodyPath}" fill="${esc(resolved.body.color)}"/></g>`
@@ -526,7 +536,7 @@ function roundedRectPath(x: number, y: number, w: number, h: number, rTop: numbe
 }
 
 const svgWrap = (inner: string) =>
-  `<svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" ` +
+  `<svg viewBox="0 0 ${FRAME} ${FRAME}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" ` +
   `xmlns="http://www.w3.org/2000/svg" role="presentation">${inner}</svg>`
 
 /** Readable initials color over a background of the given lightness. */

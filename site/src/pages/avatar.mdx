@@ -150,6 +150,26 @@ number for a pixel size.
 <Avatar seed="user-42" name="Vlad Korobov" size={96} />
 ```
 
+## Round
+
+`round` makes the frame a circle. Pass a number (px) or a CSS length for a custom
+radius instead. The status indicator tucks inward on a round frame so it still
+meets the circle's edge.
+
+<Preview gap="12px">
+  <Avatar round seed="user-42" name="Vlad Korobov" size={56} />
+  <Avatar round seed="lena-r" name="Lena Rossi" size={56} status="success" />
+  <Avatar round seed="8f21ac" name="Sam Okafor" size={56} />
+  <Avatar round name="Ada Lovelace" size={56} generator={initialsOnly} />
+  <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} round={10} />
+</Preview>
+
+```tsx folded
+<Avatar round seed="user-42" name="Vlad Korobov" />
+<Avatar round seed="lena-r" name="Lena Rossi" status="success" />
+<Avatar seed="k-tanaka" name="Kenji Tanaka" round={10} />
+```
+
 ## Brand constraints
 
 The `generator` config caps the space so every avatar sits on your brand. Each
@@ -267,24 +287,28 @@ Reach for the props first: **`size`** sets the dimensions and **`generator`** th
 generated look. Everything else is `--avatar-*` custom properties on the host and
 `::part()` on the shadow content.
 
-The container is a rounded square by default. Set `--avatar-radius: 50%` for a
-circle. The indicator's size and ring are `--avatar-status-size`,
-`--avatar-status-ring-width`, and `--avatar-status-ring`; its color comes from
-`status`, so route color through the prop rather than overriding
-`--avatar-status-color`.
+The container is a rounded square by default; `round` makes it a circle and takes
+a length for a custom radius, so reach for the prop before the custom property.
+The indicator's size, inset, and ring are `--avatar-status-size`,
+`--avatar-status-inset`, `--avatar-status-ring-width`, and
+`--avatar-status-ring`; its color comes from `status`, so route color through the
+prop rather than overriding `--avatar-status-color`.
 
 <Preview gap="12px">
-  <Avatar className="round" seed="user-42" name="Vlad Korobov" size={56} status="success" />
-  <Avatar className="round" seed="lena-r" name="Lena Rossi" size={56} status="critical" />
+  <Avatar round className="badge-dot" seed="user-42" name="Vlad Korobov" size={56} status="success" />
+  <Avatar round className="badge-dot" seed="lena-r" name="Lena Rossi" size={56} status="critical" />
   <style is:inline>{`
-    a-avatar.round { --avatar-radius: 50%; --avatar-status-size: 26%; }
+    a-avatar.badge-dot {
+      --avatar-status-size: 22%;
+      --avatar-status-ring-width: 3px;
+    }
   `}</style>
 </Preview>
 
 ```css folded
-a-avatar.round {
-  --avatar-radius: 50%;      /* circle instead of rounded square */
-  --avatar-status-size: 26%;
+a-avatar.badge-dot {
+  --avatar-status-size: 22%;        /* a smaller dot */
+  --avatar-status-ring-width: 3px;  /* with a thicker ring */
 }
 ```
 

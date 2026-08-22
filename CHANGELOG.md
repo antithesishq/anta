@@ -15,7 +15,8 @@ changes are not listed.
   where the head elongates into an oval; it is split into `headRadiusTop` and
   `headRadiusBottom` so the head can take an egg shape, with the bottom never
   rounded less than the top. `status` colors its corner indicator with any named
-  tone or literal CSS color. The
+  tone or literal CSS color, and `round` makes the frame a circle (or takes a
+  length for a custom radius). The
   `avatar-core` generation helpers (`resolveAvatar`, `avatarToSvg`, `getInitials`,
   and the seed PRNG) ship as named exports.
 

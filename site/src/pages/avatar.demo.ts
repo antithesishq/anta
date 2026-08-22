@@ -5,6 +5,7 @@ export default `import { Avatar } from '@antadesign/anta'
   name="Vlad Korobov"
   size={96}
   status="success"
+  round
   generator={{
     // Every dimension takes one mode: 'off' | 'any' | 'range' | 'list'.
     bgColor: { mode: 'range', l: [0.55, 0.72], c: [0.05, 0.12], h: [0, 360] },

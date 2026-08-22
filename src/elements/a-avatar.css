@@ -5,6 +5,7 @@
     --avatar-placeholder-bg: var(--bg-3);
 
     --avatar-status-size: 30%;
+    --avatar-status-inset: 0%;
     --avatar-status-ring-width: 2px;
     --avatar-status-ring: var(--bg-1);
 
@@ -19,6 +20,16 @@
     inline-size: var(--avatar-size);
     block-size: var(--avatar-size);
     vertical-align: middle;
+  }
+
+  /* `round` — a fully circular frame. Bare `round` is a circle (50%); a length
+     value (`round="12px"`, or the wrapper's `round={12}` → inline --avatar-radius)
+     sets a custom radius. The indicator tucks inward so it still meets the
+     circle's edge instead of floating off the corner of the box. */
+  a-avatar[round] {
+    --avatar-round: attr(round type(<length>));
+    --avatar-radius: var(--avatar-round, 50%);
+    --avatar-status-inset: 7%;
   }
 
   a-avatar[size='small'] {

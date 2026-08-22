@@ -53,7 +53,7 @@ const STRUCTURAL_CHILDREN = new Set([
  *  here as a display concern. */
 const PROP_ORDER: Record<string, string[]> = {
   Avatar: [
-    'seed', 'name', 'src', 'size', 'status',
+    'seed', 'name', 'src', 'size', 'round', 'status',
     'generator', 'className', 'style',
   ],
   Button: [

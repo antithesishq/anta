@@ -108,8 +108,8 @@ const SHADOW_STYLE = `
   .content img { object-fit: cover; }
   .status {
     position: absolute;
-    right: 0;
-    bottom: 0;
+    right: var(--avatar-status-inset);
+    bottom: var(--avatar-status-inset);
     inline-size: var(--avatar-status-size);
     block-size: var(--avatar-status-size);
     border-radius: 50%;

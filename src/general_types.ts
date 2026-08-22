@@ -219,6 +219,9 @@ export interface AAvatarAttributes extends BaseAttributes {
   /** Corner indicator, colored by tone — a named tone or any literal CSS color
    *  (derived in oklch). Omit for no indicator. */
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Fully-round (circular) frame, or a custom radius via a length value
+   *  (`round="12px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
   /** Brand generation constraints as a JSON string (an `AvatarGenConfig`). With
    *  the `Avatar` wrapper, pass the object as `generator` and it is serialized. */
   config?: string

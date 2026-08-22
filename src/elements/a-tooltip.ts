@@ -48,12 +48,11 @@ const PROX_FADE_MS = 60
  */
 const ENTER_TOUCH_DELAY = 500
 /**
- * Default elements measured for `truncated-only` — Anta's ellipsizing label parts
- * (`<a-tab-label>` / `<a-button-label>` share the same overflow:hidden + ellipsis
- * pattern). A `truncated-selector` overrides this; otherwise we fall back to the
- * anchor itself. Append future ellipsizing parts here.
+ * Default elements measured for `truncated-only` — Anta's ellipsizing label parts.
+ * A `truncated-selector` overrides this; otherwise we use the first matching
+ * part, then fall back to the anchor itself. Append future ellipsizing parts here.
  */
-const TRUNCATING_PARTS = 'a-tab-label, a-button-label'
+const TRUNCATING_PARTS = 'a-tab-label, a-button-label, a-step-hint'
 /** Internal marker emitted by JSX `<Text truncate>`. Its tooltip reads the
  * anchor's rendered text instead of duplicating React children. */
 const AUTOMATIC_TEXT_TOOLTIP = 'data-anta-text-tooltip'
@@ -491,38 +490,39 @@ export class ATooltipElement extends HTMLElementBase {
     if (this.#isAutomaticTextTooltip) this.bubble.textContent = this.anchorText()
   }
 
-  /** The element whose overflow decides whether the tooltip shows: a
-   *  `truncated-selector` resolved within the anchor wins; else the first of
+  /** The elements whose overflow decides whether the tooltip shows: every
+   *  `truncated-selector` match within the anchor wins; else the first of
    *  Anta's ellipsizing label parts inside the anchor; else the anchor itself
    *  (which may be the clipping box for a hand-authored target). */
-  private resolveTruncationTarget(): HTMLElement | null {
+  private resolveTruncationTargets(): HTMLElement[] {
     const anchor = this.anchor
-    if (!anchor) return null
+    if (!anchor) return []
     const sel = this.getAttribute('truncated-selector')
     if (sel) {
       try {
-        const found = anchor.querySelector(sel) as HTMLElement | null
-        if (found) return found
+        const found = Array.from(anchor.querySelectorAll(sel)) as HTMLElement[]
+        if (found.length) return found
       } catch {
         /* invalid selector → fall through to the defaults */
       }
     }
-    return (anchor.querySelector(TRUNCATING_PARTS) as HTMLElement | null) ?? anchor
+    const part = anchor.querySelector(TRUNCATING_PARTS) as HTMLElement | null
+    return [part ?? anchor]
   }
 
-  /** True when the resolved target overflows its box (horizontal ellipsis or
+  /** True when any resolved target overflows its box (horizontal ellipsis or
    *  vertical clamp). A 1px threshold absorbs sub-pixel rounding; a zero-size
    *  (hidden / detached) target counts as not truncated. Measured fresh on each
    *  show attempt, so late fonts / resizes self-correct with no observer. */
   private isTargetTruncated(): boolean {
-    const t = this.resolveTruncationTarget()
-    if (!t) return false
-    // `a-text` owns the clamping box in shadow DOM. Its host itself does not
-    // overflow, so consume the element's read-only UI-thread measurement first.
-    const reported = (t as HTMLElement & { isTruncated?: unknown }).isTruncated
-    if (typeof reported === 'boolean') return reported
-    if (t.clientWidth === 0 && t.clientHeight === 0) return false
-    return t.scrollWidth - t.clientWidth > 1 || t.scrollHeight - t.clientHeight > 1
+    return this.resolveTruncationTargets().some((target) => {
+      // `a-text` owns the clamping box in shadow DOM. Its host itself does not
+      // overflow, so consume the element's read-only UI-thread measurement first.
+      const reported = (target as HTMLElement & { isTruncated?: unknown }).isTruncated
+      if (typeof reported === 'boolean') return reported
+      if (target.clientWidth === 0 && target.clientHeight === 0) return false
+      return target.scrollWidth - target.clientWidth > 1 || target.scrollHeight - target.clientHeight > 1
+    })
   }
 
   /** True when there's nothing worth showing: no element children (so an

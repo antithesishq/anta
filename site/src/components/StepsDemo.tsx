@@ -92,7 +92,7 @@ export function Tones() {
           label={`${label} steps`}
           options={[
             { value: 'done', label: 'Done', hint: 'Complete', status: 'completed' },
-            { value: 'current', label, hint: 'In progress', status: 'loading' },
+            { value: 'current', label: `${label} validation in progress`, hint: 'Checking security and dependency scans', status: 'loading' },
             { value: 'next', label: 'Next', hint: 'Waiting', status: 'incomplete' },
           ]}
         />

@@ -92,14 +92,15 @@ selected.
 ```tsx
 const options = [
   { value: 'done', label: 'Done', hint: 'Complete', status: 'completed' },
-  { value: 'current', label: 'Current', hint: 'In progress', status: 'loading' },
+  { value: 'current', label: 'Current validation in progress', hint: 'Checking security and dependency scans', status: 'loading' },
   { value: 'next', label: 'Next', hint: 'Waiting', status: 'incomplete' },
 ]
 
 <Steps tone="success" defaultValue="current" options={options} />
 ```
 
-Hints are not clamped: they take their own line and make the strip taller.
+Labels and hints ellipsize within each step. Hovering or focusing a clipped step
+shows its full label and hint in a tooltip.
 
 Options are `neutral`, `brand` (default), `info`, `success`, `warning`, and
 `critical`.
@@ -215,11 +216,39 @@ replaces `marker` and the built-in status marker; return `undefined` to use
 those fallbacks, or `null` for an empty ring. |
 | `tone?` | StepTone | brand | Tone for the selected step. An error step always uses critical. |
 
-`Steps` is a JSX composition, not a standalone web component. It renders
-`a-tabs`, `a-tab`, and optional `a-tabpanel` elements, then adds its step
-markers in light DOM. For framework-free usage, use the [Tabs Web Component]
-(/tabs/#web-component) and own the process-specific markers and statuses in
-your application CSS.
+For framework-free use, compose the same light DOM that `Steps` emits.
+`a-steps` and its `a-step-*` children are structural elements styled by the
+shipped Steps stylesheet. The [Tabs Web Component](./tabs.md#web-component) inside
+owns selection and panel behavior; markers and statuses stay in your markup.
+
+```js
+import '@antadesign/anta/elements'
+import '@antadesign/anta/components/Steps.css'
+```
+
+```html
+<div>
+  <a-steps>
+    <a-tabs role="tablist" aria-label="Setup progress" priority="secondary" tone="brand" default-state="setup" data-steps>
+      <a-tab role="tab" value="build" tabindex="0">
+        <a-step-marker aria-hidden="true"><a-icon shape="check"></a-icon></a-step-marker>
+        <a-step-desc><a-tab-label>Build</a-tab-label><a-step-hint>Complete</a-step-hint></a-step-desc>
+      </a-tab>
+      <a-tab role="tab" value="setup" tabindex="-1">
+        <a-step-marker aria-hidden="true"><a-loader tone="brand"></a-loader></a-step-marker>
+        <a-step-desc><a-tab-label>Setup</a-tab-label><a-step-hint>In progress</a-step-hint></a-step-desc>
+      </a-tab>
+      <a-tab role="tab" value="review" tabindex="-1">
+        <a-step-marker aria-hidden="true"><a-icon shape="circle-large"></a-icon></a-step-marker>
+        <a-step-desc><a-tab-label>Review</a-tab-label><a-step-hint>Waiting</a-step-hint></a-step-desc>
+      </a-tab>
+    </a-tabs>
+    <a-tabpanel role="tabpanel" value="build">Build output is ready.</a-tabpanel>
+    <a-tabpanel role="tabpanel" value="setup">Prepare the environment.</a-tabpanel>
+    <a-tabpanel role="tabpanel" value="review">Review the result.</a-tabpanel>
+  </a-steps>
+</div>
+```
 
 Use `size`, `orientation`, and `tone` first. Each option also accepts `className`,
 `style`, and `data-*` attributes. The marker and connector are light DOM.

@@ -6,6 +6,7 @@ import { Icon } from "./Icon"
 import { Loader } from "./Loader"
 import type { TabOption, TabsProps } from "./Tabs"
 import { Tabs } from "./Tabs"
+import { Tooltip } from "./Tooltip"
 import "./Steps.css"
 
 /** Named Anta tone used by the selected step. */
@@ -37,9 +38,11 @@ export interface StepMarkerState {
 export interface StepOption extends OptionPresentationProps {
   /** Stable phase identity. Values must be unique within the sequence. */
   value: string
-  /** Visible phase label. */
+  /** Visible phase label. It ellipsizes in a constrained step; its full content
+   * is available in a tooltip only when clipped. */
   label: React.ReactNode
-  /** Secondary text shown below the label. */
+  /** Secondary text shown below the label. It ellipsizes in a constrained step;
+   * its full content is available in a tooltip only when clipped. */
   hint?: React.ReactNode
   /** Application-owned process state. Selection and availability are separate;
    * `error` keeps a critical icon and outline, and selection adds the fill. */
@@ -181,6 +184,13 @@ export const Steps = ({
             <a-tab-label>{option.label}</a-tab-label>
             {option.hint != null && <a-step-hint>{option.hint}</a-step-hint>}
           </a-step-desc>
+          <Tooltip
+            truncatedOnly
+            truncatedSelector="a-tab-label, a-step-hint"
+          >
+            {option.label}
+            {option.hint != null && <> — {option.hint}</>}
+          </Tooltip>
         </>
       ),
     }

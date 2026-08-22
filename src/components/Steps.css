@@ -69,7 +69,9 @@
 
   a-tabs[data-steps] > a-tab {
     position: relative;
-    flex: none;
+    flex: 1 1 120px;
+    min-width: 120px;
+    max-width: 240px;
     min-height: 0;
     justify-content: flex-start;
     gap: var(--steps-item-gap);
@@ -105,6 +107,11 @@
   }
 
   a-step-hint {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--text-4);
     font-size: calc(1em - 2px);
     font-weight: 400;
@@ -194,6 +201,8 @@
   }
 
   a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] > a-tab {
+    flex: none;
+    min-width: 0;
     grid-column: 1;
     width: max-content;
     max-width: 100%;

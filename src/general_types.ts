@@ -216,9 +216,9 @@ export interface AAvatarAttributes extends BaseAttributes {
   /** Size of the square container. `medium` is the default; set a pixel size via
    *  the `--avatar-size` custom property. */
   size?: 'small' | 'medium' | 'large'
-  /** Corner indicator, colored by tone — a named tone or any literal CSS color
-   *  (derived in oklch). Omit for no indicator. */
-  status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Corner badge, colored by tone — a named tone or any literal CSS color
+   *  (derived in oklch). Omit for no badge. */
+  badge?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Fully-round (circular) frame, or a custom radius via a length value
    *  (`round="12px"`). Presence-based for the boolean form. */
   round?: boolean | number | string

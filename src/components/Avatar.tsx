@@ -19,10 +19,10 @@ export interface AvatarProps extends Omit<BaseProps, 'children'> {
   /** Size of the square container. A number is a pixel size.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large' | number
-  /** Corner indicator, colored by tone. Pass a named tone or any literal CSS
-   *  color; the application decides what each tone means (`success` for online,
-   *  `critical` for busy, `neutral` for offline). Omit for no indicator. */
-  status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Corner badge, colored by tone. Pass a named tone or any literal CSS color;
+   *  the application decides what each tone means (`success` for online,
+   *  `critical` for busy, `neutral` for offline). Omit for no badge. */
+  badge?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Fully-round (circular) frame. Pass a `number` (px) or a CSS length string
    *  for a custom radius instead. */
   round?: boolean | number | string
@@ -52,29 +52,29 @@ export interface AvatarProps extends Omit<BaseProps, 'children'> {
  * <Avatar seed="user-42" name="Vlad Korobov" />
  * ```
  *
- * @example Image with a status
+ * @example Image with a badge
  * ```tsx
- * <Avatar src="/vlad.jpg" name="Vlad Korobov" status="online" />
+ * <Avatar src="/vlad.jpg" name="Vlad Korobov" badge="success" />
  * ```
  *
  * @example Initials (no figure shape configured)
  * ```tsx
  * <Avatar
  *   name="Vlad Korobov"
- *   generator={{ headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }}
+ *   generator={{ headRadiusTop: { mode: 'off' }, headRadiusBottom: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }}
  * />
  * ```
  */
-export const Avatar = ({ seed, name, src, size, status, round, generator, className, style, ...rest }: AvatarProps) => {
+export const Avatar = ({ seed, name, src, size, badge, round, generator, className, style, ...rest }: AvatarProps) => {
   const numericSize = typeof size === 'number'
   // A numeric size feeds the pixel value through `--avatar-size` (computed key
   // via the shared helper — a literal `--avatar-size` key trips the excess-
   // property check on React.CSSProperties).
-  // A custom (non-named) status color reaches the element's oklch derivation
+  // A custom (non-named) badge color reaches the element's oklch derivation
   // through the inline tone-source property (shared helper — see anta_helpers).
   const sized = numericSize ? lengthStyle(size, '--avatar-size', style) : style
   const rounded = roundStyle(round, '--avatar-radius', sized)
-  const mergedStyle = toneStyle(status, '--avatar-status-tone-source', rounded)
+  const mergedStyle = toneStyle(badge, '--avatar-badge-tone-source', rounded)
   return (
     <a-avatar
       seed={seed}
@@ -82,7 +82,7 @@ export const Avatar = ({ seed, name, src, size, status, round, generator, classN
       src={src}
       // 'medium' (and unset) is the implicit default — emit no DOM attribute.
       size={!numericSize && size && size !== 'medium' ? size : undefined}
-      status={status}
+      badge={badge}
       round={roundAttr(round)}
       // Serialize the config to the JSON `config` attribute — the element parses
       // it, so generation is declarative (works in SSR and hand-authored markup).

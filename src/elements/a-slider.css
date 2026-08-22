@@ -4,12 +4,12 @@
   :where(a-slider, input[data-anta][type="range"]) {
     --anta-slider-control-size: 28px;
     --anta-slider-track-size: 2px;
-    --anta-slider-thumb-size: 18px;
+    --anta-slider-thumb-size: 16px;
     --anta-slider-thumb-border-width: 1.5px;
   }
   :where(a-slider, input[data-anta][type="range"])[size="small"] {
     --anta-slider-control-size: 24px;
-    --anta-slider-thumb-size: 16px;
+    --anta-slider-thumb-size: 12px;
   }
   :where(a-slider, input[data-anta][type="range"])[size="large"] {
     --anta-slider-control-size: 32px;
@@ -19,7 +19,7 @@
     --anta-slider-track-size: attr(track-size type(<length>), 2px);
   }
   :where(a-slider, input[data-anta][type="range"])[thumb-size] {
-    --anta-slider-thumb-size: attr(thumb-size type(<length>), 18px);
+    --anta-slider-thumb-size: attr(thumb-size type(<length>), 16px);
   }
 
   a-slider {

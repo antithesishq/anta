@@ -14,18 +14,20 @@ import './a-avatar.css'
  * `DEFAULT_CONFIG` produces a varied figure; a config whose head and body shapes
  * are both `off` renders initials.
  *
- * Shadow structure (the host is the box; the content is clipped to the container
- * shape by `.content { overflow: hidden }`):
+ * Shadow structure — the picture is the box, with no wrapper around it:
  *
  *   :host
- *     .content   ← the image / generated SVG, part="frame"
- *     .status    ← the optional corner indicator, part="status"
+ *     <svg> | <img>   ← the generated figure or the image, part="frame"
+ *     .badge          ← the optional corner badge, part="badge"
+ *
+ * The picture carries the frame's radius and the badge cutout; the host stays
+ * unclipped so the badge can sit at the very corner.
  */
 export class AAvatarElement extends HTMLElementBase {
-  static observedAttributes = ['seed', 'name', 'src', 'size', 'status', 'config']
+  static observedAttributes = ['seed', 'name', 'src', 'size', 'badge', 'config']
 
-  #content: HTMLDivElement
-  #status: HTMLSpanElement
+  #badge: HTMLSpanElement
+  #picture?: Element
 
   constructor() {
     super()
@@ -34,16 +36,19 @@ export class AAvatarElement extends HTMLElementBase {
     const style = document.createElement('style')
     style.textContent = SHADOW_STYLE
 
-    this.#content = document.createElement('div')
-    this.#content.className = 'content'
-    this.#content.setAttribute('part', 'frame')
+    this.#badge = document.createElement('span')
+    this.#badge.className = 'badge'
+    this.#badge.setAttribute('part', 'badge')
+    this.#badge.style.display = 'none'
 
-    this.#status = document.createElement('span')
-    this.#status.className = 'status'
-    this.#status.setAttribute('part', 'status')
-    this.#status.style.display = 'none'
+    shadow.append(style, this.#badge)
+  }
 
-    shadow.append(style, this.#content, this.#status)
+  /** Swap in the picture, keeping it between the style and the indicator. */
+  #setPicture(node: Element) {
+    if (this.#picture) this.#picture.replaceWith(node)
+    else this.#badge.before(node)
+    this.#picture = node
   }
 
   connectedCallback() {
@@ -67,27 +72,35 @@ export class AAvatarElement extends HTMLElementBase {
   }
 
   #render() {
-    // The dot's color comes from the host CSS (the status tone); the element
-    // only decides whether it shows.
-    const status = this.getAttribute('status')
-    this.#status.style.display = status && status !== 'none' ? '' : 'none'
+    // The badge's color comes from the host CSS (its tone); the element only
+    // decides whether it shows.
+    const badge = this.getAttribute('badge')
+    this.#badge.style.display = badge && badge !== 'none' ? '' : 'none'
 
     const name = this.getAttribute('name') ?? undefined
     const src = this.getAttribute('src')
 
     if (src) {
       const img = document.createElement('img')
-      img.setAttribute('part', 'image')
+      img.setAttribute('part', 'frame image')
       img.src = src
       img.alt = name ?? ''
       img.loading = 'lazy'
-      this.#content.replaceChildren(img)
+      this.#setPicture(img)
       return
     }
 
     const seed = this.getAttribute('seed') ?? name ?? ''
     const resolved = resolveAvatar(this.#parseConfig(), seed)
-    this.#content.innerHTML = avatarToSvg(resolved, { initials: getInitials(name), title: name })
+    // Parse through a template so the shadow root's own children survive; the
+    // generated markup is ours, and `avatar-core` escapes the name it embeds.
+    const tpl = document.createElement('template')
+    tpl.innerHTML = avatarToSvg(resolved, { initials: getInitials(name), title: name })
+    const svg = tpl.content.firstElementChild
+    if (svg) {
+      svg.setAttribute('part', 'frame')
+      this.#setPicture(svg)
+    }
   }
 }
 
@@ -97,24 +110,23 @@ export class AAvatarElement extends HTMLElementBase {
 // the external a-avatar.css; this only lays out the shadow-internal nodes.
 const SHADOW_STYLE = `
   :host { display: inline-block; position: relative; vertical-align: middle; }
-  .content {
+  svg, img {
+    display: block;
     inline-size: 100%;
     block-size: 100%;
     border-radius: var(--avatar-radius);
-    overflow: hidden;
     background: var(--avatar-placeholder-bg);
+    mask-image: var(--avatar-badge-mask);
   }
-  .content svg, .content img { display: block; inline-size: 100%; block-size: 100%; }
-  .content img { object-fit: cover; }
-  .status {
+  img { object-fit: cover; }
+  .badge {
     position: absolute;
-    right: var(--avatar-status-inset);
-    bottom: var(--avatar-status-inset);
-    inline-size: var(--avatar-status-size);
-    block-size: var(--avatar-status-size);
+    right: var(--avatar-badge-inset);
+    bottom: var(--avatar-badge-inset);
+    inline-size: var(--avatar-badge-size);
+    block-size: var(--avatar-badge-size);
     border-radius: 50%;
-    background: var(--avatar-status-color);
-    box-shadow: 0 0 0 var(--avatar-status-ring-width) var(--avatar-status-ring);
+    background: var(--avatar-badge-color);
   }
 `
 

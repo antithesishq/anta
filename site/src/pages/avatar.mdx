@@ -17,8 +17,6 @@ export const brandRange = { bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 
 
 export const palette = { bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headRadiusTop: { mode: 'off' }, headRadiusBottom: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }
 
-export const photo = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f97362'/%3E%3Cstop offset='1' stop-color='%236c5ce7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='128' height='128' fill='url(%23g)'/%3E%3Ccircle cx='64' cy='52' r='24' fill='%23ffffff' opacity='0.85'/%3E%3Crect x='28' y='84' width='72' height='48' rx='24' fill='%23ffffff' opacity='0.85'/%3E%3C/svg%3E"
-
 # Avatar
 
 A userpic container. `Avatar` shows one of three things, in priority order: a
@@ -92,44 +90,48 @@ const initials = {
 <Avatar name="Madonna" generator={initials} />
 ```
 
-## Image and status
+## Image and badge
 
 Set `src` to show an uploaded photo instead of a generated figure, cropped to
 fill the container.
 
-`status` adds a corner indicator, colored by tone, on any avatar — image or
-generated. It takes any named tone, so the application decides what each one
-means: `success` for online, `critical` for busy, `warning` for idle, `neutral`
-for offline. Named tones track light and dark mode automatically.
+`badge` adds a corner badge, colored by tone, on any avatar — image or generated.
+It takes any named tone, so the application decides what each one means:
+`success` for online, `critical` for busy, `warning` for idle, `neutral` for
+offline. Named tones track light and dark mode automatically.
+
+The badge sits in a hole masked out of the picture rather than behind a painted
+ring, so whatever is behind the avatar shows through the gap and no ring color
+has to track the surface.
 
 <Preview gap="12px">
-  <Avatar src={photo} name="Vlad Korobov" size={56} status="success" />
-  <Avatar seed="lena-r" name="Lena Rossi" size={56} status="critical" />
-  <Avatar seed="8f21ac" name="Sam Okafor" size={56} status="warning" />
-  <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} status="info" />
-  <Avatar seed="marie-c" name="Marie Curie" size={56} status="brand" />
-  <Avatar seed="q-jones" name="Quincy Jones" size={56} status="neutral" />
+  <Avatar src="/anta-logo.svg" name="Anta" size={56} badge="success" />
+  <Avatar seed="lena-r" name="Lena Rossi" size={56} badge="critical" />
+  <Avatar seed="8f21ac" name="Sam Okafor" size={56} badge="warning" />
+  <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} badge="info" />
+  <Avatar seed="marie-c" name="Marie Curie" size={56} badge="brand" />
+  <Avatar seed="q-jones" name="Quincy Jones" size={56} badge="neutral" />
 </Preview>
 
 ```tsx folded
-<Avatar src="/team/vlad.jpg" name="Vlad Korobov" status="success" />
-<Avatar seed="lena-r" name="Lena Rossi" status="critical" />
-<Avatar seed="8f21ac" name="Sam Okafor" status="warning" />
-<Avatar seed="k-tanaka" name="Kenji Tanaka" status="info" />
+<Avatar src="/anta-logo.svg" name="Anta" badge="success" />
+<Avatar seed="lena-r" name="Lena Rossi" badge="critical" />
+<Avatar seed="8f21ac" name="Sam Okafor" badge="warning" />
+<Avatar seed="k-tanaka" name="Kenji Tanaka" badge="info" />
 ```
 
-`status` also accepts any literal CSS color for a one-off indicator, derived in
-oklch the same way a named tone is.
+`badge` also accepts any literal CSS color for a one-off badge, derived in oklch
+the same way a named tone is.
 
 <Preview gap="12px">
-  <Avatar seed="a-lee" name="Ann Lee" size={56} status="#ff1493" />
-  <Avatar seed="b-qi" name="Bo Qi" size={56} status="rebeccapurple" />
-  <Avatar seed="c-v" name="Cy Vance" size={56} status="#0d9488" />
+  <Avatar seed="a-lee" name="Ann Lee" size={56} badge="#ff1493" />
+  <Avatar seed="b-qi" name="Bo Qi" size={56} badge="rebeccapurple" />
+  <Avatar seed="c-v" name="Cy Vance" size={56} badge="#0d9488" />
 </Preview>
 
 ```tsx folded
-<Avatar seed="a-lee" name="Ann Lee" status="#ff1493" />
-<Avatar seed="b-qi" name="Bo Qi" status="rebeccapurple" />
+<Avatar seed="a-lee" name="Ann Lee" badge="#ff1493" />
+<Avatar seed="b-qi" name="Bo Qi" badge="rebeccapurple" />
 ```
 
 ## Size
@@ -153,12 +155,11 @@ number for a pixel size.
 ## Round
 
 `round` makes the frame a circle. Pass a number (px) or a CSS length for a custom
-radius instead. The status indicator tucks inward on a round frame so it still
-meets the circle's edge.
+radius instead. The badge hugs the circle's edge on a round frame.
 
 <Preview gap="12px">
   <Avatar round seed="user-42" name="Vlad Korobov" size={56} />
-  <Avatar round seed="lena-r" name="Lena Rossi" size={56} status="success" />
+  <Avatar round seed="lena-r" name="Lena Rossi" size={56} badge="success" />
   <Avatar round seed="8f21ac" name="Sam Okafor" size={56} />
   <Avatar round name="Ada Lovelace" size={56} generator={initialsOnly} />
   <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} round={10} />
@@ -166,7 +167,7 @@ meets the circle's edge.
 
 ```tsx folded
 <Avatar round seed="user-42" name="Vlad Korobov" />
-<Avatar round seed="lena-r" name="Lena Rossi" status="success" />
+<Avatar round seed="lena-r" name="Lena Rossi" badge="success" />
 <Avatar seed="k-tanaka" name="Kenji Tanaka" round={10} />
 ```
 
@@ -253,6 +254,118 @@ over a squarer jaw reads mechanical, and the reverse reads natural. And under
 `any` both radii average near or above `1`, so heads read round to oval unless
 you narrow them yourself.
 
+<Disclosure title="Generator config">
+
+`generator` takes an `AvatarGenConfig`. Every field is optional — anything you
+leave out keeps its default from the table above.
+
+```ts
+interface AvatarGenConfig {
+  bgColor?: ColorDim
+  headColor?: ColorDim
+  bodyColor?: ColorDim
+  figureScale?: ScalarDim
+  figureTranslate?: Vec2Dim
+  figureAngle?: ScalarDim
+  headAngle?: ScalarDim
+  bodyAngle?: ScalarDim
+  figureGap?: ScalarDim
+  headRadiusTop?: ScalarDim
+  headRadiusBottom?: ScalarDim
+  bodyBorderRadius?: ScalarDim
+  harmony?: boolean
+}
+
+type DimMode = 'off' | 'any' | 'range' | 'list'
+```
+
+### Modes
+
+Every dimension carries a `mode`. It decides which of the dimension's other
+fields are read; the rest are ignored.
+
+| `mode` | Behavior | Fields read |
+| --- | --- | --- |
+| `off` | Excluded. The dimension holds a fixed neutral default. | none |
+| `any` | Varies across the dimension's full natural range (the default). | none |
+| `range` | Varies within an explicit range. | `min` / `max`, or `l` / `c` / `h`, or `x` / `y` |
+| `list` | Picks one value at random from an explicit set. | `values` |
+
+### Dimension types
+
+**`ScalarDim`** — a single number: scale, an angle, the gap, a corner radius.
+
+```ts
+interface ScalarDim {
+  mode?: DimMode
+  min?: number      // range: lower bound
+  max?: number      // range: upper bound
+  values?: number[] // list: the allowed values
+}
+```
+
+**`ColorDim`** — a color. `range` caps OKLCH per channel as `[min, max]` pairs,
+with chroma clamped into sRGB so a value can never clip. `list` passes a palette
+of any CSS colors.
+
+```ts
+interface ColorDim {
+  mode?: DimMode
+  l?: [number, number] // range: lightness, 0 to 1
+  c?: [number, number] // range: chroma, 0 to ~0.4
+  h?: [number, number] // range: hue, 0 to 360
+  values?: string[]    // list: the allowed CSS colors
+}
+```
+
+**`Vec2Dim`** — the figure's offset from center, used only by `figureTranslate`.
+Each axis runs from −50 to 50 in the frame's coordinates, where 0 centers the
+head.
+
+```ts
+interface Vec2Dim {
+  mode?: DimMode              // 'list' is not used here
+  x?: [number, number]        // range: horizontal bounds
+  y?: [number, number]        // range: vertical bounds
+  values?: [number, number][] // list: allowed [x, y] points
+}
+```
+
+`harmony` is a plain boolean rather than a dimension: when true, `headColor` and
+`bodyColor` take their hue from the background so the parts stay coordinated.
+
+### Defaults per dimension
+
+What `off` pins each dimension to, and what `any` samples. Corner radii are
+sampled toward the top of their range, so heads average round to oval.
+
+| Dimension | `off` | `any` samples |
+| --- | --- | --- |
+| `bgColor` | mid grey | `l` 0.55–0.78, `c` 0.03–0.09, any hue |
+| `headColor` | light grey | `l` 0.8–0.93, `c` 0.02–0.06, any hue |
+| `bodyColor` | light grey | `l` 0.78–0.92, `c` 0.02–0.06, any hue |
+| `figureScale` | `1` | 0.82–1.2 |
+| `figureTranslate` | `[0, 0]` | −12 to 12 per axis |
+| `figureAngle` | `0` | −12° to 12° |
+| `headAngle` | `0` | −14° to 14° |
+| `bodyAngle` | `0` | −10° to 10° |
+| `figureGap` | `0.15` | 0–0.3 |
+| `headRadiusTop` | `1` | 0.5–1.15 |
+| `headRadiusBottom` | `1` | 0.6–1.35 |
+| `bodyBorderRadius` | `1` | 0.45–1 |
+| `harmony` | — | `true` |
+
+With every shape dimension (`headRadiusTop`, `headRadiusBottom`,
+`bodyBorderRadius`) set to `off`, no figure shape is configured and the avatar
+renders initials instead.
+
+The generation helpers are exported too, for a consumer that needs the result
+outside a component: `resolveAvatar(config, seed)` returns the resolved colors
+and geometry, `avatarToSvg(resolved)` renders it, and `getInitials(name)` derives
+the fallback letters.
+
+</Disclosure>
+
 <Disclosure title="Component props" open>
 
 <PropsTable component="Avatar" />
@@ -289,31 +402,32 @@ generated look. Everything else is `--avatar-*` custom properties on the host an
 
 The container is a rounded square by default; `round` makes it a circle and takes
 a length for a custom radius, so reach for the prop before the custom property.
-The indicator's size, inset, and ring are `--avatar-status-size`,
-`--avatar-status-inset`, `--avatar-status-ring-width`, and
-`--avatar-status-ring`; its color comes from `status`, so route color through the
-prop rather than overriding `--avatar-status-color`.
+The badge is sized and placed with `--avatar-badge-ratio` (its size as a fraction
+of the frame), `--avatar-badge-inset`, and `--avatar-badge-gap` (the width of the
+cutout around it). Its fill comes from `badge`, so route color through the prop
+rather than overriding `--avatar-badge-color`.
 
 <Preview gap="12px">
-  <Avatar round className="badge-dot" seed="user-42" name="Vlad Korobov" size={56} status="success" />
-  <Avatar round className="badge-dot" seed="lena-r" name="Lena Rossi" size={56} status="critical" />
+  <Avatar round className="badge-dot" seed="user-42" name="Vlad Korobov" size={56} badge="success" />
+  <Avatar round className="badge-dot" seed="lena-r" name="Lena Rossi" size={56} badge="critical" />
   <style is:inline>{`
     a-avatar.badge-dot {
-      --avatar-status-size: 22%;
-      --avatar-status-ring-width: 3px;
+      --avatar-badge-ratio: 0.34;
+      --avatar-badge-gap: 4px;
     }
   `}</style>
 </Preview>
 
 ```css folded
 a-avatar.badge-dot {
-  --avatar-status-size: 22%;        /* a smaller dot */
-  --avatar-status-ring-width: 3px;  /* with a thicker ring */
+  --avatar-badge-ratio: 0.34;  /* a larger badge */
+  --avatar-badge-gap: 4px;     /* in a wider cutout */
 }
 ```
 
-The shadow content exposes `::part(frame)` (the clipped container), `::part(image)`
-(the `src` image), and `::part(status)` (the corner indicator) for anything the
-custom properties do not cover.
+The shadow content exposes `::part(frame)` (the picture — the generated figure or
+the image, whichever is showing), `::part(image)` (only the `src` image), and
+`::part(badge)` (the corner badge) for anything the custom properties do not
+cover.
 
 </Disclosure>

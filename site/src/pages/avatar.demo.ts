@@ -4,7 +4,7 @@ export default `import { Avatar } from '@antadesign/anta'
   seed="user-42"
   name="Vlad Korobov"
   size={96}
-  status="success"
+  badge="success"
   round
   generator={{
     // Every dimension takes one mode: 'off' | 'any' | 'range' | 'list'.

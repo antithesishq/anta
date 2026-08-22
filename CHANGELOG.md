@@ -14,11 +14,18 @@ changes are not listed.
   on-brand. Corner radius runs 0 (square) through 1 (fully round) to above 1,
   where the head elongates into an oval; it is split into `headRadiusTop` and
   `headRadiusBottom` so the head can take an egg shape, with the bottom never
-  rounded less than the top. `status` colors its corner indicator with any named
-  tone or literal CSS color, and `round` makes the frame a circle (or takes a
+  rounded less than the top. `badge` colors its corner badge with any named tone or
+  literal CSS color — the badge sits in a hole masked out of the picture rather
+  than behind a painted ring — and `round` makes the frame a circle (or takes a
   length for a custom radius). The
   `avatar-core` generation helpers (`resolveAvatar`, `avatarToSvg`, `getInitials`,
   and the seed PRNG) ship as named exports.
+
+### Changed
+
+- `Slider` thumbs are smaller: 12px at `small`, 16px at `medium` (the default,
+  previously 18px), and 20px at `large`, unchanged. `thumbSize` still overrides
+  any of them.
 
 ## 0.3.22 — August 20, 2026
 

@@ -340,6 +340,12 @@ export interface ResolvedBody {
 
 /** Renderer-agnostic description of one avatar. */
 export interface ResolvedAvatar {
+  /** Ink for the initials fallback: the background's own hue at a text-like
+   *  lightness, so the letters read as tinted ink on the generated color. It is
+   *  derived from the background rather than a theme text token because the
+   *  background does not follow the theme — a theme token would go light-on-light
+   *  in dark mode. */
+  initialsColor: string
   /** `true` for a generated head + shoulders figure; `false` for the initials
    *  fallback (no figure shape was configured). */
   figure: boolean
@@ -413,6 +419,7 @@ export function resolveAvatar(config: AvatarGenConfig, seed: string): ResolvedAv
     figure: hasFigure(config),
     bg: bg.color,
     bgLightness: bg.l,
+    initialsColor: initialsInk(bg.color, bg.l),
     scale,
     translate,
     angle,
@@ -429,6 +436,18 @@ export function resolveAvatar(config: AvatarGenConfig, seed: string): ResolvedAv
     },
     body: { color: body.color, radius: bodyRadiusFrac * bodyUnit, height: bodyHeight, angle: bodyAngle },
   }
+}
+
+/**
+ * Ink for the initials: the background's hue at a text-like lightness — dark ink
+ * on a light background, light ink on a dark one — with chroma held low so the
+ * letters read as ink rather than a second fill. A background whose hue can't be
+ * read (a hex from a palette) gets neutral ink.
+ */
+function initialsInk(bg: string, bgL: number): string {
+  const tinted = /^oklch\(/i.test(bg.trim())
+  const hue = tinted ? readHue(bg) : 0
+  return bgL > 0.5 ? oklchString(0.35, tinted ? 0.06 : 0, hue) : oklchString(0.95, tinted ? 0.04 : 0, hue)
 }
 
 /** Read a hue from an `oklch(L C H)` string; 0 if absent (used for harmony). */
@@ -465,7 +484,8 @@ export function avatarToSvg(resolved: ResolvedAvatar, opts: SvgOptions = {}): st
     const text = opts.initials
       ? `<text x="50" y="50" text-anchor="middle" dominant-baseline="central" ` +
         `font-family="var(--avatar-font, system-ui, sans-serif)" font-weight="500" ` +
-        `font-size="${initialsFontSize(opts.initials.length)}" fill="${initialsColor(resolved.bgLightness)}"` +
+        `font-size="${initialsFontSize(opts.initials.length)}" ` +
+        `fill="var(--avatar-initials-color, ${esc(resolved.initialsColor)})"` +
         `>${esc(opts.initials)}</text>`
       : ''
     return svgWrap(title + bgRect + text)
@@ -538,9 +558,6 @@ function roundedRectPath(x: number, y: number, w: number, h: number, rTop: numbe
 const svgWrap = (inner: string) =>
   `<svg viewBox="0 0 ${FRAME} ${FRAME}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" ` +
   `xmlns="http://www.w3.org/2000/svg" role="presentation">${inner}</svg>`
-
-/** Readable initials color over a background of the given lightness. */
-const initialsColor = (bgL: number) => (bgL < 0.6 ? 'oklch(0.98 0 0)' : 'oklch(0.28 0 0)')
 
 /** Shrink the initials to keep 1–3 letters inside the frame. */
 const initialsFontSize = (len: number) => (len >= 3 ? 30 : len === 2 ? 38 : 46)

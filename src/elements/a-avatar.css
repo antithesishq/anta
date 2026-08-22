@@ -4,17 +4,24 @@
     --avatar-radius: 22%;
     --avatar-placeholder-bg: var(--bg-3);
 
-    --avatar-status-size: 30%;
-    --avatar-status-inset: 0%;
-    --avatar-status-ring-width: 2px;
-    --avatar-status-ring: var(--bg-1);
+    /* The dot is sized as a fraction of the frame, resolved to a length so the
+       cutout radius below is a single unit — calc() may not mix % with px in a
+       gradient radius (it may in the position). */
+    --avatar-badge-ratio: 0.24;
+    --avatar-badge-size: calc(var(--avatar-size) * var(--avatar-badge-ratio));
+    --avatar-badge-inset: 0px;
+    /* Separation between the dot and the picture. It is a hole punched out of
+       the picture, not a painted ring, so whatever sits behind the avatar shows
+       through it and no color has to be kept in sync with the surface. */
+    --avatar-badge-gap: 2px;
+    --avatar-badge-mask: none;
 
-    /* The dot is a solid fill of the status tone. One formula derives it from
+    /* The badge is a solid fill of its tone. One formula derives it from
        the tone source, so a named tone and a literal CSS color take the same
        path (the JSX wrapper writes the source inline for a custom color). */
-    --avatar-status-tone-source: var(--anta-seed-neutral);
-    --avatar-status-chroma: 0.17;
-    --avatar-status-color: oklch(from var(--avatar-status-tone-source) 0.62 var(--avatar-status-chroma) h);
+    --avatar-badge-tone-source: var(--anta-seed-neutral);
+    --avatar-badge-chroma: 0.17;
+    --avatar-badge-color: oklch(from var(--avatar-badge-tone-source) 0.62 var(--avatar-badge-chroma) h);
 
     display: inline-block;
     inline-size: var(--avatar-size);
@@ -29,17 +36,30 @@
   a-avatar[round] {
     --avatar-round: attr(round type(<length>));
     --avatar-radius: var(--avatar-round, 50%);
-    --avatar-status-inset: 7%;
+    --avatar-badge-inset: calc(var(--avatar-size) * 0.03);
   }
 
   a-avatar[size='small'] {
     --avatar-size: 32px;
-    --avatar-status-ring-width: 1.5px;
+    --avatar-badge-gap: 1.5px;
   }
 
   a-avatar[size='large'] {
     --avatar-size: 64px;
-    --avatar-status-ring-width: 2.5px;
+    --avatar-badge-gap: 2.5px;
+  }
+
+  /* The cutout: a transparent disc in the picture, centered on the dot and one
+     gap wider, so the dot sits in a hole rather than behind a ring. Only an
+     avatar that actually shows a dot is masked. */
+  a-avatar[badge]:not([badge=""], [badge="none"]) {
+    --avatar-badge-mask: radial-gradient(
+      circle calc(var(--avatar-badge-size) / 2 + var(--avatar-badge-gap))
+      at calc(100% - var(--avatar-badge-inset) - var(--avatar-badge-size) / 2)
+         calc(100% - var(--avatar-badge-inset) - var(--avatar-badge-size) / 2),
+      transparent 99%,
+      #000 100%
+    );
   }
 
   /* Pre-upgrade skeleton: before the element registers there is no shadow, so
@@ -56,27 +76,26 @@
   /* Named tones point the source at the matching seed, so each dot tracks the
      theme's tone and dark mode comes from the formula below. Neutral drops the
      chroma so it reads grey rather than a tinted color. */
-  a-avatar[status="neutral"] { --avatar-status-chroma: 0.005; }
-  a-avatar[status="brand"] { --avatar-status-tone-source: var(--anta-seed-brand); }
-  a-avatar[status="info"] { --avatar-status-tone-source: var(--anta-seed-info); }
-  a-avatar[status="success"] { --avatar-status-tone-source: var(--anta-seed-success); }
-  a-avatar[status="warning"] { --avatar-status-tone-source: var(--anta-seed-warning); }
-  a-avatar[status="critical"] { --avatar-status-tone-source: var(--anta-seed-critical); }
+  a-avatar[badge="neutral"] { --avatar-badge-chroma: 0.005; }
+  a-avatar[badge="brand"] { --avatar-badge-tone-source: var(--anta-seed-brand); }
+  a-avatar[badge="info"] { --avatar-badge-tone-source: var(--anta-seed-info); }
+  a-avatar[badge="success"] { --avatar-badge-tone-source: var(--anta-seed-success); }
+  a-avatar[badge="warning"] { --avatar-badge-tone-source: var(--anta-seed-warning); }
+  a-avatar[badge="critical"] { --avatar-badge-tone-source: var(--anta-seed-critical); }
 
-  /* A raw `status="#ff1493"` on hand-authored markup, where typed attr() is
+  /* A raw `badge="#ff1493"` on hand-authored markup, where typed attr() is
      supported; the wrapper's inline custom property covers every browser. */
-  @supports (color: attr(status type(<color>), transparent)) {
-    a-avatar[status]:not(
-        [status=""], [status="neutral"], [status="brand"], [status="info"],
-        [status="success"], [status="warning"], [status="critical"]) {
-      --avatar-status-tone-source: attr(status type(<color>), transparent);
+  @supports (color: attr(badge type(<color>), transparent)) {
+    a-avatar[badge]:not(
+        [badge=""], [badge="neutral"], [badge="brand"], [badge="info"],
+        [badge="success"], [badge="warning"], [badge="critical"]) {
+      --avatar-badge-tone-source: attr(badge type(<color>), transparent);
     }
   }
 
   .dark a-avatar {
-    --avatar-status-ring: var(--bg-2);
-    --avatar-status-color: oklch(from var(--avatar-status-tone-source) 0.68 var(--avatar-status-chroma) h);
+    --avatar-badge-color: oklch(from var(--avatar-badge-tone-source) 0.68 var(--avatar-badge-chroma) h);
   }
 
-  .dark a-avatar[status="neutral"] { --avatar-status-chroma: 0.008; }
+  .dark a-avatar[badge="neutral"] { --avatar-badge-chroma: 0.008; }
 }

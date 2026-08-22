@@ -91,13 +91,15 @@ selected.
 
 ```tsx
 const options = [
-  { value: 'done', label: 'Done', status: 'completed' },
-  { value: 'current', label: 'Current', status: 'loading' },
-  { value: 'next', label: 'Next', status: 'incomplete' },
+  { value: 'done', label: 'Done', hint: 'Complete', status: 'completed' },
+  { value: 'current', label: 'Current', hint: 'In progress', status: 'loading' },
+  { value: 'next', label: 'Next', hint: 'Waiting', status: 'incomplete' },
 ]
 
 <Steps tone="success" defaultValue="current" options={options} />
 ```
+
+Hints are not clamped: they take their own line and make the strip taller.
 
 Options are `neutral`, `brand` (default), `info`, `success`, `warning`, and
 `critical`.

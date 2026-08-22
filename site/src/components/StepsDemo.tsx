@@ -91,9 +91,9 @@ export function Tones() {
           defaultValue="current"
           label={`${label} steps`}
           options={[
-            { value: 'done', label: 'Done', status: 'completed' },
-            { value: 'current', label, status: 'loading' },
-            { value: 'next', label: 'Next', status: 'incomplete' },
+            { value: 'done', label: 'Done', hint: 'Complete', status: 'completed' },
+            { value: 'current', label, hint: 'In progress', status: 'loading' },
+            { value: 'next', label: 'Next', hint: 'Waiting', status: 'incomplete' },
           ]}
         />
       ))}

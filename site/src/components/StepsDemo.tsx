@@ -19,7 +19,6 @@ const statusExamples: StepOption[] = [
   { value: 'loading', label: 'Loading', status: 'loading' },
   { value: 'error', label: 'Error', status: 'error' },
   { value: 'incomplete', label: 'Incomplete', status: 'incomplete' },
-  { value: 'disabled', label: 'Disabled', hint: 'Unavailable', status: 'incomplete', disabled: true },
 ]
 
 const toneExamples: Array<{ tone: StepTone; label: string }> = [
@@ -69,7 +68,7 @@ const panelText = (children: React.ReactNode) => (
 export function Statuses() {
   useElements()
   return (
-    <div style={{ width: '100%', maxWidth: '640px' }}>
+    <div style={{ width: '100%' }}>
       <Steps defaultValue="loading" label="Task status" options={statusExamples}>
         <TabPanel value="completed" style={panel}>{panelText('This work is complete and ready to use.')}</TabPanel>
         <TabPanel value="loading" style={panel}>{panelText('This work is currently running.')}</TabPanel>

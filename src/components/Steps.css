@@ -179,10 +179,10 @@
     order: 3;
     flex: 1 1 auto;
     align-self: center;
-    min-width: 16px;
+    min-width: var(--steps-ring-size);
     height: 1px;
-    margin-inline-start: calc(-1 * var(--steps-item-gap));
-    margin-inline-end: calc(-2 * var(--steps-tab-padding-x));
+    margin-inline-start: calc(1ch - var(--steps-item-gap));
+    margin-inline-end: calc(1ch - 2 * var(--steps-tab-padding-x));
     background: var(--steps-connector-color);
     pointer-events: none;
   }

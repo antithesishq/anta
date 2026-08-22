@@ -31,13 +31,12 @@
   }
 
   a-tabs[data-steps] {
-    --steps-connector-size: 12px;
     --steps-active-border: var(--border-1);
-    --tabs-gap: calc(
-      var(--steps-gap) * 2 + var(--steps-connector-size)
-    );
+    --tabs-gap: 0px;
 
     align-items: center;
+    width: 100%;
+    align-self: stretch;
     overflow-x: auto;
     scrollbar-width: thin;
   }
@@ -67,11 +66,18 @@
     --steps-active-border: var(--border-1-critical);
   }
 
+  /* Unlike secondary Tabs, a Steps sequence carries its tone at rest: the
+     muted label and hint identify a single process without competing with its
+     selected marker. */
+  a-tabs[data-steps][tone]:not([tone=""], [tone="neutral"]) > a-tab {
+    --tab-fg-rest: var(--tab-rest-tone);
+  }
+
   a-tabs[data-steps] > a-tab {
     position: relative;
-    flex: 1 1 120px;
-    min-width: 120px;
-    max-width: 240px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
     min-height: 0;
     justify-content: flex-start;
     gap: var(--steps-item-gap);
@@ -91,7 +97,7 @@
 
   a-step-desc {
     display: inline-flex;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     flex-direction: column;
     min-width: 0;
     max-width: 100%;
@@ -112,7 +118,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--text-4);
+    color: var(--tab-rest-tone, var(--text-3));
     font-size: calc(1em - 2px);
     font-weight: 400;
     line-height: var(--steps-hint-leading);
@@ -164,17 +170,20 @@
     color: var(--tab-selected-text);
   }
 
-  a-tabs[data-steps] a-tab:not(:last-child)::before {
+  /* In a horizontal strip, the connector is a flexible final child. It starts
+     immediately after the description and reaches the next marker rather than
+     being a fixed segment stranded between two step boxes. */
+  a-tabs[data-steps]:not([orientation="vertical"])
+    > a-tab:not(:last-child)::before {
     content: "";
-    position: absolute;
-    inset-block-start: 50%;
-    inset-inline-end: calc(
-      -1 * (var(--steps-gap) + var(--steps-connector-size))
-    );
-    width: var(--steps-connector-size);
+    order: 3;
+    flex: 1 1 auto;
+    align-self: center;
+    min-width: 0;
     height: 1px;
+    margin-inline-start: calc(-1 * var(--steps-item-gap));
+    margin-inline-end: calc(-2 * var(--steps-tab-padding-x));
     background: var(--steps-connector-color);
-    transform: translateY(-50%);
     pointer-events: none;
   }
 
@@ -182,6 +191,10 @@
     --tab-fg: var(--text-5);
 
     opacity: 1;
+  }
+
+  a-tabs[data-steps] a-tab[disabled] a-step-hint {
+    color: var(--text-5);
   }
 
   a-steps[data-orientation="vertical"] {

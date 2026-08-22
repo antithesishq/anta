@@ -2,13 +2,20 @@
 layout: ../layouts/DocsLayout.astro
 title: Avatar
 ---
+import Playground from '../components/Playground'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
-import AvatarLab from '../components/AvatarLab.tsx'
+import avatarDemoCode from './avatar.demo.ts'
 import { Avatar } from '@antadesign/anta'
+
+export const initialsOnly = { headRadiusTop: { mode: 'off' }, headRadiusBottom: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }
+
+export const brandRange = { bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] }, harmony: true }
+
+export const palette = { bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headRadiusTop: { mode: 'off' }, headRadiusBottom: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }
 
 export const photo = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f97362'/%3E%3Cstop offset='1' stop-color='%236c5ce7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='128' height='128' fill='url(%23g)'/%3E%3Ccircle cx='64' cy='52' r='24' fill='%23ffffff' opacity='0.85'/%3E%3Crect x='28' y='84' width='72' height='48' rx='24' fill='%23ffffff' opacity='0.85'/%3E%3C/svg%3E"
 
@@ -26,7 +33,15 @@ config caps each dimension to your brand.
 
 <Disclosure title="Playground" anchor={false} brand>
 
-<AvatarLab client:visible />
+<Playground
+  client:visible
+  component="Avatar"
+  layout="side"
+  panelHeight={430}
+  initialCode={avatarDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; align-items: center; justify-content: center; }`}
+/>
 
 </Disclosure>
 
@@ -54,20 +69,21 @@ seed, while the head and body hues stay coordinated with the background.
 
 ## Initials
 
-Turn both shape dimensions off in the `generator` and the avatar falls back to
+Turn the shape dimensions off in the `generator` and the avatar falls back to
 initials — the first letter of each of the first three words of `name` — over the
 generated background. The background color still varies with the seed.
 
 <Preview gap="12px">
-  <Avatar name="Vlad Korobov" size={56} generator={{ headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
-  <Avatar name="Marie Skłodowska Curie" size={56} generator={{ headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
-  <Avatar name="Madonna" size={56} generator={{ headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
-  <Avatar name="Ada Lovelace" size={56} generator={{ headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
+  <Avatar name="Vlad Korobov" size={56} generator={initialsOnly} />
+  <Avatar name="Marie Skłodowska Curie" size={56} generator={initialsOnly} />
+  <Avatar name="Madonna" size={56} generator={initialsOnly} />
+  <Avatar name="Ada Lovelace" size={56} generator={initialsOnly} />
 </Preview>
 
 ```tsx folded
 const initials = {
-  headBorderRadius: { mode: 'off' },
+  headRadiusTop: { mode: 'off' },
+  headRadiusBottom: { mode: 'off' },
   bodyBorderRadius: { mode: 'off' },
 }
 
@@ -116,10 +132,10 @@ number for a pixel size.
 
 ## Brand constraints
 
-The `generator` config caps the space so every avatar sits on your brand. Each of
-the ten dimensions takes one of four modes: `off` (excluded, a fixed default),
-`any` (its full natural range), `range` (an explicit range), or `list` (a set of
-values the seed picks from).
+The `generator` config caps the space so every avatar sits on your brand. Each
+dimension takes one of four modes: `off` (excluded, a fixed default), `any` (its
+full natural range), `range` (an explicit range), or `list` (a set of values the
+seed picks from). Edit the config in the playground's **Code** tab to try them.
 
 <Columns>
 <Col>
@@ -130,10 +146,10 @@ hue to your brand's, keep chroma modest, and every generated color stays in band
 body hue to the background.
 
 <Preview gap="12px" background="var(--bg-4)">
-  <Avatar seed="a1" name="A" size={52} generator={{ bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] }, harmony: true }} />
-  <Avatar seed="b2" name="B" size={52} generator={{ bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] }, harmony: true }} />
-  <Avatar seed="c3" name="C" size={52} generator={{ bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] }, harmony: true }} />
-  <Avatar seed="d4" name="D" size={52} generator={{ bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] }, harmony: true }} />
+  <Avatar seed="a1" name="A" size={52} generator={brandRange} />
+  <Avatar seed="b2" name="B" size={52} generator={brandRange} />
+  <Avatar seed="c3" name="C" size={52} generator={brandRange} />
+  <Avatar seed="d4" name="D" size={52} generator={brandRange} />
 </Preview>
 
 ```tsx folded
@@ -153,16 +169,17 @@ random. Combine with `off` shapes for a classic initials avatar restricted to
 your palette.
 
 <Preview gap="12px" background="var(--bg-4)">
-  <Avatar name="Ann Lee" size={52} generator={{ bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
-  <Avatar name="Bo Qi" size={52} generator={{ bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
-  <Avatar name="Cy Vance" size={52} generator={{ bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
-  <Avatar name="Di Xu" size={52} generator={{ bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headBorderRadius: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }} />
+  <Avatar name="Ann Lee" size={52} generator={palette} />
+  <Avatar name="Bo Qi" size={52} generator={palette} />
+  <Avatar name="Cy Vance" size={52} generator={palette} />
+  <Avatar name="Di Xu" size={52} generator={palette} />
 </Preview>
 
 ```tsx folded
 const palette = {
   bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] },
-  headBorderRadius: { mode: 'off' },
+  headRadiusTop: { mode: 'off' },
+  headRadiusBottom: { mode: 'off' },
   bodyBorderRadius: { mode: 'off' },
 }
 
@@ -172,10 +189,24 @@ const palette = {
 </Col>
 </Columns>
 
-The ten dimensions are `bgColor`, `headColor`, `bodyColor`, `figureScale`,
-`figureTranslate`, `figureAngle`, `headAngle`, `bodyAngle`, `headBorderRadius`,
-and `bodyBorderRadius`. Explore every mode and range in the playground, then copy
-the config it exports.
+### The dimensions
+
+| Dimension | Range |
+| --- | --- |
+| `bgColor`, `headColor`, `bodyColor` | OKLCH `l` / `c` / `h` caps, or a palette via `list` |
+| `figureScale` | Relative size of the whole figure |
+| `figureTranslate` | X and Y shift from the centered position |
+| `figureAngle` | Rotation of the whole figure |
+| `headAngle`, `bodyAngle` | Rotation of each part within the figure |
+| `figureGap` | Space between head and body, `0` to `1` of head height |
+| `headRadiusTop`, `headRadiusBottom` | `0` square to `1` fully round, per half of the head |
+| `bodyBorderRadius` | `0` square to `1` fully round shoulders |
+
+Corner radius is normalized: `0` is a square corner and `1` is fully round, so a
+head with both radii at `1` is a circle. Splitting the head into a top and a
+bottom radius is what gives it an egg shape — a round top over a squarer bottom
+reads as a head, and the reverse reads as a jaw. Under `any` the head radii
+average near `1`, so heads read round unless you narrow them yourself.
 
 <Disclosure title="Component props" open>
 
@@ -191,7 +222,7 @@ generates from plain markup with no JavaScript of your own.
 
 <Preview gap="12px">
   <a-avatar seed="user-42" name="Vlad Korobov" style="--avatar-size: 56px"></a-avatar>
-  <a-avatar name="Vlad Korobov" style="--avatar-size: 56px" config='{"headBorderRadius":{"mode":"off"},"bodyBorderRadius":{"mode":"off"}}'></a-avatar>
+  <a-avatar name="Vlad Korobov" style="--avatar-size: 56px" config='{"headRadiusTop":{"mode":"off"},"headRadiusBottom":{"mode":"off"},"bodyBorderRadius":{"mode":"off"}}'></a-avatar>
 </Preview>
 
 ```html
@@ -199,7 +230,7 @@ generates from plain markup with no JavaScript of your own.
 
 <a-avatar
   name="Vlad Korobov"
-  config='{"headBorderRadius":{"mode":"off"},"bodyBorderRadius":{"mode":"off"}}'
+  config='{"headRadiusTop":{"mode":"off"},"headRadiusBottom":{"mode":"off"},"bodyBorderRadius":{"mode":"off"}}'
 ></a-avatar>
 ```
 

@@ -2,7 +2,9 @@ import type { BaseProps } from "../general_types"
 import type { AvatarGenConfig } from "../avatar-core"
 import { lengthStyle } from "../anta_helpers"
 
-export interface AvatarProps extends BaseProps {
+// `children` is omitted: the element has no slot, so anything passed would land
+// in its light DOM and never render (mirrors RadioGroup omitting it).
+export interface AvatarProps extends Omit<BaseProps, 'children'> {
   /** Alphanumeric seed that deterministically drives the generated userpic. The
    *  same seed always renders the same avatar. Falls back to `name` when omitted,
    *  so a stable user id or name is a good value. */

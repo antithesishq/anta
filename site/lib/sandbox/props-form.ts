@@ -52,6 +52,10 @@ const STRUCTURAL_CHILDREN = new Set([
  *  without collapsing the unions that give them type-safety, so it lives
  *  here as a display concern. */
 const PROP_ORDER: Record<string, string[]> = {
+  Avatar: [
+    'seed', 'name', 'src', 'size', 'status',
+    'generator', 'className', 'style',
+  ],
   Button: [
     'priority', 'tone', 'size', 'underline', 'paddingless',
     'label', 'icon', 'iconTrailing',

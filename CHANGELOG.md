@@ -9,8 +9,10 @@ changes are not listed.
 
 - `Avatar` — a userpic container that shows an image, a seed-generated placeholder
   figure, or initials. A `generator` config caps each dimension (colors, scale,
-  translate, angles, corner radii) to OFF / ANY / RANGE / LIST, with OKLCH color
-  ranges or an explicit palette, so generated avatars stay on-brand. The
+  translate, angles, the head-to-body gap, and corner radii) to OFF / ANY / RANGE /
+  LIST, with OKLCH color ranges or an explicit palette, so generated avatars stay
+  on-brand. Corner radius runs 0 (square) to 1 (fully round), split into
+  `headRadiusTop` and `headRadiusBottom` so the head can take an egg shape. The
   `avatar-core` generation helpers (`resolveAvatar`, `avatarToSvg`, `getInitials`,
   and the seed PRNG) ship as named exports.
 

@@ -185,22 +185,42 @@ export interface AvatarGenConfig {
   figureAngle?: ScalarDim
   headAngle?: ScalarDim
   bodyAngle?: ScalarDim
-  headBorderRadius?: ScalarDim
+  /** Space between head and body, as a fraction of head height (0 to 1). */
+  figureGap?: ScalarDim
+  /** Head top corner radius, 0 (square) to 1 (fully round). Pairing a round top
+   *  with a squarer bottom (or the reverse) gives an egg-shaped head. */
+  headRadiusTop?: ScalarDim
+  /** Head bottom corner radius, 0 (square) to 1 (fully round). */
+  headRadiusBottom?: ScalarDim
+  /** Shoulder corner radius, 0 (square) to 1 (fully round). */
   bodyBorderRadius?: ScalarDim
   /** Derive `headColor` and `bodyColor` hue from the background so the parts
    *  stay coordinated with the background. */
   harmony?: boolean
 }
 
-/** Natural range and neutral (OFF) default for each numeric dimension. */
+/**
+ * Natural range and neutral (OFF) default for each numeric dimension.
+ *
+ * `bias` skews the ANY distribution inside the range: an exponent below 1 pulls
+ * samples toward the top of it. The head radii use it because a head reads
+ * better round than square, so they average close to a circle while still
+ * reaching squarer shapes. RANGE stays uniform — an explicit range means
+ * exactly what it says.
+ */
 const NATURAL = {
   figureScale: { range: [0.82, 1.2] as const, off: 1 },
   figureAngle: { range: [-12, 12] as const, off: 0 },
   headAngle: { range: [-14, 14] as const, off: 0 },
   bodyAngle: { range: [-10, 10] as const, off: 0 },
-  headBorderRadius: { range: [0.16, 0.5] as const, off: 0.5 },
-  bodyBorderRadius: { range: [0.22, 0.5] as const, off: 0.5 },
+  figureGap: { range: [0, 0.3] as const, off: 0.15 },
+  headRadiusTop: { range: [0.45, 1] as const, off: 1, bias: 0.55 },
+  headRadiusBottom: { range: [0.45, 1] as const, off: 1, bias: 0.55 },
+  bodyBorderRadius: { range: [0.45, 1] as const, off: 1 },
 }
+
+/** One numeric dimension's distribution. */
+type ScalarMeta = { range: readonly [number, number]; off: number; bias?: number }
 const TRANSLATE_NATURAL: { x: [number, number]; y: [number, number]; off: [number, number] } = {
   x: [-12, 12],
   y: [-12, 12],
@@ -226,7 +246,9 @@ export const DEFAULT_CONFIG: Required<Omit<AvatarGenConfig, 'harmony'>> & { harm
   figureAngle: { mode: 'off' },
   headAngle: { mode: 'any' },
   bodyAngle: { mode: 'any' },
-  headBorderRadius: { mode: 'any' },
+  figureGap: { mode: 'any' },
+  headRadiusTop: { mode: 'any' },
+  headRadiusBottom: { mode: 'any' },
   bodyBorderRadius: { mode: 'any' },
   harmony: true,
 }
@@ -239,12 +261,12 @@ const lerp = (t: number, a: number, b: number) => a + (b - a) * t
 const pickOf = <T>(t: number, arr: T[]): T => arr[Math.min(arr.length - 1, Math.floor(t * arr.length))]
 
 /** Resolve a numeric dimension to a value for this draw. */
-function sampleScalar(rng: () => number, dim: ScalarDim | undefined, natural: readonly [number, number], off: number): number {
+function sampleScalar(rng: () => number, dim: ScalarDim | undefined, meta: ScalarMeta): number {
   const mode = dim?.mode ?? 'any'
-  if (mode === 'off') return off
+  if (mode === 'off') return meta.off
   if (mode === 'list' && dim?.values?.length) return pickOf(rng(), dim.values)
-  const [min, max] = mode === 'range' ? [dim?.min ?? natural[0], dim?.max ?? natural[1]] : natural
-  return lerp(rng(), min, max)
+  if (mode === 'range') return lerp(rng(), dim?.min ?? meta.range[0], dim?.max ?? meta.range[1])
+  return lerp(meta.bias ? rng() ** meta.bias : rng(), meta.range[0], meta.range[1])
 }
 
 function sampleVec2(rng: () => number, dim: Vec2Dim | undefined): [number, number] {
@@ -287,16 +309,19 @@ const CENTER = 50
 const HEAD_SIZE = 40
 const BODY_W = 74
 const BODY_H = 58
-const GAP = 6
 
 export interface ResolvedHead {
   color: string
-  /** Corner radius in user units (0 → sharp, HEAD_SIZE/2 → circle). */
-  radius: number
+  /** Top corner radius in user units. At `HEAD_SIZE / 2` the top is a
+   *  semicircle; equal to `radiusBottom` at that value the head is a circle. */
+  radiusTop: number
+  /** Bottom corner radius in user units. */
+  radiusBottom: number
   angle: number
 }
 export interface ResolvedBody {
   color: string
+  /** Corner radius in user units (half the short side is fully round). */
   radius: number
   angle: number
 }
@@ -311,17 +336,19 @@ export interface ResolvedAvatar {
   scale: number
   translate: [number, number]
   angle: number
+  /** Space between head and body in user units. */
+  gap: number
   head: ResolvedHead
   body: ResolvedBody
 }
 
-/** A figure is drawn when at least one shape dimension is enabled; with both
- *  head and body shapes OFF, nothing shape-like was chosen, so the avatar falls
- *  back to initials. */
+/** The shape dimensions — all OFF means nothing shape-like was chosen, so the
+ *  avatar falls back to initials. */
+const SHAPE_DIMS = ['headRadiusTop', 'headRadiusBottom', 'bodyBorderRadius'] as const
+
+/** A figure is drawn when at least one shape dimension is enabled. */
 export function hasFigure(config: AvatarGenConfig): boolean {
-  const head = config.headBorderRadius?.mode ?? DEFAULT_CONFIG.headBorderRadius.mode
-  const body = config.bodyBorderRadius?.mode ?? DEFAULT_CONFIG.bodyBorderRadius.mode
-  return head !== 'off' || body !== 'off'
+  return SHAPE_DIMS.some((k) => (config[k]?.mode ?? DEFAULT_CONFIG[k].mode) !== 'off')
 }
 
 /**
@@ -338,13 +365,20 @@ export function resolveAvatar(config: AvatarGenConfig, seed: string): ResolvedAv
   const head = sampleColor(rng, cfg.headColor, COLOR_NATURAL.headColor, cfg.harmony ? bgHue : undefined)
   const body = sampleColor(rng, cfg.bodyColor, COLOR_NATURAL.bodyColor, cfg.harmony ? bgHue : undefined)
 
-  const scale = sampleScalar(rng, cfg.figureScale, NATURAL.figureScale.range, NATURAL.figureScale.off)
+  const scale = sampleScalar(rng, cfg.figureScale, NATURAL.figureScale)
   const translate = sampleVec2(rng, cfg.figureTranslate)
-  const angle = sampleScalar(rng, cfg.figureAngle, NATURAL.figureAngle.range, NATURAL.figureAngle.off)
-  const headAngle = sampleScalar(rng, cfg.headAngle, NATURAL.headAngle.range, NATURAL.headAngle.off)
-  const bodyAngle = sampleScalar(rng, cfg.bodyAngle, NATURAL.bodyAngle.range, NATURAL.bodyAngle.off)
-  const headRadiusFrac = sampleScalar(rng, cfg.headBorderRadius, NATURAL.headBorderRadius.range, NATURAL.headBorderRadius.off)
-  const bodyRadiusFrac = sampleScalar(rng, cfg.bodyBorderRadius, NATURAL.bodyBorderRadius.range, NATURAL.bodyBorderRadius.off)
+  const angle = sampleScalar(rng, cfg.figureAngle, NATURAL.figureAngle)
+  const headAngle = sampleScalar(rng, cfg.headAngle, NATURAL.headAngle)
+  const bodyAngle = sampleScalar(rng, cfg.bodyAngle, NATURAL.bodyAngle)
+  const gapFrac = sampleScalar(rng, cfg.figureGap, NATURAL.figureGap)
+  const headTop = sampleScalar(rng, cfg.headRadiusTop, NATURAL.headRadiusTop)
+  const headBottom = sampleScalar(rng, cfg.headRadiusBottom, NATURAL.headRadiusBottom)
+  const bodyRadiusFrac = sampleScalar(rng, cfg.bodyBorderRadius, NATURAL.bodyBorderRadius)
+
+  // Radii are fractions of "fully round": half the head's side, and half the
+  // body's short side. So 1 is a circle (head) or a stadium (body), 0 is square.
+  const headUnit = HEAD_SIZE / 2
+  const bodyUnit = Math.min(BODY_W, BODY_H) / 2
 
   return {
     figure: hasFigure(config),
@@ -353,8 +387,9 @@ export function resolveAvatar(config: AvatarGenConfig, seed: string): ResolvedAv
     scale,
     translate,
     angle,
-    head: { color: head.color, radius: headRadiusFrac * (HEAD_SIZE / 2), angle: headAngle },
-    body: { color: body.color, radius: bodyRadiusFrac * (BODY_W / 2), angle: bodyAngle },
+    gap: gapFrac * HEAD_SIZE,
+    head: { color: head.color, radiusTop: headTop * headUnit, radiusBottom: headBottom * headUnit, angle: headAngle },
+    body: { color: body.color, radius: bodyRadiusFrac * bodyUnit, angle: bodyAngle },
   }
 }
 
@@ -405,19 +440,52 @@ export function avatarToSvg(resolved: ResolvedAvatar, opts: SvgOptions = {}): st
     `translate(50 50) scale(${round(resolved.scale, 3)}) translate(-50 -50)`
 
   const hs = HEAD_SIZE
-  const headRect =
+  const headPath = roundedRectPath(CENTER - hs / 2, CENTER - hs / 2, hs, hs, resolved.head.radiusTop, resolved.head.radiusBottom)
+  const headShape =
     `<g transform="rotate(${round(resolved.head.angle, 2)} 50 50)">` +
-    `<rect x="${CENTER - hs / 2}" y="${CENTER - hs / 2}" width="${hs}" height="${hs}" ` +
-    `rx="${round(resolved.head.radius, 2)}" ry="${round(resolved.head.radius, 2)}" fill="${esc(resolved.head.color)}"/></g>`
+    `<path d="${headPath}" fill="${esc(resolved.head.color)}"/></g>`
 
-  const bodyTop = CENTER + hs / 2 + GAP
-  const bodyR = Math.min(resolved.body.radius, BODY_W / 2, BODY_H / 2)
-  const bodyRect =
-    `<g transform="rotate(${round(resolved.body.angle, 2)} 50 ${bodyTop})">` +
-    `<rect x="${CENTER - BODY_W / 2}" y="${bodyTop}" width="${BODY_W}" height="${BODY_H}" ` +
-    `rx="${round(bodyR, 2)}" ry="${round(bodyR, 2)}" fill="${esc(resolved.body.color)}"/></g>`
+  const bodyTop = CENTER + hs / 2 + resolved.gap
+  const bodyPath = roundedRectPath(CENTER - BODY_W / 2, bodyTop, BODY_W, BODY_H, resolved.body.radius, resolved.body.radius)
+  const bodyShape =
+    `<g transform="rotate(${round(resolved.body.angle, 2)} 50 ${round(bodyTop, 2)})">` +
+    `<path d="${bodyPath}" fill="${esc(resolved.body.color)}"/></g>`
 
-  return svgWrap(`${title}${bgRect}<g transform="${group}">${bodyRect}${headRect}</g>`)
+  return svgWrap(`${title}${bgRect}<g transform="${group}">${bodyShape}${headShape}</g>`)
+}
+
+/**
+ * Rounded-rect path with independent top and bottom corner radii. Equal radii at
+ * half the side make a circle (square box) or a stadium (oblong box); differing
+ * ones make an egg. A radius of 0 degrades to a sharp corner.
+ */
+function roundedRectPath(x: number, y: number, w: number, h: number, rTop: number, rBottom: number): string {
+  let t = Math.max(0, Math.min(rTop, w / 2))
+  let b = Math.max(0, Math.min(rBottom, w / 2))
+  // Two radii share the box height — scale them together rather than clipping
+  // one, so a tall-radius pair stays symmetric instead of lopsided.
+  const sum = t + b
+  if (sum > h && sum > 0) {
+    const k = h / sum
+    t *= k
+    b *= k
+  }
+  const n = (v: number) => round(v, 2)
+  const arc = (r: number, ex: number, ey: number) => `A${n(r)} ${n(r)} 0 0 1 ${n(ex)} ${n(ey)}`
+  return [
+    `M${n(x + t)} ${n(y)}`,
+    `H${n(x + w - t)}`,
+    t ? arc(t, x + w, y + t) : '',
+    `V${n(y + h - b)}`,
+    b ? arc(b, x + w - b, y + h) : '',
+    `H${n(x + b)}`,
+    b ? arc(b, x, y + h - b) : '',
+    `V${n(y + t)}`,
+    t ? arc(t, x + t, y) : '',
+    'Z',
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 const svgWrap = (inner: string) =>

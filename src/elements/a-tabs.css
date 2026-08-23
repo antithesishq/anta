@@ -139,6 +139,15 @@
     --tab-rest-tone: var(--text-3-critical);
     --tabs-track-border: var(--border-4-critical); --tab-selected-border: var(--border-2-critical);
   }
+  /* An explicit neutral option must not inherit a selected sibling's tone from
+     the strip. This is especially important for composed controls like Steps. */
+  a-tab[tone="neutral"] {
+    --tabs-tone-source: var(--anta-seed-neutral);
+    --tab-selected-text: var(--text-1); --tab-text-2: var(--text-2);
+    --tab-rest-tone: var(--text-3);
+    --tabs-track-border: var(--border-4); --tab-selected-border: var(--border-2);
+    --_track-c: 0.008;
+  }
 
   a-tabs[tone]:not([tone=""], [tone="neutral"]),
   a-tab[tone]:not([tone=""], [tone="neutral"]) {

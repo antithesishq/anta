@@ -197,7 +197,7 @@ export const Steps = ({
       "data-step-state": option.state,
       // Steps propagates its tone to each generated tab. A local option tone
       // wins, while error and disabled states retain their fixed semantics.
-      tone: stepTone !== "neutral" ? stepTone : undefined,
+      tone: stepTone,
       tooltip: (
         <>
           {option.label}

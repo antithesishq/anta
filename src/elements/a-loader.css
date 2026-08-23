@@ -5,7 +5,6 @@
     color: var(--text-3);
   }
 
-  a-loader[tone="neutral"]  { color: var(--text-2); }
   a-loader[tone="brand"]    { color: var(--text-2-brand); }
   a-loader[tone="info"]     { color: var(--text-2-info); }
   a-loader[tone="success"]  { color: var(--text-2-success); }

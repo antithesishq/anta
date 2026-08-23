@@ -262,7 +262,7 @@ const index = options.findIndex((option) => option.value === phase)
 Horizontal steps scroll when needed. Vertical steps place the active panel before
 the next step.
 
-<Preview background="var(--bg-base)" minHeight={230}>
+<Preview background="var(--bg-base)" minHeight={230} justify="flex-start">
   <Vertical client:visible={{ rootMargin: '200px' }} />
 </Preview>
 

@@ -268,9 +268,10 @@ export const Tabs = ({
             {...optionAttrs}
             role="tab"
             value={p.value}
-            // Per-tab tone override: named/custom pass the attribute (CSS keys off it),
-            // and a custom literal color also sets --tabs-tone-source on the tab.
-            tone={p.tone && p.tone !== "neutral" ? p.tone : undefined}
+            // Per-tab tone override: named, neutral, and custom tones pass the
+            // attribute (CSS keys off it), and a custom literal color also sets
+            // --tabs-tone-source on the tab.
+            tone={p.tone || undefined}
             aria-disabled={tabDisabled ? "true" : undefined}
             // Every enabled tab is its own tab stop (not a roving single stop) — Tab /
             // Shift+Tab step through them; arrows move + select via the element. A

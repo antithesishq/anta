@@ -83,6 +83,11 @@
     --tab-selected-border: var(--border-1-critical);
   }
 
+  a-tabs[data-steps] > a-tab[tone="neutral"] {
+    --tab-selected-border: var(--border-1);
+    --steps-complete-connector-chroma: 0.008;
+  }
+
   a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
     --steps-complete-connector-chroma: 0.09;
     --steps-primary-marker-chroma: 0.17;
@@ -161,31 +166,31 @@
 
   /* In vertical Steps the bridge through a selected panel belongs to the
      outer element. Mirror that selected step's named tone onto the bridge. */
-  a-steps:has(> a-tabs[data-steps] > a-tab:state(selected)[tone]:not([tone=""], [tone="neutral"])) {
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone]:not([tone=""], [tone="neutral"])) {
     --steps-complete-connector-chroma: 0.09;
   }
 
-  a-steps:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="brand"]) {
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="brand"]) {
     --steps-complete-connector-source: var(--anta-seed-brand);
   }
 
-  a-steps:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="info"]) {
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="info"]) {
     --steps-complete-connector-source: var(--anta-seed-info);
   }
 
-  a-steps:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="success"]) {
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="success"]) {
     --steps-complete-connector-source: var(--anta-seed-success);
   }
 
-  a-steps:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="warning"]) {
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="warning"]) {
     --steps-complete-connector-source: var(--anta-seed-warning);
   }
 
-  a-steps:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="critical"]) {
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="critical"]) {
     --steps-complete-connector-source: var(--anta-seed-critical);
   }
 
-  .dark a-steps:has(> a-tabs[data-steps] > a-tab:state(selected)[tone]:not([tone=""], [tone="neutral"])) {
+  .dark a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone]:not([tone=""], [tone="neutral"])) {
     --steps-complete-connector-chroma: 0.12;
   }
 
@@ -284,10 +289,14 @@
 
   a-tabs[data-steps] > a-tab:is(
     :state(selected),
-    [data-step-state="completed"],
-    [data-step-state="error"]
+    [data-step-state="completed"]
   ) a-step-marker {
     border-color: var(--tab-selected-border);
+  }
+
+  a-tabs[data-steps] > a-tab[data-step-state="error"]:not(:state(selected)):not([disabled])
+    a-step-marker {
+    border-color: var(--border-2-critical);
   }
 
   /* Secondary and tertiary retain the current label color in their icon. */
@@ -329,11 +338,12 @@
   }
 
   a-tabs[data-steps]:is([priority="secondary"], [priority="tertiary"])
-    a-step-marker > a-loader {
+    a-step-marker > a-loader:not([tone="neutral"]) {
     color: inherit;
   }
 
-  a-tabs[data-steps] a-tab:state(selected):not([disabled]) a-step-marker > a-loader {
+  a-tabs[data-steps] a-tab:state(selected):not([disabled])
+    a-step-marker > a-loader:not([tone="neutral"]) {
     color: inherit;
   }
 
@@ -364,6 +374,13 @@
     --tab-fg: var(--text-5);
 
     opacity: 1;
+  }
+
+  /* Keep a supplied marker legible while matching the disabled label. Loaders
+     normally establish their own tone, so reset that color explicitly too. */
+  a-tabs[data-steps] a-tab[disabled] a-step-marker,
+  a-tabs[data-steps] a-tab[disabled] a-step-marker > a-loader {
+    color: var(--text-5);
   }
 
   a-tabs[data-steps] a-tab[disabled] a-step-hint {

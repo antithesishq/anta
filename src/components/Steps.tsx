@@ -124,6 +124,7 @@ export const Steps = ({
   renderMarker,
   size,
   orientation,
+  fill,
   disabled,
   children,
   className,
@@ -233,6 +234,7 @@ export const Steps = ({
         tone={tone}
         size={size}
         orientation={orientation}
+        fill={fill}
         priority="secondary"
         noslide
         disabled={disabled}

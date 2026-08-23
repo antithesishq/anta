@@ -208,6 +208,16 @@
     flex: 1 1 0;
     max-width: max-content;
   }
+  /* `fill` turns a horizontal strip into equal columns. It is useful for a
+     segmented control whose labels should share the available width. */
+  a-tabs[data-fill] {
+    width: 100%;
+    align-self: stretch;
+  }
+  a-tabs[data-fill]:not([orientation="vertical"]) a-tab {
+    flex: 1 1 0;
+    max-width: none;
+  }
   @media (hover: hover) and (pointer: fine) {
     /* Instant recolor (no `color` transition; see a-tab.css) to the selected-label strength
        (--text-1 neutral, the tone otherwise). Secondary / tertiary override this below. */

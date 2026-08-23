@@ -75,7 +75,7 @@ export function Statuses() {
   useElements()
   return (
     <div style={{ width: '100%' }}>
-      <Steps defaultValue="loading" label="Task status" options={statusExamples}>
+      <Steps fill defaultValue="loading" label="Task status" options={statusExamples}>
         <TabPanel value="completed" style={panel}>{panelText('This work is complete and ready to use.')}</TabPanel>
         <TabPanel value="loading" style={panel}>{panelText('This work is currently running.')}</TabPanel>
         <TabPanel value="error" style={panel}>{panelText('Resolve this error before continuing.')}</TabPanel>
@@ -251,6 +251,7 @@ export function FullWidthSteps() {
   return (
     <div style={{ width: '100%' }}>
       <Steps
+        fill
         defaultValue="review"
         label="Deployment progress"
         options={fullWidthPhases}

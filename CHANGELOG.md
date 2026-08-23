@@ -13,6 +13,8 @@ changes are not listed.
   and hints with clipped-content tooltips, and a sequence-wide tone.
 - `Loader` accepts a named `tone`; the loading Steps status forwards the
   sequence tone to it.
+- `Tabs` and `Steps` accept `fill`. Tabs share the available width equally;
+  Steps stretch their connectors between content-sized phases.
 
 ## 0.3.22 — August 20, 2026
 

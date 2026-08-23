@@ -326,6 +326,7 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 | `defaultValue?` | string | — | Initial active value for the uncontrolled case. After first render `Tabs`
  owns selection itself. |
 | `disabled?` | boolean | — | Disable the whole strip. |
+| `fill?` | boolean | false | Makes horizontal tabs share the available inline space equally. |
 | `label?` | string | — | Accessible name for the tablist (`aria-label`). |
 | `noslide?` | boolean | — | Disable the sliding indicator. By default the selected-tab indicator animates
  between tabs (a single rectangle, via CSS anchor positioning); `noslide` paints it
@@ -438,12 +439,21 @@ scrollable.
 ```
 
 **Equal-width tabs.** By default tabs are sized to their labels (and compress only
-when the strip overflows). For a segmented-control look where every tab is the same
-width, let them fill the strip from a zero basis:
+when the strip overflows). Pass `fill` for a segmented-control look where every tab
+shares the strip width:
 
-```css
-.equal-tabs a-tabs { width: 100%; }
-.equal-tabs a-tab  { flex: 1 1 0; max-width: none; }
+```tsx
+<Tabs
+  fill
+  defaultValue="all"
+  label="Filter"
+  options={[
+    { value: 'all', label: 'All' },
+    { value: 'assigned', label: 'Assigned to me' },
+    { value: 'recent', label: 'Recent' },
+    { value: 'archived', label: 'Archived' },
+  ]}
+/>
 ```
 
 **Wrap labels.** Let long labels wrap so the tabs grow taller instead of truncating:

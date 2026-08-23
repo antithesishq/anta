@@ -228,15 +228,17 @@ import '@antadesign/anta/components/Steps.css'
 ```html
 <div>
   <a-steps>
-    <a-tabs role="tablist" aria-label="Setup progress" priority="secondary" tone="brand" default-state="setup" data-steps noslide>
+    <a-tabs role="tablist" aria-label="Setup progress" priority="secondary" tone="brand" default-state="setup" data-steps data-fill noslide>
       <a-tab role="tab" value="build" tabindex="0">
         <a-step-marker aria-hidden="true"><a-icon shape="check"></a-icon></a-step-marker>
         <a-step-desc><a-tab-label>Build</a-tab-label><a-step-hint>Complete</a-step-hint></a-step-desc>
       </a-tab>
+      <a-step-connector aria-hidden="true"></a-step-connector>
       <a-tab role="tab" value="setup" tabindex="-1">
         <a-step-marker aria-hidden="true"><a-loader tone="brand"></a-loader></a-step-marker>
         <a-step-desc><a-tab-label>Setup</a-tab-label><a-step-hint>In progress</a-step-hint></a-step-desc>
       </a-tab>
+      <a-step-connector aria-hidden="true"></a-step-connector>
       <a-tab role="tab" value="review" tabindex="-1">
         <a-step-marker aria-hidden="true"><a-icon shape="circle-large"></a-icon></a-step-marker>
         <a-step-desc><a-tab-label>Review</a-tab-label><a-step-hint>Waiting</a-step-hint></a-step-desc>
@@ -256,7 +258,8 @@ Use `size`, `orientation`, and `tone` first. Each option also accepts `className
 background with a dotted border:
 
 ```css
-.dotted-steps a-tab:not(:last-child)::before {
+.dotted-steps a-tab:not(:last-child)::before,
+.dotted-steps a-step-connector {
   height: 0;
   background: none;
   border-block-start: 2px dotted var(--border-2-brand);
@@ -267,13 +270,13 @@ background with a dotted border:
 density: `--steps-marker-size`, `--steps-marker-border-width`, `--steps-item-gap`, and
 `--steps-gap`.
 
-**Fill the container.** Horizontal `Steps` fill their container by default. The
-steps share its width, and the connector fills the remaining space between them.
-With three steps, the middle step sits at the center and the last reaches the
-far edge.
+**Fill the container.** Pass `fill` to spread horizontal steps across their
+container. The connectors take the remaining space, placing the middle step in
+the middle and the last step at the far edge.
 
 ```tsx
 <Steps
+  fill
   defaultValue="review"
   label="Deployment progress"
   options={[

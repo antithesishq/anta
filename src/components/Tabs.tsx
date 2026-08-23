@@ -114,6 +114,9 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
    *  is opt-in via CSS); vertical stacks them.
    *  @defaultValue 'horizontal' */
   orientation?: "horizontal" | "vertical"
+  /** Makes horizontal tabs share the available inline space equally.
+   *  @defaultValue false */
+  fill?: boolean
   /** Disable the sliding indicator. By default the selected-tab indicator animates
    *  between tabs (a single rectangle, via CSS anchor positioning); `noslide` paints it
    *  per tab so it snaps with no movement. (Browsers without anchor positioning get that
@@ -176,6 +179,7 @@ export const Tabs = ({
   tone,
   size,
   orientation,
+  fill,
   noslide,
   round,
   disabled,
@@ -220,6 +224,10 @@ export const Tabs = ({
       : undefined
 
   const vertical = orientation === "vertical"
+  // A filled Steps rail needs connectors as strip children so they, rather
+  // than an empty last tab cell, receive the remaining flex space.
+  const stepStrip = "data-steps" in rest
+  const renderStepConnectors = fill && !vertical && stepStrip
 
   const strip = (
     <a-tabs
@@ -238,6 +246,7 @@ export const Tabs = ({
       tone={tone && tone !== "neutral" ? tone : undefined}
       size={size && size !== "medium" ? size : undefined}
       orientation={vertical ? "vertical" : undefined}
+      data-fill={fill ? "" : undefined}
       noslide={noslide ? "" : undefined}
       round={roundAttr(round)}
       disabled={disabled ? "" : undefined}
@@ -251,11 +260,11 @@ export const Tabs = ({
       style={roundStyle(round, "--tabs-round", toneStyle(tone, "--tabs-tone-source", style))}
       {...rest}
     >
-      {tabs.map((p) => {
+      {tabs.flatMap((p, index) => {
         const tabDisabled = disabled || p.disabled
         const isSelected = p.value === currentValue
         const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(p)
-        return (
+        const tab = (
           <a-tab
             key={p.value}
             {...optionAttrs}
@@ -287,6 +296,12 @@ export const Tabs = ({
             ) : null}
           </a-tab>
         )
+        return renderStepConnectors && index < tabs.length - 1
+          ? [
+              tab,
+              <a-step-connector key={`${p.value}-connector`} aria-hidden="true" />,
+            ]
+          : [tab]
       })}
     </a-tabs>
   )

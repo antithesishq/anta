@@ -639,20 +639,25 @@ scrollable.
 ```
 
 **Equal-width tabs.** By default tabs are sized to their labels (and compress only
-when the strip overflows). For a segmented-control look where every tab is the same
-width, let them fill the strip from a zero basis:
+when the strip overflows). Pass `fill` for a segmented-control look where every tab
+shares the strip width:
 
 <Preview background="var(--bg-base)">
   <EqualWidth client:visible={{ rootMargin: '200px' }} />
-  <style is:inline>{`
-    .equal-tabs a-tabs { width: 100%; }
-    .equal-tabs a-tab { flex: 1 1 0; max-width: none; }
-  `}</style>
 </Preview>
 
-```css folded
-.equal-tabs a-tabs { width: 100%; }
-.equal-tabs a-tab  { flex: 1 1 0; max-width: none; }
+```tsx folded
+<Tabs
+  fill
+  defaultValue="all"
+  label="Filter"
+  options={[
+    { value: 'all', label: 'All' },
+    { value: 'assigned', label: 'Assigned to me' },
+    { value: 'recent', label: 'Recent' },
+    { value: 'archived', label: 'Archived' },
+  ]}
+/>
 ```
 
 **Wrap labels.** Let long labels wrap so the tabs grow taller instead of truncating:

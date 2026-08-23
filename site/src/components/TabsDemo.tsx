@@ -209,8 +209,9 @@ export function ScrollTabs() {
 export function EqualWidth() {
   useElements()
   return (
-    <div className="equal-tabs" style={{ width: '100%' }}>
+    <div style={{ width: '100%' }}>
       <Tabs
+        fill
         defaultValue="all"
         label="Filter"
         options={[

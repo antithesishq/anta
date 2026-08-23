@@ -1,12 +1,12 @@
 ---
 // At-a-glance matrix for the /comparison page: one row per system, columns
 // for the facts that decide adoption (frameworks, styling, license). The
-// Anta row is highlighted. Full-bleed + horizontal scroll so the wide table
-// never forces the page body to scroll sideways.
+// Anta row is highlighted. Horizontal scrolling stays inside the matrix on
+// compact screens.
 import { SYSTEMS } from './comparison-data'
 ---
 
-<div class="full-bleed matrix-scroll">
+<div class="matrix-scroll">
   <table class="matrix">
     <thead>
       <tr>
@@ -65,7 +65,9 @@ import { SYSTEMS } from './comparison-data'
   .matrix {
     border-collapse: separate;
     border-spacing: 0;
-    width: 100%;
+    /* Keep the comparison readable without letting it consume all of the
+       available desktop track. The scroll container handles smaller viewports. */
+    width: 720px;
     min-width: 720px;
     font-size: 13px;
     line-height: 1.4;

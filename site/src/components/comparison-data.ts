@@ -94,7 +94,7 @@ export const SYSTEMS: System[] = [
       'Per-element imports register only the component you use. Lottie lives in the separate stickers package.',
     ],
     cons: [
-      'Young and small: about 20 components, with no avatar yet.',
+      'Young and small: about 20 components.',
       'Table and plotting libraries are planned companion packages.',
       'A 0.x release from one organization has a shorter track record than established systems.',
     ],
@@ -474,7 +474,7 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   anta: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes', slider: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes',
-    accordion: 'yes', table: 'partial', tag: 'yes', card: 'yes', progress: 'yes', steps: 'yes',
+    accordion: 'yes', table: 'partial', tag: 'yes', avatar: 'yes', card: 'yes', progress: 'yes', steps: 'yes',
     icons: 'yes', typography: 'yes',
   },
   webawesome: {

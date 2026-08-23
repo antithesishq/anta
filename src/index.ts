@@ -141,7 +141,7 @@ export type {
   StepMarker,
   StepMarkerState,
   StepOption,
-  StepStatus,
+  StepState,
   StepTone,
 } from './components/Steps'
 export { TabPanel } from './components/TabPanel'

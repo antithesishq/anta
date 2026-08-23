@@ -19,7 +19,7 @@ export type StepTone =
   | "critical"
 
 /** Process state shown by one step. */
-export type StepStatus = "incomplete" | "loading" | "completed" | "error"
+export type StepState = "incomplete" | "loading" | "completed" | "error"
 
 /** A static step marker: a number or any registered Anta icon shape. */
 export type StepMarker = number | IconShape
@@ -27,7 +27,7 @@ export type StepMarker = number | IconShape
 /** Snapshot passed to `renderMarker` for a step. */
 export interface StepMarkerState {
   /** This step's application-owned process state. */
-  status: StepStatus
+  state: StepState
   /** Whether this step is the selected tab. */
   selected: boolean
   /** Whether this step cannot be selected. */
@@ -46,8 +46,8 @@ export interface StepOption extends OptionPresentationProps {
   hint?: React.ReactNode
   /** Application-owned process state. Selection and availability are separate;
    * `error` keeps a critical icon and outline, and selection adds the fill. */
-  status: StepStatus
-  /** Replaces the marker derived from `status`. A number is shown directly; an
+  state: StepState
+  /** Replaces the marker derived from `state`. A number is shown directly; an
    * Anta icon shape is rendered as an `<Icon>`. */
   marker?: StepMarker
   /** Disables this phase. A custom `marker` or `renderMarker` result is kept;
@@ -67,7 +67,7 @@ export interface StepsProps extends Omit<
    * @defaultValue brand */
   tone?: StepTone
   /** Builds a custom marker from a step and its current state. A returned node
-   * replaces `marker` and the built-in status marker; return `undefined` to use
+   * replaces `marker` and the built-in state marker; return `undefined` to use
    * those fallbacks, or `null` for an empty ring. */
   renderMarker?: (
     option: StepOption,
@@ -78,7 +78,7 @@ export interface StepsProps extends Omit<
 type StateDetail = { next: string | null; prev: string | null }
 type StateChangeEvent = CustomEvent<StateDetail>
 
-const STATUS_ICON: Record<Exclude<StepStatus, "loading">, IconShape> = {
+const STATE_ICON: Record<Exclude<StepState, "loading">, IconShape> = {
   incomplete: "circle-large",
   completed: "check",
   error: "x",
@@ -87,8 +87,8 @@ const STATUS_ICON: Record<Exclude<StepStatus, "loading">, IconShape> = {
 /**
  * A process stepper that switches tab-like content.
  *
- * The application owns phase statuses and transitions. `Steps` owns the tab
- * interaction pattern, status presentation, and optional panels. Compose
+ * The application owns phase states and transitions. `Steps` owns the tab
+ * interaction pattern, state presentation, and optional panels. Compose
  * application-owned navigation controls beside it when the flow needs actions
  * such as Back or Continue.
  *
@@ -103,9 +103,9 @@ const STATUS_ICON: Record<Exclude<StepStatus, "loading">, IconShape> = {
  *   defaultValue="setup"
  *   label="Setup progress"
  *   options={[
- *     { value: "build", label: "Build", status: "completed" },
- *     { value: "setup", label: "Setup", status: "loading" },
- *     { value: "next", label: "Next steps", status: "incomplete", disabled: true },
+ *     { value: "build", label: "Build", state: "completed" },
+ *     { value: "setup", label: "Setup", state: "loading" },
+ *     { value: "next", label: "Next steps", state: "incomplete", disabled: true },
  *   ]}
  * />
  * ```
@@ -151,15 +151,15 @@ export const Steps = ({
       optionPresentationAttrs(option)
 
     const customMarker = renderMarker?.(option, {
-      status: option.status,
+      state: option.state,
       selected: option.value === currentValue,
       disabled: !!option.disabled,
     })
     const builtInMarker = option.disabled
-      ? <Icon shape={STATUS_ICON.incomplete} />
-      : option.status === "loading"
+      ? <Icon shape={STATE_ICON.incomplete} />
+      : option.state === "loading"
         ? <Loader tone={tone} />
-        : <Icon shape={STATUS_ICON[option.status]} />
+        : <Icon shape={STATE_ICON[option.state]} />
     const marker =
       customMarker !== undefined
         ? customMarker
@@ -173,7 +173,7 @@ export const Steps = ({
       ...optionAttrs,
       value: option.value,
       disabled: option.disabled,
-      tone: !option.disabled && option.status === "error" ? "critical" : undefined,
+      tone: !option.disabled && option.state === "error" ? "critical" : undefined,
       className: optionClassName,
       style: optionStyle,
       children: (

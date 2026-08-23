@@ -2,16 +2,16 @@
 export default `import { Steps, TabPanel, Text } from '@antadesign/anta'
 
 const options = [
-  { value: 'completed', label: 'Completed', status: 'completed' },
-  { value: 'loading', label: 'Loading', status: 'loading' },
-  { value: 'error', label: 'Error', status: 'error' },
-  { value: 'incomplete', label: 'Incomplete', status: 'incomplete' },
-  { value: 'disabled', label: 'Disabled', hint: 'Unavailable', status: 'incomplete', disabled: true },
+  { value: 'completed', label: 'Completed', state: 'completed' },
+  { value: 'loading', label: 'Loading', state: 'loading' },
+  { value: 'error', label: 'Error', state: 'error' },
+  { value: 'incomplete', label: 'Incomplete', state: 'incomplete' },
+  { value: 'disabled', label: 'Disabled', hint: 'Unavailable', state: 'incomplete', disabled: true },
 ]
 
 <Steps
   defaultValue="loading"
-  label="Task status"
+  label="Task state"
   options={options}
 >
   <TabPanel value="completed"><Text size="small">This work is complete and ready to use.</Text></TabPanel>

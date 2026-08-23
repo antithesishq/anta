@@ -9,22 +9,22 @@ function useElements() {
 }
 
 const phases: StepOption[] = [
-  { value: 'build', label: 'Build', status: 'completed' },
-  { value: 'setup', label: 'Setup', status: 'loading' },
-  { value: 'next', label: 'Next steps', status: 'incomplete', disabled: true },
+  { value: 'build', label: 'Build', state: 'completed' },
+  { value: 'setup', label: 'Setup', state: 'loading' },
+  { value: 'next', label: 'Next steps', state: 'incomplete', disabled: true },
 ]
 
 const fullWidthPhases: StepOption[] = [
-  { value: 'build', label: 'Build', status: 'completed' },
-  { value: 'review', label: 'Review', status: 'loading' },
-  { value: 'deploy', label: 'Deploy', status: 'incomplete' },
+  { value: 'build', label: 'Build', state: 'completed' },
+  { value: 'review', label: 'Review', state: 'loading' },
+  { value: 'deploy', label: 'Deploy', state: 'incomplete' },
 ]
 
-const statusExamples: StepOption[] = [
-  { value: 'completed', label: 'Completed', status: 'completed' },
-  { value: 'loading', label: 'Loading', status: 'loading' },
-  { value: 'error', label: 'Error', status: 'error' },
-  { value: 'incomplete', label: 'Incomplete', status: 'incomplete' },
+const stateExamples: StepOption[] = [
+  { value: 'completed', label: 'Completed', state: 'completed' },
+  { value: 'loading', label: 'Loading', state: 'loading' },
+  { value: 'error', label: 'Error', state: 'error' },
+  { value: 'incomplete', label: 'Incomplete', state: 'incomplete' },
 ]
 
 const toneExamples: Array<{ tone: StepTone; label: string }> = [
@@ -41,20 +41,20 @@ const customExamples: StepOption[] = [
     value: 'draft',
     label: 'Draft',
     hint: 'Content saved',
-    status: 'completed',
+    state: 'completed',
     marker: 1,
   },
   {
     value: 'approval',
     label: 'Approval',
     hint: 'Waiting for review',
-    status: 'loading',
+    state: 'loading',
   },
   {
     value: 'publish',
     label: 'Publish',
     hint: 'Not started',
-    status: 'incomplete',
+    state: 'incomplete',
     marker: 'send',
   },
 ]
@@ -71,11 +71,11 @@ const panelText = (children: React.ReactNode) => (
   <Text size="small">{children}</Text>
 )
 
-export function Statuses() {
+export function State() {
   useElements()
   return (
     <div style={{ width: '100%' }}>
-      <Steps fill defaultValue="loading" label="Task status" options={statusExamples}>
+      <Steps fill defaultValue="loading" label="Task state" options={stateExamples}>
         <TabPanel value="completed" style={panel}>{panelText('This work is complete and ready to use.')}</TabPanel>
         <TabPanel value="loading" style={panel}>{panelText('This work is currently running.')}</TabPanel>
         <TabPanel value="error" style={panel}>{panelText('Resolve this error before continuing.')}</TabPanel>
@@ -96,9 +96,9 @@ export function Tones() {
           defaultValue="current"
           label={`${label} steps`}
           options={[
-            { value: 'done', label: 'Done', hint: 'Complete', status: 'completed' },
-            { value: 'current', label: `${label} validation in progress`, hint: 'Checking security and dependency scans', status: 'loading' },
-            { value: 'next', label: 'Next', hint: 'Waiting', status: 'incomplete' },
+            { value: 'done', label: 'Done', hint: 'Complete', state: 'completed' },
+            { value: 'current', label: `${label} validation in progress`, hint: 'Checking security and dependency scans', state: 'loading' },
+            { value: 'next', label: 'Next', hint: 'Waiting', state: 'incomplete' },
           ]}
         />
       ))}
@@ -115,7 +115,7 @@ export function Customization() {
         label="Custom step markers"
         options={customExamples}
         renderMarker={(option, { selected }) =>
-          option.status === 'loading' ? (
+          option.state === 'loading' ? (
             <Icon shape={selected ? 'refresh-ccw-dot' : 'hourglass'} />
           ) : undefined
         }
@@ -129,9 +129,9 @@ export function ControlledSequence() {
   const [value, setValue] = useState('setup')
   const [setupComplete, setSetupComplete] = useState(false)
   const options: StepOption[] = [
-    { value: 'build', label: 'Build', status: 'completed' },
-    { value: 'setup', label: 'Setup', status: setupComplete ? 'completed' : 'loading' },
-    { value: 'next', label: 'Next steps', status: 'incomplete', disabled: !setupComplete },
+    { value: 'build', label: 'Build', state: 'completed' },
+    { value: 'setup', label: 'Setup', state: setupComplete ? 'completed' : 'loading' },
+    { value: 'next', label: 'Next steps', state: 'incomplete', disabled: !setupComplete },
   ]
 
   return (
@@ -181,9 +181,9 @@ export function Vertical() {
         defaultValue="setup"
         label="Deployment progress"
         options={[
-          { value: 'build', label: 'Build', status: 'completed' },
-          { value: 'setup', label: 'Setup', status: 'loading' },
-          { value: 'next', label: 'Next steps', status: 'incomplete' },
+          { value: 'build', label: 'Build', state: 'completed' },
+          { value: 'setup', label: 'Setup', state: 'loading' },
+          { value: 'next', label: 'Next steps', state: 'incomplete' },
         ]}
       >
         <TabPanel value="build">{panelText('Build output and artifacts are ready.')}</TabPanel>
@@ -197,9 +197,9 @@ export function Vertical() {
 export function ComposedNavigation() {
   useElements()
   const options: StepOption[] = [
-    { value: 'build', label: 'Build', status: 'completed' },
-    { value: 'setup', label: 'Setup', status: 'loading' },
-    { value: 'next', label: 'Next steps', status: 'incomplete' },
+    { value: 'build', label: 'Build', state: 'completed' },
+    { value: 'setup', label: 'Setup', state: 'loading' },
+    { value: 'next', label: 'Next steps', state: 'incomplete' },
   ]
   const [value, setValue] = useState('setup')
   const index = options.findIndex((option) => option.value === value)

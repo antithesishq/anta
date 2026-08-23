@@ -245,7 +245,7 @@
     a-tab:state(selected):not([disabled]) a-step-marker {
     color: var(--tab-selected-text);
     background-color: var(--tab-secondary-bg);
-    border-color: var(--tab-fg);
+    border-color: var(--tab-selected-border);
   }
 
   a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])

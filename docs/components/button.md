@@ -5,7 +5,7 @@ component (or `<a role="button">` when `href` is set). Tone, priority,
 size, and state are all plain attributes, so the styling is identical
 whether you use the wrapper or author the element by hand.
 
-## Priorities
+## Priority
 
 A button's priority helps control how much attention it draws:
 
@@ -21,7 +21,7 @@ A button's priority helps control how much attention it draws:
 - `tertiary` — Background-less at rest, fills on hover.
 - `quaternary` — Text only, no background.
 
-## Tones
+## Tone
 
 Six named tones — `neutral` (default), `brand`, `critical`, `info`,
 `success`, `warning`. Omitting `tone` — or passing an empty string —
@@ -66,7 +66,7 @@ too, so there's no state change; to keep distinct states, set the per-state
 variables instead — `--button-bg-{priority}-hover`,
 `--button-bg-{priority}-active`, and the `--button-fg-*` equivalents.
 
-## Sizes
+## Size
 
 ```tsx
 <Button tone="brand" size="small"  label="Small" />

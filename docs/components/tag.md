@@ -20,7 +20,7 @@ and tracks dark mode.
 <Tag allcaps priority="tertiary" tone="brand" label="Tertiary" />
 ```
 
-## Tones
+## Tone
 
 Omit `tone` for the neutral gray tag, or pick a semantic tone. Color
 comes from the theme tokens, so every tone tracks light and dark mode

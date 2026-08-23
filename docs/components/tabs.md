@@ -20,7 +20,7 @@ selectable strip that emits the chosen value; add matching `<TabPanel>` children
 - **`secondary`**: a filled tab, no track.
 - **`tertiary`**: an underline.
 
-## Tones
+## Tone
 
 Six named tones: `neutral` (default), `brand`, `info`, `success`, `warning`,
 `critical`. Any CSS color works for a one-off custom tone. The tone runs through the

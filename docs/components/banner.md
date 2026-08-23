@@ -11,7 +11,7 @@ twice the resting height of `Progress`. It's **borderless by default**; add a ru
 under it or an outline around it with `border-bottom-width` / `border-width`, the
 same opt-in as `Progress` ([Styling](#styling)).
 
-## Tones
+## Tone
 
 Pick a semantic `tone` to tint the surface and text together — and the ✕ adopts the
 same tone (it also sets the border color, used if you opt into a border). The set

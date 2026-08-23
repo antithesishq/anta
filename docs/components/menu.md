@@ -39,7 +39,7 @@ const onSelect = (e, { value }) => act(value)
 </Menu>
 ```
 
-## Tones
+## Tone
 
 `tone` colors an item's label, icon, and hover/selected tint (and its
 `selectionIndicator`) with a semantic palette — `brand`, `info`, `success`,

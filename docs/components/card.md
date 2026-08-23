@@ -62,7 +62,7 @@ when toned (stepping to `border-3` on hover).
 <Card priority="tertiary" header="Tertiary">…</Card>
 ```
 
-## Tones
+## Tone
 
 A semantic `tone` tints the surface, border, and text. The set matches the rest of
 Anta: `neutral` (the default) plus `brand`, `info`, `success`, `warning`, and

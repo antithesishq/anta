@@ -299,7 +299,7 @@ export const Tabs = ({
         return renderStepConnectors && index < tabs.length - 1
           ? [
               tab,
-              <a-step-connector key={`${p.value}-connector`} aria-hidden="true" />,
+              <a-step-connector key={`${p.value}-connector`} />,
             ]
           : [tab]
       })}

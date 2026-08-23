@@ -233,12 +233,12 @@ import '@antadesign/anta/components/Steps.css'
         <a-step-marker aria-hidden="true"><a-icon shape="check"></a-icon></a-step-marker>
         <a-step-desc><a-tab-label>Build</a-tab-label><a-step-hint>Complete</a-step-hint></a-step-desc>
       </a-tab>
-      <a-step-connector aria-hidden="true"></a-step-connector>
+      <a-step-connector></a-step-connector>
       <a-tab role="tab" value="setup" tabindex="-1">
         <a-step-marker aria-hidden="true"><a-loader tone="brand"></a-loader></a-step-marker>
         <a-step-desc><a-tab-label>Setup</a-tab-label><a-step-hint>In progress</a-step-hint></a-step-desc>
       </a-tab>
-      <a-step-connector aria-hidden="true"></a-step-connector>
+      <a-step-connector></a-step-connector>
       <a-tab role="tab" value="review" tabindex="-1">
         <a-step-marker aria-hidden="true"><a-icon shape="circle-large"></a-icon></a-step-marker>
         <a-step-desc><a-tab-label>Review</a-tab-label><a-step-hint>Waiting</a-step-hint></a-step-desc>

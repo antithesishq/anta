@@ -3,7 +3,7 @@
  * source code.
  *
  * The authoring model: a single TSX source can mark any JSX component or
- * declared JSON-like object with a `/** @playground Title *​/` comment.
+ * declared JSON-like object with a `/** @play props Title *​/` comment.
  * Legacy `# Title` JSDoc headings still mark JSX examples. Each pairing is an
  * accordion entry in the Props panel.
  *
@@ -46,7 +46,7 @@ export interface Example {
 
 /**
  * Walk the source and return every annotated target in order of appearance.
- * `@playground` marks JSX or a declared object literal. A `# heading` keeps the
+ * `@play props` marks JSX or a declared object literal. A `# heading` keeps the
  * older JSX-only annotation working for existing demos.
  */
 export function parseExamples(source: string): Example[] {
@@ -161,14 +161,24 @@ type Marker = {
   description: string
 }
 
-/** Read the explicit `@playground` annotation before falling back to the
+/** Read the explicit `@play props` annotation before falling back to the
  * established heading-style marker used by existing component examples. */
 function extractMarker(body: string): Marker | null {
   const lines = body.split('\n').map((l) => l.replace(/^\s*\*?\s?/, ''))
-  const annotationIndex = lines.findIndex((line) => /^@playground(?:\s+|$)/.test(line))
+  const annotationIndex = lines.findIndex((line) => /^@play\s+props(?:\s+|$)/.test(line))
   if (annotationIndex !== -1) {
-    const label = lines[annotationIndex].replace(/^@playground\s*/, '').trim()
+    const label = lines[annotationIndex].replace(/^@play\s+props\s*/, '').trim()
     const rest = lines.slice(annotationIndex + 1)
+    while (rest.length && rest[0].trim() === '') rest.shift()
+    while (rest.length && rest[rest.length - 1].trim() === '') rest.pop()
+    return { annotation: 'playground', label, description: rest.join('\n').trim() }
+  }
+  // The first implementation used `@playground`. Keep it working for demos
+  // written before the shorter, scoped annotation was introduced.
+  const legacyPlaygroundIndex = lines.findIndex((line) => /^@playground(?:\s+|$)/.test(line))
+  if (legacyPlaygroundIndex !== -1) {
+    const label = lines[legacyPlaygroundIndex].replace(/^@playground\s*/, '').trim()
+    const rest = lines.slice(legacyPlaygroundIndex + 1)
     while (rest.length && rest[0].trim() === '') rest.shift()
     while (rest.length && rest[rest.length - 1].trim() === '') rest.pop()
     return { annotation: 'playground', label, description: rest.join('\n').trim() }

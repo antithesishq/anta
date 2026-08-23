@@ -53,7 +53,7 @@ Supporting code:
 
 ### Props annotations
 
-Use `/** @playground Title */` immediately before a demo's JSX component or a
+Use `/** @play props Title */` immediately before a demo's JSX component or a
 `const` / `let` / `var` object-literal declaration to add a Props-panel section.
 Component sections use the typed API schema; object sections expose the current
 literal leaves, including nested paths and array expressions. Keep non-literal

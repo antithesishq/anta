@@ -1,7 +1,7 @@
 export default `import { Avatar } from '@antadesign/anta'
 
 /**
- * @playground Generator
+ * @play props Generator
  * The avatar's JSON-like generation settings. Nested values become editable
  * fields in the Props panel.
  */
@@ -23,7 +23,7 @@ const generator = {
   harmony: true,
 }
 
-/** @playground Avatar */
+/** @play props Avatar */
 <Avatar
   seed="user-42"
   name="Vlad Korobov"

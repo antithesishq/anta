@@ -80,7 +80,7 @@ for a shared custom radius. |
 | `step?` | number | 1 | Smallest keyboard and drag increment. |
 | `thumbFill?` | boolean | false | Fill the thumb with its resolved border color. This follows `thumbTone`
 and interactive states. |
-| `thumbSize?` | number \| string | 18 | Diameter of the thumb. Numbers use pixels; strings are CSS lengths. Keep
+| `thumbSize?` | number \| string | 16 | Diameter of the thumb. Numbers use pixels; strings are CSS lengths. Keep
 it at least as large as `trackSize`. |
 | `thumbTone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the thumb stroke. Pass a named tone or a literal CSS color for a
 one-off custom tone. Omit it to keep the thumb neutral. |

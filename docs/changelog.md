@@ -5,6 +5,8 @@ changes are not listed.
 
 ## Unreleased
 
+## 0.3.23 — August 23, 2026
+
 ### Removed
 
 - Removed the `education-disk`, `help-disk`, and all `*-logo` icon shapes.

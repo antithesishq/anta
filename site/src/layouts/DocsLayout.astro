@@ -1,16 +1,7 @@
 ---
-import '@antadesign/anta/tokens.css'
-import '@antadesign/anta/reset.css'
-// Link every element's HOST / light-DOM CSS (border, background, gutter, tones,
-// summary/details typography) as a render-blocking <head> stylesheet. Without
-// it, that CSS only lands when the client-side `@antadesign/anta/elements`
-// module runs (each `a-*.ts` does `import './a-*.css'`) — i.e. AFTER first
-// paint — so an `<a-expander>` flashes as an unstyled box until the
-// registration round-trip completes. We import only the stylesheets (never the
-// JS barrel, which calls `customElements.define` and would crash SSR where
-// `HTMLElement` is undefined), so the host chrome paints immediately; only the
-// shadow-DOM internals still wait for upgrade. See element-host-styles.css.
-import './element-host-styles.css'
+// The full Anta stylesheet is render-blocking so token, host, and composed
+// wrapper styles paint before the client-side runtime registers elements.
+import '@antadesign/anta/bundle.css'
 import '../styles/base.css'
 // Docs-site-only extra icon shapes (generated via Anta's generate-icons
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
@@ -488,7 +479,7 @@ if (isComponentPage && title) {
     </script>
 
     <script>
-      import '@antadesign/anta/elements'
+      import '@antadesign/anta/bundle'
       import '@antadesign/stickers/elements'
       import '../components/a-toc.ts'
 

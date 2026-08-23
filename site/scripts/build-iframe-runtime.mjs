@@ -19,10 +19,8 @@ import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
 
 const root = new URL('../..', import.meta.url)
-const tokensCss = fileURLToPath(new URL('src/tokens.css', root))
-const resetCss = fileURLToPath(new URL('src/reset.css', root))
-const distElements = fileURLToPath(new URL('dist/elements/index.js', root))
-const distIndex = fileURLToPath(new URL('dist/index.js', root))
+const distBundle = fileURLToPath(new URL('dist/bundle.js', root))
+const distBundleCss = fileURLToPath(new URL('dist/bundle.css', root))
 const iframeDir = fileURLToPath(new URL('site/public/iframe', root))
 const manifestFile = fileURLToPath(new URL('site/src/generated/iframe-assets.ts', root))
 // Bare specifiers (`preact`) resolve from the site's node_modules.
@@ -36,13 +34,11 @@ const preactJsxRuntime = require.resolve('preact/jsx-runtime')
 
 await mkdir(iframeDir, { recursive: true })
 
-// Entry: pull in tokens + reset + element registration + the Anta barrel + Preact,
-// then publish everything the demo shim needs onto `window.__demo_modules__`.
+// Entry: pull in the same full Anta bundle and stylesheet as the docs shell, then
+// publish everything the demo shim needs onto `window.__demo_modules__`.
 const entry = `
-import ${JSON.stringify(tokensCss)};
-import ${JSON.stringify(resetCss)};
-import ${JSON.stringify(distElements)};
-import * as anta from ${JSON.stringify(distIndex)};
+import ${JSON.stringify(distBundleCss)};
+import * as anta from ${JSON.stringify(distBundle)};
 import * as preact from 'preact';
 import * as preactHooks from 'preact/hooks';
 if (typeof window !== 'undefined') {

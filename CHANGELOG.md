@@ -11,6 +11,8 @@ changes are not listed.
 
 ### Added
 
+- `@antadesign/anta/bundle` and `bundle.css` provide one minified full-runtime
+  entry and one matching stylesheet for applications that prefer full imports.
 - `Steps` provides controlled and uncontrolled process navigation with optional
   panels, horizontal and vertical layouts, accessible tab semantics, process
   states, number and icon-shape markers, state-aware `renderMarker`, labels

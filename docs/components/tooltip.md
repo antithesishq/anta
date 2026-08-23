@@ -138,8 +138,8 @@ shows.
  (px) or a CSS length string for a custom radius. |
 | `truncatedOnly?` | boolean | — | Only show when the target is actually truncated (its text overflows and is
  ellipsized); a label that fits gets no tooltip. The check is a UI-thread
- layout read, re-measured on each show. By default it measures the first
- Anta ellipsizing label part inside the anchor, then the anchor itself —
+ layout read, re-measured on each show. By default it measures every Anta
+ ellipsizing label part inside the anchor, then the anchor itself —
  override with `truncatedSelector`. |
 | `truncatedSelector?` | string | — | CSS selector (resolved within the anchor) for the element or elements
  whose overflow decides whether a `truncatedOnly` tooltip shows. |

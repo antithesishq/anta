@@ -49,8 +49,8 @@ const PROX_FADE_MS = 60
 const ENTER_TOUCH_DELAY = 500
 /**
  * Default elements measured for `truncated-only` — Anta's ellipsizing label parts.
- * A `truncated-selector` overrides this; otherwise we use the first matching
- * part, then fall back to the anchor itself. Append future ellipsizing parts here.
+ * A `truncated-selector` overrides this; otherwise we use every matching part,
+ * then fall back to the anchor itself. Append future ellipsizing parts here.
  */
 const TRUNCATING_PARTS = 'a-tab-label, a-button-label, a-step-hint'
 /** Internal marker emitted by JSX `<Text truncate>`. Its tooltip reads the
@@ -491,7 +491,7 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   /** The elements whose overflow decides whether the tooltip shows: every
-   *  `truncated-selector` match within the anchor wins; else the first of
+   *  `truncated-selector` match within the anchor wins; else every one of
    *  Anta's ellipsizing label parts inside the anchor; else the anchor itself
    *  (which may be the clipping box for a hand-authored target). */
   private resolveTruncationTargets(): HTMLElement[] {
@@ -506,8 +506,10 @@ export class ATooltipElement extends HTMLElementBase {
         /* invalid selector → fall through to the defaults */
       }
     }
-    const part = anchor.querySelector(TRUNCATING_PARTS) as HTMLElement | null
-    return [part ?? anchor]
+    const parts = Array.from(
+      anchor.querySelectorAll(TRUNCATING_PARTS),
+    ) as HTMLElement[]
+    return parts.length ? parts : [anchor]
   }
 
   /** True when any resolved target overflows its box (horizontal ellipsis or

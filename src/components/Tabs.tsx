@@ -51,9 +51,10 @@ export interface TabOption extends OptionPresentationProps {
   /** Disable just this tab — skipped by keyboard nav and dropped from the tab order
    *  (a disabled-but-selected tab stays reachable, per the ARIA pattern). */
   disabled?: boolean
-  /** Tooltip for this tab — a string or any node — shown **only when the tab's label
-   *  is truncated** (tabs ellipsize when the strip overflows), so a clipped tab reveals
-   *  its full text on hover while a tab that fits shows nothing. Rendered as a
+  /** Tooltip for this tab — a string or any node — shown **only when one of the
+   *  tab's ellipsizing label parts is truncated** (tabs ellipsize when the strip
+   *  overflows), so clipped content reveals its full text on hover while a tab that
+   *  fits shows nothing. Rendered as a
    *  `truncatedOnly` `<Tooltip>` anchored to the tab. For an always-visible tooltip or
    *  other custom trigger content, use `children` with your own `<Tooltip>` instead. */
   tooltip?: React.ReactNode
@@ -285,9 +286,9 @@ export const Tabs = ({
             {p.icon && <a-icon shape={p.icon} aria-hidden="true" />}
             {wrapLabel(p.label != null ? p.label : p.children, "a-tab-label")}
             {p.iconTrailing && <a-icon shape={p.iconTrailing} aria-hidden="true" />}
-            {/* Per-tab tooltip: a truncatedOnly Tooltip anchored to the tab, so it
-                surfaces only when the label ellipsizes. It finds the tab's
-                <a-tab-label> automatically (see a-tooltip's TRUNCATING_PARTS). */}
+            {/* A truncatedOnly tooltip is part of each tab's own light DOM, after
+                its label/content. It follows every truncating label part,
+                including a Step's label and hint. */}
             {p.tooltip != null && p.tooltip !== "" ? (
               <Tooltip truncatedOnly>{p.tooltip}</Tooltip>
             ) : null}

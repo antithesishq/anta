@@ -6,7 +6,6 @@ import { Icon } from "./Icon"
 import { Loader } from "./Loader"
 import type { TabOption, TabsProps } from "./Tabs"
 import { Tabs } from "./Tabs"
-import { Tooltip } from "./Tooltip"
 import "./Steps.css"
 
 /** Named Anta tone used by Steps. */
@@ -199,6 +198,12 @@ export const Steps = ({
       // Steps propagates its tone to each generated tab. A local option tone
       // wins, while error and disabled states retain their fixed semantics.
       tone: stepTone !== "neutral" ? stepTone : undefined,
+      tooltip: (
+        <>
+          {option.label}
+          {option.hint != null && <> — {option.hint}</>}
+        </>
+      ),
       className: optionClassName,
       style: optionStyle,
       children: (
@@ -210,13 +215,6 @@ export const Steps = ({
             <a-tab-label>{option.label}</a-tab-label>
             {option.hint != null && <a-step-hint>{option.hint}</a-step-hint>}
           </a-step-desc>
-          <Tooltip
-            truncatedOnly
-            truncatedSelector="a-tab-label, a-step-hint"
-          >
-            {option.label}
-            {option.hint != null && <> — {option.hint}</>}
-          </Tooltip>
         </>
       ),
     }

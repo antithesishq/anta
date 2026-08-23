@@ -1159,6 +1159,9 @@ export interface ATabsAttributes extends BaseAttributes {
   /** Layout + arrow-key axis. `'horizontal'` (default) ellipsizes labels when tabs
    *  overflow (scrolling is opt-in via CSS); `'vertical'` stacks them. */
   orientation?: 'horizontal' | 'vertical'
+  /** Make horizontal tabs share the available inline space equally. Presence-based
+   *  (`''` on, omit off). */
+  fill?: boolean | ''
   /** Disable the sliding indicator. By default the selected-tab indicator is a single
    *  rectangle that animates between tabs via CSS anchor positioning; with `noslide` the
    *  highlight is painted on each tab and snaps with no movement (also the automatic

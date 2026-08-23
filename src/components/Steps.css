@@ -41,7 +41,7 @@
 
   /* `fill` turns a Steps sequence into a rail: content-sized tabs stay at the
      ends, and real connector flex items take the remaining space. */
-  a-tabs[data-steps][data-fill] {
+  a-tabs[data-steps][fill] {
     width: 100%;
     align-self: stretch;
     justify-content: space-between;
@@ -93,7 +93,7 @@
       box-shadow var(--tab-timing);
   }
 
-  a-steps > a-tabs[data-steps][data-fill] > a-tab {
+  a-steps > a-tabs[data-steps][fill] > a-tab {
     flex: 0 1 auto;
     max-width: max-content;
   }
@@ -184,7 +184,7 @@
   /* In a horizontal strip, the connector is a flexible final child. It starts
      immediately after the description and reaches the next marker rather than
      being a fixed segment stranded between two step boxes. */
-  a-tabs[data-steps]:not([data-fill], [orientation="vertical"])
+  a-tabs[data-steps]:not([fill], [orientation="vertical"])
     > a-tab:not(:last-child)::before {
     content: "";
     order: 3;
@@ -202,7 +202,7 @@
     display: none;
   }
 
-  a-tabs[data-steps][data-fill] > a-step-connector {
+  a-tabs[data-steps][fill] > a-step-connector {
     display: block;
     flex: 1 1 0;
     align-self: center;

@@ -246,7 +246,7 @@ export const Tabs = ({
       tone={tone && tone !== "neutral" ? tone : undefined}
       size={size && size !== "medium" ? size : undefined}
       orientation={vertical ? "vertical" : undefined}
-      data-fill={fill ? "" : undefined}
+      fill={fill ? "" : undefined}
       noslide={noslide ? "" : undefined}
       round={roundAttr(round)}
       disabled={disabled ? "" : undefined}

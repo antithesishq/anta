@@ -369,9 +369,11 @@ Use the web component directly when you are not using React or Preact and a nati
 Keep the tab strip and panels as siblings under one parent. Panels read the active
 value from `<a-tabs>`.
 
+Add `fill` to make horizontal tabs share the available width equally.
+
 ```html
 <div>
-  <a-tabs role="tablist" default-state="account">
+  <a-tabs role="tablist" default-state="account" fill>
     <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
     <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
   </a-tabs>

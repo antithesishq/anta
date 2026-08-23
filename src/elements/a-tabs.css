@@ -210,11 +210,11 @@
   }
   /* `fill` turns a horizontal strip into equal columns. It is useful for a
      segmented control whose labels should share the available width. */
-  a-tabs[data-fill] {
+  a-tabs[fill] {
     width: 100%;
     align-self: stretch;
   }
-  a-tabs[data-fill]:not([orientation="vertical"]) a-tab {
+  a-tabs[fill]:not([orientation="vertical"]) a-tab {
     flex: 1 1 0;
     max-width: none;
   }

@@ -173,6 +173,10 @@ export interface AntaIntrinsicElements {
   'a-tab': ATabAttributes
   'a-tab-label': BaseAttributes
   'a-tabpanel': ATabpanelAttributes
+  'a-steps': BaseAttributes
+  'a-step-marker': BaseAttributes
+  'a-step-desc': BaseAttributes
+  'a-step-hint': BaseAttributes
   'a-dialog': ADialogAttributes
   'a-card': ACardAttributes
   'a-card-icon-chip': BaseAttributes

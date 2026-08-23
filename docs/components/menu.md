@@ -39,7 +39,7 @@ const onSelect = (e, { value }) => act(value)
 </Menu>
 ```
 
-## Tones
+## Tone
 
 `tone` colors an item's label, icon, and hover/selected tint (and its
 `selectionIndicator`) with a semantic palette — `brand`, `info`, `success`,
@@ -264,6 +264,34 @@ and call `.open()` / `.close()` / `.toggle()`.
     <button data-menu-close>Done</button>
   </div>
 </Menu>
+```
+
+## Inside a clickable row
+
+A `<Menu>` can live inside a clickable row or card without its items triggering
+that row's `onClick` — selecting an item is contained at the menu surface. In the
+row below, the counter moves when you click the row, but not when you pick a menu
+item. The kebab trigger is a plain button, so its click is stopped by hand; the menu
+items need nothing. To contain more (a slotted control's clicks, say), add
+`stopPropagation` to the `<Menu>`.
+
+```tsx
+<div className="row" onClick={openRow}>
+  <span>Quarterly report.pdf</span>
+  {/* the trigger is a plain button — stop its click so opening the
+      menu isn't a row click; the menu items need no handling */}
+  <Button
+    icon="dots-vertical"
+    aria-label="File actions"
+    onClick={(e) => e.stopPropagation()}
+  />
+  <Menu>
+    <MenuItem icon="edit" label="Rename" onSelect={rename} />
+    <MenuItem icon="copy" label="Duplicate" onSelect={duplicate} />
+    <MenuSeparator />
+    <MenuItem icon="trash" tone="critical" label="Delete" onSelect={confirmDelete} />
+  </Menu>
+</div>
 ```
 
 ## Links

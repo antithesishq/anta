@@ -6,7 +6,7 @@ description: A binary control for an immediate setting.
 import Preview from '../components/Preview.astro'
 import Disclosure from '../components/Disclosure.astro'
 import PropsTable from '../components/PropsTable.astro'
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import switchDemoCode from './switch.demo.ts'
 import { Switch } from '@antadesign/anta'
 
@@ -19,7 +19,6 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Switch"
   layout="side"
   panelHeight={400}
@@ -206,7 +205,7 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

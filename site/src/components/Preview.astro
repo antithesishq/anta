@@ -19,19 +19,23 @@ interface Props {
   /** `align-items` for the flex layout; defaults to `center`. Pass `stretch`
    *  to make a wrapping row of items equal height. */
   align?: string
+  /** `justify-content` for the flex layout; defaults to `center`. Pass
+   *  `flex-start` to pin a variable-height preview to its top edge. */
+  justify?: string
   /** Reserve a minimum panel height so a client-hydrated demo doesn't snap
    *  open from zero on load. Any CSS length (a number is read as px). Previews
    *  holding an island get a modest default; set this for taller demos to
    *  reserve their real height. */
   minHeight?: string | number
 }
-const { cols, gap, background, minHeight, align } = Astro.props
+const { cols, gap, background, minHeight, align, justify } = Astro.props
 const mh = typeof minHeight === 'number' ? `${minHeight}px` : minHeight
 const style = [
   cols ? `--preview-cols: ${cols}` : '',
   gap ? `gap: ${gap}` : '',
   background ? `background: ${background}` : '',
   align ? `align-items: ${align}` : '',
+  justify ? `justify-content: ${justify}` : '',
   mh ? `--preview-min-height: ${mh}` : '',
 ].filter(Boolean).join('; ') || undefined
 ---

@@ -31,7 +31,7 @@ Each option can also set `className`, `style`, and `data-*`.
 `RadioGroup` forwards them to that option's `<a-radio>` so you can add
 per-option presentation and application metadata.
 
-## Tones
+## Tone
 
 ```tsx
 {/* Usually one tone for the whole group: */}

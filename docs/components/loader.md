@@ -61,6 +61,7 @@ decorative so nearby status text remains the single announcement. |
 | `max?` | number | 100 | Upper bound of the range. |
 | `size?` | number | 16 | Width and height in pixels. |
 | `speed?` | number | 0.75 | Seconds per rotation. Pass a positive number. |
+| `tone?` | LoaderTone | — | Color tone for the loader. Omit it to use the standard text-3 color. |
 | `value?` | number \| false | — | Current progress value. Omit this prop, or pass `false`, for an
 indeterminate rotating gradient. |
 

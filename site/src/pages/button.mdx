@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Button
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -26,7 +26,6 @@ whether you use the wrapper or author the element by hand.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Button"
   layout="side"
   panelHeight={400}
@@ -37,7 +36,7 @@ whether you use the wrapper or author the element by hand.
 
 </Disclosure>
 
-## Priorities
+## Priority
 
 A button's priority helps control how much attention it draws:
 
@@ -69,7 +68,7 @@ A button's priority helps control how much attention it draws:
 </Col>
 </Columns>
 
-## Tones
+## Tone
 
 Six named tones — `neutral` (default), `brand`, `critical`, `info`,
 `success`, `warning`. Omitting `tone` — or passing an empty string —
@@ -150,7 +149,7 @@ variables instead — `--button-bg-{priority}-hover`,
 </Col>
 </Columns>
 
-## Sizes
+## Size
 
 <Columns>
 <Col>
@@ -728,7 +727,7 @@ without taking ownership of `onClick`.
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

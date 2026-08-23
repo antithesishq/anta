@@ -18,6 +18,7 @@ const byId = new Map<number, any>()
 })(api as any)
 
 const root = (api as any).children?.find((c: any) => c.name === propsName)
+  ?? (api as any).children?.find((c: any) => c.name === component)
 
 // A union member is a *value* (string / number / boolean literal) → render
 // it as a copyable code pill. Everything else (type keywords like `string`,

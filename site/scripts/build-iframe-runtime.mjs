@@ -16,26 +16,29 @@ import { build } from 'esbuild'
 import { writeFile, mkdir, readdir, unlink } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
+import { createRequire } from 'node:module'
 
 const root = new URL('../..', import.meta.url)
-const tokensCss = fileURLToPath(new URL('src/tokens.css', root))
-const resetCss = fileURLToPath(new URL('src/reset.css', root))
-const distElements = fileURLToPath(new URL('dist/elements/index.js', root))
-const distIndex = fileURLToPath(new URL('dist/index.js', root))
+const distBundle = fileURLToPath(new URL('dist/bundle.js', root))
+const distBundleCss = fileURLToPath(new URL('dist/bundle.css', root))
 const iframeDir = fileURLToPath(new URL('site/public/iframe', root))
 const manifestFile = fileURLToPath(new URL('site/src/generated/iframe-assets.ts', root))
 // Bare specifiers (`preact`) resolve from the site's node_modules.
 const siteDir = fileURLToPath(new URL('..', import.meta.url))
+const require = createRequire(import.meta.url)
+// Anta's generated JSX runtime imports `react`. Resolve the Preact compatibility
+// entries to absolute files: an alias to bare `preact/compat` would otherwise
+// resolve from `dist/`, where pnpm intentionally has no direct Preact link.
+const preactCompat = require.resolve('preact/compat')
+const preactJsxRuntime = require.resolve('preact/jsx-runtime')
 
 await mkdir(iframeDir, { recursive: true })
 
-// Entry: pull in tokens + reset + element registration + the Anta barrel + Preact,
-// then publish everything the demo shim needs onto `window.__demo_modules__`.
+// Entry: pull in the same full Anta bundle and stylesheet as the docs shell, then
+// publish everything the demo shim needs onto `window.__demo_modules__`.
 const entry = `
-import ${JSON.stringify(tokensCss)};
-import ${JSON.stringify(resetCss)};
-import ${JSON.stringify(distElements)};
-import * as anta from ${JSON.stringify(distIndex)};
+import ${JSON.stringify(distBundleCss)};
+import * as anta from ${JSON.stringify(distBundle)};
 import * as preact from 'preact';
 import * as preactHooks from 'preact/hooks';
 if (typeof window !== 'undefined') {
@@ -59,9 +62,9 @@ const out = await build({
   // Anta's JSX runtime resolves `react` — map it to Preact's compat (bundled in,
   // so there's a single Preact instance shared with the demo).
   alias: {
-    react: 'preact/compat',
-    'react-dom': 'preact/compat',
-    'react/jsx-runtime': 'preact/jsx-runtime',
+    react: preactCompat,
+    'react-dom': preactCompat,
+    'react/jsx-runtime': preactJsxRuntime,
   },
   loader: { '.svg': 'text' },
 })

@@ -7,6 +7,19 @@
 // it scrolls horizontally.
 import { SYSTEMS, CATEGORIES, COVERAGE, COVERAGE_URLS, type Mark } from './comparison-data'
 
+// Anta is the reference column. The remaining systems descend by the number
+// of component jobs they ship; partial and paid entries count as half coverage.
+const coverageScore = (id: string) => CATEGORIES.reduce((score, category) => {
+  const mark = COVERAGE[id]?.[category.id]
+  return score + (mark === 'yes' ? 1 : mark === 'partial' || mark === 'paid' ? 0.5 : 0)
+}, 0)
+
+const COVERAGE_SYSTEMS = [...SYSTEMS].sort((a, b) => {
+  if (a.anta) return -1
+  if (b.anta) return 1
+  return coverageScore(b.id) - coverageScore(a.id) || a.name.localeCompare(b.name)
+})
+
 const MARK: Record<Mark | 'none', { glyph: string; label: string; cls: string }> = {
   yes: { glyph: '✓', label: 'Included', cls: 'm-yes' },
   partial: { glyph: '~', label: 'Basic or community-only', cls: 'm-partial' },
@@ -23,15 +36,16 @@ const MARK_TONE: Partial<Record<Mark, string>> = {
   paid: 'info',
 }
 
-// Category → Anta's own component doc page, for the row-label link. Only
-// categories Anta ships a page for; the rest render as plain, unlinked labels.
+// Anta's own coverage marks link to the matching component page. The category
+// labels above remain static text so the first column is not interactive.
 const ANTA_SLUG: Record<string, string> = {
   button: 'button', textinput: 'input', select: 'select', combobox: 'input-autocomplete',
   choice: 'checkbox', slider: 'slider',
   datetime: 'input-date', tabs: 'tabs', menu: 'menu', tooltip: 'tooltip',
-  dialog: 'dialog', toast: 'toaster', accordion: 'expander', table: 'table', tag: 'tag', card: 'card', progress: 'progress',
+  dialog: 'dialog', toast: 'toaster', accordion: 'expander', table: 'table', tag: 'tag', card: 'card', progress: 'progress', steps: 'steps',
   icons: 'icon', typography: 'text',
 }
+
 ---
 
 <div class="full-bleed cov-scroll">
@@ -39,7 +53,7 @@ const ANTA_SLUG: Record<string, string> = {
     <thead>
       <tr>
         <th scope="col" class="cat-col">Component</th>
-        {SYSTEMS.map((s) => (
+        {COVERAGE_SYSTEMS.map((s) => (
           <th scope="col" class:list={['sys-head', { anta: s.anta }]}>
             <a href={s.docs} target="_blank" rel="noopener" class="sys-head-label" aria-label={s.name} title={s.name}>{s.short ?? s.name}</a>
           </th>
@@ -50,12 +64,10 @@ const ANTA_SLUG: Record<string, string> = {
       {CATEGORIES.map((c) => (
         <tr>
           <th scope="row" class="cat-col">
-            {ANTA_SLUG[c.id]
-              ? <a href={`/${ANTA_SLUG[c.id]}`} class="cat-label cat-link">{c.label}</a>
-              : <span class="cat-label">{c.label}</span>}
+            <span class="cat-label">{c.label}</span>
             <span class="cat-members">{c.members}</span>
           </th>
-          {SYSTEMS.map((s) => {
+          {COVERAGE_SYSTEMS.map((s) => {
             const raw = COVERAGE[s.id]?.[c.id]
             const m = MARK[raw ?? 'none']
             const shipped = !!raw && raw !== 'no'
@@ -124,7 +136,7 @@ const ANTA_SLUG: Record<string, string> = {
   }
 
   /* The 810px table minimum leaves 630px after the 180px category column:
-     45px for each of the 14 equal system columns. Keep the viewport
+     about 48px for each of the 13 equal system columns. Keep the viewport
      only while that minimum needs horizontal scrolling. */
   @container (min-width: 810px) {
     .cov-scroll {
@@ -137,7 +149,7 @@ const ANTA_SLUG: Record<string, string> = {
     border-collapse: separate;
     border-spacing: 0;
     /* Fixed layout gives the category its 180px measure and divides all
-       remaining room evenly between the 15 system columns. */
+       remaining room evenly between the 13 system columns. */
     table-layout: fixed;
     width: max(100%, 810px);
     min-width: 100%;
@@ -206,12 +218,6 @@ const ANTA_SLUG: Record<string, string> = {
     display: block;
     font-weight: 500;
     color: var(--text-1);
-  }
-  a.cat-label {
-    text-decoration: none;
-  }
-  a.cat-label:hover {
-    text-decoration: underline;
   }
   .cat-members {
     display: block;
@@ -295,6 +301,10 @@ const ANTA_SLUG: Record<string, string> = {
         const cell = (e.target as Element).closest('th, td')
         if (!cell || !table.contains(cell)) return
         const nextCol = (cell as HTMLTableCellElement).cellIndex
+        if (nextCol === 0) {
+          clear()
+          return
+        }
         if (nextCol === col) return
         clear()
         col = nextCol

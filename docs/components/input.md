@@ -6,7 +6,7 @@ self-contained (you never pass a control in) yet fully native underneath:
 focus, IME, autofill, and form submission all work, and the control is reachable
 for styling through `::part(input)`.
 
-## Sizes
+## Size
 
 ```tsx
 <Input size="small"  label="Small"  placeholder="24px tall" />

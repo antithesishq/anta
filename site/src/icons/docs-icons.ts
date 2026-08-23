@@ -11,6 +11,7 @@ export const ICON_SHAPES = [
   'circle-play',
   'clipboard-paste',
   'dialog',
+  'footprints',
   'loader-docs',
   'octagon-pause',
   'search-slash',
@@ -36,6 +37,7 @@ declare module '@antadesign/anta' {
     'circle-play': true
     'clipboard-paste': true
     'dialog': true
+    'footprints': true
     'loader-docs': true
     'octagon-pause': true
     'search-slash': true

@@ -6,6 +6,9 @@ A tablist for switching between views. The strip is data-driven: pass an
 selectable strip that emits the chosen value; add matching `<TabPanel>` children
 (see [Panels](#panels)) to show and hide the content too.
 
+Each option can also set `className`, `style`, and `data-*` attributes on its
+individual `<a-tab>`.
+
 ## Priority
 
 ```tsx
@@ -20,7 +23,7 @@ selectable strip that emits the chosen value; add matching `<TabPanel>` children
 - **`secondary`**: a filled tab, no track.
 - **`tertiary`**: an underline.
 
-## Tones
+## Tone
 
 Six named tones: `neutral` (default), `brand`, `info`, `success`, `warning`,
 `critical`. Any CSS color works for a one-off custom tone. The tone runs through the
@@ -326,6 +329,7 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 | `defaultValue?` | string | — | Initial active value for the uncontrolled case. After first render `Tabs`
  owns selection itself. |
 | `disabled?` | boolean | — | Disable the whole strip. |
+| `fill?` | boolean | false | Makes horizontal tabs share the available inline space equally. |
 | `label?` | string | — | Accessible name for the tablist (`aria-label`). |
 | `noslide?` | boolean | — | Disable the sliding indicator. By default the selected-tab indicator animates
  between tabs (a single rectangle, via CSS anchor positioning); `noslide` paints it
@@ -341,7 +345,8 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 | `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value }` snapshot as the 2nd argument. |
 | `options?` | TabOption[] | — | The tabs, as a data array (the strip's single source). Each entry is a
  `TabOption` (`value`, `label` or `children`, `icon`, `iconTrailing`, `tone`,
- `disabled`, `round`). |
+ `disabled`, `round`, `className`, `style`). `className` and `style` land on
+ that option's individual `<a-tab>`, not on the strip. |
 | `orientation?` | 'horizontal' \| 'vertical' | 'horizontal' | Layout + arrow-key axis. Horizontal ellipsizes labels when tabs overflow (scroll
  is opt-in via CSS); vertical stacks them. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'primary' | Visual priority. `primary` is the raised pill on a recessed track (the
@@ -368,9 +373,11 @@ Use the web component directly when you are not using React or Preact and a nati
 Keep the tab strip and panels as siblings under one parent. Panels read the active
 value from `<a-tabs>`.
 
+Add `fill` to make horizontal tabs share the available width equally.
+
 ```html
 <div>
-  <a-tabs role="tablist" default-state="account">
+  <a-tabs role="tablist" default-state="account" fill>
     <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
     <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
   </a-tabs>
@@ -438,12 +445,21 @@ scrollable.
 ```
 
 **Equal-width tabs.** By default tabs are sized to their labels (and compress only
-when the strip overflows). For a segmented-control look where every tab is the same
-width, let them fill the strip from a zero basis:
+when the strip overflows). Pass `fill` for a segmented-control look where every tab
+shares the strip width:
 
-```css
-.equal-tabs a-tabs { width: 100%; }
-.equal-tabs a-tab  { flex: 1 1 0; max-width: none; }
+```tsx
+<Tabs
+  fill
+  defaultValue="all"
+  label="Filter"
+  options={[
+    { value: 'all', label: 'All' },
+    { value: 'assigned', label: 'Assigned to me' },
+    { value: 'recent', label: 'Recent' },
+    { value: 'archived', label: 'Archived' },
+  ]}
+/>
 ```
 
 **Wrap labels.** Let long labels wrap so the tabs grow taller instead of truncating:

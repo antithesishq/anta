@@ -1,6 +1,17 @@
 import type { BaseProps } from '../general_types'
 
+/** Named Anta color tone for a loader. */
+export type LoaderTone =
+  | 'neutral'
+  | 'brand'
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'critical'
+
 export interface LoaderProps extends BaseProps {
+  /** Color tone for the loader. Omit it to use the standard text-3 color. */
+  tone?: LoaderTone
   /** Current progress value. Omit this prop, or pass `false`, for an
    * indeterminate rotating gradient. */
   value?: number | false
@@ -38,7 +49,7 @@ export interface LoaderProps extends BaseProps {
  * <Loader value={42} label="Uploading files" />
  * ```
  */
-export const Loader = ({ value, max = 100, size, speed, label, className, style, ...rest }: LoaderProps) => {
+export const Loader = ({ tone, value, max = 100, size, speed, label, className, style, ...rest }: LoaderProps) => {
   const determinate = typeof value === 'number' && Number.isFinite(value)
   const safeMax = Number.isFinite(max) && max > 0 ? max : 100
   const clampedValue = determinate ? Math.min(safeMax, Math.max(0, value)) : undefined
@@ -63,6 +74,7 @@ export const Loader = ({ value, max = 100, size, speed, label, className, style,
 
   return (
     <a-loader
+      tone={tone}
       {...(determinate ? { value: clampedValue } : {})}
       class={className}
       style={computedStyle}

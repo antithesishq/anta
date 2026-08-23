@@ -97,10 +97,10 @@
     --tab-padding-x: 13px;
     --tab-height: 32px;
   }
-  /* Icons track the tab size (medium = a-icon's 16px default). */
-  a-tabs a-tab a-icon { --icon-size: 16px; }
-  a-tabs[size="small"] a-tab a-icon { --icon-size: 14px; }
-  a-tabs[size="large"] a-tab a-icon { --icon-size: 18px; }
+  /* Icons and loaders track the tab size (medium = the 16px default). */
+  a-tabs a-tab :is(a-icon, a-loader) { --icon-size: 16px; }
+  a-tabs[size="small"] a-tab :is(a-icon, a-loader) { --icon-size: 14px; }
+  a-tabs[size="large"] a-tab :is(a-icon, a-loader) { --icon-size: 18px; }
 
   /* ── Tones — re-point the source + the label colors: --tab-selected-text is the
      tone's --text-1-<tone>, --tab-rest-tone its muted --text-3-<tone> (both theme-aware,
@@ -138,6 +138,15 @@
     --tab-selected-text: var(--text-1-critical); --tab-text-2: var(--text-2-critical);
     --tab-rest-tone: var(--text-3-critical);
     --tabs-track-border: var(--border-4-critical); --tab-selected-border: var(--border-2-critical);
+  }
+  /* An explicit neutral option must not inherit a selected sibling's tone from
+     the strip. This is especially important for composed controls like Steps. */
+  a-tab[tone="neutral"] {
+    --tabs-tone-source: var(--anta-seed-neutral);
+    --tab-selected-text: var(--text-1); --tab-text-2: var(--text-2);
+    --tab-rest-tone: var(--text-3);
+    --tabs-track-border: var(--border-4); --tab-selected-border: var(--border-2);
+    --_track-c: 0.008;
   }
 
   a-tabs[tone]:not([tone=""], [tone="neutral"]),
@@ -207,6 +216,16 @@
   a-tabs:not([orientation="vertical"]) a-tab {
     flex: 1 1 0;
     max-width: max-content;
+  }
+  /* `fill` turns a horizontal strip into equal columns. It is useful for a
+     segmented control whose labels should share the available width. */
+  a-tabs[fill] {
+    width: 100%;
+    align-self: stretch;
+  }
+  a-tabs[fill]:not([orientation="vertical"]) a-tab {
+    flex: 1 1 0;
+    max-width: none;
   }
   @media (hover: hover) and (pointer: fine) {
     /* Instant recolor (no `color` transition; see a-tab.css) to the selected-label strength

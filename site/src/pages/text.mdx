@@ -5,7 +5,7 @@ title: Text
 import TextDemo from '../components/TextDemo'
 import TruncateDemo from '../components/TruncateDemo'
 import ExpandableDemo from '../components/ExpandableDemo'
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -31,7 +31,6 @@ design system, with no per-page overrides to maintain.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Text"
   layout="side"
   initialCode={textDemoCode}
@@ -155,7 +154,7 @@ more" and "Show less". `collapsible` takes effect only with `expandable`.
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

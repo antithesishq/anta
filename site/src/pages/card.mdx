@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Card
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -27,7 +27,6 @@ rest of Anta.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Card"
   layout="side"
   panelHeight={400}
@@ -129,7 +128,7 @@ when toned (stepping to `border-3` on hover).
 <Card priority="tertiary" header="Tertiary">…</Card>
 ```
 
-## Tones
+## Tone
 
 A semantic `tone` tints the surface, border, and text. The set matches the rest of
 Anta: `neutral` (the default) plus `brand`, `info`, `success`, `warning`, and
@@ -392,7 +391,7 @@ it also blocks navigation until the load resolves.
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

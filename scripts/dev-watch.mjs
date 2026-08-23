@@ -5,7 +5,7 @@
  * Vite never reads a partially-written generated docs file.
  */
 import { spawn } from 'node:child_process'
-import { watch } from 'node:fs'
+import { statSync, watch } from 'node:fs'
 
 const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
 const tasks = [
@@ -56,6 +56,20 @@ function schedule() {
 for (const path of ['src', 'stickers/src']) {
   watch(path, { recursive: true }, schedule)
 }
-watch('CHANGELOG.md', schedule)
+
+let changelogSignature = changelogFileSignature()
+
+function changelogFileSignature() {
+  const { mtimeMs, size } = statSync('CHANGELOG.md')
+  return `${mtimeMs}:${size}`
+}
+
+watch('CHANGELOG.md', () => {
+  const nextSignature = changelogFileSignature()
+  if (nextSignature === changelogSignature) return
+
+  changelogSignature = nextSignature
+  schedule()
+})
 
 console.log('[dev-watch] watching src, stickers/src, and CHANGELOG.md')

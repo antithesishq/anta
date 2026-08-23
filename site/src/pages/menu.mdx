@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Menu
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -34,7 +34,6 @@ open with `event.preventDefault()`. You can also keep a `ref` and call
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Menu"
   layout="side"
   panelHeight={440}
@@ -89,7 +88,7 @@ const onSelect = (e, { value }) => act(value)
 </Col>
 </Columns>
 
-## Tones
+## Tone
 
 <Columns reverse>
 <Col>
@@ -747,7 +746,7 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

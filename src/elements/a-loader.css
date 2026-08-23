@@ -5,6 +5,16 @@
     color: var(--text-3);
   }
 
+  /* Tones stay out of forced-colors mode so the CanvasText rule below wins;
+     these attribute selectors would otherwise outrank the bare a-loader rule. */
+  @media not (forced-colors: active) {
+    a-loader[tone="brand"]    { color: var(--text-2-brand); }
+    a-loader[tone="info"]     { color: var(--text-2-info); }
+    a-loader[tone="success"]  { color: var(--text-2-success); }
+    a-loader[tone="warning"]  { color: var(--text-2-warning); }
+    a-loader[tone="critical"] { color: var(--text-2-critical); }
+  }
+
   :where(a-loader, a-icon[shape="loader"]) {
     display: inline-block;
     inline-size: var(--loader-size, var(--icon-size, 16px));

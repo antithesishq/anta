@@ -205,6 +205,8 @@ export interface AProgressAttributes extends BaseAttributes {
  * `@antadesign/anta`.
  */
 export interface ALoaderAttributes extends BaseAttributes {
+  /** Color tone for the loader. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Presence selects the static, determinate gradient. Set `--loader-value`
    * in `style` to its percentage. Omit this attribute for the rotating
    * indeterminate gradient. */
@@ -1157,6 +1159,9 @@ export interface ATabsAttributes extends BaseAttributes {
   /** Layout + arrow-key axis. `'horizontal'` (default) ellipsizes labels when tabs
    *  overflow (scrolling is opt-in via CSS); `'vertical'` stacks them. */
   orientation?: 'horizontal' | 'vertical'
+  /** Make horizontal tabs share the available inline space equally. Presence-based
+   *  (`''` on, omit off). */
+  fill?: boolean | ''
   /** Disable the sliding indicator. By default the selected-tab indicator is a single
    *  rectangle that animates between tabs via CSS anchor positioning; with `noslide` the
    *  highlight is painted on each tab and snaps with no movement (also the automatic

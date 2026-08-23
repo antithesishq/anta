@@ -93,6 +93,12 @@
       box-shadow var(--tab-timing);
   }
 
+  /* A sequence starts directly at its first marker. Later horizontal steps retain
+     their inset so their labels do not run into the preceding connector. */
+  a-tabs[data-steps]:not([orientation="vertical"]) > a-tab:first-child {
+    padding-inline-start: 0;
+  }
+
   a-steps > a-tabs[data-steps][fill] > a-tab {
     flex: 0 1 auto;
     max-width: max-content;
@@ -225,8 +231,7 @@
 
   a-steps[data-orientation="vertical"] {
     --steps-content-indent: calc(
-      var(--steps-tab-padding-x) + var(--steps-marker-size) +
-      var(--steps-item-gap)
+      var(--steps-marker-size) + var(--steps-item-gap)
     );
     --steps-vertical-gap: calc(var(--steps-gap) + 4px);
 
@@ -245,6 +250,7 @@
     grid-column: 1;
     width: max-content;
     max-width: 100%;
+    padding-inline-start: 0;
   }
 
   a-steps[data-orientation="vertical"]
@@ -255,8 +261,7 @@
       var(--steps-tab-padding-block) + var(--steps-marker-size)
     );
     inset-inline-start: calc(
-      var(--steps-tab-padding-x) + var(--steps-marker-size) / 2 -
-      0.5px
+      var(--steps-marker-size) / 2 - 0.5px
     );
     inset-inline-end: auto;
     width: 1px;
@@ -283,7 +288,6 @@
     width: 1px;
     min-height: var(--steps-marker-size);
     margin-inline-start: calc(
-      var(--steps-tab-padding-x) +
       var(--steps-marker-size) / 2 - 0.5px
     );
     margin-block-end: calc(-1 * var(--steps-vertical-gap));

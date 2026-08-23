@@ -56,7 +56,7 @@ const options = [
   { value: 'incomplete', label: 'Incomplete', status: 'incomplete' },
 ]
 
-<Steps defaultValue="loading" label="Task status" options={options}>
+<Steps fill defaultValue="loading" label="Task status" options={options}>
   <TabPanel value="completed"><Text size="small">This work is complete and ready to use.</Text></TabPanel>
   <TabPanel value="loading"><Text size="small">This work is currently running.</Text></TabPanel>
   <TabPanel value="error"><Text size="small">Resolve this error before continuing.</Text></TabPanel>

@@ -33,6 +33,7 @@
   }
 
   a-tabs[data-steps] {
+    --tab-selected-border: var(--border-1);
     --steps-complete-connector-lightness: 0.8;
     --steps-complete-connector-chroma: 0.008;
     --steps-complete-connector-color: oklch(
@@ -63,6 +64,31 @@
     width: 100%;
     align-self: stretch;
     justify-content: space-between;
+  }
+
+  a-tabs[data-steps][tone="brand"],
+  a-tabs[data-steps] > a-tab[tone="brand"] {
+    --tab-selected-border: var(--border-1-brand);
+  }
+
+  a-tabs[data-steps][tone="info"],
+  a-tabs[data-steps] > a-tab[tone="info"] {
+    --tab-selected-border: var(--border-1-info);
+  }
+
+  a-tabs[data-steps][tone="success"],
+  a-tabs[data-steps] > a-tab[tone="success"] {
+    --tab-selected-border: var(--border-1-success);
+  }
+
+  a-tabs[data-steps][tone="warning"],
+  a-tabs[data-steps] > a-tab[tone="warning"] {
+    --tab-selected-border: var(--border-1-warning);
+  }
+
+  a-tabs[data-steps][tone="critical"],
+  a-tabs[data-steps] > a-tab[tone="critical"] {
+    --tab-selected-border: var(--border-1-critical);
   }
 
   a-tabs[data-steps][tone]:not([tone=""], [tone="neutral"]),

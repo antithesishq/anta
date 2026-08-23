@@ -18,6 +18,9 @@ changes are not listed.
 - `Steps` adds `primary`, `secondary`, and `tertiary` priorities. Primary uses a
   solid selected marker and stronger completed connectors; tertiary is compact
   and borderless.
+- `Steps` defaults to the neutral tone. Omitting `tone` or passing an empty
+  string produces the same result; selected rings use the stronger `border-1`
+  step.
 
 ## 0.3.22 — August 20, 2026
 

@@ -9,7 +9,7 @@ import { Tabs } from "./Tabs"
 import { Tooltip } from "./Tooltip"
 import "./Steps.css"
 
-/** Named Anta tone used by the selected step. */
+/** Named Anta tone used by Steps. */
 export type StepTone =
   | "neutral"
   | "brand"
@@ -71,9 +71,10 @@ export interface StepsProps extends Omit<
    * and borderless.
    * @defaultValue 'secondary' */
   priority?: StepPriority
-  /** Tone for the selected step. An error step always uses critical.
-   * @defaultValue brand */
-  tone?: StepTone
+  /** Tone for Steps. Omit it or pass an empty string for neutral. An error step
+   * always uses critical.
+   * @defaultValue neutral */
+  tone?: StepTone | ""
   /** Builds a custom marker from a step and its current state. A returned node
    * replaces `marker` and the built-in state marker; return `undefined` to use
    * those fallbacks, or `null` for an empty ring. */
@@ -128,7 +129,7 @@ export const Steps = ({
   onFocus,
   onBlur,
   label,
-  tone = "brand",
+  tone = "neutral",
   priority = "secondary",
   renderMarker,
   size,
@@ -141,6 +142,9 @@ export const Steps = ({
   id,
   ...rest
 }: StepsProps) => {
+  // Empty string is the same as omitting tone: keep it out of Tabs' custom-tone
+  // path and give loading markers the neutral Loader tone.
+  const toneAttr: StepTone = tone || "neutral"
   const controlled = value !== undefined
   const [internalValue, setInternalValue] = useState<string | undefined>(
     defaultValue,
@@ -167,7 +171,7 @@ export const Steps = ({
     const builtInMarker = option.disabled
       ? <Icon shape={STATE_ICON.incomplete} />
       : option.state === "loading"
-        ? <Loader tone={tone} />
+        ? <Loader tone={toneAttr} />
         : <Icon shape={STATE_ICON[option.state]} />
     const marker =
       customMarker !== undefined
@@ -237,7 +241,7 @@ export const Steps = ({
         onFocus={onFocus}
         onBlur={onBlur}
         label={label}
-        tone={tone}
+        tone={toneAttr}
         size={size}
         orientation={orientation}
         fill={fill}

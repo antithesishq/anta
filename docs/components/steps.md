@@ -83,8 +83,8 @@ const options = [
 Labels and hints ellipsize within each step. Hovering or focusing a clipped step
 shows its full label and hint in a tooltip.
 
-Options are `neutral`, `brand` (default), `info`, `success`, `warning`, and
-`critical`.
+Options are `neutral` (default), `brand`, `info`, `success`, `warning`, and
+`critical`. Omitting `tone`, or passing an empty string, resolves to neutral.
 
 ## Markers and hints
 
@@ -241,7 +241,7 @@ Events match [`Tabs`](./tabs.md#events).
 | `renderMarker?` | (option, state) => ReactNode | — | Builds a custom marker from a step and its current state. A returned node
 replaces `marker` and the built-in state marker; return `undefined` to use
 those fallbacks, or `null` for an empty ring. |
-| `tone?` | StepTone | brand | Tone for the selected step. An error step always uses critical. |
+| `tone?` | StepTone \| "" | neutral | Tone for Steps. Omit it or pass an empty string for neutral. An error step always uses critical. |
 
 For framework-free use, compose the same light DOM that `Steps` emits.
 `a-steps` and its `a-step-*` children are structural elements styled by the
@@ -256,14 +256,14 @@ import '@antadesign/anta/components/Steps.css'
 ```html
 <div>
   <a-steps>
-    <a-tabs role="tablist" aria-label="Setup progress" priority="secondary" tone="brand" default-state="setup" data-steps fill noslide>
+    <a-tabs role="tablist" aria-label="Setup progress" priority="secondary" default-state="setup" data-steps fill noslide>
       <a-tab role="tab" value="build" tabindex="0">
         <a-step-marker aria-hidden="true"><a-icon shape="check"></a-icon></a-step-marker>
         <a-step-desc><a-tab-label>Build</a-tab-label><a-step-hint>Complete</a-step-hint></a-step-desc>
       </a-tab>
       <a-step-connector></a-step-connector>
       <a-tab role="tab" value="setup" tabindex="-1">
-        <a-step-marker aria-hidden="true"><a-loader tone="brand"></a-loader></a-step-marker>
+        <a-step-marker aria-hidden="true"><a-loader></a-loader></a-step-marker>
         <a-step-desc><a-tab-label>Setup</a-tab-label><a-step-hint>In progress</a-step-hint></a-step-desc>
       </a-tab>
       <a-step-connector></a-step-connector>

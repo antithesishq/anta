@@ -40,9 +40,11 @@ Pass `marker` or return a value from `renderMarker` to keep a custom marker. Use
 
 `secondary` is the default: selected markers have a subtle fill inside their
 outline. `primary` fills the selected marker with its tone and uses a white icon,
-like a primary Button. Its marker and connector are 2px; the connector after a
-completed step uses the same tone at the stronger `border-2` step. `tertiary`
-removes the marker stroke and makes its marker the icon size plus 2px on each side.
+like a primary Button. Its 2px resting marker uses `border-3` and its 2px rail
+uses `border-2`; a completed, unselected marker keeps the primary fill at 80%.
+The connector after a completed step uses the same tone at the stronger `border-2`
+step. `tertiary` removes the marker stroke and makes its marker the icon size plus
+2px on each side.
 
 ```tsx
 <Steps
@@ -58,7 +60,33 @@ removes the marker stroke and makes its marker the icon size plus 2px on each si
 />
 ```
 
-### Markers and hints
+## Tone
+
+`tone` colors labels, hints, and the selected marker. Labels strengthen on hover
+and selection; hints stay at the muted `text-3` tone. In `secondary` and
+`tertiary`, the marker icon always matches the label's current color; a secondary
+marker's resting stroke uses the matching muted border tone. With
+`priority="primary"`, the connector after a completed step also uses the tone at
+the stronger `border-2` step. Error markers keep a critical outline and gain a
+critical fill when selected.
+
+```tsx
+const options = [
+  { value: 'done', label: 'Done', hint: 'Complete', state: 'completed' },
+  { value: 'current', label: 'Current validation in progress', hint: 'Checking security and dependency scans', state: 'loading' },
+  { value: 'next', label: 'Next', hint: 'Waiting', state: 'incomplete' },
+]
+
+<Steps tone="success" defaultValue="current" options={options} />
+```
+
+Labels and hints ellipsize within each step. Hovering or focusing a clipped step
+shows its full label and hint in a tooltip.
+
+Options are `neutral`, `brand` (default), `info`, `success`, `warning`, and
+`critical`.
+
+## Markers and hints
 
 Marker precedence is:
 
@@ -102,30 +130,6 @@ const options = [
   }
 />
 ```
-
-## Tone
-
-`tone` colors labels, hints, and the selected marker. Labels strengthen on hover
-and selection; hints stay at the muted `text-3` tone. With `priority="primary"`,
-the connector after a completed step also uses the tone at the stronger `border-2`
-step. Resting markers and connectors otherwise stay neutral; error markers keep a
-critical outline and gain a critical fill when selected.
-
-```tsx
-const options = [
-  { value: 'done', label: 'Done', hint: 'Complete', state: 'completed' },
-  { value: 'current', label: 'Current validation in progress', hint: 'Checking security and dependency scans', state: 'loading' },
-  { value: 'next', label: 'Next', hint: 'Waiting', state: 'incomplete' },
-]
-
-<Steps tone="success" defaultValue="current" options={options} />
-```
-
-Labels and hints ellipsize within each step. Hovering or focusing a clipped step
-shows its full label and hint in a tooltip.
-
-Options are `neutral`, `brand` (default), `info`, `success`, `warning`, and
-`critical`.
 
 ## Panels
 
@@ -290,9 +294,8 @@ background with a dotted border:
 }
 ```
 
-`className` and `style` on `Steps` apply to `a-steps`. These properties adjust
-density: `--steps-marker-size`, `--steps-marker-border-width`,
-`--steps-connector-width`, `--steps-item-gap`, and `--steps-gap`.
+`className` on `Steps` applies to `a-steps`. `.dotted-steps` is only the demo
+scope; use your own selector when applying the rule.
 
 **Fill the container.** Pass `fill` to spread horizontal steps across their
 container. The connectors take the remaining space, placing the middle step in

@@ -33,7 +33,6 @@
   }
 
   a-tabs[data-steps] {
-    --steps-active-border: var(--border-1);
     --steps-complete-connector-lightness: 0.8;
     --steps-complete-connector-chroma: 0.008;
     --steps-complete-connector-color: oklch(
@@ -66,31 +65,6 @@
     justify-content: space-between;
   }
 
-  a-tabs[data-steps][tone="brand"],
-  a-tabs[data-steps] > a-tab[tone="brand"] {
-    --steps-active-border: var(--border-1-brand);
-  }
-
-  a-tabs[data-steps][tone="info"],
-  a-tabs[data-steps] > a-tab[tone="info"] {
-    --steps-active-border: var(--border-1-info);
-  }
-
-  a-tabs[data-steps][tone="success"],
-  a-tabs[data-steps] > a-tab[tone="success"] {
-    --steps-active-border: var(--border-1-success);
-  }
-
-  a-tabs[data-steps][tone="warning"],
-  a-tabs[data-steps] > a-tab[tone="warning"] {
-    --steps-active-border: var(--border-1-warning);
-  }
-
-  a-tabs[data-steps][tone="critical"],
-  a-tabs[data-steps] > a-tab[tone="critical"] {
-    --steps-active-border: var(--border-1-critical);
-  }
-
   a-tabs[data-steps][tone]:not([tone=""], [tone="neutral"]),
   a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
     --steps-complete-connector-chroma: 0.09;
@@ -111,7 +85,14 @@
 
   a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"]) {
     --steps-marker-border-width: 2px;
+    --steps-marker-rest-border: var(--border-3);
+    --steps-connector-color: var(--border-2);
     --steps-connector-width: 2px;
+    --steps-primary-completed-marker-bg: color-mix(
+      in oklch,
+      var(--steps-primary-marker-bg) 80%,
+      transparent
+    );
   }
 
   a-tabs[data-steps][priority="tertiary"] {
@@ -237,11 +218,21 @@
     border-color: var(--tab-selected-border);
   }
 
+  /* Secondary and tertiary retain the current label color in their icon. A
+     secondary ring uses the matching muted border tone until it is selected. */
+  a-tabs[data-steps]:is([priority="secondary"], [priority="tertiary"])[tone]:not([tone=""], [tone="neutral"])
+    > a-tab a-step-marker,
+  a-tabs[data-steps]:is([priority="secondary"], [priority="tertiary"])
+    > a-tab[tone]:not([tone=""], [tone="neutral"]) a-step-marker {
+    color: var(--tab-fg);
+    border-color: var(--tabs-track-border);
+  }
+
   a-tabs[data-steps][priority="secondary"]
     a-tab:state(selected):not([disabled]) a-step-marker {
     color: var(--tab-selected-text);
     background-color: var(--tab-secondary-bg);
-    border-color: var(--steps-active-border);
+    border-color: var(--tab-fg);
   }
 
   a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])
@@ -249,6 +240,13 @@
     color: var(--steps-primary-marker-fg);
     background-color: var(--steps-primary-marker-bg);
     border-color: var(--steps-primary-marker-bg);
+  }
+
+  a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])
+    a-tab[data-step-state="completed"]:not(:state(selected)):not([disabled]) a-step-marker {
+    color: var(--steps-primary-marker-fg);
+    background-color: var(--steps-primary-completed-marker-bg);
+    border-color: var(--steps-primary-completed-marker-bg);
   }
 
   a-tabs[data-steps][priority="tertiary"]
@@ -260,6 +258,11 @@
 
   a-tabs[data-steps] a-step-marker > a-loader {
     transition: color var(--tab-timing);
+  }
+
+  a-tabs[data-steps]:is([priority="secondary"], [priority="tertiary"])
+    a-step-marker > a-loader {
+    color: inherit;
   }
 
   a-tabs[data-steps] a-tab:state(selected):not([disabled]) a-step-marker > a-loader {

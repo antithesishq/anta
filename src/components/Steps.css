@@ -8,14 +8,10 @@
     --steps-gap: 4px;
     --steps-connector-color: var(--border-3);
     --steps-connector-width: 1px;
-    --steps-complete-connector-lightness: 0.8;
-    --steps-complete-connector-chroma: 0.008;
-    --steps-complete-connector-source: var(--anta-seed-neutral);
-    --steps-complete-connector-color: oklch(
-      from var(--steps-complete-connector-source)
-      var(--steps-complete-connector-lightness)
-      var(--steps-complete-connector-chroma) h
-    );
+    /* A completed connector is the tone's `--border-2`, one step stronger than
+       the `--border-3` rest rail. This root value is the neutral default the
+       vertical bridge reads; each tab re-points it to its own tone below. */
+    --steps-complete-connector-color: var(--border-2);
     --steps-tab-padding-x: 9px;
     --steps-tab-padding-block: 0px;
     --steps-hint-leading: 16px;
@@ -41,7 +37,7 @@
   }
 
   a-tabs[data-steps] {
-    --tab-selected-border: var(--border-1);
+    --steps-marker-active-border: var(--border-1);
     --steps-primary-marker-lightness: 0.5;
     --steps-primary-marker-chroma: 0.02;
     --steps-primary-marker-fg: #ffffff;
@@ -64,37 +60,31 @@
   }
 
   a-tabs[data-steps] > a-tab[tone="brand"] {
-    --tab-selected-border: var(--border-1-brand);
+    --steps-marker-active-border: var(--border-1-brand);
   }
 
   a-tabs[data-steps] > a-tab[tone="info"] {
-    --tab-selected-border: var(--border-1-info);
+    --steps-marker-active-border: var(--border-1-info);
   }
 
   a-tabs[data-steps] > a-tab[tone="success"] {
-    --tab-selected-border: var(--border-1-success);
+    --steps-marker-active-border: var(--border-1-success);
   }
 
   a-tabs[data-steps] > a-tab[tone="warning"] {
-    --tab-selected-border: var(--border-1-warning);
+    --steps-marker-active-border: var(--border-1-warning);
   }
 
   a-tabs[data-steps] > a-tab[tone="critical"] {
-    --tab-selected-border: var(--border-1-critical);
+    --steps-marker-active-border: var(--border-1-critical);
   }
 
   a-tabs[data-steps] > a-tab[tone="neutral"] {
-    --tab-selected-border: var(--border-1);
-    --steps-complete-connector-chroma: 0.008;
+    --steps-marker-active-border: var(--border-1);
   }
 
   a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
-    --steps-complete-connector-chroma: 0.09;
     --steps-primary-marker-chroma: 0.17;
-  }
-
-  .dark a-steps {
-    --steps-complete-connector-lightness: 0.41;
   }
 
   .dark a-tabs[data-steps] {
@@ -103,7 +93,6 @@
   }
 
   .dark a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
-    --steps-complete-connector-chroma: 0.12;
     --steps-primary-marker-chroma: 0.16;
   }
 
@@ -129,14 +118,10 @@
   }
 
   a-tabs[data-steps] > a-tab {
-    /* The connector belongs to its preceding step, so completed connectors
-       resolve the source from that option rather than from the whole strip. */
-    --steps-complete-connector-source: var(--tabs-tone-source);
-    --steps-complete-connector-color: oklch(
-      from var(--steps-complete-connector-source)
-      var(--steps-complete-connector-lightness)
-      var(--steps-complete-connector-chroma) h
-    );
+    /* The connector belongs to its own step, so it takes that step's tone.
+       Tabs sets --tab-selected-border to the tone's --border-2 per tab; the
+       marker border uses --steps-marker-active-border instead so the two can differ. */
+    --steps-complete-connector-color: var(--tab-selected-border);
     /* Resolve these on the individual tab, after a per-step `tone` has
        re-pointed --tabs-tone-source. A parent-level value would retain the
        strip tone and make a primary marker ignore an option override. */
@@ -164,34 +149,27 @@
       box-shadow var(--tab-timing);
   }
 
-  /* In vertical Steps the bridge through a selected panel belongs to the
-     outer element. Mirror that selected step's named tone onto the bridge. */
-  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone]:not([tone=""], [tone="neutral"])) {
-    --steps-complete-connector-chroma: 0.09;
-  }
-
+  /* In vertical Steps the bridge through a selected panel belongs to the outer
+     element, which can't read the selected tab's --tab-selected-border. Mirror
+     that selected step's --border-2 tone onto the bridge. */
   a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="brand"]) {
-    --steps-complete-connector-source: var(--anta-seed-brand);
+    --steps-complete-connector-color: var(--border-2-brand);
   }
 
   a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="info"]) {
-    --steps-complete-connector-source: var(--anta-seed-info);
+    --steps-complete-connector-color: var(--border-2-info);
   }
 
   a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="success"]) {
-    --steps-complete-connector-source: var(--anta-seed-success);
+    --steps-complete-connector-color: var(--border-2-success);
   }
 
   a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="warning"]) {
-    --steps-complete-connector-source: var(--anta-seed-warning);
+    --steps-complete-connector-color: var(--border-2-warning);
   }
 
   a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="critical"]) {
-    --steps-complete-connector-source: var(--anta-seed-critical);
-  }
-
-  .dark a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone]:not([tone=""], [tone="neutral"])) {
-    --steps-complete-connector-chroma: 0.12;
+    --steps-complete-connector-color: var(--border-2-critical);
   }
 
   /* A sequence starts directly at its first marker. Later horizontal steps retain
@@ -281,8 +259,8 @@
     );
   }
 
-  /* The icon follows its tab's tone. Rings stay neutral until their step is
-     active, completed, or in error. */
+  /* The icon follows its tab's tone. Marker borders stay neutral until their
+     step is active, completed, or in error. */
   a-tabs[data-steps] > a-tab[tone] a-step-marker {
     color: var(--tab-selected-text);
   }
@@ -291,7 +269,7 @@
     :state(selected),
     [data-step-state="completed"]
   ) a-step-marker {
-    border-color: var(--tab-selected-border);
+    border-color: var(--steps-marker-active-border);
   }
 
   a-tabs[data-steps] > a-tab[data-step-state="error"]:not(:state(selected)):not([disabled])
@@ -309,7 +287,7 @@
     a-tab:state(selected):not([disabled]) a-step-marker {
     color: var(--tab-selected-text);
     background-color: var(--tab-secondary-bg);
-    border-color: var(--tab-selected-border);
+    border-color: var(--steps-marker-active-border);
   }
 
   a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])

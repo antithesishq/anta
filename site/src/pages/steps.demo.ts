@@ -6,28 +6,28 @@ const completed = {
   value: 'completed',
   label: 'Completed',
   state: 'completed',
-} satisfies StepOption
+} satisfies StepOption;
 
 /** @play props Loading step */
 const loading = {
   value: 'loading',
   label: 'Loading',
   state: 'loading',
-} satisfies StepOption
+} satisfies StepOption;
 
 /** @play props Error step */
 const error = {
   value: 'error',
   label: 'Error',
   state: 'error',
-} satisfies StepOption
+} satisfies StepOption;
 
 /** @play props Incomplete step */
 const incomplete = {
   value: 'incomplete',
   label: 'Incomplete',
   state: 'incomplete',
-} satisfies StepOption
+} satisfies StepOption;
 
 /** @play props Disabled step */
 const disabled = {
@@ -36,7 +36,7 @@ const disabled = {
   hint: 'Unavailable',
   state: 'incomplete',
   disabled: true,
-} satisfies StepOption
+} satisfies StepOption;
 
 /** @play props Steps */
 <Steps

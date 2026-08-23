@@ -51,6 +51,16 @@ Supporting code:
 - `site/scripts/build-iframe-runtime.mjs` — pre-builds `site/public/iframe-anta-runtime.js`, a self-contained ESM bundle of `@antadesign/anta/elements` + per-element CSS that the iframe dynamic-imports to register custom elements on its own `customElements` registry.
 - `site/scripts/build-playground-runtime.mjs` — pre-builds the changing editor app and its CSS, plus independent content-hashed Monaco, Shiki, and compiler bundles in `site/public/playground/`. Monaco includes its workers as blobs. It runs before both dev and production builds, so do not change the Playground back into a hydrated Astro island: that would reintroduce Vite's source-module graph in dev.
 
+### Props annotations
+
+Use `/** @playground Title */` immediately before a demo's JSX component or a
+`const` / `let` / `var` object-literal declaration to add a Props-panel section.
+Component sections use the typed API schema; object sections expose the current
+literal leaves, including nested paths and array expressions. Keep non-literal
+structure in the Code tab. A single annotated section opens by default; when a
+demo has multiple sections, they all start folded. Legacy `# Title` JSDoc
+headings remain supported for existing JSX examples.
+
 ### Monaco is bundled from npm (no CDN)
 
 Monaco lives in `dependencies` as `monaco-editor` and is built into its own cached runtime. `Playground.tsx` dynamically imports that generated bundle, while `playground-monaco.ts` owns the Monaco and worker imports:

@@ -13,6 +13,7 @@
 import api from '../../src/api.json'
 import type { PropDescriptor } from './prop-patch.ts'
 import { findAttribute, listAttributes, locateOpeningTag } from './locate-tag.ts'
+import { listObjectFields, type ObjectRange } from './object-config.ts'
 
 /** Props with no place among the playground controls — renderer plumbing
  *  (`key`, `ref`) or attributes only meaningful in real app code (`id`,
@@ -659,6 +660,36 @@ export function controlsForExample(
     return known.filter((e) => !EXCLUDED_PROP_NAMES.has(e.control.name))
   }
   return controlsFromJsxAttributes(tagName, source, range)
+}
+
+/** Infer controls from the current leaves of an annotated object literal. Nested
+ * objects flatten into dotted field names; arrays and non-literal expressions
+ * stay editable as source expressions so JSON-like configuration remains valid
+ * TypeScript rather than being coerced through JSON.stringify. */
+export function controlsForObject(source: string, range: ObjectRange): PropEntry[] {
+  return listObjectFields(source, range).map((field) => {
+    const name = field.path.join('.')
+    const prop: PropDescriptor = {
+      name,
+      kind:
+        field.kind === 'number'
+          ? 'number'
+          : field.kind === 'boolean'
+            ? 'boolean'
+            : field.kind === 'expression'
+              ? 'expression'
+              : 'string',
+      objectPath: field.path,
+      objectValueKind: field.kind,
+    }
+    const control: Control =
+      field.kind === 'number'
+        ? { kind: 'number', name }
+        : field.kind === 'boolean'
+          ? { kind: 'boolean', name }
+          : { kind: 'text', name }
+    return { prop, control, optional: false }
+  })
 }
 
 function controlsFromJsxAttributes(

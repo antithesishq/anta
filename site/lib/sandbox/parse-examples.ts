@@ -2,10 +2,10 @@
  * parse-examples.ts — extract JSDoc-headed JSX blocks from playground
  * source code.
  *
- * The authoring model: a single TSX source contains multiple top-level
- * JSX expressions, each preceded by a `/** … *​/` block comment whose
- * body starts with a `# Title` markdown heading. Each such pairing is
- * an "example" the playground surfaces in the Props panel.
+ * The authoring model: a single TSX source can mark any JSX component or
+ * declared JSON-like object with a `/** @playground Title *​/` comment.
+ * Legacy `# Title` JSDoc headings still mark JSX examples. Each pairing is an
+ * accordion entry in the Props panel.
  *
  * This module does no rendering — it just maps source offsets to
  * labels / descriptions / JSX ranges. The bundler and the per-example
@@ -27,24 +27,27 @@ export interface Example {
    *  follows the JSDoc. */
   jsxStart: number
   jsxEnd: number
-  /** What kind of expression follows the JSDoc.
+  /** What kind of target follows the JSDoc.
    *  - `'jsx'`: a `<Tag …>` element — the Props form can bind to
    *    it and surface that element's literal props.
    *  - `'expression'`: a `{ … }` container (typically an IIFE
    *    returning JSX) — too dynamic to bind a form to. The
    *    accordion entry shows the heading + description only. */
-  kind: 'jsx' | 'expression'
+  kind: 'jsx' | 'expression' | 'object'
   /** For `kind: 'jsx'`, the tag name (e.g. `'Progress'` or
    *  `'AnimatedProgress'`). Drives the form's source of prop
    *  schema: known components use api.json; unknown ones infer
    *  fields from the JSX's currently-set attributes. */
   tagName?: string
+  /** For `kind: 'object'`, the declared object literal's range. */
+  objectStart?: number
+  objectEnd?: number
 }
 
 /**
- * Walk the source and return every JSDoc-headed JSX block in order
- * of appearance. JSDoc comments without a `# heading` first line are
- * ignored (they're regular documentation, not example markers).
+ * Walk the source and return every annotated target in order of appearance.
+ * `@playground` marks JSX or a declared object literal. A `# heading` keeps the
+ * older JSX-only annotation working for existing demos.
  */
 export function parseExamples(source: string): Example[] {
   const out: Example[] = []
@@ -58,8 +61,8 @@ export function parseExamples(source: string): Example[] {
     const blockEnd = blockEndDelim + 2
 
     const body = source.slice(blockStart + 3, blockEndDelim)
-    const heading = extractHeading(body)
-    if (!heading) {
+    const marker = extractMarker(body)
+    if (!marker) {
       i = blockEnd
       continue
     }
@@ -78,8 +81,11 @@ export function parseExamples(source: string): Example[] {
     }
     const first = source[afterDoc]
     let jsxEnd: number
-    let kind: 'jsx' | 'expression'
+    let kind: 'jsx' | 'expression' | 'object'
     let tagName: string | undefined
+    let objectName: string | undefined
+    let objectStart: number | undefined
+    let objectEnd: number | undefined
 
     if (first === '<') {
       kind = 'jsx'
@@ -112,27 +118,63 @@ export function parseExamples(source: string): Example[] {
         continue
       }
       jsxEnd = end
+    } else if (marker.annotation === 'playground') {
+      const object = parseObjectDeclaration(source, afterDoc)
+      if (!object) {
+        i = blockEnd
+        continue
+      }
+      kind = 'object'
+      objectName = object.name
+      objectStart = object.start
+      objectEnd = object.end
+      jsxEnd = object.end
     } else {
       i = blockEnd
       continue
     }
 
-    const id = uniqueId(heading.label, usedIds)
+    const label = marker.label || tagName || objectName || 'Example'
+    const id = uniqueId(label, usedIds)
     out.push({
       id,
-      label: heading.label,
-      description: heading.description,
+      label,
+      description: marker.description,
       jsdocStart: blockStart,
       jsdocEnd: blockEnd,
       jsxStart: afterDoc,
       jsxEnd,
       kind,
       tagName,
+      objectStart,
+      objectEnd,
     })
     usedIds.add(id)
     i = jsxEnd
   }
   return out
+}
+
+type Marker = {
+  annotation: 'legacy' | 'playground'
+  label: string
+  description: string
+}
+
+/** Read the explicit `@playground` annotation before falling back to the
+ * established heading-style marker used by existing component examples. */
+function extractMarker(body: string): Marker | null {
+  const lines = body.split('\n').map((l) => l.replace(/^\s*\*?\s?/, ''))
+  const annotationIndex = lines.findIndex((line) => /^@playground(?:\s+|$)/.test(line))
+  if (annotationIndex !== -1) {
+    const label = lines[annotationIndex].replace(/^@playground\s*/, '').trim()
+    const rest = lines.slice(annotationIndex + 1)
+    while (rest.length && rest[0].trim() === '') rest.shift()
+    while (rest.length && rest[rest.length - 1].trim() === '') rest.pop()
+    return { annotation: 'playground', label, description: rest.join('\n').trim() }
+  }
+  const heading = extractHeading(body)
+  return heading ? { annotation: 'legacy', ...heading } : null
 }
 
 /** Find a `# Heading` line in the JSDoc body and split it into label
@@ -189,6 +231,25 @@ function skipWhitespaceAndComments(source: string, from: number): number | null 
     return i
   }
   return null
+}
+
+/** Parse `const name = { … }` (also `let` / `var`) following an explicit
+ * annotation. Type annotations between the name and `=` are fine; the object
+ * initializer itself must be a literal so the Props form has stable fields. */
+function parseObjectDeclaration(
+  source: string,
+  start: number,
+): { name: string; start: number; end: number } | null {
+  const declaration = /^(?:const|let|var)\s+([A-Za-z_$][\w$]*)/.exec(source.slice(start))
+  if (!declaration) return null
+  const name = declaration[1]
+  const equals = source.indexOf('=', start + declaration[0].length)
+  if (equals === -1) return null
+  let objectStart = equals + 1
+  while (objectStart < source.length && /\s/.test(source[objectStart])) objectStart++
+  if (source[objectStart] !== '{') return null
+  const objectEnd = skipBraced(source, objectStart)
+  return objectEnd == null ? null : { name, start: objectStart, end: objectEnd }
 }
 
 /** Slug-ify a label, suffixing `-2`, `-3`, … when the same slug

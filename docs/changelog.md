@@ -3,6 +3,31 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Removed
+
+- Removed the `education-disk`, `help-disk`, and all `*-logo` icon shapes.
+
+### Added
+
+- `@antadesign/anta/bundle` and `bundle.css` provide one minified full-runtime
+  entry and one matching stylesheet for applications that prefer full imports.
+- `Steps` provides controlled and uncontrolled process navigation with optional
+  panels, horizontal and vertical layouts, accessible tab semantics, process
+  states, number and icon-shape markers, state-aware `renderMarker`, labels
+  and hints with clipped-content tooltips, and per-option tones.
+- `Loader` accepts a named `tone`; the loading Steps state forwards the
+  option tone to it.
+- `Tabs` and `Steps` accept `fill`. Tabs share the available width equally;
+  Steps stretch their connectors between content-sized phases.
+- `Steps` adds `primary`, `secondary`, and `tertiary` priorities. Primary uses a
+  solid selected marker and stronger completed connectors; tertiary is compact
+  and borderless.
+- `StepOption` defaults to the neutral tone. Omitting its `tone` or passing an
+  empty string produces the same result; selected rings use the stronger
+  `border-1` step.
+
 ## 0.3.22 — August 20, 2026
 
 ### Changed

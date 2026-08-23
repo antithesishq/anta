@@ -20,7 +20,7 @@ and tracks dark mode.
 <Tag allcaps priority="tertiary" tone="brand" label="Tertiary" />
 ```
 
-## Tones
+## Tone
 
 Omit `tone` for the neutral gray tag, or pick a semantic tone. Color
 comes from the theme tokens, so every tone tracks light and dark mode
@@ -74,7 +74,7 @@ versions, and timers don't reflow.
 ```tsx
 <Tag allcaps tone="success" icon="circle-check" label="Build" value="passed" />
 <Tag allcaps tone="info" icon="hourglass" label="Running" value="20m 16s" />
-<Tag allcaps icon="github-logo" label="Commit" value="4f90d13" />
+<Tag allcaps icon="history" label="Commit" value="4f90d13" />
 <Tag allcaps tone="warning" label="Retries" value="3" iconTrailing="refresh" />
 ```
 
@@ -113,7 +113,7 @@ Uppercase also tracks wider (0.08ch vs the default 0.02ch) and steps each size
 down 1px, since caps read larger than mixed case at the same size.
 
 ```tsx
-<Tag icon="github-logo" label="GitHub" value="v1.6.9" />
+<Tag icon="external-link" label="GitHub" value="v1.6.9" />
 <Tag allcaps label="Running" />
 ```
 

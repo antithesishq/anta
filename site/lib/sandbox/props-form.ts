@@ -43,7 +43,7 @@ const EXCLUDED_BY_COMPONENT: Record<string, Set<string>> = {
  *  Text / Title / Tag keep the editable field — there it edits the label.)
  *  A later iteration replaces this with per-child visual config panels. */
 const STRUCTURAL_CHILDREN = new Set([
-  'Menu', 'Tabs', 'RadioGroup', 'Select', 'SelectFaceted',
+  'Menu', 'Tabs', 'Steps', 'RadioGroup', 'Select', 'SelectFaceted',
 ])
 
 /** Explicit control order per component. Listed names lead in this order;

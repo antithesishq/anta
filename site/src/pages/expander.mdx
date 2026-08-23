@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Expander
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -28,7 +28,6 @@ collapsible body.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Expander"
   layout="side"
   panelHeight={400}
@@ -83,7 +82,7 @@ to see the corners hold their radius as the body appears.
 <Expander round title="Details" priority="primary">…</Expander>
 ```
 
-## Tones
+## Tone
 
 Pick a semantic `tone` to tint the header text and — on the filled
 priorities (`secondary` / `primary`) — the surface too. The set matches
@@ -488,7 +487,7 @@ function Accordion() {
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

@@ -161,6 +161,16 @@ export type {
 } from './components/SelectFaceted'
 export { Tabs } from './components/Tabs'
 export type { TabsProps, TabOption, TabsChangeAttrs } from './components/Tabs'
+export { Steps } from './components/Steps'
+export type {
+  StepsProps,
+  StepMarker,
+  StepMarkerState,
+  StepOption,
+  StepPriority,
+  StepState,
+  StepTone,
+} from './components/Steps'
 export { TabPanel } from './components/TabPanel'
 export type { TabPanelProps } from './components/TabPanel'
 export { Dialog } from './components/Dialog'

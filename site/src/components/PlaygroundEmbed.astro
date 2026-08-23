@@ -1,0 +1,37 @@
+---
+import { PLAYGROUND_ASSETS } from '../generated/playground-assets'
+
+interface Props {
+  component: string
+  initialCode: string
+  initialCss?: string
+  layout?: 'stacked' | 'side'
+  panelHeight?: number
+  codeInitiallyFolded?: boolean
+}
+
+const props = Astro.props as Props
+const serializedProps = JSON.stringify(props)
+const placeholderHeight = props.panelHeight ?? 400
+---
+
+<!--
+  The editor is deliberately mounted by the prebuilt Playground runtime rather
+  than an Astro island. In dev that avoids Vite serving Monaco, its CSS, Shiki,
+  and esbuild-wasm as a large source-module graph. The page loads one hashed
+  JS bundle and one CSS bundle, exactly as it does in production.
+-->
+<link rel="stylesheet" href={`/playground/${PLAYGROUND_ASSETS.css}`} />
+<link rel="stylesheet" href={`/playground/${PLAYGROUND_ASSETS.monacoCss}`} />
+<div
+  class="playground-host"
+  data-anta-playground={serializedProps}
+  style={`min-height: ${placeholderHeight}px`}
+></div>
+<script is:inline type="module" src={`/playground/${PLAYGROUND_ASSETS.js}`}></script>
+
+<style is:inline>
+  .playground-host {
+    margin-bottom: 32px;
+  }
+</style>

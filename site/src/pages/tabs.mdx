@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Tabs
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -19,10 +19,12 @@ A tablist for switching between views. The strip is data-driven: pass an
 selectable strip that emits the chosen value; add matching `<TabPanel>` children
 (see [Panels](#panels)) to show and hide the content too.
 
+Each option can also set `className`, `style`, and `data-*` attributes on its
+individual `<a-tab>`.
+
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Tabs"
   layout="side"
   panelHeight={420}
@@ -69,7 +71,7 @@ a-tabs[priority="tertiary"] ~ a-tabpanel {
 </Col>
 </Columns>
 
-## Tones
+## Tone
 
 Six named tones: `neutral` (default), `brand`, `info`, `success`, `warning`,
 `critical`. Any CSS color works for a one-off custom tone. The tone runs through the
@@ -512,16 +514,18 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Keep the tab strip and panels as siblings under one parent. Panels read the active
 value from `<a-tabs>`.
 
+Add `fill` to make horizontal tabs share the available width equally.
+
 <Preview align="stretch">
   <div style={{ display: 'grid', gap: '12px', width: '320px' }}>
-    <a-tabs role="tablist" default-state="account">
+    <a-tabs role="tablist" default-state="account" fill>
       <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
       <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
     </a-tabs>
@@ -532,7 +536,7 @@ value from `<a-tabs>`.
 
 ```html
 <div>
-  <a-tabs role="tablist" default-state="account">
+  <a-tabs role="tablist" default-state="account" fill>
     <a-tab role="tab" value="account" tabindex="0"><a-tab-label>Account</a-tab-label></a-tab>
     <a-tab role="tab" value="security" tabindex="-1"><a-tab-label>Security</a-tab-label></a-tab>
   </a-tabs>
@@ -639,20 +643,25 @@ scrollable.
 ```
 
 **Equal-width tabs.** By default tabs are sized to their labels (and compress only
-when the strip overflows). For a segmented-control look where every tab is the same
-width, let them fill the strip from a zero basis:
+when the strip overflows). Pass `fill` for a segmented-control look where every tab
+shares the strip width:
 
 <Preview background="var(--bg-base)">
   <EqualWidth client:visible={{ rootMargin: '200px' }} />
-  <style is:inline>{`
-    .equal-tabs a-tabs { width: 100%; }
-    .equal-tabs a-tab { flex: 1 1 0; max-width: none; }
-  `}</style>
 </Preview>
 
-```css folded
-.equal-tabs a-tabs { width: 100%; }
-.equal-tabs a-tab  { flex: 1 1 0; max-width: none; }
+```tsx folded
+<Tabs
+  fill
+  defaultValue="all"
+  label="Filter"
+  options={[
+    { value: 'all', label: 'All' },
+    { value: 'assigned', label: 'Assigned to me' },
+    { value: 'recent', label: 'Recent' },
+    { value: 'archived', label: 'Archived' },
+  ]}
+/>
 ```
 
 **Wrap labels.** Let long labels wrap so the tabs grow taller instead of truncating:

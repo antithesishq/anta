@@ -1,0 +1,469 @@
+@layer anta {
+  a-steps {
+    --steps-marker-size: 28px;
+    --steps-icon-size: 16px;
+    --steps-marker-border-width: 1.5px;
+    --steps-marker-rest-border: var(--border-4);
+    --steps-item-gap: 6px;
+    --steps-gap: 4px;
+    --steps-connector-color: var(--border-3);
+    --steps-connector-width: 1px;
+    /* A completed connector is the tone's `--border-2`, one step stronger than
+       the `--border-3` rest rail. This root value is the neutral default the
+       vertical bridge reads; each tab re-points it to its own tone below. */
+    --steps-complete-connector-color: var(--border-2);
+    --steps-tab-padding-x: 9px;
+    --steps-tab-padding-block: 0px;
+    --steps-hint-leading: 16px;
+
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+  }
+
+  a-steps:has(> a-tabs[size="small"]) {
+    --steps-marker-size: 24px;
+    --steps-icon-size: 14px;
+    --steps-tab-padding-x: 7px;
+    --steps-hint-leading: 14px;
+  }
+
+  a-steps:has(> a-tabs[size="large"]) {
+    --steps-marker-size: 32px;
+    --steps-icon-size: 18px;
+    --steps-tab-padding-x: 13px;
+    --steps-hint-leading: 20px;
+  }
+
+  a-tabs[data-steps] {
+    --steps-marker-active-border: var(--border-1);
+    --steps-primary-marker-lightness: 0.5;
+    --steps-primary-marker-chroma: 0.02;
+    --steps-primary-marker-fg: #ffffff;
+    --tabs-gap: 0px;
+
+    align-items: center;
+    width: fit-content;
+    align-self: flex-start;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  /* `fill` turns a Steps sequence into a rail. Each nonfinal tab gives its
+     connector pseudo-element the remaining space; the final tab stays sized
+     to its content at the far edge. */
+  a-tabs[data-steps][fill] {
+    width: 100%;
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  a-tabs[data-steps] > a-tab[tone="brand"] {
+    --steps-marker-active-border: var(--border-1-brand);
+  }
+
+  a-tabs[data-steps] > a-tab[tone="info"] {
+    --steps-marker-active-border: var(--border-1-info);
+  }
+
+  a-tabs[data-steps] > a-tab[tone="success"] {
+    --steps-marker-active-border: var(--border-1-success);
+  }
+
+  a-tabs[data-steps] > a-tab[tone="warning"] {
+    --steps-marker-active-border: var(--border-1-warning);
+  }
+
+  a-tabs[data-steps] > a-tab[tone="critical"] {
+    --steps-marker-active-border: var(--border-1-critical);
+  }
+
+  a-tabs[data-steps] > a-tab[tone="neutral"] {
+    --steps-marker-active-border: var(--border-1);
+  }
+
+  a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
+    --steps-primary-marker-chroma: 0.17;
+  }
+
+  .dark a-tabs[data-steps] {
+    --steps-primary-marker-lightness: 0.4;
+    --steps-primary-marker-chroma: 0.015;
+  }
+
+  .dark a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
+    --steps-primary-marker-chroma: 0.16;
+  }
+
+  a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"]) {
+    --steps-marker-border-width: 2px;
+    --steps-marker-rest-border: var(--border-3);
+    --steps-connector-color: var(--border-3);
+    --steps-connector-width: 2px;
+  }
+
+  a-tabs[data-steps][priority="tertiary"] {
+    --steps-marker-size: calc(var(--steps-icon-size) + 4px);
+    --steps-marker-border-width: 0px;
+  }
+
+  /* `a-tabs` owns keyboard interaction and panels, but its track, pill, and
+     underline are never part of the Steps presentation. The structural parent
+     makes these resets more specific than Tabs' own priority styles. */
+  a-steps > a-tabs[data-steps] {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  a-tabs[data-steps] > a-tab {
+    /* The connector belongs to its own step, so it takes that step's tone.
+       Tabs sets --tab-selected-border to the tone's --border-2 per tab; the
+       marker border uses --steps-marker-active-border instead so the two can differ. */
+    --steps-complete-connector-color: var(--tab-selected-border);
+    /* Resolve these on the individual tab, after a per-step `tone` has
+       re-pointed --tabs-tone-source. A parent-level value would retain the
+       strip tone and make a primary marker ignore an option override. */
+    --steps-primary-marker-bg: oklch(
+      from var(--tabs-tone-source)
+      var(--steps-primary-marker-lightness)
+      var(--steps-primary-marker-chroma) h
+    );
+    --steps-primary-completed-marker-bg: color-mix(
+      in oklch,
+      var(--steps-primary-marker-bg) 80%,
+      transparent
+    );
+
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: max-content;
+    padding-block: 0;
+    justify-content: flex-start;
+    gap: var(--steps-item-gap);
+    transition:
+      color var(--tab-timing),
+      background-color var(--tab-timing),
+      box-shadow var(--tab-timing);
+  }
+
+  /* In vertical Steps the bridge through a selected panel belongs to the outer
+     element, which can't read the selected tab's --tab-selected-border. Mirror
+     that selected step's --border-2 tone onto the bridge. */
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="brand"]) {
+    --steps-complete-connector-color: var(--border-2-brand);
+  }
+
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="info"]) {
+    --steps-complete-connector-color: var(--border-2-info);
+  }
+
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="success"]) {
+    --steps-complete-connector-color: var(--border-2-success);
+  }
+
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="warning"]) {
+    --steps-complete-connector-color: var(--border-2-warning);
+  }
+
+  a-steps[data-orientation="vertical"]:has(> a-tabs[data-steps] > a-tab:state(selected)[tone="critical"]) {
+    --steps-complete-connector-color: var(--border-2-critical);
+  }
+
+  /* A sequence starts directly at its first marker. Later horizontal steps retain
+     their inset so their labels do not run into the preceding connector. */
+  a-tabs[data-steps]:not([orientation="vertical"]) > a-tab:first-child {
+    padding-inline-start: 0;
+  }
+
+  a-steps > a-tabs[data-steps][fill] > a-tab:not(:last-child) {
+    flex: 1 1 0;
+    max-width: none;
+  }
+
+  a-steps > a-tabs[data-steps][fill] > a-tab:last-child {
+    flex: 0 1 auto;
+    max-width: max-content;
+  }
+
+  /* Steps uses Tabs for its interaction model, but selection belongs to the
+     marker rather than a pill or underline around the complete tab label. */
+  a-steps > a-tabs[data-steps] > a-tab:state(selected) {
+    --tab-bg: transparent;
+
+    box-shadow: none;
+  }
+
+  a-steps > a-tabs[data-steps][priority="tertiary"] > a-tab::after {
+    border: 0;
+  }
+
+  a-step-desc {
+    display: inline-flex;
+    flex: 0 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  a-step-desc > a-tab-label {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  a-step-hint {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--tab-rest-tone, var(--text-3));
+    font-size: calc(1em - 2px);
+    font-weight: 400;
+    line-height: var(--steps-hint-leading);
+  }
+
+  a-step-marker {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--steps-marker-size);
+    height: var(--steps-marker-size);
+    box-sizing: border-box;
+    color: var(--text-4);
+    border: var(--steps-marker-border-width) solid var(--steps-marker-rest-border);
+    border-radius: 999px;
+    transition:
+      color var(--tab-timing),
+      background-color var(--tab-timing),
+      border-color var(--tab-timing);
+  }
+
+  a-tabs[data-steps] a-step-marker :is(a-icon, a-loader) {
+    --icon-size: var(--steps-icon-size);
+  }
+
+  /* A per-step state tone recomputes the secondary fill from that step's
+     source. The fill appears only when the error step is selected. */
+  a-tabs[data-steps] > a-tab[tone] {
+    --tab-secondary-bg: oklch(
+      from var(--tabs-tone-source)
+      var(--_track-l) var(--_track-c) h / var(--_sec-a)
+    );
+  }
+
+  /* The icon follows its tab's tone. Marker borders stay neutral until their
+     step is active, completed, or in error. */
+  a-tabs[data-steps] > a-tab[tone] a-step-marker {
+    color: var(--tab-selected-text);
+  }
+
+  a-tabs[data-steps] > a-tab:is(
+    :state(selected),
+    [data-step-state="completed"]
+  ) a-step-marker {
+    border-color: var(--steps-marker-active-border);
+  }
+
+  a-tabs[data-steps] > a-tab[data-step-state="error"]:not(:state(selected)):not([disabled])
+    a-step-marker {
+    border-color: var(--border-2-critical);
+  }
+
+  /* Secondary and tertiary retain the current label color in their icon. */
+  a-tabs[data-steps]:is([priority="secondary"], [priority="tertiary"])
+    > a-tab[tone]:not([tone=""], [tone="neutral"]) a-step-marker {
+    color: var(--tab-fg);
+  }
+
+  a-tabs[data-steps][priority="secondary"]
+    a-tab:state(selected):not([disabled]) a-step-marker {
+    color: var(--tab-selected-text);
+    background-color: var(--tab-secondary-bg);
+    border-color: var(--steps-marker-active-border);
+  }
+
+  a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])
+    a-tab:state(selected):not([disabled]) a-step-marker {
+    color: var(--steps-primary-marker-fg);
+    background-color: var(--steps-primary-marker-bg);
+    border-color: var(--steps-primary-marker-bg);
+  }
+
+  a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])
+    a-tab[data-step-state="completed"]:not(:state(selected)):not([disabled]) a-step-marker {
+    color: var(--steps-primary-marker-fg);
+    background-color: var(--steps-primary-completed-marker-bg);
+    border-color: transparent;
+  }
+
+  a-tabs[data-steps][priority="tertiary"]
+    a-tab:state(selected):not([disabled]) a-step-marker {
+    color: var(--tab-selected-text);
+    background-color: transparent;
+    border-color: transparent;
+  }
+
+  a-tabs[data-steps] a-step-marker > a-loader {
+    transition: color var(--tab-timing);
+  }
+
+  a-tabs[data-steps]:is([priority="secondary"], [priority="tertiary"])
+    a-step-marker > a-loader:not([tone="neutral"]) {
+    color: inherit;
+  }
+
+  a-tabs[data-steps] a-tab:state(selected):not([disabled])
+    a-step-marker > a-loader {
+    color: inherit;
+  }
+
+  /* In a horizontal strip, each nonfinal tab draws a flexible final pseudo-
+     element. It starts immediately after the description and reaches the next
+     marker rather than being a fixed segment stranded between two step boxes. */
+  a-tabs[data-steps]:not([orientation="vertical"])
+    > a-tab:not(:last-child)::before {
+    content: "";
+    order: 3;
+    flex: 1 1 auto;
+    align-self: center;
+    min-width: calc(var(--steps-marker-size) / 2);
+    height: var(--steps-connector-width);
+    margin-inline-start: calc(1ch - var(--steps-item-gap));
+    margin-inline-end: calc(1ch - 2 * var(--steps-tab-padding-x));
+    background: var(--steps-connector-color);
+    pointer-events: none;
+  }
+
+  /* A completed phase strengthens only the connector toward its next phase. */
+  a-tabs[data-steps]:not([orientation="vertical"])
+    > a-tab[data-step-state="completed"]:not(:last-child)::before {
+    background: var(--steps-complete-connector-color);
+  }
+
+  a-tabs[data-steps] a-tab[disabled] {
+    --tab-fg: var(--text-5);
+
+    opacity: 1;
+  }
+
+  /* Keep a supplied marker legible while matching the disabled label. Loaders
+     normally establish their own tone, so reset that color explicitly too. */
+  a-tabs[data-steps] a-tab[disabled] a-step-marker,
+  a-tabs[data-steps] a-tab[disabled] a-step-marker > a-loader {
+    color: var(--text-5);
+  }
+
+  a-tabs[data-steps] a-tab[disabled] a-step-hint {
+    color: var(--text-5);
+  }
+
+  a-steps[data-orientation="vertical"] {
+    --steps-content-indent: calc(
+      var(--steps-marker-size) + var(--steps-item-gap)
+    );
+    --steps-vertical-gap: calc(var(--steps-gap) + 4px);
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--steps-vertical-gap);
+  }
+
+  /* display: contents folds the tablist's tabs into the a-steps grid. Older
+     engines drop a display:contents element and its accessible name from the
+     a11y tree; current Chrome, Firefox, and Safari expose it correctly. */
+  a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] {
+    display: contents;
+  }
+
+  a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] > a-tab {
+    flex: none;
+    min-width: 0;
+    grid-column: 1;
+    width: max-content;
+    max-width: 100%;
+    padding-inline-start: 0;
+  }
+
+  a-steps[data-orientation="vertical"]
+    a-tab:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    inset-block-start: calc(
+      var(--steps-tab-padding-block) + var(--steps-marker-size)
+    );
+    inset-inline-start: calc(
+      var(--steps-marker-size) / 2 - var(--steps-connector-width) / 2
+    );
+    inset-inline-end: auto;
+    width: var(--steps-connector-width);
+    height: calc(100% - var(--steps-marker-size) + var(--steps-vertical-gap));
+    background: var(--steps-connector-color);
+    transform: none;
+    pointer-events: none;
+  }
+
+  a-steps[data-orientation="vertical"] > a-tabpanel {
+    grid-column: 1;
+    grid-row: var(--steps-panel-row);
+    width: calc(100% - var(--steps-content-indent));
+    margin-inline-start: var(--steps-content-indent);
+  }
+
+  a-steps[data-orientation="vertical"]:has(> a-tabpanel):has(
+    > a-tabs[orientation="vertical"] > a-tab:state(selected):not(:last-child)
+  )::after {
+    content: "";
+    grid-column: 1;
+    grid-row: var(--steps-panel-row);
+    align-self: stretch;
+    justify-self: start;
+    width: var(--steps-connector-width);
+    min-height: var(--steps-marker-size);
+    margin-inline-start: calc(
+      var(--steps-marker-size) / 2 - var(--steps-connector-width) / 2
+    );
+    margin-block-end: calc(-1 * var(--steps-vertical-gap));
+    background: var(--steps-connector-color);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  a-steps[data-orientation="vertical"]
+    > a-tabs[data-steps]
+    > a-tab[data-step-state="completed"]:not(:last-child)::before {
+    background: var(--steps-complete-connector-color);
+  }
+
+  a-steps[data-orientation="vertical"]:has(> a-tabpanel):has(
+    > a-tabs[data-steps][orientation="vertical"]
+      > a-tab[data-step-state="completed"]:state(selected):not(:last-child)
+  )::after {
+    background: var(--steps-complete-connector-color);
+  }
+
+  @media (forced-colors: active) {
+    a-tabs[data-steps][priority="secondary"] a-tab:state(selected) {
+      background-color: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+
+    a-step-marker {
+      color: CanvasText;
+      background-color: Canvas;
+      border-color: CanvasText;
+    }
+
+    a-tabs[data-steps] a-tab:state(selected):not([disabled]) a-step-marker {
+      border-color: Highlight;
+    }
+  }
+}

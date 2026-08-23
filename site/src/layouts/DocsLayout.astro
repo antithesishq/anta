@@ -1,16 +1,7 @@
 ---
-import '@antadesign/anta/tokens.css'
-import '@antadesign/anta/reset.css'
-// Link every element's HOST / light-DOM CSS (border, background, gutter, tones,
-// summary/details typography) as a render-blocking <head> stylesheet. Without
-// it, that CSS only lands when the client-side `@antadesign/anta/elements`
-// module runs (each `a-*.ts` does `import './a-*.css'`) — i.e. AFTER first
-// paint — so an `<a-expander>` flashes as an unstyled box until the
-// registration round-trip completes. We import only the stylesheets (never the
-// JS barrel, which calls `customElements.define` and would crash SSR where
-// `HTMLElement` is undefined), so the host chrome paints immediately; only the
-// shadow-DOM internals still wait for upgrade. See element-host-styles.css.
-import './element-host-styles.css'
+// The full Anta stylesheet is render-blocking so token, host, and composed
+// wrapper styles paint before the client-side runtime registers elements.
+import '@antadesign/anta/bundle.css'
 import '../styles/base.css'
 // Docs-site-only extra icon shapes (generated via Anta's generate-icons
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
@@ -301,7 +292,7 @@ if (isComponentPage && title) {
             rel="noopener"
             aria-label="GitHub repository"
           >
-            <Icon shape="github-logo" size={16} /> GitHub
+            <Icon shape="external-link" size={16} /> GitHub
           </a>
         </div>
         <menu>
@@ -326,6 +317,7 @@ if (isComponentPage && title) {
           <li><a href="/switch/" aria-current={isCurrent('/switch/') ? 'page' : undefined}><Icon shape="toggle-right" size={18} /> Switch</a></li>
           <li><a href="/slider/" aria-current={isCurrent('/slider/') ? 'page' : undefined}><Icon shape="settings-2" size={18} /> Slider</a></li>
           <li><a href="/tabs/" aria-current={isCurrent('/tabs/') ? 'page' : undefined}><Icon shape="tabs" size={18} /> Tabs</a></li>
+          <li><a href="/steps/" aria-current={isCurrent('/steps/') ? 'page' : undefined}><Icon shape="footprints" size={18} /> Steps</a></li>
         </menu>
         <hr class="sidebar-separator" />
         <menu>
@@ -488,7 +480,7 @@ if (isComponentPage && title) {
     </script>
 
     <script>
-      import '@antadesign/anta/elements'
+      import '@antadesign/anta/bundle'
       import '@antadesign/stickers/elements'
       import '../components/a-toc.ts'
 
@@ -699,7 +691,7 @@ if (isComponentPage && title) {
     border: 0;
     height: 1px;
     background: linear-gradient(to right, var(--border-4), var(--border-5));
-    margin: 4px 0;
+    margin: 8px 0;
   }
 
   .sidebar menu li.theming-nav-item {

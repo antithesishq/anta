@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Toaster
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import toasterDemoCode from './toaster.demo.ts'
 import ToasterDemo from '../components/ToasterDemo'
 import Preview from '../components/Preview.astro'
@@ -36,7 +36,6 @@ and the `{ placement, duration }` it's toasted with.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Banner"
   layout="side"
   panelHeight={300}
@@ -257,7 +256,7 @@ Toaster.manager.add(() => <Banner tone="critical" message="Connection lost" />, 
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

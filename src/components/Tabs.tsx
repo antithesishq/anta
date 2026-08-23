@@ -51,9 +51,10 @@ export interface TabOption extends OptionPresentationProps {
   /** Disable just this tab — skipped by keyboard nav and dropped from the tab order
    *  (a disabled-but-selected tab stays reachable, per the ARIA pattern). */
   disabled?: boolean
-  /** Tooltip for this tab — a string or any node — shown **only when the tab's label
-   *  is truncated** (tabs ellipsize when the strip overflows), so a clipped tab reveals
-   *  its full text on hover while a tab that fits shows nothing. Rendered as a
+  /** Tooltip for this tab — a string or any node — shown **only when one of the
+   *  tab's ellipsizing label parts is truncated** (tabs ellipsize when the strip
+   *  overflows), so clipped content reveals its full text on hover while a tab that
+   *  fits shows nothing. Rendered as a
    *  `truncatedOnly` `<Tooltip>` anchored to the tab. For an always-visible tooltip or
    *  other custom trigger content, use `children` with your own `<Tooltip>` instead. */
   tooltip?: React.ReactNode
@@ -69,7 +70,8 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
   children?: React.ReactNode
   /** The tabs, as a data array (the strip's single source). Each entry is a
    *  `TabOption` (`value`, `label` or `children`, `icon`, `iconTrailing`, `tone`,
-   *  `disabled`, `round`). */
+   *  `disabled`, `round`, `className`, `style`). `className` and `style` land on
+   *  that option's individual `<a-tab>`, not on the strip. */
   options?: TabOption[]
   /** Controlled active value — the tab `value` to mark selected (and, when a
    *  `<TabPanel value="…">` shares it, the panel to reveal). When set, you own
@@ -114,6 +116,9 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
    *  is opt-in via CSS); vertical stacks them.
    *  @defaultValue 'horizontal' */
   orientation?: "horizontal" | "vertical"
+  /** Makes horizontal tabs share the available inline space equally.
+   *  @defaultValue false */
+  fill?: boolean
   /** Disable the sliding indicator. By default the selected-tab indicator animates
    *  between tabs (a single rectangle, via CSS anchor positioning); `noslide` paints it
    *  per tab so it snaps with no movement. (Browsers without anchor positioning get that
@@ -176,6 +181,7 @@ export const Tabs = ({
   tone,
   size,
   orientation,
+  fill,
   noslide,
   round,
   disabled,
@@ -238,6 +244,7 @@ export const Tabs = ({
       tone={tone && tone !== "neutral" ? tone : undefined}
       size={size && size !== "medium" ? size : undefined}
       orientation={vertical ? "vertical" : undefined}
+      fill={fill ? "" : undefined}
       noslide={noslide ? "" : undefined}
       round={roundAttr(round)}
       disabled={disabled ? "" : undefined}
@@ -255,15 +262,16 @@ export const Tabs = ({
         const tabDisabled = disabled || p.disabled
         const isSelected = p.value === currentValue
         const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(p)
-        return (
+        const tab = (
           <a-tab
             key={p.value}
             {...optionAttrs}
             role="tab"
             value={p.value}
-            // Per-tab tone override: named/custom pass the attribute (CSS keys off it),
-            // and a custom literal color also sets --tabs-tone-source on the tab.
-            tone={p.tone && p.tone !== "neutral" ? p.tone : undefined}
+            // Per-tab tone override: named, neutral, and custom tones pass the
+            // attribute (CSS keys off it), and a custom literal color also sets
+            // --tabs-tone-source on the tab.
+            tone={p.tone || undefined}
             aria-disabled={tabDisabled ? "true" : undefined}
             // Every enabled tab is its own tab stop (not a roving single stop) — Tab /
             // Shift+Tab step through them; arrows move + select via the element. A
@@ -279,14 +287,15 @@ export const Tabs = ({
             {p.icon && <a-icon shape={p.icon} aria-hidden="true" />}
             {wrapLabel(p.label != null ? p.label : p.children, "a-tab-label")}
             {p.iconTrailing && <a-icon shape={p.iconTrailing} aria-hidden="true" />}
-            {/* Per-tab tooltip: a truncatedOnly Tooltip anchored to the tab, so it
-                surfaces only when the label ellipsizes. It finds the tab's
-                <a-tab-label> automatically (see a-tooltip's TRUNCATING_PARTS). */}
+            {/* A truncatedOnly tooltip is part of each tab's own light DOM, after
+                its label/content. It follows every truncating label part,
+                including a Step's label and hint. */}
             {p.tooltip != null && p.tooltip !== "" ? (
               <Tooltip truncatedOnly>{p.tooltip}</Tooltip>
             ) : null}
           </a-tab>
         )
+        return tab
       })}
     </a-tabs>
   )

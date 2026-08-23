@@ -24,12 +24,19 @@ const PREVIOUS_BROWSERS = 'Chrome 149 (2026), Edge 149 (2026), Firefox 152 (2026
 
 export type Mark = 'yes' | 'partial' | 'no' | 'paid'
 
+export interface SystemNamePart {
+  label: string
+  href: string
+}
+
 export interface System {
   /** Short key, also the coverage-column id. */
   id: string
   name: string
+  /** Linked names that replace `name` where a combined system is rendered. */
+  nameParts?: SystemNamePart[]
   /** Compact label for the matrix column headers, where horizontal space is
-   *  tight. Falls back to `name` (used verbatim on the pros/cons cards). */
+   *  tight. Falls back to `name`. */
   short?: string
   /** True for Anta; drives the highlight styling in both matrices. */
   anta?: boolean
@@ -357,37 +364,18 @@ export const SYSTEMS: System[] = [
     ],
   },
   {
-    id: 'baseui',
-    name: 'Base UI',
-    version: '@base-ui/react 1.6.0',
-    docs: 'https://base-ui.com',
-    tagline: 'An unstyled React library for accessible, composable interface primitives.',
-    kind: 'Headless React primitives',
-    frameworks: 'React',
-    styling: 'Unstyled; bring your own',
-    license: 'MIT',
-    bundleSize: "160 KiB",
-    bundleIncludes: "All Base UI primitives and positioning code; React, styling, and icons excluded. Selective imports are smaller.",
-    browsers: `Base UI publishes no fixed browser floor. This snapshot's current-browser reference is ${CURRENT_BROWSERS}, including iOS Safari 26.6 (2026).`,
-    pros: [
-      'Includes Combobox, Autocomplete, Number Field, Meter, and Field/Fieldset primitives.',
-      "MUI's top investment; Material UI v9 already builds new components on it.",
-      'The default base for new shadcn/ui projects since July 2026.',
-      'One package with a render-prop API instead of `asChild`.',
-    ],
-    cons: [
-      'Newer, with fewer third-party examples and answers.',
-      'React-only.',
-    ],
-  },
-  {
     id: 'shadcn',
-    name: 'shadcn/ui',
+    name: 'shadcn + Base UI + Tailwind',
+    nameParts: [
+      { label: 'shadcn', href: 'https://ui.shadcn.com' },
+      { label: 'Base UI', href: 'https://base-ui.com' },
+      { label: 'Tailwind', href: 'https://tailwindcss.com' },
+    ],
     short: 'shadcn',
     version: 'Base UI registry @ 705ce59',
     docs: 'https://ui.shadcn.com',
-    tagline: 'Tailwind-styled source copied into your repo by CLI, on an accessible primitive layer.',
-    kind: 'Copy-paste React source',
+    tagline: 'Tailwind-styled source copied into your repo by CLI, using Base UI primitives by default.',
+    kind: 'Copy-paste React source on Base UI',
     frameworks: 'React',
     frameworksNote: 'Vue, Svelte community ports',
     styling: 'Tailwind + CSS variables',
@@ -397,7 +385,7 @@ export const SYSTEMS: System[] = [
     browsers: "Depends on the selected primitives. Tailwind CSS 4 requires Safari 16.4 (2023), Chrome 111 (2023), and Firefox 128 (2024), or later.",
     pros: [
       'The source lives in your repo, with no black-box dependency or version lock.',
-      'Accessibility comes from the primitive layer you choose.',
+      'Base UI supplies accessible, composable primitives with a render-prop API.',
       'AI tools such as v0 and Cursor commonly generate shadcn-style code.',
       'A large ecosystem of themes, blocks, and community registries.',
     ],
@@ -409,7 +397,12 @@ export const SYSTEMS: System[] = [
   },
   {
     id: 'untitledui',
-    name: 'Untitled UI',
+    name: 'Untitled UI + React Aria + Tailwind',
+    nameParts: [
+      { label: 'Untitled UI', href: 'https://www.untitledui.com/react' },
+      { label: 'React Aria', href: 'https://react-spectrum.adobe.com/react-aria/' },
+      { label: 'Tailwind', href: 'https://tailwindcss.com' },
+    ],
     short: 'Untitled',
     version: 'React app source @ eaee6a5',
     docs: 'https://www.untitledui.com/react',
@@ -474,14 +467,14 @@ export const CATEGORIES: Category[] = [
  * Coverage marks per system, keyed by category id. Absent keys default to
  * 'no'. Honest, grouped-by-job marks; see the module header. `partial` =
  * basic, simple, or community-only; `paid` = behind a commercial tier.
- * headless primitives such as Base UI get marks only where they ship an
- * actual primitive, so their empty cells reflect "you build the visual".
+ * A mark means the combined system ships the component readers use; an absent
+ * mark means it does not.
  */
 export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   anta: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes', slider: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes',
-    accordion: 'yes', table: 'partial', tag: 'yes', card: 'yes', progress: 'yes',
+    accordion: 'yes', table: 'partial', tag: 'yes', card: 'yes', progress: 'yes', steps: 'yes',
     icons: 'yes', typography: 'yes',
   },
   webawesome: {
@@ -510,7 +503,7 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes',
   },
   mantine: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
@@ -547,12 +540,6 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
     nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial',
   },
-  baseui: {
-    button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
-    choice: 'yes', slider: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes',
-    dialog: 'yes', toast: 'yes', accordion: 'yes', progress: 'yes',
-    avatar: 'yes', nav: 'partial',
-  },
   shadcn: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
@@ -564,7 +551,7 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'paid', accordion: 'paid',
-    table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'partial',
+    table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes',
     steps: 'paid', nav: 'paid', icons: 'yes', typography: 'yes', charts: 'yes',
   },
   gravity: {
@@ -798,23 +785,6 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     nav: 'https://astryx.atmeta.com/components/Breadcrumbs',
     icons: 'https://astryx.atmeta.com/components/Icon',
     typography: 'https://astryx.atmeta.com/components/Text',
-  },
-  baseui: {
-    button: 'https://base-ui.com/react/components/toggle-group',
-    textinput: 'https://base-ui.com/react/components/input',
-    select: 'https://base-ui.com/react/components/select',
-    combobox: 'https://base-ui.com/react/components/combobox',
-    choice: 'https://base-ui.com/react/components/checkbox',
-    slider: 'https://base-ui.com/react/components/slider',
-    tabs: 'https://base-ui.com/react/components/tabs',
-    menu: 'https://base-ui.com/react/components/menu',
-    tooltip: 'https://base-ui.com/react/components/tooltip',
-    dialog: 'https://base-ui.com/react/components/dialog',
-    toast: 'https://base-ui.com/react/components/toast',
-    accordion: 'https://base-ui.com/react/components/accordion',
-    progress: 'https://base-ui.com/react/components/progress',
-    avatar: 'https://base-ui.com/react/components/avatar',
-    nav: 'https://base-ui.com/react/components/navigation-menu',
   },
   shadcn: {
     button: 'https://ui.shadcn.com/docs/components/button',

@@ -10,7 +10,7 @@ The docs site consumes Anta via the workspace symlink (`"@antadesign/anta": "wor
 
 - `src/layouts/DocsLayout.astro` is the sidebar and main-content shell; it imports `@antadesign/anta/elements` in a client-side script.
 - `src/pages/` holds static `.astro` pages and MDX component documentation.
-- `src/components/` holds Preact islands. Use `client:load` or `client:visible`; `Playground.tsx` is the shared interactive component-demo surface, while custom islands are for demos it cannot express.
+- `src/components/` holds Preact islands. Use `client:load` or `client:visible`; `Playground.tsx` is the shared interactive component-demo surface, mounted by the prebuilt `PlaygroundEmbed.astro` runtime so it is not a Vite island. Custom islands are for demos it cannot express.
 - `src/styles/base.css` owns the minimal site reset and typography.
 
 Astro renders static output. The site uses MDX and astro-expressive-code, with GFM, math, directive, definition-list, and attributes Remark plugins; slug, autolink-headings, and MathJax Rehype plugins. Preact compat aliases `react` to `preact/compat`, so anta's JSX runtime works without `configure()`.
@@ -41,7 +41,7 @@ Astro renders static output. The site uses MDX and astro-expressive-code, with G
 
 ## Playground
 
-The `<Playground>` component (`site/src/components/Playground.tsx`) is the playground that lands on `/<name>/` pages. It is the largest single component in this directory and is intentionally self-contained so that a future migration to a dedicated package (`@antadesign/sandbox` or similar) and a dedicated repository can lift it out without disturbing the rest of the site.
+The `<Playground>` component (`site/src/components/Playground.tsx`) is the playground that lands on `/<name>/` pages. It is the largest single component in this directory and is intentionally self-contained so that a future migration to a dedicated package (`@antadesign/sandbox` or similar) and a dedicated repository can lift it out without disturbing the rest of the site. Pages import `PlaygroundEmbed.astro`, which serializes its props into a host for the prebuilt runtime.
 
 Supporting code:
 
@@ -49,36 +49,35 @@ Supporting code:
   - **`modules.ts` maps the imports the sandbox exposes to playground code.** The whole `@antadesign/anta` barrel is exposed automatically — `moduleManifest['@antadesign/anta']` and `getDemoModules()['@antadesign/anta']` are both derived from `Object.keys(import * as anta)`, so **any component (current or future) is importable/passable as children with no edit here**. Other paths (`preact`, `preact/hooks`, `@antadesign/anta/elements` side-effect) stay curated — add a new *non-anta* module to **both** the manifest and `getDemoModules()`, or `import { X }` resolves to `undefined` and the preview renders blank.
 - `site/scripts/copy-esbuild-wasm.mjs` — copies `esbuild.wasm` into `site/public/` so the iframe can fetch `/esbuild.wasm` directly.
 - `site/scripts/build-iframe-runtime.mjs` — pre-builds `site/public/iframe-anta-runtime.js`, a self-contained ESM bundle of `@antadesign/anta/elements` + per-element CSS that the iframe dynamic-imports to register custom elements on its own `customElements` registry.
+- `site/scripts/build-playground-runtime.mjs` — pre-builds the changing editor app and its CSS, plus independent content-hashed Monaco, Shiki, and compiler bundles in `site/public/playground/`. Monaco includes its workers as blobs. It runs before both dev and production builds, so do not change the Playground back into a hydrated Astro island: that would reintroduce Vite's source-module graph in dev.
 
 ### Monaco is bundled from npm (no CDN)
 
-Monaco lives in `dependencies` as `monaco-editor` and is bundled by Vite into the playground's lazy chunk. The wiring is in `Playground.tsx`'s mount effect:
+Monaco lives in `dependencies` as `monaco-editor` and is built into its own cached runtime. `Playground.tsx` dynamically imports that generated bundle, while `playground-monaco.ts` owns the Monaco and worker imports:
 
 ```ts
-import('monaco-editor')                                                         // namespace
-import('monaco-editor/esm/vs/editor/editor.worker?worker')                      // fallback worker
-import('monaco-editor/esm/vs/language/typescript/ts.worker?worker')             // TS service
-import('monaco-editor/esm/vs/language/css/css.worker?worker')                   // CSS tab
-import('@monaco-editor/react')                                                  // React wrapper
+import * as monaco from 'monaco-editor'                                         // namespace
+import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker&inline'
+import TsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker&inline'
+import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker&inline'
 ```
 
-After load, `MonacoEnvironment.getWorker(_, label)` returns a fresh `Worker` for `typescript`/`javascript` (ts.worker), `css`/`scss`/`less` (css.worker), and anything else (editor.worker). `loader.config({ monaco: monacoNs })` is what makes `@monaco-editor/react` skip its default CDN fetch.
+`Playground.tsx` keeps the small `@monaco-editor/react` bridge in the app bundle
+so it shares the app's Preact instance. After load, `MonacoEnvironment.getWorker(_, label)` returns a fresh `Worker` for `typescript`/`javascript` (ts.worker), `css`/`scss`/`less` (css.worker), and anything else (editor.worker). `loader.config({ monaco: monacoNs })` is what makes `@monaco-editor/react` skip its default CDN fetch.
 
-Trade-off: ~1.5 MB Monaco enters the `/<name>/` lazy chunk. The docs site is self-contained — no third-party JS fetch, offline-correct, and the runtime version is whatever `package.json` says.
+The docs site is self-contained — no third-party JS fetch, offline-correct, and the runtime version is whatever `package.json` says. The runtime's content hash lets it remain cached while app code changes.
 
 We only register workers for languages the playground actually uses. Adding JSON/HTML support means adding two more `?worker` imports and switch arms.
 
 ## Adding a component docs page
 
-Create `site/src/pages/{name}.mdx` with `layout: ../layouts/DocsLayout.astro` (component pages are served at the site root, `/{name}/`, not under `/components/`; add the slug to `site/lib/component-slugs.ts` and the sidebar nav in `DocsLayout.astro`). For an interactive demo, drop `<Playground client:visible component="…" layout="side" initialCode={…} />` near the top.
+Create `site/src/pages/{name}.mdx` with `layout: ../layouts/DocsLayout.astro` (component pages are served at the site root, `/{name}/`, not under `/components/`; add the slug to `site/lib/component-slugs.ts` and the sidebar nav in `DocsLayout.astro`). For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop `<Playground component="…" layout="side" initialCode={…} />` near the top. It is mounted by the shared prebuilt runtime, so it does not take a `client:*` directive.
 
 **Always use the shared `<Playground>` for the interactive demo — never hand-roll a bespoke per-component playground island.** The shared one gives a uniform editor + auto props form (from `api.json`) + isolated preview iframe across every page, and is slated for extraction into its own package; a one-off island fragments that and drifts. The `initialCode` is plain TSX — imports followed by a trailing JSX block that the bundler auto-wraps in a `<>…</>` fragment, so it can hold **multiple sibling or nested elements** (e.g. several anchors each wrapping a `<Tooltip>`); the props panel binds to the first instance of `component`. Keep `initialCode` in a sibling `{name}.demo.ts` (`export default \`…\``) so Astro's MDX pipeline doesn't mangle the template literal's indentation. Reserve custom islands for demos the playground genuinely can't express (e.g. a self-animating `AnimatedProgress`).
 
 **Demos use Anta's own components wherever one exists — down to the incidental controls.** Any control the design system ships — `Checkbox`, `Input`, `Button`, `RadioGroup`, `Select`, `Tabs`, `Tag`, `Tooltip`, … — is what a demo reaches for, whether it's the component under test or just a knob beside it (a "simulate loading" toggle, a filter field, a segmented switcher). This holds in every demo surface: Playground `initialCode`, a hydrated island (`src/components/*.tsx`), and inline `.mdx` examples. The point is that every example dogfoods the library and looks/behaves like real usage; a raw `<input>` / `<button>` / `<select>` next to an Anta component reads as an oversight. Drop to a raw HTML control **only** when there's genuinely no Anta equivalent yet (e.g. `<input type="range">` — there's no slider component). The `Playground` island itself is exempt — it's editor/props-form infrastructure kept standalone for extraction, not a component demo.
 
-The preview iframe loads `tokens.css` + `reset.css` + the registered elements via `site/scripts/build-iframe-runtime.mjs` (→ `public/iframe-anta-runtime.js`), so component CSS that references `--bg-*` / `--text-*` / `--border-*` resolves the same as on the docs site. If a new component's appearance depends on a stylesheet not in that bundle, add it there.
-
-**`site/src/layouts/element-host-styles.css` is a hand-maintained aggregator** — it `@import`s every element's `dist/elements/a-*.css` so `DocsLayout.astro` can link the host/light-DOM chrome render-blocking in `<head>` (otherwise the element CSS only arrives when the client `@antadesign/anta/elements` JS registers the elements, flashing an unstyled box on load). **When you add a new component, add its `a-{name}.css` `@import` here too** (the same manual step as `build:css` and `elements/index.ts`), or its host chrome will flash before upgrade on the docs site.
+The preview iframe loads Anta's built `bundle.js` + `bundle.css` through `site/scripts/build-iframe-runtime.mjs`. The iframe re-bundles that same package entry with its own Preact instance because custom elements and renderer state are scoped to its document. `DocsLayout.astro` also imports `bundle.css` render-blocking and registers elements from `bundle`, so the shell and every playground share Anta's shipped runtime and styles. New components enter both automatically through `src/index.ts` and `src/elements/index.ts`; no site-side stylesheet aggregator is needed.
 
 ```sh
 pnpm run dev                 # ← run from the REPO ROOT (see below); the dev command for all work
@@ -87,7 +86,7 @@ cd site && pnpm run build    # static build (site only)
 
 **Run the dev server with `pnpm run dev` from the repo root, not `cd site && pnpm run dev`.** The root command runs the site's `astro dev` *and* a `nodemon` watcher that rebuilds anta's `dist` on `src` changes, so package edits propagate to the running site; the site-only command does not rebuild anta. (See "Common commands" in the root [`AGENTS.md`](../AGENTS.md).)
 
-The site's own `pnpm run dev` (which the root command invokes under the hood) chains through `docs:api` (typedoc → `src/api.json`), `docs:pages` (regenerate changelog partials), `docs:wasm` (copy esbuild.wasm), and `docs:iframe-runtime` (rebuild iframe runtime) before starting Astro.
+The site's own `pnpm run dev` (which the root command invokes under the hood) chains through `docs:api` (typedoc → `src/api.json`), `docs:pages` (regenerate changelog partials), `docs:wasm` (copy esbuild.wasm), `docs:iframe-runtime` (rebuild iframe runtime), and `docs:playground-runtime` (rebuild the editor runtime) before starting Astro.
 
 ## Docs prose style
 

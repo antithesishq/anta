@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Select
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -26,7 +26,6 @@ uncontrolled Select.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Select"
   layout="side"
   panelHeight={420}
@@ -919,7 +918,7 @@ inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

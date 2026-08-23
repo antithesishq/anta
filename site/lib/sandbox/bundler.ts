@@ -20,10 +20,26 @@
  */
 import { moduleManifest } from './modules.ts'
 
-let initialized: Promise<void> | null = null
+type Esbuild = typeof import('esbuild-wasm/esm/browser')
 
-async function ensureInit(): Promise<typeof import('esbuild-wasm')> {
-  const esbuild = await import('esbuild-wasm')
+let initialized: Promise<void> | null = null
+let loadEsbuild = () => import('esbuild-wasm/esm/browser')
+
+/**
+ * Supply the browser compiler module used by the playground. The docs runtime
+ * sets this to its independently cacheable compiler bundle; leaving the
+ * default keeps this helper usable in isolation.
+ */
+export function setEsbuildLoader(loader: () => Promise<Esbuild>) {
+  initialized = null
+  loadEsbuild = loader
+}
+
+async function ensureInit(): Promise<Esbuild> {
+  // The package root selects its CommonJS browser build. Use its ESM browser
+  // entry by default; the docs runtime replaces this loader with a stable
+  // content-hashed compiler bundle.
+  const esbuild = await loadEsbuild()
   if (!initialized) {
     initialized = esbuild.initialize({ wasmURL: '/esbuild.wasm', worker: true })
   }
@@ -52,7 +68,7 @@ export async function bundle(
   userCode: string,
   userStyles?: string,
 ): Promise<BundleResult> {
-  let esbuild: typeof import('esbuild-wasm')
+  let esbuild: Esbuild
   try {
     esbuild = await ensureInit()
   } catch (err: any) {

@@ -41,7 +41,6 @@ export const ICON_SHAPES = [
   'dots-vertical',
   'download',
   'edit',
-  'education-disk',
   'external-link',
   'eye-closed',
   'eye',
@@ -52,19 +51,14 @@ export const ICON_SHAPES = [
   'folder-close',
   'folder-open',
   'folder-tree',
-  'github-logo',
-  'gitlab-logo',
   'hat-glasses',
   'heart-handshake',
   'heart',
-  'help-disk',
   'history-tree',
   'history',
   'home',
   'hourglass',
   'info',
-  'jira-logo',
-  'linear-logo',
   'link',
   'list-collapse',
   'maximize',
@@ -106,7 +100,6 @@ export const ICON_SHAPES = [
   'timer',
   'toggle-right',
   'trash',
-  'trello-logo',
   'view',
   'warning-diamond',
   'warning-triangle',
@@ -180,16 +173,9 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'history': ['log', 'past'],
   'history-tree': ['log', 'past'],
   'runs-history': ['log', 'past'],
-  'github-logo': ['github', 'git', 'repo'],
-  'gitlab-logo': ['gitlab', 'git', 'repo'],
-  'trello-logo': ['trello', 'board', 'kanban'],
-  'jira-logo': ['jira', 'ticket', 'issue'],
-  'linear-logo': ['linear', 'ticket', 'issue'],
   'chat': ['message', 'comment', 'discuss'],
   'presentation': ['slides', 'deck'],
-  'education-disk': ['learn', 'school', 'academic'],
   'book-open': ['read', 'docs', 'documentation'],
-  'help-disk': ['question', 'faq', 'support', 'help'],
   'sparkles': ['ai', 'magic', 'generate'],
   'cube': ['box', 'package'],
   'circle': ['dot', 'point'],
@@ -252,7 +238,6 @@ declare module '@antadesign/anta' {
     'dots-vertical': true
     'download': true
     'edit': true
-    'education-disk': true
     'external-link': true
     'eye-closed': true
     'eye': true
@@ -263,19 +248,14 @@ declare module '@antadesign/anta' {
     'folder-close': true
     'folder-open': true
     'folder-tree': true
-    'github-logo': true
-    'gitlab-logo': true
     'hat-glasses': true
     'heart-handshake': true
     'heart': true
-    'help-disk': true
     'history-tree': true
     'history': true
     'home': true
     'hourglass': true
     'info': true
-    'jira-logo': true
-    'linear-logo': true
     'link': true
     'list-collapse': true
     'maximize': true
@@ -317,7 +297,6 @@ declare module '@antadesign/anta' {
     'timer': true
     'toggle-right': true
     'trash': true
-    'trello-logo': true
     'view': true
     'warning-diamond': true
     'warning-triangle': true

@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Tag
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -23,7 +23,6 @@ from `icon`, `label`, `value`, and `iconTrailing` props, the same way
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Tag"
   layout="side"
   panelHeight={400}
@@ -53,7 +52,7 @@ and tracks dark mode.
 <Tag allcaps priority="tertiary" tone="brand" label="Tertiary" />
 ```
 
-## Tones
+## Tone
 
 <Columns>
 <Col>
@@ -146,14 +145,14 @@ versions, and timers don't reflow.
 <Preview>
   <Tag allcaps tone="success" icon="circle-check" label="Build" value="passed" />
   <Tag allcaps tone="info" icon="hourglass" label="Running" value="20m 16s" />
-  <Tag allcaps icon="github-logo" label="Commit" value="4f90d13" />
+  <Tag allcaps icon="history" label="Commit" value="4f90d13" />
   <Tag allcaps tone="warning" label="Retries" value="3" iconTrailing="refresh" />
 </Preview>
 
 ```tsx folded
 <Tag allcaps tone="success" icon="circle-check" label="Build" value="passed" />
 <Tag allcaps tone="info" icon="hourglass" label="Running" value="20m 16s" />
-<Tag allcaps icon="github-logo" label="Commit" value="4f90d13" />
+<Tag allcaps icon="history" label="Commit" value="4f90d13" />
 <Tag allcaps tone="warning" label="Retries" value="3" iconTrailing="refresh" />
 ```
 
@@ -209,12 +208,12 @@ Uppercase also tracks wider (0.08ch vs the default 0.02ch) and steps each size
 down 1px, since caps read larger than mixed case at the same size.
 
 <Preview>
-  <Tag icon="github-logo" label="GitHub" value="v1.6.9" />
+  <Tag icon="external-link" label="GitHub" value="v1.6.9" />
   <Tag allcaps label="Running" />
 </Preview>
 
 ```tsx folded
-<Tag icon="github-logo" label="GitHub" value="v1.6.9" />
+<Tag icon="external-link" label="GitHub" value="v1.6.9" />
 <Tag allcaps label="Running" />
 ```
 
@@ -224,7 +223,7 @@ down 1px, since caps read larger than mixed case at the same size.
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

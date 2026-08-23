@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Checkbox
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -21,7 +21,6 @@ The `Checkbox` wrapper renders an `<a-checkbox>` element that manages its own st
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Checkbox"
   layout="side"
   panelHeight={400}
@@ -250,7 +249,7 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

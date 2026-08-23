@@ -28,6 +28,16 @@ changes are not listed.
   empty string produces the same result; selected rings use the stronger
   `border-1` step.
 
+- `Avatar` renders an image, seed-generated placeholder, or initials, with
+  `generator`, `badge`, and `round` options. `avatar-core` generation helpers are
+  also exported.
+
+### Changed
+
+- `Slider` thumbs are smaller: 12px at `small`, 16px at `medium` (the default,
+  previously 18px), and 20px at `large`, unchanged. `thumbSize` still overrides
+  any of them.
+
 ## 0.3.22 — August 20, 2026
 
 ### Changed

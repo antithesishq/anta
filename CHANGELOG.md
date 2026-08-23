@@ -28,19 +28,9 @@ changes are not listed.
   empty string produces the same result; selected rings use the stronger
   `border-1` step.
 
-- `Avatar` — a userpic container that shows an image, a seed-generated placeholder
-  figure, or initials. A `generator` config caps each dimension (colors, scale,
-  translate, angles, the head-to-body gap, and corner radii) to OFF / ANY / RANGE /
-  LIST, with OKLCH color ranges or an explicit palette, so generated avatars stay
-  on-brand. Corner radius runs 0 (square) through 1 (fully round) to above 1,
-  where the head elongates into an oval; it is split into `headRadiusTop` and
-  `headRadiusBottom` so the head can take an egg shape, with the bottom never
-  rounded less than the top. `badge` colors its corner badge with any named tone or
-  literal CSS color — the badge sits in a hole masked out of the picture rather
-  than behind a painted ring — and `round` makes the frame a circle (or takes a
-  length for a custom radius). The
-  `avatar-core` generation helpers (`resolveAvatar`, `avatarToSvg`, `getInitials`,
-  and the seed PRNG) ship as named exports.
+- `Avatar` renders an image, seed-generated placeholder, or initials, with
+  `generator`, `badge`, and `round` options. `avatar-core` generation helpers are
+  also exported.
 
 ### Changed
 

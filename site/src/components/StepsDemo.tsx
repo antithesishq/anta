@@ -85,6 +85,26 @@ export function State() {
   )
 }
 
+export function Priority() {
+  useElements()
+  return (
+    <div style={{ display: 'grid', gap: '16px', width: '100%' }}>
+      {(['primary', 'secondary', 'tertiary'] as const).map((priority) => (
+        <div key={priority} style={{ display: 'grid', gap: '6px' }}>
+          <Text size="small" tone="neutral">{priority}</Text>
+          <Steps
+            fill
+            priority={priority}
+            defaultValue="review"
+            label={`${priority} deployment progress`}
+            options={fullWidthPhases}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function Tones() {
   useElements()
   return (

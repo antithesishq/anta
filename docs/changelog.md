@@ -15,6 +15,9 @@ changes are not listed.
   sequence tone to it.
 - `Tabs` and `Steps` accept `fill`. Tabs share the available width equally;
   Steps stretch their connectors between content-sized phases.
+- `Steps` adds `primary`, `secondary`, and `tertiary` priorities. Primary uses a
+  solid selected marker and stronger completed connectors; tertiary is compact
+  and borderless.
 
 ## 0.3.22 — August 20, 2026
 

@@ -36,6 +36,28 @@ disabled steps keep their layout space and use the incomplete marker by default.
 Pass `marker` or return a value from `renderMarker` to keep a custom marker. Use
 `loading` for work running in the background.
 
+## Priority
+
+`secondary` is the default: selected markers have a subtle fill inside their
+outline. `primary` fills the selected marker with its tone and uses a white icon,
+like a primary Button. Its marker and connector are 2px; the connector after a
+completed step uses the same tone at the stronger `border-2` step. `tertiary`
+removes the marker stroke and makes its marker the icon size plus 2px on each side.
+
+```tsx
+<Steps
+  fill
+  priority="primary"
+  defaultValue="review"
+  label="Deployment progress"
+  options={[
+    { value: 'build', label: 'Build', state: 'completed' },
+    { value: 'review', label: 'Review', state: 'loading' },
+    { value: 'deploy', label: 'Deploy', state: 'incomplete' },
+  ]}
+/>
+```
+
 ### Markers and hints
 
 Marker precedence is:
@@ -84,9 +106,10 @@ const options = [
 ## Tone
 
 `tone` colors labels, hints, and the selected marker. Labels strengthen on hover
-and selection; hints stay at the muted `text-3` tone. Resting markers and
-connectors stay neutral; error markers keep a critical outline and gain a
-critical fill when selected.
+and selection; hints stay at the muted `text-3` tone. With `priority="primary"`,
+the connector after a completed step also uses the tone at the stronger `border-2`
+step. Resting markers and connectors otherwise stay neutral; error markers keep a
+critical outline and gain a critical fill when selected.
 
 ```tsx
 const options = [
@@ -210,6 +233,7 @@ Events match [`Tabs`](./tabs.md#events).
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `options` | StepOption[] | — | Ordered process phases. |
+| `priority?` | StepPriority | secondary | Visual emphasis. Primary uses a solid selected marker and a stronger completed connector; secondary is the outlined default; tertiary is compact and borderless. |
 | `renderMarker?` | (option, state) => ReactNode | — | Builds a custom marker from a step and its current state. A returned node
 replaces `marker` and the built-in state marker; return `undefined` to use
 those fallbacks, or `null` for an empty ring. |
@@ -251,7 +275,7 @@ import '@antadesign/anta/components/Steps.css'
 </div>
 ```
 
-Use `size`, `orientation`, and `tone` first. Each option also accepts `className`,
+Use `priority`, `size`, `orientation`, and `tone` first. Each option also accepts `className`,
 `style`, and `data-*` attributes. The marker and connector are light DOM.
 
 **Dotted connector.** For horizontal steps, replace the connector's solid
@@ -267,8 +291,8 @@ background with a dotted border:
 ```
 
 `className` and `style` on `Steps` apply to `a-steps`. These properties adjust
-density: `--steps-marker-size`, `--steps-marker-border-width`, `--steps-item-gap`, and
-`--steps-gap`.
+density: `--steps-marker-size`, `--steps-marker-border-width`,
+`--steps-connector-width`, `--steps-item-gap`, and `--steps-gap`.
 
 **Fill the container.** Pass `fill` to spread horizontal steps across their
 container. The connectors take the remaining space, placing the middle step in

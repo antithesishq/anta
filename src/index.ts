@@ -141,6 +141,7 @@ export type {
   StepMarker,
   StepMarkerState,
   StepOption,
+  StepPriority,
   StepState,
   StepTone,
 } from './components/Steps'

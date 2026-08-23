@@ -21,6 +21,9 @@ export type StepTone =
 /** Process state shown by one step. */
 export type StepState = "incomplete" | "loading" | "completed" | "error"
 
+/** Visual emphasis for the step markers and completed connectors. */
+export type StepPriority = "primary" | "secondary" | "tertiary"
+
 /** A static step marker: a number or any registered Anta icon shape. */
 export type StepMarker = number | IconShape
 
@@ -63,6 +66,11 @@ export interface StepsProps extends Omit<
 > {
   /** Ordered process phases. */
   options: StepOption[]
+  /** Visual emphasis. Primary uses a solid selected marker and a stronger
+   * completed connector; secondary is the outlined default; tertiary is compact
+   * and borderless.
+   * @defaultValue 'secondary' */
+  priority?: StepPriority
   /** Tone for the selected step. An error step always uses critical.
    * @defaultValue brand */
   tone?: StepTone
@@ -121,6 +129,7 @@ export const Steps = ({
   onBlur,
   label,
   tone = "brand",
+  priority = "secondary",
   renderMarker,
   size,
   orientation,
@@ -173,6 +182,7 @@ export const Steps = ({
       ...optionAttrs,
       value: option.value,
       disabled: option.disabled,
+      "data-step-state": option.state,
       tone: !option.disabled && option.state === "error" ? "critical" : undefined,
       className: optionClassName,
       style: optionStyle,
@@ -217,10 +227,6 @@ export const Steps = ({
       id={id}
       {...rest}
       data-orientation={vertical ? "vertical" : undefined}
-      data-has-selection={currentIndex >= 0 ? "" : undefined}
-      data-connects-next={
-        hasVerticalPanel && currentIndex < options.length - 1 ? "" : undefined
-      }
     >
       <Tabs
         options={tabs}
@@ -235,7 +241,7 @@ export const Steps = ({
         size={size}
         orientation={orientation}
         fill={fill}
-        priority="secondary"
+        priority={priority}
         noslide
         disabled={disabled}
         data-steps=""

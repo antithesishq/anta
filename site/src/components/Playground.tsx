@@ -307,9 +307,11 @@ export default function Playground({ component, initialCode, initialCss = '', la
   }, [])
 
   // Initialise the iframe (clone stylesheets, seed __demo_modules__,
-  // register custom elements, set up dark-mode mirror). srcdoc iframes
-  // can `load` before the Preact reconciler attaches `onLoad`, so we
-  // poll readyState here and fall back to a `load` listener.
+  // register custom elements, set up dark-mode mirror). Its runtime is
+  // content-hashed; when a package rebuild produces a new hash during dev,
+  // reset the iframe so its exported components and CSS match the editor.
+  // srcdoc iframes can `load` before the Preact reconciler attaches `onLoad`,
+  // so we poll readyState here and fall back to a `load` listener.
   useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe) return
@@ -329,15 +331,17 @@ export default function Playground({ component, initialCode, initialCss = '', la
     // resolve against the real origin — SSR has no window and would bake a wrong
     // host (ERR_CONNECTION_REFUSED). Listener first, then assign, so the fresh
     // srcdoc's `load` is always caught → init() → setupIframe.
+    iframeReadyRef.current = false
     iframe.addEventListener('load', init)
     iframe.srcdoc = buildSrcdoc()
     return () => {
       cancelled = true
       iframe.removeEventListener('load', init)
     }
-    // The iframe is mounted exactly once per component instance.
+    // `IFRAME_ASSETS` changes whenever the dev watcher rebuilds Anta. It is
+    // otherwise immutable for the lifetime of a production page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [IFRAME_ASSETS.js, IFRAME_ASSETS.css])
 
   // Form edits don't rewrite `code` on every event — doing so re-synced
   // Monaco's model and re-parsed every field on each slider tick, which

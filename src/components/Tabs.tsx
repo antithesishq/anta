@@ -224,10 +224,6 @@ export const Tabs = ({
       : undefined
 
   const vertical = orientation === "vertical"
-  // A filled Steps rail needs connectors as strip children so they, rather
-  // than an empty last tab cell, receive the remaining flex space.
-  const stepStrip = "data-steps" in rest
-  const renderStepConnectors = fill && !vertical && stepStrip
 
   const strip = (
     <a-tabs
@@ -260,7 +256,7 @@ export const Tabs = ({
       style={roundStyle(round, "--tabs-round", toneStyle(tone, "--tabs-tone-source", style))}
       {...rest}
     >
-      {tabs.flatMap((p, index) => {
+      {tabs.map((p) => {
         const tabDisabled = disabled || p.disabled
         const isSelected = p.value === currentValue
         const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(p)
@@ -296,12 +292,7 @@ export const Tabs = ({
             ) : null}
           </a-tab>
         )
-        return renderStepConnectors && index < tabs.length - 1
-          ? [
-              tab,
-              <a-step-connector key={`${p.value}-connector`} />,
-            ]
-          : [tab]
+        return tab
       })}
     </a-tabs>
   )

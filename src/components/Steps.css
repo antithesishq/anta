@@ -58,8 +58,9 @@
     scrollbar-width: thin;
   }
 
-  /* `fill` turns a Steps sequence into a rail: content-sized tabs stay at the
-     ends, and real connector flex items take the remaining space. */
+  /* `fill` turns a Steps sequence into a rail. Each nonfinal tab gives its
+     connector pseudo-element the remaining space; the final tab stays sized
+     to its content at the far edge. */
   a-tabs[data-steps][fill] {
     width: 100%;
     align-self: stretch;
@@ -162,7 +163,12 @@
     padding-inline-start: 0;
   }
 
-  a-steps > a-tabs[data-steps][fill] > a-tab {
+  a-steps > a-tabs[data-steps][fill] > a-tab:not(:last-child) {
+    flex: 1 1 0;
+    max-width: none;
+  }
+
+  a-steps > a-tabs[data-steps][fill] > a-tab:last-child {
     flex: 0 1 auto;
     max-width: max-content;
   }
@@ -295,10 +301,10 @@
     color: inherit;
   }
 
-  /* In a horizontal strip, the connector is a flexible final child. It starts
-     immediately after the description and reaches the next marker rather than
-     being a fixed segment stranded between two step boxes. */
-  a-tabs[data-steps]:not([fill], [orientation="vertical"])
+  /* In a horizontal strip, each nonfinal tab draws a flexible final pseudo-
+     element. It starts immediately after the description and reaches the next
+     marker rather than being a fixed segment stranded between two step boxes. */
+  a-tabs[data-steps]:not([orientation="vertical"])
     > a-tab:not(:last-child)::before {
     content: "";
     order: 3;
@@ -312,26 +318,9 @@
     pointer-events: none;
   }
 
-  a-tabs[data-steps] > a-step-connector {
-    display: none;
-  }
-
-  a-tabs[data-steps][fill] > a-step-connector {
-    display: block;
-    flex: 1 1 0;
-    align-self: center;
-    min-width: calc(var(--steps-marker-size) / 2);
-    height: var(--steps-connector-width);
-    margin-inline: calc(1ch - var(--steps-tab-padding-x));
-    background: var(--steps-connector-color);
-    pointer-events: none;
-  }
-
   /* A completed phase strengthens only the connector toward its next phase. */
-  a-tabs[data-steps]:not([fill], [orientation="vertical"])
-    > a-tab[data-step-state="completed"]:not(:last-child)::before,
-  a-tabs[data-steps][fill]
-    > a-tab[data-step-state="completed"] + a-step-connector {
+  a-tabs[data-steps]:not([orientation="vertical"])
+    > a-tab[data-step-state="completed"]:not(:last-child)::before {
     background: var(--steps-complete-connector-color);
   }
 
@@ -410,6 +399,7 @@
     margin-block-end: calc(-1 * var(--steps-vertical-gap));
     background: var(--steps-connector-color);
     pointer-events: none;
+    z-index: 1;
   }
 
   a-steps[data-orientation="vertical"]

@@ -261,12 +261,10 @@ import '@antadesign/anta/components/Steps.css'
         <a-step-marker aria-hidden="true"><a-icon shape="check"></a-icon></a-step-marker>
         <a-step-desc><a-tab-label>Build</a-tab-label><a-step-hint>Complete</a-step-hint></a-step-desc>
       </a-tab>
-      <a-step-connector></a-step-connector>
       <a-tab role="tab" value="setup" tabindex="-1">
         <a-step-marker aria-hidden="true"><a-loader></a-loader></a-step-marker>
         <a-step-desc><a-tab-label>Setup</a-tab-label><a-step-hint>In progress</a-step-hint></a-step-desc>
       </a-tab>
-      <a-step-connector></a-step-connector>
       <a-tab role="tab" value="review" tabindex="-1">
         <a-step-marker aria-hidden="true"><a-icon shape="circle-large"></a-icon></a-step-marker>
         <a-step-desc><a-tab-label>Review</a-tab-label><a-step-hint>Waiting</a-step-hint></a-step-desc>
@@ -280,14 +278,13 @@ import '@antadesign/anta/components/Steps.css'
 ```
 
 Use `priority`, `size`, `orientation`, and `tone` first. Each option also accepts `className`,
-`style`, and `data-*` attributes. The marker and connector are light DOM.
+`style`, and `data-*` attributes. Markers are light DOM; connectors are pseudo-elements.
 
 **Dotted connector.** For horizontal steps, replace the connector's solid
 background with a dotted border:
 
 ```css
-.dotted-steps a-tab:not(:last-child)::before,
-.dotted-steps a-step-connector {
+.dotted-steps a-tab:not(:last-child)::before {
   height: 0;
   background: none;
   border-block-start: 2px dotted var(--border-2-brand);

@@ -177,7 +177,6 @@ export interface AntaIntrinsicElements {
   'a-step-marker': BaseAttributes
   'a-step-desc': BaseAttributes
   'a-step-hint': BaseAttributes
-  'a-step-connector': BaseAttributes
   'a-dialog': ADialogAttributes
   'a-card': ACardAttributes
   'a-card-icon-chip': BaseAttributes

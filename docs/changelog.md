@@ -5,6 +5,10 @@ changes are not listed.
 
 ## Unreleased
 
+### Removed
+
+- Removed the `education-disk`, `help-disk`, and all `*-logo` icon shapes.
+
 ### Added
 
 - `Steps` provides controlled and uncontrolled process navigation with optional

@@ -105,7 +105,7 @@ ring, so whatever is behind the avatar shows through the gap and no ring color
 has to track the surface.
 
 <Preview gap="12px">
-  <Avatar src="/anta-logo.svg" name="Anta" size={56} badge="success" />
+  <Avatar round src="/anta-logo.svg" name="Anta" size={56} badge="success" />
   <Avatar seed="lena-r" name="Lena Rossi" size={56} badge="critical" />
   <Avatar seed="8f21ac" name="Sam Okafor" size={56} badge="warning" />
   <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} badge="info" />
@@ -114,7 +114,7 @@ has to track the surface.
 </Preview>
 
 ```tsx folded
-<Avatar src="/anta-logo.svg" name="Anta" badge="success" />
+<Avatar round src="/anta-logo.svg" name="Anta" badge="success" />
 <Avatar seed="lena-r" name="Lena Rossi" badge="critical" />
 <Avatar seed="8f21ac" name="Sam Okafor" badge="warning" />
 <Avatar seed="k-tanaka" name="Kenji Tanaka" badge="info" />
@@ -254,7 +254,7 @@ over a squarer jaw reads mechanical, and the reverse reads natural. And under
 `any` both radii average near or above `1`, so heads read round to oval unless
 you narrow them yourself.
 
-<Disclosure title="Generator config">
+<Disclosure title="Generator config" open>
 
 `generator` takes an `AvatarGenConfig`. Every field is optional — anything you
 leave out keeps its default from the table above.

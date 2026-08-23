@@ -74,8 +74,8 @@ Pass `marker` or return a value from `renderMarker` to keep a custom marker. Use
 `secondary` is the default: selected markers have a subtle fill inside their
 outline. `primary` fills the selected marker with its tone and uses a white icon,
 like a primary Button. Its 2px resting marker uses `border-3` and its 2px rail
-uses `border-2`; a completed, unselected marker keeps the primary fill at 80%
-without an outline. Its completed connector moves one step stronger to `border-1`.
+uses `border-3`; a completed, unselected marker keeps the primary fill at 80%
+without an outline. Its completed connector moves one step stronger to `border-2`.
 `tertiary` removes the marker stroke and makes its marker the icon size plus 2px on
 each side.
 
@@ -104,8 +104,8 @@ and selection; hints stay at the muted `text-3` tone. In `secondary` and
 `tertiary`, the marker icon always matches the label's current color; a secondary
 marker's resting stroke uses the matching muted border tone. With
 every priority, the connector after a completed step is one border step stronger:
-`border-2` from the standard `border-3` rail, or `border-1` from the primary rail.
-Error markers keep a critical outline and gain a critical fill when selected.
+`border-2` from the standard `border-3` rail. Error markers keep a critical
+outline and gain a critical fill when selected.
 
 <Preview background="var(--bg-base)" align="stretch">
   <Tones client:visible={{ rootMargin: '200px' }} />

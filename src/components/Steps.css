@@ -86,26 +86,13 @@
   a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"]) {
     --steps-marker-border-width: 2px;
     --steps-marker-rest-border: var(--border-3);
-    --steps-connector-color: var(--border-2);
+    --steps-connector-color: var(--border-3);
     --steps-connector-width: 2px;
-    --steps-complete-connector-lightness: 0.67;
     --steps-primary-completed-marker-bg: color-mix(
       in oklch,
       var(--steps-primary-marker-bg) 80%,
       transparent
     );
-  }
-
-  a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])[tone]:not([tone=""], [tone="neutral"]) {
-    --steps-complete-connector-chroma: 0.13;
-  }
-
-  .dark a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"]) {
-    --steps-complete-connector-lightness: 0.52;
-  }
-
-  .dark a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])[tone]:not([tone=""], [tone="neutral"]) {
-    --steps-complete-connector-chroma: 0.15;
   }
 
   a-tabs[data-steps][priority="tertiary"] {

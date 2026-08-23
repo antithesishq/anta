@@ -37,7 +37,8 @@ export interface StepMarkerState {
   disabled: boolean
 }
 
-/** One phase rendered by `<Steps>`. */
+/** One phase rendered by `<Steps>`. Inherited `className` and `style` land on
+ * the individual `<a-tab>`, not on the enclosing Steps sequence. */
 export interface StepOption extends OptionPresentationProps {
   /** Stable phase identity. Values must be unique within the sequence. */
   value: string
@@ -50,6 +51,10 @@ export interface StepOption extends OptionPresentationProps {
   /** Application-owned process state. Selection and availability are separate;
    * `error` keeps a critical icon and outline, and selection adds the fill. */
   state: StepState
+  /** Tone for this phase. It colors the label, hint, marker, and completed
+   * connector. Error steps stay critical, and disabled steps stay neutral.
+   * @defaultValue 'neutral' */
+  tone?: StepTone | ""
   /** Replaces the marker derived from `state`. A number is shown directly; an
    * Anta icon shape is rendered as an `<Icon>`. */
   marker?: StepMarker
@@ -71,10 +76,6 @@ export interface StepsProps extends Omit<
    * and borderless.
    * @defaultValue 'secondary' */
   priority?: StepPriority
-  /** Tone for Steps. Omit it or pass an empty string for neutral. An error step
-   * always uses critical.
-   * @defaultValue neutral */
-  tone?: StepTone | ""
   /** Builds a custom marker from a step and its current state. A returned node
    * replaces `marker` and the built-in state marker; return `undefined` to use
    * those fallbacks, or `null` for an empty ring. */
@@ -129,7 +130,6 @@ export const Steps = ({
   onFocus,
   onBlur,
   label,
-  tone = "neutral",
   priority = "secondary",
   renderMarker,
   size,
@@ -142,9 +142,6 @@ export const Steps = ({
   id,
   ...rest
 }: StepsProps) => {
-  // Empty string is the same as omitting tone: keep it out of Tabs' custom-tone
-  // path and give loading markers the neutral Loader tone.
-  const toneAttr: StepTone = tone || "neutral"
   const controlled = value !== undefined
   const [internalValue, setInternalValue] = useState<string | undefined>(
     defaultValue,
@@ -163,6 +160,11 @@ export const Steps = ({
     const { className: optionClassName, style: optionStyle, ...optionAttrs } =
       optionPresentationAttrs(option)
 
+    const stepTone: StepTone = option.disabled
+      ? "neutral"
+      : option.state === "error"
+        ? "critical"
+        : (option.tone || "neutral")
     const customMarker = renderMarker?.(option, {
       state: option.state,
       selected: option.value === currentValue,
@@ -171,7 +173,7 @@ export const Steps = ({
     const builtInMarker = option.disabled
       ? <Icon shape={STATE_ICON.incomplete} />
       : option.state === "loading"
-        ? <Loader tone={toneAttr} />
+        ? <Loader tone={stepTone} />
         : <Icon shape={STATE_ICON[option.state]} />
     const marker =
       customMarker !== undefined
@@ -187,7 +189,7 @@ export const Steps = ({
       value: option.value,
       disabled: option.disabled,
       "data-step-state": option.state,
-      tone: !option.disabled && option.state === "error" ? "critical" : undefined,
+      tone: stepTone !== "neutral" ? stepTone : undefined,
       className: optionClassName,
       style: optionStyle,
       children: (
@@ -241,7 +243,6 @@ export const Steps = ({
         onFocus={onFocus}
         onBlur={onBlur}
         label={label}
-        tone={toneAttr}
         size={size}
         orientation={orientation}
         fill={fill}

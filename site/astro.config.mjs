@@ -45,6 +45,12 @@ export default defineConfig({
   // dev looks fine. Forcing every component's CSS into the linked, always-
   // parsed bundle makes dev and prod render identically.
   build: { inlineStylesheets: 'never' },
+  // `marked` already ships as browser-ready ESM. Keeping it out of Vite's
+  // optimized-dependency cache prevents a hydrated Playground from requesting
+  // a stale hashed `marked.js` module after the docs watcher rebuilds.
+  vite: {
+    optimizeDeps: { exclude: ['marked'] },
+  },
   integrations: [
     // compat:true aliases react / react-dom → preact/compat so Anta's JSX
     // wrappers (typed against React) run under Preact without calling configure().

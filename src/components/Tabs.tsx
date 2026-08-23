@@ -69,7 +69,8 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
   children?: React.ReactNode
   /** The tabs, as a data array (the strip's single source). Each entry is a
    *  `TabOption` (`value`, `label` or `children`, `icon`, `iconTrailing`, `tone`,
-   *  `disabled`, `round`). */
+   *  `disabled`, `round`, `className`, `style`). `className` and `style` land on
+   *  that option's individual `<a-tab>`, not on the strip. */
   options?: TabOption[]
   /** Controlled active value — the tab `value` to mark selected (and, when a
    *  `<TabPanel value="…">` shares it, the panel to reveal). When set, you own

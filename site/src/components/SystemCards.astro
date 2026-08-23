@@ -10,7 +10,12 @@ import { SYSTEMS } from './comparison-data'
     <section class:list={['card', { anta: s.anta }]}>
       <header class="card-head">
         <h3 class="card-name" id={`sys-${s.id}`}>
-          <a href={s.docs} target="_blank" rel="noopener">{s.name}</a>
+          {s.nameParts
+            ? s.nameParts.map((part, index) => <>
+                {index > 0 && <span aria-hidden="true"> + </span>}
+                <a href={part.href} target="_blank" rel="noopener">{part.label}</a>
+              </>)
+            : <a href={s.docs} target="_blank" rel="noopener">{s.name}</a>}
         </h3>
         <span class="card-ver">{s.version}</span>
       </header>

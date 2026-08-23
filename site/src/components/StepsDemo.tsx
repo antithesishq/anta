@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks'
 import { Button, Icon, Steps, TabPanel, Text } from '@antadesign/anta'
-import type { StepOption, StepTone } from '@antadesign/anta'
+import type { StepOption } from '@antadesign/anta'
 
 function useElements() {
   useEffect(() => {
@@ -27,13 +27,12 @@ const stateExamples: StepOption[] = [
   { value: 'incomplete', label: 'Incomplete', state: 'incomplete' },
 ]
 
-const toneExamples: Array<{ tone: StepTone; label: string }> = [
-  { tone: 'neutral', label: 'Neutral' },
-  { tone: 'brand', label: 'Brand' },
-  { tone: 'info', label: 'Info' },
-  { tone: 'success', label: 'Success' },
-  { tone: 'warning', label: 'Warning' },
-  { tone: 'critical', label: 'Critical' },
+const toneExamples: StepOption[] = [
+  { value: 'done', label: 'Done', hint: 'Complete', state: 'completed', tone: 'success' },
+  { value: 'current', label: 'Validate', hint: 'Checking dependencies', state: 'loading', tone: 'brand' },
+  { value: 'review', label: 'Review', hint: 'Needs attention', state: 'incomplete', tone: 'warning' },
+  { value: 'deploy', label: 'Deploy', hint: 'Waiting', state: 'incomplete', tone: 'info' },
+  { value: 'error', label: 'Error', hint: 'Resolve before continuing', state: 'error' },
 ]
 
 const customExamples: StepOption[] = [
@@ -108,20 +107,13 @@ export function Priority() {
 export function Tones() {
   useElements()
   return (
-    <div style={{ display: 'grid', gap: '16px', width: '100%' }}>
-      {toneExamples.map(({ tone, label }) => (
-        <Steps
-          key={tone}
-          tone={tone}
-          defaultValue="current"
-          label={`${label} steps`}
-          options={[
-            { value: 'done', label: 'Done', hint: 'Complete', state: 'completed' },
-            { value: 'current', label: `${label} validation in progress`, hint: 'Checking security and dependency scans', state: 'loading' },
-            { value: 'next', label: 'Next', hint: 'Waiting', state: 'incomplete' },
-          ]}
-        />
-      ))}
+    <div style={{ width: '100%' }}>
+      <Steps
+        fill
+        defaultValue="current"
+        label="Deployment progress"
+        options={toneExamples}
+      />
     </div>
   )
 }

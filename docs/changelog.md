@@ -16,17 +16,22 @@ changes are not listed.
 - `Steps` provides controlled and uncontrolled process navigation with optional
   panels, horizontal and vertical layouts, accessible tab semantics, process
   states, number and icon-shape markers, state-aware `renderMarker`, labels
-  and hints with clipped-content tooltips, and a sequence-wide tone.
+  and hints with clipped-content tooltips, and per-option tones.
 - `Loader` accepts a named `tone`; the loading Steps state forwards the
-  sequence tone to it.
+  option tone to it.
 - `Tabs` and `Steps` accept `fill`. Tabs share the available width equally;
   Steps stretch their connectors between content-sized phases.
 - `Steps` adds `primary`, `secondary`, and `tertiary` priorities. Primary uses a
   solid selected marker and stronger completed connectors; tertiary is compact
   and borderless.
-- `Steps` defaults to the neutral tone. Omitting `tone` or passing an empty
-  string produces the same result; selected rings use the stronger `border-1`
-  step.
+- `StepOption` defaults to the neutral tone. Omitting its `tone` or passing an
+  empty string produces the same result; selected rings use the stronger
+  `border-1` step.
+
+### Changed
+
+- `Steps` now takes `tone` on each option. The sequence-wide `tone` prop is
+  removed.
 
 ## 0.3.22 — August 20, 2026
 

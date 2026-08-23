@@ -62,29 +62,29 @@ each side.
 
 ## Tone
 
-`tone` colors labels, hints, and the selected marker. Labels strengthen on hover
-and selection; hints stay at the muted `text-3` tone. In `secondary` and
-`tertiary`, the marker icon always matches the label's current color; a secondary
-marker's resting stroke uses the matching muted border tone. With
-every priority, the connector after a completed step is one border step stronger:
-`border-2` from the standard `border-3` rail. Error markers keep a critical
-outline and gain a critical fill when selected.
+Set `tone` on an option to color that step's label, hint, marker, and completed
+connector. Labels strengthen on hover and selection; hints stay at the muted
+`text-3` tone. In `secondary` and `tertiary`, the marker icon always matches the
+label's current color; a secondary marker's resting stroke uses the matching muted
+border tone. With every priority, the connector after a completed step is one
+border step stronger: `border-2` from the standard `border-3` rail. Error markers
+stay critical and gain a critical fill when selected.
 
 ```tsx
 const options = [
-  { value: 'done', label: 'Done', hint: 'Complete', state: 'completed' },
-  { value: 'current', label: 'Current validation in progress', hint: 'Checking security and dependency scans', state: 'loading' },
-  { value: 'next', label: 'Next', hint: 'Waiting', state: 'incomplete' },
+  { value: 'done', label: 'Done', hint: 'Complete', state: 'completed', tone: 'success' },
+  { value: 'current', label: 'Current validation in progress', hint: 'Checking security and dependency scans', state: 'loading', tone: 'brand' },
+  { value: 'next', label: 'Next', hint: 'Waiting', state: 'incomplete', tone: 'info' },
 ]
 
-<Steps tone="success" defaultValue="current" options={options} />
+<Steps defaultValue="current" options={options} />
 ```
 
 Labels and hints ellipsize within each step. Hovering or focusing a clipped step
 shows its full label and hint in a tooltip.
 
-Options are `neutral` (default), `brand`, `info`, `success`, `warning`, and
-`critical`. Omitting `tone`, or passing an empty string, resolves to neutral.
+Option tones are `neutral` (default), `brand`, `info`, `success`, `warning`, and
+`critical`. Omit `option.tone`, or pass an empty string, for neutral.
 
 ## Markers and hints
 
@@ -241,12 +241,11 @@ Events match [`Tabs`](./tabs.md#events).
 | `renderMarker?` | (option, state) => ReactNode | — | Builds a custom marker from a step and its current state. A returned node
 replaces `marker` and the built-in state marker; return `undefined` to use
 those fallbacks, or `null` for an empty ring. |
-| `tone?` | StepTone \| "" | neutral | Tone for Steps. Omit it or pass an empty string for neutral. An error step always uses critical. |
 
 For framework-free use, compose the same light DOM that `Steps` emits.
 `a-steps` and its `a-step-*` children are structural elements styled by the
 shipped Steps stylesheet. The [Tabs Web Component](./tabs.md#web-component) inside
-owns selection and panel behavior; markers and states stay in your markup.
+owns selection and panel behavior; markers, states, and tones stay in your markup.
 
 ```js
 import '@antadesign/anta/elements'
@@ -257,11 +256,11 @@ import '@antadesign/anta/components/Steps.css'
 <div>
   <a-steps>
     <a-tabs role="tablist" aria-label="Setup progress" priority="secondary" default-state="setup" data-steps fill noslide>
-      <a-tab role="tab" value="build" tabindex="0">
+      <a-tab role="tab" value="build" tabindex="0" tone="success">
         <a-step-marker aria-hidden="true"><a-icon shape="check"></a-icon></a-step-marker>
         <a-step-desc><a-tab-label>Build</a-tab-label><a-step-hint>Complete</a-step-hint></a-step-desc>
       </a-tab>
-      <a-tab role="tab" value="setup" tabindex="-1">
+      <a-tab role="tab" value="setup" tabindex="-1" tone="brand">
         <a-step-marker aria-hidden="true"><a-loader></a-loader></a-step-marker>
         <a-step-desc><a-tab-label>Setup</a-tab-label><a-step-hint>In progress</a-step-hint></a-step-desc>
       </a-tab>
@@ -277,8 +276,9 @@ import '@antadesign/anta/components/Steps.css'
 </div>
 ```
 
-Use `priority`, `size`, `orientation`, and `tone` first. Each option also accepts `className`,
-`style`, and `data-*` attributes. Markers are light DOM; connectors are pseudo-elements.
+Use `priority`, `size`, and `orientation` first. Set `tone` on each option. Each
+option also accepts `className`, `style`, and `data-*` attributes. Markers are
+light DOM; connectors are pseudo-elements.
 
 **Dotted connector.** For horizontal steps, replace the connector's solid
 background with a dotted border:

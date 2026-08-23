@@ -343,7 +343,7 @@
   }
 
   a-tabs[data-steps] a-tab:state(selected):not([disabled])
-    a-step-marker > a-loader:not([tone="neutral"]) {
+    a-step-marker > a-loader {
     color: inherit;
   }
 
@@ -398,6 +398,9 @@
     row-gap: var(--steps-vertical-gap);
   }
 
+  /* display: contents folds the tablist's tabs into the a-steps grid. Older
+     engines drop a display:contents element and its accessible name from the
+     a11y tree; current Chrome, Firefox, and Safari expose it correctly. */
   a-steps[data-orientation="vertical"] > a-tabs[orientation="vertical"] {
     display: contents;
   }

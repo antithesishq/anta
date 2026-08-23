@@ -28,11 +28,6 @@ changes are not listed.
   empty string produces the same result; selected rings use the stronger
   `border-1` step.
 
-### Changed
-
-- `Steps` now takes `tone` on each option. The sequence-wide `tone` prop is
-  removed.
-
 ## 0.3.22 — August 20, 2026
 
 ### Changed

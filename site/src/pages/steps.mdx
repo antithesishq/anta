@@ -74,10 +74,10 @@ Pass `marker` or return a value from `renderMarker` to keep a custom marker. Use
 `secondary` is the default: selected markers have a subtle fill inside their
 outline. `primary` fills the selected marker with its tone and uses a white icon,
 like a primary Button. Its 2px resting marker uses `border-3` and its 2px rail
-uses `border-2`; a completed, unselected marker keeps the primary fill at 80%.
-The connector after a completed step uses the same tone at the stronger `border-2`
-step. `tertiary` removes the marker stroke and makes its marker the icon size plus
-2px on each side.
+uses `border-2`; a completed, unselected marker keeps the primary fill at 80%
+without an outline. The connector after a completed step uses the same tone at the
+stronger `border-2` step. `tertiary` removes the marker stroke and makes its marker
+the icon size plus 2px on each side.
 
 <Preview background="var(--bg-base)" align="stretch">
   <Priority client:visible={{ rootMargin: '200px' }} />

@@ -246,7 +246,7 @@
     a-tab[data-step-state="completed"]:not(:state(selected)):not([disabled]) a-step-marker {
     color: var(--steps-primary-marker-fg);
     background-color: var(--steps-primary-completed-marker-bg);
-    border-color: var(--steps-primary-completed-marker-bg);
+    border-color: transparent;
   }
 
   a-tabs[data-steps][priority="tertiary"]

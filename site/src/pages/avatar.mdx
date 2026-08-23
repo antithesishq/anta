@@ -1,0 +1,433 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Avatar
+---
+import Playground from '../components/Playground'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
+import avatarDemoCode from './avatar.demo.ts'
+import { Avatar } from '@antadesign/anta'
+
+export const initialsOnly = { headRadiusTop: { mode: 'off' }, headRadiusBottom: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }
+
+export const brandRange = { bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] }, harmony: true }
+
+export const palette = { bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] }, headRadiusTop: { mode: 'off' }, headRadiusBottom: { mode: 'off' }, bodyBorderRadius: { mode: 'off' } }
+
+# Avatar
+
+A userpic container. `Avatar` shows one of three things, in priority order: a
+supplied image, a seed-generated placeholder figure, or initials. The generated
+figure imitates a framed portrait — a head and shoulders over a colored
+background — with no face or gender indicators, so an app can fill an empty slot
+with a distinct, on-brand picture per user without an uploaded photo.
+
+An alphanumeric `seed` drives the result deterministically: the same seed always
+renders the same avatar, and different seeds are distinguishable. A `generator`
+config caps each dimension to your brand.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  client:visible
+  component="Avatar"
+  layout="side"
+  panelHeight={430}
+  initialCode={avatarDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; align-items: center; justify-content: center; }`}
+/>
+
+</Disclosure>
+
+## Generated userpic
+
+Pass a `seed` (a stable user id) and a `name`. With no `generator`, each seed
+draws a varied figure: background, head, and body colors, the figure's scale, the
+head and shoulder angles, and the corner radius of each shape all move with the
+seed, while the head and body hues stay coordinated with the background.
+
+<Preview gap="12px">
+  <Avatar seed="user-42" name="Vlad Korobov" size={56} />
+  <Avatar seed="lena-r" name="Lena Rossi" size={56} />
+  <Avatar seed="8f21ac" name="Sam Okafor" size={56} />
+  <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} />
+  <Avatar seed="marie-c" name="Marie Curie" size={56} />
+  <Avatar seed="q-jones" name="Quincy Jones" size={56} />
+</Preview>
+
+```tsx folded
+<Avatar seed="user-42" name="Vlad Korobov" />
+<Avatar seed="lena-r" name="Lena Rossi" />
+<Avatar seed="8f21ac" name="Sam Okafor" />
+```
+
+## Initials
+
+Turn the shape dimensions off in the `generator` and the avatar falls back to
+initials — the first letter of each of the first three words of `name` — over the
+generated background. The background color still varies with the seed.
+
+<Preview gap="12px">
+  <Avatar name="Vlad Korobov" size={56} generator={initialsOnly} />
+  <Avatar name="Marie Skłodowska Curie" size={56} generator={initialsOnly} />
+  <Avatar name="Madonna" size={56} generator={initialsOnly} />
+  <Avatar name="Ada Lovelace" size={56} generator={initialsOnly} />
+</Preview>
+
+```tsx folded
+const initials = {
+  headRadiusTop: { mode: 'off' },
+  headRadiusBottom: { mode: 'off' },
+  bodyBorderRadius: { mode: 'off' },
+}
+
+<Avatar name="Vlad Korobov" generator={initials} />
+<Avatar name="Marie Skłodowska Curie" generator={initials} />
+<Avatar name="Madonna" generator={initials} />
+```
+
+## Image and badge
+
+Set `src` to show an uploaded photo instead of a generated figure, cropped to
+fill the container.
+
+`badge` adds a corner badge, colored by tone, on any avatar — image or generated.
+It takes any named tone, so the application decides what each one means:
+`success` for online, `critical` for busy, `warning` for idle, `neutral` for
+offline. Named tones track light and dark mode automatically.
+
+The badge sits in a hole masked out of the picture rather than behind a painted
+ring, so whatever is behind the avatar shows through the gap and no ring color
+has to track the surface.
+
+<Preview gap="12px">
+  <Avatar round src="/anta-logo.svg" name="Anta" size={56} badge="success" />
+  <Avatar seed="lena-r" name="Lena Rossi" size={56} badge="critical" />
+  <Avatar seed="8f21ac" name="Sam Okafor" size={56} badge="warning" />
+  <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} badge="info" />
+  <Avatar seed="marie-c" name="Marie Curie" size={56} badge="brand" />
+  <Avatar seed="q-jones" name="Quincy Jones" size={56} badge="neutral" />
+</Preview>
+
+```tsx folded
+<Avatar round src="/anta-logo.svg" name="Anta" badge="success" />
+<Avatar seed="lena-r" name="Lena Rossi" badge="critical" />
+<Avatar seed="8f21ac" name="Sam Okafor" badge="warning" />
+<Avatar seed="k-tanaka" name="Kenji Tanaka" badge="info" />
+```
+
+`badge` also accepts any literal CSS color for a one-off badge, derived in oklch
+the same way a named tone is.
+
+<Preview gap="12px">
+  <Avatar seed="a-lee" name="Ann Lee" size={56} badge="#ff1493" />
+  <Avatar seed="b-qi" name="Bo Qi" size={56} badge="rebeccapurple" />
+  <Avatar seed="c-v" name="Cy Vance" size={56} badge="#0d9488" />
+</Preview>
+
+```tsx folded
+<Avatar seed="a-lee" name="Ann Lee" badge="#ff1493" />
+<Avatar seed="b-qi" name="Bo Qi" badge="rebeccapurple" />
+```
+
+## Size
+
+`size` is `small` (32px), `medium` (44px, the default), or `large` (64px). Pass a
+number for a pixel size.
+
+<Preview gap="12px">
+  <Avatar seed="user-42" name="Vlad Korobov" size="small" />
+  <Avatar seed="user-42" name="Vlad Korobov" size="medium" />
+  <Avatar seed="user-42" name="Vlad Korobov" size="large" />
+  <Avatar seed="user-42" name="Vlad Korobov" size={96} />
+</Preview>
+
+```tsx folded
+<Avatar seed="user-42" name="Vlad Korobov" size="small" />
+<Avatar seed="user-42" name="Vlad Korobov" size="large" />
+<Avatar seed="user-42" name="Vlad Korobov" size={96} />
+```
+
+## Round
+
+`round` makes the frame a circle. Pass a number (px) or a CSS length for a custom
+radius instead. The badge hugs the circle's edge on a round frame.
+
+<Preview gap="12px">
+  <Avatar round seed="user-42" name="Vlad Korobov" size={56} />
+  <Avatar round seed="lena-r" name="Lena Rossi" size={56} badge="success" />
+  <Avatar round seed="8f21ac" name="Sam Okafor" size={56} />
+  <Avatar round name="Ada Lovelace" size={56} generator={initialsOnly} />
+  <Avatar seed="k-tanaka" name="Kenji Tanaka" size={56} round={10} />
+</Preview>
+
+```tsx folded
+<Avatar round seed="user-42" name="Vlad Korobov" />
+<Avatar round seed="lena-r" name="Lena Rossi" badge="success" />
+<Avatar seed="k-tanaka" name="Kenji Tanaka" round={10} />
+```
+
+## Brand constraints
+
+The `generator` config caps the space so every avatar sits on your brand. Each
+dimension takes one of four modes: `off` (excluded, a fixed default), `any` (its
+full natural range), `range` (an explicit range), or `list` (a set of values the
+seed picks from). Edit the config in the playground's **Code** tab to try them.
+
+<Columns>
+<Col>
+
+**Color ranges** cap OKLCH per channel — lightness, chroma, and hue. Narrow the
+hue to your brand's, keep chroma modest, and every generated color stays in band
+(chroma is clamped into sRGB, so it never clips). `harmony` ties the head and
+body hue to the background.
+
+<Preview gap="12px" background="var(--bg-4)">
+  <Avatar seed="a1" name="A" size={52} generator={brandRange} />
+  <Avatar seed="b2" name="B" size={52} generator={brandRange} />
+  <Avatar seed="c3" name="C" size={52} generator={brandRange} />
+  <Avatar seed="d4" name="D" size={52} generator={brandRange} />
+</Preview>
+
+```tsx folded
+const brand = {
+  bgColor: { mode: 'range', l: [0.5, 0.62], c: [0.09, 0.15], h: [255, 285] },
+  harmony: true,
+}
+
+<Avatar seed={user.id} name={user.name} generator={brand} />
+```
+
+</Col>
+<Col>
+
+**Color lists** pass an explicit palette — a scheme the seed picks from at
+random. Combine with `off` shapes for a classic initials avatar restricted to
+your palette.
+
+<Preview gap="12px" background="var(--bg-4)">
+  <Avatar name="Ann Lee" size={52} generator={palette} />
+  <Avatar name="Bo Qi" size={52} generator={palette} />
+  <Avatar name="Cy Vance" size={52} generator={palette} />
+  <Avatar name="Di Xu" size={52} generator={palette} />
+</Preview>
+
+```tsx folded
+const palette = {
+  bgColor: { mode: 'list', values: ['#6c5ce7', '#00b894', '#e17055', '#0984e3', '#fdcb6e'] },
+  headRadiusTop: { mode: 'off' },
+  headRadiusBottom: { mode: 'off' },
+  bodyBorderRadius: { mode: 'off' },
+}
+
+<Avatar name={user.name} generator={palette} />
+```
+
+</Col>
+</Columns>
+
+### The dimensions
+
+| Dimension | Range |
+| --- | --- |
+| `bgColor`, `headColor`, `bodyColor` | OKLCH `l` / `c` / `h` caps, or a palette via `list` |
+| `figureScale` | Relative size of the whole figure |
+| `figureTranslate` | X and Y shift from the centered position |
+| `figureAngle` | Rotation of the whole figure |
+| `headAngle`, `bodyAngle` | Rotation of each part within the figure |
+| `figureGap` | Space between head and body, `0` to `1` of head height |
+| `headRadiusTop`, `headRadiusBottom` | `0` square, `1` fully round, above `1` elongated |
+| `bodyBorderRadius` | `0` square to `1` fully round shoulders |
+
+Corner radius is normalized: `0` is a square corner and `1` is fully round, so a
+head with both radii at `1` is a circle. **Above `1` the head elongates** into an
+oval, spending the excess on that half's height — `1.3` on both radii is a tall
+oval, and more at the bottom than the top is an egg.
+
+Two rules keep the head reading as a head. The bottom is never rounded less than
+the top, so a value below the top radius is raised to match it: a rounder crown
+over a squarer jaw reads mechanical, and the reverse reads natural. And under
+`any` both radii average near or above `1`, so heads read round to oval unless
+you narrow them yourself.
+
+<Disclosure title="Generator config" open>
+
+`generator` takes an `AvatarGenConfig`. Every field is optional — anything you
+leave out keeps its default from the table above.
+
+```ts
+interface AvatarGenConfig {
+  bgColor?: ColorDim
+  headColor?: ColorDim
+  bodyColor?: ColorDim
+  figureScale?: ScalarDim
+  figureTranslate?: Vec2Dim
+  figureAngle?: ScalarDim
+  headAngle?: ScalarDim
+  bodyAngle?: ScalarDim
+  figureGap?: ScalarDim
+  headRadiusTop?: ScalarDim
+  headRadiusBottom?: ScalarDim
+  bodyBorderRadius?: ScalarDim
+  harmony?: boolean
+}
+
+type DimMode = 'off' | 'any' | 'range' | 'list'
+```
+
+### Modes
+
+Every dimension carries a `mode`. It decides which of the dimension's other
+fields are read; the rest are ignored.
+
+| `mode` | Behavior | Fields read |
+| --- | --- | --- |
+| `off` | Excluded. The dimension holds a fixed neutral default. | none |
+| `any` | Varies across the dimension's full natural range (the default). | none |
+| `range` | Varies within an explicit range. | `min` / `max`, or `l` / `c` / `h`, or `x` / `y` |
+| `list` | Picks one value at random from an explicit set. | `values` |
+
+### Dimension types
+
+**`ScalarDim`** — a single number: scale, an angle, the gap, a corner radius.
+
+```ts
+interface ScalarDim {
+  mode?: DimMode
+  min?: number      // range: lower bound
+  max?: number      // range: upper bound
+  values?: number[] // list: the allowed values
+}
+```
+
+**`ColorDim`** — a color. `range` caps OKLCH per channel as `[min, max]` pairs,
+with chroma clamped into sRGB so a value can never clip. `list` passes a palette
+of any CSS colors.
+
+```ts
+interface ColorDim {
+  mode?: DimMode
+  l?: [number, number] // range: lightness, 0 to 1
+  c?: [number, number] // range: chroma, 0 to ~0.4
+  h?: [number, number] // range: hue, 0 to 360
+  values?: string[]    // list: the allowed CSS colors
+}
+```
+
+**`Vec2Dim`** — the figure's offset from center, used only by `figureTranslate`.
+Each axis runs from −50 to 50 in the frame's coordinates, where 0 centers the
+head.
+
+```ts
+interface Vec2Dim {
+  mode?: DimMode              // 'list' is not used here
+  x?: [number, number]        // range: horizontal bounds
+  y?: [number, number]        // range: vertical bounds
+  values?: [number, number][] // list: allowed [x, y] points
+}
+```
+
+`harmony` is a plain boolean rather than a dimension: when true, `headColor` and
+`bodyColor` take their hue from the background so the parts stay coordinated.
+
+### Defaults per dimension
+
+What `off` pins each dimension to, and what `any` samples. Corner radii are
+sampled toward the top of their range, so heads average round to oval.
+
+| Dimension | `off` | `any` samples |
+| --- | --- | --- |
+| `bgColor` | mid grey | `l` 0.5–0.82, `c` 0.02–0.12, any hue |
+| `headColor` | light grey | `l` 0.78–0.96, `c` 0.015–0.075, any hue |
+| `bodyColor` | light grey | `l` 0.68–0.9, `c` 0.015–0.09, any hue |
+| `figureScale` | `1` | 0.76–1.2 |
+| `figureTranslate` | `[0, 0]` | X −15 to 15; Y −14 to 4 |
+| `figureAngle` | `0` | −15° to 15° |
+| `headAngle` | `0` | −20° to 20° |
+| `bodyAngle` | `0` | −16° to 16° |
+| `figureGap` | `0.25` | 0.12–0.42 |
+| `headRadiusTop` | `1` | 0.35–1.25 |
+| `headRadiusBottom` | `1` | 0.45–1.5 |
+| `bodyBorderRadius` | `1` | 0.25–1 |
+| `harmony` | — | `true` |
+
+With every shape dimension (`headRadiusTop`, `headRadiusBottom`,
+`bodyBorderRadius`) set to `off`, no figure shape is configured and the avatar
+renders initials instead.
+
+The generation helpers are exported too, for a consumer that needs the result
+outside a component: `resolveAvatar(config, seed)` returns the resolved colors
+and geometry, `avatarToSvg(resolved)` renders it, and `getInitials(name)` derives
+the fallback letters.
+
+</Disclosure>
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Avatar" />
+
+</Disclosure>
+
+<Disclosure title="Vanilla web component">
+
+Use the web component directly when you are not using React or Preact. The
+generation config rides the `config` attribute as a JSON string, so the element
+generates from plain markup with no JavaScript of your own.
+
+<Preview gap="12px">
+  <a-avatar seed="user-42" name="Vlad Korobov" style="--avatar-size: 56px"></a-avatar>
+  <a-avatar name="Vlad Korobov" style="--avatar-size: 56px" config='{"headRadiusTop":{"mode":"off"},"headRadiusBottom":{"mode":"off"},"bodyBorderRadius":{"mode":"off"}}'></a-avatar>
+</Preview>
+
+```html
+<a-avatar seed="user-42" name="Vlad Korobov"></a-avatar>
+
+<a-avatar
+  name="Vlad Korobov"
+  config='{"headRadiusTop":{"mode":"off"},"headRadiusBottom":{"mode":"off"},"bodyBorderRadius":{"mode":"off"}}'
+></a-avatar>
+```
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+Reach for the props first: **`size`** sets the dimensions and **`generator`** the
+generated look. Everything else is `--avatar-*` custom properties on the host and
+`::part()` on the shadow content.
+
+The container is a rounded square by default; `round` makes it a circle and takes
+a length for a custom radius, so reach for the prop before the custom property.
+The badge is sized and placed with `--avatar-badge-ratio` (its size as a fraction
+of the frame), `--avatar-badge-inset`, and `--avatar-badge-gap` (the width of the
+cutout around it). Its fill comes from `badge`, so route color through the prop
+rather than overriding `--avatar-badge-color`.
+
+<Preview gap="12px">
+  <Avatar round className="badge-dot" seed="user-42" name="Vlad Korobov" size={56} badge="success" />
+  <Avatar round className="badge-dot" seed="lena-r" name="Lena Rossi" size={56} badge="critical" />
+  <style is:inline>{`
+    a-avatar.badge-dot {
+      --avatar-badge-ratio: 0.34;
+      --avatar-badge-gap: 4px;
+    }
+  `}</style>
+</Preview>
+
+```css folded
+a-avatar.badge-dot {
+  --avatar-badge-ratio: 0.34;  /* a larger badge */
+  --avatar-badge-gap: 4px;     /* in a wider cutout */
+}
+```
+
+The shadow content exposes `::part(frame)` (the picture — the generated figure or
+the image, whichever is showing), `::part(image)` (only the `src` image), and
+`::part(badge)` (the corner badge) for anything the custom properties do not
+cover.
+
+</Disclosure>

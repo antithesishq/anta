@@ -56,7 +56,7 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   trackSize?: number | string
   /** Diameter of the thumb. Numbers use pixels; strings are CSS lengths. Keep
    * it at least as large as `trackSize`.
-   * @defaultValue 18 */
+   * @defaultValue 16 */
   thumbSize?: number | string
   /** Fill the thumb with its resolved border color. This follows `thumbTone`
    * and interactive states.

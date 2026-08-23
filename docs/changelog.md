@@ -5,6 +5,8 @@ changes are not listed.
 
 ## Unreleased
 
+## 0.3.23 — August 23, 2026
+
 ### Removed
 
 - Removed the `education-disk`, `help-disk`, and all `*-logo` icon shapes.
@@ -27,6 +29,19 @@ changes are not listed.
 - `StepOption` defaults to the neutral tone. Omitting its `tone` or passing an
   empty string produces the same result; selected rings use the stronger
   `border-1` step.
+
+- `Avatar` renders an image, seed-generated placeholder, or initials, with
+  `generator`, `badge`, and `round` options. `avatar-core` generation helpers are
+  also exported.
+
+### Changed
+
+- `Avatar` default generation uses a larger head-to-body gap, shifts figures
+  slightly upward, and varies their position, rotation, color, scale, and shape
+  more widely.
+- `Slider` thumbs are smaller: 12px at `small`, 16px at `medium` (the default,
+  previously 18px), and 20px at `large`, unchanged. `thumbSize` still overrides
+  any of them.
 
 ## 0.3.22 — August 20, 2026
 

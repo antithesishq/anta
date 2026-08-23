@@ -31,6 +31,11 @@ export interface PropDescriptor {
   kind: 'string' | 'number' | 'boolean' | 'literal-union' | 'children' | 'style-css' | 'expression'
   /** Default value — if `next === defaultValue` we omit the attribute. */
   defaultValue?: string | number | boolean | null
+  /** A path inside an annotated object literal. When present, the playground
+   *  edits the literal value rather than a JSX attribute. */
+  objectPath?: string[]
+  /** Serialization to use for an annotated object-literal value. */
+  objectValueKind?: 'string' | 'number' | 'boolean' | 'expression'
 }
 
 /**

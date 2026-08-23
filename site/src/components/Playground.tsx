@@ -1,15 +1,14 @@
 /**
- * Playground — single-component playground.
+ * Playground — component and configuration playground.
  *
  *   <Playground component="Progress" initialCode={`...`} client:load />
  *
  * Renders three regions:
  *   - A live preview, isolated inside an iframe so user CSS / DOM
  *     changes can't touch the docs page.
- *   - A props form auto-generated from `api.json` for the bound
- *     component. Every form edit performs a targeted string
- *     replacement on the source code (so siblings like a `<style>`
- *     block are preserved).
+ *   - A props form auto-generated from `api.json` for the bound component, or
+ *     from explicitly annotated JSX / JSON-like object literals. Every form
+ *     edit performs a targeted source replacement, preserving surrounding code.
  *   - A Monaco editor showing the same source. Hand-edits feed back
  *     into the form (best-effort literal-attribute scan) and back
  *     into the iframe via the in-browser bundler (esbuild-wasm).
@@ -21,13 +20,14 @@ import { Input, Tooltip, Text, Checkbox, Select, Tabs } from '@antadesign/anta'
 import { marked } from 'marked'
 import s from './Playground.module.css'
 
-import { controlsFor, controlsForExample, CONDITIONAL_PROPS, type Control, type PropEntry } from '../../lib/sandbox/props-form.ts'
+import { controlsFor, controlsForExample, controlsForObject, CONDITIONAL_PROPS, type Control, type PropEntry } from '../../lib/sandbox/props-form.ts'
 import { bundle, setEsbuildLoader, type BundleResult } from '../../lib/sandbox/bundler.ts'
 import { moduleManifest } from '../../lib/sandbox/modules.ts'
 import { IFRAME_ASSETS } from '../generated/iframe-assets'
 import { PLAYGROUND_ASSETS } from '../generated/playground-assets'
 import { replaceProp, readChildren } from '../../lib/sandbox/prop-patch.ts'
 import { readProp } from '../../lib/sandbox/prop-read.ts'
+import { readObjectValue, replaceObjectValue, type ObjectRange } from '../../lib/sandbox/object-config.ts'
 import { parseExamples, type Example } from '../../lib/sandbox/parse-examples.ts'
 import { throttle } from 'es-toolkit'
 
@@ -133,10 +133,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
   // keystrokes don't flood PostHog with events.
   const hasTrackedEditRef = useRef(false)
 
-  // Parse JSDoc-headed JSX blocks out of the user's source. Each
-  // headed block becomes one entry in the Props accordion; the
-  // bundler also receives this list so it can strip JSDocs before
-  // wrapping the JSX in a Fragment.
+  // Parse annotated JSX components and object literals out of the source. Each
+  // annotation becomes one entry in the Props accordion.
   const examples = useMemo(() => parseExamples(code), [code])
 
   // Track the parent's dark-mode state — drives both Monaco's theme
@@ -371,11 +369,18 @@ export default function Playground({ component, initialCode, initialCss = '', la
               continue
             }
             const latest = parseExamples(next).find((e) => e.id === exampleId)
-            if (!latest || !latest.tagName) continue
-            next = replaceProp(next, latest.tagName, prop.prop, value, {
-              start: latest.jsxStart,
-              end: latest.jsxEnd,
-            })
+            if (!latest) continue
+            if (latest.kind === 'jsx' && latest.tagName) {
+              next = replaceProp(next, latest.tagName, prop.prop, value, {
+                start: latest.jsxStart,
+                end: latest.jsxEnd,
+              })
+            } else if (latest.kind === 'object' && latest.objectStart != null && latest.objectEnd != null) {
+              next = replaceObjectValue(next, {
+                start: latest.objectStart,
+                end: latest.objectEnd,
+              }, prop.prop, value)
+            }
           }
           return next
         })
@@ -677,11 +682,11 @@ export default function Playground({ component, initialCode, initialCss = '', la
                 </div>
               ) : (
                 <div class={s.examplesList}>
-                  {examples.map((ex, i) => (
+                  {examples.map((ex) => (
                     <ExampleAccordion
                       key={ex.id}
                       example={ex}
-                      defaultOpen={i === 0}
+                      defaultOpen={examples.length === 1}
                       code={code}
                       onChange={handleFormChange}
                     />
@@ -875,12 +880,14 @@ function FormField({
   code,
   componentName,
   range,
+  objectRange,
   onChange,
 }: {
   entry: PropEntry
   code: string
   componentName: string
   range?: { start: number; end: number }
+  objectRange?: ObjectRange
   onChange: (v: string | number | boolean | null) => void
 }) {
   const c = entry.control
@@ -891,6 +898,8 @@ function FormField({
   if (entry.prop.kind === 'children') {
     const body = readChildren(code, componentName, range)
     read = body !== undefined ? { kind: 'literal', value: body } : undefined
+  } else if (objectRange) {
+    read = readObjectValue(code, objectRange, entry.prop)
   } else {
     read = readProp(code, componentName, entry.prop, range)
   }
@@ -1184,17 +1193,23 @@ function ExampleAccordion({
   onChange: (entry: PropEntry, value: string | number | boolean | null, exampleId: string) => void
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  useEffect(() => setOpen(defaultOpen), [defaultOpen])
   // Per-example control schema. JSX examples introspect their tag:
   // known components (api.json) get their full prop set; unknown
   // tags fall back to attribute inference from the JSX itself.
   // Expression examples don't drive a form.
   const controls = useMemo(() => {
-    if (example.kind !== 'jsx' || !example.tagName) return []
-    return controlsForExample(example.tagName, code, {
-      start: example.jsxStart,
-      end: example.jsxEnd,
-    })
-  }, [example.tagName, example.kind, example.jsxStart, example.jsxEnd, code])
+    if (example.kind === 'jsx' && example.tagName) {
+      return controlsForExample(example.tagName, code, {
+        start: example.jsxStart,
+        end: example.jsxEnd,
+      })
+    }
+    if (example.kind === 'object' && example.objectStart != null && example.objectEnd != null) {
+      return controlsForObject(code, { start: example.objectStart, end: example.objectEnd })
+    }
+    return []
+  }, [example.tagName, example.kind, example.jsxStart, example.jsxEnd, example.objectStart, example.objectEnd, code])
 
   return (
     <div class={s.example}>
@@ -1216,21 +1231,24 @@ function ExampleAccordion({
           {example.description && (
             <div class={s.exampleDescription}>{example.description}</div>
           )}
-          {/* The Props form binds only when the example body is a
-              plain `<Tag …>` element — `{}` expression bodies
-              (IIFEs, inline components) are too dynamic to bind to.
-              The accordion entry still shows heading + description
-              for documented examples; the user edits the JSX in the
-              Code tab if they want to change anything. */}
-          {example.kind === 'jsx' && controls.length > 0 && (
+          {/* JSX annotations bind to their target component, and object
+              annotations bind to literal leaves. Dynamic `{}` examples remain
+              documented-only because they have no stable edit target. */}
+          {(example.kind === 'jsx' || example.kind === 'object') && controls.length > 0 && (
             <div class={s.form}>
-              {visibleControls(controls, example.tagName!, code, { start: example.jsxStart, end: example.jsxEnd }).map((entry) => (
+              {(example.kind === 'jsx'
+                ? visibleControls(controls, example.tagName!, code, { start: example.jsxStart, end: example.jsxEnd })
+                : controls
+              ).map((entry) => (
                 <FormField
                   key={entry.control.name}
                   entry={entry}
                   code={code}
-                  componentName={example.tagName!}
-                  range={{ start: example.jsxStart, end: example.jsxEnd }}
+                  componentName={example.tagName ?? example.label}
+                  range={example.kind === 'jsx' ? { start: example.jsxStart, end: example.jsxEnd } : undefined}
+                  objectRange={example.kind === 'object' && example.objectStart != null && example.objectEnd != null
+                    ? { start: example.objectStart, end: example.objectEnd }
+                    : undefined}
                   onChange={(v) => onChange(entry, v, example.id)}
                 />
               ))}

@@ -252,11 +252,7 @@
   a-tabs[data-steps][priority="tertiary"]
     a-tab:state(selected):not([disabled]) a-step-marker {
     color: var(--tab-selected-text);
-    background-color: color-mix(
-      in oklch,
-      var(--tab-selected-text) 12%,
-      transparent
-    );
+    background-color: transparent;
     border-color: transparent;
   }
 

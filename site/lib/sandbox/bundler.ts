@@ -25,6 +25,15 @@ type Esbuild = typeof import('esbuild-wasm/esm/browser')
 let initialized: Promise<void> | null = null
 let loadEsbuild = () => import('esbuild-wasm/esm/browser')
 
+type EsbuildRuntime = {
+  module: Esbuild
+  initialized: Promise<void>
+}
+
+const runtime = globalThis as typeof globalThis & {
+  __antaPlaygroundEsbuild?: EsbuildRuntime
+}
+
 /**
  * Supply the browser compiler module used by the playground. The docs runtime
  * sets this to its independently cacheable compiler bundle; leaving the
@@ -40,8 +49,15 @@ async function ensureInit(): Promise<Esbuild> {
   // entry by default; the docs runtime replaces this loader with a stable
   // content-hashed compiler bundle.
   const esbuild = await loadEsbuild()
-  if (!initialized) {
+  if (runtime.__antaPlaygroundEsbuild?.module === esbuild) {
+    initialized = runtime.__antaPlaygroundEsbuild.initialized
+  } else if (!initialized) {
     initialized = esbuild.initialize({ wasmURL: '/esbuild.wasm', worker: true })
+    // The docs router can load a new Playground app bundle while the compiler
+    // vendor chunk stays cached. Keep the initialization promise on the page,
+    // not just this app module, so that fresh bundle cannot initialize the
+    // same esbuild module a second time.
+    runtime.__antaPlaygroundEsbuild = { module: esbuild, initialized }
   }
   await initialized
   return esbuild

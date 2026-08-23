@@ -267,12 +267,19 @@ background with a dotted border:
 density: `--steps-marker-size`, `--steps-marker-border-width`, `--steps-item-gap`, and
 `--steps-gap`.
 
-**Roomier markers.** This example increases the marker and connector spacing:
+**Fill the container.** Horizontal `Steps` fill their container by default. The
+steps share its width, and the connector fills the remaining space between them.
+With three steps, the middle step sits at the center and the last reaches the
+far edge.
 
-```css
-.roomy-steps {
-  --steps-marker-size: 30px;
-  --steps-item-gap: 8px;
-  --steps-gap: 6px;
-}
+```tsx
+<Steps
+  defaultValue="review"
+  label="Deployment progress"
+  options={[
+    { value: 'build', label: 'Build', status: 'completed' },
+    { value: 'review', label: 'Review', status: 'loading' },
+    { value: 'deploy', label: 'Deploy', status: 'incomplete' },
+  ]}
+/>
 ```

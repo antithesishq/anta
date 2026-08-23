@@ -7,7 +7,7 @@
     --steps-gap: 4px;
     --steps-connector-color: var(--border-3);
     --steps-tab-padding-x: 9px;
-    --steps-tab-padding-block: 3.5px;
+    --steps-tab-padding-block: 0px;
     --steps-hint-leading: 16px;
 
     display: flex;
@@ -19,14 +19,12 @@
   a-steps:has(> a-tabs[size="small"]) {
     --steps-marker-size: 24px;
     --steps-tab-padding-x: 7px;
-    --steps-tab-padding-block: 3.75px;
     --steps-hint-leading: 14px;
   }
 
   a-steps:has(> a-tabs[size="large"]) {
     --steps-marker-size: 32px;
     --steps-tab-padding-x: 13px;
-    --steps-tab-padding-block: 3.25px;
     --steps-hint-leading: 20px;
   }
 
@@ -78,7 +76,7 @@
     flex: 1 1 0;
     min-width: 0;
     max-width: none;
-    min-height: 0;
+    padding-block: 0;
     justify-content: flex-start;
     gap: var(--steps-item-gap);
     transition:
@@ -229,7 +227,7 @@
       var(--steps-tab-padding-block) + var(--steps-marker-size)
     );
     inset-inline-start: calc(
-      var(--tab-padding-x) + var(--steps-marker-size) / 2 -
+      var(--steps-tab-padding-x) + var(--steps-marker-size) / 2 -
       0.5px
     );
     inset-inline-end: auto;
@@ -260,11 +258,7 @@
       var(--steps-tab-padding-x) +
       var(--steps-marker-size) / 2 - 0.5px
     );
-    margin-block-end: calc(
-      -1 * (
-        var(--steps-vertical-gap) + var(--steps-tab-padding-block)
-      )
-    );
+    margin-block-end: calc(-1 * var(--steps-vertical-gap));
     background: var(--steps-connector-color);
     pointer-events: none;
   }

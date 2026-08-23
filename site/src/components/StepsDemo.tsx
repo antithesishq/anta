@@ -14,6 +14,12 @@ const phases: StepOption[] = [
   { value: 'next', label: 'Next steps', status: 'incomplete', disabled: true },
 ]
 
+const fullWidthPhases: StepOption[] = [
+  { value: 'build', label: 'Build', status: 'completed' },
+  { value: 'review', label: 'Review', status: 'loading' },
+  { value: 'deploy', label: 'Deploy', status: 'incomplete' },
+]
+
 const statusExamples: StepOption[] = [
   { value: 'completed', label: 'Completed', status: 'completed' },
   { value: 'loading', label: 'Loading', status: 'loading' },
@@ -240,15 +246,14 @@ export function DottedConnectorStyle() {
   )
 }
 
-export function RoomySteps() {
+export function FullWidthSteps() {
   useElements()
   return (
-    <div style={{ width: '100%', maxWidth: '560px' }}>
+    <div style={{ width: '100%' }}>
       <Steps
-        className="roomy-steps"
-        defaultValue="setup"
+        defaultValue="review"
         label="Deployment progress"
-        options={phases}
+        options={fullWidthPhases}
       />
     </div>
   )

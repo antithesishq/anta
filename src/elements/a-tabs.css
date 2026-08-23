@@ -97,10 +97,10 @@
     --tab-padding-x: 13px;
     --tab-height: 32px;
   }
-  /* Icons track the tab size (medium = a-icon's 16px default). */
-  a-tabs a-tab a-icon { --icon-size: 16px; }
-  a-tabs[size="small"] a-tab a-icon { --icon-size: 14px; }
-  a-tabs[size="large"] a-tab a-icon { --icon-size: 18px; }
+  /* Icons and loaders track the tab size (medium = the 16px default). */
+  a-tabs a-tab :is(a-icon, a-loader) { --icon-size: 16px; }
+  a-tabs[size="small"] a-tab :is(a-icon, a-loader) { --icon-size: 14px; }
+  a-tabs[size="large"] a-tab :is(a-icon, a-loader) { --icon-size: 18px; }
 
   /* ── Tones — re-point the source + the label colors: --tab-selected-text is the
      tone's --text-1-<tone>, --tab-rest-tone its muted --text-3-<tone> (both theme-aware,

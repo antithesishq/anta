@@ -88,11 +88,24 @@
     --steps-marker-rest-border: var(--border-3);
     --steps-connector-color: var(--border-2);
     --steps-connector-width: 2px;
+    --steps-complete-connector-lightness: 0.67;
     --steps-primary-completed-marker-bg: color-mix(
       in oklch,
       var(--steps-primary-marker-bg) 80%,
       transparent
     );
+  }
+
+  a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])[tone]:not([tone=""], [tone="neutral"]) {
+    --steps-complete-connector-chroma: 0.13;
+  }
+
+  .dark a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"]) {
+    --steps-complete-connector-lightness: 0.52;
+  }
+
+  .dark a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])[tone]:not([tone=""], [tone="neutral"]) {
+    --steps-complete-connector-chroma: 0.15;
   }
 
   a-tabs[data-steps][priority="tertiary"] {
@@ -301,11 +314,10 @@
     pointer-events: none;
   }
 
-  /* Primary Steps treats a completed phase as part of the progress rail. Its
-     stronger, tone-derived connector reaches only toward the next phase. */
-  a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"], [fill], [orientation="vertical"])
+  /* A completed phase strengthens only the connector toward its next phase. */
+  a-tabs[data-steps]:not([fill], [orientation="vertical"])
     > a-tab[data-step-state="completed"]:not(:last-child)::before,
-  a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])[fill]
+  a-tabs[data-steps][fill]
     > a-tab[data-step-state="completed"] + a-step-connector {
     background: var(--steps-complete-connector-color);
   }
@@ -388,13 +400,13 @@
   }
 
   a-steps[data-orientation="vertical"]
-    > a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"])
+    > a-tabs[data-steps]
     > a-tab[data-step-state="completed"]:not(:last-child)::before {
     background: var(--steps-complete-connector-color);
   }
 
   a-steps[data-orientation="vertical"]:has(> a-tabpanel):has(
-    > a-tabs[data-steps][orientation="vertical"]:not([priority="secondary"], [priority="tertiary"])
+    > a-tabs[data-steps][orientation="vertical"]
       > a-tab[data-step-state="completed"]:state(selected):not(:last-child)
   )::after {
     background: var(--steps-complete-connector-color);

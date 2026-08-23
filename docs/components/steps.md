@@ -42,9 +42,9 @@ Pass `marker` or return a value from `renderMarker` to keep a custom marker. Use
 outline. `primary` fills the selected marker with its tone and uses a white icon,
 like a primary Button. Its 2px resting marker uses `border-3` and its 2px rail
 uses `border-2`; a completed, unselected marker keeps the primary fill at 80%
-without an outline. The connector after a completed step uses the same tone at the
-stronger `border-2` step. `tertiary` removes the marker stroke and makes its marker
-the icon size plus 2px on each side.
+without an outline. Its completed connector moves one step stronger to `border-1`.
+`tertiary` removes the marker stroke and makes its marker the icon size plus 2px on
+each side.
 
 ```tsx
 <Steps
@@ -66,9 +66,9 @@ the icon size plus 2px on each side.
 and selection; hints stay at the muted `text-3` tone. In `secondary` and
 `tertiary`, the marker icon always matches the label's current color; a secondary
 marker's resting stroke uses the matching muted border tone. With
-`priority="primary"`, the connector after a completed step also uses the tone at
-the stronger `border-2` step. Error markers keep a critical outline and gain a
-critical fill when selected.
+every priority, the connector after a completed step is one border step stronger:
+`border-2` from the standard `border-3` rail, or `border-1` from the primary rail.
+Error markers keep a critical outline and gain a critical fill when selected.
 
 ```tsx
 const options = [

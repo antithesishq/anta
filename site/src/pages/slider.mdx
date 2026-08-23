@@ -8,7 +8,7 @@ import Disclosure from '../components/Disclosure.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import sliderDemoCode from './slider.demo.ts'
 import { Slider } from '@antadesign/anta'
 
@@ -21,7 +21,6 @@ rail, and the value appears at the right side of the label row by default. Use
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:load
   component="Slider"
   layout="side"
   panelHeight={390}

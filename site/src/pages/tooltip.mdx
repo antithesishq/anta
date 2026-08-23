@@ -5,7 +5,7 @@ title: Tooltip
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 import Preview from '../components/Preview.astro'
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import { Tooltip, Button, Icon } from '@antadesign/anta'
 import tooltipDemoCode from './tooltip.demo.ts'
 
@@ -35,7 +35,6 @@ button. The props panel is generated from the `Tooltip` API and edits the
 `<Tooltip>` element, not the `<Button>` it's attached to.
 
 <Playground
-  client:visible
   component="Tooltip"
   layout="side"
   initialCode={tooltipDemoCode}

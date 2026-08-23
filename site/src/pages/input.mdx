@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Input
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -31,7 +31,6 @@ for styling through `::part(input)`.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Input"
   layout="side"
   panelHeight={460}

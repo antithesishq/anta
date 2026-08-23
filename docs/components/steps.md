@@ -50,6 +50,7 @@ each side.
 <Steps
   fill
   priority="primary"
+  tone="brand"
   defaultValue="review"
   label="Deployment progress"
   options={[
@@ -62,29 +63,35 @@ each side.
 
 ## Tone
 
-Set `tone` on an option to color that step's label, hint, marker, and completed
-connector. Labels strengthen on hover and selection; hints stay at the muted
-`text-3` tone. In `secondary` and `tertiary`, the marker icon always matches the
-label's current color; a secondary marker's resting stroke uses the matching muted
-border tone. With every priority, the connector after a completed step is one
-border step stronger: `border-2` from the standard `border-3` rail. Error markers
-stay critical and gain a critical fill when selected.
+Set `tone` on `Steps` to color every step's label, hint, and icon, plus active
+and completed markers. Inactive incomplete/loading marker rings stay neutral.
+Set `option.tone` when one step needs an override. Labels strengthen on hover and
+selection; hints stay at the muted `text-3` tone. In `secondary` and
+`tertiary`, the marker icon always matches the label's current color; a secondary
+marker's resting stroke uses the matching muted border tone. With every priority,
+the connector after a completed step is one border step stronger: `border-2` from
+the standard `border-3` rail. Error markers stay critical and gain a critical fill
+when selected.
 
 ```tsx
 const options = [
-  { value: 'done', label: 'Done', hint: 'Complete', state: 'completed', tone: 'success' },
-  { value: 'current', label: 'Current validation in progress', hint: 'Checking security and dependency scans', state: 'loading', tone: 'brand' },
-  { value: 'next', label: 'Next', hint: 'Waiting', state: 'incomplete', tone: 'info' },
+  { value: 'done', label: 'Done', hint: 'Complete', state: 'completed' },
+  { value: 'current', label: 'Validate', hint: 'Checking dependencies', state: 'loading' },
+  { value: 'review', label: 'Review', hint: 'Needs attention', state: 'incomplete', tone: 'warning' },
+  { value: 'deploy', label: 'Deploy', hint: 'Waiting', state: 'incomplete', tone: 'info' },
+  { value: 'error', label: 'Error', hint: 'Resolve before continuing', state: 'error' },
 ]
 
-<Steps defaultValue="current" options={options} />
+<Steps tone="brand" defaultValue="current" options={options} />
 ```
 
 Labels and hints ellipsize within each step. Hovering or focusing a clipped step
 shows its full label and hint in a tooltip.
 
-Option tones are `neutral` (default), `brand`, `info`, `success`, `warning`, and
-`critical`. Omit `option.tone`, or pass an empty string, for neutral.
+Steps and option tones are `neutral` (default), `brand`, `info`, `success`,
+`warning`, and `critical`. Options inherit the Steps tone until `option.tone` is
+set. Omit the Steps tone, or pass an empty string, for neutral; set an option to
+`neutral` or an empty string to opt it out of an inherited tone.
 
 ## Markers and hints
 
@@ -151,6 +158,7 @@ const [phase, setPhase] = useState('setup')
 
 <Steps
   value={phase}
+  tone="brand"
   options={options}
   onStateChange={(_event, { next }) => next && setPhase(next)}
 />
@@ -237,10 +245,14 @@ Events match [`Tabs`](./tabs.md#events).
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `options` | StepOption[] | — | Ordered process phases. |
-| `priority?` | StepPriority | secondary | Visual emphasis. Primary uses a solid selected marker and a stronger completed connector; secondary is the outlined default; tertiary is compact and borderless. |
+| `priority?` | StepPriority | 'secondary' | Visual emphasis. Primary uses a solid selected marker and a stronger
+completed connector; secondary is the outlined default; tertiary is compact
+and borderless. |
 | `renderMarker?` | (option, state) => ReactNode | — | Builds a custom marker from a step and its current state. A returned node
 replaces `marker` and the built-in state marker; return `undefined` to use
 those fallbacks, or `null` for an empty ring. |
+| `tone?` | StepTone \| '' | 'neutral' | Tone applied to every step without its own `tone`. Error steps stay
+critical and disabled steps stay neutral. |
 
 For framework-free use, compose the same light DOM that `Steps` emits.
 `a-steps` and its `a-step-*` children are structural elements styled by the

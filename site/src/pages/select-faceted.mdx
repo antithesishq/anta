@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Faceted select
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -36,7 +36,6 @@ is limited. `offset` sets the gap in pixels between the trigger and the menu:
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="SelectFaceted"
   layout="side"
   panelHeight={440}

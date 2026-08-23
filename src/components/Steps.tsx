@@ -52,8 +52,9 @@ export interface StepOption extends OptionPresentationProps {
    * `error` keeps a critical icon and outline, and selection adds the fill. */
   state: StepState
   /** Tone for this phase. It colors the label, hint, marker, and completed
-   * connector. Error steps stay critical, and disabled steps stay neutral.
-   * @defaultValue 'neutral' */
+   * connector. Overrides the Steps `tone`; error steps stay critical and
+   * disabled steps stay neutral.
+   * @defaultValue inherits Steps `tone` */
   tone?: StepTone | ""
   /** Replaces the marker derived from `state`. A number is shown directly; an
    * Anta icon shape is rendered as an `<Icon>`. */
@@ -76,6 +77,10 @@ export interface StepsProps extends Omit<
    * and borderless.
    * @defaultValue 'secondary' */
   priority?: StepPriority
+  /** Tone applied to every step without its own `tone`. Error steps stay
+   * critical and disabled steps stay neutral.
+   * @defaultValue 'neutral' */
+  tone?: StepTone | ""
   /** Builds a custom marker from a step and its current state. A returned node
    * replaces `marker` and the built-in state marker; return `undefined` to use
    * those fallbacks, or `null` for an empty ring. */
@@ -131,6 +136,7 @@ export const Steps = ({
   onBlur,
   label,
   priority = "secondary",
+  tone,
   renderMarker,
   size,
   orientation,
@@ -160,11 +166,12 @@ export const Steps = ({
     const { className: optionClassName, style: optionStyle, ...optionAttrs } =
       optionPresentationAttrs(option)
 
+    const optionTone = option.tone || undefined
     const stepTone: StepTone = option.disabled
       ? "neutral"
       : option.state === "error"
         ? "critical"
-        : (option.tone || "neutral")
+        : (optionTone || tone || "neutral")
     const customMarker = renderMarker?.(option, {
       state: option.state,
       selected: option.value === currentValue,
@@ -189,6 +196,8 @@ export const Steps = ({
       value: option.value,
       disabled: option.disabled,
       "data-step-state": option.state,
+      // Steps propagates its tone to each generated tab. A local option tone
+      // wins, while error and disabled states retain their fixed semantics.
       tone: stepTone !== "neutral" ? stepTone : undefined,
       className: optionClassName,
       style: optionStyle,

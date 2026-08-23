@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Progress
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 import Preview from '../components/Preview.astro'
@@ -24,7 +24,6 @@ pass `false`, while work is underway without a known duration.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Progress"
   layout="side"
   codeInitiallyFolded

@@ -28,8 +28,8 @@ const stateExamples: StepOption[] = [
 ]
 
 const toneExamples: StepOption[] = [
-  { value: 'done', label: 'Done', hint: 'Complete', state: 'completed', tone: 'success' },
-  { value: 'current', label: 'Validate', hint: 'Checking dependencies', state: 'loading', tone: 'brand' },
+  { value: 'done', label: 'Done', hint: 'Complete', state: 'completed' },
+  { value: 'current', label: 'Validate', hint: 'Checking dependencies', state: 'loading' },
   { value: 'review', label: 'Review', hint: 'Needs attention', state: 'incomplete', tone: 'warning' },
   { value: 'deploy', label: 'Deploy', hint: 'Waiting', state: 'incomplete', tone: 'info' },
   { value: 'error', label: 'Error', hint: 'Resolve before continuing', state: 'error' },
@@ -94,6 +94,7 @@ export function Priority() {
           <Steps
             fill
             priority={priority}
+            tone="brand"
             defaultValue="review"
             label={`${priority} deployment progress`}
             options={fullWidthPhases}
@@ -110,6 +111,7 @@ export function Tones() {
     <div style={{ width: '100%' }}>
       <Steps
         fill
+        tone="brand"
         defaultValue="current"
         label="Deployment progress"
         options={toneExamples}
@@ -220,6 +222,7 @@ export function ComposedNavigation() {
     <div style={{ width: '100%', maxWidth: '560px' }}>
       <Steps
         value={value}
+        tone="brand"
         label="Deployment progress"
         options={options}
         onStateChange={(_event, { next }) => next && setValue(next)}

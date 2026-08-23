@@ -20,21 +20,12 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { Input, Tooltip, Text, Checkbox, Select, Tabs } from '@antadesign/anta'
 import { marked } from 'marked'
 import s from './Playground.module.css'
-// Monaco ships its structural CSS as ~110 separate `import './x.css'`
-// side-effect imports inside its ESM build. Vite injects each one
-// live in dev (so the editor looks right under `pnpm dev`) but emits
-// none of them into the production bundle, since they're only reached
-// through the lazily-imported `monaco-editor` chunk. Without these
-// rules the editor's hidden <textarea> (`.inputarea`) falls back to
-// the UA default (border + resize grip) and the layout breaks. Pull
-// in Monaco's concatenated stylesheet statically so it's always part
-// of this island's CSS in both dev and prod.
-import 'monaco-editor/min/vs/editor/editor.main.css'
 
 import { controlsFor, controlsForExample, CONDITIONAL_PROPS, type Control, type PropEntry } from '../../lib/sandbox/props-form.ts'
-import { bundle, type BundleResult } from '../../lib/sandbox/bundler.ts'
+import { bundle, setEsbuildLoader, type BundleResult } from '../../lib/sandbox/bundler.ts'
 import { moduleManifest } from '../../lib/sandbox/modules.ts'
 import { IFRAME_ASSETS } from '../generated/iframe-assets'
+import { PLAYGROUND_ASSETS } from '../generated/playground-assets'
 import { replaceProp, readChildren } from '../../lib/sandbox/prop-patch.ts'
 import { readProp } from '../../lib/sandbox/prop-read.ts'
 import { parseExamples, type Example } from '../../lib/sandbox/parse-examples.ts'
@@ -47,6 +38,18 @@ const COLUMN_WIDTH = 960
 // Lazily loaded inside an effect so the docs page paints without
 // blocking on Monaco's ~1.5 MB bundle.
 type MonacoEditorLib = typeof import('@monaco-editor/react')
+type MonacoVendor = typeof import('./playground-monaco')
+type ShikiVendor = typeof import('./playground-shiki')
+type EsbuildVendor = typeof import('./playground-esbuild')
+
+function loadVendor<T>(vendor: 'monaco' | 'shiki' | 'compiler') {
+  // These vendor bundles are generated before the changing Playground bundle.
+  // Keep the dynamic import at runtime so Vite does not fold them back into the
+  // application chunk while building it.
+  return import(/* @vite-ignore */ `/playground/${PLAYGROUND_ASSETS[vendor]}`) as Promise<T>
+}
+
+setEsbuildLoader(() => loadVendor<EsbuildVendor>('compiler'))
 
 interface Props {
   /** Anta component name to bind the props form to. Must match the
@@ -160,7 +163,7 @@ export default function Playground({ component, initialCode, initialCss = '', la
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([import('shiki'), import('@shikijs/monaco')]).then(([shiki, sm]) =>
+    loadVendor<ShikiVendor>('shiki').then(({ shiki, shikiMonaco }) =>
       shiki.createHighlighter({
         themes: ['github-light', 'tokyo-night'],
         langs: ['tsx', 'css'],
@@ -171,8 +174,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
         }
         setShikiBundle({
           highlighter,
-          shikiToMonaco: sm.shikiToMonaco,
-          textmateThemeToMonacoTheme: sm.textmateThemeToMonacoTheme,
+          shikiToMonaco: shikiMonaco.shikiToMonaco,
+          textmateThemeToMonacoTheme: shikiMonaco.textmateThemeToMonacoTheme,
         })
       }),
     )
@@ -237,17 +240,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
   // use the bundled namespace.
   useEffect(() => {
     let cancelled = false
-    Promise.all([
-      import('monaco-editor'),
-      import('monaco-editor/esm/vs/editor/editor.worker?worker'),
-      import('monaco-editor/esm/vs/language/typescript/ts.worker?worker'),
-      import('monaco-editor/esm/vs/language/css/css.worker?worker'),
-      import('@monaco-editor/react'),
-    ]).then(([monacoNs, editorWorker, tsWorker, cssWorker, reactMod]) => {
+    Promise.all([loadVendor<MonacoVendor>('monaco'), import('@monaco-editor/react')]).then(([{ monaco, EditorWorker, TsWorker, CssWorker }, monacoReact]) => {
       if (cancelled) return
-      const EditorWorker = editorWorker.default
-      const TsWorker = tsWorker.default
-      const CssWorker = cssWorker.default
       ;(globalThis as any).MonacoEnvironment = {
         getWorker(_id: string, label: string) {
           if (label === 'typescript' || label === 'javascript') return new TsWorker()
@@ -255,8 +249,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
           return new EditorWorker()
         },
       }
-      reactMod.loader.config({ monaco: monacoNs })
-      setMonacoLib(reactMod)
+      monacoReact.loader.config({ monaco })
+      setMonacoLib(monacoReact)
     })
     return () => {
       cancelled = true
@@ -1359,8 +1353,9 @@ function setupIframe(iframe: HTMLIFrameElement) {
   apply()
   const obs = new MutationObserver(apply)
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  // Detach when the iframe unloads.
-  iframe.addEventListener('unload', () => obs.disconnect(), { once: true })
+  // `unload` is disallowed in this nested document by Chromium's permissions
+  // policy. `pagehide` has the same lifetime semantics without the violation.
+  win.addEventListener('pagehide', () => obs.disconnect(), { once: true })
 
   // 5) Capture iframe runtime errors → bubble to parent via postMessage.
   win.addEventListener('error', (e: any) => {
@@ -1383,7 +1378,7 @@ function setupIframe(iframe: HTMLIFrameElement) {
   if (ResizeObserverCtor) {
     const ro = new ResizeObserverCtor(report)
     ro.observe(observed)
-    iframe.addEventListener('unload', () => ro.disconnect(), { once: true })
+    win.addEventListener('pagehide', () => ro.disconnect(), { once: true })
   }
   // Initial report after a microtask so the first render lands first.
   setTimeout(report, 0)

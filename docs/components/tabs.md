@@ -6,6 +6,9 @@ A tablist for switching between views. The strip is data-driven: pass an
 selectable strip that emits the chosen value; add matching `<TabPanel>` children
 (see [Panels](#panels)) to show and hide the content too.
 
+Each option can also set `className`, `style`, and `data-*` attributes on its
+individual `<a-tab>`.
+
 ## Priority
 
 ```tsx
@@ -342,7 +345,8 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 | `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value }` snapshot as the 2nd argument. |
 | `options?` | TabOption[] | — | The tabs, as a data array (the strip's single source). Each entry is a
  `TabOption` (`value`, `label` or `children`, `icon`, `iconTrailing`, `tone`,
- `disabled`, `round`). |
+ `disabled`, `round`, `className`, `style`). `className` and `style` land on
+ that option's individual `<a-tab>`, not on the strip. |
 | `orientation?` | 'horizontal' \| 'vertical' | 'horizontal' | Layout + arrow-key axis. Horizontal ellipsizes labels when tabs overflow (scroll
  is opt-in via CSS); vertical stacks them. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'primary' | Visual priority. `primary` is the raised pill on a recessed track (the

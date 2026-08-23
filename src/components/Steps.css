@@ -44,11 +44,6 @@
     --tab-selected-border: var(--border-1);
     --steps-primary-marker-lightness: 0.5;
     --steps-primary-marker-chroma: 0.02;
-    --steps-primary-marker-bg: oklch(
-      from var(--tabs-tone-source)
-      var(--steps-primary-marker-lightness)
-      var(--steps-primary-marker-chroma) h
-    );
     --steps-primary-marker-fg: #ffffff;
     --tabs-gap: 0px;
 
@@ -88,19 +83,6 @@
     --tab-selected-border: var(--border-1-critical);
   }
 
-  /* Tabs mirrors the selected tab's named tone onto its strip for the shared
-     indicator. Steps uses per-tab paint, so neutral steps reset that inherited
-     source instead of adopting their selected sibling's color. */
-  a-tabs[data-steps] > a-tab:is(:not([tone]), [tone=""], [tone="neutral"]) {
-    --tabs-tone-source: var(--anta-seed-neutral);
-    --tab-selected-text: var(--text-1);
-    --tab-text-2: var(--text-2);
-    --tab-rest-tone: var(--text-3);
-    --tabs-track-border: var(--border-4);
-    --tab-selected-border: var(--border-1);
-    --_track-c: 0.008;
-  }
-
   a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
     --steps-complete-connector-chroma: 0.09;
     --steps-primary-marker-chroma: 0.17;
@@ -125,11 +107,6 @@
     --steps-marker-rest-border: var(--border-3);
     --steps-connector-color: var(--border-3);
     --steps-connector-width: 2px;
-    --steps-primary-completed-marker-bg: color-mix(
-      in oklch,
-      var(--steps-primary-marker-bg) 80%,
-      transparent
-    );
   }
 
   a-tabs[data-steps][priority="tertiary"] {
@@ -154,6 +131,19 @@
       from var(--steps-complete-connector-source)
       var(--steps-complete-connector-lightness)
       var(--steps-complete-connector-chroma) h
+    );
+    /* Resolve these on the individual tab, after a per-step `tone` has
+       re-pointed --tabs-tone-source. A parent-level value would retain the
+       strip tone and make a primary marker ignore an option override. */
+    --steps-primary-marker-bg: oklch(
+      from var(--tabs-tone-source)
+      var(--steps-primary-marker-lightness)
+      var(--steps-primary-marker-chroma) h
+    );
+    --steps-primary-completed-marker-bg: color-mix(
+      in oklch,
+      var(--steps-primary-marker-bg) 80%,
+      transparent
     );
 
     position: relative;
@@ -286,18 +276,24 @@
     );
   }
 
-  /* Errors remain critical while resting, but only selection fills the ring. */
+  /* The icon follows its tab's tone. Rings stay neutral until their step is
+     active, completed, or in error. */
   a-tabs[data-steps] > a-tab[tone] a-step-marker {
     color: var(--tab-selected-text);
+  }
+
+  a-tabs[data-steps] > a-tab:is(
+    :state(selected),
+    [data-step-state="completed"],
+    [data-step-state="error"]
+  ) a-step-marker {
     border-color: var(--tab-selected-border);
   }
 
-  /* Secondary and tertiary retain the current label color in their icon. A
-     secondary ring uses the matching muted border tone until it is selected. */
+  /* Secondary and tertiary retain the current label color in their icon. */
   a-tabs[data-steps]:is([priority="secondary"], [priority="tertiary"])
     > a-tab[tone]:not([tone=""], [tone="neutral"]) a-step-marker {
     color: var(--tab-fg);
-    border-color: var(--tabs-track-border);
   }
 
   a-tabs[data-steps][priority="secondary"]

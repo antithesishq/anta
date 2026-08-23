@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Banner
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -25,7 +25,6 @@ same opt-in as `Progress` ([Styling](#styling)).
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Banner"
   layout="side"
   panelHeight={360}

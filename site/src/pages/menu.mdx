@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Menu
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -34,7 +34,6 @@ open with `event.preventDefault()`. You can also keep a `ref` and call
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Menu"
   layout="side"
   panelHeight={440}

@@ -3,7 +3,7 @@ layout: ../layouts/DocsLayout.astro
 title: Title
 ---
 import { Title, Icon } from '@antadesign/anta'
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -26,7 +26,6 @@ component layouts when you need tone, priority, or parent-controlled spacing.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Title"
   layout="side"
   initialCode={titleDemoCode}

@@ -211,21 +211,21 @@ export interface AvatarGenConfig {
  * exactly what it says.
  */
 const NATURAL = {
-  figureScale: { range: [0.82, 1.2] as const, off: 1 },
-  figureAngle: { range: [-12, 12] as const, off: 0 },
-  headAngle: { range: [-14, 14] as const, off: 0 },
-  bodyAngle: { range: [-10, 10] as const, off: 0 },
-  figureGap: { range: [0, 0.3] as const, off: 0.15 },
-  headRadiusTop: { range: [0.5, 1.15] as const, off: 1, bias: 0.6 },
-  headRadiusBottom: { range: [0.6, 1.35] as const, off: 1, bias: 0.6 },
-  bodyBorderRadius: { range: [0.45, 1] as const, off: 1 },
+  figureScale: { range: [0.76, 1.2] as const, off: 1 },
+  figureAngle: { range: [-15, 15] as const, off: 0 },
+  headAngle: { range: [-20, 20] as const, off: 0 },
+  bodyAngle: { range: [-16, 16] as const, off: 0 },
+  figureGap: { range: [0.12, 0.42] as const, off: 0.25 },
+  headRadiusTop: { range: [0.35, 1.25] as const, off: 1, bias: 0.6 },
+  headRadiusBottom: { range: [0.45, 1.5] as const, off: 1, bias: 0.6 },
+  bodyBorderRadius: { range: [0.25, 1] as const, off: 1 },
 }
 
 /** One numeric dimension's distribution. */
 type ScalarMeta = { range: readonly [number, number]; off: number; bias?: number }
 const TRANSLATE_NATURAL: { x: [number, number]; y: [number, number]; off: [number, number] } = {
-  x: [-12, 12],
-  y: [-12, 12],
+  x: [-15, 15],
+  y: [-14, 4],
   off: [0, 0],
 }
 
@@ -233,9 +233,9 @@ const TRANSLATE_NATURAL: { x: [number, number]; y: [number, number]; off: [numbe
  *  Muted, mid-tone background; lighter, low-chroma head and body — the earthy
  *  register of the reference sheet, on-brand-neutral until an app narrows it. */
 const COLOR_NATURAL: Record<'bgColor' | 'headColor' | 'bodyColor', { l: [number, number]; c: [number, number]; h: [number, number]; off: string }> = {
-  bgColor: { l: [0.55, 0.78], c: [0.03, 0.09], h: [0, 360], off: 'oklch(0.7 0 0)' },
-  headColor: { l: [0.8, 0.93], c: [0.02, 0.06], h: [0, 360], off: 'oklch(0.9 0 0)' },
-  bodyColor: { l: [0.78, 0.92], c: [0.02, 0.06], h: [0, 360], off: 'oklch(0.88 0 0)' },
+  bgColor: { l: [0.5, 0.82], c: [0.02, 0.12], h: [0, 360], off: 'oklch(0.7 0 0)' },
+  headColor: { l: [0.78, 0.96], c: [0.015, 0.075], h: [0, 360], off: 'oklch(0.9 0 0)' },
+  bodyColor: { l: [0.68, 0.9], c: [0.015, 0.09], h: [0, 360], off: 'oklch(0.88 0 0)' },
 }
 
 /** A config that produces a pleasant, fully-varied figure avatar. */
@@ -244,8 +244,8 @@ export const DEFAULT_CONFIG: Required<Omit<AvatarGenConfig, 'harmony'>> & { harm
   headColor: { mode: 'any' },
   bodyColor: { mode: 'any' },
   figureScale: { mode: 'any' },
-  figureTranslate: { mode: 'off' },
-  figureAngle: { mode: 'off' },
+  figureTranslate: { mode: 'any' },
+  figureAngle: { mode: 'any' },
   headAngle: { mode: 'any' },
   bodyAngle: { mode: 'any' },
   figureGap: { mode: 'any' },

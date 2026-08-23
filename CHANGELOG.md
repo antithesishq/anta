@@ -34,6 +34,9 @@ changes are not listed.
 
 ### Changed
 
+- `Avatar` default generation uses a larger head-to-body gap, shifts figures
+  slightly upward, and varies their position, rotation, color, scale, and shape
+  more widely.
 - `Slider` thumbs are smaller: 12px at `small`, 16px at `medium` (the default,
   previously 18px), and 20px at `large`, unchanged. `thumbSize` still overrides
   any of them.

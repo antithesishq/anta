@@ -39,6 +39,18 @@ Astro renders static output. The site uses MDX and astro-expressive-code, with G
 - **Restoring stored state into an SSR'd island happens in a mount effect, never in the `useState` initializer.** Preact skips attribute patching during hydration, so initializer-restored state silently desyncs from the server-rendered DOM (stale `hidden`/`value` attributes). A post-mount `setState` is a normal update and patches everything (see `ThemingLab.tsx`).
 - **Swapped-in subtrees upgrade custom elements parent-first.** Anta group elements (`a-tabs`, `a-radio-group`) defer their first child sync a microtask for exactly this reason (see `childrenReady` in `src/elements/a-tabs.ts`). A new element class that reads or writes its custom-element *children* at connect time must do the same, or swapped-in pages render it dead while full loads look fine.
 
+## Search
+
+`pnpm run build` runs `scripts/build-search-index.mjs` after Astro writes `dist/`.
+The script parses rendered `<main class="content">` elements, adds stable `data-search-id`
+attributes and anchors to searchable blocks, then writes `dist/search-index.json`. Keep the
+browser configuration in `lib/search/config.json` compatible with the build script: FlexSearch
+imports require the same document configuration that exported the chunks. The search island starts
+loading the index during idle time; its page-target highlighter must run on `astro:page-load` so
+ClientRouter navigations receive the same mark.js treatment as cold loads.
+The build also copies the index to ignored `public/search-index.json`; `pnpm run dev` serves that
+last-built snapshot without rebuilding it during source changes.
+
 ## Playground
 
 The `<Playground>` component (`site/src/components/Playground.tsx`) is the playground that lands on `/<name>/` pages. It is the largest single component in this directory and is intentionally self-contained so that a future migration to a dedicated package (`@antadesign/sandbox` or similar) and a dedicated repository can lift it out without disturbing the rest of the site. Pages import `PlaygroundEmbed.astro`, which serializes its props into a host for the prebuilt runtime.

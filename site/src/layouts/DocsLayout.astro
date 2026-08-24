@@ -11,6 +11,7 @@ import { Button, Icon } from '@antadesign/anta'
 import PostHog from '../components/posthog.astro'
 import { COMPONENT_SLUGS } from '../../lib/component-slugs'
 import ThemeSwitcher from '../components/ThemeSwitcher.tsx'
+import SearchDialog from '../components/SearchDialog.tsx'
 
 interface Props {
   title?: string
@@ -253,6 +254,7 @@ if (isComponentPage && title) {
             <img src="/anta-logo.svg" alt="" width="32" height="32" />
             <span class="logo-label">Anta</span>
           </a>
+          <Button class="search-toggle" priority="tertiary" size="large" icon="search" aria-label="Search documentation" data-search-trigger />
           <Button class="theme-toggle" priority="tertiary" size="large" aria-label="Switch theme">
             <Icon shape="sun" size={18} />
             <Icon shape="moon" size={18} />
@@ -346,6 +348,7 @@ if (isComponentPage && title) {
           <li><a href="/stickers/" aria-current={isCurrent('/stickers/') ? 'page' : undefined}><Icon shape="sticker" size={18} /> Stickers</a></li>
         </menu>
       </aside>
+      <div transition:persist="search-dialog"><SearchDialog client:load /></div>
       <main class="content">
         {/* Mobile-only: opens the "On this page" TOC as a right-side
             slide-out (the .toc-rail is hidden on mobile otherwise).
@@ -372,6 +375,7 @@ if (isComponentPage && title) {
 
     <script>
       import type { TransitionBeforeSwapEvent } from 'astro:transitions/client'
+      import { startSearchHighlighting } from '../../lib/search/highlight'
 
       // Runs once per session (ClientRouter never re-runs a seen script), so
       // handlers are document-delegated and per-page work hangs off astro:*
@@ -407,7 +411,9 @@ if (isComponentPage && title) {
       document.addEventListener('click', (e) => {
         const target = e.target as HTMLElement
         if (!target.closest) return
-        if (target.closest('.menu-toggle, .topbar-title')) {
+        if (target.closest('[data-search-trigger]')) {
+          document.dispatchEvent(new Event('anta-search-open'))
+        } else if (target.closest('.menu-toggle, .topbar-title')) {
           setMenu(document.body.dataset.menuOpen !== 'true')
         } else if (target.closest('.toc-toggle')) {
           setToc(document.body.dataset.tocOpen !== 'true')
@@ -477,6 +483,8 @@ if (isComponentPage && title) {
           else a.removeAttribute('aria-current')
         }
       })
+
+      startSearchHighlighting()
     </script>
 
     <script>
@@ -659,9 +667,9 @@ if (isComponentPage && title) {
     flex: 1;
   }
 
-  /* Theme toggle is a tertiary icon <a-button> (Anta owns fg/hover),
-     forced to a square with a circular radius. We only swap which icon
-     shows per mode: sun in light, moon in dark. */
+  /* Header controls are tertiary icon buttons. The search trigger stays next
+     to the theme switcher, so the logo keeps the remaining row space. */
+  .search-toggle,
   .theme-toggle {
     padding-inline: 8px;
     padding-block: 8px;

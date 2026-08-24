@@ -16,6 +16,7 @@ site/src/generated/
 site/public/esbuild.wasm
 site/public/iframe-anta-runtime.js
 site/public/themes/anta.css
+site/public/search-index.json
 .DS_Store
 **/.DS_Store
 .dev.pid

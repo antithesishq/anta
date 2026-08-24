@@ -1,8 +1,8 @@
 {
-  "version": 1,
+  "version": 2,
   "document": {
     "id": "id",
-    "index": ["title", "text"],
+    "index": ["text"],
     "store": ["route", "anchor", "title", "heading", "text", "kind", "level"]
   },
   "tokenize": "forward",

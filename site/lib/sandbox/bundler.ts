@@ -218,6 +218,24 @@ function formatErrors(errors: any[]): string {
  * `null` if no JSX block is found.
  */
 function wrapWithRender(code: string): string | null {
+  // A `Demo` function is the normal TSX shape for a playground example.
+  // TypeScript's language service parses JSX after a bare top-level `<` as a
+  // type comparison, while JSX in the function's return is unambiguous. The
+  // function is a playground convention, not an application export. Accept
+  // the older default-export spelling while existing examples migrate.
+  const demoFunction = /^\s*(?:export\s+default\s+)?function\s+(Demo)\s*\(/m.exec(code)
+  if (demoFunction) {
+    const lines = code.split('\n')
+    const firstJsxLine = lines.findIndex((line) => line.trimStart().startsWith('<'))
+    const beforeJsx = firstJsxLine === -1 ? code : lines.slice(0, firstJsxLine).join('\n')
+    const autoImport = buildAntaAutoImport(beforeJsx, code)
+    const componentName = demoFunction[1]
+    return `${autoImport}${code.trimEnd()}
+import { render as __demo_render__ } from 'preact'
+__demo_render__(<${componentName} />, document.getElementById('root'))
+`
+  }
+
   const lines = code.split('\n')
   let jsxStart = -1
   for (let i = 0; i < lines.length; i++) {

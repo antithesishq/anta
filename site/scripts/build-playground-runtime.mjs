@@ -50,7 +50,7 @@ const sharedConfig = {
   },
 }
 
-async function buildRuntime({ entry, name, format, includeCss = false }) {
+async function buildRuntime({ entry, name, format, includeCss = false, discardCss = false }) {
   const result = await build({
     ...sharedConfig,
     build: {
@@ -76,7 +76,7 @@ async function buildRuntime({ entry, name, format, includeCss = false }) {
   const chunks = output.filter((file) => file.type === 'chunk')
   const css = output.filter((file) => file.type === 'asset' && file.fileName.endsWith('.css'))
 
-  if (chunks.length !== 1 || (includeCss && css.length !== 1) || (!includeCss && css.length !== 0)) {
+  if (chunks.length !== 1 || (includeCss && css.length !== 1) || (discardCss ? css.length !== 1 : !includeCss && css.length !== 0)) {
     throw new Error(
       `Expected ${name} to emit one JavaScript${includeCss ? ' and one CSS' : ''} bundle; got ${output.map((file) => file.fileName).join(', ')}.`,
     )
@@ -99,11 +99,13 @@ const monaco = await buildRuntime({
   entry: resolveEntry('site/src/components/playground-monaco.ts'),
   name: 'playground-monaco',
   format: 'es',
-  includeCss: true,
+  // Playground.tsx imports Monaco's styles into the app sheet, which
+  // travels with the app runtime. The Monaco module still emits CSS while it
+  // bundles its imports; validate then discard that duplicate output.
+  discardCss: true,
 })
 const vendors = {
   monaco: monaco.js,
-  monacoCss: monaco.css,
   shiki: (await buildRuntime({
     entry: resolveEntry('site/src/components/playground-shiki.ts'),
     name: 'playground-shiki',

@@ -1,4 +1,4 @@
-export default `import { Avatar } from '@antadesign/anta'
+export default `import { Avatar, type AvatarGenConfig } from '@antadesign/anta'
 
 /**
  * @play props Generator
@@ -21,15 +21,19 @@ const generator = {
   headAngle: { mode: 'any' },
   bodyAngle: { mode: 'any' },
   harmony: true,
-}
+} satisfies AvatarGenConfig
 
-/** @play props Avatar */
-<Avatar
-  seed="user-42"
-  name="Vlad Korobov"
-  size={96}
-  badge="success"
-  round
-  generator={generator}
-/>
+function Demo() {
+  return (
+    /** @play props Avatar */
+    <Avatar
+      seed="user-42"
+      name="Vlad Korobov"
+      size={96}
+      badge="success"
+      round
+      generator={generator}
+    />
+  )
+}
 `

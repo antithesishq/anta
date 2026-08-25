@@ -624,7 +624,6 @@ if (isComponentPage && title) {
   .sidebar {
     width: 214px;
     flex-shrink: 0;
-    background: var(--bg-pane);
     /* border-right: 1px solid var(--border-5); */
     padding: 20px 16px 48px 20px;
     position: sticky;
@@ -697,7 +696,7 @@ if (isComponentPage && title) {
 
   .sidebar-separator {
     border: 0;
-    height: 1px;
+    height: 0;
     background: linear-gradient(to right, var(--border-4), var(--border-5));
     margin: 8px 0;
   }
@@ -900,6 +899,7 @@ if (isComponentPage && title) {
       position: fixed;
       top: 0;
       right: 0;
+      background: var(--bg-pane);
       /* Wider as a slide-out than docked (214px) — matches the TOC slide-out. */
       width: min(240px, 80vw);
       height: 100dvh;

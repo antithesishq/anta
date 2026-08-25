@@ -16,6 +16,10 @@
  * See site/lib/sandbox/* for the moving parts.
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
+// Monaco's UI stylesheet must be part of the shared component, not only the
+// prebuilt Embed runtime. Some pages still mount Playground as an Astro island;
+// without these rules, Monaco's hidden input becomes a native textarea.
+import 'monaco-editor/min/vs/editor/editor.main.css'
 import { Input, Tooltip, Text, Checkbox, Select, Tabs } from '@antadesign/anta'
 import { marked } from 'marked'
 import s from './Playground.module.css'
@@ -704,7 +708,10 @@ export default function Playground({ component, initialCode, initialCss = '', la
                 <monacoLib.Editor
                   height="100%"
                   defaultLanguage="typescript"
-                  path="user.tsx"
+                  // The TypeScript worker chooses its parser from the model
+                  // URI's file extension. Use an explicit file URI: a bare
+                  // Keep a stable .tsx URI for Monaco's TypeScript JSX services.
+                  path="file:///playground/user.tsx"
                   // Uncontrolled: seed the initial text, then let the
                   // editor own its model. We deliberately do NOT pass
                   // `value={code}` — @monaco-editor/react reacts to a
@@ -719,11 +726,11 @@ export default function Playground({ component, initialCode, initialCss = '', la
                   onChange={handleEditorChange}
                   beforeMount={(monaco) => {
                     monacoRef.current = monaco
+                    configureTypeScript(monaco)
                     installShikiBridge(monaco, shikiBundle)
                   }}
                   onMount={(editor, monaco) => {
                     editorRef.current = editor
-                    onMonacoMount(editor, monaco)
                     installJsxAwareCommentToggle(editor, monaco)
                     editor.layout()
                     if (codeInitiallyFolded) {
@@ -1653,7 +1660,7 @@ const packageJsons = import.meta.glob(
 
 let monacoTypesInstalled = false
 
-function onMonacoMount(_editor: unknown, monaco: any) {
+function configureTypeScript(monaco: any) {
   if (monacoTypesInstalled) return
   monacoTypesInstalled = true
   const ts = monaco.languages.typescript
@@ -1674,9 +1681,9 @@ function onMonacoMount(_editor: unknown, monaco: any) {
     // 2657 — "JSX expressions must have one parent element". The
     // playground wraps the user's trailing JSX in a Fragment at
     // bundle time, so the user is free to write sibling roots (e.g.
-    // a `<style>` next to the component). Silence the squiggle to
-    // match that contract.
-    diagnosticCodesToIgnore: [2657],
+    // a `<style>` next to the component). 6133 — the bundler renders
+    // `Demo` after compiling it, outside Monaco's source model.
+    diagnosticCodesToIgnore: [2657, 6133],
   })
   for (const [absPath, contents] of Object.entries(antaTypeDefs)) {
     ts.typescriptDefaults.addExtraLib(contents, 'file://' + absPath)

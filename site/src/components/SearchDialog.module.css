@@ -1,0 +1,59 @@
+.dialog {
+  --dialog-width: min(42rem, calc(100vw - 2rem));
+}
+
+.body {
+  display: grid;
+  gap: 12px;
+}
+
+.status,
+.empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.results {
+  display: grid;
+  gap: 4px;
+  max-height: min(54vh, 32rem);
+  overflow: auto;
+  padding: 2px;
+}
+
+.result {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-1);
+  text-decoration: none;
+}
+
+.result:hover,
+.result[data-selected='true'] {
+  background: var(--bg-3);
+}
+
+.result:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.path {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.snippet {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}

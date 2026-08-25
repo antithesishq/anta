@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "document": {
+    "id": "id",
+    "index": ["text"],
+    "store": ["route", "anchor", "title", "heading", "text", "kind", "level"]
+  },
+  "tokenize": "forward",
+  "cache": 100
+}

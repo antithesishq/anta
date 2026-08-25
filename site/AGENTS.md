@@ -39,6 +39,18 @@ Astro renders static output. The site uses MDX and astro-expressive-code, with G
 - **Restoring stored state into an SSR'd island happens in a mount effect, never in the `useState` initializer.** Preact skips attribute patching during hydration, so initializer-restored state silently desyncs from the server-rendered DOM (stale `hidden`/`value` attributes). A post-mount `setState` is a normal update and patches everything (see `ThemingLab.tsx`).
 - **Swapped-in subtrees upgrade custom elements parent-first.** Anta group elements (`a-tabs`, `a-radio-group`) defer their first child sync a microtask for exactly this reason (see `childrenReady` in `src/elements/a-tabs.ts`). A new element class that reads or writes its custom-element *children* at connect time must do the same, or swapped-in pages render it dead while full loads look fine.
 
+## Search
+
+`pnpm run build` runs `scripts/build-search-index.mjs` after Astro writes `dist/`.
+The script parses rendered `<main class="content">` elements, adds stable `data-search-id`
+attributes and anchors to searchable blocks, then writes `dist/search-index.json`. Keep the
+browser configuration in `lib/search/config.json` compatible with the build script: FlexSearch
+imports require the same document configuration that exported the chunks. The search island starts
+loading the index during idle time; its page-target highlighter must run on `astro:page-load` so
+ClientRouter navigations receive the same mark.js treatment as cold loads.
+The build also copies the index to ignored `public/search-index.json`; `pnpm run dev` serves that
+last-built snapshot without rebuilding it during source changes.
+
 ## Playground
 
 The `<Playground>` component (`site/src/components/Playground.tsx`) is the playground that lands on `/<name>/` pages. It is the largest single component in this directory and is intentionally self-contained so that a future migration to a dedicated package (`@antadesign/sandbox` or similar) and a dedicated repository can lift it out without disturbing the rest of the site. Pages import `PlaygroundEmbed.astro`, which serializes its props into a host for the prebuilt runtime.
@@ -66,7 +78,7 @@ headings remain supported for existing JSX examples.
 
 ### Monaco is bundled from npm (no CDN)
 
-Monaco lives in `dependencies` as `monaco-editor` and is built into its own cached runtime. `Playground.tsx` dynamically imports that generated bundle, while `playground-monaco.ts` owns the Monaco and worker imports:
+Monaco lives in `dependencies` as `monaco-editor` and is built into its own cached runtime. `Playground.tsx` dynamically imports that generated bundle, while `playground-monaco.ts` owns the Monaco and worker imports. Its base CSS is imported by `Playground.tsx`, so both prebuilt and Astro-island mounts load it; do not give Monaco a separate asset link, which ClientRouter can leave stale after a dev rebuild.
 
 ```ts
 import * as monaco from 'monaco-editor'                                         // namespace
@@ -86,7 +98,7 @@ We only register workers for languages the playground actually uses. Adding JSON
 
 Create `site/src/pages/{name}.mdx` with `layout: ../layouts/DocsLayout.astro` (component pages are served at the site root, `/{name}/`, not under `/components/`; add the slug to `site/lib/component-slugs.ts` and the sidebar nav in `DocsLayout.astro`). For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop `<Playground component="…" layout="side" initialCode={…} />` near the top. It is mounted by the shared prebuilt runtime, so it does not take a `client:*` directive.
 
-**Always use the shared `<Playground>` for the interactive demo — never hand-roll a bespoke per-component playground island.** The shared one gives a uniform editor + auto props form (from `api.json`) + isolated preview iframe across every page, and is slated for extraction into its own package; a one-off island fragments that and drifts. The `initialCode` is plain TSX — imports followed by a trailing JSX block that the bundler auto-wraps in a `<>…</>` fragment, so it can hold **multiple sibling or nested elements** (e.g. several anchors each wrapping a `<Tooltip>`); the props panel binds to the first instance of `component`. Keep `initialCode` in a sibling `{name}.demo.ts` (`export default \`…\``) so Astro's MDX pipeline doesn't mangle the template literal's indentation. Reserve custom islands for demos the playground genuinely can't express (e.g. a self-animating `AnimatedProgress`).
+**Always use the shared `<Playground>` for the interactive demo — never hand-roll a bespoke per-component playground island.** The shared one gives a uniform editor + auto props form (from `api.json`) + isolated preview iframe across every page, and is slated for extraction into its own package; a one-off island fragments that and drifts. Write the source as a `Demo` function and return its JSX (`function Demo() { return (…) }`). The bundler renders that function, and Monaco's TypeScript service then parses its JSX correctly. Keep `initialCode` in a sibling `{name}.demo.ts` (`export default \`…\``) so Astro's MDX pipeline doesn't mangle the template literal's indentation. Reserve custom islands for demos the playground genuinely can't express (e.g. a self-animating `AnimatedProgress`).
 
 **Demos use Anta's own components wherever one exists — down to the incidental controls.** Any control the design system ships — `Checkbox`, `Input`, `Button`, `RadioGroup`, `Select`, `Tabs`, `Tag`, `Tooltip`, … — is what a demo reaches for, whether it's the component under test or just a knob beside it (a "simulate loading" toggle, a filter field, a segmented switcher). This holds in every demo surface: Playground `initialCode`, a hydrated island (`src/components/*.tsx`), and inline `.mdx` examples. The point is that every example dogfoods the library and looks/behaves like real usage; a raw `<input>` / `<button>` / `<select>` next to an Anta component reads as an oversight. Drop to a raw HTML control **only** when there's genuinely no Anta equivalent yet (e.g. `<input type="range">` — there's no slider component). The `Playground` island itself is exempt — it's editor/props-form infrastructure kept standalone for extraction, not a component demo.
 

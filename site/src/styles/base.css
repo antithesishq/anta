@@ -8,6 +8,17 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Match the established Antithesis docs treatment for marked text. */
+mark {
+  color: color-mix(in oklch, black 90%, transparent);
+  background-color: hsl(55 100% 35%);
+  border-radius: 2px;
+}
+
+html:not(.dark) mark {
+  background-color: hsl(55deg 100% 61.85%);
+}
+
 /* Brand fonts (temporary Uploadcare hosting) */
 @font-face {
   font-family: "Anta sans";

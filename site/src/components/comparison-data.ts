@@ -91,7 +91,7 @@ export const SYSTEMS: System[] = [
       'Plain CSS in one @layer avoids a style runtime and specificity fights.',
       'Global tokens cover color roles, fonts, and focus. Components expose their remaining CSS variables locally.',
       'OKLCH tones use the same token system in light and dark mode.',
-      'Per-element imports register only the component you use. Lottie lives in the separate stickers package.',
+      'Per-element imports register only the component you use.',
     ],
     cons: [
       'Young and small: about 20 components.',
@@ -562,6 +562,20 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial',
   },
 }
+
+const coverageScore = (id: string) => CATEGORIES.reduce((total, category) => {
+  const mark = COVERAGE[id]?.[category.id]
+  return total + (mark === 'yes' ? 1 : mark === 'partial' || mark === 'paid' ? 0.5 : 0)
+}, 0)
+
+/** The coverage matrix's column order. Keep this shared with the summary
+ *  matrix so a system occupies the same visual position in both views. */
+export const COVERAGE_SYSTEMS = [...SYSTEMS].sort((a, b) => {
+  if (a.anta) return -1
+  if (b.anta) return 1
+
+  return coverageScore(b.id) - coverageScore(a.id) || a.name.localeCompare(b.name)
+})
 
 /**
  * Per-cell deep links: for each system, the official documentation page for

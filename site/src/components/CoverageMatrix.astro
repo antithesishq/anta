@@ -5,20 +5,7 @@
 // job (see comparison-data.ts). Anta's column is highlighted; the category
 // column and the header row are sticky so the wide grid stays legible while
 // it scrolls horizontally.
-import { SYSTEMS, CATEGORIES, COVERAGE, COVERAGE_URLS, type Mark } from './comparison-data'
-
-// Anta is the reference column. The remaining systems descend by the number
-// of component jobs they ship; partial and paid entries count as half coverage.
-const coverageScore = (id: string) => CATEGORIES.reduce((score, category) => {
-  const mark = COVERAGE[id]?.[category.id]
-  return score + (mark === 'yes' ? 1 : mark === 'partial' || mark === 'paid' ? 0.5 : 0)
-}, 0)
-
-const COVERAGE_SYSTEMS = [...SYSTEMS].sort((a, b) => {
-  if (a.anta) return -1
-  if (b.anta) return 1
-  return coverageScore(b.id) - coverageScore(a.id) || a.name.localeCompare(b.name)
-})
+import { CATEGORIES, COVERAGE, COVERAGE_SYSTEMS, COVERAGE_URLS, type Mark } from './comparison-data'
 
 const MARK: Record<Mark | 'none', { glyph: string; label: string; cls: string }> = {
   yes: { glyph: '✓', label: 'Included', cls: 'm-yes' },

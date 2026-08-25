@@ -26,6 +26,7 @@ export const componentGroups = [
   ],
   [
     ['Button', '/button/'],
+    ['Breadcrumbs', '/breadcrumbs/'],
     ['Checkbox', '/checkbox/'],
     ['Radio', '/radio/'],
     ['Switch', '/switch/'],

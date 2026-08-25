@@ -137,6 +137,8 @@ export interface AntaIntrinsicElements {
   'a-icon': AIconAttributes
   'a-button': AButtonAttributes
   'a-button-label': BaseAttributes
+  'a-breadcrumbs': BaseAttributes
+  'a-breadcrumb-separator': BaseAttributes
   'a-copy': ACopyAttributes
   'a-checkbox': ACheckboxAttributes
   'a-checkbox-label': BaseAttributes

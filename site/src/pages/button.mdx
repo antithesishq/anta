@@ -375,12 +375,14 @@ dropped (a valid `0` still renders).
   <Button tone="brand" priority="tertiary" underline="solid" label="Solid" />
   <Button tone="brand" priority="tertiary" underline="dashed" label="Dashed" />
   <Button tone="brand" priority="tertiary" underline="dotted" label="Dotted" />
+  <Button tone="brand" priority="quaternary" underline="solid" underlineOnHover label="Hover only" />
 </Preview>
 
 ```tsx folded
 <Button tone="brand" priority="tertiary" underline="solid"  label="Solid" />
 <Button tone="brand" priority="tertiary" underline="dashed" label="Dashed" />
 <Button tone="brand" priority="tertiary" underline="dotted" label="Dotted" />
+<Button tone="brand" priority="quaternary" underline="solid" underlineOnHover label="Hover only" />
 ```
 
 </Col>
@@ -388,7 +390,8 @@ dropped (a valid `0` still renders).
 
 When the button has a [link mode](#link-mode), or you simply want an
 underline stylistically, it supports three styles — `solid`, `dashed`,
-`dotted` (only valid on `priority="tertiary"` / `"quaternary"`).
+`dotted` (only valid on `priority="tertiary"` / `"quaternary"`). Set
+`underlineOnHover` to keep that underline hidden until pointer hover.
 
 </Col>
 </Columns>

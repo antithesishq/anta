@@ -1,0 +1,50 @@
+@layer anta {
+  a-breadcrumbs {
+    --breadcrumb-gap: 1px;
+    --breadcrumb-separator-color: var(--text-5);
+    --breadcrumb-separator-icon-size: 16px;
+    --breadcrumb-separator-font-size: 15px;
+
+    display: flex;
+    align-items: center;
+    gap: var(--breadcrumb-gap);
+    width: max-content;
+    min-width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  a-breadcrumbs[data-size="small"] {
+    --breadcrumb-separator-icon-size: 14px;
+    --breadcrumb-separator-font-size: 13px;
+  }
+
+  a-breadcrumbs[data-size="large"] {
+    --breadcrumb-separator-icon-size: 18px;
+    --breadcrumb-separator-font-size: 17px;
+  }
+
+  a-breadcrumbs[data-paddingless] {
+    --breadcrumb-gap: 0.75ch;
+  }
+
+  a-breadcrumbs > * {
+    flex: none;
+  }
+
+  a-breadcrumb-separator {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    color: var(--breadcrumb-separator-color);
+    font-family: var(--sans-serif);
+    font-size: var(--breadcrumb-separator-font-size);
+    line-height: 1;
+    user-select: none;
+  }
+
+  a-breadcrumb-separator > a-icon {
+    --icon-size: var(--breadcrumb-separator-icon-size);
+  }
+}

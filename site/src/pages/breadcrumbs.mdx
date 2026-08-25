@@ -1,0 +1,280 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Breadcrumbs
+---
+import Playground from '../components/PlaygroundEmbed.astro'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import Columns from '../components/Columns.astro'
+import Col from '../components/Col.astro'
+import breadcrumbsDemoCode from './breadcrumbs.demo.ts'
+import { Breadcrumbs } from '@antadesign/anta'
+
+# Breadcrumbs
+
+Hierarchy navigation assembled from Anta Buttons. Breadcrumb entries can be
+links, actions, or copy controls. Set `maxItems` to fold one middle range into a
+More menu without measuring the available width.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  component="Breadcrumbs"
+  layout="side"
+  panelHeight={380}
+  initialCode={breadcrumbsDemoCode}
+  initialCss={`.preview { min-height: 100%; align-items: center; }`}
+/>
+
+</Disclosure>
+
+## Items
+
+Pass ordered data through `items`. An `href` renders a native link with the
+Button appearance; omit it for an action button. Each item accepts `label`,
+`icon`, `iconTrailing`, `tone`, `disabled`, `onClick`, `className`, `style`,
+`id`, `title`, and `data-*` / `aria-*` attributes. `size`, priority, and
+underline treatment belong to the whole trail so every visible control retains
+the same height.
+
+<Columns>
+<Col>
+
+<Preview>
+  <Breadcrumbs
+    aria-label="Project location"
+    items={[
+      { label: 'Home', href: '/', icon: 'home' },
+      { label: 'Projects', href: '/projects', icon: 'folder-open', tone: 'brand' },
+      { label: 'Refresh', icon: 'refresh', onClick: () => {}, title: 'Reload this list' },
+    ]}
+  />
+</Preview>
+
+```tsx folded
+<Breadcrumbs
+  aria-label="Project location"
+  items={[
+    { label: 'Home', href: '/', icon: 'home' },
+    { label: 'Projects', href: '/projects', icon: 'folder-open', tone: 'brand' },
+    { label: 'Refresh', icon: 'refresh', onClick: reload },
+  ]}
+/>
+```
+
+</Col>
+<Col>
+
+An item with `current` receives `aria-current="page"`. The current item may
+remain a link when revisiting the page is useful, or it can be an action such as
+copying the current path.
+
+</Col>
+</Columns>
+
+## Priority, size, underline, and padding
+
+Breadcrumbs use either `tertiary` or `quaternary` Button priority. `size` drives
+every visible crumb and the More control: small is 24px, medium is 28px, and
+large is 32px. `underline` and `underlineOnHover` forward to each visible Button.
+With `priority="quaternary"` (the default), `paddingless` removes their horizontal
+padding without changing their height, and uses a `0.75ch` gap around separators.
+
+<Columns>
+<Col>
+
+<Preview>
+  <Breadcrumbs priority="tertiary" size="small" items={[{ label: 'Small', href: '/' }, { label: 'Tertiary', href: '/tertiary' }]} />
+  <Breadcrumbs priority="quaternary" size="medium" underline="solid" underlineOnHover items={[{ label: 'Medium', href: '/' }, { label: 'Hover underline', href: '/hover' }]} />
+  <Breadcrumbs paddingless items={[{ label: 'Compact', href: '/' }, { label: 'No padding', href: '/paddingless' }]} />
+  <Breadcrumbs priority="tertiary" size="large" items={[{ label: 'Large', href: '/' }, { label: 'Tertiary', href: '/tertiary' }]} />
+</Preview>
+
+```tsx folded
+<Breadcrumbs priority="tertiary" size="small" items={items} />
+<Breadcrumbs priority="quaternary" underline="solid" underlineOnHover items={items} />
+<Breadcrumbs paddingless items={items} />
+<Breadcrumbs priority="tertiary" size="large" items={items} />
+```
+
+</Col>
+<Col>
+
+The default is medium quaternary. `tertiary` adds a hover fill. `quaternary`
+keeps the trail text-only, which suits dense page headers. An underline is
+permanent unless `underlineOnHover` is set. `paddingless` is only available with
+quaternary priority.
+
+</Col>
+</Columns>
+
+## Separators
+
+Pass any of `→`, `＞`, `/`, `•`, `〉`, `▸`, or `▶︎` for a text separator. Pass an
+Anta icon shape for an icon separator. Separators are decorative and hidden from
+assistive technology.
+
+<Columns>
+<Col>
+
+<Preview>
+  <Breadcrumbs separator="→" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
+  <Breadcrumbs separator="＞" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
+  <Breadcrumbs separator="•" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
+  <Breadcrumbs separator="〉" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
+  <Breadcrumbs separator="▸" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
+  <Breadcrumbs separator="▶︎" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
+  <Breadcrumbs separator="chevron-right" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
+</Preview>
+
+```tsx folded
+<Breadcrumbs separator="→" items={items} />
+<Breadcrumbs separator="＞" items={items} />
+<Breadcrumbs separator="/" items={items} />
+<Breadcrumbs separator="•" items={items} />
+<Breadcrumbs separator="〉" items={items} />
+<Breadcrumbs separator="▸" items={items} />
+<Breadcrumbs separator="▶︎" items={items} />
+<Breadcrumbs separator="chevron-right" items={items} />
+```
+
+</Col>
+<Col>
+
+`/` is the default. The icon form accepts any registered `IconShape`, including
+icons added by an application through Anta's icon generator.
+
+</Col>
+</Columns>
+
+## Folding into More
+
+`maxItems` limits the number of original breadcrumb entries that remain visible;
+the More control does not count. When folding, `itemsBeforeCollapse` controls
+where More appears. Its default is `0`, so More comes first and the most recent
+items remain visible. The final original item is always kept visible.
+
+<Columns>
+<Col>
+
+<Preview>
+  <Breadcrumbs
+    maxItems={3}
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Workspace', href: '/workspace' },
+      { label: 'Projects', href: '/workspace/projects' },
+      { label: 'Anta', href: '/workspace/projects/anta' },
+      { label: 'Button.tsx', href: '/workspace/projects/anta/src/button' },
+    ]}
+  />
+  <Breadcrumbs
+    maxItems={4}
+    itemsBeforeCollapse={2}
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Workspace', href: '/workspace' },
+      { label: 'Projects', href: '/workspace/projects' },
+      { label: 'Anta', href: '/workspace/projects/anta' },
+      { label: 'src', href: '/workspace/projects/anta/src' },
+      { label: 'Button.tsx', href: '/workspace/projects/anta/src/button' },
+    ]}
+  />
+</Preview>
+
+```tsx folded
+// More / Projects / Anta / Button.tsx
+<Breadcrumbs maxItems={3} items={items} />
+
+// Home / Workspace / More / src / Button.tsx
+<Breadcrumbs maxItems={4} itemsBeforeCollapse={2} items={items} />
+```
+
+</Col>
+<Col>
+
+The More trigger is an icon-only Button followed by an Anta `Menu`; it supports
+pointer, keyboard, and outside-dismiss interaction through the existing menu
+primitive. Folded links retain their native link behavior, while folded actions
+become menu selections.
+
+</Col>
+</Columns>
+
+## Copying the current item
+
+An item with `copy`, `copyNode`, or `copyUrl` uses `ButtonCopy` while visible and
+`MenuItemCopy` if it is folded. Copy entries cannot combine with `href`. Mark a
+copying final item `current` when it represents the current page.
+
+<Columns>
+<Col>
+
+<Preview>
+  <Breadcrumbs
+    items={[
+      { label: 'Home', href: '/' },
+      { label: 'Button.tsx', current: true, copy: 'src/components/Button.tsx', iconPlacement: 'trailing' },
+    ]}
+  />
+</Preview>
+
+```tsx folded
+<Breadcrumbs
+  items={[
+    { label: 'Home', href: '/' },
+    {
+      label: 'Button.tsx',
+      current: true,
+      copy: 'src/components/Button.tsx',
+      iconPlacement: 'trailing',
+      copiedLabel: 'Path copied',
+    },
+  ]}
+/>
+```
+
+</Col>
+<Col>
+
+Use `copyUrl` to copy `location.href`, `copyNode` to copy a marked rendered
+region, or `copy` for a known string. `onCopyRequest` refreshes a reactive string
+before copying, and `onCopied` receives the result.
+
+</Col>
+</Columns>
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Breadcrumbs" />
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+Use `priority`, `size`, and `separator` before adding CSS. A `className` on
+`Breadcrumbs` lands on the navigation wrapper; item `className` values land on
+their individual Buttons. The composed structure uses light-DOM tags, so plain
+CSS can style a separator directly.
+
+<Preview>
+  <Breadcrumbs className="project-breadcrumbs" separator="chevron-right" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
+  <style is:inline>{`
+    .project-breadcrumbs a-breadcrumb-separator {
+      color: var(--text-2);
+    }
+  `}</style>
+</Preview>
+
+```tsx folded
+<Breadcrumbs className="project-breadcrumbs" separator="chevron-right" items={items} />
+```
+
+```css folded
+.project-breadcrumbs a-breadcrumb-separator {
+  color: var(--text-2);
+}
+```
+
+</Disclosure>

@@ -370,7 +370,8 @@ chevron stay centered on the row, so it composes with a trailing counter.
 literal string, `copyNode` for a DOM region. It composes a `<MenuItem>` with a
 slotted `<a-copy>` element that performs the write, and keeps the menu open on
 select so the check / retone feedback shows. `onCopied(ok)` fires after each
-attempt.
+attempt. `iconPlacement="trailing"` moves the feedback glyph to the end of the
+row; `"none"` shows a cursor-near confirmation instead.
 
 Copy sits alongside normal items, so a "Share" menu can mix a copy-link row with
 navigating links.
@@ -391,6 +392,7 @@ navigating links.
 |------|------|---------|-------------|
 | `children?` | ReactNode | — | Item content. With `label` set, children are extra content — most
  notably the nested `<Menu>` for a submenu parent. |
+| `copiedLabel?` | string | Copied | Text in the successful no-icon confirmation. |
 | `copy?` | string | — | Text copied to the clipboard on activation. |
 | `copyNode?` | boolean \| string | — | Copy a DOM node as rich text (`text/html`) + plain text. `true` copies
  the nearest ancestor marked `data-copy-source`; a string is a CSS
@@ -404,6 +406,9 @@ navigating links.
  option `hint`. Requires `label` (it stacks in a column beneath it). Muted
  (`--text-3`) and tracks the row's `tone`. A string, or any node. |
 | `icon?` | IconShape | — | Leading icon shape. |
+| `iconPlacement?` | 'leading' \| 'trailing' \| 'none' | 'leading' | Where the copy glyph sits relative to the label — or `'none'` to omit it.
+ Without a glyph, a successful copy shows a confirmation label near the
+ pointer and leaves the row unchanged. |
 | `iconTrailing?` | IconShape | — | A trailing icon. On a `submenu` item this **overrides** the default
  chevron (omit it to keep the chevron); on a normal item it's the trailing
  glyph (omit for none). |

@@ -671,7 +671,8 @@ chevron stay centered on the row, so it composes with a trailing counter.
 literal string, `copyNode` for a DOM region. It composes a `<MenuItem>` with a
 slotted `<a-copy>` element that performs the write, and keeps the menu open on
 select so the check / retone feedback shows. `onCopied(ok)` fires after each
-attempt.
+attempt. `iconPlacement="trailing"` moves the feedback glyph to the end of the
+row; `"none"` shows a cursor-near confirmation instead.
 
 Copy sits alongside normal items, so a "Share" menu can mix a copy-link row with
 navigating links.

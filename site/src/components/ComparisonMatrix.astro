@@ -6,14 +6,8 @@
 import { SYSTEMS } from './comparison-data'
 ---
 
-<div class="matrix-scroll">
+<div class="full-bleed matrix-scroll">
   <table class="matrix">
-    <colgroup>
-      <col class="sys-width" />
-      <col class="frameworks-width" />
-      <col class="styling-width" />
-      <col class="license-width" />
-    </colgroup>
     <thead>
       <tr>
         <th scope="col" class="sys-col">System</th>
@@ -71,20 +65,14 @@ import { SYSTEMS } from './comparison-data'
   .matrix {
     border-collapse: separate;
     border-spacing: 0;
-    /* Keep the comparison compact. Explicit columns prevent the browser from
-       spreading spare width across the table; the scroll container handles
+    /* Fill the available comparison lane. Intrinsic sizing lets each fact
+       column use the space its content needs; the scroll container handles
        smaller viewports. */
-    width: 640px;
-    min-width: 640px;
-    table-layout: fixed;
+    width: 100%;
+    min-width: 720px;
     font-size: 13px;
     line-height: 1.4;
   }
-
-  .sys-width { width: 144px; }
-  .frameworks-width { width: 182px; }
-  .styling-width { width: 156px; }
-  .license-width { width: 158px; }
 
   .matrix th,
   .matrix td {
@@ -115,7 +103,7 @@ import { SYSTEMS } from './comparison-data'
     left: 0;
     z-index: 1;
     background: var(--bg-canvas);
-    min-width: 144px;
+    min-width: 168px;
   }
   thead .sys-col {
     z-index: 3;

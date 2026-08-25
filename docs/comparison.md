@@ -8,6 +8,10 @@ Most systems are React-only and use CSS-in-JS, Sass, StyleX, or Tailwind.
 Anta ships web components with plain CSS in one `@layer`, without a style
 runtime. Consumer CSS overrides its defaults normally.
 
+Browser years show the oldest published fixed floor. A dash means the system
+uses a rolling policy or does not publish a versioned floor; its card gives the
+full policy.
+
 Fixed-package sizes are measured from the version named on each card. Each npm
 artifact was downloaded, bundled as a full ESM import with esbuild, minified,
 and gzipped. React and React DOM are external. When a library ships base CSS,

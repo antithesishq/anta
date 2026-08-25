@@ -5,10 +5,6 @@
 // row is highlighted. Horizontal scrolling stays inside the matrix on compact
 // screens.
 import { COVERAGE_SYSTEMS } from './comparison-data'
-
-// Browser policies name every relevant engine. The first release year is the
-// oldest supported baseline, which keeps this at-a-glance column compact.
-const browserSupportYear = (browsers: string) => browsers.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? '—'
 ---
 
 <div class="matrix-scroll">
@@ -42,7 +38,7 @@ const browserSupportYear = (browsers: string) => browsers.match(/\b(?:19|20)\d{2
           </td>
           <td>{s.styling}</td>
           <td>{s.license}</td>
-          <td>{browserSupportYear(s.browsers)}</td>
+          <td title={s.browsers}>{s.browserBaselineYear ?? '—'}</td>
         </tr>
       ))}
     </tbody>

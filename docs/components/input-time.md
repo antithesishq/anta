@@ -68,6 +68,7 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
+| `autoFocus?` | boolean | — | Focus this field when its containing `Dialog` opens. |
 | `children?` | ReactNode | — | Extra content rendered under the field, above the hint (a no-box child like
  a `<Tooltip>` takes no space and anchors to the field). |
 | `clearable?` | boolean | — | Show a clear button once the field has a value. |

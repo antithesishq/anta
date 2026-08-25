@@ -640,6 +640,8 @@ export interface AInputAttributes extends BaseAttributes {
   name?: string
   /** Placeholder shown when empty. */
   placeholder?: string
+  /** Focus this field when its containing `a-dialog` opens. Presence-based. */
+  autofocus?: boolean | ''
   /** Ellipsize an overflowing single-line value. Presence-based. */
   truncate?: boolean | ''
   autocomplete?: string
@@ -723,6 +725,8 @@ export interface ASliderAttributes extends BaseAttributes {
 export interface AInputTimeAttributes extends BaseAttributes {
   /** Controlled value — 24-hour `"HH:mm"`, `''` when incomplete. */
   value?: string
+  /** Focus this field when its containing `a-dialog` opens. Presence-based. */
+  autofocus?: boolean | ''
   /** Initial value for the uncontrolled case (24-hour `"HH:mm"`). */
   defaultvalue?: string
   /** BCP-47 locale driving the clock (12h vs 24h), segment order, separator, and

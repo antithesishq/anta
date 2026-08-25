@@ -97,6 +97,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
     | (string & {})
   /** Virtual-keyboard hint. Overrides the value derived from `type`. */
   inputMode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url'
+  /** Focus this field when its containing `Dialog` opens. */
+  autoFocus?: boolean
   /** Form field name — submitted with the form via ElementInternals. */
   name?: string
   /** Placeholder shown when empty. */
@@ -246,6 +248,7 @@ export const Input = ({
   type,
   autoComplete,
   inputMode,
+  autoFocus,
   name,
   placeholder,
   truncate = true,
@@ -308,6 +311,7 @@ export const Input = ({
       dim-actions={presence(dimActions)}
       autocomplete={autoComplete ?? (!multiline && rows == null && type ? AUTOCOMPLETE_BY_TYPE[type] : undefined)}
       inputmode={inputMode ?? (!multiline && rows == null && type ? INPUTMODE_BY_TYPE[type] : undefined)}
+      autofocus={presence(autoFocus)}
       spellcheck={spellCheck != null ? (spellCheck ? 'true' : 'false') : undefined}
       maxlength={maxLength != null ? String(maxLength) : undefined}
       minlength={minLength != null ? String(minLength) : undefined}

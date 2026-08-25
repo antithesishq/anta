@@ -317,13 +317,13 @@ destructive button, and it works the same with or without a close button or
 focusable content. A screen reader announces the dialog by its `header` text
 (mirrored to the dialog's accessible name), and the ✕ is the last tab stop.
 
-To focus a specific control on open instead (a search field, say), put
-`autofocus` on it; the dialog honors that and skips the default. On close, focus
-returns to whatever opened the dialog, from the native `<dialog>`.
+To focus a specific control on open instead (a search field, say), pass
+`autoFocus`; the dialog focuses it before returning from the opening interaction.
+On close, focus returns to whatever opened the dialog, from the native `<dialog>`.
 
 ```tsx folded
 <Dialog header="Rename" footer={…}>
-  <Input label="Name" autofocus />   {/* focus the field on open */}
+  <Input label="Name" autoFocus />
 </Dialog>
 ```
 

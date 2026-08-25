@@ -159,6 +159,9 @@ const SHADOW_STYLE = `
     cursor: text;
     font-variant-numeric: tabular-nums;
   }
+  @media (pointer: coarse) {
+    .seg:focus { font-size: max(16px, var(--input-time-font-size)); }
+  }
   .seg--period {
     field-sizing: content;
     width: auto;
@@ -846,6 +849,11 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#dispatch('change')
     this.dispatchEvent(new CustomEvent(CLEAR_INPUT_EVENT, { bubbles: true }))
     this.#segs[0]?.el.focus()
+  }
+
+  /** Focus the first editable segment. */
+  focus(options?: FocusOptions) {
+    this.#segs[0]?.el.focus(options)
   }
 
   get name(): string { return this.getAttribute('name') ?? '' }

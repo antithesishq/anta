@@ -75,6 +75,8 @@ export interface InputTimeProps extends BaseProps, DOMEventHandlers {
   trailing?: React.ReactNode
   /** Fully-round the field, or a custom radius (`number` px / CSS length). */
   round?: boolean | number | string
+  /** Focus this field when its containing `Dialog` opens. */
+  autoFocus?: boolean
   /** Fires on every edit (`input`), with the native event + an `attrs` snapshot
    *  (`value`, `name`, `empty`, `valid`, `validationMessage`). Also fires on
    *  `change` (blur) and on clear. */
@@ -153,6 +155,7 @@ export const InputTime = ({
   clearable,
   dimActions,
   trailing,
+  autoFocus,
   onValueChange,
   onClearInput,
   children,
@@ -179,6 +182,7 @@ export const InputTime = ({
       disabled={presence(disabled)}
       required={presence(required)}
       dim-actions={presence(dimActions)}
+      autofocus={presence(autoFocus)}
       aria-invalid={status === 'critical' ? 'true' : undefined}
       oninput={onValueChange ? (e: any) => onValueChange(e, attrsOf(e)) : undefined}
       onchange={onValueChange ? (e: any) => onValueChange(e, attrsOf(e)) : undefined}

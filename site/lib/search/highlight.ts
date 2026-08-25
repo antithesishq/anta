@@ -30,8 +30,30 @@ function unfoldCodeAncestors(target: HTMLElement) {
   return frames
 }
 
+function unfoldDisclosureAncestors(target: HTMLElement) {
+  const disclosures: HTMLDetailsElement[] = []
+  for (
+    let details = target.closest<HTMLDetailsElement>('details');
+    details;
+    details = details.parentElement?.closest<HTMLDetailsElement>('details') ?? null
+  ) {
+    if (!details.open) {
+      details.open = true
+      disclosures.push(details)
+    }
+  }
+  return disclosures
+}
+
 let run = 0
 let pendingNavigation: PendingNavigation | undefined
+
+export function clearSearchHighlighting() {
+  run++
+  pendingNavigation = undefined
+  const content = document.querySelector<HTMLElement>('main.content')
+  if (content) new Mark(content).unmark()
+}
 
 export function highlightSearchTarget() {
   const url = location.href
@@ -57,34 +79,47 @@ export function highlightSearchTarget() {
       ?? findIndexedBlock(content, indexedResult)
     const target = matchedBlock ?? content
 
-    for (let details = target.closest('details'); details; details = details.parentElement?.closest('details') ?? null) {
-      details.open = true
-    }
+    const unfoldedDisclosures = unfoldDisclosureAncestors(target)
     const unfoldedFrames = unfoldCodeAncestors(target)
 
     // Astro attempts its hash scroll before this dev page has generated search
-    // ids. Wait for a folded code block's expand transition before centering.
+    // ids. Wait for any expanded disclosure or folded code block before centering.
     const scrollTarget = () => requestAnimationFrame(() => {
       if (currentRun !== run || location.href !== url) return
       target.scrollIntoView({ block: 'center' })
     })
-    if (!unfoldedFrames.length) {
+    if (!unfoldedFrames.length && !unfoldedDisclosures.length) {
       scrollTarget()
     } else {
       let scrolled = false
+      let framesExpanded = !unfoldedFrames.length
+      let disclosuresExpanded = !unfoldedDisclosures.length
+      let fallbackTimeout: number | undefined
       const finishScrolling = () => {
         if (scrolled) return
         scrolled = true
+        if (fallbackTimeout !== undefined) window.clearTimeout(fallbackTimeout)
         for (const frame of unfoldedFrames) frame.removeEventListener('transitionend', onTransitionEnd)
         scrollTarget()
       }
+      const scrollWhenExpanded = () => {
+        if (framesExpanded && disclosuresExpanded) finishScrolling()
+      }
       const onTransitionEnd = (event: TransitionEvent) => {
         if (event.target instanceof HTMLElement && unfoldedFrames.includes(event.target) && event.propertyName === 'grid-template-rows') {
-          finishScrolling()
+          framesExpanded = true
+          scrollWhenExpanded()
         }
       }
       for (const frame of unfoldedFrames) frame.addEventListener('transitionend', onTransitionEnd)
-      window.setTimeout(finishScrolling, 260)
+      // Disclosure content is a CSS pseudo-element, so its transition does not
+      // provide a dependable event target. Its 240ms animation finishes before
+      // this fallback, which also covers disabled or interrupted transitions.
+      fallbackTimeout = window.setTimeout(() => {
+        framesExpanded = true
+        disclosuresExpanded = true
+        scrollWhenExpanded()
+      }, 260)
     }
 
     const marker = new Mark(target)

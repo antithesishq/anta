@@ -10,6 +10,7 @@ import { ClientRouter } from 'astro:transitions'
 import { Button, Icon } from '@antadesign/anta'
 import PostHog from '../components/posthog.astro'
 import { COMPONENT_SLUGS } from '../../lib/component-slugs'
+import SidebarSearch from '../components/SidebarSearch'
 import ThemeSwitcher from '../components/ThemeSwitcher.tsx'
 import SearchDialog from '../components/SearchDialog.tsx'
 
@@ -254,10 +255,10 @@ if (isComponentPage && title) {
             <img src="/anta-logo.svg" alt="" width="32" height="32" />
             <span class="logo-label">Anta</span>
           </a>
-          <Button class="search-toggle" priority="tertiary" size="large" icon="search" aria-label="Search documentation" data-search-trigger />
           <Button class="theme-toggle" priority="tertiary" size="large" aria-label="Switch theme">
             <Icon shape="sun" size={18} />
             <Icon shape="moon" size={18} />
+            <a-tooltip>Switch theme</a-tooltip>
           </Button>
         </span>
         <menu>
@@ -266,17 +267,9 @@ if (isComponentPage && title) {
           <li><a href="/install/" aria-current={isCurrent('/install/') ? 'page' : undefined}><Icon shape="download" size={18} /> Install and configure</a></li>
           <li><a href="/normalization/" aria-current={isCurrent('/normalization/') ? 'page' : undefined}><Icon shape="book-a" size={18} /> Normalization</a></li>
         </menu>
-        <hr class="sidebar-separator" />
         <menu>
-          <li><a href="/colors/" aria-current={isCurrent('/colors/') ? 'page' : undefined}><Icon shape="swatch-book" size={18} /> Colors</a></li>
-          <li class="theming-nav-item">
-            <a href="/theming/" aria-current={isCurrent('/theming/') ? 'page' : undefined}><Icon shape="theme" size={18} /> Theming</a>
-            <div class="theming-switcher"><ThemeSwitcher client:load /></div>
-          </li>
-          <li><a href="/accessibility/" aria-current={isCurrent('/accessibility/') ? 'page' : undefined}><Icon shape="hat-glasses" size={18} /> Accessibility</a></li>
-          <li><a href="/credits/" aria-current={isCurrent('/credits/') ? 'page' : undefined}><Icon shape="heart-handshake" size={18} /> Credits</a></li>
+          <li><a href="/changelog/" aria-current={isCurrent('/changelog/') ? 'page' : undefined}><Icon shape="scroll-text" size={18} /> Changelog</a></li>
         </menu>
-        <hr class="sidebar-separator" />
         <div class="package-links">
           <a
             class="package-link"
@@ -297,9 +290,19 @@ if (isComponentPage && title) {
             <Icon shape="external-link" size={16} /> GitHub
           </a>
         </div>
+        <hr class="sidebar-separator" />
         <menu>
-          <li><a href="/changelog/" aria-current={isCurrent('/changelog/') ? 'page' : undefined}><Icon shape="scroll-text" size={18} /> Changelog</a></li>
+          <li class="theming-nav-item">
+            <a href="/theming/" aria-current={isCurrent('/theming/') ? 'page' : undefined}><Icon shape="theme" size={18} /> Theming</a>
+            <div class="theming-switcher"><ThemeSwitcher client:load /></div>
+          </li>
+          <li><a href="/colors/" aria-current={isCurrent('/colors/') ? 'page' : undefined}><Icon shape="swatch-book" size={18} /> Colors</a></li>
+          <li><a href="/accessibility/" aria-current={isCurrent('/accessibility/') ? 'page' : undefined}><Icon shape="hat-glasses" size={18} /> Accessibility</a></li>
+          <li><a href="/credits/" aria-current={isCurrent('/credits/') ? 'page' : undefined}><Icon shape="heart-handshake" size={18} /> Credits</a></li>
         </menu>
+        <div class="sidebar-search-field">
+          <SidebarSearch />
+        </div>
         <h4>Components</h4>
         <menu>
           <li><a href="/title/" aria-current={isCurrent('/title/') ? 'page' : undefined}><Icon shape="case-sensitive" size={18} /> Title</a></li>
@@ -375,11 +378,46 @@ if (isComponentPage && title) {
 
     <script>
       import type { TransitionBeforeSwapEvent } from 'astro:transitions/client'
-      import { startSearchHighlighting } from '../../lib/search/highlight'
+      import { clearSearchHighlighting, startSearchHighlighting } from '../../lib/search/highlight'
 
       // Runs once per session (ClientRouter never re-runs a seen script), so
       // handlers are document-delegated and per-page work hangs off astro:*
       // events; never hold a reference to one page's DOM.
+
+      const platform = (
+        (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform
+        || navigator.platform
+        || navigator.userAgent
+      )
+      const searchShortcut = /Mac|iPhone|iPad|iPod/i.test(platform) ? 'Cmd+K' : 'Ctrl+K'
+      for (const shortcut of document.querySelectorAll('[data-sidebar-search-shortcut]')) {
+        shortcut.textContent = `${searchShortcut} or /`
+      }
+
+      const syncSidebarSearch = () => {
+        const params = new URLSearchParams(location.search)
+        // A plain `q` is not enough: only result links carry a search id, so
+        // visiting a URL that happens to use `q` never turns the sidebar into
+        // a stale search field.
+        const query = params.get('search') ? params.get('q')?.trim() ?? '' : ''
+        const input = document.querySelector<HTMLElement & { value?: string }>('[data-sidebar-search-input]')
+        if (input) {
+          // The attribute paints Anta Input's pre-upgrade shell; the property
+          // updates its live shadow control once custom elements are ready.
+          if (query) input.setAttribute('value', query)
+          else input.removeAttribute('value')
+          input.value = query
+        }
+      }
+
+      const clearSidebarSearch = () => {
+        const url = new URL(location.href)
+        url.searchParams.delete('search')
+        url.searchParams.delete('q')
+        history.replaceState(history.state, '', url)
+        clearSearchHighlighting()
+        syncSidebarSearch()
+      }
 
       // Two mobile slide-outs share the backdrop: the nav sidebar and the
       // "On this page" TOC; opening one closes the other. State lives in
@@ -411,7 +449,9 @@ if (isComponentPage && title) {
       document.addEventListener('click', (e) => {
         const target = e.target as HTMLElement
         if (!target.closest) return
-        if (target.closest('[data-search-trigger]')) {
+        if (target.closest('[data-custom-event="clearrequest"]')) {
+          e.preventDefault()
+        } else if (target.closest('[data-search-trigger]')) {
           document.dispatchEvent(new Event('anta-search-open'))
         } else if (target.closest('.menu-toggle, .topbar-title')) {
           setMenu(document.body.dataset.menuOpen !== 'true')
@@ -425,7 +465,21 @@ if (isComponentPage && title) {
           setToc(false)
         }
       })
+      document.addEventListener('clearinput', (e) => {
+        const input = e.target as HTMLElement
+        if (input.matches?.('[data-sidebar-search-input]')) clearSidebarSearch()
+      })
       document.addEventListener('keydown', (e) => {
+        const target = e.target as HTMLElement
+        if (
+          (e.key === 'Enter' || e.key === ' ')
+          && target.closest?.('[data-search-trigger]')
+          && !target.closest('[data-custom-event="clearrequest"]')
+        ) {
+          e.preventDefault()
+          document.dispatchEvent(new Event('anta-search-open'))
+          return
+        }
         if (e.key === 'Escape') closeAll()
       })
       window.addEventListener('hashchange', () => setToc(false))
@@ -482,7 +536,9 @@ if (isComponentPage && title) {
           if (linkPath === here) a.setAttribute('aria-current', 'page')
           else a.removeAttribute('aria-current')
         }
+        syncSidebarSearch()
       })
+      syncSidebarSearch()
 
       startSearchHighlighting()
     </script>
@@ -666,9 +722,8 @@ if (isComponentPage && title) {
     flex: 1;
   }
 
-  /* Header controls are tertiary icon buttons. The search trigger stays next
-     to the theme switcher, so the logo keeps the remaining row space. */
-  .search-toggle,
+  /* The logo keeps the remaining row space while the theme control stays at
+     the sidebar's edge. */
   .theme-toggle {
     padding-inline: 8px;
     padding-block: 8px;
@@ -694,6 +749,13 @@ if (isComponentPage && title) {
     margin: 24px 0 8px;
   }
 
+  .sidebar-search-field {
+    position: relative;
+    margin-block: 8px 16px;
+  }
+  .sidebar-search-field + h4 {
+    margin-top: 8px;
+  }
   .sidebar-separator {
     border: 0;
     height: 0;

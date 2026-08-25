@@ -24,9 +24,10 @@ Most systems are React-only and use CSS-in-JS, Sass, StyleX, or Tailwind.
 Anta ships web components with plain CSS in one `@layer`, without a style
 runtime. Consumer CSS overrides its defaults normally.
 
-Browser years show the oldest published fixed floor. A dash means the system
-uses a rolling policy or does not publish a versioned floor; its card gives the
-full policy.
+Browser years show the oldest published fixed floor. `~` marks the earliest
+year shared by a browser feature the current system ships, rather than a
+published support promise. Hover a value for the policy and the feature behind
+that estimate.
 
 </Disclosure>
 
@@ -34,9 +35,9 @@ full policy.
 
 Fixed-package sizes are measured from the version named on each card. Each npm
 artifact was downloaded, bundled as a full ESM import with esbuild, minified,
-and gzipped. React and React DOM are external. When a library ships base CSS,
-the total adds its separately gzipped CSS bundle. The line below each figure
-states what it counts.
+and gzipped, then rounded up to the nearest 10 KiB. React and React DOM are
+external. When a library ships base CSS, the total adds its separately gzipped
+CSS bundle. The line below each figure states what it counts.
 
 Tree-shaking, peer dependencies, icons, styles, and copied source still make
 the numbers different shapes. Polaris is a dated CDN snapshot, not a

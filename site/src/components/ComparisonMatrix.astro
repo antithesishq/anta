@@ -5,6 +5,10 @@
 // row is highlighted. Horizontal scrolling stays inside the matrix on compact
 // screens.
 import { COVERAGE_SYSTEMS } from './comparison-data'
+// A tilde distinguishes a moving policy's current target from a documented
+// minimum browser floor.
+const browserYear = (year: typeof COVERAGE_SYSTEMS[number]) =>
+  year.browserBaselineYear ?? (year.browserApproximateYear ? `~${year.browserApproximateYear}` : '—')
 ---
 
 <div class="matrix-scroll">
@@ -38,7 +42,12 @@ import { COVERAGE_SYSTEMS } from './comparison-data'
           </td>
           <td>{s.styling}</td>
           <td>{s.license}</td>
-          <td title={s.browsers}>{s.browserBaselineYear ?? '—'}</td>
+          <td>
+            <span class="browser-year" tabindex="0">
+              {browserYear(s)}
+              <a-tooltip>{s.browsers}</a-tooltip>
+            </span>
+          </td>
         </tr>
       ))}
     </tbody>
@@ -130,6 +139,12 @@ import { COVERAGE_SYSTEMS } from './comparison-data'
 
   .matrix td {
     color: var(--text-2);
+  }
+
+  .browser-year {
+    cursor: help;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.18em;
   }
 
   /* Secondary framework reach on its own muted line under the primary. */

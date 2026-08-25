@@ -96,7 +96,6 @@ export const ICON_SHAPES = [
   'table-2',
   'tag',
   'text-cursor-input',
-  'text-highlight',
   'text-initial',
   'timer',
   'toggle-right',
@@ -160,7 +159,6 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'asterisk': ['star', 'wildcard'],
   'braces': ['code', 'brackets', 'json'],
   'case-sensitive': ['aA', 'capitalize', 'case'],
-  'text-highlight': ['mark', 'highlight'],
   'list-collapse': ['list', 'collapse', 'expand', 'items'],
   'table-2': ['table', 'grid', 'data', 'spreadsheet', 'rows', 'columns'],
   'folder-open': ['directory', 'browse'],
@@ -295,7 +293,6 @@ declare module '@antadesign/anta' {
     'table-2': true
     'tag': true
     'text-cursor-input': true
-    'text-highlight': true
     'text-initial': true
     'timer': true
     'toggle-right': true

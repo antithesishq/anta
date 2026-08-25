@@ -25,6 +25,7 @@
   "check": ["tick", "ok", "done", "confirm", "approve"],
   "dollar-sign": ["currency", "money", "payment"],
   "circle-check": ["success", "ok", "done"],
+  "circle-user": ["avatar", "person", "account", "contact", "profile"],
   "x": ["close", "cancel", "dismiss", "remove", "no"],
   "plus": ["add", "new", "create"],
   "minus": ["remove", "subtract"],

@@ -29,6 +29,7 @@ export const ICON_SHAPES = [
   'circle-dot',
   'circle-large',
   'circle-small-solid',
+  'circle-user',
   'circle',
   'click',
   'clock',
@@ -135,6 +136,7 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'check': ['tick', 'ok', 'done', 'confirm', 'approve'],
   'dollar-sign': ['currency', 'money', 'payment'],
   'circle-check': ['success', 'ok', 'done'],
+  'circle-user': ['avatar', 'person', 'account', 'contact', 'profile'],
   'x': ['close', 'cancel', 'dismiss', 'remove', 'no'],
   'plus': ['add', 'new', 'create'],
   'minus': ['remove', 'subtract'],
@@ -226,6 +228,7 @@ declare module '@antadesign/anta' {
     'circle-dot': true
     'circle-large': true
     'circle-small-solid': true
+    'circle-user': true
     'circle': true
     'click': true
     'clock': true

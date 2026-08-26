@@ -251,6 +251,56 @@ before copying, and `onCopied` receives the result.
 
 </Disclosure>
 
+<Disclosure title="Web Component">
+
+`Breadcrumbs` deliberately adds no custom-element behavior: it assembles Anta
+Buttons, an optional Menu, and two light-DOM layout tags. When you are not using
+JSX, import the Breadcrumbs stylesheet and the primitives, then compose the same
+structure yourself. Keep an overflow Menu immediately after its More Button.
+
+```ts
+import '@antadesign/anta/components/Breadcrumbs.css'
+import '@antadesign/anta/elements'
+```
+
+<Preview>
+  <a-breadcrumbs role="navigation" aria-label="Project location" data-paddingless>
+    <a href="/" data-anta role="button" priority="quaternary" paddingless><a-button-label>Home</a-button-label></a>
+    <a-breadcrumb-separator aria-hidden="true">•</a-breadcrumb-separator>
+    <a-button role="button" tabindex="0" priority="quaternary" paddingless aria-label="Show more breadcrumbs" aria-haspopup="menu"><a-icon shape="more" aria-hidden="true"></a-icon></a-button>
+    <a-menu autowidth>
+      <a href="/workspace" data-anta-menu-item role="menuitem"><a-menu-item-label>Workspace</a-menu-item-label></a>
+      <a href="/workspace/projects" data-anta-menu-item role="menuitem"><a-menu-item-label>Projects</a-menu-item-label></a>
+    </a-menu>
+    <a-breadcrumb-separator aria-hidden="true">•</a-breadcrumb-separator>
+    <a href="/workspace/projects/anta" data-anta role="button" priority="quaternary" paddingless aria-current="page"><a-button-label>Anta</a-button-label></a>
+  </a-breadcrumbs>
+</Preview>
+
+```html
+<a-breadcrumbs role="navigation" aria-label="Project location" data-paddingless>
+  <a href="/" data-anta role="button" priority="quaternary" paddingless>
+    <a-button-label>Home</a-button-label>
+  </a>
+  <a-breadcrumb-separator aria-hidden="true">•</a-breadcrumb-separator>
+
+  <a-button role="button" tabindex="0" priority="quaternary" paddingless
+    aria-label="Show more breadcrumbs" aria-haspopup="menu">
+    <a-icon shape="more" aria-hidden="true"></a-icon>
+  </a-button>
+  <a-menu autowidth>
+    <a href="/workspace" data-anta-menu-item role="menuitem"><a-menu-item-label>Workspace</a-menu-item-label></a>
+    <a href="/workspace/projects" data-anta-menu-item role="menuitem"><a-menu-item-label>Projects</a-menu-item-label></a>
+  </a-menu>
+
+  <a-breadcrumb-separator aria-hidden="true">•</a-breadcrumb-separator>
+  <a href="/workspace/projects/anta" data-anta role="button" priority="quaternary"
+    paddingless aria-current="page"><a-button-label>Anta</a-button-label></a>
+</a-breadcrumbs>
+```
+
+</Disclosure>
+
 <Disclosure title="Styling">
 
 Use `priority`, `size`, and `separator` before adding CSS. A `className` on

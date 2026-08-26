@@ -311,7 +311,7 @@ export const Input = ({
       dim-actions={presence(dimActions)}
       autocomplete={autoComplete ?? (!multiline && rows == null && type ? AUTOCOMPLETE_BY_TYPE[type] : undefined)}
       inputmode={inputMode ?? (!multiline && rows == null && type ? INPUTMODE_BY_TYPE[type] : undefined)}
-      autofocus={presence(autoFocus)}
+      autofocus={autoFocus ? true : undefined}
       spellcheck={spellCheck != null ? (spellCheck ? 'true' : 'false') : undefined}
       maxlength={maxLength != null ? String(maxLength) : undefined}
       minlength={minLength != null ? String(minLength) : undefined}

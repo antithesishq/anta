@@ -80,19 +80,10 @@ export type BreadcrumbItem =
   | BreadcrumbActionItem
   | BreadcrumbCopyItem
 
-type BreadcrumbUnderlineMode =
-  | {
-      underline?: never
-      underlineOnHover?: never
-    }
-  | {
-      /** Underline style applied to every visible breadcrumb control. */
-      underline: 'solid' | 'dashed' | 'dotted'
-      /** Hide the underline at rest and reveal it on hover. */
-      underlineOnHover?: boolean
-    }
-
-type BreadcrumbsBaseProps = Omit<BaseProps, 'children'> & {
+/** Public props for `<Breadcrumbs>`. */
+export type BreadcrumbsProps = BaseProps & {
+  children?: never
+} & {
   /** Ordered breadcrumb entries. */
   items: BreadcrumbItem[]
   /** Button size applied to every visible item and the More control.
@@ -112,9 +103,7 @@ type BreadcrumbsBaseProps = Omit<BaseProps, 'children'> & {
   /** Accessible name for the More control.
    *  @defaultValue 'Show more breadcrumbs' */
   moreLabel?: string
-}
-
-type BreadcrumbsPriorityMode =
+} & (
   | {
       /** Button priority applied to every visible item and the More control.
        *  @defaultValue quaternary */
@@ -127,9 +116,18 @@ type BreadcrumbsPriorityMode =
       priority: 'tertiary'
       paddingless?: never
     }
-
-/** Public props for `<Breadcrumbs>`. */
-export type BreadcrumbsProps = BreadcrumbsBaseProps & BreadcrumbsPriorityMode & BreadcrumbUnderlineMode
+) & (
+  | {
+      underline?: never
+      underlineOnHover?: never
+    }
+  | {
+      /** Underline style applied to every visible breadcrumb control. */
+      underline: 'solid' | 'dashed' | 'dotted'
+      /** Hide the underline at rest and reveal it on hover. */
+      underlineOnHover?: boolean
+    }
+)
 
 type BreadcrumbEntry =
   | { kind: 'item'; item: BreadcrumbItem }
@@ -176,10 +174,10 @@ function currentAttrs(item: BreadcrumbItem) {
 
 function renderButtonItem(
   item: BreadcrumbItem,
-  priority: NonNullable<BreadcrumbsPriorityMode['priority']>,
-  size: NonNullable<BreadcrumbsBaseProps['size']>,
-  underline: BreadcrumbUnderlineMode['underline'],
-  underlineOnHover: BreadcrumbUnderlineMode['underlineOnHover'],
+  priority: 'tertiary' | 'quaternary',
+  size: 'small' | 'medium' | 'large',
+  underline: 'solid' | 'dashed' | 'dotted' | undefined,
+  underlineOnHover: boolean | undefined,
   paddingless: boolean | undefined,
   key: string | number,
 ) {
@@ -306,6 +304,7 @@ export const Breadcrumbs = ({
                   paddingless,
                   icon: 'more',
                   'aria-label': moreLabel,
+                  'aria-haspopup': 'menu',
                 } as any}
               />,
               <Menu key={`menu-${index}`} autoWidth>

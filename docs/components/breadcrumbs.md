@@ -115,6 +115,54 @@ before copying, and `onCopied` receives the result.
 
 ### Props
 
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `items` | BreadcrumbItem[] | — | Ordered breadcrumb entries. |
+| `itemsBeforeCollapse?` | number | 0 | Number of original items kept before the More control when `maxItems`
+ collapses the trail. The rest of the visible-item budget is kept from the
+ end, so `0` puts More first. |
+| `maxItems?` | number | — | Maximum number of original breadcrumb items left visible. The More
+ control does not count. Omit to keep every item visible. |
+| `moreLabel?` | string | 'Show more breadcrumbs' | Accessible name for the More control. |
+| `paddingless?` | boolean | — | Remove horizontal padding from every visible breadcrumb control. |
+| `priority?` | 'quaternary' \| 'tertiary' | quaternary | Button priority applied to every visible item and the More control. |
+| `separator?` | BreadcrumbSeparator | '/' | Separator between visible entries. |
+| `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Button size applied to every visible item and the More control. |
+| `underline?` | 'solid' \| 'dashed' \| 'dotted' | — | Underline style applied to every visible breadcrumb control. |
+| `underlineOnHover?` | boolean | — | Hide the underline at rest and reveal it on hover. |
+
+`Breadcrumbs` deliberately adds no custom-element behavior: it assembles Anta
+Buttons, an optional Menu, and two light-DOM layout tags. When you are not using
+JSX, import the Breadcrumbs stylesheet and the primitives, then compose the same
+structure yourself. Keep an overflow Menu immediately after its More Button.
+
+```ts
+import '@antadesign/anta/components/Breadcrumbs.css'
+import '@antadesign/anta/elements'
+```
+
+```html
+<a-breadcrumbs role="navigation" aria-label="Project location" data-paddingless>
+  <a href="/" data-anta role="button" priority="quaternary" paddingless>
+    <a-button-label>Home</a-button-label>
+  </a>
+  <a-breadcrumb-separator aria-hidden="true">•</a-breadcrumb-separator>
+
+  <a-button role="button" tabindex="0" priority="quaternary" paddingless
+    aria-label="Show more breadcrumbs" aria-haspopup="menu">
+    <a-icon shape="more" aria-hidden="true"></a-icon>
+  </a-button>
+  <a-menu autowidth>
+    <a href="/workspace" data-anta-menu-item role="menuitem"><a-menu-item-label>Workspace</a-menu-item-label></a>
+    <a href="/workspace/projects" data-anta-menu-item role="menuitem"><a-menu-item-label>Projects</a-menu-item-label></a>
+  </a-menu>
+
+  <a-breadcrumb-separator aria-hidden="true">•</a-breadcrumb-separator>
+  <a href="/workspace/projects/anta" data-anta role="button" priority="quaternary"
+    paddingless aria-current="page"><a-button-label>Anta</a-button-label></a>
+</a-breadcrumbs>
+```
+
 Use `priority`, `size`, and `separator` before adding CSS. A `className` on
 `Breadcrumbs` lands on the navigation wrapper; item `className` values land on
 their individual Buttons. The composed structure uses light-DOM tags, so plain

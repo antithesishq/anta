@@ -392,9 +392,9 @@
         }
       }
       &[underline][underline-on-hover] {
-        text-decoration-color: color-mix(in oklch, currentColor 0%, transparent);
+        text-decoration-color: transparent;
         &[selected] {
-          text-decoration-color: color-mix(in oklch, currentColor 0%, transparent);
+          text-decoration-color: transparent;
         }
 
         @media (hover: hover) and (pointer: fine) {

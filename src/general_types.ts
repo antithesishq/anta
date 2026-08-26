@@ -957,6 +957,8 @@ export interface AButtonAttributes extends BaseAttributes {
     | (string & {})
   /** Underline style. Only renders on `priority="tertiary" | "quaternary"`. */
   underline?: 'solid' | 'dashed' | 'dotted'
+  /** Show the underline only on hover. Requires `underline`. Presence-based (`''` on, omit off). */
+  'underline-on-hover'?: boolean | ''
   /** Size variant. small=22px, medium=26px, large=30px. */
   size?: 'small' | 'medium' | 'large'
   /** Drop outer padding to zero. Only takes effect on `priority="quaternary"`.

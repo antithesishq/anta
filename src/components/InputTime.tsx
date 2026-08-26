@@ -182,7 +182,7 @@ export const InputTime = ({
       disabled={presence(disabled)}
       required={presence(required)}
       dim-actions={presence(dimActions)}
-      autofocus={presence(autoFocus)}
+      autofocus={autoFocus ? true : undefined}
       aria-invalid={status === 'critical' ? 'true' : undefined}
       oninput={onValueChange ? (e: any) => onValueChange(e, attrsOf(e)) : undefined}
       onchange={onValueChange ? (e: any) => onValueChange(e, attrsOf(e)) : undefined}

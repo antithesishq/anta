@@ -12,7 +12,7 @@ import './Breadcrumbs.css'
 
 /** The text separators built into `<Breadcrumbs>`. Pass an `IconShape` for a
  *  graphic separator instead. */
-export type BreadcrumbTextSeparator = '→' | '＞' | '/' | '•' | '〉' | '▸' | '▶︎'
+export type BreadcrumbTextSeparator = '→' | '/' | '•' | '▸'
 
 /** A built-in text separator or any registered Anta icon shape. */
 export type BreadcrumbSeparator = BreadcrumbTextSeparator | IconShape
@@ -90,7 +90,7 @@ export type BreadcrumbsProps = BaseProps & {
    *  @defaultValue 'medium' */
   size?: 'small' | 'medium' | 'large'
   /** Separator between visible entries.
-   *  @defaultValue '/' */
+   *  @defaultValue 'chevron-right' */
   separator?: BreadcrumbSeparator
   /** Maximum number of original breadcrumb items left visible. The More
    *  control does not count. Omit to keep every item visible. */
@@ -133,7 +133,7 @@ type BreadcrumbEntry =
   | { kind: 'item'; item: BreadcrumbItem }
   | { kind: 'overflow'; items: BreadcrumbItem[] }
 
-const TEXT_SEPARATORS = new Set<BreadcrumbTextSeparator>(['→', '＞', '/', '•', '〉', '▸', '▶︎'])
+const TEXT_SEPARATORS = new Set<BreadcrumbTextSeparator>(['→', '/', '•', '▸'])
 
 function isCopyItem(item: BreadcrumbItem): item is BreadcrumbCopyItem {
   return 'copy' in item || 'copyNode' in item || 'copyUrl' in item
@@ -266,7 +266,7 @@ export const Breadcrumbs = ({
   items,
   priority = 'quaternary',
   size = 'medium',
-  separator = '/',
+  separator = 'chevron-right',
   maxItems,
   itemsBeforeCollapse = 0,
   moreLabel = 'Show more breadcrumbs',
@@ -279,7 +279,8 @@ export const Breadcrumbs = ({
   ...rest
 }: BreadcrumbsProps) => {
   const entries = buildEntries(items, maxItems, itemsBeforeCollapse)
-  const separatorNode = TEXT_SEPARATORS.has(separator as BreadcrumbTextSeparator)
+  const textSeparator = TEXT_SEPARATORS.has(separator as BreadcrumbTextSeparator)
+  const separatorNode = textSeparator
     ? separator
     : <Icon shape={separator as IconShape} />
 
@@ -289,6 +290,7 @@ export const Breadcrumbs = ({
       aria-label={ariaLabel ?? 'Breadcrumb'}
       data-size={size === 'medium' ? undefined : size}
       data-paddingless={paddingless ? '' : undefined}
+      data-separator-icon={textSeparator ? undefined : ''}
       class={className}
       style={style}
       {...rest}

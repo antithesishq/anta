@@ -50,23 +50,21 @@ quaternary priority.
 
 ## Separators
 
-Pass any of `→`, `＞`, `/`, `•`, `〉`, `▸`, or `▶︎` for a text separator. Pass an
+Pass any of `→`, `/`, `•`, or `▸` for a text separator. Pass an
 Anta icon shape for an icon separator. Separators are decorative and hidden from
 assistive technology.
 
 ```tsx
 <Breadcrumbs separator="→" items={items} />
-<Breadcrumbs separator="＞" items={items} />
 <Breadcrumbs separator="/" items={items} />
 <Breadcrumbs separator="•" items={items} />
-<Breadcrumbs separator="〉" items={items} />
 <Breadcrumbs separator="▸" items={items} />
-<Breadcrumbs separator="▶︎" items={items} />
 <Breadcrumbs separator="chevron-right" items={items} />
 ```
 
-`/` is the default. The icon form accepts any registered `IconShape`, including
-icons added by an application through Anta's icon generator.
+`chevron-right` is the default. The icon form accepts any registered `IconShape`,
+including icons added by an application through Anta's icon generator. Icon
+separators use no flex gap; text separators keep the configured gap.
 
 ## Folding into More
 
@@ -126,7 +124,7 @@ before copying, and `onCopied` receives the result.
 | `moreLabel?` | string | 'Show more breadcrumbs' | Accessible name for the More control. |
 | `paddingless?` | boolean | — | Remove horizontal padding from every visible breadcrumb control. |
 | `priority?` | 'quaternary' \| 'tertiary' | quaternary | Button priority applied to every visible item and the More control. |
-| `separator?` | BreadcrumbSeparator | '/' | Separator between visible entries. |
+| `separator?` | BreadcrumbSeparator | 'chevron-right' | Separator between visible entries. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Button size applied to every visible item and the More control. |
 | `underline?` | 'solid' \| 'dashed' \| 'dotted' | — | Underline style applied to every visible breadcrumb control. |
 | `underlineOnHover?` | boolean | — | Hide the underline at rest and reveal it on hover. |

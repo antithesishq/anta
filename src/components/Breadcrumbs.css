@@ -28,6 +28,10 @@
     --breadcrumb-gap: 0.75ch;
   }
 
+  a-breadcrumbs[data-separator-icon] {
+    --breadcrumb-gap: 0;
+  }
+
   a-breadcrumbs > * {
     flex: none;
   }

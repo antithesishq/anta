@@ -111,7 +111,7 @@ quaternary priority.
 
 ## Separators
 
-Pass any of `→`, `＞`, `/`, `•`, `〉`, `▸`, or `▶︎` for a text separator. Pass an
+Pass any of `→`, `/`, `•`, or `▸` for a text separator. Pass an
 Anta icon shape for an icon separator. Separators are decorative and hidden from
 assistive technology.
 
@@ -120,30 +120,25 @@ assistive technology.
 
 <Preview>
   <Breadcrumbs separator="→" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
-  <Breadcrumbs separator="＞" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
   <Breadcrumbs separator="•" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
-  <Breadcrumbs separator="〉" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
   <Breadcrumbs separator="▸" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
-  <Breadcrumbs separator="▶︎" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
   <Breadcrumbs separator="chevron-right" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
 </Preview>
 
 ```tsx folded
 <Breadcrumbs separator="→" items={items} />
-<Breadcrumbs separator="＞" items={items} />
 <Breadcrumbs separator="/" items={items} />
 <Breadcrumbs separator="•" items={items} />
-<Breadcrumbs separator="〉" items={items} />
 <Breadcrumbs separator="▸" items={items} />
-<Breadcrumbs separator="▶︎" items={items} />
 <Breadcrumbs separator="chevron-right" items={items} />
 ```
 
 </Col>
 <Col>
 
-`/` is the default. The icon form accepts any registered `IconShape`, including
-icons added by an application through Anta's icon generator.
+`chevron-right` is the default. The icon form accepts any registered `IconShape`,
+including icons added by an application through Anta's icon generator. Icon
+separators use no flex gap; text separators keep the configured gap.
 
 </Col>
 </Columns>

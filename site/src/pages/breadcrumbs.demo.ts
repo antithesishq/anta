@@ -12,14 +12,13 @@ const items = [
     iconPlacement: 'trailing',
     copiedLabel: 'Path copied',
   },
-] satisfies BreadcrumbItem[]
+] satisfies BreadcrumbItem[];
 
 /** @play props Breadcrumbs */
 <Breadcrumbs
   aria-label="File path"
   items={items}
   maxItems={3}
-  separator="chevron-right"
   underline="solid"
   underlineOnHover
 />

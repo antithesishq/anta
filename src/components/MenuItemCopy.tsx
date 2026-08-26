@@ -1,6 +1,7 @@
 import { MenuItem, type MenuItemCommonProps, type MenuItemActionMode } from './MenuItem'
 import { useCopyFeedback } from '../anta_helpers'
 import { type CopyTarget, copyElementProps, isNodeCopy } from './copy-props'
+import type { IconShape } from '../elements/a-icon.shapes'
 
 /** Action-mode menu-item props plus a required copy target (a copying row must
  *  copy something). The action-mode props that don't fit a copy row are pinned to
@@ -14,7 +15,17 @@ export type MenuItemCopyProps = MenuItemCommonProps &
     selectionIndicator?: never
     indeterminate?: never
     indicator?: never
-  } & CopyTarget
+    iconTrailing?: never
+  } & CopyTarget & {
+    /** Where the copy glyph sits relative to the label — or `'none'` to omit it.
+     *  Without a glyph, a successful copy shows a confirmation label near the
+     *  pointer and leaves the row unchanged.
+     *  @defaultValue 'leading' */
+    iconPlacement?: 'leading' | 'trailing' | 'none'
+    /** Text in the successful no-icon confirmation.
+     *  @defaultValue Copied */
+    copiedLabel?: string
+  }
 
 /**
  * Copying menu item — a `MenuItem` preset for copy-to-clipboard rows inside a
@@ -28,7 +39,8 @@ export type MenuItemCopyProps = MenuItemCommonProps &
  * flips the leading icon to a check / ✕ and retones for ~2s (see `useCopyFeedback`).
  *
  * Defaults `label` to "Copy" and the leading `icon` to `copy`; override either.
- * Other props pass through — `tone`, `kbd`, `onCopied`.
+ * `iconPlacement` moves that glyph to the trailing edge or omits it. Other props
+ * pass through — `tone`, `kbd`, `onCopied`.
  *
  * @example
  * ```tsx
@@ -41,6 +53,8 @@ export type MenuItemCopyProps = MenuItemCommonProps &
 export const MenuItemCopy = ({
   label = 'Copy',
   icon = 'copy',
+  iconPlacement = 'leading',
+  copiedLabel,
   tone,
   onCopied,
   onCopyRequest,
@@ -51,7 +65,14 @@ export const MenuItemCopy = ({
   children,
   ...rest
 }: MenuItemCopyProps) => {
-  const { shownIcon, shownTone, handleCopied } = useCopyFeedback(icon, tone, onCopied)
+  const restingIcon: IconShape | undefined = iconPlacement === 'none' ? undefined : icon
+  const { shownIcon, shownTone, handleCopied } = useCopyFeedback(restingIcon, tone, onCopied)
+  const iconSlot =
+    iconPlacement === 'trailing'
+      ? { iconTrailing: shownIcon }
+      : iconPlacement === 'none'
+        ? {}
+        : { icon: shownIcon }
   const copyAttrs = copyElementProps({
     copy,
     copyNode,
@@ -59,13 +80,15 @@ export const MenuItemCopy = ({
     copyWithUrl,
     onCopyRequest,
     onCopied: handleCopied,
+    toast: iconPlacement === 'none',
+    copiedLabel,
   })
 
   return (
     <MenuItem
       label={label}
-      icon={shownIcon}
       tone={shownTone}
+      {...iconSlot}
       // Keep the menu open on select so the icon / tone feedback is visible (a
       // closing row would tear down before the swap shows). For `copyNode`, mark
       // the row so the serializer strips it from the copied region.

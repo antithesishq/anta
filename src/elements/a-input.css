@@ -297,7 +297,7 @@
     caret-color: currentColor;
     color-scheme: light;
     font-family: var(--sans-serif);
-    font-size: var(--native-field-font-size);
+    font-size: var(--native-field-zoom-safe-font-size, var(--native-field-font-size));
     font-weight: 400;
     font-feature-settings: 'ss02', 'ss05', 'tnum';
     font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
@@ -502,7 +502,7 @@
     color: var(--text-1);
     color-scheme: light;
     font-family: var(--sans-serif);
-    font-size: var(--native-field-font-size);
+    font-size: var(--native-field-zoom-safe-font-size, var(--native-field-font-size));
     font-weight: 400;
     font-feature-settings: 'ss02', 'ss05', 'tnum';
     font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
@@ -598,6 +598,14 @@
     --native-field-padding-block: 5px;
     --native-field-font-size: 17px;
     --native-field-line-height: 22px;
+  }
+  /* iOS zooms focused editable controls whose computed type is below 16px.
+     Preserve a larger consumer-supplied size while lifting the active field. */
+  @media (pointer: coarse) {
+    input[data-anta]:focus,
+    select[data-anta]:focus {
+      --native-field-zoom-safe-font-size: max(16px, var(--native-field-font-size));
+    }
   }
   input[data-anta]:is(
     :not([type]),

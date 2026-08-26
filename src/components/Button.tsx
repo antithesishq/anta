@@ -108,6 +108,19 @@ export type SubmitMode =
       form?: string
     }
 
+/** Underline options shared by tertiary and quaternary buttons. */
+export type UnderlineMode =
+  | {
+      underline?: never
+      underlineOnHover?: never
+    }
+  | {
+      /** Underline style. */
+      underline: 'solid' | 'dashed' | 'dotted'
+      /** Hide the underline at rest and reveal it on hover. */
+      underlineOnHover?: boolean
+    }
+
 /** Priority axis — `underline` only on `tertiary` / `quaternary`,
  *  `paddingless` only on `quaternary`. */
 export type PriorityMode =
@@ -116,18 +129,15 @@ export type PriorityMode =
        *  @defaultValue secondary */
       priority?: 'primary' | 'secondary'
       underline?: never
+      underlineOnHover?: never
       paddingless?: never
     }
-  | {
+  | UnderlineMode & {
       priority: 'tertiary'
-      /** Underline style. */
-      underline?: 'solid' | 'dashed' | 'dotted'
       paddingless?: never
     }
-  | {
+  | UnderlineMode & {
       priority: 'quaternary'
-      /** Underline style. */
-      underline?: 'solid' | 'dashed' | 'dotted'
       /** Drops outer padding to zero. */
       paddingless?: boolean
     }
@@ -158,6 +168,7 @@ export const Button = ({
   priority,
   tone,
   underline,
+  underlineOnHover,
   icon,
   iconTrailing,
   paddingless,
@@ -206,6 +217,7 @@ export const Button = ({
     priority,
     tone: toneAttr,
     underline,
+    'underline-on-hover': underlineOnHover ? '' : undefined,
     // 'medium' (and unset) is the implicit default — emit no DOM attr.
     size: size && size !== 'medium' ? size : undefined,
     // Boolean attributes: emit a presence attribute (empty string) when on,

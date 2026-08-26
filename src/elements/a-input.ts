@@ -240,6 +240,9 @@ const SHADOW_STYLE = `
     -webkit-appearance: none;
             appearance: none;
   }
+  @media (pointer: coarse) {
+    input:focus, textarea:focus { font-size: max(16px, var(--_fs)); }
+  }
   textarea {
     resize: none;
     padding-block: var(--_pad-block);
@@ -665,6 +668,13 @@ export class AInputElement extends HTMLElementBase {
     this.updateValidity()
     this.updateFilled()
     this.syncAutoHeight()
+  }
+
+  /** Focus the shadow control. `delegatesFocus` handles this in supporting
+   * browsers; the explicit target keeps programmatic dialog autofocus reliable
+   * everywhere. */
+  focus(options?: FocusOptions) {
+    this.control?.focus(options)
   }
 
   /** Clear the field and refocus it — fired by the wrapper's clear button.

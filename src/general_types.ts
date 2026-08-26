@@ -640,6 +640,8 @@ export interface AInputAttributes extends BaseAttributes {
   name?: string
   /** Placeholder shown when empty. */
   placeholder?: string
+  /** Focus this field when its containing `a-dialog` opens. Presence-based. */
+  autofocus?: boolean | ''
   /** Ellipsize an overflowing single-line value. Presence-based. */
   truncate?: boolean | ''
   autocomplete?: string
@@ -723,6 +725,8 @@ export interface ASliderAttributes extends BaseAttributes {
 export interface AInputTimeAttributes extends BaseAttributes {
   /** Controlled value — 24-hour `"HH:mm"`, `''` when incomplete. */
   value?: string
+  /** Focus this field when its containing `a-dialog` opens. Presence-based. */
+  autofocus?: boolean | ''
   /** Initial value for the uncontrolled case (24-hour `"HH:mm"`). */
   defaultvalue?: string
   /** BCP-47 locale driving the clock (12h vs 24h), segment order, separator, and
@@ -953,6 +957,8 @@ export interface AButtonAttributes extends BaseAttributes {
     | (string & {})
   /** Underline style. Only renders on `priority="tertiary" | "quaternary"`. */
   underline?: 'solid' | 'dashed' | 'dotted'
+  /** Show the underline only on hover. Requires `underline`. Presence-based (`''` on, omit off). */
+  'underline-on-hover'?: boolean | ''
   /** Size variant. small=22px, medium=26px, large=30px. */
   size?: 'small' | 'medium' | 'large'
   /** Drop outer padding to zero. Only takes effect on `priority="quaternary"`.

@@ -76,9 +76,9 @@ import './a-dialog.css'
  * without a ✕ or any focusable content. The container has an accessible name
  * (the mirrored header text), so a screen reader announces the dialog by title.
  * A consumer that wants a specific control focused instead puts `autofocus` on
- * it — the native dialog honors that and the element skips the container
- * override. The ✕ is the last tab stop (see the slot order). Focus return (to
- * the opener) on close comes from the native `<dialog>`.
+ * it. The element focuses that control after opening, including a control inside
+ * a custom element's shadow root. The ✕ is the last tab stop (see the slot
+ * order). Focus return (to the opener) on close comes from the native `<dialog>`.
  *
  * ## Lifecycle across re-parenting
  *
@@ -551,9 +551,11 @@ export class ADialogElement extends HTMLElementBase {
     // or a footer button — possibly destructive). Override to focus the dialog
     // CONTAINER instead, so the user tabs to reach the first control and a
     // screen reader announces the dialog + its name on open (WAI-ARIA's safe
-    // default). A consumer that wants a specific control focused puts `autofocus`
-    // on it — native honors that during showModal(), so we leave it be.
-    if (!this.querySelector('[autofocus]')) this.dialog.focus()
+    // default). Custom-element descendants need an explicit focus call: native
+    // dialog autofocus does not enter their shadow controls consistently.
+    const autofocus = this.querySelector<HTMLElement>('[autofocus]')
+    if (autofocus) autofocus.focus({ preventScroll: true })
+    else this.dialog.focus()
   }
 
   /** Raw close. Records the closed intent and counts the pending `close` event as

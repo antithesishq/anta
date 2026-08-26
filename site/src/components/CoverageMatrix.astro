@@ -5,20 +5,7 @@
 // job (see comparison-data.ts). Anta's column is highlighted; the category
 // column and the header row are sticky so the wide grid stays legible while
 // it scrolls horizontally.
-import { SYSTEMS, CATEGORIES, COVERAGE, COVERAGE_URLS, type Mark } from './comparison-data'
-
-// Anta is the reference column. The remaining systems descend by the number
-// of component jobs they ship; partial and paid entries count as half coverage.
-const coverageScore = (id: string) => CATEGORIES.reduce((score, category) => {
-  const mark = COVERAGE[id]?.[category.id]
-  return score + (mark === 'yes' ? 1 : mark === 'partial' || mark === 'paid' ? 0.5 : 0)
-}, 0)
-
-const COVERAGE_SYSTEMS = [...SYSTEMS].sort((a, b) => {
-  if (a.anta) return -1
-  if (b.anta) return 1
-  return coverageScore(b.id) - coverageScore(a.id) || a.name.localeCompare(b.name)
-})
+import { CATEGORIES, COVERAGE, COVERAGE_SYSTEMS, COVERAGE_URLS, type Mark } from './comparison-data'
 
 const MARK: Record<Mark | 'none', { glyph: string; label: string; cls: string }> = {
   yes: { glyph: '✓', label: 'Included', cls: 'm-yes' },
@@ -42,13 +29,13 @@ const ANTA_SLUG: Record<string, string> = {
   button: 'button', textinput: 'input', select: 'select', combobox: 'input-autocomplete',
   choice: 'checkbox', slider: 'slider',
   datetime: 'input-date', tabs: 'tabs', menu: 'menu', tooltip: 'tooltip',
-  dialog: 'dialog', toast: 'toaster', accordion: 'expander', table: 'table', tag: 'tag', avatar: 'avatar', card: 'card', progress: 'progress', steps: 'steps',
+  dialog: 'dialog', toast: 'toaster', accordion: 'expander', table: 'table', tag: 'tag', avatar: 'avatar', card: 'card', progress: 'progress', steps: 'steps', nav: 'breadcrumbs',
   icons: 'icon', typography: 'text',
 }
 
 ---
 
-<div class="full-bleed cov-scroll">
+<div class="cov-scroll">
   <table class="cov">
     <thead>
       <tr>
@@ -223,7 +210,8 @@ const ANTA_SLUG: Record<string, string> = {
     display: block;
     margin-top: 1px;
     font-size: 11px;
-    color: var(--text-4);
+    font-weight: 400;
+    color: var(--text-3);
     overflow-wrap: anywhere;
   }
 

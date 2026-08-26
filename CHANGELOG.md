@@ -3,6 +3,28 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.24 — August 25, 2026
+
+### Added
+
+- Added `Breadcrumbs`, which composes links, actions, and copy controls with
+  text or icon separators and deterministic More-menu folding.
+- `MenuItemCopy` supports leading, trailing, or no copy glyph, matching
+  `ButtonCopy` placement and confirmation options.
+- Buttons accept `underlineOnHover` with a configured underline style.
+- `Input` and `InputTime` accept `autoFocus` for focusing the field when its
+  containing `Dialog` opens.
+- Added the `circle-user` icon shape.
+
+### Fixed
+
+- Focused editable Anta and `data-anta` fields use at least 16px type on touch
+  devices, preventing iOS automatic input zoom.
+
+### Removed
+
+- Removed the `text-highlight` icon shape.
+
 ## 0.3.23 — August 23, 2026
 
 ### Removed

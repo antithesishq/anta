@@ -106,6 +106,10 @@
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3C/svg%3E%0A");
   }
 
+  a-icon[shape="circle-user"] {
+    --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3Cpath d='M7 20.662V19c0-1.1.9-2 2-2h6c1.1 0 2 .9 2 2v1.662'/%3E%3C/svg%3E%0A");
+  }
+
   a-icon[shape="circle"] {
     --icon: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 11C9.65685 11 11 9.65685 11 8C11 6.34315 9.65685 5 8 5C6.34315 5 5 6.34315 5 8C5 9.65685 6.34315 11 8 11Z' stroke='%23525A61' stroke-width='1.33' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
   }
@@ -368,10 +372,6 @@
 
   a-icon[shape="text-cursor-input"] {
     --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h-1a2 2 0 0 1-2-2 2 2 0 0 1-2 2H6'/%3E%3Cpath d='M13 8h7a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-7'/%3E%3Cpath d='M5 16H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h1'/%3E%3Cpath d='M6 4h1a2 2 0 0 1 2 2 2 2 0 0 1 2-2h1'/%3E%3Cpath d='M9 6v12'/%3E%3C/svg%3E%0A");
-  }
-
-  a-icon[shape="text-highlight"] {
-    --icon: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%0A%3C!-- Generator: Adobe Illustrator 18.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  --%3E%0A%3Csvg version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px'%0A	 viewBox='0 0 16 16' enable-background='new 0 0 16 16' xml:space='preserve'%3E%0A%3Cg id='text_highlight_1_'%3E%0A	%3Cg%3E%0A		%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9,10H2V6h7V4H1C0.45,4,0,4.45,0,5v6c0,0.55,0.45,1,1,1h8V10z M13,13h-1V3h1%0A			c0.55,0,1-0.45,1-1c0-0.55-0.45-1-1-1h-1c-0.37,0-0.7,0.11-1,0.28C10.7,1.11,10.37,1,10,1H9C8.45,1,8,1.45,8,2c0,0.55,0.45,1,1,1%0A			h1v10H9c-0.55,0-1,0.45-1,1c0,0.55,0.45,1,1,1h1c0.37,0,0.7-0.11,1-0.28c0.3,0.17,0.63,0.28,1,0.28h1c0.55,0,1-0.45,1-1%0A			C14,13.45,13.55,13,13,13z M15,4h-2v2h1v4h-1v2h2c0.55,0,1-0.45,1-1V5C16,4.45,15.55,4,15,4z'/%3E%0A	%3C/g%3E%0A%3C/g%3E%0A%3C/svg%3E%0A");
   }
 
   a-icon[shape="text-initial"] {

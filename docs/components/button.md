@@ -190,11 +190,13 @@ dropped (a valid `0` still renders).
 <Button tone="brand" priority="tertiary" underline="solid"  label="Solid" />
 <Button tone="brand" priority="tertiary" underline="dashed" label="Dashed" />
 <Button tone="brand" priority="tertiary" underline="dotted" label="Dotted" />
+<Button tone="brand" priority="quaternary" underline="solid" underlineOnHover label="Hover only" />
 ```
 
 When the button has a [link mode](#link-mode), or you simply want an
 underline stylistically, it supports three styles — `solid`, `dashed`,
-`dotted` (only valid on `priority="tertiary"` / `"quaternary"`).
+`dotted` (only valid on `priority="tertiary"` / `"quaternary"`). Set
+`underlineOnHover` to keep that underline hidden until pointer hover.
 
 ## States
 
@@ -369,6 +371,7 @@ because the write happens on the click.
  brand curve so any input stays legible. |
 | `type?` | 'button' \| 'submit' \| 'reset' | — | Form submission type. |
 | `underline?` | 'solid' \| 'dashed' \| 'dotted' | — | Underline style. |
+| `underlineOnHover?` | boolean | — | Hide the underline at rest and reveal it on hover. |
 
 ## Link mode
 

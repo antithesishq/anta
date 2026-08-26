@@ -376,7 +376,7 @@
         text-decoration: underline dotted;
       }
       &[underline] {
-        text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
+        text-decoration-color: color-mix(in oklch, currentColor 75%, transparent);
         text-decoration-thickness: 1px;
         text-underline-offset: 3px;
         &[selected] {
@@ -388,6 +388,18 @@
           &:hover {
             text-decoration-color: var(--button-fg);
             text-decoration-thickness: 1px;
+          }
+        }
+      }
+      &[underline][underline-on-hover] {
+        text-decoration-color: transparent;
+        &[selected] {
+          text-decoration-color: transparent;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          &:hover {
+            text-decoration-color: var(--button-fg);
           }
         }
       }

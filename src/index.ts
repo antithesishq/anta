@@ -61,10 +61,21 @@ export type {
   ContentMode,
   SubmitMode,
   PriorityMode,
+  UnderlineMode,
 } from './components/Button'
 export { ButtonCopy } from './components/ButtonCopy'
 export type { ButtonCopyProps } from './components/ButtonCopy'
 export type { CopyTarget } from './components/copy-props'
+export { Breadcrumbs } from './components/Breadcrumbs'
+export type {
+  BreadcrumbsProps,
+  BreadcrumbItem,
+  BreadcrumbLinkItem,
+  BreadcrumbActionItem,
+  BreadcrumbCopyItem,
+  BreadcrumbSeparator,
+  BreadcrumbTextSeparator,
+} from './components/Breadcrumbs'
 export { ICON_SHAPES, ICON_SYNONYMS } from './elements/a-icon.shapes'
 export { Tooltip } from './components/Tooltip'
 export type { TooltipProps } from './components/Tooltip'

@@ -106,7 +106,6 @@ export default function SearchDialog() {
   useEffect(() => {
     if (!open) return
     void ensureIndex()
-    window.setTimeout(() => document.getElementById('docs-search-input')?.focus(), 0)
   }, [open])
 
   useEffect(() => {
@@ -143,6 +142,7 @@ export default function SearchDialog() {
         <Input
           id="docs-search-input"
           type="search"
+          autoFocus
           placeholder={status === 'loading' ? 'Loading search…' : 'Search documentation'}
           value={query}
           onInput={(event) => setQuery((event.target as { value: string }).value)}

@@ -29,6 +29,7 @@ export const ICON_SHAPES = [
   'circle-dot',
   'circle-large',
   'circle-small-solid',
+  'circle-user',
   'circle',
   'click',
   'clock',
@@ -95,7 +96,6 @@ export const ICON_SHAPES = [
   'table-2',
   'tag',
   'text-cursor-input',
-  'text-highlight',
   'text-initial',
   'timer',
   'toggle-right',
@@ -135,6 +135,7 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'check': ['tick', 'ok', 'done', 'confirm', 'approve'],
   'dollar-sign': ['currency', 'money', 'payment'],
   'circle-check': ['success', 'ok', 'done'],
+  'circle-user': ['avatar', 'person', 'account', 'contact', 'profile'],
   'x': ['close', 'cancel', 'dismiss', 'remove', 'no'],
   'plus': ['add', 'new', 'create'],
   'minus': ['remove', 'subtract'],
@@ -158,7 +159,6 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'asterisk': ['star', 'wildcard'],
   'braces': ['code', 'brackets', 'json'],
   'case-sensitive': ['aA', 'capitalize', 'case'],
-  'text-highlight': ['mark', 'highlight'],
   'list-collapse': ['list', 'collapse', 'expand', 'items'],
   'table-2': ['table', 'grid', 'data', 'spreadsheet', 'rows', 'columns'],
   'folder-open': ['directory', 'browse'],
@@ -226,6 +226,7 @@ declare module '@antadesign/anta' {
     'circle-dot': true
     'circle-large': true
     'circle-small-solid': true
+    'circle-user': true
     'circle': true
     'click': true
     'clock': true
@@ -292,7 +293,6 @@ declare module '@antadesign/anta' {
     'table-2': true
     'tag': true
     'text-cursor-input': true
-    'text-highlight': true
     'text-initial': true
     'timer': true
     'toggle-right': true

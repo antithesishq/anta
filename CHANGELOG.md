@@ -19,6 +19,7 @@ changes are not listed.
 
 ### Fixed
 
+- Page-wide `body.dark` and consumer `body` backgrounds now paint the browser canvas.
 - Native `data-anta` checkboxes and radios match Anta components under the reference
   theme.
 - `MenuItem` exposes `kbd` shortcuts through `aria-keyshortcuts`; pass the attribute

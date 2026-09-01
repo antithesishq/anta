@@ -226,13 +226,16 @@ specifier with a bundler or import map.
 
 ## Dark mode
 
-Add the `dark` class to any ancestor element:
+For a page-wide dark mode, add `dark` to `body`. Its `--bg-2` background then
+paints the browser canvas:
 
 ```html
-<div class="dark">
+<body class="dark">
   <Progress value={50} />
-</div>
+</body>
 ```
+
+Add the class to another ancestor to scope dark mode to that subtree instead.
 
 ## Fonts
 

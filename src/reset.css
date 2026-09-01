@@ -61,13 +61,11 @@
   /* ───── Page baseline ────────────────────────────────────────── */
 
   /* Without this, components render in --sans-serif while the prose around them
-     falls back to the browser's serif at UA black on no background.
-     --bg-2, not --bg-1: a field paints itself --bg-1, so a --bg-1 page would
-     leave inputs flush with the ground. */
+     falls back to the browser's serif at UA black. Keep the root transparent so
+     the browser propagates the body's background to the canvas. */
   html {
     color-scheme: light;
     color: var(--text-2);
-    background: var(--bg-2);
     font-family: var(--sans-serif);
     /* 22px on the 15px body, as a division so it lands exactly, unitless so it
        inherits as a ratio. Looser than `<Text>` and the control labels, which
@@ -75,6 +73,12 @@
     line-height: calc(22 / 15);
     /* Controls carry their own :active; the platform overlay only muddies it. */
     -webkit-tap-highlight-color: transparent;
+  }
+  /* --bg-2, not --bg-1: a field paints itself --bg-1, so a --bg-1 page would
+     leave inputs flush with the ground. This also lets body.dark select the
+     dark canvas and leaves consumers free to set their own body background. */
+  body {
+    background: var(--bg-2);
   }
   .dark {
     color-scheme: dark;

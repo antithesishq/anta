@@ -223,7 +223,7 @@ through `dismissed` instead.
  without a handler to set `dismissed` the ✕ can't close the banner. Leave
  undefined for uncontrolled. |
 | `message?` | ReactNode | — | Leading message — a string (rendered at the banner type scale) or any node.
- Centered in the bar, followed by `children` and then `actions`. |
+ It is followed by `children` and then `actions`; `align` places the row. |
 | `onDismiss?` | () => void | — | Fired when the user dismisses the banner (clicks ✕). Uncontrolled, the banner
  hides itself and this notifies. Controlled, use it to accept the
  request — set `dismissed` to `true` (or ignore to reject); pair it with

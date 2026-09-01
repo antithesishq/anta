@@ -7,7 +7,7 @@ import { Button } from "./Button"
  *  `align`. */
 export interface BannerProps extends BaseProps {
   /** Leading message — a string (rendered at the banner type scale) or any node.
-   *  Centered in the bar, followed by `children` and then `actions`. */
+   *  It is followed by `children` and then `actions`; `align` places the row. */
   message?: React.ReactNode
   /** Trailing controls (buttons, links) rendered as a compact row after the
    *  message and `children`. */

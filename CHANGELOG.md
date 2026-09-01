@@ -7,74 +7,22 @@ changes are not listed.
 
 ### Added
 
-- `Banner` accepts `align` (`'start'` or `'center'`) to place the content row along
-  the bar. The message text follows it.
-- `<textarea data-anta>` receives Input's field chrome, matching the `input` and
-  `select` opt-ins. `data-anta-size`, `round`, and `tone` all apply. Its height
-  comes from `rows` with the field height as a floor, and it resizes vertically;
-  autogrow stays exclusive to `<Input multiline>`.
+- `Banner` accepts `align="start" | "center"`; content starts at the inline edge by
+  default.
+- `<textarea data-anta>` supports the Input field styling, `data-anta-size`, `round`,
+  and `tone`.
 
 ### Changed
 
-- `Tag` uses the default arrow cursor and is not text-selectable. It is a label,
-  so the I-beam invited a selection that was never the point.
-- `reset.css` gives prose blocks a rhythm: `p`, `ul`, `ol`, `blockquote`, `dl`,
-  `pre`, and `figure` take a `1rem` bottom margin, cleared on a last child so a
-  block at the end of a container doesn't push a gap against its padding. Only
-  headings and list items carried margins before, so paragraphs ran together.
-  `table` and `hr` are deliberately excluded.
-- `<pre>` in `reset.css` is a code-block surface: `--bg-3` behind a 1px
-  `--border-5` at a 6px radius, `10px 1rem 6px` padding, the `--monospace` face at
-  13px/20px, and `overflow-x: auto` so a long line scrolls inside the block instead
-  of widening the page. `pre code` takes `font: inherit`, so the inline pill's
-  `0.933em` doesn't shrink a second time against it.
-- `reset.css` styles seven more prose tags that previously fell through to the
-  browser: `mark` (a tuned yellow per theme with a 2px radius, replacing `#ff0`),
-  `del` (`--text-2-critical`, struck) and `ins` (`--text-2-success`, no underline),
-  `sub` / `sup` (75%, kept on the baseline at zero line-height and shifted with
-  relative offsets, so a footnote mark no longer makes its line taller than the
-  ones around it), `var` and `dt` (italic at weight 600), `small` and
-  `figcaption` (`calc(13em / 15)`, the 13-of-15 step matching
-  `<Text size="small">` and replacing the UA's `smaller` keyword, with `--text-3`
-  on `figcaption`), and `hr` (a 1px `--border-4` line in place of the UA's inset 3D
-  border). `kbd` is deliberately left to the browser — a keyboard key is a
-  component, not a typographic default.
-- `<blockquote>` in `reset.css` is marked by a 3px rule down its inline start in
-  the list marker's `--text-5`. The border and padding total `2ch`, so
-  the text sits just inside the rule. It was unstyled.
-- Inline `<code>` in `reset.css` renders as a tinted pill: the `--monospace` face,
-  `0.933em`, padding, and a 3px radius over a `currentColor` mix, so it follows the
-  surrounding tone and theme. `pre code` keeps no pill. It previously took only a
-  line-height, so it inherited the page's proportional font.
-- `reset.css` points the document at Anta's own roles: `--sans-serif`,
-  `--text-2`, `--bg-2`, and a `color-scheme` that flips under `.dark`. Plain
-  prose previously fell back to the browser's default serif at UA black on no
-  background while the components rendered in Anta's font. `--bg-2`, not
-  `--bg-1`, so fields stay recessed against the page.
-- The native checkbox and radio opt-ins read the same `--checkbox-*` / `--radio-*`
-  tokens as `<a-checkbox>` and `<a-radio>`. The parallel `--native-choice-*` set
-  they used duplicated those values under a second name; it is removed. Both were
-  undocumented internals, not a supported override surface.
-- A `Banner` now starts its content at the inline edge instead of centering it.
-  Pass `align="center"` for the previous look. Inline padding is 16px on the start
-  side and 48px on the end side (48px both sides when centered), replacing the
-  symmetric 52px, and is logical, so it flips with the ✕ under `direction: rtl`.
+- `Tag` uses the default cursor and cannot be selected.
+- `reset.css` applies Anta typography, spacing, and semantic styles to prose.
+- Native `data-anta` checkboxes and radios share component theme values.
 
 ### Fixed
 
-- A `MenuItem` with `kbd` announces its shortcut. The hint is translated to an
-  `aria-keyshortcuts` value (`"⌘E"` → `"Meta+E"`) and the glyphs are hidden from
-  assistive tech, which read `⌘` as "place of interest sign" or skipped it. Pass
-  `aria-keyshortcuts` to override the translation.
-- `<input data-anta type="checkbox">` and `<input data-anta type="radio">` follow
-  the Anta reference theme. They derived their selected colour from the tone seed
-  while `<a-checkbox>` and `<a-radio>` used the hand-tuned palette, so the two
-  forms of the same control did not match.
-- A `Banner` with no `actions` stays centered. The empty actions slot no longer
-  claims a `gap` column beside the message, and once the message wraps it no
-  longer adds an extra row that shifted the text up. Several `actions` now sit
-  on the banner's own `1ch` gap and wrap one at a time, rather than as a 4px
-  group that wrapped as a block.
+- `MenuItem` exposes `kbd` shortcuts through `aria-keyshortcuts`; pass the attribute
+  to override its translation.
+- Banners without actions stay centered.
 
 ## 0.3.24 — August 25, 2026
 

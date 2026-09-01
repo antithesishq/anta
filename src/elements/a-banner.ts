@@ -87,22 +87,26 @@ const DISMISS_TRIGGER = 'dismissrequest'
 const DISMISS_ATTR = 'data-banner-dismiss'
 
 // The host is the flex bar (styled in a-banner.css); the shadow only projects the
-// slots. The message / content / actions slots are display:contents so their nodes
-// ARE the host's flex items; close is a 40px-wide, full-height ✕ strip on the right
-// edge (its glyph vertically centered). The close slot is dimmed at rest (opacity
-// 0.65) and brightens only when the ✕ itself is hovered/focused (not the whole
-// banner) — the a-input dim-actions affordance, scoped tight.
-// display:contents generates NO box, so an EMPTY slot is not a flex item at all and
-// the host's `gap` reserves nothing for it. That's why actions is display:contents
-// too: as its own display:flex box it stayed a zero-size flex item when empty, so
-// the gap still reserved a column beside it — and, once the message wrapped, a whole
-// extra row below it — pushing the centered content off-center. The trade is that
-// multiple actions are now spaced by the host's `1ch` gap and wrap individually,
-// rather than as one tight 4px group.
+// slots. The message / content slots are display:contents so their nodes ARE the
+// host's flex items. Actions keeps its own flex box (and `::part(actions)` styling
+// surface), but the element hides that shadow-internal box when it has no assigned
+// nodes, so the host gap reserves nothing for it. Close is a 40px-wide, full-height
+// ✕ strip on the right edge (its glyph vertically centered). The close slot is
+// dimmed at rest (opacity 0.65) and brightens only when the ✕ itself is
+// hovered/focused (not the whole banner) — the a-input dim-actions affordance,
+// scoped tight.
 // NOTE: this string is injected verbatim into every instance's shadow root and isn't
 // minified, so it stays comment-free (rationale lives here in TS instead).
 const SHADOW_STYLE = `
-  slot[name="message"], slot[name="actions"], slot:not([name]) { display: contents; }
+  slot[name="message"], slot:not([name]) { display: contents; }
+
+  slot[name="actions"] {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  slot[name="actions"][hidden] { display: none; }
 
   slot[name="close"] {
     position: absolute;
@@ -162,6 +166,15 @@ export class ABannerElement extends HTMLElementBase {
     const actionsSlot = document.createElement('slot')
     actionsSlot.name = 'actions'
     actionsSlot.setAttribute('part', 'actions')
+    // A slot's assigned nodes are not DOM children, so CSS cannot distinguish an
+    // empty actions slot from one with content. Hide the shadow-internal flex box
+    // until `slotchange` assigns something; this keeps the documented `actions`
+    // part stylable without reserving the host's gap beside a lone message.
+    const syncActionsSlot = () => {
+      actionsSlot.hidden = actionsSlot.assignedNodes({ flatten: true }).length === 0
+    }
+    actionsSlot.hidden = true
+    actionsSlot.addEventListener('slotchange', syncActionsSlot)
 
     const closeSlot = document.createElement('slot')
     closeSlot.name = 'close'
@@ -170,6 +183,7 @@ export class ABannerElement extends HTMLElementBase {
     // The slots project directly under the host (no wrapper element); the host is
     // the flex bar (see a-banner.css).
     shadow.append(style, messageSlot, contentSlot, actionsSlot, closeSlot)
+    syncActionsSlot()
 
     // The ✕ dispatches DISMISS_TRIGGER (bubbling) on activation; turn it into a
     // dismiss request and stop it here, at the nearest banner — otherwise a Banner

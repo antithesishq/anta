@@ -35,7 +35,11 @@
   text-decoration: none;
 }
 
-.result:hover,
+/* The hover highlight is the same as the selected one, so it only applies once the
+   pointer is actually driving the list (`data-pointer="active"`, set on a real
+   pointermove). Otherwise a cursor left resting over the results would light up a
+   second row while typing or arrowing. */
+.results[data-pointer='active'] .result:hover,
 .result[data-selected='true'] {
   background: var(--bg-3);
 }

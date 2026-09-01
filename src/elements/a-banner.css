@@ -14,17 +14,18 @@
     --banner-border: var(--border-4);
     --banner-text: var(--text-2);
 
-    /* The host IS the centered bar — the slots (message / content / actions / close)
-       project as its flex items, no wrapper element. Layout lives here (not a shadow
-       node) so it paints before upgrade and consumers can override it in plain CSS.
+    /* The host IS the bar — the slots (message / content / actions / close) project
+       as its flex items, no wrapper element. Layout lives here (not a shadow node)
+       so it paints before upgrade and consumers can override it in plain CSS.
        `position: relative` anchors the absolutely-positioned close ✕. */
     display: flex;
     align-items: center;
-    justify-content: center;
-    /* Wrap when the row can't fit: the actions slot is one atomic flex item
-       (flex-shrink: 0), so it drops to its own line below the message instead of
-       squeezing the message into a tall narrow column. `gap: <row> <column>` — a
-       tight 4px between wrapped lines, and a font-relative 1ch between inline items. */
+    /* Content sits at the inline start; `align="center"` below centers it instead. */
+    justify-content: flex-start;
+    /* Wrap when the row can't fit: the slotted items drop to the next line rather
+       than squeezing the message into a tall narrow column. `gap: <row> <column>` —
+       a tight 4px between wrapped lines, and a font-relative 1ch between inline
+       items. */
     flex-wrap: wrap;
     gap: 4px 1ch;
     position: relative;
@@ -33,9 +34,12 @@
     /* Resting height. A plain host property, not a token: `a-banner` is light DOM,
        so a consumer just sets `min-height` (plain CSS beats @layer, or inline). */
     min-height: 40px;
-    /* Symmetric inline padding reserves the right zone for the full-height ✕ (so
-       the centered content never runs under it) and keeps the group centered. */
-    padding: 6px 52px;
+    /* Logical inline padding: the end side reserves the full-height ✕'s 40px strip
+       plus clearance, so content never runs under it, while the start side hugs the
+       edge. Logical (not `padding-left`/`-right`) to track the ✕, which is pinned
+       with `inset-inline-end` — both flip together in RTL. */
+    padding-block: 6px;
+    padding-inline: 16px 48px;
 
     color: var(--banner-text);
     background: var(--banner-bg);
@@ -70,6 +74,14 @@
       display 200ms allow-discrete;
   }
 
+  /* `align="center"` centers the content row instead of starting it at the inline
+     edge. Both inline paddings then match the ✕'s reserved end zone, so the group
+     centers on the whole bar rather than on the space left over beside the ✕. */
+  a-banner[align="center"] {
+    justify-content: center;
+    padding-inline: 48px;
+  }
+
   /* `round` — rounded corners for a standalone, floating banner (still borderless
      by default; add `border-width` for an outline). Bare `round` clamps to a stadium
      (half the height); a length value (`round="12px"`, or the wrapper's `round={12}`
@@ -92,11 +104,16 @@
   }
 
   /* A string `message` is wrapped in <a-banner-message> by the <Banner> wrapper;
-     it carries the message type scale. A node message keeps its own type. */
+     it carries the message type scale. A node message keeps its own type. The text
+     tracks `align`, so a message that wraps to two lines reads with the bar instead
+     of centering its lines inside a start-aligned strip. */
   a-banner-message {
     font-size: 14px;
     line-height: 20px;
     font-weight: 475;
+    text-align: start;
+  }
+  a-banner[align="center"] a-banner-message {
     text-align: center;
   }
 

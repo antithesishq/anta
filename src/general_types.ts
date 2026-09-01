@@ -1326,6 +1326,10 @@ export interface ABannerAttributes extends BaseAttributes {
    *  custom color keeps its hue with lightness/chroma pinned. `'neutral'` is the
    *  default (same as omitting it). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Where the content row sits along the bar. `'start'` (the default, same as
+   *  omitting it) runs it from the inline edge with the ✕'s zone kept clear;
+   *  `'center'` centers it on the whole bar. The message text follows. */
+  align?: 'start' | 'center'
   /** Rounded corners for a standalone banner — `border-radius: 999px` (clamps to a
    *  stadium), or a custom radius via a length value (`round="12px"`). Borderless
    *  like the default. Presence-based for the boolean form. */

@@ -2,6 +2,61 @@ import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { toneStyle } from '../anta_helpers'
 
+/* Glyphs and words a `kbd` hint is written with, mapped to the `KeyboardEvent.key`
+   names `aria-keyshortcuts` is specified in. Keys are lowercased before lookup, so
+   only the glyphs need their exact form here. */
+const SHORTCUT_KEYS: Record<string, string> = {
+  '⌘': 'Meta', cmd: 'Meta', command: 'Meta', win: 'Meta', super: 'Meta',
+  '⌃': 'Control', ctrl: 'Control', control: 'Control',
+  '⌥': 'Alt', alt: 'Alt', opt: 'Alt', option: 'Alt',
+  '⇧': 'Shift', shift: 'Shift',
+  '↵': 'Enter', '⏎': 'Enter', enter: 'Enter', return: 'Enter',
+  '⌫': 'Backspace', backspace: 'Backspace',
+  '⌦': 'Delete', del: 'Delete', delete: 'Delete',
+  '⎋': 'Escape', esc: 'Escape', escape: 'Escape',
+  '⇥': 'Tab', tab: 'Tab',
+  '␣': 'Space', space: 'Space',
+  '↑': 'ArrowUp', '↓': 'ArrowDown', '←': 'ArrowLeft', '→': 'ArrowRight',
+  '⇞': 'PageUp', '⇟': 'PageDown', '↖': 'Home', '↘': 'End',
+}
+
+/**
+ * Translate a display `kbd` hint into an `aria-keyshortcuts` value.
+ *
+ * The hint is written for the eye (`"⌘E"`, `"Ctrl+K"`, `"⌘⇧P"`), which assistive
+ * tech reads poorly — `⌘` is announced as "place of interest sign" or skipped
+ * entirely. `aria-keyshortcuts` wants `KeyboardEvent.key` names joined by `+`
+ * (`"Meta+E"`), so the glyphs are peeled off one at a time and the rest is taken
+ * as a single key: a lone character uppercases (`d` → `D`), anything longer is
+ * passed through so `F2` and named keys survive.
+ *
+ * Returns `undefined` when nothing recognizable comes out, which is the signal to
+ * leave the visible hint readable by AT rather than hide it behind a label that
+ * was never produced. Declaring the shortcut does not bind it — that stays the
+ * consumer's job.
+ */
+function shortcutLabel(kbd: string): string | undefined {
+  const parts: string[] = []
+  let word = ''
+  const flush = () => {
+    if (!word) return
+    parts.push(SHORTCUT_KEYS[word.toLowerCase()] ?? (word.length === 1 ? word.toUpperCase() : word))
+    word = ''
+  }
+  for (const char of kbd.trim()) {
+    if (SHORTCUT_KEYS[char]) {
+      flush()
+      parts.push(SHORTCUT_KEYS[char])
+    } else if (char === '+' || char === ' ') {
+      flush()
+    } else {
+      word += char
+    }
+  }
+  flush()
+  return parts.length ? parts.join('+') : undefined
+}
+
 /** Props shared by every menu item, link or not. */
 export interface MenuItemCommonProps extends BaseProps {
   /** Leading icon shape. */
@@ -14,7 +69,12 @@ export interface MenuItemCommonProps extends BaseProps {
    *  option `hint`. Requires `label` (it stacks in a column beneath it). Muted
    *  (`--text-3`) and tracks the row's `tone`. A string, or any node. */
   hint?: React.ReactNode
-  /** A trailing keyboard-shortcut hint, e.g. `"⌘E"`. */
+  /** A trailing keyboard-shortcut hint, e.g. `"⌘E"`. The row also announces it:
+   *  the hint is translated to an `aria-keyshortcuts` value (`"Meta+E"`) and the
+   *  visible glyphs are hidden from assistive tech, which reads them poorly.
+   *  Modifier glyphs (`⌘ ⌃ ⌥ ⇧`) and their words (`Cmd`, `Ctrl`, `Alt`, `Shift`)
+   *  are understood. Pass `aria-keyshortcuts` yourself to override the
+   *  translation. Declaring a shortcut does not bind it — that stays yours. */
   kbd?: string
   /** A trailing icon. On a `submenu` item this **overrides** the default
    *  chevron (omit it to keep the chevron); on a normal item it's the trailing
@@ -202,6 +262,19 @@ export const MenuItem = ({
   // the checkbox/radio indicator.
   const toneAttr = effectiveTone && effectiveTone !== 'neutral' ? effectiveTone : undefined
 
+  // An explicit `aria-keyshortcuts` always wins over the value derived from `kbd`:
+  // `rest` spreads last in both branches, so it already overrides the attribute
+  // itself — it's read here so the same choice drives the hint below. The `kbd`
+  // hint is decorative once a shortcut is declared on the row, so it's hidden from
+  // AT to avoid announcing the glyphs after the name (`⌘` reads as "place of
+  // interest sign"). With neither value it stays exposed: a garbled reading beats
+  // no reading at all.
+  const declaredShortcuts = (rest as Record<string, unknown>)['aria-keyshortcuts']
+  const keyShortcuts = kbd ? shortcutLabel(kbd) : undefined
+  const kbdNode = kbd ? (
+    <kbd aria-hidden={(declaredShortcuts ?? keyShortcuts) ? 'true' : undefined}>{kbd}</kbd>
+  ) : null
+
   // Label block — shared by the element and link renders. A hint stacks under
   // the label in a column; without it the label is a bare row child.
   const labelNode =
@@ -227,6 +300,7 @@ export const MenuItem = ({
       tabIndex: disabled ? -1 : 0,
       'aria-disabled': disabled ? 'true' : undefined,
       'aria-current': selected ? 'true' : undefined,
+      'aria-keyshortcuts': keyShortcuts,
       tone: toneAttr,
       style: toneStyle(effectiveTone, '--menu-item-tone-source', style),
       onClick: onSelect && !disabled ? (e: any) => onSelect(e, { value, label }) : undefined,
@@ -237,7 +311,7 @@ export const MenuItem = ({
         {icon && <a-icon shape={icon} aria-hidden="true" />}
         {labelNode}
         {children}
-        {kbd && <kbd>{kbd}</kbd>}
+        {kbdNode}
         {iconTrailing && <a-icon shape={iconTrailing} aria-hidden="true" />}
       </a>
     )
@@ -262,6 +336,7 @@ export const MenuItem = ({
       // announces the submenu, and the open branch's visual rides the nested
       // a-menu's off-DOM `:state(open)` (see a-menu-item.css).
       aria-disabled={disabled ? 'true' : undefined}
+      aria-keyshortcuts={keyShortcuts}
       // Pure projection — no DOM walking. `a-menu` decides which item was
       // genuinely activated (on the UI thread, via the composed path) and fires a
       // pre-filtered `menuselect` on it (skipping submenu parents + bubbled child
@@ -317,7 +392,7 @@ export const MenuItem = ({
           the item's last child — the `[submenu]`-scoped CSS positions the chevron
           without relying on that (see a-menu-item.css). */}
       {children}
-      {kbd && <kbd>{kbd}</kbd>}
+      {kbdNode}
       {(() => {
         // A submenu shows the chevron by default; `iconTrailing` overrides it. The
         // `check` selection style reserves a trailing slot on *every* row — a check

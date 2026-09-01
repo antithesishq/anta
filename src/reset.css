@@ -58,6 +58,28 @@
     text-wrap: balance;
   }
 
+  /* ───── Page baseline ────────────────────────────────────────── */
+
+  /* Without this, components render in --sans-serif while the prose around them
+     falls back to the browser's serif at UA black on no background.
+     --bg-2, not --bg-1: a field paints itself --bg-1, so a --bg-1 page would
+     leave inputs flush with the ground. */
+  html {
+    color-scheme: light;
+    color: var(--text-2);
+    background: var(--bg-2);
+    font-family: var(--sans-serif);
+    /* 22px on the 15px body, as a division so it lands exactly, unitless so it
+       inherits as a ratio. Looser than `<Text>` and the control labels, which
+       stay at 15/20 to line up with each other. */
+    line-height: calc(22 / 15);
+    /* Controls carry their own :active; the platform overlay only muddies it. */
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+
   /* ───── Typography defaults — Anta opinion ───────────────────── */
 
   /* Raw headings adopt the same visual scale as `<Title level={n}>`
@@ -91,18 +113,130 @@
     text-decoration-color: color-mix(in oklch, currentColor 50%, transparent);
   }
 
-  /* Keep inline `<code>` from inflating the line box of the prose it
-     sits in — `1em` pins its line height to its own font size. */
+  /* The UA's #ff0 is too saturated for running text. Text stays near-black in
+     both themes — light-on-yellow never clears contrast. */
+  mark {
+    color: color-mix(in oklch, black 90%, transparent);
+    background-color: hsl(55 100% 61.85%);
+    border-radius: 2px;
+  }
+  .dark mark {
+    background-color: hsl(55 100% 35%);
+  }
+
+  /* An insertion drops the UA underline, which reads as a link in prose; the
+     tone carries it instead. A deletion keeps its strike. */
+  del {
+    color: var(--text-2-critical);
+    text-decoration: line-through;
+  }
+  ins {
+    color: var(--text-2-success);
+    text-decoration: none;
+  }
+
+  /* A variable and the term naming it read as the same thing. */
+  var,
+  dt {
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  /* The UA's `vertical-align: super`/`sub` moves the inline box, so it protrudes
+     and the whole line grows. Baseline + zero line-height contributes nothing to
+     the line box; relative offsets do the shift without affecting layout. */
+  sub,
+  sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  sup { top: -0.5em; }
+  sub { bottom: -0.25em; }
+
+  /* 13 of the surrounding 15 — `<Text size="small">` against the body. A division
+     so it lands exactly, relative so it still steps down inside a heading. Also
+     replaces the UA's `smaller`, whose factor is UA-defined and compounds. */
+  small,
+  figcaption {
+    font-size: calc(13em / 15);
+  }
+
+  /* Secondary to the content it labels. */
+  figcaption {
+    color: var(--text-3);
+  }
+
+  /* Matches a table's cell divider. `border: 0` first — the UA draws an inset
+     3D border, not a line. */
+  hr {
+    border: 0;
+    border-block-start: 1px solid var(--border-4);
+  }
+
+  /* The tint mixes from currentColor, so it follows the surrounding tone and
+     theme from one value. `1em` line-height keeps it out of the line box. */
   code {
+    font-family: var(--monospace);
+    font-size: 0.933em;
     line-height: 1em;
+    color: inherit;
+    background: color-mix(in srgb, currentColor 6%, transparent);
+    border: none;
+    padding: 0.25em 0.4ch 0.2em;
+    border-radius: 3px;
+  }
+
+  /* 6% disappears on a dark surface. Inline only — `pre code` has no pill. */
+  .dark :not(pre) > code {
+    background: color-mix(in srgb, currentColor 10%, transparent);
+  }
+
+  /* Its own surface, so it reads as a block. `overflow-x: auto` keeps a long line
+     from widening the page. Padding is asymmetric because the line box carries its
+     leading below the glyphs — 10px over 6px renders as even. */
+  pre {
+    padding: 10px 1rem 6px;
+    border: 1px solid var(--border-5);
+    border-radius: 6px;
+    background: var(--bg-3);
+    color: var(--text-1);
+    font-family: var(--monospace);
+    font-size: 13px;
+    font-weight: 440;
+    line-height: 20px;
+    overflow-x: auto;
+  }
+
+  /* No pill on an existing surface; `font: inherit` stops `code`'s 0.933em
+     shrinking a second time against `pre`'s 13px. */
+  pre code {
+    background: none;
+    padding: 0;
+    font: inherit;
   }
 
   /* Monospace text carries no letter tracking. Code is metrically even
      by design, so a global `letter-spacing` an app sets on body prose
      must not bleed into it. Targets the monospace elements directly so
-     the declaration beats the inherited tracking. */
-  code, kbd, samp, pre {
+     the declaration beats the inherited tracking. `kbd` is absent on purpose —
+     a keyboard key is a component, not a typographic default. */
+  code, samp, pre {
     letter-spacing: 0;
+  }
+
+  /* Bottom-only, so two adjacent blocks never negotiate which margin wins.
+     `table` and `hr` are out on purpose — a table is placed by its container, and
+     a rule's spacing belongs to whatever it divides. Cleared on a last child so a
+     block at the end of a card or dialog doesn't push a gap against its padding. */
+  p, ul, ol, blockquote, dl, pre, figure {
+    /* `rem`, not `em` — the gap belongs to the document, not the block's own
+       type, so a 13px `pre` sits the same distance as a paragraph. */
+    margin-block-end: 1rem;
+  }
+  :is(p, ul, ol, blockquote, dl, pre, figure):last-child {
+    margin-block-end: 0;
   }
 
   /* Prose lists (ul, ol) get a tight 3ch left padding so markers
@@ -117,6 +251,13 @@
   }
   :is(ul, ol) > li::marker {
     color: var(--text-5);
+  }
+
+  /* A rule rather than an indent or italics, in the list marker's --text-5 so
+     both read as the same scaffolding. Border + padding total 2ch. */
+  blockquote {
+    border-left: 3px solid var(--text-5);
+    padding-left: calc(2ch - 3px);
   }
 
   /* `<menu>` is for command/option lists, not prose. By default

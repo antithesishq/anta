@@ -69,6 +69,10 @@
     overflow: hidden;
     white-space: nowrap;
     -webkit-user-drag: none;
+    /* A tag is a label, not prose — the I-beam invites a selection that isn't
+       the point. Interactive tags set their own cursor. */
+    cursor: default;
+    user-select: none;
 
     color: var(--tag-text);
     background: var(--tag-bg);

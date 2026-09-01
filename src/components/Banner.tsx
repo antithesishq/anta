@@ -3,7 +3,8 @@ import type { BaseProps } from "../general_types"
 import { Button } from "./Button"
 
 /** Public props for the `<Banner>` message strip. `message` is the leading
- *  content, `children` sit between it and `actions`, all centered in one row. */
+ *  content, `children` sit between it and `actions`, all in one row placed by
+ *  `align`. */
 export interface BannerProps extends BaseProps {
   /** Leading message — a string (rendered at the banner type scale) or any node.
    *  Centered in the bar, followed by `children` and then `actions`. */
@@ -26,6 +27,12 @@ export interface BannerProps extends BaseProps {
     | "warning"
     | "critical"
     | (string & {})
+  /** Where the content row sits along the bar. `'start'` runs it from the inline
+   *  edge (16px in, with 48px kept clear for the ✕); `'center'` centers it on the
+   *  whole bar (48px both sides). The message text follows, so a message that wraps
+   *  to two lines reads with the bar.
+   *  @defaultValue 'start' */
+  align?: "start" | "center"
   /** Rounded corners for a standalone, floating banner (`border-radius: 999px`,
    *  which clamps to a stadium) instead of the edge-to-edge strip. Still borderless
    *  by default. Pass a `number` (px) or a CSS length string for a custom radius. */
@@ -61,9 +68,10 @@ type StateChangeDetail = { next: "open" | "closed"; prev: "open" | "closed" }
 /**
  * `<Banner>` — a full-width, dismissible message strip with a bottom border.
  *
- * A close cousin of `<Card>` with a small, centered horizontal payload:
- * `message` leads, `children` sit in the middle, `actions` trail, and (when
- * `closable`) a 40px-wide, full-height ✕ fills the right edge without shifting the centered group.
+ * A close cousin of `<Card>` with a small horizontal payload: `message` leads,
+ * `children` sit in the middle, `actions` trail, and (when `closable`) a 40px-wide,
+ * full-height ✕ fills the right edge without shifting the group. `align` places
+ * that group at the inline start (the default) or centers it.
  *
  * A pure, stateless pass-through to `<a-banner>`: the element owns dismissal and
  * visibility, so the wrapper holds no state and grabs no ref — it maps props to
@@ -94,6 +102,7 @@ export const Banner = ({
   message,
   actions,
   tone,
+  align,
   round,
   closable,
   role = "status",
@@ -139,6 +148,7 @@ export const Banner = ({
       // default-state (absent reads `closed` → hidden).
       default-state={!controlled ? (defaultDismissed ? "closed" : "open") : undefined}
       tone={tone && tone !== "neutral" ? tone : undefined}
+      align={align === "center" ? "center" : undefined}
       round={roundAttr(round)}
       // ARIA lives in the wrapper (the element stays engine-agnostic). Default the
       // strip to `role="status"` — a polite live region — so a notice reaches AT;

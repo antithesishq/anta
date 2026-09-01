@@ -2,8 +2,9 @@
 
 A full-width message strip for a page- or section-level notice: an announcement, a
 status change, a promotion. The `Banner` JSX wrapper renders an `<a-banner>` whose
-content is a single centered row — `message`, optional `children`, then `actions` —
-with a dismiss ✕ on the right edge. It's **closable** by default.
+content is a single row — `message`, optional `children`, then `actions` — with a
+dismiss ✕ on the right edge. The row starts at the left edge; `align="center"`
+centers it ([Align](#align)). It's **closable** by default.
 
 Its surface reuses `Expander`'s primary vocabulary — a toned box that tracks light
 and dark — but laid out as a short horizontal strip sitting edge to edge, about
@@ -49,11 +50,26 @@ pass a `number` (px) or a CSS length string for a custom radius.
 <Banner round={12} tone="success" message="A custom 12px radius." />
 ```
 
+## Align
+
+`align` places the content row along the bar. `start` (the default) runs it from the
+inline edge, 16px in, with 48px kept clear on the other side for the ✕. `center`
+centers the row on the whole bar, with 48px on both sides. The message text follows,
+so a message that wraps to two lines reads with the bar.
+
+```tsx
+<Banner tone="info" message="Start — the row runs from the edge." />   {/* start is the default */}
+<Banner align="center" tone="info" message="Center — the row sits mid-bar." />
+```
+
+The padding is logical, and the ✕ is pinned to the inline end, so both flip together
+under `direction: rtl`.
+
 ## Message and content
 
 `message` is the leading content — a string (rendered at the banner type scale) or
 any node. `children` sit between the message and the actions, for a chip, a link,
-or a secondary line. Both are centered as one row.
+or a secondary line. Both lay out as one row.
 
 ```tsx
 <Banner tone="info" message="Deployment complete.">
@@ -192,6 +208,10 @@ through `dismissed` instead.
 |------|------|---------|-------------|
 | `actions?` | ReactNode | — | Trailing controls (buttons, links) rendered as a compact row after the
  message and `children`. |
+| `align?` | 'start' \| 'center' | 'start' | Where the content row sits along the bar. `'start'` runs it from the inline
+ edge (16px in, with 48px kept clear for the ✕); `'center'` centers it on the
+ whole bar (48px both sides). The message text follows, so a message that wraps
+ to two lines reads with the bar. |
 | `children?` | ReactNode | — | Free content placed BETWEEN the message and the actions. |
 | `closable?` | boolean | true | Whether the trailing ✕ dismiss button is present. `false` removes it — drive
  dismissal yourself (a controlled `dismissed`, or your own control) instead.
@@ -257,7 +277,7 @@ banner's border matches its tone with no extra work.
 <Banner round tone="success" message="A full outline on a round banner." style={{ borderWidth: 1 }} />
 ```
 
-The host `a-banner` **is** the centered bar — its surface, text, border, and layout
+The host `a-banner` **is** the bar — its surface, text, border, and layout
 are all plain CSS on the host (`@layer anta`, so an un-layered rule of yours wins
 without `!important`). For the individual regions, `<a-banner>` exposes
 `::part(message)` / `::part(content)` / `::part(actions)` / `::part(close)`.

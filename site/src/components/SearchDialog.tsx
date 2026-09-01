@@ -61,6 +61,11 @@ export default function SearchDialog() {
   const [results, setResults] = useState(EMPTY_RESULTS)
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const [selected, setSelected] = useState(0)
+  // Whether the pointer is driving the selection. Typing and arrow keys turn it
+  // off, a real `pointermove` over a result turns it back on. It gates both the
+  // hover highlight (see the module CSS) and pointer-driven selection, so a cursor
+  // resting over the list can't claim the highlight from the top result.
+  const [pointerActive, setPointerActive] = useState(false)
 
   const ensureIndex = () => {
     setStatus((current) => current === 'ready' ? current : 'loading')
@@ -110,7 +115,10 @@ export default function SearchDialog() {
 
   useEffect(() => {
     const term = query.trim()
+    // Every keystroke re-ranks the list, so the top result takes the selection back
+    // even if the cursor happens to rest over a different row.
     setSelected(0)
+    setPointerActive(false)
     if (!term || status !== 'ready') {
       setResults(EMPTY_RESULTS)
       return
@@ -127,6 +135,7 @@ export default function SearchDialog() {
 
   const moveSelection = (amount: number) => {
     if (!results.length) return
+    setPointerActive(false)
     setSelected((current) => (current + amount + results.length) % results.length)
   }
 
@@ -169,7 +178,12 @@ export default function SearchDialog() {
         {status === 'error' && <p className={styles.status}>Search is unavailable. Try reloading the page.</p>}
 
         {query.trim() && status === 'ready' && (
-          <div id="docs-search-results" className={styles.results} aria-live="polite">
+          <div
+            id="docs-search-results"
+            className={styles.results}
+            data-pointer={pointerActive ? 'active' : undefined}
+            aria-live="polite"
+          >
             {results.length ? results.map((result, index) => {
               const icon = sidebarIcon(result.route)
               return (
@@ -178,7 +192,16 @@ export default function SearchDialog() {
                   data-selected={selected === index ? 'true' : undefined}
                   href={resultHref(result, query.trim())}
                   key={result.id}
-                  onMouseEnter={() => setSelected(index)}
+                  // `pointermove`, not `mouseenter`: re-rendering the list under a
+                  // resting cursor fires the boundary events (mouseover/enter) with
+                  // no pointer movement at all, which is what let a middle row steal
+                  // the selection mid-search. A move event only fires when the
+                  // pointer actually moves. Both setters no-op when the value is
+                  // unchanged, so hovering one row doesn't re-render per event.
+                  onPointerMove={() => {
+                    setPointerActive(true)
+                    setSelected(index)
+                  }}
                   onClick={() => {
                     document.dispatchEvent(new CustomEvent('anta-search-navigate', {
                       detail: { result, query: query.trim() },

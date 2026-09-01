@@ -1,22 +1,13 @@
-/* Site-only baseline. The reset itself (box-sizing, margin: 0,
-   replaced-element block + max-width, form-control font: inherit,
-   text-wrap defaults) lives in anta's reset.css (`@layer anta`); this
-   file does not duplicate it. */
+/* Site-only baseline. The reset itself lives in anta's reset.css
+   (`@layer anta`) and this file does not duplicate it — that now covers
+   box-sizing, margin: 0, replaced-element block + max-width, form-control
+   font: inherit, text-wrap defaults, the document font / colour / background /
+   color-scheme, prose block rhythm, inline code, mark, and the rest of the
+   prose tags. What remains here is what the reset deliberately leaves open. */
+/* Leading and the tap-highlight come from anta's reset; the tracking is
+   site-owned (the reset takes no position on letter-spacing). */
 html, body {
-  line-height: 1.5;
   letter-spacing: 0.02ch;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Match the established Antithesis docs treatment for marked text. */
-mark {
-  color: color-mix(in oklch, black 90%, transparent);
-  background-color: hsl(55 100% 35%);
-  border-radius: 2px;
-}
-
-html:not(.dark) mark {
-  background-color: hsl(55deg 100% 61.85%);
 }
 
 /* Brand fonts (temporary Uploadcare hosting) */
@@ -103,17 +94,11 @@ html:not(.dark) mark {
   --bg-spot-warning:  var(--bg-5-warning);
 }
 
-/* Document defaults */
+/* Document defaults. Colour, background, and `color-scheme` come from anta's
+   reset (`--bg-base` is this site's alias for the `--bg-2` the reset uses), so
+   only the scroll offset for anchor jumps is site-owned. */
 html {
-  color: var(--text-2);
-  background: var(--bg-base);
   scroll-padding-top: var(--scroll-padding-top);
-  /* Match native UI (form controls, scrollbars, overscroll/rubber-band
-     background) to the active theme. `.dark` is toggled on <html>. */
-  color-scheme: light;
-}
-html.dark {
-  color-scheme: dark;
 }
 
 /* Smooth-scroll anchor jumps (e.g. the "On this page" TOC), but respect
@@ -125,27 +110,28 @@ html.dark {
 }
 
 html, body {
-  font-family: var(--sans-serif);
-  /* The sans variable font has `slnt` and `wdth` axes that
-     don't default to 0 / 100 inside the file. Chrome normalizes them
-     under `font-style: normal` / `font-stretch: normal`; Safari leaves
-     them at the file defaults, so the body renders slanted or at an
-     off-normal width — and the width shift is visible as glyph advances
-     change when the font finishes loading. Pin both axes so every
-     browser renders upright at normal width from the first paint.
-     `font-variation-settings` replaces the whole set per element, so
-     every pinned axis is restated wherever it's set (here, the italic
-     rule below, and the condensed `wdth 88` on Button / Tab). */
-  font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0;
+  /* The family itself comes from anta's reset. The sans variable font exposes
+     `wdth` and `slnt`, and neither defaults to 100 / 0 inside the file. Chrome
+     normalizes them under `font-style: normal` / `font-stretch: normal`; Safari
+     leaves them at the file defaults, so the body renders slanted or at an
+     off-normal width — and the width shift is visible as glyph advances change
+     when the font finishes loading. Pin both so every browser renders upright at
+     normal width from the first paint. `font-variation-settings` replaces the
+     whole set per element, so every pinned axis is restated wherever it's set
+     (here, the italic rule below, and the condensed `wdth 88` on Button / Tab). */
+  font-variation-settings: "wdth" 100, "slnt" 0;
 }
-/* Italic markup drives the slant axis manually, since the global
-   pin above would otherwise keep them upright too. `-10deg` is a
-   reasonable starting value; tune once the file's actual range is
-   known. `ital 1` is set defensively in case the file exposes that
-   axis as well. `wdth 100` is restated so italics keep the normal
-   width (font-variation-settings replaces, it doesn't merge). */
-:is(em, i, address) {
-  font-variation-settings: "wdth" 100, "slnt" -10, "ital" 1;
+
+/* Italic markup drives the slant axis manually, since the global pin above holds
+   it upright. `slnt` runs 0 → 11 here and **positive leans right** — the opposite
+   of the OpenType convention, so a negative value is out of range, clamps to 0,
+   and silently falls back to synthetic oblique. There is no `ital` axis.
+   `font-style: italic` stays underneath as the fallback. The list must name every
+   element Anta renders italic (`var` / `dt` beyond the UA's own); keying off the
+   computed `font-style` isn't possible. A `font-style` range on the @font-face
+   would remove the list, once the font leaves temporary hosting. */
+:is(em, i, address, var, dt) {
+  font-variation-settings: "wdth" 100, "slnt" 11;
 }
 
 /* Anta's global stylesheet provides the `a` defaults (color, underline,
@@ -236,8 +222,11 @@ details:not([data-anta])[open] > summary:not(.summary)::before {
   text-underline-offset: 3px;
 }
 
-p, ul, ol, blockquote, dl { margin: 0 0 1em; }
-pre, figure, hr, .expressive-code { margin: 0 0 1.5em; }
+/* Block rhythm for prose tags comes from anta's reset (1rem, bottom-only, cleared
+   on a last child). `hr` and the Expressive Code wrapper are outside that set —
+   the reset leaves `hr` spacing to whatever it divides, and `.expressive-code` is
+   a class it can't reach. */
+hr, .expressive-code { margin: 0 0 1.5em; }
 
 /* Proximity: a paragraph that introduces a <Preview> hugs it (caption-to-
    figure), so the prose groups with the example it describes rather than the
@@ -312,18 +301,8 @@ pre, figure, hr, .expressive-code { margin: 0 0 1.5em; }
   margin: 0;
 }
 
-code {
-  font-family: var(--monospace);
-  font-size: 0.933em;
-  color: inherit;
-  background: color-mix(in srgb, currentColor 6%, transparent);
-  border: none;
-  padding: 0.25em 0.4ch 0.2em;
-  border-radius: 3px;
-}
-
-
-pre code { background: none; padding: 0; }
+/* The inline code pill, its dark-mode tint, and the `pre code` opt-out all come
+   from anta's reset. Only the copy affordance below is site-owned. */
 
 /* Font, size, line-height, weight and padding are set via Expressive Code's
    styleOverrides (astro.config.mjs). letter-spacing has no EC setting, and EC's
@@ -336,12 +315,6 @@ pre code { background: none; padding: 0; }
   position: relative;
 }
 
-/* Inline code pills read too faint at 6% on dark surfaces — bump the
-   tint to 10% in dark mode. Scoped to inline code so `pre code` (which
-   is background-less) is untouched. */
-.dark :not(pre) > code {
-  background: color-mix(in srgb, currentColor 10%, transparent);
-}
 
 .copyable {
   cursor: copy;

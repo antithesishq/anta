@@ -7,7 +7,8 @@ import './a-banner.css'
  *
  * A close cousin of `<a-card>`: the same toned surface vocabulary, but laid out
  * as a single horizontal bar of *small* content rather than a stacked panel. The
- * content row is centered, and (when closable) a ✕ button fills the right edge (glyph centered).
+ * content row sits at the inline start, or centered with `align="center"`, and
+ * (when closable) a ✕ button fills the right edge (glyph centered).
  *
  * Light-DOM composition (what the `<Banner>` wrapper emits, or a vanilla author
  * writes by hand) is slot-based:
@@ -19,21 +20,22 @@ import './a-banner.css'
  *     <a-button slot="close" data-custom-event="dismissrequest" …>   ← ✕ (wrapper-owned)
  *   </a-banner>
  *
- * Shadow structure — the host itself is the centered bar (no wrapper element); the
- * slots are its flex items, each carrying a `part`:
+ * Shadow structure — the host itself is the bar (no wrapper element); the slots are
+ * its flex items, each carrying a `part`:
  *
  *   :host  (the light-DOM <a-banner>, styled `display: flex` in a-banner.css)
  *     <slot name="message" part="message"> ← display:contents (message nodes ARE flex items)
  *     <slot part="content">                ← the default slot; display:contents (middle content)
- *     <slot name="actions" part="actions"> ← a flex row of trailing controls
+ *     <slot name="actions" part="actions"> ← display:contents (trailing controls)
  *     <slot name="close" part="close">     ← the ✕, a 40px-wide full-height strip on the right edge (glyph centered)
  *
- * The bar layout (flex, centering, gap, min-height, padding) lives on the HOST in
+ * The bar layout (flex, `align`, gap, min-height, padding) lives on the HOST in
  * a-banner.css — not a shadow wrapper — so it paints before upgrade and consumers
- * can override it in plain CSS. The message / content slots are `display: contents`,
- * so their projected nodes are direct flex items of the host and centering + `gap`
- * treat them uniformly; an empty slot contributes nothing. The close slot is
- * absolutely positioned, so it's out of flow and never knocks the group off-center.
+ * can override it in plain CSS. The message / content / actions slots are
+ * `display: contents`, so their projected nodes are direct flex items of the host
+ * and `justify-content` + `gap` treat them uniformly; an empty slot contributes
+ * nothing. The close slot is absolutely positioned, so it's out of flow and never
+ * shifts the group.
  *
  * ## Visibility — the `state` contract (mirrors `<a-dialog>` / `<a-expander>`)
  *
@@ -85,22 +87,22 @@ const DISMISS_TRIGGER = 'dismissrequest'
 const DISMISS_ATTR = 'data-banner-dismiss'
 
 // The host is the flex bar (styled in a-banner.css); the shadow only projects the
-// slots. The message / content slots are display:contents so their nodes ARE the
-// host's flex items; actions is a nested flex row; close is a 40px-wide, full-height
-// ✕ strip on the right edge (its glyph vertically centered). The close slot is dimmed
-// at rest (opacity 0.65) and brightens only when the ✕ itself is hovered/focused (not
-// the whole banner) — the a-input dim-actions affordance, scoped tight.
+// slots. The message / content / actions slots are display:contents so their nodes
+// ARE the host's flex items; close is a 40px-wide, full-height ✕ strip on the right
+// edge (its glyph vertically centered). The close slot is dimmed at rest (opacity
+// 0.65) and brightens only when the ✕ itself is hovered/focused (not the whole
+// banner) — the a-input dim-actions affordance, scoped tight.
+// display:contents generates NO box, so an EMPTY slot is not a flex item at all and
+// the host's `gap` reserves nothing for it. That's why actions is display:contents
+// too: as its own display:flex box it stayed a zero-size flex item when empty, so
+// the gap still reserved a column beside it — and, once the message wrapped, a whole
+// extra row below it — pushing the centered content off-center. The trade is that
+// multiple actions are now spaced by the host's `1ch` gap and wrap individually,
+// rather than as one tight 4px group.
 // NOTE: this string is injected verbatim into every instance's shadow root and isn't
 // minified, so it stays comment-free (rationale lives here in TS instead).
 const SHADOW_STYLE = `
-  slot[name="message"], slot:not([name]) { display: contents; }
-
-  slot[name="actions"] {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-  }
+  slot[name="message"], slot[name="actions"], slot:not([name]) { display: contents; }
 
   slot[name="close"] {
     position: absolute;

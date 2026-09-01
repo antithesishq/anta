@@ -14,7 +14,6 @@ changes are not listed.
 
 ### Changed
 
-- `Tag` uses the default cursor and cannot be selected.
 - `reset.css` applies Anta typography, spacing, and semantic styles to prose.
 
 ### Fixed

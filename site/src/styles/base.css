@@ -110,28 +110,21 @@ html {
 }
 
 html, body {
-  /* The family itself comes from anta's reset. The sans variable font exposes
-     `wdth` and `slnt`, and neither defaults to 100 / 0 inside the file. Chrome
-     normalizes them under `font-style: normal` / `font-stretch: normal`; Safari
-     leaves them at the file defaults, so the body renders slanted or at an
-     off-normal width — and the width shift is visible as glyph advances change
-     when the font finishes loading. Pin both so every browser renders upright at
-     normal width from the first paint. `font-variation-settings` replaces the
-     whole set per element, so every pinned axis is restated wherever it's set
-     (here, the italic rule below, and the condensed `wdth 88` on Button / Tab). */
+  /* This temporary font's `slnt` axis uses the opposite direction to the
+     registered OpenType axis, so it cannot be advertised with an `oblique`
+     range. Pin its actual upright coordinates here instead. */
   font-variation-settings: "wdth" 100, "slnt" 0;
 }
 
-/* Italic markup drives the slant axis manually, since the global pin above holds
-   it upright. `slnt` runs 0 → 11 here and **positive leans right** — the opposite
-   of the OpenType convention, so a negative value is out of range, clamps to 0,
-   and silently falls back to synthetic oblique. There is no `ital` axis.
-   `font-style: italic` stays underneath as the fallback. The list must name every
-   element Anta renders italic (`var` / `dt` beyond the UA's own); keying off the
-   computed `font-style` isn't possible. A `font-style` range on the @font-face
-   would remove the list, once the font leaves temporary hosting. */
+/* The temporary brand font has no separate Italic face. Its non-standard
+   positive `slnt` value supplies the right-leaning instance, while the semantic
+   `font-style: italic` still participates in normal CSS inheritance. Prevent
+   the browser from adding a second, synthetic slant. When this font is replaced
+   with a standards-compliant file, declare its `oblique` range in @font-face and
+   remove this docs-only exception. */
 :is(em, i, address, var, dt) {
   font-variation-settings: "wdth" 100, "slnt" 11;
+  font-synthesis: none;
 }
 
 /* Anta's global stylesheet provides the `a` defaults (color, underline,

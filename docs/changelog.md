@@ -16,10 +16,11 @@ changes are not listed.
 
 - `Tag` uses the default cursor and cannot be selected.
 - `reset.css` applies Anta typography, spacing, and semantic styles to prose.
-- Native `data-anta` checkboxes and radios share component theme values.
 
 ### Fixed
 
+- Native `data-anta` checkboxes and radios match Anta components under the reference
+  theme.
 - `MenuItem` exposes `kbd` shortcuts through `aria-keyshortcuts`; pass the attribute
   to override its translation.
 - Banners without actions stay centered.

@@ -237,13 +237,22 @@ Add the class to another ancestor to scope dark mode to that subtree instead.
 
 Anta is designed for a customized TT Interphases Pro, but ships no font binaries. Components use `--sans-serif` and `--monospace` with system fallbacks. `tokens.css` sets a 15px root size (`1rem = 15px`).
 
-To use your own fonts, register `@font-face` declarations and override the variables:
+Register your fonts in the application that owns their files, then override the
+font variables. This example uses separate Roman and Italic variable files:
 
 ```css
 @font-face {
   font-family: "App Sans";
-  src: url("/path/to/your/sans.woff2") format("woff2");
-  /* ... */
+  src: url("/fonts/app-sans-roman.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: "App Sans";
+  src: url("/fonts/app-sans-italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
 }
 
 :root {
@@ -251,6 +260,34 @@ To use your own fonts, register `@font-face` declarations and override the varia
   --monospace: ui-monospace, monospace;
 }
 ```
+
+With those faces registered, Anta's semantic italics (`em`, `i`, `var`, and
+`dt`) select the Italic face without any component-specific CSS.
+
+### Variable slant
+
+A variable font with a standard `slnt` axis can supply the upright and slanted
+instances from one file. Advertise that axis through `font-style: oblique` rather
+than setting `slnt` directly on italic elements:
+
+```css
+@font-face {
+  font-family: "App Variable";
+  src: url("/fonts/app-variable.woff2") format("woff2");
+  font-style: oblique 0deg 12deg;
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+}
+
+:root {
+  --sans-serif: "App Variable", sans-serif;
+}
+```
+
+The browser selects the upright `0deg` instance for normal text and the slanted
+`11deg` instance for semantic italics. Use the range your font declares; this
+keeps font matching in charge and avoids combining a `slnt` setting with a
+synthetic oblique.
 
 ## Browser support
 

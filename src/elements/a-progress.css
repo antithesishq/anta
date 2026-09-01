@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   :where(a-progress, progress[data-anta]) {
     --progress-bg: var(--bg-4);
     --progress-border-color: var(--border-4);

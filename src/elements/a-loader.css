@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* A standalone loader begins at the legacy text-3 color. The icon alias
      intentionally inherits its parent control's color instead. */
   a-loader {

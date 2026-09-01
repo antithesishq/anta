@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Token surface — mirrors a-input's field chrome (same literal/role values) so a
      time field reads as one of the other inputs, under `--input-time-*` names. */
 

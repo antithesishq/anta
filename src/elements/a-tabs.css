@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   a-tabs {
     /* Type scale by size — shared with Button/Input (small 13/16 · medium 15/20 ·
        large 17/24). --_pb is the optical bottom nudge for Anta's low-sitting glyphs;

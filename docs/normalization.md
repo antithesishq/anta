@@ -4,8 +4,8 @@ Anta ships an opinionated reset + typography baseline in **`reset.css`**, so pla
 HTML (`<h2>`, `<ul>`, `<a>`, `<table>`…) renders in the same visual language as the
 components — no per-page restyling to make prose match a `<Title>` or a `<Table>`.
 
-It's a **separate import**, and every rule lives in a single cascade layer
-(`@layer anta`), so it is easy to override individual rules or use a different
+It's a **separate import**, and every rule lives in `@layer anta.reset`, inside
+Anta's outer cascade layer. You can override individual rules or use a different
 reset. Omit this import when another reset provides the baseline.
 
 ```js
@@ -50,9 +50,9 @@ This is **not** a neutral normalize — these defaults make raw markup match the
 - `::selection` → the focus-ring color, tuned per theme (20% alpha in light, 30% in dark).
 - **Tables**: `border-collapse`, `tabular-nums`, and a polite cell baseline; opt into a framed look with `<table data-bordered>` (outer frame + column dividers + rounded corners).
 
-Everything above is defined in `src/reset.css`, inside `@layer anta` — read that file
-for the authoritative set (it's short and commented). The headings block is duplicated
-in `src/elements/a-title.css`; the two are kept in sync.
+Everything above is defined in `src/reset.css`, inside `@layer anta.reset` — read
+that file for the authoritative set (it's short and commented). The headings block
+is duplicated in `src/elements/a-title.css`; the two are kept in sync.
 
 ## Cascade layers — how to override
 
@@ -60,9 +60,12 @@ Anta declares this layer order once (in `tokens.css`):
 
 ```css
 @layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
 ```
 
-Everything Anta ships — this reset **and** the element styles — lives in **`@layer anta`**. That placement is deliberate:
+Everything Anta ships lives inside **`@layer anta`**: the reset uses
+`anta.reset`, components use `anta.components`, and the optional reference palette
+uses `anta.theme`. That placement is deliberate:
 
 - **Above `base`** — a framework preflight you drop into `@layer base` (e.g. Tailwind) won't wipe Anta's typography.
 - **Below `components` and `utilities`** — your own component or utility CSS overrides Anta with no specificity battles.
@@ -72,9 +75,9 @@ Everything Anta ships — this reset **and** the element styles — lives in **`
 > *specific* element unlayered is the intended escape hatch (below). But a blanket
 > `* { margin: 0 }` / `*, *::before, *::after { box-sizing: border-box }` left
 > **unlayered** also outranks Anta's *per-element* defaults — its `p`, `caption`,
-> and `ul / ol` margins — because unlayered wins over `@layer anta` regardless of
+> and `ul / ol` margins — because unlayered wins over `@layer anta.reset` regardless of
 > specificity. Anta already runs that universal `*` reset itself, inside
-> `@layer anta`, so the copy-pasted duplicate is redundant *and* harmful: delete it,
+> `@layer anta.reset`, so the copy-pasted duplicate is redundant *and* harmful: delete it,
 > or if you keep your own reset wrap it in `@layer base { … }` (below `anta`) so
 > Anta's element defaults still apply.
 
@@ -83,7 +86,7 @@ Everything Anta ships — this reset **and** the element styles — lives in **`
 Write the rule unlayered (or in a layer after `anta`) — targeting a **specific** element, not `*`:
 
 ```css
-/* wins over Anta's @layer anta reset — no !important */
+/* wins over Anta's @layer anta.reset — no !important */
 h2 { letter-spacing: -0.01em; }
 ```
 

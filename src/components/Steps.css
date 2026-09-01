@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   a-steps {
     --steps-marker-size: 28px;
     --steps-icon-size: 16px;

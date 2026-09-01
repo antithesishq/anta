@@ -44,7 +44,7 @@ recommended; the reference theme is optional.
 | Import | Provides | Skip if… |
 |---|---|---|
 | `@antadesign/anta/tokens.css` | Six seed tokens, derived role scales (`--bg-1…5`, `--text-1…5`, `--border-1…5`), `.dark`, the 15px root size, and layer order. Override a seed to reskin its tone. | You provide those variables. |
-| `@antadesign/anta/reset.css` | A small reset plus Anta's focus, heading, list, and link typography in `@layer anta`. | You use another reset and typography. |
+| `@antadesign/anta/reset.css` | A small reset plus Anta's focus, heading, list, and link typography in `@layer anta.reset`. | You use another reset and typography. |
 | `@antadesign/anta/elements` | Registers every `<a-*>` element and its CSS. Per-element entries register one; see [Registering elements](#registering-elements). | You render only on the server or register elements individually. |
 | `@antadesign/anta` | Typed React/Preact wrappers such as `Progress`, `Text`, and `Icon`. | You write `<a-*>` elements directly. |
 | `@antadesign/anta/bundle.css` | One minified stylesheet containing tokens, reset, element, and JSX-wrapper styles. | You want granular CSS imports. |
@@ -60,9 +60,18 @@ seed-derived default palette or provide your own theme.
 
 ### Cascade layers
 
-Anta's reset and element CSS live in `@layer anta`. `tokens.css` declares
-`@layer base, anta, components, utilities`, placing Anta above preflight resets
-and below your component and utility layers.
+Anta's reset and element CSS live in child layers inside `@layer anta`.
+`tokens.css` declares their order, keeping Anta above preflight resets and below
+your component and utility layers:
+
+```css
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+```
+
+`anta.theme` contains the optional reference palette's component values, so they
+consistently replace the default formulas. The outer `anta` layer remains in the
+same position in the public cascade.
 
 To change that order, declare it in CSS loaded **before** `tokens.css`. The
 first declaration fixes a layer's position:
@@ -84,7 +93,7 @@ Token custom properties stay unlayered so they apply everywhere.
 > Unlayered styles beat layered ones regardless of specificity. This reset
 > overrides Anta's element defaults. Delete the duplicate, or put your reset in
 > `@layer base { … }`; `reset.css` already applies the same universal reset in
-> `@layer anta`.
+> `@layer anta.reset`.
 
 ## Registering elements
 

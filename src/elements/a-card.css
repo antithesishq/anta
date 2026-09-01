@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Host + token definitions for <a-card>. The visible box lives here (not in the
      shadow) so plain consumer CSS overrides it and it paints before the element
      upgrades; the shadow <style> owns layout + region typography and only
@@ -209,7 +209,8 @@
   /* A slotted heading node — <a-title> (any level) or a raw <h1>–<h6> — carries a
      document TOP margin (Title level 4 is 20px) that would add a leading gap in any
      section; zero it. Specificity is bumped past `a-title[level="N"]` (0,1,1) and
-     the reset's `hN` (0,0,1); `@layer anta` keeps it overridable by un-layered CSS. */
+     the reset's `hN` (0,0,1); `@layer anta.components` keeps it overridable by
+     un-layered CSS. */
   a-card :is(h1, h2, h3, h4, h5, h6),
   a-card a-title[level] {
     margin-block-start: 0;

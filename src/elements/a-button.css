@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* `<a-button>` is Anta's own tag, so it's always styled. The anchor
      variant keys off `role="button"` — a *generic* ARIA role that any
      widget (Monaco, third-party menus, comboboxes) also emits — so it

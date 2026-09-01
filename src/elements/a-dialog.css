@@ -4,7 +4,7 @@
    visual on the dialog surface itself lives in the shadow; this file owns the
    tokens + the host box + dark mode. */
 
-@layer anta {
+@layer anta.components {
   a-dialog {
     /* Surface — --bg-1 (white in light, black in dark), so the dialog reads as
        the topmost sheet above the dimmed overlay. */

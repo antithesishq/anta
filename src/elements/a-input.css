@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Token surface — all literal/role-pointed values live here so external CSS
      can re-point a single instance or a whole theme. Text/bg/border point at
      Anta's theme-aware role tokens (so dark mode is mostly free); the focus ring

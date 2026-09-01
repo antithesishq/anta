@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Host + token definitions for <a-banner>. The visible box (surface, bottom
      border) lives here so plain consumer CSS overrides it and it paints before the
      element upgrades; the shadow <style> owns only the bar layout and REFERENCES

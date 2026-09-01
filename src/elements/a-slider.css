@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Shared slider geometry keeps the custom element and the opt-in native
      range aligned. Their presentation remains independent below. */
   :where(a-slider, input[data-anta][type="range"]) {

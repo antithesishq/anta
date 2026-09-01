@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Light-DOM element (a-checkbox.ts): state lives on ElementInternals, so
      styling keys off :state(checked) / :state(indeterminate) — not attributes.
      Box is ::before, glyph is ::after, label is the children. Only the color

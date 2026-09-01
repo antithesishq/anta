@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Light-DOM element (a-radio.ts): selection lives on ElementInternals, set by
      the enclosing <a-radio-group>, so styling keys off :state(selected) — not an
      attribute. Ring is ::before, dot is ::after, label is the children. Only the

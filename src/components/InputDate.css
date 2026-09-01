@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   a-input-date-time-container {
     display: flex;
     align-items: center;

@@ -23,6 +23,12 @@ Anta's palette is generative. Every color in the system derives from six tone se
 }
 ```
 
-Past the seeds, any look and feel is reachable. Anta's styles live in `@layer anta`, so an un-layered rule you write wins without `!important`, and shadow-DOM components expose `::part(...)` hooks. Per component, the `tone` prop takes a named tone or any CSS color and derives that component's full rest/hover/active curve from it. Each component page lists its own hooks under Styling.
+Past the seeds, any look and feel is reachable. Anta's styles live inside
+`@layer anta`; its reset, component, and optional reference-theme rules have
+ordered child layers. An un-layered rule you write wins without `!important`, and
+shadow-DOM components expose `::part(...)` hooks. Per component, the `tone` prop
+takes a named tone or any CSS color and derives that component's full
+rest/hover/active curve from it. Each component page lists its own hooks under
+Styling.
 
 The lab below shows the derivation live. For each toned component, the shipped Default sits next to a Custom preview driven by the seed picker, with the formula constants editable and the resolved CSS shown.

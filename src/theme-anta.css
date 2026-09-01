@@ -13,31 +13,27 @@
  * Two parts, layered differently on purpose:
  *
  * (1) The global role scale (`--text-*` / `--bg-*` / `--border-*` / `--focus-ring`, below) is
- *     UNLAYERED (so it beats the components' `@layer anta` seed-derived tokens and
- *     replaces the role scale wholesale) and uses DOUBLED `:root:root` / `.light.light`
- *     / `.dark.dark` selectors, so it out-SPECIFIES tokens.css's equally-unlayered
- *     `:root` / `.light` / `.dark` role tokens no matter which file loads first (and
- *     matches the same set, including scoped `.light` / `.dark`). Plain source order
- *     isn't enough:
- *     a host may inject this file before tokens.css (the docs site does, and Astro
- *     controls where the bundled tokens.css `<link>` lands), which would otherwise
- *     let tokens.css win the `:root`-vs-`:root` tie.
+ *     UNLAYERED, replacing the default role scale wholesale. It uses DOUBLED
+ *     `:root:root` / `.light.light` / `.dark.dark` selectors, so it out-specifies
+ *     tokens.css's equally-unlayered `:root` / `.light` / `.dark` tokens regardless
+ *     of source order (and matches the same root and scoped-light/dark sets).
  *
  * (2) The bespoke component ramps that don't flow from role tokens (Button /
- *     Checkbox / Radio / Input status / Tag / Tabs) live in `@layer anta`, so the
- *     cascade — not layer precedence — sorts them against the element CSS (same
- *     layer). Neutral base rules carry `:not([tone])` (and `:not([tone-selected])`
- *     for Checkbox / Radio) so they out-SPECIFY the element's bare base and win the
- *     neutral case regardless of load order (the element CSS is re-injected by JS
- *     registration, so source order isn't reliable). Named-tone rules out-specify
- *     the base too. But a component's own even-higher-specificity CUSTOM-tone rule
- *     (`[tone]:not(…named)`, derived in oklch) wins for a literal color — so a
- *     custom `tone` keeps deriving instead of flattening to neutral.
+ *     Checkbox / Radio / Input status / Tag / Tabs) live in `@layer anta.theme`.
+ *     `tokens.css` reserves this layer after `anta.components`, so named reference
+ *     values beat the component formulas regardless of stylesheet injection order
+ *     or selector specificity. Named rules do not match literal custom colors;
+ *     those continue through the component or theme formula branches.
  *
- * Overriding: part 2's component ramps are beaten by any unlayered consumer rule.
- * Part 1's role tokens sit at `:root:root` specificity, so a consumer override must
- * match it — `:root:root { --text-1: … }` (or higher) — rather than a plain `:root`.
+ * Overriding: an unlayered consumer rule or a consumer `components` / `utilities`
+ * layer beats the component ramps. Part 1's role tokens sit at `:root:root`
+ * specificity, so a consumer role override must match it — `:root:root { --text-1:
+ * … }` (or higher) — rather than a plain `:root`.
  */
+
+/* Establish the component/theme relationship even when a host injects this
+   stylesheet before tokens.css or an element stylesheet. */
+@layer anta.components, anta.theme;
 
 /* ── 1. Global role scale — hand-tuned literals ───────────────────────────── */
 /* Doubled `:root:root` / `.light.light` — out-specifies tokens.css's `:root, .light`
@@ -301,14 +297,10 @@
    Expander, Text, Card, Menu, …) need nothing — restoring the role scale above
    restores them.
 
-   This whole section is in `@layer anta` (unlike part 1) so it cooperates with the
-   cascade instead of steamrolling it: neutral bases carry `:not([tone])` (plus
-   `:not([tone-selected])` for checkbox/radio) so they out-specify the element's
-   bare base (order-independent); named tones win by specificity too; and each
-   component's own higher-specificity custom-tone rule (in the element CSS, same
-   layer) still wins for a literal `tone`. Rules keep their original indentation;
-   the layer just wraps them. */
-@layer anta {
+   This section lives in `@layer anta.theme`, after `anta.components`. Exact named
+   rules replace the derived outputs. Neutral rules stay off custom-tone branches,
+   which continue deriving from their literal color. */
+@layer anta.theme {
 
 /* Button ------------------------------------------------------------------- */
 /* Neutral literals apply when tone is omitted or explicitly neutral. */
@@ -1172,4 +1164,4 @@ a-input-time:disabled {
   --input-time-border-hover: #635b65;
 }
 
-} /* @layer anta — end of part 2 (bespoke component ramps) */
+} /* @layer anta.theme — end of part 2 (bespoke component ramps) */

@@ -1,11 +1,11 @@
-/* Anta's reset + typography defaults. All rules live in `@layer anta`
+/* Anta's reset + typography defaults. All rules live in `@layer anta.reset`
    so consumer-owned components (in `@layer components`) and utility
    frameworks (in `@layer utilities`) can override on demand. The
    layer-order declaration in `tokens.css` (`@layer base, anta,
    components, utilities;`) keeps Anta above any preflight resets in
    `@layer base` so a Tailwind import doesn't wipe Anta's typography. */
 
-@layer anta {
+@layer anta.reset {
   /* ───── Structural reset ─────────────────────────────────────── */
 
   /* Modern box-sizing — pads and borders count inside the declared
@@ -320,7 +320,7 @@
 
   /* ───── Tables ───────────────────────────────────────────────── */
 
-  /* Polite, element-level baseline. Rules live in `@layer anta`, so
+  /* Polite, element-level baseline. Rules live in `@layer anta.reset`, so
      any consumer rule outside a layer — or in `components` /
      `utilities` — overrides without effort. Width is intentionally
      left untouched so app tables stay inline-sized; full-bleed is a

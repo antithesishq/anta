@@ -14,14 +14,15 @@ changes are not listed.
 
 - `Banner` content starts at the inline edge by default; pass `align="center"` to
   center it.
-- `reset.css` styles prose to match Anta components.
+- `reset.css` now applies Anta page and prose defaults; `body` backgrounds paint the
+  browser canvas. For page-wide dark mode, put `class="dark"` on `<html>`; use
+  `class="light"` in a dark subtree.
 
 ### Fixed
 
-- `body` backgrounds now paint the browser canvas.
-- Native `data-anta` checkboxes and radios match Anta components under the reference
-  theme.
-- `MenuItem` exposes space-separated `kbd` shortcuts through `aria-keyshortcuts`.
+- Native `data-anta` checkboxes and radios match component colors with
+  `theme-anta.css`.
+- `MenuItem` maps `kbd` hints to `aria-keyshortcuts`; spaces separate shortcuts.
 
 ## 0.3.24 — August 25, 2026
 

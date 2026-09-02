@@ -203,36 +203,26 @@ a.tag-link {
 }
 ```
 
-A removable tag has one interactive child: its remove button. Keep the label as
-tag content, give the button an accessible name, and let the segment divider
-separate it. The negative focus offset keeps the button's focus ring inside the
-tag's clipped edge.
+A removable tag has one interactive child: its remove `Button`. Keep the label
+as tag content, give the button an accessible name, and let the segment divider
+separate it. Remove the tag's block padding so the small button keeps its target
+size. The negative focus offset keeps its focus ring inside the tag's clipped edge.
 
 ```tsx
 <Tag className="removable-tag" tone="info">
   <span>Frontend</span>
-  <button className="removable-tag__remove" type="button" aria-label="Remove Frontend">
-    <Icon shape="x" aria-hidden />
-  </button>
+  <Button priority="quaternary" size="small" icon="x" aria-label="Remove Frontend" />
 </Tag>
 ```
 
 ```css
-a-tag.removable-tag .removable-tag__remove {
-  display: grid;
-  place-items: center;
-  align-self: stretch;
-  min-inline-size: 1em;
+a-tag.removable-tag {
   padding-block: 0;
-  padding-inline-end: 0;
-  border: 0;
-  border-radius: 2px;
-  appearance: none;
-  color: inherit;
-  background: transparent;
-  cursor: pointer;
 }
-a-tag.removable-tag .removable-tag__remove:focus-visible {
+a-tag.removable-tag > a-button {
+  align-self: stretch;
+}
+a-tag.removable-tag > a-button:focus-visible {
   outline-offset: -2px;
 }
 ```

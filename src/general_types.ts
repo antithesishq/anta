@@ -1012,10 +1012,10 @@ export interface ACopyAttributes extends BaseAttributes {
    *  nested copy control can't flip an ancestor's feedback). All-lowercase so it
    *  binds in React *and* Preact. */
   oncopydone?: (e: CustomEvent<{ ok: boolean }>) => void
-  /** Fired on **pointerdown** / keydown for a string-copy control (`copyrequest`,
-   *  non-bubbling). Answer by setting the `copy` attribute to the freshly-computed
-   *  value; the activation then copies it. The gap lets an off-UI-thread handler
-   *  set `copy` in time. All-lowercase. */
+  /** Fired before a string copy (`copyrequest`, non-bubbling). Set this element's
+   *  `copy` attribute to the new text; JSX applications update their `copy` prop
+   *  through state. Return values are ignored. Fires on pointerdown and
+   *  Enter/Space keydown. All-lowercase. */
   oncopyrequest?: (e: CustomEvent) => void
 }
 

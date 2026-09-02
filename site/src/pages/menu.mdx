@@ -667,12 +667,12 @@ chevron stay centered on the row, so it composes with a trailing counter.
 <Columns reverse>
 <Col>
 
-`MenuItemCopy` is a row that copies to the clipboard when chosen — `copy` for a
-literal string, `copyNode` for a DOM region. It composes a `<MenuItem>` with a
-slotted `<a-copy>` element that performs the write, and keeps the menu open on
-select so the check / retone feedback shows. `onCopied(ok)` fires after each
-attempt. `iconPlacement="trailing"` moves the feedback glyph to the end of the
-row; `"none"` shows a cursor-near confirmation instead.
+`MenuItemCopy` is a row that copies to the clipboard when chosen: `copy` for a
+string, `copyNode` for a DOM region, or `copyUrl` for the current URL. It composes
+a `<MenuItem>` with a slotted `<a-copy>` element that performs the write, and
+keeps the menu open on select so the check / retone feedback shows. `onCopied(ok)`
+fires after each attempt. `iconPlacement="trailing"` moves the feedback glyph to
+the end of the row; `"none"` shows a cursor-near confirmation instead.
 
 Copy sits alongside normal items, so a "Share" menu can mix a copy-link row with
 navigating links.

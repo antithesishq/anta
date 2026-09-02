@@ -316,7 +316,7 @@ changes are not listed.
 
 ### Breaking
 
-- `copyLazy` is removed. Keep `copy` reactive and update it from
+- `copyLazy` is removed. Pass a controlled string to `copy` and update it in
   `onCopyRequest` before activation.
 - Link-mode `Button` and `MenuItem` types reject copy props.
 

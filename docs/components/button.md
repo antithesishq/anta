@@ -288,11 +288,11 @@ carries a link back to where it came from.
 <ButtonCopy copy={snippet} copyWithUrl label="Copy snippet" />  {/* snippet + source URL */}
 ```
 
-### Lazy content
+### Copy dynamic text
 
-When the content is expensive to compute or changes over time, keep `copy`
-reactive and refresh it in **`onCopyRequest`**, which fires on **pointerdown** —
-the click that follows copies the latest value.
+`copy` is a controlled string. Start it at `''`, then set the new text in
+`onCopyRequest`. The next render updates `copy`, and activation writes that value.
+`onCopyRequest` does not return text. It does not add a polling loop.
 
 ```tsx
 const [report, setReport] = useState('')
@@ -300,16 +300,28 @@ const [report, setReport] = useState('')
 <ButtonCopy
   copy={report}
   label="Copy report"
-  onCopyRequest={() => setReport(generateReport())} // recomputed on pointerdown
+  onCopyRequest={() => setReport(generateReport())}
 />
 ```
 
-The value is recomputed on pointerdown and read on the click a moment later, so
-the pointerdown→click gap absorbs the work — including an update that arrives from
-another thread. Only the serializable `copy` string crosses, through the normal
-re-render, so this holds in off-UI-thread runtimes (a worker-rendered app) where a
-callback couldn't. The clipboard API's user-gesture requirement is preserved
-because the write happens on the click.
+`onCopyRequest` fires on pointerdown or Enter/Space keydown, before the click or
+menu selection that writes to the clipboard.
+
+#### Why `copy` is controlled
+
+In a usual React or Preact app, an `onClick` handler can calculate a string and
+call the Clipboard API itself. `ButtonCopy` also supports applications rendered
+from a worker. The DOM copy control and Clipboard API are on the browser UI
+thread, but the application's JSX code can be elsewhere. A function cannot cross
+that boundary as a callable reference.
+
+The request tells the application to calculate the text. Its state update makes
+the renderer send the string as the `copy` attribute. The control then writes that
+attribute during activation, when the browser permits clipboard access. A
+`lazyCopy: () => string` prop could only hide this same state update inside the
+wrapper. A generic return value would also need a defined clipboard format and
+serialization; Anta supports text (`copy`), a DOM region (`copyNode`), and the
+current URL (`copyUrl`).
 
 ### Props
 
@@ -342,10 +354,9 @@ because the write happens on the click.
  activation, and removes the button from the tab order while active. |
 | `onClick?` | (e) => void | — | Click handler. |
 | `onCopied?` | (ok) => void | — | Fires after the copy attempt with whether it succeeded. |
-| `onCopyRequest?` | () => void | — | Compute the copy content lazily. Fires on pointerdown / keydown; update
- `copy` (a state change) here and the activation copies the latest value.
- The gap lets the update land even off the UI thread — only the
- serializable `copy` string crosses. |
+| `onCopyRequest?` | () => void | — | Refresh a dynamic `copy` value before activation. Set the new string in
+ application state so the next render updates `copy`. Return values are
+ ignored. Fires on pointerdown and Enter/Space keydown. |
 | `paddingless?` | boolean | — | Drops outer padding to zero. |
 | `ping?` | string | — | Space-separated URLs the browser pings on navigation. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Visual emphasis. |

@@ -366,12 +366,12 @@ chevron stay centered on the row, so it composes with a trailing counter.
 </Menu>
 ```
 
-`MenuItemCopy` is a row that copies to the clipboard when chosen — `copy` for a
-literal string, `copyNode` for a DOM region. It composes a `<MenuItem>` with a
-slotted `<a-copy>` element that performs the write, and keeps the menu open on
-select so the check / retone feedback shows. `onCopied(ok)` fires after each
-attempt. `iconPlacement="trailing"` moves the feedback glyph to the end of the
-row; `"none"` shows a cursor-near confirmation instead.
+`MenuItemCopy` is a row that copies to the clipboard when chosen: `copy` for a
+string, `copyNode` for a DOM region, or `copyUrl` for the current URL. It composes
+a `<MenuItem>` with a slotted `<a-copy>` element that performs the write, and
+keeps the menu open on select so the check / retone feedback shows. `onCopied(ok)`
+fires after each attempt. `iconPlacement="trailing"` moves the feedback glyph to
+the end of the row; `"none"` shows a cursor-near confirmation instead.
 
 Copy sits alongside normal items, so a "Share" menu can mix a copy-link row with
 navigating links.
@@ -430,10 +430,9 @@ navigating links.
  `Select` bolds the matched substring. Omit and pass `children` for richer
  content. |
 | `onCopied?` | (ok) => void | — | Fires after the copy attempt with whether it succeeded. |
-| `onCopyRequest?` | () => void | — | Compute the copy content lazily. Fires on pointerdown / keydown; update
- `copy` (a state change) here and the activation copies the latest value.
- The gap lets the update land even off the UI thread — only the
- serializable `copy` string crosses. |
+| `onCopyRequest?` | () => void | — | Refresh a dynamic `copy` value before activation. Set the new string in
+ application state so the next render updates `copy`. Return values are
+ ignored. Fires on pointerdown and Enter/Space keydown. |
 | `onMouseDown?` | (event) => void | — | Raw `mousedown` on the row. Mainly to `preventDefault()` so the row doesn't
  take focus on a mouse press — e.g. a combobox option keeping focus in its
  input field while the click still selects. |

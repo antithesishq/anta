@@ -22,17 +22,17 @@
  *   (an ancestor region). The copy control is stripped from the serialized
  *   output (`[data-copy-node-button]`).
  *
- * ## Lazy content (off-UI-thread safe)
+ * ## Dynamic string targets
  *
- * When the content isn't known ahead of time, the element emits a `copyrequest`
- * event on **pointerdown** (`emitCopyRequest`, fired whenever a `copy` attribute
- * is present). The consumer answers by setting the `copy` attribute to the
- * freshly-computed value; the **click** then reads that value and writes it. The
- * pointerdown→click gap absorbs the round-trip, so this works even when the
- * consumer's handler runs off the UI thread (e.g. a worker-rendered app): only a
- * serializable string crosses the boundary via the normal reconcile — no
- * callback, and the write stays inside the click's transient activation. This is
- * why there is no `provide`-function handoff and no `copy-lazy` marker.
+ * A `copyrequest` event is emitted before activation when `copy` is present.
+ * JSX applications respond by setting their controlled `copy` value; the next
+ * render updates this attribute, which activation reads and writes.
+ *
+ * `<a-copy>` and the clipboard run on the browser UI thread, while an application
+ * renderer can run in a worker. The UI thread cannot call an application function
+ * by reference. The state update sends text through the renderer instead. The
+ * request occurs on pointerdown or keydown before the activation that writes to
+ * the clipboard, preserving the browser's user-activation requirement.
  *
  * Precedence when several are set (the discriminated-union prop types make this
  * unreachable from the wrappers, but hand-authored markup can): node → url →
@@ -113,11 +113,9 @@ function isTextCopy(el: Element): boolean {
 }
 
 /**
- * Ask a lazy consumer to refresh the copy content, on pointerdown — dispatch a
- * non-bubbling, payload-free `copyrequest`. The consumer answers by setting the
- * `copy` attribute to the freshly-computed value before the click reads it (see
- * the "Lazy content" note above). Fires only for string-copy controls; node/url
- * modes resolve themselves at click time and need no request. No-op otherwise.
+ * Ask a consumer to refresh its controlled copy string before activation. This
+ * dispatches a non-bubbling, payload-free `copyrequest`. Only string-copy
+ * controls need it; node and URL targets resolve on activation.
  */
 export function emitCopyRequest(el: HTMLElement): void {
   if (!el.hasAttribute('copy')) return

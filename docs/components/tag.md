@@ -183,3 +183,60 @@ a-tag.badge a-tag-label { font-weight: 600; letter-spacing: 0.15ch; }
 
 For a *solid* recolor, prefer `tone` / `priority` — don't reach for the resolved
 `--tag-bg` / `--tag-border` / `--tag-text` (they're recomputed per priority and tone).
+
+### Interactive tags
+
+`Tag` is presentational. Wrap it in an anchor for navigation or a native button
+for an action. The outer control receives focus and keyboard activation.
+
+```tsx
+<a className="tag-link" href="/builds/42">
+  <Tag tone="info" icon="external-link" label="Build" value="#42" />
+</a>
+```
+
+```css
+a.tag-link {
+  display: inline-flex;
+  text-decoration: none;
+  cursor: pointer;
+}
+```
+
+A removable tag has one interactive child: its remove button. Keep the label as
+tag content, give the button an accessible name, and let the segment divider
+separate it. The negative focus offset keeps the button's focus ring inside the
+tag's clipped edge.
+
+```tsx
+<Tag className="removable-tag" tone="info">
+  <span>Frontend</span>
+  <button className="removable-tag__remove" type="button" aria-label="Remove Frontend">
+    <Icon shape="x" aria-hidden />
+  </button>
+</Tag>
+```
+
+```css
+a-tag.removable-tag .removable-tag__remove {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  min-inline-size: 1em;
+  padding-block: 0;
+  padding-inline-end: 0;
+  border: 0;
+  border-radius: 2px;
+  appearance: none;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+a-tag.removable-tag .removable-tag__remove:focus-visible {
+  outline-offset: -2px;
+}
+```
+
+When a tag both opens something and removes it, render two sibling controls in a
+compound layout. Do not place a remove button inside an anchor or button that
+wraps the tag.

@@ -116,6 +116,7 @@ out above.
 
 Every tag the reset has an opinion about, rendered live.
 
-A few are still the browser's own — `dd`, `abbr`, `q`, and `cite`.
+A few remain browser-owned — `abbr`, `q`, and `cite`; `dd` has no browser indent
+because the reset clears margins.
 `kbd` is left alone on purpose: a keyboard key is a component, not a typographic
 default, and one is coming.

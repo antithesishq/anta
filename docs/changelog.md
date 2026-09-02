@@ -23,7 +23,6 @@ changes are not listed.
   theme.
 - `MenuItem` exposes `kbd` shortcuts, including space-separated alternatives, through
   `aria-keyshortcuts`; pass the attribute to override its translation.
-- Banners without actions stay centered.
 
 ## 0.3.24 — August 25, 2026
 

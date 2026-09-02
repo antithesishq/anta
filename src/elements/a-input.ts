@@ -432,6 +432,18 @@ export class AInputElement extends HTMLElementBase {
 
   connectedCallback() {
     trackFocusModality(this.doc)
+    // Autonomous form-associated elements otherwise expose the generic role.
+    // Set a default only after connection: parser-created elements receive their
+    // attributes after construction. An author-supplied role still overrides this
+    // ElementInternals default. Mirror the native control's primary role.
+    const type = this.getAttribute('type')?.toLowerCase()
+    if (this.internals && type !== 'number' && type !== 'search') {
+      this.internals.role = 'textbox'
+    } else if (this.internals && type === 'number') {
+      this.internals.role = 'spinbutton'
+    } else if (this.internals && type === 'search') {
+      this.internals.role = 'searchbox'
+    }
     // A `value` set as a property before the element upgraded shadows the
     // accessor as an own data property — re-apply it through the setter so the
     // initial controlled value isn't lost when the control is built.

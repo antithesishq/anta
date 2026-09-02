@@ -21,8 +21,8 @@ changes are not listed.
 - Page-wide `body.dark` and consumer `body` backgrounds now paint the browser canvas.
 - Native `data-anta` checkboxes and radios match Anta components under the reference
   theme.
-- `MenuItem` exposes `kbd` shortcuts through `aria-keyshortcuts`; pass the attribute
-  to override its translation.
+- `MenuItem` exposes `kbd` shortcuts, including space-separated alternatives, through
+  `aria-keyshortcuts`; pass the attribute to override its translation.
 - Banners without actions stay centered.
 
 ## 0.3.24 — August 25, 2026

@@ -25,17 +25,18 @@ const SHORTCUT_KEYS: Record<string, string> = {
  *
  * The hint is written for the eye (`"⌘E"`, `"Ctrl+K"`, `"⌘⇧P"`), which assistive
  * tech reads poorly — `⌘` is announced as "place of interest sign" or skipped
- * entirely. `aria-keyshortcuts` wants `KeyboardEvent.key` names joined by `+`
- * (`"Meta+E"`), so the glyphs are peeled off one at a time and the rest is taken
- * as a single key: a lone character uppercases (`d` → `D`), anything longer is
- * passed through so `F2` and named keys survive.
+ * entirely. `aria-keyshortcuts` joins a chord's `KeyboardEvent.key` names with
+ * `+` (`"Meta+E"`) and separates shortcuts with a space (`"Meta+K Meta+S"`).
+ * The glyphs are peeled off one at a time and the rest is taken as a single key:
+ * a lone character uppercases (`d` → `D`), anything longer is passed through so
+ * `F2` and named keys survive.
  *
  * Returns `undefined` when nothing recognizable comes out, which is the signal to
  * leave the visible hint readable by AT rather than hide it behind a label that
  * was never produced. Declaring the shortcut does not bind it — that stays the
  * consumer's job.
  */
-function shortcutLabel(kbd: string): string | undefined {
+function shortcutChordLabel(kbd: string): string | undefined {
   const parts: string[] = []
   let word = ''
   const flush = () => {
@@ -43,11 +44,11 @@ function shortcutLabel(kbd: string): string | undefined {
     parts.push(SHORTCUT_KEYS[word.toLowerCase()] ?? (word.length === 1 ? word.toUpperCase() : word))
     word = ''
   }
-  for (const char of kbd.trim()) {
+  for (const char of kbd) {
     if (SHORTCUT_KEYS[char]) {
       flush()
       parts.push(SHORTCUT_KEYS[char])
-    } else if (char === '+' || char === ' ') {
+    } else if (char === '+') {
       flush()
     } else {
       word += char
@@ -55,6 +56,15 @@ function shortcutLabel(kbd: string): string | undefined {
   }
   flush()
   return parts.length ? parts.join('+') : undefined
+}
+
+function shortcutLabel(kbd: string): string | undefined {
+  /* Spaces separate alternatives. Allow spaces around the within-chord `+` so
+     the common `Ctrl + K` spelling still describes one shortcut. */
+  const shortcuts = kbd.trim().replace(/\s*\+\s*/g, '+').split(/\s+/)
+    .map(shortcutChordLabel)
+    .filter((shortcut): shortcut is string => shortcut !== undefined)
+  return shortcuts.length ? shortcuts.join(' ') : undefined
 }
 
 /** Props shared by every menu item, link or not. */
@@ -71,7 +81,9 @@ export interface MenuItemCommonProps extends BaseProps {
   hint?: React.ReactNode
   /** A trailing keyboard-shortcut hint, e.g. `"⌘E"`. The row also announces it:
    *  the hint is translated to an `aria-keyshortcuts` value (`"Meta+E"`) and the
-   *  visible glyphs are hidden from assistive tech, which reads them poorly.
+   *  visible glyphs are hidden from assistive tech, which reads them poorly. Use
+   *  `+` within a chord and spaces between alternatives (`"⌘K ⌘S"` becomes
+   *  `"Meta+K Meta+S"`).
    *  Modifier glyphs (`⌘ ⌃ ⌥ ⇧`) and their words (`Cmd`, `Ctrl`, `Alt`, `Shift`)
    *  are understood. Pass `aria-keyshortcuts` yourself to override the
    *  translation. Declaring a shortcut does not bind it — that stays yours. */

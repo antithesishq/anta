@@ -423,7 +423,9 @@ navigating links.
  passive (aria-hidden, no pointer events) so the row receives the click. |
 | `kbd?` | string | — | A trailing keyboard-shortcut hint, e.g. `"⌘E"`. The row also announces it:
  the hint is translated to an `aria-keyshortcuts` value (`"Meta+E"`) and the
- visible glyphs are hidden from assistive tech, which reads them poorly.
+ visible glyphs are hidden from assistive tech, which reads them poorly. Use
+ `+` within a chord and spaces between alternatives (`"⌘K ⌘S"` becomes
+ `"Meta+K Meta+S"`).
  Modifier glyphs (`⌘ ⌃ ⌥ ⇧`) and their words (`Cmd`, `Ctrl`, `Alt`, `Shift`)
  are understood. Pass `aria-keyshortcuts` yourself to override the
  translation. Declaring a shortcut does not bind it — that stays yours. |

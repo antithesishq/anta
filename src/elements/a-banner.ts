@@ -153,10 +153,15 @@ export class ABannerElement extends HTMLElementBase {
     const actionsSlot = document.createElement('slot')
     actionsSlot.name = 'actions'
     actionsSlot.setAttribute('part', 'actions')
-    // CSS cannot select a slot by assigned nodes. Hide an empty actions box without
-    // removing its `::part(actions)` styling surface.
+    // CSS cannot select a slot by assigned content. Hide an empty JSX wrapper
+    // without removing the `::part(actions)` styling surface.
     const syncActionsSlot = () => {
-      actionsSlot.hidden = actionsSlot.assignedNodes({ flatten: true }).length === 0
+      actionsSlot.hidden = !actionsSlot.assignedNodes({ flatten: true }).some((node) => {
+        if (node.nodeType === Node.TEXT_NODE) return node.textContent?.trim() !== ''
+        if (node.nodeType !== Node.ELEMENT_NODE) return false
+        const element = node as Element
+        return !element.hasAttribute('data-anta-banner-actions-wrapper') || !element.matches(':empty')
+      })
     }
     actionsSlot.hidden = true
     actionsSlot.addEventListener('slotchange', syncActionsSlot)

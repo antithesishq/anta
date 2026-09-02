@@ -220,16 +220,18 @@ specifier with a bundler or import map.
 
 ## Dark mode
 
-For a page-wide dark mode, add `dark` to `body`. Its `--bg-2` background then
-paints the browser canvas:
+For a page-wide dark mode, add `dark` to `html`. The `body` `--bg-2` background
+then paints the browser canvas, and the root controls scrollbar colors:
 
 ```html
-<body class="dark">
-  <Progress value={50} />
-</body>
+<html class="dark">
+  <body>
+    <Progress value={50} />
+  </body>
+</html>
 ```
 
-Add the class to another ancestor to scope dark mode to that subtree instead.
+Use `dark` or `light` on another ancestor to scope its color scheme and palette.
 
 ## Fonts
 

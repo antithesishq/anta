@@ -74,6 +74,9 @@
   body {
     background: var(--bg-2);
   }
+  .light {
+    color-scheme: light;
+  }
   .dark {
     color-scheme: dark;
   }
@@ -169,14 +172,14 @@
     font-size: 0.933em;
     line-height: 1em;
     color: inherit;
-    background: color-mix(in srgb, currentColor 6%, transparent);
+    background: color-mix(in oklch, currentColor 6%, transparent);
     border: none;
     padding: 0.25em 0.4ch 0.2em;
     border-radius: 3px;
   }
 
   .dark :not(pre) > code {
-    background: color-mix(in srgb, currentColor 10%, transparent);
+    background: color-mix(in oklch, currentColor 10%, transparent);
   }
 
   /* Scroll long lines within the code block. */

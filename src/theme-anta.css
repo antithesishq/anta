@@ -10,8 +10,8 @@
  * component values. Match `:root:root` to override a role token.
  */
 
-/* Preserve the component/theme relationship if this file loads first. */
-@layer anta.components, anta.theme;
+/* Preserve the internal layer order if this file loads first. */
+@layer anta.reset, anta.components, anta.theme;
 
 /* ── 1. Global role scale — hand-tuned literals ───────────────────────────── */
 /* Doubled `:root:root` / `.light.light` — out-specifies tokens.css's `:root, .light`

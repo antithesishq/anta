@@ -7,18 +7,18 @@ changes are not listed.
 
 ### Added
 
-- `Banner` content starts at the inline edge by default; pass `align="center"` to
-  center it.
 - `<textarea data-anta>` uses Input field styling and supports `data-anta-size`,
   `round`, and `tone`.
 
 ### Changed
 
+- `Banner` content starts at the inline edge by default; pass `align="center"` to
+  center it.
 - `reset.css` styles prose to match Anta components.
 
 ### Fixed
 
-- `body.dark` and consumer `body` backgrounds now paint the browser canvas.
+- `body` backgrounds now paint the browser canvas.
 - Native `data-anta` checkboxes and radios match Anta components under the reference
   theme.
 - `MenuItem` exposes space-separated `kbd` shortcuts through `aria-keyshortcuts`.

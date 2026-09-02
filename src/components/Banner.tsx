@@ -167,7 +167,7 @@ export const Banner = ({
       {messageNode}
       {children}
       {actions != null && (
-        <span slot="actions" style={{ display: "contents" }}>
+        <span data-anta-banner-actions-wrapper="" slot="actions" style={{ display: "contents" }}>
           {actions}
         </span>
       )}

@@ -1,6 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises'
 
 const src = new URL('../src/', import.meta.url)
+const antaChildLayerOrder = '@layer anta.reset, anta.components, anta.theme;'
 
 async function cssFiles(dir = src) {
   const entries = await readdir(dir, { withFileTypes: true })
@@ -29,8 +30,8 @@ for (const file of files) {
     if (!css.includes('@layer anta.theme {')) {
       failures.push(`${path}: component palette rules must use anta.theme`)
     }
-    if (!css.includes('@layer anta.components, anta.theme;')) {
-      failures.push(`${path}: must reserve the component/theme order`)
+    if (!css.includes(antaChildLayerOrder)) {
+      failures.push(`${path}: must reserve the internal Anta layer order`)
     }
   }
   if (!path.endsWith('/reset.css') && !path.endsWith('/theme-anta.css') && !path.endsWith('/tokens.css') && !css.includes('@layer anta.components {')) {
@@ -39,7 +40,7 @@ for (const file of files) {
 }
 
 const tokens = await readFile(new URL('tokens.css', src), 'utf8')
-if (!tokens.includes('@layer anta.reset, anta.components, anta.theme;')) {
+if (!tokens.includes(antaChildLayerOrder)) {
   failures.push('src/tokens.css: must declare the internal Anta layer order')
 }
 

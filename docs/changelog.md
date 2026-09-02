@@ -7,22 +7,21 @@ changes are not listed.
 
 ### Added
 
-- `Banner` accepts `align="start" | "center"`; content starts at the inline edge by
-  default.
-- `<textarea data-anta>` supports the Input field styling, `data-anta-size`, `round`,
-  and `tone`.
+- `Banner` content starts at the inline edge by default; pass `align="center"` to
+  center it.
+- `<textarea data-anta>` uses Input field styling and supports `data-anta-size`,
+  `round`, and `tone`.
 
 ### Changed
 
-- `reset.css` applies Anta typography, spacing, and semantic styles to prose.
+- `reset.css` styles prose to match Anta components.
 
 ### Fixed
 
-- Page-wide `body.dark` and consumer `body` backgrounds now paint the browser canvas.
+- `body.dark` and consumer `body` backgrounds now paint the browser canvas.
 - Native `data-anta` checkboxes and radios match Anta components under the reference
   theme.
-- `MenuItem` exposes `kbd` shortcuts, including space-separated alternatives, through
-  `aria-keyshortcuts`; pass the attribute to override its translation.
+- `MenuItem` exposes space-separated `kbd` shortcuts through `aria-keyshortcuts`.
 
 ## 0.3.24 — August 25, 2026
 

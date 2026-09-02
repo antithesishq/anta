@@ -1,12 +1,6 @@
 ---
-// A specimen of plain HTML — every tag `reset.css` has an opinion about, plus a
-// few it deliberately leaves alone, rendered live so the page shows the baseline
-// rather than describing it.
-//
-// Kept as a component rather than written into the MDX for two reasons: the
-// headings here are samples, not sections, and MDX would feed them to rehype-slug
-// and land "Heading two" in the page's table of contents; and the markup passes
-// through untouched, so no remark paragraph handling can rearrange it.
+// Plain HTML specimen for the reset. A component keeps sample headings out of the
+// page table of contents and preserves the markup.
 ---
 
 <div class="specimen">
@@ -49,8 +43,7 @@
 </div>
 
 <style>
-  /* A quiet frame so the sample reads as a specimen and not as page copy. The
-     tags inside are left entirely to the reset — no rule here targets them. */
+  /* Frame only; reset.css styles the sample tags. */
   .specimen {
     padding: 20px 24px;
     border: 1px solid var(--border-4);
@@ -58,7 +51,7 @@
     margin-bottom: 1.5em;
   }
 
-  /* The sample's first and last elements shouldn't push the frame open. */
+  /* Keep the frame compact. */
   .specimen > :first-child { margin-block-start: 0; }
   .specimen > :last-child { margin-block-end: 0; }
 </style>

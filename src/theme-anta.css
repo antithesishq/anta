@@ -1,38 +1,16 @@
-/* theme-anta.css — Anta's hand-tuned reference palette.
- *
- * Anta's default colors are derived live from six tone seeds (see tokens.css:
- * `--anta-seed-*` + `oklch(from …)`). This optional theme restores the
- * hand-tuned literals that shipped before the seed-derived default — the
- * refined per-tone values that a formula can't reproduce exactly.
- *
- * Load it AFTER tokens.css and the element CSS:
+/* Optional hand-tuned reference palette. Load after tokens and element CSS:
  *   import '@antadesign/anta/tokens.css'
  *   import '@antadesign/anta/reset.css'
- *   import '@antadesign/anta/theme-anta.css'   // ← restores the hand-tuned palette
+ *   import '@antadesign/anta/theme-anta.css'
  *
- * Two parts, layered differently on purpose:
- *
- * (1) The global role scale (`--text-*` / `--bg-*` / `--border-*` / `--focus-ring`, below) is
- *     UNLAYERED, replacing the default role scale wholesale. It uses DOUBLED
- *     `:root:root` / `.light.light` / `.dark.dark` selectors, so it out-specifies
- *     tokens.css's equally-unlayered `:root` / `.light` / `.dark` tokens regardless
- *     of source order (and matches the same root and scoped-light/dark sets).
- *
- * (2) The bespoke component ramps that don't flow from role tokens (Button /
- *     Checkbox / Radio / Input status / Tag / Tabs) live in `@layer anta.theme`.
- *     `tokens.css` reserves this layer after `anta.components`, so named reference
- *     values beat the component formulas regardless of stylesheet injection order
- *     or selector specificity. Named rules do not match literal custom colors;
- *     those continue through the component or theme formula branches.
- *
- * Overriding: an unlayered consumer rule or a consumer `components` / `utilities`
- * layer beats the component ramps. Part 1's role tokens sit at `:root:root`
- * specificity, so a consumer role override must match it — `:root:root { --text-1:
- * … }` (or higher) — rather than a plain `:root`.
+ * Role tokens are unlayered and doubled (`:root:root`, `.light.light`,
+ * `.dark.dark`) to replace seed-derived defaults regardless of load order.
+ * Component literals use `anta.theme`, after `anta.components`; custom colors keep
+ * their formula-derived values. Consumer unlayered CSS or later layers override
+ * component values. Match `:root:root` to override a role token.
  */
 
-/* Establish the component/theme relationship even when a host injects this
-   stylesheet before tokens.css or an element stylesheet. */
+/* Preserve the component/theme relationship if this file loads first. */
 @layer anta.components, anta.theme;
 
 /* ── 1. Global role scale — hand-tuned literals ───────────────────────────── */
@@ -292,14 +270,8 @@
 }
 
 /* ── 2. Bespoke component ramps — hand-tuned literals ─────────────────────── */
-/* Components whose tone treatment doesn't flow from the role scale re-supply
-   their pre-seed literal outputs here. Role-token components (Progress,
-   Expander, Text, Card, Menu, …) need nothing — restoring the role scale above
-   restores them.
-
-   This section lives in `@layer anta.theme`, after `anta.components`. Exact named
-   rules replace the derived outputs. Neutral rules stay off custom-tone branches,
-   which continue deriving from their literal color. */
+/* Component values not covered by role tokens. Named rules replace formulas;
+   custom colors continue deriving from their literal color. */
 @layer anta.theme {
 
 /* Button ------------------------------------------------------------------- */

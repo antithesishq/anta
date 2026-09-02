@@ -61,10 +61,7 @@ export default function SearchDialog() {
   const [results, setResults] = useState(EMPTY_RESULTS)
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const [selected, setSelected] = useState(0)
-  // Whether the pointer is driving the selection. Typing and arrow keys turn it
-  // off, a real `pointermove` over a result turns it back on. It gates both the
-  // hover highlight (see the module CSS) and pointer-driven selection, so a cursor
-  // resting over the list can't claim the highlight from the top result.
+  // A resting pointer cannot override keyboard selection.
   const [pointerActive, setPointerActive] = useState(false)
 
   const ensureIndex = () => {
@@ -115,8 +112,7 @@ export default function SearchDialog() {
 
   useEffect(() => {
     const term = query.trim()
-    // Every keystroke re-ranks the list, so the top result takes the selection back
-    // even if the cursor happens to rest over a different row.
+    // Re-ranked results start at the top.
     setSelected(0)
     setPointerActive(false)
     if (!term || status !== 'ready') {
@@ -192,12 +188,7 @@ export default function SearchDialog() {
                   data-selected={selected === index ? 'true' : undefined}
                   href={resultHref(result, query.trim())}
                   key={result.id}
-                  // `pointermove`, not `mouseenter`: re-rendering the list under a
-                  // resting cursor fires the boundary events (mouseover/enter) with
-                  // no pointer movement at all, which is what let a middle row steal
-                  // the selection mid-search. A move event only fires when the
-                  // pointer actually moves. Both setters no-op when the value is
-                  // unchanged, so hovering one row doesn't re-render per event.
+                  // Ignore a resting pointer after the results re-render.
                   onPointerMove={() => {
                     setPointerActive(true)
                     setSelected(index)

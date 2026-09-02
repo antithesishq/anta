@@ -1,16 +1,12 @@
 # Banner
 
-A full-width message strip for a page- or section-level notice: an announcement, a
-status change, a promotion. The `Banner` JSX wrapper renders an `<a-banner>` whose
-content is a single row — `message`, optional `children`, then `actions` — with a
-dismiss ✕ on the right edge. The row starts at the left edge; `align="center"`
-centers it ([Align](#align)). It's **closable** by default.
+A full-width notice for an announcement, status change, or promotion. `Banner`
+renders an `<a-banner>` with `message`, optional `children`, `actions`, and a dismiss
+control. Content starts at the inline edge; pass `align="center"` to center it
+([Align](#align)). `closable` defaults to `true`.
 
-Its surface reuses `Expander`'s primary vocabulary — a toned box that tracks light
-and dark — but laid out as a short horizontal strip sitting edge to edge, about
-twice the resting height of `Progress`. It's **borderless by default**; add a rule
-under it or an outline around it with `border-bottom-width` / `border-width`, the
-same opt-in as `Progress` ([Styling](#styling)).
+`Banner` is borderless. Set `border-bottom-width` for a rule or `border-width` for
+an outline ([Styling](#styling)).
 
 ## Tone
 
@@ -52,24 +48,22 @@ pass a `number` (px) or a CSS length string for a custom radius.
 
 ## Align
 
-`align` places the content row along the bar. `start` (the default) runs it from the
-inline edge, 16px in, with 48px kept clear on the other side for the ✕. `center`
-centers the row on the whole bar, with 48px on both sides. The message text follows,
-so a message that wraps to two lines reads with the bar.
+`align` places the content row. `start` (the default) aligns it to the inline edge
+and reserves space for the dismiss control. `center` centers it in the bar. Wrapped
+message text follows the selected alignment.
 
 ```tsx
-<Banner tone="info" message="Start — the row runs from the edge." />   {/* start is the default */}
-<Banner align="center" tone="info" message="Center — the row sits mid-bar." />
+<Banner tone="info" message="Start-aligned content." /> {/* start is the default */}
+<Banner align="center" tone="info" message="Centered content." />
 ```
 
-The padding is logical, and the ✕ is pinned to the inline end, so both flip together
-under `direction: rtl`.
+The layout follows `direction: rtl`.
 
 ## Message and content
 
-`message` is the leading content — a string (rendered at the banner type scale) or
-any node. `children` sit between the message and the actions, for a chip, a link,
-or a secondary line. Both lay out as one row.
+`message` is the leading content: a string at the banner type scale or any node.
+`children` sit between the message and actions, for example a chip, link, or
+secondary line.
 
 ```tsx
 <Banner tone="info" message="Deployment complete.">
@@ -208,10 +202,8 @@ through `dismissed` instead.
 |------|------|---------|-------------|
 | `actions?` | ReactNode | — | Trailing controls (buttons, links) rendered as a compact row after the
  message and `children`. |
-| `align?` | 'start' \| 'center' | 'start' | Where the content row sits along the bar. `'start'` runs it from the inline
- edge (16px in, with 48px kept clear for the ✕); `'center'` centers it on the
- whole bar (48px both sides). The message text follows, so a message that wraps
- to two lines reads with the bar. |
+| `align?` | 'start' \| 'center' | 'start' | Positions the content row. `'start'` aligns it to the inline edge; `'center'`
+ centers it. Wrapped message text follows the selected alignment. |
 | `children?` | ReactNode | — | Free content placed BETWEEN the message and the actions. |
 | `closable?` | boolean | true | Whether the trailing ✕ dismiss button is present. `false` removes it — drive
  dismissal yourself (a controlled `dismissed`, or your own control) instead.
@@ -222,8 +214,7 @@ through `dismissed` instead.
  not updating). **Requires `onDismiss`** — controlled mode never self-hides, so
  without a handler to set `dismissed` the ✕ can't close the banner. Leave
  undefined for uncontrolled. |
-| `message?` | ReactNode | — | Leading message — a string (rendered at the banner type scale) or any node.
- It is followed by `children` and then `actions`; `align` places the row. |
+| `message?` | ReactNode | — | Leading message: a string at the banner type scale or any node. |
 | `onDismiss?` | () => void | — | Fired when the user dismisses the banner (clicks ✕). Uncontrolled, the banner
  hides itself and this notifies. Controlled, use it to accept the
  request — set `dismissed` to `true` (or ignore to reject); pair it with

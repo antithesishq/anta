@@ -1306,9 +1306,7 @@ function buildSrcdoc(): string {
     document.documentElement.style.colorScheme = d ? 'dark' : 'light';
   } catch (e) {}
 </script><link rel="stylesheet" href="${iframeAssetUrl(A.css)}"><script type="module" src="${iframeAssetUrl(A.js)}"></script><style>
-  /* The preview may receive an app's variable font. Use its public typography
-     controls rather than pinning private axes, so semantic italics still select
-     that font's declared slanted or italic face. */
+  /* Preserve an app font's italic or oblique face. */
   html, body { margin: 0; background: transparent; font-family: var(--sans-serif, sans-serif); font-style: normal; font-stretch: 100%; }
   body { padding: 24px; overflow: auto; box-sizing: border-box; min-height: 100%; }
   /* Preview default layout: a column-flex with 16px gap so multiple

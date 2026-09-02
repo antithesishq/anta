@@ -1,11 +1,4 @@
-/* Site-only baseline. The reset itself lives in anta's reset.css
-   (`@layer anta`) and this file does not duplicate it — that now covers
-   box-sizing, margin: 0, replaced-element block + max-width, form-control
-   font: inherit, text-wrap defaults, the document font / colour / background /
-   color-scheme, prose block rhythm, inline code, mark, and the rest of the
-   prose tags. What remains here is what the reset deliberately leaves open. */
-/* Leading and the tap-highlight come from anta's reset; the tracking is
-   site-owned (the reset takes no position on letter-spacing). */
+/* Site-only styles outside Anta's reset. */
 html, body {
   letter-spacing: 0.02ch;
 }
@@ -94,9 +87,7 @@ html, body {
   --bg-spot-warning:  var(--bg-5-warning);
 }
 
-/* Document defaults. Colour, background, and `color-scheme` come from anta's
-   reset (`--bg-base` is this site's alias for the `--bg-2` the reset uses), so
-   only the scroll offset for anchor jumps is site-owned. */
+/* Only the anchor offset is site-owned; Anta's reset supplies document defaults. */
 html {
   scroll-padding-top: var(--scroll-padding-top);
 }
@@ -110,18 +101,11 @@ html {
 }
 
 html, body {
-  /* This temporary font's `slnt` axis uses the opposite direction to the
-     registered OpenType axis, so it cannot be advertised with an `oblique`
-     range. Pin its actual upright coordinates here instead. */
+  /* This temporary font reverses the registered `slnt` axis. */
   font-variation-settings: "wdth" 100, "slnt" 0;
 }
 
-/* The temporary brand font has no separate Italic face. Its non-standard
-   positive `slnt` value supplies the right-leaning instance, while the semantic
-   `font-style: italic` still participates in normal CSS inheritance. Prevent
-   the browser from adding a second, synthetic slant. When this font is replaced
-   with a standards-compliant file, declare its `oblique` range in @font-face and
-   remove this docs-only exception. */
+/* Prevent synthetic italics from stacking on this font's `slnt` instance. */
 :is(em, i, address, var, dt) {
   font-variation-settings: "wdth" 100, "slnt" 11;
   font-synthesis: none;
@@ -215,10 +199,7 @@ details:not([data-anta])[open] > summary:not(.summary)::before {
   text-underline-offset: 3px;
 }
 
-/* Block rhythm for prose tags comes from anta's reset (1rem, bottom-only, cleared
-   on a last child). `hr` and the Expressive Code wrapper are outside that set —
-   the reset leaves `hr` spacing to whatever it divides, and `.expressive-code` is
-   a class it can't reach. */
+/* Anta's reset owns prose rhythm; the site owns `hr` and Expressive Code spacing. */
 hr, .expressive-code { margin: 0 0 1.5em; }
 
 /* Proximity: a paragraph that introduces a <Preview> hugs it (caption-to-
@@ -294,8 +275,7 @@ hr, .expressive-code { margin: 0 0 1.5em; }
   margin: 0;
 }
 
-/* The inline code pill, its dark-mode tint, and the `pre code` opt-out all come
-   from anta's reset. Only the copy affordance below is site-owned. */
+/* Anta styles code; the site adds the copy affordance below. */
 
 /* Font, size, line-height, weight and padding are set via Expressive Code's
    styleOverrides (astro.config.mjs). letter-spacing has no EC setting, and EC's

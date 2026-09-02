@@ -305,12 +305,8 @@
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
-  /* A textarea's height comes from `rows` (or the author), so the shared field
-     height becomes a floor rather than a fixed size — one empty row then lines up
-     with a native input of the same Anta size. `resize: vertical` keeps the native
-     grab handle but drops the horizontal axis, which would otherwise let the field
-     escape its container. Autogrow stays exclusive to <a-input multiline>: this is
-     a visual bridge for native controls, not a replacement for it. */
+  /* Let `rows` or the author set height; the field size remains the minimum.
+     Native textareas resize vertically but do not autogrow. */
   textarea[data-anta] {
     block-size: auto;
     min-block-size: var(--native-field-block-size);

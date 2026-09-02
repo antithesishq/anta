@@ -545,9 +545,9 @@ file name, with an Anta-styled chooser button. `submit` and `reset` inputs use t
 matching Anta button chrome; set `priority="primary"` on a submit control when it
 is the form's main action.
 
-A `<textarea>` takes the same marker and the same chrome. Its height comes from
-`rows`, with one field-height as the floor, and it resizes vertically. Autogrow
-belongs to [`multiline`](#multiline) on Input, which a native textarea does not get.
+`<textarea data-anta>` uses the same field chrome. Set `rows` for its height; one
+field-height is the minimum, and it resizes vertically. Native textareas do not
+autogrow; use Input's [`multiline`](#multiline) instead.
 
 Use `data-anta-size="small"` or `"large"` for field sizing. Native inputs own
 their `size` attribute, so Anta does not reuse it. `round` and a custom-color

@@ -64,18 +64,16 @@ seed-derived default palette or provide your own theme.
 
 ### Cascade layers
 
-Anta's reset and element CSS live in child layers inside `@layer anta`.
-`tokens.css` declares their order, keeping Anta above preflight resets and below
-your component and utility layers:
+Anta's reset and element CSS use child layers inside `@layer anta`. `tokens.css`
+orders them above preflight resets and below your component and utility layers:
 
 ```css
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
 ```
 
-`anta.theme` contains the optional reference palette's component values, so they
-consistently replace the default formulas. The outer `anta` layer remains in the
-same position in the public cascade.
+`anta.theme` lets the optional reference palette replace component formulas. The
+outer `anta` layer keeps its public cascade position.
 
 To change that order, declare it in CSS loaded **before** `tokens.css`. The
 first declaration fixes a layer's position:
@@ -239,10 +237,10 @@ Add the class to another ancestor to scope dark mode to that subtree instead.
 
 ## Fonts
 
-Anta is designed for a customized <a href="https://typetype.org/fonts/tt-interphases-pro" target="_blank" rel="noopener noreferrer">TT Interphases Pro</a>, but ships no font binaries. Components use `--sans-serif` and `--monospace` with system fallbacks. `tokens.css` sets a 15px root size (`1rem = 15px`).
+Anta is designed for a customized <a href="https://typetype.org/fonts/tt-interphases-pro" target="_blank" rel="noopener noreferrer">TT Interphases Pro</a>, but ships no font binaries. Components use `--sans-serif` and `--monospace` with system fallbacks. `tokens.css` sets `1rem` to 15px.
 
-Register your fonts in the application that owns their files, then override the
-font variables. This example uses separate Roman and Italic variable files:
+Register application-owned fonts, then override the font variables. This example
+uses separate Roman and Italic variable files:
 
 ```css
 @font-face {
@@ -265,14 +263,12 @@ font variables. This example uses separate Roman and Italic variable files:
 }
 ```
 
-With those faces registered, Anta's semantic italics (`em`, `i`, `var`, and
-`dt`) select the Italic face without any component-specific CSS.
+Anta's semantic italics (`em`, `i`, `var`, and `dt`) select the Italic face.
 
 ### Variable slant
 
-A variable font with a standard `slnt` axis can supply the upright and slanted
-instances from one file. Advertise that axis through `font-style: oblique` rather
-than setting `slnt` directly on italic elements:
+A variable font with a standard `slnt` axis can provide both instances. Expose it
+through `font-style: oblique` instead of setting `slnt` on italic elements:
 
 ```css
 @font-face {
@@ -288,10 +284,8 @@ than setting `slnt` directly on italic elements:
 }
 ```
 
-The browser selects the upright `0deg` instance for normal text and the slanted
-`11deg` instance for semantic italics. Use the range your font declares; this
-keeps font matching in charge and avoids combining a `slnt` setting with a
-synthetic oblique.
+The browser selects `0deg` for normal text and `11deg` for semantic italics. Use
+the range your font declares to avoid combining `slnt` with a synthetic oblique.
 
 ## Browser support
 

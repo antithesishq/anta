@@ -421,14 +421,11 @@ navigating links.
  carries `role` + `aria-checked`; only the drawn mark changes. Suppresses the
  built-in checkbox / radio and the trailing `check` glyph. The node is made
  passive (aria-hidden, no pointer events) so the row receives the click. |
-| `kbd?` | string | — | A trailing keyboard-shortcut hint, e.g. `"⌘E"`. The row also announces it:
- the hint is translated to an `aria-keyshortcuts` value (`"Meta+E"`) and the
- visible glyphs are hidden from assistive tech, which reads them poorly. Use
- `+` within a chord and spaces between alternatives (`"⌘K ⌘S"` becomes
- `"Meta+K Meta+S"`).
- Modifier glyphs (`⌘ ⌃ ⌥ ⇧`) and their words (`Cmd`, `Ctrl`, `Alt`, `Shift`)
- are understood. Pass `aria-keyshortcuts` yourself to override the
- translation. Declaring a shortcut does not bind it — that stays yours. |
+| `kbd?` | string | — | Trailing shortcut hint, e.g. `"⌘E"`. Anta translates it to
+ `aria-keyshortcuts` and hides the visual glyphs from assistive technology.
+ Use `+` within a chord and spaces between shortcuts (`"⌘K ⌘S"` becomes
+ `"Meta+K Meta+S"`). Pass `aria-keyshortcuts` to override the translation.
+ This does not bind the shortcut. |
 | `label?` | ReactNode | — | The item's text. Usually a string, but any node is accepted — e.g. a filtered
  `Select` bolds the matched substring. Omit and pass `children` for richer
  content. |

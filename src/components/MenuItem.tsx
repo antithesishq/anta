@@ -2,9 +2,7 @@ import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { toneStyle } from '../anta_helpers'
 
-/* Glyphs and words a `kbd` hint is written with, mapped to the `KeyboardEvent.key`
-   names `aria-keyshortcuts` is specified in. Keys are lowercased before lookup, so
-   only the glyphs need their exact form here. */
+/* Display shortcut tokens mapped to `KeyboardEvent.key` names. */
 const SHORTCUT_KEYS: Record<string, string> = {
   '⌘': 'Meta', cmd: 'Meta', command: 'Meta', win: 'Meta', super: 'Meta',
   '⌃': 'Control', ctrl: 'Control', control: 'Control',
@@ -23,18 +21,8 @@ const SHORTCUT_KEYS: Record<string, string> = {
 /**
  * Translate a display `kbd` hint into an `aria-keyshortcuts` value.
  *
- * The hint is written for the eye (`"⌘E"`, `"Ctrl+K"`, `"⌘⇧P"`), which assistive
- * tech reads poorly — `⌘` is announced as "place of interest sign" or skipped
- * entirely. `aria-keyshortcuts` joins a chord's `KeyboardEvent.key` names with
- * `+` (`"Meta+E"`) and separates shortcuts with a space (`"Meta+K Meta+S"`).
- * The glyphs are peeled off one at a time and the rest is taken as a single key:
- * a lone character uppercases (`d` → `D`), anything longer is passed through so
- * `F2` and named keys survive.
- *
- * Returns `undefined` when nothing recognizable comes out, which is the signal to
- * leave the visible hint readable by AT rather than hide it behind a label that
- * was never produced. Declaring the shortcut does not bind it — that stays the
- * consumer's job.
+ * `+` joins a chord, and spaces separate shortcuts: `"⌘K ⌘S"` becomes
+ * `"Meta+K Meta+S"`. Returns `undefined` when no shortcut can be translated.
  */
 function shortcutChordLabel(kbd: string): string | undefined {
   const parts: string[] = []
@@ -59,8 +47,7 @@ function shortcutChordLabel(kbd: string): string | undefined {
 }
 
 function shortcutLabel(kbd: string): string | undefined {
-  /* Spaces separate alternatives. Allow spaces around the within-chord `+` so
-     the common `Ctrl + K` spelling still describes one shortcut. */
+  // Accept spaces around `+` while preserving whitespace between shortcuts.
   const shortcuts = kbd.trim().replace(/\s*\+\s*/g, '+').split(/\s+/)
     .map(shortcutChordLabel)
     .filter((shortcut): shortcut is string => shortcut !== undefined)
@@ -79,14 +66,11 @@ export interface MenuItemCommonProps extends BaseProps {
    *  option `hint`. Requires `label` (it stacks in a column beneath it). Muted
    *  (`--text-3`) and tracks the row's `tone`. A string, or any node. */
   hint?: React.ReactNode
-  /** A trailing keyboard-shortcut hint, e.g. `"⌘E"`. The row also announces it:
-   *  the hint is translated to an `aria-keyshortcuts` value (`"Meta+E"`) and the
-   *  visible glyphs are hidden from assistive tech, which reads them poorly. Use
-   *  `+` within a chord and spaces between alternatives (`"⌘K ⌘S"` becomes
-   *  `"Meta+K Meta+S"`).
-   *  Modifier glyphs (`⌘ ⌃ ⌥ ⇧`) and their words (`Cmd`, `Ctrl`, `Alt`, `Shift`)
-   *  are understood. Pass `aria-keyshortcuts` yourself to override the
-   *  translation. Declaring a shortcut does not bind it — that stays yours. */
+  /** Trailing shortcut hint, e.g. `"⌘E"`. Anta translates it to
+   *  `aria-keyshortcuts` and hides the visual glyphs from assistive technology.
+   *  Use `+` within a chord and spaces between shortcuts (`"⌘K ⌘S"` becomes
+   *  `"Meta+K Meta+S"`). Pass `aria-keyshortcuts` to override the translation.
+   *  This does not bind the shortcut. */
   kbd?: string
   /** A trailing icon. On a `submenu` item this **overrides** the default
    *  chevron (omit it to keep the chevron); on a normal item it's the trailing
@@ -274,13 +258,8 @@ export const MenuItem = ({
   // the checkbox/radio indicator.
   const toneAttr = effectiveTone && effectiveTone !== 'neutral' ? effectiveTone : undefined
 
-  // An explicit `aria-keyshortcuts` always wins over the value derived from `kbd`:
-  // `rest` spreads last in both branches, so it already overrides the attribute
-  // itself — it's read here so the same choice drives the hint below. The `kbd`
-  // hint is decorative once a shortcut is declared on the row, so it's hidden from
-  // AT to avoid announcing the glyphs after the name (`⌘` reads as "place of
-  // interest sign"). With neither value it stays exposed: a garbled reading beats
-  // no reading at all.
+  // `rest` overrides the derived attribute; use the winning value to hide the
+  // visual shortcut from assistive technology.
   const declaredShortcuts = (rest as Record<string, unknown>)['aria-keyshortcuts']
   const keyShortcuts = kbd ? shortcutLabel(kbd) : undefined
   const kbdNode = kbd ? (

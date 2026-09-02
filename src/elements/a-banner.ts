@@ -7,8 +7,8 @@ import './a-banner.css'
  *
  * A close cousin of `<a-card>`: the same toned surface vocabulary, but laid out
  * as a single horizontal bar of *small* content rather than a stacked panel. The
- * content row sits at the inline start, or centered with `align="center"`, and
- * (when closable) a ✕ button fills the right edge (glyph centered).
+ * content row starts at the inline edge, or centers with `align="center"`, and a
+ * closable banner has a ✕ button at the inline end.
  *
  * Light-DOM composition (what the `<Banner>` wrapper emits, or a vanilla author
  * writes by hand) is slot-based:
@@ -20,8 +20,7 @@ import './a-banner.css'
  *     <a-button slot="close" data-custom-event="dismissrequest" …>   ← ✕ (wrapper-owned)
  *   </a-banner>
  *
- * Shadow structure — the host itself is the bar (no wrapper element); the slots are
- * its flex items, each carrying a `part`:
+ * The host is the flex bar; its slots carry these parts:
  *
  *   :host  (the light-DOM <a-banner>, styled `display: flex` in a-banner.css)
  *     <slot name="message" part="message"> ← display:contents (message nodes ARE flex items)
@@ -29,13 +28,8 @@ import './a-banner.css'
  *     <slot name="actions" part="actions"> ← display:contents (trailing controls)
  *     <slot name="close" part="close">     ← the ✕, a 40px-wide full-height strip on the right edge (glyph centered)
  *
- * The bar layout (flex, `align`, gap, min-height, padding) lives on the HOST in
- * a-banner.css — not a shadow wrapper — so it paints before upgrade and consumers
- * can override it in plain CSS. The message / content / actions slots are
- * `display: contents`, so their projected nodes are direct flex items of the host
- * and `justify-content` + `gap` treat them uniformly; an empty slot contributes
- * nothing. The close slot is absolutely positioned, so it's out of flow and never
- * shifts the group.
+ * Host layout paints before upgrade and is available to consumer CSS. The message,
+ * content, and actions slots project into that layout; the close slot is out of flow.
  *
  * ## Visibility — the `state` contract (mirrors `<a-dialog>` / `<a-expander>`)
  *
@@ -86,15 +80,8 @@ const DISMISS_TRIGGER = 'dismissrequest'
 // the `dismissrequest` event above.
 const DISMISS_ATTR = 'data-banner-dismiss'
 
-// The host is the flex bar (styled in a-banner.css); the shadow only projects the
-// slots. The message / content slots are display:contents so their nodes ARE the
-// host's flex items. Actions keeps its own flex box (and `::part(actions)` styling
-// surface), but the element hides that shadow-internal box when it has no assigned
-// nodes, so the host gap reserves nothing for it. Close is a 40px-wide, full-height
-// ✕ strip on the right edge (its glyph vertically centered). The close slot is
-// dimmed at rest (opacity 0.65) and brightens only when the ✕ itself is
-// hovered/focused (not the whole banner) — the a-input dim-actions affordance,
-// scoped tight.
+// The host lays out projected slots. Actions retains its flex box and `::part`, but
+// hides when empty so it reserves no gap. The close slot is a full-height end strip.
 // NOTE: this string is injected verbatim into every instance's shadow root and isn't
 // minified, so it stays comment-free (rationale lives here in TS instead).
 const SHADOW_STYLE = `
@@ -166,10 +153,8 @@ export class ABannerElement extends HTMLElementBase {
     const actionsSlot = document.createElement('slot')
     actionsSlot.name = 'actions'
     actionsSlot.setAttribute('part', 'actions')
-    // A slot's assigned nodes are not DOM children, so CSS cannot distinguish an
-    // empty actions slot from one with content. Hide the shadow-internal flex box
-    // until `slotchange` assigns something; this keeps the documented `actions`
-    // part stylable without reserving the host's gap beside a lone message.
+    // CSS cannot select a slot by assigned nodes. Hide an empty actions box without
+    // removing its `::part(actions)` styling surface.
     const syncActionsSlot = () => {
       actionsSlot.hidden = actionsSlot.assignedNodes({ flatten: true }).length === 0
     }

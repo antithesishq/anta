@@ -14,18 +14,12 @@
     --banner-border: var(--border-4);
     --banner-text: var(--text-2);
 
-    /* The host IS the bar — the slots (message / content / actions / close) project
-       as its flex items, no wrapper element. Layout lives here (not a shadow node)
-       so it paints before upgrade and consumers can override it in plain CSS.
-       `position: relative` anchors the absolutely-positioned close ✕. */
+    /* The host lays out projected slots so it paints before upgrade and consumer CSS
+       can override it. */
     display: flex;
     align-items: center;
-    /* Content sits at the inline start; `align="center"` below centers it instead. */
     justify-content: flex-start;
-    /* Wrap when the row can't fit: the slotted items drop to the next line rather
-       than squeezing the message into a tall narrow column. `gap: <row> <column>` —
-       a tight 4px between wrapped lines, and a font-relative 1ch between inline
-       items. */
+    /* Wrap instead of narrowing the message. */
     flex-wrap: wrap;
     gap: 4px 1ch;
     position: relative;
@@ -34,10 +28,7 @@
     /* Resting height. A plain host property, not a token: `a-banner` is light DOM,
        so a consumer just sets `min-height` (plain CSS beats @layer, or inline). */
     min-height: 40px;
-    /* Logical inline padding: the end side reserves the full-height ✕'s 40px strip
-       plus clearance, so content never runs under it, while the start side hugs the
-       edge. Logical (not `padding-left`/`-right`) to track the ✕, which is pinned
-       with `inset-inline-end` — both flip together in RTL. */
+    /* The end inset reserves the close control. */
     padding-block: 6px;
     padding-inline: 16px 48px;
 
@@ -74,9 +65,7 @@
       display 200ms allow-discrete;
   }
 
-  /* `align="center"` centers the content row instead of starting it at the inline
-     edge. Both inline paddings then match the ✕'s reserved end zone, so the group
-     centers on the whole bar rather than on the space left over beside the ✕. */
+  /* Symmetric padding centers content on the full bar. */
   a-banner[align="center"] {
     justify-content: center;
     padding-inline: 48px;
@@ -103,10 +92,7 @@
     width: 40px;
   }
 
-  /* A string `message` is wrapped in <a-banner-message> by the <Banner> wrapper;
-     it carries the message type scale. A node message keeps its own type. The text
-     tracks `align`, so a message that wraps to two lines reads with the bar instead
-     of centering its lines inside a start-aligned strip. */
+  /* A string message gets the banner type scale; a node keeps its own type. */
   a-banner-message {
     font-size: 14px;
     line-height: 20px;

@@ -1,0 +1,107 @@
+@layer anta.components {
+  /* `a-box` intentionally has no shadow root: it is the consumer's actual CSS
+     box, while its element class only observes the browser state around it. */
+  a-box {
+    display: block;
+    min-width: 0;
+  }
+
+  a-box[display="inline-block"] { display: inline-block; }
+  a-box[display="flex"] { display: flex; }
+  a-box[display="inline-flex"] { display: inline-flex; }
+  a-box[display="grid"] { display: grid; }
+  a-box[display="inline-grid"] { display: inline-grid; }
+
+  /* The wrapper's `gap={8}` becomes an inline --box-gap, the same channel custom
+     tones use, and inline always outranks this layer. The typed attr() is a
+     progressive enhancement for hand-written `<a-box gap="8px">`: Chrome honors
+     it today, other engines drop it and fall back to `normal`. The attribute
+     also gates the rule, so a nested Box never inherits an ancestor's
+     --box-gap. The declaration stays in this layer, so a consumer's own `gap`
+     rule still wins. */
+  a-box[gap] {
+    --box-gap: attr(gap type(<length>));
+
+    gap: var(--box-gap, normal);
+  }
+
+  /* Bare `round` → 999px, clamped to the box. A length (`round="16px"`, or the
+     wrapper's `round={16}` → inline --box-round) sets a custom radius. The typed
+     attr() covers raw-HTML authors. Box has no default radius, so square corners
+     stay the resting state. */
+  a-box[round] {
+    --box-round: attr(round type(<length>));
+
+    border-radius: var(--box-round, 999px);
+  }
+
+  /* `fade` masks each edge that currently hides content, leaving the border
+     crisp. The element owns the per-edge states, so the fade follows scroll
+     position with no JS in the consumer.
+
+     The two axis gradients are inverted: they are opaque where content should
+     disappear. They union into one "erase" layer, which `exclude` subtracts
+     from a border-box rectangle. Because the axis layers clip to the padding
+     box, they erase nothing in the border ring, so the border stays fully
+     painted. Fading straight across the border box instead would fade the
+     border with it.
+
+     `mask-origin` matters as much as `mask-clip` here: it sets what the
+     gradients' `100%` measures against. Left at the `border-box` default, the
+     last stop of a fade lands under a thick border and gets clipped away, so
+     the content ends on a hard edge instead of finishing its fade. */
+  a-box[fade] {
+    --box-fade-size: 24px;
+    --box-fade-x: linear-gradient(transparent, transparent);
+    --box-fade-y: linear-gradient(transparent, transparent);
+
+    mask-image: linear-gradient(black, black), var(--box-fade-x), var(--box-fade-y);
+    mask-clip: border-box, padding-box, padding-box;
+    mask-origin: border-box, padding-box, padding-box;
+    mask-composite: exclude, add, add;
+    mask-repeat: no-repeat;
+    mask-size: 100% 100%;
+  }
+
+  /* Same two channels as `gap`: the wrapper's `fadeSize` writes the inline
+     custom property, the typed attr() serves hand-written HTML. */
+  a-box[fade][fade-size] {
+    --box-fade-size: attr(fade-size type(<length>), 24px);
+  }
+
+  a-box[fade]:state(hidden-end-x) {
+    --box-fade-x: linear-gradient(to right, transparent calc(100% - var(--box-fade-size)), black);
+  }
+
+  a-box[fade]:state(hidden-start-x) {
+    --box-fade-x: linear-gradient(to left, transparent calc(100% - var(--box-fade-size)), black);
+  }
+
+  a-box[fade]:state(hidden-start-x):state(hidden-end-x) {
+    --box-fade-x: linear-gradient(
+      to right,
+      black,
+      transparent var(--box-fade-size),
+      transparent calc(100% - var(--box-fade-size)),
+      black
+    );
+  }
+
+  a-box[fade]:state(hidden-end-y) {
+    --box-fade-y: linear-gradient(to bottom, transparent calc(100% - var(--box-fade-size)), black);
+  }
+
+  a-box[fade]:state(hidden-start-y) {
+    --box-fade-y: linear-gradient(to top, transparent calc(100% - var(--box-fade-size)), black);
+  }
+
+  a-box[fade]:state(hidden-start-y):state(hidden-end-y) {
+    --box-fade-y: linear-gradient(
+      to bottom,
+      black,
+      transparent var(--box-fade-size),
+      transparent calc(100% - var(--box-fade-size)),
+      black
+    );
+  }
+}

@@ -48,6 +48,20 @@ export { Loader } from './components/Loader'
 export type { LoaderProps } from './components/Loader'
 export { Text } from './components/Text'
 export type { TextProps, ExpandMode } from './components/Text'
+export { Box } from './components/Box'
+export type { BoxProps } from './components/Box'
+export type {
+  BoxChange,
+  BoxContext,
+  BoxContextChange,
+  BoxDisplay,
+  BoxMeasurement,
+  BoxMeasurementChange,
+  BoxMode,
+  BoxOS,
+  BoxBrowser,
+  BoxPointer,
+} from './box-types'
 export { Title } from './components/Title'
 export type { TitleProps } from './components/Title'
 export { Tag } from './components/Tag'

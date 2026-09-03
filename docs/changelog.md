@@ -3,10 +3,19 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## 0.3.25 — September 1, 2026
+## 0.3.25 — September 2, 2026
 
 ### Added
 
+- Added `Box` / `<a-box>`, a light-DOM layout container that reports its own
+  geometry, content overflow, and browser context through native custom events.
+  `display`, `gap`, and `round` mirror the CSS properties of the same names.
+  `fade` masks every edge that currently hides clipped content and clears as the
+  reader scrolls to it, leaving the border crisp; `fadeSize` sets its depth.
+  Overflow state is also exposed as CSS states (`:state(clipped-x)`,
+  `:state(scrollable-y)`, `:state(hidden-end-x)`, …). `contextchange` reports
+  color mode, `os` / `osVersion` / `browser` / `browserVersion` as coarse
+  families and major versions, plus pointer, hover, and reduced-motion.
 - `<textarea data-anta>` uses Input field styling and supports `data-anta-size`,
   `round`, and `tone`.
 

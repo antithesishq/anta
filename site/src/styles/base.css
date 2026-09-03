@@ -256,6 +256,39 @@ hr, .expressive-code { margin: 0 0 1.5em; }
   border-top-right-radius: 0;
 }
 
+/* Consecutive code blocks stack into one panel, on the same reasoning as the
+   Preview fusion above: a JSX sample and the CSS recipe for the same example
+   belong together, so drop the gap and square the touching corners. The upper
+   block's bottom border is the single seam. A folded block's header rounds all
+   four corners (below), so its bottom pair is squared here too. */
+.content .expressive-code:has(+ .expressive-code) {
+  margin-bottom: 0;
+}
+.content .expressive-code:has(+ .expressive-code) pre,
+.content .expressive-code:has(+ .expressive-code) .frame,
+.content .expressive-code:has(+ .expressive-code) .frame[data-folded] .header {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.content .expressive-code + .expressive-code pre {
+  border-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.content .expressive-code + .expressive-code .frame.has-title:not(.is-terminal),
+.content .expressive-code + .expressive-code .frame.is-terminal,
+.content .expressive-code + .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.content .expressive-code + .expressive-code .frame.has-title:not(.is-terminal) .header,
+.content .expressive-code + .expressive-code .frame.is-terminal .header,
+.content .expressive-code + .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) .header {
+  border-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 /* Tone × priority demo on the Title docs page. Scrolls horizontally
    when the columns don't fit; titles inside the grid drop their
    per-level margins so cell heights are uniform. */
@@ -508,6 +541,12 @@ hr, .expressive-code { margin: 0 0 1.5em; }
   content: "Code";
   color: inherit;
   font-weight: 450;
+}
+/* …and an untitled CSS block says so, so a JSX sample and its CSS recipe don't
+   sit under two identical "Code" bars. EC stamps the language on the <pre>,
+   the header's next sibling. */
+.content .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal):has(> pre[data-language="css"]) .header::after {
+  content: "CSS";
 }
 
 /* Folded: collapse the body (the header track is fixed, so only this row

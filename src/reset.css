@@ -1,11 +1,11 @@
-/* Anta's reset + typography defaults. All rules live in `@layer anta`
+/* Anta's reset + typography defaults. All rules live in `@layer anta.reset`
    so consumer-owned components (in `@layer components`) and utility
    frameworks (in `@layer utilities`) can override on demand. The
    layer-order declaration in `tokens.css` (`@layer base, anta,
    components, utilities;`) keeps Anta above any preflight resets in
    `@layer base` so a Tailwind import doesn't wipe Anta's typography. */
 
-@layer anta {
+@layer anta.reset {
   /* ───── Structural reset ─────────────────────────────────────── */
 
   /* Modern box-sizing — pads and borders count inside the declared
@@ -58,6 +58,29 @@
     text-wrap: balance;
   }
 
+  /* ───── Page baseline ────────────────────────────────────────── */
+
+  /* Keep the root transparent so the body background paints the canvas. */
+  html {
+    color-scheme: light;
+    color: var(--text-2);
+    font-family: var(--sans-serif);
+    /* Unitless 22px/15px leading keeps its ratio when inherited. */
+    line-height: calc(22 / 15);
+    /* Controls carry their own :active; the platform overlay only muddies it. */
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* `--bg-2` separates fields, which use `--bg-1`, from the page. */
+  body {
+    background: var(--bg-2);
+  }
+  .light {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+
   /* ───── Typography defaults — Anta opinion ───────────────────── */
 
   /* Raw headings adopt the same visual scale as `<Title level={n}>`
@@ -91,18 +114,109 @@
     text-decoration-color: color-mix(in oklch, currentColor 50%, transparent);
   }
 
-  /* Keep inline `<code>` from inflating the line box of the prose it
-     sits in — `1em` pins its line height to its own font size. */
+  mark {
+    color: color-mix(in oklch, black 90%, transparent);
+    background-color: hsl(55 100% 61.85%);
+    border-radius: 2px;
+  }
+  .dark mark {
+    background-color: hsl(55 100% 35%);
+  }
+
+  del {
+    color: var(--text-2-critical);
+    text-decoration: line-through;
+  }
+  ins {
+    color: var(--text-2-success);
+    text-decoration: none;
+  }
+
+  var,
+  dt {
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  /* Relative offsets preserve the line box. */
+  sub,
+  sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  sup { top: -0.5em; }
+  sub { bottom: -0.25em; }
+
+  /* The 13/15 step matches `<Text size="small">` against body text. */
+  small,
+  figcaption {
+    font-size: calc(13em / 15);
+  }
+
+  /* Secondary to the content it labels. */
+  figcaption {
+    color: var(--text-3);
+  }
+
+  /* Reset the UA's inset border before drawing the divider. */
+  hr {
+    border: 0;
+    border-block-start: 1px solid var(--border-4);
+  }
+
+  /* `currentColor` carries the surrounding tone into the tint. */
   code {
+    font-family: var(--monospace);
+    font-size: 0.933em;
     line-height: 1em;
+    color: inherit;
+    background: color-mix(in oklch, currentColor 6%, transparent);
+    border: none;
+    padding: 0.25em 0.4ch 0.2em;
+    border-radius: 3px;
+  }
+
+  .dark :not(pre) > code {
+    background: color-mix(in oklch, currentColor 10%, transparent);
+  }
+
+  /* Scroll long lines within the code block. */
+  pre {
+    padding: 10px 1rem 6px;
+    border: 1px solid var(--border-5);
+    border-radius: 6px;
+    background: var(--bg-3);
+    color: var(--text-1);
+    font-family: var(--monospace);
+    font-size: 13px;
+    font-weight: 440;
+    line-height: 20px;
+    overflow-x: auto;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    font: inherit;
   }
 
   /* Monospace text carries no letter tracking. Code is metrically even
      by design, so a global `letter-spacing` an app sets on body prose
      must not bleed into it. Targets the monospace elements directly so
-     the declaration beats the inherited tracking. */
-  code, kbd, samp, pre {
+     the declaration beats inherited tracking. `kbd` keeps browser typography. */
+  code, samp, pre {
     letter-spacing: 0;
+  }
+
+  /* Bottom-only margins make document spacing explicit and clear on a last child. */
+  p, ul, ol, blockquote, dl, pre, figure {
+    /* Document spacing stays constant across type sizes. */
+    margin-block-end: 1rem;
+  }
+  :is(p, ul, ol, blockquote, dl, pre, figure):last-child {
+    margin-block-end: 0;
   }
 
   /* Prose lists (ul, ol) get a tight 3ch left padding so markers
@@ -117,6 +231,12 @@
   }
   :is(ul, ol) > li::marker {
     color: var(--text-5);
+  }
+
+  /* Match list-marker color; border plus inset totals 2ch. */
+  blockquote {
+    border-left: 3px solid var(--text-5);
+    padding-left: calc(2ch - 3px);
   }
 
   /* `<menu>` is for command/option lists, not prose. By default
@@ -179,7 +299,7 @@
 
   /* ───── Tables ───────────────────────────────────────────────── */
 
-  /* Polite, element-level baseline. Rules live in `@layer anta`, so
+  /* Polite, element-level baseline. Rules live in `@layer anta.reset`, so
      any consumer rule outside a layer — or in `components` /
      `utilities` — overrides without effort. Width is intentionally
      left untouched so app tables stay inline-sized; full-bleed is a

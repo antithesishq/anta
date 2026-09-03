@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* All light DOM — no shadow. The group stacks label / list / hint; the
      <a-radio-list> is the radios' flex box. Both are plain selectors a consumer
      can override (e.g. `a-radio-group a-radio-list { display: grid }`). */

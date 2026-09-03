@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* The component and the native disclosure use the same chevron mask. Keeping
      it at this scope lets a native summary render the Anta glyph rather than a
      browser marker. */

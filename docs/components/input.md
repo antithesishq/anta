@@ -545,6 +545,10 @@ file name, with an Anta-styled chooser button. `submit` and `reset` inputs use t
 matching Anta button chrome; set `priority="primary"` on a submit control when it
 is the form's main action.
 
+`<textarea data-anta>` uses the same field chrome. Set `rows` for its height; one
+field-height is the minimum, and it resizes vertically. Native textareas do not
+autogrow; use Input's [`multiline`](#multiline) instead.
+
 Use `data-anta-size="small"` or `"large"` for field sizing. Native inputs own
 their `size` attribute, so Anta does not reuse it. `round` and a custom-color
 `tone` work the same way as Input.
@@ -557,6 +561,7 @@ their `size` attribute, so Anta does not reuse it. `round` and a custom-color
 <input data-anta round type="url" name="site" placeholder="Rounded URL">
 <input data-anta type="password" name="password" value="password">
 <input data-anta tone="rebeccapurple" type="number" name="seats" value="3" min="1">
+<textarea data-anta rows="3" name="notes" placeholder="Notes"></textarea>
 <input data-anta type="file" name="attachment" accept=".pdf,.docx">
 
 <input data-anta type="submit" value="Submit" priority="primary">

@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Token surface — all literal/role-pointed values live here so external CSS
      can re-point a single instance or a whole theme. Text/bg/border point at
      Anta's theme-aware role tokens (so dark mode is mostly free); the focus ring
@@ -275,7 +275,8 @@
     [type="month"],
     [type="time"],
     [type="week"]
-  ) {
+  ),
+  textarea[data-anta] {
     --native-field-block-size: 28px;
     --native-field-padding-block: 4px;
     --native-field-font-size: 15px;
@@ -304,6 +305,14 @@
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
+  /* Let `rows` or the author set height; the field size remains the minimum.
+     Native textareas resize vertically but do not autogrow. */
+  textarea[data-anta] {
+    block-size: auto;
+    min-block-size: var(--native-field-block-size);
+    resize: vertical;
+    overflow-y: auto;
+  }
   /* Chrome exposes a datalist's hover chevron through this proprietary picker
      part. Its user-agent style switches the part's opacity on hover, so retain
      an explicit override for Anta's native-autocomplete opt-in. */
@@ -325,7 +334,8 @@
     [type="month"],
     [type="time"],
     [type="week"]
-  ) {
+  ),
+  .dark textarea[data-anta] {
     color-scheme: dark;
   }
   @media (hover: hover) and (pointer: fine) {
@@ -343,7 +353,8 @@
       [type="month"],
       [type="time"],
       [type="week"]
-    ):not(:disabled):hover {
+    ):not(:disabled):hover,
+    textarea[data-anta]:not(:disabled):hover {
       box-shadow: inset 0 0 0 1px var(--native-field-border);
     }
   }
@@ -361,7 +372,8 @@
     [type="month"],
     [type="time"],
     [type="week"]
-  ):focus {
+  ):focus,
+  textarea[data-anta]:focus {
     box-shadow: inset 0 0 0 1px var(--native-field-border);
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
@@ -380,7 +392,8 @@
     [type="month"],
     [type="time"],
     [type="week"]
-  ):disabled {
+  ):disabled,
+  textarea[data-anta]:disabled {
     background: color-mix(in oklch, var(--text-1) 4%, var(--bg-1));
     box-shadow: inset 0 0 0 0.5px color-mix(in oklch, var(--text-1) 15%, transparent);
     color: var(--text-4);
@@ -550,7 +563,8 @@
       [type="time"],
       [type="week"]
     ),
-    select[data-anta] {
+    select[data-anta],
+    textarea[data-anta] {
       border: 1px solid ButtonBorder;
     }
   }
@@ -572,7 +586,8 @@
     [type="time"],
     [type="week"]
   )[data-anta-size="small"],
-  select[data-anta][data-anta-size="small"] {
+  select[data-anta][data-anta-size="small"],
+  textarea[data-anta][data-anta-size="small"] {
     --native-field-block-size: 24px;
     --native-field-padding-block: 2px;
     --native-field-font-size: 13px;
@@ -593,7 +608,8 @@
     [type="time"],
     [type="week"]
   )[data-anta-size="large"],
-  select[data-anta][data-anta-size="large"] {
+  select[data-anta][data-anta-size="large"],
+  textarea[data-anta][data-anta-size="large"] {
     --native-field-block-size: 32px;
     --native-field-padding-block: 5px;
     --native-field-font-size: 17px;
@@ -603,7 +619,8 @@
      Preserve a larger consumer-supplied size while lifting the active field. */
   @media (pointer: coarse) {
     input[data-anta]:focus,
-    select[data-anta]:focus {
+    select[data-anta]:focus,
+    textarea[data-anta]:focus {
       --native-field-zoom-safe-font-size: max(16px, var(--native-field-font-size));
     }
   }
@@ -622,7 +639,8 @@
     [type="time"],
     [type="week"]
   )[round],
-  select[data-anta][round] {
+  select[data-anta][round],
+  textarea[data-anta][round] {
     --native-field-round: attr(round type(<length>), 999px);
   }
   input[data-anta]:is(
@@ -639,7 +657,8 @@
     [type="month"],
     [type="time"],
     [type="week"]
-  )[tone]:not([tone=""]) {
+  )[tone]:not([tone=""]),
+  textarea[data-anta][tone]:not([tone=""]) {
     --native-field-tone: attr(tone type(<color>), var(--border-2));
     --native-field-border: oklch(from var(--native-field-tone) 0.7 calc(c * 0.8) h);
   }
@@ -657,7 +676,8 @@
     [type="month"],
     [type="time"],
     [type="week"]
-  )[tone]:not([tone=""]) {
+  )[tone]:not([tone=""]),
+  .dark textarea[data-anta][tone]:not([tone=""]) {
     --native-field-border: oklch(from var(--native-field-tone) 0.5 calc(c * 0.8) h);
   }
   @supports (appearance: base-select) {

@@ -35,7 +35,8 @@
   text-decoration: none;
 }
 
-.result:hover,
+/* A hover highlight follows a moved pointer, not one left over a re-rendered list. */
+.results[data-pointer='active'] .result:hover,
 .result[data-selected='true'] {
   background: var(--bg-3);
 }

@@ -44,7 +44,7 @@ recommended; the reference theme is optional.
 | Import | Provides | Skip if… |
 |---|---|---|
 | `@antadesign/anta/tokens.css` | Six seed tokens, derived role scales (`--bg-1…5`, `--text-1…5`, `--border-1…5`), `.dark`, the 15px root size, and layer order. Override a seed to reskin its tone. | You provide those variables. |
-| `@antadesign/anta/reset.css` | A small reset plus Anta's focus, heading, list, and link typography in `@layer anta`. | You use another reset and typography. |
+| `@antadesign/anta/reset.css` | A small reset plus Anta's focus, heading, list, and link typography in `@layer anta.reset`. | You use another reset and typography. |
 | `@antadesign/anta/elements` | Registers every `<a-*>` element and its CSS. Per-element entries register one; see [Registering elements](#registering-elements). | You render only on the server or register elements individually. |
 | `@antadesign/anta` | Typed React/Preact wrappers such as `Progress`, `Text`, and `Icon`. | You write `<a-*>` elements directly. |
 | `@antadesign/anta/bundle.css` | One minified stylesheet containing tokens, reset, element, and JSX-wrapper styles. | You want granular CSS imports. |
@@ -60,9 +60,16 @@ seed-derived default palette or provide your own theme.
 
 ### Cascade layers
 
-Anta's reset and element CSS live in `@layer anta`. `tokens.css` declares
-`@layer base, anta, components, utilities`, placing Anta above preflight resets
-and below your component and utility layers.
+Anta's reset and element CSS use child layers inside `@layer anta`. `tokens.css`
+orders them above preflight resets and below your component and utility layers:
+
+```css
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+```
+
+`anta.theme` lets the optional reference palette replace component formulas. The
+outer `anta` layer keeps its public cascade position.
 
 To change that order, declare it in CSS loaded **before** `tokens.css`. The
 first declaration fixes a layer's position:
@@ -84,7 +91,7 @@ Token custom properties stay unlayered so they apply everywhere.
 > Unlayered styles beat layered ones regardless of specificity. This reset
 > overrides Anta's element defaults. Delete the duplicate, or put your reset in
 > `@layer base { … }`; `reset.css` already applies the same universal reset in
-> `@layer anta`.
+> `@layer anta.reset`.
 
 ## Registering elements
 
@@ -213,25 +220,39 @@ specifier with a bundler or import map.
 
 ## Dark mode
 
-Add the `dark` class to any ancestor element:
+For a page-wide dark mode, add `dark` to `html`. The `body` `--bg-2` background
+then paints the browser canvas, and the root controls scrollbar colors:
 
 ```html
-<div class="dark">
-  <Progress value={50} />
-</div>
+<html class="dark">
+  <body>
+    <Progress value={50} />
+  </body>
+</html>
 ```
+
+Use `dark` or `light` on another ancestor to scope its color scheme and palette.
 
 ## Fonts
 
-Anta is designed for a customized TT Interphases Pro, but ships no font binaries. Components use `--sans-serif` and `--monospace` with system fallbacks. `tokens.css` sets a 15px root size (`1rem = 15px`).
+Anta is designed for a customized TT Interphases Pro, but ships no font binaries. Components use `--sans-serif` and `--monospace` with system fallbacks. `tokens.css` sets `1rem` to 15px.
 
-To use your own fonts, register `@font-face` declarations and override the variables:
+Register application-owned fonts, then override the font variables. This example
+uses separate Roman and Italic variable files:
 
 ```css
 @font-face {
   font-family: "App Sans";
-  src: url("/path/to/your/sans.woff2") format("woff2");
-  /* ... */
+  src: url("/fonts/app-sans-roman.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: "App Sans";
+  src: url("/fonts/app-sans-italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
 }
 
 :root {
@@ -239,6 +260,30 @@ To use your own fonts, register `@font-face` declarations and override the varia
   --monospace: ui-monospace, monospace;
 }
 ```
+
+Anta's semantic italics (`em`, `i`, `var`, and `dt`) select the Italic face.
+
+### Variable slant
+
+A variable font with a standard `slnt` axis can provide both instances. Expose it
+through `font-style: oblique` instead of setting `slnt` on italic elements:
+
+```css
+@font-face {
+  font-family: "App Variable";
+  src: url("/fonts/app-variable.woff2") format("woff2");
+  font-style: oblique 0deg 12deg;
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+}
+
+:root {
+  --sans-serif: "App Variable", sans-serif;
+}
+```
+
+The browser selects `0deg` for normal text and `11deg` for semantic italics. Use
+the range your font declares to avoid combining `slnt` with a synthetic oblique.
 
 ## Browser support
 

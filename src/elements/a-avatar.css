@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   a-avatar {
     --avatar-size: 44px;
     --avatar-radius: 22%;

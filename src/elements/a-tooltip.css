@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Keep hidden until defined. The bubble content is SLOTTED (a-tooltip's
      children), and the anchor is the tooltip's PARENT — so hiding the tooltip
      never hides the trigger, but pre-upgrade (no shadow yet) the slotted

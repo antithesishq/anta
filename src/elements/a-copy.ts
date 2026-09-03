@@ -31,9 +31,8 @@ declare global {
  * capture phase runs root→target regardless of bubbling), so menu rows need no
  * special path.
  *
- * - `pointerdown` / `keydown` (Enter/Space) → `emitCopyRequest` (the lazy
- *   pre-request; the pointerdown/keydown→activation gap lets an off-UI-thread
- *   handler refresh `copy` in time — see copy-behavior's "Lazy content" note).
+ * - `pointerdown` / `keydown` (Enter/Space) → `emitCopyRequest`, so an
+ *   application can refresh a controlled `copy` value before activation.
  * - `click` on an `<a-button>` host → `runCopy` (buttons activate via click; a
  *   keyboard activation is a synthesized `el.click()`, so this covers both).
  * - `menuselect` on an `<a-menu-item>` host → `runCopy` (menu rows activate via

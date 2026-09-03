@@ -61,6 +61,8 @@ export default function SearchDialog() {
   const [results, setResults] = useState(EMPTY_RESULTS)
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const [selected, setSelected] = useState(0)
+  // A resting pointer cannot override keyboard selection.
+  const [pointerActive, setPointerActive] = useState(false)
 
   const ensureIndex = () => {
     setStatus((current) => current === 'ready' ? current : 'loading')
@@ -110,7 +112,9 @@ export default function SearchDialog() {
 
   useEffect(() => {
     const term = query.trim()
+    // Re-ranked results start at the top.
     setSelected(0)
+    setPointerActive(false)
     if (!term || status !== 'ready') {
       setResults(EMPTY_RESULTS)
       return
@@ -127,6 +131,7 @@ export default function SearchDialog() {
 
   const moveSelection = (amount: number) => {
     if (!results.length) return
+    setPointerActive(false)
     setSelected((current) => (current + amount + results.length) % results.length)
   }
 
@@ -169,7 +174,12 @@ export default function SearchDialog() {
         {status === 'error' && <p className={styles.status}>Search is unavailable. Try reloading the page.</p>}
 
         {query.trim() && status === 'ready' && (
-          <div id="docs-search-results" className={styles.results} aria-live="polite">
+          <div
+            id="docs-search-results"
+            className={styles.results}
+            data-pointer={pointerActive ? 'active' : undefined}
+            aria-live="polite"
+          >
             {results.length ? results.map((result, index) => {
               const icon = sidebarIcon(result.route)
               return (
@@ -178,7 +188,11 @@ export default function SearchDialog() {
                   data-selected={selected === index ? 'true' : undefined}
                   href={resultHref(result, query.trim())}
                   key={result.id}
-                  onMouseEnter={() => setSelected(index)}
+                  // Ignore a resting pointer after the results re-render.
+                  onPointerMove={() => {
+                    setPointerActive(true)
+                    setSelected(index)
+                  }}
                   onClick={() => {
                     document.dispatchEvent(new CustomEvent('anta-search-navigate', {
                       detail: { result, query: query.trim() },

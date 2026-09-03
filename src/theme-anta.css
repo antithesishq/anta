@@ -1,43 +1,17 @@
-/* theme-anta.css — Anta's hand-tuned reference palette.
- *
- * Anta's default colors are derived live from six tone seeds (see tokens.css:
- * `--anta-seed-*` + `oklch(from …)`). This optional theme restores the
- * hand-tuned literals that shipped before the seed-derived default — the
- * refined per-tone values that a formula can't reproduce exactly.
- *
- * Load it AFTER tokens.css and the element CSS:
+/* Optional hand-tuned reference palette. Load after tokens and element CSS:
  *   import '@antadesign/anta/tokens.css'
  *   import '@antadesign/anta/reset.css'
- *   import '@antadesign/anta/theme-anta.css'   // ← restores the hand-tuned palette
+ *   import '@antadesign/anta/theme-anta.css'
  *
- * Two parts, layered differently on purpose:
- *
- * (1) The global role scale (`--text-*` / `--bg-*` / `--border-*` / `--focus-ring`, below) is
- *     UNLAYERED (so it beats the components' `@layer anta` seed-derived tokens and
- *     replaces the role scale wholesale) and uses DOUBLED `:root:root` / `.light.light`
- *     / `.dark.dark` selectors, so it out-SPECIFIES tokens.css's equally-unlayered
- *     `:root` / `.light` / `.dark` role tokens no matter which file loads first (and
- *     matches the same set, including scoped `.light` / `.dark`). Plain source order
- *     isn't enough:
- *     a host may inject this file before tokens.css (the docs site does, and Astro
- *     controls where the bundled tokens.css `<link>` lands), which would otherwise
- *     let tokens.css win the `:root`-vs-`:root` tie.
- *
- * (2) The bespoke component ramps that don't flow from role tokens (Button /
- *     Checkbox / Radio / Input status / Tag / Tabs) live in `@layer anta`, so the
- *     cascade — not layer precedence — sorts them against the element CSS (same
- *     layer). Neutral base rules carry `:not([tone])` (and `:not([tone-selected])`
- *     for Checkbox / Radio) so they out-SPECIFY the element's bare base and win the
- *     neutral case regardless of load order (the element CSS is re-injected by JS
- *     registration, so source order isn't reliable). Named-tone rules out-specify
- *     the base too. But a component's own even-higher-specificity CUSTOM-tone rule
- *     (`[tone]:not(…named)`, derived in oklch) wins for a literal color — so a
- *     custom `tone` keeps deriving instead of flattening to neutral.
- *
- * Overriding: part 2's component ramps are beaten by any unlayered consumer rule.
- * Part 1's role tokens sit at `:root:root` specificity, so a consumer override must
- * match it — `:root:root { --text-1: … }` (or higher) — rather than a plain `:root`.
+ * Role tokens are unlayered and doubled (`:root:root`, `.light.light`,
+ * `.dark.dark`) to replace seed-derived defaults regardless of load order.
+ * Component literals use `anta.theme`, after `anta.components`; custom colors keep
+ * their formula-derived values. Consumer unlayered CSS or later layers override
+ * component values. Match `:root:root` to override a role token.
  */
+
+/* Preserve the internal layer order if this file loads first. */
+@layer anta.reset, anta.components, anta.theme;
 
 /* ── 1. Global role scale — hand-tuned literals ───────────────────────────── */
 /* Doubled `:root:root` / `.light.light` — out-specifies tokens.css's `:root, .light`
@@ -296,19 +270,9 @@
 }
 
 /* ── 2. Bespoke component ramps — hand-tuned literals ─────────────────────── */
-/* Components whose tone treatment doesn't flow from the role scale re-supply
-   their pre-seed literal outputs here. Role-token components (Progress,
-   Expander, Text, Card, Menu, …) need nothing — restoring the role scale above
-   restores them.
-
-   This whole section is in `@layer anta` (unlike part 1) so it cooperates with the
-   cascade instead of steamrolling it: neutral bases carry `:not([tone])` (plus
-   `:not([tone-selected])` for checkbox/radio) so they out-specify the element's
-   bare base (order-independent); named tones win by specificity too; and each
-   component's own higher-specificity custom-tone rule (in the element CSS, same
-   layer) still wins for a literal `tone`. Rules keep their original indentation;
-   the layer just wraps them. */
-@layer anta {
+/* Component values not covered by role tokens. Named rules replace formulas;
+   custom colors continue deriving from their literal color. */
+@layer anta.theme {
 
 /* Button ------------------------------------------------------------------- */
 /* Neutral literals apply when tone is omitted or explicitly neutral. */
@@ -417,109 +381,109 @@ a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[da
 
 /* ===== checkbox ===== */
 /* The omitted and explicit neutral tones use the same reference values. */
-a-checkbox:not([tone]):not([tone-selected]) {
+:is(a-checkbox, input[data-anta][type="checkbox"]):not([tone]):not([tone-selected]) {
   --checkbox-bg-selected: #878089;
   --checkbox-bg-selected-hover: #776e77;
   --checkbox-bg-selected-active: #635b65;
 }
-a-checkbox[tone="brand"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="brand"] {
   --checkbox-bg-selected: #5f4bc3;
   --checkbox-bg-selected-hover: #503cb4;
   --checkbox-bg-selected-active: #483493;
 }
-a-checkbox[tone="neutral"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="neutral"] {
   --checkbox-bg-selected: #878089;
   --checkbox-bg-selected-hover: #776e77;
   --checkbox-bg-selected-active: #635b65;
 }
-a-checkbox[tone="info"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="info"] {
   --checkbox-bg-selected: #1f6eb2;
   --checkbox-bg-selected-hover: #1a5b93;
   --checkbox-bg-selected-active: #175082;
 }
-a-checkbox[tone="success"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="success"] {
   --checkbox-bg-selected: #2a7e43;
   --checkbox-bg-selected-hover: #226737;
   --checkbox-bg-selected-active: #1f5c31;
 }
-a-checkbox[tone="warning"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="warning"] {
   --checkbox-bg-selected: #c37416;
   --checkbox-bg-selected-hover: #ae6613;
   --checkbox-bg-selected-active: #995200;
 }
-a-checkbox[tone="critical"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="critical"] {
   --checkbox-bg-selected: #c9302c;
   --checkbox-bg-selected-hover: #b02120;
   --checkbox-bg-selected-active: #a01c1c;
 }
-a-checkbox[tone="brand"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="brand"] {
   --checkbox-bg: #fcfcfe;
   --checkbox-border: #bcb1f1;
   --checkbox-border-hover: #9e8eeb;
   --checkbox-border-active: #9081df;
 }
-a-checkbox[tone="info"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="info"] {
   --checkbox-bg: #fbfcfe;
   --checkbox-border: #93c5ec;
   --checkbox-border-hover: #69ace5;
   --checkbox-border-active: #56a1e1;
 }
-a-checkbox[tone="success"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="success"] {
   --checkbox-bg: #f7fcf9;
   --checkbox-border: #88d7a0;
   --checkbox-border-hover: #5bc87b;
   --checkbox-border-active: #44c169;
 }
-a-checkbox[tone="warning"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="warning"] {
   --checkbox-bg: #fefbf6;
   --checkbox-border: #edb25a;
   --checkbox-border-hover: #e09127;
   --checkbox-border-active: #d88118;
 }
-a-checkbox[tone="critical"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone="critical"] {
   --checkbox-bg: #fefbfb;
   --checkbox-border: #efa4a4;
   --checkbox-border-hover: #e87f7f;
   --checkbox-border-active: #e56c6c;
 }
-a-checkbox[tone-selected="brand"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="brand"] {
   --checkbox-bg-selected: #5f4bc3;
   --checkbox-bg-selected-hover: #503cb4;
   --checkbox-bg-selected-active: #483493;
 }
-a-checkbox[tone-selected="neutral"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="neutral"] {
   --checkbox-bg-selected: #878089;
   --checkbox-bg-selected-hover: #776e77;
   --checkbox-bg-selected-active: #635b65;
 }
-a-checkbox[tone-selected="info"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="info"] {
   --checkbox-bg-selected: #1f6eb2;
   --checkbox-bg-selected-hover: #1a5b93;
   --checkbox-bg-selected-active: #175082;
 }
-a-checkbox[tone-selected="success"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="success"] {
   --checkbox-bg-selected: #2a7e43;
   --checkbox-bg-selected-hover: #226737;
   --checkbox-bg-selected-active: #1f5c31;
 }
-a-checkbox[tone-selected="warning"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="warning"] {
   --checkbox-bg-selected: #c37416;
   --checkbox-bg-selected-hover: #ae6613;
   --checkbox-bg-selected-active: #995200;
 }
-a-checkbox[tone-selected="critical"] {
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="critical"] {
   --checkbox-bg-selected: #c9302c;
   --checkbox-bg-selected-hover: #b02120;
   --checkbox-bg-selected-active: #a01c1c;
 }
-a-checkbox[tone-selected]:not(
+:is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected]:not(
     [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
     [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
   --checkbox-bg-selected: oklch(from var(--checkbox-tone-source) var(--_tone-l-rest) c h);
   --checkbox-bg-selected-hover: oklch(from var(--checkbox-tone-source) var(--_tone-l-hover) c h);
   --checkbox-bg-selected-active: oklch(from var(--checkbox-tone-source) var(--_tone-l-active) c h);
 }
-.dark a-checkbox:not([tone]):not([tone-selected]) {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"]):not([tone]):not([tone-selected]) {
   --checkbox-border-neutral: #49424c;
   --checkbox-border-hover: #635b65;
   --checkbox-border-active: #776e77;
@@ -528,97 +492,97 @@ a-checkbox[tone-selected]:not(
   --checkbox-bg-selected-active: #635b65;
   --checkbox-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
 }
-.dark a-checkbox[tone="brand"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="brand"] {
   --checkbox-bg-selected: #503cb4;
   --checkbox-bg-selected-hover: #5f4bc3;
   --checkbox-bg-selected-active: #7460d7;
 }
-.dark a-checkbox[tone="neutral"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="neutral"] {
   --checkbox-bg-selected: #49424c;
   --checkbox-bg-selected-hover: #534c57;
   --checkbox-bg-selected-active: #635b65;
 }
-.dark a-checkbox[tone="info"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="info"] {
   --checkbox-bg-selected: #1a5b93;
   --checkbox-bg-selected-hover: #1f6eb2;
   --checkbox-bg-selected-active: #2686d9;
 }
-.dark a-checkbox[tone="success"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="success"] {
   --checkbox-bg-selected: #226737;
   --checkbox-bg-selected-hover: #2a7e43;
   --checkbox-bg-selected-active: #329550;
 }
-.dark a-checkbox[tone="warning"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="warning"] {
   --checkbox-bg-selected: #7f410b;
   --checkbox-bg-selected-hover: #995200;
   --checkbox-bg-selected-active: #ae6613;
 }
-.dark a-checkbox[tone="critical"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="critical"] {
   --checkbox-bg-selected: #b02120;
   --checkbox-bg-selected-hover: #c9302c;
   --checkbox-bg-selected-active: #de4545;
 }
-.dark a-checkbox[tone="brand"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="brand"] {
   --checkbox-bg: #0b0916;
   --checkbox-border: #483493;
   --checkbox-border-hover: #5f4bc3;
   --checkbox-border-active: #7460d7;
 }
-.dark a-checkbox[tone="info"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="info"] {
   --checkbox-bg: #040d18;
   --checkbox-border: #175082;
   --checkbox-border-hover: #1f6eb2;
   --checkbox-border-active: #2686d9;
 }
-.dark a-checkbox[tone="success"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="success"] {
   --checkbox-bg: #041008;
   --checkbox-border: #1f5c31;
   --checkbox-border-hover: #2a7e43;
   --checkbox-border-active: #329550;
 }
-.dark a-checkbox[tone="warning"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="warning"] {
   --checkbox-bg: #120a03;
   --checkbox-border: #6a3b0c;
   --checkbox-border-hover: #995200;
   --checkbox-border-active: #ae6613;
 }
-.dark a-checkbox[tone="critical"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="critical"] {
   --checkbox-bg: #190405;
   --checkbox-border: #a01c1c;
   --checkbox-border-hover: #c9302c;
   --checkbox-border-active: #de4545;
 }
-.dark a-checkbox[tone-selected="brand"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="brand"] {
   --checkbox-bg-selected: #503cb4;
   --checkbox-bg-selected-hover: #5f4bc3;
   --checkbox-bg-selected-active: #7460d7;
 }
-.dark a-checkbox[tone-selected="neutral"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="neutral"] {
   --checkbox-bg-selected: #49424c;
   --checkbox-bg-selected-hover: #534c57;
   --checkbox-bg-selected-active: #635b65;
 }
-.dark a-checkbox[tone-selected="info"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="info"] {
   --checkbox-bg-selected: #1a5b93;
   --checkbox-bg-selected-hover: #1f6eb2;
   --checkbox-bg-selected-active: #2686d9;
 }
-.dark a-checkbox[tone-selected="success"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="success"] {
   --checkbox-bg-selected: #226737;
   --checkbox-bg-selected-hover: #2a7e43;
   --checkbox-bg-selected-active: #329550;
 }
-.dark a-checkbox[tone-selected="warning"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="warning"] {
   --checkbox-bg-selected: #7f410b;
   --checkbox-bg-selected-hover: #995200;
   --checkbox-bg-selected-active: #ae6613;
 }
-.dark a-checkbox[tone-selected="critical"] {
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="critical"] {
   --checkbox-bg-selected: #b02120;
   --checkbox-bg-selected-hover: #c9302c;
   --checkbox-bg-selected-active: #de4545;
 }
-.dark a-checkbox[tone-selected]:not(
+.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected]:not(
     [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
     [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
   --checkbox-bg-selected: oklch(from var(--checkbox-tone-source) var(--_tone-l-rest) c h);
@@ -629,7 +593,7 @@ a-checkbox[tone-selected]:not(
 /* ===== radio ===== */
 /* Neutral base — `:not([tone]):not([tone-selected])` keeps it off a direct custom
    tone. Named and group-cascaded tones have their own higher-specificity rows. */
-a-radio:not([tone]):not([tone-selected]) {
+:is(a-radio, input[data-anta][type="radio"]):not([tone]):not([tone-selected]) {
   --radio-border-width: 1.5px;
   --radio-bg: var(--bg-1);
   --radio-bg-selected: #878089;
@@ -641,71 +605,71 @@ a-radio:not([tone]):not([tone-selected]) {
   --radio-border-active: #9f99a1;
   --radio-border-disabled: color-mix(in oklch, #44374b 10%, transparent);
 }
-a-radio[tone="brand"],
+:is(a-radio, input[data-anta][type="radio"])[tone="brand"],
   a-radio-group[tone="brand"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #5f4bc3;
   --radio-bg-selected-hover: #503cb4;
   --radio-bg-selected-active: #483493;
 }
-a-radio[tone="neutral"],
+:is(a-radio, input[data-anta][type="radio"])[tone="neutral"],
   a-radio-group[tone="neutral"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #878089;
   --radio-bg-selected-hover: #776e77;
   --radio-bg-selected-active: #635b65;
 }
-a-radio[tone="info"],
+:is(a-radio, input[data-anta][type="radio"])[tone="info"],
   a-radio-group[tone="info"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #1f6eb2;
   --radio-bg-selected-hover: #1a5b93;
   --radio-bg-selected-active: #175082;
 }
-a-radio[tone="success"],
+:is(a-radio, input[data-anta][type="radio"])[tone="success"],
   a-radio-group[tone="success"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #2a7e43;
   --radio-bg-selected-hover: #226737;
   --radio-bg-selected-active: #1f5c31;
 }
-a-radio[tone="warning"],
+:is(a-radio, input[data-anta][type="radio"])[tone="warning"],
   a-radio-group[tone="warning"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #c37416;
   --radio-bg-selected-hover: #ae6613;
   --radio-bg-selected-active: #995200;
 }
-a-radio[tone="critical"],
+:is(a-radio, input[data-anta][type="radio"])[tone="critical"],
   a-radio-group[tone="critical"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #c9302c;
   --radio-bg-selected-hover: #b02120;
   --radio-bg-selected-active: #a01c1c;
 }
-a-radio[tone="brand"],
+:is(a-radio, input[data-anta][type="radio"])[tone="brand"],
   a-radio-group[tone="brand"] a-radio:not([tone], [tone-selected]) {
   --radio-bg: #fcfcfe;
   --radio-border: #bcb1f1;
   --radio-border-hover: #9e8eeb;
   --radio-border-active: #9081df;
 }
-a-radio[tone="info"],
+:is(a-radio, input[data-anta][type="radio"])[tone="info"],
   a-radio-group[tone="info"] a-radio:not([tone], [tone-selected]) {
   --radio-bg: #fbfcfe;
   --radio-border: #93c5ec;
   --radio-border-hover: #69ace5;
   --radio-border-active: #56a1e1;
 }
-a-radio[tone="success"],
+:is(a-radio, input[data-anta][type="radio"])[tone="success"],
   a-radio-group[tone="success"] a-radio:not([tone], [tone-selected]) {
   --radio-bg: #f7fcf9;
   --radio-border: #88d7a0;
   --radio-border-hover: #5bc87b;
   --radio-border-active: #44c169;
 }
-a-radio[tone="warning"],
+:is(a-radio, input[data-anta][type="radio"])[tone="warning"],
   a-radio-group[tone="warning"] a-radio:not([tone], [tone-selected]) {
   --radio-bg: #fefbf6;
   --radio-border: #edb25a;
   --radio-border-hover: #e09127;
   --radio-border-active: #d88118;
 }
-a-radio[tone="critical"],
+:is(a-radio, input[data-anta][type="radio"])[tone="critical"],
   a-radio-group[tone="critical"] a-radio:not([tone], [tone-selected]) {
   --radio-bg: #fefbfb;
   --radio-border: #efa4a4;
@@ -726,43 +690,43 @@ a-radio-group[tone]:where(:not(
   --radio-border-hover: oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
   --radio-border-active: var(--_radio-border-base);
 }
-a-radio[tone-selected="brand"],
+:is(a-radio, input[data-anta][type="radio"])[tone-selected="brand"],
   a-radio-group[tone-selected="brand"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #5f4bc3;
   --radio-bg-selected-hover: #503cb4;
   --radio-bg-selected-active: #483493;
 }
-a-radio[tone-selected="neutral"],
+:is(a-radio, input[data-anta][type="radio"])[tone-selected="neutral"],
   a-radio-group[tone-selected="neutral"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #878089;
   --radio-bg-selected-hover: #776e77;
   --radio-bg-selected-active: #635b65;
 }
-a-radio[tone-selected="info"],
+:is(a-radio, input[data-anta][type="radio"])[tone-selected="info"],
   a-radio-group[tone-selected="info"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #1f6eb2;
   --radio-bg-selected-hover: #1a5b93;
   --radio-bg-selected-active: #175082;
 }
-a-radio[tone-selected="success"],
+:is(a-radio, input[data-anta][type="radio"])[tone-selected="success"],
   a-radio-group[tone-selected="success"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #2a7e43;
   --radio-bg-selected-hover: #226737;
   --radio-bg-selected-active: #1f5c31;
 }
-a-radio[tone-selected="warning"],
+:is(a-radio, input[data-anta][type="radio"])[tone-selected="warning"],
   a-radio-group[tone-selected="warning"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #c37416;
   --radio-bg-selected-hover: #ae6613;
   --radio-bg-selected-active: #995200;
 }
-a-radio[tone-selected="critical"],
+:is(a-radio, input[data-anta][type="radio"])[tone-selected="critical"],
   a-radio-group[tone-selected="critical"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #c9302c;
   --radio-bg-selected-hover: #b02120;
   --radio-bg-selected-active: #a01c1c;
 }
-a-radio[tone-selected]:not(
+:is(a-radio, input[data-anta][type="radio"])[tone-selected]:not(
     [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
     [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]),
 a-radio-group[tone-selected]:not(
@@ -772,7 +736,7 @@ a-radio-group[tone-selected]:not(
   --radio-bg-selected-hover: oklch(from var(--radio-tone-source) var(--_tone-l-hover) c h);
   --radio-bg-selected-active: oklch(from var(--radio-tone-source) var(--_tone-l-active) c h);
 }
-.dark a-radio:not([tone]):not([tone-selected]) {
+.dark :is(a-radio, input[data-anta][type="radio"]):not([tone]):not([tone-selected]) {
   --radio-border-hover: #635b65;
   --radio-border-active: #776e77;
   --radio-bg-selected: #49424c;
@@ -780,71 +744,71 @@ a-radio-group[tone-selected]:not(
   --radio-bg-selected-active: #635b65;
   --radio-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
 }
-.dark a-radio[tone="brand"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="brand"],
   .dark a-radio-group[tone="brand"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #503cb4;
   --radio-bg-selected-hover: #5f4bc3;
   --radio-bg-selected-active: #7460d7;
 }
-.dark a-radio[tone="neutral"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="neutral"],
   .dark a-radio-group[tone="neutral"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #49424c;
   --radio-bg-selected-hover: #534c57;
   --radio-bg-selected-active: #635b65;
 }
-.dark a-radio[tone="info"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="info"],
   .dark a-radio-group[tone="info"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #1a5b93;
   --radio-bg-selected-hover: #1f6eb2;
   --radio-bg-selected-active: #2686d9;
 }
-.dark a-radio[tone="success"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="success"],
   .dark a-radio-group[tone="success"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #226737;
   --radio-bg-selected-hover: #2a7e43;
   --radio-bg-selected-active: #329550;
 }
-.dark a-radio[tone="warning"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="warning"],
   .dark a-radio-group[tone="warning"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #7f410b;
   --radio-bg-selected-hover: #995200;
   --radio-bg-selected-active: #ae6613;
 }
-.dark a-radio[tone="critical"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="critical"],
   .dark a-radio-group[tone="critical"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #b02120;
   --radio-bg-selected-hover: #c9302c;
   --radio-bg-selected-active: #de4545;
 }
-.dark a-radio[tone="brand"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="brand"],
   .dark a-radio-group[tone="brand"] a-radio:not([tone], [tone-selected]) {
   --radio-bg: #0b0916;
   --radio-border: #483493;
   --radio-border-hover: #5f4bc3;
   --radio-border-active: #7460d7;
 }
-.dark a-radio[tone="info"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="info"],
   .dark a-radio-group[tone="info"] a-radio:not([tone], [tone-selected]) {
   --radio-bg: #040d18;
   --radio-border: #175082;
   --radio-border-hover: #1f6eb2;
   --radio-border-active: #2686d9;
 }
-.dark a-radio[tone="success"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="success"],
   .dark a-radio-group[tone="success"] a-radio:not([tone], [tone-selected]) {
   --radio-bg: #041008;
   --radio-border: #1f5c31;
   --radio-border-hover: #2a7e43;
   --radio-border-active: #329550;
 }
-.dark a-radio[tone="warning"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="warning"],
   .dark a-radio-group[tone="warning"] a-radio:not([tone], [tone-selected]) {
   --radio-bg: #120a03;
   --radio-border: #6a3b0c;
   --radio-border-hover: #995200;
   --radio-border-active: #ae6613;
 }
-.dark a-radio[tone="critical"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone="critical"],
   .dark a-radio-group[tone="critical"] a-radio:not([tone], [tone-selected]) {
   --radio-bg: #190405;
   --radio-border: #a01c1c;
@@ -862,43 +826,43 @@ a-radio-group[tone-selected]:not(
   --radio-border-hover: oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
   --radio-border-active: oklch(from var(--_radio-border-base) calc(l + 0.17) c h);
 }
-.dark a-radio[tone-selected="brand"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="brand"],
   .dark a-radio-group[tone-selected="brand"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #503cb4;
   --radio-bg-selected-hover: #5f4bc3;
   --radio-bg-selected-active: #7460d7;
 }
-.dark a-radio[tone-selected="neutral"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="neutral"],
   .dark a-radio-group[tone-selected="neutral"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #49424c;
   --radio-bg-selected-hover: #534c57;
   --radio-bg-selected-active: #635b65;
 }
-.dark a-radio[tone-selected="info"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="info"],
   .dark a-radio-group[tone-selected="info"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #1a5b93;
   --radio-bg-selected-hover: #1f6eb2;
   --radio-bg-selected-active: #2686d9;
 }
-.dark a-radio[tone-selected="success"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="success"],
   .dark a-radio-group[tone-selected="success"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #226737;
   --radio-bg-selected-hover: #2a7e43;
   --radio-bg-selected-active: #329550;
 }
-.dark a-radio[tone-selected="warning"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="warning"],
   .dark a-radio-group[tone-selected="warning"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #7f410b;
   --radio-bg-selected-hover: #995200;
   --radio-bg-selected-active: #ae6613;
 }
-.dark a-radio[tone-selected="critical"],
+.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="critical"],
   .dark a-radio-group[tone-selected="critical"] a-radio:not([tone], [tone-selected]) {
   --radio-bg-selected: #b02120;
   --radio-bg-selected-hover: #c9302c;
   --radio-bg-selected-active: #de4545;
 }
-.dark a-radio[tone-selected]:not(
+.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected]:not(
     [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
     [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]),
 .dark a-radio-group[tone-selected]:not(
@@ -1172,4 +1136,4 @@ a-input-time:disabled {
   --input-time-border-hover: #635b65;
 }
 
-} /* @layer anta — end of part 2 (bespoke component ramps) */
+} /* @layer anta.theme — end of part 2 (bespoke component ramps) */

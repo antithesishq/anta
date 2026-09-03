@@ -1012,10 +1012,10 @@ export interface ACopyAttributes extends BaseAttributes {
    *  nested copy control can't flip an ancestor's feedback). All-lowercase so it
    *  binds in React *and* Preact. */
   oncopydone?: (e: CustomEvent<{ ok: boolean }>) => void
-  /** Fired on **pointerdown** / keydown for a string-copy control (`copyrequest`,
-   *  non-bubbling). Answer by setting the `copy` attribute to the freshly-computed
-   *  value; the activation then copies it. The gap lets an off-UI-thread handler
-   *  set `copy` in time. All-lowercase. */
+  /** Fired before a string copy (`copyrequest`, non-bubbling). Set this element's
+   *  `copy` attribute to the new text; JSX applications update their `copy` prop
+   *  through state. Return values are ignored. Fires on pointerdown and
+   *  Enter/Space keydown. All-lowercase. */
   oncopyrequest?: (e: CustomEvent) => void
 }
 
@@ -1326,6 +1326,8 @@ export interface ABannerAttributes extends BaseAttributes {
    *  custom color keeps its hue with lightness/chroma pinned. `'neutral'` is the
    *  default (same as omitting it). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Positions the content row. `'start'` is the default; `'center'` centers it. */
+  align?: 'start' | 'center'
   /** Rounded corners for a standalone banner — `border-radius: 999px` (clamps to a
    *  stadium), or a custom radius via a length value (`round="12px"`). Borderless
    *  like the default. Presence-based for the boolean form. */

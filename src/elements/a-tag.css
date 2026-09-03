@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* `<a-tag>` is intentionally CSS-only — no JS, no shadow DOM, no
      `customElements.define`. It's a small uppercase pill / chip styled
      purely from attributes; the `Tag` JSX wrapper composes its content

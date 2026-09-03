@@ -298,9 +298,10 @@ export class AMenuElement extends HTMLElementBase {
 
   constructor() {
     super()
-    // Off-DOM state only (`:state(open)`); guarded for non-standard runtimes.
+    // Off-DOM accessibility and custom state; guarded for non-standard runtimes.
     try {
       this.internals = this.attachInternals?.()
+      if (this.internals) this.internals.ariaHidden = 'true'
     } catch {}
     const shadow = this.attachShadow({ mode: 'open' })
     const style = document.createElement('style')
@@ -1073,10 +1074,10 @@ export class AMenuElement extends HTMLElementBase {
     this.cancelCloseTimer()
   }
 
-  /** Expose the menu's OWN open state as an off-DOM custom state (`:state(open)`),
-   *  never a light-DOM attribute. A web component must not mutate light DOM — it
-   *  desyncs the worker-thread reactive model, which owns the light tree. A
-   *  submenu parent lights its open branch purely in CSS via
+  /** Keep the menu's OWN open state off the light DOM. `ariaHidden` removes the
+   *  closed host (whose slotted items are hidden in the shadow popover) from the
+   *  accessibility tree, and `:state(open)` lets a submenu parent light its open
+   *  branch purely in CSS via
    *  `a-menu-item:has(> a-menu:state(open))`; the state is element-owned (like
    *  `a-menu-item`'s `:state(active)`) and, being off-DOM, survives a reactive
    *  re-render without the element ever writing an attribute. Set on every menu
@@ -1085,6 +1086,7 @@ export class AMenuElement extends HTMLElementBase {
     try {
       if (open) this.internals?.states.add('open')
       else this.internals?.states.delete('open')
+      if (this.internals) this.internals.ariaHidden = open ? 'false' : 'true'
     } catch {}
   }
 

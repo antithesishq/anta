@@ -1,13 +1,8 @@
-/* Anta declares its layer order so consumers don't have to.
-   `base` is below — typically used by resets like Tailwind's
-   preflight (`@layer base`) — so Anta's reset + element styles
-   beat resets but lose to a consumer's own `@layer components`
-   rules. `utilities` sits above everything so utility-class
-   frameworks like Tailwind (`@layer utilities`) can still
-   override single properties when needed. Consumers who load
-   their own layer-order declaration earlier in the cascade
-   override this one — first mention of each layer name wins. */
+/* Anta reserves its public layer between `base` and `components`. Its reset,
+   components, and optional reference theme use ordered child layers. An earlier
+   consumer layer-order declaration wins. */
 @layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
 
 /* Scope of this file — Anta's entire global token vocabulary, kept
    deliberately tiny: theme-aware color *roles* for text (--text-*),

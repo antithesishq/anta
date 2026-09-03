@@ -1306,13 +1306,8 @@ function buildSrcdoc(): string {
     document.documentElement.style.colorScheme = d ? 'dark' : 'light';
   } catch (e) {}
 </script><link rel="stylesheet" href="${iframeAssetUrl(A.css)}"><script type="module" src="${iframeAssetUrl(A.js)}"></script><style>
-  /* Pin the sans variable font's slnt / ital axes to 0.
-     Safari leaves variable-font axes at the font file's internal
-     defaults unless they're explicitly set — and our font ships
-     with non-zero defaults — so without this the preview iframe
-     renders italic on Safari only. \`font-style: normal\` is the
-     belt to the variation-settings braces. */
-  html, body { margin: 0; background: transparent; font-family: var(--sans-serif, sans-serif); font-style: normal; font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0; }
+  /* Preserve an app font's italic or oblique face. */
+  html, body { margin: 0; background: transparent; font-family: var(--sans-serif, sans-serif); font-style: normal; font-stretch: 100%; }
   body { padding: 24px; overflow: auto; box-sizing: border-box; min-height: 100%; }
   /* Preview default layout: a column-flex with 16px gap so multiple
      examples stack vertically with consistent breathing room. The

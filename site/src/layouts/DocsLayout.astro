@@ -469,7 +469,12 @@ if (isComponentPage && title) {
       })
       document.addEventListener('clearinput', (e) => {
         const input = e.target as HTMLElement
-        if (input.matches?.('[data-sidebar-search-input]')) clearSidebarSearch()
+        if (input.matches?.('[data-sidebar-search-input]')) {
+          clearSidebarSearch()
+          // `a-input.clear()` refocuses itself after this event; let that finish
+          // before the dialog opens and moves focus to its own search field.
+          queueMicrotask(() => document.dispatchEvent(new Event('anta-search-open')))
+        }
       })
       document.addEventListener('keydown', (e) => {
         const target = e.target as HTMLElement

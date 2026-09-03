@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* The calendar is composed in LIGHT DOM from Anta components, so its styling is
      ordinary CSS targeting those elements — nothing is hidden in a shadow root.
      Day cells are real <a-button>s, so their colors/states (hover, focus ring,

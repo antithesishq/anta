@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Light-DOM element (a-checkbox.ts): state lives on ElementInternals, so
      styling keys off :state(checked) / :state(indeterminate) — not attributes.
      Box is ::before, glyph is ::after, label is the children. Only the color
@@ -336,36 +336,36 @@
     line-height: 20px;
   }
   input[data-anta][type="checkbox"] {
-    --native-choice-size: 16px;
-    --native-choice-mark-size: 12px;
-    --native-choice-round: 4px;
-    --native-choice-bg: var(--bg-1);
-    --native-choice-border-neutral: var(--border-3);
-    --native-choice-border: var(--native-choice-border-neutral);
-    --native-choice-border-hover: var(--border-2);
-    --native-choice-border-active: var(--border-1);
-    --native-choice-tone-source: var(--anta-seed-neutral);
-    --native-choice-off-tone-source: var(--anta-seed-neutral);
-    --_native-choice-l-rest: 0.6;
-    --_native-choice-l-hover: 0.45;
-    --_native-choice-l-active: 0.4;
-    --native-choice-selected: oklch(from var(--native-choice-tone-source) var(--_native-choice-l-rest) c h);
-    --native-choice-selected-hover: oklch(from var(--native-choice-tone-source) var(--_native-choice-l-hover) c h);
-    --native-choice-selected-active: oklch(from var(--native-choice-tone-source) var(--_native-choice-l-active) c h);
+    --checkbox-box-size: 16px;
+    --checkbox-mask-size: 12px;
+    --checkbox-round: 4px;
+    --checkbox-bg: var(--bg-1);
+    --checkbox-border-neutral: var(--border-3);
+    --checkbox-border: var(--checkbox-border-neutral);
+    --checkbox-border-hover: var(--border-2);
+    --checkbox-border-active: var(--border-1);
+    --checkbox-tone-source: var(--anta-seed-neutral);
+    --checkbox-off-tone-source: var(--anta-seed-neutral);
+    --_tone-l-rest: 0.6;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.4;
+    --checkbox-bg-selected:        oklch(from var(--checkbox-tone-source) var(--_tone-l-rest) c h);
+    --checkbox-bg-selected-hover:  oklch(from var(--checkbox-tone-source) var(--_tone-l-hover) c h);
+    --checkbox-bg-selected-active: oklch(from var(--checkbox-tone-source) var(--_tone-l-active) c h);
 
     box-sizing: border-box;
-    flex: 0 0 var(--native-choice-size);
-    inline-size: var(--native-choice-size);
-    block-size: var(--native-choice-size);
+    flex: 0 0 var(--checkbox-box-size);
+    inline-size: var(--checkbox-box-size);
+    block-size: var(--checkbox-box-size);
     margin: 0;
     appearance: none;
     -webkit-appearance: none;
-    border: 1.5px solid var(--native-choice-border);
-    border-radius: var(--native-choice-round);
-    background-color: var(--native-choice-bg);
+    border: 1.5px solid var(--checkbox-border);
+    border-radius: var(--checkbox-round);
+    background-color: var(--checkbox-bg);
     background-repeat: no-repeat;
     background-position: center;
-    background-size: var(--native-choice-mark-size);
+    background-size: var(--checkbox-mask-size);
     cursor: pointer;
     vertical-align: middle;
     transition:
@@ -382,77 +382,77 @@
     line-height: 22px;
   }
   input[data-anta][type="checkbox"][size="small"] {
-    --native-choice-size: 14px;
-    --native-choice-mark-size: 10px;
+    --checkbox-box-size: 14px;
+    --checkbox-mask-size: 10px;
   }
   input[data-anta][type="checkbox"][size="large"] {
-    --native-choice-size: 18px;
-    --native-choice-mark-size: 14px;
+    --checkbox-box-size: 18px;
+    --checkbox-mask-size: 14px;
   }
   input[data-anta][type="checkbox"][round] {
-    --native-choice-round: attr(round type(<length>), 999px);
+    --checkbox-round: attr(round type(<length>), 999px);
   }
   input[data-anta][type="checkbox"][tone]:not([tone=""], [tone="neutral"]),
   input[data-anta][type="checkbox"][tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
-    --_native-choice-l-rest: 0.5;
-    --_native-choice-l-hover: 0.45;
-    --_native-choice-l-active: 0.4;
+    --_tone-l-rest: 0.5;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.4;
   }
-  input[data-anta][type="checkbox"][tone="brand"]    { --native-choice-tone-source: var(--anta-seed-brand); --native-choice-off-tone-source: var(--anta-seed-brand); }
-  input[data-anta][type="checkbox"][tone="info"]     { --native-choice-tone-source: var(--anta-seed-info); --native-choice-off-tone-source: var(--anta-seed-info); }
-  input[data-anta][type="checkbox"][tone="success"]  { --native-choice-tone-source: var(--anta-seed-success); --native-choice-off-tone-source: var(--anta-seed-success); }
-  input[data-anta][type="checkbox"][tone="warning"]  { --native-choice-tone-source: var(--anta-seed-warning); --native-choice-off-tone-source: var(--anta-seed-warning); }
-  input[data-anta][type="checkbox"][tone="critical"] { --native-choice-tone-source: var(--anta-seed-critical); --native-choice-off-tone-source: var(--anta-seed-critical); }
-  input[data-anta][type="checkbox"][tone="neutral"]  { --native-choice-tone-source: var(--anta-seed-neutral); --native-choice-off-tone-source: var(--anta-seed-neutral); }
+  input[data-anta][type="checkbox"][tone="brand"]    { --checkbox-tone-source: var(--anta-seed-brand); --checkbox-off-tone-source: var(--anta-seed-brand); }
+  input[data-anta][type="checkbox"][tone="info"]     { --checkbox-tone-source: var(--anta-seed-info); --checkbox-off-tone-source: var(--anta-seed-info); }
+  input[data-anta][type="checkbox"][tone="success"]  { --checkbox-tone-source: var(--anta-seed-success); --checkbox-off-tone-source: var(--anta-seed-success); }
+  input[data-anta][type="checkbox"][tone="warning"]  { --checkbox-tone-source: var(--anta-seed-warning); --checkbox-off-tone-source: var(--anta-seed-warning); }
+  input[data-anta][type="checkbox"][tone="critical"] { --checkbox-tone-source: var(--anta-seed-critical); --checkbox-off-tone-source: var(--anta-seed-critical); }
+  input[data-anta][type="checkbox"][tone="neutral"]  { --checkbox-tone-source: var(--anta-seed-neutral); --checkbox-off-tone-source: var(--anta-seed-neutral); }
   input[data-anta][type="checkbox"][tone]:not([tone=""], [tone="neutral"]) {
-    --native-choice-bg: oklch(from var(--native-choice-off-tone-source) 0.99 calc(c * 0.03) h);
-    --_native-choice-off-selected: oklch(from var(--native-choice-off-tone-source) var(--_native-choice-l-rest) c h);
-    --_native-choice-border-base: color-mix(in oklch, var(--_native-choice-off-selected) 70%, var(--native-choice-border-neutral));
-    --native-choice-border: oklch(from var(--_native-choice-border-base) calc(l + 0.17) c h);
-    --native-choice-border-hover: oklch(from var(--_native-choice-border-base) calc(l + 0.1) c h);
-    --native-choice-border-active: var(--_native-choice-border-base);
+    --checkbox-bg: oklch(from var(--checkbox-off-tone-source) 0.99 calc(c * 0.03) h);
+    --_checkbox-off-bg-selected: oklch(from var(--checkbox-off-tone-source) var(--_tone-l-rest) c h);
+    --_checkbox-border-base: color-mix(in oklch, var(--_checkbox-off-bg-selected) 70%, var(--checkbox-border-neutral));
+    --checkbox-border: oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
+    --checkbox-border-hover: oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
+    --checkbox-border-active: var(--_checkbox-border-base);
   }
   input[data-anta][type="checkbox"][tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
-    --native-choice-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
-    --native-choice-off-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
+    --checkbox-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
+    --checkbox-off-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
   }
-  input[data-anta][type="checkbox"][tone-selected="brand"]    { --native-choice-tone-source: var(--anta-seed-brand); }
-  input[data-anta][type="checkbox"][tone-selected="info"]     { --native-choice-tone-source: var(--anta-seed-info); }
-  input[data-anta][type="checkbox"][tone-selected="success"]  { --native-choice-tone-source: var(--anta-seed-success); }
-  input[data-anta][type="checkbox"][tone-selected="warning"]  { --native-choice-tone-source: var(--anta-seed-warning); }
-  input[data-anta][type="checkbox"][tone-selected="critical"] { --native-choice-tone-source: var(--anta-seed-critical); }
+  input[data-anta][type="checkbox"][tone-selected="brand"]    { --checkbox-tone-source: var(--anta-seed-brand); }
+  input[data-anta][type="checkbox"][tone-selected="info"]     { --checkbox-tone-source: var(--anta-seed-info); }
+  input[data-anta][type="checkbox"][tone-selected="success"]  { --checkbox-tone-source: var(--anta-seed-success); }
+  input[data-anta][type="checkbox"][tone-selected="warning"]  { --checkbox-tone-source: var(--anta-seed-warning); }
+  input[data-anta][type="checkbox"][tone-selected="critical"] { --checkbox-tone-source: var(--anta-seed-critical); }
   input[data-anta][type="checkbox"][tone-selected="neutral"] {
-    --native-choice-tone-source: var(--anta-seed-neutral);
-    --_native-choice-l-rest: 0.6;
-    --_native-choice-l-hover: 0.45;
-    --_native-choice-l-active: 0.4;
+    --checkbox-tone-source: var(--anta-seed-neutral);
+    --_tone-l-rest: 0.6;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.4;
   }
   input[data-anta][type="checkbox"][tone-selected]:not(
       [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
       [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
-    --native-choice-tone-source: attr(tone-selected type(<color>), var(--anta-seed-neutral));
+    --checkbox-tone-source: attr(tone-selected type(<color>), var(--anta-seed-neutral));
   }
   @media (hover: hover) and (pointer: fine) {
     input[data-anta][type="checkbox"]:not(:disabled):hover {
-      border-color: var(--native-choice-border-hover);
+      border-color: var(--checkbox-border-hover);
     }
     input[data-anta][type="checkbox"]:not(:disabled):hover:is(:checked, :indeterminate) {
-      background-color: var(--native-choice-selected-hover);
-      border-color: var(--native-choice-selected-hover);
+      background-color: var(--checkbox-bg-selected-hover);
+      border-color: var(--checkbox-bg-selected-hover);
     }
   }
   input[data-anta][type="checkbox"]:not(:disabled):active {
-    border-color: var(--native-choice-border-active);
+    border-color: var(--checkbox-border-active);
   }
   input[data-anta][type="checkbox"]:not(:disabled):active:is(:checked, :indeterminate) {
-    background-color: var(--native-choice-selected-active);
-    border-color: var(--native-choice-selected-active);
+    background-color: var(--checkbox-bg-selected-active);
+    border-color: var(--checkbox-bg-selected-active);
   }
   input[data-anta][type="checkbox"]:is(:checked, :indeterminate) {
-    background-color: var(--native-choice-selected);
-    border-color: var(--native-choice-selected);
+    background-color: var(--checkbox-bg-selected);
+    border-color: var(--checkbox-bg-selected);
   }
   input[data-anta][type="checkbox"]:checked {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f6f4f6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
@@ -473,26 +473,26 @@
     background-color: color-mix(in oklch, var(--text-1) 10%, transparent);
   }
   .dark input[data-anta][type="checkbox"] {
-    --_native-choice-l-rest: 0.42;
-    --_native-choice-l-hover: 0.45;
-    --_native-choice-l-active: 0.5;
+    --_tone-l-rest: 0.42;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.5;
   }
   .dark input[data-anta][type="checkbox"][tone]:not([tone=""], [tone="neutral"]),
   .dark input[data-anta][type="checkbox"][tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
-    --_native-choice-l-rest: 0.45;
-    --_native-choice-l-hover: 0.5;
-    --_native-choice-l-active: 0.57;
+    --_tone-l-rest: 0.45;
+    --_tone-l-hover: 0.5;
+    --_tone-l-active: 0.57;
   }
   .dark input[data-anta][type="checkbox"][tone]:not([tone=""], [tone="neutral"]) {
-    --native-choice-bg: oklch(from var(--native-choice-off-tone-source) 0.15 calc(c * 0.18) h);
-    --native-choice-border: var(--_native-choice-border-base);
-    --native-choice-border-hover: oklch(from var(--_native-choice-border-base) calc(l + 0.1) c h);
-    --native-choice-border-active: oklch(from var(--_native-choice-border-base) calc(l + 0.17) c h);
+    --checkbox-bg: oklch(from var(--checkbox-off-tone-source) 0.15 calc(c * 0.18) h);
+    --checkbox-border: var(--_checkbox-border-base);
+    --checkbox-border-hover: oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
+    --checkbox-border-active: oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
   }
   .dark input[data-anta][type="checkbox"][tone-selected="neutral"] {
-    --_native-choice-l-rest: 0.42;
-    --_native-choice-l-hover: 0.45;
-    --_native-choice-l-active: 0.5;
+    --_tone-l-rest: 0.42;
+    --_tone-l-hover: 0.45;
+    --_tone-l-active: 0.5;
   }
 
   /* The custom checkmark is a mask painted by ::after. In forced colors, pair

@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   a-text {
     --text-color: var(--text-2);
     --text-link-color: var(--link-color);

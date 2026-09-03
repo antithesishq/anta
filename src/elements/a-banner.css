@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Host + token definitions for <a-banner>. The visible box (surface, bottom
      border) lives here so plain consumer CSS overrides it and it paints before the
      element upgrades; the shadow <style> owns only the bar layout and REFERENCES
@@ -14,17 +14,12 @@
     --banner-border: var(--border-4);
     --banner-text: var(--text-2);
 
-    /* The host IS the centered bar — the slots (message / content / actions / close)
-       project as its flex items, no wrapper element. Layout lives here (not a shadow
-       node) so it paints before upgrade and consumers can override it in plain CSS.
-       `position: relative` anchors the absolutely-positioned close ✕. */
+    /* The host lays out projected slots so it paints before upgrade and consumer CSS
+       can override it. */
     display: flex;
     align-items: center;
-    justify-content: center;
-    /* Wrap when the row can't fit: the actions slot is one atomic flex item
-       (flex-shrink: 0), so it drops to its own line below the message instead of
-       squeezing the message into a tall narrow column. `gap: <row> <column>` — a
-       tight 4px between wrapped lines, and a font-relative 1ch between inline items. */
+    justify-content: flex-start;
+    /* Wrap instead of narrowing the message. */
     flex-wrap: wrap;
     gap: 4px 1ch;
     position: relative;
@@ -33,9 +28,9 @@
     /* Resting height. A plain host property, not a token: `a-banner` is light DOM,
        so a consumer just sets `min-height` (plain CSS beats @layer, or inline). */
     min-height: 40px;
-    /* Symmetric inline padding reserves the right zone for the full-height ✕ (so
-       the centered content never runs under it) and keeps the group centered. */
-    padding: 6px 52px;
+    /* The end inset reserves the close control. */
+    padding-block: 6px;
+    padding-inline: 16px 48px;
 
     color: var(--banner-text);
     background: var(--banner-bg);
@@ -70,6 +65,12 @@
       display 200ms allow-discrete;
   }
 
+  /* Symmetric padding centers content on the full bar. */
+  a-banner[align="center"] {
+    justify-content: center;
+    padding-inline: 48px;
+  }
+
   /* `round` — rounded corners for a standalone, floating banner (still borderless
      by default; add `border-width` for an outline). Bare `round` clamps to a stadium
      (half the height); a length value (`round="12px"`, or the wrapper's `round={12}`
@@ -91,12 +92,14 @@
     width: 40px;
   }
 
-  /* A string `message` is wrapped in <a-banner-message> by the <Banner> wrapper;
-     it carries the message type scale. A node message keeps its own type. */
+  /* A string message gets the banner type scale; a node keeps its own type. */
   a-banner-message {
     font-size: 14px;
     line-height: 20px;
     font-weight: 475;
+    text-align: start;
+  }
+  a-banner[align="center"] a-banner-message {
     text-align: center;
   }
 

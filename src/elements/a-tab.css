@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Intrinsic, priority-independent tab chrome. The per-priority / per-tone / per-
      state values of --tab-fg / --tab-bg, the type-scale vars (--_fs/--_lh/--_pb),
      padding, and the track live on the parent <a-tabs> (a-tabs.css) and inherit /

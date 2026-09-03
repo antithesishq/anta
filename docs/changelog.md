@@ -3,6 +3,27 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.25 — September 1, 2026
+
+### Added
+
+- `<textarea data-anta>` uses Input field styling and supports `data-anta-size`,
+  `round`, and `tone`.
+
+### Changed
+
+- `Banner` content starts at the inline edge by default; pass `align="center"` to
+  center it.
+- `reset.css` now applies Anta page and prose defaults; `body` backgrounds paint the
+  browser canvas. For page-wide dark mode, put `class="dark"` on `<html>`; use
+  `class="light"` in a dark subtree.
+
+### Fixed
+
+- Native `data-anta` checkboxes and radios match component colors with
+  `theme-anta.css`.
+- `MenuItem` maps `kbd` hints to `aria-keyshortcuts`; spaces separate shortcuts.
+
 ## 0.3.24 — August 25, 2026
 
 ### Added
@@ -296,7 +317,7 @@ changes are not listed.
 
 ### Breaking
 
-- `copyLazy` is removed. Keep `copy` reactive and update it from
+- `copyLazy` is removed. Pass a controlled string to `copy` and update it in
   `onCopyRequest` before activation.
 - Link-mode `Button` and `MenuItem` types reject copy props.
 

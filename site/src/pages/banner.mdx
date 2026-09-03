@@ -11,16 +11,13 @@ import { Banner, Button, Text } from '@antadesign/anta'
 
 # Banner
 
-A full-width message strip for a page- or section-level notice: an announcement, a
-status change, a promotion. The `Banner` JSX wrapper renders an `<a-banner>` whose
-content is a single centered row — `message`, optional `children`, then `actions` —
-with a dismiss ✕ on the right edge. It's **closable** by default.
+A full-width notice for an announcement, status change, or promotion. `Banner`
+renders an `<a-banner>` with `message`, optional `children`, `actions`, and a dismiss
+control. Content starts at the inline edge; pass `align="center"` to center it
+([Align](#align)). `closable` defaults to `true`.
 
-Its surface reuses `Expander`'s primary vocabulary — a toned box that tracks light
-and dark — but laid out as a short horizontal strip sitting edge to edge, about
-twice the resting height of `Progress`. It's **borderless by default**; add a rule
-under it or an outline around it with `border-bottom-width` / `border-width`, the
-same opt-in as `Progress` ([Styling](#styling)).
+`Banner` is borderless. Set `border-bottom-width` for a rule or `border-width` for
+an outline ([Styling](#styling)).
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -93,11 +90,29 @@ pass a `number` (px) or a CSS length string for a custom radius.
 <Banner round={12} tone="success" message="A custom 12px radius." />
 ```
 
+## Align
+
+`align` places the content row. `start` (the default) aligns it to the inline edge
+and reserves space for the dismiss control. `center` centers it in the bar. Wrapped
+message text follows the selected alignment.
+
+<Preview direction="column" gap="8px">
+  <Banner tone="info" message="Start-aligned content." />
+  <Banner align="center" tone="info" message="Centered content." />
+</Preview>
+
+```tsx folded
+<Banner tone="info" message="Start-aligned content." /> {/* start is the default */}
+<Banner align="center" tone="info" message="Centered content." />
+```
+
+The layout follows `direction: rtl`.
+
 ## Message and content
 
-`message` is the leading content — a string (rendered at the banner type scale) or
-any node. `children` sit between the message and the actions, for a chip, a link,
-or a secondary line. Both are centered as one row.
+`message` is the leading content: a string at the banner type scale or any node.
+`children` sit between the message and actions, for example a chip, link, or
+secondary line.
 
 <Preview direction="column" gap="8px">
   <Banner tone="info" message="Deployment complete.">
@@ -341,7 +356,7 @@ banner's border matches its tone with no extra work.
 <Banner round tone="success" message="A full outline on a round banner." style={{ borderWidth: 1 }} />
 ```
 
-The host `a-banner` **is** the centered bar — its surface, text, border, and layout
+The host `a-banner` **is** the bar — its surface, text, border, and layout
 are all plain CSS on the host (`@layer anta`, so an un-layered rule of yours wins
 without `!important`). For the individual regions, `<a-banner>` exposes
 `::part(message)` / `::part(content)` / `::part(actions)` / `::part(close)`.

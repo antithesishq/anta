@@ -30,8 +30,8 @@ export type MenuItemCopyProps = MenuItemCommonProps &
 /**
  * Copying menu item — a `MenuItem` preset for copy-to-clipboard rows inside a
  * `Menu`. Set `copy` for a literal string, `copyNode` to copy a DOM region, or
- * `copyUrl` to copy the current page URL. For content computed on demand, keep
- * `copy` reactive and refresh it in `onCopyRequest` (fired on pointerdown / keydown).
+ * `copyUrl` to copy the current page URL. For dynamic text, pass a controlled
+ * `copy` string and set it in `onCopyRequest` before activation.
  *
  * It composes a plain `<MenuItem>` with a slotted `<a-copy>` child that performs
  * the write when the row is chosen — the item itself carries no copy behavior.

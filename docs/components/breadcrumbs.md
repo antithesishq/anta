@@ -108,8 +108,8 @@ copying final item `current` when it represents the current page.
 ```
 
 Use `copyUrl` to copy `location.href`, `copyNode` to copy a marked rendered
-region, or `copy` for a known string. `onCopyRequest` refreshes a reactive string
-before copying, and `onCopied` receives the result.
+region, or `copy` for a known string. For dynamic text, pass a controlled `copy`
+string and set it from `onCopyRequest`. `onCopied` receives the result.
 
 ### Props
 

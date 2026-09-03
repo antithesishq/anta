@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   a-menu:not(:defined) {
     display: none;
   }

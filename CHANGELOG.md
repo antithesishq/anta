@@ -3,7 +3,7 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## 0.3.25 — September 1, 2026
+## 0.3.25 — September 2, 2026
 
 ### Added
 

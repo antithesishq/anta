@@ -32,6 +32,11 @@ changes are not listed.
 
 ### Fixed
 
+- `Tooltip truncatedOnly` on a `Box` reads the Box's own overflow. Target
+  resolution preferred any `a-button-label` / `a-tab-label` / `a-step-hint`
+  inside the anchor, so a Box clipping a row of Buttons whose labels each fit
+  never opened its tooltip. An anchor that reports its own truncation now wins;
+  `truncated-selector` still overrides both.
 - Bare `round` gives full-round corners in Firefox and Safari. Neither engine has
   typed `attr()`, and without a `@supports` guard they stored the literal `attr()`
   token stream in the custom property, so the radius computed to 0. The guard now

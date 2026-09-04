@@ -3,6 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.27 — September 4, 2026
+
+### Fixed
+
+- `Checkbox` sets its ARIA state and form value in Safari 16.4-17.3 and Firefox
+  93-125, where `ElementInternals` lacks `CustomStateSet`.
+
 ## 0.3.26 — September 4, 2026
 
 ### Added

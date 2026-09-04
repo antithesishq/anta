@@ -155,10 +155,13 @@ export class ACheckboxElement extends HTMLElementBase {
   private paint() {
     const i = this.internals;
     if (!i) return;
-    i.states.delete("checked");
-    i.states.delete("indeterminate");
-    if (this.currentState === "indeterminate") i.states.add("indeterminate");
-    else if (this.currentState === "checked") i.states.add("checked");
+    // `?.` on `states` guards engines with ElementInternals but no CustomStateSet
+    // (`.states` undefined), where a throw here would abort paint() — and, on the
+    // first connect, the rest of connectedCallback with it.
+    i.states?.delete("checked");
+    i.states?.delete("indeterminate");
+    if (this.currentState === "indeterminate") i.states?.add("indeterminate");
+    else if (this.currentState === "checked") i.states?.add("checked");
     // Publish aria-checked off-DOM via ElementInternals (like a-radio), so it stays
     // live as the element self-toggles in *uncontrolled* mode — a wrapper-set
     // aria-checked would go stale there (it only re-renders for controlled changes).

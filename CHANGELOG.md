@@ -13,7 +13,10 @@ changes are not listed.
   `fade` masks every edge that currently hides clipped content and clears as the
   reader scrolls to it, leaving the border crisp; `fadeSize` sets its depth.
   Overflow state is also exposed as CSS states (`:state(clipped-x)`,
-  `:state(scrollable-y)`, `:state(hidden-end-x)`, …). `contextchange` reports
+  `:state(scrollable-y)`, `:state(hidden-end-x)`, …). Measurement is opt-in and
+  pauses off screen: a Box observes itself while it has `fade`, an
+  `onMeasureChange` handler, or `observe`, and only while it intersects the
+  viewport. `contextchange` reports
   color mode, `os` / `osVersion` / `browser` / `browserVersion` as coarse
   families and major versions, plus pointer, hover, and reduced-motion.
 - `<textarea data-anta>` uses Input field styling and supports `data-anta-size`,
@@ -29,6 +32,12 @@ changes are not listed.
 
 ### Fixed
 
+- Bare `round` gives full-round corners in Firefox and Safari. Neither engine has
+  typed `attr()`, and without a `@supports` guard they stored the literal `attr()`
+  token stream in the custom property, so the radius computed to 0. The guard now
+  covers every typed attribute: `round`, `gap`, `fade-size`, `track-size`,
+  `thumb-size`, and the raw-HTML `tone` / `tone-selected` / `thumb-tone` / `badge`
+  colors.
 - Native `data-anta` checkboxes and radios match component colors with
   `theme-anta.css`.
 - `MenuItem` maps `kbd` hints to `aria-keyshortcuts`; spaces separate shortcuts.

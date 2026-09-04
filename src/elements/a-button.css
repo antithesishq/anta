@@ -108,8 +108,11 @@
   a[role="button"][data-anta][round],
   button[data-anta][round],
   input[data-anta]:is([type="reset"], [type="submit"])[round] {
-    --button-round: attr(round type(<length>), 999px);
+    --button-round: 999px;
     --_radius: var(--button-round, 999px);
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --button-round: attr(round type(<length>), 999px);
+    }
   }
 
   /* Colored tones — saturate the fill/tint and nudge the primary lightness.
@@ -151,7 +154,10 @@
   a[role="button"][data-anta][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
   button[data-anta][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
   input[data-anta]:is([type="reset"], [type="submit"])[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
-    --_src: var(--button-tone-source, attr(tone type(<color>), transparent));
+    --_src: var(--button-tone-source, transparent);
+    @supports (color: attr(probe type(<color>), red)) {
+      --_src: var(--button-tone-source, attr(tone type(<color>), transparent));
+    }
   }
 
   .dark a-button,

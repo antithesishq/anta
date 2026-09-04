@@ -31,7 +31,10 @@
   /* `round` softens the bubble to a 20px radius, matching a round menu. A value
      (`round="12px"`, or the wrapper's `round={12}`) sets a custom radius. */
   a-tooltip[round] {
-    --tooltip-radius: attr(round type(<length>), 20px);
+    --tooltip-radius: 20px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --tooltip-radius: attr(round type(<length>), 20px);
+    }
   }
 
   .dark a-tooltip {

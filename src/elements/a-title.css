@@ -65,9 +65,12 @@
      (text-1, the distinct strong shade); --_title-tone is the text-2 base that
      secondary and the fainter (alpha-stepped) priorities resolve from. */
   a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
-    --title-tone-source: attr(tone type(<color>), currentColor);
+    --title-tone-source: currentColor;
     --_title-tone: oklch(from var(--title-tone-source) 0.41 0.15 h);
     color: oklch(from var(--title-tone-source) 0.33 0.15 h);
+    @supports (color: attr(probe type(<color>), red)) {
+      --title-tone-source: attr(tone type(<color>), currentColor);
+    }
   }
   a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="secondary"]  { color: var(--_title-tone); }
   a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="tertiary"]   { color: color-mix(in oklch, var(--_title-tone) 80%, transparent); }

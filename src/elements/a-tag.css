@@ -199,9 +199,12 @@
       [tone="neutral"], [tone="brand"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]
     ) {
-    --tag-tone-source: attr(tone type(<color>), currentColor);
+    --tag-tone-source: currentColor;
     --tag-text: color-mix(in oklch, oklch(from var(--tag-tone-source) 0.43 0.15 h) 80%, transparent);
     --tag-edge: oklch(from var(--tag-tone-source) 0.43 0.15 h);
+    @supports (color: attr(probe type(<color>), red)) {
+      --tag-tone-source: attr(tone type(<color>), currentColor);
+    }
   }
   .dark a-tag[tone]:not(
       [tone="neutral"], [tone="brand"], [tone="info"],

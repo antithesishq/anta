@@ -22,19 +22,36 @@ type DeviceSnapshot = Pick<
   'os' | 'osVersion' | 'browser' | 'browserVersion' | 'mobile'
 >
 
-const contextStores = new WeakMap<Window, BoxContextStore>()
+const stores = new WeakMap<Window, BoxWindowStore>()
 
-/** One browser-context observer shared by every `a-box` in a window. It owns
- * media-query listeners and the mode-class observer; individual boxes only own
- * their own geometry and focus observation. */
-class BoxContextStore {
-  #boxes = new Set<ABoxElement>()
+/** A class attribute holding `dark` or `light`, matched against a mutation's
+ * recorded previous value (a string, so `classList` is not available). */
+const MODE_CLASS = /(?:^|\s)(?:dark|light)(?:\s|$)/
+
+function hasModeClass(element: Element): boolean {
+  return element.classList.contains('dark') || element.classList.contains('light')
+}
+
+/**
+ * One per-window observer shared by every `a-box` in that window. It owns the
+ * media-query listeners, the mode-class observer, and the visibility observer;
+ * individual boxes own only their own geometry and focus observation.
+ *
+ * Both halves are refcounted and start idle. A page whose boxes report no
+ * context attaches no listeners at all, and the last box to leave takes the
+ * observers and the store itself with it.
+ */
+class BoxWindowStore {
+  #contextBoxes = new Set<ABoxElement>()
+  #observedBoxes = new Set<ABoxElement>()
   #dark: MediaQueryList
   #finePointer: MediaQueryList
   #coarsePointer: MediaQueryList
   #hover: MediaQueryList
   #reducedMotion: MediaQueryList
+  #queries: MediaQueryList[]
   #classObserver?: MutationObserver
+  #visibility?: IntersectionObserver
   #device: DeviceSnapshot
 
   constructor(
@@ -46,38 +63,51 @@ class BoxContextStore {
     this.#coarsePointer = view.matchMedia('(pointer: coarse)')
     this.#hover = view.matchMedia('(hover: hover)')
     this.#reducedMotion = view.matchMedia('(prefers-reduced-motion: reduce)')
+    this.#queries = [this.#dark, this.#finePointer, this.#coarsePointer, this.#hover, this.#reducedMotion]
     this.#device = deviceSnapshot(view.navigator)
+  }
 
-    for (const query of [this.#dark, this.#finePointer, this.#coarsePointer, this.#hover, this.#reducedMotion]) {
-      query.addEventListener('change', this.#notifyAll)
+  /** Only a box with a `contextchange` listener subscribes, so a page that never
+   * reads context pays for no media listeners and no document observer. */
+  subscribeContext(box: ABoxElement) {
+    if (this.#contextBoxes.size === 0) this.#startWatching()
+    this.#contextBoxes.add(box)
+  }
+
+  unsubscribeContext(box: ABoxElement) {
+    if (!this.#contextBoxes.delete(box)) return
+    if (this.#contextBoxes.size === 0) this.#stopWatching()
+    this.#collect()
+  }
+
+  /** Only a box that measures is tracked, and it measures only while on screen. */
+  observeVisibility(box: ABoxElement) {
+    if (typeof this.view.IntersectionObserver === 'undefined') {
+      box.visibilityDidChange(true)
+      return
     }
-
-    const root = doc.documentElement
-    if (root) {
-      this.#classObserver = new view.MutationObserver((records) => {
-        const affected = new Set<ABoxElement>()
-        for (const record of records) {
-          if (!(record.target instanceof this.view.Element)) continue
-          for (const box of this.#boxes) {
-            if (record.target === box || record.target.contains(box)) affected.add(box)
-          }
+    // threshold 0 only: any higher would re-fire on animated size changes.
+    this.#visibility ??= new this.view.IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const box = entry.target as ABoxElement
+          if (this.#observedBoxes.has(box)) box.visibilityDidChange(entry.isIntersecting)
         }
-        for (const box of affected) box.contextStoreDidChange()
-      })
-      this.#classObserver.observe(root, {
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['class'],
-      })
+      },
+      { root: null, rootMargin: '0px', threshold: 0 },
+    )
+    this.#observedBoxes.add(box)
+    this.#visibility.observe(box)
+  }
+
+  unobserveVisibility(box: ABoxElement) {
+    if (!this.#observedBoxes.delete(box)) return
+    this.#visibility?.unobserve(box)
+    if (this.#observedBoxes.size === 0) {
+      this.#visibility?.disconnect()
+      this.#visibility = undefined
     }
-  }
-
-  subscribe(box: ABoxElement) {
-    this.#boxes.add(box)
-  }
-
-  unsubscribe(box: ABoxElement) {
-    this.#boxes.delete(box)
+    this.#collect()
   }
 
   snapshot(): SharedContext {
@@ -91,16 +121,55 @@ class BoxContextStore {
     }
   }
 
+  #startWatching() {
+    for (const query of this.#queries) query.addEventListener('change', this.#notifyAll)
+    const root = this.doc.documentElement
+    if (!root) return
+    this.#classObserver = new this.view.MutationObserver(this.#handleClassChange)
+    this.#classObserver.observe(root, {
+      subtree: true,
+      attributes: true,
+      attributeOldValue: true,
+      attributeFilter: ['class'],
+    })
+  }
+
+  #stopWatching() {
+    for (const query of this.#queries) query.removeEventListener('change', this.#notifyAll)
+    this.#classObserver?.disconnect()
+    this.#classObserver = undefined
+  }
+
+  #collect() {
+    if (this.#contextBoxes.size === 0 && this.#observedBoxes.size === 0) stores.delete(this.view)
+  }
+
+  /* Only `dark` and `light` change what a box reports. Every other class toggle
+     on the page — a route class, a scroll lock, a theme-unrelated modifier —
+     is dropped here, before the ancestor scan runs. */
+  #handleClassChange = (records: MutationRecord[]) => {
+    const affected = new Set<ABoxElement>()
+    for (const record of records) {
+      const target = record.target
+      if (!(target instanceof this.view.Element)) continue
+      if (!hasModeClass(target) && !MODE_CLASS.test(record.oldValue ?? '')) continue
+      for (const box of this.#contextBoxes) {
+        if (target === box || target.contains(box)) affected.add(box)
+      }
+    }
+    for (const box of affected) box.contextStoreDidChange()
+  }
+
   #notifyAll = () => {
-    for (const box of this.#boxes) box.contextStoreDidChange()
+    for (const box of this.#contextBoxes) box.contextStoreDidChange()
   }
 }
 
-function contextStore(view: Window & typeof globalThis, doc: Document): BoxContextStore {
-  let store = contextStores.get(view)
+function windowStore(view: Window & typeof globalThis, doc: Document): BoxWindowStore {
+  let store = stores.get(view)
   if (!store) {
-    store = new BoxContextStore(view, doc)
-    contextStores.set(view, store)
+    store = new BoxWindowStore(view, doc)
+    stores.set(view, store)
   }
   return store
 }
@@ -213,56 +282,95 @@ function rounded(value: number): number {
   return Math.round(value * 100) / 100
 }
 
+/** Events whose listeners switch reporting on. */
+const REPORTED_EVENTS = ['measurechange', 'contextchange']
+
+/** The DOM matches a listener on type plus capture, so the tally has to as well:
+ * a capturing listener removed without the flag stays attached. */
+function listenerKey(type: string, options?: boolean | EventListenerOptions): string {
+  return `${type}|${typeof options === 'object' ? Boolean(options.capture) : Boolean(options)}`
+}
+
 /**
  * `<a-box>` is a light-DOM container that observes itself. It leaves the host
  * and its children entirely to the renderer: all output is read-only getters,
  * `measurechange` / `contextchange` events, and private `ElementInternals`
  * states. This keeps measurement usable when JSX itself cannot access the DOM.
+ *
+ * Observation is opt-in and pauses off screen. A box measures only while it is
+ * intersecting the viewport and something asked for the result: `fade`, the
+ * `observe` attribute (for a consumer styling on the overflow states alone), or
+ * an attached `measurechange` listener. Context reporting needs a
+ * `contextchange` listener. A box with none of those runs no observers, and the
+ * `measurement` / `context` / `isTruncated` getters still read on demand.
  */
 export class ABoxElement extends HTMLElementBase {
+  static observedAttributes = ['fade', 'observe']
+
   #internals = this.attachInternals?.()
-  #store?: BoxContextStore
+  #store?: BoxWindowStore
   #resizeObserver?: ResizeObserver
   #contentObserver?: MutationObserver
   #frame?: number
   #contextQueued = false
   #measurement?: BoxMeasurement
   #context?: BoxContext
+  #listeners = new Map<string, Set<unknown>>()
+  #measuring = false
+  #reportingContext = false
+  #visible = true
+  #initialMeasurement = false
+  #initialContext = false
 
   connectedCallback() {
-    this.#store = contextStore(this.view, this.doc)
-    this.#store.subscribe(this)
-    this.#resizeObserver = new this.view.ResizeObserver(this.#queueMeasurement)
-    this.#resizeObserver.observe(this)
-    this.#contentObserver = new this.view.MutationObserver(this.#queueMeasurement)
-    this.#contentObserver.observe(this, {
-      subtree: true,
-      childList: true,
-      characterData: true,
-      attributes: true,
-    })
-    this.addEventListener('focusin', this.#queueContext)
-    this.addEventListener('focusout', this.#queueContext)
-    this.addEventListener('input', this.#queueMeasurement)
-    this.addEventListener('scroll', this.#queueMeasurement, { passive: true })
-    this.addEventListener('load', this.#queueMeasurement, true)
-    this.doc.fonts?.addEventListener('loadingdone', this.#queueMeasurement)
-    this.#reportMeasurement(true)
-    this.#reportContext(true)
+    this.#store = windowStore(this.view, this.doc)
+    this.#store.observeVisibility(this)
+    this.#sync()
   }
 
   disconnectedCallback() {
-    this.#resizeObserver?.disconnect()
-    this.#contentObserver?.disconnect()
-    if (this.#frame != null) this.view.cancelAnimationFrame(this.#frame)
-    this.#frame = undefined
-    this.#store?.unsubscribe(this)
-    this.removeEventListener('focusin', this.#queueContext)
-    this.removeEventListener('focusout', this.#queueContext)
-    this.removeEventListener('input', this.#queueMeasurement)
-    this.removeEventListener('scroll', this.#queueMeasurement)
-    this.removeEventListener('load', this.#queueMeasurement, true)
-    this.doc.fonts?.removeEventListener('loadingdone', this.#queueMeasurement)
+    this.#stopMeasuring()
+    this.#stopReportingContext()
+    this.#store?.unobserveVisibility(this)
+    this.#store = undefined
+    this.#visible = true
+  }
+
+  attributeChangedCallback() {
+    if (this.isConnected) this.#sync()
+  }
+
+  /* A listener is one of the ways into reporting, and the DOM offers no way to
+     ask whether one is attached, so the element keeps its own tally. */
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | AddEventListenerOptions,
+  ) {
+    // A null listener is a DOM no-op, so it never reaches the tally either.
+    if (!listener) return
+    super.addEventListener(type, listener, options)
+    if (!REPORTED_EVENTS.includes(type)) return
+    const key = listenerKey(type, options)
+    let set = this.#listeners.get(key)
+    if (!set) {
+      set = new Set()
+      this.#listeners.set(key, set)
+    }
+    set.add(listener)
+    this.#sync()
+  }
+
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | EventListenerOptions,
+  ) {
+    if (!listener) return
+    super.removeEventListener(type, listener, options)
+    if (!REPORTED_EVENTS.includes(type)) return
+    this.#listeners.get(listenerKey(type, options))?.delete(listener)
+    this.#sync()
   }
 
   /** A fresh measurement snapshot. For notifications, prefer `measurechange`:
@@ -284,24 +392,121 @@ export class ABoxElement extends HTMLElementBase {
 
   /** Called by the per-window context cache. It is intentionally not a JSX prop. */
   contextStoreDidChange() {
-    this.#reportContext(false)
+    this.#queueContext()
     this.#queueMeasurement()
   }
 
+  /** Called by the per-window visibility observer. Also not a JSX prop. */
+  visibilityDidChange(visible: boolean) {
+    if (this.#visible === visible) return
+    this.#visible = visible
+    this.#sync()
+  }
+
+  /* Nothing observes until something wants the answer, and a box scrolled off
+     screen wants nothing until it comes back. Context reporting ignores
+     visibility: a mode change has to reach an off-screen box too, and the store
+     it subscribes to is already refcounted down to nothing. */
+  #sync() {
+    const measure =
+      this.isConnected &&
+      this.#visible &&
+      (this.hasAttribute('fade') || this.hasAttribute('observe') || this.#hasListener('measurechange'))
+    if (measure) this.#startMeasuring()
+    else this.#stopMeasuring()
+
+    if (this.isConnected && this.#hasListener('contextchange')) this.#startReportingContext()
+    else this.#stopReportingContext()
+  }
+
+  #hasListener(type: string): boolean {
+    return (this.#listeners.get(`${type}|true`)?.size ?? 0) > 0
+      || (this.#listeners.get(`${type}|false`)?.size ?? 0) > 0
+  }
+
+  #startMeasuring() {
+    if (this.#measuring) return
+    this.#measuring = true
+    this.#resizeObserver = new this.view.ResizeObserver(this.#queueMeasurement)
+    this.#resizeObserver.observe(this)
+    // ResizeObserver only fires when the box itself changes size. A fixed-width
+    // box whose child grows keeps its size while its scrollWidth moves, so the
+    // overflow states need the content watcher too.
+    this.#contentObserver = new this.view.MutationObserver(this.#queueMeasurement)
+    this.#contentObserver.observe(this, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+    })
+    this.addEventListener('input', this.#queueMeasurement)
+    this.addEventListener('scroll', this.#queueMeasurement, { passive: true })
+    this.addEventListener('load', this.#queueMeasurement, true)
+    this.doc.fonts?.addEventListener('loadingdone', this.#queueMeasurement)
+    // The states drive the `fade` mask, so they have to be right on the first
+    // frame. The matching event waits a frame, so a listener attached mid-render
+    // is never called back synchronously from inside its own `addEventListener`.
+    this.#measurement = this.#readMeasurement()
+    this.#setMeasurementStates(this.#measurement)
+    this.#initialMeasurement = true
+    this.#queueMeasurement()
+  }
+
+  #stopMeasuring() {
+    if (!this.#measuring) return
+    this.#measuring = false
+    this.#resizeObserver?.disconnect()
+    this.#resizeObserver = undefined
+    this.#contentObserver?.disconnect()
+    this.#contentObserver = undefined
+    if (this.#frame != null) this.view.cancelAnimationFrame(this.#frame)
+    this.#frame = undefined
+    this.removeEventListener('input', this.#queueMeasurement)
+    this.removeEventListener('scroll', this.#queueMeasurement)
+    this.removeEventListener('load', this.#queueMeasurement, true)
+    this.doc.fonts?.removeEventListener('loadingdone', this.#queueMeasurement)
+    // The last states stay set. Clearing them would flash the `fade` mask off
+    // and back on as a box scrolls past the viewport edge.
+  }
+
+  #startReportingContext() {
+    if (this.#reportingContext) return
+    this.#reportingContext = true
+    this.#store?.subscribeContext(this)
+    this.addEventListener('focusin', this.#queueContext)
+    this.addEventListener('focusout', this.#queueContext)
+    this.#initialContext = true
+    this.#queueContext()
+  }
+
+  #stopReportingContext() {
+    if (!this.#reportingContext) return
+    this.#reportingContext = false
+    this.#store?.unsubscribeContext(this)
+    this.removeEventListener('focusin', this.#queueContext)
+    this.removeEventListener('focusout', this.#queueContext)
+  }
+
   #queueMeasurement = () => {
-    if (!this.isConnected || this.#frame != null) return
+    if (!this.#measuring || this.#frame != null) return
     this.#frame = this.view.requestAnimationFrame(() => {
       this.#frame = undefined
-      this.#reportMeasurement(false)
+      if (!this.#measuring) return
+      const initial = this.#initialMeasurement
+      this.#initialMeasurement = false
+      this.#reportMeasurement(initial)
     })
   }
 
   #queueContext = () => {
-    if (!this.isConnected || this.#contextQueued) return
+    if (!this.#reportingContext || this.#contextQueued) return
     this.#contextQueued = true
     queueMicrotask(() => {
       this.#contextQueued = false
-      if (this.isConnected) this.#reportContext(false)
+      if (!this.#reportingContext) return
+      const initial = this.#initialContext
+      this.#initialContext = false
+      this.#reportContext(initial)
     })
   }
 
@@ -348,7 +553,7 @@ export class ABoxElement extends HTMLElementBase {
   }
 
   #readContext(): BoxContext {
-    const shared = (this.#store ?? contextStore(this.view, this.doc)).snapshot()
+    const shared = (this.#store ?? windowStore(this.view, this.doc)).snapshot()
     return {
       ...shared,
       mode: localMode(this),

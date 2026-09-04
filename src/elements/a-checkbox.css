@@ -97,7 +97,10 @@
        value (`round="6px"`, or the wrapper's `round={6}` → inline `--checkbox-round`)
        gives a rounded-square mark instead. */
     &[round] {
-      --checkbox-round: attr(round type(<length>), 999px);
+      --checkbox-round: 999px;
+      @supports (border-radius: attr(probe type(<length>), 1px)) {
+        --checkbox-round: attr(round type(<length>), 999px);
+      }
     }
     &[round]::before {
       border-radius: var(--checkbox-round, 999px);
@@ -264,8 +267,12 @@
   a-checkbox[tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
-    --checkbox-tone-source: attr(tone type(<color>), transparent);
-    --checkbox-off-tone-source: attr(tone type(<color>), transparent);
+    --checkbox-tone-source: transparent;
+    --checkbox-off-tone-source: transparent;
+    @supports (color: attr(probe type(<color>), red)) {
+      --checkbox-tone-source: attr(tone type(<color>), transparent);
+      --checkbox-off-tone-source: attr(tone type(<color>), transparent);
+    }
   }
 
   /* Selected-tone mappings follow `tone`, so `tone-selected` always chooses the
@@ -285,7 +292,10 @@
   a-checkbox[tone-selected]:not(
       [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
       [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
-    --checkbox-tone-source: attr(tone-selected type(<color>), transparent);
+    --checkbox-tone-source: transparent;
+    @supports (color: attr(probe type(<color>), red)) {
+      --checkbox-tone-source: attr(tone-selected type(<color>), transparent);
+    }
   }
 
   /* Dark — neutral chrome + brighter fill/tinted-box lightnesses. Constants from
@@ -390,7 +400,10 @@
     --checkbox-mask-size: 14px;
   }
   input[data-anta][type="checkbox"][round] {
-    --checkbox-round: attr(round type(<length>), 999px);
+    --checkbox-round: 999px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --checkbox-round: attr(round type(<length>), 999px);
+    }
   }
   input[data-anta][type="checkbox"][tone]:not([tone=""], [tone="neutral"]),
   input[data-anta][type="checkbox"][tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
@@ -415,8 +428,12 @@
   input[data-anta][type="checkbox"][tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
-    --checkbox-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
-    --checkbox-off-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
+    --checkbox-tone-source: var(--anta-seed-neutral);
+    --checkbox-off-tone-source: var(--anta-seed-neutral);
+    @supports (color: attr(probe type(<color>), red)) {
+      --checkbox-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
+      --checkbox-off-tone-source: attr(tone type(<color>), var(--anta-seed-neutral));
+    }
   }
   input[data-anta][type="checkbox"][tone-selected="brand"]    { --checkbox-tone-source: var(--anta-seed-brand); }
   input[data-anta][type="checkbox"][tone-selected="info"]     { --checkbox-tone-source: var(--anta-seed-info); }
@@ -432,7 +449,10 @@
   input[data-anta][type="checkbox"][tone-selected]:not(
       [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
       [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
-    --checkbox-tone-source: attr(tone-selected type(<color>), var(--anta-seed-neutral));
+    --checkbox-tone-source: var(--anta-seed-neutral);
+    @supports (color: attr(probe type(<color>), red)) {
+      --checkbox-tone-source: attr(tone-selected type(<color>), var(--anta-seed-neutral));
+    }
   }
   @media (hover: hover) and (pointer: fine) {
     input[data-anta][type="checkbox"]:not(:disabled):hover {

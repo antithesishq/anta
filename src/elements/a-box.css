@@ -20,9 +20,10 @@
      --box-gap. The declaration stays in this layer, so a consumer's own `gap`
      rule still wins. */
   a-box[gap] {
-    --box-gap: attr(gap type(<length>));
-
     gap: var(--box-gap, normal);
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --box-gap: attr(gap type(<length>));
+    }
   }
 
   /* Bare `round` → 999px, clamped to the box. A length (`round="16px"`, or the
@@ -30,9 +31,10 @@
      attr() covers raw-HTML authors. Box has no default radius, so square corners
      stay the resting state. */
   a-box[round] {
-    --box-round: attr(round type(<length>));
-
     border-radius: var(--box-round, 999px);
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --box-round: attr(round type(<length>));
+    }
   }
 
   /* `fade` masks each edge that currently hides content, leaving the border
@@ -54,6 +56,8 @@
     --box-fade-size: 24px;
     --box-fade-x: linear-gradient(transparent, transparent);
     --box-fade-y: linear-gradient(transparent, transparent);
+    --box-fade-to-start: to left;
+    --box-fade-to-end: to right;
 
     mask-image: linear-gradient(black, black), var(--box-fade-x), var(--box-fade-y);
     mask-clip: border-box, padding-box, padding-box;
@@ -66,15 +70,31 @@
   /* Same two channels as `gap`: the wrapper's `fadeSize` writes the inline
      custom property, the typed attr() serves hand-written HTML. */
   a-box[fade][fade-size] {
-    --box-fade-size: attr(fade-size type(<length>), 24px);
+    --box-fade-size: 24px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --box-fade-size: attr(fade-size type(<length>), 24px);
+    }
+  }
+
+  /* The `hidden-*-x` states are logical: `start` is the inline-start edge, which
+     is the right edge in a right-to-left box. Gradients take physical directions
+     only, so `:dir()` resolves the two logical edges. The both-edges rule below
+     is symmetric and needs no flip.
+
+     No `-webkit-` mask fallbacks here on purpose: unprefixed `mask-*` landed in
+     Safari 15.4 and Chrome 120, while `:state()` needs Safari 17.4 / Chrome 125,
+     so no engine can reach these rules without the standard properties. */
+  a-box[fade]:dir(rtl) {
+    --box-fade-to-start: to right;
+    --box-fade-to-end: to left;
   }
 
   a-box[fade]:state(hidden-end-x) {
-    --box-fade-x: linear-gradient(to right, transparent calc(100% - var(--box-fade-size)), black);
+    --box-fade-x: linear-gradient(var(--box-fade-to-end), transparent calc(100% - var(--box-fade-size)), black);
   }
 
   a-box[fade]:state(hidden-start-x) {
-    --box-fade-x: linear-gradient(to left, transparent calc(100% - var(--box-fade-size)), black);
+    --box-fade-x: linear-gradient(var(--box-fade-to-start), transparent calc(100% - var(--box-fade-size)), black);
   }
 
   a-box[fade]:state(hidden-start-x):state(hidden-end-x) {

@@ -12,6 +12,8 @@ changes are not listed.
 - `Box` removes its per-window store only when that store is the one still
   registered, so a page that mounts and unmounts boxes repeatedly keeps one
   document-wide class observer instead of accumulating them.
+- `Box` ships its TSDoc in `dist/components/Box.d.ts`, so editors show the
+  description and example on hover.
 
 ## 0.3.26 — September 4, 2026
 

@@ -3,36 +3,14 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## 0.3.25 — September 2, 2026
+## 0.3.25 — September 5, 2026
 
 ### Added
 
-- Added `Box` / `<a-box>`, a light-DOM layout container that reports its own
-  geometry, content overflow, and browser context through native custom events.
-  `display`, `gap`, and `round` mirror the CSS properties of the same names.
-  `fade` masks every edge that currently hides clipped content and clears as the
-  reader scrolls to it, leaving the border crisp; `fadeSize` sets its depth.
-  Overflow state is also exposed as CSS states (`:state(clipped-x)`,
-  `:state(scrollable-y)`, `:state(hidden-end-x)`, …). Measurement is opt-in and
-  pauses off screen: a Box observes itself while it has `fade`, an
-  `onMeasureChange` handler, or `observe="size"`, and only while it intersects
-  the viewport. The switch is the `observe` attribute — `size`, `context`, or
-  `all`, with a bare `observe` reading as `all` — which `Box` merges from the
-  `observe` prop and the handlers you pass; a hand-written `<a-box>` sets it
-  itself, because `addEventListener` alone does not arm anything. A Box that
-  clips or scrolls also watches its direct children, so a
-  child that upgrades late or resizes from its own state keeps the overflow
-  states honest; a Box with visible overflow watches none. `contextchange` reports
-  color mode, `os` / `osVersion` / `browser` / `browserVersion` as coarse
-  families and major versions, plus pointer, hover, reduced-motion, and
-  `devicePixelRatio`, which re-reports on zoom and on a move to a display with a
-  different density. `context.font` reports the resolved text style as a
-  canvas-ready `BoxFont`, including a `font` shorthand Box assembles itself
-  because every engine returns an empty string for the computed one.
-  `context.inset` reports padding and border widths, which `BoxMeasurement`
-  cannot express — `width` is the border box and `clientWidth` the padding box —
-  and `context.backgroundColor` completes the set for drawing a box's content
-  somewhere its own background is not behind it.
+- Added `Box` / `<a-box>`, a light-DOM container with layout props, overflow
+  states, optional edge fades, and measurement and context events. Set
+  `observe` to update states or receive events; the JSX wrapper derives it from
+  handlers, while a hand-written `<a-box>` sets it directly.
 - `<textarea data-anta>` uses Input field styling and supports `data-anta-size`,
   `round`, and `tone`.
 
@@ -40,33 +18,14 @@ changes are not listed.
 
 - `Banner` content starts at the inline edge by default; pass `align="center"` to
   center it.
-- `reset.css` now applies Anta page and prose defaults; `body` backgrounds paint the
-  browser canvas. For page-wide dark mode, put `class="dark"` on `<html>`; use
-  `class="light"` in a dark subtree.
+- `reset.css` applies Anta page and prose defaults, including `body` backgrounds.
+  Use `class="dark"` on `<html>` for page-wide dark mode and `class="light"` in
+  a dark subtree.
 
 ### Fixed
 
-- `Box` no longer clips an outset `box-shadow` or focus ring on a `fade` Box that
-  is hiding nothing. The mask is applied only while an edge actually hides
-  content.
-- Custom-state writes are guarded across every element. `ElementInternals`
-  exists without `CustomStateSet` on Safari 16.4-17.3 and Firefox 93-125, where
-  the unguarded call threw out of `connectedCallback`.
-- `Box` reports one `contextchange` when focus moves between two of its own
-  descendants. Safari runs a microtask checkpoint between `focusout` and
-  `focusin`, so the pair used to surface an extra `focusWithin: false` that was
-  never true for the reader.
-- `Tooltip truncatedOnly` on a `Box` reads the Box's own overflow. Target
-  resolution preferred any `a-button-label` / `a-tab-label` / `a-step-hint`
-  inside the anchor, so a Box clipping a row of Buttons whose labels each fit
-  never opened its tooltip. An anchor that reports its own truncation now wins;
-  `truncated-selector` still overrides both.
-- Bare `round` gives full-round corners in Firefox and Safari. Neither engine has
-  typed `attr()`, and without a `@supports` guard they stored the literal `attr()`
-  token stream in the custom property, so the radius computed to 0. The guard now
-  covers every typed attribute: `round`, `gap`, `fade-size`, `track-size`,
-  `thumb-size`, and the raw-HTML `tone` / `tone-selected` / `thumb-tone` / `badge`
-  colors.
+- Custom states work in Safari 16.4-17.3 and Firefox 93-125, where
+  `ElementInternals` lacks `CustomStateSet`.
 - Native `data-anta` checkboxes and radios match component colors with
   `theme-anta.css`.
 - `MenuItem` maps `kbd` hints to `aria-keyshortcuts`; spaces separate shortcuts.

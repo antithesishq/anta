@@ -3,7 +3,7 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## 0.3.25 — September 5, 2026
+## 0.3.26 — September 4, 2026
 
 ### Added
 
@@ -11,6 +11,22 @@ changes are not listed.
   states, optional edge fades, and measurement and context events. Set
   `observe` to update states or receive events; the JSX wrapper derives it from
   handlers, while a hand-written `<a-box>` sets it directly.
+
+### Fixed
+
+- `Box` applies its fade mask only to edges that hide content, preserving an
+  outset box shadow and focus ring when all content is visible.
+- `Tooltip` with `truncatedOnly` detects clipping on its own `Box` anchor when
+  child labels do not truncate.
+- Raw custom-element length and color attributes work in Firefox and Safari,
+  which do not support typed `attr()`.
+- Custom states work in Safari 16.4-17.3 and Firefox 93-125, where
+  `ElementInternals` lacks `CustomStateSet`.
+
+## 0.3.25 — September 2, 2026
+
+### Added
+
 - `<textarea data-anta>` uses Input field styling and supports `data-anta-size`,
   `round`, and `tone`.
 
@@ -18,14 +34,12 @@ changes are not listed.
 
 - `Banner` content starts at the inline edge by default; pass `align="center"` to
   center it.
-- `reset.css` applies Anta page and prose defaults, including `body` backgrounds.
-  Use `class="dark"` on `<html>` for page-wide dark mode and `class="light"` in
-  a dark subtree.
+- `reset.css` now applies Anta page and prose defaults; `body` backgrounds paint
+  the browser canvas. For page-wide dark mode, put `class="dark"` on `<html>`;
+  use `class="light"` in a dark subtree.
 
 ### Fixed
 
-- Custom states work in Safari 16.4-17.3 and Firefox 93-125, where
-  `ElementInternals` lacks `CustomStateSet`.
 - Native `data-anta` checkboxes and radios match component colors with
   `theme-anta.css`.
 - `MenuItem` maps `kbd` hints to `aria-keyshortcuts`; spaces separate shortcuts.

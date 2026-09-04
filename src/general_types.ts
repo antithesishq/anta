@@ -306,10 +306,12 @@ export interface ABoxAttributes extends BaseAttributes {
   fade?: boolean | ''
   /** Turns measurement on for a box without `fade`. Presence is the switch: a
    *  box with neither runs no observers, so a `measurechange` listener alone
-   *  reports nothing. The JSX wrapper sets it from `observe` or a handler. */
-  observe?: boolean | ''
+   *  reports nothing. The JSX wrapper sets it from `reportMeasure` or an
+   *  `onMeasureChange` handler. */
+  'report-measure'?: boolean | ''
   /** Turns `contextchange` on. Presence is the switch, for the same reason as
-   *  `observe`. The JSX wrapper sets it from an `onContextChange` handler. */
+   *  `report-measure`. The JSX wrapper sets it from an `onContextChange`
+   *  handler. */
   'report-context'?: boolean | ''
   /** Depth of that mask, as a length value (`fade-size="2rem"`). Engines
    *  without typed `attr()` read it from `--box-fade-size` in the host's

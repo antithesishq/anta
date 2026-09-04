@@ -388,8 +388,9 @@ function rounded(value: number): number {
  * `measurechange` / `contextchange` events, and private `ElementInternals`
  * states. This keeps measurement usable when JSX itself cannot access the DOM.
  *
- * Observation is opt-in by attribute and pauses off screen. `fade` or `observe`
- * turns measurement on, `report-context` turns `contextchange` on, and a box
+ * Observation is opt-in by attribute and pauses off screen. `fade` or
+ * `report-measure` turns measurement on, `report-context` turns `contextchange`
+ * on, and a box
  * with neither runs no observers at all — not even the shared visibility one.
  * The `measurement` / `context` / `isTruncated` getters still read on demand.
  *
@@ -401,7 +402,7 @@ function rounded(value: number): number {
  * props, so this is invisible to anyone using `Box`.
  */
 export class ABoxElement extends HTMLElementBase {
-  static observedAttributes = ['fade', 'observe', 'report-context']
+  static observedAttributes = ['fade', 'report-measure', 'report-context']
 
   #internals = this.attachInternals?.()
   #store?: BoxWindowStore
@@ -483,7 +484,7 @@ export class ABoxElement extends HTMLElementBase {
      visibility: a mode change has to reach an off-screen box too, and the store
      it subscribes to is already refcounted down to nothing. */
   #sync() {
-    const wantsMeasurement = this.hasAttribute('fade') || this.hasAttribute('observe')
+    const wantsMeasurement = this.hasAttribute('fade') || this.hasAttribute('report-measure')
     const measure = this.isConnected && wantsMeasurement && (this.#visible ?? this.hasAttribute('fade'))
     if (measure) this.#startMeasuring()
     else this.#stopMeasuring()

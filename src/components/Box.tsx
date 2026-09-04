@@ -30,7 +30,7 @@ export interface BoxProps extends BaseProps {
   /** Keeps the overflow CSS states (`:state(clipped-x)`, `:state(scrollable-y)`,
    * …) current. A Box measures only when it has `fade`, an `onMeasureChange`
    * handler, or this; set it when your own CSS is the only reader. */
-  observe?: boolean
+  reportMeasure?: boolean
   /** Fades out every edge that currently hides clipped content, and drops the
    * fade from an edge once the reader scrolls to it. */
   fade?: boolean
@@ -71,7 +71,7 @@ export const Box = ({
   display,
   round,
   gap,
-  observe,
+  reportMeasure,
   fade,
   fadeSize,
   onMeasureChange,
@@ -99,7 +99,7 @@ export const Box = ({
       display={display === 'block' ? undefined : display}
       round={roundAttr(round)}
       gap={gap != null ? '' : undefined}
-      observe={observe || onMeasureChange ? '' : undefined}
+      report-measure={reportMeasure || onMeasureChange ? '' : undefined}
       report-context={onContextChange ? '' : undefined}
       fade={fade ? '' : undefined}
       fade-size={fade && fadeSize != null ? cssLength(fadeSize) : undefined}

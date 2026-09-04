@@ -15,11 +15,11 @@ changes are not listed.
   Overflow state is also exposed as CSS states (`:state(clipped-x)`,
   `:state(scrollable-y)`, `:state(hidden-end-x)`, …). Measurement is opt-in and
   pauses off screen: a Box observes itself while it has `fade`, an
-  `onMeasureChange` handler, or `reportMeasure`, and only while it intersects the
-  viewport. The switches are the `report-measure` and `report-context`
-  attributes, which `Box` stamps from `reportMeasure` / `onMeasureChange` and
-  `onContextChange`; a hand-written `<a-box>` needs them, because
-  `addEventListener` alone does not arm anything. A Box that
+  `onMeasureChange` handler, or `observe="size"`, and only while it intersects
+  the viewport. The switch is the `observe` attribute — `size`, `context`, or
+  `all`, with a bare `observe` reading as `all` — which `Box` merges from the
+  `observe` prop and the handlers you pass; a hand-written `<a-box>` sets it
+  itself, because `addEventListener` alone does not arm anything. A Box that
   clips or scrolls also watches its direct children, so a
   child that upgrades late or resizes from its own state keeps the overflow
   states honest; a Box with visible overflow watches none. `contextchange` reports

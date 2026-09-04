@@ -304,15 +304,13 @@ export interface ABoxAttributes extends BaseAttributes {
   gap?: boolean | '' | number | string
   /** Masks every edge that currently hides clipped content. */
   fade?: boolean | ''
-  /** Turns measurement on for a box without `fade`. Presence is the switch: a
-   *  box with neither runs no observers, so a `measurechange` listener alone
-   *  reports nothing. The JSX wrapper sets it from `reportMeasure` or an
-   *  `onMeasureChange` handler. */
-  'report-measure'?: boolean | ''
-  /** Turns `contextchange` on. Presence is the switch, for the same reason as
-   *  `report-measure`. The JSX wrapper sets it from an `onContextChange`
-   *  handler. */
-  'report-context'?: boolean | ''
+  /** What the box watches. `size` reports geometry and overflow through
+   *  `measurechange` and the CSS states; `context` reports the rendering
+   *  environment through `contextchange`; `all`, or a bare `observe`, does both.
+   *  A box without it (and without `fade`) runs no observers, so a listener
+   *  alone reports nothing. The JSX wrapper sets it from `observe` and from the
+   *  handlers you pass. */
+  observe?: 'size' | 'context' | 'all' | ''
   /** Depth of that mask, as a length value (`fade-size="2rem"`). Engines
    *  without typed `attr()` read it from `--box-fade-size` in the host's
    *  inline style instead, which is what the JSX wrapper always sets. */

@@ -27,10 +27,12 @@ export interface BoxProps extends BaseProps {
    * pixels; a string is any CSS length or two-value gap (`'1rem'`,
    * `'8px 16px'`). Applies while the Box is a flex or grid container. */
   gap?: number | string
-  /** Keeps the overflow CSS states (`:state(clipped-x)`, `:state(scrollable-y)`,
-   * …) current. A Box measures only when it has `fade`, an `onMeasureChange`
-   * handler, or this; set it when your own CSS is the only reader. */
-  reportMeasure?: boolean
+  /** What the Box watches, when a handler is not what turns it on. `'size'`
+   * keeps the overflow CSS states (`:state(clipped-x)`, `:state(scrollable-y)`,
+   * …) current — reach for it when your own CSS is the only reader. `'context'`
+   * and `'all'` are there for symmetry; passing `onMeasureChange` or
+   * `onContextChange` already turns the matching half on. */
+  observe?: 'size' | 'context' | 'all'
   /** Fades out every edge that currently hides clipped content, and drops the
    * fade from an edge once the reader scrolls to it. */
   fade?: boolean
@@ -67,11 +69,25 @@ export interface BoxProps extends BaseProps {
  * </Box>
  * ```
  */
+/** Merges the `observe` prop with the halves the handlers imply. */
+function observeAttr(
+  observe: 'size' | 'context' | 'all' | undefined,
+  onMeasureChange: unknown,
+  onContextChange: unknown,
+): 'size' | 'context' | 'all' | undefined {
+  const size = observe === 'size' || observe === 'all' || onMeasureChange != null
+  const context = observe === 'context' || observe === 'all' || onContextChange != null
+  if (size && context) return 'all'
+  if (size) return 'size'
+  if (context) return 'context'
+  return undefined
+}
+
 export const Box = ({
   display,
   round,
   gap,
-  reportMeasure,
+  observe,
   fade,
   fadeSize,
   onMeasureChange,
@@ -99,8 +115,7 @@ export const Box = ({
       display={display === 'block' ? undefined : display}
       round={roundAttr(round)}
       gap={gap != null ? '' : undefined}
-      report-measure={reportMeasure || onMeasureChange ? '' : undefined}
-      report-context={onContextChange ? '' : undefined}
+      observe={observeAttr(observe, onMeasureChange, onContextChange)}
       fade={fade ? '' : undefined}
       fade-size={fade && fadeSize != null ? cssLength(fadeSize) : undefined}
       onmeasurechange={measureHandler}

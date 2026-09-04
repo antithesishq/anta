@@ -389,8 +389,8 @@ function rounded(value: number): number {
  * states. This keeps measurement usable when JSX itself cannot access the DOM.
  *
  * Observation is opt-in by attribute and pauses off screen. `fade` or
- * `report-measure` turns measurement on, `report-context` turns `contextchange`
- * on, and a box
+ * `observe="size"` turns measurement on, `observe="context"` turns
+ * `contextchange` on, `observe="all"` (or a bare `observe`) turns on both, and a box
  * with neither runs no observers at all — not even the shared visibility one.
  * The `measurement` / `context` / `isTruncated` getters still read on demand.
  *
@@ -402,7 +402,7 @@ function rounded(value: number): number {
  * props, so this is invisible to anyone using `Box`.
  */
 export class ABoxElement extends HTMLElementBase {
-  static observedAttributes = ['fade', 'report-measure', 'report-context']
+  static observedAttributes = ['fade', 'observe']
 
   #internals = this.attachInternals?.()
   #store?: BoxWindowStore
@@ -484,7 +484,13 @@ export class ABoxElement extends HTMLElementBase {
      visibility: a mode change has to reach an off-screen box too, and the store
      it subscribes to is already refcounted down to nothing. */
   #sync() {
-    const wantsMeasurement = this.hasAttribute('fade') || this.hasAttribute('report-measure')
+    // A bare `observe` reads as `all`; an unrecognized value observes nothing,
+    // the same way an unknown `tone` falls through rather than guessing.
+    const observe = this.getAttribute('observe')
+    const both = observe === '' || observe === 'all'
+    const wantsMeasurement = this.hasAttribute('fade') || both || observe === 'size'
+    const wantsContext = both || observe === 'context'
+
     const measure = this.isConnected && wantsMeasurement && (this.#visible ?? this.hasAttribute('fade'))
     if (measure) this.#startMeasuring()
     else this.#stopMeasuring()
@@ -492,7 +498,7 @@ export class ABoxElement extends HTMLElementBase {
     if (this.isConnected && wantsMeasurement) this.#store?.observeVisibility(this)
     else this.#store?.unobserveVisibility(this)
 
-    if (this.isConnected && this.hasAttribute('report-context')) this.#startReportingContext()
+    if (this.isConnected && wantsContext) this.#startReportingContext()
     else this.#stopReportingContext()
 
     this.#syncHostObserver()

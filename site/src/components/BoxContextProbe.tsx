@@ -45,6 +45,7 @@ export function BoxContextProbe() {
         <Tag size="small" label={`hover ${context?.hover ?? '…'}`} />
         <Tag size="small" label={`mobile ${context?.mobile ?? '…'}`} />
         <Tag size="small" label={`reducedMotion ${context?.reducedMotion ?? '…'}`} />
+        <Tag size="small" label={`devicePixelRatio ${context?.devicePixelRatio ?? '…'}`} />
       </Box>
 
       <div className="light">

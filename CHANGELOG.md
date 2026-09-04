@@ -16,9 +16,13 @@ changes are not listed.
   `:state(scrollable-y)`, `:state(hidden-end-x)`, …). Measurement is opt-in and
   pauses off screen: a Box observes itself while it has `fade`, an
   `onMeasureChange` handler, or `observe`, and only while it intersects the
-  viewport. `contextchange` reports
+  viewport. A Box that clips or scrolls also watches its direct children, so a
+  child that upgrades late or resizes from its own state keeps the overflow
+  states honest; a Box with visible overflow watches none. `contextchange` reports
   color mode, `os` / `osVersion` / `browser` / `browserVersion` as coarse
-  families and major versions, plus pointer, hover, and reduced-motion.
+  families and major versions, plus pointer, hover, reduced-motion, and
+  `devicePixelRatio`, which re-reports on zoom and on a move to a display with a
+  different density.
 - `<textarea data-anta>` uses Input field styling and supports `data-anta-size`,
   `round`, and `tone`.
 
@@ -32,6 +36,10 @@ changes are not listed.
 
 ### Fixed
 
+- `Box` reports one `contextchange` when focus moves between two of its own
+  descendants. Safari runs a microtask checkpoint between `focusout` and
+  `focusin`, so the pair used to surface an extra `focusWithin: false` that was
+  never true for the reader.
 - `Tooltip truncatedOnly` on a `Box` reads the Box's own overflow. Target
   resolution preferred any `a-button-label` / `a-tab-label` / `a-step-hint`
   inside the anchor, so a Box clipping a row of Buttons whose labels each fit

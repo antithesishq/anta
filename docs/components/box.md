@@ -1,62 +1,14 @@
----
-layout: ../layouts/DocsLayout.astro
-title: Box
----
-import Playground from '../components/PlaygroundEmbed.astro'
-import Preview from '../components/Preview.astro'
-import PropsTable from '../components/PropsTable.astro'
-import Disclosure from '../components/Disclosure.astro'
-import boxDemoCode from './box.demo.ts'
-import { Box, Tag, Tooltip } from '@antadesign/anta'
-import { BoxContextProbe } from '../components/BoxContextProbe.tsx'
-
 # Box
 
 `Box` is a regular DOM container (like `<div>`) with helpful features and
 callbacks.
-
-<Disclosure title="Playground" anchor={false} brand>
-
-<Playground
-  component="Box"
-  layout="side"
-  panelHeight={420}
-  initialCode={boxDemoCode}
-  initialCss={`.preview { align-items: flex-start; justify-content: flex-start; padding: 20px; }`}
-/>
-
-</Disclosure>
 
 ## Display
 
 For convenience, `display` and `gap` mirror the CSS properties of the same
 names. `gap` takes a number of pixels or any CSS length string.
 
-<Preview align="stretch" gap="16px" justify="flex-start">
-  <Box round={8} className="display-demo" style={{ width: '150px' }}>
-    <span className="chip" />
-    <span className="chip" />
-    <span className="chip" />
-  </Box>
-  <Box display="flex" round={8} gap={6} className="display-demo" style={{ width: '150px' }}>
-    <span className="chip" />
-    <span className="chip" />
-    <span className="chip" />
-  </Box>
-  <Box display="grid" round={8} gap={6} className="display-demo" style={{ width: '150px', gridTemplateColumns: '1fr 1fr' }}>
-    <span className="chip" />
-    <span className="chip" />
-    <span className="chip" />
-  </Box>
-  <style is:inline>{`
-    .display-demo { padding: 10px; border: 1px solid var(--border-4); }
-    .display-demo .chip { display: block; flex: 1; width: 100%; height: 22px; border-radius: 4px; background: var(--bg-4-brand); }
-    .display-demo .chip + .chip { margin-top: 6px; }
-    .display-demo[display] .chip + .chip { margin-top: 0; }
-  `}</style>
-</Preview>
-
-```tsx folded
+```tsx
 <Box round={8}>…</Box>
 <Box display="flex" round={8} gap={6}>…</Box>
 <Box display="grid" round={8} gap="0.5rem" style={{ gridTemplateColumns: '1fr 1fr' }}>…</Box>
@@ -83,22 +35,7 @@ and measurement pauses while a Box sits off screen.
 
 `.edge` below is a demo class name; use your own selector.
 
-<Preview align="stretch" gap="16px" justify="flex-start">
-  <Box observe round={8} className="edge" style={{ width: '150px' }}>Content that fits.</Box>
-  <Box observe round={8} className="edge" style={{ width: '150px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-    A label too long for this box.
-  </Box>
-  <Box observe round={8} className="edge" style={{ width: '150px', height: '56px', overflowY: 'auto' }}>
-    One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten.
-  </Box>
-  <style is:inline>{`
-    .edge { padding: 10px; border: 1px solid var(--border-4); }
-    .edge:state(clipped-x) { border-color: var(--border-3-warning); }
-    .edge:state(scrollable-y) { border-color: var(--border-3-info); }
-  `}</style>
-</Preview>
-
-```tsx folded
+```tsx
 <Box observe round={8} className="edge" style={{ width: 150 }}>Content that fits.</Box>
 
 <Box observe round={8} className="edge" style={{ width: 150, overflow: 'hidden', whiteSpace: 'nowrap' }}>
@@ -110,7 +47,7 @@ and measurement pauses while a Box sits off screen.
 </Box>
 ```
 
-```css folded
+```css
 .edge:state(clipped-x) { border-color: var(--border-3-warning); }
 .edge:state(scrollable-y) { border-color: var(--border-3-info); }
 ```
@@ -122,27 +59,7 @@ edge as soon as the reader scrolls to it. Scroll either box: the fade moves to
 the edge that still has content behind it, then clears at the end. `fadeSize`
 sets the gradient depth.
 
-<Preview align="stretch" gap="16px" justify="flex-start">
-  <Box fade fadeSize={32} round display="flex" gap={6} className="fade-demo" style={{ width: '190px', overflowX: 'auto' }}>
-    <Tag size="small" label="frontend" />
-    <Tag size="small" label="design-system" />
-    <Tag size="small" label="a11y" />
-    <Tag size="small" label="performance" />
-  </Box>
-  <Box fade fadeSize={32} round={8} className="fade-demo" style={{ width: '190px', height: '56px', overflowY: 'auto' }}>
-    One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten. Eleven. Twelve.
-  </Box>
-  <style is:inline>{`
-    .fade-demo {
-      flex-wrap: nowrap;
-      padding: 10px;
-      border: 1px solid var(--border-4);
-    }
-    .fade-demo a-tag { flex: 0 0 auto; }
-  `}</style>
-</Preview>
-
-```tsx folded
+```tsx
 <Box fade fadeSize={32} round display="flex" gap={6} style={{ overflowX: 'auto' }}>
   {TAGS.map((t) => <Tag key={t} size="small" label={t} />)}
 </Box>
@@ -156,7 +73,7 @@ Four states drive the mask, one per edge: `hidden-start-x`, `hidden-end-x`,
 siblings, or style them yourself instead of using `fade`. Styling them by hand
 means adding `observe`, since `fade` is what would otherwise turn measurement on.
 
-```css folded
+```css
 /* <Box observe className="my-box"> */
 .my-box:state(hidden-end-x) {
   mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
@@ -170,31 +87,7 @@ Box clips on either axis. It covers wrapped children as well as one clipped line
 the first box hides tags past its height, so the tooltip shows the whole set. The
 second box fits and stays silent.
 
-<Preview align="stretch" gap="16px" justify="flex-start">
-  <Box display="flex" round={8} gap={6} className="tag-box" style={{ width: '190px', height: '34px' }}>
-    <Tag size="small" label="frontend" />
-    <Tag size="small" label="design-system" />
-    <Tag size="small" label="a11y" />
-    <Tag size="small" label="performance" />
-    <Tooltip truncatedOnly>
-      frontend · design-system · a11y · performance
-    </Tooltip>
-  </Box>
-  <Box display="flex" round={8} gap={6} className="tag-box" style={{ width: '190px', height: '34px' }}>
-    <Tag size="small" label="frontend" />
-    <Tooltip truncatedOnly>frontend</Tooltip>
-  </Box>
-  <style is:inline>{`
-    .tag-box {
-      flex-wrap: wrap;
-      padding: 6px;
-      overflow: hidden;
-      border: 1px solid var(--border-4);
-    }
-  `}</style>
-</Preview>
-
-```tsx folded
+```tsx
 const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
 
 <Box display="flex" round={8} gap={6} className="tag-box" style={{ height: 34 }}>
@@ -203,7 +96,7 @@ const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
 </Box>
 ```
 
-```css folded
+```css
 .tag-box { flex-wrap: wrap; padding: 6px; overflow: hidden; }
 ```
 
@@ -214,7 +107,7 @@ or its content changes. `changed` holds only the fields that moved; `current` is
 the complete snapshot. The event pauses while the Box is off screen and resumes
 with a fresh reading when it scrolls back.
 
-```tsx folded title="measurechange"
+```tsx title="measurechange"
 <Box
   style={{ maxWidth: 210, overflow: 'hidden', whiteSpace: 'nowrap' }}
   onMeasureChange={(event, { changed, current }) => {
@@ -253,20 +146,7 @@ and Windows 11 reports `10.0`, so only Android and iOS carry a real number. Read
 them as hints, and gate behavior on `pointer`, `hover`, or a feature test. The second Box sits in a `.light` scope, so its `mode`
 stays `light` on a dark page while `globalMode` follows the document.
 
-<Preview justify="flex-start" minHeight={140}>
-  <BoxContextProbe client:only="preact" />
-  <style is:inline>{`
-    .context-probe { display: grid; gap: 8px; width: 100%; }
-    .context-probe-box {
-      flex-wrap: wrap;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid var(--border-4);
-    }
-  `}</style>
-</Preview>
-
-```tsx folded title="contextchange"
+```tsx title="contextchange"
 <Box onContextChange={(event, { changed, current }) => {
   if (changed.mode) updatePreviewTheme(current.mode)
   if (changed.focusWithin) announceFocus(current.focusWithin)
@@ -275,31 +155,43 @@ stays `light` on a dark page while `globalMode` follows the document.
 </Box>
 ```
 
-<Disclosure title="Component props" open>
+### Props
 
-<PropsTable component="Box" />
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `display?` | BoxDisplay | block | Layout model for the host. All other layout, sizing, mask, and shadow
+properties stay ordinary `className` / `style` CSS on the Box itself. |
+| `fade?` | boolean | — | Fades out every edge that currently hides clipped content, and drops the
+fade from an edge once the reader scrolls to it. |
+| `fadeSize?` | number \| string | 24 | Depth of the `fade` gradient. A `number` is pixels; a string is any CSS
+length. |
+| `gap?` | number \| string | — | Gap between children, matching the CSS `gap` property. A `number` is
+pixels; a string is any CSS length or two-value gap (`'1rem'`,
+`'8px 16px'`). Applies while the Box is a flex or grid container. |
+| `observe?` | boolean | — | Keeps the overflow CSS states (`:state(clipped-x)`, `:state(scrollable-y)`,
+…) current. A Box measures only when it has `fade`, an `onMeasureChange`
+handler, or this; set it when your own CSS is the only reader. |
+| `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail`
+contains the changed fields and a full current snapshot. |
+| `onMeasureChange?` | (event, detail) => void | — | Fired after Box geometry or its content-overflow state changes. `detail`
+contains the changed fields and a full current snapshot. |
+| `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a
+`number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit
+for square corners. |
 
 ### BoxMeasurement
 
 The `measurechange` payload, as `changed` (only what moved) and `current` (the
 whole snapshot).
 
-<PropsTable component="BoxMeasurement" label="Field" />
-
 ### BoxContext
 
 The `contextchange` payload, in the same two shapes.
 
-<PropsTable component="BoxContext" label="Field" />
-
-</Disclosure>
-
-<Disclosure title="Web Component">
-
 Use `<a-box>` when you assemble DOM without a JSX wrapper. Both events are
 ordinary, non-bubbling `CustomEvent`s carrying the same detail object.
 
-```html folded title="a-box"
+```html title="a-box"
 <a-box display="grid" gap="8px" round="12px" id="summary"
        style="overflow: auto; max-height: 16rem">
   <p>Content…</p>
@@ -329,5 +221,3 @@ style work everywhere and take precedence, so that is what the JSX wrapper sets:
 
 `box.measurement`, `box.context`, and `box.isTruncated` read the same values
 synchronously.
-
-</Disclosure>

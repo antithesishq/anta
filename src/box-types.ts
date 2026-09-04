@@ -46,6 +46,11 @@ export interface BoxContext {
   hover: boolean
   /** Whether the reader asks for reduced motion. */
   reducedMotion: boolean
+  /** `window.devicePixelRatio`: CSS pixels per device pixel. `1` on a standard
+   * display, `2` on most Retina screens, and a fraction under OS or browser
+   * zoom. Live — it re-reports on zoom and when the window moves to a monitor
+   * with a different density. */
+  devicePixelRatio: number
 }
 
 /** Current box dimensions and its content-overflow state. */

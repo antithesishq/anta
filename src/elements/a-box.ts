@@ -14,6 +14,7 @@ type SharedContext = Pick<
   BoxContext,
   | 'globalMode' | 'systemAppearance' | 'os' | 'osVersion' | 'browser'
   | 'browserVersion' | 'mobile' | 'pointer' | 'hover' | 'reducedMotion'
+  | 'devicePixelRatio'
 >
 
 /** What one user-agent read yields. Computed once per window. */
@@ -52,6 +53,8 @@ class BoxWindowStore {
   #queries: MediaQueryList[]
   #classObserver?: MutationObserver
   #visibility?: IntersectionObserver
+  #pixelRatio?: MediaQueryList
+  #lastPixelRatio = 0
   #device: DeviceSnapshot
 
   constructor(
@@ -118,11 +121,33 @@ class BoxWindowStore {
       pointer: this.#finePointer.matches ? 'fine' : this.#coarsePointer.matches ? 'coarse' : 'none',
       hover: this.#hover.matches,
       reducedMotion: this.#reducedMotion.matches,
+      devicePixelRatio: this.view.devicePixelRatio,
     }
+  }
+
+  /* devicePixelRatio has no change event of its own, so two signals cover it.
+     A resolution query pinned to the current value stops matching the moment
+     the ratio moves; each fire re-arms against the new value. Page zoom also
+     resizes the CSS viewport, and `resize` catches the engines and paths where
+     the query stays quiet. Both funnel through the same guard, so whichever
+     arrives first reports and the other is a no-op. */
+  #watchPixelRatio() {
+    this.#pixelRatio?.removeEventListener('change', this.#pixelRatioDidChange)
+    this.#pixelRatio = this.view.matchMedia(`(resolution: ${this.view.devicePixelRatio}dppx)`)
+    this.#pixelRatio.addEventListener('change', this.#pixelRatioDidChange, { once: true })
+    this.#lastPixelRatio = this.view.devicePixelRatio
+  }
+
+  #pixelRatioDidChange = () => {
+    if (this.view.devicePixelRatio === this.#lastPixelRatio) return
+    this.#watchPixelRatio()
+    this.#notifyAll()
   }
 
   #startWatching() {
     for (const query of this.#queries) query.addEventListener('change', this.#notifyAll)
+    this.#watchPixelRatio()
+    this.view.addEventListener('resize', this.#pixelRatioDidChange, { passive: true })
     const root = this.doc.documentElement
     if (!root) return
     this.#classObserver = new this.view.MutationObserver(this.#handleClassChange)
@@ -136,6 +161,9 @@ class BoxWindowStore {
 
   #stopWatching() {
     for (const query of this.#queries) query.removeEventListener('change', this.#notifyAll)
+    this.#pixelRatio?.removeEventListener('change', this.#pixelRatioDidChange)
+    this.#pixelRatio = undefined
+    this.view.removeEventListener('resize', this.#pixelRatioDidChange)
     this.#classObserver?.disconnect()
     this.#classObserver = undefined
   }
@@ -317,6 +345,8 @@ export class ABoxElement extends HTMLElementBase {
   #context?: BoxContext
   #listeners = new Map<string, Set<unknown>>()
   #measuring = false
+  #clips = false
+  #observedChildren = new Set<Element>()
   #reportingContext = false
   #visible = true
   #initialMeasurement = false
@@ -448,13 +478,41 @@ export class ABoxElement extends HTMLElementBase {
     // is never called back synchronously from inside its own `addEventListener`.
     this.#measurement = this.#readMeasurement()
     this.#setMeasurementStates(this.#measurement)
+    this.#syncChildObservation()
     this.#initialMeasurement = true
     this.#queueMeasurement()
+  }
+
+  /* A clipping box's scroll size can move because a child's own size moved for
+     a reason nothing else here can see: a late upgrade attaching a shadow root,
+     or a child resizing from its own internal state (an Expander opening).
+     Neither is a light-DOM mutation, and a fixed-size box never resizes, so the
+     direct children go into the same ResizeObserver. A box with visible
+     overflow hides nothing — a growing child just grows the box, which its own
+     entry already reports — so it observes no children at all. */
+  #syncChildObservation() {
+    if (!this.#clips || !this.#measuring) {
+      for (const child of this.#observedChildren) this.#resizeObserver?.unobserve(child)
+      this.#observedChildren.clear()
+      return
+    }
+    const current = new Set<Element>(this.children)
+    for (const child of this.#observedChildren) {
+      if (current.has(child)) continue
+      this.#resizeObserver?.unobserve(child)
+      this.#observedChildren.delete(child)
+    }
+    for (const child of current) {
+      if (this.#observedChildren.has(child)) continue
+      this.#resizeObserver?.observe(child)
+      this.#observedChildren.add(child)
+    }
   }
 
   #stopMeasuring() {
     if (!this.#measuring) return
     this.#measuring = false
+    this.#observedChildren.clear()
     this.#resizeObserver?.disconnect()
     this.#resizeObserver = undefined
     this.#contentObserver?.disconnect()
@@ -474,7 +532,7 @@ export class ABoxElement extends HTMLElementBase {
     this.#reportingContext = true
     this.#store?.subscribeContext(this)
     this.addEventListener('focusin', this.#queueContext)
-    this.addEventListener('focusout', this.#queueContext)
+    this.addEventListener('focusout', this.#handleFocusOut)
     this.#initialContext = true
     this.#queueContext()
   }
@@ -484,7 +542,18 @@ export class ABoxElement extends HTMLElementBase {
     this.#reportingContext = false
     this.#store?.unsubscribeContext(this)
     this.removeEventListener('focusin', this.#queueContext)
-    this.removeEventListener('focusout', this.#queueContext)
+    this.removeEventListener('focusout', this.#handleFocusOut)
+  }
+
+  /* Tabbing between two descendants fires focusout then focusin, and WebKit runs
+     a microtask checkpoint between the two — long enough to report a
+     focusWithin: false that was never true for the reader. `relatedTarget` is
+     where focus is heading (retargeted to the host for a shadow child), so a
+     move that stays inside is not a change at all. */
+  #handleFocusOut = (event: Event) => {
+    const next = (event as FocusEvent).relatedTarget
+    if (next instanceof this.view.Node && this.contains(next)) return
+    this.#queueContext()
   }
 
   #queueMeasurement = () => {
@@ -520,6 +589,10 @@ export class ABoxElement extends HTMLElementBase {
     const overflowX = hasBox && scrollWidth > clientWidth + 1
     const overflowY = hasBox && scrollHeight > clientHeight + 1
     const styles = this.view.getComputedStyle(this)
+    // Whether this box *can* hide content, not whether it currently does. The
+    // child observation below keys off it, and keying off actual overflow would
+    // be circular: an un-upgraded child is exactly why there is no overflow yet.
+    this.#clips = styles.overflowX !== 'visible' || styles.overflowY !== 'visible'
     const clippedX = overflowX && styles.overflowX !== 'visible'
     const clippedY = overflowY && styles.overflowY !== 'visible'
     const scrollableX = overflowX && (styles.overflowX === 'auto' || styles.overflowX === 'scroll')
@@ -566,6 +639,7 @@ export class ABoxElement extends HTMLElementBase {
     const previous = this.#measurement
     this.#measurement = current
     this.#setMeasurementStates(current)
+    this.#syncChildObservation()
     if (!initial && same(previous, current)) return
     const detail: BoxMeasurementChange = {
       changed: initial ? { ...current } : changed(previous, current),

@@ -9,6 +9,9 @@ changes are not listed.
 
 - `Checkbox` sets its ARIA state and form value in Safari 16.4-17.3 and Firefox
   93-125, where `ElementInternals` lacks `CustomStateSet`.
+- `Box` removes its per-window store only when that store is the one still
+  registered, so a page that mounts and unmounts boxes repeatedly keeps one
+  document-wide class observer instead of accumulating them.
 
 ## 0.3.26 — September 4, 2026
 

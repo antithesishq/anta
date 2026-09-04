@@ -339,6 +339,7 @@ export class ABoxElement extends HTMLElementBase {
   #store?: BoxWindowStore
   #resizeObserver?: ResizeObserver
   #contentObserver?: MutationObserver
+  #hostObserver?: MutationObserver
   #frame?: number
   #contextQueued = false
   #measurement?: BoxMeasurement
@@ -460,15 +461,30 @@ export class ABoxElement extends HTMLElementBase {
     this.#resizeObserver = new this.view.ResizeObserver(this.#queueMeasurement)
     this.#resizeObserver.observe(this)
     // ResizeObserver only fires when the box itself changes size. A fixed-width
-    // box whose child grows keeps its size while its scrollWidth moves, so the
-    // overflow states need the content watcher too.
+    // box whose content grows keeps its size while its scrollWidth moves, so
+    // structure and text need watching too.
+    //
+    // Descendant *attributes* deliberately are not watched: a child whose
+    // attribute changes its size is reported by that child's ResizeObserver
+    // entry below, on the actual resize rather than on every attribute that
+    // might cause one. Watching them re-measured on ordinary app churn — 100
+    // aria/class flips that moved nothing cost 57 layout reads. The one case
+    // this gives up is a `display: contents` direct child, which has no box and
+    // so is invisible to ResizeObserver, whose grandchild resizes purely by
+    // attribute; childList and characterData still cover content changes there.
     this.#contentObserver = new this.view.MutationObserver(this.#queueMeasurement)
     this.#contentObserver.observe(this, {
       subtree: true,
       childList: true,
       characterData: true,
-      attributes: true,
     })
+    // The host's own attributes still matter, and need their own observer: one
+    // observer cannot take `subtree: true` for childList and `subtree: false`
+    // for attributes on the same target. A class that flips this box to
+    // `overflow: auto` changes what it clips without changing its size, so
+    // nothing else here would notice.
+    this.#hostObserver = new this.view.MutationObserver(this.#queueMeasurement)
+    this.#hostObserver.observe(this, { attributes: true })
     this.addEventListener('input', this.#queueMeasurement)
     this.addEventListener('scroll', this.#queueMeasurement, { passive: true })
     this.addEventListener('load', this.#queueMeasurement, true)
@@ -517,6 +533,8 @@ export class ABoxElement extends HTMLElementBase {
     this.#resizeObserver = undefined
     this.#contentObserver?.disconnect()
     this.#contentObserver = undefined
+    this.#hostObserver?.disconnect()
+    this.#hostObserver = undefined
     if (this.#frame != null) this.view.cancelAnimationFrame(this.#frame)
     this.#frame = undefined
     this.removeEventListener('input', this.#queueMeasurement)

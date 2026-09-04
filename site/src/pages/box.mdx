@@ -9,6 +9,7 @@ import Disclosure from '../components/Disclosure.astro'
 import boxDemoCode from './box.demo.ts'
 import { Box, Tag, Tooltip } from '@antadesign/anta'
 import { BoxContextProbe } from '../components/BoxContextProbe.tsx'
+import { BoxMeasurementProbe } from '../components/BoxMeasurementProbe.tsx'
 
 # Box
 
@@ -244,6 +245,29 @@ with a fresh reading when it scrolls back.
 </Box>
 ```
 
+Every field is live below. Drag the Box's corner to resize it, or scroll inside
+it, and watch which values move. A tag turns brand-coloured while its value is
+`true`.
+
+<Preview align="stretch">
+  <BoxMeasurementProbe client:only="preact" />
+  <style is:inline>{`
+    .measure-probe { display: grid; gap: 12px; width: 100%; }
+    .measure-probe-box {
+      resize: both;
+      overflow: auto;
+      inline-size: 320px;
+      block-size: 132px;
+      min-inline-size: 120px;
+      min-block-size: 64px;
+      padding: 10px;
+      border: 1px solid var(--border-4);
+    }
+    .measure-probe-wide { inline-size: 520px; padding-block: 6px; }
+    .measure-probe-readout { display: flex; flex-wrap: wrap; gap: 6px; }
+  `}</style>
+</Preview>
+
 [`BoxMeasurement`](#boxmeasurement) lists every field. Each one has a matching
 CSS state, named in kebab case: `overflow-x`, `clipped-y`, `scrollable-x`,
 `hidden-end-y`, and so on. They are the only states Box sets, because overflow is
@@ -268,7 +292,7 @@ focus, the `.dark` ancestor class for mode, and the `prefers-color-scheme`,
 `pointer`, `hover`, `prefers-reduced-motion`, and `resolution` media queries for
 the rest.
 
-### Drawing to a canvas
+### Canvas
 
 `context.font` carries the Box's resolved text style, `context.inset` the
 distance from its border edge to its content edge, and `devicePixelRatio` the

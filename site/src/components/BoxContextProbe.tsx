@@ -35,17 +35,17 @@ export function BoxContextProbe() {
         onContextChange={(_, { current }) => setContext(current)}
         onMeasureChange={(_, { current }) => setSize(current)}
       >
-        <Tag size="small" tone="brand" label={`mode ${context?.mode ?? '…'}`} />
-        <Tag size="small" label={`globalMode ${context?.globalMode ?? '…'}`} />
-        <Tag size="small" label={`systemAppearance ${context?.systemAppearance ?? '…'}`} />
-        <Tag size="small" tone="info" label={`${size?.width ?? 0} × ${size?.height ?? 0}`} />
-        <Tag size="small" label={`os ${context?.os ?? '…'} ${context?.osVersion ?? ''}`} />
-        <Tag size="small" label={`browser ${context?.browser ?? '…'} ${context?.browserVersion ?? ''}`} />
-        <Tag size="small" label={`pointer ${context?.pointer ?? '…'}`} />
-        <Tag size="small" label={`hover ${context?.hover ?? '…'}`} />
-        <Tag size="small" label={`mobile ${context?.mobile ?? '…'}`} />
-        <Tag size="small" label={`reducedMotion ${context?.reducedMotion ?? '…'}`} />
-        <Tag size="small" label={`devicePixelRatio ${context?.devicePixelRatio ?? '…'}`} />
+        <Tag size="small" tone="brand" label="mode" value={context?.mode ?? '…'} />
+        <Tag size="small" label="globalMode" value={context?.globalMode ?? '…'} />
+        <Tag size="small" label="systemAppearance" value={context?.systemAppearance ?? '…'} />
+        <Tag size="small" tone="info" label="size" value={`${size?.width ?? 0} × ${size?.height ?? 0}`} />
+        <Tag size="small" label="os" value={`${context?.os ?? '…'} ${context?.osVersion ?? ''}`.trim()} />
+        <Tag size="small" label="browser" value={`${context?.browser ?? '…'} ${context?.browserVersion ?? ''}`.trim()} />
+        <Tag size="small" label="pointer" value={context?.pointer ?? '…'} />
+        <Tag size="small" label="hover" value={String(context?.hover ?? '…')} />
+        <Tag size="small" label="mobile" value={String(context?.mobile ?? '…')} />
+        <Tag size="small" label="reducedMotion" value={String(context?.reducedMotion ?? '…')} />
+        <Tag size="small" label="devicePixelRatio" value={String(context?.devicePixelRatio ?? '…')} />
       </Box>
 
       <div className="light">
@@ -57,8 +57,8 @@ export function BoxContextProbe() {
           onContextChange={(_, { current }) => setScoped(current)}
         >
           <Text size="small" priority="tertiary">inside a .light scope</Text>
-          <Tag size="small" tone="brand" label={`mode ${scoped?.mode ?? '…'}`} />
-          <Tag size="small" label={`globalMode ${scoped?.globalMode ?? '…'}`} />
+          <Tag size="small" tone="brand" label="mode" value={scoped?.mode ?? '…'} />
+          <Tag size="small" label="globalMode" value={scoped?.globalMode ?? '…'} />
         </Box>
       </div>
     </div>

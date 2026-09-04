@@ -137,6 +137,10 @@ with a fresh reading when it scrolls back.
 </Box>
 ```
 
+Every field is live below. Drag the Box's corner to resize it, or scroll inside
+it, and watch which values move. A tag turns brand-coloured while its value is
+`true`.
+
 [`BoxMeasurement`](#boxmeasurement) lists every field. Each one has a matching
 CSS state, named in kebab case: `overflow-x`, `clipped-y`, `scrollable-x`,
 `hidden-end-y`, and so on. They are the only states Box sets, because overflow is
@@ -161,7 +165,7 @@ focus, the `.dark` ancestor class for mode, and the `prefers-color-scheme`,
 `pointer`, `hover`, `prefers-reduced-motion`, and `resolution` media queries for
 the rest.
 
-### Drawing to a canvas
+### Canvas
 
 `context.font` carries the Box's resolved text style, `context.inset` the
 distance from its border edge to its content edge, and `devicePixelRatio` the

@@ -349,7 +349,13 @@ export class ABoxElement extends HTMLElementBase {
   #clips = false
   #observedChildren = new Set<Element>()
   #reportingContext = false
-  #visible = true
+  /* Undefined until the visibility observer first reports. `fade` is the one
+     thing that cannot wait for it — the mask is painted from the CSS states, so
+     a box that deferred its first measurement would flash unmasked. Everything
+     else stays idle until it is known to be on screen, which keeps a page of
+     hundreds of boxes from measuring every one of them once at connect only to
+     tear it all down a frame later. */
+  #visible?: boolean
   #initialMeasurement = false
   #initialContext = false
 
@@ -364,7 +370,7 @@ export class ABoxElement extends HTMLElementBase {
     this.#stopReportingContext()
     this.#store?.unobserveVisibility(this)
     this.#store = undefined
-    this.#visible = true
+    this.#visible = undefined
   }
 
   attributeChangedCallback() {
@@ -439,10 +445,11 @@ export class ABoxElement extends HTMLElementBase {
      visibility: a mode change has to reach an off-screen box too, and the store
      it subscribes to is already refcounted down to nothing. */
   #sync() {
+    const fade = this.hasAttribute('fade')
     const measure =
       this.isConnected &&
-      this.#visible &&
-      (this.hasAttribute('fade') || this.hasAttribute('observe') || this.#hasListener('measurechange'))
+      (this.#visible ?? fade) &&
+      (fade || this.hasAttribute('observe') || this.#hasListener('measurechange'))
     if (measure) this.#startMeasuring()
     else this.#stopMeasuring()
 

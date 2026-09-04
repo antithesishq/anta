@@ -31,7 +31,9 @@ a box styles itself with no JSX state and no measurement ref.
 A Box measures only when something asks for the result: `fade`, an
 `onMeasureChange` handler, or `observe`. Reach for `observe` when your own CSS is
 the only reader, as it is here. A Box with none of the three runs no observers,
-and measurement pauses while a Box sits off screen.
+and measurement pauses while a Box sits off screen. `fade` is the one that
+measures the moment it connects, because its mask is painted from those states;
+`observe` and a handler wait until the Box is known to be on screen.
 
 `.edge` below is a demo class name; use your own selector.
 

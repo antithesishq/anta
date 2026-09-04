@@ -237,11 +237,11 @@ export class ABannerElement extends HTMLElementBase {
     if (!this.#internals) return
     try {
       if (state === 'closed') {
-        this.#internals.states.add('closed')
-        this.#internals.states.delete('open')
+        this.#internals?.states?.add('closed')
+        this.#internals?.states?.delete('open')
       } else {
-        this.#internals.states.add('open')
-        this.#internals.states.delete('closed')
+        this.#internals?.states?.add('open')
+        this.#internals?.states?.delete('closed')
       }
     } catch {}
   }

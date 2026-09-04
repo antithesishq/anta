@@ -104,7 +104,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
+import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ABoxAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -127,6 +127,7 @@ export interface AntaIntrinsicElements {
   'a-progress-text': BaseAttributes
   'a-progress-hint': BaseAttributes
   'a-text': ATextAttributes
+  'a-box': ABoxAttributes
   'a-title': ATitleAttributes
   'a-tag': ATagAttributes
   'a-tag-label': BaseAttributes

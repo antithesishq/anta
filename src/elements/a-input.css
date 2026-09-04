@@ -173,7 +173,10 @@
      `Input` wrapper's `round={20}` → inline `--input-round`) sets a custom radius.
      Read by the shadow `.field` rule (the var inherits into the shadow). */
   a-input[round] {
-    --input-round: attr(round type(<length>), 999px);
+    --input-round: 999px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --input-round: attr(round type(<length>), 999px);
+    }
   }
 
   /* Custom tone — a literal CSS color tints the resting border (hover thickens
@@ -186,12 +189,15 @@
     /* Fallback is the default border (not transparent) so a non-color value —
        e.g. a stray `tone="brand"` (named tones live on `status`, not `tone`) —
        degrades to the normal border instead of vanishing. */
-    --input-tone-source: attr(tone type(<color>), var(--border-2));
+    --input-tone-source: var(--border-2);
 
     --input-border:       oklch(from var(--input-tone-source) 0.7 calc(c * 0.8) h);
 
     .dark & {
       --input-border:       oklch(from var(--input-tone-source) 0.5 calc(c * 0.8) h);
+    }
+    @supports (color: attr(probe type(<color>), red)) {
+      --input-tone-source: attr(tone type(<color>), var(--border-2));
     }
   }
 
@@ -641,7 +647,10 @@
   )[round],
   select[data-anta][round],
   textarea[data-anta][round] {
-    --native-field-round: attr(round type(<length>), 999px);
+    --native-field-round: 999px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --native-field-round: attr(round type(<length>), 999px);
+    }
   }
   input[data-anta]:is(
     :not([type]),
@@ -659,8 +668,11 @@
     [type="week"]
   )[tone]:not([tone=""]),
   textarea[data-anta][tone]:not([tone=""]) {
-    --native-field-tone: attr(tone type(<color>), var(--border-2));
+    --native-field-tone: var(--border-2);
     --native-field-border: oklch(from var(--native-field-tone) 0.7 calc(c * 0.8) h);
+    @supports (color: attr(probe type(<color>), red)) {
+      --native-field-tone: attr(tone type(<color>), var(--border-2));
+    }
   }
   .dark input[data-anta]:is(
     :not([type]),

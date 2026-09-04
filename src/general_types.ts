@@ -1,4 +1,5 @@
 import type { IconShape } from './elements/a-icon.shapes'
+import type { BoxContextChange, BoxDisplay, BoxMeasurementChange } from './box-types'
 
 /** Common props for JSX component wrappers. */
 export interface BaseProps {
@@ -286,6 +287,38 @@ export interface ATextAttributes extends BaseAttributes {
   collapsible?: boolean | ''
   /** ARIA disclosure state, mirrors the JSX wrapper's `expanded` flag. */
   'aria-expanded'?: boolean | 'true' | 'false'
+}
+
+/** Attributes for the light-DOM `<a-box>` observing container. For the JSX
+ * wrapper with cross-renderer event unwrapping, use `Box` from
+ * `@antadesign/anta`. */
+export interface ABoxAttributes extends BaseAttributes {
+  /** Host display mode. Omit for the default block box. */
+  display?: BoxDisplay
+  /** Fully-round corners (`border-radius: 999px`), or a custom radius via a
+   *  length value (`round="12px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
+  /** Gap between children, as a length value (`gap="8px"`). Engines without
+   *  typed `attr()` read it from `--box-gap` in the host's inline style
+   *  instead, which is what the JSX wrapper always sets. */
+  gap?: boolean | '' | number | string
+  /** Masks every edge that currently hides clipped content. */
+  fade?: boolean | ''
+  /** What the box watches. `size` reports geometry and overflow through
+   *  `measurechange` and the CSS states; `context` reports the rendering
+   *  environment through `contextchange`; `all`, or a bare `observe`, does both.
+   *  A box without it (and without `fade`) runs no observers, so a listener
+   *  alone reports nothing. The JSX wrapper sets it from `observe` and from the
+   *  handlers you pass. */
+  observe?: 'size' | 'context' | 'all' | ''
+  /** Depth of that mask, as a length value (`fade-size="2rem"`). Engines
+   *  without typed `attr()` read it from `--box-fade-size` in the host's
+   *  inline style instead, which is what the JSX wrapper always sets. */
+  'fade-size'?: number | string
+  /** Native event fired when geometry or overflow changes. */
+  onmeasurechange?: (event: CustomEvent<BoxMeasurementChange> | { nativeEvent: CustomEvent<BoxMeasurementChange> }) => void
+  /** Native event fired when rendering context or focus-within changes. */
+  oncontextchange?: (event: CustomEvent<BoxContextChange> | { nativeEvent: CustomEvent<BoxContextChange> }) => void
 }
 
 /**

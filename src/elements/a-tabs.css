@@ -194,12 +194,15 @@
        fixed L/C the named tone tokens use at that step (measured average across the five
        named tones in oklch) — so a custom color gets the same treatment a named tone would.
        text-3 (rest) = text-2 at 0.8 alpha, matching the named token scale (--text-3 = --text-2 @ 0.8α). */
-    --tabs-tone-source: attr(tone type(<color>), #635b65);
+    --tabs-tone-source: #635b65;
     --tab-selected-text: oklch(from var(--tabs-tone-source) 0.38 0.13 h);
     --tab-text-2: oklch(from var(--tabs-tone-source) 0.45 0.13 h);
     --tab-rest-tone: oklch(from var(--tabs-tone-source) 0.45 0.13 h / 0.8);
     --tabs-track-border: oklch(from var(--tabs-tone-source) 0.9 0.045 h);
     --tab-selected-border: oklch(from var(--tabs-tone-source) 0.8 0.09 h);
+    @supports (color: attr(probe type(<color>), red)) {
+      --tabs-tone-source: attr(tone type(<color>), #635b65);
+    }
   }
 
   /* ── Tab base state (all priorities) ─────────────────────────────────────── */
@@ -255,7 +258,10 @@
      is meaningless there — so the track rule excludes it.) */
   a-tabs[round] {
     --tab-radius: 999px;
-    --tabs-round: attr(round type(<length>), 999px);
+    --tabs-round: 999px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --tabs-round: attr(round type(<length>), 999px);
+    }
   }
   a-tabs[round]:not([priority="secondary"], [priority="tertiary"]) {
     border-radius: var(--tabs-round, 999px);

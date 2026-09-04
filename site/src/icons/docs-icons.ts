@@ -19,6 +19,7 @@ export const ICON_SHAPES = [
   'settings-2',
   'square-chevron-down',
   'square-chevron-right',
+  'square-dashed',
   'sticker',
   'tabs',
   'theme',
@@ -46,6 +47,7 @@ declare module '@antadesign/anta' {
     'settings-2': true
     'square-chevron-down': true
     'square-chevron-right': true
+    'square-dashed': true
     'sticker': true
     'tabs': true
     'theme': true

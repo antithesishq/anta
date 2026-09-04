@@ -41,7 +41,10 @@
      shadow's per-side rules). A full shorthand (`round="5px 3px 0 0"`) comes
      through the wrapper's inline `--dialog-round` only. */
   a-dialog[round] {
-    --dialog-round: attr(round type(<length>), var(--dialog-radius, 10px));
+    --dialog-round: var(--dialog-radius, 10px);
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --dialog-round: attr(round type(<length>), var(--dialog-radius, 10px));
+    }
   }
 
   /* Before the element upgrades, the light-DOM children (header / body / footer)

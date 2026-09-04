@@ -111,8 +111,11 @@
     }
 
     &[round] {
-      --switch-track-round: var(--switch-round, attr(round type(<length>), 999px));
+      --switch-track-round: var(--switch-round, 999px);
       --switch-thumb-round: max(0px, calc(var(--switch-track-round) - 3px));
+      @supports (border-radius: attr(probe type(<length>), 1px)) {
+        --switch-track-round: var(--switch-round, attr(round type(<length>), 999px));
+      }
     }
 
     &:state(checked) {
@@ -234,8 +237,12 @@
   a-switch[tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
-    --switch-tone-source: attr(tone type(<color>), transparent);
-    --switch-off-tone-source: attr(tone type(<color>), transparent);
+    --switch-tone-source: transparent;
+    --switch-off-tone-source: transparent;
+    @supports (color: attr(probe type(<color>), red)) {
+      --switch-tone-source: attr(tone type(<color>), transparent);
+      --switch-off-tone-source: attr(tone type(<color>), transparent);
+    }
   }
   a-switch[tone-selected="brand"] { --switch-tone-source: var(--anta-seed-brand); }
   a-switch[tone-selected="neutral"] { --switch-tone-source: var(--anta-seed-neutral); }
@@ -246,7 +253,10 @@
   a-switch[tone-selected]:not(
       [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
       [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
-    --switch-tone-source: attr(tone-selected type(<color>), transparent);
+    --switch-tone-source: transparent;
+    @supports (color: attr(probe type(<color>), red)) {
+      --switch-tone-source: attr(tone-selected type(<color>), transparent);
+    }
   }
 
   .dark a-switch {

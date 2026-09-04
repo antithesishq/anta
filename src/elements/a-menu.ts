@@ -1084,8 +1084,8 @@ export class AMenuElement extends HTMLElementBase {
    *  (harmless on roots — no `a-menu-item` parent matches the selector). */
   private reflectOpen(open: boolean) {
     try {
-      if (open) this.internals?.states.add('open')
-      else this.internals?.states.delete('open')
+      if (open) this.internals?.states?.add('open')
+      else this.internals?.states?.delete('open')
       if (this.internals) this.internals.ariaHidden = open ? 'false' : 'true'
     } catch {}
   }

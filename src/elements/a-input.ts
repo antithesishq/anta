@@ -590,7 +590,7 @@ export class AInputElement extends HTMLElementBase {
   private syncStatus() {
     const critical = this.getAttribute('status') === 'critical'
     this.control?.setAttribute('aria-invalid', critical ? 'true' : 'false')
-    try { critical ? this.internals?.states.add('invalid') : this.internals?.states.delete('invalid') } catch {}
+    try { critical ? this.internals?.states?.add('invalid') : this.internals?.states?.delete('invalid') } catch {}
   }
 
   private onInput = (event: Event) => {
@@ -613,12 +613,12 @@ export class AInputElement extends HTMLElementBase {
   // won't make for an <input>. Editable fields ignore the state (ring on `:focus`).
   private onFocus = () => {
     try {
-      if (focusFromKeyboard) this.internals?.states.add('kb-focus')
-      else this.internals?.states.delete('kb-focus')
+      if (focusFromKeyboard) this.internals?.states?.add('kb-focus')
+      else this.internals?.states?.delete('kb-focus')
     } catch { /* CustomStateSet unsupported */ }
   }
   private onBlur = () => {
-    try { this.internals?.states.delete('kb-focus') } catch { /* CustomStateSet unsupported */ }
+    try { this.internals?.states?.delete('kb-focus') } catch { /* CustomStateSet unsupported */ }
   }
 
   private onLabelSlotChange = () => {
@@ -648,8 +648,8 @@ export class AInputElement extends HTMLElementBase {
   }
 
   private updateFilled() {
-    if (this.value) this.internals?.states.add('filled')
-    else this.internals?.states.delete('filled')
+    if (this.value) this.internals?.states?.add('filled')
+    else this.internals?.states?.delete('filled')
   }
 
   private updateValidity() {

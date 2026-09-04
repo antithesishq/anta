@@ -110,8 +110,11 @@
   }
 
   a-input-time[round] {
-    --input-time-round: attr(round type(<length>), 999px);
+    --input-time-round: 999px;
     --input-time-field-radius: var(--input-time-round, 999px);
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --input-time-round: attr(round type(<length>), 999px);
+    }
   }
 
   /* Leading icon size tracks the field size — small 14 / medium 16 / large 18,
@@ -120,13 +123,16 @@
   a-input-time[size="large"] a-icon { --icon-size: 18px; }
 
   a-input-time[tone]:not([tone=""]) {
-    --input-time-tone-source: attr(tone type(<color>), var(--border-2));
+    --input-time-tone-source: var(--border-2);
     --input-time-border:       oklch(from var(--input-time-tone-source) 0.7 calc(c * 0.8) h);
     --input-time-border-hover: oklch(from var(--input-time-tone-source) 0.6 c h);
 
     .dark & {
       --input-time-border:       oklch(from var(--input-time-tone-source) 0.5 calc(c * 0.8) h);
       --input-time-border-hover: oklch(from var(--input-time-tone-source) 0.6 c h);
+    }
+    @supports (color: attr(probe type(<color>), red)) {
+      --input-time-tone-source: attr(tone type(<color>), var(--border-2));
     }
   }
 

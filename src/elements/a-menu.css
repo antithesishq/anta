@@ -25,7 +25,10 @@
      a-menu-item.css. A custom value (`round="12px"`, or the wrapper's `round={12}`)
      tunes the CONTAINER radius only — items stay full pills. */
   a-menu[round] {
-    --menu-radius: attr(round type(<length>), 20px);
+    --menu-radius: 20px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --menu-radius: attr(round type(<length>), 20px);
+    }
   }
 
   .dark a-menu {

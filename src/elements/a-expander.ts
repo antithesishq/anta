@@ -532,8 +532,8 @@ export class AExpanderElement extends HTMLElementBase {
     this.region.inert = !open
     // Mirror to the `:state(open)` custom state for external CSS hooks.
     try {
-      if (open) this.internals?.states.add('open')
-      else this.internals?.states.delete('open')
+      if (open) this.internals?.states?.add('open')
+      else this.internals?.states?.delete('open')
     } catch {}
   }
 

@@ -34,9 +34,11 @@
      sets a custom radius. The indicator tucks inward so it still meets the
      circle's edge instead of floating off the corner of the box. */
   a-avatar[round] {
-    --avatar-round: attr(round type(<length>));
     --avatar-radius: var(--avatar-round, 50%);
     --avatar-badge-inset: calc(var(--avatar-size) * 0.03);
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --avatar-round: attr(round type(<length>));
+    }
   }
 
   a-avatar[size='small'] {

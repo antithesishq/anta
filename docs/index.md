@@ -21,6 +21,7 @@ Anta is designed for a clean DOM. Prefer the props and attributes exposed by eac
 - [Tag](./components/tag.md)
 - [Tooltip](./components/tooltip.md)
 - [Icon](./components/icon.md)
+- [Avatar](./components/avatar.md)
 - [Loader](./components/loader.md)
 - [Progress](./components/progress.md)
 
@@ -33,9 +34,6 @@ Anta is designed for a clean DOM. Prefer the props and attributes exposed by eac
 - [Tabs](./components/tabs.md)
 - [Steps](./components/steps.md)
 
-- [Expander](./components/expander.md)
-- [Menu](./components/menu.md)
-
 - [Input](./components/input.md)
 - [InputAutocomplete](./components/input-autocomplete.md)
 - [InputDate](./components/input-date.md)
@@ -43,10 +41,13 @@ Anta is designed for a clean DOM. Prefer the props and attributes exposed by eac
 - [Select](./components/select.md)
 - [SelectFaceted](./components/select-faceted.md)
 
+- [Box](./components/box.md)
 - [Banner](./components/banner.md)
 - [Card](./components/card.md)
 - [Dialog](./components/dialog.md)
 - [Toaster](./components/toaster.md)
+- [Expander](./components/expander.md)
+- [Menu](./components/menu.md)
 
 ## Packages
 

@@ -4,9 +4,12 @@ import { marked } from 'marked'
 
 interface Props {
   component: string
+  /** Heading for the name column. Payload interfaces (`BoxMeasurement`) list
+   *  fields, not props. */
+  label?: string
 }
 
-const { component } = Astro.props
+const { component, label = 'Prop' } = Astro.props
 const propsName = `${component}Props`
 
 // id → node index so `reference` types (e.g. ButtonProps → BaseButtonProps)
@@ -45,8 +48,18 @@ function renderType(type: any): string {
       if (parts.includes('string')) return 'string'
       return parts.filter((p: string) => p !== '—').join(' & ') || '—'
     }
-    case 'reference':
+    case 'reference': {
+      // A named alias for a small union of literals reads better expanded: the
+      // table shows the accepted values instead of a name the reader has to go
+      // look up (BoxMode → light | dark). Only all-literal unions expand, so a
+      // reference to an interface or a union of shapes keeps its name.
+      const target = typeof type.target === 'number' ? byId.get(type.target) : null
+      const alias = target?.type
+      if (alias?.type === 'union' && alias.types.every((t: any) => t.type === 'literal')) {
+        return alias.types.map(renderType).join(' | ')
+      }
       return type.name || '—'
+    }
     case 'array':
       return `${renderType(type.elementType)}[]`
     case 'reflection': {
@@ -222,7 +235,7 @@ const inherited = all
     <table>
       <thead>
         <tr>
-          <th>Prop</th>
+          <th>{label}</th>
           <th>Type</th>
           <th>Default</th>
           <th>Description</th>
@@ -322,7 +335,7 @@ const inherited = all
       <table>
         <thead>
           <tr>
-            <th>Prop</th>
+            <th>{label}</th>
             <th>Type</th>
             <th>Default</th>
             <th>Description</th>

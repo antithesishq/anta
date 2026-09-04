@@ -53,6 +53,12 @@ const ENTER_TOUCH_DELAY = 500
  * then fall back to the anchor itself. Append future ellipsizing parts here.
  */
 const TRUNCATING_PARTS = 'a-tab-label, a-button-label, a-step-hint'
+/** True when an element answers the truncation question itself — `a-text` clamps
+ * inside its shadow root, `a-box` measures its own overflow — rather than
+ * leaving it to a scrollWidth read on the host. */
+function reportsTruncation(el: Element): el is HTMLElement & { isTruncated: boolean } {
+  return typeof (el as HTMLElement & { isTruncated?: unknown }).isTruncated === 'boolean'
+}
 /** Internal marker emitted by JSX `<Text truncate>`. Its tooltip reads the
  * anchor's rendered text instead of duplicating React children. */
 const AUTOMATIC_TEXT_TOOLTIP = 'data-anta-text-tooltip'
@@ -491,9 +497,10 @@ export class ATooltipElement extends HTMLElementBase {
   }
 
   /** The elements whose overflow decides whether the tooltip shows: every
-   *  `truncated-selector` match within the anchor wins; else every one of
-   *  Anta's ellipsizing label parts inside the anchor; else the anchor itself
-   *  (which may be the clipping box for a hand-authored target). */
+   *  `truncated-selector` match within the anchor wins; else the anchor itself
+   *  when it reports its own truncation; else every one of Anta's ellipsizing
+   *  label parts inside the anchor; else the anchor itself (which may be the
+   *  clipping box for a hand-authored target). */
   private resolveTruncationTargets(): HTMLElement[] {
     const anchor = this.anchor
     if (!anchor) return []
@@ -506,6 +513,12 @@ export class ATooltipElement extends HTMLElementBase {
         /* invalid selector → fall through to the defaults */
       }
     }
+    // An anchor that answers for itself has already decided. `a-box` IS the
+    // clipping box, so a label part belonging to some child inside it says
+    // nothing about whether the box clips: a Box full of Buttons that fit would
+    // otherwise report "not truncated" while the Box hides half of them.
+    // `truncated-selector` above still overrides this.
+    if (reportsTruncation(anchor)) return [anchor]
     const parts = Array.from(
       anchor.querySelectorAll(TRUNCATING_PARTS),
     ) as HTMLElement[]
@@ -520,8 +533,7 @@ export class ATooltipElement extends HTMLElementBase {
     return this.resolveTruncationTargets().some((target) => {
       // `a-text` owns the clamping box in shadow DOM. Its host itself does not
       // overflow, so consume the element's read-only UI-thread measurement first.
-      const reported = (target as HTMLElement & { isTruncated?: unknown }).isTruncated
-      if (typeof reported === 'boolean') return reported
+      if (reportsTruncation(target)) return target.isTruncated
       if (target.clientWidth === 0 && target.clientHeight === 0) return false
       return target.scrollWidth - target.clientWidth > 1 || target.scrollHeight - target.clientHeight > 1
     })

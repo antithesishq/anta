@@ -268,7 +268,7 @@
       [tone="warning"],
       [tone="critical"]
     ) {
-    --menu-item-tone-source: attr(tone type(<color>), var(--text-2));
+    --menu-item-tone-source: var(--text-2);
 
     --menu-item-color:      oklch(from var(--menu-item-tone-source) 0.45 c h);
     --menu-item-icon-color: var(--menu-item-color);
@@ -279,6 +279,9 @@
     .dark & {
       --menu-item-color:      oklch(from var(--menu-item-tone-source) 0.78 c h);
       --menu-item-hint-color: oklch(from var(--menu-item-tone-source) 0.78 c h / 0.8);
+    }
+    @supports (color: attr(probe type(<color>), red)) {
+      --menu-item-tone-source: attr(tone type(<color>), var(--text-2));
     }
   }
 

@@ -327,11 +327,6 @@ if (isComponentPage && title) {
         </menu>
         <hr class="sidebar-separator" />
         <menu>
-          <li><a href="/expander/" aria-current={isCurrent('/expander/') ? 'page' : undefined}><Icon shape="square-chevron-right" size={18} /> Expander</a></li>
-          <li><a href="/menu/" aria-current={isCurrent('/menu/') ? 'page' : undefined}><Icon shape="square-menu" size={18} /> Menu</a></li>
-        </menu>
-        <hr class="sidebar-separator" />
-        <menu>
           <li><a href="/input/" aria-current={isCurrent('/input/') ? 'page' : undefined}><Icon shape="text-cursor-input" size={18} /> Input</a></li>
           <li><a href="/input-autocomplete/" aria-current={isCurrent('/input-autocomplete/') ? 'page' : undefined}><Icon shape="search-slash" size={18} /> InputAutocomplete</a></li>
           <li><a href="/input-date/" aria-current={isCurrent('/input-date/') ? 'page' : undefined}><Icon shape="calendar-days" size={18} /> InputDate</a></li>
@@ -341,10 +336,13 @@ if (isComponentPage && title) {
         </menu>
         <hr class="sidebar-separator" />
         <menu>
+          <li><a href="/box/" aria-current={isCurrent('/box/') ? 'page' : undefined}><Icon shape="square-dashed" size={18} /> Box</a></li>
           <li><a href="/banner/" aria-current={isCurrent('/banner/') ? 'page' : undefined}><Icon shape="banner" size={18} /> Banner</a></li>
           <li><a href="/card/" aria-current={isCurrent('/card/') ? 'page' : undefined}><Icon shape="card" size={18} /> Card</a></li>
           <li><a href="/dialog/" aria-current={isCurrent('/dialog/') ? 'page' : undefined}><Icon shape="dialog" size={18} /> Dialog</a></li>
           <li><a href="/toaster/" aria-current={isCurrent('/toaster/') ? 'page' : undefined}><Icon shape="toaster" size={18} /> Toaster</a></li>
+          <li><a href="/expander/" aria-current={isCurrent('/expander/') ? 'page' : undefined}><Icon shape="square-chevron-right" size={18} /> Expander</a></li>
+          <li><a href="/menu/" aria-current={isCurrent('/menu/') ? 'page' : undefined}><Icon shape="square-menu" size={18} /> Menu</a></li>
         </menu>
         <h4>Packages</h4>
         <menu>
@@ -764,8 +762,10 @@ if (isComponentPage && title) {
     margin-top: 8px;
   }
   .sidebar-separator {
+    /* A hairline, not a gap: the gradient is the whole rule, so it needs a row
+       of pixels to paint into. `border: 0` drops the UA's default groove. */
     border: 0;
-    height: 0;
+    height: 1px;
     background: linear-gradient(to right, var(--border-4), var(--border-5));
     margin: 8px 0;
   }

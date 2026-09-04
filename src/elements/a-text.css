@@ -73,11 +73,14 @@
      The wrapper writes --text-tone-source inline; the typed attr() fallback picks up
      a raw <a-text tone="…">. */
   a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
-    --text-tone-source: attr(tone type(<color>), currentColor);
+    --text-tone-source: currentColor;
     --_text-tone: oklch(from var(--text-tone-source) 0.41 0.15 h);
     --text-color: var(--_text-tone);
     --text-link-color: currentColor;
     --text-link-hover: oklch(from var(--text-tone-source) 0.33 0.15 h);
+    @supports (color: attr(probe type(<color>), red)) {
+      --text-tone-source: attr(tone type(<color>), currentColor);
+    }
   }
   a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="primary"] {
     --text-color: oklch(from var(--text-tone-source) 0.33 0.15 h);

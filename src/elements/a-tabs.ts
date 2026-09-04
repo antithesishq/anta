@@ -121,8 +121,8 @@ export class ATabsElement extends HTMLElementBase {
   }
 
   formDisabledCallback(disabled: boolean) {
-    if (disabled) this.internals?.states.add("disabled");
-    else this.internals?.states.delete("disabled");
+    if (disabled) this.internals?.states?.add("disabled");
+    else this.internals?.states?.delete("disabled");
     this.sync();
   }
 
@@ -136,7 +136,7 @@ export class ATabsElement extends HTMLElementBase {
   get #isDisabled() {
     return (
       this.hasAttribute("disabled") ||
-      (this.internals?.states.has("disabled") ?? false)
+      (this.internals?.states?.has("disabled") ?? false)
     );
   }
 
@@ -165,7 +165,7 @@ export class ATabsElement extends HTMLElementBase {
   // The anchored indicator's far edge changes when its strip resizes. Pause its
   // edge transition through a resize burst so it cannot stretch between layouts.
   #pauseIndicatorTransition = () => {
-    this.internals?.states.add("resizing");
+    this.internals?.states?.add("resizing");
     if (this.resizeTimer != null) this.view.clearTimeout(this.resizeTimer);
     if (this.resizeFrame != null) this.view.cancelAnimationFrame(this.resizeFrame);
     this.resizeFrame = undefined;
@@ -173,7 +173,7 @@ export class ATabsElement extends HTMLElementBase {
       this.resizeTimer = undefined;
       this.resizeFrame = this.view.requestAnimationFrame(() => {
         this.resizeFrame = undefined;
-        this.internals?.states.delete("resizing");
+        this.internals?.states?.delete("resizing");
       });
     }, 120);
   };
@@ -183,7 +183,7 @@ export class ATabsElement extends HTMLElementBase {
     if (this.resizeFrame != null) this.view.cancelAnimationFrame(this.resizeFrame);
     this.resizeTimer = undefined;
     this.resizeFrame = undefined;
-    this.internals?.states.delete("resizing");
+    this.internals?.states?.delete("resizing");
   }
 
   private sync = () => {

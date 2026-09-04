@@ -340,7 +340,7 @@ export class SelectableChildElement extends HTMLElementBase {
   }
 
   get selected(): boolean {
-    return this.internals?.states.has('selected') ?? false
+    return this.internals?.states?.has('selected') ?? false
   }
   /**
    * Live selection, held off the DOM as `:state(selected)` (mirrored to `ariaProp`).
@@ -370,8 +370,8 @@ export class SelectableChildElement extends HTMLElementBase {
 
   protected applyState(on: boolean) {
     if (!this.internals) return
-    if (on) this.internals.states.add('selected')
-    else this.internals.states.delete('selected')
+    if (on) this.internals?.states?.add('selected')
+    else this.internals?.states?.delete('selected')
     this.internals[this.ariaProp] = on ? 'true' : 'false'
   }
 }

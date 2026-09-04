@@ -76,9 +76,10 @@
      (half the height); a length value (`round="12px"`, or the wrapper's `round={12}`
      → inline --banner-round) sets a custom radius. */
   a-banner[round] {
-    --banner-round: attr(round type(<length>));
-
     border-radius: var(--banner-round, 999px);
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --banner-round: attr(round type(<length>));
+    }
   }
 
   /* The dismiss ✕ is a fixed 40px-wide strip that fills the full bar height (the
@@ -139,7 +140,7 @@
   a-banner[tone]:not(
       [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
-    --banner-tone-source: attr(tone type(<color>), currentColor);
+    --banner-tone-source: currentColor;
 
     --banner-text:   oklch(from var(--banner-tone-source) 0.5 0.125 h);
     --banner-bg:     oklch(from var(--banner-tone-source) 0.955 0.02 h);
@@ -149,6 +150,9 @@
       --banner-text:   oklch(from var(--banner-tone-source) 0.77 0.11 h);
       --banner-bg:     oklch(from var(--banner-tone-source) 0.185 0.05 h);
       --banner-border: oklch(from var(--banner-tone-source) 0.26 0.06 h);
+    }
+    @supports (color: attr(probe type(<color>), red)) {
+      --banner-tone-source: attr(tone type(<color>), currentColor);
     }
   }
 

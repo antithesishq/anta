@@ -248,6 +248,45 @@ focus, the `.dark` ancestor class for mode, and the `prefers-color-scheme`,
 `pointer`, `hover`, `prefers-reduced-motion`, and `resolution` media queries for
 the rest.
 
+### Drawing to a canvas
+
+`context.font` carries the Box's resolved text style, and `devicePixelRatio`
+carries the scale, so one `contextchange` gives you everything a canvas needs to
+draw text that matches the DOM around it.
+
+Assign `shorthand` **first**. Chromium and Firefox reset `fontStretch`,
+`fontVariantCaps`, `fontKerning` and `textRendering` when `ctx.font` is set, so
+anything applied before it is lost. `stretch` and `variantCaps` stay out of the
+shorthand on purpose: computed `font-stretch` is a percentage, and a percentage
+in the shorthand makes every engine reject the whole string and fall back to
+`10px sans-serif`.
+
+```tsx folded title="canvas"
+<Box
+  onContextChange={(_, { current }) => {
+    const ctx = canvas.getContext('2d')
+    const { font, devicePixelRatio: dpr } = current
+
+    canvas.width = 300 * dpr
+    canvas.height = 80 * dpr
+    ctx.scale(dpr, dpr)
+
+    ctx.font = font.shorthand        // first: it resets the four below
+    ctx.fontStretch = font.stretch
+    ctx.fontVariantCaps = font.variantCaps
+    ctx.letterSpacing = font.letterSpacing
+    ctx.direction = font.direction
+    ctx.fillStyle = font.color
+    ctx.fillText('Matches the DOM', 0, font.lineHeight ?? font.size)
+  }}
+>
+  <canvas ref={…} />
+</Box>
+```
+
+`getComputedStyle(el).font` is an empty string in Chromium, Firefox and WebKit
+alike, which is why Box assembles the shorthand itself.
+
 Every value below is live. Switch the site theme, resize the window, zoom the
 page, or open it on a touch device. `osVersion` and `browserVersion` are major
 numbers, because every engine freezes the rest: macOS always reports `10.15.7`
@@ -293,6 +332,12 @@ whole snapshot).
 The `contextchange` payload, in the same two shapes.
 
 <PropsTable component="BoxContext" label="Field" />
+
+### BoxFont
+
+`context.font`, the resolved text style.
+
+<PropsTable component="BoxFont" label="Field" />
 
 </Disclosure>
 

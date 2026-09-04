@@ -15,6 +15,54 @@ export type BoxBrowser = 'chrome' | 'edge' | 'firefox' | 'opera' | 'safari' | 'u
 export type BoxPointer = 'fine' | 'coarse' | 'none'
 
 /** Current state that affects a box's rendering or interaction decisions. */
+/**
+ * The box's resolved text style, shaped to configure a canvas 2D context.
+ *
+ * Assign `shorthand` to `ctx.font` **first**: Chromium and Firefox reset
+ * `fontStretch`, `fontVariantCaps`, `fontKerning` and `textRendering` when
+ * `font` is assigned, so setting those before it loses them.
+ */
+export interface BoxFont {
+  /** CSS `font` shorthand, assembled here because every engine returns an empty
+   * string for the computed shorthand. `stretch` and `variantCaps` are left out
+   * of it deliberately: a percentage `font-stretch` makes every engine reject
+   * the whole string and fall back to `10px sans-serif`. Apply those through
+   * `ctx.fontStretch` / `ctx.fontVariantCaps` after setting `ctx.font`. */
+  shorthand: string
+  /** Resolved family list, quoted as the engine reports it. */
+  family: string
+  /** Font size in CSS pixels. */
+  size: number
+  /** Numeric weight, 1-1000. */
+  weight: number
+  /** `normal`, `italic`, or an `oblique <angle>`. */
+  style: string
+  /** Computed `font-stretch`, a percentage such as `88%`. Canvas: `ctx.fontStretch`. */
+  stretch: string
+  /** Line height in CSS pixels, or `null` when it computes to `normal`. Canvas
+   * ignores line height in `ctx.font`; this is for laying text out yourself. */
+  lineHeight: number | null
+  /** A length, never `normal` - `normal` is reported as `0px`, which is what
+   * `ctx.letterSpacing` accepts. */
+  letterSpacing: string
+  /** Same normalization as `letterSpacing`. Canvas: `ctx.wordSpacing`. */
+  wordSpacing: string
+  /** Resolved text color. Canvas: `ctx.fillStyle`. */
+  color: string
+  /** Canvas 2D consumes neither of these. They are here for text you measure or
+   * draw some other way. */
+  featureSettings: string
+  variationSettings: string
+  /** Canvas: `ctx.fontKerning`. */
+  kerning: string
+  /** Canvas: `ctx.fontVariantCaps`. */
+  variantCaps: string
+  /** Canvas: `ctx.textRendering`, which WebKit does not implement. */
+  textRendering: string
+  /** Canvas: `ctx.direction`. */
+  direction: string
+}
+
 export interface BoxContext {
   /** Closest scoped Anta mode. A local `.light` can override a dark document. */
   mode: BoxMode
@@ -51,6 +99,8 @@ export interface BoxContext {
    * zoom. Live — it re-reports on zoom and when the window moves to a monitor
    * with a different density. */
   devicePixelRatio: number
+  /** Resolved text style, ready to hand to a canvas 2D context. */
+  font: BoxFont
 }
 
 /** Current box dimensions and its content-overflow state. */

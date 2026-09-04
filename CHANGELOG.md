@@ -22,7 +22,9 @@ changes are not listed.
   color mode, `os` / `osVersion` / `browser` / `browserVersion` as coarse
   families and major versions, plus pointer, hover, reduced-motion, and
   `devicePixelRatio`, which re-reports on zoom and on a move to a display with a
-  different density.
+  different density. `context.font` reports the resolved text style as a
+  canvas-ready `BoxFont`, including a `font` shorthand Box assembles itself
+  because every engine returns an empty string for the computed one.
 - `<textarea data-anta>` uses Input field styling and supports `data-anta-size`,
   `round`, and `tone`.
 

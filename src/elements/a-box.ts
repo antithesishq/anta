@@ -1,6 +1,7 @@
 import { HTMLElementBase } from '../anta_helpers'
 import type {
   BoxContext,
+  BoxFont,
   BoxContextChange,
   BoxMeasurement,
   BoxMeasurementChange,
@@ -295,15 +296,66 @@ function deviceSnapshot(navigator: Navigator): DeviceSnapshot {
   }
 }
 
+/** Field equality, one level deep. `font` is rebuilt on every read, so an
+ * identity check would report it changed on every focus move. */
+function equal(a: unknown, b: unknown): boolean {
+  if (a === b) return true
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
+  const left = a as Record<string, unknown>
+  const right = b as Record<string, unknown>
+  const keys = Object.keys(left)
+  return keys.length === Object.keys(right).length && keys.every((key) => left[key] === right[key])
+}
+
 function same<T extends object>(a: T | undefined, b: T): boolean {
-  return a !== undefined && Object.keys(b).every((key) => a[key as keyof T] === b[key as keyof T])
+  return a !== undefined && Object.keys(b).every((key) => equal(a[key as keyof T], b[key as keyof T]))
 }
 
 function changed<T extends object>(previous: T | undefined, current: T): Partial<T> {
   if (!previous) return { ...current }
   return Object.fromEntries(
-    Object.entries(current).filter(([key, value]) => previous[key as keyof T] !== value),
+    Object.entries(current).filter(([key, value]) => !equal(previous[key as keyof T], value)),
   ) as Partial<T>
+}
+
+/** `normal` is the computed spacing default; canvas wants a length. */
+function spacing(value: string): string {
+  return value === 'normal' ? '0px' : value
+}
+
+/**
+ * The resolved text style, assembled for a canvas 2D context.
+ *
+ * The shorthand is built by hand because `getComputedStyle(el).font` is an empty
+ * string in Chromium, Firefox and WebKit alike. Stretch and variant stay out of
+ * it: computed `font-stretch` is a percentage, and a percentage in the shorthand
+ * makes every engine reject the whole declaration and fall back to
+ * `10px sans-serif`. Both have their own canvas attributes instead.
+ */
+function readFont(styles: CSSStyleDeclaration): BoxFont {
+  const lineHeightPx = parseFloat(styles.lineHeight)
+  const lineHeight = Number.isFinite(lineHeightPx) ? lineHeightPx : null
+  const style = styles.fontStyle && styles.fontStyle !== 'normal' ? `${styles.fontStyle} ` : ''
+  const weight = styles.fontWeight && styles.fontWeight !== '400' ? `${styles.fontWeight} ` : ''
+  const height = lineHeight != null ? `/${lineHeight}px` : ''
+  return {
+    shorthand: `${style}${weight}${styles.fontSize}${height} ${styles.fontFamily}`,
+    family: styles.fontFamily,
+    size: parseFloat(styles.fontSize) || 0,
+    weight: parseFloat(styles.fontWeight) || 400,
+    style: styles.fontStyle,
+    stretch: styles.fontStretch,
+    lineHeight,
+    letterSpacing: spacing(styles.letterSpacing),
+    wordSpacing: spacing(styles.wordSpacing),
+    color: styles.color,
+    featureSettings: styles.fontFeatureSettings,
+    variationSettings: styles.fontVariationSettings,
+    kerning: styles.fontKerning,
+    variantCaps: styles.fontVariantCaps,
+    textRendering: styles.textRendering,
+    direction: styles.direction,
+  }
 }
 
 function rounded(value: number): number {
@@ -455,6 +507,29 @@ export class ABoxElement extends HTMLElementBase {
 
     if (this.isConnected && this.#hasListener('contextchange')) this.#startReportingContext()
     else this.#stopReportingContext()
+
+    this.#syncHostObserver()
+  }
+
+  /* The host's own attributes need their own observer: one observer cannot take
+     `subtree: true` for childList and `subtree: false` for attributes on the
+     same target. A class on this box can flip it to `overflow: auto` without
+     changing its size, and can restyle its text, so both halves want to know. */
+  #syncHostObserver() {
+    const wanted = this.#measuring || this.#reportingContext
+    if (wanted === Boolean(this.#hostObserver)) return
+    if (wanted) {
+      this.#hostObserver = new this.view.MutationObserver(this.#hostDidChange)
+      this.#hostObserver.observe(this, { attributes: true })
+    } else {
+      this.#hostObserver?.disconnect()
+      this.#hostObserver = undefined
+    }
+  }
+
+  #hostDidChange = () => {
+    this.#queueMeasurement()
+    this.#queueContext()
   }
 
   #hasListener(type: string): boolean {
@@ -485,13 +560,6 @@ export class ABoxElement extends HTMLElementBase {
       childList: true,
       characterData: true,
     })
-    // The host's own attributes still matter, and need their own observer: one
-    // observer cannot take `subtree: true` for childList and `subtree: false`
-    // for attributes on the same target. A class that flips this box to
-    // `overflow: auto` changes what it clips without changing its size, so
-    // nothing else here would notice.
-    this.#hostObserver = new this.view.MutationObserver(this.#queueMeasurement)
-    this.#hostObserver.observe(this, { attributes: true })
     this.addEventListener('input', this.#queueMeasurement)
     this.addEventListener('scroll', this.#queueMeasurement, { passive: true })
     this.addEventListener('load', this.#queueMeasurement, true)
@@ -540,8 +608,6 @@ export class ABoxElement extends HTMLElementBase {
     this.#resizeObserver = undefined
     this.#contentObserver?.disconnect()
     this.#contentObserver = undefined
-    this.#hostObserver?.disconnect()
-    this.#hostObserver = undefined
     if (this.#frame != null) this.view.cancelAnimationFrame(this.#frame)
     this.#frame = undefined
     this.removeEventListener('input', this.#queueMeasurement)
@@ -558,6 +624,8 @@ export class ABoxElement extends HTMLElementBase {
     this.#store?.subscribeContext(this)
     this.addEventListener('focusin', this.#queueContext)
     this.addEventListener('focusout', this.#handleFocusOut)
+    // A webfont arriving changes the resolved family and its metrics.
+    this.doc.fonts?.addEventListener('loadingdone', this.#queueContext)
     this.#initialContext = true
     this.#queueContext()
   }
@@ -568,6 +636,7 @@ export class ABoxElement extends HTMLElementBase {
     this.#store?.unsubscribeContext(this)
     this.removeEventListener('focusin', this.#queueContext)
     this.removeEventListener('focusout', this.#handleFocusOut)
+    this.doc.fonts?.removeEventListener('loadingdone', this.#queueContext)
   }
 
   /* Tabbing between two descendants fires focusout then focusin, and WebKit runs
@@ -656,6 +725,7 @@ export class ABoxElement extends HTMLElementBase {
       ...shared,
       mode: localMode(this),
       focusWithin: this.matches(':focus-within'),
+      font: readFont(this.view.getComputedStyle(this)),
     }
   }
 

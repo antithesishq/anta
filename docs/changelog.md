@@ -25,6 +25,10 @@ changes are not listed.
   different density. `context.font` reports the resolved text style as a
   canvas-ready `BoxFont`, including a `font` shorthand Box assembles itself
   because every engine returns an empty string for the computed one.
+  `context.inset` reports padding and border widths, which `BoxMeasurement`
+  cannot express — `width` is the border box and `clientWidth` the padding box —
+  and `context.backgroundColor` completes the set for drawing a box's content
+  somewhere its own background is not behind it.
 - `<textarea data-anta>` uses Input field styling and supports `data-anta-size`,
   `round`, and `tone`.
 

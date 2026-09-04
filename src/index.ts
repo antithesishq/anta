@@ -56,6 +56,7 @@ export type {
   BoxContextChange,
   BoxDisplay,
   BoxFont,
+  BoxInset,
   BoxMeasurement,
   BoxMeasurementChange,
   BoxMode,

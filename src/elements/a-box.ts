@@ -2,6 +2,7 @@ import { HTMLElementBase } from '../anta_helpers'
 import type {
   BoxContext,
   BoxFont,
+  BoxInset,
   BoxContextChange,
   BoxMeasurement,
   BoxMeasurementChange,
@@ -316,6 +317,23 @@ function changed<T extends object>(previous: T | undefined, current: T): Partial
   return Object.fromEntries(
     Object.entries(current).filter(([key, value]) => !equal(previous[key as keyof T], value)),
   ) as Partial<T>
+}
+
+function px(value: string): number {
+  return parseFloat(value) || 0
+}
+
+function readInset(styles: CSSStyleDeclaration): BoxInset {
+  return {
+    paddingTop: px(styles.paddingTop),
+    paddingRight: px(styles.paddingRight),
+    paddingBottom: px(styles.paddingBottom),
+    paddingLeft: px(styles.paddingLeft),
+    borderTop: px(styles.borderTopWidth),
+    borderRight: px(styles.borderRightWidth),
+    borderBottom: px(styles.borderBottomWidth),
+    borderLeft: px(styles.borderLeftWidth),
+  }
 }
 
 /** `normal` is the computed spacing default; canvas wants a length. */
@@ -721,11 +739,15 @@ export class ABoxElement extends HTMLElementBase {
 
   #readContext(): BoxContext {
     const shared = (this.#store ?? windowStore(this.view, this.doc)).snapshot()
+    // One style read feeds the font, the inset, and the background.
+    const styles = this.view.getComputedStyle(this)
     return {
       ...shared,
       mode: localMode(this),
       focusWithin: this.matches(':focus-within'),
-      font: readFont(this.view.getComputedStyle(this)),
+      font: readFont(styles),
+      inset: readInset(styles),
+      backgroundColor: styles.backgroundColor,
     }
   }
 

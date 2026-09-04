@@ -143,9 +143,14 @@ the rest.
 
 ### Drawing to a canvas
 
-`context.font` carries the Box's resolved text style, and `devicePixelRatio`
-carries the scale, so one `contextchange` gives you everything a canvas needs to
-draw text that matches the DOM around it.
+`context.font` carries the Box's resolved text style, `context.inset` the
+distance from its border edge to its content edge, and `devicePixelRatio` the
+scale. One `contextchange` gives you everything a canvas needs to draw text that
+matches the DOM around it.
+
+The inset is the one thing `measurement` cannot give you: `width` is the border
+box and `clientWidth` is the padding box, so neither the padding nor the border
+thickness can be recovered from them.
 
 Assign `shorthand` **first**. Chromium and Firefox reset `fontStretch`,
 `fontVariantCaps`, `fontKerning` and `textRendering` when `ctx.font` is set, so
@@ -170,7 +175,11 @@ in the shorthand makes every engine reject the whole string and fall back to
     ctx.letterSpacing = font.letterSpacing
     ctx.direction = font.direction
     ctx.fillStyle = font.color
-    ctx.fillText('Matches the DOM', 0, font.lineHeight ?? font.size)
+
+    // Start where the DOM's own content starts.
+    const x = current.inset.borderLeft + current.inset.paddingLeft
+    const y = current.inset.borderTop + current.inset.paddingTop
+    ctx.fillText('Matches the DOM', x, y + (font.lineHeight ?? font.size))
   }}
 >
   <canvas ref={…} />
@@ -232,6 +241,10 @@ The `contextchange` payload, in the same two shapes.
 ### BoxFont
 
 `context.font`, the resolved text style.
+
+### BoxInset
+
+`context.inset`, the distance from the border edge to the content edge.
 
 Use `<a-box>` when you assemble DOM without a JSX wrapper. Both events are
 ordinary, non-bubbling `CustomEvent`s carrying the same detail object.

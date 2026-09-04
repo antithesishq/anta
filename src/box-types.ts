@@ -16,6 +16,25 @@ export type BoxPointer = 'fine' | 'coarse' | 'none'
 
 /** Current state that affects a box's rendering or interaction decisions. */
 /**
+ * Distance from the box's border edge to its content edge, in CSS pixels.
+ *
+ * Not derivable from `BoxMeasurement`: `width` / `height` are the border box and
+ * `clientWidth` / `clientHeight` are the padding box, so neither the padding nor
+ * the border thickness can be recovered from them. Add a padding and its border
+ * to place content relative to the border box.
+ */
+export interface BoxInset {
+  paddingTop: number
+  paddingRight: number
+  paddingBottom: number
+  paddingLeft: number
+  borderTop: number
+  borderRight: number
+  borderBottom: number
+  borderLeft: number
+}
+
+/**
  * The box's resolved text style, shaped to configure a canvas 2D context.
  *
  * Assign `shorthand` to `ctx.font` **first**: Chromium and Firefox reset
@@ -101,6 +120,12 @@ export interface BoxContext {
   devicePixelRatio: number
   /** Resolved text style, ready to hand to a canvas 2D context. */
   font: BoxFont
+  /** Padding and border widths, for placing content inside the border box. */
+  inset: BoxInset
+  /** Resolved `background-color`. Needed when the box's content is drawn
+   * somewhere else — an offscreen canvas, a worker, an export — where the box's
+   * own background is not behind it. */
+  backgroundColor: string
 }
 
 /** Current box dimensions and its content-overflow state. */

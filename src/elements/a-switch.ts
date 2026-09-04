@@ -105,8 +105,8 @@ export class ASwitchElement extends HTMLElementBase {
     const internals = this.internals;
     if (!internals) return;
 
-    internals.states.delete("checked");
-    if (this.currentState === "checked") internals.states.add("checked");
+    internals?.states?.delete("checked");
+    if (this.currentState === "checked") internals?.states?.add("checked");
     internals.ariaChecked = this.currentState === "checked" ? "true" : "false";
     internals.setFormValue?.(
       this.currentState === "checked" ? (this.getAttribute("value") ?? "on") : null,

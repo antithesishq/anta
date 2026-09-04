@@ -21,9 +21,12 @@ const indexed = new Set(
   [...componentGroups.flat(), ...documentationLinks, ...packageLinks].map(([, path]) => path),
 )
 
-const pages = readdirSync(pagesDir)
+// Recursive: a page can be `foo.mdx` or `foo/index.mdx`, and the nested form is
+// exactly the one a flat scan misses — `accessibility/index.mdx` is one today.
+const pages = readdirSync(pagesDir, { recursive: true })
+  .map((name) => String(name).replaceAll('\\', '/'))
   .filter((name) => name.endsWith('.mdx') && name !== 'index.mdx')
-  .map((name) => `/${name.slice(0, -'.mdx'.length)}/`)
+  .map((name) => `/${name.replace(/(\/)?index\.mdx$/, '').replace(/\.mdx$/, '')}/`)
 
 const missing = pages.filter((path) => !indexed.has(path))
 const stale = [...indexed].filter((path) => path !== '/' && !pages.includes(path))

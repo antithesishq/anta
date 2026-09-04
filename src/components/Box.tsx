@@ -99,7 +99,8 @@ export const Box = ({
       display={display === 'block' ? undefined : display}
       round={roundAttr(round)}
       gap={gap != null ? '' : undefined}
-      observe={observe ? '' : undefined}
+      observe={observe || onMeasureChange ? '' : undefined}
+      report-context={onContextChange ? '' : undefined}
       fade={fade ? '' : undefined}
       fade-size={fade && fadeSize != null ? cssLength(fadeSize) : undefined}
       onmeasurechange={measureHandler}

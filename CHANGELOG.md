@@ -16,7 +16,10 @@ changes are not listed.
   `:state(scrollable-y)`, `:state(hidden-end-x)`, …). Measurement is opt-in and
   pauses off screen: a Box observes itself while it has `fade`, an
   `onMeasureChange` handler, or `observe`, and only while it intersects the
-  viewport. A Box that clips or scrolls also watches its direct children, so a
+  viewport. `Box` stamps `observe` from an `onMeasureChange` handler and
+  `report-context` from `onContextChange`; a hand-written `<a-box>` needs the
+  attribute, because `addEventListener` alone does not arm anything. A Box that
+  clips or scrolls also watches its direct children, so a
   child that upgrades late or resizes from its own state keeps the overflow
   states honest; a Box with visible overflow watches none. `contextchange` reports
   color mode, `os` / `osVersion` / `browser` / `browserVersion` as coarse
@@ -42,6 +45,12 @@ changes are not listed.
 
 ### Fixed
 
+- `Box` no longer clips an outset `box-shadow` or focus ring on a `fade` Box that
+  is hiding nothing. The mask is applied only while an edge actually hides
+  content.
+- Custom-state writes are guarded across every element. `ElementInternals`
+  exists without `CustomStateSet` on Safari 16.4-17.3 and Firefox 93-125, where
+  the unguarded call threw out of `connectedCallback`.
 - `Box` reports one `contextchange` when focus moves between two of its own
   descendants. Safari runs a microtask checkpoint between `focusout` and
   `focusin`, so the pair used to surface an extra `focusWithin: false` that was

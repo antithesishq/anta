@@ -30,10 +30,24 @@ a box styles itself with no JSX state and no measurement ref.
 
 A Box measures only when something asks for the result: `fade`, an
 `onMeasureChange` handler, or `observe`. Reach for `observe` when your own CSS is
-the only reader, as it is here. A Box with none of the three runs no observers,
-and measurement pauses while a Box sits off screen. `fade` is the one that
+the only reader, as it is here. A Box with none of the three runs no observers at
+all, and measurement pauses while a Box sits off screen. `fade` is the one that
 measures the moment it connects, because its mask is painted from those states;
 `observe` and a handler wait until the Box is known to be on screen.
+
+The switch is an attribute, not the presence of a listener. `Box` stamps
+`observe` from `onMeasureChange` and `report-context` from `onContextChange`, so
+this is invisible in JSX. Writing `<a-box>` by hand, add the attribute yourself —
+`addEventListener` alone reports nothing:
+
+```html
+<a-box observe report-context>…</a-box>
+```
+
+An attribute rather than a listener tally because a tally cannot see listeners
+attached before the element upgrades (the client-side `import` pattern), cannot
+see `once` or `AbortSignal` removals, and churns on every React 19 render, since
+React removes and re-adds an `on*` prop whenever its identity changes.
 
 `.edge` below is a demo class name; use your own selector.
 
@@ -127,6 +141,10 @@ CSS state, named in kebab case: `overflow-x`, `clipped-y`, `scrollable-x`,
 the one thing CSS has no way to ask about. None of them appear as host
 attributes, and they stay current only while the Box measures: give it `fade`,
 `observe`, or an `onMeasureChange` handler.
+
+`fade` masks an edge only while that edge hides something. A mask clips to the
+border box, so an always-on one would swallow an outset `box-shadow` or a focus
+ring on a Box that is hiding nothing.
 
 ## Context
 

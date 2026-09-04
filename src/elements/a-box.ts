@@ -87,6 +87,8 @@ class BoxWindowStore {
 
   /** Only a box that measures is tracked, and it measures only while on screen. */
   observeVisibility(box: ABoxElement) {
+    // #sync runs on every attribute change, so this has to be idempotent.
+    if (this.#observedBoxes.has(box)) return
     if (typeof this.view.IntersectionObserver === 'undefined') {
       box.visibilityDidChange(true)
       return
@@ -380,30 +382,26 @@ function rounded(value: number): number {
   return Math.round(value * 100) / 100
 }
 
-/** Events whose listeners switch reporting on. */
-const REPORTED_EVENTS = ['measurechange', 'contextchange']
-
-/** The DOM matches a listener on type plus capture, so the tally has to as well:
- * a capturing listener removed without the flag stays attached. */
-function listenerKey(type: string, options?: boolean | EventListenerOptions): string {
-  return `${type}|${typeof options === 'object' ? Boolean(options.capture) : Boolean(options)}`
-}
-
 /**
  * `<a-box>` is a light-DOM container that observes itself. It leaves the host
  * and its children entirely to the renderer: all output is read-only getters,
  * `measurechange` / `contextchange` events, and private `ElementInternals`
  * states. This keeps measurement usable when JSX itself cannot access the DOM.
  *
- * Observation is opt-in and pauses off screen. A box measures only while it is
- * intersecting the viewport and something asked for the result: `fade`, the
- * `observe` attribute (for a consumer styling on the overflow states alone), or
- * an attached `measurechange` listener. Context reporting needs a
- * `contextchange` listener. A box with none of those runs no observers, and the
- * `measurement` / `context` / `isTruncated` getters still read on demand.
+ * Observation is opt-in by attribute and pauses off screen. `fade` or `observe`
+ * turns measurement on, `report-context` turns `contextchange` on, and a box
+ * with neither runs no observers at all — not even the shared visibility one.
+ * The `measurement` / `context` / `isTruncated` getters still read on demand.
+ *
+ * Attributes rather than "is a listener attached" on purpose. A listener tally
+ * cannot see listeners added before the element upgrades (the SSR pattern in
+ * AGENTS.md), cannot see `once` or `AbortSignal` removals, and churns on every
+ * React 19 render, because React removes and re-adds an `on*` prop whenever its
+ * identity changes. The JSX wrapper stamps both attributes from its handler
+ * props, so this is invisible to anyone using `Box`.
  */
 export class ABoxElement extends HTMLElementBase {
-  static observedAttributes = ['fade', 'observe']
+  static observedAttributes = ['fade', 'observe', 'report-context']
 
   #internals = this.attachInternals?.()
   #store?: BoxWindowStore
@@ -414,7 +412,6 @@ export class ABoxElement extends HTMLElementBase {
   #contextQueued = false
   #measurement?: BoxMeasurement
   #context?: BoxContext
-  #listeners = new Map<string, Set<unknown>>()
   #measuring = false
   #clips = false
   #observedChildren = new Set<Element>()
@@ -431,7 +428,6 @@ export class ABoxElement extends HTMLElementBase {
 
   connectedCallback() {
     this.#store = windowStore(this.view, this.doc)
-    this.#store.observeVisibility(this)
     this.#sync()
   }
 
@@ -443,41 +439,13 @@ export class ABoxElement extends HTMLElementBase {
     this.#visible = undefined
   }
 
+  /* Guarded on the store, not on `isConnected`: upgrading an element that is
+     already in the document runs this for every present attribute *before*
+     connectedCallback, when there is no store yet. Syncing then would flip the
+     started flags while `this.#store?.subscribeContext` silently did nothing,
+     and the later connect would see the flags already set and skip it. */
   attributeChangedCallback() {
-    if (this.isConnected) this.#sync()
-  }
-
-  /* A listener is one of the ways into reporting, and the DOM offers no way to
-     ask whether one is attached, so the element keeps its own tally. */
-  addEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions,
-  ) {
-    // A null listener is a DOM no-op, so it never reaches the tally either.
-    if (!listener) return
-    super.addEventListener(type, listener, options)
-    if (!REPORTED_EVENTS.includes(type)) return
-    const key = listenerKey(type, options)
-    let set = this.#listeners.get(key)
-    if (!set) {
-      set = new Set()
-      this.#listeners.set(key, set)
-    }
-    set.add(listener)
-    this.#sync()
-  }
-
-  removeEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | EventListenerOptions,
-  ) {
-    if (!listener) return
-    super.removeEventListener(type, listener, options)
-    if (!REPORTED_EVENTS.includes(type)) return
-    this.#listeners.get(listenerKey(type, options))?.delete(listener)
-    this.#sync()
+    if (this.#store) this.#sync()
   }
 
   /** A fresh measurement snapshot. For notifications, prefer `measurechange`:
@@ -515,15 +483,15 @@ export class ABoxElement extends HTMLElementBase {
      visibility: a mode change has to reach an off-screen box too, and the store
      it subscribes to is already refcounted down to nothing. */
   #sync() {
-    const fade = this.hasAttribute('fade')
-    const measure =
-      this.isConnected &&
-      (this.#visible ?? fade) &&
-      (fade || this.hasAttribute('observe') || this.#hasListener('measurechange'))
+    const wantsMeasurement = this.hasAttribute('fade') || this.hasAttribute('observe')
+    const measure = this.isConnected && wantsMeasurement && (this.#visible ?? this.hasAttribute('fade'))
     if (measure) this.#startMeasuring()
     else this.#stopMeasuring()
 
-    if (this.isConnected && this.#hasListener('contextchange')) this.#startReportingContext()
+    if (this.isConnected && wantsMeasurement) this.#store?.observeVisibility(this)
+    else this.#store?.unobserveVisibility(this)
+
+    if (this.isConnected && this.hasAttribute('report-context')) this.#startReportingContext()
     else this.#stopReportingContext()
 
     this.#syncHostObserver()
@@ -548,11 +516,6 @@ export class ABoxElement extends HTMLElementBase {
   #hostDidChange = () => {
     this.#queueMeasurement()
     this.#queueContext()
-  }
-
-  #hasListener(type: string): boolean {
-    return (this.#listeners.get(`${type}|true`)?.size ?? 0) > 0
-      || (this.#listeners.get(`${type}|false`)?.size ?? 0) > 0
   }
 
   #startMeasuring() {
@@ -711,10 +674,13 @@ export class ABoxElement extends HTMLElementBase {
     const scrollableY = overflowY && (styles.overflowY === 'auto' || styles.overflowY === 'scroll')
     const scrollLeft = Math.round(this.scrollLeft)
     const scrollTop = Math.round(this.scrollTop)
-    // A right-to-left box scrolls into negative `scrollLeft`, so distance from
-    // the logical start edge is the magnitude, not the signed value.
-    const fromStartX = Math.abs(scrollLeft)
-    const fromStartY = Math.abs(scrollTop)
+    // A right-to-left box scrolls into negative `scrollLeft`, so the start edge
+    // is whichever end the sign runs from. Clamping instead of taking the
+    // magnitude matters during elastic overscroll, where the sign flips past the
+    // resting edge: `Math.abs` would read that rubber-band as real distance and
+    // flash a start-edge fade.
+    const fromStartX = Math.max(0, styles.direction === 'rtl' ? -scrollLeft : scrollLeft)
+    const fromStartY = Math.max(0, scrollTop)
     return {
       width: rounded(rect.width),
       height: rounded(rect.height),
@@ -796,8 +762,8 @@ export class ABoxElement extends HTMLElementBase {
   }
 
   #setState(name: string, active: boolean) {
-    if (active) this.#internals?.states.add(name)
-    else this.#internals?.states.delete(name)
+    if (active) this.#internals?.states?.add(name)
+    else this.#internals?.states?.delete(name)
   }
 }
 

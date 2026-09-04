@@ -58,7 +58,15 @@
     --box-fade-y: linear-gradient(transparent, transparent);
     --box-fade-to-start: to left;
     --box-fade-to-end: to right;
+  }
 
+  /* The mask is applied only while an edge actually hides something. A mask
+     clips to the border box, so an always-on one would swallow an outset
+     box-shadow or a focus ring on a box that is hiding nothing at all. */
+  a-box[fade]:is(
+    :state(hidden-start-x), :state(hidden-end-x),
+    :state(hidden-start-y), :state(hidden-end-y)
+  ) {
     mask-image: linear-gradient(black, black), var(--box-fade-x), var(--box-fade-y);
     mask-clip: border-box, padding-box, padding-box;
     mask-origin: border-box, padding-box, padding-box;

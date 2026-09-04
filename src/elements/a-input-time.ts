@@ -787,12 +787,12 @@ export class AInputTimeElement extends HTMLElementBase {
   #syncStatus() {
     const critical = this.getAttribute('status') === 'critical'
     for (const seg of this.#segs) seg.el.setAttribute('aria-invalid', critical ? 'true' : 'false')
-    try { critical ? this.#internals?.states.add('invalid') : this.#internals?.states.delete('invalid') } catch {}
+    try { critical ? this.#internals?.states?.add('invalid') : this.#internals?.states?.delete('invalid') } catch {}
   }
 
   #updateFilled() {
-    if (this.value) this.#internals?.states.add('filled')
-    else this.#internals?.states.delete('filled')
+    if (this.value) this.#internals?.states?.add('filled')
+    else this.#internals?.states?.delete('filled')
   }
 
   #updateValidity() {

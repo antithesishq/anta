@@ -242,6 +242,70 @@ test('empty wheel bounds track dwell but explicit disabling clears it', async t 
   assert.equal(await wheel(page), false, 'Blur while bounds are closed must invalidate dwell')
 })
 
+test('a settled Box accepts the first native wheel after a captured drag', async t => {
+  const page = await pageFor(t)
+  await mount(page, { 'wheel-capture': '', 'pointer-capture': 'mouse', 'wheel-delay': '0' })
+  await page.mouse.move(20, 20)
+  assert.equal(await wheel(page), true)
+  await page.mouse.down()
+  await page.mouse.move(80, 50)
+  await page.mouse.up()
+  await page.evaluate(() => {
+    window.wheelDelivered = false
+    box.addEventListener('wheel', () => { window.wheelDelivered = true }, { once: true })
+  })
+  await page.mouse.wheel(0, 12)
+  await page.waitForFunction(() => wheelDelivered)
+  const captured = await page.evaluate(() => log.filter(e => e.type === 'wheelinput'))
+  assert.equal(captured.length, 2)
+  assert.equal(captured[1].detail.wheelEvent.isTrusted, true)
+  assert.equal(captured[1].detail.activationReason, 'settled')
+
+  await page.mouse.down()
+  await page.mouse.move(360, 300)
+  await page.mouse.move(80, 50)
+  await page.mouse.up()
+  assert.equal(await wheel(page, { clientX: 80, clientY: 50 }), false, 'Leaving during capture must invalidate dwell')
+})
+
+test('dragging does not establish dwell or bypass movement resets', async t => {
+  const page = await pageFor(t)
+  for (const mode of ['new', 'pending', 'reset']) {
+    await mount(page, { 'wheel-capture': '', 'pointer-capture': 'mouse', 'wheel-delay': mode === 'pending' ? '10000' : '150' })
+    await syntheticCapture(page)
+    await page.evaluate(mode => {
+      if (mode === 'reset') box.setAttribute('wheel-reset-on-move', '')
+      if (mode !== 'new') pointer('pointermove', { buttons: 0, time: performance.now() - 200 })
+      pointer('pointerdown')
+      pointer('pointermove', { clientX: 80, clientY: 50 })
+      pointer('pointerup', { clientX: 80, clientY: 50 })
+    }, mode)
+    assert.equal(await wheel(page, { clientX: 80, clientY: 50 }), false, mode)
+    const afterSettling = await page.evaluate(() => {
+      const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: 80, clientY: 50, deltaY: 12 })
+      Object.defineProperty(event, 'timeStamp', { value: performance.now() + 11000 })
+      box.dispatchEvent(event)
+      return event.defaultPrevented
+    })
+    assert.equal(afterSettling, mode !== 'new', `${mode}: existing dwell can settle after release without another move`)
+  }
+})
+
+test('a hybrid-device touch tap does not clear settled mouse dwell', async t => {
+  const page = await pageFor(t, { hasTouch: true })
+  await mount(page, { 'wheel-capture': '', 'wheel-delay': '0' })
+  await page.mouse.move(20, 20)
+  assert.equal(await wheel(page), true)
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 400, y: 300, id: 0 }] })
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  assert.equal(await wheel(page), true)
+  await page.evaluate(() => {
+    box.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, pointerType: 'mouse', relatedTarget: null }))
+  })
+  assert.equal(await wheel(page), false, 'Mouse exit still clears dwell')
+})
+
 test('trusted mouse capture continues outside, ends once, and does not emit an accidental click', async t => {
   const page = await pageFor(t)
   await mount(page, { 'pointer-capture': 'mouse', 'pointer-threshold': '3' })
@@ -271,6 +335,88 @@ test('nested interactive controls and explicit ignored subtrees keep their input
   await page.evaluate(() => box.setAttribute('pointer-include-interactive', ''))
   await page.locator('#button').click()
   assert.deepEqual(await page.evaluate(() => log.map(e => e.detail.phase)), ['start', 'end'])
+})
+
+test('nested Anta Tabs switch without starting Box pointer or pan capture', async t => {
+  for (const props of [
+    { pointerCapture: true },
+    { pan: { pointerTypes: ['mouse'], threshold: 0 } },
+    { pointerCapture: true, pan: { pointerTypes: ['mouse'], threshold: 0 } },
+  ]) {
+    const page = await pageFor(t)
+    await page.evaluate(props => {
+      window.log = []
+      renderTabsInBox({
+        ...props,
+        onPointerInput: (_, detail) => log.push(detail),
+        onPanInput: (_, detail) => log.push(detail),
+      })
+    }, props)
+    assert.equal(await page.locator('a-tabs').evaluate(tabs => tabs.value), 'first')
+    await page.locator('a-tab[value="second"]').click()
+    assert.deepEqual(await page.evaluate(() => log), [], JSON.stringify(props))
+    assert.equal(await page.locator('a-tabs').evaluate(tabs => tabs.value), 'second')
+  }
+})
+
+test('raw Anta tabs without explicit roles keep their clicks', async t => {
+  const page = await pageFor(t)
+  await mount(page, { 'pointer-capture': '' })
+  await page.evaluate(() => {
+    box.innerHTML = '<a-tabs default-state="first"><a-tab value="first">First</a-tab><a-tab value="second">Second</a-tab></a-tabs>'
+  })
+  await page.locator('a-tab[value="second"]').click()
+  assert.deepEqual(await page.evaluate(() => log), [])
+  assert.equal(await page.locator('a-tabs').evaluate(tabs => tabs.value), 'second')
+})
+
+test('nested ARIA controls keep descendant clicks under pointer and pan capture', async t => {
+  const page = await pageFor(t)
+  for (const attributes of [
+    { 'pointer-capture': '' },
+    { pan: 'both', 'pan-pointer-types': 'mouse', 'pan-threshold': '0' },
+  ]) {
+    for (const role of [
+      'button', 'checkbox', 'combobox', 'link', 'menuitem', 'menuitemcheckbox',
+      'menuitemradio', 'option', 'radio', 'scrollbar', 'searchbox', 'slider',
+      'spinbutton', 'switch', 'tab', 'textbox', 'treeitem', 'unknown tab',
+    ]) {
+      await mount(page, attributes)
+      await page.evaluate(role => {
+        const control = document.createElement('div')
+        control.id = 'control'
+        control.setAttribute('role', role)
+        control.tabIndex = 0
+        control.innerHTML = '<span>Choose</span>'
+        control.addEventListener('click', () => log.push({ type: 'control-click' }))
+        box.append(control)
+      }, role)
+      await page.locator('#control span').click()
+      assert.deepEqual(await page.evaluate(() => log), [{ type: 'control-click' }], `${role}: ${JSON.stringify(attributes)}`)
+    }
+  }
+})
+
+test('interactive capture remains explicit and focusable non-controls still capture', async t => {
+  const page = await pageFor(t)
+  await mount(page, { 'pointer-capture': '', 'pointer-include-interactive': '' })
+  await page.evaluate(() => {
+    box.innerHTML = '<div id="control" role="tab" tabindex="0"><span>Choose</span></div>'
+    control.addEventListener('click', () => log.push({ type: 'control-click' }))
+  })
+  await page.locator('#control span').click()
+  assert.deepEqual(await page.evaluate(() => log.map(e => e.detail?.phase)), ['start', 'end'])
+  await page.evaluate(() => {
+    log.length = 0
+    control.setAttribute('data-box-input-ignore', '')
+  })
+  await page.locator('#control span').click()
+  assert.deepEqual(await page.evaluate(() => log), [{ type: 'control-click' }])
+
+  await mount(page, { 'pointer-capture': '' })
+  await page.evaluate(() => { box.innerHTML = '<div id="surface" role="img" tabindex="0" aria-label="Plot">Plot</div>' })
+  await page.locator('#surface').click()
+  assert.deepEqual(await page.evaluate(() => log.map(e => e.detail?.phase)), ['start', 'end'])
 })
 
 test('click suppression does not swallow a new press on an excluded control', async t => {

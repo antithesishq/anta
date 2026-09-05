@@ -43,7 +43,15 @@ const inputs = new WeakMap<HTMLElement, InputState>()
 const documents = new WeakMap<Document, InputStore>()
 const DIRECTIONS: Record<string, number> = { up: 1, down: 2, left: 4, right: 8 }
 const POINTER_TYPES: Record<string, number> = { mouse: 1, pen: 2, touch: 4 }
-const INTERACTIVE = 'input, textarea, select, button, a[href], [contenteditable]:not([contenteditable="false"]), [role="button"], [role="slider"], [role="textbox"], a-input, a-button, a-slider, a-checkbox, a-switch, a-radio, a-menu'
+const INTERACTIVE = [
+  'input, textarea, select, button, summary, a[href], [contenteditable]:not([contenteditable="false"])',
+  ...[
+    'button', 'checkbox', 'combobox', 'link', 'menuitem', 'menuitemcheckbox',
+    'menuitemradio', 'option', 'radio', 'scrollbar', 'searchbox', 'slider',
+    'spinbutton', 'switch', 'tab', 'textbox', 'treeitem',
+  ].map(role => `[role~="${role}"]`),
+  'a-input, a-button, a-slider, a-checkbox, a-switch, a-radio, a-menu, a-menu-item, a-tab',
+].join(', ')
 
 function mask(value: string | null, values: Record<string, number>, fallback: number): number {
   if (value === null || value === '') return fallback
@@ -216,15 +224,21 @@ function syncDwellTracking(store: InputStore) {
 function onDwellMove(this: Document, event: PointerEvent) {
   const store = documents.get(this)
   if (!store || event.pointerType === 'touch') return
-  if (event.buttons) { store.dwell.clear(); return }
   const path = event.composedPath()
-  for (const box of store.dwell.keys()) if (!path.includes(box)) store.dwell.delete(box)
+  for (const box of store.dwell.keys()) {
+    // Pointer capture retargets moves even after the pointer leaves Box.
+    if (!path.includes(box) || event.buttons && !geometry(box, event.clientX, event.clientY).inside) {
+      store.dwell.delete(box)
+    }
+  }
   for (const target of path) {
     const state = inputs.get(target as HTMLElement)
     const options = state?.wheel
     if (!state || !options || !needsDwell(options)) continue
     let dwell = store.dwell.get(state.box)
     if (!dwell) {
+      // Drags can update existing dwell, but cannot activate a new region.
+      if (event.buttons) continue
       store.dwell.set(state.box, { x: event.clientX, y: event.clientY, time: event.timeStamp, ready: false })
       continue
     }
@@ -239,6 +253,7 @@ function onDwellMove(this: Document, event: PointerEvent) {
 }
 
 function onDwellOut(this: Document, event: PointerEvent) {
+  if (event.pointerType === 'touch') return
   if (event.relatedTarget === null) documents.get(this)?.dwell.clear()
 }
 

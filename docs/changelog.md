@@ -18,6 +18,10 @@ changes are not listed.
 - `Box` preserves wheel settling when all direction bounds close and reopen.
 - `Box` gives touch pointer capture precedence over single-axis pan. Empty
   device or button lists no longer restrict native selection or touch gestures.
+- `Box` leaves nested tabs and ARIA controls interactive during pointer capture
+  and custom panning, unless pointer capture explicitly includes them.
+- `Box` preserves settled wheel activation after an in-bounds drag and ignores
+  touch exit events when tracking mouse dwell.
 
 ## 0.3.26 — September 4, 2026
 

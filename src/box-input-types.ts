@@ -37,7 +37,7 @@ export interface BoxPointerCapture {
   /** Modifier required to start a capture session.
    * @defaultValue any */
   modifier?: BoxInputModifier
-  /** Allow capture to start on a nested form control, link, or editable region.
+  /** Allow capture to start on nested native or ARIA controls, links, or editable regions.
    * @defaultValue false */
   includeInteractive?: boolean
 }

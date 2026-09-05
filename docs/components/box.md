@@ -5,8 +5,8 @@ events, and opt-in input capture.
 
 ## Display
 
-`display` and `gap` set the matching CSS properties. A numeric `gap` uses
-pixels. A string accepts any CSS length.
+Use `display`, `gap`, and `round` for layout and corners. Numeric lengths use
+pixels; strings accept CSS lengths. A bare `round` fully rounds the corners.
 
 ```tsx
 <Box round={8}><span /></Box>
@@ -14,35 +14,12 @@ pixels. A string accepts any CSS length.
 <Box display="grid" round={8} gap="0.5rem" style={{ gridTemplateColumns: '1fr 1fr' }}><span /></Box>
 ```
 
-`round` accepts the same values. Pass `round` for fully rounded corners. Omit
-it for square corners.
-
-`display`, `gap`, and `round` use the `anta.components` layer. Your
-`className` and `style` override them.
-
 ## Overflow
 
-Box reports when content exceeds its bounds (`overflowX` and `overflowY`), when
-CSS clips it (`clippedX` and `clippedY`), and when it can scroll (`scrollableX`
-and `scrollableY`). It exposes each measurement as a CSS state, so CSS can react
-without JSX state or a measurement ref.
-
-A Box measures for `fade`, `onMeasureChange`, or `observe="size"`. Use
-`observe="size"` when CSS reads its states. A Box with none of these attaches no
-observers. Measurement pauses off screen, except `fade`, which measures on
-connection so it can paint its mask.
-
-`observe` accepts `"size"`, `"context"`, or `"all"`. A bare `observe` means
-`"all"`. The JSX `Box` derives the needed value from its handlers. When you use
-`a-box` directly, set it yourself; `addEventListener` does not start reporting:
-
-```html
-<a-box observe="size">Content</a-box>
-<a-box observe="all">Content</a-box>
-```
-
-The attribute works with listeners added before upgrade, removed with `once` or
-`AbortSignal`, and replaced during React renders.
+Box reports overflow, clipping, and scrollability as measurements and CSS
+states. Use `observe="size"` to keep CSS states current. `fade` and
+`onMeasureChange` also enable measurement; without these, Box adds no size
+observers.
 
 `.edge` is a demo class name. Use your own selector.
 
@@ -65,8 +42,8 @@ The attribute works with listeners added before upgrade, removed with `once` or
 
 ### Fading a clipped edge
 
-`fade` masks each edge that hides content. Scrolling moves the mask to the edge
-that still hides content and removes it at the end. `fadeSize` sets its depth.
+`fade` masks edges with hidden content and removes the mask as scrolling reveals
+them. `fadeSize` sets its depth. It measures on connection, even off screen.
 
 ```tsx
 <Box fade fadeSize={32} round display="flex" gap={6} style={{ overflowX: 'auto' }}>
@@ -77,9 +54,8 @@ that still hides content and removes it at the end. `fadeSize` sets its depth.
 The mask clips to the padding box. It preserves the Box border, shadows, and
 focus ring when no edge is hidden.
 
-The four edge states are `hidden-start-x`, `hidden-end-x`, `hidden-start-y`, and
-`hidden-end-y`. Use `hiddenStartX` and its siblings in JSX. To style the states
-without `fade`, add `observe="size"`.
+To style hidden edges without `fade`, use `observe="size"` and the
+`hidden-start-x`, `hidden-end-x`, `hidden-start-y`, or `hidden-end-y` CSS states.
 
 ```css
 /* <Box observe="size" className="my-box"> */
@@ -90,8 +66,8 @@ without `fade`, add `observe="size"`.
 
 ### Tooltip on clipped content
 
-`Tooltip truncatedOnly` uses Box's `isTruncated` getter. It shows when the Box
-clips on either axis, including wrapped children.
+`Tooltip truncatedOnly` shows when Box clips content on either axis, including
+wrapped children.
 
 ```tsx
 const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
@@ -108,9 +84,9 @@ const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
 
 ## Measurements
 
-`measurechange` fires one frame after observation starts and after the Box or its
-content changes. `changed` contains the moved fields, and `current` is the full
-snapshot. The event pauses off screen and reports again when the Box returns.
+`onMeasureChange` reports one frame after observation starts and when the Box or
+its content changes. `changed` contains changed fields; `current` is the full
+snapshot. Reporting pauses off screen and resumes when Box returns.
 
 ```tsx title="measurechange"
 <Box
@@ -124,44 +100,31 @@ snapshot. The event pauses off screen and reports again when the Box returns.
 </Box>
 ```
 
-The preview updates as you resize or scroll the Box. Tags mark `true` values.
+Resize or scroll the Box to update its measurements.
 
-[`BoxMeasurement`](#boxmeasurement) lists every field. Box maps each overflow
-field to a kebab-case CSS state, such as `overflow-x`, `clipped-y`,
-`scrollable-x`, and `hidden-end-y`. These states are not host attributes. They
-remain current only while `fade`, `observe="size"`, or `onMeasureChange` enables
-measurement.
+See the [measurement fields](#boxmeasurement). Overflow fields map to kebab-case
+CSS states, such as `clippedX` → `:state(clipped-x)`, not host attributes.
 
 ## Context
 
-`contextchange` uses the same `{ changed, current }` shape. Boxes share one
-context observer per window, which stops when the last context reader
-disconnects.
+`onContextChange` reports theme, focus, and browser context as
+`{ changed, current }`. See the [context fields](#boxcontext). For CSS, use
+`:focus-within`, mode classes, and media queries instead.
 
-[`BoxContext`](#boxcontext) lists every field. `contextchange` sets no CSS
-states. Use `:focus-within`, mode classes, and media queries when CSS is the
-reader.
-
-Every value in the following preview is live. Switch the site theme, resize the
-window, zoom the page, or use a touch device. Treat `osVersion` and
-`browserVersion` as hints because browsers freeze parts of these values. Use
-`pointer`, `hover`, or a feature test to gate behavior. The second Box is in a
-`.light` scope, so its `mode` remains `light` on a dark page while `globalMode`
-follows the document.
+Switch themes, resize, or zoom to update the preview. The `.light` Box keeps its
+local `mode`; `globalMode` follows the document. Browser and OS versions may be
+frozen, so use `pointer`, `hover`, or feature tests to choose behavior.
 
 ### Canvas-related styles
 
-`context.font` is the Box's resolved text style, `context.inset` measures from
-the border edge to the content edge, and `devicePixelRatio` provides the canvas
-scale. Use them to align canvas text with the DOM.
+Use `context.font`, `context.inset`, and `devicePixelRatio` to align canvas text
+with the DOM. Insets include border and padding; measurement widths alone
+cannot derive them.
 
-`measurement` cannot derive the inset: `width` is the border box, and
-`clientWidth` is the padding box.
-
-Set `ctx.font` from `font.shorthand` first. Chromium and Firefox reset
-`fontStretch`, `fontVariantCaps`, `fontKerning`, and `textRendering` when
-`ctx.font` changes. `stretch` and `variantCaps` stay out of the shorthand because
-a percentage `font-stretch` invalidates it.
+Set `ctx.font` first: Chromium and Firefox reset some font settings when
+it changes. Box assembles `font.shorthand` because `getComputedStyle(element).font`
+can be empty. Apply `stretch` and `variantCaps` separately; percentage stretch
+is invalid in the shorthand.
 
 ```tsx title="canvas"
 <Box
@@ -194,9 +157,6 @@ a percentage `font-stretch` invalidates it.
 </Box>
 ```
 
-`getComputedStyle(element).font` is empty in Chromium, Firefox, and WebKit, so
-Box assembles the shorthand.
-
 ```tsx title="contextchange"
 <Box onContextChange={(_, { changed, current }) => {
   if (changed.mode) updatePreviewTheme(current.mode)
@@ -208,123 +168,98 @@ Box assembles the shorthand.
 
 ## Capture wheel, pointer and touch
 
-`wheelCapture`, `pointerCapture`, and `pan` are independent opt-ins. Their
-handlers alone enable nothing. A plain Box allocates no input state and adds no
-input listeners. Processing functions are shared; gesture state exists only
-while needed. Input does not enable size or context observation.
+Use `wheelCapture`, `pointerCapture`, or `pan` to handle custom scrolling,
+zooming, or dragging. Each is opt-in; handlers alone enable nothing. Plain Boxes
+add no input state or listeners, and capture does not enable observation.
 
-Box decides ownership and cancels accepted native input on the browser thread.
-It then emits a custom event with plain data. Your table or plot decides how to
-scroll, zoom, select, or draw. Send the event's `detail` through your worker
-bridge; the `CustomEvent` itself is not serializable. Returning a value from a
-handler cannot change cancellation of the original input.
+Box cancels accepted native input on the browser thread, then sends plain data
+to your handler. Your component performs the action. To cross a worker boundary,
+send `detail`, not the `CustomEvent`. Handler return values cannot change
+cancellation.
 
 ### Wheel ownership
 
-`wheelCapture={true}` accepts every direction. A direction object accepts only
-its `true` entries. Update it from your scroll or zoom bounds; declined input
-continues to the enclosing editor or scroll container. Ownership follows the
-dominant axis of each event. Once accepted, both original deltas are delivered
-unchanged, so your component still decides how to use diagonal input.
+Set `wheelCapture` to `true` for all directions, or update allowed directions
+from your component's bounds. Declined input reaches the enclosing editor or
+scroll container. The dominant axis decides ownership; both deltas are delivered.
 
 ```tsx title="Custom table wheel"
 <Box
   wheelCapture={{ up: offset > 0, down: offset < maxOffset }}
   wheelActivation="settled-or-focus"
-  wheelSettle={{ delay: 150, tolerance: 5, resetOnMove: false }}
-  onWheelInput={(_, { wheelEvent, localX, localY, activationReason }) => {
-    handleTableWheel({ wheelEvent, localX, localY, activationReason })
-  }}
+  wheelSettle={{ delay: 200 }}
+  tabIndex={0}
+  onWheelInput={(_, detail) => handleTableWheel(detail)}
 >
   {tableContent}
 </Box>
 ```
 
-The default activation is `"settled"`: a real pointer movement into the Box
-starts a 150ms dwell with 5px tolerance. Eligibility lasts until the pointer
-leaves that Box. `resetOnMove: true` requires another dwell after movement
-beyond tolerance. Wheel events invalidate dwell for regions no longer under
-the pointer; they do not activate a new region scrolled underneath it.
+The default `"settled"` activation waits for the pointer to rest inside Box
+(150ms, 5px tolerance). It stays active until the pointer leaves.
+`wheelSettle.resetOnMove` requires settling again after movement beyond tolerance.
+Scrolling a Box under a stationary pointer does not activate it.
 
-`"hover"` accepts immediately. `"focus"` requires `:focus-within`;
-`"settled-or-focus"` accepts either condition. Focus never redirects wheel
-input from elsewhere, and Box never takes focus automatically. Supply
-`tabIndex` or a focusable child when focus activation is useful.
+Use `"hover"` for immediate activation, `"focus"` for `:focus-within`, or
+`"settled-or-focus"` for either condition. Wheel input must still target Box.
+Box never takes focus automatically; provide `tabIndex` or a focusable child.
 
-By default, modified input remains native, including Ctrl/pinch zoom. Set
-`wheelModifier="ctrl"` for an explicitly owned Ctrl-wheel zoom surface, or
-`"any"` to accept all modifiers. `"alt"`, `"meta"`, and `"shift"` are also
-available. A named modifier requires that key but allows other modifiers.
+Modified input stays native by default, including Ctrl/pinch zoom. Use
+`wheelModifier="ctrl"` to capture Ctrl-wheel, or `"any"` for all modifiers.
+Named modifiers allow other keys too.
 
-Box listens for wheel input on its own host. Settled Boxes share passive
-document listeners to track pointer dwell; those listeners never claim input.
-The innermost eligible Box wins through normal bubbling. Already-cancelled or
-non-cancelable events are declined. An ancestor that intercepts an event during
-capture runs before Box and cannot be undone by it.
+The innermost eligible Box handles wheel input on its host. Canceled and
+non-cancelable events are ignored; Box cannot undo an ancestor's capture-phase
+handler.
 
-`wheelEvent` preserves `deltaX`, `deltaY`, `deltaZ`, `deltaMode`, timestamps,
-coordinates, buttons, modifiers, and cancellation flags. Units stay native:
-0 means pixels, 1 lines, and 2 pages. Use the delivered signs; Box does not
-infer an OS natural-scrolling preference or normalize units.
-
-`localX` and `localY` are viewport CSS pixels from the Box bounding rectangle's
-top-left. `boxWidth` and `boxHeight` describe that same rectangle, including
-CSS transforms, without undoing rotation or scaling. Native `offsetX` and
-`offsetY` remain in `wheelEvent` and refer to the event target, which may be a
-child. Every input also includes `inside` and `focusWithin`.
+`detail.wheelEvent` preserves native event data, signs, and `deltaMode` units
+(0: pixels, 1: lines, 2: pages). Box does not infer OS scrolling preferences.
+`localX` and `localY` are CSS pixels from Box's viewport rectangle's top-left,
+without undoing transforms. Native `offsetX` and `offsetY` refer to the original
+target, which may be a child.
 
 ### Pointer sessions
 
-`pointerCapture` emits `start`, `move`, `end`, and `cancel` through
-`onPointerInput`. It supports mouse, pen, and touch without device sniffing.
-Filter `pointerTypes`, initiating `buttons`, and `modifier`, or set a movement
-`threshold` before capture begins. Box tracks one primary pointer at a time
-and retains native pointer capture outside its bounds.
+`pointerCapture` tracks one primary mouse, pen, or touch pointer, including
+movement outside Box. Use `threshold` to delay capture until dragging starts:
 
 ```tsx title="Mouse or pen selection"
 <Box
   pointerCapture={{ pointerTypes: ['mouse', 'pen'], threshold: 3 }}
-  onPointerInput={(_, { phase, start, localX, localY, movementX, movementY }) => {
-    updateSelection({ phase, start, localX, localY, movementX, movementY })
-  }}
+  onPointerInput={(_, detail) => updateSelection(detail)}
 >
   {plotContent}
 </Box>
 ```
 
-`pointerEvent` is a serialized pointer sample. `start` preserves the initial
-press and geometry. `deltaX/Y` are incremental physical movement;
-`movementX/Y` are total physical movement from that press. Positive means
-right/down. This differs from the old RemoteVirtualDOM MouseCapture's
-start-minus-current deltas: negate these totals when adapting that protocol.
+`onPointerInput` reports `start`, `move`, `end`, and `cancel`. `deltaX/Y` are
+incremental movement; `movementX/Y` are totals from the press, positive
+right/down. Negate totals when adapting RemoteVirtualDOM MouseCapture's
+start-minus-current convention.
 
-`activationReason` is `"pointer-down"` or `"drag-threshold"`. A pending press
-that never crosses its threshold emits nothing. A captured gesture suppresses
-its following pointer-generated click. Cancellation includes `cancelReason`
-and occurs on pointer cancellation, lost capture, disabling, removal, or loss
-of window visibility/focus. Lifecycle cancellation has `pointerEvent: null`.
+Presses below threshold emit nothing. Captured gestures suppress the following
+pointer-generated click. Cancellation reports `cancelReason` on pointer
+cancellation, lost capture, disabling, removal, or window blur/hiding.
+Lifecycle cancellation sets `pointerEvent: null`.
 
-Nested controls, links, and editable regions are excluded from pointer and pan
-activation. `pointerCapture={{ includeInteractive: true }}` includes them.
-Mark a subtree with `data-box-input-ignore` to exclude all three input
-capabilities, including wheel. This excludes event handling, not the ancestor's
-CSS `touch-action` restriction.
+Pointer and pan capture skip nested controls, links, and editable content.
+`pointerCapture.includeInteractive` includes them. Use `data-box-input-ignore`
+to exclude a subtree from all capture, including wheel. It does not remove
+ancestor `touch-action` restrictions.
 
 ### Touch panning and inertia
 
-`pan` enables custom touch panning on both axes, without inertia. An options
-object can select devices, an axis, a threshold, and allowed scroll directions.
-For mouse dragging as well, set `pointerTypes: ['touch', 'mouse']`. Raw pointer
-sessions and pan motion can be enabled together; they share one capture.
+`pan` enables custom touch scrolling without inertia. Set `pointerTypes` to
+include mouse dragging. It can share capture with `pointerCapture`:
 
 ```tsx title="Custom touch scrolling"
 <Box
   pan={{
     axis: 'y',
     directions: { up: offset > 0, down: offset < maxOffset },
-    inertia: { timeConstant: 325, minVelocity: 0.02 },
+    inertia: true,
   }}
-  onPanInput={(_, { deltaY, phase }) => {
+  onPanInput={(_, { deltaY }) => {
     setOffset(value => Math.max(0, Math.min(maxOffset, value + deltaY)))
   }}
 >
@@ -332,22 +267,17 @@ sessions and pan motion can be enabled together; they share one capture.
 </Box>
 ```
 
-Pan deltas are scroll motion, opposite to physical finger movement. Phases are
-`start`, `move`, `release`, optional `inertia`, then `end`; interruption emits
-`cancel`. Apply the deltas from `release` too. Velocity is CSS pixels per
-millisecond. Momentum samples have `pointerEvent: null`; they are generated
-motion, not synthetic native touch events. Inertia is time-based, independent
-per Box, and stops on new input, disabled directions, or lifecycle cleanup.
+Pan deltas oppose finger movement. Apply deltas from every phase, including
+`release`. Inertia samples have `pointerEvent: null`. Motion stops on new input,
+disabled directions, or cancellation.
 
-Touch ownership is declared before contact through CSS `touch-action`.
-`axis: 'x'` leaves vertical panning and pinch zoom to the browser; `'y'`
-leaves horizontal panning and pinch zoom. `'both'`, or raw pointer capture that
-includes touch, owns the whole touch gesture. Mouse-only options leave native
-touch behavior unchanged. Declared ownership cannot transfer an ongoing custom
-gesture back to native scrolling at a bound; update directions to stop custom
-motion and choose ownership for the next gesture.
+Box sets CSS `touch-action` before contact. Single-axis pan leaves the other
+axis and pinch zoom to the browser. Both-axis pan or touch pointer capture owns
+the whole gesture; mouse-only capture leaves touch unchanged. Unlike wheel,
+an active touch gesture cannot return to native scrolling at a bound. Update
+directions to stop custom motion and control the next gesture.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -392,12 +322,7 @@ A listener alone never enables capture. |
 
 ### BoxMeasurement
 
-The `measurechange` payload, as `changed` (only what moved) and `current` (the
-whole snapshot).
-
 ### BoxContext
-
-The `contextchange` payload, in the same two shapes.
 
 ### BoxFont
 
@@ -421,8 +346,11 @@ The `contextchange` payload, in the same two shapes.
 
 ### BoxPanInput
 
-Use `<a-box>` when you assemble DOM without a JSX wrapper. Its events are
-ordinary, non-bubbling `CustomEvent`s carrying the same detail object.
+## Web component
+
+Use `<a-box>` without JSX. Events are non-bubbling `CustomEvent`s with the same
+`detail`. Set `observe="size"`, `"context"`, or `"all"` explicitly; adding a
+listener does not enable observation. A bare `observe` means `"all"`.
 
 ```html title="a-box"
 <a-box display="grid" gap="8px" round="12px" observe="all" id="summary"
@@ -443,22 +371,10 @@ ordinary, non-bubbling `CustomEvent`s carrying the same detail object.
 </script>
 ```
 
-`gap`, `round`, and `fade-size` read their length through typed `attr()`, which
-today only Chrome supports. The matching custom properties in the host's inline
-style work everywhere and take precedence, so that is what the JSX wrapper sets:
-
-```html
-<a-box gap round fade
-       style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">Content</a-box>
-```
-
-`box.measurement`, `box.context`, and `box.isTruncated` read the same values
-synchronously.
-
-Input configuration uses attributes; callbacks use the matching lowercase
-event names. A bare `wheel-capture` accepts all directions. A bare
-`pointer-capture` accepts mouse, pen, and touch; a bare `pan` enables touch
-panning on both axes. Remove the capture attribute to disable that capability.
+`box.measurement`, `box.context`, and `box.isTruncated` read values synchronously.
+Configure capture with attributes and listen for lowercase event names. Bare
+capture attributes match passing `true` in JSX. Remove an attribute to disable
+capture.
 
 ```html title="Browser-thread input"
 <a-box wheel-capture="up down" wheel-activation="settled-or-focus"
@@ -471,4 +387,17 @@ panning on both axes. Remove the capture attribute to disable that capability.
   surface.addEventListener('wheelinput', ({ detail }) => handleWheel(detail))
   surface.addEventListener('paninput', ({ detail }) => handlePan(detail))
 </script>
+```
+
+## Styling
+
+Your `className` and `style` override `display`, `gap`, and `round` through the
+`anta.components` CSS layer.
+
+Without typed CSS `attr()` support, raw `gap`, `round`, and `fade-size` length
+attributes need matching custom properties. The JSX wrapper sets these for you:
+
+```html
+<a-box gap round fade
+       style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">Content</a-box>
 ```

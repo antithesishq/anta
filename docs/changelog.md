@@ -13,6 +13,12 @@ changes are not listed.
   filters, direction limits, and optional pan inertia are declarative; ordinary
   Boxes allocate no input state or listeners.
 
+### Fixed
+
+- `Box` preserves wheel settling when all direction bounds close and reopen.
+- `Box` gives touch pointer capture precedence over single-axis pan. Empty
+  device or button lists no longer restrict native selection or touch gestures.
+
 ## 0.3.26 — September 4, 2026
 
 ### Added

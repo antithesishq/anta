@@ -316,6 +316,7 @@ for square corners. |
 Focus applies only to input targeted within this Box. |
 | `wheelCapture?` | BoxInputDirections | — | Capture wheel input in the enabled directions and emit `onWheelInput`.
 `true` accepts all directions. Omit or pass `false` to leave wheel input alone.
+All-false direction bounds preserve pointer settling while declining input.
 A listener alone never enables capture. |
 | `wheelModifier?` | BoxInputModifier | none | Required modifier for wheel capture. `none` preserves browser Ctrl/pinch zoom. |
 | `wheelSettle?` | BoxWheelSettle | { delay: 150, tolerance: 5, resetOnMove: false } | Dwell delay, movement tolerance, and whether movement resets eligibility. |

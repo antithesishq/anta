@@ -191,6 +191,57 @@ test('wheel settling uses pointer dwell, reset policy, and region identity; focu
   assert.equal(await wheel(page), false)
 })
 
+test('settled wheel bounds retain dwell when all directions close and reopen', async t => {
+  for (const activation of ['settled', 'settled-or-focus']) {
+    const page = await pageFor(t)
+    await page.evaluate(activation => {
+      window.log = []
+      window.setBounds = wheelCapture => renderBox({
+        id: 'box', wheelCapture, wheelActivation: activation,
+        onWheelInput: (_, detail) => log.push(detail),
+      })
+      setBounds({ up: false, down: true })
+    }, activation)
+    await syntheticCapture(page)
+    await page.evaluate(() => pointer('pointermove', { buttons: 0, clientX: 20, clientY: 20, time: performance.now() - 200 }))
+    assert.equal(await wheel(page), true)
+    await page.evaluate(() => setBounds({ up: false, down: false }))
+    assert.equal(await page.locator('#box').getAttribute('wheel-capture'), 'none')
+    assert.equal(await wheel(page), false)
+    await page.evaluate(() => setBounds({ down: true }))
+    assert.equal(await wheel(page), true, activation)
+    assert.deepEqual(await page.evaluate(() => log.map(detail => detail.activationReason)), ['settled', 'settled'])
+
+    await page.evaluate(() => {
+      setBounds({})
+      pointer('pointermove', { buttons: 0 }, document.body)
+      setBounds({ down: true })
+    })
+    assert.equal(await wheel(page), false, 'Leaving while bounds are closed must invalidate dwell')
+  }
+})
+
+test('empty wheel bounds track dwell but explicit disabling clears it', async t => {
+  const page = await pageFor(t)
+  await mount(page, { 'wheel-capture': 'none' })
+  await syntheticCapture(page)
+  await page.evaluate(() => pointer('pointermove', { buttons: 0, clientX: 20, clientY: 20, time: performance.now() - 200 }))
+  assert.equal(await wheel(page), false)
+  await page.evaluate(() => box.setAttribute('wheel-capture', 'down'))
+  assert.equal(await wheel(page), true)
+
+  await page.evaluate(() => { box.removeAttribute('wheel-capture'); box.setAttribute('wheel-capture', 'down') })
+  assert.equal(await wheel(page), false)
+  await page.evaluate(() => pointer('pointermove', { buttons: 0, clientX: 20, clientY: 20, time: performance.now() - 200 }))
+  assert.equal(await wheel(page), true)
+  await page.evaluate(() => {
+    box.setAttribute('wheel-capture', 'none')
+    window.dispatchEvent(new Event('blur'))
+    box.setAttribute('wheel-capture', 'down')
+  })
+  assert.equal(await wheel(page), false, 'Blur while bounds are closed must invalidate dwell')
+})
+
 test('trusted mouse capture continues outside, ends once, and does not emit an accidental click', async t => {
   const page = await pageFor(t)
   await mount(page, { 'pointer-capture': 'mouse', 'pointer-threshold': '3' })
@@ -265,21 +316,85 @@ test('pointer ids, immutable snapshots, and cancellation on disable/removal/lost
   }
 })
 
-test('touch ownership is opt-in per device and axis', async t => {
+test('touch ownership and text selection follow enabled devices, buttons, and axes', async t => {
   const page = await pageFor(t)
-  for (const [props, touchAction] of [
-    [{ pan: { pointerTypes: ['mouse'] } }, 'auto'],
-    [{ pan: { pointerTypes: [] } }, 'auto'],
-    [{ pointerCapture: { pointerTypes: ['mouse', 'pen'] } }, 'auto'],
-    [{ pan: { axis: 'x' } }, 'pan-y pinch-zoom'],
-    [{ pan: { axis: 'y' } }, 'pan-x pinch-zoom'],
-    [{ pan: true }, 'none'],
-    [{ pointerCapture: true }, 'none'],
-    [{ pan: false, pointerCapture: false }, 'auto'],
+  for (const [props, touchAction, userSelect] of [
+    [{ pan: { pointerTypes: ['mouse'] } }, 'auto', 'none'],
+    [{ pan: { pointerTypes: [] } }, 'auto', 'auto'],
+    [{ pointerCapture: { pointerTypes: [] } }, 'auto', 'auto'],
+    [{ pointerCapture: { buttons: [] } }, 'auto', 'auto'],
+    [{ pointerCapture: { pointerTypes: ['mouse', 'pen'] } }, 'auto', 'none'],
+    [{ pan: { axis: 'x' } }, 'pan-y pinch-zoom', 'none'],
+    [{ pan: { axis: 'y' } }, 'pan-x pinch-zoom', 'none'],
+    [{ pan: true }, 'none', 'none'],
+    [{ pointerCapture: true }, 'none', 'none'],
+    [{ pan: { axis: 'x' }, pointerCapture: true }, 'none', 'none'],
+    [{ pan: { axis: 'y' }, pointerCapture: { pointerTypes: ['touch'] } }, 'none', 'none'],
+    [{ pan: { axis: 'x' }, pointerCapture: { pointerTypes: ['mouse'] } }, 'pan-y pinch-zoom', 'none'],
+    [{ pan: { axis: 'y' }, pointerCapture: { buttons: [] } }, 'pan-x pinch-zoom', 'none'],
+    [{ pan: { pointerTypes: [] }, pointerCapture: true }, 'none', 'none'],
+    [{ pan: { pointerTypes: [] }, pointerCapture: { buttons: [] } }, 'auto', 'auto'],
+    [{ pan: false, pointerCapture: false }, 'auto', 'auto'],
   ]) {
     await page.evaluate(props => renderBox(props), props)
-    assert.equal(await page.locator('a-box').evaluate(box => getComputedStyle(box).touchAction), touchAction)
+    const styles = await page.locator('a-box').evaluate(box => {
+      const { touchAction, userSelect } = getComputedStyle(box)
+      return { touchAction, userSelect }
+    })
+    assert.deepEqual(styles, { touchAction, userSelect }, JSON.stringify(props))
   }
+})
+
+test('empty pointer devices and buttons attach no input listeners', async t => {
+  const page = await pageFor(t)
+  const result = await page.evaluate(() => {
+    const additions = []
+    const original = EventTarget.prototype.addEventListener
+    EventTarget.prototype.addEventListener = function(type, ...args) {
+      if (['wheel', 'pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'lostpointercapture'].includes(type)) additions.push(type)
+      return original.call(this, type, ...args)
+    }
+    for (const attributes of [
+      { pan: 'both', 'pan-pointer-types': 'none' },
+      { 'pointer-capture': '', 'pointer-buttons': 'none' },
+      { 'pointer-capture': 'none' },
+    ]) {
+      const box = document.createElement('a-box')
+      for (const [name, value] of Object.entries(attributes)) box.setAttribute(name, value)
+      document.body.append(box)
+    }
+    EventTarget.prototype.addEventListener = original
+    return additions
+  })
+  assert.deepEqual(result, [])
+})
+
+test('touch pointer capture takes priority over single-axis pan', async t => {
+  const page = await pageFor(t)
+  for (const axis of ['x', 'y']) {
+    for (const pointerTypes of ['', 'all', 'touch', 'mouse touch']) {
+      await mount(page, { pan: axis, 'pointer-capture': pointerTypes })
+      assert.equal(await page.locator('#box').evaluate(box => getComputedStyle(box).touchAction), 'none', `${axis}: ${pointerTypes}`)
+    }
+  }
+})
+
+test('touch pointer capture keeps a gesture in the axis not handled by pan', async t => {
+  const page = await pageFor(t, { hasTouch: true })
+  await mount(page, { pan: 'x', 'pointer-capture': 'touch' })
+  await page.evaluate(() => { document.body.style.height = '2000px' })
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 80, y: 120, id: 0 }] })
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 80, y: 80, id: 0 }] })
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 80, y: 40, id: 0 }] })
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  const result = await page.evaluate(() => log)
+  assert.ok(result.every(e => e.type === 'pointerinput'))
+  assert.equal(result[0].detail.phase, 'start')
+  assert.equal(result.at(-1).detail.phase, 'end')
+  assert.ok(result.some(e => e.detail.phase === 'move' && e.detail.pointerEvent?.isTrusted))
+  assert.ok(!result.some(e => e.detail.phase === 'cancel'))
+  assert.equal(await page.evaluate(() => window.scrollY), 0)
 })
 
 test('touch pan handles trusted touch on desktop without enabling raw pointer input or inertia', async t => {
@@ -372,11 +487,17 @@ test('enabled Boxes share document input listeners and release all of them on di
       return box
     })
     const live = Object.fromEntries(balance)
+    boxes.forEach(box => box.setAttribute('wheel-capture', 'none'))
+    const bounded = Object.fromEntries(balance)
+    boxes.forEach(box => box.removeAttribute('wheel-capture'))
+    const disabled = Object.fromEntries(balance)
     boxes.forEach(box => box.remove())
-    return { live, remaining: Object.fromEntries(balance) }
+    return { live, bounded, disabled, remaining: Object.fromEntries(balance) }
   })
   assert.ok(Object.keys(result.live).length >= 5)
   assert.ok(Object.values(result.live).every(value => value === 1))
+  assert.deepEqual(result.bounded, result.live)
+  assert.ok(Object.values(result.disabled).every(value => value === 0))
   assert.ok(Object.values(result.remaining).every(value => value === 0))
 })
 

@@ -64,8 +64,8 @@ function modifierAttr(box: HTMLElement, name: string, fallback: BoxInputModifier
 
 function readWheel(box: HTMLElement): WheelOptions | undefined {
   if (!box.hasAttribute('wheel-capture')) return
+  // Empty bounds preserve pointer dwell until a direction becomes available.
   const directions = mask(box.getAttribute('wheel-capture'), DIRECTIONS, 15)
-  if (!directions) return
   const activation = box.getAttribute('wheel-activation')
   return {
     directions,
@@ -81,13 +81,14 @@ function readPointer(box: HTMLElement): PointerOptions | undefined {
   if (!box.hasAttribute('pointer-capture')) return
   const types = mask(box.getAttribute('pointer-capture'), POINTER_TYPES, 7)
   if (!types) return
-  const buttons = box.getAttribute('pointer-buttons')
+  const buttonAttribute = box.getAttribute('pointer-buttons')
+  const buttons = buttonAttribute === null ? 1 : buttonAttribute.split(/\s+/).reduce((bits, button) => {
+    const n = Number(button)
+    return Number.isInteger(n) && n >= 0 && n <= 5 ? bits | (1 << n) : bits
+  }, 0)
+  if (!buttons) return
   return {
-    types,
-    buttons: buttons === null ? 1 : buttons.split(/\s+/).reduce((bits, button) => {
-      const n = Number(button)
-      return Number.isInteger(n) && n >= 0 && n <= 5 ? bits | (1 << n) : bits
-    }, 0),
+    types, buttons,
     threshold: numberAttr(box, 'pointer-threshold', 0),
     modifier: modifierAttr(box, 'pointer-modifier', 'any'),
     interactive: box.hasAttribute('pointer-include-interactive'),

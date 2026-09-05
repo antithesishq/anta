@@ -59,6 +59,7 @@ export interface BoxProps extends BaseProps {
   ) => void
   /** Capture wheel input in the enabled directions and emit `onWheelInput`.
    * `true` accepts all directions. Omit or pass `false` to leave wheel input alone.
+   * All-false direction bounds preserve pointer settling while declining input.
    * A listener alone never enables capture. */
   wheelCapture?: BoxInputDirections
   /** Pointer or focus condition required before wheel input can be captured.

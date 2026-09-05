@@ -51,6 +51,13 @@ export type { TextProps, ExpandMode } from './components/Text'
 export { Box } from './components/Box'
 export type { BoxProps } from './components/Box'
 export type {
+  BoxInputCancelReason, BoxInputDirection, BoxInputDirections, BoxInputGeometry,
+  BoxInputModifier, BoxPan, BoxPanInertia, BoxPanInput, BoxPointerActivationReason,
+  BoxPointerCapture, BoxPointerInput, BoxPointerStart, BoxPointerType,
+  BoxWheelActivation, BoxWheelActivationReason, BoxWheelInput, BoxWheelSettle,
+  SerializedMouseEvent, SerializedPointerEvent, SerializedWheelEvent,
+} from './box-input-types'
+export type {
   BoxChange,
   BoxContext,
   BoxContextChange,

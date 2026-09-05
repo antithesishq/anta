@@ -17,6 +17,12 @@ jobs:
       - run: pnpm run build
       - run: pnpm run lint
       - run: pnpm run typecheck
+      - name: Install capture-test browser
+        run: pnpm --filter anta-site exec playwright install --with-deps chromium
+      - name: Test Box input capture
+        run: pnpm run test:box-input
+      - name: Test Markdown disclosure headings
+        run: node --test tests/mdx-disclosures.test.mjs
       - name: Build stickers
         run: pnpm --filter @antadesign/stickers run build
       - name: Typecheck stickers

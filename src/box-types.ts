@@ -161,7 +161,7 @@ export interface BoxMeasurement {
   hiddenEndY: boolean
 }
 
-/** Every Box event includes just the changed fields and a complete current snapshot. */
+/** Box observation events include changed fields and a complete current snapshot. */
 export interface BoxChange<T> {
   changed: Partial<T>
   current: T

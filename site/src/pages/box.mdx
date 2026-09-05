@@ -10,11 +10,12 @@ import boxDemoCode from './box.demo.ts'
 import { Box, Tag, Tooltip } from '@antadesign/anta'
 import { BoxContextProbe } from '../components/BoxContextProbe.tsx'
 import { BoxMeasurementProbe } from '../components/BoxMeasurementProbe.tsx'
+import { BoxWheelCapturePreview } from '../components/BoxWheelCapturePreview.tsx'
 
 # Box
 
-`Box` is a DOM container that adds layout props, overflow states, and browser
-context events.
+`Box` is a DOM container with layout props, overflow states, browser context
+events, and opt-in input capture.
 
 <Disclosure title="Playground" anchor={false} brand>
 
@@ -348,30 +349,181 @@ Box assembles the shorthand.
 </Box>
 ```
 
+## Capture wheel, pointer and touch
+
+`wheelCapture`, `pointerCapture`, and `pan` are independent opt-ins. Their
+handlers alone enable nothing. A plain Box allocates no input state and adds no
+input listeners. Processing functions are shared; gesture state exists only
+while needed. Input does not enable size or context observation.
+
+Box decides ownership and cancels accepted native input on the browser thread.
+It then emits a custom event with plain data. Your table or plot decides how to
+scroll, zoom, select, or draw. Send the event's `detail` through your worker
+bridge; the `CustomEvent` itself is not serializable. Returning a value from a
+handler cannot change cancellation of the original input.
+
+<Preview align="stretch" minHeight={440}>
+  <BoxWheelCapturePreview client:only="preact" />
+</Preview>
+
+### Wheel ownership
+
+`wheelCapture={true}` accepts every direction. A direction object accepts only
+its `true` entries. Update it from your scroll or zoom bounds; declined input
+continues to the enclosing editor or scroll container. Ownership follows the
+dominant axis of each event. Once accepted, both original deltas are delivered
+unchanged, so your component still decides how to use diagonal input.
+
+```tsx folded title="Custom table wheel"
+<Box
+  wheelCapture={{ up: offset > 0, down: offset < maxOffset }}
+  wheelActivation="settled-or-focus"
+  wheelSettle={{ delay: 150, tolerance: 5, resetOnMove: false }}
+  onWheelInput={(_, { wheelEvent, localX, localY, activationReason }) => {
+    handleTableWheel({ wheelEvent, localX, localY, activationReason })
+  }}
+>
+  {tableContent}
+</Box>
+```
+
+The default activation is `"settled"`: a real pointer movement into the Box
+starts a 150ms dwell with 5px tolerance. Eligibility lasts until the pointer
+leaves that Box. `resetOnMove: true` requires another dwell after movement
+beyond tolerance. Wheel events invalidate dwell for regions no longer under
+the pointer; they do not activate a new region scrolled underneath it.
+
+`"hover"` accepts immediately. `"focus"` requires `:focus-within`;
+`"settled-or-focus"` accepts either condition. Focus never redirects wheel
+input from elsewhere, and Box never takes focus automatically. Supply
+`tabIndex` or a focusable child when focus activation is useful.
+
+By default, modified input remains native, including Ctrl/pinch zoom. Set
+`wheelModifier="ctrl"` for an explicitly owned Ctrl-wheel zoom surface, or
+`"any"` to accept all modifiers. `"alt"`, `"meta"`, and `"shift"` are also
+available. A named modifier requires that key but allows other modifiers.
+
+Box listens for wheel input on its own host. Settled Boxes share passive
+document listeners to track pointer dwell; those listeners never claim input.
+The innermost eligible Box wins through normal bubbling. Already-cancelled or
+non-cancelable events are declined. An ancestor that intercepts an event during
+capture runs before Box and cannot be undone by it.
+
+`wheelEvent` preserves `deltaX`, `deltaY`, `deltaZ`, `deltaMode`, timestamps,
+coordinates, buttons, modifiers, and cancellation flags. Units stay native:
+0 means pixels, 1 lines, and 2 pages. Use the delivered signs; Box does not
+infer an OS natural-scrolling preference or normalize units.
+
+`localX` and `localY` are viewport CSS pixels from the Box bounding rectangle's
+top-left. `boxWidth` and `boxHeight` describe that same rectangle, including
+CSS transforms, without undoing rotation or scaling. Native `offsetX` and
+`offsetY` remain in `wheelEvent` and refer to the event target, which may be a
+child. Every input also includes `inside` and `focusWithin`.
+
+### Pointer sessions
+
+`pointerCapture` emits `start`, `move`, `end`, and `cancel` through
+`onPointerInput`. It supports mouse, pen, and touch without device sniffing.
+Filter `pointerTypes`, initiating `buttons`, and `modifier`, or set a movement
+`threshold` before capture begins. Box tracks one primary pointer at a time
+and retains native pointer capture outside its bounds.
+
+```tsx folded title="Mouse or pen selection"
+<Box
+  pointerCapture={{ pointerTypes: ['mouse', 'pen'], threshold: 3 }}
+  onPointerInput={(_, { phase, start, localX, localY, movementX, movementY }) => {
+    updateSelection({ phase, start, localX, localY, movementX, movementY })
+  }}
+>
+  {plotContent}
+</Box>
+```
+
+`pointerEvent` is a serialized pointer sample. `start` preserves the initial
+press and geometry. `deltaX/Y` are incremental physical movement;
+`movementX/Y` are total physical movement from that press. Positive means
+right/down. This differs from the old RemoteVirtualDOM MouseCapture's
+start-minus-current deltas: negate these totals when adapting that protocol.
+
+`activationReason` is `"pointer-down"` or `"drag-threshold"`. A pending press
+that never crosses its threshold emits nothing. A captured gesture suppresses
+its following pointer-generated click. Cancellation includes `cancelReason`
+and occurs on pointer cancellation, lost capture, disabling, removal, or loss
+of window visibility/focus. Lifecycle cancellation has `pointerEvent: null`.
+
+Nested controls, links, and editable regions are excluded from pointer and pan
+activation. `pointerCapture={{ includeInteractive: true }}` includes them.
+Mark a subtree with `data-box-input-ignore` to exclude all three input
+capabilities, including wheel. This excludes event handling, not the ancestor's
+CSS `touch-action` restriction.
+
+### Touch panning and inertia
+
+`pan` enables custom touch panning on both axes, without inertia. An options
+object can select devices, an axis, a threshold, and allowed scroll directions.
+For mouse dragging as well, set `pointerTypes: ['touch', 'mouse']`. Raw pointer
+sessions and pan motion can be enabled together; they share one capture.
+
+```tsx folded title="Custom touch scrolling"
+<Box
+  pan={{
+    axis: 'y',
+    directions: { up: offset > 0, down: offset < maxOffset },
+    inertia: { timeConstant: 325, minVelocity: 0.02 },
+  }}
+  onPanInput={(_, { deltaY, phase }) => {
+    setOffset(value => Math.max(0, Math.min(maxOffset, value + deltaY)))
+  }}
+>
+  {tableContent}
+</Box>
+```
+
+Pan deltas are scroll motion, opposite to physical finger movement. Phases are
+`start`, `move`, `release`, optional `inertia`, then `end`; interruption emits
+`cancel`. Apply the deltas from `release` too. Velocity is CSS pixels per
+millisecond. Momentum samples have `pointerEvent: null`; they are generated
+motion, not synthetic native touch events. Inertia is time-based, independent
+per Box, and stops on new input, disabled directions, or lifecycle cleanup.
+
+Touch ownership is declared before contact through CSS `touch-action`.
+`axis: 'x'` leaves vertical panning and pinch zoom to the browser; `'y'`
+leaves horizontal panning and pinch zoom. `'both'`, or raw pointer capture that
+includes touch, owns the whole touch gesture. Mouse-only options leave native
+touch behavior unchanged. Declared ownership cannot transfer an ongoing custom
+gesture back to native scrolling at a bound; update directions to stop custom
+motion and choose ownership for the next gesture.
+
 <Disclosure title="Component props" open>
 
 <PropsTable component="Box" />
 
-### BoxMeasurement
+<Disclosure title="BoxMeasurement" level={3}>
 
 The `measurechange` payload, as `changed` (only what moved) and `current` (the
 whole snapshot).
 
 <PropsTable component="BoxMeasurement" label="Field" />
 
-### BoxContext
+</Disclosure>
+
+<Disclosure title="BoxContext" level={3}>
 
 The `contextchange` payload, in the same two shapes.
 
 <PropsTable component="BoxContext" label="Field" />
 
-### BoxFont
+</Disclosure>
+
+<Disclosure title="BoxFont" level={3}>
 
 `context.font`, the resolved text style.
 
 <PropsTable component="BoxFont" label="Field" />
 
-### BoxInset
+</Disclosure>
+
+<Disclosure title="BoxInset" level={3}>
 
 `context.inset`, the distance from the border edge to the content edge.
 
@@ -379,9 +531,53 @@ The `contextchange` payload, in the same two shapes.
 
 </Disclosure>
 
+<Disclosure title="BoxWheelSettle" level={3}>
+
+<PropsTable component="BoxWheelSettle" label="Option" />
+
+</Disclosure>
+
+<Disclosure title="BoxPointerCapture" level={3}>
+
+<PropsTable component="BoxPointerCapture" label="Option" />
+
+</Disclosure>
+
+<Disclosure title="BoxPan" level={3}>
+
+<PropsTable component="BoxPan" label="Option" />
+
+</Disclosure>
+
+<Disclosure title="BoxPanInertia" level={3}>
+
+<PropsTable component="BoxPanInertia" label="Option" />
+
+</Disclosure>
+
+<Disclosure title="BoxWheelInput" level={3}>
+
+<PropsTable component="BoxWheelInput" label="Field" />
+
+</Disclosure>
+
+<Disclosure title="BoxPointerInput" level={3}>
+
+<PropsTable component="BoxPointerInput" label="Field" />
+
+</Disclosure>
+
+<Disclosure title="BoxPanInput" level={3}>
+
+<PropsTable component="BoxPanInput" label="Field" />
+
+</Disclosure>
+
+</Disclosure>
+
 <Disclosure title="Web Component">
 
-Use `<a-box>` when you assemble DOM without a JSX wrapper. Both events are
+Use `<a-box>` when you assemble DOM without a JSX wrapper. Its events are
 ordinary, non-bubbling `CustomEvent`s carrying the same detail object.
 
 ```html folded title="a-box"
@@ -414,5 +610,23 @@ style work everywhere and take precedence, so that is what the JSX wrapper sets:
 
 `box.measurement`, `box.context`, and `box.isTruncated` read the same values
 synchronously.
+
+Input configuration uses attributes; callbacks use the matching lowercase
+event names. A bare `wheel-capture` accepts all directions. A bare
+`pointer-capture` accepts mouse, pen, and touch; a bare `pan` enables touch
+panning on both axes. Remove the capture attribute to disable that capability.
+
+```html folded title="Browser-thread input"
+<a-box wheel-capture="up down" wheel-activation="settled-or-focus"
+       wheel-delay="150" wheel-tolerance="5"
+       pan="y" pan-directions="up down" pan-inertia id="table-surface">
+  Custom table content
+</a-box>
+<script type="module">
+  const surface = document.querySelector('#table-surface')
+  surface.addEventListener('wheelinput', ({ detail }) => handleWheel(detail))
+  surface.addEventListener('paninput', ({ detail }) => handlePan(detail))
+</script>
+```
 
 </Disclosure>

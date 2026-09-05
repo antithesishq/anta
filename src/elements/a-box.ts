@@ -11,6 +11,7 @@ import type {
   BoxOS,
 } from '../box-types'
 import './a-box.css'
+import { BOX_INPUT_ATTRIBUTES, disconnectBoxInput, syncBoxInput } from './box-input'
 
 type SharedContext = Pick<
   BoxContext,
@@ -402,7 +403,7 @@ function rounded(value: number): number {
  * props, so this is invisible to anyone using `Box`.
  */
 export class ABoxElement extends HTMLElementBase {
-  static observedAttributes = ['fade', 'observe']
+  static observedAttributes = ['fade', 'observe', ...BOX_INPUT_ATTRIBUTES]
 
   #internals = this.attachInternals?.()
   #store?: BoxWindowStore
@@ -430,9 +431,11 @@ export class ABoxElement extends HTMLElementBase {
   connectedCallback() {
     this.#store = windowStore(this.view, this.doc)
     this.#sync()
+    syncBoxInput(this)
   }
 
   disconnectedCallback() {
+    disconnectBoxInput(this)
     this.#stopMeasuring()
     this.#stopReportingContext()
     this.#store?.unobserveVisibility(this)
@@ -445,8 +448,10 @@ export class ABoxElement extends HTMLElementBase {
      connectedCallback, when there is no store yet. Syncing then would flip the
      started flags while `this.#store?.subscribeContext` silently did nothing,
      and the later connect would see the flags already set and skip it. */
-  attributeChangedCallback() {
-    if (this.#store) this.#sync()
+  attributeChangedCallback(name: string) {
+    if (!this.#store) return
+    if (name === 'fade' || name === 'observe') this.#sync()
+    else syncBoxInput(this, name)
   }
 
   /** A fresh measurement snapshot. For notifications, prefer `measurechange`:

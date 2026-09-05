@@ -19,6 +19,12 @@ export function parseMdx(raw) {
   source = source.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
   source = source.replace(/<Disclosure\s+title="Playground"[^>]*>[\s\S]*?<\/Disclosure>/g, '')
   source = source.replace(/<Playground[\s\S]*?(?:\/>|<\/Playground>)/g, '')
+  // Explicitly leveled disclosures are section headings, even when the site's
+  // interactive version hides their tables. Preserve those labels in Markdown.
+  source = source.replace(/<Disclosure\s+title="([^"]+)"([^>]*)>/g, (tag, title, attributes) => {
+    const level = attributes.match(/\blevel=\{([2-6])\}/)?.[1]
+    return level ? `\n${'#'.repeat(Number(level))} ${title}\n` : tag
+  })
   source = source.replace(
     /<Disclosure\s+title="Component tokens"[^>]*>([\s\S]*?)<\/Disclosure>/g,
     (_, inner) => `### Component tokens\n\n${inner.trim()}`,

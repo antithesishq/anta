@@ -166,6 +166,8 @@ its value is active. The panel names its tab as its accessible label
 Panels are **optional**. Without panels, `Tabs` renders the strip. Listen to
 `onStateChange` / `onValueChange` and render the content yourself.
 
+### JSX vs DOM
+
 The strip renders from the `options` array; each `<TabPanel>` renders a
 self-managing `<a-tabpanel>`. `Tabs` **never reads or toggles the panels**: there's
 no child introspection, so it renders the same in static SSR and works with any
@@ -195,6 +197,8 @@ and shows/hides **itself** via its own off-DOM `:state(active)`; nothing writes
 (`internals.ariaLabelledByElements`), so no `id` wiring is needed. No web component
 writes the light DOM, only your JSX does, which keeps a worker-thread reactive engine
 in sync.
+
+### Hiding an inactive panel
 
 A `<TabPanel>` stays mounted while inactive (its DOM, form values, and scroll
 survive tab switches); `hideMode` picks how it hides:

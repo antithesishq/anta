@@ -405,6 +405,8 @@ split or conditional spread:
 <Button href={reportUrl} disabled={!reportUrl} iconTrailing="external-link" label="View report" />
 ```
 
+### Routing libraries
+
 Anta's CSS targets `a-button, a[role="button"][data-anta]` — an anchor (`<a>`)
 with `role="button"`, the `data-anta` opt-in marker, and the right attributes
 gets the styling. That means anta doesn't need an `as` / `asChild` /

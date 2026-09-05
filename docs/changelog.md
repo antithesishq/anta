@@ -3,6 +3,16 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.27 — September 4, 2026
+
+### Added
+
+- `Box` adds explicit `wheelCapture`, `pointerCapture`, and `pan` options for
+  custom tables, plots, and drag surfaces. Browser-side capture emits serialized
+  input with local geometry and activation reasons. Wheel settling, device
+  filters, direction limits, and optional pan inertia are declarative; ordinary
+  Boxes allocate no input state or listeners.
+
 ## 0.3.26 — September 4, 2026
 
 ### Added

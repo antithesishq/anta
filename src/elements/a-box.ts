@@ -172,8 +172,15 @@ class BoxWindowStore {
     this.#classObserver = undefined
   }
 
+  /* Only the store the map currently points at may remove that entry. A box
+     that was connected while its store went empty keeps a direct reference to
+     it, so an evicted store can be re-subscribed and later empty again — by
+     which time the map holds a live store with its own document observer.
+     Deleting blind would drop that live store and leave its observer running
+     while the next connect built a second one. */
   #collect() {
-    if (this.#contextBoxes.size === 0 && this.#observedBoxes.size === 0) stores.delete(this.view)
+    if (this.#contextBoxes.size > 0 || this.#observedBoxes.size > 0) return
+    if (stores.get(this.view) === this) stores.delete(this.view)
   }
 
   /* Only `dark` and `light` change what a box reports. Every other class toggle

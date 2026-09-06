@@ -54,6 +54,20 @@ export interface BoxProps extends BaseProps {
   ) => void
 }
 
+/** Merges the `observe` prop with the halves the handlers imply. */
+function observeAttr(
+  observe: 'size' | 'context' | 'all' | undefined,
+  onMeasureChange: unknown,
+  onContextChange: unknown,
+): 'size' | 'context' | 'all' | undefined {
+  const size = observe === 'size' || observe === 'all' || onMeasureChange != null
+  const context = observe === 'context' || observe === 'all' || onContextChange != null
+  if (size && context) return 'all'
+  if (size) return 'size'
+  if (context) return 'context'
+  return undefined
+}
+
 /**
  * A light-DOM CSS box with browser-owned observation. `Box` is deliberately a
  * thin JSX projection: it never holds a DOM ref. The element measures itself,
@@ -69,20 +83,6 @@ export interface BoxProps extends BaseProps {
  * </Box>
  * ```
  */
-/** Merges the `observe` prop with the halves the handlers imply. */
-function observeAttr(
-  observe: 'size' | 'context' | 'all' | undefined,
-  onMeasureChange: unknown,
-  onContextChange: unknown,
-): 'size' | 'context' | 'all' | undefined {
-  const size = observe === 'size' || observe === 'all' || onMeasureChange != null
-  const context = observe === 'context' || observe === 'all' || onContextChange != null
-  if (size && context) return 'all'
-  if (size) return 'size'
-  if (context) return 'context'
-  return undefined
-}
-
 export const Box = ({
   display,
   round,

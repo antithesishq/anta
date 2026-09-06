@@ -3,6 +3,18 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.27 — September 4, 2026
+
+### Fixed
+
+- `Checkbox` sets its ARIA state and form value in Safari 16.4-17.3 and Firefox
+  93-125, where `ElementInternals` lacks `CustomStateSet`.
+- `Box` removes its per-window store only when that store is the one still
+  registered, so a page that mounts and unmounts boxes repeatedly keeps one
+  document-wide class observer instead of accumulating them.
+- `Box` ships its TSDoc in `dist/components/Box.d.ts`, so editors show the
+  description and example on hover.
+
 ## 0.3.26 — September 4, 2026
 
 ### Added

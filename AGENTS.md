@@ -45,6 +45,12 @@ conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runne
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
 
+Cloudflare Pages must use the Node version in `.node-version`; a dashboard
+`NODE_VERSION` override can make its build differ from CI. The manual
+`trigger-cloudflare-deploy.yml` workflow supports `action: logs` for diagnostics
+and an optional `node_version` when redeploying. That override applies to the
+project's preview or production environment, according to the target branch.
+
 ## Shared conventions
 
 - Use `color-mix(in oklch, <color> <percent>%, transparent)` to adjust color alpha or interpolate colors. Do not use `rgba()`, hex alpha, or parent `opacity` for a one-property alpha change.

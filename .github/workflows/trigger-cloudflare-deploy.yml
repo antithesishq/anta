@@ -2,7 +2,7 @@ name: Trigger Cloudflare Pages deployment
 
 # Manual recovery and build logs for Cloudflare Pages.
 # Run from the Actions UI: pick a branch, click "Run workflow".
-# The workflow cancels any in-flight deployment for that branch
+# Deploy mode cancels any in-flight deployment for that branch
 # (best-effort) and asks Cloudflare to start a fresh build at the
 # branch's current HEAD.
 #
@@ -22,6 +22,9 @@ on:
         options:
           - deploy
           - logs
+      node_version:
+        description: Optional Node version to set for the target build environment before redeploying
+        type: string
 
 permissions: {}
 
@@ -29,6 +32,47 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
+      - name: Set the build Node version
+        if: inputs.action != 'logs' && inputs.node_version != ''
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: anta
+          BRANCH: ${{ inputs.branch }}
+          BUILD_NODE_VERSION: ${{ inputs.node_version }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import urllib.request
+
+          version = os.environ["BUILD_NODE_VERSION"]
+          if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+              raise SystemExit("Use an exact Node version, such as 24.15.0")
+          url = f"https://api.cloudflare.com/client/v4/accounts/{os.environ['CF_ACCOUNT_ID']}/pages/projects/{os.environ['PROJECT']}"
+          headers = {"Authorization": "Bearer " + os.environ["CF_API_TOKEN"], "Content-Type": "application/json"}
+
+          def request(method="GET", payload=None):
+              data = json.dumps(payload).encode() if payload is not None else None
+              req = urllib.request.Request(url, data=data, headers=headers, method=method)
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  body = json.load(response)
+              if not body.get("success"):
+                  raise RuntimeError(body.get("errors"))
+              return body["result"]
+
+          project = request()
+          environment = "production" if os.environ["BRANCH"] == project["production_branch"] else "preview"
+          request("PATCH", {"deployment_configs": {environment: {"env_vars": {
+              "NODE_VERSION": {"type": "plain_text", "value": version}
+          }}}})
+          updated = request()["deployment_configs"][environment]["env_vars"]["NODE_VERSION"]["value"]
+          if updated != version:
+              raise SystemExit("Cloudflare did not retain the requested Node version")
+          print(f"Set {environment} build NODE_VERSION to {version}")
+          PY
+
       - name: Read latest deployment logs
         if: inputs.action == 'logs'
         timeout-minutes: 6

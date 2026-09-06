@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { parseMdx } from '../site/lib/llms/parse-mdx.mjs'
 import { renderDocumentation } from '../site/lib/llms/render-documentation.mjs'
 import { documentationLinks, componentGroups, packageLinks } from '../site/lib/llms/index-content.mjs'
-import { AS_OF, SYSTEMS, CATEGORIES } from '../site/src/components/comparison-data.ts'
+import { SYSTEMS, CATEGORIES } from '../site/src/components/comparison-data.ts'
 import { TEXT_LINES } from '../site/src/components/color-reference.ts'
 import { SYSTEM_COLORS } from '../site/src/components/system-colors.ts'
 import { SPECS } from '../site/src/components/theming-lab-formulas.ts'
@@ -43,9 +43,8 @@ test('reference expansion preserves code and skips previews', () => {
   assert.match(result, /```astro\n<Reference \/> \{DATE\}\n```/)
 })
 
-test('comparison includes every system, coverage category, example, and snapshot date', async () => {
+test('comparison includes every system, coverage category, example, and measured version', async () => {
   const markdown = await renderPage('comparison')
-  assert.ok(markdown.includes(AS_OF))
   for (const system of SYSTEMS) {
     for (const value of [system.name, system.version, system.license, system.bundleSize, system.bundleIncludes, system.browsers, ...system.pros, ...system.cons]) {
       assert.ok(markdown.includes(value), `${system.name}: ${value}`)
@@ -126,7 +125,7 @@ test('every MDX page is indexed and has a packaged Markdown file', async () => {
 
 test('packaged references contain the expanded content', async () => {
   for (const [page, marker] of [
-    ['comparison', AS_OF],
+    ['comparison', SYSTEMS[0].bundleVersion],
     ['colors', '| Default light | Default dark |'],
     ['accessibility', '| `Canvas`, `CanvasText` |'],
     ['components/icon', '| `chevron-down` |'],

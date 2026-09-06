@@ -60,6 +60,13 @@ not count. Focus management is a separate row: count standalone APIs for focus
 indicators, traps, scopes, or navigation. Internal dialog behavior and plain CSS
 focus styling do not count. Name each row's examples in its cell tooltips.
 
+Keep current package versions separate from dated bundle measurements. Updating
+a version does not update its measured size. Link factual system claims to
+official sources. Browser compatibility estimates need a `~`, the shipped
+features and browser versions behind them, and a separate statement of the
+vendor's support policy. Account for polyfills and progressive enhancements;
+a JavaScript build target alone does not establish browser compatibility.
+
 ## Playground
 
 The `<Playground>` component (`site/src/components/Playground.tsx`) is the playground that lands on `/<name>/` pages. It is the largest single component in this directory and is intentionally self-contained so that a future migration to a dedicated package (`@antadesign/sandbox` or similar) and a dedicated repository can lift it out without disturbing the rest of the site. Pages import `PlaygroundEmbed.astro`, which serializes its props into a host for the prebuilt runtime.

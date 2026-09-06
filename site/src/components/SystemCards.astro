@@ -1,7 +1,4 @@
 ---
-// Per-system pros/cons cards for the /comparison page. One card per system,
-// each with its name (linked to docs), version, one-line identity, and honest
-// pro/con columns. Anta's card leads and carries a brand accent.
 import { SYSTEMS } from './comparison-data'
 ---
 
@@ -22,11 +19,14 @@ import { SYSTEMS } from './comparison-data'
       <p class="card-tagline">{s.tagline}</p>
       <dl class="card-facts">
         <div>
-          <dt>Gzipped size</dt>
-          <dd><strong>{s.bundleSize}</strong><span>{s.bundleIncludes}</span></dd>
+          <dt>Gzipped size <strong>{s.bundleSize}</strong></dt>
+          <dd>
+            <span class="size-version">Measured: {s.bundleVersion}.</span>
+            {s.bundleIncludes}
+          </dd>
         </div>
         <div>
-          <dt>Browser support</dt>
+          <dt>Browser support <strong>{s.browserSupport}</strong></dt>
           <dd>{s.browsers}</dd>
         </div>
       </dl>
@@ -44,6 +44,12 @@ import { SYSTEMS } from './comparison-data'
           </ul>
         </div>
       </div>
+      <p class="card-sources">
+        Sources: {s.sources.map((source, index) => <>
+          {index > 0 && ' · '}
+          <a href={source.href}>{source.label}</a>
+        </>)}
+      </p>
     </section>
   ))}
 </div>
@@ -116,10 +122,16 @@ import { SYSTEMS } from './comparison-data'
     background: var(--bg-5-brand);
   }
   .card-facts dt {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 8px;
     margin-bottom: 3px;
     color: var(--text-3);
     font-size: 11px;
     font-weight: 650;
+    font-style: normal;
+    font-variation-settings: inherit;
     letter-spacing: 0.05em;
     text-transform: uppercase;
   }
@@ -134,12 +146,19 @@ import { SYSTEMS } from './comparison-data'
     font-family: var(--monospace, ui-monospace, monospace);
     font-size: 12px;
     font-weight: 550;
+    text-transform: none;
+    letter-spacing: normal;
   }
-  .card-facts strong::after {
-    content: " · ";
-    color: var(--text-4);
+  .size-version {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-3);
   }
-  .card-facts span {
+
+  .card-sources {
+    margin: 16px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
     color: var(--text-3);
   }
 

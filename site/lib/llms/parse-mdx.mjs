@@ -1,5 +1,5 @@
 /** Transforms raw MDX documentation into regular Markdown. */
-export function parseMdx(raw) {
+export function parseMdx(raw, { renderPropsTable } = {}) {
   let source = raw
 
   const codeBlocks = []
@@ -35,12 +35,23 @@ export function parseMdx(raw) {
   })
   source = source.replace(/<Preview[^>]*>[\s\S]*?<\/Preview>/g, '')
   source = source.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+  // Render every reference table and protect its Markdown from JSX stripping.
+  const tables = []
+  if (renderPropsTable) {
+    source = source.replace(/<PropsTable\b([^>]*?)\/>/g, (_, attributes) => {
+      const component = attributes.match(/\scomponent=(["'])(.*?)\1/)?.[2]
+      const label = attributes.match(/\slabel=(["'])(.*?)\1/)?.[2]
+      tables.push(component ? renderPropsTable(component, label) : '')
+      return `\n\x00TABLE${tables.length - 1}\x00\n`
+    })
+  }
   source = source.replace(/^<\/?(?:Columns|Col)(?:\s[^>]*)?>[ \t]*\n?/gm, '')
   source = source.replace(/^<[A-Z][A-Za-z]*(?:\s[^>]*)?\/>[ \t]*\n?/gm, '')
   source = source.replace(/<\/?[A-Za-z][A-Za-z0-9.-]*(?:\s[^>]*)?>/g, '')
   source = source.replace(/\{[A-Za-z_$][A-Za-z0-9_$.]*\}/g, '')
 
   source = source.replace(/\x00ANCHOR(\d+)\x00/g, (_, index) => anchors[Number(index)])
+  source = source.replace(/\x00TABLE(\d+)\x00/g, (_, index) => tables[Number(index)])
   source = source.replace(/\x00INLINE(\d+)\x00/g, (_, index) => inlineCode[Number(index)])
 
   source = source.replace(/\x00CODE(\d+)\x00/g, (_, index) => {

@@ -71,41 +71,29 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `autoFocus?` | boolean | — | Focus this field when its containing `Dialog` opens. |
-| `children?` | ReactNode | — | Extra content rendered under the field, above the hint (a no-box child like
- a `<Tooltip>` takes no space and anchors to the field). |
+| `children?` | ReactNode | — | Extra content rendered under the field, above the hint (a no-box child like a `<Tooltip>` takes no space and anchors to the field). |
 | `clearable?` | boolean | — | Show a clear button once the field has a value. |
 | `defaultValue?` | string | — | Initial value for the uncontrolled case (24-hour `"HH:mm"`). |
 | `dimActions?` | boolean | — | Dim the trailing adornments at rest; they brighten on hover / focus. |
 | `disabled?` | boolean | — | Disable the field. |
 | `hint?` | ReactNode | — | Message below the field. `status` recolors it and prefixes a glyph. |
-| `hour12?` | boolean | — | Force the clock: `true` = 12-hour (AM/PM), `false` = 24-hour. Omit to follow
- the locale. |
-| `icon?` | false \| IconShape | clock | Leading icon at the start of the field — the clock affordance. Pass another
- shape to change it, or `false` to drop it. |
-| `label?` | ReactNode | — | Field label, shown above the control and used as the segment group's
- accessible name. |
-| `locale?` | string | navigator.language | BCP-47 locale driving the clock (12h vs 24h), segment order, separator, and
- the AM/PM text. |
-| `max?` | string | — | Latest allowed time, 24-hour `"HH:mm"`. A complete value above it is clamped
- down (on step / blur) and flagged `rangeOverflow`. |
-| `min?` | string | — | Earliest allowed time, 24-hour `"HH:mm"`. A complete value below it is
- clamped up (on step / blur) and flagged `rangeUnderflow` for form validity. |
+| `hour12?` | boolean | — | Force the clock: `true` = 12-hour (AM/PM), `false` = 24-hour. Omit to follow the locale. |
+| `icon?` | false \| IconShape | clock | Leading icon at the start of the field — the clock affordance. Pass another shape to change it, or `false` to drop it. |
+| `label?` | ReactNode | — | Field label, shown above the control and used as the segment group's accessible name. |
+| `locale?` | string | navigator.language | BCP-47 locale driving the clock (12h vs 24h), segment order, separator, and the AM/PM text. |
+| `max?` | string | — | Latest allowed time, 24-hour `"HH:mm"`. A complete value above it is clamped down (on step / blur) and flagged `rangeOverflow`. |
+| `min?` | string | — | Earliest allowed time, 24-hour `"HH:mm"`. A complete value below it is clamped up (on step / blur) and flagged `rangeUnderflow` for form validity. |
 | `name?` | string | — | Form field name — the 24-hour value submits under this key. |
 | `onBlur?` | (e) => void | — | Fires when the field loses focus. |
 | `onClearInput?` | (e) => void | — | Fires after the built-in clear button has cleared the field. |
 | `onFocus?` | (e) => void | — | Fires when the field gains focus. |
-| `onValueChange?` | (event, attrs) => void | — | Fires on every edit (`input`), with the native event + an `attrs` snapshot
- (`value`, `name`, `empty`, `valid`, `validationMessage`). Also fires on
- `change` (blur) and on clear. |
+| `onValueChange?` | (event, attrs) => void | — | Fires on every edit (`input`), with the native event + an `attrs` snapshot (`value`, `name`, `empty`, `valid`, `validationMessage`). Also fires on `change` (blur) and on clear. |
 | `required?` | boolean | — | Mark the field required (drives native validity). |
 | `round?` | boolean \| number \| string | — | Fully-round the field, or a custom radius (`number` px / CSS length). |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. small=24px, medium=28px, large=32px tall. |
-| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | — | Validation / feedback tone. Only `critical` marks the field invalid; the
- others are advisory. Omit (or `neutral`) for a plain field. |
-| `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph before the `hint` when `status` is set (per-status default; pass a
- shape to override, or `false` to drop it). |
-| `tone?` | string | — | Custom accent color — any literal CSS color tints the resting + hover
- border (focus ring stays `--focus-ring`); `status` overrides for validation. |
+| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | — | Validation / feedback tone. Only `critical` marks the field invalid; the others are advisory. Omit (or `neutral`) for a plain field. |
+| `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph before the `hint` when `status` is set (per-status default; pass a shape to override, or `false` to drop it). |
+| `tone?` | string | — | Custom accent color — any literal CSS color tints the resting + hover border (focus ring stays `--focus-ring`); `status` overrides for validation. |
 | `trailing?` | ReactNode | — | Content pinned to the end of the field (after the clear button). |
 | `value?` | string | — | Controlled value — 24-hour `"HH:mm"`. Pair with `onValueChange`. |
 

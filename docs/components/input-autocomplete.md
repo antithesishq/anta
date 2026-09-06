@@ -41,30 +41,24 @@ Suggestions are bare strings or `SelectOption`s, the same option shape
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `suggestions` | string \| SelectOption[] | — | The suggestions: bare strings or `SelectOption`s (`value` / `label` / `hint` /
- `icon` / `tone` / `disabled`). A flat list; picking one fills the field. |
+| `suggestions` | string \| SelectOption[] | — | The suggestions: bare strings or `SelectOption`s (`value` / `label` / `hint` / `icon` / `tone` / `disabled`). A flat list; picking one fills the field. |
 | `clearable?` | boolean | — | Show a clear button while the field has text. |
 | `defaultValue?` | string | — | Initial value for uncontrolled use. |
 | `disabled?` | boolean | — | Disable the field. |
-| `filter?` | boolean \| (option, query) => boolean | true | How suggestions match the text. `true` uses the built-in case-insensitive
- substring match on `value` / `label` / `hint`; a function `(option, query) =>
- boolean` uses a custom matcher; `false` shows `suggestions` unchanged for
- application-provided async or remote filtering. |
+| `filter?` | boolean \| (option, query) => boolean | true | How suggestions match the text. `true` uses the built-in case-insensitive substring match on `value` / `label` / `hint`; a function `(option, query) => boolean` uses a custom matcher; `false` shows `suggestions` unchanged for application-provided async or remote filtering. |
 | `hint?` | ReactNode | — | Hint under the field. |
 | `label?` | ReactNode | — | Field label. |
 | `leading?` | ReactNode | — | Leading adornment inside the field. |
 | `name?` | string | — | Form field name. |
 | `onSelect?` | (option) => void | — | Fires only when a suggestion is chosen, with that option. |
-| `onValueChange?` | (value) => void | — | Fires as the text changes (typing, picking a suggestion, or clearing) with
- the new field text. |
+| `onValueChange?` | (value) => void | — | Fires as the text changes (typing, picking a suggestion, or clearing) with the new field text. |
 | `placeholder?` | string | — | Placeholder text. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Field size. |
 | `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | — | Validation status. |
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Status icon override, or `false` to drop it. |
 | `tone?` | string | — | Custom accent color — a named tone or any CSS color. |
 | `trailing?` | ReactNode | — | Trailing adornment inside the field. |
-| `value?` | string | — | Controlled value: the field's text, a **free** string not constrained to a
- suggestion. Leave undefined for uncontrolled. |
+| `value?` | string | — | Controlled value: the field's text, a **free** string not constrained to a suggestion. Leave undefined for uncontrolled. |
 
 ## Web Component
 

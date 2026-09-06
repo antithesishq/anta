@@ -183,39 +183,96 @@ is invalid in the shorthand.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `display?` | BoxDisplay | block | Layout model for the host. All other layout, sizing, mask, and shadow
-properties stay ordinary `className` / `style` CSS on the Box itself. |
-| `fade?` | boolean | — | Fades out every edge that currently hides clipped content, and drops the
-fade from an edge once the reader scrolls to it. |
-| `fadeSize?` | number \| string | 24 | Depth of the `fade` gradient. A `number` is pixels; a string is any CSS
-length. |
-| `gap?` | number \| string | — | Gap between children, matching the CSS `gap` property. A `number` is
-pixels; a string is any CSS length or two-value gap (`'1rem'`,
-`'8px 16px'`). Applies while the Box is a flex or grid container. |
-| `observe?` | 'size' \| 'context' \| 'all' | — | What the Box watches, when a handler is not what turns it on. `'size'`
-keeps the overflow CSS states (`:state(clipped-x)`, `:state(scrollable-y)`,
-…) current — reach for it when your own CSS is the only reader. `'context'`
-and `'all'` are there for symmetry; passing `onMeasureChange` or
-`onContextChange` already turns the matching half on. |
-| `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail`
-contains the changed fields and a full current snapshot. |
-| `onMeasureChange?` | (event, detail) => void | — | Fired after Box geometry or its content-overflow state changes. `detail`
-contains the changed fields and a full current snapshot. |
-| `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a
-`number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit
-for square corners. |
+| `display?` | BoxDisplay | block | Layout model for the host. All other layout, sizing, mask, and shadow properties stay ordinary `className` / `style` CSS on the Box itself. |
+| `fade?` | boolean | — | Fades out every edge that currently hides clipped content, and drops the fade from an edge once the reader scrolls to it. |
+| `fadeSize?` | number \| string | 24 | Depth of the `fade` gradient. A `number` is pixels; a string is any CSS length. |
+| `gap?` | number \| string | — | Gap between children, matching the CSS `gap` property. A `number` is pixels; a string is any CSS length or two-value gap (`'1rem'`, `'8px 16px'`). Applies while the Box is a flex or grid container. |
+| `observe?` | 'size' \| 'context' \| 'all' | — | What the Box watches, when a handler is not what turns it on. `'size'` keeps the overflow CSS states (`:state(clipped-x)`, `:state(scrollable-y)`, …) current — reach for it when your own CSS is the only reader. `'context'` and `'all'` are there for symmetry; passing `onMeasureChange` or `onContextChange` already turns the matching half on. |
+| `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail` contains the changed fields and a full current snapshot. |
+| `onMeasureChange?` | (event, detail) => void | — | Fired after Box geometry or its content-overflow state changes. `detail` contains the changed fields and a full current snapshot. |
+| `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a `number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit for square corners. |
 
 ### BoxMeasurement
 
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `clientHeight` | number | — |  |
+| `clientWidth` | number | — | Padding-box dimensions, matching the browser's `clientWidth` / `clientHeight`. |
+| `clippedX` | boolean | — | The exceeded content is visually clipped on this axis. |
+| `clippedY` | boolean | — |  |
+| `height` | number | — |  |
+| `hiddenEndX` | boolean | — |  |
+| `hiddenEndY` | boolean | — |  |
+| `hiddenStartX` | boolean | — | Clipped content sits past this specific edge, in logical writing-mode terms. A clipped box that has not been scrolled hides content past its end edge only; scroll it to the end and the hidden content moves to the start. These drive the `fade` mask. |
+| `hiddenStartY` | boolean | — |  |
+| `overflowX` | boolean | — | Content exceeds the padding box on this axis, regardless of CSS overflow. |
+| `overflowY` | boolean | — |  |
+| `scrollableX` | boolean | — | The exceeded content can be scrolled by the reader on this axis. |
+| `scrollableY` | boolean | — |  |
+| `scrollHeight` | number | — |  |
+| `scrollLeft` | number | — | Current scroll offset, matching `scrollLeft` / `scrollTop`. |
+| `scrollTop` | number | — |  |
+| `scrollWidth` | number | — | Full scrollable-content dimensions, matching `scrollWidth` / `scrollHeight`. |
+| `width` | number | — | Border-box width and height in CSS pixels. |
+
 ### BoxContext
+
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `backgroundColor` | string | — | Resolved `background-color`. Needed when the box's content is drawn somewhere else — an offscreen canvas, a worker, an export — where the box's own background is not behind it. |
+| `browser` | BoxBrowser | — | Browser family. |
+| `browserVersion` | number | — | Browser major version, or `0` when unknown. Minor and patch digits are frozen by every engine, so only the major number is reported. |
+| `devicePixelRatio` | number | — | `window.devicePixelRatio`: CSS pixels per device pixel. `1` on a standard display, `2` on most Retina screens, and a fraction under OS or browser zoom. Live — it re-reports on zoom and when the window moves to a monitor with a different density. |
+| `focusWithin` | boolean | — | Whether focus is on the box or any of its descendants, read from the native `:focus-within`. For CSS, use that pseudo-class directly; this field is for logic that cannot query the DOM. |
+| `font` | BoxFont | — | Resolved text style, ready to hand to a canvas 2D context. |
+| `globalMode` | BoxMode | — | Mode on `<html>`, independent of an enclosing local scope. |
+| `hover` | boolean | — | Whether ordinary hover interaction is available. |
+| `inset` | BoxInset | — | Padding and border widths, for placing content inside the border box. |
+| `mobile` | boolean | — | Whether the browser reports a mobile device. |
+| `mode` | BoxMode | — | Closest scoped Anta mode. A local `.light` can override a dark document. |
+| `os` | BoxOS | — | Operating-system family. |
+| `osVersion` | number | — | Operating-system major version, or `0` when the browser withholds it. Browsers freeze this: every engine reports macOS as `10.15.7` and Windows 11 as `10.0`, so only Android and iOS carry a real number. Treat it as a hint, never as a gate. |
+| `pointer` | BoxPointer | — | Most precise available primary pointer. |
+| `reducedMotion` | boolean | — | Whether the reader asks for reduced motion. |
+| `systemAppearance` | BoxMode | — | Browser / operating-system color preference, independent of Anta classes. |
 
 ### BoxFont
 
 `context.font`, the resolved text style.
 
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `color` | string | — | Resolved text color. Canvas: `ctx.fillStyle`. |
+| `direction` | string | — | Canvas: `ctx.direction`. |
+| `family` | string | — | Resolved family list, quoted as the engine reports it. |
+| `featureSettings` | string | — | Canvas 2D consumes neither of these. They are here for text you measure or draw some other way. |
+| `kerning` | string | — | Canvas: `ctx.fontKerning`. |
+| `letterSpacing` | string | — | A length, never `normal` - `normal` is reported as `0px`, which is what `ctx.letterSpacing` accepts. |
+| `lineHeight` | number \| null | — | Line height in CSS pixels, or `null` when it computes to `normal`. Canvas ignores line height in `ctx.font`; this is for laying text out yourself. |
+| `shorthand` | string | — | CSS `font` shorthand, assembled here because every engine returns an empty string for the computed shorthand. `stretch` and `variantCaps` are left out of it deliberately: a percentage `font-stretch` makes every engine reject the whole string and fall back to `10px sans-serif`. Apply those through `ctx.fontStretch` / `ctx.fontVariantCaps` after setting `ctx.font`. |
+| `size` | number | — | Font size in CSS pixels. |
+| `stretch` | string | — | Computed `font-stretch`, a percentage such as `88%`. Canvas: `ctx.fontStretch`. |
+| `style` | string | — | `normal`, `italic`, or an `oblique <angle>`. |
+| `textRendering` | string | — | Canvas: `ctx.textRendering`, which WebKit does not implement. |
+| `variantCaps` | string | — | Canvas: `ctx.fontVariantCaps`. |
+| `variationSettings` | string | — |  |
+| `weight` | number | — | Numeric weight, 1-1000. |
+| `wordSpacing` | string | — | Same normalization as `letterSpacing`. Canvas: `ctx.wordSpacing`. |
+
 ### BoxInset
 
 `context.inset`, the distance from the border edge to the content edge.
+
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `borderBottom` | number | — |  |
+| `borderLeft` | number | — |  |
+| `borderRight` | number | — |  |
+| `borderTop` | number | — |  |
+| `paddingBottom` | number | — |  |
+| `paddingLeft` | number | — |  |
+| `paddingRight` | number | — |  |
+| `paddingTop` | number | — |  |
 
 ## Web component
 

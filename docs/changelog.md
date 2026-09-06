@@ -3,28 +3,17 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## 0.3.27 — September 4, 2026
+## 0.3.27 — September 7, 2026
 
 ### Added
 
 - Added `Capture` / `<a-capture>` for custom wheel, pointer, and pan handling,
-  with serialized input and local geometry. All input capabilities are disabled
-  by default.
+  with serialized input and local geometry.
 
 ### Fixed
 
 - `Slider` stops dragging after lost pointer capture or a missed button release,
   so moving back over it without pressing cannot move the thumb.
-- `Capture` preserves wheel settling when all direction bounds close and reopen.
-- `Capture` gives touch pointer capture precedence over single-axis pan. Empty
-  device or button lists no longer restrict native selection or touch gestures.
-- `Capture` leaves nested tabs and ARIA controls interactive during pointer capture
-  and custom panning, unless pointer capture explicitly includes them.
-- `Capture` preserves settled wheel activation after an in-bounds drag and ignores
-  touch exit events when tracking mouse dwell.
-- `Capture` keeps captured pointer events available to ancestor and document
-  listeners while canceling native behavior.
-- `Capture` preserves native wheel scrolling in nested textareas and Anta menus.
 
 ## 0.3.26 — September 4, 2026
 

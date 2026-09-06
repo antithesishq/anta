@@ -96,21 +96,13 @@ radius.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `hint?` | string | — | Right-aligned hint text (e.g. "3 of 7"). Like `label`, it's not rendered
- when custom `children` are provided but still feeds the accessible name. |
-| `label?` | string | — | Text label displayed after the percentage, or on its own for
- indeterminate progress. When you provide custom `children` (which replace
- the default label row), `label` is no longer rendered — but it still
- supplies the progressbar's accessible name. |
+| `hint?` | string | — | Right-aligned hint text (e.g. "3 of 7"). Like `label`, it's not rendered when custom `children` are provided but still feeds the accessible name. |
+| `label?` | string | — | Text label displayed after the percentage, or on its own for indeterminate progress. When you provide custom `children` (which replace the default label row), `label` is no longer rendered — but it still supplies the progressbar's accessible name. |
 | `max?` | number | 100 | Upper bound of the range. |
-| `round?` | boolean \| number \| string | — | Fully-round track (`border-radius: 999px`); the fill is clipped to it. Pass a
- `number` (px) or a CSS length string for a custom radius. |
+| `round?` | boolean \| number \| string | — | Fully-round track (`border-radius: 999px`); the fill is clipped to it. Pass a `number` (px) or a CSS length string for a custom radius. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. Scales the track and the default label row together. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color variant, or any literal CSS color for a one-off custom tone (the
- surface / indicator / text are derived from it in oklch). Named tones track
- light/dark automatically. |
-| `value?` | number \| false | — | Current progress value. Omit this prop, or pass `false`, to show
-indeterminate progress. Negative values are clamped to 0. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color variant, or any literal CSS color for a one-off custom tone (the surface / indicator / text are derived from it in oklch). Named tones track light/dark automatically. |
+| `value?` | number \| false | — | Current progress value. Omit this prop, or pass `false`, to show indeterminate progress. Negative values are clamped to 0. |
 
 ## Web Component
 

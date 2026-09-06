@@ -65,10 +65,6 @@ function renderLinks(links, pathFor) {
   return links.map(([title, path]) => `- [${title}](./${pathFor(path)})`).join('\n')
 }
 
-function extractComponentName(raw) {
-  return raw.match(/<PropsTable\s+component="([^"]+)"/)?.[1] ?? null
-}
-
 function extractDemoCode(raw) {
   return raw.match(/^\s*export\s+default\s+`([\s\S]*)`\s*$/)?.[1].trim() ?? null
 }
@@ -87,17 +83,10 @@ async function readDemo(path) {
 }
 
 async function renderPage(title, path, outputPath, includeDemo = false) {
-  let raw = await readPage(path)
-  const componentName = extractComponentName(raw)
-  if (componentName) {
-    raw = raw.replace(
-      /<PropsTable\s+component="[^"]+"\s*\/>/,
-      () => renderPropsTable(componentName),
-    )
-  }
+  const raw = await readPage(path)
 
   let body = rewriteSiteLinks(
-    parseMdx(raw).replace(/^# .+$/m, `# ${title}`),
+    parseMdx(raw, { renderPropsTable }).replace(/^# .+$/m, `# ${title}`),
     outputPath,
   )
   if (includeDemo) {

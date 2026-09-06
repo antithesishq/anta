@@ -30,7 +30,7 @@ const ANTA_SLUG: Record<string, string> = {
   choice: 'checkbox', slider: 'slider',
   datetime: 'input-date', tabs: 'tabs', menu: 'menu', tooltip: 'tooltip',
   dialog: 'dialog', toast: 'toaster', accordion: 'expander', table: 'table', tag: 'tag', avatar: 'avatar', card: 'card', progress: 'progress', steps: 'steps', nav: 'breadcrumbs',
-  icons: 'icon', typography: 'text',
+  icons: 'icon', typography: 'text', utilities: 'box',
 }
 
 ---
@@ -68,7 +68,8 @@ const ANTA_SLUG: Record<string, string> = {
               : undefined
             const tone = MARK_TONE[raw ?? 'no']
             const iconShape = raw === 'paid' ? 'dollar-sign' : 'check'
-            const title = `${s.name} — ${c.label}: ${m.label}`
+            const example = c.examples?.[s.id]
+            const title = `${s.name} — ${c.label}: ${m.label}${example ? ` (${example})` : ''}`
             return (
               <td class:list={['mark', m.cls, { anta: s.anta }]}>
                 {shipped && href ? (

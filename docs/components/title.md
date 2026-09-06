@@ -97,14 +97,9 @@ scale.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 2 | Heading level, 1-6. Drives font-size, line-height, and vertical
- rhythm. Also surfaced to assistive tech via `aria-level`
- (h1 is typically reserved for the page title). |
+| `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 2 | Heading level, 1-6. Drives font-size, line-height, and vertical rhythm. Also surfaced to assistive tech via `aria-level` (h1 is typically reserved for the page title). |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | primary | Visual priority. Maps to text-1..text-4 (`primary` = text-1). |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a
- named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS
- color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is
- kept while lightness/chroma are pinned per priority in oklch. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is kept while lightness/chroma are pinned per priority in oklch. |
 
 ## Web Component
 

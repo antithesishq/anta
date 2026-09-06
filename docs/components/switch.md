@@ -130,24 +130,17 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 | `checked?` | boolean | — | Controlled checked value. In controlled mode, update this in `onStateChange`. |
 | `defaultChecked?` | boolean | false | Initial checked value for an uncontrolled switch. |
 | `disabled?` | boolean | — | Disables interaction and removes the switch from the tab order. |
-| `hint?` | ReactNode | — | Secondary text rendered under the label. It does not become part of the
-accessible name. |
+| `hint?` | ReactNode | — | Secondary text rendered under the label. It does not become part of the accessible name. |
 | `label?` | string | — | Visible, stable label for the setting. Use `children` for richer label content. |
-| `labelPosition?` | 'start' \| 'end' | 'end' | Put the visible label before or after the control. Grid layout changes only
-the visual order, preserving DOM/source order for assistive technologies. |
+| `labelPosition?` | 'start' \| 'end' | 'end' | Put the visible label before or after the control. Grid layout changes only the visual order, preserving DOM/source order for assistive technologies. |
 | `name?` | string | — | Form field name. A checked switch submits `value` under this name. |
 | `onChange?` | (event) => void | — | Native post-apply `change` event. |
-| `onStateChange?` | (event, detail) => void | — | Fired before a user toggle applies. Call `event.preventDefault()` to veto an
-uncontrolled change; controlled consumers accept by updating `checked`. |
+| `onStateChange?` | (event, detail) => void | — | Fired before a user toggle applies. Call `event.preventDefault()` to veto an uncontrolled change; controlled consumers accept by updating `checked`. |
 | `onValueChange?` | (event, attrs) => void | — | Post-apply callback with the new form-relevant value snapshot. |
-| `round?` | boolean \| number \| string | — | Fully round the thumb and track. Pass a `number` (px) or CSS length string
-for a custom track radius; the thumb radius is 3px smaller. |
+| `round?` | boolean \| number \| string | — | Fully round the thumb and track. Pass a `number` (px) or CSS length string for a custom track radius; the thumb radius is 3px smaller. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant. small=26×16px, medium=30×18px, large=34×20px. |
-| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Color of the track and thumb. A tinted tone also colors the unchecked
-track border and thumb; use `toneSelected` to color only the checked track. |
-| `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Like `tone`, but applies only while the switch is checked. The unchecked
-track and thumb stay neutral. If both are set, `tone` colors the unchecked
-state and `toneSelected` colors the checked track. |
+| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Color of the track and thumb. A tinted tone also colors the unchecked track border and thumb; use `toneSelected` to color only the checked track. |
+| `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Like `tone`, but applies only while the switch is checked. The unchecked track and thumb stay neutral. If both are set, `tone` colors the unchecked state and `toneSelected` colors the checked track. |
 | `value?` | string | "on" | Value submitted while checked. |
 
 ## Web Component

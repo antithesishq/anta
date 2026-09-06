@@ -21,14 +21,8 @@ accessible loading status.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `shape` | IconShape | — | Which icon to render. The set of valid shapes comes from Anta's
- built-in icons plus any consumer-generated shapes (via the
- `IconShapes` interface module augmentation). |
-| `label?` | string | — | Accessible name for the icon. When set, the wrapper exposes
- `role="img"` and `aria-label={label}` so screen readers announce
- the icon. When omitted (the default), the icon is treated as
- decorative — `aria-hidden="true"` is applied so it doesn't add
- noise alongside neighbouring text. |
+| `shape` | IconShape | — | Which icon to render. The set of valid shapes comes from Anta's built-in icons plus any consumer-generated shapes (via the `IconShapes` interface module augmentation). |
+| `label?` | string | — | Accessible name for the icon. When set, the wrapper exposes `role="img"` and `aria-label={label}` so screen readers announce the icon. When omitted (the default), the icon is treated as decorative — `aria-hidden="true"` is applied so it doesn't add noise alongside neighbouring text. |
 | `size?` | number | 16 | Width and height in pixels. |
 
 ## Web Component

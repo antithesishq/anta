@@ -627,113 +627,36 @@ scannable list instead of hiding matches behind flyouts.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `options` | SelectItem[] | — | The options to choose from — bare strings, `SelectOption` objects, `SelectGroup`s
- (inline titled sections), or `SelectSubmenu`s (flyout branches). Groups and
- submenus nest and mix with plain options. Selection stays global (one `value`,
- leaf options only); a filter query flattens the tree into grouped results.
-
- `Select` infers its value type `V` from these options: `{ value: 365 }` makes
- `onValueChange` report `number`. A mix of value types widens `V` to the union.
-
- Each leaf `value` is the option's identity and must be **unique across the whole
- tree** (selection is value-keyed, so a value repeated in two sections is one logical
- pick: both rows toggle together, the trigger resolves to the last). Values that
- stringify alike (`365` and `"365"`) also collide as row keys; dev builds
- `console.warn` on either. |
-| `clearable?` | boolean | — | Add a "Clear" row pinned in the menu **footer** that empties the selection
- (single → none, multiple → `[]`). Shown only while something is selected, so
- it never scrolls away in a long or filtered list. |
+| `options` | SelectItem[] | — | The options to choose from — bare strings, `SelectOption` objects, `SelectGroup`s (inline titled sections), or `SelectSubmenu`s (flyout branches). Groups and submenus nest and mix with plain options. Selection stays global (one `value`, leaf options only); a filter query flattens the tree into grouped results. `Select` infers its value type `V` from these options: `{ value: 365 }` makes `onValueChange` report `number`. A mix of value types widens `V` to the union. Each leaf `value` is the option's identity and must be **unique across the whole tree** (selection is value-keyed, so a value repeated in two sections is one logical pick: both rows toggle together, the trigger resolves to the last). Values that stringify alike (`365` and `"365"`) also collide as row keys; dev builds `console.warn` on either. |
+| `clearable?` | boolean | — | Add a "Clear" row pinned in the menu **footer** that empties the selection (single → none, multiple → `[]`). Shown only while something is selected, so it never scrolls away in a long or filtered list. |
 | `clearLabel?` | string | Clear | Label for the `clearable` footer row. |
 | `defaultValue?` | V \| V[] | — | Initial selected option value for uncontrolled use. |
 | `disabled?` | boolean | — | Disable the whole select. |
-| `filter?` | boolean \| (option, query) => boolean | — | Add a search field at the top of the menu that filters the options as you
- type. `true` uses the built-in matcher — a case-insensitive substring of the
- option's **value / label / hint**. Pass a **function** `(option, query) =>
- boolean` for custom matching (called per option; return `true` to keep it). |
+| `filter?` | boolean \| (option, query) => boolean | — | Add a search field at the top of the menu that filters the options as you type. `true` uses the built-in matcher — a case-insensitive substring of the option's **value / label / hint**. Pass a **function** `(option, query) => boolean` for custom matching (called per option; return `true` to keep it). |
 | `hint?` | string | — | Helper text under the field (Input's `hint`). |
-| `icon?` | IconShape | — | Leading icon shown at the left of the field (the default trigger's `Input`
- `leading` slot). With a custom `renderTrigger`, it's passed through as
- `state.icon` instead — the consumer places it. |
-| `indicator?` | 'none' \| 'check' \| 'radio' | none | The per-row mark for **single**-select: `'none'` (a tint-only highlight),
- `'check'` (a trailing checkmark on the selected row, keeping the tint — the
- canonical Select look), or `'radio'` (a leading radio on every row).
- Multi-select always uses checkboxes. |
+| `icon?` | IconShape | — | Leading icon shown at the left of the field (the default trigger's `Input` `leading` slot). With a custom `renderTrigger`, it's passed through as `state.icon` instead — the consumer places it. |
+| `indicator?` | 'none' \| 'check' \| 'radio' | none | The per-row mark for **single**-select: `'none'` (a tint-only highlight), `'check'` (a trailing checkmark on the selected row, keeping the tint — the canonical Select look), or `'radio'` (a leading radio on every row). Multi-select always uses checkboxes. |
 | `label?` | string | — | Field label, above the trigger (Input's `label`). |
-| `leading?` | ReactNode | — | Content for the default trigger's `leading` slot, such as a key prefix
- before the value. It replaces the icon derived from `icon`. Include an
- `<Icon>` in this content when both are needed. Ignored by `renderTrigger`. |
+| `leading?` | ReactNode | — | Content for the default trigger's `leading` slot, such as a key prefix before the value. It replaces the icon derived from `icon`. Include an `<Icon>` in this content when both are needed. Ignored by `renderTrigger`. |
 | `offset?` | number | 4 | Gap in pixels between the trigger and the options menu. |
-| `onValueChange?` | (value, attrs) => void | — | Fires after the selection changes, with the new value and a
- `{ value, option }` snapshot. Select has no discrete element state, so
- there is no cancelable `onStateChange` (see the Input event-model note). |
+| `onValueChange?` | (value, attrs) => void | — | Fires after the selection changes, with the new value and a `{ value, option }` snapshot. Select has no discrete element state, so there is no cancelable `onStateChange` (see the Input event-model note). |
 | `placeholder?` | string | — | Text shown when nothing is selected. |
-| `placement?` | 'left' \| 'right' \| 'bottom' \| 'top' \| 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' | bottom-start | Preferred placement of the options menu relative to the trigger. The menu
- auto-flips vertically and clamps horizontally when needed. |
-| `renderEmpty?` | (state) => ReactNode | — | Render content in the menu body when the (filtered) option list is empty —
- a "no results" message, a loading indicator (gated on your own external
- loading state), or a "create from the query" row. Receives an `EmptyState`
- (`query`, trimmed). There is no built-in empty message: when omitted, an empty
- list renders nothing. Whatever you return goes where the option rows would —
- a plain node is inert; return a `MenuItem` (e.g. a "Create" row) to make it
- focusable and selectable. |
-| `renderIndicator?` | (state) => ReactNode | — | Replace each row's selection **mark** with your own node, drawn at the
- leading edge. The row stays the control (`role` + `aria-checked` from
- `indicator` / `selection`); only the drawn mark changes, so pair it with an
- `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the
- semantics. Composes with `renderOption`. |
-| `renderOption?` | (option, state) => ReactNode | — | Replaces the built-in `label`, `hint`, and `icon` layout for each option row.
- Select still supplies the row container, click handling, ARIA attributes, and
- selection indicator. Read extra option fields through `SelectOption`'s index
- signature. `state` contains `value`, `selected`, and `disabled`. Filtering
- still matches the option's `value`, `label`, and `hint`, but Select cannot
- highlight matches within the returned content. |
-| `renderSummary?` | (selected) => string \| undefined | — | `multiple` only: build the trigger's selection summary text yourself,
- replacing the built-in "`All` / one label / `N selected`" logic. Receives
- the resolved selected options (`selected.length` is the count) and runs only
- while something is selected — an empty selection still shows the
- `placeholder`. Return a **string**: it flows into the default trigger's
- read-only field, so a long summary ellipsizes at the field's width just
- like a long value (`Engineering, Design, … `). Return `undefined` to fall
- back to the default for that case (e.g. customize only the count, keeping
- the single-label case built-in). For rich content (chips, multiple nodes)
- use `renderTrigger`, which replaces the whole field. |
-| `renderTrigger?` | (state) => ReactNode | — | Replaces the default field with a trigger returned from this function.
- Receives `open`, `value`, `selected`, `disabled`, and `icon`. Return exactly
- one focusable element, such as an Anta `Button`. The menu is positioned
- relative to that element and opens when it is clicked. Do not return a
- fragment, multiple siblings, or a non-focusable wrapper. Add
- `aria-haspopup="menu"` and `aria-expanded={state.open}` to the element, on a
- role that supports them (an Anta `Button` already carries `role="button"`;
- otherwise add `role="combobox"`).
- Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and
- `className` / `style` apply only to the default field. Add styling and
- attributes to the returned element instead. |
+| `placement?` | 'left' \| 'right' \| 'bottom' \| 'top' \| 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' | bottom-start | Preferred placement of the options menu relative to the trigger. The menu auto-flips vertically and clamps horizontally when needed. |
+| `renderEmpty?` | (state) => ReactNode | — | Render content in the menu body when the (filtered) option list is empty — a "no results" message, a loading indicator (gated on your own external loading state), or a "create from the query" row. Receives an `EmptyState` (`query`, trimmed). There is no built-in empty message: when omitted, an empty list renders nothing. Whatever you return goes where the option rows would — a plain node is inert; return a `MenuItem` (e.g. a "Create" row) to make it focusable and selectable. |
+| `renderIndicator?` | (state) => ReactNode | — | Replace each row's selection **mark** with your own node, drawn at the leading edge. The row stays the control (`role` + `aria-checked` from `indicator` / `selection`); only the drawn mark changes, so pair it with an `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the semantics. Composes with `renderOption`. |
+| `renderOption?` | (option, state) => ReactNode | — | Replaces the built-in `label`, `hint`, and `icon` layout for each option row. Select still supplies the row container, click handling, ARIA attributes, and selection indicator. Read extra option fields through `SelectOption`'s index signature. `state` contains `value`, `selected`, and `disabled`. Filtering still matches the option's `value`, `label`, and `hint`, but Select cannot highlight matches within the returned content. |
+| `renderSummary?` | (selected) => string \| undefined | — | `multiple` only: build the trigger's selection summary text yourself, replacing the built-in "`All` / one label / `N selected`" logic. Receives the resolved selected options (`selected.length` is the count) and runs only while something is selected — an empty selection still shows the `placeholder`. Return a **string**: it flows into the default trigger's read-only field, so a long summary ellipsizes at the field's width just like a long value (`Engineering, Design, … `). Return `undefined` to fall back to the default for that case (e.g. customize only the count, keeping the single-label case built-in). For rich content (chips, multiple nodes) use `renderTrigger`, which replaces the whole field. |
+| `renderTrigger?` | (state) => ReactNode | — | Replaces the default field with a trigger returned from this function. Receives `open`, `value`, `selected`, `disabled`, and `icon`. Return exactly one focusable element, such as an Anta `Button`. The menu is positioned relative to that element and opens when it is clicked. Do not return a fragment, multiple siblings, or a non-focusable wrapper. Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the element, on a role that supports them (an Anta `Button` already carries `role="button"`; otherwise add `role="combobox"`). Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and `className` / `style` apply only to the default field. Add styling and attributes to the returned element instead. |
 | `round?` | boolean \| number \| string | — | Round the field corners — `true` for fully round, or a number / CSS length. |
-| `selectAll?` | boolean | true | `multiple` only: shows a "Select all" row that toggles every enabled option,
- or only the visible options when a filter query is active. Its checkbox is
- mixed when some options are selected. It is on by default. Set it to `false`
- to remove the row and the Alt/Option-click shortcut that selects only one row. |
+| `selectAll?` | boolean | true | `multiple` only: shows a "Select all" row that toggles every enabled option, or only the visible options when a filter query is active. Its checkbox is mixed when some options are selected. It is on by default. Set it to `false` to remove the row and the Alt/Option-click shortcut that selects only one row. |
 | `selectAllLabel?` | string | Select all | Label for the `selectAll` row. |
-| `selection?` | 'single' \| 'multiple' | single | Selection mode. `'single'` (the default) keeps `value` a single value and
- closes the menu on pick. Switch to `'multiple'` for checkboxes + an
- array value. |
+| `selection?` | 'single' \| 'multiple' | single | Selection mode. `'single'` (the default) keeps `value` a single value and closes the menu on pick. Switch to `'multiple'` for checkboxes + an array value. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Field size. |
 | `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | neutral | Validation/feedback tone for the field (Input's `status`). |
-| `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set (Input's `statusIcon`).
- Each status has a default; pass a shape to override, or `false` to drop it. |
-| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Tone applied to the **selected** row(s) — the whole row takes this tone
- (label, icon, indicator, and the background tint), like passing `tone` to just
- the chosen option. A named tone or a custom CSS color. Most visible with the
- tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` /
- `'checkbox'` it tones the label + indicator (those modes have no row tint). |
-| `value?` | V \| V[] | — | Controlled value: the selected option's `value`. Update it through
- `onValueChange`. Leave it undefined for uncontrolled use. |
-| `verbose?` | boolean | — | `multiple` only: spell the picks out in the count summary — `3 selected:
- A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies
- to the multi-count case only: `All` stays `All`, a single pick stays its
- own label, and an empty selection stays the `placeholder`. The list flows
- into the read-only field, so it ellipsizes at the field's width when long
- (`3 selected: Engineering, Des… `). `renderSummary` overrides this. |
+| `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set (Input's `statusIcon`). Each status has a default; pass a shape to override, or `false` to drop it. |
+| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Tone applied to the **selected** row(s) — the whole row takes this tone (label, icon, indicator, and the background tint), like passing `tone` to just the chosen option. A named tone or a custom CSS color. Most visible with the tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` / `'checkbox'` it tones the label + indicator (those modes have no row tint). |
+| `value?` | V \| V[] | — | Controlled value: the selected option's `value`. Update it through `onValueChange`. Leave it undefined for uncontrolled use. |
+| `verbose?` | boolean | — | `multiple` only: spell the picks out in the count summary — `3 selected: A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies to the multi-count case only: `All` stays `All`, a single pick stays its own label, and an empty selection stays the `placeholder`. The list flows into the read-only field, so it ellipsizes at the field's width when long (`3 selected: Engineering, Des… `). `renderSummary` overrides this. |
 
 ### The `SelectItem` type
 

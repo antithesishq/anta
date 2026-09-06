@@ -35,3 +35,7 @@ stable releases in this snapshot.
 Rows group components by job, so Dialog, Modal, and Drawer share one mark.
 Anta covers the common controls but remains narrower than full suites. The
 shadcn row reflects its default Base UI registry.
+
+Utility containers include general-purpose boxes, observers, and scroll or input
+utilities. Focus management includes standalone APIs for focus indicators,
+trapping, and navigation.

@@ -227,8 +227,7 @@ Toaster.manager.add(() => <Banner tone="critical" message="Connection lost" />, 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `label?` | string | 'Notifications' | Accessible label for the region landmark. |
-| `toaster?` | Toaster | — | The store this region renders. Omit to bind the default store driven by
- `Toaster.manager`; pass a `createToaster()` for an isolated region. |
+| `toaster?` | Toaster | — | The store this region renders. Omit to bind the default store driven by `Toaster.manager`; pass a `createToaster()` for an isolated region. |
 
 ## Web Component
 

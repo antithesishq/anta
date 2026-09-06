@@ -428,100 +428,47 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `autoComplete?` | 'off' \| 'on' \| 'name' \| 'username' \| 'email' \| 'current-password' \| 'new-password' \| 'one-time-code' \| 'tel' \| 'url' \| (string & {}) | — | Native autocomplete token. Overrides the value derived from `type`
- (`email` / `tel` / `url`) — set it for the cases `type` can't express, e.g.
- `username`, `current-password`, `new-password`, `one-time-code`, or `off`. |
+| `autoComplete?` | 'off' \| 'on' \| 'name' \| 'username' \| 'email' \| 'current-password' \| 'new-password' \| 'one-time-code' \| 'tel' \| 'url' \| (string & {}) | — | Native autocomplete token. Overrides the value derived from `type` (`email` / `tel` / `url`) — set it for the cases `type` can't express, e.g. `username`, `current-password`, `new-password`, `one-time-code`, or `off`. |
 | `autoFocus?` | boolean | — | Focus this field when its containing `Dialog` opens. |
-| `children?` | ReactNode | — | Extra content rendered directly under the field, above the hint/error (it
- pushes the message down). A no-box child like an Anta `<Tooltip>` takes no
- space and anchors to the field — consistent with how tooltips attach
- to any other element. Use the named `leading` / `trailing` props for
- in-field content. |
-| `clearable?` | boolean | — | Show a clear button as the first trailing item once the field has a
- value. |
+| `children?` | ReactNode | — | Extra content rendered directly under the field, above the hint/error (it pushes the message down). A no-box child like an Anta `<Tooltip>` takes no space and anchors to the field — consistent with how tooltips attach to any other element. Use the named `leading` / `trailing` props for in-field content. |
+| `clearable?` | boolean | — | Show a clear button as the first trailing item once the field has a value. |
 | `defaultValue?` | string | — | Initial value for the uncontrolled case. |
-| `dimActions?` | boolean | — | Dim the `leading` / `trailing` adornments at rest; they brighten to full
- when the field is hovered or focused (a quiet-until-engaged affordance for
- trailing actions). |
+| `dimActions?` | boolean | — | Dim the `leading` / `trailing` adornments at rest; they brighten to full when the field is hovered or focused (a quiet-until-engaged affordance for trailing actions). |
 | `disabled?` | boolean | — | Disable the field. |
-| `hint?` | ReactNode | — | Message below the field. Neutral helper text by default; `status` recolors
- it and prefixes the matching glyph. |
+| `hint?` | ReactNode | — | Message below the field. Neutral helper text by default; `status` recolors it and prefixes the matching glyph. |
 | `inputMode?` | 'none' \| 'text' \| 'decimal' \| 'numeric' \| 'tel' \| 'search' \| 'email' \| 'url' | — | Virtual-keyboard hint. Overrides the value derived from `type`. |
-| `label?` | ReactNode | — | Field label, shown above the control. A string is rendered with the
- label type scale; pass a node for full control. Associated with the
- control as its accessible name (the element mirrors the label text to
- `aria-label`, since `<label for>` can't cross the shadow boundary). |
+| `label?` | ReactNode | — | Field label, shown above the control. A string is rendered with the label type scale; pass a node for full control. Associated with the control as its accessible name (the element mirrors the label text to `aria-label`, since `<label for>` can't cross the shadow boundary). |
 | `leading?` | ReactNode | — | Content pinned to the start of the field (e.g. an icon). |
 | `max?` | number \| string | — |  |
 | `maxLength?` | number | — | Max input length. |
-| `maxRows?` | number | — | Cap the autogrow height (in rows) of a `multiline` field with no `rows`.
- Omit for unbounded growth. |
+| `maxRows?` | number | — | Cap the autogrow height (in rows) of a `multiline` field with no `rows`. Omit for unbounded growth. |
 | `min?` | number \| string | — | Min / max / step — for `type="number"`. |
 | `minLength?` | number | — | Min input length. |
-| `multiline?` | boolean | — | Render a `<textarea>` instead of an `<input>`. Without `rows` it grows
- with its content from one line (capped by `maxRows` if set). Autogrow uses
- CSS `field-sizing` where supported (Chrome/Edge, Safari ≥ 26.2) and falls
- back to a built-in JS resize elsewhere (Firefox, older Safari), so it grows
- in every browser. |
+| `multiline?` | boolean | — | Render a `<textarea>` instead of an `<input>`. Without `rows` it grows with its content from one line (capped by `maxRows` if set). Autogrow uses CSS `field-sizing` where supported (Chrome/Edge, Safari ≥ 26.2) and falls back to a built-in JS resize elsewhere (Firefox, older Safari), so it grows in every browser. |
 | `name?` | string | — | Form field name — submitted with the form via ElementInternals. |
 | `onBlur?` | (e) => void | — | Fires when the field loses focus. |
-| `onChange?` | (e) => void | — | Fires on **commit** (blur / Enter) — the platform `change` semantics, **not**
- React's per-keystroke `onChange`. This is a web component, so `onChange` keeps
- the native meaning; reach for `onInput` (every keystroke) or `onValueChange`
- (both) for live updates. Read `e.target.value`. |
-| `onClearClick?` | (e) => void | — | Fires when the built-in clear button (`clearable`) is clicked, *before*
- the field is cleared. Call `e.preventDefault()` to keep the current value
- — the clear is cancelled and `onClearInput` won't fire. Backed by the
- element's cancelable, bubbling `clearclick` event. |
-| `onClearInput?` | (e) => void | — | Fires after the built-in clear button (`clearable`) has cleared the field
- — so `onInput` / `onChange` fire too — making this useful for reacting
- specifically to a clear. Doesn't fire if `onClearClick` cancelled the
- clear. Backed by the element's bubbling `clearinput` event. |
+| `onChange?` | (e) => void | — | Fires on **commit** (blur / Enter) — the platform `change` semantics, **not** React's per-keystroke `onChange`. This is a web component, so `onChange` keeps the native meaning; reach for `onInput` (every keystroke) or `onValueChange` (both) for live updates. Read `e.target.value`. |
+| `onClearClick?` | (e) => void | — | Fires when the built-in clear button (`clearable`) is clicked, *before* the field is cleared. Call `e.preventDefault()` to keep the current value — the clear is cancelled and `onClearInput` won't fire. Backed by the element's cancelable, bubbling `clearclick` event. |
+| `onClearInput?` | (e) => void | — | Fires after the built-in clear button (`clearable`) has cleared the field — so `onInput` / `onChange` fire too — making this useful for reacting specifically to a clear. Doesn't fire if `onClearClick` cancelled the clear. Backed by the element's bubbling `clearinput` event. |
 | `onFocus?` | (e) => void | — | Fires when the field gains focus. |
 | `onInput?` | (e) => void | — | Fires on every keystroke. Read `e.target.value`. |
-| `onValueChange?` | (event, attrs) => void | — | Unified value-change handler — the easy path for state. Fires on `input`
- *and* `change` (and on clear), with the native `event` plus a convenience
- `attrs` snapshot (`value`, `name`, `empty`, `valid`, `validationMessage`) so
- you can do `setForm(s => ({ ...s, [attrs.name]: attrs.value }))` without
- digging into the event. Use `event.type` to tell a live edit (`input`) from
- a commit (`change`); read `id` / `type` / `className` off `event.target`. |
+| `onValueChange?` | (event, attrs) => void | — | Unified value-change handler — the easy path for state. Fires on `input` *and* `change` (and on clear), with the native `event` plus a convenience `attrs` snapshot (`value`, `name`, `empty`, `valid`, `validationMessage`) so you can do `setForm(s => ({ ...s, [attrs.name]: attrs.value }))` without digging into the event. Use `event.type` to tell a live edit (`input`) from a commit (`change`); read `id` / `type` / `className` off `event.target`. |
 | `pattern?` | string | — | Validation pattern (single-line). |
 | `placeholder?` | string | — | Placeholder shown when empty. |
 | `readOnly?` | boolean | — | Make the field read-only. |
 | `required?` | boolean | — | Mark the field required (drives native validity). |
-| `role?` | string | — | ARIA `role` for the field — e.g. `combobox` when the input drives a
- suggestion `listbox` (see `InputAutocomplete`). Left unset by default. |
-| `round?` | boolean \| number \| string | — | Fully-round the field (`border-radius: 999px`). Pass a `number` (px) or a CSS
- length string for a custom radius. The `clearable` × button always rounds to
- a circle to match (it isn't sized by a custom field value). |
-| `rows?` | number | — | Fixed visible row count — a constant-height `<textarea>` (implies
- `multiline`). |
-| `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. small=24px, medium=28px, large=32px tall; the type scale and
- icon track the size (small 13/16 + 14px icon · medium 15/20 + 16px ·
- large 17/22 + 18px). |
+| `role?` | string | — | ARIA `role` for the field — e.g. `combobox` when the input drives a suggestion `listbox` (see `InputAutocomplete`). Left unset by default. |
+| `round?` | boolean \| number \| string | — | Fully-round the field (`border-radius: 999px`). Pass a `number` (px) or a CSS length string for a custom radius. The `clearable` × button always rounds to a circle to match (it isn't sized by a custom field value). |
+| `rows?` | number | — | Fixed visible row count — a constant-height `<textarea>` (implies `multiline`). |
+| `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. small=24px, medium=28px, large=32px tall; the type scale and icon track the size (small 13/16 + 14px icon · medium 15/20 + 16px · large 17/22 + 18px). |
 | `spellCheck?` | boolean | — | Toggle native spell-checking. |
-| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | — | Validation / feedback tone — colors the border + `hint` and prefixes a
- glyph. Only `critical` marks the field invalid (`aria-invalid`, blocks form
- submission, `:state(invalid)`); `success` / `warning` / `info` / `brand`
- are advisory and stay valid. Omit (or `neutral`) for a plain field. |
-| `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set. Each status has a
- default (critical → `warning-diamond`, warning → `warning-triangle`,
- success → `circle-check`, info → `info`, brand → `circle-small-solid`); pass a
- shape to override, or `false` to drop it. `neutral` has no default glyph. |
+| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | — | Validation / feedback tone — colors the border + `hint` and prefixes a glyph. Only `critical` marks the field invalid (`aria-invalid`, blocks form submission, `:state(invalid)`); `success` / `warning` / `info` / `brand` are advisory and stay valid. Omit (or `neutral`) for a plain field. |
+| `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set. Each status has a default (critical → `warning-diamond`, warning → `warning-triangle`, success → `circle-check`, info → `info`, brand → `circle-small-solid`); pass a shape to override, or `false` to drop it. `neutral` has no default glyph. |
 | `step?` | number \| string | — |  |
-| `tone?` | string | — | Custom accent color — any literal CSS color tints the resting + hover
- border (focus ring stays the global `--focus-ring`). For consistency with the
- other controls' custom-tone knob; a `status` still overrides for validation. |
-| `trailing?` | ReactNode | — | Content pinned to the end of the field (e.g. icons, buttons), after the
- clear button when `clearable`. |
-| `truncate?` | boolean | true | Ellipsize an overflowing single-line value. Read-only inputs already do
-this; pass `false` when an editable field should show the full value. |
-| `type?` | 'text' \| 'search' \| 'email' \| 'password' \| 'tel' \| 'url' \| 'number' | text | Single-line input type. Ignored when `multiline`. `search` is a
- **wrapper-only** shorthand: it defaults a leading search icon and a clear
- button (both overridable — pass your own `leading`, or `clearable={false}`)
- and sets `inputmode="search"`, but the DOM input stays `type="text"`. The
- native `search` type never reaches the element, so the browser's own
- clear/search affordances never appear — Anta owns that chrome. |
+| `tone?` | string | — | Custom accent color — any literal CSS color tints the resting + hover border (focus ring stays the global `--focus-ring`). For consistency with the other controls' custom-tone knob; a `status` still overrides for validation. |
+| `trailing?` | ReactNode | — | Content pinned to the end of the field (e.g. icons, buttons), after the clear button when `clearable`. |
+| `truncate?` | boolean | true | Ellipsize an overflowing single-line value. Read-only inputs already do this; pass `false` when an editable field should show the full value. |
+| `type?` | 'text' \| 'search' \| 'email' \| 'password' \| 'tel' \| 'url' \| 'number' | text | Single-line input type. Ignored when `multiline`. `search` is a **wrapper-only** shorthand: it defaults a leading search icon and a clear button (both overridable — pass your own `leading`, or `clearable={false}`) and sets `inputmode="search"`, but the DOM input stays `type="text"`. The native `search` type never reaches the element, so the browser's own clear/search affordances never appear — Anta owns that chrome. |
 | `value?` | string | — | Controlled value. Pair with `onChange` / `onInput`. |
 
 ## Web Component

@@ -101,30 +101,13 @@ more" and "Show less". `collapsible` takes effect only with `expandable`.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `collapsible?` | boolean | — | Let the reader collapse back after expanding: the chevron becomes a
- "Show more" / "Show less" toggle that stays visible while expanded.
- Only takes effect together with `expandable`. |
-| `expandable?` | boolean | — | Show a fade hint and chevron over the truncated text and let the user
- expand it by clicking the chevron region or pressing Enter while the
- chevron has keyboard focus. Only takes effect together with `truncate`.
- On its own, expanding is **one-way** — the control is removed once
- expanded; add `collapsible` for a two-way toggle. |
+| `collapsible?` | boolean | — | Let the reader collapse back after expanding: the chevron becomes a "Show more" / "Show less" toggle that stays visible while expanded. Only takes effect together with `expandable`. |
+| `expandable?` | boolean | — | Show a fade hint and chevron over the truncated text and let the user expand it by clicking the chevron region or pressing Enter while the chevron has keyboard focus. Only takes effect together with `truncate`. On its own, expanding is **one-way** — the control is removed once expanded; add `collapsible` for a two-way toggle. |
 | `inline?` | boolean | — | Render as inline-block instead of the default block element. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Visual priority. Maps to text-1..text-4 (`primary` = text-1, the
- strongest). The default is `secondary` (text-2) — body text reads a
- step softer than the strongest foreground; pass `primary` for emphasis. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Visual priority. Maps to text-1..text-4 (`primary` = text-1, the strongest). The default is `secondary` (text-2) — body text reads a step softer than the strongest foreground; pass `primary` for emphasis. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Type scale. `small` = 13/16, `medium` = 15/20, `large` = 17/24. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a
- named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS
- color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is
- kept while lightness/chroma are pinned per priority in oklch. |
-| `truncate?` | boolean \| number | — | Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
- single line; any integer ≥ 2 clamps to that many lines; `0` or a
- negative value means no truncation. A clipped, non-expandable JSX
- `Text` shows its text content in a tooltip by default. Nest a
- `<Tooltip>` to provide your own tooltip instead. Uses the
- `-webkit-line-clamp` technique, supported in all major browsers
- (Firefox 68+, Chrome, Safari, Edge). |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is kept while lightness/chroma are pinned per priority in oklch. |
+| `truncate?` | boolean \| number | — | Truncate with a trailing ellipsis. `true` (or `1`) clamps to a single line; any integer ≥ 2 clamps to that many lines; `0` or a negative value means no truncation. A clipped, non-expandable JSX `Text` shows its text content in a tooltip by default. Nest a `<Tooltip>` to provide your own tooltip instead. Uses the `-webkit-line-clamp` technique, supported in all major browsers (Firefox 68+, Chrome, Safari, Edge). |
 
 ## Web Component
 

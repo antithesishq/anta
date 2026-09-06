@@ -308,46 +308,17 @@ function Accordion() {
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `title` | ReactNode | — | Summary (header) content. A string is rendered with the `level`
- type scale; pass a node (e.g. a `<Title>`) for full control or real
- heading semantics in the document outline. |
-| `actions?` | ReactNode | — | Header actions (e.g. buttons, tags) rendered at the end of the
- header row, OUTSIDE the toggle trigger — clicking them never
- toggles, they're separately focusable, and screen readers see them
- as separate controls. |
+| `title` | ReactNode | — | Summary (header) content. A string is rendered with the `level` type scale; pass a node (e.g. a `<Title>`) for full control or real heading semantics in the document outline. |
+| `actions?` | ReactNode | — | Header actions (e.g. buttons, tags) rendered at the end of the header row, OUTSIDE the toggle trigger — clicking them never toggles, they're separately focusable, and screen readers see them as separate controls. |
 | `defaultOpen?` | boolean | — | Initial open state for the uncontrolled case. |
-| `disabled?` | boolean | — | Disables the header: not clickable or focusable, hover affordance
- off, text dimmed. The open state freezes as-is — disabling an open
- expander keeps it open. `actions` stay live; disable them
- separately if needed. |
-| `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 5 | Heading type scale applied to a string `title` (mirrors `<Title>`'s
- levels). Visual only — for outline semantics, pass a `<Title>` as
- the title. |
-| `onStateChange?` | (event, detail) => void | — | Fired before the open state changes. `event` is the cancelable
- `statechange` — call `event.preventDefault()` to veto an *uncontrolled*
- toggle (e.g. confirm before closing). `detail.next` is the requested
- open state, `detail.prev` the current one (booleans). In controlled
- mode, apply `detail.next` to `open` to accept, or do nothing to reject. |
-| `open?` | boolean | — | Controlled open state. When provided, the consumer owns open/close. Selecting
- the summary requests a change through `onStateChange`; omit `open` for
- uncontrolled use. |
-| `outdent?` | boolean | — | Outdent the chevron into the left gutter so the title and body sit
- flush with surrounding content (the docs-header layout). Only takes
- effect with `priority="tertiary"` — on the filled priorities the
- container edge has to bound the chevron, so it's a no-op there. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'secondary' | Surface emphasis. `secondary` (the default) is a subtle fill;
- `primary` is a more pronounced card; `tertiary` is transparent (the
- bare disclosure). |
-| `round?` | boolean \| number \| string | — | Round corners sized to half the folded (header) height: a pill when folded,
- and — when expanded — the same corner radius rather than a bigger stadium.
- The element measures the header, so it tracks custom header content. Pass a
- `number` (px) or CSS length string for a *fixed* radius that overrides the
- measurement (and skips it) in both states. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`)
- for a one-off custom tone. Named tones re-point the text and (on filled
- priorities) the surface to the matching palette; a custom color keeps
- its hue while lightness/chroma are pinned. `'neutral'` (the default) is
- the same as omitting it. |
+| `disabled?` | boolean | — | Disables the header: not clickable or focusable, hover affordance off, text dimmed. The open state freezes as-is — disabling an open expander keeps it open. `actions` stay live; disable them separately if needed. |
+| `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 5 | Heading type scale applied to a string `title` (mirrors `<Title>`'s levels). Visual only — for outline semantics, pass a `<Title>` as the title. |
+| `onStateChange?` | (event, detail) => void | — | Fired before the open state changes. `event` is the cancelable `statechange` — call `event.preventDefault()` to veto an *uncontrolled* toggle (e.g. confirm before closing). `detail.next` is the requested open state, `detail.prev` the current one (booleans). In controlled mode, apply `detail.next` to `open` to accept, or do nothing to reject. |
+| `open?` | boolean | — | Controlled open state. When provided, the consumer owns open/close. Selecting the summary requests a change through `onStateChange`; omit `open` for uncontrolled use. |
+| `outdent?` | boolean | — | Outdent the chevron into the left gutter so the title and body sit flush with surrounding content (the docs-header layout). Only takes effect with `priority="tertiary"` — on the filled priorities the container edge has to bound the chevron, so it's a no-op there. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'secondary' | Surface emphasis. `secondary` (the default) is a subtle fill; `primary` is a more pronounced card; `tertiary` is transparent (the bare disclosure). |
+| `round?` | boolean \| number \| string | — | Round corners sized to half the folded (header) height: a pill when folded, and — when expanded — the same corner radius rather than a bigger stadium. The element measures the header, so it tracks custom header content. Pass a `number` (px) or CSS length string for a *fixed* radius that overrides the measurement (and skips it) in both states. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Named tones re-point the text and (on filled priorities) the surface to the matching palette; a custom color keeps its hue while lightness/chroma are pinned. `'neutral'` (the default) is the same as omitting it. |
 
 ## Web Component
 

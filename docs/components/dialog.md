@@ -208,42 +208,16 @@ On close, focus returns to whatever opened the dialog, from the native `<dialog>
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `children?` | ReactNode | — | The dialog body. Scrolls when it overflows the available height. |
-| `closable?` | boolean | true | Whether the top-right ✕ button is present. It's one way to close the dialog,
- alongside Esc, the backdrop, a `data-dialog-close` / footer action, and your
- own code; `false` removes the ✕ without making the dialog unclosable. |
+| `closable?` | boolean | true | Whether the top-right ✕ button is present. It's one way to close the dialog, alongside Esc, the backdrop, a `data-dialog-close` / footer action, and your own code; `false` removes the ✕ without making the dialog unclosable. |
 | `defaultOpen?` | boolean | — | Initial open state for the uncontrolled case (read once on mount). |
-| `footer?` | ReactNode | — | Footer content, usually the action buttons. Rendered in the bottom zone as
- a right-aligned row (wraps under pressure). Omit for none. |
-| `header?` | ReactNode | — | Header content: a title, or any node. Rendered in the top zone. Omit for a
- chromeless dialog with only a body. |
-| `name?` | string | — | Uncontrolled trigger name. Any element with `data-dialog-open="{name}"`
- opens this dialog, `data-dialog-close="{name}"` closes it. A convenience for
- triggers rendered elsewhere; ignored in controlled mode. |
-| `onStateChange?` | (event, detail) => void | — | Fired before the open state changes, on every user open or dismiss.
- `event` is the cancelable `statechange`: call `event.preventDefault()` to
- veto an *uncontrolled* transition. `detail.next` is the requested open
- state, `detail.prev` the current one (booleans). In controlled mode, apply
- `detail.next` to `open` to accept, or do nothing to reject. |
-| `open?` | boolean | — | Controlled open state. When provided, the consumer owns open/close: the
- dialog only follows this prop, and every user dismiss (Esc, backdrop, close
- button) *requests* a change via `onStateChange` (reject by not updating).
- Leave undefined for uncontrolled. |
-| `persistent?` | boolean | — | Turn off light-dismiss: a backdrop click and Esc no longer close the dialog.
- It stays closable through explicit controls (the ✕ when `closable`, a footer
- action, your own code); `persistent` isn't "un-closable", it stops an
- accidental click or stray Esc from dismissing. For an alert / confirm that
- should be answered deliberately. Omit for the default dismissible behavior. |
-| `position?` | 'center' \| 'left' \| 'right' \| 'top' \| 'bottom' \| 'fullscreen' | 'center' | Placement. `center` (the default) is a centered modal; `left` / `right` /
- `top` / `bottom` turn it into an edge drawer (full height for left/right,
- full width for top/bottom); `fullscreen` fills the whole viewport with no
- edge gap or corner radius. |
-| `round?` | boolean \| number \| 'top' \| 'right' \| 'bottom' \| 'left' \| (string & {}) | — | Corner radius. A side keyword — `'top'` / `'right'` / `'bottom'` / `'left'` —
- rounds only that edge's two corners (at `--dialog-radius`), which pairs with
- a drawer's exposed edge (a bottom sheet → `'top'`, a right drawer → `'left'`).
- A `number` (px) or CSS string rounds all corners at that value; the string
- may be a full `border-radius` shorthand (`'12px 12px 0 0'`). `true` rounds all
- corners at `--dialog-radius`. Omit for the position default: `center` is
- rounded, drawers and `fullscreen` are square. |
+| `footer?` | ReactNode | — | Footer content, usually the action buttons. Rendered in the bottom zone as a right-aligned row (wraps under pressure). Omit for none. |
+| `header?` | ReactNode | — | Header content: a title, or any node. Rendered in the top zone. Omit for a chromeless dialog with only a body. |
+| `name?` | string | — | Uncontrolled trigger name. Any element with `data-dialog-open="{name}"` opens this dialog, `data-dialog-close="{name}"` closes it. A convenience for triggers rendered elsewhere; ignored in controlled mode. |
+| `onStateChange?` | (event, detail) => void | — | Fired before the open state changes, on every user open or dismiss. `event` is the cancelable `statechange`: call `event.preventDefault()` to veto an *uncontrolled* transition. `detail.next` is the requested open state, `detail.prev` the current one (booleans). In controlled mode, apply `detail.next` to `open` to accept, or do nothing to reject. |
+| `open?` | boolean | — | Controlled open state. When provided, the consumer owns open/close: the dialog only follows this prop, and every user dismiss (Esc, backdrop, close button) *requests* a change via `onStateChange` (reject by not updating). Leave undefined for uncontrolled. |
+| `persistent?` | boolean | — | Turn off light-dismiss: a backdrop click and Esc no longer close the dialog. It stays closable through explicit controls (the ✕ when `closable`, a footer action, your own code); `persistent` isn't "un-closable", it stops an accidental click or stray Esc from dismissing. For an alert / confirm that should be answered deliberately. Omit for the default dismissible behavior. |
+| `position?` | 'center' \| 'left' \| 'right' \| 'top' \| 'bottom' \| 'fullscreen' | 'center' | Placement. `center` (the default) is a centered modal; `left` / `right` / `top` / `bottom` turn it into an edge drawer (full height for left/right, full width for top/bottom); `fullscreen` fills the whole viewport with no edge gap or corner radius. |
+| `round?` | boolean \| number \| 'top' \| 'right' \| 'bottom' \| 'left' \| (string & {}) | — | Corner radius. A side keyword — `'top'` / `'right'` / `'bottom'` / `'left'` — rounds only that edge's two corners (at `--dialog-radius`), which pairs with a drawer's exposed edge (a bottom sheet → `'top'`, a right drawer → `'left'`). A `number` (px) or CSS string rounds all corners at that value; the string may be a full `border-radius` shorthand (`'12px 12px 0 0'`). `true` rounds all corners at `--dialog-radius`. Omit for the position default: `center` is rounded, drawers and `fullscreen` are square. |
 
 ## Web Component
 

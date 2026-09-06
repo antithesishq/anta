@@ -172,22 +172,21 @@ const Heading = `h${level}` as const
   // it closed) and deep-links it, and arriving via a `#slug` URL opens
   // the targeted section. Bundled once per page by Astro regardless of
   // how many <Disclosure>s render, so it queries them all.
-  // Open the disclosure that contains the element with the given id —
-  // works for a block's own title heading AND for any heading nested in
-  // its body (so TOC entries inside a folded block expand it).
+  // Open every enclosing disclosure so nested headings become visible.
   function openContaining(id: string): Element | null {
     if (!id) return null
     const target = document.getElementById(id)
-    const details = target?.closest('details.disclosure')
-    if (details instanceof HTMLDetailsElement && !details.open) {
-      // Deep-link / anchor open: expand instantly (no animation) so the
-      // page height is final before we scroll — otherwise the smooth
-      // scroll chases a moving target as the 0fr→1fr row grows. Re-enable
-      // the animation after the open commits so manual toggles still animate.
+    const opened: HTMLDetailsElement[] = []
+    for (let details = target?.closest('details'); details; details = details.parentElement?.closest('details')) {
+      if (details.open) continue
       details.classList.add('no-anim')
       details.open = true
+      opened.push(details)
+    }
+    // Keep layout stable through the anchor scroll, then restore manual animation.
+    if (opened.length) {
       requestAnimationFrame(() =>
-        requestAnimationFrame(() => details.classList.remove('no-anim')),
+        requestAnimationFrame(() => opened.forEach(details => details.classList.remove('no-anim'))),
       )
     }
     return target

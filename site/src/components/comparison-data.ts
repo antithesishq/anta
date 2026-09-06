@@ -450,6 +450,8 @@ export interface Category {
   label: string
   /** The grouped members, shown as the row's sub-label. */
   members: string
+  /** Representative components by system, shown in the cell tooltip. */
+  examples?: Record<string, string>
 }
 
 export const CATEGORIES: Category[] = [
@@ -476,6 +478,25 @@ export const CATEGORIES: Category[] = [
   { id: 'icons', label: 'Icons', members: 'Bundled icon set' },
   { id: 'typography', label: 'Typography', members: 'Text / title components' },
   { id: 'charts', label: 'Charts', members: 'First-party data viz' },
+  // Utility and focus coverage verified against public APIs on September 5, 2026.
+  {
+    id: 'utilities', label: 'Utility containers', members: 'General-purpose boxes, observers, scroll, and input',
+    examples: {
+      anta: 'Box, Capture', webawesome: 'Resize Observer', mui: 'ClickAwayListener',
+      mantine: 'useResizeObserver', atlassian: 'Pragmatic drag and drop',
+      blueprint: 'ResizeSensor', astryx: 'useScrollOverflow', shadcn: 'Scroll Area',
+      untitledui: 'React Aria useMove', gravity: 'useResizeObserver',
+      polaris: 'Box (responsive styling and accessibility)',
+    },
+  },
+  {
+    id: 'focus', label: 'Focus management', members: 'Focus indicators, traps, scopes, and navigation',
+    examples: {
+      mui: 'Unstable_TrapFocus (experimental)', mantine: 'FocusTrap, useFocusTrap',
+      astryx: 'useFocusTrap, useListFocus', untitledui: 'React Aria FocusScope, useFocusManager',
+      blueprint: 'FocusStyleManager (focus indicators)',
+    },
+  },
 ]
 
 /**
@@ -490,91 +511,91 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes', slider: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes',
     accordion: 'yes', table: 'partial', tag: 'yes', avatar: 'yes', card: 'yes', progress: 'yes', steps: 'yes',
-    nav: 'yes', icons: 'yes', typography: 'yes',
+    nav: 'yes', icons: 'yes', typography: 'yes', utilities: 'yes',
   },
   webawesome: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'paid',
     choice: 'yes', slider: 'yes', datetime: 'paid', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'paid', accordion: 'yes',
     tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes', nav: 'yes',
-    icons: 'yes', typography: 'partial', charts: 'paid',
+    icons: 'yes', typography: 'partial', charts: 'paid', utilities: 'yes',
   },
   polaris: {
     button: 'yes', textinput: 'yes', select: 'yes', choice: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes',
     dialog: 'partial', toast: 'partial', table: 'yes', tag: 'yes',
     progress: 'partial', avatar: 'yes', card: 'yes', icons: 'yes',
-    typography: 'yes',
+    typography: 'yes', utilities: 'yes',
   },
   mui: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes', utilities: 'yes', focus: 'yes',
   },
   antd: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes', utilities: 'no',
   },
   mantine: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'partial', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'partial', typography: 'yes', charts: 'yes',
+    steps: 'yes', nav: 'yes', icons: 'partial', typography: 'yes', charts: 'yes', utilities: 'yes', focus: 'yes',
   },
   carbon: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'partial', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'partial', charts: 'yes',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'partial', charts: 'yes', utilities: 'no',
   },
   atlassian: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'partial',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', table: 'yes', tag: 'yes',
     progress: 'yes', avatar: 'yes', card: 'partial',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'partial',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'partial', utilities: 'yes',
   },
   blueprint: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', card: 'yes', nav: 'yes',
-    icons: 'yes', typography: 'partial',
+    icons: 'yes', typography: 'partial', utilities: 'yes', focus: 'yes',
   },
   astryx: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial',
+    nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial', utilities: 'yes', focus: 'yes',
   },
   shadcn: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'partial', nav: 'yes', icons: 'partial', charts: 'yes',
+    steps: 'partial', nav: 'yes', icons: 'partial', charts: 'yes', utilities: 'yes',
   },
   untitledui: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'paid', accordion: 'paid',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes',
-    steps: 'paid', nav: 'paid', icons: 'yes', typography: 'yes', charts: 'yes',
+    steps: 'paid', nav: 'paid', icons: 'yes', typography: 'yes', charts: 'yes', utilities: 'yes', focus: 'yes',
   },
   gravity: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'partial',
     choice: 'yes', slider: 'yes', datetime: 'partial', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial', utilities: 'yes',
   },
 }
 
@@ -630,6 +651,7 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     icons: 'https://webawesome.com/docs/components/icon/',
     typography: 'https://webawesome.com/docs/tokens/typography/',
     charts: 'https://webawesome.com/docs/components/chart/',
+    utilities: 'https://webawesome.com/docs/components/resize-observer/',
   },
   polaris: {
     button: 'https://shopify.dev/docs/api/app-home/web-components/actions/button',
@@ -648,6 +670,7 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     card: 'https://shopify.dev/docs/api/app-home/web-components/layout-and-structure/section',
     icons: 'https://shopify.dev/docs/api/app-home/web-components/media-and-visuals/icon',
     typography: 'https://shopify.dev/docs/api/app-home/web-components/typography-and-content/text',
+    utilities: 'https://shopify.dev/docs/api/app-home/web-components/layout-and-structure/box',
   },
   mui: {
     button: 'https://mui.com/material-ui/react-button/',
@@ -673,6 +696,8 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     icons: 'https://mui.com/material-ui/material-icons/',
     typography: 'https://mui.com/material-ui/react-typography/',
     charts: 'https://mui.com/x/react-charts/',
+    utilities: 'https://mui.com/material-ui/react-click-away-listener/',
+    focus: 'https://github.com/mui/material-ui/tree/master/packages/mui-material/src/Unstable_TrapFocus',
   },
   antd: {
     button: 'https://ant.design/components/button',
@@ -723,6 +748,8 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     icons: 'https://mantine.dev/guides/icons/',
     typography: 'https://mantine.dev/core/typography/',
     charts: 'https://mantine.dev/charts/getting-started/',
+    utilities: 'https://mantine.dev/hooks/use-resize-observer/',
+    focus: 'https://mantine.dev/core/focus-trap/',
   },
   carbon: {
     button: 'https://carbondesignsystem.com/components/button/usage/',
@@ -769,6 +796,7 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     nav: 'https://atlassian.design/components/breadcrumbs/examples',
     icons: 'https://atlassian.design/components/icon/examples',
     typography: 'https://atlassian.design/components/heading/examples',
+    utilities: 'https://atlassian.design/components/pragmatic-drag-and-drop/core-package/',
   },
   blueprint: {
     button: 'https://blueprintjs.com/docs/#core/components/button',
@@ -791,6 +819,8 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     nav: 'https://blueprintjs.com/docs/#core/components/breadcrumbs',
     icons: 'https://blueprintjs.com/docs/#core/components/icon',
     typography: 'https://blueprintjs.com/docs/#core/typography',
+    utilities: 'https://blueprintjs.com/docs/#core/components/resize-sensor',
+    focus: 'https://github.com/palantir/blueprint/blob/develop/packages/core/src/accessibility/focusStyleManager.ts',
   },
   astryx: {
     button: 'https://astryx.atmeta.com/components/Button',
@@ -814,6 +844,8 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     nav: 'https://astryx.atmeta.com/components/Breadcrumbs',
     icons: 'https://astryx.atmeta.com/components/Icon',
     typography: 'https://astryx.atmeta.com/components/Text',
+    utilities: 'https://astryx.atmeta.com/components/useScrollOverflow',
+    focus: 'https://astryx.atmeta.com/components/useFocusTrap',
   },
   shadcn: {
     button: 'https://ui.shadcn.com/docs/components/button',
@@ -836,6 +868,7 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     card: 'https://ui.shadcn.com/docs/components/card',
     nav: 'https://ui.shadcn.com/docs/components/breadcrumb',
     charts: 'https://ui.shadcn.com/charts',
+    utilities: 'https://ui.shadcn.com/docs/components/scroll-area',
   },
   untitledui: {
     button: 'https://www.untitledui.com/react/components/buttons',
@@ -860,6 +893,8 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     icons: 'https://www.untitledui.com/react/docs/icons',
     typography: 'https://www.untitledui.com/react/docs/typography',
     charts: 'https://www.untitledui.com/react/components/line-bar-charts',
+    utilities: 'https://react-aria.adobe.com/useMove',
+    focus: 'https://react-aria.adobe.com/FocusScope',
   },
   gravity: {
     button: 'https://gravity-ui.com/components/uikit/button',
@@ -884,5 +919,6 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     nav: 'https://gravity-ui.com/components/uikit/breadcrumbs',
     icons: 'https://gravity-ui.com/components/uikit/icon',
     typography: 'https://gravity-ui.com/components/uikit/text',
+    utilities: 'https://github.com/gravity-ui/uikit/tree/main/src/hooks/useResizeObserver',
   },
 }

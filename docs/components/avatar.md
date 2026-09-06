@@ -272,23 +272,13 @@ the fallback letters.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `badge?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Corner badge, colored by tone. Pass a named tone or any literal CSS color;
- the application decides what each tone means (`success` for online,
- `critical` for busy, `neutral` for offline). Omit for no badge. |
-| `generator?` | AvatarGenConfig | — | Brand generation constraints — each dimension is OFF / ANY / RANGE / LIST.
- Colors cap OKLCH ranges or pass an explicit palette. Omit for the default
- varied figure. Define one config for the app and reuse it across avatars. |
-| `name?` | string | — | Person or entity name. Supplies the initials fallback (up to 3 letters from
- the first 3 words) and the accessible name, and seeds generation when `seed`
- is absent. |
-| `round?` | boolean \| number \| string | — | Fully-round (circular) frame. Pass a `number` (px) or a CSS length string
- for a custom radius instead. |
-| `seed?` | string | — | Alphanumeric seed that deterministically drives the generated userpic. The
- same seed always renders the same avatar. Falls back to `name` when omitted,
- so a stable user id or name is a good value. |
+| `badge?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Corner badge, colored by tone. Pass a named tone or any literal CSS color; the application decides what each tone means (`success` for online, `critical` for busy, `neutral` for offline). Omit for no badge. |
+| `generator?` | AvatarGenConfig | — | Brand generation constraints — each dimension is OFF / ANY / RANGE / LIST. Colors cap OKLCH ranges or pass an explicit palette. Omit for the default varied figure. Define one config for the app and reuse it across avatars. |
+| `name?` | string | — | Person or entity name. Supplies the initials fallback (up to 3 letters from the first 3 words) and the accessible name, and seeds generation when `seed` is absent. |
+| `round?` | boolean \| number \| string | — | Fully-round (circular) frame. Pass a `number` (px) or a CSS length string for a custom radius instead. |
+| `seed?` | string | — | Alphanumeric seed that deterministically drives the generated userpic. The same seed always renders the same avatar. Falls back to `name` when omitted, so a stable user id or name is a good value. |
 | `size?` | 'small' \| 'medium' \| 'large' \| number | medium | Size of the square container. A number is a pixel size. |
-| `src?` | string | — | Image URL. When set, the image is shown instead of a generated userpic,
- cropped to fill the container. |
+| `src?` | string | — | Image URL. When set, the image is shown instead of a generated userpic, cropped to fill the container. |
 
 ## Vanilla web component
 

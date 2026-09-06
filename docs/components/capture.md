@@ -150,38 +150,101 @@ native text selection or touch gestures.
 |------|------|---------|-------------|
 | `onPanInput?` | (event, detail) => void | — | Custom pan motion and its lifecycle. Inertial samples have no native pointer event. |
 | `onPointerInput?` | (event, detail) => void | — | Start, movement, end, and cancellation of an opted-in pointer session. |
-| `onWheelInput?` | (event, detail) => void | — | Accepted wheel input, with a serialized original event, Capture-relative
-geometry, focus state, and activation reason. Cancellation is already complete. |
-| `pan?` | boolean \| CapturePan | — | Emit custom pan motion. `true` enables touch panning on both axes without
-momentum. Options select devices, axes, bounds directions, and optional inertia.
-Captures the pointer internally; `pointerCapture` is not required.
-Sets CSS touch-action through attributes before the gesture starts. |
-| `pointerCapture?` | boolean \| CapturePointerCapture | — | Emit raw data for a primary pointer until release or cancellation. An options object
-filters devices/buttons and configures activation. Nested interactive controls
-are excluded unless explicitly included. A listener alone enables nothing. |
-| `wheelActivation?` | CaptureWheelActivation | settled | Pointer or focus condition required before wheel input can be captured.
-Focus applies only to input targeted within this Capture. |
-| `wheelCapture?` | CaptureInputDirections | — | Capture wheel input in the enabled directions and emit `onWheelInput`.
-`true` accepts all directions. Omit or pass `false` to leave wheel input alone.
-Nested native wheel controls and Anta menus are excluded.
-All-false direction bounds preserve pointer settling while declining input.
-A listener alone never enables capture. |
+| `onWheelInput?` | (event, detail) => void | — | Accepted wheel input, with a serialized original event, Capture-relative geometry, focus state, and activation reason. Cancellation is already complete. |
+| `pan?` | boolean \| CapturePan | — | Emit custom pan motion. `true` enables touch panning on both axes without momentum. Options select devices, axes, bounds directions, and optional inertia. Captures the pointer internally; `pointerCapture` is not required. Sets CSS touch-action through attributes before the gesture starts. |
+| `pointerCapture?` | boolean \| CapturePointerCapture | — | Emit raw data for a primary pointer until release or cancellation. An options object filters devices/buttons and configures activation. Nested interactive controls are excluded unless explicitly included. A listener alone enables nothing. |
+| `wheelActivation?` | CaptureWheelActivation | settled | Pointer or focus condition required before wheel input can be captured. Focus applies only to input targeted within this Capture. |
+| `wheelCapture?` | CaptureInputDirections | — | Capture wheel input in the enabled directions and emit `onWheelInput`. `true` accepts all directions. Omit or pass `false` to leave wheel input alone. Nested native wheel controls and Anta menus are excluded. All-false direction bounds preserve pointer settling while declining input. A listener alone never enables capture. |
 | `wheelModifier?` | CaptureInputModifier | none | Required modifier for wheel capture. `none` preserves browser Ctrl/pinch zoom. |
 | `wheelSettle?` | CaptureWheelSettle | { delay: 150, tolerance: 5, resetOnMove: false } | Dwell delay, movement tolerance, and whether movement resets eligibility. |
 
 ### CaptureWheelSettle
 
+| Option | Type | Default | Description |
+|------|------|---------|-------------|
+| `delay?` | number | 150 | Pointer dwell time in milliseconds. |
+| `resetOnMove?` | boolean | false | Restart dwell after movement beyond tolerance, including after activation. |
+| `tolerance?` | number | 5 | Maximum movement from the dwell anchor on either axis, in CSS pixels. |
+
 ### CapturePointerCapture
+
+| Option | Type | Default | Description |
+|------|------|---------|-------------|
+| `buttons?` | readonly number[] | [0] | Accepted initiating buttons, using PointerEvent.button values. |
+| `includeInteractive?` | boolean | false | Allow capture to start on nested native or ARIA controls, links, or editable regions. |
+| `modifier?` | CaptureInputModifier | any | Modifier required to start a capture session. |
+| `pointerTypes?` | readonly CapturePointerType[] | ['mouse', 'pen', 'touch'] | Accepted pointer devices. One primary pointer is tracked per Capture. |
+| `threshold?` | number | 0 | Movement required before activation, in viewport CSS pixels. |
 
 ### CapturePan
 
+| Option | Type | Default | Description |
+|------|------|---------|-------------|
+| `axis?` | 'x' \| 'y' \| 'both' | both | Axes handled by custom panning. CSS touch-action leaves the other axis to the browser. |
+| `directions?` | CaptureInputDirections | true | Allowed scroll directions. Updating these can stop motion at application bounds. |
+| `inertia?` | boolean \| CapturePanInertia | false | Continue panning after release with browser-side velocity decay. |
+| `pointerTypes?` | readonly CapturePointerType[] | ['touch'] | Accepted pointer devices. |
+| `threshold?` | number | 3 | Movement required before activation, in viewport CSS pixels. |
+
 ### CapturePanInertia
+
+| Option | Type | Default | Description |
+|------|------|---------|-------------|
+| `minVelocity?` | number | 0.02 | Stop when speed on both axes falls below this value, in CSS pixels/ms. |
+| `timeConstant?` | number | 325 | Exponential velocity decay time constant in milliseconds. |
 
 ### CaptureWheelInput
 
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `activationReason` | CaptureWheelActivationReason | — |  |
+| `boxHeight` | number | — |  |
+| `boxWidth` | number | — | Dimensions of the same viewport bounding rectangle, in CSS pixels. |
+| `focusWithin` | boolean | — |  |
+| `inside` | boolean | — | Whether the pointer is inside that rectangle. Capture can continue outside it. |
+| `localX` | number | — | Pointer position relative to the viewport bounding rectangle's top-left, in CSS pixels. |
+| `localY` | number | — |  |
+| `wheelEvent` | SerializedWheelEvent | — |  |
+
 ### CapturePointerInput
 
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `activationReason` | CapturePointerActivationReason | — |  |
+| `boxHeight` | number | — |  |
+| `boxWidth` | number | — | Dimensions of the same viewport bounding rectangle, in CSS pixels. |
+| `deltaX` | number | — | Movement since the previous delivered sample, in viewport CSS pixels. |
+| `deltaY` | number | — |  |
+| `focusWithin` | boolean | — |  |
+| `inside` | boolean | — | Whether the pointer is inside that rectangle. Capture can continue outside it. |
+| `localX` | number | — | Pointer position relative to the viewport bounding rectangle's top-left, in CSS pixels. |
+| `localY` | number | — |  |
+| `movementX` | number | — | Total movement from the initial press, in viewport CSS pixels. |
+| `movementY` | number | — |  |
+| `phase` | 'start' \| 'move' \| 'end' \| 'cancel' | — |  |
+| `pointerEvent` | SerializedPointerEvent \| null | — | Null when cancellation comes from lifecycle or configuration changes. |
+| `start` | CapturePointerStart | — |  |
+| `cancelReason?` | CaptureInputCancelReason | — |  |
+
 ### CapturePanInput
+
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `activationReason` | CapturePointerActivationReason | — |  |
+| `boxHeight` | number | — |  |
+| `boxWidth` | number | — | Dimensions of the same viewport bounding rectangle, in CSS pixels. |
+| `deltaX` | number | — | Incremental scroll motion in viewport CSS pixels. |
+| `deltaY` | number | — |  |
+| `focusWithin` | boolean | — |  |
+| `inside` | boolean | — | Whether the pointer is inside that rectangle. Capture can continue outside it. |
+| `localX` | number | — | Pointer position relative to the viewport bounding rectangle's top-left, in CSS pixels. |
+| `localY` | number | — |  |
+| `phase` | 'start' \| 'move' \| 'release' \| 'inertia' \| 'end' \| 'cancel' | — |  |
+| `pointerEvent` | SerializedPointerEvent \| null | — | Null during momentum or cancellation without a pointer event. |
+| `start` | CapturePointerStart | — |  |
+| `velocityX` | number | — | Scroll velocity in viewport CSS pixels/ms. |
+| `velocityY` | number | — |  |
+| `cancelReason?` | CaptureInputCancelReason | — |  |
 
 ## Web component
 

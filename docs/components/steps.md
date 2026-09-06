@@ -249,16 +249,36 @@ Events match [`Tabs`](./tabs.md#events).
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `options` | StepOption[] | — | Ordered process phases. |
-| `priority?` | StepPriority | 'secondary' | Visual emphasis. Primary uses a solid selected marker and a stronger
-completed connector; secondary is the outlined default; tertiary is compact
-and borderless. |
-| `renderMarker?` | (option, state) => ReactNode | — | Builds a custom marker from a step and its current state. A returned node
-replaces `marker` and the built-in state marker; return `undefined` to use
-those fallbacks, or `null` for an empty ring. |
-| `tone?` | StepTone \| '' | 'neutral' | Tone applied to every step without its own `tone`. Error steps stay
-critical and disabled steps stay neutral. |
+| `children?` | ReactNode | — | Optional `<TabPanel value="…">` panels, one per tab value. Each is a self-managing `<a-tabpanel>` that shows itself when its `value` is the active tab. Omit them to use `Tabs` as a bare selectable strip. To place panels in a different layout region, or to unmount an inactive panel, drive selection with a controlled `value` and render the content yourself (see the docs). |
+| `defaultValue?` | string | — | Initial active value for the uncontrolled case. After first render `Tabs` owns selection itself. |
+| `disabled?` | boolean | — | Disable the whole strip. |
+| `fill?` | boolean | false | Makes horizontal tabs share the available inline space equally. |
+| `label?` | string | — | Accessible name for the tablist (`aria-label`). |
+| `onBlur?` | (event) => void | — | Focus left the strip entirely — wired to `focusout`. |
+| `onChange?` | (event) => void | — | Fired *after* the active tab changes — a native `change` event. |
+| `onFocus?` | (event) => void | — | Focus entered the strip (any tab) — wired to `focusin` (focus lands on a tab, not the tablist). |
+| `onStateChange?` | (event, detail) => void | — | Fired whenever the active tab changes — event-first. `detail` is `{ next, prev }` (values; `null` = none). Cancelable: `event.preventDefault()` vetoes it (uncontrolled), or in controlled mode answer by updating `value`. |
+| `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value }` snapshot as the 2nd argument. |
+| `orientation?` | 'horizontal' \| 'vertical' | 'horizontal' | Layout + arrow-key axis. Horizontal ellipsizes labels when tabs overflow (scroll is opt-in via CSS); vertical stacks them. |
+| `priority?` | StepPriority | 'secondary' | Visual emphasis. Primary uses a solid selected marker and a stronger completed connector; secondary is the outlined default; tertiary is compact and borderless. |
+| `renderMarker?` | (option, state) => ReactNode | — | Builds a custom marker from a step and its current state. A returned node replaces `marker` and the built-in state marker; return `undefined` to use those fallbacks, or `null` for an empty ring. |
+| `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size — small 24px · medium 28px · large 32px tall, matching Button's scale (the tab's label leading runs a touch tighter, offset by 1px more block padding per side). |
+| `tone?` | StepTone \| '' | 'neutral' | Tone applied to every step without its own `tone`. Error steps stay critical and disabled steps stay neutral. |
+| `value?` | string | — | Controlled active value — the tab `value` to mark selected (and, when a `<TabPanel value="…">` shares it, the panel to reveal). When set, you own selection: the strip renders exactly what this says, and a user pick only *requests* a change via `onStateChange` — apply it by updating this prop. Leave undefined (and use `defaultValue`) for uncontrolled. |
 
 ## Step option props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `label` | ReactNode | — | Visible phase label. It ellipsizes in a constrained step; its full content is available in a tooltip only when clipped. |
+| `state` | StepState | — | Application-owned process state. Selection and availability are separate; `error` keeps a critical icon and outline, and selection adds the fill. |
+| `value` | string | — | Stable phase identity. Values must be unique within the sequence. |
+| `className?` | string | — | CSS class on the option's rendered row. |
+| `disabled?` | boolean | — | Disables this phase. A custom `marker` or `renderMarker` result is kept; otherwise it uses the incomplete marker. |
+| `hint?` | ReactNode | — | Secondary text shown below the label. It ellipsizes in a constrained step; its full content is available in a tooltip only when clipped. |
+| `marker?` | StepMarker | — | Replaces the marker derived from `state`. A number is shown directly; an Anta icon shape is rendered as an `<Icon>`. |
+| `style?` | CSSProperties | — | Inline styles on the option's rendered row. |
+| `tone?` | StepTone \| '' | inherits Steps `tone | Tone for this phase. It colors the label, hint, marker, and completed connector. Overrides the Steps `tone`; error steps stay critical and disabled steps stay neutral. |
 
 ## Web Component
 

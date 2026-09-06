@@ -1,4 +1,5 @@
 import api from '../../src/api.json' with { type: 'json' }
+import { isBaseProp } from '../api-props.mjs'
 
 const byId = new Map()
 ;(function index(node) {
@@ -96,7 +97,7 @@ function collect(declaration) {
     if (!candidate?.name || EXCLUDED.has(candidate.name)) return
     if (candidate.kind !== 1024 || isNever(candidate.type)) return
 
-    const base = fromBase || Boolean(candidate.inheritedFrom)
+    const base = isBaseProp(candidate, fromBase)
     const optional = Boolean(candidate.flags?.isOptional) || fromUnion
     const type = renderType(candidate.type)
     const existing = props.get(candidate.name)
@@ -143,11 +144,12 @@ function collect(declaration) {
 }
 
 function escapeMarkdown(value) {
-  return value.replace(/\|/g, '\\|')
+  return value.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ')
 }
 
-export function renderPropsTable(componentName) {
+export function renderPropsTable(componentName, label = 'Prop') {
   const root = api.children?.find((child) => child.name === `${componentName}Props`)
+    ?? api.children?.find((child) => child.name === componentName)
   if (!root) return ''
 
   const props = collect(root)
@@ -166,5 +168,5 @@ export function renderPropsTable(componentName) {
     return `| \`${name}\` | ${type} | ${defaultValue} | ${description} |`
   })
 
-  return ['| Prop | Type | Default | Description |', '|------|------|---------|-------------|', ...rows].join('\n')
+  return [`| ${escapeMarkdown(label)} | Type | Default | Description |`, '|------|------|---------|-------------|', ...rows].join('\n')
 }

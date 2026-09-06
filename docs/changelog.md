@@ -3,12 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## 0.3.27 — September 7, 2026
+## 0.3.27 — September 6, 2026
 
 ### Added
 
-- Added `Capture` / `<a-capture>` for custom wheel, pointer, and pan handling,
-  with serialized input and local geometry.
+- Added `Capture` / `<a-capture>`, a new input container for custom wheel,
+  pointer, and pan gestures. Each capability is opt-in and emits serialized
+  input with coordinates relative to the component.
 
 ### Fixed
 

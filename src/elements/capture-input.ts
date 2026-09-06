@@ -1,12 +1,12 @@
 import { finiteNumber } from '../anta_helpers'
 import type {
-  BoxInputCancelReason, BoxInputGeometry, BoxInputModifier, BoxPanInput,
-  BoxPointerActivationReason, BoxPointerInput, BoxPointerStart,
-  BoxWheelActivation, BoxWheelActivationReason, BoxWheelInput,
+  CaptureInputCancelReason, CaptureInputGeometry, CaptureInputModifier, CapturePanInput,
+  CapturePointerActivationReason, CapturePointerInput, CapturePointerStart,
+  CaptureWheelActivation, CaptureWheelActivationReason, CaptureWheelInput,
   SerializedMouseEvent, SerializedPointerEvent, SerializedWheelEvent,
-} from '../box-input-types'
+} from '../capture-types'
 
-export const BOX_INPUT_ATTRIBUTES = [
+export const CAPTURE_INPUT_ATTRIBUTES = [
   'wheel-capture', 'wheel-activation', 'wheel-modifier', 'wheel-delay', 'wheel-tolerance', 'wheel-reset-on-move',
   'pointer-capture', 'pointer-buttons', 'pointer-threshold', 'pointer-modifier', 'pointer-include-interactive',
   'pan', 'pan-pointer-types', 'pan-threshold', 'pan-directions', 'pan-inertia', 'pan-time-constant', 'pan-min-velocity',
@@ -15,31 +15,31 @@ export const BOX_INPUT_ATTRIBUTES = [
 type View = Window & typeof globalThis
 type Point = { x: number; y: number; time: number }
 type WheelOptions = {
-  directions: number; activation: BoxWheelActivation; modifier: BoxInputModifier
+  directions: number; activation: CaptureWheelActivation; modifier: CaptureInputModifier
   delay: number; tolerance: number; resetOnMove: boolean
 }
-type PointerOptions = { types: number; buttons: number; threshold: number; modifier: BoxInputModifier; interactive: boolean }
+type PointerOptions = { types: number; buttons: number; threshold: number; modifier: CaptureInputModifier; interactive: boolean }
 type PanOptions = { types: number; axis: string; threshold: number; directions: number; inertia: boolean; tau: number; minVelocity: number }
 type InputState = {
-  box: HTMLElement; store: InputStore
+  surface: HTMLElement; store: InputStore
   wheel?: WheelOptions; pointer?: PointerOptions; pan?: PanOptions
   session?: PointerSession; momentum?: Momentum; suppressClickUntil?: number
 }
 type PointerSession = {
-  state: InputState; id: number; start: BoxPointerStart; current: SerializedPointerEvent
+  state: InputState; id: number; start: CapturePointerStart; current: SerializedPointerEvent
   pointer: boolean; pan: boolean; pointerStarted: boolean; panStarted: boolean; captured: boolean
-  pointerReason: BoxPointerActivationReason; panReason: BoxPointerActivationReason
+  pointerReason: CapturePointerActivationReason; panReason: CapturePointerActivationReason
   pointerLast: Point; panLast: Point; samples: Point[]; lastMoveTime: number
 }
 type Momentum = { state: InputState; session: PointerSession; vx: number; vy: number; time: number }
-type PanMotion = Partial<Pick<BoxPanInput, 'deltaX' | 'deltaY' | 'velocityX' | 'velocityY' | 'cancelReason'>>
+type PanMotion = Partial<Pick<CapturePanInput, 'deltaX' | 'deltaY' | 'velocityX' | 'velocityY' | 'cancelReason'>>
 type InputStore = {
   doc: Document; view: View; states: Set<InputState>; dwell: Map<HTMLElement, Point>
   sessions: Map<number, PointerSession>; momenta: Set<Momentum>
   tracking: boolean; listening: boolean; frame?: number; animate?: FrameRequestCallback
 }
 
-// Plain boxes never enter either map. Listeners use shared functions.
+// Plain capture surfaces never enter either map. Listeners use shared functions.
 const inputs = new WeakMap<HTMLElement, InputState>()
 const documents = new WeakMap<Document, InputStore>()
 const DIRECTIONS: Record<string, number> = { up: 1, down: 2, left: 4, right: 8 }
@@ -61,35 +61,35 @@ function mask(value: string | null, values: Record<string, number>, fallback: nu
   return value.trim().split(/\s+/).reduce((result, key) => result | (values[key] ?? 0), 0)
 }
 
-function numberAttr(box: HTMLElement, name: string, fallback: number, min = 0): number {
-  return Math.max(min, finiteNumber(box.getAttribute(name)?.trim() ?? null, fallback))
+function numberAttr(surface: HTMLElement, name: string, fallback: number, min = 0): number {
+  return Math.max(min, finiteNumber(surface.getAttribute(name)?.trim() ?? null, fallback))
 }
 
-function modifierAttr(box: HTMLElement, name: string, fallback: BoxInputModifier): BoxInputModifier {
-  const value = box.getAttribute(name)
+function modifierAttr(surface: HTMLElement, name: string, fallback: CaptureInputModifier): CaptureInputModifier {
+  const value = surface.getAttribute(name)
   return value === 'any' || value === 'none' || value === 'alt' || value === 'ctrl' || value === 'meta' || value === 'shift' ? value : fallback
 }
 
-function readWheel(box: HTMLElement): WheelOptions | undefined {
-  if (!box.hasAttribute('wheel-capture')) return
+function readWheel(surface: HTMLElement): WheelOptions | undefined {
+  if (!surface.hasAttribute('wheel-capture')) return
   // Empty bounds preserve pointer dwell until a direction becomes available.
-  const directions = mask(box.getAttribute('wheel-capture'), DIRECTIONS, 15)
-  const activation = box.getAttribute('wheel-activation')
+  const directions = mask(surface.getAttribute('wheel-capture'), DIRECTIONS, 15)
+  const activation = surface.getAttribute('wheel-activation')
   return {
     directions,
     activation: activation === 'hover' || activation === 'focus' || activation === 'settled-or-focus' ? activation : 'settled',
-    modifier: modifierAttr(box, 'wheel-modifier', 'none'),
-    delay: numberAttr(box, 'wheel-delay', 150),
-    tolerance: numberAttr(box, 'wheel-tolerance', 5),
-    resetOnMove: box.hasAttribute('wheel-reset-on-move'),
+    modifier: modifierAttr(surface, 'wheel-modifier', 'none'),
+    delay: numberAttr(surface, 'wheel-delay', 150),
+    tolerance: numberAttr(surface, 'wheel-tolerance', 5),
+    resetOnMove: surface.hasAttribute('wheel-reset-on-move'),
   }
 }
 
-function readPointer(box: HTMLElement): PointerOptions | undefined {
-  if (!box.hasAttribute('pointer-capture')) return
-  const types = mask(box.getAttribute('pointer-capture'), POINTER_TYPES, 7)
+function readPointer(surface: HTMLElement): PointerOptions | undefined {
+  if (!surface.hasAttribute('pointer-capture')) return
+  const types = mask(surface.getAttribute('pointer-capture'), POINTER_TYPES, 7)
   if (!types) return
-  const buttonAttribute = box.getAttribute('pointer-buttons')
+  const buttonAttribute = surface.getAttribute('pointer-buttons')
   const buttons = buttonAttribute === null ? 1 : buttonAttribute.split(/\s+/).reduce((bits, button) => {
     const n = Number(button)
     return Number.isInteger(n) && n >= 0 && n <= 5 ? bits | (1 << n) : bits
@@ -97,29 +97,29 @@ function readPointer(box: HTMLElement): PointerOptions | undefined {
   if (!buttons) return
   return {
     types, buttons,
-    threshold: numberAttr(box, 'pointer-threshold', 0),
-    modifier: modifierAttr(box, 'pointer-modifier', 'any'),
-    interactive: box.hasAttribute('pointer-include-interactive'),
+    threshold: numberAttr(surface, 'pointer-threshold', 0),
+    modifier: modifierAttr(surface, 'pointer-modifier', 'any'),
+    interactive: surface.hasAttribute('pointer-include-interactive'),
   }
 }
 
-function readPan(box: HTMLElement): PanOptions | undefined {
-  if (!box.hasAttribute('pan')) return
-  const axis = box.getAttribute('pan')
+function readPan(surface: HTMLElement): PanOptions | undefined {
+  if (!surface.hasAttribute('pan')) return
+  const axis = surface.getAttribute('pan')
   if (axis !== '' && axis !== 'both' && axis !== 'x' && axis !== 'y') return
-  const types = mask(box.getAttribute('pan-pointer-types'), POINTER_TYPES, 4)
+  const types = mask(surface.getAttribute('pan-pointer-types'), POINTER_TYPES, 4)
   if (!types) return
   return {
-    types, axis: axis || 'both', threshold: numberAttr(box, 'pan-threshold', 3),
-    directions: mask(box.getAttribute('pan-directions'), DIRECTIONS, 15),
-    inertia: box.hasAttribute('pan-inertia'),
-    tau: numberAttr(box, 'pan-time-constant', 325, 1),
-    minVelocity: numberAttr(box, 'pan-min-velocity', 0.02, 0.001),
+    types, axis: axis || 'both', threshold: numberAttr(surface, 'pan-threshold', 3),
+    directions: mask(surface.getAttribute('pan-directions'), DIRECTIONS, 15),
+    inertia: surface.hasAttribute('pan-inertia'),
+    tau: numberAttr(surface, 'pan-time-constant', 325, 1),
+    minVelocity: numberAttr(surface, 'pan-min-velocity', 0.02, 0.001),
   }
 }
 
-function inputStore(box: HTMLElement): InputStore {
-  const doc = box.ownerDocument
+function inputStore(surface: HTMLElement): InputStore {
+  const doc = surface.ownerDocument
   let store = documents.get(doc)
   if (store) return store
   const view = doc.defaultView as View
@@ -131,20 +131,20 @@ function inputStore(box: HTMLElement): InputStore {
 }
 
 /** Read declarative attributes, allocating input resources only for enabled capabilities. */
-export function syncBoxInput(box: HTMLElement, attribute?: string) {
-  if (!box.isConnected || !box.ownerDocument.defaultView) return
-  let state = inputs.get(box)
-  if (!state && !box.hasAttribute('wheel-capture') && !box.hasAttribute('pointer-capture') && !box.hasAttribute('pan')) return
-  const wheel = readWheel(box)
-  const pointer = readPointer(box)
-  const pan = readPan(box)
+export function syncCaptureInput(surface: HTMLElement, attribute?: string) {
+  if (!surface.isConnected || !surface.ownerDocument.defaultView) return
+  let state = inputs.get(surface)
+  if (!state && !surface.hasAttribute('wheel-capture') && !surface.hasAttribute('pointer-capture') && !surface.hasAttribute('pan')) return
+  const wheel = readWheel(surface)
+  const pointer = readPointer(surface)
+  const pan = readPan(surface)
   if (!wheel && !pointer && !pan) {
-    disconnectBoxInput(box, 'disabled')
+    disconnectCaptureInput(surface, 'disabled')
     return
   }
   if (!state) {
-    state = { box, store: inputStore(box) }
-    inputs.set(box, state)
+    state = { surface, store: inputStore(surface) }
+    inputs.set(surface, state)
     state.store.states.add(state)
   }
   const hadWheel = !!state.wheel
@@ -153,18 +153,18 @@ export function syncBoxInput(box: HTMLElement, attribute?: string) {
   state.pointer = pointer
   state.pan = pan
   if (hadWheel !== !!wheel) {
-    if (wheel) box.addEventListener('wheel', onWheel, { passive: false })
-    else box.removeEventListener('wheel', onWheel)
+    if (wheel) surface.addEventListener('wheel', onWheel, { passive: false })
+    else surface.removeEventListener('wheel', onWheel)
   }
   if (hadPointer !== !!(pointer || pan)) {
     if (pointer || pan) {
-      box.addEventListener('pointerdown', onPointerDown)
-      box.addEventListener('lostpointercapture', onLostCapture)
-      box.addEventListener('click', onClick, true)
-      box.addEventListener('dragstart', onDragStart)
-    } else removePointerListeners(box)
+      surface.addEventListener('pointerdown', onPointerDown)
+      surface.addEventListener('lostpointercapture', onLostCapture)
+      surface.addEventListener('click', onClick, true)
+      surface.addEventListener('dragstart', onDragStart)
+    } else removePointerListeners(surface)
   }
-  if (!wheel || attribute?.startsWith('wheel-') && attribute !== 'wheel-capture') state.store.dwell.delete(box)
+  if (!wheel || attribute?.startsWith('wheel-') && attribute !== 'wheel-capture') state.store.dwell.delete(surface)
   if (state.session && attribute && (attribute.startsWith('pointer-') || attribute === 'pan' || attribute === 'pan-pointer-types' || attribute === 'pan-threshold')) {
     finishSession(state.session, null, 'disabled')
   }
@@ -172,19 +172,19 @@ export function syncBoxInput(box: HTMLElement, attribute?: string) {
   syncDwellTracking(state.store)
 }
 
-export function disconnectBoxInput(box: HTMLElement, reason: BoxInputCancelReason = 'disconnected') {
-  const state = inputs.get(box)
+export function disconnectCaptureInput(surface: HTMLElement, reason: CaptureInputCancelReason = 'disconnected') {
+  const state = inputs.get(surface)
   if (!state) return
-  inputs.delete(box)
+  inputs.delete(surface)
   state.wheel = undefined
   state.pointer = undefined
   state.pan = undefined
-  box.removeEventListener('wheel', onWheel)
-  removePointerListeners(box)
+  surface.removeEventListener('wheel', onWheel)
+  removePointerListeners(surface)
   if (state.session) finishSession(state.session, null, reason)
   if (state.momentum) stopMomentum(state.momentum, reason)
   const store = state.store
-  store.dwell.delete(box)
+  store.dwell.delete(surface)
   store.states.delete(state)
   syncDwellTracking(store)
   if (store.states.size) return
@@ -193,11 +193,11 @@ export function disconnectBoxInput(box: HTMLElement, reason: BoxInputCancelReaso
   if (documents.get(store.doc) === store) documents.delete(store.doc)
 }
 
-function removePointerListeners(box: HTMLElement) {
-  box.removeEventListener('pointerdown', onPointerDown)
-  box.removeEventListener('lostpointercapture', onLostCapture)
-  box.removeEventListener('click', onClick, true)
-  box.removeEventListener('dragstart', onDragStart)
+function removePointerListeners(surface: HTMLElement) {
+  surface.removeEventListener('pointerdown', onPointerDown)
+  surface.removeEventListener('lostpointercapture', onLostCapture)
+  surface.removeEventListener('click', onClick, true)
+  surface.removeEventListener('dragstart', onDragStart)
 }
 
 function needsDwell(options?: WheelOptions) {
@@ -224,28 +224,28 @@ function onDwellMove(this: Document, event: PointerEvent) {
   const store = documents.get(this)
   if (!store || event.pointerType === 'touch') return
   const path = event.composedPath()
-  for (const box of store.dwell.keys()) {
-    // Pointer capture retargets moves even after the pointer leaves Box.
-    if (!path.includes(box) || event.buttons && !geometry(box, event.clientX, event.clientY).inside) {
-      store.dwell.delete(box)
+  for (const surface of store.dwell.keys()) {
+    // Pointer capture retargets moves even after the pointer leaves Capture.
+    if (!path.includes(surface) || event.buttons && !geometry(surface, event.clientX, event.clientY).inside) {
+      store.dwell.delete(surface)
     }
   }
   for (const target of path) {
     const state = inputs.get(target as HTMLElement)
     const options = state?.wheel
     if (!state || !options || !needsDwell(options)) continue
-    let dwell = store.dwell.get(state.box)
+    let dwell = store.dwell.get(state.surface)
     if (!dwell) {
       // Drags can update existing dwell, but cannot activate a new region.
       if (event.buttons) continue
-      store.dwell.set(state.box, { x: event.clientX, y: event.clientY, time: event.timeStamp })
+      store.dwell.set(state.surface, { x: event.clientX, y: event.clientY, time: event.timeStamp })
       continue
     }
     if (event.clientX === dwell.x && event.clientY === dwell.y) continue
     if (event.timeStamp - dwell.time >= options.delay && !options.resetOnMove) continue
     if (Math.abs(event.clientX - dwell.x) > options.tolerance || Math.abs(event.clientY - dwell.y) > options.tolerance) {
       dwell = { x: event.clientX, y: event.clientY, time: event.timeStamp }
-      store.dwell.set(state.box, dwell)
+      store.dwell.set(state.surface, dwell)
     }
   }
 }
@@ -260,35 +260,35 @@ function onDwellWheel(this: Document, event: WheelEvent) {
   if (!store) return
   const path = event.composedPath()
   // Wheel input invalidates old dwell; it never establishes dwell on a new region.
-  for (const box of store.dwell.keys()) if (!path.includes(box)) store.dwell.delete(box)
+  for (const surface of store.dwell.keys()) if (!path.includes(surface)) store.dwell.delete(surface)
 }
 
-function matchesModifier(event: MouseEvent, modifier: BoxInputModifier) {
+function matchesModifier(event: MouseEvent, modifier: CaptureInputModifier) {
   if (modifier === 'any') return true
   if (modifier === 'none') return !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey
   return event[`${modifier}Key`]
 }
 
-function ignoredTarget(box: HTMLElement, event: Event, controls: string) {
-  const view = box.ownerDocument.defaultView as View
+function ignoredTarget(surface: HTMLElement, event: Event, controls: string) {
+  const view = surface.ownerDocument.defaultView as View
   for (const target of event.composedPath()) {
-    if (target === box) break
-    if (target instanceof view.Element && (target.hasAttribute('data-box-input-ignore') || controls && target.matches(controls))) return true
+    if (target === surface) break
+    if (target instanceof view.Element && (target.hasAttribute('data-capture-ignore') || controls && target.matches(controls))) return true
   }
-  return box.hasAttribute('data-box-input-ignore')
+  return surface.hasAttribute('data-capture-ignore')
 }
 
 function allows(directions: number, delta: number, horizontal: boolean) {
   return delta !== 0 && !!(directions & (horizontal ? delta < 0 ? 4 : 8 : delta < 0 ? 1 : 2))
 }
 
-function geometry(box: HTMLElement, x: number, y: number): BoxInputGeometry {
-  const rect = box.getBoundingClientRect()
+function geometry(surface: HTMLElement, x: number, y: number): CaptureInputGeometry {
+  const rect = surface.getBoundingClientRect()
   return {
     localX: x - rect.left, localY: y - rect.top,
     boxWidth: rect.width, boxHeight: rect.height,
     inside: x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom,
-    focusWithin: box.matches(':focus-within'),
+    focusWithin: surface.matches(':focus-within'),
   }
 }
 
@@ -312,8 +312,8 @@ function serializePointer(event: PointerEvent): SerializedPointerEvent {
   }
 }
 
-function emit(state: InputState, type: 'wheelinput' | 'pointerinput' | 'paninput', detail: BoxWheelInput | BoxPointerInput | BoxPanInput) {
-  state.box.dispatchEvent(new state.store.view.CustomEvent(type, { detail }))
+function emit(state: InputState, type: 'wheelinput' | 'pointerinput' | 'paninput', detail: CaptureWheelInput | CapturePointerInput | CapturePanInput) {
+  state.surface.dispatchEvent(new state.store.view.CustomEvent(type, { detail }))
 }
 
 function onWheel(this: HTMLElement, event: WheelEvent) {
@@ -326,7 +326,7 @@ function onWheel(this: HTMLElement, event: WheelEvent) {
   // Ownership follows the dominant axis; the complete diagonal input is forwarded unchanged.
   const horizontal = Math.abs(deltaX) > Math.abs(deltaY)
   if (!allows(options.directions, horizontal ? deltaX : deltaY, horizontal)) return
-  let activationReason: BoxWheelActivationReason
+  let activationReason: CaptureWheelActivationReason
   if ((options.activation === 'focus' || options.activation === 'settled-or-focus') && this.matches(':focus-within')) activationReason = 'focus'
   else if (options.activation === 'hover') activationReason = 'immediate'
   else {
@@ -445,7 +445,7 @@ function updateSession(session: PointerSession, event: PointerEvent, down = fals
   const panStarts = session.pan && !session.panStarted && !!state.pan && panDistance >= state.pan.threshold
   if (pointerStarts || panStarts || session.captured) {
     if (!session.captured) {
-      try { state.box.setPointerCapture(session.id) } catch { finishSession(session, event, 'lost-capture'); return }
+      try { state.surface.setPointerCapture(session.id) } catch { finishSession(session, event, 'lost-capture'); return }
       session.captured = true
     }
     consumePointer(event)
@@ -477,7 +477,7 @@ function updateSession(session: PointerSession, event: PointerEvent, down = fals
   }
 }
 
-function emitPointer(session: PointerSession, phase: BoxPointerInput['phase'], event: SerializedPointerEvent | null, cancelReason?: BoxInputCancelReason) {
+function emitPointer(session: PointerSession, phase: CapturePointerInput['phase'], event: SerializedPointerEvent | null, cancelReason?: CaptureInputCancelReason) {
   const current = event ?? session.current
   const start = session.start.pointerEvent
   const first = phase === 'start'
@@ -486,27 +486,27 @@ function emitPointer(session: PointerSession, phase: BoxPointerInput['phase'], e
   session.pointerLast = point(current)
   emit(session.state, 'pointerinput', {
     phase, pointerEvent: event ? { ...event } : null, start: snapshotStart(session),
-    ...geometry(session.state.box, current.clientX, current.clientY), deltaX, deltaY,
+    ...geometry(session.state.surface, current.clientX, current.clientY), deltaX, deltaY,
     movementX: current.clientX - start.clientX, movementY: current.clientY - start.clientY,
     activationReason: session.pointerReason, ...(cancelReason ? { cancelReason } : {}),
   })
 }
 
-function emitPan(session: PointerSession, phase: BoxPanInput['phase'], event: SerializedPointerEvent | null, motion?: PanMotion) {
+function emitPan(session: PointerSession, phase: CapturePanInput['phase'], event: SerializedPointerEvent | null, motion?: PanMotion) {
   const current = event ?? session.current
   emit(session.state, 'paninput', {
     phase, pointerEvent: event ? { ...event } : null, start: snapshotStart(session),
-    ...geometry(session.state.box, current.clientX, current.clientY),
+    ...geometry(session.state.surface, current.clientX, current.clientY),
     deltaX: 0, deltaY: 0, velocityX: 0, velocityY: 0,
     activationReason: session.panReason, ...motion,
   })
 }
 
-function snapshotStart(session: PointerSession): BoxPointerStart {
+function snapshotStart(session: PointerSession): CapturePointerStart {
   return { ...session.start, pointerEvent: { ...session.start.pointerEvent } }
 }
 
-function finishSession(session: PointerSession, event: PointerEvent | null, reason?: BoxInputCancelReason) {
+function finishSession(session: PointerSession, event: PointerEvent | null, reason?: CaptureInputCancelReason) {
   const state = session.state
   if (state.session !== session) return
   state.session = undefined
@@ -517,11 +517,11 @@ function finishSession(session: PointerSession, event: PointerEvent | null, reas
     recordSample(session, event)
     session.current = serializePointer(event)
   }
-  if (state.box.hasPointerCapture(session.id)) state.box.releasePointerCapture(session.id)
+  if (state.surface.hasPointerCapture(session.id)) state.surface.releasePointerCapture(session.id)
   if (session.captured) state.suppressClickUntil = state.store.view.performance.now() + 400
   if (session.pointerStarted) emitPointer(session, reason ? 'cancel' : 'end', event ? session.current : null, reason)
   if (!session.panStarted) return
-  if (reason || inputs.get(state.box) !== state || !state.pan) {
+  if (reason || inputs.get(state.surface) !== state || !state.pan) {
     emitPan(session, 'cancel', event ? session.current : null, { cancelReason: reason ?? 'disabled' })
     return
   }
@@ -530,7 +530,7 @@ function finishSession(session: PointerSession, event: PointerEvent | null, reas
   const speed = panDelta(state.pan, v.x, v.y)
   emitPan(session, 'release', session.current, { deltaX: finalDelta.x, deltaY: finalDelta.y, velocityX: speed.x, velocityY: speed.y })
   const options = state.pan
-  if (inputs.get(state.box) !== state || !options || state.session) {
+  if (inputs.get(state.surface) !== state || !options || state.session) {
     emitPan(session, 'cancel', null, { cancelReason: 'disabled' })
     return
   }
@@ -552,7 +552,7 @@ function advanceMomentum(store: InputStore, time: number) {
   store.frame = undefined
   for (const motion of Array.from(store.momenta)) {
     const options = motion.state.pan
-    if (!options?.inertia || !motion.state.box.isConnected) { stopMomentum(motion, 'disabled'); continue }
+    if (!options?.inertia || !motion.state.surface.isConnected) { stopMomentum(motion, 'disabled'); continue }
     const dt = Math.min(50, Math.max(0, time - motion.time))
     motion.time = time
     const decay = Math.exp(-dt / options.tau)
@@ -567,7 +567,7 @@ function advanceMomentum(store: InputStore, time: number) {
   scheduleMomentum(store)
 }
 
-function stopMomentum(motion: Momentum, reason?: BoxInputCancelReason) {
+function stopMomentum(motion: Momentum, reason?: CaptureInputCancelReason) {
   const state = motion.state
   if (state.momentum !== motion) return
   state.momentum = undefined

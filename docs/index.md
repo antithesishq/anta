@@ -41,13 +41,15 @@ Anta is designed for a clean DOM. Prefer the props and attributes exposed by eac
 - [Select](./components/select.md)
 - [SelectFaceted](./components/select-faceted.md)
 
-- [Box](./components/box.md)
 - [Banner](./components/banner.md)
 - [Card](./components/card.md)
 - [Dialog](./components/dialog.md)
 - [Toaster](./components/toaster.md)
 - [Expander](./components/expander.md)
 - [Menu](./components/menu.md)
+
+- [Box](./components/box.md)
+- [Capture](./components/capture.md)
 
 ## Packages
 

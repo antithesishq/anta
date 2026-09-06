@@ -1,13 +1,13 @@
-import type { BoxInputDirections, BoxPan, BoxPointerCapture, BoxWheelSettle } from '../box-input-types'
+import type { CaptureInputDirections, CapturePan, CapturePointerCapture, CaptureWheelSettle } from '../capture-types'
 
 /** The empty string enables every direction; `none` keeps an explicit empty set. */
-export function directionAttribute(value: BoxInputDirections | undefined): string | undefined {
+export function directionAttribute(value: CaptureInputDirections | undefined): string | undefined {
   if (value === undefined || value === false) return undefined
   if (value === true) return ''
   return (['up', 'down', 'left', 'right'] as const).filter(direction => value[direction]).join(' ') || 'none'
 }
 
-export function wheelSettleAttributes(value: BoxWheelSettle | undefined) {
+export function wheelSettleAttributes(value: CaptureWheelSettle | undefined) {
   if (!value) return undefined
   return {
     'wheel-delay': value.delay,
@@ -16,7 +16,7 @@ export function wheelSettleAttributes(value: BoxWheelSettle | undefined) {
   }
 }
 
-export function pointerCaptureAttributes(value: boolean | BoxPointerCapture | undefined) {
+export function pointerCaptureAttributes(value: boolean | CapturePointerCapture | undefined) {
   if (!value) return undefined
   if (value === true) return { 'pointer-capture': '' }
   return {
@@ -28,7 +28,7 @@ export function pointerCaptureAttributes(value: boolean | BoxPointerCapture | un
   }
 }
 
-export function panAttributes(value: boolean | BoxPan | undefined) {
+export function panAttributes(value: boolean | CapturePan | undefined) {
   if (!value) return undefined
   const options = value === true ? {} : value
   const inertia = typeof options.inertia === 'object' ? options.inertia : undefined

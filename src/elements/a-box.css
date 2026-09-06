@@ -12,22 +12,6 @@
   a-box[display="grid"] { display: grid; }
   a-box[display="inline-grid"] { display: inline-grid; }
 
-  a-box[pointer-capture]:not([pointer-capture="none"], [pointer-buttons="none"]),
-  a-box[pan]:is([pan=""], [pan="both"], [pan="x"], [pan="y"]):not([pan-pointer-types="none"]) {
-    user-select: none;
-  }
-
-  /* Keep pan specificity low so touch pointer capture can own both axes. */
-  a-box:where(:not([pan-pointer-types]), [pan-pointer-types=""], [pan-pointer-types="all"], [pan-pointer-types~="touch"]) {
-    &[pan="x"] { touch-action: pan-y pinch-zoom; }
-    &[pan="y"] { touch-action: pan-x pinch-zoom; }
-    &[pan=""], &[pan="both"] { touch-action: none; }
-  }
-
-  a-box:is([pointer-capture=""], [pointer-capture="all"], [pointer-capture~="touch"]):not(:where([pointer-buttons="none"])) {
-    touch-action: none;
-  }
-
   /* The wrapper's `gap={8}` becomes an inline --box-gap, the same channel custom
      tones use, and inline always outranks this layer. The typed attr() is a
      progressive enhancement for hand-written `<a-box gap="8px">`: Chrome honors

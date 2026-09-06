@@ -21,6 +21,7 @@
 }
 
 .surface {
+  border-radius: 8px;
   height: 192px;
   overflow: hidden;
   border: 1px solid var(--border-4);

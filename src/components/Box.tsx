@@ -11,11 +11,6 @@ import type {
   BoxMeasurementChange,
 } from '../box-types'
 import type { BaseProps } from '../general_types'
-import type {
-  BoxInputDirections, BoxInputModifier, BoxPan, BoxPanInput, BoxPointerCapture,
-  BoxPointerInput, BoxWheelActivation, BoxWheelInput, BoxWheelSettle,
-} from '../box-input-types'
-import { directionAttribute, panAttributes, pointerCaptureAttributes, wheelSettleAttributes } from './box-input-props'
 
 /** JSX props for the observing light-DOM `<a-box>` container. */
 export interface BoxProps extends BaseProps {
@@ -56,38 +51,6 @@ export interface BoxProps extends BaseProps {
     event: CustomEvent<BoxContextChange>,
     detail: BoxContextChange,
   ) => void
-  /** Capture wheel input in the enabled directions and emit `onWheelInput`.
-   * `true` accepts all directions. Omit or pass `false` to leave wheel input alone.
-   * Nested native wheel controls and Anta menus are excluded.
-   * All-false direction bounds preserve pointer settling while declining input.
-   * A listener alone never enables capture. */
-  wheelCapture?: BoxInputDirections
-  /** Pointer or focus condition required before wheel input can be captured.
-   * Focus applies only to input targeted within this Box.
-   * @defaultValue settled */
-  wheelActivation?: BoxWheelActivation
-  /** Required modifier for wheel capture. `none` preserves browser Ctrl/pinch zoom.
-   * @defaultValue none */
-  wheelModifier?: BoxInputModifier
-  /** Dwell delay, movement tolerance, and whether movement resets eligibility.
-   * @defaultValue { delay: 150, tolerance: 5, resetOnMove: false } */
-  wheelSettle?: BoxWheelSettle
-  /** Accepted wheel input, with a serialized original event, Box-relative
-   * geometry, focus state, and activation reason. Cancellation is already complete. */
-  onWheelInput?: (event: CustomEvent<BoxWheelInput>, detail: BoxWheelInput) => void
-  /** Emit raw data for a primary pointer until release or cancellation. An options object
-   * filters devices/buttons and configures activation. Nested interactive controls
-   * are excluded unless explicitly included. A listener alone enables nothing. */
-  pointerCapture?: boolean | BoxPointerCapture
-  /** Start, movement, end, and cancellation of an opted-in pointer session. */
-  onPointerInput?: (event: CustomEvent<BoxPointerInput>, detail: BoxPointerInput) => void
-  /** Emit custom pan motion. `true` enables touch panning on both axes without
-   * momentum. Options select devices, axes, bounds directions, and optional inertia.
-   * Captures the pointer internally; `pointerCapture` is not required.
-   * Sets CSS touch-action through attributes before the gesture starts. */
-  pan?: boolean | BoxPan
-  /** Custom pan motion and its lifecycle. Inertial samples have no native pointer event. */
-  onPanInput?: (event: CustomEvent<BoxPanInput>, detail: BoxPanInput) => void
 }
 
 /**
@@ -128,15 +91,6 @@ export const Box = ({
   fadeSize,
   onMeasureChange,
   onContextChange,
-  wheelCapture,
-  wheelActivation,
-  wheelModifier,
-  wheelSettle,
-  onWheelInput,
-  pointerCapture,
-  onPointerInput,
-  pan,
-  onPanInput,
   className,
   style,
   children,
@@ -152,15 +106,6 @@ export const Box = ({
       fade-size={fade && fadeSize != null ? cssLength(fadeSize) : undefined}
       onmeasurechange={customEventHandler(onMeasureChange)}
       oncontextchange={customEventHandler(onContextChange)}
-      wheel-capture={directionAttribute(wheelCapture)}
-      wheel-activation={wheelCapture ? wheelActivation : undefined}
-      wheel-modifier={wheelCapture ? wheelModifier : undefined}
-      {...wheelSettleAttributes(wheelCapture ? wheelSettle : undefined)}
-      {...pointerCaptureAttributes(pointerCapture)}
-      {...panAttributes(pan)}
-      onwheelinput={customEventHandler(onWheelInput)}
-      onpointerinput={customEventHandler(onPointerInput)}
-      onpaninput={customEventHandler(onPanInput)}
       class={className}
       style={lengthStyle(
         fade ? fadeSize : undefined,

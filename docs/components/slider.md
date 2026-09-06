@@ -13,6 +13,9 @@ decreases it. The thumb does not move to the point where the rail was pressed.
 Set `trackClick="jump"` to move the thumb to the pressed position before
 dragging, as a native range input does.
 
+Releasing the pointer or losing pointer capture ends the drag. Moving back over
+the slider without pressing leaves its value unchanged.
+
 Arrow keys change by `step`. Home and End set the minimum and maximum. PageUp and PageDown move by one tenth of the range.
 
 ```tsx

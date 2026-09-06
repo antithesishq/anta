@@ -20,7 +20,7 @@ jobs:
       - name: Run tests
         run: pnpm test
         env:
-          BOX_TEST_BROWSER_CHANNEL: chrome
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Build stickers
         run: pnpm --filter @antadesign/stickers run build
       - name: Typecheck stickers

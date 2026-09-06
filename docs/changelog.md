@@ -7,22 +7,24 @@ changes are not listed.
 
 ### Added
 
-- `Box` adds opt-in `wheelCapture`, `pointerCapture`, and `pan` for custom tables,
-  plots, and drag surfaces. Handlers receive serialized input and local geometry,
-  with configurable wheel settling, device filters, direction limits, and pan inertia.
+- Added `Capture` / `<a-capture>` for custom wheel, pointer, and pan handling,
+  with serialized input and local geometry. All input capabilities are disabled
+  by default.
 
 ### Fixed
 
-- `Box` preserves wheel settling when all direction bounds close and reopen.
-- `Box` gives touch pointer capture precedence over single-axis pan. Empty
+- `Slider` stops dragging after lost pointer capture or a missed button release,
+  so moving back over it without pressing cannot move the thumb.
+- `Capture` preserves wheel settling when all direction bounds close and reopen.
+- `Capture` gives touch pointer capture precedence over single-axis pan. Empty
   device or button lists no longer restrict native selection or touch gestures.
-- `Box` leaves nested tabs and ARIA controls interactive during pointer capture
+- `Capture` leaves nested tabs and ARIA controls interactive during pointer capture
   and custom panning, unless pointer capture explicitly includes them.
-- `Box` preserves settled wheel activation after an in-bounds drag and ignores
+- `Capture` preserves settled wheel activation after an in-bounds drag and ignores
   touch exit events when tracking mouse dwell.
-- `Box` keeps captured pointer events available to ancestor and document
+- `Capture` keeps captured pointer events available to ancestor and document
   listeners while canceling native behavior.
-- `Box` preserves native wheel scrolling in nested textareas and Anta menus.
+- `Capture` preserves native wheel scrolling in nested textareas and Anta menus.
 
 ## 0.3.26 — September 4, 2026
 

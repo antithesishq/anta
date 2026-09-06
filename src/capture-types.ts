@@ -1,16 +1,16 @@
 /** Directions of wheel or scroll deltas. Positive Y is down; positive X is right. */
-export type BoxInputDirection = 'up' | 'down' | 'left' | 'right'
+export type CaptureInputDirection = 'up' | 'down' | 'left' | 'right'
 
 /** `true` accepts every direction; omitted object entries decline that direction. */
-export type BoxInputDirections = boolean | Partial<Record<BoxInputDirection, boolean>>
+export type CaptureInputDirections = boolean | Partial<Record<CaptureInputDirection, boolean>>
 
 /** `none` accepts unmodified input; a named modifier must be pressed. */
-export type BoxInputModifier = 'none' | 'any' | 'alt' | 'ctrl' | 'meta' | 'shift'
+export type CaptureInputModifier = 'none' | 'any' | 'alt' | 'ctrl' | 'meta' | 'shift'
 
-export type BoxWheelActivation = 'hover' | 'settled' | 'focus' | 'settled-or-focus'
-export type BoxWheelActivationReason = 'immediate' | 'settled' | 'focus'
+export type CaptureWheelActivation = 'hover' | 'settled' | 'focus' | 'settled-or-focus'
+export type CaptureWheelActivationReason = 'immediate' | 'settled' | 'focus'
 
-export interface BoxWheelSettle {
+export interface CaptureWheelSettle {
   /** Pointer dwell time in milliseconds.
    * @defaultValue 150 */
   delay?: number
@@ -22,12 +22,12 @@ export interface BoxWheelSettle {
   resetOnMove?: boolean
 }
 
-export type BoxPointerType = 'mouse' | 'pen' | 'touch'
+export type CapturePointerType = 'mouse' | 'pen' | 'touch'
 
-export interface BoxPointerCapture {
-  /** Accepted pointer devices. One primary pointer is tracked per Box.
+export interface CapturePointerCapture {
+  /** Accepted pointer devices. One primary pointer is tracked per Capture.
    * @defaultValue ['mouse', 'pen', 'touch'] */
-  pointerTypes?: readonly BoxPointerType[]
+  pointerTypes?: readonly CapturePointerType[]
   /** Accepted initiating buttons, using PointerEvent.button values.
    * @defaultValue [0] */
   buttons?: readonly number[]
@@ -36,13 +36,13 @@ export interface BoxPointerCapture {
   threshold?: number
   /** Modifier required to start a capture session.
    * @defaultValue any */
-  modifier?: BoxInputModifier
+  modifier?: CaptureInputModifier
   /** Allow capture to start on nested native or ARIA controls, links, or editable regions.
    * @defaultValue false */
   includeInteractive?: boolean
 }
 
-export interface BoxPanInertia {
+export interface CapturePanInertia {
   /** Exponential velocity decay time constant in milliseconds.
    * @defaultValue 325 */
   timeConstant?: number
@@ -51,10 +51,10 @@ export interface BoxPanInertia {
   minVelocity?: number
 }
 
-export interface BoxPan {
+export interface CapturePan {
   /** Accepted pointer devices.
    * @defaultValue ['touch'] */
-  pointerTypes?: readonly BoxPointerType[]
+  pointerTypes?: readonly CapturePointerType[]
   /** Axes handled by custom panning. CSS touch-action leaves the other axis to the browser.
    * @defaultValue both */
   axis?: 'x' | 'y' | 'both'
@@ -63,10 +63,10 @@ export interface BoxPan {
   threshold?: number
   /** Allowed scroll directions. Updating these can stop motion at application bounds.
    * @defaultValue true */
-  directions?: BoxInputDirections
+  directions?: CaptureInputDirections
   /** Continue panning after release with browser-side velocity decay.
    * @defaultValue false */
-  inertia?: boolean | BoxPanInertia
+  inertia?: boolean | CapturePanInertia
 }
 
 /** Plain event data. DOM targets, methods, and browser objects are excluded. */
@@ -115,7 +115,7 @@ export interface SerializedPointerEvent extends SerializedMouseEvent {
 }
 
 /** Geometry measured at delivery. CSS transforms are included in the viewport rectangle. */
-export interface BoxInputGeometry {
+export interface CaptureInputGeometry {
   /** Pointer position relative to the viewport bounding rectangle's top-left, in CSS pixels. */
   localX: number
   localY: number
@@ -128,46 +128,46 @@ export interface BoxInputGeometry {
 }
 
 /** An accepted wheel input. Cancellation has already happened on the browser thread. */
-export interface BoxWheelInput extends BoxInputGeometry {
+export interface CaptureWheelInput extends CaptureInputGeometry {
   wheelEvent: SerializedWheelEvent
-  activationReason: BoxWheelActivationReason
+  activationReason: CaptureWheelActivationReason
 }
 
-export type BoxPointerActivationReason = 'pointer-down' | 'drag-threshold'
-export type BoxInputCancelReason = 'pointer-cancel' | 'lost-capture' | 'disabled' | 'disconnected' | 'blur' | 'interrupted'
+export type CapturePointerActivationReason = 'pointer-down' | 'drag-threshold'
+export type CaptureInputCancelReason = 'pointer-cancel' | 'lost-capture' | 'disabled' | 'disconnected' | 'blur' | 'interrupted'
 
-export interface BoxPointerStart extends BoxInputGeometry {
+export interface CapturePointerStart extends CaptureInputGeometry {
   pointerEvent: SerializedPointerEvent
 }
 
 /** A captured pointer session. Positive movement follows the pointer right/down. */
-export interface BoxPointerInput extends BoxInputGeometry {
+export interface CapturePointerInput extends CaptureInputGeometry {
   phase: 'start' | 'move' | 'end' | 'cancel'
   /** Null when cancellation comes from lifecycle or configuration changes. */
   pointerEvent: SerializedPointerEvent | null
-  start: BoxPointerStart
+  start: CapturePointerStart
   /** Movement since the previous delivered sample, in viewport CSS pixels. */
   deltaX: number
   deltaY: number
   /** Total movement from the initial press, in viewport CSS pixels. */
   movementX: number
   movementY: number
-  activationReason: BoxPointerActivationReason
-  cancelReason?: BoxInputCancelReason
+  activationReason: CapturePointerActivationReason
+  cancelReason?: CaptureInputCancelReason
 }
 
 /** Custom scroll motion. Deltas have the opposite sign to finger movement. */
-export interface BoxPanInput extends BoxInputGeometry {
+export interface CapturePanInput extends CaptureInputGeometry {
   phase: 'start' | 'move' | 'release' | 'inertia' | 'end' | 'cancel'
   /** Null during momentum or cancellation without a pointer event. */
   pointerEvent: SerializedPointerEvent | null
-  start: BoxPointerStart
+  start: CapturePointerStart
   /** Incremental scroll motion in viewport CSS pixels. */
   deltaX: number
   deltaY: number
   /** Scroll velocity in viewport CSS pixels/ms. */
   velocityX: number
   velocityY: number
-  activationReason: BoxPointerActivationReason
-  cancelReason?: BoxInputCancelReason
+  activationReason: CapturePointerActivationReason
+  cancelReason?: CaptureInputCancelReason
 }

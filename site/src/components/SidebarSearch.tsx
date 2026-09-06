@@ -9,8 +9,14 @@ import { useEffect, useState } from 'preact/hooks'
 export default function SidebarSearch() {
   const [hasValue, setHasValue] = useState(false)
   const [focused, setFocused] = useState(false)
+  const [shortcut, setShortcut] = useState('')
 
   useEffect(() => {
+    const platform = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform
+      || navigator.platform
+      || navigator.userAgent
+    setShortcut(/Mac|iPhone|iPad|iPod/i.test(platform) ? '⌘+K' : 'Ctrl+K')
+
     const input = document.querySelector<HTMLElement & { value?: string }>('[data-sidebar-search-input]')
     const syncValue = (event?: Event) => {
       const value = event instanceof CustomEvent
@@ -37,7 +43,7 @@ export default function SidebarSearch() {
       onInput={(event) => setHasValue(Boolean((event.target as { value?: string }).value))}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
-      trailing={hasValue || focused ? undefined : <span data-sidebar-search-shortcut>Ctrl+K or /</span>}
+      trailing={hasValue || focused ? undefined : <span data-sidebar-search-shortcut>{shortcut ? `${shortcut} or /` : '/'}</span>}
     />
   )
 }

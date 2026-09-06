@@ -1,14 +1,14 @@
 import { useId, useState } from 'preact/hooks'
-import { Box, Button, Checkbox, Select, Slider, Tag, Text } from '@antadesign/anta'
-import type { BoxWheelActivation, BoxWheelInput, SelectOption } from '@antadesign/anta'
-import styles from './BoxWheelCapturePreview.module.css'
+import { Capture, Button, Checkbox, Select, Slider, Tag, Text } from '@antadesign/anta'
+import type { CaptureWheelActivation, CaptureWheelInput, SelectOption } from '@antadesign/anta'
+import styles from './WheelCapturePreview.module.css'
 import { useElements } from './useElements'
 
 const ROW_HEIGHT = 32
 const VIEW_HEIGHT = ROW_HEIGHT * 6
 const ROW_COUNT = 28
 const MAX_OFFSET = ROW_HEIGHT * ROW_COUNT - VIEW_HEIGHT
-const ACTIVATIONS: SelectOption<BoxWheelActivation>[] = [
+const ACTIVATIONS: SelectOption<CaptureWheelActivation>[] = [
   { value: 'settled', label: 'After settling' },
   { value: 'hover', label: 'Immediately on hover' },
   { value: 'focus', label: 'While focused' },
@@ -16,15 +16,15 @@ const ACTIVATIONS: SelectOption<BoxWheelActivation>[] = [
 ]
 
 /** Focused wheel controls live outside the surface that claims input. */
-export function BoxWheelCapturePreview() {
+export function WheelCapturePreview() {
   useElements()
   const hintId = useId()
   const [enabled, setEnabled] = useState(false)
-  const [activation, setActivation] = useState<BoxWheelActivation>('settled')
+  const [activation, setActivation] = useState<CaptureWheelActivation>('settled')
   const [delay, setDelay] = useState(150)
   const [resetOnMove, setResetOnMove] = useState(false)
   const [offset, setOffset] = useState(0)
-  const [last, setLast] = useState<BoxWheelInput | null>(null)
+  const [last, setLast] = useState<CaptureWheelInput | null>(null)
   const needsSettle = activation === 'settled' || activation === 'settled-or-focus'
 
   function move(delta: number) {
@@ -43,7 +43,7 @@ export function BoxWheelCapturePreview() {
       </div>
 
       <div className={styles.controls}>
-        <Select<BoxWheelActivation>
+        <Select<CaptureWheelActivation>
           label="Activation"
           size="small"
           options={ACTIVATIONS}
@@ -76,9 +76,8 @@ export function BoxWheelCapturePreview() {
         event.preventDefault()
         move(event.key === 'ArrowDown' ? ROW_HEIGHT : -ROW_HEIGHT)
       }}>
-        <Box
+        <Capture
           className={styles.surface}
-          round={8}
           tabIndex={0}
           aria-label="Wheel capture surface"
           aria-describedby={hintId}
@@ -101,7 +100,7 @@ export function BoxWheelCapturePreview() {
               </div>
             ))}
           </div>
-        </Box>
+        </Capture>
       </div>
 
       <Text id={hintId} size="small" priority="tertiary">

@@ -50,13 +50,15 @@ export { Text } from './components/Text'
 export type { TextProps, ExpandMode } from './components/Text'
 export { Box } from './components/Box'
 export type { BoxProps } from './components/Box'
+export { Capture } from './components/Capture'
+export type { CaptureProps } from './components/Capture'
 export type {
-  BoxInputCancelReason, BoxInputDirection, BoxInputDirections, BoxInputGeometry,
-  BoxInputModifier, BoxPan, BoxPanInertia, BoxPanInput, BoxPointerActivationReason,
-  BoxPointerCapture, BoxPointerInput, BoxPointerStart, BoxPointerType,
-  BoxWheelActivation, BoxWheelActivationReason, BoxWheelInput, BoxWheelSettle,
+  CaptureInputCancelReason, CaptureInputDirection, CaptureInputDirections, CaptureInputGeometry,
+  CaptureInputModifier, CapturePan, CapturePanInertia, CapturePanInput, CapturePointerActivationReason,
+  CapturePointerCapture, CapturePointerInput, CapturePointerStart, CapturePointerType,
+  CaptureWheelActivation, CaptureWheelActivationReason, CaptureWheelInput, CaptureWheelSettle,
   SerializedMouseEvent, SerializedPointerEvent, SerializedWheelEvent,
-} from './box-input-types'
+} from './capture-types'
 export type {
   BoxChange,
   BoxContext,

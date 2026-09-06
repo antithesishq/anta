@@ -40,8 +40,8 @@ The docs site consumes the built workspace `dist/` output. Esbuild runs without 
 
 CI runs build, custom linting, anta and sticker type checks, root regression tests,
 the stickers build, site CSS linting, and a production site build. `pnpm test`
-includes Box browser tests and Markdown conversion tests. CI sets
-`BOX_TEST_BROWSER_CHANNEL=chrome` to use the runner's installed Chrome.
+includes Capture and Slider browser tests and Markdown conversion tests. CI sets
+`CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runner's installed Chrome.
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
 

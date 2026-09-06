@@ -11,7 +11,7 @@ let browser, server, origin
 
 before(async () => {
   const result = await build({
-    entryPoints: ['tests/box-input.fixture.tsx'], bundle: true, write: false,
+    entryPoints: ['tests/capture-input.fixture.tsx'], bundle: true, write: false,
     outfile: 'fixture.js', format: 'esm', target: 'es2022',
     jsx: 'automatic', jsxImportSource: '@antadesign/anta',
     nodePaths: [resolve('site/node_modules')],
@@ -24,14 +24,14 @@ before(async () => {
   server = createServer((req, res) => {
     const asset = assets.get(req.url)
     res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript' : req.url.endsWith('.css') ? 'text/css' : 'text/html')
-    res.end(asset ?? '<!doctype html><link rel="stylesheet" href="/fixture.css"><style>body{margin:0}a-box{width:240px;height:180px}</style><script type="module" src="/fixture.js"></script>')
+    res.end(asset ?? '<!doctype html><link rel="stylesheet" href="/fixture.css"><style>body{margin:0}a-capture{width:240px;height:180px}</style><script type="module" src="/fixture.js"></script>')
   })
   await new Promise((resolve, reject) => {
     server.once('error', reject)
     server.listen(0, '127.0.0.1', resolve)
   })
   origin = `http://127.0.0.1:${server.address().port}`
-  browser = await chromium.launch({ headless: true, channel: process.env.BOX_TEST_BROWSER_CHANNEL || undefined })
+  browser = await chromium.launch({ headless: true, channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined })
 })
 
 after(async () => {
@@ -44,25 +44,25 @@ async function pageFor(t, options = {}) {
   t.after(() => context.close())
   const page = await context.newPage()
   await page.goto(origin)
-  await page.waitForFunction(() => typeof window.renderBox === 'function')
+  await page.waitForFunction(() => typeof window.renderCapture === 'function')
   return page
 }
 
 async function mount(page, attributes = {}) {
   await page.evaluate(attributes => {
     document.body.replaceChildren()
-    const box = document.createElement('a-box')
-    box.id = 'box'
-    for (const [name, value] of Object.entries(attributes)) box.setAttribute(name, value)
+    const surface = document.createElement('a-capture')
+    surface.id = 'surface'
+    for (const [name, value] of Object.entries(attributes)) surface.setAttribute(name, value)
     window.log = []
     for (const type of ['wheelinput', 'pointerinput', 'paninput']) {
-      box.addEventListener(type, event => log.push({ type, detail: structuredClone(event.detail) }))
+      surface.addEventListener(type, event => log.push({ type, detail: structuredClone(event.detail) }))
     }
-    document.body.append(box)
+    document.body.append(surface)
   }, attributes)
 }
 
-async function wheel(page, options = {}, selector = '#box') {
+async function wheel(page, options = {}, selector = '#surface') {
   return page.evaluate(({ options, selector }) => {
     const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: 20, clientY: 20, deltaY: 12, ...options })
     document.querySelector(selector).dispatchEvent(event)
@@ -75,11 +75,11 @@ async function wheel(page, options = {}, selector = '#box') {
 async function syntheticCapture(page) {
   await page.evaluate(() => {
     const held = new Set()
-    const box = document.querySelector('#box')
-    box.setPointerCapture = id => held.add(id)
-    box.hasPointerCapture = id => held.has(id)
-    box.releasePointerCapture = id => held.delete(id)
-    window.pointer = (type, options = {}, target = box) => {
+    const surface = document.querySelector('#surface')
+    surface.setPointerCapture = id => held.add(id)
+    surface.hasPointerCapture = id => held.has(id)
+    surface.releasePointerCapture = id => held.delete(id)
+    window.pointer = (type, options = {}, target = surface) => {
       const { time, ...init } = options
       const event = new PointerEvent(type, {
         bubbles: true, cancelable: true, pointerId: 7, pointerType: 'mouse',
@@ -93,21 +93,111 @@ async function syntheticCapture(page) {
   })
 }
 
-test('ordinary Boxes and handler-only JSX add no input listeners or touch ownership', async t => {
+test('bare and handler-only Capture surfaces add no input listeners or touch ownership', async t => {
   const page = await pageFor(t)
   const result = await page.evaluate(() => {
     const additions = []
     const original = EventTarget.prototype.addEventListener
     EventTarget.prototype.addEventListener = function(type, ...args) {
-      if (['wheel', 'pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'lostpointercapture'].includes(type)) additions.push(type)
+      if (['wheel', 'pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'pointerout', 'lostpointercapture', 'click', 'dragstart', 'blur', 'visibilitychange'].includes(type)) additions.push(type)
       return original.call(this, type, ...args)
     }
-    renderBox({ onWheelInput: () => {}, onPointerInput: () => {}, onPanInput: () => {} })
-    for (let i = 0; i < 100; i++) document.body.append(document.createElement('a-box'))
+    renderCapture({ id: 'surface', onWheelInput: () => {}, onPointerInput: () => {}, onPanInput: () => {} })
+    for (let i = 0; i < 100; i++) document.body.append(document.createElement('a-capture'))
     EventTarget.prototype.addEventListener = original
-    return { additions, touch: getComputedStyle(document.querySelector('a-box')).touchAction }
+    const surface = document.querySelector('a-capture')
+    const { touchAction, userSelect } = getComputedStyle(surface)
+    return { additions, touchAction, userSelect, tabIndex: surface.tabIndex, shadow: surface.shadowRoot }
   })
-  assert.deepEqual(result, { additions: [], touch: 'auto' })
+  assert.deepEqual(result, { additions: [], touchAction: 'auto', userSelect: 'auto', tabIndex: -1, shadow: null })
+  assert.equal(await wheel(page), false)
+  await syntheticCapture(page)
+  assert.deepEqual(await page.evaluate(() => [pointer('pointerdown'), pointer('pointermove', { clientX: 80 }), pointer('pointerup')]), [false, false, false])
+})
+
+test('configuration and explicit false values leave all Capture capabilities disabled', async t => {
+  const page = await pageFor(t)
+  for (const capabilities of [{}, { wheelCapture: false, pointerCapture: false, pan: false }]) {
+    await page.evaluate(capabilities => {
+      window.log = []
+      renderCapture({
+        id: 'surface', ...capabilities,
+        wheelActivation: 'hover', wheelModifier: 'any', wheelSettle: { delay: 0 },
+        onWheelInput: () => log.push('wheel'), onPointerInput: () => log.push('pointer'), onPanInput: () => log.push('pan'),
+      })
+    }, capabilities)
+    assert.deepEqual(await page.locator('#surface').evaluate(surface => surface.getAttributeNames()), ['id'])
+    assert.equal(await wheel(page), false)
+    await page.mouse.move(20, 20)
+    await page.mouse.down()
+    await page.mouse.move(100, 100)
+    await page.mouse.up()
+    assert.deepEqual(await page.evaluate(() => log), [])
+  }
+})
+
+test('a bare Capture preserves native wheel and touch scrolling', async t => {
+  const page = await pageFor(t, { hasTouch: true })
+  await mount(page)
+  await page.evaluate(() => { document.body.style.height = '2000px'; surface.style.height = '2000px' })
+  await page.mouse.move(80, 120)
+  await page.mouse.wheel(0, 100)
+  await page.waitForFunction(() => window.scrollY > 0)
+  await page.evaluate(() => window.scrollTo(0, 0))
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 80, y: 400, id: 0 }] })
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 80, y: 200, id: 0 }] })
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  await page.waitForFunction(() => window.scrollY > 0)
+  assert.deepEqual(await page.evaluate(() => log), [])
+})
+
+test('Box has no capture attributes or touch rules after extraction', async t => {
+  const page = await pageFor(t)
+  await page.evaluate(() => {
+    renderBox({ id: 'surface', style: { width: '240px', height: '180px' } })
+    window.log = []
+    for (const type of ['wheelinput', 'pointerinput', 'paninput']) surface.addEventListener(type, () => log.push(type))
+    for (const [name, value] of Object.entries({ 'wheel-capture': '', 'wheel-activation': 'hover', 'pointer-capture': '', pan: 'both' })) surface.setAttribute(name, value)
+  })
+  assert.deepEqual(await page.evaluate(() => customElements.get('a-box').observedAttributes), ['fade', 'observe'])
+  assert.deepEqual(await page.locator('a-box').evaluate(box => {
+    const { touchAction, userSelect } = getComputedStyle(box)
+    return { touchAction, userSelect }
+  }), { touchAction: 'auto', userSelect: 'auto' })
+  assert.equal(await wheel(page), false)
+  await syntheticCapture(page)
+  await page.evaluate(() => { pointer('pointerdown'); pointer('pointermove', { clientX: 80 }); pointer('pointerup') })
+  assert.deepEqual(await page.evaluate(() => log), [])
+})
+
+test('Capture reports its own geometry inside an observing Box', async t => {
+  const page = await pageFor(t)
+  await mount(page, { 'wheel-capture': '', 'wheel-activation': 'hover' })
+  await page.evaluate(() => {
+    const box = document.createElement('a-box')
+    box.id = 'outer'
+    box.style.cssText = 'width:300px;padding:20px;margin:10px'
+    box.setAttribute('observe', 'all')
+    surface.before(box)
+    box.append(surface)
+  })
+  assert.equal(await wheel(page, { clientX: 50, clientY: 60 }), true)
+  assert.deepEqual(await page.evaluate(() => {
+    const { localX, localY, boxWidth, boxHeight } = log[0].detail
+    return { localX, localY, boxWidth, boxHeight, outerWidth: outer.measurement.width }
+  }), { localX: 20, localY: 30, boxWidth: 240, boxHeight: 180, outerWidth: 340 })
+})
+
+test('granular Box and Capture imports keep their engines independent', async () => {
+  for (const [entry, excluded] of [
+    ['src/elements/a-box.ts', /capture/],
+    ['src/elements/a-capture.ts', /(?:a-box|box-types)/],
+    ['src/components/Box.tsx', /capture/],
+  ]) {
+    const result = await build({ entryPoints: [entry], bundle: true, write: false, metafile: true, outfile: 'granular.js', external: ['@antadesign/anta/jsx-runtime'] })
+    assert.deepEqual(Object.keys(result.metafile.inputs).filter(path => excluded.test(path)), [], entry)
+  }
 })
 
 test('shared event adapters unwrap native and renderer events without adding absent handlers', async t => {
@@ -124,16 +214,20 @@ test('shared event adapters unwrap native and renderer events without adding abs
   assert.deepEqual(result, { absent: true, calls: [[true, { value: 3 }], [true, { value: 3 }], [true, 0], [true, false], [true, '']] })
   assert.deepEqual(await page.evaluate(() => {
     const received = []
-    const props = {}
-    const names = ['MeasureChange', 'ContextChange', 'WheelInput', 'PointerInput', 'PanInput']
-    for (const name of names) props[`on${name}`] = (event, detail) => received.push([name, event.detail === detail, detail.value])
-    renderBox(props)
-    for (const name of names) document.querySelector('a-box').dispatchEvent(new CustomEvent(name.toLowerCase(), { detail: { value: name } }))
+    for (const [render, tag, names] of [
+      [renderBox, 'a-box', ['MeasureChange', 'ContextChange']],
+      [renderCapture, 'a-capture', ['WheelInput', 'PointerInput', 'PanInput']],
+    ]) {
+      const props = {}
+      for (const name of names) props[`on${name}`] = (event, detail) => received.push([name, event.detail === detail, detail.value])
+      render(props)
+      for (const name of names) document.querySelector(tag).dispatchEvent(new CustomEvent(name.toLowerCase(), { detail: { value: name } }))
+    }
     return received
   }), ['MeasureChange', 'ContextChange', 'WheelInput', 'PointerInput', 'PanInput'].map(name => [name, true, name]))
 })
 
-test('shared numeric parsing preserves Slider whitespace and Box fallback/clamping rules', async t => {
+test('shared numeric parsing preserves Slider whitespace and Capture fallback/clamping rules', async t => {
   const page = await pageFor(t)
   assert.deepEqual(await page.evaluate(() => [null, '', ' ', 'bad', 'Infinity', NaN, -2, '2.5'].map(value => finiteNumber(value, 10))), [10, 10, 0, 10, 10, 10, -2, 2.5])
   for (const delay of [' ', 'bad', 'Infinity', '-1', '25']) {
@@ -145,7 +239,7 @@ test('shared numeric parsing preserves Slider whitespace and Box fallback/clampi
       const at = elapsed => {
         const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 12, clientX: 20, clientY: 20 })
         Object.defineProperty(event, 'timeStamp', { value: 1000 + elapsed })
-        box.dispatchEvent(event)
+        surface.dispatchEvent(event)
         return event.defaultPrevented
       }
       return [at(expected - 1), at(expected)]
@@ -154,14 +248,14 @@ test('shared numeric parsing preserves Slider whitespace and Box fallback/clampi
   }
 })
 
-test('wheel is cancelled synchronously and sends cloneable original values and Box geometry', async t => {
+test('wheel is canceled synchronously and sends cloneable original values and Capture geometry', async t => {
   const page = await pageFor(t)
   await mount(page, { 'wheel-capture': '', 'wheel-activation': 'hover' })
   await page.evaluate(() => {
-    box.style.margin = '10px'
+    surface.style.margin = '10px'
     const child = document.createElement('span')
     child.id = 'child'
-    box.append(child)
+    surface.append(child)
     document.body.addEventListener('wheel', () => log.push({ type: 'ancestor' }))
   })
   assert.equal(await wheel(page, { deltaX: -2, deltaY: 17, deltaZ: 3, deltaMode: 1, clientX: 50, clientY: 60 }, '#child'), true)
@@ -179,7 +273,7 @@ test('wheel is cancelled synchronously and sends cloneable original values and B
   assert.equal('target' in detail.wheelEvent, false)
   assert.equal(await wheel(page, { ctrlKey: true }), false)
   assert.equal(await wheel(page, { cancelable: false }), false)
-  await page.evaluate(() => box.setAttribute('wheel-modifier', 'ctrl'))
+  await page.evaluate(() => surface.setAttribute('wheel-modifier', 'ctrl'))
   assert.equal(await wheel(page, { ctrlKey: true }), true)
 })
 
@@ -187,18 +281,18 @@ test('nested wheel ownership and live bounds decline to the eligible ancestor', 
   const page = await pageFor(t)
   await mount(page, { 'wheel-capture': '', 'wheel-activation': 'hover' })
   await page.evaluate(() => {
-    const child = document.createElement('a-box')
+    const child = document.createElement('a-capture')
     child.id = 'child'
     child.setAttribute('wheel-capture', 'down')
     child.setAttribute('wheel-activation', 'hover')
     child.addEventListener('wheelinput', () => log.push({ type: 'child' }))
-    box.append(child)
+    surface.append(child)
   })
   assert.equal(await wheel(page, {}, '#child'), true)
   assert.deepEqual(await page.evaluate(() => log.map(e => e.type)), ['child'])
   assert.equal(await wheel(page, { deltaY: -12 }, '#child'), true)
   assert.deepEqual(await page.evaluate(() => log.map(e => e.type)), ['child', 'wheelinput'])
-  await page.evaluate(() => { child.setAttribute('wheel-capture', 'none'); box.removeAttribute('wheel-capture') })
+  await page.evaluate(() => { child.setAttribute('wheel-capture', 'none'); surface.removeAttribute('wheel-capture') })
   assert.equal(await wheel(page, {}, '#child'), false)
 })
 
@@ -208,8 +302,8 @@ test('wheel rejections skip serialization and geometry, preserving deltaMode rea
   await syntheticCapture(page)
   const result = await page.evaluate(() => {
     let rects = 0, snapshots = 0
-    const readRect = box.getBoundingClientRect.bind(box)
-    box.getBoundingClientRect = () => { rects++; return readRect() }
+    const readRect = surface.getBoundingClientRect.bind(surface)
+    surface.getBoundingClientRect = () => { rects++; return readRect() }
     const send = deltaY => {
       let unitsRead = false
       const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 })
@@ -219,16 +313,16 @@ test('wheel rejections skip serialization and geometry, preserving deltaMode rea
         deltaY: { get() { if (!unitsRead) throw new Error('Read deltaMode first'); return deltaY } },
         screenX: { get() { snapshots++; return 100 } },
       })
-      box.dispatchEvent(event)
+      surface.dispatchEvent(event)
       return { accepted: event.defaultPrevented, rects, snapshots }
     }
     const blockedDirection = send(-12)
     const missingDwell = send(12)
     pointer('pointermove', { buttons: 0 })
     const pendingDwell = send(12)
-    box.setAttribute('wheel-activation', 'focus')
+    surface.setAttribute('wheel-activation', 'focus')
     const missingFocus = send(12)
-    box.setAttribute('wheel-activation', 'hover')
+    surface.setAttribute('wheel-activation', 'hover')
     const accepted = send(12)
     return { rejected: [blockedDirection, missingDwell, pendingDwell, missingFocus], accepted, detail: log.at(-1).detail }
   })
@@ -243,7 +337,7 @@ test('native wheel controls keep scrolling while custom surfaces and their links
   const page = await pageFor(t)
   await mount(page, { 'wheel-capture': '', 'wheel-activation': 'hover' })
   await page.evaluate(() => {
-    box.innerHTML = '<textarea id="editor" style="width:150px;height:80px"></textarea><a-menu><div role="option" id="option">Option</div></a-menu><select></select><input type="number"><input type="range"><div id="pane" data-box-input-ignore style="overflow:auto;height:30px"><div style="height:300px">Content</div></div><div id="plot" role="img" tabindex="0"><a href="#point">Point</a><button>Reset</button></div>'
+    surface.innerHTML = '<textarea id="editor" style="width:150px;height:80px"></textarea><a-menu><div role="option" id="option">Option</div></a-menu><select></select><input type="number"><input type="range"><div id="pane" data-capture-ignore style="overflow:auto;height:30px"><div style="height:300px">Content</div></div><div id="plot" role="img" tabindex="0"><a href="#point">Point</a><button>Reset</button></div>'
     editor.value = 'Line\n'.repeat(100)
   })
   for (const selector of ['#editor', '#option', 'a-menu', 'select', 'input[type="number"]', 'input[type="range"]', '#pane > div']) {
@@ -258,11 +352,11 @@ test('native wheel controls keep scrolling while custom surfaces and their links
   assert.equal(await wheel(page, {}, '#plot button'), true)
 })
 
-test('an open Select scrolls within a hover-activated wheel Box', async t => {
+test('an open Select scrolls within a hover-activated wheel Capture', async t => {
   const page = await pageFor(t)
   await page.evaluate(() => {
     window.log = []
-    renderSelectInBox({
+    renderSelectInCapture({
       wheelCapture: true, wheelActivation: 'hover', style: { height: '580px' },
       onWheelInput: (_, detail) => log.push(detail),
     })
@@ -284,23 +378,23 @@ test('wheel settling uses pointer dwell, reset policy, and region identity; focu
   await page.evaluate(() => pointer('pointermove', { buttons: 0, clientX: 90, clientY: 50 }))
   assert.equal(await wheel(page), true)
   await page.evaluate(() => {
-    box.setAttribute('wheel-reset-on-move', '')
+    surface.setAttribute('wheel-reset-on-move', '')
     pointer('pointermove', { buttons: 0, time: performance.now() - 200 })
   })
   assert.equal(await wheel(page), true)
   await page.evaluate(() => pointer('pointermove', { buttons: 0, clientX: 90 }))
   assert.equal(await wheel(page), false)
   await page.evaluate(() => {
-    box.setAttribute('wheel-activation', 'focus')
-    box.tabIndex = 0
+    surface.setAttribute('wheel-activation', 'focus')
+    surface.tabIndex = 0
   })
   assert.equal(await wheel(page), false)
   assert.equal(await page.evaluate(() => document.activeElement === document.body), true)
-  await page.locator('#box').focus()
+  await page.locator('#surface').focus()
   assert.equal(await wheel(page), true)
   assert.equal(await page.evaluate(() => log.at(-1).detail.activationReason), 'focus')
   await page.evaluate(() => {
-    box.setAttribute('wheel-activation', 'settled')
+    surface.setAttribute('wheel-activation', 'settled')
     pointer('pointermove', { buttons: 0, time: performance.now() - 200 })
     document.body.dispatchEvent(new WheelEvent('wheel', { bubbles: true }))
   })
@@ -317,7 +411,7 @@ test('dwell eligibility follows elapsed time before the first wheel sample', asy
       pointer('pointermove', { buttons: 0, clientX: 100, clientY: 20, time: 1200 })
       const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 12, clientX: 100, clientY: 20 })
       Object.defineProperty(event, 'timeStamp', { value: 1201 })
-      box.dispatchEvent(event)
+      surface.dispatchEvent(event)
       return event.defaultPrevented
     })
     assert.equal(accepted, !reset)
@@ -329,8 +423,8 @@ test('settled wheel bounds retain dwell when all directions close and reopen', a
     const page = await pageFor(t)
     await page.evaluate(activation => {
       window.log = []
-      window.setBounds = wheelCapture => renderBox({
-        id: 'box', wheelCapture, wheelActivation: activation,
+      window.setBounds = wheelCapture => renderCapture({
+        id: 'surface', wheelCapture, wheelActivation: activation,
         onWheelInput: (_, detail) => log.push(detail),
       })
       setBounds({ up: false, down: true })
@@ -339,7 +433,7 @@ test('settled wheel bounds retain dwell when all directions close and reopen', a
     await page.evaluate(() => pointer('pointermove', { buttons: 0, clientX: 20, clientY: 20, time: performance.now() - 200 }))
     assert.equal(await wheel(page), true)
     await page.evaluate(() => setBounds({ up: false, down: false }))
-    assert.equal(await page.locator('#box').getAttribute('wheel-capture'), 'none')
+    assert.equal(await page.locator('#surface').getAttribute('wheel-capture'), 'none')
     assert.equal(await wheel(page), false)
     await page.evaluate(() => setBounds({ down: true }))
     assert.equal(await wheel(page), true, activation)
@@ -360,22 +454,22 @@ test('empty wheel bounds track dwell but explicit disabling clears it', async t 
   await syntheticCapture(page)
   await page.evaluate(() => pointer('pointermove', { buttons: 0, clientX: 20, clientY: 20, time: performance.now() - 200 }))
   assert.equal(await wheel(page), false)
-  await page.evaluate(() => box.setAttribute('wheel-capture', 'down'))
+  await page.evaluate(() => surface.setAttribute('wheel-capture', 'down'))
   assert.equal(await wheel(page), true)
 
-  await page.evaluate(() => { box.removeAttribute('wheel-capture'); box.setAttribute('wheel-capture', 'down') })
+  await page.evaluate(() => { surface.removeAttribute('wheel-capture'); surface.setAttribute('wheel-capture', 'down') })
   assert.equal(await wheel(page), false)
   await page.evaluate(() => pointer('pointermove', { buttons: 0, clientX: 20, clientY: 20, time: performance.now() - 200 }))
   assert.equal(await wheel(page), true)
   await page.evaluate(() => {
-    box.setAttribute('wheel-capture', 'none')
+    surface.setAttribute('wheel-capture', 'none')
     window.dispatchEvent(new Event('blur'))
-    box.setAttribute('wheel-capture', 'down')
+    surface.setAttribute('wheel-capture', 'down')
   })
   assert.equal(await wheel(page), false, 'Blur while bounds are closed must invalidate dwell')
 })
 
-test('a settled Box accepts the first native wheel after a captured drag', async t => {
+test('a settled Capture accepts the first native wheel after a captured drag', async t => {
   const page = await pageFor(t)
   await mount(page, { 'wheel-capture': '', 'pointer-capture': 'mouse', 'wheel-delay': '0' })
   await page.mouse.move(20, 20)
@@ -385,7 +479,7 @@ test('a settled Box accepts the first native wheel after a captured drag', async
   await page.mouse.up()
   await page.evaluate(() => {
     window.wheelDelivered = false
-    box.addEventListener('wheel', () => { window.wheelDelivered = true }, { once: true })
+    surface.addEventListener('wheel', () => { window.wheelDelivered = true }, { once: true })
   })
   await page.mouse.wheel(0, 12)
   await page.waitForFunction(() => wheelDelivered)
@@ -407,7 +501,7 @@ test('dragging does not establish dwell or bypass movement resets', async t => {
     await mount(page, { 'wheel-capture': '', 'pointer-capture': 'mouse', 'wheel-delay': mode === 'pending' ? '10000' : '150' })
     await syntheticCapture(page)
     await page.evaluate(mode => {
-      if (mode === 'reset') box.setAttribute('wheel-reset-on-move', '')
+      if (mode === 'reset') surface.setAttribute('wheel-reset-on-move', '')
       if (mode !== 'new') pointer('pointermove', { buttons: 0, time: performance.now() - 200 })
       pointer('pointerdown')
       pointer('pointermove', { clientX: 80, clientY: 50 })
@@ -417,7 +511,7 @@ test('dragging does not establish dwell or bypass movement resets', async t => {
     const afterSettling = await page.evaluate(() => {
       const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: 80, clientY: 50, deltaY: 12 })
       Object.defineProperty(event, 'timeStamp', { value: performance.now() + 11000 })
-      box.dispatchEvent(event)
+      surface.dispatchEvent(event)
       return event.defaultPrevented
     })
     assert.equal(afterSettling, mode !== 'new', `${mode}: existing dwell can settle after release without another move`)
@@ -434,7 +528,7 @@ test('a hybrid-device touch tap does not clear settled mouse dwell', async t => 
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   assert.equal(await wheel(page), true)
   await page.evaluate(() => {
-    box.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, pointerType: 'mouse', relatedTarget: null }))
+    surface.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, pointerType: 'mouse', relatedTarget: null }))
   })
   assert.equal(await wheel(page), false, 'Mouse exit still clears dwell')
 })
@@ -442,7 +536,7 @@ test('a hybrid-device touch tap does not clear settled mouse dwell', async t => 
 test('trusted mouse capture continues outside, ends once, and does not emit an accidental click', async t => {
   const page = await pageFor(t)
   await mount(page, { 'pointer-capture': 'mouse', 'pointer-threshold': '3' })
-  await page.evaluate(() => box.addEventListener('click', () => log.push({ type: 'click' })))
+  await page.evaluate(() => surface.addEventListener('click', () => log.push({ type: 'click' })))
   await page.mouse.move(20, 20)
   await page.mouse.down()
   assert.deepEqual(await page.evaluate(() => log), [])
@@ -463,11 +557,11 @@ test('captured pointers reach delegated handlers without starting an ancestor se
     const page = await pageFor(t)
     await mount(page, { 'pointer-capture': 'mouse', 'pointer-threshold': String(threshold), pan: 'both', 'pan-pointer-types': 'mouse', 'pan-threshold': String(threshold) })
     await page.evaluate(() => {
-      const parent = document.createElement('a-box')
+      const parent = document.createElement('a-capture')
       parent.setAttribute('pointer-capture', 'mouse')
       parent.addEventListener('pointerinput', () => log.push({ type: 'ancestor' }))
-      box.before(parent)
-      parent.append(box)
+      surface.before(parent)
+      parent.append(surface)
       window.delegated = []
       for (const target of [document.body, document]) {
         for (const type of ['pointerdown', 'pointermove', 'pointerup']) {
@@ -496,16 +590,16 @@ test('captured pointers reach delegated handlers without starting an ancestor se
 test('nested interactive controls and explicit ignored subtrees keep their input', async t => {
   const page = await pageFor(t)
   await mount(page, { 'pointer-capture': '', pan: 'both', 'wheel-capture': '', 'wheel-activation': 'hover' })
-  await page.evaluate(() => { box.innerHTML = '<button id="button">Control</button><span id="ignored" data-box-input-ignore>Ignored</span>' })
+  await page.evaluate(() => { surface.innerHTML = '<button id="button">Control</button><span id="ignored" data-capture-ignore>Ignored</span>' })
   await page.locator('#button').click()
   assert.deepEqual(await page.evaluate(() => log), [])
   assert.equal(await wheel(page, {}, '#ignored'), false)
-  await page.evaluate(() => box.setAttribute('pointer-include-interactive', ''))
+  await page.evaluate(() => surface.setAttribute('pointer-include-interactive', ''))
   await page.locator('#button').click()
   assert.deepEqual(await page.evaluate(() => log.map(e => e.detail.phase)), ['start', 'end'])
 })
 
-test('nested Anta Tabs switch without starting Box pointer or pan capture', async t => {
+test('nested Anta Tabs switch without starting Capture pointer or pan capture', async t => {
   for (const props of [
     { pointerCapture: true },
     { pan: { pointerTypes: ['mouse'], threshold: 0 } },
@@ -514,7 +608,7 @@ test('nested Anta Tabs switch without starting Box pointer or pan capture', asyn
     const page = await pageFor(t)
     await page.evaluate(props => {
       window.log = []
-      renderTabsInBox({
+      renderTabsInCapture({
         ...props,
         onPointerInput: (_, detail) => log.push(detail),
         onPanInput: (_, detail) => log.push(detail),
@@ -531,7 +625,7 @@ test('raw Anta tabs without explicit roles keep their clicks', async t => {
   const page = await pageFor(t)
   await mount(page, { 'pointer-capture': '' })
   await page.evaluate(() => {
-    box.innerHTML = '<a-tabs default-state="first"><a-tab value="first">First</a-tab><a-tab value="second">Second</a-tab></a-tabs>'
+    surface.innerHTML = '<a-tabs default-state="first"><a-tab value="first">First</a-tab><a-tab value="second">Second</a-tab></a-tabs>'
   })
   await page.locator('a-tab[value="second"]').click()
   assert.deepEqual(await page.evaluate(() => log), [])
@@ -557,7 +651,7 @@ test('nested ARIA controls keep descendant clicks under pointer and pan capture'
         control.tabIndex = 0
         control.innerHTML = '<span>Choose</span>'
         control.addEventListener('click', () => log.push({ type: 'control-click' }))
-        box.append(control)
+        surface.append(control)
       }, role)
       await page.locator('#control span').click()
       assert.deepEqual(await page.evaluate(() => log), [{ type: 'control-click' }], `${role}: ${JSON.stringify(attributes)}`)
@@ -569,21 +663,21 @@ test('interactive capture remains explicit and focusable non-controls still capt
   const page = await pageFor(t)
   await mount(page, { 'pointer-capture': '', 'pointer-include-interactive': '' })
   await page.evaluate(() => {
-    box.innerHTML = '<div id="control" role="tab" tabindex="0"><span>Choose</span></div>'
+    surface.innerHTML = '<div id="control" role="tab" tabindex="0"><span>Choose</span></div>'
     control.addEventListener('click', () => log.push({ type: 'control-click' }))
   })
   await page.locator('#control span').click()
   assert.deepEqual(await page.evaluate(() => log.map(e => e.detail?.phase)), ['start', 'end'])
   await page.evaluate(() => {
     log.length = 0
-    control.setAttribute('data-box-input-ignore', '')
+    control.setAttribute('data-capture-ignore', '')
   })
   await page.locator('#control span').click()
   assert.deepEqual(await page.evaluate(() => log), [{ type: 'control-click' }])
 
   await mount(page, { 'pointer-capture': '' })
-  await page.evaluate(() => { box.innerHTML = '<div id="surface" role="img" tabindex="0" aria-label="Plot">Plot</div>' })
-  await page.locator('#surface').click()
+  await page.evaluate(() => { surface.innerHTML = '<div id="plot-surface" role="img" tabindex="0" aria-label="Plot">Plot</div>' })
+  await page.locator('#plot-surface').click()
   assert.deepEqual(await page.evaluate(() => log.map(e => e.detail?.phase)), ['start', 'end'])
 })
 
@@ -591,7 +685,7 @@ test('click suppression does not swallow a new press on an excluded control', as
   const page = await pageFor(t)
   await mount(page, { 'pointer-capture': 'mouse' })
   await page.evaluate(() => {
-    box.innerHTML = '<button id="button">Control</button>'
+    surface.innerHTML = '<button id="button">Control</button>'
     button.addEventListener('click', () => log.push({ type: 'button-click' }))
   })
   await page.mouse.move(100, 100)
@@ -608,7 +702,7 @@ test('pointer ids, immutable snapshots, and cancellation on disable/removal/lost
     await mount(page, { 'pointer-capture': 'mouse' })
     await syntheticCapture(page)
     await page.evaluate(reason => {
-      box.addEventListener('pointerinput', e => {
+      surface.addEventListener('pointerinput', e => {
         e.detail.start.pointerEvent.clientX = 999
         if (e.detail.pointerEvent) e.detail.pointerEvent.clientX = 999
       })
@@ -616,8 +710,8 @@ test('pointer ids, immutable snapshots, and cancellation on disable/removal/lost
       pointer('pointermove', { pointerId: 55, clientX: 700 })
       pointer('pointerup', { pointerId: 55 })
       pointer('pointermove', { clientX: 50 })
-      if (reason === 'disabled') box.removeAttribute('pointer-capture')
-      if (reason === 'disconnected') box.remove()
+      if (reason === 'disabled') surface.removeAttribute('pointer-capture')
+      if (reason === 'disconnected') surface.remove()
       if (reason === 'lost-capture') pointer('lostpointercapture')
       if (reason === 'pointer-cancel') pointer('pointercancel')
       if (reason === 'blur') window.dispatchEvent(new Event('blur'))
@@ -650,9 +744,9 @@ test('touch ownership and text selection follow enabled devices, buttons, and ax
     [{ pan: { pointerTypes: [] }, pointerCapture: { buttons: [] } }, 'auto', 'auto'],
     [{ pan: false, pointerCapture: false }, 'auto', 'auto'],
   ]) {
-    await page.evaluate(props => renderBox(props), props)
-    const styles = await page.locator('a-box').evaluate(box => {
-      const { touchAction, userSelect } = getComputedStyle(box)
+    await page.evaluate(props => renderCapture(props), props)
+    const styles = await page.locator('a-capture').evaluate(surface => {
+      const { touchAction, userSelect } = getComputedStyle(surface)
       return { touchAction, userSelect }
     })
     assert.deepEqual(styles, { touchAction, userSelect }, JSON.stringify(props))
@@ -673,9 +767,9 @@ test('empty pointer devices and buttons attach no input listeners', async t => {
       { 'pointer-capture': '', 'pointer-buttons': 'none' },
       { 'pointer-capture': 'none' },
     ]) {
-      const box = document.createElement('a-box')
-      for (const [name, value] of Object.entries(attributes)) box.setAttribute(name, value)
-      document.body.append(box)
+      const surface = document.createElement('a-capture')
+      for (const [name, value] of Object.entries(attributes)) surface.setAttribute(name, value)
+      document.body.append(surface)
     }
     EventTarget.prototype.addEventListener = original
     return additions
@@ -688,7 +782,7 @@ test('touch pointer capture takes priority over single-axis pan', async t => {
   for (const axis of ['x', 'y']) {
     for (const pointerTypes of ['', 'all', 'touch', 'mouse touch']) {
       await mount(page, { pan: axis, 'pointer-capture': pointerTypes })
-      assert.equal(await page.locator('#box').evaluate(box => getComputedStyle(box).touchAction), 'none', `${axis}: ${pointerTypes}`)
+      assert.equal(await page.locator('#surface').evaluate(surface => getComputedStyle(surface).touchAction), 'none', `${axis}: ${pointerTypes}`)
     }
   }
 })
@@ -751,7 +845,7 @@ test('pan release applies its final delta; stale movement does not start inertia
   assert.equal(result.at(-2).detail.velocityY, 0)
   await page.evaluate(() => {
     log.length = 0
-    box.removeAttribute('pan-inertia')
+    surface.removeAttribute('pan-inertia')
     pointer('pointerdown', { time: 220, clientY: 100 })
     pointer('pointermove', { time: 240, clientY: 70 })
     pointer('pointerup', { time: 260, clientY: 50 })
@@ -770,7 +864,7 @@ test('inertia is time based, has no native event, and stops when declarative bou
     pointer('pointerup', { time: 40, clientY: 50 })
   })
   await page.waitForFunction(() => log.some(e => e.detail.phase === 'inertia'))
-  await page.evaluate(() => box.setAttribute('pan-directions', 'none'))
+  await page.evaluate(() => surface.setAttribute('pan-directions', 'none'))
   const result = await page.evaluate(() => log)
   const motion = result.find(e => e.detail.phase === 'inertia').detail
   assert.equal(motion.pointerEvent, null)
@@ -779,7 +873,7 @@ test('inertia is time based, has no native event, and stops when declarative bou
   assert.equal(result.at(-1).detail.cancelReason, 'disabled')
 })
 
-test('enabled Boxes share document input listeners and release all of them on disconnect', async t => {
+test('enabled Capture surfaces share document input listeners and release all of them on disconnect', async t => {
   const page = await pageFor(t)
   const result = await page.evaluate(() => {
     const balance = new Map()
@@ -794,18 +888,18 @@ test('enabled Boxes share document input listeners and release all of them on di
       if (tracked.has(fn?.name)) balance.set(fn.name, (balance.get(fn.name) ?? 0) - 1)
       return remove.call(this, type, fn, options)
     }
-    const boxes = Array.from({ length: 20 }, () => {
-      const box = document.createElement('a-box')
-      box.setAttribute('wheel-capture', '')
-      document.body.append(box)
-      return box
+    const surfaces = Array.from({ length: 20 }, () => {
+      const surface = document.createElement('a-capture')
+      surface.setAttribute('wheel-capture', '')
+      document.body.append(surface)
+      return surface
     })
     const live = Object.fromEntries(balance)
-    boxes.forEach(box => box.setAttribute('wheel-capture', 'none'))
+    surfaces.forEach(surface => surface.setAttribute('wheel-capture', 'none'))
     const bounded = Object.fromEntries(balance)
-    boxes.forEach(box => box.removeAttribute('wheel-capture'))
+    surfaces.forEach(surface => surface.removeAttribute('wheel-capture'))
     const disabled = Object.fromEntries(balance)
-    boxes.forEach(box => box.remove())
+    surfaces.forEach(surface => surface.remove())
     return { live, bounded, disabled, remaining: Object.fromEntries(balance) }
   })
   assert.ok(Object.keys(result.live).length >= 5)
@@ -815,7 +909,7 @@ test('enabled Boxes share document input listeners and release all of them on di
   assert.ok(Object.values(result.remaining).every(value => value === 0))
 })
 
-test('inertia integrates the same distance at different frame rates and runs independently per Box', async t => {
+test('inertia integrates the same distance at different frame rates and runs independently per Capture', async t => {
   const page = await pageFor(t)
   await page.evaluate(() => {
     let now = 0, nextId = 0
@@ -850,21 +944,21 @@ test('inertia integrates the same distance at different frame rates and runs ind
   await syntheticCapture(page)
   const result = await page.evaluate(() => {
     advance(0)
-    const other = box.cloneNode()
+    const other = surface.cloneNode()
     other.id = 'other'
-    other.setPointerCapture = box.setPointerCapture
-    other.releasePointerCapture = box.releasePointerCapture
-    other.hasPointerCapture = box.hasPointerCapture
+    other.setPointerCapture = surface.setPointerCapture
+    other.releasePointerCapture = surface.releasePointerCapture
+    other.hasPointerCapture = surface.hasPointerCapture
     other.addEventListener('paninput', e => log.push({ type: 'other', detail: e.detail }))
     document.body.append(other)
-    for (const target of [box, other]) {
+    for (const target of [surface, other]) {
       pointer('pointerdown', { time: 0, clientY: 100 }, target)
       pointer('pointermove', { time: 20, clientY: 70 }, target)
       pointer('pointerup', { time: 40, clientY: 50 }, target)
     }
     advance(16)
     const moving = log.filter(e => e.detail.phase === 'inertia').map(e => e.type)
-    box.remove()
+    surface.remove()
     log.length = 0
     advance(32)
     return { moving, remaining: log.map(e => e.type) }
@@ -878,8 +972,8 @@ test('a consumer can disable a gesture during its start event without further de
   await mount(page, { 'pointer-capture': 'mouse', pan: 'both', 'pan-pointer-types': 'mouse', 'pan-threshold': '0' })
   await syntheticCapture(page)
   await page.evaluate(() => {
-    box.addEventListener('pointerinput', event => {
-      if (event.detail.phase === 'start') box.removeAttribute('pointer-capture')
+    surface.addEventListener('pointerinput', event => {
+      if (event.detail.phase === 'start') surface.removeAttribute('pointer-capture')
     })
     pointer('pointerdown')
     pointer('pointermove', { clientX: 90 })

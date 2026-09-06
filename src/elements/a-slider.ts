@@ -288,6 +288,7 @@ export class ASliderElement extends HTMLElementBase {
     this.#control.addEventListener('pointermove', (event) => this.#moveDrag(event))
     this.#control.addEventListener('pointerup', (event) => this.#finishDrag(event))
     this.#control.addEventListener('pointercancel', (event) => this.#finishDrag(event))
+    this.#control.addEventListener('lostpointercapture', (event) => this.#finishDrag(event))
     this.addEventListener('keydown', (event) => this.#handleKeydown(event))
     this.addEventListener('blur', () => delete this.#control.dataset.pointerFocus)
 
@@ -456,6 +457,11 @@ export class ASliderElement extends HTMLElementBase {
   #moveDrag(event: PointerEvent) {
     const drag = this.#drag
     if (!drag || drag.pointerId !== event.pointerId) return
+    // A release outside the window may arrive only as a button-free move.
+    if (!(event.buttons & 1)) {
+      this.#finishDrag(event)
+      return
+    }
 
     const next = this.getAttribute('track-click') === 'jump'
       ? this.#valueAt(event.clientX)

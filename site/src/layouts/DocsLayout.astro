@@ -336,13 +336,17 @@ if (isComponentPage && title) {
         </menu>
         <hr class="sidebar-separator" />
         <menu>
-          <li><a href="/box/" aria-current={isCurrent('/box/') ? 'page' : undefined}><Icon shape="square-dashed" size={18} /> Box</a></li>
           <li><a href="/banner/" aria-current={isCurrent('/banner/') ? 'page' : undefined}><Icon shape="banner" size={18} /> Banner</a></li>
           <li><a href="/card/" aria-current={isCurrent('/card/') ? 'page' : undefined}><Icon shape="card" size={18} /> Card</a></li>
           <li><a href="/dialog/" aria-current={isCurrent('/dialog/') ? 'page' : undefined}><Icon shape="dialog" size={18} /> Dialog</a></li>
           <li><a href="/toaster/" aria-current={isCurrent('/toaster/') ? 'page' : undefined}><Icon shape="toaster" size={18} /> Toaster</a></li>
           <li><a href="/expander/" aria-current={isCurrent('/expander/') ? 'page' : undefined}><Icon shape="square-chevron-right" size={18} /> Expander</a></li>
           <li><a href="/menu/" aria-current={isCurrent('/menu/') ? 'page' : undefined}><Icon shape="square-menu" size={18} /> Menu</a></li>
+        </menu>
+        <hr class="sidebar-separator" />
+        <menu>
+          <li><a href="/box/" aria-current={isCurrent('/box/') ? 'page' : undefined}><Icon shape="square-dashed" size={18} /> Box</a></li>
+          <li><a href="/capture/" aria-current={isCurrent('/capture/') ? 'page' : undefined}><Icon shape="vector-square" size={18} /> Capture</a></li>
         </menu>
         <h4>Packages</h4>
         <menu>
@@ -382,16 +386,6 @@ if (isComponentPage && title) {
       // Runs once per session (ClientRouter never re-runs a seen script), so
       // handlers are document-delegated and per-page work hangs off astro:*
       // events; never hold a reference to one page's DOM.
-
-      const platform = (
-        (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform
-        || navigator.platform
-        || navigator.userAgent
-      )
-      const searchShortcut = /Mac|iPhone|iPad|iPod/i.test(platform) ? 'Cmd+K' : 'Ctrl+K'
-      for (const shortcut of document.querySelectorAll('[data-sidebar-search-shortcut]')) {
-        shortcut.textContent = `${searchShortcut} or /`
-      }
 
       const syncSidebarSearch = () => {
         const params = new URLSearchParams(location.search)

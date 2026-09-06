@@ -21,6 +21,60 @@ npm install @antadesign/stickers   # pulls @antadesign/anta + lottie-web
 
 The full set is also published as a [Telegram sticker pack](https://t.me/addstickers/SnoutyAntithesis).
 
+## Available stickers
+
+| Name | Static export | Animated export | Asset imports |
+| --- | --- | --- | --- |
+| Angry | `StickerAngry` | `StickerAngryAnimated` | `@antadesign/stickers/angry`, `@antadesign/stickers/angry-animated` |
+| Ask | `StickerAsk` | `StickerAskAnimated` | `@antadesign/stickers/ask`, `@antadesign/stickers/ask-animated` |
+| Balance | `StickerBalance` | `StickerBalanceAnimated` | `@antadesign/stickers/balance`, `@antadesign/stickers/balance-animated` |
+| Butterfly | `StickerButterfly` | `StickerButterflyAnimated` | `@antadesign/stickers/butterfly`, `@antadesign/stickers/butterfly-animated` |
+| ButterflySnake | `StickerButterflySnake` | `StickerButterflySnakeAnimated` | `@antadesign/stickers/butterfly-snake`, `@antadesign/stickers/butterfly-snake-animated` |
+| Catch | `StickerCatch` | `StickerCatchAnimated` | `@antadesign/stickers/catch`, `@antadesign/stickers/catch-animated` |
+| Clap | `StickerClap` | `StickerClapAnimated` | `@antadesign/stickers/clap`, `@antadesign/stickers/clap-animated` |
+| Coding | `StickerCoding` | `StickerCodingAnimated` | `@antadesign/stickers/coding`, `@antadesign/stickers/coding-animated` |
+| Cowboy | `StickerCowboy` | `StickerCowboyAnimated` | `@antadesign/stickers/cowboy`, `@antadesign/stickers/cowboy-animated` |
+| Dance | `StickerDance` | `StickerDanceAnimated` | `@antadesign/stickers/dance`, `@antadesign/stickers/dance-animated` |
+| Detective | `StickerDetective` | `StickerDetectiveAnimated` | `@antadesign/stickers/detective`, `@antadesign/stickers/detective-animated` |
+| Disapprove | `StickerDisapprove` | `StickerDisapproveAnimated` | `@antadesign/stickers/disapprove`, `@antadesign/stickers/disapprove-animated` |
+| Distracted | `StickerDistracted` | `StickerDistractedAnimated` | `@antadesign/stickers/distracted`, `@antadesign/stickers/distracted-animated` |
+| Dive | `StickerDive` | `StickerDiveAnimated` | `@antadesign/stickers/dive`, `@antadesign/stickers/dive-animated` |
+| Eat | `StickerEat` | `StickerEatAnimated` | `@antadesign/stickers/eat`, `@antadesign/stickers/eat-animated` |
+| Facepalm | `StickerFacepalm` | `StickerFacepalmAnimated` | `@antadesign/stickers/facepalm`, `@antadesign/stickers/facepalm-animated` |
+| Failed | `StickerFailed` | `StickerFailedAnimated` | `@antadesign/stickers/failed`, `@antadesign/stickers/failed-animated` |
+| Found | `StickerFound` | `StickerFoundAnimated` | `@antadesign/stickers/found`, `@antadesign/stickers/found-animated` |
+| Grow | `StickerGrow` | `StickerGrowAnimated` | `@antadesign/stickers/grow`, `@antadesign/stickers/grow-animated` |
+| Handstand | `StickerHandstand` | `StickerHandstandAnimated` | `@antadesign/stickers/handstand`, `@antadesign/stickers/handstand-animated` |
+| Heart | `StickerHeart` | `StickerHeartAnimated` | `@antadesign/stickers/heart`, `@antadesign/stickers/heart-animated` |
+| Hello | `StickerHello` | `StickerHelloAnimated` | `@antadesign/stickers/hello`, `@antadesign/stickers/hello-animated` |
+| Idea | `StickerIdea` | `StickerIdeaAnimated` | `@antadesign/stickers/idea`, `@antadesign/stickers/idea-animated` |
+| Laugh | `StickerLaugh` | `StickerLaughAnimated` | `@antadesign/stickers/laugh`, `@antadesign/stickers/laugh-animated` |
+| Love | `StickerLove` | `StickerLoveAnimated` | `@antadesign/stickers/love`, `@antadesign/stickers/love-animated` |
+| Nap | `StickerNap` | `StickerNapAnimated` | `@antadesign/stickers/nap`, `@antadesign/stickers/nap-animated` |
+| Party | `StickerParty` | `StickerPartyAnimated` | `@antadesign/stickers/party`, `@antadesign/stickers/party-animated` |
+| Passed | `StickerPassed` | `StickerPassedAnimated` | `@antadesign/stickers/passed`, `@antadesign/stickers/passed-animated` |
+| Peekaboo | `StickerPeekaboo` | `StickerPeekabooAnimated` | `@antadesign/stickers/peekaboo`, `@antadesign/stickers/peekaboo-animated` |
+| Pizza | `StickerPizza` | `StickerPizzaAnimated` | `@antadesign/stickers/pizza`, `@antadesign/stickers/pizza-animated` |
+| Puzzle | `StickerPuzzle` | `StickerPuzzleAnimated` | `@antadesign/stickers/puzzle`, `@antadesign/stickers/puzzle-animated` |
+| Sad | `StickerSad` | `StickerSadAnimated` | `@antadesign/stickers/sad`, `@antadesign/stickers/sad-animated` |
+| Scared | `StickerScared` | `StickerScaredAnimated` | `@antadesign/stickers/scared`, `@antadesign/stickers/scared-animated` |
+| Scroll | `StickerScroll` | `StickerScrollAnimated` | `@antadesign/stickers/scroll`, `@antadesign/stickers/scroll-animated` |
+| Search | `StickerSearch` | `StickerSearchAnimated` | `@antadesign/stickers/search`, `@antadesign/stickers/search-animated` |
+| Shield | `StickerShield` | `StickerShieldAnimated` | `@antadesign/stickers/shield`, `@antadesign/stickers/shield-animated` |
+| Shocked | `StickerShocked` | `StickerShockedAnimated` | `@antadesign/stickers/shocked`, `@antadesign/stickers/shocked-animated` |
+| Sleep | `StickerSleep` | `StickerSleepAnimated` | `@antadesign/stickers/sleep`, `@antadesign/stickers/sleep-animated` |
+| Stressed | `StickerStressed` | `StickerStressedAnimated` | `@antadesign/stickers/stressed`, `@antadesign/stickers/stressed-animated` |
+| Suspicious | `StickerSuspicious` | `StickerSuspiciousAnimated` | `@antadesign/stickers/suspicious`, `@antadesign/stickers/suspicious-animated` |
+| Thanks | `StickerThanks` | `StickerThanksAnimated` | `@antadesign/stickers/thanks`, `@antadesign/stickers/thanks-animated` |
+| Think | `StickerThink` | `StickerThinkAnimated` | `@antadesign/stickers/think`, `@antadesign/stickers/think-animated` |
+| ThinkOfYou | `StickerThinkOfYou` | `StickerThinkOfYouAnimated` | `@antadesign/stickers/think-of-you`, `@antadesign/stickers/think-of-you-animated` |
+| ThumbsUp | `StickerThumbsUp` | `StickerThumbsUpAnimated` | `@antadesign/stickers/thumbs-up`, `@antadesign/stickers/thumbs-up-animated` |
+| Vacation | `StickerVacation` | `StickerVacationAnimated` | `@antadesign/stickers/vacation`, `@antadesign/stickers/vacation-animated` |
+| Wait | `StickerWait` | `StickerWaitAnimated` | `@antadesign/stickers/wait`, `@antadesign/stickers/wait-animated` |
+| Wink | `StickerWink` | `StickerWinkAnimated` | `@antadesign/stickers/wink`, `@antadesign/stickers/wink-animated` |
+| Work | `StickerWork` | `StickerWorkAnimated` | `@antadesign/stickers/work`, `@antadesign/stickers/work-animated` |
+| Zen | `StickerZen` | `StickerZenAnimated` | `@antadesign/stickers/zen`, `@antadesign/stickers/zen-animated` |
+
 ## Props
 
 Both flavors share the same base props; the animated flavor adds playback props.

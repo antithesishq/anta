@@ -12,6 +12,8 @@ changes are not listed.
 
 ### Fixed
 
+- Packaged Markdown includes comparison tables, color and system-color references,
+  icon and sticker catalogs, and theming-lab inputs.
 - `Slider` stops dragging after lost pointer capture or a missed button release,
   so moving back over it without pressing cannot move the thumb.
 

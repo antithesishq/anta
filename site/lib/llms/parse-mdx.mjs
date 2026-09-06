@@ -1,5 +1,5 @@
 /** Transforms raw MDX documentation into regular Markdown. */
-export function parseMdx(raw, { renderPropsTable } = {}) {
+export function parseMdx(raw, { renderPropsTable, renderComponent, expressions = {} } = {}) {
   let source = raw
 
   const codeBlocks = []
@@ -45,6 +45,20 @@ export function parseMdx(raw, { renderPropsTable } = {}) {
       return `\n\x00TABLE${tables.length - 1}\x00\n`
     })
   }
+  // Reference components contribute Markdown; previews and code stay untouched.
+  if (renderComponent) {
+    source = source.replace(/<([A-Z][A-Za-z0-9]*)\b([^>]*?)\/>/g, (match, name, attributes) => {
+      const markdown = renderComponent(name, attributes)
+      if (markdown === undefined) return match
+      tables.push(markdown)
+      return `\n\x00TABLE${tables.length - 1}\x00\n`
+    })
+  }
+  source = source.replace(/\{([A-Za-z_$][A-Za-z0-9_$.]*)\}/g, (match, name) => {
+    if (!Object.hasOwn(expressions, name)) return match
+    tables.push(String(expressions[name]))
+    return `\x00TABLE${tables.length - 1}\x00`
+  })
   source = source.replace(/^<\/?(?:Columns|Col)(?:\s[^>]*)?>[ \t]*\n?/gm, '')
   source = source.replace(/^<[A-Z][A-Za-z]*(?:\s[^>]*)?\/>[ \t]*\n?/gm, '')
   source = source.replace(/<\/?[A-Za-z][A-Za-z0-9.-]*(?:\s[^>]*)?>/g, '')

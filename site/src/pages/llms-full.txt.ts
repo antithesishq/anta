@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs'
 import type { APIRoute } from 'astro'
-import { renderPropsTable } from '../../lib/llms/props-from-api.mjs'
-import { parseMdx } from '../../lib/llms/parse-mdx.mjs'
+import { renderDocumentation } from '../../lib/llms/render-documentation.mjs'
+import tokens from '../../../src/tokens.css?raw'
+import theme from '../../../src/theme-anta.css?raw'
+import stickers from '../../../stickers/src/generated/index.ts?raw'
+import specimen from '../components/HtmlSpecimen.astro?raw'
 import {
   componentGroups,
   documentationLinks,
@@ -36,7 +39,7 @@ function extractDemoCode(slug: string): string | null {
 }
 
 function renderMdx(raw: string, title: string, slug?: string) {
-  let body = parseMdx(raw, { renderPropsTable })
+  let body = renderDocumentation(raw, { tokens, theme, stickers, specimen })
   body = body.replace(/^# .+$/m, `# ${title}`)
   const demo = slug ? extractDemoCode(slug) : null
   if (demo) body += `\n\n### Example\n\n\`\`\`tsx\n${demo}\n\`\`\``

@@ -17,6 +17,15 @@
 
 export const AS_OF = 'July 2026'
 
+/** Anta component routes used by both coverage references. */
+export const ANTA_SLUG: Record<string, string> = {
+  button: 'button', textinput: 'input', select: 'select', combobox: 'input-autocomplete',
+  choice: 'checkbox', slider: 'slider',
+  datetime: 'input-date', tabs: 'tabs', menu: 'menu', tooltip: 'tooltip',
+  dialog: 'dialog', toast: 'toaster', accordion: 'expander', table: 'table', tag: 'tag', avatar: 'avatar', card: 'card', progress: 'progress', steps: 'steps', nav: 'breadcrumbs',
+  icons: 'icon', typography: 'text', utilities: 'box',
+}
+
 export type Mark = 'yes' | 'partial' | 'no' | 'paid'
 
 export interface SystemNamePart {

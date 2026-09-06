@@ -7,12 +7,17 @@ import {
   overview,
   packageLinks,
 } from '../site/lib/llms/index-content.mjs'
-import { parseMdx } from '../site/lib/llms/parse-mdx.mjs'
-import { renderPropsTable } from '../site/lib/llms/props-from-api.mjs'
+import { renderDocumentation } from '../site/lib/llms/render-documentation.mjs'
 
 const pages = new URL('../site/src/pages/', import.meta.url)
 const docs = new URL('../docs/', import.meta.url)
 const changelog = (await readFile(new URL('../CHANGELOG.md', import.meta.url), 'utf8')).trim()
+const sources = Object.fromEntries(await Promise.all(Object.entries({
+  tokens: '../src/tokens.css',
+  theme: '../src/theme-anta.css',
+  stickers: '../stickers/src/generated/index.ts',
+  specimen: '../site/src/components/HtmlSpecimen.astro',
+}).map(async ([key, path]) => [key, await readFile(new URL(path, import.meta.url), 'utf8')])))
 
 function sourcePath(path) {
   return path === '/accessibility/'
@@ -86,7 +91,7 @@ async function renderPage(title, path, outputPath, includeDemo = false) {
   const raw = await readPage(path)
 
   let body = rewriteSiteLinks(
-    parseMdx(raw, { renderPropsTable }).replace(/^# .+$/m, `# ${title}`),
+    renderDocumentation(raw, sources).replace(/^# .+$/m, `# ${title}`),
     outputPath,
   )
   if (includeDemo) {

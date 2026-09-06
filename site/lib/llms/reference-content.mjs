@@ -14,7 +14,7 @@ const systemLink = (system) => system.nameParts
   ? system.nameParts.map(part => link(part.label, part.href)).join(' + ')
   : link(system.name, system.docs)
 const MARKS = { yes: 'Included', partial: 'Basic or community-only', paid: 'Paid tier', no: 'Not shipped' }
-const { SYSTEMS, COVERAGE_SYSTEMS, CATEGORIES, COVERAGE, COVERAGE_URLS, ANTA_SLUG } = comparison
+const { COVERAGE_SYSTEMS, CATEGORIES, COVERAGE, COVERAGE_URLS, ANTA_SLUG } = comparison
 
 function comparisonMatrix() {
   return table(['System', 'Version', 'Frameworks', 'Styling', 'License', 'Browser baseline', 'Browser policy'], COVERAGE_SYSTEMS.map(s => [
@@ -24,7 +24,7 @@ function comparisonMatrix() {
 }
 
 function systemCards() {
-  return SYSTEMS.map(s => `### ${s.name}
+  return COVERAGE_SYSTEMS.map(s => `### ${s.name}
 
 ${systemLink(s)}. ${s.tagline}
 

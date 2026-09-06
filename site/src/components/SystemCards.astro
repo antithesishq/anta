@@ -1,9 +1,9 @@
 ---
-import { SYSTEMS } from './comparison-data'
+import { COVERAGE_SYSTEMS } from './comparison-data'
 ---
 
 <div class="cards">
-  {SYSTEMS.map((s) => (
+  {COVERAGE_SYSTEMS.map((s) => (
     <section class:list={['card', { anta: s.anta }]}>
       <header class="card-head">
         <h3 class="card-name" id={`sys-${s.id}`}>

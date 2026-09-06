@@ -658,8 +658,7 @@ const coverageScore = (id: string) => CATEGORIES.reduce((total, category) => {
   return total + (mark === 'yes' ? 1 : mark === 'partial' || mark === 'paid' ? 0.5 : 0)
 }, 0)
 
-/** The coverage matrix's column order. Keep this shared with the summary
- *  matrix so a system occupies the same visual position in both views. */
+/** Shared system order for both comparison matrices and the system cards. */
 export const COVERAGE_SYSTEMS = [...SYSTEMS].sort((a, b) => {
   if (a.anta) return -1
   if (b.anta) return 1

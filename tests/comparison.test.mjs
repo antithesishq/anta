@@ -8,6 +8,13 @@ const read = path => readFile(new URL(path, import.meta.url), 'utf8')
 const cards = await read('../site/src/components/SystemCards.astro')
 const page = await read('../site/src/pages/comparison.mdx')
 
+test('comparison cards and matrices use the shared system order', async () => {
+  for (const component of ['SystemCards', 'ComparisonMatrix', 'CoverageMatrix']) {
+    const source = await read(`../site/src/components/${component}.astro`)
+    assert.match(source, /\bCOVERAGE_SYSTEMS\.map\(/)
+  }
+})
+
 test('comparison cards separate measured versions and link their factual claims', () => {
   for (const system of SYSTEMS) {
     assert.ok(system.bundleVersion, `${system.id}: measured version`)

@@ -67,70 +67,6 @@ download costs.
 - [Installation and browser support](./install-config.md#browser-support)
 - [Theming](./theming.md)
 
-### Web Awesome
-
-[Web Awesome](https://webawesome.com). Font Awesome's framework-agnostic web components and CSS framework, succeeding Shoelace.
-
-| Field | Value |
-| --- | --- |
-| Version | @awesome.me/webawesome 3.12.0 |
-| Delivery | Styled web components |
-| Gzipped size | ~190 KiB |
-| Measured version | @awesome.me/webawesome 3.10.0 |
-| Measurement scope | Free components, Lit, and base CSS. Excludes Pro components and web fonts. |
-| Browser support | Estimated compatibility: Chrome / Edge 125+, Firefox 128+, and Safari 18+ (2024). Current styles use custom states and relative OKLCH colors. Official support covers the latest two major browser versions. |
-
-#### Strengths
-
-- Works in any stack or plain HTML without a build step.
-- Includes form controls, layout utilities, observers, and Toasts.
-- CSS variables and shadow parts support theming.
-
-#### Trade-offs
-
-- Combobox, date and file inputs, Data Grid, charts, and video require Pro.
-- Lit is a runtime dependency alongside React or Vue.
-- Its own docs describe SSR support as experimental.
-
-#### Sources
-
-- [Components and Pro features](https://webawesome.com/docs/components)
-- [Server rendering](https://webawesome.com/docs/ssr)
-- [Browser policy](https://webawesome.com/docs/resources/browser-support)
-- [Shipped theme CSS](https://unpkg.com/@awesome.me/webawesome@3.12.0/dist/styles/themes/default.css)
-
-### Shopify Polaris
-
-[Shopify Polaris](https://shopify.dev/docs/api/app-home/web-components). Shopify's web-component system for apps that must match Shopify Admin.
-
-| Field | Value |
-| --- | --- |
-| Version | Polaris CDN 1.x; 1.1 RC |
-| Delivery | Styled web components (CDN) |
-| Gzipped size | ~120 KiB |
-| Measured version | polaris.js, July 31, 2026 |
-| Measurement scope | CDN script with embedded component CSS. Excludes separately loaded fonts and icons. |
-| Browser support | Estimated compatibility: Chrome / Edge 105+, Firefox 121+, and Safari 16.4+ (2023), based on :has(), container queries, and form-associated custom elements. The CDN includes a Popover polyfill. Shopify does not guarantee this minimum set. |
-
-#### Strengths
-
-- Web components match Shopify Admin across frameworks.
-- Box exposes layout, spacing, border, and color properties.
-- CDN versioning now separates compatible updates from major upgrades.
-
-#### Trade-offs
-
-- Styled for Shopify apps, with customization limited to the exposed properties.
-- The 1.1 release candidate changes in place until it becomes stable.
-- Use is subject to Shopify’s app-specific license terms.
-
-#### Sources
-
-- [CDN versioning](https://community.shopify.dev/t/the-polaris-cdn-is-adopting-semantic-versioning/37332)
-- [1.1 release candidate](https://shopify.dev/changelog/polaris-cdn-1-1-release-candidate)
-- [Box properties](https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/box)
-- [CDN implementation](https://cdn.shopify.com/shopifycloud/polaris-1.js)
-
 ### MUI (Material UI)
 
 [MUI (Material UI)](https://mui.com/material-ui/). MUI’s React implementation of Google’s Material Design.
@@ -162,37 +98,6 @@ download costs.
 - [Browser requirements](https://mui.com/material-ui/migration/upgrade-to-v9/)
 - [Project status](https://mui.com/blog/2026-and-beyond/)
 
-### Ant Design
-
-[Ant Design](https://ant.design). An enterprise React library for data-dense admin and dashboard UIs.
-
-| Field | Value |
-| --- | --- |
-| Version | antd 6.6.2 |
-| Delivery | Styled React components |
-| Gzipped size | ~470 KiB |
-| Measured version | antd 6.5.2 |
-| Measurement scope | All antd exports and its CSS-in-JS runtime. Excludes React and separately imported charts and icons. |
-| Browser support | Estimated compatibility: Chrome / Edge 111+, Firefox 121+, and Safari 16.2+ (2023), based on :has(), color-mix(), and ResizeObserver in current components. Ant Design officially targets modern browsers; some enhancements can require newer versions. |
-
-#### Strengths
-
-- Table, Form, Transfer, and Cascader cover data-heavy application flows.
-- Theme tokens provide dark and compact modes.
-- v6 exposes semantic element styles and class names across components.
-
-#### Trade-offs
-
-- v6 requires React 18 or later and retains a CSS-in-JS runtime.
-- Overrides that depend on internal DOM structure can need migration work.
-- React-only; Vue and Angular versions are separate community projects.
-
-#### Sources
-
-- [v6 requirements](https://ant.design/docs/react/migration-v6/)
-- [Component changes](https://ant.design/components/changelog/)
-- [Checkbox focus styles](https://unpkg.com/antd@6.6.2/es/checkbox/style/index.js)
-
 ### Mantine
 
 [Mantine](https://mantine.dev). A React library with extensive hooks and official form, date, and chart packages.
@@ -223,100 +128,6 @@ download costs.
 - [v9 requirements](https://mantine.dev/changelog/9-0-0/)
 - [Browser policy](https://mantine.dev/browser-support/)
 
-### Carbon
-
-[Carbon](https://carbondesignsystem.com). IBM's enterprise design system for React and first-party web components.
-
-| Field | Value |
-| --- | --- |
-| Version | @carbon/react 1.115.0 |
-| Delivery | Styled React (+ web components) |
-| Gzipped size | ~300 KiB |
-| Measured version | @carbon/react 1.112.0 |
-| Measurement scope | React components and compiled Carbon CSS. Excludes React, separately imported icons, charts, and web components. |
-| Browser support | Estimated compatibility: Chrome / Edge 105+, Firefox 121+, and Safari 16+ (2023), based on :has() and container queries in the shipped CSS. Official support covers the latest stable browser releases. |
-
-#### Strengths
-
-- Publishes component accessibility results, including manual screen-reader checks mapped to WCAG.
-- First-party React and web-component implementations.
-- Theme-scoped role tokens support four built-in themes.
-
-#### Trade-offs
-
-- The documented React setup requires a Sass build step.
-- Typography and component customization can require Sass or CSS overrides.
-- Angular, Vue, and Svelte implementations are community-maintained.
-
-#### Sources
-
-- [React setup](https://carbondesignsystem.com/developing/frameworks/react/)
-- [Frameworks and browser policy](https://carbondesignsystem.com/help/faq/)
-- [Themes](https://carbondesignsystem.com/elements/themes/overview/)
-- [Shipped CSS](https://unpkg.com/@carbon/styles@1.114.0/css/styles.css)
-
-### Atlassian (Atlaskit)
-
-[Atlassian (Atlaskit)](https://atlassian.design). Atlassian’s React design system, distributed as independently versioned packages.
-
-| Field | Value |
-| --- | --- |
-| Version | @atlaskit/tokens 16.11.2 |
-| Delivery | Styled React components |
-| Gzipped size | ~600 KiB |
-| Measured version | 57-package snapshot, July 2026 |
-| Measurement scope | 57 Design System packages. Excludes React, tables, icons, editors, and product packages. |
-| Browser support | Estimated compatibility for compiled controls: Chrome / Edge 86+, Firefox 85+, and Safari 15.4+ (2022), based on CSS variables and :focus-visible. Other packages can require newer features. Official support follows the target Atlassian product. |
-
-#### Strengths
-
-- Design tokens and components used in Atlassian products.
-- Compiled styles ship as CSS alongside the packages.
-- Separate utilities include Pragmatic drag and drop and Focus ring.
-
-#### Trade-offs
-
-- Independently versioned packages require dependency coordination.
-- The recommended build setup adds Babel and Compiled configuration.
-- ADS terms cover Atlassian integrations; individual open-source packages may grant broader rights.
-
-#### Sources
-
-- [Build setup](https://atlassian.design/get-started/develop/atlassians/)
-- [Design system license](https://atlassian.design/license/)
-- [Button focus styles](https://unpkg.com/@atlaskit/button@25.3.2/dist/esm/new-button/variants/shared/button-base.compiled.css)
-
-### Blueprint
-
-[Blueprint](https://blueprintjs.com). Palantir's React toolkit for complex, data-dense desktop interfaces.
-
-| Field | Value |
-| --- | --- |
-| Version | @blueprintjs/core 6.18.0 |
-| Delivery | Styled React components |
-| Gzipped size | ~350 KiB |
-| Measured version | @blueprintjs/core 6.17.2 |
-| Measurement scope | Core components and compiled CSS. Excludes React and the Table, Select, and Datetime packages. |
-| Browser support | Estimated compatibility: Chrome / Edge 111+, Firefox 113+, and Safari 16.2+ (2023), based on color-mix() in core CSS. Relative-color enhancements have fallbacks. The repository maintains a rolling Browserslist target. |
-
-#### Strengths
-
-- Built for dense desktop tools: a virtualized Table, Omnibar, and dual-calendar date picker.
-- Core CSS ships precompiled and can be customized with Sass.
-- FocusStyleManager switches focus indicators by input method.
-
-#### Trade-offs
-
-- Designed for desktop applications; test touch-heavy flows separately.
-- Table, Select, and Datetime are separate packages.
-- React-only.
-
-#### Sources
-
-- [Toolkit and packages](https://github.com/palantir/blueprint)
-- [Browser targets](https://github.com/palantir/blueprint/blob/develop/.browserslistrc)
-- [Shipped CSS and fallbacks](https://unpkg.com/@blueprintjs/core@6.18.0/lib/css/blueprint.css)
-
 ### Astryx
 
 [Astryx](https://astryx.atmeta.com). Meta's React design system on StyleX, with precompiled CSS and first-party AI-agent tooling.
@@ -346,6 +157,37 @@ download costs.
 
 - [Components and tooling](https://astryx.atmeta.com/blog/introducing-astryx)
 - [Browser tiers](https://astryx.atmeta.com/docs/browser-support)
+
+### Ant Design
+
+[Ant Design](https://ant.design). An enterprise React library for data-dense admin and dashboard UIs.
+
+| Field | Value |
+| --- | --- |
+| Version | antd 6.6.2 |
+| Delivery | Styled React components |
+| Gzipped size | ~470 KiB |
+| Measured version | antd 6.5.2 |
+| Measurement scope | All antd exports and its CSS-in-JS runtime. Excludes React and separately imported charts and icons. |
+| Browser support | Estimated compatibility: Chrome / Edge 111+, Firefox 121+, and Safari 16.2+ (2023), based on :has(), color-mix(), and ResizeObserver in current components. Ant Design officially targets modern browsers; some enhancements can require newer versions. |
+
+#### Strengths
+
+- Table, Form, Transfer, and Cascader cover data-heavy application flows.
+- Theme tokens provide dark and compact modes.
+- v6 exposes semantic element styles and class names across components.
+
+#### Trade-offs
+
+- v6 requires React 18 or later and retains a CSS-in-JS runtime.
+- Overrides that depend on internal DOM structure can need migration work.
+- React-only; Vue and Angular versions are separate community projects.
+
+#### Sources
+
+- [v6 requirements](https://ant.design/docs/react/migration-v6/)
+- [Component changes](https://ant.design/components/changelog/)
+- [Checkbox focus styles](https://unpkg.com/antd@6.6.2/es/checkbox/style/index.js)
 
 ### Gravity UI
 
@@ -436,6 +278,164 @@ download costs.
 
 - [Stack and licensing](https://www.untitledui.com/react/docs/introduction)
 - [Tailwind browser requirements](https://tailwindcss.com/docs/compatibility)
+
+### Blueprint
+
+[Blueprint](https://blueprintjs.com). Palantir's React toolkit for complex, data-dense desktop interfaces.
+
+| Field | Value |
+| --- | --- |
+| Version | @blueprintjs/core 6.18.0 |
+| Delivery | Styled React components |
+| Gzipped size | ~350 KiB |
+| Measured version | @blueprintjs/core 6.17.2 |
+| Measurement scope | Core components and compiled CSS. Excludes React and the Table, Select, and Datetime packages. |
+| Browser support | Estimated compatibility: Chrome / Edge 111+, Firefox 113+, and Safari 16.2+ (2023), based on color-mix() in core CSS. Relative-color enhancements have fallbacks. The repository maintains a rolling Browserslist target. |
+
+#### Strengths
+
+- Built for dense desktop tools: a virtualized Table, Omnibar, and dual-calendar date picker.
+- Core CSS ships precompiled and can be customized with Sass.
+- FocusStyleManager switches focus indicators by input method.
+
+#### Trade-offs
+
+- Designed for desktop applications; test touch-heavy flows separately.
+- Table, Select, and Datetime are separate packages.
+- React-only.
+
+#### Sources
+
+- [Toolkit and packages](https://github.com/palantir/blueprint)
+- [Browser targets](https://github.com/palantir/blueprint/blob/develop/.browserslistrc)
+- [Shipped CSS and fallbacks](https://unpkg.com/@blueprintjs/core@6.18.0/lib/css/blueprint.css)
+
+### Carbon
+
+[Carbon](https://carbondesignsystem.com). IBM's enterprise design system for React and first-party web components.
+
+| Field | Value |
+| --- | --- |
+| Version | @carbon/react 1.115.0 |
+| Delivery | Styled React (+ web components) |
+| Gzipped size | ~300 KiB |
+| Measured version | @carbon/react 1.112.0 |
+| Measurement scope | React components and compiled Carbon CSS. Excludes React, separately imported icons, charts, and web components. |
+| Browser support | Estimated compatibility: Chrome / Edge 105+, Firefox 121+, and Safari 16+ (2023), based on :has() and container queries in the shipped CSS. Official support covers the latest stable browser releases. |
+
+#### Strengths
+
+- Publishes component accessibility results, including manual screen-reader checks mapped to WCAG.
+- First-party React and web-component implementations.
+- Theme-scoped role tokens support four built-in themes.
+
+#### Trade-offs
+
+- The documented React setup requires a Sass build step.
+- Typography and component customization can require Sass or CSS overrides.
+- Angular, Vue, and Svelte implementations are community-maintained.
+
+#### Sources
+
+- [React setup](https://carbondesignsystem.com/developing/frameworks/react/)
+- [Frameworks and browser policy](https://carbondesignsystem.com/help/faq/)
+- [Themes](https://carbondesignsystem.com/elements/themes/overview/)
+- [Shipped CSS](https://unpkg.com/@carbon/styles@1.114.0/css/styles.css)
+
+### Atlassian (Atlaskit)
+
+[Atlassian (Atlaskit)](https://atlassian.design). Atlassian’s React design system, distributed as independently versioned packages.
+
+| Field | Value |
+| --- | --- |
+| Version | @atlaskit/tokens 16.11.2 |
+| Delivery | Styled React components |
+| Gzipped size | ~600 KiB |
+| Measured version | 57-package snapshot, July 2026 |
+| Measurement scope | 57 Design System packages. Excludes React, tables, icons, editors, and product packages. |
+| Browser support | Estimated compatibility for compiled controls: Chrome / Edge 86+, Firefox 85+, and Safari 15.4+ (2022), based on CSS variables and :focus-visible. Other packages can require newer features. Official support follows the target Atlassian product. |
+
+#### Strengths
+
+- Design tokens and components used in Atlassian products.
+- Compiled styles ship as CSS alongside the packages.
+- Separate utilities include Pragmatic drag and drop and Focus ring.
+
+#### Trade-offs
+
+- Independently versioned packages require dependency coordination.
+- The recommended build setup adds Babel and Compiled configuration.
+- ADS terms cover Atlassian integrations; individual open-source packages may grant broader rights.
+
+#### Sources
+
+- [Build setup](https://atlassian.design/get-started/develop/atlassians/)
+- [Design system license](https://atlassian.design/license/)
+- [Button focus styles](https://unpkg.com/@atlaskit/button@25.3.2/dist/esm/new-button/variants/shared/button-base.compiled.css)
+
+### Web Awesome
+
+[Web Awesome](https://webawesome.com). Font Awesome's framework-agnostic web components and CSS framework, succeeding Shoelace.
+
+| Field | Value |
+| --- | --- |
+| Version | @awesome.me/webawesome 3.12.0 |
+| Delivery | Styled web components |
+| Gzipped size | ~190 KiB |
+| Measured version | @awesome.me/webawesome 3.10.0 |
+| Measurement scope | Free components, Lit, and base CSS. Excludes Pro components and web fonts. |
+| Browser support | Estimated compatibility: Chrome / Edge 125+, Firefox 128+, and Safari 18+ (2024). Current styles use custom states and relative OKLCH colors. Official support covers the latest two major browser versions. |
+
+#### Strengths
+
+- Works in any stack or plain HTML without a build step.
+- Includes form controls, layout utilities, observers, and Toasts.
+- CSS variables and shadow parts support theming.
+
+#### Trade-offs
+
+- Combobox, date and file inputs, Data Grid, charts, and video require Pro.
+- Lit is a runtime dependency alongside React or Vue.
+- Its own docs describe SSR support as experimental.
+
+#### Sources
+
+- [Components and Pro features](https://webawesome.com/docs/components)
+- [Server rendering](https://webawesome.com/docs/ssr)
+- [Browser policy](https://webawesome.com/docs/resources/browser-support)
+- [Shipped theme CSS](https://unpkg.com/@awesome.me/webawesome@3.12.0/dist/styles/themes/default.css)
+
+### Shopify Polaris
+
+[Shopify Polaris](https://shopify.dev/docs/api/app-home/web-components). Shopify's web-component system for apps that must match Shopify Admin.
+
+| Field | Value |
+| --- | --- |
+| Version | Polaris CDN 1.x; 1.1 RC |
+| Delivery | Styled web components (CDN) |
+| Gzipped size | ~120 KiB |
+| Measured version | polaris.js, July 31, 2026 |
+| Measurement scope | CDN script with embedded component CSS. Excludes separately loaded fonts and icons. |
+| Browser support | Estimated compatibility: Chrome / Edge 105+, Firefox 121+, and Safari 16.4+ (2023), based on :has(), container queries, and form-associated custom elements. The CDN includes a Popover polyfill. Shopify does not guarantee this minimum set. |
+
+#### Strengths
+
+- Web components match Shopify Admin across frameworks.
+- Box exposes layout, spacing, border, and color properties.
+- CDN versioning now separates compatible updates from major upgrades.
+
+#### Trade-offs
+
+- Styled for Shopify apps, with customization limited to the exposed properties.
+- The 1.1 release candidate changes in place until it becomes stable.
+- Use is subject to Shopify’s app-specific license terms.
+
+#### Sources
+
+- [CDN versioning](https://community.shopify.dev/t/the-polaris-cdn-is-adopting-semantic-versioning/37332)
+- [1.1 release candidate](https://shopify.dev/changelog/polaris-cdn-1-1-release-candidate)
+- [Box properties](https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/box)
+- [CDN implementation](https://cdn.shopify.com/shopifycloud/polaris-1.js)
 
 ## Component coverage
 

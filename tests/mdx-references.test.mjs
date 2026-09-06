@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { parseMdx } from '../site/lib/llms/parse-mdx.mjs'
 import { renderDocumentation } from '../site/lib/llms/render-documentation.mjs'
 import { documentationLinks, componentGroups, packageLinks } from '../site/lib/llms/index-content.mjs'
-import { SYSTEMS, CATEGORIES } from '../site/src/components/comparison-data.ts'
+import { SYSTEMS, COVERAGE_SYSTEMS, CATEGORIES } from '../site/src/components/comparison-data.ts'
 import { TEXT_LINES } from '../site/src/components/color-reference.ts'
 import { SYSTEM_COLORS } from '../site/src/components/system-colors.ts'
 import { SPECS } from '../site/src/components/theming-lab-formulas.ts'
@@ -45,6 +45,10 @@ test('reference expansion preserves code and skips previews', () => {
 
 test('comparison includes every system, coverage category, example, and measured version', async () => {
   const markdown = await renderPage('comparison')
+  assert.deepEqual(
+    [...markdown.matchAll(/^### (.+)$/gm)].map(([, name]) => name),
+    COVERAGE_SYSTEMS.map(system => system.name),
+  )
   for (const system of SYSTEMS) {
     for (const value of [system.name, system.version, system.license, system.bundleSize, system.bundleIncludes, system.browsers, ...system.pros, ...system.cons]) {
       assert.ok(markdown.includes(value), `${system.name}: ${value}`)

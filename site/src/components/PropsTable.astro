@@ -1,6 +1,7 @@
 ---
 import api from '../api.json'
 import { marked } from 'marked'
+import { isBaseProp } from '../../lib/api-props.mjs'
 
 interface Props {
   component: string
@@ -164,7 +165,7 @@ function collect(decl: any) {
       }
       return // (a union-branch `never` is just skipped)
     }
-    const base = fromBase || !!c.inheritedFrom
+    const base = isBaseProp(c, fromBase)
     const optional = !!c.flags?.isOptional || fromUnion
     const type = renderType(c.type)
     const existing = out.get(c.name)

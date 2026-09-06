@@ -17,6 +17,10 @@ jobs:
       - run: pnpm run build
       - run: pnpm run lint
       - run: pnpm run typecheck
+      - name: Run tests
+        run: pnpm test
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Build stickers
         run: pnpm --filter @antadesign/stickers run build
       - name: Typecheck stickers

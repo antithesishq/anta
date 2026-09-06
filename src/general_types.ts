@@ -1,5 +1,6 @@
 import type { IconShape } from './elements/a-icon.shapes'
 import type { BoxContextChange, BoxDisplay, BoxMeasurementChange } from './box-types'
+import type { CaptureInputModifier, CapturePanInput, CapturePointerInput, CaptureWheelActivation, CaptureWheelInput } from './capture-types'
 
 /** Common props for JSX component wrappers. */
 export interface BaseProps {
@@ -287,6 +288,34 @@ export interface ATextAttributes extends BaseAttributes {
   collapsible?: boolean | ''
   /** ARIA disclosure state, mirrors the JSX wrapper's `expanded` flag. */
   'aria-expanded'?: boolean | 'true' | 'false'
+}
+
+/** Attributes for the opt-in light-DOM capture surface. */
+export interface ACaptureAttributes extends BaseAttributes {
+  /** Space-separated accepted wheel directions. Bare means all; `none` preserves settling while declining input. */
+  'wheel-capture'?: string
+  'wheel-activation'?: CaptureWheelActivation
+  'wheel-modifier'?: CaptureInputModifier
+  'wheel-delay'?: number | string
+  'wheel-tolerance'?: number | string
+  'wheel-reset-on-move'?: boolean | ''
+  /** Space-separated pointer types. Bare means mouse, pen, and touch. */
+  'pointer-capture'?: string
+  'pointer-buttons'?: string
+  'pointer-threshold'?: number | string
+  'pointer-modifier'?: CaptureInputModifier
+  'pointer-include-interactive'?: boolean | ''
+  /** Enable custom panning on the selected axes. */
+  pan?: '' | 'x' | 'y' | 'both'
+  'pan-pointer-types'?: string
+  'pan-threshold'?: number | string
+  'pan-directions'?: string
+  'pan-inertia'?: boolean | ''
+  'pan-time-constant'?: number | string
+  'pan-min-velocity'?: number | string
+  onwheelinput?: (event: CustomEvent<CaptureWheelInput> | { nativeEvent: CustomEvent<CaptureWheelInput> }) => void
+  onpointerinput?: (event: CustomEvent<CapturePointerInput> | { nativeEvent: CustomEvent<CapturePointerInput> }) => void
+  onpaninput?: (event: CustomEvent<CapturePanInput> | { nativeEvent: CustomEvent<CapturePanInput> }) => void
 }
 
 /** Attributes for the light-DOM `<a-box>` observing container. For the JSX

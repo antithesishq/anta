@@ -117,32 +117,20 @@ arrives later works normally; a bubble whose content is cleared while it's open
 closes itself. Content that's a single icon or image (an element, no text) still
 shows.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `children?` | ReactNode | — | Tooltip content. Renders anything — text, markup, an icon + text.
- Lives in the light DOM, so it's styleable with your own plain CSS. |
-| `delay?` | number | 300 | Show delay in milliseconds after hover / focus. Never use `0` — use
- ~`50` for a near-instant tooltip (0 has caused issues in practice). |
-| `follow?` | boolean | — | Follow the cursor instead of pinning under the anchor. The bubble is
- pinned (anchored beneath the target) by default; pass `follow` for the
- cursor-tracking behavior, which fades by distance as the cursor leaves. |
-| `interactive?` | boolean | — | Make the bubble hoverable and clickable — enables pointer events and
- keeps it open while the cursor is over it, so its content (links,
- buttons) can be interacted with. Always pinned (an interactive bubble
- can't follow the cursor, even with `follow`). |
-| `placement?` | 'top' \| 'bottom' | bottom | Which side of the anchor the bubble prefers. Auto-flips to the other
- side when there isn't room. |
-| `round?` | boolean \| number \| string | — | Round the bubble to a 20px radius (matching a round menu). Pass a `number`
- (px) or a CSS length string for a custom radius. |
-| `truncatedOnly?` | boolean | — | Only show when the target is actually truncated (its text overflows and is
- ellipsized); a label that fits gets no tooltip. The check is a UI-thread
- layout read, re-measured on each show. By default it measures every Anta
- ellipsizing label part inside the anchor, then the anchor itself —
- override with `truncatedSelector`. |
-| `truncatedSelector?` | string | — | CSS selector (resolved within the anchor) for the element or elements
- whose overflow decides whether a `truncatedOnly` tooltip shows. |
+| `children?` | ReactNode | — | Tooltip content. Renders anything — text, markup, an icon + text. Lives in the light DOM, so it's styleable with your own plain CSS. |
+| `delay?` | number | 300 | Show delay in milliseconds after hover / focus. Never use `0` — use ~`50` for a near-instant tooltip (0 has caused issues in practice). |
+| `follow?` | boolean | — | Follow the cursor instead of pinning under the anchor. The bubble is pinned (anchored beneath the target) by default; pass `follow` for the cursor-tracking behavior, which fades by distance as the cursor leaves. |
+| `interactive?` | boolean | — | Make the bubble hoverable and clickable — enables pointer events and keeps it open while the cursor is over it, so its content (links, buttons) can be interacted with. Always pinned (an interactive bubble can't follow the cursor, even with `follow`). |
+| `placement?` | 'top' \| 'bottom' | bottom | Which side of the anchor the bubble prefers. Auto-flips to the other side when there isn't room. |
+| `round?` | boolean \| number \| string | — | Round the bubble to a 20px radius (matching a round menu). Pass a `number` (px) or a CSS length string for a custom radius. |
+| `truncatedOnly?` | boolean | — | Only show when the target is actually truncated (its text overflows and is ellipsized); a label that fits gets no tooltip. The check is a UI-thread layout read, re-measured on each show. By default it measures every Anta ellipsizing label part inside the anchor, then the anchor itself — override with `truncatedSelector`. |
+| `truncatedSelector?` | string | — | CSS selector (resolved within the anchor) for the element or elements whose overflow decides whether a `truncatedOnly` tooltip shows. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -154,6 +142,8 @@ Place `<a-tooltip>` inside the element it describes.
   <a-tooltip>Make the draft public</a-tooltip>
 </a-button>
 ```
+
+## Styling
 
 The bubble lives in shadow DOM and is exposed as a single **part** — style the box
 (background, frost, shadow, radius, padding, a border) with `::part(bubble)`. Its

@@ -111,16 +111,13 @@ Use `copyUrl` to copy `location.href`, `copyNode` to copy a marked rendered
 region, or `copy` for a known string. For dynamic text, pass a controlled `copy`
 string and set it from `onCopyRequest`. `onCopied` receives the result.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `items` | BreadcrumbItem[] | — | Ordered breadcrumb entries. |
-| `itemsBeforeCollapse?` | number | 0 | Number of original items kept before the More control when `maxItems`
- collapses the trail. The rest of the visible-item budget is kept from the
- end, so `0` puts More first. |
-| `maxItems?` | number | — | Maximum number of original breadcrumb items left visible. The More
- control does not count. Omit to keep every item visible. |
+| `itemsBeforeCollapse?` | number | 0 | Number of original items kept before the More control when `maxItems` collapses the trail. The rest of the visible-item budget is kept from the end, so `0` puts More first. |
+| `maxItems?` | number | — | Maximum number of original breadcrumb items left visible. The More control does not count. Omit to keep every item visible. |
 | `moreLabel?` | string | 'Show more breadcrumbs' | Accessible name for the More control. |
 | `paddingless?` | boolean | — | Remove horizontal padding from every visible breadcrumb control. |
 | `priority?` | 'quaternary' \| 'tertiary' | quaternary | Button priority applied to every visible item and the More control. |
@@ -128,6 +125,8 @@ string and set it from `onCopyRequest`. `onCopied` receives the result.
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Button size applied to every visible item and the More control. |
 | `underline?` | 'solid' \| 'dashed' \| 'dotted' | — | Underline style applied to every visible breadcrumb control. |
 | `underlineOnHover?` | boolean | — | Hide the underline at rest and reveal it on hover. |
+
+## Web Component
 
 `Breadcrumbs` deliberately adds no custom-element behavior: it assembles Anta
 Buttons, an optional Menu, and two light-DOM layout tags. When you are not using
@@ -160,6 +159,8 @@ import '@antadesign/anta/elements'
     paddingless aria-current="page"><a-button-label>Anta</a-button-label></a>
 </a-breadcrumbs>
 ```
+
+## Styling
 
 Use `priority`, `size`, and `separator` before adding CSS. A `className` on
 `Breadcrumbs` lands on the navigation wrapper; item `className` values land on

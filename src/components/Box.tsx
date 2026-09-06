@@ -1,10 +1,9 @@
 import {
   cssLength,
+  customEventHandler,
   lengthStyle,
-  nativeStateChange,
   roundAttr,
   roundStyle,
-  type StateChangeEvent,
 } from '../anta_helpers'
 import type {
   BoxContextChange,
@@ -97,19 +96,6 @@ export const Box = ({
   children,
   ...rest
 }: BoxProps) => {
-  const measureHandler = onMeasureChange
-    ? (input: StateChangeEvent<BoxMeasurementChange>) => {
-        const { event, detail } = nativeStateChange(input)
-        if (detail) onMeasureChange(event, detail)
-      }
-    : undefined
-  const contextHandler = onContextChange
-    ? (input: StateChangeEvent<BoxContextChange>) => {
-        const { event, detail } = nativeStateChange(input)
-        if (detail) onContextChange(event, detail)
-      }
-    : undefined
-
   return (
     <a-box
       display={display === 'block' ? undefined : display}
@@ -118,8 +104,8 @@ export const Box = ({
       observe={observeAttr(observe, onMeasureChange, onContextChange)}
       fade={fade ? '' : undefined}
       fade-size={fade && fadeSize != null ? cssLength(fadeSize) : undefined}
-      onmeasurechange={measureHandler}
-      oncontextchange={contextHandler}
+      onmeasurechange={customEventHandler(onMeasureChange)}
+      oncontextchange={customEventHandler(onContextChange)}
       class={className}
       style={lengthStyle(
         fade ? fadeSize : undefined,

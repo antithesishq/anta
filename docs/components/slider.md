@@ -13,6 +13,9 @@ decreases it. The thumb does not move to the point where the rail was pressed.
 Set `trackClick="jump"` to move the thumb to the pressed position before
 dragging, as a native range input does.
 
+Releasing the pointer or losing pointer capture ends the drag. Moving back over
+the slider without pressing leaves its value unchanged.
+
 Arrow keys change by `step`. Home and End set the minimum and maximum. PageUp and PageDown move by one tenth of the range.
 
 ```tsx
@@ -59,42 +62,34 @@ Arrow keys change by `step`. Home and End set the minimum and maximum. PageUp an
 />
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `defaultValue?` | number | 0 | Initial uncontrolled value. |
 | `disabled?` | boolean | — | Disables pointer and keyboard interaction. |
-| `label?` | ReactNode | — | Visible field label, shown above the rail. A string supplies the slider's
-accessible name; give a rich label an explicit `aria-label`. |
-| `markers?` | SliderMarker[] | — | Compact text labels positioned below the rail. They do not add dots or
-ticks to the rail. |
+| `label?` | ReactNode | — | Visible field label, shown above the rail. A string supplies the slider's accessible name; give a rich label an explicit `aria-label`. |
+| `markers?` | SliderMarker[] | — | Compact text labels positioned below the rail. They do not add dots or ticks to the rail. |
 | `max?` | number | 100 | Highest permitted value. |
 | `min?` | number | 0 | Lowest permitted value. |
 | `name?` | string | — | Form field name. The current numeric value submits under this name. |
 | `onValueChange?` | (event, attrs) => void | — | Fires on every keyboard or pointer value change. |
 | `onValueCommit?` | (event, attrs) => void | — | Fires after a drag ends and after each keyboard value change. |
-| `round?` | boolean \| number \| string | — | Fully round the rail and thumb. Pass a number (px) or CSS length string
-for a shared custom radius. |
+| `round?` | boolean \| number \| string | — | Fully round the rail and thumb. Pass a number (px) or CSS length string for a shared custom radius. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant. small=24px, medium=28px, large=32px tall. |
 | `step?` | number | 1 | Smallest keyboard and drag increment. |
-| `thumbFill?` | boolean | false | Fill the thumb with its resolved border color. This follows `thumbTone`
-and interactive states. |
-| `thumbSize?` | number \| string | 16 | Diameter of the thumb. Numbers use pixels; strings are CSS lengths. Keep
-it at least as large as `trackSize`. |
-| `thumbTone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the thumb stroke. Pass a named tone or a literal CSS color for a
-one-off custom tone. Omit it to keep the thumb neutral. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the filled rail. Pass a named tone or a literal CSS color for a
-one-off custom tone. The unfilled rail stays neutral. |
-| `trackClick?` | 'drag-only' \| 'jump' | 'drag-only' | Controls what happens when the rail is pressed. `drag-only` starts dragging
-from the current value. `jump` first moves to the pressed position. |
-| `trackSize?` | number \| string | 2 | Thickness of both rail segments. Numbers use pixels; strings are CSS
-lengths. Keep it no larger than the thumb diameter. |
+| `thumbFill?` | boolean | false | Fill the thumb with its resolved border color. This follows `thumbTone` and interactive states. |
+| `thumbSize?` | number \| string | 16 | Diameter of the thumb. Numbers use pixels; strings are CSS lengths. Keep it at least as large as `trackSize`. |
+| `thumbTone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the thumb stroke. Pass a named tone or a literal CSS color for a one-off custom tone. Omit it to keep the thumb neutral. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the filled rail. Pass a named tone or a literal CSS color for a one-off custom tone. The unfilled rail stays neutral. |
+| `trackClick?` | 'drag-only' \| 'jump' | 'drag-only' | Controls what happens when the rail is pressed. `drag-only` starts dragging from the current value. `jump` first moves to the pressed position. |
+| `trackSize?` | number \| string | 2 | Thickness of both rail segments. Numbers use pixels; strings are CSS lengths. Keep it no larger than the thumb diameter. |
 | `value?` | number | — | Controlled value. Update it from `onValueChange`. |
-| `valueDisplay?` | 'end' \| 'inline' \| 'thumb' \| 'none' | 'end' | Where the live value appears. `end` puts it at the right edge of the label
-row. `inline` renders `Label: value`. `thumb` keeps it above the thumb. |
+| `valueDisplay?` | 'end' \| 'inline' \| 'thumb' \| 'none' | 'end' | Where the live value appears. `end` puts it at the right edge of the label row. `inline` renders `Label: value`. `thumb` keeps it above the thumb. |
 | `valuePrefix?` | string | — | Text inserted before the live numeric value, such as `$`. |
 | `valueSuffix?` | string | — | Text inserted after the live numeric value, such as `%` or `°C`. |
+
+## Web Component
 
 Use `<a-slider>` when you are not using React or Preact. Add its `role` and accessible name yourself, then register it from `@antadesign/anta/elements`.
 

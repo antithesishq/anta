@@ -8,52 +8,43 @@ import ComparisonMatrix from '../components/ComparisonMatrix.astro'
 import CoverageMatrix from '../components/CoverageMatrix.astro'
 import SystemCards from '../components/SystemCards.astro'
 import Disclosure from '../components/Disclosure.astro'
-import { AS_OF } from '../components/comparison-data'
+import Columns from '../components/Columns.astro'
 
 # Comparison
 
-Compare four delivery models: styled React libraries, headless primitives,
-copy-paste source, and framework-agnostic web components. Versions are a
-snapshot from {AS_OF}; use each system's link for the current release.
-
-<Disclosure title="Frameworks, styling, license, browser support">
+<Disclosure title="Frameworks, styling, licenses, and browser support" id="frameworks-styling-license-browser-support">
 
 <ComparisonMatrix />
 
-Most systems are React-only and use CSS-in-JS, Sass, StyleX, or Tailwind.
-Anta ships web components with plain CSS in one `@layer`, without a style
-runtime. Consumer CSS overrides its defaults normally.
-
-Browser years show the oldest published fixed floor. `~` marks the earliest
-year shared by a browser feature the current system ships, rather than a
-published support promise. Hover a value for the policy and the feature behind
-that estimate.
+Browser years summarize minimum-version release dates. `~` marks a compatibility
+estimate from shipped CSS and APIs, checked against
+[MDN browser data](https://github.com/mdn/browser-compat-data).
+Each value includes browser versions, the estimate’s basis, and the official
+support policy. Astryx lists functional and full-fidelity tiers.
 
 </Disclosure>
 
 <Disclosure title="The systems">
 
-Fixed-package sizes are measured from the version named on each card. Each npm
-artifact was downloaded, bundled as a full ESM import with esbuild, minified,
-and gzipped, then rounded up to the nearest 10 KiB. React and React DOM are
-external. When a library ships base CSS, the total adds its separately gzipped
-CSS bundle. The line below each figure states what it counts.
+<Columns colGap="32px" rowGap="12px">
+<div>
+<p><small>Sizes measure full imports, minified with esbuild and compressed with gzip,
+including separately compressed base CSS. Figures round up to 10 KiB and
+exclude React and React DOM. Each card lists its measured package or source
+snapshot and other exclusions.</small></p>
+</div>
 
-Tree-shaking, peer dependencies, icons, styles, and copied source still make
-the numbers different shapes. Polaris is a dated CDN snapshot, not a
-release-based package figure. Independently versioned packages and copied-source
-systems need an explicit component boundary; each card names it. Every browser
-version includes its release year. Rolling policies are pinned to the current
-stable releases in this snapshot.
+<div>
+<p><small>These imports cover different component sets. Selective imports and copied
+components usually ship less code. Measure your application before comparing
+download costs.</small></p>
+</div>
+</Columns>
 
 <SystemCards />
 
 </Disclosure>
 
 ## Component coverage
-
-Rows group components by job, so Dialog, Modal, and Drawer share one mark.
-Anta covers the common controls but remains narrower than full suites. The
-shadcn row reflects its default Base UI registry.
 
 <CoverageMatrix />

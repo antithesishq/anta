@@ -17,19 +17,121 @@ accessible loading status.
 
 ## Built-in shapes
 
-### Props
+| Shape | Search synonyms |
+| --- | --- |
+| `arrow-left-to-line` | dock, snap, align |
+| `arrow-left` | back, previous, prev |
+| `arrow-narrow-down` | download, fall, down |
+| `arrow-narrow-up-down` | sort, swap, transfer, reorder |
+| `arrow-narrow-up` | upload, rise, up |
+| `arrow-right` | forward, next |
+| `arrow-top-right` | external, open, leave |
+| `asterisk` | star, wildcard |
+| `blank` | spacer, empty, placeholder, space, none |
+| `book-open` | read, docs, documentation |
+| `braces` | code, brackets, json |
+| `bug` | defect, issue, error |
+| `calendar-days` |  |
+| `calendar` | date, schedule |
+| `case-sensitive` | aA, capitalize, case |
+| `chat` | message, comment, discuss |
+| `check` | tick, ok, done, confirm, approve |
+| `chevron-down` | arrow, expand, open, down |
+| `chevron-left` | arrow, back, previous |
+| `chevron-right` | arrow, forward, next |
+| `chevron-up` | arrow, collapse, close, up |
+| `chevrons-right` | skip, fast forward |
+| `circle-check` | success, ok, done |
+| `circle-dot` |  |
+| `circle-large` | dot, marker |
+| `circle-small-solid` |  |
+| `circle-user` | avatar, person, account, contact, profile |
+| `circle` | dot, point |
+| `click` | tap, press, touch |
+| `clock` | time |
+| `cloud-upload` | save, sync, upload, send, export |
+| `columns-3-cog` | columns, table, settings, configure, fields, visibility |
+| `copy` | duplicate, clone |
+| `corner-down-right` | branch, indent, return |
+| `cube` | box, package |
+| `dollar-sign` | currency, money, payment |
+| `dots-vertical` | more, kebab, options |
+| `download` | save, import |
+| `edit` | pencil, modify, rename |
+| `external-link` | open, link, share, outbound |
+| `eye-closed` |  |
+| `eye` |  |
+| `file-down` | download, save |
+| `file` | document, page |
+| `filter-x` | clear filter, reset filter, remove filter |
+| `filter` | sort, narrow |
+| `folder-close` | directory |
+| `folder-open` | directory, browse |
+| `folder-tree` | hierarchy, structure, tree |
+| `hat-glasses` | accessibility, vision, disguise, person |
+| `heart-handshake` | credits, thanks, agreement, deal, partnership |
+| `heart` | like, favorite, love, wishlist |
+| `history-tree` | log, past |
+| `history` | log, past |
+| `home` |  |
+| `hourglass` | progress, time, wait, loading, timer |
+| `info` | information, about, i |
+| `link` | url, href, anchor |
+| `list-collapse` | list, collapse, expand, items |
+| `maximize` | fullscreen, expand |
+| `megaphone` | announcement, broadcast |
+| `menu` | hamburger, list, more |
+| `minimize` | collapse, shrink |
+| `minus` | remove, subtract |
+| `moon` |  |
+| `more` | options, extra |
+| `move-horizontal` | resize, swap, horizontal |
+| `not-equal` | neq, different |
+| `play` | start, run, execute |
+| `plus` | add, new, create |
+| `pointer` |  |
+| `presentation` | slides, deck |
+| `refresh-ccw-dot` |  |
+| `refresh` | reload, sync, update |
+| `regex` | pattern, match |
+| `repeat` | loop, retry, rerun |
+| `rotate-ccw` |  |
+| `rss` | feed, subscribe |
+| `runs-history` | log, past |
+| `scroll-text` | log, output, console |
+| `search-check` | found, validated |
+| `search` | find, magnify, lookup |
+| `send` | submit, share, deliver |
+| `settings` |  |
+| `share` |  |
+| `sparkles` | ai, magic, generate |
+| `square-check-big` |  |
+| `square-menu` |  |
+| `sun` |  |
+| `swatch-book` | palette, color, swatch, paint, design |
+| `table-2` | table, grid, data, spreadsheet, rows, columns |
+| `tag` | label, badge, chip |
+| `text-cursor-input` |  |
+| `text-initial` | text, typography, letter, a |
+| `timer` | stopwatch, countdown, time |
+| `toggle-right` | toggle, switch, on, off, boolean |
+| `trash` | delete, remove, bin |
+| `view` | show, display, preview |
+| `warning-diamond` | error, invalid, alert, danger |
+| `warning-triangle` | alert, danger, caution |
+| `webhook` | integration, hook |
+| `workflow` | pipeline, process, flow |
+| `x` | close, cancel, dismiss, remove, no |
+
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `shape` | IconShape | — | Which icon to render. The set of valid shapes comes from Anta's
- built-in icons plus any consumer-generated shapes (via the
- `IconShapes` interface module augmentation). |
-| `label?` | string | — | Accessible name for the icon. When set, the wrapper exposes
- `role="img"` and `aria-label={label}` so screen readers announce
- the icon. When omitted (the default), the icon is treated as
- decorative — `aria-hidden="true"` is applied so it doesn't add
- noise alongside neighbouring text. |
+| `shape` | IconShape | — | Which icon to render. The set of valid shapes comes from Anta's built-in icons plus any consumer-generated shapes (via the `IconShapes` interface module augmentation). |
+| `label?` | string | — | Accessible name for the icon. When set, the wrapper exposes `role="img"` and `aria-label={label}` so screen readers announce the icon. When omitted (the default), the icon is treated as decorative — `aria-hidden="true"` is applied so it doesn't add noise alongside neighbouring text. |
 | `size?` | number | 16 | Width and height in pixels. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

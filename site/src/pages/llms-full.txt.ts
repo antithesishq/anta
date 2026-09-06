@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs'
 import type { APIRoute } from 'astro'
-import { renderPropsTable } from '../../lib/llms/props-from-api.mjs'
-import { parseMdx } from '../../lib/llms/parse-mdx.mjs'
+import { renderDocumentation } from '../../lib/llms/render-documentation.mjs'
+import tokens from '../../../src/tokens.css?raw'
+import theme from '../../../src/theme-anta.css?raw'
+import stickers from '../../../stickers/src/generated/index.ts?raw'
+import specimen from '../components/HtmlSpecimen.astro?raw'
 import {
   componentGroups,
   documentationLinks,
@@ -29,11 +32,6 @@ function modulePath(path: string) {
     : `.${path.slice(0, -1)}.mdx`
 }
 
-function extractComponentName(raw: string): string | null {
-  const m = raw.match(/<PropsTable\s+component="([^"]+)"/)
-  return m ? m[1] : null
-}
-
 function extractDemoCode(slug: string): string | null {
   const mod = demoModules[`./${slug}.demo.ts`]
   if (!mod?.default) return null
@@ -41,15 +39,7 @@ function extractDemoCode(slug: string): string | null {
 }
 
 function renderMdx(raw: string, title: string, slug?: string) {
-  const componentName = extractComponentName(raw)
-  if (componentName) {
-    raw = raw.replace(
-      /<PropsTable\s+component="[^"]+"\s*\/>/,
-      () => renderPropsTable(componentName),
-    )
-  }
-
-  let body = parseMdx(raw)
+  let body = renderDocumentation(raw, { tokens, theme, stickers, specimen })
   body = body.replace(/^# .+$/m, `# ${title}`)
   const demo = slug ? extractDemoCode(slug) : null
   if (demo) body += `\n\n### Example\n\n\`\`\`tsx\n${demo}\n\`\`\``

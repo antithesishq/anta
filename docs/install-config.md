@@ -93,6 +93,30 @@ Token custom properties stay unlayered so they apply everywhere.
 > `@layer base { … }`; `reset.css` already applies the same universal reset in
 > `@layer anta.reset`.
 
+## AI setup
+
+Anta includes version-matched Markdown documentation in its npm package.
+Append this section to your application's agent instruction file, such as
+`AGENTS.md`, `CLAUDE.md`, or your tool's equivalent. Keep existing project rules:
+
+```md
+## Anta
+
+Before Anta UI work, read
+`node_modules/@antadesign/anta/docs/index.md`
+and the pages relevant to the task.
+Verify component names, imports, props, and event signatures against the
+installed documentation and TypeScript declarations. Do not infer Anta APIs
+from similarly named components in other libraries.
+```
+
+The path is relative to the application directory where Anta is installed.
+Adjust it for your workspace or package-manager layout. Installing Anta does
+not modify your agent configuration.
+
+For tools without local file access, provide the [web documentation index](https://anta.design/llms.txt)
+and your installed Anta version. Web documentation may describe a newer release.
+
 ## Registering elements
 
 JSX wrappers render `<a-*>` tags. Register their classes before those tags reach

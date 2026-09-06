@@ -62,6 +62,8 @@
     "dev:run": "echo $$ > \"$ANTA_DEV_PID_FILE\"; trap 'rm -f \"$ANTA_DEV_PID_FILE\"' EXIT; pnpm run build:dev && pnpm --filter @antadesign/stickers run build:dev && pnpm --filter anta-site run docs && (node scripts/dev-watch.mjs & pnpm --filter anta-site run dev:server & wait)",
     "stop": "node scripts/dev-stop.mjs",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
+    "test": "node --test tests/*.test.mjs",
+    "test:capture-input": "node --test tests/capture-input.test.mjs",
     "lint": "node scripts/lint-getters.mjs && node scripts/lint-css-layers.mjs",
     "verify": "pnpm run lint && pnpm run typecheck && pnpm --filter anta-site run docs:api",
     "icons": "node scripts/generate-icons.mjs --input src/elements/icons --output src/elements --name a-icon.shapes --internal",

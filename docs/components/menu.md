@@ -366,6 +366,8 @@ chevron stay centered on the row, so it composes with a trailing counter.
 </Menu>
 ```
 
+## MenuItemCopy
+
 `MenuItemCopy` is a row that copies to the clipboard when chosen: `copy` for a
 string, `copyNode` for a DOM region, or `copyUrl` for the current URL. It composes
 a `<MenuItem>` with a slotted `<a-copy>` element that performs the write, and
@@ -390,89 +392,32 @@ navigating links.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `children?` | ReactNode | — | Item content. With `label` set, children are extra content — most
- notably the nested `<Menu>` for a submenu parent. |
+| `children?` | ReactNode | — | Item content. With `label` set, children are extra content — most notably the nested `<Menu>` for a submenu parent. |
 | `copiedLabel?` | string | Copied | Text in the successful no-icon confirmation. |
 | `copy?` | string | — | Text copied to the clipboard on activation. |
-| `copyNode?` | boolean \| string | — | Copy a DOM node as rich text (`text/html`) + plain text. `true` copies
- the nearest ancestor marked `data-copy-source`; a string is a CSS
- selector for an ancestor region (`closest`). The copy control is stripped
- from the copied output. |
+| `copyNode?` | boolean \| string | — | Copy a DOM node as rich text (`text/html`) + plain text. `true` copies the nearest ancestor marked `data-copy-source`; a string is a CSS selector for an ancestor region (`closest`). The copy control is stripped from the copied output. |
 | `copyUrl?` | true | — | Copy the current page URL (`location.href`). |
 | `copyWithUrl?` | boolean | — | Prefix the copied text with `// URL: <current page URL>`. |
-| `disabled?` | boolean | — | Disable the item: greyed out, not focusable for activation, no close. A
- disabled link also drops its `href`, so it can't navigate. |
-| `hint?` | ReactNode | — | Secondary text under the label — explanatory copy, like `RadioGroup`'s
- option `hint`. Requires `label` (it stacks in a column beneath it). Muted
- (`--text-3`) and tracks the row's `tone`. A string, or any node. |
+| `disabled?` | boolean | — | Disable the item: greyed out, not focusable for activation, no close. A disabled link also drops its `href`, so it can't navigate. |
+| `hint?` | ReactNode | — | Secondary text under the label — explanatory copy, like `RadioGroup`'s option `hint`. Requires `label` (it stacks in a column beneath it). Muted (`--text-3`) and tracks the row's `tone`. A string, or any node. |
 | `icon?` | IconShape | — | Leading icon shape. |
-| `iconPlacement?` | 'leading' \| 'trailing' \| 'none' | 'leading' | Where the copy glyph sits relative to the label — or `'none'` to omit it.
- Without a glyph, a successful copy shows a confirmation label near the
- pointer and leaves the row unchanged. |
-| `iconTrailing?` | IconShape | — | A trailing icon. On a `submenu` item this **overrides** the default
- chevron (omit it to keep the chevron); on a normal item it's the trailing
- glyph (omit for none). |
-| `indeterminate?` | boolean | — | Only meaningful with `selectionIndicator="checkbox"`: render the box in the
- mixed state (`aria-checked="mixed"`) — e.g. a "Select all" row when some but
- not all of its options are selected. |
-| `indicator?` | React.ReactNode | — | Replace the built-in selection-indicator *visual* with your own node,
- rendered at the **leading** edge (where the checkbox / radio sit). Pair with
- `selectionIndicator` to keep the semantics — the row stays the control and
- carries `role` + `aria-checked`; only the drawn mark changes. Suppresses the
- built-in checkbox / radio and the trailing `check` glyph. The node is made
- passive (aria-hidden, no pointer events) so the row receives the click. |
-| `kbd?` | string | — | Trailing shortcut hint, e.g. `"⌘E"`. Anta translates it to
- `aria-keyshortcuts` and hides the visual glyphs from assistive technology.
- Use `+` within a chord and spaces between shortcuts (`"⌘K ⌘S"` becomes
- `"Meta+K Meta+S"`). Pass `aria-keyshortcuts` to override the translation.
- This does not bind the shortcut. |
-| `label?` | ReactNode | — | The item's text. Usually a string, but any node is accepted — e.g. a filtered
- `Select` bolds the matched substring. Omit and pass `children` for richer
- content. |
+| `iconPlacement?` | 'leading' \| 'trailing' \| 'none' | 'leading' | Where the copy glyph sits relative to the label — or `'none'` to omit it. Without a glyph, a successful copy shows a confirmation label near the pointer and leaves the row unchanged. |
+| `iconTrailing?` | IconShape | — | A trailing icon. On a `submenu` item this **overrides** the default chevron (omit it to keep the chevron); on a normal item it's the trailing glyph (omit for none). |
+| `indeterminate?` | boolean | — | Only meaningful with `selectionIndicator="checkbox"`: render the box in the mixed state (`aria-checked="mixed"`) — e.g. a "Select all" row when some but not all of its options are selected. |
+| `indicator?` | React.ReactNode | — | Replace the built-in selection-indicator *visual* with your own node, rendered at the **leading** edge (where the checkbox / radio sit). Pair with `selectionIndicator` to keep the semantics — the row stays the control and carries `role` + `aria-checked`; only the drawn mark changes. Suppresses the built-in checkbox / radio and the trailing `check` glyph. The node is made passive (aria-hidden, no pointer events) so the row receives the click. |
+| `kbd?` | string | — | Trailing shortcut hint, e.g. `"⌘E"`. Anta translates it to `aria-keyshortcuts` and hides the visual glyphs from assistive technology. Use `+` within a chord and spaces between shortcuts (`"⌘K ⌘S"` becomes `"Meta+K Meta+S"`). Pass `aria-keyshortcuts` to override the translation. This does not bind the shortcut. |
+| `label?` | ReactNode | — | The item's text. Usually a string, but any node is accepted — e.g. a filtered `Select` bolds the matched substring. Omit and pass `children` for richer content. |
 | `onCopied?` | (ok) => void | — | Fires after the copy attempt with whether it succeeded. |
-| `onCopyRequest?` | () => void | — | Refresh a dynamic `copy` value before activation. Set the new string in
- application state so the next render updates `copy`. Return values are
- ignored. Fires on pointerdown and Enter/Space keydown. |
-| `onMouseDown?` | (event) => void | — | Raw `mousedown` on the row. Mainly to `preventDefault()` so the row doesn't
- take focus on a mouse press — e.g. a combobox option keeping focus in its
- input field while the click still selects. |
-| `onSelect?` | (event, detail) => void | — | Activation handler — fires when *this* item is chosen (click / Enter /
- Space), unless it's `disabled`. It does **not** fire for a submenu parent
- (clicking that opens the flyout, which isn't a selection) nor for a
- selection bubbling up from a nested submenu. On a link item it fires
- alongside the navigation. Receives the event plus a `{ value, label }`
- detail. |
-| `role?` | string | — | ARIA role override. Defaults to the role implied by `selectionIndicator`
- (`menuitem` / `menuitemcheckbox` / `menuitemradio`); set it to reparent the
- row under a different container role — e.g. `option` inside a `listbox`. |
-| `selected?` | boolean | — | Mark the item as selected. On a plain row (no `selectionIndicator`) this is
- a persistent background tint, the same resting fill a pressed row shows —
- also the way to flag the current page on a link item. On a checkable row
- (`selectionIndicator` set) it instead drives the leading `checkbox` / `radio`
- indicator and the row's `aria-checked`. |
-| `selectionIndicator?` | 'checkbox' \| 'radio' \| 'check' | — | Turn the row into a checkable item, driven by `selected` (the row stays the
- control and carries `aria-checked`):
- - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>`
-   (before `icon`); the tint is dropped (the box carries state).
- - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped.
- - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected
-   row *and* the background tint (the canonical single-select look).
- Omit for a plain row (the default). |
-| `submenu?` | boolean | — | Marks this item as a submenu parent: adds the trailing chevron and
- `aria-haspopup="menu"`. Nest the flyout as a `<Menu>` child. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone — colors the label, icon, and hover/selected tint (and the
- `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal
- CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose
- hue + chroma are kept while the lightness is pinned to match the brand text.
- `critical` is the destructive action; `neutral` (the default) is the standard
- gray. |
-| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Like `tone`, but applied only while the row is `selected` — an unselected row
- stays neutral. The whole selected row (label, icon, tint, and the `checkbox` /
- `radio` indicator) takes the tone. Same value set as `tone`; on a selected row
- `toneSelected` wins over `tone` when both are set. |
-| `value?` | string \| number | — | An opaque value identifying this item, handed back in `onSelect`'s detail
- so a shared handler can tell which row was chosen without a per-item
- closure. |
+| `onCopyRequest?` | () => void | — | Refresh a dynamic `copy` value before activation. Set the new string in application state so the next render updates `copy`. Return values are ignored. Fires on pointerdown and Enter/Space keydown. |
+| `onMouseDown?` | (event) => void | — | Raw `mousedown` on the row. Mainly to `preventDefault()` so the row doesn't take focus on a mouse press — e.g. a combobox option keeping focus in its input field while the click still selects. |
+| `onSelect?` | (event, detail) => void | — | Activation handler — fires when *this* item is chosen (click / Enter / Space), unless it's `disabled`. It does **not** fire for a submenu parent (clicking that opens the flyout, which isn't a selection) nor for a selection bubbling up from a nested submenu. On a link item it fires alongside the navigation. Receives the event plus a `{ value, label }` detail. |
+| `role?` | string | — | ARIA role override. Defaults to the role implied by `selectionIndicator` (`menuitem` / `menuitemcheckbox` / `menuitemradio`); set it to reparent the row under a different container role — e.g. `option` inside a `listbox`. |
+| `selected?` | boolean | — | Mark the item as selected. On a plain row (no `selectionIndicator`) this is a persistent background tint, the same resting fill a pressed row shows — also the way to flag the current page on a link item. On a checkable row (`selectionIndicator` set) it instead drives the leading `checkbox` / `radio` indicator and the row's `aria-checked`. |
+| `selectionIndicator?` | 'checkbox' \| 'radio' \| 'check' | — | Turn the row into a checkable item, driven by `selected` (the row stays the control and carries `aria-checked`): - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>` (before `icon`); the tint is dropped (the box carries state). - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped. - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected row *and* the background tint (the canonical single-select look). Omit for a plain row (the default). |
+| `submenu?` | boolean | — | Marks this item as a submenu parent: adds the trailing chevron and `aria-haspopup="menu"`. Nest the flyout as a `<Menu>` child. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone — colors the label, icon, and hover/selected tint (and the `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose hue + chroma are kept while the lightness is pinned to match the brand text. `critical` is the destructive action; `neutral` (the default) is the standard gray. |
+| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Like `tone`, but applied only while the row is `selected` — an unselected row stays neutral. The whole selected row (label, icon, tint, and the `checkbox` / `radio` indicator) takes the tone. Same value set as `tone`; on a selected row `toneSelected` wins over `tone` when both are set. |
+| `value?` | string \| number | — | An opaque value identifying this item, handed back in `onSelect`'s detail so a shared handler can tell which row was chosen without a per-item closure. |
 
 ## Keyboard
 
@@ -506,6 +451,55 @@ call `event.preventDefault()` to keep the menu as-is (e.g. block a dismiss).
 Controlled, the menu never self-moves — apply `detail.next` to `open` to accept,
 or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`.)
 
+## Menu props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `autoWidth?` | boolean | — | Size the menu to its content instead of flooring its width to the trigger. A root menu is never narrower than its trigger by default; set this for a content menu under a wide trigger (e.g. a calendar below a full-width field) so it wraps its content and left-aligns under the trigger. |
+| `children?` | ReactNode | — | The menu's contents: `MenuItem`, `MenuSeparator`, `MenuGroup`, or any custom element. |
+| `context?` | boolean | — | Open on right-click (the `contextmenu` event) of the trigger region instead of a left click, positioned at the pointer. |
+| `coord?` | boolean | — | Open at the pointer coordinates rather than aligned to the trigger box. Pairs naturally with `context`; on its own it positions a left-click menu at the cursor. |
+| `inset?` | number \| string | 4 | Inner inset for the scroll body and named header/footer content. A number is pixels; a CSS length string is used as written. |
+| `nohover?` | boolean | — | Submenu-only (a `<Menu>` nested inside a `MenuItem`); ignored on a root menu. Submenus open on hover by default (with intent timing) as well as on click — set `nohover` to make this submenu click-only. Hover-intent is mouse-only regardless: on touch (and pen) a submenu always opens on tap and stays open until dismissed. |
+| `offset?` | number | 4 | Gap in pixels between the trigger and the menu. |
+| `onactivedescendant?` | (e) => void | — | Combobox-mode cursor report (raw element event). Fires when the active option changes as arrow keys move the cursor while focus stays in a `[data-menu-search]` filter field; `detail.id` is the active option's `id` (`null` when none). The reactive layer that renders the field reflects this onto its `aria-activedescendant` — the element can't write that light-DOM attribute itself. Passed straight through to the element. |
+| `onStateChange?` | (event, detail) => void | — | Fired before the open state changes — on open, and on every dismiss (Esc, outside-click, scroll, selecting an item). `event` is the cancelable `statechange`; `detail.next`/`detail.prev` are the requested/previous open state (booleans). It's the declarative way to observe a menu, and the handler you pair with `open` to drive a controlled menu (apply `detail.next` to `open`). Uncontrolled, `event.preventDefault()` vetoes the transition (e.g. keep the menu open). |
+| `open?` | boolean | — | Controlled open state. Omit for the default **uncontrolled** menu (it opens/closes itself via its triggers). Pass a boolean to **control** it: the menu's visibility follows `open`, and user dismiss (Esc, outside-click, select) fires `onStateChange` *without* self-closing — you update `open` in response. Submenus are always uncontrolled regardless of this. See STATEFUL-COMPONENTS.md. |
+| `placement?` | 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'bottom' \| 'top' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' \| 'right' \| 'left' | bottom-start | Preferred placement relative to the trigger. `bottom` / `top` place the menu below / above; `right` / `left` place it beside (like a submenu flyout). The cross-axis suffix (`-start` / `-end`) aligns the near / far edges, and no suffix centers on the trigger. The menu flips to the opposite side when the preferred one lacks room, and clamps to the viewport. |
+| `role?` | string | menu | ARIA role of the menu surface. |
+| `round?` | boolean \| number \| string | — | Round the menu: the container softens to a 20px radius and its items go fully round. A `number` (px) or CSS length string tunes the container radius only — items stay full pills. |
+| `stopPropagation?` | boolean \| string \| string[] | — | Contain events so they don't bubble out of the menu to ancestor handlers (e.g. a clickable row the menu sits in). Selecting an item is always contained; this extends it to whole event types. `true` contains `click`; pass an event name or list (`"click pointerdown"`) to contain those. |
+
+## MenuItem props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children?` | ReactNode | — | Item content. With `label` set, children are extra content — most notably the nested `<Menu>` for a submenu parent. |
+| `disabled?` | boolean | — | Disable the item: greyed out, not focusable for activation, no close. A disabled link also drops its `href`, so it can't navigate. |
+| `download?` | string \| boolean | — | Download the resource instead of navigating: `true` / `''` uses the resource's default filename, a string overrides it. |
+| `hint?` | ReactNode | — | Secondary text under the label — explanatory copy, like `RadioGroup`'s option `hint`. Requires `label` (it stacks in a column beneath it). Muted (`--text-3`) and tracks the row's `tone`. A string, or any node. |
+| `href?` | string | — | Renders the item as `<a role="menuitem" data-anta-menu-item href>`. |
+| `icon?` | IconShape | — | Leading icon shape. |
+| `iconTrailing?` | IconShape | — | A trailing icon. On a `submenu` item this **overrides** the default chevron (omit it to keep the chevron); on a normal item it's the trailing glyph (omit for none). |
+| `indeterminate?` | boolean | — | Only meaningful with `selectionIndicator="checkbox"`: render the box in the mixed state (`aria-checked="mixed"`) — e.g. a "Select all" row when some but not all of its options are selected. |
+| `indicator?` | React.ReactNode | — | Replace the built-in selection-indicator *visual* with your own node, rendered at the **leading** edge (where the checkbox / radio sit). Pair with `selectionIndicator` to keep the semantics — the row stays the control and carries `role` + `aria-checked`; only the drawn mark changes. Suppresses the built-in checkbox / radio and the trailing `check` glyph. The node is made passive (aria-hidden, no pointer events) so the row receives the click. |
+| `kbd?` | string | — | Trailing shortcut hint, e.g. `"⌘E"`. Anta translates it to `aria-keyshortcuts` and hides the visual glyphs from assistive technology. Use `+` within a chord and spaces between shortcuts (`"⌘K ⌘S"` becomes `"Meta+K Meta+S"`). Pass `aria-keyshortcuts` to override the translation. This does not bind the shortcut. |
+| `label?` | ReactNode | — | The item's text. Usually a string, but any node is accepted — e.g. a filtered `Select` bolds the matched substring. Omit and pass `children` for richer content. |
+| `onMouseDown?` | (event) => void | — | Raw `mousedown` on the row. Mainly to `preventDefault()` so the row doesn't take focus on a mouse press — e.g. a combobox option keeping focus in its input field while the click still selects. |
+| `onSelect?` | (event, detail) => void | — | Activation handler — fires when *this* item is chosen (click / Enter / Space), unless it's `disabled`. It does **not** fire for a submenu parent (clicking that opens the flyout, which isn't a selection) nor for a selection bubbling up from a nested submenu. On a link item it fires alongside the navigation. Receives the event plus a `{ value, label }` detail. |
+| `ping?` | string | — | Space-separated URLs the browser pings on navigation. |
+| `rel?` | string | — | Anchor rel. |
+| `role?` | string | — | ARIA role override. Defaults to the role implied by `selectionIndicator` (`menuitem` / `menuitemcheckbox` / `menuitemradio`); set it to reparent the row under a different container role — e.g. `option` inside a `listbox`. |
+| `selected?` | boolean | — | Mark the item as selected. On a plain row (no `selectionIndicator`) this is a persistent background tint, the same resting fill a pressed row shows — also the way to flag the current page on a link item. On a checkable row (`selectionIndicator` set) it instead drives the leading `checkbox` / `radio` indicator and the row's `aria-checked`. |
+| `selectionIndicator?` | 'checkbox' \| 'radio' \| 'check' | — | Turn the row into a checkable item, driven by `selected` (the row stays the control and carries `aria-checked`): - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>` (before `icon`); the tint is dropped (the box carries state). - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped. - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected row *and* the background tint (the canonical single-select look). Omit for a plain row (the default). |
+| `submenu?` | boolean | — | Marks this item as a submenu parent: adds the trailing chevron and `aria-haspopup="menu"`. Nest the flyout as a `<Menu>` child. |
+| `target?` | string | — | Anchor target, e.g. `'_blank'`. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone — colors the label, icon, and hover/selected tint (and the `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose hue + chroma are kept while the lightness is pinned to match the brand text. `critical` is the destructive action; `neutral` (the default) is the standard gray. |
+| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Like `tone`, but applied only while the row is `selected` — an unselected row stays neutral. The whole selected row (label, icon, tint, and the `checkbox` / `radio` indicator) takes the tone. Same value set as `tone`; on a selected row `toneSelected` wins over `tone` when both are set. |
+| `value?` | string \| number | — | An opaque value identifying this item, handed back in `onSelect`'s detail so a shared handler can tell which row was chosen without a per-item closure. |
+
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Put a focusable trigger immediately before `<a-menu>` and omit `state` for an
@@ -521,6 +515,8 @@ values.
   <a-menu-item role="menuitem" tabindex="0" value="members"><a-menu-item-label>Members</a-menu-item-label></a-menu-item>
 </a-menu>
 ```
+
+## Styling
 
 The popover surface lives in shadow DOM and is exposed as a **part** — style its
 chrome (background, frost, border, radius, shadow, padding, min-width) with

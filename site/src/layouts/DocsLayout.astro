@@ -290,7 +290,6 @@ if (isComponentPage && title) {
           <li><a href="/normalization/" aria-current={isCurrent('/normalization/') ? 'page' : undefined}><Icon shape="book-a" size={18} /> Normalization</a></li>
           <li><a href="/changelog/" aria-current={isCurrent('/changelog/') ? 'page' : undefined}><Icon shape="scroll-text" size={18} /> Changelog</a></li>
         </menu>
-        <hr class="sidebar-separator" />
         <menu>
           <li class="theming-nav-item">
             <a href="/theming/" aria-current={isCurrent('/theming/') ? 'page' : undefined}><Icon shape="theme" size={18} /> Theming</a>
@@ -314,7 +313,6 @@ if (isComponentPage && title) {
           <li><a href="/loader/" aria-current={isCurrent('/loader/') ? 'page' : undefined}><Icon shape="loader-docs" size={18} /> Loader</a></li>
           <li><a href="/progress/" aria-current={isCurrent('/progress/') ? 'page' : undefined}><Icon shape="hourglass" size={18} /> Progress</a></li>
         </menu>
-        <hr class="sidebar-separator" />
         <menu>
           <li><a href="/button/" aria-current={isCurrent('/button/') ? 'page' : undefined}><Icon shape="pointer" size={18} /> Button</a></li>
           <li><a href="/breadcrumbs/" aria-current={isCurrent('/breadcrumbs/') ? 'page' : undefined}><Icon shape="chevrons-right" size={18} /> Breadcrumbs</a></li>
@@ -325,7 +323,6 @@ if (isComponentPage && title) {
           <li><a href="/tabs/" aria-current={isCurrent('/tabs/') ? 'page' : undefined}><Icon shape="tabs" size={18} /> Tabs</a></li>
           <li><a href="/steps/" aria-current={isCurrent('/steps/') ? 'page' : undefined}><Icon shape="footprints" size={18} /> Steps</a></li>
         </menu>
-        <hr class="sidebar-separator" />
         <menu>
           <li><a href="/input/" aria-current={isCurrent('/input/') ? 'page' : undefined}><Icon shape="text-cursor-input" size={18} /> Input</a></li>
           <li><a href="/input-autocomplete/" aria-current={isCurrent('/input-autocomplete/') ? 'page' : undefined}><Icon shape="search-slash" size={18} /> InputAutocomplete</a></li>
@@ -334,15 +331,17 @@ if (isComponentPage && title) {
           <li><a href="/select/" aria-current={isCurrent('/select/') ? 'page' : undefined}><Icon shape="square-chevron-down" size={18} /> Select</a></li>
           <li><a href="/select-faceted/" aria-current={isCurrent('/select-faceted/') ? 'page' : undefined}><Icon shape="filter" size={18} /> SelectFaceted</a></li>
         </menu>
-        <hr class="sidebar-separator" />
         <menu>
-          <li><a href="/box/" aria-current={isCurrent('/box/') ? 'page' : undefined}><Icon shape="square-dashed" size={18} /> Box</a></li>
           <li><a href="/banner/" aria-current={isCurrent('/banner/') ? 'page' : undefined}><Icon shape="banner" size={18} /> Banner</a></li>
           <li><a href="/card/" aria-current={isCurrent('/card/') ? 'page' : undefined}><Icon shape="card" size={18} /> Card</a></li>
           <li><a href="/dialog/" aria-current={isCurrent('/dialog/') ? 'page' : undefined}><Icon shape="dialog" size={18} /> Dialog</a></li>
           <li><a href="/toaster/" aria-current={isCurrent('/toaster/') ? 'page' : undefined}><Icon shape="toaster" size={18} /> Toaster</a></li>
           <li><a href="/expander/" aria-current={isCurrent('/expander/') ? 'page' : undefined}><Icon shape="square-chevron-right" size={18} /> Expander</a></li>
           <li><a href="/menu/" aria-current={isCurrent('/menu/') ? 'page' : undefined}><Icon shape="square-menu" size={18} /> Menu</a></li>
+        </menu>
+        <menu>
+          <li><a href="/box/" aria-current={isCurrent('/box/') ? 'page' : undefined}><Icon shape="square-dashed" size={18} /> Box</a></li>
+          <li><a href="/capture/" aria-current={isCurrent('/capture/') ? 'page' : undefined}><Icon shape="vector-square" size={18} /> Capture</a></li>
         </menu>
         <h4>Packages</h4>
         <menu>
@@ -382,16 +381,6 @@ if (isComponentPage && title) {
       // Runs once per session (ClientRouter never re-runs a seen script), so
       // handlers are document-delegated and per-page work hangs off astro:*
       // events; never hold a reference to one page's DOM.
-
-      const platform = (
-        (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform
-        || navigator.platform
-        || navigator.userAgent
-      )
-      const searchShortcut = /Mac|iPhone|iPad|iPod/i.test(platform) ? 'Cmd+K' : 'Ctrl+K'
-      for (const shortcut of document.querySelectorAll('[data-sidebar-search-shortcut]')) {
-        shortcut.textContent = `${searchShortcut} or /`
-      }
 
       const syncSidebarSearch = () => {
         const params = new URLSearchParams(location.search)
@@ -761,13 +750,8 @@ if (isComponentPage && title) {
   .sidebar-search-field + h4 {
     margin-top: 8px;
   }
-  .sidebar-separator {
-    /* A hairline, not a gap: the gradient is the whole rule, so it needs a row
-       of pixels to paint into. `border: 0` drops the UA's default groove. */
-    border: 0;
-    height: 1px;
-    background: linear-gradient(to right, var(--border-4), var(--border-5));
-    margin: 8px 0;
+  .sidebar menu + menu {
+    margin-block-start: 12px;
   }
 
   .sidebar menu li.theming-nav-item {

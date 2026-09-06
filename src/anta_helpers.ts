@@ -85,6 +85,22 @@ export function nativeStateChange<D>(
   return { event, detail: event?.detail, isOwn: !event || event.target === event.currentTarget }
 }
 
+/** Adapt a callback to native or renderer-wrapped custom events with non-null detail. */
+export function customEventHandler<D>(handler?: (event: CustomEvent<D>, detail: D) => void) {
+  if (!handler) return undefined
+  return (input: StateChangeEvent<D>) => {
+    const { event, detail } = nativeStateChange(input)
+    if (detail != null) handler(event, detail)
+  }
+}
+
+/** Parse a finite number, falling back for missing, empty, or invalid values. */
+export function finiteNumber(value: string | number | null, fallback: number): number {
+  if (value == null || value === '') return fallback
+  const number = Number(value)
+  return Number.isFinite(number) ? number : fallback
+}
+
 // macOS labels the "isolate" accelerator ⌥ (Option); every other platform, Alt.
 // `altKey` fires for both at runtime — only the hint wording differs.
 export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '')

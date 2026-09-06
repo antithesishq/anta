@@ -358,7 +358,7 @@ const recency: SelectFacetCustom<Recency> = {
 // concrete date (or take the day as-is) and filter your rows with it
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -370,33 +370,15 @@ const recency: SelectFacetCustom<Recency> = {
 | `icon?` | IconShape | filter | Default trigger's leading icon. |
 | `label?` | string | Filter | Default trigger's button label. |
 | `offset?` | number | 4 | Gap in pixels between the trigger and the filter menu. |
-| `onValueChange?` | (value, attrs) => void | — | Fires after any facet changes. `value` is the whole new record (a facet key →
- that facet's value; a cleared facet is absent). `attrs` says what changed:
- `{ facet, kind, value }` for a single facet edit, or `{ all: true }` for the
- "Clear all" row — narrow on `'all' in attrs` before reading `facet`. |
-| `placement?` | 'left' \| 'right' \| 'bottom' \| 'top' \| 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' | bottom-start | Preferred placement of the root filter menu relative to its trigger. The
- menu auto-flips vertically and clamps horizontally when needed. |
+| `onValueChange?` | (value, attrs) => void | — | Fires after any facet changes. `value` is the whole new record (a facet key → that facet's value; a cleared facet is absent). `attrs` says what changed: `{ facet, kind, value }` for a single facet edit, or `{ all: true }` for the "Clear all" row — narrow on `'all' in attrs` before reading `facet`. |
+| `placement?` | 'left' \| 'right' \| 'bottom' \| 'top' \| 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' | bottom-start | Preferred placement of the root filter menu relative to its trigger. The menu auto-flips vertically and clamps horizontally when needed. |
 | `priority?` | 'primary' \| 'secondary' | secondary | Default trigger's button priority. |
-| `renderTrigger?` | (state) => ReactNode | — | Replaces the default `Button` with a trigger returned from this function.
- Receives a `SelectFacetedTriggerState`. Return exactly one focusable element:
- the menu is positioned relative to that element and opens when it is clicked.
- Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned
- element, on a role that supports them (an Anta `Button` already carries
- `role="button"`; otherwise add `role="combobox"`). `className`, `style`, and
- other trigger props apply only to the default Button, so add styling and
- attributes to the returned element. |
-| `searchable?` | boolean | — | Adds a search field at the top of the root menu. It searches the options of
- every `single` and `multiple` facet in one list. For example, "alice" can
- appear under application-defined Assignee and Owner facets. `text` and
- `custom` facets remain available when the search is empty. Each facet uses
- its `filter` function when supplied, or the built-in substring match. |
+| `renderTrigger?` | (state) => ReactNode | — | Replaces the default `Button` with a trigger returned from this function. Receives a `SelectFacetedTriggerState`. Return exactly one focusable element: the menu is positioned relative to that element and opens when it is clicked. Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned element, on a role that supports them (an Anta `Button` already carries `role="button"`; otherwise add `role="combobox"`). `className`, `style`, and other trigger props apply only to the default Button, so add styling and attributes to the returned element. |
+| `searchable?` | boolean | — | Adds a search field at the top of the root menu. It searches the options of every `single` and `multiple` facet in one list. For example, "alice" can appear under application-defined Assignee and Owner facets. `text` and `custom` facets remain available when the search is empty. Each facet uses its `filter` function when supplied, or the built-in substring match. |
 | `searchPlaceholder?` | string | Filter… | Placeholder for the global search field. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Default trigger's button size. |
-| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Tone applied to a selected option row in the facet flyouts (label, selected
- tint, and the check / checkbox indicator). A named tone or a custom CSS
- color, matching `Select`'s `toneSelected`. Defaults to a neutral selection. |
-| `value?` | SelectFacetedValue | — | Controlled value record, keyed by facet. When provided, update it through
- `onValueChange`. Leave it undefined for uncontrolled use. |
+| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Tone applied to a selected option row in the facet flyouts (label, selected tint, and the check / checkbox indicator). A named tone or a custom CSS color, matching `Select`'s `toneSelected`. Defaults to a neutral selection. |
+| `value?` | SelectFacetedValue | — | Controlled value record, keyed by facet. When provided, update it through `onValueChange`. Leave it undefined for uncontrolled use. |
 
 ### The `SelectFacet` type
 

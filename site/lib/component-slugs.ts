@@ -6,7 +6,7 @@
  *  generators to filter the root `.mdx` set. Keep in sync with the sidebar nav
  *  in DocsLayout.astro when adding a component. */
 export const COMPONENT_SLUGS = [
-  'avatar', 'banner', 'box', 'breadcrumbs', 'button', 'card', 'checkbox', 'dialog', 'expander', 'icon', 'loader', 'progress', 'input',
+  'avatar', 'banner', 'box', 'capture', 'breadcrumbs', 'button', 'card', 'checkbox', 'dialog', 'expander', 'icon', 'loader', 'progress', 'input',
   'input-autocomplete', 'input-date', 'input-time', 'slider',
   'menu', 'radio', 'select', 'select-faceted', 'stickers', 'table',
   'switch', 'tabs', 'steps', 'tag', 'text', 'title', 'toaster', 'tooltip',

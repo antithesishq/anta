@@ -5,7 +5,7 @@
 // job (see comparison-data.ts). Anta's column is highlighted; the category
 // column and the header row are sticky so the wide grid stays legible while
 // it scrolls horizontally.
-import { CATEGORIES, COVERAGE, COVERAGE_SYSTEMS, COVERAGE_URLS, type Mark } from './comparison-data'
+import { CATEGORIES, COVERAGE, COVERAGE_SYSTEMS, COVERAGE_URLS, ANTA_SLUG, type Mark } from './comparison-data'
 
 const MARK: Record<Mark | 'none', { glyph: string; label: string; cls: string }> = {
   yes: { glyph: '✓', label: 'Included', cls: 'm-yes' },
@@ -21,16 +21,6 @@ const MARK_TONE: Partial<Record<Mark, string>> = {
   yes: 'success',
   partial: 'warning',
   paid: 'info',
-}
-
-// Anta's own coverage marks link to the matching component page. The category
-// labels above remain static text so the first column is not interactive.
-const ANTA_SLUG: Record<string, string> = {
-  button: 'button', textinput: 'input', select: 'select', combobox: 'input-autocomplete',
-  choice: 'checkbox', slider: 'slider',
-  datetime: 'input-date', tabs: 'tabs', menu: 'menu', tooltip: 'tooltip',
-  dialog: 'dialog', toast: 'toaster', accordion: 'expander', table: 'table', tag: 'tag', avatar: 'avatar', card: 'card', progress: 'progress', steps: 'steps', nav: 'breadcrumbs',
-  icons: 'icon', typography: 'text',
 }
 
 ---
@@ -68,7 +58,8 @@ const ANTA_SLUG: Record<string, string> = {
               : undefined
             const tone = MARK_TONE[raw ?? 'no']
             const iconShape = raw === 'paid' ? 'dollar-sign' : 'check'
-            const title = `${s.name} — ${c.label}: ${m.label}`
+            const example = c.examples?.[s.id]
+            const title = `${s.name} — ${c.label}: ${m.label}${example ? ` (${example})` : ''}`
             return (
               <td class:list={['mark', m.cls, { anta: s.anta }]}>
                 {shipped && href ? (

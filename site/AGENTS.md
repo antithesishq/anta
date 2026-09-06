@@ -51,6 +51,22 @@ ClientRouter navigations receive the same mark.js treatment as cold loads.
 The build also copies the index to ignored `public/search-index.json`; `pnpm run dev` serves that
 last-built snapshot without rebuilding it during source changes.
 
+## Comparison coverage
+
+Coverage marks need a public, reusable component or utility and a supporting
+docs or source link. Utility containers include general-purpose Box APIs,
+observers, and scroll or input utilities. Dedicated Stack/Grid layouts alone do
+not count. Focus management is a separate row: count standalone APIs for focus
+indicators, traps, scopes, or navigation. Internal dialog behavior and plain CSS
+focus styling do not count. Name each row's examples in its cell tooltips.
+
+Keep current package versions separate from dated bundle measurements. Updating
+a version does not update its measured size. Link factual system claims to
+official sources. Browser compatibility estimates need a `~`, the shipped
+features and browser versions behind them, and a separate statement of the
+vendor's support policy. Account for polyfills and progressive enhancements;
+a JavaScript build target alone does not establish browser compatibility.
+
 ## Playground
 
 The `<Playground>` component (`site/src/components/Playground.tsx`) is the playground that lands on `/<name>/` pages. It is the largest single component in this directory and is intentionally self-contained so that a future migration to a dedicated package (`@antadesign/sandbox` or similar) and a dedicated repository can lift it out without disturbing the rest of the site. Pages import `PlaygroundEmbed.astro`, which serializes its props into a host for the prebuilt runtime.
@@ -127,6 +143,12 @@ bring a section into voice when you edit it. This file covers the page *structur
 (below); `WRITING.md` covers the words.
 
 ## Component reference tables
+
+- Every `Preview` has matching `folded` code immediately after it. Put explanatory prose before the preview or after the complete code group so the panels stay visually attached. Demonstrate interaction recipes with working previews instead of placeholder handlers.
+- A demo that switches to a local `.light` or `.dark` scope sets both its foreground and background from that scope's tokens. Transparent surfaces can leave locally themed text on the opposite page background.
+- Fold only DOM-forwarding base props under "Inherited props." Keep fields inherited from payload interfaces in the main table. `lib/api-props.mjs` shares that classification with the Markdown renderer.
+- Package Markdown and `/llms-full.txt` render every `PropsTable` through `lib/llms/parse-mdx.mjs`, including labeled secondary references. Deep links into nested disclosures must open every enclosing block.
+- Reference information inside a site component needs a Markdown renderer in `lib/llms/reference-content.mjs`. Use `renderDocumentation` for npm and LLM output, share the page's data, and test that tables, catalogs, and dynamic labels survive. Live previews may be omitted; their reference content must remain.
 
 - **Props table is automatic.** `<PropsTable component="Button" />` derives everything from `src/api.json` (typedoc) and `PropsTable.astro` owns the rendering, so it's uniform across pages — don't hand-format props. How it renders (for reference, all in `PropsTable.astro`): prop name = monospace, weight 475, no code pill; the optional `?` is a separate `--text-5` element with `user-select: none` (double-click selects just the name, copy omits the `?`); the type column lists each union member on its own line (no `|`), with **type names** (`string`/`number`/`boolean` and named types like `IconShape`) as plain `--text-3` monospace and **literal values** as copyable `<code>` pills with the surrounding quotes stripped (e.g. `neutral`); "no value" em-dashes in the Type/Default columns use `--text-5`.
 - **Each component page ends with a `## Styling` `<Disclosure>`, not a token table.** Per the [`../src/AGENTS.md`](../src/AGENTS.md) "Documented styling surface" doctrine, it leads with the props + the single `--{component}-tone-source` custom-color knob, then shows how to customize everything else with **plain CSS** (light-DOM components) or **`::part(...)`** (shadow-DOM components) — with a short `tsx folded` / `css folded` example. Do **not** enumerate the internal per-state output tokens (`--*-fill*`, `--*-bg`, `--*-fg`, …) as an override table, and examples must not set those `--*` vars. If you do list a kept knob (`--*-tone-source`, `--checkbox-mask-*`, `--expander-gutter`), it stays normal `` `code` `` (copyable code-pill styling is automatic).

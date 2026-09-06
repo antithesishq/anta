@@ -6,8 +6,32 @@ A few guidelines for designers and engineers using Anta.
 
 The matrix renders every text level on every background for the selected tone and theme. Each cell shows the WCAG 2 contrast ratio, AA or AAA result for the selected size and weight, and APCA Lc value. The controls change rendering and pass thresholds, not the color-pair ratios. Vision tabs apply SVG-filter and CSS-mask simulations; the numbers use normal-vision math.
 
+The interactive matrix compares all five text levels with all five background levels for each tone in light and dark mode. It resolves the active CSS palette in the browser, composites transparent text over its background, and reports WCAG 2 contrast and APCA Lc.
+
+Choose the application's palette, tone, font size, and font weight before evaluating a pair. Recheck after changing a theme or seed. The [Colors reference](./colors.md) lists the source declarations for both shipped palettes.
+
+Vision simulations change the displayed sample; contrast results continue to use normal-vision colors. Use simulations alongside text labels and other non-color signals.
+
+Computed contrast cells depend on the selected palette and settings. Evaluate the actual application colors with the [interactive accessibility matrix](https://anta.design/accessibility/).
+
+## System colors
+
 This table uses the browser's system colors directly. It changes with the active
 forced-colors palette, so it shows the values a component can use in that mode.
+
+| System colors | Use |
+| --- | --- |
+| `Canvas`, `CanvasText` | Document background and text |
+| `ButtonFace`, `ButtonText`, `ButtonBorder` | Control surface, text, and edge |
+| `Field`, `FieldText` | Input field background and text |
+| `Highlight`, `HighlightText` | Selected text |
+| `SelectedItem`, `SelectedItemText` | Selected control or list item |
+| `Mark`, `MarkText` | Marked text, such as &lt;mark&gt; |
+| `AccentColor`, `AccentColorText` | Accented control |
+| `LinkText` | Unvisited link text |
+| `VisitedText` | Visited link text |
+| `ActiveText` | Active link text |
+| `GrayText` | Disabled text |
 
 ## Color is not a unique communication channel
 

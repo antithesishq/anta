@@ -29,6 +29,7 @@ pnpm run dev        # Long-running package watcher and docs-site dev server
 pnpm run build      # Build anta JS, CSS, and declarations
 pnpm run lint       # Enforce custom-element / React 19 safety rules
 pnpm run typecheck  # Type check anta without emitting
+pnpm test           # Run root regression tests (requires Chromium or installed Chrome)
 ```
 
 Use `pnpm run dev` for any development work, including docs-site work. It rebuilds anta and stickers before the site, so package-source edits propagate to the running site. Do not start `site`'s dev server directly for package work.
@@ -37,7 +38,18 @@ The docs site consumes the built workspace `dist/` output. Esbuild runs without 
 
 ## Verification
 
-CI runs build, custom linting, anta and sticker type checks, the stickers build, site CSS linting, and a production site build. Run the checks relevant to the area you changed; run the complete set before handing off a broad change.
+CI runs build, custom linting, anta and sticker type checks, root regression tests,
+the stickers build, site CSS linting, and a production site build. `pnpm test`
+includes Capture, Slider, and disclosure-navigation browser tests and Markdown
+conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runner's installed Chrome.
+Run the checks relevant to the area you changed; run the complete set before
+handing off a broad change.
+
+Cloudflare Pages must use the Node version in `.node-version`; a dashboard
+`NODE_VERSION` override can make its build differ from CI. The manual
+`trigger-cloudflare-deploy.yml` workflow supports `action: logs` for diagnostics
+and an optional `node_version` when redeploying. That override applies to the
+project's preview or production environment, according to the target branch.
 
 ## Shared conventions
 

@@ -3,10 +3,20 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## 0.3.27 — September 4, 2026
+## 0.3.27 — September 6, 2026
+
+### Added
+
+- Added `Capture` / `<a-capture>`, a new input container for custom wheel,
+  pointer, and pan gestures. Each capability is opt-in and emits serialized
+  input with coordinates relative to the component.
 
 ### Fixed
 
+- Packaged Markdown includes comparison tables, color and system-color references,
+  icon and sticker catalogs, and theming-lab inputs.
+- `Slider` stops dragging after lost pointer capture or a missed button release,
+  so moving back over it without pressing cannot move the thumb.
 - `Checkbox` sets its ARIA state and form value in Safari 16.4-17.3 and Firefox
   93-125, where `ElementInternals` lacks `CustomStateSet`.
 - `Box` removes its per-window store only when that store is the one still

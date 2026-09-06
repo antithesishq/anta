@@ -250,50 +250,29 @@ element — `Input`, and the composed `Select` — skip it and expose only
 <RadioGroup onValueChange={(_e, { value }) => save(value)} options={…} />
 ```
 
+## RadioGroup props
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `options` | RadioOption[] | — | The options. The wrapper renders one `<a-radio>` per entry and computes its
- `selected` / roving `tabindex` / `role` declaratively. |
+| `options` | RadioOption[] | — | The options. The wrapper renders one `<a-radio>` per entry and computes its `selected` / roving `tabindex` / `role` declaratively. |
 | `defaultValue?` | string | — | Initial selected value for uncontrolled use. |
 | `disabled?` | boolean | — | Disable the whole group. |
-| `hint?` | string | — | Plain-text description for the group, rendered directly under `label` (above
- the options) — typically instructional copy. Per-option helper text goes on
- the option's own `hint` instead. |
+| `hint?` | string | — | Plain-text description for the group, rendered directly under `label` (above the options) — typically instructional copy. Per-option helper text goes on the option's own `hint` instead. |
 | `label?` | string | — | Plain-text label for the whole group, rendered above the options. |
-| `name?` | string | — | Form field name — the group submits one `name=value` (it's the
- form-associated element). |
+| `name?` | string | — | Form field name — the group submits one `name=value` (it's the form-associated element). |
 | `onBlur?` | (event) => void | — | Fired when focus leaves the group entirely — wired to `focusout`. |
-| `onChange?` | (event) => void | — | Fired *after* the selection changes — a native `change` event (the post-apply
- counterpart to `onStateChange`). Not cancelable; for a controlled group it
- fires once you've updated `value`. |
-| `onFocus?` | (event) => void | — | Fired when focus enters the group (any option) — wired to `focusin`, since
- focus lands on an individual option, not the group element itself. |
-| `onStateChange?` | (event, detail) => void | — | Fired whenever selection changes — event-first. `detail` is
- `{ next, prev, reason }`: `next`/`prev` are values (`null` = nothing selected);
- `reason` is `'user'` \| `'reset'` \| `'restore'`. A `'user'` pick fires *before*
- applying and is **cancelable** — `event.preventDefault()` vetoes it
- (uncontrolled), or in controlled mode answer by updating `value` (reject by
- doing nothing). `'reset'` (form reset) and `'restore'` (bfcache / autofill) are
- not cancelable — filter on `reason` if you only track user picks. |
-| `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value, name }` snapshot as the second argument,
- matching `Input`. |
+| `onChange?` | (event) => void | — | Fired *after* the selection changes — a native `change` event (the post-apply counterpart to `onStateChange`). Not cancelable; for a controlled group it fires once you've updated `value`. |
+| `onFocus?` | (event) => void | — | Fired when focus enters the group (any option) — wired to `focusin`, since focus lands on an individual option, not the group element itself. |
+| `onStateChange?` | (event, detail) => void | — | Fired whenever selection changes — event-first. `detail` is `{ next, prev, reason }`: `next`/`prev` are values (`null` = nothing selected); `reason` is `'user'` \| `'reset'` \| `'restore'`. A `'user'` pick fires *before* applying and is **cancelable** — `event.preventDefault()` vetoes it (uncontrolled), or in controlled mode answer by updating `value` (reject by doing nothing). `'reset'` (form reset) and `'restore'` (bfcache / autofill) are not cancelable — filter on `reason` if you only track user picks. |
+| `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value, name }` snapshot as the second argument, matching `Input`. |
 | `orientation?` | 'vertical' \| 'horizontal' | 'vertical' | Layout + arrow-key axis. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size applied to every option (an option's own `size` wins). |
-| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | 'neutral' | Validation/feedback tone for the group `hint` — recolors it (same tone set
- as `Input`'s `status`). Use `critical` for an error message, etc.; omit for
- the neutral default. |
-| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Mark tone applied to every option (an option's own `tone` wins), or any literal
- CSS color for a one-off custom tone. Colors the selected-ring fill + dot *and*
- the unselected ring border. Named tones track light/dark mode. Use `toneSelected`
- instead to tone only the selected option and leave the rest neutral. The option
- text stays neutral — recolor it in plain CSS via the `--text-N-{tone}` tokens. |
-| `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Like `tone`, but colored onto the **selected option only** — every unselected
- ring stays neutral grey. Applied to every option (an option's own `toneSelected`
- wins). Prefer this over `tone` when a resting tinted border would read as a
- validation state. |
-| `value?` | string | — | Controlled selected value. The group follows this prop and reports a
- requested change through `onStateChange`. Leave it undefined for
- uncontrolled use. |
+| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | 'neutral' | Validation/feedback tone for the group `hint` — recolors it (same tone set as `Input`'s `status`). Use `critical` for an error message, etc.; omit for the neutral default. |
+| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Mark tone applied to every option (an option's own `tone` wins), or any literal CSS color for a one-off custom tone. Colors the selected-ring fill + dot *and* the unselected ring border. Named tones track light/dark mode. Use `toneSelected` instead to tone only the selected option and leave the rest neutral. The option text stays neutral — recolor it in plain CSS via the `--text-N-{tone}` tokens. |
+| `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Like `tone`, but colored onto the **selected option only** — every unselected ring stays neutral grey. Applied to every option (an option's own `toneSelected` wins). Prefer this over `tone` when a resting tinted border would read as a validation state. |
+| `value?` | string | — | Controlled selected value. The group follows this prop and reports a requested change through `onStateChange`. Leave it undefined for uncontrolled use. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -325,6 +304,8 @@ treatments.
   <label><input data-anta type="radio" name="plan" value="enterprise" size="large" tone="warning"> Enterprise</label>
 </div>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** colors the mark in every state,
 **`toneSelected`** only the selected option (any CSS color for a custom tone, set on

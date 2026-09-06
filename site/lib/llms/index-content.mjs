@@ -47,13 +47,16 @@ export const componentGroups = [
     ['SelectFaceted', '/select-faceted/'],
   ],
   [
-    ['Box', '/box/'],
     ['Banner', '/banner/'],
     ['Card', '/card/'],
     ['Dialog', '/dialog/'],
     ['Toaster', '/toaster/'],
     ['Expander', '/expander/'],
     ['Menu', '/menu/'],
+  ],
+  [
+    ['Box', '/box/'],
+    ['Capture', '/capture/'],
   ],
 ]
 

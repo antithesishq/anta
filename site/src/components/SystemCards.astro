@@ -1,35 +1,34 @@
 ---
-// Per-system pros/cons cards for the /comparison page. One card per system,
-// each with its name (linked to docs), version, one-line identity, and honest
-// pro/con columns. Anta's card leads and carries a brand accent.
-import { SYSTEMS } from './comparison-data'
+import { COVERAGE_SYSTEMS } from './comparison-data'
 ---
 
 <div class="cards">
-  {SYSTEMS.map((s) => (
+  {COVERAGE_SYSTEMS.map((s) => (
     <section class:list={['card', { anta: s.anta }]}>
       <header class="card-head">
-        <h3 class="card-name" id={`sys-${s.id}`}>
-          {s.nameParts
-            ? s.nameParts.map((part, index) => <>
-                {index > 0 && <span aria-hidden="true"> + </span>}
-                <a href={part.href} target="_blank" rel="noopener">{part.label}</a>
-              </>)
-            : <a href={s.docs} target="_blank" rel="noopener">{s.name}</a>}
-        </h3>
-        <span class="card-ver">{s.version}</span>
+        <div class="card-identity">
+          <h3 class="card-name" id={`sys-${s.id}`}>
+            {s.nameParts
+              ? s.nameParts.map((part, index) => <>
+                  {index > 0 && <span aria-hidden="true"> + </span>}
+                  <a href={part.href} target="_blank" rel="noopener">{part.label}</a>
+                </>)
+              : <a href={s.docs} target="_blank" rel="noopener">{s.name}</a>}
+          </h3>
+          <span class="card-ver">{s.version}</span>
+        </div>
+        <div class="card-facts">
+          <span class="card-fact" tabindex="0" aria-describedby={`sys-${s.id}-size`}>
+            Gzipped size <strong>{s.bundleSize}</strong>
+            <a-tooltip id={`sys-${s.id}-size`}><span class="size-version">Measured: {s.bundleVersion}.</span>{s.bundleIncludes}</a-tooltip>
+          </span>
+          <span class="card-fact" tabindex="0" aria-describedby={`sys-${s.id}-browsers`}>
+            Browser support <strong>{s.browserSupport}</strong>
+            <a-tooltip id={`sys-${s.id}-browsers`}>{s.browsers}</a-tooltip>
+          </span>
+        </div>
       </header>
       <p class="card-tagline">{s.tagline}</p>
-      <dl class="card-facts">
-        <div>
-          <dt>Gzipped size</dt>
-          <dd><strong>{s.bundleSize}</strong><span>{s.bundleIncludes}</span></dd>
-        </div>
-        <div>
-          <dt>Browser support</dt>
-          <dd>{s.browsers}</dd>
-        </div>
-      </dl>
       <div class="card-cols">
         <div class="col-pros">
           <h4><a-icon shape="circle-check" class="head-icon"></a-icon>Strengths</h4>
@@ -44,6 +43,12 @@ import { SYSTEMS } from './comparison-data'
           </ul>
         </div>
       </div>
+      <p class="card-sources">
+        Sources: {s.sources.map((source, index) => <>
+          {index > 0 && ' · '}
+          <a href={source.href}>{source.label}</a>
+        </>)}
+      </p>
     </section>
   ))}
 </div>
@@ -64,10 +69,16 @@ import { SYSTEMS } from './comparison-data'
   }
   .card.anta {
     border-color: var(--border-3-brand);
-    background: var(--bg-5-brand);
+    background: var(--bg-4-brand);
   }
 
   .card-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 12px 24px;
+  }
+  .card-identity {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
@@ -99,47 +110,43 @@ import { SYSTEMS } from './comparison-data'
   }
 
   .card-facts {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 1px;
-    margin: 0 0 18px;
-    overflow: hidden;
-    border: 1px solid var(--border-5);
-    border-radius: 7px;
-    background: var(--border-5);
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 16px;
   }
-  .card-facts > div {
-    padding: 10px 12px;
-    background: var(--bg-canvas);
-  }
-  .card.anta .card-facts > div {
-    background: var(--bg-5-brand);
-  }
-  .card-facts dt {
-    margin-bottom: 3px;
+  .card-fact {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
     color: var(--text-3);
     font-size: 11px;
     font-weight: 650;
+    font-style: normal;
+    font-variation-settings: inherit;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-  }
-  .card-facts dd {
-    margin: 0;
-    color: var(--text-2);
-    font-size: 12.5px;
-    line-height: 1.45;
+    white-space: nowrap;
+    cursor: help;
+    border-radius: 3px;
   }
   .card-facts strong {
     color: var(--text-1);
     font-family: var(--monospace, ui-monospace, monospace);
     font-size: 12px;
     font-weight: 550;
+    text-transform: none;
+    letter-spacing: normal;
   }
-  .card-facts strong::after {
-    content: " · ";
-    color: var(--text-4);
+  .size-version {
+    display: block;
+    margin-bottom: 4px;
   }
-  .card-facts span {
+
+  .card-sources {
+    margin: 16px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
     color: var(--text-3);
   }
 
@@ -148,8 +155,12 @@ import { SYSTEMS } from './comparison-data'
     grid-template-columns: 1fr 1fr;
     gap: 12px 32px;
   }
+  @container (max-width: 760px) {
+    .card-head {
+      grid-template-columns: 1fr;
+    }
+  }
   @container (max-width: 640px) {
-    .card-facts,
     .card-cols {
       grid-template-columns: 1fr;
     }

@@ -206,52 +206,29 @@ it also blocks navigation until the load resolves.
 </Card>
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `children?` | ReactNode | — | The card body. A string is wrapped in a `<Text>` at secondary priority,
- following the card's `tone` and `size`; pass your own nodes to take over. |
-| `footer?` | ReactNode | — | Footer content, usually action buttons. Rendered as a **left-aligned** row
- (wraps under pressure) — the opposite of `Dialog`'s right-aligned footer. |
-| `header?` | ReactNode | — | Header content, in the top zone. A string is wrapped in a `<Title>` — a real
- heading in the document outline, tinted to match `tone`, at a level that
- tracks `size` (small → 5, medium → 4, large → 3). Pass your own node
- (`<Title level={2}>`, an `<h2>`) for a different level or styling. Omit for
- no header. |
-| `href?` | string | — | Turn the whole card into a link. The card renders a focusable anchor and its
- accessible name comes from `header` → body → this URL (override with
- `aria-label`). A link card is display content — don't nest interactive
- controls inside it. |
-| `icon?` | (string & {}) \| string \| number \| bigint \| boolean \| ReactElement \| Iterable \| ReactPortal \| Promise \| null | — | Leading visual for the header, laid out to the left of the `header` /
- `subtitle` as one aligned row (so it doesn't sit inline in the title, where it
- mis-aligns). A **string** is an icon shape, rendered as an `<Icon>` inside a
- circular chip (sized per the card via `--card-icon-size`); pass an `<img>`,
- initials (`<Text>`), or any node to use it as-is. Omit for none. |
-| `loading?` | boolean | — | Loading state — dims the card with a skeleton pulse, sets `aria-busy`, and (in
- link mode) blocks navigation. |
-| `media?` | ReactNode | — | Media (image, illustration) rendered full-bleed to the card edge, clipped to
- its corners. Position it with `mediaPosition`. |
+| `children?` | ReactNode | — | The card body. A string is wrapped in a `<Text>` at secondary priority, following the card's `tone` and `size`; pass your own nodes to take over. |
+| `footer?` | ReactNode | — | Footer content, usually action buttons. Rendered as a **left-aligned** row (wraps under pressure) — the opposite of `Dialog`'s right-aligned footer. |
+| `header?` | ReactNode | — | Header content, in the top zone. A string is wrapped in a `<Title>` — a real heading in the document outline, tinted to match `tone`, at a level that tracks `size` (small → 5, medium → 4, large → 3). Pass your own node (`<Title level={2}>`, an `<h2>`) for a different level or styling. Omit for no header. |
+| `href?` | string | — | Turn the whole card into a link. The card renders a focusable anchor and its accessible name comes from `header` → body → this URL (override with `aria-label`). A link card is display content — don't nest interactive controls inside it. |
+| `icon?` | (string & {}) \| string \| number \| bigint \| boolean \| ReactElement \| Iterable \| ReactPortal \| Promise \| null | — | Leading visual for the header, laid out to the left of the `header` / `subtitle` as one aligned row (so it doesn't sit inline in the title, where it mis-aligns). A **string** is an icon shape, rendered as an `<Icon>` inside a circular chip (sized per the card via `--card-icon-size`); pass an `<img>`, initials (`<Text>`), or any node to use it as-is. Omit for none. |
+| `loading?` | boolean | — | Loading state — dims the card with a skeleton pulse, sets `aria-busy`, and (in link mode) blocks navigation. |
+| `media?` | ReactNode | — | Media (image, illustration) rendered full-bleed to the card edge, clipped to its corners. Position it with `mediaPosition`. |
 | `mediaPosition?` | 'top' \| 'bottom' \| 'left' \| 'right' | 'top' | Which edge the `media` bleeds to. |
 | `ping?` | string | — | Space-separated URLs the browser pings on navigation (only with `href`). |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'primary' | Surface emphasis. `primary` (the default) is a clean sheet; `secondary` is a
- subtle fill; `tertiary` is a frosted, semi-transparent panel with a backdrop
- blur. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'primary' | Surface emphasis. `primary` (the default) is a clean sheet; `secondary` is a subtle fill; `tertiary` is a frosted, semi-transparent panel with a backdrop blur. |
 | `rel?` | string | — | Anchor rel (only with `href`). |
-| `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a
- `number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit for
- the default `--card-radius`. |
-| `selected?` | boolean | — | Selected / chosen state — draws an inset ring in the tone color, for
- choice-card / plan-picker patterns. |
+| `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a `number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit for the default `--card-radius`. |
+| `selected?` | boolean | — | Selected / chosen state — draws an inset ring in the tone color, for choice-card / plan-picker patterns. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant — scales the padding. |
-| `subtitle?` | ReactNode | — | A secondary line under the header title, rendered as smaller text
- (`<Text size="small">`) in the heading section. Tinted to match `tone`, like
- the title. Omit for no subtitle. |
+| `subtitle?` | ReactNode | — | A secondary line under the header title, rendered as smaller text (`<Text size="small">`) in the heading section. Tinted to match `tone`, like the title. Omit for no subtitle. |
 | `target?` | string | — | Anchor target (only with `href`). |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for
- a one-off custom tone. Named tones re-point the surface + text; a custom
- color keeps its hue while lightness/chroma are pinned. `'neutral'` (the
- default) is the same as omitting it. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Named tones re-point the surface + text; a custom color keeps its hue while lightness/chroma are pinned. `'neutral'` (the default) is the same as omitting it. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -266,6 +243,8 @@ Slots hold media, header, and footer content. Unslotted content is the card body
   </a-button>
 </a-card>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the surface in oklch), **`priority`** the fill, **`size`** the

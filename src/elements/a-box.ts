@@ -452,8 +452,9 @@ export class ABoxElement extends HTMLElementBase {
      connectedCallback, when there is no store yet. Syncing then would flip the
      started flags while `this.#store?.subscribeContext` silently did nothing,
      and the later connect would see the flags already set and skip it. */
-  attributeChangedCallback() {
-    if (this.#store) this.#sync()
+  attributeChangedCallback(name: string) {
+    if (!this.#store) return
+    if (name === 'fade' || name === 'observe') this.#sync()
   }
 
   /** A fresh measurement snapshot. For notifications, prefer `measurechange`:

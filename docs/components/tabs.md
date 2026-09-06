@@ -166,6 +166,8 @@ its value is active. The panel names its tab as its accessible label
 Panels are **optional**. Without panels, `Tabs` renders the strip. Listen to
 `onStateChange` / `onValueChange` and render the content yourself.
 
+### JSX vs DOM
+
 The strip renders from the `options` array; each `<TabPanel>` renders a
 self-managing `<a-tabpanel>`. `Tabs` **never reads or toggles the panels**: there's
 no child introspection, so it renders the same in static SSR and works with any
@@ -195,6 +197,8 @@ and shows/hides **itself** via its own off-DOM `:state(active)`; nothing writes
 (`internals.ariaLabelledByElements`), so no `id` wiring is needed. No web component
 writes the light DOM, only your JSX does, which keeps a worker-thread reactive engine
 in sync.
+
+### Hiding an inactive panel
 
 A `<TabPanel>` stays mounted while inactive (its DOM, form values, and scroll
 survive tab switches); `hideMode` picks how it hides:
@@ -265,6 +269,8 @@ const [tab, setTab] = useState('overview')
 />
 ```
 
+## Keyboard & accessibility
+
 Every enabled tab is in the tab order; `Tab` / `Shift`+`Tab` step through them.
 The arrow keys also move between enabled tabs (wrapping at the ends), `Home` /
 `End` jump to the first / last, and `Space` / `Enter` activate the focused tab;
@@ -274,6 +280,8 @@ Disabled tabs are skipped and dropped from the tab order.
 Pass `label` for the tablist's accessible name. Each `<TabPanel>` names its tab as
 its accessible label (`aria-labelledby`), set off-DOM so nothing writes the panel's
 attributes.
+
+## Routing
 
 `Tabs` reports the picked value and leaves navigation to the app, so a strip can
 switch routes as readily as panels. Treat each `value` as a path: control `value`
@@ -319,54 +327,56 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 <Tabs defaultValue="a" onValueChange={(_e, { value }) => route(value)}>…</Tabs>
 ```
 
+## Tabs props
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `children?` | ReactNode | — | Optional `<TabPanel value="…">` panels, one per tab value. Each is a
- self-managing `<a-tabpanel>` that shows itself when its `value` is the active
- tab. Omit them to use `Tabs` as a bare selectable strip. To place panels in a
- different layout region, or to unmount an inactive panel, drive selection with
- a controlled `value` and render the content yourself (see the docs). |
-| `defaultValue?` | string | — | Initial active value for the uncontrolled case. After first render `Tabs`
- owns selection itself. |
+| `children?` | ReactNode | — | Optional `<TabPanel value="…">` panels, one per tab value. Each is a self-managing `<a-tabpanel>` that shows itself when its `value` is the active tab. Omit them to use `Tabs` as a bare selectable strip. To place panels in a different layout region, or to unmount an inactive panel, drive selection with a controlled `value` and render the content yourself (see the docs). |
+| `defaultValue?` | string | — | Initial active value for the uncontrolled case. After first render `Tabs` owns selection itself. |
 | `disabled?` | boolean | — | Disable the whole strip. |
 | `fill?` | boolean | false | Makes horizontal tabs share the available inline space equally. |
 | `label?` | string | — | Accessible name for the tablist (`aria-label`). |
-| `noslide?` | boolean | — | Disable the sliding indicator. By default the selected-tab indicator animates
- between tabs (a single rectangle, via CSS anchor positioning); `noslide` paints it
- per tab so it snaps with no movement. (Browsers without anchor positioning get that
- per-tab paint automatically — `noslide` is the explicit opt-out.) |
+| `noslide?` | boolean | — | Disable the sliding indicator. By default the selected-tab indicator animates between tabs (a single rectangle, via CSS anchor positioning); `noslide` paints it per tab so it snaps with no movement. (Browsers without anchor positioning get that per-tab paint automatically — `noslide` is the explicit opt-out.) |
 | `onBlur?` | (event) => void | — | Focus left the strip entirely — wired to `focusout`. |
 | `onChange?` | (event) => void | — | Fired *after* the active tab changes — a native `change` event. |
-| `onFocus?` | (event) => void | — | Focus entered the strip (any tab) — wired to `focusin` (focus lands on a tab,
- not the tablist). |
-| `onStateChange?` | (event, detail) => void | — | Fired whenever the active tab changes — event-first. `detail` is
- `{ next, prev }` (values; `null` = none). Cancelable: `event.preventDefault()`
- vetoes it (uncontrolled), or in controlled mode answer by updating `value`. |
+| `onFocus?` | (event) => void | — | Focus entered the strip (any tab) — wired to `focusin` (focus lands on a tab, not the tablist). |
+| `onStateChange?` | (event, detail) => void | — | Fired whenever the active tab changes — event-first. `detail` is `{ next, prev }` (values; `null` = none). Cancelable: `event.preventDefault()` vetoes it (uncontrolled), or in controlled mode answer by updating `value`. |
 | `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value }` snapshot as the 2nd argument. |
-| `options?` | TabOption[] | — | The tabs, as a data array (the strip's single source). Each entry is a
- `TabOption` (`value`, `label` or `children`, `icon`, `iconTrailing`, `tone`,
- `disabled`, `round`, `className`, `style`). `className` and `style` land on
- that option's individual `<a-tab>`, not on the strip. |
-| `orientation?` | 'horizontal' \| 'vertical' | 'horizontal' | Layout + arrow-key axis. Horizontal ellipsizes labels when tabs overflow (scroll
- is opt-in via CSS); vertical stacks them. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'primary' | Visual priority. `primary` is the raised pill on a recessed track (the
- segmented-control look); `secondary` keeps that sizing but drops the track, marking
- the selected tab with a subtle active background fill; `tertiary` is a bottom-underline
- indicator under the selected tab (no track, no rest line). `tone` colors `secondary` +
- `tertiary`; `primary` stays neutral. |
-| `round?` | boolean \| number \| string | — | Fully-round the tabs and the sliding indicator (and the primary track
- well). Applies strip-wide; a single tab's `round` rounds just that tab. A
- `number` (px) or CSS length string sets a custom radius on the top-level
- track well only — the tab pills + indicator stay fully round. |
-| `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size — small 24px · medium 28px · large 32px tall, matching Button's scale (the tab's
- label leading runs a touch tighter, offset by 1px more block padding per side). |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Tone applied to the selected indicator/label, or any literal CSS color for a
- one-off custom tone (derived in oklch). Named tones track light/dark. |
-| `value?` | string | — | Controlled active value — the tab `value` to mark selected (and, when a
- `<TabPanel value="…">` shares it, the panel to reveal). When set, you own
- selection: the strip renders exactly what this says, and a user pick only
- *requests* a change via `onStateChange` — apply it by updating this prop.
- Leave undefined (and use `defaultValue`) for uncontrolled. |
+| `options?` | TabOption[] | — | The tabs, as a data array (the strip's single source). Each entry is a `TabOption` (`value`, `label` or `children`, `icon`, `iconTrailing`, `tone`, `disabled`, `round`, `className`, `style`). `className` and `style` land on that option's individual `<a-tab>`, not on the strip. |
+| `orientation?` | 'horizontal' \| 'vertical' | 'horizontal' | Layout + arrow-key axis. Horizontal ellipsizes labels when tabs overflow (scroll is opt-in via CSS); vertical stacks them. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'primary' | Visual priority. `primary` is the raised pill on a recessed track (the segmented-control look); `secondary` keeps that sizing but drops the track, marking the selected tab with a subtle active background fill; `tertiary` is a bottom-underline indicator under the selected tab (no track, no rest line). `tone` colors `secondary` + `tertiary`; `primary` stays neutral. |
+| `round?` | boolean \| number \| string | — | Fully-round the tabs and the sliding indicator (and the primary track well). Applies strip-wide; a single tab's `round` rounds just that tab. A `number` (px) or CSS length string sets a custom radius on the top-level track well only — the tab pills + indicator stay fully round. |
+| `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size — small 24px · medium 28px · large 32px tall, matching Button's scale (the tab's label leading runs a touch tighter, offset by 1px more block padding per side). |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Tone applied to the selected indicator/label, or any literal CSS color for a one-off custom tone (derived in oklch). Named tones track light/dark. |
+| `value?` | string | — | Controlled active value — the tab `value` to mark selected (and, when a `<TabPanel value="…">` shares it, the panel to reveal). When set, you own selection: the strip renders exactly what this says, and a user pick only *requests* a change via `onStateChange` — apply it by updating this prop. Leave undefined (and use `defaultValue`) for uncontrolled. |
+
+## Tab option props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `value` | string | — | This tab's identity — pairs it with the `<TabPanel value="…">` of the same value, and the value reported by `onStateChange` / `onChange`. Unique per strip. |
+| `children?` | ReactNode | — | Tab content when you need more than a string — used if `label` is omitted. |
+| `className?` | string | — | CSS class on the option's rendered row. |
+| `disabled?` | boolean | — | Disable just this tab — skipped by keyboard nav and dropped from the tab order (a disabled-but-selected tab stays reachable, per the ARIA pattern). |
+| `icon?` | IconShape | — | Leading icon shape, rendered before the label. |
+| `iconTrailing?` | IconShape | — | Trailing icon shape, rendered after the label. |
+| `label?` | ReactNode | — | Visible label. The string shorthand for the tab's content; for richer content pass `children` instead (`label` wins when both are set). |
+| `round?` | boolean | — | Fully-round just this tab's box. `<Tabs round>` rounds the whole strip (tabs + sliding indicator) instead. |
+| `style?` | CSSProperties | — | Inline styles on the option's rendered row. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | inherits the strip's `tone | Per-tab tone override, same vocabulary as `<Tabs tone>` — colors this one tab's label + icons (all priorities/modes, named or custom color) and, when it's the active tab, its indicator. For a **custom literal color** the sliding indicator can't adopt it (the shared moving element can't read a descendant's color), so a custom tone colors the label everywhere and the indicator only in `noslide`; the six **named** tones color both in every mode. Overrides the strip's `tone` for this tab. |
+| `tooltip?` | ReactNode | — | Tooltip for this tab — a string or any node — shown **only when one of the tab's ellipsizing label parts is truncated** (tabs ellipsize when the strip overflows), so clipped content reveals its full text on hover while a tab that fits shows nothing. Rendered as a `truncatedOnly` `<Tooltip>` anchored to the tab. For an always-visible tooltip or other custom trigger content, use `children` with your own `<Tooltip>` instead. |
+
+## TabPanel props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `value` | string | — | Pairs this panel with the tab (`options` entry) of the same `value`. |
+| `children?` | ReactNode | — | Panel content — arbitrary React/Preact. |
+| `className?` | string | — | CSS class on the rendered `<a-tabpanel>`. |
+| `hideMode?` | 'display' \| 'visibility' | display | How this panel hides while inactive: `display` (default — removed from layout and the a11y tree) or `visibility` (keeps its layout box, to measure it or avoid reflow). Both stay mounted; to *not render* an inactive panel, render it conditionally off a controlled `value` (see the Tabs docs). |
+| `style?` | CSSProperties | — | Inline style on the rendered `<a-tabpanel>`. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -385,6 +395,8 @@ Add `fill` to make horizontal tabs share the available width equally.
   <a-tabpanel role="tabpanel" value="security">Security settings</a-tabpanel>
 </div>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`**, **`size`**, **`priority`**. The focus ring is
 the global `--focus-ring` (see [Colors](../colors.md#focus-ring)).

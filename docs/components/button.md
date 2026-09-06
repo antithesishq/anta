@@ -217,6 +217,8 @@ underline stylistically, it supports three styles — `solid`, `dashed`,
 - **`selected`** — toggled-on / pressed visual; shares the active
   state's look. Useful for filter chips and icon toggles.
 
+## ButtonCopy
+
 `ButtonCopy` is a copy button — a `Button` preset for copy-to-clipboard. It
 composes a plain `<Button>` with a slotted `<a-copy>` element that writes to the
 clipboard when the button is activated. A button with a copy glyph changes the
@@ -329,57 +331,32 @@ current URL (`copyUrl`).
 |------|------|---------|-------------|
 | `copiedLabel?` | string | Copied | Text in the successful no-icon confirmation. |
 | `copy?` | string | — | Text copied to the clipboard on activation. |
-| `copyNode?` | boolean \| string | — | Copy a DOM node as rich text (`text/html`) + plain text. `true` copies
- the nearest ancestor marked `data-copy-source`; a string is a CSS
- selector for an ancestor region (`closest`). The copy control is stripped
- from the copied output. |
+| `copyNode?` | boolean \| string | — | Copy a DOM node as rich text (`text/html`) + plain text. `true` copies the nearest ancestor marked `data-copy-source`; a string is a CSS selector for an ancestor region (`closest`). The copy control is stripped from the copied output. |
 | `copyUrl?` | true | — | Copy the current page URL (`location.href`). |
 | `copyWithUrl?` | boolean | — | Prefix the copied text with `// URL: <current page URL>`. |
 | `disabled?` | boolean | — | Disable the button. |
 | `download?` | string \| boolean | — | Anchor download attribute. Empty string / `true` triggers a download with the resource's default name; a string overrides the filename. |
 | `form?` | string | — | Form id when the button isn't a descendant of its form. |
-| `href?` | string | — | URL to link to. A definite string renders `<a role="button">`; omit it
- (or pass `undefined`) to render `<a-button>`, so `href={maybeUrl}`
- degrades to a plain button when the URL is absent. |
-| `icon?` | IconShape | — | Leading icon shape. When set alone (no `label`, no `iconTrailing`, no
- `children`), the button renders as a square icon-only control and
- the wrapper auto-supplies `aria-label={icon}` (override by passing
- your own `aria-label`). |
-| `iconPlacement?` | 'leading' \| 'trailing' \| 'none' | 'leading' | Where the copy glyph sits relative to the label — or `'none'` to omit it.
- Without a glyph, a successful copy shows a small confirmation label near
- the pointer and leaves the button unchanged. |
+| `href?` | string | — | URL to link to. A definite string renders `<a role="button">`; omit it (or pass `undefined`) to render `<a-button>`, so `href={maybeUrl}` degrades to a plain button when the URL is absent. |
+| `icon?` | IconShape | — | Leading icon shape. When set alone (no `label`, no `iconTrailing`, no `children`), the button renders as a square icon-only control and the wrapper auto-supplies `aria-label={icon}` (override by passing your own `aria-label`). |
+| `iconPlacement?` | 'leading' \| 'trailing' \| 'none' | 'leading' | Where the copy glyph sits relative to the label — or `'none'` to omit it. Without a glyph, a successful copy shows a small confirmation label near the pointer and leaves the button unchanged. |
 | `iconTrailing?` | IconShape | — | Trailing icon shape. Renders after `children`, last in the slot order. |
 | `label?` | string | — | Label text. Renders between the leading icon and `children`. |
-| `loading?` | boolean | — | Show a rotating loading indicator. Blocks clicks and keyboard
- activation, and removes the button from the tab order while active. |
+| `loading?` | boolean | — | Show a rotating loading indicator. Blocks clicks and keyboard activation, and removes the button from the tab order while active. |
 | `onClick?` | (e) => void | — | Click handler. |
 | `onCopied?` | (ok) => void | — | Fires after the copy attempt with whether it succeeded. |
-| `onCopyRequest?` | () => void | — | Refresh a dynamic `copy` value before activation. Set the new string in
- application state so the next render updates `copy`. Return values are
- ignored. Fires on pointerdown and Enter/Space keydown. |
+| `onCopyRequest?` | () => void | — | Refresh a dynamic `copy` value before activation. Set the new string in application state so the next render updates `copy`. Return values are ignored. Fires on pointerdown and Enter/Space keydown. |
 | `paddingless?` | boolean | — | Drops outer padding to zero. |
 | `ping?` | string | — | Space-separated URLs the browser pings on navigation. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Visual emphasis. |
 | `rel?` | string | — | Anchor rel. |
-| `role?` | string | button | ARIA role override (e.g. `'gridcell'` when a button is a cell in a grid).
- Forwarded to the underlying element. |
-| `round?` | boolean \| number \| string | — | Fully-round corners — a pill for text buttons, a circle for icon-only ones
- (`border-radius: 999px`, clamped to the element's height). Pass a `number`
- (px) or a CSS length string (`'1rem'`) for a custom radius instead. |
+| `role?` | string | button | ARIA role override (e.g. `'gridcell'` when a button is a cell in a grid). Forwarded to the underlying element. |
+| `round?` | boolean \| number \| string | — | Fully-round corners — a pill for text buttons, a circle for icon-only ones (`border-radius: 999px`, clamped to the element's height). Pass a `number` (px) or a CSS length string (`'1rem'`) for a custom radius instead. |
 | `selected?` | boolean | — | Toggled-on / pressed state, e.g. for filter chips. |
-| `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. small=24px, medium=28px, large=32px. Omit the
- attribute or pass `'medium'` for the default — both render
- identically and emit no DOM attribute. |
-| `tabIndex?` | number | 0 | Tab order. The button is keyboard-focusable by default (`0`) and
- becomes `-1` automatically while `disabled` or `loading` — `<a-button>`
- and `<a role="button">` aren't focusable without an explicit tabindex,
- and a loading button must stay out of the tab order so Enter/Space can't
- fire it mid-flight. |
+| `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. small=24px, medium=28px, large=32px. Omit the attribute or pass `'medium'` for the default — both render identically and emit no DOM attribute. |
+| `tabIndex?` | number | 0 | Tab order. The button is keyboard-focusable by default (`0`) and becomes `-1` automatically while `disabled` or `loading` — `<a-button>` and `<a role="button">` aren't focusable without an explicit tabindex, and a loading button must stay out of the tab order so Enter/Space can't fire it mid-flight. |
 | `target?` | string | — | Anchor target. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`)
- for a one-off custom tone. Primary uses the color as-is; secondary,
- tertiary, and quaternary take its hue and pin lightness/chroma to the
- brand curve so any input stays legible. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Primary uses the color as-is; secondary, tertiary, and quaternary take its hue and pin lightness/chroma to the brand curve so any input stays legible. |
 | `type?` | 'button' \| 'submit' \| 'reset' | — | Form submission type. |
 | `underline?` | 'solid' \| 'dashed' \| 'dotted' | — | Underline style. |
 | `underlineOnHover?` | boolean | — | Hide the underline at rest and reveal it on hover. |
@@ -404,6 +381,8 @@ split or conditional spread:
 // Links out when there's a URL; a plain, disabled button when there isn't.
 <Button href={reportUrl} disabled={!reportUrl} iconTrailing="external-link" label="View report" />
 ```
+
+### Routing libraries
 
 Anta's CSS targets `a-button, a[role="button"][data-anta]` — an anchor (`<a>`)
 with `role="button"`, the `data-anta` opt-in marker, and the right attributes
@@ -453,6 +432,8 @@ Usage:
 This approach would work for Next.js `<Link>`, TanStack Router, or any
 other routing library.
 
+## Special events
+
 Beyond a plain click, a `Button` can drive a native form or emit your own
 event:
 
@@ -483,7 +464,35 @@ without taking ownership of `onClick`.
 <Button tone="brand" label="Save" data-custom-event="save-clicked" />
 ```
 
-### Props
+## Component props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `disabled?` | boolean | — | Disable the button. |
+| `download?` | string \| boolean | — | Anchor download attribute. Empty string / `true` triggers a download with the resource's default name; a string overrides the filename. |
+| `form?` | string | — | Form id when the button isn't a descendant of its form. |
+| `href?` | string | — | URL to link to. A definite string renders `<a role="button">`; omit it (or pass `undefined`) to render `<a-button>`, so `href={maybeUrl}` degrades to a plain button when the URL is absent. |
+| `icon?` | IconShape | — | Leading icon shape. When set alone (no `label`, no `iconTrailing`, no `children`), the button renders as a square icon-only control and the wrapper auto-supplies `aria-label={icon}` (override by passing your own `aria-label`). |
+| `iconTrailing?` | IconShape | — | Trailing icon shape. Renders after `children`, last in the slot order. |
+| `label?` | string | — | Label text. Renders between the leading icon and `children`. |
+| `loading?` | boolean | — | Show a rotating loading indicator. Blocks clicks and keyboard activation, and removes the button from the tab order while active. |
+| `onClick?` | (e) => void | — | Click handler. |
+| `paddingless?` | boolean | — | Drops outer padding to zero. |
+| `ping?` | string | — | Space-separated URLs the browser pings on navigation. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Visual emphasis. |
+| `rel?` | string | — | Anchor rel. |
+| `role?` | string | button | ARIA role override (e.g. `'gridcell'` when a button is a cell in a grid). Forwarded to the underlying element. |
+| `round?` | boolean \| number \| string | — | Fully-round corners — a pill for text buttons, a circle for icon-only ones (`border-radius: 999px`, clamped to the element's height). Pass a `number` (px) or a CSS length string (`'1rem'`) for a custom radius instead. |
+| `selected?` | boolean | — | Toggled-on / pressed state, e.g. for filter chips. |
+| `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. small=24px, medium=28px, large=32px. Omit the attribute or pass `'medium'` for the default — both render identically and emit no DOM attribute. |
+| `tabIndex?` | number | 0 | Tab order. The button is keyboard-focusable by default (`0`) and becomes `-1` automatically while `disabled` or `loading` — `<a-button>` and `<a role="button">` aren't focusable without an explicit tabindex, and a loading button must stay out of the tab order so Enter/Space can't fire it mid-flight. |
+| `target?` | string | — | Anchor target. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Primary uses the color as-is; secondary, tertiary, and quaternary take its hue and pin lightness/chroma to the brand curve so any input stays legible. |
+| `type?` | 'button' \| 'submit' \| 'reset' | — | Form submission type. |
+| `underline?` | 'solid' \| 'dashed' \| 'dotted' | — | Underline style. |
+| `underlineOnHover?` | boolean | — | Hide the underline at rest and reveal it on hover. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -519,6 +528,8 @@ wrapper sets them for you). A native `<button>` also carries its own default
 <button data-anta priority="secondary">Cancel</button>
 <button data-anta tone="critical" priority="tertiary">Delete</button>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the whole tone × priority × state curve in oklch), **`priority`**

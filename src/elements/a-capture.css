@@ -1,0 +1,22 @@
+@layer anta.components {
+  a-capture {
+    display: block;
+    min-width: 0;
+  }
+
+  a-capture[pointer-capture]:not([pointer-capture="none"], [pointer-buttons="none"]),
+  a-capture[pan]:is([pan=""], [pan="both"], [pan="x"], [pan="y"]):not([pan-pointer-types="none"]) {
+    user-select: none;
+  }
+
+  /* Keep pan specificity low so touch pointer capture can own both axes. */
+  a-capture:where(:not([pan-pointer-types]), [pan-pointer-types=""], [pan-pointer-types="all"], [pan-pointer-types~="touch"]) {
+    &[pan="x"] { touch-action: pan-y pinch-zoom; }
+    &[pan="y"] { touch-action: pan-x pinch-zoom; }
+    &[pan=""], &[pan="both"] { touch-action: none; }
+  }
+
+  a-capture:is([pointer-capture=""], [pointer-capture="all"], [pointer-capture~="touch"]):not(:where([pointer-buttons="none"])) {
+    touch-action: none;
+  }
+}

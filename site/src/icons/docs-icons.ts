@@ -24,6 +24,7 @@ export const ICON_SHAPES = [
   'tabs',
   'theme',
   'toaster',
+  'vector-square',
 ] as const
 
 export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
@@ -52,6 +53,7 @@ declare module '@antadesign/anta' {
     'tabs': true
     'theme': true
     'toaster': true
+    'vector-square': true
   }
 }
 

@@ -1,13 +1,7 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useState } from 'preact/hooks'
 import { Box, Tag, Text } from '@antadesign/anta'
 import type { BoxContext, BoxMeasurement } from '@antadesign/anta'
-
-/** Registers the custom elements client-side (see TabsDemo for the pattern). */
-function useElements() {
-  useEffect(() => {
-    import('@antadesign/anta/elements')
-  }, [])
-}
+import { useElements } from './useElements'
 
 /**
  * Live readout of one Box's own context and size. Mounted `client:only` so the

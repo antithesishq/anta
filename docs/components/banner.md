@@ -196,39 +196,23 @@ applies anything, so a vanilla `<a-banner>` listener can `preventDefault()` a
 dismiss. The `<Banner>` wrapper's `onDismiss` is notification-only — drive rejection
 through `dismissed` instead.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `actions?` | ReactNode | — | Trailing controls (buttons, links) rendered as a compact row after the
- message and `children`. |
-| `align?` | 'start' \| 'center' | 'start' | Positions the content row. `'start'` aligns it to the inline edge; `'center'`
- centers it. Wrapped message text follows the selected alignment. |
+| `actions?` | ReactNode | — | Trailing controls (buttons, links) rendered as a compact row after the message and `children`. |
+| `align?` | 'start' \| 'center' | 'start' | Positions the content row. `'start'` aligns it to the inline edge; `'center'` centers it. Wrapped message text follows the selected alignment. |
 | `children?` | ReactNode | — | Free content placed BETWEEN the message and the actions. |
-| `closable?` | boolean | true | Whether the trailing ✕ dismiss button is present. `false` removes it — drive
- dismissal yourself (a controlled `dismissed`, or your own control) instead.
- It removes the built-in ✕ without making the banner un-dismissible. |
+| `closable?` | boolean | true | Whether the trailing ✕ dismiss button is present. `false` removes it — drive dismissal yourself (a controlled `dismissed`, or your own control) instead. It removes the built-in ✕ without making the banner un-dismissible. |
 | `defaultDismissed?` | boolean | — | Initial dismissed state for the uncontrolled case (read once on mount). |
-| `dismissed?` | boolean | — | Controlled dismissed state. When provided, the consumer owns visibility: the
- banner follows this prop only, and clicking ✕ *requests* dismissal (reject by
- not updating). **Requires `onDismiss`** — controlled mode never self-hides, so
- without a handler to set `dismissed` the ✕ can't close the banner. Leave
- undefined for uncontrolled. |
+| `dismissed?` | boolean | — | Controlled dismissed state. When provided, the consumer owns visibility: the banner follows this prop only, and clicking ✕ *requests* dismissal (reject by not updating). **Requires `onDismiss`** — controlled mode never self-hides, so without a handler to set `dismissed` the ✕ can't close the banner. Leave undefined for uncontrolled. |
 | `message?` | ReactNode | — | Leading message: a string at the banner type scale or any node. |
-| `onDismiss?` | () => void | — | Fired when the user dismisses the banner (clicks ✕). Uncontrolled, the banner
- hides itself and this notifies. Controlled, use it to accept the
- request — set `dismissed` to `true` (or ignore to reject); pair it with
- `dismissed`, or the banner can't be closed. |
-| `role?` | string | 'status' | ARIA role for the strip host. `'status'` (a polite live region, so the notice
- reaches assistive tech) by default; pass `'alert'` for an urgent notice that
- should interrupt, or a landmark role. |
-| `round?` | boolean \| number \| string | — | Rounded corners for a standalone, floating banner (`border-radius: 999px`,
- which clamps to a stadium) instead of the edge-to-edge strip. Still borderless
- by default. Pass a `number` (px) or a CSS length string for a custom radius. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for
- a one-off custom tone. Named tones re-point the surface, text, and border
- color (used if you opt into a border); a custom color keeps its hue while
- lightness/chroma are pinned. `'neutral'` (the default) is the same as omitting it. |
+| `onDismiss?` | () => void | — | Fired when the user dismisses the banner (clicks ✕). Uncontrolled, the banner hides itself and this notifies. Controlled, use it to accept the request — set `dismissed` to `true` (or ignore to reject); pair it with `dismissed`, or the banner can't be closed. |
+| `role?` | string | 'status' | ARIA role for the strip host. `'status'` (a polite live region, so the notice reaches assistive tech) by default; pass `'alert'` for an urgent notice that should interrupt, or a landmark role. |
+| `round?` | boolean \| number \| string | — | Rounded corners for a standalone, floating banner (`border-radius: 999px`, which clamps to a stadium) instead of the edge-to-edge strip. Still borderless by default. Pass a `number` (px) or a CSS length string for a custom radius. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Named tones re-point the surface, text, and border color (used if you opt into a border); a custom color keeps its hue while lightness/chroma are pinned. `'neutral'` (the default) is the same as omitting it. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -245,6 +229,8 @@ Slots hold the message, actions, and close control. A close button dispatches
     aria-label="Dismiss" data-custom-event="dismissrequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
 </a-banner>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the surface, text, and border color in oklch), **`round`** the

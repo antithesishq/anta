@@ -1,12 +1,12 @@
 # Box
 
-`Box` is a DOM container that adds layout props, overflow states, and browser
-context events.
+`Box` is a DOM container with layout props, overflow states, and browser context
+events. For custom wheel, pointer, and touch handling, use [Capture](./capture.md).
 
 ## Display
 
-`display` and `gap` set the matching CSS properties. A numeric `gap` uses
-pixels. A string accepts any CSS length.
+Use `display`, `gap`, and `round` for layout and corners. Numeric lengths use
+pixels; strings accept CSS lengths. A bare `round` fully rounds the corners.
 
 ```tsx
 <Box round={8}><span /></Box>
@@ -14,35 +14,12 @@ pixels. A string accepts any CSS length.
 <Box display="grid" round={8} gap="0.5rem" style={{ gridTemplateColumns: '1fr 1fr' }}><span /></Box>
 ```
 
-`round` accepts the same values. Pass `round` for fully rounded corners. Omit
-it for square corners.
-
-`display`, `gap`, and `round` use the `anta.components` layer. Your
-`className` and `style` override them.
-
 ## Overflow
 
-Box reports when content exceeds its bounds (`overflowX` and `overflowY`), when
-CSS clips it (`clippedX` and `clippedY`), and when it can scroll (`scrollableX`
-and `scrollableY`). It exposes each measurement as a CSS state, so CSS can react
-without JSX state or a measurement ref.
-
-A Box measures for `fade`, `onMeasureChange`, or `observe="size"`. Use
-`observe="size"` when CSS reads its states. A Box with none of these attaches no
-observers. Measurement pauses off screen, except `fade`, which measures on
-connection so it can paint its mask.
-
-`observe` accepts `"size"`, `"context"`, or `"all"`. A bare `observe` means
-`"all"`. The JSX `Box` derives the needed value from its handlers. When you use
-`a-box` directly, set it yourself; `addEventListener` does not start reporting:
-
-```html
-<a-box observe="size">Content</a-box>
-<a-box observe="all">Content</a-box>
-```
-
-The attribute works with listeners added before upgrade, removed with `once` or
-`AbortSignal`, and replaced during React renders.
+Box reports overflow, clipping, and scrollability as measurements and CSS
+states. Use `observe="size"` to keep CSS states current. `fade` and
+`onMeasureChange` also enable measurement; without these, Box adds no size
+observers.
 
 `.edge` is a demo class name. Use your own selector.
 
@@ -65,33 +42,36 @@ The attribute works with listeners added before upgrade, removed with `once` or
 
 ### Fading a clipped edge
 
-`fade` masks each edge that hides content. Scrolling moves the mask to the edge
-that still hides content and removes it at the end. `fadeSize` sets its depth.
+`fade` masks edges with hidden content and removes the mask as scrolling reveals
+them. `fadeSize` sets its depth. It measures on connection, even off screen.
 
 ```tsx
-<Box fade fadeSize={32} round display="flex" gap={6} style={{ overflowX: 'auto' }}>
+const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
+
+<Box fade fadeSize={32} round display="flex" gap={6} className="fade-demo" style={{ width: 190, overflowX: 'auto' }}>
   {TAGS.map((t) => <Tag key={t} size="small" label={t} />)}
 </Box>
+
+<Box fade fadeSize={32} round={8} className="fade-demo" style={{ width: 190, height: 56, overflowY: 'auto' }}>
+  One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten. Eleven. Twelve.
+</Box>
+```
+
+```css
+.fade-demo { flex-wrap: nowrap; padding: 10px; border: 1px solid var(--border-4); }
+.fade-demo a-tag { flex: 0 0 auto; }
 ```
 
 The mask clips to the padding box. It preserves the Box border, shadows, and
 focus ring when no edge is hidden.
 
-The four edge states are `hidden-start-x`, `hidden-end-x`, `hidden-start-y`, and
-`hidden-end-y`. Use `hiddenStartX` and its siblings in JSX. To style the states
-without `fade`, add `observe="size"`.
-
-```css
-/* <Box observe="size" className="my-box"> */
-.my-box:state(hidden-end-x) {
-  mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
-}
-```
+To style hidden edges without `fade`, use `observe="size"` and the
+`hidden-start-x`, `hidden-end-x`, `hidden-start-y`, or `hidden-end-y` CSS states.
 
 ### Tooltip on clipped content
 
-`Tooltip truncatedOnly` uses Box's `isTruncated` getter. It shows when the Box
-clips on either axis, including wrapped children.
+`Tooltip truncatedOnly` shows when Box clips content on either axis, including
+wrapped children.
 
 ```tsx
 const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
@@ -108,175 +88,267 @@ const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
 
 ## Measurements
 
-`measurechange` fires one frame after observation starts and after the Box or its
-content changes. `changed` contains the moved fields, and `current` is the full
-snapshot. The event pauses off screen and reports again when the Box returns.
+`onMeasureChange` reports one frame after observation starts and when the Box or
+its content changes. `changed` contains changed fields; `current` is the full
+snapshot. Reporting pauses off screen and resumes when Box returns.
+
+Resize or scroll the Box to update its measurements.
 
 ```tsx title="measurechange"
+const [measurement, setMeasurement] = useState<BoxMeasurement | null>(null)
+
 <Box
-  style={{ maxWidth: 210, overflow: 'hidden', whiteSpace: 'nowrap' }}
-  onMeasureChange={(_, { changed, current }) => {
-    // changed → { clippedX: true, scrollWidth: 412 }
-    if (changed.clippedX) setShowOverflowHint(current.clippedX)
-  }}
+  round={8}
+  className="measure-probe-box"
+  onMeasureChange={(_, { current }) => setMeasurement(current)}
 >
-  Long account name
+  <Text size="small" priority="tertiary">Resize or scroll this Box.</Text>
+  <div className="measure-probe-wide">wide content, so both axes overflow</div>
+  <div className="measure-probe-wide">and a second line, so the vertical axis does too</div>
+  <div className="measure-probe-wide">and a third</div>
 </Box>
+
+<div className="measure-probe-readout">
+  {Object.entries(measurement ?? {}).map(([field, value]) => (
+    <Tag key={field} size="small" label={field} value={String(value)} />
+  ))}
+</div>
 ```
 
-The preview updates as you resize or scroll the Box. Tags mark `true` values.
+```css
+.measure-probe-box {
+  resize: both;
+  overflow: auto;
+  inline-size: 320px;
+  block-size: 132px;
+  min-inline-size: 120px;
+  min-block-size: 64px;
+  padding: 10px;
+  border: 1px solid var(--border-4);
+}
+.measure-probe-wide { inline-size: 520px; padding-block: 6px; }
+.measure-probe-readout { display: flex; flex-wrap: wrap; gap: 6px; }
+```
 
-[`BoxMeasurement`](#boxmeasurement) lists every field. Box maps each overflow
-field to a kebab-case CSS state, such as `overflow-x`, `clipped-y`,
-`scrollable-x`, and `hidden-end-y`. These states are not host attributes. They
-remain current only while `fade`, `observe="size"`, or `onMeasureChange` enables
-measurement.
+See the [measurement fields](#boxmeasurement). Overflow fields map to kebab-case
+CSS states, such as `clippedX` → `:state(clipped-x)`.
 
 ## Context
 
-`contextchange` uses the same `{ changed, current }` shape. Boxes share one
-context observer per window, which stops when the last context reader
-disconnects.
+`onContextChange` reports theme, focus, and browser context as
+`{ changed, current }`. See the [context fields](#boxcontext). For CSS, use
+`:focus-within`, mode classes, and media queries instead.
 
-[`BoxContext`](#boxcontext) lists every field. `contextchange` sets no CSS
-states. Use `:focus-within`, mode classes, and media queries when CSS is the
-reader.
+Switch themes, resize, or zoom to update the preview. The `.light` Box keeps its
+local `mode`; `globalMode` follows the document. Browser and OS versions may be
+frozen, so use `pointer`, `hover`, or feature tests to choose behavior.
 
-Every value in the following preview is live. Switch the site theme, resize the
-window, zoom the page, or use a touch device. Treat `osVersion` and
-`browserVersion` as hints because browsers freeze parts of these values. Use
-`pointer`, `hover`, or a feature test to gate behavior. The second Box is in a
-`.light` scope, so its `mode` remains `light` on a dark page while `globalMode`
-follows the document.
+```tsx title="contextchange"
+import { useState } from 'react'
+import { Box, Tag, Text, type BoxContext } from '@antadesign/anta'
 
-`context.font` is the Box's resolved text style, `context.inset` measures from
-the border edge to the content edge, and `devicePixelRatio` provides the canvas
-scale. Use them to align canvas text with the DOM.
+function ScopedContext() {
+  const [context, setContext] = useState<BoxContext | null>(null)
 
-`measurement` cannot derive the inset: `width` is the border box, and
-`clientWidth` is the padding box.
+  return (
+    <div className="light">
+      <Box display="flex" round={8} gap={6} className="context-probe-box"
+           onContextChange={(_, { current }) => setContext(current)}>
+        <Text size="small" priority="tertiary">inside a .light scope</Text>
+        <Tag size="small" tone="brand" label="mode" value={context?.mode ?? '…'} />
+        <Tag size="small" label="globalMode" value={context?.globalMode ?? '…'} />
+      </Box>
+    </div>
+  )
+}
+```
 
-Set `ctx.font` from `font.shorthand` first. Chromium and Firefox reset
-`fontStretch`, `fontVariantCaps`, `fontKerning`, and `textRendering` when
-`ctx.font` changes. `stretch` and `variantCaps` stay out of the shorthand because
-a percentage `font-stretch` invalidates it.
+```css
+.context-probe-box {
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border-4);
+  background: var(--bg-1);
+  color: var(--text-1);
+}
+```
+
+<a id="canvas"></a>
+
+### Canvas-related styles
+
+Use `context.font` and `devicePixelRatio` to match canvas text to the DOM.
+The first line is DOM text; the second is drawn on canvas. Switch themes or
+zoom to update both. `context.inset` also reports border and padding when you
+need to align drawing coordinates with the Box's content edge.
+
+Set `ctx.font` before spacing and direction. Box assembles `font.shorthand`
+because `getComputedStyle(element).font` can be empty. Stretch and variant caps
+remain separate fields; percentage stretch is invalid in the shorthand.
 
 ```tsx title="canvas"
-<Box
+const canvasRef = useRef<HTMLCanvasElement>(null)
+
+<Box className="canvas-probe"
   onContextChange={(_, { current }) => {
     const canvas = canvasRef.current
     const ctx = canvas?.getContext('2d')
-    if (!ctx) return
+    if (!canvas || !ctx) return
 
     const { font, devicePixelRatio: dpr } = current
-    canvas.width = 300 * dpr
-    canvas.height = 80 * dpr
+    canvas.width = canvas.clientWidth * dpr
+    canvas.height = canvas.clientHeight * dpr
     ctx.scale(dpr, dpr)
 
     ctx.font = font.shorthand
-    ctx.fontStretch = font.stretch
-    ctx.fontVariantCaps = font.variantCaps
-    ctx.fontKerning = font.kerning
-    ctx.textRendering = font.textRendering
     ctx.letterSpacing = font.letterSpacing
     ctx.wordSpacing = font.wordSpacing
-    ctx.direction = font.direction
+    ctx.direction = font.direction === 'rtl' ? 'rtl' : 'ltr'
     ctx.fillStyle = font.color
 
-    const x = current.inset.borderLeft + current.inset.paddingLeft
-    const y = current.inset.borderTop + current.inset.paddingTop
-    ctx.fillText('Matches the DOM', x, y + (font.lineHeight ?? font.size))
+    ctx.fillText('Matches the DOM', 0, font.lineHeight ?? font.size)
   }}
 >
-  <canvas ref={canvasRef} />
+  <span>Matches the DOM</span>
+  <canvas ref={canvasRef} aria-label="Canvas text using the Box font and color" />
 </Box>
 ```
 
-`getComputedStyle(element).font` is empty in Chromium, Firefox, and WebKit, so
-Box assembles the shorthand.
-
-```tsx title="contextchange"
-<Box onContextChange={(_, { changed, current }) => {
-  if (changed.mode) updatePreviewTheme(current.mode)
-  if (changed.focusWithin) announceFocus(current.focusWithin)
-}}>
-  <span>Preview content</span>
-</Box>
+```css
+.canvas-probe { width: 100%; font-size: 20px; line-height: 32px; color: var(--text-1); }
+.canvas-probe canvas { display: block; width: 100%; height: 48px; }
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `display?` | BoxDisplay | block | Layout model for the host. All other layout, sizing, mask, and shadow
-properties stay ordinary `className` / `style` CSS on the Box itself. |
-| `fade?` | boolean | — | Fades out every edge that currently hides clipped content, and drops the
-fade from an edge once the reader scrolls to it. |
-| `fadeSize?` | number \| string | 24 | Depth of the `fade` gradient. A `number` is pixels; a string is any CSS
-length. |
-| `gap?` | number \| string | — | Gap between children, matching the CSS `gap` property. A `number` is
-pixels; a string is any CSS length or two-value gap (`'1rem'`,
-`'8px 16px'`). Applies while the Box is a flex or grid container. |
-| `observe?` | 'size' \| 'context' \| 'all' | — | What the Box watches, when a handler is not what turns it on. `'size'`
-keeps the overflow CSS states (`:state(clipped-x)`, `:state(scrollable-y)`,
-…) current — reach for it when your own CSS is the only reader. `'context'`
-and `'all'` are there for symmetry; passing `onMeasureChange` or
-`onContextChange` already turns the matching half on. |
-| `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail`
-contains the changed fields and a full current snapshot. |
-| `onMeasureChange?` | (event, detail) => void | — | Fired after Box geometry or its content-overflow state changes. `detail`
-contains the changed fields and a full current snapshot. |
-| `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a
-`number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit
-for square corners. |
+| `display?` | BoxDisplay | block | Layout model for the host. All other layout, sizing, mask, and shadow properties stay ordinary `className` / `style` CSS on the Box itself. |
+| `fade?` | boolean | — | Fades out every edge that currently hides clipped content, and drops the fade from an edge once the reader scrolls to it. |
+| `fadeSize?` | number \| string | 24 | Depth of the `fade` gradient. A `number` is pixels; a string is any CSS length. |
+| `gap?` | number \| string | — | Gap between children, matching the CSS `gap` property. A `number` is pixels; a string is any CSS length or two-value gap (`'1rem'`, `'8px 16px'`). Applies while the Box is a flex or grid container. |
+| `observe?` | 'size' \| 'context' \| 'all' | — | What the Box watches, when a handler is not what turns it on. `'size'` keeps the overflow CSS states (`:state(clipped-x)`, `:state(scrollable-y)`, …) current — reach for it when your own CSS is the only reader. `'context'` and `'all'` are there for symmetry; passing `onMeasureChange` or `onContextChange` already turns the matching half on. |
+| `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail` contains the changed fields and a full current snapshot. |
+| `onMeasureChange?` | (event, detail) => void | — | Fired after Box geometry or its content-overflow state changes. `detail` contains the changed fields and a full current snapshot. |
+| `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a `number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit for square corners. |
 
 ### BoxMeasurement
 
-The `measurechange` payload, as `changed` (only what moved) and `current` (the
-whole snapshot).
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `clientHeight` | number | — |  |
+| `clientWidth` | number | — | Padding-box dimensions, matching the browser's `clientWidth` / `clientHeight`. |
+| `clippedX` | boolean | — | The exceeded content is visually clipped on this axis. |
+| `clippedY` | boolean | — |  |
+| `height` | number | — |  |
+| `hiddenEndX` | boolean | — |  |
+| `hiddenEndY` | boolean | — |  |
+| `hiddenStartX` | boolean | — | Clipped content sits past this specific edge, in logical writing-mode terms. A clipped box that has not been scrolled hides content past its end edge only; scroll it to the end and the hidden content moves to the start. These drive the `fade` mask. |
+| `hiddenStartY` | boolean | — |  |
+| `overflowX` | boolean | — | Content exceeds the padding box on this axis, regardless of CSS overflow. |
+| `overflowY` | boolean | — |  |
+| `scrollableX` | boolean | — | The exceeded content can be scrolled by the reader on this axis. |
+| `scrollableY` | boolean | — |  |
+| `scrollHeight` | number | — |  |
+| `scrollLeft` | number | — | Current scroll offset, matching `scrollLeft` / `scrollTop`. |
+| `scrollTop` | number | — |  |
+| `scrollWidth` | number | — | Full scrollable-content dimensions, matching `scrollWidth` / `scrollHeight`. |
+| `width` | number | — | Border-box width and height in CSS pixels. |
 
 ### BoxContext
 
-The `contextchange` payload, in the same two shapes.
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `backgroundColor` | string | — | Resolved `background-color`. Needed when the box's content is drawn somewhere else — an offscreen canvas, a worker, an export — where the box's own background is not behind it. |
+| `browser` | BoxBrowser | — | Browser family. |
+| `browserVersion` | number | — | Browser major version, or `0` when unknown. Minor and patch digits are frozen by every engine, so only the major number is reported. |
+| `devicePixelRatio` | number | — | `window.devicePixelRatio`: CSS pixels per device pixel. `1` on a standard display, `2` on most Retina screens, and a fraction under OS or browser zoom. Live — it re-reports on zoom and when the window moves to a monitor with a different density. |
+| `focusWithin` | boolean | — | Whether focus is on the box or any of its descendants, read from the native `:focus-within`. For CSS, use that pseudo-class directly; this field is for logic that cannot query the DOM. |
+| `font` | BoxFont | — | Resolved text style, ready to hand to a canvas 2D context. |
+| `globalMode` | BoxMode | — | Mode on `<html>`, independent of an enclosing local scope. |
+| `hover` | boolean | — | Whether ordinary hover interaction is available. |
+| `inset` | BoxInset | — | Padding and border widths, for placing content inside the border box. |
+| `mobile` | boolean | — | Whether the browser reports a mobile device. |
+| `mode` | BoxMode | — | Closest scoped Anta mode. A local `.light` can override a dark document. |
+| `os` | BoxOS | — | Operating-system family. |
+| `osVersion` | number | — | Operating-system major version, or `0` when the browser withholds it. Browsers freeze this: every engine reports macOS as `10.15.7` and Windows 11 as `10.0`, so only Android and iOS carry a real number. Treat it as a hint, never as a gate. |
+| `pointer` | BoxPointer | — | Most precise available primary pointer. |
+| `reducedMotion` | boolean | — | Whether the reader asks for reduced motion. |
+| `systemAppearance` | BoxMode | — | Browser / operating-system color preference, independent of Anta classes. |
 
 ### BoxFont
 
 `context.font`, the resolved text style.
 
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `color` | string | — | Resolved text color. Canvas: `ctx.fillStyle`. |
+| `direction` | string | — | Canvas: `ctx.direction`. |
+| `family` | string | — | Resolved family list, quoted as the engine reports it. |
+| `featureSettings` | string | — | Canvas 2D consumes neither of these. They are here for text you measure or draw some other way. |
+| `kerning` | string | — | Canvas: `ctx.fontKerning`. |
+| `letterSpacing` | string | — | A length, never `normal` - `normal` is reported as `0px`, which is what `ctx.letterSpacing` accepts. |
+| `lineHeight` | number \| null | — | Line height in CSS pixels, or `null` when it computes to `normal`. Canvas ignores line height in `ctx.font`; this is for laying text out yourself. |
+| `shorthand` | string | — | CSS `font` shorthand, assembled here because every engine returns an empty string for the computed shorthand. `stretch` and `variantCaps` are left out of it deliberately: a percentage `font-stretch` makes every engine reject the whole string and fall back to `10px sans-serif`. Apply those through `ctx.fontStretch` / `ctx.fontVariantCaps` after setting `ctx.font`. |
+| `size` | number | — | Font size in CSS pixels. |
+| `stretch` | string | — | Computed `font-stretch`, a percentage such as `88%`. Canvas: `ctx.fontStretch`. |
+| `style` | string | — | `normal`, `italic`, or an `oblique <angle>`. |
+| `textRendering` | string | — | Canvas: `ctx.textRendering`, which WebKit does not implement. |
+| `variantCaps` | string | — | Canvas: `ctx.fontVariantCaps`. |
+| `variationSettings` | string | — |  |
+| `weight` | number | — | Numeric weight, 1-1000. |
+| `wordSpacing` | string | — | Same normalization as `letterSpacing`. Canvas: `ctx.wordSpacing`. |
+
 ### BoxInset
 
 `context.inset`, the distance from the border edge to the content edge.
 
-Use `<a-box>` when you assemble DOM without a JSX wrapper. Both events are
-ordinary, non-bubbling `CustomEvent`s carrying the same detail object.
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `borderBottom` | number | — |  |
+| `borderLeft` | number | — |  |
+| `borderRight` | number | — |  |
+| `borderTop` | number | — |  |
+| `paddingBottom` | number | — |  |
+| `paddingLeft` | number | — |  |
+| `paddingRight` | number | — |  |
+| `paddingTop` | number | — |  |
+
+## Web component
+
+Use `<a-box>` without JSX. Events are non-bubbling `CustomEvent`s with the same
+`detail`. Set `observe="size"`, `"context"`, or `"all"` explicitly; adding a
+listener does not enable observation. A bare `observe` means `"all"`.
 
 ```html title="a-box"
-<a-box display="grid" gap="8px" round="12px" observe="all" id="summary"
-       style="overflow: auto; max-height: 16rem">
-  <p>Summary content</p>
+<a-box display="grid" gap="8px" round="12px" observe="all"
+       style="--box-gap: 8px; --box-round: 12px; padding: 12px; border: 1px solid var(--border-4)">
+  <span>Summary content</span>
+  <span>Observation enabled</span>
 </a-box>
-
-<script type="module">
-  import '@antadesign/anta/elements/a-box'
-
-  const box = document.querySelector('#summary')
-  box.addEventListener('measurechange', ({ detail }) => {
-    console.log(detail.changed, detail.current.scrollableY)
-  })
-  box.addEventListener('contextchange', ({ detail }) => {
-    console.log(detail.changed, detail.current.mode)
-  })
-</script>
 ```
 
-`gap`, `round`, and `fade-size` read their length through typed `attr()`, which
-today only Chrome supports. The matching custom properties in the host's inline
-style work everywhere and take precedence, so that is what the JSX wrapper sets:
+Import `@antadesign/anta/elements/a-box` to register the element. Listen for
+`measurechange` and `contextchange` with `addEventListener`.
+`box.measurement`, `box.context`, and `box.isTruncated` read values synchronously.
+
+## Styling
+
+Your `className` and `style` override `display`, `gap`, and `round` through the
+`anta.components` CSS layer.
+
+Without typed CSS `attr()` support, raw `gap`, `round`, and `fade-size` length
+attributes need matching custom properties. The JSX wrapper sets these for you:
 
 ```html
-<a-box gap round fade
-       style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">Content</a-box>
+<a-box display="flex" gap round fade class="raw-box"
+       style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">
+  <span>Layout</span><span>Context</span><span>Measurements</span>
+</a-box>
 ```
 
-`box.measurement`, `box.context`, and `box.isTruncated` read the same values
-synchronously.
+```css
+.raw-box { width: 190px; overflow: auto; padding: 12px; border: 1px solid var(--border-4); }
+.raw-box span { flex: 0 0 auto; }
+```

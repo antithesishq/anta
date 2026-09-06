@@ -480,7 +480,7 @@ export const CATEGORIES: Category[] = [
   { id: 'charts', label: 'Charts', members: 'First-party data viz' },
   // Utility and focus coverage verified against public APIs on September 5, 2026.
   {
-    id: 'utilities', label: 'Utility containers', members: 'General-purpose boxes, observers, scroll, and input',
+    id: 'utilities', label: 'Utility containers', members: 'Boxes with observers, scroll, and input',
     examples: {
       anta: 'Box, Capture', webawesome: 'Resize Observer', mui: 'ClickAwayListener',
       mantine: 'useResizeObserver', atlassian: 'Pragmatic drag and drop',
@@ -490,7 +490,7 @@ export const CATEGORIES: Category[] = [
     },
   },
   {
-    id: 'focus', label: 'Focus management', members: 'Focus indicators, traps, scopes, and navigation',
+    id: 'focus', label: 'Focus management', members: 'Focus detection and traps',
     examples: {
       mui: 'Unstable_TrapFocus (experimental)', mantine: 'FocusTrap, useFocusTrap',
       astryx: 'useFocusTrap, useListFocus', untitledui: 'React Aria FocusScope, useFocusManager',

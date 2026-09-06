@@ -6,6 +6,7 @@ import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 import { WheelCapturePreview } from '../components/WheelCapturePreview.tsx'
+import { CapturePointerPreview, CapturePanPreview } from '../components/CaptureGesturePreview.tsx'
 
 # Capture
 
@@ -28,24 +29,9 @@ Capture cancels accepted native input on the browser thread, then sends plain da
 to your handler. Your component performs the action. Forward the serializable
 `detail` across worker boundaries. Handler return values cannot change cancellation.
 
-For a 2D table, separate touch scrolling from mouse/pen selection:
-
-```tsx folded title="Table input"
-<Capture
-  wheelCapture
-  pan
-  pointerCapture={{ pointerTypes: ['mouse', 'pen'] }}
-  onWheelInput={handleWheel}
-  onPanInput={handlePan}
-  onPointerInput={handleSelection}
->
-  {tableContent}
-</Capture>
-```
-
-<Preview align="stretch" minHeight={440}>
-  <WheelCapturePreview client:only="preact" />
-</Preview>
+For a 2D table, combine `wheelCapture` and `pan` for scrolling with
+`pointerCapture={{ pointerTypes: ['mouse', 'pen'] }}` for selection. Each
+handler updates the corresponding scroll or selection state.
 
 ## Wheel ownership
 
@@ -55,16 +41,43 @@ scroll container. The dominant axis decides ownership; both deltas are delivered
 All-false bounds preserve settling while declining input. Passing `false` or
 removing `wheelCapture` disables capture and clears settling.
 
+Enable **Capture wheel**, then scroll over the rows. The controls let you try
+different activation and settling rules.
+
+<Preview align="stretch" minHeight={440}>
+  <WheelCapturePreview client:only="preact" />
+</Preview>
+
 ```tsx folded title="Custom table wheel"
-<Capture
-  wheelCapture={{ up: offset > 0, down: offset < maxOffset }}
-  wheelActivation="settled-or-focus"
-  wheelSettle={{ delay: 200 }}
-  tabIndex={0}
-  onWheelInput={(_, detail) => handleTableWheel(detail)}
->
-  {tableContent}
-</Capture>
+const [offset, setOffset] = useState(0)
+const maxOffset = 28 * 32 - 192
+
+// These settings come from the preview controls.
+<div onKeyDown={event => {
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+  event.preventDefault()
+  const delta = event.key === 'ArrowDown' ? 32 : -32
+  setOffset(value => Math.max(0, Math.min(maxOffset, value + delta)))
+}}>
+  <Capture
+    wheelCapture={enabled && { up: offset > 0, down: offset < maxOffset }}
+    wheelActivation={activation}
+    wheelSettle={{ delay, tolerance: 5, resetOnMove }}
+    tabIndex={0}
+    aria-label="Wheel capture surface"
+    style={{ height: 192, overflow: 'hidden' }}
+    onWheelInput={(_, { wheelEvent, boxHeight }) => {
+      const unit = wheelEvent.deltaMode === 1 ? 32 : wheelEvent.deltaMode === 2 ? boxHeight : 1
+      setOffset(value => Math.max(0, Math.min(maxOffset, value + wheelEvent.deltaY * unit)))
+    }}
+  >
+    <div style={{ transform: `translateY(${-offset}px)` }}>
+      {Array.from({ length: 28 }, (_, index) => (
+        <div key={index} style={{ height: 32 }}>Sample {index + 1}</div>
+      ))}
+    </div>
+  </Capture>
+</div>
 ```
 
 The default `"settled"` activation waits for the pointer to rest inside Capture
@@ -95,15 +108,50 @@ target, which may be a child.
 
 `pointerCapture` sends raw data for one primary mouse, pen, or touch pointer,
 including movement outside Capture. Your component interprets the gesture.
-Use `threshold` to delay capture until dragging starts:
+Use `threshold` to delay capture until dragging starts. Drag an area in the
+preview, or select **Select sample area** with the keyboard.
+
+<Preview align="stretch">
+  <CapturePointerPreview client:only="preact" />
+  <style is:inline>{`
+    .pointer-probe { display: grid; gap: 12px; width: 100%; }
+    .pointer-probe-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .pointer-probe-surface { position: relative; height: 160px; overflow: hidden; border: 1px solid var(--border-4); border-radius: 8px; background: var(--bg-canvas); }
+    .pointer-probe-surface a-text { display: block; padding: 12px; }
+    .pointer-probe-selection { position: absolute; pointer-events: none; border: 1px solid var(--border-3-brand); background: color-mix(in oklch, var(--text-1-brand) 12%, transparent); }
+  `}</style>
+</Preview>
 
 ```tsx folded title="Mouse or pen selection"
+type Selection = { x: number; y: number; width: number; height: number }
+const [selection, setSelection] = useState<Selection | null>(null)
+
+<Button label="Select sample area" onClick={() => setSelection({ x: 24, y: 24, width: 100, height: 64 })} />
+<Button label="Clear selection" onClick={() => setSelection(null)} />
 <Capture
+  className="pointer-probe-surface"
+  aria-label="Pointer selection surface"
   pointerCapture={{ pointerTypes: ['mouse', 'pen'], threshold: 3 }}
-  onPointerInput={(_, detail) => updateSelection(detail)}
+  onPointerInput={(_, detail) => {
+    if (detail.phase === 'cancel') return
+    const x = Math.max(0, Math.min(detail.boxWidth, detail.localX))
+    const y = Math.max(0, Math.min(detail.boxHeight, detail.localY))
+    setSelection({
+      x: Math.min(detail.start.localX, x), y: Math.min(detail.start.localY, y),
+      width: Math.abs(x - detail.start.localX), height: Math.abs(y - detail.start.localY),
+    })
+  }}
 >
-  {plotContent}
+  <Text size="small" priority="tertiary">Drag to select an area.</Text>
+  {selection && <div className="pointer-probe-selection"
+    style={{ left: selection.x, top: selection.y, width: selection.width, height: selection.height }} />}
 </Capture>
+```
+
+```css folded
+.pointer-probe-surface { position: relative; height: 160px; overflow: hidden; border: 1px solid var(--border-4); border-radius: 8px; background: var(--bg-canvas); }
+.pointer-probe-surface a-text { display: block; padding: 12px; }
+.pointer-probe-selection { position: absolute; pointer-events: none; border: 1px solid var(--border-3-brand); background: color-mix(in oklch, var(--text-1-brand) 12%, transparent); }
 ```
 
 `onPointerInput` reports `start`, `move`, `end`, and `cancel`. `deltaX/Y` are
@@ -127,22 +175,57 @@ captures the pointer internally; it does not require `pointerCapture`. Set
 `pan.pointerTypes` to enable mouse or pen panning. If your component already
 interprets touch gestures, use `pointerCapture` for touch and omit `pan`.
 
-Enabling both for the same pointer type emits both streams. The table example
-uses separate pointer types so each gesture has one handler.
+Enabling both for the same pointer type emits both streams. Assign separate
+pointer types when each gesture should have one handler.
+
+Try touch panning, or enable **Pan with mouse**. **Inertia** continues motion
+after release; turn it off to stop when the pointer lifts.
+
+<Preview align="stretch">
+  <CapturePanPreview client:only="preact" />
+  <style is:inline>{`
+    .pan-probe { display: grid; gap: 12px; width: 100%; }
+    .pan-probe-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .pan-probe-surface { height: 160px; overflow: hidden; border: 1px solid var(--border-4); border-radius: 8px; background: var(--bg-canvas); }
+    .pan-probe-row { height: 32px; box-sizing: border-box; padding: 6px 12px; border-bottom: 1px solid var(--border-5); }
+  `}</style>
+</Preview>
 
 ```tsx folded title="Custom touch scrolling"
-<Capture
-  pan={{
-    axis: 'y',
-    directions: { up: offset > 0, down: offset < maxOffset },
-    inertia: true,
-  }}
-  onPanInput={(_, { deltaY }) => {
-    setOffset(value => Math.max(0, Math.min(maxOffset, value + deltaY)))
-  }}
->
-  {tableContent}
-</Capture>
+const [offset, setOffset] = useState(0)
+const maxOffset = 18 * 32 - 160
+const move = (delta: number) => setOffset(value => Math.max(0, Math.min(maxOffset, value + delta)))
+
+// mouse and inertia come from the preview checkboxes.
+<div onKeyDown={event => {
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+  event.preventDefault()
+  move(event.key === 'ArrowDown' ? 32 : -32)
+}}>
+  <Capture
+    className="pan-probe-surface"
+    tabIndex={0}
+    aria-label="Pan capture surface"
+    pan={{
+      axis: 'y',
+      pointerTypes: mouse ? ['touch', 'mouse'] : ['touch'],
+      directions: { up: offset > 0, down: offset < maxOffset },
+      inertia,
+    }}
+    onPanInput={(_, { deltaY }) => move(deltaY)}
+  >
+    <div style={{ transform: `translateY(${-offset}px)` }}>
+      {Array.from({ length: 18 }, (_, index) => (
+        <div className="pan-probe-row" key={index}>Sample {index + 1}</div>
+      ))}
+    </div>
+  </Capture>
+</div>
+```
+
+```css folded
+.pan-probe-surface { height: 160px; overflow: hidden; border: 1px solid var(--border-4); border-radius: 8px; background: var(--bg-canvas); }
+.pan-probe-row { height: 32px; box-sizing: border-box; padding: 6px 12px; border-bottom: 1px solid var(--border-5); }
 ```
 
 Pan deltas oppose finger movement. Apply deltas from every phase, including
@@ -210,24 +293,40 @@ native text selection or touch gestures.
 Use `<a-capture>` without JSX. Events are non-bubbling `CustomEvent`s
 with the same `detail`. Adding listeners enables no capabilities.
 
-Configure capture with attributes and listen for lowercase event names. Bare
-capture attributes match passing `true` in JSX. Remove an attribute to disable
-capture.
+Import `@antadesign/anta/elements/a-capture` to register the element. A bare
+Capture leaves wheel and touch scrolling native:
 
-```html folded title="Browser-thread input"
-<a-capture wheel-capture="up down" wheel-activation="settled-or-focus"
-       wheel-delay="150" wheel-tolerance="5"
-       pan="y" pan-directions="up down" pan-inertia id="table-surface">
-  Custom table content
+<Preview align="stretch">
+  <a-capture class="native-capture">
+    <p>Native scrolling stays enabled.</p>
+    <p>No wheel, pointer, or pan input is captured.</p>
+    <p>Scroll to the end of this content.</p>
+    <p>The browser owns this scroll position.</p>
+  </a-capture>
+  <style is:inline>{`
+    .native-capture { width: 100%; height: 120px; overflow: auto; padding: 12px; border: 1px solid var(--border-4); border-radius: 8px; }
+    .native-capture p { margin: 0; padding-block: 12px; }
+  `}</style>
+</Preview>
+
+```html folded title="a-capture"
+<a-capture class="native-capture">
+  <p>Native scrolling stays enabled.</p>
+  <p>No wheel, pointer, or pan input is captured.</p>
+  <p>Scroll to the end of this content.</p>
+  <p>The browser owns this scroll position.</p>
 </a-capture>
-<script type="module">
-  import '@antadesign/anta/elements/a-capture'
-
-  const surface = document.querySelector('#table-surface')
-  surface.addEventListener('wheelinput', ({ detail }) => handleWheel(detail))
-  surface.addEventListener('paninput', ({ detail }) => handlePan(detail))
-</script>
 ```
+
+```css folded
+.native-capture { width: 100%; height: 120px; overflow: auto; padding: 12px; border: 1px solid var(--border-4); border-radius: 8px; }
+.native-capture p { margin: 0; padding-block: 12px; }
+```
+
+Configure capture with attributes such as `wheel-capture="up down"` or `pan="y"`.
+Bare capability attributes match passing `true` in JSX. Remove an attribute to
+disable it. Listen for `wheelinput`, `pointerinput`, and `paninput` with
+`addEventListener`; each event exposes the same `detail` as the JSX handler.
 
 </Disclosure>
 

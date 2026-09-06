@@ -137,6 +137,8 @@ bring a section into voice when you edit it. This file covers the page *structur
 
 ## Component reference tables
 
+- Every `Preview` has matching `folded` code immediately after it. Put explanatory prose before the preview or after the complete code group so the panels stay visually attached. Demonstrate interaction recipes with working previews instead of placeholder handlers.
+- A demo that switches to a local `.light` or `.dark` scope sets both its foreground and background from that scope's tokens. Transparent surfaces can leave locally themed text on the opposite page background.
 - Fold only DOM-forwarding base props under "Inherited props." Keep fields inherited from payload interfaces in the main table. `lib/api-props.mjs` shares that classification with the Markdown renderer.
 - Package Markdown and `/llms-full.txt` render every `PropsTable` through `lib/llms/parse-mdx.mjs`, including labeled secondary references. Deep links into nested disclosures must open every enclosing block.
 

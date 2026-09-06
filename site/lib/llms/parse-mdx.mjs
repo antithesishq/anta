@@ -19,21 +19,20 @@ export function parseMdx(raw) {
   source = source.replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
   source = source.replace(/<Disclosure\s+title="Playground"[^>]*>[\s\S]*?<\/Disclosure>/g, '')
   source = source.replace(/<Playground[\s\S]*?(?:\/>|<\/Playground>)/g, '')
-  // Explicitly leveled disclosures are section headings, even when the site's
-  // interactive version hides their tables. Preserve those labels in Markdown.
-  source = source.replace(/<Disclosure\s+title="([^"]+)"([^>]*)>/g, (tag, title, attributes) => {
-    const level = attributes.match(/\blevel=\{([2-6])\}/)?.[1]
-    return level ? `\n${'#'.repeat(Number(level))} ${title}\n` : tag
+  // Keep section headings and explicit anchors when unfolding disclosures.
+  const anchors = []
+  source = source.replace(/<Disclosure\s+title="([^"]+)"([^>]*)>/g, (_, title, attributes) => {
+    if (/\sanchor=\{false\}/.test(attributes)) return ''
+    const level = attributes.match(/\slevel=\{([2-6])\}/)?.[1] ?? '2'
+    const id = attributes.match(/\sid="([^"]*)"/)?.[1]
+    let anchor = ''
+    if (id !== undefined) {
+      const slug = id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      anchors.push(`<a id="${slug}"></a>`)
+      anchor = `\x00ANCHOR${anchors.length - 1}\x00\n\n`
+    }
+    return `\n${anchor}${'#'.repeat(Number(level))} ${title}\n`
   })
-  source = source.replace(
-    /<Disclosure\s+title="Component tokens"[^>]*>([\s\S]*?)<\/Disclosure>/g,
-    (_, inner) => `### Component tokens\n\n${inner.trim()}`,
-  )
-  source = source.replace(
-    /<Disclosure\s+title="Component props"[^>]*>([\s\S]*?)<\/Disclosure>/g,
-    (_, inner) => `### Props\n\n${inner.trim()}`,
-  )
-  source = source.replace(/<Disclosure[^>]*>([\s\S]*?)<\/Disclosure>/g, (_, inner) => inner.trim())
   source = source.replace(/<Preview[^>]*>[\s\S]*?<\/Preview>/g, '')
   source = source.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
   source = source.replace(/^<\/?(?:Columns|Col)(?:\s[^>]*)?>[ \t]*\n?/gm, '')
@@ -41,6 +40,7 @@ export function parseMdx(raw) {
   source = source.replace(/<\/?[A-Za-z][A-Za-z0-9.-]*(?:\s[^>]*)?>/g, '')
   source = source.replace(/\{[A-Za-z_$][A-Za-z0-9_$.]*\}/g, '')
 
+  source = source.replace(/\x00ANCHOR(\d+)\x00/g, (_, index) => anchors[Number(index)])
   source = source.replace(/\x00INLINE(\d+)\x00/g, (_, index) => inlineCode[Number(index)])
 
   source = source.replace(/\x00CODE(\d+)\x00/g, (_, index) => {

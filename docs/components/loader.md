@@ -52,7 +52,7 @@ label, state, and semantics.
 
 Use `<Loader>` when you need a value, speed, or accessible loading status.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -64,6 +64,8 @@ decorative so nearby status text remains the single announcement. |
 | `tone?` | LoaderTone | — | Color tone for the loader. Omit it to use the standard text-3 color. |
 | `value?` | number \| false | — | Current progress value. Omit this prop, or pass `false`, for an
 indeterminate rotating gradient. |
+
+## Web Component
 
 Use a raw `<a-loader>` when you are not using the JSX wrapper. Set its size,
 speed, and determinate percentage with CSS custom properties. `value` selects
@@ -91,6 +93,8 @@ the static ring; `--loader-value` is the percentage it shows.
 
 When the value is unknown, omit `value` and give a standalone loader an
 accessible name. Mark a loader beside visible status text with `aria-hidden`.
+
+## Styling
 
 The standalone Loader uses the quiet `--text-3` color by default. Set `color`
 directly when it needs a deliberate semantic or one-off color; the `loader`

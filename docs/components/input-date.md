@@ -52,6 +52,8 @@ field converts it (18 → 6 PM).
 <InputDate size="large" label="Large" time defaultValue="2026-06-15T09:00" />
 ```
 
+## InputDate props
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `clearable?` | boolean | — | Show a clear button once the field has a value. |
@@ -336,6 +338,10 @@ Tracking the cursor, painting the grid from `buildMonth`, and re-rendering on
 `navigate` is what the React `Calendar` packages, plus the year/month jump menu,
 which uses the same `Menu` composition shown on the [Menu](./menu.md) page.
 
+## Calendar props
+
+## Web Component
+
 `InputDate` has no host element. Rebuilding its text parsing, dropdown calendar,
 localized day grid, month navigation, keyboard navigation, and focus management
 in vanilla JavaScript is significant work, even with Anta's `buildMonth` and
@@ -360,6 +366,8 @@ field treatments.
 <input data-anta type="time" name="reminder-at" value="09:00">
 <input data-anta type="week" name="sprint-week" value="2026-W25">
 ```
+
+## Styling
 
 The calendar is **light DOM**, so everything is plain CSS, with no shadow parts or
 hidden internals. The days and chevrons are real `<a-button>`s, so their colors,

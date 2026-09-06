@@ -1,7 +1,8 @@
-import { useEffect, useId, useState } from 'preact/hooks'
+import { useId, useState } from 'preact/hooks'
 import { Box, Button, Checkbox, Select, Slider, Tag, Text } from '@antadesign/anta'
 import type { BoxWheelActivation, BoxWheelInput, SelectOption } from '@antadesign/anta'
 import styles from './BoxWheelCapturePreview.module.css'
+import { useElements } from './useElements'
 
 const ROW_HEIGHT = 32
 const VIEW_HEIGHT = ROW_HEIGHT * 6
@@ -16,7 +17,7 @@ const ACTIVATIONS: SelectOption<BoxWheelActivation>[] = [
 
 /** Focused wheel controls live outside the surface that claims input. */
 export function BoxWheelCapturePreview() {
-  useEffect(() => { import('@antadesign/anta/elements') }, [])
+  useElements()
   const hintId = useId()
   const [enabled, setEnabled] = useState(false)
   const [activation, setActivation] = useState<BoxWheelActivation>('settled')

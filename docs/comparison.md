@@ -4,6 +4,8 @@ Compare four delivery models: styled React libraries, headless primitives,
 copy-paste source, and framework-agnostic web components. Versions are a
 snapshot from ; use each system's link for the current release.
 
+## Frameworks, styling, license, browser support
+
 Most systems are React-only and use CSS-in-JS, Sass, StyleX, or Tailwind.
 Anta ships web components with plain CSS in one `@layer`, without a style
 runtime. Consumer CSS overrides its defaults normally.
@@ -12,6 +14,8 @@ Browser years show the oldest published fixed floor. `~` marks the earliest
 year shared by a browser feature the current system ships, rather than a
 published support promise. Hover a value for the policy and the feature behind
 that estimate.
+
+## The systems
 
 Fixed-package sizes are measured from the version named on each card. Each npm
 artifact was downloaded, bundled as a full ESM import with esbuild, minified,

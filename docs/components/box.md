@@ -103,7 +103,7 @@ snapshot. Reporting pauses off screen and resumes when Box returns.
 Resize or scroll the Box to update its measurements.
 
 See the [measurement fields](#boxmeasurement). Overflow fields map to kebab-case
-CSS states, such as `clippedX` → `:state(clipped-x)`, not host attributes.
+CSS states, such as `clippedX` → `:state(clipped-x)`.
 
 ## Context
 
@@ -114,6 +114,28 @@ CSS states, such as `clippedX` → `:state(clipped-x)`, not host attributes.
 Switch themes, resize, or zoom to update the preview. The `.light` Box keeps its
 local `mode`; `globalMode` follows the document. Browser and OS versions may be
 frozen, so use `pointer`, `hover`, or feature tests to choose behavior.
+
+The scoped readout stores the current context:
+
+```tsx title="contextchange"
+import { useState } from 'react'
+import { Box, Tag, type BoxContext } from '@antadesign/anta'
+
+function ScopedContext() {
+  const [context, setContext] = useState<BoxContext | null>(null)
+
+  return (
+    <div className="light">
+      <Box display="flex" gap={6} onContextChange={(_, { current }) => setContext(current)}>
+        <Tag size="small" label="mode" value={context?.mode ?? '…'} />
+        <Tag size="small" label="globalMode" value={context?.globalMode ?? '…'} />
+      </Box>
+    </div>
+  )
+}
+```
+
+<a id="canvas"></a>
 
 ### Canvas-related styles
 
@@ -157,31 +179,44 @@ is invalid in the shorthand.
 </Box>
 ```
 
-```tsx title="contextchange"
-<Box onContextChange={(_, { changed, current }) => {
-  if (changed.mode) updatePreviewTheme(current.mode)
-  if (changed.focusWithin) announceFocus(current.focusWithin)
-}}>
-  <span>Preview content</span>
-</Box>
-```
+## Capture wheel, pointer, and touch
 
-## Capture wheel, pointer and touch
+Each capability is opt-in; handlers alone enable nothing. Choose by interaction:
 
-Use `wheelCapture`, `pointerCapture`, or `pan` to handle custom scrolling,
-zooming, or dragging. Each is opt-in; handlers alone enable nothing. Plain Boxes
-add no input state or listeners, and capture does not enable observation.
+| Interaction | Capability | Your component handles |
+| --- | --- | --- |
+| Mouse wheel or trackpad scrolling | `wheelCapture` | Scroll offsets or zoom |
+| Touchscreen drag to scroll | `pan` | Scroll offsets from pan deltas |
+| Drag to select, resize, or draw | `pointerCapture` | Raw pointer samples |
+
+Plain Boxes add no input state or listeners. Capture does not enable observation.
 
 Box cancels accepted native input on the browser thread, then sends plain data
-to your handler. Your component performs the action. To cross a worker boundary,
-send `detail`, not the `CustomEvent`. Handler return values cannot change
-cancellation.
+to your handler. Your component performs the action. Forward the serializable
+`detail` across worker boundaries. Handler return values cannot change cancellation.
+
+For a 2D table, separate touch scrolling from mouse/pen selection:
+
+```tsx title="Table input"
+<Box
+  wheelCapture
+  pan
+  pointerCapture={{ pointerTypes: ['mouse', 'pen'] }}
+  onWheelInput={handleWheel}
+  onPanInput={handlePan}
+  onPointerInput={handleSelection}
+>
+  {tableContent}
+</Box>
+```
 
 ### Wheel ownership
 
 Set `wheelCapture` to `true` for all directions, or update allowed directions
 from your component's bounds. Declined input reaches the enclosing editor or
 scroll container. The dominant axis decides ownership; both deltas are delivered.
+All-false bounds preserve settling while declining input. Passing `false` or
+removing `wheelCapture` disables capture and clears settling.
 
 ```tsx title="Custom table wheel"
 <Box
@@ -210,7 +245,8 @@ Named modifiers allow other keys too.
 
 The innermost eligible Box handles wheel input on its host. Canceled and
 non-cancelable events are ignored; Box cannot undo an ancestor's capture-phase
-handler.
+handler. Capture skips nested `textarea`, `select`, numeric/range inputs, and
+Anta menus. Mark other native scroll panes with `data-box-input-ignore`.
 
 `detail.wheelEvent` preserves native event data, signs, and `deltaMode` units
 (0: pixels, 1: lines, 2: pages). Box does not infer OS scrolling preferences.
@@ -220,8 +256,9 @@ target, which may be a child.
 
 ### Pointer sessions
 
-`pointerCapture` tracks one primary mouse, pen, or touch pointer, including
-movement outside Box. Use `threshold` to delay capture until dragging starts:
+`pointerCapture` sends raw data for one primary mouse, pen, or touch pointer,
+including movement outside Box. Your component interprets the gesture.
+Use `threshold` to delay capture until dragging starts:
 
 ```tsx title="Mouse or pen selection"
 <Box
@@ -233,24 +270,28 @@ movement outside Box. Use `threshold` to delay capture until dragging starts:
 ```
 
 `onPointerInput` reports `start`, `move`, `end`, and `cancel`. `deltaX/Y` are
-incremental movement; `movementX/Y` are totals from the press, positive
-right/down. Negate totals when adapting RemoteVirtualDOM MouseCapture's
-start-minus-current convention.
+incremental movement; `movementX/Y` are totals from the press, positive right/down.
 
 Presses below threshold emit nothing. Captured gestures suppress the following
 pointer-generated click. Cancellation reports `cancelReason` on pointer
 cancellation, lost capture, disabling, removal, or window blur/hiding.
 Lifecycle cancellation sets `pointerEvent: null`.
+Capture cancels native behavior without stopping pointer-event propagation.
 
-Pointer and pan capture skip nested controls, links, and editable content.
+Pointer and pan capture skip nested native/ARIA controls, links, and editable content.
 `pointerCapture.includeInteractive` includes them. Use `data-box-input-ignore`
 to exclude a subtree from all capture, including wheel. It does not remove
 ancestor `touch-action` restrictions.
 
 ### Touch panning and inertia
 
-`pan` enables custom touch scrolling without inertia. Set `pointerTypes` to
-include mouse dragging. It can share capture with `pointerCapture`:
+`pan` converts touchscreen dragging into scroll deltas without inertia. It
+captures the pointer internally; it does not require `pointerCapture`. Set
+`pan.pointerTypes` to enable mouse or pen panning. If your component already
+interprets touch gestures, use `pointerCapture` for touch and omit `pan`.
+
+Enabling both for the same pointer type emits both streams. The table example
+uses separate pointer types so each gesture has one handler.
 
 ```tsx title="Custom touch scrolling"
 <Box
@@ -276,6 +317,8 @@ axis and pinch zoom to the browser. Both-axis pan or touch pointer capture owns
 the whole gesture; mouse-only capture leaves touch unchanged. Unlike wheel,
 an active touch gesture cannot return to native scrolling at a bound. Update
 directions to stop custom motion and control the next gesture.
+Empty pointer-type or button lists disable that capability without restricting
+native text selection or touch gestures.
 
 ## Component props
 
@@ -305,8 +348,9 @@ contains the changed fields and a full current snapshot. |
 geometry, focus state, and activation reason. Cancellation is already complete. |
 | `pan?` | boolean \| BoxPan | — | Emit custom pan motion. `true` enables touch panning on both axes without
 momentum. Options select devices, axes, bounds directions, and optional inertia.
+Captures the pointer internally; `pointerCapture` is not required.
 Sets CSS touch-action through attributes before the gesture starts. |
-| `pointerCapture?` | boolean \| BoxPointerCapture | — | Capture a primary pointer until release or cancellation. An options object
+| `pointerCapture?` | boolean \| BoxPointerCapture | — | Emit raw data for a primary pointer until release or cancellation. An options object
 filters devices/buttons and configures activation. Nested interactive controls
 are excluded unless explicitly included. A listener alone enables nothing. |
 | `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a
@@ -316,6 +360,7 @@ for square corners. |
 Focus applies only to input targeted within this Box. |
 | `wheelCapture?` | BoxInputDirections | — | Capture wheel input in the enabled directions and emit `onWheelInput`.
 `true` accepts all directions. Omit or pass `false` to leave wheel input alone.
+Nested native wheel controls and Anta menus are excluded.
 All-false direction bounds preserve pointer settling while declining input.
 A listener alone never enables capture. |
 | `wheelModifier?` | BoxInputModifier | none | Required modifier for wheel capture. `none` preserves browser Ctrl/pinch zoom. |

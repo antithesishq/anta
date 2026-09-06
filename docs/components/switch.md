@@ -123,7 +123,7 @@ The wrapper sets `role="switch"` and keeps `aria-checked` in sync with the curre
 
 Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w3.org/WAI/ARIA/apg/patterns/switch/).
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -150,6 +150,8 @@ track and thumb stay neutral. If both are set, `tone` colors the unchecked
 state and `toneSelected` colors the checked track. |
 | `value?` | string | "on" | Value submitted while checked. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 The focusable host carries the state. Label and hint are light-DOM children.
@@ -160,6 +162,8 @@ The focusable host carries the state. Label and hint are light-DOM children.
   <a-switch-hint>Product and security notices.</a-switch-hint>
 </a-switch>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** colors the checked track plus the unchecked chrome, while **`toneSelected`** colors only the checked track. Both accept any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](../colors.md#focus-ring).
 

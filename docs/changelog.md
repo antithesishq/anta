@@ -7,11 +7,9 @@ changes are not listed.
 
 ### Added
 
-- `Box` adds explicit `wheelCapture`, `pointerCapture`, and `pan` options for
-  custom tables, plots, and drag surfaces. Browser-side capture emits serialized
-  input with local geometry and activation reasons. Wheel settling, device
-  filters, direction limits, and optional pan inertia are declarative; ordinary
-  Boxes allocate no input state or listeners.
+- `Box` adds opt-in `wheelCapture`, `pointerCapture`, and `pan` for custom tables,
+  plots, and drag surfaces. Handlers receive serialized input and local geometry,
+  with configurable wheel settling, device filters, direction limits, and pan inertia.
 
 ### Fixed
 
@@ -22,6 +20,9 @@ changes are not listed.
   and custom panning, unless pointer capture explicitly includes them.
 - `Box` preserves settled wheel activation after an in-bounds drag and ignores
   touch exit events when tracking mouse dwell.
+- `Box` keeps captured pointer events available to ancestor and document
+  listeners while canceling native behavior.
+- `Box` preserves native wheel scrolling in nested textareas and Anta menus.
 
 ## 0.3.26 — September 4, 2026
 

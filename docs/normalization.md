@@ -105,6 +105,8 @@ Or import both and override only the pieces you want (unlayered, or in a later l
 The reset gives headings, lists, links, and tables the same baseline as Anta
 components. Omit it when your own reset should control them.
 
+## Default HTML tags
+
 Tags styled by the reset, rendered live.
 
 `abbr`, `q`, and `cite` keep browser typographic styles. `dd` has no browser indent

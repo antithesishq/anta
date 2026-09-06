@@ -17,7 +17,7 @@ accessible loading status.
 
 ## Built-in shapes
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -30,6 +30,8 @@ accessible loading status.
  decorative — `aria-hidden="true"` is applied so it doesn't add
  noise alongside neighbouring text. |
 | `size?` | number | 16 | Width and height in pixels. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

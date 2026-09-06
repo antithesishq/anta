@@ -250,6 +250,8 @@ element — `Input`, and the composed `Select` — skip it and expose only
 <RadioGroup onValueChange={(_e, { value }) => save(value)} options={…} />
 ```
 
+## RadioGroup props
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `options` | RadioOption[] | — | The options. The wrapper renders one `<a-radio>` per entry and computes its
@@ -295,6 +297,8 @@ element — `Input`, and the composed `Select` — skip it and expose only
  requested change through `onStateChange`. Leave it undefined for
  uncontrolled use. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 The group owns selection and the single tab stop. Put options in `<a-radio-list>`.
@@ -325,6 +329,8 @@ treatments.
   <label><input data-anta type="radio" name="plan" value="enterprise" size="large" tone="warning"> Enterprise</label>
 </div>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** colors the mark in every state,
 **`toneSelected`** only the selected option (any CSS color for a custom tone, set on

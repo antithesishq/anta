@@ -623,7 +623,7 @@ sections is one pick (dev builds warn).
 groups (their label becomes the heading) and drops empty ones, so results read as one
 scannable list instead of hiding matches behind flyouts.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -829,6 +829,8 @@ inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
 />
 ```
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 `Select` has no host element. Compose a read-only `<a-input>` trigger with an
@@ -895,6 +897,8 @@ corners.
   </optgroup>
 </select>
 ```
+
+## Styling
 
 Select is an [Input](./input.md) plus a [Menu](./menu.md), so it
 inherits both surfaces' hooks. Reach for props first, then plain CSS or `::part` for

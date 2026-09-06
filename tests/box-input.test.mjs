@@ -110,6 +110,50 @@ test('ordinary Boxes and handler-only JSX add no input listeners or touch owners
   assert.deepEqual(result, { additions: [], touch: 'auto' })
 })
 
+test('shared event adapters unwrap native and renderer events without adding absent handlers', async t => {
+  const page = await pageFor(t)
+  const result = await page.evaluate(() => {
+    const calls = []
+    const handler = customEventHandler((event, detail) => calls.push([event.detail === detail, detail]))
+    const event = new CustomEvent('sample', { detail: { value: 3 } })
+    handler(event)
+    handler({ nativeEvent: event })
+    for (const detail of [0, false, '', null]) handler(new CustomEvent('sample', { detail }))
+    return { absent: customEventHandler() === undefined, calls }
+  })
+  assert.deepEqual(result, { absent: true, calls: [[true, { value: 3 }], [true, { value: 3 }], [true, 0], [true, false], [true, '']] })
+  assert.deepEqual(await page.evaluate(() => {
+    const received = []
+    const props = {}
+    const names = ['MeasureChange', 'ContextChange', 'WheelInput', 'PointerInput', 'PanInput']
+    for (const name of names) props[`on${name}`] = (event, detail) => received.push([name, event.detail === detail, detail.value])
+    renderBox(props)
+    for (const name of names) document.querySelector('a-box').dispatchEvent(new CustomEvent(name.toLowerCase(), { detail: { value: name } }))
+    return received
+  }), ['MeasureChange', 'ContextChange', 'WheelInput', 'PointerInput', 'PanInput'].map(name => [name, true, name]))
+})
+
+test('shared numeric parsing preserves Slider whitespace and Box fallback/clamping rules', async t => {
+  const page = await pageFor(t)
+  assert.deepEqual(await page.evaluate(() => [null, '', ' ', 'bad', 'Infinity', NaN, -2, '2.5'].map(value => finiteNumber(value, 10))), [10, 10, 0, 10, 10, 10, -2, 2.5])
+  for (const delay of [' ', 'bad', 'Infinity', '-1', '25']) {
+    await mount(page, { 'wheel-capture': '', 'wheel-delay': delay })
+    await syntheticCapture(page)
+    const expected = delay === '-1' ? 0 : delay === '25' ? 25 : 150
+    const result = await page.evaluate(expected => {
+      pointer('pointermove', { buttons: 0, time: 1000 })
+      const at = elapsed => {
+        const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 12, clientX: 20, clientY: 20 })
+        Object.defineProperty(event, 'timeStamp', { value: 1000 + elapsed })
+        box.dispatchEvent(event)
+        return event.defaultPrevented
+      }
+      return [at(expected - 1), at(expected)]
+    }, expected)
+    assert.deepEqual(result, [false, true], delay)
+  }
+})
+
 test('wheel is cancelled synchronously and sends cloneable original values and Box geometry', async t => {
   const page = await pageFor(t)
   await mount(page, { 'wheel-capture': '', 'wheel-activation': 'hover' })
@@ -158,6 +202,78 @@ test('nested wheel ownership and live bounds decline to the eligible ancestor', 
   assert.equal(await wheel(page, {}, '#child'), false)
 })
 
+test('wheel rejections skip serialization and geometry, preserving deltaMode read order', async t => {
+  const page = await pageFor(t)
+  await mount(page, { 'wheel-capture': 'down', 'wheel-delay': '100000' })
+  await syntheticCapture(page)
+  const result = await page.evaluate(() => {
+    let rects = 0, snapshots = 0
+    const readRect = box.getBoundingClientRect.bind(box)
+    box.getBoundingClientRect = () => { rects++; return readRect() }
+    const send = deltaY => {
+      let unitsRead = false
+      const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 })
+      Object.defineProperties(event, {
+        deltaMode: { get() { unitsRead = true; return 1 } },
+        deltaX: { get() { if (!unitsRead) throw new Error('Read deltaMode first'); return 0 } },
+        deltaY: { get() { if (!unitsRead) throw new Error('Read deltaMode first'); return deltaY } },
+        screenX: { get() { snapshots++; return 100 } },
+      })
+      box.dispatchEvent(event)
+      return { accepted: event.defaultPrevented, rects, snapshots }
+    }
+    const blockedDirection = send(-12)
+    const missingDwell = send(12)
+    pointer('pointermove', { buttons: 0 })
+    const pendingDwell = send(12)
+    box.setAttribute('wheel-activation', 'focus')
+    const missingFocus = send(12)
+    box.setAttribute('wheel-activation', 'hover')
+    const accepted = send(12)
+    return { rejected: [blockedDirection, missingDwell, pendingDwell, missingFocus], accepted, detail: log.at(-1).detail }
+  })
+  for (const rejected of result.rejected) assert.deepEqual(rejected, { accepted: false, rects: 0, snapshots: 0 })
+  assert.deepEqual(result.accepted, { accepted: true, rects: 1, snapshots: 1 })
+  assert.equal(result.detail.wheelEvent.deltaMode, 1)
+  assert.equal(result.detail.wheelEvent.deltaY, 12)
+  assert.equal(result.detail.wheelEvent.defaultPrevented, true)
+})
+
+test('native wheel controls keep scrolling while custom surfaces and their links still capture', async t => {
+  const page = await pageFor(t)
+  await mount(page, { 'wheel-capture': '', 'wheel-activation': 'hover' })
+  await page.evaluate(() => {
+    box.innerHTML = '<textarea id="editor" style="width:150px;height:80px"></textarea><a-menu><div role="option" id="option">Option</div></a-menu><select></select><input type="number"><input type="range"><div id="pane" data-box-input-ignore style="overflow:auto;height:30px"><div style="height:300px">Content</div></div><div id="plot" role="img" tabindex="0"><a href="#point">Point</a><button>Reset</button></div>'
+    editor.value = 'Line\n'.repeat(100)
+  })
+  for (const selector of ['#editor', '#option', 'a-menu', 'select', 'input[type="number"]', 'input[type="range"]', '#pane > div']) {
+    assert.equal(await wheel(page, {}, selector), false, selector)
+  }
+  await page.locator('#editor').hover()
+  await page.mouse.wheel(0, 80)
+  await page.waitForFunction(() => editor.scrollTop > 0)
+  assert.deepEqual(await page.evaluate(() => log), [])
+  assert.equal(await wheel(page, {}, '#plot'), true)
+  assert.equal(await wheel(page, {}, '#plot a'), true)
+  assert.equal(await wheel(page, {}, '#plot button'), true)
+})
+
+test('an open Select scrolls within a hover-activated wheel Box', async t => {
+  const page = await pageFor(t)
+  await page.evaluate(() => {
+    window.log = []
+    renderSelectInBox({
+      wheelCapture: true, wheelActivation: 'hover', style: { height: '580px' },
+      onWheelInput: (_, detail) => log.push(detail),
+    })
+  })
+  await page.locator('a-input').click()
+  await page.locator('a-menu-item').first().hover()
+  await page.mouse.wheel(0, 100)
+  await page.waitForFunction(() => document.querySelector('a-menu').shadowRoot.querySelector('[part="scroll"]').scrollTop > 0)
+  assert.deepEqual(await page.evaluate(() => log), [])
+})
+
 test('wheel settling uses pointer dwell, reset policy, and region identity; focus never moves focus', async t => {
   const page = await pageFor(t)
   await mount(page, { 'wheel-capture': '', 'wheel-delay': '150' })
@@ -189,6 +305,23 @@ test('wheel settling uses pointer dwell, reset policy, and region identity; focu
     document.body.dispatchEvent(new WheelEvent('wheel', { bubbles: true }))
   })
   assert.equal(await wheel(page), false)
+})
+
+test('dwell eligibility follows elapsed time before the first wheel sample', async t => {
+  const page = await pageFor(t)
+  for (const reset of [false, true]) {
+    await mount(page, { 'wheel-capture': '', ...(reset ? { 'wheel-reset-on-move': '' } : {}) })
+    await syntheticCapture(page)
+    const accepted = await page.evaluate(() => {
+      pointer('pointermove', { buttons: 0, clientX: 20, clientY: 20, time: 1000 })
+      pointer('pointermove', { buttons: 0, clientX: 100, clientY: 20, time: 1200 })
+      const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 12, clientX: 100, clientY: 20 })
+      Object.defineProperty(event, 'timeStamp', { value: 1201 })
+      box.dispatchEvent(event)
+      return event.defaultPrevented
+    })
+    assert.equal(accepted, !reset)
+  }
 })
 
 test('settled wheel bounds retain dwell when all directions close and reopen', async t => {
@@ -323,6 +456,41 @@ test('trusted mouse capture continues outside, ends once, and does not emit an a
   assert.equal(result[2].detail.deltaX, 300)
   assert.equal(result[0].detail.activationReason, 'drag-threshold')
   assert.equal(result[2].detail.pointerEvent.isTrusted, true)
+})
+
+test('captured pointers reach delegated handlers without starting an ancestor session', async t => {
+  for (const threshold of [0, 3]) {
+    const page = await pageFor(t)
+    await mount(page, { 'pointer-capture': 'mouse', 'pointer-threshold': String(threshold), pan: 'both', 'pan-pointer-types': 'mouse', 'pan-threshold': String(threshold) })
+    await page.evaluate(() => {
+      const parent = document.createElement('a-box')
+      parent.setAttribute('pointer-capture', 'mouse')
+      parent.addEventListener('pointerinput', () => log.push({ type: 'ancestor' }))
+      box.before(parent)
+      parent.append(box)
+      window.delegated = []
+      for (const target of [document.body, document]) {
+        for (const type of ['pointerdown', 'pointermove', 'pointerup']) {
+          target.addEventListener(type, event => {
+            if (type === 'pointermove' && !event.buttons) return
+            delegated.push({ target: target === document ? 'document' : 'root', type, cancelled: event.defaultPrevented })
+          })
+        }
+      }
+    })
+    await page.mouse.move(20, 20)
+    await page.mouse.down()
+    await page.mouse.move(60, 50)
+    await page.mouse.move(360, 300)
+    await page.mouse.up()
+    assert.deepEqual(await page.evaluate(() => delegated), ['pointerdown', 'pointermove', 'pointermove', 'pointerup'].flatMap(type =>
+      ['root', 'document'].map(target => ({ target, type, cancelled: type !== 'pointerdown' || threshold === 0 })),
+    ))
+    const events = await page.evaluate(() => log)
+    assert.equal(events.some(event => event.type === 'ancestor'), false)
+    assert.deepEqual(events.filter(event => event.type === 'pointerinput').map(event => event.detail.phase), ['start', 'move', 'move', 'end'])
+    assert.deepEqual(events.filter(event => event.type === 'paninput').map(event => event.detail.phase), ['start', 'move', 'move', 'release', 'end'])
+  }
 })
 
 test('nested interactive controls and explicit ignored subtrees keep their input', async t => {

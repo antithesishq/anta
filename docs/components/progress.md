@@ -92,7 +92,7 @@ works for one at the bottom.
 `round` makes the track fully round. Pass a number or CSS length for a custom
 radius.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -111,6 +111,8 @@ radius.
  light/dark automatically. |
 | `value?` | number \| false | — | Current progress value. Omit this prop, or pass `false`, to show
 indeterminate progress. Negative values are clamped to 0. |
+
+## Web Component
 
 ```html
 <a-progress style="width: 100%" value="42" max="100" tone="info" role="progressbar"
@@ -157,6 +159,8 @@ the browser's native semantics, including indeterminate progress when `value`
 is absent, while using Anta's track, fill, tone, and size treatments. Native
 progress does not render Anta's label or hint structure; give it an accessible
 name instead.
+
+## Styling
 
 ```css
 /* a fancy bar: rounded track (all sides), a multi-stop gradient fill with a glow,

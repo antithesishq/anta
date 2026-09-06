@@ -304,7 +304,7 @@ function Accordion() {
 .accordion a-expander:not(:first-child):not(:last-child) { border-radius: 0; }
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -349,6 +349,8 @@ function Accordion() {
  its hue while lightness/chroma are pinned. `'neutral'` (the default) is
  the same as omitting it. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the title and actions. The details element contains the collapsible body.
@@ -378,6 +380,8 @@ use a heading inside the summary when you need heading semantics.
   <div>Everything inside &lt;details&gt; is the collapsible body.</div>
 </details>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the surface in oklch), **`priority`** the fill, **`level`** the

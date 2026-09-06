@@ -206,7 +206,7 @@ it also blocks navigation until the load resolves.
 </Card>
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -253,6 +253,8 @@ it also blocks navigation until the load resolves.
  color keeps its hue while lightness/chroma are pinned. `'neutral'` (the
  default) is the same as omitting it. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold media, header, and footer content. Unslotted content is the card body.
@@ -266,6 +268,8 @@ Slots hold media, header, and footer content. Unslotted content is the card body
   </a-button>
 </a-card>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the surface in oklch), **`priority`** the fill, **`size`** the

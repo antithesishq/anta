@@ -117,7 +117,7 @@ down 1px, since caps read larger than mixed case at the same size.
 <Tag allcaps label="Running" />
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -145,6 +145,8 @@ down 1px, since caps read larger than mixed case at the same size.
  Rendered in the default color and weight, with no divider from the
  label; the color + weight contrast does the separating. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Use `a-tag-label` for the key and `a-tag-value` for its value.
@@ -156,6 +158,8 @@ Use `a-tag-label` for the key and `a-tag-value` for its value.
   <a-tag-value>Passed</a-tag-value>
 </a-tag>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the fill / border / text in oklch), **`priority`** the fill style,

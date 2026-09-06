@@ -1,13 +1,7 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useState } from 'preact/hooks'
 import { Box, Tag, Text } from '@antadesign/anta'
 import type { BoxMeasurement } from '@antadesign/anta'
-
-/** Registers the custom elements client-side (see TabsDemo for the pattern). */
-function useElements() {
-  useEffect(() => {
-    import('@antadesign/anta/elements')
-  }, [])
-}
+import { useElements } from './useElements'
 
 /** Every `BoxMeasurement` field, in the order the type declares them. */
 const FIELDS: (keyof BoxMeasurement)[] = [

@@ -1,11 +1,5 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { finiteNumber, HTMLElementBase } from '../anta_helpers'
 import './a-slider.css'
-
-const finiteNumber = (value: string | number | null, fallback: number) => {
-  if (value == null || value === '') return fallback
-  const number = Number(value)
-  return Number.isFinite(number) ? number : fallback
-}
 
 const precisionOf = (value: number) => {
   const exponent = value.toString().match(/(?:\.(\d+))?(?:e([+-]?\d+))?$/i)

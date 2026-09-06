@@ -167,7 +167,7 @@ The wrapper sets `role="checkbox"` and `aria-checked` (`"true"` / `"false"` / `"
 
 Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -213,6 +213,8 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
  set, `tone` governs the off-state border and `toneSelected` the checked fill. |
 | `value?` | string | "on" | Value submitted with the form when checked — like a native checkbox. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 The focusable host carries the state. Label and hint are light-DOM children.
@@ -240,6 +242,8 @@ treatments.
   <label><input data-anta type="checkbox" name="billing" size="large" round tone="warning" checked> Billing alerts</label>
 </div>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** colors the mark in every state,
 **`toneSelected`** only the checked mark (any CSS color for a custom tone — it

@@ -269,6 +269,8 @@ const [tab, setTab] = useState('overview')
 />
 ```
 
+## Keyboard & accessibility
+
 Every enabled tab is in the tab order; `Tab` / `Shift`+`Tab` step through them.
 The arrow keys also move between enabled tabs (wrapping at the ends), `Home` /
 `End` jump to the first / last, and `Space` / `Enter` activate the focused tab;
@@ -278,6 +280,8 @@ Disabled tabs are skipped and dropped from the tab order.
 Pass `label` for the tablist's accessible name. Each `<TabPanel>` names its tab as
 its accessible label (`aria-labelledby`), set off-DOM so nothing writes the panel's
 attributes.
+
+## Routing
 
 `Tabs` reports the picked value and leaves navigation to the app, so a strip can
 switch routes as readily as panels. Treat each `value` as a path: control `value`
@@ -322,6 +326,8 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 // Uncontrolled: the strip owns selection, so onValueChange fires on each pick.
 <Tabs defaultValue="a" onValueChange={(_e, { value }) => route(value)}>…</Tabs>
 ```
+
+## Tabs props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -372,6 +378,12 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
  *requests* a change via `onStateChange` — apply it by updating this prop.
  Leave undefined (and use `defaultValue`) for uncontrolled. |
 
+## Tab option props
+
+## TabPanel props
+
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Keep the tab strip and panels as siblings under one parent. Panels read the active
@@ -389,6 +401,8 @@ Add `fill` to make horizontal tabs share the available width equally.
   <a-tabpanel role="tabpanel" value="security">Security settings</a-tabpanel>
 </div>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`**, **`size`**, **`priority`**. The focus ring is
 the global `--focus-ring` (see [Colors](../colors.md#focus-ring)).

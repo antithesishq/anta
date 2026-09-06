@@ -358,7 +358,7 @@ const recency: SelectFacetCustom<Recency> = {
 // concrete date (or take the day as-is) and filter your rows with it
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|

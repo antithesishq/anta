@@ -1,4 +1,9 @@
-# Box input regression tests
+# Regression tests
+
+Run `pnpm test` for all root tests, including Markdown disclosure conversion.
+CI uses the runner's installed Chrome with `BOX_TEST_BROWSER_CHANNEL=chrome`.
+
+## Box input
 
 Run `pnpm run test:box-input` from the repository root. The suite uses the site's
 Playwright dependency and an in-memory build of the source, served on loopback.

@@ -53,9 +53,12 @@ Uses `jsx: "react-jsx"` with `jsxImportSource: "@antadesign/anta"` (automatic tr
 ### CI
 
 `.github/workflows/ci.yml` runs on pull requests to main:
-1. `pnpm run build` — build anta
-2. `pnpm run typecheck` — type check
-3. `pnpm --filter anta-site build` — build the docs site
+
+1. `pnpm run build` — build anta.
+2. `pnpm run lint` and `pnpm run typecheck` — check package conventions and types.
+3. `pnpm test` — run root tests, including Box browser behavior and Markdown
+   conversion. CI uses `BOX_TEST_BROWSER_CHANNEL=chrome`.
+4. Build and type check stickers, then lint site CSS and build the docs site.
 
 ## Package consumption
 

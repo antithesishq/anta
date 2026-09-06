@@ -203,7 +203,7 @@ On close, focus returns to whatever opened the dialog, from the native `<dialog>
 </Dialog>
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -245,6 +245,8 @@ On close, focus returns to whatever opened the dialog, from the native `<dialog>
  corners at `--dialog-radius`. Omit for the position default: `center` is
  rounded, drawers and `fullscreen` are square. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the header, footer, and close control. Add `tabindex="0"` to every
@@ -261,6 +263,8 @@ raw `<a-button>`.
     aria-label="Close" data-custom-event="closerequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
 </a-dialog>
 ```
+
+## Styling
 
 Reach for the props first: **`position`** (modal, drawer edge, or fullscreen),
 **`closable`** (the ✕), **`persistent`** (light-dismiss off), **`round`** (corner

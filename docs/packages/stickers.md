@@ -45,6 +45,8 @@ Same as the static base, plus:
 | `playOnce?` | `boolean` | Plays once and holds the final frame instead of looping. |
 | `replayOnClick?` | `boolean` | With `playOnce`, lets people click or press Enter/Space to replay the animation. The sticker becomes a labeled button. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Pass the generated SVG payload to `<a-sticker>` and set a size through

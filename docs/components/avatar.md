@@ -158,6 +158,8 @@ over a squarer jaw reads mechanical, and the reverse reads natural. And under
 `any` both radii average near or above `1`, so heads read round to oval unless
 you narrow them yourself.
 
+## Generator config
+
 `generator` takes an `AvatarGenConfig`. Every field is optional — anything you
 leave out keeps its default from the table above.
 
@@ -266,7 +268,7 @@ outside a component: `resolveAvatar(config, seed)` returns the resolved colors
 and geometry, `avatarToSvg(resolved)` renders it, and `getInitials(name)` derives
 the fallback letters.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -288,6 +290,8 @@ the fallback letters.
 | `src?` | string | — | Image URL. When set, the image is shown instead of a generated userpic,
  cropped to fill the container. |
 
+## Vanilla web component
+
 Use the web component directly when you are not using React or Preact. The
 generation config rides the `config` attribute as a JSON string, so the element
 generates from plain markup with no JavaScript of your own.
@@ -300,6 +304,8 @@ generates from plain markup with no JavaScript of your own.
   config='{"headRadiusTop":{"mode":"off"},"headRadiusBottom":{"mode":"off"},"bodyBorderRadius":{"mode":"off"}}'
 ></a-avatar>
 ```
+
+## Styling
 
 Reach for the props first: **`size`** sets the dimensions and **`generator`** the
 generated look. Everything else is `--avatar-*` custom properties on the host and

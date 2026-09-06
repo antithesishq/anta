@@ -366,6 +366,8 @@ chevron stay centered on the row, so it composes with a trailing counter.
 </Menu>
 ```
 
+## MenuItemCopy
+
 `MenuItemCopy` is a row that copies to the clipboard when chosen: `copy` for a
 string, `copyNode` for a DOM region, or `copyUrl` for the current URL. It composes
 a `<MenuItem>` with a slotted `<a-copy>` element that performs the write, and
@@ -506,6 +508,12 @@ call `event.preventDefault()` to keep the menu as-is (e.g. block a dismiss).
 Controlled, the menu never self-moves — apply `detail.next` to `open` to accept,
 or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`.)
 
+## Menu props
+
+## MenuItem props
+
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Put a focusable trigger immediately before `<a-menu>` and omit `state` for an
@@ -521,6 +529,8 @@ values.
   <a-menu-item role="menuitem" tabindex="0" value="members"><a-menu-item-label>Members</a-menu-item-label></a-menu-item>
 </a-menu>
 ```
+
+## Styling
 
 The popover surface lives in shadow DOM and is exposed as a **part** — style its
 chrome (background, frost, border, radius, shadow, padding, min-width) with

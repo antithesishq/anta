@@ -117,7 +117,7 @@ arrives later works normally; a bubble whose content is cleared while it's open
 closes itself. Content that's a single icon or image (an element, no text) still
 shows.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -144,6 +144,8 @@ shows.
 | `truncatedSelector?` | string | — | CSS selector (resolved within the anchor) for the element or elements
  whose overflow decides whether a `truncatedOnly` tooltip shows. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Place `<a-tooltip>` inside the element it describes.
@@ -154,6 +156,8 @@ Place `<a-tooltip>` inside the element it describes.
   <a-tooltip>Make the draft public</a-tooltip>
 </a-button>
 ```
+
+## Styling
 
 The bubble lives in shadow DOM and is exposed as a single **part** — style the box
 (background, frost, shadow, radius, padding, a border) with `::part(bubble)`. Its

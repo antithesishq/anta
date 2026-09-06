@@ -6,6 +6,8 @@ A few guidelines for designers and engineers using Anta.
 
 The matrix renders every text level on every background for the selected tone and theme. Each cell shows the WCAG 2 contrast ratio, AA or AAA result for the selected size and weight, and APCA Lc value. The controls change rendering and pass thresholds, not the color-pair ratios. Vision tabs apply SVG-filter and CSS-mask simulations; the numbers use normal-vision math.
 
+## System colors
+
 This table uses the browser's system colors directly. It changes with the active
 forced-colors palette, so it shows the values a component can use in that mode.
 

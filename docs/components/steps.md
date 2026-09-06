@@ -225,6 +225,8 @@ the next step.
 </Steps>
 ```
 
+## Keyboard and accessibility
+
 Pass `label` to name the tablist. Arrow keys follow the orientation; `Home` and
 `End` move to the edges; `Enter` and `Space` activate a focused step. Disabled
 steps are skipped.
@@ -242,6 +244,8 @@ Events match [`Tabs`](./tabs.md#events).
 | `onChange(event)` | After selection | No | Native `change` event |
 | `onValueChange(event, { value })` | After selection | No | Selected value |
 
+## Steps props
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `options` | StepOption[] | — | Ordered process phases. |
@@ -253,6 +257,10 @@ replaces `marker` and the built-in state marker; return `undefined` to use
 those fallbacks, or `null` for an empty ring. |
 | `tone?` | StepTone \| '' | 'neutral' | Tone applied to every step without its own `tone`. Error steps stay
 critical and disabled steps stay neutral. |
+
+## Step option props
+
+## Web Component
 
 For framework-free use, compose the same light DOM that `Steps` emits.
 `a-steps` and its `a-step-*` children are structural elements styled by the
@@ -287,6 +295,8 @@ import '@antadesign/anta/components/Steps.css'
   </a-steps>
 </div>
 ```
+
+## Styling
 
 Use `priority`, `size`, and `orientation` first. Set `tone` on each option. Each
 option also accepts `className`, `style`, and `data-*` attributes. Markers are

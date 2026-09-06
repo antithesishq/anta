@@ -222,13 +222,15 @@ Toaster.manager.add(() => <Banner tone="critical" message="Connection lost" />, 
 })
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `label?` | string | 'Notifications' | Accessible label for the region landmark. |
 | `toaster?` | Toaster | — | The store this region renders. Omit to bind the default store driven by
  `Toaster.manager`; pass a `createToaster()` for an isolated region. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -265,6 +267,8 @@ remove the toast from the DOM.
   })
 </script>
 ```
+
+## Styling
 
 The region and item are plain custom elements — style them with ordinary CSS
 (`@layer anta`, so an un-layered rule of yours wins without `!important`).

@@ -1,3 +1,4 @@
+import { finiteNumber } from '../anta_helpers'
 import type {
   BoxInputCancelReason, BoxInputGeometry, BoxInputModifier, BoxPanInput,
   BoxPointerActivationReason, BoxPointerInput, BoxPointerStart,
@@ -13,7 +14,6 @@ export const BOX_INPUT_ATTRIBUTES = [
 
 type View = Window & typeof globalThis
 type Point = { x: number; y: number; time: number }
-type Dwell = Point & { ready: boolean }
 type WheelOptions = {
   directions: number; activation: BoxWheelActivation; modifier: BoxInputModifier
   delay: number; tolerance: number; resetOnMove: boolean
@@ -32,17 +32,19 @@ type PointerSession = {
   pointerLast: Point; panLast: Point; samples: Point[]; lastMoveTime: number
 }
 type Momentum = { state: InputState; session: PointerSession; vx: number; vy: number; time: number }
+type PanMotion = Partial<Pick<BoxPanInput, 'deltaX' | 'deltaY' | 'velocityX' | 'velocityY' | 'cancelReason'>>
 type InputStore = {
-  doc: Document; view: View; states: Set<InputState>; dwell: Map<HTMLElement, Dwell>
+  doc: Document; view: View; states: Set<InputState>; dwell: Map<HTMLElement, Point>
   sessions: Map<number, PointerSession>; momenta: Set<Momentum>
   tracking: boolean; listening: boolean; frame?: number; animate?: FrameRequestCallback
 }
 
-// Plain boxes never enter either map. Listeners are shared functions, not instance closures.
+// Plain boxes never enter either map. Listeners use shared functions.
 const inputs = new WeakMap<HTMLElement, InputState>()
 const documents = new WeakMap<Document, InputStore>()
 const DIRECTIONS: Record<string, number> = { up: 1, down: 2, left: 4, right: 8 }
 const POINTER_TYPES: Record<string, number> = { mouse: 1, pen: 2, touch: 4 }
+const WHEEL_CONTROLS = 'textarea, select, input[type="number"], input[type="range"], a-menu'
 const INTERACTIVE = [
   'input, textarea, select, button, summary, a[href], [contenteditable]:not([contenteditable="false"])',
   ...[
@@ -60,9 +62,7 @@ function mask(value: string | null, values: Record<string, number>, fallback: nu
 }
 
 function numberAttr(box: HTMLElement, name: string, fallback: number, min = 0): number {
-  const raw = box.getAttribute(name)
-  const value = raw === null || raw.trim() === '' ? fallback : Number(raw)
-  return Number.isFinite(value) ? Math.max(min, value) : fallback
+  return Math.max(min, finiteNumber(box.getAttribute(name)?.trim() ?? null, fallback))
 }
 
 function modifierAttr(box: HTMLElement, name: string, fallback: BoxInputModifier): BoxInputModifier {
@@ -162,12 +162,7 @@ export function syncBoxInput(box: HTMLElement, attribute?: string) {
       box.addEventListener('lostpointercapture', onLostCapture)
       box.addEventListener('click', onClick, true)
       box.addEventListener('dragstart', onDragStart)
-    } else {
-      box.removeEventListener('pointerdown', onPointerDown)
-      box.removeEventListener('lostpointercapture', onLostCapture)
-      box.removeEventListener('click', onClick, true)
-      box.removeEventListener('dragstart', onDragStart)
-    }
+    } else removePointerListeners(box)
   }
   if (!wheel || attribute?.startsWith('wheel-') && attribute !== 'wheel-capture') state.store.dwell.delete(box)
   if (state.session && attribute && (attribute.startsWith('pointer-') || attribute === 'pan' || attribute === 'pan-pointer-types' || attribute === 'pan-threshold')) {
@@ -185,10 +180,7 @@ export function disconnectBoxInput(box: HTMLElement, reason: BoxInputCancelReaso
   state.pointer = undefined
   state.pan = undefined
   box.removeEventListener('wheel', onWheel)
-  box.removeEventListener('pointerdown', onPointerDown)
-  box.removeEventListener('lostpointercapture', onLostCapture)
-  box.removeEventListener('click', onClick, true)
-  box.removeEventListener('dragstart', onDragStart)
+  removePointerListeners(box)
   if (state.session) finishSession(state.session, null, reason)
   if (state.momentum) stopMomentum(state.momentum, reason)
   const store = state.store
@@ -199,6 +191,13 @@ export function disconnectBoxInput(box: HTMLElement, reason: BoxInputCancelReaso
   store.view.removeEventListener('blur', onWindowBlur)
   store.doc.removeEventListener('visibilitychange', onVisibilityChange)
   if (documents.get(store.doc) === store) documents.delete(store.doc)
+}
+
+function removePointerListeners(box: HTMLElement) {
+  box.removeEventListener('pointerdown', onPointerDown)
+  box.removeEventListener('lostpointercapture', onLostCapture)
+  box.removeEventListener('click', onClick, true)
+  box.removeEventListener('dragstart', onDragStart)
 }
 
 function needsDwell(options?: WheelOptions) {
@@ -239,14 +238,13 @@ function onDwellMove(this: Document, event: PointerEvent) {
     if (!dwell) {
       // Drags can update existing dwell, but cannot activate a new region.
       if (event.buttons) continue
-      store.dwell.set(state.box, { x: event.clientX, y: event.clientY, time: event.timeStamp, ready: false })
+      store.dwell.set(state.box, { x: event.clientX, y: event.clientY, time: event.timeStamp })
       continue
     }
     if (event.clientX === dwell.x && event.clientY === dwell.y) continue
-    dwell.ready ||= event.timeStamp - dwell.time >= options.delay
-    if (dwell.ready && !options.resetOnMove) continue
+    if (event.timeStamp - dwell.time >= options.delay && !options.resetOnMove) continue
     if (Math.abs(event.clientX - dwell.x) > options.tolerance || Math.abs(event.clientY - dwell.y) > options.tolerance) {
-      dwell = { x: event.clientX, y: event.clientY, time: event.timeStamp, ready: false }
+      dwell = { x: event.clientX, y: event.clientY, time: event.timeStamp }
       store.dwell.set(state.box, dwell)
     }
   }
@@ -271,11 +269,11 @@ function matchesModifier(event: MouseEvent, modifier: BoxInputModifier) {
   return event[`${modifier}Key`]
 }
 
-function ignoredTarget(box: HTMLElement, event: Event, interactive: boolean) {
+function ignoredTarget(box: HTMLElement, event: Event, controls: string) {
   const view = box.ownerDocument.defaultView as View
   for (const target of event.composedPath()) {
     if (target === box) break
-    if (target instanceof view.Element && (target.hasAttribute('data-box-input-ignore') || interactive && target.matches(INTERACTIVE))) return true
+    if (target instanceof view.Element && (target.hasAttribute('data-box-input-ignore') || controls && target.matches(controls))) return true
   }
   return box.hasAttribute('data-box-input-ignore')
 }
@@ -305,12 +303,6 @@ function serializeMouse(event: MouseEvent): SerializedMouseEvent {
   }
 }
 
-function serializeWheel(event: WheelEvent): SerializedWheelEvent {
-  // Firefox can change delta units depending on whether deltaMode has been read.
-  const deltaMode = event.deltaMode
-  return { ...serializeMouse(event), deltaMode, deltaX: event.deltaX, deltaY: event.deltaY, deltaZ: event.deltaZ }
-}
-
 function serializePointer(event: PointerEvent): SerializedPointerEvent {
   return {
     ...serializeMouse(event), pointerId: event.pointerId, pointerType: event.pointerType,
@@ -327,28 +319,29 @@ function emit(state: InputState, type: 'wheelinput' | 'pointerinput' | 'paninput
 function onWheel(this: HTMLElement, event: WheelEvent) {
   const state = inputs.get(this)
   const options = state?.wheel
-  if (!state || !options || event.defaultPrevented || !event.cancelable || ignoredTarget(this, event, false) || !matchesModifier(event, options.modifier)) return
+  if (!state || !options || !options.directions || event.defaultPrevented || !event.cancelable || !matchesModifier(event, options.modifier)) return
   // Read the units before either delta (Firefox's legacy wheel compatibility).
-  const wheelEvent = serializeWheel(event)
+  const deltaMode = event.deltaMode
+  const deltaX = event.deltaX, deltaY = event.deltaY
   // Ownership follows the dominant axis; the complete diagonal input is forwarded unchanged.
-  const horizontal = Math.abs(wheelEvent.deltaX) > Math.abs(wheelEvent.deltaY)
-  if (!allows(options.directions, horizontal ? wheelEvent.deltaX : wheelEvent.deltaY, horizontal)) return
-  const bounds = geometry(this, event.clientX, event.clientY)
-  if (!bounds.inside) return
+  const horizontal = Math.abs(deltaX) > Math.abs(deltaY)
+  if (!allows(options.directions, horizontal ? deltaX : deltaY, horizontal)) return
   let activationReason: BoxWheelActivationReason
-  if ((options.activation === 'focus' || options.activation === 'settled-or-focus') && bounds.focusWithin) activationReason = 'focus'
+  if ((options.activation === 'focus' || options.activation === 'settled-or-focus') && this.matches(':focus-within')) activationReason = 'focus'
   else if (options.activation === 'hover') activationReason = 'immediate'
   else {
     const dwell = state.store.dwell.get(this)
     if (!needsDwell(options) || !dwell || event.timeStamp - dwell.time < options.delay) return
-    dwell.ready = true
     activationReason = 'settled'
   }
+  if (ignoredTarget(this, event, WHEEL_CONTROLS)) return
+  const bounds = geometry(this, event.clientX, event.clientY)
+  if (!bounds.inside) return
   event.preventDefault()
   if (!event.defaultPrevented) return
   event.stopPropagation()
+  const wheelEvent: SerializedWheelEvent = { ...serializeMouse(event), deltaMode, deltaX, deltaY, deltaZ: event.deltaZ }
   if (state.momentum) stopMomentum(state.momentum, 'interrupted')
-  wheelEvent.defaultPrevented = true
   emit(state, 'wheelinput', { wheelEvent, ...bounds, activationReason })
 }
 
@@ -365,8 +358,8 @@ function onPointerDown(this: HTMLElement, event: PointerEvent) {
   if (event.defaultPrevented || !event.isPrimary || state.session || state.store.sessions.has(event.pointerId)) return
   const type = POINTER_TYPES[event.pointerType] ?? 0
   const options = state.pointer
-  const pointer = !!options && !!(options.types & type) && !!(options.buttons & (1 << event.button)) && matchesModifier(event, options.modifier) && !ignoredTarget(this, event, !options.interactive)
-  const pan = !!state.pan && !!(state.pan.types & type) && event.button === 0 && state.pan.directions !== 0 && !ignoredTarget(this, event, true)
+  const pointer = !!options && !!(options.types & type) && !!(options.buttons & (1 << event.button)) && matchesModifier(event, options.modifier) && !ignoredTarget(this, event, options.interactive ? '' : INTERACTIVE)
+  const pan = !!state.pan && !!(state.pan.types & type) && event.button === 0 && state.pan.directions !== 0 && !ignoredTarget(this, event, INTERACTIVE)
   if (!pointer && !pan) return
   const snapshot = serializePointer(event)
   const origin = point(snapshot)
@@ -417,7 +410,6 @@ function onLostCapture(this: HTMLElement, event: PointerEvent) {
 
 function consumePointer(event: PointerEvent) {
   if (event.cancelable) event.preventDefault()
-  event.stopPropagation()
 }
 
 function recordSample(session: PointerSession, event: PointerEvent) {
@@ -481,7 +473,7 @@ function updateSession(session: PointerSession, event: PointerEvent, down = fals
     const v = velocity(session, event.timeStamp)
     const speed = panDelta(state.pan, v.x, v.y)
     session.panLast = point(event)
-    emitPan(session, 'move', session.current, delta.x, delta.y, speed.x, speed.y)
+    emitPan(session, 'move', session.current, { deltaX: delta.x, deltaY: delta.y, velocityX: speed.x, velocityY: speed.y })
   }
 }
 
@@ -500,12 +492,13 @@ function emitPointer(session: PointerSession, phase: BoxPointerInput['phase'], e
   })
 }
 
-function emitPan(session: PointerSession, phase: BoxPanInput['phase'], event: SerializedPointerEvent | null, deltaX = 0, deltaY = 0, velocityX = 0, velocityY = 0, cancelReason?: BoxInputCancelReason) {
+function emitPan(session: PointerSession, phase: BoxPanInput['phase'], event: SerializedPointerEvent | null, motion?: PanMotion) {
   const current = event ?? session.current
   emit(session.state, 'paninput', {
     phase, pointerEvent: event ? { ...event } : null, start: snapshotStart(session),
-    ...geometry(session.state.box, current.clientX, current.clientY), deltaX, deltaY, velocityX, velocityY,
-    activationReason: session.panReason, ...(cancelReason ? { cancelReason } : {}),
+    ...geometry(session.state.box, current.clientX, current.clientY),
+    deltaX: 0, deltaY: 0, velocityX: 0, velocityY: 0,
+    activationReason: session.panReason, ...motion,
   })
 }
 
@@ -529,16 +522,16 @@ function finishSession(session: PointerSession, event: PointerEvent | null, reas
   if (session.pointerStarted) emitPointer(session, reason ? 'cancel' : 'end', event ? session.current : null, reason)
   if (!session.panStarted) return
   if (reason || inputs.get(state.box) !== state || !state.pan) {
-    emitPan(session, 'cancel', event ? session.current : null, 0, 0, 0, 0, reason ?? 'disabled')
+    emitPan(session, 'cancel', event ? session.current : null, { cancelReason: reason ?? 'disabled' })
     return
   }
   const finalDelta = panDelta(state.pan, session.panLast.x - session.current.clientX, session.panLast.y - session.current.clientY)
   const v = velocity(session, session.current.timeStamp)
   const speed = panDelta(state.pan, v.x, v.y)
-  emitPan(session, 'release', session.current, finalDelta.x, finalDelta.y, speed.x, speed.y)
+  emitPan(session, 'release', session.current, { deltaX: finalDelta.x, deltaY: finalDelta.y, velocityX: speed.x, velocityY: speed.y })
   const options = state.pan
   if (inputs.get(state.box) !== state || !options || state.session) {
-    emitPan(session, 'cancel', null, 0, 0, 0, 0, 'disabled')
+    emitPan(session, 'cancel', null, { cancelReason: 'disabled' })
     return
   }
   if (options.inertia && (Math.abs(speed.x) >= options.minVelocity || Math.abs(speed.y) >= options.minVelocity)) {
@@ -567,7 +560,7 @@ function advanceMomentum(store: InputStore, time: number) {
     const speed = panDelta(options, motion.vx * decay, motion.vy * decay)
     motion.vx = speed.x
     motion.vy = speed.y
-    if (delta.x || delta.y) emitPan(motion.session, 'inertia', null, delta.x, delta.y, speed.x, speed.y)
+    if (delta.x || delta.y) emitPan(motion.session, 'inertia', null, { deltaX: delta.x, deltaY: delta.y, velocityX: speed.x, velocityY: speed.y })
     if (!store.momenta.has(motion)) continue
     if (Math.abs(speed.x) < options.minVelocity && Math.abs(speed.y) < options.minVelocity) stopMomentum(motion)
   }
@@ -583,7 +576,7 @@ function stopMomentum(motion: Momentum, reason?: BoxInputCancelReason) {
     state.store.view.cancelAnimationFrame(state.store.frame)
     state.store.frame = undefined
   }
-  emitPan(motion.session, reason ? 'cancel' : 'end', null, 0, 0, 0, 0, reason)
+  emitPan(motion.session, reason ? 'cancel' : 'end', null, reason ? { cancelReason: reason } : undefined)
 }
 
 function onClick(this: HTMLElement, event: MouseEvent) {

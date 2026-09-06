@@ -111,7 +111,7 @@ Use `copyUrl` to copy `location.href`, `copyNode` to copy a marked rendered
 region, or `copy` for a known string. For dynamic text, pass a controlled `copy`
 string and set it from `onCopyRequest`. `onCopied` receives the result.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -128,6 +128,8 @@ string and set it from `onCopyRequest`. `onCopied` receives the result.
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Button size applied to every visible item and the More control. |
 | `underline?` | 'solid' \| 'dashed' \| 'dotted' | — | Underline style applied to every visible breadcrumb control. |
 | `underlineOnHover?` | boolean | — | Hide the underline at rest and reveal it on hover. |
+
+## Web Component
 
 `Breadcrumbs` deliberately adds no custom-element behavior: it assembles Anta
 Buttons, an optional Menu, and two light-DOM layout tags. When you are not using
@@ -160,6 +162,8 @@ import '@antadesign/anta/elements'
     paddingless aria-current="page"><a-button-label>Anta</a-button-label></a>
 </a-breadcrumbs>
 ```
+
+## Styling
 
 Use `priority`, `size`, and `separator` before adding CSS. A `className` on
 `Breadcrumbs` lands on the navigation wrapper; item `className` values land on

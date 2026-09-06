@@ -59,7 +59,7 @@ Arrow keys change by `step`. Home and End set the minimum and maximum. PageUp an
 />
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -95,6 +95,8 @@ lengths. Keep it no larger than the thumb diameter. |
 row. `inline` renders `Label: value`. `thumb` keeps it above the thumb. |
 | `valuePrefix?` | string | — | Text inserted before the live numeric value, such as `$`. |
 | `valueSuffix?` | string | — | Text inserted after the live numeric value, such as `%` or `°C`. |
+
+## Web Component
 
 Use `<a-slider>` when you are not using React or Preact. Add its `role` and accessible name yourself, then register it from `@antadesign/anta/elements`.
 

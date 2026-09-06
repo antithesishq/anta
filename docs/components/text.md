@@ -97,7 +97,7 @@ more" and "Show less". `collapsible` takes effect only with `expandable`.
 <Text truncate={3} expandable collapsible>{longSentence}</Text>
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -126,6 +126,8 @@ more" and "Show less". `collapsible` takes effect only with `expandable`.
  `-webkit-line-clamp` technique, supported in all major browsers
  (Firefox 68+, Chrome, Safari, Edge). |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Use `<a-text>` directly for a block that carries the text priority and tone.
@@ -135,6 +137,8 @@ Use `<a-text>` directly for a block that carries the text priority and tone.
   Read the <a href="/colors/">color guidance</a>.
 </a-text>
 ```
+
+## Styling
 
 Color comes from **`priority`** (the neutral text level) and **`tone`** (the tint);
 `size` and the type props set the rest. For a named tone, `Text` consumes the

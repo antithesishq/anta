@@ -66,6 +66,8 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 <InputTime label="Office hours" size="large" min="09:00" max="17:00" defaultValue="09:30" />
 ```
 
+## InputTime props
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `autoFocus?` | boolean | — | Focus this field when its containing `Dialog` opens. |
@@ -106,6 +108,8 @@ range is clamped to the nearest bound as you step or leave the field, and flags
  border (focus ring stays `--focus-ring`); `status` overrides for validation. |
 | `trailing?` | ReactNode | — | Content pinned to the end of the field (after the clear button). |
 | `value?` | string | — | Controlled value — 24-hour `"HH:mm"`. Pair with `onValueChange`. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

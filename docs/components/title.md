@@ -93,7 +93,7 @@ The four priorities are shown across every named tone at `level={3}`. Omit
 document outline or SEO needs heading elements; the reset applies the same type
 scale.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -106,6 +106,8 @@ scale.
  color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is
  kept while lightness/chroma are pinned per priority in oklch. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Set the heading role and level when writing `<a-title>` directly.
@@ -115,6 +117,8 @@ Set the heading role and level when writing `<a-title>` directly.
   Release notes
 </a-title>
 ```
+
+## Styling
 
 `priority` selects a neutral text level. Named `tone`s use the matching global
 text tokens. A literal `tone` is stored in `--title-tone-source` and resolved

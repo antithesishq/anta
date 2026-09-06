@@ -217,6 +217,8 @@ underline stylistically, it supports three styles — `solid`, `dashed`,
 - **`selected`** — toggled-on / pressed visual; shares the active
   state's look. Useful for filter chips and icon toggles.
 
+## ButtonCopy
+
 `ButtonCopy` is a copy button — a `Button` preset for copy-to-clipboard. It
 composes a plain `<Button>` with a slotted `<a-copy>` element that writes to the
 clipboard when the button is activated. A button with a copy glyph changes the
@@ -455,6 +457,8 @@ Usage:
 This approach would work for Next.js `<Link>`, TanStack Router, or any
 other routing library.
 
+## Special events
+
 Beyond a plain click, a `Button` can drive a native form or emit your own
 event:
 
@@ -485,7 +489,9 @@ without taking ownership of `onClick`.
 <Button tone="brand" label="Save" data-custom-event="save-clicked" />
 ```
 
-### Props
+## Component props
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -521,6 +527,8 @@ wrapper sets them for you). A native `<button>` also carries its own default
 <button data-anta priority="secondary">Cancel</button>
 <button data-anta tone="critical" priority="tertiary">Delete</button>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the whole tone × priority × state curve in oklch), **`priority`**

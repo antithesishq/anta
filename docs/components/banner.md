@@ -196,7 +196,7 @@ applies anything, so a vanilla `<a-banner>` listener can `preventDefault()` a
 dismiss. The `<Banner>` wrapper's `onDismiss` is notification-only — drive rejection
 through `dismissed` instead.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -230,6 +230,8 @@ through `dismissed` instead.
  color (used if you opt into a border); a custom color keeps its hue while
  lightness/chroma are pinned. `'neutral'` (the default) is the same as omitting it. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the message, actions, and close control. A close button dispatches
@@ -245,6 +247,8 @@ Slots hold the message, actions, and close control. A close button dispatches
     aria-label="Dismiss" data-custom-event="dismissrequest"><a-icon shape="x" aria-hidden="true"></a-icon></a-button>
 </a-banner>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the surface, text, and border color in oklch), **`round`** the

@@ -27,11 +27,6 @@
   background: var(--bg-canvas);
 }
 
-.surface:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
 .row {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) auto;

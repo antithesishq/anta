@@ -1,10 +1,9 @@
 import {
   cssLength,
+  customEventHandler,
   lengthStyle,
-  nativeStateChange,
   roundAttr,
   roundStyle,
-  type StateChangeEvent,
 } from '../anta_helpers'
 import type {
   BoxContextChange,
@@ -59,6 +58,7 @@ export interface BoxProps extends BaseProps {
   ) => void
   /** Capture wheel input in the enabled directions and emit `onWheelInput`.
    * `true` accepts all directions. Omit or pass `false` to leave wheel input alone.
+   * Nested native wheel controls and Anta menus are excluded.
    * All-false direction bounds preserve pointer settling while declining input.
    * A listener alone never enables capture. */
   wheelCapture?: BoxInputDirections
@@ -75,7 +75,7 @@ export interface BoxProps extends BaseProps {
   /** Accepted wheel input, with a serialized original event, Box-relative
    * geometry, focus state, and activation reason. Cancellation is already complete. */
   onWheelInput?: (event: CustomEvent<BoxWheelInput>, detail: BoxWheelInput) => void
-  /** Capture a primary pointer until release or cancellation. An options object
+  /** Emit raw data for a primary pointer until release or cancellation. An options object
    * filters devices/buttons and configures activation. Nested interactive controls
    * are excluded unless explicitly included. A listener alone enables nothing. */
   pointerCapture?: boolean | BoxPointerCapture
@@ -83,6 +83,7 @@ export interface BoxProps extends BaseProps {
   onPointerInput?: (event: CustomEvent<BoxPointerInput>, detail: BoxPointerInput) => void
   /** Emit custom pan motion. `true` enables touch panning on both axes without
    * momentum. Options select devices, axes, bounds directions, and optional inertia.
+   * Captures the pointer internally; `pointerCapture` is not required.
    * Sets CSS touch-action through attributes before the gesture starts. */
   pan?: boolean | BoxPan
   /** Custom pan motion and its lifecycle. Inertial samples have no native pointer event. */
@@ -141,37 +142,6 @@ export const Box = ({
   children,
   ...rest
 }: BoxProps) => {
-  const measureHandler = onMeasureChange
-    ? (input: StateChangeEvent<BoxMeasurementChange>) => {
-        const { event, detail } = nativeStateChange(input)
-        if (detail) onMeasureChange(event, detail)
-      }
-    : undefined
-  const contextHandler = onContextChange
-    ? (input: StateChangeEvent<BoxContextChange>) => {
-        const { event, detail } = nativeStateChange(input)
-        if (detail) onContextChange(event, detail)
-      }
-    : undefined
-  const wheelHandler = onWheelInput
-    ? (input: StateChangeEvent<BoxWheelInput>) => {
-        const { event, detail } = nativeStateChange(input)
-        if (detail) onWheelInput(event, detail)
-      }
-    : undefined
-  const pointerHandler = onPointerInput
-    ? (input: StateChangeEvent<BoxPointerInput>) => {
-        const { event, detail } = nativeStateChange(input)
-        if (detail) onPointerInput(event, detail)
-      }
-    : undefined
-  const panHandler = onPanInput
-    ? (input: StateChangeEvent<BoxPanInput>) => {
-        const { event, detail } = nativeStateChange(input)
-        if (detail) onPanInput(event, detail)
-      }
-    : undefined
-
   return (
     <a-box
       display={display === 'block' ? undefined : display}
@@ -180,17 +150,17 @@ export const Box = ({
       observe={observeAttr(observe, onMeasureChange, onContextChange)}
       fade={fade ? '' : undefined}
       fade-size={fade && fadeSize != null ? cssLength(fadeSize) : undefined}
-      onmeasurechange={measureHandler}
-      oncontextchange={contextHandler}
+      onmeasurechange={customEventHandler(onMeasureChange)}
+      oncontextchange={customEventHandler(onContextChange)}
       wheel-capture={directionAttribute(wheelCapture)}
       wheel-activation={wheelCapture ? wheelActivation : undefined}
       wheel-modifier={wheelCapture ? wheelModifier : undefined}
       {...wheelSettleAttributes(wheelCapture ? wheelSettle : undefined)}
       {...pointerCaptureAttributes(pointerCapture)}
       {...panAttributes(pan)}
-      onwheelinput={wheelHandler}
-      onpointerinput={pointerHandler}
-      onpaninput={panHandler}
+      onwheelinput={customEventHandler(onWheelInput)}
+      onpointerinput={customEventHandler(onPointerInput)}
+      onpaninput={customEventHandler(onPanInput)}
       class={className}
       style={lengthStyle(
         fade ? fadeSize : undefined,

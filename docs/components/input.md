@@ -424,7 +424,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 `}</style>
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -524,6 +524,8 @@ this; pass `false` when an editable field should show the full value. |
  clear/search affordances never appear — Anta owns that chrome. |
 | `value?` | string | — | Controlled value. Pair with `onChange` / `onInput`. |
 
+## Web Component
+
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Slots hold the label, hint, and controls around the native field.
@@ -567,6 +569,8 @@ their `size` attribute, so Anta does not reuse it. `round` and a custom-color
 <input data-anta type="submit" value="Submit" priority="primary">
 <input data-anta type="reset" value="Reset">
 ```
+
+## Styling
 
 Reach for the props first: **`status`** sets a validation tone (border + message),
 **`tone`** a custom accent color for the border (any CSS color), **`size`** the

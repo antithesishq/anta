@@ -37,7 +37,7 @@ closes the list; clicking the field to place the caret keeps it open.
 Suggestions are bare strings or `SelectOption`s, the same option shape
 [Select](./select.md) uses: `value`, `label`, `hint`, `icon`, `tone`, `disabled`.
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -66,6 +66,8 @@ Suggestions are bare strings or `SelectOption`s, the same option shape
 | `value?` | string | — | Controlled value: the field's text, a **free** string not constrained to a
  suggestion. Leave undefined for uncontrolled. |
 
+## Web Component
+
 `InputAutocomplete` combines an input with a Menu. Reproducing its filtering,
 selection, focus, and popup coordination without the React or Preact wrapper is
 a substantial amount of code.
@@ -89,6 +91,8 @@ option content, popup styling, or consistent behavior across browsers.
   <option value="Liam Johnson">
 </datalist>
 ```
+
+## Styling
 
 **The field** is styled through Input's props (`size`, `status`, `tone`, `round`,
 `leading` / `trailing`) and its `::part`s; set its width with `style` / `className`

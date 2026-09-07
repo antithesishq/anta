@@ -320,7 +320,7 @@ export default function SearchDialog() {
                     onClick={() => { void askAI() }}
                   >
                     <Text priority="tertiary" size="small">No results for “{term}”.</Text>
-                    <strong>Try AI search</strong>
+                    <strong>Get answer from AI</strong>
                   </button>
                 )}
                 {currentSearch.answerStatus === 'loading' && (
@@ -356,7 +356,7 @@ export default function SearchDialog() {
                   <div className={styles.emptyRow}>
                     <p className={styles.status}>{currentSearch.answer ? 'The answer was interrupted. Try again.' : 'Couldn’t load an AI answer. Try again.'}</p>
                     {currentSearch.answer && (
-                      <Button priority="secondary" size="small" label="Try AI search" onClick={() => { void askAI() }} />
+                      <Button priority="secondary" size="small" label="Get answer from AI" onClick={() => { void askAI() }} />
                     )}
                   </div>
                 )}

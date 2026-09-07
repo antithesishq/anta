@@ -1,7 +1,7 @@
 # Search answers
 
 Full-text search runs in the browser. When it finishes with zero matches, the
-dialog shows the empty-results message and bold **Try AI search** text in a
+dialog shows the empty-results message and bold **Get answer from AI** text in a
 selected result row. Clicking anywhere in that row or pressing Enter in the
 input sends the query to `/api/search-answer/`
 and keeps the dialog open. The endpoint calls
@@ -49,7 +49,7 @@ on the gateway that also handles embedding calls.
 When Cloudflare returns no public documentation sources, the endpoint replaces
 the generated answer with a message that no relevant documentation was found.
 
-The browser loads Marked and DOMPurify after selecting **Try AI search**. Answers
+The browser loads Marked and DOMPurify after selecting **Get answer from AI**. Answers
 support headings, paragraphs, lists, tables, links, inline code, and fenced code
 blocks. Raw HTML and images are removed, and links are checked before rendering.
 Expressive Code renders every code block with the same shared configuration,

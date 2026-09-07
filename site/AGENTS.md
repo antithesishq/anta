@@ -51,7 +51,7 @@ ClientRouter navigations receive the same mark.js treatment as cold loads.
 The build also copies the index to ignored `public/search-index.json`; `pnpm run dev` serves that
 last-built snapshot without rebuilding it during source changes.
 
-Selecting **Try AI search** or pressing Enter in the input after a successful
+Selecting **Get answer from AI** or pressing Enter in the input after a successful
 full-text search with zero matches may request an AI answer. Enter keeps the
 dialog open while requesting the answer. Never request AI responses while typing.
 Debounce full-text search with `es-toolkit`, keep previous matches while it runs,

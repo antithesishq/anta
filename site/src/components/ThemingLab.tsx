@@ -127,7 +127,7 @@ function toOklch(color: string): string {
 }
 
 /** Re-read trigger for the live "Default" readouts. `ThemeSwitcher` dispatches
- *  `anta-palette-change` when the opt-in theme-anta palette toggles, repainting the
+ *  `anta-palette-change` when the opt-in theme-antune palette toggles, repainting the
  *  components without touching `tone` / `isDark`. Bump a counter on the event and
  *  fold it into each readout effect's deps so the oklch labels re-read the new
  *  tokens (mirrors `SwatchGrid`, which listens for the same event). */

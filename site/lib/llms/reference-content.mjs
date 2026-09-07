@@ -73,7 +73,7 @@ function swatches({ tokens, theme }) {
     text: table(['Token', 'Use'], TEXT_LINES.map(line => [code(`--${line.token}`), line.copy])) + '\n\n' + LINK_GUIDANCE,
     border: BORDER_GUIDANCE,
   }
-  return `Values are CSS declarations from the shipped default palette and optional \`theme-anta.css\` reference palette. Resolve them in the application's theme to obtain displayed colors. Toned backgrounds share the neutral \`--bg-1\`; there is no \`--bg-1-{tone}\`.
+  return `Values are CSS declarations from the shipped default palette and optional \`theme-antune.css\` reference palette. Resolve them in the application's theme to obtain displayed colors. Toned backgrounds share the neutral \`--bg-1\`; there is no \`--bg-1-{tone}\`.
 
 ${KINDS.map(kind => `## ${TITLES[kind]}\n\n${INTROS[kind]}\n\n${guidance[kind]}\n\n${tokenTable([...modes[0].keys()].filter(name => name.startsWith(`--${kind}-`)))}`).join('\n\n')}
 

@@ -15,7 +15,7 @@ of a floating tag such as `"latest"`.
 import '@antadesign/anta/tokens.css'  // CSS custom properties
 import '@antadesign/anta/reset.css'   // reset and typography defaults
 import '@antadesign/anta/elements'    // registers <a-*> elements
-import '@antadesign/anta/theme-anta.css' // optional hand-tuned reference palette
+import '@antadesign/anta/theme-antune.css' // optional Antune theme
 import { Progress } from '@antadesign/anta'
 
 <Progress value={42} label="Uploaded" hint="3 of 7" />
@@ -49,12 +49,13 @@ recommended; the reference theme is optional.
 | `@antadesign/anta` | Typed React/Preact wrappers such as `Progress`, `Text`, and `Icon`. | You write `<a-*>` elements directly. |
 | `@antadesign/anta/bundle.css` | One minified stylesheet containing tokens, reset, element, and JSX-wrapper styles. | You want granular CSS imports. |
 | `@antadesign/anta/bundle` | One minified ESM runtime that registers every `<a-*>` element and re-exports the JSX API. | You want granular JS imports. |
-| `@antadesign/anta/theme-anta.css` *(optional)* | The hand-tuned reference palette. Import last to replace the seed-derived default. | You want the seed-derived or your own palette. |
+| `@antadesign/anta/theme-antune.css` *(optional)* | Antune, the hand-tuned reference palette. Import last to replace the seed-derived default. | You want the seed-derived or your own palette. |
+| `@antadesign/anta/theme-antithesis.css` *(optional)* | Antithesis: warm color seeds, pill buttons, square text fields, and `1px` tag corners. Import as the only theme. | You want Antune, the seed-derived palette, or your own theme. |
 
 Load `tokens.css` before element CSS. Elements read its variables; without it,
 they render unstyled.
 
-To use the optional reference palette, import `theme-anta.css` after the element
+To use the optional reference palette, import `theme-antune.css` after the element
 registration import. It ships in `@antadesign/anta`; omit it to keep the
 seed-derived default palette or provide your own theme.
 

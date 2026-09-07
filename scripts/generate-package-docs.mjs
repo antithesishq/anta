@@ -14,7 +14,7 @@ const docs = new URL('../docs/', import.meta.url)
 const changelog = (await readFile(new URL('../CHANGELOG.md', import.meta.url), 'utf8')).trim()
 const sources = Object.fromEntries(await Promise.all(Object.entries({
   tokens: '../src/tokens.css',
-  theme: '../src/theme-anta.css',
+  theme: '../src/theme-antune.css',
   stickers: '../stickers/src/generated/index.ts',
   specimen: '../site/src/components/HtmlSpecimen.astro',
 }).map(async ([key, path]) => [key, await readFile(new URL(path, import.meta.url), 'utf8')])))

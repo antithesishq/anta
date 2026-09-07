@@ -1335,20 +1335,12 @@ function setupIframe(iframe: HTMLIFrameElement) {
   // bundle loaded from the srcdoc (see buildSrcdoc) — it runs before this
   // iframe's `load`, so the modules are seeded by the time we push a demo.
 
-  // Clone Anta-related <link rel="stylesheet"> + <style> tags from
-  //    the parent into the iframe so the rendered preview gets the
-  //    same look as the docs site. Anta CSS stays unlayered — its
-  //    component defaults beat anything in a cascade layer
-  //    (including Tailwind's `@layer utilities`), and consumers can
-  //    override via higher-specificity unlayered class selectors
-  //    written in their own CSS (which always tie-break in their
-  //    favour at unlayered tier). Tailwind utility classes WILL NOT
-  //    override Anta declarations — that's an accepted tradeoff for
-  //    keeping the library's defaults sticky.
+  // Copy the docs styles into the preview and keep its palette link in sync.
   for (const link of Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'))) {
     const clone = doc.createElement('link')
     clone.rel = 'stylesheet'
     clone.href = link.href
+    if (link.id === 'palette-link') clone.id = link.id
     doc.head.appendChild(clone)
   }
   // Also clone any inline <style> from the head that's likely tokens.
@@ -1369,10 +1361,15 @@ function setupIframe(iframe: HTMLIFrameElement) {
     const dark = document.documentElement.classList.contains('dark')
     doc.documentElement.classList.toggle('dark', dark)
     doc.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+    const palette = document.getElementById('palette-link') as HTMLLinkElement | null
+    const clone = doc.getElementById('palette-link') as HTMLLinkElement | null
+    if (palette && clone && clone.href !== palette.href) clone.href = palette.href
   }
   apply()
   const obs = new MutationObserver(apply)
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  const palette = document.getElementById('palette-link')
+  if (palette) obs.observe(palette, { attributes: true, attributeFilter: ['href'] })
   // `unload` is disallowed in this nested document by Chromium's permissions
   // policy. `pagehide` has the same lifetime semantics without the violation.
   win.addEventListener('pagehide', () => obs.disconnect(), { once: true })

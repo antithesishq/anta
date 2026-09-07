@@ -13,7 +13,7 @@ import { ICON_SHAPES } from '../src/elements/a-icon.shapes.ts'
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8')
 const sources = Object.fromEntries(await Promise.all(Object.entries({
   tokens: '../src/tokens.css',
-  theme: '../src/theme-anta.css',
+  theme: '../src/theme-antune.css',
   stickers: '../stickers/src/generated/index.ts',
   specimen: '../site/src/components/HtmlSpecimen.astro',
 }).map(async ([key, path]) => [key, await read(path)])))

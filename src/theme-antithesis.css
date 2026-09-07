@@ -1,0 +1,30 @@
+/* Antithesis. Import after tokens.css and element CSS, as the only theme. */
+@layer anta.reset, anta.components, anta.theme;
+
+:root:root, .light.light {
+  --anta-seed-brand: #cc4636;
+  --anta-seed-neutral: #65605b;
+}
+
+@layer anta.theme {
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])):not([round]) {
+    --_radius: 999px;
+  }
+
+  a-input:not([round])::part(field),
+  a-input:not([round]):not(:defined)::after {
+    border-radius: 0;
+  }
+
+  :is(input[data-anta]:not([type="checkbox"], [type="radio"], [type="range"],
+      [type="color"], [type="file"], [type="button"], [type="reset"],
+      [type="submit"], [type="image"], [type="hidden"]),
+      textarea[data-anta], select[data-anta]):not([round]) {
+    --native-field-round: 0px;
+  }
+
+  a-tag {
+    border-radius: 1px;
+  }
+}

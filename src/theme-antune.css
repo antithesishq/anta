@@ -1,7 +1,7 @@
-/* Optional hand-tuned reference palette. Load after tokens and element CSS:
+/* Antune: optional hand-tuned reference palette. Load after tokens and element CSS:
  *   import '@antadesign/anta/tokens.css'
  *   import '@antadesign/anta/reset.css'
- *   import '@antadesign/anta/theme-anta.css'
+ *   import '@antadesign/anta/theme-antune.css'
  *
  * Role tokens are unlayered and doubled (`:root:root`, `.light.light`,
  * `.dark.dark`) to replace seed-derived defaults regardless of load order.

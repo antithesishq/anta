@@ -5,6 +5,16 @@ changes are not listed.
 
 ## Unreleased
 
+### Changed
+
+- Renamed the optional Anta theme to Antune. Replace imports of
+  `@antadesign/anta/theme-anta.css` with `@antadesign/anta/theme-antune.css`.
+
+### Added
+
+- Added `theme-antithesis.css` with brand seed `#cc4636`, neutral seed `#65605b`,
+  pill buttons, square text fields, and tags with a `1px` corner radius.
+
 ### Fixed
 
 - `b` uses the same `600` font weight as `strong` in the typography reset.

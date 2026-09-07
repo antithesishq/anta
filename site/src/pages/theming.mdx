@@ -8,20 +8,35 @@ import ThemingLab from '../components/ThemingLab.tsx'
 
 # Theming
 
-## Reference palette
+## Themes
 
-`@antadesign/anta` ships an optional hand-tuned reference palette at
-`@antadesign/anta/theme-anta.css`. Import it after the tokens, reset, and element
-registration imports to replace the seed-derived default:
+Antune is the hand-tuned reference theme and the initial theme on this website.
+Choose **None** in the theme dropdown to use the package's seed-derived palette.
+Your selection survives navigation and is saved for future visits when browser
+storage is available.
+
+Import one theme after the package styles:
 
 ```ts
 import '@antadesign/anta/tokens.css'
 import '@antadesign/anta/reset.css'
 import '@antadesign/anta/elements'
-import '@antadesign/anta/theme-anta.css'
+import '@antadesign/anta/theme-antune.css'
 ```
 
-Omit the final import to use the default palette, or define your own theme.
+Antune was previously named Anta. Update `theme-anta.css` imports to
+`theme-antune.css`.
+
+To use Antithesis, replace the last import with
+`@antadesign/anta/theme-antithesis.css`. It uses brand seed `#cc4636` and neutral
+seed `#65605b`, with `999px` button corners, `0px` text-field corners, and `1px`
+tag corners. Explicit `round` values on buttons and inputs override those defaults.
+Choose **Antithesis** in the dropdown to preview it on this website.
+
+Omit both theme imports to use the seed-derived palette. Antune supplies fixed
+color values, so use **None** or Antithesis when experimenting with color seeds.
+
+## Color seeds
 
 Anta's palette is generative. Every color in the system derives from six tone seeds (`--anta-seed-neutral`, `--anta-seed-brand`, `--anta-seed-info`, …), and a seed contributes only its hue: the lightness and chroma of every background, text, border, and component state come from Anta's formulas, tuned per role and per theme. Reskinning a tone is one custom property, and the whole scale re-derives in both light and dark:
 
@@ -35,6 +50,53 @@ Anta's styles use ordered child layers inside `@layer anta`. Your unlayered CSS
 overrides them without `!important`, and shadow-DOM components expose
 `::part(...)`. A component's `tone` accepts a named tone or CSS color and derives
 its rest, hover, and active values. Each component page lists its styling hooks.
+
+## Fonts in a theme
+
+Declare the font with `@font-face` and select it through `--sans-serif` or
+`--monospace`. Give consumers a separate override property so they can change the
+stack without matching the theme selector's specificity:
+
+```css
+/* In a custom theme. The font URL is supplied by the theme author. */
+@font-face {
+  font-family: "Theme Sans";
+  src: url("./fonts/theme-sans.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root, .light {
+  --sans-serif: var(--app-sans-serif, "Theme Sans", sans-serif);
+}
+```
+
+Set the override in the application's initial CSS, loaded before the first paint:
+
+```css
+:root {
+  --app-sans-serif: system-ui, sans-serif;
+}
+```
+
+The browser selects the system stack, leaving the theme font unused. An unused
+`@font-face` declaration does not itself require a font download. Keep the theme
+font out of every fallback stack, including scoped styles and iframe styles.
+See the [CSS font resource loading rules](https://www.w3.org/TR/css-fonts-3/#font-resources).
+
+Do not preload the theme font or call `document.fonts.load()` for it when the
+application overrides it. A preload requests the resource independently of
+whether text uses it, and a later JavaScript override cannot undo an earlier
+request. `font-display` controls rendering while a font loads; it does not disable
+the request. See [font preloading](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/preload)
+and the [CSS Font Loading API](https://www.w3.org/TR/css-font-loading/).
+
+For an explicit opt-in, ship font-face declarations in a separate stylesheet.
+Consumers using their own fonts can omit that import. Antune and Antithesis
+currently use the package font stacks and include no remote font resources.
+
+## Theming lab
 
 The lab below shows the derivation live. For each toned component, the shipped Default sits next to a Custom preview driven by the seed picker, with the formula constants editable and the resolved CSS shown.
 

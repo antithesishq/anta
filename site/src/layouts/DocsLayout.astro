@@ -224,12 +224,12 @@ if (isComponentPage && title) {
     </script>
     {/* Palette — separate axis from light/dark above. One stable <link>; its
         href is the switch point (/themes/default.css is an empty stub, the
-        ThemeSwitcher island swaps in e.g. /themes/anta.css). The persist id
+        ThemeSwitcher island swaps in e.g. /themes/antune.css). The persist id
         carries the mutated node across swaps, so navigation needs no JS. */}
     <link
       rel="stylesheet"
       id="palette-link"
-      href="/themes/default.css"
+      href="/themes/antune.css"
       data-astro-transition-persist="palette"
     />
     <script is:inline>
@@ -237,10 +237,15 @@ if (isComponentPage && title) {
       // parse keeps the stylesheet render-blocking, so a cold load never
       // flashes the default palette. Keep URLs in sync with ThemeSwitcher.tsx.
       try {
-        const palette = localStorage.getItem('anta-palette')
-        if (palette === 'anta') {
-          document.getElementById('palette-link').href = '/themes/anta.css'
+        const stored = localStorage.getItem('anta-palette')
+        const palette = stored === 'anta' ? 'antune' : stored
+        const hrefs = {
+          none: '/themes/default.css',
+          antune: '/themes/antune.css',
+          antithesis: '/themes/antithesis.css',
         }
+        document.getElementById('palette-link').href = Object.hasOwn(hrefs, palette) ? hrefs[palette] : hrefs.antune
+        if (stored === 'anta') localStorage.setItem('anta-palette', 'antune')
       } catch (e) {}
     </script>
   </head>

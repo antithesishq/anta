@@ -279,9 +279,9 @@ export default function SearchDialog() {
                 event.preventDefault()
                 event.stopPropagation()
                 if (event.repeat) return
-                const result = currentSearch?.results[selected]
-                if (result) {
-                  location.href = resultHref(result, term)
+                const selectedLink = resultsRef.current?.querySelector<HTMLAnchorElement>('a[data-selected="true"]')
+                if (selectedLink) {
+                  selectedLink.click()
                 } else if (currentSearch?.answerStatus !== 'ready') {
                   void askAI()
                 }

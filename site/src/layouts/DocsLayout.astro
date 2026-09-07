@@ -263,7 +263,7 @@ if (isComponentPage && title) {
             aria-label="Site breadcrumb"
             items={[
               {
-                label: [h(AntaLogo, { size: 16, compact: true }), 'Anta'],
+                label: [h(Icon, { shape: 'menu', size: 16, className: 'mobile-menu-icon', 'aria-hidden': true }), h(AntaLogo, { size: 16, compact: true }), 'Anta'],
                 href: '/',
                 current: !title,
                 tone: title ? 'brand' : 'neutral',
@@ -892,6 +892,10 @@ if (isComponentPage && title) {
     min-width: 0;
   }
 
+  .topbar :global(.mobile-menu-icon) {
+    display: none;
+  }
+
   .topbar :global(.header-breadcrumbs a-breadcrumb-separator) {
     width: 8px;
   }
@@ -1012,6 +1016,10 @@ if (isComponentPage && title) {
   }
 
   @media (max-width: 800px) {
+    .topbar :global(.mobile-menu-icon) {
+      display: inline-block;
+    }
+
     .topbar-search :global(a-input)::part(trailing) {
       display: none;
     }

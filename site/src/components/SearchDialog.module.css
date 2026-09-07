@@ -107,6 +107,7 @@
 .results[data-pointer='active'] .result:hover,
 .result[data-selected='true'] {
   background: var(--bg-5-brand);
+  transition: none;
 }
 
 .result:focus-visible {

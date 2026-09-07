@@ -84,6 +84,7 @@ function isEditableTarget(target: EventTarget | null) {
 
 export default function SearchDialog() {
   const [open, setOpen] = useState(false)
+  const [inputBounds, setInputBounds] = useState<{ left: number; width: number }>()
   const [query, setQuery] = useState('')
   const [search, setSearch] = useState<SearchState>()
   const lastAnswer = useRef<{ query: string; answer: SearchAnswer }>()
@@ -122,7 +123,16 @@ export default function SearchDialog() {
   }, [])
 
   useEffect(() => {
-    const showSearch = () => setOpen(true)
+    const syncInputBounds = () => {
+      const input = document.querySelector('[data-sidebar-search-input]')
+      if (!input) return
+      const { left, width } = input.getBoundingClientRect()
+      setInputBounds({ left, width })
+    }
+    const showSearch = () => {
+      syncInputBounds()
+      setOpen(true)
+    }
     const onKeyDown = (event: KeyboardEvent) => {
       if (isEditableTarget(event.target)) return
       if (event.key === '/' || ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k')) {
@@ -133,9 +143,11 @@ export default function SearchDialog() {
 
     document.addEventListener('anta-search-open', showSearch)
     document.addEventListener('keydown', onKeyDown)
+    window.addEventListener('resize', syncInputBounds)
     return () => {
       document.removeEventListener('anta-search-open', showSearch)
       document.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('resize', syncInputBounds)
     }
   }, [])
 
@@ -221,6 +233,10 @@ export default function SearchDialog() {
   return (
     <Dialog
       className={styles.dialog}
+      style={inputBounds ? {
+        '--search-left': `${inputBounds.left}px`,
+        '--search-width': `${inputBounds.width}px`,
+      } : undefined}
       header={
         <div className={styles.header}>
           <span className={styles.srOnly}>Search documentation</span>

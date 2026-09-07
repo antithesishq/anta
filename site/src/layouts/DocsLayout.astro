@@ -1000,6 +1000,10 @@ if (isComponentPage && title) {
   }
 
   @media (max-width: 800px) {
+    .topbar :global(.header-breadcrumbs > :not(:first-child)) {
+      display: none;
+    }
+
     .topbar-start {
       width: auto;
       min-width: 0;

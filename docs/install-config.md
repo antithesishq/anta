@@ -260,15 +260,14 @@ Use `dark` or `light` on another ancestor to scope its color scheme and palette.
 
 ## Fonts
 
-Anta is designed for a customized TT Interphases Pro. The core package ships no font binaries: `tokens.css` uses system stacks, while the optional Antune and Antithesis themes register hosted reference fonts and select them by default. Antithesis uses Stringer for level 1–3 headings and titles; lower levels use TT Interphases Pro Variable. `tokens.css` sets `1rem` to 15px.
+Without an optional theme, `tokens.css` defines system stacks in `--sans-serif`,
+`--serif`, and `--monospace`. Reference themes register hosted fonts and replace
+some of those same variables. Components and theme rules decide which stack to
+use. `tokens.css` also sets `1rem` to 15px.
 
-If your application does not have a license for the reference fonts, set the
-application-owned stacks before the theme stylesheet loads. For Antithesis,
-override both the body stack and the level 1–3 heading stack. This prevents the
-theme faces from being selected or downloaded:
-
-Register application-owned fonts, then override the font variables. This example
-uses separate Roman and Italic variable files:
+Register application-owned fonts and redefine the variables in CSS loaded after
+the Anta styles and optional theme. This example uses separate Roman and Italic
+variable files:
 
 ```css
 @font-face {
@@ -286,13 +285,16 @@ uses separate Roman and Italic variable files:
 }
 
 :root {
-  --app-sans-serif: "App Sans", sans-serif;
-  --app-heading-font: "App Sans", sans-serif;
-  --app-monospace: ui-monospace, monospace;
+  --sans-serif: "App Sans", sans-serif;
+  --serif: Georgia, serif;
+  --monospace: ui-monospace, monospace;
 }
 ```
 
-Anta's semantic italics (`em`, `i`, `var`, and `dt`) select the Italic face.
+Place this application stylesheet after `theme-antune.css` or
+`theme-antithesis.css`, not before it. When all stylesheets are in the document
+head, the override applies before the first paint. Anta's semantic italics
+(`em`, `i`, `var`, and `dt`) select the Italic face.
 
 ### Variable slant
 

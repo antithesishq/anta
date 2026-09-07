@@ -47,51 +47,56 @@ its rest, hover, and active values. Each component page lists its styling hooks.
 
 ## Fonts in a theme
 
-The reference themes register hosted fonts and select them by default. Both use
-TT Interphases Pro Variable through `--sans-serif` and Antithesis Mono through
-`--monospace`. Antithesis additionally uses Stringer for raw `h1`–`h3` elements
-and `<Title level={1}>`–`<Title level={3}>` (the corresponding `a-title` levels);
-lower heading levels continue to use TT Interphases Pro Variable. The font files
-are loaded only when the resolved stack selects them. Importing a reference theme
-opts into these hosted font resources.
-
-Set the application override in critical CSS or an inline `<style>` in the
-document head when the application has its own font license:
+Without a reference theme, `tokens.css` defines three system font stacks:
 
 ```css
-/* Place this before first paint. The theme keeps these values when present. */
-:root {
-  --app-sans-serif: system-ui, sans-serif;
-  --app-heading-font: system-ui, sans-serif;
-  --app-monospace: ui-monospace, monospace;
+:root, .light {
+  --sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, "Liberation Mono", monospace;
 }
 ```
 
-Antune resolves its public stacks like this:
+Components and theme rules choose which variable to use. For example, body text
+can use `--sans-serif` while a particular title style uses `--serif`.
+
+To use your own font, register it and redefine the stacks in application CSS
+loaded **after** Anta's styles, including the optional theme stylesheet:
 
 ```css
+/* app.css — load after tokens.css, component CSS, and theme-*.css. */
+@font-face {
+  font-family: "App Sans";
+  src: url("/fonts/app-sans.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
-  --sans-serif: var(--app-sans-serif, "TT Interphases Pro Variable", sans-serif);
-  --heading-font: var(--app-heading-font, var(--sans-serif));
-  --monospace: var(--app-monospace, "Antithesis Mono", ui-monospace, monospace);
+  --sans-serif: "App Sans", system-ui, sans-serif;
+  --serif: Georgia, serif;
+  --monospace: ui-monospace, monospace;
 }
 ```
 
-Antithesis uses the same `--sans-serif` and `--monospace` values, but its default
-heading stack is:
+When using stylesheet links, place `app.css` after the Anta and theme links in
+the document `<head>`. An inline `<style>` works too when it appears after those
+links. Keeping all of them in the head resolves the final stacks before the first
+paint.
 
-```css
-:root {
-  --heading-font: var(--app-heading-font, "Stringer", var(--sans-serif));
-}
-```
+Antune replaces `--sans-serif` with hosted TT Interphases Pro Variable and
+`--monospace` with hosted Antithesis Mono. Antithesis does the same and also
+replaces `--serif` with hosted Stringer. Antithesis's own CSS uses `--serif` for
+raw `h1`–`h3` and title levels 1–3; lower title levels continue to use
+`--sans-serif`. Other components decide which stack fits their own typography.
 
-The browser selects the application stacks, leaving the theme faces unused. An
-unused `@font-face` declaration does not itself require a font download. For
-Antithesis, set `--app-heading-font` as well as `--app-sans-serif` if you do not
-have a license for Stringer. Keep the theme families out of every application
-fallback stack, including scoped styles and iframe styles. See the [CSS font
-resource loading rules](https://www.w3.org/TR/css-fonts-3/#font-resources).
+Redefining these three variables after the theme leaves its font faces unused.
+An unused `@font-face` declaration does not itself download a font. Keep the
+theme families out of application fallback stacks. See the [CSS font resource
+loading rules](https://www.w3.org/TR/css-fonts-3/#font-resources).
 
 Reference themes do not include preload hints. Do not preload a theme font or
 call `document.fonts.load()` for it when the application overrides it. A preload
@@ -102,7 +107,7 @@ and the [CSS Font Loading API](https://www.w3.org/TR/css-font-loading/).
 
 If the application uses the default theme fonts, it may add its own matching
 preload for the font faces it actually uses. Keep those hints out of builds that
-set the application overrides.
+redefine the font stacks.
 
 <a id="themes"></a>
 

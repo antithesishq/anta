@@ -13,6 +13,7 @@ export const ICON_SHAPES = [
   'clipboard-paste',
   'dialog',
   'footprints',
+  'github-logo',
   'loader-docs',
   'octagon-pause',
   'search-slash',
@@ -42,6 +43,7 @@ declare module '@antadesign/anta' {
     'clipboard-paste': true
     'dialog': true
     'footprints': true
+    'github-logo': true
     'loader-docs': true
     'octagon-pause': true
     'search-slash': true

@@ -7,7 +7,8 @@ import '../styles/base.css'
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
 import '../icons/docs-icons.css'
 import { ClientRouter } from 'astro:transitions'
-import { Button, Icon } from '@antadesign/anta'
+import { Breadcrumbs, Button, Icon } from '@antadesign/anta'
+import { h } from 'preact'
 import PostHog from '../components/posthog.astro'
 import { COMPONENT_SLUGS } from '../../lib/component-slugs'
 import SidebarSearch from '../components/SidebarSearch'
@@ -29,6 +30,15 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
 const tocMaxLevel = Astro.props.tocMaxLevel ?? Astro.props.frontmatter?.tocMaxLevel
 const hideToc = Astro.props.hideToc ?? Astro.props.frontmatter?.hideToc ?? false
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
+const shortLabels: Record<string, string> = {
+  '/input-autocomplete': 'InputAutocomplete',
+  '/input-date': 'InputDate',
+  '/input-time': 'InputTime',
+  '/select-faceted': 'SelectFaceted',
+  '/switch': 'Switch',
+  '/changelog/dev': 'Changelog',
+}
+const breadcrumbLabel = shortLabels[path] ?? title
 const isCurrent = (href: string) => {
   const h = href.replace(/\/+$/, '') || '/'
   return h === path
@@ -192,6 +202,12 @@ if (isComponentPage && title) {
         document.documentElement.classList.toggle('dark', m)
         const tc = document.querySelector('meta[name="theme-color"]')
         if (tc) tc.setAttribute('content', m ? THEME_COLOR.dark : THEME_COLOR.light)
+        const label = m ? 'Switch to light theme' : 'Switch to dark theme'
+        for (const toggle of document.querySelectorAll('.theme-toggle')) {
+          toggle.setAttribute('aria-label', label)
+          const tooltip = toggle.querySelector('a-tooltip')
+          if (tooltip) tooltip.textContent = label
+        }
       }
       window.__antaApplyTheme = apply
       const stored = localStorage.getItem(KEY)
@@ -232,59 +248,79 @@ if (isComponentPage && title) {
     {/* The router fetches the destination before it can swap the document.
         This small bar makes that wait visible without delaying the swap. */}
     <div class="navigation-progress" aria-hidden="true"></div>
-    <header class="topbar">
-      <span class="topbar-title">
-        Anta{title && <Fragment><span class="crumb-sep">›</span>{title}</Fragment>}
-      </span>
-      <Button
-        class="menu-toggle"
-        priority="tertiary"
-        size="large"
-        label="MENU"
-        iconTrailing="menu"
-        aria-label="Open menu"
-      />
+    <header class="topbar" style={{ '--topbar-sidebar-balance': hideToc ? '214px' : '0px' }}>
+      <div class="topbar-start">
+        <div class="topbar-breadcrumbs">
+          <Breadcrumbs
+            className="header-breadcrumbs"
+            size="small"
+            aria-label="Site breadcrumb"
+            items={[
+              {
+                label: [h('img', { src: '/anta-favicon.svg', width: 16, height: 16 }), 'Anta'],
+                href: '/',
+                current: !title,
+                tone: title ? 'brand' : 'neutral',
+              },
+              ...(breadcrumbLabel ? [{ label: breadcrumbLabel, current: true, tone: 'neutral' as const }] : []),
+            ]}
+          />
+        </div>
+      </div>
+      <div class="topbar-center">
+        <div class="topbar-search">
+          <SidebarSearch client:load />
+        </div>
+      </div>
+      <div class="topbar-tools">
+        <div class="package-links">
+          <Button
+            size="small"
+            priority="quaternary"
+            icon="cube"
+            tone="brand"
+            underline="solid"
+            underlineOnHover
+            href="https://www.npmjs.com/package/@antadesign/anta?activeTab=versions"
+            target="_blank"
+            rel="noopener"
+            aria-label={npmVersion ? `npm package ${npmVersion}` : 'npm package'}
+          >
+            <span class="package-link-label">{npmVersion ? `npm ${npmVersion}` : 'npm'}</span>
+            <a-tooltip follow>{npmVersion ? `npm package ${npmVersion}` : 'npm package'}</a-tooltip>
+          </Button>
+          <Button
+            size="small"
+            priority="quaternary"
+            icon="github-logo"
+            tone="brand"
+            underline="solid"
+            underlineOnHover
+            href="https://github.com/antithesishq/anta"
+            target="_blank"
+            rel="noopener"
+            aria-label="GitHub repository"
+          >
+            <span class="package-link-label">GitHub</span>
+            <a-tooltip follow>GitHub repository</a-tooltip>
+          </Button>
+        </div>
+        <Button class="theme-toggle" priority="quaternary" tone="neutral" size="small" aria-label="Switch to dark theme">
+          <Icon shape="sun" size={16} />
+          <Icon shape="moon" size={16} />
+          <a-tooltip follow>Switch to dark theme</a-tooltip>
+        </Button>
+      </div>
     </header>
     <div class="layout">
       {/* Persisted: ClientRouter moves this exact node into each new page, so
           sidebar scroll and the ThemeSwitcher island survive navigation. The
           stale aria-current is re-pointed on astro:page-load below. */}
       <aside class="sidebar" transition:persist="sidebar">
-        <span class="logo">
-          <a class="logo-home" href="https://anta.design/" aria-label="Anta home">
-            <img src="/anta-logo.svg" alt="" width="32" height="32" />
-            <span class="logo-label">Anta</span>
-          </a>
-          <Button class="theme-toggle" priority="tertiary" size="large" aria-label="Switch theme">
-            <Icon shape="sun" size={18} />
-            <Icon shape="moon" size={18} />
-            <a-tooltip>Switch theme</a-tooltip>
-          </Button>
-        </span>
         <menu>
           <li><a href="/" aria-current={isCurrent('/') ? 'page' : undefined}><Icon shape="info" size={18} /> Overview</a></li>
           <li><a href="/comparison/" aria-current={isCurrent('/comparison/') ? 'page' : undefined}><Icon shape="table-2" size={18} /> Comparison</a></li>
         </menu>
-        <div class="package-links">
-          <a
-            class="package-link"
-            href="https://www.npmjs.com/package/@antadesign/anta?activeTab=versions"
-            target="_blank"
-            rel="noopener"
-            aria-label={npmVersion ? `npm package ${npmVersion}` : 'npm package'}
-          >
-            <Icon shape="cube" size={18} /> {npmVersion ? `npm ${npmVersion}` : 'npm'}
-          </a>
-          <a
-            class="package-link github-link"
-            href="https://github.com/antithesishq/anta"
-            target="_blank"
-            rel="noopener"
-            aria-label="GitHub repository"
-          >
-            <Icon shape="external-link" size={16} /> GitHub
-          </a>
-        </div>
         <menu>
           <li><a href="/install/" aria-current={isCurrent('/install/') ? 'page' : undefined}><Icon shape="download" size={18} /> Install and configure</a></li>
           <li><a href="/normalization/" aria-current={isCurrent('/normalization/') ? 'page' : undefined}><Icon shape="book-a" size={18} /> Normalization</a></li>
@@ -299,9 +335,6 @@ if (isComponentPage && title) {
           <li><a href="/accessibility/" aria-current={isCurrent('/accessibility/') ? 'page' : undefined}><Icon shape="hat-glasses" size={18} /> Accessibility</a></li>
           <li><a href="/credits/" aria-current={isCurrent('/credits/') ? 'page' : undefined}><Icon shape="heart-handshake" size={18} /> Credits</a></li>
         </menu>
-        <div class="sidebar-search-field">
-          <SidebarSearch client:load />
-        </div>
         <h4>Components</h4>
         <menu>
           <li><a href="/title/" aria-current={isCurrent('/title/') ? 'page' : undefined}><Icon shape="case-sensitive" size={18} /> Title</a></li>
@@ -396,7 +429,6 @@ if (isComponentPage && title) {
           else input.removeAttribute('value')
           input.value = query
         }
-        document.dispatchEvent(new CustomEvent('anta-sidebar-search-value', { detail: query }))
       }
 
       const clearSidebarSearch = () => {
@@ -424,6 +456,20 @@ if (isComponentPage && title) {
         setToc(false)
       }
 
+      const mobileNavigation = matchMedia('(max-width: 800px)')
+      const isMobileBreadcrumb = (target: EventTarget | null) =>
+        mobileNavigation.matches
+        && target instanceof Element
+        && Boolean(target.closest('.header-breadcrumbs :is(a-button, a[data-anta])'))
+
+      // Capture before ClientRouter handles the breadcrumb's link.
+      document.addEventListener('click', (e) => {
+        if (!isMobileBreadcrumb(e.target)) return
+        e.preventDefault()
+        setMenu(true)
+      }, true)
+      mobileNavigation.addEventListener('change', () => setMenu(false))
+
       // Show immediate acknowledgement while ClientRouter prepares the next
       // document. The incoming <html> replaces this attribute during the swap;
       // clear it explicitly as well for the current document and accessibility
@@ -442,8 +488,6 @@ if (isComponentPage && title) {
           e.preventDefault()
         } else if (target.closest('[data-search-trigger]')) {
           document.dispatchEvent(new Event('anta-search-open'))
-        } else if (target.closest('.menu-toggle, .topbar-title')) {
-          setMenu(document.body.dataset.menuOpen !== 'true')
         } else if (target.closest('.toc-toggle')) {
           setToc(document.body.dataset.tocOpen !== 'true')
         } else if (target.closest('.backdrop')) {
@@ -524,6 +568,7 @@ if (isComponentPage && title) {
       // The persisted sidebar keeps the previous page's aria-current:
       // re-point it at the new URL. Idempotent on the initial load.
       document.addEventListener('astro:page-load', () => {
+        applyTheme(document.documentElement.classList.contains('dark'))
         const here = location.pathname.replace(/\/+$/, '') || '/'
         for (const a of document.querySelectorAll<HTMLAnchorElement>('.sidebar menu a')) {
           const linkPath = new URL(a.href).pathname.replace(/\/+$/, '') || '/'
@@ -645,7 +690,7 @@ if (isComponentPage && title) {
     display: flex;
     min-height: 100vh;
     /* Clip horizontal overflow so the off-canvas slide-out panels (the nav
-       sidebar ≤640px and the TOC rail ≤1024px, both fixed + translated past
+       sidebar ≤800px and the TOC rail ≤1024px, both fixed + translated past
        the right edge when closed) can't create a pannable region. Without it
        a wide page — the comparison matrices in landscape especially — scrolls
        sideways into empty space. `clip` (not `hidden`) doesn't establish a
@@ -666,61 +711,17 @@ if (isComponentPage && title) {
     /* border-right: 1px solid var(--border-5); */
     padding: 20px 16px 48px 20px;
     position: sticky;
-    top: 0;
-    height: 100vh;
+    top: 44px;
+    height: calc(100vh - 44px);
     overflow-y: auto;
   }
 
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 550;
-    font-size: 1.2rem;
-    margin-bottom: 12px;
-    margin-left: -6px;
-    letter-spacing: 0.05ch;
-    color: var(--text-1-brand);
-  }
-
-  .logo img {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-  }
-
-  /* The logo (mark + wordmark) links home. It fills the row so the theme
-     toggle stays against the right edge; inherits the brand color, no
-     underline. */
-  .logo-home {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-    min-width: 0;
-    color: inherit;
-    text-decoration: none;
-  }
-  .logo .logo-label {
-    flex: 1;
-  }
-
-  /* The logo keeps the remaining row space while the theme control stays at
-     the sidebar's edge. */
-  .theme-toggle {
-    padding-inline: 8px;
-    padding-block: 8px;
-    border-radius: 999px;
-    justify-content: center;
-  }
-  .theme-toggle a-icon[shape="moon"] { display: none; }
-  :global(.dark) .theme-toggle a-icon[shape="sun"] { display: none; }
-  :global(.dark) .theme-toggle a-icon[shape="moon"] { display: inline-block; }
-
   .package-links {
     display: flex;
-    gap: 1ch;
-    flex-wrap: wrap;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 0.25ch;
+    white-space: nowrap;
   }
 
   .sidebar h4 {
@@ -732,13 +733,6 @@ if (isComponentPage && title) {
     margin: 24px 0 8px;
   }
 
-  .sidebar-search-field {
-    position: relative;
-    margin-block: 8px 16px;
-  }
-  .sidebar-search-field + h4 {
-    margin-top: 8px;
-  }
   .sidebar menu + menu {
     margin-block-start: 12px;
   }
@@ -764,8 +758,7 @@ if (isComponentPage && title) {
   /* Anta's global stylesheet already strips list-style, padding, and
      margin from `<menu>` and its items, so the sidebar only has to
      style its links. */
-  .sidebar menu li a,
-  .package-link {
+  .sidebar menu li a {
     display: flex;
     align-items: center;
     gap: 0.75ch;
@@ -781,11 +774,7 @@ if (isComponentPage && title) {
     text-decoration: none;
     transition: color 160ms ease-out;
   }
-  .package-link {
-    font-size: 12px;
-  }
-  .sidebar menu li a > a-icon,
-  .package-link > a-icon {
+  .sidebar menu li a > a-icon {
     color: var(--text-4-brand);
     flex-shrink: 0;
     transition: color 160ms ease-out;
@@ -796,28 +785,19 @@ if (isComponentPage && title) {
     flex-shrink: 0;
   }
   .sidebar menu li a:hover,
-  .sidebar menu li a[aria-current="page"],
-  .package-link:hover {
+  .sidebar menu li a[aria-current="page"] {
     color: var(--text-1);
     text-decoration: none;
   }
-  /* Sidebar navigation uses the same dotted underline as the in-page TOC.
-     Package links use a solid underline below. */
+  /* Sidebar navigation uses the same dotted underline as the in-page TOC. */
   .sidebar menu li a:hover {
     text-decoration: underline dotted;
     text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;
   }
-  .package-link:hover {
-    text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
-  }
   .sidebar menu li a:hover > a-icon,
-  .sidebar menu li a[aria-current="page"] > a-icon,
-  .package-link:hover > a-icon {
+  .sidebar menu li a[aria-current="page"] > a-icon {
     color: var(--text-1-brand);
   }
   .sidebar a:focus-visible {
@@ -855,19 +835,114 @@ if (isComponentPage && title) {
     flex-shrink: 0;
     padding: 32px 16px 32px 4px;
     position: sticky;
-    top: 0;
-    height: 100vh;
+    top: 44px;
+    height: calc(100vh - 44px);
     overflow-y: auto;
   }
 
-  .topbar { display: none; }
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 44px;
+    padding-inline: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg-3-brand);
+    border-bottom: 1px solid var(--border-4-brand);
+  }
+
+  .topbar-start,
+  .topbar-center,
+  .topbar-tools {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .topbar-start {
+    flex: 0 0 auto;
+    /* Follow the centered 960px prose column after it stops growing.
+       The percentage excludes header padding; subtract the 12px search gap. */
+    width: max(222px, calc((100% - 960px + var(--topbar-sidebar-balance)) / 2 - 12px));
+    min-width: 222px;
+    gap: 8px;
+  }
+
+  .topbar-breadcrumbs {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 222px;
+  }
+
+  .topbar :global(.header-breadcrumbs) {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .topbar :global(.header-breadcrumbs > [aria-current="page"]) {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .topbar :global(.header-breadcrumbs a-breadcrumb-separator) {
+    width: 8px;
+  }
+
+  .topbar-center {
+    flex: 1 1 auto;
+    justify-content: flex-start;
+  }
+
+  .topbar-tools {
+    flex: 0 0 auto;
+    min-width: 300px;
+    gap: 0.5ch;
+    justify-content: flex-end;
+  }
+
+  .topbar-search {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 960px;
+  }
+
+  .topbar-search :global(a-input) {
+    width: 100%;
+  }
+
+  .topbar-search :global(a-input)::part(input),
+  .topbar-search :global(a-input)::part(trailing) {
+    font-size: 13px;
+  }
+
+  .topbar-search :global(a-input:state(filled))::part(trailing),
+  .topbar-search :global(a-input:focus-within)::part(trailing) {
+    display: none;
+  }
+
+  /* Show the destination theme: moon in light mode, sun in dark mode. */
+  .theme-toggle a-icon[shape="sun"] { display: none; }
+  .theme-toggle a-icon[shape="moon"] { display: inline-block; }
+  :global(.dark) .theme-toggle a-icon[shape="sun"] { display: inline-block; }
+  :global(.dark) .theme-toggle a-icon[shape="moon"] { display: none; }
+
   .backdrop { display: none; }
 
   /* The TOC rail collapses to a right-side slide-out — opened by a
      top-level "On this page" trigger — earlier than the full-mobile
      layout, because the dual-rail shell squeezes the content track first.
-     The nav sidebar keeps its own slide-out at 640px below. */
+     The nav sidebar keeps its own slide-out at 800px below. */
   @media (max-width: 1024px) {
+    .package-link-label {
+      display: none;
+    }
+
+    .topbar-tools {
+      min-width: 0;
+    }
+
     /* Positioning context for the absolutely-placed TOC trigger. */
     .content {
       position: relative;
@@ -888,9 +963,9 @@ if (isComponentPage && title) {
     .toc-rail {
       display: block;
       position: fixed;
-      top: 0;
+      top: 44px;
       right: 0;
-      height: 100dvh;
+      height: calc(100dvh - 44px);
       width: min(240px, 80vw);
       padding: 24px;
       background: var(--bg-canvas);
@@ -906,7 +981,7 @@ if (isComponentPage && title) {
     }
 
     /* Shared scrim for the slide-outs (the TOC here; the nav sidebar at
-       ≤640px reuses it). */
+       ≤800px reuses it). */
     .backdrop {
       display: block;
       position: fixed;
@@ -930,7 +1005,20 @@ if (isComponentPage && title) {
     }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 800px) {
+    .topbar-search :global(a-input)::part(trailing) {
+      display: none;
+    }
+
+    .topbar :global(.header-breadcrumbs > :not(:first-child)) {
+      display: none;
+    }
+
+    .topbar-start {
+      width: auto;
+      min-width: 0;
+    }
+
     .content {
       /* Asymmetric on mobile: a touch more breathing room on the left
          (start) than the right (end). `padding-inline: <start> <end>`. */
@@ -940,12 +1028,12 @@ if (isComponentPage && title) {
     .sidebar {
       position: fixed;
       top: 0;
-      right: 0;
+      left: 0;
       background: var(--bg-pane);
       /* Wider as a slide-out than docked (214px) — matches the TOC slide-out. */
       width: min(240px, 80vw);
       height: 100dvh;
-      transform: translateX(100%);
+      transform: translateX(-100%);
       transition: transform 250ms ease-out, background 200ms ease-out;
       z-index: 20;
     }
@@ -959,55 +1047,5 @@ if (isComponentPage && title) {
       pointer-events: auto;
     }
 
-    .topbar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      height: 44px;
-      /* A touch more room on the left (start) than the right (end). */
-      padding-block: 0;
-      padding-inline: 18px 6px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: var(--bg-block);
-      border-bottom: 1px solid var(--border-4);
-    }
-
-    /* The menu button is an Anta tertiary <Button> (background-less, fills
-       on hover), pushed to the right of the topbar. The smaller font-size +
-       letter-spacing (inherited by the label; the icon stays its absolute
-       16px) bring the "MENU" text back to its previous compact look. */
-    .menu-toggle {
-      margin-left: auto;
-      font-size: 14px;
-      letter-spacing: 0.05em;
-    }
-    /* Override Anta's label optical-centering (17px line + 1px bottom pad)
-       for this compact menu label: tight 14px line box, no bottom padding.
-       `:global` because the label is rendered inside the Button island. */
-    .menu-toggle :global(a-button-label) {
-      line-height: 14px;
-      padding-bottom: 0;
-    }
-
-    /* Breadcrumb "Anta › {page}". The separator is muted; crumbs sit tight
-       (gap: 0) with the separator carrying its own side margins. */
-    .topbar-title {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      font-weight: 550;
-      font-size: 0.95rem;
-      line-height: 1em;
-      letter-spacing: 0.05ch;
-      color: var(--text-1-brand);
-      cursor: pointer;
-    }
-    .topbar-title .crumb-sep {
-      margin-inline: 6px;
-      color: var(--text-4);
-      font-weight: 400;
-    }
   }
 </style>

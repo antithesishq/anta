@@ -7,8 +7,6 @@ import { useEffect, useState } from 'preact/hooks'
  * Anta's Input composition together, including its in-field clear action.
  */
 export default function SidebarSearch() {
-  const [hasValue, setHasValue] = useState(false)
-  const [focused, setFocused] = useState(false)
   const [shortcut, setShortcut] = useState('')
 
   useEffect(() => {
@@ -17,39 +15,26 @@ export default function SidebarSearch() {
       || navigator.userAgent
     setShortcut(/Mac|iPhone|iPad|iPod/i.test(platform) ? '⌘+K' : 'Ctrl+K')
 
-    const input = document.querySelector<HTMLElement & { value?: string }>('[data-sidebar-search-input]')
-    const syncValue = (event?: Event) => {
-      const value = event instanceof CustomEvent
-        ? event.detail as string
-        : input?.value ?? ''
-      setHasValue(Boolean(value))
-    }
-
-    syncValue()
-    document.addEventListener('anta-sidebar-search-value', syncValue)
-    return () => document.removeEventListener('anta-sidebar-search-value', syncValue)
   }, [])
 
   return (
     <Input
       type="search"
-      size="small"
+      size="medium"
+      tone="var(--anta-seed-brand)"
       dimActions
-      placeholder="Search"
+      placeholder="Search or ask"
       aria-label="Search documentation"
       aria-haspopup="dialog"
       data-search-trigger
       data-sidebar-search-input
       onMouseDown={(event) => {
-        // Keep the shortcut mounted until click reaches the layout's search trigger.
+        // Let the dialog receive focus when the search trigger is clicked.
         if (event.button === 0 && !(event.target as HTMLElement).closest('[data-custom-event="clearrequest"]')) {
           event.preventDefault()
         }
       }}
-      onInput={(event) => setHasValue(Boolean((event.target as { value?: string }).value))}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      trailing={hasValue || focused ? undefined : <span data-sidebar-search-shortcut>{shortcut ? `${shortcut} or /` : '/'}</span>}
+      trailing={<span data-sidebar-search-shortcut>{shortcut ? `${shortcut} or /` : '/'}</span>}
     />
   )
 }

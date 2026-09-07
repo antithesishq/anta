@@ -84,12 +84,14 @@ function isEditableTarget(target: EventTarget | null) {
 
 export default function SearchDialog() {
   const [open, setOpen] = useState(false)
+  const [inputBounds, setInputBounds] = useState<{ left: number; width: number }>()
   const [query, setQuery] = useState('')
   const [search, setSearch] = useState<SearchState>()
   const lastAnswer = useRef<{ query: string; answer: SearchAnswer }>()
   const answerRequest = useRef<AbortController>()
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const [selected, setSelected] = useState(0)
+  const resultsRef = useRef<HTMLDivElement>(null)
   // A resting pointer cannot override keyboard selection.
   const [pointerActive, setPointerActive] = useState(false)
   const term = query.trim()
@@ -97,6 +99,18 @@ export default function SearchDialog() {
   const results = term ? search?.results ?? EMPTY_RESULTS : EMPTY_RESULTS
   const resultQuery = search?.query ?? term
   const searching = status === 'loading' || (status === 'ready' && Boolean(term) && !currentSearch)
+
+  useEffect(() => {
+    if (!open || pointerActive) return
+    const frame = requestAnimationFrame(() => {
+      resultsRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+        behavior: 'auto',
+      })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [open, selected, results, pointerActive])
 
   const ensureIndex = () => {
     setStatus((current) => current === 'ready' ? current : 'loading')
@@ -122,7 +136,18 @@ export default function SearchDialog() {
   }, [])
 
   useEffect(() => {
-    const showSearch = () => setOpen(true)
+    const syncInputBounds = () => {
+      const input = document.querySelector('[data-sidebar-search-input]')
+      if (!input) return
+      const { left, width } = input.getBoundingClientRect()
+      setInputBounds({ left, width })
+    }
+    const showSearch = () => {
+      syncInputBounds()
+      const input = document.querySelector<HTMLElement & { value?: string }>('[data-sidebar-search-input]')
+      if (input) setQuery(input.value ?? input.getAttribute('value') ?? '')
+      setOpen(true)
+    }
     const onKeyDown = (event: KeyboardEvent) => {
       if (isEditableTarget(event.target)) return
       if (event.key === '/' || ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k')) {
@@ -133,9 +158,11 @@ export default function SearchDialog() {
 
     document.addEventListener('anta-search-open', showSearch)
     document.addEventListener('keydown', onKeyDown)
+    window.addEventListener('resize', syncInputBounds)
     return () => {
       document.removeEventListener('anta-search-open', showSearch)
       document.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('resize', syncInputBounds)
     }
   }, [])
 
@@ -221,15 +248,22 @@ export default function SearchDialog() {
   return (
     <Dialog
       className={styles.dialog}
+      style={inputBounds ? {
+        '--search-left': `${inputBounds.left}px`,
+        '--search-width': `${inputBounds.width}px`,
+      } : undefined}
       header={
         <div className={styles.header}>
           <span className={styles.srOnly}>Search documentation</span>
           <Input
             id="docs-search-input"
             type="search"
+            size="medium"
+            tone="var(--anta-seed-brand)"
+            dimActions
             autoFocus
-            placeholder="Search documentation"
-            leading={searching ? <Loader size={16} label="Searching documentation" /> : <Icon shape="search" size={16} />}
+            placeholder="Search or ask"
+            leading={searching ? <Loader size={16} label="Searching documentation" /> : undefined}
             value={query}
             onInput={(event) => setQuery((event.target as { value: string }).value)}
             onKeyDown={(event) => {
@@ -245,9 +279,9 @@ export default function SearchDialog() {
                 event.preventDefault()
                 event.stopPropagation()
                 if (event.repeat) return
-                const result = currentSearch?.results[selected]
-                if (result) {
-                  location.href = resultHref(result, term)
+                const selectedLink = resultsRef.current?.querySelector<HTMLAnchorElement>('a[data-selected="true"]')
+                if (selectedLink) {
+                  selectedLink.click()
                 } else if (currentSearch?.answerStatus !== 'ready') {
                   void askAI()
                 }
@@ -271,6 +305,7 @@ export default function SearchDialog() {
         {query.trim() && status === 'ready' && (
           <div
             id="docs-search-results"
+            ref={resultsRef}
             className={styles.results}
             data-pointer={pointerActive ? 'active' : undefined}
             aria-live="polite"
@@ -320,7 +355,7 @@ export default function SearchDialog() {
                     onClick={() => { void askAI() }}
                   >
                     <Text priority="tertiary" size="small">No results for “{term}”.</Text>
-                    <strong>Try AI search</strong>
+                    <strong>Get answer from AI</strong>
                   </button>
                 )}
                 {currentSearch.answerStatus === 'loading' && (
@@ -356,7 +391,7 @@ export default function SearchDialog() {
                   <div className={styles.emptyRow}>
                     <p className={styles.status}>{currentSearch.answer ? 'The answer was interrupted. Try again.' : 'Couldn’t load an AI answer. Try again.'}</p>
                     {currentSearch.answer && (
-                      <Button priority="secondary" size="small" label="Try AI search" onClick={() => { void askAI() }} />
+                      <Button priority="secondary" size="small" label="Get answer from AI" onClick={() => { void askAI() }} />
                     )}
                   </div>
                 )}

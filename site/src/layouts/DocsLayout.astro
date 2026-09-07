@@ -248,7 +248,7 @@ if (isComponentPage && title) {
     {/* The router fetches the destination before it can swap the document.
         This small bar makes that wait visible without delaying the swap. */}
     <div class="navigation-progress" aria-hidden="true"></div>
-    <header class="topbar">
+    <header class="topbar" style={{ '--topbar-sidebar-balance': hideToc ? '214px' : '0px' }}>
       <div class="topbar-start">
         <div class="topbar-breadcrumbs">
           <Breadcrumbs
@@ -864,15 +864,17 @@ if (isComponentPage && title) {
 
   .topbar-start {
     flex: 0 0 auto;
-    width: 222px;
+    /* Follow the centered 960px prose column after it stops growing.
+       Subtract the header's 12px inset and 12px gap before search. */
+    width: max(222px, calc((100vw - 960px + var(--topbar-sidebar-balance)) / 2 - 24px));
     min-width: 222px;
-    max-width: 222px;
     gap: 8px;
   }
 
   .topbar-breadcrumbs {
     flex: 1 1 auto;
     min-width: 0;
+    max-width: 222px;
   }
 
   .topbar :global(.header-breadcrumbs) {

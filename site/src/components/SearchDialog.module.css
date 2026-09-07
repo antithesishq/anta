@@ -100,6 +100,7 @@
   border-radius: 8px;
   color: var(--text-1);
   text-decoration: none;
+  transition: background-color 160ms ease-out;
 }
 
 /* A hover highlight follows a moved pointer, not one left over a re-rendered list. */

@@ -865,8 +865,8 @@ if (isComponentPage && title) {
   .topbar-start {
     flex: 0 0 auto;
     /* Follow the centered 960px prose column after it stops growing.
-       Subtract the header's 12px inset and 12px gap before search. */
-    width: max(222px, calc((100vw - 960px + var(--topbar-sidebar-balance)) / 2 - 24px));
+       The percentage excludes header padding; subtract the 12px search gap. */
+    width: max(222px, calc((100% - 960px + var(--topbar-sidebar-balance)) / 2 - 12px));
     min-width: 222px;
     gap: 8px;
   }

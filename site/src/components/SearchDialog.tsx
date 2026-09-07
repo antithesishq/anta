@@ -282,7 +282,9 @@ export default function SearchDialog() {
                 event.preventDefault()
                 event.stopPropagation()
                 if (event.repeat) return
-                const selectedLink = resultsRef.current?.querySelector<HTMLAnchorElement>('a[data-selected="true"]')
+                const selectedLink = currentSearch
+                  ? resultsRef.current?.querySelector<HTMLAnchorElement>('a[data-selected="true"]')
+                  : undefined
                 if (selectedLink) {
                   selectedLink.click()
                 } else if (currentSearch?.answerStatus !== 'ready') {

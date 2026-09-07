@@ -36,7 +36,7 @@ export default function SidebarSearch() {
       size="medium"
       tone="var(--anta-seed-brand)"
       dimActions
-      placeholder="Search"
+      placeholder="Search or ask"
       aria-label="Search documentation"
       aria-haspopup="dialog"
       data-search-trigger

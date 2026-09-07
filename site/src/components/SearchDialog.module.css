@@ -105,7 +105,7 @@
 /* A hover highlight follows a moved pointer, not one left over a re-rendered list. */
 .results[data-pointer='active'] .result:hover,
 .result[data-selected='true'] {
-  background: var(--bg-3);
+  background: var(--bg-4-brand);
 }
 
 .result:focus-visible {

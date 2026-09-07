@@ -864,12 +864,24 @@ if (isComponentPage && title) {
 
   .topbar-start {
     flex: 0 0 auto;
-    min-width: 300px;
+    width: 222px;
+    min-width: 222px;
+    max-width: 222px;
     gap: 8px;
   }
 
   .topbar-breadcrumbs {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .topbar :global(.header-breadcrumbs) {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .topbar :global(.header-breadcrumbs > [aria-current="page"]) {
+    flex: 0 1 auto;
     min-width: 0;
   }
 
@@ -879,7 +891,7 @@ if (isComponentPage && title) {
 
   .topbar-center {
     flex: 1 1 auto;
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .topbar-tools {
@@ -923,10 +935,6 @@ if (isComponentPage && title) {
 
     .topbar-tools {
       min-width: 0;
-    }
-
-    .topbar-center {
-      justify-content: flex-end;
     }
 
     /* Positioning context for the absolutely-placed TOC trigger. */
@@ -993,6 +1001,7 @@ if (isComponentPage && title) {
 
   @media (max-width: 800px) {
     .topbar-start {
+      width: auto;
       min-width: 0;
     }
 

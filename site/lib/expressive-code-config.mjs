@@ -1,7 +1,10 @@
 import { createInlineSvgUrl } from '@expressive-code/core'
 import ecFoldable from './ec-foldable.mjs'
 
-/** Shared rendering options for authored documentation and AI answers. */
+/**
+ * Shared rendering options for authored documentation and AI answers.
+ * @satisfies {import('expressive-code').ExpressiveCodeConfig}
+ */
 export default {
   plugins: [ecFoldable()],
   themes: ['github-light', 'tokyo-night'],

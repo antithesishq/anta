@@ -1,0 +1,74 @@
+---
+import { Tabs } from '@antadesign/anta'
+import { Code } from 'astro-expressive-code/components'
+import antune from '../../../src/theme-antune.css?raw'
+import antithesis from '../../../src/theme-antithesis.css?raw'
+
+const themes = [
+  { value: 'none', label: 'None', filename: 'No theme overrides', code: '/* No theme stylesheet.\n   Components use Anta’s built-in tokens and styles. */' },
+  { value: 'antune', label: 'Antune', filename: 'theme-antune.css', code: antune },
+  { value: 'antithesis', label: 'Antithesis', filename: 'theme-antithesis.css', code: antithesis },
+]
+---
+<div class="themes" data-themes data-theme="antune">
+  <Tabs data-theme-tabs label="Preview theme" defaultValue="antune" options={themes.map(({ value, label }) => ({ value, label }))} />
+  <div class="columns">
+    <iframe src="/theme-preview/" title="Theme component canvas" loading="lazy" data-theme-canvas></iframe>
+    <div class="sources" aria-label="Theme CSS source">
+      {themes.map(theme => (
+        <div data-theme-source={theme.value} hidden={theme.value !== 'antune'}>
+          <Code code={theme.code} lang="css" title={theme.filename} />
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+<style>
+  .themes { min-width: 0; max-width: 960px; margin-inline: auto; container: themes / inline-size; }
+  .themes > :global(a-tabs) { margin-bottom: 16px; flex-wrap: wrap; }
+  .columns { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+  iframe { display: block; width: 100%; height: 780px; border: 1px solid var(--border-4); border-radius: 8px; background: var(--bg-1); box-sizing: border-box; }
+  .sources { min-width: 0; }
+  .sources :global(.expressive-code) { margin: 0; }
+  .sources :global(pre) { max-height: 738px; overflow: auto; }
+  .sources :global(pre > code) { font-size: 12px; line-height: 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .sources :global(.ec-line) { white-space: pre-wrap; overflow-wrap: anywhere; }
+  @container themes (min-width: 760px) {
+    .columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>
+<script>
+  function syncCanvas(gallery: HTMLElement) {
+    gallery.querySelector<HTMLIFrameElement>('[data-theme-canvas]')?.contentWindow?.postMessage({
+      type: 'anta-theme-preview', theme: gallery.dataset.theme,
+      dark: document.documentElement.classList.contains('dark'),
+    }, location.origin)
+  }
+  function selectTheme(gallery: HTMLElement, theme: string) {
+    if (!['none', 'antune', 'antithesis'].includes(theme)) return
+    gallery.dataset.theme = theme
+    for (const panel of gallery.querySelectorAll<HTMLElement>('[data-theme-source]')) panel.hidden = panel.dataset.themeSource !== theme
+    syncCanvas(gallery)
+  }
+  document.addEventListener('change', event => {
+    const tabs = event.target as HTMLElement & { value?: string }
+    if (!tabs.matches('[data-theme-tabs]')) return
+    const gallery = tabs.closest<HTMLElement>('[data-themes]')
+    if (gallery && tabs.value) selectTheme(gallery, tabs.value)
+  })
+  document.addEventListener('anta-search-reveal', event => {
+    const panel = (event.target as HTMLElement).closest<HTMLElement>('[data-theme-source]')
+    const gallery = panel?.closest<HTMLElement>('[data-themes]')
+    if (!gallery || !panel) return
+    gallery.querySelector<HTMLElement>(`[data-theme-tabs] a-tab[value="${panel.dataset.themeSource}"]`)?.click()
+  })
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin || event.data?.type !== 'anta-theme-preview-ready') return
+    for (const gallery of document.querySelectorAll<HTMLElement>('[data-themes]')) {
+      if (gallery.querySelector<HTMLIFrameElement>('iframe')?.contentWindow === event.source) syncCanvas(gallery)
+    }
+  })
+  const syncAll = () => document.querySelectorAll<HTMLElement>('[data-themes]').forEach(syncCanvas)
+  document.addEventListener('astro:page-load', syncAll)
+  new MutationObserver(syncAll).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+</script>

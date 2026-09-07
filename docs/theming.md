@@ -1,6 +1,6 @@
 # Theming
 
-## Themes
+## Using a theme
 
 Antune is the hand-tuned reference theme and the initial theme on this website.
 Choose **None** in the theme dropdown to use the package's seed-derived palette.
@@ -42,6 +42,8 @@ Anta's styles use ordered child layers inside `@layer anta`. Your unlayered CSS
 overrides them without `!important`, and shadow-DOM components expose
 `::part(...)`. A component's `tone` accepts a named tone or CSS color and derives
 its rest, hover, and active values. Each component page lists its styling hooks.
+
+<a id="fonts-in-a-theme"></a>
 
 ## Fonts in a theme
 
@@ -87,6 +89,15 @@ and the [CSS Font Loading API](https://www.w3.org/TR/css-font-loading/).
 For an explicit opt-in, ship font-face declarations in a separate stylesheet.
 Consumers using their own fonts can omit that import. Antune and Antithesis
 currently use the package font stacks and include no remote font resources.
+
+<a id="themes"></a>
+
+## Themes
+
+Compare the same components across themes. Select a tab to preview the theme and
+read its stylesheet.
+
+<a id="theming-lab"></a>
 
 ## Theming lab
 

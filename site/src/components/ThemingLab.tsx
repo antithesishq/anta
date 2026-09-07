@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import chroma from 'chroma-js'
 import {
   Tabs,
@@ -585,7 +585,6 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, allVLight, allVDark, o
               key={g.label}
               title={`${g.label} variables`}
               priority="tertiary"
-              outdent
               open={!!openMap[key]}
               onStateChange={(_e, { next }) => onExpanderToggle(key, next)}
               actions={<GroupActions specId={spec.id} vars={g.vars} v={v} onVar={onVar} />}
@@ -603,7 +602,6 @@ function Block({ spec, tone, seed, isDark, vLight, vDark, allVLight, allVDark, o
         <Expander
           title="CSS output"
           priority="tertiary"
-          outdent
           open={!!openMap[`${spec.id}:css`]}
           onStateChange={(_e, { next }) => onExpanderToggle(`${spec.id}:css`, next)}
         >
@@ -702,28 +700,25 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
               key={g.label}
               title={`${g.label} variables`}
               priority="tertiary"
-              outdent
               open={!!openMap[key]}
               onStateChange={(_e, { next }) => onExpanderToggle(key, next)}
               actions={<GroupActions specId={spec.id} vars={g.vars} v={v} onVar={onVar} />}
             >
               {g.note ? <p className={styles.groupNote}>{g.note}</p> : null}
               {(() => {
-                // Two aligned rows: L channels on top, C beneath. Each input's
-                // grid column is its N index (bg-2/border-2 → col 2), so a C sits
-                // directly under its L; the row is 1 for L, 2 for C.
-                const cols = Math.max(...g.vars.map((d) => Number(d.key.match(/\d+/)?.[0] ?? 1)))
+                const indexOf = (d: VarDef) => Number(d.key.match(/\d+/)?.[0] ?? 1)
+                const columns = [...new Set(g.vars.map(indexOf))].sort((a, b) => a - b)
                 return (
-                  <div className={styles.varRows} style={{ gridTemplateColumns: `repeat(${cols}, 88px)` }}>
-                    {g.vars.map((d) => {
-                      const col = Number(d.key.match(/\d+/)?.[0] ?? 1)
-                      const row = d.key.endsWith('C') ? 2 : 1
-                      return (
-                        <div key={d.key} style={{ gridColumn: col, gridRow: row }}>
-                          <VarInput spec={spec} d={d} v={v} onVar={onVar} />
-                        </div>
-                      )
-                    })}
+                  <div className={styles.varRows}>
+                    {columns.map((col) => (
+                      <div key={col} className={styles.varColumn}>
+                        {g.vars.filter((d) => indexOf(d) === col).map((d) => (
+                          <div key={d.key} style={{ gridRow: d.key.endsWith('C') ? 2 : 1 }}>
+                            <VarInput spec={spec} d={d} v={v} onVar={onVar} />
+                          </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 )
               })()}
@@ -734,7 +729,6 @@ function SurfaceBlock({ spec, tone, seed, isDark, vLight, vDark, onVar, openMap,
         <Expander
           title="CSS output"
           priority="tertiary"
-          outdent
           open={!!openMap[`${spec.id}:css`]}
           onStateChange={(_e, { next }) => onExpanderToggle(`${spec.id}:css`, next)}
         >
@@ -826,6 +820,7 @@ function TonePanel({
 }
 
 export default function ThemingLab() {
+  const labRef = useRef<HTMLDivElement>(null)
   const [isDark, setIsDark] = useState(false)
   const [active, setActive] = useState<Tone>('neutral')
   const [seeds, setSeeds] = useState<Record<Tone, string>>(() => ({ ...SEED }))
@@ -844,13 +839,26 @@ export default function ThemingLab() {
   // `restoreRev` keys the seed ColorPicker: it reads `value` only at mount, so
   // a restored seed for an unchanged tone needs one remount to show up.
   const [restoreRev, setRestoreRev] = useState(0)
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (TONES.includes(labSnapshot.active as Tone)) setActive(labSnapshot.active as Tone)
     if (labSnapshot.seeds) setSeeds((s) => ({ ...s, ...labSnapshot.seeds }))
     if (labSnapshot.openMap) setOpenMap({ ...labSnapshot.openMap })
     if (typeof labSnapshot.surfaceBg === 'number') setSurfaceBg(labSnapshot.surfaceBg)
     if (typeof labSnapshot.surfaceBorder === 'number') setSurfaceBorder(labSnapshot.surfaceBorder)
     setRestoreRev(1)
+  }, [])
+
+  useLayoutEffect(() => {
+    const lab = labRef.current
+    if (!lab) return
+    const reveal = (event: Event) => {
+      const target = event.target
+      if (!(target instanceof HTMLElement)) return
+      const tone = target.closest<HTMLElement>('[data-theming-tone]')?.dataset.themingTone as Tone
+      if (TONES.includes(tone)) setActive(tone)
+    }
+    lab.addEventListener('anta-search-reveal', reveal)
+    return () => lab.removeEventListener('anta-search-reveal', reveal)
   }, [])
 
   useEffect(() => persistLab('active', active), [active])
@@ -869,7 +877,7 @@ export default function ThemingLab() {
   }, [])
 
   return (
-    <div className={`${styles.lab} full-bleed`}>
+    <div ref={labRef} className={styles.lab}>
       <div className={styles.header}>
         <Tabs
           value={active}
@@ -887,7 +895,7 @@ export default function ThemingLab() {
       </div>
 
       {TONES.map((t) => (
-        <div key={t} hidden={t !== active}>
+        <div key={t} data-theming-tone={t} hidden={t !== active}>
           <TonePanel
             tone={t}
             seed={seeds[t]}

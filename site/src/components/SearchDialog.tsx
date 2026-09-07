@@ -7,6 +7,7 @@ import styles from './SearchDialog.module.css'
 
 const EMPTY_RESULTS: SearchResult[] = []
 type SearchState = {
+  route: string
   query: string
   results: SearchResult[]
   status: 'ready' | 'error'
@@ -86,6 +87,7 @@ export default function SearchDialog() {
   const [open, setOpen] = useState(false)
   const [inputBounds, setInputBounds] = useState<{ left: number; width: number }>()
   const [query, setQuery] = useState('')
+  const [route, setRoute] = useState('')
   const [search, setSearch] = useState<SearchState>()
   const lastAnswer = useRef<{ query: string; answer: SearchAnswer }>()
   const answerRequest = useRef<AbortController>()
@@ -95,7 +97,7 @@ export default function SearchDialog() {
   // A resting pointer cannot override keyboard selection.
   const [pointerActive, setPointerActive] = useState(false)
   const term = query.trim()
-  const currentSearch = search?.query === term ? search : undefined
+  const currentSearch = search?.query === term && search.route === route ? search : undefined
   const results = term ? search?.results ?? EMPTY_RESULTS : EMPTY_RESULTS
   const resultQuery = search?.query ?? term
   const searching = status === 'loading' || (status === 'ready' && Boolean(term) && !currentSearch)
@@ -143,6 +145,7 @@ export default function SearchDialog() {
       setInputBounds({ left, width })
     }
     const showSearch = () => {
+      setRoute(window.location.pathname)
       syncInputBounds()
       const input = document.querySelector<HTMLElement & { value?: string }>('[data-sidebar-search-input]')
       if (input) setQuery(input.value ?? input.getAttribute('value') ?? '')
@@ -180,19 +183,19 @@ export default function SearchDialog() {
 
     let active = true
     const runSearch = debounce(() => {
-      void searchDocumentation(term).then((next) => {
+      void searchDocumentation(term, route).then((next) => {
         if (!active) return
-        const ready: SearchState = { query: term, results: next, status: 'ready' }
+        const ready: SearchState = { route, query: term, results: next, status: 'ready' }
         if (!next.length && lastAnswer.current?.query === term) {
           setSearch({ ...ready, answerStatus: 'ready', answer: lastAnswer.current.answer })
           return
         }
         setSearch(ready)
       }, () => {
-        if (active) setSearch({ query: term, results: EMPTY_RESULTS, status: 'error' })
+        if (active) setSearch({ route, query: term, results: EMPTY_RESULTS, status: 'error' })
       })
     }, 250)
-    if (search?.query !== term || search.status === 'error') runSearch()
+    if (search?.query !== term || search.route !== route || search.status === 'error') runSearch()
     return () => {
       active = false
       runSearch.cancel()
@@ -205,7 +208,7 @@ export default function SearchDialog() {
         }))
       }
     }
-  }, [term, status, open])
+  }, [term, status, open, route])
 
   const askAI = async () => {
     if (!open || !term || term.length > AI_QUERY_MAX_LENGTH

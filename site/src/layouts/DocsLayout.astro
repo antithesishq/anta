@@ -14,6 +14,7 @@ import { COMPONENT_SLUGS } from '../../lib/component-slugs'
 import SidebarSearch from '../components/SidebarSearch'
 import ThemeSwitcher from '../components/ThemeSwitcher.tsx'
 import SearchDialog from '../components/SearchDialog.tsx'
+import AntaLogo from '../components/AntaLogo'
 
 interface Props {
   title?: string
@@ -262,7 +263,7 @@ if (isComponentPage && title) {
             aria-label="Site breadcrumb"
             items={[
               {
-                label: [h('img', { src: '/anta-favicon.svg', width: 16, height: 16 }), 'Anta'],
+                label: [h(AntaLogo, { size: 16, compact: true }), 'Anta'],
                 href: '/',
                 current: !title,
                 tone: title ? 'brand' : 'neutral',

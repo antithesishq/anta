@@ -23,10 +23,6 @@ type SearchIndexPayload = {
 
 let indexPromise: Promise<any> | undefined
 
-function resultPriority(result: SearchResult) {
-  return /^h[1-6]$/.test(result.kind) ? result.level : 7
-}
-
 export function loadSearchIndex() {
   if (indexPromise) return indexPromise
 
@@ -40,7 +36,7 @@ export function loadSearchIndex() {
 
     const index = new flexsearch.Document(searchConfig as any)
     for (const [key, chunk] of Object.entries(payload.chunks)) index.import(key, chunk)
-    return { index, Resolver: flexsearch.Resolver }
+    return { index }
   })
 
   indexPromise = load.catch((error) => {
@@ -50,29 +46,37 @@ export function loadSearchIndex() {
   return indexPromise
 }
 
-export async function searchDocumentation(query: string) {
-  const { index, Resolver } = await loadSearchIndex()
-  const search = { index, field: 'text', query }
+export async function searchDocumentation(query: string, currentPath?: string) {
+  const { index } = await loadSearchIndex()
+  const route = currentPath == null ? undefined : `${currentPath.split(/[?#]/)[0].replace(/\/+$/, '')}/`
 
-  // FlexSearch ranks matches by relevance inside each tag. Combine those
-  // result sets with descending boosts, matching the old documentation
-  // search: page titles first, then progressively deeper headings, then copy.
-  const results = new Resolver(search)
-    .and({ tag: { searchRank: 'h1' } }).limit(16).boost(8)
-    .or({ ...search, tag: { searchRank: 'h2' } }).limit(16).boost(6)
-    .or({ ...search, tag: { searchRank: 'h3' } }).limit(16).boost(5)
-    .or({ ...search, tag: { searchRank: 'h4' } }).limit(16).boost(4)
-    .or({ ...search, tag: { searchRank: 'h5' } }).limit(16).boost(3)
-    .or({ ...search, tag: { searchRank: 'h6' } }).limit(16).boost(2)
-    .or({ ...search, tag: { searchRank: 'block' } }).limit(16).boost(1)
+  const searchMatches = async (route?: string): Promise<SearchResult[]> => {
+    const matches: SearchResult[] = []
+    // Keep heading levels ahead of body copy, and FlexSearch's relevance order
+    // within each level. Apply route tags before each result limit.
+    for (const searchRank of ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'block']) {
+      const hits = await index.search({
+        query, pluck: 'text', enrich: true, limit: 16 - matches.length,
+        tag: route ? { routeRank: `${route}:${searchRank}` } : { searchRank },
+      }) as SearchHit[]
+      matches.push(...hits.map((hit) => ({ id: hit.id, ...hit.doc })))
+      if (matches.length >= 16) break
+    }
+    return matches
+  }
 
-  const hits = await results.resolve({ enrich: true, limit: 16 }) as SearchHit[]
-  return hits
-    .map((hit) => ({ id: hit.id, ...hit.doc }))
-    // Resolver boosts retain relevance inside each heading level. Keep that
-    // ordering stable, while ensuring incidental table cells and paragraphs
-    // cannot displace a matching section heading.
-    .sort((first, second) => resultPriority(first) - resultPriority(second))
+  // Search the current route before limiting results so global matches cannot
+  // crowd its matching blocks out of the candidate set.
+  const [local, global] = await Promise.all([
+    route ? searchMatches(route) : Promise.resolve([]),
+    searchMatches(),
+  ])
+  const seen = new Set<string>()
+  return [...local, ...global].filter((result) => {
+    if (seen.has(result.id)) return false
+    seen.add(result.id)
+    return true
+  }).slice(0, 16)
 }
 
 export async function getSearchResult(id: string) {

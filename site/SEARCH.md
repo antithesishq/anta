@@ -16,6 +16,14 @@ Full-text search waits until typing pauses for 250 ms, using `es-toolkit`'s
 matches stay visible until the next search finishes. Clearing the query or
 closing the dialog cancels pending searches.
 
+Matching blocks on the current page appear before matches from other pages.
+Each group retains heading priority and text relevance. The route is read when
+the dialog opens, so client-side navigation changes the preference. The index
+tags routes as well as heading levels, allowing local matches to be found before
+the 16-result limit is applied. Selecting a result opens its enclosing folded
+sections and highlights the matching text. Theming previews also select the
+tone or theme tab that contains the result.
+
 The selected AI result row is replaced by a loader until
 the first answer text arrives. Markdown then appears progressively under **AI
 answer**. The title and close

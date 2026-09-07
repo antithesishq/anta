@@ -5,10 +5,12 @@ hideToc: true
 ---
 
 import ThemingLab from '../components/ThemingLab.tsx'
+import Themes from '../components/Themes.astro'
+import Disclosure from '../components/Disclosure.astro'
 
 # Theming
 
-## Themes
+## Using a theme
 
 Antune is the hand-tuned reference theme and the initial theme on this website.
 Choose **None** in the theme dropdown to use the package's seed-derived palette.
@@ -51,7 +53,7 @@ overrides them without `!important`, and shadow-DOM components expose
 `::part(...)`. A component's `tone` accepts a named tone or CSS color and derives
 its rest, hover, and active values. Each component page lists its styling hooks.
 
-## Fonts in a theme
+<Disclosure title="Fonts in a theme" id="fonts-in-a-theme">
 
 Declare the font with `@font-face` and select it through `--sans-serif` or
 `--monospace`. Give consumers a separate override property so they can change the
@@ -96,8 +98,21 @@ For an explicit opt-in, ship font-face declarations in a separate stylesheet.
 Consumers using their own fonts can omit that import. Antune and Antithesis
 currently use the package font stacks and include no remote font resources.
 
-## Theming lab
+</Disclosure>
+
+<Disclosure title="Themes" id="themes">
+
+Compare the same components across themes. Select a tab to preview the theme and
+read its stylesheet.
+
+<Themes />
+
+</Disclosure>
+
+<Disclosure title="Theming lab" id="theming-lab">
 
 The lab below shows the derivation live. For each toned component, the shipped Default sits next to a Custom preview driven by the seed picker, with the formula constants editable and the resolved CSS shown.
 
 <ThemingLab client:load />
+
+</Disclosure>

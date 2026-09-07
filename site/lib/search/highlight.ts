@@ -45,6 +45,20 @@ function unfoldDisclosureAncestors(target: HTMLElement) {
   return disclosures
 }
 
+function unfoldExpanders(target: HTMLElement) {
+  let unfolded = false
+  for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) {
+    if (!parent.matches('a-expander')) continue
+    const summary = parent.shadowRoot?.querySelector<HTMLButtonElement>('button[part="summary"]')
+    if (summary?.getAttribute('aria-expanded') === 'false') {
+      // Use the component's interaction so controlled islands update their state.
+      summary.click()
+      unfolded = true
+    }
+  }
+  return unfolded
+}
+
 let run = 0
 let pendingNavigation: PendingNavigation | undefined
 
@@ -80,6 +94,17 @@ export function highlightSearchTarget() {
     const target = matchedBlock ?? content
 
     const unfoldedDisclosures = unfoldDisclosureAncestors(target)
+    // Wait for eager islands to attach their state handlers before revealing
+    // tabs or controlled expanders. Open the outer disclosure first.
+    const island = target.closest('astro-island[client="load"][ssr]')
+    if (island) await new Promise<void>((resolve) => {
+      island.addEventListener('astro:hydrate', () => resolve(), { once: true })
+    })
+    if (currentRun !== run || location.href !== url) return
+    target.dispatchEvent(new CustomEvent('anta-search-reveal', { bubbles: true }))
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+    if (currentRun !== run || location.href !== url) return
+    const unfoldedExpanders = unfoldExpanders(target)
     const unfoldedFrames = unfoldCodeAncestors(target)
 
     // Astro attempts its hash scroll before this dev page has generated search
@@ -88,12 +113,12 @@ export function highlightSearchTarget() {
       if (currentRun !== run || location.href !== url) return
       target.scrollIntoView({ block: 'center' })
     })
-    if (!unfoldedFrames.length && !unfoldedDisclosures.length) {
+    if (!unfoldedFrames.length && !unfoldedDisclosures.length && !unfoldedExpanders) {
       scrollTarget()
     } else {
       let scrolled = false
       let framesExpanded = !unfoldedFrames.length
-      let disclosuresExpanded = !unfoldedDisclosures.length
+      let disclosuresExpanded = !unfoldedDisclosures.length && !unfoldedExpanders
       let fallbackTimeout: number | undefined
       const finishScrolling = () => {
         if (scrolled) return

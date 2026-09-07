@@ -22,6 +22,7 @@
     "build": "pnpm run docs && astro build && pnpm run search:index && pnpm run search:worker && pnpm run sitemap:root",
     "sitemap:root": "node scripts/copy-sitemap-index.mjs",
     "preview": "astro preview",
+    "test:themes-production": "node --test ../tests/themes-production.mjs",
     "test:search-production": "node --test ../tests/search-production.mjs",
     "lint:css": "stylelint \"src/**/*.{css,astro}\""
   },

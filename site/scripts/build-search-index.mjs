@@ -132,10 +132,10 @@ for (const file of files) {
       text,
       kind: block.nodeName,
       level: /^h[1-6]$/.test(block.nodeName) ? Number(block.nodeName[1]) : 0,
-      // Keep headings in separately queryable tags. The client combines these
-      // tag-filtered searches with descending boosts, so a component page
-      // title wins over an incidental body-text match on another page.
+      // Query each heading level globally or within one route. A combined tag
+      // keeps both constraints together before FlexSearch limits the matches.
       searchRank: /^h[1-6]$/.test(block.nodeName) ? block.nodeName : 'block',
+      routeRank: `${route}:${/^h[1-6]$/.test(block.nodeName) ? block.nodeName : 'block'}`,
     })
   }
 

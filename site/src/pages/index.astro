@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../layouts/DocsLayout.astro'
+import AntaLogo from '../components/AntaLogo'
 import { Card, Text, Title, Tooltip } from '@antadesign/anta'
 import { StickerThumbsUpAnimated } from '@antadesign/stickers'
 ---
@@ -9,7 +10,7 @@ import { StickerThumbsUpAnimated } from '@antadesign/stickers'
 
   <div class="overview-intro">
     <Text size="large" className="overview-copy">
-      <p><img src="/anta-logo.svg" alt="" width="28" height="28" style="display: inline-block; vertical-align: middle; margin-right: 4px; margin-top: -5px;" /><b>Anta</b> is an opinionated design system.</p>
+      <p><AntaLogo size={28} style={{ marginRight: 4, marginTop: -5 }} /><b>Anta</b> is an opinionated design system.</p>
       <ul>
         <li>it's carefully made <dfn>for web apps<Tooltip follow>Import the whole library (~200kb gzipped)<br />or selected components to minimize your bundle.<br />There is <b>no CSS-in-JS runtime</b>.</Tooltip></dfn></li>
         <li>it has a <dfn>clean, attribute-driven DOM<Tooltip follow><b>No piles of utility classes and wrapping containers</b>.<br />Variants, tones, and behavior are attributes: <code>tone="critical"</code>, <code>size="large"</code>.</Tooltip></dfn></li>

@@ -66,7 +66,10 @@ the browser API. The root dev command starts the chat Worker. See `SEARCH.md` fo
 deployment and local development settings.
 AI Markdown is untrusted: render it through `lib/search/markdown.ts`, which
 sanitizes markup and links before rendering code with Expressive Code.
-Authored docs and answers share `lib/expressive-code-config.mjs` and the
+Authored docs and answers share `lib/expressive-code-config.mjs`; `ec.config.mjs`
+re-exports it for MDX and the `<Code>` component. Keep function-valued options
+in that config file rather than passing them to the Astro integration, because
+`<Code>` cannot read non-serializable inline integration options. They share the
 delegated copy handler in `lib/code-copy.ts`. Set the Shiki engine in that shared
 config: Astro removes the other engine from production bundles. After building
 the site, run `pnpm --filter anta-site test:search-production` to verify highlighting

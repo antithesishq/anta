@@ -227,9 +227,12 @@ export default function SearchDialog() {
           <Input
             id="docs-search-input"
             type="search"
+            size="medium"
+            tone="var(--anta-seed-brand)"
+            dimActions
             autoFocus
             placeholder="Search or ask"
-            leading={searching ? <Loader size={16} label="Searching documentation" /> : <Icon shape="search" size={16} />}
+            leading={searching ? <Loader size={16} label="Searching documentation" /> : undefined}
             value={query}
             onInput={(event) => setQuery((event.target as { value: string }).value)}
             onKeyDown={(event) => {

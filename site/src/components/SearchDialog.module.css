@@ -1,7 +1,39 @@
-.dialog {
-  --dialog-header-padding: 16px 20px 12px;
-  --dialog-body-padding: 0 20px 16px;
-  --dialog-bg: var(--bg-2);
+.dialog::part(dialog) {
+  background: var(--bg-3-brand);
+  border-bottom: 1px solid var(--border-4-brand);
+  box-shadow: none;
+  transform: none;
+}
+
+.dialog::part(header) {
+  box-sizing: border-box;
+  height: 43px;
+  padding: 0 12px;
+}
+
+.dialog::part(body) {
+  padding: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.header :global(a-input) {
+  width: 100%;
+}
+
+.header :global(a-input)::part(input),
+.header :global(a-input)::part(trailing) {
+  font-size: 13px;
+}
+
+@media (max-width: 800px) {
+  .header :global(a-input)::part(trailing) {
+    display: none;
+  }
 }
 
 /* Keep a name for the native dialog without a visible title. */
@@ -18,6 +50,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;
+}
+
+.body:not(:empty) {
+  padding: 12px 20px 16px;
 }
 
 .header,

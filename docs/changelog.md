@@ -3,6 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- `b` uses the same `600` font weight as `strong` in the typography reset.
+
 ## 0.3.27 — September 6, 2026
 
 ### Added

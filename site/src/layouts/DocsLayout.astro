@@ -568,18 +568,7 @@ if (isComponentPage && title) {
         }
       })
 
-      // Expressive-code copy buttons: instead of EC's "Copied!" tooltip
-      // (hidden via CSS), flip the copy glyph to a green check for a
-      // moment by toggling `[data-anta-copied]` on the button.
-      document.addEventListener('click', (e) => {
-        const btn = (e.target as HTMLElement)?.closest?.('.expressive-code .copy button') as
-          | (HTMLElement & { _antaCopyTimer?: ReturnType<typeof setTimeout> })
-          | null
-        if (!btn) return
-        btn.dataset.antaCopied = 'true'
-        clearTimeout(btn._antaCopyTimer)
-        btn._antaCopyTimer = setTimeout(() => { delete btn.dataset.antaCopied }, 1400)
-      })
+      import '../../lib/code-copy'
 
       // Foldable code blocks: clicking (or Enter/Space on) the header bar of a
       // framed block — titled, terminal, or one authored `folded` (which gets

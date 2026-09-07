@@ -51,6 +51,29 @@ ClientRouter navigations receive the same mark.js treatment as cold loads.
 The build also copies the index to ignored `public/search-index.json`; `pnpm run dev` serves that
 last-built snapshot without rebuilding it during source changes.
 
+Selecting **Try AI search** or pressing Enter in the input after a successful
+full-text search with zero matches may request an AI answer. Enter keeps the
+dialog open while requesting the answer. Never request AI responses while typing.
+Debounce full-text search with `es-toolkit`, keep previous matches while it runs,
+and show its loader in the input's leading slot so results do not flash.
+Place the input in the Dialog header and output in its body. The Dialog body
+owns scrolling; do not add a nested results scroller.
+`lib/search/worker.ts` builds to Pages' `dist/_worker.js`; keep `_routes.json`
+limited to `/api/search-answer/` and its slashless alias so static pages bypass
+the worker. Pages uses the `SEARCH_CHAT` service binding to reach the chat Worker,
+which calls `AI_SEARCH.chatCompletions()`. Keep credentials and chat history out of
+the browser API. The root dev command starts the chat Worker. See `SEARCH.md` for
+deployment and local development settings.
+AI Markdown is untrusted: render it through `lib/search/markdown.ts`, which
+sanitizes markup and links before rendering code with Expressive Code.
+Authored docs and answers share `lib/expressive-code-config.mjs` and the
+delegated copy handler in `lib/code-copy.ts`. Do not use the authored-content `Markdown.astro` helper or evaluate
+AI output as MDX. `lib/search/code-block.ts` renders code in answers;
+`lib/search/highlight.ts` highlights full-text matches on documentation pages.
+Chat responses stream through `lib/search/chat-stream.ts`. Forward only public
+source URLs and answer deltas, keep source validation before model text, and
+cache only responses that received the final completion event.
+
 ## Comparison coverage
 
 Coverage marks need a public, reusable component or utility and a supporting

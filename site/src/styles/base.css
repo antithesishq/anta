@@ -215,11 +215,9 @@ hr, .expressive-code { margin: 0 0 1.5em; }
   margin-block-end: 24px;
 }
 
-/* Code blocks in the main content use the `bg-pane` fill (a static
-   background — no hover change). Overrides the `--code-background` var the
-   EC `pre` reads (specificity-proof vs EC's own rule), and scoped to
-   `.content` so the playground's embedded editor is unaffected. */
-.content .expressive-code pre {
+/* Authored docs and AI answers share code-block styles. The embedded
+   playground editor is outside this scope. */
+:is(.content, [data-docs-markdown]) .expressive-code pre {
   --code-background: var(--bg-pane);
 }
 
@@ -261,29 +259,29 @@ hr, .expressive-code { margin: 0 0 1.5em; }
    belong together, so drop the gap and square the touching corners. The upper
    block's bottom border is the single seam. A folded block's header rounds all
    four corners (below), so its bottom pair is squared here too. */
-.content .expressive-code:has(+ .expressive-code) {
+:is(.content, [data-docs-markdown]) .expressive-code:has(+ .expressive-code) {
   margin-bottom: 0;
 }
-.content .expressive-code:has(+ .expressive-code) pre,
-.content .expressive-code:has(+ .expressive-code) .frame,
-.content .expressive-code:has(+ .expressive-code) .frame[data-folded] .header {
+:is(.content, [data-docs-markdown]) .expressive-code:has(+ .expressive-code) pre,
+:is(.content, [data-docs-markdown]) .expressive-code:has(+ .expressive-code) .frame,
+:is(.content, [data-docs-markdown]) .expressive-code:has(+ .expressive-code) .frame[data-folded] .header {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
-.content .expressive-code + .expressive-code pre {
+:is(.content, [data-docs-markdown]) .expressive-code + .expressive-code pre {
   border-top: 0;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
-.content .expressive-code + .expressive-code .frame.has-title:not(.is-terminal),
-.content .expressive-code + .expressive-code .frame.is-terminal,
-.content .expressive-code + .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) {
+:is(.content, [data-docs-markdown]) .expressive-code + .expressive-code .frame.has-title:not(.is-terminal),
+:is(.content, [data-docs-markdown]) .expressive-code + .expressive-code .frame.is-terminal,
+:is(.content, [data-docs-markdown]) .expressive-code + .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
-.content .expressive-code + .expressive-code .frame.has-title:not(.is-terminal) .header,
-.content .expressive-code + .expressive-code .frame.is-terminal .header,
-.content .expressive-code + .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) .header {
+:is(.content, [data-docs-markdown]) .expressive-code + .expressive-code .frame.has-title:not(.is-terminal) .header,
+:is(.content, [data-docs-markdown]) .expressive-code + .expressive-code .frame.is-terminal .header,
+:is(.content, [data-docs-markdown]) .expressive-code + .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) .header {
   border-top: 0;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
@@ -311,10 +309,10 @@ hr, .expressive-code { margin: 0 0 1.5em; }
 /* Anta styles code; the site adds the copy affordance below. */
 
 /* Font, size, line-height, weight and padding are set via Expressive Code's
-   styleOverrides (astro.config.mjs). letter-spacing has no EC setting, and EC's
+   styleOverrides (lib/expressive-code-config.mjs). letter-spacing has no EC setting, and EC's
    `pre > code` rule uses `all: unset` (which resets letter-spacing too), so the
-   extra `.content` ancestor here out-specifies it. */
-.content .expressive-code pre > code { letter-spacing: 0; }
+   docs Markdown ancestor here out-specifies it. */
+:is(.content, [data-docs-markdown]) .expressive-code pre > code { letter-spacing: 0; }
 
 :not(pre) > code {
   cursor: copy;
@@ -331,7 +329,7 @@ hr, .expressive-code { margin: 0 0 1.5em; }
    quaternary icon button — see below). On a plain block it's a frosted corner
    tab in the top-right over the code; framed (titled / terminal / foldable)
    frames lift it into the header bar instead (rule further down). */
-.content .expressive-code .frame .copy {
+:is(.content, [data-docs-markdown]) .expressive-code .frame .copy {
   inset-block-start: 1px;
   inset-inline-end: 1px;
 }
@@ -339,7 +337,7 @@ hr, .expressive-code { margin: 0 0 1.5em; }
    code-bg fill with a slight backdrop blur over the code beneath, hugging the
    block's rounded top-right corner with a rounded bottom-left "peel". (Framed
    frames skip this — their header bar is the backdrop.) */
-.content .expressive-code .frame:not(.has-title):not(.is-terminal):not([data-foldable]) .copy {
+:is(.content, [data-docs-markdown]) .expressive-code .frame:not(.has-title):not(.is-terminal):not([data-foldable]) .copy {
   background: color-mix(in oklch, var(--bg-pane) 60%, transparent);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
@@ -352,19 +350,19 @@ hr, .expressive-code { margin: 0 0 1.5em; }
    EC's own opaque code-bg fill and its inner-`<div>` hover tint are both
    suppressed (see above / below). Framed blocks resize this to fill the header
    (above); plain blocks keep a frosted corner tab behind it (above). */
-.content .expressive-code .copy button {
+:is(.content, [data-docs-markdown]) .expressive-code .copy button {
   inline-size: 28px;
   block-size: 28px;
   border-radius: 6px;
   background: transparent;
 }
-.content .expressive-code .copy button > div {
+:is(.content, [data-docs-markdown]) .expressive-code .copy button > div {
   display: none;
 }
 /* EC's empty `<div aria-live="polite">` live region adds width to the .copy
    tab; the copy confirmation is our green-check icon swap, so it's not used —
    drop it from layout. */
-.content .expressive-code .copy > div[aria-live] {
+:is(.content, [data-docs-markdown]) .expressive-code .copy > div[aria-live] {
   display: none;
 }
 /* Pin the icon glyph to a fixed 16px, centered. EC sizes the button larger
@@ -373,7 +371,7 @@ hr, .expressive-code { margin: 0 0 1.5em; }
    the glyph up too. Fixing the mask size decouples the icon from the button:
    the button can grow for a bigger tap target while the icon stays 16px.
    Applies to the green-check state too (it only swaps the mask image). */
-.content .expressive-code .copy button::after {
+:is(.content, [data-docs-markdown]) .expressive-code .copy button::after {
   margin: 0;
   /* Copy glyph defined here, NOT via EC's `copyIcon` (that pipeline mangles the
      SVG's stroke-width). Lucide copy on the 24-grid; at the 16px mask below,
@@ -394,8 +392,8 @@ hr, .expressive-code { margin: 0 0 1.5em; }
 /* Icon darkens to full strength on hover/active — the quaternary affordance for
    framed blocks, and a complement to the tertiary fill on plain blocks. Skipped
    while copied so the green check keeps its color. */
-.content .expressive-code .copy button:hover:not([data-anta-copied])::after,
-.content .expressive-code .copy button:active:not([data-anta-copied])::after {
+:is(.content, [data-docs-markdown]) .expressive-code .copy button:hover:not([data-anta-copied])::after,
+:is(.content, [data-docs-markdown]) .expressive-code .copy button:active:not([data-anta-copied])::after {
   background-color: var(--ec-frm-inlBtnFg);
 }
 
@@ -414,7 +412,7 @@ hr, .expressive-code { margin: 0 0 1.5em; }
    the figure lets its 5.5px border-radius clip the header's corners, so the
    bar rounds all four corners as the body collapses — no radius animation. */
 
-.content .expressive-code {
+:is(.content, [data-docs-markdown]) .expressive-code {
   --fold-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
   /* Fixed bar height — used for both the header `min-height` and the grid's
      header track, so the header never resizes while the body animates. */
@@ -423,9 +421,9 @@ hr, .expressive-code { margin: 0 0 1.5em; }
 
 /* Figure → 2-row grid (header auto, body 1fr); .copy is absolute, out of flow.
    Low specificity is fine — EC doesn't set grid-template-rows. */
-.content .expressive-code .frame.has-title,
-.content .expressive-code .frame.is-terminal,
-.content .expressive-code .frame[data-foldable] {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal,
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable] {
   display: grid;
   /* Clamp the single column to the figure width. Without this the implicit
      `auto` column grows to the `<pre>`'s longest line (grid items default to
@@ -437,9 +435,9 @@ hr, .expressive-code { margin: 0 0 1.5em; }
   grid-template-rows: var(--fold-header-h) 1fr;
   overflow: hidden;
 }
-.content .expressive-code .frame.has-title > pre,
-.content .expressive-code .frame.is-terminal > pre,
-.content .expressive-code .frame[data-foldable] > pre {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title > pre,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal > pre,
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable] > pre {
   min-height: 0;
   /* Clipped by default so no scrollbar renders while the body collapses or
      grows. Scrolling is restored only once expanded + settled (below). */
@@ -449,15 +447,15 @@ hr, .expressive-code { margin: 0 0 1.5em; }
    flip back to `auto` is deferred until the expand animation finishes (overflow
    is a discrete property), mirroring Disclosure's body; folding reverts to the
    clipped base rule immediately. */
-.content .expressive-code .frame.has-title:not([data-folded]) > pre,
-.content .expressive-code .frame.is-terminal:not([data-folded]) > pre,
-.content .expressive-code .frame[data-foldable]:not([data-folded]) > pre {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title:not([data-folded]) > pre,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal:not([data-folded]) > pre,
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable]:not([data-folded]) > pre {
   overflow: auto;
 }
 /* A folded-authored PLAIN block is a frameless code block to EC, so it keeps a
    rounded, fully-bordered top — square it off so the body meets the forced
    header flush, like the titled/terminal frames do. */
-.content .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) > pre {
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) > pre {
   border-top: 0;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
@@ -466,9 +464,9 @@ hr, .expressive-code { margin: 0 0 1.5em; }
 /* The bar. Editor needs `:not(.is-terminal)` so the `.content` prefix tips it
    past EC's own `.has-title:not(.is-terminal)` rules; terminal/plain win via
    `.content` alone. */
-.content .expressive-code .frame.has-title:not(.is-terminal) .header,
-.content .expressive-code .frame.is-terminal .header,
-.content .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) .header {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title:not(.is-terminal) .header,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal .header,
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) .header {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -488,20 +486,20 @@ hr, .expressive-code { margin: 0 0 1.5em; }
   background: var(--bg-4);
   cursor: pointer;
 }
-.content .expressive-code .frame .header:focus-visible {
+:is(.content, [data-docs-markdown]) .expressive-code .frame .header:focus-visible {
   outline: 1px solid var(--focus-ring);
   outline-offset: -1px;
 }
 /* Bar tint — the chevron (currentColor) and label (inherit) follow this:
    text-4 at rest → text-2 on hover → back to text-4 while pressed. */
-.content .expressive-code .frame .header { color: var(--text-4); }
-.content .expressive-code .frame .header:hover { color: var(--text-2); }
-.content .expressive-code .frame .header:active { color: var(--text-3); }
+:is(.content, [data-docs-markdown]) .expressive-code .frame .header { color: var(--text-4); }
+:is(.content, [data-docs-markdown]) .expressive-code .frame .header:hover { color: var(--text-2); }
+:is(.content, [data-docs-markdown]) .expressive-code .frame .header:active { color: var(--text-3); }
 
 /* Chevron — repurpose the ::before EC used for the tab outline / dots. */
-.content .expressive-code .frame.has-title:not(.is-terminal) .header::before,
-.content .expressive-code .frame.is-terminal .header::before,
-.content .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) .header::before {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title:not(.is-terminal) .header::before,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal .header::before,
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) .header::before {
   content: "";
   flex: none;
   width: 1rem;
@@ -517,16 +515,16 @@ hr, .expressive-code { margin: 0 0 1.5em; }
 
 /* Drop the rest of EC's chrome — editor tab connector + the terminal dots'
    ::after half. (::before is the chevron; the label is .title or ::after.) */
-.content .expressive-code .frame.has-title:not(.is-terminal) .title::before,
-.content .expressive-code .frame.has-title:not(.is-terminal) .title::after,
-.content .expressive-code .frame.has-title:not(.is-terminal) .header::after,
-.content .expressive-code .frame.is-terminal .header::after {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title:not(.is-terminal) .title::before,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title:not(.is-terminal) .title::after,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title:not(.is-terminal) .header::after,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal .header::after {
   display: none;
 }
 
 /* Label text (titled + terminal use the real .title span). */
-.content .expressive-code .frame.has-title:not(.is-terminal) .title,
-.content .expressive-code .frame.is-terminal .title {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title:not(.is-terminal) .title,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal .title {
   background: none;
   border: none;
   padding: 0;
@@ -534,10 +532,10 @@ hr, .expressive-code { margin: 0 0 1.5em; }
   font-weight: 450;
 }
 /* Terminal with no title → "Terminal". Folded-authored plain block → "Code". */
-.content .expressive-code .frame.is-terminal .title:empty::before {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal .title:empty::before {
   content: "Terminal";
 }
-.content .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) .header::after {
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal) .header::after {
   content: "Code";
   color: inherit;
   font-weight: 450;
@@ -545,7 +543,7 @@ hr, .expressive-code { margin: 0 0 1.5em; }
 /* …and an untitled CSS block says so, so a JSX sample and its CSS recipe don't
    sit under two identical "Code" bars. EC stamps the language on the <pre>,
    the header's next sibling. */
-.content .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal):has(> pre[data-language="css"]) .header::after {
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal):has(> pre[data-language="css"]) .header::after {
   content: "CSS";
 }
 
@@ -553,65 +551,65 @@ hr, .expressive-code { margin: 0 0 1.5em; }
    animates — the bar never resizes), drop the body border, hide the copy chip,
    round the header's bottom corners (EC leaves them square, which let the
    clipped corner leak), and rotate the chevron. */
-.content .expressive-code .frame[data-folded] { grid-template-rows: var(--fold-header-h) 0fr; }
-.content .expressive-code .frame[data-folded] > pre { border: 0; }
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-folded] { grid-template-rows: var(--fold-header-h) 0fr; }
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-folded] > pre { border: 0; }
 /* These frames carry a header bar at the top, so the copy button moves up into
    it (top-right corner) rather than floating over the code, and stays visible
    without hover. Higher specificity than the hover-reveal rule below, so it
    wins. It's hidden entirely while folded (next line) — nothing to copy when
    the body is collapsed. */
-.content .expressive-code .frame.has-title .copy,
-.content .expressive-code .frame.is-terminal .copy,
-.content .expressive-code .frame[data-foldable] .copy {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title .copy,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal .copy,
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable] .copy {
   inset-block-start: 0;
   inset-inline-end: 0;
   /* Slightly dimmed at rest, full on hover. */
   opacity: 0.8;
   transition: opacity 120ms ease-out;
 }
-.content .expressive-code .frame.has-title .copy:hover,
-.content .expressive-code .frame.is-terminal .copy:hover,
-.content .expressive-code .frame[data-foldable] .copy:hover {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title .copy:hover,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal .copy:hover,
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable] .copy:hover {
   opacity: 1;
 }
 /* The button is a square that fills the full header height (the icon stays 16px,
    centered) — a bigger, header-tall hit target than the plain-block 24px. */
-.content .expressive-code .frame.has-title .copy button,
-.content .expressive-code .frame.is-terminal .copy button,
-.content .expressive-code .frame[data-foldable] .copy button {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title .copy button,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal .copy button,
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable] .copy button {
   inline-size: var(--fold-header-h);
   block-size: var(--fold-header-h);
 }
-.content .expressive-code .frame[data-folded] .copy { display: none; }
-.content .expressive-code .frame[data-folded] .header { border-radius: var(--header-border-radius); }
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-folded] .copy { display: none; }
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-folded] .header { border-radius: var(--header-border-radius); }
 /* Folded bar gets a slightly deeper surface. Higher specificity than the
    expanded bar's bg-4 (but NOT touching border-radius, so the preview-fusion
    top-square still wins). */
-.content .expressive-code .frame.has-title:not(.is-terminal)[data-folded] .header,
-.content .expressive-code .frame.is-terminal[data-folded] .header,
-.content .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal)[data-folded] .header {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title:not(.is-terminal)[data-folded] .header,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal[data-folded] .header,
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal)[data-folded] .header {
   background: var(--bg-3);
 }
-.content .expressive-code .frame.has-title:not(.is-terminal)[data-folded] .header::before,
-.content .expressive-code .frame.is-terminal[data-folded] .header::before,
-.content .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal)[data-folded] .header::before {
+:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title:not(.is-terminal)[data-folded] .header::before,
+:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal[data-folded] .header::before,
+:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable]:not(.has-title):not(.is-terminal)[data-folded] .header::before {
   transform: rotate(-90deg);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .content .expressive-code .frame.has-title,
-  .content .expressive-code .frame.is-terminal,
-  .content .expressive-code .frame[data-foldable] {
+  :is(.content, [data-docs-markdown]) .expressive-code .frame.has-title,
+  :is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal,
+  :is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable] {
     transition: grid-template-rows 240ms ease;
     transition-behavior: allow-discrete;
   }
-  .content .expressive-code .frame .header { transition: border-radius 240ms ease, background-color 240ms ease, color 120ms ease-out; }
-  .content .expressive-code .frame .header::before { transition: transform 150ms ease-out; }
+  :is(.content, [data-docs-markdown]) .expressive-code .frame .header { transition: border-radius 240ms ease, background-color 240ms ease, color 120ms ease-out; }
+  :is(.content, [data-docs-markdown]) .expressive-code .frame .header::before { transition: transform 150ms ease-out; }
   /* Defer the body's overflow flip until the expand animation finishes, so the
      scrollbar never flashes mid-animation (overflow is discrete). */
-  .content .expressive-code .frame.has-title:not([data-folded]) > pre,
-  .content .expressive-code .frame.is-terminal:not([data-folded]) > pre,
-  .content .expressive-code .frame[data-foldable]:not([data-folded]) > pre {
+  :is(.content, [data-docs-markdown]) .expressive-code .frame.has-title:not([data-folded]) > pre,
+  :is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal:not([data-folded]) > pre,
+  :is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable]:not([data-folded]) > pre {
     transition: overflow 0s 240ms;
     transition-behavior: allow-discrete;
   }
@@ -620,15 +618,15 @@ hr, .expressive-code { margin: 0 0 1.5em; }
 /* EC fades the copy *button* in on frame hover; move that reveal to the
    whole `.copy` tab so the frosted chip isn't shown empty at rest. */
 @media (hover: hover) {
-  .content .expressive-code .frame .copy {
+  :is(.content, [data-docs-markdown]) .expressive-code .frame .copy {
     opacity: 0;
     transition: opacity 150ms ease-out;
   }
-  .content .expressive-code .frame:hover .copy,
-  .content .expressive-code .frame:focus-within .copy {
+  :is(.content, [data-docs-markdown]) .expressive-code .frame:hover .copy,
+  :is(.content, [data-docs-markdown]) .expressive-code .frame:focus-within .copy {
     opacity: 1;
   }
-  .content .expressive-code .copy button {
+  :is(.content, [data-docs-markdown]) .expressive-code .copy button {
     opacity: 1;
   }
 }

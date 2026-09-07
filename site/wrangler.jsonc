@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "anta",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-09-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "services": [{ "binding": "SEARCH_CHAT", "service": "anta-search-chat" }],
+  "env": {
+    "preview": {
+      "services": [{ "binding": "SEARCH_CHAT", "service": "anta-search-chat-preview" }]
+    }
+  }
+}

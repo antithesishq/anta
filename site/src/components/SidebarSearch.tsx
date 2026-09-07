@@ -40,6 +40,12 @@ export default function SidebarSearch() {
       aria-haspopup="dialog"
       data-search-trigger
       data-sidebar-search-input
+      onMouseDown={(event) => {
+        // Keep the shortcut mounted until click reaches the layout's search trigger.
+        if (event.button === 0 && !(event.target as HTMLElement).closest('[data-custom-event="clearrequest"]')) {
+          event.preventDefault()
+        }
+      }}
       onInput={(event) => setHasValue(Boolean((event.target as { value?: string }).value))}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}

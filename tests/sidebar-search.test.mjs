@@ -6,7 +6,7 @@ import { build } from 'esbuild'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium } = requireSite('playwright')
-let browser, script
+let browser, script, css
 
 before(async () => {
   const result = await build({
@@ -32,6 +32,7 @@ before(async () => {
     },
   })
   script = result.outputFiles.find(file => file.path.endsWith('.js')).text
+  css = result.outputFiles.find(file => file.path.endsWith('.css')).text
   browser = await chromium.launch({ headless: true, channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined })
 })
 
@@ -72,4 +73,25 @@ test('search shortcut uses the platform modifier and survives focus and value up
     await hint.waitFor({ state: 'attached' })
     assert.equal(await hint.textContent(), expected)
   }
+})
+
+test('the trailing shortcut reaches the search trigger without focusing away its click target', async t => {
+  const context = await browser.newContext()
+  t.after(() => context.close())
+  const page = await context.newPage()
+  page.setDefaultTimeout(5_000)
+  await page.addStyleTag({ content: css })
+  await page.addScriptTag({ content: script })
+  await page.evaluate(() => {
+    window.searchClicks = 0
+    document.addEventListener('click', event => {
+      if (event.target.closest('[data-search-trigger]')) window.searchClicks++
+    })
+  })
+  const shortcut = page.locator('[data-sidebar-search-shortcut]')
+  await shortcut.waitFor({ state: 'visible' })
+  await shortcut.click()
+  assert.equal(await page.evaluate(() => window.searchClicks), 1)
+  assert.equal(await page.evaluate(() => document.activeElement.localName), 'body')
+  await shortcut.waitFor({ state: 'visible' })
 })

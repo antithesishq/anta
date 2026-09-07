@@ -11,6 +11,10 @@ node-compile-cache/
 stickers/dist/
 site/dist/
 site/.astro/
+site/.wrangler/
+site/worker-configuration.d.ts
+site/chat-configuration.d.ts
+site/.dev.vars*
 site/src/api.json
 site/src/generated/
 site/public/esbuild.wasm

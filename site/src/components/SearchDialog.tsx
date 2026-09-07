@@ -1,9 +1,36 @@
-import { useEffect, useState } from 'preact/hooks'
-import { Dialog, Icon, Input, Loader, Text, Title } from '@antadesign/anta'
+import { useEffect, useRef, useState } from 'preact/hooks'
+import { debounce } from 'es-toolkit/function'
+import { Button, Dialog, Icon, Input, Loader, Text, Title } from '@antadesign/anta'
 import { loadSearchIndex, searchDocumentation, type SearchResult } from '../../lib/search/client'
+import { AI_ANSWER_TIMEOUT_MS, AI_QUERY_MAX_LENGTH, requestSearchAnswer, type SearchAnswer } from '../../lib/search/answer'
 import styles from './SearchDialog.module.css'
 
 const EMPTY_RESULTS: SearchResult[] = []
+type SearchState = {
+  query: string
+  results: SearchResult[]
+  status: 'ready' | 'error'
+  answerStatus?: 'loading' | 'streaming' | 'ready' | 'error'
+  answer?: SearchAnswer
+}
+
+function AnswerMarkdown({ source }: { source: string }) {
+  const [html, setHtml] = useState<string>()
+  useEffect(() => {
+    let active = true
+    void import('../../lib/search/markdown').then(({ renderAnswerMarkdown }) => (
+      renderAnswerMarkdown(source)
+    )).then((next) => {
+      if (active) setHtml(next)
+    }, () => {
+      if (active) setHtml(undefined)
+    })
+    return () => { active = false }
+  }, [source])
+  return html === undefined
+    ? <div className={`${styles.answerText} ${styles.answerPlain}`}>{source}</div>
+    : <div className={styles.answerText} data-docs-markdown dangerouslySetInnerHTML={{ __html: html }} />
+}
 
 function markTerms(text: string, query: string) {
   const terms = [...new Set(query.trim().split(/\s+/).filter(Boolean))]
@@ -58,11 +85,18 @@ function isEditableTarget(target: EventTarget | null) {
 export default function SearchDialog() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState(EMPTY_RESULTS)
+  const [search, setSearch] = useState<SearchState>()
+  const lastAnswer = useRef<{ query: string; answer: SearchAnswer }>()
+  const answerRequest = useRef<AbortController>()
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const [selected, setSelected] = useState(0)
   // A resting pointer cannot override keyboard selection.
   const [pointerActive, setPointerActive] = useState(false)
+  const term = query.trim()
+  const currentSearch = search?.query === term ? search : undefined
+  const results = term ? search?.results ?? EMPTY_RESULTS : EMPTY_RESULTS
+  const resultQuery = search?.query ?? term
+  const searching = status === 'loading' || (status === 'ready' && Boolean(term) && !currentSearch)
 
   const ensureIndex = () => {
     setStatus((current) => current === 'ready' ? current : 'loading')
@@ -111,23 +145,72 @@ export default function SearchDialog() {
   }, [open])
 
   useEffect(() => {
-    const term = query.trim()
     // Re-ranked results start at the top.
     setSelected(0)
     setPointerActive(false)
-    if (!term || status !== 'ready') {
-      setResults(EMPTY_RESULTS)
-      return
-    }
+    if (!term) setSearch(undefined)
+    if (!open || !term || status !== 'ready') return
 
     let active = true
-    void searchDocumentation(term).then((next) => {
-      if (active) setResults(next)
-    }, () => {
-      if (active) setResults(EMPTY_RESULTS)
-    })
-    return () => { active = false }
-  }, [query, status])
+    const runSearch = debounce(() => {
+      void searchDocumentation(term).then((next) => {
+        if (!active) return
+        const ready: SearchState = { query: term, results: next, status: 'ready' }
+        if (!next.length && lastAnswer.current?.query === term) {
+          setSearch({ ...ready, answerStatus: 'ready', answer: lastAnswer.current.answer })
+          return
+        }
+        setSearch(ready)
+      }, () => {
+        if (active) setSearch({ query: term, results: EMPTY_RESULTS, status: 'error' })
+      })
+    }, 250)
+    if (search?.query !== term || search.status === 'error') runSearch()
+    return () => {
+      active = false
+      runSearch.cancel()
+      if (answerRequest.current) {
+        answerRequest.current.abort()
+        answerRequest.current = undefined
+        setSearch((current) => current && ({
+          ...current,
+          answerStatus: current.answer ? 'error' : undefined,
+        }))
+      }
+    }
+  }, [term, status, open])
+
+  const askAI = async () => {
+    if (!open || !term || term.length > AI_QUERY_MAX_LENGTH
+      || currentSearch?.status !== 'ready' || results.length || answerRequest.current) return
+
+    const controller = new AbortController()
+    answerRequest.current = controller
+    const ready = currentSearch
+    setSearch({ ...ready, answer: undefined, answerStatus: 'loading' })
+    const timeout = setTimeout(() => controller.abort(), AI_ANSWER_TIMEOUT_MS + 1_000)
+    let latest: SearchAnswer | undefined
+    let repaint: ReturnType<typeof setTimeout> | undefined
+    try {
+      const answer = await requestSearchAnswer(term, controller.signal, (progress) => {
+        latest = progress
+        if (repaint !== undefined) return
+        repaint = setTimeout(() => {
+          repaint = undefined
+          if (answerRequest.current === controller) setSearch({ ...ready, answerStatus: 'streaming', answer: latest })
+        }, 50)
+      })
+      if (answerRequest.current !== controller) return
+      lastAnswer.current = { query: term, answer }
+      setSearch({ ...ready, answerStatus: 'ready', answer })
+    } catch {
+      if (answerRequest.current === controller) setSearch({ ...ready, answerStatus: 'error', answer: latest })
+    } finally {
+      clearTimeout(timeout)
+      clearTimeout(repaint)
+      if (answerRequest.current === controller) answerRequest.current = undefined
+    }
+  }
 
   const moveSelection = (amount: number) => {
     if (!results.length) return
@@ -138,39 +221,51 @@ export default function SearchDialog() {
   return (
     <Dialog
       className={styles.dialog}
-      header="Search documentation"
+      header={
+        <div className={styles.header}>
+          <span className={styles.srOnly}>Search documentation</span>
+          <Input
+            id="docs-search-input"
+            type="search"
+            autoFocus
+            placeholder="Search documentation"
+            leading={searching ? <Loader size={16} label="Searching documentation" /> : <Icon shape="search" size={16} />}
+            value={query}
+            onInput={(event) => setQuery((event.target as { value: string }).value)}
+            onKeyDown={(event) => {
+              if ((event.target as Element).closest('a-button')) return
+              if (event.key === 'ArrowDown') {
+                event.preventDefault()
+                moveSelection(1)
+              } else if (event.key === 'ArrowUp') {
+                event.preventDefault()
+                moveSelection(-1)
+              } else if (event.key === 'Enter') {
+                if ((event as unknown as KeyboardEvent).isComposing) return
+                event.preventDefault()
+                event.stopPropagation()
+                if (event.repeat) return
+                const result = currentSearch?.results[selected]
+                if (result) {
+                  location.href = resultHref(result, term)
+                } else if (currentSearch?.answerStatus !== 'ready') {
+                  void askAI()
+                }
+              }
+            }}
+            aria-label="Search documentation"
+            aria-controls="docs-search-results"
+            aria-expanded={query.trim() ? 'true' : 'false'}
+            aria-busy={searching ? 'true' : undefined}
+          />
+        </div>
+      }
+      closable={false}
       open={open}
       position="top"
       onStateChange={(_event, { next }) => setOpen(next)}
     >
       <div className={styles.body}>
-        <Input
-          id="docs-search-input"
-          type="search"
-          autoFocus
-          placeholder={status === 'loading' ? 'Loading search…' : 'Search documentation'}
-          value={query}
-          onInput={(event) => setQuery((event.target as { value: string }).value)}
-          onKeyDown={(event) => {
-            if (event.key === 'ArrowDown') {
-              event.preventDefault()
-              moveSelection(1)
-            } else if (event.key === 'ArrowUp') {
-              event.preventDefault()
-              moveSelection(-1)
-            } else if (event.key === 'Enter' && results[selected]) {
-              event.preventDefault()
-              location.href = resultHref(results[selected], query.trim())
-            }
-          }}
-          aria-label="Search documentation"
-          aria-controls="docs-search-results"
-          aria-expanded={query.trim() ? 'true' : 'false'}
-        />
-
-        {status === 'loading' && (
-          <p className={styles.status}><Loader size={16} label="Loading search index" /> Loading search index</p>
-        )}
         {status === 'error' && <p className={styles.status}>Search is unavailable. Try reloading the page.</p>}
 
         {query.trim() && status === 'ready' && (
@@ -186,7 +281,7 @@ export default function SearchDialog() {
                 <a
                   className={styles.result}
                   data-selected={selected === index ? 'true' : undefined}
-                  href={resultHref(result, query.trim())}
+                  href={resultHref(result, resultQuery)}
                   key={result.id}
                   // Ignore a resting pointer after the results re-render.
                   onPointerMove={() => {
@@ -195,7 +290,7 @@ export default function SearchDialog() {
                   }}
                   onClick={() => {
                     document.dispatchEvent(new CustomEvent('anta-search-navigate', {
-                      detail: { result, query: query.trim() },
+                      detail: { result, query: resultQuery },
                     }))
                     setOpen(false)
                   }}
@@ -205,14 +300,71 @@ export default function SearchDialog() {
                     {pathLabel(result.route)}
                   </Text>
                   <Title level={resultTitleLevel(result)}>
-                    {markTerms(result.heading || result.title, query)}
+                    {markTerms(result.heading || result.title, resultQuery)}
                   </Title>
                   {result.text !== result.heading && (
-                    <Text className={styles.snippet} size="small">{markTerms(result.text, query)}</Text>
+                    <Text className={styles.snippet} size="small">{markTerms(result.text, resultQuery)}</Text>
                   )}
                 </a>
               )
-            }) : <p className={styles.empty}>No results for “{query.trim()}”.</p>}
+            }) : !currentSearch ? null : currentSearch.status === 'error' ? (
+              <p className={styles.status}>Search is unavailable. Try another query or reload the page.</p>
+            ) : (
+              <div className={styles.fallback}>
+                {!currentSearch.answer && currentSearch.answerStatus !== 'loading' && (
+                  <button
+                    type="button"
+                    className={`${styles.result} ${styles.aiResult}`}
+                    data-selected="true"
+                    disabled={term.length > AI_QUERY_MAX_LENGTH}
+                    onClick={() => { void askAI() }}
+                  >
+                    <Text priority="tertiary" size="small">No results for “{term}”.</Text>
+                    <strong>Try AI search</strong>
+                  </button>
+                )}
+                {currentSearch.answerStatus === 'loading' && (
+                  <p className={styles.status}><Loader size={16} label="Preparing AI answer" /> Preparing an AI answer…</p>
+                )}
+                {currentSearch.answer && (
+                  <section
+                    className={styles.answer}
+                    aria-label="AI answer"
+                    aria-busy={currentSearch.answerStatus === 'streaming' ? 'true' : undefined}
+                    onClick={(event) => {
+                      if ((event.target as Element).closest('a[href]')
+                        && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) setOpen(false)
+                    }}
+                  >
+                    <div className={styles.answerHeading}>
+                      <Text priority="tertiary" size="small">AI answer</Text>
+                      {currentSearch.answerStatus === 'streaming' && <Loader size={12} label="Writing AI answer" />}
+                    </div>
+                    <AnswerMarkdown source={currentSearch.answer.answer} />
+                    {currentSearch.answer.sources.length > 0 && (
+                      <div className={styles.sources} aria-label="Sources">
+                        <Text priority="tertiary" size="small">Sources</Text>
+                        {currentSearch.answer.sources.map((source) => {
+                          const route = new URL(source).pathname
+                          return <a href={route} key={source}>{pathLabel(route)}</a>
+                        })}
+                      </div>
+                    )}
+                  </section>
+                )}
+                {currentSearch.answerStatus === 'error' && (
+                  <div className={styles.emptyRow}>
+                    <p className={styles.status}>{currentSearch.answer ? 'The answer was interrupted. Try again.' : 'Couldn’t load an AI answer. Try again.'}</p>
+                    {currentSearch.answer && (
+                      <Button priority="secondary" size="small" label="Try AI search" onClick={() => { void askAI() }} />
+                    )}
+                  </div>
+                )}
+                {term.length > AI_QUERY_MAX_LENGTH && (
+                  <p className={styles.status}>Use up to {AI_QUERY_MAX_LENGTH} characters for an AI answer.</p>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

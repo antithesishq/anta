@@ -27,5 +27,11 @@ jobs:
         run: pnpm --filter @antadesign/stickers run typecheck
       - name: Lint site CSS
         run: pnpm --filter anta-site run lint:css
+      - name: Typecheck search worker
+        run: pnpm --filter anta-site run typecheck:worker
       - name: Build site
         run: pnpm --filter anta-site build
+      - name: Test production search rendering
+        run: pnpm --filter anta-site test:search-production
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome

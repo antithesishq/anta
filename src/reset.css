@@ -99,7 +99,7 @@
   h5 { font-size: 15px; line-height: 20px; margin-block: 16px 8px;  }
   h6 { font-size: 13px; line-height: 16px; margin-block: 16px 4px;  }
 
-  strong {
+  b, strong {
     font-weight: 600;
   }
 

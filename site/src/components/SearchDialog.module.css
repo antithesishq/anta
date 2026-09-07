@@ -1,18 +1,38 @@
 .dialog {
-  --dialog-width: min(42rem, calc(100vw - 2rem));
+  --dialog-header-padding: 16px 20px 12px;
+  --dialog-body-padding: 0 20px 16px;
+  --dialog-bg: var(--bg-2);
+}
+
+/* Keep a name for the native dialog without a visible title. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
-.status,
-.empty {
+.header,
+.body {
+  box-sizing: border-box;
+  width: min(100%, 960px);
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.status {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0;
+  margin-block: 0;
   color: var(--text-2);
   font-size: 14px;
   line-height: 20px;
@@ -20,10 +40,8 @@
 
 .results {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
-  max-height: min(54vh, 32rem);
-  overflow: auto;
-  padding: 2px;
 }
 
 .result {
@@ -46,6 +64,18 @@
   outline-offset: 1px;
 }
 
+.aiResult {
+  width: 100%;
+  border: 0;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.aiResult:disabled {
+  cursor: default;
+}
+
 .path {
   display: flex;
   align-items: center;
@@ -57,4 +87,63 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
+
+.fallback {
+  display: grid;
+  gap: 12px;
+}
+
+.emptyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.answer {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.answerHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.answerPlain {
+  white-space: pre-wrap;
+}
+
+.answerText {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 14px;
+  line-height: calc(22 / 15);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.answerText > :first-child {
+  margin-block-start: 0;
+}
+
+.answerText > :last-child {
+  margin-block-end: 0;
+}
+
+.answerText table {
+  display: block;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-size: 13px;
 }

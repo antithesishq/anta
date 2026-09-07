@@ -11,13 +11,18 @@
     "docs:iframe-runtime": "node scripts/build-iframe-runtime.mjs",
     "docs:playground-runtime": "node scripts/build-playground-runtime.mjs",
     "search:index": "node scripts/build-search-index.mjs",
+    "search:worker": "node scripts/build-search-worker.mjs",
+    "search:types": "wrangler types && wrangler types --config wrangler.chat.jsonc --env-interface ChatEnv chat-configuration.d.ts --include-runtime false",
+    "typecheck:worker": "pnpm run search:types && tsc -p tsconfig.worker.json",
+    "dev:search": "wrangler dev --config wrangler.chat.jsonc --port ${ANTA_SEARCH_DEV_PORT:-8788} --inspector-port 0",
     "comparison:measure": "node scripts/measure-comparison-bundles.mjs",
     "docs": "pnpm run docs:api && pnpm run docs:pages && pnpm run docs:llms-check && pnpm run docs:wasm && pnpm run docs:theme && pnpm run docs:iframe-runtime && pnpm run docs:playground-runtime",
     "dev": "pnpm run docs && pnpm run dev:server",
     "dev:server": "astro dev --port ${ANTA_DEV_PORT:-4321}",
-    "build": "pnpm run docs && astro build && pnpm run search:index && pnpm run sitemap:root",
+    "build": "pnpm run docs && astro build && pnpm run search:index && pnpm run search:worker && pnpm run sitemap:root",
     "sitemap:root": "node scripts/copy-sitemap-index.mjs",
     "preview": "astro preview",
+    "test:search-production": "node --test ../tests/search-production.mjs",
     "lint:css": "stylelint \"src/**/*.{css,astro}\""
   },
   "dependencies": {
@@ -26,13 +31,16 @@
     "@astrojs/mdx": "4.3.14",
     "@astrojs/preact": "4.1.3",
     "@astrojs/sitemap": "^3.7.3",
+    "@expressive-code/core": "0.41.7",
     "@monaco-editor/react": "4.7.0",
     "@shikijs/monaco": "3.23.0",
     "astro": "5.18.1",
     "astro-expressive-code": "0.41.7",
     "chroma-js": "^3.2.0",
+    "dompurify": "^3.4.15",
     "es-toolkit": "^1.47.0",
     "esbuild-wasm": "0.25.12",
+    "expressive-code": "0.41.7",
     "flexsearch": "^0.8.212",
     "mark.js": "^8.11.1",
     "marked": "^18.0.4",
@@ -60,6 +68,7 @@
     "stylelint": "^17.13.0",
     "stylelint-config-html": "^1.1.0",
     "stylelint-config-standard": "^40.0.0",
-    "typedoc": "0.28.19"
+    "typedoc": "0.28.19",
+    "wrangler": "^4.129.0"
   }
 }

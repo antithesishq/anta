@@ -260,7 +260,12 @@ Use `dark` or `light` on another ancestor to scope its color scheme and palette.
 
 ## Fonts
 
-Anta is designed for a customized TT Interphases Pro, but ships no font binaries. Components use `--sans-serif` and `--monospace` with system fallbacks. `tokens.css` sets `1rem` to 15px.
+Anta is designed for a customized TT Interphases Pro. The core package ships no font binaries: `tokens.css` uses system stacks, while the optional Antune and Antithesis themes register hosted reference fonts and select them by default. Antithesis uses Stringer for level 1–3 headings and titles; lower levels use TT Interphases Pro Variable. `tokens.css` sets `1rem` to 15px.
+
+If your application does not have a license for the reference fonts, set the
+application-owned stacks before the theme stylesheet loads. For Antithesis,
+override both the body stack and the level 1–3 heading stack. This prevents the
+theme faces from being selected or downloaded:
 
 Register application-owned fonts, then override the font variables. This example
 uses separate Roman and Italic variable files:
@@ -281,8 +286,9 @@ uses separate Roman and Italic variable files:
 }
 
 :root {
-  --sans-serif: "App Sans", sans-serif;
-  --monospace: ui-monospace, monospace;
+  --app-sans-serif: "App Sans", sans-serif;
+  --app-heading-font: "App Sans", sans-serif;
+  --app-monospace: ui-monospace, monospace;
 }
 ```
 

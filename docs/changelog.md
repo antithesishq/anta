@@ -9,6 +9,12 @@ changes are not listed.
 
 - Renamed the optional Anta theme to Antune. Replace imports of
   `@antadesign/anta/theme-anta.css` with `@antadesign/anta/theme-antune.css`.
+- Reference themes provide hosted font faces by default and expose
+  `--app-sans-serif` and `--app-monospace` overrides that prevent those faces
+  from being selected.
+- Antune uses hosted TT Interphases Pro Variable; Antithesis uses it for body
+  text and hosted Stringer for level 1–3 headings and titles, with an
+  overridable `--app-heading-font` stack.
 
 ### Added
 

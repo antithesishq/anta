@@ -10,6 +10,37 @@
  * component values. Match `:root:root` to override a role token.
  */
 
+/* The reference theme uses hosted fonts by default. Set --app-sans-serif,
+   --app-heading-font, and/or --app-monospace in critical CSS before loading
+   this theme to opt out. These declarations register faces but do not request
+   them until a computed font stack selects them, so the package deliberately
+   does not add preload hints. */
+@font-face {
+  font-family: "TT Interphases Pro Variable";
+  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-optical-sizing: auto;
+  font-feature-settings: "ss02", "ss05", "tnum";
+  font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Antithesis Mono";
+  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Upright.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Antithesis Mono";
+  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
 /* Preserve the internal layer order if this file loads first. */
 @layer anta.reset, anta.components, anta.theme;
 
@@ -18,6 +49,10 @@
    role tokens regardless of load order (see the header note), while matching the
    same set (root, plus any scoped `.light`). */
 :root:root, .light.light {
+  --sans-serif: var(--app-sans-serif, "TT Interphases Pro Variable", sans-serif);
+  --heading-font: var(--app-heading-font, var(--sans-serif));
+  --monospace: var(--app-monospace, "Antithesis Mono", ui-monospace, monospace);
+
   /* Backgrounds — light, neutral */
   --bg-1: #ffffff;
   --bg-2: #fbfafb;
@@ -273,6 +308,10 @@
 /* Component values not covered by role tokens. Named rules replace formulas;
    custom colors continue deriving from their literal color. */
 @layer anta.theme {
+  :is(h1, h2, h3, a-title[level="1"], a-title[level="2"], a-title[level="3"]) {
+    font-family: var(--heading-font);
+  }
+
 
 /* Button ------------------------------------------------------------------- */
 /* Neutral literals apply when tone is omitted or explicitly neutral. */

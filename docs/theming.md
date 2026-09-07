@@ -47,48 +47,62 @@ its rest, hover, and active values. Each component page lists its styling hooks.
 
 ## Fonts in a theme
 
-Declare the font with `@font-face` and select it through `--sans-serif` or
-`--monospace`. Give consumers a separate override property so they can change the
-stack without matching the theme selector's specificity:
+The reference themes register hosted fonts and select them by default. Both use
+TT Interphases Pro Variable through `--sans-serif` and Antithesis Mono through
+`--monospace`. Antithesis additionally uses Stringer for raw `h1`–`h3` elements
+and `<Title level={1}>`–`<Title level={3}>` (the corresponding `a-title` levels);
+lower heading levels continue to use TT Interphases Pro Variable. The font files
+are loaded only when the resolved stack selects them. Importing a reference theme
+opts into these hosted font resources.
+
+Set the application override in critical CSS or an inline `<style>` in the
+document head when the application has its own font license:
 
 ```css
-/* In a custom theme. The font URL is supplied by the theme author. */
-@font-face {
-  font-family: "Theme Sans";
-  src: url("./fonts/theme-sans.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-:root, .light {
-  --sans-serif: var(--app-sans-serif, "Theme Sans", sans-serif);
+/* Place this before first paint. The theme keeps these values when present. */
+:root {
+  --app-sans-serif: system-ui, sans-serif;
+  --app-heading-font: system-ui, sans-serif;
+  --app-monospace: ui-monospace, monospace;
 }
 ```
 
-Set the override in the application's initial CSS, loaded before the first paint:
+Antune resolves its public stacks like this:
 
 ```css
 :root {
-  --app-sans-serif: system-ui, sans-serif;
+  --sans-serif: var(--app-sans-serif, "TT Interphases Pro Variable", sans-serif);
+  --heading-font: var(--app-heading-font, var(--sans-serif));
+  --monospace: var(--app-monospace, "Antithesis Mono", ui-monospace, monospace);
 }
 ```
 
-The browser selects the system stack, leaving the theme font unused. An unused
-`@font-face` declaration does not itself require a font download. Keep the theme
-font out of every fallback stack, including scoped styles and iframe styles.
-See the [CSS font resource loading rules](https://www.w3.org/TR/css-fonts-3/#font-resources).
+Antithesis uses the same `--sans-serif` and `--monospace` values, but its default
+heading stack is:
 
-Do not preload the theme font or call `document.fonts.load()` for it when the
-application overrides it. A preload requests the resource independently of
-whether text uses it, and a later JavaScript override cannot undo an earlier
-request. `font-display` controls rendering while a font loads; it does not disable
-the request. See [font preloading](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/preload)
+```css
+:root {
+  --heading-font: var(--app-heading-font, "Stringer", var(--sans-serif));
+}
+```
+
+The browser selects the application stacks, leaving the theme faces unused. An
+unused `@font-face` declaration does not itself require a font download. For
+Antithesis, set `--app-heading-font` as well as `--app-sans-serif` if you do not
+have a license for Stringer. Keep the theme families out of every application
+fallback stack, including scoped styles and iframe styles. See the [CSS font
+resource loading rules](https://www.w3.org/TR/css-fonts-3/#font-resources).
+
+Reference themes do not include preload hints. Do not preload a theme font or
+call `document.fonts.load()` for it when the application overrides it. A preload
+requests the resource independently of whether text uses it, and a later
+JavaScript override cannot undo that request. `font-display` controls rendering
+while a font loads; it does not disable the request. See [font preloading](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/preload)
 and the [CSS Font Loading API](https://www.w3.org/TR/css-font-loading/).
 
-For an explicit opt-in, ship font-face declarations in a separate stylesheet.
-Consumers using their own fonts can omit that import. Antune and Antithesis
-currently use the package font stacks and include no remote font resources.
+If the application uses the default theme fonts, it may add its own matching
+preload for the font faces it actually uses. Keep those hints out of builds that
+set the application overrides.
 
 <a id="themes"></a>
 

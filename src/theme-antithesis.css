@@ -1,12 +1,57 @@
 /* Antithesis. Import after tokens.css and element CSS, as the only theme. */
+
+/* The reference theme uses hosted fonts by default. Set --app-sans-serif,
+   --app-heading-font, and/or --app-monospace in critical CSS before loading
+   this theme to opt out. These declarations register faces but do not request
+   them until a computed font stack selects them, so the package deliberately
+   does not add preload hints. */
+@font-face {
+  font-family: "TT Interphases Pro Variable";
+  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-optical-sizing: auto;
+  font-feature-settings: "ss02", "ss05", "tnum";
+  font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Stringer";
+  src: url("https://assets.anta.design/fonts/Stringer-Regular-Web.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Antithesis Mono";
+  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Upright.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Antithesis Mono";
+  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+}
 @layer anta.reset, anta.components, anta.theme;
 
 :root:root, .light.light {
+  --sans-serif: var(--app-sans-serif, "TT Interphases Pro Variable", sans-serif);
+  --heading-font: var(--app-heading-font, "Stringer", var(--sans-serif));
+  --monospace: var(--app-monospace, "Antithesis Mono", ui-monospace, monospace);
   --anta-seed-brand: #cc4636;
   --anta-seed-neutral: #65605b;
 }
 
 @layer anta.theme {
+  :is(h1, h2, h3, a-title[level="1"], a-title[level="2"], a-title[level="3"]) {
+    font-family: var(--heading-font);
+  }
+
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])):not([round]) {
     --_radius: 999px;

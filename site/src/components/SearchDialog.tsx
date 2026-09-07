@@ -131,6 +131,8 @@ export default function SearchDialog() {
     }
     const showSearch = () => {
       syncInputBounds()
+      const input = document.querySelector<HTMLElement & { value?: string }>('[data-sidebar-search-input]')
+      if (input) setQuery(input.value ?? input.getAttribute('value') ?? '')
       setOpen(true)
     }
     const onKeyDown = (event: KeyboardEvent) => {

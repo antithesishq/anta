@@ -1000,6 +1000,10 @@ if (isComponentPage && title) {
   }
 
   @media (max-width: 800px) {
+    .topbar-search :global(a-input)::part(trailing) {
+      display: none;
+    }
+
     .topbar :global(.header-breadcrumbs > :not(:first-child)) {
       display: none;
     }

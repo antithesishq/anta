@@ -5,6 +5,9 @@ import ecFoldable from './ec-foldable.mjs'
 export default {
   plugins: [ecFoldable()],
   themes: ['github-light', 'tokyo-night'],
+  // Astro removes the unused engine from browser bundles, so authored docs
+  // and streamed answers must select the same engine here.
+  shiki: { engine: 'javascript' },
   // Switch themes by the docs site's `.dark` class on <html>,
   // not by `prefers-color-scheme`. The theme toggle in the
   // sidebar lives in user-space — the OS preference is only the

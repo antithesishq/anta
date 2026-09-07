@@ -67,7 +67,11 @@ deployment and local development settings.
 AI Markdown is untrusted: render it through `lib/search/markdown.ts`, which
 sanitizes markup and links before rendering code with Expressive Code.
 Authored docs and answers share `lib/expressive-code-config.mjs` and the
-delegated copy handler in `lib/code-copy.ts`. Do not use the authored-content `Markdown.astro` helper or evaluate
+delegated copy handler in `lib/code-copy.ts`. Set the Shiki engine in that shared
+config: Astro removes the other engine from production bundles. After building
+the site, run `pnpm --filter anta-site test:search-production` to verify highlighting
+and copy buttons in the built browser code.
+Do not use the authored-content `Markdown.astro` helper or evaluate
 AI output as MDX. `lib/search/code-block.ts` renders code in answers;
 `lib/search/highlight.ts` highlights full-text matches on documentation pages.
 Chat responses stream through `lib/search/chat-stream.ts`. Forward only public

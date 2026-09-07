@@ -4,7 +4,7 @@ import config from '../expressive-code-config.mjs'
 
 // Load the same renderer as authored docs only when an answer contains code.
 const engine = Promise.all(config.themes.map((name) => loadShikiTheme(name as BundledShikiTheme)))
-  .then((themes) => new ExpressiveCode({ ...config, themes, shiki: { engine: 'javascript' } }))
+  .then((themes) => new ExpressiveCode({ ...config, themes }))
 const baseStyles = engine.then(async (ec) => (
   (await Promise.all([ec.getBaseStyles(), ec.getThemeStyles()])).join('\n')
 ))

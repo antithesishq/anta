@@ -3,9 +3,9 @@ import ecFoldable from './ec-foldable.mjs'
 
 /**
  * Shared rendering options for authored documentation and AI answers.
- * @satisfies {import('expressive-code').ExpressiveCodeConfig}
+ * @satisfies {import('astro-expressive-code').AstroExpressiveCodeOptions}
  */
-export default {
+const config = {
   plugins: [ecFoldable()],
   themes: ['github-light', 'tokyo-night'],
   // Astro removes the unused engine from browser bundles, so authored docs
@@ -67,3 +67,5 @@ export default {
     },
   },
 }
+
+export default config

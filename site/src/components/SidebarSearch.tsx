@@ -33,7 +33,8 @@ export default function SidebarSearch() {
   return (
     <Input
       type="search"
-      size="small"
+      size="medium"
+      tone="var(--anta-seed-brand)"
       dimActions
       placeholder="Search"
       aria-label="Search documentation"

@@ -1,6 +1,9 @@
 /* Site-only styles outside Anta's reset. */
 html, body {
   letter-spacing: 0.02ch;
+  /* Keep the shell usable at a narrow viewport and let the document scroll
+     horizontally once the viewport is narrower than the supported width. */
+  min-width: 320px;
 }
 
 /* Brand fonts (temporary Uploadcare hosting) */
@@ -35,11 +38,8 @@ html, body {
 :root {
   --sans-serif: "Anta sans", sans-serif;
   --monospace: "Anta mono", "Roboto Mono", monospace;
-  /* Distance from the top of the viewport to use when scrolling an
-     anchor target into view (e.g. clicking a heading link). On
-     desktop a small breathing room; on mobile, enough to clear the
-     sticky topbar (height set in the @media block at the bottom). */
-  --scroll-padding-top: 1em;
+  /* Clear the global sticky topbar when scrolling to a heading. */
+  --scroll-padding-top: calc(44px + 1em);
 }
 
 /* Semantic background aliases. Anta now ships an unopinionated numeric
@@ -941,14 +941,4 @@ code[data-copied]::after {
      Width and centering inherit from the cell. */
   top: auto;
   bottom: 4px;
-}
-
-/* On mobile the sticky topbar is 44px tall, so anchor-scrolls need to
-   account for it — otherwise the target heading lands underneath the
-   topbar. The number is duplicated in DocsLayout.astro's `.topbar`
-   height; keep them in sync. */
-@media (max-width: 900px) {
-  :root {
-    --scroll-padding-top: calc(44px + 1em);
-  }
 }

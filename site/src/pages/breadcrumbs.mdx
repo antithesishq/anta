@@ -31,12 +31,41 @@ More menu without measuring the available width.
 
 ## Items
 
-Pass ordered data through `items`. An `href` renders a native link with the
-Button appearance; omit it for an action button. Each item accepts `label`,
-`icon`, `iconTrailing`, `tone`, `disabled`, `onClick`, `className`, `style`,
-`id`, `title`, and `data-*` / `aria-*` attributes. `size`, priority, and
-underline treatment belong to the whole trail so every visible control retains
-the same height.
+Pass ordered `BreadcrumbItem` objects through `items`. Each item is a link,
+action, or copy control. `size`, `priority`, and underline treatment belong to
+the whole trail.
+
+### BreadcrumbItem reference
+
+| Property | Possible values | Description |
+| --- | --- | --- |
+| `label` | `React.ReactNode` | Required content, such as text, an image, or JSX. Also used as the label when the item folds into More. |
+| `icon` | `IconShape` | Leading Anta icon shape. |
+| `iconTrailing` | `IconShape` | Trailing Anta icon shape. Available on link and action items. |
+| `tone` | `'neutral'`, `'brand'`, `'info'`, `'success'`, `'warning'`, `'critical'`, or a CSS color string | Item color. Defaults to neutral. |
+| `disabled` | `boolean` | Disables the item. |
+| `current` | `boolean` | Sets `aria-current="page"`. Does not change the tone. |
+| `onClick` | `(event: any) => void` | Activation handler. Folded items call it on menu selection. |
+| `href` | `string` | Destination URL for a link item. |
+| `target` | `string` | Link target, such as `'_blank'`. Requires `href`. |
+| `copy` | `string` | Literal text to copy. |
+| `copyNode` | `boolean` or `string` | `true` copies the nearest ancestor marked `data-copy-source`; a CSS selector chooses an ancestor region. `false` disables the node target. |
+| `copyUrl` | `true` | Copies the current page URL. |
+| `copyWithUrl` | `boolean` | Prefixes literal `copy` text with the current page URL. |
+| `onCopyRequest` | `() => void` | Refreshes a literal `copy` value before activation. Update application state; return values are ignored. |
+| `onCopied` | `(ok: boolean) => void` | Reports whether a copy attempt succeeded. Available on copy items. |
+| `iconPlacement` | `'leading'`, `'trailing'`, or `'none'` | Copy glyph placement. Defaults to `'leading'`. |
+| `copiedLabel` | `string` | Confirmation text for a copy item with no icon. Defaults to `'Copied'`. |
+| `className` | `string` | CSS class on the item control. |
+| `style` | `React.CSSProperties` | Inline styles on the item control. |
+| `id` | `string` | HTML ID on the item control. |
+| `title` | `string` | Native browser tooltip text. |
+| `data-*`, `aria-*` | Attribute-specific values | Attributes forwarded to the item control. |
+
+Use `href` for a link, omit navigation and copy props for an action, or choose
+exactly one of `copy`, `copyNode`, and `copyUrl` for a copy item. Copy items
+cannot use `href`, `target`, or `iconTrailing`. `copyWithUrl` and
+`onCopyRequest` apply only to literal `copy` text.
 
 <Columns>
 <Col>
@@ -303,10 +332,17 @@ Use `priority`, `size`, and `separator` before adding CSS. A `className` on
 their individual Buttons. The composed structure uses light-DOM tags, so plain
 CSS can style a separator directly.
 
+To tighten the space between items, give the trail a class and set
+`a-breadcrumb-separator` to `width: 8px` within that class. This changes the
+separator's layout width while keeping the icon size unchanged. The website
+header uses this approach. `project-breadcrumbs` is a demo class; replace it
+with your own selector.
+
 <Preview>
   <Breadcrumbs className="project-breadcrumbs" separator="chevron-right" items={[{ label: 'Home', href: '/' }, { label: 'Projects', href: '/projects' }]} />
   <style is:inline>{`
     .project-breadcrumbs a-breadcrumb-separator {
+      width: 8px;
       color: var(--text-2);
     }
   `}</style>
@@ -318,6 +354,7 @@ CSS can style a separator directly.
 
 ```css folded
 .project-breadcrumbs a-breadcrumb-separator {
+  width: 8px;
   color: var(--text-2);
 }
 ```

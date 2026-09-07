@@ -6,11 +6,11 @@
   display: block;
 }
 
-/* Sticky header: tone switcher + seed picker, both pinned while scrolling. The docs
-   topbar is display:none on desktop, so top:0 is flush under the viewport. */
+/* Sticky header: tone switcher + seed picker, both pinned while scrolling. The
+   global docs topbar is 44px tall, so the lab header docks beneath it. */
 .header {
   position: sticky;
-  top: 0;
+  top: 44px;
   z-index: 5;
   background: var(--bg-2);
   padding: 14px 0 12px;

@@ -91,6 +91,7 @@ export default function SearchDialog() {
   const answerRequest = useRef<AbortController>()
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const [selected, setSelected] = useState(0)
+  const resultsRef = useRef<HTMLDivElement>(null)
   // A resting pointer cannot override keyboard selection.
   const [pointerActive, setPointerActive] = useState(false)
   const term = query.trim()
@@ -98,6 +99,18 @@ export default function SearchDialog() {
   const results = term ? search?.results ?? EMPTY_RESULTS : EMPTY_RESULTS
   const resultQuery = search?.query ?? term
   const searching = status === 'loading' || (status === 'ready' && Boolean(term) && !currentSearch)
+
+  useEffect(() => {
+    if (!open || pointerActive) return
+    const frame = requestAnimationFrame(() => {
+      resultsRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+        behavior: 'auto',
+      })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [open, selected, results, pointerActive])
 
   const ensureIndex = () => {
     setStatus((current) => current === 'ready' ? current : 'loading')
@@ -292,6 +305,7 @@ export default function SearchDialog() {
         {query.trim() && status === 'ready' && (
           <div
             id="docs-search-results"
+            ref={resultsRef}
             className={styles.results}
             data-pointer={pointerActive ? 'active' : undefined}
             aria-live="polite"

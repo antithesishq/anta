@@ -65,7 +65,7 @@ redefine all three font variables as shown above.
 ```
 
 After you redefine these three variables, the theme fonts are not used or
-downloaded.
+downloaded (exactly what we want in this case).
 
 <a id="color-seeds"></a>
 

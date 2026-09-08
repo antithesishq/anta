@@ -159,9 +159,6 @@ const SHADOW_STYLE = `
     cursor: text;
     font-variant-numeric: tabular-nums;
   }
-  @media (pointer: coarse) {
-    :host(:focus-within) .seg { font-size: max(16px, var(--input-time-font-size)); }
-  }
   .seg--period {
     field-sizing: content;
     width: auto;

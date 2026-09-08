@@ -368,6 +368,52 @@ test('an open Select scrolls within a hover-activated wheel Capture', async t =>
   assert.deepEqual(await page.evaluate(() => log), [])
 })
 
+test('small fields keep their declared type size when focused with a coarse pointer', async t => {
+  const page = await pageFor(t, { hasTouch: true })
+  const result = await page.evaluate(() => {
+    document.body.innerHTML = `
+      <a-input id="input" size="small" value="Antune" readonly></a-input>
+      <a-input-time id="time" size="small" value="10:30"></a-input-time>
+      <input id="native-input" data-anta data-anta-size="small" value="Antune">
+      <textarea id="native-textarea" data-anta data-anta-size="small">Antune</textarea>
+      <select id="native-select" data-anta data-anta-size="small"><option>Antune</option></select>
+    `
+
+    const sizes = {}
+    const focused = {}
+    const input = document.querySelector('#input')
+    input.focus()
+    const innerInput = input.shadowRoot.querySelector('input')
+    sizes.input = getComputedStyle(innerInput).fontSize
+    focused.input = input.shadowRoot.activeElement === innerInput
+
+    const time = document.querySelector('#time')
+    time.focus()
+    const segment = time.shadowRoot.querySelector('.seg')
+    sizes.time = getComputedStyle(segment).fontSize
+    focused.time = time.shadowRoot.activeElement === segment
+
+    for (const id of ['native-input', 'native-textarea', 'native-select']) {
+      const field = document.querySelector(`#${id}`)
+      field.focus()
+      sizes[id] = getComputedStyle(field).fontSize
+      focused[id] = document.activeElement === field
+    }
+
+    return { coarse: matchMedia('(pointer: coarse)').matches, focused, sizes }
+  })
+
+  assert.equal(result.coarse, true)
+  assert.ok(Object.values(result.focused).every(Boolean), JSON.stringify(result.focused))
+  assert.deepEqual(result.sizes, {
+    input: '13px',
+    time: '13px',
+    'native-input': '13px',
+    'native-textarea': '13px',
+    'native-select': '13px',
+  })
+})
+
 test('wheel settling uses pointer dwell, reset policy, and region identity; focus never moves focus', async t => {
   const page = await pageFor(t)
   await mount(page, { 'wheel-capture': '', 'wheel-delay': '150' })

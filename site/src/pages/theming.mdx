@@ -10,48 +10,15 @@ import Disclosure from '../components/Disclosure.astro'
 
 # Theming
 
-## Using a theme
+Anta works without a theme. Customize individual components through their props
+or with classes in your application CSS.
 
-Antune is the hand-tuned reference theme and the initial theme on this website.
-Choose **None** in the theme dropdown to use the package's seed-derived palette.
-Your selection survives navigation and is saved for future visits when browser
-storage is available.
-
-Import one theme after the package styles:
+When an application needs many customizations or a global change to Anta's look
+and feel, add a theme stylesheet. Import one theme after the package styles:
 
 ```ts
-import '@antadesign/anta/tokens.css'
-import '@antadesign/anta/reset.css'
-import '@antadesign/anta/elements'
-import '@antadesign/anta/theme-antune.css'
+import '@antadesign/anta/theme-antune.css' // Choose one theme included in the package.
 ```
-
-Antune was previously named Anta. Update `theme-anta.css` imports to
-`theme-antune.css`.
-
-To use Antithesis, replace the last import with
-`@antadesign/anta/theme-antithesis.css`. It uses brand seed `#cc4636` and neutral
-seed `#65605b`, with `999px` button corners, `0px` text-field corners, and `1px`
-tag corners. Explicit `round` values on buttons and inputs override those defaults.
-Choose **Antithesis** in the dropdown to preview it on this website.
-
-Omit both theme imports to use the seed-derived palette. Antune supplies fixed
-color values, so use **None** or Antithesis when experimenting with color seeds.
-
-## Color seeds
-
-Anta's palette is generative. Every color in the system derives from six tone seeds (`--anta-seed-neutral`, `--anta-seed-brand`, `--anta-seed-info`, …), and a seed contributes only its hue: the lightness and chroma of every background, text, border, and component state come from Anta's formulas, tuned per role and per theme. Reskinning a tone is one custom property, and the whole scale re-derives in both light and dark:
-
-```css
-:root {
-  --anta-seed-brand: #0f766e; /* a teal brand; every brand token follows */
-}
-```
-
-Anta's styles use ordered child layers inside `@layer anta`. Your unlayered CSS
-overrides them without `!important`, and shadow-DOM components expose
-`::part(...)`. A component's `tone` accepts a named tone or CSS color and derives
-its rest, hover, and active values. Each component page lists its styling hooks.
 
 <Disclosure title="Fonts in a theme" id="fonts-in-a-theme">
 
@@ -70,11 +37,11 @@ Without a reference theme, `tokens.css` defines three system font stacks:
 Components and theme rules choose which variable to use. For example, body text
 can use `--sans-serif` while a particular title style uses `--serif`.
 
-To use your own font, register it and redefine the stacks in application CSS
-loaded **after** Anta's styles, including the optional theme stylesheet:
+You can register your fonts and redefine the stacks in a custom theme stylesheet
+such as `theme.css`:
 
 ```css
-/* app.css — load after tokens.css, component CSS, and theme-*.css. */
+/* theme.css */
 @font-face {
   font-family: "App Sans";
   src: url("/fonts/app-sans.woff2") format("woff2");
@@ -90,32 +57,54 @@ loaded **after** Anta's styles, including the optional theme stylesheet:
 }
 ```
 
-When using stylesheet links, place `app.css` after the Anta and theme links in
-the document `<head>`. An inline `<style>` works too when it appears after those
-links. Keeping all of them in the head resolves the final stacks before the first
-paint.
+<div style={{ color: 'var(--text-2-warning)' }}>
 
-Antune replaces `--sans-serif` with hosted TT Interphases Pro Variable and
-`--monospace` with hosted Antithesis Mono. Antithesis does the same and also
-replaces `--serif` with hosted Stringer. Antithesis's own CSS uses `--serif` for
-raw `h1`–`h3` and title levels 1–3; lower title levels continue to use
-`--sans-serif`. Other components decide which stack fits their own typography.
+The **Antune** and **Antithesis** themes included with Anta use custom fonts that
+require separate licenses. If your application does not have those licenses,
+redefine all three font variables as shown above. You can also load a replacement
+stack through the [Google Fonts CSS API](https://developers.google.com/fonts/docs/css2):
 
-Redefining these three variables after the theme leaves its font faces unused.
-An unused `@font-face` declaration does not itself download a font. Keep the
-theme families out of application fallback stacks. See the [CSS font resource
-loading rules](https://www.w3.org/TR/css-fonts-3/#font-resources).
+</div>
 
-Reference themes do not include preload hints. Do not preload a theme font or
-call `document.fonts.load()` for it when the application overrides it. A preload
-requests the resource independently of whether text uses it, and a later
-JavaScript override cannot undo that request. `font-display` controls rendering
-while a font loads; it does not disable the request. See [font preloading](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel/preload)
-and the [CSS Font Loading API](https://www.w3.org/TR/css-font-loading/).
+```css
+/* theme.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@400;600&display=swap");
 
-If the application uses the default theme fonts, it may add its own matching
-preload for the font faces it actually uses. Keep those hints out of builds that
-redefine the font stacks.
+:root {
+  --sans-serif: "Inter", sans-serif;
+  --serif: "Source Serif 4", serif;
+  --monospace: "JetBrains Mono", monospace;
+}
+```
+
+After you redefine these three variables, the theme fonts are not used or
+downloaded.
+
+</Disclosure>
+
+<Disclosure title="Color seeds" id="color-seeds" data-no-search>
+
+In your custom theme, override any of Anta's six seed color tokens to recolor
+components. These overrides can live in any application stylesheet:
+
+- `--anta-seed-neutral`
+- `--anta-seed-brand`
+- `--anta-seed-info`
+- `--anta-seed-success`
+- `--anta-seed-warning`
+- `--anta-seed-critical`
+
+```css
+:root {
+  --anta-seed-brand: #0f766e; /* a teal brand; every brand token follows */
+}
+```
+
+For more control, customize the `--text-*`, `--bg-*`, and `--border-*` tokens
+separately for light and dark modes.
+
+Anta's styles use ordered child layers inside `@layer anta`. Your regular
+unlayered CSS overrides them without `!important`.
 
 </Disclosure>
 
@@ -132,6 +121,8 @@ read its stylesheet.
 
 The lab below shows the derivation live. For each toned component, the shipped Default sits next to a Custom preview driven by the seed picker, with the formula constants editable and the resolved CSS shown.
 
-<ThemingLab client:load />
+<div data-no-search>
+  <ThemingLab client:load />
+</div>
 
 </Disclosure>

@@ -50,6 +50,12 @@ loading the index during idle time; its page-target highlighter must run on `ast
 ClientRouter navigations receive the same mark.js treatment as cold loads.
 The build also copies the index to ignored `public/search-index.json`; `pnpm run dev` serves that
 last-built snapshot without rebuilding it during source changes.
+The post-build indexer treats known phrasing tags as inline content and every
+other non-ignored element as a container boundary. Add native UI chrome to its
+ignored-subtree list, and use `data-no-search` on page-specific containers whose
+rendered content should not enter the index. Anta controls, navigation, and media
+elements have an explicit ignored-subtree list. Content-bearing Anta elements
+remain traversable.
 
 Selecting **Get answer from AI** or pressing Enter in the input after a successful
 full-text search with zero matches may request an AI answer. Enter keeps the

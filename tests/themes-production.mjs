@@ -8,6 +8,46 @@ const requireSite = createRequire(new URL('../site/package.json', import.meta.ur
 const { chromium } = requireSite('playwright')
 const dist = new URL('../site/dist/', import.meta.url)
 
+test('overriding theme font variables prevents hosted font requests', async t => {
+  const browser = await chromium.launch({ headless: true, channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined })
+  t.after(() => browser.close())
+  const page = await browser.newPage()
+  const fontRequests = []
+  await page.route('https://assets.anta.design/fonts/**', route => {
+    fontRequests.push(route.request().url())
+    return route.abort()
+  })
+
+  for (const theme of ['antune', 'antithesis']) {
+    const css = await readFile(new URL(`../src/theme-${theme}.css`, import.meta.url), 'utf8')
+    await page.setContent(`
+      <style>${css}</style>
+      <style>
+        :root {
+          --sans-serif: system-ui, sans-serif;
+          --serif: Georgia, serif;
+          --monospace: ui-monospace, monospace;
+        }
+        body { font-family: var(--sans-serif); }
+        h1 { font-family: var(--serif); }
+        code { font-family: var(--monospace); }
+      </style>
+      <h1>Theme heading</h1>
+      <p>Theme body</p>
+      <code>Theme code</code>
+    `)
+    await page.evaluate(() => document.fonts.ready)
+    const families = await page.locator('h1, p, code').evaluateAll(elements => (
+      elements.map(element => getComputedStyle(element).fontFamily)
+    ))
+    for (const family of families) {
+      assert.doesNotMatch(family, /TT Interphases|Stringer|Antithesis Mono/)
+    }
+  }
+
+  assert.deepEqual(fontRequests, [])
+})
+
 // Run after the site build to exercise CSS isolation and Astro's Code renderer.
 test('theme tabs pair the package CSS with an isolated, responsive component canvas', async t => {
   const browser = await chromium.launch({ channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined })

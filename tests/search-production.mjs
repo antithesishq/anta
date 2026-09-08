@@ -76,13 +76,15 @@ test('production search reveals folded theme content and prioritizes the current
   await page.goto('https://anta.test/theming/', { waitUntil: 'domcontentloaded' })
   const section = id => page.locator('details').filter({ has: page.locator(`#${id}`) })
   assert.equal(await section('fonts-in-a-theme').getAttribute('open'), null)
+  assert.equal(await section('color-seeds').getAttribute('data-no-search'), '')
+  assert.equal(await section('color-seeds').locator('[data-search-id]').count(), 0)
   assert.equal(await section('theming-lab').getAttribute('open'), null)
+  assert.ok(await section('theming-lab').locator('.body > p').first().getAttribute('data-search-id'))
+  assert.equal(await section('theming-lab').locator('[data-no-search] [data-search-id]').count(), 0)
   const targets = await page.evaluate(() => [
     document.querySelector('#fonts-in-a-theme').closest('details').querySelector('p'),
-    document.querySelector('[data-theming-tone="brand"] pre'),
   ].map(element => ({
-    id: element.dataset.searchId, anchor: element.id,
-    query: element.tagName === 'PRE' ? 'oklch' : 'font',
+    id: element.dataset.searchId, anchor: element.id, query: 'font',
   })))
 
   const assertRevealed = async target => {
@@ -129,9 +131,12 @@ test('production search reveals folded theme content and prioritizes the current
     assert.equal(await page.evaluate(() => window.searchNavigationSentinel), true)
   }
   await navigate('/button/')
+  assert.ok(await page.locator('main.content a-button').count())
+  assert.equal(await page.locator('main.content a-button[data-search-id], main.content a-button [data-search-id]').count(), 0)
+  assert.ok(await page.locator('main.content a-text[data-search-id]').count())
   await search('button')
   assert.ok((await page.locator('#docs-search-results a').first().getAttribute('href')).startsWith('/button/'))
   await page.keyboard.press('Escape')
-  await navigate(href(targets[1]))
-  await assertRevealed(targets[1])
+  await navigate(href(targets[0]))
+  await assertRevealed(targets[0])
 })

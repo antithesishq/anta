@@ -364,7 +364,6 @@
     background: var(--native-expander-bg);
     font-family: var(--sans-serif);
     font-size: 15px;
-    font-feature-settings: "ss02", "ss05", "tnum";
     line-height: var(--native-expander-summary-line-height);
     transition: background-color 100ms ease;
   }

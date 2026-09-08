@@ -35,7 +35,6 @@
 :root, .light {
   font-size: 15px;
   font-weight: 400;
-  font-feature-settings: 'ss02' on, 'ss05' on, 'tnum' on;
 
   /* Tone seeds — the single source each scale derives from. Hues from the
      Anta 0.2 primaries; override any of these to reskin a whole tone. */

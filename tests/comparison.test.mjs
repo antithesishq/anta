@@ -80,7 +80,7 @@ test('card facts stay upright, wrap below the title, and show details on hover a
   assert.equal(headings.length, 2)
   for (const heading of headings) {
     assert.equal(heading.italic, 'normal')
-    assert.match(heading.axes, /"slnt" 0/)
+    assert.equal(heading.axes, 'normal')
     assert.equal(heading.described, true)
   }
   assert.deepEqual(headings.map(heading => heading.value), [system.bundleSize, system.browserSupport])

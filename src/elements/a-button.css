@@ -252,14 +252,7 @@
     font-size: var(--_fs);
     font-family: var(--sans-serif);
     font-weight: 450;
-
-    font-variation-settings: "wdth" 88, "slnt" 0, "ital" 0;
-    /* Anta's stylistic sets: ss02 (alternate l) + ss05, plus tnum for tabular
-       (fixed-width) figures so numbers align. Re-stated here (like the variation
-       axes above) so it survives in the shadow regardless of any
-       font-feature-settings a consumer sets on an ancestor — it replaces, not
-       merges. */
-    font-feature-settings: "ss02", "ss05", "tnum";
+    font-stretch: normal;
     line-height: var(--_lh);
     letter-spacing: 0.05ch;
 

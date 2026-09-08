@@ -263,7 +263,8 @@ Use `dark` or `light` on another ancestor to scope its color scheme and palette.
 Without an optional theme, `tokens.css` defines system stacks in `--sans-serif`,
 `--serif`, and `--monospace`. Reference themes register hosted fonts and replace
 some of those same variables. Components and theme rules decide which stack to
-use. `tokens.css` also sets `1rem` to 15px.
+use. Theme-free components do not force font-specific stylistic sets or
+variable-font axes. `tokens.css` also sets `1rem` to 15px.
 
 Register application-owned fonts and redefine the variables in CSS loaded after
 the Anta styles and optional theme. This example uses separate Roman and Italic

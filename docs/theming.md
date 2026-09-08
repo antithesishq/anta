@@ -27,7 +27,8 @@ Without a reference theme, `tokens.css` defines three system font stacks:
 ```
 
 Components and theme rules choose which variable to use. For example, body text
-can use `--sans-serif` while a particular title style uses `--serif`.
+can use `--sans-serif` while a particular title style uses `--serif`. Without a
+theme, Anta does not force font-specific stylistic sets or variable-font axes.
 
 You can register your fonts and redefine the stacks in a custom theme stylesheet
 such as `theme.css`:

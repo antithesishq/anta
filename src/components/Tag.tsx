@@ -79,7 +79,7 @@ export interface TagProps extends BaseProps {
  *   picks up raw `<a-tag tone="…">` on Chrome 133+/Safari 18.2+.
  * - `allcaps` switches on the uppercase transform and widens tracking to
  *   0.08ch (the default mixed case uses the body-text 0.02ch); tabular
- *   figures + `ss05` stay on. Each size steps down 1px under `allcaps`
+ *   figures stay on. Each size steps down 1px under `allcaps`
  *   (uppercase reads larger than mixed case at the same px), with height
  *   unchanged.
  *

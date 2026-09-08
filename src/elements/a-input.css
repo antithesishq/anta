@@ -77,8 +77,8 @@
     font-family: var(--sans-serif);
     font-size: 15px;
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -306,8 +306,8 @@
     font-family: var(--sans-serif);
     font-size: var(--native-field-zoom-safe-font-size, var(--native-field-font-size));
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
@@ -439,8 +439,8 @@
     font-family: var(--sans-serif);
     font-size: var(--native-file-font-size);
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     line-height: var(--native-file-line-height);
   }
   .dark input[data-anta][type="file"] { color-scheme: dark; }
@@ -523,8 +523,8 @@
     font-family: var(--sans-serif);
     font-size: var(--native-field-zoom-safe-font-size, var(--native-field-font-size));
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
@@ -758,10 +758,10 @@
       color: var(--native-select-option-color);
       cursor: pointer;
       font-family: var(--sans-serif);
-      font-feature-settings: 'ss02', 'ss05', 'tnum';
       font-size: 14px;
       font-weight: 400;
-      font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+      font-stretch: normal;
+      font-style: normal;
       letter-spacing: normal;
       line-height: 16px;
       text-transform: none;

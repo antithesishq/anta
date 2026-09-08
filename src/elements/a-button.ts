@@ -71,10 +71,8 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   returns to rest instead — it's already light), and has instant
  *   transitions in every direction.
  * - **Layout gotchas:** `flex-shrink: 0` (shrinking + `overflow: hidden`
- *   would clip the label silently); `font-variation-settings` must restate
- *   ALL axes — it replaces rather than merges, and dropping "slnt"/"ital"
- *   renders italic in Safari; the label uses a 17px line box + 1px bottom
- *   padding for optical vertical centering at an unchanged 18px box.
+ *   would clip the label silently); the label uses a 17px line box + 1px
+ *   bottom padding for optical vertical centering at an unchanged 18px box.
  * - **Icon-only** is purely structural — `:has(> a-icon:only-child)` gives
  *   square padding + a min-size pin (and centers when the host is sized
  *   bigger). A non-only edge icon trims ~2px off its side's padding

@@ -87,10 +87,8 @@
        0.08ch is reserved for the `allcaps` opt-in below. */
     text-transform: none;
     letter-spacing: 0.02ch;
-    /* Tabular figures are always on (so counts / versions / timers don't
-       reflow), plus `ss05` alternate numerals and the proportional-case
-       extras (`lnum` / `ss04`) — layered on top of the default set. */
-    font-feature-settings: 'tnum' 1, 'ss05' 1, 'lnum', 'ss01', 'ss04', 'case', 'calt';
+    /* Counts, versions, and timers keep stable figure widths with any font. */
+    font-variant-numeric: lining-nums tabular-nums;
   }
 
   /* Icons scale to the pill (the default 16px a-icon is too big here) and
@@ -267,15 +265,14 @@
   }
 
   /* All-caps opt-in: switch to the uppercase treatment — wider 0.08ch
-     tracking and the base stylistic set (no `lnum` / `ss04`). Uppercase
+     tracking. Uppercase
      reads larger than mixed case at the same px, so each size steps down
      1px from its normal-case default (medium 12→11; small 10, large 12
-     via the combos below). Tabular figures + `ss05` stay on. */
+     via the combos below). */
   a-tag[allcaps] {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08ch;
-    font-feature-settings: 'tnum' 1, 'ss05' 1, 'ss01', 'case', 'calt';
   }
   a-tag[size="small"][allcaps] {
     font-size: 10px;

@@ -272,9 +272,9 @@ export class ATooltipElement extends HTMLElementBase {
     const style = document.createElement('style')
     // Shadow bubble CSS (kept comment-free — this string ships into every
     // consumer document). Non-obvious bits:
-    // - The container establishes its own text baseline (font axes, spacing,
-    //   transform all restated) so inheritable text properties from the
-    //   anchor — a Button's condensed "wdth" 88, its letter-spacing, an
+    // - The container establishes its own text baseline (font style, stretch,
+    //   spacing, and transform all restated) so inheritable text properties
+    //   from the anchor — a condensed Button, its letter-spacing, or an
     //   uppercase transform — don't bleed into the slotted content. The
     //   content inherits from this container, the single choke point;
     //   consumers customize one tooltip by classing their own content.
@@ -338,7 +338,6 @@ export class ATooltipElement extends HTMLElementBase {
         font-weight: 400;
         font-style: normal;
         font-stretch: normal;
-        font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0;
         line-height: 1.5;
         letter-spacing: 0.02ch;
         word-spacing: normal;

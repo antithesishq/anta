@@ -2,18 +2,12 @@
   a-title {
     display: block;
     /* Pin the family so a consumer's font-family on an ancestor can't reach in
-       and restyle headings — same reasoning as font-feature-settings below: the
-       property replaces, it doesn't merge. */
+       and restyle headings. */
     font-family: var(--sans-serif);
     color: var(--text-1);
     font-weight: 584.62;
     letter-spacing: 0;
     text-wrap: balance;
-    /* Anta's stylistic sets: ss02 (alternate l) + ss05, plus tnum for tabular
-       (fixed-width) figures. Re-stated explicitly (not just inherited from :root)
-       so a consumer's font-feature-settings on an ancestor can't drop them — the
-       property replaces, not merges. */
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
     /* No vertical margins: <Title> is a spacing-neutral atom that drops into any
        container, so the parent owns spacing (gap/padding). Raw <h1>-<h6> keep the
        document prose rhythm via src/reset.css. */

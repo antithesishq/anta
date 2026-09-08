@@ -73,7 +73,6 @@
     font-family: var(--sans-serif);
     font-size: var(--checkbox-label-fs);
     line-height: var(--checkbox-label-lh);
-    font-feature-settings: "ss02", "ss05", "tnum";
 
     &::before {
       content: "";
@@ -341,7 +340,6 @@
     gap: 8px;
     color: var(--text-2);
     font-family: var(--sans-serif);
-    font-feature-settings: "ss02", "ss05", "tnum";
     font-size: 15px;
     line-height: 20px;
   }

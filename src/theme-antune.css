@@ -17,12 +17,10 @@
 @font-face {
   font-family: "TT Interphases Pro Variable";
   src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
-  font-style: normal;
+  font-style: oblique 0deg 11deg;
   font-weight: 100 900;
   font-stretch: 75% 100%;
-  font-optical-sizing: auto;
   font-feature-settings: "ss02", "ss05", "tnum";
-  font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0;
   font-display: swap;
 }
 @font-face {
@@ -310,6 +308,22 @@
 /* Component values not covered by role tokens. Named rules replace formulas;
    custom colors continue deriving from their literal color. */
 @layer anta.theme {
+/* Typography --------------------------------------------------------------- */
+:is(a-button, a[role="button"][data-anta], button[data-anta],
+    input[data-anta]:is([type="reset"], [type="submit"])),
+a-tab {
+  font-stretch: 88%;
+}
+a-input {
+  --_input-adornment-font-stretch: 88%;
+}
+a-tag {
+  font-feature-settings: 'tnum' 1, 'ss05' 1, 'lnum', 'ss01', 'ss04', 'case', 'calt';
+}
+a-tag[allcaps] {
+  font-feature-settings: 'tnum' 1, 'ss05' 1, 'ss01', 'case', 'calt';
+}
+
 /* Button ------------------------------------------------------------------- */
 /* Neutral literals apply when tone is omitted or explicitly neutral. */
 a-button:not([tone]),

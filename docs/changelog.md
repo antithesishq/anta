@@ -12,6 +12,9 @@ changes are not listed.
 - Reference themes provide hosted font faces by default through the public
   `--sans-serif`, `--serif`, and `--monospace` stacks. Applications can replace
   the stacks directly in CSS loaded after the theme.
+- Theme-free components no longer force TT Interphases stylistic sets or
+  variable-font axes. Antune and Antithesis own those font-specific treatments,
+  while numeric surfaces retain portable tabular figures.
 
 ### Added
 

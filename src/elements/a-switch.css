@@ -56,7 +56,6 @@
     font-family: var(--sans-serif);
     font-size: var(--switch-label-fs);
     line-height: var(--switch-label-lh);
-    font-feature-settings: "ss02", "ss05", "tnum";
 
     &::before,
     &::after {

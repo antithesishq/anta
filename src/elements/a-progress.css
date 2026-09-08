@@ -134,7 +134,6 @@
     align-items: flex-start;
     gap: 0.5ch;
     font-variant-numeric: lining-nums tabular-nums;
-    font-feature-settings: 'ss02', 'ss05';
     letter-spacing: 0.03em;
     font-size: var(--progress-label-size);
     line-height: var(--progress-label-line-height);

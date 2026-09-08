@@ -43,8 +43,8 @@
 /* Preserve the internal layer order if this file loads first. */
 @layer anta.reset, anta.components, anta.theme;
 
-/* Same specificity as tokens.css: this theme wins because it is imported after
-   tokens, and application CSS imported after this theme can replace it again. */
+/* Default font stacks in tokens.css have zero specificity, so theme fonts win
+   regardless of stylesheet order. Later application CSS can replace them. */
 :root, .light {
   --sans-serif: "TT Interphases Pro Variable", sans-serif;
   --monospace: "Antithesis Mono", ui-monospace, monospace;

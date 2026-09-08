@@ -51,8 +51,7 @@ such as `theme.css`:
 
 The **Antune** and **Antithesis** themes included with Anta use custom fonts that
 require separate licenses. If your application does not have those licenses,
-redefine all three font variables as shown above. You can also load a replacement
-stack through the [Google Fonts CSS API](https://developers.google.com/fonts/docs/css2):
+redefine all three font variables as shown above.
 
 ```css
 /* theme.css */

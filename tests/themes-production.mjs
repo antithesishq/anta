@@ -8,6 +8,15 @@ const requireSite = createRequire(new URL('../site/package.json', import.meta.ur
 const { chromium } = requireSite('playwright')
 const dist = new URL('../site/dist/', import.meta.url)
 
+async function routeBuiltSite(page) {
+  await page.route('https://anta.test/**', async route => {
+    const path = new URL(route.request().url()).pathname
+    const file = new URL(`.${path}${path.endsWith('/') ? 'index.html' : ''}`, dist)
+    if (!file.href.startsWith(dist.href)) return route.abort()
+    await route.fulfill({ path: fileURLToPath(file) })
+  })
+}
+
 test('overriding theme font variables prevents hosted font requests', async t => {
   const browser = await chromium.launch({ headless: true, channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined })
   t.after(() => browser.close())
@@ -48,6 +57,43 @@ test('overriding theme font variables prevents hosted font requests', async t =>
   assert.deepEqual(fontRequests, [])
 })
 
+test('switching the website theme to None restores the system font stacks', async t => {
+  const browser = await chromium.launch({ headless: true, channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined })
+  t.after(() => browser.close())
+  const page = await browser.newPage()
+  await routeBuiltSite(page)
+  await page.addInitScript(() => localStorage.setItem('anta-palette', 'antune'))
+  await page.goto('https://anta.test/theming/', { waitUntil: 'domcontentloaded' })
+
+  const theme = page.getByRole('combobox', { name: 'Theme' })
+  await theme.waitFor()
+  const before = await page.locator('body').evaluate(element => ({
+    family: getComputedStyle(element).fontFamily,
+    sans: getComputedStyle(element).getPropertyValue('--sans-serif').trim(),
+  }))
+  assert.match(before.family, /TT Interphases Pro Variable/)
+  assert.match(before.sans, /TT Interphases Pro Variable/)
+
+  await theme.click()
+  await page.getByRole('menuitemradio', { name: 'None' }).click()
+  await page.waitForFunction(() => {
+    const link = document.querySelector('#palette-link')
+    const sans = getComputedStyle(document.body).getPropertyValue('--sans-serif')
+    return link?.getAttribute('href') === '/themes/default.css' && sans.includes('-apple-system')
+  })
+
+  const after = await page.locator('body').evaluate(element => ({
+    family: getComputedStyle(element).fontFamily,
+    sans: getComputedStyle(element).getPropertyValue('--sans-serif').trim(),
+    serif: getComputedStyle(element).getPropertyValue('--serif').trim(),
+    monospace: getComputedStyle(element).getPropertyValue('--monospace').trim(),
+  }))
+  assert.doesNotMatch(after.family, /TT Interphases Pro Variable/)
+  assert.match(after.sans, /-apple-system/)
+  assert.match(after.serif, /ui-serif/)
+  assert.match(after.monospace, /ui-monospace/)
+})
+
 // Run after the site build to exercise CSS isolation and Astro's Code renderer.
 test('theme tabs pair the package CSS with an isolated, responsive component canvas', async t => {
   const browser = await chromium.launch({ channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined })
@@ -56,12 +102,7 @@ test('theme tabs pair the package CSS with an isolated, responsive component can
   page.setDefaultTimeout(10_000)
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
-  await page.route('https://anta.test/**', async route => {
-    const path = new URL(route.request().url()).pathname
-    const file = new URL(`.${path}${path.endsWith('/') ? 'index.html' : ''}`, dist)
-    if (!file.href.startsWith(dist.href)) return route.abort()
-    await route.fulfill({ path: fileURLToPath(file) })
-  })
+  await routeBuiltSite(page)
   await page.goto('https://anta.test/theming/', { waitUntil: 'domcontentloaded' })
   const section = page.locator('details').filter({ has: page.locator('#themes') })
   assert.equal(await section.getAttribute('open'), null)

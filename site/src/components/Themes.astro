@@ -11,8 +11,8 @@ const themes = [
 ]
 ---
 <div class="themes" data-themes data-theme="antune">
-  <Tabs data-theme-tabs label="Preview theme" defaultValue="antune" options={themes.map(({ value, label }) => ({ value, label }))} />
-  <div class="columns">
+  <Tabs data-theme-tabs label="Preview theme" defaultValue="antune" priority="secondary" tone="brand" options={themes.map(({ value, label }) => ({ value, label }))} />
+  <div class="theme-stack">
     <iframe src="/theme-preview/" title="Theme component canvas" loading="lazy" data-theme-canvas></iframe>
     <div class="sources" aria-label="Theme CSS source">
       {themes.map(theme => (
@@ -24,18 +24,17 @@ const themes = [
   </div>
 </div>
 <style>
-  .themes { min-width: 0; max-width: 960px; margin-inline: auto; container: themes / inline-size; }
+  .themes { min-width: 0; max-width: 960px; margin-inline: auto; }
   .themes > :global(a-tabs) { margin-bottom: 16px; flex-wrap: wrap; }
-  .columns { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
-  iframe { display: block; width: 100%; height: 780px; border: 1px solid var(--border-4); border-radius: 8px; background: var(--bg-1); box-sizing: border-box; }
+  .theme-stack { min-width: 0; }
+  iframe { display: block; width: 100%; height: 45vh; border: 1px solid var(--border-4); border-radius: 8px 8px 0 0; background: var(--bg-1); box-sizing: border-box; }
   .sources { min-width: 0; }
-  .sources :global(.expressive-code) { margin: 0; }
-  .sources :global(pre) { max-height: 738px; overflow: auto; }
-  .sources :global(pre > code) { font-size: 12px; line-height: 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .sources :global(.expressive-code) { margin-top: 0; }
+  .sources :global(.frame.has-title:not(.is-terminal)) { display: flex; flex-direction: column; max-height: 45vh; border-top-left-radius: 0; border-top-right-radius: 0; }
+  .sources :global(.frame.has-title:not(.is-terminal) .header) { border-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
+  .sources :global(pre) { min-height: 0; overflow: auto; }
+  .sources :global(pre > code) { font-size: 11px; line-height: 130%; white-space: pre-wrap; overflow-wrap: anywhere; }
   .sources :global(.ec-line) { white-space: pre-wrap; overflow-wrap: anywhere; }
-  @container themes (min-width: 760px) {
-    .columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
 </style>
 <script>
   function syncCanvas(gallery: HTMLElement) {

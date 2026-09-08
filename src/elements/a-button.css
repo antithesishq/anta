@@ -254,7 +254,7 @@
     font-weight: 450;
     font-stretch: normal;
     line-height: var(--_lh);
-    letter-spacing: 0.05ch;
+    letter-spacing: 0.025ch;
 
     text-overflow: ellipsis;
     text-wrap: nowrap;
@@ -533,7 +533,6 @@
 
       box-shadow: none;
       font-weight: 400;
-      letter-spacing: 0.06ch;
       @media (hover: hover) and (pointer: fine) {
         &:hover {
           --button-fg: var(--button-fg-quaternary-hover);

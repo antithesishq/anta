@@ -82,11 +82,10 @@
     font-weight: 450;
     font-size: 12px;
     line-height: 16px;
-    /* Normal (mixed) case is the default — a tag is proportional, readable
-       text. Keep a small body-text tracking (Anta's 0.02ch); the wider
-       0.08ch is reserved for the `allcaps` opt-in below. */
+    /* Normal (mixed) case is the default. Theme-free tags use deliberately
+       open tracking; reference themes can tune it for their chosen font. */
     text-transform: none;
-    letter-spacing: 0.02ch;
+    letter-spacing: 0.1ch;
     /* Counts, versions, and timers keep stable figure widths with any font. */
     font-variant-numeric: lining-nums tabular-nums;
   }
@@ -264,15 +263,13 @@
     line-height: 18px;
   }
 
-  /* All-caps opt-in: switch to the uppercase treatment — wider 0.08ch
-     tracking. Uppercase
-     reads larger than mixed case at the same px, so each size steps down
+  /* All-caps opt-in: switch to the uppercase treatment. Uppercase reads
+     larger than mixed case at the same px, so each size steps down
      1px from its normal-case default (medium 12→11; small 10, large 12
      via the combos below). */
   a-tag[allcaps] {
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.08ch;
   }
   a-tag[size="small"][allcaps] {
     font-size: 10px;

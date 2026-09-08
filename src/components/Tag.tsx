@@ -31,8 +31,7 @@ export interface TagProps extends BaseProps {
    *  default — both render identically and emit no DOM attribute.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
-  /** Render in all-caps instead of the default normal (mixed) case
-   *  (uppercase tracks wider than the default body-text letter-spacing). */
+  /** Render in all-caps instead of the default normal (mixed) case. */
   allcaps?: boolean
   /** Leading icon shape. Sits flush before the label, scaled to the pill. */
   icon?: IconShape
@@ -77,9 +76,8 @@ export interface TagProps extends BaseProps {
  *   are the only numbers to tune and the `.dark` block re-tunes them. The
  *   wrapper writes `--tag-tone-source` inline; a typed `attr()` fallback
  *   picks up raw `<a-tag tone="…">` on Chrome 133+/Safari 18.2+.
- * - `allcaps` switches on the uppercase transform and widens tracking to
- *   0.08ch (the default mixed case uses the body-text 0.02ch); tabular
- *   figures stay on. Each size steps down 1px under `allcaps`
+ * - `allcaps` switches on the uppercase transform; tabular figures stay on.
+ *   Each size steps down 1px under `allcaps`
  *   (uppercase reads larger than mixed case at the same px), with height
  *   unchanged.
  *

@@ -15,6 +15,8 @@ changes are not listed.
 - Theme-free components no longer force TT Interphases stylistic sets or
   variable-font axes. Antune and Antithesis own those font-specific treatments,
   while numeric surfaces retain portable tabular figures.
+- Theme-free Buttons use `0.025ch` tracking and Tags use `0.1ch`. Antune and
+  Antithesis retain their previous font-specific tracking.
 
 ### Added
 

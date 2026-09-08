@@ -16,8 +16,8 @@
      `component/tag/{primary,secondary,tertiary}/*` set. Each tone declares
      a few hue anchors and the priority rules pick how they map to the
      fill / border / text. Text comes from Anta's theme-aware
-     `--text-3{,-tone}` tokens, so most of dark mode re-themes for free; the
-     `.dark` rules below only re-tune the alpha tints + the solid fills. */
+     `--text-3{,-tone}` tokens; `light-dark()` selects the matching tint and
+     solid-fill ramp from the nearest inherited color scheme. */
 
   a-tag {
     /* Per-tone hue anchors (neutral defaults here; the tone rules below
@@ -26,30 +26,21 @@
          --tag-bg-solid  solid hue → primary fill
          --tag-edge  deep hue  → tertiary border (= --text-2-{tone}; neutral
                                  reuses the tint, which flips light↔dark)
-       Neutral's tint is a plum-gray that flips light↔dark (see the `.dark`
-       rule); the colored tones keep one tint hue and just deepen their
-       alpha for dark mode. */
+       Neutral's tint is a plum-gray that flips light↔dark; the colored tones
+       keep one tint hue and deepen their alpha for dark mode. */
     /* Tone — the vivid tint and solid fill derive in oklch from
        --tag-tone-source (the tone's seed, or a custom literal color); text +
        edge are role tokens that already track the seed (--text-3 / --text-2).
        Constants come from the lab's Tag spec. Neutral is the base; named tones
        and a custom color re-point the source + role tokens (rules below). */
     --tag-tone-source: var(--anta-seed-neutral);
-    --_tag-tint-l: 0.55;
-    --_tag-tint-c: 0.03;
-    --_tag-solid-l: 0.55;
-    --_tag-solid-c: 0.015;
-    --tag-tint:     oklch(from var(--tag-tone-source) var(--_tag-tint-l) var(--_tag-tint-c) h);
-    --tag-bg-solid: oklch(from var(--tag-tone-source) var(--_tag-solid-l) var(--_tag-solid-c) h);
+    --tag-tint: light-dark(oklch(from var(--tag-tone-source) 0.55 0.03 h), oklch(from var(--tag-tone-source) 0.63 0.04 h));
+    --tag-bg-solid: light-dark(oklch(from var(--tag-tone-source) 0.55 0.015 h), oklch(from var(--tag-tone-source) 0.48 0.015 h));
     --tag-text: var(--text-3);
     --tag-edge: var(--text-2);
 
-    --_tag-bg-alpha: 10%;
-    --_tag-border-alpha: 15%;
-    --_tag-edge-alpha: 20%;
-
-    --tag-bg:        color-mix(in oklch, var(--tag-tint) var(--_tag-bg-alpha), transparent);
-    --tag-border:    color-mix(in oklch, var(--tag-tint) var(--_tag-border-alpha), transparent);
+    --tag-bg: light-dark(color-mix(in oklch, var(--tag-tint) 10%, transparent), color-mix(in oklch, var(--tag-tint) 20%, transparent));
+    --tag-border: light-dark(color-mix(in oklch, var(--tag-tint) 15%, transparent), color-mix(in oklch, var(--tag-tint) 25%, transparent));
     --tag-separator: color-mix(in oklch, var(--tag-text) 30%, transparent);
 
     /* 1.5px top/bottom — the extra 0.5px each side compensates for the
@@ -139,51 +130,21 @@
   /* Named tones — text uses the theme-aware `--text-3-{tone}` (self-themes
      for dark). Each tone re-points the three hue anchors: `--tag-tint`
      (vivid, for the secondary fill + secondary/primary border), `--tag-bg-solid`
-     (the solid primary fill — light value; the `.dark` block re-points it),
+     (the solid primary fill, selected for the inherited color scheme),
      and `--tag-edge` (the deep tertiary-border hue = `--text-2-{tone}`, which
      already flips for dark). Colored fill alpha is 10% (vs neutral's 7%) and
      the tertiary edge alpha is 20% (vs neutral's 25%); dark deepens them. */
   /* Colored tones — saturate tint + solid fill; text + edge become the tone's
      role tokens (they already track the seed). Alphas match the neutral base. */
   a-tag[tone]:not([tone=""], [tone="neutral"]) {
-    --_tag-tint-l: 0.57;
-    --_tag-tint-c: 0.16;
-    --_tag-solid-l: 0.58;
-    --_tag-solid-c: 0.175;
+    --tag-tint: light-dark(oklch(from var(--tag-tone-source) 0.57 0.16 h), oklch(from var(--tag-tone-source) 0.63 0.17 h));
+    --tag-bg-solid: light-dark(oklch(from var(--tag-tone-source) 0.58 0.175 h), oklch(from var(--tag-tone-source) 0.46 0.165 h));
   }
   a-tag[tone="brand"]    { --tag-tone-source: var(--anta-seed-brand);    --tag-text: var(--text-3-brand);    --tag-edge: var(--text-2-brand); }
   a-tag[tone="info"]     { --tag-tone-source: var(--anta-seed-info);     --tag-text: var(--text-3-info);     --tag-edge: var(--text-2-info); }
   a-tag[tone="success"]  { --tag-tone-source: var(--anta-seed-success);  --tag-text: var(--text-3-success);  --tag-edge: var(--text-2-success); }
   a-tag[tone="warning"]  { --tag-tone-source: var(--anta-seed-warning);  --tag-text: var(--text-3-warning);  --tag-edge: var(--text-2-warning); }
   a-tag[tone="critical"] { --tag-tone-source: var(--anta-seed-critical); --tag-text: var(--text-3-critical); --tag-edge: var(--text-2-critical); }
-
-  /* Neutral, dark — the tint flips to a light plum so it still reads as a
-     tint on the dark surface; the solid primary fill darkens; the fill alpha
-     lifts to ≈12%, border + edge stay (≈15% / ≈25%). (Scoped to the default
-     + explicit `neutral` so it never touches a colored or custom tone.) */
-  /* Neutral, dark — lift the tint lightness (reads as a light tint on the dark
-     surface), darken the solid fill, deepen the alphas. */
-  .dark a-tag:not([tone]),
-  .dark a-tag[tone="neutral"] {
-    --_tag-tint-l: 0.63;
-    --_tag-tint-c: 0.04;
-    --_tag-solid-l: 0.48;
-    --_tag-bg-alpha: 20%;
-    --_tag-border-alpha: 25%;
-    --_tag-edge-alpha: 30%;
-  }
-
-  /* Colored + custom tones, dark — lift the tint, darken the solid, deepen the
-     alphas; text/edge flip via their role tokens (or the custom oklch below). */
-  .dark a-tag[tone]:not([tone=""], [tone="neutral"]) {
-    --_tag-tint-l: 0.63;
-    --_tag-tint-c: 0.17;
-    --_tag-solid-l: 0.46;
-    --_tag-solid-c: 0.165;
-    --_tag-bg-alpha: 20%;
-    --_tag-border-alpha: 25%;
-    --_tag-edge-alpha: 30%;
-  }
 
   /* Custom tone — any non-named `tone` value. Tint + solid fill come from the
      shared colored constants + the base formula (the source pinned near Brand's
@@ -197,20 +158,15 @@
       [tone="success"], [tone="warning"], [tone="critical"]
     ) {
     --tag-tone-source: currentColor;
-    --tag-text: color-mix(in oklch, oklch(from var(--tag-tone-source) 0.43 0.15 h) 80%, transparent);
-    --tag-edge: oklch(from var(--tag-tone-source) 0.43 0.15 h);
+    --tag-text: light-dark(
+      color-mix(in oklch, oklch(from var(--tag-tone-source) 0.43 0.15 h) 80%, transparent),
+      color-mix(in oklch, oklch(from var(--tag-tone-source) 0.77 0.11 h) 80%, transparent)
+    );
+    --tag-edge: light-dark(oklch(from var(--tag-tone-source) 0.43 0.15 h), oklch(from var(--tag-tone-source) 0.77 0.11 h));
     @supports (color: attr(probe type(<color>), red)) {
       --tag-tone-source: attr(tone type(<color>), currentColor);
     }
   }
-  .dark a-tag[tone]:not(
-      [tone="neutral"], [tone="brand"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]
-    ) {
-    --tag-text: color-mix(in oklch, oklch(from var(--tag-tone-source) 0.77 0.11 h) 80%, transparent);
-    --tag-edge: oklch(from var(--tag-tone-source) 0.77 0.11 h);
-  }
-
   /* ---- Priority ----------------------------------------------------------
      `secondary` is the default (the alpha-tint formula in the base rule).
      These re-map the same per-tone hue anchors for the other two priorities;
@@ -240,7 +196,10 @@
      alpha); text stays the tone's `--text-3-{tone}`. */
   a-tag[priority="tertiary"] {
     --tag-bg: transparent;
-    --tag-border: color-mix(in oklch, var(--tag-edge) var(--_tag-edge-alpha), transparent);
+    --tag-border: light-dark(
+      color-mix(in oklch, var(--tag-edge) 20%, transparent),
+      color-mix(in oklch, var(--tag-edge) 30%, transparent)
+    );
   }
 
   a-tag[size="small"] {

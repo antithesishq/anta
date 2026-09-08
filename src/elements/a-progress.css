@@ -113,19 +113,14 @@
         [tone="success"], [tone="warning"], [tone="critical"]) {
       --progress-tone-source: attr(tone type(<color>), transparent);
 
-      --progress-bg:             oklch(from var(--progress-tone-source) 0.955 0.02 h);
-      --progress-border-color:   oklch(from var(--progress-tone-source) 0.9 0.04 h);
-      --progress-indicator-bg:   oklch(from var(--progress-tone-source) 0.935 0.03 h);
-      --progress-text-color:     oklch(from var(--progress-tone-source) 0.43 0.15 h);
-      --progress-hint-color:     color-mix(in oklch, var(--progress-text-color) 82%, transparent);
-
-      .dark & {
-        --progress-bg:           oklch(from var(--progress-tone-source) 0.185 0.05 h);
-        --progress-border-color: oklch(from var(--progress-tone-source) 0.26 0.06 h);
-        --progress-indicator-bg: oklch(from var(--progress-tone-source) 0.205 0.055 h);
-        --progress-text-color:   oklch(from var(--progress-tone-source) 0.77 0.11 h);
-        --progress-hint-color:   color-mix(in oklch, var(--progress-text-color) 80%, transparent);
-      }
+      --progress-bg: light-dark(oklch(from var(--progress-tone-source) 0.955 0.02 h), oklch(from var(--progress-tone-source) 0.185 0.05 h));
+      --progress-border-color: light-dark(oklch(from var(--progress-tone-source) 0.9 0.04 h), oklch(from var(--progress-tone-source) 0.26 0.06 h));
+      --progress-indicator-bg: light-dark(oklch(from var(--progress-tone-source) 0.935 0.03 h), oklch(from var(--progress-tone-source) 0.205 0.055 h));
+      --progress-text-color: light-dark(oklch(from var(--progress-tone-source) 0.43 0.15 h), oklch(from var(--progress-tone-source) 0.77 0.11 h));
+      --progress-hint-color: light-dark(
+        color-mix(in oklch, var(--progress-text-color) 82%, transparent),
+        color-mix(in oklch, var(--progress-text-color) 80%, transparent)
+      );
     }
   }
 
@@ -246,29 +241,12 @@
       forced-color-adjust: none;
       --progress-bg: Canvas !important;
       --progress-border-color: CanvasText !important;
-      --progress-indicator-bg: SelectedItem !important;
-      --progress-indicator-edge: SelectedItem !important;
-      --progress-indicator-edge-border: 1px solid SelectedItemText !important;
+      --progress-indicator-bg: light-dark(SelectedItem, Highlight) !important;
+      --progress-indicator-edge: light-dark(SelectedItem, Highlight) !important;
+      --progress-indicator-edge-border: 1px solid light-dark(SelectedItemText, HighlightText) !important;
       --progress-text-color: CanvasText !important;
       --progress-hint-color: CanvasText !important;
       border: 1px dotted CanvasText !important;
-    }
-
-    /* Dark palettes use the text-selection pair for the completed part. The
-       class covers Anta's explicit theme; the media query covers a system-dark
-       forced-colors palette without that class. */
-    .dark :where(a-progress, progress[data-anta]) {
-      --progress-indicator-bg: Highlight !important;
-      --progress-indicator-edge: Highlight !important;
-      --progress-indicator-edge-border: 1px solid HighlightText !important;
-    }
-  }
-
-  @media (forced-colors: active) and (prefers-color-scheme: dark) {
-    :where(a-progress, progress[data-anta]) {
-      --progress-indicator-bg: Highlight !important;
-      --progress-indicator-edge: Highlight !important;
-      --progress-indicator-edge-border: 1px solid HighlightText !important;
     }
   }
 }

@@ -19,11 +19,17 @@
     --menu-item-color: var(--text-2);
     --menu-item-icon-color: var(--text-3);
     --menu-item-hint-color: var(--text-3);
-    --menu-item-hover: 5%;
-    --menu-item-active: 8%;
+    --menu-item-hover-bg: light-dark(
+      color-mix(in oklch, currentColor 5%, transparent),
+      color-mix(in oklch, currentColor 10%, transparent)
+    );
+    --menu-item-active-bg: light-dark(
+      color-mix(in oklch, currentColor 8%, transparent),
+      color-mix(in oklch, currentColor 14%, transparent)
+    );
     /* Persistent "on" tint for a selected row — held in every state (an
        already-selected row doesn't change on hover / press). */
-    --menu-item-selected: 8%;
+    --menu-item-selected-bg: var(--menu-item-active-bg);
     /* Hover eases in quickly and eases out slower; active is instant. */
     --menu-item-timing-in: 60ms ease-in-out;
     --menu-item-timing-out: 280ms ease-out;
@@ -75,13 +81,13 @@
   /* Combobox cursor: focus stays in the filter input, so the active option can't
      use :focus — `a-menu` sets :state(active) instead. Same tint as hover/focus. */
   a-menu-item:state(active) {
-    background: color-mix(in oklch, currentColor var(--menu-item-hover), transparent);
+    background: var(--menu-item-hover-bg);
     /* Hover-enter easing (moderate, shorter). */
     transition: background-color var(--menu-item-timing-in);
   }
   a-menu-item:active,
   a[data-anta-menu-item]:active {
-    background: color-mix(in oklch, currentColor var(--menu-item-active), transparent);
+    background: var(--menu-item-active-bg);
     /* Press is instant — no transition. */
     transition: none;
   }
@@ -95,7 +101,7 @@
      boolean across renderers, and `aria-current` is the meaningful ARIA for it. */
   a-menu-item[selected],
   a[data-anta-menu-item][aria-current="true"] {
-    background: color-mix(in oklch, currentColor var(--menu-item-selected), transparent);
+    background: var(--menu-item-selected-bg);
   }
 
   a-menu-item:focus-visible,
@@ -270,16 +276,17 @@
     ) {
     --menu-item-tone-source: var(--text-2);
 
-    --menu-item-color:      oklch(from var(--menu-item-tone-source) 0.45 c h);
+    --menu-item-color: light-dark(
+      oklch(from var(--menu-item-tone-source) 0.45 c h),
+      oklch(from var(--menu-item-tone-source) 0.78 c h)
+    );
     --menu-item-icon-color: var(--menu-item-color);
     /* Hint = the label at 0.8 alpha, mirroring the named token scale
        (--menu-item-hint-color = --text-3-{tone} = --text-2-{tone} @ 0.8α). */
-    --menu-item-hint-color: oklch(from var(--menu-item-tone-source) 0.45 c h / 0.8);
-
-    .dark & {
-      --menu-item-color:      oklch(from var(--menu-item-tone-source) 0.78 c h);
-      --menu-item-hint-color: oklch(from var(--menu-item-tone-source) 0.78 c h / 0.8);
-    }
+    --menu-item-hint-color: light-dark(
+      oklch(from var(--menu-item-tone-source) 0.45 c h / 0.8),
+      oklch(from var(--menu-item-tone-source) 0.78 c h / 0.8)
+    );
     @supports (color: attr(probe type(<color>), red)) {
       --menu-item-tone-source: attr(tone type(<color>), var(--text-2));
     }
@@ -297,12 +304,5 @@
     --menu-item-hint-color: var(--text-5);
     cursor: default;
     pointer-events: none;
-  }
-
-  .dark a-menu-item,
-  .dark a[data-anta-menu-item] {
-    --menu-item-hover: 10%;
-    --menu-item-active: 14%;
-    --menu-item-selected: 14%;
   }
 }

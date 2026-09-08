@@ -126,7 +126,7 @@ export default function ThemeCanvas() {
 
         <section className={styles.group} aria-label="Typography and surfaces">
           {([1, 2, 3, 4, 5, 6] as const).map(level => <Title key={level} level={level}>Title {level}</Title>)}
-          <Text>Primary text brings the important things into focus.</Text>
+          <Text>Primary text brings the <i>important things</i> into focus.</Text>
           <Text priority="secondary">Secondary text adds context.</Text>
           <Text priority="tertiary">Tertiary text keeps the quieter details close.</Text>
           <div className={styles.swatches}>

@@ -4,7 +4,10 @@
   }
 
   a-menu {
-    --menu-bg: color-mix(in oklch, var(--bg-1) 90%, transparent);
+    --menu-bg: light-dark(
+      color-mix(in oklch, var(--bg-1) 90%, transparent),
+      color-mix(in oklch, var(--bg-1) 78%, transparent)
+    );
     --menu-radius: var(--radius-md, 8px);
     --menu-border: 1px solid var(--border-3);
     --menu-shadow:
@@ -32,10 +35,9 @@
   }
 
   .dark a-menu {
-    --menu-bg: color-mix(in oklch, var(--bg-1) 78%, transparent);
     --menu-shadow:
-      0 2px 8px color-mix(in oklch, black 50%, transparent),
-      0 12px 32px color-mix(in oklch, black 40%, transparent),
-      inset 0 0 0 1px color-mix(in oklch, white 8%, transparent);
+      0 2px 8px light-dark(color-mix(in oklch, var(--text-1) 8%, transparent), color-mix(in oklch, black 50%, transparent)),
+      0 12px 32px light-dark(color-mix(in oklch, var(--text-1) 10%, transparent), color-mix(in oklch, black 40%, transparent)),
+      inset 0 0 0 1px light-dark(transparent, color-mix(in oklch, white 8%, transparent));
   }
 }

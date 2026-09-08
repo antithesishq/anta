@@ -1,16 +1,22 @@
 /* Antithesis. Import after tokens.css and element CSS, as the only theme. */
 
-/* The reference theme uses hosted fonts by default. Override --sans-serif,
-   --serif, and/or --monospace in application CSS loaded after this file. These
-   declarations register faces but do not request them until a computed font
-   stack selects them, so the package deliberately does not add preload hints. */
 @font-face {
   font-family: "TT Interphases Pro Variable";
   src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
-  font-style: oblique 0deg 11deg;
+  font-style: normal;
   font-weight: 100 900;
   font-stretch: 75% 100%;
   font-feature-settings: "ss02", "ss05", "tnum";
+  font-display: swap;
+}
+@font-face {
+  font-family: "TT Interphases Pro Variable";
+  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-feature-settings: "ss02", "ss05", "tnum";
+  font-variation-settings: "slnt" 11;
   font-display: swap;
 }
 @font-face {
@@ -36,15 +42,13 @@
 }
 @layer anta.reset, anta.components, anta.theme;
 
-/* Default font stacks in tokens.css have zero specificity, so theme fonts win
-   regardless of stylesheet order. Later application CSS can replace them. */
 :root, .light {
   --sans-serif: "TT Interphases Pro Variable", sans-serif;
   --serif: "Stringer", serif;
   --monospace: "Antithesis Mono", ui-monospace, monospace;
 }
 
-:root:root, .light.light {
+:root, .light {
   --anta-seed-brand: #cc4636;
   --anta-seed-neutral: #65605b;
 }

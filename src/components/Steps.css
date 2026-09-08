@@ -38,8 +38,6 @@
 
   a-tabs[data-steps] {
     --steps-marker-active-border: var(--border-1);
-    --steps-primary-marker-lightness: 0.5;
-    --steps-primary-marker-chroma: 0.02;
     --steps-primary-marker-fg: #ffffff;
     --tabs-gap: 0px;
 
@@ -84,16 +82,10 @@
   }
 
   a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
-    --steps-primary-marker-chroma: 0.17;
-  }
-
-  .dark a-tabs[data-steps] {
-    --steps-primary-marker-lightness: 0.4;
-    --steps-primary-marker-chroma: 0.015;
-  }
-
-  .dark a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
-    --steps-primary-marker-chroma: 0.16;
+    --steps-primary-marker-bg: light-dark(
+      oklch(from var(--tabs-tone-source) 0.5 0.17 h),
+      oklch(from var(--tabs-tone-source) 0.4 0.16 h)
+    );
   }
 
   a-tabs[data-steps]:not([priority="secondary"], [priority="tertiary"]) {
@@ -125,10 +117,9 @@
     /* Resolve these on the individual tab, after a per-step `tone` has
        re-pointed --tabs-tone-source. A parent-level value would retain the
        strip tone and make a primary marker ignore an option override. */
-    --steps-primary-marker-bg: oklch(
-      from var(--tabs-tone-source)
-      var(--steps-primary-marker-lightness)
-      var(--steps-primary-marker-chroma) h
+    --steps-primary-marker-bg: light-dark(
+      oklch(from var(--tabs-tone-source) 0.5 0.02 h),
+      oklch(from var(--tabs-tone-source) 0.4 0.015 h)
     );
     --steps-primary-completed-marker-bg: color-mix(
       in oklch,
@@ -253,9 +244,15 @@
   /* A per-step state tone recomputes the secondary fill from that step's
      source. The fill appears only when the error step is selected. */
   a-tabs[data-steps] > a-tab[tone] {
-    --tab-secondary-bg: oklch(
-      from var(--tabs-tone-source)
-      var(--_track-l) var(--_track-c) h / var(--_sec-a)
+    --tab-secondary-bg: light-dark(
+      oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.03),
+      oklch(from var(--tabs-tone-source) 0.8 0.008 h / 0.08)
+    );
+  }
+  a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
+    --tab-secondary-bg: light-dark(
+      oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.03),
+      oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.08)
     );
   }
 

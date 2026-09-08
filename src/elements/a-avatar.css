@@ -21,7 +21,10 @@
        path (the JSX wrapper writes the source inline for a custom color). */
     --avatar-badge-tone-source: var(--anta-seed-neutral);
     --avatar-badge-chroma: 0.17;
-    --avatar-badge-color: oklch(from var(--avatar-badge-tone-source) 0.62 var(--avatar-badge-chroma) h);
+    --avatar-badge-color: light-dark(
+      oklch(from var(--avatar-badge-tone-source) 0.62 var(--avatar-badge-chroma) h),
+      oklch(from var(--avatar-badge-tone-source) 0.68 var(--avatar-badge-chroma) h)
+    );
 
     display: inline-block;
     inline-size: var(--avatar-size);
@@ -78,7 +81,12 @@
   /* Named tones point the source at the matching seed, so each dot tracks the
      theme's tone and dark mode comes from the formula below. Neutral drops the
      chroma so it reads grey rather than a tinted color. */
-  a-avatar[badge="neutral"] { --avatar-badge-chroma: 0.005; }
+  a-avatar[badge="neutral"] {
+    --avatar-badge-color: light-dark(
+      oklch(from var(--avatar-badge-tone-source) 0.62 0.005 h),
+      oklch(from var(--avatar-badge-tone-source) 0.68 0.008 h)
+    );
+  }
   a-avatar[badge="brand"] { --avatar-badge-tone-source: var(--anta-seed-brand); }
   a-avatar[badge="info"] { --avatar-badge-tone-source: var(--anta-seed-info); }
   a-avatar[badge="success"] { --avatar-badge-tone-source: var(--anta-seed-success); }
@@ -94,10 +102,4 @@
       --avatar-badge-tone-source: attr(badge type(<color>), transparent);
     }
   }
-
-  .dark a-avatar {
-    --avatar-badge-color: oklch(from var(--avatar-badge-tone-source) 0.68 var(--avatar-badge-chroma) h);
-  }
-
-  .dark a-avatar[badge="neutral"] { --avatar-badge-chroma: 0.008; }
 }

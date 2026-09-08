@@ -1,5 +1,5 @@
 ---
-import '@antadesign/anta/bundle.css'
+import antaStylesheet from '@antadesign/anta/bundle.css?url'
 import ThemeCanvas from '../components/ThemeCanvas'
 ---
 <!doctype html>
@@ -9,6 +9,7 @@ import ThemeCanvas from '../components/ThemeCanvas'
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
     <title>Theme preview</title>
+    <link rel="stylesheet" href={antaStylesheet} />
     <link id="preview-theme" rel="stylesheet" href="/themes/antune.css" />
     <script is:inline>
       if (window.parent !== window) {

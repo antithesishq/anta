@@ -72,12 +72,20 @@ test('font-specific features and variation axes stay out of core styles', async 
 test('reference font descriptors expose supported TT Interphases axes', async () => {
   for (const theme of ['antune', 'antithesis']) {
     const source = await readFile(new URL(`../src/theme-${theme}.css`, import.meta.url), 'utf8')
-    const face = source.match(/@font-face \{[\s\S]*?\}/)?.[0] ?? ''
-    assert.match(face, /font-style: oblique 0deg 11deg/)
-    assert.match(face, /font-weight: 100 900/)
-    assert.match(face, /font-stretch: 75% 100%/)
-    assert.match(face, /font-feature-settings: "ss02", "ss05", "tnum"/)
-    assert.doesNotMatch(face, /font-optical-sizing|font-variation-settings|"ital"/)
+    const faces = [...source.matchAll(/@font-face \{[\s\S]*?\}/g)]
+      .map(([face]) => face)
+      .filter(face => face.includes('font-family: "TT Interphases Pro Variable"'))
+    assert.equal(faces.length, 2)
+    const normal = faces.find(face => /font-style: normal/.test(face)) ?? ''
+    const italic = faces.find(face => /font-style: italic/.test(face)) ?? ''
+    for (const face of faces) {
+      assert.match(face, /font-weight: 100 900/)
+      assert.match(face, /font-stretch: 75% 100%/)
+      assert.match(face, /font-feature-settings: "ss02", "ss05", "tnum"/)
+      assert.doesNotMatch(face, /font-optical-sizing|"ital"/)
+    }
+    assert.doesNotMatch(normal, /font-variation-settings/)
+    assert.match(italic, /font-variation-settings: "slnt" 11/)
   }
 })
 

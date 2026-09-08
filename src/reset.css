@@ -116,13 +116,9 @@
 
   mark {
     color: color-mix(in oklch, black 90%, transparent);
-    background-color: hsl(55 100% 61.85%);
+    background-color: light-dark(hsl(55 100% 61.85%), hsl(55 100% 35%));
     border-radius: 2px;
   }
-  .dark mark {
-    background-color: hsl(55 100% 35%);
-  }
-
   del {
     color: var(--text-2-critical);
     text-decoration: line-through;
@@ -172,14 +168,13 @@
     font-size: 0.933em;
     line-height: 1em;
     color: inherit;
-    background: color-mix(in oklch, currentColor 6%, transparent);
+    background: light-dark(
+      color-mix(in oklch, currentColor 6%, transparent),
+      color-mix(in oklch, currentColor 10%, transparent)
+    );
     border: none;
     padding: 0.25em 0.4ch 0.2em;
     border-radius: 3px;
-  }
-
-  .dark :not(pre) > code {
-    background: color-mix(in oklch, currentColor 10%, transparent);
   }
 
   /* Scroll long lines within the code block. */
@@ -291,10 +286,10 @@
   /* Text selection — the focus-ring color, tuned per theme (20% light / 30%
      dark; the ring reads lighter on a dark surface, so it needs more presence). */
   ::selection {
-    background: color-mix(in oklch, var(--focus-ring) 20%, transparent);
-  }
-  .dark ::selection {
-    background: color-mix(in oklch, var(--focus-ring) 30%, transparent);
+    background: light-dark(
+      color-mix(in oklch, var(--focus-ring) 20%, transparent),
+      color-mix(in oklch, var(--focus-ring) 30%, transparent)
+    );
   }
 
   /* ───── Tables ───────────────────────────────────────────────── */

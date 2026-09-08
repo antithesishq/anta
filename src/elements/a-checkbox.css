@@ -18,12 +18,9 @@
        (rules below). Default tone is neutral. */
     --checkbox-tone-source: var(--anta-seed-neutral);
     --checkbox-off-tone-source: var(--anta-seed-neutral);
-    --_tone-l-rest: 0.6;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.4;
-    --checkbox-bg-selected:        oklch(from var(--checkbox-tone-source) var(--_tone-l-rest) c h);
-    --checkbox-bg-selected-hover:  oklch(from var(--checkbox-tone-source) var(--_tone-l-hover) c h);
-    --checkbox-bg-selected-active: oklch(from var(--checkbox-tone-source) var(--_tone-l-active) c h);
+    --checkbox-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.6 c h), oklch(from var(--checkbox-tone-source) 0.42 c h));
+    --checkbox-bg-selected-hover: oklch(from var(--checkbox-tone-source) 0.45 c h);
+    --checkbox-bg-selected-active: light-dark(oklch(from var(--checkbox-tone-source) 0.4 c h), oklch(from var(--checkbox-tone-source) 0.5 c h));
 
     /* Unselected box border: neutral role-token greys by default (1.5px). Named
        tinted tones + a custom color derive the resting fill + border from the
@@ -33,10 +30,10 @@
     --checkbox-border-hover: var(--border-2);
     --checkbox-border-active: var(--border-1);
 
-    --checkbox-icon: #f6f4f6;
-    --checkbox-icon-disabled: #c1b9c1;
-    --checkbox-bg-disabled: color-mix(in oklch, #44374b 10%, transparent);
-    --checkbox-border-disabled: color-mix(in oklch, #44374b 10%, transparent);
+    --checkbox-icon: light-dark(#f6f4f6, #ece9ec);
+    --checkbox-icon-disabled: light-dark(#c1b9c1, #534c57);
+    --checkbox-bg-disabled: light-dark(color-mix(in oklch, #44374b 10%, transparent), color-mix(in oklch, #e4d1ef 10%, transparent));
+    --checkbox-border-disabled: var(--checkbox-bg-disabled);
 
     /* The glyph (::after mark): its size and the check / minus mask images, exposed
        so a consumer can resize or swap the mark. The keyboard focus ring uses the
@@ -236,9 +233,9 @@
      the base greys; the default omits the attribute. */
   a-checkbox[tone]:not([tone=""], [tone="neutral"]),
   a-checkbox[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
-    --_tone-l-rest: 0.5;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.4;
+    --checkbox-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.5 c h), oklch(from var(--checkbox-tone-source) 0.45 c h));
+    --checkbox-bg-selected-hover: light-dark(oklch(from var(--checkbox-tone-source) 0.45 c h), oklch(from var(--checkbox-tone-source) 0.5 c h));
+    --checkbox-bg-selected-active: light-dark(oklch(from var(--checkbox-tone-source) 0.4 c h), oklch(from var(--checkbox-tone-source) 0.57 c h));
   }
   a-checkbox[tone="brand"]    { --checkbox-tone-source: var(--anta-seed-brand); --checkbox-off-tone-source: var(--anta-seed-brand); }
   a-checkbox[tone="info"]     { --checkbox-tone-source: var(--anta-seed-info); --checkbox-off-tone-source: var(--anta-seed-info); }
@@ -252,12 +249,12 @@
      stepped off the fill. Named tones + custom colors reach this; neutral and
      every tone-selected keep the neutral off-box border. */
   a-checkbox[tone]:not([tone=""], [tone="neutral"]) {
-    --checkbox-bg: oklch(from var(--checkbox-off-tone-source) 0.99 calc(c * 0.03) h);
-    --_checkbox-off-bg-selected: oklch(from var(--checkbox-off-tone-source) var(--_tone-l-rest) c h);
+    --checkbox-bg: light-dark(oklch(from var(--checkbox-off-tone-source) 0.99 calc(c * 0.03) h), oklch(from var(--checkbox-off-tone-source) 0.15 calc(c * 0.18) h));
+    --_checkbox-off-bg-selected: var(--checkbox-bg-selected);
     --_checkbox-border-base: color-mix(in oklch, var(--_checkbox-off-bg-selected) 70%, var(--checkbox-border-neutral));
-    --checkbox-border:        oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
+    --checkbox-border: light-dark(oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h), var(--_checkbox-border-base));
     --checkbox-border-hover:  oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
-    --checkbox-border-active: var(--_checkbox-border-base);
+    --checkbox-border-active: light-dark(var(--_checkbox-border-base), oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h));
   }
 
   /* A non-named `tone` is a literal CSS color. Every named value must be listed in
@@ -284,9 +281,9 @@
   a-checkbox[tone-selected="critical"] { --checkbox-tone-source: var(--anta-seed-critical); }
   a-checkbox[tone-selected="neutral"] {
     --checkbox-tone-source: var(--anta-seed-neutral);
-    --_tone-l-rest: 0.6;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.4;
+    --checkbox-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.6 c h), oklch(from var(--checkbox-tone-source) 0.42 c h));
+    --checkbox-bg-selected-hover: oklch(from var(--checkbox-tone-source) 0.45 c h);
+    --checkbox-bg-selected-active: light-dark(oklch(from var(--checkbox-tone-source) 0.4 c h), oklch(from var(--checkbox-tone-source) 0.5 c h));
   }
   a-checkbox[tone-selected]:not(
       [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
@@ -295,38 +292,6 @@
     @supports (color: attr(probe type(<color>), red)) {
       --checkbox-tone-source: attr(tone-selected type(<color>), transparent);
     }
-  }
-
-  /* Dark — neutral chrome + brighter fill/tinted-box lightnesses. Constants from
-     the lab; the fill + tinted-box formulas (above) recompute against them. */
-  .dark a-checkbox {
-    --checkbox-border-neutral: var(--border-3);
-    --checkbox-border-hover: var(--border-2);
-    --checkbox-border-active: var(--border-1);
-    --checkbox-icon: #ece9ec;
-    --checkbox-icon-disabled: #534c57;
-    --checkbox-bg-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
-    --checkbox-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
-    --_tone-l-rest: 0.42;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.5;
-  }
-  .dark a-checkbox[tone]:not([tone=""], [tone="neutral"]),
-  .dark a-checkbox[tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
-    --_tone-l-rest: 0.45;
-    --_tone-l-hover: 0.5;
-    --_tone-l-active: 0.57;
-  }
-  .dark a-checkbox[tone]:not([tone=""], [tone="neutral"]) {
-    --checkbox-bg: oklch(from var(--checkbox-off-tone-source) 0.15 calc(c * 0.18) h);
-    --checkbox-border:        var(--_checkbox-border-base);
-    --checkbox-border-hover:  oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
-    --checkbox-border-active: oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
-  }
-  .dark a-checkbox[tone-selected="neutral"] {
-    --_tone-l-rest: 0.42;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.5;
   }
 
   /* A native checkbox can opt into the same compact control surface with
@@ -354,12 +319,9 @@
     --checkbox-border-active: var(--border-1);
     --checkbox-tone-source: var(--anta-seed-neutral);
     --checkbox-off-tone-source: var(--anta-seed-neutral);
-    --_tone-l-rest: 0.6;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.4;
-    --checkbox-bg-selected:        oklch(from var(--checkbox-tone-source) var(--_tone-l-rest) c h);
-    --checkbox-bg-selected-hover:  oklch(from var(--checkbox-tone-source) var(--_tone-l-hover) c h);
-    --checkbox-bg-selected-active: oklch(from var(--checkbox-tone-source) var(--_tone-l-active) c h);
+    --checkbox-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.6 c h), oklch(from var(--checkbox-tone-source) 0.42 c h));
+    --checkbox-bg-selected-hover: oklch(from var(--checkbox-tone-source) 0.45 c h);
+    --checkbox-bg-selected-active: light-dark(oklch(from var(--checkbox-tone-source) 0.4 c h), oklch(from var(--checkbox-tone-source) 0.5 c h));
 
     box-sizing: border-box;
     flex: 0 0 var(--checkbox-box-size);
@@ -405,9 +367,9 @@
   }
   input[data-anta][type="checkbox"][tone]:not([tone=""], [tone="neutral"]),
   input[data-anta][type="checkbox"][tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
-    --_tone-l-rest: 0.5;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.4;
+    --checkbox-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.5 c h), oklch(from var(--checkbox-tone-source) 0.45 c h));
+    --checkbox-bg-selected-hover: light-dark(oklch(from var(--checkbox-tone-source) 0.45 c h), oklch(from var(--checkbox-tone-source) 0.5 c h));
+    --checkbox-bg-selected-active: light-dark(oklch(from var(--checkbox-tone-source) 0.4 c h), oklch(from var(--checkbox-tone-source) 0.57 c h));
   }
   input[data-anta][type="checkbox"][tone="brand"]    { --checkbox-tone-source: var(--anta-seed-brand); --checkbox-off-tone-source: var(--anta-seed-brand); }
   input[data-anta][type="checkbox"][tone="info"]     { --checkbox-tone-source: var(--anta-seed-info); --checkbox-off-tone-source: var(--anta-seed-info); }
@@ -416,12 +378,12 @@
   input[data-anta][type="checkbox"][tone="critical"] { --checkbox-tone-source: var(--anta-seed-critical); --checkbox-off-tone-source: var(--anta-seed-critical); }
   input[data-anta][type="checkbox"][tone="neutral"]  { --checkbox-tone-source: var(--anta-seed-neutral); --checkbox-off-tone-source: var(--anta-seed-neutral); }
   input[data-anta][type="checkbox"][tone]:not([tone=""], [tone="neutral"]) {
-    --checkbox-bg: oklch(from var(--checkbox-off-tone-source) 0.99 calc(c * 0.03) h);
-    --_checkbox-off-bg-selected: oklch(from var(--checkbox-off-tone-source) var(--_tone-l-rest) c h);
+    --checkbox-bg: light-dark(oklch(from var(--checkbox-off-tone-source) 0.99 calc(c * 0.03) h), oklch(from var(--checkbox-off-tone-source) 0.15 calc(c * 0.18) h));
+    --_checkbox-off-bg-selected: var(--checkbox-bg-selected);
     --_checkbox-border-base: color-mix(in oklch, var(--_checkbox-off-bg-selected) 70%, var(--checkbox-border-neutral));
-    --checkbox-border: oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
+    --checkbox-border: light-dark(oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h), var(--_checkbox-border-base));
     --checkbox-border-hover: oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
-    --checkbox-border-active: var(--_checkbox-border-base);
+    --checkbox-border-active: light-dark(var(--_checkbox-border-base), oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h));
   }
   input[data-anta][type="checkbox"][tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
@@ -440,9 +402,9 @@
   input[data-anta][type="checkbox"][tone-selected="critical"] { --checkbox-tone-source: var(--anta-seed-critical); }
   input[data-anta][type="checkbox"][tone-selected="neutral"] {
     --checkbox-tone-source: var(--anta-seed-neutral);
-    --_tone-l-rest: 0.6;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.4;
+    --checkbox-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.6 c h), oklch(from var(--checkbox-tone-source) 0.42 c h));
+    --checkbox-bg-selected-hover: oklch(from var(--checkbox-tone-source) 0.45 c h);
+    --checkbox-bg-selected-active: light-dark(oklch(from var(--checkbox-tone-source) 0.4 c h), oklch(from var(--checkbox-tone-source) 0.5 c h));
   }
   input[data-anta][type="checkbox"][tone-selected]:not(
       [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
@@ -490,29 +452,6 @@
   input[data-anta][type="checkbox"]:disabled:is(:checked, :indeterminate) {
     background-color: color-mix(in oklch, var(--text-1) 10%, transparent);
   }
-  .dark input[data-anta][type="checkbox"] {
-    --_tone-l-rest: 0.42;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.5;
-  }
-  .dark input[data-anta][type="checkbox"][tone]:not([tone=""], [tone="neutral"]),
-  .dark input[data-anta][type="checkbox"][tone-selected]:not([tone-selected=""], [tone-selected="neutral"]) {
-    --_tone-l-rest: 0.45;
-    --_tone-l-hover: 0.5;
-    --_tone-l-active: 0.57;
-  }
-  .dark input[data-anta][type="checkbox"][tone]:not([tone=""], [tone="neutral"]) {
-    --checkbox-bg: oklch(from var(--checkbox-off-tone-source) 0.15 calc(c * 0.18) h);
-    --checkbox-border: var(--_checkbox-border-base);
-    --checkbox-border-hover: oklch(from var(--_checkbox-border-base) calc(l + 0.1) c h);
-    --checkbox-border-active: oklch(from var(--_checkbox-border-base) calc(l + 0.17) c h);
-  }
-  .dark input[data-anta][type="checkbox"][tone-selected="neutral"] {
-    --_tone-l-rest: 0.42;
-    --_tone-l-hover: 0.45;
-    --_tone-l-active: 0.5;
-  }
-
   /* The custom checkmark is a mask painted by ::after. In forced colors, pair
      the selected box with HighlightText explicitly so the glyph cannot be
      remapped to the same color as its Highlight fill. */

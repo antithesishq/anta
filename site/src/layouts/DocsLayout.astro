@@ -1,7 +1,8 @@
 ---
-// The full Anta stylesheet is render-blocking so token, host, and composed
-// wrapper styles paint before the client-side runtime registers elements.
-import '@antadesign/anta/bundle.css'
+// Render the full Anta stylesheet explicitly before the palette link. Astro
+// otherwise emits imported CSS after authored head links, which would let the
+// default unlayered tokens override the selected theme.
+import antaStylesheet from '@antadesign/anta/bundle.css?url'
 import '../styles/base.css'
 // Docs-site-only extra icon shapes (generated via Anta's generate-icons
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
@@ -131,6 +132,7 @@ if (isComponentPage && title) {
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <link rel="icon" type="image/svg+xml" href="/anta-favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href={antaStylesheet} />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content={pageUrl} />

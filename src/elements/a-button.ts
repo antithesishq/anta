@@ -47,8 +47,8 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   secondary is declared unscoped so a bare `a-button` consumer selector
  *   can override it without bumping specificity; primary/tertiary/quaternary
  *   match an explicit `[priority]` and win on specificity. Secondary's rest
- *   label is darkened by `--button-fg-secondary-l-shift` oklch lightness
- *   (0.05 light mode, zeroed in dark) at the `--button-fg` wiring, so it
+ *   label is darkened by 0.05 oklch lightness in light mode at the
+ *   `--button-fg` wiring, while `light-dark()` keeps the dark label unchanged, so it
  *   covers named and custom tones alike; secondary also carries a 1px
  *   hairline box-shadow in the current fg tone at 50% alpha, which the
  *   other priorities cancel in their own blocks. `[selected]` adds a 1px
@@ -59,8 +59,8 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   contrast.
  * - **Custom tones** (any non-named `tone` value): primary uses the literal
  *   color; other priorities derive from the source HUE via oklch relative
- *   color with lightness/chroma/alpha pinned near Brand. The `--_tone-*`
- *   knobs are the only numbers to tune (the `.dark` block re-tunes them).
+ *   color with lightness/chroma/alpha pinned near Brand. `light-dark()` selects
+ *   the matching output ramp from the nearest inherited color scheme.
  *   The JSX wrapper writes `--button-tone-source` inline; a typed `attr()`
  *   fallback picks up raw `<a-button tone="…">` on Chrome 133+/Safari 18.2+.
  * - **Hover is gated** to `(hover: hover) and (pointer: fine)` so it doesn't
@@ -86,7 +86,7 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   `animation-delay` desyncs instances so a row doesn't pulse in lockstep.
  * - **Disabled** sets `background-color`/`color` directly (not the vars) so
  *   an inline `--button-bg` override can't keep a disabled button alive, and
- *   skips transitions — a `.dark` toggle would flash the tone hue
+ *   skips transitions — a color-mode toggle would flash the tone hue
  *   mid-resolve.
  */
 export class AButtonElement extends HTMLElementBase {

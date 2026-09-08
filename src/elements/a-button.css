@@ -13,10 +13,10 @@
   input[data-anta]:is([type="reset"], [type="submit"]) {
     --button-primary-fg: #ffffff;
 
-    --bg-primary-disabled: #ece9ec;
-    --bg-secondary-disabled: #f6f4f6;
-    --fg-disabled-primary: #afa9b1;
-    --fg-disabled: #afa9b1;
+    --bg-primary-disabled: light-dark(#ece9ec, #272329);
+    --bg-secondary-disabled: light-dark(#f6f4f6, #1d1a1e);
+    --fg-disabled-primary: light-dark(#afa9b1, #776e77);
+    --fg-disabled: light-dark(#afa9b1, #635b65);
 
     --button-loading-stripe: 14px;
     --button-loading-stripe-gap: 16px;
@@ -32,50 +32,31 @@
     --button-loading-blur: 5px;
 
     /* Tone — every priority/state is derived in oklch from --_src (the tone's
-       seed, or a custom literal color) with the per-tone --_tone-* constants
-       below. Neutral is the base: its seed is near-grey, so the same formula
-       greys out. Named tones point --_src at their seed and saturate the
-       constants; a custom `tone="<color>"` points --_src at the literal. The
-       constants come from the theming lab's Button spec (the generative source
-       of truth). */
+       seed, or a custom literal color). Neutral is the base: its seed is
+       near-grey, so the same formula greys out. Named tones point --_src at
+       their seed and use the saturated formulas below; a custom `tone="<color>"`
+       points --_src at the literal. */
     --_src: var(--anta-seed-neutral);
 
-    --_tone-pl-rest: 0.5;
-    --_tone-pl-hover: 0.45;
-    --_tone-pl-active: 0.4;
-    --_tone-pl-c: 0.02;
-    --_tone-fg-l: 0.46;
-    --_tone-fg-strong-l: 0.4;
-    --_tone-fg-c: 0.008;
-    --_tone-fg-shift: 0.05;
-    --_tone-bg-l: 0.54;
-    --_tone-bg-c: 0.03;
-    --_tone-a-rest: 0.1;
-    --_tone-a-hover: 0.15;
-    --_tone-a-active: 0.2;
-    --_tone-quat-hover-l: 0.38;
-    --_tone-quat-rest-a: 0.85;
-
-    --button-bg-primary-rest:   oklch(from var(--_src) var(--_tone-pl-rest) var(--_tone-pl-c) h);
-    --button-bg-primary-hover:  oklch(from var(--_src) var(--_tone-pl-hover) var(--_tone-pl-c) h);
-    --button-bg-primary-active: oklch(from var(--_src) var(--_tone-pl-active) var(--_tone-pl-c) h);
+    --button-bg-primary-rest: light-dark(oklch(from var(--_src) 0.5 0.02 h), oklch(from var(--_src) 0.4 0.015 h));
+    --button-bg-primary-hover: light-dark(oklch(from var(--_src) 0.45 0.02 h), oklch(from var(--_src) 0.44 0.015 h));
+    --button-bg-primary-active: light-dark(oklch(from var(--_src) 0.4 0.02 h), oklch(from var(--_src) 0.48 0.015 h));
     --button-fg-primary-rest: var(--button-primary-fg);
 
-    --button-fg-secondary-rest:   oklch(from var(--_src) var(--_tone-fg-l) var(--_tone-fg-c) h);
-    --button-fg-secondary-hover:  oklch(from var(--_src) var(--_tone-fg-strong-l) var(--_tone-fg-c) h);
-    --button-fg-secondary-l-shift: var(--_tone-fg-shift);
+    --button-fg-secondary-rest: light-dark(oklch(from var(--_src) 0.46 0.008 h), oklch(from var(--_src) 0.86 0.015 h));
+    --button-fg-secondary-hover: light-dark(oklch(from var(--_src) 0.4 0.008 h), oklch(from var(--_src) 0.86 0.015 h));
 
-    --button-fg-tertiary-rest:  oklch(from var(--_src) var(--_tone-fg-l) var(--_tone-fg-c) h);
-    --button-fg-tertiary-hover: oklch(from var(--_src) var(--_tone-fg-strong-l) var(--_tone-fg-c) h);
-    --button-bg-tertiary-hover:  oklch(from var(--_src) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-a-rest));
-    --button-bg-tertiary-active: oklch(from var(--_src) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-a-hover));
+    --button-fg-tertiary-rest: var(--button-fg-secondary-rest);
+    --button-fg-tertiary-hover: var(--button-fg-secondary-hover);
+    --button-bg-tertiary-hover: light-dark(oklch(from var(--_src) 0.54 0.03 h / 0.1), oklch(from var(--_src) 0.44 0.01 h / 0.24));
+    --button-bg-tertiary-active: light-dark(oklch(from var(--_src) 0.54 0.03 h / 0.15), oklch(from var(--_src) 0.44 0.01 h / 0.34));
 
-    --button-fg-quaternary-rest:  oklch(from var(--_src) var(--_tone-fg-l) var(--_tone-fg-c) h / var(--_tone-quat-rest-a));
-    --button-fg-quaternary-hover: oklch(from var(--_src) var(--_tone-quat-hover-l) var(--_tone-fg-c) h);
+    --button-fg-quaternary-rest: light-dark(oklch(from var(--_src) 0.46 0.008 h / 0.85), oklch(from var(--_src) 0.86 0.015 h / 0.85));
+    --button-fg-quaternary-hover: light-dark(oklch(from var(--_src) 0.38 0.008 h), oklch(from var(--_src) 0.9 0.015 h));
 
-    --button-bg-secondary-rest:   oklch(from var(--_src) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-a-rest));
-    --button-bg-secondary-hover:  oklch(from var(--_src) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-a-hover));
-    --button-bg-secondary-active: oklch(from var(--_src) var(--_tone-bg-l) var(--_tone-bg-c) h / var(--_tone-a-active));
+    --button-bg-secondary-rest: light-dark(oklch(from var(--_src) 0.54 0.03 h / 0.1), oklch(from var(--_src) 0.44 0.01 h / 0.24));
+    --button-bg-secondary-hover: light-dark(oklch(from var(--_src) 0.54 0.03 h / 0.15), oklch(from var(--_src) 0.44 0.01 h / 0.34));
+    --button-bg-secondary-active: light-dark(oklch(from var(--_src) 0.54 0.03 h / 0.2), oklch(from var(--_src) 0.44 0.01 h / 0.44));
 
     /* Type scale by size (small 13/16 · medium 15/20 · large 17/24); --_fs/--_lh
        carry it. The label gets an optical `padding-bottom` (--_pb) that scales
@@ -115,29 +96,25 @@
     }
   }
 
-  /* Colored tones — saturate the fill/tint and nudge the primary lightness.
-     Full constant set (not deltas) so the highest-specificity matching rule
-     across the neutral/colored × light/dark matrix fully determines every
-     constant. */
+  /* Colored tones — saturate the fill, foreground, and tint formulas. */
   a-button[tone]:not([tone=""], [tone="neutral"]),
   a[role="button"][data-anta][tone]:not([tone=""], [tone="neutral"]),
   button[data-anta][tone]:not([tone=""], [tone="neutral"]),
   input[data-anta]:is([type="reset"], [type="submit"])[tone]:not([tone=""], [tone="neutral"]) {
-    --_tone-pl-rest: 0.51;
-    --_tone-pl-hover: 0.46;
-    --_tone-pl-active: 0.41;
-    --_tone-pl-c: 0.17;
-    --_tone-fg-l: 0.46;
-    --_tone-fg-strong-l: 0.4;
-    --_tone-fg-c: 0.17;
-    --_tone-fg-shift: 0.05;
-    --_tone-bg-l: 0.54;
-    --_tone-bg-c: 0.17;
-    --_tone-a-rest: 0.1;
-    --_tone-a-hover: 0.15;
-    --_tone-a-active: 0.2;
-    --_tone-quat-hover-l: 0.38;
-    --_tone-quat-rest-a: 0.85;
+    --button-bg-primary-rest: light-dark(oklch(from var(--_src) 0.51 0.17 h), oklch(from var(--_src) 0.4 0.16 h));
+    --button-bg-primary-hover: light-dark(oklch(from var(--_src) 0.46 0.17 h), oklch(from var(--_src) 0.44 0.16 h));
+    --button-bg-primary-active: light-dark(oklch(from var(--_src) 0.41 0.17 h), oklch(from var(--_src) 0.48 0.16 h));
+    --button-fg-secondary-rest: light-dark(oklch(from var(--_src) 0.46 0.17 h), oklch(from var(--_src) 0.86 0.13 h));
+    --button-fg-secondary-hover: light-dark(oklch(from var(--_src) 0.4 0.17 h), oklch(from var(--_src) 0.86 0.13 h));
+    --button-fg-tertiary-rest: var(--button-fg-secondary-rest);
+    --button-fg-tertiary-hover: var(--button-fg-secondary-hover);
+    --button-bg-tertiary-hover: light-dark(oklch(from var(--_src) 0.54 0.17 h / 0.1), oklch(from var(--_src) 0.58 0.16 h / 0.215));
+    --button-bg-tertiary-active: light-dark(oklch(from var(--_src) 0.54 0.17 h / 0.15), oklch(from var(--_src) 0.58 0.16 h / 0.29));
+    --button-fg-quaternary-rest: light-dark(oklch(from var(--_src) 0.46 0.17 h / 0.85), oklch(from var(--_src) 0.86 0.13 h / 0.85));
+    --button-fg-quaternary-hover: light-dark(oklch(from var(--_src) 0.38 0.17 h), oklch(from var(--_src) 0.9 0.13 h));
+    --button-bg-secondary-rest: light-dark(oklch(from var(--_src) 0.54 0.17 h / 0.1), oklch(from var(--_src) 0.58 0.16 h / 0.215));
+    --button-bg-secondary-hover: light-dark(oklch(from var(--_src) 0.54 0.17 h / 0.15), oklch(from var(--_src) 0.58 0.16 h / 0.29));
+    --button-bg-secondary-active: light-dark(oklch(from var(--_src) 0.54 0.17 h / 0.2), oklch(from var(--_src) 0.58 0.16 h / 0.34));
   }
 
   /* Named tones point --_src at their seed; the constants above apply. */
@@ -158,55 +135,6 @@
     @supports (color: attr(probe type(<color>), red)) {
       --_src: var(--button-tone-source, attr(tone type(<color>), transparent));
     }
-  }
-
-  .dark a-button,
-  .dark a[role="button"][data-anta],
-  .dark button[data-anta],
-  .dark input[data-anta]:is([type="reset"], [type="submit"]) {
-    --bg-primary-disabled: #272329;
-    --bg-secondary-disabled: #1d1a1e;
-    --fg-disabled-primary: #776e77;
-    --fg-disabled: #635b65;
-
-    /* Dark neutral tone constants */
-    --_tone-pl-rest: 0.4;
-    --_tone-pl-hover: 0.44;
-    --_tone-pl-active: 0.48;
-    --_tone-pl-c: 0.015;
-    --_tone-fg-l: 0.86;
-    --_tone-fg-strong-l: 0.86;
-    --_tone-fg-c: 0.015;
-    --_tone-fg-shift: 0;
-    --_tone-bg-l: 0.44;
-    --_tone-bg-c: 0.01;
-    --_tone-a-rest: 0.24;
-    --_tone-a-hover: 0.34;
-    --_tone-a-active: 0.44;
-    --_tone-quat-hover-l: 0.9;
-    --_tone-quat-rest-a: 0.85;
-  }
-
-  /* Dark colored tone constants */
-  .dark a-button[tone]:not([tone=""], [tone="neutral"]),
-  .dark a[role="button"][data-anta][tone]:not([tone=""], [tone="neutral"]),
-  .dark button[data-anta][tone]:not([tone=""], [tone="neutral"]),
-  .dark input[data-anta]:is([type="reset"], [type="submit"])[tone]:not([tone=""], [tone="neutral"]) {
-    --_tone-pl-rest: 0.4;
-    --_tone-pl-hover: 0.44;
-    --_tone-pl-active: 0.48;
-    --_tone-pl-c: 0.16;
-    --_tone-fg-l: 0.86;
-    --_tone-fg-strong-l: 0.86;
-    --_tone-fg-c: 0.13;
-    --_tone-fg-shift: 0;
-    --_tone-bg-l: 0.58;
-    --_tone-bg-c: 0.16;
-    --_tone-a-rest: 0.215;
-    --_tone-a-hover: 0.29;
-    --_tone-a-active: 0.34;
-    --_tone-quat-hover-l: 0.9;
-    --_tone-quat-rest-a: 0.85;
   }
 
   /* Native buttons and submit/reset inputs opt in with `data-anta`. The shared
@@ -473,7 +401,10 @@
       }
     }
 
-    --button-fg: oklch(from var(--button-fg-secondary-rest) calc(l - var(--button-fg-secondary-l-shift)) c h);
+    --button-fg: light-dark(
+      oklch(from var(--button-fg-secondary-rest) calc(l - 0.05) c h),
+      var(--button-fg-secondary-rest)
+    );
     --button-bg: var(--button-bg-secondary-rest);
 
     @media (hover: hover) and (pointer: fine) {

@@ -60,8 +60,8 @@
      secondary and the fainter (alpha-stepped) priorities resolve from. */
   a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
     --title-tone-source: currentColor;
-    --_title-tone: oklch(from var(--title-tone-source) 0.41 0.15 h);
-    color: oklch(from var(--title-tone-source) 0.33 0.15 h);
+    --_title-tone: light-dark(oklch(from var(--title-tone-source) 0.41 0.15 h), oklch(from var(--title-tone-source) 0.75 0.11 h));
+    color: light-dark(oklch(from var(--title-tone-source) 0.33 0.15 h), oklch(from var(--title-tone-source) 0.82 0.10 h));
     @supports (color: attr(probe type(<color>), red)) {
       --title-tone-source: attr(tone type(<color>), currentColor);
     }
@@ -69,9 +69,4 @@
   a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="secondary"]  { color: var(--_title-tone); }
   a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="tertiary"]   { color: color-mix(in oklch, var(--_title-tone) 80%, transparent); }
   a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="quaternary"] { color: color-mix(in oklch, var(--_title-tone) 60%, transparent); }
-  /* Dark: re-tune the base + the distinct primary; the others follow --_title-tone. */
-  .dark a-title[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
-    --_title-tone: oklch(from var(--title-tone-source) 0.75 0.11 h);
-    color: oklch(from var(--title-tone-source) 0.82 0.10 h);
-  }
 }

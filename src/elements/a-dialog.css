@@ -13,7 +13,10 @@
 
     /* The hairline border is drawn as the first (inset) layer of the composed
        box-shadow below, so it sits inside the radius and never adds to layout. */
-    --dialog-border: color-mix(in oklch, black 9%, transparent);
+    --dialog-border: light-dark(
+      color-mix(in oklch, black 9%, transparent),
+      color-mix(in oklch, white 14%, transparent)
+    );
 
     --dialog-radius: 10px;
 
@@ -27,7 +30,10 @@
       0 28px 64px color-mix(in oklch, black 14%, transparent);
 
     /* The dimmed overlay behind the dialog — black, a touch deeper in dark mode. */
-    --dialog-overlay: color-mix(in oklch, black 42%, transparent);
+    --dialog-overlay: light-dark(
+      color-mix(in oklch, black 42%, transparent),
+      color-mix(in oklch, black 62%, transparent)
+    );
 
     /* The host itself contributes no box: the dialog renders in the top layer,
        and its slotted children project into the shadow dialog, not the page. */
@@ -57,13 +63,11 @@
   .dark a-dialog {
     /* A light hairline reads better than a dark one against a dark surface, and
        the drop shadows go deeper to keep the sheet legible over the overlay. */
-    --dialog-border: color-mix(in oklch, white 14%, transparent);
     --dialog-shadow:
       inset 0 0 0 1px var(--dialog-border),
-      0 1px 3px color-mix(in oklch, black 40%, transparent),
-      0 12px 32px color-mix(in oklch, black 55%, transparent),
-      0 28px 64px color-mix(in oklch, black 40%, transparent);
-    --dialog-overlay: color-mix(in oklch, black 62%, transparent);
+      0 1px 3px light-dark(color-mix(in oklch, black 10%, transparent), color-mix(in oklch, black 40%, transparent)),
+      0 12px 32px light-dark(color-mix(in oklch, black 22%, transparent), color-mix(in oklch, black 55%, transparent)),
+      0 28px 64px light-dark(color-mix(in oklch, black 14%, transparent), color-mix(in oklch, black 40%, transparent));
   }
 
   /* The usual inset edge is part of the elevation shadow. Forced colors can

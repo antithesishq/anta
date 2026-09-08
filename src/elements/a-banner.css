@@ -3,8 +3,8 @@
      border) lives here so plain consumer CSS overrides it and it paints before the
      element upgrades; the shadow <style> owns only the bar layout and REFERENCES
      these --banner-* tokens with literal fallbacks. Named tones use Anta's
-     theme-aware role tokens, so dark mode is mostly free (same as <a-card> /
-     <a-progress>); only the custom-tone branch needs a .dark re-tune. */
+     theme-aware role tokens, so named tones follow the inherited color scheme
+     (same as <a-card> / <a-progress>); custom tones use `light-dark()`. */
 
   a-banner {
     /* Surface / text / border mirror <a-expander>'s PRIMARY look, so a banner reads
@@ -142,15 +142,18 @@
       [tone="success"], [tone="warning"], [tone="critical"]) {
     --banner-tone-source: currentColor;
 
-    --banner-text:   oklch(from var(--banner-tone-source) 0.5 0.125 h);
-    --banner-bg:     oklch(from var(--banner-tone-source) 0.955 0.02 h);
-    --banner-border: oklch(from var(--banner-tone-source) 0.9 0.04 h);
-
-    .dark & {
-      --banner-text:   oklch(from var(--banner-tone-source) 0.77 0.11 h);
-      --banner-bg:     oklch(from var(--banner-tone-source) 0.185 0.05 h);
-      --banner-border: oklch(from var(--banner-tone-source) 0.26 0.06 h);
-    }
+    --banner-text: light-dark(
+      oklch(from var(--banner-tone-source) 0.5 0.125 h),
+      oklch(from var(--banner-tone-source) 0.77 0.11 h)
+    );
+    --banner-bg: light-dark(
+      oklch(from var(--banner-tone-source) 0.955 0.02 h),
+      oklch(from var(--banner-tone-source) 0.185 0.05 h)
+    );
+    --banner-border: light-dark(
+      oklch(from var(--banner-tone-source) 0.9 0.04 h),
+      oklch(from var(--banner-tone-source) 0.26 0.06 h)
+    );
     @supports (color: attr(probe type(<color>), red)) {
       --banner-tone-source: attr(tone type(<color>), currentColor);
     }

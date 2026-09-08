@@ -297,40 +297,20 @@
     ) {
     --expander-tone-source: currentColor;
 
-    --expander-text:             oklch(from var(--expander-tone-source) 0.5 0.125 h);
-    --expander-text-hover:       oklch(from var(--expander-tone-source) 0.4 0.11 h);
-    --expander-bg-secondary:     oklch(from var(--expander-tone-source) 0.99 0.004 h);
-    --expander-border-secondary: oklch(from var(--expander-tone-source) 0.935 0.028 h);
-    --expander-bg-primary:       oklch(from var(--expander-tone-source) 0.955 0.02 h);
-    --expander-border-primary:   oklch(from var(--expander-tone-source) 0.9 0.04 h);
+    --expander-text: light-dark(oklch(from var(--expander-tone-source) 0.5 0.125 h), oklch(from var(--expander-tone-source) 0.77 0.11 h));
+    --expander-text-hover: light-dark(oklch(from var(--expander-tone-source) 0.4 0.11 h), oklch(from var(--expander-tone-source) 0.85 0.10 h));
+    --expander-bg-secondary: light-dark(oklch(from var(--expander-tone-source) 0.99 0.004 h), oklch(from var(--expander-tone-source) 0.13 0.02 h));
+    --expander-border-secondary: light-dark(oklch(from var(--expander-tone-source) 0.935 0.028 h), oklch(from var(--expander-tone-source) 0.21 0.045 h));
+    --expander-bg-primary: light-dark(oklch(from var(--expander-tone-source) 0.955 0.02 h), oklch(from var(--expander-tone-source) 0.185 0.05 h));
+    --expander-border-primary: light-dark(oklch(from var(--expander-tone-source) 0.9 0.04 h), oklch(from var(--expander-tone-source) 0.26 0.06 h));
     @supports (color: attr(probe type(<color>), red)) {
       --expander-tone-source: attr(tone type(<color>), currentColor);
     }
   }
 
-  .dark a-expander[tone]:not(
-      [tone="neutral"],
-      [tone="brand"],
-      [tone="info"],
-      [tone="success"],
-      [tone="warning"],
-      [tone="critical"]
-    ) {
-    --expander-text:             oklch(from var(--expander-tone-source) 0.77 0.11 h);
-    --expander-text-hover:       oklch(from var(--expander-tone-source) 0.85 0.10 h);
-    --expander-bg-secondary:     oklch(from var(--expander-tone-source) 0.13 0.02 h);
-    --expander-border-secondary: oklch(from var(--expander-tone-source) 0.21 0.045 h);
-    --expander-bg-primary:       oklch(from var(--expander-tone-source) 0.185 0.05 h);
-    --expander-border-primary:   oklch(from var(--expander-tone-source) 0.26 0.06 h);
-  }
-
   a-expander[disabled],
   a-expander[disabled][tone] {
-    --expander-text: #afa9b1;
-  }
-  .dark a-expander[disabled],
-  .dark a-expander[disabled][tone] {
-    --expander-text: #635b65;
+    --expander-text: light-dark(#afa9b1, #635b65);
   }
 
   /* A native disclosure can opt into Expander's visual variants without giving
@@ -464,26 +444,15 @@
       [tone="success"], [tone="warning"], [tone="critical"]
     ) {
     --native-expander-tone-source: currentColor;
-    --native-expander-text: oklch(from var(--native-expander-tone-source) 0.5 0.125 h);
-    --native-expander-text-hover: oklch(from var(--native-expander-tone-source) 0.4 0.11 h);
-    --native-expander-bg-secondary: oklch(from var(--native-expander-tone-source) 0.99 0.004 h);
-    --native-expander-border-secondary: oklch(from var(--native-expander-tone-source) 0.935 0.028 h);
-    --native-expander-bg-primary: oklch(from var(--native-expander-tone-source) 0.955 0.02 h);
-    --native-expander-border-primary: oklch(from var(--native-expander-tone-source) 0.9 0.04 h);
+    --native-expander-text: light-dark(oklch(from var(--native-expander-tone-source) 0.5 0.125 h), oklch(from var(--native-expander-tone-source) 0.77 0.11 h));
+    --native-expander-text-hover: light-dark(oklch(from var(--native-expander-tone-source) 0.4 0.11 h), oklch(from var(--native-expander-tone-source) 0.85 0.1 h));
+    --native-expander-bg-secondary: light-dark(oklch(from var(--native-expander-tone-source) 0.99 0.004 h), oklch(from var(--native-expander-tone-source) 0.13 0.02 h));
+    --native-expander-border-secondary: light-dark(oklch(from var(--native-expander-tone-source) 0.935 0.028 h), oklch(from var(--native-expander-tone-source) 0.21 0.045 h));
+    --native-expander-bg-primary: light-dark(oklch(from var(--native-expander-tone-source) 0.955 0.02 h), oklch(from var(--native-expander-tone-source) 0.185 0.05 h));
+    --native-expander-border-primary: light-dark(oklch(from var(--native-expander-tone-source) 0.9 0.04 h), oklch(from var(--native-expander-tone-source) 0.26 0.06 h));
     @supports (color: attr(probe type(<color>), red)) {
       --native-expander-tone-source: attr(tone type(<color>), currentColor);
     }
-  }
-  .dark details[data-anta][tone]:not(
-      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]
-    ) {
-    --native-expander-text: oklch(from var(--native-expander-tone-source) 0.77 0.11 h);
-    --native-expander-text-hover: oklch(from var(--native-expander-tone-source) 0.85 0.1 h);
-    --native-expander-bg-secondary: oklch(from var(--native-expander-tone-source) 0.13 0.02 h);
-    --native-expander-border-secondary: oklch(from var(--native-expander-tone-source) 0.21 0.045 h);
-    --native-expander-bg-primary: oklch(from var(--native-expander-tone-source) 0.185 0.05 h);
-    --native-expander-border-primary: oklch(from var(--native-expander-tone-source) 0.26 0.06 h);
   }
   details[data-anta] > summary {
     position: relative;

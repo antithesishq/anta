@@ -1,26 +1,22 @@
-/* Antune: optional hand-tuned reference palette. Load after tokens and element CSS:
- *   import '@antadesign/anta/tokens.css'
- *   import '@antadesign/anta/reset.css'
- *   import '@antadesign/anta/theme-antune.css'
- *
- * Role tokens are unlayered and doubled (`:root:root`, `.light.light`,
- * `.dark.dark`) to replace seed-derived defaults regardless of load order.
- * Component literals use `anta.theme`, after `anta.components`; custom colors keep
- * their formula-derived values. Consumer unlayered CSS or later layers override
- * component values. Match `:root:root` to override a role token.
- */
+/* The Antune theme is optional CSS for the Anta design system; if used, load it after tokens and reset. */
 
-/* The reference theme uses hosted fonts by default. Override --sans-serif,
-   --serif, and/or --monospace in application CSS loaded after this file. These
-   declarations register faces but do not request them until a computed font
-   stack selects them, so the package deliberately does not add preload hints. */
 @font-face {
   font-family: "TT Interphases Pro Variable";
   src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
-  font-style: oblique 0deg 11deg;
+  font-style: normal;
   font-weight: 100 900;
   font-stretch: 75% 100%;
   font-feature-settings: "ss02", "ss05", "tnum";
+  font-display: swap;
+}
+@font-face {
+  font-family: "TT Interphases Pro Variable";
+  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-feature-settings: "ss02", "ss05", "tnum";
+  font-variation-settings: "slnt" 11;
   font-display: swap;
 }
 @font-face {
@@ -38,21 +34,16 @@
   font-display: swap;
 }
 
-/* Preserve the internal layer order if this file loads first. */
+/* Preserve Anta's internal layer order when this standalone stylesheet loads. */
 @layer anta.reset, anta.components, anta.theme;
 
-/* Default font stacks in tokens.css have zero specificity, so theme fonts win
-   regardless of stylesheet order. Later application CSS can replace them. */
 :root, .light {
   --sans-serif: "TT Interphases Pro Variable", sans-serif;
   --monospace: "Antithesis Mono", ui-monospace, monospace;
 }
 
 /* ── 1. Global role scale — hand-tuned literals ───────────────────────────── */
-/* Doubled `:root:root` / `.light.light` — out-specifies tokens.css's `:root, .light`
-   role tokens regardless of load order (see the header note), while matching the
-   same set (root, plus any scoped `.light`). */
-:root:root, .light.light {
+:root, .light {
   /* Backgrounds — light, neutral */
   --bg-1: #ffffff;
   --bg-2: #fbfafb;
@@ -177,9 +168,7 @@
   --focus-ring: oklch(0.55 0.2 284.15);
 }
 
-/* Doubled `.dark.dark` — mirrors tokens.css's `.dark` (any scoped dark region)
-   at +1 specificity so it wins regardless of load order. */
-.dark.dark {
+.dark {
   /* Backgrounds — dark, neutral */
   --bg-1: #000000;
   --bg-2: #0e0d0f;
@@ -344,310 +333,165 @@ button[data-anta]:not([tone]),
 button[data-anta][tone="neutral"],
 input[data-anta]:is([type="reset"], [type="submit"]):not([tone]),
 input[data-anta]:is([type="reset"], [type="submit"])[tone="neutral"] {
-  --button-bg-primary-rest: #635b65;
-  --button-bg-primary-hover: #534c57;
-  --button-bg-primary-active: #49424c;
-  --button-bg-secondary-rest: #45374c12;
-  --button-bg-secondary-hover: #44374b1a;
-  --button-bg-secondary-active: #44374b26;
-  --button-fg-secondary-rest: #534c57;
-  --button-fg-secondary-hover: #49424c;
-  --button-fg-secondary-l-shift: 0.05;
-  --button-fg-tertiary-rest: #635b65;
-  --button-fg-tertiary-hover: #534c57;
-  --button-bg-tertiary-hover: #44374b0d;
-  --button-bg-tertiary-active: #44374b1a;
-  --button-fg-quaternary-rest: #635b65;
-  --button-fg-quaternary-hover: #49424c;
+  --button-bg-primary-rest: light-dark(#635b65, #534c57);
+  --button-bg-primary-hover: light-dark(#534c57, #635b65);
+  --button-bg-primary-active: light-dark(#49424c, #938d96);
+  --button-bg-secondary-rest: light-dark(#45374c12, #e4d1ef1c);
+  --button-bg-secondary-hover: light-dark(#44374b1a, #e4d1ef24);
+  --button-bg-secondary-active: light-dark(#44374b26, #e4d1ef2e);
+  --button-fg-secondary-rest: light-dark(#534c57, #c1b9c1);
+  --button-fg-secondary-hover: light-dark(#49424c, #d4ced4);
+  --button-fg-tertiary-rest: light-dark(#635b65, #afa9b1);
+  --button-fg-tertiary-hover: light-dark(#534c57, #afa9b1);
+  --button-bg-tertiary-hover: light-dark(#44374b0d, #e4d1ef14);
+  --button-bg-tertiary-active: light-dark(#44374b1a, #e4d1ef21);
+  --button-fg-quaternary-rest: light-dark(#635b65, #afa9b1);
+  --button-fg-quaternary-hover: light-dark(#49424c, #cac4ca);
 }
 a-button[tone="brand"], a[role="button"][data-anta][tone="brand"], button[data-anta][tone="brand"], input[data-anta]:is([type="reset"], [type="submit"])[tone="brand"] {
-  --button-bg-primary-rest: #5f4bc3; --button-bg-primary-hover: #503cb4; --button-bg-primary-active: #483493;
-  --button-bg-secondary-rest: #7460d71a; --button-bg-secondary-hover: #7460d726; --button-bg-secondary-active: #7460d733;
-  --button-fg-secondary-rest: #5f4bc3; --button-fg-secondary-hover: #503cb4;
-  --button-fg-tertiary-rest: #5f4bc3; --button-fg-tertiary-hover: #503cb4; --button-bg-tertiary-hover: #7460d71a; --button-bg-tertiary-active: #7460d726;
-  --button-fg-quaternary-rest: #5f4bc3; --button-fg-quaternary-hover: #483493;
+  --button-bg-primary-rest: light-dark(#5f4bc3, #503cb4); --button-bg-primary-hover: light-dark(#503cb4, #5f4bc3); --button-bg-primary-active: light-dark(#483493, #7460d7);
+  --button-bg-secondary-rest: light-dark(#7460d71a, #7460d73b); --button-bg-secondary-hover: light-dark(#7460d726, #7460d747); --button-bg-secondary-active: light-dark(#7460d733, #7460d754);
+  --button-fg-secondary-rest: light-dark(#5f4bc3, #c5baff); --button-fg-secondary-hover: light-dark(#503cb4, #d2cbf6);
+  --button-fg-tertiary-rest: light-dark(#5f4bc3, #ada0ee); --button-fg-tertiary-hover: light-dark(#503cb4, #bcb1f1); --button-bg-tertiary-hover: light-dark(#7460d71a, #7460d73b); --button-bg-tertiary-active: light-dark(#7460d726, #7460d747);
+  --button-fg-quaternary-rest: light-dark(#5f4bc3, #ada0ee); --button-fg-quaternary-hover: light-dark(#483493, #c7bef4);
 }
 a-button[tone="critical"], a[role="button"][data-anta][tone="critical"], button[data-anta][tone="critical"], input[data-anta]:is([type="reset"], [type="submit"])[tone="critical"] {
-  --button-bg-primary-rest: #c9302c; --button-bg-primary-hover: #b02120; --button-bg-primary-active: #a01c1c;
-  --button-bg-secondary-rest: #de45451a; --button-bg-secondary-hover: #de454526; --button-bg-secondary-active: #de454533;
-  --button-fg-secondary-rest: #c9302c; --button-fg-secondary-hover: #b02120;
-  --button-fg-tertiary-rest: #c9302c; --button-fg-tertiary-hover: #b02120; --button-bg-tertiary-hover: #de45451a; --button-bg-tertiary-active: #de454533;
-  --button-fg-quaternary-rest: #c9302c; --button-fg-quaternary-hover: #a01c1c;
+  --button-bg-primary-rest: light-dark(#c9302c, #b02120); --button-bg-primary-hover: light-dark(#b02120, #c9302c); --button-bg-primary-active: light-dark(#a01c1c, #de4545);
+  --button-bg-secondary-rest: light-dark(#de45451a, #de45453b); --button-bg-secondary-hover: light-dark(#de454526, #de454547); --button-bg-secondary-active: light-dark(#de454533, #de454554);
+  --button-fg-secondary-rest: light-dark(#c9302c, #ffabac); --button-fg-secondary-hover: light-dark(#b02120, #f4c2c2);
+  --button-fg-tertiary-rest: light-dark(#c9302c, #e78e90); --button-fg-tertiary-hover: light-dark(#b02120, #efa4a4); --button-bg-tertiary-hover: light-dark(#de45451a, #de45453b); --button-bg-tertiary-active: light-dark(#de454526, #de454547);
+  --button-fg-quaternary-rest: light-dark(#c9302c, #e78e90); --button-fg-quaternary-hover: light-dark(#a01c1c, #ffabac);
 }
 a-button[tone="info"], a[role="button"][data-anta][tone="info"], button[data-anta][tone="info"], input[data-anta]:is([type="reset"], [type="submit"])[tone="info"] {
-  --button-bg-primary-rest: #1f6eb2; --button-bg-primary-hover: #1a5b93; --button-bg-primary-active: #175082;
-  --button-bg-secondary-rest: #2686d91a; --button-bg-secondary-hover: #2686d926; --button-bg-secondary-active: #2686d933;
-  --button-fg-secondary-rest: #1f6eb2; --button-fg-secondary-hover: #1a5b93;
-  --button-fg-tertiary-rest: #1f6eb2; --button-fg-tertiary-hover: #1a5b93; --button-bg-tertiary-hover: #2686d91a; --button-bg-tertiary-active: #2686d926;
-  --button-fg-quaternary-rest: #1f6eb2; --button-fg-quaternary-hover: #175082;
+  --button-bg-primary-rest: light-dark(#1f6eb2, #1a5b93); --button-bg-primary-hover: light-dark(#1a5b93, #1f6eb2); --button-bg-primary-active: light-dark(#175082, #2686d9);
+  --button-bg-secondary-rest: light-dark(#2686d91a, #2686d93b); --button-bg-secondary-hover: light-dark(#2686d926, #2686d947); --button-bg-secondary-active: light-dark(#2686d933, #2686d954);
+  --button-fg-secondary-rest: light-dark(#1f6eb2, #9ed2ff); --button-fg-secondary-hover: light-dark(#1a5b93, #bad6f3);
+  --button-fg-tertiary-rest: light-dark(#1f6eb2, #7db6e8); --button-fg-tertiary-hover: light-dark(#1a5b93, #93c5ec); --button-bg-tertiary-hover: light-dark(#2686d91a, #2686d93b); --button-bg-tertiary-active: light-dark(#2686d926, #2686d947);
+  --button-fg-quaternary-rest: light-dark(#1f6eb2, #7db6e8); --button-fg-quaternary-hover: light-dark(#175082, #a6cdef);
 }
 a-button[tone="success"], a[role="button"][data-anta][tone="success"], button[data-anta][tone="success"], input[data-anta]:is([type="reset"], [type="submit"])[tone="success"] {
-  --button-bg-primary-rest: #2a7e43; --button-bg-primary-hover: #226737; --button-bg-primary-active: #1f5c31;
-  --button-bg-secondary-rest: #3295501a; --button-bg-secondary-hover: #32955026; --button-bg-secondary-active: #32955033;
-  --button-fg-secondary-rest: #2a7e43; --button-fg-secondary-hover: #226737;
-  --button-fg-tertiary-rest: #2a7e43; --button-fg-tertiary-hover: #226737; --button-bg-tertiary-hover: #3295501a; --button-bg-tertiary-active: #32955026;
-  --button-fg-quaternary-rest: #2a7e43; --button-fg-quaternary-hover: #1f5c31;
+  --button-bg-primary-rest: light-dark(#2a7e43, #226737); --button-bg-primary-hover: light-dark(#226737, #2a7e43); --button-bg-primary-active: light-dark(#1f5c31, #329550);
+  --button-bg-secondary-rest: light-dark(#3295501a, #3295503b); --button-bg-secondary-hover: light-dark(#32955026, #32955047); --button-bg-secondary-active: light-dark(#32955033, #32955054);
+  --button-fg-secondary-rest: light-dark(#2a7e43, #8ceca9); --button-fg-secondary-hover: light-dark(#226737, #b3e5c2);
+  --button-fg-tertiary-rest: light-dark(#2a7e43, #74cd8e); --button-fg-tertiary-hover: light-dark(#226737, #88d7a0); --button-bg-tertiary-hover: light-dark(#3295501a, #3295503b); --button-bg-tertiary-active: light-dark(#32955026, #32955047);
+  --button-fg-quaternary-rest: light-dark(#2a7e43, #74cd8e); --button-fg-quaternary-hover: light-dark(#1f5c31, #9ddeb1);
 }
 a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[data-anta][tone="warning"], input[data-anta]:is([type="reset"], [type="submit"])[tone="warning"] {
-  --button-bg-primary-rest: #c37416; --button-bg-primary-hover: #ae6613; --button-bg-primary-active: #995200;
-  --button-bg-secondary-rest: #c374161a; --button-bg-secondary-hover: #c3741626; --button-bg-secondary-active: #c3741633;
-  --button-fg-secondary-rest: #c37416; --button-fg-secondary-hover: #ae6613;
-  --button-fg-tertiary-rest: #c37416; --button-fg-tertiary-hover: #ae6613; --button-bg-tertiary-hover: #c374161a; --button-bg-tertiary-active: #c3741633;
-  --button-fg-quaternary-rest: #c37416; --button-fg-quaternary-hover: #995200;
-}
-.dark a-button:not([tone]), .dark a-button[tone="neutral"], .dark a[role="button"][data-anta]:not([tone]), .dark a[role="button"][data-anta][tone="neutral"], .dark button[data-anta]:not([tone]), .dark button[data-anta][tone="neutral"], .dark input[data-anta]:is([type="reset"], [type="submit"]):not([tone]), .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="neutral"] {
-  --button-bg-primary-rest: #534c57; --button-bg-primary-hover: #635b65; --button-bg-primary-active: #938d96;
-  --button-bg-secondary-rest: #e4d1ef1c; --button-bg-secondary-hover: #e4d1ef24; --button-bg-secondary-active: #e4d1ef2e;
-  --button-fg-secondary-rest: #c1b9c1; --button-fg-secondary-hover: #d4ced4; --button-fg-secondary-l-shift: 0;
-  --button-fg-tertiary-rest: #afa9b1; --button-fg-tertiary-hover: #afa9b1; --button-bg-tertiary-hover: #e4d1ef14; --button-bg-tertiary-active: #e4d1ef21;
-  --button-fg-quaternary-rest: #afa9b1; --button-fg-quaternary-hover: #cac4ca;
-}
-.dark a-button[tone="brand"], .dark a[role="button"][data-anta][tone="brand"], .dark button[data-anta][tone="brand"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="brand"] {
-  --button-bg-primary-rest: #503cb4; --button-bg-primary-hover: #5f4bc3; --button-bg-primary-active: #7460d7;
-  --button-bg-secondary-rest: #7460d73b; --button-bg-secondary-hover: #7460d747; --button-bg-secondary-active: #7460d754;
-  --button-fg-secondary-rest: #c5baff; --button-fg-secondary-hover: #d2cbf6;
-  --button-fg-tertiary-rest: #ada0ee; --button-fg-tertiary-hover: #bcb1f1; --button-bg-tertiary-hover: #7460d73b; --button-bg-tertiary-active: #7460d747;
-  --button-fg-quaternary-rest: #ada0ee; --button-fg-quaternary-hover: #c7bef4;
-}
-.dark a-button[tone="critical"], .dark a[role="button"][data-anta][tone="critical"], .dark button[data-anta][tone="critical"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="critical"] {
-  --button-bg-primary-rest: #b02120; --button-bg-primary-hover: #c9302c; --button-bg-primary-active: #de4545;
-  --button-bg-secondary-rest: #de45453b; --button-bg-secondary-hover: #de454547; --button-bg-secondary-active: #de454554;
-  --button-fg-secondary-rest: #ffabac; --button-fg-secondary-hover: #f4c2c2;
-  --button-fg-tertiary-rest: #e78e90; --button-fg-tertiary-hover: #efa4a4; --button-bg-tertiary-hover: #de45453b; --button-bg-tertiary-active: #de454547;
-  --button-fg-quaternary-rest: #e78e90; --button-fg-quaternary-hover: #ffabac;
-}
-.dark a-button[tone="info"], .dark a[role="button"][data-anta][tone="info"], .dark button[data-anta][tone="info"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="info"] {
-  --button-bg-primary-rest: #1a5b93; --button-bg-primary-hover: #1f6eb2; --button-bg-primary-active: #2686d9;
-  --button-bg-secondary-rest: #2686d93b; --button-bg-secondary-hover: #2686d947; --button-bg-secondary-active: #2686d954;
-  --button-fg-secondary-rest: #9ed2ff; --button-fg-secondary-hover: #bad6f3;
-  --button-fg-tertiary-rest: #7db6e8; --button-fg-tertiary-hover: #93c5ec; --button-bg-tertiary-hover: #2686d93b; --button-bg-tertiary-active: #2686d947;
-  --button-fg-quaternary-rest: #7db6e8; --button-fg-quaternary-hover: #a6cdef;
-}
-.dark a-button[tone="success"], .dark a[role="button"][data-anta][tone="success"], .dark button[data-anta][tone="success"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="success"] {
-  --button-bg-primary-rest: #226737; --button-bg-primary-hover: #2a7e43; --button-bg-primary-active: #329550;
-  --button-bg-secondary-rest: #3295503b; --button-bg-secondary-hover: #32955047; --button-bg-secondary-active: #32955054;
-  --button-fg-secondary-rest: #8ceca9; --button-fg-secondary-hover: #b3e5c2;
-  --button-fg-tertiary-rest: #74cd8e; --button-fg-tertiary-hover: #88d7a0; --button-bg-tertiary-hover: #3295503b; --button-bg-tertiary-active: #32955047;
-  --button-fg-quaternary-rest: #74cd8e; --button-fg-quaternary-hover: #9ddeb1;
-}
-.dark a-button[tone="warning"], .dark a[role="button"][data-anta][tone="warning"], .dark button[data-anta][tone="warning"], .dark input[data-anta]:is([type="reset"], [type="submit"])[tone="warning"] {
-  --button-bg-primary-rest: #7f410b; --button-bg-primary-hover: #995200; --button-bg-primary-active: #ae6613;
-  --button-bg-secondary-rest: #c374163b; --button-bg-secondary-hover: #c3741647; --button-bg-secondary-active: #c3741654;
-  --button-fg-secondary-rest: #f7c06e; --button-fg-secondary-hover: #f3cc91;
-  --button-fg-tertiary-rest: #e1a452; --button-fg-tertiary-hover: #edb25a; --button-bg-tertiary-hover: #c374163b; --button-bg-tertiary-active: #c3741647;
-  --button-fg-quaternary-rest: #e1a452; --button-fg-quaternary-hover: #f0bf75;
+  --button-bg-primary-rest: light-dark(#c37416, #7f410b); --button-bg-primary-hover: light-dark(#ae6613, #995200); --button-bg-primary-active: light-dark(#995200, #ae6613);
+  --button-bg-secondary-rest: light-dark(#c374161a, #c374163b); --button-bg-secondary-hover: light-dark(#c3741626, #c3741647); --button-bg-secondary-active: light-dark(#c3741633, #c3741654);
+  --button-fg-secondary-rest: light-dark(#c37416, #f7c06e); --button-fg-secondary-hover: light-dark(#ae6613, #f3cc91);
+  --button-fg-tertiary-rest: light-dark(#c37416, #e1a452); --button-fg-tertiary-hover: light-dark(#ae6613, #edb25a); --button-bg-tertiary-hover: light-dark(#c374161a, #c374163b); --button-bg-tertiary-active: light-dark(#c3741626, #c3741647);
+  --button-fg-quaternary-rest: light-dark(#c37416, #e1a452); --button-fg-quaternary-hover: light-dark(#995200, #f0bf75);
 }
 
 
 /* ===== checkbox ===== */
 /* The omitted and explicit neutral tones use the same reference values. */
 :is(a-checkbox, input[data-anta][type="checkbox"]):not([tone]):not([tone-selected]) {
-  --checkbox-bg-selected: #878089;
-  --checkbox-bg-selected-hover: #776e77;
+  --checkbox-border-neutral: light-dark(#d4ced4, #49424c);
+  --checkbox-border-hover: light-dark(#c1b9c1, #635b65);
+  --checkbox-border-active: light-dark(#938d96, #776e77);
+  --checkbox-bg-selected: light-dark(#878089, #49424c);
+  --checkbox-bg-selected-hover: light-dark(#776e77, #534c57);
   --checkbox-bg-selected-active: #635b65;
+  --checkbox-border-disabled: light-dark(color-mix(in oklch, #44374b 10%, transparent), color-mix(in oklch, #e4d1ef 10%, transparent));
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="brand"] {
-  --checkbox-bg-selected: #5f4bc3;
-  --checkbox-bg-selected-hover: #503cb4;
-  --checkbox-bg-selected-active: #483493;
+  --checkbox-bg-selected: light-dark(#5f4bc3, #503cb4);
+  --checkbox-bg-selected-hover: light-dark(#503cb4, #5f4bc3);
+  --checkbox-bg-selected-active: light-dark(#483493, #7460d7);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="neutral"] {
-  --checkbox-bg-selected: #878089;
-  --checkbox-bg-selected-hover: #776e77;
+  --checkbox-bg-selected: light-dark(#878089, #49424c);
+  --checkbox-bg-selected-hover: light-dark(#776e77, #534c57);
   --checkbox-bg-selected-active: #635b65;
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="info"] {
-  --checkbox-bg-selected: #1f6eb2;
-  --checkbox-bg-selected-hover: #1a5b93;
-  --checkbox-bg-selected-active: #175082;
+  --checkbox-bg-selected: light-dark(#1f6eb2, #1a5b93);
+  --checkbox-bg-selected-hover: light-dark(#1a5b93, #1f6eb2);
+  --checkbox-bg-selected-active: light-dark(#175082, #2686d9);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="success"] {
-  --checkbox-bg-selected: #2a7e43;
-  --checkbox-bg-selected-hover: #226737;
-  --checkbox-bg-selected-active: #1f5c31;
+  --checkbox-bg-selected: light-dark(#2a7e43, #226737);
+  --checkbox-bg-selected-hover: light-dark(#226737, #2a7e43);
+  --checkbox-bg-selected-active: light-dark(#1f5c31, #329550);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="warning"] {
-  --checkbox-bg-selected: #c37416;
-  --checkbox-bg-selected-hover: #ae6613;
-  --checkbox-bg-selected-active: #995200;
+  --checkbox-bg-selected: light-dark(#c37416, #7f410b);
+  --checkbox-bg-selected-hover: light-dark(#ae6613, #995200);
+  --checkbox-bg-selected-active: light-dark(#995200, #ae6613);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="critical"] {
-  --checkbox-bg-selected: #c9302c;
-  --checkbox-bg-selected-hover: #b02120;
-  --checkbox-bg-selected-active: #a01c1c;
+  --checkbox-bg-selected: light-dark(#c9302c, #b02120);
+  --checkbox-bg-selected-hover: light-dark(#b02120, #c9302c);
+  --checkbox-bg-selected-active: light-dark(#a01c1c, #de4545);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="brand"] {
-  --checkbox-bg: #fcfcfe;
-  --checkbox-border: #bcb1f1;
-  --checkbox-border-hover: #9e8eeb;
-  --checkbox-border-active: #9081df;
+  --checkbox-bg: light-dark(#fcfcfe, #0b0916);
+  --checkbox-border: light-dark(#bcb1f1, #483493);
+  --checkbox-border-hover: light-dark(#9e8eeb, #5f4bc3);
+  --checkbox-border-active: light-dark(#9081df, #7460d7);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="info"] {
-  --checkbox-bg: #fbfcfe;
-  --checkbox-border: #93c5ec;
-  --checkbox-border-hover: #69ace5;
-  --checkbox-border-active: #56a1e1;
+  --checkbox-bg: light-dark(#fbfcfe, #040d18);
+  --checkbox-border: light-dark(#93c5ec, #175082);
+  --checkbox-border-hover: light-dark(#69ace5, #1f6eb2);
+  --checkbox-border-active: light-dark(#56a1e1, #2686d9);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="success"] {
-  --checkbox-bg: #f7fcf9;
-  --checkbox-border: #88d7a0;
-  --checkbox-border-hover: #5bc87b;
-  --checkbox-border-active: #44c169;
+  --checkbox-bg: light-dark(#f7fcf9, #041008);
+  --checkbox-border: light-dark(#88d7a0, #1f5c31);
+  --checkbox-border-hover: light-dark(#5bc87b, #2a7e43);
+  --checkbox-border-active: light-dark(#44c169, #329550);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="warning"] {
-  --checkbox-bg: #fefbf6;
-  --checkbox-border: #edb25a;
-  --checkbox-border-hover: #e09127;
-  --checkbox-border-active: #d88118;
+  --checkbox-bg: light-dark(#fefbf6, #120a03);
+  --checkbox-border: light-dark(#edb25a, #6a3b0c);
+  --checkbox-border-hover: light-dark(#e09127, #995200);
+  --checkbox-border-active: light-dark(#d88118, #ae6613);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone="critical"] {
-  --checkbox-bg: #fefbfb;
-  --checkbox-border: #efa4a4;
-  --checkbox-border-hover: #e87f7f;
-  --checkbox-border-active: #e56c6c;
+  --checkbox-bg: light-dark(#fefbfb, #190405);
+  --checkbox-border: light-dark(#efa4a4, #a01c1c);
+  --checkbox-border-hover: light-dark(#e87f7f, #c9302c);
+  --checkbox-border-active: light-dark(#e56c6c, #de4545);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="brand"] {
-  --checkbox-bg-selected: #5f4bc3;
-  --checkbox-bg-selected-hover: #503cb4;
-  --checkbox-bg-selected-active: #483493;
+  --checkbox-bg-selected: light-dark(#5f4bc3, #503cb4);
+  --checkbox-bg-selected-hover: light-dark(#503cb4, #5f4bc3);
+  --checkbox-bg-selected-active: light-dark(#483493, #7460d7);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="neutral"] {
-  --checkbox-bg-selected: #878089;
-  --checkbox-bg-selected-hover: #776e77;
+  --checkbox-bg-selected: light-dark(#878089, #49424c);
+  --checkbox-bg-selected-hover: light-dark(#776e77, #534c57);
   --checkbox-bg-selected-active: #635b65;
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="info"] {
-  --checkbox-bg-selected: #1f6eb2;
-  --checkbox-bg-selected-hover: #1a5b93;
-  --checkbox-bg-selected-active: #175082;
+  --checkbox-bg-selected: light-dark(#1f6eb2, #1a5b93);
+  --checkbox-bg-selected-hover: light-dark(#1a5b93, #1f6eb2);
+  --checkbox-bg-selected-active: light-dark(#175082, #2686d9);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="success"] {
-  --checkbox-bg-selected: #2a7e43;
-  --checkbox-bg-selected-hover: #226737;
-  --checkbox-bg-selected-active: #1f5c31;
+  --checkbox-bg-selected: light-dark(#2a7e43, #226737);
+  --checkbox-bg-selected-hover: light-dark(#226737, #2a7e43);
+  --checkbox-bg-selected-active: light-dark(#1f5c31, #329550);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="warning"] {
-  --checkbox-bg-selected: #c37416;
-  --checkbox-bg-selected-hover: #ae6613;
-  --checkbox-bg-selected-active: #995200;
+  --checkbox-bg-selected: light-dark(#c37416, #7f410b);
+  --checkbox-bg-selected-hover: light-dark(#ae6613, #995200);
+  --checkbox-bg-selected-active: light-dark(#995200, #ae6613);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="critical"] {
-  --checkbox-bg-selected: #c9302c;
-  --checkbox-bg-selected-hover: #b02120;
-  --checkbox-bg-selected-active: #a01c1c;
+  --checkbox-bg-selected: light-dark(#c9302c, #b02120);
+  --checkbox-bg-selected-hover: light-dark(#b02120, #c9302c);
+  --checkbox-bg-selected-active: light-dark(#a01c1c, #de4545);
 }
 :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected]:not(
     [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
     [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
-  --checkbox-bg-selected: oklch(from var(--checkbox-tone-source) var(--_tone-l-rest) c h);
-  --checkbox-bg-selected-hover: oklch(from var(--checkbox-tone-source) var(--_tone-l-hover) c h);
-  --checkbox-bg-selected-active: oklch(from var(--checkbox-tone-source) var(--_tone-l-active) c h);
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"]):not([tone]):not([tone-selected]) {
-  --checkbox-border-neutral: #49424c;
-  --checkbox-border-hover: #635b65;
-  --checkbox-border-active: #776e77;
-  --checkbox-bg-selected: #49424c;
-  --checkbox-bg-selected-hover: #534c57;
-  --checkbox-bg-selected-active: #635b65;
-  --checkbox-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="brand"] {
-  --checkbox-bg-selected: #503cb4;
-  --checkbox-bg-selected-hover: #5f4bc3;
-  --checkbox-bg-selected-active: #7460d7;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="neutral"] {
-  --checkbox-bg-selected: #49424c;
-  --checkbox-bg-selected-hover: #534c57;
-  --checkbox-bg-selected-active: #635b65;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="info"] {
-  --checkbox-bg-selected: #1a5b93;
-  --checkbox-bg-selected-hover: #1f6eb2;
-  --checkbox-bg-selected-active: #2686d9;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="success"] {
-  --checkbox-bg-selected: #226737;
-  --checkbox-bg-selected-hover: #2a7e43;
-  --checkbox-bg-selected-active: #329550;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="warning"] {
-  --checkbox-bg-selected: #7f410b;
-  --checkbox-bg-selected-hover: #995200;
-  --checkbox-bg-selected-active: #ae6613;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="critical"] {
-  --checkbox-bg-selected: #b02120;
-  --checkbox-bg-selected-hover: #c9302c;
-  --checkbox-bg-selected-active: #de4545;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="brand"] {
-  --checkbox-bg: #0b0916;
-  --checkbox-border: #483493;
-  --checkbox-border-hover: #5f4bc3;
-  --checkbox-border-active: #7460d7;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="info"] {
-  --checkbox-bg: #040d18;
-  --checkbox-border: #175082;
-  --checkbox-border-hover: #1f6eb2;
-  --checkbox-border-active: #2686d9;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="success"] {
-  --checkbox-bg: #041008;
-  --checkbox-border: #1f5c31;
-  --checkbox-border-hover: #2a7e43;
-  --checkbox-border-active: #329550;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="warning"] {
-  --checkbox-bg: #120a03;
-  --checkbox-border: #6a3b0c;
-  --checkbox-border-hover: #995200;
-  --checkbox-border-active: #ae6613;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone="critical"] {
-  --checkbox-bg: #190405;
-  --checkbox-border: #a01c1c;
-  --checkbox-border-hover: #c9302c;
-  --checkbox-border-active: #de4545;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="brand"] {
-  --checkbox-bg-selected: #503cb4;
-  --checkbox-bg-selected-hover: #5f4bc3;
-  --checkbox-bg-selected-active: #7460d7;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="neutral"] {
-  --checkbox-bg-selected: #49424c;
-  --checkbox-bg-selected-hover: #534c57;
-  --checkbox-bg-selected-active: #635b65;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="info"] {
-  --checkbox-bg-selected: #1a5b93;
-  --checkbox-bg-selected-hover: #1f6eb2;
-  --checkbox-bg-selected-active: #2686d9;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="success"] {
-  --checkbox-bg-selected: #226737;
-  --checkbox-bg-selected-hover: #2a7e43;
-  --checkbox-bg-selected-active: #329550;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="warning"] {
-  --checkbox-bg-selected: #7f410b;
-  --checkbox-bg-selected-hover: #995200;
-  --checkbox-bg-selected-active: #ae6613;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected="critical"] {
-  --checkbox-bg-selected: #b02120;
-  --checkbox-bg-selected-hover: #c9302c;
-  --checkbox-bg-selected-active: #de4545;
-}
-.dark :is(a-checkbox, input[data-anta][type="checkbox"])[tone-selected]:not(
-    [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
-    [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
-  --checkbox-bg-selected: oklch(from var(--checkbox-tone-source) var(--_tone-l-rest) c h);
-  --checkbox-bg-selected-hover: oklch(from var(--checkbox-tone-source) var(--_tone-l-hover) c h);
-  --checkbox-bg-selected-active: oklch(from var(--checkbox-tone-source) var(--_tone-l-active) c h);
+  --checkbox-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.5 c h), oklch(from var(--checkbox-tone-source) 0.45 c h));
+  --checkbox-bg-selected-hover: light-dark(oklch(from var(--checkbox-tone-source) 0.45 c h), oklch(from var(--checkbox-tone-source) 0.5 c h));
+  --checkbox-bg-selected-active: light-dark(oklch(from var(--checkbox-tone-source) 0.4 c h), oklch(from var(--checkbox-tone-source) 0.57 c h));
 }
 
 /* ===== radio ===== */
@@ -656,135 +500,135 @@ a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[da
 :is(a-radio, input[data-anta][type="radio"]):not([tone]):not([tone-selected]) {
   --radio-border-width: 1.5px;
   --radio-bg: var(--bg-1);
-  --radio-bg-selected: #878089;
-  --radio-bg-selected-hover: #776e77;
+  --radio-bg-selected: light-dark(#878089, #49424c);
+  --radio-bg-selected-hover: light-dark(#776e77, #534c57);
   --radio-bg-selected-active: #635b65;
-  --radio-border-neutral: #d4ced4;
+  --radio-border-neutral: light-dark(#d4ced4, #49424c);
   --radio-border: var(--radio-border-neutral);
-  --radio-border-hover: #c1b9c1;
-  --radio-border-active: #9f99a1;
-  --radio-border-disabled: color-mix(in oklch, #44374b 10%, transparent);
+  --radio-border-hover: light-dark(#c1b9c1, #635b65);
+  --radio-border-active: light-dark(#9f99a1, #776e77);
+  --radio-border-disabled: light-dark(color-mix(in oklch, #44374b 10%, transparent), color-mix(in oklch, #e4d1ef 10%, transparent));
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="brand"],
   a-radio-group[tone="brand"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #5f4bc3;
-  --radio-bg-selected-hover: #503cb4;
-  --radio-bg-selected-active: #483493;
+  --radio-bg-selected: light-dark(#5f4bc3, #503cb4);
+  --radio-bg-selected-hover: light-dark(#503cb4, #5f4bc3);
+  --radio-bg-selected-active: light-dark(#483493, #7460d7);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="neutral"],
   a-radio-group[tone="neutral"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #878089;
-  --radio-bg-selected-hover: #776e77;
+  --radio-bg-selected: light-dark(#878089, #49424c);
+  --radio-bg-selected-hover: light-dark(#776e77, #534c57);
   --radio-bg-selected-active: #635b65;
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="info"],
   a-radio-group[tone="info"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #1f6eb2;
-  --radio-bg-selected-hover: #1a5b93;
-  --radio-bg-selected-active: #175082;
+  --radio-bg-selected: light-dark(#1f6eb2, #1a5b93);
+  --radio-bg-selected-hover: light-dark(#1a5b93, #1f6eb2);
+  --radio-bg-selected-active: light-dark(#175082, #2686d9);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="success"],
   a-radio-group[tone="success"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #2a7e43;
-  --radio-bg-selected-hover: #226737;
-  --radio-bg-selected-active: #1f5c31;
+  --radio-bg-selected: light-dark(#2a7e43, #226737);
+  --radio-bg-selected-hover: light-dark(#226737, #2a7e43);
+  --radio-bg-selected-active: light-dark(#1f5c31, #329550);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="warning"],
   a-radio-group[tone="warning"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #c37416;
-  --radio-bg-selected-hover: #ae6613;
-  --radio-bg-selected-active: #995200;
+  --radio-bg-selected: light-dark(#c37416, #7f410b);
+  --radio-bg-selected-hover: light-dark(#ae6613, #995200);
+  --radio-bg-selected-active: light-dark(#995200, #ae6613);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="critical"],
   a-radio-group[tone="critical"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #c9302c;
-  --radio-bg-selected-hover: #b02120;
-  --radio-bg-selected-active: #a01c1c;
+  --radio-bg-selected: light-dark(#c9302c, #b02120);
+  --radio-bg-selected-hover: light-dark(#b02120, #c9302c);
+  --radio-bg-selected-active: light-dark(#a01c1c, #de4545);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="brand"],
   a-radio-group[tone="brand"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg: #fcfcfe;
-  --radio-border: #bcb1f1;
-  --radio-border-hover: #9e8eeb;
-  --radio-border-active: #9081df;
+  --radio-bg: light-dark(#fcfcfe, #0b0916);
+  --radio-border: light-dark(#bcb1f1, #483493);
+  --radio-border-hover: light-dark(#9e8eeb, #5f4bc3);
+  --radio-border-active: light-dark(#9081df, #7460d7);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="info"],
   a-radio-group[tone="info"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg: #fbfcfe;
-  --radio-border: #93c5ec;
-  --radio-border-hover: #69ace5;
-  --radio-border-active: #56a1e1;
+  --radio-bg: light-dark(#fbfcfe, #040d18);
+  --radio-border: light-dark(#93c5ec, #175082);
+  --radio-border-hover: light-dark(#69ace5, #1f6eb2);
+  --radio-border-active: light-dark(#56a1e1, #2686d9);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="success"],
   a-radio-group[tone="success"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg: #f7fcf9;
-  --radio-border: #88d7a0;
-  --radio-border-hover: #5bc87b;
-  --radio-border-active: #44c169;
+  --radio-bg: light-dark(#f7fcf9, #041008);
+  --radio-border: light-dark(#88d7a0, #1f5c31);
+  --radio-border-hover: light-dark(#5bc87b, #2a7e43);
+  --radio-border-active: light-dark(#44c169, #329550);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="warning"],
   a-radio-group[tone="warning"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg: #fefbf6;
-  --radio-border: #edb25a;
-  --radio-border-hover: #e09127;
-  --radio-border-active: #d88118;
+  --radio-bg: light-dark(#fefbf6, #120a03);
+  --radio-border: light-dark(#edb25a, #6a3b0c);
+  --radio-border-hover: light-dark(#e09127, #995200);
+  --radio-border-active: light-dark(#d88118, #ae6613);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone="critical"],
   a-radio-group[tone="critical"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg: #fefbfb;
-  --radio-border: #efa4a4;
-  --radio-border-hover: #e87f7f;
-  --radio-border-active: #e56c6c;
+  --radio-bg: light-dark(#fefbfb, #190405);
+  --radio-border: light-dark(#efa4a4, #a01c1c);
+  --radio-border-hover: light-dark(#e87f7f, #c9302c);
+  --radio-border-active: light-dark(#e56c6c, #de4545);
 }
 /* A custom group tone reaches unoverridden children through the element rule.
    These output values keep the reference theme from restoring the neutral base. */
 a-radio-group[tone]:where(:not(
     [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
     [tone="success"], [tone="warning"], [tone="critical"])) a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: oklch(from var(--radio-tone-source) var(--_tone-l-rest) c h);
-  --radio-bg-selected-hover: oklch(from var(--radio-tone-source) var(--_tone-l-hover) c h);
-  --radio-bg-selected-active: oklch(from var(--radio-tone-source) var(--_tone-l-active) c h);
-  --radio-bg: oklch(from var(--radio-off-tone-source) 0.99 calc(c * 0.03) h);
-  --_radio-border-base: color-mix(in oklch, var(--_radio-off-bg-selected) 70%, var(--radio-border-neutral));
-  --radio-border: oklch(from var(--_radio-border-base) calc(l + 0.17) c h);
+  --radio-bg-selected: light-dark(oklch(from var(--radio-tone-source) 0.5 c h), oklch(from var(--radio-tone-source) 0.45 c h));
+  --radio-bg-selected-hover: light-dark(oklch(from var(--radio-tone-source) 0.45 c h), oklch(from var(--radio-tone-source) 0.5 c h));
+  --radio-bg-selected-active: light-dark(oklch(from var(--radio-tone-source) 0.4 c h), oklch(from var(--radio-tone-source) 0.57 c h));
+  --radio-bg: light-dark(oklch(from var(--radio-off-tone-source) 0.99 calc(c * 0.03) h), oklch(from var(--radio-off-tone-source) 0.15 calc(c * 0.18) h));
+  --_radio-border-base: color-mix(in oklch, var(--radio-bg-selected) 70%, var(--radio-border-neutral));
+  --radio-border: light-dark(oklch(from var(--_radio-border-base) calc(l + 0.17) c h), var(--_radio-border-base));
   --radio-border-hover: oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
-  --radio-border-active: var(--_radio-border-base);
+  --radio-border-active: light-dark(var(--_radio-border-base), oklch(from var(--_radio-border-base) calc(l + 0.17) c h));
 }
 :is(a-radio, input[data-anta][type="radio"])[tone-selected="brand"],
   a-radio-group[tone-selected="brand"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #5f4bc3;
-  --radio-bg-selected-hover: #503cb4;
-  --radio-bg-selected-active: #483493;
+  --radio-bg-selected: light-dark(#5f4bc3, #503cb4);
+  --radio-bg-selected-hover: light-dark(#503cb4, #5f4bc3);
+  --radio-bg-selected-active: light-dark(#483493, #7460d7);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone-selected="neutral"],
   a-radio-group[tone-selected="neutral"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #878089;
-  --radio-bg-selected-hover: #776e77;
+  --radio-bg-selected: light-dark(#878089, #49424c);
+  --radio-bg-selected-hover: light-dark(#776e77, #534c57);
   --radio-bg-selected-active: #635b65;
 }
 :is(a-radio, input[data-anta][type="radio"])[tone-selected="info"],
   a-radio-group[tone-selected="info"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #1f6eb2;
-  --radio-bg-selected-hover: #1a5b93;
-  --radio-bg-selected-active: #175082;
+  --radio-bg-selected: light-dark(#1f6eb2, #1a5b93);
+  --radio-bg-selected-hover: light-dark(#1a5b93, #1f6eb2);
+  --radio-bg-selected-active: light-dark(#175082, #2686d9);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone-selected="success"],
   a-radio-group[tone-selected="success"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #2a7e43;
-  --radio-bg-selected-hover: #226737;
-  --radio-bg-selected-active: #1f5c31;
+  --radio-bg-selected: light-dark(#2a7e43, #226737);
+  --radio-bg-selected-hover: light-dark(#226737, #2a7e43);
+  --radio-bg-selected-active: light-dark(#1f5c31, #329550);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone-selected="warning"],
   a-radio-group[tone-selected="warning"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #c37416;
-  --radio-bg-selected-hover: #ae6613;
-  --radio-bg-selected-active: #995200;
+  --radio-bg-selected: light-dark(#c37416, #7f410b);
+  --radio-bg-selected-hover: light-dark(#ae6613, #995200);
+  --radio-bg-selected-active: light-dark(#995200, #ae6613);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone-selected="critical"],
   a-radio-group[tone-selected="critical"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #c9302c;
-  --radio-bg-selected-hover: #b02120;
-  --radio-bg-selected-active: #a01c1c;
+  --radio-bg-selected: light-dark(#c9302c, #b02120);
+  --radio-bg-selected-hover: light-dark(#b02120, #c9302c);
+  --radio-bg-selected-active: light-dark(#a01c1c, #de4545);
 }
 :is(a-radio, input[data-anta][type="radio"])[tone-selected]:not(
     [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
@@ -792,239 +636,60 @@ a-radio-group[tone]:where(:not(
 a-radio-group[tone-selected]:not(
     [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
     [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: oklch(from var(--radio-tone-source) var(--_tone-l-rest) c h);
-  --radio-bg-selected-hover: oklch(from var(--radio-tone-source) var(--_tone-l-hover) c h);
-  --radio-bg-selected-active: oklch(from var(--radio-tone-source) var(--_tone-l-active) c h);
-}
-.dark :is(a-radio, input[data-anta][type="radio"]):not([tone]):not([tone-selected]) {
-  --radio-border-hover: #635b65;
-  --radio-border-active: #776e77;
-  --radio-bg-selected: #49424c;
-  --radio-bg-selected-hover: #534c57;
-  --radio-bg-selected-active: #635b65;
-  --radio-border-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="brand"],
-  .dark a-radio-group[tone="brand"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #503cb4;
-  --radio-bg-selected-hover: #5f4bc3;
-  --radio-bg-selected-active: #7460d7;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="neutral"],
-  .dark a-radio-group[tone="neutral"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #49424c;
-  --radio-bg-selected-hover: #534c57;
-  --radio-bg-selected-active: #635b65;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="info"],
-  .dark a-radio-group[tone="info"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #1a5b93;
-  --radio-bg-selected-hover: #1f6eb2;
-  --radio-bg-selected-active: #2686d9;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="success"],
-  .dark a-radio-group[tone="success"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #226737;
-  --radio-bg-selected-hover: #2a7e43;
-  --radio-bg-selected-active: #329550;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="warning"],
-  .dark a-radio-group[tone="warning"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #7f410b;
-  --radio-bg-selected-hover: #995200;
-  --radio-bg-selected-active: #ae6613;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="critical"],
-  .dark a-radio-group[tone="critical"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #b02120;
-  --radio-bg-selected-hover: #c9302c;
-  --radio-bg-selected-active: #de4545;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="brand"],
-  .dark a-radio-group[tone="brand"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg: #0b0916;
-  --radio-border: #483493;
-  --radio-border-hover: #5f4bc3;
-  --radio-border-active: #7460d7;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="info"],
-  .dark a-radio-group[tone="info"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg: #040d18;
-  --radio-border: #175082;
-  --radio-border-hover: #1f6eb2;
-  --radio-border-active: #2686d9;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="success"],
-  .dark a-radio-group[tone="success"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg: #041008;
-  --radio-border: #1f5c31;
-  --radio-border-hover: #2a7e43;
-  --radio-border-active: #329550;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="warning"],
-  .dark a-radio-group[tone="warning"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg: #120a03;
-  --radio-border: #6a3b0c;
-  --radio-border-hover: #995200;
-  --radio-border-active: #ae6613;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone="critical"],
-  .dark a-radio-group[tone="critical"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg: #190405;
-  --radio-border: #a01c1c;
-  --radio-border-hover: #c9302c;
-  --radio-border-active: #de4545;
-}
-.dark a-radio-group[tone]:where(:not(
-    [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
-    [tone="success"], [tone="warning"], [tone="critical"])) a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: oklch(from var(--radio-tone-source) var(--_tone-l-rest) c h);
-  --radio-bg-selected-hover: oklch(from var(--radio-tone-source) var(--_tone-l-hover) c h);
-  --radio-bg-selected-active: oklch(from var(--radio-tone-source) var(--_tone-l-active) c h);
-  --radio-bg: oklch(from var(--radio-off-tone-source) 0.15 calc(c * 0.18) h);
-  --radio-border: var(--_radio-border-base);
-  --radio-border-hover: oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
-  --radio-border-active: oklch(from var(--_radio-border-base) calc(l + 0.17) c h);
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="brand"],
-  .dark a-radio-group[tone-selected="brand"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #503cb4;
-  --radio-bg-selected-hover: #5f4bc3;
-  --radio-bg-selected-active: #7460d7;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="neutral"],
-  .dark a-radio-group[tone-selected="neutral"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #49424c;
-  --radio-bg-selected-hover: #534c57;
-  --radio-bg-selected-active: #635b65;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="info"],
-  .dark a-radio-group[tone-selected="info"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #1a5b93;
-  --radio-bg-selected-hover: #1f6eb2;
-  --radio-bg-selected-active: #2686d9;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="success"],
-  .dark a-radio-group[tone-selected="success"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #226737;
-  --radio-bg-selected-hover: #2a7e43;
-  --radio-bg-selected-active: #329550;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="warning"],
-  .dark a-radio-group[tone-selected="warning"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #7f410b;
-  --radio-bg-selected-hover: #995200;
-  --radio-bg-selected-active: #ae6613;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected="critical"],
-  .dark a-radio-group[tone-selected="critical"] a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: #b02120;
-  --radio-bg-selected-hover: #c9302c;
-  --radio-bg-selected-active: #de4545;
-}
-.dark :is(a-radio, input[data-anta][type="radio"])[tone-selected]:not(
-    [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
-    [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]),
-.dark a-radio-group[tone-selected]:not(
-    [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
-    [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) a-radio:not([tone], [tone-selected]) {
-  --radio-bg-selected: oklch(from var(--radio-tone-source) var(--_tone-l-rest) c h);
-  --radio-bg-selected-hover: oklch(from var(--radio-tone-source) var(--_tone-l-hover) c h);
-  --radio-bg-selected-active: oklch(from var(--radio-tone-source) var(--_tone-l-active) c h);
+  --radio-bg-selected: light-dark(oklch(from var(--radio-tone-source) 0.5 c h), oklch(from var(--radio-tone-source) 0.45 c h));
+  --radio-bg-selected-hover: light-dark(oklch(from var(--radio-tone-source) 0.45 c h), oklch(from var(--radio-tone-source) 0.5 c h));
+  --radio-bg-selected-active: light-dark(oklch(from var(--radio-tone-source) 0.4 c h), oklch(from var(--radio-tone-source) 0.57 c h));
 }
 
 /* ===== tag ===== */
 a-tag:not([tone]),
 a-tag[tone="neutral"] {
-  --tag-tint: #44374b;
-  --tag-bg-solid: #776e77;
+  --tag-tint: light-dark(#44374b, #e4d1ef);
+  --tag-bg-solid: light-dark(#776e77, #635b65);
   --tag-edge: var(--tag-tint);
-  --_tag-bg-alpha: 7%;
-  --_tag-border-alpha: 15%;
-  --_tag-edge-alpha: 25%;
+  --tag-bg: light-dark(color-mix(in oklch, var(--tag-tint) 7%, transparent), color-mix(in oklch, var(--tag-tint) 12%, transparent));
+  --tag-border: color-mix(in oklch, var(--tag-tint) 15%, transparent);
 }
 a-tag[tone="brand"] {
   --tag-tint: #7460d7;
-  --tag-bg-solid: #7460d7;
+  --tag-bg-solid: light-dark(#7460d7, #5f4bc3);
   --tag-edge: var(--text-2-brand);
-  --_tag-bg-alpha: 10%;
-  --_tag-edge-alpha: 20%;
 }
 a-tag[tone="info"] {
   --tag-tint: #2686d9;
-  --tag-bg-solid: #2686d9;
+  --tag-bg-solid: light-dark(#2686d9, #1f6eb2);
   --tag-edge: var(--text-2-info);
-  --_tag-bg-alpha: 10%;
-  --_tag-edge-alpha: 20%;
 }
 a-tag[tone="success"] {
   --tag-tint: #329550;
-  --tag-bg-solid: #329550;
+  --tag-bg-solid: light-dark(#329550, #2a7e43);
   --tag-edge: var(--text-2-success);
-  --_tag-bg-alpha: 10%;
-  --_tag-edge-alpha: 20%;
 }
 a-tag[tone="warning"] {
   --tag-tint: #c37416;
-  --tag-bg-solid: #ae6613;
+  --tag-bg-solid: light-dark(#ae6613, #995200);
   --tag-edge: var(--text-2-warning);
-  --_tag-bg-alpha: 10%;
-  --_tag-edge-alpha: 20%;
 }
 a-tag[tone="critical"] {
   --tag-tint: #de4545;
-  --tag-bg-solid: #de4545;
+  --tag-bg-solid: light-dark(#de4545, #c9302c);
   --tag-edge: var(--text-2-critical);
-  --_tag-bg-alpha: 10%;
-  --_tag-edge-alpha: 20%;
 }
-.dark a-tag:not([tone]),
-  .dark a-tag[tone="neutral"] {
-  --tag-tint: #e4d1ef;
-  --tag-bg-solid: #635b65;
-  --_tag-bg-alpha: 12%;
-}
-.dark a-tag[tone="brand"],
-  .dark a-tag[tone="info"],
-  .dark a-tag[tone="success"],
-  .dark a-tag[tone="warning"],
-  .dark a-tag[tone="critical"] {
-  --_tag-bg-alpha: 20%;
-  --_tag-border-alpha: 25%;
-  --_tag-edge-alpha: 30%;
-}
-.dark a-tag[tone="brand"] {
-  --tag-bg-solid: #5f4bc3;
-}
-.dark a-tag[tone="info"] {
-  --tag-bg-solid: #1f6eb2;
-}
-.dark a-tag[tone="success"] {
-  --tag-bg-solid: #2a7e43;
-}
-.dark a-tag[tone="warning"] {
-  --tag-bg-solid: #995200;
-}
-.dark a-tag[tone="critical"] {
-  --tag-bg-solid: #c9302c;
-}
-.dark a-tag[tone]:not(
-      [tone="neutral"],
-      [tone="brand"],
-      [tone="info"],
-      [tone="success"],
-      [tone="warning"],
-      [tone="critical"]
-    ) {
-  --_tag-bg-alpha: 20%;
-  --_tag-border-alpha: 25%;
-  --_tag-edge-alpha: 30%;
+a-tag:not([tone])[priority="tertiary"],
+a-tag[tone="neutral"][priority="tertiary"] {
+  --tag-border: color-mix(in oklch, var(--tag-edge) 25%, transparent);
 }
 
 /* ===== tabs ===== */
-.dark a-tabs {
-  --tabs-track-bg: color-mix(in oklch, #e4d1ef 7%, transparent);
-  --tab-secondary-bg: color-mix(in oklch, #e4d1ef 8%, transparent);
+a-tabs {
+  --tabs-track-bg: light-dark(
+    oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.06),
+    color-mix(in oklch, #e4d1ef 7%, transparent)
+  );
+  --tab-secondary-bg: light-dark(
+    oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.03),
+    color-mix(in oklch, #e4d1ef 8%, transparent)
+  );
 }
 
 /* ===== input ===== */
@@ -1034,166 +699,85 @@ a-tag[tone="critical"] {
    unaffected. */
 a-input:not([tone]) {
   --input-bg: var(--bg-1);
-  --input-border: var(--border-2);
+  --input-border: light-dark(var(--border-2), #49424c);
   --input-hint: var(--text-3);
 }
 a-input[status="critical"] {
-  --input-bg: #fefbfb;
-  --input-border: #de4545;
-  --input-hint: #c9302c;
+  --input-bg: light-dark(#fefbfb, #1f0506);
+  --input-border: light-dark(#de4545, #c9302c);
+  --input-hint: light-dark(#c9302c, #e25858);
 }
 a-input[status="warning"] {
-  --input-bg: #fefbf6;
-  --input-border: #ae6613;
-  --input-hint: #995200;
+  --input-bg: light-dark(#fefbf6, #120a03);
+  --input-border: light-dark(#ae6613, #995200);
+  --input-hint: light-dark(#995200, #c37416);
 }
 a-input[status="success"] {
-  --input-bg: #f7fcf9;
-  --input-border: #329550;
-  --input-hint: #2a7e43;
+  --input-bg: light-dark(#f7fcf9, #041008);
+  --input-border: light-dark(#329550, var(--border-1-success));
+  --input-hint: light-dark(#2a7e43, #3aab5c);
 }
 a-input[status="info"] {
-  --input-bg: #fbfcfe;
-  --input-border: #2686d9;
-  --input-hint: #175082;
+  --input-bg: light-dark(#fbfcfe, #040d18);
+  --input-border: light-dark(#2686d9, #1f6eb2);
+  --input-hint: light-dark(#175082, #3e93dd);
 }
 a-input[status="brand"] {
-  --input-bg: #fcfcfe;
-  --input-border: #7460d7;
-  --input-hint: #5f4bc3;
-}
-.dark a-input[status="critical"] {
-  --input-bg: #1f0506;
-  --input-border: #c9302c;
-  --input-hint: #e25858;
-}
-.dark a-input[status="warning"] {
-  --input-bg: #120a03;
-  --input-border: #995200;
-  --input-hint: #c37416;
-}
-.dark a-input[status="success"] {
-  --input-bg: #041008;
-  --input-border: #2a7e43;
-  --input-hint: #3aab5c;
-}
-.dark a-input[status="info"] {
-  --input-bg: #040d18;
-  --input-border: #1f6eb2;
-  --input-hint: #3e93dd;
-}
-.dark a-input[status="brand"] {
-  --input-bg: #0b0916;
-  --input-border: #5f4bc3;
-  --input-hint: #8270db;
+  --input-bg: light-dark(#fcfcfe, #0b0916);
+  --input-border: light-dark(#7460d7, #5f4bc3);
+  --input-hint: light-dark(#5f4bc3, #8270db);
 }
 a-input:disabled {
-  --input-bg: #44374b12;
-  --input-border: #44374b26;
+  --input-bg: light-dark(#44374b12, #e4d1ef0d);
+  --input-border: light-dark(#44374b26, #e4d1ef1f);
   --input-hint: var(--text-5);
 }
 a-input[status]:disabled {
-  --input-bg: #44374b12;
-  --input-border: #44374b26;
+  --input-bg: light-dark(#44374b12, #e4d1ef0d);
+  --input-border: light-dark(#44374b26, #e4d1ef1f);
   --input-hint: var(--text-5);
 }
-.dark a-input:disabled {
-  --input-bg: #e4d1ef0d;
-  --input-border: #e4d1ef1f;
-}
-.dark a-input[status]:disabled {
-  --input-bg: #e4d1ef0d;
-  --input-border: #e4d1ef1f;
-  --input-hint: var(--text-5);
-}
-.dark a-input:not([status]):not([tone]) {
-  --input-border: #49424c;
-}
-.dark a-input[status="success"] {
-  --input-border: var(--border-1-success);
-}
-
 /* ===== input-time ===== */
 a-input-time {
   --input-time-bg: var(--bg-1);
-  --input-time-border: var(--border-2);
-  --input-time-border-hover: var(--border-1);
+  --input-time-border: light-dark(var(--border-2), #49424c);
+  --input-time-border-hover: light-dark(var(--border-1), #635b65);
   --input-time-hint: var(--text-3);
 }
 a-input-time[status="critical"] {
-  --input-time-bg: #fefbfb;
-  --input-time-border: #de4545;
-  --input-time-border-hover: #de4545;
-  --input-time-hint: #c9302c;
+  --input-time-bg: light-dark(#fefbfb, #1f0506);
+  --input-time-border: light-dark(#de4545, #c9302c);
+  --input-time-border-hover: var(--input-time-border);
+  --input-time-hint: light-dark(#c9302c, #e25858);
 }
 a-input-time[status="warning"] {
-  --input-time-bg: #fefbf6;
-  --input-time-border: #ae6613;
-  --input-time-border-hover: #ae6613;
-  --input-time-hint: #995200;
+  --input-time-bg: light-dark(#fefbf6, #120a03);
+  --input-time-border: light-dark(#ae6613, #995200);
+  --input-time-border-hover: var(--input-time-border);
+  --input-time-hint: light-dark(#995200, #c37416);
 }
 a-input-time[status="success"] {
-  --input-time-bg: #f7fcf9;
-  --input-time-border: #329550;
-  --input-time-border-hover: #329550;
-  --input-time-hint: #2a7e43;
+  --input-time-bg: light-dark(#f7fcf9, #041008);
+  --input-time-border: light-dark(#329550, var(--border-1-success));
+  --input-time-border-hover: var(--input-time-border);
+  --input-time-hint: light-dark(#2a7e43, #3aab5c);
 }
 a-input-time[status="info"] {
-  --input-time-bg: #fbfcfe;
-  --input-time-border: #2686d9;
-  --input-time-border-hover: #2686d9;
-  --input-time-hint: #175082;
+  --input-time-bg: light-dark(#fbfcfe, #040d18);
+  --input-time-border: light-dark(#2686d9, #1f6eb2);
+  --input-time-border-hover: var(--input-time-border);
+  --input-time-hint: light-dark(#175082, #3e93dd);
 }
 a-input-time[status="brand"] {
-  --input-time-bg: #fcfcfe;
-  --input-time-border: #7460d7;
-  --input-time-border-hover: #7460d7;
-  --input-time-hint: #5f4bc3;
-}
-.dark a-input-time[status="critical"] {
-  --input-time-bg: #1f0506;
-  --input-time-border: #c9302c;
-  --input-time-border-hover: #c9302c;
-  --input-time-hint: #e25858;
-}
-.dark a-input-time[status="warning"] {
-  --input-time-bg: #120a03;
-  --input-time-border: #995200;
-  --input-time-border-hover: #995200;
-  --input-time-hint: #c37416;
-}
-.dark a-input-time[status="success"] {
-  --input-time-bg: #041008;
-  --input-time-border: var(--border-1-success);
-  --input-time-border-hover: var(--border-1-success);
-  --input-time-hint: #3aab5c;
-}
-.dark a-input-time[status="info"] {
-  --input-time-bg: #040d18;
-  --input-time-border: #1f6eb2;
-  --input-time-border-hover: #1f6eb2;
-  --input-time-hint: #3e93dd;
-}
-.dark a-input-time[status="brand"] {
-  --input-time-bg: #0b0916;
-  --input-time-border: #5f4bc3;
-  --input-time-border-hover: #5f4bc3;
-  --input-time-hint: #8270db;
+  --input-time-bg: light-dark(#fcfcfe, #0b0916);
+  --input-time-border: light-dark(#7460d7, #5f4bc3);
+  --input-time-border-hover: var(--input-time-border);
+  --input-time-hint: light-dark(#5f4bc3, #8270db);
 }
 a-input-time:disabled {
-  --input-time-bg: #44374b12;
-  --input-time-border: #44374b26;
-  --input-time-border-hover: #44374b26;
+  --input-time-bg: light-dark(#44374b12, #e4d1ef0d);
+  --input-time-border: light-dark(#44374b26, #e4d1ef1f);
+  --input-time-border-hover: var(--input-time-border);
   --input-time-hint: var(--text-5);
 }
-.dark a-input-time:disabled {
-  --input-time-bg: #e4d1ef0d;
-  --input-time-border: #e4d1ef1f;
-  --input-time-border-hover: #e4d1ef1f;
 }
-.dark a-input-time:not([status]) {
-  --input-time-border: #49424c;
-  --input-time-border-hover: #635b65;
-}
-
-} /* @layer anta.theme — end of part 2 (bespoke component ramps) */

@@ -16,7 +16,10 @@
   }
 
   a-tooltip {
-    --tooltip-bg: color-mix(in oklch, var(--bg-1) 80%, transparent);
+    --tooltip-bg: light-dark(
+      color-mix(in oklch, var(--bg-1) 80%, transparent),
+      color-mix(in oklch, var(--bg-1) 70%, transparent)
+    );
     --tooltip-shadow:
       0 1px 8px color-mix(in oklch, var(--text-1) 15%, transparent),
       0 0 1px color-mix(in oklch, var(--text-1) 50%, transparent);
@@ -38,10 +41,9 @@
   }
 
   .dark a-tooltip {
-    --tooltip-bg: color-mix(in oklch, var(--bg-1) 70%, transparent);
     --tooltip-shadow:
-      0 2px 16px color-mix(in oklch, black 70%, transparent),
-      inset 0 0 0 1px color-mix(in oklch, white 15%, transparent);
+      0 2px 16px light-dark(color-mix(in oklch, var(--text-1) 15%, transparent), color-mix(in oklch, black 70%, transparent)),
+      inset 0 0 0 1px light-dark(color-mix(in oklch, var(--text-1) 50%, transparent), color-mix(in oklch, white 15%, transparent));
   }
 
   @media (forced-colors: active) {

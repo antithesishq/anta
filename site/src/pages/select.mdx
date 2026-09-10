@@ -87,8 +87,8 @@ skipped by the keyboard.
 <Select options={OPTIONS} value={one} onValueChange={setOne} />                    // tint only (default)
 
 // Tone the selected row: named tone or custom color (the indicator adopts it)
-<Select indicator="check" toneSelected="brand" options={OPTIONS} value={one} onValueChange={setOne} />
-<Select indicator="radio" toneSelected="#c026d3" options={OPTIONS} value={one} onValueChange={setOne} />
+<Select indicator="check" tone="brand" toneScope="selected" options={OPTIONS} value={one} onValueChange={setOne} />
+<Select indicator="radio" tone="#c026d3" toneScope="selected" options={OPTIONS} value={one} onValueChange={setOne} />
 
 // Multiple: checkboxes, count summary, Select-all row (default); value is an array
 <Select
@@ -128,9 +128,9 @@ Each checkable row is the control itself (`role="menuitemcheckbox"` /
 `menuitemradio`, `aria-checked`); the checkbox / radio / check is a passive indicator
 the row drives.
 
-**`toneSelected`** tones the selected row(s): the whole row takes the tone, including
-label, icon, indicator, and tint. Pass a named tone or any CSS color (a custom color
-keeps its hue, with lightness pinned to the brand text). It reads strongest with
+Use **`tone`** with **`toneScope="selected"`** to tone only selected rows: the whole
+row takes the tone, including label, icon, indicator, and tint. Pass a named tone or
+any CSS color (a custom color keeps its hue, with lightness pinned to the brand text). It reads strongest with
 `indicator` `none` / `check`, which show the row tint; `radio` / `checkbox` have no
 row tint, so it tones the label and indicator only.
 
@@ -1026,8 +1026,8 @@ Select is an [Input](/input/) plus a [Menu](/menu/), so it
 inherits both surfaces' hooks. Reach for props first, then plain CSS or `::part` for
 the rest. Don't override an element's internal `--*` output tokens.
 
-**Selection color** routes through the props: a per-option `tone`, or `toneSelected`
-for the chosen row(s). Both take a named tone or any CSS color (a custom color keeps
+**Selection color** routes through `tone`: set it per option or on the Select as a
+default, then use `toneScope="selected"` for chosen rows only. It takes a named tone or any CSS color (a custom color keeps
 its hue, with lightness pinned to the brand text).
 
 **The field** is styled through Input's props (`size`, `status`, `round`) and its
@@ -1036,7 +1036,7 @@ popover** takes Menu's `::part(menu)`.
 
 ```tsx folded
 // Tone the selection; give the trigger a width.
-<Select toneSelected="brand" style={{ width: '220px' }} options={OPTIONS} />
+<Select tone="brand" toneScope="selected" style={{ width: '220px' }} options={OPTIONS} />
 ```
 
 **Borderless trigger.** The field's border is an inset `box-shadow`, so you can drop

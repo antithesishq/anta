@@ -54,20 +54,19 @@
 }
 
 @layer anta.theme {
-  :is(a-button, a[role="button"][data-anta], button[data-anta],
-      input[data-anta]:is([type="reset"], [type="submit"])),
+  a-button,
+  a[role="button"][data-anta],
+  button[data-anta],
+  input[data-anta]:is([type="reset"], [type="submit"]),
   a-tab {
     font-stretch: 88%;
   }
 
-  :is(a-button, a[role="button"][data-anta], button[data-anta],
-      input[data-anta]:is([type="reset"], [type="submit"])) {
+  a-button,
+  a[role="button"][data-anta],
+  button[data-anta],
+  input[data-anta]:is([type="reset"], [type="submit"]) {
     letter-spacing: 0.05ch;
-  }
-
-  :is(a-button, a[role="button"][data-anta], button[data-anta],
-      input[data-anta]:is([type="reset"], [type="submit"]))[priority="quaternary"] {
-    letter-spacing: 0.06ch;
   }
 
   a-input {

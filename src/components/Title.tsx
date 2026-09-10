@@ -1,5 +1,5 @@
 import type { BaseProps } from "../general_types"
-import { toneStyle } from "../anta_helpers"
+import { neutralToneAttr, toneStyle } from "../anta_helpers"
 
 export interface TitleProps extends BaseProps {
   /** Heading level, 1-6. Drives font-size, line-height, and vertical
@@ -61,8 +61,7 @@ export interface TitleProps extends BaseProps {
  * ```
  */
 export const Title = ({ level = 2, priority, tone, className, style, children, ...rest }: TitleProps) => {
-  // Empty string is "no tone" — normalize so it doesn't hit the custom-tone path.
-  const toneAttr = tone || undefined
+  const toneAttr = neutralToneAttr(tone)
   return (
     <a-title
       level={String(level)}

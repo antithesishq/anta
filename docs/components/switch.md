@@ -17,16 +17,16 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 
 ## Selected-only tone
 
-`toneSelected` colors the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state. It accepts the same values as `tone`.
+`toneScope="selected"` applies the switch's `tone` to the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state.
 
 ```tsx
-<Switch toneSelected="brand" label="Off stays neutral" />
-<Switch defaultChecked toneSelected="critical" label="Checked track tinted" />
+<Switch tone="brand" toneScope="selected" label="Off stays neutral" />
+<Switch defaultChecked tone="critical" toneScope="selected" label="Checked track tinted" />
 ```
 
 ## Coloring the text
 
-There is no text-tone prop. To tint the label, set `color` on the switch with a theme-aware `--text-N-{tone}` token; to tint the hint, target `a-switch-hint`. Pair either with `tone` or `toneSelected` to color the whole control.
+There is no text-tone prop. To tint the label, set `color` on the switch with a theme-aware `--text-N-{tone}` token; to tint the hint, target `a-switch-hint`. Pair either with `tone` to color the whole control.
 
 ```css
 /* The class is only for the demo — use your own selector. */
@@ -139,8 +139,8 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 | `onValueChange?` | (event, attrs) => void | — | Post-apply callback with the new form-relevant value snapshot. |
 | `round?` | boolean \| number \| string | — | Fully round the thumb and track. Pass a `number` (px) or CSS length string for a custom track radius; the thumb radius is 3px smaller. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant. small=26×16px, medium=30×18px, large=34×20px. |
-| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Color of the track and thumb. A tinted tone also colors the unchecked track border and thumb; use `toneSelected` to color only the checked track. |
-| `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Like `tone`, but applies only while the switch is checked. The unchecked track and thumb stay neutral. If both are set, `tone` colors the unchecked state and `toneSelected` colors the checked track. |
+| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Color of the track and thumb. A tinted tone also colors the unchecked track border and thumb; use `toneScope="selected"` to color only the checked track. |
+| `toneScope?` | ToneScope | 'all' | Apply `tone` to every state, or only while checked so the unchecked track and thumb stay neutral. |
 | `value?` | string | "on" | Value submitted while checked. |
 
 ## Web Component
@@ -158,7 +158,7 @@ The focusable host carries the state. Label and hint are light-DOM children.
 
 ## Styling
 
-Reach for the props first: **`tone`** colors the checked track plus the unchecked chrome, while **`toneSelected`** colors only the checked track. Both accept any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](../colors.md#focus-ring).
+Reach for the props first: **`tone`** chooses the control color, while **`toneScope`** chooses whether it colors all states or only the checked track. `tone` accepts any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](../colors.md#focus-ring).
 
 ```tsx
 <Switch tone="#e0457b" defaultChecked label="Custom color" />

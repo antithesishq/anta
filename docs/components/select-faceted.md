@@ -377,7 +377,8 @@ const recency: SelectFacetCustom<Recency> = {
 | `searchable?` | boolean | — | Adds a search field at the top of the root menu. It searches the options of every `single` and `multiple` facet in one list. For example, "alice" can appear under application-defined Assignee and Owner facets. `text` and `custom` facets remain available when the search is empty. Each facet uses its `filter` function when supplied, or the built-in substring match. |
 | `searchPlaceholder?` | string | Filter… | Placeholder for the global search field. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Default trigger's button size. |
-| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Tone applied to a selected option row in the facet flyouts (label, selected tint, and the check / checkbox indicator). A named tone or a custom CSS color, matching `Select`'s `toneSelected`. Defaults to a neutral selection. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Default option-row tone in facet flyouts. An option's own `tone` wins. |
+| `toneScope?` | ToneScope | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
 | `value?` | SelectFacetedValue | — | Controlled value record, keyed by facet. When provided, update it through `onValueChange`. Leave it undefined for uncontrolled use. |
 
 ### The `SelectFacet` type

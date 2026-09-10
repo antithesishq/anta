@@ -1,5 +1,5 @@
 import { nativeStateChange, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
-import type { BaseProps } from "../general_types"
+import type { BaseProps, ToneScope } from "../general_types"
 
 type SwitchState = 'checked' | 'unchecked'
 type StateDetail = { next: SwitchState; prev: SwitchState }
@@ -40,14 +40,13 @@ export interface SwitchProps extends BaseProps {
    * @defaultValue "on" */
   value?: string
   /** Color of the track and thumb. A tinted tone also colors the unchecked
-   * track border and thumb; use `toneSelected` to color only the checked track.
+   * track border and thumb; use `toneScope="selected"` to color only the checked track.
    * @defaultValue 'brand' */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but applies only while the switch is checked. The unchecked
-   * track and thumb stay neutral. If both are set, `tone` colors the unchecked
-   * state and `toneSelected` colors the checked track.
-   * @defaultValue 'brand' */
-  toneSelected?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply `tone` to every state, or only while checked so the unchecked track
+   * and thumb stay neutral.
+   * @defaultValue 'all' */
+  toneScope?: ToneScope
   /** Size variant. small=26×16px, medium=30×18px, large=34×20px.
    * @defaultValue 'medium' */
   size?: 'small' | 'medium' | 'large'
@@ -74,7 +73,7 @@ export const Switch = ({
   defaultChecked,
   disabled,
   tone,
-  toneSelected,
+  toneScope,
   size,
   round,
   labelPosition,
@@ -92,17 +91,7 @@ export const Switch = ({
   const computedStyle = roundStyle(
     round,
     '--switch-round',
-    toneStyle(
-      toneSelected,
-      '--switch-tone-source',
-      toneStyle(
-        tone,
-        '--switch-off-tone-source',
-        toneSelected == null
-          ? toneStyle(tone, '--switch-tone-source', style)
-          : style,
-      ),
-    ),
+    toneStyle(tone, '--switch-tone-source', toneStyle(tone, '--switch-off-tone-source', style)),
   )
   const explicitAriaLabel = rest['aria-label']
   const ariaLabel =
@@ -146,7 +135,7 @@ export const Switch = ({
       default-state={defaultStateAttr}
       disabled={disabled ? '' : undefined}
       tone={tone}
-      tone-selected={toneSelected}
+      tone-scope={toneScope && toneScope !== 'all' ? toneScope : undefined}
       size={size && size !== 'medium' ? size : undefined}
       round={roundAttr(round)}
       label-position={labelPosition && labelPosition !== 'end' ? labelPosition : undefined}

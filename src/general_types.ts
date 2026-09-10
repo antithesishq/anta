@@ -31,6 +31,10 @@ export interface BaseProps {
   [key: `aria-${string}`]: unknown
 }
 
+/** Where a stateful component applies its tone. `all` colors both resting and
+ * selected chrome; `selected` keeps resting chrome neutral. */
+export type ToneScope = 'all' | 'selected'
+
 /** Safe presentation attributes for a data-rendered option. They land on the
  * option's rendered row, rather than on the enclosing control. Menu-based
  * components reserve `data-menu-*` for their own selection and focus behavior. */
@@ -566,15 +570,13 @@ export interface ATooltipAttributes extends BaseAttributes {
  * `@antadesign/anta`.
  */
 export interface ACheckboxAttributes extends BaseAttributes {
-  /** Mark color in every state — checked fill *and* unselected box border — or any
-   *  literal CSS color for a one-off custom tone. Named tones track light/dark mode
-   *  automatically. `'neutral'` is the default (same as omitting it). The label + hint
+  /** Mark color, or any literal CSS color for a one-off custom tone. Named tones
+   *  track light/dark mode automatically. Its scope is controlled by `tone-scope`. `'neutral'` is the
+   *  default (same as omitting it). The label + hint
    *  stay neutral — recolor them in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but colored onto the checked mark only — the empty box stays
-   *  neutral grey. Same value set as `tone`; if both are set, `tone` governs the
-   *  off-state border and `tone-selected` the checked fill. */
-  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply `tone` to every state (`all`, the default) or only while checked. */
+  'tone-scope'?: ToneScope
   /** Size variant. `small` = 14px, `medium` (default) = 16px, `large` = 18px box. */
   size?: 'small' | 'medium' | 'large'
   /** Controlled state — the element reflects changes to this attribute. Use this
@@ -620,10 +622,10 @@ export interface ACheckboxAttributes extends BaseAttributes {
  * wrapper supplies both.
  */
 export interface ASwitchAttributes extends BaseAttributes {
-  /** Track and thumb color. A tinted tone also colors the unchecked chrome. */
+  /** Track and thumb color. Its scope is controlled by `tone-scope`. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Checked-track-only color. The unchecked track and thumb stay neutral. */
-  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply `tone` to every state (`all`, the default) or only while checked. */
+  'tone-scope'?: ToneScope
   /** Size variant. `small` = 26×16px, `medium` (default) = 30×18px, `large` = 34×20px. */
   size?: 'small' | 'medium' | 'large'
   /** Fully round the thumb and track, or pass a custom track radius via a length
@@ -1092,15 +1094,13 @@ export interface ACopyAttributes extends BaseAttributes {
 export interface ARadioAttributes extends BaseAttributes {
   /** This option's identity / submitted value. */
   value?: string
-  /** Mark color in every state — selected ring fill + dot *and* unselected ring
-   *  border — or any literal CSS color for a one-off custom tone. Named tones track
-   *  light/dark mode. `'neutral'` is the default. The label + hint stay neutral —
+  /** Mark color, or any literal CSS color for a one-off custom tone. Named tones track
+   *  light/dark mode; `tone-scope` controls whether unselected chrome is tinted.
+   *  `'neutral'` is the default. The label + hint stay neutral —
    *  recolor them in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but colored onto the selected mark only — an unselected ring stays
-   *  neutral grey. Same value set as `tone`; if both are set, `tone` governs the
-   *  off-state border and `tone-selected` the selected fill. */
-  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply `tone` to every state (`all`, the default) or only while selected. */
+  'tone-scope'?: ToneScope
   /** Size variant. small=14px, medium=16px, large=18px control. */
   size?: 'small' | 'medium' | 'large'
   /** Disabled state. Presence-based (`''` on, omit off). */
@@ -1144,13 +1144,13 @@ export interface ARadioGroupAttributes extends BaseAttributes {
   /** Form field name — the group submits `name=value`. */
   name?: string
   /** Mark tone cascaded to children that don't set their own, or any literal CSS
-   *  color for a one-off custom tone. Colors every child's ring fill + dot *and*
-   *  unselected border. The option text stays neutral — recolor it in plain CSS via
-   *  the `--text-N-{tone}` tokens. */
+   *  color for a one-off custom tone. In `all` scope it colors every child's ring
+   *  fill, dot, and unselected border. The option text stays neutral — recolor it
+   *  in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but colored onto the selected option only — every unselected ring
-   *  stays neutral grey. Cascaded to children that don't set their own. */
-  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply the cascaded `tone` to every state (`all`, the default) or only to the
+   * selected option. A child's explicit scope overrides the group. */
+  'tone-scope'?: ToneScope
   /** Size cascaded to children that don't set their own. */
   size?: 'small' | 'medium' | 'large'
   /** Validation/feedback tone for the group hint — same set as `<a-input>`'s

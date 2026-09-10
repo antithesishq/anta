@@ -7,7 +7,7 @@
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
 import { useState, useMemo } from '../jsx-runtime'
 import { nativeStateChange, ISOLATE_HINT, optionPresentationAttrs } from '../anta_helpers'
-import type { BaseProps } from '../general_types'
+import type { BaseProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { OptionValue, SelectItem, SelectOption } from './Select'
 import { normalizeOpt, matchQueryRegex, matchesQuery } from './select-options'
@@ -179,10 +179,12 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   priority?: 'primary' | 'secondary'
   /** Disable the whole control. */
   disabled?: boolean
-  /** Tone applied to a selected option row in the facet flyouts (label, selected
-   *  tint, and the check / checkbox indicator). A named tone or a custom CSS
-   *  color, matching `Select`'s `toneSelected`. Defaults to a neutral selection. */
-  toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Default option-row tone in facet flyouts. An option's own `tone` wins. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply the default row tone in every state, or only to selected rows. An
+   * option's own `toneScope` wins.
+   * @defaultValue 'all' */
+  toneScope?: ToneScope
   /** Adds a search field at the top of the root menu. It searches the options of
    *  every `single` and `multiple` facet in one list. For example, "alice" can
    *  appear under application-defined Assignee and Owner facets. `text` and
@@ -274,7 +276,8 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
     size,
     priority = 'secondary',
     disabled,
-    toneSelected,
+    tone,
+    toneScope,
     searchable,
     searchPlaceholder = 'Filter…',
     clearable = true,
@@ -402,8 +405,8 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
       icon: opt.icon,
       label: opt.label ?? String(opt.value),
       hint: opt.hint,
-      tone: opt.tone,
-      toneSelected,
+      tone: opt.tone ?? tone,
+      toneScope: opt.toneScope ?? toneScope,
       disabled: opt.disabled,
       className: optionClassName,
       style: optionStyle,

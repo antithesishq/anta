@@ -1,6 +1,6 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { nativeStateChange, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
+import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
 
@@ -300,7 +300,7 @@ export const Input = ({
       rows={rows != null ? String(rows) : undefined}
       maxrows={maxRows != null ? String(maxRows) : undefined}
       status={statusTone}
-      tone={tone || undefined}
+      tone={neutralToneAttr(tone)}
       type={!multiline && rows == null ? nativeType : undefined}
       name={name}
       placeholder={placeholder}

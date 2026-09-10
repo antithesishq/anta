@@ -1,5 +1,5 @@
-import { nativeStateChange, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
-import type { BaseProps } from "../general_types"
+import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
+import type { BaseProps, ToneScope } from "../general_types"
 
 /** The wrapper-level checked value: a boolean for the binary axis, the string
  *  `'indeterminate'` for the third state. Mirrors Radix's `Checkbox.Root`. */
@@ -67,21 +67,20 @@ export interface CheckboxProps extends BaseProps {
   /** Value submitted with the form when checked — like a native checkbox.
    *  @defaultValue "on" */
   value?: string
-  /** Color of the **mark** in every state — the checked-box fill *and* the
-   *  unselected box border. A named tone or any literal CSS color (`'#ff1493'`,
+  /** Color of the **mark**. In the default `all` scope this colors the checked-box
+   *  fill and unselected box border. A named tone or any literal CSS color (`'#ff1493'`,
    *  `'rebeccapurple'`) for a one-off custom tone. Named tones track light/dark mode
    *  automatically; a custom color keeps its hue + chroma and pins lightness to the
-   *  fill curve. Use `toneSelected` instead to tone only the checked mark and leave
+   *  fill curve. Set `toneScope="selected"` to tone only the checked mark and leave
    *  the empty box neutral. The label + hint stay neutral — recolor them in plain
    *  CSS via the theme-aware `--text-N-{tone}` tokens.
    *  @defaultValue 'neutral' */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but colored onto the **checked mark only** — the empty box stays
-   *  neutral grey until it's checked. Prefer this over `tone` when a resting tinted
-   *  border would read as a validation state. Same value set as `tone`; if both are
-   *  set, `tone` governs the off-state border and `toneSelected` the checked fill.
-   *  @defaultValue 'neutral' */
-  toneSelected?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply `tone` to every state, or only while checked so the empty box stays
+   *  neutral. `selected` is useful when a tinted resting border would read as a
+   *  validation state.
+   *  @defaultValue 'all' */
+  toneScope?: ToneScope
   /** Size variant. small=14px, medium=16px, large=18px box.
    *  @defaultValue 'medium' */
   size?: 'small' | 'medium' | 'large'
@@ -120,7 +119,7 @@ export const Checkbox = ({
   defaultChecked,
   disabled,
   tone,
-  toneSelected,
+  toneScope,
   size,
   round,
   onStateChange,
@@ -139,22 +138,12 @@ export const Checkbox = ({
   // publishes it off-DOM via `ElementInternals`, so it stays live through
   // uncontrolled self-toggles (a wrapper-set value would go stale there).
 
-  // A non-named tone/toneSelected is a custom CSS color. The normal tone owns the
-  // off-state source, while toneSelected owns the checked-fill source.
+  // A non-named tone is a custom CSS color. CSS decides whether it also colors
+  // resting chrome from tone-scope.
   const computedStyle = roundStyle(
     round,
     '--checkbox-round',
-    toneStyle(
-      toneSelected,
-      '--checkbox-tone-source',
-      toneStyle(
-        tone,
-        '--checkbox-off-tone-source',
-        toneSelected == null
-          ? toneStyle(tone, '--checkbox-tone-source', style)
-          : style,
-      ),
-    ),
+    toneStyle(tone, '--checkbox-tone-source', toneStyle(tone, '--checkbox-off-tone-source', style)),
   )
 
   // The accessible name is wrapper-derived (matches `Input` and the "ARIA lives
@@ -208,10 +197,8 @@ export const Checkbox = ({
       state={stateAttr}
       default-state={defaultStateAttr}
       disabled={disabled ? '' : undefined}
-      tone={tone && tone !== 'neutral' ? tone : undefined}
-      // `toneSelected="neutral"` is an explicit reset when `tone` is colored,
-      // so it must reach the element instead of collapsing to the default.
-      tone-selected={toneSelected || undefined}
+      tone={neutralToneAttr(tone)}
+      tone-scope={toneScope && toneScope !== 'all' ? toneScope : undefined}
       size={size && size !== 'medium' ? size : undefined}
       round={roundAttr(round)}
       tabIndex={disabled ? -1 : (tabIndex ?? 0)}

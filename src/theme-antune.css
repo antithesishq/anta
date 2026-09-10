@@ -37,13 +37,15 @@
 /* Preserve Anta's internal layer order when this standalone stylesheet loads. */
 @layer anta.reset, anta.components, anta.theme;
 
-:root, .light {
+:root,
+.light {
   --sans-serif: "TT Interphases Pro Variable", sans-serif;
   --monospace: "Antithesis Mono", ui-monospace, monospace;
 }
 
 /* ── 1. Global role scale — hand-tuned literals ───────────────────────────── */
-:root, .light {
+:root,
+.light {
   /* Backgrounds — light, neutral */
   --bg-1: #ffffff;
   --bg-2: #fbfafb;
@@ -345,7 +347,10 @@ input[data-anta]:is([type="reset"], [type="submit"])[tone="neutral"] {
   --button-fg-quaternary-rest: light-dark(#635b65, #afa9b1);
   --button-fg-quaternary-hover: light-dark(#49424c, #cac4ca);
 }
-a-button[tone="brand"], a[role="button"][data-anta][tone="brand"], button[data-anta][tone="brand"], input[data-anta]:is([type="reset"], [type="submit"])[tone="brand"] {
+a-button[tone="brand"],
+a[role="button"][data-anta][tone="brand"],
+button[data-anta][tone="brand"],
+input[data-anta]:is([type="reset"], [type="submit"])[tone="brand"] {
   --button-bg-primary-rest: light-dark(#5f4bc3, #503cb4);
   --button-bg-primary-hover: light-dark(#503cb4, #5f4bc3);
   --button-bg-primary-active: light-dark(#483493, #7460d7);
@@ -361,7 +366,10 @@ a-button[tone="brand"], a[role="button"][data-anta][tone="brand"], button[data-a
   --button-fg-quaternary-rest: light-dark(#5f4bc3, #ada0ee);
   --button-fg-quaternary-hover: light-dark(#483493, #c7bef4);
 }
-a-button[tone="critical"], a[role="button"][data-anta][tone="critical"], button[data-anta][tone="critical"], input[data-anta]:is([type="reset"], [type="submit"])[tone="critical"] {
+a-button[tone="critical"],
+a[role="button"][data-anta][tone="critical"],
+button[data-anta][tone="critical"],
+input[data-anta]:is([type="reset"], [type="submit"])[tone="critical"] {
   --button-bg-primary-rest: light-dark(#c9302c, #b02120);
   --button-bg-primary-hover: light-dark(#b02120, #c9302c);
   --button-bg-primary-active: light-dark(#a01c1c, #de4545);
@@ -377,7 +385,10 @@ a-button[tone="critical"], a[role="button"][data-anta][tone="critical"], button[
   --button-fg-quaternary-rest: light-dark(#c9302c, #e78e90);
   --button-fg-quaternary-hover: light-dark(#a01c1c, #ffabac);
 }
-a-button[tone="info"], a[role="button"][data-anta][tone="info"], button[data-anta][tone="info"], input[data-anta]:is([type="reset"], [type="submit"])[tone="info"] {
+a-button[tone="info"],
+a[role="button"][data-anta][tone="info"],
+button[data-anta][tone="info"],
+input[data-anta]:is([type="reset"], [type="submit"])[tone="info"] {
   --button-bg-primary-rest: light-dark(#1f6eb2, #1a5b93);
   --button-bg-primary-hover: light-dark(#1a5b93, #1f6eb2);
   --button-bg-primary-active: light-dark(#175082, #2686d9);
@@ -393,7 +404,10 @@ a-button[tone="info"], a[role="button"][data-anta][tone="info"], button[data-ant
   --button-fg-quaternary-rest: light-dark(#1f6eb2, #7db6e8);
   --button-fg-quaternary-hover: light-dark(#175082, #a6cdef);
 }
-a-button[tone="success"], a[role="button"][data-anta][tone="success"], button[data-anta][tone="success"], input[data-anta]:is([type="reset"], [type="submit"])[tone="success"] {
+a-button[tone="success"],
+a[role="button"][data-anta][tone="success"],
+button[data-anta][tone="success"],
+input[data-anta]:is([type="reset"], [type="submit"])[tone="success"] {
   --button-bg-primary-rest: light-dark(#2a7e43, #226737);
   --button-bg-primary-hover: light-dark(#226737, #2a7e43);
   --button-bg-primary-active: light-dark(#1f5c31, #329550);
@@ -409,7 +423,10 @@ a-button[tone="success"], a[role="button"][data-anta][tone="success"], button[da
   --button-fg-quaternary-rest: light-dark(#2a7e43, #74cd8e);
   --button-fg-quaternary-hover: light-dark(#1f5c31, #9ddeb1);
 }
-a-button[tone="warning"], a[role="button"][data-anta][tone="warning"], button[data-anta][tone="warning"], input[data-anta]:is([type="reset"], [type="submit"])[tone="warning"] {
+a-button[tone="warning"],
+a[role="button"][data-anta][tone="warning"],
+button[data-anta][tone="warning"],
+input[data-anta]:is([type="reset"], [type="submit"])[tone="warning"] {
   --button-bg-primary-rest: light-dark(#c37416, #7f410b);
   --button-bg-primary-hover: light-dark(#ae6613, #995200);
   --button-bg-primary-active: light-dark(#995200, #ae6613);
@@ -612,7 +629,6 @@ a-radio-group[tone]:where(:not(
   --radio-border-hover: oklch(from var(--_radio-border-base) calc(l + 0.1) c h);
   --radio-border-active: light-dark(var(--_radio-border-base), oklch(from var(--_radio-border-base) calc(l + 0.17) c h));
 }
-/* ===== tag ===== */
 a-tag:not([tone]),
 a-tag[tone="neutral"] {
   --tag-tint: light-dark(#44374b, #e4d1ef);
@@ -651,7 +667,6 @@ a-tag[tone="neutral"][priority="tertiary"] {
   --tag-border: color-mix(in oklch, var(--tag-edge) 25%, transparent);
 }
 
-/* ===== tabs ===== */
 a-tabs {
   --tabs-track-bg: light-dark(
     oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.06),

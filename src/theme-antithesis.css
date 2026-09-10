@@ -42,13 +42,15 @@
 }
 @layer anta.reset, anta.components, anta.theme;
 
-:root, .light {
+:root,
+.light {
   --sans-serif: "TT Interphases Pro Variable", sans-serif;
   --serif: "Stringer", serif;
   --monospace: "Antithesis Mono", ui-monospace, monospace;
 }
 
-:root, .light {
+:root,
+.light {
   --anta-seed-brand: #cc4636;
   --anta-seed-neutral: #65605b;
 }

@@ -253,8 +253,11 @@
     --radio-border-active: light-dark(var(--_radio-border-base), oklch(from var(--_radio-border-base) calc(l + 0.17) c h));
   }
 
-  /* A non-named `tone` is a literal CSS color. The group resolves a raw custom
-     attribute on itself and its unoverridden children explicitly inherit it. */
+  /* A non-named `tone` is a literal CSS color. `[tone]` also matches an empty
+     attribute, so exclude `[tone=""]` to keep it neutral instead of parsing it
+     as a custom color and producing transparent tone variables. The group
+     resolves a raw custom attribute on itself and its unoverridden children
+     explicitly inherit it. */
   a-radio[tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {

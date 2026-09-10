@@ -62,7 +62,6 @@
 
   /* Keep the root transparent so the body background paints the canvas. */
   html {
-    color-scheme: light;
     color: var(--text-2);
     font-family: var(--sans-serif);
     /* Unitless 22px/15px leading keeps its ratio when inherited. */
@@ -73,12 +72,6 @@
   /* `--bg-2` separates fields, which use `--bg-1`, from the page. */
   body {
     background: var(--bg-2);
-  }
-  .light {
-    color-scheme: light;
-  }
-  .dark {
-    color-scheme: dark;
   }
 
   /* ───── Typography defaults — Anta opinion ───────────────────── */

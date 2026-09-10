@@ -13,7 +13,7 @@ const inlineNames = new Set([
   'var', 'wbr',
 ])
 const ignoredNames = new Set([
-  'audio', 'button', 'canvas', 'dialog', 'footer', 'form', 'head', 'header', 'hr',
+  'audio', 'button', 'canvas', 'dialog', 'footer', 'form', 'head', 'hr',
   'iframe', 'img', 'input', 'map', 'menu', 'nav', 'noscript', 'object', 'picture',
   'script', 'select', 'style', 'svg', 'template', 'textarea', 'video',
 ])
@@ -110,7 +110,10 @@ function collectBlocks(node, blocks = []) {
   const containers = []
   for (const child of node.childNodes ?? []) {
     if (isIgnored(child)) continue
-    if ((child.nodeName === '#text' && child.value.trim()) || inlineNames.has(child.nodeName)) {
+    // Space-only text nodes stay in the inline run: between two adjacent
+    // inline elements they are the only word boundary. `normalizedText`
+    // collapses them, so a run of them still indexes as nothing.
+    if (child.nodeName === '#text' || inlineNames.has(child.nodeName)) {
       inline.push(child)
     } else if (child.childNodes?.length) {
       // Every non-inline element is a container boundary. Its direct inline

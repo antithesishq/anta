@@ -30,6 +30,11 @@
 }
 
 :root, .light {
+  /* Element CSS resolves its dark values with `light-dark()`, which reads the
+     computed `color-scheme`. It is declared here, next to the token blocks it
+     switches, because `tokens.css` is required for any styled element while
+     `reset.css` is optional. */
+  color-scheme: light;
   font-size: 15px;
   font-weight: 400;
 
@@ -178,6 +183,7 @@
 
 
 .dark {
+  color-scheme: dark;
   font-weight: 400;
 
   /* Backgrounds — dark, neutral */

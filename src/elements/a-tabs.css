@@ -178,6 +178,11 @@
       oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.06),
       oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.07)
     );
+    /* Declared on the strip so non-toned sibling tabs inherit the tone too. */
+    --tab-secondary-bg: light-dark(
+      oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.03),
+      oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.08)
+    );
   }
   /* Custom literal-color tone (anything not a named tone): derive the source from the
      attribute via typed attr(), and the selected label by oklch (no --text-1-<tone>). */

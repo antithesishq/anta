@@ -65,9 +65,9 @@
        the drop shadows go deeper to keep the sheet legible over the overlay. */
     --dialog-shadow:
       inset 0 0 0 1px var(--dialog-border),
-      0 1px 3px light-dark(color-mix(in oklch, black 10%, transparent), color-mix(in oklch, black 40%, transparent)),
-      0 12px 32px light-dark(color-mix(in oklch, black 22%, transparent), color-mix(in oklch, black 55%, transparent)),
-      0 28px 64px light-dark(color-mix(in oklch, black 14%, transparent), color-mix(in oklch, black 40%, transparent));
+      0 1px 3px color-mix(in oklch, black 40%, transparent),
+      0 12px 32px color-mix(in oklch, black 55%, transparent),
+      0 28px 64px color-mix(in oklch, black 40%, transparent);
   }
 
   /* The usual inset edge is part of the elevation shadow. Forced colors can

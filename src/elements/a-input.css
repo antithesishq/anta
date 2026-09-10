@@ -500,11 +500,13 @@
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
+  /* Dark mode adds an inset ring to the shadow list. `light-dark()` carries
+     colors only, so this geometry stays in a class rule. */
   .dark select[data-anta] {
     --native-select-picker-shadow:
-      0 2px 8px light-dark(color-mix(in oklch, var(--text-1) 8%, transparent), color-mix(in oklch, black 50%, transparent)),
-      0 12px 32px light-dark(color-mix(in oklch, var(--text-1) 10%, transparent), color-mix(in oklch, black 40%, transparent)),
-      inset 0 0 0 1px light-dark(transparent, color-mix(in oklch, white 8%, transparent));
+      0 2px 8px color-mix(in oklch, black 50%, transparent),
+      0 12px 32px color-mix(in oklch, black 40%, transparent),
+      inset 0 0 0 1px color-mix(in oklch, white 8%, transparent);
   }
   @media (hover: hover) and (pointer: fine) {
     select[data-anta]:not(:disabled):hover {

@@ -16,9 +16,9 @@ import '@antadesign/anta/elements'      // web components (client-side only)
 
 ### Structural reset
 
-- `html` uses `--sans-serif`, `--text-2`, 22px leading, and `color-scheme`.
-  `.dark` selects dark mode; `.light` restores it in a dark subtree. `body` paints
-  `--bg-2`, including the browser canvas.
+- `html` uses `--sans-serif`, `--text-2`, and 22px leading. `body` paints
+  `--bg-2`, including the browser canvas. `color-scheme` comes from `tokens.css`,
+  where `.dark` selects dark mode and `.light` restores it in a dark subtree.
 - `box-sizing: border-box` on every element (and `::before` / `::after`).
 - `margin: 0` on everything — apps build spacing from explicit values.
 - Replaced elements (`img`, `picture`, `video`, `canvas`, `svg`) → `display: block` + `max-width: 100%`, so a stray large asset can't blow out the layout.

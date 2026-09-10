@@ -31,6 +31,12 @@ changes are not listed.
 
 ### Fixed
 
+- `tokens.css` declares `color-scheme` on `:root`, `.light`, and `.dark`, so
+  component colors resolve to the right mode without the optional `reset.css`
+  import.
+- A per-tab `tone` on the selected Tab tones the strip's secondary tab
+  background, so non-toned sibling tabs pick up the same tint.
+- `--avatar-badge-chroma` applies to `badge="neutral"` again.
 - Small Input, Select, InputTime, and opt-in native controls keep their declared
   font size while focused on touch devices instead of growing to 16px.
 - Antune restores the dark neutral Radio border used by the original palette.

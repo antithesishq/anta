@@ -94,11 +94,15 @@ export function highlightSearchTarget() {
     const target = matchedBlock ?? content
 
     const unfoldedDisclosures = unfoldDisclosureAncestors(target)
-    // Wait for eager islands to attach their state handlers before revealing
-    // tabs or controlled expanders. Open the outer disclosure first.
-    const island = target.closest('astro-island[client="load"][ssr]')
+    // Wait for the island to attach its state handlers before revealing tabs
+    // or controlled expanders. Open the outer disclosure first. Astro drops
+    // `ssr` once an island hydrates, so the attribute alone means "not yet".
+    // An off-screen `client:visible` island never hydrates, so a 1s cap ends
+    // the wait and the reveal still runs.
+    const island = target.closest('astro-island[ssr]')
     if (island) await new Promise<void>((resolve) => {
       island.addEventListener('astro:hydrate', () => resolve(), { once: true })
+      setTimeout(resolve, 1000)
     })
     if (currentRun !== run || location.href !== url) return
     target.dispatchEvent(new CustomEvent('anta-search-reveal', { bubbles: true }))

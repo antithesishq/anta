@@ -231,9 +231,9 @@
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  /* Full-width axis (a-tab defaults to the condensed "wdth" 88) so the labels
-     match the PREVIEW header's normal-width type. */
-  font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0;
+  /* The reference themes condense tabs; this site control stays full width to
+     match the PREVIEW header's type. */
+  font-stretch: normal;
 }
 
 /* Roomier tabs — wider inline padding than the small default so the

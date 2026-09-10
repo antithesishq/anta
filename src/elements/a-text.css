@@ -6,8 +6,7 @@
 
     display: block;
     /* Pin the family so a consumer's font-family on an ancestor can't reach in
-       and restyle body copy — same reasoning as font-feature-settings below: the
-       property replaces, it doesn't merge. */
+       and restyle body copy. */
     font-family: var(--sans-serif);
     color: var(--text-color);
     font-size: 15px;
@@ -16,11 +15,6 @@
        reset (headings use `balance`). Only affects the non-truncated case;
        `truncate` clamps in shadow DOM. */
     text-wrap: pretty;
-    /* Anta's stylistic sets: ss02 (alternate l) + ss05, plus tnum for tabular
-       (fixed-width) figures. Re-stated explicitly (not just inherited from :root)
-       so a consumer's own font-feature-settings on an ancestor can't silently
-       drop them — the property replaces, not merges. */
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
   }
 
   a-text[size="small"]  { font-size: 13px; line-height: 16px; }
@@ -74,16 +68,16 @@
      a raw <a-text tone="…">. */
   a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
     --text-tone-source: currentColor;
-    --_text-tone: oklch(from var(--text-tone-source) 0.41 0.15 h);
+    --_text-tone: light-dark(oklch(from var(--text-tone-source) 0.41 0.15 h), oklch(from var(--text-tone-source) 0.75 0.11 h));
     --text-color: var(--_text-tone);
     --text-link-color: currentColor;
-    --text-link-hover: oklch(from var(--text-tone-source) 0.33 0.15 h);
+    --text-link-hover: light-dark(oklch(from var(--text-tone-source) 0.33 0.15 h), oklch(from var(--text-tone-source) 0.82 0.10 h));
     @supports (color: attr(probe type(<color>), red)) {
       --text-tone-source: attr(tone type(<color>), currentColor);
     }
   }
   a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="primary"] {
-    --text-color: oklch(from var(--text-tone-source) 0.33 0.15 h);
+    --text-color: light-dark(oklch(from var(--text-tone-source) 0.33 0.15 h), oklch(from var(--text-tone-source) 0.82 0.10 h));
   }
   a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="tertiary"] {
     --text-color: color-mix(in oklch, var(--_text-tone) 80%, transparent);
@@ -92,16 +86,6 @@
   a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="quaternary"] {
     --text-color: color-mix(in oklch, var(--_text-tone) 60%, transparent);
   }
-  /* Dark: only the base + the distinct primary need re-tuning; secondary is
-     var(--_text-tone) and the fainter steps are color-mix of it, so they follow. */
-  .dark a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
-    --_text-tone: oklch(from var(--text-tone-source) 0.75 0.11 h);
-    --text-link-hover: oklch(from var(--text-tone-source) 0.82 0.10 h);
-  }
-  .dark a-text[tone]:not([tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])[priority="primary"] {
-    --text-color: oklch(from var(--text-tone-source) 0.82 0.10 h);
-  }
-
   a-text a, a-text a:link, a-text a:visited { color: var(--text-link-color); }
 
   @media (hover: hover) and (pointer: fine) {

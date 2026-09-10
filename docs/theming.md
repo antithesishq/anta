@@ -1,21 +1,86 @@
 # Theming
 
-## Reference palette
+Anta works without a theme. Customize individual components through their props
+or with classes in your application CSS.
 
-`@antadesign/anta` ships an optional hand-tuned reference palette at
-`@antadesign/anta/theme-anta.css`. Import it after the tokens, reset, and element
-registration imports to replace the seed-derived default:
+When an application needs many customizations or a global change to Anta's look
+and feel, add a theme stylesheet. Import one theme after the package styles:
 
 ```ts
-import '@antadesign/anta/tokens.css'
-import '@antadesign/anta/reset.css'
-import '@antadesign/anta/elements'
-import '@antadesign/anta/theme-anta.css'
+import '@antadesign/anta/theme-antune.css' // Choose one theme included in the package.
 ```
 
-Omit the final import to use the default palette, or define your own theme.
+<a id="fonts-in-a-theme"></a>
 
-Anta's palette is generative. Every color in the system derives from six tone seeds (`--anta-seed-neutral`, `--anta-seed-brand`, `--anta-seed-info`, …), and a seed contributes only its hue: the lightness and chroma of every background, text, border, and component state come from Anta's formulas, tuned per role and per theme. Reskinning a tone is one custom property, and the whole scale re-derives in both light and dark:
+## Fonts in a theme
+
+Without a reference theme, `tokens.css` defines three system font stacks:
+
+```css
+:root, .light {
+  --sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, "Liberation Mono", monospace;
+}
+```
+
+Components and theme rules choose which variable to use. For example, body text
+can use `--sans-serif` while a particular title style uses `--serif`. Without a
+theme, Anta does not force font-specific stylistic sets or variable-font axes.
+
+You can register your fonts and redefine the stacks in a custom theme stylesheet
+such as `theme.css`:
+
+```css
+/* theme.css */
+@font-face {
+  font-family: "App Sans";
+  src: url("/fonts/app-sans.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --sans-serif: "App Sans", system-ui, sans-serif;
+  --serif: Georgia, serif;
+  --monospace: ui-monospace, monospace;
+}
+```
+
+The **Antune** and **Antithesis** themes included with Anta use custom fonts that
+require separate licenses. If your application does not have those licenses,
+redefine all three font variables as shown above.
+
+```css
+/* theme.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@400;600&display=swap");
+
+:root {
+  --sans-serif: "Inter", sans-serif;
+  --serif: "Source Serif 4", serif;
+  --monospace: "JetBrains Mono", monospace;
+}
+```
+
+After you redefine these three variables, the theme fonts are not used or
+downloaded (exactly what we want in this case).
+
+<a id="color-seeds"></a>
+
+## Color seeds
+
+In your custom theme, override any of Anta's six seed color tokens to recolor
+components. These overrides can live in any application stylesheet:
+
+- `--anta-seed-neutral`
+- `--anta-seed-brand`
+- `--anta-seed-info`
+- `--anta-seed-success`
+- `--anta-seed-warning`
+- `--anta-seed-critical`
 
 ```css
 :root {
@@ -23,12 +88,25 @@ Anta's palette is generative. Every color in the system derives from six tone se
 }
 ```
 
-Anta's styles use ordered child layers inside `@layer anta`. Your unlayered CSS
-overrides them without `!important`, and shadow-DOM components expose
-`::part(...)`. A component's `tone` accepts a named tone or CSS color and derives
-its rest, hover, and active values. Each component page lists its styling hooks.
+For more control, customize the `--text-*`, `--bg-*`, and `--border-*` tokens
+separately for light and dark modes.
+
+Anta's styles use ordered child layers inside `@layer anta`. Your regular
+unlayered CSS overrides them without `!important`.
+
+<a id="themes"></a>
+
+## Themes
+
+Compare the same components across themes. Select a tab to preview the theme and
+read its stylesheet.
+
+<a id="theming-lab"></a>
+
+## Theming lab
 
 The lab below shows the derivation live. For each toned component, the shipped Default sits next to a Custom preview driven by the seed picker, with the formula constants editable and the resolved CSS shown.
+
 
 ## Theming lab reference
 

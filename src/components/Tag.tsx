@@ -31,8 +31,7 @@ export interface TagProps extends BaseProps {
    *  default — both render identically and emit no DOM attribute.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
-  /** Render in all-caps instead of the default normal (mixed) case
-   *  (uppercase tracks wider than the default body-text letter-spacing). */
+  /** Render in all-caps instead of the default normal (mixed) case. */
   allcaps?: boolean
   /** Leading icon shape. Sits flush before the label, scaled to the pill. */
   icon?: IconShape
@@ -63,8 +62,8 @@ export interface TagProps extends BaseProps {
  *   at 20px), so text is never clipped and the padding tokens can be
  *   retuned freely. An edge icon trims ~2px off its side's padding
  *   (optical), and icons scale to `--tag-icon-size`.
- * - Color comes from the theme-aware semantic tokens, so named tones need
- *   no `.dark` rules; the hairline border and the segment divider both
+ * - Color comes from the theme-aware semantic tokens and `light-dark()`; the
+ *   hairline border and the segment divider both
  *   derive from `--tag-text`, so every tone gets a matching edge. A lone
  *   `label` is dropped into `<a-tag-value>` by this wrapper so it keeps the
  *   default weight; `<a-tag-label>` only renders as the bold key before a
@@ -73,13 +72,12 @@ export interface TagProps extends BaseProps {
  *   elements) get a hairline left border per segment after the first; the
  *   flex `gap` sits left of the border and `padding-left` balances it.
  * - Custom tones (any non-named `tone`) keep the source hue with
- *   lightness/chroma pinned via oklch relative color; the `--_tag-*` knobs
- *   are the only numbers to tune and the `.dark` block re-tunes them. The
+ *   lightness/chroma pinned via oklch relative color. `light-dark()` selects
+ *   the matching ramp from the nearest inherited color scheme. The
  *   wrapper writes `--tag-tone-source` inline; a typed `attr()` fallback
  *   picks up raw `<a-tag tone="…">` on Chrome 133+/Safari 18.2+.
- * - `allcaps` switches on the uppercase transform and widens tracking to
- *   0.08ch (the default mixed case uses the body-text 0.02ch); tabular
- *   figures + `ss05` stay on. Each size steps down 1px under `allcaps`
+ * - `allcaps` switches on the uppercase transform; tabular figures stay on.
+ *   Each size steps down 1px under `allcaps`
  *   (uppercase reads larger than mixed case at the same px), with height
  *   unchanged.
  *

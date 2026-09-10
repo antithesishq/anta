@@ -20,20 +20,29 @@
     --switch-track-off-stroke: var(--switch-track-off-stroke-neutral);
     --switch-track-off-stroke-hover: var(--border-2);
     --switch-track-off-stroke-active: var(--border-1);
-    --switch-track-disabled: color-mix(in oklch, #44374b 10%, transparent);
-    --switch-thumb: var(--bg-1);
+    --switch-track-disabled: light-dark(
+      color-mix(in oklch, #44374b 10%, transparent),
+      color-mix(in oklch, #e4d1ef 10%, transparent)
+    );
+    --switch-thumb: light-dark(var(--bg-1), #ece9ec);
     --switch-thumb-off: var(--switch-track-off-stroke);
 
     /* Brand is the default checked-track tone. `tone` also points the off-state
        chrome at its seed; `tone-selected` leaves that chrome neutral. */
     --switch-tone-source: var(--anta-seed-brand);
     --switch-off-tone-source: var(--anta-seed-brand);
-    --_switch-tone-l-rest: 0.56;
-    --_switch-tone-l-hover: 0.48;
-    --_switch-tone-l-active: 0.42;
-    --switch-track-on: oklch(from var(--switch-tone-source) var(--_switch-tone-l-rest) c h);
-    --switch-track-on-hover: oklch(from var(--switch-tone-source) var(--_switch-tone-l-hover) c h);
-    --switch-track-on-active: oklch(from var(--switch-tone-source) var(--_switch-tone-l-active) c h);
+    --switch-track-on: light-dark(
+      oklch(from var(--switch-tone-source) 0.56 c h),
+      oklch(from var(--switch-tone-source) 0.47 c h)
+    );
+    --switch-track-on-hover: light-dark(
+      oklch(from var(--switch-tone-source) 0.48 c h),
+      oklch(from var(--switch-tone-source) 0.53 c h)
+    );
+    --switch-track-on-active: light-dark(
+      oklch(from var(--switch-tone-source) 0.42 c h),
+      oklch(from var(--switch-tone-source) 0.58 c h)
+    );
 
     --switch-label-color: var(--text-2);
     --switch-label-color-disabled: var(--text-4);
@@ -56,7 +65,6 @@
     font-family: var(--sans-serif);
     font-size: var(--switch-label-fs);
     line-height: var(--switch-label-lh);
-    font-feature-settings: "ss02", "ss05", "tnum";
 
     &::before,
     &::after {
@@ -226,11 +234,20 @@
      keeps a whisper-light border at rest, then steps through the same ramp as
      the neutral chrome. `tone-selected` deliberately does not participate. */
   a-switch[tone]:not([tone=""], [tone="neutral"]) {
-    --_switch-off-track: oklch(from var(--switch-off-tone-source) var(--_switch-tone-l-rest) c h);
+    --_switch-off-track: light-dark(
+      oklch(from var(--switch-off-tone-source) 0.56 c h),
+      oklch(from var(--switch-off-tone-source) 0.47 c h)
+    );
     --_switch-off-chrome: color-mix(in oklch, var(--_switch-off-track) 70%, var(--switch-track-off-stroke-neutral));
-    --switch-track-off-stroke: oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h);
+    --switch-track-off-stroke: light-dark(
+      oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h),
+      var(--_switch-off-chrome)
+    );
     --switch-track-off-stroke-hover: oklch(from var(--_switch-off-chrome) calc(l + 0.1) c h);
-    --switch-track-off-stroke-active: var(--_switch-off-chrome);
+    --switch-track-off-stroke-active: light-dark(
+      var(--_switch-off-chrome),
+      oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h)
+    );
     --switch-thumb-off: var(--_switch-off-chrome);
   }
 
@@ -257,20 +274,6 @@
     @supports (color: attr(probe type(<color>), red)) {
       --switch-tone-source: attr(tone-selected type(<color>), transparent);
     }
-  }
-
-  .dark a-switch {
-    --switch-track-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
-    --switch-thumb: #ece9ec;
-    --switch-thumb-off: var(--switch-track-off-stroke);
-    --_switch-tone-l-rest: 0.47;
-    --_switch-tone-l-hover: 0.53;
-    --_switch-tone-l-active: 0.58;
-  }
-  .dark a-switch[tone]:not([tone=""], [tone="neutral"]) {
-    --switch-track-off-stroke: var(--_switch-off-chrome);
-    --switch-track-off-stroke-hover: oklch(from var(--_switch-off-chrome) calc(l + 0.1) c h);
-    --switch-track-off-stroke-active: oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h);
   }
 
   /* The track and thumb are both author-painted pseudo-elements. Keep their

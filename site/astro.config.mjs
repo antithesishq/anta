@@ -14,7 +14,6 @@ import rehypeMathjax from 'rehype-mathjax';
 import rehypeTableWrap from './lib/rehype-table-wrap.mjs';
 import remarkUnwrapJsxParagraph from './lib/remark-unwrap-jsx-paragraph.mjs';
 import remarkUnwrapImages from './lib/remark-unwrap-images.mjs';
-import expressiveCodeConfig from './lib/expressive-code-config.mjs';
 
 export default defineConfig({
   site: 'https://anta.design',
@@ -67,9 +66,9 @@ export default defineConfig({
     // compat:true aliases react / react-dom → preact/compat so Anta's JSX
     // wrappers (typed against React) run under Preact without calling configure().
     preact({ compat: true }),
-    astroExpressiveCode(expressiveCodeConfig),
+    astroExpressiveCode(),
     mdx(),
-    sitemap(),
+    sitemap({ filter: (page) => !page.endsWith('/theme-preview/') }),
   ],
   trailingSlash: 'always',
   markdown: {

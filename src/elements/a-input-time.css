@@ -38,8 +38,9 @@
     font-family: var(--sans-serif);
     font-size: var(--input-time-font-size);
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
   @media (forced-colors: active) {
@@ -124,13 +125,11 @@
 
   a-input-time[tone]:not([tone=""]) {
     --input-time-tone-source: var(--border-2);
-    --input-time-border:       oklch(from var(--input-time-tone-source) 0.7 calc(c * 0.8) h);
+    --input-time-border: light-dark(
+      oklch(from var(--input-time-tone-source) 0.7 calc(c * 0.8) h),
+      oklch(from var(--input-time-tone-source) 0.5 calc(c * 0.8) h)
+    );
     --input-time-border-hover: oklch(from var(--input-time-tone-source) 0.6 c h);
-
-    .dark & {
-      --input-time-border:       oklch(from var(--input-time-tone-source) 0.5 calc(c * 0.8) h);
-      --input-time-border-hover: oklch(from var(--input-time-tone-source) 0.6 c h);
-    }
     @supports (color: attr(probe type(<color>), red)) {
       --input-time-tone-source: attr(tone type(<color>), var(--border-2));
     }
@@ -145,29 +144,22 @@
   a-input-time[status="info"]     { --input-time-tone-source: var(--anta-seed-info);     --input-time-bg: var(--bg-2-info);     --input-time-hint: var(--text-2-info); }
   a-input-time[status="brand"]    { --input-time-tone-source: var(--anta-seed-brand);    --input-time-bg: var(--bg-2-brand);    --input-time-hint: var(--text-2-brand); }
   a-input-time[status]:not([status="neutral"]) {
-    --input-time-border:       oklch(from var(--input-time-tone-source) 0.58 c h);
-    --input-time-border-hover: oklch(from var(--input-time-tone-source) 0.58 c h);
-  }
-  .dark a-input-time[status]:not([status="neutral"]) {
-    --input-time-border:       oklch(from var(--input-time-tone-source) 0.52 c h);
-    --input-time-border-hover: oklch(from var(--input-time-tone-source) 0.52 c h);
+    --input-time-border: light-dark(
+      oklch(from var(--input-time-tone-source) 0.58 c h),
+      oklch(from var(--input-time-tone-source) 0.52 c h)
+    );
+    --input-time-border-hover: var(--input-time-border);
   }
 
   a-input-time:disabled {
-    --input-time-bg: #44374b12;
-    --input-time-border: #44374b26;
-    --input-time-border-hover: #44374b26;
+    --input-time-bg: light-dark(#44374b12, #e4d1ef0d);
+    --input-time-border: light-dark(#44374b26, #e4d1ef1f);
+    --input-time-border-hover: var(--input-time-border);
     --input-time-text: var(--text-4);
     --input-time-label: var(--text-4);
     --input-time-hint: var(--text-5);
     cursor: not-allowed;
   }
-  .dark a-input-time:disabled {
-    --input-time-bg: #e4d1ef0d;
-    --input-time-border: #e4d1ef1f;
-    --input-time-border-hover: #e4d1ef1f;
-  }
-
   /* Neutral dark border needs no override: base points at --border-2 / --border-1
      (seed-derived dark values). */
 

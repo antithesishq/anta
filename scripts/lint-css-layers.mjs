@@ -19,6 +19,7 @@ const failures = []
 for (const file of files) {
   const path = file.pathname
   const css = await readFile(file, 'utf8')
+  const isTheme = /\/theme-[^/]+\.css$/.test(path)
   if (/^@layer anta \{/m.test(css)) {
     failures.push(`${path}: shipped rules must not use the direct anta layer`)
   }
@@ -26,7 +27,7 @@ for (const file of files) {
   if (path.endsWith('/reset.css') && !css.includes('@layer anta.reset {')) {
     failures.push(`${path}: reset rules must use anta.reset`)
   }
-  if (path.endsWith('/theme-anta.css')) {
+  if (isTheme) {
     if (!css.includes('@layer anta.theme {')) {
       failures.push(`${path}: component palette rules must use anta.theme`)
     }
@@ -34,7 +35,7 @@ for (const file of files) {
       failures.push(`${path}: must reserve the internal Anta layer order`)
     }
   }
-  if (!path.endsWith('/reset.css') && !path.endsWith('/theme-anta.css') && !path.endsWith('/tokens.css') && !css.includes('@layer anta.components {')) {
+  if (!path.endsWith('/reset.css') && !isTheme && !path.endsWith('/tokens.css') && !css.includes('@layer anta.components {')) {
     failures.push(`${path}: component styles must use anta.components`)
   }
 }

@@ -58,13 +58,14 @@ function coverageMatrix() {
 
 function declarations(css, selector) {
   const blocks = css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{};]+)\{([^{}]*)\}/g)
-  const block = [...blocks].find(([, selectors]) => selectors.split(',').some(value => value.trim() === selector))
-  if (!block) throw new Error(`Missing color reference selector: ${selector}`)
-  return new Map([...block[2].matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()]))
+  const matching = [...blocks].filter(([, selectors]) => selectors.split(',').some(value => value.trim() === selector))
+  if (!matching.length) throw new Error(`Missing color reference selector: ${selector}`)
+  return new Map(matching.flatMap(([, , body]) =>
+    [...body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()])))
 }
 
 function swatches({ tokens, theme }) {
-  const modes = [declarations(tokens, ':root'), declarations(tokens, '.dark'), declarations(theme, ':root:root'), declarations(theme, '.dark.dark')]
+  const modes = [declarations(tokens, ':root'), declarations(tokens, '.dark'), declarations(theme, ':root'), declarations(theme, '.dark')]
   const tokenTable = (names) => table(['Token', 'Default light', 'Default dark', 'Reference light', 'Reference dark'], names.map(name => [
     code(name), ...modes.map(mode => mode.has(name) ? code(mode.get(name)) : 'Uses default'),
   ]))
@@ -73,7 +74,7 @@ function swatches({ tokens, theme }) {
     text: table(['Token', 'Use'], TEXT_LINES.map(line => [code(`--${line.token}`), line.copy])) + '\n\n' + LINK_GUIDANCE,
     border: BORDER_GUIDANCE,
   }
-  return `Values are CSS declarations from the shipped default palette and optional \`theme-anta.css\` reference palette. Resolve them in the application's theme to obtain displayed colors. Toned backgrounds share the neutral \`--bg-1\`; there is no \`--bg-1-{tone}\`.
+  return `Values are CSS declarations from the shipped default palette and optional \`theme-antune.css\` reference palette. Resolve them in the application's theme to obtain displayed colors. Toned backgrounds share the neutral \`--bg-1\`; there is no \`--bg-1-{tone}\`.
 
 ${KINDS.map(kind => `## ${TITLES[kind]}\n\n${INTROS[kind]}\n\n${guidance[kind]}\n\n${tokenTable([...modes[0].keys()].filter(name => name.startsWith(`--${kind}-`)))}`).join('\n\n')}
 

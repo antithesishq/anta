@@ -6,38 +6,8 @@ html, body {
   min-width: 320px;
 }
 
-/* Brand fonts (temporary Uploadcare hosting) */
-@font-face {
-  font-family: "Anta sans";
-  src: url("https://ucarecdn.com/af38fa86-199f-44f5-82d2-3ea2a690dd6c/") format("woff2");
-  font-style: normal;
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
-  font-optical-sizing: auto;
-  text-rendering: geometricPrecision;
-  font-display: optional;
-}
-@font-face {
-  font-family: "Anta mono";
-  src: url("https://ucarecdn.com/61bd3320-3787-4a92-887e-a5ff7bd6e051/") format("woff2");
-  font-style: normal;
-  font-weight: 400 700;
-  text-rendering: optimizeLegibility;
-  font-display: optional;
-}
-@font-face {
-  font-family: "Anta mono";
-  src: url("https://ucarecdn.com/03e90df9-d945-4837-b177-cdc408e94bb4/") format("woff2");
-  font-style: italic;
-  font-weight: 400 700;
-  text-rendering: optimizeLegibility;
-  font-display: optional;
-}
-
-/* Brand variable overrides */
+/* Site-only variables */
 :root {
-  --sans-serif: "Anta sans", sans-serif;
-  --monospace: "Anta mono", "Roboto Mono", monospace;
   /* Clear the global sticky topbar when scrolling to a heading. */
   --scroll-padding-top: calc(44px + 1em);
 }
@@ -98,17 +68,6 @@ html {
   html {
     scroll-behavior: smooth;
   }
-}
-
-html, body {
-  /* This temporary font reverses the registered `slnt` axis. */
-  font-variation-settings: "wdth" 100, "slnt" 0;
-}
-
-/* Prevent synthetic italics from stacking on this font's `slnt` instance. */
-:is(em, i, address, var, dt) {
-  font-variation-settings: "wdth" 100, "slnt" 11;
-  font-synthesis: none;
 }
 
 /* Anta's global stylesheet provides the `a` defaults (color, underline,

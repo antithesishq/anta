@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import type { APIRoute } from 'astro'
 import { renderDocumentation } from '../../lib/llms/render-documentation.mjs'
 import tokens from '../../../src/tokens.css?raw'
-import theme from '../../../src/theme-anta.css?raw'
+import theme from '../../../src/theme-antune.css?raw'
 import stickers from '../../../stickers/src/generated/index.ts?raw'
 import specimen from '../components/HtmlSpecimen.astro?raw'
 import {

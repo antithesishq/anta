@@ -26,9 +26,19 @@ interface Props {
    *  `<Expander tone="brand">` colors its summary. Body internals stay
    *  neutral. Used for the top-of-page Playground. Defaults to false. */
   brand?: boolean
+  /** Exclude this disclosure and its contents from the site search index. */
+  'data-no-search'?: boolean
 }
 
-const { title, open = false, id, level = 2, anchor = true, brand = false } = Astro.props
+const {
+  title,
+  open = false,
+  id,
+  level = 2,
+  anchor = true,
+  brand = false,
+  'data-no-search': dataNoSearch = false,
+} = Astro.props
 const slug = (id ?? title)
   .toLowerCase()
   .replace(/[^a-z0-9]+/g, '-')
@@ -36,7 +46,11 @@ const slug = (id ?? title)
 const Heading = `h${level}` as const
 ---
 
-<details class:list={["disclosure", { plain: !anchor, brand }]} open={open}>
+<details
+  class:list={["disclosure", { plain: !anchor, brand }]}
+  open={open}
+  data-no-search={dataNoSearch ? '' : undefined}
+>
   <summary class="summary">
     <a-icon shape="chevron-right" class="chevron"></a-icon>
     {/* A real heading carries the id so the TOC picks it up; the inner

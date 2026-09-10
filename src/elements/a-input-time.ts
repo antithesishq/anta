@@ -132,8 +132,8 @@ const SHADOW_STYLE = `
     padding-inline: 7px;
     color: var(--input-time-text);
     font-family: var(--sans-serif);
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     font-size: var(--input-time-font-size);
     line-height: var(--input-time-line-height);
     font-weight: 400;
@@ -150,17 +150,14 @@ const SHADOW_STYLE = `
     background: transparent;
     color: inherit;
     font: inherit;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: inherit;
+    font-style: inherit;
     line-height: inherit;
     text-align: center;
     white-space: nowrap;
     outline: none;
     cursor: text;
     font-variant-numeric: tabular-nums;
-  }
-  @media (pointer: coarse) {
-    :host(:focus-within) .seg { font-size: max(16px, var(--input-time-font-size)); }
   }
   .seg--period {
     field-sizing: content;

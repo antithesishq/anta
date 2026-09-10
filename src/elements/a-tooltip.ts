@@ -198,10 +198,9 @@ const lazyObserver: IntersectionObserver | null =
  *   light DOM — its font/color/size are already styleable from the page and
  *   are intentionally NOT tokens.
  * - The frost: `--tooltip-bg` is a mostly-opaque mix of `--bg-1` that, with
- *   the container's backdrop blur, reads as a frosted bubble. `--bg-1` is
- *   white in light / black in dark, so dark mode flips automatically (the
- *   `.dark` override just lowers the alpha and adds an inset white ring so
- *   the edge stays crisp on dark content). There's no real border by
+ *   the container's backdrop blur, reads as a frosted bubble. `light-dark()`
+ *   lowers the dark alpha and adds an inset white ring so the edge stays crisp
+ *   on dark content. There's no real border by
  *   default — the hairline edge comes from `--tooltip-shadow`; set
  *   `--tooltip-border` for an actual one.
  * - On coarse/no-hover pointers, an anchor that owns a tooltip
@@ -272,9 +271,9 @@ export class ATooltipElement extends HTMLElementBase {
     const style = document.createElement('style')
     // Shadow bubble CSS (kept comment-free — this string ships into every
     // consumer document). Non-obvious bits:
-    // - The container establishes its own text baseline (font axes, spacing,
-    //   transform all restated) so inheritable text properties from the
-    //   anchor — a Button's condensed "wdth" 88, its letter-spacing, an
+    // - The container establishes its own text baseline (font style, stretch,
+    //   spacing, and transform all restated) so inheritable text properties
+    //   from the anchor — a condensed Button, its letter-spacing, or an
     //   uppercase transform — don't bleed into the slotted content. The
     //   content inherits from this container, the single choke point;
     //   consumers customize one tooltip by classing their own content.
@@ -338,7 +337,6 @@ export class ATooltipElement extends HTMLElementBase {
         font-weight: 400;
         font-style: normal;
         font-stretch: normal;
-        font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0;
         line-height: 1.5;
         letter-spacing: 0.02ch;
         word-spacing: normal;

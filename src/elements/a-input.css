@@ -3,8 +3,8 @@
      can re-point a single instance or a whole theme. Text/bg/border point at
      Anta's theme-aware role tokens (so dark mode is mostly free); the focus ring
      uses the global `--focus-ring` token directly (it themes itself — no per-input
-     token, no `.dark` override needed); the error border is the one literal (no
-     role token matches it) and gets a `.dark` override below. Sizes set the field
+     token needed); the error border is the one literal with light and dark values
+     selected by `light-dark()`. Sizes set the field
      height plus a per-size type scale (small 13/16 · medium 15/20 · large 17/22)
      and icon size (14/16/18); the field min-height still anchors the box to the
      same-size Button. */
@@ -77,8 +77,8 @@
     font-family: var(--sans-serif);
     font-size: 15px;
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -191,11 +191,10 @@
        degrades to the normal border instead of vanishing. */
     --input-tone-source: var(--border-2);
 
-    --input-border:       oklch(from var(--input-tone-source) 0.7 calc(c * 0.8) h);
-
-    .dark & {
-      --input-border:       oklch(from var(--input-tone-source) 0.5 calc(c * 0.8) h);
-    }
+    --input-border: light-dark(
+      oklch(from var(--input-tone-source) 0.7 calc(c * 0.8) h),
+      oklch(from var(--input-tone-source) 0.5 calc(c * 0.8) h)
+    );
     @supports (color: attr(probe type(<color>), red)) {
       --input-tone-source: attr(tone type(<color>), var(--border-2));
     }
@@ -213,15 +212,15 @@
   a-input[status="info"]     { --input-status-source: var(--anta-seed-info);     --input-bg: var(--bg-2-info);     --input-hint: var(--text-2-info); }
   a-input[status="brand"]    { --input-status-source: var(--anta-seed-brand);    --input-bg: var(--bg-2-brand);    --input-hint: var(--text-2-brand); }
   a-input[status]:not([status="neutral"]) {
-    --input-border:       oklch(from var(--input-status-source) 0.58 c h);
-  }
-  .dark a-input[status]:not([status="neutral"]) {
-    --input-border:       oklch(from var(--input-status-source) 0.52 c h);
+    --input-border: light-dark(
+      oklch(from var(--input-status-source) 0.58 c h),
+      oklch(from var(--input-status-source) 0.52 c h)
+    );
   }
 
   a-input:disabled {
-    --input-bg: #44374b12;
-    --input-border: #44374b26;
+    --input-bg: light-dark(#44374b12, #e4d1ef0d);
+    --input-border: light-dark(#44374b26, #e4d1ef1f);
     --input-text: var(--text-4);
     --input-label: var(--text-4);
     --input-hint: var(--text-5);
@@ -229,19 +228,8 @@
   }
 
   a-input[status]:disabled {
-    --input-bg: #44374b12;
-    --input-border: #44374b26;
-    --input-hint: var(--text-5);
-  }
-
-  .dark a-input:disabled {
-    --input-bg: #e4d1ef0d;
-    --input-border: #e4d1ef1f;
-  }
-
-  .dark a-input[status]:disabled {
-    --input-bg: #e4d1ef0d;
-    --input-border: #e4d1ef1f;
+    --input-bg: light-dark(#44374b12, #e4d1ef0d);
+    --input-border: light-dark(#44374b26, #e4d1ef1f);
     --input-hint: var(--text-5);
   }
 
@@ -302,12 +290,12 @@
     box-shadow: inset 0 0 0 0.5px var(--native-field-border);
     color: var(--text-1);
     caret-color: currentColor;
-    color-scheme: light;
+    color-scheme: inherit;
     font-family: var(--sans-serif);
-    font-size: var(--native-field-zoom-safe-font-size, var(--native-field-font-size));
+    font-size: var(--native-field-font-size);
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
@@ -325,24 +313,6 @@
   input[data-anta][list]::-webkit-calendar-picker-indicator {
     opacity: 0 !important;
     pointer-events: none !important;
-  }
-  .dark input[data-anta]:is(
-    :not([type]),
-    [type="text"],
-    [type="search"],
-    [type="email"],
-    [type="number"],
-    [type="password"],
-    [type="tel"],
-    [type="url"],
-    [type="date"],
-    [type="datetime-local"],
-    [type="month"],
-    [type="time"],
-    [type="week"]
-  ),
-  .dark textarea[data-anta] {
-    color-scheme: dark;
   }
   @media (hover: hover) and (pointer: fine) {
     input[data-anta]:is(
@@ -435,15 +405,14 @@
     padding: 0;
     border: 0;
     color: var(--text-2);
-    color-scheme: light;
+    color-scheme: inherit;
     font-family: var(--sans-serif);
     font-size: var(--native-file-font-size);
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     line-height: var(--native-file-line-height);
   }
-  .dark input[data-anta][type="file"] { color-scheme: dark; }
   input[data-anta][type="file"]::file-selector-button {
     box-sizing: border-box;
     min-block-size: var(--native-file-block-size);
@@ -495,7 +464,10 @@
     --native-field-line-height: 20px;
     --native-field-round: 4px;
     --native-field-border: var(--border-2);
-    --native-select-picker-bg: color-mix(in oklch, var(--bg-1) 90%, transparent);
+    --native-select-picker-bg: light-dark(
+      color-mix(in oklch, var(--bg-1) 90%, transparent),
+      color-mix(in oklch, var(--bg-1) 78%, transparent)
+    );
     --native-select-picker-radius: var(--radius-md, 8px);
     --native-select-picker-border: 1px solid var(--border-3);
     --native-select-picker-shadow:
@@ -519,23 +491,22 @@
     background: var(--bg-1);
     box-shadow: inset 0 0 0 0.5px var(--native-field-border);
     color: var(--text-1);
-    color-scheme: light;
+    color-scheme: inherit;
     font-family: var(--sans-serif);
-    font-size: var(--native-field-zoom-safe-font-size, var(--native-field-font-size));
+    font-size: var(--native-field-font-size);
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
+  /* Dark mode adds an inset ring to the shadow list. `light-dark()` carries
+     colors only, so this geometry stays in a class rule. */
   .dark select[data-anta] {
-    --native-select-picker-bg: color-mix(in oklch, var(--bg-1) 78%, transparent);
     --native-select-picker-shadow:
       0 2px 8px color-mix(in oklch, black 50%, transparent),
       0 12px 32px color-mix(in oklch, black 40%, transparent),
       inset 0 0 0 1px color-mix(in oklch, white 8%, transparent);
-
-    color-scheme: dark;
   }
   @media (hover: hover) and (pointer: fine) {
     select[data-anta]:not(:disabled):hover {
@@ -621,15 +592,6 @@
     --native-field-font-size: 17px;
     --native-field-line-height: 22px;
   }
-  /* iOS zooms focused editable controls whose computed type is below 16px.
-     Preserve a larger consumer-supplied size while lifting the active field. */
-  @media (pointer: coarse) {
-    input[data-anta]:focus,
-    select[data-anta]:focus,
-    textarea[data-anta]:focus {
-      --native-field-zoom-safe-font-size: max(16px, var(--native-field-font-size));
-    }
-  }
   input[data-anta]:is(
     :not([type]),
     [type="text"],
@@ -669,28 +631,13 @@
   )[tone]:not([tone=""]),
   textarea[data-anta][tone]:not([tone=""]) {
     --native-field-tone: var(--border-2);
-    --native-field-border: oklch(from var(--native-field-tone) 0.7 calc(c * 0.8) h);
+    --native-field-border: light-dark(
+      oklch(from var(--native-field-tone) 0.7 calc(c * 0.8) h),
+      oklch(from var(--native-field-tone) 0.5 calc(c * 0.8) h)
+    );
     @supports (color: attr(probe type(<color>), red)) {
       --native-field-tone: attr(tone type(<color>), var(--border-2));
     }
-  }
-  .dark input[data-anta]:is(
-    :not([type]),
-    [type="text"],
-    [type="search"],
-    [type="email"],
-    [type="number"],
-    [type="password"],
-    [type="tel"],
-    [type="url"],
-    [type="date"],
-    [type="datetime-local"],
-    [type="month"],
-    [type="time"],
-    [type="week"]
-  )[tone]:not([tone=""]),
-  .dark textarea[data-anta][tone]:not([tone=""]) {
-    --native-field-border: oklch(from var(--native-field-tone) 0.5 calc(c * 0.8) h);
   }
   @supports (appearance: base-select) {
     select[data-anta],
@@ -758,10 +705,10 @@
       color: var(--native-select-option-color);
       cursor: pointer;
       font-family: var(--sans-serif);
-      font-feature-settings: 'ss02', 'ss05', 'tnum';
       font-size: 14px;
       font-weight: 400;
-      font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+      font-stretch: normal;
+      font-style: normal;
       letter-spacing: normal;
       line-height: 16px;
       text-transform: none;

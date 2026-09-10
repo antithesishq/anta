@@ -38,7 +38,7 @@ before(async () => {
 
 after(async () => browser?.close())
 
-test('search shortcut uses the platform modifier and survives focus and value updates', async t => {
+test('search shortcut uses the platform modifier and stays mounted through focus and value updates', async t => {
   for (const [platform, legacy, userAgent, expected] of [
     ['macOS', 'MacIntel', '', '⌘+K or /'],
     [null, 'MacIntel', '', '⌘+K or /'],
@@ -63,12 +63,12 @@ test('search shortcut uses the platform modifier and survives focus and value up
     const hint = page.locator('[data-sidebar-search-shortcut]')
     await page.waitForFunction(expected => document.querySelector('[data-sidebar-search-shortcut]')?.textContent === expected, expected)
     await page.locator('a-input').evaluate(input => input.focus())
-    await page.waitForFunction(() => !document.querySelector('[data-sidebar-search-shortcut]'))
+    assert.equal(await hint.textContent(), expected)
     await page.evaluate(() => document.activeElement.blur())
     await hint.waitFor({ state: 'attached' })
     assert.equal(await hint.textContent(), expected)
     await page.evaluate(() => document.dispatchEvent(new CustomEvent('anta-sidebar-search-value', { detail: 'query' })))
-    await page.waitForFunction(() => !document.querySelector('[data-sidebar-search-shortcut]'))
+    assert.equal(await hint.textContent(), expected)
     await page.evaluate(() => document.dispatchEvent(new CustomEvent('anta-sidebar-search-value', { detail: '' })))
     await hint.waitFor({ state: 'attached' })
     assert.equal(await hint.textContent(), expected)

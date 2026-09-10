@@ -2,7 +2,7 @@
 
 Anta doesn't offer a global color palette — there are no raw scales like `blue-500` or `gray-900` to pick from. Color ships only as a small set of **role tokens**, grouped by where they apply — background, text, and border — each with a neutral set plus five tones (brand, info, success, critical, warning) that already pair light and dark. You compose from these roles instead of arbitrary swatches; anything app-specific lives in component tokens or your own [semantic aliases](#custom-semantic-tokens).
 
-Values are CSS declarations from the shipped default palette and optional `theme-anta.css` reference palette. Resolve them in the application's theme to obtain displayed colors. Toned backgrounds share the neutral `--bg-1`; there is no `--bg-1-{tone}`.
+Values are CSS declarations from the shipped default palette and optional `theme-antune.css` reference palette. Resolve them in the application's theme to obtain displayed colors. Toned backgrounds share the neutral `--bg-1`; there is no `--bg-1-{tone}`.
 
 ## Background
 

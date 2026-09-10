@@ -126,7 +126,7 @@ test('debounces typing, keeps previous matches, and shows activity only in the i
   assert.match(await page.locator('#docs-search-results a').getAttribute('href'), /q=button/)
   await page.waitForFunction(() => Boolean(window.finishSearch))
   await page.evaluate(() => window.finishSearch([]))
-  await page.getByRole('button', { name: 'Try AI search' }).waitFor()
+  await page.getByRole('button', { name: 'Get answer from AI' }).waitFor()
   await page.locator('#docs-search-input [slot="leading"] a-icon').waitFor()
   assert.equal(requests.length, 0)
   await input.fill('cancel this search')
@@ -150,7 +150,7 @@ test('renders partial Markdown before completion, retains interrupted text, and 
     }
   })
   await input.fill('unknown question')
-  await page.getByRole('button', { name: 'Try AI search' }).click()
+  await page.getByRole('button', { name: 'Get answer from AI' }).click()
   await page.getByText('Preparing an AI answer…').waitFor()
   await page.evaluate(() => {
     window.chatEvent('sources', { sources: ['https://anta.design/tag/'] })
@@ -164,7 +164,7 @@ test('renders partial Markdown before completion, retains interrupted text, and 
   await page.evaluate(() => window.chatEvent('error', { error: 'unavailable' }))
   await page.getByText('The answer was interrupted. Try again.').waitFor()
   assert.match(await answer.textContent(), /Design/)
-  await page.getByRole('button', { name: 'Try AI search' }).click()
+  await page.getByRole('button', { name: 'Get answer from AI' }).click()
   await page.getByText('Preparing an AI answer…').waitFor()
   await page.evaluate(() => window.chatEvent('delta', { text: 'Second attempt' }))
   await answer.getByText('Second attempt', { exact: true }).waitFor()
@@ -190,16 +190,16 @@ test('reopening a cancelled answer offers a retry instead of leaving a loader', 
       }
     }, partial)
     await input.fill('a question without full-text matches')
-    await page.getByRole('button', { name: 'Try AI search' }).click()
+    await page.getByRole('button', { name: 'Get answer from AI' }).click()
     await page.getByText(partial ? 'Partial answer' : 'Preparing an AI answer…', { exact: true }).waitFor()
     await input.press('Escape')
     await page.locator('a-dialog[state="closed"]').waitFor({ state: 'attached' })
     await page.waitForFunction(() => window.chatSignal.aborted)
     await page.evaluate(() => document.dispatchEvent(new Event('anta-search-open')))
-    await page.getByRole('button', { name: 'Try AI search' }).waitFor()
+    await page.getByRole('button', { name: 'Get answer from AI' }).waitFor()
     assert.equal(await page.getByText('Preparing an AI answer…').count(), 0)
     if (partial) await page.getByText('The answer was interrupted. Try again.').waitFor()
-    await page.getByRole('button', { name: 'Try AI search' }).click()
+    await page.getByRole('button', { name: 'Get answer from AI' }).click()
     await page.getByText('Use the documented theme tokens.').waitFor()
     assert.equal(requests.length, 1)
   })
@@ -220,10 +220,10 @@ test('waits for an explicit click after zero matches, returns one safe answer, a
   await page.waitForTimeout(750)
   assert.equal(requests.length, 0)
   await page.evaluate(() => window.finishSearch([]))
-  const tryAI = page.getByRole('button', { name: 'Try AI search' })
+  const tryAI = page.getByRole('button', { name: 'Get answer from AI' })
   await tryAI.waitFor()
   assert.equal(await tryAI.getAttribute('data-selected'), 'true')
-  assert.equal(await tryAI.locator('strong').textContent(), 'Try AI search')
+  assert.equal(await tryAI.locator('strong').textContent(), 'Get answer from AI')
   assert.equal(await tryAI.getByText('No results for “unknown question”.').count(), 1)
   await page.waitForTimeout(750)
   assert.equal(requests.length, 0, 'Empty results alone must not call Cloudflare')
@@ -272,7 +272,7 @@ test('typing cancels an explicitly requested answer and stale responses cannot r
     await reply(route, { answer: 'Obsolete answer' }).catch(() => {})
   })
   await input.fill('first question')
-  await page.getByRole('button', { name: 'Try AI search' }).waitFor()
+  await page.getByRole('button', { name: 'Get answer from AI' }).waitFor()
   await input.fill('button')
   await page.locator('#docs-search-results a').waitFor()
   await page.waitForTimeout(750)
@@ -280,18 +280,18 @@ test('typing cancels an explicitly requested answer and stale responses cannot r
   await input.fill('second question')
   await Promise.all([
     page.waitForRequest('**/api/search-answer/'),
-    page.getByRole('button', { name: 'Try AI search' }).click(),
+    page.getByRole('button', { name: 'Get answer from AI' }).click(),
   ])
   await page.getByText('Preparing an AI answer…').waitFor()
   assert.equal(await page.getByText('No results for “second question”.').count(), 0)
-  assert.equal(await page.getByRole('button', { name: 'Try AI search' }).count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'Get answer from AI' }).count(), 0)
   await input.fill('button')
   await page.locator('#docs-search-results a').waitFor()
   release()
   await page.waitForTimeout(100)
   assert.equal(await page.getByRole('region', { name: 'AI answer' }).count(), 0)
   await input.fill('third question')
-  await page.getByRole('button', { name: 'Try AI search' }).waitFor()
+  await page.getByRole('button', { name: 'Get answer from AI' }).waitFor()
   await input.press('Escape')
   await page.waitForTimeout(750)
   assert.equal(requests.length, 1)
@@ -312,7 +312,7 @@ test('every code example has an Expressive Code frame and copies its exact text'
     Object.defineProperty(navigator.clipboard, 'writeText', { value: async text => { window.copiedCode.push(text) } })
   })
   await input.fill('code examples')
-  await page.getByRole('button', { name: 'Try AI search' }).click()
+  await page.getByRole('button', { name: 'Get answer from AI' }).click()
   const answer = page.getByRole('region', { name: 'AI answer' })
   const frames = answer.locator('.expressive-code .frame')
   await frames.nth(3).waitFor()
@@ -376,12 +376,14 @@ test('keeps the input in the header, scrolls only the dialog body, and caps cont
     const width = selector => document.querySelector(selector).getBoundingClientRect().width
     return {
       input: width('#docs-search-input'),
+      body: document.querySelector('#docs-search-results').parentElement.getBoundingClientRect().width,
       scroller: document.querySelector('a-dialog').shadowRoot.querySelector('[part="body"]').getBoundingClientRect().width,
       result: width('#docs-search-results > a'),
     }
   })
   assert.equal(dimensions.input, 960)
-  assert.equal(dimensions.result, 960)
+  assert.equal(dimensions.body, 960)
+  assert.equal(dimensions.result, 920)
   assert.ok(dimensions.scroller > 960)
   await page.evaluate(() => {
     window.runFullText = async () => Array.from({ length: 40 }, (_, i) => ({
@@ -402,7 +404,7 @@ test('keeps the input in the header, scrolls only the dialog body, and caps cont
   assert.equal((await input.boundingBox()).y, before.y)
   await page.evaluate(() => { window.runFullText = async () => [] })
   await input.fill('unknown question')
-  await page.getByRole('button', { name: 'Try AI search' }).click()
+  await page.getByRole('button', { name: 'Get answer from AI' }).click()
   const answer = page.getByRole('region', { name: 'AI answer' })
   await answer.waitFor()
   assert.ok((await answer.boundingBox()).width <= 960)
@@ -426,10 +428,10 @@ test('a failed chat can be retried with the button', async t => {
       : reply(route, { answer: 'Use a Tag component.' })
   })
   await input.fill('unknown question')
-  await page.getByRole('button', { name: 'Try AI search' }).click()
+  await page.getByRole('button', { name: 'Get answer from AI' }).click()
   await page.getByText('Couldn’t load an AI answer. Try again.').waitFor()
   assert.equal(await page.getByText('No results for “unknown question”.').count(), 1)
-  await page.getByRole('button', { name: 'Try AI search' }).click()
+  await page.getByRole('button', { name: 'Get answer from AI' }).click()
   await page.getByRole('region', { name: 'AI answer' }).waitFor()
   assert.equal(requests.length, 2)
 })

@@ -109,8 +109,10 @@ proper names, identifiers, and case-sensitive IDs keep their shape (`GitHub`,
 not `GITHUB`). Pass `allcaps` for the uppercase treatment: at this small size
 all-caps reads as a label at a glance and keeps a uniform, scannable shape,
 which suits short status words where the exact case carries no meaning.
-Uppercase also tracks wider (0.08ch vs the default 0.02ch) and steps each size
-down 1px, since caps read larger than mixed case at the same size.
+Without a theme, both treatments use `0.1ch` tracking. Antune and Antithesis
+retain their font-specific `0.02ch` mixed-case and `0.08ch` uppercase tracking.
+All-caps steps each size down 1px, since caps read larger than mixed case at the
+same size.
 
 ```tsx
 <Tag icon="external-link" label="GitHub" value="v1.6.9" />
@@ -121,7 +123,7 @@ down 1px, since caps read larger than mixed case at the same size.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `allcaps?` | boolean | — | Render in all-caps instead of the default normal (mixed) case (uppercase tracks wider than the default body-text letter-spacing). |
+| `allcaps?` | boolean | — | Render in all-caps instead of the default normal (mixed) case. |
 | `icon?` | IconShape | — | Leading icon shape. Sits flush before the label, scaled to the pill. |
 | `iconTrailing?` | IconShape | — | Trailing icon shape. Renders last, after the value. |
 | `label?` | string | — | A short "key" shown before the value. When paired with `value` it renders bold (weight 600), same color. On its own (no `value`) it's treated as the tag's primary text and keeps the default styling. |

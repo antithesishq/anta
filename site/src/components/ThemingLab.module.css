@@ -1,9 +1,12 @@
 /* Layout for the theming lab (ThemingLab.tsx). Structure only — every color the
-   page compares is set by the components themselves or the injected formula CSS.
-   Desktop-first; mobile is out of scope for this tool. */
+   page compares is set by the components themselves or the injected formula CSS. */
 
 .lab {
   display: block;
+  min-width: 0;
+  max-width: 960px;
+  margin-inline: auto;
+  container: theming-lab / inline-size;
 }
 
 /* Sticky header: tone switcher + seed picker, both pinned while scrolling. The
@@ -27,13 +30,24 @@
   flex-wrap: wrap;
 }
 
-/* One component block: previews in a fixed 420px column, controls take the rest. */
+/* Stack until the content column has room for previews and controls together. */
 .block {
   display: grid;
-  grid-template-columns: 420px minmax(420px, 1fr);
-  gap: 32px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
   align-items: start;
   padding: 28px 0 0;
+}
+
+@container theming-lab (min-width: 760px) {
+  .block {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.header > a-tabs,
+.surfaceTabs > a-tabs {
+  flex-wrap: wrap;
 }
 
 /* Previews stack as one unit with no gap; borders overlap. */
@@ -77,7 +91,7 @@
 }
 
 .var {
-  width: 88px;
+  width: min(88px, 100%);
   position: relative;
 }
 
@@ -118,13 +132,20 @@
   align-items: center;
 }
 
-/* Surface (Background & Borders) groups: L channels on the top row, C channels
-   on the bottom, each C aligned under its matching L by grid column. */
+/* Wrap each L/C pair together, keeping C beneath its matching L. */
 .varRows {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(88px, 100%), 88px));
   gap: 8px 10px;
   padding: 4px 0 6px;
   justify-content: start;
+}
+
+.varColumn {
+  display: grid;
+  grid-template-rows: repeat(2, auto);
+  gap: 8px;
+  min-width: 0;
 }
 
 .pre {
@@ -137,7 +158,8 @@
   font-family: var(--monospace);
   font-size: 12px;
   line-height: 1.5;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   max-width: 100%;
   overflow: auto;
 }
@@ -150,6 +172,11 @@
   border-radius: 10px;
   border: 1px solid var(--border-4);
   background: var(--bg-2);
+}
+
+.preview > *,
+.col > * {
+  min-width: 0;
 }
 /* The two previews read as one stacked unit: square the touching corners and
    overlap the shared 1px border. */
@@ -207,7 +234,7 @@
    menu inline in the preview (rather than a floating popover). */
 .menuSurface {
   width: max-content;
-  min-width: 220px;
+  min-width: min(220px, 100%);
   max-width: 100%;
   /* Match a real <a-menu>'s shadow body: items stack with a 1px inter-item gap
      (a-menu.ts sets `flex-direction: column; gap: 1px`). The preview renders bare

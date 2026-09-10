@@ -204,8 +204,10 @@ proper names, identifiers, and case-sensitive IDs keep their shape (`GitHub`,
 not `GITHUB`). Pass `allcaps` for the uppercase treatment: at this small size
 all-caps reads as a label at a glance and keeps a uniform, scannable shape,
 which suits short status words where the exact case carries no meaning.
-Uppercase also tracks wider (0.08ch vs the default 0.02ch) and steps each size
-down 1px, since caps read larger than mixed case at the same size.
+Without a theme, both treatments use `0.1ch` tracking. Antune and Antithesis
+retain their font-specific `0.02ch` mixed-case and `0.08ch` uppercase tracking.
+All-caps steps each size down 1px, since caps read larger than mixed case at the
+same size.
 
 <Preview>
   <Tag icon="external-link" label="GitHub" value="v1.6.9" />

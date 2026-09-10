@@ -16,7 +16,10 @@
   }
 
   a-tooltip {
-    --tooltip-bg: color-mix(in oklch, var(--bg-1) 80%, transparent);
+    --tooltip-bg: light-dark(
+      color-mix(in oklch, var(--bg-1) 80%, transparent),
+      color-mix(in oklch, var(--bg-1) 70%, transparent)
+    );
     --tooltip-shadow:
       0 1px 8px color-mix(in oklch, var(--text-1) 15%, transparent),
       0 0 1px color-mix(in oklch, var(--text-1) 50%, transparent);
@@ -37,8 +40,9 @@
     }
   }
 
+  /* Dark mode deepens the drop shadow and adds an inset ring. `light-dark()`
+     carries colors only, so this geometry stays in a class rule. */
   .dark a-tooltip {
-    --tooltip-bg: color-mix(in oklch, var(--bg-1) 70%, transparent);
     --tooltip-shadow:
       0 2px 16px color-mix(in oklch, black 70%, transparent),
       inset 0 0 0 1px color-mix(in oklch, white 15%, transparent);

@@ -91,7 +91,6 @@ export class ASliderElement extends HTMLElementBase {
       .end-value {
         color: var(--slider-value);
         font-family: var(--sans-serif);
-        font-feature-settings: 'ss02', 'ss05', 'tnum';
         font-size: var(--slider-value-size);
         font-variant-numeric: tabular-nums;
         line-height: var(--slider-value-line-height);
@@ -171,7 +170,6 @@ export class ASliderElement extends HTMLElementBase {
         min-inline-size: max-content;
         color: var(--slider-value);
         font-family: var(--sans-serif);
-        font-feature-settings: 'ss02', 'ss05', 'tnum';
         font-size: var(--slider-value-size);
         font-variant-numeric: tabular-nums;
         line-height: var(--slider-value-line-height);
@@ -196,7 +194,6 @@ export class ASliderElement extends HTMLElementBase {
         max-inline-size: min(12rem, 50vw);
         color: var(--slider-marker);
         font-family: var(--sans-serif);
-        font-feature-settings: 'ss02', 'ss05', 'tnum';
         font-size: var(--slider-marker-size);
         font-variant-numeric: tabular-nums;
         line-height: var(--slider-marker-line-height);

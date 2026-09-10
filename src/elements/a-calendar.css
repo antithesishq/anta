@@ -103,6 +103,7 @@
     min-width: var(--calendar-cell-width, 32px);
     min-height: var(--calendar-cell-height, 28px);
     justify-content: center;
+    font-variant-numeric: tabular-nums;
   }
   /* Day labels are uniform digits, so drop Button's optical bottom padding (it
      compensates for text glyphs sitting low in the line-box) — it would otherwise

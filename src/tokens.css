@@ -21,15 +21,22 @@
    The neutral seed is near-grey, so neutral tokens stay grey with the same
    formula. Light and dark share the seeds and differ only in the pinned L/C.
    The hand-tuned literals that shipped before this are available as the opt-in
-   `@antadesign/anta/theme-anta.css`. L/C constants mirror the theming lab. */
+   `@antadesign/anta/theme-antune.css`. L/C constants mirror the theming lab. */
 
 :root, .light {
   --sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
 
+:root, .light {
+  /* Element CSS resolves its dark values with `light-dark()`, which reads the
+     computed `color-scheme`. It is declared here, next to the token blocks it
+     switches, because `tokens.css` is required for any styled element while
+     `reset.css` is optional. */
+  color-scheme: light;
   font-size: 15px;
   font-weight: 400;
-  font-feature-settings: 'ss02' on, 'ss05' on, 'tnum' on;
 
   /* Tone seeds — the single source each scale derives from. Hues from the
      Anta 0.2 primaries; override any of these to reskin a whole tone. */
@@ -176,6 +183,7 @@
 
 
 .dark {
+  color-scheme: dark;
   font-weight: 400;
 
   /* Backgrounds — dark, neutral */

@@ -47,6 +47,12 @@ conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runne
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
 
+For scoped package-documentation changes, run
+`node scripts/generate-package-docs.mjs --only <generated-path...>` with paths
+relative to `docs/`, such as `theming.md`. The unscoped command intentionally
+deletes and rebuilds the complete `docs/` tree, so reserve it for broad
+documentation synchronization.
+
 Cloudflare Pages must use the Node version in `.node-version`; a dashboard
 `NODE_VERSION` override can make its build differ from CI. The manual
 `trigger-cloudflare-deploy.yml` workflow supports `action: logs` for diagnostics

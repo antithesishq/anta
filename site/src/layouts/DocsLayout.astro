@@ -1,7 +1,8 @@
 ---
-// The full Anta stylesheet is render-blocking so token, host, and composed
-// wrapper styles paint before the client-side runtime registers elements.
-import '@antadesign/anta/bundle.css'
+// Render the full Anta stylesheet explicitly before the palette link. Astro
+// otherwise emits imported CSS after authored head links, which would let the
+// default unlayered tokens override the selected theme.
+import antaStylesheet from '@antadesign/anta/bundle.css?url'
 import '../styles/base.css'
 // Docs-site-only extra icon shapes (generated via Anta's generate-icons
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
@@ -14,6 +15,7 @@ import { COMPONENT_SLUGS } from '../../lib/component-slugs'
 import SidebarSearch from '../components/SidebarSearch'
 import ThemeSwitcher from '../components/ThemeSwitcher.tsx'
 import SearchDialog from '../components/SearchDialog.tsx'
+import AntaLogo from '../components/AntaLogo'
 
 interface Props {
   title?: string
@@ -130,42 +132,7 @@ if (isComponentPage && title) {
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <link rel="icon" type="image/svg+xml" href="/anta-favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-
-    {/*
-      Preload the brand fonts so the browser starts fetching them in
-      parallel with HTML parsing — without this the font requests don't
-      fire until the CSS rule is parsed. This preload is what makes
-      `font-display: optional` (see base.css) reliable: optional gives
-      the font only a ~100ms block window and never swaps afterward, so
-      the fetch has to be in flight from the very start to win that race
-      and render the brand font on first paint with no reflow. Without
-      the preload, optional would usually miss the window and the page
-      would stay in the system fallback for the whole load. `crossorigin`
-      is required for fetch-credentials to match @font-face requests;
-      without it the preloaded resource doesn't get reused by the
-      @font-face fetch and we'd preload twice.
-    */}
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      crossorigin
-      href="https://ucarecdn.com/af38fa86-199f-44f5-82d2-3ea2a690dd6c/"
-    />
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      crossorigin
-      href="https://ucarecdn.com/61bd3320-3787-4a92-887e-a5ff7bd6e051/"
-    />
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      crossorigin
-      href="https://ucarecdn.com/03e90df9-d945-4837-b177-cdc408e94bb4/"
-    />
+    <link rel="stylesheet" href={antaStylesheet} />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content={pageUrl} />
@@ -224,12 +191,12 @@ if (isComponentPage && title) {
     </script>
     {/* Palette — separate axis from light/dark above. One stable <link>; its
         href is the switch point (/themes/default.css is an empty stub, the
-        ThemeSwitcher island swaps in e.g. /themes/anta.css). The persist id
+        ThemeSwitcher island swaps in e.g. /themes/antune.css). The persist id
         carries the mutated node across swaps, so navigation needs no JS. */}
     <link
       rel="stylesheet"
       id="palette-link"
-      href="/themes/default.css"
+      href="/themes/antune.css"
       data-astro-transition-persist="palette"
     />
     <script is:inline>
@@ -237,10 +204,15 @@ if (isComponentPage && title) {
       // parse keeps the stylesheet render-blocking, so a cold load never
       // flashes the default palette. Keep URLs in sync with ThemeSwitcher.tsx.
       try {
-        const palette = localStorage.getItem('anta-palette')
-        if (palette === 'anta') {
-          document.getElementById('palette-link').href = '/themes/anta.css'
+        const stored = localStorage.getItem('anta-palette')
+        const palette = stored === 'anta' ? 'antune' : stored
+        const hrefs = {
+          none: '/themes/default.css',
+          antune: '/themes/antune.css',
+          antithesis: '/themes/antithesis.css',
         }
+        document.getElementById('palette-link').href = Object.hasOwn(hrefs, palette) ? hrefs[palette] : hrefs.antune
+        if (stored === 'anta') localStorage.setItem('anta-palette', 'antune')
       } catch (e) {}
     </script>
   </head>
@@ -257,7 +229,7 @@ if (isComponentPage && title) {
             aria-label="Site breadcrumb"
             items={[
               {
-                label: [h('img', { src: '/anta-favicon.svg', width: 16, height: 16 }), 'Anta'],
+                label: [h(Icon, { shape: 'menu', size: 16, className: 'mobile-menu-icon', 'aria-hidden': true }), h(AntaLogo, { size: 16, compact: true }), 'Anta'],
                 href: '/',
                 current: !title,
                 tone: title ? 'brand' : 'neutral',
@@ -886,6 +858,10 @@ if (isComponentPage && title) {
     min-width: 0;
   }
 
+  .topbar :global(.mobile-menu-icon) {
+    display: none;
+  }
+
   .topbar :global(.header-breadcrumbs a-breadcrumb-separator) {
     width: 8px;
   }
@@ -1006,6 +982,10 @@ if (isComponentPage && title) {
   }
 
   @media (max-width: 800px) {
+    .topbar :global(.mobile-menu-icon) {
+      display: inline-block;
+    }
+
     .topbar-search :global(a-input)::part(trailing) {
       display: none;
     }

@@ -7,7 +7,7 @@
     "docs:pages": "node scripts/gen-pages.mjs",
     "docs:llms-check": "node scripts/check-llms-index.mjs",
     "docs:wasm": "node scripts/copy-esbuild-wasm.mjs",
-    "docs:theme": "node scripts/copy-theme-anta.mjs",
+    "docs:theme": "node scripts/copy-themes.mjs",
     "docs:iframe-runtime": "node scripts/build-iframe-runtime.mjs",
     "docs:playground-runtime": "node scripts/build-playground-runtime.mjs",
     "search:index": "node scripts/build-search-index.mjs",

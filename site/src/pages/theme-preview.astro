@@ -1,0 +1,45 @@
+---
+import antaStylesheet from '@antadesign/anta/bundle.css?url'
+import ThemeCanvas from '../components/ThemeCanvas'
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Theme preview</title>
+    <link rel="stylesheet" href={antaStylesheet} />
+    <link id="preview-theme" rel="stylesheet" href="/themes/antune.css" />
+    <script is:inline>
+      if (window.parent !== window) {
+        try { document.documentElement.classList.toggle('dark', parent.document.documentElement.classList.contains('dark')) } catch {}
+      }
+    </script>
+  </head>
+  <body>
+    <ThemeCanvas client:load />
+  </body>
+</html>
+<style>
+  html, body { margin: 0; background: var(--bg-1); }
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
+</style>
+<script>
+  import '@antadesign/anta/elements'
+  const themes: Record<string, string> = {
+    none: '/themes/default.css',
+    antune: '/themes/antune.css',
+    antithesis: '/themes/antithesis.css',
+  }
+  window.addEventListener('message', event => {
+    if (event.source !== parent || event.origin !== location.origin || event.data?.type !== 'anta-theme-preview') return
+    const href = themes[event.data.theme]
+    if (!href) return
+    const link = document.querySelector<HTMLLinkElement>('#preview-theme')!
+    if (link.getAttribute('href') !== href) link.href = href
+    document.documentElement.classList.toggle('dark', event.data.dark === true)
+  })
+  parent.postMessage({ type: 'anta-theme-preview-ready' }, location.origin)
+</script>

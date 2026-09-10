@@ -312,11 +312,14 @@ export default function Playground({ component, initialCode, initialCss = '', la
     const iframe = iframeRef.current
     if (!iframe) return
     let cancelled = false
+    let teardown: (() => void) | undefined
     function init() {
       if (cancelled) return
       const doc = iframe.contentDocument
       if (!doc || !iframe.contentWindow) return
-      setupIframe(iframe)
+      // A reload runs `init` again, so drop the previous document's observers.
+      teardown?.()
+      teardown = setupIframe(iframe)
       iframeReadyRef.current = true
       // If a bundle is already compiled, push it now.
       if (bundleState && (bundleState as any).ok) {
@@ -333,6 +336,7 @@ export default function Playground({ component, initialCode, initialCss = '', la
     return () => {
       cancelled = true
       iframe.removeEventListener('load', init)
+      teardown?.()
     }
     // `IFRAME_ASSETS` changes whenever the dev watcher rebuilds Anta. It is
     // otherwise immutable for the lifetime of a production page.
@@ -1325,30 +1329,23 @@ function buildSrcdoc(): string {
 </style></head><body><div id="root" class="preview"></div></body></html>`
 }
 
-function setupIframe(iframe: HTMLIFrameElement) {
+function setupIframe(iframe: HTMLIFrameElement): (() => void) | undefined {
   const doc = iframe.contentDocument
   const win = iframe.contentWindow as Window & { __demo_modules__?: Record<string, unknown> }
   if (!doc || !win) return
+  const teardowns: Array<() => void> = []
 
   // `window.__demo_modules__` (the Anta + Preact instances the demo shim reads)
   // and the custom-element registration are both handled by the preview-app
   // bundle loaded from the srcdoc (see buildSrcdoc) — it runs before this
   // iframe's `load`, so the modules are seeded by the time we push a demo.
 
-  // Clone Anta-related <link rel="stylesheet"> + <style> tags from
-  //    the parent into the iframe so the rendered preview gets the
-  //    same look as the docs site. Anta CSS stays unlayered — its
-  //    component defaults beat anything in a cascade layer
-  //    (including Tailwind's `@layer utilities`), and consumers can
-  //    override via higher-specificity unlayered class selectors
-  //    written in their own CSS (which always tie-break in their
-  //    favour at unlayered tier). Tailwind utility classes WILL NOT
-  //    override Anta declarations — that's an accepted tradeoff for
-  //    keeping the library's defaults sticky.
+  // Copy the docs styles into the preview and keep its palette link in sync.
   for (const link of Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'))) {
     const clone = doc.createElement('link')
     clone.rel = 'stylesheet'
     clone.href = link.href
+    if (link.id === 'palette-link') clone.id = link.id
     doc.head.appendChild(clone)
   }
   // Also clone any inline <style> from the head that's likely tokens.
@@ -1369,13 +1366,16 @@ function setupIframe(iframe: HTMLIFrameElement) {
     const dark = document.documentElement.classList.contains('dark')
     doc.documentElement.classList.toggle('dark', dark)
     doc.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+    const palette = document.getElementById('palette-link') as HTMLLinkElement | null
+    const clone = doc.getElementById('palette-link') as HTMLLinkElement | null
+    if (palette && clone && clone.href !== palette.href) clone.href = palette.href
   }
   apply()
   const obs = new MutationObserver(apply)
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  // `unload` is disallowed in this nested document by Chromium's permissions
-  // policy. `pagehide` has the same lifetime semantics without the violation.
-  win.addEventListener('pagehide', () => obs.disconnect(), { once: true })
+  const palette = document.getElementById('palette-link')
+  if (palette) obs.observe(palette, { attributes: true, attributeFilter: ['href'] })
+  teardowns.push(() => obs.disconnect())
 
   // 5) Capture iframe runtime errors → bubble to parent via postMessage.
   win.addEventListener('error', (e: any) => {
@@ -1398,10 +1398,21 @@ function setupIframe(iframe: HTMLIFrameElement) {
   if (ResizeObserverCtor) {
     const ro = new ResizeObserverCtor(report)
     ro.observe(observed)
-    win.addEventListener('pagehide', () => ro.disconnect(), { once: true })
+    teardowns.push(() => ro.disconnect())
   }
   // Initial report after a microtask so the first render lands first.
   setTimeout(report, 0)
+
+  // The class / palette observer watches parent-document nodes that outlive
+  // this preview: `documentElement`, and `#palette-link`, which the docs
+  // router persists across navigation. `pagehide` covers the iframe unloading
+  // itself, and an iframe removed by a route change may never fire it, so the
+  // caller owns teardown as well. Both disconnects are safe to run twice.
+  // (`unload` is disallowed in this nested document by Chromium's permissions
+  // policy; `pagehide` has the same lifetime semantics without the violation.)
+  const teardown = () => { for (const stop of teardowns) stop() }
+  win.addEventListener('pagehide', teardown, { once: true })
+  return teardown
 }
 
 function pushBundleToIframe(iframe: HTMLIFrameElement, code: string, resetRoot = false) {

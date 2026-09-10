@@ -14,7 +14,8 @@ const LINK_ID = 'palette-link'
 // plus entries here, in the options below, and in DocsLayout's inline script.
 const THEME_HREF: Record<string, string> = {
   none: '/themes/default.css',
-  anta: '/themes/anta.css',
+  antune: '/themes/antune.css',
+  antithesis: '/themes/antithesis.css',
 }
 
 // Announce a palette change so live token readouts (e.g. the Colors page
@@ -24,7 +25,7 @@ const notify = () => window.dispatchEvent(new Event('anta-palette-change'))
 
 function applyPalette(v: string) {
   const link = document.getElementById(LINK_ID) as HTMLLinkElement | null
-  const href = THEME_HREF[v] ?? THEME_HREF.none
+  const href = THEME_HREF[v] ?? THEME_HREF.antune
   if (!link || link.getAttribute('href') === href) {
     notify()
     return
@@ -35,12 +36,13 @@ function applyPalette(v: string) {
 }
 
 export default function ThemeSwitcher() {
-  const [value, setValue] = useState('none')
+  const [value, setValue] = useState('antune')
 
   // Reflect the stored choice once mounted (the inline head script already
   // applied the stylesheet before paint).
   useEffect(() => {
-    setValue(localStorage.getItem(KEY) === 'anta' ? 'anta' : 'none')
+    const href = document.getElementById(LINK_ID)?.getAttribute('href')
+    setValue(Object.keys(THEME_HREF).find(key => THEME_HREF[key] === href) ?? 'antune')
   }, [])
 
   return (
@@ -60,8 +62,9 @@ export default function ThemeSwitcher() {
         ;(window as any).posthog?.capture('theme_switched', { theme: v })
       }}
       options={[
-        { value: 'none', label: 'Default' },
-        { value: 'anta', label: 'Anta', tooltip: 'Hand-tuned default colors ("invisible" to non-designers)' },
+        { value: 'none', label: 'None' },
+        { value: 'antune', label: 'Antune', tooltip: 'Hand-tuned reference colors' },
+        { value: 'antithesis', label: 'Antithesis', tooltip: 'Warm colors, pill buttons, and square text fields' },
       ]}
     />
   )

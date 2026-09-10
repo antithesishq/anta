@@ -6,8 +6,24 @@ import { Document } from 'flexsearch'
 import searchConfig from '../lib/search/config.json' with { type: 'json' }
 
 const outDir = resolve(process.cwd(), 'dist')
-const blockNames = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'dt', 'dd', 'blockquote', 'pre', 'td', 'th', 'figcaption'])
-const ignoredNames = new Set(['button', 'canvas', 'form', 'nav', 'script', 'style', 'svg', 'template', 'textarea'])
+const inlineNames = new Set([
+  'a', 'a-tag', 'abbr', 'acronym', 'b', 'bdi', 'bdo', 'big', 'br', 'cite', 'code',
+  'data', 'del', 'dfn', 'em', 'i', 'ins', 'kbd', 'label', 'mark', 'q', 'ruby',
+  's', 'samp', 'small', 'span', 'strong', 'sub', 'sup', 'time', 'tt', 'u',
+  'var', 'wbr',
+])
+const ignoredNames = new Set([
+  'audio', 'button', 'canvas', 'dialog', 'footer', 'form', 'head', 'hr',
+  'iframe', 'img', 'input', 'map', 'menu', 'nav', 'noscript', 'object', 'picture',
+  'script', 'select', 'style', 'svg', 'template', 'textarea', 'video',
+])
+const ignoredAntaNames = new Set([
+  'a-avatar', 'a-breadcrumbs', 'a-button', 'a-calendar', 'a-checkbox', 'a-copy',
+  'a-icon', 'a-input', 'a-input-time', 'a-loader', 'a-menu', 'a-menu-group',
+  'a-menu-item', 'a-menu-separator', 'a-progress', 'a-radio', 'a-radio-group',
+  'a-select', 'a-slider', 'a-steps', 'a-sticker', 'a-sticker-animated', 'a-switch',
+  'a-tab', 'a-toc',
+])
 
 function hash(value) {
   return createHash('sha256').update(value).digest('hex').slice(0, 10)
@@ -19,6 +35,13 @@ function classNames(node) {
 
 function attr(node, name) {
   return node.attrs?.find((item) => item.name === name)?.value
+}
+
+function isIgnored(node) {
+  return ignoredNames.has(node.nodeName)
+    || ignoredAntaNames.has(node.nodeName)
+    || (node.nodeName === 'a' && attr(node, 'role') === 'button')
+    || attr(node, 'data-no-search') !== undefined
 }
 
 function setAttr(node, name, value) {
@@ -41,8 +64,13 @@ function findMain(node) {
 
 function textContent(node) {
   if (node.nodeName === '#text') return node.value
-  if (ignoredNames.has(node.nodeName)) return ''
+  if (isIgnored(node)) return ''
+  if (node.nodeName === 'br') return ' '
   return (node.childNodes ?? []).map(textContent).join('')
+}
+
+function normalizedText(nodes) {
+  return nodes.map(textContent).join('').replace(/\s+/g, ' ').trim()
 }
 
 function routeFor(file) {
@@ -75,9 +103,28 @@ async function htmlFiles(dir) {
 }
 
 function collectBlocks(node, blocks = []) {
-  if (ignoredNames.has(node.nodeName)) return blocks
-  if (blockNames.has(node.nodeName)) blocks.push(node)
-  for (const child of node.childNodes ?? []) collectBlocks(child, blocks)
+  // `data-no-search` excludes the element and its complete subtree.
+  if (isIgnored(node)) return blocks
+
+  const inline = []
+  const containers = []
+  for (const child of node.childNodes ?? []) {
+    if (isIgnored(child)) continue
+    // Space-only text nodes stay in the inline run: between two adjacent
+    // inline elements they are the only word boundary. `normalizedText`
+    // collapses them, so a run of them still indexes as nothing.
+    if (child.nodeName === '#text' || inlineNames.has(child.nodeName)) {
+      inline.push(child)
+    } else if (child.childNodes?.length) {
+      // Every non-inline element is a container boundary. Its direct inline
+      // content becomes a separate result when the traversal reaches it.
+      containers.push(child)
+    }
+  }
+
+  const text = normalizedText(inline)
+  if (text) blocks.push({ node, text })
+  for (const child of containers) collectBlocks(child, blocks)
   return blocks
 }
 
@@ -85,7 +132,7 @@ function nearestHeading(block, headings) {
   const blockIndex = block.__searchOrder
   for (let i = headings.length - 1; i >= 0; i--) {
     const heading = headings[i]
-    if (heading.__searchOrder < blockIndex && Number(heading.nodeName[1]) <= 6) return heading
+    if (heading.__searchOrder < blockIndex) return heading
   }
 }
 
@@ -105,8 +152,10 @@ for (const file of files) {
   if (!main) continue
 
   const blocks = collectBlocks(main)
-  const headings = blocks.filter((block) => /^h[1-6]$/.test(block.nodeName))
-  const title = textContent(headings.find((heading) => heading.nodeName === 'h1') ?? main).replace(/\s+/g, ' ').trim()
+  const headings = blocks.filter((block) => /^h[1-6]$/.test(block.node.nodeName))
+  const title = headings.find((heading) => heading.node.nodeName === 'h1')?.text
+    ?? blocks[0]?.text
+    ?? ''
   const pageKey = hash(route)
 
   blocks.forEach((block, index) => {
@@ -114,28 +163,26 @@ for (const file of files) {
   })
 
   for (const [index, block] of blocks.entries()) {
-    const text = textContent(block).replace(/\s+/g, ' ').trim()
-    if (!text) continue
-
+    const { node, text } = block
     const id = `${pageKey}-${index + 1}`
-    const anchor = attr(block, 'id') || `search-${id}`
-    const heading = /^h[1-6]$/.test(block.nodeName) ? block : nearestHeading(block, headings)
+    const anchor = attr(node, 'id') || `search-${id}`
+    const heading = /^h[1-6]$/.test(node.nodeName) ? block : nearestHeading(block, headings)
 
-    setAttr(block, 'data-search-id', id)
-    setAttr(block, 'id', anchor)
+    setAttr(node, 'data-search-id', id)
+    setAttr(node, 'id', anchor)
     documents.push({
       id,
       route,
       anchor,
       title,
-      heading: textContent(heading ?? block).replace(/\s+/g, ' ').trim(),
+      heading: (heading ?? block).text,
       text,
-      kind: block.nodeName,
-      level: /^h[1-6]$/.test(block.nodeName) ? Number(block.nodeName[1]) : 0,
-      // Keep headings in separately queryable tags. The client combines these
-      // tag-filtered searches with descending boosts, so a component page
-      // title wins over an incidental body-text match on another page.
-      searchRank: /^h[1-6]$/.test(block.nodeName) ? block.nodeName : 'block',
+      kind: node.nodeName,
+      level: /^h[1-6]$/.test(node.nodeName) ? Number(node.nodeName[1]) : 0,
+      // Query each heading level globally or within one route. A combined tag
+      // keeps both constraints together before FlexSearch limits the matches.
+      searchRank: /^h[1-6]$/.test(node.nodeName) ? node.nodeName : 'block',
+      routeRank: `${route}:${/^h[1-6]$/.test(node.nodeName) ? node.nodeName : 'block'}`,
     })
   }
 

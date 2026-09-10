@@ -57,10 +57,11 @@ try {
         import * as plot from '@antadesign/plot'
         import * as host from '@antadesign/plot/host'
         import { create_anta_host } from '@antadesign/plot/anta'
-        import { definePlotElement } from '@antadesign/plot/browser'
+        import { definePlotElement, definePlotSurfaceElement } from '@antadesign/plot/browser'
         import { plotElementReady } from '@antadesign/plot/auto'
         await plotElementReady
         await assert.rejects(definePlotElement(), /browser custom-element registry/)
+        await assert.rejects(definePlotSurfaceElement(), /browser custom-element registry/)
         const rows = [{x:1,y:2},{x:2,y:4},{x:3,y:3}]
         for (const kind of ['scatter','bar','rect','line','rule','area','custom']) {
             const args = kind === 'bar' ? {data:[{x:'a',y:2},{x:'b',y:4}]} :
@@ -81,7 +82,7 @@ try {
         assert.notEqual(controller.interactions.staged_viewport.x,null)
         await assert.rejects(import('@antadesign/plot/core/controller'), {code:'ERR_PACKAGE_PATH_NOT_EXPORTED'})
         const css = await readFile(new URL(import.meta.resolve('@antadesign/plot/plot.css')), 'utf8')
-        for (const selector of ['.plot-root','a-capture']) assert.ok(css.includes(selector),selector)
+        for (const selector of ['a-plot-surface','a-capture']) assert.ok(css.includes(selector),selector)
     `
     await writeFile(resolve(sandbox, 'runtime.mjs'), runtime)
     execFileSync(process.execPath, ['runtime.mjs'], { cwd: sandbox, stdio: 'inherit', env: { ...process.env, NODE_PATH: '' } })

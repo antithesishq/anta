@@ -1,10 +1,9 @@
-import { tooltip_wrapper_style } from '../core/presentation/tooltip'
 import { reset_zoom_presentation } from '../core/presentation/reset_zoom'
 import { create_interaction_coordinator } from '../core/interactions/coordinator'
 import { capture_pointer_input, capture_wheel_input } from '../integrations/anta_gestures'
 import { resolve_canvas_size } from '../core/compose/layout'
 import {
-    configure_capture, create_browser_view, prepare_canvas, size_host, type BrowserView,
+    create_browser_view, size_host, type BrowserView,
 } from './browser_view'
 import type {
     BoxContext, BoxContextChange, BoxMeasurement, BoxMeasurementChange,
@@ -53,7 +52,7 @@ export function create_plot_element(): CustomElementConstructor {
             },
             on_hover_update: () => {
                 if (this.#controller !== null) {
-                    render_hover(this.#controller, this.#view.highlight, this.#view.tooltip)
+                    render_hover(this.#controller, this.#view.highlight, this.#view.tooltip, this.#context?.devicePixelRatio ?? 1)
                 }
                 this.#update_cursor()
             },
@@ -70,16 +69,16 @@ export function create_plot_element(): CustomElementConstructor {
 
         // Route Box notifications and Capture events to rendering and interaction handlers.
         #listen_for_events(): void {
-            this.#view.box.addEventListener('measurechange', event => {
+            this.#view.root.addEventListener('measurechange', event => {
                 if (this.isConnected) {
                     this.#resize((event as CustomEvent<BoxMeasurementChange>).detail.current)
                 }
             })
-            this.#view.box.addEventListener('contextchange', event => {
+            this.#view.root.addEventListener('contextchange', event => {
                 this.#context = (event as CustomEvent<BoxContextChange>).detail.current
                 this.#schedule()
             })
-            this.#view.reset.addEventListener('click', this.#interaction_coordinator.reset)
+            this.#view.root.addEventListener('resetrequest', this.#interaction_coordinator.reset)
             this.#view.capture.addEventListener('dblclick', this.#interaction_coordinator.handle_double_click)
             this.#view.capture.addEventListener('wheelinput', event => {
                 const detail = (event as CustomEvent<CaptureWheelInput>).detail
@@ -164,8 +163,8 @@ export function create_plot_element(): CustomElementConstructor {
         #refresh_environment(): void {
             this.#resize.cancel()
             if (this.isConnected) {
-                this.#measurement = this.#view.box.measurement
-                this.#context = this.#view.box.context
+                this.#measurement = this.#view.root.measurement
+                this.#context = this.#view.root.context
             }
             this.#controller?.invalidate_draw()
             this.#schedule()
@@ -180,7 +179,7 @@ export function create_plot_element(): CustomElementConstructor {
                 return
             }
             this.#controller?.set_draw_host({
-                prepare: (width, height, dpr) => prepare_canvas(this.#view.canvas, width, height, dpr),
+                prepare: (width, height, dpr) => this.#view.root.prepareCanvas(width, height, dpr),
             })
         }
 
@@ -220,15 +219,13 @@ export function create_plot_element(): CustomElementConstructor {
             }
             controller.flush_draw()
             const { inner } = plot
-            Object.assign(this.#view.capture.style, tooltip_wrapper_style(inner))
-            const filter = plot_color_filter(controller.template, color_theme) ?? ''
-            this.#view.canvas.style.filter = filter
-            this.#view.highlight.style.filter = filter
-            const reset = reset_zoom_presentation(controller, inner, color_theme)
-            Object.assign(this.#view.reset.style, reset.position, reset.button.style)
-            this.#view.reset.hidden = !reset.visible
+            this.#view.root.present({
+                width, height, inner,
+                filter: plot_color_filter(controller.template, color_theme),
+                reset: reset_zoom_presentation(controller, inner, color_theme),
+            })
             this.#configure_capture()
-            render_hover(controller, this.#view.highlight, this.#view.tooltip)
+            render_hover(controller, this.#view.highlight, this.#view.tooltip, context.devicePixelRatio)
             this.#update_cursor()
         }
 
@@ -274,8 +271,7 @@ export function create_plot_element(): CustomElementConstructor {
                 axes,
             )
 
-            configure_capture(
-                this.#view.capture,
+            this.#view.root.configureCapture(
                 resolve_capture_configuration(enabled, axes.modifier, wheel_claim),
             )
         }
@@ -283,7 +279,7 @@ export function create_plot_element(): CustomElementConstructor {
         // Match the old precedence: active pan, modifier-ready pan, selectable hit, then default.
         #update_cursor(): void {
             const controller = this.#controller
-            this.#view.capture.style.cursor = controller?.interactions.cursor_style({
+            this.#view.root.cursor = controller?.interactions.cursor_style({
                 ...controller.template.zoom_pan,
                 enabled: zoom_pan_enabled(controller.template),
             }) ?? ''

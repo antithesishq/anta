@@ -33,6 +33,7 @@ export function render_hover(
     controller: PlotController<Node>,
     canvas: HTMLCanvasElement,
     tooltip: ATooltipElement,
+    dpr: number,
 ): void {
     const plot = controller.composed_plot
 
@@ -40,7 +41,6 @@ export function render_hover(
         return
     }
 
-    const dpr = canvas.ownerDocument.defaultView?.devicePixelRatio ?? 1
     const hits = controller.interactions.hovered
     const previous = rendered_hover.get(canvas)
 
@@ -48,9 +48,6 @@ export function render_hover(
     if (previous?.plot === plot && previous.hits === hits && previous.dpr === dpr) {
         return
     }
-
-    canvas.style.width = `${plot.layout.width}px`
-    canvas.style.height = `${plot.layout.height}px`
 
     const ctx = get_canvas_context(canvas)
 

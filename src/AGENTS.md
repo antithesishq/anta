@@ -2,9 +2,10 @@
 
 Published as `@antadesign/anta` on npm. Portable UI component library. Works in React apps out of the box, in Preact via compat aliasing (`react` → `preact/compat`), and in custom runtimes via `configure()`.
 
-This repo is a pnpm workspace with **two publishable packages** plus the docs site:
+This repo is a pnpm workspace with **three publishable packages** plus the docs site:
 - `@antadesign/anta` — this package, at the repo root (`src/`, `dist/`).
 - `@antadesign/stickers` — the sticker pack, in top-level [`stickers/`](../stickers/AGENTS.md). It owns the `<a-sticker>` / `<a-sticker-animated>` elements, the `Sticker` / `StickerAnimated` wrappers, the artwork, and the **only** `lottie-web` dependency. It depends on `@antadesign/anta` for the JSX runtime and shared helpers. Kept separate so anta carries no animation runtime. **Anything sticker-related — components, tokens, docs page, the generator — lives there, not here.**
+- `@antadesign/plot` — the separate canvas plot library in `plot/`; its core and browser host live outside this package.
 - `site/` — the docs site (not published).
 
 ## Architecture

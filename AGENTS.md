@@ -2,10 +2,11 @@
 
 Anta is a portable UI component library, published as `@antadesign/anta`. It works in React, Preact through `preact/compat`, and custom JSX runtimes through `configure()`.
 
-This pnpm workspace contains two publishable packages and one private site:
+This pnpm workspace contains three publishable packages and one private site:
 
 - `@antadesign/anta` — the root package; its source is in `src/`.
 - `@antadesign/stickers` — a separate sticker package in `stickers/`, keeping `lottie-web` out of anta's dependency graph.
+- `@antadesign/plot` — the separate canvas plot package in `plot/`.
 - `site/` — the documentation site; it is not published to npm.
 
 ## Task routing
@@ -15,6 +16,7 @@ Read the closest guidance before changing a scoped area:
 - `src/AGENTS.md` — Anta component architecture, web-component and JSX-wrapper conventions, CSS rules, and component additions.
 - `site/AGENTS.md` — Astro site, interactive playground, client-router, and documentation-page conventions.
 - `stickers/AGENTS.md` — sticker package layout, generation, and publishing details. Read `src/AGENTS.md` as well before changing its elements or wrappers.
+- `plot/AGENTS.md` — plot entry points, build, and package verification.
 - `RELEASING.md` — mandatory publish order and package-manager commands.
 - `FIGMA.md`, `WRITING.md`, and `DESIGN.md` — Figma extraction, prose, and design guidance respectively.
 
@@ -71,4 +73,4 @@ Ask: would an npm consumer see this change? If not, keep the narrative in the co
 
 ## Publishing
 
-Before publishing either package, read and follow [`RELEASING.md`](RELEASING.md). The order and use of `npm` versus `pnpm` are mandatory.
+Before publishing any package, read and follow [`RELEASING.md`](RELEASING.md). The order and use of `npm` versus `pnpm` are mandatory.

@@ -53,7 +53,7 @@ await declarations(resolve(output, 'types'))
 
 const result = await build({
     absWorkingDir: root,
-    entryPoints: Object.fromEntries(['index', 'host', 'anta', 'browser', 'auto'].map(name => [name, `src/entries/${name}.ts`])),
+    entryPoints: Object.fromEntries(['index', 'browser', 'auto'].map(name => [name, `src/entries/${name}.ts`])),
     outdir: output,
     bundle: true,
     splitting: true,

@@ -10,14 +10,6 @@
       "types": "./dist/types/entries/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./host": {
-      "types": "./dist/types/entries/host.d.ts",
-      "import": "./dist/host.js"
-    },
-    "./anta": {
-      "types": "./dist/types/entries/anta.d.ts",
-      "import": "./dist/anta.js"
-    },
     "./browser": {
       "types": "./dist/types/entries/browser.d.ts",
       "import": "./dist/browser.js"

@@ -18,14 +18,12 @@ Use a bundler that handles CSS imports. The browser entry loads Anta elements an
 
 | Import | Contents |
 | --- | --- |
-| `@antadesign/plot` | Seven series factories, controllers, and public types |
-| `@antadesign/plot/host` | Canvas, highlight, tooltip, and reset-button presentation helpers |
-| `@antadesign/plot/anta` | Box and Capture event integration |
+| `@antadesign/plot` | Series factories, controllers, host presentation helpers, Anta event integration, and public types |
 | `@antadesign/plot/browser` | DOM tooltip factories and explicit `definePlotElement()` registration |
 | `@antadesign/plot/auto` | Browser registration with the `plotElementReady` promise |
 | `@antadesign/plot/plot.css` | Plot layout stylesheet |
 
-The root, host, and Anta integration entries do not load Anta or React at runtime. Browser registration loads Anta elements lazily. Imports are safe during server rendering; call `definePlotElement()` only in a browser.
+The root entry does not load Anta or React at runtime. Browser registration loads Anta elements lazily. Imports are safe during server rendering; call `definePlotElement()` only in a browser.
 
 ## Build and verify
 
@@ -92,3 +90,7 @@ The check replaces the current page body with a plot fixture. It covers notifica
 size pins, resize, hide/show, theme, context options, worker backing-store ownership,
 single/partial transfers, reconnect/remount, synchronous Ctrl-wheel cancellation,
 reset forwarding, teardown, and standalone sizing/drawing.
+
+Host helpers and `create_anta_host` are exported directly from `@antadesign/plot`.
+The former `/host` and `/anta` subpaths have been removed. Update those imports
+when adopting this package version; browser registration remains in `/browser`.

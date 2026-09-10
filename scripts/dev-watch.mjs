@@ -11,6 +11,7 @@ const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
 const workspaceTasks = [
   ['run', 'build:dev'],
   ['--filter', '@antadesign/stickers', 'run', 'build:dev'],
+  ['--filter', '@antadesign/plot', 'run', 'build:dev'],
   ['--filter', 'anta-site', 'run', 'docs'],
 ]
 
@@ -71,7 +72,7 @@ function schedule(kind) {
   }, 150)
 }
 
-for (const path of ['src', 'stickers/src']) {
+for (const path of ['src', 'stickers/src', 'plot/src']) {
   watch(path, { recursive: true }, () => schedule('workspace'))
 }
 

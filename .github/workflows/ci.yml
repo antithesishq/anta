@@ -25,6 +25,12 @@ jobs:
         run: pnpm --filter @antadesign/stickers run build
       - name: Typecheck stickers
         run: pnpm --filter @antadesign/stickers run typecheck
+      - name: Build plot
+        run: pnpm --filter @antadesign/plot run build
+      - name: Typecheck plot
+        run: pnpm --filter @antadesign/plot run typecheck
+      - name: Verify plot package
+        run: pnpm --filter @antadesign/plot run check:package
       - name: Lint site CSS
         run: pnpm --filter anta-site run lint:css
       - name: Typecheck search worker

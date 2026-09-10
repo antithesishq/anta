@@ -35,7 +35,7 @@ for (const entry of ['index', 'host', 'anta']) {
     }
 }
 for (const input of Object.keys(metadata.inputs)) {
-    assert.doesNotMatch(input, /notebook_demo|(?:^|\/)shell\/|(?:^|\/)deps\/preact/)
+    assert.doesNotMatch(input, /(?:^|\/)lodash(?:\/|$)|notebook_demo|(?:^|\/)shell\/|(?:^|\/)deps\/preact/)
     assert.ok(/^src\/(entries|core|integrations|browser)\//.test(input) || input.includes('/node_modules/'),
         `Unexpected source outside the package: ${input}`)
 }

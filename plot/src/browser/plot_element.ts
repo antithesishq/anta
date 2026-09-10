@@ -17,7 +17,7 @@ import type { ComposedPlot, ViewportChange } from '../core/types'
 import type { APlotElement, PlotArgs } from './index'
 import { clear_hover, render_hover } from './hover'
 import { resolve_capture_configuration, zoom_pan_enabled } from '../core/interactions/zoom_pan'
-import throttle from 'lodash/throttle'
+import { throttle } from 'es-toolkit/function'
 
 import { UPDATE_INTERVAL_MS } from '../core/interactions/viewport_schedule'
 
@@ -35,7 +35,7 @@ export function create_plot_element(): CustomElementConstructor {
         readonly #resize = throttle((measurement: BoxMeasurement) => {
             this.#measurement = measurement
             this.#schedule()
-        }, UPDATE_INTERVAL_MS, { leading: false, trailing: true })
+        }, UPDATE_INTERVAL_MS, { edges: ['trailing'] })
 
         readonly #interaction_coordinator = create_interaction_coordinator({
             controller: () => this.#controller,

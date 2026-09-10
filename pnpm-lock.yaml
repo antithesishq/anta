@@ -48,9 +48,9 @@ importers:
       d3-scale:
         specifier: 3.2.3
         version: 3.2.3
-      lodash:
-        specifier: 4.18.1
-        version: 4.18.1
+      es-toolkit:
+        specifier: 1.47.0
+        version: 1.47.0
       react:
         specifier: ^18.0.0 || ^19.0.0
         version: 19.2.8
@@ -58,9 +58,6 @@ importers:
       '@types/chroma-js':
         specifier: 2.1.4
         version: 2.1.4
-      '@types/lodash':
-        specifier: 4.17.25
-        version: 4.17.25
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.18
@@ -1525,9 +1522,6 @@ packages:
   '@types/katex@0.16.8':
     resolution: {integrity: sha512-trgaNyfU+Xh2Tc+ABIb44a5AYUpicB3uwirOioeOkNPPbmgRNtcWyDeeFRzjPZENO9Vq8gvVqfhaaXWLlevVwg==}
 
-  '@types/lodash@4.17.25':
-    resolution: {integrity: sha512-+K1NIO8I+F9/wNulfVvu23QYd0Pe9/OCqRrim4NoYIf1VoEDL90Ve4ClzpyqBLc7NpGGWRvYNCKZ1BE/Jpf8dQ==}
-
   '@types/mark.js@8.11.12':
     resolution: {integrity: sha512-244ZnaIBpz4c6xutliAnYVZp6xJlmC569jZqnR3ElO1Y01ooYASSVQEqpd2x0A2UfrgVMs5V9/9tUAdZaDMytQ==}
 
@@ -2387,9 +2381,6 @@ packages:
 
   lodash.truncate@4.4.2:
     resolution: {integrity: sha512-jttmRe7bRse52OsWIMDLaXxWqRAmtIUccAQ3garviCqJjafXOfNMO0yMfNpdD6zbGaTU0P5Nz7e7gAT6cKmJRw==}
-
-  lodash@4.18.1:
-    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
@@ -4724,8 +4715,6 @@ snapshots:
 
   '@types/katex@0.16.8': {}
 
-  '@types/lodash@4.17.25': {}
-
   '@types/mark.js@8.11.12':
     dependencies:
       '@types/jquery': 4.0.1
@@ -5803,8 +5792,6 @@ snapshots:
       uc.micro: 2.1.0
 
   lodash.truncate@4.4.2: {}
-
-  lodash@4.18.1: {}
 
   longest-streak@3.1.0: {}
 

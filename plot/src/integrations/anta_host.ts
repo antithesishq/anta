@@ -1,4 +1,4 @@
-import throttle from 'lodash/throttle'
+import { throttle } from 'es-toolkit/function'
 import type {
     BoxContextChange, BoxMeasurementChange, CapturePointerInput, CaptureProps, CaptureWheelInput,
 } from '@antadesign/anta'
@@ -86,7 +86,7 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
         }
         measured = { width: current.width, height }
         host.on_measure(measured)
-    }, UPDATE_INTERVAL_MS, { leading: false, trailing: true })
+    }, UPDATE_INTERVAL_MS, { edges: ['trailing'] })
 
     const on_pointer_input = (event: CustomEvent<CapturePointerInput>): void => {
         coordinator.handle_pan(capture_pointer_input(event.detail))

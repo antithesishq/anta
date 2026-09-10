@@ -1,4 +1,4 @@
-import debounce from 'lodash/debounce'
+import { debounce, throttle } from 'es-toolkit/function'
 import type { PointerOffset } from './hit'
 import type { PanInput, PanUpdate, PlotInteractionController } from '../interaction_controller'
 import type { Viewport, ViewportChange, ViewportRequest, ZoomPan } from '../types'
@@ -6,7 +6,6 @@ import { compatible_viewport, viewport_moved, type ViewportAxes } from './viewpo
 
 export const UPDATE_INTERVAL_MS = 40
 const REPORT_SETTLE_MS = 150
-export const FRAME_THROTTLE = { leading: true, trailing: true, maxWait: UPDATE_INTERVAL_MS }
 
 type ViewportHost<T> = {
     interactions(): PlotInteractionController<T> | null
@@ -23,7 +22,7 @@ export function create_viewport_schedule<T>(host: ViewportHost<T>) {
             host.on_commit(interactions.commit_viewport())
         }
     }
-    const pending_commit = debounce(publish, UPDATE_INTERVAL_MS, FRAME_THROTTLE)
+    const pending_commit = throttle(publish, UPDATE_INTERVAL_MS)
     const pending_report = debounce(() => {
         const change = host.interactions()?.viewport_change()
         if (change !== undefined && change !== null) {

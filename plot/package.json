@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/plot",
-  "version": "0.1.0-dev.0",
+  "version": "0.1.0-dev.3",
   "type": "module",
   "files": [
     "dist"
@@ -18,10 +18,15 @@
       "types": "./dist/types/entries/auto.d.ts",
       "import": "./dist/auto.js"
     },
-    "./plot.css": "./dist/plot.css"
+    "./plot.css": "./dist/plot.css",
+    "./elements": {
+      "types": "./dist/types/entries/elements.d.ts",
+      "import": "./dist/elements.js"
+    }
   },
   "sideEffects": [
     "./dist/auto.js",
+    "./dist/elements.js",
     "./dist/*.css",
     "./dist/chunks/*.js"
   ],

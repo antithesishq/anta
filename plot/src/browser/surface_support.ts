@@ -1,5 +1,5 @@
 import { prepare_canvas_context } from '../core/render/canvas'
-import type { CaptureConfiguration } from '../core/interactions/zoom_pan'
+import { capture_attributes, type CaptureConfiguration } from '../core/interactions/zoom_pan'
 
 type SavedDimension = { value: string; priority: string }
 type HostDimensions = { width?: number; height?: number }
@@ -66,18 +66,9 @@ export function prepare_canvas(
 
 // Apply resolved gesture settings without rewriting unchanged attributes and restarting Capture state.
 export function configure_capture(capture: HTMLElement, settings: CaptureConfiguration): void {
-    const directions = settings.wheel_capture === 'both' ? 'up down' : settings.wheel_capture
-
-    set_attribute(capture, 'wheel-capture', directions)
-    set_attribute(capture, 'wheel-modifier', settings.wheel_modifier)
-    set_attribute(capture, 'wheel-activation', settings.wheel_activation)
-    set_attribute(capture, 'wheel-delay', String(settings.wheel_delay))
-    set_attribute(capture, 'wheel-tolerance', String(settings.wheel_tolerance))
-    set_attribute(capture, 'wheel-reset-on-move', settings.wheel_reset_on_move ? '' : null)
-    set_attribute(capture, 'pointer-capture', settings.pointer_capture)
-    set_attribute(capture, 'pointer-buttons', settings.pointer_buttons.join(' '))
-    set_attribute(capture, 'pointer-threshold', String(settings.pointer_threshold))
-    set_attribute(capture, 'pointer-modifier', settings.pointer_modifier)
+    for (const [name, value] of Object.entries(capture_attributes(settings))) {
+        set_attribute(capture, name, value ?? null)
+    }
 }
 
 function set_attribute(element: HTMLElement, name: string, value: string | null): void {

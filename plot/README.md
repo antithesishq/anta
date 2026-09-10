@@ -20,6 +20,7 @@ Use a bundler that handles CSS imports. The browser entry loads Anta elements an
 | --- | --- |
 | `@antadesign/plot` | Series factories, controllers, host presentation helpers, Anta event integration, and public types |
 | `@antadesign/plot/browser` | DOM tooltip factories and explicit `definePlotElement()` registration |
+| `@antadesign/plot/elements` | Registers only `a-plot-surface`; exports `plotSurfaceElementReady` |
 | `@antadesign/plot/auto` | Browser registration with the `plotElementReady` promise |
 | `@antadesign/plot/plot.css` | Plot layout stylesheet |
 
@@ -46,7 +47,19 @@ The notebook adapter remains in Star. Until Star adopts a published version, its
 
 ## Shared plot surface
 
-`definePlotSurfaceElement()` from `/browser` registers `<a-plot-surface>` and its Box,
+Import `@antadesign/plot/elements` to register the surface and load its layout CSS:
+
+```ts
+import '@antadesign/plot/elements'
+```
+
+This leaves `a-plot` available for a host-owned wrapper. Registration is asynchronous;
+existing surface elements upgrade when its Anta dependencies finish loading. Import
+and await `plotSurfaceElementReady` from the same entry when registration must finish
+before accessing surface methods. Registration failures are logged to the console;
+the readiness promise also rejects. Server-side imports do nothing.
+
+For explicit registration, `definePlotSurfaceElement()` from `/browser` registers `<a-plot-surface>` and its Box,
 Capture, button and icon dependencies. It does not register `<a-plot>` or Tooltip.
 The surface fills its parent; standalone plots retain their 300px default height.
 Worker hosts should provide a 400px parent fallback when plot height is omitted.
@@ -66,6 +79,27 @@ The exported `APlotSurfaceElement` interface exposes:
   Transfer is attempted once, including partial failure. The worker owns both
   backing stores and contexts thereafter; `present()` only changes CSS dimensions.
 - Initial `measurement` and `context` snapshots. Use notifications for later changes.
+
+Declarative hosts can use the same surface without a browser adapter:
+
+- Set `presentation` to JSON encoding of `PlotSurfacePresentation`, and `cursor`
+  to a CSS cursor. Removing presentation hides the capture area and reset control.
+- Set native Capture attributes (`wheel-capture`, `wheel-modifier`,
+  `pointer-capture`, etc.). `create_anta_host().capture_attributes(plot, viewport)`
+  supplies these as strings suitable for a DOM bridge.
+- Set `canvas-owner="worker"` before mounting. The surface emits one
+  `canvastransfer` event with `{ canvas, highlight, scale }` after the mounting
+  mutation batch. A worker bridge must include both canvases in its transfer list.
+  The worker then acquires contexts and owns backing-store sizing.
+- Listen for `plotmove`, `plotleave`, `plotclick`, and `plotdoubleclick` for
+  coordinates relative to the capture area. `input-scope="parent"` also observes
+  bubbling mouse events from host-owned tooltip siblings. Margins and reset
+  controls are excluded from plot input.
+- Listen for `surfaceerror` with `{ message }` to report presentation or transfer
+  failures. Failed transfers are never retried.
+
+`PlotSurfacePresentation`, `PlotSurfaceMouseInput`, `PlotSurfaceCanvases`, and
+`PlotSurfaceEventMap` are available as types from the root package.
 
 Disconnect removes forwarding listeners; Box and Capture stop their own observers,
 listeners and pending work. Reconnection retains both canvases and their ownership.

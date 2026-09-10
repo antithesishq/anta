@@ -37,3 +37,6 @@ export {
     render_tooltip_body, TOOLTIP_DIVIDER_STYLE, TOOLTIP_OPTIONS, tooltip_wrapper_style,
 } from '../core/presentation/tooltip'
 export { create_anta_host, type AntaHost, type AntaHostAdapter } from '../integrations/anta_host'
+export type {
+    PlotSurfacePresentation, PlotSurfaceMouseInput, PlotSurfaceCanvases, PlotSurfaceEventMap,
+} from '../core/presentation/surface'

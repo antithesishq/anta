@@ -23,6 +23,22 @@ export type CaptureConfiguration = {
     pointer_modifier: 'ctrl' | 'any'
 }
 
+/** Plain attributes accepted by Capture and the plot surface, with no JSX or browser dependency. */
+export function capture_attributes(settings: CaptureConfiguration) {
+    return {
+        'wheel-capture': (settings.wheel_capture === 'both' ? 'up down' : settings.wheel_capture) ?? undefined,
+        'wheel-modifier': settings.wheel_modifier,
+        'wheel-activation': settings.wheel_activation,
+        'wheel-delay': String(settings.wheel_delay),
+        'wheel-tolerance': String(settings.wheel_tolerance),
+        'wheel-reset-on-move': settings.wheel_reset_on_move ? '' : undefined,
+        'pointer-capture': settings.pointer_capture ?? undefined,
+        'pointer-buttons': settings.pointer_buttons.join(' '),
+        'pointer-threshold': String(settings.pointer_threshold),
+        'pointer-modifier': settings.pointer_modifier,
+    }
+}
+
 /** Resolve interaction policy once; hosts translate it into Capture props or attributes. */
 export function resolve_capture_configuration(
     enabled: boolean,

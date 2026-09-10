@@ -56,7 +56,9 @@ try {
         import { create_anta_host } from '@antadesign/plot'
         import { definePlotElement, definePlotSurfaceElement } from '@antadesign/plot/browser'
         import { plotElementReady } from '@antadesign/plot/auto'
+        import { plotSurfaceElementReady } from '@antadesign/plot/elements'
         await plotElementReady
+        await plotSurfaceElementReady
         await assert.rejects(definePlotElement(), /browser custom-element registry/)
         await assert.rejects(definePlotSurfaceElement(), /browser custom-element registry/)
         const rows = [{x:1,y:2},{x:2,y:4},{x:3,y:3}]
@@ -151,6 +153,7 @@ try {
         import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
         import type { CaptureProps } from '@antadesign/anta'
         import { plotElementReady } from '@antadesign/plot/auto'
+        import { plotSurfaceElementReady } from '@antadesign/plot/elements'
         const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
         const controller = new PlotController(args)
         const adapter: AntaHostAdapter<string> = create_anta_host({controller,on_measure(){},on_context(){},

@@ -1,34 +1,18 @@
 import type { ABoxElement } from '@antadesign/anta/elements/a-box'
-import type {
-    BoxContext, BoxMeasurement, BoxContextChange, BoxMeasurementChange,
-    CapturePointerInput, CaptureWheelInput,
-} from '@antadesign/anta'
-import type { Rect } from '../core/types'
+import type { BoxContext, BoxMeasurement } from '@antadesign/anta/box-types'
 import type { CaptureConfiguration } from '../core/interactions/zoom_pan'
-import { RESET_ZOOM_BUTTON, type reset_zoom_presentation } from '../core/presentation/reset_zoom'
+import { RESET_ZOOM_BUTTON } from '../core/presentation/reset_zoom'
 import { tooltip_wrapper_style } from '../core/presentation/tooltip'
 import { configure_capture, prepare_canvas, size_host } from './surface_support'
+import type {
+    PlotSurfacePresentation, PlotSurfaceMouseInput, PlotSurfaceCanvases, PlotSurfaceEventMap,
+} from '../core/presentation/surface'
+export type { PlotSurfacePresentation, PlotSurfaceCanvases, PlotSurfaceEventMap } from '../core/presentation/surface'
 
-export type PlotSurfacePresentation = {
-    width: number
-    height: number
-    inner: Rect
-    filter?: string
-    reset: ReturnType<typeof reset_zoom_presentation>
-}
-
-export type PlotSurfaceEventMap = {
-    measurechange: CustomEvent<BoxMeasurementChange>
-    contextchange: CustomEvent<BoxContextChange>
-    wheelinput: CustomEvent<CaptureWheelInput>
-    pointerinput: CustomEvent<CapturePointerInput>
-    resetrequest: CustomEvent<void>
-}
-
-export type PlotSurfaceCanvases = {
-    canvas: OffscreenCanvas
-    highlight: OffscreenCanvas
-}
+const CAPTURE_ATTRIBUTES = [
+    'wheel-capture', 'wheel-modifier', 'wheel-activation', 'wheel-delay', 'wheel-tolerance', 'wheel-reset-on-move',
+    'pointer-capture', 'pointer-buttons', 'pointer-threshold', 'pointer-modifier',
+]
 
 /** Light-DOM host only: callers own composition, rendering, interactions and tooltip content. */
 export interface APlotSurfaceElement extends HTMLElement {
@@ -49,6 +33,8 @@ export interface APlotSurfaceElement extends HTMLElement {
 // Defer HTMLElement access until explicit browser registration.
 export function create_plot_surface_element(): CustomElementConstructor {
     return class PlotSurfaceElement extends HTMLElement implements APlotSurfaceElement {
+        static observedAttributes = [...CAPTURE_ATTRIBUTES, 'presentation', 'cursor', 'canvas-owner', 'input-scope']
+
         readonly #box: ABoxElement
         readonly canvas: HTMLCanvasElement
         readonly highlight: HTMLCanvasElement
@@ -56,6 +42,9 @@ export function create_plot_surface_element(): CustomElementConstructor {
         readonly #reset: HTMLElement
         #ownership: 'unclaimed' | 'main' | 'worker' = 'unclaimed'
         #listeners: AbortController | null = null
+        #inputListeners: AbortController | null = null
+        #transferRequested = false
+        #connection = 0
 
         constructor() {
             super()
@@ -68,6 +57,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
             this.highlight.className = 'plot-highlight'
             this.capture = doc.createElement('a-capture')
             this.capture.className = 'plot-capture'
+            this.capture.style.display = 'none'
             this.#reset = doc.createElement('a-button')
             this.#reset.className = 'plot-reset'
             this.#reset.setAttribute('type', 'button')
@@ -84,7 +74,38 @@ export function create_plot_surface_element(): CustomElementConstructor {
             this.#reset.hidden = true
         }
 
+        attributeChangedCallback(name: string, previous: string | null, value: string | null): void {
+            if (previous === value) return
+
+            if (CAPTURE_ATTRIBUTES.includes(name)) {
+                if (value === null) this.capture.removeAttribute(name)
+                else this.capture.setAttribute(name, value)
+            } else if (name === 'cursor') {
+                this.cursor = value ?? ''
+            } else if (name === 'presentation') {
+                try {
+                    if (value === null) {
+                        this.capture.style.display = 'none'
+                        this.#reset.hidden = true
+                    } else {
+                        this.present(JSON.parse(value))
+                    }
+                } catch (error) {
+                    // Defer until the caller has attached its event listeners in this DOM update.
+                    const connection = this.#connection + (this.isConnected ? 0 : 1)
+                    queueMicrotask(() => {
+                        if (this.isConnected && connection === this.#connection) this.#reportError(error)
+                    })
+                }
+            } else if (name === 'canvas-owner') {
+                this.#scheduleTransfer()
+            } else if (name === 'input-scope' && this.isConnected) {
+                this.#listenForMouseInput()
+            }
+        }
+
         connectedCallback(): void {
+            this.#connection++
             this.#listeners?.abort()
             this.#listeners = new AbortController()
             const { signal } = this.#listeners
@@ -105,11 +126,82 @@ export function create_plot_surface_element(): CustomElementConstructor {
             if (this.#box.parentNode !== this) {
                 this.append(this.#box, this.canvas, this.highlight, this.capture, this.#reset)
             }
+
+            this.#listenForMouseInput()
+            this.#scheduleTransfer()
         }
 
         disconnectedCallback(): void {
+            this.#connection++
+            this.#inputListeners?.abort()
+            this.#inputListeners = null
             this.#listeners?.abort()
             this.#listeners = null
+        }
+
+        #emit<K extends keyof PlotSurfaceEventMap>(name: K, detail: PlotSurfaceEventMap[K]['detail']): void {
+            this.dispatchEvent(new CustomEvent(name, { detail }))
+        }
+
+        #reportError(error: unknown): void {
+            this.#emit('surfaceerror', { message: error instanceof Error ? error.message : String(error) })
+        }
+
+        #scheduleTransfer(): void {
+            if (!this.isConnected || this.getAttribute('canvas-owner') !== 'worker' || this.#transferRequested) return
+            const connection = this.#connection
+
+            // Normal DOM consumers attach listeners in the same mutation batch as mounting the element.
+            queueMicrotask(() => {
+                if (!this.isConnected || connection !== this.#connection || this.#transferRequested
+                    || this.getAttribute('canvas-owner') !== 'worker') return
+
+                this.#transferRequested = true
+                try {
+                    const canvases = this.transferCanvases()
+                    this.#emit('canvastransfer', { ...canvases, scale: this.context.devicePixelRatio })
+                } catch (error) {
+                    this.#reportError(error)
+                }
+            })
+        }
+
+        #listenForMouseInput(): void {
+            this.#inputListeners?.abort()
+            this.#inputListeners = new AbortController()
+            const { signal } = this.#inputListeners
+            const scope = this.getAttribute('input-scope') === 'parent' ? this.parentElement : this
+            if (scope === null) return
+
+            const normalized = (event: MouseEvent): PlotSurfaceMouseInput | null => {
+                if (event.target instanceof Node && this.#reset.contains(event.target)) return null
+                if (this.capture.style.display === 'none') return null
+
+                const rect = this.capture.getBoundingClientRect()
+                const offsetX = event.clientX - rect.left
+                const offsetY = event.clientY - rect.top
+                if (rect.width <= 0 || rect.height <= 0 || offsetX < 0 || offsetY < 0
+                    || offsetX > rect.width || offsetY > rect.height) return null
+
+                return { offsetX, offsetY, ctrlKey: event.ctrlKey }
+            }
+
+            scope.addEventListener('mousemove', event => {
+                const input = normalized(event)
+                if (input === null) this.#emit('plotleave', undefined)
+                else this.#emit('plotmove', input)
+            }, { signal })
+
+            scope.addEventListener('mouseleave', () => this.#emit('plotleave', undefined), { signal })
+
+            scope.addEventListener('click', event => {
+                const input = normalized(event)
+                if (input !== null) this.#emit('plotclick', input)
+            }, { signal })
+
+            scope.addEventListener('dblclick', event => {
+                if (normalized(event) !== null) this.#emit('plotdoubleclick', undefined)
+            }, { signal })
         }
 
         get measurement(): BoxMeasurement { return this.#box.measurement }
@@ -122,6 +214,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
         }
 
         present({ width, height, inner, filter, reset }: PlotSurfacePresentation): void {
+            this.capture.style.display = ''
             for (const canvas of [this.canvas, this.highlight]) {
                 canvas.style.width = `${width}px`
                 canvas.style.height = `${height}px`

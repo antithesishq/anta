@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/plot",
-  "version": "0.1.0-dev.3",
+  "version": "0.1.0-dev.4",
   "type": "module",
   "files": [
     "dist"

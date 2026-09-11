@@ -27,6 +27,7 @@ before(async () => {
         configure(h)
         render(<>
           <Button id="button">Button</Button>
+          <em id="italic">Italic</em>
           <Button id="link" href="/">Link</Button>
           <Button id="custom-button" round={6}>Custom</Button>
           <Input id="input" value="Text" />
@@ -86,7 +87,8 @@ test('font-specific features and variation axes stay out of core styles', async 
   for (const file of files) {
     if (!/\.(?:css|ts|tsx)$/.test(file.pathname) || /\/theme-(?:antune|antithesis)\.css$/.test(file.pathname)) continue
     const source = await readFile(file, 'utf8')
-    if (/font-(?:feature|variation)-settings\s*:/.test(source)) violations.push(file.pathname)
+    const settings = [...source.matchAll(/font-(?:feature|variation)-settings\s*:\s*([^;]+)/g)]
+    if (settings.some(([, value]) => value.trim() !== 'inherit')) violations.push(file.pathname)
   }
   assert.deepEqual(violations, [])
 })
@@ -106,7 +108,7 @@ test('reference font descriptors expose supported TT Interphases axes', async ()
       assert.match(face, /font-feature-settings: "ss02", "ss05", "tnum"/)
       assert.doesNotMatch(face, /font-optical-sizing|"ital"/)
     }
-    assert.doesNotMatch(normal, /font-variation-settings/)
+    assert.match(normal, /font-variation-settings: "slnt" 0/)
     assert.match(italic, /font-variation-settings: "slnt" 11/)
   }
 })
@@ -136,6 +138,7 @@ test('theme-free typography stays neutral while reference themes restore their f
     }
     return {
       root: read(document.documentElement),
+      italic: read(document.getElementById('italic')),
       button: read(document.getElementById('button')),
       input: read(document.getElementById('input').shadowRoot.querySelector('input')),
       tab: read(document.getElementById('tab')),
@@ -162,6 +165,8 @@ test('theme-free typography stays neutral while reference themes restore their f
     link.href = '/antune.css'
   }))
   const withTheme = await typography()
+  assert.equal(withTheme.root.variations, '"slnt" 0')
+  assert.equal(withTheme.italic.variations, '"slnt" 11')
   assert.equal(withTheme.button.stretch, '88%')
   assert.equal(withTheme.tab.stretch, '88%')
   assert.equal(withTheme.inputAdornmentStretch, '88%')

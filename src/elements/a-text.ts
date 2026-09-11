@@ -50,6 +50,7 @@ const SHADOW_STYLE = `
     color: var(--text-3);
     cursor: pointer;
     font: inherit;
+    font-variation-settings: inherit;
     display: none;
     position: absolute;
     z-index: 1;

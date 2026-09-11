@@ -43,6 +43,10 @@ changes are not listed.
 
 ### Fixed
 
+- Antune and Antithesis pin regular TT Interphases text to `slnt` 0, including
+  form controls that reset font shorthand inheritance. This keeps text upright
+  in Safari despite the font file's non-zero axis default while preserving the
+  `slnt` 11 instance for semantic italics.
 - `tokens.css` declares `color-scheme` on `:root`, `.light`, and `.dark`, so
   component colors resolve to the right mode without the optional `reset.css`
   import.

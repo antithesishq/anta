@@ -119,6 +119,7 @@
   width: 100%;
   border: 0;
   font: inherit;
+  font-variation-settings: inherit;
   text-align: start;
   cursor: pointer;
 }

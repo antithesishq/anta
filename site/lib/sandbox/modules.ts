@@ -13,8 +13,6 @@
  * not available in the demo sandbox" instead of a cryptic bundler failure.
  */
 import * as anta from '@antadesign/anta'
-import * as preact from 'preact'
-import * as preactHooks from 'preact/hooks'
 
 /** Every runtime export of the anta barrel, filtered to valid JS identifiers so
  *  each name can be emitted as `export const <name>` in the bundler shim (drops
@@ -25,36 +23,16 @@ const antaExportNames = Object.keys(anta).filter(
 
 /** The named exports the bundler will expose for each module path. The
  *  resolve plugin uses these names to emit a deterministic shim per
- *  module. Each name must exist on `getDemoModules()[path]` at runtime. */
+ *  module. Each name must exist in the matching iframe runtime registry. */
 export const moduleManifest: Record<string, string[]> = {
+  // Plot's names stay a hand-written list, unlike the anta barrel above: deriving
+  // them would mean importing the plot runtime (d3-scale, chroma-js) into the
+  // editor bundle just to read `Object.keys`. Add a name here when a demo needs it.
+  '@antadesign/plot': ['scatter', 'bar', 'line', 'area', 'rect', 'rule', 'custom'],
+  '@antadesign/plot/react': ['Plot'],
+  '@antadesign/plot/plot.css': [],
   '@antadesign/anta': antaExportNames,
   '@antadesign/anta/elements': [],  // side-effect only
   'preact': ['createElement', 'Fragment', 'h', 'render'],
   'preact/hooks': ['useState', 'useEffect', 'useRef', 'useMemo', 'useCallback', 'useReducer'],
-}
-
-/** Build the registry the iframe's `window.__demo_modules__` is seeded
- *  with. Called once per Playground mount. */
-export function getDemoModules(): Record<string, Record<string, unknown>> {
-  return {
-    // Spread the whole barrel — mirrors `moduleManifest['@antadesign/anta']`.
-    '@antadesign/anta': Object.fromEntries(
-      antaExportNames.map((k) => [k, (anta as any)[k]]),
-    ),
-    '@antadesign/anta/elements': {},
-    'preact': {
-      createElement: preact.createElement,
-      Fragment: preact.Fragment,
-      h: preact.h,
-      render: preact.render,
-    },
-    'preact/hooks': {
-      useState: preactHooks.useState,
-      useEffect: preactHooks.useEffect,
-      useRef: preactHooks.useRef,
-      useMemo: preactHooks.useMemo,
-      useCallback: preactHooks.useCallback,
-      useReducer: preactHooks.useReducer,
-    },
-  }
 }

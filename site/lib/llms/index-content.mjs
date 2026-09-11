@@ -60,7 +60,7 @@ export const componentGroups = [
   ],
 ]
 
-export const packageLinks = [['Table', '/table/'], ['Stickers', '/stickers/']]
+export const packageLinks = [['Plot', '/plot/'], ['Table', '/table/'], ['Stickers', '/stickers/']]
 
 export const overview = `# Overview
 

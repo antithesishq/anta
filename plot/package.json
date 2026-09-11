@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/plot",
-  "version": "0.1.0-dev.0",
+  "version": "0.1.0-dev.4",
   "type": "module",
   "files": [
     "dist"
@@ -10,14 +10,6 @@
       "types": "./dist/types/entries/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./host": {
-      "types": "./dist/types/entries/host.d.ts",
-      "import": "./dist/host.js"
-    },
-    "./anta": {
-      "types": "./dist/types/entries/anta.d.ts",
-      "import": "./dist/anta.js"
-    },
     "./browser": {
       "types": "./dist/types/entries/browser.d.ts",
       "import": "./dist/browser.js"
@@ -26,10 +18,23 @@
       "types": "./dist/types/entries/auto.d.ts",
       "import": "./dist/auto.js"
     },
-    "./plot.css": "./dist/plot.css"
+    "./plot.css": "./dist/plot.css",
+    "./elements": {
+      "types": "./dist/types/entries/elements.d.ts",
+      "import": "./dist/elements.js"
+    },
+    "./components": {
+      "types": "./dist/types/entries/components.d.ts",
+      "import": "./dist/components.js"
+    },
+    "./react": {
+      "types": "./dist/types/entries/react.d.ts",
+      "import": "./dist/react.js"
+    }
   },
   "sideEffects": [
     "./dist/auto.js",
+    "./dist/elements.js",
     "./dist/*.css",
     "./dist/chunks/*.js"
   ],
@@ -39,24 +44,27 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false -p tsconfig.build.json",
     "check:package": "node scripts/verify-package.mjs",
     "prepare": "pnpm run build",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "test:react": "node --test tests/react.test.mjs"
   },
   "dependencies": {
-    "d3-scale": "3.2.3",
-    "chroma-js": "2.4.2",
-    "lodash": "4.18.1",
+    "@antadesign/anta": "workspace:*",
     "@types/d3-scale": "4.0.3",
-    "@antadesign/anta": "workspace:*"
+    "chroma-js": "2.4.2",
+    "d3-scale": "3.2.3",
+    "es-toolkit": "1.47.0"
   },
   "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "@types/lodash": "4.17.25",
     "@types/chroma-js": "2.1.4",
-    "typescript": "^5.7.0",
-    "esbuild": "^0.25.0"
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.25.0",
+    "react-dom": "^19.2.8",
+    "typescript": "^5.7.0"
   },
   "packageManager": "pnpm@10.11.1",
   "main": "dist/index.js",

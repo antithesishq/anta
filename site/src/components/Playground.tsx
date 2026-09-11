@@ -73,6 +73,11 @@ interface Props {
    *  playground doesn't grow with form content and so switching tabs
    *  doesn't reflow. Defaults to 400. */
   panelHeight?: number
+  /** Minimum preview height, including the iframe's content padding.
+   *  Unset leaves the height to the stylesheet and the content observer. */
+  previewMinHeight?: number
+  /** Optional subsection keys for each annotated configuration section. */
+  propSections?: Record<string, string[]>
   /** Whether the Code editor initially folds every foldable region.
    *  Defaults to false so source opens expanded. */
   codeInitiallyFolded?: boolean
@@ -80,7 +85,9 @@ interface Props {
 
 type Tab = 'props' | 'code' | 'css'
 
-export default function Playground({ component, initialCode, initialCss = '', layout = 'stacked', panelHeight = 400, codeInitiallyFolded = false }: Props) {
+export default function Playground({ component, initialCode, initialCss = '', layout = 'stacked', panelHeight = 400, previewMinHeight, propSections = {}, codeInitiallyFolded = false }: Props) {
+  // Monaco shares models by URI, so each playground needs its own stable paths.
+  const [modelBasePath] = useState(() => `file:///playground/${crypto.randomUUID()}`)
   const [code, setCode] = useState(initialCode)
   // CSS state is independent of the code — the user owns it. The CSS
   // tab is unconditionally available; no auto-seed from any className
@@ -589,7 +596,10 @@ export default function Playground({ component, initialCode, initialCss = '', la
             // body scroll on overflow. In `stacked` layout the
             // iframe's content-height observer drives the height so
             // the demo sits as tall as its rendered preview.
-            style={layout === 'side' ? undefined : { height: `${previewHeight}px` }}
+            style={{
+              ...(previewMinHeight === undefined ? {} : { minHeight: `${previewMinHeight}px` }),
+              ...(layout === 'side' ? {} : { height: `${previewHeight}px` }),
+            }}
           />
         </div>
 
@@ -694,6 +704,7 @@ export default function Playground({ component, initialCode, initialCss = '', la
                     <ExampleAccordion
                       key={ex.id}
                       example={ex}
+                      subsections={propSections[ex.id] ?? []}
                       defaultOpen={examples.length === 1}
                       code={code}
                       onChange={handleFormChange}
@@ -712,10 +723,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
                 <monacoLib.Editor
                   height="100%"
                   defaultLanguage="typescript"
-                  // The TypeScript worker chooses its parser from the model
-                  // URI's file extension. Use an explicit file URI: a bare
-                  // Keep a stable .tsx URI for Monaco's TypeScript JSX services.
-                  path="file:///playground/user.tsx"
+                  // The .tsx extension enables Monaco's TypeScript JSX parser.
+                  path={`${modelBasePath}/user.tsx`}
                   // Uncontrolled: seed the initial text, then let the
                   // editor own its model. We deliberately do NOT pass
                   // `value={code}` — @monaco-editor/react reacts to a
@@ -768,7 +777,7 @@ export default function Playground({ component, initialCode, initialCss = '', la
                   <monacoLib.Editor
                     height="100%"
                     defaultLanguage="css"
-                    path="user.css"
+                    path={`${modelBasePath}/user.css`}
                     value={styles}
                     theme={isDark ? 'tokyo-night' : 'github-light'}
                     onChange={(v) => setStyles(v ?? '')}
@@ -914,7 +923,11 @@ function FormField({
   } else {
     read = readProp(code, componentName, entry.prop, range)
   }
-  const fromExpression = read?.kind === 'expression'
+  // Keep callback source visible, but leave function editing to the Code tab.
+  const callbackSource = entry.prop.kind === 'expression' && read?.kind === 'literal'
+    && typeof read.value === 'string'
+    && /^(?:async\s+)?(?:function\b|\([^]*?\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/.test(read.value.trim())
+  const fromExpression = read?.kind === 'expression' || callbackSource
   // Only the literal in code populates the input; the default is
   // shown as a placeholder instead so the user can tell what Anta
   // would do if they leave the field blank.
@@ -1194,11 +1207,13 @@ function FieldControl({
 // (see `handleFormChange` for the re-parse-on-update flow).
 function ExampleAccordion({
   example,
+  subsections,
   defaultOpen,
   code,
   onChange,
 }: {
   example: Example
+  subsections: string[]
   defaultOpen: boolean
   code: string
   onChange: (entry: PropEntry, value: string | number | boolean | null, exampleId: string) => void
@@ -1221,6 +1236,42 @@ function ExampleAccordion({
     }
     return []
   }, [example.tagName, example.kind, example.jsxStart, example.jsxEnd, example.objectStart, example.objectEnd, code])
+
+  const renderField = (entry: PropEntry, nested = false) => (
+    <FormField
+      key={entry.control.name}
+      entry={nested ? {
+        ...entry,
+        control: { ...entry.control, name: entry.prop.objectPath!.slice(1).join('.') },
+      } : entry}
+      code={code}
+      componentName={example.tagName ?? example.label}
+      range={example.kind === 'jsx' ? { start: example.jsxStart, end: example.jsxEnd } : undefined}
+      objectRange={example.kind === 'object' && example.objectStart != null && example.objectEnd != null
+        ? { start: example.objectStart, end: example.objectEnd }
+        : undefined}
+      onChange={(v) => onChange(entry, v, example.id)}
+    />
+  )
+
+  // Only explicitly selected keys become subsections; their fields stay flat.
+  const renderObjectFields = (entries: PropEntry[]) => {
+    const rendered = new Set<string>()
+    return entries.map(entry => {
+      const name = entry.prop.objectPath![0]
+      if (!subsections.includes(name) || entry.prop.objectPath!.length === 1) return renderField(entry)
+      if (rendered.has(name)) return null
+      rendered.add(name)
+      return (
+        <details key={name} class={s.objectGroup}>
+          <summary>{name}</summary>
+          <div class={s.form}>
+            {entries.filter(field => field.prop.objectPath![0] === name).map(field => renderField(field, true))}
+          </div>
+        </details>
+      )
+    })
+  }
 
   return (
     <div class={s.example}>
@@ -1247,22 +1298,11 @@ function ExampleAccordion({
               documented-only because they have no stable edit target. */}
           {(example.kind === 'jsx' || example.kind === 'object') && controls.length > 0 && (
             <div class={s.form}>
-              {(example.kind === 'jsx'
-                ? visibleControls(controls, example.tagName!, code, { start: example.jsxStart, end: example.jsxEnd })
-                : controls
-              ).map((entry) => (
-                <FormField
-                  key={entry.control.name}
-                  entry={entry}
-                  code={code}
-                  componentName={example.tagName ?? example.label}
-                  range={example.kind === 'jsx' ? { start: example.jsxStart, end: example.jsxEnd } : undefined}
-                  objectRange={example.kind === 'object' && example.objectStart != null && example.objectEnd != null
-                    ? { start: example.objectStart, end: example.objectEnd }
-                    : undefined}
-                  onChange={(v) => onChange(entry, v, example.id)}
-                />
-              ))}
+              {example.kind === 'object'
+                ? renderObjectFields(controls)
+                : visibleControls(controls, example.tagName!, code, {
+                  start: example.jsxStart, end: example.jsxEnd,
+                }).map(entry => renderField(entry))}
             </div>
           )}
         </div>
@@ -1333,7 +1373,7 @@ function setupIframe(iframe: HTMLIFrameElement): (() => void) | undefined {
   const doc = iframe.contentDocument
   const win = iframe.contentWindow as Window & { __demo_modules__?: Record<string, unknown> }
   if (!doc || !win) return
-  const teardowns: Array<() => void> = []
+  const teardowns: Array<() => void> = [() => (win as any).__demo_unmount__?.()]
 
   // `window.__demo_modules__` (the Anta + Preact instances the demo shim reads)
   // and the custom-element registration are both handled by the preview-app
@@ -1434,6 +1474,7 @@ function pushBundleToIframe(iframe: HTMLIFrameElement, code: string, resetRoot =
   // node (no `_children`) makes the next `render()` a clean initial mount — so
   // a corrected edit fully restores instead of staying broken.
   if (resetRoot) {
+    (iframe.contentWindow as any)?.__demo_unmount__?.()
     const oldRoot = doc.getElementById('root')
     if (oldRoot) {
       const fresh = doc.createElement('div')
@@ -1650,6 +1691,11 @@ const antaTypeDefs = import.meta.glob(
   { eager: true, query: '?raw', import: 'default' }
 ) as Record<string, string>
 
+const plotTypeDefs = import.meta.glob(
+  '/node_modules/@antadesign/plot/dist/**/*.d.ts',
+  { eager: true, query: '?raw', import: 'default' },
+) as Record<string, string>
+
 const preactTypeDefs = import.meta.glob(
   '/node_modules/preact/**/*.d.ts',
   { eager: true, query: '?raw', import: 'default' }
@@ -1658,6 +1704,7 @@ const preactTypeDefs = import.meta.glob(
 const packageJsons = import.meta.glob(
   [
     '/node_modules/@antadesign/anta/package.json',
+    '/node_modules/@antadesign/plot/package.json',
     '/node_modules/preact/package.json',
     '/node_modules/preact/*/package.json',
   ],
@@ -1674,6 +1721,13 @@ function configureTypeScript(monaco: any) {
     target: ts.ScriptTarget.ES2020,
     module: ts.ModuleKind.ESNext,
     moduleResolution: ts.ModuleResolutionKind.NodeJs,
+    baseUrl: 'file:///',
+    paths: {
+      '@antadesign/plot': ['node_modules/@antadesign/plot/dist/types/entries/index.d.ts'],
+      '@antadesign/plot/react': ['node_modules/@antadesign/plot/dist/types/entries/react.d.ts'],
+      'react': ['node_modules/preact/compat/src/index.d.ts'],
+      'react/jsx-runtime': ['node_modules/preact/jsx-runtime/src/index.d.ts'],
+    },
     jsx: ts.JsxEmit.Preserve,
     jsxImportSource: 'preact',
     esModuleInterop: true,
@@ -1708,6 +1762,9 @@ function configureTypeScript(monaco: any) {
     `export {}\ndeclare global {\n${antaGlobals}\n}\n`,
     'file:///anta-auto-imports.d.ts',
   )
+  for (const [absPath, contents] of Object.entries(plotTypeDefs)) {
+    ts.typescriptDefaults.addExtraLib(contents, 'file://' + absPath)
+  }
   for (const [absPath, contents] of Object.entries(preactTypeDefs)) {
     ts.typescriptDefaults.addExtraLib(contents, 'file://' + absPath)
   }

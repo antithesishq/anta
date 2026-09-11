@@ -1,7 +1,7 @@
-import debounce from 'lodash/debounce'
+import { throttle } from 'es-toolkit/function'
 import type { PlotController } from '../controller'
 import type { PointerOffset } from './hit'
-import { FRAME_THROTTLE, UPDATE_INTERVAL_MS } from './viewport_schedule'
+import { UPDATE_INTERVAL_MS } from './viewport_schedule'
 
 type HoverInput = PointerOffset & { ctrlKey: boolean }
 
@@ -13,7 +13,7 @@ type HoverHost<T, Input> = {
 
 /** Throttle hit testing and discard queued pointer work when hover is invalidated. */
 export function create_hover_schedule<T, Input>(host: HoverHost<T, Input>) {
-    const move = debounce((input: Input) => {
+    const move = throttle((input: Input) => {
         const controller = host.controller()
         if (controller === null || controller.interactions.pan_in_progress) {
             return
@@ -24,7 +24,7 @@ export function create_hover_schedule<T, Input>(host: HoverHost<T, Input>) {
         }
         const changed = controller.interactions.handle_hover(pointer, controller.template.zoom_pan)
         host.on_update(changed)
-    }, UPDATE_INTERVAL_MS, FRAME_THROTTLE)
+    }, UPDATE_INTERVAL_MS)
 
     return {
         move,

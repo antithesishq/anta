@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@antadesign/anta": "workspace:*",
+    "@antadesign/plot": "workspace:*",
     "@antadesign/stickers": "workspace:*",
     "@astrojs/mdx": "4.3.14",
     "@astrojs/preact": "4.1.3",

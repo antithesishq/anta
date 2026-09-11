@@ -1,10 +1,9 @@
-import { tooltip_wrapper_style } from '../core/presentation/tooltip'
 import { reset_zoom_presentation } from '../core/presentation/reset_zoom'
 import { create_interaction_coordinator } from '../core/interactions/coordinator'
 import { capture_pointer_input, capture_wheel_input } from '../integrations/anta_gestures'
 import { resolve_canvas_size } from '../core/compose/layout'
 import {
-    configure_capture, create_browser_view, prepare_canvas, size_host, type BrowserView,
+    create_browser_view, size_host, type BrowserView,
 } from './browser_view'
 import type {
     BoxContext, BoxContextChange, BoxMeasurement, BoxMeasurementChange,
@@ -14,18 +13,19 @@ import { PlotController, type PlotEnvironment } from '../core/controller'
 import type { PointerOffset } from '../core/interactions/hit'
 import { plot_color_filter } from '../core/presentation/plot'
 import type { ComposedPlot, ViewportChange } from '../core/types'
-import type { APlotElement, PlotArgs } from './index'
+import type { APlotElement, PlotArgs, PlotTooltipRenderer } from './index'
 import { clear_hover, render_hover } from './hover'
 import { resolve_capture_configuration, zoom_pan_enabled } from '../core/interactions/zoom_pan'
-import throttle from 'lodash/throttle'
+import { throttle } from 'es-toolkit/function'
 
 import { UPDATE_INTERVAL_MS } from '../core/interactions/viewport_schedule'
 
 /** The class is created at registration time so importing this module never reads HTMLElement. */
-export function create_plot_element(): CustomElementConstructor {
-    return class PlotElement extends HTMLElement implements APlotElement {
-        #controller: PlotController<Node> | null = null
-        #args: PlotArgs<Node> | undefined
+export function create_plot_element<T = Node>(): CustomElementConstructor {
+    return class PlotElement extends HTMLElement implements APlotElement<T> {
+        #controller: PlotController<T> | null = null
+        #tooltip_renderer: PlotTooltipRenderer<T> | undefined
+        #args: PlotArgs<T> | undefined
         #pending_frame_id: number | null = null
         #measurement: BoxMeasurement | null = null
         #context: BoxContext | null = null
@@ -35,7 +35,7 @@ export function create_plot_element(): CustomElementConstructor {
         readonly #resize = throttle((measurement: BoxMeasurement) => {
             this.#measurement = measurement
             this.#schedule()
-        }, UPDATE_INTERVAL_MS, { leading: false, trailing: true })
+        }, UPDATE_INTERVAL_MS, { edges: ['trailing'] })
 
         readonly #interaction_coordinator = create_interaction_coordinator({
             controller: () => this.#controller,
@@ -53,11 +53,14 @@ export function create_plot_element(): CustomElementConstructor {
             },
             on_hover_update: () => {
                 if (this.#controller !== null) {
-                    render_hover(this.#controller, this.#view.highlight, this.#view.tooltip)
+                    render_hover(
+                        this.#controller, this.#view.highlight, this.#view.tooltip,
+                        this.#context?.devicePixelRatio ?? 1, this.#tooltip_renderer,
+                    )
                 }
                 this.#update_cursor()
             },
-            on_hover_clear: () => clear_hover(this.#view.highlight, this.#view.tooltip),
+            on_hover_clear: () => clear_hover(this.#view.highlight, this.#view.tooltip, this.#tooltip_renderer),
             on_pointer_change: () => this.#update_cursor(),
             on_pan_end: () => this.#schedule(),
         })
@@ -70,16 +73,16 @@ export function create_plot_element(): CustomElementConstructor {
 
         // Route Box notifications and Capture events to rendering and interaction handlers.
         #listen_for_events(): void {
-            this.#view.box.addEventListener('measurechange', event => {
+            this.#view.root.addEventListener('measurechange', event => {
                 if (this.isConnected) {
                     this.#resize((event as CustomEvent<BoxMeasurementChange>).detail.current)
                 }
             })
-            this.#view.box.addEventListener('contextchange', event => {
+            this.#view.root.addEventListener('contextchange', event => {
                 this.#context = (event as CustomEvent<BoxContextChange>).detail.current
                 this.#schedule()
             })
-            this.#view.reset.addEventListener('click', this.#interaction_coordinator.reset)
+            this.#view.root.addEventListener('resetrequest', this.#interaction_coordinator.reset)
             this.#view.capture.addEventListener('dblclick', this.#interaction_coordinator.handle_double_click)
             this.#view.capture.addEventListener('wheelinput', event => {
                 const detail = (event as CustomEvent<CaptureWheelInput>).detail
@@ -111,10 +114,12 @@ export function create_plot_element(): CustomElementConstructor {
 
         // Apply arguments assigned before custom-element registration through the normal setter.
         #restore_properties(): void {
-            const descriptor = Object.getOwnPropertyDescriptor(this, 'plotArgs')
-            if (descriptor !== undefined) {
-                Reflect.deleteProperty(this, 'plotArgs')
-                this.plotArgs = descriptor.value
+            for (const name of ['tooltipRenderer', 'plotArgs'] as const) {
+                const descriptor = Object.getOwnPropertyDescriptor(this, name)
+                if (descriptor !== undefined) {
+                    Reflect.deleteProperty(this, name)
+                    Reflect.set(this, name, descriptor.value)
+                }
             }
         }
 
@@ -127,16 +132,28 @@ export function create_plot_element(): CustomElementConstructor {
             this.#interaction_coordinator.disconnect()
             this.#resize.cancel()
             this.#controller?.set_draw_host(null)
-            clear_hover(this.#view.highlight, this.#view.tooltip)
+            clear_hover(this.#view.highlight, this.#view.tooltip, this.#tooltip_renderer)
             this.#update_cursor()
         }
 
-        get plotArgs(): PlotArgs<Node> | undefined {
+        get tooltipRenderer(): PlotTooltipRenderer<T> | undefined {
+            return this.#tooltip_renderer
+        }
+
+        set tooltipRenderer(renderer: PlotTooltipRenderer<T> | undefined) {
+            if (renderer === this.#tooltip_renderer) return
+            this.#clear_hover()
+            this.#view.tooltip.replaceChildren()
+            this.#tooltip_renderer = renderer
+            this.#schedule()
+        }
+
+        get plotArgs(): PlotArgs<T> | undefined {
             return this.#args
         }
 
         // Apply valid plot arguments while retaining the previous configuration if templating fails.
-        set plotArgs(value: PlotArgs<Node> | undefined) {
+        set plotArgs(value: PlotArgs<T> | undefined) {
             if (value === undefined) {
                 return
             }
@@ -164,8 +181,8 @@ export function create_plot_element(): CustomElementConstructor {
         #refresh_environment(): void {
             this.#resize.cancel()
             if (this.isConnected) {
-                this.#measurement = this.#view.box.measurement
-                this.#context = this.#view.box.context
+                this.#measurement = this.#view.root.measurement
+                this.#context = this.#view.root.context
             }
             this.#controller?.invalidate_draw()
             this.#schedule()
@@ -180,7 +197,7 @@ export function create_plot_element(): CustomElementConstructor {
                 return
             }
             this.#controller?.set_draw_host({
-                prepare: (width, height, dpr) => prepare_canvas(this.#view.canvas, width, height, dpr),
+                prepare: (width, height, dpr) => this.#view.root.prepareCanvas(width, height, dpr),
             })
         }
 
@@ -220,20 +237,18 @@ export function create_plot_element(): CustomElementConstructor {
             }
             controller.flush_draw()
             const { inner } = plot
-            Object.assign(this.#view.capture.style, tooltip_wrapper_style(inner))
-            const filter = plot_color_filter(controller.template, color_theme) ?? ''
-            this.#view.canvas.style.filter = filter
-            this.#view.highlight.style.filter = filter
-            const reset = reset_zoom_presentation(controller, inner, color_theme)
-            Object.assign(this.#view.reset.style, reset.position, reset.button.style)
-            this.#view.reset.hidden = !reset.visible
+            this.#view.root.present({
+                width, height, inner,
+                filter: plot_color_filter(controller.template, color_theme),
+                reset: reset_zoom_presentation(controller, inner, color_theme),
+            })
             this.#configure_capture()
-            render_hover(controller, this.#view.highlight, this.#view.tooltip)
+            render_hover(controller, this.#view.highlight, this.#view.tooltip, context.devicePixelRatio, this.#tooltip_renderer)
             this.#update_cursor()
         }
 
         // Apply newly keyed argument requests and normalize the current window against fresh domains.
-        #compose(environment: PlotEnvironment): ComposedPlot<Node> | null {
+        #compose(environment: PlotEnvironment): ComposedPlot<T> | null {
             const controller = this.#controller
             if (controller === null) {
                 return null
@@ -274,8 +289,7 @@ export function create_plot_element(): CustomElementConstructor {
                 axes,
             )
 
-            configure_capture(
-                this.#view.capture,
+            this.#view.root.configureCapture(
                 resolve_capture_configuration(enabled, axes.modifier, wheel_claim),
             )
         }
@@ -283,7 +297,7 @@ export function create_plot_element(): CustomElementConstructor {
         // Match the old precedence: active pan, modifier-ready pan, selectable hit, then default.
         #update_cursor(): void {
             const controller = this.#controller
-            this.#view.capture.style.cursor = controller?.interactions.cursor_style({
+            this.#view.root.cursor = controller?.interactions.cursor_style({
                 ...controller.template.zoom_pan,
                 enabled: zoom_pan_enabled(controller.template),
             }) ?? ''

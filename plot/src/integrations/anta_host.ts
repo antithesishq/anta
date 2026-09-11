@@ -1,7 +1,10 @@
-import throttle from 'lodash/throttle'
+import type { PlotSurfaceMouseInput } from '../core/presentation/surface'
+import { throttle } from 'es-toolkit/function'
 import type {
-    BoxContextChange, BoxMeasurementChange, CapturePointerInput, CaptureProps, CaptureWheelInput,
-} from '@antadesign/anta'
+    CapturePointerInput, CaptureWheelInput, CaptureInputDirections, CaptureWheelActivation,
+    CaptureInputModifier, CaptureWheelSettle, CapturePointerCapture,
+} from '@antadesign/anta/capture-types'
+import type { BoxContextChange, BoxMeasurementChange } from '@antadesign/anta/box-types'
 import type { PlotController } from '../core/controller'
 import type { Dimensions } from '../core/compose/layout'
 import type { ColorTheme, ComposedPlot, Viewport, ViewportChange } from '../core/types'
@@ -9,7 +12,7 @@ import type { NearestPoint } from '../core/interactions/hit'
 import { create_interaction_coordinator } from '../core/interactions/coordinator'
 import { compatible_viewport } from '../core/interactions/viewport'
 import { UPDATE_INTERVAL_MS } from '../core/interactions/viewport_schedule'
-import { resolve_capture_configuration, zoom_pan_enabled } from '../core/interactions/zoom_pan'
+import { capture_attributes, resolve_capture_configuration, zoom_pan_enabled } from '../core/interactions/zoom_pan'
 import { capture_pointer_input, capture_wheel_directions, capture_wheel_input } from './anta_gestures'
 
 export type AntaHost<T> = {
@@ -22,13 +25,20 @@ export type AntaHost<T> = {
     on_pointer_change(): void
 }
 
-type MouseHandler = (event: MouseEvent) => void
+type MouseHandler = (event: PlotSurfaceMouseInput) => void
 type PointerHandler = (event: CustomEvent<CapturePointerInput>) => void
 type WheelHandler = (event: CustomEvent<CaptureWheelInput>) => void
 
-type HostCaptureProps = Pick<CaptureProps,
-    'wheelCapture' | 'wheelActivation' | 'wheelModifier' | 'wheelSettle' | 'pointerCapture'
-> & {
+// Use Anta's data contracts without importing its JSX component declaration graph.
+type HostCaptureSettings = {
+    wheelCapture?: CaptureInputDirections
+    wheelActivation?: CaptureWheelActivation
+    wheelModifier?: CaptureInputModifier
+    wheelSettle?: CaptureWheelSettle
+    pointerCapture?: boolean | CapturePointerCapture
+}
+
+type HostCaptureProps = HostCaptureSettings & {
     onMouseMove: MouseHandler
     onMouseLeave(): void
     onClick: MouseHandler
@@ -51,6 +61,7 @@ export type AntaHostAdapter<T> = {
     viewport_for_render(snapshot: Viewport): Viewport
     reconcile_viewport(snapshot: Viewport): Viewport
     capture_props(plot: ComposedPlot<T> | null, viewport: Viewport): HostCaptureProps
+    capture_attributes(plot: ComposedPlot<T> | null, viewport: Viewport): ReturnType<typeof capture_attributes>
     cursor_style(): string | undefined
     disconnect(): void
 }
@@ -64,7 +75,7 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
     const coordinator = create_interaction_coordinator({
         controller: () => controller,
         commit_mode: 'throttled',
-        resolve_hover: (event: MouseEvent) => event,
+        resolve_hover: (event: PlotSurfaceMouseInput) => event,
         on_viewport_commit: host.on_viewport,
         on_viewport_report: host.on_viewport_report,
         on_hover_update: changed => {
@@ -77,6 +88,14 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
         on_pointer_change: host.on_pointer_change,
     })
 
+    const capture_configuration = (plot: ComposedPlot<T> | null, viewport: Viewport) => {
+        const zoom_pan = controller.template.zoom_pan
+        return resolve_capture_configuration(
+            zoom_pan_enabled(controller.template), zoom_pan.modifier,
+            interactions.wheel_claim(plot, viewport, zoom_pan),
+        )
+    }
+
     // Keep the previous height during transient zero-height measurements and publish only changed sizes.
     const on_measure_change = throttle((event: CustomEvent<BoxMeasurementChange>) => {
         const current = event.detail.current
@@ -86,7 +105,7 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
         }
         measured = { width: current.width, height }
         host.on_measure(measured)
-    }, UPDATE_INTERVAL_MS, { leading: false, trailing: true })
+    }, UPDATE_INTERVAL_MS, { edges: ['trailing'] })
 
     const on_pointer_input = (event: CustomEvent<CapturePointerInput>): void => {
         coordinator.handle_pan(capture_pointer_input(event.detail))
@@ -120,11 +139,7 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
             )
         },
         capture_props(plot: ComposedPlot<T> | null, viewport: Viewport) {
-            const zoom_pan = controller.template.zoom_pan
-            const capture = resolve_capture_configuration(
-                zoom_pan_enabled(controller.template), zoom_pan.modifier,
-                interactions.wheel_claim(plot, viewport, zoom_pan),
-            )
+            const capture = capture_configuration(plot, viewport)
             const settings = {
                 wheelCapture: capture.wheel_capture === null ? false : capture_wheel_directions(capture.wheel_capture),
                 wheelActivation: capture.wheel_activation,
@@ -140,7 +155,7 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
                     threshold: capture.pointer_threshold,
                     modifier: capture.pointer_modifier,
                 },
-            } satisfies CaptureProps
+            } satisfies HostCaptureSettings
             return {
                 ...settings,
                 onMouseMove: coordinator.move,
@@ -150,6 +165,9 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
                 onWheelInput: on_wheel_input,
                 onPointerInput: on_pointer_input,
             }
+        },
+        capture_attributes(plot, viewport) {
+            return capture_attributes(capture_configuration(plot, viewport))
         },
         cursor_style(): string | undefined {
             return interactions.cursor_style({

@@ -6,6 +6,7 @@ export const ICON_SHAPES = [
   'banner',
   'book-a',
   'card',
+  'chart-spline',
   'chevrons-right',
   'chevrons-up-down-square',
   'circle-pause',
@@ -36,6 +37,7 @@ declare module '@antadesign/anta' {
     'banner': true
     'book-a': true
     'card': true
+    'chart-spline': true
     'chevrons-right': true
     'chevrons-up-down-square': true
     'circle-pause': true

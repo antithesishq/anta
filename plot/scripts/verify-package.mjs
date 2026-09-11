@@ -34,7 +34,7 @@ for (const input of inputs('dist/index.js')) {
 }
 for (const input of Object.keys(metadata.inputs)) {
     assert.doesNotMatch(input, /(?:^|\/)lodash(?:\/|$)|notebook_demo|(?:^|\/)shell\/|(?:^|\/)deps\/preact/)
-    assert.ok(/^src\/(entries|core|integrations|browser)\//.test(input) || input.includes('/node_modules/'),
+    assert.ok(/^src\/(entries|core|integrations|browser|components)\//.test(input) || input.includes('/node_modules/'),
         `Unexpected source outside the package: ${input}`)
 }
 inputs('dist/browser.js') // Browser dependencies may retain the declared React peer.
@@ -152,6 +152,11 @@ try {
         import { create_anta_host, type AntaHostAdapter } from '@antadesign/plot'
         import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
         import type { CaptureProps } from '@antadesign/anta'
+        import { PlotSurface, type PlotSurfaceProps } from '@antadesign/plot/components'
+        const surface: PlotSurfaceProps = { canvasOwner: 'worker', onCanvasTransfer(event) {
+            const canvas: OffscreenCanvas = event.detail.canvas
+        } }
+        PlotSurface(surface)
         import { plotElementReady } from '@antadesign/plot/auto'
         import { plotSurfaceElementReady } from '@antadesign/plot/elements'
         const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}

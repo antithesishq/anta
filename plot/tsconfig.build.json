@@ -15,7 +15,9 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "rootDir": "src",
-    "outDir": "dist/types"
+    "outDir": "dist/types",
+    "jsx": "react-jsx",
+    "jsxImportSource": "@antadesign/anta"
   },
   "include": [
     "src/entries/*.ts"

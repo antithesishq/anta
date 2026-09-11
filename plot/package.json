@@ -22,6 +22,10 @@
     "./elements": {
       "types": "./dist/types/entries/elements.d.ts",
       "import": "./dist/elements.js"
+    },
+    "./components": {
+      "types": "./dist/types/entries/components.d.ts",
+      "import": "./dist/components.js"
     }
   },
   "sideEffects": [

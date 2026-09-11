@@ -1,6 +1,6 @@
 # @antadesign/plot
 
-Canvas plots with series factories, shared interaction controllers, host integration helpers, and an optional `<a-plot>` browser host. React and Preact wrappers are deferred. Anta is a regular dependency; React is a peer, as it is for stickers.
+Canvas plots with series factories, shared interaction controllers, host integration helpers, and an optional `<a-plot>` browser host. The surface has a thin Anta JSX wrapper; a full plot wrapper is deferred. Anta is a regular dependency; React is a peer, as it is for stickers.
 
 ```ts
 import { scatter, definePlotElement, type APlotElement } from '@antadesign/plot/browser'
@@ -20,6 +20,7 @@ Use a bundler that handles CSS imports. The browser entry loads Anta elements an
 | --- | --- |
 | `@antadesign/plot` | Series factories, controllers, host presentation helpers, Anta event integration, and public types |
 | `@antadesign/plot/browser` | DOM tooltip factories and explicit `definePlotElement()` registration |
+| `@antadesign/plot/components` | `PlotSurface` JSX wrapper and its props; no element registration |
 | `@antadesign/plot/elements` | Registers only `a-plot-surface`; exports `plotSurfaceElementReady` |
 | `@antadesign/plot/auto` | Browser registration with the `plotElementReady` promise |
 | `@antadesign/plot/plot.css` | Plot layout stylesheet |
@@ -52,6 +53,28 @@ Import `@antadesign/plot/elements` to register the surface and load its layout C
 ```ts
 import '@antadesign/plot/elements'
 ```
+
+React, Preact, and other Anta JSX consumers can use the typed wrapper:
+
+```tsx
+import { PlotSurface } from '@antadesign/plot/components'
+
+// Browser entry only:
+import '@antadesign/plot/elements'
+
+// In the host render:
+<PlotSurface
+    presentation={presentation}
+    canvasOwner="worker"
+    onCanvasTransfer={event => attachCanvases(event.detail)}
+/>
+```
+
+The wrapper serializes presentation and forwards Capture attributes and event
+handlers. It has no DOM refs, hooks, controller, or drawing logic, so it also works
+in worker-side renderers. `/components` uses Anta's JSX runtime; the root remains
+free of framework runtime dependencies. Native custom-element consumers can keep
+using `a-plot-surface` directly.
 
 This leaves `a-plot` available for a host-owned wrapper. Registration is asynchronous;
 existing surface elements upgrade when its Anta dependencies finish loading. Import

@@ -13,7 +13,7 @@ import { PlotController, type PlotEnvironment } from '../core/controller'
 import type { PointerOffset } from '../core/interactions/hit'
 import { plot_color_filter } from '../core/presentation/plot'
 import type { ComposedPlot, ViewportChange } from '../core/types'
-import type { APlotElement, PlotArgs } from './index'
+import type { APlotElement, PlotArgs, PlotTooltipRenderer } from './index'
 import { clear_hover, render_hover } from './hover'
 import { resolve_capture_configuration, zoom_pan_enabled } from '../core/interactions/zoom_pan'
 import { throttle } from 'es-toolkit/function'
@@ -21,10 +21,11 @@ import { throttle } from 'es-toolkit/function'
 import { UPDATE_INTERVAL_MS } from '../core/interactions/viewport_schedule'
 
 /** The class is created at registration time so importing this module never reads HTMLElement. */
-export function create_plot_element(): CustomElementConstructor {
-    return class PlotElement extends HTMLElement implements APlotElement {
-        #controller: PlotController<Node> | null = null
-        #args: PlotArgs<Node> | undefined
+export function create_plot_element<T = Node>(): CustomElementConstructor {
+    return class PlotElement extends HTMLElement implements APlotElement<T> {
+        #controller: PlotController<T> | null = null
+        #tooltip_renderer: PlotTooltipRenderer<T> | undefined
+        #args: PlotArgs<T> | undefined
         #pending_frame_id: number | null = null
         #measurement: BoxMeasurement | null = null
         #context: BoxContext | null = null
@@ -52,11 +53,14 @@ export function create_plot_element(): CustomElementConstructor {
             },
             on_hover_update: () => {
                 if (this.#controller !== null) {
-                    render_hover(this.#controller, this.#view.highlight, this.#view.tooltip, this.#context?.devicePixelRatio ?? 1)
+                    render_hover(
+                        this.#controller, this.#view.highlight, this.#view.tooltip,
+                        this.#context?.devicePixelRatio ?? 1, this.#tooltip_renderer,
+                    )
                 }
                 this.#update_cursor()
             },
-            on_hover_clear: () => clear_hover(this.#view.highlight, this.#view.tooltip),
+            on_hover_clear: () => clear_hover(this.#view.highlight, this.#view.tooltip, this.#tooltip_renderer),
             on_pointer_change: () => this.#update_cursor(),
             on_pan_end: () => this.#schedule(),
         })
@@ -110,10 +114,12 @@ export function create_plot_element(): CustomElementConstructor {
 
         // Apply arguments assigned before custom-element registration through the normal setter.
         #restore_properties(): void {
-            const descriptor = Object.getOwnPropertyDescriptor(this, 'plotArgs')
-            if (descriptor !== undefined) {
-                Reflect.deleteProperty(this, 'plotArgs')
-                this.plotArgs = descriptor.value
+            for (const name of ['tooltipRenderer', 'plotArgs'] as const) {
+                const descriptor = Object.getOwnPropertyDescriptor(this, name)
+                if (descriptor !== undefined) {
+                    Reflect.deleteProperty(this, name)
+                    Reflect.set(this, name, descriptor.value)
+                }
             }
         }
 
@@ -126,16 +132,28 @@ export function create_plot_element(): CustomElementConstructor {
             this.#interaction_coordinator.disconnect()
             this.#resize.cancel()
             this.#controller?.set_draw_host(null)
-            clear_hover(this.#view.highlight, this.#view.tooltip)
+            clear_hover(this.#view.highlight, this.#view.tooltip, this.#tooltip_renderer)
             this.#update_cursor()
         }
 
-        get plotArgs(): PlotArgs<Node> | undefined {
+        get tooltipRenderer(): PlotTooltipRenderer<T> | undefined {
+            return this.#tooltip_renderer
+        }
+
+        set tooltipRenderer(renderer: PlotTooltipRenderer<T> | undefined) {
+            if (renderer === this.#tooltip_renderer) return
+            this.#clear_hover()
+            this.#view.tooltip.replaceChildren()
+            this.#tooltip_renderer = renderer
+            this.#schedule()
+        }
+
+        get plotArgs(): PlotArgs<T> | undefined {
             return this.#args
         }
 
         // Apply valid plot arguments while retaining the previous configuration if templating fails.
-        set plotArgs(value: PlotArgs<Node> | undefined) {
+        set plotArgs(value: PlotArgs<T> | undefined) {
             if (value === undefined) {
                 return
             }
@@ -225,12 +243,12 @@ export function create_plot_element(): CustomElementConstructor {
                 reset: reset_zoom_presentation(controller, inner, color_theme),
             })
             this.#configure_capture()
-            render_hover(controller, this.#view.highlight, this.#view.tooltip, context.devicePixelRatio)
+            render_hover(controller, this.#view.highlight, this.#view.tooltip, context.devicePixelRatio, this.#tooltip_renderer)
             this.#update_cursor()
         }
 
         // Apply newly keyed argument requests and normalize the current window against fresh domains.
-        #compose(environment: PlotEnvironment): ComposedPlot<Node> | null {
+        #compose(environment: PlotEnvironment): ComposedPlot<T> | null {
             const controller = this.#controller
             if (controller === null) {
                 return null

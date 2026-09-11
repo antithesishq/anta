@@ -1,5 +1,6 @@
 import { create_plot_surface_element } from './plot_surface'
 export type { APlotSurfaceElement, PlotSurfacePresentation, PlotSurfaceCanvases, PlotSurfaceEventMap } from './plot_surface'
+import type { ResolvedTooltip } from '../core/interactions/tooltip'
 import { create_plot_element } from './plot_element'
 import type { PlotArgs } from '../core/types'
 import { new_scatter } from '../core/series/scatter/factory'
@@ -27,9 +28,14 @@ export type RuleArgs = Parameters<typeof rule>[0]
 export type AreaArgs = Parameters<typeof area>[0]
 export type CustomArgs = Parameters<typeof custom>[0]
 
-/** Internal host input: all plot behavior is configured through the complete argument object. */
-export interface APlotElement extends HTMLElement {
-    plotArgs: PlotArgs<Node> | undefined
+/** Renderer owns the target's children and receives an empty list when hover clears. */
+export type PlotTooltipRenderer<Content = Node> =
+    (tooltips: ResolvedTooltip<Content>[], target: HTMLElement) => void
+
+/** Browser host configured through properties; custom tooltip content requires a renderer. */
+export interface APlotElement<Content = Node> extends HTMLElement {
+    plotArgs: PlotArgs<Content> | undefined
+    tooltipRenderer: PlotTooltipRenderer<Content> | undefined
 }
 
 const implementations = new WeakSet<CustomElementConstructor>()

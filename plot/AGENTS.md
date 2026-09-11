@@ -4,8 +4,9 @@ Follow the root AGENTS.md. This package owns plotting code, not the notebook ada
 
 - `src/core/` contains series factories, composition, rendering, interactions, and presentation.
 - `src/integrations/` connects host events to the core controllers.
-- `src/browser/` implements the optional light-DOM `<a-plot>` host. Preserve its established behavior during packaging; Full plot React/Preact wrappers are deferred.
+- `src/browser/` implements the optional light-DOM `<a-plot>` host. Preserve its established behavior during packaging.
 - `src/components/` contains the thin Anta JSX surface wrapper, exposed through `/components`. It must not register elements or access the DOM.
+- `src/react/` owns the optional React adapter. Keep controller updates after commit and tooltip nodes under React ownership. Browser verification must cover StrictMode cleanup and discarded renders.
 - `src/entries/` defines the supported package exports. Keep internal imports private.
 - `scripts/build.mjs` emits JS, declarations, and CSS. Anta stays external to avoid duplicate component implementations.
 - `scripts/verify-package.mjs` checks the built package from an isolated consumer directory.

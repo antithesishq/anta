@@ -34,10 +34,11 @@ for (const input of inputs('dist/index.js')) {
 }
 for (const input of Object.keys(metadata.inputs)) {
     assert.doesNotMatch(input, /(?:^|\/)lodash(?:\/|$)|notebook_demo|(?:^|\/)shell\/|(?:^|\/)deps\/preact/)
-    assert.ok(/^src\/(entries|core|integrations|browser|components)\//.test(input) || input.includes('/node_modules/'),
+    assert.ok(/^src\/(entries|core|integrations|browser|components|react)\//.test(input) || input.includes('/node_modules/'),
         `Unexpected source outside the package: ${input}`)
 }
 inputs('dist/browser.js') // Browser dependencies may retain the declared React peer.
+inputs('dist/react.js')
 
 
 const sandbox = await mkdtemp(resolve(tmpdir(), 'plot-package-'))
@@ -153,6 +154,13 @@ try {
         import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
         import type { CaptureProps } from '@antadesign/anta'
         import { PlotSurface, type PlotSurfaceProps } from '@antadesign/plot/components'
+        import { Plot, type PlotProps } from '@antadesign/plot/react'
+        import { createElement } from 'react'
+        const reactProps: PlotProps = {
+            plotArgs: { series: [scatter({ data: [{x:1,y:2}], tooltip: () => createElement('strong', null, 'point') })] },
+            onError(failure) { const phase: string = failure.phase },
+        }
+        createElement(Plot, reactProps)
         const surface: PlotSurfaceProps = { canvasOwner: 'worker', onCanvasTransfer(event) {
             const canvas: OffscreenCanvas = event.detail.canvas
         } }

@@ -79,6 +79,9 @@ importers:
       '@antadesign/anta':
         specifier: workspace:*
         version: link:..
+      '@antadesign/plot':
+        specifier: workspace:*
+        version: link:../plot
       '@antadesign/stickers':
         specifier: workspace:*
         version: link:../stickers

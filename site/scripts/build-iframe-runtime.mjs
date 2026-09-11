@@ -1,7 +1,7 @@
 /**
  * build-iframe-runtime.mjs — build the Playground's preview-app bundle.
  *
- * ONE self-contained ESM bundle (`site/public/iframe/iframe-app.<hash>.js` +
+ * One self-contained ESM bundle (`site/public/iframe/iframe-app.<hash>.js` +
  * `.css`) that has Preact and the whole Anta library baked in: it registers the
  * custom elements, and seeds `window.__demo_modules__` from ITS OWN Anta/Preact
  * instances. The sandbox bundler compiles the (TS→JS) demo code with a tiny shim
@@ -41,8 +41,17 @@ import ${JSON.stringify(distBundleCss)};
 import * as anta from ${JSON.stringify(distBundle)};
 import * as preact from 'preact';
 import * as preactHooks from 'preact/hooks';
+import * as plot from '@antadesign/plot';
+import * as plotReact from '@antadesign/plot/react';
+import '@antadesign/plot/plot.css';
 if (typeof window !== 'undefined') {
+  // Unmounting through THIS Preact instance is what runs the demo's effect
+  // cleanups (plot listeners, tooltip portals) before the root is replaced.
+  window.__demo_unmount__ = () => preact.render(null, document.getElementById('root'));
   window.__demo_modules__ = Object.assign(window.__demo_modules__ || {}, {
+    '@antadesign/plot': plot,
+    '@antadesign/plot/react': plotReact,
+    '@antadesign/plot/plot.css': {},
     '@antadesign/anta': anta,
     '@antadesign/anta/elements': {},
     'preact': preact,
@@ -59,8 +68,10 @@ const out = await build({
   target: 'es2020',
   logLevel: 'silent',
   write: false,
-  // Anta's JSX runtime resolves `react` — map it to Preact's compat (bundled in,
-  // so there's a single Preact instance shared with the demo).
+  // Anta's generated JSX runtime and Plot's React host both resolve `react` —
+  // map it to Preact's compat so the preview, the Anta wrappers, and Plot share
+  // one Preact instance. Absolute files: an alias to bare `preact/compat` would
+  // resolve from `dist/`, where pnpm intentionally has no direct Preact link.
   alias: {
     react: preactCompat,
     'react-dom': preactCompat,

@@ -589,3 +589,19 @@
   letter-spacing: 0.06em;
   font-size: 11px;
 }
+
+/* Nested configuration objects share the same grouping in every playground. */
+.objectGroup {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.objectGroup > summary {
+  cursor: pointer;
+  padding: 8px 0;
+  font-weight: 500;
+}
+
+.objectGroup > .form {
+  padding-left: 16px;
+}

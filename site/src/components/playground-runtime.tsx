@@ -1,3 +1,5 @@
+// Register the editor controls before mounting; the docs shell loads separately.
+import '@antadesign/anta/elements'
 import { render } from 'preact'
 import Playground from './Playground'
 

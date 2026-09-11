@@ -8,6 +8,6 @@
 export const COMPONENT_SLUGS = [
   'avatar', 'banner', 'box', 'capture', 'breadcrumbs', 'button', 'card', 'checkbox', 'dialog', 'expander', 'icon', 'loader', 'progress', 'input',
   'input-autocomplete', 'input-date', 'input-time', 'slider',
-  'menu', 'radio', 'select', 'select-faceted', 'stickers', 'table',
+  'menu', 'radio', 'select', 'select-faceted', 'plot', 'stickers', 'table',
   'switch', 'tabs', 'steps', 'tag', 'text', 'title', 'toaster', 'tooltip',
 ]

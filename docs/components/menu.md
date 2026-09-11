@@ -49,9 +49,8 @@ action. Pass **any CSS color** for a one-off custom tone — its hue and chroma 
 kept while the lightness is pinned to match the brand text (resolved through
 `--menu-item-tone-source`).
 
-`toneSelected` applies the tone the same way, but **only while the row is `selected`**
-— an unselected row stays neutral. It's the checkable-menu counterpart to `tone`
-(`Select` uses it to tone the chosen row).
+`toneScope="selected"` applies `tone` **only while the row is `selected`** — an
+unselected row stays neutral. `Select` uses the same pair to tone chosen rows.
 
 ```tsx
 <Menu>
@@ -416,7 +415,7 @@ navigating links.
 | `selectionIndicator?` | 'checkbox' \| 'radio' \| 'check' | — | Turn the row into a checkable item, driven by `selected` (the row stays the control and carries `aria-checked`): - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>` (before `icon`); the tint is dropped (the box carries state). - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped. - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected row *and* the background tint (the canonical single-select look). Omit for a plain row (the default). |
 | `submenu?` | boolean | — | Marks this item as a submenu parent: adds the trailing chevron and `aria-haspopup="menu"`. Nest the flyout as a `<Menu>` child. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone — colors the label, icon, and hover/selected tint (and the `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose hue + chroma are kept while the lightness is pinned to match the brand text. `critical` is the destructive action; `neutral` (the default) is the standard gray. |
-| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Like `tone`, but applied only while the row is `selected` — an unselected row stays neutral. The whole selected row (label, icon, tint, and the `checkbox` / `radio` indicator) takes the tone. Same value set as `tone`; on a selected row `toneSelected` wins over `tone` when both are set. |
+| `toneScope?` | ToneScope | 'all' | Apply `tone` to every row state, or only while the row is selected. In `selected` scope, an unselected row and its checkbox/radio indicator stay neutral. |
 | `value?` | string \| number | — | An opaque value identifying this item, handed back in `onSelect`'s detail so a shared handler can tell which row was chosen without a per-item closure. |
 
 ## Keyboard
@@ -495,7 +494,7 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 | `submenu?` | boolean | — | Marks this item as a submenu parent: adds the trailing chevron and `aria-haspopup="menu"`. Nest the flyout as a `<Menu>` child. |
 | `target?` | string | — | Anchor target, e.g. `'_blank'`. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone — colors the label, icon, and hover/selected tint (and the `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose hue + chroma are kept while the lightness is pinned to match the brand text. `critical` is the destructive action; `neutral` (the default) is the standard gray. |
-| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Like `tone`, but applied only while the row is `selected` — an unselected row stays neutral. The whole selected row (label, icon, tint, and the `checkbox` / `radio` indicator) takes the tone. Same value set as `tone`; on a selected row `toneSelected` wins over `tone` when both are set. |
+| `toneScope?` | ToneScope | 'all' | Apply `tone` to every row state, or only while the row is selected. In `selected` scope, an unselected row and its checkbox/radio indicator stay neutral. |
 | `value?` | string \| number | — | An opaque value identifying this item, handed back in `onSelect`'s detail so a shared handler can tell which row was chosen without a per-item closure. |
 
 ## Web Component

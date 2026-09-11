@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+import { neutralToneAttr, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
 
 /** Always-allowed props, independent of content/submit/priority mode. */
 export type BaseButtonProps = {
@@ -191,10 +191,7 @@ export const Button = ({
   children,
   ...rest
 }: ButtonProps) => {
-  // Empty string is "no tone" — same as omitting the prop: neutral base.
-  // Don't emit a bare `tone=""` (it matched the custom-tone branch and
-  // resolved to a `transparent` source, rendering an invisible button).
-  const toneAttr = tone || undefined
+  const toneAttr = neutralToneAttr(tone)
   const unavailable = disabled || loading
   // A non-named tone is a literal CSS color: feed it to the element's oklch
   // derivation via the inline custom property (shared helper — see anta_helpers).

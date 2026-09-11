@@ -1,6 +1,6 @@
-import type { BaseProps } from '../general_types'
+import type { BaseProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle } from '../anta_helpers'
+import { neutralToneAttr, toneStyle } from '../anta_helpers'
 
 /* Display shortcut tokens mapped to `KeyboardEvent.key` names. */
 const SHORTCUT_KEYS: Record<string, string> = {
@@ -93,12 +93,11 @@ export interface MenuItemCommonProps extends BaseProps {
    *  gray.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but applied only while the row is `selected` — an unselected row
-   *  stays neutral. The whole selected row (label, icon, tint, and the `checkbox` /
-   *  `radio` indicator) takes the tone. Same value set as `tone`; on a selected row
-   *  `toneSelected` wins over `tone` when both are set.
-   *  @defaultValue neutral */
-  toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply `tone` to every row state, or only while the row is selected. In
+   *  `selected` scope, an unselected row and its checkbox/radio indicator stay
+   *  neutral.
+   *  @defaultValue 'all' */
+  toneScope?: ToneScope
   /** An opaque value identifying this item, handed back in `onSelect`'s detail
    *  so a shared handler can tell which row was chosen without a per-item
    *  closure. */
@@ -210,7 +209,7 @@ export const MenuItem = ({
   indeterminate,
   indicator,
   tone,
-  toneSelected,
+  toneScope,
   submenu,
   value,
   onSelect,
@@ -249,14 +248,13 @@ export const MenuItem = ({
         ? 'true'
         : 'false'
   const keepTint = selected && (selectionIndicator === undefined || selectionIndicator === 'check')
-  // `toneSelected` tones the whole row (text, icon, tint, indicator) only while the
-  // row is selected; `tone` tones it always. On a selected row toneSelected wins.
-  const effectiveTone = (selected && toneSelected) || tone
+  // In selected scope the tone identity is dormant until the row is selected.
+  const effectiveTone = toneScope === 'selected' && !selected ? undefined : tone
   // A named tone travels as the attribute; a custom color also needs its
   // `--{component}-tone-source` var set inline (the typed `attr()` path only
   // resolves on newer engines) — for the host and, so it adopts the row's tone,
   // the checkbox/radio indicator.
-  const toneAttr = effectiveTone && effectiveTone !== 'neutral' ? effectiveTone : undefined
+  const toneAttr = neutralToneAttr(effectiveTone)
 
   // `rest` overrides the derived attribute; use the winning value to hide the
   // visual shortcut from assistive technology.

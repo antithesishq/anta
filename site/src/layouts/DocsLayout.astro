@@ -16,6 +16,7 @@ import SidebarSearch from '../components/SidebarSearch'
 import ThemeSwitcher from '../components/ThemeSwitcher.tsx'
 import SearchDialog from '../components/SearchDialog.tsx'
 import AntaLogo from '../components/AntaLogo'
+import antaPackage from '../../../package.json'
 
 interface Props {
   title?: string
@@ -46,21 +47,10 @@ const isCurrent = (href: string) => {
   return h === path
 }
 
-// Fetch the latest published version from the npm registry at build time
-// so the sidebar shield labels the current release without a runtime call.
-// Prefer the stable `latest` dist-tag, falling back to `dev` only if no
-// stable release exists yet. Any failure (offline, registry hiccup)
-// silently degrades to a plain "npm" label.
-let npmVersion: string | null = null
-try {
-  const res = await fetch('https://registry.npmjs.org/@antadesign/anta', {
-    signal: AbortSignal.timeout(3000),
-  })
-  if (res.ok) {
-    const data = await res.json()
-    npmVersion = data?.['dist-tags']?.latest ?? data?.['dist-tags']?.dev ?? null
-  }
-} catch {}
+// Show the version represented by this documentation build. Reading the
+// workspace manifest also lets release previews display the upcoming version
+// before it exists on npm.
+const npmVersion = antaPackage.version
 
 // Resolve URLs against the site config (https://anta.design) so
 // Open Graph / Twitter crawlers receive absolute URLs, and the canonical

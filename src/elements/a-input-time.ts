@@ -150,6 +150,7 @@ const SHADOW_STYLE = `
     background: transparent;
     color: inherit;
     font: inherit;
+    font-variation-settings: inherit;
     font-stretch: inherit;
     font-style: inherit;
     line-height: inherit;

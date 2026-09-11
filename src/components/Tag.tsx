@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle } from "../anta_helpers"
+import { neutralToneAttr, toneStyle } from "../anta_helpers"
 import { Icon } from "./Icon"
 
 export interface TagProps extends BaseProps {
@@ -104,8 +104,7 @@ export const Tag = ({
 }: TagProps) => {
   // A non-named tone is a literal CSS color: feed it to the element's oklch
   // derivation via the inline custom property (shared helper — see anta_helpers).
-  // Empty string is "no tone" — normalize so it doesn't hit the custom-tone path.
-  const toneAttr = tone || undefined
+  const toneAttr = neutralToneAttr(tone)
   const computedStyle = toneStyle(toneAttr, '--tag-tone-source', style)
 
   // `value` is the primary text. A label only becomes the dim/bold "key"

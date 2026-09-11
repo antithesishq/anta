@@ -6,7 +6,7 @@
 // (no `Children`/Fragment scan or component-identity matching), which keeps it compatible
 // across React / Preact / custom runtimes and static SSR.
 import { useState } from "../jsx-runtime"
-import { nativeStateChange, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
 import type { BaseProps, OptionPresentationProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
 import { Tooltip } from "./Tooltip"
@@ -241,7 +241,7 @@ export const Tabs = ({
       state={controlled ? value : undefined}
       default-state={!controlled ? defaultValue : undefined}
       priority={priority && priority !== "primary" ? priority : undefined}
-      tone={tone && tone !== "neutral" ? tone : undefined}
+      tone={neutralToneAttr(tone)}
       size={size && size !== "medium" ? size : undefined}
       orientation={vertical ? "vertical" : undefined}
       fill={fill ? "" : undefined}

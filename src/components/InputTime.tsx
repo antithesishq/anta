@@ -1,6 +1,6 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { nativeStateChange, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
+import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
 
@@ -177,7 +177,7 @@ export const InputTime = ({
       min={min}
       max={max}
       status={statusTone}
-      tone={tone || undefined}
+      tone={neutralToneAttr(tone)}
       name={name}
       disabled={presence(disabled)}
       required={presence(required)}

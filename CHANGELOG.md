@@ -3,10 +3,18 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.28 — September 10, 2026
 
 ### Changed
 
+- **Breaking:** Checkbox, RadioGroup, Switch, MenuItem, Select, and SelectFaceted
+  now use one `tone` identity plus `toneScope="all" | "selected"`. The
+  `toneSelected` prop and `tone-selected` custom-element attribute were removed;
+  use `tone="…" toneScope="selected"` (or `tone="…" tone-scope="selected"` in
+  HTML) for neutral resting chrome with a toned selected state. Select and
+  SelectFaceted now accept `tone` as their default option-row tone. Switch's
+  default brand tone now covers its unchecked chrome too; set
+  `toneScope="selected"` to retain the previous neutral unchecked appearance.
 - Renamed the optional Anta theme to Antune. Replace imports of
   `@antadesign/anta/theme-anta.css` with `@antadesign/anta/theme-antune.css`.
 - Reference themes provide hosted font faces by default through the public
@@ -16,7 +24,11 @@ changes are not listed.
   variable-font axes. Antune and Antithesis own those font-specific treatments,
   while numeric surfaces retain portable tabular figures.
 - Theme-free Buttons use `0.025ch` tracking and Tags use `0.1ch`. Antune and
-  Antithesis retain their previous font-specific tracking.
+  Antithesis use `0.05ch` Button tracking across priorities and retain their
+  font-specific Tag tracking.
+- JSX wrappers omit `tone="neutral"` where neutral is the standalone default;
+  explicit child resets remain in the rendered DOM when they override an
+  inherited group tone.
 - Reference-theme font stacks and role tokens use normal selectors, so the
   documented tokens, theme, application CSS source order controls overrides.
 - Reference themes register separate upright and italic TT Interphases faces,
@@ -31,6 +43,10 @@ changes are not listed.
 
 ### Fixed
 
+- Antune and Antithesis pin regular TT Interphases text to `slnt` 0, including
+  form controls that reset font shorthand inheritance. This keeps text upright
+  in Safari despite the font file's non-zero axis default while preserving the
+  `slnt` 11 instance for semantic italics.
 - `tokens.css` declares `color-scheme` on `:root`, `.light`, and `.dark`, so
   component colors resolve to the right mode without the optional `reset.css`
   import.

@@ -40,8 +40,8 @@ skipped by the keyboard.
 <Select options={OPTIONS} value={one} onValueChange={setOne} />                    // tint only (default)
 
 // Tone the selected row: named tone or custom color (the indicator adopts it)
-<Select indicator="check" toneSelected="brand" options={OPTIONS} value={one} onValueChange={setOne} />
-<Select indicator="radio" toneSelected="#c026d3" options={OPTIONS} value={one} onValueChange={setOne} />
+<Select indicator="check" tone="brand" toneScope="selected" options={OPTIONS} value={one} onValueChange={setOne} />
+<Select indicator="radio" tone="#c026d3" toneScope="selected" options={OPTIONS} value={one} onValueChange={setOne} />
 
 // Multiple: checkboxes, count summary, Select-all row (default); value is an array
 <Select
@@ -78,9 +78,9 @@ Each checkable row is the control itself (`role="menuitemcheckbox"` /
 `menuitemradio`, `aria-checked`); the checkbox / radio / check is a passive indicator
 the row drives.
 
-**`toneSelected`** tones the selected row(s): the whole row takes the tone, including
-label, icon, indicator, and tint. Pass a named tone or any CSS color (a custom color
-keeps its hue, with lightness pinned to the brand text). It reads strongest with
+Use **`tone`** with **`toneScope="selected"`** to tone only selected rows: the whole
+row takes the tone, including label, icon, indicator, and tint. Pass a named tone or
+any CSS color (a custom color keeps its hue, with lightness pinned to the brand text). It reads strongest with
 `indicator` `none` / `check`, which show the row tint; `radio` / `checkbox` have no
 row tint, so it tones the label and indicator only.
 
@@ -654,7 +654,8 @@ scannable list instead of hiding matches behind flyouts.
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Field size. |
 | `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | neutral | Validation/feedback tone for the field (Input's `status`). |
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set (Input's `statusIcon`). Each status has a default; pass a shape to override, or `false` to drop it. |
-| `toneSelected?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Tone applied to the **selected** row(s) — the whole row takes this tone (label, icon, indicator, and the background tint), like passing `tone` to just the chosen option. A named tone or a custom CSS color. Most visible with the tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` / `'checkbox'` it tones the label + indicator (those modes have no row tint). |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Default option-row tone. An option's own `tone` wins. A named tone or a custom CSS color. Most visible with tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` / `'checkbox'` it also tones the indicator. |
+| `toneScope?` | ToneScope | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
 | `value?` | V \| V[] | — | Controlled value: the selected option's `value`. Update it through `onValueChange`. Leave it undefined for uncontrolled use. |
 | `verbose?` | boolean | — | `multiple` only: spell the picks out in the count summary — `3 selected: A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies to the multi-count case only: `All` stays `All`, a single pick stays its own label, and an empty selection stays the `placeholder`. The list flows into the read-only field, so it ellipsizes at the field's width when long (`3 selected: Engineering, Des… `). `renderSummary` overrides this. |
 
@@ -827,8 +828,8 @@ Select is an [Input](./input.md) plus a [Menu](./menu.md), so it
 inherits both surfaces' hooks. Reach for props first, then plain CSS or `::part` for
 the rest. Don't override an element's internal `--*` output tokens.
 
-**Selection color** routes through the props: a per-option `tone`, or `toneSelected`
-for the chosen row(s). Both take a named tone or any CSS color (a custom color keeps
+**Selection color** routes through `tone`: set it per option or on the Select as a
+default, then use `toneScope="selected"` for chosen rows only. It takes a named tone or any CSS color (a custom color keeps
 its hue, with lightness pinned to the brand text).
 
 **The field** is styled through Input's props (`size`, `status`, `round`) and its
@@ -837,7 +838,7 @@ popover** takes Menu's `::part(menu)`.
 
 ```tsx
 // Tone the selection; give the trigger a width.
-<Select toneSelected="brand" style={{ width: '220px' }} options={OPTIONS} />
+<Select tone="brand" toneScope="selected" style={{ width: '220px' }} options={OPTIONS} />
 ```
 
 **Borderless trigger.** The field's border is an inset `box-shadow`, so you can drop

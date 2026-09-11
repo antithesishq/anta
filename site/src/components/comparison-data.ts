@@ -534,7 +534,7 @@ export const CATEGORIES: Category[] = [
   { id: 'charts', label: 'Charts', members: 'First-party data viz' },
   // Utility and focus coverage verified against public APIs on September 5, 2026.
   {
-    id: 'utilities', label: 'Utility containers', members: 'Boxes with observers, scroll, and input',
+    id: 'utilities', label: 'Utility containers', members: 'Boxes with observers',
     examples: {
       anta: 'Box, Capture', webawesome: 'Resize Observer', mui: 'ClickAwayListener',
       mantine: 'useResizeObserver', atlassian: 'Pragmatic drag and drop',
@@ -544,8 +544,9 @@ export const CATEGORIES: Category[] = [
     },
   },
   {
-    id: 'focus', label: 'Focus management', members: 'Focus detection and traps',
+    id: 'focus', label: 'Focus utility', members: 'Focus detection and traps',
     examples: {
+      anta: 'Tabs, RadioGroup, Menu, and Calendar manage keyboard focus; Dialog traps and restores focus; Box detects focus within',
       mui: 'Unstable_TrapFocus (experimental)', mantine: 'FocusTrap, useFocusTrap',
       astryx: 'useFocusTrap, useListFocus', untitledui: 'React Aria FocusScope, useFocusManager',
       blueprint: 'FocusStyleManager (focus indicators)',
@@ -565,7 +566,7 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes', slider: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes',
     accordion: 'yes', table: 'partial', tag: 'yes', avatar: 'yes', card: 'yes', progress: 'yes', steps: 'yes',
-    nav: 'yes', icons: 'yes', typography: 'yes', utilities: 'yes',
+    nav: 'yes', icons: 'yes', typography: 'yes', utilities: 'yes', focus: 'partial',
   },
   webawesome: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'paid',

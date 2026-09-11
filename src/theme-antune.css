@@ -302,9 +302,12 @@
 
 @layer anta.theme {
 /* Typography --------------------------------------------------------------- */
-:is(address, cite, dfn, em, i, var, dt) {
+:is(address, cite, em, i, var, dt) {
   font-variation-settings: "slnt" 11;
   font-synthesis: none;
+}
+dfn {
+  font-variation-settings: "slnt" 0;
 }
 a-button,
 a[role="button"][data-anta],

@@ -16,6 +16,7 @@ before(async () => {
         import { configure } from './src/jsx-runtime'
         import { Button, Checkbox, Input, MenuItem, Select, Switch, Tag } from './src/index'
         import './src/tokens.css'
+        import './src/reset.css'
         import './src/elements/a-button'
         import './src/elements/a-input'
         import './src/elements/a-checkbox'
@@ -28,6 +29,8 @@ before(async () => {
         render(<>
           <Button id="button">Button</Button>
           <em id="italic">Italic</em>
+          <dfn id="defined">Defined</dfn>
+          <em><dfn id="nested-defined">Defined inside italic text</dfn></em>
           <Button id="link" href="/">Link</Button>
           <Button id="custom-button" round={6}>Custom</Button>
           <Input id="input" value="Text" />
@@ -132,6 +135,7 @@ test('theme-free typography stays neutral while reference themes restore their f
       return {
         features: style.fontFeatureSettings,
         variations: style.fontVariationSettings,
+        style: style.fontStyle,
         stretch: style.fontStretch,
         numeric: style.fontVariantNumeric,
       }
@@ -139,6 +143,8 @@ test('theme-free typography stays neutral while reference themes restore their f
     return {
       root: read(document.documentElement),
       italic: read(document.getElementById('italic')),
+      defined: read(document.getElementById('defined')),
+      nestedDefined: read(document.getElementById('nested-defined')),
       button: read(document.getElementById('button')),
       input: read(document.getElementById('input').shadowRoot.querySelector('input')),
       tab: read(document.getElementById('tab')),
@@ -154,6 +160,8 @@ test('theme-free typography stays neutral while reference themes restore their f
     assert.equal(value.variations, 'normal')
   }
   assert.equal(withoutTheme.button.stretch, '100%')
+  assert.equal(withoutTheme.defined.style, 'normal')
+  assert.equal(withoutTheme.nestedDefined.style, 'normal')
   assert.equal(withoutTheme.input.stretch, '100%')
   assert.equal(withoutTheme.tab.stretch, '100%')
   assert.equal(withoutTheme.tag.numeric, 'lining-nums tabular-nums')
@@ -167,6 +175,10 @@ test('theme-free typography stays neutral while reference themes restore their f
   const withTheme = await typography()
   assert.equal(withTheme.root.variations, '"slnt" 0')
   assert.equal(withTheme.italic.variations, '"slnt" 11')
+  assert.equal(withTheme.defined.variations, '"slnt" 0')
+  assert.equal(withTheme.nestedDefined.variations, '"slnt" 0')
+  assert.equal(withTheme.defined.style, 'normal')
+  assert.equal(withTheme.nestedDefined.style, 'normal')
   assert.equal(withTheme.button.stretch, '88%')
   assert.equal(withTheme.tab.stretch, '88%')
   assert.equal(withTheme.inputAdornmentStretch, '88%')

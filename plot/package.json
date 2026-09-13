@@ -43,6 +43,7 @@
     "build:dev": "pnpm run build",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false -p tsconfig.build.json",
     "check:package": "node scripts/verify-package.mjs",
+    "test:series": "node --test tests/error_bar.test.mjs",
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
     "test:react": "node --test tests/react.test.mjs"

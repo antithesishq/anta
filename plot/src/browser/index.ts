@@ -9,6 +9,7 @@ import { new_rect } from '../core/series/rect/factory'
 import { new_line } from '../core/series/line/factory'
 import { new_rule } from '../core/series/rule/factory'
 import { new_area } from '../core/series/area/factory'
+import { new_error_bar } from '../core/series/error_bar/factory'
 import { new_custom } from '../core/series/custom/factory'
 
 // Reuse the core factories directly, with DOM Node tooltips at the browser boundary.
@@ -18,6 +19,7 @@ export const rect = new_rect<Node>
 export const line = new_line<Node>
 export const rule = new_rule<Node>
 export const area = new_area<Node>
+export const error_bar = new_error_bar<Node>
 export const custom = new_custom<Node>
 
 export type ScatterArgs = Parameters<typeof scatter>[0]
@@ -26,6 +28,7 @@ export type RectArgs = Parameters<typeof rect>[0]
 export type LineArgs = Parameters<typeof line>[0]
 export type RuleArgs = Parameters<typeof rule>[0]
 export type AreaArgs = Parameters<typeof area>[0]
+export type ErrorBarArgs = Parameters<typeof error_bar>[0]
 export type CustomArgs = Parameters<typeof custom>[0]
 
 /** Renderer owns the target's children and receives an empty list when hover clears. */

@@ -63,9 +63,10 @@ try {
         await assert.rejects(definePlotElement(), /browser custom-element registry/)
         await assert.rejects(definePlotSurfaceElement(), /browser custom-element registry/)
         const rows = [{x:1,y:2},{x:2,y:4},{x:3,y:3}]
-        for (const kind of ['scatter','bar','rect','line','rule','area','custom']) {
+        for (const kind of ['scatter','bar','rect','line','rule','area','error_bar','custom']) {
             const args = kind === 'bar' ? {data:[{x:'a',y:2},{x:'b',y:4}]} :
                 kind === 'rule' ? {x:2} : kind === 'custom' ? {data:rows,renderer(){}} :
+                kind === 'error_bar' ? {data:rows,y_error:0.5} :
                 kind === 'rect' ? {data:rows,size:8} : {data:rows}
             const controller = new plot.PlotController({series:[plot[kind](args)]})
             const composed = controller.compose({width:600,height:300,color_theme:'light',device_pixel_ratio:1})
@@ -194,7 +195,7 @@ try {
             getCanonicalFileName: name => name, getCurrentDirectory: () => sandbox, getNewLine: () => '\n',
         }))
     }
-    console.log('PASS: isolated ESM exports, seven factories, composition, interactions, SSR imports, CSS, private paths and Bundler/NodeNext consumer types')
+    console.log('PASS: isolated ESM exports, eight factories, composition, interactions, SSR imports, CSS, private paths and Bundler/NodeNext consumer types')
 } finally {
     await rm(sandbox, { recursive: true, force: true })
 }

@@ -3,6 +3,13 @@ import type { Series, ThemeColor } from "../types"
 // This file remaps band indices (if applicabble), drops rows with unknown categories, and strips
 // internal *_categories and *_axis_kind fields.
 
+// row-aligned numeric columns some kinds carry beyond x / y: an area band's second boundary, an error
+// bar's interval. They hold axis values rather than band indices, so a remap never rewrites them, but a
+// drop has to trim them alongside the rows they belong to.
+const BOUND_COLUMNS = ['x2', 'y2', 'low', 'high'] as const
+
+type BoundColumn = typeof BOUND_COLUMNS[number]
+
 /**
  * Remap each series' band indices to canonical order, drop unknown-category rows
  * @param input - the input series
@@ -51,8 +58,7 @@ function rebuild_series(
 type RemappedBuffers = {
     x: Float64Array
     y: Float64Array
-    x2?: Float64Array
-    y2?: Float64Array
+    bounds: Partial<Record<BoundColumn, Float64Array>>
     colors?: (ThemeColor | null)[]
     sizes?: (number | null)[]
     rows?: Record<string, unknown>[]
@@ -64,7 +70,7 @@ type RemappedBuffers = {
  * @param series_item - the source series
  * @param x_translation - x translation table, or null
  * @param y_translation - y translation table, or null
- * @returns the remapped x/y (and any x2/y2, colors, sizes, rows, labels) buffers
+ * @returns the remapped x/y (and any bound columns, colors, sizes, rows, labels) buffers
  */
 function remap_rows(
     series_item: Series,
@@ -79,10 +85,8 @@ function remap_rows(
     const input_sizes = series_item.kind === 'scatter' ? series_item.sizes : undefined
     const buffer_sizes = input_sizes !== undefined ? new Array<number | null>(length) : undefined
 
-    const input_x2 = 'x2' in series_item ? series_item.x2 : undefined
-    const input_y2 = 'y2' in series_item ? series_item.y2 : undefined
-    const buffer_x2 = input_x2 !== undefined ? new Float64Array(length) : undefined
-    const buffer_y2 = input_y2 !== undefined ? new Float64Array(length) : undefined
+    const input_bounds = BOUND_COLUMNS.map(name => bound_column(series_item, name))
+    const buffer_bounds = input_bounds.map(values => values === undefined ? undefined : new Float64Array(length))
 
     const input_rows = series_item.rows
     const buffer_rows = input_rows !== undefined ? new Array<Record<string, unknown>>(length) : undefined
@@ -110,12 +114,12 @@ function remap_rows(
             buffer_sizes[write_index] = input_sizes![row_index]
         }
 
-        if (buffer_x2 !== undefined) {
-            buffer_x2[write_index] = input_x2![row_index]
-        }
+        for (let bound = 0; bound < BOUND_COLUMNS.length; bound++) {
+            const buffer = buffer_bounds[bound]
 
-        if (buffer_y2 !== undefined) {
-            buffer_y2[write_index] = input_y2![row_index]
+            if (buffer !== undefined) {
+                buffer[write_index] = input_bounds[bound]![row_index]
+            }
         }
 
         if (buffer_rows !== undefined) {
@@ -129,9 +133,19 @@ function remap_rows(
     }
     // trim only when rows were dropped, otherwise pass the full buffer through
     const full = write_index === length
+    const bounds: Partial<Record<BoundColumn, Float64Array>> = {}
+
+    for (let bound = 0; bound < BOUND_COLUMNS.length; bound++) {
+        const buffer = buffer_bounds[bound]
+
+        if (buffer !== undefined) {
+            bounds[BOUND_COLUMNS[bound]] = full ? buffer : buffer.slice(0, write_index)
+        }
+    }
     const result: RemappedBuffers = {
         x: full ? buffer_x : buffer_x.slice(0, write_index),
         y: full ? buffer_y : buffer_y.slice(0, write_index),
+        bounds,
     }
 
     if (buffer_colors !== undefined) {
@@ -140,14 +154,6 @@ function remap_rows(
 
     if (buffer_sizes !== undefined) {
         result.sizes = full ? buffer_sizes : buffer_sizes.slice(0, write_index)
-    }
-
-    if (buffer_x2 !== undefined) {
-        result.x2 = full ? buffer_x2 : buffer_x2.slice(0, write_index)
-    }
-
-    if (buffer_y2 !== undefined) {
-        result.y2 = full ? buffer_y2 : buffer_y2.slice(0, write_index)
     }
 
     if (buffer_rows !== undefined) {
@@ -191,13 +197,8 @@ function assemble_output_series(series_item: Series, remapped: RemappedBuffers):
         }
     }
 
-    if ('x2' in output && remapped.x2 !== undefined) {
-        output.x2 = remapped.x2
-    }
-
-    if ('y2' in output && remapped.y2 !== undefined) {
-        output.y2 = remapped.y2
-    }
+    // every bound column the input carried, trimmed to the surviving rows
+    Object.assign(output, remapped.bounds)
 
     if (remapped.rows !== undefined) {
         output.rows = remapped.rows
@@ -207,4 +208,14 @@ function assemble_output_series(series_item: Series, remapped: RemappedBuffers):
         output.labels = remapped.labels
     }
     return output
+}
+
+/**
+ * One of a series' bound columns, when its kind carries that column.
+ * @param series_item - the series to read
+ * @param name - the bound column's field name
+ * @returns the column, or undefined when this kind has none
+ */
+function bound_column(series_item: Series, name: BoundColumn): Float64Array | undefined {
+    return (series_item as Partial<Record<BoundColumn, Float64Array>>)[name]
 }

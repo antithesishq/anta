@@ -35,3 +35,16 @@ export function xy_extent(series: XYColumns): { x: [number, number]; y: [number,
         y: array_extent(series.y),
     }
 }
+
+/**
+ * The extent covering two numeric columns, for a series whose axis carries more than one value per row
+ * (an area band's boundaries, an error bar's interval).
+ * @param first - one column's values
+ * @param second - the other column's values
+ * @returns the [min, max] spanning both
+ */
+export function merged_extent(first: Float64Array, second: Float64Array): [number, number] {
+    const [first_min, first_max] = array_extent(first)
+    const [second_min, second_max] = array_extent(second)
+    return [Math.min(first_min, second_min), Math.max(first_max, second_max)]
+}

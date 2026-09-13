@@ -2,6 +2,7 @@ import type { Series, SeriesType } from "./types"
 import { area_runtime } from "./series/area"
 import { bar_runtime } from "./series/bar"
 import { custom_runtime } from "./series/custom"
+import { error_bar_runtime } from "./series/error_bar"
 import { line_runtime } from "./series/line"
 import { rect_runtime } from "./series/rect"
 import { rule_runtime } from "./series/rule"
@@ -14,6 +15,7 @@ const SERIES_TYPES: Record<Series['kind'], SeriesType> = {
     line: line_runtime,
     rule: rule_runtime,
     area: area_runtime,
+    error_bar: error_bar_runtime,
     custom: custom_runtime,
 }
 

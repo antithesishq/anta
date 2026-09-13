@@ -2,7 +2,7 @@ import type { Scale } from "../types"
 import { pixel_resolver } from "./pixel_resolver"
 
 // floor on the hover radius, so a small mark keeps a forgiving hitbox even when drawn smaller than this
-const MIN_HIT_RADIUS = 8
+export const MIN_HIT_RADIUS = 8
 
 /**
  * The point under the cursor, or null: the nearest point whose distance is within its hit radius. Shared

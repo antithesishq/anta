@@ -1,5 +1,5 @@
 import { resolve_xy_columns, attach_resolved_columns, resolve_column, validate_field_present } from "../../template/column"
-import { array_extent } from "../../template/extent"
+import { array_extent, merged_extent } from "../../template/extent"
 import { validate_finite, validate_non_negative, validate_hoverable } from "../../template/validate"
 import { resolve_stroke } from "../../template/color"
 import type { AreaSeries, AxisContext, FieldArg, SelectFn, StrokeArg, ThemeColor, TooltipArg } from "../../types"
@@ -230,16 +230,4 @@ export function area_domain_extent(series: AreaSeries): { x: [number, number]; y
         x: array_extent(series.x),
         y: [Math.min(y_min, 0), Math.max(y_max, 0)],
     }
-}
-
-/**
- * The extent covering both of a band's boundary columns.
- * @param first - one boundary's values
- * @param second - the other boundary's values
- * @returns the [min, max] spanning both
- */
-function merged_extent(first: Float64Array, second: Float64Array): [number, number] {
-    const [first_min, first_max] = array_extent(first)
-    const [second_min, second_max] = array_extent(second)
-    return [Math.min(first_min, second_min), Math.max(first_max, second_max)]
 }

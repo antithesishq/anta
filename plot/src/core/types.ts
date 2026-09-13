@@ -21,7 +21,7 @@ export type SideMargins = {
 
 export type Margin = number | SideMargins
 
-type SeriesTypes = 'scatter' | 'rect' | 'bar' | 'line' | 'rule' | 'area' | 'custom'
+type SeriesTypes = 'scatter' | 'rect' | 'bar' | 'line' | 'rule' | 'area' | 'error_bar' | 'custom'
 
 type BaseSeries<TooltipContent = unknown> = {
     kind: SeriesTypes
@@ -115,6 +115,21 @@ export type AreaPixelRuns = {
     run_starts: Int32Array
 }
 
+export type ErrorBarSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
+    kind: 'error_bar'
+    // the axis the interval spans; x / y carry the center on both axes
+    side: 'x' | 'y'
+    low: Float64Array
+    high: Float64Array
+    mark?: MarkShape
+    size?: number
+    stroke?: Stroke
+    width?: number
+    // crossbar length in pixels at each end of the interval; 0 draws plain ends
+    cap?: number
+    connect?: boolean
+}
+
 export type CustomSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
     kind: 'custom'
     renderer: CustomRendererFn<TooltipContent>
@@ -129,6 +144,7 @@ export type Series<TooltipContent = unknown> =
     | LineSeries<TooltipContent>
     | RuleSeries<TooltipContent>
     | AreaSeries<TooltipContent>
+    | ErrorBarSeries<TooltipContent>
     | CustomSeries<TooltipContent>
 
 // color fields after compose resolves each ThemeColor to a concrete string for the current theme
@@ -148,6 +164,7 @@ export type ComposedBar<TooltipContent = unknown> = ReplaceKeys<BarSeries<Toolti
 export type ComposedLine<TooltipContent = unknown> = ReplaceKeys<LineSeries<TooltipContent>, ResolvedColorFields>
 export type ComposedRule<TooltipContent = unknown> = ReplaceKeys<RuleSeries<TooltipContent>, ResolvedColorFields>
 export type ComposedArea<TooltipContent = unknown> = ReplaceKeys<AreaSeries<TooltipContent>, ResolvedColorFields & { pixel_runs?: AreaPixelRuns }>
+export type ComposedErrorBar<TooltipContent = unknown> = ReplaceKeys<ErrorBarSeries<TooltipContent>, ResolvedColorFields>
 export type ComposedCustom<TooltipContent = unknown> = ReplaceKeys<CustomSeries<TooltipContent>, ResolvedColorFields>
 export type ComposedSeries<TooltipContent = unknown> =
     | ComposedScatter<TooltipContent>
@@ -156,6 +173,7 @@ export type ComposedSeries<TooltipContent = unknown> =
     | ComposedLine<TooltipContent>
     | ComposedRule<TooltipContent>
     | ComposedArea<TooltipContent>
+    | ComposedErrorBar<TooltipContent>
     | ComposedCustom<TooltipContent>
 
 export type AxisKind = 'numeric' | 'categorical'

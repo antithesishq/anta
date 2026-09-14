@@ -33,7 +33,7 @@ This installs `@antadesign/anta` as a dependency. React 18 or 19 is a peer depen
 
 ## Series types
 
-Explore the series below, then select a preview to see its options and examples.
+Select a series type below to see its options and examples.
 
 <PlotGallery>
   <PlotGalleryPreview example="scatter" />
@@ -462,7 +462,7 @@ in-place mutation is not observed.
 | [`chrome_color?`](#theme-colors) | `string \| { light, dark }` | Theme defaults | Color for axis lines, tick marks, grid lines, and the plot border. Text colors are configured separately. |
 | [`background?`](#theme-colors) | `boolean \| string \| { light, dark }` | White | Plot fill. `false` paints none; `true` and an absent value use `#fff`. |
 | [`theme_invert?`](#theme-colors) | `boolean` | Automatic | Forces dark-mode inversion on or off. Absent means invert unless a series color or the background is a `{ light, dark }` pair. |
-| [`zoom_pan?`](#zoom-and-pan) | `boolean \| { x?, y?, modifier? }` | Both axes, Ctrl required | Zoom and pan, on both axes and Ctrl-gated by default. `modifier: false` zooms on a bare wheel; opting both axes out is the same as `false`. |
+| [`zoom_pan?`](#zoom-and-pan) | `boolean \| { x?, y?, modifier? }` | Both axes, Ctrl required | Require Ctrl for zoom and pan by default. Set `modifier: false` to allow gestures without Ctrl. Set both axes to `false` to disable zoom and pan. |
 | [`viewport?`](#viewport) | `{ x?, y?, key? }` | Full domain | Requested starting window per axis. Applied at mount and on each `key` change, clamped to the full domain. |
 | [`on_viewport_change?`](#viewport-changes) | `(change: ViewportChange) => void` | None | Fires with each axis's current window and full extent after a gesture or reset. |
 
@@ -471,8 +471,8 @@ disappears once the view is back to its full extent.
 
 ### Axes
 
-`axis.x` and `axis.y` both accept `AxisArgs`. Configure them independently;
-fields you omit are inferred from the series or use the defaults below.
+`axis.x` and `axis.y` both accept `AxisArgs`. Configure them independently.
+Omitted fields are inferred from the series or use the documented defaults.
 [`ThemeColor`](#theme-colors) accepts a CSS color string or a `{ light, dark }` pair.
 
 | Field | Type | Default | Description |
@@ -499,13 +499,10 @@ A series describes a set of data and how to draw it. Pass one or more series
 in `plotArgs.series`; they are drawn in array order. Import the series
 functions from `@antadesign/plot`.
 
-Defaults below describe omitted fields, not the values chosen in the examples.
-[`FieldArg`](#data-fields) is a field name or `(row, index) => number | string` accessor.
-[`ThemeColor`](#theme-colors) is a CSS color string or `{ light, dark }` pair; [`ColorArg`](#series-colors)
-also accepts a per-row accessor. [`StrokeArg`](#strokes) is a color or `{ color, width }`.
-[`TooltipArg`](#tooltips) is `true` or a callback returning tooltip content, and [`SelectFn`](#selection-callbacks)
-receives the selected point. In React, custom tooltip content is a `ReactNode`.
-[`MarkShape`](#mark-shapes) is `'circle'`, `'square'`, `'diamond'`, or `'triangle'`.
+The default column describes omitted fields. Examples may override these defaults.
+See [Data fields](#data-fields), [Series colors](#series-colors), [Strokes](#strokes),
+and [Mark shapes](#mark-shapes) for shared configuration types.
+For callbacks, see [Tooltips](#tooltips) and [Selection callbacks](#selection-callbacks).
 
 #### Scatter
 
@@ -1271,7 +1268,7 @@ document.body.append(plot)
 
 <h5>Horizontal intervals</h5>
 
-Use x and x2 for horizontal bounds. The filled band shows how an interval shifts along the vertical axis.
+Use `x` and `x2` for horizontal bounds. The filled band shows how an interval shifts along the vertical axis.
 
 <Preview minHeight={308}>
   <PlotAreaPreview example="horizontal" />
@@ -1384,7 +1381,7 @@ intervals, regions, or cells in a grid.
 
 <h5>Categorical cells</h5>
 
-Combine two categorical axes to form a heatmap. Color each cell from its value and use inset to separate neighboring cells.
+Combine two categorical axes to form a heatmap. Color each cell from its value and use `inset` to separate neighboring cells.
 
 <Preview minHeight={308}>
   <PlotRectPreview example="heatmap" />
@@ -1436,7 +1433,7 @@ document.body.append(plot)
 
 <h5>Intervals with explicit bounds</h5>
 
-Set x and x2 to show durations within categorical rows. Each rectangle retains its start and end values as the plot resizes.
+Set `x` and `x2` to show durations within categorical rows. Each rectangle retains its start and end values as the plot resizes.
 
 <Preview minHeight={308}>
   <PlotRectPreview example="intervals" />
@@ -1490,7 +1487,7 @@ document.body.append(plot)
 
 <h5>Fixed pixel dimensions</h5>
 
-Set size to draw rectangles with a consistent width and height at numeric coordinates. An outline keeps nearby marks distinct.
+Set `size` to draw rectangles with a consistent width and height at numeric coordinates. An outline keeps nearby marks distinct.
 
 <Preview minHeight={308}>
   <PlotRectPreview example="sized" />
@@ -1711,7 +1708,7 @@ same series array as the data it annotates.
 
 <h5>Horizontal reference values</h5>
 
-Use numeric y values for reference lines without a data array. A thin dashed target and a thick solid upper limit show how width and dash patterns distinguish reference values.
+Use numeric `y` values for reference lines without a data array. A thin dashed target and a thick solid upper limit show how width and dash patterns distinguish reference values.
 
 <Preview minHeight={308}>
   <PlotRulePreview example="thresholds" />
@@ -1770,7 +1767,7 @@ document.body.append(plot)
 
 <h5>Vertical event markers</h5>
 
-Read x positions from data to mark events along a signal. A solid rule marks deployment; thinner dashed rules mark recovery events. Tooltips identify each event.
+Read `x` positions from data to mark events along a signal. A solid rule marks deployment; thinner dashed rules mark recovery events. Tooltips identify each event.
 
 <Preview minHeight={308}>
   <PlotRulePreview example="events" />
@@ -2404,7 +2401,7 @@ to declare bounds when they cannot be inferred from the data.
 
 ### Hover highlights
 
-Hover the translucent teal bars to see their color intensify. The purple bar sets `highlight: false`, so its appearance stays unchanged. The gray bar uses `hoverable: false`, so it does not participate in hit testing.
+Hover bars A through D to see their color intensify. Bar E sets `highlight: false`, so its appearance stays unchanged. Bar F uses `hoverable: false`, so it does not participate in hit testing.
 
 Hover feedback is temporary. For custom geometry, supply a [hit-testing callback](#custom-hit-testing).
 
@@ -2485,7 +2482,7 @@ type HitTest = (series: ComposedCustom, context: HitContext) => number | null
 
 ### Tooltips
 
-Hover a teal rectangle for the default tooltip, or a purple rectangle for custom content showing its bounds. Where the two series overlap, both tooltip entries appear together, separated by a divider. The tooltip follows the pointer.
+Hover a rectangle to inspect its data. The series with `tooltip: true` shows the default tooltip. The series with a tooltip callback shows custom content describing its bounds. Where the two series overlap, both tooltip entries appear together, separated by a divider. The tooltip follows the pointer.
 
 Use `tooltip: true` for default content, or return a DOM node from the standalone host’s callback. React callbacks can return JSX. Both receive the [tooltip and selection callback parameters](#tooltip-and-selection-callback-parameters). Omit `tooltip` to keep hover feedback without a tooltip. See [Tooltip content](#tooltip-content) for the callback types.
 
@@ -2566,7 +2563,7 @@ leaves the content type to the host.
 
 ### Selection
 
-Select a point to display its source data beneath the plot. `on_select` receives the selected point and its original row, so you can update a detail panel or application state.
+Select a point to display its source data in the preview’s text readout. `on_select` receives the selected point and its original row, so you can update a detail panel or application state.
 
 The callback does not create persistent selection styling. This preview keeps the last selected value in a text readout. See [Selection callbacks](#selection-callbacks) for the payload.
 
@@ -2837,9 +2834,9 @@ Setting both axes to `false` disables zoom and pan. Categorical axes do not zoom
 
 Use the buttons to focus on a range or restore the full extent. You can still zoom and pan horizontally with Ctrl after a button sets the view.
 
-`viewport` requests a window at mount and whenever its `key` changes. Increment the key to apply a request again, even after the user has moved elsewhere. Set an axis to `null` to restore its full extent; omit it to leave its window unchanged.
+Set `viewport` to control the visible range. Increment its `key` to apply a new request after the user zooms or pans. See [Viewport](#viewport) for initialization and reset behavior.
 
-`on_viewport_change` reports the visible and full ranges. Keep this notification separate from viewport requests to avoid reapplying the view on every gesture. See [Viewport](#viewport) and [Viewport changes](#viewport-changes).
+`on_viewport_change` reports the visible and full ranges. Keep this notification separate from viewport requests to avoid reapplying the view on every gesture. See [Viewport changes](#viewport-changes) for the callback parameters.
 
 <PlotInteractionExample>
 
@@ -3200,7 +3197,7 @@ grid lines, and the plot border, `background` for the fill, and each series' own
 Both take `{ light, dark }` pairs when a plot owns its theming; a plain
 string stays subject to dark-mode inversion.
 
-Set text colors separately with `title.color`, `axis.x.label.color` or
+Set text colors separately with `title.color`, `axis.x.label.color`, or
 `axis.y.label.color`, and `axis.x.tick_label.color` or `axis.y.tick_label.color`.
 
 `plot.css` supplies standalone `a-plot` sizing, including for the React host.
@@ -3210,8 +3207,8 @@ and falls back to `300px` tall rather than following the container's
 height, because a canvas host inside a container with no definite height
 measures zero. `300px` is a fallback, not a minimum.
 
-Two ways to change that. CSS on the element wins outright, since the
-package rule sits in `:where()` and carries no specificity:
+Set the plot size with CSS. The package sizing rule uses `:where()` with
+zero specificity, so your selector overrides it:
 
 ```css folded
 .dashboard-chart {
@@ -3225,11 +3222,11 @@ package rule sits in `:where()` and carries no specificity:
 <Plot plotArgs={plotArgs} className="dashboard-chart" />
 ```
 
-Or pass `width` / `height`, which land as inline styles on the host and
-override the stylesheet. The previous inline value is saved and restored,
-so dropping an argument returns the plot to your CSS.
+Alternatively, pass `width` and `height` to set inline styles on the host.
+These override stylesheet rules. Removing an argument restores the previous
+inline value, allowing stylesheet rules to apply when no inline value remains.
 
-Tooltip content is yours: return a `ReactNode` from a series' [`tooltip`](#tooltips)
+With the React host, return a `ReactNode` from a series' [`tooltip`](#tooltips)
 and style it like any other markup. The reset control is an Anta
 `Button`, so it follows the app's theme with no plot-specific override.
 

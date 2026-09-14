@@ -1,0 +1,31 @@
+---
+interface Props { composed?: boolean }
+const { composed = false } = Astro.props
+---
+<div class:list={["plot-gallery", { composed }]}>
+  <slot />
+</div>
+
+<style>
+  .plot-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 12px;
+    margin-block: 24px;
+  }
+  .plot-gallery.composed {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 452px), 1fr));
+  }
+  .plot-gallery :global(.plot-gallery-card) {
+    min-width: 0;
+  }
+
+  .plot-gallery :global(.plot-gallery-card > .plot-gallery-preview) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .plot-gallery :global(.plot-gallery-card > .expressive-code) {
+    margin-block: 0;
+  }
+</style>

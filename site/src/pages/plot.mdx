@@ -3,6 +3,8 @@ layout: ../layouts/DocsLayout.astro
 title: Plot
 ---
 import Disclosure from '../components/Disclosure.astro'
+import PlotGalleryPreview from '../components/PlotGalleryPreview.astro'
+import PlotGallery from '../components/PlotGallery.astro'
 import Preview from '../components/Preview.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
@@ -28,6 +30,340 @@ npm install @antadesign/plot   # or pnpm / bun
 ```
 
 This installs `@antadesign/anta` as a dependency. React 18 or 19 is a peer dependency.
+
+## Series types
+
+Explore the series below, then select a preview to see its options and examples.
+
+<PlotGallery>
+  <PlotGalleryPreview example="scatter" />
+  <PlotGalleryPreview example="line" />
+  <PlotGalleryPreview example="bar" />
+  <PlotGalleryPreview example="stacked" />
+  <PlotGalleryPreview example="area" />
+  <PlotGalleryPreview example="rect" />
+  <PlotGalleryPreview example="rule" />
+  <PlotGalleryPreview example="custom" />
+</PlotGallery>
+
+## Composed examples
+
+Combine multiple series in one plot to compare values, show trends, and add context.
+
+<PlotGallery composed>
+<div class="plot-gallery-card">
+  <PlotGalleryPreview example="overview" />
+
+```ts folded
+import { area, line, rule, scatter, type PlotArgs, type Series } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function overviewExample(): PlotArgs<Node> {
+  // Synthetic data, sampled every 15 minutes. No randomness: edits keep the same data.
+  const forecast = Array.from({ length: 97 }, (_, i) => {
+    const hour = i / 4
+    const morning = 150 * Math.exp(-(((hour - 9) / 2.8) ** 2))
+    const evening = 240 * Math.exp(-(((hour - 17) / 3.4) ** 2))
+    const expected = 85 + morning + evening
+    const spread = 22 + 12 * Math.sin(hour / 5) ** 2
+    return { hour, expected, low: expected - spread, high: expected + spread }
+  })
+
+  const observations = forecast.map((point, i) => {
+    const burst = i >= 61 && i <= 68 ? 65 * Math.sin((i - 60) / 9 * Math.PI) : 0
+    const actual = Math.round(point.expected + 13 * Math.sin(i * 1.8) + 8 * Math.cos(i * 0.7) + burst)
+    return { ...point, actual, outside: actual > point.high || actual < point.low }
+  })
+
+  const trend = observations.map((point, i) => {
+    const window = observations.slice(Math.max(0, i - 3), Math.min(observations.length, i + 4))
+    return { hour: point.hour, average: window.reduce((sum, row) => sum + row.actual, 0) / window.length }
+  })
+
+  const meanExpected = forecast.reduce((sum, point) => sum + point.expected, 0) / forecast.length
+
+  const series: Series<Node>[] = [
+    area<Node>({
+      data: forecast,
+      x: 'hour',
+      y: 'high',
+      y2: 'low',
+      color: { light: '#ede9fe', dark: '#30274e' },
+      hoverable: false,
+    }),
+    rule<Node>({
+      y: meanExpected,
+      color: { light: '#d97706', dark: '#fbbf24' },
+      width: 2,
+      dash: [8, 4],
+      hoverable: false,
+    }),
+    line<Node>({
+      data: forecast,
+      x: 'hour',
+      y: 'expected',
+      color: { light: '#8b5cf6', dark: '#c4b5fd' },
+      width: 2,
+      dash: [5, 5],
+      tooltip: ({ x, y }) => document.createTextNode('Forecast at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s'),
+    }),
+    line<Node>({
+      data: trend,
+      x: 'hour',
+      y: 'average',
+      color: { light: '#0891b2', dark: '#67e8f9' },
+      width: 3,
+      tooltip: ({ x, y }) => document.createTextNode('Trend at ' + x + 'h: ' + Math.round(Number(y)) + ' requests/s'),
+    }),
+    scatter<Node>({
+      data: observations.filter(point => !point.outside),
+      x: 'hour',
+      y: 'actual',
+      color: { light: '#0891b2', dark: '#67e8f9' },
+      size: 4,
+      tooltip: ({ x, y }) => document.createTextNode('Observed at ' + x + 'h: ' + y + ' requests/s'),
+    }),
+    scatter<Node>({
+      data: observations.filter(point => point.outside),
+      x: 'hour',
+      y: 'actual',
+      color: { light: '#e76f51', dark: '#fda489' },
+      mark: 'diamond',
+      size: 9,
+      stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1 },
+      tooltip: ({ x, y }) => document.createTextNode('Outside forecast range: ' + x + 'h · ' + y + ' requests/s'),
+    }),
+  ]
+
+  const options = {
+
+    height: 400,
+    border: false,
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    background: { light: '#ffffff', dark: '#151b28' },
+    theme_invert: false,
+  }
+
+  const axis = {
+
+    x: { min: 0, max: 24, label: 'Hour' },
+
+    y: { min: 0, max: 440, label: 'Requests/s' },
+
+  }
+
+  const margin = 12
+
+  const grid = false
+
+  const zoom_pan = { x: true, y: true, modifier: false }
+
+  // Replace the object to apply a change; Plot does not observe in-place mutation.
+  const plotArgs: PlotArgs<Node> = { ...options, series, axis, margin, grid, zoom_pan }
+
+  return plotArgs
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+const args = overviewExample()
+plot.plotArgs = {
+  ...args,
+  height: 280,
+  margin: { top: 12, right: 16, bottom: 42, left: 74 },
+  zoom_pan: false,
+  series: args.series.map(series => ({ ...series, hoverable: false })),
+}
+document.body.append(plot)
+```
+
+</div>
+
+<div class="plot-gallery-card">
+  <PlotGalleryPreview example="energy" />
+
+```ts folded
+import { bar, scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function energyExample(): PlotArgs<Node> {
+  const data = [
+    { x: 'A', solar: 28, wind: 35, demand: 72 },
+    { x: 'B', solar: 48, wind: 18, demand: 54 },
+    { x: 'C', solar: 19, wind: 25, demand: 62 },
+    { x: 'D', solar: 36, wind: 42, demand: 69 },
+    { x: 'E', solar: 52, wind: 12, demand: 78 },
+    { x: 'F', solar: 24, wind: 30, demand: 46 },
+    { x: 'G', solar: 41, wind: 28, demand: 58 },
+    { x: 'H', solar: 16, wind: 22, demand: 51 },
+  ]
+  return {
+    series: [
+      bar<Node>({ data, y: ['solar', 'wind'],
+        color: [{ light: '#fbbf24', dark: '#d97706' }, { light: '#2dd4bf', dark: '#0d9488' }],
+        inset: 5, border_radius: 3 }),
+      scatter<Node>({ data, y: 'demand', mark: 'diamond', size: 7,
+        color: { light: '#7c3aed', dark: '#c4b5fd' },
+        stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 } }),
+    ],
+    axis: { x: { label: 'Site' }, y: { min: 0, max: 90, label: 'Power (kW)' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    border: false,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+const args = energyExample()
+plot.plotArgs = {
+  ...args,
+  height: 280,
+  margin: { top: 12, right: 16, bottom: 42, left: 58 },
+  zoom_pan: false,
+  series: args.series.map(series => ({ ...series, hoverable: false })),
+}
+document.body.append(plot)
+```
+
+</div>
+<div class="plot-gallery-card">
+  <PlotGalleryPreview example="latency" />
+
+```ts folded
+import { area, rect, line, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function latencyExample(): PlotArgs<Node> {
+  const density = (x: number) => 48 * Math.exp(-(((x - 65) / 24) ** 2))
+    + 19 * Math.exp(-(((x - 135) / 38) ** 2))
+  const bins = Array.from({ length: 24 }, (_, i) => {
+    const x = i * 10
+    return { x: x + 1, x2: x + 9, y: density(x + 5) * (0.8 + 0.3 * Math.sin(i * 2.3) ** 2), y2: 0 }
+  })
+  const curve = Array.from({ length: 121 }, (_, i) => ({ x: i * 2, y: density(i * 2) }))
+  return {
+    series: [
+      area<Node>({ data: curve, y2: 0, color: { light: '#fce7f3', dark: '#452039' } }),
+      rect<Node>({ data: bins, color: { light: '#f472b6', dark: '#be185d' } }),
+      line<Node>({ data: curve, color: { light: '#9d174d', dark: '#fbcfe8' }, width: 2.5 }),
+
+    ],
+    axis: { x: { min: 0, max: 240, label: 'Latency (ms)' }, y: { min: 0, max: 60, label: 'Requests' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    border: false,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+const args = latencyExample()
+plot.plotArgs = {
+  ...args,
+  height: 280,
+  margin: { top: 12, right: 16, bottom: 42, left: 58 },
+  zoom_pan: false,
+  series: args.series.map(series => ({ ...series, hoverable: false })),
+}
+document.body.append(plot)
+```
+
+</div>
+
+<div class="plot-gallery-card">
+  <PlotGalleryPreview example="mixed" />
+
+```ts folded
+import { area, rect, line, scatter, rule, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function mixedExample(): PlotArgs<Node> {
+  const points = [
+    { x: 12, y: 74 }, { x: 25, y: 57 }, { x: 39, y: 85 }, { x: 48, y: 18 },
+    { x: 62, y: 70 }, { x: 73, y: 37 }, { x: 86.5, y: 86 }, { x: 92, y: 22 },
+    { x: 15, y: 27 }, { x: 36, y: 64 }, { x: 57, y: 88 },
+  ]
+  const paths = [
+    [
+      { x: 25, y: 0 }, { x: 36, y: 19 }, { x: 41, y: 15 }, { x: 56, y: 37 },
+      { x: 65, y: 23 }, { x: 72, y: 48 }, { x: 76, y: 44 }, { x: 93, y: 63 }, { x: 100, y: 68 },
+    ],
+    [
+      { x: 0, y: 73 }, { x: 9, y: 87 }, { x: 13, y: 84 }, { x: 20, y: 92 },
+      { x: 29, y: 79 }, { x: 39, y: 96 }, { x: 42, y: 93 }, { x: 48, y: 100 },
+    ],
+  ]
+  // Sample cosine transitions to round each turn without changing its height.
+  const smoothPaths = paths.map(path => path.flatMap((point, i) => {
+    const next = path[i + 1]
+    if (!next) return [point]
+    return Array.from({ length: 16 }, (_, j) => {
+      const t = j / 16
+      const blend = (1 - Math.cos(Math.PI * t)) / 2
+      return { x: point.x + (next.x - point.x) * t, y: point.y + (next.y - point.y) * blend }
+    })
+  }))
+  const colors = [
+    { light: '#7c3aed', dark: '#c4b5fd' },
+    { light: '#e11d48', dark: '#fda4af' },
+    { light: '#0284c7', dark: '#7dd3fc' },
+    { light: '#d97706', dark: '#fcd34d' },
+  ]
+  return {
+    series: [
+      area<Node>({ data: Array.from({ length: 81 }, (_, i) => {
+        const x = i * 1.25
+        const center = 50 + 7 * Math.sin(i / 9) + 3 * Math.cos(i / 4)
+        const spread = 3 + 1.5 * Math.sin(i / 11) ** 2
+        return { x, y: center + spread, y2: center - spread }
+      }), color: { light: '#99f6e4', dark: '#115e59' },
+        stroke: { color: { light: '#14b8a6', dark: '#5eead4' }, width: 1 } }),
+      ...points.map((point, i) => scatter<Node>({ data: [point], size: [7, 12, 21, 10, 15, 9, 26, 13, 11, 8, 14][i],
+        mark: 'circle', color: colors[i % colors.length],
+        stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 } })),
+      rect<Node>({ data: [{ x: 32, x2: 44, y: 31, y2: 47 }],
+        color: { light: '#ddd6fe', dark: '#5b21b6' },
+        stroke: { color: { light: '#8b5cf6', dark: '#c4b5fd' }, width: 1.5 } }),
+      rect<Node>({ data: [{ x: 76, x2: 97, y: 76, y2: 96 }],
+        color: { light: 'rgba(254, 215, 170, 0.55)', dark: 'rgba(154, 52, 18, 0.55)' },
+        stroke: { color: { light: '#f97316', dark: '#fdba74' }, width: 1.5 } }),
+      ...smoothPaths.map((data, i) => line<Node>({ data, width: 2.5, dash: i === 1 ? [7, 5] : [],
+        color: i % 2 === 0 ? { light: '#0d9488', dark: '#5eead4' }
+          : { light: '#f97316', dark: '#fdba74' },
+      })),
+
+      rule<Node>({ y: 10, color: { light: '#0284c7', dark: '#7dd3fc' }, width: 1.5, dash: [6, 4] }),
+    ],
+    axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    border: false,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+const args = mixedExample()
+plot.plotArgs = {
+  ...args,
+  height: 280,
+  margin: { top: 12, right: 16, bottom: 42, left: 58 },
+  zoom_pan: false,
+  series: args.series.map(series => ({ ...series, hoverable: false })),
+}
+document.body.append(plot)
+```
+
+</div>
+</PlotGallery>
 
 <Disclosure title="Install">
 
@@ -71,7 +407,7 @@ renders the reset control on its own.
 
 | Import | Contents |
 |---|---|
-| `@antadesign/plot/react` | The React `Plot` component, `PlotProps`, and `ReactPlotError`. Mounts `<a-plot>` after commit and keeps tooltip nodes under React ownership. React is a peer. |
+| `@antadesign/plot/react` | The React `Plot` component and `PlotProps`. Mounts `<a-plot>` after commit and keeps tooltip nodes under React ownership. React is a peer. |
 | `@antadesign/plot/browser` | `definePlotElement()` for explicit registration, plus the same seven factories typed for DOM `Node` tooltips instead of a framework's nodes. |
 | `@antadesign/plot/auto` | The same registration as a side effect, with a `plotElementReady` promise. Browser only. |
 
@@ -106,24 +442,12 @@ host, keep custom-element registration on the browser side.
 
 </Disclosure>
 
-## Props
-
-`Plot` takes one complete configuration object and ordinary div attributes.
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| [`plotArgs`](#plot-arguments) | `PlotArgs<ReactNode>` | Required | The whole plot: series, axes, and presentation. Replace the object to apply a change; in-place mutation is not observed. |
-| `onError?` | `(failure: ReactPlotError) => void` | `console.warn` | Receives registration, configuration, composition, and drawing failures. Defaults to `console.warn`. |
-
-Inherited props (`className`, `style`, `aria-label`, and the rest of
-`HTMLAttributes<HTMLDivElement>` except `children`).
-
-Tooltip content is a `ReactNode` rendered through a portal, so it keeps
-React ownership and context.
-
 ## Plot arguments
 
-`PlotArgs` is the single object every host accepts.
+`PlotArgs` configures the whole plot: its series, axes, and presentation. Pass it
+as the required `plotArgs` prop to `<Plot plotArgs={plotArgs} />`, or assign it to
+the `plotArgs` property on `<a-plot>`. Replace the object to apply changes;
+in-place mutation is not observed.
 
 | Field | Type | Default | Description |
 |---|---|---|---|

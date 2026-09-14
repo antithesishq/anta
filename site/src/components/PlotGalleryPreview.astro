@@ -1,0 +1,76 @@
+---
+interface Props {
+  example: 'latency' | 'mixed' | 'energy' | 'overview' | 'scatter' | 'line' | 'bar' | 'stacked' | 'area' | 'rect' | 'rule' | 'custom'
+}
+const { example } = Astro.props
+const composed = ['overview', 'energy', 'latency', 'mixed'].includes(example)
+const Tag = composed ? 'div' : 'a'
+const target = example === 'overview' ? 'series' : example === 'stacked' ? 'stacked-bars' : example
+const compositionLabels = { overview: 'Request volume', energy: 'Generation and demand by site',
+  latency: 'Latency distribution', mixed: 'Mixed series composition' }
+const label = composed ? compositionLabels[example as keyof typeof compositionLabels] : 'Explore ' + (example === 'stacked' ? 'stacked bars' : example) + ' series'
+---
+
+<Tag class:list={["plot-gallery-preview", { composed }]} data-plot-gallery={example} href={composed ? undefined : `#${target}`} aria-label={label}>
+  <a-plot aria-hidden="true" inert></a-plot>
+</Tag>
+
+<script>
+  import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+  import '@antadesign/plot/plot.css'
+  import { galleryExamples, galleryLabel } from './plot-gallery-examples'
+
+  const ready = definePlotElement()
+  const mounted = new WeakSet<APlotElement>()
+
+  async function mountExamples() {
+    await ready
+    for (const wrapper of document.querySelectorAll<HTMLElement>('[data-plot-gallery]')) {
+      const plot = wrapper.querySelector<APlotElement>('a-plot')!
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = wrapper.dataset.plotGallery as keyof typeof galleryExamples
+      const args = galleryExamples[example]()
+      const composed = ['overview', 'energy', 'latency', 'mixed'].includes(example)
+      const titles = { latency: 'Latency distribution', mixed: 'Mixed series composition', overview: 'Request volume', energy: 'Solar generation & demand', scatter: 'Scatter', line: 'Line', bar: 'Bar',
+        stacked: 'Stacked bars', area: 'Area', rect: 'Rect', rule: 'Rule', custom: 'Custom' }
+      plot.plotArgs = {
+        ...args,
+        height: composed ? 280 : 160,
+        margin: composed ? { top: 12, right: 16, bottom: 42, left: example === 'overview' ? 74 : 58 } : 8,
+        zoom_pan: false,
+        series: [
+          ...args.series.map(series => ({ ...series, hoverable: false })),
+          ...(composed ? [] : [galleryLabel(titles[example])]),
+        ],
+      }
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  .plot-gallery-preview {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--border-5);
+    border-radius: 6px;
+  }
+
+  .plot-gallery-preview:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+
+  .composed a-plot { height: 280px; }
+
+  a-plot {
+    display: block;
+    width: 100%;
+    height: 160px;
+    pointer-events: none;
+  }
+</style>

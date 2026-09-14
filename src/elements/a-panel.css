@@ -1,0 +1,7 @@
+@layer anta.components {
+  a-panel {
+    display: block;
+    min-width: 0;
+    min-height: 0;
+  }
+}

@@ -82,6 +82,7 @@
   "dependencies": {
     "clsx": "^2.1.0",
     "es-toolkit": "1.47.0",
+    "tabbable": "^6.5.0",
     "temporal-polyfill": "^1.0.1"
   },
   "peerDependencies": {

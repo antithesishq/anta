@@ -294,6 +294,16 @@ export interface ATextAttributes extends BaseAttributes {
   'aria-expanded'?: boolean | 'true' | 'false'
 }
 
+/** Panel presentation state. Normal panels remain visible in their parent layout. */
+export type PanelState = 'normal' | 'maximized'
+
+/** Attributes for the persistent viewport-capable container. */
+export interface APanelAttributes extends BaseAttributes {
+  state?: PanelState
+  'default-state'?: PanelState
+  onstatechange?: (event: CustomEvent<{ next: PanelState; prev: PanelState }> | { nativeEvent: CustomEvent<{ next: PanelState; prev: PanelState }> }) => void
+}
+
 /** Attributes for the opt-in light-DOM capture surface. */
 export interface ACaptureAttributes extends BaseAttributes {
   /** Space-separated accepted wheel directions. Bare means all; `none` preserves settling while declining input. */

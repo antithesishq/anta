@@ -50,6 +50,7 @@ Anta is designed for a clean DOM. Prefer the props and attributes exposed by eac
 
 - [Box](./components/box.md)
 - [Capture](./components/capture.md)
+- [Panel](./components/panel.md)
 
 ## Packages
 

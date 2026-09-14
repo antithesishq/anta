@@ -3,6 +3,14 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- Panel is a persistent container that can maximize to the browser viewport
+  through a manual popover while keeping its DOM children mounted. Maximized
+  panels contain keyboard focus until restored.
+
 ## 0.3.28 — September 10, 2026
 
 ### Changed

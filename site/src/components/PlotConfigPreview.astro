@@ -1,0 +1,42 @@
+---
+interface Props {
+  example: 'presentation' | 'spacing' | 'logarithmic' | 'timeAxis'
+}
+const { example } = Astro.props
+---
+
+<a-plot
+  data-config-example={example}
+  aria-label={{ presentation: 'Plot title and grid', spacing: 'Scatter plot with border and generous margins', logarithmic: 'Batch duration on a logarithmic scale', timeAxis: 'Utilization over one day in UTC' }[example]}
+></a-plot>
+
+<script>
+  import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+  import '@antadesign/plot/plot.css'
+  import { configExamples } from './plot-config-examples'
+
+  const ready = definePlotElement()
+  const mounted = new WeakSet<APlotElement>()
+
+  async function mountExamples() {
+    await ready
+    for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-config-example]')) {
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = plot.dataset.configExample as keyof typeof configExamples
+      plot.plotArgs = configExamples[example]()
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  a-plot {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 260px;
+  }
+</style>

@@ -411,6 +411,77 @@ as the required `plotArgs` prop to `<Plot plotArgs={plotArgs} />`, or assign it 
 the `plotArgs` property on `<a-plot>`. Replace the object to apply changes;
 in-place mutation is not observed.
 
+Title, background, and grid
+
+Set a title, reserve space with `margin`, and style the plot background and horizontal grid lines.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+const examplePoints = [
+  { x: 8, y: 14 }, { x: 36, y: 40 }, { x: 52, y: 32 },
+  { x: 44, y: 59 }, { x: 64, y: 54 }, { x: 92, y: 86 },
+]
+
+function presentation(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: examplePoints, size: 3,
+      color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    title: { text: 'Plot title', size: 16, color: { light: '#374151', dark: '#e5e7eb' } },
+    height: 260,
+    margin: { top: 38, right: 16, bottom: 42, left: 52 },
+    background: { light: '#f3f4f6', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    grid: { x: false, y: true },
+    border: true,
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = presentation()
+document.body.append(plot)
+```
+
+Border and spacing
+
+Set `border: true` and `grid: false` to frame the plot without grid lines. Use `margin` to reserve space around the axes and their labels.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+const examplePoints = [
+  { x: 8, y: 14 }, { x: 36, y: 40 }, { x: 52, y: 32 },
+  { x: 44, y: 59 }, { x: 64, y: 54 }, { x: 92, y: 86 },
+]
+
+function spacing(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: examplePoints, size: 3,
+      color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 40, right: 40, bottom: 68, left: 88 },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = spacing()
+document.body.append(plot)
+```
+
 | Field | Type | Default | Description |
 |---|---|---|---|
 | [`series`](#series) | `Series[]` | Required | What to draw, in paint order. Build each one with a factory. |
@@ -436,6 +507,88 @@ disappears once the view is back to its full extent.
 `axis.x` and `axis.y` both accept `AxisArgs`. Configure them independently.
 Omitted fields are inferred from the series or use the documented defaults.
 [`ThemeColor`](#theme-colors) accepts a CSS color string or a `{ light, dark }` pair.
+
+Logarithmic scale
+
+Use a logarithmic axis to compare values across orders of magnitude. Format large tick values with a `k` suffix.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+const examplePoints = [
+  { x: 8, y: 14 }, { x: 36, y: 40 }, { x: 52, y: 32 },
+  { x: 44, y: 59 }, { x: 64, y: 54 }, { x: 92, y: 86 },
+]
+
+function logarithmic(): PlotArgs<Node> {
+  const data = examplePoints.map(({ x, y }) => ({ x, y: 10 ** (y / 20 - 1) }))
+  return {
+    series: [scatter<Node>({ data, size: 3,
+      color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 12, right: 14, bottom: 44, left: 80 },
+    axis: {
+      x: { min: 0, max: 100, label: 'Batch' },
+      y: { scale: 'log', min: 0.1, max: 10000, label: 'Duration (ms)',
+        tick_label: { format: value => Number(value) >= 1000 ? Number(value) / 1000 + 'k' : String(value) } },
+    },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: { x: false, y: true },
+    border: true,
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = logarithmic()
+document.body.append(plot)
+```
+
+Time and tick formatting
+
+Plot timestamps on a UTC axis and format the horizontal ticks as hours and minutes. Add a percent suffix to the vertical ticks.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+const examplePoints = [
+  { x: 8, y: 14 }, { x: 36, y: 40 }, { x: 52, y: 32 },
+  { x: 44, y: 59 }, { x: 64, y: 54 }, { x: 92, y: 86 },
+]
+
+function timeAxis(): PlotArgs<Node> {
+  const start = Date.UTC(2026, 0, 12)
+  const data = examplePoints.map(({ x, y }) => ({ x: start + x / 100 * 86400000, y }))
+  return {
+    series: [scatter<Node>({ data, size: 3,
+      color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 12, right: 16, bottom: 44, left: 76 },
+    axis: {
+      x: { scale: 'utc', min: start, max: start + 86400000, label: 'Time (UTC)', padding: 8,
+        tick_label: { format: value => new Date(Number(value)).toISOString().slice(11, 16) } },
+      y: { min: 0, max: 100, label: 'Utilization', tick_mark: false,
+        tick_label: { format: value => value + '%' } },
+    },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: { x: true, y: false },
+    border: true,
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = timeAxis()
+document.body.append(plot)
+```
 
 | Field | Type | Default | Description |
 |---|---|---|---|
@@ -818,51 +971,6 @@ plot.plotArgs = {
 document.body.append(plot)
 ```
 
-Stacked values
-
-Pass multiple value fields to stack them within each category. Colors follow the field order; hover a segment to see its contribution.
-
-```ts
-import { bar, definePlotElement, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/plot.css'
-
-await definePlotElement()
-const plot = document.createElement('a-plot') as APlotElement
-
-const data = [
-  { day: 'Mon', network: 18, compute: 42, storage: 24 },
-  { day: 'Tue', network: 24, compute: 32, storage: 18 },
-  { day: 'Wed', network: 12, compute: 56, storage: 28 },
-  { day: 'Thu', network: 28, compute: 24, storage: 16 },
-  { day: 'Fri', network: 16, compute: 48, storage: 22 },
-]
-
-plot.plotArgs = {
-  series: [bar<Node>({
-    data,
-    x: 'day',
-    y: ['network', 'compute', 'storage'],
-    color: [
-      { light: '#0d9488', dark: '#5eead4' },
-      { light: '#6366f1', dark: '#a5b4fc' },
-      { light: '#d97706', dark: '#fcd34d' },
-    ],
-    inset: 8,
-    tooltip: ({ label, y }) => document.createTextNode(label + ': ' + y + ' ms'),
-  })],
-  height: 260,
-  margin: { top: 5, right: 8, bottom: 20, left: 30 },
-  axis: { x: { label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: { x: false, y: true },
-  border: false,
-  zoom_pan: false,
-}
-
-document.body.append(plot)
-```
-
 Positive and negative values
 
 Bars extend from zero in either direction. Use a color accessor to distinguish monthly gains from losses.
@@ -909,6 +1017,45 @@ plot.plotArgs = {
 document.body.append(plot)
 ```
 
+Custom category order
+
+Set `axis.x.categories` to order bars by severity, independently of the source row order.
+
+```ts
+import { bar, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function categoryOrder(): PlotArgs<Node> {
+  const data = [
+    { severity: 'High', count: 28 }, { severity: 'Low', count: 46 },
+    { severity: 'Critical', count: 12 }, { severity: 'Medium', count: 35 },
+  ]
+  return {
+    series: [bar<Node>({ data, x: 'severity', y: 'count', inset: 10, border_radius: 3,
+      color: { light: '#64748b', dark: '#94a3b8' },
+      tooltip: ({ x, y }) => document.createTextNode(x + ': ' + y + ' issues'),
+    })],
+    height: 260,
+    margin: { top: 5, right: 12, bottom: 24, left: 30 },
+    axis: {
+      x: { categories: ['Critical', 'High', 'Medium', 'Low'], label: '' },
+      y: { min: 0, max: 50, label: '' },
+    },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: { x: false, y: true },
+    border: false,
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = categoryOrder()
+document.body.append(plot)
+```
+
 Bar arguments
 
 | Field | Type | Default | Description |
@@ -952,6 +1099,199 @@ const series = [bar({
 Pass an array of value-field names to stack them within each category.
 Use `y` for vertical stacks or `x` for horizontal stacks. An array of
 colors assigns one color to each field, in the same order.
+
+Stacked values
+
+Pass multiple value fields to stack them within each category. Colors follow the field order; hover a segment to see its contribution.
+
+```ts
+import { bar, definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+
+const data = [
+  { day: 'Mon', network: 18, compute: 42, storage: 24 },
+  { day: 'Tue', network: 24, compute: 32, storage: 18 },
+  { day: 'Wed', network: 12, compute: 56, storage: 28 },
+  { day: 'Thu', network: 28, compute: 24, storage: 16 },
+  { day: 'Fri', network: 16, compute: 48, storage: 22 },
+]
+
+plot.plotArgs = {
+  series: [bar<Node>({
+    data,
+    x: 'day',
+    y: ['network', 'compute', 'storage'],
+    color: [
+      { light: '#0d9488', dark: '#5eead4' },
+      { light: '#6366f1', dark: '#a5b4fc' },
+      { light: '#d97706', dark: '#fcd34d' },
+    ],
+    inset: 8,
+    tooltip: ({ label, y }) => document.createTextNode(label + ': ' + y + ' ms'),
+  })],
+  height: 260,
+  margin: { top: 5, right: 8, bottom: 20, left: 30 },
+  axis: { x: { label: '' }, y: { min: 0, max: 100, label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  grid: { x: false, y: true },
+  border: false,
+  zoom_pan: false,
+}
+
+document.body.append(plot)
+```
+
+Horizontal stacks
+
+Pass multiple fields to `x` and categories to `y` to compare contributions across services.
+
+```ts
+import { bar, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function stackedHorizontal(): PlotArgs<Node> {
+  const data = [
+    { service: 'Search', network: 18, compute: 46, storage: 14 },
+    { service: 'Feed', network: 26, compute: 28, storage: 22 },
+    { service: 'Upload', network: 42, compute: 16, storage: 32 },
+    { service: 'Export', network: 12, compute: 36, storage: 18 },
+  ]
+  return {
+    series: [bar<Node>({ data, x: ['network', 'compute', 'storage'], y: 'service',
+      color: [
+        { light: '#0d9488', dark: '#5eead4' },
+        { light: '#6366f1', dark: '#a5b4fc' },
+        { light: '#d97706', dark: '#fcd34d' },
+      ],
+      inset: 8, border_radius: 3,
+      tooltip: ({ label, x }) => document.createTextNode(label + ': ' + x + ' ms'),
+    })],
+    height: 260,
+    margin: { top: 5, right: 8, bottom: 20, left: 64 },
+    axis: { x: { min: 0, max: 100, label: '' }, y: { label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: { x: true, y: false },
+    border: false,
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = stackedHorizontal()
+document.body.append(plot)
+```
+
+Positive and negative stacks
+
+Positive and negative values stack separately from zero. Each segment retains its sign and field label.
+
+```ts
+import { bar, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function stackedDiverging(): PlotArgs<Node> {
+  const data = [
+    { month: 'Jan', new: 28, expansion: 12, churn: -14, contraction: -6 },
+    { month: 'Feb', new: 18, expansion: 8, churn: -22, contraction: -10 },
+    { month: 'Mar', new: 36, expansion: 16, churn: -8, contraction: -4 },
+    { month: 'Apr', new: 24, expansion: 18, churn: -18, contraction: -12 },
+    { month: 'May', new: 32, expansion: 10, churn: -12, contraction: -8 },
+  ]
+  return {
+    series: [bar<Node>({ data, x: 'month', y: ['new', 'expansion', 'churn', 'contraction'],
+      color: [
+        { light: '#0d9488', dark: '#2dd4bf' },
+        { light: '#5eead4', dark: '#99f6e4' },
+        { light: '#ea580c', dark: '#fb923c' },
+        { light: '#fdba74', dark: '#fed7aa' },
+      ],
+      inset: 7,
+      tooltip: ({ label, y }) => document.createTextNode(label + ': ' + (Number(y) > 0 ? '+' : '') + y),
+    })],
+    height: 260,
+    margin: { top: 5, right: 8, bottom: 20, left: 36 },
+    axis: { x: { label: '' }, y: { min: -40, max: 60, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: { x: false, y: true },
+    border: false,
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = stackedDiverging()
+document.body.append(plot)
+```
+
+Full-stack tooltips
+
+Hover a segment to see every value in its stack. The callback reads the values from `row` and uses `label` to display the hovered segment’s name and value in bold.
+
+```ts
+import { bar, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function stackedTooltip(): PlotArgs<Node> {
+  const data = [
+    { day: 'Mon', network: 18, compute: 42, storage: 24 },
+    { day: 'Tue', network: 24, compute: 32, storage: 18 },
+    { day: 'Wed', network: 12, compute: 56, storage: 28 },
+    { day: 'Thu', network: 28, compute: 24, storage: 16 },
+    { day: 'Fri', network: 16, compute: 48, storage: 22 },
+  ]
+
+  return {
+    series: [bar<Node>({
+      data,
+      x: 'day',
+      y: ['network', 'compute', 'storage'],
+      color: [
+        { light: '#0d9488', dark: '#5eead4' },
+        { light: '#6366f1', dark: '#a5b4fc' },
+        { light: '#d97706', dark: '#fcd34d' },
+      ],
+      inset: 10,
+      hover_span_x: false,
+      hover_span_y: false,
+      tooltip: ({ label, row }) => {
+        const content = document.createElement('div')
+        for (const field of ['network', 'compute', 'storage']) {
+          const entry = document.createElement('div')
+          const value = document.createElement(field === label ? 'strong' : 'span')
+          value.textContent = field + ': ' + row[field] + ' ms'
+          entry.append(value)
+          content.append(entry)
+        }
+        return content
+      },
+    })],
+    height: 260,
+    margin: { top: 5, right: 8, bottom: 20, left: 30 },
+    axis: { x: { label: '' }, y: { min: 0, max: 100, label: '' } },
+    background: { light: '#ffffff', dark: '#151b28' },
+    chrome_color: { light: '#e2e8f0', dark: '#334155' },
+    grid: { x: false, y: true },
+    border: false,
+    zoom_pan: false,
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = stackedTooltip()
+document.body.append(plot)
+```
 
 ```ts
 import { bar } from '@antadesign/plot'
@@ -2615,6 +2955,41 @@ Each `AxisViewport` contains:
 
 ### Title
 
+Set the title text, size, and purple theme colors.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function title(): PlotArgs<Node> {
+  return { ...base(), margin: { top: 44, right: 24, bottom: 48, left: 76 },
+    title: { text: 'Plot title', size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = title()
+document.body.append(plot)
+```
+
 `title` accepts a string or a `TitleArg` object:
 
 | Field | Type | Default | Description |
@@ -2624,6 +2999,42 @@ Each `AxisViewport` contains:
 | `color?` | [`ThemeColor`](#theme-colors) | Theme default | Title color. |
 
 ### Margins
+
+The canvas uses a gray CSS background. The plot background fills only the area inside the axes, making the margins visible.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function margins(): PlotArgs<Node> {
+  return { ...base(), margin: { top: 40, right: 40, bottom: 64, left: 88 },
+    background: { light: 'white', dark: '#202124' } }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = margins()
+plot.style.background = 'color-mix(in srgb, var(--text-1, #111827) 18%, var(--bg-1, #ffffff))'
+document.body.append(plot)
+```
 
 `margin` accepts one number for all sides or a `SideMargins` object.
 Margins reserve space outside the plot area for labels and the title;
@@ -2641,6 +3052,180 @@ pixels instead. Explicit margins still apply.
 
 ### Grid
 
+Compare both grid directions, each direction separately, and no grid. Seven categories set the vertical grid positions; tick marks and labels are hidden.
+
+Both grid directions
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function grid(): PlotArgs<Node> {
+  const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+  return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
+    series: [scatter<Node>({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+      size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
+      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
+    grid: { x: true, y: true } }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = grid()
+document.body.append(plot)
+```
+
+Vertical grid lines
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function grid(): PlotArgs<Node> {
+  const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+  return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
+    series: [scatter<Node>({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+      size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
+      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
+    grid: { x: true, y: true } }
+}
+
+function gridX(): PlotArgs<Node> {
+  return { ...grid(), grid: { x: true, y: false } }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = gridX()
+document.body.append(plot)
+```
+
+Horizontal grid lines
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function grid(): PlotArgs<Node> {
+  const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+  return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
+    series: [scatter<Node>({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+      size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
+      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
+    grid: { x: true, y: true } }
+}
+
+function gridY(): PlotArgs<Node> {
+  return { ...grid(), grid: { x: false, y: true } }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = gridY()
+document.body.append(plot)
+```
+
+No grid lines
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function grid(): PlotArgs<Node> {
+  const categories = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+  return { ...base(), height: 160, margin: { top: 10, right: 10, bottom: 10, left: 10 },
+    series: [scatter<Node>({ data: categories.map((x, i) => ({ x, y: 20 + i * 9 })),
+      size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    axis: { x: { categories, label: '', tick_mark: false, tick_label: { format: () => '' } },
+      y: { min: 0, max: 100, label: '', tick_mark: false, tick_label: { format: () => '' } } },
+    grid: { x: true, y: true } }
+}
+
+function gridNone(): PlotArgs<Node> {
+  return { ...grid(), grid: false }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = gridNone()
+document.body.append(plot)
+```
+
 `grid` accepts a boolean for both axes or this `GridSpec` object:
 
 | Field | Type | Default | Description |
@@ -2649,6 +3234,43 @@ pixels instead. Explicit margins still apply.
 | `y?` | `boolean` | `false` | Draw horizontal grid lines at y-axis ticks. |
 
 ### Theme colors
+
+The scatter marks use `tomato` in light mode and `lightskyblue` in dark mode, with `size: 18`. Switch the site theme to compare them.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function themeColors(): PlotArgs<Node> {
+  return { ...base(), series: [scatter<Node>({
+    data: [{ x: 20, y: 30 }, { x: 50, y: 65 }, { x: 80, y: 45 }],
+    size: 18, color: { light: 'tomato', dark: 'lightskyblue' }, hoverable: false,
+  })] }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = themeColors()
+document.body.append(plot)
+```
 
 `ThemeColor` accepts a CSS color string or a `ColorPair`. Use a pair to choose
 separate colors for light and dark themes.
@@ -2662,6 +3284,94 @@ Both fields in a `ColorPair` are required. `ColorTheme` is `'light'` or `'dark'`
 Plain colors remain subject to the plot's `theme_invert` setting.
 
 ### Scales
+
+Compare linear and logarithmic axes, then time and category axes. Each axis label names its scale.
+
+Linear and logarithmic scales
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function scales(): PlotArgs<Node> {
+  return { ...base(),
+    series: [scatter<Node>({ data: [1, 10, 100, 1000, 10000].map((y, i) => ({ x: 10 + i * 20, y })),
+      size: 4, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    axis: { x: { scale: 'linear', min: 0, max: 100, label: 'Linear' },
+      y: { scale: 'log', min: 1, max: 10000, label: 'Logarithmic',
+        tick_label: { format: value => Number(value) >= 1000 ? Number(value) / 1000 + 'k' : String(value) } } },
+    grid: { y: true },
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = scales()
+document.body.append(plot)
+```
+
+Time and category scales
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function timeCategory(): PlotArgs<Node> {
+  const start = new Date(2026, 0, 12).getTime()
+  return { ...base(),
+    series: [scatter<Node>({ data: [
+      { x: start, y: 'Alpha' }, { x: start + 3600000, y: 'Beta' },
+      { x: start + 7200000, y: 'Alpha' }, { x: start + 10800000, y: 'Gamma' },
+      { x: start + 14400000, y: 'Beta' },
+    ], size: 4, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    margin: { top: 20, right: 24, bottom: 48, left: 94 },
+    axis: { x: { scale: 'time', min: start, max: start + 14400000, label: 'Time', padding: 8,
+      tick_label: { format: value => new Date(Number(value)).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) } },
+      y: { scale: 'category', categories: ['Alpha', 'Beta', 'Gamma'], label: 'Category' } },
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = timeCategory()
+document.body.append(plot)
+```
 
 Set `axis.x.scale` or `axis.y.scale` to choose how data maps to positions.
 Plot uses [D3 scales](https://d3js.org/d3-scale) internally.
@@ -2679,6 +3389,84 @@ to set a category order, or `min` and `max` to set continuous-domain bounds.
 
 ### Axis labels
 
+Compare label positions, sizes, and colors: 18px and 12px labels aligned right and top, then 12px and 20px labels aligned left and bottom.
+
+Right and top labels
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function axisLabels(): PlotArgs<Node> {
+  return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
+    x: { min: 0, max: 100, label: { text: 'Time', position: 'right', size: 18, color: { light: '#713fff', dark: '#c4b5fd' } } },
+    y: { min: 0, max: 100, label: { text: 'Value', position: 'top', size: 12, color: { light: '#c2410c', dark: '#fdba74' } } },
+  } }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = axisLabels()
+document.body.append(plot)
+```
+
+Left and bottom labels
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function axisLabelsOpposite(): PlotArgs<Node> {
+  return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
+    x: { min: 0, max: 100, label: { text: 'Time', position: 'left', size: 12,
+      color: { light: '#c2410c', dark: '#fdba74' } } },
+    y: { min: 0, max: 100, label: { text: 'Value', position: 'bottom', size: 20,
+      color: { light: '#713fff', dark: '#c4b5fd' } } },
+  } }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = axisLabelsOpposite()
+document.body.append(plot)
+```
+
 `LabelArg` accepts a string or this object at `axis.x.label` or `axis.y.label`:
 
 | Field | Type | Default | Description |
@@ -2690,6 +3478,43 @@ to set a category order, or `min` and `max` to set continuous-domain bounds.
 
 ### Tick labels
 
+Add units to tick labels with formatting callbacks. The horizontal ticks use 10px purple text; the vertical ticks use 15px orange text.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function tickLabels(): PlotArgs<Node> {
+  return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
+    x: { min: 0, max: 100, label: 'Elapsed time', tick_label: { format: value => value + ' s', size: 10, color: { light: '#713fff', dark: '#c4b5fd' } } },
+    y: { min: 0, max: 100, label: 'Utilization', tick_label: { format: value => value + '%', size: 15, color: { light: '#c2410c', dark: '#fdba74' } } },
+  } }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = tickLabels()
+document.body.append(plot)
+```
+
 Use `TickLabelArg` at `axis.x.tick_label` or `axis.y.tick_label`:
 
 | Field | Type | Default | Description |
@@ -2698,24 +3523,46 @@ Use `TickLabelArg` at `axis.x.tick_label` or `axis.y.tick_label`:
 | `size?` | `number` | `10` | Font size in pixels. |
 | `color?` | [`ThemeColor`](#theme-colors) | Theme default | Tick label color. |
 
-### Data fields
+### Series colors
 
-`FieldArg` selects a value from each data row. Use it for series coordinates
-such as `x` and `y`, or for a second boundary where the series supports one.
-
-| Form | Type | Description |
-|---|---|---|
-| Field name | `string` | Read the named property from each row. |
-| Accessor | `(row: Record<string, unknown>, index: number) => number \| string` | Compute a value from the row and its zero-based index. Return numbers for continuous axes or strings for categories. |
+Use a color accessor to distinguish values at or above 60.
 
 ```ts
-import type { FieldArg } from '@antadesign/plot'
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
 
-const x: FieldArg = 'elapsed_ms'
-const y: FieldArg = (row) => Number(row.duration_ms) / 1000
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function seriesColors(): PlotArgs<Node> {
+  return { ...base(), series: [scatter<Node>({
+    data: [{ x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 }, { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 }],
+    size: 8, color: row => Number(row.y) >= 60
+      ? { light: '#c2410c', dark: '#fdba74' } : { light: '#64748b', dark: '#94a3b8' },
+    hoverable: false,
+  })] }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = seriesColors()
+document.body.append(plot)
 ```
-
-### Series colors
 
 `ColorArg` adds a per-row accessor to [`ThemeColor`](#theme-colors). Scatter, bar, rect, rule,
 and custom series accept it; line and area use one `ThemeColor` per series.
@@ -2737,6 +3584,49 @@ one entry per stacked field.
 
 ### Mark shapes
 
+Set a different mark shape for each category.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function markShapes(): PlotArgs<Node> {
+  const marks = ['circle', 'square', 'diamond', 'triangle'] as const
+  return { ...base(), series: marks.map((mark, i) => scatter<Node>({
+    data: [{ x: mark, y: 40 + i * 10 }], mark, size: 12,
+    color: [
+      { light: '#7c3aed', dark: '#c4b5fd' }, { light: '#db2777', dark: '#f9a8d4' },
+      { light: '#0891b2', dark: '#67e8f9' }, { light: '#ea580c', dark: '#fdba74' },
+    ][i], hoverable: false,
+  })), axis: { x: { categories: [...marks], label: '' }, y: { min: 0, max: 100, label: '' } },
+    margin: { top: 20, right: 12, bottom: 32, left: 32 },
+  }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = markShapes()
+document.body.append(plot)
+```
+
 `MarkShape` controls [`scatter.mark`](#scatter) and [`line.mark`](#line):
 
 | Value | Description |
@@ -2749,6 +3639,44 @@ one entry per stacked field.
 Scatter defaults to `'circle'`; line draws no marks unless `mark` is set.
 
 ### Strokes
+
+Compare outlines with widths of 1, 3, and 5 pixels on equal-sized circles.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/plot.css'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function strokes(): PlotArgs<Node> {
+  return { ...base(), series: [1, 3, 5].map((width, i) => scatter<Node>({
+    data: [{ x: 25 + i * 25, y: 50 }], size: 18,
+    color: { light: '#f0abfc', dark: '#c026d3' },
+    stroke: { color: { light: '#7e22ce', dark: '#f5d0fe' }, width }, hoverable: false,
+  })) }
+}
+
+await definePlotElement()
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = strokes()
+document.body.append(plot)
+```
 
 `StrokeArg` accepts a [`ThemeColor`](#theme-colors) or a `Stroke` object. Use it for `stroke`
 on scatter, area, and rect series, or `mark_stroke` on a line series.
@@ -2765,6 +3693,23 @@ const stroke: StrokeArg = {
   color: { light: 'navy', dark: 'lightsteelblue' },
   width: 1,
 }
+```
+
+### Data fields
+
+`FieldArg` selects a value from each data row. Use it for series coordinates
+such as `x` and `y`, or for a second boundary where the series supports one.
+
+| Form | Type | Description |
+|---|---|---|
+| Field name | `string` | Read the named property from each row. |
+| Accessor | `(row: Record<string, unknown>, index: number) => number \| string` | Compute a value from the row and its zero-based index. Return numbers for continuous axes or strings for categories. |
+
+```ts
+import type { FieldArg } from '@antadesign/plot'
+
+const x: FieldArg = 'elapsed_ms'
+const y: FieldArg = (row) => Number(row.duration_ms) / 1000
 ```
 
 ### Custom rendering

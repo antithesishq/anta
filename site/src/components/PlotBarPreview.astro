@@ -1,13 +1,13 @@
 ---
 interface Props {
-  example: 'rounded' | 'horizontal' | 'stacked' | 'diverging'
+  example: 'rounded' | 'horizontal' | 'stacked' | 'diverging' | 'stackedHorizontal' | 'stackedDiverging' | 'stackedTooltip' | 'categoryOrder'
 }
 const { example } = Astro.props
 ---
 
 <a-plot
   data-bar-example={example}
-  aria-label={{ rounded: 'Rounded bars with data colors', horizontal: 'Horizontal bars by service', stacked: 'Stacked bars by day', diverging: 'Positive and negative monthly changes' }[example]}
+  aria-label={{ rounded: 'Rounded bars with data colors', horizontal: 'Horizontal bars by service', stacked: 'Stacked bars by day', diverging: 'Positive and negative monthly changes', stackedHorizontal: 'Horizontal stacked bars by service', stackedDiverging: 'Positive and negative stacked bars by month', stackedTooltip: 'Stacked bars with the hovered segment emphasized in a full-stack tooltip', categoryOrder: 'Bars ordered by severity' }[example]}
 ></a-plot>
 
 <script>

@@ -1,0 +1,19 @@
+---
+interface Props { small?: boolean }
+const { small = false } = Astro.props
+---
+<div class:list={["plot-detail-grid", { small }]}><slot /></div>
+<style>
+  .plot-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 24px 16px;
+    margin-block: 20px;
+  }
+  .plot-detail-grid.small {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+    justify-content: center;
+  }
+  .plot-detail-grid.small :global(.preview) { padding: 12px; }
+  .plot-detail-grid :global(.plot-detail-card) { min-width: 0; }
+</style>

@@ -1,0 +1,30 @@
+<div class="plot-example-grid">
+  <slot />
+</div>
+
+<style>
+  .plot-example-grid :global(.columns) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+    gap: 32px 20px;
+    align-items: stretch;
+  }
+
+  /* Share heading, description, preview, and code rows across each pair. */
+  .plot-example-grid :global(.columns > .col) {
+    display: grid;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+    grid-row: span 4;
+    min-width: 0;
+  }
+
+  .plot-example-grid :global(.col > h5),
+  .plot-example-grid :global(.col > p) {
+    padding-bottom: 16px;
+  }
+
+  .plot-example-grid :global(.col > *) {
+    margin-block: 0;
+  }
+</style>

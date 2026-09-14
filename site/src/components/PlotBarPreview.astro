@@ -1,0 +1,42 @@
+---
+interface Props {
+  example: 'rounded' | 'horizontal' | 'stacked' | 'diverging'
+}
+const { example } = Astro.props
+---
+
+<a-plot
+  data-bar-example={example}
+  aria-label={{ rounded: 'Rounded bars with data colors', horizontal: 'Horizontal bars by service', stacked: 'Stacked bars by day', diverging: 'Positive and negative monthly changes' }[example]}
+></a-plot>
+
+<script>
+  import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+  import '@antadesign/plot/plot.css'
+  import { barExamples } from './plot-bar-examples'
+
+  const ready = definePlotElement()
+  const mounted = new WeakSet<APlotElement>()
+
+  async function mountExamples() {
+    await ready
+    for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-bar-example]')) {
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = plot.dataset.barExample as keyof typeof barExamples
+      plot.plotArgs = barExamples[example]()
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  a-plot {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 260px;
+  }
+</style>

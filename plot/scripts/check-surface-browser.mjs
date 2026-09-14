@@ -27,6 +27,12 @@ export async function checkSurface() {
     await wait()
     check(measures > 0 && contexts > 0, 'initial Box notifications')
     check(surface.measurement.width === 640 && surface.measurement.height === 400, 'responsive dimensions')
+    const styles = surface.querySelector('style')
+    check(styles !== null, 'surface installs its own structural styles')
+    check(getComputedStyle(surface).position === 'relative', 'surface establishes a positioning context')
+    check(getComputedStyle(surface.canvas).position === 'absolute'
+        && getComputedStyle(surface.highlight).position === 'absolute', 'canvases stack without external surface CSS')
+    check(getComputedStyle(surface.highlight).pointerEvents === 'none', 'highlight passes pointer input through')
     const canvas = surface.canvas, highlight = surface.highlight
     const transferred = surface.transferCanvases()
     rejects(() => surface.transferCanvases(), 'second transfer rejected')
@@ -46,6 +52,10 @@ export async function checkSurface() {
     check(surface.capture.style.filter === '' && surface.canvas.style.filter === 'invert(1)', 'filter only on canvases')
     const reset = surface.querySelector('.plot-reset')
     check(reset.style.left === '48px' && reset.style.top === '28px', 'reset at plottable top left')
+    check(getComputedStyle(reset).zIndex === '3', 'reset stays above Capture')
+    surface.present({ ...presentation, reset: { ...presentation.reset, visible: false } })
+    check(getComputedStyle(reset).display === 'none', 'hidden reset is removed from layout')
+    surface.present(presentation)
     reset.click()
     check(resets === 1, 'reset request forwarded')
     surface.configureCapture({
@@ -84,6 +94,8 @@ export async function checkSurface() {
     host.append(surface)
     await wait()
     check(surface.canvas === canvas && surface.highlight === highlight, 'reconnect retains both canvases')
+    check(surface.querySelector('style') === styles && surface.querySelectorAll('style').length === 1,
+        'reconnect retains one structural stylesheet')
     rejects(() => surface.transferCanvases(), 'reconnect retains worker ownership')
     reset.click()
     check(resets === 2, 'reconnect installs exactly one reset listener')

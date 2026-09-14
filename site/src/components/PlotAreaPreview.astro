@@ -1,0 +1,43 @@
+---
+interface Props {
+  example: 'baseline' | 'range' | 'layers' | 'horizontal'
+}
+const { example } = Astro.props
+---
+
+<a-plot
+  data-area-example={example}
+  aria-label={{ baseline: 'Area filled to zero', range: 'Area between lower and upper bounds',
+    layers: 'Three layered area contributions', horizontal: 'Horizontal area interval' }[example]}
+></a-plot>
+
+<script>
+  import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+  import '@antadesign/plot/plot.css'
+  import { areaExamples } from './plot-area-examples'
+
+  const ready = definePlotElement()
+  const mounted = new WeakSet<APlotElement>()
+
+  async function mountExamples() {
+    await ready
+    for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-area-example]')) {
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = plot.dataset.areaExample as keyof typeof areaExamples
+      plot.plotArgs = areaExamples[example]()
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  a-plot {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 260px;
+  }
+</style>

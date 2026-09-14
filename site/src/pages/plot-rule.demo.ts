@@ -1,6 +1,6 @@
 export default `
 import { useState } from 'preact/hooks'
-import { rule, line, type RuleArgs } from '@antadesign/plot'
+import { rule, line, area, type RuleArgs } from '@antadesign/plot'
 import { Plot } from '@antadesign/plot/react'
 import '@antadesign/plot/plot.css'
 
@@ -8,10 +8,18 @@ const data = [
   { threshold: 75, level: 'Warning' },
   { threshold: 110, level: 'Critical' },
 ]
-const samples = Array.from({ length: 45 }, (_, i) => ({
-  minute: i,
-  latency: Math.round(44 + 12 * Math.sin(i / 3) + 78 * Math.exp(-(((i - 28) / 4) ** 2))),
-}))
+const samples = Array.from({ length: 181 }, (_, i) => {
+  const minute = i / 3
+  const latency = Math.round(42 + 8 * Math.sin(i / 9) + 5 * Math.cos(i * 0.9)
+    + 65 * Math.exp(-(((minute - 23) / 5) ** 2))
+    + 82 * Math.exp(-(((minute - 42) / 4) ** 2)))
+  return { minute, latency, low: latency - 8, high: latency + 10 }
+})
+const events = [
+  { minute: 16, event: 'Deploy started' },
+  { minute: 35, event: 'Traffic shifted' },
+  { minute: 48, event: 'Rollback completed' },
+]
 
 /** @play props Rule options */
 const options = {
@@ -29,6 +37,16 @@ function Demo() {
 
   const plotArgs = {
     series: [
+      area<string>({
+        data: samples, x: 'minute', y: 'high', y2: 'low',
+        color: { light: '#e0e7ff', dark: '#312e81' }, hoverable: false,
+      }),
+      rule<string>({
+        data: events, x: 'minute',
+        color: { light: '#64748b', dark: '#94a3b8' }, width: 1.5, dash: [3, 5],
+        tooltip: ({ row }) => String(row?.event),
+        on_select: ({ row }) => setSelection(String(row?.event)),
+      }),
       line<string>({ data: samples, x: 'minute', y: 'latency', color: { light: '#6366f1', dark: '#a5b4fc' }, width: 3 }),
       rule({
         data,
@@ -40,7 +58,7 @@ function Demo() {
     title: { text: 'Response time budget', size: 16 },
     margin: { top: 28, right: 24, bottom: 54, left: 72 },
     border: false,
-    axis: { x: { label: 'Minute', min: 0, max: 44 }, y: { label: 'Latency (ms)', min: 0, max: 140 } },
+    axis: { x: { label: 'Minute', min: 0, max: 60 }, y: { label: 'Latency (ms)', min: 0, max: 160 } },
     background: { light: '#ffffff', dark: '#141820' },
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: { x: false, y: true },

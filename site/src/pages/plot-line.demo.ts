@@ -4,9 +4,10 @@ import { line, type LineArgs } from '@antadesign/plot'
 import { Plot } from '@antadesign/plot/react'
 import '@antadesign/plot/plot.css'
 
-const data = Array.from({ length: 49 }, (_, i) => ({
-  hour: i / 2,
-  requests: Math.round(180 + 420 * Math.exp(-(((i - 29) / 10) ** 2)) + 38 * Math.sin(i * 0.9) + 17 * Math.cos(i * 2.1)),
+const data = Array.from({ length: 193 }, (_, i) => ({
+  hour: i / 8,
+  requests: Math.round(180 + 420 * Math.exp(-(((i - 116) / 40) ** 2))
+    + 55 * Math.sin(i * 0.55) + 28 * Math.cos(i * 1.7) + 16 * Math.sin(i * 2.9)),
 }))
 
 /** @play props Line options */
@@ -16,9 +17,6 @@ const options = {
   color: { light: '#6366f1', dark: '#a5b4fc' },
   width: 3,
   dash: [],
-  mark: 'circle',
-  mark_size: 5,
-  mark_stroke: { color: { light: '#ffffff', dark: '#141820' }, width: 1 },
   tooltip: ({ x, y }) => x + ':00 · ' + y + ' requests/s',
   hoverable: true,
   highlight: true,

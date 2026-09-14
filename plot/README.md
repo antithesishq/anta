@@ -12,7 +12,7 @@ plot.plotArgs = { series: [scatter({ data: [{ x: 1, y: 2 }, { x: 2, y: 3 }] })] 
 document.body.append(plot)
 ```
 
-Use a bundler that handles CSS imports. The browser entry loads Anta elements and their styles through the Anta dependency. `plot.css` supplies the plot layout. Applications supply their Anta theme as usual.
+Use a bundler that handles CSS imports. The browser entry loads Anta elements and their styles through the Anta dependency. `plot.css` supplies standalone `a-plot` sizing; the surface installs its own structural styles. Applications supply their Anta theme as usual.
 
 ## Entry points
 
@@ -74,8 +74,8 @@ changing them; in-place mutations are not observed. The default height is 300px,
 and width fills the parent. Explicit argument dimensions override wrapper styles;
 removing them restores the style or fallback.
 
-The component registers and mounts standalone `a-plot` after React commits. The separate `plot.css` import is required for canvas
-stacking and surface layout. The root `@antadesign/plot` remains framework-free.
+The component registers and mounts standalone `a-plot` after React commits. The separate `plot.css` import supplies standalone host sizing. The surface installs its own canvas
+stacking and internal layout styles. The root `@antadesign/plot` remains framework-free.
 
 React owns tooltip content and its context/lifecycle through ReactDOM portals.
 React consumers need matching `react` and `react-dom` versions. Default tooltips, custom
@@ -106,12 +106,11 @@ DOM renderer. Framework adapters must clean up their renderer on unmount.
 
 ## Shared plot surface
 
-Import `@antadesign/plot/elements` to register the surface, and `plot.css` for its layout.
-The published JavaScript and CSS are separate assets; both imports are required:
+Import `@antadesign/plot/elements` to register the surface. It installs its structural styles
+when its internal elements are initialized; no separate `plot.css` import is needed:
 
 ```ts
 import '@antadesign/plot/elements'
-import '@antadesign/plot/plot.css'
 ```
 
 React, Preact, and other Anta JSX consumers can use the typed wrapper:
@@ -121,7 +120,6 @@ import { PlotSurface } from '@antadesign/plot/components'
 
 // Browser entry only:
 import '@antadesign/plot/elements'
-import '@antadesign/plot/plot.css'
 
 // In the host render:
 <PlotSurface

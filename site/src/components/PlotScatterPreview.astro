@@ -1,0 +1,42 @@
+---
+interface Props {
+  example: 'bubbles' | 'shapes'
+}
+const { example } = Astro.props
+---
+
+<a-plot
+  data-scatter-example={example}
+  aria-label={example === 'bubbles' ? 'Scatter plot with varying bubble sizes and colors' : 'Scatter plot comparing square and diamond marks'}
+></a-plot>
+
+<script>
+  import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+  import '@antadesign/plot/plot.css'
+  import { scatterExamples } from './plot-scatter-examples'
+
+  const ready = definePlotElement()
+  const mounted = new WeakSet<APlotElement>()
+
+  async function mountExamples() {
+    await ready
+    for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-scatter-example]')) {
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = plot.dataset.scatterExample as keyof typeof scatterExamples
+      plot.plotArgs = scatterExamples[example]()
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  a-plot {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 260px;
+  }
+</style>

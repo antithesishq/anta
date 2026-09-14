@@ -1,4 +1,3 @@
-import '../browser/plot.css'
 import { definePlotSurfaceElement } from '../browser/index'
 
 /** Register the shared surface on import; server-side imports are a no-op. */

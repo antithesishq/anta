@@ -4,12 +4,17 @@ import { area, type AreaArgs } from '@antadesign/plot'
 import { Plot } from '@antadesign/plot/react'
 import '@antadesign/plot/plot.css'
 
-const data = Array.from({ length: 41 }, (_, i) => {
-  const baseline = 36 + 12 * Math.sin(i / 5) + 24 * Math.exp(-(((i - 27) / 5) ** 2))
+const data = Array.from({ length: 181 }, (_, i) => {
+  const minute = i / 3
+  const baseline = 45 + 15 * Math.sin(i / 22)
+    + 35 * Math.exp(-(((i - 115) / 23) ** 2)) + 4 * Math.sin(i * 0.8)
+  const spread = 17 + 7 * Math.sin(i / 13) ** 2
   return {
-    minute: i * 1.5,
-    low: Math.round(baseline - 10 - 3 * Math.sin(i)),
-    high: Math.round(baseline + 18 + 9 * Math.sin(i / 3) ** 2),
+    minute,
+    low: Math.round(baseline - spread),
+    high: Math.round(baseline + spread),
+    innerLow: Math.round(baseline - spread * 0.4),
+    innerHigh: Math.round(baseline + spread * 0.4),
   }
 })
 
@@ -35,6 +40,16 @@ function Demo() {
         data,
         ...options,
         on_select: (point) => setSelection(options.tooltip(point)),
+      }),
+      area({
+        data,
+        x: 'minute',
+        y: 'innerHigh',
+        y2: 'innerLow',
+        color: { light: '#818cf8', dark: '#6366f1' },
+        stroke: { color: { light: '#4f46e5', dark: '#c7d2fe' }, width: 1.5 },
+        tooltip: ({ x, row }) => x + ' min · typical range: ' + row.innerLow + '–' + row.innerHigh + ' ms',
+        on_select: ({ row }) => setSelection('Typical range: ' + row.innerLow + '–' + row.innerHigh + ' ms'),
       }),
     ],
     height: 320,

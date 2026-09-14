@@ -11,6 +11,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
 const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
 const metadata = JSON.parse(await readFile(resolve(root, '.build/metafile.json'), 'utf8'))
+assert.equal(metadata.outputs['dist/elements.js'].cssBundle, undefined, 'surface registration needs no plot stylesheet')
 
 // Follow emitted imports, including lazy chunks, to verify each entry's actual runtime boundary.
 function inputs(entry, visited = new Set()) {
@@ -84,7 +85,8 @@ try {
             await assert.rejects(import('@antadesign/plot/' + path), {code:'ERR_PACKAGE_PATH_NOT_EXPORTED'})
         }
         const css = await readFile(new URL(import.meta.resolve('@antadesign/plot/plot.css')), 'utf8')
-        for (const selector of ['a-plot-surface','a-capture']) assert.ok(css.includes(selector),selector)
+        assert.ok(css.includes(':where(a-plot)'), 'standalone host layout')
+        assert.ok(!css.includes('a-plot-surface'), 'surface owns its layout')
     `
     await writeFile(resolve(sandbox, 'runtime.mjs'), runtime)
     execFileSync(process.execPath, ['runtime.mjs'], { cwd: sandbox, stdio: 'inherit', env: { ...process.env, NODE_PATH: '' } })

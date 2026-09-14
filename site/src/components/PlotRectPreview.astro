@@ -1,0 +1,44 @@
+---
+interface Props {
+  example: 'heatmap' | 'intervals' | 'sized' | 'history'
+}
+const { example } = Astro.props
+---
+
+<a-plot
+  data-rect-example={example}
+  aria-label={{ heatmap: 'Categorical activity heatmap', intervals: 'Task durations with explicit bounds',
+    sized: 'Rectangles with fixed pixel sizes', history: 'Run history with passed and failed lanes over time' }[example]}
+></a-plot>
+
+<script>
+  import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+  import '@antadesign/plot/plot.css'
+  import { rectExamples } from './plot-rect-examples'
+
+  const ready = definePlotElement()
+  const mounted = new WeakSet<APlotElement>()
+
+  async function mountExamples() {
+    await ready
+    for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-rect-example]')) {
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = plot.dataset.rectExample as keyof typeof rectExamples
+      plot.plotArgs = rectExamples[example]()
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  a-plot {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 260px;
+  }
+
+</style>

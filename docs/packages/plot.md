@@ -12,11 +12,33 @@ This installs `@antadesign/anta` as a dependency. React 18 or 19 is a peer depen
 
 ## Install
 
-The entries divide on one question: whether the plot's lifecycle —
-composition, drawing, viewport, tooltips — belongs to the package or to
-the host. `Plot` and `<a-plot>` own it. The bare surface hands it over.
+In React, import the complete `Plot` component from `@antadesign/plot/react`.
+Other Anta components, such as `Button` and `Tooltip`, come directly from
+`@antadesign/anta`; Plot keeps its React adapter in a separate entry.
+Import series factories from `@antadesign/plot`.
 
-Start here, and read the framework-free core as the layer both levels sit on.
+```tsx
+import { Plot } from '@antadesign/plot/react'
+import { line } from '@antadesign/plot'
+import '@antadesign/plot/plot.css'
+
+const plotArgs = {
+  series: [line({ data: [{ x: 1, y: 3 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
+}
+
+function Example() {
+  return <Plot plotArgs={plotArgs} />
+}
+```
+
+React needs no `configure()` call. Preact uses this same adapter through
+`preact/compat` aliasing. The adapter uses React hooks, refs, and portals;
+calling Anta’s `configure(h)` does not change those mechanisms.
+
+For plain JavaScript or TypeScript, use the `<a-plot>` web component through
+`@antadesign/plot/browser` or `@antadesign/plot/auto`. Both the React component
+and the web component handle canvas setup, controllers, drawing, and interactions
+internally.
 
 | Import | Contents |
 |---|---|
@@ -39,17 +61,29 @@ it, so these three need no separate element import.
 
 ### The host owns the lifecycle
 
-Drive `PlotController` yourself and use the surface for canvas stacking,
-measurement, pointer capture, and the overlay. This is what Antithesis's
-notebook does, and the only level that exposes worker canvas ownership.
+Use `PlotSurface` when building a host integration that manages controllers
+and drawing itself, including drawing in a worker. It provides canvas stacking,
+measurement, pointer capture, and the overlay.
+
+`PlotSurface` uses Anta’s configurable JSX functions. By default these create
+React elements; `configure(h)` makes the wrapper create elements through the
+supplied function instead. This changes element construction, not thread
+placement or canvas transport.
+
+The Antithesis notebook calls `anta.configure(h)` with its own element-construction
+function. Its plot adapter runs controllers and drawing in the worker, while
+`<a-plot-surface>` runs in the browser. The notebook’s rendering bridge forwards
+events and transfers canvases. That integration also owns tooltip content;
+`PlotSurface` does not render it.
 
 | Import | Contents |
 |---|---|
-| `@antadesign/plot/components` | The `PlotSurface` JSX wrapper over `<a-plot-surface>` and its props. Maps attributes and surface events, nothing more: no controller, no DOM access, no registration. Its types come from Anta's JSX runtime, not React, so it works in React, Preact, or a custom Anta runtime. |
+| `@antadesign/plot/components` | The `PlotSurface` JSX wrapper and its props. Uses Anta’s configured element-construction function to map props to `<a-plot-surface>` attributes and events. The host supplies controllers, drawing, and tooltip content. |
 | `@antadesign/plot/elements` | Registers `a-plot-surface` and its Anta dependencies on import, and exports `plotSurfaceElementReady`. No `a-plot`, no tooltip element. |
 
 These two are a pair: `/components` renders the element and `/elements`
-is what defines it. Import `/elements` once at the app entry.
+is what defines it. Import `/elements` once in the browser entry; in a worker-based
+host, keep custom-element registration on the browser side.
 
 ## Props
 

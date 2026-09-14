@@ -30,7 +30,7 @@ before(async () => {
       #content>div{height:800px}#panel{--test-color:rgb(20, 30, 40)}
       a-panel:state(maximized)>#content{height:100%}</style>
       <div class="workspace"><a-panel id="panel"><a-box id="content"><a-capture id="capture">
-      <input id="note" value="Draft"><a-button role="button" tabindex="0" id="toggle" data-custom-event="paneltogglerequest">Toggle panel</a-button>
+      <input id="note" value="Draft"><a-button role="button" tabindex="0" id="toggle" data-custom-event="paneltoggle">Toggle panel</a-button>
       </a-capture><div>Scrollable content</div></a-box></a-panel><p id="neighbor">Next pane</p></div>
       <button id="outside">Outside</button><div id="mount"></div>
       <script type="module" src="/panel.js"></script>`)
@@ -187,7 +187,7 @@ test('Only the nearest nested Panel handles a control request', async t => {
   await page.evaluate(() => {
     const nested = document.createElement('a-panel')
     nested.id = 'nested'
-    nested.innerHTML = '<a-button data-custom-event="paneltogglerequest">Nested toggle</a-button>'
+    nested.innerHTML = '<a-button data-custom-event="paneltoggle">Nested toggle</a-button>'
     document.querySelector('#content').prepend(nested)
   })
   await page.getByText('Nested toggle').click()

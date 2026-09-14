@@ -68,7 +68,7 @@ export class APanelElement extends HTMLElementBase {
     })
     this.addEventListener('panelmaximizerequest', this.#onRequest)
     this.addEventListener('panelrestorerequest', this.#onRequest)
-    this.addEventListener('paneltogglerequest', this.#onRequest)
+    this.addEventListener('paneltoggle', this.#onRequest)
   }
 
   get #current(): PanelState {
@@ -107,7 +107,7 @@ export class APanelElement extends HTMLElementBase {
   #onRequest = (event: Event) => {
     const owner = event.composedPath().find(node => node instanceof Element && node.localName === 'a-panel')
     if (owner !== this || event.defaultPrevented) return
-    this.#request(event.type === 'paneltogglerequest'
+    this.#request(event.type === 'paneltoggle'
       ? this.#current === 'maximized' ? 'normal' : 'maximized'
       : event.type === 'panelmaximizerequest' ? 'maximized' : 'normal')
   }

@@ -11,7 +11,7 @@ or remounting its children.
 
 ### Declarative
 
-Panel manages its own state. Use `data-custom-event="paneltogglerequest"` on
+Panel manages its own state. Use `data-custom-event="paneltoggle"` on
 an Anta button to toggle maximization without a click handler.
 
 ```tsx title="Declarative Panel"
@@ -23,10 +23,10 @@ function Workspace() {
       <Box
         display="flex"
         gap={16}
-        style={{ minHeight: '100%', boxSizing: 'border-box', padding: 16, alignItems: 'flex-start', background: 'var(--bg-2)' }}
+        style={{ minHeight: '100%', boxSizing: 'border-box', padding: 16, alignItems: 'flex-start', background: 'var(--bg-3)' }}
       >
         <Input aria-label="Workspace note" placeholder="Write a note" />
-        <Button data-custom-event="paneltogglerequest">
+        <Button data-custom-event="paneltoggle">
           Maximize / restore
         </Button>
       </Box>
@@ -57,7 +57,7 @@ function Workspace() {
       <Box
         display="flex"
         gap={16}
-        style={{ minHeight: '100%', boxSizing: 'border-box', padding: 16, alignItems: 'flex-start', background: 'var(--bg-2)' }}
+        style={{ minHeight: '100%', boxSizing: 'border-box', padding: 16, alignItems: 'flex-start', background: 'var(--bg-3)' }}
       >
         <Input aria-label="Workspace note" placeholder="Write a note" />
         <Button onClick={() => setMaximized(value => !value)}>
@@ -112,9 +112,9 @@ The button toggles the nearest panel without JavaScript handlers.
 
 ```html title="Declarative web component"
 <a-panel style="width: 100%">
-  <a-box display="flex" style="min-height: 100%; box-sizing: border-box; padding: 16px; gap: 16px; align-items: flex-start; background: var(--bg-2)">
+  <a-box display="flex" style="min-height: 100%; box-sizing: border-box; padding: 16px; gap: 16px; align-items: flex-start; background: var(--bg-3)">
     <a-input aria-label="Workspace note" placeholder="Write a note"></a-input>
-    <a-button role="button" tabindex="0" data-custom-event="paneltogglerequest">
+    <a-button role="button" tabindex="0" data-custom-event="paneltoggle">
       Maximize / restore
     </a-button>
   </a-box>
@@ -127,7 +127,7 @@ for an initially maximized, uncontrolled panel.
 `requestMaximize()` and `requestRestore()` emit a cancelable, non-bubbling
 `statechange` with `{ next, prev }` using those state strings.
 Anta buttons can send `panelmaximizerequest`, `panelrestorerequest`, or
-`paneltogglerequest` through `data-custom-event` to the nearest Panel.
+`paneltoggle` through `data-custom-event` to the nearest Panel.
 
 ## Styling
 
@@ -145,7 +145,7 @@ replace them with your own selectors.
   <a-box class="panel-demo-content">
     <a-box class="panel-demo-toolbar" display="flex">
       <a-text weight="medium">Workspace preview</a-text>
-      <a-button role="button" tabindex="0" data-custom-event="paneltogglerequest">
+      <a-button role="button" tabindex="0" data-custom-event="paneltoggle">
         <span class="panel-demo-maximize">Maximize panel</span>
         <span class="panel-demo-restore">Restore panel</span>
       </a-button>
@@ -160,7 +160,7 @@ replace them with your own selectors.
 
 ```css title="Preview layout and appearance"
 .panel-demo { width: 100%; }
-.panel-demo-content { box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; min-height: 220px; padding: 20px; border: 1px solid var(--border-4); border-radius: 8px; background: var(--bg-canvas); }
+.panel-demo-content { box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; min-height: 220px; padding: 20px; border: 1px solid var(--border-4); border-radius: 8px; background: var(--bg-3); }
 .panel-demo-toolbar { justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .panel-demo-content a-capture { display: grid; gap: 16px; }
 .panel-demo-content a-input { width: 100%; }

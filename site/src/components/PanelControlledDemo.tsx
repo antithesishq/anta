@@ -13,7 +13,7 @@ export default function PanelControlledDemo() {
       <Box
         display="flex"
         gap={16}
-        style={{ minHeight: '100%', boxSizing: 'border-box', padding: 16, alignItems: 'flex-start', background: 'var(--bg-2)' }}
+        style={{ minHeight: '100%', boxSizing: 'border-box', padding: 16, alignItems: 'flex-start', background: 'var(--bg-3)' }}
       >
         <Input aria-label="Workspace note" placeholder="Write a note" />
         <Button onClick={() => setMaximized(value => !value)}>

@@ -1,4 +1,4 @@
-import { nativeStateChange, toneStyle, roundStyle, roundAttr } from "../anta_helpers";
+import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from "../anta_helpers";
 import type { BaseProps } from "../general_types";
 
 /** Public props for the `<Expander>` disclosure. `title` is the always-
@@ -139,7 +139,7 @@ export const Expander = ({
       state={controlled ? (open ? "open" : "closed") : undefined}
       default-state={!controlled && defaultOpen ? "open" : undefined}
       level={level != null ? (String(level) as `${typeof level}`) : undefined}
-      tone={tone && tone !== "neutral" ? tone : undefined}
+      tone={neutralToneAttr(tone)}
       priority={priority && priority !== "secondary" ? priority : undefined}
       outdent={outdent ? "" : undefined}
       round={roundAttr(round)}

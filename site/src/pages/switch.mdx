@@ -52,22 +52,22 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 
 ## Selected-only tone
 
-`toneSelected` colors the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state. It accepts the same values as `tone`.
+`toneScope="selected"` applies the switch's `tone` to the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state.
 
 <Preview gap="16px">
-  <Switch toneSelected="brand" label="Off — neutral" />
-  <Switch defaultChecked toneSelected="brand" label="On — brand" />
-  <Switch defaultChecked toneSelected="critical" label="On — critical" />
+  <Switch tone="brand" toneScope="selected" label="Off — neutral" />
+  <Switch defaultChecked tone="brand" toneScope="selected" label="On — brand" />
+  <Switch defaultChecked tone="critical" toneScope="selected" label="On — critical" />
 </Preview>
 
 ```tsx folded
-<Switch toneSelected="brand" label="Off stays neutral" />
-<Switch defaultChecked toneSelected="critical" label="Checked track tinted" />
+<Switch tone="brand" toneScope="selected" label="Off stays neutral" />
+<Switch defaultChecked tone="critical" toneScope="selected" label="Checked track tinted" />
 ```
 
 ## Coloring the text
 
-There is no text-tone prop. To tint the label, set `color` on the switch with a theme-aware `--text-N-{tone}` token; to tint the hint, target `a-switch-hint`. Pair either with `tone` or `toneSelected` to color the whole control.
+There is no text-tone prop. To tint the label, set `color` on the switch with a theme-aware `--text-N-{tone}` token; to tint the hint, target `a-switch-hint`. Pair either with `tone` to color the whole control.
 
 <Preview gap="16px">
   <Switch className="toned-text" defaultChecked tone="critical" label="Delete workspace" hint="This cannot be undone." />
@@ -229,7 +229,7 @@ The focusable host carries the state. Label and hint are light-DOM children.
 
 <Disclosure title="Styling">
 
-Reach for the props first: **`tone`** colors the checked track plus the unchecked chrome, while **`toneSelected`** colors only the checked track. Both accept any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).
+Reach for the props first: **`tone`** chooses the control color, while **`toneScope`** chooses whether it colors all states or only the checked track. `tone` accepts any CSS color; **`size`** scales the control, label, and hint. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).
 
 ```tsx folded
 <Switch tone="#e0457b" defaultChecked label="Custom color" />

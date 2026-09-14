@@ -315,7 +315,7 @@ Non-selected label = --text-2 at this alpha (80 → --text-3). Selected/hover us
 
 ### Checkboxes
 
-Hoisted to --_tone-l-* inputs: the checked fill is the source at three lightnesses. The off-state box border ramps off that fill mixed toward neutral grey. On = toneSelected; off = tone.
+Hoisted to --_tone-l-* inputs: the checked fill is the source at three lightnesses. In all scope, the off-state box border ramps off that fill mixed toward neutral grey; selected scope keeps it neutral.
 
 #### Fill
 
@@ -327,7 +327,7 @@ Hoisted to --_tone-l-* inputs: the checked fill is the source at three lightness
 
 ### Radio
 
-Identical fill curve to Checkbox: --_tone-l-* set the selected dot at three lightnesses, and the off-ring border ramps off it. Group toneSelected drives the picked option.
+Identical fill curve to Checkbox: --_tone-l-* set the selected dot at three lightnesses. All scope also ramps the off-ring border from it; selected scope keeps unpicked options neutral.
 
 #### Fill
 

@@ -291,7 +291,7 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'checkbox',
     title: 'Checkboxes',
     blurb:
-      'Hoisted to --_tone-l-* inputs: the checked fill is the source at three lightnesses. The off-state box border ramps off that fill mixed toward neutral grey. On = toneSelected; off = tone.',
+      'Hoisted to --_tone-l-* inputs: the checked fill is the source at three lightnesses. In all scope, the off-state box border ramps off that fill mixed toward neutral grey; selected scope keeps it neutral.',
     vars: [
       { key: 'lRest', label: 'L rest', light: 0.5, dark: 0.45, neutral: { light: 0.6, dark: 0.42 }, ...v3() },
       { key: 'lHover', label: 'L hover', light: 0.45, dark: 0.5, neutral: { dark: 0.45 }, ...v3() },
@@ -309,7 +309,7 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'radio',
     title: 'Radio',
     blurb:
-      'Identical fill curve to Checkbox: --_tone-l-* set the selected dot at three lightnesses, and the off-ring border ramps off it. Group toneSelected drives the picked option.',
+      'Identical fill curve to Checkbox: --_tone-l-* set the selected dot at three lightnesses. All scope also ramps the off-ring border from it; selected scope keeps unpicked options neutral.',
     vars: [
       { key: 'lRest', label: 'L rest', light: 0.5, dark: 0.45, neutral: { light: 0.6, dark: 0.42 }, ...v3() },
       { key: 'lHover', label: 'L hover', light: 0.45, dark: 0.5, neutral: { dark: 0.45 }, ...v3() },

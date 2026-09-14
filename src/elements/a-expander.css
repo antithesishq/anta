@@ -464,6 +464,7 @@
     color: inherit;
     cursor: pointer;
     font: inherit;
+    font-variation-settings: inherit;
     font-size: var(--native-expander-summary-font-size);
     line-height: var(--native-expander-summary-line-height);
     font-weight: 584.62;

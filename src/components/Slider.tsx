@@ -1,5 +1,5 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
-import { toneStyle, roundStyle, roundAttr, lengthStyle, cssLength } from '../anta_helpers'
+import { neutralToneAttr, toneStyle, roundStyle, roundAttr, lengthStyle, cssLength } from '../anta_helpers'
 
 /** A text marker displayed below the slider rail. Markers are labels only; they
  * do not add dots or ticks to the rail. */
@@ -201,8 +201,8 @@ export const Slider = ({
       step={step}
       name={name}
       disabled={disabled ? '' : undefined}
-      tone={tone && tone !== 'neutral' ? tone : undefined}
-      thumb-tone={thumbTone && thumbTone !== 'neutral' ? thumbTone : undefined}
+      tone={neutralToneAttr(tone)}
+      thumb-tone={neutralToneAttr(thumbTone)}
       size={size && size !== 'medium' ? size : undefined}
       track-size={trackSizeValue}
       thumb-size={thumbSizeValue}

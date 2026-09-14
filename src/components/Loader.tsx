@@ -1,4 +1,5 @@
 import type { BaseProps } from '../general_types'
+import { neutralToneAttr } from '../anta_helpers'
 
 /** Named Anta color tone for a loader. */
 export type LoaderTone =
@@ -74,7 +75,7 @@ export const Loader = ({ tone, value, max = 100, size, speed, label, className, 
 
   return (
     <a-loader
-      tone={tone}
+      tone={neutralToneAttr(tone)}
       {...(determinate ? { value: clampedValue } : {})}
       class={className}
       style={computedStyle}

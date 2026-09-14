@@ -7,6 +7,8 @@
   font-weight: 100 900;
   font-stretch: 75% 100%;
   font-feature-settings: "ss02", "ss05", "tnum";
+  /* Safari otherwise uses the font file's non-zero internal slant default. */
+  font-variation-settings: "slnt" 0;
   font-display: swap;
 }
 @font-face {
@@ -42,32 +44,41 @@
 }
 @layer anta.reset, anta.components, anta.theme;
 
-:root, .light {
+:root,
+.light {
   --sans-serif: "TT Interphases Pro Variable", sans-serif;
   --serif: "Stringer", serif;
   --monospace: "Antithesis Mono", ui-monospace, monospace;
+  /* Safari leaves this font at its non-zero internal slant default unless the
+     axis is pinned on rendered content; the @font-face descriptor is not enough. */
+  font-variation-settings: "slnt" 0;
 }
 
-:root, .light {
+:root,
+.light {
   --anta-seed-brand: #cc4636;
   --anta-seed-neutral: #65605b;
 }
 
 @layer anta.theme {
-  :is(a-button, a[role="button"][data-anta], button[data-anta],
-      input[data-anta]:is([type="reset"], [type="submit"])),
+  :is(address, cite, dfn, em, i, var, dt) {
+    font-variation-settings: "slnt" 11;
+    font-synthesis: none;
+  }
+
+  a-button,
+  a[role="button"][data-anta],
+  button[data-anta],
+  input[data-anta]:is([type="reset"], [type="submit"]),
   a-tab {
     font-stretch: 88%;
   }
 
-  :is(a-button, a[role="button"][data-anta], button[data-anta],
-      input[data-anta]:is([type="reset"], [type="submit"])) {
+  a-button,
+  a[role="button"][data-anta],
+  button[data-anta],
+  input[data-anta]:is([type="reset"], [type="submit"]) {
     letter-spacing: 0.05ch;
-  }
-
-  :is(a-button, a[role="button"][data-anta], button[data-anta],
-      input[data-anta]:is([type="reset"], [type="submit"]))[priority="quaternary"] {
-    letter-spacing: 0.06ch;
   }
 
   a-input {

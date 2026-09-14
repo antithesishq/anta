@@ -147,7 +147,9 @@ const SUPPORTS_FIELD_SIZING =
 //    scrolled end); textarea wraps, so neither applies there. Font stretch and style
 //    are normalized with standard properties because the UA form-control `font`
 //    shorthand can otherwise give the control different metrics from its label,
-//    hint, and pre-upgrade skeleton.
+//    hint, and pre-upgrade skeleton. Variation settings explicitly inherit the
+//    active theme's axis pin because Safari does not reliably carry it into form
+//    controls on its own.
 //  • slots — leading/trailing/clear are display:none until they hold content,
 //    so an empty slot reserves no box or phantom gap. The host stylesheet derives
 //    named-slot presence with `:has(> [slot])` and styles the matching part.
@@ -233,6 +235,7 @@ const SHADOW_STYLE = `
     font-family: var(--sans-serif);
     font-stretch: normal;
     font-style: normal;
+    font-variation-settings: inherit;
     font-size: var(--_fs);
     line-height: var(--_lh);
     font-weight: 400;

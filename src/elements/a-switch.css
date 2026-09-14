@@ -27,8 +27,8 @@
     --switch-thumb: light-dark(var(--bg-1), #ece9ec);
     --switch-thumb-off: var(--switch-track-off-stroke);
 
-    /* Brand is the default checked-track tone. `tone` also points the off-state
-       chrome at its seed; `tone-selected` leaves that chrome neutral. */
+    /* Brand is the default tone. In all scope it colors both states; selected
+       scope keeps the off-state chrome neutral. */
     --switch-tone-source: var(--anta-seed-brand);
     --switch-off-tone-source: var(--anta-seed-brand);
     --switch-track-on: light-dark(
@@ -224,16 +224,35 @@
     margin-block-start: 2px;
   }
 
-  a-switch[tone="brand"] { --switch-tone-source: var(--anta-seed-brand); --switch-off-tone-source: var(--anta-seed-brand); }
-  a-switch[tone="neutral"] { --switch-tone-source: var(--anta-seed-neutral); --switch-off-tone-source: var(--anta-seed-neutral); }
-  a-switch[tone="info"] { --switch-tone-source: var(--anta-seed-info); --switch-off-tone-source: var(--anta-seed-info); }
-  a-switch[tone="success"] { --switch-tone-source: var(--anta-seed-success); --switch-off-tone-source: var(--anta-seed-success); }
-  a-switch[tone="warning"] { --switch-tone-source: var(--anta-seed-warning); --switch-off-tone-source: var(--anta-seed-warning); }
-  a-switch[tone="critical"] { --switch-tone-source: var(--anta-seed-critical); --switch-off-tone-source: var(--anta-seed-critical); }
-  /* A regular `tone` also colors the unchecked border and thumb. The track
+  a-switch[tone="brand"] {
+    --switch-tone-source: var(--anta-seed-brand);
+    --switch-off-tone-source: var(--anta-seed-brand);
+  }
+  a-switch[tone="neutral"] {
+    --switch-tone-source: var(--anta-seed-neutral);
+    --switch-off-tone-source: var(--anta-seed-neutral);
+  }
+  a-switch[tone="info"] {
+    --switch-tone-source: var(--anta-seed-info);
+    --switch-off-tone-source: var(--anta-seed-info);
+  }
+  a-switch[tone="success"] {
+    --switch-tone-source: var(--anta-seed-success);
+    --switch-off-tone-source: var(--anta-seed-success);
+  }
+  a-switch[tone="warning"] {
+    --switch-tone-source: var(--anta-seed-warning);
+    --switch-off-tone-source: var(--anta-seed-warning);
+  }
+  a-switch[tone="critical"] {
+    --switch-tone-source: var(--anta-seed-critical);
+    --switch-off-tone-source: var(--anta-seed-critical);
+  }
+  /* In the default `all` scope, `tone` also colors the unchecked border and thumb. The track
      keeps a whisper-light border at rest, then steps through the same ramp as
-     the neutral chrome. `tone-selected` deliberately does not participate. */
-  a-switch[tone]:not([tone=""], [tone="neutral"]) {
+     the neutral chrome. */
+  a-switch:not([tone], [tone-scope="selected"]),
+  a-switch[tone]:not([tone=""], [tone="neutral"], [tone-scope="selected"]) {
     --_switch-off-track: light-dark(
       oklch(from var(--switch-off-tone-source) 0.56 c h),
       oklch(from var(--switch-off-tone-source) 0.47 c h)
@@ -261,21 +280,6 @@
       --switch-off-tone-source: attr(tone type(<color>), transparent);
     }
   }
-  a-switch[tone-selected="brand"] { --switch-tone-source: var(--anta-seed-brand); }
-  a-switch[tone-selected="neutral"] { --switch-tone-source: var(--anta-seed-neutral); }
-  a-switch[tone-selected="info"] { --switch-tone-source: var(--anta-seed-info); }
-  a-switch[tone-selected="success"] { --switch-tone-source: var(--anta-seed-success); }
-  a-switch[tone-selected="warning"] { --switch-tone-source: var(--anta-seed-warning); }
-  a-switch[tone-selected="critical"] { --switch-tone-source: var(--anta-seed-critical); }
-  a-switch[tone-selected]:not(
-      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
-      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
-    --switch-tone-source: transparent;
-    @supports (color: attr(probe type(<color>), red)) {
-      --switch-tone-source: attr(tone-selected type(<color>), transparent);
-    }
-  }
-
   /* The track and thumb are both author-painted pseudo-elements. Keep their
      forced-colors pairing explicit: off is a Canvas track with a CanvasText
      thumb, while on swaps those two colors. */

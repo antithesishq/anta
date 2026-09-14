@@ -51,6 +51,7 @@
     /* Resting / hover-exit easing (the slower, ease-out direction). */
     transition: background-color var(--menu-item-timing-out);
     font: inherit;
+    font-variation-settings: inherit;
     font-size: 14px;
     line-height: 16px;
     text-align: left;
@@ -216,6 +217,7 @@
     padding-left: 12px;
     color: var(--text-5);
     font: inherit;
+    font-variation-settings: inherit;
     font-size: 1em;
     letter-spacing: 0.1ch;
     white-space: nowrap;

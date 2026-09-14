@@ -224,7 +224,7 @@ export type {
   ToastContent,
   ToastRender,
 } from './components/Toaster'
-export type { BaseProps, BaseAttributes } from './general_types'
+export type { BaseProps, BaseAttributes, ToneScope } from './general_types'
 export { configure } from './jsx-runtime'
 export type { AntaIntrinsicElements } from './jsx-runtime'
 

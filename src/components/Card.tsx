@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from "../elements/a-icon.shapes"
-import { toneStyle, roundStyle, roundAttr } from "../anta_helpers"
+import { neutralToneAttr, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
 import { Title } from "./Title"
 import { Text } from "./Text"
 import { Icon } from "./Icon"
@@ -132,9 +132,9 @@ export const Card = ({
   children,
   ...rest
 }: CardProps) => {
-  // Empty string is "no tone" — same as omitting it. A non-named tone is a literal
-  // CSS color fed to the element's oklch derivation via the inline custom property.
-  const toneAttr = tone || undefined
+  // A non-named tone is a literal CSS color fed to the element's oklch
+  // derivation via the inline custom property.
+  const toneAttr = neutralToneAttr(tone)
   const computedStyle = roundStyle(
     round,
     "--card-round",

@@ -1,4 +1,4 @@
-import { nativeStateChange, toneStyle, roundStyle, roundAttr, type StateChangeEvent } from "../anta_helpers"
+import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr, type StateChangeEvent } from "../anta_helpers"
 import type { BaseProps } from "../general_types"
 import { Button } from "./Button"
 
@@ -139,7 +139,7 @@ export const Banner = ({
       // A banner is shown by default, so uncontrolled always emits an explicit
       // default-state (absent reads `closed` → hidden).
       default-state={!controlled ? (defaultDismissed ? "closed" : "open") : undefined}
-      tone={tone && tone !== "neutral" ? tone : undefined}
+      tone={neutralToneAttr(tone)}
       align={align === "center" ? "center" : undefined}
       round={roundAttr(round)}
       // ARIA lives in the wrapper (the element stays engine-agnostic). Default the

@@ -275,6 +275,7 @@ const SHADOW_STYLE = `
     flex: 1;
     min-width: 0;
     font: inherit;
+    font-variation-settings: inherit;
     color: inherit;
     text-align: left;
 

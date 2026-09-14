@@ -134,9 +134,10 @@ one. Any literal CSS color works too, for a one-off custom tone.
 
 <Preview>
   <RadioGroup
-    name="tone-selected"
+    name="tone-scope"
     defaultValue="a"
-    toneSelected="brand"
+    tone="brand"
+    toneScope="selected"
     options={[
       { value: 'a', label: 'Option A' },
       { value: 'b', label: 'Option B' },
@@ -147,7 +148,8 @@ one. Any literal CSS color works too, for a one-off custom tone.
 
 ```tsx folded
 <RadioGroup
-  toneSelected="brand"
+  tone="brand"
+  toneScope="selected"
   defaultValue="a"
   options={[
     { value: 'a', label: 'Option A' },
@@ -159,10 +161,10 @@ one. Any literal CSS color works too, for a one-off custom tone.
 </Col>
 <Col>
 
-`toneSelected` tones the **selected option only** — every unselected ring stays
-neutral grey. Reach for it instead of `tone` when a resting tinted border would read
-as a validation error. Same tone set; set it on the group, or on a single option to
-override one.
+`toneScope="selected"` applies the group's `tone` to the **selected option only** —
+every unselected ring stays neutral grey. Use it when a resting tinted border would
+read as a validation error. Set the scope on the group, or on a single option to
+override the group.
 
 To color the **label and hint**, there's no prop — add a `color` rule on the
 option's `a-radio-label` / `a-radio-hint` with a `--text-N-{tone}` value.
@@ -480,13 +482,13 @@ For a standard HTML form, add `data-anta` to each native radio. Radios that shar
 a `name` retain the browser's selection, keyboard behavior, labels, and form
 submission while using Anta's control surface.
 
-`size`, `tone`, and `tone-selected` use the matching RadioGroup option
+`size`, `tone`, and `tone-scope` use the matching RadioGroup option
 treatments.
 
 <Preview>
   <div style={{ display: 'grid', gap: '8px', marginBottom: '8px' }}>
     <label><input data-anta type="radio" name="native-plan" value="starter" size="small" tone="brand" /> Starter</label>
-    <label><input data-anta type="radio" name="native-plan" value="pro" tone-selected="success" checked /> Pro</label>
+    <label><input data-anta type="radio" name="native-plan" value="pro" tone="success" tone-scope="selected" checked /> Pro</label>
     <label><input data-anta type="radio" name="native-plan" value="enterprise" size="large" tone="warning" /> Enterprise</label>
   </div>
 </Preview>
@@ -494,7 +496,7 @@ treatments.
 ```html
 <div style="display: grid; gap: 8px">
   <label><input data-anta type="radio" name="plan" value="starter" size="small" tone="brand"> Starter</label>
-  <label><input data-anta type="radio" name="plan" value="pro" tone-selected="success" checked> Pro</label>
+  <label><input data-anta type="radio" name="plan" value="pro" tone="success" tone-scope="selected" checked> Pro</label>
   <label><input data-anta type="radio" name="plan" value="enterprise" size="large" tone="warning"> Enterprise</label>
 </div>
 ```
@@ -503,9 +505,9 @@ treatments.
 
 <Disclosure title="Styling">
 
-Reach for the props first: **`tone`** colors the mark in every state,
-**`toneSelected`** only the selected option (any CSS color for a custom tone, set on
-the group or a single option — derives the full curve in oklch), **`size`** the
+Reach for the props first: **`tone`** chooses the mark color and **`toneScope`**
+chooses whether it applies in all states or only to the selected option (any CSS
+color can be set on the group or one option and derives the full curve in oklch), **`size`** the
 dimensions + type. To tint the label + hint, add a `color` rule on the option's
 `a-radio-label` / `a-radio-hint` with the `--text-N-{tone}` values — there's no
 text-tone prop. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).

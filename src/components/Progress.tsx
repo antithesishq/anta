@@ -1,5 +1,5 @@
 import type { BaseProps } from "../general_types"
-import { hasChildren, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
+import { hasChildren, neutralToneAttr, toneStyle, roundStyle, roundAttr } from "../anta_helpers"
 
 export interface ProgressProps extends BaseProps {
   /** Current progress value. Omit this prop, or pass `false`, to show
@@ -80,7 +80,7 @@ export const Progress = ({ value, max = 100, tone, size, round, label, hint, cla
     <a-progress
       value={indeterminate ? false : numericValue}
       max={max}
-      tone={tone && tone !== 'neutral' ? tone : undefined}
+      tone={neutralToneAttr(tone)}
       size={size && size !== 'medium' ? size : undefined}
       round={roundAttr(round)}
       role="progressbar"

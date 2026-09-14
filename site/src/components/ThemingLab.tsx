@@ -373,7 +373,7 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
     case 'checkbox':
       return (
         <div className={styles.col}>
-          <Checkbox defaultChecked toneSelected={selVal} label="On · toneSelected" />
+          <Checkbox defaultChecked tone={selVal} toneScope="selected" label="On · selected scope" />
           <Checkbox tone={toneVal} label="Off · tone" />
         </div>
       )
@@ -382,7 +382,8 @@ function preview(spec: ComponentSpec, mode: 'ref' | 'gen', tone: Tone, seed: str
       return (
         <RadioGroup
           name={`tl-radio-${tone}-${mode}`}
-          toneSelected={selVal}
+          tone={selVal}
+          toneScope="selected"
           defaultValue="b"
           options={[
             { value: 'a', label: 'One' },

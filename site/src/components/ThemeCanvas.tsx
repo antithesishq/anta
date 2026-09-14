@@ -76,10 +76,10 @@ export default function ThemeCanvas() {
           <Input label="Description" multiline defaultValue="A small space to explore a big idea." />
           <Input label="Project URL" defaultValue="already-taken" status="critical" hint="This address is already in use." />
           <div className={styles.row}>
-            <Checkbox label="Include a README" defaultChecked toneSelected="brand" />
+            <Checkbox label="Include a README" defaultChecked tone="brand" toneScope="selected" />
             <Switch label="Notifications" defaultChecked tone="brand" />
           </div>
-          <RadioGroup name="theme-preview-plan" defaultValue="team" toneSelected="brand" options={[
+          <RadioGroup name="theme-preview-plan" defaultValue="team" tone="brand" toneScope="selected" options={[
             { value: 'personal', label: 'Personal' },
             { value: 'team', label: 'Team' },
             { value: 'enterprise', label: 'Enterprise' },

@@ -424,6 +424,7 @@
     background: color-mix(in oklch, var(--text-1) 10%, transparent);
     box-shadow: inset 0 0 1px color-mix(in oklch, currentColor, transparent 90%);
     font: inherit;
+    font-variation-settings: inherit;
     font-weight: 450;
     letter-spacing: 0.05ch;
     line-height: var(--native-file-line-height);
@@ -662,6 +663,7 @@
       color: inherit;
       cursor: pointer;
       font: inherit;
+      font-variation-settings: inherit;
       text-align: start;
     }
     select[data-anta] > button > selectedcontent {

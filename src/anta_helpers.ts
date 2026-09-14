@@ -146,6 +146,13 @@ export const NAMED_TONES = new Set([
   'critical',
 ])
 
+/** Omits the neutral default from JSX-generated DOM. Use only where an absent
+ * tone is equivalent to neutral; per-child tones keep an explicit `neutral`
+ * value when it resets an inherited group tone. */
+export function neutralToneAttr<T extends string>(tone: T | undefined): T | undefined {
+  return tone && tone !== 'neutral' ? tone : undefined
+}
+
 /**
  * Inline-style helper for a custom (non-named) tone: hands the literal color to
  * the element via `varName` (e.g. `--radio-tone-source`) so the element's CSS

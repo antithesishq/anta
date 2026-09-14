@@ -2,8 +2,8 @@
 // not a hard `react` import — so a custom runtime resolves them, not whatever
 // `react` maps to. See AGENTS.md (stateless-wrapper exception for RadioGroup).
 import { useId, useState } from "../jsx-runtime"
-import { nativeStateChange, optionPresentationAttrs, toneStyle } from "../anta_helpers"
-import type { BaseProps, OptionPresentationProps } from "../general_types"
+import { nativeStateChange, neutralToneAttr, optionPresentationAttrs, toneStyle } from "../anta_helpers"
+import type { BaseProps, OptionPresentationProps, ToneScope } from "../general_types"
 
 /** The element's `statechange` payload. `next`/`prev` are values (`null` = nothing
  *  selected); `reason` distinguishes a user pick from a form reset / bfcache restore. */
@@ -36,8 +36,8 @@ export interface RadioOption extends OptionPresentationProps {
   disabled?: boolean
   /** Override this one option's mark tone (defaults to the group's `tone`). */
   tone?: "brand" | "neutral" | "info" | "success" | "warning" | "critical" | (string & {})
-  /** Override this one option's `toneSelected` (defaults to the group's). */
-  toneSelected?: "brand" | "neutral" | "info" | "success" | "warning" | "critical" | (string & {})
+  /** Override this option's tone scope. The group scope is inherited when omitted. */
+  toneScope?: ToneScope
   /** Override this one option's size (defaults to the group's `size`). */
   size?: "small" | "medium" | "large"
 }
@@ -88,18 +88,17 @@ export interface RadioGroupProps extends Omit<BaseProps, "children" | "onChange"
    *  @defaultValue 'neutral' */
   status?: "neutral" | "brand" | "info" | "success" | "warning" | "critical"
   /** Mark tone applied to every option (an option's own `tone` wins), or any literal
-   *  CSS color for a one-off custom tone. Colors the selected-ring fill + dot *and*
-   *  the unselected ring border. Named tones track light/dark mode. Use `toneSelected`
-   *  instead to tone only the selected option and leave the rest neutral. The option
+   *  CSS color for a one-off custom tone. In the default `all` scope it colors the
+   *  selected-ring fill + dot and the unselected ring border. Named tones track
+   *  light/dark mode. Set `toneScope="selected"` to tone only the selected option
+   *  and leave the rest neutral. The option
    *  text stays neutral — recolor it in plain CSS via the `--text-N-{tone}` tokens.
    *  @defaultValue 'neutral' */
   tone?: "brand" | "neutral" | "info" | "success" | "warning" | "critical" | (string & {})
-  /** Like `tone`, but colored onto the **selected option only** — every unselected
-   *  ring stays neutral grey. Applied to every option (an option's own `toneSelected`
-   *  wins). Prefer this over `tone` when a resting tinted border would read as a
-   *  validation state.
-   *  @defaultValue 'neutral' */
-  toneSelected?: "brand" | "neutral" | "info" | "success" | "warning" | "critical" | (string & {})
+  /** Apply `tone` to every state, or only to the selected option so unselected
+   *  rings stay neutral. An option's own `toneScope` wins.
+   *  @defaultValue 'all' */
+  toneScope?: ToneScope
   /** Size applied to every option (an option's own `size` wins).
    *  @defaultValue 'medium' */
   size?: "small" | "medium" | "large"
@@ -141,7 +140,7 @@ export const RadioGroup = ({
   hint,
   status,
   tone,
-  toneSelected,
+  toneScope,
   size,
   disabled,
   orientation,
@@ -216,10 +215,8 @@ export const RadioGroup = ({
       default-state={!controlled ? defaultValue : undefined}
       name={name}
       status={status && status !== "neutral" ? status : undefined}
-      tone={tone && tone !== "neutral" ? tone : undefined}
-      // Unlike the group tone, an explicit neutral selected tone can reset a
-      // colored group tone, so it remains a DOM attribute.
-      tone-selected={toneSelected || undefined}
+      tone={neutralToneAttr(tone)}
+      tone-scope={toneScope && toneScope !== "all" ? toneScope : undefined}
       size={size && size !== "medium" ? size : undefined}
       disabled={disabled ? "" : undefined}
       orientation={orientation && orientation !== "vertical" ? orientation : undefined}
@@ -232,17 +229,9 @@ export const RadioGroup = ({
       onfocusin={onFocus}
       onfocusout={onBlur}
       class={className}
-      // Custom normal and selected tones flow to children through separate sources;
-      // named tones cascade through the CSS instead.
-      style={toneStyle(
-        toneSelected,
-        "--radio-tone-source",
-        toneStyle(
-          tone,
-          "--radio-off-tone-source",
-          toneSelected == null ? toneStyle(tone, "--radio-tone-source", style) : style,
-        ),
-      )}
+      // Custom tones flow to children through both sources; CSS decides whether
+      // the resting source participates from tone-scope.
+      style={toneStyle(tone, "--radio-tone-source", toneStyle(tone, "--radio-off-tone-source", style))}
     >
       {label && <a-radio-group-label id={labelId}>{label}</a-radio-group-label>}
       {hint && <a-radio-group-hint id={hintId}>{hint}</a-radio-group-hint>}
@@ -265,21 +254,11 @@ export const RadioGroup = ({
               // An option's explicit neutral tone is an override of the group
               // tone, rather than the same as an omitted option tone.
               tone={o.tone || undefined}
-              tone-selected={o.toneSelected || undefined}
+              tone-scope={o.toneScope ?? (o.tone ? toneScope : undefined)}
               size={o.size && o.size !== "medium" ? o.size : undefined}
               disabled={o.disabled ? "" : undefined}
               class={optionClassName}
-              style={toneStyle(
-                o.toneSelected,
-                "--radio-tone-source",
-                toneStyle(
-                  o.tone,
-                  "--radio-off-tone-source",
-                  o.toneSelected == null
-                    ? toneStyle(o.tone, "--radio-tone-source", optionStyle)
-                    : optionStyle,
-                ),
-              )}
+              style={toneStyle(o.tone, "--radio-tone-source", toneStyle(o.tone, "--radio-off-tone-source", optionStyle))}
             >
               <a-radio-label>{o.label}</a-radio-label>
               {o.hint != null && <a-radio-hint>{o.hint}</a-radio-hint>}

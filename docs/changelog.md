@@ -29,6 +29,12 @@ changes are not listed.
   its segments. DOM code that expected ARIA attributes to remain on an
   `<a-input>` host must read its `control`; CSS should use explicit application
   state rather than host ARIA selectors.
+- **Breaking:** Filtered Select popups and SelectFaceted popups that contain an
+  editable field now use `role="dialog"`, and their triggers expose
+  `aria-haspopup="dialog"`. The existing shadow scroll region uses
+  `role="menu"` while it contains option rows, so the filter textbox is no
+  longer a child of a menu in the accessibility tree. CSS or DOM code that
+  targets the popup host by `[role="menu"]` must also account for dialogs.
 - Every independently loadable stylesheet now reserves Anta's public and
   internal cascade-layer order. Granular element imports therefore keep
   component and theme rules above `reset.css` even when a bundler loads their

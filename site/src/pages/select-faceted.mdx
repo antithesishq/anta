@@ -25,6 +25,12 @@ application-defined facet keys, not Anta terms. Each facet has one of four
 Use `value` with `onValueChange` to control it, or use `defaultValue` for an
 uncontrolled filter.
 
+Without `searchable`, the trigger opens a menu of facets. With `searchable`, it
+opens a dialog containing the search field and that menu. A filtered option
+facet also opens a dialog containing its search field and options menu. Text and
+custom facets use dialogs for their editable content. An unfiltered option facet
+keeps the menu popup pattern.
+
 Pass `placement` to control where the root facet menu opens relative to its
 trigger. It uses the same values as `Menu` and still flips or clamps when space
 is limited. `offset` sets the gap in pixels between the trigger and the menu:

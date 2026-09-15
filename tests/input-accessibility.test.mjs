@@ -14,13 +14,28 @@ before(async () => {
       contents: `
         import { h, render } from 'preact'
         import { configure } from './src/jsx-runtime'
-        import { InputAutocomplete, InputDate, InputTime, Select } from './src/index'
+        import { InputAutocomplete, InputDate, InputTime, Select, SelectFaceted } from './src/index'
         import './src/elements/index'
         configure(h)
         render(h('main', {},
           h(InputAutocomplete, { label: 'Framework', suggestions: ['React', 'Preact'] }),
           h(InputDate, { label: 'Due date' }),
           h(Select, { label: 'Team', options: ['Design', 'Engineering'] }),
+          h(Select, {
+            label: 'Repository',
+            options: ['Anta', 'Stickers'],
+            filter: true,
+            clearable: true,
+            defaultValue: 'Anta',
+          }),
+          h(SelectFaceted, {
+            label: 'Filter issues',
+            searchable: true,
+            facets: [
+              { key: 'team', label: 'Team', kind: 'single', options: ['Design', 'Engineering'], filter: true },
+              { key: 'title', label: 'Title', kind: 'text' },
+            ],
+          }),
           h(InputTime, { label: 'Start time', required: true, status: 'critical' }),
         ), document.body)
       `,
@@ -149,9 +164,11 @@ test('Input compositions put popup semantics on their focused controls', async t
     const autocomplete = hosts.find(host => host.shadowRoot.querySelector('input')?.getAttribute('aria-label') === 'Framework')
     const date = hosts.find(host => host.shadowRoot.querySelector('input')?.getAttribute('aria-label') === 'Due date')
     const select = hosts.find(host => host.shadowRoot.querySelector('button')?.getAttribute('aria-label') === 'Team')
+    const filteredSelect = hosts.find(host => host.shadowRoot.querySelector('button')?.getAttribute('aria-label') === 'Repository')
     const autoControl = autocomplete.shadowRoot.querySelector('input')
     const dateControl = date.shadowRoot.querySelector('input')
     const selectControl = select.shadowRoot.querySelector('button')
+    const filteredSelectControl = filteredSelect.shadowRoot.querySelector('button')
     return {
       autocomplete: {
         hostRole: autocomplete.hasAttribute('role'),
@@ -172,6 +189,12 @@ test('Input compositions put popup semantics on their focused controls', async t
         popup: selectControl.getAttribute('aria-haspopup'),
         controlsRole: selectControl.ariaControlsElements?.[0]?.getAttribute('role'),
       },
+      filteredSelect: {
+        popup: filteredSelectControl.getAttribute('aria-haspopup'),
+        controlsRole: filteredSelectControl.ariaControlsElements?.[0]?.getAttribute('role'),
+        bodyRole: filteredSelectControl.ariaControlsElements?.[0]?.shadowRoot
+          .querySelector('[part="scroll"]')?.getAttribute('role'),
+      },
     }
   })
 
@@ -179,7 +202,66 @@ test('Input compositions put popup semantics on their focused controls', async t
     autocomplete: { hostRole: false, role: 'combobox', popup: 'listbox', controlsRole: 'listbox' },
     date: { hostRole: false, role: 'combobox', popup: 'dialog', controlsRole: 'dialog' },
     select: { hostRole: false, tag: 'button', role: null, popup: 'menu', controlsRole: 'menu' },
+    filteredSelect: { popup: 'dialog', controlsRole: 'dialog', bodyRole: 'menu' },
   })
+})
+
+test('filtered Select exposes its textbox and option menu as dialog siblings', async t => {
+  const page = await pageFor(t)
+  const selectHost = page.locator('a-input').filter({ has: page.locator('button[aria-label="Repository"]') })
+  await selectHost.focus()
+  await page.keyboard.press('Enter')
+  await page.waitForTimeout(20)
+
+  const popup = page.locator('a-menu[role="dialog"][aria-label="Repository options"]')
+  assert.equal(await popup.evaluate(menu => menu.isOpen), true)
+  const snapshot = await popup.ariaSnapshot()
+  assert.match(snapshot, /dialog "Repository options"/)
+  assert.match(snapshot, /textbox "Filter options"/)
+  assert.match(snapshot, /menu "Options"/)
+  assert.match(snapshot, /menuitemradio "Anta"/)
+  assert.match(snapshot, /button "Clear"/)
+
+  const filter = popup.locator('a-input[data-menu-search] input')
+  await filter.fill('missing')
+  await page.waitForTimeout(20)
+  assert.equal(
+    await popup.evaluate(menu => menu.shadowRoot.querySelector('[part="scroll"]').getAttribute('role')),
+    null,
+  )
+})
+
+test('searchable and editable SelectFaceted popups expose dialog semantics', async t => {
+  const page = await pageFor(t)
+  const trigger = page.locator('a-button').filter({ hasText: 'Filter issues' })
+  assert.equal(await trigger.getAttribute('aria-haspopup'), 'dialog')
+  await trigger.click()
+  await page.waitForTimeout(20)
+
+  const root = page.locator('a-menu[role="dialog"][aria-label="Filter issues options"]')
+  const rootSnapshot = await root.ariaSnapshot()
+  assert.match(rootSnapshot, /dialog "Filter issues options"/)
+  assert.match(rootSnapshot, /textbox "Filter all facets"/)
+  assert.match(rootSnapshot, /menu "Options"/)
+
+  const team = root.locator('a-menu-item').filter({ hasText: 'Team' }).first()
+  assert.equal(await team.getAttribute('aria-haspopup'), 'dialog')
+  await team.click()
+  await page.waitForTimeout(20)
+  const teamPopup = page.locator('a-menu[role="dialog"][aria-label="Team options"]')
+  const teamSnapshot = await teamPopup.ariaSnapshot()
+  assert.match(teamSnapshot, /dialog "Team options"/)
+  assert.match(teamSnapshot, /textbox "Filter Team"/)
+  assert.match(teamSnapshot, /menu "Options"/)
+
+  await page.keyboard.press('Escape')
+  const title = root.locator('a-menu-item').filter({ hasText: 'Title' }).first()
+  assert.equal(await title.getAttribute('aria-haspopup'), 'dialog')
+  await title.click()
+  await page.waitForTimeout(20)
+  const titleSnapshot = await page.locator('a-menu[role="dialog"][aria-label="Title editor"]').ariaSnapshot()
+  assert.match(titleSnapshot, /dialog "Title editor"/)
+  assert.match(titleSnapshot, /textbox "Title"/)
 })
 
 test('button-backed Select and editable InputDate retain their popup interactions', async t => {

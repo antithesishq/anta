@@ -239,7 +239,7 @@ const lazyObserver: IntersectionObserver | null =
  *   slotted light DOM (see `a-menu-item.css`), directly styleable.
  */
 export class AMenuElement extends HTMLElementBase {
-  static observedAttributes = ['placement', 'context', 'coord', 'offset', 'nohover', 'state', 'stop-propagation']
+  static observedAttributes = ['placement', 'context', 'coord', 'offset', 'nohover', 'state', 'stop-propagation', 'role']
 
   /** Shadow-internal popover surface — the only thing we ever mutate. */
   surface!: HTMLDivElement
@@ -274,6 +274,10 @@ export class AMenuElement extends HTMLElementBase {
   // event, which the reactive layer reflects onto the field's `aria-activedescendant`.
   private activeItem: AMenuItemElement | null = null
   private comboObserver?: MutationObserver
+  // A dialog-style filtered popup keeps its text field outside the menu role.
+  // The existing shadow scroll region becomes the menu that owns the option
+  // rows; this observer only tracks whether that region currently has items.
+  private accessibilityObserver?: MutationObserver
   // An open menu follows its anchor vertically through scrolling, transforms, and
   // layout shifts. Those movements do not all produce a DOM observer callback, so
   // this frame is active only while the menu is visible.
@@ -472,6 +476,7 @@ export class AMenuElement extends HTMLElementBase {
     // to install the listener itself. Idempotent per document.
     ensureMenuItemKeyListener(this.doc)
     this.#syncStopPropagation()
+    this.#syncAccessibilityRegions()
     const anchor = this.triggerAnchor
     if (anchor) {
       anchorToMenu.set(anchor, this)
@@ -489,6 +494,8 @@ export class AMenuElement extends HTMLElementBase {
     this.teardownListeners()
     this.cancelOpenTimer()
     this.cancelCloseTimer()
+    this.accessibilityObserver?.disconnect()
+    this.accessibilityObserver = undefined
     const anchor = this.triggerAnchor
     if (anchor && anchorToMenu.get(anchor) === this) {
       anchorToMenu.delete(anchor)
@@ -506,6 +513,10 @@ export class AMenuElement extends HTMLElementBase {
     }
     if (name === 'stop-propagation') {
       this.#syncStopPropagation()
+      return
+    }
+    if (name === 'role') {
+      this.#syncAccessibilityRegions()
       return
     }
     // Trigger-shaping attributes changed — rewire the anchor listeners.
@@ -742,6 +753,48 @@ export class AMenuElement extends HTMLElementBase {
     const el = this.querySelector('[data-menu-search]') as HTMLElement | null
     if (el && el.closest('a-menu') === this) return el
     return this.#comboAnchor
+  }
+
+  /** Split a filtered dialog into its existing shadow regions for accessibility:
+   *  the header owns the textbox, while the scrolling body owns menu items. The
+   *  role disappears when filtering leaves only inert empty-state content, so an
+   *  exposed empty menu is never announced. All mutations stay in shadow DOM. */
+  #syncAccessibilityRegions() {
+    if (!this.scrollEl) return
+    const dialog = this.getAttribute('role') === 'dialog'
+    const split = dialog && !!this.#searchField
+
+    if (dialog && this.isConnected && !this.accessibilityObserver) {
+      this.accessibilityObserver = new this.view.MutationObserver(() => this.#syncAccessibilityRegions())
+      this.accessibilityObserver.observe(this, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['data-menu-search', 'slot'],
+      })
+    } else if (!dialog && this.accessibilityObserver) {
+      this.accessibilityObserver.disconnect()
+      this.accessibilityObserver = undefined
+    }
+
+    const hasBodyItem = split && [...this.querySelectorAll<HTMLElement>('a-menu-item, [data-anta-menu-item]')]
+      .some((item) => {
+        if (item.closest('a-menu') !== this) return false
+        let region: HTMLElement = item
+        while (region.parentElement && region.parentElement !== this) region = region.parentElement
+        const slot = region.getAttribute('slot')
+        return slot !== 'header' && slot !== 'footer'
+      })
+
+    if (hasBodyItem) {
+      this.scrollEl.setAttribute('role', 'menu')
+      this.scrollEl.setAttribute('aria-label', 'Options')
+      this.scrollEl.setAttribute('aria-orientation', 'vertical')
+    } else {
+      this.scrollEl.removeAttribute('role')
+      this.scrollEl.removeAttribute('aria-label')
+      this.scrollEl.removeAttribute('aria-orientation')
+    }
   }
 
   /** Move the combobox cursor. Sets the item's `active` **property** (off-DOM

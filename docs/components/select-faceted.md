@@ -14,6 +14,12 @@ application-defined facet keys, not Anta terms. Each facet has one of four
 Use `value` with `onValueChange` to control it, or use `defaultValue` for an
 uncontrolled filter.
 
+Without `searchable`, the trigger opens a menu of facets. With `searchable`, it
+opens a dialog containing the search field and that menu. A filtered option
+facet also opens a dialog containing its search field and options menu. Text and
+custom facets use dialogs for their editable content. An unfiltered option facet
+keeps the menu popup pattern.
+
 Pass `placement` to control where the root facet menu opens relative to its
 trigger. It uses the same values as `Menu` and still flips or clamps when space
 is limited. `offset` sets the gap in pixels between the trigger and the menu:
@@ -373,7 +379,7 @@ const recency: SelectFacetCustom<Recency> = {
 | `onValueChange?` | (value, attrs) => void | — | Fires after any facet changes. `value` is the whole new record (a facet key → that facet's value; a cleared facet is absent). `attrs` says what changed: `{ facet, kind, value }` for a single facet edit, or `{ all: true }` for the "Clear all" row — narrow on `'all' in attrs` before reading `facet`. |
 | `placement?` | 'left' \| 'right' \| 'bottom' \| 'top' \| 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' | bottom-start | Preferred placement of the root filter menu relative to its trigger. The menu auto-flips vertically and clamps horizontally when needed. |
 | `priority?` | 'primary' \| 'secondary' | secondary | Default trigger's button priority. |
-| `renderTrigger?` | (state) => ReactNode | — | Replaces the default `Button` with a trigger returned from this function. Receives a `SelectFacetedTriggerState`. Return exactly one focusable element: the menu is positioned relative to that element and opens when it is clicked. Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned element, on a role that supports them (an Anta `Button` already carries `role="button"`; otherwise add `role="combobox"`). `className`, `style`, and other trigger props apply only to the default Button, so add styling and attributes to the returned element. |
+| `renderTrigger?` | (state) => ReactNode | — | Replaces the default `Button` with a trigger returned from this function. Receives a `SelectFacetedTriggerState`. Return exactly one focusable element: the menu is positioned relative to that element and opens when it is clicked. Add `aria-haspopup={searchable ? 'dialog' : 'menu'}` and `aria-expanded={state.open}` to the returned element, on a role that supports them (an Anta `Button` already carries `role="button"`; otherwise add `role="combobox"`). `className`, `style`, and other trigger props apply only to the default Button, so add styling and attributes to the returned element. |
 | `searchable?` | boolean | — | Adds a search field at the top of the root menu. It searches the options of every `single` and `multiple` facet in one list. For example, "alice" can appear under application-defined Assignee and Owner facets. `text` and `custom` facets remain available when the search is empty. Each facet uses its `filter` function when supplied, or the built-in substring match. |
 | `searchPlaceholder?` | string | Filter… | Placeholder for the global search field. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Default trigger's button size. |

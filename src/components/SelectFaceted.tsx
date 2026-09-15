@@ -203,11 +203,12 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   /** Replaces the default `Button` with a trigger returned from this function.
    *  Receives a `SelectFacetedTriggerState`. Return exactly one focusable element:
    *  the menu is positioned relative to that element and opens when it is clicked.
-   *  Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned
-   *  element, on a role that supports them (an Anta `Button` already carries
-   *  `role="button"`; otherwise add `role="combobox"`). `className`, `style`, and
-   *  other trigger props apply only to the default Button, so add styling and
-   *  attributes to the returned element. */
+   *  Add `aria-haspopup={searchable ? 'dialog' : 'menu'}` and
+   *  `aria-expanded={state.open}` to the returned element, on a role that
+   *  supports them (an Anta `Button` already carries `role="button"`; otherwise
+   *  add `role="combobox"`). `className`, `style`, and other trigger props apply
+   *  only to the default Button, so add styling and attributes to the returned
+   *  element. */
   renderTrigger?: (state: SelectFacetedTriggerState) => React.ReactNode
 }
 
@@ -545,6 +546,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
 
   const renderEditor = (facet: SelectFacet) => {
     const isOptions = facet.kind === 'single' || facet.kind === 'multiple'
+    const dialog = !isOptions || !!facet.filter
     const body =
       facet.kind === 'single'
         ? renderSingle(facet)
@@ -555,7 +557,11 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
             : renderCustom(facet)
     const hasValue = !isEmpty(current[facet.key])
     return (
-      <Menu onactivedescendant={isOptions && facet.filter ? onActive(facet.key) : undefined}>
+      <Menu
+        role={dialog ? 'dialog' : undefined}
+        aria-label={dialog ? `${facet.label} ${isOptions ? 'options' : 'editor'}` : undefined}
+        onactivedescendant={isOptions && facet.filter ? onActive(facet.key) : undefined}
+      >
         {isOptions && filterHeader(facet)}
         {body}
         {/* Clear rides the pinned `footer` slot, so it never scrolls away in a
@@ -567,6 +573,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
               <MenuItem
                 icon="x"
                 label="Clear"
+                role={dialog ? 'button' : undefined}
                 data-menu-open=""
                 onSelect={() => setFacet(facet, undefined)}
               />
@@ -613,7 +620,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           priority={priority}
           size={size}
           disabled={disabled}
-          aria-haspopup="menu"
+          aria-haspopup={searchable ? 'dialog' : 'menu'}
           aria-expanded={open ? 'true' : 'false'}
           className={className}
           style={style}
@@ -630,6 +637,8 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           so `custom` facets can `close()` it; user dismiss (Esc / outside-click)
           fires onStateChange, which we apply — and clears the global search. */}
       <Menu
+        role={searchable ? 'dialog' : undefined}
+        aria-label={searchable ? `${label} options` : undefined}
         placement={placement}
         offset={offset}
         open={open}
@@ -659,7 +668,17 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
         {searchable && rootQuery.trim()
           ? renderFlatResults()
           : facets.map((facet) => (
-              <MenuItem key={facet.key} submenu icon={facet.icon} label={facet.label}>
+              <MenuItem
+                key={facet.key}
+                submenu
+                icon={facet.icon}
+                label={facet.label}
+                aria-haspopup={
+                  facet.kind === 'text' || facet.kind === 'custom' || !!facet.filter
+                    ? 'dialog'
+                    : 'menu'
+                }
+              >
                 {(() => {
                   const s = summaryOf(facet)
                   return s != null ? (
@@ -679,6 +698,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
               <MenuItem
                 icon="filter-x"
                 label={clearAllLabel}
+                role={searchable ? 'button' : undefined}
                 disabled={activeCount === 0}
                 data-menu-open=""
                 onSelect={clearAll}

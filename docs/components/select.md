@@ -105,13 +105,14 @@ option's **value, label, or hint**. It's **whitespace-flexible** (a typed space
 matches any run of whitespace) and **bolds the matched substring** in the results.
 Pass a **function** `(option, query) => boolean` for custom matching (no highlight).
 
-With `filter`, Select remains a **menu button**. Opening it focuses a search
-field inside the menu. ↑ and ↓ move through matching options
-while focus stays in that field. Enter selects the active option, and
-Esc closes the menu. The search field stays visible while the results
-scroll. A "No matches" row appears when nothing matches, and the query resets
-when the menu closes. In `multiple` mode, `selectAll` affects only the visible
-matches.
+With `filter`, the trigger opens a dialog containing the search field and an
+options menu. This keeps the textbox outside the menu in the accessibility tree.
+Opening the dialog focuses the search field. ↑ and ↓ move
+through matching options while focus stays in that field. Enter
+selects the active option, and Esc closes the dialog. The search field
+stays visible while the results scroll. A "No matches" row appears when nothing
+matches, and the query resets when the dialog closes. In `multiple` mode,
+`selectAll` affects only the visible matches.
 
 ## Value and changes
 
@@ -534,7 +535,8 @@ focusable element, such as the Anta `Button` in this example. Select positions
 the menu relative to that element and opens it when it is clicked. A fragment,
 multiple sibling elements, or a non-focusable wrapper prevents Select from finding
 the trigger. It logs a console warning when that happens. Add
-`aria-haspopup="menu"` and `aria-expanded={state.open}` to the element.
+`aria-haspopup={filter ? 'dialog' : 'menu'}` and
+`aria-expanded={state.open}` to the element.
 
 `state` includes `open`, `value`, `selected`, `disabled`, and `icon`. `selected`
 is the resolved option list, so `selected.length` is the multi-select count. The
@@ -657,7 +659,7 @@ scannable list instead of hiding matches behind flyouts.
 | `renderIndicator?` | (state) => ReactNode | — | Replace each row's selection **mark** with your own node, drawn at the leading edge. The row stays the control (`role` + `aria-checked` from `indicator` / `selection`); only the drawn mark changes, so pair it with an `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the semantics. Composes with `renderOption`. |
 | `renderOption?` | (option, state) => ReactNode | — | Replaces the built-in `label`, `hint`, and `icon` layout for each option row. Select still supplies the row container, click handling, ARIA attributes, and selection indicator. Read extra option fields through `SelectOption`'s index signature. `state` contains `value`, `selected`, and `disabled`. Filtering still matches the option's `value`, `label`, and `hint`, but Select cannot highlight matches within the returned content. |
 | `renderSummary?` | (selected) => string \| undefined | — | `multiple` only: build the trigger's selection summary text yourself, replacing the built-in "`All` / one label / `N selected`" logic. Receives the resolved selected options (`selected.length` is the count) and runs only while something is selected — an empty selection still shows the `placeholder`. Return a **string**: it flows into the default trigger's button-backed field, so a long summary ellipsizes at the field's width just like a long value (`Engineering, Design, … `). Return `undefined` to fall back to the default for that case (e.g. customize only the count, keeping the single-label case built-in). For rich content (chips, multiple nodes) use `renderTrigger`, which replaces the whole field. |
-| `renderTrigger?` | (state) => ReactNode | — | Replaces the default field with a trigger returned from this function. Receives `open`, `value`, `selected`, `disabled`, and `icon`. Return exactly one focusable element, such as an Anta `Button`. The menu is positioned relative to that element and opens when it is clicked. Do not return a fragment, multiple siblings, or a non-focusable wrapper. Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned button. An Anta `Button` already carries the correct role. Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and `className` / `style` apply only to the default field. Add styling and attributes to the returned element instead. |
+| `renderTrigger?` | (state) => ReactNode | — | Replaces the default field with a trigger returned from this function. Receives `open`, `value`, `selected`, `disabled`, and `icon`. Return exactly one focusable element, such as an Anta `Button`. The menu is positioned relative to that element and opens when it is clicked. Do not return a fragment, multiple siblings, or a non-focusable wrapper. Add `aria-haspopup={filter ? 'dialog' : 'menu'}` and `aria-expanded={state.open}` to the returned button. An Anta `Button` already carries the correct role. Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and `className` / `style` apply only to the default field. Add styling and attributes to the returned element instead. |
 | `round?` | boolean \| number \| string | — | Round the field corners — `true` for fully round, or a number / CSS length. |
 | `selectAll?` | boolean | true | `multiple` only: shows a "Select all" row that toggles every enabled option, or only the visible options when a filter query is active. Its checkbox is mixed when some options are selected. It is on by default. Set it to `false` to remove the row and the Alt/Option-click shortcut that selects only one row. |
 | `selectAllLabel?` | string | Select all | Label for the `selectAll` row. |

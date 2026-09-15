@@ -282,8 +282,9 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  one focusable element, such as an Anta `Button`. The menu is positioned
    *  relative to that element and opens when it is clicked. Do not return a
    *  fragment, multiple siblings, or a non-focusable wrapper. Add
-   *  `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned
-   *  button. An Anta `Button` already carries the correct role.
+   *  `aria-haspopup={filter ? 'dialog' : 'menu'}` and
+   *  `aria-expanded={state.open}` to the returned button. An Anta `Button`
+   *  already carries the correct role.
    *  Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and
    *  `className` / `style` apply only to the default field. Add styling and
    *  attributes to the returned element instead. */
@@ -519,6 +520,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   const [activeId, setActiveId] = useState<string | null>(null)
   const uid = useId()
   const menuId = `${uid}-menu`
+  const popupLabel = `${label ?? (rest['aria-label'] as string | undefined) ?? 'Select'} options`
 
   // Discriminate an `options` entry by shape: a `submenu` array → flyout branch, an
   // `options` array → inline group, otherwise a leaf option.
@@ -790,7 +792,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         status={status}
         statusIcon={statusIcon}
         round={round}
-        aria-haspopup="menu"
+        aria-haspopup={filtering ? 'dialog' : 'menu'}
         aria-expanded={open ? 'true' : 'false'}
         aria-controls={menuId}
         trailing={
@@ -811,6 +813,8 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
           and to reset the filter when the menu closes. */}
       <Menu
         id={menuId}
+        role={filtering ? 'dialog' : undefined}
+        aria-label={filtering ? popupLabel : undefined}
         placement={placement}
         offset={offset}
         onStateChange={(_e, { next }) => {
@@ -868,7 +872,13 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
           <>
             <MenuSeparator slot="footer" />
             <a-select-footer slot="footer">
-              <MenuItem icon="x" label={clearLabel} data-menu-open="" onSelect={clear} />
+              <MenuItem
+                icon="x"
+                label={clearLabel}
+                role={filtering ? 'button' : undefined}
+                data-menu-open=""
+                onSelect={clear}
+              />
             </a-select-footer>
           </>
         )}

@@ -168,13 +168,14 @@ option's **value, label, or hint**. It's **whitespace-flexible** (a typed space
 matches any run of whitespace) and **bolds the matched substring** in the results.
 Pass a **function** `(option, query) => boolean` for custom matching (no highlight).
 
-With `filter`, Select remains a **menu button**. Opening it focuses a search
-field inside the menu. <kbd>↑</kbd> and <kbd>↓</kbd> move through matching options
-while focus stays in that field. <kbd>Enter</kbd> selects the active option, and
-<kbd>Esc</kbd> closes the menu. The search field stays visible while the results
-scroll. A "No matches" row appears when nothing matches, and the query resets
-when the menu closes. In `multiple` mode, `selectAll` affects only the visible
-matches.
+With `filter`, the trigger opens a dialog containing the search field and an
+options menu. This keeps the textbox outside the menu in the accessibility tree.
+Opening the dialog focuses the search field. <kbd>↑</kbd> and <kbd>↓</kbd> move
+through matching options while focus stays in that field. <kbd>Enter</kbd>
+selects the active option, and <kbd>Esc</kbd> closes the dialog. The search field
+stays visible while the results scroll. A "No matches" row appears when nothing
+matches, and the query resets when the dialog closes. In `multiple` mode,
+`selectAll` affects only the visible matches.
 
 </Col>
 </Columns>
@@ -700,7 +701,8 @@ focusable element, such as the Anta `Button` in this example. Select positions
 the menu relative to that element and opens it when it is clicked. A fragment,
 multiple sibling elements, or a non-focusable wrapper prevents Select from finding
 the trigger. It logs a console warning when that happens. Add
-`aria-haspopup="menu"` and `aria-expanded={state.open}` to the element.
+`aria-haspopup={filter ? 'dialog' : 'menu'}` and
+`aria-expanded={state.open}` to the element.
 
 `state` includes `open`, `value`, `selected`, `disabled`, and `icon`. `selected`
 is the resolved option list, so `selected.length` is the multi-select count. The

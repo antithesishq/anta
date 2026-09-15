@@ -92,42 +92,42 @@
   --text-1: oklch(from var(--anta-seed-neutral) 0.1 0.01 h);
   --text-2: oklch(from var(--anta-seed-neutral) 0.3 0.015 h);
   --text-3: color-mix(in oklch, var(--text-2) 82%, transparent);
-  --text-4: color-mix(in oklch, var(--text-2) 60%, transparent);
+  --text-4: color-mix(in oklch, var(--text-2) 66%, transparent);
   --text-5: color-mix(in oklch, var(--text-2) 40%, transparent);
 
   /* Text — light, brand */
   --text-1-brand: oklch(from var(--anta-seed-brand) 0.38 0.11 h);
   --text-2-brand: oklch(from var(--anta-seed-brand) 0.43 0.15 h);
   --text-3-brand: color-mix(in oklch, var(--text-2-brand) 82%, transparent);
-  --text-4-brand: color-mix(in oklch, var(--text-2-brand) 60%, transparent);
+  --text-4-brand: color-mix(in oklch, var(--text-2-brand) 66%, transparent);
   --text-5-brand: color-mix(in oklch, var(--text-2-brand) 40%, transparent);
 
   /* Text — light, info */
   --text-1-info: oklch(from var(--anta-seed-info) 0.38 0.11 h);
   --text-2-info: oklch(from var(--anta-seed-info) 0.43 0.15 h);
   --text-3-info: color-mix(in oklch, var(--text-2-info) 82%, transparent);
-  --text-4-info: color-mix(in oklch, var(--text-2-info) 60%, transparent);
+  --text-4-info: color-mix(in oklch, var(--text-2-info) 66%, transparent);
   --text-5-info: color-mix(in oklch, var(--text-2-info) 40%, transparent);
 
   /* Text — light, success */
   --text-1-success: oklch(from var(--anta-seed-success) 0.38 0.11 h);
   --text-2-success: oklch(from var(--anta-seed-success) 0.43 0.15 h);
   --text-3-success: color-mix(in oklch, var(--text-2-success) 82%, transparent);
-  --text-4-success: color-mix(in oklch, var(--text-2-success) 60%, transparent);
+  --text-4-success: color-mix(in oklch, var(--text-2-success) 66%, transparent);
   --text-5-success: color-mix(in oklch, var(--text-2-success) 40%, transparent);
 
   /* Text — light, warning */
   --text-1-warning: oklch(from var(--anta-seed-warning) 0.38 0.11 h);
   --text-2-warning: oklch(from var(--anta-seed-warning) 0.43 0.15 h);
   --text-3-warning: color-mix(in oklch, var(--text-2-warning) 82%, transparent);
-  --text-4-warning: color-mix(in oklch, var(--text-2-warning) 60%, transparent);
+  --text-4-warning: color-mix(in oklch, var(--text-2-warning) 66%, transparent);
   --text-5-warning: color-mix(in oklch, var(--text-2-warning) 40%, transparent);
 
   /* Text — light, critical */
   --text-1-critical: oklch(from var(--anta-seed-critical) 0.38 0.11 h);
   --text-2-critical: oklch(from var(--anta-seed-critical) 0.43 0.15 h);
   --text-3-critical: color-mix(in oklch, var(--text-2-critical) 82%, transparent);
-  --text-4-critical: color-mix(in oklch, var(--text-2-critical) 60%, transparent);
+  --text-4-critical: color-mix(in oklch, var(--text-2-critical) 66%, transparent);
   --text-5-critical: color-mix(in oklch, var(--text-2-critical) 40%, transparent);
 
   /* Borders — light, neutral */
@@ -229,42 +229,42 @@
   --text-1: oklch(from var(--anta-seed-neutral) 0.94 0.008 h);
   --text-2: oklch(from var(--anta-seed-neutral) 0.8 0.015 h);
   --text-3: color-mix(in oklch, var(--text-2) 80%, transparent);
-  --text-4: color-mix(in oklch, var(--text-2) 60%, transparent);
+  --text-4: color-mix(in oklch, var(--text-2) 62%, transparent);
   --text-5: color-mix(in oklch, var(--text-2) 40%, transparent);
 
   /* Text — dark, brand */
   --text-1-brand: oklch(from var(--anta-seed-brand) 0.85 0.1 h);
   --text-2-brand: oklch(from var(--anta-seed-brand) 0.77 0.11 h);
   --text-3-brand: color-mix(in oklch, var(--text-2-brand) 80%, transparent);
-  --text-4-brand: color-mix(in oklch, var(--text-2-brand) 60%, transparent);
+  --text-4-brand: color-mix(in oklch, var(--text-2-brand) 62%, transparent);
   --text-5-brand: color-mix(in oklch, var(--text-2-brand) 40%, transparent);
 
   /* Text — dark, info */
   --text-1-info: oklch(from var(--anta-seed-info) 0.85 0.1 h);
   --text-2-info: oklch(from var(--anta-seed-info) 0.77 0.11 h);
   --text-3-info: color-mix(in oklch, var(--text-2-info) 80%, transparent);
-  --text-4-info: color-mix(in oklch, var(--text-2-info) 60%, transparent);
+  --text-4-info: color-mix(in oklch, var(--text-2-info) 62%, transparent);
   --text-5-info: color-mix(in oklch, var(--text-2-info) 40%, transparent);
 
   /* Text — dark, success */
   --text-1-success: oklch(from var(--anta-seed-success) 0.85 0.1 h);
   --text-2-success: oklch(from var(--anta-seed-success) 0.77 0.11 h);
   --text-3-success: color-mix(in oklch, var(--text-2-success) 80%, transparent);
-  --text-4-success: color-mix(in oklch, var(--text-2-success) 60%, transparent);
+  --text-4-success: color-mix(in oklch, var(--text-2-success) 62%, transparent);
   --text-5-success: color-mix(in oklch, var(--text-2-success) 40%, transparent);
 
   /* Text — dark, warning */
   --text-1-warning: oklch(from var(--anta-seed-warning) 0.85 0.1 h);
   --text-2-warning: oklch(from var(--anta-seed-warning) 0.77 0.11 h);
   --text-3-warning: color-mix(in oklch, var(--text-2-warning) 80%, transparent);
-  --text-4-warning: color-mix(in oklch, var(--text-2-warning) 60%, transparent);
+  --text-4-warning: color-mix(in oklch, var(--text-2-warning) 62%, transparent);
   --text-5-warning: color-mix(in oklch, var(--text-2-warning) 40%, transparent);
 
   /* Text — dark, critical */
   --text-1-critical: oklch(from var(--anta-seed-critical) 0.85 0.1 h);
   --text-2-critical: oklch(from var(--anta-seed-critical) 0.77 0.11 h);
   --text-3-critical: color-mix(in oklch, var(--text-2-critical) 80%, transparent);
-  --text-4-critical: color-mix(in oklch, var(--text-2-critical) 60%, transparent);
+  --text-4-critical: color-mix(in oklch, var(--text-2-critical) 62%, transparent);
   --text-5-critical: color-mix(in oklch, var(--text-2-critical) 40%, transparent);
 
   /* Borders — dark, neutral */

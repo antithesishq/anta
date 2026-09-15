@@ -38,7 +38,7 @@
     font-weight: 450;
     font-stretch: normal;
     line-height: var(--_lh);
-    letter-spacing: 0.05ch;
+    letter-spacing: 0.025ch;
 
     white-space: nowrap;
     text-wrap: nowrap;

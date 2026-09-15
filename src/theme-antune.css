@@ -92,42 +92,42 @@
   --text-1: #050306;
   --text-2: #302b31;
   --text-3: #635b65;
-  --text-4: #878089;
+  --text-4: #7a737c;
   --text-5: #9f99a1;
 
   /* Text — light, Brand */
   --text-1-brand: #2e1e7b;
   --text-2-brand: #483493;
   --text-3-brand: #483493cc;
-  --text-4-brand: #48349399;
+  --text-4-brand: color-mix(in oklch, var(--text-2-brand) 66%, transparent);
   --text-5-brand: #48349366;
 
   /* Text — light, Success */
   --text-1-success: #004618;
   --text-2-success: #1f5c31;
   --text-3-success: #1f5c31cc;
-  --text-4-success: #1f5c3199;
+  --text-4-success: color-mix(in oklch, var(--text-2-success) 66%, transparent);
   --text-5-success: #1f5c3166;
 
   /* Text — light, Critical */
   --text-1-critical: #8f1014;
   --text-2-critical: #a01c1c;
   --text-3-critical: #a01c1ccc;
-  --text-4-critical: #a01c1c99;
+  --text-4-critical: color-mix(in oklch, var(--text-2-critical) 66%, transparent);
   --text-5-critical: #a01c1c66;
 
   /* Text — light, Warning */
   --text-1-warning: #7f410b;
   --text-2-warning: #995200;
   --text-3-warning: #995200cc;
-  --text-4-warning: #99520099;
+  --text-4-warning: color-mix(in oklch, var(--text-2-warning) 66%, transparent);
   --text-5-warning: #99520066;
 
   /* Text — light, Info */
   --text-1-info: #003969;
   --text-2-info: #175082;
   --text-3-info: #175082cc;
-  --text-4-info: #175082b2;
+  --text-4-info: color-mix(in oklch, var(--text-2-info) 66%, transparent);
   --text-5-info: #17508280;
 
   /* Borders — light, neutral */
@@ -217,42 +217,42 @@
   --text-1: #ece9ec;
   --text-2: #c1b9c1;
   --text-3: #9f99a1;
-  --text-4: #776e77;
+  --text-4: #7c737c;
   --text-5: #635b65;
 
   /* Text — dark, Brand */
   --text-1-brand: #c5baff;
   --text-2-brand: #ada0ee;
   --text-3-brand: #ada0eecc;
-  --text-4-brand: #ada0ee99;
+  --text-4-brand: color-mix(in oklch, var(--text-2-brand) 62%, transparent);
   --text-5-brand: #ada0ee66;
 
   /* Text — dark, Success */
   --text-1-success: #9ddeb1;
   --text-2-success: #74cd8e;
   --text-3-success: #74cd8ecc;
-  --text-4-success: #74cd8e99;
+  --text-4-success: color-mix(in oklch, var(--text-2-success) 62%, transparent);
   --text-5-success: #74cd8e66;
 
   /* Text — dark, Critical */
   --text-1-critical: #ffabac;
   --text-2-critical: #e78e90;
   --text-3-critical: #e78e90cc;
-  --text-4-critical: #e78e9099;
+  --text-4-critical: color-mix(in oklch, var(--text-2-critical) 62%, transparent);
   --text-5-critical: #e78e9066;
 
   /* Text — dark, Warning */
   --text-1-warning: #f0bf75;
   --text-2-warning: #e1a452;
   --text-3-warning: #e1a452cc;
-  --text-4-warning: #e1a45299;
+  --text-4-warning: color-mix(in oklch, var(--text-2-warning) 62%, transparent);
   --text-5-warning: #e1a45266;
 
   /* Text — dark, Info */
   --text-1-info: #9ed2ff;
   --text-2-info: #7db6e8;
   --text-3-info: #7db6e8cc;
-  --text-4-info: #7db6e899;
+  --text-4-info: color-mix(in oklch, var(--text-2-info) 62%, transparent);
   --text-5-info: #7db6e866;
 
   /* Borders — dark, neutral */
@@ -319,8 +319,18 @@ a-tab {
 a-button,
 a[role="button"][data-anta],
 button[data-anta],
-input[data-anta]:is([type="reset"], [type="submit"]) {
+input[data-anta]:is([type="reset"], [type="submit"]),
+a-tab {
   letter-spacing: 0.05ch;
+}
+a-tooltip {
+  --_tooltip-letter-spacing: 0.02ch;
+}
+a-progress-label {
+  letter-spacing: 0.03em;
+}
+a-menu-group-label {
+  letter-spacing: 0.06em;
 }
 a-input {
   --_input-adornment-font-stretch: 88%;

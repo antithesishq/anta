@@ -556,7 +556,6 @@ hr, .expressive-code { margin: 0 0 1.5em; }
   inline-size: var(--fold-header-h);
   block-size: var(--fold-header-h);
 }
-:is(.content, [data-docs-markdown]) .expressive-code .frame[data-folded] .copy { display: none; }
 :is(.content, [data-docs-markdown]) .expressive-code .frame[data-folded] .header { border-radius: var(--header-border-radius); }
 /* Folded bar gets a slightly deeper surface. Higher specificity than the
    expanded bar's bg-4 (but NOT touching border-radius, so the preview-fusion
@@ -604,6 +603,22 @@ hr, .expressive-code { margin: 0 0 1.5em; }
   }
   :is(.content, [data-docs-markdown]) .expressive-code .copy button {
     opacity: 1;
+  }
+}
+
+:is(.content, [data-docs-markdown]) .expressive-code .frame:is(.has-title, .is-terminal, [data-foldable]) .copy {
+  visibility: visible;
+  transition: opacity 150ms ease-out, visibility 0s;
+}
+:is(.content, [data-docs-markdown]) .expressive-code .frame:is(.has-title, .is-terminal, [data-foldable])[data-folded] .copy {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition-delay: 0s, 150ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.content, [data-docs-markdown]) .expressive-code .frame:is(.has-title, .is-terminal, [data-foldable]) .copy {
+    transition: none;
   }
 }
 

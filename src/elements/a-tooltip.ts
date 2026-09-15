@@ -348,7 +348,7 @@ export class ATooltipElement extends HTMLElementBase {
         font-style: normal;
         font-stretch: normal;
         line-height: 1.5;
-        letter-spacing: 0.02ch;
+        letter-spacing: var(--_tooltip-letter-spacing, 0.025ch);
         word-spacing: normal;
         text-transform: none;
         white-space: break-spaces;

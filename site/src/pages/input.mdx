@@ -822,6 +822,10 @@ and darkens on focus in light mode, and the inverse in dark:
       padding-inline: 20px;
     }
     a-input.fancy::part(input) { color: light-dark(#ffffff, #1a1a1a); }
+    a-input.fancy::part(input)::placeholder {
+      color: light-dark(#b8b8b8, #666666);
+      opacity: 1;
+    }
     a-input.fancy:focus-within::part(field) { background: light-dark(#161616, #ffffff); }
   `}</style>
 </Preview>
@@ -838,7 +842,65 @@ a-input.fancy::part(field) {
   padding-inline: 20px;                      /* roomier */
 }
 a-input.fancy::part(input) { color: light-dark(#ffffff, #1a1a1a); }
+a-input.fancy::part(input)::placeholder {
+  color: light-dark(#b8b8b8, #666666);
+  opacity: 1;
+}
 a-input.fancy:focus-within::part(field) { background: light-dark(#161616, #ffffff); }
 ```
+
+<Disclosure title="Placeholder contrast" level={3}>
+
+If the label, marking, context, or hint leaves the field's purpose unclear,
+a stronger placeholder can help. Keep an accessible name and put essential
+instructions in a persistent label or hint.
+
+Antune uses `--text-4` for placeholders. These ratios compare the default neutral
+Input backgrounds with the example's literal color:
+
+| Style | Placeholder | Background | Contrast |
+| --- | --- | --- | --- |
+| Antune light theme | `#7a737c` | `#ffffff` | 4.59:1 |
+| Antune dark theme | `#7c737c` | `#000000` | 4.60:1 |
+| Example | `#767676` | `#ffffff` | 4.54:1 |
+
+`#767676` is the lightest opaque 8-bit neutral gray that passes 4.5:1 on white.
+W3C recommends [sufficient placeholder contrast](https://www.w3.org/WAI/tutorials/forms/instructions/#styling).
+Redundant placeholders remain debated in the
+[meeting discussion](https://www.w3.org/2025/04/16-matf-minutes.html) and
+[open W3C issue](https://github.com/w3c/wcag/issues/4343); there is no agreed exemption.
+
+This demo uses `#767676` on white in every state and theme.
+Replace `.placeholder-contrast` with your own class.
+
+<Preview>
+  <Input className="placeholder-contrast" label="Email" type="email" autoComplete="email" placeholder="you@example.com" />
+  <style is:inline>{`
+    a-input.placeholder-contrast::part(field) { background: #ffffff; }
+    a-input.placeholder-contrast::part(input) { color: #161616; }
+    a-input.placeholder-contrast::part(input)::placeholder {
+      color: #767676;
+      opacity: 1;
+    }
+  `}</style>
+</Preview>
+
+```tsx folded
+<Input className="placeholder-contrast" label="Email" type="email" autoComplete="email" placeholder="you@example.com" />
+```
+
+```css folded
+a-input.placeholder-contrast::part(field) { background: #ffffff; }
+a-input.placeholder-contrast::part(input) { color: #161616; }
+a-input.placeholder-contrast::part(input)::placeholder {
+  color: #767676;
+  opacity: 1;
+}
+```
+
+Check contrast separately if you use a different background.
+Native inputs and textareas use `::placeholder` without `::part(input)`.
+
+</Disclosure>
 
 </Disclosure>

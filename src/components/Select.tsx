@@ -698,7 +698,9 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
       >
         {custom}
         {tip && (
-          <Tooltip follow {...(hintOnly ? { delay: ISOLATE_HINT_DELAY } : {})}>{tip}</Tooltip>
+          <Tooltip {...(hintOnly ? { delay: ISOLATE_HINT_DELAY, placement: 'left' as const } : { follow: true })}>
+            {tip}
+          </Tooltip>
         )}
       </MenuItem>
     )

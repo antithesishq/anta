@@ -17,8 +17,11 @@ changes are not listed.
 
 ### Changed
 
-- The default Alt/Option-click hint in multi-select option menus follows the
-  pointer and waits one second before appearing.
+- The default Alt/Option-click hint in multi-select option menus appears to the
+  left of its row after one second, and moving between rows restarts that delay.
+- Tooltip delay-free handoff now applies only when both the outgoing and incoming
+  tooltips have `follow`. Tooltip supports centered-left placement with
+  `placement="left"` and flips right when space is limited.
 - Input and its composed controls now expose roles, labels, popup relationships,
   required state, and active options on the controls that receive focus. Direct
   ARIA element references avoid generated Calendar, popup, and option ID

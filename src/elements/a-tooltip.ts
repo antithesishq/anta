@@ -82,14 +82,19 @@ const TOUCH_SLOP = 10
  * ------------------------------------------------------------------ */
 let currentOpen: ATooltipElement | null = null
 let graceTimer: ReturnType<typeof setTimeout> | undefined
+let graceFollows = false
 
 function graceActive(): boolean {
   return graceTimer !== undefined
 }
 
-/** Open is "hot" when another tooltip is showing or just closed — skip the delay. */
-function isHot(): boolean {
-  return currentOpen !== null || graceActive()
+/** Only two explicitly-following tooltips share a warm, delay-free handoff.
+ * Non-follow tooltips are independent disclosures, so entering or leaving one
+ * always resets the next tooltip's configured delay. */
+function isHot(next: ATooltipElement): boolean {
+  if (!next.hasAttribute('follow')) return false
+  if (currentOpen) return currentOpen.hasAttribute('follow')
+  return graceActive() && graceFollows
 }
 
 function clearGrace() {
@@ -97,6 +102,7 @@ function clearGrace() {
     clearTimeout(graceTimer)
     graceTimer = undefined
   }
+  graceFollows = false
 }
 
 /** Called from an element as it shows: close the previous one (cross-fade) and claim the slot. */
@@ -118,7 +124,11 @@ function releaseOpen(el: ATooltipElement) {
   if (currentOpen !== el) return
   currentOpen = null
   clearGrace()
-  graceTimer = setTimeout(() => { graceTimer = undefined }, GRACE_MS)
+  graceFollows = el.hasAttribute('follow')
+  graceTimer = setTimeout(() => {
+    graceTimer = undefined
+    graceFollows = false
+  }, GRACE_MS)
 }
 
 /* ------------------------------------------------------------------ *
@@ -444,6 +454,10 @@ export class ATooltipElement extends HTMLElementBase {
     return this.getAttribute('placement') === 'top'
   }
 
+  get #prefersLeft(): boolean {
+    return this.getAttribute('placement') === 'left'
+  }
+
   get #delay(): number {
     const attr = this.getAttribute('delay')
     if (attr == null) return DEFAULT_DELAY
@@ -604,9 +618,10 @@ export class ATooltipElement extends HTMLElementBase {
 
   /** Clamp a candidate (left, top) into the viewport and write it as the
    *  container's transform — the single place the transform is set. */
-  private place(left: number, top: number, boxWidth: number, vw: number) {
+  private place(left: number, top: number, boxWidth: number, boxHeight: number, vw: number, vh: number) {
     if (left + boxWidth > vw) left = vw - boxWidth - MARGIN
     left = Math.max(MARGIN, left)
+    if (top + boxHeight > vh) top = vh - boxHeight - MARGIN
     top = Math.max(MARGIN, top)
     this.container.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`
   }
@@ -618,10 +633,19 @@ export class ATooltipElement extends HTMLElementBase {
       const a = anchorRect(this.anchor)
       const box = this.container.getBoundingClientRect()
       const { innerWidth: vw, innerHeight: vh } = this.view
+      if (this.#prefersLeft) {
+        // `left` means centered beside the anchor. Flip to its right when the
+        // preferred side would clip, then clamp vertically at viewport edges.
+        const preferredLeft = a.left - box.width - MARGIN
+        const left = preferredLeft >= MARGIN ? preferredLeft : a.right + MARGIN
+        const top = a.top + (a.height - box.height) / 2
+        this.place(left, top, box.width, box.height, vw, vh)
+        return
+      }
       // Touch long-press biases above the anchor so the fingertip resting on it
       // doesn't cover the bubble (auto-flips below when there's no room).
       const top = this.flipVertical(a.top - box.height - MARGIN, a.bottom + MARGIN, box.height, vh, this.#prefersTop || this.touchOpen)
-      this.place(a.left, top, box.width, vw)
+      this.place(a.left, top, box.width, box.height, vw, vh)
     })
   }
 
@@ -630,10 +654,16 @@ export class ATooltipElement extends HTMLElementBase {
       if (!this.shown && !this.fading) return
       const box = this.container.getBoundingClientRect()
       const { innerWidth: vw, innerHeight: vh } = this.view
+      if (this.#prefersLeft) {
+        const preferredLeft = e.clientX - box.width - MARGIN
+        const left = preferredLeft >= MARGIN ? preferredLeft : e.clientX + CURSOR_SIZE
+        this.place(left, e.clientY - box.height / 2, box.width, box.height, vw, vh)
+        return
+      }
       // Shift left by the bubble's left padding so the cursor sits at the start
       // of the text rather than to the left of the whole bubble.
       const top = this.flipVertical(e.clientY - box.height - MARGIN * 2, e.clientY + CURSOR_SIZE, box.height, vh, this.#prefersTop)
-      this.place(e.clientX - PADDING_X, top, box.width, vw)
+      this.place(e.clientX - PADDING_X, top, box.width, box.height, vw, vh)
     })
   }
 
@@ -816,7 +846,7 @@ export class ATooltipElement extends HTMLElementBase {
     if (this.hasExplicitTextTooltip()) return
     if (this.isEmpty()) return
     if (this.#truncatedOnly && !this.isTargetTruncated()) return
-    if (isHot()) {
+    if (isHot(this)) {
       this.debouncedShow?.cancel()
       this.show(e)
     } else {

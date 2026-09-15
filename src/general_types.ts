@@ -555,7 +555,7 @@ export interface ATooltipAttributes extends BaseAttributes {
   /** Show delay in milliseconds. Never use `0` — use ~`50`. Defaults to 300. */
   delay?: number | string
   /** Preferred side; auto-flips when there's no room. Defaults to `'bottom'`. */
-  placement?: 'top' | 'bottom'
+  placement?: 'top' | 'bottom' | 'left'
   /** Follow the cursor instead of pinning under the anchor (pinned is the
    *  default). Presence-based (`''` on, omit off). */
   follow?: boolean | ''

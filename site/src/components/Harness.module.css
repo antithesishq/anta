@@ -1,34 +1,21 @@
 .harness {
-  --top-bar-height: 34px;
-
-  position: relative;
+  position: fixed;
+  inset: 0;
   display: flex;
-  width: 100vw;
-  height: 100dvh;
   overflow: hidden;
   background: var(--bg-0);
 }
 
-.codeTrigger {
+.showEditorButton {
   position: absolute;
   top: 0;
   left: 0;
   z-index: 10;
-  display: flex;
-  height: var(--top-bar-height);
-  flex: 0 0 auto;
-  overflow: hidden;
-  border: 0;
-  background: none;
-  box-shadow: none;
-}
-
-.showEditorButton {
   box-sizing: border-box;
-  width: var(--top-bar-height);
-  min-width: var(--top-bar-height);
-  height: var(--top-bar-height);
-  min-height: var(--top-bar-height);
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
   padding: 0;
   border: 1px solid var(--border-2);
   border-left: 0;
@@ -40,11 +27,13 @@
 .editor {
   position: relative;
   display: flex;
+  width: var(--editor-width, 420px);
+  min-width: 280px;
+  height: 100%;
   flex: 0 0 auto;
   flex-direction: column;
+  order: -1;
   box-sizing: border-box;
-  min-width: 240px;
-  max-width: 60vw;
   border-right: 1px solid var(--border-2);
   background: var(--bg-1);
 }
@@ -55,11 +44,9 @@
   align-items: center;
   box-sizing: border-box;
   gap: 12px;
-  padding: 8px 48px 8px 10px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border-2);
 }
-
-.editorTabs { flex: 0 0 auto; }
 
 .editorActions {
   display: flex;
@@ -68,57 +55,11 @@
   margin-left: auto;
 }
 
-.closeButton {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 2;
-  display: flex;
-}
-
 .editorHost {
+  position: relative;
   flex: 1 1 0;
   min-height: 0;
   overflow: hidden;
-}
-
-.editorLoading {
-  display: grid;
-  height: 100%;
-  place-items: center;
-  color: var(--text-3);
-  font-size: 13px;
-}
-
-.navigation {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-top: 1px solid var(--border-2);
-}
-
-.navigation > :first-child { justify-self: start; }
-.navigation > :last-child { justify-self: end; }
-
-.stageNavigation {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  z-index: 9;
-  width: max-content;
-  padding: 8px;
-  border: 1px solid var(--border-2);
-  border-radius: 6px;
-  background: var(--bg-1);
-  box-shadow: 0 4px 16px color-mix(in oklch, var(--text-1) 8%, transparent);
-}
-
-.navigation span {
-  color: var(--text-3);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
 }
 
 .resizeHandle {
@@ -140,12 +81,13 @@
   background: var(--focus-ring);
   content: '';
   opacity: 0;
-  transform: scaleY(0.96);
+  transform: scaleY(0.98);
   transition: opacity 120ms ease, transform 120ms ease;
 }
 
 .resizeHandle:hover::after,
-.resizeHandleActive::after {
+.resizeHandle:focus-visible::after,
+.editorResizing .resizeHandle::after {
   opacity: 1;
   transform: scaleY(1);
 }
@@ -156,17 +98,25 @@
   box-shadow: 4px 0 14px color-mix(in oklch, var(--focus-ring) 12%, transparent);
 }
 
-.harnessResizing,
-.harnessResizing * {
+.harness:has(.editorResizing),
+.harness:has(.editorResizing) * {
   cursor: col-resize !important;
   user-select: none;
 }
 
-.harnessResizing .editorHost { pointer-events: none; }
+.editorResizing .editorHost { pointer-events: none; }
+
+.editorLoading {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
 
 .stage {
-  flex: 1 1 0;
   min-width: 0;
+  flex: 1 1 0;
   overflow: auto;
   padding: clamp(24px, 5vw, 72px);
 }
@@ -199,5 +149,18 @@
 }
 
 @media (max-width: 720px) {
+  .editor {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 11;
+    width: 100vw;
+    min-width: 0;
+    box-shadow: none;
+  }
+
+  .resizeHandle {
+    display: none;
+  }
+
   .stage { padding: 64px 16px 24px; }
 }

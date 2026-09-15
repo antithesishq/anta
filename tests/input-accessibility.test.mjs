@@ -14,9 +14,11 @@ before(async () => {
       contents: `
         import { h, render } from 'preact'
         import { configure } from './src/jsx-runtime'
-        import { InputAutocomplete, InputDate, InputTime, Select, SelectFaceted } from './src/index'
+        import { Calendar, Checkbox, InputAutocomplete, InputDate, InputTime, RadioGroup, Select, SelectFaceted, Switch } from './src/index'
         import './src/elements/index'
         configure(h)
+        const main = document.createElement('main')
+        document.body.append(main)
         render(h('main', {},
           h(InputAutocomplete, { label: 'Framework', suggestions: ['React', 'Preact'] }),
           h(InputDate, { label: 'Due date' }),
@@ -37,7 +39,26 @@ before(async () => {
             ],
           }),
           h(InputTime, { label: 'Start time', required: true, status: 'critical' }),
-        ), document.body)
+          h(Checkbox, { id: 'described-checkbox', label: 'Email notifications', hint: h('strong', {}, 'Weekly digest, never marketing.') }),
+          h(Switch, { id: 'described-switch', label: 'Automatic updates', hint: h('strong', {}, 'Downloads in the background.') }),
+          h(RadioGroup, {
+            label: 'Delivery method',
+            options: [
+              { value: 'email', label: 'Email', hint: 'A confirmation link goes to your inbox.' },
+              { value: 'sms', label: 'SMS' },
+            ],
+          }),
+        ), main)
+        for (let i = 0; i < 2; i++) {
+          const root = document.createElement('div')
+          document.body.append(root)
+          render(h('div', {},
+            h(Calendar, { defaultValue: '2026-06-15' }),
+            h(InputDate, { label: 'Root date ' + i }),
+            h(Select, { label: 'Root select ' + i, options: ['One', 'Two'] }),
+            h(InputAutocomplete, { label: 'Root autocomplete ' + i, suggestions: ['One', 'Two'] }),
+          ), root)
+        }
       `,
       resolveDir: process.cwd(),
     },
@@ -87,6 +108,8 @@ test('raw Input delegates standard ARIA and tracks later updates and removal', a
     host.setAttribute('aria-expanded', 'false')
     host.setAttribute('aria-controls', list.id)
     document.body.append(host)
+    const adjacentMenu = document.createElement('a-menu')
+    document.body.append(adjacentMenu)
     await new Promise(resolve => queueMicrotask(resolve))
     const input = host.shadowRoot.querySelector('input')
     const initial = {
@@ -98,6 +121,8 @@ test('raw Input delegates standard ARIA and tracks later updates and removal', a
       expanded: input.getAttribute('aria-expanded'),
       controls: input.ariaControlsElements?.[0] === list,
     }
+    host.removeAttribute('aria-controls')
+    const generatedRelationshipRestored = input.ariaControlsElements?.[0] === adjacentMenu
     host.setAttribute('aria-expanded', 'true')
     const updated = input.getAttribute('aria-expanded')
     host.removeAttribute('aria-expanded')
@@ -118,6 +143,7 @@ test('raw Input delegates standard ARIA and tracks later updates and removal', a
     await new Promise(resolve => queueMicrotask(resolve))
     return {
       initial,
+      generatedRelationshipRestored,
       updated,
       removed,
       propertyUpdated,
@@ -138,6 +164,7 @@ test('raw Input delegates standard ARIA and tracks later updates and removal', a
       expanded: 'false',
       controls: true,
     },
+    generatedRelationshipRestored: true,
     updated: 'true',
     removed: false,
     propertyUpdated: 'false',
@@ -206,6 +233,45 @@ test('Input compositions put popup semantics on their focused controls', async t
   })
 })
 
+test('popup relationships stay instance-local across separate renderer roots without IDs', async t => {
+  const page = await pageFor(t)
+  const result = await page.evaluate(async () => {
+    await new Promise(resolve => queueMicrotask(resolve))
+    const labels = [
+      'Root date 0', 'Root select 0', 'Root autocomplete 0',
+      'Root date 1', 'Root select 1', 'Root autocomplete 1',
+    ]
+    return {
+      relations: labels.map(label => {
+        const host = [...document.querySelectorAll('a-input')].find(candidate =>
+          candidate.control?.getAttribute('aria-label') === label,
+        )
+        return {
+          label,
+          controlsOwnPopup: host?.control?.ariaControlsElements?.[0] === host?.nextElementSibling,
+          serializedControls: host?.control?.getAttribute('aria-controls'),
+          popupId: host?.nextElementSibling?.getAttribute('id'),
+        }
+      }),
+      generatedPopupIds: [...document.querySelectorAll('a-menu[id], a-menu-item[id]')].map(element => element.id),
+    }
+  })
+
+  assert.deepEqual(result.relations, [
+    'Root date 0', 'Root select 0', 'Root autocomplete 0',
+    'Root date 1', 'Root select 1', 'Root autocomplete 1',
+  ].map(label => ({ label, controlsOwnPopup: true, serializedControls: '', popupId: null })))
+  assert.deepEqual(result.generatedPopupIds, [])
+
+  await page.locator('input[aria-label="Root autocomplete 0"]').focus()
+  await page.waitForTimeout(20)
+  const cdp = await page.context().newCDPSession(page)
+  const { nodes } = await cdp.send('Accessibility.getFullAXTree')
+  const field = nodes.find(node => node.name?.value === 'Root autocomplete 0')
+  const controls = field?.properties?.find(property => property.name === 'controls')
+  assert.equal(controls?.value?.relatedNodes?.length, 1)
+})
+
 test('filtered Select exposes its textbox and option menu as dialog siblings', async t => {
   const page = await pageFor(t)
   const selectHost = page.locator('a-input').filter({ has: page.locator('button[aria-label="Repository"]') })
@@ -223,12 +289,42 @@ test('filtered Select exposes its textbox and option menu as dialog siblings', a
   assert.match(snapshot, /button "Clear"/)
 
   const filter = popup.locator('a-input[data-menu-search] input')
+  await filter.press('ArrowDown')
+  assert.deepEqual(
+    await filter.evaluate(input => ({
+      controlsPopup: input.ariaControlsElements?.[0] === input.getRootNode().host.closest('a-menu'),
+      controlledPart: input.ariaControlsElements?.[0]?.getAttribute('part') ?? null,
+      controlledRole: input.ariaControlsElements?.[0]?.getAttribute('role') ?? null,
+      activeRole: input.ariaActiveDescendantElement?.getAttribute('role') ?? null,
+    })),
+    { controlsPopup: true, controlledPart: null, controlledRole: 'dialog', activeRole: 'menuitemradio' },
+  )
   await filter.fill('missing')
   await page.waitForTimeout(20)
   assert.equal(
     await popup.evaluate(menu => menu.shadowRoot.querySelector('[part="scroll"]').getAttribute('role')),
     null,
   )
+})
+
+test('autocomplete cursor uses a direct active-option relationship', async t => {
+  const page = await pageFor(t)
+  const field = page.locator('a-input').filter({ has: page.locator('input[aria-label="Framework"]') })
+  const input = field.locator('input')
+  await input.focus()
+  await input.press('ArrowDown')
+  const result = await input.evaluate(control => ({
+    role: control.ariaActiveDescendantElement?.getAttribute('role') ?? null,
+    id: control.ariaActiveDescendantElement?.getAttribute('id') ?? null,
+    selected: control.ariaActiveDescendantElement?.internals?.ariaSelected ?? null,
+  }))
+  assert.deepEqual(result, { role: 'option', id: null, selected: 'true' })
+
+  const cdp = await page.context().newCDPSession(page)
+  const { nodes } = await cdp.send('Accessibility.getFullAXTree')
+  const combobox = nodes.find(node => node.name?.value === 'Framework')
+  const activeDescendant = combobox?.properties?.find(property => property.name === 'activedescendant')
+  assert.equal(activeDescendant?.value?.relatedNodes?.length, 1)
 })
 
 test('searchable and editable SelectFaceted popups expose dialog semantics', async t => {
@@ -239,6 +335,10 @@ test('searchable and editable SelectFaceted popups expose dialog semantics', asy
   await page.waitForTimeout(20)
 
   const root = page.locator('a-menu[role="dialog"][aria-label="Filter issues options"]')
+  assert.equal(
+    await trigger.evaluate(button => button.internals?.ariaControlsElements?.[0] === button.nextElementSibling),
+    true,
+  )
   const rootSnapshot = await root.ariaSnapshot()
   assert.match(rootSnapshot, /dialog "Filter issues options"/)
   assert.match(rootSnapshot, /textbox "Filter all facets"/)
@@ -307,4 +407,51 @@ test('InputTime names its group and exposes required and invalid on every segmen
   assert.ok(result.required.length >= 2)
   assert.deepEqual(new Set(result.required), new Set(['true']))
   assert.deepEqual(new Set(result.invalid), new Set(['true']))
+})
+
+test('Calendars in separate renderer roots use direct names without duplicate IDs', async t => {
+  const page = await pageFor(t)
+  const result = await page.locator('a-calendar').evaluateAll(calendars => ({
+    names: calendars.map(calendar => calendar.getAttribute('aria-label')),
+    labelledBy: calendars.map(calendar => calendar.hasAttribute('aria-labelledby')),
+    headingIds: calendars.map(calendar => calendar.previousElementSibling?.querySelector?.('[data-part="heading"]')?.id ?? ''),
+  }))
+
+  const juneIndexes = result.names.map((name, index) => name === 'June 2026' ? index : -1).filter(index => index >= 0).slice(-2)
+  assert.equal(juneIndexes.length, 2)
+  assert.deepEqual(juneIndexes.map(index => result.labelledBy[index]), [false, false])
+  assert.deepEqual(juneIndexes.map(index => result.headingIds[index]), ['', ''])
+})
+
+test('Checkbox, Switch, and Radio expose their light-DOM hints as descriptions', async t => {
+  const page = await pageFor(t)
+  const result = await page.evaluate(async () => {
+    await new Promise(resolve => queueMicrotask(resolve))
+    const controls = [
+      document.querySelector('#described-checkbox'),
+      document.querySelector('#described-switch'),
+      [...document.querySelectorAll('a-radio')].find(radio => radio.getAttribute('value') === 'email'),
+    ]
+    return controls.map(control => {
+      const internals = control.internals
+      return {
+        hint: internals?.ariaDescribedByElements?.[0]?.textContent ?? null,
+        hintHasId: internals?.ariaDescribedByElements?.[0]?.hasAttribute('id') ?? null,
+      }
+    })
+  })
+
+  assert.deepEqual(result, [
+    { hint: 'Weekly digest, never marketing.', hintHasId: false },
+    { hint: 'Downloads in the background.', hintHasId: false },
+    { hint: 'A confirmation link goes to your inbox.', hintHasId: false },
+  ])
+
+  const cdp = await page.context().newCDPSession(page)
+  const { nodes } = await cdp.send('Accessibility.getFullAXTree')
+  const descriptionOf = (role, name) =>
+    nodes.find(node => node.role?.value === role && node.name?.value === name)?.description?.value
+  assert.equal(descriptionOf('checkbox', 'Email notifications'), 'Weekly digest, never marketing.')
+  assert.equal(descriptionOf('switch', 'Automatic updates'), 'Downloads in the background.')
+  assert.equal(descriptionOf('radio', 'Email'), 'A confirmation link goes to your inbox.')
 })

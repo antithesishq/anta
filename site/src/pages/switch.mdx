@@ -195,7 +195,10 @@ Use **`onStateChange`** to intercept a toggle or drive a controlled switch. Use 
 
 ## Accessibility
 
-The wrapper sets `role="switch"` and keeps `aria-checked` in sync with the current value. It derives the accessible name from `label` or text children. For a label-less switch, pass `aria-label`.
+The wrapper sets `role="switch"`, and the element keeps `aria-checked` in sync
+with the current value. Its light-DOM label supplies the accessible name and its
+hint supplies the accessible description through `ElementInternals`; no generated
+IDs are needed. For a label-less switch, pass `aria-label`.
 
 Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w3.org/WAI/ARIA/apg/patterns/switch/).
 
@@ -209,7 +212,8 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-The focusable host carries the state. Label and hint are light-DOM children.
+The focusable host carries the state. Label and hint are light-DOM children that
+the element exposes as its accessible name and description.
 
 <Preview>
   <a-switch role="switch" tabindex="0" name="updates" default-state="checked">

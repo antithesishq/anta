@@ -957,11 +957,9 @@ export interface AMenuAttributes extends BaseAttributes {
   onstatechange?: (
     e: CustomEvent<{ next: 'open' | 'closed'; prev: 'open' | 'closed' }>,
   ) => void
-  /** Combobox-mode cursor report — fired when the active option changes (arrow
-   *  keys, or the list re-filtering), with `detail.id` the active option's `id`
-   *  (`null` when none). The element owns the keyboard cursor but must NOT write
-   *  `aria-activedescendant` on the (light-DOM) filter field itself; the reactive
-   *  layer that owns the field (e.g. `Select`) listens here and reflects it.
+  /** Combobox-mode cursor report for custom fields and observers. Fires when
+   *  the active option changes, with `detail.id` containing an authored option
+   *  ID or `null`. Built-in Anta Inputs receive a direct ARIA element relation.
    *  All-lowercase so React/Preact bind it to the CustomEvent. */
   onactivedescendant?: (e: CustomEvent<{ id: string | null }>) => void
   /** Contain events so they don't bubble out of the menu surface to ancestor /

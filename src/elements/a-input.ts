@@ -1,4 +1,4 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations } from '../anta_helpers'
 import {
   applyShadowAria,
   ariaAttributeProperty,
@@ -351,6 +351,12 @@ export class AInputElement extends HTMLElementBase {
   private delegatedAria = new Map<ShadowAriaAttribute, string>()
   private consumingAria = new Set<string>()
   private ariaApplyQueued = false
+  // Direct element relationships supplied by an adjacent a-menu. These avoid
+  // renderer-local IDs and apply only when the consumer has not authored the
+  // corresponding ARIA relationship explicitly.
+  private popupAriaSource?: Element
+  private popupControls: Element | null = null
+  private popupActiveDescendant: Element | null = null
 
   constructor() {
     super()
@@ -459,6 +465,21 @@ export class AInputElement extends HTMLElementBase {
     this.ready = true
   }
 
+  [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
+    if (relations.clear) {
+      if (this.popupAriaSource !== relations.source) return
+      this.popupAriaSource = undefined
+      this.popupControls = null
+      this.popupActiveDescendant = null
+    } else {
+      this.popupAriaSource = relations.source
+      if ('controls' in relations) this.popupControls = relations.controls ?? null
+      if ('activeDescendant' in relations)
+        this.popupActiveDescendant = relations.activeDescendant ?? null
+    }
+    this.applyPopupAria()
+  }
+
   attributeChangedCallback(name: string, _old: string | null, value: string | null) {
     if (SHADOW_ARIA_ATTRIBUTE_SET.has(name)) {
       if (this.consumingAria.has(name)) return
@@ -549,6 +570,7 @@ export class AInputElement extends HTMLElementBase {
     if (name === 'aria-label' || name === 'aria-labelledby') this.applyLabelAria()
     if (name === 'aria-description' || name === 'aria-describedby') this.applyDescriptionAria()
     if (name === 'aria-invalid' && !this.delegatedAria.has(name)) this.syncStatus()
+    if (name === 'aria-controls' || name === 'aria-activedescendant') this.applyPopupAria()
   }
 
   private queueDelegatedAria() {
@@ -593,6 +615,7 @@ export class AInputElement extends HTMLElementBase {
     this.queueDelegatedAria()
     this.applyLabelAria()
     this.applyDescriptionAria()
+    this.applyPopupAria()
     if (multiline) this.configureTextarea(next as HTMLTextAreaElement)
 
     const value = initial ?? this.pendingValue ?? this.getAttribute('value') ?? this.getAttribute('defaultvalue') ?? ''
@@ -751,6 +774,19 @@ export class AInputElement extends HTMLElementBase {
     const text = this.hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
     if (text) c.setAttribute('aria-description', text)
     else c.removeAttribute('aria-description')
+  }
+
+  private applyPopupAria() {
+    const control = this.control
+    if (!control) return
+    try {
+      if (!this.delegatedAria.has('aria-controls') && 'ariaControlsElements' in control)
+        control.ariaControlsElements = this.popupControls ? [this.popupControls] : null
+      if (!this.delegatedAria.has('aria-activedescendant') && 'ariaActiveDescendantElement' in control)
+        control.ariaActiveDescendantElement = this.popupActiveDescendant
+    } catch {
+      // Direct ARIA element reflection is unavailable in older engines.
+    }
   }
 
   private updateFilled() {

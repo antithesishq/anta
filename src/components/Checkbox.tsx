@@ -43,8 +43,8 @@ export interface CheckboxProps extends BaseProps {
    *  renders first. Required unless `children` or `aria-label` is provided
    *  (a `role="checkbox"` takes its name from the author, not the markup). */
   label?: string
-  /** Secondary text rendered under the label — explanatory copy, like
-   *  Input's hint. Not part of the accessible name. */
+  /** Secondary text rendered under the label and exposed as the checkbox's
+   *  accessible description. Not part of the accessible name. */
   hint?: React.ReactNode
   /** Controlled checked state. When provided the checkbox is controlled — it
    *  renders exactly this and never self-applies; `onStateChange` is a *request*

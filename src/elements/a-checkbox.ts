@@ -42,6 +42,7 @@ export class ACheckboxElement extends HTMLElementBase {
   // True after the first connect. Gates the native `change` event so it never
   // fires for the initial attribute seed (only for real, post-connect transitions).
   private alive = false;
+  private accessibilityObserver?: MutationObserver;
 
   /** Current checked state as a boolean (native-`<input>`-like). `indeterminate`
    *  reads false here; check `.indeterminate` for the mixed state. */
@@ -77,7 +78,16 @@ export class ACheckboxElement extends HTMLElementBase {
       this.seeded = true;
     }
     this.paint();
+    this.syncAccessibilityRelations();
+    this.accessibilityObserver ??= new this.view.MutationObserver(() =>
+      this.syncAccessibilityRelations(),
+    );
+    this.accessibilityObserver.observe(this, { childList: true });
     this.alive = true;
+  }
+
+  disconnectedCallback() {
+    this.accessibilityObserver?.disconnect();
   }
 
   attributeChangedCallback(name: string) {
@@ -176,6 +186,23 @@ export class ACheckboxElement extends HTMLElementBase {
       this.currentState === "checked" ? (this.getAttribute("value") ?? "on") : null,
       this.currentState,
     );
+  }
+
+  private syncAccessibilityRelations() {
+    const internals = this.internals;
+    if (!internals) return;
+    try {
+      if ("ariaLabelledByElements" in internals)
+        internals.ariaLabelledByElements = Array.from(
+          this.querySelectorAll(":scope > a-checkbox-label"),
+        );
+      if ("ariaDescribedByElements" in internals)
+        internals.ariaDescribedByElements = Array.from(
+          this.querySelectorAll(":scope > a-checkbox-hint"),
+        );
+    } catch {
+      // Older engines can expose the properties without implementing setters.
+    }
   }
 
   formResetCallback() {

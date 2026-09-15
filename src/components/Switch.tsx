@@ -21,8 +21,8 @@ const switchAttrsOf = (element: any): SwitchChangeAttrs => ({
 export interface SwitchProps extends BaseProps {
   /** Visible, stable label for the setting. Use `children` for richer label content. */
   label?: string
-  /** Secondary text rendered under the label. It does not become part of the
-   * accessible name. */
+  /** Secondary text rendered under the label and exposed as the switch's
+   * accessible description. It does not become part of the accessible name. */
   hint?: React.ReactNode
   /** Controlled checked value. In controlled mode, update this in `onStateChange`. */
   checked?: boolean

@@ -1,4 +1,4 @@
-import { HTMLElementBase } from "../anta_helpers";
+import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations } from "../anta_helpers";
 import { installKeyActivation } from "./key-activation";
 import "./a-button.css";
 
@@ -90,10 +90,35 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   mid-resolve.
  */
 export class AButtonElement extends HTMLElementBase {
+  private internals?: ElementInternals;
+  private popupAriaSource?: Element;
+
+  constructor() {
+    super();
+    try {
+      this.internals = this.attachInternals?.();
+    } catch {}
+  }
+
   connectedCallback() {
     // Install on the button's OWN document so activation works in whatever
     // frame the element actually lives in (parent page or playground iframe).
     installDocumentHandlers(this.doc);
+  }
+
+  [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
+    if (!this.internals || !("ariaControlsElements" in this.internals)) return;
+    if (relations.clear) {
+      if (this.popupAriaSource !== relations.source) return;
+      this.popupAriaSource = undefined;
+      try { this.internals.ariaControlsElements = null; } catch {}
+      return;
+    }
+    if (!("controls" in relations)) return;
+    this.popupAriaSource = relations.source;
+    try {
+      this.internals.ariaControlsElements = relations.controls ? [relations.controls] : null;
+    } catch {}
   }
 }
 

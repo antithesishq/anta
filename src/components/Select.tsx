@@ -1,7 +1,7 @@
 // Hooks come from the jsx-runtime indirection configured through `configure()`,
 // as in RadioGroup. Select keeps its selection and open state, then renders an
 // Input trigger followed by a Menu of options. There is no `a-select` element.
-import { useState, useId } from '../jsx-runtime'
+import { useState } from '../jsx-runtime'
 import { ISOLATE_HINT, optionPresentationAttrs } from '../anta_helpers'
 import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
 import type { BaseProps, OptionPresentationProps, ToneScope } from '../general_types'
@@ -513,13 +513,6 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   const [open, setOpen] = useState(false)
   // Filter query (reset when the menu closes — see the Menu's onStateChange).
   const [query, setQuery] = useState('')
-  // Combobox active-option id, reported by the menu's `activedescendant` event.
-  // Select, the reactive layer that renders the filter field, reflects it onto the
-  // field's `aria-activedescendant` — the element must not write that light-DOM
-  // attribute itself.
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const uid = useId()
-  const menuId = `${uid}-menu`
   const popupLabel = `${label ?? (rest['aria-label'] as string | undefined) ?? 'Select'} options`
 
   // Discriminate an `options` entry by shape: a `submenu` array → flyout branch, an
@@ -688,7 +681,6 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
       <MenuItem
         key={String(o.value)}
         {...optionAttrs}
-        id={`${uid}-opt-${o.value}`}
         selectionIndicator={menuItemIndicator}
         {...ariaSelectable}
         indicator={customMark ?? undefined}
@@ -794,7 +786,6 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         round={round}
         aria-haspopup={filtering ? 'dialog' : 'menu'}
         aria-expanded={open ? 'true' : 'false'}
-        aria-controls={menuId}
         trailing={
           // The named tag applies the Select-specific rotation while the icon remains
           // a normal currentColor glyph.
@@ -812,16 +803,14 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
           the menu open. We observe onStateChange to flip the chevron / aria-expanded
           and to reset the filter when the menu closes. */}
       <Menu
-        id={menuId}
         role={filtering ? 'dialog' : undefined}
         aria-label={filtering ? popupLabel : undefined}
         placement={placement}
         offset={offset}
         onStateChange={(_e, { next }) => {
           setOpen(next)
-          if (!next) { setQuery(''); setActiveId(null) } // closed → clear filter + cursor
+          if (!next) setQuery('') // closed → clear filter
         }}
-        onactivedescendant={(e: any) => setActiveId(((e.nativeEvent ?? e).detail?.id) ?? null)}
       >
         {filtering && (
           // `slot="header"` pins the field in the Menu's fixed header region (above
@@ -835,10 +824,6 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
               placeholder="Filter…"
               aria-label="Filter options"
               aria-autocomplete="list"
-              aria-controls={menuId}
-              // Reflect the menu's reported cursor (in-sync — Select owns this
-              // field), rather than the element writing this light-DOM attribute.
-              aria-activedescendant={open && activeId ? activeId : undefined}
               onInput={(e: any) => setQuery(e.currentTarget.value)}
             />
           </a-select-header>

@@ -207,6 +207,7 @@ if (isComponentPage && title) {
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     {/* The router fetches the destination before it can swap the document.
         This small bar makes that wait visible without delaying the swap. */}
     <div class="navigation-progress" aria-hidden="true"></div>
@@ -346,7 +347,7 @@ if (isComponentPage && title) {
         </menu>
       </aside>
       <div transition:persist="search-dialog"><SearchDialog client:load /></div>
-      <main class="content">
+      <main id="main-content" class="content">
         {/* Mobile-only: opens the "On this page" TOC as a right-side
             slide-out (the .toc-rail is hidden on mobile otherwise).
             Absolutely positioned in the content's top-right corner. */}

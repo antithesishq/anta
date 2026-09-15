@@ -17,6 +17,19 @@ changes are not listed.
 
 ### Changed
 
+- Checkbox, Switch, and individual Radio hints are exposed as accessible
+  descriptions through `ElementInternals`, including rich light-DOM hint
+  content, without adding generated IDs.
+- Calendar names its grid directly from the visible month, avoiding generated
+  heading IDs that could collide when separate application roots render
+  calendars on the same page.
+- **Breaking:** InputDate, Select, InputAutocomplete, and SelectFaceted now
+  associate Anta fields and buttons with their popups through direct ARIA
+  element references. Autocomplete fields use the same mechanism for the
+  active option. The wrappers no longer generate popup or option IDs, avoiding
+  collisions across independent application roots. DOM code that relied on
+  those generated IDs must use component structure or application-owned IDs;
+  explicit consumer-authored ARIA relationships continue to take precedence.
 - Tabs use one roving tab stop in JSX: the selected tab participates in the
   page Tab sequence and arrow keys move within the strip. `TabPanel` now forwards
   the common component props, including `tabIndex`, `aria-*`, and `data-*`.

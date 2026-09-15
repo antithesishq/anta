@@ -165,7 +165,9 @@ Under the hood the split is deliberate. The `<a-radio-group>` web component
 **never mutates the DOM** — it coordinates entirely off-DOM: selection is set as a
 property on each `<a-radio>` (which reflects it into `:state(selected)` +
 `aria-checked` via its own `ElementInternals`), the form value goes through
-`ElementInternals`, and focus is tracked with `aria-activedescendant`. The
+`ElementInternals`, and focus is tracked with `aria-activedescendant`. Each
+option's light-DOM label and hint also become its accessible name and description
+through direct element references, without generated IDs. The
 **roving `tabindex`** — which option Tab lands on — is the one piece rendered
 declaratively, by the `RadioGroup` wrapper, from the current value. That's why
 selection is owned by the element but the wrapper holds the value: it needs it to

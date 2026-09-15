@@ -6,7 +6,7 @@
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
 import { useState, useMemo } from '../jsx-runtime'
-import { nativeStateChange, ISOLATE_HINT, optionPresentationAttrs } from '../anta_helpers'
+import { ISOLATE_HINT, optionPresentationAttrs } from '../anta_helpers'
 import type { BaseProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { OptionValue, SelectItem, SelectOption } from './Select'
@@ -323,16 +323,6 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   const [queries, setQueries] = useState<Record<string, string>>({})
   // The global search query (for `searchable`) — resets when the menu closes.
   const [rootQuery, setRootQuery] = useState('')
-  // Combobox active-option ids, reported by each menu's `activedescendant` event and
-  // reflected onto the owning filter field's `aria-activedescendant` (the element must
-  // not write that light-DOM attribute itself). Keyed by field: `__root__` for the
-  // global search, the facet key for a per-facet filter.
-  const [activeIds, setActiveIds] = useState<Record<string, string | null>>({})
-  const onActive = (key: string) => (e: any) => {
-    const id = nativeStateChange<{ id: string | null }>(e).detail?.id ?? null
-    setActiveIds((s) => (s[key] === id ? s : { ...s, [key]: id }))
-  }
-
   const activeCount = facets.reduce((n, f) => n + (isEmpty(current[f.key]) ? 0 : 1), 0)
 
   // Flatten each options facet's leaves once per `facets` change — visibleLeavesOf,
@@ -389,7 +379,6 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           placeholder="Filter…"
           aria-label={`Filter ${facet.label}`}
           aria-autocomplete="list"
-          aria-activedescendant={activeIds[facet.key] ?? undefined}
           onInput={(e: any) => setQueries((s) => ({ ...s, [facet.key]: e.currentTarget.value }))}
         />
       </a-select-header>
@@ -560,7 +549,6 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
       <Menu
         role={dialog ? 'dialog' : undefined}
         aria-label={dialog ? `${facet.label} ${isOptions ? 'options' : 'editor'}` : undefined}
-        onactivedescendant={isOptions && facet.filter ? onActive(facet.key) : undefined}
       >
         {isOptions && filterHeader(facet)}
         {body}
@@ -646,7 +634,6 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           setOpen(next)
           if (!next) setRootQuery('')
         }}
-        onactivedescendant={searchable ? onActive('__root__') : undefined}
       >
         {searchable && (
           // Pinned global search: flattens all options facets while a query is active.
@@ -660,7 +647,6 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
               placeholder={searchPlaceholder}
               aria-label="Filter all facets"
               aria-autocomplete="list"
-              aria-activedescendant={activeIds['__root__'] ?? undefined}
               onInput={(e: any) => setRootQuery(e.currentTarget.value)}
             />
           </a-select-header>

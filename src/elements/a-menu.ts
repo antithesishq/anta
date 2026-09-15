@@ -1,4 +1,11 @@
-import { HTMLElementBase, anchorRect, setMenuPresence } from '../anta_helpers'
+import {
+  HTMLElementBase,
+  SYNC_POPUP_ARIA,
+  anchorRect,
+  isPopupAriaReceiver,
+  setMenuPresence,
+  type PopupAriaReceiver,
+} from '../anta_helpers'
 import { AMenuItemElement, isMenuItemEl, ensureMenuItemKeyListener } from './a-menu-item'
 import { emitCopyRequest } from './copy-behavior'
 import './a-menu.css'
@@ -270,14 +277,18 @@ export class AMenuElement extends HTMLElementBase {
 
   // Combobox (filter) state — engaged when a `[data-menu-search]` field is slotted
   // in (e.g. `Select` with `filter`). Focus stays in that field; ArrowUp/Down move
-  // `activeItem` (a cursor, not DOM focus) and REPORT it via the `activedescendant`
-  // event, which the reactive layer reflects onto the field's `aria-activedescendant`.
+  // `activeItem` (a cursor, not DOM focus) and associates it directly with an
+  // Anta Input's native field. The public `activedescendant` event remains an
+  // observation hook for raw/custom compositions.
   private activeItem: AMenuItemElement | null = null
   private comboObserver?: MutationObserver
   // A dialog-style filtered popup keeps its text field outside the menu role.
   // The existing shadow scroll region becomes the menu that owns the option
   // rows; this observer only tracks whether that region currently has items.
   private accessibilityObserver?: MutationObserver
+  // Anta-owned trigger/search fields associated with this popup through direct
+  // ARIA element reflection. No renderer-local IDs are involved.
+  #ariaRelationTargets = new Set<PopupAriaReceiver>()
   // An open menu follows its anchor vertically through scrolling, transforms, and
   // layout shifts. Those movements do not all produce a DOM observer callback, so
   // this frame is active only while the menu is visible.
@@ -482,6 +493,10 @@ export class AMenuElement extends HTMLElementBase {
       anchorToMenu.set(anchor, this)
       lazyObserver?.observe(anchor)
     }
+    this.#syncPopupAriaRelations()
+    queueMicrotask(() => {
+      if (this.isConnected) this.#syncPopupAriaRelations()
+    })
     // Apply an initial controlled state (e.g. <a-menu state="open">) once
     // connected — attributeChangedCallback may have fired before this during
     // upgrade, when the anchor / layout weren't ready yet.
@@ -496,6 +511,7 @@ export class AMenuElement extends HTMLElementBase {
     this.cancelCloseTimer()
     this.accessibilityObserver?.disconnect()
     this.accessibilityObserver = undefined
+    this.#clearPopupAriaRelations()
     const anchor = this.triggerAnchor
     if (anchor && anchorToMenu.get(anchor) === this) {
       anchorToMenu.delete(anchor)
@@ -795,12 +811,50 @@ export class AMenuElement extends HTMLElementBase {
       this.scrollEl.removeAttribute('aria-label')
       this.scrollEl.removeAttribute('aria-orientation')
     }
+    this.#syncPopupAriaRelations()
   }
 
-  /** Move the combobox cursor. Sets the item's `active` **property** (off-DOM
-   *  `:state(active)`, no attribute churn) for the highlight, and REPORTS the
-   *  active id via the `activedescendant` event so the reactive layer can set
-   *  `aria-activedescendant` on the light-DOM field. `null` clears the cursor. */
+  /** Associate the popup with its Anta-owned trigger and filter field. Both
+   * control the popup host; the active option is a direct element reference.
+   * The host target also works when the options region lives in another shadow
+   * root, which ARIA element reflection does not expose through its getter. */
+  #syncPopupAriaRelations() {
+    if (!this.isConnected) return
+    const next = new Map<PopupAriaReceiver, { controls: Element | null; activeDescendant: Element | null }>()
+    const anchor = this.triggerAnchor
+    const search = this.#searchField
+
+    if (isPopupAriaReceiver(anchor)) {
+      next.set(anchor, {
+        controls: this,
+        activeDescendant: search === anchor ? this.activeItem : null,
+      })
+    }
+    if (search !== anchor && isPopupAriaReceiver(search)) {
+      next.set(search, {
+        controls: this,
+        activeDescendant: this.activeItem,
+      })
+    }
+
+    for (const target of this.#ariaRelationTargets) {
+      if (!next.has(target)) target[SYNC_POPUP_ARIA]({ source: this, clear: true })
+    }
+    for (const [target, relations] of next) {
+      target[SYNC_POPUP_ARIA]({ source: this, ...relations })
+    }
+    this.#ariaRelationTargets = new Set(next.keys())
+  }
+
+  #clearPopupAriaRelations() {
+    for (const target of this.#ariaRelationTargets)
+      target[SYNC_POPUP_ARIA]({ source: this, clear: true })
+    this.#ariaRelationTargets.clear()
+  }
+
+  /** Move the combobox cursor. Sets the item's `active` property for its
+   *  off-DOM highlight/selected state, associates it directly with an Anta
+   *  Input, and reports it for raw/custom observers. `null` clears the cursor. */
   private setActive(item: AMenuItemElement | null) {
     if (this.activeItem && this.activeItem !== item) this.activeItem.active = false
     this.activeItem = item
@@ -808,12 +862,9 @@ export class AMenuElement extends HTMLElementBase {
       item.active = true
       item.scrollIntoView?.({ block: 'nearest' })
     }
-    // The cursor *highlight* rides the item's off-DOM `:state(active)` above. The
-    // ARIA `aria-activedescendant` relationship, though, points from the (light-DOM)
-    // filter field to the active option — and a web component must not write that
-    // light-DOM attribute itself (it would desync the worker-thread reactive
-    // model). So we only REPORT the active id; the reactive layer that owns the
-    // field (e.g. `Select`) reflects it onto `aria-activedescendant`.
+    this.#syncPopupAriaRelations()
+    // Keep the raw event for custom fields and observers. Built-in a-input fields
+    // receive the direct element relationship in #syncPopupAriaRelations above.
     this.dispatchEvent(
       new CustomEvent('activedescendant', { detail: { id: item?.id ?? null } }),
     )

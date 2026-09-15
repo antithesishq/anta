@@ -21,6 +21,7 @@ export class ASwitchElement extends HTMLElementBase {
   private seeded = false;
   private dirty = false;
   private alive = false;
+  private accessibilityObserver?: MutationObserver;
 
   /** Current checked value. Write through the `state` attribute instead. */
   get checked(): boolean {
@@ -45,7 +46,16 @@ export class ASwitchElement extends HTMLElementBase {
       this.seeded = true;
     }
     this.paint();
+    this.syncAccessibilityRelations();
+    this.accessibilityObserver ??= new this.view.MutationObserver(() =>
+      this.syncAccessibilityRelations(),
+    );
+    this.accessibilityObserver.observe(this, { childList: true });
     this.alive = true;
+  }
+
+  disconnectedCallback() {
+    this.accessibilityObserver?.disconnect();
   }
 
   attributeChangedCallback(name: string) {
@@ -112,6 +122,23 @@ export class ASwitchElement extends HTMLElementBase {
       this.currentState === "checked" ? (this.getAttribute("value") ?? "on") : null,
       this.currentState,
     );
+  }
+
+  private syncAccessibilityRelations() {
+    const internals = this.internals;
+    if (!internals) return;
+    try {
+      if ("ariaLabelledByElements" in internals)
+        internals.ariaLabelledByElements = Array.from(
+          this.querySelectorAll(":scope > a-switch-label"),
+        );
+      if ("ariaDescribedByElements" in internals)
+        internals.ariaDescribedByElements = Array.from(
+          this.querySelectorAll(":scope > a-switch-hint"),
+        );
+    } catch {
+      // Older engines can expose the properties without implementing setters.
+    }
   }
 
   formResetCallback() {

@@ -9,9 +9,9 @@ for styling through `::part(input)`.
 ## Size
 
 ```tsx
-<Input size="small"  label="Small"  placeholder="24px tall" />
-<Input size="medium" label="Medium" placeholder="28px tall" /> {/* default */}
-<Input size="large"  label="Large"  placeholder="32px tall" />
+<Input size="small"  label="Small"  placeholder="24px tall" autoComplete="off" />
+<Input size="medium" label="Medium" placeholder="28px tall" autoComplete="off" /> {/* default */}
+<Input size="large"  label="Large"  placeholder="32px tall" autoComplete="off" />
 ```
 
 Three sizes (`medium` is the default). The field **height**, the **type scale**
@@ -27,8 +27,8 @@ Anta's text scale, so a field lines up with same-size `Text` / `Button`.
 ## Label and hint
 
 ```tsx
-<Input label="Display name" defaultValue="Ada Lovelace" />
-<Input label="API key" hint="Find this in Settings → Developers." placeholder="sk-…" />
+<Input label="Display name" defaultValue="Ada Lovelace" autoComplete="name" />
+<Input label="API key" hint="Find this in Settings → Developers." placeholder="sk-…" autoComplete="off" />
 ```
 
 `label` sits above the field; `hint` is neutral helper text below it
@@ -51,7 +51,7 @@ the custom-element host.
 ```tsx
 {/* Drop a <Tooltip> in as a child — it attaches to the field and shows on hover,
     exactly like a tooltip on any other element. */}
-<Input label="API key" placeholder="sk-…">
+<Input label="API key" placeholder="sk-…" autoComplete="off">
   <Tooltip>Find this in Settings → Developers.</Tooltip>
 </Input>
 ```
@@ -66,12 +66,12 @@ content.)
 
 ```tsx
 {/* No status = neutral helper text */}
-<Input label="Display name" defaultValue="Ada Lovelace" hint="This is your public name." />
-<Input label="Workspace" defaultValue="acme" status="info" hint="Lowercase letters and dashes only." />
-<Input label="Username" defaultValue="ada" status="success" hint="Username is available." />
-<Input label="Password" type="password" defaultValue="hunter2" status="warning" hint="Weak — add more characters." />
-<Input label="Email" defaultValue="not-an-email" status="critical" hint="Enter a valid email address." />
-<Input label="Plan" defaultValue="Pro" status="brand" hint="You're on the Pro plan." />
+<Input label="Display name" defaultValue="Ada Lovelace" hint="This is your public name." autoComplete="name" />
+<Input label="Workspace" defaultValue="acme" status="info" hint="Lowercase letters and dashes only." autoComplete="off" />
+<Input label="Username" defaultValue="ada" status="success" hint="Username is available." autoComplete="username" />
+<Input label="Password" type="password" defaultValue="hunter2" status="warning" hint="Weak — add more characters." autoComplete="new-password" />
+<Input label="Email" type="email" defaultValue="not-an-email" status="critical" hint="Enter a valid email address." autoComplete="email" />
+<Input label="Plan" defaultValue="Pro" status="brand" hint="You're on the Pro plan." autoComplete="off" />
 ```
 
 `status` tints the border and the `hint`, and prefixes a glyph — `critical`,
@@ -98,15 +98,16 @@ with `statusIcon={false}`.
 ```tsx
 {/* clearable — the clear button shows once there's a value */}
 {/* dimActions — adornments rest quiet, brighten when the field is hovered/focused */}
-<Input label="Search" placeholder="Search…" clearable dimActions defaultValue="design tokens" />
+<Input label="Search" placeholder="Search…" clearable dimActions defaultValue="design tokens" autoComplete="off" />
 
 {/* type="search" is a shorthand for the leading search icon + clearable below */}
-<Input label="Search" type="search" placeholder="Search…" />
+<Input label="Search" type="search" placeholder="Search…" autoComplete="off" />
 
 {/* leading / trailing take any node — see the live playground above */}
-<Input label="Search" leading={<Icon shape="search" />} clearable dimActions />
+<Input label="Search" leading={<Icon shape="search" />} clearable dimActions autoComplete="off" />
 <Input
   label="Date"
+  autoComplete="off"
   leading={<Icon shape="calendar" />}
   trailing={<Button priority="quaternary" size="small" icon="eye" aria-label="Pick" />}
   dimActions
@@ -155,6 +156,7 @@ const [reveal, setReveal] = useState(false)
 
 <Input
   label="Password"
+  autoComplete="current-password"
   type={reveal ? 'text' : 'password'}
   defaultValue="hunter2"
   dimActions
@@ -182,10 +184,10 @@ Firefox. So Anta keeps the native field.
 
 ```tsx
 {/* Grows with content, capped at 6 rows, then scrolls */}
-<Input multiline maxRows={6} label="Bio (autogrows)" placeholder="Tell us…" />
+<Input multiline maxRows={6} label="Bio (autogrows)" placeholder="Tell us…" autoComplete="off" />
 
 {/* Constant height of 3 rows */}
-<Input multiline rows={3} label="Notes (fixed 3 rows)" placeholder="…" />
+<Input multiline rows={3} label="Notes (fixed 3 rows)" placeholder="…" autoComplete="off" />
 ```
 
 `multiline` renders a `<textarea>` under the same API. With **no `rows`** it
@@ -201,11 +203,11 @@ browser.
 
 ```tsx
 // Uncontrolled: the element updates its value after input.
-<Input label="Name" defaultValue="Ada" onChange={(e) => log(e.target.value)} />
+<Input label="Name" defaultValue="Ada" autoComplete="name" onChange={(e) => log(e.target.value)} />
 
 // Controlled: application state supplies the value.
 const [v, setV] = useState('')
-<Input label="Name" value={v} onInput={(e) => setV(e.target.value)} />
+<Input label="Name" value={v} autoComplete="name" onInput={(e) => setV(e.target.value)} />
 ```
 
 Like a native input: pass `defaultValue` for **uncontrolled**, or `value` +
@@ -246,7 +248,7 @@ value-based, also has only `onValueChange`.)
 
 ```tsx
 <form onSubmit={handle}>
-  <Input name="email" label="Email" type="email" required clearable />
+  <Input name="email" label="Email" type="email" autoComplete="email" required clearable />
   <Button tone="brand" type="submit" label="Sign up" />
   <Button priority="tertiary" type="reset" label="Reset" />
 </form>
@@ -260,18 +262,24 @@ restores the field to its `defaultValue` via `formResetCallback`.
 ## Types and validation
 
 ```tsx
-<Input type="text"     label="Text" />
-<Input type="email"    label="Email" />
-<Input type="password" label="Password" />
-<Input type="tel"      label="Tel" />
-<Input type="url"      label="URL" />
-<Input type="number"   label="Number" min={0} max={100} />
+<Input type="text"     label="Text"     autoComplete="off" />
+<Input type="email"    label="Email"    autoComplete="email" />
+<Input type="password" label="Password" autoComplete="current-password" />
+<Input type="tel"      label="Tel"      autoComplete="tel" />
+<Input type="url"      label="URL"      autoComplete="url" />
+<Input type="number"   label="Number"   autoComplete="off" min={0} max={100} />
 ```
 
 `type` accepts `text` (default), `email`, `password`, `tel`, `url`, and
 `number` — each gets the right mobile keyboard, autofill behavior, and native
 constraint validation. (`search` is omitted on purpose — see above.)
 `number` also takes `min` / `max` / `step`.
+
+Set `autoComplete` to describe the field's purpose. `email`, `tel`, and `url`
+derive their matching token from `type`. Other purposes need an explicit token,
+such as `name`, `username`, `current-password`, `new-password`, or
+`one-time-code`. Use `autoComplete="off"` for examples and application fields
+that do not represent autofill data.
 
 For a **controlled** numeric field — one whose `value` you hold in state — prefer
 `type="text"` with `inputMode="decimal"` (or `"numeric"`) over `type="number"`. A
@@ -302,10 +310,10 @@ function onSubmit(e) {
 }
 
 <form noValidate onSubmit={onSubmit}>
-  <Input name="email" type="email" required hint={errors.email}
+  <Input name="email" type="email" autoComplete="email" required hint={errors.email}
          status={errors.email ? 'critical' : undefined}
          onInput={() => setErrors(p => ({ ...p, email: undefined }))} />
-  <Input name="age" type="number" min="18" max="120" hint={errors.age}
+  <Input name="age" type="number" autoComplete="off" min="18" max="120" hint={errors.age}
          status={errors.age ? 'critical' : undefined}
          onInput={() => setErrors(p => ({ ...p, age: undefined }))} />
   <Button type="submit" label="Submit" />
@@ -351,7 +359,7 @@ Re-template the host to two columns and drop each part into one. The hint stays
 under the field by landing in the same column.
 
 ```tsx
-<Input className="label-side" label="Display name" hint="Shown on your profile" />
+<Input className="label-side" label="Display name" hint="Shown on your profile" autoComplete="name" />
 
 {/* .label-side is just for the demo — use your own selector */}
 <style>{`
@@ -375,9 +383,9 @@ left-edge lines up. Each hint still tucks under its own field.
 
 ```tsx
 <div className="aligned-form">
-  <Input label="Email" type="email" hint="We'll never share it." />
-  <Input label="Confirm password" type="password" />
-  <Input label="PIN" />
+  <Input label="Email" type="email" autoComplete="email" hint="We'll never share it." />
+  <Input label="Confirm password" type="password" autoComplete="new-password" />
+  <Input label="PIN" autoComplete="one-time-code" />
 </div>
 
 <style>{`
@@ -397,7 +405,7 @@ unit. Two columns (field, then hint); the label spans the top, and the hint
 centers against the field.
 
 ```tsx
-<Input className="hint-right" label="Username" hint="3–20 characters" placeholder="ada" />
+<Input className="hint-right" label="Username" hint="3–20 characters" placeholder="ada" autoComplete="username" />
 
 <style>{`
   a-input.hint-right {
@@ -418,10 +426,10 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 
 ```tsx
 <div className="wrap-fields">
-  <Input label="First name" />
-  <Input label="Last name" />
-  <Input label="Email" type="email" />
-  <Input label="Phone" type="tel" />
+  <Input label="First name" autoComplete="given-name" />
+  <Input label="Last name" autoComplete="family-name" />
+  <Input label="Email" type="email" autoComplete="email" />
+  <Input label="Phone" type="tel" autoComplete="tel" />
 </div>
 
 <style>{`
@@ -485,7 +493,7 @@ Use the web component directly when you are not using React or Preact and a nati
 Slots hold the label, hint, and controls around the native field.
 
 ```html
-<a-input name="email" placeholder="you@example.com">
+<a-input name="email" type="email" autocomplete="email" placeholder="you@example.com">
   <span slot="label">Email</span>
   <span slot="hint">We only use it for account notices.</span>
 </a-input>
@@ -531,7 +539,7 @@ Reach for the props first: **`status`** sets a validation tone (border + message
 dimensions. The focus ring is the global [`--focus-ring`](../colors.md#focus-ring).
 
 ```tsx
-<Input tone="#e0457b" label="Custom accent" />
+<Input tone="#e0457b" label="Custom accent" autoComplete="off" />
 ```
 
 For everything else, `<a-input>` is shadow-DOM — style its **parts** with plain

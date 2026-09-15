@@ -266,6 +266,7 @@ export default function SearchDialog() {
           <Input
             id="docs-search-input"
             type="search"
+            autoComplete="off"
             size="medium"
             tone="var(--anta-seed-brand)"
             dimActions

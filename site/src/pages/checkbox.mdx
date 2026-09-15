@@ -239,7 +239,11 @@ function ParentChild() {
 
 ## Accessibility
 
-The wrapper sets `role="checkbox"` and `aria-checked` (`"true"` / `"false"` / `"mixed"`), and derives the accessible name from `label` or `children`. For a label-less checkbox, pass `aria-label`.
+The wrapper sets `role="checkbox"`, and the element keeps `aria-checked`
+(`"true"` / `"false"` / `"mixed"`) in sync. Its light-DOM label supplies the
+accessible name and its hint supplies the accessible description through
+`ElementInternals`; no generated IDs are needed. For a label-less checkbox, pass
+`aria-label`.
 
 Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
 
@@ -253,7 +257,8 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-The focusable host carries the state. Label and hint are light-DOM children.
+The focusable host carries the state. Label and hint are light-DOM children that
+the element exposes as its accessible name and description.
 
 <Preview>
   <a-checkbox role="checkbox" tabindex="0" name="updates" default-state="checked">

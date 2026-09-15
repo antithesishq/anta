@@ -65,10 +65,10 @@ export interface MenuProps extends BaseProps {
   ) => void
   /** Combobox-mode cursor report (raw element event). Fires when the active
    *  option changes as arrow keys move the cursor while focus stays in a
-   *  `[data-menu-search]` filter field; `detail.id` is the active option's `id`
-   *  (`null` when none). The reactive layer that renders the field reflects this
-   *  onto its `aria-activedescendant` — the element can't write that light-DOM
-   *  attribute itself. Passed straight through to the element. */
+   *  `[data-menu-search]` filter field; `detail.id` is an authored option `id`,
+   *  or `null`. Built-in Anta Inputs receive the active option through a direct
+   *  ARIA element relationship; this remains available to custom fields and
+   *  observers. Passed straight through to the element. */
   onactivedescendant?: (e: CustomEvent<{ id: string | null }>) => void
   /** ARIA role of the menu surface.
    *  @defaultValue menu */

@@ -119,7 +119,10 @@ Use **`onStateChange`** to intercept a toggle or drive a controlled switch. Use 
 
 ## Accessibility
 
-The wrapper sets `role="switch"` and keeps `aria-checked` in sync with the current value. It derives the accessible name from `label` or text children. For a label-less switch, pass `aria-label`.
+The wrapper sets `role="switch"`, and the element keeps `aria-checked` in sync
+with the current value. Its light-DOM label supplies the accessible name and its
+hint supplies the accessible description through `ElementInternals`; no generated
+IDs are needed. For a label-less switch, pass `aria-label`.
 
 Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w3.org/WAI/ARIA/apg/patterns/switch/).
 
@@ -130,7 +133,7 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 | `checked?` | boolean | — | Controlled checked value. In controlled mode, update this in `onStateChange`. |
 | `defaultChecked?` | boolean | false | Initial checked value for an uncontrolled switch. |
 | `disabled?` | boolean | — | Disables interaction and removes the switch from the tab order. |
-| `hint?` | ReactNode | — | Secondary text rendered under the label. It does not become part of the accessible name. |
+| `hint?` | ReactNode | — | Secondary text rendered under the label and exposed as the switch's accessible description. It does not become part of the accessible name. |
 | `label?` | string | — | Visible, stable label for the setting. Use `children` for richer label content. |
 | `labelPosition?` | 'start' \| 'end' | 'end' | Put the visible label before or after the control. Grid layout changes only the visual order, preserving DOM/source order for assistive technologies. |
 | `name?` | string | — | Form field name. A checked switch submits `value` under this name. |
@@ -147,7 +150,8 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-The focusable host carries the state. Label and hint are light-DOM children.
+The focusable host carries the state. Label and hint are light-DOM children that
+the element exposes as its accessible name and description.
 
 ```html
 <a-switch role="switch" tabindex="0" name="updates" default-state="checked">

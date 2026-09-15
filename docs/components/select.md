@@ -281,11 +281,10 @@ the Menu directly after the Input so it can use that Input as its trigger.
     aria-label="Field"
     aria-haspopup="menu"
     aria-expanded="false"
-    aria-controls="field-menu"
   >
     <a-icon slot="trailing" shape="chevron-down" style="transition: transform 150ms ease"></a-icon>
   </a-input>
-  <a-menu id="field-menu" role="menu">
+  <a-menu role="menu">
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="container"><a-menu-item-label>container</a-menu-item-label></a-menu-item>
@@ -318,6 +317,10 @@ the Menu directly after the Input so it can use that Input as its trigger.
 ```
 
 The React and Preact `Select` wrapper performs those updates for you.
+Because the Menu directly follows the Anta Input, it associates the focused
+field with the popup through a direct ARIA element reference. No popup ID is
+required. If a custom composition supplies its own `aria-controls`, Anta keeps
+that authored relationship.
 
 ### Custom option rendering
 

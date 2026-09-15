@@ -163,7 +163,11 @@ function ParentChild() {
 
 ## Accessibility
 
-The wrapper sets `role="checkbox"` and `aria-checked` (`"true"` / `"false"` / `"mixed"`), and derives the accessible name from `label` or `children`. For a label-less checkbox, pass `aria-label`.
+The wrapper sets `role="checkbox"`, and the element keeps `aria-checked`
+(`"true"` / `"false"` / `"mixed"`) in sync. Its light-DOM label supplies the
+accessible name and its hint supplies the accessible description through
+`ElementInternals`; no generated IDs are needed. For a label-less checkbox, pass
+`aria-label`.
 
 Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
 
@@ -174,7 +178,7 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 | `checked?` | CheckboxValue | — | Controlled checked state. When provided the checkbox is controlled — it renders exactly this and never self-applies; `onStateChange` is a *request* the consumer accepts by updating this prop. Use `defaultChecked` for an uncontrolled checkbox. `'indeterminate'` shows the minus glyph and takes visual precedence; clicking it requests `true`. |
 | `defaultChecked?` | CheckboxValue | false | Initial checked state for an uncontrolled checkbox. Read once; later changes are ignored and the element updates its state after interaction. |
 | `disabled?` | boolean | — | Disable the checkbox (no interaction, dropped from the tab order). |
-| `hint?` | ReactNode | — | Secondary text rendered under the label — explanatory copy, like Input's hint. Not part of the accessible name. |
+| `hint?` | ReactNode | — | Secondary text rendered under the label and exposed as the checkbox's accessible description. Not part of the accessible name. |
 | `label?` | string | — | Visible label — the *value* of the checkbox (clicked along with the box). Convenience for the common single-string case; for richer content (markup, a link, an info icon) use `children`. When both are supplied, `label` renders first. Required unless `children` or `aria-label` is provided (a `role="checkbox"` takes its name from the author, not the markup). |
 | `name?` | string | — | Form field name. Inside a `<form>` the checkbox submits under this name, contributing `value` when checked — like a native checkbox. |
 | `onChange?` | (event) => void | — | Fired *after* the checked state changes — a native `change` event (the post-apply counterpart to `onStateChange`). Not cancelable. For a controlled checkbox this fires once you've updated `checked`. |
@@ -190,7 +194,8 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-The focusable host carries the state. Label and hint are light-DOM children.
+The focusable host carries the state. Label and hint are light-DOM children that
+the element exposes as its accessible name and description.
 
 ```html
 <a-checkbox role="checkbox" tabindex="0" name="updates" default-state="checked">

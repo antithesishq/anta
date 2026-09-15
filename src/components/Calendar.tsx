@@ -1,6 +1,6 @@
 import cn from "clsx"
 import { Temporal } from "temporal-polyfill"
-import { useId, useMemo, useState } from "../jsx-runtime"
+import { useMemo, useState } from "../jsx-runtime"
 import { nativeStateChange } from "../anta_helpers"
 import { Button } from "./Button"
 import { Menu } from "./Menu"
@@ -153,7 +153,6 @@ export const Calendar = ({
   // shared open-stack's closeSystem — we dismiss the jump menu here instead.
   const [jumpOpen, setJumpOpen] = useState(false)
 
-  const headingId = useId()
   const month = buildMonth({ anchor: effectiveCursor, locale: resolvedLocale, min: minD, max: maxD, selected, today })
   const cursorIso = effectiveCursor.toString()
 
@@ -303,7 +302,6 @@ export const Calendar = ({
           onClick={() => moveCursorByMonth(-1)}
         />
         <Button
-          id={headingId}
           data-part="heading"
           priority="tertiary"
           size={size}
@@ -335,8 +333,7 @@ export const Calendar = ({
 
       <a-calendar
         role="group"
-        aria-labelledby={headingId}
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? month.heading}
         name={name}
         // Controlled → drive the element's `value` (and it only *requests* picks);
         // uncontrolled → seed `defaultvalue` and let the element own selection.

@@ -92,26 +92,25 @@ function unbindDocListeners() {
   docBound = false
 }
 
-/** A node is "inside the open menu system" if the event path crosses any
- *  open menu's surface or its anchor. `composedPath` crosses shadow
- *  boundaries, so slotted custom content (a slider, an input) counts as
- *  inside — clicking it never dismisses the menu.
+/** Find the deepest open menu whose surface or anchor contains the event.
+ *  `composedPath` includes shadow surfaces around slotted custom content.
  *
  *  `primaryClick` marks a left-button pointerdown. A context menu's anchor is
  *  the whole region it follows and re-triggers ONLY on right-click, so on a
  *  normal left-click it isn't part of the menu system — a click on it must
  *  dismiss like any outside click. (A click-trigger anchor stays exempt so its
  *  own click handler toggles instead of racing the dismiss.) */
-function pathHitsMenus(e: Event, primaryClick = false): boolean {
+function menuIndexForEvent(e: Event, primaryClick = false): number {
   const path = e.composedPath()
-  for (const m of openStack) {
-    if (path.includes(m.surface)) return true
+  for (let i = openStack.length - 1; i >= 0; i--) {
+    const m = openStack[i]
+    if (path.includes(m.surface)) return i
     const anchor = m.triggerAnchor
     if (!anchor) continue
     if (primaryClick && m.hasAttribute('context')) continue
-    if (path.includes(anchor)) return true
+    if (path.includes(anchor)) return i
   }
-  return false
+  return -1
 }
 
 function pathCrossesTopLayerBeforeAnchor(e: Event, anchor: HTMLElement): boolean {
@@ -149,14 +148,17 @@ setMenuPresence({
 
 function onDocPointerDown(e: Event) {
   if (!openStack.length) return
-  if (!pathHitsMenus(e, (e as MouseEvent).button === 0)) dismiss(e)
+  const index = menuIndexForEvent(e, (e as MouseEvent).button === 0)
+  // The first menu above the hit owns the branch to dismiss. A miss closes
+  // the root; a hit on the deepest menu leaves the stack open.
+  openStack[index + 1]?.requestClose(e)
 }
 
 function onDocContextMenu(e: Event) {
   if (!openStack.length) return
   // Right-click inside the menu system (or on an open anchor) is left alone —
   // a context anchor's own handler repositions rather than toggling.
-  if (!pathHitsMenus(e)) dismiss(e)
+  if (menuIndexForEvent(e) === -1) dismiss(e)
 }
 
 function onResize() {

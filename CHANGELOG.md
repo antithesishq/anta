@@ -50,6 +50,9 @@ changes are not listed.
 
 ### Fixed
 
+- Clicking inside a parent menu closes nested menus outside the clicked branch.
+  Calendar's month/year picker closes when clicking elsewhere in the calendar,
+  including the month navigation arrows.
 - Nested menus reset when their controlled parent closes. InputDate's month/year
   picker can reopen after selecting a date while the picker is open.
 - Calendar weekday headers use a higher-contrast text color, including weekends.

@@ -453,6 +453,75 @@ test('InputDate resets nested menu state when a date pick closes its controlled 
   }
 })
 
+test('nested menu outside clicks close only the branch above the clicked parent', async t => {
+  const page = await pageFor(t)
+  const result = await page.evaluate(async () => {
+    const field = [...document.querySelectorAll('a-input')]
+      .find(input => input.shadowRoot?.querySelector('input[aria-label="Due date"]'))
+    const popup = field.nextElementSibling
+    const heading = popup.querySelector('[data-part="heading"]')
+    const jump = heading.nextElementSibling
+    const flyout = jump.querySelector('a-menu')
+    const settle = () => new Promise(resolve => setTimeout(resolve, 20))
+    const pointer = element => element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, button: 0 }))
+    const state = () => [popup.isOpen, jump.isOpen, flyout.isOpen]
+    const openBranch = async () => {
+      jump.open()
+      await settle()
+      flyout.open()
+      await settle()
+    }
+    popup.open()
+    await settle()
+    await openBranch()
+
+    pointer(flyout.querySelector('a-menu-item'))
+    await settle()
+    const insideChild = state()
+
+    pointer(jump.querySelector(':scope > a-menu-item:last-child'))
+    await settle()
+    const insideYearList = state()
+
+    pointer(heading)
+    await settle()
+    const triggerPointer = state()
+    heading.click()
+    await settle()
+    const triggerToggle = state()
+
+    await openBranch()
+    pointer(popup.querySelector('[data-part="weekday"]'))
+    await settle()
+    const insideCalendar = state()
+
+    await openBranch()
+    const nextMonth = popup.querySelector('[aria-label="Next month"]')
+    const oldHeading = heading.textContent
+    pointer(nextMonth)
+    nextMonth.click()
+    await settle()
+    const navigation = { parentOpen: popup.isOpen, childOpen: jump.isOpen, monthChanged: heading.textContent !== oldHeading }
+
+    jump.open()
+    await settle()
+    pointer(document.body)
+    await settle()
+    const outsideAll = [popup.isOpen, jump.isOpen]
+    return { insideChild, insideYearList, triggerPointer, triggerToggle, insideCalendar, navigation, outsideAll }
+  })
+
+  assert.deepEqual(result, {
+    insideChild: [true, true, true],
+    insideYearList: [true, true, false],
+    triggerPointer: [true, true, false],
+    triggerToggle: [true, false, false],
+    insideCalendar: [true, false, false],
+    navigation: { parentOpen: true, childOpen: false, monthChanged: true },
+    outsideAll: [false, false],
+  })
+})
+
 test('Calendars in separate renderer roots use direct names without duplicate IDs', async t => {
   const page = await pageFor(t)
   const result = await page.locator('a-calendar').evaluateAll(calendars => ({

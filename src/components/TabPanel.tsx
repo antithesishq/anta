@@ -1,3 +1,5 @@
+import type { BaseProps } from "../general_types"
+
 /**
  * A tab panel inside `<Tabs>`. Renders a self-managing `<a-tabpanel>` — the element
  * finds its `<a-tabs>` (its flat sibling under the same parent — `Tabs` renders the
@@ -10,24 +12,18 @@
  * unmount an inactive panel (the old `mounting="active" | "lazy"`), drive selection
  * with a controlled `value` and render the content yourself — see the Tabs docs.
  */
-export interface TabPanelProps {
+export interface TabPanelProps extends BaseProps {
   /** Pairs this panel with the tab (`options` entry) of the same `value`. */
   value: string
-  /** Panel content — arbitrary React/Preact. */
-  children?: React.ReactNode
   /** How this panel hides while inactive: `display` (default — removed from layout
    *  and the a11y tree) or `visibility` (keeps its layout box, to measure it or
    *  avoid reflow). Both stay mounted; to *not render* an inactive panel, render it
    *  conditionally off a controlled `value` (see the Tabs docs).
    *  @defaultValue display */
   hideMode?: "display" | "visibility"
-  /** CSS class on the rendered `<a-tabpanel>`. */
-  className?: string
-  /** Inline style on the rendered `<a-tabpanel>`. */
-  style?: React.CSSProperties
 }
 
-export const TabPanel = ({ value, children, hideMode, className, style }: TabPanelProps) => (
+export const TabPanel = ({ value, children, hideMode, className, style, ...rest }: TabPanelProps) => (
   <a-tabpanel
     value={value}
     role="tabpanel"
@@ -35,6 +31,7 @@ export const TabPanel = ({ value, children, hideMode, className, style }: TabPan
     hide-mode={hideMode === "visibility" ? "visibility" : undefined}
     class={className}
     style={style}
+    {...rest}
   >
     {children}
   </a-tabpanel>

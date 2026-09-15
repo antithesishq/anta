@@ -1323,11 +1323,10 @@ export interface ATabsAttributes extends BaseAttributes {
 /**
  * Attributes for the `<a-tabpanel>` styled tag.
  *
- * `<a-tabpanel>` has no JS — it's a CSS-only styled element. The `Tabs` wrapper renders
- * it, pairs it to its tab via id, and toggles visibility declaratively: `hidden`
- * (display:none) or `data-hide="visibility"` (keeps the layout box), plus `inert` while
- * hidden. Low-level attributes; for the typed JSX wrapper use `TabPanel` (inside `Tabs`)
- * from `@antadesign/anta`.
+ * `<a-tabpanel>` finds its sibling `<a-tabs>`, exposes its active state through
+ * `ElementInternals`, and points its accessible label at the matching tab. Low-level
+ * attributes; for the typed JSX wrapper use `TabPanel` (inside `Tabs`) from
+ * `@antadesign/anta`.
  */
 export interface ATabpanelAttributes extends BaseAttributes {
   /** Pairs the panel with the tab of the same value. The element reads its

@@ -271,15 +271,17 @@ const [tab, setTab] = useState('overview')
 
 ## Keyboard & accessibility
 
-Every enabled tab is in the tab order; `Tab` / `Shift`+`Tab` step through them.
-The arrow keys also move between enabled tabs (wrapping at the ends), `Home` /
+The selected tab is in the page's tab order. Once focus enters the strip, the
+arrow keys move between enabled tabs (wrapping at the ends), `Home` /
 `End` jump to the first / last, and `Space` / `Enter` activate the focused tab;
 arrow / `Home` / `End` navigation activates as it moves (selection follows focus).
 Disabled tabs are skipped and dropped from the tab order.
 
 Pass `label` for the tablist's accessible name. Each `<TabPanel>` names its tab as
 its accessible label (`aria-labelledby`), set off-DOM so nothing writes the panel's
-attributes.
+attributes. Static panel content remains readable without making the panel a tab
+stop. Set `tabIndex={0}` when you want a text-only panel itself to receive focus;
+when the panel starts with a focusable control, Tab reaches that control directly.
 
 ## Routing
 
@@ -371,17 +373,18 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `value` | string | — | Pairs this panel with the tab (`options` entry) of the same `value`. |
-| `children?` | ReactNode | — | Panel content — arbitrary React/Preact. |
-| `className?` | string | — | CSS class on the rendered `<a-tabpanel>`. |
 | `hideMode?` | 'display' \| 'visibility' | display | How this panel hides while inactive: `display` (default — removed from layout and the a11y tree) or `visibility` (keeps its layout box, to measure it or avoid reflow). Both stay mounted; to *not render* an inactive panel, render it conditionally off a controlled `value` (see the Tabs docs). |
-| `style?` | CSSProperties | — | Inline style on the rendered `<a-tabpanel>`. |
 
 ## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
 Keep the tab strip and panels as siblings under one parent. Panels read the active
-value from `<a-tabs>`.
+value from `<a-tabs>`. Give the selected tab `tabindex="0"` and the others
+`tabindex="-1"`; `<a-tabs>` moves focus and selection with the arrow keys, while
+your change handler updates those attributes for the next visit to the strip. Add
+`tabindex="0"` to a text-only panel only when you want the panel itself in the page
+Tab sequence.
 
 Add `fill` to make horizontal tabs share the available width equally.
 
@@ -394,6 +397,16 @@ Add `fill` to make horizontal tabs share the available width equally.
   <a-tabpanel role="tabpanel" value="account">Account settings</a-tabpanel>
   <a-tabpanel role="tabpanel" value="security">Security settings</a-tabpanel>
 </div>
+```
+
+```js title="Keep the raw DOM tab stop on the selected tab"
+const tabs = document.querySelector('a-tabs')
+
+tabs.addEventListener('change', () => {
+  for (const tab of tabs.querySelectorAll('a-tab')) {
+    tab.tabIndex = tab.getAttribute('value') === tabs.value ? 0 : -1
+  }
+})
 ```
 
 ## Styling

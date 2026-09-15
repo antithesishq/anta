@@ -17,6 +17,9 @@ changes are not listed.
 
 ### Changed
 
+- Tabs use one roving tab stop in JSX: the selected tab participates in the
+  page Tab sequence and arrow keys move within the strip. `TabPanel` now forwards
+  the common component props, including `tabIndex`, `aria-*`, and `data-*`.
 - **Breaking:** Input now delegates standard `role` and `aria-*` declarations
   from `<a-input>` to its focused native shadow control, preventing a duplicate
   host control in the accessibility tree. InputAutocomplete and InputDate expose

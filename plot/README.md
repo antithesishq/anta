@@ -31,30 +31,26 @@ Use a bundler that handles CSS imports. The browser entry loads Anta elements an
 ```tsx
 import { Plot } from '@antadesign/plot/components'
 import { scatter } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/elements/a-plot-surface'
+import '@antadesign/anta/elements/a-tooltip'
 
-<Plot plotArgs={{ series: [scatter({ data: [{ x: 1, y: 2 }], tooltip: true })] }} />
+<Plot plotArgs={{ height: 300, series: [scatter({ data: [{ x: 1, y: 2 }], tooltip: true })] }} />
 ```
 
-`Plot` uses Anta’s configured renderer and delegates lifecycle to `<a-plot>`.
-Register the element before rendering. The renderer must assign `plotArgs` as an
-object property; React 19 and Preact support this. React 18 is not supported.
-For server rendering, register in the browser before hydration.
-Replace `plotArgs` to update the plot. Removal disconnects the browser host.
+`Plot` uses Anta's configured renderer and hooks. Register
+`@antadesign/plot/elements/a-plot-surface` and `@antadesign/anta/elements/a-tooltip`
+before rendering. The existing `/elements/a-plot` registration also includes these dependencies.
 
-Default and custom JSX tooltips render through Anta’s `Tooltip` in the component
-tree, without refs or portals. Custom renderers must supply `useState` and `useSyncExternalStore` through
-`configure()` as well as their element factory. The latter publishes object props
-after hydration. Tooltip updates arrive through
-`tooltipchange` events; `onPlotError` receives browser-host error events.
-Plotting runs in the browser and does not replace the notebook’s worker adapter.
+The component owns the controller, composition, drawing, and cleanup. It receives
+OffscreenCanvas objects from the surface and draws on the renderer's thread: the
+main thread in ordinary React/Preact apps, or the worker through the notebook's DOM bridge.
+Default and custom tooltips render through Anta's `Tooltip`, without DOM refs or portals.
+Replace `plotArgs` to update the plot. Custom renderers supply `useState`, `useMemo`,
+`useRef`, `useCallback`, and `useLayoutEffect` through `configure()` when their hooks
+are not already provided by React aliases.
 
-The root entry does not load Anta or React at runtime. The `/elements` entry loads Anta elements statically and registers synchronously. Registration is a no-op when `customElements` is unavailable. Like Anta’s element imports, `/elements` requires a bundler that handles CSS imports, including during server rendering.
-
-Before adopting bulk registration in the notebook, rename its passive `a-plot`
-wrapper to `notebook-plot`. Otherwise the browser upgrades that wrapper into a
-standalone host and creates an additional plot surface. Existing definitions are
-preserved, and importing `/elements` alone does not create plot instances.
+The root entry does not load Anta or React at runtime. Element registration requires
+a CSS-aware bundler and is guarded when no browser registry is available.
 
 ## Build and verify
 
@@ -72,27 +68,25 @@ The plot build emits ESM, declarations, and CSS into `dist/`. Internal plot code
 
 `check:package` copies the built package into a temporary consumer directory and checks all seven factories, composition, interaction integration, server imports, exports, and Bundler/NodeNext declarations. It checks core declarations fully; third-party Anta declarations use `skipLibCheck`.
 
-`prepare` and `prepublishOnly` rebuild the package. `dist/` and build metadata are ignored. Follow [the release instructions](../RELEASING.md) to publish with pnpm, which rewrites `workspace:*` to the current Anta version.
+`prepare` and `prepublishOnly` rebuild the package. `dist/` and build metadata are ignored. Follow [the release instructions](../RELEASING.md) to publish. This extraction requires an Anta release containing the new configured hooks; the current dependency pin does not yet include them.
 
 The notebook adapter remains in Star. Until Star adopts a published version, its migration source remains the active implementation; keep any intervening fixes synchronized.
 
 ## Component lifecycle
 
 `Plot` accepts `plotArgs`, presentation props such as `className` and `style`, and
-`onPlotError` for browser-host failures. Configuration updates run when the renderer
-assigns the object property after commit. Canvas setup, drawing, interaction state,
-and cleanup belong to `<a-plot>`. Tooltip content remains in the renderer’s tree.
+`onError` for lifecycle failures. `validateTooltipContent` optionally validates custom
+content at a renderer boundary. Controller updates, composition, and drawing run
+in layout effects after commit; discarded renders do not invoke plot callbacks.
+The surface mounts after hydration and transfers each canvas once. Effects can
+replay without retransferring canvases; a new component mount gets a new surface.
 
-React 19 is the React peer dependency. ReactDOM is used only by development tests.
-The browser regression suite is `pnpm --filter @antadesign/plot run test:browser`
-after building. It uses the workspace’s Playwright dependency and Chromium.
-Set `PLOT_TEST_BROWSER_EXECUTABLE` for a local browser, or
-`CAPTURE_TEST_BROWSER_CHANNEL=chrome` for an installed Chrome.
+The wrapper fills its parent. Give the parent a height or set `plotArgs.height`.
+Explicit plot dimensions override the wrapper styles until removed.
 
-For renderer-owned tooltips, set `tooltip-mode="external"` before assigning
-`plotArgs` and listen for `tooltipchange`. Its `detail` is the array of resolved
-tooltip entries, or an empty array when hover clears. This mode suppresses the
-standalone tooltip renderer. `/components` manages this protocol internally.
+Run `pnpm --filter @antadesign/plot run test:browser` after building. The browser
+suite covers React and Preact, hydration, discarded renders, interactions, sizing,
+and tooltip cleanup. Set `PLOT_TEST_BROWSER_EXECUTABLE` to a Chromium executable.
 
 Standalone hosts can optionally assign `element.tooltipRenderer` to receive resolved
 tooltip entries and their target element. The renderer owns the target's children

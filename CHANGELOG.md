@@ -3,6 +3,10 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+- Added configurable `useRef`, `useCallback`, and `useLayoutEffect` exports to `@antadesign/anta/jsx-runtime`.
+
 ## 0.3.28 — September 10, 2026
 
 ### Changed

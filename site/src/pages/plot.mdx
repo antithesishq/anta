@@ -373,9 +373,11 @@ React 19 is a peer dependency. For Preact, use `preact/compat` aliases.
 ```tsx
 import { Plot } from '@antadesign/plot/components'
 import { line } from '@antadesign/plot'
-import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/elements/a-plot-surface'
+import '@antadesign/anta/elements/a-tooltip'
 
 const plotArgs = {
+  height: 300,
   series: [line({ data: [{ x: 1, y: 3 }, { x: 2, y: 5 }, { x: 3, y: 4 }] })],
 }
 
@@ -384,11 +386,17 @@ function Example() {
 }
 ```
 
-Import the element registration once in your browser entry. Styles are installed automatically.
-`Plot` handles canvas setup, drawing, and interactions.
+`Plot` is a function component that uses Anta's configured JSX factory and hooks.
+It needs no DOM registration. Import the surface and tooltip registration modules
+once in your browser entry; their elements install their styles automatically.
+`Plot` handles canvas setup, drawing, interactions, and cleanup.
 
-For plain JavaScript or TypeScript, use `<a-plot>` with the same registration
-import, and assign its `plotArgs` property.
+By default, `Plot` fills its parent. Give the parent a height or set `plotArgs.height`,
+as above. Custom renderers supply their hooks through Anta's `configure()`.
+With a worker renderer and a DOM bridge that transfers the surface's canvases,
+`Plot` runs in the worker while `a-plot-surface` stays in the browser.
+
+For plain JavaScript or TypeScript, import `@antadesign/plot/elements/a-plot`, then use `<a-plot>` and assign its `plotArgs` property.
 
 For custom host integrations, `/components` also exports `PlotSurface`.
 Register it with `@antadesign/plot/elements/a-plot-surface`; your host manages
@@ -498,7 +506,7 @@ document.body.append(plot)
 | [`axis?`](#axes) | `{ x?: AxisArgs, y?: AxisArgs }` | Inferred from data | Per-axis scale, label, ticks, and domain. |
 | [`title?`](#title) | `string \| { text, size?, color? }` | None | Plot title. |
 | `width?` | `number` | Container width | Canvas width in pixels. Overrides the wrapper's CSS width. |
-| `height?` | `number` | `300` in React and standalone hosts | Canvas height in pixels. Overrides the wrapper's CSS height (default `300`). |
+| `height?` | `number` | Parent height for `Plot`; `300` for `<a-plot>` | Canvas height in pixels. Overrides the host's CSS height. |
 | [`margin?`](#margins) | `number \| { top?, right?, bottom?, left? }` | `60` per side; `2` without axes or title | Space reserved around the plot area for axes and title. |
 | `border?` | `boolean` | `true` | Draws a border around the plot area. |
 | [`grid?`](#grid) | `boolean \| { x?, y? }` | `false` | Grid lines, per axis. |
@@ -4216,7 +4224,8 @@ position is `undefined`. `ColorResolver` is `(index: number) => string`.
 <Disclosure title="Web Component">
 
 `<a-plot>` is a light-DOM custom element that takes the same arguments
-as a property. Use it when the host is not React.
+as a property. Use it directly from plain JavaScript or TypeScript; it owns
+controller setup, drawing, and cleanup in the browser.
 
 ```ts
 import { scatter, type APlotElement } from '@antadesign/plot/browser'
@@ -4236,8 +4245,13 @@ is unavailable, including during server rendering.
 
 <Disclosure title="Styling">
 
-Use CSS to size the plot host and style its container. Configure canvas colors,
-lines, and text through `plotArgs`.
+The JSX `Plot` component fills its parent with `width: 100%` and `height: 100%`.
+Give its container a height, or set `width` and `height` in `plotArgs`. Removing
+those arguments restores parent-relative sizing. Use `className` and `style` to
+style the wrapper; inline `style` props can override its default dimensions.
+
+The standalone `<a-plot>` element has a 300px fallback height. The preview below
+uses that element. Configure canvas colors, lines, and text through `plotArgs`.
 
 This preview uses CSS for the rounded container, padding, and responsive aspect
 ratio. It omits `width` and `height` from `plotArgs` so CSS controls the size.
@@ -4323,8 +4337,9 @@ Plain color strings remain subject to the plot’s `theme_invert` setting.
 Set text colors separately with `title.color`, `axis.x.label.color`,
 `axis.y.label.color`, `axis.x.tick_label.color`, and `axis.y.tick_label.color`.
 
-With the React host, return a `ReactNode` from a series’ [`tooltip`](#tooltips)
-and style it like other markup. The reset control is an Anta `Button` and
+With the JSX `Plot` component, return content supported by your renderer from a
+series’ [`tooltip`](#tooltips) callback and style it like other markup. Anta’s
+`Tooltip` renders that content in the component tree. The reset control is an Anta `Button` and
 follows the application’s theme.
 
 </Disclosure>

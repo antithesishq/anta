@@ -55,8 +55,8 @@ before(async () => {
     server = createServer((req, res) => {
         res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript'
             : req.url.endsWith('.css') ? 'text/css' : 'text/html')
-        res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/fixture.css">
-            <style>body{margin:0}#app{width:600px}</style>
+        res.end(assets.get(req.url) ?? `<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/fixture.css">
+            <style>body{margin:0}#app{width:600px;height:300px}</style>
             <div id="app">${req.url === '/hydrate' ? ssr : ''}</div>
             <script type="module" src="/fixture.js"></script>`)
     })
@@ -129,7 +129,7 @@ test('SSR does not initialize a controller or evaluate plot callbacks', () => {
             },
         },
     }))
-    assert.match(markup, /a-plot/)
+    assert.match(markup, /<div/)
     assert.doesNotMatch(markup, /<canvas/)
     assert.equal(calls, 0)
     assert.equal(typeof globalThis.customElements, 'undefined')
@@ -150,7 +150,7 @@ test('StrictMode: overlap, default/explicit sizing, pin removal, theme, DPR and 
             height: document.querySelector('[data-plot]').getBoundingClientRect().height,
             standalone: Boolean(customElements.get('a-plot')),
         }
-    }), { main: [0, 0, 600, 300], overlay: [0, 0, 600, 300], height: 300, standalone: true })
+    }), { main: [0, 0, 600, 300], overlay: [0, 0, 600, 300], height: 300, standalone: false })
 
     await page.evaluate(() => renderPlot({ args: { width: 420, height: 260 } }))
     await page.waitForFunction(() => document.querySelector('canvas').width === 420)
@@ -160,6 +160,21 @@ test('StrictMode: overlap, default/explicit sizing, pin removal, theme, DPR and 
     })
     await page.waitForFunction(() => document.querySelector('canvas').width === 500
         && document.querySelector('canvas').height === 300)
+
+    // Parent-relative height is the notebook dashboard contract.
+    await page.evaluate(() => {
+        document.querySelector('#app').style.height = '170px'
+        renderPlot()
+    })
+    await page.waitForFunction(() => document.querySelector('canvas').height === 170)
+    await page.evaluate(() => document.querySelector('#app').style.height = '246px')
+    await page.waitForFunction(() => document.querySelector('canvas').height === 246)
+    await page.evaluate(() => {
+        document.querySelector('#app').style.height = '300px'
+        renderPlot()
+    })
+    await page.waitForFunction(() => document.querySelector('canvas').height === 300)
+    assert.equal(await page.evaluate(() => stats.transfers), 2)
 
     await page.evaluate(() => document.documentElement.classList.add('dark'))
     await page.waitForFunction(() => document.querySelector('canvas').style.filter.includes('invert'))
@@ -182,6 +197,7 @@ test('StrictMode: overlap, default/explicit sizing, pin removal, theme, DPR and 
     await page.waitForFunction(() => document.querySelector('canvas')?.width === 1000)
     assert.equal(await page.evaluate(() => oldSurface !== document.querySelector('a-plot-surface')), true)
     assert.deepEqual(await page.evaluate(() => stats.errors), [])
+    assert.equal(await page.evaluate(() => stats.transfers), 4)
 })
 
 test('React-owned tooltips retain context, clear in margins, and unmount with the plot', async t => {
@@ -237,7 +253,7 @@ test('a suspended update cannot change the active plot or its callbacks', async 
     assert.equal(await page.evaluate(() => stats.formatted.discarded ?? 0), 0)
 })
 
-test('hydrates the server-rendered standalone host', async t => {
+test('hydrates the server-rendered shared component', async t => {
     const page = await pageFor(t, true)
     assert.equal(await page.locator('a-plot-surface').count(), 1)
     assert.deepEqual(await page.evaluate(() => stats.errors), [])
@@ -262,14 +278,13 @@ for (const renderer of ['react', 'preact']) {
         await page.evaluate(renderer => { unmountPlot(); renderAntaPlot(220, renderer) }, renderer)
         await page.waitForFunction(() => stats.formatted.anta > 0 && document.querySelector('canvas')?.height === 220)
         assert.equal(await page.evaluate(() => {
-            window.originalAntaPlot = document.querySelector('a-plot')
-            return originalAntaPlot.plotArgs === antaArgs && originalAntaPlot.className === 'anta-plot'
+            window.originalAntaPlot = document.querySelector('.anta-plot')
+            return originalAntaPlot.className === 'anta-plot'
         }), true)
 
         await page.evaluate(renderer => renderAntaPlot(260, renderer), renderer)
         await page.waitForFunction(() => document.querySelector('canvas')?.height === 260)
-        assert.equal(await page.evaluate(() => originalAntaPlot === document.querySelector('a-plot')
-            && originalAntaPlot.plotArgs === antaArgs), true)
+        assert.equal(await page.evaluate(() => originalAntaPlot === document.querySelector('.anta-plot')), true)
 
         await page.evaluate(() => unmountPlot())
         await page.waitForTimeout(150)
@@ -277,11 +292,11 @@ for (const renderer of ['react', 'preact']) {
         await page.setViewportSize({ width: 900, height: 700 })
         await page.waitForTimeout(150)
         assert.equal(await page.evaluate(() => stats.formatted.anta), draws)
-        assert.equal(await page.locator('a-plot').count(), 0)
+        assert.equal(await page.locator('.anta-plot').count(), 0)
 
         await page.evaluate(renderer => renderAntaPlot(220, renderer), renderer)
         await page.waitForFunction(() => document.querySelector('canvas')?.height === 220)
-        assert.equal(await page.evaluate(() => originalAntaPlot !== document.querySelector('a-plot')), true)
+        assert.equal(await page.evaluate(() => originalAntaPlot !== document.querySelector('.anta-plot')), true)
     })
 }
 
@@ -290,18 +305,18 @@ for (const renderer of ['react', 'preact']) {
         const page = await pageFor(t)
         await page.mouse.move(900, 700)
         await page.evaluate(renderer => { unmountPlot(); renderAntaPlot(220, renderer, true) }, renderer)
-        await page.waitForFunction(() => document.querySelector('a-plot')?.plotArgs === antaArgs)
+        await page.waitForFunction(() => document.querySelector('.anta-plot canvas'))
         await page.waitForFunction(() => document.querySelector('canvas')?.height === 220)
-        await page.waitForFunction(() => document.querySelector('a-plot > a-tooltip')?.listening)
+        await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.listening)
         const capture = await page.locator('a-capture').boundingBox()
         await page.mouse.move(capture.x + capture.width / 2, capture.y + capture.height / 2)
-        const tooltip = page.locator('a-plot > a-tooltip')
-        await page.waitForFunction(() => document.querySelector('a-plot > a-tooltip')?.textContent.includes('point'))
+        const tooltip = page.locator('.anta-plot > a-tooltip')
+        await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.textContent.includes('point'))
         assert.equal(await tooltip.locator('hr').count(), 1)
         assert.match(await tooltip.textContent(), renderer === 'react' ? /provided:Anta point/ : /Custom point/)
-        assert.equal(await page.locator('a-capture > a-tooltip').textContent(), '')
+        assert.equal(await page.locator('a-capture > a-tooltip').count(), 0)
         assert.equal(await tooltip.evaluate(tip => tip.hasAttribute('follow')), true)
-        await page.waitForFunction(() => document.querySelector('a-plot > a-tooltip')?.shadowRoot?.querySelector(':popover-open'))
+        await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.shadowRoot?.querySelector(':popover-open'))
 
         const contentSelector = renderer === 'react' ? '[data-tooltip]' : '[data-anta-tooltip]'
         await center(page, 'mousemove', {}, contentSelector)
@@ -310,9 +325,9 @@ for (const renderer of ['react', 'preact']) {
 
         // Entering a margin clears renderer-owned content without moving its DOM nodes.
         await page.mouse.move(1, 1)
-        await page.waitForFunction(() => document.querySelector('a-plot > a-tooltip')?.textContent === '')
+        await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.textContent === '')
         await page.mouse.move(capture.x + capture.width / 2, capture.y + capture.height / 2)
-        await page.waitForFunction(() => document.querySelector('a-plot > a-tooltip')?.textContent.includes('point'))
+        await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.textContent.includes('point'))
         await page.evaluate(() => unmountPlot())
         assert.equal(await page.locator('a-tooltip').count(), 0)
         if (renderer === 'react') {

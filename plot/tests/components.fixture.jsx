@@ -1,19 +1,25 @@
 import React, { StrictMode, Suspense, createContext, useContext, useEffect, startTransition } from 'react'
 import { h, Fragment, render as renderPreact } from 'preact'
-import { useState as preactUseState } from 'preact/hooks'
+import { useState as preactUseState, useRef as preactUseRef, useCallback as preactUseCallback, useLayoutEffect as preactUseLayoutEffect } from 'preact/hooks'
 import { useSyncExternalStore as preactUseSyncExternalStore } from 'preact/compat'
 import { configure } from '@antadesign/anta/jsx-runtime'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { Plot } from '../dist/components.js'
 import { Plot as AntaPlot } from '../dist/components.js'
-import '../dist/elements/a-plot.js'
+import '../dist/elements/a-plot-surface.js'
+import '@antadesign/anta/elements/a-tooltip'
 import { scatter } from '../dist/index.js'
 
 const Context = createContext('missing')
 const container = document.querySelector('#app')
 let root = null
 const blocked = new Promise(() => {})
-window.stats = { mounted: 0, unmounted: 0, selected: 0, reports: [], errors: [], formatted: {}, renders: [] }
+window.stats = { transfers: 0, mounted: 0, unmounted: 0, selected: 0, reports: [], errors: [], formatted: {}, renders: [] }
+const transferCanvas = HTMLCanvasElement.prototype.transferControlToOffscreen
+HTMLCanvasElement.prototype.transferControlToOffscreen = function () {
+    stats.transfers++
+    return transferCanvas.call(this)
+}
 window.addEventListener('error', event => stats.errors.push(event.message))
 window.addEventListener('unhandledrejection', event => stats.errors.push(String(event.reason)))
 
@@ -59,7 +65,7 @@ function App({ options }) {
     stats.renders.push(options.label ?? 'committed')
     return <Context.Provider value="provided">
         <Suspense fallback={<span>Pending</span>}>
-            <Plot plotArgs={argsFor(options)} onPlotError={event => stats.errors.push(event.detail.phase)}
+            <Plot plotArgs={argsFor(options)} onError={failure => stats.errors.push(failure.phase)}
                 data-plot style={options.style} />
             {options.suspend && <Suspend />}
         </Suspense>
@@ -83,6 +89,9 @@ window.ready = true
 
 window.renderAntaPlot = (height = 220, renderer = 'react', customTooltip = false) => {
     configure(renderer === 'preact' ? h : React.createElement, renderer === 'preact' ? Fragment : React.Fragment, {
+        useRef: renderer === 'preact' ? preactUseRef : React.useRef,
+        useCallback: renderer === 'preact' ? preactUseCallback : React.useCallback,
+        useLayoutEffect: renderer === 'preact' ? preactUseLayoutEffect : React.useLayoutEffect,
         useState: renderer === 'preact' ? preactUseState : React.useState,
         useSyncExternalStore: renderer === 'preact' ? preactUseSyncExternalStore : React.useSyncExternalStore,
     })

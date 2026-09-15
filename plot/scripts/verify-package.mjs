@@ -178,9 +178,9 @@ try {
         import { createElement } from 'react'
         const reactProps: PlotProps = {
             plotArgs: { series: [scatter({ data: [{x:1,y:2}], tooltip: () => createElement('strong', null, 'point') })] },
-            onPlotError(event) { const phase: string = event.detail.phase },
+            onError(failure) { const phase: string = failure.phase },
         }
-        createElement(Plot, reactProps)
+        createElement(Plot<React.ReactNode>, reactProps)
         const surface: PlotSurfaceProps = { canvasOwner: 'worker', onCanvasTransfer(event) {
             const canvas: OffscreenCanvas = event.detail.canvas
         } }

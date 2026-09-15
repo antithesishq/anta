@@ -18,7 +18,8 @@ changes are not listed.
 ### Changed
 
 - Select uses Anta Button for its default trigger, preserving popup accessibility,
-  keyboard-only focus rings, and ellipsis for long values. Menu button triggers
+  keyboard-only focus rings, and ellipsis for long values. Its accessible description
+  includes the current selection and field hint. Menu button triggers
   open with ArrowUp and ArrowDown. Select field styling now targets its
   `a-select-field` wrapper and child `a-button` instead of Input shadow parts.
 

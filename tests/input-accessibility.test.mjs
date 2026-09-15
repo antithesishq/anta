@@ -604,6 +604,19 @@ test('Select buttons open once with arrows, Enter, and Space and retain focus-vi
   assert.equal(await disabled.getAttribute('aria-expanded'), 'false')
 })
 
+test('Select exposes its selection after choosing a value', async t => {
+  const page = await pageFor(t)
+  const trigger = page.getByRole('button', { name: 'Team', exact: true })
+  const cdp = await page.context().newCDPSession(page)
+  for (const value of ['Design', 'Engineering']) {
+    await trigger.click()
+    await page.getByRole('menuitemradio', { name: value, exact: true }).click()
+    const { nodes } = await cdp.send('Accessibility.getFullAXTree')
+    const node = nodes.find(node => node.role?.value === 'button' && node.name?.value === 'Team')
+    assert.equal(node?.description?.value, value)
+  }
+})
+
 test('Select preserves rich labels, hints, and long-value ellipsis on Anta Button', async t => {
   const page = await pageFor(t)
   const trigger = page.locator('a-select-field').filter({ has: page.locator('a-select-label', { hasText: 'Departments' }) }).locator(':scope > a-button')
@@ -611,14 +624,14 @@ test('Select preserves rich labels, hints, and long-value ellipsis on Anta Butto
   const cdp = await page.context().newCDPSession(page)
   const { nodes } = await cdp.send('Accessibility.getFullAXTree')
   const node = nodes.find(node => node.role?.value === 'button' && node.name?.value === 'Departments')
-  assert.equal(node?.description?.value, 'Choose departments')
+  assert.equal(node?.description?.value, 'Engineering department with a very long name Choose departments')
   await trigger.evaluate(el => {
     el.setAttribute('aria-label', 'Override departments')
     el.parentElement.querySelector('a-select-hint').textContent = 'Updated hint'
   })
   const updated = (await cdp.send('Accessibility.getFullAXTree')).nodes.find(node =>
     node.role?.value === 'button' && node.name?.value === 'Override departments')
-  assert.equal(updated?.description?.value, 'Updated hint')
+  assert.equal(updated?.description?.value, 'Engineering department with a very long name Updated hint')
 
   const label = trigger.locator('a-button-label')
   assert.deepEqual(await label.evaluate(el => ({

@@ -110,7 +110,7 @@ export class AButtonElement extends HTMLElementBase {
     if (this.parentElement?.localName === "a-select-field") {
       this.#field = this.parentElement;
       this.#fieldObserver = new MutationObserver(() => this.#syncField());
-      this.#fieldObserver.observe(this.#field, { childList: true });
+      this.#fieldObserver.observe(this.#field, { childList: true, subtree: true });
       this.#field.addEventListener("click", this.#onFieldClick);
       this.#syncField();
     }
@@ -133,9 +133,11 @@ export class AButtonElement extends HTMLElementBase {
     // Element references preserve rich labels and descriptions across renderer roots.
     const label = this.#field?.querySelector(":scope > a-select-label");
     const hint = this.#field?.querySelector(":scope > a-select-hint");
+    const value = this.#field ? this.querySelector(":scope > a-button-label") : null;
+    const descriptions = [value, hint].filter((element): element is Element => !!element);
     try {
       this.internals.ariaLabelledByElements = label && !this.hasAttribute("aria-label") && !this.hasAttribute("aria-labelledby") ? [label] : null;
-      this.internals.ariaDescribedByElements = hint && !this.hasAttribute("aria-describedby") ? [hint] : null;
+      this.internals.ariaDescribedByElements = descriptions.length && !this.hasAttribute("aria-describedby") ? descriptions : null;
     } catch {}
   }
 

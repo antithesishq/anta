@@ -48,8 +48,8 @@ export interface TabOption extends OptionPresentationProps {
    *  tones color both in every mode. Overrides the strip's `tone` for this tab.
    *  @defaultValue inherits the strip's `tone` */
   tone?: "neutral" | "brand" | "info" | "success" | "warning" | "critical" | (string & {})
-  /** Disable just this tab — skipped by keyboard nav and dropped from the tab order
-   *  (a disabled-but-selected tab stays reachable, per the ARIA pattern). */
+  /** Prevent user activation of this tab. A disabled tab can still indicate
+   *  the current selection. */
   disabled?: boolean
   /** Tooltip for this tab — a string or any node — shown **only when one of the
    *  tab's ellipsizing label parts is truncated** (tabs ellipsize when the strip

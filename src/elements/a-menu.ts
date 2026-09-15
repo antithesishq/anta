@@ -6,7 +6,8 @@ import {
   setMenuPresence,
   type PopupAriaReceiver,
 } from '../anta_helpers'
-import { AMenuItemElement, isMenuItemEl, ensureMenuItemKeyListener } from './a-menu-item'
+import { AMenuItemElement, MENU_ITEM_SELECTOR, isMenuItemEl, ensureMenuItemKeyListener } from './a-menu-item'
+import { activeFocus, cycleFocus, focusParent, tabStops } from './focus'
 import { emitCopyRequest } from './copy-behavior'
 import './a-menu.css'
 
@@ -663,11 +664,9 @@ export class AMenuElement extends HTMLElementBase {
     return el.getClientRects().length > 0
   }
 
-  /** The subset of `focusables()` that are menu items (drives arrow / Home /
-   *  End / type-ahead navigation). Same visibility / disabled / ownership
-   *  filter — just narrowed to `a-menu-item`. */
+  /** Custom menu rows that support the combobox cursor and selection state. */
   private focusableItems(): AMenuItemElement[] {
-    return this.focusables().filter(
+    return this.navigableItems().filter(
       (el): el is AMenuItemElement => el instanceof AMenuItemElement,
     )
   }
@@ -678,26 +677,22 @@ export class AMenuElement extends HTMLElementBase {
    *  custom-element-only because the combobox cursor (`setActive`) and selection
    *  seating are `a-menu-item` affordances a plain link doesn't carry. */
   private navigableItems(): HTMLElement[] {
-    return this.focusables().filter((el) => isMenuItemEl(el))
+    return [...this.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR)].filter(
+      el => el.closest('a-menu') === this && !el.hasAttribute('disabled') && this.isVisible(el),
+    )
   }
 
-  /** Every tabbable element belonging to THIS menu (items + nested controls
-   *  like inputs / sliders / buttons), in DOM order, visible and enabled —
-   *  used to trap Tab within the open menu. Submenu contents are excluded
-   *  (their nearest `a-menu` is the submenu). */
-  private focusables(): HTMLElement[] {
-    // `a-input` is listed explicitly: its real control lives in shadow, so the bare
-    // `input` selector can't see it, and without this a slotted Anta field (a time
-    // input, a filter) drops out of the Tab cycle — focus on it then Tab jumps to
-    // the first item instead of the next field. `.focus()` on the host delegates in.
-    const sel =
-      'a-menu-item, a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]),' +
-      ' a-input:not([disabled]), select:not([disabled]), textarea:not([disabled]),' +
-      ' [tabindex]:not([tabindex="-1"]), [data-menu-search]'
-    return (Array.from(this.querySelectorAll(sel)) as HTMLElement[]).filter(
-      (el) =>
-        el.closest('a-menu') === this && !el.hasAttribute('disabled') && this.isVisible(el),
-    )
+  /** Tab stops in rendered order, excluding controls owned by nested menus. */
+  private focusables() {
+    return tabStops(this.surface).filter(el => {
+      if (el.hasAttribute('disabled')) return false
+      let node: Node | null = el
+      while (node) {
+        if (node.nodeType === 1 && (node as Element).localName === 'a-menu') return node === this
+        node = focusParent(node)
+      }
+      return false
+    })
   }
 
   /** On open, seat initial focus like a native `<select>` / macOS menu: a menu
@@ -772,14 +767,12 @@ export class AMenuElement extends HTMLElementBase {
     return this.#comboAnchor
   }
 
-  /** Split a filtered dialog into its existing shadow regions for accessibility:
-   *  the header owns the textbox, while the scrolling body owns menu items. The
-   *  role disappears when filtering leaves only inert empty-state content, so an
-   *  exposed empty menu is never announced. All mutations stay in shadow DOM. */
+  /** Give a dialog's scrolling body menu semantics when it contains menu items.
+   *  Headers and footers stay outside the menu. Empty bodies and plain editors
+   *  have no inner menu role. All mutations stay in shadow DOM. */
   #syncAccessibilityRegions() {
     if (!this.scrollEl) return
     const dialog = this.getAttribute('role') === 'dialog'
-    const split = dialog && !!this.#searchField
 
     if (dialog && this.isConnected && !this.accessibilityObserver) {
       this.accessibilityObserver = new this.view.MutationObserver(() => this.#syncAccessibilityRegions())
@@ -794,7 +787,7 @@ export class AMenuElement extends HTMLElementBase {
       this.accessibilityObserver = undefined
     }
 
-    const hasBodyItem = split && [...this.querySelectorAll<HTMLElement>('a-menu-item, [data-anta-menu-item]')]
+    const hasBodyItem = dialog && [...this.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR)]
       .some((item) => {
         if (item.closest('a-menu') !== this) return false
         let region: HTMLElement = item
@@ -1575,24 +1568,10 @@ export class AMenuElement extends HTMLElementBase {
         this.requestClose(e)
         return
       }
-      const f = this.focusables()
-      if (!f.length) return
+      const targets = this.focusables()
+      if (!targets.length) return
       e.preventDefault()
-      const i = active ? f.indexOf(active) : -1
-      // Focus isn't on a listed focusable (the surface itself, or an unmatched
-      // slotted node) → step to the first item rather than wrapping to the last.
-      if (i === -1) {
-        f[0]?.focus()
-        return
-      }
-      const next = e.shiftKey
-        ? i === 0
-          ? f.length - 1
-          : i - 1
-        : i === f.length - 1
-          ? 0
-          : i + 1
-      f[next]?.focus()
+      cycleFocus(targets, activeFocus(this.doc), e.shiftKey)
       return
     }
 

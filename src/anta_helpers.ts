@@ -336,6 +336,23 @@ export class HTMLElementBase extends NativeHTMLElement {
   }
 }
 
+/** Apply default accessible names and descriptions through element references. */
+export function applyAccessibilityRelations(
+  internals: ElementInternals | undefined,
+  labels: Element[],
+  descriptions: Element[],
+) {
+  if (!internals) return
+  try {
+    if ("ariaLabelledByElements" in internals)
+      internals.ariaLabelledByElements = labels
+    if ("ariaDescribedByElements" in internals)
+      internals.ariaDescribedByElements = descriptions
+  } catch {
+    // Older engines can expose the properties without implementing setters.
+  }
+}
+
 /**
  * Base for a coordinated presentational child — one option in a control whose
  * parent owns the selection (`<a-radio>` in `<a-radio-group>`, `<a-tab>` in
@@ -420,14 +437,6 @@ export class SelectableChildElement extends HTMLElementBase {
   /** Give subclasses name/description relationships to their light-DOM content
    * without exposing IDs or the shared ElementInternals instance. */
   protected applyAccessibilityRelations(labels: Element[], descriptions: Element[]) {
-    if (!this.internals) return
-    try {
-      if ("ariaLabelledByElements" in this.internals)
-        this.internals.ariaLabelledByElements = labels
-      if ("ariaDescribedByElements" in this.internals)
-        this.internals.ariaDescribedByElements = descriptions
-    } catch {
-      // Older engines can expose the properties without implementing setters.
-    }
+    applyAccessibilityRelations(this.internals, labels, descriptions)
   }
 }

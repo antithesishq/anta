@@ -314,6 +314,90 @@ test('filtered Select exposes its textbox and option menu as dialog siblings', a
   )
 })
 
+test('dialog menus expose body items without a search field and clear empty menu semantics', async t => {
+  const page = await pageFor(t)
+  await page.evaluate(() => {
+    const menu = document.createElement('a-menu')
+    menu.id = 'preset-dialog'
+    menu.setAttribute('role', 'dialog')
+    menu.setAttribute('aria-label', 'Recency presets')
+    menu.setAttribute('state', 'open')
+    menu.innerHTML = `
+      <a-menu-item slot="header" role="button">Header action</a-menu-item>
+      <div data-presets><a-menu-item role="menuitem" tabindex="0">Today</a-menu-item></div>
+      <a-menu-item slot="footer" role="button">Clear</a-menu-item>
+    `
+    document.body.append(menu)
+  })
+  const popup = page.locator('#preset-dialog')
+  const snapshot = await popup.ariaSnapshot()
+  assert.match(snapshot, /dialog "Recency presets"/)
+  assert.match(snapshot, /menu "Options":\n\s+- menuitem "Today"/)
+  assert.equal(await popup.locator('[part="scroll"]').getAttribute('aria-orientation'), 'vertical')
+
+  await popup.locator('[data-presets]').evaluate(body => {
+    body.innerHTML = '<p>No presets</p><a-menu><a-menu-item role="menuitem">Nested item</a-menu-item></a-menu>'
+  })
+  const region = popup.locator('[part="scroll"]').first()
+  for (const attribute of ['role', 'aria-label', 'aria-orientation']) {
+    assert.equal(await region.getAttribute(attribute), null)
+  }
+})
+
+test('Menu cycles rendered Tab stops through shadow controls and skips unavailable controls', async t => {
+  const page = await pageFor(t)
+  await page.evaluate(() => {
+    const menu = document.createElement('a-menu')
+    menu.id = 'mixed-menu'
+    menu.setAttribute('role', 'dialog')
+    menu.setAttribute('state', 'open')
+    menu.innerHTML = `
+      <button id="last-control" slot="footer">Last</button>
+      <a-menu-item id="row" role="menuitem" tabindex="0">Preset</a-menu-item>
+      <a-input id="shadow-field" aria-label="Note"></a-input>
+      <a-input-time id="time-field" locale="en-GB" value="10:30"></a-input-time>
+      <button disabled>Disabled</button><button hidden>Hidden</button>
+      <a-menu-item disabled tabindex="0">Disabled row</a-menu-item>
+      <div inert><button>Inert</button></div><button tabindex="-1">Programmatic only</button>
+      <a-menu><button>Nested control</button></a-menu>
+      <button id="first-control" slot="header">First</button>
+    `
+    document.body.append(menu)
+  })
+  const ids = await page.locator('#time-field input').evaluateAll(inputs => inputs.map((input, i) => {
+    input.id = `time-segment-${i}`
+    return input.id
+  }))
+  assert.ok(ids.length >= 2)
+  const focused = () => page.evaluate(() => {
+    let el = document.activeElement
+    while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement
+    return el?.getRootNode().host?.id === 'shadow-field' ? 'shadow-field' : el?.id
+  })
+  const order = ['first-control', 'row', 'shadow-field', ...ids, 'last-control']
+  await page.locator('#first-control').focus()
+  for (const expected of [...order.slice(1), order[0]]) {
+    await page.keyboard.press('Tab')
+    assert.equal(await focused(), expected)
+  }
+  for (const expected of [...order].reverse()) {
+    await page.keyboard.press('Shift+Tab')
+    assert.equal(await focused(), expected)
+  }
+})
+
+test('autocomplete Tab closes the popup and moves to the next control', async t => {
+  const page = await pageFor(t)
+  const field = page.getByRole('combobox', { name: 'Framework', exact: true })
+  await field.fill('Re')
+  await field.press('ArrowDown')
+  const popup = page.locator('a-menu').filter({ has: page.getByRole('option', { name: 'React', exact: true }) })
+  assert.equal(await popup.evaluate(menu => menu.isOpen), true)
+  await field.press('Tab')
+  assert.equal(await popup.evaluate(menu => menu.isOpen), false)
+  assert.equal(await field.evaluate(input => input.getRootNode().activeElement === input), false)
+})
+
 test('autocomplete cursor uses a direct active-option relationship', async t => {
   const page = await pageFor(t)
   const field = page.locator('a-input').filter({ has: page.locator('input[aria-label="Framework"]') })

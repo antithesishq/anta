@@ -1,4 +1,4 @@
-import { HTMLElementBase } from "../anta_helpers";
+import { applyAccessibilityRelations, HTMLElementBase } from "../anta_helpers";
 import "./a-checkbox.css";
 
 type CheckboxState = "checked" | "unchecked" | "indeterminate";
@@ -189,20 +189,11 @@ export class ACheckboxElement extends HTMLElementBase {
   }
 
   private syncAccessibilityRelations() {
-    const internals = this.internals;
-    if (!internals) return;
-    try {
-      if ("ariaLabelledByElements" in internals)
-        internals.ariaLabelledByElements = Array.from(
-          this.querySelectorAll(":scope > a-checkbox-label"),
-        );
-      if ("ariaDescribedByElements" in internals)
-        internals.ariaDescribedByElements = Array.from(
-          this.querySelectorAll(":scope > a-checkbox-hint"),
-        );
-    } catch {
-      // Older engines can expose the properties without implementing setters.
-    }
+    applyAccessibilityRelations(
+      this.internals,
+      Array.from(this.querySelectorAll(":scope > a-checkbox-label")),
+      Array.from(this.querySelectorAll(":scope > a-checkbox-hint")),
+    );
   }
 
   formResetCallback() {

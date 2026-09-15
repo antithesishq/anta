@@ -1,29 +1,8 @@
-import { isFocusable, tabbable } from 'tabbable'
+import { activeFocus, canFocus, containsFocus, cycleFocus, tabStops } from './focus'
 
-type FocusTarget = HTMLElement | SVGElement
+export { activeFocus } from './focus'
+
 const scopes = new WeakMap<Document, PanelFocusScope[]>()
-const options = { getShadowRoot: true }
-
-export function activeFocus(doc: Document): Element | null {
-  let active = doc.activeElement
-  while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement
-  return active
-}
-
-/** Follow rendered ancestry through slots and shadow roots. */
-function contains(scope: Element, node: Node | null): boolean {
-  while (node) {
-    if (node === scope) return true
-    node = node instanceof Element && node.assignedSlot
-      ? node.assignedSlot
-      : node.parentNode instanceof ShadowRoot ? node.parentNode.host : node.parentNode
-  }
-  return false
-}
-
-function canFocus(node: Element | null): node is FocusTarget {
-  return !!node && 'focus' in node && isFocusable(node, options)
-}
 
 /** One active Panel scope per document; later scopes suspend earlier ones. */
 export class PanelFocusScope {
@@ -50,7 +29,7 @@ export class PanelFocusScope {
     if (this.#active) return
     this.#active = true
     this.#previous = previous
-    this.#lastInside = contains(this.#surface, previous) ? previous : null
+    this.#lastInside = containsFocus(this.#surface, previous) ? previous : null
     this.#stack.push(this)
     this.#doc.addEventListener('focusin', this.#onFocus, true)
     // Bubble phase lets controls and nested menus handle Tab first.
@@ -59,8 +38,8 @@ export class PanelFocusScope {
 
   focusInside(preferred: Element | null = this.#lastInside) {
     if (!this.#ownsFocus) return
-    const target = contains(this.#surface, preferred) && canFocus(preferred)
-      ? preferred : tabbable(this.#surface, options)[0] ?? this.#surface
+    const target = containsFocus(this.#surface, preferred) && canFocus(preferred)
+      ? preferred : tabStops(this.#surface)[0] ?? this.#surface
     target.focus({ preventScroll: true })
   }
 
@@ -68,9 +47,9 @@ export class PanelFocusScope {
   deactivate(): () => void {
     if (!this.#active) return () => {}
     const current = activeFocus(this.#doc)
-    const restore = this.#stack.at(-1) === this && contains(this.#surface, current)
+    const restore = this.#stack.at(-1) === this && containsFocus(this.#surface, current)
     const previous = this.#previous
-    const target = previous && !contains(this.#surface, previous) ? previous : current
+    const target = previous && !containsFocus(this.#surface, previous) ? previous : current
     this.#active = false
     this.#stack.splice(this.#stack.indexOf(this), 1)
     this.#doc.removeEventListener('focusin', this.#onFocus, true)
@@ -111,12 +90,7 @@ export class PanelFocusScope {
   #onKeyDown = (event: KeyboardEvent) => {
     if (!this.#ownsFocus || event.defaultPrevented || event.key !== 'Tab' || event.altKey || event.ctrlKey || event.metaKey) return
     if (this.#inModal(event.composedPath())) return
-    const nodes = tabbable(this.#surface, options)
-    const current = activeFocus(this.#doc)
-    const index = nodes.indexOf(current as FocusTarget)
-    const next = index < 0 ? (event.shiftKey ? nodes.length - 1 : 0)
-      : (index + (event.shiftKey ? -1 : 1) + nodes.length) % nodes.length
     event.preventDefault()
-    ;(nodes[next] ?? this.#surface).focus()
+    cycleFocus(tabStops(this.#surface), activeFocus(this.#doc), event.shiftKey, this.#surface)
   }
 }

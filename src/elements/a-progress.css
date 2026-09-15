@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   :where(a-progress, progress[data-anta]) {
     --progress-bg: var(--bg-4);

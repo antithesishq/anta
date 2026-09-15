@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* `a-box` intentionally has no shadow root: it is the consumer's actual CSS
      box, while its element class only observes the browser state around it. */

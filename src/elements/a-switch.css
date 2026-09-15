@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* A light-DOM binary control. The track and thumb are pseudo-elements, while
      the authored label stays ordinary light DOM. The checked state lives in

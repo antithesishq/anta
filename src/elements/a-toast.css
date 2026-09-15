@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 /* Registered so a countdown animation interpolates it smoothly (an unregistered
    custom property animates discretely). The element animates it 1 -> 0 on the
    shadow slot over the toast's duration; slotted content inherits the live value

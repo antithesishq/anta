@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* The calendar is composed in LIGHT DOM from Anta components, so its styling is
      ordinary CSS targeting those elements — nothing is hidden in a shadow root.

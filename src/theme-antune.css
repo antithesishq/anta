@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 /* The Antune theme is optional CSS for the Anta design system; if used, load it after tokens and reset. */
 
 @font-face {
@@ -35,9 +38,6 @@
   font-weight: 400 700;
   font-display: swap;
 }
-
-/* Preserve Anta's internal layer order when this standalone stylesheet loads. */
-@layer anta.reset, anta.components, anta.theme;
 
 :root,
 .light {

@@ -17,6 +17,10 @@ changes are not listed.
 
 ### Changed
 
+- Every independently loadable stylesheet now reserves Anta's public and
+  internal cascade-layer order. Granular element imports therefore keep
+  component and theme rules above `reset.css` even when a bundler loads their
+  CSS before `tokens.css`.
 - Breadcrumbs no longer scroll horizontally by default, so button focus rings
   remain visible. To enable scrolling, set `overflow-x: auto` on the trail and
   `outline-offset: -1px` on its focused controls.

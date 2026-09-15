@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* Intrinsic, priority-independent tab chrome. The per-priority / per-tone / per-
      state values of --tab-fg / --tab-bg, the type-scale vars (--_fs/--_lh/--_pb),

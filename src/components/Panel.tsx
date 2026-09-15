@@ -12,7 +12,8 @@ export interface PanelProps extends BaseProps, DOMEventHandlers {
   onStateChange?: (event: CustomEvent, detail: { next: boolean; prev: boolean }) => void
 }
 
-/** A persistent container that maximizes its content without moving its DOM children. */
+/** A scroll container that fills its parent and can maximize to the viewport.
+ * Percentage height requires a parent with a defined height. */
 export const Panel = ({ maximized, defaultMaximized, onStateChange, className, children, ...rest }: PanelProps) => (
   <a-panel
     state={maximized === undefined ? undefined : maximized ? 'maximized' : 'normal'}

@@ -270,7 +270,7 @@ element — `Input`, and the composed `Select` — skip it and expose only
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size applied to every option (an option's own `size` wins). |
 | `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | 'neutral' | Validation/feedback tone for the group `hint` — recolors it (same tone set as `Input`'s `status`). Use `critical` for an error message, etc.; omit for the neutral default. |
 | `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Mark tone applied to every option (an option's own `tone` wins), or any literal CSS color for a one-off custom tone. In the default `all` scope it colors the selected-ring fill + dot and the unselected ring border. Named tones track light/dark mode. Set `toneScope="selected"` to tone only the selected option and leave the rest neutral. The option text stays neutral — recolor it in plain CSS via the `--text-N-{tone}` tokens. |
-| `toneScope?` | ToneScope | 'all' | Apply `tone` to every state, or only to the selected option so unselected rings stay neutral. An option's own `toneScope` wins. |
+| `toneScope?` | 'all' \| 'selected' | 'all' | Apply `tone` to every state, or only to the selected option so unselected rings stay neutral. An option's own `toneScope` wins. |
 | `value?` | string | — | Controlled selected value. The group follows this prop and reports a requested change through `onStateChange`. Leave it undefined for uncontrolled use. |
 
 ## Web Component

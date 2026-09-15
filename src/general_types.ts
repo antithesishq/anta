@@ -347,18 +347,20 @@ export interface ABoxAttributes extends BaseAttributes {
   gap?: boolean | '' | number | string
   /** Masks every edge that currently hides clipped content. */
   fade?: boolean | ''
-  /** What the box watches. `size` reports geometry and overflow through
-   *  `measurechange` and the CSS states; `context` reports the rendering
-   *  environment through `contextchange`; `all`, or a bare `observe`, does both.
-   *  A box without it (and without `fade`) runs no observers, so a listener
-   *  alone reports nothing. The JSX wrapper sets it from `observe` and from the
-   *  handlers you pass. */
-  observe?: 'size' | 'context' | 'all' | ''
+  /** Space-separated selections: `width`, `height`, `size`, `context`,
+   * `overflow`, `edges`, `scroll`, or `all`, in any order. `size` selects
+   * width and height; `edges` selects edge transitions. A bare
+   * attribute means `all`. Omission runs no observers unless `fade` is set;
+   * a native event listener alone does not enable observation. */
+  observe?: string
+  /** Minimum interval between measurement events in milliseconds. Omit or
+   * pass `0` for frame-based reporting. Invalid or negative values use `0`. */
+  throttle?: number | string
   /** Depth of that mask, as a length value (`fade-size="2rem"`). Engines
    *  without typed `attr()` read it from `--box-fade-size` in the host's
    *  inline style instead, which is what the JSX wrapper always sets. */
   'fade-size'?: number | string
-  /** Native event fired when geometry or overflow changes. */
+  /** Native event fired when a selected measurement field changes. */
   onmeasurechange?: (event: CustomEvent<BoxMeasurementChange> | { nativeEvent: CustomEvent<BoxMeasurementChange> }) => void
   /** Native event fired when rendering context or focus-within changes. */
   oncontextchange?: (event: CustomEvent<BoxContextChange> | { nativeEvent: CustomEvent<BoxContextChange> }) => void

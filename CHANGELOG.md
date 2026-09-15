@@ -9,7 +9,19 @@ changes are not listed.
 
 - Panel is a persistent container that can maximize to the browser viewport
   through a manual popover while keeping its DOM children mounted. Maximized
-  panels contain keyboard focus until restored.
+  panels contain keyboard focus until restored. Panels fill their parent's
+  width and height and use `overflow: scroll` by default.
+
+### Changed
+
+- **Breaking:** Box measurement events now trigger on border-box width and
+  height changes by default. `observe` accepts `width`, `height`, `size`,
+  `context`, `overflow`, `edges`, `scroll`, or `all`, individually or in a typed
+  array. Plain HTML accepts the same selections separated by spaces.
+  Use `overflow` for content-driven CSS states or `edges` for scroll-edge
+  changes; size observation skips content and scroll observers. `throttle` sets
+  the event interval in milliseconds without delaying CSS fades or on-demand
+  truncation checks.
 
 ## 0.3.28 — September 10, 2026
 

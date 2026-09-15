@@ -140,7 +140,7 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 | `round?` | boolean \| number \| string | — | Fully round the thumb and track. Pass a `number` (px) or CSS length string for a custom track radius; the thumb radius is 3px smaller. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant. small=26×16px, medium=30×18px, large=34×20px. |
 | `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Color of the track and thumb. A tinted tone also colors the unchecked track border and thumb; use `toneScope="selected"` to color only the checked track. |
-| `toneScope?` | ToneScope | 'all' | Apply `tone` to every state, or only while checked so the unchecked track and thumb stay neutral. |
+| `toneScope?` | 'all' \| 'selected' | 'all' | Apply `tone` to every state, or only while checked so the unchecked track and thumb stay neutral. |
 | `value?` | string | "on" | Value submitted while checked. |
 
 ## Web Component

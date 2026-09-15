@@ -17,7 +17,7 @@ const SHADOW_STYLE = `
     padding: 0;
     border: 0;
     box-sizing: border-box;
-    overflow: auto;
+    overflow: scroll;
     overscroll-behavior: contain;
     color: inherit;
     background: transparent;
@@ -131,10 +131,15 @@ export class APanelElement extends HTMLElementBase {
       const focused = activeFocus(this.ownerDocument)
       const styles = this.ownerDocument.defaultView!.getComputedStyle(this)
       const borderBox = styles.boxSizing === 'border-box'
+      const borderWidth = parseFloat(styles.borderLeftWidth) + parseFloat(styles.borderRightWidth)
+      const borderHeight = parseFloat(styles.borderTopWidth) + parseFloat(styles.borderBottomWidth)
+      // Classic scrollbars occupy space outside the placeholder's content box.
+      const scrollbarWidth = Math.max(0, this.offsetWidth - this.clientWidth - Math.round(borderWidth))
+      const scrollbarHeight = Math.max(0, this.offsetHeight - this.clientHeight - Math.round(borderHeight))
       const width = parseFloat(styles.width) - (borderBox
-        ? parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight) + parseFloat(styles.borderLeftWidth) + parseFloat(styles.borderRightWidth) : 0)
+        ? parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight) + borderWidth : 0) - scrollbarWidth
       const height = parseFloat(styles.height) - (borderBox
-        ? parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom) + parseFloat(styles.borderTopWidth) + parseFloat(styles.borderBottomWidth) : 0)
+        ? parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom) + borderHeight : 0) - scrollbarHeight
       this.#placeholder.style.width = `${Math.max(0, width || 0)}px`
       this.#placeholder.style.height = `${Math.max(0, height || 0)}px`
       this.#placeholder.classList.add('active')

@@ -655,7 +655,7 @@ scannable list instead of hiding matches behind flyouts.
 | `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | neutral | Validation/feedback tone for the field (Input's `status`). |
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set (Input's `statusIcon`). Each status has a default; pass a shape to override, or `false` to drop it. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Default option-row tone. An option's own `tone` wins. A named tone or a custom CSS color. Most visible with tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` / `'checkbox'` it also tones the indicator. |
-| `toneScope?` | ToneScope | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
+| `toneScope?` | 'all' \| 'selected' | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
 | `value?` | V \| V[] | — | Controlled value: the selected option's `value`. Update it through `onValueChange`. Leave it undefined for uncontrolled use. |
 | `verbose?` | boolean | — | `multiple` only: spell the picks out in the count summary — `3 selected: A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies to the multi-count case only: `All` stays `All`, a single pick stays its own label, and an empty selection stays the `placeholder`. The list flows into the read-only field, so it ellipsizes at the field's width when long (`3 selected: Engineering, Des… `). `renderSummary` overrides this. |
 

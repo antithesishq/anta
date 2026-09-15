@@ -40,7 +40,10 @@ before(async () => {
   const engine = process.env.PANEL_TEST_BROWSER || 'chromium'
   browser = await ({ chromium, firefox, webkit })[engine].launch({
     headless: true,
-    ...(engine === 'chromium' ? { channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined } : {}),
+    ...(engine === 'chromium' ? {
+      channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined,
+      ignoreDefaultArgs: ['--hide-scrollbars'],
+    } : {}),
   })
 })
 
@@ -57,6 +60,88 @@ async function pageFor(t) {
   await page.waitForFunction(() => typeof window.renderPanel === 'function')
   return page
 }
+
+test('Panel fills a bounded parent, includes its padding and borders, and scrolls its own content', async t => {
+  const page = await pageFor(t)
+  const result = await page.evaluate(async () => {
+    const parent = document.createElement('div')
+    parent.style.cssText = 'width:320px;height:180px'
+    parent.innerHTML = '<a-panel style="padding:8px;border:2px solid"><div style="width:800px;height:900px">Content</div></a-panel>'
+    document.querySelector('#mount').append(parent)
+    await new Promise(requestAnimationFrame)
+    const panel = parent.firstElementChild
+    const rect = panel.getBoundingClientRect()
+    panel.scrollLeft = 70
+    panel.scrollTop = 90
+    const before = [panel.scrollLeft, panel.scrollTop]
+    const styles = getComputedStyle(panel)
+    parent.style.width = '380px'
+    parent.style.height = '220px'
+    const resized = panel.getBoundingClientRect()
+    return { size: [rect.width, rect.height], resized: [resized.width, resized.height],
+      scroll: before, overflow: [styles.overflowX, styles.overflowY],
+      parentOverflow: [parent.scrollWidth, parent.scrollHeight] }
+  })
+  assert.deepEqual(result.size, [320, 180])
+  assert.deepEqual(result.resized, [380, 220])
+  assert.deepEqual(result.scroll, [70, 90])
+  assert.deepEqual(result.overflow, ['scroll', 'scroll'])
+  assert.deepEqual(result.parentOverflow, [380, 220])
+})
+
+test('Panel default sizing and overflow can be overridden with ordinary CSS', async t => {
+  const page = await pageFor(t)
+  assert.deepEqual(await page.evaluate(async () => {
+    const parent = document.createElement('div')
+    parent.style.cssText = 'width:320px;height:180px'
+    parent.innerHTML = '<a-panel style="width:auto;height:auto;overflow:visible"><div style="height:40px">Content</div></a-panel>'
+    document.querySelector('#mount').append(parent)
+    await new Promise(requestAnimationFrame)
+    const panel = parent.firstElementChild
+    const rect = panel.getBoundingClientRect()
+    return { size: [rect.width, rect.height], overflow: getComputedStyle(panel).overflow }
+  }), { size: [320, 40], overflow: 'visible' })
+})
+
+test('A bounded Panel fills the viewport when maximized and returns to its parent size', async t => {
+  const page = await pageFor(t)
+  assert.deepEqual(await page.evaluate(async () => {
+    const parent = document.createElement('div')
+    parent.style.cssText = 'width:320px;height:180px'
+    parent.innerHTML = '<a-panel><div style="width:1200px;height:1400px">Content</div></a-panel>'
+    document.querySelector('#mount').append(parent)
+    await new Promise(requestAnimationFrame)
+    const panel = parent.firstElementChild
+    panel.requestMaximize()
+    const surface = panel.shadowRoot.querySelector('[part="content"]')
+    const rect = surface.getBoundingClientRect()
+    const overflow = getComputedStyle(surface).overflow
+    await new Promise(requestAnimationFrame)
+    panel.requestRestore()
+    return { maximized: [rect.width, rect.height], overflow,
+      restored: [panel.offsetWidth, panel.offsetHeight] }
+  }), { maximized: [800, 600], overflow: 'scroll', restored: [320, 180] })
+})
+
+test('Classic scrollbars do not enlarge an auto-height Panel placeholder while maximized', async t => {
+  const page = await pageFor(t)
+  await page.addStyleTag({ content: 'a-panel::-webkit-scrollbar { width: 12px; height: 12px; }' })
+  const result = await page.evaluate(() => {
+    const panel = document.querySelector('#panel')
+    const normal = [panel.offsetWidth, panel.offsetHeight]
+    const scrollbar = panel.offsetHeight - panel.clientHeight
+    const neighbor = document.querySelector('#neighbor').offsetTop
+    panel.requestMaximize()
+    const maximized = [panel.offsetWidth, panel.offsetHeight]
+    const maximizedNeighbor = document.querySelector('#neighbor').offsetTop
+    panel.requestRestore()
+    return { normal, maximized, restored: [panel.offsetWidth, panel.offsetHeight], neighbor, maximizedNeighbor, scrollbar }
+  })
+  if (!process.env.PANEL_TEST_BROWSER || process.env.PANEL_TEST_BROWSER === 'chromium') assert.equal(result.scrollbar, 12)
+  assert.deepEqual(result.maximized, result.normal)
+  assert.deepEqual(result.restored, result.normal)
+  assert.equal(result.maximizedNeighbor, result.neighbor)
+})
 
 test('Panel lifts its existing content out of clipping and restores normal layout', async t => {
   const page = await pageFor(t)

@@ -160,7 +160,7 @@ test('Box has no capture attributes or touch rules after extraction', async t =>
     for (const type of ['wheelinput', 'pointerinput', 'paninput']) surface.addEventListener(type, () => log.push(type))
     for (const [name, value] of Object.entries({ 'wheel-capture': '', 'wheel-activation': 'hover', 'pointer-capture': '', pan: 'both' })) surface.setAttribute(name, value)
   })
-  assert.deepEqual(await page.evaluate(() => customElements.get('a-box').observedAttributes), ['fade', 'observe'])
+  assert.deepEqual(await page.evaluate(() => customElements.get('a-box').observedAttributes), ['fade', 'observe', 'throttle'])
   assert.deepEqual(await page.locator('a-box').evaluate(box => {
     const { touchAction, userSelect } = getComputedStyle(box)
     return { touchAction, userSelect }

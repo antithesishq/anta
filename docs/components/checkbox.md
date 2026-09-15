@@ -183,7 +183,7 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 | `round?` | boolean \| number \| string | — | Round the checkbox mark to a circle (`border-radius: 999px` on the box). Pass a `number` (px) or a CSS length string for a rounded-square mark instead. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant. small=14px, medium=16px, large=18px box. |
 | `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the **mark**. In the default `all` scope this colors the checked-box fill and unselected box border. A named tone or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Named tones track light/dark mode automatically; a custom color keeps its hue + chroma and pins lightness to the fill curve. Set `toneScope="selected"` to tone only the checked mark and leave the empty box neutral. The label + hint stay neutral — recolor them in plain CSS via the theme-aware `--text-N-{tone}` tokens. |
-| `toneScope?` | ToneScope | 'all' | Apply `tone` to every state, or only while checked so the empty box stays neutral. `selected` is useful when a tinted resting border would read as a validation state. |
+| `toneScope?` | 'all' \| 'selected' | 'all' | Apply `tone` to every state, or only while checked so the empty box stays neutral. `selected` is useful when a tinted resting border would read as a validation state. |
 | `value?` | string | "on" | Value submitted with the form when checked — like a native checkbox. |
 
 ## Web Component

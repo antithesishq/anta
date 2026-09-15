@@ -62,7 +62,7 @@ function renderType(type: any): string {
       return type.name || '—'
     }
     case 'array':
-      return `${renderType(type.elementType)}[]`
+      return `${type.elementType.type === 'reference' ? type.elementType.name : renderType(type.elementType)}[]`
     case 'reflection': {
       // Function type → render its first signature, e.g. `(e) => void`.
       const sig = type.declaration?.signatures?.[0]

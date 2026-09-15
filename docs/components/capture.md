@@ -214,9 +214,9 @@ native text selection or touch gestures.
 | `onWheelInput?` | (event, detail) => void | — | Accepted wheel input, with a serialized original event, Capture-relative geometry, focus state, and activation reason. Cancellation is already complete. |
 | `pan?` | boolean \| CapturePan | — | Emit custom pan motion. `true` enables touch panning on both axes without momentum. Options select devices, axes, bounds directions, and optional inertia. Captures the pointer internally; `pointerCapture` is not required. Sets CSS touch-action through attributes before the gesture starts. |
 | `pointerCapture?` | boolean \| CapturePointerCapture | — | Emit raw data for a primary pointer until release or cancellation. An options object filters devices/buttons and configures activation. Nested interactive controls are excluded unless explicitly included. A listener alone enables nothing. |
-| `wheelActivation?` | CaptureWheelActivation | settled | Pointer or focus condition required before wheel input can be captured. Focus applies only to input targeted within this Capture. |
+| `wheelActivation?` | 'hover' \| 'settled' \| 'focus' \| 'settled-or-focus' | settled | Pointer or focus condition required before wheel input can be captured. Focus applies only to input targeted within this Capture. |
 | `wheelCapture?` | CaptureInputDirections | — | Capture wheel input in the enabled directions and emit `onWheelInput`. `true` accepts all directions. Omit or pass `false` to leave wheel input alone. Nested native wheel controls and Anta menus are excluded. All-false direction bounds preserve pointer settling while declining input. A listener alone never enables capture. |
-| `wheelModifier?` | CaptureInputModifier | none | Required modifier for wheel capture. `none` preserves browser Ctrl/pinch zoom. |
+| `wheelModifier?` | 'none' \| 'any' \| 'alt' \| 'ctrl' \| 'meta' \| 'shift' | none | Required modifier for wheel capture. `none` preserves browser Ctrl/pinch zoom. |
 | `wheelSettle?` | CaptureWheelSettle | { delay: 150, tolerance: 5, resetOnMove: false } | Dwell delay, movement tolerance, and whether movement resets eligibility. |
 
 ### CaptureWheelSettle
@@ -233,7 +233,7 @@ native text selection or touch gestures.
 |------|------|---------|-------------|
 | `buttons?` | readonly number[] | [0] | Accepted initiating buttons, using PointerEvent.button values. |
 | `includeInteractive?` | boolean | false | Allow capture to start on nested native or ARIA controls, links, or editable regions. |
-| `modifier?` | CaptureInputModifier | any | Modifier required to start a capture session. |
+| `modifier?` | 'none' \| 'any' \| 'alt' \| 'ctrl' \| 'meta' \| 'shift' | any | Modifier required to start a capture session. |
 | `pointerTypes?` | readonly CapturePointerType[] | ['mouse', 'pen', 'touch'] | Accepted pointer devices. One primary pointer is tracked per Capture. |
 | `threshold?` | number | 0 | Movement required before activation, in viewport CSS pixels. |
 
@@ -258,7 +258,7 @@ native text selection or touch gestures.
 
 | Field | Type | Default | Description |
 |------|------|---------|-------------|
-| `activationReason` | CaptureWheelActivationReason | — |  |
+| `activationReason` | 'immediate' \| 'settled' \| 'focus' | — |  |
 | `boxHeight` | number | — |  |
 | `boxWidth` | number | — | Dimensions of the same viewport bounding rectangle, in CSS pixels. |
 | `focusWithin` | boolean | — |  |
@@ -271,7 +271,7 @@ native text selection or touch gestures.
 
 | Field | Type | Default | Description |
 |------|------|---------|-------------|
-| `activationReason` | CapturePointerActivationReason | — |  |
+| `activationReason` | 'pointer-down' \| 'drag-threshold' | — |  |
 | `boxHeight` | number | — |  |
 | `boxWidth` | number | — | Dimensions of the same viewport bounding rectangle, in CSS pixels. |
 | `deltaX` | number | — | Movement since the previous delivered sample, in viewport CSS pixels. |
@@ -285,13 +285,13 @@ native text selection or touch gestures.
 | `phase` | 'start' \| 'move' \| 'end' \| 'cancel' | — |  |
 | `pointerEvent` | SerializedPointerEvent \| null | — | Null when cancellation comes from lifecycle or configuration changes. |
 | `start` | CapturePointerStart | — |  |
-| `cancelReason?` | CaptureInputCancelReason | — |  |
+| `cancelReason?` | 'pointer-cancel' \| 'lost-capture' \| 'disabled' \| 'disconnected' \| 'blur' \| 'interrupted' | — |  |
 
 ### CapturePanInput
 
 | Field | Type | Default | Description |
 |------|------|---------|-------------|
-| `activationReason` | CapturePointerActivationReason | — |  |
+| `activationReason` | 'pointer-down' \| 'drag-threshold' | — |  |
 | `boxHeight` | number | — |  |
 | `boxWidth` | number | — | Dimensions of the same viewport bounding rectangle, in CSS pixels. |
 | `deltaX` | number | — | Incremental scroll motion in viewport CSS pixels. |
@@ -305,7 +305,7 @@ native text selection or touch gestures.
 | `start` | CapturePointerStart | — |  |
 | `velocityX` | number | — | Scroll velocity in viewport CSS pixels/ms. |
 | `velocityY` | number | — |  |
-| `cancelReason?` | CaptureInputCancelReason | — |  |
+| `cancelReason?` | 'pointer-cancel' \| 'lost-capture' \| 'disabled' \| 'disconnected' \| 'blur' \| 'interrupted' | — |  |
 
 ## Web component
 

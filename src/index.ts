@@ -71,6 +71,7 @@ export type {
   BoxInset,
   BoxMeasurement,
   BoxMeasurementChange,
+  BoxObservation,
   BoxMode,
   BoxOS,
   BoxBrowser,

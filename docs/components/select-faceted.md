@@ -378,7 +378,7 @@ const recency: SelectFacetCustom<Recency> = {
 | `searchPlaceholder?` | string | Filter… | Placeholder for the global search field. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Default trigger's button size. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Default option-row tone in facet flyouts. An option's own `tone` wins. |
-| `toneScope?` | ToneScope | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
+| `toneScope?` | 'all' \| 'selected' | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
 | `value?` | SelectFacetedValue | — | Controlled value record, keyed by facet. When provided, update it through `onValueChange`. Leave it undefined for uncontrolled use. |
 
 ### The `SelectFacet` type

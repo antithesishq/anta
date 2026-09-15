@@ -8,12 +8,11 @@ export default function PanelControlledDemo() {
     <Panel
       maximized={maximized}
       onStateChange={(_event, { next }) => setMaximized(next)}
-      style={{ width: '100%' }}
     >
       <Box
         display="flex"
         gap={16}
-        style={{ minHeight: '100%', boxSizing: 'border-box', padding: 16, alignItems: 'flex-start', background: 'var(--bg-3)' }}
+        style={{ minHeight: '100%', padding: 16, alignItems: 'flex-start', background: 'var(--bg-3)' }}
       >
         <Input aria-label="Workspace note" placeholder="Write a note" />
         <Button onClick={() => setMaximized(value => !value)}>

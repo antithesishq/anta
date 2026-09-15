@@ -51,7 +51,8 @@ export class PanelFocusScope {
     const previous = this.#previous
     const target = previous && !containsFocus(this.#surface, previous) ? previous : current
     this.#active = false
-    this.#stack.splice(this.#stack.indexOf(this), 1)
+    const index = this.#stack.indexOf(this)
+    if (index >= 0) this.#stack.splice(index, 1)
     this.#doc.removeEventListener('focusin', this.#onFocus, true)
     this.#doc.removeEventListener('keydown', this.#onKeyDown)
     this.#previous = this.#lastInside = null

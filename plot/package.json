@@ -30,13 +30,24 @@
     "./react": {
       "types": "./dist/types/entries/react.d.ts",
       "import": "./dist/react.js"
+    },
+    "./elements/a-plot": {
+      "types": "./dist/types/entries/elements/a-plot.d.ts",
+      "import": "./dist/elements/a-plot.js"
+    },
+    "./elements/a-plot-surface": {
+      "types": "./dist/types/entries/elements/a-plot-surface.d.ts",
+      "import": "./dist/elements/a-plot-surface.js"
     }
   },
   "sideEffects": [
     "./dist/auto.js",
     "./dist/elements.js",
+    "./dist/elements/*.js",
     "./dist/*.css",
-    "./dist/chunks/*.js"
+    "./dist/chunks/*.js",
+    "./src/entries/elements.ts",
+    "./src/entries/elements/*.ts"
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -45,6 +56,7 @@
     "check:package": "node scripts/verify-package.mjs",
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
+    "test:registration": "node --test tests/registration.test.mjs",
     "test:react": "node --test tests/react.test.mjs"
   },
   "dependencies": {

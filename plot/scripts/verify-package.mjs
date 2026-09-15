@@ -6,12 +6,13 @@ import { tmpdir } from 'node:os'
 import { createRequire } from 'node:module'
 import { execFileSync } from 'node:child_process'
 import ts from 'typescript'
+import { build } from 'esbuild'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
 const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
 const metadata = JSON.parse(await readFile(resolve(root, '.build/metafile.json'), 'utf8'))
-assert.equal(metadata.outputs['dist/elements.js'].cssBundle, undefined, 'surface registration needs no plot stylesheet')
+assert.equal(metadata.outputs['dist/elements.js'].cssBundle, undefined, 'element registration does not implicitly load the standalone stylesheet')
 
 // Follow emitted imports, including lazy chunks, to verify each entry's actual runtime boundary.
 function inputs(entry, visited = new Set()) {
@@ -40,10 +41,28 @@ for (const input of Object.keys(metadata.inputs)) {
 }
 inputs('dist/browser.js') // Browser dependencies may retain the declared React peer.
 inputs('dist/react.js')
+for (const input of inputs('dist/elements/a-plot-surface.js')) {
+    assert.doesNotMatch(input, /browser\/plot_element|browser\/tooltip|anta\/elements\/a-tooltip/)
+}
 
 
 const sandbox = await mkdtemp(resolve(tmpdir(), 'plot-package-'))
 try {
+    // Exercise real element dependencies during SSR, with CSS handled by the bundler.
+    const serverBundle = resolve(sandbox, 'elements-ssr.cjs')
+    await build({
+        stdin: {
+            contents: "import './dist/elements/a-plot-surface.js'; import './dist/elements/a-plot.js'; import './dist/elements.js'; import './dist/auto.js'",
+            resolveDir: root,
+        },
+        bundle: true,
+        platform: 'node',
+        format: 'cjs',
+        loader: { '.css': 'empty' },
+        outfile: serverBundle,
+    })
+    execFileSync(process.execPath, [serverBundle], { stdio: 'inherit' })
+
     const installed = resolve(sandbox, 'node_modules/@antadesign/plot')
     await mkdir(installed, { recursive: true })
     await cp(resolve(root, 'dist'), resolve(installed, 'dist'), { recursive: true })
@@ -57,12 +76,8 @@ try {
         import * as plot from '@antadesign/plot'
         import { create_anta_host } from '@antadesign/plot'
         import { definePlotElement, definePlotSurfaceElement } from '@antadesign/plot/browser'
-        import { plotElementReady } from '@antadesign/plot/auto'
-        import { plotSurfaceElementReady } from '@antadesign/plot/elements'
-        await plotElementReady
-        await plotSurfaceElementReady
-        await assert.rejects(definePlotElement(), /browser custom-element registry/)
-        await assert.rejects(definePlotSurfaceElement(), /browser custom-element registry/)
+        await definePlotElement()
+        await definePlotSurfaceElement()
         const rows = [{x:1,y:2},{x:2,y:4},{x:3,y:3}]
         for (const kind of ['scatter','bar','rect','line','rule','area','custom']) {
             const args = kind === 'bar' ? {data:[{x:'a',y:2},{x:'b',y:4}]} :
@@ -167,7 +182,10 @@ try {
             const canvas: OffscreenCanvas = event.detail.canvas
         } }
         PlotSurface(surface)
-        import { plotElementReady } from '@antadesign/plot/auto'
+        import { plotElementReady as legacyReady } from '@antadesign/plot/auto'
+        import '@antadesign/plot/elements/a-plot'
+        import '@antadesign/plot/elements/a-plot-surface'
+        import { plotElementReady } from '@antadesign/plot/elements'
         import { plotSurfaceElementReady } from '@antadesign/plot/elements'
         const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
         const controller = new PlotController(args)

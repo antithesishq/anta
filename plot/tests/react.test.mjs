@@ -14,25 +14,42 @@ const requirePlot = createRequire(new URL('../package.json', import.meta.url))
 const requireSite = createRequire(new URL('../../site/package.json', import.meta.url))
 const { renderToString } = requirePlot('react-dom/server')
 const { chromium } = requireSite('playwright')
+
 let browser, server, origin
-const series = [scatter({ data: [{ x: 0, y: 0 }, { x: 5, y: 5 }, { x: 10, y: 10 }], tooltip: true })]
+
+const series = [scatter({
+    data: [{ x: 0, y: 0 }, { x: 5, y: 5 }, { x: 10, y: 10 }],
+    tooltip: true,
+})]
+
 const ssr = renderToString(React.createElement(React.StrictMode, null,
     React.createElement(Plot, { plotArgs: { series }, 'data-plot': true })))
 
 before(async () => {
     const result = await build({
-        entryPoints: [resolve(directory, 'react.fixture.jsx')], bundle: true, write: false,
-        outfile: 'fixture.js', format: 'esm', target: 'es2022',
-        jsx: 'automatic', jsxImportSource: 'react',
+        entryPoints: [resolve(directory, 'react.fixture.jsx')],
+        bundle: true,
+        write: false,
+        outfile: 'fixture.js',
+        format: 'esm',
+        target: 'es2022',
+        jsx: 'automatic',
+        jsxImportSource: 'react',
         tsconfigRaw: { compilerOptions: { jsx: 'react-jsx', jsxImportSource: 'react' } },
         alias: {
             react: dirname(requirePlot.resolve('react/package.json')),
             'react-dom': dirname(requirePlot.resolve('react-dom/package.json')),
         },
     })
-    const assets = new Map(result.outputFiles.map(file => [file.path.endsWith('.css') ? '/fixture.css' : '/fixture.js', file.text]))
+
+    const assets = new Map(result.outputFiles.map(file => [
+        file.path.endsWith('.css') ? '/fixture.css' : '/fixture.js',
+        file.text,
+    ]))
+
     // Catch missing package layout CSS before any browser assertions.
     assert.match(assets.get('/fixture.css'), /a-plot-surface\s*>\s*canvas\s*\{[^}]*position:\s*absolute/s)
+
     server = createServer((req, res) => {
         res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript'
             : req.url.endsWith('.css') ? 'text/css' : 'text/html')
@@ -41,11 +58,14 @@ before(async () => {
             <div id="app">${req.url === '/hydrate' ? ssr : ''}</div>
             <script type="module" src="/fixture.js"></script>`)
     })
+
     await new Promise((resolve, reject) => {
         server.once('error', reject)
         server.listen(0, '127.0.0.1', resolve)
     })
+
     origin = `http://127.0.0.1:${server.address().port}`
+
     browser = await chromium.launch({
         headless: true,
         executablePath: process.env.PLOT_TEST_BROWSER_EXECUTABLE || undefined,
@@ -78,8 +98,11 @@ async function center(page, type = 'mousemove', options = {}, selector = 'a-capt
         const capture = document.querySelector('a-capture')
         const rect = capture.getBoundingClientRect()
         const eventOptions = {
-            bubbles: true, cancelable: true, clientX: rect.left + rect.width / 2,
-            clientY: rect.top + rect.height / 2, ...options,
+            bubbles: true,
+            cancelable: true,
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2,
+            ...options,
         }
         const event = type === 'wheel' ? new WheelEvent(type, eventOptions) : new MouseEvent(type, eventOptions)
         document.querySelector(selector).dispatchEvent(event)
@@ -90,7 +113,19 @@ async function center(page, type = 'mousemove', options = {}, selector = 'a-capt
 test('SSR does not initialize a controller or evaluate plot callbacks', () => {
     let calls = 0
     const markup = renderToString(React.createElement(Plot, {
-        plotArgs: { series, axis: { x: { tick_label: { format: () => { calls++; return 'x' } } } } },
+        plotArgs: {
+            series,
+            axis: {
+                x: {
+                    tick_label: {
+                        format: () => {
+                            calls++
+                            return 'x'
+                        },
+                    },
+                },
+            },
+        },
     }))
     assert.match(markup, /a-plot/)
     assert.doesNotMatch(markup, /<canvas/)
@@ -100,11 +135,16 @@ test('SSR does not initialize a controller or evaluate plot callbacks', () => {
 
 test('StrictMode: overlap, default/explicit sizing, pin removal, theme, DPR and remount', async t => {
     const page = await pageFor(t)
+
     assert.deepEqual(await page.evaluate(() => {
-        const main = document.querySelector('.plot-canvas'), overlay = document.querySelector('.plot-highlight')
-        const a = main.getBoundingClientRect(), b = overlay.getBoundingClientRect()
+        const main = document.querySelector('.plot-canvas')
+        const overlay = document.querySelector('.plot-highlight')
+        const a = main.getBoundingClientRect()
+        const b = overlay.getBoundingClientRect()
+
         return {
-            main: [a.x, a.y, a.width, a.height], overlay: [b.x, b.y, b.width, b.height],
+            main: [a.x, a.y, a.width, a.height],
+            overlay: [b.x, b.y, b.width, b.height],
             height: document.querySelector('[data-plot]').getBoundingClientRect().height,
             standalone: Boolean(customElements.get('a-plot')),
         }
@@ -131,7 +171,11 @@ test('StrictMode: overlap, default/explicit sizing, pin removal, theme, DPR and 
     await page.evaluate(() => document.querySelector('#app').style.display = '')
     await page.waitForFunction(() => document.querySelector('canvas').getBoundingClientRect().width === 500)
 
-    await page.evaluate(() => { window.oldSurface = document.querySelector('a-plot-surface'); unmountPlot(); renderPlot() })
+    await page.evaluate(() => {
+        window.oldSurface = document.querySelector('a-plot-surface')
+        unmountPlot()
+        renderPlot()
+    })
     await page.waitForFunction(() => document.querySelector('canvas')?.width === 1000)
     assert.equal(await page.evaluate(() => oldSurface !== document.querySelector('a-plot-surface')), true)
     assert.deepEqual(await page.evaluate(() => stats.errors), [])
@@ -139,6 +183,7 @@ test('StrictMode: overlap, default/explicit sizing, pin removal, theme, DPR and 
 
 test('React-owned tooltips retain context, clear in margins, and unmount with the plot', async t => {
     const page = await pageFor(t)
+
     await center(page)
     await page.waitForFunction(() => document.querySelector('[data-tooltip]')?.textContent === 'provided:committed')
     assert.equal(await page.locator('a-tooltip hr').count(), 1)
@@ -158,6 +203,7 @@ test('React-owned tooltips retain context, clear in margins, and unmount with th
 
 test('wheel ownership, reset, and keyed viewport updates retain shared controller behavior', async t => {
     const page = await pageFor(t)
+
     assert.equal(await center(page, 'wheel', { ctrlKey: true, deltaY: -120 }), true)
     await page.waitForFunction(() => !document.querySelector('.plot-reset').hidden && stats.reports.length > 0)
     await page.locator('.plot-reset').click()
@@ -175,6 +221,7 @@ test('wheel ownership, reset, and keyed viewport updates retain shared controlle
 
 test('a suspended update cannot change the active plot or its callbacks', async t => {
     const page = await pageFor(t)
+
     await page.evaluate(() => renderPlot({ label: 'discarded', suspend: true, args: { width: 700 } }))
     await page.waitForFunction(() => stats.renders.includes('discarded'))
     assert.equal(await page.locator('canvas').first().evaluate(el => el.width), 600)
@@ -195,7 +242,11 @@ test('hydrates the server-rendered standalone host', async t => {
 
 test('invalid initial configuration can recover on a later committed update', async t => {
     const page = await pageFor(t)
-    await page.evaluate(() => { unmountPlot(); renderPlot({ args: { series: null } }) })
+
+    await page.evaluate(() => {
+        unmountPlot()
+        renderPlot({ args: { series: null } })
+    })
     await page.waitForFunction(() => stats.errors.includes('template'))
     await page.evaluate(() => renderPlot({ label: 'recovered' }))
     await page.waitForFunction(() => stats.formatted.recovered > 0)

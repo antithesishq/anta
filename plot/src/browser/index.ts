@@ -38,12 +38,10 @@ export interface APlotElement<Content = Node> extends HTMLElement {
     tooltipRenderer: PlotTooltipRenderer<Content> | undefined
 }
 
-const implementations = new WeakSet<CustomElementConstructor>()
-
-/** Register Plot and its internal Anta elements. Safe to import without a DOM; call in the browser. */
+/** Register Plot and its internal Anta elements. No-op without a registry; existing definitions are preserved. */
 export async function definePlotElement(): Promise<void> {
     if (typeof customElements === 'undefined') {
-        throw new Error('plot: definePlotElement requires a browser custom-element registry')
+        return
     }
     if (already_registered()) return
     await definePlotSurfaceElement()
@@ -54,35 +52,20 @@ export async function definePlotElement(): Promise<void> {
     tooltip.register_a_tooltip()
     const element = create_plot_element()
     customElements.define('a-plot', element)
-    implementations.add(element)
 }
 
 export type { PlotArgs, Viewport, ViewportChange } from '../core/types'
 
 function already_registered(): boolean {
-    const existing = customElements.get('a-plot')
-    if (existing === undefined) return false
-    if (!implementations.has(existing)) {
-        throw new Error('plot: another implementation already registered <a-plot>')
-    }
-    return true
+    return customElements.get('a-plot') !== undefined
 }
-
-const surface_implementations = new WeakSet<CustomElementConstructor>()
 
 /** Register the shared surface without registering the standalone plot or its tooltip. */
 export async function definePlotSurfaceElement(): Promise<void> {
     if (typeof customElements === 'undefined') {
-        throw new Error('plot: definePlotSurfaceElement requires a browser custom-element registry')
+        return
     }
-    const registered = () => {
-        const existing = customElements.get('a-plot-surface')
-        if (existing === undefined) return false
-        if (!surface_implementations.has(existing)) {
-            throw new Error('plot: another implementation already registered <a-plot-surface>')
-        }
-        return true
-    }
+    const registered = () => customElements.get('a-plot-surface') !== undefined
     if (registered()) return
     const [box, capture, button, icon] = await Promise.all([
         import('@antadesign/anta/elements/a-box'),
@@ -97,5 +80,4 @@ export async function definePlotSurfaceElement(): Promise<void> {
     icon.register_a_icon()
     const element = create_plot_surface_element()
     customElements.define('a-plot-surface', element)
-    surface_implementations.add(element)
 }

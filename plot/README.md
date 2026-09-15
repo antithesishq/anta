@@ -3,10 +3,10 @@
 Canvas plots with series factories, shared interaction controllers, host integration helpers, and an optional `<a-plot>` browser host. React applications can use `Plot`; lower-level hosts can use the thin Anta `PlotSurface` wrapper. Anta is a regular dependency; React is a peer, as it is for stickers.
 
 ```ts
-import { scatter, definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+import { scatter, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
 import '@antadesign/plot/plot.css'
 
-await definePlotElement()
 const plot = document.createElement('a-plot') as APlotElement
 plot.plotArgs = { series: [scatter({ data: [{ x: 1, y: 2 }, { x: 2, y: 3 }] })] }
 document.body.append(plot)
@@ -22,11 +22,18 @@ Use a bundler that handles CSS imports. The browser entry loads Anta elements an
 | `@antadesign/plot/browser` | DOM tooltip factories and explicit `definePlotElement()` registration |
 | `@antadesign/plot/react` | React `Plot` adapter, props, and error types |
 | `@antadesign/plot/components` | `PlotSurface` JSX wrapper and its props; no element registration |
-| `@antadesign/plot/elements` | Registers only `a-plot-surface`; exports `plotSurfaceElementReady` |
-| `@antadesign/plot/auto` | Browser registration with the `plotElementReady` promise |
+| `@antadesign/plot/elements/a-plot` | Registers the standalone plot and its surface dependency synchronously |
+| `@antadesign/plot/elements/a-plot-surface` | Registers only the surface and its Anta dependencies synchronously |
+| `@antadesign/plot/elements` | Registers `a-plot` and `a-plot-surface`; retains resolved readiness promises for compatibility |
+| `@antadesign/plot/auto` | Compatibility alias for `/elements` registration with the `plotElementReady` promise |
 | `@antadesign/plot/plot.css` | Plot layout stylesheet |
 
-The root entry does not load Anta or React at runtime. Browser registration loads Anta elements lazily. Imports are safe during server rendering; call `definePlotElement()` only in a browser.
+The root entry does not load Anta or React at runtime. The `/elements` entry loads Anta elements statically and registers synchronously. Registration is a no-op when `customElements` is unavailable. Like Anta’s element imports, `/elements` requires a bundler that handles CSS imports, including during server rendering.
+
+Before adopting bulk registration in the notebook, rename its passive `a-plot`
+wrapper to `notebook-plot`. Otherwise the browser upgrades that wrapper into a
+standalone host and creates an additional plot surface. Existing definitions are
+preserved, and importing `/elements` alone does not create plot instances.
 
 ## Build and verify
 
@@ -37,6 +44,7 @@ pnpm run build:dev
 pnpm --filter @antadesign/plot run build
 pnpm --filter @antadesign/plot run typecheck
 pnpm --filter @antadesign/plot run check:package
+pnpm --filter @antadesign/plot run test:registration
 ```
 
 The plot build emits ESM, declarations, and CSS into `dist/`. Internal plot code and its data dependencies are bundled into shared chunks. Anta and React remain external. Ship the entire `dist/` directory, including chunks. Declarations use explicit ESM paths for NodeNext consumers.
@@ -106,11 +114,11 @@ DOM renderer. Framework adapters must clean up their renderer on unmount.
 
 ## Shared plot surface
 
-Import `@antadesign/plot/elements` to register the surface. It installs its structural styles
+Import `@antadesign/plot/elements/a-plot-surface` to register the surface without the standalone host. It installs its structural styles
 when its internal elements are initialized; no separate `plot.css` import is needed:
 
 ```ts
-import '@antadesign/plot/elements'
+import '@antadesign/plot/elements/a-plot-surface'
 ```
 
 React, Preact, and other Anta JSX consumers can use the typed wrapper:
@@ -119,7 +127,7 @@ React, Preact, and other Anta JSX consumers can use the typed wrapper:
 import { PlotSurface } from '@antadesign/plot/components'
 
 // Browser entry only:
-import '@antadesign/plot/elements'
+import '@antadesign/plot/elements/a-plot-surface'
 
 // In the host render:
 <PlotSurface
@@ -135,11 +143,9 @@ in worker-side renderers. `/components` uses Anta's JSX runtime; the root remain
 free of framework runtime dependencies. Native custom-element consumers can keep
 using `a-plot-surface` directly.
 
-This leaves `a-plot` available for a host-owned wrapper. Registration is asynchronous;
-existing surface elements upgrade when its Anta dependencies finish loading. Import
-and await `plotSurfaceElementReady` from the same entry when registration must finish
-before accessing surface methods. Registration failures are logged to the console;
-the readiness promise also rejects. Server-side imports do nothing.
+`/elements` registers both `a-plot` and `a-plot-surface` synchronously.
+Use a different tag for a host-owned wrapper, such as `notebook-plot`.
+The existing readiness promises remain resolved compatibility exports; no await is needed.
 
 For explicit registration, `definePlotSurfaceElement()` from `/browser` registers `<a-plot-surface>` and its Box,
 Capture, button and icon dependencies. It does not register `<a-plot>` or Tooltip.
@@ -209,4 +215,4 @@ reset forwarding, teardown, and standalone sizing/drawing.
 
 Host helpers and `create_anta_host` are exported directly from `@antadesign/plot`.
 The former `/host` and `/anta` subpaths have been removed. Update those imports
-when adopting this package version; browser registration remains in `/browser`.
+when adopting this package version; browser registration uses `/elements`.

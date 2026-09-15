@@ -25,16 +25,15 @@ const initial = example === 'selection'
 </div>
 
 <script>
-  import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+  import '@antadesign/plot/elements/a-plot'
+  import type { APlotElement } from '@antadesign/plot/browser'
   import '@antadesign/plot/plot.css'
   import '@antadesign/anta/elements/a-button'
   import { interactionExamples } from './plot-interaction-examples'
 
-  const ready = definePlotElement()
   const mounted = new WeakSet<APlotElement>()
 
-  async function mountExamples() {
-    await ready
+  function mountExamples() {
     for (const wrapper of document.querySelectorAll<HTMLElement>('[data-plot-interaction]')) {
       const plot = wrapper.querySelector<APlotElement>('a-plot')!
       if (mounted.has(plot) || !plot.isConnected) continue

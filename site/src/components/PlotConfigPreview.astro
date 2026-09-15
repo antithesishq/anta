@@ -11,15 +11,14 @@ const { example } = Astro.props
 ></a-plot>
 
 <script>
-  import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
+  import '@antadesign/plot/elements/a-plot'
+  import type { APlotElement } from '@antadesign/plot/browser'
   import '@antadesign/plot/plot.css'
   import { configExamples } from './plot-config-examples'
 
-  const ready = definePlotElement()
   const mounted = new WeakSet<APlotElement>()
 
-  async function mountExamples() {
-    await ready
+  function mountExamples() {
     for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-config-example]')) {
       if (mounted.has(plot) || !plot.isConnected) continue
       const example = plot.dataset.configExample as keyof typeof configExamples

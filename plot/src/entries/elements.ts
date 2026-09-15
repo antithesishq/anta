@@ -1,8 +1,5 @@
-import { definePlotSurfaceElement } from '../browser/index'
+import './elements/a-plot'
 
-/** Register the shared surface on import; server-side imports are a no-op. */
-export const plotSurfaceElementReady = typeof customElements === 'undefined'
-    ? Promise.resolve()
-    : definePlotSurfaceElement()
-
-void plotSurfaceElementReady.catch(error => console.error('plot: surface registration failed.', error))
+/** Compatibility exports. Registration has already completed; no await is needed. */
+export const plotSurfaceElementReady = Promise.resolve()
+export const plotElementReady = plotSurfaceElementReady

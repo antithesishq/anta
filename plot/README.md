@@ -5,14 +5,13 @@ Canvas plots with series factories, shared interaction controllers, host integra
 ```ts
 import { scatter, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
-import '@antadesign/plot/plot.css'
 
 const plot = document.createElement('a-plot') as APlotElement
 plot.plotArgs = { series: [scatter({ data: [{ x: 1, y: 2 }, { x: 2, y: 3 }] })] }
 document.body.append(plot)
 ```
 
-Use a bundler that handles CSS imports. The browser entry loads Anta elements and their styles through the Anta dependency. `plot.css` supplies standalone `a-plot` sizing; the surface installs its own structural styles. Applications supply their Anta theme as usual.
+Use a bundler that handles CSS imports. The browser entry loads Anta elements and their styles through the Anta dependency. The plot host and surface install their base styles automatically; no separate `plot.css` import is needed. Applications supply their Anta theme as usual.
 
 ## Entry points
 
@@ -20,13 +19,12 @@ Use a bundler that handles CSS imports. The browser entry loads Anta elements an
 | --- | --- |
 | `@antadesign/plot` | Series factories, controllers, host presentation helpers, Anta event integration, and public types |
 | `@antadesign/plot/browser` | DOM tooltip factories and explicit `definePlotElement()` registration |
-| `@antadesign/plot/react` | React `Plot` adapter, props, and error types |
 | `@antadesign/plot/components` | `Plot` and `PlotSurface` JSX wrappers and their props; no element registration |
 | `@antadesign/plot/elements/a-plot` | Registers the standalone plot and its surface dependency synchronously |
 | `@antadesign/plot/elements/a-plot-surface` | Registers only the surface and its Anta dependencies synchronously |
 | `@antadesign/plot/elements` | Registers `a-plot` and `a-plot-surface`; retains resolved readiness promises for compatibility |
 | `@antadesign/plot/auto` | Compatibility alias for `/elements` registration with the `plotElementReady` promise |
-| `@antadesign/plot/plot.css` | Plot layout stylesheet |
+| `@antadesign/plot/plot.css` | Optional compatibility stylesheet; base styles are installed automatically |
 
 ## Anta component
 
@@ -34,20 +32,22 @@ Use a bundler that handles CSS imports. The browser entry loads Anta elements an
 import { Plot } from '@antadesign/plot/components'
 import { scatter } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot'
-import '@antadesign/plot/plot.css'
 
 <Plot plotArgs={{ series: [scatter({ data: [{ x: 1, y: 2 }], tooltip: true })] }} />
 ```
 
 `Plot` uses Anta’s configured renderer and delegates lifecycle to `<a-plot>`.
 Register the element before rendering. The renderer must assign `plotArgs` as an
-object property; React 19 and Preact support this. React 18 consumers should keep
-using `/react`. For server rendering, register in the browser before hydration.
+object property; React 19 and Preact support this. React 18 is not supported.
+For server rendering, register in the browser before hydration.
 Replace `plotArgs` to update the plot. Removal disconnects the browser host.
 
-Default tooltips work through the standalone host. Custom tooltip callbacks return
-DOM nodes; JSX tooltip content still requires `/react`. This component runs plotting
-in the browser and does not replace the notebook’s worker adapter.
+Default and custom JSX tooltips render through Anta’s `Tooltip` in the component
+tree, without refs or portals. Custom renderers must supply `useState` and `useSyncExternalStore` through
+`configure()` as well as their element factory. The latter publishes object props
+after hydration. Tooltip updates arrive through
+`tooltipchange` events; `onPlotError` receives browser-host error events.
+Plotting runs in the browser and does not replace the notebook’s worker adapter.
 
 The root entry does not load Anta or React at runtime. The `/elements` entry loads Anta elements statically and registers synchronously. Registration is a no-op when `customElements` is unavailable. Like Anta’s element imports, `/elements` requires a bundler that handles CSS imports, including during server rendering.
 
@@ -76,57 +76,23 @@ The plot build emits ESM, declarations, and CSS into `dist/`. Internal plot code
 
 The notebook adapter remains in Star. Until Star adopts a published version, its migration source remains the active implementation; keep any intervening fixes synchronized.
 
-## React adapter
+## Component lifecycle
 
-```tsx
-import { useMemo } from 'react'
-import { scatter } from '@antadesign/plot'
-import { Plot } from '@antadesign/plot/react'
-import '@antadesign/plot/plot.css'
+`Plot` accepts `plotArgs`, presentation props such as `className` and `style`, and
+`onPlotError` for browser-host failures. Configuration updates run when the renderer
+assigns the object property after commit. Canvas setup, drawing, interaction state,
+and cleanup belong to `<a-plot>`. Tooltip content remains in the renderer’s tree.
 
-export function Chart({ data }: { data: { x: number; y: number }[] }) {
-    const plotArgs = useMemo(() => ({
-        series: [scatter({
-            data,
-            tooltip: point => <strong>{point.x}, {point.y}</strong>,
-        })],
-        zoom_pan: { x: true, y: true },
-    }), [data])
+React 19 is the React peer dependency. ReactDOM is used only by development tests.
+The browser regression suite is `pnpm --filter @antadesign/plot run test:browser`
+after building. It uses the workspace’s Playwright dependency and Chromium.
+Set `PLOT_TEST_BROWSER_EXECUTABLE` for a local browser, or
+`CAPTURE_TEST_BROWSER_CHANNEL=chrome` for an installed Chrome.
 
-    return <Plot plotArgs={plotArgs} onError={({ phase, error }) => console.warn(phase, error)} />
-}
-```
-
-`Plot` accepts one complete `plotArgs` object and ordinary div attributes such as
-`className`, `style`, and `aria-label`. Replace argument objects and data when
-changing them; in-place mutations are not observed. The default height is 300px,
-and width fills the parent. Explicit argument dimensions override wrapper styles;
-removing them restores the style or fallback.
-
-The component registers and mounts standalone `a-plot` after React commits. The separate `plot.css` import supplies standalone host sizing. The surface installs its own canvas
-stacking and internal layout styles. The root `@antadesign/plot` remains framework-free.
-
-React owns tooltip content and its context/lifecycle through ReactDOM portals.
-React consumers need matching `react` and `react-dom` versions. Default tooltips, custom
-React nodes, and separators use the shared presentation helpers. Canvas contexts,
-backing-store sizing, and drawing run on the main thread. Composition and
-interactions, scheduling, and controller lifecycle belong to the standalone element.
-
-Configuration, rendering callbacks, and controller updates run after React commits.
-SSR emits the wrapper and empty custom elements without creating a controller;
-hydration initializes the standalone element. Removing it cancels pending drawing,
-gesture reports, and hover work. StrictMode effect replay reconnects the tooltip
-renderer while retaining the element and its canvases.
-
-`onError` receives `initialize`, `template`, `compose`, or `draw` failures.
-Without a handler, failures are logged with `console.warn`. Initial template
-failures can recover when a later valid configuration is committed.
-
-The browser regression suite is `pnpm --filter @antadesign/plot run test:react`
-after building. It uses the workspace's existing Playwright dependency and a
-Chromium installation. Set `PLOT_TEST_BROWSER_EXECUTABLE` for a local browser, or
-`CAPTURE_TEST_BROWSER_CHANNEL=chrome` for an installed Chrome. React browser
-behavior is pending manual verification for this first adapter revision.
+For renderer-owned tooltips, set `tooltip-mode="external"` before assigning
+`plotArgs` and listen for `tooltipchange`. Its `detail` is the array of resolved
+tooltip entries, or an empty array when hover clears. This mode suppresses the
+standalone tooltip renderer. `/components` manages this protocol internally.
 
 Standalone hosts can optionally assign `element.tooltipRenderer` to receive resolved
 tooltip entries and their target element. The renderer owns the target's children

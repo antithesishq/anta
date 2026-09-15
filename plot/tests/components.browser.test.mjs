@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
 import React from 'react'
-import { Plot } from '../dist/react.js'
+import { Plot } from './components.bundle.mjs'
 import { scatter } from '../dist/index.js'
 
 const directory = dirname(fileURLToPath(import.meta.url))
@@ -23,11 +23,12 @@ const series = [scatter({
 })]
 
 const ssr = renderToString(React.createElement(React.StrictMode, null,
-    React.createElement(Plot, { plotArgs: { series }, 'data-plot': true })))
+    React.createElement(React.Suspense, { fallback: React.createElement('span', null, 'Pending') },
+        React.createElement(Plot, { plotArgs: { series }, 'data-plot': true }))))
 
 before(async () => {
     const result = await build({
-        entryPoints: [resolve(directory, 'react.fixture.jsx')],
+        entryPoints: [resolve(directory, 'components.fixture.jsx')],
         bundle: true,
         write: false,
         outfile: 'fixture.js',
@@ -48,8 +49,8 @@ before(async () => {
         file.text,
     ]))
 
-    // Catch missing package layout CSS before any browser assertions.
-    assert.match(assets.get('/fixture.css'), /a-plot/)
+    // These checks exercise injected host styles without the compatibility stylesheet.
+    assert.doesNotMatch(assets.get('/fixture.css') ?? '', /:where\(a-plot\)/)
 
     server = createServer((req, res) => {
         res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript'
@@ -166,6 +167,7 @@ test('StrictMode: overlap, default/explicit sizing, pin removal, theme, DPR and 
 
     const cdp = await page.context().newCDPSession(page)
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1000, height: 800, deviceScaleFactor: 2, mobile: false })
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')))
     await page.waitForFunction(() => document.querySelector('canvas').width === 1000
         && document.querySelector('.plot-highlight').width === 1000)
     await page.evaluate(() => document.querySelector('#app').style.display = 'none')
@@ -280,5 +282,41 @@ for (const renderer of ['react', 'preact']) {
         await page.evaluate(renderer => renderAntaPlot(220, renderer), renderer)
         await page.waitForFunction(() => document.querySelector('canvas')?.height === 220)
         assert.equal(await page.evaluate(() => originalAntaPlot !== document.querySelector('a-plot')), true)
+    })
+}
+
+for (const renderer of ['react', 'preact']) {
+    test(`Anta tooltip content stays declarative, follows, and clears (${renderer})`, async t => {
+        const page = await pageFor(t)
+        await page.mouse.move(900, 700)
+        await page.evaluate(renderer => { unmountPlot(); renderAntaPlot(220, renderer, true) }, renderer)
+        await page.waitForFunction(() => document.querySelector('a-plot')?.plotArgs === antaArgs)
+        await page.waitForFunction(() => document.querySelector('canvas')?.height === 220)
+        await page.waitForFunction(() => document.querySelector('a-plot > a-tooltip')?.listening)
+        const capture = await page.locator('a-capture').boundingBox()
+        await page.mouse.move(capture.x + capture.width / 2, capture.y + capture.height / 2)
+        const tooltip = page.locator('a-plot > a-tooltip')
+        await page.waitForFunction(() => document.querySelector('a-plot > a-tooltip')?.textContent.includes('point'))
+        assert.equal(await tooltip.locator('hr').count(), 1)
+        assert.match(await tooltip.textContent(), renderer === 'react' ? /provided:Anta point/ : /Custom point/)
+        assert.equal(await page.locator('a-capture > a-tooltip').textContent(), '')
+        assert.equal(await tooltip.evaluate(tip => tip.hasAttribute('follow')), true)
+        await page.waitForFunction(() => document.querySelector('a-plot > a-tooltip')?.shadowRoot?.querySelector(':popover-open'))
+
+        const contentSelector = renderer === 'react' ? '[data-tooltip]' : '[data-anta-tooltip]'
+        await center(page, 'mousemove', {}, contentSelector)
+        await center(page, 'click', {}, contentSelector)
+        assert.equal(await page.evaluate(() => stats.selected), 1)
+
+        // Entering a margin clears renderer-owned content without moving its DOM nodes.
+        await page.mouse.move(1, 1)
+        await page.waitForFunction(() => document.querySelector('a-plot > a-tooltip')?.textContent === '')
+        await page.mouse.move(capture.x + capture.width / 2, capture.y + capture.height / 2)
+        await page.waitForFunction(() => document.querySelector('a-plot > a-tooltip')?.textContent.includes('point'))
+        await page.evaluate(() => unmountPlot())
+        assert.equal(await page.locator('a-tooltip').count(), 0)
+        if (renderer === 'react') {
+            assert.equal(await page.evaluate(() => stats.mounted === stats.unmounted), true)
+        }
     })
 }

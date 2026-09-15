@@ -2,13 +2,12 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
-import { configure } from '@antadesign/anta/jsx-runtime'
-import { Plot } from '../dist/components.js'
+import { configure, Plot } from './components.bundle.mjs'
 import { scatter } from '../dist/index.js'
 
 test('Plot uses the configured renderer and preserves configuration identity', () => {
     const plotArgs = { series: [scatter({ data: [{ x: 1, y: 2 }], tooltip: true })] }
-    configure((type, props) => ({ type, props }))
+    configure((type, props) => ({ type, props }), React.Fragment, { useState: initial => [initial, () => {}], useSyncExternalStore: (_subscribe, snapshot) => snapshot() })
 
     try {
         const result = Plot({ plotArgs, className: 'example', id: 'plot' })
@@ -18,7 +17,7 @@ test('Plot uses the configured renderer and preserves configuration identity', (
         assert.equal(result.props.id, 'plot')
         assert.equal(result.props.ref, undefined)
     } finally {
-        configure(React.createElement)
+        configure(React.createElement, React.Fragment, { useState: React.useState, useSyncExternalStore: React.useSyncExternalStore })
     }
 })
 

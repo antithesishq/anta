@@ -1,12 +1,13 @@
 import React, { StrictMode, Suspense, createContext, useContext, useEffect, startTransition } from 'react'
-import { h, render as renderPreact } from 'preact'
+import { h, Fragment, render as renderPreact } from 'preact'
+import { useState as preactUseState } from 'preact/hooks'
+import { useSyncExternalStore as preactUseSyncExternalStore } from 'preact/compat'
 import { configure } from '@antadesign/anta/jsx-runtime'
 import { createRoot, hydrateRoot } from 'react-dom/client'
-import { Plot } from '../dist/react.js'
+import { Plot } from '../dist/components.js'
 import { Plot as AntaPlot } from '../dist/components.js'
 import '../dist/elements/a-plot.js'
 import { scatter } from '../dist/index.js'
-import '../dist/plot.css'
 
 const Context = createContext('missing')
 const container = document.querySelector('#app')
@@ -42,7 +43,8 @@ function argsFor(options) {
             }),
         ],
         axis: {
-            x: { tick_label: { format: value => {
+            y: { min: 0, max: 10 },
+            x: { min: 0, max: 10, tick_label: { format: value => {
                 stats.formatted[label] = (stats.formatted[label] ?? 0) + 1
                 return String(value)
             } } },
@@ -57,7 +59,7 @@ function App({ options }) {
     stats.renders.push(options.label ?? 'committed')
     return <Context.Provider value="provided">
         <Suspense fallback={<span>Pending</span>}>
-            <Plot plotArgs={argsFor(options)} onError={failure => stats.errors.push(failure.phase)}
+            <Plot plotArgs={argsFor(options)} onPlotError={event => stats.errors.push(event.detail.phase)}
                 data-plot style={options.style} />
             {options.suspend && <Suspend />}
         </Suspense>
@@ -79,15 +81,27 @@ window.unmountPlot = () => {
 }
 window.ready = true
 
-window.renderAntaPlot = (height = 220, renderer = 'react') => {
-    configure(renderer === 'preact' ? h : React.createElement)
+window.renderAntaPlot = (height = 220, renderer = 'react', customTooltip = false) => {
+    configure(renderer === 'preact' ? h : React.createElement, renderer === 'preact' ? Fragment : React.Fragment, {
+        useState: renderer === 'preact' ? preactUseState : React.useState,
+        useSyncExternalStore: renderer === 'preact' ? preactUseSyncExternalStore : React.useSyncExternalStore,
+    })
     root ??= renderer === 'preact'
         ? { render: vnode => renderPreact(vnode, container), unmount: () => renderPreact(null, container) }
         : createRoot(container)
     const plotArgs = {
-        series: [scatter({ data: [{ x: 0, y: 0 }, { x: 1, y: 1 }], tooltip: true })],
+        series: [
+            scatter({ data: [{ x: 0, y: 0 }, { x: 0.5, y: 0.5 }, { x: 1, y: 1 }], tooltip: true }),
+            ...(customTooltip ? [scatter({
+                data: [{ x: 0.5, y: 0.5 }],
+                on_select: () => { stats.selected++ },
+                tooltip: () => renderer === 'preact'
+                    ? h('strong', { 'data-anta-tooltip': '' }, 'Custom point')
+                    : <Tip label="Anta point" />,
+            })] : []),
+        ],
         height,
-        axis: { x: { tick_label: { format: value => {
+        axis: { y: { min: 0, max: 1 }, x: { min: 0, max: 1, tick_label: { format: value => {
             stats.formatted.anta = (stats.formatted.anta ?? 0) + 1
             return String(value)
         } } } },
@@ -95,5 +109,5 @@ window.renderAntaPlot = (height = 220, renderer = 'react') => {
     window.antaArgs = plotArgs
     root.render(renderer === 'preact'
         ? h(AntaPlot, { plotArgs, className: 'anta-plot' })
-        : <StrictMode><AntaPlot plotArgs={plotArgs} className="anta-plot" /></StrictMode>)
+        : <StrictMode><Context.Provider value="provided"><AntaPlot plotArgs={plotArgs} className="anta-plot" /></Context.Provider></StrictMode>)
 }

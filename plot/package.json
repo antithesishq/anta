@@ -27,10 +27,6 @@
       "types": "./dist/types/entries/components.d.ts",
       "import": "./dist/components.js"
     },
-    "./react": {
-      "types": "./dist/types/entries/react.d.ts",
-      "import": "./dist/react.js"
-    },
     "./elements/a-plot": {
       "types": "./dist/types/entries/elements/a-plot.d.ts",
       "import": "./dist/elements/a-plot.js"
@@ -57,8 +53,8 @@
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
     "test:registration": "node --test tests/registration.test.mjs",
-    "test:react": "node --test tests/react.test.mjs",
-    "test:components": "node --test tests/components.test.mjs"
+    "test:components": "node --test tests/components.test.mjs",
+    "test:browser": "node --test tests/components.browser.test.mjs"
   },
   "dependencies": {
     "@antadesign/anta": "workspace:*",
@@ -68,8 +64,7 @@
     "es-toolkit": "1.47.0"
   },
   "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@types/chroma-js": "2.1.4",

@@ -23,7 +23,7 @@ function inputs(entry, visited = new Set()) {
     const result = Object.keys(output.inputs)
     for (const imported of output.imports) {
         if (imported.external) {
-            assert.match(imported.path, /^(?:react(?:-dom)?(?:\/|$)|@antadesign\/anta(?:\/|$))/, `Unexpected external: ${imported.path}`)
+            assert.match(imported.path, /^(?:react(?:\/|$)|@antadesign\/anta(?:\/|$))/, `Unexpected external: ${imported.path}`)
             result.push(imported.path)
         } else {
             result.push(...inputs(imported.path, visited))
@@ -36,11 +36,14 @@ for (const input of inputs('dist/index.js')) {
 }
 for (const input of Object.keys(metadata.inputs)) {
     assert.doesNotMatch(input, /(?:^|\/)lodash(?:\/|$)|notebook_demo|(?:^|\/)shell\/|(?:^|\/)deps\/preact/)
-    assert.ok(/^src\/(entries|core|integrations|browser|components|react)\//.test(input) || input.includes('/node_modules/'),
+    assert.ok(/^src\/(entries|core|integrations|browser|components)\//.test(input) || input.includes('/node_modules/'),
         `Unexpected source outside the package: ${input}`)
 }
 inputs('dist/browser.js') // Browser dependencies may retain the declared React peer.
-inputs('dist/react.js')
+assert.equal(manifest.exports['./react'], undefined)
+assert.equal(manifest.peerDependencies['react-dom'], undefined)
+assert.equal(manifest.peerDependencies.react, '^19.0.0')
+for (const input of inputs('dist/components.js')) assert.doesNotMatch(input, /^react-dom(?:\/|$)/)
 for (const input of inputs('dist/elements/a-plot-surface.js')) {
     assert.doesNotMatch(input, /browser\/plot_element|browser\/tooltip|anta\/elements\/a-tooltip/)
 }
@@ -171,11 +174,11 @@ try {
         import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
         import type { CaptureProps } from '@antadesign/anta'
         import { PlotSurface, type PlotSurfaceProps } from '@antadesign/plot/components'
-        import { Plot, type PlotProps } from '@antadesign/plot/react'
+        import { Plot, type PlotProps } from '@antadesign/plot/components'
         import { createElement } from 'react'
         const reactProps: PlotProps = {
             plotArgs: { series: [scatter({ data: [{x:1,y:2}], tooltip: () => createElement('strong', null, 'point') })] },
-            onError(failure) { const phase: string = failure.phase },
+            onPlotError(event) { const phase: string = event.detail.phase },
         }
         createElement(Plot, reactProps)
         const surface: PlotSurfaceProps = { canvasOwner: 'worker', onCanvasTransfer(event) {
@@ -185,7 +188,6 @@ try {
         import { Plot as AntaPlot, type PlotProps as AntaPlotProps } from '@antadesign/plot/components'
         const antaProps: AntaPlotProps = { plotArgs: { series: [scatter({data: [{x:1,y:2}], tooltip: true})] } }
         AntaPlot(antaProps)
-        // @ts-expect-error Framework tooltip nodes require the React adapter.
         AntaPlot({ plotArgs: reactProps.plotArgs })
         import { plotElementReady as legacyReady } from '@antadesign/plot/auto'
         import '@antadesign/plot/elements/a-plot'

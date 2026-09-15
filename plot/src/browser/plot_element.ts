@@ -55,12 +55,12 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
                 if (this.#controller !== null) {
                     render_hover(
                         this.#controller, this.#view.highlight, this.#view.tooltip,
-                        this.#context?.devicePixelRatio ?? 1, this.#tooltip_renderer,
+                        this.#context?.devicePixelRatio ?? 1, this.#hover_renderer,
                     )
                 }
                 this.#update_cursor()
             },
-            on_hover_clear: () => clear_hover(this.#view.highlight, this.#view.tooltip, this.#tooltip_renderer),
+            on_hover_clear: () => clear_hover(this.#view.highlight, this.#view.tooltip, this.#hover_renderer),
             on_pointer_change: () => this.#update_cursor(),
             on_pan_end: () => this.#schedule(),
         })
@@ -100,14 +100,31 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             })
             this.#view.capture.addEventListener('mouseleave', () => this.#on_mouse_leave())
             this.#view.capture.addEventListener('click', event => this.#on_click(event))
+            // Renderer-owned tooltips are siblings of the surface, so their input bypasses Capture.
+            this.addEventListener('mousemove', event => {
+                if (this.getAttribute('tooltip-mode') === 'external'
+                    && !this.#view.capture.contains(event.target as Node)) {
+                    this.#interaction_coordinator.move({ event, offset: undefined })
+                }
+            })
+            this.addEventListener('click', event => {
+                if (this.getAttribute('tooltip-mode') === 'external'
+                    && !this.#view.capture.contains(event.target as Node)) {
+                    this.#on_click(event)
+                }
+            })
+            this.addEventListener('mouseleave', () => {
+                if (this.getAttribute('tooltip-mode') === 'external') this.#on_mouse_leave()
+            })
         }
 
-        // Mount the view so Box starts observing, restore assigned properties, and schedule the first draw.
+        // Defer browser-owned DOM until configuration arrives, keeping hydration markup intact.
         connectedCallback(): void {
+            this.#restore_properties()
+            if (this.#args === undefined) return
             if (this.#view.root.parentNode !== this) {
                 this.append(this.#view.root)
             }
-            this.#restore_properties()
             this.#attach_canvas()
             this.#refresh_environment()
         }
@@ -132,8 +149,18 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             this.#interaction_coordinator.disconnect()
             this.#resize.cancel()
             this.#controller?.set_draw_host(null)
-            clear_hover(this.#view.highlight, this.#view.tooltip, this.#tooltip_renderer)
+            clear_hover(this.#view.highlight, this.#view.tooltip, this.#hover_renderer)
             this.#update_cursor()
+        }
+
+        // External tooltip content stays in the renderer's tree; no DOM target crosses this event.
+        readonly #emit_tooltips: PlotTooltipRenderer<T> = tooltips => {
+            this.#view.tooltip.hide()
+            this.#emit('tooltipchange', tooltips)
+        }
+
+        get #hover_renderer(): PlotTooltipRenderer<T> | undefined {
+            return this.getAttribute('tooltip-mode') === 'external' ? this.#emit_tooltips : this.#tooltip_renderer
         }
 
         get tooltipRenderer(): PlotTooltipRenderer<T> | undefined {
@@ -172,6 +199,9 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
                 }
             }
             this.#args = value
+            if (this.isConnected && this.#view.root.parentNode !== this) {
+                this.append(this.#view.root)
+            }
             size_host(this, this.#controller.template)
             this.#clear_hover()
             this.#schedule()
@@ -243,7 +273,7 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
                 reset: reset_zoom_presentation(controller, inner, color_theme),
             })
             this.#configure_capture()
-            render_hover(controller, this.#view.highlight, this.#view.tooltip, context.devicePixelRatio, this.#tooltip_renderer)
+            render_hover(controller, this.#view.highlight, this.#view.tooltip, context.devicePixelRatio, this.#hover_renderer)
             this.#update_cursor()
         }
 

@@ -17,6 +17,8 @@ changes are not listed.
 
 ### Changed
 
+- Calendar adjacent-month dates are hidden from assistive technology and reach
+  full opacity on hover or focus when enabled.
 - The default Alt/Option-click hint in multi-select option menus appears to the
   left of its row after one second, and moving between rows restarts that delay.
 - Tooltip delay-free handoff now applies only when both the outgoing and incoming
@@ -45,6 +47,13 @@ changes are not listed.
   truncation checks.
 - Tags no longer impose `max-width: 100%`. Labels and values still ellipsize
   when the application constrains the tag’s width.
+
+### Fixed
+
+- Calendar weekday headers use a higher-contrast text color, including weekends.
+- Slider exposes its `ElementInternals` through the same runtime inspection hook
+  as other stateful controls, allowing accessibility tooling to inspect its live
+  range semantics.
 
 ## 0.3.28 — September 10, 2026
 

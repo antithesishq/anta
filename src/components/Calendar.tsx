@@ -374,6 +374,7 @@ export const Calendar = ({
               disabled={disabled || d.disabled}
               tabIndex={d.iso === cursorIso ? 0 : -1}
               aria-label={d.label}
+              aria-hidden={d.outside ? "true" : undefined}
               aria-current={d.today ? "date" : undefined}
               data-part="day-cell"
               data-date={d.iso}

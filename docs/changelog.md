@@ -19,37 +19,12 @@ changes are not listed.
 
 - The default Alt/Option-click hint in multi-select option menus follows the
   pointer and waits one second before appearing.
-- Checkbox, Switch, and individual Radio hints are exposed as accessible
-  descriptions through `ElementInternals`, including rich light-DOM hint
-  content, without adding generated IDs.
-- Calendar names its grid directly from the visible month, avoiding generated
-  heading IDs that could collide when separate application roots render
-  calendars on the same page.
-- **Breaking:** InputDate, Select, InputAutocomplete, and SelectFaceted now
-  associate Anta fields and buttons with their popups through direct ARIA
-  element references. Autocomplete fields use the same mechanism for the
-  active option. The wrappers no longer generate popup or option IDs, avoiding
-  collisions across independent application roots. DOM code that relied on
-  those generated IDs must use component structure or application-owned IDs;
-  explicit consumer-authored ARIA relationships continue to take precedence.
-- Tabs use one roving tab stop in JSX: the selected tab participates in the
-  page Tab sequence and arrow keys move within the strip. `TabPanel` now forwards
-  the common component props, including `tabIndex`, `aria-*`, and `data-*`.
-- **Breaking:** Input now delegates standard `role` and `aria-*` declarations
-  from `<a-input>` to its focused native shadow control, preventing a duplicate
-  host control in the accessibility tree. InputAutocomplete and InputDate expose
-  their listbox/dialog relationships on that focused field; Select uses a native
-  button trigger for its menu; and InputTime delegates its overall name and
-  description to its internal group while exposing required/invalid state on
-  its segments. DOM code that expected ARIA attributes to remain on an
-  `<a-input>` host must read its `control`; CSS should use explicit application
-  state rather than host ARIA selectors.
-- **Breaking:** Filtered Select popups and SelectFaceted popups that contain an
-  editable field now use `role="dialog"`, and their triggers expose
-  `aria-haspopup="dialog"`. The existing shadow scroll region uses
-  `role="menu"` while it contains option rows, so the filter textbox is no
-  longer a child of a menu in the accessibility tree. CSS or DOM code that
-  targets the popup host by `[role="menu"]` must also account for dialogs.
+- Input and its composed controls now expose roles, labels, popup relationships,
+  required state, and active options on the controls that receive focus. Direct
+  ARIA element references avoid generated Calendar, popup, and option ID
+  collisions across application roots.
+- Checkbox, Switch, and Radio hints are accessible descriptions. Tabs use a
+  roving tab stop, and `TabPanel` forwards common component props.
 - Every independently loadable stylesheet now reserves Anta's public and
   internal cascade-layer order. Granular element imports therefore keep
   component and theme rules above `reset.css` even when a bundler loads their

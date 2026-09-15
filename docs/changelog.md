@@ -50,6 +50,9 @@ changes are not listed.
 
 ### Fixed
 
+- Neutral `text-4` meets at least 4.5:1 contrast against `bg-1` in both light
+  and dark modes for Antune and None. This guarantee does not extend to named
+  tones or other backgrounds.
 - Clicking inside a parent menu closes nested menus outside the clicked branch.
   Calendar's month/year picker closes when clicking elsewhere in the calendar,
   including the month navigation arrows.

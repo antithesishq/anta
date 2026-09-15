@@ -867,7 +867,7 @@ code[data-copied]::after {
   font-size: 0.75rem;
   font-family: var(--monospace);
   letter-spacing: 0;
-  color: var(--text-4);
+  color: var(--text-3);
 }
 .demoLabel.upper {
   text-transform: uppercase;

@@ -1,6 +1,6 @@
 import type { BaseProps } from "../general_types"
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
+import { neutralToneAttr, toneStyle, roundStyle, roundAttr, wrapLabel } from "../anta_helpers"
 
 /** Always-allowed props, independent of content/submit/priority mode. */
 export type BaseButtonProps = {
@@ -108,6 +108,19 @@ export type SubmitMode =
       form?: string
     }
 
+/** Underline options shared by tertiary and quaternary buttons. */
+export type UnderlineMode =
+  | {
+      underline?: never
+      underlineOnHover?: never
+    }
+  | {
+      /** Underline style. */
+      underline: 'solid' | 'dashed' | 'dotted'
+      /** Hide the underline at rest and reveal it on hover. */
+      underlineOnHover?: boolean
+    }
+
 /** Priority axis — `underline` only on `tertiary` / `quaternary`,
  *  `paddingless` only on `quaternary`. */
 export type PriorityMode =
@@ -116,18 +129,15 @@ export type PriorityMode =
        *  @defaultValue secondary */
       priority?: 'primary' | 'secondary'
       underline?: never
+      underlineOnHover?: never
       paddingless?: never
     }
-  | {
+  | UnderlineMode & {
       priority: 'tertiary'
-      /** Underline style. */
-      underline?: 'solid' | 'dashed' | 'dotted'
       paddingless?: never
     }
-  | {
+  | UnderlineMode & {
       priority: 'quaternary'
-      /** Underline style. */
-      underline?: 'solid' | 'dashed' | 'dotted'
       /** Drops outer padding to zero. */
       paddingless?: boolean
     }
@@ -158,6 +168,7 @@ export const Button = ({
   priority,
   tone,
   underline,
+  underlineOnHover,
   icon,
   iconTrailing,
   paddingless,
@@ -167,6 +178,7 @@ export const Button = ({
   disabled,
   selected,
   round,
+  onClick,
   href,
   target,
   rel,
@@ -179,10 +191,8 @@ export const Button = ({
   children,
   ...rest
 }: ButtonProps) => {
-  // Empty string is "no tone" — same as omitting the prop: neutral base.
-  // Don't emit a bare `tone=""` (it matched the custom-tone branch and
-  // resolved to a `transparent` source, rendering an invisible button).
-  const toneAttr = tone || undefined
+  const toneAttr = neutralToneAttr(tone)
+  const unavailable = disabled || loading
   // A non-named tone is a literal CSS color: feed it to the element's oklch
   // derivation via the inline custom property (shared helper — see anta_helpers).
   const computedStyle = roundStyle(round, '--button-round', toneStyle(toneAttr, '--button-tone-source', style))
@@ -204,6 +214,7 @@ export const Button = ({
     priority,
     tone: toneAttr,
     underline,
+    'underline-on-hover': underlineOnHover ? '' : undefined,
     // 'medium' (and unset) is the implicit default — emit no DOM attr.
     size: size && size !== 'medium' ? size : undefined,
     // Boolean attributes: emit a presence attribute (empty string) when on,
@@ -219,8 +230,8 @@ export const Button = ({
     // Disabled AND loading both leave the keyboard tab order — a loading
     // button blocks the mouse (pointer-events), so it must block Enter/Space
     // activation too, else the loading guard would be mouse-only.
-    tabIndex: disabled || loading ? -1 : 0,
-    'aria-disabled': disabled || loading ? 'true' : undefined,
+    tabIndex: unavailable ? -1 : 0,
+    'aria-disabled': unavailable ? 'true' : undefined,
     'aria-busy': loading ? 'true' : undefined,
     'aria-pressed': selected ? 'true' : undefined,
     // Icon-only buttons get an accessible name from the icon shape. Consumer's
@@ -229,6 +240,7 @@ export const Button = ({
     'aria-label': isIconOnly ? icon : undefined,
     class: className,
     style: computedStyle,
+    onClick: unavailable ? undefined : onClick,
   } as const
 
   const inner = (
@@ -241,6 +253,10 @@ export const Button = ({
   )
 
   if (href != null) {
+    const anchorAttrs = {
+      ...sharedAttrs,
+      disabled: unavailable || undefined,
+    }
     // type / form intentionally omitted — anchors don't submit forms.
     // `data-anta` opts this anchor into Anta's `a[role="button"]` styling.
     // The role is generic (any widget emits `role="button"`), so the CSS
@@ -251,13 +267,13 @@ export const Button = ({
     // Anta owns that tag and styles it unconditionally.
     return (
       <a
-        href={href}
+        href={unavailable ? undefined : href}
         data-anta=""
         target={target}
         rel={rel}
         download={download}
         ping={ping}
-        {...sharedAttrs as any}
+        {...anchorAttrs as any}
         {...rest}
       >
         {inner}

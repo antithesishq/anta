@@ -2,11 +2,8 @@ import { useState } from 'preact/hooks'
 import { ButtonCopy, Text } from '@antadesign/anta'
 
 /**
- * Lazy-copy demo for the Button docs. `onCopyRequest` fires on pointerdown and
- * refreshes the reactive `copy` value; the click that follows copies the latest
- * string. The pointerdown→click gap lets the update land even when the handler
- * runs off the UI thread — only the serializable `copy` string crosses. Hydrated
- * as an island so the state is live.
+ * Dynamic-copy demo for the Button docs. `onCopyRequest` sets the controlled
+ * `copy` value before activation. Hydrated as an island so the state is live.
  */
 export default function ButtonCopyLazyDemo() {
   const [count, setCount] = useState(0)
@@ -20,7 +17,7 @@ export default function ButtonCopyLazyDemo() {
         tone="brand"
         label="Copy report"
         onCopyRequest={() => {
-          // Recomputed on pointerdown, just before the click reads it.
+          // This state value becomes the next rendered `copy` attribute.
           const n = count + 1
           setCount(n)
           setReport(`Report #${n} — generated ${new Date().toLocaleTimeString()}`)

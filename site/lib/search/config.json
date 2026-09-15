@@ -1,0 +1,11 @@
+{
+  "version": 4,
+  "document": {
+    "id": "id",
+    "index": ["text"],
+    "store": ["route", "anchor", "title", "heading", "text", "kind", "level"],
+    "tag": ["searchRank", "routeRank"]
+  },
+  "tokenize": "forward",
+  "cache": 100
+}

@@ -96,8 +96,8 @@ export class ACalendarElement extends HTMLElementBase {
   private applyFormValue(value: string | null) {
     this.internals?.setFormValue(value || null)
     try {
-      if (value) this.internals?.states.add('filled')
-      else this.internals?.states.delete('filled')
+      if (value) this.internals?.states?.add('filled')
+      else this.internals?.states?.delete('filled')
     } catch {
       /* custom states unsupported */
     }

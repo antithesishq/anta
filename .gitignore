@@ -11,11 +11,18 @@ node-compile-cache/
 stickers/dist/
 site/dist/
 site/.astro/
+site/.wrangler/
+site/worker-configuration.d.ts
+site/chat-configuration.d.ts
+site/.dev.vars*
 site/src/api.json
 site/src/generated/
 site/public/esbuild.wasm
 site/public/iframe-anta-runtime.js
+site/public/themes/antune.css
+site/public/themes/antithesis.css
 site/public/themes/anta.css
+site/public/search-index.json
 .DS_Store
 **/.DS_Store
 .dev.pid
@@ -23,3 +30,4 @@ site/public/themes/anta.css
 site/public/iframe/
 .hegel/
 tests/.test-output/
+site/public/playground/

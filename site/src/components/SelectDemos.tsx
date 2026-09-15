@@ -94,7 +94,8 @@ export function SelectModesDemo() {
         <Select
           label="Checkmark · brand tone"
           indicator="check"
-          toneSelected="brand"
+          tone="brand"
+          toneScope="selected"
           options={opts}
           value={check}
           onValueChange={setCheck}
@@ -104,7 +105,8 @@ export function SelectModesDemo() {
         <Select
           label="Radio · custom tone"
           indicator="radio"
-          toneSelected="#c026d3"
+          tone="#c026d3"
+          toneScope="selected"
           options={opts}
           value={radio}
           onValueChange={setRadio}
@@ -115,7 +117,8 @@ export function SelectModesDemo() {
           label="Multiple · brand tone"
           selection="multiple"
           selectAll
-          toneSelected="brand"
+          tone="brand"
+          toneScope="selected"
           placeholder="Select fields…"
           options={opts}
           value={checks}

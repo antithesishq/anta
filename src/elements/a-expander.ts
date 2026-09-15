@@ -275,6 +275,7 @@ const SHADOW_STYLE = `
     flex: 1;
     min-width: 0;
     font: inherit;
+    font-variation-settings: inherit;
     color: inherit;
     text-align: left;
 
@@ -532,8 +533,8 @@ export class AExpanderElement extends HTMLElementBase {
     this.region.inert = !open
     // Mirror to the `:state(open)` custom state for external CSS hooks.
     try {
-      if (open) this.internals?.states.add('open')
-      else this.internals?.states.delete('open')
+      if (open) this.internals?.states?.add('open')
+      else this.internals?.states?.delete('open')
     } catch {}
   }
 

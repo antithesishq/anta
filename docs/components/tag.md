@@ -20,7 +20,7 @@ and tracks dark mode.
 <Tag allcaps priority="tertiary" tone="brand" label="Tertiary" />
 ```
 
-## Tones
+## Tone
 
 Omit `tone` for the neutral gray tag, or pick a semantic tone. Color
 comes from the theme tokens, so every tone tracks light and dark mode
@@ -74,7 +74,7 @@ versions, and timers don't reflow.
 ```tsx
 <Tag allcaps tone="success" icon="circle-check" label="Build" value="passed" />
 <Tag allcaps tone="info" icon="hourglass" label="Running" value="20m 16s" />
-<Tag allcaps icon="github-logo" label="Commit" value="4f90d13" />
+<Tag allcaps icon="history" label="Commit" value="4f90d13" />
 <Tag allcaps tone="warning" label="Retries" value="3" iconTrailing="refresh" />
 ```
 
@@ -109,41 +109,30 @@ proper names, identifiers, and case-sensitive IDs keep their shape (`GitHub`,
 not `GITHUB`). Pass `allcaps` for the uppercase treatment: at this small size
 all-caps reads as a label at a glance and keeps a uniform, scannable shape,
 which suits short status words where the exact case carries no meaning.
-Uppercase also tracks wider (0.08ch vs the default 0.02ch) and steps each size
-down 1px, since caps read larger than mixed case at the same size.
+Without a theme, both treatments use `0.1ch` tracking. Antune and Antithesis
+retain their font-specific `0.02ch` mixed-case and `0.08ch` uppercase tracking.
+All-caps steps each size down 1px, since caps read larger than mixed case at the
+same size.
 
 ```tsx
-<Tag icon="github-logo" label="GitHub" value="v1.6.9" />
+<Tag icon="external-link" label="GitHub" value="v1.6.9" />
 <Tag allcaps label="Running" />
 ```
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `allcaps?` | boolean | — | Render in all-caps instead of the default normal (mixed) case
- (uppercase tracks wider than the default body-text letter-spacing). |
+| `allcaps?` | boolean | — | Render in all-caps instead of the default normal (mixed) case. |
 | `icon?` | IconShape | — | Leading icon shape. Sits flush before the label, scaled to the pill. |
 | `iconTrailing?` | IconShape | — | Trailing icon shape. Renders last, after the value. |
-| `label?` | string | — | A short "key" shown before the value. When paired with `value` it
- renders bold (weight 600), same color. On its own (no `value`) it's
- treated as the tag's primary text and keeps the default styling. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | secondary | Emphasis level. `secondary` (the default) is the subtle alpha-tint
- fill; `primary` is a solid fill with white text; `tertiary` is a
- transparent outline. Omitting it (or passing `'secondary'`) renders
- the default and emits no DOM attribute. |
-| `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. `small` = 16px tall, `medium` = 20px, `large` = 24px
- (matching `Button`). Omit the attribute or pass `'medium'` for the
- default — both render identically and emit no DOM attribute. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`)
- for a one-off custom tone. Each tone renders the secondary tag style:
- `--text-3-{tone}` text over an alpha tint of the tone's hue (fill + a
- slightly stronger hairline border). A custom color is tinted the same
- way, with the text deepened to a readable foreground. `'neutral'` (the
- default) is the gray tag — the same as omitting `tone`. |
-| `value?` | string | — | The tag's primary text — a status, count, version, duration, etc.
- Rendered in the default color and weight, with no divider from the
- label; the color + weight contrast does the separating. |
+| `label?` | string | — | A short "key" shown before the value. When paired with `value` it renders bold (weight 600), same color. On its own (no `value`) it's treated as the tag's primary text and keeps the default styling. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | secondary | Emphasis level. `secondary` (the default) is the subtle alpha-tint fill; `primary` is a solid fill with white text; `tertiary` is a transparent outline. Omitting it (or passing `'secondary'`) renders the default and emits no DOM attribute. |
+| `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. `small` = 16px tall, `medium` = 20px, `large` = 24px (matching `Button`). Omit the attribute or pass `'medium'` for the default — both render identically and emit no DOM attribute. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Each tone renders the secondary tag style: `--text-3-{tone}` text over an alpha tint of the tone's hue (fill + a slightly stronger hairline border). A custom color is tinted the same way, with the text deepened to a readable foreground. `'neutral'` (the default) is the gray tag — the same as omitting `tone`. |
+| `value?` | string | — | The tag's primary text — a status, count, version, duration, etc. Rendered in the default color and weight, with no divider from the label; the color + weight contrast does the separating. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -156,6 +145,8 @@ Use `a-tag-label` for the key and `a-tag-value` for its value.
   <a-tag-value>Passed</a-tag-value>
 </a-tag>
 ```
+
+## Styling
 
 Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the fill / border / text in oklch), **`priority`** the fill style,
@@ -183,3 +174,50 @@ a-tag.badge a-tag-label { font-weight: 600; letter-spacing: 0.15ch; }
 
 For a *solid* recolor, prefer `tone` / `priority` — don't reach for the resolved
 `--tag-bg` / `--tag-border` / `--tag-text` (they're recomputed per priority and tone).
+
+### Interactive tags
+
+`Tag` is presentational. Wrap it in an anchor for navigation or a native button
+for an action. The outer control receives focus and keyboard activation.
+
+```tsx
+<a className="tag-link" href="/builds/42">
+  <Tag tone="info" icon="external-link" label="Build" value="#42" />
+</a>
+```
+
+```css
+a.tag-link {
+  display: inline-flex;
+  text-decoration: none;
+  cursor: pointer;
+}
+```
+
+A removable tag has one interactive child: its remove `Button`. Keep the label
+as tag content, give the button an accessible name, and let the segment divider
+separate it. Remove the tag's block padding so the small button keeps its target
+size. The negative focus offset keeps its focus ring inside the tag's clipped edge.
+
+```tsx
+<Tag className="removable-tag" tone="info">
+  <span>Frontend</span>
+  <Button priority="quaternary" size="small" icon="x" aria-label="Remove Frontend" />
+</Tag>
+```
+
+```css
+a-tag.removable-tag {
+  padding-block: 0;
+}
+a-tag.removable-tag > a-button {
+  align-self: stretch;
+}
+a-tag.removable-tag > a-button:focus-visible {
+  outline-offset: -2px;
+}
+```
+
+When a tag both opens something and removes it, render two sibling controls in a
+compound layout. Do not place a remove button inside an anchor or button that
+wraps the tag.

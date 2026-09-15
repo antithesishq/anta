@@ -9,7 +9,7 @@
   initial-value: 1;
 }
 
-@layer anta {
+@layer anta.components {
   /* --toast-dur is the enter/exit timing. The holder is style-neutral by
      default (no elevation) — the toasted content brings its own look. */
   a-toast {

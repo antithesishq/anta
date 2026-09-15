@@ -1,25 +1,31 @@
-@layer anta {
+@layer anta.components {
   /* Shared slider geometry keeps the custom element and the opt-in native
      range aligned. Their presentation remains independent below. */
   :where(a-slider, input[data-anta][type="range"]) {
     --anta-slider-control-size: 28px;
     --anta-slider-track-size: 2px;
-    --anta-slider-thumb-size: 18px;
+    --anta-slider-thumb-size: 16px;
     --anta-slider-thumb-border-width: 1.5px;
   }
   :where(a-slider, input[data-anta][type="range"])[size="small"] {
     --anta-slider-control-size: 24px;
-    --anta-slider-thumb-size: 16px;
+    --anta-slider-thumb-size: 12px;
   }
   :where(a-slider, input[data-anta][type="range"])[size="large"] {
     --anta-slider-control-size: 32px;
     --anta-slider-thumb-size: 20px;
   }
   :where(a-slider, input[data-anta][type="range"])[track-size] {
-    --anta-slider-track-size: attr(track-size type(<length>), 2px);
+    --anta-slider-track-size: 2px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --anta-slider-track-size: attr(track-size type(<length>), 2px);
+    }
   }
   :where(a-slider, input[data-anta][type="range"])[thumb-size] {
-    --anta-slider-thumb-size: attr(thumb-size type(<length>), 18px);
+    --anta-slider-thumb-size: 16px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --anta-slider-thumb-size: attr(thumb-size type(<length>), 16px);
+    }
   }
 
   a-slider {
@@ -74,8 +80,12 @@
      shape for its boolean form, and gives both pieces the same custom radius
      when passed a number or CSS length through the wrapper. */
   a-slider[round] {
-    --slider-track-radius: var(--slider-round, attr(round type(<length>), 999px));
-    --slider-thumb-radius: var(--slider-round, attr(round type(<length>), 999px));
+    --slider-track-radius: var(--slider-round, 999px);
+    --slider-thumb-radius: var(--slider-round, 999px);
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --slider-track-radius: var(--slider-round, attr(round type(<length>), 999px));
+      --slider-thumb-radius: var(--slider-round, attr(round type(<length>), 999px));
+    }
   }
 
   /* `tone` affects the filled rail only. `thumb-tone` separately controls the
@@ -103,9 +113,12 @@
   a-slider[tone]:not(
       [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
-    --slider-tone-source: attr(tone type(<color>), transparent);
+    --slider-tone-source: transparent;
     --slider-interactive-rest: color-mix(in oklch, var(--slider-tone-source) 65%, var(--border-2));
     --slider-fill-hover: color-mix(in oklch, var(--slider-tone-source) 80%, var(--border-1));
+    @supports (color: attr(probe type(<color>), red)) {
+      --slider-tone-source: attr(tone type(<color>), transparent);
+    }
   }
   a-slider[thumb-tone="brand"] {
     --slider-thumb-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
@@ -130,9 +143,12 @@
   a-slider[thumb-tone]:not(
       [thumb-tone=""], [thumb-tone="neutral"], [thumb-tone="brand"], [thumb-tone="info"],
       [thumb-tone="success"], [thumb-tone="warning"], [thumb-tone="critical"]) {
-    --slider-thumb-tone-source: attr(thumb-tone type(<color>), transparent);
+    --slider-thumb-tone-source: transparent;
     --slider-thumb-interactive-rest: color-mix(in oklch, var(--slider-thumb-tone-source) 65%, var(--border-2));
     --slider-thumb-border-active: color-mix(in oklch, var(--slider-thumb-tone-source) 80%, var(--border-1));
+    @supports (color: attr(probe type(<color>), red)) {
+      --slider-thumb-tone-source: attr(thumb-tone type(<color>), transparent);
+    }
   }
   a-slider[thumb-fill] {
     --slider-thumb: var(--slider-thumb-border);
@@ -229,9 +245,12 @@
   input[data-anta][type="range"][tone]:not(
       [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
-    --anta-native-range-tone-source: attr(tone type(<color>), transparent);
+    --anta-native-range-tone-source: transparent;
     --anta-native-range-interactive-rest: color-mix(in oklch, var(--anta-native-range-tone-source) 65%, var(--border-2));
     --anta-native-range-fill-hover: color-mix(in oklch, var(--anta-native-range-tone-source) 80%, var(--border-1));
+    @supports (color: attr(probe type(<color>), red)) {
+      --anta-native-range-tone-source: attr(tone type(<color>), transparent);
+    }
   }
   input[data-anta][type="range"][thumb-tone="brand"] {
     --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand));
@@ -256,17 +275,24 @@
   input[data-anta][type="range"][thumb-tone]:not(
       [thumb-tone=""], [thumb-tone="neutral"], [thumb-tone="brand"], [thumb-tone="info"],
       [thumb-tone="success"], [thumb-tone="warning"], [thumb-tone="critical"]) {
-    --anta-native-range-thumb-tone-source: attr(thumb-tone type(<color>), transparent);
+    --anta-native-range-thumb-tone-source: transparent;
     --anta-native-range-thumb-interactive-rest: color-mix(in oklch, var(--anta-native-range-thumb-tone-source) 65%, var(--border-2));
     --anta-native-range-thumb-border-active: color-mix(in oklch, var(--anta-native-range-thumb-tone-source) 80%, var(--border-1));
+    @supports (color: attr(probe type(<color>), red)) {
+      --anta-native-range-thumb-tone-source: attr(thumb-tone type(<color>), transparent);
+    }
   }
   input[data-anta][type="range"][thumb-fill] {
     --anta-native-range-thumb: var(--anta-native-range-thumb-border);
     --anta-native-range-thumb-active: var(--anta-native-range-thumb-border-active);
   }
   input[data-anta][type="range"][round] {
-    --anta-native-range-track-radius: attr(round type(<length>), 999px);
-    --anta-native-range-thumb-radius: attr(round type(<length>), 999px);
+    --anta-native-range-track-radius: 999px;
+    --anta-native-range-thumb-radius: 999px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --anta-native-range-track-radius: attr(round type(<length>), 999px);
+      --anta-native-range-thumb-radius: attr(round type(<length>), 999px);
+    }
   }
   /* The fill clip's circular-thumb seam would cut a smaller custom radius.
      A valued raw `round` keeps the entire thumb silhouette instead. */
@@ -424,7 +450,6 @@
     content: attr(value-prefix) attr(min) attr(value-suffix);
     color: var(--slider-value);
     font-family: var(--sans-serif);
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
     font-size: var(--slider-value-size);
     font-variant-numeric: tabular-nums;
     line-height: var(--slider-value-line-height);
@@ -465,7 +490,6 @@
     max-inline-size: min(12rem, 50vw);
     color: var(--slider-marker, var(--text-4));
     font-family: var(--sans-serif);
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
     font-size: var(--slider-marker-size);
     font-variant-numeric: tabular-nums;
     line-height: var(--slider-marker-line-height);

@@ -1,8 +1,8 @@
 name: Trigger Cloudflare Pages deployment
 
-# Manual recovery for stuck or skipped Cloudflare Pages builds.
+# Manual recovery and build logs for Cloudflare Pages.
 # Run from the Actions UI: pick a branch, click "Run workflow".
-# The workflow cancels any in-flight deployment for that branch
+# Deploy mode cancels any in-flight deployment for that branch
 # (best-effort) and asks Cloudflare to start a fresh build at the
 # branch's current HEAD.
 #
@@ -12,8 +12,18 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: Branch to redeploy (e.g. main, anta-button)
+        description: Branch to inspect or redeploy (e.g. main, anta-button)
         required: true
+        type: string
+      action:
+        description: Redeploy the branch or read its latest build logs
+        type: choice
+        default: deploy
+        options:
+          - deploy
+          - logs
+      node_version:
+        description: Optional Node version to set for the target build environment before redeploying
         type: string
 
 permissions: {}
@@ -22,7 +32,105 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
+      - name: Set the build Node version
+        if: inputs.action != 'logs' && inputs.node_version != ''
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: anta
+          BRANCH: ${{ inputs.branch }}
+          BUILD_NODE_VERSION: ${{ inputs.node_version }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import urllib.request
+
+          version = os.environ["BUILD_NODE_VERSION"]
+          if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+              raise SystemExit("Use an exact Node version, such as 24.15.0")
+          url = f"https://api.cloudflare.com/client/v4/accounts/{os.environ['CF_ACCOUNT_ID']}/pages/projects/{os.environ['PROJECT']}"
+          headers = {"Authorization": "Bearer " + os.environ["CF_API_TOKEN"], "Content-Type": "application/json"}
+
+          def request(method="GET", payload=None):
+              data = json.dumps(payload).encode() if payload is not None else None
+              req = urllib.request.Request(url, data=data, headers=headers, method=method)
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  body = json.load(response)
+              if not body.get("success"):
+                  raise RuntimeError(body.get("errors"))
+              return body["result"]
+
+          project = request()
+          environment = "production" if os.environ["BRANCH"] == project["production_branch"] else "preview"
+          request("PATCH", {"deployment_configs": {environment: {"env_vars": {
+              "NODE_VERSION": {"type": "plain_text", "value": version}
+          }}}})
+          updated = request()["deployment_configs"][environment]["env_vars"]["NODE_VERSION"]["value"]
+          if updated != version:
+              raise SystemExit("Cloudflare did not retain the requested Node version")
+          print(f"Set {environment} build NODE_VERSION to {version}")
+          PY
+
+      - name: Read latest deployment logs
+        if: inputs.action == 'logs'
+        timeout-minutes: 6
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: anta
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import time
+          import urllib.parse
+          import urllib.request
+          import uuid
+
+          base = f"https://api.cloudflare.com/client/v4/accounts/{os.environ['CF_ACCOUNT_ID']}/pages/projects/{os.environ['PROJECT']}/deployments"
+          headers = {"Authorization": "Bearer " + os.environ["CF_API_TOKEN"]}
+
+          def get(suffix):
+              request = urllib.request.Request(base + suffix, headers=headers)
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  payload = json.load(response)
+              if not payload.get("success"):
+                  raise RuntimeError(payload.get("errors"))
+              return payload["result"]
+
+          page = 1
+          deployment = None
+          while deployment is None:
+              items = get(f"?page={page}&per_page=25")
+              deployment = next((item for item in items if item["deployment_trigger"]["metadata"]["branch"] == os.environ["BRANCH"]), None)
+              if deployment is not None or len(items) < 25:
+                  break
+              page += 1
+          if deployment is None:
+              raise SystemExit("No deployment found for the branch")
+
+          deployment_path = "/" + urllib.parse.quote(deployment["id"], safe="")
+          terminal = {"success", "failure", "canceled", "skipped"}
+          for attempt in range(24):
+              if deployment["latest_stage"]["status"] in terminal:
+                  break
+              time.sleep(10)
+              deployment = get(deployment_path)
+
+          print(json.dumps({key: deployment.get(key) for key in ["id", "build_config", "latest_stage", "deployment_trigger"]}, indent=2))
+          logs = get(deployment_path + "/history/logs")
+          marker = uuid.uuid4().hex
+          print(f"::stop-commands::{marker}")
+          for item in logs.get("data", []):
+              print(item["line"])
+          print(f"::{marker}::")
+          PY
+
       - name: Cancel in-flight deployments and trigger fresh build
+        if: inputs.action != 'logs'
         env:
           CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

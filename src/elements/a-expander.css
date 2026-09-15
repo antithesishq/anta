@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* The component and the native disclosure use the same chevron mask. Keeping
      it at this scope lets a native summary render the Anta glyph rather than a
      browser marker. */
@@ -66,8 +66,10 @@
        the measured `--_expander-round-radius`, then to the 999px first-paint
        fallback. `attr()` has no fallback here on purpose — an empty `round` must
        fall through to the measurement, not resolve to a length. */
-    --expander-round: attr(round type(<length>));
     border-radius: var(--expander-round, var(--_expander-round-radius, 999px));
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --expander-round: attr(round type(<length>));
+    }
   }
 
   /* The wrapper's `actions` slot span is layout-neutral post-upgrade: its buttons
@@ -293,39 +295,22 @@
       [tone="warning"],
       [tone="critical"]
     ) {
-    --expander-tone-source: attr(tone type(<color>), currentColor);
+    --expander-tone-source: currentColor;
 
-    --expander-text:             oklch(from var(--expander-tone-source) 0.5 0.125 h);
-    --expander-text-hover:       oklch(from var(--expander-tone-source) 0.4 0.11 h);
-    --expander-bg-secondary:     oklch(from var(--expander-tone-source) 0.99 0.004 h);
-    --expander-border-secondary: oklch(from var(--expander-tone-source) 0.935 0.028 h);
-    --expander-bg-primary:       oklch(from var(--expander-tone-source) 0.955 0.02 h);
-    --expander-border-primary:   oklch(from var(--expander-tone-source) 0.9 0.04 h);
-  }
-
-  .dark a-expander[tone]:not(
-      [tone="neutral"],
-      [tone="brand"],
-      [tone="info"],
-      [tone="success"],
-      [tone="warning"],
-      [tone="critical"]
-    ) {
-    --expander-text:             oklch(from var(--expander-tone-source) 0.77 0.11 h);
-    --expander-text-hover:       oklch(from var(--expander-tone-source) 0.85 0.10 h);
-    --expander-bg-secondary:     oklch(from var(--expander-tone-source) 0.13 0.02 h);
-    --expander-border-secondary: oklch(from var(--expander-tone-source) 0.21 0.045 h);
-    --expander-bg-primary:       oklch(from var(--expander-tone-source) 0.185 0.05 h);
-    --expander-border-primary:   oklch(from var(--expander-tone-source) 0.26 0.06 h);
+    --expander-text: light-dark(oklch(from var(--expander-tone-source) 0.5 0.125 h), oklch(from var(--expander-tone-source) 0.77 0.11 h));
+    --expander-text-hover: light-dark(oklch(from var(--expander-tone-source) 0.4 0.11 h), oklch(from var(--expander-tone-source) 0.85 0.10 h));
+    --expander-bg-secondary: light-dark(oklch(from var(--expander-tone-source) 0.99 0.004 h), oklch(from var(--expander-tone-source) 0.13 0.02 h));
+    --expander-border-secondary: light-dark(oklch(from var(--expander-tone-source) 0.935 0.028 h), oklch(from var(--expander-tone-source) 0.21 0.045 h));
+    --expander-bg-primary: light-dark(oklch(from var(--expander-tone-source) 0.955 0.02 h), oklch(from var(--expander-tone-source) 0.185 0.05 h));
+    --expander-border-primary: light-dark(oklch(from var(--expander-tone-source) 0.9 0.04 h), oklch(from var(--expander-tone-source) 0.26 0.06 h));
+    @supports (color: attr(probe type(<color>), red)) {
+      --expander-tone-source: attr(tone type(<color>), currentColor);
+    }
   }
 
   a-expander[disabled],
   a-expander[disabled][tone] {
-    --expander-text: #afa9b1;
-  }
-  .dark a-expander[disabled],
-  .dark a-expander[disabled][tone] {
-    --expander-text: #635b65;
+    --expander-text: light-dark(#afa9b1, #635b65);
   }
 
   /* A native disclosure can opt into Expander's visual variants without giving
@@ -359,7 +344,6 @@
     background: var(--native-expander-bg);
     font-family: var(--sans-serif);
     font-size: 15px;
-    font-feature-settings: "ss02", "ss05", "tnum";
     line-height: var(--native-expander-summary-line-height);
     transition: background-color 100ms ease;
   }
@@ -407,7 +391,10 @@
     --native-expander-round: var(--native-expander-round-size);
   }
   details[data-anta][round]:not([round=""]) {
-    --native-expander-round: attr(round type(<length>), var(--native-expander-round-size));
+    --native-expander-round: var(--native-expander-round-size);
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --native-expander-round: attr(round type(<length>), var(--native-expander-round-size));
+    }
   }
   details[data-anta][priority="tertiary"][outdent] {
     --native-expander-gutter: 0px;
@@ -456,24 +443,16 @@
       [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]
     ) {
-    --native-expander-tone-source: attr(tone type(<color>), currentColor);
-    --native-expander-text: oklch(from var(--native-expander-tone-source) 0.5 0.125 h);
-    --native-expander-text-hover: oklch(from var(--native-expander-tone-source) 0.4 0.11 h);
-    --native-expander-bg-secondary: oklch(from var(--native-expander-tone-source) 0.99 0.004 h);
-    --native-expander-border-secondary: oklch(from var(--native-expander-tone-source) 0.935 0.028 h);
-    --native-expander-bg-primary: oklch(from var(--native-expander-tone-source) 0.955 0.02 h);
-    --native-expander-border-primary: oklch(from var(--native-expander-tone-source) 0.9 0.04 h);
-  }
-  .dark details[data-anta][tone]:not(
-      [tone=""], [tone="neutral"], [tone="brand"], [tone="info"],
-      [tone="success"], [tone="warning"], [tone="critical"]
-    ) {
-    --native-expander-text: oklch(from var(--native-expander-tone-source) 0.77 0.11 h);
-    --native-expander-text-hover: oklch(from var(--native-expander-tone-source) 0.85 0.1 h);
-    --native-expander-bg-secondary: oklch(from var(--native-expander-tone-source) 0.13 0.02 h);
-    --native-expander-border-secondary: oklch(from var(--native-expander-tone-source) 0.21 0.045 h);
-    --native-expander-bg-primary: oklch(from var(--native-expander-tone-source) 0.185 0.05 h);
-    --native-expander-border-primary: oklch(from var(--native-expander-tone-source) 0.26 0.06 h);
+    --native-expander-tone-source: currentColor;
+    --native-expander-text: light-dark(oklch(from var(--native-expander-tone-source) 0.5 0.125 h), oklch(from var(--native-expander-tone-source) 0.77 0.11 h));
+    --native-expander-text-hover: light-dark(oklch(from var(--native-expander-tone-source) 0.4 0.11 h), oklch(from var(--native-expander-tone-source) 0.85 0.1 h));
+    --native-expander-bg-secondary: light-dark(oklch(from var(--native-expander-tone-source) 0.99 0.004 h), oklch(from var(--native-expander-tone-source) 0.13 0.02 h));
+    --native-expander-border-secondary: light-dark(oklch(from var(--native-expander-tone-source) 0.935 0.028 h), oklch(from var(--native-expander-tone-source) 0.21 0.045 h));
+    --native-expander-bg-primary: light-dark(oklch(from var(--native-expander-tone-source) 0.955 0.02 h), oklch(from var(--native-expander-tone-source) 0.185 0.05 h));
+    --native-expander-border-primary: light-dark(oklch(from var(--native-expander-tone-source) 0.9 0.04 h), oklch(from var(--native-expander-tone-source) 0.26 0.06 h));
+    @supports (color: attr(probe type(<color>), red)) {
+      --native-expander-tone-source: attr(tone type(<color>), currentColor);
+    }
   }
   details[data-anta] > summary {
     position: relative;
@@ -485,6 +464,7 @@
     color: inherit;
     cursor: pointer;
     font: inherit;
+    font-variation-settings: inherit;
     font-size: var(--native-expander-summary-font-size);
     line-height: var(--native-expander-summary-line-height);
     font-weight: 584.62;

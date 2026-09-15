@@ -36,8 +36,8 @@ export type ButtonCopyProps = ButtonProps & {
 /**
  * Copy button — a `Button` preset for copy-to-clipboard. Set `copy` for a literal
  * string, `copyNode` to copy a DOM region, or `copyUrl` to copy the current page
- * URL. For content computed on demand, keep `copy` reactive and refresh it in
- * `onCopyRequest` (fired on pointerdown / keydown).
+ * URL. For dynamic text, pass a controlled `copy` string and set it in
+ * `onCopyRequest` before activation.
  *
  * It composes a plain `<Button>` with a slotted `<a-copy>` child that performs
  * the write — the button itself carries no copy behavior. This wrapper flips the

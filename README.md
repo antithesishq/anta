@@ -7,34 +7,32 @@ components in React, Preact via compat, plain HTML, and custom JSX runtimes via
 
 ## Documentation for coding agents
 
-Start with [`./docs/index.md`](./docs/index.md). This path is relative to the
-root of the installed Anta package, not to the consuming application.
+The package includes version-matched Markdown documentation. Start with the
+[documentation index](./docs/index.md) and open the pages relevant to your task.
+Agents with filesystem access can read these files offline.
 
-This package includes version-specific documentation inside the installed npm
-package.
+### AI setup
 
-Example:
+Append this section to your application's agent instruction file, such as
+`AGENTS.md`, `CLAUDE.md`, or your tool's equivalent. Keep existing project rules:
 
-```text
-node_modules/
-└── @antadesign/
-    └── anta/
-        ├── README.md
-        ├── docs/
-        │   ├── index.md
-        │   ├── install-config.md
-        │   ├── theming.md
-        │   └── components/
-        │       ├── button.md
-        │       ├── dialog.md
-        │       └── ...
-        └── dist/
+```md
+## Anta
+
+Before Anta UI work, read
+`node_modules/@antadesign/anta/docs/index.md`
+and the pages relevant to the task.
+Verify component names, imports, props, and event signatures against the
+installed documentation and TypeScript declarations. Do not infer Anta APIs
+from similarly named components in other libraries.
 ```
 
-When working with Anta components:
+The path is relative to the application directory where Anta is installed.
+Adjust it for your workspace or package-manager layout. Installing Anta does
+not modify your agent configuration.
 
-1. Read `./docs/index.md` from the installed `@antadesign/anta` package.
-2. Open only the documentation relevant to the component or feature you are using.
-3. Do **not** guess component names, props, or behavior from similarly named component libraries (e.g. MUI, Chakra UI, Radix UI, Mantine, shadcn/ui, Ant Design, etc.).
-4. Use the installed package's TypeScript declarations (`*.d.ts`) as the source of truth for the installed package version.
-5. If the Markdown documentation and TypeScript declarations disagree, prefer the TypeScript declarations, as they always correspond to the installed version.
+If a documented type differs from the installed `.d.ts` declarations, use the
+declarations for the installed API.
+
+For tools without local file access, provide the [web documentation index](https://anta.design/llms.txt)
+and your installed Anta version. Web documentation may describe a newer release.

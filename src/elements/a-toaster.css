@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Tokens live on the host and inherit across the shadow boundary into the
      region + zones. --toaster-inset is the gap from the viewport edge,
      --toaster-gap the space between stacked toasts, --toaster-width the column

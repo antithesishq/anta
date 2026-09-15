@@ -1,0 +1,68 @@
+{
+  "name": "@antadesign/plot",
+  "version": "0.1.0-dev.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/entries/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./host": {
+      "types": "./dist/types/entries/host.d.ts",
+      "import": "./dist/host.js"
+    },
+    "./anta": {
+      "types": "./dist/types/entries/anta.d.ts",
+      "import": "./dist/anta.js"
+    },
+    "./browser": {
+      "types": "./dist/types/entries/browser.d.ts",
+      "import": "./dist/browser.js"
+    },
+    "./auto": {
+      "types": "./dist/types/entries/auto.d.ts",
+      "import": "./dist/auto.js"
+    },
+    "./plot.css": "./dist/plot.css"
+  },
+  "sideEffects": [
+    "./dist/auto.js",
+    "./dist/*.css",
+    "./dist/chunks/*.js"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:dev": "pnpm run build",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false -p tsconfig.build.json",
+    "check:package": "node scripts/verify-package.mjs",
+    "prepare": "pnpm run build",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "d3-scale": "3.2.3",
+    "chroma-js": "2.4.2",
+    "lodash": "4.18.1",
+    "@types/d3-scale": "4.0.3",
+    "@antadesign/anta": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/lodash": "4.17.25",
+    "@types/chroma-js": "2.1.4",
+    "typescript": "^5.7.0",
+    "esbuild": "^0.25.0"
+  },
+  "packageManager": "pnpm@10.11.1",
+  "main": "dist/index.js",
+  "types": "dist/types/entries/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "tag": "dev"
+  }
+}

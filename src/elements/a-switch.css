@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* A light-DOM binary control. The track and thumb are pseudo-elements, while
      the authored label stays ordinary light DOM. The checked state lives in
      ElementInternals. */
@@ -20,20 +20,29 @@
     --switch-track-off-stroke: var(--switch-track-off-stroke-neutral);
     --switch-track-off-stroke-hover: var(--border-2);
     --switch-track-off-stroke-active: var(--border-1);
-    --switch-track-disabled: color-mix(in oklch, #44374b 10%, transparent);
-    --switch-thumb: var(--bg-1);
+    --switch-track-disabled: light-dark(
+      color-mix(in oklch, #44374b 10%, transparent),
+      color-mix(in oklch, #e4d1ef 10%, transparent)
+    );
+    --switch-thumb: light-dark(var(--bg-1), #ece9ec);
     --switch-thumb-off: var(--switch-track-off-stroke);
 
-    /* Brand is the default checked-track tone. `tone` also points the off-state
-       chrome at its seed; `tone-selected` leaves that chrome neutral. */
+    /* Brand is the default tone. In all scope it colors both states; selected
+       scope keeps the off-state chrome neutral. */
     --switch-tone-source: var(--anta-seed-brand);
     --switch-off-tone-source: var(--anta-seed-brand);
-    --_switch-tone-l-rest: 0.56;
-    --_switch-tone-l-hover: 0.48;
-    --_switch-tone-l-active: 0.42;
-    --switch-track-on: oklch(from var(--switch-tone-source) var(--_switch-tone-l-rest) c h);
-    --switch-track-on-hover: oklch(from var(--switch-tone-source) var(--_switch-tone-l-hover) c h);
-    --switch-track-on-active: oklch(from var(--switch-tone-source) var(--_switch-tone-l-active) c h);
+    --switch-track-on: light-dark(
+      oklch(from var(--switch-tone-source) 0.56 c h),
+      oklch(from var(--switch-tone-source) 0.47 c h)
+    );
+    --switch-track-on-hover: light-dark(
+      oklch(from var(--switch-tone-source) 0.48 c h),
+      oklch(from var(--switch-tone-source) 0.53 c h)
+    );
+    --switch-track-on-active: light-dark(
+      oklch(from var(--switch-tone-source) 0.42 c h),
+      oklch(from var(--switch-tone-source) 0.58 c h)
+    );
 
     --switch-label-color: var(--text-2);
     --switch-label-color-disabled: var(--text-4);
@@ -56,7 +65,6 @@
     font-family: var(--sans-serif);
     font-size: var(--switch-label-fs);
     line-height: var(--switch-label-lh);
-    font-feature-settings: "ss02", "ss05", "tnum";
 
     &::before,
     &::after {
@@ -111,8 +119,11 @@
     }
 
     &[round] {
-      --switch-track-round: var(--switch-round, attr(round type(<length>), 999px));
+      --switch-track-round: var(--switch-round, 999px);
       --switch-thumb-round: max(0px, calc(var(--switch-track-round) - 3px));
+      @supports (border-radius: attr(probe type(<length>), 1px)) {
+        --switch-track-round: var(--switch-round, attr(round type(<length>), 999px));
+      }
     }
 
     &:state(checked) {
@@ -142,6 +153,7 @@
     }
     &:not(:disabled):active:state(checked)::before { background: var(--switch-track-on-active); }
 
+    &:focus-visible { outline: none; }
     &:focus-visible::before {
       outline: 1px solid var(--focus-ring);
       outline-offset: 1px;
@@ -212,56 +224,62 @@
     margin-block-start: 2px;
   }
 
-  a-switch[tone="brand"] { --switch-tone-source: var(--anta-seed-brand); --switch-off-tone-source: var(--anta-seed-brand); }
-  a-switch[tone="neutral"] { --switch-tone-source: var(--anta-seed-neutral); --switch-off-tone-source: var(--anta-seed-neutral); }
-  a-switch[tone="info"] { --switch-tone-source: var(--anta-seed-info); --switch-off-tone-source: var(--anta-seed-info); }
-  a-switch[tone="success"] { --switch-tone-source: var(--anta-seed-success); --switch-off-tone-source: var(--anta-seed-success); }
-  a-switch[tone="warning"] { --switch-tone-source: var(--anta-seed-warning); --switch-off-tone-source: var(--anta-seed-warning); }
-  a-switch[tone="critical"] { --switch-tone-source: var(--anta-seed-critical); --switch-off-tone-source: var(--anta-seed-critical); }
-  /* A regular `tone` also colors the unchecked border and thumb. The track
+  a-switch[tone="brand"] {
+    --switch-tone-source: var(--anta-seed-brand);
+    --switch-off-tone-source: var(--anta-seed-brand);
+  }
+  a-switch[tone="neutral"] {
+    --switch-tone-source: var(--anta-seed-neutral);
+    --switch-off-tone-source: var(--anta-seed-neutral);
+  }
+  a-switch[tone="info"] {
+    --switch-tone-source: var(--anta-seed-info);
+    --switch-off-tone-source: var(--anta-seed-info);
+  }
+  a-switch[tone="success"] {
+    --switch-tone-source: var(--anta-seed-success);
+    --switch-off-tone-source: var(--anta-seed-success);
+  }
+  a-switch[tone="warning"] {
+    --switch-tone-source: var(--anta-seed-warning);
+    --switch-off-tone-source: var(--anta-seed-warning);
+  }
+  a-switch[tone="critical"] {
+    --switch-tone-source: var(--anta-seed-critical);
+    --switch-off-tone-source: var(--anta-seed-critical);
+  }
+  /* In the default `all` scope, `tone` also colors the unchecked border and thumb. The track
      keeps a whisper-light border at rest, then steps through the same ramp as
-     the neutral chrome. `tone-selected` deliberately does not participate. */
-  a-switch[tone]:not([tone=""], [tone="neutral"]) {
-    --_switch-off-track: oklch(from var(--switch-off-tone-source) var(--_switch-tone-l-rest) c h);
+     the neutral chrome. */
+  a-switch:not([tone], [tone-scope="selected"]),
+  a-switch[tone]:not([tone=""], [tone="neutral"], [tone-scope="selected"]) {
+    --_switch-off-track: light-dark(
+      oklch(from var(--switch-off-tone-source) 0.56 c h),
+      oklch(from var(--switch-off-tone-source) 0.47 c h)
+    );
     --_switch-off-chrome: color-mix(in oklch, var(--_switch-off-track) 70%, var(--switch-track-off-stroke-neutral));
-    --switch-track-off-stroke: oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h);
+    --switch-track-off-stroke: light-dark(
+      oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h),
+      var(--_switch-off-chrome)
+    );
     --switch-track-off-stroke-hover: oklch(from var(--_switch-off-chrome) calc(l + 0.1) c h);
-    --switch-track-off-stroke-active: var(--_switch-off-chrome);
+    --switch-track-off-stroke-active: light-dark(
+      var(--_switch-off-chrome),
+      oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h)
+    );
     --switch-thumb-off: var(--_switch-off-chrome);
   }
 
   a-switch[tone]:not(
       [tone=""], [tone="brand"], [tone="neutral"], [tone="info"],
       [tone="success"], [tone="warning"], [tone="critical"]) {
-    --switch-tone-source: attr(tone type(<color>), transparent);
-    --switch-off-tone-source: attr(tone type(<color>), transparent);
+    --switch-tone-source: transparent;
+    --switch-off-tone-source: transparent;
+    @supports (color: attr(probe type(<color>), red)) {
+      --switch-tone-source: attr(tone type(<color>), transparent);
+      --switch-off-tone-source: attr(tone type(<color>), transparent);
+    }
   }
-  a-switch[tone-selected="brand"] { --switch-tone-source: var(--anta-seed-brand); }
-  a-switch[tone-selected="neutral"] { --switch-tone-source: var(--anta-seed-neutral); }
-  a-switch[tone-selected="info"] { --switch-tone-source: var(--anta-seed-info); }
-  a-switch[tone-selected="success"] { --switch-tone-source: var(--anta-seed-success); }
-  a-switch[tone-selected="warning"] { --switch-tone-source: var(--anta-seed-warning); }
-  a-switch[tone-selected="critical"] { --switch-tone-source: var(--anta-seed-critical); }
-  a-switch[tone-selected]:not(
-      [tone-selected=""], [tone-selected="brand"], [tone-selected="neutral"], [tone-selected="info"],
-      [tone-selected="success"], [tone-selected="warning"], [tone-selected="critical"]) {
-    --switch-tone-source: attr(tone-selected type(<color>), transparent);
-  }
-
-  .dark a-switch {
-    --switch-track-disabled: color-mix(in oklch, #e4d1ef 10%, transparent);
-    --switch-thumb: #ece9ec;
-    --switch-thumb-off: var(--switch-track-off-stroke);
-    --_switch-tone-l-rest: 0.47;
-    --_switch-tone-l-hover: 0.53;
-    --_switch-tone-l-active: 0.58;
-  }
-  .dark a-switch[tone]:not([tone=""], [tone="neutral"]) {
-    --switch-track-off-stroke: var(--_switch-off-chrome);
-    --switch-track-off-stroke-hover: oklch(from var(--_switch-off-chrome) calc(l + 0.1) c h);
-    --switch-track-off-stroke-active: oklch(from var(--_switch-off-chrome) calc(l + 0.17) c h);
-  }
-
   /* The track and thumb are both author-painted pseudo-elements. Keep their
      forced-colors pairing explicit: off is a Canvas track with a CanvasText
      thumb, while on swaps those two colors. */

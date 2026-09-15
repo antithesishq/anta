@@ -79,6 +79,7 @@ const READONLY_ALLOWLIST = {
   AInputTimeElement: ['validity', 'validationMessage', 'willValidate'],
   AMenuElement: ['isControlled', 'isSubmenu', 'triggerAnchor', 'isOpen'],
   ATextElement: ['isTruncated'],
+  ABoxElement: ['measurement', 'context', 'isTruncated'],
   ARadioGroupElement: ['value'],
   ATabsElement: ['value'],
   ACheckboxElement: ['checked', 'indeterminate'],

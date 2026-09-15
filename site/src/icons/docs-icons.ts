@@ -6,21 +6,26 @@ export const ICON_SHAPES = [
   'banner',
   'book-a',
   'card',
+  'chevrons-right',
   'chevrons-up-down-square',
   'circle-pause',
   'circle-play',
   'clipboard-paste',
   'dialog',
+  'footprints',
+  'github-logo',
   'loader-docs',
   'octagon-pause',
   'search-slash',
   'settings-2',
   'square-chevron-down',
   'square-chevron-right',
+  'square-dashed',
   'sticker',
   'tabs',
   'theme',
   'toaster',
+  'vector-square',
 ] as const
 
 export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
@@ -31,21 +36,26 @@ declare module '@antadesign/anta' {
     'banner': true
     'book-a': true
     'card': true
+    'chevrons-right': true
     'chevrons-up-down-square': true
     'circle-pause': true
     'circle-play': true
     'clipboard-paste': true
     'dialog': true
+    'footprints': true
+    'github-logo': true
     'loader-docs': true
     'octagon-pause': true
     'search-slash': true
     'settings-2': true
     'square-chevron-down': true
     'square-chevron-right': true
+    'square-dashed': true
     'sticker': true
     'tabs': true
     'theme': true
     'toaster': true
+    'vector-square': true
   }
 }
 

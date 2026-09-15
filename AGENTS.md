@@ -2,10 +2,11 @@
 
 Anta is a portable UI component library, published as `@antadesign/anta`. It works in React, Preact through `preact/compat`, and custom JSX runtimes through `configure()`.
 
-This pnpm workspace contains two publishable packages and one private site:
+This pnpm workspace contains three publishable packages and one private site:
 
 - `@antadesign/anta` — the root package; its source is in `src/`.
 - `@antadesign/stickers` — a separate sticker package in `stickers/`, keeping `lottie-web` out of anta's dependency graph.
+- `@antadesign/plot` — the separate canvas plot package in `plot/`.
 - `site/` — the documentation site; it is not published to npm.
 
 ## Task routing
@@ -15,6 +16,7 @@ Read the closest guidance before changing a scoped area:
 - `src/AGENTS.md` — Anta component architecture, web-component and JSX-wrapper conventions, CSS rules, and component additions.
 - `site/AGENTS.md` — Astro site, interactive playground, client-router, and documentation-page conventions.
 - `stickers/AGENTS.md` — sticker package layout, generation, and publishing details. Read `src/AGENTS.md` as well before changing its elements or wrappers.
+- `plot/AGENTS.md` — plot entry points, build, and package verification.
 - `RELEASING.md` — mandatory publish order and package-manager commands.
 - `FIGMA.md`, `WRITING.md`, and `DESIGN.md` — Figma extraction, prose, and design guidance respectively.
 
@@ -29,6 +31,7 @@ pnpm run dev        # Long-running package watcher and docs-site dev server
 pnpm run build      # Build anta JS, CSS, and declarations
 pnpm run lint       # Enforce custom-element / React 19 safety rules
 pnpm run typecheck  # Type check anta without emitting
+pnpm test           # Run root regression tests (requires Chromium or installed Chrome)
 ```
 
 Use `pnpm run dev` for any development work, including docs-site work. It rebuilds anta and stickers before the site, so package-source edits propagate to the running site. Do not start `site`'s dev server directly for package work.
@@ -37,7 +40,24 @@ The docs site consumes the built workspace `dist/` output. Esbuild runs without 
 
 ## Verification
 
-CI runs build, custom linting, anta and sticker type checks, the stickers build, site CSS linting, and a production site build. Run the checks relevant to the area you changed; run the complete set before handing off a broad change.
+CI runs build, custom linting, anta and sticker type checks, root regression tests,
+the stickers build, site CSS linting, and a production site build. `pnpm test`
+includes Capture, Slider, and disclosure-navigation browser tests and Markdown
+conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runner's installed Chrome.
+Run the checks relevant to the area you changed; run the complete set before
+handing off a broad change.
+
+For scoped package-documentation changes, run
+`node scripts/generate-package-docs.mjs --only <generated-path...>` with paths
+relative to `docs/`, such as `theming.md`. The unscoped command intentionally
+deletes and rebuilds the complete `docs/` tree, so reserve it for broad
+documentation synchronization.
+
+Cloudflare Pages must use the Node version in `.node-version`; a dashboard
+`NODE_VERSION` override can make its build differ from CI. The manual
+`trigger-cloudflare-deploy.yml` workflow supports `action: logs` for diagnostics
+and an optional `node_version` when redeploying. That override applies to the
+project's preview or production environment, according to the target branch.
 
 ## Shared conventions
 
@@ -53,4 +73,4 @@ Ask: would an npm consumer see this change? If not, keep the narrative in the co
 
 ## Publishing
 
-Before publishing either package, read and follow [`RELEASING.md`](RELEASING.md). The order and use of `npm` versus `pnpm` are mandatory.
+Before publishing any package, read and follow [`RELEASING.md`](RELEASING.md). The order and use of `npm` versus `pnpm` are mandatory.

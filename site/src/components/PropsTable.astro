@@ -1,12 +1,16 @@
 ---
 import api from '../api.json'
 import { marked } from 'marked'
+import { isBaseProp } from '../../lib/api-props.mjs'
 
 interface Props {
   component: string
+  /** Heading for the name column. Payload interfaces (`BoxMeasurement`) list
+   *  fields, not props. */
+  label?: string
 }
 
-const { component } = Astro.props
+const { component, label = 'Prop' } = Astro.props
 const propsName = `${component}Props`
 
 // id → node index so `reference` types (e.g. ButtonProps → BaseButtonProps)
@@ -18,6 +22,7 @@ const byId = new Map<number, any>()
 })(api as any)
 
 const root = (api as any).children?.find((c: any) => c.name === propsName)
+  ?? (api as any).children?.find((c: any) => c.name === component)
 
 // A union member is a *value* (string / number / boolean literal) → render
 // it as a copyable code pill. Everything else (type keywords like `string`,
@@ -44,8 +49,18 @@ function renderType(type: any): string {
       if (parts.includes('string')) return 'string'
       return parts.filter((p: string) => p !== '—').join(' & ') || '—'
     }
-    case 'reference':
+    case 'reference': {
+      // A named alias for a small union of literals reads better expanded: the
+      // table shows the accepted values instead of a name the reader has to go
+      // look up (BoxMode → light | dark). Only all-literal unions expand, so a
+      // reference to an interface or a union of shapes keeps its name.
+      const target = typeof type.target === 'number' ? byId.get(type.target) : null
+      const alias = target?.type
+      if (alias?.type === 'union' && alias.types.every((t: any) => t.type === 'literal')) {
+        return alias.types.map(renderType).join(' | ')
+      }
       return type.name || '—'
+    }
     case 'array':
       return `${renderType(type.elementType)}[]`
     case 'reflection': {
@@ -150,7 +165,7 @@ function collect(decl: any) {
       }
       return // (a union-branch `never` is just skipped)
     }
-    const base = fromBase || !!c.inheritedFrom
+    const base = isBaseProp(c, fromBase)
     const optional = !!c.flags?.isOptional || fromUnion
     const type = renderType(c.type)
     const existing = out.get(c.name)
@@ -221,7 +236,7 @@ const inherited = all
     <table>
       <thead>
         <tr>
-          <th>Prop</th>
+          <th>{label}</th>
           <th>Type</th>
           <th>Default</th>
           <th>Description</th>
@@ -321,7 +336,7 @@ const inherited = all
       <table>
         <thead>
           <tr>
-            <th>Prop</th>
+            <th>{label}</th>
             <th>Type</th>
             <th>Default</th>
             <th>Description</th>

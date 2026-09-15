@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Time input
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -30,7 +30,6 @@ or uncontrolled (`defaultValue`), and submits under `name` via the native form A
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="InputTime"
   layout="side"
   panelHeight={360}
@@ -114,7 +113,7 @@ range is clamped to the nearest bound as you step or leave the field, and flags
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

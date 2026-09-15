@@ -7,24 +7,15 @@
 import s from './Swatches.module.css'
 import SwatchGrid from './SwatchGrid.tsx'
 import ToneTabs from './ToneTabs'
+import { marked } from 'marked'
+import { KINDS, TITLES, INTROS, TEXT_LINES, BACKGROUND_GUIDANCE, LINK_GUIDANCE, BORDER_GUIDANCE, type Kind } from './color-reference'
 
-type Kind = 'bg' | 'text' | 'border'
-
-const KINDS: Kind[] = ['bg', 'text', 'border']
-const TITLES: Record<Kind, string> = { bg: 'Background', text: 'Text', border: 'Border' }
-const INTROS: Record<Kind, string> = {
-  bg: 'These tokens help create visual hierarchy and guide the user’s attention.',
-  text: 'These tokens define how text is presented across the interface. They help establish hierarchy, readability, and consistent contrast.',
-  border: 'Border tokens are used to separate, group, and structure elements across the interface.',
+function guidance(markdown: string) {
+  return marked.parse(markdown, { async: false }).replace(/<h3>([^<]+)<\/h3>/g, (_, title) => {
+    const id = title.toLowerCase().replaceAll(' ', '-')
+    return `<h3 id="${id}"><a href="#${id}" class="header-anchor muted">${title}</a></h3>`
+  })
 }
-
-const TEXT_LINES: { token: string; copy: string }[] = [
-  { token: 'text-1', copy: 'Primary text, for headings and key content.' },
-  { token: 'text-2', copy: 'Secondary text, for descriptions and supporting content.' },
-  { token: 'text-3', copy: 'Subdued text, for labels, statuses and secondary data.' },
-  { token: 'text-4', copy: 'Minor text, for timestamps, counters and metadata.' },
-  { token: 'text-5', copy: 'Placeholder text, for hints and non-critical information.' },
-]
 
 const slug = (k: Kind) => TITLES[k].toLowerCase()
 ---
@@ -70,7 +61,7 @@ const slug = (k: Kind) => TITLES[k].toLowerCase()
 
       {kind === 'bg' && (
         <div class={s.description}>
-          <p>The naming is intentionally unopinionated — it carries no role, just order and change of lightness suitable for backgrounds. If you want meaningful names in your own app, create semantic tokens and link them to Anta’s backgrounds in the way you prefer.</p>
+          <Fragment set:html={guidance(BACKGROUND_GUIDANCE)} />
         </div>
       )}
 
@@ -82,21 +73,13 @@ const slug = (k: Kind) => TITLES[k].toLowerCase()
             </p>
           ))}
 
-          <h3 id="link-color"><a href="#link-color" class="header-anchor muted">Link color</a></h3>
-          <p>Links carry their own color, separate from the <code>text-*</code> scale: <code>--link-color</code> at rest and <code>--link-color-hover</code> on hover, each pairing light and dark. <a href="#link-color">This link</a> renders in the resting color.</p>
+          <Fragment set:html={guidance(LINK_GUIDANCE)} />
         </div>
       )}
 
       {kind === 'border' && (
         <div class={s.description}>
-          <p>Border colors are used depending on how much separation is needed and the background they appear on.</p>
-          <p><code>border-1</code> and <code>border-2</code> are used when a container needs to be clearly defined or when separating elements on stronger backgrounds such as <code>bg-4</code> and <code>bg-5</code>.</p>
-          <p><code>border-3</code> sits in the middle. It provides a moderate level of contrast, useful when a boundary should be visible but not dominant.</p>
-          <p><code>border-4</code> is used to separate <code>bg-2</code> and <code>bg-3</code>, providing a slightly stronger level of contrast.</p>
-          <p><code>border-5</code> is used on lighter surfaces. It works well between <code>bg-2</code> and <code>bg-1</code>, often appearing in spacing areas to subtly define boundaries.</p>
-
-          <h3 id="focus-ring"><a href="#focus-ring" class="header-anchor muted">Focus ring</a></h3>
-          <p>One global interaction-state token sits beside the role scales: <code>--focus-ring</code>, the keyboard-focus outline color shared across focusable components. It already pairs light and dark, so components use it directly rather than defining their own focus color — there's no per-component focus token to keep in sync.</p>
+          <Fragment set:html={guidance(BORDER_GUIDANCE)} />
         </div>
       )}
     </section>

@@ -1,0 +1,63 @@
+.canvas {
+  display: grid;
+  gap: 24px;
+  padding: 24px;
+  min-width: 0;
+  background: var(--bg-1);
+  color: var(--text-2);
+}
+.canvas *,
+.canvas *::before,
+.canvas *::after {
+  box-sizing: border-box;
+}
+.canvas :is(section, a-box, a-card, a-input, a-tabs, a-steps) {
+  min-width: 0;
+  max-width: 100%;
+}
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.identity > div {
+  flex: 1;
+  min-width: 0;
+}
+.cardProgress {
+  margin-top: 12px;
+}
+.group {
+  display: grid;
+  gap: 16px;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  gap: 16px;
+}
+.canvas a-tabs {
+  flex-wrap: wrap;
+}
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.swatches > div {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 12px;
+}
+@media (max-width: 360px) {
+  .canvas { padding: 16px; }
+}

@@ -1,12 +1,13 @@
 ---
 // At-a-glance matrix for the /comparison page: one row per system, columns
-// for the facts that decide adoption (frameworks, styling, license). The
-// Anta row is highlighted. Full-bleed + horizontal scroll so the wide table
-// never forces the page body to scroll sideways.
-import { SYSTEMS } from './comparison-data'
+// for the facts that decide adoption (frameworks, styling, license, browser
+// support). Its rows use the coverage matrix's shared system order. The Anta
+// row is highlighted. Horizontal scrolling stays inside the matrix on compact
+// screens.
+import { COVERAGE_SYSTEMS } from './comparison-data'
 ---
 
-<div class="full-bleed matrix-scroll">
+<div class="matrix-scroll">
   <table class="matrix">
     <thead>
       <tr>
@@ -14,13 +15,21 @@ import { SYSTEMS } from './comparison-data'
         <th scope="col">Frameworks</th>
         <th scope="col">Styling</th>
         <th scope="col">License</th>
+        <th scope="col">Browser support</th>
       </tr>
     </thead>
     <tbody>
-      {SYSTEMS.map((s) => (
+      {COVERAGE_SYSTEMS.map((s) => (
         <tr class:list={[{ anta: s.anta }]}>
           <th scope="row" class="sys-col">
-            <a href={s.docs} target="_blank" rel="noopener" class="sys-name">{s.short ?? s.name}</a>
+            <span class="sys-name">
+              {s.nameParts
+                ? s.nameParts.map((part, index) => <>
+                    {index > 0 && <span aria-hidden="true"> + </span>}
+                    <a href={part.href} target="_blank" rel="noopener">{part.label}</a>
+                  </>)
+                : <a href={s.docs} target="_blank" rel="noopener">{s.short ?? s.name}</a>}
+            </span>
             <span class="sys-ver">{s.version}</span>
           </th>
           <td>
@@ -29,6 +38,12 @@ import { SYSTEMS } from './comparison-data'
           </td>
           <td>{s.styling}</td>
           <td>{s.license}</td>
+          <td>
+            <span class="browser-year" tabindex="0">
+              {s.browserSupport}
+              <a-tooltip>{s.browsers}</a-tooltip>
+            </span>
+          </td>
         </tr>
       ))}
     </tbody>
@@ -46,9 +61,9 @@ import { SYSTEMS } from './comparison-data'
     margin-block: 24px;
   }
 
-  /* The matrix itself needs 720px. Once that fits, let the page own vertical
+  /* The five-column matrix needs 800px. Once that fits, let the page own vertical
      scrolling again and keep only the document-level sticky header. */
-  @container (min-width: 720px) {
+  @container (min-width: 800px) {
     .matrix-scroll {
       max-block-size: none;
       overflow: visible;
@@ -58,8 +73,11 @@ import { SYSTEMS } from './comparison-data'
   .matrix {
     border-collapse: separate;
     border-spacing: 0;
+    /* Fill the available comparison lane. Intrinsic sizing lets each fact
+       column use the space its content needs; the scroll container handles
+       smaller viewports. */
     width: 100%;
-    min-width: 720px;
+    min-width: 800px;
     font-size: 13px;
     line-height: 1.4;
   }
@@ -92,7 +110,9 @@ import { SYSTEMS } from './comparison-data'
     position: sticky;
     left: 0;
     z-index: 1;
-    background: var(--bg-canvas);
+    /* Match ordinary cells rather than making the pinned system column look
+       selected. It remains opaque so scrolled fact cells do not show through. */
+    background: var(--bg-base);
     min-width: 168px;
   }
   thead .sys-col {
@@ -115,6 +135,12 @@ import { SYSTEMS } from './comparison-data'
 
   .matrix td {
     color: var(--text-2);
+  }
+
+  .browser-year {
+    cursor: help;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.18em;
   }
 
   /* Secondary framework reach on its own muted line under the primary. */

@@ -4,7 +4,7 @@
 import { useState, useId } from '../jsx-runtime'
 import { ISOLATE_HINT, optionPresentationAttrs } from '../anta_helpers'
 import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
-import type { BaseProps, OptionPresentationProps } from '../general_types'
+import type { BaseProps, OptionPresentationProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { Input } from './Input'
 import { Icon } from './Icon'
@@ -45,6 +45,9 @@ export interface SelectOption<V extends OptionValue = string> extends OptionPres
   /** Tone for this option's row (label, icon, hint, selected tint, and the
    *  checkbox/radio indicator). A named tone or a custom CSS color. */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Override where this option applies its tone. The Select scope is inherited
+   *  when omitted. */
+  toneScope?: ToneScope
   /** Tooltip for this option's row — a string or any node. In a `multiple`
    *  select with `selectAll`, a row with no `tooltip` falls back to a default
    *  hint for the Alt/Option-click "select only this" accelerator; set `tooltip`
@@ -214,12 +217,14 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
   round?: boolean | number | string
   /** Disable the whole select. */
   disabled?: boolean
-  /** Tone applied to the **selected** row(s) — the whole row takes this tone
-   *  (label, icon, indicator, and the background tint), like passing `tone` to just
-   *  the chosen option. A named tone or a custom CSS color. Most visible with the
-   *  tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` /
-   *  `'checkbox'` it tones the label + indicator (those modes have no row tint). */
-  toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Default option-row tone. An option's own `tone` wins. A named tone or a
+   *  custom CSS color. Most visible with tint-based marks (`indicator` `'none'` /
+   *  `'check'`); with `'radio'` / `'checkbox'` it also tones the indicator. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply the default row tone in every state, or only to selected rows. An
+   *  option's own `toneScope` wins.
+   *  @defaultValue 'all' */
+  toneScope?: ToneScope
   /** Add a search field at the top of the menu that filters the options as you
    *  type. `true` uses the built-in matcher — a case-insensitive substring of the
    *  option's **value / label / hint**. Pass a **function** `(option, query) =>
@@ -277,7 +282,9 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  one focusable element, such as an Anta `Button`. The menu is positioned
    *  relative to that element and opens when it is clicked. Do not return a
    *  fragment, multiple siblings, or a non-focusable wrapper. Add
-   *  `aria-haspopup="menu"` and `aria-expanded={state.open}` to the element.
+   *  `aria-haspopup="menu"` and `aria-expanded={state.open}` to the element, on a
+   *  role that supports them (an Anta `Button` already carries `role="button"`;
+   *  otherwise add `role="combobox"`).
    *  Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and
    *  `className` / `style` apply only to the default field. Add styling and
    *  attributes to the returned element instead. */
@@ -470,7 +477,8 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     statusIcon,
     round,
     disabled,
-    toneSelected,
+    tone,
+    toneScope,
     filter,
     selectAll = true,
     selectAllLabel = 'Select all',
@@ -685,8 +693,8 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         label={custom ? undefined : highlight(o.label ?? String(o.value), queryRe)}
         hint={custom ? undefined : o.hint ? highlight(o.hint, queryRe) : o.hint}
         icon={custom ? undefined : o.icon}
-        tone={o.tone}
-        toneSelected={toneSelected}
+        tone={o.tone ?? tone}
+        toneScope={o.toneScope ?? toneScope}
         selected={isSelected(o.value)}
         disabled={disabled || undefined}
         data-menu-open={multiple ? '' : undefined}
@@ -782,6 +790,10 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         status={status}
         statusIcon={statusIcon}
         round={round}
+        // `combobox` role keeps `aria-expanded` valid here (it isn't a global attr);
+        // `button` would make a-menu treat the trigger as self-activating and drop
+        // the keyboard-open this read-only field relies on.
+        role="combobox"
         aria-haspopup="menu"
         aria-expanded={open ? 'true' : 'false'}
         // <a-menu> handles Enter, Space, and ArrowDown on this read-only field by

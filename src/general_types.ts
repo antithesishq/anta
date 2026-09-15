@@ -1,4 +1,6 @@
 import type { IconShape } from './elements/a-icon.shapes'
+import type { BoxContextChange, BoxDisplay, BoxMeasurementChange } from './box-types'
+import type { CaptureInputModifier, CapturePanInput, CapturePointerInput, CaptureWheelActivation, CaptureWheelInput } from './capture-types'
 
 /** Common props for JSX component wrappers. */
 export interface BaseProps {
@@ -28,6 +30,10 @@ export interface BaseProps {
   /** Any `aria-*` attribute is forwarded to the rendered element. */
   [key: `aria-${string}`]: unknown
 }
+
+/** Where a stateful component applies its tone. `all` colors both resting and
+ * selected chrome; `selected` keeps resting chrome neutral. */
+export type ToneScope = 'all' | 'selected'
 
 /** Safe presentation attributes for a data-rendered option. They land on the
  * option's rendered row, rather than on the enclosing control. Menu-based
@@ -200,11 +206,45 @@ export interface AProgressAttributes extends BaseAttributes {
 }
 
 /**
+ * Attributes for the `<a-avatar>` custom element.
+ *
+ * These are the low-level web component attributes. For the typed JSX wrapper,
+ * use `Avatar` from `@antadesign/anta`.
+ */
+export interface AAvatarAttributes extends BaseAttributes {
+  /** Alphanumeric seed driving the generated userpic. Falls back to `name`. */
+  seed?: string
+  /** Name — supplies the initials fallback and accessible name, and seeds
+   *  generation when `seed` is absent. */
+  name?: string
+  /** Image URL. Shown instead of a generated userpic when present. */
+  src?: string
+  /** Size of the square container. `medium` is the default; set a pixel size via
+   *  the `--avatar-size` custom property. */
+  size?: 'small' | 'medium' | 'large'
+  /** Corner badge, colored by tone — a named tone or any literal CSS color
+   *  (derived in oklch). Omit for no badge. */
+  badge?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Fully-round (circular) frame, or a custom radius via a length value
+   *  (`round="12px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
+  /** Brand generation constraints as a JSON string (an `AvatarGenConfig`). With
+   *  the `Avatar` wrapper, pass the object as `generator` and it is serialized. */
+  config?: string
+  /** ARIA role — the JSX wrapper sets this to `'img'`. */
+  role?: string
+  /** ARIA accessible name. */
+  'aria-label'?: string
+}
+
+/**
  * Attributes for the `<a-loader>` custom element. For the JSX wrapper with
  * cross-browser sizing and accessible progress semantics, use `Loader` from
  * `@antadesign/anta`.
  */
 export interface ALoaderAttributes extends BaseAttributes {
+  /** Color tone for the loader. */
+  tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
   /** Presence selects the static, determinate gradient. Set `--loader-value`
    * in `style` to its percentage. Omit this attribute for the rotating
    * indeterminate gradient. */
@@ -252,6 +292,66 @@ export interface ATextAttributes extends BaseAttributes {
   collapsible?: boolean | ''
   /** ARIA disclosure state, mirrors the JSX wrapper's `expanded` flag. */
   'aria-expanded'?: boolean | 'true' | 'false'
+}
+
+/** Attributes for the opt-in light-DOM capture surface. */
+export interface ACaptureAttributes extends BaseAttributes {
+  /** Space-separated accepted wheel directions. Bare means all; `none` preserves settling while declining input. */
+  'wheel-capture'?: string
+  'wheel-activation'?: CaptureWheelActivation
+  'wheel-modifier'?: CaptureInputModifier
+  'wheel-delay'?: number | string
+  'wheel-tolerance'?: number | string
+  'wheel-reset-on-move'?: boolean | ''
+  /** Space-separated pointer types. Bare means mouse, pen, and touch. */
+  'pointer-capture'?: string
+  'pointer-buttons'?: string
+  'pointer-threshold'?: number | string
+  'pointer-modifier'?: CaptureInputModifier
+  'pointer-include-interactive'?: boolean | ''
+  /** Enable custom panning on the selected axes. */
+  pan?: '' | 'x' | 'y' | 'both'
+  'pan-pointer-types'?: string
+  'pan-threshold'?: number | string
+  'pan-directions'?: string
+  'pan-inertia'?: boolean | ''
+  'pan-time-constant'?: number | string
+  'pan-min-velocity'?: number | string
+  onwheelinput?: (event: CustomEvent<CaptureWheelInput> | { nativeEvent: CustomEvent<CaptureWheelInput> }) => void
+  onpointerinput?: (event: CustomEvent<CapturePointerInput> | { nativeEvent: CustomEvent<CapturePointerInput> }) => void
+  onpaninput?: (event: CustomEvent<CapturePanInput> | { nativeEvent: CustomEvent<CapturePanInput> }) => void
+}
+
+/** Attributes for the light-DOM `<a-box>` observing container. For the JSX
+ * wrapper with cross-renderer event unwrapping, use `Box` from
+ * `@antadesign/anta`. */
+export interface ABoxAttributes extends BaseAttributes {
+  /** Host display mode. Omit for the default block box. */
+  display?: BoxDisplay
+  /** Fully-round corners (`border-radius: 999px`), or a custom radius via a
+   *  length value (`round="12px"`). Presence-based for the boolean form. */
+  round?: boolean | number | string
+  /** Gap between children, as a length value (`gap="8px"`). Engines without
+   *  typed `attr()` read it from `--box-gap` in the host's inline style
+   *  instead, which is what the JSX wrapper always sets. */
+  gap?: boolean | '' | number | string
+  /** Masks every edge that currently hides clipped content. */
+  fade?: boolean | ''
+  /** What the box watches. `size` reports geometry and overflow through
+   *  `measurechange` and the CSS states; `context` reports the rendering
+   *  environment through `contextchange`; `all`, or a bare `observe`, does both.
+   *  A box without it (and without `fade`) runs no observers, so a listener
+   *  alone reports nothing. The JSX wrapper sets it from `observe` and from the
+   *  handlers you pass. */
+  observe?: 'size' | 'context' | 'all' | ''
+  /** Depth of that mask, as a length value (`fade-size="2rem"`). Engines
+   *  without typed `attr()` read it from `--box-fade-size` in the host's
+   *  inline style instead, which is what the JSX wrapper always sets. */
+  'fade-size'?: number | string
+  /** Native event fired when geometry or overflow changes. */
+  onmeasurechange?: (event: CustomEvent<BoxMeasurementChange> | { nativeEvent: CustomEvent<BoxMeasurementChange> }) => void
+  /** Native event fired when rendering context or focus-within changes. */
+  oncontextchange?: (event: CustomEvent<BoxContextChange> | { nativeEvent: CustomEvent<BoxContextChange> }) => void
 }
 
 /**
@@ -470,15 +570,13 @@ export interface ATooltipAttributes extends BaseAttributes {
  * `@antadesign/anta`.
  */
 export interface ACheckboxAttributes extends BaseAttributes {
-  /** Mark color in every state — checked fill *and* unselected box border — or any
-   *  literal CSS color for a one-off custom tone. Named tones track light/dark mode
-   *  automatically. `'neutral'` is the default (same as omitting it). The label + hint
+  /** Mark color, or any literal CSS color for a one-off custom tone. Named tones
+   *  track light/dark mode automatically. Its scope is controlled by `tone-scope`. `'neutral'` is the
+   *  default (same as omitting it). The label + hint
    *  stay neutral — recolor them in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but colored onto the checked mark only — the empty box stays
-   *  neutral grey. Same value set as `tone`; if both are set, `tone` governs the
-   *  off-state border and `tone-selected` the checked fill. */
-  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply `tone` to every state (`all`, the default) or only while checked. */
+  'tone-scope'?: ToneScope
   /** Size variant. `small` = 14px, `medium` (default) = 16px, `large` = 18px box. */
   size?: 'small' | 'medium' | 'large'
   /** Controlled state — the element reflects changes to this attribute. Use this
@@ -524,10 +622,10 @@ export interface ACheckboxAttributes extends BaseAttributes {
  * wrapper supplies both.
  */
 export interface ASwitchAttributes extends BaseAttributes {
-  /** Track and thumb color. A tinted tone also colors the unchecked chrome. */
+  /** Track and thumb color. Its scope is controlled by `tone-scope`. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Checked-track-only color. The unchecked track and thumb stay neutral. */
-  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply `tone` to every state (`all`, the default) or only while checked. */
+  'tone-scope'?: ToneScope
   /** Size variant. `small` = 26×16px, `medium` (default) = 30×18px, `large` = 34×20px. */
   size?: 'small' | 'medium' | 'large'
   /** Fully round the thumb and track, or pass a custom track radius via a length
@@ -606,6 +704,8 @@ export interface AInputAttributes extends BaseAttributes {
   name?: string
   /** Placeholder shown when empty. */
   placeholder?: string
+  /** Focus this field when its containing `a-dialog` opens. Presence-based. */
+  autofocus?: boolean | ''
   /** Ellipsize an overflowing single-line value. Presence-based. */
   truncate?: boolean | ''
   autocomplete?: string
@@ -689,6 +789,8 @@ export interface ASliderAttributes extends BaseAttributes {
 export interface AInputTimeAttributes extends BaseAttributes {
   /** Controlled value — 24-hour `"HH:mm"`, `''` when incomplete. */
   value?: string
+  /** Focus this field when its containing `a-dialog` opens. Presence-based. */
+  autofocus?: boolean | ''
   /** Initial value for the uncontrolled case (24-hour `"HH:mm"`). */
   defaultvalue?: string
   /** BCP-47 locale driving the clock (12h vs 24h), segment order, separator, and
@@ -836,6 +938,12 @@ export interface AMenuAttributes extends BaseAttributes {
    *  layer that owns the field (e.g. `Select`) listens here and reflects it.
    *  All-lowercase so React/Preact bind it to the CustomEvent. */
   onactivedescendant?: (e: CustomEvent<{ id: string | null }>) => void
+  /** Contain events so they don't bubble out of the menu surface to ancestor /
+   *  document handlers. Space- or comma-separated event names
+   *  (`stop-propagation="click pointerdown"`); a bare / empty attribute defaults to
+   *  `click`. Menu-item / `data-menu-close` selections are always contained; this
+   *  extends containment to whole event types. */
+  'stop-propagation'?: string
   /** ARIA role — the JSX wrapper sets this to `'menu'`. */
   role?: string
   'aria-orientation'?: 'vertical' | 'horizontal'
@@ -913,6 +1021,8 @@ export interface AButtonAttributes extends BaseAttributes {
     | (string & {})
   /** Underline style. Only renders on `priority="tertiary" | "quaternary"`. */
   underline?: 'solid' | 'dashed' | 'dotted'
+  /** Show the underline only on hover. Requires `underline`. Presence-based (`''` on, omit off). */
+  'underline-on-hover'?: boolean | ''
   /** Size variant. small=22px, medium=26px, large=30px. */
   size?: 'small' | 'medium' | 'large'
   /** Drop outer padding to zero. Only takes effect on `priority="quaternary"`.
@@ -966,10 +1076,10 @@ export interface ACopyAttributes extends BaseAttributes {
    *  nested copy control can't flip an ancestor's feedback). All-lowercase so it
    *  binds in React *and* Preact. */
   oncopydone?: (e: CustomEvent<{ ok: boolean }>) => void
-  /** Fired on **pointerdown** / keydown for a string-copy control (`copyrequest`,
-   *  non-bubbling). Answer by setting the `copy` attribute to the freshly-computed
-   *  value; the activation then copies it. The gap lets an off-UI-thread handler
-   *  set `copy` in time. All-lowercase. */
+  /** Fired before a string copy (`copyrequest`, non-bubbling). Set this element's
+   *  `copy` attribute to the new text; JSX applications update their `copy` prop
+   *  through state. Return values are ignored. Fires on pointerdown and
+   *  Enter/Space keydown. All-lowercase. */
   oncopyrequest?: (e: CustomEvent) => void
 }
 
@@ -984,15 +1094,13 @@ export interface ACopyAttributes extends BaseAttributes {
 export interface ARadioAttributes extends BaseAttributes {
   /** This option's identity / submitted value. */
   value?: string
-  /** Mark color in every state — selected ring fill + dot *and* unselected ring
-   *  border — or any literal CSS color for a one-off custom tone. Named tones track
-   *  light/dark mode. `'neutral'` is the default. The label + hint stay neutral —
+  /** Mark color, or any literal CSS color for a one-off custom tone. Named tones track
+   *  light/dark mode; `tone-scope` controls whether unselected chrome is tinted.
+   *  `'neutral'` is the default. The label + hint stay neutral —
    *  recolor them in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but colored onto the selected mark only — an unselected ring stays
-   *  neutral grey. Same value set as `tone`; if both are set, `tone` governs the
-   *  off-state border and `tone-selected` the selected fill. */
-  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply `tone` to every state (`all`, the default) or only while selected. */
+  'tone-scope'?: ToneScope
   /** Size variant. small=14px, medium=16px, large=18px control. */
   size?: 'small' | 'medium' | 'large'
   /** Disabled state. Presence-based (`''` on, omit off). */
@@ -1036,13 +1144,13 @@ export interface ARadioGroupAttributes extends BaseAttributes {
   /** Form field name — the group submits `name=value`. */
   name?: string
   /** Mark tone cascaded to children that don't set their own, or any literal CSS
-   *  color for a one-off custom tone. Colors every child's ring fill + dot *and*
-   *  unselected border. The option text stays neutral — recolor it in plain CSS via
-   *  the `--text-N-{tone}` tokens. */
+   *  color for a one-off custom tone. In `all` scope it colors every child's ring
+   *  fill, dot, and unselected border. The option text stays neutral — recolor it
+   *  in plain CSS via the `--text-N-{tone}` tokens. */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but colored onto the selected option only — every unselected ring
-   *  stays neutral grey. Cascaded to children that don't set their own. */
-  'tone-selected'?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply the cascaded `tone` to every state (`all`, the default) or only to the
+   * selected option. A child's explicit scope overrides the group. */
+  'tone-scope'?: ToneScope
   /** Size cascaded to children that don't set their own. */
   size?: 'small' | 'medium' | 'large'
   /** Validation/feedback tone for the group hint — same set as `<a-input>`'s
@@ -1151,6 +1259,9 @@ export interface ATabsAttributes extends BaseAttributes {
   /** Layout + arrow-key axis. `'horizontal'` (default) ellipsizes labels when tabs
    *  overflow (scrolling is opt-in via CSS); `'vertical'` stacks them. */
   orientation?: 'horizontal' | 'vertical'
+  /** Make horizontal tabs share the available inline space equally. Presence-based
+   *  (`''` on, omit off). */
+  fill?: boolean | ''
   /** Disable the sliding indicator. By default the selected-tab indicator is a single
    *  rectangle that animates between tabs via CSS anchor positioning; with `noslide` the
    *  highlight is painted on each tab and snaps with no movement (also the automatic
@@ -1277,6 +1388,8 @@ export interface ABannerAttributes extends BaseAttributes {
    *  custom color keeps its hue with lightness/chroma pinned. `'neutral'` is the
    *  default (same as omitting it). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Positions the content row. `'start'` is the default; `'center'` centers it. */
+  align?: 'start' | 'center'
   /** Rounded corners for a standalone banner — `border-radius: 999px` (clamps to a
    *  stadium), or a custom radius via a length value (`round="12px"`). Borderless
    *  like the default. Presence-based for the boolean form. */

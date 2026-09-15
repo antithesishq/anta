@@ -118,8 +118,8 @@ export class ARadioGroupElement extends HTMLElementBase {
   }
 
   formDisabledCallback(disabled: boolean) {
-    if (disabled) this.internals?.states.add("disabled");
-    else this.internals?.states.delete("disabled");
+    if (disabled) this.internals?.states?.add("disabled");
+    else this.internals?.states?.delete("disabled");
     this.sync();
   }
 
@@ -152,7 +152,7 @@ export class ARadioGroupElement extends HTMLElementBase {
   get #isDisabled() {
     return (
       this.hasAttribute("disabled") ||
-      (this.internals?.states.has("disabled") ?? false)
+      (this.internals?.states?.has("disabled") ?? false)
     );
   }
 

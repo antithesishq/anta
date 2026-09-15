@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* <a-tabpanel> is a self-managing element (see a-tabpanel.ts): it toggles its own
      off-DOM `:state(active)`, and this CSS turns that into visibility. No wrapper
      writes `hidden` / `data-hide` on it anymore — the element owns it.

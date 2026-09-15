@@ -13,10 +13,9 @@ export type CopyTarget =
       copy: string
       /** Prefix the copied text with `// URL: <current page URL>`. */
       copyWithUrl?: boolean
-      /** Compute the copy content lazily. Fires on pointerdown / keydown; update
-       *  `copy` (a state change) here and the activation copies the latest value.
-       *  The gap lets the update land even off the UI thread — only the
-       *  serializable `copy` string crosses. */
+      /** Refresh a dynamic `copy` value before activation. Set the new string in
+       *  application state so the next render updates `copy`. Return values are
+       *  ignored. Fires on pointerdown and Enter/Space keydown. */
       onCopyRequest?: () => void
       /** Fires after the copy attempt with whether it succeeded. */
       onCopied?: (ok: boolean) => void

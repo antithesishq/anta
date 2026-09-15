@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Button
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -26,7 +26,6 @@ whether you use the wrapper or author the element by hand.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Button"
   layout="side"
   panelHeight={400}
@@ -37,7 +36,7 @@ whether you use the wrapper or author the element by hand.
 
 </Disclosure>
 
-## Priorities
+## Priority
 
 A button's priority helps control how much attention it draws:
 
@@ -69,7 +68,7 @@ A button's priority helps control how much attention it draws:
 </Col>
 </Columns>
 
-## Tones
+## Tone
 
 Six named tones — `neutral` (default), `brand`, `critical`, `info`,
 `success`, `warning`. Omitting `tone` — or passing an empty string —
@@ -150,7 +149,7 @@ variables instead — `--button-bg-{priority}-hover`,
 </Col>
 </Columns>
 
-## Sizes
+## Size
 
 <Columns>
 <Col>
@@ -376,12 +375,14 @@ dropped (a valid `0` still renders).
   <Button tone="brand" priority="tertiary" underline="solid" label="Solid" />
   <Button tone="brand" priority="tertiary" underline="dashed" label="Dashed" />
   <Button tone="brand" priority="tertiary" underline="dotted" label="Dotted" />
+  <Button tone="brand" priority="quaternary" underline="solid" underlineOnHover label="Hover only" />
 </Preview>
 
 ```tsx folded
 <Button tone="brand" priority="tertiary" underline="solid"  label="Solid" />
 <Button tone="brand" priority="tertiary" underline="dashed" label="Dashed" />
 <Button tone="brand" priority="tertiary" underline="dotted" label="Dotted" />
+<Button tone="brand" priority="quaternary" underline="solid" underlineOnHover label="Hover only" />
 ```
 
 </Col>
@@ -389,7 +390,8 @@ dropped (a valid `0` still renders).
 
 When the button has a [link mode](#link-mode), or you simply want an
 underline stylistically, it supports three styles — `solid`, `dashed`,
-`dotted` (only valid on `priority="tertiary"` / `"quaternary"`).
+`dotted` (only valid on `priority="tertiary"` / `"quaternary"`). Set
+`underlineOnHover` to keep that underline hidden until pointer hover.
 
 </Col>
 </Columns>
@@ -536,11 +538,11 @@ carries a link back to where it came from.
 <ButtonCopy copy={snippet} copyWithUrl label="Copy snippet" />  {/* snippet + source URL */}
 ```
 
-### Lazy content
+### Copy dynamic text
 
-When the content is expensive to compute or changes over time, keep `copy`
-reactive and refresh it in **`onCopyRequest`**, which fires on **pointerdown** —
-the click that follows copies the latest value.
+`copy` is a controlled string. Start it at `''`, then set the new text in
+`onCopyRequest`. The next render updates `copy`, and activation writes that value.
+`onCopyRequest` does not return text. It does not add a polling loop.
 
 <Columns>
 <Col>
@@ -555,22 +557,34 @@ const [report, setReport] = useState('')
 <ButtonCopy
   copy={report}
   label="Copy report"
-  onCopyRequest={() => setReport(generateReport())} // recomputed on pointerdown
+  onCopyRequest={() => setReport(generateReport())}
 />
 ```
 
 </Col>
 <Col>
 
-The value is recomputed on pointerdown and read on the click a moment later, so
-the pointerdown→click gap absorbs the work — including an update that arrives from
-another thread. Only the serializable `copy` string crosses, through the normal
-re-render, so this holds in off-UI-thread runtimes (a worker-rendered app) where a
-callback couldn't. The clipboard API's user-gesture requirement is preserved
-because the write happens on the click.
+`onCopyRequest` fires on pointerdown or Enter/Space keydown, before the click or
+menu selection that writes to the clipboard.
 
 </Col>
 </Columns>
+
+#### Why `copy` is controlled
+
+In a usual React or Preact app, an `onClick` handler can calculate a string and
+call the Clipboard API itself. `ButtonCopy` also supports applications rendered
+from a worker. The DOM copy control and Clipboard API are on the browser UI
+thread, but the application's JSX code can be elsewhere. A function cannot cross
+that boundary as a callable reference.
+
+The request tells the application to calculate the text. Its state update makes
+the renderer send the string as the `copy` attribute. The control then writes that
+attribute during activation, when the browser permits clipboard access. A
+`lazyCopy: () => string` prop could only hide this same state update inside the
+wrapper. A generic return value would also need a defined clipboard format and
+serialization; Anta supports text (`copy`), a DOM region (`copyNode`), and the
+current URL (`copyUrl`).
 
 ### Props
 
@@ -728,7 +742,7 @@ without taking ownership of `onClick`.
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -838,7 +852,6 @@ with no `.dark` selector. The classes below are just for the demos:
       text-transform: uppercase;
       letter-spacing: 0.14em;
       font-weight: 600;
-      font-feature-settings: "ss02", "ss05";
     }
 
     /* Second button — liquid glass: frost (blur + saturate + brightness),

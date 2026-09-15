@@ -1,6 +1,58 @@
-import type { BaseProps } from '../general_types'
+import type { BaseProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { toneStyle } from '../anta_helpers'
+import { neutralToneAttr, toneStyle } from '../anta_helpers'
+
+/* Display shortcut tokens mapped to `KeyboardEvent.key` names. */
+const SHORTCUT_KEYS: Record<string, string> = {
+  '⌘': 'Meta', cmd: 'Meta', command: 'Meta', win: 'Meta', super: 'Meta',
+  '⌃': 'Control', ctrl: 'Control', control: 'Control',
+  '⌥': 'Alt', alt: 'Alt', opt: 'Alt', option: 'Alt',
+  '⇧': 'Shift', shift: 'Shift',
+  '↵': 'Enter', '⏎': 'Enter', enter: 'Enter', return: 'Enter',
+  '⌫': 'Backspace', backspace: 'Backspace',
+  '⌦': 'Delete', del: 'Delete', delete: 'Delete',
+  '⎋': 'Escape', esc: 'Escape', escape: 'Escape',
+  '⇥': 'Tab', tab: 'Tab',
+  '␣': 'Space', space: 'Space',
+  '↑': 'ArrowUp', '↓': 'ArrowDown', '←': 'ArrowLeft', '→': 'ArrowRight',
+  '⇞': 'PageUp', '⇟': 'PageDown', '↖': 'Home', '↘': 'End',
+}
+
+/**
+ * Translate a display `kbd` hint into an `aria-keyshortcuts` value.
+ *
+ * `+` joins a chord, and spaces separate shortcuts: `"⌘K ⌘S"` becomes
+ * `"Meta+K Meta+S"`. Returns `undefined` when no shortcut can be translated.
+ */
+function shortcutChordLabel(kbd: string): string | undefined {
+  const parts: string[] = []
+  let word = ''
+  const flush = () => {
+    if (!word) return
+    parts.push(SHORTCUT_KEYS[word.toLowerCase()] ?? (word.length === 1 ? word.toUpperCase() : word))
+    word = ''
+  }
+  for (const char of kbd) {
+    if (SHORTCUT_KEYS[char]) {
+      flush()
+      parts.push(SHORTCUT_KEYS[char])
+    } else if (char === '+') {
+      flush()
+    } else {
+      word += char
+    }
+  }
+  flush()
+  return parts.length ? parts.join('+') : undefined
+}
+
+function shortcutLabel(kbd: string): string | undefined {
+  // Accept spaces around `+` while preserving whitespace between shortcuts.
+  const shortcuts = kbd.trim().replace(/\s*\+\s*/g, '+').split(/\s+/)
+    .map(shortcutChordLabel)
+    .filter((shortcut): shortcut is string => shortcut !== undefined)
+  return shortcuts.length ? shortcuts.join(' ') : undefined
+}
 
 /** Props shared by every menu item, link or not. */
 export interface MenuItemCommonProps extends BaseProps {
@@ -14,7 +66,11 @@ export interface MenuItemCommonProps extends BaseProps {
    *  option `hint`. Requires `label` (it stacks in a column beneath it). Muted
    *  (`--text-3`) and tracks the row's `tone`. A string, or any node. */
   hint?: React.ReactNode
-  /** A trailing keyboard-shortcut hint, e.g. `"⌘E"`. */
+  /** Trailing shortcut hint, e.g. `"⌘E"`. Anta translates it to
+   *  `aria-keyshortcuts` and hides the visual glyphs from assistive technology.
+   *  Use `+` within a chord and spaces between shortcuts (`"⌘K ⌘S"` becomes
+   *  `"Meta+K Meta+S"`). Pass `aria-keyshortcuts` to override the translation.
+   *  This does not bind the shortcut. */
   kbd?: string
   /** A trailing icon. On a `submenu` item this **overrides** the default
    *  chevron (omit it to keep the chevron); on a normal item it's the trailing
@@ -37,12 +93,11 @@ export interface MenuItemCommonProps extends BaseProps {
    *  gray.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
-  /** Like `tone`, but applied only while the row is `selected` — an unselected row
-   *  stays neutral. The whole selected row (label, icon, tint, and the `checkbox` /
-   *  `radio` indicator) takes the tone. Same value set as `tone`; on a selected row
-   *  `toneSelected` wins over `tone` when both are set.
-   *  @defaultValue neutral */
-  toneSelected?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Apply `tone` to every row state, or only while the row is selected. In
+   *  `selected` scope, an unselected row and its checkbox/radio indicator stay
+   *  neutral.
+   *  @defaultValue 'all' */
+  toneScope?: ToneScope
   /** An opaque value identifying this item, handed back in `onSelect`'s detail
    *  so a shared handler can tell which row was chosen without a per-item
    *  closure. */
@@ -154,7 +209,7 @@ export const MenuItem = ({
   indeterminate,
   indicator,
   tone,
-  toneSelected,
+  toneScope,
   submenu,
   value,
   onSelect,
@@ -193,14 +248,21 @@ export const MenuItem = ({
         ? 'true'
         : 'false'
   const keepTint = selected && (selectionIndicator === undefined || selectionIndicator === 'check')
-  // `toneSelected` tones the whole row (text, icon, tint, indicator) only while the
-  // row is selected; `tone` tones it always. On a selected row toneSelected wins.
-  const effectiveTone = (selected && toneSelected) || tone
+  // In selected scope the tone identity is dormant until the row is selected.
+  const effectiveTone = toneScope === 'selected' && !selected ? undefined : tone
   // A named tone travels as the attribute; a custom color also needs its
   // `--{component}-tone-source` var set inline (the typed `attr()` path only
   // resolves on newer engines) — for the host and, so it adopts the row's tone,
   // the checkbox/radio indicator.
-  const toneAttr = effectiveTone && effectiveTone !== 'neutral' ? effectiveTone : undefined
+  const toneAttr = neutralToneAttr(effectiveTone)
+
+  // `rest` overrides the derived attribute; use the winning value to hide the
+  // visual shortcut from assistive technology.
+  const declaredShortcuts = (rest as Record<string, unknown>)['aria-keyshortcuts']
+  const keyShortcuts = kbd ? shortcutLabel(kbd) : undefined
+  const kbdNode = kbd ? (
+    <kbd aria-hidden={(declaredShortcuts ?? keyShortcuts) ? 'true' : undefined}>{kbd}</kbd>
+  ) : null
 
   // Label block — shared by the element and link renders. A hint stacks under
   // the label in a column; without it the label is a bare row child.
@@ -227,6 +289,7 @@ export const MenuItem = ({
       tabIndex: disabled ? -1 : 0,
       'aria-disabled': disabled ? 'true' : undefined,
       'aria-current': selected ? 'true' : undefined,
+      'aria-keyshortcuts': keyShortcuts,
       tone: toneAttr,
       style: toneStyle(effectiveTone, '--menu-item-tone-source', style),
       onClick: onSelect && !disabled ? (e: any) => onSelect(e, { value, label }) : undefined,
@@ -237,7 +300,7 @@ export const MenuItem = ({
         {icon && <a-icon shape={icon} aria-hidden="true" />}
         {labelNode}
         {children}
-        {kbd && <kbd>{kbd}</kbd>}
+        {kbdNode}
         {iconTrailing && <a-icon shape={iconTrailing} aria-hidden="true" />}
       </a>
     )
@@ -262,6 +325,7 @@ export const MenuItem = ({
       // announces the submenu, and the open branch's visual rides the nested
       // a-menu's off-DOM `:state(open)` (see a-menu-item.css).
       aria-disabled={disabled ? 'true' : undefined}
+      aria-keyshortcuts={keyShortcuts}
       // Pure projection — no DOM walking. `a-menu` decides which item was
       // genuinely activated (on the UI thread, via the composed path) and fires a
       // pre-filtered `menuselect` on it (skipping submenu parents + bubbled child
@@ -317,7 +381,7 @@ export const MenuItem = ({
           the item's last child — the `[submenu]`-scoped CSS positions the chevron
           without relying on that (see a-menu-item.css). */}
       {children}
-      {kbd && <kbd>{kbd}</kbd>}
+      {kbdNode}
       {(() => {
         // A submenu shows the chevron by default; `iconTrailing` overrides it. The
         // `check` selection style reserves a trailing slot on *every* row — a check

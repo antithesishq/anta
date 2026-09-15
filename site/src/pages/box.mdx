@@ -1,0 +1,467 @@
+---
+layout: ../layouts/DocsLayout.astro
+title: Box
+---
+import Playground from '../components/PlaygroundEmbed.astro'
+import Preview from '../components/Preview.astro'
+import PropsTable from '../components/PropsTable.astro'
+import Disclosure from '../components/Disclosure.astro'
+import boxDemoCode from './box.demo.ts'
+import { Box, Tag, Tooltip } from '@antadesign/anta'
+import { BoxContextProbe } from '../components/BoxContextProbe.tsx'
+import { BoxMeasurementProbe } from '../components/BoxMeasurementProbe.tsx'
+import { BoxCanvasPreview } from '../components/BoxCanvasPreview.tsx'
+
+# Box
+
+`Box` is a DOM container with layout props, overflow states, and browser context
+events. For custom wheel, pointer, and touch handling, use [Capture](/capture/).
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  component="Box"
+  layout="side"
+  panelHeight={420}
+  initialCode={boxDemoCode}
+  initialCss={`.preview { align-items: flex-start; justify-content: flex-start; padding: 20px; }`}
+/>
+
+</Disclosure>
+
+## Display
+
+Use `display`, `gap`, and `round` for layout and corners. Numeric lengths use
+pixels; strings accept CSS lengths. A bare `round` fully rounds the corners.
+
+<Preview align="stretch" gap="16px" justify="flex-start">
+  <Box round={8} className="display-demo" style={{ width: '150px' }}>
+    <span className="chip" />
+    <span className="chip" />
+    <span className="chip" />
+  </Box>
+  <Box display="flex" round={8} gap={6} className="display-demo" style={{ width: '150px' }}>
+    <span className="chip" />
+    <span className="chip" />
+    <span className="chip" />
+  </Box>
+  <Box display="grid" round={8} gap={6} className="display-demo" style={{ width: '150px', gridTemplateColumns: '1fr 1fr' }}>
+    <span className="chip" />
+    <span className="chip" />
+    <span className="chip" />
+  </Box>
+  <style is:inline>{`
+    .display-demo { padding: 10px; border: 1px solid var(--border-4); }
+    .display-demo .chip { display: block; flex: 1; width: 100%; height: 22px; border-radius: 4px; background: var(--bg-4-brand); }
+    .display-demo .chip + .chip { margin-top: 6px; }
+    .display-demo[display] .chip + .chip { margin-top: 0; }
+  `}</style>
+</Preview>
+
+```tsx folded
+<Box round={8}><span /></Box>
+<Box display="flex" round={8} gap={6}><span /></Box>
+<Box display="grid" round={8} gap="0.5rem" style={{ gridTemplateColumns: '1fr 1fr' }}><span /></Box>
+```
+
+## Overflow
+
+Box reports overflow, clipping, and scrollability as measurements and CSS
+states. Use `observe="size"` to keep CSS states current. `fade` and
+`onMeasureChange` also enable measurement; without these, Box adds no size
+observers.
+
+`.edge` is a demo class name. Use your own selector.
+
+<Preview align="stretch" gap="16px" justify="flex-start">
+  <Box observe="size" round={8} className="edge" style={{ width: '150px' }}>Content that fits.</Box>
+  <Box observe="size" round={8} className="edge" style={{ width: '150px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+    A label too long for this box.
+  </Box>
+  <Box observe="size" round={8} className="edge" style={{ width: '150px', height: '56px', overflowY: 'auto' }}>
+    One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten.
+  </Box>
+  <style is:inline>{`
+    .edge { padding: 10px; border: 1px solid var(--border-4); }
+    .edge:state(clipped-x) { border-color: var(--border-3-warning); }
+    .edge:state(scrollable-y) { border-color: var(--border-3-info); }
+  `}</style>
+</Preview>
+
+```tsx folded
+<Box observe="size" round={8} className="edge" style={{ width: 150 }}>Content that fits.</Box>
+
+<Box observe="size" round={8} className="edge" style={{ width: 150, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+  A label too long for this box.
+</Box>
+
+<Box observe="size" round={8} className="edge" style={{ width: 150, height: 56, overflowY: 'auto' }}>
+  One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten.
+</Box>
+```
+
+```css folded
+.edge:state(clipped-x) { border-color: var(--border-3-warning); }
+.edge:state(scrollable-y) { border-color: var(--border-3-info); }
+```
+
+### Fading a clipped edge
+
+`fade` masks edges with hidden content and removes the mask as scrolling reveals
+them. `fadeSize` sets its depth. It measures on connection, even off screen.
+
+<Preview align="stretch" gap="16px" justify="flex-start">
+  <Box fade fadeSize={32} round display="flex" gap={6} className="fade-demo" style={{ width: '190px', overflowX: 'auto' }}>
+    <Tag size="small" label="frontend" />
+    <Tag size="small" label="design-system" />
+    <Tag size="small" label="a11y" />
+    <Tag size="small" label="performance" />
+  </Box>
+  <Box fade fadeSize={32} round={8} className="fade-demo" style={{ width: '190px', height: '56px', overflowY: 'auto' }}>
+    One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten. Eleven. Twelve.
+  </Box>
+  <style is:inline>{`
+    .fade-demo {
+      flex-wrap: nowrap;
+      padding: 10px;
+      border: 1px solid var(--border-4);
+    }
+    .fade-demo a-tag { flex: 0 0 auto; }
+  `}</style>
+</Preview>
+
+```tsx folded
+const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
+
+<Box fade fadeSize={32} round display="flex" gap={6} className="fade-demo" style={{ width: 190, overflowX: 'auto' }}>
+  {TAGS.map((t) => <Tag key={t} size="small" label={t} />)}
+</Box>
+
+<Box fade fadeSize={32} round={8} className="fade-demo" style={{ width: 190, height: 56, overflowY: 'auto' }}>
+  One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten. Eleven. Twelve.
+</Box>
+```
+
+```css folded
+.fade-demo { flex-wrap: nowrap; padding: 10px; border: 1px solid var(--border-4); }
+.fade-demo a-tag { flex: 0 0 auto; }
+```
+
+The mask clips to the padding box. It preserves the Box border, shadows, and
+focus ring when no edge is hidden.
+
+To style hidden edges without `fade`, use `observe="size"` and the
+`hidden-start-x`, `hidden-end-x`, `hidden-start-y`, or `hidden-end-y` CSS states.
+
+### Tooltip on clipped content
+
+`Tooltip truncatedOnly` shows when Box clips content on either axis, including
+wrapped children.
+
+<Preview align="stretch" gap="16px" justify="flex-start">
+  <Box display="flex" round={8} gap={6} className="tag-box" style={{ width: '190px', height: '34px' }}>
+    <Tag size="small" label="frontend" />
+    <Tag size="small" label="design-system" />
+    <Tag size="small" label="a11y" />
+    <Tag size="small" label="performance" />
+    <Tooltip truncatedOnly>
+      frontend · design-system · a11y · performance
+    </Tooltip>
+  </Box>
+  <Box display="flex" round={8} gap={6} className="tag-box" style={{ width: '190px', height: '34px' }}>
+    <Tag size="small" label="frontend" />
+    <Tooltip truncatedOnly>frontend</Tooltip>
+  </Box>
+  <style is:inline>{`
+    .tag-box {
+      flex-wrap: wrap;
+      padding: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border-4);
+    }
+  `}</style>
+</Preview>
+
+```tsx folded
+const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
+
+<Box display="flex" round={8} gap={6} className="tag-box" style={{ height: 34 }}>
+  {TAGS.map((t) => <Tag key={t} size="small" label={t} />)}
+  <Tooltip truncatedOnly>{TAGS.join(' · ')}</Tooltip>
+</Box>
+```
+
+```css folded
+.tag-box { flex-wrap: wrap; padding: 6px; overflow: hidden; }
+```
+
+## Measurements
+
+`onMeasureChange` reports one frame after observation starts and when the Box or
+its content changes. `changed` contains changed fields; `current` is the full
+snapshot. Reporting pauses off screen and resumes when Box returns.
+
+Resize or scroll the Box to update its measurements.
+
+<Preview align="stretch">
+  <BoxMeasurementProbe client:only="preact" />
+  <style is:inline>{`
+    .measure-probe { display: grid; gap: 12px; width: 100%; }
+    .measure-probe-box {
+      resize: both;
+      overflow: auto;
+      inline-size: 320px;
+      block-size: 132px;
+      min-inline-size: 120px;
+      min-block-size: 64px;
+      padding: 10px;
+      border: 1px solid var(--border-4);
+    }
+    .measure-probe-wide { inline-size: 520px; padding-block: 6px; }
+    .measure-probe-readout { display: flex; flex-wrap: wrap; gap: 6px; }
+  `}</style>
+</Preview>
+
+```tsx folded title="measurechange"
+const [measurement, setMeasurement] = useState<BoxMeasurement | null>(null)
+
+<Box
+  round={8}
+  className="measure-probe-box"
+  onMeasureChange={(_, { current }) => setMeasurement(current)}
+>
+  <Text size="small" priority="tertiary">Resize or scroll this Box.</Text>
+  <div className="measure-probe-wide">wide content, so both axes overflow</div>
+  <div className="measure-probe-wide">and a second line, so the vertical axis does too</div>
+  <div className="measure-probe-wide">and a third</div>
+</Box>
+
+<div className="measure-probe-readout">
+  {Object.entries(measurement ?? {}).map(([field, value]) => (
+    <Tag key={field} size="small" label={field} value={String(value)} />
+  ))}
+</div>
+```
+
+```css folded
+.measure-probe-box {
+  resize: both;
+  overflow: auto;
+  inline-size: 320px;
+  block-size: 132px;
+  min-inline-size: 120px;
+  min-block-size: 64px;
+  padding: 10px;
+  border: 1px solid var(--border-4);
+}
+.measure-probe-wide { inline-size: 520px; padding-block: 6px; }
+.measure-probe-readout { display: flex; flex-wrap: wrap; gap: 6px; }
+```
+
+See the [measurement fields](#boxmeasurement). Overflow fields map to kebab-case
+CSS states, such as `clippedX` → `:state(clipped-x)`.
+
+## Context
+
+`onContextChange` reports theme, focus, and browser context as
+`{ changed, current }`. See the [context fields](#boxcontext). For CSS, use
+`:focus-within`, mode classes, and media queries instead.
+
+Switch themes, resize, or zoom to update the preview. The `.light` Box keeps its
+local `mode`; `globalMode` follows the document. Browser and OS versions may be
+frozen, so use `pointer`, `hover`, or feature tests to choose behavior.
+
+<Preview justify="flex-start" minHeight={140}>
+  <BoxContextProbe client:only="preact" />
+  <style is:inline>{`
+    .context-probe { display: grid; gap: 8px; width: 100%; }
+    .context-probe-box {
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--border-4);
+      background: var(--bg-1);
+      color: var(--text-1);
+    }
+  `}</style>
+</Preview>
+
+```tsx folded title="contextchange"
+import { useState } from 'react'
+import { Box, Tag, Text, type BoxContext } from '@antadesign/anta'
+
+function ScopedContext() {
+  const [context, setContext] = useState<BoxContext | null>(null)
+
+  return (
+    <div className="light">
+      <Box display="flex" round={8} gap={6} className="context-probe-box"
+           onContextChange={(_, { current }) => setContext(current)}>
+        <Text size="small" priority="tertiary">inside a .light scope</Text>
+        <Tag size="small" tone="brand" label="mode" value={context?.mode ?? '…'} />
+        <Tag size="small" label="globalMode" value={context?.globalMode ?? '…'} />
+      </Box>
+    </div>
+  )
+}
+```
+
+```css folded
+.context-probe-box {
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border-4);
+  background: var(--bg-1);
+  color: var(--text-1);
+}
+```
+
+<Disclosure title="Canvas-related styles" id="canvas" level={3}>
+
+Use `context.font` and `devicePixelRatio` to match canvas text to the DOM.
+The first line is DOM text; the second is drawn on canvas. Switch themes or
+zoom to update both. `context.inset` also reports border and padding when you
+need to align drawing coordinates with the Box's content edge.
+
+Set `ctx.font` before spacing and direction. Box assembles `font.shorthand`
+because `getComputedStyle(element).font` can be empty. Stretch and variant caps
+remain separate fields; percentage stretch is invalid in the shorthand.
+
+<Preview align="stretch">
+  <BoxCanvasPreview client:only="preact" />
+  <style is:inline>{`
+    .canvas-probe { width: 100%; font-size: 20px; line-height: 32px; color: var(--text-1); }
+    .canvas-probe canvas { display: block; width: 100%; height: 48px; }
+  `}</style>
+</Preview>
+
+```tsx folded title="canvas"
+const canvasRef = useRef<HTMLCanvasElement>(null)
+
+<Box className="canvas-probe"
+  onContextChange={(_, { current }) => {
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext('2d')
+    if (!canvas || !ctx) return
+
+    const { font, devicePixelRatio: dpr } = current
+    canvas.width = canvas.clientWidth * dpr
+    canvas.height = canvas.clientHeight * dpr
+    ctx.scale(dpr, dpr)
+
+    ctx.font = font.shorthand
+    ctx.letterSpacing = font.letterSpacing
+    ctx.wordSpacing = font.wordSpacing
+    ctx.direction = font.direction === 'rtl' ? 'rtl' : 'ltr'
+    ctx.fillStyle = font.color
+
+    ctx.fillText('Matches the DOM', 0, font.lineHeight ?? font.size)
+  }}
+>
+  <span>Matches the DOM</span>
+  <canvas ref={canvasRef} aria-label="Canvas text using the Box font and color" />
+</Box>
+```
+
+```css folded
+.canvas-probe { width: 100%; font-size: 20px; line-height: 32px; color: var(--text-1); }
+.canvas-probe canvas { display: block; width: 100%; height: 48px; }
+```
+
+</Disclosure>
+
+<Disclosure title="Component props" level={2} open>
+
+<PropsTable component="Box" />
+
+<Disclosure title="BoxMeasurement" level={3}>
+
+<PropsTable component="BoxMeasurement" label="Field" />
+
+</Disclosure>
+
+<Disclosure title="BoxContext" level={3}>
+
+<PropsTable component="BoxContext" label="Field" />
+
+</Disclosure>
+
+<Disclosure title="BoxFont" level={3}>
+
+`context.font`, the resolved text style.
+
+<PropsTable component="BoxFont" label="Field" />
+
+</Disclosure>
+
+<Disclosure title="BoxInset" level={3}>
+
+`context.inset`, the distance from the border edge to the content edge.
+
+<PropsTable component="BoxInset" label="Field" />
+
+</Disclosure>
+
+</Disclosure>
+
+<Disclosure title="Web component" level={2}>
+
+Use `<a-box>` without JSX. Events are non-bubbling `CustomEvent`s with the same
+`detail`. Set `observe="size"`, `"context"`, or `"all"` explicitly; adding a
+listener does not enable observation. A bare `observe` means `"all"`.
+
+<Preview align="stretch">
+  <a-box display="grid" gap="8px" round="12px" observe="all"
+         style="--box-gap: 8px; --box-round: 12px; padding: 12px; border: 1px solid var(--border-4)">
+    <span>Summary content</span>
+    <span>Observation enabled</span>
+  </a-box>
+</Preview>
+
+```html folded title="a-box"
+<a-box display="grid" gap="8px" round="12px" observe="all"
+       style="--box-gap: 8px; --box-round: 12px; padding: 12px; border: 1px solid var(--border-4)">
+  <span>Summary content</span>
+  <span>Observation enabled</span>
+</a-box>
+```
+
+Import `@antadesign/anta/elements/a-box` to register the element. Listen for
+`measurechange` and `contextchange` with `addEventListener`.
+`box.measurement`, `box.context`, and `box.isTruncated` read values synchronously.
+
+</Disclosure>
+
+<Disclosure title="Styling" level={2}>
+
+Your `className` and `style` override `display`, `gap`, and `round` through the
+`anta.components` CSS layer.
+
+Without typed CSS `attr()` support, raw `gap`, `round`, and `fade-size` length
+attributes need matching custom properties. The JSX wrapper sets these for you:
+
+<Preview align="stretch">
+  <a-box display="flex" gap round fade class="raw-box"
+         style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">
+    <span>Layout</span><span>Context</span><span>Measurements</span>
+  </a-box>
+  <style is:inline>{`
+    .raw-box { width: 190px; overflow: auto; padding: 12px; border: 1px solid var(--border-4); }
+    .raw-box span { flex: 0 0 auto; }
+  `}</style>
+</Preview>
+
+```html folded
+<a-box display="flex" gap round fade class="raw-box"
+       style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">
+  <span>Layout</span><span>Context</span><span>Measurements</span>
+</a-box>
+```
+
+```css folded
+.raw-box { width: 190px; overflow: auto; padding: 12px; border: 1px solid var(--border-4); }
+.raw-box span { flex: 0 0 auto; }
+```
+
+</Disclosure>

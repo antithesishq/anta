@@ -161,7 +161,7 @@ export class AToastElement extends HTMLElementBase {
       this.#exitTimer = undefined
     }
     this.#leaving = false
-    this.#internals?.states.delete('leaving')
+    this.#internals?.states?.delete('leaving')
     this.#startTimer()
   }
 
@@ -338,7 +338,7 @@ export class AToastElement extends HTMLElementBase {
     this.#leaving = true
     this.#clearTimer()
     this.#pauseCountdown()
-    this.#internals?.states.add('leaving')
+    this.#internals?.states?.add('leaving')
     const wait = this.#exitDuration()
     this.#exitTimer = this.view.setTimeout(() => {
       this.#exitTimer = undefined

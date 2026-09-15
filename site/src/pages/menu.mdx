@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Menu
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -11,6 +11,7 @@ import Col from '../components/Col.astro'
 import menuDemoCode from './menu.demo.ts'
 import MenuNestedDemo from '../components/MenuNestedDemo'
 import MenuCopyDemo from '../components/MenuCopyDemo'
+import MenuContainmentDemo from '../components/MenuContainmentDemo'
 import { Menu, MenuItem, MenuSeparator, MenuGroup, Button, Input, Tag } from '@antadesign/anta'
 
 # Menu
@@ -33,7 +34,6 @@ open with `event.preventDefault()`. You can also keep a `ref` and call
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Menu"
   layout="side"
   panelHeight={440}
@@ -88,7 +88,7 @@ const onSelect = (e, { value }) => act(value)
 </Col>
 </Columns>
 
-## Tones
+## Tone
 
 <Columns reverse>
 <Col>
@@ -101,9 +101,8 @@ action. Pass **any CSS color** for a one-off custom tone — its hue and chroma 
 kept while the lightness is pinned to match the brand text (resolved through
 `--menu-item-tone-source`).
 
-`toneSelected` applies the tone the same way, but **only while the row is `selected`**
-— an unselected row stays neutral. It's the checkable-menu counterpart to `tone`
-(`Select` uses it to tone the chosen row).
+`toneScope="selected"` applies `tone` **only while the row is `selected`** — an
+unselected row stays neutral. `Select` uses the same pair to tone chosen rows.
 
 </Col>
 <Col>
@@ -441,6 +440,11 @@ run off the UI thread. Walking out from the click, the nearest marker wins:
   element (or a "Done" button inside a `data-menu-open` region) can dismiss the
   menu without being a `MenuItem`.
 
+Selecting an item won't also click the region the menu sits in — the activation
+click stops at the surface, so a `<Menu>` inside a clickable row or card is safe.
+Other events still bubble; pass `stopPropagation` (`true` for clicks, or event
+names like `"click pointerdown"`) to contain those too.
+
 For programmatic open/close from app state, drive the `open` prop (the `state`
 attribute, `"open"` / `"closed"`) and react via `onStateChange`, or keep a `ref`
 and call `.open()` / `.close()` / `.toggle()`.
@@ -477,6 +481,47 @@ and call `.open()` / `.close()` / `.toggle()`.
     <button data-menu-close>Done</button>
   </div>
 </Menu>
+```
+
+</Col>
+</Columns>
+
+## Inside a clickable row
+
+<Columns reverse>
+<Col>
+
+A `<Menu>` can live inside a clickable row or card without its items triggering
+that row's `onClick` — selecting an item is contained at the menu surface. In the
+row below, the counter moves when you click the row, but not when you pick a menu
+item. The kebab trigger is a plain button, so its click is stopped by hand; the menu
+items need nothing. To contain more (a slotted control's clicks, say), add
+`stopPropagation` to the `<Menu>`.
+
+</Col>
+<Col>
+
+<Preview>
+  <MenuContainmentDemo client:visible />
+</Preview>
+
+```tsx folded
+<div className="row" onClick={openRow}>
+  <span>Quarterly report.pdf</span>
+  {/* the trigger is a plain button — stop its click so opening the
+      menu isn't a row click; the menu items need no handling */}
+  <Button
+    icon="dots-vertical"
+    aria-label="File actions"
+    onClick={(e) => e.stopPropagation()}
+  />
+  <Menu>
+    <MenuItem icon="edit" label="Rename" onSelect={rename} />
+    <MenuItem icon="copy" label="Duplicate" onSelect={duplicate} />
+    <MenuSeparator />
+    <MenuItem icon="trash" tone="critical" label="Delete" onSelect={confirmDelete} />
+  </Menu>
+</div>
 ```
 
 </Col>
@@ -621,11 +666,12 @@ chevron stay centered on the row, so it composes with a trailing counter.
 <Columns reverse>
 <Col>
 
-`MenuItemCopy` is a row that copies to the clipboard when chosen — `copy` for a
-literal string, `copyNode` for a DOM region. It composes a `<MenuItem>` with a
-slotted `<a-copy>` element that performs the write, and keeps the menu open on
-select so the check / retone feedback shows. `onCopied(ok)` fires after each
-attempt.
+`MenuItemCopy` is a row that copies to the clipboard when chosen: `copy` for a
+string, `copyNode` for a DOM region, or `copyUrl` for the current URL. It composes
+a `<MenuItem>` with a slotted `<a-copy>` element that performs the write, and
+keeps the menu open on select so the check / retone feedback shows. `onCopied(ok)`
+fires after each attempt. `iconPlacement="trailing"` moves the feedback glyph to
+the end of the row; `"none"` shows a cursor-near confirmation instead.
 
 Copy sits alongside normal items, so a "Share" menu can mix a copy-link row with
 navigating links.
@@ -700,7 +746,7 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 

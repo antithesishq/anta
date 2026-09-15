@@ -1,5 +1,5 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
-import { toneStyle, roundStyle, roundAttr, lengthStyle, cssLength } from '../anta_helpers'
+import { neutralToneAttr, toneStyle, roundStyle, roundAttr, lengthStyle, cssLength } from '../anta_helpers'
 
 /** A text marker displayed below the slider rail. Markers are labels only; they
  * do not add dots or ticks to the rail. */
@@ -56,7 +56,7 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   trackSize?: number | string
   /** Diameter of the thumb. Numbers use pixels; strings are CSS lengths. Keep
    * it at least as large as `trackSize`.
-   * @defaultValue 18 */
+   * @defaultValue 16 */
   thumbSize?: number | string
   /** Fill the thumb with its resolved border color. This follows `thumbTone`
    * and interactive states.
@@ -201,8 +201,8 @@ export const Slider = ({
       step={step}
       name={name}
       disabled={disabled ? '' : undefined}
-      tone={tone && tone !== 'neutral' ? tone : undefined}
-      thumb-tone={thumbTone && thumbTone !== 'neutral' ? thumbTone : undefined}
+      tone={neutralToneAttr(tone)}
+      thumb-tone={neutralToneAttr(thumbTone)}
       size={size && size !== 'medium' ? size : undefined}
       track-size={trackSizeValue}
       thumb-size={thumbSizeValue}

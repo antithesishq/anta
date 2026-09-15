@@ -20,12 +20,44 @@
  */
 import { moduleManifest } from './modules.ts'
 
-let initialized: Promise<void> | null = null
+type Esbuild = typeof import('esbuild-wasm/esm/browser')
 
-async function ensureInit(): Promise<typeof import('esbuild-wasm')> {
-  const esbuild = await import('esbuild-wasm')
-  if (!initialized) {
+let initialized: Promise<void> | null = null
+let loadEsbuild = () => import('esbuild-wasm/esm/browser')
+
+type EsbuildRuntime = {
+  module: Esbuild
+  initialized: Promise<void>
+}
+
+const runtime = globalThis as typeof globalThis & {
+  __antaPlaygroundEsbuild?: EsbuildRuntime
+}
+
+/**
+ * Supply the browser compiler module used by the playground. The docs runtime
+ * sets this to its independently cacheable compiler bundle; leaving the
+ * default keeps this helper usable in isolation.
+ */
+export function setEsbuildLoader(loader: () => Promise<Esbuild>) {
+  initialized = null
+  loadEsbuild = loader
+}
+
+async function ensureInit(): Promise<Esbuild> {
+  // The package root selects its CommonJS browser build. Use its ESM browser
+  // entry by default; the docs runtime replaces this loader with a stable
+  // content-hashed compiler bundle.
+  const esbuild = await loadEsbuild()
+  if (runtime.__antaPlaygroundEsbuild?.module === esbuild) {
+    initialized = runtime.__antaPlaygroundEsbuild.initialized
+  } else if (!initialized) {
     initialized = esbuild.initialize({ wasmURL: '/esbuild.wasm', worker: true })
+    // The docs router can load a new Playground app bundle while the compiler
+    // vendor chunk stays cached. Keep the initialization promise on the page,
+    // not just this app module, so that fresh bundle cannot initialize the
+    // same esbuild module a second time.
+    runtime.__antaPlaygroundEsbuild = { module: esbuild, initialized }
   }
   await initialized
   return esbuild
@@ -52,7 +84,7 @@ export async function bundle(
   userCode: string,
   userStyles?: string,
 ): Promise<BundleResult> {
-  let esbuild: typeof import('esbuild-wasm')
+  let esbuild: Esbuild
   try {
     esbuild = await ensureInit()
   } catch (err: any) {
@@ -186,6 +218,24 @@ function formatErrors(errors: any[]): string {
  * `null` if no JSX block is found.
  */
 function wrapWithRender(code: string): string | null {
+  // A `Demo` function is the normal TSX shape for a playground example.
+  // TypeScript's language service parses JSX after a bare top-level `<` as a
+  // type comparison, while JSX in the function's return is unambiguous. The
+  // function is a playground convention, not an application export. Accept
+  // the older default-export spelling while existing examples migrate.
+  const demoFunction = /^\s*(?:export\s+default\s+)?function\s+(Demo)\s*\(/m.exec(code)
+  if (demoFunction) {
+    const lines = code.split('\n')
+    const firstJsxLine = lines.findIndex((line) => line.trimStart().startsWith('<'))
+    const beforeJsx = firstJsxLine === -1 ? code : lines.slice(0, firstJsxLine).join('\n')
+    const autoImport = buildAntaAutoImport(beforeJsx, code)
+    const componentName = demoFunction[1]
+    return `${autoImport}${code.trimEnd()}
+import { render as __demo_render__ } from 'preact'
+__demo_render__(<${componentName} />, document.getElementById('root'))
+`
+  }
+
   const lines = code.split('\n')
   let jsxStart = -1
   for (let i = 0; i < lines.length; i++) {

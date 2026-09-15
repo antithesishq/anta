@@ -1,5 +1,6 @@
 ---
 import DocsLayout from '../layouts/DocsLayout.astro'
+import AntaLogo from '../components/AntaLogo'
 import { Card, Text, Title, Tooltip } from '@antadesign/anta'
 import { StickerThumbsUpAnimated } from '@antadesign/stickers'
 ---
@@ -9,7 +10,7 @@ import { StickerThumbsUpAnimated } from '@antadesign/stickers'
 
   <div class="overview-intro">
     <Text size="large" className="overview-copy">
-      <p><b>Anta</b> is an opinionated design system.<br />Here is why you might like it:</p>
+      <p><AntaLogo size={28} style={{ marginRight: 4, marginTop: -5 }} /><b>Anta</b> is an opinionated design system.</p>
       <ul>
         <li>it's carefully made <dfn>for web apps<Tooltip follow>Import the whole library (~200kb gzipped)<br />or selected components to minimize your bundle.<br />There is <b>no CSS-in-JS runtime</b>.</Tooltip></dfn></li>
         <li>it has a <dfn>clean, attribute-driven DOM<Tooltip follow><b>No piles of utility classes and wrapping containers</b>.<br />Variants, tones, and behavior are attributes: <code>tone="critical"</code>, <code>size="large"</code>.</Tooltip></dfn></li>
@@ -36,17 +37,17 @@ import { StickerThumbsUpAnimated } from '@antadesign/stickers'
 </DocsLayout>
 
 <style>
-  h1 { margin-inline-start: 0; }
-  .overview-notice { margin-block: 1rem 2rem; margin-inline: 0; max-width: 62ch; }
+  h1,
+  .overview-intro { max-width: 640px; }
+  .overview-notice { margin-block: 1rem 2rem; max-width: 62ch; }
   .overview-intro {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
-    margin-inline-start: 0;
   }
   .overview-sticker { flex: none; transform: scaleX(-1); }
   .overview-copy { flex: 1 1 auto; min-width: min(100%, 33ch); max-width: 33ch; }
-  .overview-copy ul { padding-left: 1.5ch; }
+  .overview-copy ul { padding-left: 2.25ch; }
   @media (max-width: 640px) {
     .overview-intro { flex-direction: column; align-items: flex-start; }
     .overview-sticker { order: -1; }

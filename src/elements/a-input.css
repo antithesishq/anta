@@ -1,10 +1,10 @@
-@layer anta {
+@layer anta.components {
   /* Token surface — all literal/role-pointed values live here so external CSS
      can re-point a single instance or a whole theme. Text/bg/border point at
      Anta's theme-aware role tokens (so dark mode is mostly free); the focus ring
      uses the global `--focus-ring` token directly (it themes itself — no per-input
-     token, no `.dark` override needed); the error border is the one literal (no
-     role token matches it) and gets a `.dark` override below. Sizes set the field
+     token needed); the error border is the one literal with light and dark values
+     selected by `light-dark()`. Sizes set the field
      height plus a per-size type scale (small 13/16 · medium 15/20 · large 17/22)
      and icon size (14/16/18); the field min-height still anchors the box to the
      same-size Button. */
@@ -77,8 +77,8 @@
     font-family: var(--sans-serif);
     font-size: 15px;
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -173,7 +173,10 @@
      `Input` wrapper's `round={20}` → inline `--input-round`) sets a custom radius.
      Read by the shadow `.field` rule (the var inherits into the shadow). */
   a-input[round] {
-    --input-round: attr(round type(<length>), 999px);
+    --input-round: 999px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --input-round: attr(round type(<length>), 999px);
+    }
   }
 
   /* Custom tone — a literal CSS color tints the resting border (hover thickens
@@ -186,12 +189,14 @@
     /* Fallback is the default border (not transparent) so a non-color value —
        e.g. a stray `tone="brand"` (named tones live on `status`, not `tone`) —
        degrades to the normal border instead of vanishing. */
-    --input-tone-source: attr(tone type(<color>), var(--border-2));
+    --input-tone-source: var(--border-2);
 
-    --input-border:       oklch(from var(--input-tone-source) 0.7 calc(c * 0.8) h);
-
-    .dark & {
-      --input-border:       oklch(from var(--input-tone-source) 0.5 calc(c * 0.8) h);
+    --input-border: light-dark(
+      oklch(from var(--input-tone-source) 0.7 calc(c * 0.8) h),
+      oklch(from var(--input-tone-source) 0.5 calc(c * 0.8) h)
+    );
+    @supports (color: attr(probe type(<color>), red)) {
+      --input-tone-source: attr(tone type(<color>), var(--border-2));
     }
   }
 
@@ -206,16 +211,16 @@
   a-input[status="success"]  { --input-status-source: var(--anta-seed-success);  --input-bg: var(--bg-2-success);  --input-hint: var(--text-2-success); }
   a-input[status="info"]     { --input-status-source: var(--anta-seed-info);     --input-bg: var(--bg-2-info);     --input-hint: var(--text-2-info); }
   a-input[status="brand"]    { --input-status-source: var(--anta-seed-brand);    --input-bg: var(--bg-2-brand);    --input-hint: var(--text-2-brand); }
-  a-input[status] {
-    --input-border:       oklch(from var(--input-status-source) 0.58 c h);
-  }
-  .dark a-input[status] {
-    --input-border:       oklch(from var(--input-status-source) 0.52 c h);
+  a-input[status]:not([status="neutral"]) {
+    --input-border: light-dark(
+      oklch(from var(--input-status-source) 0.58 c h),
+      oklch(from var(--input-status-source) 0.52 c h)
+    );
   }
 
   a-input:disabled {
-    --input-bg: #44374b12;
-    --input-border: #44374b26;
+    --input-bg: light-dark(#44374b12, #e4d1ef0d);
+    --input-border: light-dark(#44374b26, #e4d1ef1f);
     --input-text: var(--text-4);
     --input-label: var(--text-4);
     --input-hint: var(--text-5);
@@ -223,19 +228,8 @@
   }
 
   a-input[status]:disabled {
-    --input-bg: #44374b12;
-    --input-border: #44374b26;
-    --input-hint: var(--text-5);
-  }
-
-  .dark a-input:disabled {
-    --input-bg: #e4d1ef0d;
-    --input-border: #e4d1ef1f;
-  }
-
-  .dark a-input[status]:disabled {
-    --input-bg: #e4d1ef0d;
-    --input-border: #e4d1ef1f;
+    --input-bg: light-dark(#44374b12, #e4d1ef0d);
+    --input-border: light-dark(#44374b26, #e4d1ef1f);
     --input-hint: var(--text-5);
   }
 
@@ -275,7 +269,8 @@
     [type="month"],
     [type="time"],
     [type="week"]
-  ) {
+  ),
+  textarea[data-anta] {
     --native-field-block-size: 28px;
     --native-field-padding-block: 4px;
     --native-field-font-size: 15px;
@@ -295,14 +290,22 @@
     box-shadow: inset 0 0 0 0.5px var(--native-field-border);
     color: var(--text-1);
     caret-color: currentColor;
-    color-scheme: light;
+    color-scheme: inherit;
     font-family: var(--sans-serif);
     font-size: var(--native-field-font-size);
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
+  }
+  /* Let `rows` or the author set height; the field size remains the minimum.
+     Native textareas resize vertically but do not autogrow. */
+  textarea[data-anta] {
+    block-size: auto;
+    min-block-size: var(--native-field-block-size);
+    resize: vertical;
+    overflow-y: auto;
   }
   /* Chrome exposes a datalist's hover chevron through this proprietary picker
      part. Its user-agent style switches the part's opacity on hover, so retain
@@ -310,23 +313,6 @@
   input[data-anta][list]::-webkit-calendar-picker-indicator {
     opacity: 0 !important;
     pointer-events: none !important;
-  }
-  .dark input[data-anta]:is(
-    :not([type]),
-    [type="text"],
-    [type="search"],
-    [type="email"],
-    [type="number"],
-    [type="password"],
-    [type="tel"],
-    [type="url"],
-    [type="date"],
-    [type="datetime-local"],
-    [type="month"],
-    [type="time"],
-    [type="week"]
-  ) {
-    color-scheme: dark;
   }
   @media (hover: hover) and (pointer: fine) {
     input[data-anta]:is(
@@ -343,7 +329,8 @@
       [type="month"],
       [type="time"],
       [type="week"]
-    ):not(:disabled):hover {
+    ):not(:disabled):hover,
+    textarea[data-anta]:not(:disabled):hover {
       box-shadow: inset 0 0 0 1px var(--native-field-border);
     }
   }
@@ -361,7 +348,8 @@
     [type="month"],
     [type="time"],
     [type="week"]
-  ):focus {
+  ):focus,
+  textarea[data-anta]:focus {
     box-shadow: inset 0 0 0 1px var(--native-field-border);
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
@@ -380,7 +368,8 @@
     [type="month"],
     [type="time"],
     [type="week"]
-  ):disabled {
+  ):disabled,
+  textarea[data-anta]:disabled {
     background: color-mix(in oklch, var(--text-1) 4%, var(--bg-1));
     box-shadow: inset 0 0 0 0.5px color-mix(in oklch, var(--text-1) 15%, transparent);
     color: var(--text-4);
@@ -416,15 +405,14 @@
     padding: 0;
     border: 0;
     color: var(--text-2);
-    color-scheme: light;
+    color-scheme: inherit;
     font-family: var(--sans-serif);
     font-size: var(--native-file-font-size);
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     line-height: var(--native-file-line-height);
   }
-  .dark input[data-anta][type="file"] { color-scheme: dark; }
   input[data-anta][type="file"]::file-selector-button {
     box-sizing: border-box;
     min-block-size: var(--native-file-block-size);
@@ -436,6 +424,7 @@
     background: color-mix(in oklch, var(--text-1) 10%, transparent);
     box-shadow: inset 0 0 1px color-mix(in oklch, currentColor, transparent 90%);
     font: inherit;
+    font-variation-settings: inherit;
     font-weight: 450;
     letter-spacing: 0.05ch;
     line-height: var(--native-file-line-height);
@@ -476,7 +465,10 @@
     --native-field-line-height: 20px;
     --native-field-round: 4px;
     --native-field-border: var(--border-2);
-    --native-select-picker-bg: color-mix(in oklch, var(--bg-1) 90%, transparent);
+    --native-select-picker-bg: light-dark(
+      color-mix(in oklch, var(--bg-1) 90%, transparent),
+      color-mix(in oklch, var(--bg-1) 78%, transparent)
+    );
     --native-select-picker-radius: var(--radius-md, 8px);
     --native-select-picker-border: 1px solid var(--border-3);
     --native-select-picker-shadow:
@@ -500,23 +492,22 @@
     background: var(--bg-1);
     box-shadow: inset 0 0 0 0.5px var(--native-field-border);
     color: var(--text-1);
-    color-scheme: light;
+    color-scheme: inherit;
     font-family: var(--sans-serif);
     font-size: var(--native-field-font-size);
     font-weight: 400;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     line-height: var(--native-field-line-height);
     transition: box-shadow 120ms ease;
   }
+  /* Dark mode adds an inset ring to the shadow list. `light-dark()` carries
+     colors only, so this geometry stays in a class rule. */
   .dark select[data-anta] {
-    --native-select-picker-bg: color-mix(in oklch, var(--bg-1) 78%, transparent);
     --native-select-picker-shadow:
       0 2px 8px color-mix(in oklch, black 50%, transparent),
       0 12px 32px color-mix(in oklch, black 40%, transparent),
       inset 0 0 0 1px color-mix(in oklch, white 8%, transparent);
-
-    color-scheme: dark;
   }
   @media (hover: hover) and (pointer: fine) {
     select[data-anta]:not(:disabled):hover {
@@ -550,7 +541,8 @@
       [type="time"],
       [type="week"]
     ),
-    select[data-anta] {
+    select[data-anta],
+    textarea[data-anta] {
       border: 1px solid ButtonBorder;
     }
   }
@@ -572,7 +564,8 @@
     [type="time"],
     [type="week"]
   )[data-anta-size="small"],
-  select[data-anta][data-anta-size="small"] {
+  select[data-anta][data-anta-size="small"],
+  textarea[data-anta][data-anta-size="small"] {
     --native-field-block-size: 24px;
     --native-field-padding-block: 2px;
     --native-field-font-size: 13px;
@@ -593,7 +586,8 @@
     [type="time"],
     [type="week"]
   )[data-anta-size="large"],
-  select[data-anta][data-anta-size="large"] {
+  select[data-anta][data-anta-size="large"],
+  textarea[data-anta][data-anta-size="large"] {
     --native-field-block-size: 32px;
     --native-field-padding-block: 5px;
     --native-field-font-size: 17px;
@@ -614,8 +608,12 @@
     [type="time"],
     [type="week"]
   )[round],
-  select[data-anta][round] {
-    --native-field-round: attr(round type(<length>), 999px);
+  select[data-anta][round],
+  textarea[data-anta][round] {
+    --native-field-round: 999px;
+    @supports (border-radius: attr(probe type(<length>), 1px)) {
+      --native-field-round: attr(round type(<length>), 999px);
+    }
   }
   input[data-anta]:is(
     :not([type]),
@@ -631,26 +629,16 @@
     [type="month"],
     [type="time"],
     [type="week"]
-  )[tone]:not([tone=""]) {
-    --native-field-tone: attr(tone type(<color>), var(--border-2));
-    --native-field-border: oklch(from var(--native-field-tone) 0.7 calc(c * 0.8) h);
-  }
-  .dark input[data-anta]:is(
-    :not([type]),
-    [type="text"],
-    [type="search"],
-    [type="email"],
-    [type="number"],
-    [type="password"],
-    [type="tel"],
-    [type="url"],
-    [type="date"],
-    [type="datetime-local"],
-    [type="month"],
-    [type="time"],
-    [type="week"]
-  )[tone]:not([tone=""]) {
-    --native-field-border: oklch(from var(--native-field-tone) 0.5 calc(c * 0.8) h);
+  )[tone]:not([tone=""]),
+  textarea[data-anta][tone]:not([tone=""]) {
+    --native-field-tone: var(--border-2);
+    --native-field-border: light-dark(
+      oklch(from var(--native-field-tone) 0.7 calc(c * 0.8) h),
+      oklch(from var(--native-field-tone) 0.5 calc(c * 0.8) h)
+    );
+    @supports (color: attr(probe type(<color>), red)) {
+      --native-field-tone: attr(tone type(<color>), var(--border-2));
+    }
   }
   @supports (appearance: base-select) {
     select[data-anta],
@@ -675,6 +663,7 @@
       color: inherit;
       cursor: pointer;
       font: inherit;
+      font-variation-settings: inherit;
       text-align: start;
     }
     select[data-anta] > button > selectedcontent {
@@ -718,10 +707,10 @@
       color: var(--native-select-option-color);
       cursor: pointer;
       font-family: var(--sans-serif);
-      font-feature-settings: 'ss02', 'ss05', 'tnum';
       font-size: 14px;
       font-weight: 400;
-      font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+      font-stretch: normal;
+      font-style: normal;
       letter-spacing: normal;
       line-height: 16px;
       text-transform: none;

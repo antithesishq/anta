@@ -1,6 +1,6 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { nativeStateChange, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
+import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
 
@@ -75,6 +75,8 @@ export interface InputTimeProps extends BaseProps, DOMEventHandlers {
   trailing?: React.ReactNode
   /** Fully-round the field, or a custom radius (`number` px / CSS length). */
   round?: boolean | number | string
+  /** Focus this field when its containing `Dialog` opens. */
+  autoFocus?: boolean
   /** Fires on every edit (`input`), with the native event + an `attrs` snapshot
    *  (`value`, `name`, `empty`, `valid`, `validationMessage`). Also fires on
    *  `change` (blur) and on clear. */
@@ -153,6 +155,7 @@ export const InputTime = ({
   clearable,
   dimActions,
   trailing,
+  autoFocus,
   onValueChange,
   onClearInput,
   children,
@@ -174,11 +177,12 @@ export const InputTime = ({
       min={min}
       max={max}
       status={statusTone}
-      tone={tone || undefined}
+      tone={neutralToneAttr(tone)}
       name={name}
       disabled={presence(disabled)}
       required={presence(required)}
       dim-actions={presence(dimActions)}
+      autofocus={autoFocus ? true : undefined}
       aria-invalid={status === 'critical' ? 'true' : undefined}
       oninput={onValueChange ? (e: any) => onValueChange(e, attrsOf(e)) : undefined}
       onchange={onValueChange ? (e: any) => onValueChange(e, attrsOf(e)) : undefined}

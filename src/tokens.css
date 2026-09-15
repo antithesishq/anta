@@ -1,13 +1,8 @@
-/* Anta declares its layer order so consumers don't have to.
-   `base` is below — typically used by resets like Tailwind's
-   preflight (`@layer base`) — so Anta's reset + element styles
-   beat resets but lose to a consumer's own `@layer components`
-   rules. `utilities` sits above everything so utility-class
-   frameworks like Tailwind (`@layer utilities`) can still
-   override single properties when needed. Consumers who load
-   their own layer-order declaration earlier in the cascade
-   override this one — first mention of each layer name wins. */
+/* Anta reserves its public layer between `base` and `components`. Its reset,
+   components, and optional reference theme use ordered child layers. An earlier
+   consumer layer-order declaration wins. */
 @layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
 
 /* Scope of this file — Anta's entire global token vocabulary, kept
    deliberately tiny: theme-aware color *roles* for text (--text-*),
@@ -26,15 +21,24 @@
    The neutral seed is near-grey, so neutral tokens stay grey with the same
    formula. Light and dark share the seeds and differ only in the pinned L/C.
    The hand-tuned literals that shipped before this are available as the opt-in
-   `@antadesign/anta/theme-anta.css`. L/C constants mirror the theming lab. */
+   `@antadesign/anta/theme-antune.css`. L/C constants mirror the theming lab. */
 
-:root, .light {
+:root,
+.light {
   --sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
 
+:root,
+.light {
+  /* Element CSS resolves its dark values with `light-dark()`, which reads the
+     computed `color-scheme`. It is declared here, next to the token blocks it
+     switches, because `tokens.css` is required for any styled element while
+     `reset.css` is optional. */
+  color-scheme: light;
   font-size: 15px;
   font-weight: 400;
-  font-feature-settings: 'ss02' on, 'ss05' on, 'tnum' on;
 
   /* Tone seeds — the single source each scale derives from. Hues from the
      Anta 0.2 primaries; override any of these to reskin a whole tone. */
@@ -181,6 +185,7 @@
 
 
 .dark {
+  color-scheme: dark;
   font-weight: 400;
 
   /* Backgrounds — dark, neutral */

@@ -14,6 +14,9 @@ export const documentationLinks = [
   ['Changelog', '/changelog/'],
 ]
 
+// Mirrors the DocsLayout sidebar groups, in the same order. Keep the two in
+// step: this list is the only thing /llms.txt and /llms-full.txt read, so a
+// page missing here is invisible to every model that fetches them.
 export const componentGroups = [
   [
     ['Title', '/title/'],
@@ -21,18 +24,20 @@ export const componentGroups = [
     ['Tag', '/tag/'],
     ['Tooltip', '/tooltip/'],
     ['Icon', '/icon/'],
+    ['Avatar', '/avatar/'],
     ['Loader', '/loader/'],
     ['Progress', '/progress/'],
   ],
   [
     ['Button', '/button/'],
+    ['Breadcrumbs', '/breadcrumbs/'],
     ['Checkbox', '/checkbox/'],
     ['Radio', '/radio/'],
     ['Switch', '/switch/'],
     ['Slider', '/slider/'],
     ['Tabs', '/tabs/'],
+    ['Steps', '/steps/'],
   ],
-  [['Expander', '/expander/'], ['Menu', '/menu/']],
   [
     ['Input', '/input/'],
     ['InputAutocomplete', '/input-autocomplete/'],
@@ -41,7 +46,18 @@ export const componentGroups = [
     ['Select', '/select/'],
     ['SelectFaceted', '/select-faceted/'],
   ],
-  [['Banner', '/banner/'], ['Card', '/card/'], ['Dialog', '/dialog/'], ['Toaster', '/toaster/']],
+  [
+    ['Banner', '/banner/'],
+    ['Card', '/card/'],
+    ['Dialog', '/dialog/'],
+    ['Toaster', '/toaster/'],
+    ['Expander', '/expander/'],
+    ['Menu', '/menu/'],
+  ],
+  [
+    ['Box', '/box/'],
+    ['Capture', '/capture/'],
+  ],
 ]
 
 export const packageLinks = [['Table', '/table/'], ['Stickers', '/stickers/']]

@@ -39,7 +39,7 @@ function Swatch({ kind, token, rev }: { kind: Kind; token: string; rev: number }
   // Read the live computed color off the rendered preview (which resolves
   // `var(--token)` within its themed `.light`/`.dark` row) and show it as hex
   // — so the label always tracks tokens.css, no hardcoded values. `rev` bumps
-  // on a palette switch (theme-anta on/off) so the readout re-reads.
+  // on a palette switch (theme-antune on/off) so the readout re-reads.
   const previewRef = useRef<HTMLDivElement>(null)
   const [value, setValue] = useState('')
   useEffect(() => {
@@ -75,7 +75,7 @@ function Swatch({ kind, token, rev }: { kind: Kind; token: string; rev: number }
 export default function SwatchGrid({ kind, tone: initialTone = 'neutral' }: { kind: Kind; tone?: Tone }) {
   const [tone, setTone] = useState<Tone>(initialTone)
   // Bump on a palette switch so each Swatch re-reads its computed hex (the
-  // ThemeSwitcher dispatches `anta-palette-change` when theme-anta toggles).
+  // ThemeSwitcher dispatches `anta-palette-change` when theme-antune toggles).
   const [rev, setRev] = useState(0)
   useEffect(() => {
     const onPalette = () => setRev((r) => r + 1)

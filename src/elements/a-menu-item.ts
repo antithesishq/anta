@@ -64,11 +64,11 @@ export class AMenuItemElement extends HTMLElementBase {
    *  `:state(active)` for CSS. Off-DOM, so a reactive re-render never churns it. */
   set active(on: boolean) {
     if (!this.internals) return
-    if (on) this.internals.states.add('active')
-    else this.internals.states.delete('active')
+    if (on) this.internals?.states?.add('active')
+    else this.internals?.states?.delete('active')
   }
   get active(): boolean {
-    return this.internals?.states.has('active') ?? false
+    return this.internals?.states?.has('active') ?? false
   }
 
   connectedCallback() {

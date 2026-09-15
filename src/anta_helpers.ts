@@ -85,6 +85,22 @@ export function nativeStateChange<D>(
   return { event, detail: event?.detail, isOwn: !event || event.target === event.currentTarget }
 }
 
+/** Adapt a callback to native or renderer-wrapped custom events with non-null detail. */
+export function customEventHandler<D>(handler?: (event: CustomEvent<D>, detail: D) => void) {
+  if (!handler) return undefined
+  return (input: StateChangeEvent<D>) => {
+    const { event, detail } = nativeStateChange(input)
+    if (detail != null) handler(event, detail)
+  }
+}
+
+/** Parse a finite number, falling back for missing, empty, or invalid values. */
+export function finiteNumber(value: string | number | null, fallback: number): number {
+  if (value == null || value === '') return fallback
+  const number = Number(value)
+  return Number.isFinite(number) ? number : fallback
+}
+
 // macOS labels the "isolate" accelerator ⌥ (Option); every other platform, Alt.
 // `altKey` fires for both at runtime — only the hint wording differs.
 export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '')
@@ -129,6 +145,13 @@ export const NAMED_TONES = new Set([
   'warning',
   'critical',
 ])
+
+/** Omits the neutral default from JSX-generated DOM. Use only where an absent
+ * tone is equivalent to neutral; per-child tones keep an explicit `neutral`
+ * value when it resets an inherited group tone. */
+export function neutralToneAttr<T extends string>(tone: T | undefined): T | undefined {
+  return tone && tone !== 'neutral' ? tone : undefined
+}
 
 /**
  * Inline-style helper for a custom (non-named) tone: hands the literal color to
@@ -340,7 +363,7 @@ export class SelectableChildElement extends HTMLElementBase {
   }
 
   get selected(): boolean {
-    return this.internals?.states.has('selected') ?? false
+    return this.internals?.states?.has('selected') ?? false
   }
   /**
    * Live selection, held off the DOM as `:state(selected)` (mirrored to `ariaProp`).
@@ -370,8 +393,8 @@ export class SelectableChildElement extends HTMLElementBase {
 
   protected applyState(on: boolean) {
     if (!this.internals) return
-    if (on) this.internals.states.add('selected')
-    else this.internals.states.delete('selected')
+    if (on) this.internals?.states?.add('selected')
+    else this.internals?.states?.delete('selected')
     this.internals[this.ariaProp] = on ? 'true' : 'false'
   }
 }

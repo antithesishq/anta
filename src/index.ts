@@ -16,12 +16,63 @@
  *
  * @packageDocumentation
  */
+export { Avatar } from './components/Avatar'
+export type { AvatarProps } from './components/Avatar'
+export {
+  resolveAvatar,
+  avatarToSvg,
+  getInitials,
+  hashSeed,
+  mulberry32,
+  rngFromSeed,
+  maxChroma,
+  oklchString,
+  colorLightness,
+  hasFigure,
+  DEFAULT_CONFIG,
+} from './avatar-core'
+export type {
+  AvatarGenConfig,
+  DimMode,
+  ScalarDim,
+  Vec2Dim,
+  ColorDim,
+  ResolvedAvatar,
+  ResolvedHead,
+  ResolvedBody,
+  SvgOptions,
+} from './avatar-core'
 export { Progress } from './components/Progress'
 export type { ProgressProps } from './components/Progress'
 export { Loader } from './components/Loader'
 export type { LoaderProps } from './components/Loader'
 export { Text } from './components/Text'
 export type { TextProps, ExpandMode } from './components/Text'
+export { Box } from './components/Box'
+export type { BoxProps } from './components/Box'
+export { Capture } from './components/Capture'
+export type { CaptureProps } from './components/Capture'
+export type {
+  CaptureInputCancelReason, CaptureInputDirection, CaptureInputDirections, CaptureInputGeometry,
+  CaptureInputModifier, CapturePan, CapturePanInertia, CapturePanInput, CapturePointerActivationReason,
+  CapturePointerCapture, CapturePointerInput, CapturePointerStart, CapturePointerType,
+  CaptureWheelActivation, CaptureWheelActivationReason, CaptureWheelInput, CaptureWheelSettle,
+  SerializedMouseEvent, SerializedPointerEvent, SerializedWheelEvent,
+} from './capture-types'
+export type {
+  BoxChange,
+  BoxContext,
+  BoxContextChange,
+  BoxDisplay,
+  BoxFont,
+  BoxInset,
+  BoxMeasurement,
+  BoxMeasurementChange,
+  BoxMode,
+  BoxOS,
+  BoxBrowser,
+  BoxPointer,
+} from './box-types'
 export { Title } from './components/Title'
 export type { TitleProps } from './components/Title'
 export { Tag } from './components/Tag'
@@ -35,10 +86,21 @@ export type {
   ContentMode,
   SubmitMode,
   PriorityMode,
+  UnderlineMode,
 } from './components/Button'
 export { ButtonCopy } from './components/ButtonCopy'
 export type { ButtonCopyProps } from './components/ButtonCopy'
 export type { CopyTarget } from './components/copy-props'
+export { Breadcrumbs } from './components/Breadcrumbs'
+export type {
+  BreadcrumbsProps,
+  BreadcrumbItem,
+  BreadcrumbLinkItem,
+  BreadcrumbActionItem,
+  BreadcrumbCopyItem,
+  BreadcrumbSeparator,
+  BreadcrumbTextSeparator,
+} from './components/Breadcrumbs'
 export { ICON_SHAPES, ICON_SYNONYMS } from './elements/a-icon.shapes'
 export { Tooltip } from './components/Tooltip'
 export type { TooltipProps } from './components/Tooltip'
@@ -135,6 +197,16 @@ export type {
 } from './components/SelectFaceted'
 export { Tabs } from './components/Tabs'
 export type { TabsProps, TabOption, TabsChangeAttrs } from './components/Tabs'
+export { Steps } from './components/Steps'
+export type {
+  StepsProps,
+  StepMarker,
+  StepMarkerState,
+  StepOption,
+  StepPriority,
+  StepState,
+  StepTone,
+} from './components/Steps'
 export { TabPanel } from './components/TabPanel'
 export type { TabPanelProps } from './components/TabPanel'
 export { Dialog } from './components/Dialog'
@@ -152,7 +224,7 @@ export type {
   ToastContent,
   ToastRender,
 } from './components/Toaster'
-export type { BaseProps, BaseAttributes } from './general_types'
+export type { BaseProps, BaseAttributes, ToneScope } from './general_types'
 export { configure } from './jsx-runtime'
 export type { AntaIntrinsicElements } from './jsx-runtime'
 

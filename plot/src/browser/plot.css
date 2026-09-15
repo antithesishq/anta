@@ -1,0 +1,51 @@
+:where(a-plot) {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 300px;
+}
+
+a-plot > .plot-root {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* Anta's theme classes also set typography; keep the plot's inherited font. */
+    font: inherit;
+    font-feature-settings: inherit;
+}
+
+a-plot > .plot-root > a-box {
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+a-plot > .plot-root > canvas {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+a-plot > .plot-root > a-capture {
+    display: block;
+    position: absolute;
+}
+
+a-plot > .plot-root > a-capture[pointer-capture] {
+    user-select: none;
+}
+
+a-plot > .plot-root > .plot-highlight {
+    pointer-events: none;
+}
+
+a-plot > .plot-root > .plot-reset {
+    z-index: 3;
+    cursor: pointer;
+}
+
+a-plot > .plot-root [hidden] {
+    display: none !important;
+}

@@ -1,0 +1,57 @@
+---
+// Plain HTML specimen for the reset. A component keeps sample headings out of the
+// page table of contents and preserves the markup.
+---
+
+<div class="specimen">
+  <h2>Heading two</h2>
+  <h3>Heading three</h3>
+  <h4>Heading four</h4>
+  <p>
+    Body text with <a href="/normalization">a link</a>, <strong>strong</strong>,
+    <em>em</em>, <code>inline code</code>, <kbd>Ctrl</kbd>, <samp>samp output</samp>,
+    <dfn>a defined term</dfn>, <small>small print</small>, <mark>mark</mark>,
+    <abbr title="Cascading Style Sheets">abbr</abbr>, <del>deleted</del>,
+    <ins>inserted</ins>, the variable <var>w</var>, H<sub>2</sub>O and x<sup>2</sup>.
+  </p>
+  <blockquote>A blockquote, marked by a rule rather than an indent.</blockquote>
+  <ul>
+    <li>Unordered item</li>
+    <li>Second item</li>
+  </ul>
+  <ol>
+    <li>Ordered item</li>
+    <li>Second item</li>
+  </ol>
+  <dl>
+    <dt>Term</dt>
+    <dd>Definition</dd>
+  </dl>
+  <pre><code>a code block</code></pre>
+  <table>
+    <caption>Table caption</caption>
+    <thead>
+      <tr><th>Header</th><th>Another</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Cell</td><td>Cell</td></tr>
+      <tr><td>Cell</td><td>Cell</td></tr>
+    </tbody>
+  </table>
+  <figure><figcaption>A figcaption</figcaption></figure>
+  <hr />
+</div>
+
+<style>
+  /* Frame only; reset.css styles the sample tags. */
+  .specimen {
+    padding: 20px 24px;
+    border: 1px solid var(--border-4);
+    border-radius: 6px;
+    margin-bottom: 1.5em;
+  }
+
+  /* Keep the frame compact. */
+  .specimen > :first-child { margin-block-start: 0; }
+  .specimen > :last-child { margin-block-end: 0; }
+</style>

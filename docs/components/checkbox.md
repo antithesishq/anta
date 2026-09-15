@@ -20,20 +20,20 @@ neutral. Six named tones (`neutral` default), or pass any CSS color for a custom
 
 ## Selected-only tone
 
-`toneSelected` tones the **checked mark only** — the empty box stays neutral grey
-until it's checked. Reach for it instead of `tone` when a resting tinted border would
-read as a validation error. Same value set as `tone`.
+`toneScope="selected"` applies the checkbox's `tone` to the **checked mark only** —
+the empty box stays neutral grey until it's checked. Use it when a resting tinted
+border would read as a validation error.
 
 ```tsx
-<Checkbox toneSelected="brand">Off stays neutral</Checkbox>
-<Checkbox defaultChecked toneSelected="critical">Checked mark tinted</Checkbox>
+<Checkbox tone="brand" toneScope="selected">Off stays neutral</Checkbox>
+<Checkbox defaultChecked tone="critical" toneScope="selected">Checked mark tinted</Checkbox>
 ```
 
 ## Coloring the text
 
 There's no text-tone prop. To tint the **label**, set `color` on the checkbox with a
 theme-aware `--text-N-{tone}` token (the label inherits it); for the **hint**, add a
-`color` rule on the `a-checkbox-hint` child. Pair either with `tone` / `toneSelected`
+`color` rule on the `a-checkbox-hint` child. Pair either with `tone`
 to tint the whole control.
 
 ```css
@@ -167,51 +167,26 @@ The wrapper sets `role="checkbox"` and `aria-checked` (`"true"` / `"false"` / `"
 
 Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
 
-### Props
+## Component props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `checked?` | CheckboxValue | — | Controlled checked state. When provided the checkbox is controlled — it
- renders exactly this and never self-applies; `onStateChange` is a *request*
- the consumer accepts by updating this prop. Use `defaultChecked` for an
- uncontrolled checkbox. `'indeterminate'` shows the minus glyph and takes
- visual precedence; clicking it requests `true`. |
-| `defaultChecked?` | CheckboxValue | false | Initial checked state for an uncontrolled checkbox. Read once; later
- changes are ignored and the element updates its state after interaction. |
+| `checked?` | CheckboxValue | — | Controlled checked state. When provided the checkbox is controlled — it renders exactly this and never self-applies; `onStateChange` is a *request* the consumer accepts by updating this prop. Use `defaultChecked` for an uncontrolled checkbox. `'indeterminate'` shows the minus glyph and takes visual precedence; clicking it requests `true`. |
+| `defaultChecked?` | CheckboxValue | false | Initial checked state for an uncontrolled checkbox. Read once; later changes are ignored and the element updates its state after interaction. |
 | `disabled?` | boolean | — | Disable the checkbox (no interaction, dropped from the tab order). |
-| `hint?` | ReactNode | — | Secondary text rendered under the label — explanatory copy, like
- Input's hint. Not part of the accessible name. |
-| `label?` | string | — | Visible label — the *value* of the checkbox (clicked along with the box).
- Convenience for the common single-string case; for richer content (markup,
- a link, an info icon) use `children`. When both are supplied, `label`
- renders first. Required unless `children` or `aria-label` is provided
- (a `role="checkbox"` takes its name from the author, not the markup). |
-| `name?` | string | — | Form field name. Inside a `<form>` the checkbox submits under this name,
- contributing `value` when checked — like a native checkbox. |
-| `onChange?` | (event) => void | — | Fired *after* the checked state changes — a native `change` event (the
- post-apply counterpart to `onStateChange`). Not cancelable. For a controlled
- checkbox this fires once you've updated `checked`. |
-| `onStateChange?` | (event, detail) => void | — | Fired on click / Space *before* the element applies any change. Event-first
- so `event.preventDefault()` is the synchronous veto (uncontrolled mode);
- `detail` carries `{ next, prev }`. In controlled mode the element never
- self-applies — answer by updating `checked`, reject by doing nothing. |
-| `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ checked, indeterminate, name, value }` snapshot
- as the second argument, matching `Input`'s `onValueChange`. |
-| `round?` | boolean \| number \| string | — | Round the checkbox mark to a circle (`border-radius: 999px` on the box). Pass
- a `number` (px) or a CSS length string for a rounded-square mark instead. |
+| `hint?` | ReactNode | — | Secondary text rendered under the label — explanatory copy, like Input's hint. Not part of the accessible name. |
+| `label?` | string | — | Visible label — the *value* of the checkbox (clicked along with the box). Convenience for the common single-string case; for richer content (markup, a link, an info icon) use `children`. When both are supplied, `label` renders first. Required unless `children` or `aria-label` is provided (a `role="checkbox"` takes its name from the author, not the markup). |
+| `name?` | string | — | Form field name. Inside a `<form>` the checkbox submits under this name, contributing `value` when checked — like a native checkbox. |
+| `onChange?` | (event) => void | — | Fired *after* the checked state changes — a native `change` event (the post-apply counterpart to `onStateChange`). Not cancelable. For a controlled checkbox this fires once you've updated `checked`. |
+| `onStateChange?` | (event, detail) => void | — | Fired on click / Space *before* the element applies any change. Event-first so `event.preventDefault()` is the synchronous veto (uncontrolled mode); `detail` carries `{ next, prev }`. In controlled mode the element never self-applies — answer by updating `checked`, reject by doing nothing. |
+| `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ checked, indeterminate, name, value }` snapshot as the second argument, matching `Input`'s `onValueChange`. |
+| `round?` | boolean \| number \| string | — | Round the checkbox mark to a circle (`border-radius: 999px` on the box). Pass a `number` (px) or a CSS length string for a rounded-square mark instead. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant. small=14px, medium=16px, large=18px box. |
-| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the **mark** in every state — the checked-box fill *and* the
- unselected box border. A named tone or any literal CSS color (`'#ff1493'`,
- `'rebeccapurple'`) for a one-off custom tone. Named tones track light/dark mode
- automatically; a custom color keeps its hue + chroma and pins lightness to the
- fill curve. Use `toneSelected` instead to tone only the checked mark and leave
- the empty box neutral. The label + hint stay neutral — recolor them in plain
- CSS via the theme-aware `--text-N-{tone}` tokens. |
-| `toneSelected?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Like `tone`, but colored onto the **checked mark only** — the empty box stays
- neutral grey until it's checked. Prefer this over `tone` when a resting tinted
- border would read as a validation state. Same value set as `tone`; if both are
- set, `tone` governs the off-state border and `toneSelected` the checked fill. |
+| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the **mark**. In the default `all` scope this colors the checked-box fill and unselected box border. A named tone or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Named tones track light/dark mode automatically; a custom color keeps its hue + chroma and pins lightness to the fill curve. Set `toneScope="selected"` to tone only the checked mark and leave the empty box neutral. The label + hint stay neutral — recolor them in plain CSS via the theme-aware `--text-N-{tone}` tokens. |
+| `toneScope?` | ToneScope | 'all' | Apply `tone` to every state, or only while checked so the empty box stays neutral. `selected` is useful when a tinted resting border would read as a validation state. |
 | `value?` | string | "on" | Value submitted with the form when checked — like a native checkbox. |
+
+## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -230,20 +205,22 @@ For a standard HTML form, add `data-anta` to a native checkbox. It keeps the
 browser's label behavior, checked and indeterminate states, and form submission
 while using Anta's control surface.
 
-`size`, `tone`, `tone-selected`, and `round` use the matching Checkbox visual
+`size`, `tone`, `tone-scope`, and `round` use the matching Checkbox visual
 treatments.
 
 ```html
 <div style="display: grid; gap: 8px">
   <label><input data-anta type="checkbox" name="updates" size="small" tone="brand"> Product updates</label>
-  <label><input data-anta type="checkbox" name="security" tone-selected="success" checked> Security notices</label>
+  <label><input data-anta type="checkbox" name="security" tone="success" tone-scope="selected" checked> Security notices</label>
   <label><input data-anta type="checkbox" name="billing" size="large" round tone="warning" checked> Billing alerts</label>
 </div>
 ```
 
-Reach for the props first: **`tone`** colors the mark in every state,
-**`toneSelected`** only the checked mark (any CSS color for a custom tone — it
-derives the full rest/hover/active curve in oklch), **`size`** the dimensions + type.
+## Styling
+
+Reach for the props first: **`tone`** chooses the mark color and **`toneScope`**
+chooses whether it applies in `all` states or only while `selected` (any CSS color
+derives the full rest/hover/active curve in oklch); **`size`** controls dimensions + type.
 To tint the label + hint, add a `color` rule (on the host for the label, on
 `a-checkbox-hint` for the hint) with the `--text-N-{tone}` tokens — there's no
 text-tone prop. The focus ring is the global

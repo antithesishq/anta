@@ -1,15 +1,14 @@
 /**
- * Playground — single-component playground.
+ * Playground — component and configuration playground.
  *
  *   <Playground component="Progress" initialCode={`...`} client:load />
  *
  * Renders three regions:
  *   - A live preview, isolated inside an iframe so user CSS / DOM
  *     changes can't touch the docs page.
- *   - A props form auto-generated from `api.json` for the bound
- *     component. Every form edit performs a targeted string
- *     replacement on the source code (so siblings like a `<style>`
- *     block are preserved).
+ *   - A props form auto-generated from `api.json` for the bound component, or
+ *     from explicitly annotated JSX / JSON-like object literals. Every form
+ *     edit performs a targeted source replacement, preserving surrounding code.
  *   - A Monaco editor showing the same source. Hand-edits feed back
  *     into the form (best-effort literal-attribute scan) and back
  *     into the iframe via the in-browser bundler (esbuild-wasm).
@@ -17,26 +16,22 @@
  * See site/lib/sandbox/* for the moving parts.
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
+// Monaco's UI stylesheet must be part of the shared component, not only the
+// prebuilt Embed runtime. Some pages still mount Playground as an Astro island;
+// without these rules, Monaco's hidden input becomes a native textarea.
+import 'monaco-editor/min/vs/editor/editor.main.css'
 import { Input, Tooltip, Text, Checkbox, Select, Tabs } from '@antadesign/anta'
 import { marked } from 'marked'
 import s from './Playground.module.css'
-// Monaco ships its structural CSS as ~110 separate `import './x.css'`
-// side-effect imports inside its ESM build. Vite injects each one
-// live in dev (so the editor looks right under `pnpm dev`) but emits
-// none of them into the production bundle, since they're only reached
-// through the lazily-imported `monaco-editor` chunk. Without these
-// rules the editor's hidden <textarea> (`.inputarea`) falls back to
-// the UA default (border + resize grip) and the layout breaks. Pull
-// in Monaco's concatenated stylesheet statically so it's always part
-// of this island's CSS in both dev and prod.
-import 'monaco-editor/min/vs/editor/editor.main.css'
 
-import { controlsFor, controlsForExample, CONDITIONAL_PROPS, type Control, type PropEntry } from '../../lib/sandbox/props-form.ts'
-import { bundle, type BundleResult } from '../../lib/sandbox/bundler.ts'
+import { controlsFor, controlsForExample, controlsForObject, CONDITIONAL_PROPS, type Control, type PropEntry } from '../../lib/sandbox/props-form.ts'
+import { bundle, setEsbuildLoader, type BundleResult } from '../../lib/sandbox/bundler.ts'
 import { moduleManifest } from '../../lib/sandbox/modules.ts'
 import { IFRAME_ASSETS } from '../generated/iframe-assets'
+import { PLAYGROUND_ASSETS } from '../generated/playground-assets'
 import { replaceProp, readChildren } from '../../lib/sandbox/prop-patch.ts'
 import { readProp } from '../../lib/sandbox/prop-read.ts'
+import { readObjectValue, replaceObjectValue, type ObjectRange } from '../../lib/sandbox/object-config.ts'
 import { parseExamples, type Example } from '../../lib/sandbox/parse-examples.ts'
 import { throttle } from 'es-toolkit'
 
@@ -47,6 +42,18 @@ const COLUMN_WIDTH = 960
 // Lazily loaded inside an effect so the docs page paints without
 // blocking on Monaco's ~1.5 MB bundle.
 type MonacoEditorLib = typeof import('@monaco-editor/react')
+type MonacoVendor = typeof import('./playground-monaco')
+type ShikiVendor = typeof import('./playground-shiki')
+type EsbuildVendor = typeof import('./playground-esbuild')
+
+function loadVendor<T>(vendor: 'monaco' | 'shiki' | 'compiler') {
+  // These vendor bundles are generated before the changing Playground bundle.
+  // Keep the dynamic import at runtime so Vite does not fold them back into the
+  // application chunk while building it.
+  return import(/* @vite-ignore */ `/playground/${PLAYGROUND_ASSETS[vendor]}`) as Promise<T>
+}
+
+setEsbuildLoader(() => loadVendor<EsbuildVendor>('compiler'))
 
 interface Props {
   /** Anta component name to bind the props form to. Must match the
@@ -130,10 +137,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
   // keystrokes don't flood PostHog with events.
   const hasTrackedEditRef = useRef(false)
 
-  // Parse JSDoc-headed JSX blocks out of the user's source. Each
-  // headed block becomes one entry in the Props accordion; the
-  // bundler also receives this list so it can strip JSDocs before
-  // wrapping the JSX in a Fragment.
+  // Parse annotated JSX components and object literals out of the source. Each
+  // annotation becomes one entry in the Props accordion.
   const examples = useMemo(() => parseExamples(code), [code])
 
   // Track the parent's dark-mode state — drives both Monaco's theme
@@ -160,7 +165,7 @@ export default function Playground({ component, initialCode, initialCss = '', la
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([import('shiki'), import('@shikijs/monaco')]).then(([shiki, sm]) =>
+    loadVendor<ShikiVendor>('shiki').then(({ shiki, shikiMonaco }) =>
       shiki.createHighlighter({
         themes: ['github-light', 'tokyo-night'],
         langs: ['tsx', 'css'],
@@ -171,8 +176,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
         }
         setShikiBundle({
           highlighter,
-          shikiToMonaco: sm.shikiToMonaco,
-          textmateThemeToMonacoTheme: sm.textmateThemeToMonacoTheme,
+          shikiToMonaco: shikiMonaco.shikiToMonaco,
+          textmateThemeToMonacoTheme: shikiMonaco.textmateThemeToMonacoTheme,
         })
       }),
     )
@@ -237,17 +242,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
   // use the bundled namespace.
   useEffect(() => {
     let cancelled = false
-    Promise.all([
-      import('monaco-editor'),
-      import('monaco-editor/esm/vs/editor/editor.worker?worker'),
-      import('monaco-editor/esm/vs/language/typescript/ts.worker?worker'),
-      import('monaco-editor/esm/vs/language/css/css.worker?worker'),
-      import('@monaco-editor/react'),
-    ]).then(([monacoNs, editorWorker, tsWorker, cssWorker, reactMod]) => {
+    Promise.all([loadVendor<MonacoVendor>('monaco'), import('@monaco-editor/react')]).then(([{ monaco, EditorWorker, TsWorker, CssWorker }, monacoReact]) => {
       if (cancelled) return
-      const EditorWorker = editorWorker.default
-      const TsWorker = tsWorker.default
-      const CssWorker = cssWorker.default
       ;(globalThis as any).MonacoEnvironment = {
         getWorker(_id: string, label: string) {
           if (label === 'typescript' || label === 'javascript') return new TsWorker()
@@ -255,8 +251,8 @@ export default function Playground({ component, initialCode, initialCss = '', la
           return new EditorWorker()
         },
       }
-      reactMod.loader.config({ monaco: monacoNs })
-      setMonacoLib(reactMod)
+      monacoReact.loader.config({ monaco })
+      setMonacoLib(monacoReact)
     })
     return () => {
       cancelled = true
@@ -307,18 +303,23 @@ export default function Playground({ component, initialCode, initialCss = '', la
   }, [])
 
   // Initialise the iframe (clone stylesheets, seed __demo_modules__,
-  // register custom elements, set up dark-mode mirror). srcdoc iframes
-  // can `load` before the Preact reconciler attaches `onLoad`, so we
-  // poll readyState here and fall back to a `load` listener.
+  // register custom elements, set up dark-mode mirror). Its runtime is
+  // content-hashed; when a package rebuild produces a new hash during dev,
+  // reset the iframe so its exported components and CSS match the editor.
+  // srcdoc iframes can `load` before the Preact reconciler attaches `onLoad`,
+  // so we poll readyState here and fall back to a `load` listener.
   useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe) return
     let cancelled = false
+    let teardown: (() => void) | undefined
     function init() {
       if (cancelled) return
       const doc = iframe.contentDocument
       if (!doc || !iframe.contentWindow) return
-      setupIframe(iframe)
+      // A reload runs `init` again, so drop the previous document's observers.
+      teardown?.()
+      teardown = setupIframe(iframe)
       iframeReadyRef.current = true
       // If a bundle is already compiled, push it now.
       if (bundleState && (bundleState as any).ok) {
@@ -329,15 +330,18 @@ export default function Playground({ component, initialCode, initialCss = '', la
     // resolve against the real origin — SSR has no window and would bake a wrong
     // host (ERR_CONNECTION_REFUSED). Listener first, then assign, so the fresh
     // srcdoc's `load` is always caught → init() → setupIframe.
+    iframeReadyRef.current = false
     iframe.addEventListener('load', init)
     iframe.srcdoc = buildSrcdoc()
     return () => {
       cancelled = true
       iframe.removeEventListener('load', init)
+      teardown?.()
     }
-    // The iframe is mounted exactly once per component instance.
+    // `IFRAME_ASSETS` changes whenever the dev watcher rebuilds Anta. It is
+    // otherwise immutable for the lifetime of a production page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [IFRAME_ASSETS.js, IFRAME_ASSETS.css])
 
   // Form edits don't rewrite `code` on every event — doing so re-synced
   // Monaco's model and re-parsed every field on each slider tick, which
@@ -373,11 +377,18 @@ export default function Playground({ component, initialCode, initialCss = '', la
               continue
             }
             const latest = parseExamples(next).find((e) => e.id === exampleId)
-            if (!latest || !latest.tagName) continue
-            next = replaceProp(next, latest.tagName, prop.prop, value, {
-              start: latest.jsxStart,
-              end: latest.jsxEnd,
-            })
+            if (!latest) continue
+            if (latest.kind === 'jsx' && latest.tagName) {
+              next = replaceProp(next, latest.tagName, prop.prop, value, {
+                start: latest.jsxStart,
+                end: latest.jsxEnd,
+              })
+            } else if (latest.kind === 'object' && latest.objectStart != null && latest.objectEnd != null) {
+              next = replaceObjectValue(next, {
+                start: latest.objectStart,
+                end: latest.objectEnd,
+              }, prop.prop, value)
+            }
           }
           return next
         })
@@ -679,11 +690,11 @@ export default function Playground({ component, initialCode, initialCss = '', la
                 </div>
               ) : (
                 <div class={s.examplesList}>
-                  {examples.map((ex, i) => (
+                  {examples.map((ex) => (
                     <ExampleAccordion
                       key={ex.id}
                       example={ex}
-                      defaultOpen={i === 0}
+                      defaultOpen={examples.length === 1}
                       code={code}
                       onChange={handleFormChange}
                     />
@@ -701,7 +712,10 @@ export default function Playground({ component, initialCode, initialCss = '', la
                 <monacoLib.Editor
                   height="100%"
                   defaultLanguage="typescript"
-                  path="user.tsx"
+                  // The TypeScript worker chooses its parser from the model
+                  // URI's file extension. Use an explicit file URI: a bare
+                  // Keep a stable .tsx URI for Monaco's TypeScript JSX services.
+                  path="file:///playground/user.tsx"
                   // Uncontrolled: seed the initial text, then let the
                   // editor own its model. We deliberately do NOT pass
                   // `value={code}` — @monaco-editor/react reacts to a
@@ -716,11 +730,11 @@ export default function Playground({ component, initialCode, initialCss = '', la
                   onChange={handleEditorChange}
                   beforeMount={(monaco) => {
                     monacoRef.current = monaco
+                    configureTypeScript(monaco)
                     installShikiBridge(monaco, shikiBundle)
                   }}
                   onMount={(editor, monaco) => {
                     editorRef.current = editor
-                    onMonacoMount(editor, monaco)
                     installJsxAwareCommentToggle(editor, monaco)
                     editor.layout()
                     if (codeInitiallyFolded) {
@@ -877,12 +891,14 @@ function FormField({
   code,
   componentName,
   range,
+  objectRange,
   onChange,
 }: {
   entry: PropEntry
   code: string
   componentName: string
   range?: { start: number; end: number }
+  objectRange?: ObjectRange
   onChange: (v: string | number | boolean | null) => void
 }) {
   const c = entry.control
@@ -893,6 +909,8 @@ function FormField({
   if (entry.prop.kind === 'children') {
     const body = readChildren(code, componentName, range)
     read = body !== undefined ? { kind: 'literal', value: body } : undefined
+  } else if (objectRange) {
+    read = readObjectValue(code, objectRange, entry.prop)
   } else {
     read = readProp(code, componentName, entry.prop, range)
   }
@@ -1186,17 +1204,23 @@ function ExampleAccordion({
   onChange: (entry: PropEntry, value: string | number | boolean | null, exampleId: string) => void
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  useEffect(() => setOpen(defaultOpen), [defaultOpen])
   // Per-example control schema. JSX examples introspect their tag:
   // known components (api.json) get their full prop set; unknown
   // tags fall back to attribute inference from the JSX itself.
   // Expression examples don't drive a form.
   const controls = useMemo(() => {
-    if (example.kind !== 'jsx' || !example.tagName) return []
-    return controlsForExample(example.tagName, code, {
-      start: example.jsxStart,
-      end: example.jsxEnd,
-    })
-  }, [example.tagName, example.kind, example.jsxStart, example.jsxEnd, code])
+    if (example.kind === 'jsx' && example.tagName) {
+      return controlsForExample(example.tagName, code, {
+        start: example.jsxStart,
+        end: example.jsxEnd,
+      })
+    }
+    if (example.kind === 'object' && example.objectStart != null && example.objectEnd != null) {
+      return controlsForObject(code, { start: example.objectStart, end: example.objectEnd })
+    }
+    return []
+  }, [example.tagName, example.kind, example.jsxStart, example.jsxEnd, example.objectStart, example.objectEnd, code])
 
   return (
     <div class={s.example}>
@@ -1218,21 +1242,24 @@ function ExampleAccordion({
           {example.description && (
             <div class={s.exampleDescription}>{example.description}</div>
           )}
-          {/* The Props form binds only when the example body is a
-              plain `<Tag …>` element — `{}` expression bodies
-              (IIFEs, inline components) are too dynamic to bind to.
-              The accordion entry still shows heading + description
-              for documented examples; the user edits the JSX in the
-              Code tab if they want to change anything. */}
-          {example.kind === 'jsx' && controls.length > 0 && (
+          {/* JSX annotations bind to their target component, and object
+              annotations bind to literal leaves. Dynamic `{}` examples remain
+              documented-only because they have no stable edit target. */}
+          {(example.kind === 'jsx' || example.kind === 'object') && controls.length > 0 && (
             <div class={s.form}>
-              {visibleControls(controls, example.tagName!, code, { start: example.jsxStart, end: example.jsxEnd }).map((entry) => (
+              {(example.kind === 'jsx'
+                ? visibleControls(controls, example.tagName!, code, { start: example.jsxStart, end: example.jsxEnd })
+                : controls
+              ).map((entry) => (
                 <FormField
                   key={entry.control.name}
                   entry={entry}
                   code={code}
-                  componentName={example.tagName!}
-                  range={{ start: example.jsxStart, end: example.jsxEnd }}
+                  componentName={example.tagName ?? example.label}
+                  range={example.kind === 'jsx' ? { start: example.jsxStart, end: example.jsxEnd } : undefined}
+                  objectRange={example.kind === 'object' && example.objectStart != null && example.objectEnd != null
+                    ? { start: example.objectStart, end: example.objectEnd }
+                    : undefined}
                   onChange={(v) => onChange(entry, v, example.id)}
                 />
               ))}
@@ -1283,13 +1310,8 @@ function buildSrcdoc(): string {
     document.documentElement.style.colorScheme = d ? 'dark' : 'light';
   } catch (e) {}
 </script><link rel="stylesheet" href="${iframeAssetUrl(A.css)}"><script type="module" src="${iframeAssetUrl(A.js)}"></script><style>
-  /* Pin the sans variable font's slnt / ital axes to 0.
-     Safari leaves variable-font axes at the font file's internal
-     defaults unless they're explicitly set — and our font ships
-     with non-zero defaults — so without this the preview iframe
-     renders italic on Safari only. \`font-style: normal\` is the
-     belt to the variation-settings braces. */
-  html, body { margin: 0; background: transparent; font-family: var(--sans-serif, sans-serif); font-style: normal; font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0; }
+  /* Preserve an app font's italic or oblique face. */
+  html, body { margin: 0; background: transparent; font-family: var(--sans-serif, sans-serif); font-style: normal; font-stretch: 100%; }
   body { padding: 24px; overflow: auto; box-sizing: border-box; min-height: 100%; }
   /* Preview default layout: a column-flex with 16px gap so multiple
      examples stack vertically with consistent breathing room. The
@@ -1307,30 +1329,23 @@ function buildSrcdoc(): string {
 </style></head><body><div id="root" class="preview"></div></body></html>`
 }
 
-function setupIframe(iframe: HTMLIFrameElement) {
+function setupIframe(iframe: HTMLIFrameElement): (() => void) | undefined {
   const doc = iframe.contentDocument
   const win = iframe.contentWindow as Window & { __demo_modules__?: Record<string, unknown> }
   if (!doc || !win) return
+  const teardowns: Array<() => void> = []
 
   // `window.__demo_modules__` (the Anta + Preact instances the demo shim reads)
   // and the custom-element registration are both handled by the preview-app
   // bundle loaded from the srcdoc (see buildSrcdoc) — it runs before this
   // iframe's `load`, so the modules are seeded by the time we push a demo.
 
-  // Clone Anta-related <link rel="stylesheet"> + <style> tags from
-  //    the parent into the iframe so the rendered preview gets the
-  //    same look as the docs site. Anta CSS stays unlayered — its
-  //    component defaults beat anything in a cascade layer
-  //    (including Tailwind's `@layer utilities`), and consumers can
-  //    override via higher-specificity unlayered class selectors
-  //    written in their own CSS (which always tie-break in their
-  //    favour at unlayered tier). Tailwind utility classes WILL NOT
-  //    override Anta declarations — that's an accepted tradeoff for
-  //    keeping the library's defaults sticky.
+  // Copy the docs styles into the preview and keep its palette link in sync.
   for (const link of Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'))) {
     const clone = doc.createElement('link')
     clone.rel = 'stylesheet'
     clone.href = link.href
+    if (link.id === 'palette-link') clone.id = link.id
     doc.head.appendChild(clone)
   }
   // Also clone any inline <style> from the head that's likely tokens.
@@ -1351,12 +1366,16 @@ function setupIframe(iframe: HTMLIFrameElement) {
     const dark = document.documentElement.classList.contains('dark')
     doc.documentElement.classList.toggle('dark', dark)
     doc.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+    const palette = document.getElementById('palette-link') as HTMLLinkElement | null
+    const clone = doc.getElementById('palette-link') as HTMLLinkElement | null
+    if (palette && clone && clone.href !== palette.href) clone.href = palette.href
   }
   apply()
   const obs = new MutationObserver(apply)
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  // Detach when the iframe unloads.
-  iframe.addEventListener('unload', () => obs.disconnect(), { once: true })
+  const palette = document.getElementById('palette-link')
+  if (palette) obs.observe(palette, { attributes: true, attributeFilter: ['href'] })
+  teardowns.push(() => obs.disconnect())
 
   // 5) Capture iframe runtime errors → bubble to parent via postMessage.
   win.addEventListener('error', (e: any) => {
@@ -1379,10 +1398,21 @@ function setupIframe(iframe: HTMLIFrameElement) {
   if (ResizeObserverCtor) {
     const ro = new ResizeObserverCtor(report)
     ro.observe(observed)
-    iframe.addEventListener('unload', () => ro.disconnect(), { once: true })
+    teardowns.push(() => ro.disconnect())
   }
   // Initial report after a microtask so the first render lands first.
   setTimeout(report, 0)
+
+  // The class / palette observer watches parent-document nodes that outlive
+  // this preview: `documentElement`, and `#palette-link`, which the docs
+  // router persists across navigation. `pagehide` covers the iframe unloading
+  // itself, and an iframe removed by a route change may never fire it, so the
+  // caller owns teardown as well. Both disconnects are safe to run twice.
+  // (`unload` is disallowed in this nested document by Chromium's permissions
+  // policy; `pagehide` has the same lifetime semantics without the violation.)
+  const teardown = () => { for (const stop of teardowns) stop() }
+  win.addEventListener('pagehide', teardown, { once: true })
+  return teardown
 }
 
 function pushBundleToIframe(iframe: HTMLIFrameElement, code: string, resetRoot = false) {
@@ -1636,7 +1666,7 @@ const packageJsons = import.meta.glob(
 
 let monacoTypesInstalled = false
 
-function onMonacoMount(_editor: unknown, monaco: any) {
+function configureTypeScript(monaco: any) {
   if (monacoTypesInstalled) return
   monacoTypesInstalled = true
   const ts = monaco.languages.typescript
@@ -1657,9 +1687,9 @@ function onMonacoMount(_editor: unknown, monaco: any) {
     // 2657 — "JSX expressions must have one parent element". The
     // playground wraps the user's trailing JSX in a Fragment at
     // bundle time, so the user is free to write sibling roots (e.g.
-    // a `<style>` next to the component). Silence the squiggle to
-    // match that contract.
-    diagnosticCodesToIgnore: [2657],
+    // a `<style>` next to the component). 6133 — the bundler renders
+    // `Demo` after compiling it, outside Monaco's source model.
+    diagnosticCodesToIgnore: [2657, 6133],
   })
   for (const [absPath, contents] of Object.entries(antaTypeDefs)) {
     ts.typescriptDefaults.addExtraLib(contents, 'file://' + absPath)

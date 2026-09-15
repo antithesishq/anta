@@ -97,7 +97,7 @@ const SHADOW_STYLE = `
     box-shadow: inset 0 0 0 var(--_bw) var(--_bc);
     transition: box-shadow 120ms ease;
   }
-  :host([status]) .field { --_bw: 1px; }
+  :host([status]:not([status="neutral"])) .field { --_bw: 1px; }
 
   @media (hover: hover) and (pointer: fine) {
     :host(:not(:disabled)) .field:hover {
@@ -132,8 +132,8 @@ const SHADOW_STYLE = `
     padding-inline: 7px;
     color: var(--input-time-text);
     font-family: var(--sans-serif);
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
     font-size: var(--input-time-font-size);
     line-height: var(--input-time-line-height);
     font-weight: 400;
@@ -150,8 +150,9 @@ const SHADOW_STYLE = `
     background: transparent;
     color: inherit;
     font: inherit;
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-variation-settings: inherit;
+    font-stretch: inherit;
+    font-style: inherit;
     line-height: inherit;
     text-align: center;
     white-space: nowrap;
@@ -784,12 +785,12 @@ export class AInputTimeElement extends HTMLElementBase {
   #syncStatus() {
     const critical = this.getAttribute('status') === 'critical'
     for (const seg of this.#segs) seg.el.setAttribute('aria-invalid', critical ? 'true' : 'false')
-    try { critical ? this.#internals?.states.add('invalid') : this.#internals?.states.delete('invalid') } catch {}
+    try { critical ? this.#internals?.states?.add('invalid') : this.#internals?.states?.delete('invalid') } catch {}
   }
 
   #updateFilled() {
-    if (this.value) this.#internals?.states.add('filled')
-    else this.#internals?.states.delete('filled')
+    if (this.value) this.#internals?.states?.add('filled')
+    else this.#internals?.states?.delete('filled')
   }
 
   #updateValidity() {
@@ -846,6 +847,11 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#dispatch('change')
     this.dispatchEvent(new CustomEvent(CLEAR_INPUT_EVENT, { bubbles: true }))
     this.#segs[0]?.el.focus()
+  }
+
+  /** Focus the first editable segment. */
+  focus(options?: FocusOptions) {
+    this.#segs[0]?.el.focus(options)
   }
 
   get name(): string { return this.getAttribute('name') ?? '' }

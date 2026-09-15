@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Loader
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -21,7 +21,6 @@ the duration is unknown. Pass `value` when the current proportion is known.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Loader"
   layout="side"
   initialCode={loaderDemoCode}
@@ -129,7 +128,7 @@ Use `<Loader>` when you need a value, speed, or accessible loading status.
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use a raw `<a-loader>` when you are not using the JSX wrapper. Set its size,
 speed, and determinate percentage with CSS custom properties. `value` selects

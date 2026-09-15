@@ -35,7 +35,7 @@ if (!parallel) {
 }
 
 const child = spawn('pnpm', ['run', 'dev:run'], {
-  env: { ...process.env, ANTA_DEV_PID_FILE: pidfile, ANTA_DEV_PORT: port },
+  env: { ...process.env, ANTA_DEV_PID_FILE: pidfile, ANTA_DEV_PORT: port, ANTA_SEARCH_DEV_PORT: parallel ? '8789' : '8788' },
   stdio: 'inherit',
 })
 

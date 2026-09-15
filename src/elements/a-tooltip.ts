@@ -48,12 +48,17 @@ const PROX_FADE_MS = 60
  */
 const ENTER_TOUCH_DELAY = 500
 /**
- * Default elements measured for `truncated-only` — Anta's ellipsizing label parts
- * (`<a-tab-label>` / `<a-button-label>` share the same overflow:hidden + ellipsis
- * pattern). A `truncated-selector` overrides this; otherwise we fall back to the
- * anchor itself. Append future ellipsizing parts here.
+ * Default elements measured for `truncated-only` — Anta's ellipsizing label parts.
+ * A `truncated-selector` overrides this; otherwise we use every matching part,
+ * then fall back to the anchor itself. Append future ellipsizing parts here.
  */
-const TRUNCATING_PARTS = 'a-tab-label, a-button-label'
+const TRUNCATING_PARTS = 'a-tab-label, a-button-label, a-step-hint'
+/** True when an element answers the truncation question itself — `a-text` clamps
+ * inside its shadow root, `a-box` measures its own overflow — rather than
+ * leaving it to a scrollWidth read on the host. */
+function reportsTruncation(el: Element): el is HTMLElement & { isTruncated: boolean } {
+  return typeof (el as HTMLElement & { isTruncated?: unknown }).isTruncated === 'boolean'
+}
 /** Internal marker emitted by JSX `<Text truncate>`. Its tooltip reads the
  * anchor's rendered text instead of duplicating React children. */
 const AUTOMATIC_TEXT_TOOLTIP = 'data-anta-text-tooltip'
@@ -193,10 +198,9 @@ const lazyObserver: IntersectionObserver | null =
  *   light DOM — its font/color/size are already styleable from the page and
  *   are intentionally NOT tokens.
  * - The frost: `--tooltip-bg` is a mostly-opaque mix of `--bg-1` that, with
- *   the container's backdrop blur, reads as a frosted bubble. `--bg-1` is
- *   white in light / black in dark, so dark mode flips automatically (the
- *   `.dark` override just lowers the alpha and adds an inset white ring so
- *   the edge stays crisp on dark content). There's no real border by
+ *   the container's backdrop blur, reads as a frosted bubble. `light-dark()`
+ *   lowers the dark alpha and adds an inset white ring so the edge stays crisp
+ *   on dark content. There's no real border by
  *   default — the hairline edge comes from `--tooltip-shadow`; set
  *   `--tooltip-border` for an actual one.
  * - On coarse/no-hover pointers, an anchor that owns a tooltip
@@ -267,9 +271,9 @@ export class ATooltipElement extends HTMLElementBase {
     const style = document.createElement('style')
     // Shadow bubble CSS (kept comment-free — this string ships into every
     // consumer document). Non-obvious bits:
-    // - The container establishes its own text baseline (font axes, spacing,
-    //   transform all restated) so inheritable text properties from the
-    //   anchor — a Button's condensed "wdth" 88, its letter-spacing, an
+    // - The container establishes its own text baseline (font style, stretch,
+    //   spacing, and transform all restated) so inheritable text properties
+    //   from the anchor — a condensed Button, its letter-spacing, or an
     //   uppercase transform — don't bleed into the slotted content. The
     //   content inherits from this container, the single choke point;
     //   consumers customize one tooltip by classing their own content.
@@ -333,7 +337,6 @@ export class ATooltipElement extends HTMLElementBase {
         font-weight: 400;
         font-style: normal;
         font-stretch: normal;
-        font-variation-settings: "wdth" 100, "slnt" 0, "ital" 0;
         line-height: 1.5;
         letter-spacing: 0.02ch;
         word-spacing: normal;
@@ -491,38 +494,47 @@ export class ATooltipElement extends HTMLElementBase {
     if (this.#isAutomaticTextTooltip) this.bubble.textContent = this.anchorText()
   }
 
-  /** The element whose overflow decides whether the tooltip shows: a
-   *  `truncated-selector` resolved within the anchor wins; else the first of
-   *  Anta's ellipsizing label parts inside the anchor; else the anchor itself
-   *  (which may be the clipping box for a hand-authored target). */
-  private resolveTruncationTarget(): HTMLElement | null {
+  /** The elements whose overflow decides whether the tooltip shows: every
+   *  `truncated-selector` match within the anchor wins; else the anchor itself
+   *  when it reports its own truncation; else every one of Anta's ellipsizing
+   *  label parts inside the anchor; else the anchor itself (which may be the
+   *  clipping box for a hand-authored target). */
+  private resolveTruncationTargets(): HTMLElement[] {
     const anchor = this.anchor
-    if (!anchor) return null
+    if (!anchor) return []
     const sel = this.getAttribute('truncated-selector')
     if (sel) {
       try {
-        const found = anchor.querySelector(sel) as HTMLElement | null
-        if (found) return found
+        const found = Array.from(anchor.querySelectorAll(sel)) as HTMLElement[]
+        if (found.length) return found
       } catch {
         /* invalid selector → fall through to the defaults */
       }
     }
-    return (anchor.querySelector(TRUNCATING_PARTS) as HTMLElement | null) ?? anchor
+    // An anchor that answers for itself has already decided. `a-box` IS the
+    // clipping box, so a label part belonging to some child inside it says
+    // nothing about whether the box clips: a Box full of Buttons that fit would
+    // otherwise report "not truncated" while the Box hides half of them.
+    // `truncated-selector` above still overrides this.
+    if (reportsTruncation(anchor)) return [anchor]
+    const parts = Array.from(
+      anchor.querySelectorAll(TRUNCATING_PARTS),
+    ) as HTMLElement[]
+    return parts.length ? parts : [anchor]
   }
 
-  /** True when the resolved target overflows its box (horizontal ellipsis or
+  /** True when any resolved target overflows its box (horizontal ellipsis or
    *  vertical clamp). A 1px threshold absorbs sub-pixel rounding; a zero-size
    *  (hidden / detached) target counts as not truncated. Measured fresh on each
    *  show attempt, so late fonts / resizes self-correct with no observer. */
   private isTargetTruncated(): boolean {
-    const t = this.resolveTruncationTarget()
-    if (!t) return false
-    // `a-text` owns the clamping box in shadow DOM. Its host itself does not
-    // overflow, so consume the element's read-only UI-thread measurement first.
-    const reported = (t as HTMLElement & { isTruncated?: unknown }).isTruncated
-    if (typeof reported === 'boolean') return reported
-    if (t.clientWidth === 0 && t.clientHeight === 0) return false
-    return t.scrollWidth - t.clientWidth > 1 || t.scrollHeight - t.clientHeight > 1
+    return this.resolveTruncationTargets().some((target) => {
+      // `a-text` owns the clamping box in shadow DOM. Its host itself does not
+      // overflow, so consume the element's read-only UI-thread measurement first.
+      if (reportsTruncation(target)) return target.isTruncated
+      if (target.clientWidth === 0 && target.clientHeight === 0) return false
+      return target.scrollWidth - target.clientWidth > 1 || target.scrollHeight - target.clientHeight > 1
+    })
   }
 
   /** True when there's nothing worth showing: no element children (so an

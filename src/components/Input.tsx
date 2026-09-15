@@ -1,6 +1,6 @@
 import type { BaseProps, DOMEventHandlers } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import { nativeStateChange, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
+import { nativeStateChange, neutralToneAttr, toneStyle, roundStyle, roundAttr } from '../anta_helpers'
 import { Button } from './Button'
 import { Icon } from './Icon'
 
@@ -97,12 +97,15 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
     | (string & {})
   /** Virtual-keyboard hint. Overrides the value derived from `type`. */
   inputMode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url'
+  /** Focus this field when its containing `Dialog` opens. */
+  autoFocus?: boolean
   /** Form field name — submitted with the form via ElementInternals. */
   name?: string
   /** Placeholder shown when empty. */
   placeholder?: string
   /** Ellipsize an overflowing single-line value. Read-only inputs already do
-   * this; use `truncate` when an editable field should keep the same treatment. */
+   * this; pass `false` when an editable field should show the full value.
+   * @defaultValue true */
   truncate?: boolean
   /** Disable the field. */
   disabled?: boolean
@@ -245,9 +248,10 @@ export const Input = ({
   type,
   autoComplete,
   inputMode,
+  autoFocus,
   name,
   placeholder,
-  truncate,
+  truncate = true,
   disabled,
   readOnly,
   required,
@@ -296,7 +300,7 @@ export const Input = ({
       rows={rows != null ? String(rows) : undefined}
       maxrows={maxRows != null ? String(maxRows) : undefined}
       status={statusTone}
-      tone={tone || undefined}
+      tone={neutralToneAttr(tone)}
       type={!multiline && rows == null ? nativeType : undefined}
       name={name}
       placeholder={placeholder}
@@ -307,6 +311,7 @@ export const Input = ({
       dim-actions={presence(dimActions)}
       autocomplete={autoComplete ?? (!multiline && rows == null && type ? AUTOCOMPLETE_BY_TYPE[type] : undefined)}
       inputmode={inputMode ?? (!multiline && rows == null && type ? INPUTMODE_BY_TYPE[type] : undefined)}
+      autofocus={autoFocus ? true : undefined}
       spellcheck={spellCheck != null ? (spellCheck ? 'true' : 'false') : undefined}
       maxlength={maxLength != null ? String(maxLength) : undefined}
       minlength={minLength != null ? String(minLength) : undefined}

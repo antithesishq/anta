@@ -2,14 +2,14 @@
 layout: ../layouts/DocsLayout.astro
 title: Tag
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
 import Columns from '../components/Columns.astro'
 import Col from '../components/Col.astro'
 import tagDemoCode from './tag.demo.ts'
-import { Tag } from '@antadesign/anta'
+import { Button, Tag } from '@antadesign/anta'
 
 # Tag
 
@@ -23,7 +23,6 @@ from `icon`, `label`, `value`, and `iconTrailing` props, the same way
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="Tag"
   layout="side"
   panelHeight={400}
@@ -53,7 +52,7 @@ and tracks dark mode.
 <Tag allcaps priority="tertiary" tone="brand" label="Tertiary" />
 ```
 
-## Tones
+## Tone
 
 <Columns>
 <Col>
@@ -146,14 +145,14 @@ versions, and timers don't reflow.
 <Preview>
   <Tag allcaps tone="success" icon="circle-check" label="Build" value="passed" />
   <Tag allcaps tone="info" icon="hourglass" label="Running" value="20m 16s" />
-  <Tag allcaps icon="github-logo" label="Commit" value="4f90d13" />
+  <Tag allcaps icon="history" label="Commit" value="4f90d13" />
   <Tag allcaps tone="warning" label="Retries" value="3" iconTrailing="refresh" />
 </Preview>
 
 ```tsx folded
 <Tag allcaps tone="success" icon="circle-check" label="Build" value="passed" />
 <Tag allcaps tone="info" icon="hourglass" label="Running" value="20m 16s" />
-<Tag allcaps icon="github-logo" label="Commit" value="4f90d13" />
+<Tag allcaps icon="history" label="Commit" value="4f90d13" />
 <Tag allcaps tone="warning" label="Retries" value="3" iconTrailing="refresh" />
 ```
 
@@ -205,16 +204,18 @@ proper names, identifiers, and case-sensitive IDs keep their shape (`GitHub`,
 not `GITHUB`). Pass `allcaps` for the uppercase treatment: at this small size
 all-caps reads as a label at a glance and keeps a uniform, scannable shape,
 which suits short status words where the exact case carries no meaning.
-Uppercase also tracks wider (0.08ch vs the default 0.02ch) and steps each size
-down 1px, since caps read larger than mixed case at the same size.
+Without a theme, both treatments use `0.1ch` tracking. Antune and Antithesis
+retain their font-specific `0.02ch` mixed-case and `0.08ch` uppercase tracking.
+All-caps steps each size down 1px, since caps read larger than mixed case at the
+same size.
 
 <Preview>
-  <Tag icon="github-logo" label="GitHub" value="v1.6.9" />
+  <Tag icon="external-link" label="GitHub" value="v1.6.9" />
   <Tag allcaps label="Running" />
 </Preview>
 
 ```tsx folded
-<Tag icon="github-logo" label="GitHub" value="v1.6.9" />
+<Tag icon="external-link" label="GitHub" value="v1.6.9" />
 <Tag allcaps label="Running" />
 ```
 
@@ -224,7 +225,7 @@ down 1px, since caps read larger than mixed case at the same size.
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
@@ -290,5 +291,83 @@ a-tag.badge a-tag-label { font-weight: 600; letter-spacing: 0.15ch; }
 
 For a *solid* recolor, prefer `tone` / `priority` — don't reach for the resolved
 `--tag-bg` / `--tag-border` / `--tag-text` (they're recomputed per priority and tone).
+
+### Interactive tags
+
+`Tag` is presentational. Wrap it in an anchor for navigation or a native button
+for an action. The outer control receives focus and keyboard activation.
+
+<Preview>
+  <a className="tag-link" href="/builds/42">
+    <Tag tone="info" icon="external-link" label="Build" value="#42" />
+  </a>
+  <style is:inline>{`
+    a.tag-link {
+      display: inline-flex;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  `}</style>
+</Preview>
+
+```tsx folded
+<a className="tag-link" href="/builds/42">
+  <Tag tone="info" icon="external-link" label="Build" value="#42" />
+</a>
+```
+
+```css folded
+a.tag-link {
+  display: inline-flex;
+  text-decoration: none;
+  cursor: pointer;
+}
+```
+
+A removable tag has one interactive child: its remove `Button`. Keep the label
+as tag content, give the button an accessible name, and let the segment divider
+separate it. Remove the tag's block padding so the small button keeps its target
+size. The negative focus offset keeps its focus ring inside the tag's clipped edge.
+
+<Preview>
+  <Tag className="removable-tag" tone="info">
+    <span>Frontend</span>
+    <Button priority="quaternary" size="small" icon="x" aria-label="Remove Frontend" />
+  </Tag>
+  <style is:inline>{`
+    a-tag.removable-tag {
+      padding-block: 0;
+    }
+    a-tag.removable-tag > a-button {
+      align-self: stretch;
+    }
+    a-tag.removable-tag > a-button:focus-visible {
+      outline-offset: -2px;
+    }
+  `}</style>
+</Preview>
+
+```tsx folded
+<Tag className="removable-tag" tone="info">
+  <span>Frontend</span>
+  <Button priority="quaternary" size="small" icon="x" aria-label="Remove Frontend" />
+</Tag>
+```
+
+```css folded
+a-tag.removable-tag {
+  padding-block: 0;
+}
+a-tag.removable-tag > a-button {
+  align-self: stretch;
+}
+a-tag.removable-tag > a-button:focus-visible {
+  outline-offset: -2px;
+}
+```
+
+When a tag both opens something and removes it, render two sibling controls in a
+compound layout. Do not place a remove button inside an anchor or button that
+wraps the tag.
 
 </Disclosure>

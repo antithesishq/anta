@@ -1,35 +1,36 @@
 /**
- * Data behind the /comparison page. One source of truth for the two
- * matrices (at-a-glance + component coverage) and the per-system pros/cons
- * cards, so the numbers can't drift between sections.
- *
- * Versions are a snapshot verified against npm / official docs in July 2026
- * (see `AS_OF`). The fixed-package size figures come from downloaded npm
- * artifacts: a full-package ESM bundle minified with esbuild, with React and
- * React DOM external, then gzip level 9 applied to each emitted JS and CSS
- * file. Polaris is a dated gzip-9 CDN snapshot rather than a package figure.
- * They date quickly; re-check before quoting them elsewhere.
- * Coverage marks describe *shipped* components, grouping variants that cover
- * one job into a single cell (a Dialog / Modal / Drawer family is one mark).
- * Marks are honest, not generous: `partial` means "basic or community-only",
- * not "counts if you squint".
+ * Shared comparison facts. Current package versions and descriptions use
+ * AS_OF; bundleVersion preserves the separately dated size measurement.
+ * Coverage groups components by job and links to their public APIs.
  */
 
-export const AS_OF = 'July 2026'
+export const AS_OF = 'September 6, 2026'
+export const SIZE_AS_OF = 'July 2026'
 
-// Rolling browser policies below are pinned to the stable releases available
-// at this snapshot, so every browser reference carries a release year.
-const CURRENT_BROWSERS = 'Chrome 150 (2026), Edge 150 (2026), Firefox 153 (2026), and Safari 26.6 (2026)'
-const PREVIOUS_BROWSERS = 'Chrome 149 (2026), Edge 149 (2026), Firefox 152 (2026), and Safari 26.5 (2026)'
+/** Anta component routes used by both coverage references. */
+export const ANTA_SLUG: Record<string, string> = {
+  button: 'button', textinput: 'input', select: 'select', combobox: 'input-autocomplete',
+  choice: 'checkbox', slider: 'slider',
+  datetime: 'input-date', tabs: 'tabs', menu: 'menu', tooltip: 'tooltip',
+  dialog: 'dialog', toast: 'toaster', accordion: 'expander', table: 'table', tag: 'tag', avatar: 'avatar', card: 'card', progress: 'progress', steps: 'steps', nav: 'breadcrumbs',
+  icons: 'icon', typography: 'text', utilities: 'box',
+}
 
 export type Mark = 'yes' | 'partial' | 'no' | 'paid'
+
+export interface SystemNamePart {
+  label: string
+  href: string
+}
 
 export interface System {
   /** Short key, also the coverage-column id. */
   id: string
   name: string
+  /** Linked names that replace `name` where a combined system is rendered. */
+  nameParts?: SystemNamePart[]
   /** Compact label for the matrix column headers, where horizontal space is
-   *  tight. Falls back to `name` (used verbatim on the pros/cons cards). */
+   *  tight. Falls back to `name`. */
   short?: string
   /** True for Anta; drives the highlight styling in both matrices. */
   anta?: boolean
@@ -52,10 +53,16 @@ export interface System {
   /** Measured minified, gzip-compressed download for a full useful import.
    *  This is context, not a component-level benchmark. */
   bundleSize: string
+  /** Package version or source snapshot used for the size measurement. */
+  bundleVersion: string
   /** What the size includes and excludes. */
   bundleIncludes: string
   /** Browser policy for this version. */
   browsers: string
+  /** Release year of the minimum browser set. Prefix feature-based estimates with ~. */
+  browserSupport: string
+  /** Official references for the card's claims and browser policy. */
+  sources: SystemNamePart[]
   pros: string[]
   cons: string[]
 }
@@ -68,35 +75,39 @@ export const SYSTEMS: System[] = [
     id: 'anta',
     name: 'Anta',
     anta: true,
-    version: '@antadesign/anta 0.3.17',
+    version: '@antadesign/anta 0.3.26',
     docs: 'https://anta.design',
     tagline: 'Framework-agnostic web components with optional React/Preact wrappers and no style runtime.',
     kind: 'Styled web components + JSX wrappers',
-    frameworks: 'React/Preact wrappers of Web components',
+    frameworks: 'Web components',
+    frameworksNote: 'React and Preact wrappers',
     styling: 'Plain CSS + CSS-variable tokens',
     license: 'MIT',
-    bundleSize: "102 KiB",
-    bundleIncludes: "All JSX wrappers, custom elements, component CSS, tokens, and reset CSS; React, the branded theme, and stickers excluded. Selective imports are smaller.",
+    bundleSize: '~100 KiB',
+    bundleVersion: '@antadesign/anta 0.3.16',
+    bundleIncludes: 'Wrappers, elements, CSS, tokens, and reset. Excludes React, the branded theme, and stickers.',
     browsers: "Chrome / Edge 125 (2024), Safari 17.4 (2024), and Firefox 126 (2024), or later. Requires custom elements, ElementInternals, Popover, and modern CSS.",
+    browserSupport: '2024',
+    sources: [
+      { label: 'Installation and browser support', href: '/install/#browser-support' },
+      { label: 'Theming', href: '/theming/' },
+    ],
     pros: [
       'Runs in React, Preact, and plain HTML; JSX wrappers are optional.',
-      'Components do not mutate host attributes, so they work with worker-thread and reactive renderers.',
-      'Plain CSS in one @layer avoids a style runtime and specificity fights.',
-      'Global tokens cover color roles, fonts, and focus. Components expose their remaining CSS variables locally.',
-      'OKLCH tones use the same token system in light and dark mode.',
-      'Per-element imports register only the component you use. Lottie lives in the separate stickers package.',
+      'Plain CSS and cascade layers support overrides without a style runtime.',
+      'Shared color, font, and focus tokens support light and dark themes.',
     ],
     cons: [
-      'Young and small: about 20 components, with no avatar yet.',
-      'Table and plotting libraries are planned companion packages.',
-      'A 0.x release from one organization has a shorter track record than established systems.',
+      'No data grid or chart components in the published package.',
+      'Requires modern browsers and provides no baseline polyfills.',
+      'The API is still in 0.x and can change between minor releases.',
     ],
   },
   {
     id: 'webawesome',
     name: 'Web Awesome',
     short: 'WA',
-    version: '@awesome.me/webawesome 3.10.0',
+    version: '@awesome.me/webawesome 3.12.0',
     docs: 'https://webawesome.com',
     tagline: "Font Awesome's framework-agnostic web components and CSS framework, succeeding Shoelace.",
     kind: 'Styled web components',
@@ -104,18 +115,24 @@ export const SYSTEMS: System[] = [
     frameworksNote: 'React, Vue, Angular, Svelte guides',
     styling: 'CSS framework + CSS variables',
     license: 'MIT core + paid Pro tier',
-    bundleSize: "185 KiB",
-    bundleIncludes: "All free components, Lit runtime, and base CSS; Pro components and web fonts excluded. Selective imports are smaller.",
-    browsers: "Chrome 94 (2021), Edge 94 (2021), Firefox 93 (2021), and Safari 16.4 (2023), or later.",
+    bundleSize: '~190 KiB',
+    bundleVersion: '@awesome.me/webawesome 3.10.0',
+    bundleIncludes: 'Free components, Lit, and base CSS. Excludes Pro components and web fonts.',
+    browsers: 'Estimated compatibility: Chrome / Edge 125+, Firefox 128+, and Safari 18+ (2024). Current styles use custom states and relative OKLCH colors. Official support covers the latest two major browser versions.',
+    browserSupport: '~2024',
+    sources: [
+      { label: 'Components and Pro features', href: 'https://webawesome.com/docs/components' },
+      { label: 'Server rendering', href: 'https://webawesome.com/docs/ssr' },
+      { label: 'Browser policy', href: 'https://webawesome.com/docs/resources/browser-support' },
+      { label: 'Shipped theme CSS', href: 'https://unpkg.com/@awesome.me/webawesome@3.12.0/dist/styles/themes/default.css' },
+    ],
     pros: [
       'Works in any stack or plain HTML without a build step.',
-      'Broad components, utility and layout CSS, and Font Awesome icons.',
-      'ElementInternals form controls support FormData, validation, and reset.',
-      'CSS variables and `::part()` support theming.',
-      'Backed by Font Awesome, with monthly releases since October 2025.',
+      'Includes form controls, layout utilities, observers, and Toasts.',
+      'CSS variables and shadow parts support theming.',
     ],
     cons: [
-      'Combobox, date and file inputs, toasts, charts, and video require Pro.',
+      'Combobox, date and file inputs, Data Grid, charts, and video require Pro.',
       'Lit is a runtime dependency alongside React or Vue.',
       'Its own docs describe SSR support as experimental.',
     ],
@@ -124,60 +141,72 @@ export const SYSTEMS: System[] = [
     id: 'polaris',
     name: 'Shopify Polaris',
     short: 'Polaris',
-    version: 'polaris.js CDN, always latest',
+    version: 'Polaris CDN 1.x; 1.1 RC',
     docs: 'https://shopify.dev/docs/api/app-home/web-components',
     tagline: "Shopify's web-component system for apps that must match Shopify Admin.",
     kind: 'Styled web components (CDN)',
     frameworks: 'Web components',
     styling: 'Locked to the Shopify look',
     license: 'Restricted (Shopify apps)',
-    bundleSize: "118 KiB snapshot",
-    bundleIncludes: "polaris.js on 31 July 2026; component CSS is embedded in the script. It appends 0.52 KiB-gzip Inter CSS, then loads a matching Inter WOFF2 subset (83.3 KiB Latin) and SVG icons on demand. The CDN is mutable.",
-    browsers: `Shopify supports its latest two major versions: ${CURRENT_BROWSERS}; ${PREVIOUS_BROWSERS}. The CDN is updated in place.`,
+    bundleSize: '~120 KiB',
+    bundleVersion: 'polaris.js, July 31, 2026',
+    bundleIncludes: 'CDN script with embedded component CSS. Excludes separately loaded fonts and icons.',
+    browsers: 'Estimated compatibility: Chrome / Edge 105+, Firefox 121+, and Safari 16.4+ (2023), based on :has(), container queries, and form-associated custom elements. The CDN includes a Popover polyfill. Shopify does not guarantee this minimum set.',
+    browserSupport: '~2023',
+    sources: [
+      { label: 'CDN versioning', href: 'https://community.shopify.dev/t/the-polaris-cdn-is-adopting-semantic-versioning/37332' },
+      { label: '1.1 release candidate', href: 'https://shopify.dev/changelog/polaris-cdn-1-1-release-candidate' },
+      { label: 'Box properties', href: 'https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/box' },
+      { label: 'CDN implementation', href: 'https://cdn.shopify.com/shopifycloud/polaris-1.js' },
+    ],
     pros: [
-      'Framework-agnostic web components from a major platform.',
-      'One script tag matches Shopify Admin and merchant brand settings.',
-      'Shopify measured 40–85% smaller checkout-extension bundles after leaving React.',
-      'Built-in accessibility warnings flag missing required props.',
+      'Web components match Shopify Admin across frameworks.',
+      'Box exposes layout, spacing, border, and color properties.',
+      'CDN versioning now separates compatible updates from major upgrades.',
     ],
     cons: [
-      'The CDN cannot be pinned; unannounced updates have broken production apps.',
-      'Styling is intentionally locked to Shopify, not your own brand.',
-      'It still lacks features from the deprecated React library, including bulk table selection and multi-select.',
-      'The license applies only to apps that integrate with Shopify.',
+      'Styled for Shopify apps, with customization limited to the exposed properties.',
+      'The 1.1 release candidate changes in place until it becomes stable.',
+      'Use is subject to Shopify’s app-specific license terms.',
     ],
   },
   {
     id: 'mui',
     name: 'MUI (Material UI)',
     short: 'MUI',
-    version: '@mui/material 9.2.0',
+    version: '@mui/material 9.4.0',
     docs: 'https://mui.com/material-ui/',
-    tagline: "Google's Material Design implementation for React, with extensive theming.",
+    tagline: 'MUI’s React implementation of Google’s Material Design.',
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'CSS-in-JS (Emotion)',
     license: 'MIT core + paid MUI X',
-    bundleSize: "164 KiB",
-    bundleIncludes: "All Material UI core exports and the Emotion style runtime; React, icons, MUI X, date adapters, and application code excluded. Selective imports are smaller.",
-    browsers: `Current browser releases only: ${CURRENT_BROWSERS}. MUI publishes no fixed browser floor.`,
+    bundleSize: '~170 KiB',
+    bundleVersion: '@mui/material 9.2.0',
+    bundleIncludes: 'Material UI core and Emotion. Excludes React, icons, MUI X, and date adapters.',
+    browsers: 'Chrome 117 (2023), Edge 121 (2024), Firefox 121 (2024), and Safari 17.0 (2023), or later.',
+    browserSupport: '2024',
+    sources: [
+      { label: 'v9 features', href: 'https://mui.com/blog/introducing-mui-v9/' },
+      { label: 'Browser requirements', href: 'https://mui.com/material-ui/migration/upgrade-to-v9/' },
+      { label: 'Project status', href: 'https://mui.com/blog/2026-and-beyond/' },
+    ],
     pros: [
-      'A large component set, plus MUI X data grid, charts, and date pickers.',
-      'The largest ecosystem here: documentation, themes, templates, and hiring.',
-      'Themes reach component slots through `styleOverrides` and variants.',
-      'v9 offers opt-in CSS-variable themes with OKLCH `color-mix()` states.',
+      'Core controls plus MUI X data grids, charts, and date pickers.',
+      'Themes provide component variants, slot overrides, and CSS variables.',
+      'v9 adds NumberField and Menubar and expands keyboard navigation.',
     ],
     cons: [
-      'Moving far from Material requires slot-by-slot overrides; most MUI apps still read as Material.',
-      'Emotion resolves styles at runtime. The planned zero-runtime Pigment CSS is paused.',
-      'React-only; data grid, date-range pickers, and advanced charts have paid MUI X tiers.',
+      'Emotion resolves styles at runtime; Pigment CSS remains on hold.',
+      'Some MUI X features require Pro or Premium licenses.',
+      'React-only. Custom designs can require component-level overrides.',
     ],
   },
   {
     id: 'antd',
     name: 'Ant Design',
     short: 'Ant',
-    version: 'antd 6.5.2',
+    version: 'antd 6.6.2',
     docs: 'https://ant.design',
     tagline: 'An enterprise React library for data-dense admin and dashboard UIs.',
     kind: 'Styled React components',
@@ -185,52 +214,61 @@ export const SYSTEMS: System[] = [
     frameworksNote: 'Angular, Vue community ports',
     styling: 'CSS-in-JS + CSS variables (v6)',
     license: 'MIT',
-    bundleSize: "464 KiB",
-    bundleIncludes: "All `antd` exports and its CSS-in-JS runtime; React, icons, charts, and application code excluded. Selective imports are smaller.",
-    browsers: `Last two browser releases: ${CURRENT_BROWSERS}; ${PREVIOUS_BROWSERS}.`,
+    bundleSize: '~470 KiB',
+    bundleVersion: 'antd 6.5.2',
+    bundleIncludes: 'All antd exports and its CSS-in-JS runtime. Excludes React and separately imported charts and icons.',
+    browsers: 'Estimated compatibility: Chrome / Edge 111+, Firefox 121+, and Safari 16.2+ (2023), based on :has(), color-mix(), and ResizeObserver in current components. Ant Design officially targets modern browsers; some enhancements can require newer versions.',
+    browserSupport: '~2023',
+    sources: [
+      { label: 'v6 requirements', href: 'https://ant.design/docs/react/migration-v6/' },
+      { label: 'Component changes', href: 'https://ant.design/components/changelog/' },
+      { label: 'Checkbox focus styles', href: 'https://unpkg.com/antd@6.6.2/es/checkbox/style/index.js' },
+    ],
     pros: [
-      'One of the largest component sets, including Table, Form, Transfer, and Cascader.',
-      'Built for admin and data-heavy apps, often without a separate form library.',
-      'Token-based themes include dark and compact modes.',
-      'A mature ecosystem with Pro components, AntV charts, and TypeScript support.',
+      'Table, Form, Transfer, and Cascader cover data-heavy application flows.',
+      'Theme tokens provide dark and compact modes.',
+      'v6 exposes semantic element styles and class names across components.',
     ],
     cons: [
-      'Accessibility lacks a consolidated target and documentation; fixes land component by component.',
-      'Imports need care to limit the icons, dayjs, and rc-component payload.',
-      "Themes change color, radius, and density, but the result still reads as Ant Design.",
+      'v6 requires React 18 or later and retains a CSS-in-JS runtime.',
+      'Overrides that depend on internal DOM structure can need migration work.',
       'React-only; Vue and Angular versions are separate community projects.',
     ],
   },
   {
     id: 'mantine',
     name: 'Mantine',
-    version: '@mantine/core 9.4.2',
+    version: '@mantine/core 9.6.0',
     docs: 'https://mantine.dev',
     tagline: 'A React library with extensive hooks and official form, date, and chart packages.',
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'CSS Modules + CSS variables',
     license: 'MIT',
-    bundleSize: "206 KiB",
-    bundleIncludes: "All `@mantine/core` exports, `@mantine/hooks`, and core CSS; React and separate dates, charts, forms, and notifications packages excluded. Selective imports are smaller.",
-    browsers: `Mantine publishes no fixed browser floor. This snapshot's modern-browser reference is ${CURRENT_BROWSERS}; v9 requires the browser features targeted by React 19.2.`,
+    bundleSize: '~210 KiB',
+    bundleVersion: '@mantine/core 9.4.2',
+    bundleIncludes: 'Core components, hooks, and CSS. Excludes React and extension packages.',
+    browsers: 'Tested on Chromium 108 (2022), Firefox 101 (2022), and Safari 15.4 (2022), or later.',
+    browserSupport: '2022',
+    sources: [
+      { label: 'Packages and setup', href: 'https://mantine.dev/getting-started/' },
+      { label: 'v9 requirements', href: 'https://mantine.dev/changelog/9-0-0/' },
+      { label: 'Browser policy', href: 'https://mantine.dev/browser-support/' },
+    ],
     pros: [
-      '142 components and 82 hooks; forms, dates, charts, notifications, and rich text are official packages.',
+      'Official packages cover forms, dates, charts, notifications, and rich text.',
       'CSS Modules and CSS variables avoid runtime CSS-in-JS.',
-      'Every component documents its Styles API, with unstyled and headless modes.',
-      'Weekly patches, fast issue triage, and strong TypeScript documentation.',
+      'The Styles API exposes component selectors and CSS variables.',
     ],
     cons: [
-      'Current versions require React 19.2+; React 18 stays on v8.',
-      'React-only.',
-      'A full `@mantine/core` import with its required hooks and CSS is 206 KiB gzipped, so tree-shaking matters.',
-      'Development is largely led by one active, sponsor-funded maintainer.',
+      'v9 requires React 19.2 or later; older React apps need an earlier Mantine major.',
+      'Extensions add dependencies such as Recharts and Tiptap.',
     ],
   },
   {
     id: 'carbon',
     name: 'Carbon',
-    version: '@carbon/react 1.112.0',
+    version: '@carbon/react 1.115.0',
     docs: 'https://carbondesignsystem.com',
     tagline: "IBM's enterprise design system for React and first-party web components.",
     kind: 'Styled React (+ web components)',
@@ -238,19 +276,25 @@ export const SYSTEMS: System[] = [
     frameworksNote: 'Angular, Vue, Svelte community',
     styling: 'Sass + CSS variables',
     license: 'Apache-2.0',
-    bundleSize: "293 KiB",
-    bundleIncludes: "All `@carbon/react` exports and Carbon's compiled CSS; React, icons, charts, and web components excluded. Selective imports are smaller.",
-    browsers: `Current and previous browser releases: ${CURRENT_BROWSERS}; ${PREVIOUS_BROWSERS}.`,
+    bundleSize: '~300 KiB',
+    bundleVersion: '@carbon/react 1.112.0',
+    bundleIncludes: 'React components and compiled Carbon CSS. Excludes React, separately imported icons, charts, and web components.',
+    browsers: 'Estimated compatibility: Chrome / Edge 105+, Firefox 121+, and Safari 16+ (2023), based on :has() and container queries in the shipped CSS. Official support covers the latest stable browser releases.',
+    browserSupport: '~2023',
+    sources: [
+      { label: 'React setup', href: 'https://carbondesignsystem.com/developing/frameworks/react/' },
+      { label: 'Frameworks and browser policy', href: 'https://carbondesignsystem.com/help/faq/' },
+      { label: 'Themes', href: 'https://carbondesignsystem.com/elements/themes/overview/' },
+      { label: 'Shipped CSS', href: 'https://unpkg.com/@carbon/styles@1.114.0/css/styles.css' },
+    ],
     pros: [
       'Publishes component accessibility results, including manual screen-reader checks mapped to WCAG.',
-      'Strong for data-dense enterprise UIs, with data-table and app-shell components.',
-      'React and Lit web components ship first-party on the same release cadence.',
+      'First-party React and web-component implementations.',
       'Theme-scoped role tokens support four built-in themes.',
     ],
     cons: [
-      'Component styles require Dart Sass; precompiled CSS covers only tokens, grid, and type.',
-      'Moving away from IBM Plex requires Sass recompilation or many class overrides.',
-      'Its large, multi-package surface has a matching learning curve.',
+      'The documented React setup requires a Sass build step.',
+      'Typography and component customization can require Sass or CSS overrides.',
       'Angular, Vue, and Svelte implementations are community-maintained.',
     ],
   },
@@ -258,148 +302,156 @@ export const SYSTEMS: System[] = [
     id: 'atlassian',
     name: 'Atlassian (Atlaskit)',
     short: 'Atlaskit',
-    version: '@atlaskit/tokens 16.3.0',
+    version: '@atlaskit/tokens 16.11.2',
     docs: 'https://atlassian.design',
-    tagline: 'The Jira, Confluence, and Trello system, published as independently versioned `@atlaskit` packages.',
+    tagline: 'Atlassian’s React design system, distributed as independently versioned packages.',
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'Compiled CSS-in-JS + tokens',
-    license: 'Apache-2.0 code, Atlassian-scoped terms',
-    bundleSize: "598 KiB",
-    bundleIncludes: "57 public Design System packages; tables, icons, editors, product packages, and React excluded. Only imported packages ship.",
-    browsers: `Atlaskit publishes no fixed browser floor. This snapshot's current-browser reference is ${CURRENT_BROWSERS}.`,
+    license: 'Package-specific OSS + ADS terms',
+    bundleSize: '~600 KiB',
+    bundleVersion: '57-package snapshot, July 2026',
+    bundleIncludes: '57 Design System packages. Excludes React, tables, icons, editors, and product packages.',
+    browsers: 'Estimated compatibility for compiled controls: Chrome / Edge 86+, Firefox 85+, and Safari 15.4+ (2022), based on CSS variables and :focus-visible. Other packages can require newer features. Official support follows the target Atlassian product.',
+    browserSupport: '~2022',
+    sources: [
+      { label: 'Build setup', href: 'https://atlassian.design/get-started/develop/atlassians/' },
+      { label: 'Design system license', href: 'https://atlassian.design/license/' },
+      { label: 'Button focus styles', href: 'https://unpkg.com/@atlaskit/button@25.3.2/dist/esm/new-button/variants/shared/button-base.compiled.css' },
+    ],
     pros: [
-      'Proven in Atlassian products, with tokens and Figma libraries aligned to the code.',
-      'Build-time Compiled CSS-in-JS keeps the style runtime near zero.',
-      'Deep collaboration patterns, including pragmatic drag and drop.',
-      'A WCAG 2.1 AA target with published conformance reports.',
+      'Design tokens and components used in Atlassian products.',
+      'Compiled styles ship as CSS alongside the packages.',
+      'Separate utilities include Pragmatic drag and drop and Focus ring.',
     ],
     cons: [
-      'You must keep dozens of `@atlaskit` package versions aligned.',
-      'Compiled CSS-in-JS needs Babel or SWC and style extraction setup.',
-      'Terms limit use to products that integrate with Atlassian, and the docs assume that context.',
-      'React-only.',
+      'Independently versioned packages require dependency coordination.',
+      'The recommended build setup adds Babel and Compiled configuration.',
+      'ADS terms cover Atlassian integrations; individual open-source packages may grant broader rights.',
     ],
   },
   {
     id: 'blueprint',
     name: 'Blueprint',
-    version: '@blueprintjs/core 6.17.2',
+    version: '@blueprintjs/core 6.18.0',
     docs: 'https://blueprintjs.com',
     tagline: "Palantir's React toolkit for complex, data-dense desktop interfaces.",
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'Sass-compiled CSS (bp6- classes)',
     license: 'Apache-2.0',
-    bundleSize: "350 KiB",
-    bundleIncludes: "All `@blueprintjs/core` exports and compiled core CSS; React and the separate Table, Select, and Datetime packages excluded. Selective imports are smaller.",
-    browsers: `Blueprint publishes no fixed browser floor. This snapshot's current-browser reference is ${CURRENT_BROWSERS}.`,
+    bundleSize: '~350 KiB',
+    bundleVersion: '@blueprintjs/core 6.17.2',
+    bundleIncludes: 'Core components and compiled CSS. Excludes React and the Table, Select, and Datetime packages.',
+    browsers: 'Estimated compatibility: Chrome / Edge 111+, Firefox 113+, and Safari 16.2+ (2023), based on color-mix() in core CSS. Relative-color enhancements have fallbacks. The repository maintains a rolling Browserslist target.',
+    browserSupport: '~2023',
+    sources: [
+      { label: 'Toolkit and packages', href: 'https://github.com/palantir/blueprint' },
+      { label: 'Browser targets', href: 'https://github.com/palantir/blueprint/blob/develop/.browserslistrc' },
+      { label: 'Shipped CSS and fallbacks', href: 'https://unpkg.com/@blueprintjs/core@6.18.0/lib/css/blueprint.css' },
+    ],
     pros: [
       'Built for dense desktop tools: a virtualized Table, Omnibar, and dual-calendar date picker.',
-      'Maintained by a Palantir team and in production there since 2016.',
-      'Thorough documentation and consistent keyboard behavior.',
+      'Core CSS ships precompiled and can be customized with Sass.',
+      'FocusStyleManager switches focus indicators by input method.',
     ],
     cons: [
-      'Desktop-first by design; touch and mobile are out of scope.',
-      'Restyling requires Sass recompilation or `bp6-` class overrides; dark mode is a class toggle.',
+      'Designed for desktop applications; test touch-heavy flows separately.',
+      'Table, Select, and Datetime are separate packages.',
       'React-only.',
     ],
   },
   {
     id: 'astryx',
     name: 'Astryx',
-    version: '@astryxdesign/core 0.1.8',
+    version: '@astryxdesign/core 0.5.3',
     docs: 'https://astryx.atmeta.com',
     tagline: "Meta's React design system on StyleX, with precompiled CSS and first-party AI-agent tooling.",
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'StyleX (precompiled atomic CSS)',
     license: 'MIT',
-    bundleSize: "251 KiB",
-    bundleIncludes: "All core exports, StyleX runtime, and `astryx.css`; React excluded. Selective source builds are smaller.",
-    browsers: `Astryx publishes no fixed browser floor. This snapshot's React 19 browser reference is ${CURRENT_BROWSERS}.`,
+    bundleSize: '~260 KiB',
+    bundleVersion: '@astryxdesign/core 0.1.8',
+    bundleIncludes: 'Core components, StyleX runtime, and precompiled CSS. Excludes React.',
+    browsers: 'Two documented tiers: functional support at Baseline 2024 and full fidelity at Baseline 2026. Older functional-tier browsers need a positioning fallback for anchored overlays.',
+    browserSupport: '2024 / 2026',
+    sources: [
+      { label: 'Components and tooling', href: 'https://astryx.atmeta.com/blog/introducing-astryx' },
+      { label: 'Browser tiers', href: 'https://astryx.atmeta.com/docs/browser-support' },
+    ],
     pros: [
-      'About 100 stable components, including an enterprise Table and WebGL chart primitive.',
+      'Components, templates, and brand theming built on React and StyleX.',
       'Precompiled CSS needs no StyleX build step; source compilation is optional for tree-shaking.',
       'Agent tooling includes an MCP server, `llms.txt`, and a CLI for context files and source ejection.',
-      'Developed within Meta before the June 2026 public release, with frequent updates since.',
     ],
     cons: [
-      'Custom brand tokens do not reach every component; some fall back to Astryx defaults.',
-      'React-only, and requires React 19.',
-      'Accessibility work appears in releases, but there is no conformance statement or external audit yet.',
+      'Requires React 19 and a StyleX runtime peer dependency.',
+      'Overlay positioning depends on CSS anchor positioning or an application-provided fallback.',
+      'The public package is in 0.x; check migrations when updating.',
     ],
   },
   {
     id: 'gravity',
     name: 'Gravity UI',
     short: 'Gravity',
-    version: '@gravity-ui/uikit 7.47.1',
+    version: '@gravity-ui/uikit 7.49.0',
     docs: 'https://gravity-ui.com',
-    tagline: "Yandex's open-source React system, with `@gravity-ui` packages, Figma, and Storybook.",
+    tagline: 'A React design system with separate packages for controls, data tables, charts, and navigation.',
     kind: 'Styled React components',
     frameworks: 'React',
     styling: 'CSS (BEM classes) + CSS variables',
     license: 'MIT',
-    bundleSize: "219 KiB",
-    bundleIncludes: "All UIKit exports and UIKit CSS; React, icons, dates, charts, and data-table packages excluded. Selective imports are smaller.",
-    browsers: `Last two browser releases: ${CURRENT_BROWSERS}; ${PREVIOUS_BROWSERS}.`,
+    bundleSize: '~220 KiB',
+    bundleVersion: '@gravity-ui/uikit 7.47.1',
+    bundleIncludes: 'UIKit components and CSS. Excludes React, icons, dates, charts, and the headless table package.',
+    browsers: 'Estimated compatibility: Chrome / Edge 105+, Firefox 121+, and Safari 15.4+ (2023), based on :has() in theme CSS, Array.at() in tabs and tables, and ResizeObserver. Extension packages can add requirements.',
+    browserSupport: '~2023',
+    sources: [
+      { label: 'UIKit requirements and packages', href: 'https://gravity-ui.com/libraries/uikit' },
+      { label: 'Shipped theme CSS', href: 'https://unpkg.com/@gravity-ui/uikit@7.49.0/styles/styles.css' },
+    ],
     pros: [
       'A broad core plus packages for dates, icons, charts, navigation, and a headless data table.',
       'Built-in light, dark, and high-contrast themes, with CSS variables and a hosted theme editor.',
-      'Screen-reader audits drive documented keyboard and focus fixes.',
       'Supports React 16.14 through 19 in one release.',
     ],
     cons: [
       'React-only.',
       'Dates, charts, and the data table add separate dependencies.',
-      'There is little verified adoption outside Yandex products.',
-    ],
-  },
-  {
-    id: 'baseui',
-    name: 'Base UI',
-    version: '@base-ui/react 1.6.0',
-    docs: 'https://base-ui.com',
-    tagline: 'An unstyled React library for accessible, composable interface primitives.',
-    kind: 'Headless React primitives',
-    frameworks: 'React',
-    styling: 'Unstyled; bring your own',
-    license: 'MIT',
-    bundleSize: "160 KiB",
-    bundleIncludes: "All Base UI primitives and positioning code; React, styling, and icons excluded. Selective imports are smaller.",
-    browsers: `Base UI publishes no fixed browser floor. This snapshot's current-browser reference is ${CURRENT_BROWSERS}, including iOS Safari 26.6 (2026).`,
-    pros: [
-      'Includes Combobox, Autocomplete, Number Field, Meter, and Field/Fieldset primitives.',
-      "MUI's top investment; Material UI v9 already builds new components on it.",
-      'The default base for new shadcn/ui projects since July 2026.',
-      'One package with a render-prop API instead of `asChild`.',
-    ],
-    cons: [
-      'Newer, with fewer third-party examples and answers.',
-      'React-only.',
     ],
   },
   {
     id: 'shadcn',
-    name: 'shadcn/ui',
+    name: 'shadcn + Base UI + Tailwind',
+    nameParts: [
+      { label: 'shadcn', href: 'https://ui.shadcn.com' },
+      { label: 'Base UI', href: 'https://base-ui.com' },
+      { label: 'Tailwind', href: 'https://tailwindcss.com' },
+    ],
     short: 'shadcn',
-    version: 'Base UI registry @ 705ce59',
+    version: 'Base UI registry',
     docs: 'https://ui.shadcn.com',
-    tagline: 'Tailwind-styled source copied into your repo by CLI, on an accessible primitive layer.',
-    kind: 'Copy-paste React source',
+    tagline: 'Tailwind-styled source copied into your repo by CLI, using Base UI primitives by default.',
+    kind: 'Copy-paste React source on Base UI',
     frameworks: 'React',
     frameworksNote: 'Vue, Svelte community ports',
     styling: 'Tailwind + CSS variables',
     license: 'MIT',
-    bundleSize: "341 KiB",
-    bundleIncludes: "All 61 Base UI registry components and generated Tailwind CSS; React and Lucide excluded. Only selected source ships.",
+    bundleSize: '~350 KiB',
+    bundleVersion: 'shadcn/ui source @ 705ce59',
+    bundleIncludes: '61 Base UI registry components and generated Tailwind CSS. Excludes React and Lucide.',
     browsers: "Depends on the selected primitives. Tailwind CSS 4 requires Safari 16.4 (2023), Chrome 111 (2023), and Firefox 128 (2024), or later.",
+    browserSupport: '2024',
+    sources: [
+      { label: 'Default Base UI registry', href: 'https://ui.shadcn.com/docs/changelog/2026-07-base-ui-default' },
+      { label: 'React Aria option', href: 'https://ui.shadcn.com/docs/changelog/2026-07-react-aria' },
+      { label: 'Tailwind browser requirements', href: 'https://tailwindcss.com/docs/compatibility' },
+    ],
     pros: [
-      'The source lives in your repo, with no black-box dependency or version lock.',
-      'Accessibility comes from the primitive layer you choose.',
-      'AI tools such as v0 and Cursor commonly generate shadcn-style code.',
-      'A large ecosystem of themes, blocks, and community registries.',
+      'Copied source can be edited directly in your repository.',
+      'Base UI is the default; Radix and React Aria are also supported.',
+      'The CLI installs components, styles, and their dependencies.',
     ],
     cons: [
       'Tailwind is required; generated components use utility classes throughout.',
@@ -409,26 +461,37 @@ export const SYSTEMS: System[] = [
   },
   {
     id: 'untitledui',
-    name: 'Untitled UI',
+    name: 'Untitled UI + React Aria + Tailwind',
+    nameParts: [
+      { label: 'Untitled UI', href: 'https://www.untitledui.com/react' },
+      { label: 'React Aria', href: 'https://react-spectrum.adobe.com/react-aria/' },
+      { label: 'Tailwind', href: 'https://tailwindcss.com' },
+    ],
     short: 'Untitled',
-    version: 'React app source @ eaee6a5',
+    version: 'React app source',
     docs: 'https://www.untitledui.com/react',
-    tagline: 'A large React and Tailwind source collection on React Aria, paired with the Untitled UI Figma kit.',
+    tagline: 'React and Tailwind component source built on React Aria, with a companion Figma kit.',
     kind: 'Copy-paste React source',
     frameworks: 'React',
     styling: 'Tailwind CSS + React Aria',
     license: 'MIT core + paid Pro tier',
-    bundleSize: "408 KiB",
-    bundleIncludes: "102 app source files (`base` + `application`), React Aria, and generated Tailwind CSS; React, Next, and icons excluded. Only selected source ships.",
+    bundleSize: '~410 KiB',
+    bundleVersion: 'Untitled UI source @ eaee6a5',
+    bundleIncludes: '102 base and application source files, React Aria, and generated Tailwind CSS. Excludes React, Next.js, and icons.',
     browsers: "Tailwind CSS 4 requires Safari 16.4 (2023), Chrome 111 (2023), and Firefox 128 (2024), or later. React Aria can add feature-specific requirements.",
+    browserSupport: '2024',
+    sources: [
+      { label: 'Stack and licensing', href: 'https://www.untitledui.com/react/docs/introduction' },
+      { label: 'Tailwind browser requirements', href: 'https://tailwindcss.com/docs/compatibility' },
+    ],
     pros: [
-      'A broad React Aria component set copied into your repo without a runtime dependency.',
-      'Tailwind v4 styling and a synced Figma kit keep design and code aligned.',
-      'The MIT core covers base components; charts and toasts use Recharts and Sonner.',
+      'Component source can be edited directly in your repository.',
+      'React Aria provides the underlying interaction primitives.',
+      'Includes application and marketing components with a companion Figma kit.',
     ],
     cons: [
-      'React-only, with React 19 and Tailwind CSS 4 required.',
-      'Full-page examples, extra icon styles, and the Figma kit require paid tiers.',
+      'Uses React 19.2, Tailwind CSS 4, and React Aria runtime dependencies.',
+      'Additional components, page examples, and design assets have paid tiers.',
       'You own consistency and upgrades across copied files.',
     ],
   },
@@ -441,6 +504,8 @@ export interface Category {
   label: string
   /** The grouped members, shown as the row's sub-label. */
   members: string
+  /** Representative components by system, shown in the cell tooltip. */
+  examples?: Record<string, string>
 }
 
 export const CATEGORIES: Category[] = [
@@ -463,117 +528,144 @@ export const CATEGORIES: Category[] = [
   { id: 'avatar', label: 'Avatar', members: 'Avatar / avatar group' },
   { id: 'card', label: 'Card', members: 'Card / tile / surface' },
   { id: 'steps', label: 'Steps', members: 'Stepper, wizard, progress tracker' },
-  { id: 'nav', label: 'Nav helpers', members: 'Breadcrumb, pagination' },
+  { id: 'nav', label: 'Breadcrumbs', members: 'Breadcrumb navigation' },
   { id: 'icons', label: 'Icons', members: 'Bundled icon set' },
   { id: 'typography', label: 'Typography', members: 'Text / title components' },
   { id: 'charts', label: 'Charts', members: 'First-party data viz' },
+  // Utility and focus coverage verified against public APIs on September 5, 2026.
+  {
+    id: 'utilities', label: 'Utility containers', members: 'Boxes with observers',
+    examples: {
+      anta: 'Box, Capture', webawesome: 'Resize Observer', mui: 'ClickAwayListener',
+      mantine: 'useResizeObserver', atlassian: 'Pragmatic drag and drop',
+      blueprint: 'ResizeSensor', astryx: 'useScrollOverflow', shadcn: 'Scroll Area',
+      untitledui: 'React Aria useMove', gravity: 'useResizeObserver',
+      polaris: 'Box (responsive styling and accessibility)',
+    },
+  },
+  {
+    id: 'focus', label: 'Focus utility', members: 'Focus detection and traps',
+    examples: {
+      anta: 'Tabs, RadioGroup, Menu, and Calendar manage keyboard focus; Dialog traps and restores focus; Box detects focus within',
+      mui: 'Unstable_TrapFocus (experimental)', mantine: 'FocusTrap, useFocusTrap',
+      astryx: 'useFocusTrap, useListFocus', untitledui: 'React Aria FocusScope, useFocusManager',
+      blueprint: 'FocusStyleManager (focus indicators)',
+    },
+  },
 ]
 
 /**
  * Coverage marks per system, keyed by category id. Absent keys default to
  * 'no'. Honest, grouped-by-job marks; see the module header. `partial` =
  * basic, simple, or community-only; `paid` = behind a commercial tier.
- * headless primitives such as Base UI get marks only where they ship an
- * actual primitive, so their empty cells reflect "you build the visual".
+ * A mark means the combined system ships the component readers use; an absent
+ * mark means it does not.
  */
 export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
   anta: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes', slider: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes',
-    accordion: 'yes', table: 'partial', tag: 'yes', card: 'yes', progress: 'yes',
-    icons: 'yes', typography: 'yes',
+    accordion: 'yes', table: 'partial', tag: 'yes', avatar: 'yes', card: 'yes', progress: 'yes', steps: 'yes',
+    nav: 'yes', icons: 'yes', typography: 'yes', utilities: 'yes', focus: 'partial',
   },
   webawesome: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'paid',
     choice: 'yes', slider: 'yes', datetime: 'paid', tabs: 'yes', menu: 'yes',
-    tooltip: 'yes', dialog: 'yes', toast: 'paid', accordion: 'yes',
-    tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes', nav: 'partial',
-    icons: 'yes', typography: 'partial', charts: 'paid',
+    tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes', table: 'paid',
+    tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes', nav: 'yes',
+    icons: 'yes', typography: 'partial', charts: 'paid', utilities: 'yes',
   },
   polaris: {
     button: 'yes', textinput: 'yes', select: 'yes', choice: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes',
     dialog: 'partial', toast: 'partial', table: 'yes', tag: 'yes',
     progress: 'partial', avatar: 'yes', card: 'yes', icons: 'yes',
-    typography: 'yes',
+    typography: 'yes', utilities: 'yes',
   },
   mui: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes', utilities: 'yes', focus: 'yes',
   },
   antd: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes', utilities: 'no',
   },
   mantine: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'partial', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'partial', typography: 'yes', charts: 'yes',
+    steps: 'yes', nav: 'yes', icons: 'partial', typography: 'yes', charts: 'yes', utilities: 'yes', focus: 'yes',
   },
   carbon: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'partial', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'partial', charts: 'yes',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'partial', charts: 'yes', utilities: 'no',
   },
   atlassian: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'partial',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', table: 'yes', tag: 'yes',
     progress: 'yes', avatar: 'yes', card: 'partial',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'partial',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'partial', utilities: 'yes',
   },
   blueprint: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', card: 'yes', nav: 'yes',
-    icons: 'yes', typography: 'partial',
+    icons: 'yes', typography: 'partial', utilities: 'yes', focus: 'yes',
   },
   astryx: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial',
-  },
-  baseui: {
-    button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
-    choice: 'yes', slider: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes',
-    dialog: 'yes', toast: 'yes', accordion: 'yes', progress: 'yes',
-    avatar: 'yes', nav: 'partial',
+    nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial', utilities: 'yes', focus: 'yes',
   },
   shadcn: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'partial', nav: 'yes', icons: 'partial', charts: 'yes',
+    steps: 'partial', nav: 'yes', icons: 'partial', charts: 'yes', utilities: 'yes',
   },
   untitledui: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes',
     choice: 'yes', slider: 'yes', datetime: 'yes', tabs: 'yes', menu: 'yes',
-    tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
-    table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'partial',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes',
+    tooltip: 'yes', dialog: 'yes', toast: 'paid', accordion: 'paid',
+    table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes',
+    steps: 'paid', nav: 'paid', icons: 'yes', typography: 'yes', charts: 'yes', utilities: 'yes', focus: 'yes',
   },
   gravity: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'partial',
     choice: 'yes', slider: 'yes', datetime: 'partial', tabs: 'yes', menu: 'yes',
     tooltip: 'yes', dialog: 'yes', toast: 'yes', accordion: 'yes',
     table: 'yes', tag: 'yes', progress: 'yes', avatar: 'yes', card: 'yes',
-    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial',
+    steps: 'yes', nav: 'yes', icons: 'yes', typography: 'yes', charts: 'partial', utilities: 'yes',
   },
 }
+
+const coverageScore = (id: string) => CATEGORIES.reduce((total, category) => {
+  const mark = COVERAGE[id]?.[category.id]
+  return total + (mark === 'yes' ? 1 : mark === 'partial' || mark === 'paid' ? 0.5 : 0)
+}, 0)
+
+/** Shared system order for both comparison matrices and the system cards. */
+export const COVERAGE_SYSTEMS = [...SYSTEMS].sort((a, b) => {
+  if (a.anta) return -1
+  if (b.anta) return 1
+
+  return coverageScore(b.id) - coverageScore(a.id) || a.name.localeCompare(b.name)
+})
 
 /**
  * Per-cell deep links: for each system, the official documentation page for
@@ -605,6 +697,7 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     dialog: 'https://webawesome.com/docs/components/dialog/',
     toast: 'https://webawesome.com/docs/components/toast/',
     accordion: 'https://webawesome.com/docs/components/accordion/',
+    table: 'https://webawesome.com/docs/components/data-grid/',
     tag: 'https://webawesome.com/docs/components/tag/',
     progress: 'https://webawesome.com/docs/components/progress-bar/',
     avatar: 'https://webawesome.com/docs/components/avatar/',
@@ -613,6 +706,7 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     icons: 'https://webawesome.com/docs/components/icon/',
     typography: 'https://webawesome.com/docs/tokens/typography/',
     charts: 'https://webawesome.com/docs/components/chart/',
+    utilities: 'https://webawesome.com/docs/components/resize-observer/',
   },
   polaris: {
     button: 'https://shopify.dev/docs/api/app-home/web-components/actions/button',
@@ -631,6 +725,7 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     card: 'https://shopify.dev/docs/api/app-home/web-components/layout-and-structure/section',
     icons: 'https://shopify.dev/docs/api/app-home/web-components/media-and-visuals/icon',
     typography: 'https://shopify.dev/docs/api/app-home/web-components/typography-and-content/text',
+    utilities: 'https://shopify.dev/docs/api/app-home/web-components/layout-and-structure/box',
   },
   mui: {
     button: 'https://mui.com/material-ui/react-button/',
@@ -656,6 +751,8 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     icons: 'https://mui.com/material-ui/material-icons/',
     typography: 'https://mui.com/material-ui/react-typography/',
     charts: 'https://mui.com/x/react-charts/',
+    utilities: 'https://mui.com/material-ui/react-click-away-listener/',
+    focus: 'https://github.com/mui/material-ui/tree/master/packages/mui-material/src/Unstable_TrapFocus',
   },
   antd: {
     button: 'https://ant.design/components/button',
@@ -706,6 +803,8 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     icons: 'https://mantine.dev/guides/icons/',
     typography: 'https://mantine.dev/core/typography/',
     charts: 'https://mantine.dev/charts/getting-started/',
+    utilities: 'https://mantine.dev/hooks/use-resize-observer/',
+    focus: 'https://mantine.dev/core/focus-trap/',
   },
   carbon: {
     button: 'https://carbondesignsystem.com/components/button/usage/',
@@ -752,6 +851,7 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     nav: 'https://atlassian.design/components/breadcrumbs/examples',
     icons: 'https://atlassian.design/components/icon/examples',
     typography: 'https://atlassian.design/components/heading/examples',
+    utilities: 'https://atlassian.design/components/pragmatic-drag-and-drop/core-package/',
   },
   blueprint: {
     button: 'https://blueprintjs.com/docs/#core/components/button',
@@ -774,6 +874,8 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     nav: 'https://blueprintjs.com/docs/#core/components/breadcrumbs',
     icons: 'https://blueprintjs.com/docs/#core/components/icon',
     typography: 'https://blueprintjs.com/docs/#core/typography',
+    utilities: 'https://blueprintjs.com/docs/#core/components/resize-sensor',
+    focus: 'https://github.com/palantir/blueprint/blob/develop/packages/core/src/accessibility/focusStyleManager.ts',
   },
   astryx: {
     button: 'https://astryx.atmeta.com/components/Button',
@@ -797,23 +899,8 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     nav: 'https://astryx.atmeta.com/components/Breadcrumbs',
     icons: 'https://astryx.atmeta.com/components/Icon',
     typography: 'https://astryx.atmeta.com/components/Text',
-  },
-  baseui: {
-    button: 'https://base-ui.com/react/components/toggle-group',
-    textinput: 'https://base-ui.com/react/components/input',
-    select: 'https://base-ui.com/react/components/select',
-    combobox: 'https://base-ui.com/react/components/combobox',
-    choice: 'https://base-ui.com/react/components/checkbox',
-    slider: 'https://base-ui.com/react/components/slider',
-    tabs: 'https://base-ui.com/react/components/tabs',
-    menu: 'https://base-ui.com/react/components/menu',
-    tooltip: 'https://base-ui.com/react/components/tooltip',
-    dialog: 'https://base-ui.com/react/components/dialog',
-    toast: 'https://base-ui.com/react/components/toast',
-    accordion: 'https://base-ui.com/react/components/accordion',
-    progress: 'https://base-ui.com/react/components/progress',
-    avatar: 'https://base-ui.com/react/components/avatar',
-    nav: 'https://base-ui.com/react/components/navigation-menu',
+    utilities: 'https://astryx.atmeta.com/components/useScrollOverflow',
+    focus: 'https://astryx.atmeta.com/components/useFocusTrap',
   },
   shadcn: {
     button: 'https://ui.shadcn.com/docs/components/button',
@@ -836,6 +923,7 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     card: 'https://ui.shadcn.com/docs/components/card',
     nav: 'https://ui.shadcn.com/docs/components/breadcrumb',
     charts: 'https://ui.shadcn.com/charts',
+    utilities: 'https://ui.shadcn.com/docs/components/scroll-area',
   },
   untitledui: {
     button: 'https://www.untitledui.com/react/components/buttons',
@@ -860,6 +948,8 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     icons: 'https://www.untitledui.com/react/docs/icons',
     typography: 'https://www.untitledui.com/react/docs/typography',
     charts: 'https://www.untitledui.com/react/components/line-bar-charts',
+    utilities: 'https://react-aria.adobe.com/useMove',
+    focus: 'https://react-aria.adobe.com/FocusScope',
   },
   gravity: {
     button: 'https://gravity-ui.com/components/uikit/button',
@@ -884,5 +974,6 @@ export const COVERAGE_URLS: Record<string, Partial<Record<string, string>>> = {
     nav: 'https://gravity-ui.com/components/uikit/breadcrumbs',
     icons: 'https://gravity-ui.com/components/uikit/icon',
     typography: 'https://gravity-ui.com/components/uikit/text',
+    utilities: 'https://github.com/gravity-ui/uikit/tree/main/src/hooks/useResizeObserver',
   },
 }

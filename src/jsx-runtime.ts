@@ -104,7 +104,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AProgressAttributes, ALoaderAttributes, ATextAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
+import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ABoxAttributes, ACaptureAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -119,6 +119,7 @@ export namespace JSX {
 }
 
 export interface AntaIntrinsicElements {
+  'a-avatar': AAvatarAttributes
   'a-progress': AProgressAttributes
   'a-loader': ALoaderAttributes
   'a-progress-label': BaseAttributes
@@ -126,6 +127,8 @@ export interface AntaIntrinsicElements {
   'a-progress-text': BaseAttributes
   'a-progress-hint': BaseAttributes
   'a-text': ATextAttributes
+  'a-box': ABoxAttributes
+  'a-capture': ACaptureAttributes
   'a-title': ATitleAttributes
   'a-tag': ATagAttributes
   'a-tag-label': BaseAttributes
@@ -136,6 +139,8 @@ export interface AntaIntrinsicElements {
   'a-icon': AIconAttributes
   'a-button': AButtonAttributes
   'a-button-label': BaseAttributes
+  'a-breadcrumbs': BaseAttributes
+  'a-breadcrumb-separator': BaseAttributes
   'a-copy': ACopyAttributes
   'a-checkbox': ACheckboxAttributes
   'a-checkbox-label': BaseAttributes
@@ -173,6 +178,10 @@ export interface AntaIntrinsicElements {
   'a-tab': ATabAttributes
   'a-tab-label': BaseAttributes
   'a-tabpanel': ATabpanelAttributes
+  'a-steps': BaseAttributes
+  'a-step-marker': BaseAttributes
+  'a-step-desc': BaseAttributes
+  'a-step-hint': BaseAttributes
   'a-dialog': ADialogAttributes
   'a-card': ACardAttributes
   'a-card-icon-chip': BaseAttributes

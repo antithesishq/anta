@@ -81,8 +81,8 @@ export class ATabPanelElement extends HTMLElementBase {
     const value = this.getAttribute("value");
     const active = !!this.tabs && value === (this.tabs.value ?? null);
     try {
-      if (active) this.internals?.states.add("active");
-      else this.internals?.states.delete("active");
+      if (active) this.internals?.states?.add("active");
+      else this.internals?.states?.delete("active");
     } catch {}
     // Off-DOM aria-labelledby → the tab of the same value (feature-guarded;
     // element-reference ARIA reflection is Baseline-2025).

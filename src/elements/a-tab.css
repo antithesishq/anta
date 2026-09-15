@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* Intrinsic, priority-independent tab chrome. The per-priority / per-tone / per-
      state values of --tab-fg / --tab-bg, the type-scale vars (--_fs/--_lh/--_pb),
      padding, and the track live on the parent <a-tabs> (a-tabs.css) and inherit /
@@ -33,8 +33,7 @@
     font-size: var(--_fs);
     font-family: var(--sans-serif);
     font-weight: 450;
-    font-variation-settings: "wdth" 88, "slnt" 0, "ital" 0;
-    font-feature-settings: "ss02", "ss05", "tnum";
+    font-stretch: normal;
     line-height: var(--_lh);
     letter-spacing: 0.05ch;
 

@@ -29,6 +29,7 @@ export const ICON_SHAPES = [
   'circle-dot',
   'circle-large',
   'circle-small-solid',
+  'circle-user',
   'circle',
   'click',
   'clock',
@@ -41,7 +42,6 @@ export const ICON_SHAPES = [
   'dots-vertical',
   'download',
   'edit',
-  'education-disk',
   'external-link',
   'eye-closed',
   'eye',
@@ -52,19 +52,14 @@ export const ICON_SHAPES = [
   'folder-close',
   'folder-open',
   'folder-tree',
-  'github-logo',
-  'gitlab-logo',
   'hat-glasses',
   'heart-handshake',
   'heart',
-  'help-disk',
   'history-tree',
   'history',
   'home',
   'hourglass',
   'info',
-  'jira-logo',
-  'linear-logo',
   'link',
   'list-collapse',
   'maximize',
@@ -101,12 +96,10 @@ export const ICON_SHAPES = [
   'table-2',
   'tag',
   'text-cursor-input',
-  'text-highlight',
   'text-initial',
   'timer',
   'toggle-right',
   'trash',
-  'trello-logo',
   'view',
   'warning-diamond',
   'warning-triangle',
@@ -142,6 +135,7 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'check': ['tick', 'ok', 'done', 'confirm', 'approve'],
   'dollar-sign': ['currency', 'money', 'payment'],
   'circle-check': ['success', 'ok', 'done'],
+  'circle-user': ['avatar', 'person', 'account', 'contact', 'profile'],
   'x': ['close', 'cancel', 'dismiss', 'remove', 'no'],
   'plus': ['add', 'new', 'create'],
   'minus': ['remove', 'subtract'],
@@ -165,7 +159,6 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'asterisk': ['star', 'wildcard'],
   'braces': ['code', 'brackets', 'json'],
   'case-sensitive': ['aA', 'capitalize', 'case'],
-  'text-highlight': ['mark', 'highlight'],
   'list-collapse': ['list', 'collapse', 'expand', 'items'],
   'table-2': ['table', 'grid', 'data', 'spreadsheet', 'rows', 'columns'],
   'folder-open': ['directory', 'browse'],
@@ -180,16 +173,9 @@ export const ICON_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   'history': ['log', 'past'],
   'history-tree': ['log', 'past'],
   'runs-history': ['log', 'past'],
-  'github-logo': ['github', 'git', 'repo'],
-  'gitlab-logo': ['gitlab', 'git', 'repo'],
-  'trello-logo': ['trello', 'board', 'kanban'],
-  'jira-logo': ['jira', 'ticket', 'issue'],
-  'linear-logo': ['linear', 'ticket', 'issue'],
   'chat': ['message', 'comment', 'discuss'],
   'presentation': ['slides', 'deck'],
-  'education-disk': ['learn', 'school', 'academic'],
   'book-open': ['read', 'docs', 'documentation'],
-  'help-disk': ['question', 'faq', 'support', 'help'],
   'sparkles': ['ai', 'magic', 'generate'],
   'cube': ['box', 'package'],
   'circle': ['dot', 'point'],
@@ -240,6 +226,7 @@ declare module '@antadesign/anta' {
     'circle-dot': true
     'circle-large': true
     'circle-small-solid': true
+    'circle-user': true
     'circle': true
     'click': true
     'clock': true
@@ -252,7 +239,6 @@ declare module '@antadesign/anta' {
     'dots-vertical': true
     'download': true
     'edit': true
-    'education-disk': true
     'external-link': true
     'eye-closed': true
     'eye': true
@@ -263,19 +249,14 @@ declare module '@antadesign/anta' {
     'folder-close': true
     'folder-open': true
     'folder-tree': true
-    'github-logo': true
-    'gitlab-logo': true
     'hat-glasses': true
     'heart-handshake': true
     'heart': true
-    'help-disk': true
     'history-tree': true
     'history': true
     'home': true
     'hourglass': true
     'info': true
-    'jira-logo': true
-    'linear-logo': true
     'link': true
     'list-collapse': true
     'maximize': true
@@ -312,12 +293,10 @@ declare module '@antadesign/anta' {
     'table-2': true
     'tag': true
     'text-cursor-input': true
-    'text-highlight': true
     'text-initial': true
     'timer': true
     'toggle-right': true
     'trash': true
-    'trello-logo': true
     'view': true
     'warning-diamond': true
     'warning-triangle': true

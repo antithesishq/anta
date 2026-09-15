@@ -2,7 +2,7 @@
 layout: ../layouts/DocsLayout.astro
 title: Date input
 ---
-import Playground from '../components/Playground'
+import Playground from '../components/PlaygroundEmbed.astro'
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
@@ -30,7 +30,6 @@ or uncontrolled (`defaultValue`), and submits under `name`.
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground
-  client:visible
   component="InputDate"
   layout="side"
   panelHeight={460}
@@ -432,7 +431,7 @@ which uses the same `Menu` composition shown on the [Menu](/menu/) page.
 
 </Disclosure>
 
-<Disclosure title="Vanilla web component">
+<Disclosure title="Web Component">
 
 `InputDate` has no host element. Rebuilding its text parsing, dropdown calendar,
 localized day grid, month navigation, keyboard navigation, and focus management

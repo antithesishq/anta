@@ -144,11 +144,12 @@ const SUPPORTS_FIELD_SIZING =
 //    A readonly single-line input shows an ellipsis for an overflowing value
 //    (text-overflow: ellipsis), so the Select trigger reads a long value as `name …`
 //    instead of a hard clip. Editable inputs keep the default clip (caret needs the
-//    scrolled end); textarea wraps, so neither applies there. font-variation-settings
-//    is restated (wdth 100, upright) because the UA form-control `font` shorthand
-//    resets the variable-font axes to normal — without this the control renders at
-//    the font's default-instance width while the label / hint / pre-upgrade skeleton
-//    sit at wdth 100, so the value's character width jumps on upgrade.
+//    scrolled end); textarea wraps, so neither applies there. Font stretch and style
+//    are normalized with standard properties because the UA form-control `font`
+//    shorthand can otherwise give the control different metrics from its label,
+//    hint, and pre-upgrade skeleton. Variation settings explicitly inherit the
+//    active theme's axis pin because Safari does not reliably carry it into form
+//    controls on its own.
 //  • slots — leading/trailing/clear are display:none until they hold content,
 //    so an empty slot reserves no box or phantom gap. The host stylesheet derives
 //    named-slot presence with `:has(> [slot])` and styles the matching part.
@@ -201,7 +202,7 @@ const SHADOW_STYLE = `
     transition: box-shadow 120ms ease;
   }
   :host([multiline]) .field { align-items: stretch; }
-  :host([status]) .field { --_bw: 1px; }
+  :host([status]:not([status="neutral"])) .field { --_bw: 1px; }
   :host([size="small"]) { --_fs: 13px; --_lh: 16px; }
   :host([size="large"]) { --_fs: 17px; --_lh: 22px; }
   :host([size="small"]) .field { min-height: 24px; }
@@ -232,8 +233,9 @@ const SHADOW_STYLE = `
     outline: none;
     color: var(--input-text);
     font-family: var(--sans-serif);
-    font-feature-settings: 'ss02', 'ss05', 'tnum';
-    font-variation-settings: 'wdth' 100, 'slnt' 0, 'ital' 0;
+    font-stretch: normal;
+    font-style: normal;
+    font-variation-settings: inherit;
     font-size: var(--_fs);
     line-height: var(--_lh);
     font-weight: 400;
@@ -267,7 +269,7 @@ const SHADOW_STYLE = `
     color: var(--input-adornment);
     font-size: var(--_fs);
     line-height: var(--_lh);
-    font-variation-settings: "wdth" 88, "slnt" 0, "ital" 0;
+    font-stretch: var(--_input-adornment-font-stretch, normal);
   }
   :host([dim-actions]) slot[name="leading"],
   :host([dim-actions]) slot[name="trailing"],
@@ -429,6 +431,18 @@ export class AInputElement extends HTMLElementBase {
 
   connectedCallback() {
     trackFocusModality(this.doc)
+    // Autonomous form-associated elements otherwise expose the generic role.
+    // Set a default only after connection: parser-created elements receive their
+    // attributes after construction. An author-supplied role still overrides this
+    // ElementInternals default. Mirror the native control's primary role.
+    const type = this.getAttribute('type')?.toLowerCase()
+    if (this.internals && type !== 'number' && type !== 'search') {
+      this.internals.role = 'textbox'
+    } else if (this.internals && type === 'number') {
+      this.internals.role = 'spinbutton'
+    } else if (this.internals && type === 'search') {
+      this.internals.role = 'searchbox'
+    }
     // A `value` set as a property before the element upgraded shadows the
     // accessor as an own data property — re-apply it through the setter so the
     // initial controlled value isn't lost when the control is built.
@@ -575,7 +589,7 @@ export class AInputElement extends HTMLElementBase {
   private syncStatus() {
     const critical = this.getAttribute('status') === 'critical'
     this.control?.setAttribute('aria-invalid', critical ? 'true' : 'false')
-    try { critical ? this.internals?.states.add('invalid') : this.internals?.states.delete('invalid') } catch {}
+    try { critical ? this.internals?.states?.add('invalid') : this.internals?.states?.delete('invalid') } catch {}
   }
 
   private onInput = (event: Event) => {
@@ -598,12 +612,12 @@ export class AInputElement extends HTMLElementBase {
   // won't make for an <input>. Editable fields ignore the state (ring on `:focus`).
   private onFocus = () => {
     try {
-      if (focusFromKeyboard) this.internals?.states.add('kb-focus')
-      else this.internals?.states.delete('kb-focus')
+      if (focusFromKeyboard) this.internals?.states?.add('kb-focus')
+      else this.internals?.states?.delete('kb-focus')
     } catch { /* CustomStateSet unsupported */ }
   }
   private onBlur = () => {
-    try { this.internals?.states.delete('kb-focus') } catch { /* CustomStateSet unsupported */ }
+    try { this.internals?.states?.delete('kb-focus') } catch { /* CustomStateSet unsupported */ }
   }
 
   private onLabelSlotChange = () => {
@@ -633,8 +647,8 @@ export class AInputElement extends HTMLElementBase {
   }
 
   private updateFilled() {
-    if (this.value) this.internals?.states.add('filled')
-    else this.internals?.states.delete('filled')
+    if (this.value) this.internals?.states?.add('filled')
+    else this.internals?.states?.delete('filled')
   }
 
   private updateValidity() {
@@ -665,6 +679,13 @@ export class AInputElement extends HTMLElementBase {
     this.updateValidity()
     this.updateFilled()
     this.syncAutoHeight()
+  }
+
+  /** Focus the shadow control. `delegatesFocus` handles this in supporting
+   * browsers; the explicit target keeps programmatic dialog autofocus reliable
+   * everywhere. */
+  focus(options?: FocusOptions) {
+    this.control?.focus(options)
   }
 
   /** Clear the field and refocus it — fired by the wrapper's clear button.

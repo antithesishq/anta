@@ -1,4 +1,4 @@
-@layer anta {
+@layer anta.components {
   /* The calendar is composed in LIGHT DOM from Anta components, so its styling is
      ordinary CSS targeting those elements — nothing is hidden in a shadow root.
      Day cells are real <a-button>s, so their colors/states (hover, focus ring,
@@ -103,6 +103,7 @@
     min-width: var(--calendar-cell-width, 32px);
     min-height: var(--calendar-cell-height, 28px);
     justify-content: center;
+    font-variant-numeric: tabular-nums;
   }
   /* Day labels are uniform digits, so drop Button's optical bottom padding (it
      compensates for text glyphs sitting low in the line-box) — it would otherwise

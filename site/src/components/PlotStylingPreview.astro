@@ -1,0 +1,43 @@
+<div class="plot-card">
+  <a-plot class="styled-plot" data-styling-example aria-label="Scatter plot in a rounded container"></a-plot>
+</div>
+
+<script>
+  import '@antadesign/plot/elements/a-plot'
+  import type { APlotElement } from '@antadesign/plot/browser'
+  import '@antadesign/plot/plot.css'
+  import { stylingExample } from './plot-styling-example'
+
+  const mounted = new WeakSet<APlotElement>()
+
+  function mountExamples() {
+    for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-styling-example]')) {
+      if (mounted.has(plot) || !plot.isConnected) continue
+      plot.plotArgs = stylingExample()
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  .plot-card {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 460px;
+    margin-inline: auto;
+    padding: 16px;
+    border: 1px solid #9ca3af;
+    border-radius: 16px;
+    background: rgb(156 163 175 / 12%);
+  }
+
+  .styled-plot {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+</style>

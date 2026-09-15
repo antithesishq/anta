@@ -505,7 +505,7 @@ export class AMenuElement extends HTMLElementBase {
 
   disconnectedCallback() {
     // Silent teardown — don't emit `statechange` for an element being removed.
-    this.hide()
+    this.hide(false)
     this.teardownListeners()
     this.cancelOpenTimer()
     this.cancelCloseTimer()
@@ -1121,9 +1121,9 @@ export class AMenuElement extends HTMLElementBase {
     this.comboObserver.observe(this, { childList: true })
   }
 
-  /** Apply CLOSE to the DOM (no event). Closes this menu and everything stacked
-   *  above it (its submenus). */
-  private hide() {
+  /** Apply CLOSE without notifying this menu's owner. Notify nested menus so
+   *  their controlled state follows the closing parent. */
+  private hide(notifyDescendants = true) {
     // Tear down combobox state (no-op for a plain menu).
     this.comboObserver?.disconnect()
     this.comboObserver = undefined
@@ -1135,7 +1135,11 @@ export class AMenuElement extends HTMLElementBase {
       if (this._shown) this._doHide()
       return
     }
-    for (let i = openStack.length - 1; i >= idx; i--) openStack[i]._doHide()
+    for (let i = openStack.length - 1; i >= idx; i--) {
+      const menu = openStack[i]
+      if (notifyDescendants && i > idx && menu.isOpen && !menu._dismissNotified) menu.emitChange('closed')
+      menu._doHide()
+    }
     openStack.length = idx
     if (openStack.length === 0) unbindDocListeners()
   }

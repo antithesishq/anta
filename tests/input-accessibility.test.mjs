@@ -409,6 +409,50 @@ test('InputTime names its group and exposes required and invalid on every segmen
   assert.deepEqual(new Set(result.invalid), new Set(['true']))
 })
 
+test('InputDate resets nested menu state when a date pick closes its controlled popup', async t => {
+  const page = await pageFor(t)
+  const result = await page.evaluate(async () => {
+    const field = [...document.querySelectorAll('a-input')]
+      .find(input => input.shadowRoot?.querySelector('input[aria-label="Due date"]'))
+    const popup = field.nextElementSibling
+    const heading = popup.querySelector('[data-part="heading"]')
+    const jump = heading.nextElementSibling
+    const settle = () => new Promise(resolve => setTimeout(resolve, 20))
+    const closes = []
+    jump.addEventListener('statechange', event => {
+      if (event.detail.next === 'closed') closes.push(event.detail.next)
+    })
+    const snapshot = menu => ({
+      state: menu.getAttribute('state'),
+      shown: menu.isOpen,
+      popover: !!menu.shadowRoot.querySelector(':popover-open'),
+    })
+    const results = []
+    for (const mode of ['adjacent', 'current', 'close-request']) {
+      popup.open()
+      await settle()
+      jump.open()
+      await settle()
+      const opened = snapshot(jump)
+      const beforeCloses = closes.length
+      if (mode === 'close-request') popup.close()
+      else popup.querySelector(mode === 'adjacent'
+        ? 'a-button[data-outside]:not([disabled])'
+        : 'a-button[data-date]:not([data-outside], [disabled], [selected])').click()
+      await settle()
+      results.push({ mode, opened, closed: snapshot(jump), parentOpen: popup.isOpen, closes: closes.length - beforeCloses })
+    }
+    return results
+  })
+
+  for (const row of result) {
+    assert.deepEqual(row.opened, { state: 'open', shown: true, popover: true }, row.mode)
+    assert.deepEqual(row.closed, { state: 'closed', shown: false, popover: false }, row.mode)
+    assert.equal(row.parentOpen, false, row.mode)
+    assert.equal(row.closes, 1, row.mode)
+  }
+})
+
 test('Calendars in separate renderer roots use direct names without duplicate IDs', async t => {
   const page = await pageFor(t)
   const result = await page.locator('a-calendar').evaluateAll(calendars => ({

@@ -50,6 +50,8 @@ changes are not listed.
 
 ### Fixed
 
+- Nested menus reset when their controlled parent closes. InputDate's month/year
+  picker can reopen after selecting a date while the picker is open.
 - Calendar weekday headers use a higher-contrast text color, including weekends.
 - Slider exposes its `ElementInternals` through the same runtime inspection hook
   as other stateful controls, allowing accessibility tooling to inspect its live

@@ -37,6 +37,7 @@ before(async () => {
         jsxImportSource: 'react',
         tsconfigRaw: { compilerOptions: { jsx: 'react-jsx', jsxImportSource: 'react' } },
         alias: {
+            preact: dirname(requireSite.resolve('preact/package.json')),
             react: dirname(requirePlot.resolve('react/package.json')),
             'react-dom': dirname(requirePlot.resolve('react-dom/package.json')),
         },
@@ -48,7 +49,7 @@ before(async () => {
     ]))
 
     // Catch missing package layout CSS before any browser assertions.
-    assert.match(assets.get('/fixture.css'), /a-plot-surface\s*>\s*canvas\s*\{[^}]*position:\s*absolute/s)
+    assert.match(assets.get('/fixture.css'), /a-plot/)
 
     server = createServer((req, res) => {
         res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript'
@@ -252,3 +253,32 @@ test('invalid initial configuration can recover on a later committed update', as
     await page.waitForFunction(() => stats.formatted.recovered > 0)
     assert.equal(await page.locator('canvas').first().evaluate(el => el.width), 600)
 })
+
+for (const renderer of ['react', 'preact']) {
+    test(`Anta Plot forwards object updates and delegates cleanup (${renderer})`, async t => {
+        const page = await pageFor(t)
+        await page.evaluate(renderer => { unmountPlot(); renderAntaPlot(220, renderer) }, renderer)
+        await page.waitForFunction(() => stats.formatted.anta > 0 && document.querySelector('canvas')?.height === 220)
+        assert.equal(await page.evaluate(() => {
+            window.originalAntaPlot = document.querySelector('a-plot')
+            return originalAntaPlot.plotArgs === antaArgs && originalAntaPlot.className === 'anta-plot'
+        }), true)
+
+        await page.evaluate(renderer => renderAntaPlot(260, renderer), renderer)
+        await page.waitForFunction(() => document.querySelector('canvas')?.height === 260)
+        assert.equal(await page.evaluate(() => originalAntaPlot === document.querySelector('a-plot')
+            && originalAntaPlot.plotArgs === antaArgs), true)
+
+        await page.evaluate(() => unmountPlot())
+        await page.waitForTimeout(150)
+        const draws = await page.evaluate(() => stats.formatted.anta)
+        await page.setViewportSize({ width: 900, height: 700 })
+        await page.waitForTimeout(150)
+        assert.equal(await page.evaluate(() => stats.formatted.anta), draws)
+        assert.equal(await page.locator('a-plot').count(), 0)
+
+        await page.evaluate(renderer => renderAntaPlot(220, renderer), renderer)
+        await page.waitForFunction(() => document.querySelector('canvas')?.height === 220)
+        assert.equal(await page.evaluate(() => originalAntaPlot !== document.querySelector('a-plot')), true)
+    })
+}

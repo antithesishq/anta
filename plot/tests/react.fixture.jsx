@@ -1,6 +1,10 @@
 import React, { StrictMode, Suspense, createContext, useContext, useEffect, startTransition } from 'react'
+import { h, render as renderPreact } from 'preact'
+import { configure } from '@antadesign/anta/jsx-runtime'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { Plot } from '../dist/react.js'
+import { Plot as AntaPlot } from '../dist/components.js'
+import '../dist/elements/a-plot.js'
 import { scatter } from '../dist/index.js'
 import '../dist/plot.css'
 
@@ -74,3 +78,22 @@ window.unmountPlot = () => {
     root = null
 }
 window.ready = true
+
+window.renderAntaPlot = (height = 220, renderer = 'react') => {
+    configure(renderer === 'preact' ? h : React.createElement)
+    root ??= renderer === 'preact'
+        ? { render: vnode => renderPreact(vnode, container), unmount: () => renderPreact(null, container) }
+        : createRoot(container)
+    const plotArgs = {
+        series: [scatter({ data: [{ x: 0, y: 0 }, { x: 1, y: 1 }], tooltip: true })],
+        height,
+        axis: { x: { tick_label: { format: value => {
+            stats.formatted.anta = (stats.formatted.anta ?? 0) + 1
+            return String(value)
+        } } } },
+    }
+    window.antaArgs = plotArgs
+    root.render(renderer === 'preact'
+        ? h(AntaPlot, { plotArgs, className: 'anta-plot' })
+        : <StrictMode><AntaPlot plotArgs={plotArgs} className="anta-plot" /></StrictMode>)
+}

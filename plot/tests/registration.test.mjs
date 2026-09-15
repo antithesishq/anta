@@ -2,10 +2,13 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { build } from 'esbuild'
 import vm from 'node:vm'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 // Stub element implementations, not registration: these tests need no browser DOM.
-async function registrationBundle(contents) {
+async function registrationBundle(contents, options = {}) {
   return build({
     absWorkingDir: fileURLToPath(new URL('..', import.meta.url)),
     stdin: {
@@ -40,6 +43,7 @@ async function registrationBundle(contents) {
         }))
       },
     }],
+    ...options,
   })
 }
 
@@ -138,4 +142,39 @@ test('individual entries register synchronously and compose without replacing de
   const standalone = registry()
   load(standalone, plotBundle)
   assert.deepEqual([...standalone.definitions.keys()].sort(), ['a-plot', 'a-plot-surface'])
+})
+
+test('split entry output registers the surface before upgrading existing plots', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'plot-registration-'))
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'customElements')
+  const r = registry()
+  const define = r.define
+  r.define = (name, element) => {
+    if (name === 'a-plot') assert.ok(r.get('a-plot-surface'), 'Existing plots need their surface during upgrade')
+    define(name, element)
+  }
+
+  try {
+    await registrationBundle(undefined, {
+      stdin: undefined,
+      entryPoints: {
+        elements: 'src/entries/elements.ts',
+        plot: 'src/entries/elements/a-plot.ts',
+        surface: 'src/entries/elements/a-plot-surface.ts',
+        browser: 'src/browser/index.ts',
+      },
+      format: 'esm',
+      splitting: true,
+      write: true,
+      outdir: directory,
+      outExtension: { '.js': '.mjs' },
+    })
+    Object.defineProperty(globalThis, 'customElements', { value: r, configurable: true })
+    await import(pathToFileURL(join(directory, 'plot.mjs')).href)
+    assert.deepEqual([...r.definitions.keys()], ['a-plot-surface', 'a-plot'])
+  } finally {
+    if (previous) Object.defineProperty(globalThis, 'customElements', previous)
+    else delete globalThis.customElements
+    await rm(directory, { recursive: true, force: true })
+  }
 })

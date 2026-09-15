@@ -21,12 +21,33 @@ Use a bundler that handles CSS imports. The browser entry loads Anta elements an
 | `@antadesign/plot` | Series factories, controllers, host presentation helpers, Anta event integration, and public types |
 | `@antadesign/plot/browser` | DOM tooltip factories and explicit `definePlotElement()` registration |
 | `@antadesign/plot/react` | React `Plot` adapter, props, and error types |
-| `@antadesign/plot/components` | `PlotSurface` JSX wrapper and its props; no element registration |
+| `@antadesign/plot/components` | `Plot` and `PlotSurface` JSX wrappers and their props; no element registration |
 | `@antadesign/plot/elements/a-plot` | Registers the standalone plot and its surface dependency synchronously |
 | `@antadesign/plot/elements/a-plot-surface` | Registers only the surface and its Anta dependencies synchronously |
 | `@antadesign/plot/elements` | Registers `a-plot` and `a-plot-surface`; retains resolved readiness promises for compatibility |
 | `@antadesign/plot/auto` | Compatibility alias for `/elements` registration with the `plotElementReady` promise |
 | `@antadesign/plot/plot.css` | Plot layout stylesheet |
+
+## Anta component
+
+```tsx
+import { Plot } from '@antadesign/plot/components'
+import { scatter } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot'
+import '@antadesign/plot/plot.css'
+
+<Plot plotArgs={{ series: [scatter({ data: [{ x: 1, y: 2 }], tooltip: true })] }} />
+```
+
+`Plot` uses Anta’s configured renderer and delegates lifecycle to `<a-plot>`.
+Register the element before rendering. The renderer must assign `plotArgs` as an
+object property; React 19 and Preact support this. React 18 consumers should keep
+using `/react`. For server rendering, register in the browser before hydration.
+Replace `plotArgs` to update the plot. Removal disconnects the browser host.
+
+Default tooltips work through the standalone host. Custom tooltip callbacks return
+DOM nodes; JSX tooltip content still requires `/react`. This component runs plotting
+in the browser and does not replace the notebook’s worker adapter.
 
 The root entry does not load Anta or React at runtime. The `/elements` entry loads Anta elements statically and registers synchronously. Registration is a no-op when `customElements` is unavailable. Like Anta’s element imports, `/elements` requires a bundler that handles CSS imports, including during server rendering.
 

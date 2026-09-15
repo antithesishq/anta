@@ -369,8 +369,18 @@ internally.
 Give one host a complete [`plotArgs`](#plot-arguments) and it draws, hovers, zooms, and
 renders the reset control on its own.
 
+The `Plot` component from `/components` uses Anta’s configured renderer to create
+`<a-plot>`. Register `/elements/a-plot` before rendering or hydrating. The renderer
+must assign `plotArgs` as an object property, as React 19 and Preact do. React 18
+consumers should use `/react`.
+
+This wrapper supports default tooltips and custom callbacks returning DOM nodes.
+Use `/react` for JSX tooltip content. Plotting runs in the browser; the notebook
+continues to use its worker adapter with `PlotSurface`.
+
 | Import | Contents |
 |---|---|
+| `@antadesign/plot/components` | The Anta `Plot` wrapper and `PlotProps`. Uses the configured renderer; `<a-plot>` owns updates, drawing, and cleanup. |
 | `@antadesign/plot/react` | The React `Plot` component and `PlotProps`. Mounts `<a-plot>` after commit and keeps tooltip nodes under React ownership. React is a peer. |
 | `@antadesign/plot/browser` | `definePlotElement()` for explicit registration, plus the same seven factories typed for DOM `Node` tooltips instead of a framework's nodes. |
 | `@antadesign/plot/elements/a-plot` | Registers the standalone plot and its surface dependency synchronously. |

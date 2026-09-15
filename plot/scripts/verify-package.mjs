@@ -182,6 +182,11 @@ try {
             const canvas: OffscreenCanvas = event.detail.canvas
         } }
         PlotSurface(surface)
+        import { Plot as AntaPlot, type PlotProps as AntaPlotProps } from '@antadesign/plot/components'
+        const antaProps: AntaPlotProps = { plotArgs: { series: [scatter({data: [{x:1,y:2}], tooltip: true})] } }
+        AntaPlot(antaProps)
+        // @ts-expect-error Framework tooltip nodes require the React adapter.
+        AntaPlot({ plotArgs: reactProps.plotArgs })
         import { plotElementReady as legacyReady } from '@antadesign/plot/auto'
         import '@antadesign/plot/elements/a-plot'
         import '@antadesign/plot/elements/a-plot-surface'

@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/plot",
-  "version": "0.1.0-dev.4",
+  "version": "0.1.0-dev.6",
   "type": "module",
   "files": [
     "dist"
@@ -57,7 +57,7 @@
     "test:browser": "node --test tests/components.browser.test.mjs"
   },
   "dependencies": {
-    "@antadesign/anta": "workspace:*",
+    "@antadesign/anta": "0.3.27",
     "@types/d3-scale": "4.0.3",
     "chroma-js": "2.4.2",
     "d3-scale": "3.2.3",

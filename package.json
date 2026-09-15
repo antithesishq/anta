@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/anta",
-  "version": "0.3.28",
+  "version": "0.3.29",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

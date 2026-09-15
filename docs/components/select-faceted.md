@@ -28,11 +28,32 @@ is limited. `offset` sets the gap in pixels between the trigger and the menu:
 <SelectFaceted placement="top-end" offset={8} facets={FACETS} />
 ```
 
+Open **Metadata** in the first demo to choose key–value tags such as
+**env production** or **region us-east**. Its `renderOption` callback reads
+custom option fields and renders a `Tag` with `label` and `value`. Search
+for **production** to see the same tag in global results.
+
 ```tsx
 const FACETS = [
   { key: 'assignee', label: 'Assignee', kind: 'multiple', filter: true, options: people },
   { key: 'owner',    label: 'Owner',    kind: 'single',   filter: true, options: people },
   { key: 'status',   label: 'Status',   kind: 'single',   options: [{ value: 'open', label: 'Open' }, /* … */] },
+  {
+    key: 'metadata',
+    label: 'Metadata',
+    kind: 'multiple',
+    icon: 'tag',
+    filter: true,
+    options: [
+      { value: 'env:production', label: 'env: production', dataKey: 'env', dataValue: 'production' },
+      { value: 'env:staging', label: 'env: staging', dataKey: 'env', dataValue: 'staging' },
+      { value: 'region:us-east', label: 'region: us-east', dataKey: 'region', dataValue: 'us-east' },
+      { value: 'team:platform', label: 'team: platform', dataKey: 'team', dataValue: 'platform' },
+    ],
+    renderOption: (option) => (
+      <Tag label={String(option.dataKey)} value={String(option.dataValue)} />
+    ),
+  },
   { key: 'title',    label: 'Title contains', kind: 'text' },
   { key: 'duration', label: 'Min duration', kind: 'custom', summary: (v) => `≥ ${v.min}s`, render: /* … */ },
 ]
@@ -74,6 +95,7 @@ function Demo() {
                   selection={facet.kind}
                   indicator={facet.kind === 'single' ? 'check' : undefined}
                   options={facet.options}
+                  renderOption={facet.renderOption}
                   value={value[facet.key]}
                   onValueChange={(v) => setFacet(facet.key, v)}
                   leading={`${facet.label}:`}
@@ -125,6 +147,27 @@ function Demo() {
 The trigger opens the facet menu. The example renders one editable
 [Select](./select.md) below it for each active facet. Each Select receives the
 facet label through `leading`, which displays it as a prefix.
+
+### Custom option content
+
+Pass `renderOption(option, state)` on a `single` or `multiple` facet to replace
+each option's label, hint, and icon layout. It runs in both the facet flyout and
+global search results. `state` contains `value`, `selected`, and `disabled`.
+Selection handling, indicators, and option styling remain on the row.
+Return `null` to use the default layout for an option.
+
+The first demo's **Metadata** facet stores the key and value in custom option
+fields. Pass them to Tag's `label` and `value` props:
+
+```tsx
+renderOption: (option) => (
+  <Tag label={String(option.dataKey)} value={String(option.dataValue)} />
+)
+```
+
+Filtering still uses `value`, `label`, and `hint`, or the facet's custom `filter`
+function. Keep searchable text in those fields. Single-facet summaries still
+use the option label, and multiple-facet summaries show the selected count.
 
 ### Value and changes
 

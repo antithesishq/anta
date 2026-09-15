@@ -3,10 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.29 — September 15, 2026
 
 ### Added
 
+- SelectFaceted single and multiple facets support `renderOption` for custom
+  option content in facet flyouts and global search results. Render custom
+  option data as key–value Tags while retaining selection handling and indicators.
 - Box supports `padding` and `margin` props and HTML attributes. JSX numbers
   use pixels; strings accept CSS shorthand values.
 - Panel is a persistent container that can maximize to the browser viewport

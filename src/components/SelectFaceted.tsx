@@ -9,7 +9,7 @@ import { useState, useMemo } from '../jsx-runtime'
 import { ISOLATE_HINT, ISOLATE_HINT_DELAY, optionPresentationAttrs } from '../anta_helpers'
 import type { BaseProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import type { OptionValue, SelectItem, SelectOption } from './Select'
+import type { OptionState, OptionValue, SelectItem, SelectOption } from './Select'
 import { normalizeOpt, matchQueryRegex, matchesQuery } from './select-options'
 import { Button } from './Button'
 import { Menu, type MenuProps } from './Menu'
@@ -50,6 +50,11 @@ export interface SelectFacetSingle extends FacetBase {
   options: SelectItem<OptionValue>[]
   /** Add a search field atop this facet's flyout that filters its options. */
   filter?: FacetFilter
+  /** Replace the option's label, hint, and icon layout in the flyout and global
+   *  search results. Receives the option and its value, selected, and disabled
+   *  state. The row retains selection handling and its indicator. Filtering and
+   *  summaries still use the option data. Return null to use the default layout. */
+  renderOption?: (option: SelectOption<OptionValue>, state: OptionState<OptionValue>) => React.ReactNode
 }
 
 /** Pick **any number** of options. Value: an array of the chosen `value`s
@@ -61,6 +66,11 @@ export interface SelectFacetMultiple extends FacetBase {
   options: SelectItem<OptionValue>[]
   /** Add a search field atop this facet's flyout that filters its options. */
   filter?: FacetFilter
+  /** Replace the option's label, hint, and icon layout in the flyout and global
+   *  search results. Receives the option and its value, selected, and disabled
+   *  state. The row retains selection handling and its indicator. Filtering and
+   *  summaries still use the option data. Return null to use the default layout. */
+  renderOption?: (option: SelectOption<OptionValue>, state: OptionState<OptionValue>) => React.ReactNode
   /** A "Select all" row that toggles every option. On by default — set `false`
    *  to drop it.
    *  @defaultValue true */
@@ -390,11 +400,15 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   // same option value under two facets stays a distinct row in the flat list.
   const optionRow = (facet: SelectFacetSingle | SelectFacetMultiple, opt: SelectOption<OptionValue>, keyPrefix = '') => {
     const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(opt, true)
+    const selected = facet.kind === 'single'
+      ? current[facet.key] === opt.value
+      : ((current[facet.key] as OptionValue[] | undefined) ?? []).includes(opt.value)
+    const custom = facet.renderOption?.(opt, { value: opt.value, selected, disabled: !!opt.disabled })
     const shared = {
       ...optionAttrs,
-      icon: opt.icon,
-      label: opt.label ?? String(opt.value),
-      hint: opt.hint,
+      icon: custom ? undefined : opt.icon,
+      label: custom ? undefined : opt.label ?? String(opt.value),
+      hint: custom ? undefined : opt.hint,
       tone: opt.tone ?? tone,
       toneScope: opt.toneScope ?? toneScope,
       disabled: opt.disabled,
@@ -409,9 +423,11 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           key={`${keyPrefix}${opt.value}`}
           {...shared}
           selectionIndicator="check"
-          selected={cur === opt.value}
+          selected={selected}
           onSelect={() => setFacet(facet, cur === opt.value ? undefined : opt.value)}
-        />
+        >
+          {custom}
+        </MenuItem>
       )
     }
     const arr = (current[facet.key] as OptionValue[] | undefined) ?? []
@@ -426,13 +442,14 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
         key={`${keyPrefix}${opt.value}`}
         {...shared}
         selectionIndicator="checkbox"
-        selected={arr.includes(opt.value)}
+        selected={selected}
         onSelect={(e: any) =>
           isolable && e?.altKey
             ? setFacet(facet, [opt.value])
             : setFacet(facet, arr.includes(opt.value) ? arr.filter((v) => v !== opt.value) : [...arr, opt.value])
         }
       >
+        {custom}
         {tip && (
           <Tooltip {...(hintOnly ? { delay: ISOLATE_HINT_DELAY, placement: 'left' as const } : { follow: true })}>
             {tip}

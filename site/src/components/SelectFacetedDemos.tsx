@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { SelectFaceted, Select, Input, Button, RadioGroup, InputDate, Calendar, MenuItem } from '@antadesign/anta'
+import { SelectFaceted, Select, Input, Button, RadioGroup, InputDate, Calendar, MenuItem, Tag } from '@antadesign/anta'
 import type { SelectFacet } from '@antadesign/anta'
 
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
@@ -42,6 +42,22 @@ const FACETS: SelectFacet[] = [
       { value: 'docs', label: 'Docs', tone: 'info' },
       { value: 'chore', label: 'Chore' },
     ],
+  },
+  {
+    key: 'metadata',
+    label: 'Metadata',
+    kind: 'multiple',
+    icon: 'tag',
+    filter: true,
+    options: [
+      { value: 'env:production', label: 'env: production', dataKey: 'env', dataValue: 'production' },
+      { value: 'env:staging', label: 'env: staging', dataKey: 'env', dataValue: 'staging' },
+      { value: 'region:us-east', label: 'region: us-east', dataKey: 'region', dataValue: 'us-east' },
+      { value: 'team:platform', label: 'team: platform', dataKey: 'team', dataValue: 'platform' },
+    ],
+    renderOption: (option) => (
+      <Tag label={String(option.dataKey)} value={String(option.dataValue)} />
+    ),
   },
   { key: 'title', label: 'Title contains', kind: 'text', icon: 'case-sensitive', placeholder: 'Search title…' },
   {
@@ -98,6 +114,7 @@ export function SelectFacetedBasicDemo() {
                   selection={facet.kind}
                   indicator={facet.kind === 'single' ? 'check' : undefined}
                   options={facet.options}
+                  renderOption={facet.renderOption}
                   value={value[facet.key] as any}
                   onValueChange={(v: any) => setFacet(facet.key, v)}
                   leading={`${facet.label}:`}

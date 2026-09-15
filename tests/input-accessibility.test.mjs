@@ -39,6 +39,25 @@ before(async () => {
               { key: 'title', label: 'Title', kind: 'text' },
             ],
           }),
+          h(SelectFaceted, {
+            label: 'Custom filters',
+            searchable: true,
+            defaultValue: { single: 1, multiple: [1] },
+            onValueChange: value => { window.customFacetValue = value },
+            facets: ['single', 'multiple'].map(kind => ({
+              key: kind, label: kind, kind, filter: true,
+              options: [
+                { value: 1, label: 'Alice', hint: 'Design', icon: 'user', team: 'Studio' },
+                { value: 2, label: 'Bob', disabled: true },
+                { value: 3, label: 'Default row' },
+              ],
+              renderOption: (option, state) => option.value === 3 ? null : h('span', {
+                'data-custom-option': kind + ':' + state.value,
+                'data-selected': String(state.selected),
+                'data-disabled': String(state.disabled),
+              }, option.label + ' ' + (option.team || '')),
+            })),
+          }),
           h(Select, { label: h('strong', {}, 'Departments'), hint: h('em', {}, 'Choose departments'), selection: 'multiple', options: ['Engineering department with a very long name', 'Design'], defaultValue: ['Engineering department with a very long name'], style: { width: '180px' } }),
           h(Select, { label: 'Disabled select', options: ['One'], disabled: true }),
           h(InputTime, { label: 'Start time', required: true, status: 'critical' }),
@@ -453,6 +472,45 @@ test('searchable and editable SelectFaceted popups expose dialog semantics', asy
   const titleSnapshot = await page.locator('a-menu[role="dialog"][aria-label="Title editor"]').ariaSnapshot()
   assert.match(titleSnapshot, /dialog "Title editor"/)
   assert.match(titleSnapshot, /textbox "Title"/)
+})
+
+test('faceted custom options preserve selection, disabled rows, and search', async t => {
+  const page = await pageFor(t)
+  page.setDefaultTimeout(5000)
+  await page.locator('a-button').filter({ hasText: 'Custom filters' }).click()
+  await page.waitForTimeout(20)
+  const root = page.locator('a-menu[aria-label="Custom filters options"]')
+  for (const kind of ['single', 'multiple']) {
+    await root.locator('a-menu-item[submenu]').filter({ has: page.locator('a-menu-item-label', { hasText: new RegExp(`^${kind}$`) }) }).click()
+    await page.waitForTimeout(20)
+    const popup = page.locator(`a-menu[aria-label="${kind} options"]`)
+    const alice = popup.locator(`[data-custom-option="${kind}:1"]`)
+    const row = popup.locator(`a-menu-item:has([data-custom-option="${kind}:1"])`)
+    assert.equal(await alice.getAttribute('data-selected'), 'true')
+    assert.equal(await alice.textContent(), 'Alice Studio')
+    assert.equal(await row.locator('a-menu-item-label, a-menu-item-hint, a-icon[shape="user"]').count(), 0)
+    assert.equal(await row.getAttribute('aria-checked'), 'true')
+    assert.equal(await popup.locator(`[data-custom-option="${kind}:2"]`).getAttribute('data-disabled'), 'true')
+    assert.equal(await popup.locator(`a-menu-item:has([data-custom-option="${kind}:2"])`).getAttribute('aria-disabled'), 'true')
+    assert.equal(await popup.getByText('Default row', { exact: true }).count(), 1)
+    await alice.click()
+    await page.waitForFunction(kind => document.querySelector(`[data-custom-option="${kind}:1"]`)?.dataset.selected === 'false', kind)
+    assert.equal(await row.getAttribute('aria-checked'), 'false')
+    await popup.getByRole('textbox').fill('Design')
+    assert.equal(await popup.locator('[data-custom-option]').count(), 1)
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(20)
+  }
+  await root.getByRole('textbox', { name: 'Filter all facets' }).fill('Design')
+  for (const kind of ['single', 'multiple']) {
+    const alice = root.locator(`[data-custom-option="${kind}:1"]`)
+    assert.equal(await alice.count(), 1)
+    assert.equal(await alice.getAttribute('data-selected'), 'false')
+    await root.locator(`a-menu-item:has([data-custom-option="${kind}:1"])`).focus()
+    await page.keyboard.press('Enter')
+    await page.waitForFunction(kind => document.querySelector(`[data-custom-option="${kind}:1"]`)?.dataset.selected === 'true', kind)
+  }
+  assert.deepEqual(await page.evaluate(() => window.customFacetValue), { single: 1, multiple: [1] })
 })
 
 test('button-backed Select and editable InputDate retain their popup interactions', async t => {

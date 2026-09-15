@@ -169,6 +169,10 @@ export interface AntaIntrinsicElements {
   'a-menu-separator': BaseAttributes
   'a-menu-header': BaseAttributes
   'a-menu-footer': BaseAttributes
+  'a-select-field': BaseAttributes & { size?: string; status?: string; disabled?: boolean | '' }
+  'a-select-label': BaseAttributes
+  'a-select-hint': BaseAttributes
+  'a-select-leading': BaseAttributes
   'a-select-header': BaseAttributes
   'a-select-footer': BaseAttributes
   'a-select-chevron': BaseAttributes & { open?: boolean | '' }

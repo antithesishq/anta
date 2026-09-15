@@ -17,10 +17,15 @@ changes are not listed.
 
 ### Changed
 
+- Select uses Anta Button for its default trigger, preserving popup accessibility,
+  keyboard-only focus rings, and ellipsis for long values. Menu button triggers
+  open with ArrowUp and ArrowDown. Select field styling now targets its
+  `a-select-field` wrapper and child `a-button` instead of Input shadow parts.
+
 - Calendar adjacent-month dates are hidden from assistive technology and reach
   full opacity on hover or focus when enabled.
 - The default Alt/Option-click hint in multi-select option menus appears to the
-  left of its row after one second, and moving between rows restarts that delay.
+  left of its row after 700ms, and moving between rows restarts that delay.
 - Tooltip delay-free handoff now applies only when both the outgoing and incoming
   tooltips have `follow`. Tooltip supports centered-left placement with
   `placement="left"` and flips right when space is limited.
@@ -49,6 +54,9 @@ changes are not listed.
   when the application constrains the tag’s width.
 
 ### Fixed
+
+- Panel preserves maximize and restore focus handling when custom element states
+  are unavailable.
 
 - Neutral `text-4` meets at least 4.5:1 contrast against `bg-1` in both light
   and dark modes for Antune and None. This guarantee does not extend to named

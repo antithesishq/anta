@@ -90,8 +90,11 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   mid-resolve.
  */
 export class AButtonElement extends HTMLElementBase {
+  static observedAttributes = ["aria-label", "aria-labelledby", "aria-describedby"];
   private internals?: ElementInternals;
   private popupAriaSource?: Element;
+  #fieldObserver?: MutationObserver;
+  #field?: Element;
 
   constructor() {
     super();
@@ -104,7 +107,42 @@ export class AButtonElement extends HTMLElementBase {
     // Install on the button's OWN document so activation works in whatever
     // frame the element actually lives in (parent page or playground iframe).
     installDocumentHandlers(this.doc);
+    if (this.parentElement?.localName === "a-select-field") {
+      this.#field = this.parentElement;
+      this.#fieldObserver = new MutationObserver(() => this.#syncField());
+      this.#fieldObserver.observe(this.#field, { childList: true });
+      this.#field.addEventListener("click", this.#onFieldClick);
+      this.#syncField();
+    }
   }
+
+  disconnectedCallback() {
+    if (!this.#field) return;
+    this.#fieldObserver?.disconnect();
+    this.#field?.removeEventListener("click", this.#onFieldClick);
+    this.#field = undefined;
+    this.#syncField();
+  }
+
+  attributeChangedCallback() {
+    if (this.#field) this.#syncField();
+  }
+
+  #syncField() {
+    if (!this.internals) return;
+    // Element references preserve rich labels and descriptions across renderer roots.
+    const label = this.#field?.querySelector(":scope > a-select-label");
+    const hint = this.#field?.querySelector(":scope > a-select-hint");
+    try {
+      this.internals.ariaLabelledByElements = label && !this.hasAttribute("aria-label") && !this.hasAttribute("aria-labelledby") ? [label] : null;
+      this.internals.ariaDescribedByElements = hint && !this.hasAttribute("aria-describedby") ? [hint] : null;
+    } catch {}
+  }
+
+  #onFieldClick = (event: Event) => {
+    if (this.hasAttribute("disabled") || this.hasAttribute("loading")) return;
+    if (event.composedPath().some(node => node instanceof Element && node.localName === "a-select-label")) this.focus();
+  };
 
   [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
     if (!this.internals || !("ariaControlsElements" in this.internals)) return;

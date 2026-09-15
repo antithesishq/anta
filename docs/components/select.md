@@ -4,7 +4,7 @@
 field shows the selected value. Click the field to open the menu. The menu
 closes when a user clicks outside it or presses Esc.
 
-Select uses an [Input](./input.md) for its field and a [Menu](./menu.md) for its
+Select uses an [Anta Button](./button.md) for its field and a [Menu](./menu.md) for its
 dropdown. Pass `options` as an array of strings or objects. Use `value` with
 **`onValueChange`** to control the selection, or use `defaultValue` for an
 uncontrolled Select.
@@ -70,7 +70,7 @@ its box goes mixed when only some are on. Pass **`selectAll={false}`** to drop i
 
 In a multi-select, **`Alt`+Click** a row to clear every other selection and
 select that row. On macOS, use Option instead of Alt.
-After a one-second hover, the standard tooltip describes this shortcut beside
+After hovering for 700ms, the standard tooltip describes this shortcut beside
 the row. Moving to another row restarts the delay.
 Set `SelectOption.tooltip` to replace it, or to `''` to hide it. The shortcut
 is available only when `selectAll` is enabled, so `selectAll={false}` removes it.
@@ -232,7 +232,7 @@ section marks the leaf everywhere it occurs (selection is value-keyed).
 <Select status="info" statusIcon="sparkles" hint="Custom glyph" options={OPTIONS} defaultValue="stream" />
 ```
 
-The trigger is an [Input](./input.md), so it inherits the field props.
+The trigger is an [Anta Button](./button.md) styled as a field.
 **`size`** (`small` · `medium` · `large`) sets the height and type scale.
 **`status`** paints a validation tone on the border, `hint`, and chevron, and
 prefixes a glyph (`info` / `success` / `warning` / `critical`); **`statusIcon`**
@@ -248,7 +248,7 @@ the glyph and, for `critical`, validity. See the
 ## Customization
 
 Select has no `<a-select>` element. The React and Preact wrapper coordinates an
-Input and a Menu. You can use the wrapper, render custom option content with
+Anta Button and a Menu. You can use the wrapper, render custom option content with
 `renderOption`, replace its selection mark with `renderIndicator`, or build the
 same interaction from the raw elements.
 
@@ -262,29 +262,21 @@ uses the same values as `Menu` and still flips or clamps when space is limited.
 
 ### Build it from elements
 
-The wrapper renders a button-backed `<Input>` and a `<Menu>`. It updates the field
+The wrapper renders a `<Button>` immediately followed by a `<Menu>`, with a label
+and hint inside an `<a-select-field>` layout wrapper. It updates the field
 and each option's `selected` state from the value, and reports a pick through
 `onValueChange`. Menu handles positioning, dismissal, and keyboard navigation.
 
 The following example shows the equivalent markup without React or Preact. Place
-the Menu directly after the Input so it can use that Input as its trigger.
+the Menu directly after the Button so it can use that Button as its trigger.
 
 ```html
 <!-- `.select` scopes this example's CSS. Use an application selector instead. -->
 <div class="select" style="width: 240px">
-  <!-- Button-backed field trigger; `dim-actions` dims the chevron at rest. The
-       trailing slot supplies the inline inset (--input-trailing-inset); the
-       transition on the chevron matches <Select>. -->
-  <a-input
-    button
-    dim-actions
-    value="stream"
-    aria-label="Field"
-    aria-haspopup="menu"
-    aria-expanded="false"
-  >
-    <a-icon slot="trailing" shape="chevron-down" style="transition: transform 150ms ease"></a-icon>
-  </a-input>
+  <a-button role="button" tabindex="0" aria-label="Field" aria-haspopup="menu" aria-expanded="false">
+    <a-button-label>stream</a-button-label>
+    <a-icon shape="chevron-down" aria-hidden="true" style="transition: transform 150ms ease"></a-icon>
+  </a-button>
   <a-menu role="menu">
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
@@ -294,7 +286,7 @@ the Menu directly after the Input so it can use that Input as its trigger.
 <script type="module">
   import '@antadesign/anta/elements'
   const root = document.querySelector('.select')
-  const field = root.querySelector('a-input')
+  const field = root.querySelector('a-button')
   const menu = root.querySelector('a-menu')
   const chevron = field.querySelector('a-icon')
   // Flip the chevron with the menu's open state (as <Select> does).
@@ -312,13 +304,13 @@ the Menu directly after the Input so it can use that Input as its trigger.
       el.toggleAttribute('selected', selected)
       el.setAttribute('aria-checked', String(selected))
     })
-    field.value = item.querySelector('a-menu-item-label').textContent
+    field.querySelector('a-button-label').textContent = item.querySelector('a-menu-item-label').textContent
   })
 </script>
 ```
 
 The React and Preact `Select` wrapper performs those updates for you.
-Because the Menu directly follows the Anta Input, it associates the focused
+Because the Menu directly follows the Anta Button, it associates the focused
 field with the popup through a direct ARIA element reference. No popup ID is
 required. If a custom composition supplies its own `aria-controls`, Anta keeps
 that authored relationship.
@@ -477,7 +469,7 @@ empty selection still shows the `placeholder` — and takes the resolved `select
 options (`selected.length` is the count). Return `undefined` for any case you'd rather
 leave to the default, as above for the single-label case.
 
-Return a **string**: it flows into the same button-backed field the default uses, so a
+Return a **string**: it flows into the same Button label the default uses, so a
 long summary **ellipsizes at the field's width** the way a long value does
 (`Engineering, Design, … `). For rich content — chips, several nodes — reach for
 `renderTrigger` below, which replaces the whole field.
@@ -650,11 +642,11 @@ scannable list instead of hiding matches behind flyouts.
 | `defaultValue?` | V \| V[] | — | Initial selected option value for uncontrolled use. |
 | `disabled?` | boolean | — | Disable the whole select. |
 | `filter?` | boolean \| (option, query) => boolean | — | Add a search field at the top of the menu that filters the options as you type. `true` uses the built-in matcher — a case-insensitive substring of the option's **value / label / hint**. Pass a **function** `(option, query) => boolean` for custom matching (called per option; return `true` to keep it). |
-| `hint?` | string | — | Helper text under the field (Input's `hint`). |
-| `icon?` | IconShape | — | Leading icon shown at the left of the field (the default trigger's `Input` `leading` slot). With a custom `renderTrigger`, it's passed through as `state.icon` instead — the consumer places it. |
+| `hint?` | string | — | Helper text under the field. |
+| `icon?` | IconShape | — | Leading icon shown at the left of the field. With a custom `renderTrigger`, it's passed through as `state.icon` instead — the consumer places it. |
 | `indicator?` | 'none' \| 'check' \| 'radio' | none | The per-row mark for **single**-select: `'none'` (a tint-only highlight), `'check'` (a trailing checkmark on the selected row, keeping the tint — the canonical Select look), or `'radio'` (a leading radio on every row). Multi-select always uses checkboxes. |
-| `label?` | string | — | Field label, above the trigger (Input's `label`). |
-| `leading?` | ReactNode | — | Content for the default trigger's `leading` slot, such as a key prefix before the value. It replaces the icon derived from `icon`. Include an `<Icon>` in this content when both are needed. Ignored by `renderTrigger`. |
+| `label?` | string | — | Field label, above the trigger. |
+| `leading?` | ReactNode | — | Content before the default trigger's value, such as a key prefix before the value. It replaces the icon derived from `icon`. Include an `<Icon>` in this content when both are needed. Ignored by `renderTrigger`. |
 | `offset?` | number | 4 | Gap in pixels between the trigger and the options menu. |
 | `onValueChange?` | (value, attrs) => void | — | Fires after the selection changes, with the new value and a `{ value, option }` snapshot. Select has no discrete element state, so there is no cancelable `onStateChange` (see the Input event-model note). |
 | `placeholder?` | string | — | Text shown when nothing is selected. |
@@ -662,19 +654,19 @@ scannable list instead of hiding matches behind flyouts.
 | `renderEmpty?` | (state) => ReactNode | — | Render content in the menu body when the (filtered) option list is empty — a "no results" message, a loading indicator (gated on your own external loading state), or a "create from the query" row. Receives an `EmptyState` (`query`, trimmed). There is no built-in empty message: when omitted, an empty list renders nothing. Whatever you return goes where the option rows would — a plain node is inert; return a `MenuItem` (e.g. a "Create" row) to make it focusable and selectable. |
 | `renderIndicator?` | (state) => ReactNode | — | Replace each row's selection **mark** with your own node, drawn at the leading edge. The row stays the control (`role` + `aria-checked` from `indicator` / `selection`); only the drawn mark changes, so pair it with an `indicator` (`'check'` / `'radio'`) or `selection="multiple"` for the semantics. Composes with `renderOption`. |
 | `renderOption?` | (option, state) => ReactNode | — | Replaces the built-in `label`, `hint`, and `icon` layout for each option row. Select still supplies the row container, click handling, ARIA attributes, and selection indicator. Read extra option fields through `SelectOption`'s index signature. `state` contains `value`, `selected`, and `disabled`. Filtering still matches the option's `value`, `label`, and `hint`, but Select cannot highlight matches within the returned content. |
-| `renderSummary?` | (selected) => string \| undefined | — | `multiple` only: build the trigger's selection summary text yourself, replacing the built-in "`All` / one label / `N selected`" logic. Receives the resolved selected options (`selected.length` is the count) and runs only while something is selected — an empty selection still shows the `placeholder`. Return a **string**: it flows into the default trigger's button-backed field, so a long summary ellipsizes at the field's width just like a long value (`Engineering, Design, … `). Return `undefined` to fall back to the default for that case (e.g. customize only the count, keeping the single-label case built-in). For rich content (chips, multiple nodes) use `renderTrigger`, which replaces the whole field. |
+| `renderSummary?` | (selected) => string \| undefined | — | `multiple` only: build the trigger's selection summary text yourself, replacing the built-in "`All` / one label / `N selected`" logic. Receives the resolved selected options (`selected.length` is the count) and runs only while something is selected — an empty selection still shows the `placeholder`. Return a **string**: it flows into the default trigger's Button label, so a long summary ellipsizes at the field's width just like a long value (`Engineering, Design, … `). Return `undefined` to fall back to the default for that case (e.g. customize only the count, keeping the single-label case built-in). For rich content (chips, multiple nodes) use `renderTrigger`, which replaces the whole field. |
 | `renderTrigger?` | (state) => ReactNode | — | Replaces the default field with a trigger returned from this function. Receives `open`, `value`, `selected`, `disabled`, and `icon`. Return exactly one focusable element, such as an Anta `Button`. The menu is positioned relative to that element and opens when it is clicked. Do not return a fragment, multiple siblings, or a non-focusable wrapper. Add `aria-haspopup={filter ? 'dialog' : 'menu'}` and `aria-expanded={state.open}` to the returned button. An Anta `Button` already carries the correct role. Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and `className` / `style` apply only to the default field. Add styling and attributes to the returned element instead. |
 | `round?` | boolean \| number \| string | — | Round the field corners — `true` for fully round, or a number / CSS length. |
 | `selectAll?` | boolean | true | `multiple` only: shows a "Select all" row that toggles every enabled option, or only the visible options when a filter query is active. Its checkbox is mixed when some options are selected. It is on by default. Set it to `false` to remove the row and the Alt/Option-click shortcut that selects only one row. |
 | `selectAllLabel?` | string | Select all | Label for the `selectAll` row. |
 | `selection?` | 'single' \| 'multiple' | single | Selection mode. `'single'` (the default) keeps `value` a single value and closes the menu on pick. Switch to `'multiple'` for checkboxes + an array value. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Field size. |
-| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | neutral | Validation/feedback tone for the field (Input's `status`). |
-| `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set (Input's `statusIcon`). Each status has a default; pass a shape to override, or `false` to drop it. |
+| `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | neutral | Validation/feedback tone for the field. |
+| `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set. Each status has a default; pass a shape to override, or `false` to drop it. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | — | Default option-row tone. An option's own `tone` wins. A named tone or a custom CSS color. Most visible with tint-based marks (`indicator` `'none'` / `'check'`); with `'radio'` / `'checkbox'` it also tones the indicator. |
 | `toneScope?` | 'all' \| 'selected' | 'all' | Apply the default row tone in every state, or only to selected rows. An option's own `toneScope` wins. |
 | `value?` | V \| V[] | — | Controlled value: the selected option's `value`. Update it through `onValueChange`. Leave it undefined for uncontrolled use. |
-| `verbose?` | boolean | — | `multiple` only: spell the picks out in the count summary — `3 selected: A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies to the multi-count case only: `All` stays `All`, a single pick stays its own label, and an empty selection stays the `placeholder`. The list flows into the button-backed field, so it ellipsizes at the field's width when long (`3 selected: Engineering, Des… `). `renderSummary` overrides this. |
+| `verbose?` | boolean | — | `multiple` only: spell the picks out in the count summary — `3 selected: A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies to the multi-count case only: `All` stays `All`, a single pick stays its own label, and an empty selection stays the `placeholder`. The list flows into the Button label, so it ellipsizes at the field's width when long (`3 selected: Engineering, Des… `). `renderSummary` overrides this. |
 
 ### The `SelectItem` type
 
@@ -774,16 +766,16 @@ inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-`Select` has no host element. Compose a read-only `<a-input>` trigger with an
+`Select` uses a layout wrapper. Compose an `<a-button>` trigger with an
 `<a-menu>` of options. The menu owns opening and dismissal; the short controller
 reflects a picked option into the field and selected row.
 
 ```html
 <div data-anta-composition="select" style="display: grid; gap: 4px; width: 280px">
-  <a-input readonly value="stream">
-    <span slot="label">Output</span>
-    <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
-  </a-input>
+  <a-button role="button" tabindex="0" aria-label="Output" aria-haspopup="menu" aria-expanded="false">
+    <a-button-label>stream</a-button-label>
+    <a-icon shape="chevron-down" aria-hidden="true"></a-icon>
+  </a-button>
   <a-menu role="menu">
     <a-menu-item role="menuitem" tabindex="0" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
     <a-menu-item role="menuitem" tabindex="0" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
@@ -793,8 +785,11 @@ reflects a picked option into the field and selected row.
   import '@antadesign/anta/elements'
 
   const root = document.querySelector('[data-anta-composition="select"]')
-  const field = root.querySelector('a-input')
+  const field = root.querySelector('a-button')
   const menu = root.querySelector('a-menu')
+  menu.addEventListener('statechange', (event) => {
+    field.setAttribute('aria-expanded', String(event.detail.next === 'open'))
+  })
 
   menu.addEventListener('click', (event) => {
     const item = event.target instanceof Element ? event.target.closest('a-menu-item') : null
@@ -803,7 +798,7 @@ reflects a picked option into the field and selected row.
       const selected = option === item
       option.toggleAttribute('selected', selected)
     })
-    field.value = item.querySelector('a-menu-item-label').textContent.trim()
+    field.querySelector('a-button-label').textContent = item.querySelector('a-menu-item-label').textContent.trim()
   })
 </script>
 ```
@@ -841,17 +836,18 @@ corners.
 
 ## Styling
 
-Select is an [Input](./input.md) plus a [Menu](./menu.md), so it
-inherits both surfaces' hooks. Reach for props first, then plain CSS or `::part` for
+Select composes an [Anta Button](./button.md) and a [Menu](./menu.md). Reach for props first, then plain CSS or `::part` for
 the rest. Don't override an element's internal `--*` output tokens.
 
 **Selection color** routes through `tone`: set it per option or on the Select as a
 default, then use `toneScope="selected"` for chosen rows only. It takes a named tone or any CSS color (a custom color keeps
 its hue, with lightness pinned to the brand text).
 
-**The field** is styled through Input's props (`size`, `status`, `round`) and its
-`::part`s; set its width with `style` / `className` (forwarded to the field). **The
-popover** takes Menu's `::part(menu)`.
+**The field** takes `size`, `status`, and `round`. Set its width with `style` /
+`className`, forwarded to the `<a-select-field>` wrapper. Style the trigger through
+`a-select-field > a-button` and its `a-button-label`. The trigger uses
+`:focus-visible` for its focus ring and ellipsizes long values. **The popover**
+takes Menu's `::part(menu)`.
 
 ```tsx
 // Tone the selection; give the trigger a width.
@@ -861,16 +857,15 @@ popover** takes Menu's `::part(menu)`.
 **Borderless trigger.** The field's border is an inset `box-shadow`, so you can drop
 it *at rest* and let the standard hover / focus shadow return on its own; no need to
 re-declare it. Pair that with hiding the chevron for a field that reads as plain text
-until you reach for it. Hide the chevron by targeting the trailing `a-icon` (its slot
-wrapper is inline-`display:contents`, so hit the icon itself).
+until you reach for it. Hide the chevron by targeting `a-select-chevron`.
 
 ```css
 /* Drop the resting border-shadow; the standard hover / focus shadow still shows. */
-.ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
+.ghost-select a-select-field > a-button:not(:hover):not(:focus-visible) {
   box-shadow: none;
 }
 /* Center the chosen label in the field. */
-.ghost-select a-input::part(input) { text-align: center; }
-/* The chevron's slot wrapper is inline display:contents; hide the icon itself. */
-.ghost-select a-input [slot="trailing"] a-icon { display: none; }
+.ghost-select a-select-field > a-button > a-button-label { text-align: center; }
+/* Hide the chevron. */
+.ghost-select a-select-chevron { display: none; }
 ```

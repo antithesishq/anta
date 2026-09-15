@@ -361,7 +361,7 @@ test('an open Select scrolls within a hover-activated wheel Capture', async t =>
       onWheelInput: (_, detail) => log.push(detail),
     })
   })
-  await page.locator('a-input').click()
+  await page.locator('a-select-field > a-button').click()
   await page.locator('a-menu-item').first().hover()
   await page.mouse.wheel(0, 100)
   await page.waitForFunction(() => document.querySelector('a-menu').shadowRoot.querySelector('[part="scroll"]').scrollTop > 0)

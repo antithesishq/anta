@@ -21,8 +21,7 @@ const SUBMENU_CLOSE_DELAY = 130
 const TYPEAHEAD_RESET = 500
 /** Triggers that turn Enter/Space into a click on their own — native
  *  buttons/links, `[role=button]`, `<a-button>`, and button-backed `<a-input>`.
- *  The keyboard-open skips
- *  them: their click already opens, so a second open would toggle shut. */
+ *  Enter/Space stay with their activation handler; arrows open the menu here. */
 const SELF_ACTIVATING =
   'a-button, a-input[button], button, a[href], input[type="button"], input[type="submit"], input[type="reset"], [role="button"]'
 /** Text-entry triggers that aren't read-only: Enter/Space belong to the field
@@ -1774,7 +1773,9 @@ export class AMenuElement extends HTMLElementBase {
       // breaks under worker-thread DOM.
       const onKey = (e: KeyboardEvent) => {
         if (this._shown) return // open-only; while open the surface owns the keys
-        if (anchor.matches(SELF_ACTIVATING) || anchor.hasAttribute('disabled')) return
+        if (anchor.hasAttribute('disabled') || anchor.hasAttribute('loading')) return
+        const arrow = e.key === 'ArrowDown' || e.key === 'ArrowUp'
+        if (!arrow && anchor.matches(SELF_ACTIVATING)) return
         // Either arrow opens (the menu can flip above the trigger, and native
         // <select> opens on both); Enter/Space also open a non-editable trigger,
         // but stay with the text on an editable one.

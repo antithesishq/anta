@@ -1,12 +1,13 @@
 // Hooks come from the jsx-runtime indirection configured through `configure()`,
 // as in RadioGroup. Select keeps its selection and open state, then renders an
-// Input trigger followed by a Menu of options. There is no `a-select` element.
+// Button trigger followed by a Menu of options. There is no `a-select` element.
 import { useState } from '../jsx-runtime'
 import { ISOLATE_HINT, ISOLATE_HINT_DELAY, optionPresentationAttrs } from '../anta_helpers'
 import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
 import type { BaseProps, OptionPresentationProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { Input } from './Input'
+import { Button } from './Button'
 import { Icon } from './Icon'
 import { Menu, type MenuProps } from './Menu'
 import { MenuItem } from './MenuItem'
@@ -192,25 +193,25 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
   indicator?: 'none' | 'check' | 'radio'
   /** Text shown when nothing is selected. */
   placeholder?: string
-  /** Leading icon shown at the left of the field (the default trigger's `Input`
-   *  `leading` slot). With a custom `renderTrigger`, it's passed through as
+  /** Leading icon shown at the left of the field. With a custom
+   *  `renderTrigger`, it's passed through as
    *  `state.icon` instead — the consumer places it. */
   icon?: IconShape
-  /** Content for the default trigger's `leading` slot, such as a key prefix
+  /** Content before the default trigger's value, such as a key prefix
    *  before the value. It replaces the icon derived from `icon`. Include an
    *  `<Icon>` in this content when both are needed. Ignored by `renderTrigger`. */
   leading?: React.ReactNode
-  /** Field label, above the trigger (Input's `label`). */
+  /** Field label, above the trigger. */
   label?: string
-  /** Helper text under the field (Input's `hint`). */
+  /** Helper text under the field. */
   hint?: string
   /** Field size.
    *  @defaultValue medium */
   size?: 'small' | 'medium' | 'large'
-  /** Validation/feedback tone for the field (Input's `status`).
+  /** Validation/feedback tone for the field.
    *  @defaultValue neutral */
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
-  /** Glyph shown before the `hint` when `status` is set (Input's `statusIcon`).
+  /** Glyph shown before the `hint` when `status` is set.
    *  Each status has a default; pass a shape to override, or `false` to drop it. */
   statusIcon?: IconShape | (string & {}) | false
   /** Round the field corners — `true` for fully round, or a number / CSS length. */
@@ -263,7 +264,7 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies
    *  to the multi-count case only: `All` stays `All`, a single pick stays its
    *  own label, and an empty selection stays the `placeholder`. The list flows
-   *  into the button-backed field, so it ellipsizes at the field's width when long
+   *  into the Button label, so it ellipsizes at the field's width when long
    *  (`3 selected: Engineering, Des… `). `renderSummary` overrides this. */
   verbose?: boolean
   /** `multiple` only: build the trigger's selection summary text yourself,
@@ -271,7 +272,7 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  the resolved selected options (`selected.length` is the count) and runs only
    *  while something is selected — an empty selection still shows the
    *  `placeholder`. Return a **string**: it flows into the default trigger's
-   *  button-backed field, so a long summary ellipsizes at the field's width just
+   *  Button label, so a long summary ellipsizes at the field's width just
    *  like a long value (`Engineering, Design, … `). Return `undefined` to fall
    *  back to the default for that case (e.g. customize only the count, keeping
    *  the single-label case built-in). For rich content (chips, multiple nodes)
@@ -431,8 +432,8 @@ export function optionsWithSelection<V extends OptionValue = string>(
 }
 
 /**
- * `<Select>` lets people choose one or more options from a dropdown. It uses an
- * `<Input>` as its read-only trigger and a `<Menu>` for its options. `selection` sets behavior:
+ * `<Select>` lets people choose one or more options from a dropdown. It uses a
+ * `<Button>` as its trigger and a `<Menu>` for its options. `selection` sets behavior:
  * `'single'` (default; `value` is a string, menu closes on pick) or `'multiple'`
  * (checkboxes, `value` is a string array, menu stays open while toggling, the
  * field shows an "N selected" count). For single-select, `indicator` picks the
@@ -768,37 +769,27 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     return out
   }
 
-  return (
+  const content = (
     <>
       {renderTrigger ? (
         renderTrigger({ open, value: currentRaw, selected: selectedOptions, disabled: !!disabled, icon })
       ) : (
-      <Input
-        label={label}
-        hint={hint}
-        placeholder={placeholder}
-        value={display}
-        button
-        dimActions
+      <Button
         disabled={disabled}
-        leading={leading ?? (icon ? <Icon shape={icon} /> : undefined)}
         size={size}
-        status={status}
-        statusIcon={statusIcon}
         round={round}
+        aria-label={typeof label === 'string' || typeof label === 'number' ? String(label) : undefined}
+        aria-invalid={status === 'critical' ? 'true' : undefined}
         aria-haspopup={filtering ? 'dialog' : 'menu'}
         aria-expanded={open ? 'true' : 'false'}
-        trailing={
-          // The named tag applies the Select-specific rotation while the icon remains
-          // a normal currentColor glyph.
-          <a-select-chevron open={open ? '' : undefined} style={statusColor ? { color: statusColor } : undefined}>
-            <Icon shape="chevron-down" />
-          </a-select-chevron>
-        }
-        className={className}
-        style={style}
         {...rest}
-      />
+      >
+        {(leading ?? icon) && <a-select-leading aria-hidden="true">{leading ?? <Icon shape={icon!} />}</a-select-leading>}
+        <a-button-label data-placeholder={!display ? '' : undefined}>{display || placeholder}</a-button-label>
+        <a-select-chevron open={open ? '' : undefined} aria-hidden="true" style={statusColor ? { color: statusColor } : undefined}>
+          <Icon shape="chevron-down" />
+        </a-select-chevron>
+      </Button>
       )}
       {/* Anchors to the trigger (its previous sibling); opens on click. Single-select
           closes on pick; multi-select rows carry `data-menu-open` so toggling keeps
@@ -871,5 +862,17 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         )}
       </Menu>
     </>
+  )
+  if (renderTrigger) return content
+  const statusGlyph: Partial<Record<NonNullable<typeof status>, IconShape>> = {
+    brand: 'circle-small-solid', info: 'info', success: 'circle-check', warning: 'warning-triangle', critical: 'warning-diamond',
+  }
+  const glyph = statusIcon === undefined ? (status ? statusGlyph[status] : undefined) : statusIcon
+  return (
+    <a-select-field size={size} status={status} disabled={disabled ? '' : undefined} class={className} style={style}>
+      {label != null && <a-select-label>{label}</a-select-label>}
+      {content}
+      {hint != null && <a-select-hint>{glyph && <Icon shape={glyph as IconShape} aria-hidden="true" />}{hint}</a-select-hint>}
+    </a-select-field>
   )
 }

@@ -361,6 +361,25 @@ test('Panel keeps its content visible when the Popover API is unavailable', asyn
   assert.equal(await page.locator('#panel').evaluate(p => p.matches(':state(maximized)')), false)
 })
 
+test('Panel maximizes, restores focus, and disconnects without custom states', async t => {
+  const page = await pageFor(t)
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.evaluate(() => {
+    Object.defineProperty(ElementInternals.prototype, 'states', { configurable: true, get: () => undefined })
+  })
+  await page.locator('#outside').focus()
+  await page.locator('#panel').evaluate(panel => panel.requestMaximize())
+  assert.equal(await focusedId(page), 'note')
+  assert.equal(await page.locator('#panel').evaluate(panel => panel.shadowRoot.querySelector('slot').matches(':popover-open')), true)
+  await page.locator('#panel').evaluate(panel => panel.requestRestore())
+  assert.equal(await focusedId(page), 'outside')
+  assert.equal(await page.locator('#panel').evaluate(panel => panel.shadowRoot.querySelector('slot').hasAttribute('popover')), false)
+  await page.locator('#panel').evaluate(panel => { panel.requestMaximize(); panel.remove() })
+  await page.waitForTimeout(20)
+  assert.deepEqual(errors, [])
+})
+
 async function focusedId(page) {
   return page.evaluate(() => {
     let node = document.activeElement

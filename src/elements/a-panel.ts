@@ -147,7 +147,7 @@ export class APanelElement extends HTMLElementBase {
       this.#surface.setAttribute('popover', 'manual')
       this.#focus.activate(focused)
       this.#surface.showPopover()
-      this.#internals.states.add('maximized')
+      this.#internals.states?.add('maximized')
       this.#focus.focusInside(focused)
     } else {
       this.#restoreSurface()
@@ -160,7 +160,7 @@ export class APanelElement extends HTMLElementBase {
     this.#surface.removeAttribute('popover')
     this.#surface.removeAttribute('tabindex')
     this.#placeholder.classList.remove('active')
-    this.#internals.states.delete('maximized')
+    this.#internals.states?.delete('maximized')
     if (restoreFocus) returnFocus()
   }
 }

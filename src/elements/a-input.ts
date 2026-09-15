@@ -217,7 +217,7 @@ const SHADOW_STYLE = `
   @media (hover: hover) and (pointer: fine) {
     :host(:not(:disabled)) .field:hover { --_bw: 1px; }
   }
-  :host(:not([readonly])) .field:has(input:focus, textarea:focus, button:focus),
+  :host(:not([readonly])) .field:has(input:focus, textarea:focus, button:focus-visible),
   :host([readonly]:state(kb-focus)) .field {
     --_bw: 1px;
     outline: 1px solid var(--focus-ring);

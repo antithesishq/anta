@@ -112,7 +112,7 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   /** Make the field read-only. */
   readOnly?: boolean
   /** Render the field surface with a native button as its focus target. This is
-   *  intended for Input-styled popup triggers such as Select; the value becomes
+   *  available for Input-styled popup triggers; the value becomes
    *  the button text and the placeholder is shown while it is empty. */
   button?: boolean
   /** Mark the field required (drives native validity). */

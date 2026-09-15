@@ -444,7 +444,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 |------|------|---------|-------------|
 | `autoComplete?` | 'off' \| 'on' \| 'name' \| 'username' \| 'email' \| 'current-password' \| 'new-password' \| 'one-time-code' \| 'tel' \| 'url' \| (string & {}) | — | Native autocomplete token. Overrides the value derived from `type` (`email` / `tel` / `url`) — set it for the cases `type` can't express, e.g. `username`, `current-password`, `new-password`, `one-time-code`, or `off`. |
 | `autoFocus?` | boolean | — | Focus this field when its containing `Dialog` opens. |
-| `button?` | boolean | — | Render the field surface with a native button as its focus target. This is intended for Input-styled popup triggers such as Select; the value becomes the button text and the placeholder is shown while it is empty. |
+| `button?` | boolean | — | Render the field surface with a native button as its focus target. This is available for Input-styled popup triggers; the value becomes the button text and the placeholder is shown while it is empty. |
 | `children?` | ReactNode | — | Extra content rendered directly under the field, above the hint/error (it pushes the message down). A no-box child like an Anta `<Tooltip>` takes no space and anchors to the field — consistent with how tooltips attach to any other element. Use the named `leading` / `trailing` props for in-field content. |
 | `clearable?` | boolean | — | Show a clear button as the first trailing item once the field has a value. |
 | `defaultValue?` | string | — | Initial value for the uncontrolled case. |

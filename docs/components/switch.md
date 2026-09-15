@@ -6,6 +6,8 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 
 ## Tone
 
+Switch is neutral by default. Pass `tone="brand"` or another tone to color the control.
+
 `tone` colors the whole control: the checked track, plus the unchecked track border and thumb. Six named tones are available, or pass any CSS color for a custom tone. The label and hint stay neutral.
 
 ```tsx
@@ -17,7 +19,7 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 
 ## Selected-only tone
 
-`toneScope="selected"` applies the switch's `tone` to the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state.
+To apply a tone only while selected, pass `toneScope="selected"` together with `tone`, such as `tone="brand"`. Only the checked track is tinted; the unchecked track border and thumb stay neutral.
 
 ```tsx
 <Switch tone="brand" toneScope="selected" label="Off stays neutral" />
@@ -142,7 +144,7 @@ Space toggles the switch. It follows the [WAI-ARIA switch pattern](https://www.w
 | `onValueChange?` | (event, attrs) => void | — | Post-apply callback with the new form-relevant value snapshot. |
 | `round?` | boolean \| number \| string | — | Fully round the thumb and track. Pass a `number` (px) or CSS length string for a custom track radius; the thumb radius is 3px smaller. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant. small=26×16px, medium=30×18px, large=34×20px. |
-| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'brand' | Color of the track and thumb. A tinted tone also colors the unchecked track border and thumb; use `toneScope="selected"` to color only the checked track. |
+| `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the track and thumb. A tinted tone also colors the unchecked track border and thumb; use `toneScope="selected"` to color only the checked track. |
 | `toneScope?` | 'all' \| 'selected' | 'all' | Apply `tone` to every state, or only while checked so the unchecked track and thumb stay neutral. |
 | `value?` | string | "on" | Value submitted while checked. |
 

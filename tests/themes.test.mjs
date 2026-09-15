@@ -42,7 +42,11 @@ before(async () => {
           <Checkbox id="checkbox-custom" tone="#c026d3" toneScope="selected">Custom</Checkbox>
           <Switch id="switch-all" tone="critical">All</Switch>
           <Switch id="switch-selected" tone="critical" toneScope="selected">Selected only</Switch>
-          <Switch id="switch-default">Default brand</Switch>
+          <Switch id="switch-default">Default neutral</Switch>
+          <Switch id="switch-neutral" tone="neutral">Explicit neutral</Switch>
+          <Switch id="switch-default-on" defaultChecked>Default on</Switch>
+          <Switch id="switch-neutral-on" tone="neutral" defaultChecked>Neutral on</Switch>
+          <Switch id="switch-brand-on" tone="brand" defaultChecked>Brand on</Switch>
           <Switch id="switch-brand" tone="brand">Explicit brand</Switch>
           <a-radio-group id="radio-scope" tone="success" tone-scope="selected" state="a">
             <a-radio id="radio-inherit" value="a"><a-radio-label>Inherited scope</a-radio-label></a-radio>
@@ -220,6 +224,10 @@ test('tone scope changes resting chrome without changing the tone identity', asy
         switchSelectedBorder: pseudo('switch-selected', '::before', 'border-top-color'),
         switchDefaultBorder: pseudo('switch-default', '::before', 'border-top-color'),
         switchBrandBorder: pseudo('switch-brand', '::before', 'border-top-color'),
+        switchNeutralBorder: pseudo('switch-neutral', '::before', 'border-top-color'),
+        switchDefaultFill: pseudo('switch-default-on', '::before', 'background-color'),
+        switchNeutralFill: pseudo('switch-neutral-on', '::before', 'background-color'),
+        switchBrandFill: pseudo('switch-brand-on', '::before', 'background-color'),
         radioInheritedBorder: pseudo('radio-inherit', '::before', 'border-top-color'),
         radioAllBorder: pseudo('radio-all', '::before', 'border-top-color'),
       }
@@ -227,7 +235,11 @@ test('tone scope changes resting chrome without changing the tone identity', asy
     assert.notEqual(colors.checkboxAllBorder, colors.checkboxSelectedBorder)
     assert.equal(colors.checkboxAllFill, colors.checkboxSelectedFill)
     assert.notEqual(colors.switchAllBorder, colors.switchSelectedBorder)
-    assert.equal(colors.switchDefaultBorder, colors.switchBrandBorder)
+    assert.equal(colors.switchDefaultBorder, colors.switchNeutralBorder)
+    assert.equal(colors.switchDefaultBorder, colors.switchSelectedBorder)
+    assert.notEqual(colors.switchDefaultBorder, colors.switchBrandBorder)
+    assert.equal(colors.switchDefaultFill, colors.switchNeutralFill)
+    assert.notEqual(colors.switchDefaultFill, colors.switchBrandFill)
     assert.notEqual(colors.radioInheritedBorder, colors.radioAllBorder)
   }
 

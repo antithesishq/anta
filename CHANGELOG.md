@@ -17,6 +17,9 @@ changes are not listed.
 
 ### Changed
 
+- Switch defaults to neutral in both states. Pass `tone="brand"` for brand coloring,
+  and add `toneScope="selected"` to tint only the checked track.
+
 - Select uses Anta Button for its default trigger, preserving popup accessibility,
   keyboard-only focus rings, and ellipsis for long values. Its accessible description
   includes the current selection and field hint. Menu button triggers

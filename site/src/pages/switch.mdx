@@ -31,6 +31,8 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 
 ## Tone
 
+Switch is neutral by default. Pass `tone="brand"` or another tone to color the control.
+
 `tone` colors the whole control: the checked track, plus the unchecked track border and thumb. Six named tones are available, or pass any CSS color for a custom tone. The label and hint stay neutral.
 
 <Preview gap="16px">
@@ -52,7 +54,7 @@ The `Switch` wrapper renders a form-associated `<a-switch>` element. It works un
 
 ## Selected-only tone
 
-`toneScope="selected"` applies the switch's `tone` to the checked track only. The unchecked track and thumb stay neutral until the switch is on. Use it when a resting tinted control could imply a validation state.
+To apply a tone only while selected, pass `toneScope="selected"` together with `tone`, such as `tone="brand"`. Only the checked track is tinted; the unchecked track border and thumb stay neutral.
 
 <Preview gap="16px">
   <Switch tone="brand" toneScope="selected" label="Off — neutral" />

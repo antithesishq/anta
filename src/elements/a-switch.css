@@ -30,10 +30,8 @@
     --switch-thumb: light-dark(var(--bg-1), #ece9ec);
     --switch-thumb-off: var(--switch-track-off-stroke);
 
-    /* Brand is the default tone. In all scope it colors both states; selected
-       scope keeps the off-state chrome neutral. */
-    --switch-tone-source: var(--anta-seed-brand);
-    --switch-off-tone-source: var(--anta-seed-brand);
+    --switch-tone-source: var(--anta-seed-neutral);
+    --switch-off-tone-source: var(--anta-seed-neutral);
     --switch-track-on: light-dark(
       oklch(from var(--switch-tone-source) 0.56 c h),
       oklch(from var(--switch-tone-source) 0.47 c h)
@@ -254,7 +252,6 @@
   /* In the default `all` scope, `tone` also colors the unchecked border and thumb. The track
      keeps a whisper-light border at rest, then steps through the same ramp as
      the neutral chrome. */
-  a-switch:not([tone], [tone-scope="selected"]),
   a-switch[tone]:not([tone=""], [tone="neutral"], [tone-scope="selected"]) {
     --_switch-off-track: light-dark(
       oklch(from var(--switch-off-tone-source) 0.56 c h),

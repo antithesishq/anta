@@ -41,7 +41,7 @@ export interface SwitchProps extends BaseProps {
   value?: string
   /** Color of the track and thumb. A tinted tone also colors the unchecked
    * track border and thumb; use `toneScope="selected"` to color only the checked track.
-   * @defaultValue 'brand' */
+   * @defaultValue 'neutral' */
   tone?: 'brand' | 'neutral' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Apply `tone` to every state, or only while checked so the unchecked track
    * and thumb stay neutral.

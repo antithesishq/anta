@@ -142,9 +142,9 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
         // `data-menu-search` makes the menu treat THIS anchor as its combobox
         // field (see a-menu's #comboAnchor). The ARIA combobox contract: the field
         // is the `combobox` controlling a `listbox` (the Menu below), with the
-        // active option reflected onto `aria-activedescendant` (a-input delegates
-        // focus, so the role/aria ride the host — the reactive layer sets the
-        // active id; the element never writes it itself).
+        // active option reflected onto `aria-activedescendant`. The reactive
+        // layer supplies the standard attributes and a-input delegates them to
+        // its focused native field.
         data-menu-search=""
         role="combobox"
         aria-haspopup="listbox"

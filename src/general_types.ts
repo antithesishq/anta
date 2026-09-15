@@ -683,6 +683,9 @@ export interface ASwitchAttributes extends BaseAttributes {
  * for styling, and `:state(filled)` / `:state(invalid)` as CSS hooks.
  */
 export interface AInputAttributes extends BaseAttributes {
+  /** Standard ARIA attributes describe the native input/textarea in the shadow
+   * tree and are delegated there when the element upgrades. */
+  [key: `aria-${string}`]: unknown
   /** Controlled value (string). Reflected to the shadow control only when it
    *  differs, so the caret survives re-renders. */
   value?: string
@@ -705,6 +708,8 @@ export interface AInputAttributes extends BaseAttributes {
   disabled?: boolean | ''
   /** Read-only state. Presence-based. */
   readonly?: boolean | ''
+  /** Render a native button inside the field surface. Presence-based. */
+  button?: boolean | ''
   /** Required — drives native validity. Presence-based. */
   required?: boolean | ''
   /** Dim the leading/trailing adornments at rest (0.6); they brighten to full
@@ -805,6 +810,9 @@ export interface ASliderAttributes extends BaseAttributes {
 /** Attributes for the `<a-input-time>` custom element — a segmented wall-clock
  *  time field (hour / minute / AM-PM native text-input sections in one box). */
 export interface AInputTimeAttributes extends BaseAttributes {
+  /** Standard naming/description ARIA describes the complete segmented field;
+   * invalid/error state is delegated to its focusable segments. */
+  [key: `aria-${string}`]: unknown
   /** Controlled value — 24-hour `"HH:mm"`, `''` when incomplete. */
   value?: string
   /** Focus this field when its containing `a-dialog` opens. Presence-based. */

@@ -106,6 +106,12 @@ mirrors the label text into `aria-label`, since a native `<label for>` can't
 cross the shadow boundary. The `hint` (or error) is mirrored the same way into
 `aria-description`, so a screen reader announces the message too.
 
+Standard `role` and `aria-*` attributes on `<Input>` or raw `<a-input>` are
+applied to the native input, textarea, or button inside its shadow root. This
+keeps the focused native control as the single accessible control. If you query
+the DOM directly, read those semantics from `a-input.control` rather than from
+the custom-element host.
+
 </Col>
 </Columns>
 

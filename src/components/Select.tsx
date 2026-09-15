@@ -263,7 +263,7 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies
    *  to the multi-count case only: `All` stays `All`, a single pick stays its
    *  own label, and an empty selection stays the `placeholder`. The list flows
-   *  into the read-only field, so it ellipsizes at the field's width when long
+   *  into the button-backed field, so it ellipsizes at the field's width when long
    *  (`3 selected: Engineering, Des… `). `renderSummary` overrides this. */
   verbose?: boolean
   /** `multiple` only: build the trigger's selection summary text yourself,
@@ -271,7 +271,7 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  the resolved selected options (`selected.length` is the count) and runs only
    *  while something is selected — an empty selection still shows the
    *  `placeholder`. Return a **string**: it flows into the default trigger's
-   *  read-only field, so a long summary ellipsizes at the field's width just
+   *  button-backed field, so a long summary ellipsizes at the field's width just
    *  like a long value (`Engineering, Design, … `). Return `undefined` to fall
    *  back to the default for that case (e.g. customize only the count, keeping
    *  the single-label case built-in). For rich content (chips, multiple nodes)
@@ -282,9 +282,8 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  one focusable element, such as an Anta `Button`. The menu is positioned
    *  relative to that element and opens when it is clicked. Do not return a
    *  fragment, multiple siblings, or a non-focusable wrapper. Add
-   *  `aria-haspopup="menu"` and `aria-expanded={state.open}` to the element, on a
-   *  role that supports them (an Anta `Button` already carries `role="button"`;
-   *  otherwise add `role="combobox"`).
+   *  `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned
+   *  button. An Anta `Button` already carries the correct role.
    *  Field props (`label`, `hint`, `size`, `status`, `placeholder`, and `round`) and
    *  `className` / `style` apply only to the default field. Add styling and
    *  attributes to the returned element instead. */
@@ -519,6 +518,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
   // attribute itself.
   const [activeId, setActiveId] = useState<string | null>(null)
   const uid = useId()
+  const menuId = `${uid}-menu`
 
   // Discriminate an `options` entry by shape: a `submenu` array → flyout branch, an
   // `options` array → inline group, otherwise a leaf option.
@@ -782,7 +782,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         hint={hint}
         placeholder={placeholder}
         value={display}
-        readOnly
+        button
         dimActions
         disabled={disabled}
         leading={leading ?? (icon ? <Icon shape={icon} /> : undefined)}
@@ -790,15 +790,9 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         status={status}
         statusIcon={statusIcon}
         round={round}
-        // `combobox` role keeps `aria-expanded` valid here (it isn't a global attr);
-        // `button` would make a-menu treat the trigger as self-activating and drop
-        // the keyboard-open this read-only field relies on.
-        role="combobox"
         aria-haspopup="menu"
         aria-expanded={open ? 'true' : 'false'}
-        // <a-menu> handles Enter, Space, and ArrowDown on this read-only field by
-        // binding keydown on its trigger anchor, so there is no
-        // onKeyDown here synthesizing a click on the live node.
+        aria-controls={menuId}
         trailing={
           // The named tag applies the Select-specific rotation while the icon remains
           // a normal currentColor glyph.
@@ -816,6 +810,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
           the menu open. We observe onStateChange to flip the chevron / aria-expanded
           and to reset the filter when the menu closes. */}
       <Menu
+        id={menuId}
         placement={placement}
         offset={offset}
         onStateChange={(_e, { next }) => {
@@ -836,6 +831,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
               placeholder="Filter…"
               aria-label="Filter options"
               aria-autocomplete="list"
+              aria-controls={menuId}
               // Reflect the menu's reported cursor (in-sync — Select owns this
               // field), rather than the element writing this light-DOM attribute.
               aria-activedescendant={open && activeId ? activeId : undefined}

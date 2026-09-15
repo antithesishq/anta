@@ -174,7 +174,7 @@ export const Menu = ({
               : stopPropagation
       }
       role={role}
-      aria-orientation="vertical"
+      aria-orientation={role === 'menu' || role === 'listbox' ? 'vertical' : undefined}
       class={className}
       style={lengthStyle(inset, '--menu-padding', roundStyle(round, '--menu-round', style))}
       {...rest}

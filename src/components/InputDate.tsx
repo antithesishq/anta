@@ -4,7 +4,7 @@
 // it to an ISO date (or date-time) on commit, plus a <Menu> holding a <Calendar>
 // that opens from the field itself (click or ArrowDown), anchored to it like
 // Select. There is no `a-inputdate` element; the wrapper is the coordinator.
-import { useMemo, useState } from '../jsx-runtime'
+import { useId, useMemo, useState } from '../jsx-runtime'
 import { Temporal } from 'temporal-polyfill'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
@@ -267,6 +267,7 @@ export const InputDate = ({
   // through typing a date in another month) doesn't snap the calendar back to the committed
   // month and flicker. Only advance when the draft resolves; unparseable keeps the last view.
   const [previewISO, setPreviewISO] = useState(dateISO)
+  const popupId = `${useId()}-dialog`
   if (parsedPreview !== null && parsedPreview !== previewISO) setPreviewISO(parsedPreview)
 
   return (
@@ -289,6 +290,7 @@ export const InputDate = ({
         role="combobox"
         aria-haspopup="dialog"
         aria-expanded={open ? 'true' : 'false'}
+        aria-controls={popupId}
         onInput={(e: any) => {
           setText(e.currentTarget.value)
           if (invalid) setInvalid(false)
@@ -326,6 +328,9 @@ export const InputDate = ({
           focus in the field (type, or click a day); ArrowDown moves focus into the
           grid via `focusSignal`. Controlled so a day pick / Done can close it. */}
       <Menu
+        id={popupId}
+        role="dialog"
+        aria-label={time ? 'Choose date and time' : 'Choose date'}
         open={open}
         placement={placement ?? 'bottom-start'}
         offset={offset}

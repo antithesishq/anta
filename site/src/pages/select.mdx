@@ -168,12 +168,13 @@ option's **value, label, or hint**. It's **whitespace-flexible** (a typed space
 matches any run of whitespace) and **bolds the matched substring** in the results.
 Pass a **function** `(option, query) => boolean` for custom matching (no highlight).
 
-With `filter`, Select behaves as a **combobox**. Opening it focuses the search
-field. <kbd>↑</kbd> and <kbd>↓</kbd> move through matching options while focus
-stays in the field. <kbd>Enter</kbd> selects the active option, and <kbd>Esc</kbd>
-closes the menu. The search field stays visible while the results scroll. A
-"No matches" row appears when nothing matches, and the query resets when the
-menu closes. In `multiple` mode, `selectAll` affects only the visible matches.
+With `filter`, Select remains a **menu button**. Opening it focuses a search
+field inside the menu. <kbd>↑</kbd> and <kbd>↓</kbd> move through matching options
+while focus stays in that field. <kbd>Enter</kbd> selects the active option, and
+<kbd>Esc</kbd> closes the menu. The search field stays visible while the results
+scroll. A "No matches" row appears when nothing matches, and the query resets
+when the menu closes. In `multiple` mode, `selectAll` affects only the visible
+matches.
 
 </Col>
 </Columns>
@@ -355,7 +356,7 @@ uses the same values as `Menu` and still flips or clamps when space is limited.
 
 ### Build it from elements
 
-The wrapper renders a read-only `<Input>` and a `<Menu>`. It updates the field
+The wrapper renders a button-backed `<Input>` and a `<Menu>`. It updates the field
 and each option's `selected` state from the value, and reports a pick through
 `onValueChange`. Menu handles positioning, dismissal, and keyboard navigation.
 
@@ -369,13 +370,21 @@ the Menu directly after the Input so it can use that Input as its trigger.
 ```html folded
 <!-- `.select` scopes this example's CSS. Use an application selector instead. -->
 <div class="select" style="width: 240px">
-  <!-- Read-only field trigger; `dim-actions` dims the chevron at rest. The
+  <!-- Button-backed field trigger; `dim-actions` dims the chevron at rest. The
        trailing slot supplies the inline inset (--input-trailing-inset); the
        transition on the chevron matches <Select>. -->
-  <a-input readonly dim-actions value="stream" aria-haspopup="menu">
+  <a-input
+    button
+    dim-actions
+    value="stream"
+    aria-label="Field"
+    aria-haspopup="menu"
+    aria-expanded="false"
+    aria-controls="field-menu"
+  >
     <a-icon slot="trailing" shape="chevron-down" style="transition: transform 150ms ease"></a-icon>
   </a-input>
-  <a-menu role="menu">
+  <a-menu id="field-menu" role="menu">
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="container"><a-menu-item-label>container</a-menu-item-label></a-menu-item>
@@ -389,7 +398,9 @@ the Menu directly after the Input so it can use that Input as its trigger.
   const chevron = field.querySelector('a-icon')
   // Flip the chevron with the menu's open state (as <Select> does).
   menu.addEventListener('statechange', (e) => {
-    chevron.style.transform = e.detail.next === 'open' ? 'rotate(180deg)' : ''
+    const open = e.detail.next === 'open'
+    field.setAttribute('aria-expanded', String(open))
+    chevron.style.transform = open ? 'rotate(180deg)' : ''
   })
   // On pick: mark the row selected + reflect its label into the field.
   menu.addEventListener('click', (e) => {
@@ -610,7 +621,7 @@ empty selection still shows the `placeholder` — and takes the resolved `select
 options (`selected.length` is the count). Return `undefined` for any case you'd rather
 leave to the default, as above for the single-label case.
 
-Return a **string**: it flows into the same read-only field the default uses, so a
+Return a **string**: it flows into the same button-backed field the default uses, so a
 long summary **ellipsizes at the field's width** the way a long value does
 (`Engineering, Design, … `). For rich content — chips, several nodes — reach for
 `renderTrigger` below, which replaces the whole field.

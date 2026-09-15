@@ -13,10 +13,11 @@ const SUBMENU_CLOSE_DELAY = 130
 /** Typeahead buffer reset window (ms). */
 const TYPEAHEAD_RESET = 500
 /** Triggers that turn Enter/Space into a click on their own — native
- *  buttons/links, `[role=button]`, and `<a-button>`. The keyboard-open skips
+ *  buttons/links, `[role=button]`, `<a-button>`, and button-backed `<a-input>`.
+ *  The keyboard-open skips
  *  them: their click already opens, so a second open would toggle shut. */
 const SELF_ACTIVATING =
-  'a-button, button, a[href], input[type="button"], input[type="submit"], input[type="reset"], [role="button"]'
+  'a-button, a-input[button], button, a[href], input[type="button"], input[type="submit"], input[type="reset"], [role="button"]'
 /** Text-entry triggers that aren't read-only: Enter/Space belong to the field
  *  (typing / commit), so only the arrows open the menu — the native `<select>`
  *  gesture. Read-only or non-field triggers open on Enter / Space / arrows alike. */

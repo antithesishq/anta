@@ -40,6 +40,12 @@ mirrors the label text into `aria-label`, since a native `<label for>` can't
 cross the shadow boundary. The `hint` (or error) is mirrored the same way into
 `aria-description`, so a screen reader announces the message too.
 
+Standard `role` and `aria-*` attributes on `<Input>` or raw `<a-input>` are
+applied to the native input, textarea, or button inside its shadow root. This
+keeps the focused native control as the single accessible control. If you query
+the DOM directly, read those semantics from `a-input.control` rather than from
+the custom-element host.
+
 ## Tooltip
 
 ```tsx
@@ -430,6 +436,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 |------|------|---------|-------------|
 | `autoComplete?` | 'off' \| 'on' \| 'name' \| 'username' \| 'email' \| 'current-password' \| 'new-password' \| 'one-time-code' \| 'tel' \| 'url' \| (string & {}) | — | Native autocomplete token. Overrides the value derived from `type` (`email` / `tel` / `url`) — set it for the cases `type` can't express, e.g. `username`, `current-password`, `new-password`, `one-time-code`, or `off`. |
 | `autoFocus?` | boolean | — | Focus this field when its containing `Dialog` opens. |
+| `button?` | boolean | — | Render the field surface with a native button as its focus target. This is intended for Input-styled popup triggers such as Select; the value becomes the button text and the placeholder is shown while it is empty. |
 | `children?` | ReactNode | — | Extra content rendered directly under the field, above the hint/error (it pushes the message down). A no-box child like an Anta `<Tooltip>` takes no space and anchors to the field — consistent with how tooltips attach to any other element. Use the named `leading` / `trailing` props for in-field content. |
 | `clearable?` | boolean | — | Show a clear button as the first trailing item once the field has a value. |
 | `defaultValue?` | string | — | Initial value for the uncontrolled case. |
@@ -457,7 +464,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 | `placeholder?` | string | — | Placeholder shown when empty. |
 | `readOnly?` | boolean | — | Make the field read-only. |
 | `required?` | boolean | — | Mark the field required (drives native validity). |
-| `role?` | string | — | ARIA `role` for the field — e.g. `combobox` when the input drives a suggestion `listbox` (see `InputAutocomplete`). Left unset by default. |
+| `role?` | string | — | ARIA `role` for the field — e.g. `combobox` when the input drives a suggestion `listbox` (see `InputAutocomplete`). The custom element delegates it, together with standard `aria-*` props, to the focused native shadow control. Left unset by default. |
 | `round?` | boolean \| number \| string | — | Fully-round the field (`border-radius: 999px`). Pass a `number` (px) or a CSS length string for a custom radius. The `clearable` × button always rounds to a circle to match (it isn't sized by a custom field value). |
 | `rows?` | number | — | Fixed visible row count — a constant-height `<textarea>` (implies `multiline`). |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Size variant. small=24px, medium=28px, large=32px tall; the type scale and icon track the size (small 13/16 + 14px icon · medium 15/20 + 16px · large 17/22 + 18px). |

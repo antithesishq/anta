@@ -17,6 +17,15 @@ changes are not listed.
 
 ### Changed
 
+- **Breaking:** Input now delegates standard `role` and `aria-*` declarations
+  from `<a-input>` to its focused native shadow control, preventing a duplicate
+  host control in the accessibility tree. InputAutocomplete and InputDate expose
+  their listbox/dialog relationships on that focused field; Select uses a native
+  button trigger for its menu; and InputTime delegates its overall name and
+  description to its internal group while exposing required/invalid state on
+  its segments. DOM code that expected ARIA attributes to remain on an
+  `<a-input>` host must read its `control`; CSS should use explicit application
+  state rather than host ARIA selectors.
 - Every independently loadable stylesheet now reserves Anta's public and
   internal cascade-layer order. Granular element imports therefore keep
   component and theme rules above `reset.css` even when a bundler loads their

@@ -111,6 +111,10 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   disabled?: boolean
   /** Make the field read-only. */
   readOnly?: boolean
+  /** Render the field surface with a native button as its focus target. This is
+   *  intended for Input-styled popup triggers such as Select; the value becomes
+   *  the button text and the placeholder is shown while it is empty. */
+  button?: boolean
   /** Mark the field required (drives native validity). */
   required?: boolean
   /** Dim the `leading` / `trailing` adornments at rest; they brighten to full
@@ -162,7 +166,9 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   /** Fires when the field loses focus. */
   onBlur?: (e: any) => void
   /** ARIA `role` for the field — e.g. `combobox` when the input drives a
-   *  suggestion `listbox` (see `InputAutocomplete`). Left unset by default. */
+   *  suggestion `listbox` (see `InputAutocomplete`). The custom element
+   *  delegates it, together with standard `aria-*` props, to the focused native
+   *  shadow control. Left unset by default. */
   role?: string
   // Other standard DOM event handlers (onKeyDown, onPaste, onClick, …) come from
   // `DOMEventHandlers` and are forwarded to the field via `...rest`. Standard
@@ -254,6 +260,7 @@ export const Input = ({
   truncate = true,
   disabled,
   readOnly,
+  button,
   required,
   dimActions,
   spellCheck,
@@ -263,6 +270,7 @@ export const Input = ({
   min,
   max,
   step,
+  role,
   onInput,
   onChange,
   onValueChange,
@@ -307,6 +315,7 @@ export const Input = ({
       truncate={presence(truncate)}
       disabled={presence(disabled)}
       readonly={presence(readOnly)}
+      button={presence(button)}
       required={presence(required)}
       dim-actions={presence(dimActions)}
       autocomplete={autoComplete ?? (!multiline && rows == null && type ? AUTOCOMPLETE_BY_TYPE[type] : undefined)}
@@ -320,6 +329,7 @@ export const Input = ({
       max={max}
       step={step}
       aria-invalid={status === 'critical' ? 'true' : undefined}
+      role={role ?? (isSearch ? 'searchbox' : undefined)}
       oninput={onInput || onValueChange ? (e: any) => { onInput?.(e); onValueChange?.(e, attrsOf(e)) } : undefined}
       onchange={onChange || onValueChange ? (e: any) => { onChange?.(e); onValueChange?.(e, attrsOf(e)) } : undefined}
       onclearclick={onClearClick ? (e: any) => onClearClick(nativeStateChange(e).event) : undefined}

@@ -2,7 +2,7 @@
 // as in RadioGroup. Select keeps its selection and open state, then renders an
 // Input trigger followed by a Menu of options. There is no `a-select` element.
 import { useState } from '../jsx-runtime'
-import { ISOLATE_HINT, optionPresentationAttrs } from '../anta_helpers'
+import { ISOLATE_HINT, ISOLATE_HINT_DELAY, optionPresentationAttrs } from '../anta_helpers'
 import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
 import type { BaseProps, OptionPresentationProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
@@ -698,7 +698,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
       >
         {custom}
         {tip && (
-          <Tooltip follow {...(hintOnly ? { delay: 700 } : {})}>{tip}</Tooltip>
+          <Tooltip follow {...(hintOnly ? { delay: ISOLATE_HINT_DELAY } : {})}>{tip}</Tooltip>
         )}
       </MenuItem>
     )

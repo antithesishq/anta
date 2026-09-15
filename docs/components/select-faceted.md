@@ -397,6 +397,11 @@ properties as [Select](./select.md). They use `kind` in place of Select's
 `selection`. `text` and `custom` do not use Select options. A `single` facet
 returns one option value; a `multiple` facet returns an array of option values.
 
+When `selectAll` is enabled, Alt-clicking an option in a `multiple` facet clears
+the other values and selects that option. Use Option-click on macOS. After a
+one-second hover, a pointer-following tooltip describes the shortcut. An
+option's `tooltip` replaces that hint; set it to `''` to hide the hint.
+
 | Field | Type | Description |
 |---|---|---|
 | `key` | `string` | The key for this facet's value in the record. `attrs.facet` returns it. It must be unique in `facets`. |

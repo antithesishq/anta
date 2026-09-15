@@ -17,6 +17,8 @@ changes are not listed.
 
 ### Changed
 
+- The default Alt/Option-click hint in multi-select option menus follows the
+  pointer and waits one second before appearing.
 - Checkbox, Switch, and individual Radio hints are exposed as accessible
   descriptions through `ElementInternals`, including rich light-DOM hint
   content, without adding generated IDs.

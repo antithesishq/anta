@@ -108,6 +108,9 @@ export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.tes
  *  bulk-select rows (`Select` multiple, `SelectFaceted` multiple facets). Shared
  *  so the wording stays identical across both. */
 export const ISOLATE_HINT = IS_MAC ? '⌥+Click to select only this' : 'Alt+Click to select only this'
+/** The accelerator hint is secondary guidance shown while traversing a menu, so
+ *  wait longer than Tooltip's general 300ms default before surfacing it. */
+export const ISOLATE_HINT_DELAY = 1000
 
 /** Parse an open/closed `state` / `default-state` attribute — the shared
  *  open-state vocabulary (`a-dialog`, `a-expander`, …). Anything but the literal

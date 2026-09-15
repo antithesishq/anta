@@ -6,7 +6,7 @@
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
 import { useState, useMemo } from '../jsx-runtime'
-import { ISOLATE_HINT, optionPresentationAttrs } from '../anta_helpers'
+import { ISOLATE_HINT, ISOLATE_HINT_DELAY, optionPresentationAttrs } from '../anta_helpers'
 import type { BaseProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { OptionValue, SelectItem, SelectOption } from './Select'
@@ -433,7 +433,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
             : setFacet(facet, arr.includes(opt.value) ? arr.filter((v) => v !== opt.value) : [...arr, opt.value])
         }
       >
-        {tip && <Tooltip follow {...(hintOnly ? { delay: 700 } : {})}>{tip}</Tooltip>}
+        {tip && <Tooltip follow {...(hintOnly ? { delay: ISOLATE_HINT_DELAY } : {})}>{tip}</Tooltip>}
       </MenuItem>
     )
   }

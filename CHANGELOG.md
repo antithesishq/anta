@@ -46,6 +46,12 @@ changes are not listed.
 - Tags no longer impose `max-width: 100%`. Labels and values still ellipsize
   when the application constrains the tag’s width.
 
+### Fixed
+
+- Slider exposes its `ElementInternals` through the same runtime inspection hook
+  as other stateful controls, allowing accessibility tooling to inspect its live
+  range semantics.
+
 ## 0.3.28 — September 10, 2026
 
 ### Changed

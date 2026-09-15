@@ -5,13 +5,15 @@ events. For custom wheel, pointer, and touch handling, use [Capture](./capture.m
 
 ## Display
 
-Use `display`, `gap`, and `round` for layout and corners. Numeric lengths use
-pixels; strings accept CSS lengths. A bare `round` fully rounds the corners.
+Use `display`, `gap`, `padding`, `margin`, and `round` for layout and corners. Numeric lengths use
+pixels; strings accept CSS lengths. `padding` and `margin` also accept CSS
+shorthand, such as `padding="8px 16px"` or `margin="0 auto"`. Omission adds no
+spacing styles. A bare `round` fully rounds the corners.
 
 ```tsx
-<Box round={8}><span /></Box>
-<Box display="flex" round={8} gap={6}><span /></Box>
-<Box display="grid" round={8} gap="0.5rem" style={{ gridTemplateColumns: '1fr 1fr' }}><span /></Box>
+<Box round={8} padding={10}><span /></Box>
+<Box display="flex" round={8} gap={6} padding={10}><span /></Box>
+<Box display="grid" round={8} gap="0.5rem" padding="8px 16px" style={{ gridTemplateColumns: '1fr 1fr' }}><span /></Box>
 ```
 
 ## Overflow
@@ -278,13 +280,15 @@ const canvasRef = useRef<HTMLCanvasElement>(null)
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `display?` | 'block' \| 'inline-block' \| 'flex' \| 'inline-flex' \| 'grid' \| 'inline-grid' | block | Layout model for the host. All other layout, sizing, mask, and shadow properties stay ordinary `className` / `style` CSS on the Box itself. |
+| `display?` | 'block' \| 'inline-block' \| 'flex' \| 'inline-flex' \| 'grid' \| 'inline-grid' | block | Layout model for the host. Sizing, alignment, mask, and shadow properties stay ordinary `className` / `style` CSS on the Box itself. |
 | `fade?` | boolean | — | Fades out every edge that currently hides clipped content, and drops the fade from an edge once the reader scrolls to it. |
 | `fadeSize?` | number \| string | 24 | Depth of the `fade` gradient. A `number` is pixels; a string is any CSS length. |
 | `gap?` | number \| string | — | Gap between children, matching the CSS `gap` property. A `number` is pixels; a string is any CSS length or two-value gap (`'1rem'`, `'8px 16px'`). Applies while the Box is a flex or grid container. |
+| `margin?` | number \| string | — | Outer spacing, matching CSS `margin`. Numbers are pixels; strings accept CSS shorthand, `auto`, negative lengths, and custom properties. Omission adds no style. |
 | `observe?` | 'width' \| 'height' \| 'size' \| 'context' \| 'overflow' \| 'edges' \| 'scroll' \| 'all' \| readonly BoxObservation[] | — | One selection or an array of selections, in any order. `'size'` watches width and height; `'context'` watches rendering context; `'overflow'` watches content dimensions and clipping. `'edges'` reports which edges hide content; `'scroll'` reports offsets, potentially every frame; `'all'` selects everything. Selections are independent: use `['size', 'edges']` to combine them. A measurement handler implies `'size'` when no measurement is selected; a context handler adds `'context'`. Size skips content and scroll observers; overflow adds content observation; hidden edges and scroll add scroll reads. Without handlers or `fade`, omission stays idle. |
 | `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail` contains the changed fields and a full current snapshot. |
 | `onMeasureChange?` | (event, detail) => void | — | Fired when a selected measurement field changes. `detail` contains all fields changed since the last event and a full current snapshot. |
+| `padding?` | number \| string | — | Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept CSS shorthand, percentages, and custom properties. Omission adds no style. |
 | `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a `number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit for square corners. |
 | `throttle?` | number | 0 | Minimum interval between measurement events, in milliseconds. The first report has no added delay; a trailing report delivers the latest values. Active observers and CSS clipping states are not throttled. |
 
@@ -393,20 +397,22 @@ Import `@antadesign/anta/elements/a-box` to register the element. Listen for
 
 ## Styling
 
-Your `className` and `style` override `display`, `gap`, and `round` through the
+Your `className` and `style` override `display`, `gap`, `padding`, `margin`, and
+`round` through the
 `anta.components` CSS layer.
 
-Without typed CSS `attr()` support, raw `gap`, `round`, and `fade-size` length
-attributes need matching custom properties. The JSX wrapper sets these for you:
+Without typed CSS `attr()` support, raw `gap`, `padding`, `margin`, `round`,
+and `fade-size` attributes need matching custom properties. The JSX wrapper
+sets these for you. Raw HTML lengths need units, such as `padding="16px"`:
 
 ```html
-<a-box display="flex" gap round fade class="raw-box"
-       style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">
+<a-box display="flex" gap padding margin round fade class="raw-box"
+       style="--box-gap: 8px; --box-padding: 12px; --box-margin: 0 auto; --box-round: 12px; --box-fade-size: 32px">
   <span>Layout</span><span>Context</span><span>Measurements</span>
 </a-box>
 ```
 
 ```css
-.raw-box { width: 190px; overflow: auto; padding: 12px; border: 1px solid var(--border-4); }
+.raw-box { width: 190px; overflow: auto; border: 1px solid var(--border-4); }
 .raw-box span { flex: 0 0 auto; }
 ```

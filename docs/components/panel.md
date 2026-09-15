@@ -25,11 +25,11 @@ import { Box, Button, Input, Panel } from '@antadesign/anta'
 
 function Workspace() {
   return (
-    <Panel>
+    <Panel style={{ background: 'var(--bg-3)' }}>
       <Box
         display="flex"
         gap={16}
-        style={{ minHeight: '100%', padding: 16, alignItems: 'flex-start', background: 'var(--bg-3)' }}
+        padding={16}
       >
         <Input aria-label="Workspace note" placeholder="Write a note" />
         <Button data-custom-event="paneltoggle">
@@ -56,13 +56,14 @@ function Workspace() {
 
   return (
     <Panel
+      style={{ background: 'var(--bg-3)' }}
       maximized={maximized}
       onStateChange={(_event, { next }) => setMaximized(next)}
     >
       <Box
         display="flex"
         gap={16}
-        style={{ minHeight: '100%', padding: 16, alignItems: 'flex-start', background: 'var(--bg-3)' }}
+        padding={16}
       >
         <Input aria-label="Workspace note" placeholder="Write a note" />
         <Button onClick={() => setMaximized(value => !value)}>
@@ -116,8 +117,8 @@ Import `@antadesign/anta/elements` to register the elements in this example.
 The button toggles the nearest panel without JavaScript handlers.
 
 ```html title="Declarative web component"
-<a-panel>
-  <a-box display="flex" style="min-height: 100%; padding: 16px; gap: 16px; align-items: flex-start; background: var(--bg-3)">
+<a-panel style="background: var(--bg-3)">
+  <a-box display="flex" padding="16px" gap="16px" style="--box-padding: 16px; --box-gap: 16px">
     <a-input aria-label="Workspace note" placeholder="Write a note"></a-input>
     <a-button role="button" tabindex="0" data-custom-event="paneltoggle">
       Maximize / restore
@@ -145,8 +146,9 @@ height or `overflow: auto` for scrollbars only when content overflows.
 With `overflow: scroll`, scrollbar visibility and reserved space follow the
 browser and operating system's scrollbar settings.
 
-Style its light-DOM children, such as
-[Box](./box.md) or [Capture](./capture.md), for appearance shared between both states.
+Set the background on Panel. Its maximized surface inherits that background,
+so inner content can keep its natural height. Style light-DOM children, such as
+[Box](./box.md) or [Capture](./capture.md), for content layout shared between both states.
 Use `:state(maximized)` for viewport styling and `::part(content)` for the
 maximized scrolling surface. In normal mode, the content slot uses `display: contents`.
 The maximized surface also uses `overflow: scroll`; override
@@ -175,12 +177,13 @@ replace them with your own selectors.
 ```
 
 ```css title="Preview layout and appearance"
-.panel-demo-content { display: flex; flex-direction: column; gap: 20px; min-height: 220px; padding: 20px; border: 1px solid var(--border-4); border-radius: 8px; background: var(--bg-3); }
+.panel-demo { border: 1px solid var(--border-4); border-radius: 8px; background: var(--bg-3); }
+.panel-demo-content { display: flex; flex-direction: column; gap: 20px; padding: 20px; }
 .panel-demo-toolbar { justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .panel-demo-content a-capture { display: grid; gap: 16px; }
 .panel-demo-content a-input { width: 100%; }
 .panel-demo-restore { display: none; }
-.panel-demo:state(maximized) .panel-demo-content { min-height: 100%; border: 0; border-radius: 0; padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+.panel-demo:state(maximized) .panel-demo-content { padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
 .panel-demo:state(maximized) .panel-demo-maximize { display: none; }
 .panel-demo:state(maximized) .panel-demo-restore { display: inline; }
 ```

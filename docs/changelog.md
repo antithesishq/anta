@@ -7,13 +7,19 @@ changes are not listed.
 
 ### Added
 
+- Box supports `padding` and `margin` props and HTML attributes. JSX numbers
+  use pixels; strings accept CSS shorthand values.
 - Panel is a persistent container that can maximize to the browser viewport
   through a manual popover while keeping its DOM children mounted. Maximized
   panels contain keyboard focus until restored. Panels fill their parent's
-  width and height and use `overflow: scroll` by default.
+  width and height and use `overflow: scroll` by default. The maximized surface
+  inherits the Panel's background.
 
 ### Changed
 
+- Breadcrumbs no longer scroll horizontally by default, so button focus rings
+  remain visible. To enable scrolling, set `overflow-x: auto` on the trail and
+  `outline-offset: -1px` on its focused controls.
 - **Breaking:** Box measurement events now trigger on border-box width and
   height changes by default. `observe` accepts `width`, `height`, `size`,
   `context`, `overflow`, `edges`, `scroll`, or `all`, individually or in a typed
@@ -22,6 +28,8 @@ changes are not listed.
   changes; size observation skips content and scroll observers. `throttle` sets
   the event interval in milliseconds without delaying CSS fades or on-demand
   truncation checks.
+- Tags no longer impose `max-width: 100%`. Labels and values still ellipsize
+  when the application constrains the tag’s width.
 
 ## 0.3.28 — September 10, 2026
 

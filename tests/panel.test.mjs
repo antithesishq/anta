@@ -123,6 +123,29 @@ test('A bounded Panel fills the viewport when maximized and returns to its paren
   }), { maximized: [800, 600], overflow: 'scroll', restored: [320, 180] })
 })
 
+test('Panel paints its background in both states without stretching its content', async t => {
+  const page = await pageFor(t)
+  assert.deepEqual(await page.evaluate(async () => {
+    const parent = document.createElement('div')
+    parent.style.cssText = 'width:320px;height:180px'
+    parent.innerHTML = '<a-panel style="background:rgb(20, 30, 40)"><a-box style="padding:16px;line-height:20px">Content</a-box></a-panel>'
+    document.querySelector('#mount').append(parent)
+    await new Promise(requestAnimationFrame)
+    const panel = parent.firstElementChild
+    const content = panel.firstElementChild
+    const normal = { background: getComputedStyle(panel).backgroundColor, contentHeight: content.offsetHeight }
+    panel.requestMaximize()
+    const surface = panel.shadowRoot.querySelector('[part="content"]')
+    const maximized = { background: getComputedStyle(surface).backgroundColor, contentHeight: content.offsetHeight }
+    panel.requestRestore()
+    return { normal, maximized, restored: content.offsetHeight }
+  }), {
+    normal: { background: 'rgb(20, 30, 40)', contentHeight: 52 },
+    maximized: { background: 'rgb(20, 30, 40)', contentHeight: 52 },
+    restored: 52,
+  })
+})
+
 test('Classic scrollbars do not enlarge an auto-height Panel placeholder while maximized', async t => {
   const page = await pageFor(t)
   await page.addStyleTag({ content: 'a-panel::-webkit-scrollbar { width: 12px; height: 12px; }' })

@@ -16,8 +16,8 @@ import type { BaseProps } from '../general_types'
 
 /** JSX props for the observing light-DOM `<a-box>` container. */
 export interface BoxProps extends BaseProps {
-  /** Layout model for the host. All other layout, sizing, mask, and shadow
-   * properties stay ordinary `className` / `style` CSS on the Box itself.
+  /** Layout model for the host. Sizing, alignment, mask, and shadow properties
+   * stay ordinary `className` / `style` CSS on the Box itself.
    * @defaultValue block */
   display?: BoxDisplay
   /** Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a
@@ -28,6 +28,13 @@ export interface BoxProps extends BaseProps {
    * pixels; a string is any CSS length or two-value gap (`'1rem'`,
    * `'8px 16px'`). Applies while the Box is a flex or grid container. */
   gap?: number | string
+  /** Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept
+   * CSS shorthand, percentages, and custom properties. Omission adds no style. */
+  padding?: number | string
+  /** Outer spacing, matching CSS `margin`. Numbers are pixels; strings accept
+   * CSS shorthand, `auto`, negative lengths, and custom properties.
+   * Omission adds no style. */
+  margin?: number | string
   /** One selection or an array of selections, in any order. `'size'` watches width
    * and height; `'context'` watches rendering context; `'overflow'` watches
    * content dimensions and clipping. `'edges'` reports which edges hide content;
@@ -96,6 +103,8 @@ export const Box = ({
   display,
   round,
   gap,
+  padding,
+  margin,
   observe,
   throttle,
   fade,
@@ -107,11 +116,18 @@ export const Box = ({
   children,
   ...rest
 }: BoxProps) => {
+  let boxStyle = roundStyle(round, '--box-round', style)
+  boxStyle = lengthStyle(gap, '--box-gap', boxStyle)
+  boxStyle = lengthStyle(padding, '--box-padding', boxStyle)
+  boxStyle = lengthStyle(margin, '--box-margin', boxStyle)
+  boxStyle = lengthStyle(fade ? fadeSize : undefined, '--box-fade-size', boxStyle)
   return (
     <a-box
       display={display === 'block' ? undefined : display}
       round={roundAttr(round)}
       gap={gap != null ? '' : undefined}
+      padding={padding != null ? '' : undefined}
+      margin={margin != null ? '' : undefined}
       observe={observeAttr(observe, onMeasureChange, onContextChange)}
       throttle={throttle}
       fade={fade ? '' : undefined}
@@ -119,11 +135,7 @@ export const Box = ({
       onmeasurechange={customEventHandler(onMeasureChange)}
       oncontextchange={customEventHandler(onContextChange)}
       class={className}
-      style={lengthStyle(
-        fade ? fadeSize : undefined,
-        '--box-fade-size',
-        lengthStyle(gap, '--box-gap', roundStyle(round, '--box-round', style)),
-      )}
+      style={boxStyle}
       {...rest}
     >
       {children}

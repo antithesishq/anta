@@ -55,7 +55,6 @@
     align-items: center;
     gap: var(--tag-gap);
     box-sizing: border-box;
-    max-width: 100%;
     vertical-align: middle;
     overflow: hidden;
     white-space: nowrap;

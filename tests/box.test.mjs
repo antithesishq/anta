@@ -63,6 +63,58 @@ async function pageFor(t, attributes = { observe: 'size' }) {
   return page
 }
 
+test('JSX spacing supports pixels, CSS strings, overrides, and prop removal', async t => {
+  const page = await pageFor(t, {})
+  assert.deepEqual(await page.evaluate(() => {
+    box.remove()
+    const spacing = () => {
+      const styles = getComputedStyle(document.querySelector('a-box'))
+      return [styles.padding, styles.margin]
+    }
+    renderBox({ padding: 16, margin: 8 })
+    const numeric = spacing()
+    renderBox({ padding: 'var(--space) 12px', margin: '-4px 0', style: { '--space': '6px' } })
+    const shorthand = spacing()
+    renderBox({ padding: 0, margin: 0 })
+    const zero = spacing()
+    renderBox({ padding: 16, margin: 8, style: { padding: 3, margin: 2 } })
+    const override = spacing()
+    renderBox({})
+    const omitted = spacing()
+    const element = document.querySelector('a-box')
+    return { numeric, shorthand, zero, override, omitted,
+      attributesRemoved: !element.hasAttribute('padding') && !element.hasAttribute('margin') }
+  }), {
+    numeric: ['16px', '8px'], shorthand: ['6px 12px', '-4px 0px'],
+    zero: ['0px', '0px'], override: ['3px', '2px'], omitted: ['0px', '0px'], attributesRemoved: true,
+  })
+})
+
+test('HTML spacing supports shorthand and auto margins with a CSS fallback', async t => {
+  const page = await pageFor(t, {})
+  assert.deepEqual(await page.evaluate(() => {
+    box.setAttribute('padding', '8px 16px 12px 20px')
+    box.setAttribute('margin', '-4px auto')
+    if (!CSS.supports('padding', 'attr(padding type(*))')) {
+      box.style.setProperty('--box-padding', '8px 16px 12px 20px')
+      box.style.setProperty('--box-margin', '-4px auto')
+    }
+    const styles = getComputedStyle(box)
+    const rect = box.getBoundingClientRect()
+    const parent = box.parentElement.getBoundingClientRect()
+    const child = document.createElement('a-box')
+    box.append(child)
+    const result = { padding: styles.padding, marginTop: styles.marginTop,
+      centered: rect.left + rect.width / 2 === parent.left + parent.width / 2,
+      childPadding: getComputedStyle(child).padding, childMargin: getComputedStyle(child).margin }
+    const sheet = document.createElement('style')
+    sheet.textContent = 'a-box { padding: 5px; margin: 7px; }'
+    document.head.append(sheet)
+    return { ...result, override: [styles.padding, styles.margin] }
+  }), { padding: '8px 16px 12px 20px', marginTop: '-4px', centered: true,
+    childPadding: '0px', childMargin: '0px', override: ['5px', '7px'] })
+})
+
 test('Box defaults to border-box dimensions while scroll states and snapshots stay current', async t => {
   const page = await pageFor(t, { observe: 'size', fade: '' })
   assert.deepEqual(await page.evaluate(async () => {

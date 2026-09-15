@@ -31,27 +31,29 @@ events. For custom wheel, pointer, and touch handling, use [Capture](/capture/).
 
 ## Display
 
-Use `display`, `gap`, and `round` for layout and corners. Numeric lengths use
-pixels; strings accept CSS lengths. A bare `round` fully rounds the corners.
+Use `display`, `gap`, `padding`, `margin`, and `round` for layout and corners. Numeric lengths use
+pixels; strings accept CSS lengths. `padding` and `margin` also accept CSS
+shorthand, such as `padding="8px 16px"` or `margin="0 auto"`. Omission adds no
+spacing styles. A bare `round` fully rounds the corners.
 
 <Preview align="stretch" gap="16px" justify="flex-start">
-  <Box round={8} className="display-demo" style={{ width: '150px' }}>
+  <Box round={8} padding={10} className="display-demo" style={{ width: '150px' }}>
     <span className="chip" />
     <span className="chip" />
     <span className="chip" />
   </Box>
-  <Box display="flex" round={8} gap={6} className="display-demo" style={{ width: '150px' }}>
+  <Box display="flex" round={8} gap={6} padding={10} className="display-demo" style={{ width: '150px' }}>
     <span className="chip" />
     <span className="chip" />
     <span className="chip" />
   </Box>
-  <Box display="grid" round={8} gap={6} className="display-demo" style={{ width: '150px', gridTemplateColumns: '1fr 1fr' }}>
+  <Box display="grid" round={8} gap={6} padding={10} className="display-demo" style={{ width: '150px', gridTemplateColumns: '1fr 1fr' }}>
     <span className="chip" />
     <span className="chip" />
     <span className="chip" />
   </Box>
   <style is:inline>{`
-    .display-demo { padding: 10px; border: 1px solid var(--border-4); }
+    .display-demo { border: 1px solid var(--border-4); }
     .display-demo .chip { display: block; flex: 1; width: 100%; height: 22px; border-radius: 4px; background: var(--bg-4-brand); }
     .display-demo .chip + .chip { margin-top: 6px; }
     .display-demo[display] .chip + .chip { margin-top: 0; }
@@ -59,9 +61,9 @@ pixels; strings accept CSS lengths. A bare `round` fully rounds the corners.
 </Preview>
 
 ```tsx folded
-<Box round={8}><span /></Box>
-<Box display="flex" round={8} gap={6}><span /></Box>
-<Box display="grid" round={8} gap="0.5rem" style={{ gridTemplateColumns: '1fr 1fr' }}><span /></Box>
+<Box round={8} padding={10}><span /></Box>
+<Box display="flex" round={8} gap={6} padding={10}><span /></Box>
+<Box display="grid" round={8} gap="0.5rem" padding="8px 16px" style={{ gridTemplateColumns: '1fr 1fr' }}><span /></Box>
 ```
 
 ## Overflow
@@ -492,32 +494,34 @@ Import `@antadesign/anta/elements/a-box` to register the element. Listen for
 
 <Disclosure title="Styling" level={2}>
 
-Your `className` and `style` override `display`, `gap`, and `round` through the
+Your `className` and `style` override `display`, `gap`, `padding`, `margin`, and
+`round` through the
 `anta.components` CSS layer.
 
-Without typed CSS `attr()` support, raw `gap`, `round`, and `fade-size` length
-attributes need matching custom properties. The JSX wrapper sets these for you:
+Without typed CSS `attr()` support, raw `gap`, `padding`, `margin`, `round`,
+and `fade-size` attributes need matching custom properties. The JSX wrapper
+sets these for you. Raw HTML lengths need units, such as `padding="16px"`:
 
 <Preview align="stretch">
-  <a-box display="flex" gap round fade class="raw-box"
-         style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">
+  <a-box display="flex" gap padding margin round fade class="raw-box"
+         style="--box-gap: 8px; --box-padding: 12px; --box-margin: 0 auto; --box-round: 12px; --box-fade-size: 32px">
     <span>Layout</span><span>Context</span><span>Measurements</span>
   </a-box>
   <style is:inline>{`
-    .raw-box { width: 190px; overflow: auto; padding: 12px; border: 1px solid var(--border-4); }
+    .raw-box { width: 190px; overflow: auto; border: 1px solid var(--border-4); }
     .raw-box span { flex: 0 0 auto; }
   `}</style>
 </Preview>
 
 ```html folded
-<a-box display="flex" gap round fade class="raw-box"
-       style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">
+<a-box display="flex" gap padding margin round fade class="raw-box"
+       style="--box-gap: 8px; --box-padding: 12px; --box-margin: 0 auto; --box-round: 12px; --box-fade-size: 32px">
   <span>Layout</span><span>Context</span><span>Measurements</span>
 </a-box>
 ```
 
 ```css folded
-.raw-box { width: 190px; overflow: auto; padding: 12px; border: 1px solid var(--border-4); }
+.raw-box { width: 190px; overflow: auto; border: 1px solid var(--border-4); }
 .raw-box span { flex: 0 0 auto; }
 ```
 

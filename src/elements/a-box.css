@@ -26,6 +26,20 @@
     }
   }
 
+  a-box[padding] {
+    padding: var(--box-padding, 0px);
+    @supports (padding: attr(padding type(*))) {
+      --box-padding: attr(padding type(*), 0px);
+    }
+  }
+
+  a-box[margin] {
+    margin: var(--box-margin, 0px);
+    @supports (margin: attr(margin type(*))) {
+      --box-margin: attr(margin type(*), 0px);
+    }
+  }
+
   /* Bare `round` → 999px, clamped to the box. A length (`round="16px"`, or the
      wrapper's `round={16}` → inline --box-round) sets a custom radius. The typed
      attr() covers raw-HTML authors. Box has no default radius, so square corners

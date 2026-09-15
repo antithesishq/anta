@@ -20,7 +20,7 @@ const SHADOW_STYLE = `
     overflow: scroll;
     overscroll-behavior: contain;
     color: inherit;
-    background: transparent;
+    background: inherit;
   }
   slot::backdrop { background: transparent; pointer-events: none; }
   .placeholder { display: none; }

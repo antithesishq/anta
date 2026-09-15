@@ -345,6 +345,12 @@ export interface ABoxAttributes extends BaseAttributes {
    *  typed `attr()` read it from `--box-gap` in the host's inline style
    *  instead, which is what the JSX wrapper always sets. */
   gap?: boolean | '' | number | string
+  /** CSS padding shorthand (`padding="8px 16px"`). Without typed `attr()`
+   * support, set `--box-padding` as well. The JSX wrapper supplies it. */
+  padding?: boolean | '' | number | string
+  /** CSS margin shorthand (`margin="0 auto"`). Without typed `attr()`
+   * support, set `--box-margin` as well. The JSX wrapper supplies it. */
+  margin?: boolean | '' | number | string
   /** Masks every edge that currently hides clipped content. */
   fade?: boolean | ''
   /** Space-separated selections: `width`, `height`, `size`, `context`,

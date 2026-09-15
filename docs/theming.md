@@ -190,7 +190,7 @@ text-2 base at this alpha (→ text-4).
 
 | Input | Toned light | Toned dark | Neutral light | Neutral dark | Range | Step | Meaning |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| text-4 α % | 60 | 60 | 60 | 60 | 0–100 | 1 |  |
+| text-4 α % | 66 | 62 | 66 | 62 | 0–100 | 1 |  |
 
 #### Faint (text-5)
 

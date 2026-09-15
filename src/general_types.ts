@@ -294,6 +294,16 @@ export interface ATextAttributes extends BaseAttributes {
   'aria-expanded'?: boolean | 'true' | 'false'
 }
 
+/** Panel presentation state. Normal panels remain visible in their parent layout. */
+export type PanelState = 'normal' | 'maximized'
+
+/** Attributes for the persistent viewport-capable container. */
+export interface APanelAttributes extends BaseAttributes {
+  state?: PanelState
+  'default-state'?: PanelState
+  onstatechange?: (event: CustomEvent<{ next: PanelState; prev: PanelState }> | { nativeEvent: CustomEvent<{ next: PanelState; prev: PanelState }> }) => void
+}
+
 /** Attributes for the opt-in light-DOM capture surface. */
 export interface ACaptureAttributes extends BaseAttributes {
   /** Space-separated accepted wheel directions. Bare means all; `none` preserves settling while declining input. */
@@ -335,20 +345,28 @@ export interface ABoxAttributes extends BaseAttributes {
    *  typed `attr()` read it from `--box-gap` in the host's inline style
    *  instead, which is what the JSX wrapper always sets. */
   gap?: boolean | '' | number | string
+  /** CSS padding shorthand (`padding="8px 16px"`). Without typed `attr()`
+   * support, set `--box-padding` as well. The JSX wrapper supplies it. */
+  padding?: boolean | '' | number | string
+  /** CSS margin shorthand (`margin="0 auto"`). Without typed `attr()`
+   * support, set `--box-margin` as well. The JSX wrapper supplies it. */
+  margin?: boolean | '' | number | string
   /** Masks every edge that currently hides clipped content. */
   fade?: boolean | ''
-  /** What the box watches. `size` reports geometry and overflow through
-   *  `measurechange` and the CSS states; `context` reports the rendering
-   *  environment through `contextchange`; `all`, or a bare `observe`, does both.
-   *  A box without it (and without `fade`) runs no observers, so a listener
-   *  alone reports nothing. The JSX wrapper sets it from `observe` and from the
-   *  handlers you pass. */
-  observe?: 'size' | 'context' | 'all' | ''
+  /** Space-separated selections: `width`, `height`, `size`, `context`,
+   * `overflow`, `edges`, `scroll`, or `all`, in any order. `size` selects
+   * width and height; `edges` selects edge transitions. A bare
+   * attribute means `all`. Omission runs no observers unless `fade` is set;
+   * a native event listener alone does not enable observation. */
+  observe?: string
+  /** Minimum interval between measurement events in milliseconds. Omit or
+   * pass `0` for frame-based reporting. Invalid or negative values use `0`. */
+  throttle?: number | string
   /** Depth of that mask, as a length value (`fade-size="2rem"`). Engines
    *  without typed `attr()` read it from `--box-fade-size` in the host's
    *  inline style instead, which is what the JSX wrapper always sets. */
   'fade-size'?: number | string
-  /** Native event fired when geometry or overflow changes. */
+  /** Native event fired when a selected measurement field changes. */
   onmeasurechange?: (event: CustomEvent<BoxMeasurementChange> | { nativeEvent: CustomEvent<BoxMeasurementChange> }) => void
   /** Native event fired when rendering context or focus-within changes. */
   oncontextchange?: (event: CustomEvent<BoxContextChange> | { nativeEvent: CustomEvent<BoxContextChange> }) => void
@@ -537,7 +555,7 @@ export interface ATooltipAttributes extends BaseAttributes {
   /** Show delay in milliseconds. Never use `0` — use ~`50`. Defaults to 300. */
   delay?: number | string
   /** Preferred side; auto-flips when there's no room. Defaults to `'bottom'`. */
-  placement?: 'top' | 'bottom'
+  placement?: 'top' | 'bottom' | 'left'
   /** Follow the cursor instead of pinning under the anchor (pinned is the
    *  default). Presence-based (`''` on, omit off). */
   follow?: boolean | ''
@@ -665,6 +683,9 @@ export interface ASwitchAttributes extends BaseAttributes {
  * for styling, and `:state(filled)` / `:state(invalid)` as CSS hooks.
  */
 export interface AInputAttributes extends BaseAttributes {
+  /** Standard ARIA attributes describe the native input/textarea in the shadow
+   * tree and are delegated there when the element upgrades. */
+  [key: `aria-${string}`]: unknown
   /** Controlled value (string). Reflected to the shadow control only when it
    *  differs, so the caret survives re-renders. */
   value?: string
@@ -687,6 +708,8 @@ export interface AInputAttributes extends BaseAttributes {
   disabled?: boolean | ''
   /** Read-only state. Presence-based. */
   readonly?: boolean | ''
+  /** Render a native button inside the field surface. Presence-based. */
+  button?: boolean | ''
   /** Required — drives native validity. Presence-based. */
   required?: boolean | ''
   /** Dim the leading/trailing adornments at rest (0.6); they brighten to full
@@ -787,6 +810,9 @@ export interface ASliderAttributes extends BaseAttributes {
 /** Attributes for the `<a-input-time>` custom element — a segmented wall-clock
  *  time field (hour / minute / AM-PM native text-input sections in one box). */
 export interface AInputTimeAttributes extends BaseAttributes {
+  /** Standard naming/description ARIA describes the complete segmented field;
+   * invalid/error state is delegated to its focusable segments. */
+  [key: `aria-${string}`]: unknown
   /** Controlled value — 24-hour `"HH:mm"`, `''` when incomplete. */
   value?: string
   /** Focus this field when its containing `a-dialog` opens. Presence-based. */
@@ -931,11 +957,9 @@ export interface AMenuAttributes extends BaseAttributes {
   onstatechange?: (
     e: CustomEvent<{ next: 'open' | 'closed'; prev: 'open' | 'closed' }>,
   ) => void
-  /** Combobox-mode cursor report — fired when the active option changes (arrow
-   *  keys, or the list re-filtering), with `detail.id` the active option's `id`
-   *  (`null` when none). The element owns the keyboard cursor but must NOT write
-   *  `aria-activedescendant` on the (light-DOM) filter field itself; the reactive
-   *  layer that owns the field (e.g. `Select`) listens here and reflects it.
+  /** Combobox-mode cursor report for custom fields and observers. Fires when
+   *  the active option changes, with `detail.id` containing an authored option
+   *  ID or `null`. Built-in Anta Inputs receive a direct ARIA element relation.
    *  All-lowercase so React/Preact bind it to the CustomEvent. */
   onactivedescendant?: (e: CustomEvent<{ id: string | null }>) => void
   /** Contain events so they don't bubble out of the menu surface to ancestor /
@@ -1297,11 +1321,10 @@ export interface ATabsAttributes extends BaseAttributes {
 /**
  * Attributes for the `<a-tabpanel>` styled tag.
  *
- * `<a-tabpanel>` has no JS — it's a CSS-only styled element. The `Tabs` wrapper renders
- * it, pairs it to its tab via id, and toggles visibility declaratively: `hidden`
- * (display:none) or `data-hide="visibility"` (keeps the layout box), plus `inert` while
- * hidden. Low-level attributes; for the typed JSX wrapper use `TabPanel` (inside `Tabs`)
- * from `@antadesign/anta`.
+ * `<a-tabpanel>` finds its sibling `<a-tabs>`, exposes its active state through
+ * `ElementInternals`, and points its accessible label at the matching tab. Low-level
+ * attributes; for the typed JSX wrapper use `TabPanel` (inside `Tabs`) from
+ * `@antadesign/anta`.
  */
 export interface ATabpanelAttributes extends BaseAttributes {
   /** Pairs the panel with the tab of the same value. The element reads its

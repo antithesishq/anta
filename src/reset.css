@@ -1,8 +1,11 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 /* Anta's reset + typography defaults. All rules live in `@layer anta.reset`
    so consumer-owned components (in `@layer components`) and utility
    frameworks (in `@layer utilities`) can override on demand. The
-   layer-order declaration in `tokens.css` (`@layer base, anta,
-   components, utilities;`) keeps Anta above any preflight resets in
+   shared layer-order declaration above (`@layer base, anta, components,
+   utilities;`) keeps Anta above any preflight resets in
    `@layer base` so a Tailwind import doesn't wipe Anta's typography. */
 
 @layer anta.reset {

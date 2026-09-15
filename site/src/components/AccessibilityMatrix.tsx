@@ -151,7 +151,7 @@ const TEXT_NAMES: Record<Tone, string[]> = {
 // offscreen probes — one under `.light`, one under `.dark`. Assigning the
 // token to `color` and reading it back via getComputedStyle evaluates the
 // hsl()/hex/alpha into an `rgb()`/`rgba()` string the contrast canvas paints
-// directly. Tokens are static CSS, so this runs once on mount.
+// directly. Re-read after the palette stylesheet loads or changes.
 function resolveTokens(names: readonly string[]): TokenRow[] {
   const makeProbe = (cls: string) => {
     const host = document.createElement('div')
@@ -606,10 +606,18 @@ export default function AccessibilityMatrix() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  // Resolve token colors from live CSS once, after mount (needs the DOM).
+  // Resolve both modes again when the active palette changes.
   const [resolved, setResolved] = useState<{ BG: Record<Tone, TokenRow[]>; TEXT: Record<Tone, TokenRow[]> } | null>(null)
   useEffect(() => {
-    setResolved({ BG: mapTones(BG_NAMES), TEXT: mapTones(TEXT_NAMES) })
+    const refresh = () => setResolved({ BG: mapTones(BG_NAMES), TEXT: mapTones(TEXT_NAMES) })
+    const palette = document.getElementById('palette-link')
+    refresh()
+    palette?.addEventListener('load', refresh)
+    window.addEventListener('anta-palette-change', refresh)
+    return () => {
+      palette?.removeEventListener('load', refresh)
+      window.removeEventListener('anta-palette-change', refresh)
+    }
   }, [])
 
   const dark = useDarkObserver()
@@ -766,7 +774,7 @@ export default function AccessibilityMatrix() {
         <div
           class={s.a11yMatrix}
           style={{
-            gridTemplateColumns: `max-content repeat(${texts.length}, 122px)`,
+            gridTemplateColumns: `max-content repeat(${texts.length}, minmax(122px, 1fr))`,
             ['--cell-filter' as string]: cellFilter,
             ['--cell-mask' as string]: cellMask,
             ['--cell-dynamic-range' as string]: cellDynamicRange,

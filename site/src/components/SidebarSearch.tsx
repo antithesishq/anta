@@ -1,13 +1,13 @@
-import { Input } from '@antadesign/anta'
+import { Icon, Input } from '@antadesign/anta'
 import { useEffect, useState } from 'preact/hooks'
 
 /**
- * Input trigger for the documentation search dialog. The layout owns the
- * URL-driven value and delegated interactions; this component only keeps
- * Anta's Input composition together, including its in-field clear action.
+ * Button-backed, Input-styled trigger for the documentation search dialog.
+ * The layout owns the URL-driven value and delegated interactions.
  */
 export default function SidebarSearch() {
   const [shortcut, setShortcut] = useState('')
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     const platform = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform
@@ -17,15 +17,25 @@ export default function SidebarSearch() {
 
   }, [])
 
+  useEffect(() => {
+    const onState = (event: Event) => setExpanded(Boolean((event as CustomEvent<{ open: boolean }>).detail?.open))
+    document.addEventListener('anta-search-state', onState)
+    return () => document.removeEventListener('anta-search-state', onState)
+  }, [])
+
   return (
     <Input
-      type="search"
+      button
       size="medium"
       tone="var(--anta-seed-brand)"
       dimActions
+      clearable
+      leading={<Icon shape="search" />}
       placeholder="Search or ask"
       aria-label="Search documentation"
       aria-haspopup="dialog"
+      aria-expanded={expanded ? 'true' : 'false'}
+      aria-controls="docs-search-dialog"
       data-search-trigger
       data-sidebar-search-input
       onMouseDown={(event) => {

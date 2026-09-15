@@ -59,32 +59,32 @@ Links use `--link-color` at rest and `--link-color-hover` on hover. Both tokens 
 | `--text-1` | `oklch(from var(--anta-seed-neutral) 0.1 0.01 h)` | `oklch(from var(--anta-seed-neutral) 0.94 0.008 h)` | `#050306` | `#ece9ec` |
 | `--text-2` | `oklch(from var(--anta-seed-neutral) 0.3 0.015 h)` | `oklch(from var(--anta-seed-neutral) 0.8 0.015 h)` | `#302b31` | `#c1b9c1` |
 | `--text-3` | `color-mix(in oklch, var(--text-2) 82%, transparent)` | `color-mix(in oklch, var(--text-2) 80%, transparent)` | `#635b65` | `#9f99a1` |
-| `--text-4` | `color-mix(in oklch, var(--text-2) 60%, transparent)` | `color-mix(in oklch, var(--text-2) 60%, transparent)` | `#878089` | `#776e77` |
+| `--text-4` | `color-mix(in oklch, var(--text-2) 66%, transparent)` | `color-mix(in oklch, var(--text-2) 62%, transparent)` | `#7a737c` | `#7c737c` |
 | `--text-5` | `color-mix(in oklch, var(--text-2) 40%, transparent)` | `color-mix(in oklch, var(--text-2) 40%, transparent)` | `#9f99a1` | `#635b65` |
 | `--text-1-brand` | `oklch(from var(--anta-seed-brand) 0.38 0.11 h)` | `oklch(from var(--anta-seed-brand) 0.85 0.1 h)` | `#2e1e7b` | `#c5baff` |
 | `--text-2-brand` | `oklch(from var(--anta-seed-brand) 0.43 0.15 h)` | `oklch(from var(--anta-seed-brand) 0.77 0.11 h)` | `#483493` | `#ada0ee` |
 | `--text-3-brand` | `color-mix(in oklch, var(--text-2-brand) 82%, transparent)` | `color-mix(in oklch, var(--text-2-brand) 80%, transparent)` | `#483493cc` | `#ada0eecc` |
-| `--text-4-brand` | `color-mix(in oklch, var(--text-2-brand) 60%, transparent)` | `color-mix(in oklch, var(--text-2-brand) 60%, transparent)` | `#48349399` | `#ada0ee99` |
+| `--text-4-brand` | `color-mix(in oklch, var(--text-2-brand) 66%, transparent)` | `color-mix(in oklch, var(--text-2-brand) 62%, transparent)` | `color-mix(in oklch, var(--text-2-brand) 66%, transparent)` | `color-mix(in oklch, var(--text-2-brand) 62%, transparent)` |
 | `--text-5-brand` | `color-mix(in oklch, var(--text-2-brand) 40%, transparent)` | `color-mix(in oklch, var(--text-2-brand) 40%, transparent)` | `#48349366` | `#ada0ee66` |
 | `--text-1-info` | `oklch(from var(--anta-seed-info) 0.38 0.11 h)` | `oklch(from var(--anta-seed-info) 0.85 0.1 h)` | `#003969` | `#9ed2ff` |
 | `--text-2-info` | `oklch(from var(--anta-seed-info) 0.43 0.15 h)` | `oklch(from var(--anta-seed-info) 0.77 0.11 h)` | `#175082` | `#7db6e8` |
 | `--text-3-info` | `color-mix(in oklch, var(--text-2-info) 82%, transparent)` | `color-mix(in oklch, var(--text-2-info) 80%, transparent)` | `#175082cc` | `#7db6e8cc` |
-| `--text-4-info` | `color-mix(in oklch, var(--text-2-info) 60%, transparent)` | `color-mix(in oklch, var(--text-2-info) 60%, transparent)` | `#175082b2` | `#7db6e899` |
+| `--text-4-info` | `color-mix(in oklch, var(--text-2-info) 66%, transparent)` | `color-mix(in oklch, var(--text-2-info) 62%, transparent)` | `color-mix(in oklch, var(--text-2-info) 66%, transparent)` | `color-mix(in oklch, var(--text-2-info) 62%, transparent)` |
 | `--text-5-info` | `color-mix(in oklch, var(--text-2-info) 40%, transparent)` | `color-mix(in oklch, var(--text-2-info) 40%, transparent)` | `#17508280` | `#7db6e866` |
 | `--text-1-success` | `oklch(from var(--anta-seed-success) 0.38 0.11 h)` | `oklch(from var(--anta-seed-success) 0.85 0.1 h)` | `#004618` | `#9ddeb1` |
 | `--text-2-success` | `oklch(from var(--anta-seed-success) 0.43 0.15 h)` | `oklch(from var(--anta-seed-success) 0.77 0.11 h)` | `#1f5c31` | `#74cd8e` |
 | `--text-3-success` | `color-mix(in oklch, var(--text-2-success) 82%, transparent)` | `color-mix(in oklch, var(--text-2-success) 80%, transparent)` | `#1f5c31cc` | `#74cd8ecc` |
-| `--text-4-success` | `color-mix(in oklch, var(--text-2-success) 60%, transparent)` | `color-mix(in oklch, var(--text-2-success) 60%, transparent)` | `#1f5c3199` | `#74cd8e99` |
+| `--text-4-success` | `color-mix(in oklch, var(--text-2-success) 66%, transparent)` | `color-mix(in oklch, var(--text-2-success) 62%, transparent)` | `color-mix(in oklch, var(--text-2-success) 66%, transparent)` | `color-mix(in oklch, var(--text-2-success) 62%, transparent)` |
 | `--text-5-success` | `color-mix(in oklch, var(--text-2-success) 40%, transparent)` | `color-mix(in oklch, var(--text-2-success) 40%, transparent)` | `#1f5c3166` | `#74cd8e66` |
 | `--text-1-warning` | `oklch(from var(--anta-seed-warning) 0.38 0.11 h)` | `oklch(from var(--anta-seed-warning) 0.85 0.1 h)` | `#7f410b` | `#f0bf75` |
 | `--text-2-warning` | `oklch(from var(--anta-seed-warning) 0.43 0.15 h)` | `oklch(from var(--anta-seed-warning) 0.77 0.11 h)` | `#995200` | `#e1a452` |
 | `--text-3-warning` | `color-mix(in oklch, var(--text-2-warning) 82%, transparent)` | `color-mix(in oklch, var(--text-2-warning) 80%, transparent)` | `#995200cc` | `#e1a452cc` |
-| `--text-4-warning` | `color-mix(in oklch, var(--text-2-warning) 60%, transparent)` | `color-mix(in oklch, var(--text-2-warning) 60%, transparent)` | `#99520099` | `#e1a45299` |
+| `--text-4-warning` | `color-mix(in oklch, var(--text-2-warning) 66%, transparent)` | `color-mix(in oklch, var(--text-2-warning) 62%, transparent)` | `color-mix(in oklch, var(--text-2-warning) 66%, transparent)` | `color-mix(in oklch, var(--text-2-warning) 62%, transparent)` |
 | `--text-5-warning` | `color-mix(in oklch, var(--text-2-warning) 40%, transparent)` | `color-mix(in oklch, var(--text-2-warning) 40%, transparent)` | `#99520066` | `#e1a45266` |
 | `--text-1-critical` | `oklch(from var(--anta-seed-critical) 0.38 0.11 h)` | `oklch(from var(--anta-seed-critical) 0.85 0.1 h)` | `#8f1014` | `#ffabac` |
 | `--text-2-critical` | `oklch(from var(--anta-seed-critical) 0.43 0.15 h)` | `oklch(from var(--anta-seed-critical) 0.77 0.11 h)` | `#a01c1c` | `#e78e90` |
 | `--text-3-critical` | `color-mix(in oklch, var(--text-2-critical) 82%, transparent)` | `color-mix(in oklch, var(--text-2-critical) 80%, transparent)` | `#a01c1ccc` | `#e78e90cc` |
-| `--text-4-critical` | `color-mix(in oklch, var(--text-2-critical) 60%, transparent)` | `color-mix(in oklch, var(--text-2-critical) 60%, transparent)` | `#a01c1c99` | `#e78e9099` |
+| `--text-4-critical` | `color-mix(in oklch, var(--text-2-critical) 66%, transparent)` | `color-mix(in oklch, var(--text-2-critical) 62%, transparent)` | `color-mix(in oklch, var(--text-2-critical) 66%, transparent)` | `color-mix(in oklch, var(--text-2-critical) 62%, transparent)` |
 | `--text-5-critical` | `color-mix(in oklch, var(--text-2-critical) 40%, transparent)` | `color-mix(in oklch, var(--text-2-critical) 40%, transparent)` | `#a01c1c66` | `#e78e9066` |
 
 ## Border

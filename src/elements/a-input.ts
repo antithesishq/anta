@@ -1,4 +1,11 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { HTMLElementBase, SYNC_POPUP_ARIA, type PopupAriaRelations } from '../anta_helpers'
+import {
+  applyShadowAria,
+  ariaAttributeProperty,
+  SHADOW_ARIA_ATTRIBUTES,
+  SHADOW_ARIA_ATTRIBUTE_SET,
+  type ShadowAriaAttribute,
+} from './shadow-aria'
 import './a-input.css'
 
 /**
@@ -23,7 +30,7 @@ import './a-input.css'
  *   <slot class="label" part="label" name="label">         ← display:none until a label is slotted
  *   <div class="field" part="field">                        ← the bordered box; :focus-within ring
  *     <slot name="leading" part="leading">
- *     <input|textarea part="input">                         ← created in JS per multiline/rows
+ *     <input|textarea|button part="input">                  ← created in JS per field mode
  *     <slot name="trailing" part="trailing">
  *   <slot class="hint" part="hint" name="hint">           ← message; the JSX wrapper may slot a status <Icon> here too when [status]
  *
@@ -41,10 +48,13 @@ import './a-input.css'
  * on the host and read `host.value`. `change` is NOT composed, so the element
  * catches the control's `change` and re-dispatches one on the host.
  *
- * ## Declarative-DOM safety
+ * ## Declarative DOM and ARIA delegation
  *
- * Nothing on the *host* is ever mutated from JS (the host may be reconciled off
- * the UI thread). Filled / invalid (status="critical") are surfaced via
+ * Standard `role` / `aria-*` values are consumed from the host and moved to the
+ * native shadow control so assistive technology sees one focused field. The
+ * element intercepts attribute and ARIAMixin property removal, keeping reactive
+ * updates in sync after the visible host attribute has been consumed. Other
+ * host state remains declarative. Filled / invalid (status="critical") use
  * `ElementInternals` custom states (`:state(filled)`, `:state(invalid)`) —
  * element-internal, not host attributes — purely as styling hooks (the clear
  * button shows on
@@ -57,11 +67,6 @@ const FORWARDED = [
   'placeholder', 'type', 'name', 'autocomplete', 'inputmode',
   'maxlength', 'minlength', 'pattern', 'spellcheck', 'readonly', 'required',
   'min', 'max', 'step',
-  // `aria-label` on the host names the internal control (the actual textbox);
-  // without forwarding it, a bare `<a-input aria-label>` leaves the control
-  // unnamed. `applyLabelAria` already defers to a host `aria-label` over the
-  // label-slot text, so the two don't fight.
-  'aria-label',
 ] as const
 // Presence-based among the forwarded set (toggled, not value-copied).
 const BOOL_FORWARDED = new Set(['readonly', 'required'])
@@ -212,7 +217,7 @@ const SHADOW_STYLE = `
   @media (hover: hover) and (pointer: fine) {
     :host(:not(:disabled)) .field:hover { --_bw: 1px; }
   }
-  :host(:not([readonly])) .field:has(input:focus, textarea:focus),
+  :host(:not([readonly])) .field:has(input:focus, textarea:focus, button:focus-visible),
   :host([readonly]:state(kb-focus)) .field {
     --_bw: 1px;
     outline: 1px solid var(--focus-ring);
@@ -220,7 +225,7 @@ const SHADOW_STYLE = `
   }
   @media (forced-colors: active) { .field { border: 1px solid ButtonBorder; } }
 
-  input, textarea {
+  input, textarea, button {
     flex: 1 1 auto;
     min-width: 0;
     width: 100%;
@@ -247,11 +252,13 @@ const SHADOW_STYLE = `
     padding-block: var(--_pad-block);
     overflow-y: auto;
   }
+  button { text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
+  button.placeholder { color: var(--input-placeholder); }
   :host([maxrows]:not([rows])) textarea {
     max-height: calc(var(--_lh) * var(--_maxrows) + var(--_pad-block) * 2);
   }
   input::placeholder, textarea::placeholder { color: var(--input-placeholder); opacity: 1; }
-  input:disabled, textarea:disabled { cursor: not-allowed; }
+  input:disabled, textarea:disabled, button:disabled { cursor: not-allowed; }
   :host([readonly]:not([disabled])) .field,
   :host([readonly]:not([disabled])) input,
   :host([readonly]:not([disabled])) textarea { cursor: pointer; }
@@ -311,12 +318,15 @@ const SHADOW_STYLE = `
   }
 `
 
-type Control = HTMLInputElement | HTMLTextAreaElement
+type Control = HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement
+const READ_DELEGATED_ARIA = Symbol('readDelegatedAria')
+const WRITE_DELEGATED_ARIA = Symbol('writeDelegatedAria')
 
 export class AInputElement extends HTMLElementBase {
   static formAssociated = true
   static observedAttributes = [
-    ...FORWARDED, 'value', 'defaultvalue', 'multiline', 'rows', 'maxrows', 'status', 'disabled',
+    ...FORWARDED, ...SHADOW_ARIA_ATTRIBUTES,
+    'value', 'defaultvalue', 'multiline', 'button', 'rows', 'maxrows', 'status', 'disabled',
   ]
 
   private internals?: ElementInternals
@@ -335,6 +345,18 @@ export class AInputElement extends HTMLElementBase {
   // Set by formDisabledCallback when an ancestor <fieldset disabled> / disabled
   // form turns the field off (the host can't carry a [disabled] attribute itself).
   private formDisabled = false
+  // Standard role/aria attributes are consumed from the neutral host and
+  // applied to the native shadow control. The values live off-DOM so the host
+  // does not become a second control in the accessibility tree.
+  private delegatedAria = new Map<ShadowAriaAttribute, string>()
+  private consumingAria = new Set<string>()
+  private ariaApplyQueued = false
+  // Direct element relationships supplied by an adjacent a-menu. These avoid
+  // renderer-local IDs and apply only when the consumer has not authored the
+  // corresponding ARIA relationship explicitly.
+  private popupAriaSource?: Element
+  private popupControls: Element | null = null
+  private popupActiveDescendant: Element | null = null
 
   constructor() {
     super()
@@ -362,8 +384,8 @@ export class AInputElement extends HTMLElementBase {
     // Clicking the (light-DOM) label focuses the (shadow) control — the native
     // <label for> association can't cross the boundary, so we wire it here.
     this.labelSlot.addEventListener('click', () => this.control?.focus())
-    // Mirror the label's text into the control's aria-label (unless the host
-    // already carries one) so the shadow control has an accessible name.
+    // Mirror the label's text into the control's aria-label unless an explicit
+    // delegated name already exists.
     this.labelSlot.addEventListener('slotchange', this.onLabelSlotChange)
 
     this.field = document.createElement('div')
@@ -431,18 +453,6 @@ export class AInputElement extends HTMLElementBase {
 
   connectedCallback() {
     trackFocusModality(this.doc)
-    // Autonomous form-associated elements otherwise expose the generic role.
-    // Set a default only after connection: parser-created elements receive their
-    // attributes after construction. An author-supplied role still overrides this
-    // ElementInternals default. Mirror the native control's primary role.
-    const type = this.getAttribute('type')?.toLowerCase()
-    if (this.internals && type !== 'number' && type !== 'search') {
-      this.internals.role = 'textbox'
-    } else if (this.internals && type === 'number') {
-      this.internals.role = 'spinbutton'
-    } else if (this.internals && type === 'search') {
-      this.internals.role = 'searchbox'
-    }
     // A `value` set as a property before the element upgraded shadows the
     // accessor as an own data property — re-apply it through the setter so the
     // initial controlled value isn't lost when the control is built.
@@ -455,15 +465,37 @@ export class AInputElement extends HTMLElementBase {
     this.ready = true
   }
 
+  [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
+    if (relations.clear) {
+      if (this.popupAriaSource !== relations.source) return
+      this.popupAriaSource = undefined
+      this.popupControls = null
+      this.popupActiveDescendant = null
+    } else {
+      this.popupAriaSource = relations.source
+      if ('controls' in relations) this.popupControls = relations.controls ?? null
+      if ('activeDescendant' in relations)
+        this.popupActiveDescendant = relations.activeDescendant ?? null
+    }
+    this.applyPopupAria()
+  }
+
   attributeChangedCallback(name: string, _old: string | null, value: string | null) {
+    if (SHADOW_ARIA_ATTRIBUTE_SET.has(name)) {
+      if (this.consumingAria.has(name)) return
+      this.consumeAria(name as ShadowAriaAttribute, value)
+      return
+    }
     if (!this.ready && name !== 'value' && name !== 'defaultvalue') return
-    if (name === 'multiline' || name === 'rows' || name === 'maxrows') {
+    if (name === 'multiline' || name === 'button' || name === 'rows' || name === 'maxrows') {
       if (!this.control) return
       const needTextarea = this.hasAttribute('multiline') || this.hasAttribute('rows')
       const isTextarea = this.control instanceof HTMLTextAreaElement
+      const needButton = !needTextarea && this.hasAttribute('button')
+      const isButton = this.control instanceof HTMLButtonElement
       // Only a real input<->textarea flip needs a rebuild; a rows/maxrows tweak
       // reconfigures the existing textarea in place so focus + caret survive.
-      if (needTextarea !== isTextarea) this.buildControl(this.value)
+      if (needTextarea !== isTextarea || needButton !== isButton) this.buildControl(this.value)
       else if (this.control instanceof HTMLTextAreaElement) this.configureTextarea(this.control)
       return
     }
@@ -477,7 +509,79 @@ export class AInputElement extends HTMLElementBase {
     // Forwarded attribute changed — also re-run validity, since a constraint
     // (required / pattern / min / max / step / minlength / maxlength / type) can
     // flip the inner control's validity. Symmetric with the `status` branch.
-    if (this.control) { this.forward(name, value); this.updateValidity() }
+    if (this.control) {
+      this.forward(name, value)
+      this.syncButtonPresentation()
+      this.updateValidity()
+    }
+  }
+
+  /** Standard ARIA is the raw custom-element API, but its semantic target is the
+   * native shadow field. Consume it synchronously so the host never remains a
+   * duplicate control after upgrade. */
+  private consumeAria(name: ShadowAriaAttribute, value: string | null) {
+    if (value == null) this.delegatedAria.delete(name)
+    else this.delegatedAria.set(name, value)
+    if (this.hasAttribute(name)) {
+      this.consumingAria.add(name)
+      super.removeAttribute(name)
+      this.consumingAria.delete(name)
+    }
+    this.applyDelegatedAria(name)
+    this.queueDelegatedAria()
+  }
+
+  /** React/Preact may remove a prop after Anta has already consumed its host
+   * attribute. Catch that no-op DOM removal so the shadow control still updates. */
+  override removeAttribute(name: string) {
+    if (SHADOW_ARIA_ATTRIBUTE_SET.has(name) && !this.consumingAria.has(name) && !this.hasAttribute(name)) {
+      const ariaName = name as ShadowAriaAttribute
+      if (this.delegatedAria.delete(ariaName)) {
+        this.applyDelegatedAria(ariaName)
+        this.queueDelegatedAria()
+      }
+      return
+    }
+    super.removeAttribute(name)
+  }
+
+  override toggleAttribute(name: string, force?: boolean): boolean {
+    if (SHADOW_ARIA_ATTRIBUTE_SET.has(name)) {
+      const ariaName = name as ShadowAriaAttribute
+      const next = force ?? !this.delegatedAria.has(ariaName)
+      this.consumeAria(ariaName, next ? '' : null)
+      return next
+    }
+    return super.toggleAttribute(name, force)
+  }
+
+  [READ_DELEGATED_ARIA](name: ShadowAriaAttribute): string | null {
+    return this.delegatedAria.get(name) ?? null
+  }
+
+  [WRITE_DELEGATED_ARIA](name: ShadowAriaAttribute, value: unknown) {
+    this.consumeAria(name, value == null ? null : String(value))
+  }
+
+  private applyDelegatedAria(name: ShadowAriaAttribute) {
+    const control = this.control
+    if (!control) return
+    applyShadowAria(this, control, name, this.delegatedAria.get(name) ?? null)
+    if (name === 'aria-label' || name === 'aria-labelledby') this.applyLabelAria()
+    if (name === 'aria-description' || name === 'aria-describedby') this.applyDescriptionAria()
+    if (name === 'aria-invalid' && !this.delegatedAria.has(name)) this.syncStatus()
+    if (name === 'aria-controls' || name === 'aria-activedescendant') this.applyPopupAria()
+  }
+
+  private queueDelegatedAria() {
+    if (this.ariaApplyQueued) return
+    this.ariaApplyQueued = true
+    queueMicrotask(() => {
+      this.ariaApplyQueued = false
+      const control = this.control
+      if (!control) return
+      for (const [name, value] of this.delegatedAria) applyShadowAria(this, control, name, value)
+    })
   }
 
   /** (Re)build the shadow control from the current attributes. */
@@ -488,10 +592,14 @@ export class AInputElement extends HTMLElementBase {
     const refocus = prev != null && this.shadowRoot?.activeElement === prev
     let selStart: number | null = null
     let selEnd: number | null = null
-    if (prev) try { selStart = prev.selectionStart; selEnd = prev.selectionEnd } catch { /* number/email expose no selection */ }
+    if (prev instanceof HTMLInputElement || prev instanceof HTMLTextAreaElement) {
+      try { selStart = prev.selectionStart; selEnd = prev.selectionEnd } catch { /* number/email expose no selection */ }
+    }
 
     const multiline = this.hasAttribute('multiline') || this.hasAttribute('rows')
-    const next = document.createElement(multiline ? 'textarea' : 'input') as Control
+    const button = !multiline && this.hasAttribute('button')
+    const next = document.createElement(button ? 'button' : multiline ? 'textarea' : 'input') as Control
+    if (next instanceof HTMLButtonElement) next.type = 'button'
     next.setAttribute('part', 'input')
     if (this.control) this.control.replaceWith(next)
     else this.leadingSlot.after(next)
@@ -503,12 +611,16 @@ export class AInputElement extends HTMLElementBase {
     }
     this.syncDisabled()
     this.syncStatus()
+    for (const [name, value] of this.delegatedAria) applyShadowAria(this, next, name, value)
+    this.queueDelegatedAria()
     this.applyLabelAria()
     this.applyDescriptionAria()
+    this.applyPopupAria()
     if (multiline) this.configureTextarea(next as HTMLTextAreaElement)
 
     const value = initial ?? this.pendingValue ?? this.getAttribute('value') ?? this.getAttribute('defaultvalue') ?? ''
     next.value = value
+    this.syncButtonPresentation()
 
     next.addEventListener('input', this.onInput)
     next.addEventListener('change', this.onChange)
@@ -517,10 +629,12 @@ export class AInputElement extends HTMLElementBase {
 
     if (refocus) {
       next.focus()
-      if (selStart != null) try { next.setSelectionRange(selStart, selEnd ?? selStart) } catch { /* unsupported type */ }
+      if (selStart != null && (next instanceof HTMLInputElement || next instanceof HTMLTextAreaElement)) {
+        try { next.setSelectionRange(selStart, selEnd ?? selStart) } catch { /* unsupported type */ }
+      }
     }
 
-    this.internals?.setFormValue(value)
+    this.syncFormValue(value)
     this.updateValidity()
     this.updateFilled()
     this.syncAutoHeight() // size to the initial value (JS-fallback browsers)
@@ -567,6 +681,7 @@ export class AInputElement extends HTMLElementBase {
   private forward(name: string, value: string | null) {
     const c = this.control
     if (!c) return
+    if (c instanceof HTMLButtonElement) return
     if (c instanceof HTMLTextAreaElement && name === 'type') return
     if (BOOL_FORWARDED.has(name)) c.toggleAttribute(name, value != null)
     else if (value == null) c.removeAttribute(name)
@@ -581,6 +696,20 @@ export class AInputElement extends HTMLElementBase {
     if (this.control) this.control.disabled = this.hasAttribute('disabled') || this.formDisabled
   }
 
+  private syncButtonPresentation() {
+    const button = this.control
+    if (!(button instanceof HTMLButtonElement)) return
+    const value = button.value
+    button.textContent = value || this.getAttribute('placeholder') || ''
+    button.classList.toggle('placeholder', !value)
+  }
+
+  private syncFormValue(value: string) {
+    // Button-backed Inputs are triggers rather than form fields. The native
+    // button is type="button"; keep the form-associated host equally inert.
+    this.internals?.setFormValue(this.control instanceof HTMLButtonElement ? null : value)
+  }
+
   /** Reflect `status` into the control's `aria-invalid` and the `:state(invalid)`
    *  custom state. Called on `status` change AND from buildControl — so a field
    *  that mounts already `status="critical"` gets `:state(invalid)` on the FIRST
@@ -588,13 +717,14 @@ export class AInputElement extends HTMLElementBase {
    *  `ready` is false and the early-return skips it). */
   private syncStatus() {
     const critical = this.getAttribute('status') === 'critical'
-    this.control?.setAttribute('aria-invalid', critical ? 'true' : 'false')
+    const explicit = this.delegatedAria.get('aria-invalid')
+    this.control?.setAttribute('aria-invalid', explicit ?? (critical ? 'true' : 'false'))
     try { critical ? this.internals?.states?.add('invalid') : this.internals?.states?.delete('invalid') } catch {}
   }
 
   private onInput = (event: Event) => {
     const v = this.control?.value ?? ''
-    this.internals?.setFormValue(v)
+    this.syncFormValue(v)
     this.updateValidity()
     this.updateFilled()
     this.syncAutoHeight()
@@ -627,7 +757,7 @@ export class AInputElement extends HTMLElementBase {
   private applyLabelAria() {
     const c = this.control
     if (!c) return
-    if (this.hasAttribute('aria-label') || this.hasAttribute('aria-labelledby')) return
+    if (this.delegatedAria.has('aria-label') || this.delegatedAria.has('aria-labelledby')) return
     const text = this.labelSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
     if (text) c.setAttribute('aria-label', text)
     else c.removeAttribute('aria-label')
@@ -640,10 +770,23 @@ export class AInputElement extends HTMLElementBase {
   private applyDescriptionAria() {
     const c = this.control
     if (!c) return
-    if (this.hasAttribute('aria-description') || this.hasAttribute('aria-describedby')) return
+    if (this.delegatedAria.has('aria-description') || this.delegatedAria.has('aria-describedby')) return
     const text = this.hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
     if (text) c.setAttribute('aria-description', text)
     else c.removeAttribute('aria-description')
+  }
+
+  private applyPopupAria() {
+    const control = this.control
+    if (!control) return
+    try {
+      if (!this.delegatedAria.has('aria-controls') && 'ariaControlsElements' in control)
+        control.ariaControlsElements = this.popupControls ? [this.popupControls] : null
+      if (!this.delegatedAria.has('aria-activedescendant') && 'ariaActiveDescendantElement' in control)
+        control.ariaActiveDescendantElement = this.popupActiveDescendant
+    } catch {
+      // Direct ARIA element reflection is unavailable in older engines.
+    }
   }
 
   private updateFilled() {
@@ -675,7 +818,8 @@ export class AInputElement extends HTMLElementBase {
   set value(v: string) {
     this.pendingValue = v
     if (this.control && this.control.value !== v) this.control.value = v
-    this.internals?.setFormValue(v)
+    this.syncButtonPresentation()
+    this.syncFormValue(v)
     this.updateValidity()
     this.updateFilled()
     this.syncAutoHeight()
@@ -693,7 +837,8 @@ export class AInputElement extends HTMLElementBase {
   clear() {
     if (!this.control) return
     this.control.value = ''
-    this.internals?.setFormValue('')
+    this.syncButtonPresentation()
+    this.syncFormValue('')
     this.updateValidity()
     this.updateFilled()
     this.syncAutoHeight()
@@ -727,6 +872,18 @@ export class AInputElement extends HTMLElementBase {
   }
   formDisabledCallback(disabled: boolean) { this.formDisabled = disabled; this.syncDisabled() }
   formStateRestoreCallback(state: string) { this.value = state ?? '' }
+}
+
+// React 19 assigns properties that already exist on a custom element. Shadow
+// the inherited ARIAMixin accessors so property writes use the same consumed,
+// off-host channel as setAttribute/removeAttribute.
+for (const name of SHADOW_ARIA_ATTRIBUTES) {
+  Object.defineProperty(AInputElement.prototype, ariaAttributeProperty(name), {
+    configurable: true,
+    enumerable: true,
+    get(this: AInputElement) { return this[READ_DELEGATED_ARIA](name) },
+    set(this: AInputElement, value: unknown) { this[WRITE_DELEGATED_ARIA](name, value) },
+  })
 }
 
 export function register_a_input() {

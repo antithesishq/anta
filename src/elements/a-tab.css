@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* Intrinsic, priority-independent tab chrome. The per-priority / per-tone / per-
      state values of --tab-fg / --tab-bg, the type-scale vars (--_fs/--_lh/--_pb),
@@ -35,7 +38,7 @@
     font-weight: 450;
     font-stretch: normal;
     line-height: var(--_lh);
-    letter-spacing: 0.05ch;
+    letter-spacing: 0.025ch;
 
     white-space: nowrap;
     text-wrap: nowrap;

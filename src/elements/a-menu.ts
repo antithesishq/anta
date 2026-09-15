@@ -1,5 +1,13 @@
-import { HTMLElementBase, anchorRect, setMenuPresence } from '../anta_helpers'
-import { AMenuItemElement, isMenuItemEl, ensureMenuItemKeyListener } from './a-menu-item'
+import {
+  HTMLElementBase,
+  SYNC_POPUP_ARIA,
+  anchorRect,
+  isPopupAriaReceiver,
+  setMenuPresence,
+  type PopupAriaReceiver,
+} from '../anta_helpers'
+import { AMenuItemElement, MENU_ITEM_SELECTOR, isMenuItemEl, ensureMenuItemKeyListener } from './a-menu-item'
+import { activeFocus, cycleFocus, focusParent, tabStops } from './focus'
 import { emitCopyRequest } from './copy-behavior'
 import './a-menu.css'
 
@@ -13,10 +21,10 @@ const SUBMENU_CLOSE_DELAY = 130
 /** Typeahead buffer reset window (ms). */
 const TYPEAHEAD_RESET = 500
 /** Triggers that turn Enter/Space into a click on their own — native
- *  buttons/links, `[role=button]`, and `<a-button>`. The keyboard-open skips
- *  them: their click already opens, so a second open would toggle shut. */
+ *  buttons/links, `[role=button]`, `<a-button>`, and button-backed `<a-input>`.
+ *  Enter/Space stay with their activation handler; arrows open the menu here. */
 const SELF_ACTIVATING =
-  'a-button, button, a[href], input[type="button"], input[type="submit"], input[type="reset"], [role="button"]'
+  'a-button, a-input[button], button, a[href], input[type="button"], input[type="submit"], input[type="reset"], [role="button"]'
 /** Text-entry triggers that aren't read-only: Enter/Space belong to the field
  *  (typing / commit), so only the arrows open the menu — the native `<select>`
  *  gesture. Read-only or non-field triggers open on Enter / Space / arrows alike. */
@@ -84,26 +92,25 @@ function unbindDocListeners() {
   docBound = false
 }
 
-/** A node is "inside the open menu system" if the event path crosses any
- *  open menu's surface or its anchor. `composedPath` crosses shadow
- *  boundaries, so slotted custom content (a slider, an input) counts as
- *  inside — clicking it never dismisses the menu.
+/** Find the deepest open menu whose surface or anchor contains the event.
+ *  `composedPath` includes shadow surfaces around slotted custom content.
  *
  *  `primaryClick` marks a left-button pointerdown. A context menu's anchor is
  *  the whole region it follows and re-triggers ONLY on right-click, so on a
  *  normal left-click it isn't part of the menu system — a click on it must
  *  dismiss like any outside click. (A click-trigger anchor stays exempt so its
  *  own click handler toggles instead of racing the dismiss.) */
-function pathHitsMenus(e: Event, primaryClick = false): boolean {
+function menuIndexForEvent(e: Event, primaryClick = false): number {
   const path = e.composedPath()
-  for (const m of openStack) {
-    if (path.includes(m.surface)) return true
+  for (let i = openStack.length - 1; i >= 0; i--) {
+    const m = openStack[i]
+    if (path.includes(m.surface)) return i
     const anchor = m.triggerAnchor
     if (!anchor) continue
     if (primaryClick && m.hasAttribute('context')) continue
-    if (path.includes(anchor)) return true
+    if (path.includes(anchor)) return i
   }
-  return false
+  return -1
 }
 
 function pathCrossesTopLayerBeforeAnchor(e: Event, anchor: HTMLElement): boolean {
@@ -141,14 +148,17 @@ setMenuPresence({
 
 function onDocPointerDown(e: Event) {
   if (!openStack.length) return
-  if (!pathHitsMenus(e, (e as MouseEvent).button === 0)) dismiss(e)
+  const index = menuIndexForEvent(e, (e as MouseEvent).button === 0)
+  // The first menu above the hit owns the branch to dismiss. A miss closes
+  // the root; a hit on the deepest menu leaves the stack open.
+  openStack[index + 1]?.requestClose(e)
 }
 
 function onDocContextMenu(e: Event) {
   if (!openStack.length) return
   // Right-click inside the menu system (or on an open anchor) is left alone —
   // a context anchor's own handler repositions rather than toggling.
-  if (!pathHitsMenus(e)) dismiss(e)
+  if (menuIndexForEvent(e) === -1) dismiss(e)
 }
 
 function onResize() {
@@ -238,7 +248,7 @@ const lazyObserver: IntersectionObserver | null =
  *   slotted light DOM (see `a-menu-item.css`), directly styleable.
  */
 export class AMenuElement extends HTMLElementBase {
-  static observedAttributes = ['placement', 'context', 'coord', 'offset', 'nohover', 'state', 'stop-propagation']
+  static observedAttributes = ['placement', 'context', 'coord', 'offset', 'nohover', 'state', 'stop-propagation', 'role']
 
   /** Shadow-internal popover surface — the only thing we ever mutate. */
   surface!: HTMLDivElement
@@ -269,10 +279,18 @@ export class AMenuElement extends HTMLElementBase {
 
   // Combobox (filter) state — engaged when a `[data-menu-search]` field is slotted
   // in (e.g. `Select` with `filter`). Focus stays in that field; ArrowUp/Down move
-  // `activeItem` (a cursor, not DOM focus) and REPORT it via the `activedescendant`
-  // event, which the reactive layer reflects onto the field's `aria-activedescendant`.
+  // `activeItem` (a cursor, not DOM focus) and associates it directly with an
+  // Anta Input's native field. The public `activedescendant` event remains an
+  // observation hook for raw/custom compositions.
   private activeItem: AMenuItemElement | null = null
   private comboObserver?: MutationObserver
+  // A dialog-style filtered popup keeps its text field outside the menu role.
+  // The existing shadow scroll region becomes the menu that owns the option
+  // rows; this observer only tracks whether that region currently has items.
+  private accessibilityObserver?: MutationObserver
+  // Anta-owned trigger/search fields associated with this popup through direct
+  // ARIA element reflection. No renderer-local IDs are involved.
+  #ariaRelationTargets = new Set<PopupAriaReceiver>()
   // An open menu follows its anchor vertically through scrolling, transforms, and
   // layout shifts. Those movements do not all produce a DOM observer callback, so
   // this frame is active only while the menu is visible.
@@ -471,11 +489,16 @@ export class AMenuElement extends HTMLElementBase {
     // to install the listener itself. Idempotent per document.
     ensureMenuItemKeyListener(this.doc)
     this.#syncStopPropagation()
+    this.#syncAccessibilityRegions()
     const anchor = this.triggerAnchor
     if (anchor) {
       anchorToMenu.set(anchor, this)
       lazyObserver?.observe(anchor)
     }
+    this.#syncPopupAriaRelations()
+    queueMicrotask(() => {
+      if (this.isConnected) this.#syncPopupAriaRelations()
+    })
     // Apply an initial controlled state (e.g. <a-menu state="open">) once
     // connected — attributeChangedCallback may have fired before this during
     // upgrade, when the anchor / layout weren't ready yet.
@@ -484,10 +507,13 @@ export class AMenuElement extends HTMLElementBase {
 
   disconnectedCallback() {
     // Silent teardown — don't emit `statechange` for an element being removed.
-    this.hide()
+    this.hide(false)
     this.teardownListeners()
     this.cancelOpenTimer()
     this.cancelCloseTimer()
+    this.accessibilityObserver?.disconnect()
+    this.accessibilityObserver = undefined
+    this.#clearPopupAriaRelations()
     const anchor = this.triggerAnchor
     if (anchor && anchorToMenu.get(anchor) === this) {
       anchorToMenu.delete(anchor)
@@ -505,6 +531,10 @@ export class AMenuElement extends HTMLElementBase {
     }
     if (name === 'stop-propagation') {
       this.#syncStopPropagation()
+      return
+    }
+    if (name === 'role') {
+      this.#syncAccessibilityRegions()
       return
     }
     // Trigger-shaping attributes changed — rewire the anchor listeners.
@@ -634,11 +664,9 @@ export class AMenuElement extends HTMLElementBase {
     return el.getClientRects().length > 0
   }
 
-  /** The subset of `focusables()` that are menu items (drives arrow / Home /
-   *  End / type-ahead navigation). Same visibility / disabled / ownership
-   *  filter — just narrowed to `a-menu-item`. */
+  /** Custom menu rows that support the combobox cursor and selection state. */
   private focusableItems(): AMenuItemElement[] {
-    return this.focusables().filter(
+    return this.navigableItems().filter(
       (el): el is AMenuItemElement => el instanceof AMenuItemElement,
     )
   }
@@ -649,26 +677,22 @@ export class AMenuElement extends HTMLElementBase {
    *  custom-element-only because the combobox cursor (`setActive`) and selection
    *  seating are `a-menu-item` affordances a plain link doesn't carry. */
   private navigableItems(): HTMLElement[] {
-    return this.focusables().filter((el) => isMenuItemEl(el))
+    return [...this.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR)].filter(
+      el => el.closest('a-menu') === this && !el.hasAttribute('disabled') && this.isVisible(el),
+    )
   }
 
-  /** Every tabbable element belonging to THIS menu (items + nested controls
-   *  like inputs / sliders / buttons), in DOM order, visible and enabled —
-   *  used to trap Tab within the open menu. Submenu contents are excluded
-   *  (their nearest `a-menu` is the submenu). */
-  private focusables(): HTMLElement[] {
-    // `a-input` is listed explicitly: its real control lives in shadow, so the bare
-    // `input` selector can't see it, and without this a slotted Anta field (a time
-    // input, a filter) drops out of the Tab cycle — focus on it then Tab jumps to
-    // the first item instead of the next field. `.focus()` on the host delegates in.
-    const sel =
-      'a-menu-item, a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]),' +
-      ' a-input:not([disabled]), select:not([disabled]), textarea:not([disabled]),' +
-      ' [tabindex]:not([tabindex="-1"]), [data-menu-search]'
-    return (Array.from(this.querySelectorAll(sel)) as HTMLElement[]).filter(
-      (el) =>
-        el.closest('a-menu') === this && !el.hasAttribute('disabled') && this.isVisible(el),
-    )
+  /** Tab stops in rendered order, excluding controls owned by nested menus. */
+  private focusables() {
+    return tabStops(this.surface).filter(el => {
+      if (el.hasAttribute('disabled')) return false
+      let node: Node | null = el
+      while (node) {
+        if (node.nodeType === 1 && (node as Element).localName === 'a-menu') return node === this
+        node = focusParent(node)
+      }
+      return false
+    })
   }
 
   /** On open, seat initial focus like a native `<select>` / macOS menu: a menu
@@ -743,10 +767,88 @@ export class AMenuElement extends HTMLElementBase {
     return this.#comboAnchor
   }
 
-  /** Move the combobox cursor. Sets the item's `active` **property** (off-DOM
-   *  `:state(active)`, no attribute churn) for the highlight, and REPORTS the
-   *  active id via the `activedescendant` event so the reactive layer can set
-   *  `aria-activedescendant` on the light-DOM field. `null` clears the cursor. */
+  /** Give a dialog's scrolling body menu semantics when it contains menu items.
+   *  Headers and footers stay outside the menu. Empty bodies and plain editors
+   *  have no inner menu role. All mutations stay in shadow DOM. */
+  #syncAccessibilityRegions() {
+    if (!this.scrollEl) return
+    const dialog = this.getAttribute('role') === 'dialog'
+
+    if (dialog && this.isConnected && !this.accessibilityObserver) {
+      this.accessibilityObserver = new this.view.MutationObserver(() => this.#syncAccessibilityRegions())
+      this.accessibilityObserver.observe(this, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['data-menu-search', 'slot'],
+      })
+    } else if (!dialog && this.accessibilityObserver) {
+      this.accessibilityObserver.disconnect()
+      this.accessibilityObserver = undefined
+    }
+
+    const hasBodyItem = dialog && [...this.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR)]
+      .some((item) => {
+        if (item.closest('a-menu') !== this) return false
+        let region: HTMLElement = item
+        while (region.parentElement && region.parentElement !== this) region = region.parentElement
+        const slot = region.getAttribute('slot')
+        return slot !== 'header' && slot !== 'footer'
+      })
+
+    if (hasBodyItem) {
+      this.scrollEl.setAttribute('role', 'menu')
+      this.scrollEl.setAttribute('aria-label', 'Options')
+      this.scrollEl.setAttribute('aria-orientation', 'vertical')
+    } else {
+      this.scrollEl.removeAttribute('role')
+      this.scrollEl.removeAttribute('aria-label')
+      this.scrollEl.removeAttribute('aria-orientation')
+    }
+    this.#syncPopupAriaRelations()
+  }
+
+  /** Associate the popup with its Anta-owned trigger and filter field. Both
+   * control the popup host; the active option is a direct element reference.
+   * The host target also works when the options region lives in another shadow
+   * root, which ARIA element reflection does not expose through its getter. */
+  #syncPopupAriaRelations() {
+    if (!this.isConnected) return
+    const next = new Map<PopupAriaReceiver, { controls: Element | null; activeDescendant: Element | null }>()
+    const anchor = this.triggerAnchor
+    const search = this.#searchField
+
+    if (isPopupAriaReceiver(anchor)) {
+      next.set(anchor, {
+        controls: this,
+        activeDescendant: search === anchor ? this.activeItem : null,
+      })
+    }
+    if (search !== anchor && isPopupAriaReceiver(search)) {
+      next.set(search, {
+        controls: this,
+        activeDescendant: this.activeItem,
+      })
+    }
+
+    for (const target of this.#ariaRelationTargets) {
+      if (!next.has(target)) target[SYNC_POPUP_ARIA]({ source: this, clear: true })
+    }
+    for (const [target, relations] of next) {
+      target[SYNC_POPUP_ARIA]({ source: this, ...relations })
+    }
+    this.#ariaRelationTargets = new Set(next.keys())
+  }
+
+  #clearPopupAriaRelations() {
+    for (const target of this.#ariaRelationTargets)
+      target[SYNC_POPUP_ARIA]({ source: this, clear: true })
+    this.#ariaRelationTargets.clear()
+  }
+
+  /** Move the combobox cursor. Sets the item's `active` property for its
+   *  off-DOM highlight/selected state, associates it directly with an Anta
+   *  Input, and reports it for raw/custom observers. `null` clears the cursor. */
   private setActive(item: AMenuItemElement | null) {
     if (this.activeItem && this.activeItem !== item) this.activeItem.active = false
     this.activeItem = item
@@ -754,12 +856,9 @@ export class AMenuElement extends HTMLElementBase {
       item.active = true
       item.scrollIntoView?.({ block: 'nearest' })
     }
-    // The cursor *highlight* rides the item's off-DOM `:state(active)` above. The
-    // ARIA `aria-activedescendant` relationship, though, points from the (light-DOM)
-    // filter field to the active option — and a web component must not write that
-    // light-DOM attribute itself (it would desync the worker-thread reactive
-    // model). So we only REPORT the active id; the reactive layer that owns the
-    // field (e.g. `Select`) reflects it onto `aria-activedescendant`.
+    this.#syncPopupAriaRelations()
+    // Keep the raw event for custom fields and observers. Built-in a-input fields
+    // receive the direct element relationship in #syncPopupAriaRelations above.
     this.dispatchEvent(
       new CustomEvent('activedescendant', { detail: { id: item?.id ?? null } }),
     )
@@ -1016,9 +1115,9 @@ export class AMenuElement extends HTMLElementBase {
     this.comboObserver.observe(this, { childList: true })
   }
 
-  /** Apply CLOSE to the DOM (no event). Closes this menu and everything stacked
-   *  above it (its submenus). */
-  private hide() {
+  /** Apply CLOSE without notifying this menu's owner. Notify nested menus so
+   *  their controlled state follows the closing parent. */
+  private hide(notifyDescendants = true) {
     // Tear down combobox state (no-op for a plain menu).
     this.comboObserver?.disconnect()
     this.comboObserver = undefined
@@ -1030,7 +1129,11 @@ export class AMenuElement extends HTMLElementBase {
       if (this._shown) this._doHide()
       return
     }
-    for (let i = openStack.length - 1; i >= idx; i--) openStack[i]._doHide()
+    for (let i = openStack.length - 1; i >= idx; i--) {
+      const menu = openStack[i]
+      if (notifyDescendants && i > idx && menu.isOpen && !menu._dismissNotified) menu.emitChange('closed')
+      menu._doHide()
+    }
     openStack.length = idx
     if (openStack.length === 0) unbindDocListeners()
   }
@@ -1465,24 +1568,10 @@ export class AMenuElement extends HTMLElementBase {
         this.requestClose(e)
         return
       }
-      const f = this.focusables()
-      if (!f.length) return
+      const targets = this.focusables()
+      if (!targets.length) return
       e.preventDefault()
-      const i = active ? f.indexOf(active) : -1
-      // Focus isn't on a listed focusable (the surface itself, or an unmatched
-      // slotted node) → step to the first item rather than wrapping to the last.
-      if (i === -1) {
-        f[0]?.focus()
-        return
-      }
-      const next = e.shiftKey
-        ? i === 0
-          ? f.length - 1
-          : i - 1
-        : i === f.length - 1
-          ? 0
-          : i + 1
-      f[next]?.focus()
+      cycleFocus(targets, activeFocus(this.doc), e.shiftKey)
       return
     }
 
@@ -1663,7 +1752,9 @@ export class AMenuElement extends HTMLElementBase {
       // breaks under worker-thread DOM.
       const onKey = (e: KeyboardEvent) => {
         if (this._shown) return // open-only; while open the surface owns the keys
-        if (anchor.matches(SELF_ACTIVATING) || anchor.hasAttribute('disabled')) return
+        if (anchor.hasAttribute('disabled') || anchor.hasAttribute('loading')) return
+        const arrow = e.key === 'ArrowDown' || e.key === 'ArrowUp'
+        if (!arrow && anchor.matches(SELF_ACTIVATING)) return
         // Either arrow opens (the menu can flip above the trigger, and native
         // <select> opens on both); Enter/Space also open a non-editable trigger,
         // but stay with the text on an editable one.

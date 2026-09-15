@@ -67,9 +67,11 @@ The underlying `<a-tooltip>` works in plain HTML too, as a child of any element:
 
 ### Adjacent and nested tooltips
 
-Only one tooltip shows at a time. Moving between **adjacent** anchors hands off
-cleanly — the outgoing bubble cross-fades out as the next fades in (no blink).
-With `follow` tooltips (used below to show it), the outgoing bubble also keeps
+Only one tooltip shows at a time. Moving between **adjacent** anchors with
+`follow` tooltips hands off cleanly — the outgoing bubble cross-fades out as the
+next fades in (no blink). If either tooltip does not have `follow`, the next
+tooltip waits for its configured delay. With `follow` tooltips (used below to
+show it), the outgoing bubble also keeps
 trailing the cursor and fades by distance from its anchor (transparent by ~100px
 away), so a near hop reads as a smooth cross-fade and a far one is already gone.
 With **nested** anchors, the inner (descendant) tooltip wins while you're over
@@ -125,7 +127,7 @@ shows.
 | `delay?` | number | 300 | Show delay in milliseconds after hover / focus. Never use `0` — use ~`50` for a near-instant tooltip (0 has caused issues in practice). |
 | `follow?` | boolean | — | Follow the cursor instead of pinning under the anchor. The bubble is pinned (anchored beneath the target) by default; pass `follow` for the cursor-tracking behavior, which fades by distance as the cursor leaves. |
 | `interactive?` | boolean | — | Make the bubble hoverable and clickable — enables pointer events and keeps it open while the cursor is over it, so its content (links, buttons) can be interacted with. Always pinned (an interactive bubble can't follow the cursor, even with `follow`). |
-| `placement?` | 'top' \| 'bottom' | bottom | Which side of the anchor the bubble prefers. Auto-flips to the other side when there isn't room. |
+| `placement?` | 'top' \| 'bottom' \| 'left' | bottom | Which side of the anchor the bubble prefers. Auto-flips to the other side when there isn't room. |
 | `round?` | boolean \| number \| string | — | Round the bubble to a 20px radius (matching a round menu). Pass a `number` (px) or a CSS length string for a custom radius. |
 | `truncatedOnly?` | boolean | — | Only show when the target is actually truncated (its text overflows and is ellipsized); a label that fits gets no tooltip. The check is a UI-thread layout read, re-measured on each show. By default it measures every Anta ellipsizing label part inside the anchor, then the anchor itself — override with `truncatedSelector`. |
 | `truncatedSelector?` | string | — | CSS selector (resolved within the anchor) for the element or elements whose overflow decides whether a `truncatedOnly` tooltip shows. |

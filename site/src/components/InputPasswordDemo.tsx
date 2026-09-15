@@ -18,6 +18,7 @@ export default function InputPasswordDemo() {
   return (
     <Input
       label="Password"
+      autoComplete="current-password"
       type={reveal ? 'text' : 'password'}
       defaultValue="hunter2"
       dimActions

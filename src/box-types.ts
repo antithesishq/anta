@@ -161,6 +161,9 @@ export interface BoxMeasurement {
   hiddenEndY: boolean
 }
 
+/** Independent Box observation selections, from resize signals to scroll tracking. */
+export type BoxObservation = 'width' | 'height' | 'size' | 'context' | 'overflow' | 'edges' | 'scroll' | 'all'
+
 /** Box observation events include changed fields and a complete current snapshot. */
 export interface BoxChange<T> {
   changed: Partial<T>

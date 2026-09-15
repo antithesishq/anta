@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* Light-DOM element (a-checkbox.ts): state lives on ElementInternals, so
      styling keys off :state(checked) / :state(indeterminate) — not attributes.

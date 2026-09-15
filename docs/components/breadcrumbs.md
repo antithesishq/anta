@@ -4,6 +4,9 @@ Hierarchy navigation assembled from Anta Buttons. Breadcrumb entries can be
 links, actions, or copy controls. Set `maxItems` to fold one middle range into a
 More menu without measuring the available width.
 
+Breadcrumbs do not scroll horizontally by default. Use `maxItems` to limit
+visible entries, or enable scrolling with the [scrolling recipe](#horizontal-scrolling).
+
 ## Items
 
 Pass ordered `BreadcrumbItem` objects through `items`. Each item is a link,
@@ -211,4 +214,34 @@ with your own selector.
   width: 8px;
   color: var(--text-2);
 }
+```
+
+### Horizontal scrolling
+
+Set `overflow-x: auto` on the trail to scroll when its contents exceed the
+available width. `maxItems` limits the item count; long labels can still overflow.
+
+Horizontal scrolling also makes vertical overflow compute to `auto`, which
+clips the default button focus ring above and below the row. Set
+`outline-offset: -1px` on the trail's focused controls to draw the ring inside
+their bounds. The selector below covers breadcrumb links, action and copy
+buttons, and the More control.
+
+`scrolling-breadcrumbs` is an example class; replace it with your own selector.
+Use Tab to move through the controls and see the focus ring.
+
+```tsx
+<Box style={{ width: 280, maxWidth: '100%' }}>
+  <Breadcrumbs className="scrolling-breadcrumbs" maxItems={3} items={[
+    { label: 'Anta', href: '/' },
+    { label: 'Documentation', href: '/box/' },
+    { label: 'Layout components', href: '/panel/' },
+    { label: 'Breadcrumbs', current: true },
+  ]} />
+</Box>
+```
+
+```css
+.scrolling-breadcrumbs { overflow-x: auto; }
+.scrolling-breadcrumbs > :focus-visible { outline-offset: -1px; }
 ```

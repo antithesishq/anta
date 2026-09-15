@@ -64,3 +64,17 @@ test('multiline comments produce complete single-line Markdown table rows', () =
   assert.ok(table.split('\n').every(line => line.startsWith('|') && line.endsWith('|')))
   assert.match(table, /Capture-relative geometry, focus state/)
 })
+
+test('Box observe lists literal choices in cost order instead of an opaque alias', () => {
+  const row = renderPropsTable('Box').split('\n').find(line => line.startsWith('| `observe?` |'))
+  assert.ok(row)
+  assert.doesNotMatch(row, /keyof|\(string & \{\}\)/)
+  assert.match(row, /readonly BoxObservation\[\]/)
+  const options = ['width', 'height', 'size', 'context', 'overflow', 'edges', 'scroll', 'all']
+  let previous = -1
+  for (const option of options) {
+    const index = row.indexOf(`'${option}'`)
+    assert.ok(index > previous, `${option} appears in declaration order`)
+    previous = index
+  }
+})

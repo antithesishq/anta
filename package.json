@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/anta",
-  "version": "0.3.28",
+  "version": "0.3.29",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -59,6 +59,7 @@
     "build:bundle": "node scripts/build-bundle.mjs",
     "build:types": "tsc -p src/tsconfig.json",
     "build:docs": "pnpm --filter anta-site run docs:api && pnpm --filter anta-site run docs:pages && node scripts/generate-package-docs.mjs",
+    "audit:contrast": "node scripts/audit-contrast.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:run": "echo $$ > \"$ANTA_DEV_PID_FILE\"; trap 'rm -f \"$ANTA_DEV_PID_FILE\"' EXIT; pnpm run build:dev && pnpm --filter @antadesign/stickers run build:dev && pnpm --filter @antadesign/plot run build:dev && pnpm --filter anta-site run docs && (node scripts/dev-watch.mjs & pnpm --filter anta-site run dev:server & pnpm --filter anta-site run dev:search & wait)",
     "stop": "node scripts/dev-stop.mjs",
@@ -75,6 +76,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
+    "axe-core": "4.13.0",
     "esbuild": "^0.25.0",
     "nodemon": "^3.1.0",
     "typescript": "^5.7.0"
@@ -82,6 +84,7 @@
   "dependencies": {
     "clsx": "^2.1.0",
     "es-toolkit": "1.47.0",
+    "tabbable": "^6.5.0",
     "temporal-polyfill": "^1.0.1"
   },
   "peerDependencies": {

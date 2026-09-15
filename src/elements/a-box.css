@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* `a-box` intentionally has no shadow root: it is the consumer's actual CSS
      box, while its element class only observes the browser state around it. */
@@ -23,6 +26,20 @@
     gap: var(--box-gap, normal);
     @supports (border-radius: attr(probe type(<length>), 1px)) {
       --box-gap: attr(gap type(<length>));
+    }
+  }
+
+  a-box[padding] {
+    padding: var(--box-padding, 0px);
+    @supports (padding: attr(padding type(*))) {
+      --box-padding: attr(padding type(*), 0px);
+    }
+  }
+
+  a-box[margin] {
+    margin: var(--box-margin, 0px);
+    @supports (margin: attr(margin type(*))) {
+      --box-margin: attr(margin type(*), 0px);
     }
   }
 

@@ -31,27 +31,29 @@ events. For custom wheel, pointer, and touch handling, use [Capture](/capture/).
 
 ## Display
 
-Use `display`, `gap`, and `round` for layout and corners. Numeric lengths use
-pixels; strings accept CSS lengths. A bare `round` fully rounds the corners.
+Use `display`, `gap`, `padding`, `margin`, and `round` for layout and corners. Numeric lengths use
+pixels; strings accept CSS lengths. `padding` and `margin` also accept CSS
+shorthand, such as `padding="8px 16px"` or `margin="0 auto"`. Omission adds no
+spacing styles. A bare `round` fully rounds the corners.
 
 <Preview align="stretch" gap="16px" justify="flex-start">
-  <Box round={8} className="display-demo" style={{ width: '150px' }}>
+  <Box round={8} padding={10} className="display-demo" style={{ width: '150px' }}>
     <span className="chip" />
     <span className="chip" />
     <span className="chip" />
   </Box>
-  <Box display="flex" round={8} gap={6} className="display-demo" style={{ width: '150px' }}>
+  <Box display="flex" round={8} gap={6} padding={10} className="display-demo" style={{ width: '150px' }}>
     <span className="chip" />
     <span className="chip" />
     <span className="chip" />
   </Box>
-  <Box display="grid" round={8} gap={6} className="display-demo" style={{ width: '150px', gridTemplateColumns: '1fr 1fr' }}>
+  <Box display="grid" round={8} gap={6} padding={10} className="display-demo" style={{ width: '150px', gridTemplateColumns: '1fr 1fr' }}>
     <span className="chip" />
     <span className="chip" />
     <span className="chip" />
   </Box>
   <style is:inline>{`
-    .display-demo { padding: 10px; border: 1px solid var(--border-4); }
+    .display-demo { border: 1px solid var(--border-4); }
     .display-demo .chip { display: block; flex: 1; width: 100%; height: 22px; border-radius: 4px; background: var(--bg-4-brand); }
     .display-demo .chip + .chip { margin-top: 6px; }
     .display-demo[display] .chip + .chip { margin-top: 0; }
@@ -59,26 +61,26 @@ pixels; strings accept CSS lengths. A bare `round` fully rounds the corners.
 </Preview>
 
 ```tsx folded
-<Box round={8}><span /></Box>
-<Box display="flex" round={8} gap={6}><span /></Box>
-<Box display="grid" round={8} gap="0.5rem" style={{ gridTemplateColumns: '1fr 1fr' }}><span /></Box>
+<Box round={8} padding={10}><span /></Box>
+<Box display="flex" round={8} gap={6} padding={10}><span /></Box>
+<Box display="grid" round={8} gap="0.5rem" padding="8px 16px" style={{ gridTemplateColumns: '1fr 1fr' }}><span /></Box>
 ```
 
 ## Overflow
 
 Box reports overflow, clipping, and scrollability as measurements and CSS
-states. Use `observe="size"` to keep CSS states current. `fade` and
-`onMeasureChange` also enable measurement; without these, Box adds no size
-observers.
+states. Use `observe="overflow"` to keep overflow, clipping, and scrollability
+states current as content changes. `observe="edges"` also tracks which
+edges hide content while scrolling. `fade` enables both automatically.
 
 `.edge` is a demo class name. Use your own selector.
 
 <Preview align="stretch" gap="16px" justify="flex-start">
-  <Box observe="size" round={8} className="edge" style={{ width: '150px' }}>Content that fits.</Box>
-  <Box observe="size" round={8} className="edge" style={{ width: '150px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+  <Box observe="overflow" round={8} className="edge" style={{ width: '150px' }}>Content that fits.</Box>
+  <Box observe="overflow" round={8} className="edge" style={{ width: '150px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
     A label too long for this box.
   </Box>
-  <Box observe="size" round={8} className="edge" style={{ width: '150px', height: '56px', overflowY: 'auto' }}>
+  <Box observe="overflow" round={8} className="edge" style={{ width: '150px', height: '56px', overflowY: 'auto' }}>
     One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten.
   </Box>
   <style is:inline>{`
@@ -89,13 +91,13 @@ observers.
 </Preview>
 
 ```tsx folded
-<Box observe="size" round={8} className="edge" style={{ width: 150 }}>Content that fits.</Box>
+<Box observe="overflow" round={8} className="edge" style={{ width: 150 }}>Content that fits.</Box>
 
-<Box observe="size" round={8} className="edge" style={{ width: 150, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+<Box observe="overflow" round={8} className="edge" style={{ width: 150, overflow: 'hidden', whiteSpace: 'nowrap' }}>
   A label too long for this box.
 </Box>
 
-<Box observe="size" round={8} className="edge" style={{ width: 150, height: 56, overflowY: 'auto' }}>
+<Box observe="overflow" round={8} className="edge" style={{ width: 150, height: 56, overflowY: 'auto' }}>
   One. Two. Three. Four. Five. Six. Seven. Eight. Nine. Ten.
 </Box>
 ```
@@ -150,7 +152,7 @@ const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
 The mask clips to the padding box. It preserves the Box border, shadows, and
 focus ring when no edge is hidden.
 
-To style hidden edges without `fade`, use `observe="size"` and the
+To style hidden edges without `fade`, use `observe="edges"` and the
 `hidden-start-x`, `hidden-end-x`, `hidden-start-y`, or `hidden-end-y` CSS states.
 
 ### Tooltip on clipped content
@@ -197,11 +199,63 @@ const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
 
 ## Measurements
 
-`onMeasureChange` reports one frame after observation starts and when the Box or
-its content changes. `changed` contains changed fields; `current` is the full
-snapshot. Reporting pauses off screen and resumes when Box returns.
+By default, `onMeasureChange` reports one frame after observation starts, then when
+the border-box `width` or `height` changes. `changed` contains all fields changed
+since the last event; `current` is the full snapshot. Reporting pauses off screen
+and resumes with a fresh snapshot when Box returns.
 
-Resize or scroll the Box to update its measurements.
+`observe` accepts one of the eight selections below, or a typed array combining
+them. `observe={['size', 'edges']}` and `observe={['edges', 'size']}` select the
+same triggers. Repeated selections have no effect. Changing the selected
+measurement fields requests a fresh snapshot. TypeScript checks each value;
+use an array to combine selections in JSX.
+
+The selections below progress from resize and context signals to continuous
+scroll tracking. Intensity describes typical observation work and event frequency,
+not a fixed performance rating. Content churn and the work in your handler also
+affect the cost.
+
+| Selection | Event triggers | Frontend work and intensity |
+| --- | --- | --- |
+| `width` | Border-box `width`. | Low during ordinary use: observes the host; no content or scroll observers. Can report each frame during resizing. |
+| `height` | Border-box `height`. | Same work as `width`, with height as the event trigger. |
+| `size` | Either border-box `width` or `height`. | Same observers as a single dimension; observes the element itself. |
+| `context` | Theme, resolved font, insets, background, focus, and browser/device context through `onContextChange`. | Usually infrequent: shared theme/media listeners and local style/focus reads; no scroll listener. |
+| `overflow` | `clientWidth`, `clientHeight`, `scrollWidth`, `scrollHeight`, `overflowX/Y`, `clippedX/Y`, and `scrollableX/Y`. | Content-dependent: adds content mutations and child resizes; no scroll listener. Does not report individual child dimensions. |
+| `edges` | `hiddenStartX`, `hiddenEndX`, `hiddenStartY`, and `hiddenEndY`. | Measures content/layout changes and scrolling, at most once per frame. Emits only when an edge flag changes, so moving through the middle stays silent. |
+| `scroll` | `scrollLeft` or `scrollTop`. | High during scrolling: measures content/layout and scroll changes and can emit every frame. |
+| `all` | Every measurement field and rendering context. | Enables all observers and can emit every frame. |
+
+Selections are independent. `scroll` selects offset triggers; it does not include
+`size`, `overflow`, `edges`, or `context`. Every measurement event still
+contains fresh values for every measurement field, including client/content
+dimensions and hidden edges. Combine triggers when you also need events caused
+by those other changes. With `observe="size"`, content-only changes cause no
+event; the next size event includes the current content measurements.
+
+For a scroll-edge indicator, use `edges`: it reads during scrolling but
+avoids a callback for each offset change. `scroll` and `all` can cause the most
+frequent application updates, especially when the handler sets state or sends
+each snapshot to a worker. Prefer `fade` when CSS alone needs the edge state.
+
+When no measurement is selected, `onMeasureChange` adds `size`;
+`onContextChange` adds `context`.
+Passing both handlers observes size and context without enabling scroll events.
+Without handlers or `fade`, omitting `observe` keeps Box idle.
+
+Set `throttle` to a minimum interval in milliseconds. The first report has no
+added delay; subsequent reports include a trailing update with the latest values.
+Omit it or pass `0` for frame-based reporting. Negative or non-finite values use
+`0`. The interval applies to `onMeasureChange`; context events are not throttled.
+Throttling limits event delivery; it does not reduce observer reads.
+`edges`, `scroll`, and `fade` continue measuring during scrolling so their
+CSS states remain current.
+
+`Tooltip truncatedOnly` reads Box's clipping on demand. It works without
+`observe` or `onMeasureChange` and does not enable continuous observation.
+
+This readout observes `['size', 'overflow', 'edges', 'scroll']` with `throttle={100}`.
+Resize or scroll the Box to update it.
 
 <Preview align="stretch">
   <BoxMeasurementProbe client:only="preact" />
@@ -228,6 +282,8 @@ const [measurement, setMeasurement] = useState<BoxMeasurement | null>(null)
 <Box
   round={8}
   className="measure-probe-box"
+  observe={['size', 'overflow', 'edges', 'scroll']}
+  throttle={100}
   onMeasureChange={(_, { current }) => setMeasurement(current)}
 >
   <Text size="small" priority="tertiary">Resize or scroll this Box.</Text>
@@ -408,8 +464,11 @@ const canvasRef = useRef<HTMLCanvasElement>(null)
 <Disclosure title="Web component" level={2}>
 
 Use `<a-box>` without JSX. Events are non-bubbling `CustomEvent`s with the same
-`detail`. Set `observe="size"`, `"context"`, or `"all"` explicitly; adding a
-listener does not enable observation. A bare `observe` means `"all"`.
+`detail`. Set `observe` explicitly; adding a listener does not enable
+observation. Combine the eight selections with spaces, such as
+`observe="size edges"` or `observe="size scroll"`, in any order. Repeated tokens
+have no effect; unknown tokens are ignored. A bare `observe` means `"all"`.
+`throttle="100"` limits measurement events to a 100 ms interval.
 
 <Preview align="stretch">
   <a-box display="grid" gap="8px" round="12px" observe="all"
@@ -435,32 +494,34 @@ Import `@antadesign/anta/elements/a-box` to register the element. Listen for
 
 <Disclosure title="Styling" level={2}>
 
-Your `className` and `style` override `display`, `gap`, and `round` through the
+Your `className` and `style` override `display`, `gap`, `padding`, `margin`, and
+`round` through the
 `anta.components` CSS layer.
 
-Without typed CSS `attr()` support, raw `gap`, `round`, and `fade-size` length
-attributes need matching custom properties. The JSX wrapper sets these for you:
+Without typed CSS `attr()` support, raw `gap`, `padding`, `margin`, `round`,
+and `fade-size` attributes need matching custom properties. The JSX wrapper
+sets these for you. Raw HTML lengths need units, such as `padding="16px"`:
 
 <Preview align="stretch">
-  <a-box display="flex" gap round fade class="raw-box"
-         style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">
+  <a-box display="flex" gap padding margin round fade class="raw-box"
+         style="--box-gap: 8px; --box-padding: 12px; --box-margin: 0 auto; --box-round: 12px; --box-fade-size: 32px">
     <span>Layout</span><span>Context</span><span>Measurements</span>
   </a-box>
   <style is:inline>{`
-    .raw-box { width: 190px; overflow: auto; padding: 12px; border: 1px solid var(--border-4); }
+    .raw-box { width: 190px; overflow: auto; border: 1px solid var(--border-4); }
     .raw-box span { flex: 0 0 auto; }
   `}</style>
 </Preview>
 
 ```html folded
-<a-box display="flex" gap round fade class="raw-box"
-       style="--box-gap: 8px; --box-round: 12px; --box-fade-size: 32px">
+<a-box display="flex" gap padding margin round fade class="raw-box"
+       style="--box-gap: 8px; --box-padding: 12px; --box-margin: 0 auto; --box-round: 12px; --box-fade-size: 32px">
   <span>Layout</span><span>Context</span><span>Measurements</span>
 </a-box>
 ```
 
 ```css folded
-.raw-box { width: 190px; overflow: auto; padding: 12px; border: 1px solid var(--border-4); }
+.raw-box { width: 190px; overflow: auto; border: 1px solid var(--border-4); }
 .raw-box span { flex: 0 0 auto; }
 ```
 

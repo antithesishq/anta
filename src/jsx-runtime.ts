@@ -104,7 +104,7 @@ export function jsxs(type: ComponentType, props: Record<string, unknown> | null,
 
 export { _Fragment as Fragment }
 
-import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ABoxAttributes, ACaptureAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
+import type { AAvatarAttributes, AProgressAttributes, ALoaderAttributes, ATextAttributes, ABoxAttributes, ACaptureAttributes, APanelAttributes, ATitleAttributes, ATagAttributes, AExpanderAttributes, AIconAttributes, AButtonAttributes, ACopyAttributes, ACheckboxAttributes, ASwitchAttributes, ATooltipAttributes, AInputAttributes, ASliderAttributes, AInputTimeAttributes, ACalendarAttributes, ARadioAttributes, ARadioGroupAttributes, AMenuAttributes, AMenuItemAttributes, AMenuGroupAttributes, ATabsAttributes, ATabAttributes, ATabpanelAttributes, ADialogAttributes, ACardAttributes, ABannerAttributes, AToasterAttributes, AToastAttributes, BaseAttributes } from './general_types'
 
 // Declared as an `interface` (not a type alias) so downstream companion
 // packages — e.g. `@antadesign/stickers` — can augment it with their own
@@ -129,6 +129,7 @@ export interface AntaIntrinsicElements {
   'a-text': ATextAttributes
   'a-box': ABoxAttributes
   'a-capture': ACaptureAttributes
+  'a-panel': APanelAttributes
   'a-title': ATitleAttributes
   'a-tag': ATagAttributes
   'a-tag-label': BaseAttributes
@@ -168,6 +169,10 @@ export interface AntaIntrinsicElements {
   'a-menu-separator': BaseAttributes
   'a-menu-header': BaseAttributes
   'a-menu-footer': BaseAttributes
+  'a-select-field': BaseAttributes & { size?: string; status?: string; disabled?: boolean | '' }
+  'a-select-label': BaseAttributes
+  'a-select-hint': BaseAttributes
+  'a-select-leading': BaseAttributes
   'a-select-header': BaseAttributes
   'a-select-footer': BaseAttributes
   'a-select-chevron': BaseAttributes & { open?: boolean | '' }

@@ -108,6 +108,9 @@ export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.tes
  *  bulk-select rows (`Select` multiple, `SelectFaceted` multiple facets). Shared
  *  so the wording stays identical across both. */
 export const ISOLATE_HINT = IS_MAC ? '⌥+Click to select only this' : 'Alt+Click to select only this'
+/** The accelerator hint is secondary guidance shown while traversing a menu, so
+ *  wait longer than Tooltip's general 300ms default before surfacing it. */
+export const ISOLATE_HINT_DELAY = 700
 
 /** Parse an open/closed `state` / `default-state` attribute — the shared
  *  open-state vocabulary (`a-dialog`, `a-expander`, …). Anything but the literal
@@ -288,6 +291,22 @@ export function isInsideOpenMenu(node: Node): boolean {
   return menuPresence?.contains(node) ?? false
 }
 
+/** Internal element protocol used by a popup to associate itself and its active
+ * item with an Anta-owned focus target without serializing cross-root IDs. */
+export const SYNC_POPUP_ARIA = Symbol('anta.sync-popup-aria')
+export interface PopupAriaRelations {
+  source: Element
+  controls?: Element | null
+  activeDescendant?: Element | null
+  clear?: boolean
+}
+export interface PopupAriaReceiver extends Element {
+  [SYNC_POPUP_ARIA](relations: PopupAriaRelations): void
+}
+export function isPopupAriaReceiver(element: Element | null): element is PopupAriaReceiver {
+  return element != null && typeof (element as Partial<PopupAriaReceiver>)[SYNC_POPUP_ARIA] === 'function'
+}
+
 /**
  * `HTMLElement` in browsers, a noop class in Node/Worker environments.
  * Use this as the base for custom element classes so importing the
@@ -314,6 +333,23 @@ export class HTMLElementBase extends NativeHTMLElement {
   /** This element's own document (the iframe's document when nested). */
   protected get doc(): Document {
     return this.ownerDocument ?? document
+  }
+}
+
+/** Apply default accessible names and descriptions through element references. */
+export function applyAccessibilityRelations(
+  internals: ElementInternals | undefined,
+  labels: Element[],
+  descriptions: Element[],
+) {
+  if (!internals) return
+  try {
+    if ("ariaLabelledByElements" in internals)
+      internals.ariaLabelledByElements = labels
+    if ("ariaDescribedByElements" in internals)
+      internals.ariaDescribedByElements = descriptions
+  } catch {
+    // Older engines can expose the properties without implementing setters.
   }
 }
 
@@ -396,5 +432,11 @@ export class SelectableChildElement extends HTMLElementBase {
     if (on) this.internals?.states?.add('selected')
     else this.internals?.states?.delete('selected')
     this.internals[this.ariaProp] = on ? 'true' : 'false'
+  }
+
+  /** Give subclasses name/description relationships to their light-DOM content
+   * without exposing IDs or the shared ElementInternals instance. */
+  protected applyAccessibilityRelations(labels: Element[], descriptions: Element[]) {
+    applyAccessibilityRelations(this.internals, labels, descriptions)
   }
 }

@@ -12,7 +12,7 @@ export interface TooltipProps extends BaseProps {
   /** Which side of the anchor the bubble prefers. Auto-flips to the other
    *  side when there isn't room.
    *  @defaultValue bottom */
-  placement?: 'top' | 'bottom'
+  placement?: 'top' | 'bottom' | 'left'
   /** Round the bubble to a 20px radius (matching a round menu). Pass a `number`
    *  (px) or a CSS length string for a custom radius. */
   round?: boolean | number | string
@@ -96,7 +96,7 @@ export const Tooltip = ({
     <a-tooltip
       delay={delay != null ? String(delay) : undefined}
       // 'bottom' is the implicit default — emit no DOM attribute for it.
-      placement={placement === 'top' ? 'top' : undefined}
+      placement={placement === 'top' || placement === 'left' ? placement : undefined}
       // Boolean attributes: presence form when on, omitted when off.
       round={roundAttr(round)}
       follow={follow ? '' : undefined}

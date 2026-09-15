@@ -1,0 +1,20 @@
+{
+  "id": "014",
+  "behavior": {
+    "mode": "form",
+    "type": "button",
+    "outsideForm": false
+  },
+  "content": {
+    "kind": "children-number",
+    "children": 26
+  },
+  "priority": "quaternary",
+  "tone": "brand",
+  "size": "large",
+  "disabled": true,
+  "loading": false,
+  "selected": true,
+  "round": 0,
+  "inherited": {}
+}

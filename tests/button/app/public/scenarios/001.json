@@ -1,0 +1,17 @@
+{
+  "id": "001",
+  "behavior": {
+    "mode": "plain"
+  },
+  "content": {
+    "kind": "label",
+    "label": "Save"
+  },
+  "priority": "primary",
+  "tone": "neutral",
+  "disabled": false,
+  "loading": false,
+  "selected": false,
+  "round": false,
+  "inherited": {}
+}

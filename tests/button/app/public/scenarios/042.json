@@ -1,0 +1,22 @@
+{
+  "id": "042",
+  "behavior": {
+    "mode": "form",
+    "type": "reset",
+    "outsideForm": true
+  },
+  "content": {
+    "kind": "children-number",
+    "children": 6
+  },
+  "priority": "secondary",
+  "tone": "warning",
+  "disabled": true,
+  "loading": true,
+  "selected": true,
+  "round": true,
+  "inherited": {
+    "id": "button-42",
+    "title": "Generated Button"
+  }
+}

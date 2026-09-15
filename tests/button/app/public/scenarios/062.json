@@ -1,0 +1,25 @@
+{
+  "id": "062",
+  "behavior": {
+    "mode": "form",
+    "type": "reset",
+    "outsideForm": false
+  },
+  "content": {
+    "kind": "icon-only",
+    "icon": "filter"
+  },
+  "priority": "secondary",
+  "tone": "success",
+  "size": "medium",
+  "disabled": false,
+  "loading": true,
+  "selected": true,
+  "round": true,
+  "inherited": {
+    "id": "button-62",
+    "title": "Generated Button",
+    "slot": "actions",
+    "className": "harness-button"
+  }
+}

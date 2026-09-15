@@ -1,0 +1,23 @@
+{
+  "id": "088",
+  "behavior": {
+    "mode": "href",
+    "href": "#target"
+  },
+  "content": {
+    "kind": "empty-children",
+    "children": false
+  },
+  "priority": "primary",
+  "tone": "brand",
+  "disabled": true,
+  "loading": false,
+  "selected": true,
+  "round": true,
+  "inherited": {
+    "id": "button-88",
+    "title": "Generated Button",
+    "slot": "actions",
+    "className": "harness-button"
+  }
+}

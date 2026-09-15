@@ -1,0 +1,23 @@
+{
+  "id": "072",
+  "behavior": {
+    "mode": "form",
+    "type": "submit",
+    "outsideForm": true
+  },
+  "content": {
+    "kind": "label-trailing-icon",
+    "label": "0",
+    "iconTrailing": "filter"
+  },
+  "priority": "tertiary",
+  "tone": "brand",
+  "size": "medium",
+  "disabled": true,
+  "loading": false,
+  "selected": true,
+  "round": 0,
+  "inherited": {
+    "slot": "actions"
+  }
+}

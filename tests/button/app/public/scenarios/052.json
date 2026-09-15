@@ -1,0 +1,19 @@
+{
+  "id": "052",
+  "behavior": {
+    "mode": "plain"
+  },
+  "content": {
+    "kind": "children-number",
+    "children": 26
+  },
+  "priority": "secondary",
+  "tone": "warning",
+  "disabled": false,
+  "loading": false,
+  "selected": true,
+  "round": 10,
+  "inherited": {
+    "slot": "actions"
+  }
+}

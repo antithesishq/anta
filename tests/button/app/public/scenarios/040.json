@@ -1,0 +1,21 @@
+{
+  "id": "040",
+  "behavior": {
+    "mode": "plain"
+  },
+  "content": {
+    "kind": "icon-label",
+    "icon": "filter",
+    "label": "Filter"
+  },
+  "priority": "secondary",
+  "tone": "info",
+  "size": "large",
+  "disabled": false,
+  "loading": false,
+  "selected": true,
+  "round": false,
+  "inherited": {
+    "id": "button-40"
+  }
+}

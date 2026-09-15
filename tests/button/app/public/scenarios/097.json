@@ -1,0 +1,23 @@
+{
+  "id": "097",
+  "behavior": {
+    "mode": "form",
+    "type": "reset",
+    "outsideForm": false
+  },
+  "content": {
+    "kind": "children-text",
+    "children": "Open"
+  },
+  "priority": "primary",
+  "tone": "info",
+  "disabled": false,
+  "loading": false,
+  "selected": true,
+  "round": 10,
+  "inherited": {
+    "title": "Generated Button",
+    "slot": "actions",
+    "className": "harness-button"
+  }
+}

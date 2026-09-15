@@ -1,0 +1,21 @@
+{
+  "id": "082",
+  "behavior": {
+    "mode": "href",
+    "href": "#target"
+  },
+  "content": {
+    "kind": "empty-children",
+    "children": ""
+  },
+  "priority": "primary",
+  "tone": "brand",
+  "size": "small",
+  "disabled": true,
+  "loading": false,
+  "selected": false,
+  "round": true,
+  "inherited": {
+    "slot": "actions"
+  }
+}

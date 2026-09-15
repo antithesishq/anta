@@ -1,0 +1,21 @@
+{
+  "id": "009",
+  "behavior": {
+    "mode": "href",
+    "href": "#target"
+  },
+  "content": {
+    "kind": "children-number",
+    "children": 96
+  },
+  "priority": "primary",
+  "tone": "info",
+  "disabled": false,
+  "loading": true,
+  "selected": false,
+  "round": 0,
+  "inherited": {
+    "slot": "actions",
+    "className": "harness-button"
+  }
+}

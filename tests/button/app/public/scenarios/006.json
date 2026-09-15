@@ -1,0 +1,22 @@
+{
+  "id": "006",
+  "behavior": {
+    "mode": "form",
+    "type": "reset",
+    "outsideForm": false
+  },
+  "content": {
+    "kind": "children-number",
+    "children": 22
+  },
+  "priority": "secondary",
+  "tone": "brand",
+  "size": "small",
+  "disabled": false,
+  "loading": true,
+  "selected": true,
+  "round": true,
+  "inherited": {
+    "title": "Generated Button"
+  }
+}

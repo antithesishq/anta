@@ -1,0 +1,21 @@
+{
+  "id": "099",
+  "behavior": {
+    "mode": "plain"
+  },
+  "content": {
+    "kind": "children-number",
+    "children": 24
+  },
+  "priority": "primary",
+  "tone": "critical",
+  "disabled": false,
+  "loading": false,
+  "selected": false,
+  "round": 0,
+  "inherited": {
+    "id": "button-99",
+    "title": "Generated Button",
+    "className": "harness-button"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "010",
+  "behavior": {
+    "mode": "form",
+    "type": "submit",
+    "outsideForm": true
+  },
+  "content": {
+    "kind": "empty-children",
+    "children": ""
+  },
+  "priority": "primary",
+  "tone": "brand",
+  "size": "small",
+  "disabled": false,
+  "loading": true,
+  "selected": true,
+  "round": true,
+  "inherited": {
+    "slot": "actions"
+  }
+}

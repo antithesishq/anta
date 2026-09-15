@@ -1,0 +1,22 @@
+{
+  "id": "100",
+  "behavior": {
+    "mode": "plain"
+  },
+  "content": {
+    "kind": "label-trailing-icon",
+    "label": "0",
+    "iconTrailing": "filter"
+  },
+  "priority": "secondary",
+  "tone": "neutral",
+  "disabled": false,
+  "loading": false,
+  "selected": true,
+  "round": 10,
+  "inherited": {
+    "id": "button-100",
+    "title": "Generated Button",
+    "slot": "actions"
+  }
+}

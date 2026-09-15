@@ -1,0 +1,23 @@
+{
+  "id": "019",
+  "behavior": {
+    "mode": "form",
+    "type": "reset",
+    "outsideForm": false
+  },
+  "content": {
+    "kind": "children-number",
+    "children": 32
+  },
+  "priority": "quaternary",
+  "tone": "warning",
+  "size": "small",
+  "disabled": false,
+  "loading": false,
+  "selected": false,
+  "round": 0,
+  "inherited": {
+    "id": "button-19",
+    "slot": "actions"
+  }
+}

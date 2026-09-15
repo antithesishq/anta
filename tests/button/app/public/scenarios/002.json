@@ -1,0 +1,22 @@
+{
+  "id": "002",
+  "behavior": {
+    "mode": "href",
+    "href": "/test-path"
+  },
+  "content": {
+    "kind": "icon-label",
+    "icon": "heart",
+    "label": "Continue"
+  },
+  "priority": "secondary",
+  "tone": "brand",
+  "size": "medium",
+  "disabled": true,
+  "loading": true,
+  "selected": true,
+  "round": 0,
+  "inherited": {
+    "className": "harness-button"
+  }
+}

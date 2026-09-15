@@ -1,0 +1,24 @@
+{
+  "id": "032",
+  "behavior": {
+    "mode": "href",
+    "href": "#target"
+  },
+  "content": {
+    "kind": "icon-label",
+    "icon": "check",
+    "label": "Save"
+  },
+  "priority": "secondary",
+  "tone": "success",
+  "disabled": true,
+  "loading": true,
+  "selected": true,
+  "round": 10,
+  "inherited": {
+    "id": "button-32",
+    "title": "Generated Button",
+    "slot": "actions",
+    "className": "harness-button"
+  }
+}

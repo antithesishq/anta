@@ -1,7 +1,5 @@
-import { reset_zoom_presentation } from '../core/presentation/reset_zoom'
-import { create_interaction_coordinator } from '../core/interactions/coordinator'
+import { PlotHost } from '../integrations/plot_host'
 import { capture_pointer_input, capture_wheel_input } from '../integrations/anta_gestures'
-import { resolve_canvas_size } from '../core/compose/layout'
 import {
     create_browser_view, size_host, type BrowserView,
 } from './browser_view'
@@ -9,13 +7,9 @@ import type {
     BoxContext, BoxContextChange, BoxMeasurement, BoxMeasurementChange,
     CapturePointerInput, CaptureWheelInput,
 } from '@antadesign/anta'
-import { PlotController, type PlotEnvironment } from '../core/controller'
 import type { PointerOffset } from '../core/interactions/hit'
-import { plot_color_filter } from '../core/presentation/plot'
-import type { ComposedPlot, ViewportChange } from '../core/types'
 import type { APlotElement, PlotArgs, PlotTooltipRenderer } from './index'
 import { clear_hover, render_hover } from './hover'
-import { resolve_capture_configuration, zoom_pan_enabled } from '../core/interactions/zoom_pan'
 import { throttle } from 'es-toolkit/function'
 
 import { UPDATE_INTERVAL_MS } from '../core/interactions/viewport_schedule'
@@ -23,7 +17,7 @@ import { UPDATE_INTERVAL_MS } from '../core/interactions/viewport_schedule'
 /** The class is created at registration time so importing this module never reads HTMLElement. */
 export function create_plot_element<T = Node>(): CustomElementConstructor {
     return class PlotElement extends HTMLElement implements APlotElement<T> {
-        #controller: PlotController<T> | null = null
+        get #controller() { return this.#host.controller }
         #tooltip_renderer: PlotTooltipRenderer<T> | undefined
         #args: PlotArgs<T> | undefined
         #pending_frame_id: number | null = null
@@ -37,33 +31,30 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             this.#schedule()
         }, UPDATE_INTERVAL_MS, { edges: ['trailing'] })
 
-        readonly #interaction_coordinator = create_interaction_coordinator({
-            controller: () => this.#controller,
+        readonly #host = new PlotHost<T, { event: MouseEvent; offset: PointerOffset | undefined }>({
             commit_mode: 'immediate',
-            on_viewport_commit: () => {
-                this.#clear_hover()
-                this.#schedule()
+            schedule: () => this.#schedule(),
+            error: failure => this.#emit('ploterror', failure),
+            viewport: change => {
+                this.#emit('viewportchange', change)
+                this.#controller?.template.on_viewport_change?.(change)
             },
-            on_viewport_report: change => this.#report_viewport(change),
-            resolve_hover: ({ event, offset }: { event: MouseEvent; offset: PointerOffset | undefined }) => {
-                if (!this.isConnected) {
-                    return null
-                }
+            resolve_hover: ({ event, offset }) => {
+                if (!this.isConnected) return null
                 return { ...(offset ?? this.#offset(event)), ctrlKey: event.ctrlKey }
             },
-            on_hover_update: () => {
+            hover: () => {
                 if (this.#controller !== null) {
-                    render_hover(
-                        this.#controller, this.#view.highlight, this.#view.tooltip,
-                        this.#context?.devicePixelRatio ?? 1, this.#hover_renderer,
-                    )
+                    render_hover(this.#controller, this.#view.highlight, this.#view.tooltip,
+                        this.#context?.devicePixelRatio ?? 1, this.#hover_renderer)
                 }
                 this.#update_cursor()
             },
-            on_hover_clear: () => clear_hover(this.#view.highlight, this.#view.tooltip, this.#hover_renderer),
-            on_pointer_change: () => this.#update_cursor(),
-            on_pan_end: () => this.#schedule(),
+            clear_hover: () => clear_hover(this.#view.highlight, this.#view.tooltip, this.#hover_renderer),
+            pointer: () => this.#update_cursor(),
         })
+
+        get #interaction_coordinator() { return this.#host.interactions }
 
         constructor() {
             super()
@@ -146,9 +137,8 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
                 this.ownerDocument.defaultView?.cancelAnimationFrame(this.#pending_frame_id)
             }
             this.#pending_frame_id = null
-            this.#interaction_coordinator.disconnect()
+            this.#host.disconnect()
             this.#resize.cancel()
-            this.#controller?.set_draw_host(null)
             clear_hover(this.#view.highlight, this.#view.tooltip, this.#hover_renderer)
             this.#update_cursor()
         }
@@ -184,25 +174,13 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             if (value === undefined) {
                 return
             }
-            if (this.#controller === null) {
-                try {
-                    this.#controller = new PlotController(value, failure => this.#emit('ploterror', failure))
-                } catch {
-                    // Constructor already reported the template error.
-                    return
-                }
-                this.#attach_canvas()
-            } else {
-                this.#controller.update_plot_args(value)
-                if (this.#controller.plot_args !== value) {
-                    return
-                }
-            }
+            if (!this.#host.update(value)) return
+            this.#attach_canvas()
             this.#args = value
             if (this.isConnected && this.#view.root.parentNode !== this) {
                 this.append(this.#view.root)
             }
-            size_host(this, this.#controller.template)
+            size_host(this, this.#controller!.template)
             this.#clear_hover()
             this.#schedule()
         }
@@ -222,13 +200,12 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }))
         }
 
+        readonly #canvas_host = {
+            prepare: (width: number, height: number, dpr: number) => this.#view.root.prepareCanvas(width, height, dpr),
+        }
+
         #attach_canvas(): void {
-            if (!this.isConnected) {
-                return
-            }
-            this.#controller?.set_draw_host({
-                prepare: (width, height, dpr) => this.#view.root.prepareCanvas(width, height, dpr),
-            })
+            if (this.isConnected) this.#host.attach(this.#canvas_host)
         }
 
         // Coalesce updates into one render before the browser’s next repaint.
@@ -242,95 +219,28 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             })
         }
 
-        // Compose from the current environment, flush drawing, and update the overlays.
+        // The shared host composes, reconciles the viewport, and draws; this host applies DOM presentation.
         #render(): void {
-            const controller = this.#controller
-            const measurement = this.#measurement
-            const context = this.#context
-            if (controller === null || measurement === null || context === null) {
-                return
+            if (this.#measurement === null || this.#context === null) return
+            this.#host.measurement = this.#measurement
+            this.#host.environment = {
+                color_theme: this.#context.mode, device_pixel_ratio: this.#context.devicePixelRatio,
             }
-            const dimensions = resolve_canvas_size(controller.template, measurement)
-            if (dimensions === null || dimensions.width <= 0 || dimensions.height <= 0) {
-                return
-            }
-            const { width, height } = dimensions
-            const color_theme = context.mode
-            const plot = this.#compose({
-                width,
-                height,
-                color_theme,
-                device_pixel_ratio: context.devicePixelRatio,
-            })
-            if (plot === null) {
-                return
-            }
-            controller.flush_draw()
-            const { inner } = plot
-            this.#view.root.present({
-                width, height, inner,
-                filter: plot_color_filter(controller.template, color_theme),
-                reset: reset_zoom_presentation(controller, inner, color_theme),
-            })
+            const presentation = this.#host.render()
+            if (presentation === null || this.#controller === null) return
+            this.#view.root.present(presentation)
             this.#configure_capture()
-            render_hover(controller, this.#view.highlight, this.#view.tooltip, context.devicePixelRatio, this.#hover_renderer)
+            render_hover(this.#controller, this.#view.highlight, this.#view.tooltip,
+                this.#context.devicePixelRatio, this.#hover_renderer)
             this.#update_cursor()
         }
 
-        // Apply newly keyed argument requests and normalize the current window against fresh domains.
-        #compose(environment: PlotEnvironment): ComposedPlot<T> | null {
-            const controller = this.#controller
-            if (controller === null) {
-                return null
-            }
-            const current = controller.interactions.committed_viewport
-            const plot = controller.compose(environment, current)
-
-            // A failed composition retains the old plot; it cannot normalize against the new domains.
-            if (plot === null || !controller.has_current_composition) {
-                return plot
-            }
-
-            const adopted = this.#interaction_coordinator.adopt_viewport(controller.template.viewport)
-            const normalized = controller.interactions.normalize_viewport()
-            if (!adopted && !normalized) {
-                return plot
-            }
-            return controller.compose(environment, controller.interactions.committed_viewport)
-        }
-
-        // Allow zoom and pan when enabled and at least one selected axis is continuous.
-        #zoom_enabled(): boolean {
-            const template = this.#controller?.template
-            return template !== undefined && zoom_pan_enabled(template)
-        }
-
-        // Configure wheel ownership and drag activation from the current plot state.
         #configure_capture(): void {
-            const controller = this.#controller
-            if (controller === null) {
-                return
-            }
-            const enabled = this.#zoom_enabled()
-            const axes = controller.template.zoom_pan
-            const wheel_claim = controller.interactions.wheel_claim(
-                controller.composed_plot,
-                controller.interactions.committed_viewport,
-                axes,
-            )
-
-            this.#view.root.configureCapture(
-                resolve_capture_configuration(enabled, axes.modifier, wheel_claim),
-            )
+            if (this.#controller !== null) this.#view.root.configureCapture(this.#host.capture())
         }
 
-        // Match the old precedence: active pan, modifier-ready pan, selectable hit, then default.
         #update_cursor(): void {
-            const controller = this.#controller
-            this.#view.root.cursor = controller?.interactions.cursor_style({
-                ...controller.template.zoom_pan,
-                enabled: zoom_pan_enabled(controller.template),
-            }) ?? ''
+            this.#view.root.cursor = this.#host.cursor() ?? ''
         }
 
         #on_mouse_leave(): void {
@@ -378,9 +288,5 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             this.#interaction_coordinator.handle_pan(capture_pointer_input(detail))
         }
 
-        #report_viewport(change: ViewportChange): void {
-            this.#emit('viewportchange', change)
-            this.#controller?.template.on_viewport_change?.(change)
-        }
     }
 }

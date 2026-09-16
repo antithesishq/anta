@@ -12,7 +12,7 @@ const label = composed ? compositionLabels[example as keyof typeof compositionLa
 ---
 
 <Tag class:list={["plot-gallery-preview", { composed }]} data-plot-gallery={example} href={composed ? undefined : `#${target}`} aria-label={label}>
-  <a-plot aria-hidden="true" inert></a-plot>
+  <a-plot aria-hidden={composed ? undefined : "true"} inert={composed ? undefined : ''}></a-plot>
 </Tag>
 
 <script>
@@ -37,7 +37,7 @@ const label = composed ? compositionLabels[example as keyof typeof compositionLa
         margin: composed ? { top: 12, right: 16, bottom: 42, left: example === 'overview' ? 74 : 58 } : 8,
         zoom_pan: false,
         series: [
-          ...args.series.map(series => ({ ...series, hoverable: false })),
+          ...args.series.map(series => composed ? series : { ...series, hoverable: false }),
           ...(composed ? [] : [galleryLabel(titles[example])]),
         ],
       }
@@ -63,7 +63,7 @@ const label = composed ? compositionLabels[example as keyof typeof compositionLa
     outline-offset: 3px;
   }
 
-  .composed a-plot { height: 280px; }
+  .composed a-plot { height: 280px; pointer-events: auto; }
 
   a-plot {
     display: block;

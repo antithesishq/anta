@@ -3,7 +3,7 @@
 Follow the root AGENTS.md. This package owns plotting code, not the notebook adapter.
 
 - `src/core/` contains series factories, composition, rendering, interactions, and presentation.
-- `src/integrations/` connects host events to the core controllers.
+- `src/integrations/` connects host events to the core controllers. `PlotHost` shares controller lifecycle, composition, drawing, and presentation between JSX Plot and standalone a-plot; keep browser scheduling and renderer commit notifications in their respective hosts.
 - `src/browser/` implements the optional light-DOM `<a-plot>` host. Preserve its established behavior during packaging.
 - `src/components/` contains the Anta JSX `Plot` and `PlotSurface` wrappers, exposed through `/components`. They must not register elements or access browser DOM. Plot owns controller and OffscreenCanvas drawing lifecycle on the configured renderer’s thread. Use Anta’s configured hooks, and mutate controllers only after commit. Browser verification covers React 19 and Preact, including cleanup and discarded renders.
 - `src/entries/` defines the supported package exports. Keep internal imports private.

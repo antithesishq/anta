@@ -12,7 +12,6 @@ type UseState = <S>(initial: S | (() => S)) => [S, (next: S | ((prev: S) => S)) 
 type UseId = () => string
 type UseMemo = <T>(factory: () => T, deps: unknown[]) => T
 type UseRef = <T>(initial: T) => { current: T }
-type UseCallback = <T extends Function>(callback: T, deps: unknown[]) => T
 type UseLayoutEffect = (effect: () => void | (() => void), deps?: unknown[]) => void
 type UseSyncExternalStore = <T>(
   subscribe: (onChange: () => void) => () => void,
@@ -30,7 +29,6 @@ let _useState: UseState = React.useState as UseState
 let _useId: UseId = React.useId as UseId
 let _useMemo: UseMemo = React.useMemo as UseMemo
 let _useRef: UseRef = React.useRef as UseRef
-let _useCallback: UseCallback = React.useCallback as UseCallback
 let _useLayoutEffect: UseLayoutEffect = React.useLayoutEffect as UseLayoutEffect
 let _useSyncExternalStore: UseSyncExternalStore = React.useSyncExternalStore as UseSyncExternalStore
 
@@ -61,7 +59,6 @@ export function configure(
     useId?: UseId
     useMemo?: UseMemo
     useRef?: UseRef
-    useCallback?: UseCallback
     useLayoutEffect?: UseLayoutEffect
     useSyncExternalStore?: UseSyncExternalStore
   },
@@ -72,7 +69,6 @@ export function configure(
   if (hooks?.useId) _useId = hooks.useId
   if (hooks?.useMemo) _useMemo = hooks.useMemo
   if (hooks?.useRef) _useRef = hooks.useRef
-  if (hooks?.useCallback) _useCallback = hooks.useCallback
   if (hooks?.useLayoutEffect) _useLayoutEffect = hooks.useLayoutEffect
   if (hooks?.useSyncExternalStore) _useSyncExternalStore = hooks.useSyncExternalStore
 }
@@ -90,9 +86,6 @@ export function useMemo<T>(factory: () => T, deps: unknown[]): T {
 }
 export function useRef<T>(initial: T): { current: T } {
   return _useRef(initial)
-}
-export function useCallback<T extends Function>(callback: T, deps: unknown[]): T {
-  return _useCallback(callback, deps)
 }
 export function useLayoutEffect(effect: () => void | (() => void), deps?: unknown[]): void {
   return _useLayoutEffect(effect, deps)

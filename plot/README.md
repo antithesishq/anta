@@ -46,7 +46,7 @@ OffscreenCanvas objects from the surface and draws on the renderer's thread: the
 main thread in ordinary React/Preact apps, or the worker through the notebook's DOM bridge.
 Default and custom tooltips render through Anta's `Tooltip`, without DOM refs or portals.
 Replace `plotArgs` to update the plot. Custom renderers supply `useState`, `useMemo`,
-`useRef`, `useCallback`, and `useLayoutEffect` through `configure()` when their hooks
+`useRef` and `useLayoutEffect` through `configure()` when their hooks
 are not already provided by React aliases.
 
 The root entry does not load Anta or React at runtime. Element registration requires
@@ -81,7 +81,14 @@ in layout effects after commit; discarded renders do not invoke plot callbacks.
 The surface mounts after hydration and transfers each canvas once. Effects can
 replay without retransferring canvases; a new component mount gets a new surface.
 
-The wrapper fills its parent. Give the parent a height or set `plotArgs.height`.
+Both `Plot` and `a-plot` use the internal `PlotHost` for controller ownership,
+composition, viewport reconciliation, drawing, and capture/cursor configuration.
+The JSX component retains the host and publishes presentation through configured
+hooks. It also handles surface events, transferred contexts, and measurement updates.
+The standalone element supplies DOM lifecycle callbacks and animation-frame scheduling.
+The shared host has no DOM or renderer dependency and executes in the notebook worker.
+
+The component fills its parent. Give the parent a height or set `plotArgs.height`.
 Explicit plot dimensions override the wrapper styles until removed.
 
 Run `pnpm --filter @antadesign/plot run test:browser` after building. The browser

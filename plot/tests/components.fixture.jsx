@@ -1,6 +1,6 @@
 import React, { StrictMode, Suspense, createContext, useContext, useEffect, startTransition } from 'react'
 import { h, Fragment, render as renderPreact } from 'preact'
-import { useState as preactUseState, useRef as preactUseRef, useCallback as preactUseCallback, useLayoutEffect as preactUseLayoutEffect } from 'preact/hooks'
+import { useState as preactUseState, useRef as preactUseRef, useLayoutEffect as preactUseLayoutEffect } from 'preact/hooks'
 import { useSyncExternalStore as preactUseSyncExternalStore } from 'preact/compat'
 import { configure } from '@antadesign/anta/jsx-runtime'
 import { createRoot, hydrateRoot } from 'react-dom/client'
@@ -90,7 +90,6 @@ window.ready = true
 window.renderAntaPlot = (height = 220, renderer = 'react', customTooltip = false) => {
     configure(renderer === 'preact' ? h : React.createElement, renderer === 'preact' ? Fragment : React.Fragment, {
         useRef: renderer === 'preact' ? preactUseRef : React.useRef,
-        useCallback: renderer === 'preact' ? preactUseCallback : React.useCallback,
         useLayoutEffect: renderer === 'preact' ? preactUseLayoutEffect : React.useLayoutEffect,
         useState: renderer === 'preact' ? preactUseState : React.useState,
         useSyncExternalStore: renderer === 'preact' ? preactUseSyncExternalStore : React.useSyncExternalStore,

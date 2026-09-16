@@ -170,7 +170,6 @@ plot.plotArgs = {
   height: 280,
   margin: { top: 12, right: 16, bottom: 42, left: 74 },
   zoom_pan: false,
-  series: args.series.map(series => ({ ...series, hoverable: false })),
 }
 document.body.append(plot)
 ```
@@ -200,8 +199,10 @@ function energyExample(): PlotArgs<Node> {
     series: [
       bar<Node>({ data, y: ['solar', 'wind'],
         color: [{ light: '#fbbf24', dark: '#d97706' }, { light: '#2dd4bf', dark: '#0d9488' }],
-        inset: 5, border_radius: 3 }),
+        inset: 5, border_radius: 3,
+        tooltip: ({ x, y, label }) => document.createTextNode('Site ' + x + ' · ' + label + ': ' + y + ' kW') }),
       scatter<Node>({ data, y: 'demand', mark: 'diamond', size: 7,
+        tooltip: ({ x, y }) => document.createTextNode('Site ' + x + ' · Demand: ' + y + ' kW'),
         color: { light: '#7c3aed', dark: '#c4b5fd' },
         stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 } }),
     ],
@@ -220,7 +221,6 @@ plot.plotArgs = {
   height: 280,
   margin: { top: 12, right: 16, bottom: 42, left: 58 },
   zoom_pan: false,
-  series: args.series.map(series => ({ ...series, hoverable: false })),
 }
 document.body.append(plot)
 ```
@@ -244,9 +244,13 @@ function latencyExample(): PlotArgs<Node> {
   const curve = Array.from({ length: 121 }, (_, i) => ({ x: i * 2, y: density(i * 2) }))
   return {
     series: [
-      area<Node>({ data: curve, y2: 0, color: { light: '#fce7f3', dark: '#452039' } }),
-      rect<Node>({ data: bins, color: { light: '#f472b6', dark: '#be185d' } }),
-      line<Node>({ data: curve, color: { light: '#9d174d', dark: '#fbcfe8' }, width: 2.5 }),
+      area<Node>({ data: curve, y2: 0, color: { light: '#fce7f3', dark: '#452039' }, hoverable: false }),
+      rect<Node>({ data: bins, color: { light: '#f472b6', dark: '#be185d' },
+        tooltip: ({ row, y }) => document.createTextNode(
+          (Number(row.x) - 1) + '–' + (Number(row.x2) + 1) + ' ms · ' + Math.round(Number(y)) + ' requests',
+        ) }),
+      line<Node>({ data: curve, color: { light: '#9d174d', dark: '#fbcfe8' }, width: 2.5,
+        tooltip: ({ x, y }) => document.createTextNode('Distribution at ' + x + ' ms: ' + Number(y).toFixed(1) + ' requests') }),
 
     ],
     axis: { x: { min: 0, max: 240, label: 'Latency (ms)' }, y: { min: 0, max: 60, label: 'Requests' } },
@@ -264,7 +268,6 @@ plot.plotArgs = {
   height: 280,
   margin: { top: 12, right: 16, bottom: 42, left: 58 },
   zoom_pan: false,
-  series: args.series.map(series => ({ ...series, hoverable: false })),
 }
 document.body.append(plot)
 ```
@@ -322,6 +325,7 @@ function mixedExample(): PlotArgs<Node> {
         stroke: { color: { light: '#14b8a6', dark: '#5eead4' }, width: 1 } }),
       ...points.map((point, i) => scatter<Node>({ data: [point], size: [7, 12, 21, 10, 15, 9, 26, 13, 11, 8, 14][i],
         mark: 'circle', color: colors[i % colors.length],
+        tooltip: ({ x, y }) => document.createTextNode('Point ' + (i + 1) + ' · (' + x + ', ' + y + ')'),
         stroke: { color: { light: '#ffffff', dark: '#151b28' }, width: 1.5 } })),
       rect<Node>({ data: [{ x: 32, x2: 44, y: 31, y2: 47 }],
         color: { light: '#ddd6fe', dark: '#5b21b6' },
@@ -330,6 +334,9 @@ function mixedExample(): PlotArgs<Node> {
         color: { light: 'rgba(254, 215, 170, 0.55)', dark: 'rgba(154, 52, 18, 0.55)' },
         stroke: { color: { light: '#f97316', dark: '#fdba74' }, width: 1.5 } }),
       ...smoothPaths.map((data, i) => line<Node>({ data, width: 2.5, dash: i === 1 ? [7, 5] : [],
+        tooltip: ({ x, y }) => document.createTextNode(
+          'Line ' + (i + 1) + ' · (' + Number(x).toFixed(1) + ', ' + Number(y).toFixed(1) + ')',
+        ),
         color: i % 2 === 0 ? { light: '#0d9488', dark: '#5eead4' }
           : { light: '#f97316', dark: '#fdba74' },
       })),
@@ -351,7 +358,6 @@ plot.plotArgs = {
   height: 280,
   margin: { top: 12, right: 16, bottom: 42, left: 58 },
   zoom_pan: false,
-  series: args.series.map(series => ({ ...series, hoverable: false })),
 }
 document.body.append(plot)
 ```

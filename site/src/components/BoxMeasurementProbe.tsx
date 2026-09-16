@@ -34,6 +34,8 @@ export function BoxMeasurementProbe() {
       <Box
         round={8}
         className="measure-probe-box"
+        observe={['size', 'overflow', 'edges', 'scroll']}
+        throttle={100}
         onMeasureChange={(_, { current }) => setMeasurement(current)}
       >
         <Text size="small" priority="tertiary">

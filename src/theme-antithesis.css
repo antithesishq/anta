@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 /* Antithesis. Import after tokens.css and element CSS, as the only theme. */
 
 @font-face {
@@ -42,7 +45,6 @@
   font-weight: 400 700;
   font-display: swap;
 }
-@layer anta.reset, anta.components, anta.theme;
 
 :root,
 .light {
@@ -61,9 +63,13 @@
 }
 
 @layer anta.theme {
-  :is(address, cite, dfn, em, i, var, dt) {
+  :is(address, cite, em, i, var, dt) {
     font-variation-settings: "slnt" 11;
     font-synthesis: none;
+  }
+
+  dfn {
+    font-variation-settings: "slnt" 0;
   }
 
   a-button,

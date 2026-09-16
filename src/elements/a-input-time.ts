@@ -1,5 +1,13 @@
 import { HTMLElementBase } from '../anta_helpers'
+import { applyShadowAria, ariaAttributeProperty, type ShadowAriaAttribute } from './shadow-aria'
 import './a-input-time.css'
+
+const INPUT_TIME_ARIA = [
+  'aria-label', 'aria-labelledby', 'aria-description', 'aria-describedby', 'aria-invalid', 'aria-errormessage',
+] as const satisfies readonly ShadowAriaAttribute[]
+const INPUT_TIME_ARIA_SET = new Set<string>(INPUT_TIME_ARIA)
+const READ_DELEGATED_ARIA = Symbol('readDelegatedAria')
+const WRITE_DELEGATED_ARIA = Symbol('writeDelegatedAria')
 
 /**
  * `<a-input-time>` — a segmented wall-clock time field. One visual box (matching
@@ -11,9 +19,9 @@ import './a-input-time.css'
  * This follows the cross-system segmented-field model while letting native inputs
  * own caret, selection, paste, and mobile keyboard behavior. The element owns
  * cross-segment focus, increment/wrap, and digit auto-advance — coordination that
- * needs a live element, so it lives here (the wrapper holds no DOM ref) and only
- * ever mutates its OWN shadow nodes, never the host or light DOM (worker-safe,
- * per AGENTS.md).
+ * needs a live element, so it lives here (the wrapper holds no DOM ref). Standard
+ * naming and description ARIA is consumed from the host and delegated to the
+ * shadow group; invalid/error state is delegated to its focusable segments.
  *
  * Localization is derived from `Intl`: the clock (12h vs 24h) from the resolved
  * `hourCycle`, the segment ORDER + separator + whether an AM/PM segment exists at
@@ -25,9 +33,9 @@ import './a-input-time.css'
  * incomplete. Controlled via the `value` attribute, uncontrolled via `defaultvalue`.
  *
  * ## Declarative-DOM safety
- * The host is never mutated from JS. Per-segment input state and the
- * `:state(filled)` / `:state(invalid)` hooks are set shadow-internal (the element's
- * own territory) or off-DOM via `ElementInternals` — never on the host or light DOM.
+ * Other than consuming standard ARIA so the host does not become a duplicate
+ * control, state is shadow-internal or off-DOM through `ElementInternals`. The
+ * element never mutates consumer-owned light DOM.
  */
 
 // Kept in sync with the `data-custom-event` the `<InputTime>` wrapper sets on its
@@ -250,18 +258,23 @@ const INPUT_TIME_TEMPLATE = typeof document === 'undefined' ? undefined : (() =>
 export class AInputTimeElement extends HTMLElementBase {
   static formAssociated = true
   static observedAttributes = [
-    'value', 'defaultvalue', 'locale', 'hour12', 'status', 'disabled', 'min', 'max', 'aria-label', 'required',
+    'value', 'defaultvalue', 'locale', 'hour12', 'status', 'disabled', 'min', 'max', 'required',
+    ...INPUT_TIME_ARIA,
   ]
 
   #internals?: ElementInternals
   #field: HTMLDivElement
   #labelSlot: HTMLSlotElement
+  #hintSlot: HTMLSlotElement
   #segRow: HTMLDivElement
   #ready = false
   #formDisabled = false
   // True once a value arrived via the `value` property setter — so connect
   // doesn't re-seed from the (possibly empty) attribute and wipe it.
   #seeded = false
+  #delegatedAria = new Map<ShadowAriaAttribute, string>()
+  #consumingAria = new Set<string>()
+  #ariaApplyQueued = false
   // The canonical 24-hour "HH:mm" (or ''), kept in step with the segment state.
   // Mode-independent, so a locale / hour12 switch re-derives display from it
   // rather than from the now-stale display digits.
@@ -294,6 +307,9 @@ export class AInputTimeElement extends HTMLElementBase {
     this.#labelSlot = shadow.querySelector<HTMLSlotElement>('.label')!
     this.#labelSlot.addEventListener('click', () => this.#segs[0]?.el.focus())
     this.#labelSlot.addEventListener('slotchange', this.#onLabelSlotChange)
+
+    this.#hintSlot = shadow.querySelector<HTMLSlotElement>('.hint')!
+    this.#hintSlot.addEventListener('slotchange', this.#onHintSlotChange)
 
     this.#field = shadow.querySelector<HTMLDivElement>('.field')!
     this.#segRow = shadow.querySelector<HTMLDivElement>('.segments')!
@@ -335,6 +351,11 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   attributeChangedCallback(name: string, _old: string | null, value: string | null) {
+    if (INPUT_TIME_ARIA_SET.has(name)) {
+      if (this.#consumingAria.has(name)) return
+      this.#consumeAria(name as ShadowAriaAttribute, value)
+      return
+    }
     if (!this.#ready) return
     // Route through the setter so form value / filled / validity stay in sync
     // (the setter touches only shadow + ElementInternals, never the host).
@@ -347,9 +368,70 @@ export class AInputTimeElement extends HTMLElementBase {
       this.#updateValidity()
       return
     }
-    // Forwarded (name / aria-label / required) → the group container for a11y.
-    if (name === 'aria-label') { this.#applyGroupLabel(); return }
-    if (name === 'required') { this.#updateValidity(); return }
+    if (name === 'required') { this.#syncRequired(); this.#updateValidity(); return }
+  }
+
+  #consumeAria(name: ShadowAriaAttribute, value: string | null) {
+    if (value == null) this.#delegatedAria.delete(name)
+    else this.#delegatedAria.set(name, value)
+    if (this.hasAttribute(name)) {
+      this.#consumingAria.add(name)
+      super.removeAttribute(name)
+      this.#consumingAria.delete(name)
+    }
+    this.#applyDelegatedAria(name)
+    this.#queueDelegatedAria()
+  }
+
+  override removeAttribute(name: string) {
+    if (INPUT_TIME_ARIA_SET.has(name) && !this.#consumingAria.has(name) && !this.hasAttribute(name)) {
+      const ariaName = name as ShadowAriaAttribute
+      if (this.#delegatedAria.delete(ariaName)) {
+        this.#applyDelegatedAria(ariaName)
+        this.#queueDelegatedAria()
+      }
+      return
+    }
+    super.removeAttribute(name)
+  }
+
+  override toggleAttribute(name: string, force?: boolean): boolean {
+    if (INPUT_TIME_ARIA_SET.has(name)) {
+      const ariaName = name as ShadowAriaAttribute
+      const next = force ?? !this.#delegatedAria.has(ariaName)
+      this.#consumeAria(ariaName, next ? '' : null)
+      return next
+    }
+    return super.toggleAttribute(name, force)
+  }
+
+  [READ_DELEGATED_ARIA](name: ShadowAriaAttribute): string | null {
+    return this.#delegatedAria.get(name) ?? null
+  }
+
+  [WRITE_DELEGATED_ARIA](name: ShadowAriaAttribute, value: unknown) {
+    this.#consumeAria(name, value == null ? null : String(value))
+  }
+
+  #applyDelegatedAria(name: ShadowAriaAttribute) {
+    const value = this.#delegatedAria.get(name) ?? null
+    if (name === 'aria-invalid' || name === 'aria-errormessage') {
+      for (const seg of this.#segs) applyShadowAria(this, seg.el, name, value)
+      if (name === 'aria-invalid' && value == null) this.#syncStatus()
+      return
+    }
+    applyShadowAria(this, this.#segRow, name, value)
+    if (name === 'aria-label' || name === 'aria-labelledby') this.#applyGroupLabel()
+    if (name === 'aria-description' || name === 'aria-describedby') this.#applyGroupDescription()
+  }
+
+  #queueDelegatedAria() {
+    if (this.#ariaApplyQueued) return
+    this.#ariaApplyQueued = true
+    queueMicrotask(() => {
+      this.#ariaApplyQueued = false
+      for (const name of this.#delegatedAria.keys()) this.#applyDelegatedAria(name)
+    })
   }
 
   // --- Locale-driven segment construction ---
@@ -448,7 +530,11 @@ export class AInputTimeElement extends HTMLElementBase {
       }
     }
     this.#applyValue(keep)
+    for (const name of this.#delegatedAria.keys()) this.#applyDelegatedAria(name)
+    this.#queueDelegatedAria()
     this.#applyGroupLabel()
+    this.#applyGroupDescription()
+    this.#syncRequired()
     this.#syncStatus()
     this.#syncDisabled()
     this.#commitEdit({ dispatch: false })
@@ -767,14 +853,25 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #applyGroupLabel() {
-    const label = this.getAttribute('aria-label')
-      || this.#labelSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
+    if (this.#delegatedAria.has('aria-label') || this.#delegatedAria.has('aria-labelledby')) return
+    const label = this.#labelSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
     if (label) this.#segRow.setAttribute('aria-label', label)
     else this.#segRow.removeAttribute('aria-label')
   }
 
   #onLabelSlotChange = () => {
     this.#applyGroupLabel()
+  }
+
+  #applyGroupDescription() {
+    if (this.#delegatedAria.has('aria-description') || this.#delegatedAria.has('aria-describedby')) return
+    const description = this.#hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
+    if (description) this.#segRow.setAttribute('aria-description', description)
+    else this.#segRow.removeAttribute('aria-description')
+  }
+
+  #onHintSlotChange = () => {
+    this.#applyGroupDescription()
   }
 
   #syncDisabled() {
@@ -784,8 +881,14 @@ export class AInputTimeElement extends HTMLElementBase {
 
   #syncStatus() {
     const critical = this.getAttribute('status') === 'critical'
-    for (const seg of this.#segs) seg.el.setAttribute('aria-invalid', critical ? 'true' : 'false')
+    const explicit = this.#delegatedAria.get('aria-invalid')
+    for (const seg of this.#segs) seg.el.setAttribute('aria-invalid', explicit ?? (critical ? 'true' : 'false'))
     try { critical ? this.#internals?.states?.add('invalid') : this.#internals?.states?.delete('invalid') } catch {}
+  }
+
+  #syncRequired() {
+    const required = this.hasAttribute('required')
+    for (const seg of this.#segs) seg.el.setAttribute('aria-required', required ? 'true' : 'false')
   }
 
   #updateFilled() {
@@ -874,6 +977,15 @@ export class AInputTimeElement extends HTMLElementBase {
   }
   formDisabledCallback(disabled: boolean) { this.#formDisabled = disabled; this.#syncDisabled() }
   formStateRestoreCallback(state: string) { this.value = state ?? '' }
+}
+
+for (const name of INPUT_TIME_ARIA) {
+  Object.defineProperty(AInputTimeElement.prototype, ariaAttributeProperty(name), {
+    configurable: true,
+    enumerable: true,
+    get(this: AInputTimeElement) { return this[READ_DELEGATED_ARIA](name) },
+    set(this: AInputTimeElement, value: unknown) { this[WRITE_DELEGATED_ARIA](name, value) },
+  })
 }
 
 export function register_a_input_time() {

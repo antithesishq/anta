@@ -19,7 +19,7 @@ export class ASliderElement extends HTMLElementBase {
     'value-display', 'value-prefix', 'value-suffix',
   ]
 
-  #internals?: ElementInternals
+  private internals?: ElementInternals
   #control: HTMLDivElement
   #railArea: HTMLDivElement
   #fill: HTMLDivElement
@@ -60,7 +60,7 @@ export class ASliderElement extends HTMLElementBase {
 
   constructor() {
     super()
-    this.#internals = this.attachInternals?.()
+    this.internals = this.attachInternals?.()
 
     const shadow = this.attachShadow({ mode: 'open' })
     const style = document.createElement('style')
@@ -395,7 +395,7 @@ export class ASliderElement extends HTMLElementBase {
       element.append(suffixElement)
     }
 
-    const internals = this.#internals
+    const internals = this.internals
     if (!internals) return
     internals.ariaValueMin = String(this.#min)
     internals.ariaValueMax = String(this.#max)

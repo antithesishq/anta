@@ -52,6 +52,30 @@ async function state(page) {
   return page.evaluate(() => ({ value: slider.value, dragging: control.hasAttribute('data-dragging'), commits: log.filter(e => e.type === 'change').length }))
 }
 
+test('Slider exposes live ElementInternals range semantics to accessibility tooling', async t => {
+  const { page } = await pageFor(t)
+  const initial = await page.evaluate(() => ({
+    exposed: slider.internals instanceof ElementInternals,
+    min: slider.internals?.ariaValueMin,
+    max: slider.internals?.ariaValueMax,
+    now: slider.internals?.ariaValueNow,
+    text: slider.internals?.ariaValueText,
+  }))
+  assert.deepEqual(initial, { exposed: true, min: '0', max: '100', now: '35', text: '35' })
+
+  await page.evaluate(() => {
+    slider.setAttribute('value-prefix', '$')
+    slider.value = 45
+  })
+  assert.deepEqual(
+    await page.evaluate(() => ({
+      now: slider.internals?.ariaValueNow,
+      text: slider.internals?.ariaValueText,
+    })),
+    { now: '45', text: '$45' },
+  )
+})
+
 test('Slider ends a normal captured drag released outside its bounds', async t => {
   for (const mode of ['drag-only', 'jump']) {
     const { page, x, y } = await pageFor(t, mode)

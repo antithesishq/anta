@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* Host + token definitions for <a-banner>. The visible box (surface, bottom
      border) lives here so plain consumer CSS overrides it and it paints before the

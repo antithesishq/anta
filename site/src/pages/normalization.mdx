@@ -64,7 +64,9 @@ See `src/reset.css` for the full set. Heading values are duplicated in
 
 ## Cascade layers — how to override
 
-Anta declares this layer order once (in `tokens.css`):
+Every Anta stylesheet reserves the same layer order before defining its rules.
+This keeps granular imports safe when a bundler loads component CSS before
+`tokens.css`:
 
 ```css
 @layer base, anta, components, utilities;

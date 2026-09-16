@@ -28,4 +28,6 @@ site/public/search-index.json
 .dev.pid
 .dev.parallel.pid
 site/public/iframe/
+.hegel/
+tests/.test-output/
 site/public/playground/

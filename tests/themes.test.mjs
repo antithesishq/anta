@@ -16,6 +16,7 @@ before(async () => {
         import { configure } from './src/jsx-runtime'
         import { Button, Checkbox, Input, MenuItem, Select, Switch, Tag } from './src/index'
         import './src/tokens.css'
+        import './src/reset.css'
         import './src/elements/a-button'
         import './src/elements/a-input'
         import './src/elements/a-checkbox'
@@ -28,6 +29,8 @@ before(async () => {
         render(<>
           <Button id="button">Button</Button>
           <em id="italic">Italic</em>
+          <dfn id="defined">Defined</dfn>
+          <em><dfn id="nested-defined">Defined inside italic text</dfn></em>
           <Button id="link" href="/">Link</Button>
           <Button id="custom-button" round={6}>Custom</Button>
           <Input id="input" value="Text" />
@@ -39,7 +42,11 @@ before(async () => {
           <Checkbox id="checkbox-custom" tone="#c026d3" toneScope="selected">Custom</Checkbox>
           <Switch id="switch-all" tone="critical">All</Switch>
           <Switch id="switch-selected" tone="critical" toneScope="selected">Selected only</Switch>
-          <Switch id="switch-default">Default brand</Switch>
+          <Switch id="switch-default">Default neutral</Switch>
+          <Switch id="switch-neutral" tone="neutral">Explicit neutral</Switch>
+          <Switch id="switch-default-on" defaultChecked>Default on</Switch>
+          <Switch id="switch-neutral-on" tone="neutral" defaultChecked>Neutral on</Switch>
+          <Switch id="switch-brand-on" tone="brand" defaultChecked>Brand on</Switch>
           <Switch id="switch-brand" tone="brand">Explicit brand</Switch>
           <a-radio-group id="radio-scope" tone="success" tone-scope="selected" state="a">
             <a-radio id="radio-inherit" value="a"><a-radio-label>Inherited scope</a-radio-label></a-radio>
@@ -132,6 +139,7 @@ test('theme-free typography stays neutral while reference themes restore their f
       return {
         features: style.fontFeatureSettings,
         variations: style.fontVariationSettings,
+        style: style.fontStyle,
         stretch: style.fontStretch,
         numeric: style.fontVariantNumeric,
       }
@@ -139,6 +147,8 @@ test('theme-free typography stays neutral while reference themes restore their f
     return {
       root: read(document.documentElement),
       italic: read(document.getElementById('italic')),
+      defined: read(document.getElementById('defined')),
+      nestedDefined: read(document.getElementById('nested-defined')),
       button: read(document.getElementById('button')),
       input: read(document.getElementById('input').shadowRoot.querySelector('input')),
       tab: read(document.getElementById('tab')),
@@ -154,6 +164,8 @@ test('theme-free typography stays neutral while reference themes restore their f
     assert.equal(value.variations, 'normal')
   }
   assert.equal(withoutTheme.button.stretch, '100%')
+  assert.equal(withoutTheme.defined.style, 'normal')
+  assert.equal(withoutTheme.nestedDefined.style, 'normal')
   assert.equal(withoutTheme.input.stretch, '100%')
   assert.equal(withoutTheme.tab.stretch, '100%')
   assert.equal(withoutTheme.tag.numeric, 'lining-nums tabular-nums')
@@ -167,6 +179,10 @@ test('theme-free typography stays neutral while reference themes restore their f
   const withTheme = await typography()
   assert.equal(withTheme.root.variations, '"slnt" 0')
   assert.equal(withTheme.italic.variations, '"slnt" 11')
+  assert.equal(withTheme.defined.variations, '"slnt" 0')
+  assert.equal(withTheme.nestedDefined.variations, '"slnt" 0')
+  assert.equal(withTheme.defined.style, 'normal')
+  assert.equal(withTheme.nestedDefined.style, 'normal')
   assert.equal(withTheme.button.stretch, '88%')
   assert.equal(withTheme.tab.stretch, '88%')
   assert.equal(withTheme.inputAdornmentStretch, '88%')
@@ -208,6 +224,10 @@ test('tone scope changes resting chrome without changing the tone identity', asy
         switchSelectedBorder: pseudo('switch-selected', '::before', 'border-top-color'),
         switchDefaultBorder: pseudo('switch-default', '::before', 'border-top-color'),
         switchBrandBorder: pseudo('switch-brand', '::before', 'border-top-color'),
+        switchNeutralBorder: pseudo('switch-neutral', '::before', 'border-top-color'),
+        switchDefaultFill: pseudo('switch-default-on', '::before', 'background-color'),
+        switchNeutralFill: pseudo('switch-neutral-on', '::before', 'background-color'),
+        switchBrandFill: pseudo('switch-brand-on', '::before', 'background-color'),
         radioInheritedBorder: pseudo('radio-inherit', '::before', 'border-top-color'),
         radioAllBorder: pseudo('radio-all', '::before', 'border-top-color'),
       }
@@ -215,7 +235,11 @@ test('tone scope changes resting chrome without changing the tone identity', asy
     assert.notEqual(colors.checkboxAllBorder, colors.checkboxSelectedBorder)
     assert.equal(colors.checkboxAllFill, colors.checkboxSelectedFill)
     assert.notEqual(colors.switchAllBorder, colors.switchSelectedBorder)
-    assert.equal(colors.switchDefaultBorder, colors.switchBrandBorder)
+    assert.equal(colors.switchDefaultBorder, colors.switchNeutralBorder)
+    assert.equal(colors.switchDefaultBorder, colors.switchSelectedBorder)
+    assert.notEqual(colors.switchDefaultBorder, colors.switchBrandBorder)
+    assert.equal(colors.switchDefaultFill, colors.switchNeutralFill)
+    assert.notEqual(colors.switchDefaultFill, colors.switchBrandFill)
     assert.notEqual(colors.radioInheritedBorder, colors.radioAllBorder)
   }
 

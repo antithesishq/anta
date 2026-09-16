@@ -23,6 +23,12 @@ the first suggestion (then ↑/↓ move through them), and
 Enter on a highlighted row picks it. Esc or an outside click
 closes the list; clicking the field to place the caret keeps it open.
 
+The focused field is associated directly with the suggestion popup and its
+active option through ARIA element reflection. These relationships do not
+require generated popup or option IDs, so separate application roots cannot
+collide. Explicit ARIA relationships authored on a raw Anta Input take
+precedence.
+
 ## Filtering
 
 `filter` decides how suggestions match the text:

@@ -1,4 +1,4 @@
-import { HTMLElementBase } from "../anta_helpers";
+import { applyAccessibilityRelations, HTMLElementBase } from "../anta_helpers";
 import "./a-switch.css";
 
 type SwitchState = "checked" | "unchecked";
@@ -21,6 +21,7 @@ export class ASwitchElement extends HTMLElementBase {
   private seeded = false;
   private dirty = false;
   private alive = false;
+  private accessibilityObserver?: MutationObserver;
 
   /** Current checked value. Write through the `state` attribute instead. */
   get checked(): boolean {
@@ -45,7 +46,16 @@ export class ASwitchElement extends HTMLElementBase {
       this.seeded = true;
     }
     this.paint();
+    this.syncAccessibilityRelations();
+    this.accessibilityObserver ??= new this.view.MutationObserver(() =>
+      this.syncAccessibilityRelations(),
+    );
+    this.accessibilityObserver.observe(this, { childList: true });
     this.alive = true;
+  }
+
+  disconnectedCallback() {
+    this.accessibilityObserver?.disconnect();
   }
 
   attributeChangedCallback(name: string) {
@@ -111,6 +121,14 @@ export class ASwitchElement extends HTMLElementBase {
     internals.setFormValue?.(
       this.currentState === "checked" ? (this.getAttribute("value") ?? "on") : null,
       this.currentState,
+    );
+  }
+
+  private syncAccessibilityRelations() {
+    applyAccessibilityRelations(
+      this.internals,
+      Array.from(this.querySelectorAll(":scope > a-switch-label")),
+      Array.from(this.querySelectorAll(":scope > a-switch-hint")),
     );
   }
 

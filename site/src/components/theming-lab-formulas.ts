@@ -158,7 +158,7 @@ export const SPECS: ComponentSpec[] = [
       { key: 'baseL', label: 'text-2 L', light: 0.43, dark: 0.77, neutral: { light: 0.3, dark: 0.8 }, ...v3() },
       { key: 'baseC', label: 'text-2 C', light: 0.15, dark: 0.11, neutral: { light: 0.015, dark: 0.015 }, ...v3(0, 0.4) },
       { key: 'tertA', label: 'text-3 α %', light: 82, dark: 80, ...pct },
-      { key: 'quatA', label: 'text-4 α %', light: 60, dark: 60, ...pct },
+      { key: 'quatA', label: 'text-4 α %', light: 66, dark: 62, ...pct },
       { key: 'quinA', label: 'text-5 α %', light: 40, dark: 40, ...pct },
     ],
     groups: [

@@ -3,6 +3,16 @@
 Run `pnpm test` for all root tests, including Markdown disclosure conversion.
 CI uses the runner's installed Chrome with `CAPTURE_TEST_BROWSER_CHANNEL=chrome`.
 
+## Panel
+
+Run `CAPTURE_TEST_BROWSER_CHANNEL=chrome node --test tests/panel.test.mjs` to
+check viewport promotion, state requests, keyboard controls, nested ownership,
+reconnection, and preservation of content, focus, selection, and scroll position.
+Focus checks cover Tab wrapping, shadow controls, dynamic content, nested panels,
+menus and dialogs, external focus attempts, and restoration to the opener.
+Set `PANEL_TEST_BROWSER=firefox` or `PANEL_TEST_BROWSER=webkit` to run the same
+suite in those engines after installing them with the site's Playwright CLI.
+
 ## Slider input
 
 Run `CAPTURE_TEST_BROWSER_CHANNEL=chrome node --test tests/slider-input.test.mjs`

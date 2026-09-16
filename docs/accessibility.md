@@ -4,7 +4,7 @@ A few guidelines for designers and engineers using Anta.
 
 ## Colors
 
-The matrix renders every text level on every background for the selected tone and theme. Each cell shows the WCAG 2 contrast ratio, AA or AAA result for the selected size and weight, and APCA Lc value. The controls change rendering and pass thresholds, not the color-pair ratios. Vision tabs apply SVG-filter and CSS-mask simulations; the numbers use normal-vision math.
+The matrix reads the active theme's `text-*` and `bg-*` tokens and updates when you switch themes. Each cell shows the WCAG 2 contrast ratio, AA or AAA result for the selected size and weight, and APCA Lc value. Transparent text is composited over each background before measurement. Size and weight change pass thresholds, not the color-pair ratios. Vision tabs apply SVG-filter and CSS-mask simulations; the numbers use normal-vision math.
 
 The interactive matrix compares all five text levels with all five background levels for each tone in light and dark mode. It resolves the active CSS palette in the browser, composites transparent text over its background, and reports WCAG 2 contrast and APCA Lc.
 
@@ -43,7 +43,9 @@ The simulator above makes it easy to check a candidate combination across the mo
 
 ## Low-priority text and contrast
 
-The `Text`/`Title` `quaternary` priority (`text-4`) and the `text-5` step (the faintest — used for disabled and hint text across components) sit at intentionally muted contrast, designed for non-essential metadata: timestamps, captions, helper hints, secondary counters. At small sizes (13–15 px) they may not pass WCAG AA against some background levels and tones. Use the matrix above to verify combinations before relying on them for content that has to be readable.
+Neutral `text-4` meets 4.5:1 against `bg-1` in both light and dark modes for Antune and None. This does not extend to every background: Antune's neutral `text-4` is 4.41:1 on light `bg-2` and 4.25:1 on dark `bg-2`.
+
+Named `text-4` tones use `text-2` at 66% opacity in light mode and 62% in dark mode for both themes. They remain fainter than `text-3` and are not tuned to meet 4.5:1. The `text-5` step is also intentionally muted. Check the matrix for each tone and background before choosing a pair for readable content.
 
 `text-1` and `text-2` are the primary-content priorities; reach for them whenever the content matters.
 

@@ -10,8 +10,8 @@
 //
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
-import { useState, useMemo, useId } from '../jsx-runtime'
-import { nativeStateChange, optionPresentationAttrs } from '../anta_helpers'
+import { useState, useMemo } from '../jsx-runtime'
+import { optionPresentationAttrs } from '../anta_helpers'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import type { SelectOption } from './Select'
@@ -97,7 +97,6 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
     ...rest
   } = props
 
-  const rid = useId()
   const controlled = value !== undefined
   // Uncontrolled text lives here (component state re-render is allowed where
   // element DOM mutation isn't).
@@ -106,11 +105,6 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
   // `open` is the intent; `menuOpen` also requires something to show, so an empty
   // (no-match) query never floats a blank popover. The Menu is controlled by it.
   const [open, setOpen] = useState(false)
-  // Combobox cursor id, reported by the menu's `activedescendant` event and
-  // reflected onto the field's `aria-activedescendant` (the element must not
-  // write that light-DOM attribute itself).
-  const [activeId, setActiveId] = useState<string | null>(null)
-
   const options = useMemo(() => suggestions.map(normalizeOpt), [suggestions])
   // Matching mirrors Select's search: a custom function prunes on every render;
   // the built-in matcher (shared `matchQueryRegex`) prunes only once something is
@@ -142,16 +136,13 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
         // `data-menu-search` makes the menu treat THIS anchor as its combobox
         // field (see a-menu's #comboAnchor). The ARIA combobox contract: the field
         // is the `combobox` controlling a `listbox` (the Menu below), with the
-        // active option reflected onto `aria-activedescendant` (a-input delegates
-        // focus, so the role/aria ride the host — the reactive layer sets the
-        // active id; the element never writes it itself).
+        // active option associated directly with the focused native field by
+        // a-menu, without renderer-local IDs.
         data-menu-search=""
         role="combobox"
         aria-haspopup="listbox"
-        aria-controls={`${rid}-list`}
         aria-expanded={menuOpen ? 'true' : 'false'}
         aria-autocomplete="list"
-        aria-activedescendant={menuOpen && activeId ? activeId : undefined}
         onFocus={() => setOpen(true)}
         onInput={(e: any) => {
           setText(e.currentTarget.value)
@@ -162,8 +153,8 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
           // keyup. It prevents the keydown so this controlled menu stays mounted
           // long enough for that click to reach the row and call `pick`. A plain
           // Enter is not prevented: free text is already the value, so close it.
-          // This uses the synchronous DOM event rather than `activeId`, whose
-          // reactive update can lag the menu cursor after a fast ArrowDown + Enter.
+          // This uses the synchronous DOM event because the menu cursor can move
+          // again before a reactive update after a fast ArrowDown + Enter.
           if (e.key === 'Enter' && !e.defaultPrevented) setOpen(false)
         }}
       />
@@ -171,24 +162,19 @@ export const InputAutocomplete = (props: InputAutocompleteProps) => {
           user dismiss (Esc / outside-click) fires onStateChange, which we apply.
           `autoWidth` is omitted so the list floors to the field width. */}
       <Menu
-        id={`${rid}-list`}
         role="listbox"
         open={menuOpen}
         onStateChange={(_e: any, { next }: { next: boolean }) => {
           setOpen(next)
-          if (!next) setActiveId(null)
         }}
-        onactivedescendant={(e: any) => setActiveId(nativeStateChange<{ id: string | null }>(e).detail?.id ?? null)}
       >
         {visible.map((opt, i) => {
           const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(opt, true)
           return (
             <MenuItem
-              key={`${rid}-${opt.value}-${i}`}
+              key={`${opt.value}-${i}`}
               {...optionAttrs}
-              id={`${rid}-o${i}`}
               role="option"
-              aria-selected={activeId === `${rid}-o${i}` ? 'true' : 'false'}
               icon={opt.icon}
               label={highlight(opt.label ?? opt.value, queryRe)}
               hint={opt.hint ? highlight(opt.hint, queryRe) : opt.hint}

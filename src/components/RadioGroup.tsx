@@ -30,7 +30,8 @@ export interface RadioOption extends OptionPresentationProps {
   value: string
   /** The visible label. */
   label?: React.ReactNode
-  /** Secondary text under the label — explanatory copy, like `Input`'s hint. */
+  /** Secondary text under the label and exposed as this radio option's
+   *  accessible description. */
   hint?: React.ReactNode
   /** Disable just this option (skipped by keyboard, dropped from the tab order). */
   disabled?: boolean

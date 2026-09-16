@@ -6,10 +6,10 @@
 // Hooks come from the jsx-runtime indirection (configurable via `configure()`),
 // not a hard `react` import — same rule as `Select` / `RadioGroup`.
 import { useState, useMemo } from '../jsx-runtime'
-import { nativeStateChange, ISOLATE_HINT, optionPresentationAttrs } from '../anta_helpers'
+import { ISOLATE_HINT, ISOLATE_HINT_DELAY, optionPresentationAttrs } from '../anta_helpers'
 import type { BaseProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
-import type { OptionValue, SelectItem, SelectOption } from './Select'
+import type { OptionState, OptionValue, SelectItem, SelectOption } from './Select'
 import { normalizeOpt, matchQueryRegex, matchesQuery } from './select-options'
 import { Button } from './Button'
 import { Menu, type MenuProps } from './Menu'
@@ -50,6 +50,11 @@ export interface SelectFacetSingle extends FacetBase {
   options: SelectItem<OptionValue>[]
   /** Add a search field atop this facet's flyout that filters its options. */
   filter?: FacetFilter
+  /** Replace the option's label, hint, and icon layout in the flyout and global
+   *  search results. Receives the option and its value, selected, and disabled
+   *  state. The row retains selection handling and its indicator. Filtering and
+   *  summaries still use the option data. Return null to use the default layout. */
+  renderOption?: (option: SelectOption<OptionValue>, state: OptionState<OptionValue>) => React.ReactNode
 }
 
 /** Pick **any number** of options. Value: an array of the chosen `value`s
@@ -61,6 +66,11 @@ export interface SelectFacetMultiple extends FacetBase {
   options: SelectItem<OptionValue>[]
   /** Add a search field atop this facet's flyout that filters its options. */
   filter?: FacetFilter
+  /** Replace the option's label, hint, and icon layout in the flyout and global
+   *  search results. Receives the option and its value, selected, and disabled
+   *  state. The row retains selection handling and its indicator. Filtering and
+   *  summaries still use the option data. Return null to use the default layout. */
+  renderOption?: (option: SelectOption<OptionValue>, state: OptionState<OptionValue>) => React.ReactNode
   /** A "Select all" row that toggles every option. On by default — set `false`
    *  to drop it.
    *  @defaultValue true */
@@ -203,11 +213,12 @@ export interface SelectFacetedProps extends Omit<BaseProps, 'children'> {
   /** Replaces the default `Button` with a trigger returned from this function.
    *  Receives a `SelectFacetedTriggerState`. Return exactly one focusable element:
    *  the menu is positioned relative to that element and opens when it is clicked.
-   *  Add `aria-haspopup="menu"` and `aria-expanded={state.open}` to the returned
-   *  element, on a role that supports them (an Anta `Button` already carries
-   *  `role="button"`; otherwise add `role="combobox"`). `className`, `style`, and
-   *  other trigger props apply only to the default Button, so add styling and
-   *  attributes to the returned element. */
+   *  Add `aria-haspopup={searchable ? 'dialog' : 'menu'}` and
+   *  `aria-expanded={state.open}` to the returned element, on a role that
+   *  supports them (an Anta `Button` already carries `role="button"`; otherwise
+   *  add `role="combobox"`). `className`, `style`, and other trigger props apply
+   *  only to the default Button, so add styling and attributes to the returned
+   *  element. */
   renderTrigger?: (state: SelectFacetedTriggerState) => React.ReactNode
 }
 
@@ -322,16 +333,6 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   const [queries, setQueries] = useState<Record<string, string>>({})
   // The global search query (for `searchable`) — resets when the menu closes.
   const [rootQuery, setRootQuery] = useState('')
-  // Combobox active-option ids, reported by each menu's `activedescendant` event and
-  // reflected onto the owning filter field's `aria-activedescendant` (the element must
-  // not write that light-DOM attribute itself). Keyed by field: `__root__` for the
-  // global search, the facet key for a per-facet filter.
-  const [activeIds, setActiveIds] = useState<Record<string, string | null>>({})
-  const onActive = (key: string) => (e: any) => {
-    const id = nativeStateChange<{ id: string | null }>(e).detail?.id ?? null
-    setActiveIds((s) => (s[key] === id ? s : { ...s, [key]: id }))
-  }
-
   const activeCount = facets.reduce((n, f) => n + (isEmpty(current[f.key]) ? 0 : 1), 0)
 
   // Flatten each options facet's leaves once per `facets` change — visibleLeavesOf,
@@ -388,7 +389,6 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           placeholder="Filter…"
           aria-label={`Filter ${facet.label}`}
           aria-autocomplete="list"
-          aria-activedescendant={activeIds[facet.key] ?? undefined}
           onInput={(e: any) => setQueries((s) => ({ ...s, [facet.key]: e.currentTarget.value }))}
         />
       </a-select-header>
@@ -400,11 +400,15 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
   // same option value under two facets stays a distinct row in the flat list.
   const optionRow = (facet: SelectFacetSingle | SelectFacetMultiple, opt: SelectOption<OptionValue>, keyPrefix = '') => {
     const { className: optionClassName, style: optionStyle, ...optionAttrs } = optionPresentationAttrs(opt, true)
+    const selected = facet.kind === 'single'
+      ? current[facet.key] === opt.value
+      : ((current[facet.key] as OptionValue[] | undefined) ?? []).includes(opt.value)
+    const custom = facet.renderOption?.(opt, { value: opt.value, selected, disabled: !!opt.disabled })
     const shared = {
       ...optionAttrs,
-      icon: opt.icon,
-      label: opt.label ?? String(opt.value),
-      hint: opt.hint,
+      icon: custom ? undefined : opt.icon,
+      label: custom ? undefined : opt.label ?? String(opt.value),
+      hint: custom ? undefined : opt.hint,
       tone: opt.tone ?? tone,
       toneScope: opt.toneScope ?? toneScope,
       disabled: opt.disabled,
@@ -419,9 +423,11 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           key={`${keyPrefix}${opt.value}`}
           {...shared}
           selectionIndicator="check"
-          selected={cur === opt.value}
+          selected={selected}
           onSelect={() => setFacet(facet, cur === opt.value ? undefined : opt.value)}
-        />
+        >
+          {custom}
+        </MenuItem>
       )
     }
     const arr = (current[facet.key] as OptionValue[] | undefined) ?? []
@@ -436,14 +442,19 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
         key={`${keyPrefix}${opt.value}`}
         {...shared}
         selectionIndicator="checkbox"
-        selected={arr.includes(opt.value)}
+        selected={selected}
         onSelect={(e: any) =>
           isolable && e?.altKey
             ? setFacet(facet, [opt.value])
             : setFacet(facet, arr.includes(opt.value) ? arr.filter((v) => v !== opt.value) : [...arr, opt.value])
         }
       >
-        {tip && <Tooltip follow {...(hintOnly ? { delay: 700 } : {})}>{tip}</Tooltip>}
+        {custom}
+        {tip && (
+          <Tooltip {...(hintOnly ? { delay: ISOLATE_HINT_DELAY, placement: 'left' as const } : { follow: true })}>
+            {tip}
+          </Tooltip>
+        )}
       </MenuItem>
     )
   }
@@ -545,6 +556,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
 
   const renderEditor = (facet: SelectFacet) => {
     const isOptions = facet.kind === 'single' || facet.kind === 'multiple'
+    const dialog = !isOptions || !!facet.filter
     const body =
       facet.kind === 'single'
         ? renderSingle(facet)
@@ -555,7 +567,10 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
             : renderCustom(facet)
     const hasValue = !isEmpty(current[facet.key])
     return (
-      <Menu onactivedescendant={isOptions && facet.filter ? onActive(facet.key) : undefined}>
+      <Menu
+        role={dialog ? 'dialog' : undefined}
+        aria-label={dialog ? `${facet.label} ${isOptions ? 'options' : 'editor'}` : undefined}
+      >
         {isOptions && filterHeader(facet)}
         {body}
         {/* Clear rides the pinned `footer` slot, so it never scrolls away in a
@@ -567,6 +582,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
               <MenuItem
                 icon="x"
                 label="Clear"
+                role={dialog ? 'button' : undefined}
                 data-menu-open=""
                 onSelect={() => setFacet(facet, undefined)}
               />
@@ -613,7 +629,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           priority={priority}
           size={size}
           disabled={disabled}
-          aria-haspopup="menu"
+          aria-haspopup={searchable ? 'dialog' : 'menu'}
           aria-expanded={open ? 'true' : 'false'}
           className={className}
           style={style}
@@ -630,6 +646,8 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           so `custom` facets can `close()` it; user dismiss (Esc / outside-click)
           fires onStateChange, which we apply — and clears the global search. */}
       <Menu
+        role={searchable ? 'dialog' : undefined}
+        aria-label={searchable ? `${label} options` : undefined}
         placement={placement}
         offset={offset}
         open={open}
@@ -637,7 +655,6 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
           setOpen(next)
           if (!next) setRootQuery('')
         }}
-        onactivedescendant={searchable ? onActive('__root__') : undefined}
       >
         {searchable && (
           // Pinned global search: flattens all options facets while a query is active.
@@ -651,7 +668,6 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
               placeholder={searchPlaceholder}
               aria-label="Filter all facets"
               aria-autocomplete="list"
-              aria-activedescendant={activeIds['__root__'] ?? undefined}
               onInput={(e: any) => setRootQuery(e.currentTarget.value)}
             />
           </a-select-header>
@@ -659,7 +675,17 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
         {searchable && rootQuery.trim()
           ? renderFlatResults()
           : facets.map((facet) => (
-              <MenuItem key={facet.key} submenu icon={facet.icon} label={facet.label}>
+              <MenuItem
+                key={facet.key}
+                submenu
+                icon={facet.icon}
+                label={facet.label}
+                aria-haspopup={
+                  facet.kind === 'text' || facet.kind === 'custom' || !!facet.filter
+                    ? 'dialog'
+                    : 'menu'
+                }
+              >
                 {(() => {
                   const s = summaryOf(facet)
                   return s != null ? (
@@ -679,6 +705,7 @@ export const SelectFaceted = (props: SelectFacetedProps) => {
               <MenuItem
                 icon="filter-x"
                 label={clearAllLabel}
+                role={searchable ? 'button' : undefined}
                 disabled={activeCount === 0}
                 data-menu-open=""
                 onSelect={clearAll}

@@ -1057,6 +1057,7 @@ function FieldControl({
         <Input
           label={label}
           type="number"
+          autoComplete="off"
           size="small"
           value={typeof value === 'number' ? String(value) : ''}
           placeholder={control.defaultValue != null ? String(control.defaultValue) : ''}
@@ -1072,6 +1073,7 @@ function FieldControl({
         <Input
           label={label}
           type="text"
+          autoComplete="off"
           size="small"
           multiline={code || undefined}
           className={code ? s.codeField : undefined}

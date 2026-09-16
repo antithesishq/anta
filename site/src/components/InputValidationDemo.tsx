@@ -36,6 +36,7 @@ export default function InputValidationDemo() {
       <Input
         name="email"
         type="email"
+        autoComplete="email"
         label="Email"
         placeholder="you@example.com"
         required
@@ -46,6 +47,7 @@ export default function InputValidationDemo() {
       <Input
         name="site"
         type="url"
+        autoComplete="url"
         label="Website"
         placeholder="https://…"
         hint={errors.site}
@@ -55,6 +57,7 @@ export default function InputValidationDemo() {
       <Input
         name="age"
         type="number"
+        autoComplete="off"
         label="Age"
         placeholder="18 – 120"
         min="18"

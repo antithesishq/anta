@@ -326,6 +326,8 @@ export const InputDate = ({
           focus in the field (type, or click a day); ArrowDown moves focus into the
           grid via `focusSignal`. Controlled so a day pick / Done can close it. */}
       <Menu
+        role="dialog"
+        aria-label={time ? 'Choose date and time' : 'Choose date'}
         open={open}
         placement={placement ?? 'bottom-start'}
         offset={offset}

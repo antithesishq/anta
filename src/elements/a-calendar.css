@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* The calendar is composed in LIGHT DOM from Anta components, so its styling is
      ordinary CSS targeting those elements — nothing is hidden in a shadow root.
@@ -45,8 +48,8 @@
 
   /* Size — scales the cell box; the day cells + chevrons take the matching Button
      size via the `size` prop, so their text/icons scale too. Cell heights track
-     the same-size Button (small 24 / medium 28 / large 32); weekday + heading type
-     match Button's scale (small 13/16 · medium 15/20 · large 17/24). */
+     the same-size Button (small 24 / medium 28 / large 32). Weekday labels stay
+     at 13px across sizes. */
   .anta-calendar[data-size="small"] {
     --calendar-cell-width: 28px;
     --calendar-cell-height: 24px;
@@ -56,11 +59,9 @@
     --calendar-cell-height: 32px;
   }
   .anta-calendar[data-size="small"] [data-part="weekday"] {
-    font-size: 13px;
     line-height: 16px;
   }
   .anta-calendar[data-size="large"] [data-part="weekday"] {
-    font-size: 17px;
     line-height: 24px;
   }
 
@@ -78,15 +79,11 @@
     align-items: center;
     justify-content: center;
     height: 24px;
-    font-size: 15px;
+    font-size: 13px;
     line-height: 20px;
     font-weight: 400;
-    color: var(--text-4);
+    color: var(--text-3);
     user-select: none;
-  }
-  /* Dim the weekend column headers (Sat/Sun, locale-independent). */
-  a-calendar [data-part="weekday"][data-weekend] {
-    color: var(--text-5);
   }
 
   /* Day cells are <a-button>s — sized to the cell box, number centered. The color
@@ -124,6 +121,10 @@
   /* Adjacent-month spill-over days read quieter. */
   a-calendar a-button[data-part="day-cell"][data-outside]:not([selected]) {
     opacity: 0.5;
+  }
+
+  a-calendar a-button[data-part="day-cell"][data-outside]:not([disabled]):is(:hover, :focus, :focus-visible) {
+    opacity: 1;
   }
 
   /* No calendar-wide dimming when disabled — every day cell, chevron, and the

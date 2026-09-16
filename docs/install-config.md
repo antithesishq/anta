@@ -61,8 +61,9 @@ seed-derived default palette or provide your own theme.
 
 ### Cascade layers
 
-Anta's reset and element CSS use child layers inside `@layer anta`. `tokens.css`
-orders them above preflight resets and below your component and utility layers:
+Anta's reset and element CSS use child layers inside `@layer anta`. Every Anta
+stylesheet reserves the same order, so granular stylesheets remain safe when a
+bundler loads them before `tokens.css`:
 
 ```css
 @layer base, anta, components, utilities;
@@ -72,8 +73,8 @@ orders them above preflight resets and below your component and utility layers:
 `anta.theme` lets the optional reference palette replace component formulas. The
 outer `anta` layer keeps its public cascade position.
 
-To change that order, declare it in CSS loaded **before** `tokens.css`. The
-first declaration fixes a layer's position:
+To change that order, declare it in CSS loaded **before any Anta stylesheet**.
+The first declaration fixes a layer's position:
 
 ```css
 /* your global.css, loaded before anta */

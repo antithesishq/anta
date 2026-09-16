@@ -66,6 +66,11 @@ export class AMenuItemElement extends HTMLElementBase {
     if (!this.internals) return
     if (on) this.internals?.states?.add('active')
     else this.internals?.states?.delete('active')
+    // An autocomplete option uses the cursor as its selected state while DOM
+    // focus stays in the field. Publish it off-DOM with the same property write.
+    this.internals.ariaSelected = this.getAttribute('role') === 'option'
+      ? (on ? 'true' : 'false')
+      : null
   }
   get active(): boolean {
     return this.internals?.states?.has('active') ?? false

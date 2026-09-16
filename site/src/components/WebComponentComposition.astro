@@ -11,16 +11,18 @@ const { kind } = Astro.props
 </div>
 
 <script>
-  type InputElement = HTMLElement & { value: string }
 
   const itemFrom = (event: Event) =>
     event.target instanceof Element ? event.target.closest<HTMLElement>('a-menu-item') : null
 
   function bindSelect(root: HTMLElement) {
-    const field = root.querySelector<InputElement>('a-input')
+    const field = root.querySelector<HTMLElement>('a-button')
     const menu = root.querySelector<HTMLElement>('a-menu')
     if (!field || !menu) return
 
+    menu.addEventListener('statechange', (event) => {
+      field.setAttribute('aria-expanded', String((event as CustomEvent).detail.next === 'open'))
+    })
     menu.addEventListener('click', (event) => {
       const item = itemFrom(event)
       if (!item || item.closest('a-menu') !== menu) return
@@ -28,7 +30,8 @@ const { kind } = Astro.props
         const selected = option === item
         option.toggleAttribute('selected', selected)
       }
-      field.value = item.querySelector('a-menu-item-label')?.textContent?.trim() ?? ''
+      const label = field.querySelector('a-button-label')
+      if (label) label.textContent = item.querySelector('a-menu-item-label')?.textContent?.trim() ?? ''
     })
   }
 

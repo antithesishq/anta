@@ -1,4 +1,6 @@
 import { HTMLElementBase } from '../anta_helpers'
+import { throttle } from 'es-toolkit'
+import { boxObservation } from '../box-observation'
 import type {
   BoxContext,
   BoxFont,
@@ -395,21 +397,21 @@ function rounded(value: number): number {
  * `measurechange` / `contextchange` events, and private `ElementInternals`
  * states. This keeps measurement usable when JSX itself cannot access the DOM.
  *
- * Observation is opt-in by attribute and pauses off screen. `fade` or
- * `observe="size"` turns measurement on, `observe="context"` turns
- * `contextchange` on, `observe="all"` (or a bare `observe`) turns on both, and a box
- * with neither runs no observers at all — not even the shared visibility one.
+ * Observation is opt-in by attribute and pauses off screen. `observe` selects
+ * measurement fields or presets, including `context` and `all`. `fade` keeps
+ * clipping states current without selecting event fields. A box with neither
+ * runs no observers at all, including the shared visibility observer.
  * The `measurement` / `context` / `isTruncated` getters still read on demand.
  *
  * Attributes rather than "is a listener attached" on purpose. A listener tally
  * cannot see listeners added before the element upgrades (the SSR pattern in
  * AGENTS.md), cannot see `once` or `AbortSignal` removals, and churns on every
  * React 19 render, because React removes and re-adds an `on*` prop whenever its
- * identity changes. The JSX wrapper stamps both attributes from its handler
+ * identity changes. The JSX wrapper sets `observe` from its selection and handler
  * props, so this is invisible to anyone using `Box`.
  */
 export class ABoxElement extends HTMLElementBase {
-  static observedAttributes = ['fade', 'observe']
+  static observedAttributes = ['fade', 'observe', 'throttle']
 
   #internals = this.attachInternals?.()
   #store?: BoxWindowStore
@@ -419,6 +421,12 @@ export class ABoxElement extends HTMLElementBase {
   #frame?: number
   #contextQueued = false
   #measurement?: BoxMeasurement
+  #measurementFields = new Set<keyof BoxMeasurement>()
+  #watchContent = false
+  #watchScroll = false
+  // Filtering and throttling compare against the last event, not the last read.
+  #reportedMeasurement?: BoxMeasurement
+  #throttledReport?: ReturnType<typeof throttle<() => void>>
   #context?: BoxContext
   #measuring = false
   #clips = false
@@ -452,9 +460,12 @@ export class ABoxElement extends HTMLElementBase {
      connectedCallback, when there is no store yet. Syncing then would flip the
      started flags while `this.#store?.subscribeContext` silently did nothing,
      and the later connect would see the flags already set and skip it. */
-  attributeChangedCallback(name: string) {
+  attributeChangedCallback(name: string, previous: string | null, current: string | null) {
+    if (previous === current) return
     if (!this.#store) return
     if (name === 'fade' || name === 'observe') this.#sync()
+    if (name === 'throttle') this.#configureThrottle()
+    if (name === 'observe' || name === 'throttle') this.#queueMeasurement()
   }
 
   /** A fresh measurement snapshot. For notifications, prefer `measurechange`:
@@ -492,16 +503,21 @@ export class ABoxElement extends HTMLElementBase {
      visibility: a mode change has to reach an off-screen box too, and the store
      it subscribes to is already refcounted down to nothing. */
   #sync() {
-    // A bare `observe` reads as `all`; an unrecognized value observes nothing,
-    // the same way an unknown `tone` falls through rather than guessing.
-    const observe = this.getAttribute('observe')
-    const both = observe === '' || observe === 'all'
-    const wantsMeasurement = this.hasAttribute('fade') || both || observe === 'size'
-    const wantsContext = both || observe === 'context'
+    const { fields, context: wantsContext, content, scroll } = boxObservation(this.getAttribute('observe'))
+    if (fields.size !== this.#measurementFields.size
+      || [...fields].some(field => !this.#measurementFields.has(field))) {
+      this.#initialMeasurement = true
+      this.#configureThrottle()
+    }
+    this.#measurementFields = fields
+    this.#watchContent = this.hasAttribute('fade') || content
+    this.#watchScroll = this.hasAttribute('fade') || scroll
+    const wantsMeasurement = this.hasAttribute('fade') || fields.size > 0
 
     const measure = this.isConnected && wantsMeasurement && (this.#visible ?? this.hasAttribute('fade'))
     if (measure) this.#startMeasuring()
     else this.#stopMeasuring()
+    if (this.#measuring) this.#syncMeasurementSources()
 
     if (this.isConnected && wantsMeasurement) this.#store?.observeVisibility(this)
     else this.#store?.unobserveVisibility(this)
@@ -536,29 +552,9 @@ export class ABoxElement extends HTMLElementBase {
   #startMeasuring() {
     if (this.#measuring) return
     this.#measuring = true
+    this.#configureThrottle()
     this.#resizeObserver = new this.view.ResizeObserver(this.#queueMeasurement)
     this.#resizeObserver.observe(this)
-    // ResizeObserver only fires when the box itself changes size. A fixed-width
-    // box whose content grows keeps its size while its scrollWidth moves, so
-    // structure and text need watching too.
-    //
-    // Descendant *attributes* deliberately are not watched: a child whose
-    // attribute changes its size is reported by that child's ResizeObserver
-    // entry below, on the actual resize rather than on every attribute that
-    // might cause one. Watching them re-measured on ordinary app churn — 100
-    // aria/class flips that moved nothing cost 57 layout reads. The one case
-    // this gives up is a `display: contents` direct child, which has no box and
-    // so is invisible to ResizeObserver, whose grandchild resizes purely by
-    // attribute; childList and characterData still cover content changes there.
-    this.#contentObserver = new this.view.MutationObserver(this.#queueMeasurement)
-    this.#contentObserver.observe(this, {
-      subtree: true,
-      childList: true,
-      characterData: true,
-    })
-    this.addEventListener('input', this.#queueMeasurement)
-    this.addEventListener('scroll', this.#queueMeasurement, { passive: true })
-    this.addEventListener('load', this.#queueMeasurement, true)
     this.doc.fonts?.addEventListener('loadingdone', this.#queueMeasurement)
     // The states drive the `fade` mask, so they have to be right on the first
     // frame. The matching event waits a frame, so a listener attached mid-render
@@ -570,6 +566,26 @@ export class ABoxElement extends HTMLElementBase {
     this.#queueMeasurement()
   }
 
+  #syncMeasurementSources() {
+    if (this.#watchContent && !this.#contentObserver) {
+      // Child size changes cover descendant attributes without reacting to
+      // every class/ARIA mutation. `display: contents` children have no size
+      // entry; only structure and text changes are observed beneath them.
+      this.#contentObserver = new this.view.MutationObserver(this.#queueMeasurement)
+      this.#contentObserver.observe(this, { subtree: true, childList: true, characterData: true })
+      this.addEventListener('input', this.#queueMeasurement)
+      this.addEventListener('load', this.#queueMeasurement, true)
+    } else if (!this.#watchContent && this.#contentObserver) {
+      this.#contentObserver.disconnect()
+      this.#contentObserver = undefined
+      this.removeEventListener('input', this.#queueMeasurement)
+      this.removeEventListener('load', this.#queueMeasurement, true)
+    }
+    if (this.#watchScroll) this.addEventListener('scroll', this.#queueMeasurement, { passive: true })
+    else this.removeEventListener('scroll', this.#queueMeasurement)
+    this.#syncChildObservation()
+  }
+
   /* A clipping box's scroll size can move because a child's own size moved for
      a reason nothing else here can see: a late upgrade attaching a shadow root,
      or a child resizing from its own internal state (an Expander opening).
@@ -578,7 +594,7 @@ export class ABoxElement extends HTMLElementBase {
      overflow hides nothing — a growing child just grows the box, which its own
      entry already reports — so it observes no children at all. */
   #syncChildObservation() {
-    if (!this.#clips || !this.#measuring) {
+    if (!this.#watchContent || !this.#clips || !this.#measuring) {
       for (const child of this.#observedChildren) this.#resizeObserver?.unobserve(child)
       this.#observedChildren.clear()
       return
@@ -606,6 +622,8 @@ export class ABoxElement extends HTMLElementBase {
     this.#contentObserver = undefined
     if (this.#frame != null) this.view.cancelAnimationFrame(this.#frame)
     this.#frame = undefined
+    this.#throttledReport?.cancel()
+    this.#throttledReport = undefined
     this.removeEventListener('input', this.#queueMeasurement)
     this.removeEventListener('scroll', this.#queueMeasurement)
     this.removeEventListener('load', this.#queueMeasurement, true)
@@ -651,9 +669,7 @@ export class ABoxElement extends HTMLElementBase {
     this.#frame = this.view.requestAnimationFrame(() => {
       this.#frame = undefined
       if (!this.#measuring) return
-      const initial = this.#initialMeasurement
-      this.#initialMeasurement = false
-      this.#reportMeasurement(initial)
+      this.#reportMeasurement()
     })
   }
 
@@ -732,13 +748,42 @@ export class ABoxElement extends HTMLElementBase {
     }
   }
 
-  #reportMeasurement(initial: boolean) {
+  #configureThrottle() {
+    this.#throttledReport?.cancel()
+    this.#throttledReport = undefined
+    const interval = Number(this.getAttribute('throttle'))
+    if (this.#measuring && Number.isFinite(interval) && interval > 0) {
+      this.#throttledReport = throttle(this.#emitMeasurement, Math.min(interval, 2_147_483_647))
+    }
+  }
+
+  #hasMeasurementChange(current: BoxMeasurement): boolean {
+    if (this.#measurementFields.size === 0) return false
+    const previous = this.#reportedMeasurement
+    if (!previous || this.#initialMeasurement) return true
+    for (const field of this.#measurementFields) {
+      if (previous[field] !== current[field]) return true
+    }
+    return false
+  }
+
+  #reportMeasurement() {
     const current = this.#readMeasurement()
-    const previous = this.#measurement
     this.#measurement = current
     this.#setMeasurementStates(current)
     this.#syncChildObservation()
-    if (!initial && same(previous, current)) return
+    if (!this.#hasMeasurementChange(current)) return
+    if (this.#throttledReport) this.#throttledReport()
+    else this.#emitMeasurement()
+  }
+
+  #emitMeasurement = () => {
+    const current = this.#measurement
+    if (!this.#measuring || !current || !this.#hasMeasurementChange(current)) return
+    const initial = this.#initialMeasurement
+    const previous = this.#reportedMeasurement
+    this.#initialMeasurement = false
+    this.#reportedMeasurement = current
     const detail: BoxMeasurementChange = {
       changed: initial ? { ...current } : changed(previous, current),
       current,

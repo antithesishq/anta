@@ -52,7 +52,7 @@
   gap: 12px;
 }
 
-.body:not(:empty) {
+.body:has(> :not(:empty)) {
   padding: 12px 20px 16px;
 }
 

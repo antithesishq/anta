@@ -9,13 +9,15 @@ import type {
   BoxContextChange,
   BoxDisplay,
   BoxMeasurementChange,
+  BoxObservation,
 } from '../box-types'
+import { boxObservation } from '../box-observation'
 import type { BaseProps } from '../general_types'
 
 /** JSX props for the observing light-DOM `<a-box>` container. */
 export interface BoxProps extends BaseProps {
-  /** Layout model for the host. All other layout, sizing, mask, and shadow
-   * properties stay ordinary `className` / `style` CSS on the Box itself.
+  /** Layout model for the host. Sizing, alignment, mask, and shadow properties
+   * stay ordinary `className` / `style` CSS on the Box itself.
    * @defaultValue block */
   display?: BoxDisplay
   /** Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a
@@ -26,12 +28,28 @@ export interface BoxProps extends BaseProps {
    * pixels; a string is any CSS length or two-value gap (`'1rem'`,
    * `'8px 16px'`). Applies while the Box is a flex or grid container. */
   gap?: number | string
-  /** What the Box watches, when a handler is not what turns it on. `'size'`
-   * keeps the overflow CSS states (`:state(clipped-x)`, `:state(scrollable-y)`,
-   * …) current — reach for it when your own CSS is the only reader. `'context'`
-   * and `'all'` are there for symmetry; passing `onMeasureChange` or
-   * `onContextChange` already turns the matching half on. */
-  observe?: 'size' | 'context' | 'all'
+  /** Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept
+   * CSS shorthand, percentages, and custom properties. Omission adds no style. */
+  padding?: number | string
+  /** Outer spacing, matching CSS `margin`. Numbers are pixels; strings accept
+   * CSS shorthand, `auto`, negative lengths, and custom properties.
+   * Omission adds no style. */
+  margin?: number | string
+  /** One selection or an array of selections, in any order. `'size'` watches width
+   * and height; `'context'` watches rendering context; `'overflow'` watches
+   * content dimensions and clipping. `'edges'` reports which edges hide content;
+   * `'scroll'` reports offsets, potentially every frame; `'all'` selects everything.
+   * Selections are independent: use `['size', 'edges']` to combine them.
+   * A measurement handler implies `'size'` when no measurement is selected;
+   * a context handler adds `'context'`. Size skips content and scroll observers;
+   * overflow adds content observation; hidden edges and scroll add scroll reads.
+   * Without handlers or `fade`, omission stays idle. */
+  observe?: BoxObservation | readonly BoxObservation[]
+  /** Minimum interval between measurement events, in milliseconds. The first
+   * report has no added delay; a trailing report delivers the latest values.
+   * Active observers and CSS clipping states are not throttled.
+   * @defaultValue 0 */
+  throttle?: number
   /** Fades out every edge that currently hides clipped content, and drops the
    * fade from an edge once the reader scrolls to it. */
   fade?: boolean
@@ -39,8 +57,8 @@ export interface BoxProps extends BaseProps {
    * length.
    * @defaultValue 24 */
   fadeSize?: number | string
-  /** Fired after Box geometry or its content-overflow state changes. `detail`
-   * contains the changed fields and a full current snapshot. */
+  /** Fired when a selected measurement field changes. `detail` contains all
+   * fields changed since the last event and a full current snapshot. */
   onMeasureChange?: (
     event: CustomEvent<BoxMeasurementChange>,
     detail: BoxMeasurementChange,
@@ -53,18 +71,17 @@ export interface BoxProps extends BaseProps {
   ) => void
 }
 
-/** Merges the `observe` prop with the halves the handlers imply. */
+/** Adds handler defaults without widening an explicit measurement selection. */
 function observeAttr(
-  observe: 'size' | 'context' | 'all' | undefined,
+  observe: BoxProps['observe'],
   onMeasureChange: unknown,
   onContextChange: unknown,
-): 'size' | 'context' | 'all' | undefined {
-  const size = observe === 'size' || observe === 'all' || onMeasureChange != null
-  const context = observe === 'context' || observe === 'all' || onContextChange != null
-  if (size && context) return 'all'
-  if (size) return 'size'
-  if (context) return 'context'
-  return undefined
+): string | undefined {
+  const tokens = [...new Set(observe == null ? [] : typeof observe === 'string' ? [observe] : observe)]
+  const { fields, context } = boxObservation(tokens.join(' ') || null)
+  if (onMeasureChange != null && fields.size === 0) tokens.push('size')
+  if (onContextChange != null && !context) tokens.push('context')
+  return tokens.join(' ') || undefined
 }
 
 /**
@@ -86,7 +103,10 @@ export const Box = ({
   display,
   round,
   gap,
+  padding,
+  margin,
   observe,
+  throttle,
   fade,
   fadeSize,
   onMeasureChange,
@@ -96,22 +116,26 @@ export const Box = ({
   children,
   ...rest
 }: BoxProps) => {
+  let boxStyle = roundStyle(round, '--box-round', style)
+  boxStyle = lengthStyle(gap, '--box-gap', boxStyle)
+  boxStyle = lengthStyle(padding, '--box-padding', boxStyle)
+  boxStyle = lengthStyle(margin, '--box-margin', boxStyle)
+  boxStyle = lengthStyle(fade ? fadeSize : undefined, '--box-fade-size', boxStyle)
   return (
     <a-box
       display={display === 'block' ? undefined : display}
       round={roundAttr(round)}
       gap={gap != null ? '' : undefined}
+      padding={padding != null ? '' : undefined}
+      margin={margin != null ? '' : undefined}
       observe={observeAttr(observe, onMeasureChange, onContextChange)}
+      throttle={throttle}
       fade={fade ? '' : undefined}
       fade-size={fade && fadeSize != null ? cssLength(fadeSize) : undefined}
       onmeasurechange={customEventHandler(onMeasureChange)}
       oncontextchange={customEventHandler(onContextChange)}
       class={className}
-      style={lengthStyle(
-        fade ? fadeSize : undefined,
-        '--box-fade-size',
-        lengthStyle(gap, '--box-gap', roundStyle(round, '--box-round', style)),
-      )}
+      style={boxStyle}
       {...rest}
     >
       {children}

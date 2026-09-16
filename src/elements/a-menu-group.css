@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   a-menu-group:not(:defined) {
     display: none;
@@ -18,7 +21,7 @@
     color: var(--text-5);
     font-size: 0.75em;
     font-weight: 600;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     user-select: none;
   }

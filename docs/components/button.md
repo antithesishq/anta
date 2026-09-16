@@ -166,8 +166,8 @@ name "trash". Pass your own `aria-label` to override.
 ### Children
 
 ```tsx
-<Button tone="brand" label="Save" icon="check">
-  <span style={{ opacity: 0.7 }}>⌘S</span>
+<Button tone="brand" label="Save" icon="check" aria-keyshortcuts="Meta+s">
+  <kbd aria-hidden="true" style={{ font: 'inherit', fontVariationSettings: 'inherit', opacity: 0.7 }}>⌘S</kbd>
 </Button>
 ```
 

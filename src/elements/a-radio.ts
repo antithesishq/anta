@@ -22,6 +22,27 @@ import "./a-radio.css";
 // ─────────────────────────────────────────────────────────────────────────────
 export class ARadioElement extends SelectableChildElement {
   protected ariaProp = "ariaChecked" as const;
+  private accessibilityObserver?: MutationObserver;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.syncAccessibilityRelations();
+    this.accessibilityObserver ??= new this.view.MutationObserver(() =>
+      this.syncAccessibilityRelations(),
+    );
+    this.accessibilityObserver.observe(this, { childList: true });
+  }
+
+  disconnectedCallback() {
+    this.accessibilityObserver?.disconnect();
+  }
+
+  private syncAccessibilityRelations() {
+    this.applyAccessibilityRelations(
+      Array.from(this.querySelectorAll(":scope > a-radio-label")),
+      Array.from(this.querySelectorAll(":scope > a-radio-hint")),
+    );
+  }
 }
 
 export function register_a_radio() {

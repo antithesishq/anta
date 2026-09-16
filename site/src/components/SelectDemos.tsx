@@ -517,7 +517,7 @@ function SelectionSummary({ items, depth = 0 }: { items: SelectedItem[]; depth?:
         }
         const leaf = it as SelectOption & { selected: boolean }
         return (
-          <div key={leaf.value} style={{ marginInlineStart: `${depth * 14}px`, display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 0', color: leaf.selected ? 'var(--text-1)' : 'var(--text-4)' }}>
+          <div key={leaf.value} style={{ marginInlineStart: `${depth * 14}px`, display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 0', color: leaf.selected ? 'var(--text-1)' : 'var(--text-3)' }}>
             <Icon shape={leaf.selected ? 'circle-check' : 'blank'} size={14} />
             <span>{leaf.label ?? leaf.value}</span>
           </div>

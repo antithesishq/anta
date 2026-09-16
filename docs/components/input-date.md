@@ -212,9 +212,15 @@ the standard constraint-validation pipeline.
 
 ## Accessibility
 
+The focused Input field is associated directly with its Calendar dialog through
+ARIA element reflection. The relationship does not require a generated popup ID,
+so separate application roots can render InputDate instances without ID
+collisions. An explicitly authored relationship on a raw Anta Input takes
+precedence.
+
 The calendar is a labelled **group** of day buttons, a flat grid rather than a
-nested `grid`/`row`/`gridcell` tree. The group is named by the visible month
-(`aria-labelledby`). Each day is a `<button>` whose `aria-label` is its full date
+nested `grid`/`row`/`gridcell` tree. The visible month names the group directly.
+Each day is a `<button>` whose `aria-label` is its full date
 including weekday ("Sunday, June 28, 2026"), with `aria-pressed` on the selected day
 and `aria-current="date"` on today. The decorative weekday headers are `aria-hidden`,
 since each day already names its weekday. A roving `tabindex` keeps a single tab

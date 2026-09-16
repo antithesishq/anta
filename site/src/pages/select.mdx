@@ -18,7 +18,7 @@ import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDe
 field shows the selected value. Click the field to open the menu. The menu
 closes when a user clicks outside it or presses <kbd>Esc</kbd>.
 
-Select uses an [Input](/input/) for its field and a [Menu](/menu/) for its
+Select uses an [Anta Button](/button/) for its field and a [Menu](/menu/) for its
 dropdown. Pass `options` as an array of strings or objects. Use `value` with
 **`onValueChange`** to control the selection, or use `defaultValue` for an
 uncontrolled Select.
@@ -120,7 +120,8 @@ its box goes mixed when only some are on. Pass **`selectAll={false}`** to drop i
 
 In a multi-select, **`Alt`+Click** a row to clear every other selection and
 select that row. On macOS, use <kbd>Option</kbd> instead of <kbd>Alt</kbd>.
-The standard tooltip describes this shortcut when the pointer is over a row.
+After hovering for 700ms, the standard tooltip describes this shortcut beside
+the row. Moving to another row restarts the delay.
 Set `SelectOption.tooltip` to replace it, or to `''` to hide it. The shortcut
 is available only when `selectAll` is enabled, so `selectAll={false}` removes it.
 
@@ -168,12 +169,14 @@ option's **value, label, or hint**. It's **whitespace-flexible** (a typed space
 matches any run of whitespace) and **bolds the matched substring** in the results.
 Pass a **function** `(option, query) => boolean` for custom matching (no highlight).
 
-With `filter`, Select behaves as a **combobox**. Opening it focuses the search
-field. <kbd>↑</kbd> and <kbd>↓</kbd> move through matching options while focus
-stays in the field. <kbd>Enter</kbd> selects the active option, and <kbd>Esc</kbd>
-closes the menu. The search field stays visible while the results scroll. A
-"No matches" row appears when nothing matches, and the query resets when the
-menu closes. In `multiple` mode, `selectAll` affects only the visible matches.
+With `filter`, the trigger opens a dialog containing the search field and an
+options menu. This keeps the textbox outside the menu in the accessibility tree.
+Opening the dialog focuses the search field. <kbd>↑</kbd> and <kbd>↓</kbd> move
+through matching options while focus stays in that field. <kbd>Enter</kbd>
+selects the active option, and <kbd>Esc</kbd> closes the dialog. The search field
+stays visible while the results scroll. A "No matches" row appears when nothing
+matches, and the query resets when the dialog closes. In `multiple` mode,
+`selectAll` affects only the visible matches.
 
 </Col>
 </Columns>
@@ -322,7 +325,7 @@ section marks the leaf everywhere it occurs (selection is value-keyed).
 </Col>
 <Col>
 
-The trigger is an [Input](/input/), so it inherits the field props.
+The trigger is an [Anta Button](/button/) styled as a field.
 **`size`** (`small` · `medium` · `large`) sets the height and type scale.
 **`status`** paints a validation tone on the border, `hint`, and chevron, and
 prefixes a glyph (`info` / `success` / `warning` / `critical`); **`statusIcon`**
@@ -341,7 +344,7 @@ the glyph and, for `critical`, validity. See the
 ## Customization
 
 Select has no `<a-select>` element. The React and Preact wrapper coordinates an
-Input and a Menu. You can use the wrapper, render custom option content with
+Anta Button and a Menu. You can use the wrapper, render custom option content with
 `renderOption`, replace its selection mark with `renderIndicator`, or build the
 same interaction from the raw elements.
 
@@ -355,12 +358,13 @@ uses the same values as `Menu` and still flips or clamps when space is limited.
 
 ### Build it from elements
 
-The wrapper renders a read-only `<Input>` and a `<Menu>`. It updates the field
+The wrapper renders a `<Button>` immediately followed by a `<Menu>`, with a label
+and hint inside an `<a-select-field>` layout wrapper. It updates the field
 and each option's `selected` state from the value, and reports a pick through
 `onValueChange`. Menu handles positioning, dismissal, and keyboard navigation.
 
 The following example shows the equivalent markup without React or Preact. Place
-the Menu directly after the Input so it can use that Input as its trigger.
+the Menu directly after the Button so it can use that Button as its trigger.
 
 <Preview>
   <SelectBasicDemo client:visible={{ rootMargin: '200px' }} />
@@ -369,12 +373,10 @@ the Menu directly after the Input so it can use that Input as its trigger.
 ```html folded
 <!-- `.select` scopes this example's CSS. Use an application selector instead. -->
 <div class="select" style="width: 240px">
-  <!-- Read-only field trigger; `dim-actions` dims the chevron at rest. The
-       trailing slot supplies the inline inset (--input-trailing-inset); the
-       transition on the chevron matches <Select>. -->
-  <a-input readonly dim-actions value="stream" aria-haspopup="menu">
-    <a-icon slot="trailing" shape="chevron-down" style="transition: transform 150ms ease"></a-icon>
-  </a-input>
+  <a-button role="button" tabindex="0" aria-label="Field" aria-haspopup="menu" aria-expanded="false">
+    <a-button-label>stream</a-button-label>
+    <a-icon shape="chevron-down" aria-hidden="true" style="transition: transform 150ms ease"></a-icon>
+  </a-button>
   <a-menu role="menu">
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
@@ -384,12 +386,14 @@ the Menu directly after the Input so it can use that Input as its trigger.
 <script type="module">
   import '@antadesign/anta/elements'
   const root = document.querySelector('.select')
-  const field = root.querySelector('a-input')
+  const field = root.querySelector('a-button')
   const menu = root.querySelector('a-menu')
   const chevron = field.querySelector('a-icon')
   // Flip the chevron with the menu's open state (as <Select> does).
   menu.addEventListener('statechange', (e) => {
-    chevron.style.transform = e.detail.next === 'open' ? 'rotate(180deg)' : ''
+    const open = e.detail.next === 'open'
+    field.setAttribute('aria-expanded', String(open))
+    chevron.style.transform = open ? 'rotate(180deg)' : ''
   })
   // On pick: mark the row selected + reflect its label into the field.
   menu.addEventListener('click', (e) => {
@@ -400,12 +404,16 @@ the Menu directly after the Input so it can use that Input as its trigger.
       el.toggleAttribute('selected', selected)
       el.setAttribute('aria-checked', String(selected))
     })
-    field.value = item.querySelector('a-menu-item-label').textContent
+    field.querySelector('a-button-label').textContent = item.querySelector('a-menu-item-label').textContent
   })
 </script>
 ```
 
 The React and Preact `Select` wrapper performs those updates for you.
+Because the Menu directly follows the Anta Button, it associates the focused
+field with the popup through a direct ARIA element reference. No popup ID is
+required. If a custom composition supplies its own `aria-controls`, Anta keeps
+that authored relationship.
 
 ### Custom option rendering
 
@@ -610,7 +618,7 @@ empty selection still shows the `placeholder` — and takes the resolved `select
 options (`selected.length` is the count). Return `undefined` for any case you'd rather
 leave to the default, as above for the single-label case.
 
-Return a **string**: it flows into the same read-only field the default uses, so a
+Return a **string**: it flows into the same Button label the default uses, so a
 long summary **ellipsizes at the field's width** the way a long value does
 (`Engineering, Design, … `). For rich content — chips, several nodes — reach for
 `renderTrigger` below, which replaces the whole field.
@@ -689,7 +697,8 @@ focusable element, such as the Anta `Button` in this example. Select positions
 the menu relative to that element and opens it when it is clicked. A fragment,
 multiple sibling elements, or a non-focusable wrapper prevents Select from finding
 the trigger. It logs a console warning when that happens. Add
-`aria-haspopup="menu"` and `aria-expanded={state.open}` to the element.
+`aria-haspopup={filter ? 'dialog' : 'menu'}` and
+`aria-expanded={state.open}` to the element.
 
 `state` includes `open`, `value`, `selected`, `disabled`, and `icon`. `selected`
 is the resolved option list, so `selected.length` is the multi-select count. The
@@ -922,17 +931,17 @@ inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-`Select` has no host element. Compose a read-only `<a-input>` trigger with an
+`Select` uses a layout wrapper. Compose an `<a-button>` trigger with an
 `<a-menu>` of options. The menu owns opening and dismissal; the short controller
 reflects a picked option into the field and selected row.
 
 <Preview align="stretch">
   <WebComponentComposition kind="select">
     <div style={{ display: 'grid', gap: '4px', width: '280px' }}>
-      <a-input readonly value="stream">
-        <span slot="label">Output</span>
-        <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
-      </a-input>
+      <a-button role="button" tabindex="0" aria-label="Output" aria-haspopup="menu" aria-expanded="false">
+        <a-button-label>stream</a-button-label>
+        <a-icon shape="chevron-down" aria-hidden="true"></a-icon>
+      </a-button>
       <a-menu role="menu">
         <a-menu-item role="menuitem" tabindex="0" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
         <a-menu-item role="menuitem" tabindex="0" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
@@ -943,10 +952,10 @@ reflects a picked option into the field and selected row.
 
 ```html
 <div data-anta-composition="select" style="display: grid; gap: 4px; width: 280px">
-  <a-input readonly value="stream">
-    <span slot="label">Output</span>
-    <span slot="trailing"><a-icon shape="chevron-down" aria-hidden="true"></a-icon></span>
-  </a-input>
+  <a-button role="button" tabindex="0" aria-label="Output" aria-haspopup="menu" aria-expanded="false">
+    <a-button-label>stream</a-button-label>
+    <a-icon shape="chevron-down" aria-hidden="true"></a-icon>
+  </a-button>
   <a-menu role="menu">
     <a-menu-item role="menuitem" tabindex="0" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
     <a-menu-item role="menuitem" tabindex="0" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
@@ -956,8 +965,11 @@ reflects a picked option into the field and selected row.
   import '@antadesign/anta/elements'
 
   const root = document.querySelector('[data-anta-composition="select"]')
-  const field = root.querySelector('a-input')
+  const field = root.querySelector('a-button')
   const menu = root.querySelector('a-menu')
+  menu.addEventListener('statechange', (event) => {
+    field.setAttribute('aria-expanded', String(event.detail.next === 'open'))
+  })
 
   menu.addEventListener('click', (event) => {
     const item = event.target instanceof Element ? event.target.closest('a-menu-item') : null
@@ -966,7 +978,7 @@ reflects a picked option into the field and selected row.
       const selected = option === item
       option.toggleAttribute('selected', selected)
     })
-    field.value = item.querySelector('a-menu-item-label').textContent.trim()
+    field.querySelector('a-button-label').textContent = item.querySelector('a-menu-item-label').textContent.trim()
   })
 </script>
 ```
@@ -1022,17 +1034,18 @@ corners.
 
 <Disclosure title="Styling">
 
-Select is an [Input](/input/) plus a [Menu](/menu/), so it
-inherits both surfaces' hooks. Reach for props first, then plain CSS or `::part` for
+Select composes an [Anta Button](/button/) and a [Menu](/menu/). Reach for props first, then plain CSS or `::part` for
 the rest. Don't override an element's internal `--*` output tokens.
 
 **Selection color** routes through `tone`: set it per option or on the Select as a
 default, then use `toneScope="selected"` for chosen rows only. It takes a named tone or any CSS color (a custom color keeps
 its hue, with lightness pinned to the brand text).
 
-**The field** is styled through Input's props (`size`, `status`, `round`) and its
-`::part`s; set its width with `style` / `className` (forwarded to the field). **The
-popover** takes Menu's `::part(menu)`.
+**The field** takes `size`, `status`, and `round`. Set its width with `style` /
+`className`, forwarded to the `<a-select-field>` wrapper. Style the trigger through
+`a-select-field > a-button` and its `a-button-label`. The trigger uses
+`:focus-visible` for its focus ring and ellipsizes long values. **The popover**
+takes Menu's `::part(menu)`.
 
 ```tsx folded
 // Tone the selection; give the trigger a width.
@@ -1042,30 +1055,29 @@ popover** takes Menu's `::part(menu)`.
 **Borderless trigger.** The field's border is an inset `box-shadow`, so you can drop
 it *at rest* and let the standard hover / focus shadow return on its own; no need to
 re-declare it. Pair that with hiding the chevron for a field that reads as plain text
-until you reach for it. Hide the chevron by targeting the trailing `a-icon` (its slot
-wrapper is inline-`display:contents`, so hit the icon itself).
+until you reach for it. Hide the chevron by targeting `a-select-chevron`.
 
 <Preview>
   <SelectGhostDemo client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     /* '.ghost-select' is this demo's wrapper; swap your own selector. */
-    .ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
+    .ghost-select a-select-field > a-button:not(:hover):not(:focus-visible) {
       box-shadow: none;
     }
-    .ghost-select a-input::part(input) { text-align: center; }
-    .ghost-select a-input [slot="trailing"] a-icon { display: none; }
+    .ghost-select a-select-field > a-button > a-button-label { text-align: center; }
+    .ghost-select a-select-chevron { display: none; }
   `}</style>
 </Preview>
 
 ```css folded
 /* Drop the resting border-shadow; the standard hover / focus shadow still shows. */
-.ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
+.ghost-select a-select-field > a-button:not(:hover):not(:focus-visible) {
   box-shadow: none;
 }
 /* Center the chosen label in the field. */
-.ghost-select a-input::part(input) { text-align: center; }
-/* The chevron's slot wrapper is inline display:contents; hide the icon itself. */
-.ghost-select a-input [slot="trailing"] a-icon { display: none; }
+.ghost-select a-select-field > a-button > a-button-label { text-align: center; }
+/* Hide the chevron. */
+.ghost-select a-select-chevron { display: none; }
 ```
 
 </Disclosure>

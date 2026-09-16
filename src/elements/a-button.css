@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* `<a-button>` is Anta's own tag, so it's always styled. The anchor
      variant keys off `role="button"` — a *generic* ARIA role that any

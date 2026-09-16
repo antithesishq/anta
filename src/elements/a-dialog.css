@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 /* Host + token definitions for <a-dialog>. The shadow <style> (in a-dialog.ts)
    only REFERENCES these --dialog-* tokens with literal fallbacks, so these
    host-level definitions win and stay overridable by a consumer. Everything

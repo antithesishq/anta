@@ -131,9 +131,11 @@ The underlying `<a-tooltip>` works in plain HTML too, as a child of any element:
 
 ### Adjacent and nested tooltips
 
-Only one tooltip shows at a time. Moving between **adjacent** anchors hands off
-cleanly — the outgoing bubble cross-fades out as the next fades in (no blink).
-With `follow` tooltips (used below to show it), the outgoing bubble also keeps
+Only one tooltip shows at a time. Moving between **adjacent** anchors with
+`follow` tooltips hands off cleanly — the outgoing bubble cross-fades out as the
+next fades in (no blink). If either tooltip does not have `follow`, the next
+tooltip waits for its configured delay. With `follow` tooltips (used below to
+show it), the outgoing bubble also keeps
 trailing the cursor and fades by distance from its anchor (transparent by ~100px
 away), so a near hop reads as a smooth cross-fade and a far one is already gone.
 With **nested** anchors, the inner (descendant) tooltip wins while you're over

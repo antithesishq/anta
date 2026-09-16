@@ -11,6 +11,7 @@ export type PlotHostOptions<Input> = {
     commit_mode: 'immediate' | 'throttled'
     resolve_hover(input: Input): PlotSurfaceMouseInput | null
     schedule(): void
+    viewport_commit?(): void
     hover(changed: boolean): void
     clear_hover(): void
     pointer(): void
@@ -25,13 +26,19 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
     measurement: Dimensions | null = null
     environment: Omit<PlotEnvironment, 'width' | 'height'> | null = null
     #draw_host: PlotDrawHost | null = null
+    #last_attempted_args: PlotArgs<Content> | undefined
+    #last_update_succeeded = false
+    #invalid_size_reported = false
 
     constructor(private readonly options: PlotHostOptions<Input>) {
         this.interactions = create_interaction_coordinator({
             controller: () => this.controller,
             commit_mode: options.commit_mode,
             resolve_hover: options.resolve_hover,
-            on_viewport_commit: () => options.schedule(),
+            on_viewport_commit: () => {
+                options.viewport_commit?.()
+                options.schedule()
+            },
             on_viewport_report: options.viewport,
             on_hover_update: options.hover,
             on_hover_clear: options.clear_hover,
@@ -41,6 +48,12 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
     }
 
     update(args: PlotArgs<Content>): boolean {
+        // Environment updates cannot repair invalid arguments; retry only when their reference changes.
+        if (args === this.#last_attempted_args) return this.#last_update_succeeded
+
+        this.#last_attempted_args = args
+        this.#last_update_succeeded = false
+
         if (this.controller === null) {
             try {
                 this.controller = new PlotController(args, this.options.error)
@@ -51,7 +64,8 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
         } else {
             this.controller.update_plot_args(args)
         }
-        return this.controller.plot_args === args
+        this.#last_update_succeeded = this.controller.plot_args === args
+        return this.#last_update_succeeded
     }
 
     attach(host: PlotDrawHost | null): void {
@@ -70,7 +84,23 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
         const controller = this.controller
         if (controller === null || this.environment === null) return null
         const dimensions = resolve_canvas_size(controller.template, this.measurement)
-        if (dimensions === null || dimensions.width <= 0 || dimensions.height <= 0) return null
+        if (dimensions === null) return null
+        if (dimensions.width <= 0 || dimensions.height <= 0) {
+            if (!this.#invalid_size_reported) {
+                this.#invalid_size_reported = true
+                this.options.error({
+                    phase: 'compose',
+                    error: new Error(
+                        `plot: canvas resolved to ${dimensions.width}px wide by ${dimensions.height}px tall. `
+                        + 'Width and height must both be positive. Set positive width/height arguments or fix '
+                        + "the parent container's sizing (common causes: display: none, a flex column with no "
+                        + "min-height, or a parent that hasn't been laid out yet).",
+                    ),
+                })
+            }
+            return null
+        }
+        this.#invalid_size_reported = false
         const environment = { ...dimensions, ...this.environment }
         let plot = controller.compose(environment, controller.interactions.committed_viewport)
         if (plot === null) return null

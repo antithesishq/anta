@@ -335,3 +335,20 @@ for (const renderer of ['react', 'preact']) {
         }
     })
 }
+
+test('rejected arguments retain wrapper dimensions and valid updates can remove pins', async t => {
+    const page = await pageFor(t)
+    await page.evaluate(() => renderPlot({ args: { width: 420, height: 260 } }))
+    await page.waitForFunction(() => document.querySelector('canvas').width === 420)
+
+    await page.evaluate(() => renderPlot({ args: { width: 200, height: 180, series: null } }))
+    await page.waitForFunction(() => stats.errors.includes('template'))
+    assert.deepEqual(await page.locator('[data-plot]').evaluate(el => [el.style.width, el.style.height]),
+        ['420px', '260px'])
+    assert.equal(await page.locator('canvas').first().evaluate(el => el.width), 420)
+
+    await page.evaluate(() => renderPlot())
+    await page.waitForFunction(() => document.querySelector('canvas').width === 600)
+    assert.deepEqual(await page.locator('[data-plot]').evaluate(el => [el.style.width, el.style.height]),
+        ['100%', '100%'])
+})

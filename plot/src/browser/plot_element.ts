@@ -20,6 +20,7 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
         get #controller() { return this.#host.controller }
         #tooltip_renderer: PlotTooltipRenderer<T> | undefined
         #args: PlotArgs<T> | undefined
+        #viewport_callback: PlotArgs<T>['on_viewport_change']
         #pending_frame_id: number | null = null
         #measurement: BoxMeasurement | null = null
         #context: BoxContext | null = null
@@ -34,10 +35,11 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
         readonly #host = new PlotHost<T, { event: MouseEvent; offset: PointerOffset | undefined }>({
             commit_mode: 'immediate',
             schedule: () => this.#schedule(),
+            viewport_commit: () => this.#clear_hover(),
             error: failure => this.#emit('ploterror', failure),
             viewport: change => {
                 this.#emit('viewportchange', change)
-                this.#controller?.template.on_viewport_change?.(change)
+                this.#viewport_callback?.(change)
             },
             resolve_hover: ({ event, offset }) => {
                 if (!this.isConnected) return null
@@ -174,6 +176,8 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             if (value === undefined) {
                 return
             }
+            // Event handlers follow the consumer's latest state even if the plot retains an older template.
+            this.#viewport_callback = value.on_viewport_change
             if (!this.#host.update(value)) return
             this.#attach_canvas()
             this.#args = value

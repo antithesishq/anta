@@ -26,6 +26,8 @@ export interface PlotProps<Content = React.ReactNode> extends Omit<BaseProps, 'c
 }
 
 type PlotView<Content> = {
+    width: number | undefined
+    height: number | undefined
     presentation: PlotSurfacePresentation | null
     capture: ReturnType<PlotHost<Content>['capture_attributes']>
     cursor: string | undefined
@@ -39,6 +41,7 @@ type PlotBinding<Content> = {
     measure: ReturnType<typeof throttle<MeasureHandler>> | null
     canvas: PlotDrawHost | null
     highlight: OffscreenCanvasRenderingContext2D | null
+    context_received: boolean
     report: PlotProps<Content>['onError']
     viewport: PlotArgs<Content>['on_viewport_change']
 }
@@ -59,6 +62,7 @@ export function Plot<Content = React.ReactNode>({
         measure: null,
         canvas: null,
         highlight: null,
+        context_received: false,
         report: undefined,
         viewport: undefined,
     })
@@ -129,7 +133,12 @@ export function Plot<Content = React.ReactNode>({
             )
         }
 
+        // TODO: Consider publishing interaction views before notifying to avoid the preliminary render.
+        // Profiling found 268 renders / 134 effects, with 4.385 ms total in the Plot function;
+        // measure child reconciliation and transport before prioritizing this optimization.
         setView({
+            width: controller?.template.width,
+            height: controller?.template.height,
             presentation,
             capture: host.capture_attributes(),
             cursor: host.cursor(),
@@ -138,12 +147,16 @@ export function Plot<Content = React.ReactNode>({
     }, [plotArgs, onError, revision])
 
     const host = retained.current.host
+    // Initial markup uses the supplied pins; subsequent renders follow the accepted template.
+    const width = view === null ? plotArgs.width : view.width
+    const height = view === null ? plotArgs.height : view.height
 
     const onContextChange = (event: PlotSurfaceEventMap['contextchange']) => {
         if (host === null) return
 
         const { mode, devicePixelRatio } = event.detail.current
         const previous = host.environment
+        retained.current.context_received = true
 
         if (previous?.color_theme === mode && previous.device_pixel_ratio === devicePixelRatio) return
 
@@ -153,7 +166,7 @@ export function Plot<Content = React.ReactNode>({
 
     const onCanvasTransfer = (event: PlotSurfaceEventMap['canvastransfer']) => {
         try {
-            const { canvas, highlight } = event.detail
+            const { canvas, highlight, scale } = event.detail
             const main = canvas.getContext('2d', { desynchronized: true, colorSpace: 'display-p3' })
             const overlay = highlight.getContext('2d', { desynchronized: true, colorSpace: 'display-p3' })
 
@@ -166,6 +179,10 @@ export function Plot<Content = React.ReactNode>({
                 },
             }
             retained.current.highlight = overlay
+            // Transfer provides an initial DPR until Box reports the authoritative context.
+            if (!retained.current.context_received && host?.environment) {
+                host.environment = { ...host.environment, device_pixel_ratio: scale }
+            }
             notify(value => value + 1)
         } catch (error) {
             reportError({ phase: 'draw', error })
@@ -194,8 +211,8 @@ export function Plot<Content = React.ReactNode>({
                 width: '100%',
                 height: '100%',
                 ...style,
-                ...(plotArgs.width === undefined ? {} : { width: plotArgs.width }),
-                ...(plotArgs.height === undefined ? {} : { height: plotArgs.height }),
+                ...(width === undefined ? {} : { width }),
+                ...(height === undefined ? {} : { height }),
             }}
         >
             {host && (

@@ -1,0 +1,20 @@
+---
+import antaStylesheet from '@antadesign/anta/bundle.css?url'
+import '../styles/base.css'
+import Harness from '../components/Harness'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Anta harness</title>
+    <link rel="stylesheet" href={antaStylesheet} />
+    <link rel="stylesheet" href="/themes/antune.css" />
+  </head>
+  <body>
+    <Harness client:only="preact" />
+    <script>import '@antadesign/anta/elements'</script>
+  </body>
+</html>

@@ -72,9 +72,11 @@
     "clean": "rm -rf dist",
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
-    "prepack": "pnpm run build:docs"
+    "prepack": "pnpm run build:docs",
+    "test:harness": "node scripts/test-harness.mjs"
   },
   "devDependencies": {
+    "@antithesishq/bombadil": "0.7.0",
     "@types/react": "^19.0.0",
     "axe-core": "4.13.0",
     "esbuild": "^0.25.0",

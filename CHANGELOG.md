@@ -3,7 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-<<<<<<< Updated upstream
+## Unreleased
+
+### Added
+
+- Export `useRef` and `useLayoutEffect` from the JSX runtime, with React defaults
+  and overrides through `configure()` for other renderers.
+
 ## 0.3.29 — September 15, 2026
 
 ### Added
@@ -81,14 +87,6 @@ changes are not listed.
 - Slider exposes its `ElementInternals` through the same runtime inspection hook
   as other stateful controls, allowing accessibility tooling to inspect its live
   range semantics.
-=======
-## Unreleased
-
-### Added
-
-- Export `useRef` and `useLayoutEffect` from the JSX runtime, with React defaults
-  and overrides through `configure()` for other renderers.
->>>>>>> Stashed changes
 
 ## 0.3.28 — September 10, 2026
 

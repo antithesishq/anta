@@ -23,6 +23,7 @@ directions — don't confuse the lever with the hook.
 | expander | `open` · `closed` |
 | menu | `open` · `closed` |
 | checkbox | `checked` · `unchecked` · `indeterminate` |
+| panel | `normal` · `maximized` |
 
 Present tense, never past (`open`, not `opened`). New components keep adopting
 Radix's `data-state` vocabulary rather than coining their own.
@@ -136,8 +137,8 @@ Radix's `checked?: boolean | 'indeterminate'`.)
 
 | element attribute / event | wrapper prop(s) |
 |---|---|
-| `state` (controlled) | `open?: boolean` · `checked?: boolean \| 'indeterminate'` — boolean when arity 2, union when arity > 2 |
-| `default-state` (uncontrolled) | `defaultOpen?: boolean` · `defaultChecked?: boolean \| 'indeterminate'` |
+| `state` (controlled) | `open?: boolean` · `maximized?: boolean` · `checked?: boolean \| 'indeterminate'` — boolean when arity 2, union when arity > 2 |
+| `default-state` (uncontrolled) | `defaultOpen?: boolean` · `defaultMaximized?: boolean` · `defaultChecked?: boolean \| 'indeterminate'` |
 | `statechange` event | **`onStateChange`** — the one name on every component |
 
 `onStateChange` is uniform on purpose — not `onToggle` / `onChange` / `onOpenChange`.

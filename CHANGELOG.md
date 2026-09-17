@@ -7,6 +7,84 @@ changes are not listed.
 
 - Added configurable `useRef` and `useLayoutEffect` exports to `@antadesign/anta/jsx-runtime`.
 
+## 0.3.29 — September 15, 2026
+
+### Added
+
+- SelectFaceted single and multiple facets support `renderOption` for custom
+  option content in facet flyouts and global search results. Render custom
+  option data as key–value Tags while retaining selection handling and indicators.
+- Box supports `padding` and `margin` props and HTML attributes. JSX numbers
+  use pixels; strings accept CSS shorthand values.
+- Panel is a persistent container that can maximize to the browser viewport
+  through a manual popover while keeping its DOM children mounted. Maximized
+  panels contain keyboard focus until restored. Panels fill their parent's
+  width and height and use `overflow: scroll` by default. The maximized surface
+  inherits the Panel's background.
+
+### Changed
+
+- Switch defaults to neutral in both states. Pass `tone="brand"` for brand coloring,
+  and add `toneScope="selected"` to tint only the checked track.
+
+- Select uses Anta Button for its default trigger, preserving popup accessibility,
+  keyboard-only focus rings, and ellipsis for long values. Its accessible description
+  includes the current selection and field hint. Menu button triggers
+  open with ArrowUp and ArrowDown. Select field styling now targets its
+  `a-select-field` wrapper and child `a-button` instead of Input shadow parts.
+
+- Calendar adjacent-month dates are hidden from assistive technology and reach
+  full opacity on hover or focus when enabled.
+- The default Alt/Option-click hint in multi-select option menus appears to the
+  left of its row after 700ms, and moving between rows restarts that delay.
+- Tooltip delay-free handoff now applies only when both the outgoing and incoming
+  tooltips have `follow`. Tooltip supports centered-left placement with
+  `placement="left"` and flips right when space is limited.
+- Input and its composed controls now expose roles, labels, popup relationships,
+  required state, and active options on the controls that receive focus. Direct
+  ARIA element references avoid generated Calendar, popup, and option ID
+  collisions across application roots.
+- Checkbox, Switch, and Radio hints are accessible descriptions. Tabs use a
+  roving tab stop, and `TabPanel` forwards common component props.
+- Every independently loadable stylesheet now reserves Anta's public and
+  internal cascade-layer order. Granular element imports therefore keep
+  component and theme rules above `reset.css` even when a bundler loads their
+  CSS before `tokens.css`.
+- Breadcrumbs no longer scroll horizontally by default, so button focus rings
+  remain visible. To enable scrolling, set `overflow-x: auto` on the trail and
+  `outline-offset: -1px` on its focused controls.
+- **Breaking:** Box measurement events now trigger on border-box width and
+  height changes by default. `observe` accepts `width`, `height`, `size`,
+  `context`, `overflow`, `edges`, `scroll`, or `all`, individually or in a typed
+  array. Plain HTML accepts the same selections separated by spaces.
+  Use `overflow` for content-driven CSS states or `edges` for scroll-edge
+  changes; size observation skips content and scroll observers. `throttle` sets
+  the event interval in milliseconds without delaying CSS fades or on-demand
+  truncation checks.
+- Tags no longer impose `max-width: 100%`. Labels and values still ellipsize
+  when the application constrains the tag’s width.
+
+### Fixed
+
+- Menu Tab navigation follows rendered slot order and reaches controls inside
+  shadow DOM, including individual InputTime segments.
+- Dialog menus preserve menu semantics for body items when no search field is present.
+- Panel preserves maximize and restore focus handling when custom element states
+  are unavailable.
+
+- Neutral `text-4` meets at least 4.5:1 contrast against `bg-1` in both light
+  and dark modes for Antune and None. This guarantee does not extend to named
+  tones or other backgrounds.
+- Clicking inside a parent menu closes nested menus outside the clicked branch.
+  Calendar's month/year picker closes when clicking elsewhere in the calendar,
+  including the month navigation arrows.
+- Nested menus reset when their controlled parent closes. InputDate's month/year
+  picker can reopen after selecting a date while the picker is open.
+- Calendar weekday headers use a higher-contrast text color, including weekends.
+- Slider exposes its `ElementInternals` through the same runtime inspection hook
+  as other stateful controls, allowing accessibility tooling to inspect its live
+  range semantics.
+
 ## 0.3.28 — September 10, 2026
 
 ### Changed
@@ -47,10 +125,10 @@ changes are not listed.
 
 ### Fixed
 
-- Antune and Antithesis pin regular TT Interphases text to `slnt` 0, including
-  form controls that reset font shorthand inheritance. This keeps text upright
-  in Safari despite the font file's non-zero axis default while preserving the
-  `slnt` 11 instance for semantic italics.
+- Antune and Antithesis pin regular TT Interphases text and `dfn` to `slnt` 0,
+  including form controls that reset font shorthand inheritance. This keeps
+  text upright in Safari despite the font file's non-zero axis default while
+  preserving the `slnt` 11 instance for semantic italics.
 - `tokens.css` declares `color-scheme` on `:root`, `.light`, and `.dark`, so
   component colors resolve to the right mode without the optional `reset.css`
   import.

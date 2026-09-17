@@ -160,7 +160,7 @@ test('Box has no capture attributes or touch rules after extraction', async t =>
     for (const type of ['wheelinput', 'pointerinput', 'paninput']) surface.addEventListener(type, () => log.push(type))
     for (const [name, value] of Object.entries({ 'wheel-capture': '', 'wheel-activation': 'hover', 'pointer-capture': '', pan: 'both' })) surface.setAttribute(name, value)
   })
-  assert.deepEqual(await page.evaluate(() => customElements.get('a-box').observedAttributes), ['fade', 'observe'])
+  assert.deepEqual(await page.evaluate(() => customElements.get('a-box').observedAttributes), ['fade', 'observe', 'throttle'])
   assert.deepEqual(await page.locator('a-box').evaluate(box => {
     const { touchAction, userSelect } = getComputedStyle(box)
     return { touchAction, userSelect }
@@ -361,7 +361,7 @@ test('an open Select scrolls within a hover-activated wheel Capture', async t =>
       onWheelInput: (_, detail) => log.push(detail),
     })
   })
-  await page.locator('a-input').click()
+  await page.locator('a-select-field > a-button').click()
   await page.locator('a-menu-item').first().hover()
   await page.mouse.wheel(0, 100)
   await page.waitForFunction(() => document.querySelector('a-menu').shadowRoot.querySelector('[part="scroll"]').scrollTop > 0)

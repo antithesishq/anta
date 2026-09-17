@@ -29,10 +29,15 @@ function renderType(type) {
       const parts = members.map(renderType).filter((value) => value !== '—')
       return parts.join(' & ') || '—'
     }
-    case 'reference':
+    case 'reference': {
+      const alias = typeof type.target === 'number' ? byId.get(type.target)?.type : null
+      if (alias?.type === 'union' && alias.types.every(member => member.type === 'literal')) {
+        return alias.types.map(renderType).join(' | ')
+      }
       return type.name || '—'
+    }
     case 'array':
-      return `${renderType(type.elementType)}[]`
+      return `${type.elementType.type === 'reference' ? type.elementType.name : renderType(type.elementType)}[]`
     case 'reflection': {
       const signature = type.declaration?.signatures?.[0]
       if (signature) {

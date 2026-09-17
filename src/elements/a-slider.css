@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* Shared slider geometry keeps the custom element and the opt-in native
      range aligned. Their presentation remains independent below. */

@@ -1,3 +1,6 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
 @layer anta.components {
   /* The component and the native disclosure use the same chevron mask. Keeping
      it at this scope lets a native summary render the Anta glyph rather than a

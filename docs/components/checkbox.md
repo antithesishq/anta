@@ -163,7 +163,11 @@ function ParentChild() {
 
 ## Accessibility
 
-The wrapper sets `role="checkbox"` and `aria-checked` (`"true"` / `"false"` / `"mixed"`), and derives the accessible name from `label` or `children`. For a label-less checkbox, pass `aria-label`.
+The wrapper sets `role="checkbox"`, and the element keeps `aria-checked`
+(`"true"` / `"false"` / `"mixed"`) in sync. Its light-DOM label supplies the
+accessible name and its hint supplies the accessible description through
+`ElementInternals`; no generated IDs are needed. For a label-less checkbox, pass
+`aria-label`.
 
 Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
 
@@ -174,7 +178,7 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 | `checked?` | CheckboxValue | — | Controlled checked state. When provided the checkbox is controlled — it renders exactly this and never self-applies; `onStateChange` is a *request* the consumer accepts by updating this prop. Use `defaultChecked` for an uncontrolled checkbox. `'indeterminate'` shows the minus glyph and takes visual precedence; clicking it requests `true`. |
 | `defaultChecked?` | CheckboxValue | false | Initial checked state for an uncontrolled checkbox. Read once; later changes are ignored and the element updates its state after interaction. |
 | `disabled?` | boolean | — | Disable the checkbox (no interaction, dropped from the tab order). |
-| `hint?` | ReactNode | — | Secondary text rendered under the label — explanatory copy, like Input's hint. Not part of the accessible name. |
+| `hint?` | ReactNode | — | Secondary text rendered under the label and exposed as the checkbox's accessible description. Not part of the accessible name. |
 | `label?` | string | — | Visible label — the *value* of the checkbox (clicked along with the box). Convenience for the common single-string case; for richer content (markup, a link, an info icon) use `children`. When both are supplied, `label` renders first. Required unless `children` or `aria-label` is provided (a `role="checkbox"` takes its name from the author, not the markup). |
 | `name?` | string | — | Form field name. Inside a `<form>` the checkbox submits under this name, contributing `value` when checked — like a native checkbox. |
 | `onChange?` | (event) => void | — | Fired *after* the checked state changes — a native `change` event (the post-apply counterpart to `onStateChange`). Not cancelable. For a controlled checkbox this fires once you've updated `checked`. |
@@ -183,14 +187,15 @@ Space toggles the checkbox. Follows the [WAI-ARIA checkbox pattern](https://www.
 | `round?` | boolean \| number \| string | — | Round the checkbox mark to a circle (`border-radius: 999px` on the box). Pass a `number` (px) or a CSS length string for a rounded-square mark instead. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size variant. small=14px, medium=16px, large=18px box. |
 | `tone?` | 'brand' \| 'neutral' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the **mark**. In the default `all` scope this colors the checked-box fill and unselected box border. A named tone or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone. Named tones track light/dark mode automatically; a custom color keeps its hue + chroma and pins lightness to the fill curve. Set `toneScope="selected"` to tone only the checked mark and leave the empty box neutral. The label + hint stay neutral — recolor them in plain CSS via the theme-aware `--text-N-{tone}` tokens. |
-| `toneScope?` | ToneScope | 'all' | Apply `tone` to every state, or only while checked so the empty box stays neutral. `selected` is useful when a tinted resting border would read as a validation state. |
+| `toneScope?` | 'all' \| 'selected' | 'all' | Apply `tone` to every state, or only while checked so the empty box stays neutral. `selected` is useful when a tinted resting border would read as a validation state. |
 | `value?` | string | "on" | Value submitted with the form when checked — like a native checkbox. |
 
 ## Web Component
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-The focusable host carries the state. Label and hint are light-DOM children.
+The focusable host carries the state. Label and hint are light-DOM children that
+the element exposes as its accessible name and description.
 
 ```html
 <a-checkbox role="checkbox" tabindex="0" name="updates" default-state="checked">

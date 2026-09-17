@@ -1,0 +1,166 @@
+.harness {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  overflow: hidden;
+  background: var(--bg-0);
+}
+
+.showEditorButton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 1px solid var(--border-2);
+  border-left: 0;
+  border-radius: 0 100% 100% 0;
+  background: var(--bg-1);
+  box-shadow: none;
+}
+
+.editor {
+  position: relative;
+  display: flex;
+  width: var(--editor-width, 420px);
+  min-width: 280px;
+  height: 100%;
+  flex: 0 0 auto;
+  flex-direction: column;
+  order: -1;
+  box-sizing: border-box;
+  border-right: 1px solid var(--border-2);
+  background: var(--bg-1);
+}
+
+.editorHeader {
+  display: flex;
+  min-height: 45px;
+  align-items: center;
+  box-sizing: border-box;
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-2);
+}
+
+.editorActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.editorHost {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  z-index: 3;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.resizeHandle::after {
+  position: absolute;
+  inset-block: 0;
+  left: 4px;
+  width: 2px;
+  background: var(--focus-ring);
+  content: '';
+  opacity: 0;
+  transform: scaleY(0.98);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.resizeHandle:hover::after,
+.resizeHandle:focus-visible::after,
+.editorResizing .resizeHandle::after {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.resizeHandle:focus-visible { outline: 2px solid var(--focus-ring); }
+
+.editorResizing {
+  box-shadow: 4px 0 14px color-mix(in oklch, var(--focus-ring) 12%, transparent);
+}
+
+.harness:has(.editorResizing),
+.harness:has(.editorResizing) * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+.editorResizing .editorHost { pointer-events: none; }
+
+.editorLoading {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.stage {
+  min-width: 0;
+  flex: 1 1 0;
+  overflow: auto;
+  padding: clamp(24px, 5vw, 72px);
+}
+
+.stage > :global(a-card) { max-width: 760px; }
+
+.preview { isolation: isolate; }
+
+.compileStatus {
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.compileError {
+  max-width: 760px;
+  margin: 0;
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--border-2-critical);
+  border-radius: 8px;
+  background: var(--bg-2-critical);
+  color: var(--text-2-critical);
+  font-family: var(--monospace);
+  font-size: 13px;
+  line-height: 20px;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+  .editor {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 11;
+    width: 100vw;
+    min-width: 0;
+    box-shadow: none;
+  }
+
+  .resizeHandle {
+    display: none;
+  }
+
+  .stage { padding: 64px 16px 24px; }
+}

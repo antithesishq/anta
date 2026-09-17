@@ -52,6 +52,9 @@ export { Box } from './components/Box'
 export type { BoxProps } from './components/Box'
 export { Capture } from './components/Capture'
 export type { CaptureProps } from './components/Capture'
+export { Panel } from './components/Panel'
+export type { PanelProps } from './components/Panel'
+export type { PanelState } from './general_types'
 export type {
   CaptureInputCancelReason, CaptureInputDirection, CaptureInputDirections, CaptureInputGeometry,
   CaptureInputModifier, CapturePan, CapturePanInertia, CapturePanInput, CapturePointerActivationReason,
@@ -68,6 +71,7 @@ export type {
   BoxInset,
   BoxMeasurement,
   BoxMeasurementChange,
+  BoxObservation,
   BoxMode,
   BoxOS,
   BoxBrowser,

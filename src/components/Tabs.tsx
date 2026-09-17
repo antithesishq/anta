@@ -48,8 +48,8 @@ export interface TabOption extends OptionPresentationProps {
    *  tones color both in every mode. Overrides the strip's `tone` for this tab.
    *  @defaultValue inherits the strip's `tone` */
   tone?: "neutral" | "brand" | "info" | "success" | "warning" | "critical" | (string & {})
-  /** Disable just this tab — skipped by keyboard nav and dropped from the tab order
-   *  (a disabled-but-selected tab stays reachable, per the ARIA pattern). */
+  /** Prevent user activation of this tab. A disabled tab can still indicate
+   *  the current selection. */
   disabled?: boolean
   /** Tooltip for this tab — a string or any node — shown **only when one of the
    *  tab's ellipsizing label parts is truncated** (tabs ellipsize when the strip
@@ -226,6 +226,10 @@ export const Tabs = ({
       : undefined
 
   const vertical = orientation === "vertical"
+  const focusValue =
+    currentValue != null && tabs.some((tab) => tab.value === currentValue)
+      ? currentValue
+      : tabs.find((tab) => !disabled && !tab.disabled)?.value
 
   const strip = (
     <a-tabs
@@ -273,12 +277,10 @@ export const Tabs = ({
             // --tabs-tone-source on the tab.
             tone={p.tone || undefined}
             aria-disabled={tabDisabled ? "true" : undefined}
-            // Every enabled tab is its own tab stop (not a roving single stop) — Tab /
-            // Shift+Tab step through them; arrows move + select via the element. A
-            // disabled tab leaves the tab order (-1) UNLESS it's the selected one, which
-            // stays focusable so AT can reach the active tab. `aria-selected` and the
-            // panel `aria-labelledby` link are published off-DOM by the elements.
-            tabIndex={tabDisabled && !isSelected ? -1 : 0}
+            // One tab participates in the page Tab sequence; arrows move and select
+            // within the strip. If no value is selected, keep the first enabled tab
+            // reachable so the user can enter the control.
+            tabIndex={p.value === focusValue ? 0 : -1}
             disabled={tabDisabled ? "" : undefined}
             round={roundAttr(round) ?? roundAttr(p.round)}
             class={optionClassName}

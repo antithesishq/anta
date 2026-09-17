@@ -57,6 +57,7 @@ export const componentGroups = [
   [
     ['Box', '/box/'],
     ['Capture', '/capture/'],
+    ['Panel', '/panel/'],
   ],
 ]
 

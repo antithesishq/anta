@@ -175,6 +175,10 @@ export default function SearchDialog() {
   }, [open])
 
   useEffect(() => {
+    document.dispatchEvent(new CustomEvent('anta-search-state', { detail: { open } }))
+  }, [open])
+
+  useEffect(() => {
     // Re-ranked results start at the top.
     setSelected(0)
     setPointerActive(false)
@@ -250,6 +254,7 @@ export default function SearchDialog() {
 
   return (
     <Dialog
+      id="docs-search-dialog"
       className={styles.dialog}
       style={inputBounds ? {
         '--search-left': `${inputBounds.left}px`,
@@ -261,6 +266,7 @@ export default function SearchDialog() {
           <Input
             id="docs-search-input"
             type="search"
+            autoComplete="off"
             size="medium"
             tone="var(--anta-seed-brand)"
             dimActions
@@ -294,7 +300,6 @@ export default function SearchDialog() {
             }}
             aria-label="Search documentation"
             aria-controls="docs-search-results"
-            aria-expanded={query.trim() ? 'true' : 'false'}
             aria-busy={searching ? 'true' : undefined}
           />
         </div>
@@ -307,14 +312,15 @@ export default function SearchDialog() {
       <div className={styles.body}>
         {status === 'error' && <p className={styles.status}>Search is unavailable. Try reloading the page.</p>}
 
-        {query.trim() && status === 'ready' && (
-          <div
-            id="docs-search-results"
-            ref={resultsRef}
-            className={styles.results}
-            data-pointer={pointerActive ? 'active' : undefined}
-            aria-live="polite"
-          >
+        <div
+          id="docs-search-results"
+          ref={resultsRef}
+          className={styles.results}
+          data-pointer={pointerActive ? 'active' : undefined}
+          aria-live="polite"
+        >
+          {query.trim() && status === 'ready' && (
+            <>
             {results.length ? results.map((result, index) => {
               const icon = sidebarIcon(result.route)
               return (
@@ -405,8 +411,9 @@ export default function SearchDialog() {
                 )}
               </div>
             )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </Dialog>
   )

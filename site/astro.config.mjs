@@ -71,7 +71,9 @@ export default defineConfig({
     // wrappers (typed against React) run under Preact without calling configure().
     preact({ compat: true }),
     astroExpressiveCode(),
-    mdx(),
+    // Preserve JSX's align-to-style conversion for Markdown table cells.
+    // Static serialization would leave align attributes overridden by reset.css.
+    mdx({ optimize: { ignoreElementNames: ['th', 'td'] } }),
     sitemap({ filter: (page) => !page.endsWith('/theme-preview/') }),
   ],
   trailingSlash: 'always',

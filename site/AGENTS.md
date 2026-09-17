@@ -9,6 +9,31 @@ The docs site consumes Anta via the workspace symlink (`"@antadesign/anta": "wor
 Astro dev uses `--ignore-lock` so agent sessions keep the server in the root
 dev process tree. The root launcher owns PID tracking and shutdown.
 
+## Build preparation
+
+`scripts/prepare.mjs` coordinates `docs` and `build`. It prepares API data and
+the iframe manifest before bundling the Playground, then runs search indexing,
+worker bundling, and sitemap processing after Astro finishes. Keep standalone
+`docs:*` commands usable by the root package build and dev watcher.
+
+API data, iframe assets, and Playground assets use content-checked cache stamps
+in ignored `site/.cache/build/`. The cache checks input and output contents,
+including generated manifests and asset directories. Missing or changed outputs
+rebuild automatically. Use `ANTA_BUILD_CACHE=0 pnpm --filter anta-site build` to
+force preparation, or remove `site/.cache/build/`. This is a local preparation
+cache, not Astro's experimental incremental prerendering.
+
+When a build task gains a new input outside its existing input trees, add it to
+`scripts/prepare.mjs`. Do not include a task's own outputs among its inputs.
+Package manifests, the lockfile, build scripts, and Node runtime participate in
+invalidation. Cache only tasks whose outputs are covered by the output check.
+
+MDX optimization keeps the unified plugins and excludes `th` and `td` from
+static serialization. Their JSX renderer converts Markdown alignment into
+inline styles, which must override the table defaults in Anta's reset CSS.
+Run `pnpm --filter anta-site test:production` after the production build to check
+search, table alignment, ClientRouter navigation, and the compiled Playground.
+
 ## Site topology
 
 - `src/layouts/DocsLayout.astro` is the sidebar and main-content shell; it imports `@antadesign/anta/elements` in a client-side script.
@@ -168,7 +193,10 @@ cd site && pnpm run build    # static build (site only)
 
 **Run the dev server with `pnpm run dev` from the repo root, not `cd site && pnpm run dev`.** The root command runs the site's `astro dev` *and* a `nodemon` watcher that rebuilds anta's `dist` on `src` changes, so package edits propagate to the running site; the site-only command does not rebuild anta. (See "Common commands" in the root [`AGENTS.md`](../AGENTS.md).)
 
-The site's own `pnpm run dev` (which the root command invokes under the hood) chains through `docs:api` (typedoc → `src/api.json`), `docs:pages` (regenerate changelog partials), `docs:wasm` (copy esbuild.wasm), `docs:iframe-runtime` (rebuild iframe runtime), and `docs:playground-runtime` (rebuild the editor runtime) before starting Astro.
+The root dev command runs site preparation before starting Astro through
+`dev:server`. Preparation generates API data and changelog partials, checks the
+LLM index, copies themes and esbuild.wasm, and builds the iframe and Playground
+runtimes. Unchanged cached tasks reuse their verified outputs.
 
 ## Docs prose style
 

@@ -3,11 +3,110 @@
 Recorded September 16, 2026, while updating PR #169 on branch `plot`.
 The baseline is commit `a69849e`, with Astro pinned to `7.3.3`.
 
-These optimizations are deferred to a separate branch. This document records
-the investigation and proposed follow-up work. The temporary performance
-experiment was removed, and the normal production build passed afterward.
+The original investigation was recorded on `plot` without implementing the
+proposals. Follow-up implementation began September 17 on `perf/astro-build`,
+based on `db48d4c`. PR #169 was still open when the new branch was created.
 
-## Current build and measurements
+## Implemented on the optimization branch
+
+- Enabled MDX optimization while retaining unified and the existing plugins.
+  Excluded `th` and `td`: static serialization emits `align` attributes instead
+  of the inline alignment styles needed to override Anta's reset CSS.
+- Added content-checked caches for API documentation, iframe assets, and
+  Playground assets. Source changes, dependency changes, deleted or modified
+  outputs, and Node runtime changes invalidate them. Failed builds cannot leave
+  a reusable stamp. The cache is local to `site/.cache/build/`.
+- Replaced the site's chain of `pnpm run` preparation commands with one Node
+  coordinator. Independent preparation tasks run concurrently. The Playground
+  waits for API data and the iframe manifest. Postprocessing waits for Astro.
+- Removed CI's duplicate package builds. Workspace `prepare` scripts still
+  build all three packages during installation, including on a clean output
+  tree. Publishing lifecycle scripts remain unchanged.
+- Added cache invalidation tests and a production browser regression covering
+  Markdown table alignment and editing a Playground after ClientRouter navigation.
+
+Force preparation with `ANTA_BUILD_CACHE=0 pnpm --filter anta-site build`.
+Deleting the cache directory also forces preparation. These changes do not
+enable Astro's experimental incremental builds or configure remote cache storage.
+
+## Astro 5 through 7 feature decisions
+
+Astro `7.3.3` remained the registry's latest stable version on September 17.
+The following decisions reflect this site's current architecture:
+
+| Feature | Decision |
+| --- | --- |
+| Astro 5 Content Layer | Defer. The site uses file-based MDX routes, not collections. Converting routes is a separate content-model change. |
+| Server islands, Actions, and sessions available in Astro 5 | No migration in this pass. Static documentation and the separate search Worker do not need an Astro server runtime. |
+| Astro 5 typed environment variables | No change in this pass. Validating optional analytics inputs would be separate configuration work, not a build-speed improvement. |
+| Astro 5.1 remote image caching and 5.10 responsive images | Revisit for image-heavy pages. Current build time is dominated by compilation, and most image examples demonstrate consumer markup. |
+| Astro 5.7 SVG components | Available for future Astro-only artwork. Shared Preact icons and logos also serve interactive components. |
+| Astro 6 Fonts API | Defer. Font faces belong to the portable, switchable Anta themes. A site-only font migration must preserve theme changes and iframe font behavior. |
+| Astro 6 CSP and improved Cloudflare runtime support | Separate work. CSP needs an audit of inline examples, Monaco workers, and preview iframes. Moving the static site to the Cloudflare adapter would change deployment architecture. |
+| Astro 7 Rust compiler, Rolldown, and queued rendering | Already enabled by the framework defaults. |
+| Astro 7 Sätteri Markdown/MDX processor | Defer until custom plugin behavior can be ported and verified. Keep unified for now. |
+| Astro 7.2 incremental prerendering | Defer. No eligible keyed routes, and rendering is a small portion of the build. |
+| Astro 7.3 performance and development fixes | Already included in the pinned version. Keep the root-owned foreground dev process. |
+| MDX `optimize` | Adopted with table-cell exclusions. This option predates Astro 5 but remained disabled in this site. |
+
+Sources: [Astro 5](https://astro.build/blog/astro-5/),
+[5.1](https://astro.build/blog/astro-510/),
+[5.7](https://astro.build/blog/astro-570/),
+[5.10](https://astro.build/blog/astro-5100/),
+[Astro 6](https://astro.build/blog/astro-6/),
+[Astro 7](https://astro.build/blog/astro-7/),
+[7.2](https://astro.build/blog/astro-720/),
+[7.3](https://astro.build/blog/astro-730/), and
+[MDX optimization](https://docs.astro.build/en/guides/integrations-guide/mdx/#optimize).
+
+The original measurements and remaining proposals follow.
+
+## September 17 validation and timings
+
+Three paired local runs alternated the original site scripts and Astro config
+from `db48d4c` with the optimized versions. Both used the same built production
+packages, installed dependencies, Node `24.10.0`, and pnpm `10.11.1`. Each timing
+covers `pnpm --filter anta-site build`, including preparation and postprocessing.
+The new preparation cache was warmed before the paired runs.
+
+| Run | Original build | Optimized build |
+| --- | ---: | ---: |
+| 1 | 24.45 s | 16.18 s |
+| 2 | 24.07 s | 16.19 s |
+| 3 | 23.87 s | 15.83 s |
+| Median | 24.07 s | 16.18 s |
+
+The median improved by 7.89 seconds, about 33%. This includes preparation-cache
+reuse and MDX optimization. It does not measure the additional CI savings from
+removing duplicate package builds. It is not a Cloudflare measurement, and the
+local Node version differs from the deployment's `.node-version` pin.
+
+The final configuration took 19.81 seconds with `ANTA_BUILD_CACHE=0`, forcing
+all three cached preparation tasks to rebuild. Astro's own caches and installed
+dependencies were still present. This was a single run, not a paired cold-cache
+benchmark.
+
+Validation completed during implementation:
+
+- Removed package outputs, generated site manifests/API data, and preparation
+  cache records, then ran a frozen install and production build successfully.
+  Installation built Anta, stickers, and Plot once each through `prepare`.
+- Passed all 179 root tests, including seven new cache tests covering source and
+  lockfile changes, file additions/deletions, missing or modified outputs,
+  failed builds, forced rebuilds, malformed records, and edits during a build.
+- Passed package linting, all package type checks, Plot package verification,
+  site CSS linting, and search-worker type checking.
+- Passed three production browser tests covering search rendering and copy
+  buttons, search navigation, aligned Markdown tables, ClientRouter navigation,
+  and editing Monaco to recompile the preview.
+- Compared 44 rendered main-content trees. Table alignment was the actionable
+  MDX regression and was fixed. Generated asset URLs, renderer IDs, and some
+  syntax-highlighting token boundaries can vary between builds.
+- Started the root dev launcher, served `/button/` successfully, and stopped
+  the process tree. The AI search Worker could not start its remote proxy
+  without `CLOUDFLARE_API_TOKEN`. Production search tests use mocked responses.
+
+## September 16 baseline measurements
 
 The site build runs documentation generation, asset preparation, playground
 bundling, Astro, search generation, and sitemap processing in sequence. See
@@ -56,14 +155,15 @@ also records recent rendering and large-module-graph performance fixes. Keep
 the pinned version current through normal dependency updates and regression
 checks before adding configuration intended for older releases.
 
-## Proposed changes, in priority order
+## Original proposals and remaining work
 
 ### Build packages and generate documentation once
 
-Installation runs the root `prepare` script, which builds Anta and generates API
-documentation. CI then explicitly builds Anta again. The final site build runs
-API documentation generation a third time. Sticker and Plot builds also repeat
-between installation lifecycle scripts and explicit CI steps.
+Implemented through the coordinator, API cache, and CI cleanup described above.
+At baseline, installation ran the root `prepare` script to build Anta and
+generate API documentation. CI explicitly built Anta again. The final site build
+ran API documentation generation a third time. Sticker and Plot builds also
+repeated between installation lifecycle scripts and explicit CI steps.
 
 Give the build pipeline one owner for each output. Separate reusable package,
 documentation, and site stages so downstream steps consume outputs already
@@ -82,9 +182,13 @@ measurement alone does not include repeated package builds.
 
 ### Cache playground bundles when their inputs are unchanged
 
+Implemented with local content-checked stamps. Remote cache storage remains
+unconfigured.
+
 [The playground build script](site/scripts/build-playground-runtime.mjs)
-rebuilds Monaco, Shiki, the compiler runtime, and application code on every run.
-Hashed output filenames support browser caching but do not skip compilation.
+previously rebuilt Monaco, Shiki, the compiler runtime, and application code on
+every run. Hashed output filenames supported browser caching but did not skip
+compilation.
 
 Add a cache keyed by the lockfile, relevant source files, bundler configuration,
 and runtime/tool versions. Restore all required outputs on a hit and invalidate
@@ -96,6 +200,8 @@ whose playground inputs have not changed. Theme and asset changes must still
 invalidate any outputs that embed them.
 
 ### Reduce command startup overhead and parallelize independent preparation
+
+Implemented by `site/scripts/prepare.mjs`.
 
 Several preparation commands take about half a second each, including their
 `pnpm run` startup overhead. A single preparation driver could reduce repeated
@@ -165,8 +271,8 @@ promising configuration change for the current build than the items above.
 
 ## Follow-up verification
 
-Implement the orchestration cleanup first, on a separate branch. Record cold
-and warm end-to-end timings, then repeat paired baseline and candidate runs
+For further changes, record cold and warm end-to-end timings, then repeat
+paired baseline and candidate runs
 under the same Node, pnpm, dependencies, and machine conditions. Report medians
 and variation, and distinguish local measurements from CI and Cloudflare.
 

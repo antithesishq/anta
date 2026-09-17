@@ -47,6 +47,10 @@ conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runne
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
 
+CI's `pnpm install --frozen-lockfile` runs the workspace `prepare` scripts to
+build Anta, stickers, and Plot. Do not repeat those builds in the same job or
+disable install scripts without providing an explicit replacement build stage.
+
 For scoped package-documentation changes, run
 `node scripts/generate-package-docs.mjs --only <generated-path...>` with paths
 relative to `docs/`, such as `theming.md`. The unscoped command intentionally

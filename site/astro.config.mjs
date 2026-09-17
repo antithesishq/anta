@@ -5,6 +5,7 @@ import preact from '@astrojs/preact';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import astroExpressiveCode from 'astro-expressive-code';
+import siteBuild from './integrations/site-build.mjs';
 import { unwrapImages, unwrapJsxParagraphs, headingLinks, wrapTables } from './lib/satteri-plugins.mjs';
 
 export default defineConfig({
@@ -63,6 +64,8 @@ export default defineConfig({
     astroExpressiveCode(),
     mdx({ optimize: true }),
     sitemap({ filter: (page) => !page.endsWith('/theme-preview/') }),
+    // Postprocessing needs the sitemap files written by the preceding hook.
+    siteBuild(),
   ],
   trailingSlash: 'always',
   markdown: {

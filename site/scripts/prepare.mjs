@@ -87,13 +87,5 @@ switch (mode) {
   case 'iframe': await iframe(); break
   case 'playground': await playground(); break
   case 'docs': await docs(); break
-  case 'build':
-    await docs()
-    await cli('astro', ['build'])
-    await together([
-      script('build-search-index.mjs'), script('build-search-worker.mjs'),
-      script('copy-sitemap-index.mjs'),
-    ])
-    break
   default: throw new Error(`Unknown preparation task: ${mode}`)
 }

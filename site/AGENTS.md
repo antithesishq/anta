@@ -11,10 +11,25 @@ dev process tree. The root launcher owns PID tracking and shutdown.
 
 ## Build preparation
 
-`scripts/prepare.mjs` coordinates `docs` and `build`. It prepares API data and
-the iframe manifest before bundling the Playground, then runs search indexing,
-worker bundling, and sitemap processing after Astro finishes. Keep standalone
-`docs:*` commands usable by the root package build and dev watcher.
+`integrations/site-build.mjs` makes `astro build` produce the complete static
+site. It runs `scripts/prepare.mjs docs` in `astro:config:done`, before content
+sync can import generated files. API data and the iframe manifest finish before
+Playground bundling. Build, dev, and sync prepare their inputs; preview only
+serves existing output. Keep this integration after Sitemap: its
+`astro:build:done` hook indexes rendered HTML, bundles the Pages worker, and
+normalizes the sitemap using the hook's output directory.
+
+Preparation runs in a child process with `NODE_ENV` unset, matching default
+standalone commands without changing Astro's environment. This keeps dev and
+build from changing the preparation cache identity or Playground runtime mode.
+Keep `scripts/prepare.mjs` and standalone `docs:*` commands usable by package
+publishing and the root dev watcher. The preparation runner does not launch
+Astro. Do not add a second preparation step to site build or dev commands.
+
+Postprocessors export callable functions and run as CLIs only when invoked
+directly. Pass the resolved output directory when calling them from Astro;
+do not assume `cwd/dist`. Generated source and prepared public assets remain
+in this repository's site directories.
 
 API data, iframe assets, and Playground assets use content-checked cache stamps
 in ignored `site/.cache/build/`. The cache checks input and output contents,
@@ -86,7 +101,8 @@ MDX from retaining the client-only component's CSS in both page and island build
 
 ## Search
 
-`pnpm run build` runs `scripts/build-search-index.mjs` after Astro writes `dist/`.
+The site integration runs `scripts/build-search-index.mjs` after Astro writes its
+configured output directory (`dist/` by default).
 The script parses rendered `<main class="content">` elements, adds stable `data-search-id`
 attributes and anchors to searchable blocks, then writes `dist/search-index.json`. Keep the
 browser configuration in `lib/search/config.json` compatible with the build script: FlexSearch
@@ -228,12 +244,15 @@ pnpm run dev                 # ← run from the REPO ROOT (see below); the dev c
 cd site && pnpm run build    # static build (site only)
 ```
 
-**Run the dev server with `pnpm run dev` from the repo root, not `cd site && pnpm run dev`.** The root command runs the site's `astro dev` *and* a `nodemon` watcher that rebuilds anta's `dist` on `src` changes, so package edits propagate to the running site; the site-only command does not rebuild anta. (See "Common commands" in the root [`AGENTS.md`](../AGENTS.md).)
+**Run the dev server with `pnpm run dev` from the repo root, not `cd site && pnpm run dev`.** The root command runs the site's `astro dev` *and* the root source watcher that rebuilds anta's `dist` on `src` changes, so package edits propagate to the running site; the site-only command does not rebuild anta. (See "Common commands" in the root [`AGENTS.md`](../AGENTS.md).)
 
-The root dev command runs site preparation before starting Astro through
-`dev:server`. Preparation generates API data and changelog partials, checks the
-LLM index, copies themes and esbuild.wasm, and builds the iframe and Playground
-runtimes. Unchanged cached tasks reuse their verified outputs.
+The root dev command builds the packages before starting Astro through
+`dev:server`. Astro's integration then prepares the site before Vite starts.
+Preparation generates API data and changelog partials, checks the LLM index,
+copies themes and esbuild.wasm, and builds the iframe and Playground runtimes.
+Unchanged cached tasks reuse their verified outputs. After startup, the root
+watcher still calls standalone preparation commands when package or Playground
+sources change.
 
 ## Docs prose style
 

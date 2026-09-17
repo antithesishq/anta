@@ -7,6 +7,53 @@ The original investigation was recorded on `plot` without implementing the
 proposals. Follow-up implementation began September 17 on `perf/astro-build`,
 based on `db48d4c`. PR #169 was still open when the new branch was created.
 
+## Astro integration migration
+
+Implemented September 17 on `perf/astro-build`.
+
+`site/integrations/site-build.mjs` now runs preparation in
+`astro:config:done`, before content synchronization imports generated data.
+It prepares build, dev, and sync; preview serves existing output. Preparation
+stays in a child process with `NODE_ENV` unset so Astro's command mode does not
+change cache identities or Playground bundles. The standalone `docs:*` entry
+points and root package watcher still use the same cached preparation tasks.
+
+The integration runs after Sitemap. Its `astro:build:done` hook calls the search
+indexer, Worker bundler, and sitemap normalizer with Astro's output directory,
+and waits for all writers before reporting a failure. Those scripts also retain
+their standalone CLI behavior. The site build command is now `astro build`;
+the site and root dev commands no longer repeat preparation before Astro starts.
+
+Validation:
+
+- A direct `astro build` recovers missing API data, generated manifests,
+  changelog partials, iframe/Playground bundles, themes, and esbuild.wasm.
+- A warm build reuses all three preparation caches. A custom output directory
+  containing spaces produces the same 550 files byte-for-byte as the default
+  directory, including the search index, Worker, and sitemap.
+- `astro sync` prepares generated inputs and rebuilds a deleted Playground
+  manifest while reusing the API and iframe caches. `astro preview` serves the
+  built site without preparation or generated-file writes.
+- The root publishing preparation still generates all 44 Markdown exports.
+  Root dev startup prepares once through the integration and retains its
+  package and Playground source watchers.
+- All 233 regression tests, including 14 new lifecycle/postprocessor tests,
+  and six production checks pass. Linting and root type checking pass.
+
+Compared with the previous coordinator, 520 of 550 output files are
+byte-identical. All 52 HTML files match after replacing the Playground asset
+filenames. All 31 CSS files, the search index, Worker, routes configuration,
+sitemap, and LLM exports are byte-identical. The renamed JavaScript bundles
+only update embedded build-command metadata and TypeDoc source-commit links.
+No browser behavior or stylesheet change is introduced.
+
+This is an orchestration simplification with no additional build-speed claim.
+Astro's reported total now includes preparation and postprocessing that ran
+outside the Astro command previously. Generated source and prepared public
+assets remain repository-local; configurable output directories are supported.
+The current static Pages output is verified. A future Cloudflare adapter
+migration must recheck hook order against its packaging step.
+
 ## Content Layer catalog migration
 
 Implemented September 17 on `perf/astro-build`.
@@ -332,11 +379,12 @@ invalidation, and preserve the cache across CI builds before expecting reuse.
 
 ### Make the remaining site tooling an Astro integration
 
-The new Node coordinator improves the existing build. A local Astro integration
-could own site preparation and postprocessing, so a direct `astro build` also
-creates a complete site. Move reusable task functions behind lifecycle hooks,
-use the configured output directory, and retain standalone entry points needed
-by package publishing. Keep package compilation under the root watcher.
+Implemented in `site/integrations/site-build.mjs` on `perf/astro-build`.
+A direct `astro build` now prepares generated imports before content sync and
+finishes search indexing, worker bundling, and sitemap normalization afterward.
+Postprocessors use the hook's output directory. Standalone preparation commands
+remain available for publishing and the root watcher; package compilation stays
+under the root launcher and watcher.
 
 Search indexing depends on rendered HTML and belongs after rendering. Preserve
 its block IDs, ignored UI content, folded-section anchors, and deterministic

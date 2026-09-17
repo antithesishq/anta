@@ -69,6 +69,8 @@ changes are not listed.
 
 ### Fixed
 
+- Button loading stripes loop smoothly without snapping back at the end of
+  each animation cycle.
 - Menu Tab navigation follows rendered slot order and reaches controls inside
   shadow DOM, including individual InputTime segments.
 - Dialog menus preserve menu semantics for body items when no search field is present.

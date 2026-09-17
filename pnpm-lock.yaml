@@ -46,8 +46,8 @@ importers:
   plot:
     dependencies:
       '@antadesign/anta':
-        specifier: 0.3.27
-        version: 0.3.27(react@19.2.8)
+        specifier: workspace:*
+        version: link:..
       '@types/d3-scale':
         specifier: 4.0.3
         version: 4.0.3
@@ -239,11 +239,6 @@ importers:
         version: 5.9.3
 
 packages:
-
-  '@antadesign/anta@0.3.27':
-    resolution: {integrity: sha512-3IlYY7HIXd39z4KQwbyE8TPoWUsc9in6d0U98dAkzOs+fSrXvlus8XW1ySHNn9W/8oIT7XZmSATjaVyA65l63Q==}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0
 
   '@antithesishq/bombadil@0.7.0':
     resolution: {integrity: sha512-alJmnphJ/iUoL5mCsnV3DwtajGy/sEQ3NJJCiMhgjqXshSq2BUtAs0vqdXEiiSkB8HbsOX5CLrAcaogYdwfAJg==}
@@ -3680,13 +3675,6 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
-
-  '@antadesign/anta@0.3.27(react@19.2.8)':
-    dependencies:
-      clsx: 2.1.1
-      es-toolkit: 1.47.0
-      react: 19.2.8
-      temporal-polyfill: 1.0.3
 
   '@antithesishq/bombadil@0.7.0': {}
 

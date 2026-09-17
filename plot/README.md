@@ -68,7 +68,7 @@ The plot build emits ESM, declarations, and CSS into `dist/`. Internal plot code
 
 `check:package` copies the built package into a temporary consumer directory and checks all seven factories, composition, interaction integration, server imports, exports, and Bundler/NodeNext declarations. It checks core declarations fully; third-party Anta declarations use `skipLibCheck`.
 
-`prepare` and `prepublishOnly` rebuild the package. `dist/` and build metadata are ignored. Follow [the release instructions](../RELEASING.md) to publish. This extraction requires an Anta release containing the new configured hooks; the current dependency pin does not yet include them.
+`prepare` and `prepublishOnly` rebuild the package. `dist/` and build metadata are ignored. Follow [the release instructions](../RELEASING.md) to publish. Plot uses the workspace Anta package and requires its configured hooks. Publish an Anta release containing those hooks before publishing Plot; pnpm writes that exact Anta version into the published dependency.
 
 The notebook adapter remains in Star. Until Star adopts a published version, its migration source remains the active implementation; keep any intervening fixes synchronized.
 

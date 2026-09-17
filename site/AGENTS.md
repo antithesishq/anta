@@ -28,9 +28,13 @@ When a build task gains a new input outside its existing input trees, add it to
 Package manifests, the lockfile, build scripts, and Node runtime participate in
 invalidation. Cache only tasks whose outputs are covered by the output check.
 
-MDX optimization keeps the unified plugins and excludes `th` and `td` from
-static serialization. Their JSX renderer converts Markdown alignment into
-inline styles, which must override the table defaults in Anta's reset CSS.
+Markdown and MDX use Astro's native Sätteri processor with MDX optimization.
+`lib/satteri-plugins.mjs` preserves heading links, Markdown table wrappers, and
+image/JSX paragraph handling. Native table alignment emits inline CSS, so table
+cells can use static serialization while overriding Anta's reset CSS.
+Keep the heading-ID plugin factory before the heading-link transform; its state
+must reset for each document. Authored JSX tables retain their own layout and
+must not receive Markdown table wrappers.
 Run `pnpm --filter anta-site test:production` after the production build to check
 search, table alignment, ClientRouter navigation, and the compiled Playground.
 
@@ -41,7 +45,12 @@ search, table alignment, ClientRouter navigation, and the compiled Playground.
 - `src/components/` holds Preact islands. Use `client:load` or `client:visible`; `Playground.tsx` is the shared interactive component-demo surface, mounted by the prebuilt `PlaygroundEmbed.astro` runtime so it is not a Vite island. Custom islands are for demos it cannot express.
 - `src/styles/base.css` owns the minimal site reset and typography.
 
-Astro renders static output. The site uses MDX and astro-expressive-code, with GFM, math, directive, definition-list, and attributes Remark plugins; slug, autolink-headings, and MathJax Rehype plugins. Preact compat aliases `react` to `preact/compat`, so anta's JSX runtime works without `configure()`.
+Astro renders static output. Sätteri handles Markdown/MDX and GFM; astro-expressive-code handles code blocks. Optional math and directive syntax are disabled. Keep interactive behavior in imported JSX components or the existing external Playground demo source; MDX composes the prose and previews. Preact compat aliases `react` to `preact/compat`, so anta's JSX runtime works without `configure()`.
+
+Smart punctuation also processes raw text inside MDX JSX. Use inline code for
+code identifiers, or a quoted JSX expression such as `{'--text-1'}` when a live
+preview must preserve its existing font. The package/LLM Markdown converter
+supports plain unescaped string literals; it does not evaluate JavaScript.
 
 ## CSS
 

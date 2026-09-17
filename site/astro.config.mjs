@@ -1,21 +1,11 @@
 import { defineConfig } from 'astro/config';
-import { unified } from '@astrojs/markdown-remark';
+import { satteri, satteriHeadingIdsPlugin } from '@astrojs/markdown-satteri';
 import { monacoStyleAliases } from './lib/monaco-styles.mjs';
 import preact from '@astrojs/preact';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import astroExpressiveCode from 'astro-expressive-code';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import remarkDirective from 'remark-directive';
-import remarkDefinitionList from 'remark-definition-list';
-import remarkAttributes from 'remark-attributes';
-import rehypeSlug from 'rehype-slug';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import rehypeMathjax from 'rehype-mathjax';
-import rehypeTableWrap from './lib/rehype-table-wrap.mjs';
-import remarkUnwrapJsxParagraph from './lib/remark-unwrap-jsx-paragraph.mjs';
-import remarkUnwrapImages from './lib/remark-unwrap-images.mjs';
+import { unwrapImages, unwrapJsxParagraphs, headingLinks, wrapTables } from './lib/satteri-plugins.mjs';
 
 export default defineConfig({
   site: 'https://anta.design',
@@ -71,37 +61,16 @@ export default defineConfig({
     // wrappers (typed against React) run under Preact without calling configure().
     preact({ compat: true }),
     astroExpressiveCode(),
-    // Preserve JSX's align-to-style conversion for Markdown table cells.
-    // Static serialization would leave align attributes overridden by reset.css.
-    mdx({ optimize: { ignoreElementNames: ['th', 'td'] } }),
+    mdx({ optimize: true }),
     sitemap({ filter: (page) => !page.endsWith('/theme-preview/') }),
   ],
   trailingSlash: 'always',
   markdown: {
-    processor: unified({
-      remarkPlugins: [
-        remarkGfm,
-        [remarkMath, { singleDollarTextMath: false }],
-        remarkDirective,
-        remarkDefinitionList,
-        remarkAttributes,
-        remarkUnwrapImages,
-        remarkUnwrapJsxParagraph,
-      ],
-      rehypePlugins: [
-        rehypeSlug,
-        [
-          rehypeAutolinkHeadings,
-          {
-            behavior: 'wrap',
-            properties: {
-              className: ['header-anchor', 'muted'],
-            },
-          },
-        ],
-        rehypeMathjax,
-        rehypeTableWrap,
-      ],
+    processor: satteri({
+      mdastPlugins: [unwrapImages, unwrapJsxParagraphs],
+      // Generate Astro's stable IDs before wrapping heading contents in links.
+      // The factory resets duplicate-heading counts for each document.
+      hastPlugins: [satteriHeadingIdsPlugin, headingLinks, wrapTables],
     }),
   },
 });

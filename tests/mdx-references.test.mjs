@@ -43,6 +43,33 @@ test('reference expansion preserves code and skips previews', () => {
   assert.match(result, /```astro\n<Reference \/> \{DATE\}\n```/)
 })
 
+test('plain JSX string literals become text without evaluating dynamic expressions or escapes', () => {
+  assert.equal(parseMdx('<td>{\'--text-1\'}</td> <td>{ "--border-color" }</td>'), '--text-1 --border-color')
+  assert.equal(parseMdx('<span>{"<a-icon> {name}"}</span>'), '<a-icon> {name}')
+  const preserved = [
+    String.raw`{'escaped\'quote'}`,
+    String.raw`{"line\nbreak"}`,
+    String.raw`{"\u002d\u002dtext-1"}`,
+    '{"--text-" + level}',
+    '{(() => { "--text-1" })()}',
+    '{ /[{}]/.test(value) ? "--text-1" : "--text-2" }',
+  ]
+  for (const expression of preserved) assert.equal(parseMdx(expression), expression)
+})
+
+test('JSX string conversion leaves inline and fenced examples unchanged', () => {
+  const inline = '`<td>{\'--text-1\'}</td>`'
+  const fenced = '```tsx\n<td>{\'--text-1\'}</td>\n```'
+  assert.equal(parseMdx(`${inline}\n\n${fenced}\n\n<td>{'--text-1'}</td>`), `${inline}\n\n${fenced}\n\n--text-1`)
+})
+
+test('literal token expressions keep exported Table documentation unchanged', async () => {
+  const source = await read('../site/src/pages/table.mdx')
+  const original = source.replace(/<td>\{'(--[a-z0-9-]+)'\}<\/td>/g, '<td>$1</td>')
+  assert.notEqual(source, original)
+  assert.equal(renderDocumentation(source, sources), renderDocumentation(original, sources))
+})
+
 test('comparison includes every system, coverage category, example, and measured version', async () => {
   const markdown = await renderPage('comparison')
   assert.deepEqual(

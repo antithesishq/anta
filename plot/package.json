@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/plot",
-  "version": "0.1.0-dev.7",
+  "version": "0.1.0",
   "type": "module",
   "files": [
     "dist"
@@ -82,6 +82,6 @@
   "types": "dist/types/entries/index.d.ts",
   "publishConfig": {
     "access": "public",
-    "tag": "dev"
+    "tag": "latest"
   }
 }

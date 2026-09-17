@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
@@ -85,5 +87,32 @@ test('native MDX preserves authored JSX tables, inline children, and contrast ra
   const paragraph = page.locator('main p').filter({ hasText: 'Neutral text-4 meets' })
   assert.equal(await paragraph.count(), 1)
   assert.match(await paragraph.innerText(), /4\.5:1.*4\.41:1.*4\.25:1/)
+  assert.deepEqual(errors, [])
+})
+
+test('Capture mounts its wheel demo with one copy of each stylesheet', async t => {
+  const { page, errors } = await productionPage(t)
+  await page.goto('https://anta.test/capture/')
+  const demo = page.locator('[data-wheel-capture-preview]')
+  await demo.waitFor()
+
+  const stylesheets = await page.locator('link[rel="stylesheet"]').evaluateAll(links => links.map(link => link.href))
+  const contents = new Map()
+  for (const href of stylesheets) {
+    const path = new URL(href).pathname
+    const css = await readFile(new URL(`.${path}`, dist))
+    const hash = createHash('sha256').update(css).digest('hex')
+    assert.equal(contents.has(hash), false, `${path} duplicates ${contents.get(hash)}`)
+    contents.set(hash, path)
+  }
+
+  await demo.getByRole('checkbox', { name: 'Capture wheel', exact: true }).click()
+  await demo.getByText('Capture enabled', { exact: true }).waitFor()
+  const surface = demo.locator('[aria-label="Wheel capture surface"]')
+  await surface.focus()
+  await page.keyboard.press('ArrowDown')
+  await demo.getByText('32 / 704px', { exact: true }).waitFor()
+  await demo.getByRole('button', { name: 'Reset position', exact: true }).click()
+  await demo.getByText('0 / 704px', { exact: true }).waitFor()
   assert.deepEqual(errors, [])
 })

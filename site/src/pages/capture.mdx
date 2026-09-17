@@ -5,7 +5,7 @@ title: Capture
 import Preview from '../components/Preview.astro'
 import PropsTable from '../components/PropsTable.astro'
 import Disclosure from '../components/Disclosure.astro'
-import { WheelCapturePreview } from '../components/WheelCapturePreview.tsx'
+import WheelCaptureDemo from '../components/WheelCaptureDemo.astro'
 import { CapturePointerPreview, CapturePanPreview } from '../components/CaptureGesturePreview.tsx'
 
 # Capture
@@ -44,9 +44,7 @@ removing `wheelCapture` disables capture and clears settling.
 Enable **Capture wheel**, then scroll over the rows. The controls let you try
 different activation and settling rules.
 
-<Preview align="stretch" minHeight={440}>
-  <WheelCapturePreview client:only="preact" />
-</Preview>
+<WheelCaptureDemo />
 
 ```tsx folded title="Custom table wheel"
 const [offset, setOffset] = useState(0)

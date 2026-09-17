@@ -12,12 +12,12 @@ let browser, assets
 
 test('Box and Capture previews have adjacent folded code with no detached recipes', () => {
   for (const source of pages) {
-    for (const preview of source.matchAll(/<Preview\b[\s\S]*?<\/Preview>/g)) {
+    for (const preview of source.matchAll(/<Preview\b[\s\S]*?<\/Preview>|<WheelCaptureDemo\s*\/>/g)) {
       assert.match(source.slice(preview.index + preview[0].length), /^\s*```\w+ folded\b/)
     }
     for (const block of source.matchAll(/^```\w+[^\n]*\n[\s\S]*?^```/gm)) {
       assert.match(block[0], /^```\w+ folded\b/)
-      assert.match(source.slice(0, block.index).trimEnd(), /(?:<\/Preview>|```)$/)
+      assert.match(source.slice(0, block.index).trimEnd(), /(?:<\/Preview>|<WheelCaptureDemo\s*\/>|```)$/)
     }
   }
 })

@@ -1,0 +1,8 @@
+---
+import Preview from './Preview.astro'
+import { WheelCapturePreview } from './WheelCapturePreview.tsx'
+---
+
+<Preview align="stretch" minHeight={440}>
+  <WheelCapturePreview client:only="preact" />
+</Preview>

@@ -52,6 +52,11 @@ code identifiers, or a quoted JSX expression such as `{'--text-1'}` when a live
 preview must preserve its existing font. The package/LLM Markdown converter
 supports plain unescaped string literals; it does not evaluate JavaScript.
 
+For custom client-only demos, let an `.astro` wrapper own the `Preview` layout
+and hydration directive, as in `WheelCaptureDemo.astro`. MDX imports the wrapper;
+the TSX component owns interaction and its CSS module. This also prevents native
+MDX from retaining the client-only component's CSS in both page and island builds.
+
 ## CSS
 
 - **All component styles stay co-located** (a `.astro` scoped `<style>` or a `.module.css`). `astro.config.mjs` sets `build.inlineStylesheets: 'never'` so scoped styles are emitted into *linked* bundles, never inlined into the page `<head>` — Astro's per-page inline path can land present-but-inert in production for a component used inside MDX wrapping a hydrated island. Per-route CSS code-splitting stays on (default), so heavy island CSS (Monaco/Playground) loads only where it's used.

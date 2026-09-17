@@ -76,12 +76,10 @@ authored inline style blocks, and table row counts remain unchanged.
 - The nine Table token labels now show literal `--` instead of the em dash
   produced by the old pipeline. Font styling is unchanged; the corrected glyph
   widths slightly change automatic table-column sizing.
-- CSS rule contents are unchanged. The native build emits one additional
+- CSS rule contents are unchanged. The initial native build emitted an additional
   848-byte stylesheet on `/capture/`, identical to its existing
-  `WheelCapturePreview` stylesheet. Both are linked. Inspection points to a
-  difference in how native MDX retains `client:only` component imports. This has
-  no visual effect, but adds a duplicate resource; no custom deduplication was
-  introduced to work around it.
+  `WheelCapturePreview` stylesheet. The Astro demo wrapper described below removes
+  that duplicate through the normal component compiler.
 - `/llms.txt`, `/llms-full.txt`, and generated `docs/packages/table.md` are
   byte-for-byte unchanged from the baseline. Search indexing reflects the
   repaired prose: 9,615 blocks become 9,612.
@@ -113,6 +111,22 @@ is covered separately by the production tests.
 
 Local comparison artifacts and timing logs are in
 `/tmp/anta-markdown-validation/`. No deployment was performed.
+
+### Follow-up: client-only demo boundary
+
+`WheelCaptureDemo.astro` now owns the preview layout and `client:only="preact"`
+directive. The MDX page imports that wrapper; `WheelCapturePreview.tsx` and its
+CSS module remain unchanged. The native MDX processor no longer directly
+references the browser-only component, so its stylesheet appears only once.
+Capture links 14 distinct stylesheets instead of 15, removing the duplicate
+848-byte asset and request without adding stylesheet-deduplication logic.
+
+All four before/after Capture screenshots (desktop/mobile, light/dark) are
+pixel-identical. Five production browser tests and five preview regression tests
+pass, including wheel-demo mounting, keyboard scrolling, reset, and a check for
+duplicate linked stylesheets. The production build and site CSS lint pass.
+Both LLM endpoints and generated `docs/components/capture.md` are byte-identical
+to their previous output. The local dev server remains available for inspection.
 
 ## Broader Astro and Cloudflare review
 

@@ -8,11 +8,11 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "noUncheckedSideEffectImports": false,
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "../dist",
     "rootDir": ".",
-    "baseUrl": ".",
     "paths": {
       "@antadesign/stickers": ["./index.ts"],
       "@antadesign/stickers/*": ["./*"]

@@ -11,6 +11,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "noUncheckedSideEffectImports": false,
     "types": [],
     "declaration": true,
     "emitDeclarationOnly": true,

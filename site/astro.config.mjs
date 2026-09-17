@@ -1,4 +1,6 @@
 import { defineConfig } from 'astro/config';
+import { unified } from '@astrojs/markdown-remark';
+import { monacoStyleAliases } from './lib/monaco-styles.mjs';
 import preact from '@astrojs/preact';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
@@ -17,8 +19,10 @@ import remarkUnwrapImages from './lib/remark-unwrap-images.mjs';
 
 export default defineConfig({
   site: 'https://anta.design',
+  compressHTML: true,
   devToolbar: { enabled: false },
   vite: {
+    resolve: { alias: monacoStyleAliases },
     server: {
       proxy: {
         '/api/search-answer': {
@@ -72,28 +76,30 @@ export default defineConfig({
   ],
   trailingSlash: 'always',
   markdown: {
-    remarkPlugins: [
-      remarkGfm,
-      [remarkMath, { singleDollarTextMath: false }],
-      remarkDirective,
-      remarkDefinitionList,
-      remarkAttributes,
-      remarkUnwrapImages,
-      remarkUnwrapJsxParagraph,
-    ],
-    rehypePlugins: [
-      rehypeSlug,
-      [
-        rehypeAutolinkHeadings,
-        {
-          behavior: 'wrap',
-          properties: {
-            className: ['header-anchor', 'muted'],
-          },
-        },
+    processor: unified({
+      remarkPlugins: [
+        remarkGfm,
+        [remarkMath, { singleDollarTextMath: false }],
+        remarkDirective,
+        remarkDefinitionList,
+        remarkAttributes,
+        remarkUnwrapImages,
+        remarkUnwrapJsxParagraph,
       ],
-      rehypeMathjax,
-      rehypeTableWrap,
-    ],
+      rehypePlugins: [
+        rehypeSlug,
+        [
+          rehypeAutolinkHeadings,
+          {
+            behavior: 'wrap',
+            properties: {
+              className: ['header-anchor', 'muted'],
+            },
+          },
+        ],
+        rehypeMathjax,
+        rehypeTableWrap,
+      ],
+    }),
   },
 });

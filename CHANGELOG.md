@@ -6,6 +6,7 @@ changes are not listed.
 ## 0.3.30 — September 16, 2026
 
 - Added configurable `useRef` and `useLayoutEffect` exports to `@antadesign/anta/jsx-runtime`.
+- Updated and pinned runtime dependencies to exact versions.
 
 ## 0.3.29 — September 15, 2026
 

@@ -1,9 +1,9 @@
-import { readFileSync } from 'node:fs'
+import changelog from '../../../CHANGELOG.md?raw'
 import type { APIRoute } from 'astro'
 import { marked } from 'marked'
 
 const SITE = 'https://anta.design'
-const CHANGELOG = readFileSync(new URL('../../../CHANGELOG.md', import.meta.url), 'utf8')
+const CHANGELOG = changelog
 
 type Release = {
   version: string

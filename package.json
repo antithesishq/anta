@@ -76,18 +76,20 @@
     "test:harness": "node scripts/test-harness.mjs"
   },
   "devDependencies": {
-    "@antithesishq/bombadil": "0.7.0",
-    "@types/react": "^19.3.0",
+    "@antithesishq/bombadil": "0.7.5",
+    "@types/react": "19.3.0",
+    "@typescript/native": "npm:typescript@7.0.2",
     "axe-core": "4.13.0",
-    "esbuild": "^0.25.0",
-    "nodemon": "^3.1.0",
-    "typescript": "^5.7.0"
+    "esbuild": "0.28.2",
+    "nodemon": "3.1.14",
+    "react": "19.3.0",
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "dependencies": {
-    "clsx": "^2.1.0",
-    "es-toolkit": "1.47.0",
-    "tabbable": "^6.5.0",
-    "temporal-polyfill": "^1.0.1"
+    "clsx": "2.1.1",
+    "es-toolkit": "1.52.0",
+    "tabbable": "6.5.0",
+    "temporal-polyfill": "1.0.5"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"

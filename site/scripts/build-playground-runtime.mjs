@@ -15,6 +15,7 @@ import { mkdir, readdir, unlink, writeFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { monacoStyleAliases } from '../lib/monaco-styles.mjs'
 
 const root = new URL('../..', import.meta.url)
 const siteDir = fileURLToPath(new URL('..', import.meta.url))
@@ -37,6 +38,7 @@ const sharedConfig = {
   logLevel: 'error',
   resolve: {
     alias: {
+      ...monacoStyleAliases,
       // Anta's JSX wrappers target React. The docs use Preact compat, and each
       // static bundle must use that same runtime.
       react: preactCompat,
@@ -64,9 +66,9 @@ async function buildRuntime({ entry, name, format, includeCss = false, discardCs
         fileName: () => `${name}.js`,
         cssFileName: name,
       },
-      rollupOptions: {
+      rolldownOptions: {
         output: {
-          inlineDynamicImports: true,
+          codeSplitting: false,
         },
       },
     },

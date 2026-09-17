@@ -8,10 +8,10 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "noUncheckedSideEffectImports": false,
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "../dist",
-    "baseUrl": ".",
     "paths": {
       "@antadesign/anta": ["./index.ts"],
       "@antadesign/anta/*": ["./*"]

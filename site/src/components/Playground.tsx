@@ -1671,7 +1671,7 @@ let monacoTypesInstalled = false
 function configureTypeScript(monaco: any) {
   if (monacoTypesInstalled) return
   monacoTypesInstalled = true
-  const ts = monaco.languages.typescript
+  const ts = monaco.typescript
   ts.typescriptDefaults.setCompilerOptions({
     target: ts.ScriptTarget.ES2020,
     module: ts.ModuleKind.ESNext,

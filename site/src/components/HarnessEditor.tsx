@@ -20,7 +20,7 @@ type HarnessEditorProps = {
 
 function configureMonaco(monaco: typeof import('monaco-editor')) {
   if (monacoConfigured) return
-  const typescript = monaco.languages.typescript
+  const typescript = monaco.typescript
   typescript.typescriptDefaults.setCompilerOptions({
     allowNonTsExtensions: true,
     jsx: typescript.JsxEmit.React,
@@ -56,8 +56,8 @@ export default function HarnessEditor({ source, isDark, onChange, onThemeChange,
     let cancelled = false
     Promise.all([
       import('monaco-editor'),
-      import('monaco-editor/esm/vs/editor/editor.worker?worker'),
-      import('monaco-editor/esm/vs/language/typescript/ts.worker?worker'),
+      import('monaco-editor/editor/editor.worker?worker'),
+      import('monaco-editor/languages/features/typescript/ts.worker?worker'),
       import('@monaco-editor/react'),
     ]).then(([monaco, editorWorker, tsWorker, reactMod]) => {
       if (cancelled) return

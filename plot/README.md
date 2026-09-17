@@ -1,31 +1,56 @@
 # @antadesign/plot
 
-Canvas plots with series factories, shared interaction controllers, host integration helpers, and an optional `<a-plot>` browser host. React and Preact wrappers are deferred. Anta is a regular dependency; React is a peer, as it is for stickers.
+Canvas plots with series factories, shared interaction controllers, host integration helpers, and an optional `<a-plot>` browser host. React applications can use `Plot`; lower-level hosts can use the thin Anta `PlotSurface` wrapper. Anta is a regular dependency; React is a peer, as it is for stickers.
 
 ```ts
-import { scatter, definePlotElement, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/plot.css'
+import { scatter, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
 
-await definePlotElement()
 const plot = document.createElement('a-plot') as APlotElement
 plot.plotArgs = { series: [scatter({ data: [{ x: 1, y: 2 }, { x: 2, y: 3 }] })] }
 document.body.append(plot)
 ```
 
-Use a bundler that handles CSS imports. The browser entry loads Anta elements and their styles through the Anta dependency. `plot.css` supplies the plot layout. Applications supply their Anta theme as usual.
+Use a bundler that handles CSS imports. The browser entry loads Anta elements and their styles through the Anta dependency. The plot host and surface install their base styles automatically; no separate `plot.css` import is needed. Applications supply their Anta theme as usual.
 
 ## Entry points
 
 | Import | Contents |
 | --- | --- |
-| `@antadesign/plot` | Seven series factories, controllers, and public types |
-| `@antadesign/plot/host` | Canvas, highlight, tooltip, and reset-button presentation helpers |
-| `@antadesign/plot/anta` | Box and Capture event integration |
+| `@antadesign/plot` | Series factories, controllers, host presentation helpers, Anta event integration, and public types |
 | `@antadesign/plot/browser` | DOM tooltip factories and explicit `definePlotElement()` registration |
-| `@antadesign/plot/auto` | Browser registration with the `plotElementReady` promise |
-| `@antadesign/plot/plot.css` | Plot layout stylesheet |
+| `@antadesign/plot/components` | `Plot` and `PlotSurface` JSX wrappers and their props; no element registration |
+| `@antadesign/plot/elements/a-plot` | Registers the standalone plot and its surface dependency synchronously |
+| `@antadesign/plot/elements/a-plot-surface` | Registers only the surface and its Anta dependencies synchronously |
+| `@antadesign/plot/elements` | Registers `a-plot` and `a-plot-surface`; retains resolved readiness promises for compatibility |
+| `@antadesign/plot/auto` | Compatibility alias for `/elements` registration with the `plotElementReady` promise |
+| `@antadesign/plot/plot.css` | Optional compatibility stylesheet; base styles are installed automatically |
 
-The root, host, and Anta integration entries do not load Anta or React at runtime. Browser registration loads Anta elements lazily. Imports are safe during server rendering; call `definePlotElement()` only in a browser.
+## Anta component
+
+```tsx
+import { Plot } from '@antadesign/plot/components'
+import { scatter } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot-surface'
+import '@antadesign/anta/elements/a-tooltip'
+
+<Plot plotArgs={{ height: 300, series: [scatter({ data: [{ x: 1, y: 2 }], tooltip: true })] }} />
+```
+
+`Plot` uses Anta's configured renderer and hooks. Register
+`@antadesign/plot/elements/a-plot-surface` and `@antadesign/anta/elements/a-tooltip`
+before rendering. The existing `/elements/a-plot` registration also includes these dependencies.
+
+The component owns the controller, composition, drawing, and cleanup. It receives
+OffscreenCanvas objects from the surface and draws on the renderer's thread: the
+main thread in ordinary React/Preact apps, or the worker through the notebook's DOM bridge.
+Default and custom tooltips render through Anta's `Tooltip`, without DOM refs or portals.
+Replace `plotArgs` to update the plot. Custom renderers supply `useState`, `useMemo`,
+`useRef` and `useLayoutEffect` through `configure()` when their hooks
+are not already provided by React aliases.
+
+The root entry does not load Anta or React at runtime. Element registration requires
+a CSS-aware bundler and is guarded when no browser registry is available.
 
 ## Build and verify
 
@@ -36,12 +61,146 @@ pnpm run build:dev
 pnpm --filter @antadesign/plot run build
 pnpm --filter @antadesign/plot run typecheck
 pnpm --filter @antadesign/plot run check:package
+pnpm --filter @antadesign/plot run test:registration
 ```
 
 The plot build emits ESM, declarations, and CSS into `dist/`. Internal plot code and its data dependencies are bundled into shared chunks. Anta and React remain external. Ship the entire `dist/` directory, including chunks. Declarations use explicit ESM paths for NodeNext consumers.
 
 `check:package` copies the built package into a temporary consumer directory and checks all seven factories, composition, interaction integration, server imports, exports, and Bundler/NodeNext declarations. It checks core declarations fully; third-party Anta declarations use `skipLibCheck`.
 
-`prepare` and `prepublishOnly` rebuild the package. `dist/` and build metadata are ignored. Follow [the release instructions](../RELEASING.md) to publish with pnpm, which rewrites `workspace:*` to the current Anta version.
+`prepare` and `prepublishOnly` rebuild the package. `dist/` and build metadata are ignored. Follow [the release instructions](../RELEASING.md) to publish. Plot uses the workspace Anta package and requires its configured hooks. Publish an Anta release containing those hooks before publishing Plot; pnpm writes that exact Anta version into the published dependency.
 
 The notebook adapter remains in Star. Until Star adopts a published version, its migration source remains the active implementation; keep any intervening fixes synchronized.
+
+## Component lifecycle
+
+`Plot` accepts `plotArgs`, presentation props such as `className` and `style`, and
+`onError` for lifecycle failures. `validateTooltipContent` optionally validates custom
+content at a renderer boundary. Controller updates, composition, and drawing run
+in layout effects after commit; discarded renders do not invoke plot callbacks.
+The surface mounts after hydration and transfers each canvas once. Effects can
+replay without retransferring canvases; a new component mount gets a new surface.
+
+Both `Plot` and `a-plot` use the internal `PlotHost` for controller ownership,
+composition, viewport reconciliation, drawing, and capture/cursor configuration.
+The JSX component retains the host and publishes presentation through configured
+hooks. It also handles surface events, transferred contexts, and measurement updates.
+The standalone element supplies DOM lifecycle callbacks and animation-frame scheduling.
+The shared host has no DOM or renderer dependency and executes in the notebook worker.
+
+The component fills its parent. Give the parent a height or set `plotArgs.height`.
+Explicit plot dimensions override the wrapper styles until removed.
+
+Run `pnpm --filter @antadesign/plot run test:browser` after building. The browser
+suite covers React and Preact, hydration, discarded renders, interactions, sizing,
+and tooltip cleanup. Set `PLOT_TEST_BROWSER_EXECUTABLE` to a Chromium executable.
+
+Standalone hosts can optionally assign `element.tooltipRenderer` to receive resolved
+tooltip entries and their target element. The renderer owns the target's children
+and receives an empty list when hover clears. Leave it undefined for the default
+DOM renderer. Framework adapters must clean up their renderer on unmount.
+
+## Shared plot surface
+
+Import `@antadesign/plot/elements/a-plot-surface` to register the surface without the standalone host. It installs its structural styles
+when its internal elements are initialized; no separate `plot.css` import is needed:
+
+```ts
+import '@antadesign/plot/elements/a-plot-surface'
+```
+
+React, Preact, and other Anta JSX consumers can use the typed wrapper:
+
+```tsx
+import { PlotSurface } from '@antadesign/plot/components'
+
+// Browser entry only:
+import '@antadesign/plot/elements/a-plot-surface'
+
+// In the host render:
+<PlotSurface
+    presentation={presentation}
+    canvasOwner="worker"
+    onCanvasTransfer={event => attachCanvases(event.detail)}
+/>
+```
+
+The wrapper serializes presentation and forwards Capture attributes and event
+handlers. It has no DOM refs, hooks, controller, or drawing logic, so it also works
+in worker-side renderers. `/components` uses Anta's JSX runtime; the root remains
+free of framework runtime dependencies. Native custom-element consumers can keep
+using `a-plot-surface` directly.
+
+`/elements` registers both `a-plot` and `a-plot-surface` synchronously.
+Use a different tag for a host-owned wrapper, such as `notebook-plot`.
+The existing readiness promises remain resolved compatibility exports; no await is needed.
+
+For explicit registration, `definePlotSurfaceElement()` from `/browser` registers `<a-plot-surface>` and its Box,
+Capture, button and icon dependencies. It does not register `<a-plot>` or Tooltip.
+The surface fills its parent; standalone plots retain their 300px default height.
+Worker hosts should provide a 400px parent fallback when plot height is omitted.
+`setSize({ width, height })` temporarily pins individual dimensions and restores the
+previous inline CSS when a pin is removed.
+
+The exported `APlotSurfaceElement` interface exposes:
+
+- `present({ width, height, inner, filter, reset })` for composed geometry and reset
+  presentation. Only canvases receive the filter.
+- `configureCapture(configuration)` and `cursor` for controller-owned input policy.
+- `measurechange`, `contextchange`, `wheelinput`, `pointerinput` and `resetrequest`
+  events. Box and Capture details are forwarded unchanged. Capture cancels accepted
+  wheel input synchronously. Native mouse events remain available on `capture`.
+- `prepareCanvas(width, height, dpr)` for main-thread drawing, or `transferCanvases()`
+  for worker ownership. Select ownership before acquiring either canvas context.
+  Transfer is attempted once, including partial failure. The worker owns both
+  backing stores and contexts thereafter; `present()` only changes CSS dimensions.
+- Initial `measurement` and `context` snapshots. Use notifications for later changes.
+
+Declarative hosts can use the same surface without a browser adapter:
+
+- Set `presentation` to JSON encoding of `PlotSurfacePresentation`, and `cursor`
+  to a CSS cursor. Removing presentation hides the capture area and reset control.
+- Set native Capture attributes (`wheel-capture`, `wheel-modifier`,
+  `pointer-capture`, etc.). `create_anta_host().capture_attributes(plot, viewport)`
+  supplies these as strings suitable for a DOM bridge.
+- Set `canvas-owner="worker"` before mounting. The surface emits one
+  `canvastransfer` event with `{ canvas, highlight, scale }` after the mounting
+  mutation batch. A worker bridge must include both canvases in its transfer list.
+  The worker then acquires contexts and owns backing-store sizing.
+- Listen for `plotmove`, `plotleave`, `plotclick`, and `plotdoubleclick` for
+  coordinates relative to the capture area. `input-scope="parent"` also observes
+  bubbling mouse events from host-owned tooltip siblings. Margins and reset
+  controls are excluded from plot input.
+- Listen for `surfaceerror` with `{ message }` to report presentation or transfer
+  failures. Failed transfers are never retried.
+
+`PlotSurfacePresentation`, `PlotSurfaceMouseInput`, `PlotSurfaceCanvases`, and
+`PlotSurfaceEventMap` are available as types from the root package.
+
+Disconnect removes forwarding listeners; Box and Capture stop their own observers,
+listeners and pending work. Reconnection retains both canvases and their ownership.
+A fresh worker mount must create a fresh surface. Hosts catch initialization/transfer
+errors through their existing error-reporting path and must not retry transfer.
+
+Tooltip content remains host-owned. Standalone attaches its tooltip to `capture`.
+The notebook migration must keep its tooltip and VNodes in an outer worker-owned
+wrapper, with the surface as a sibling, using Anta's following-tooltip behavior.
+Publication and Star's dependency update are separate rollout steps; keep the current
+notebook mounts until the new package is installed and notebook demos pass.
+
+For focused browser lifecycle checks, run `pnpm run dev`, open the local site and
+run this in its browser console (replace the absolute checkout path):
+
+```js
+const checks = await import('/@fs/absolute/path/to/anta/plot/scripts/check-surface-browser.mjs')
+await checks.checkSurface()
+```
+
+The check replaces the current page body with a plot fixture. It covers notifications,
+size pins, resize, hide/show, theme, context options, worker backing-store ownership,
+single/partial transfers, reconnect/remount, synchronous Ctrl-wheel cancellation,
+reset forwarding, teardown, and standalone sizing/drawing.
+
+Host helpers and `create_anta_host` are exported directly from `@antadesign/plot`.
+The former `/host` and `/anta` subpaths have been removed. Update those imports
+when adopting this package version; browser registration uses `/elements`.

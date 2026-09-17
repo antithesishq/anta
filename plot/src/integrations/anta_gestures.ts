@@ -1,7 +1,7 @@
 // Shared Anta event translation for both worker and browser hosts; no runtime Anta or DOM dependency.
 import type { PanInput } from "../core/interaction_controller"
 import type { WheelClaim } from "../core/interactions/zoom_pan"
-import type { CaptureInputDirections, CapturePointerInput, CaptureWheelInput } from "@antadesign/anta"
+import type { CaptureInputDirections, CapturePointerInput, CaptureWheelInput } from "@antadesign/anta/capture-types"
 
 /** Convert Capture's drag coordinates to the shared controller input. */
 export function capture_pointer_input(detail: CapturePointerInput): PanInput {

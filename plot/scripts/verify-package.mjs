@@ -6,11 +6,13 @@ import { tmpdir } from 'node:os'
 import { createRequire } from 'node:module'
 import { execFileSync } from 'node:child_process'
 import ts from 'typescript'
+import { build } from 'esbuild'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
 const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
 const metadata = JSON.parse(await readFile(resolve(root, '.build/metafile.json'), 'utf8'))
+assert.equal(metadata.outputs['dist/elements.js'].cssBundle, undefined, 'element registration does not implicitly load the standalone stylesheet')
 
 // Follow emitted imports, including lazy chunks, to verify each entry's actual runtime boundary.
 function inputs(entry, visited = new Set()) {
@@ -21,7 +23,7 @@ function inputs(entry, visited = new Set()) {
     const result = Object.keys(output.inputs)
     for (const imported of output.imports) {
         if (imported.external) {
-            assert.match(imported.path, /^(?:react(?:-dom)?(?:\/|$)|@antadesign\/anta(?:\/|$))/, `Unexpected external: ${imported.path}`)
+            assert.match(imported.path, /^(?:react(?:\/|$)|@antadesign\/anta(?:\/|$))/, `Unexpected external: ${imported.path}`)
             result.push(imported.path)
         } else {
             result.push(...inputs(imported.path, visited))
@@ -29,21 +31,41 @@ function inputs(entry, visited = new Set()) {
     }
     return result
 }
-for (const entry of ['index', 'host', 'anta']) {
-    for (const input of inputs(`dist/${entry}.js`)) {
-        assert.doesNotMatch(input, /(?:@antadesign|(?:^|\/)react(?:\/|$)|preact|notebook_demo|shell\/)/)
-    }
+for (const input of inputs('dist/index.js')) {
+    assert.doesNotMatch(input, /(?:@antadesign|(?:^|\/)react(?:\/|$)|preact|notebook_demo|shell\/)/)
 }
 for (const input of Object.keys(metadata.inputs)) {
-    assert.doesNotMatch(input, /notebook_demo|(?:^|\/)shell\/|(?:^|\/)deps\/preact/)
-    assert.ok(/^src\/(entries|core|integrations|browser)\//.test(input) || input.includes('/node_modules/'),
+    assert.doesNotMatch(input, /(?:^|\/)lodash(?:\/|$)|notebook_demo|(?:^|\/)shell\/|(?:^|\/)deps\/preact/)
+    assert.ok(/^src\/(entries|core|integrations|browser|components)\//.test(input) || input.includes('/node_modules/'),
         `Unexpected source outside the package: ${input}`)
 }
 inputs('dist/browser.js') // Browser dependencies may retain the declared React peer.
+assert.equal(manifest.exports['./react'], undefined)
+assert.equal(manifest.peerDependencies['react-dom'], undefined)
+assert.equal(manifest.peerDependencies.react, '^19.0.0')
+for (const input of inputs('dist/components.js')) assert.doesNotMatch(input, /^react-dom(?:\/|$)/)
+for (const input of inputs('dist/elements/a-plot-surface.js')) {
+    assert.doesNotMatch(input, /browser\/plot_element|browser\/tooltip|anta\/elements\/a-tooltip/)
+}
 
 
 const sandbox = await mkdtemp(resolve(tmpdir(), 'plot-package-'))
 try {
+    // Exercise real element dependencies during SSR, with CSS handled by the bundler.
+    const serverBundle = resolve(sandbox, 'elements-ssr.cjs')
+    await build({
+        stdin: {
+            contents: "import './dist/elements/a-plot-surface.js'; import './dist/elements/a-plot.js'; import './dist/elements.js'; import './dist/auto.js'",
+            resolveDir: root,
+        },
+        bundle: true,
+        platform: 'node',
+        format: 'cjs',
+        loader: { '.css': 'empty' },
+        outfile: serverBundle,
+    })
+    execFileSync(process.execPath, [serverBundle], { stdio: 'inherit' })
+
     const installed = resolve(sandbox, 'node_modules/@antadesign/plot')
     await mkdir(installed, { recursive: true })
     await cp(resolve(root, 'dist'), resolve(installed, 'dist'), { recursive: true })
@@ -55,12 +77,10 @@ try {
         import assert from 'node:assert/strict'
         import { readFile } from 'node:fs/promises'
         import * as plot from '@antadesign/plot'
-        import * as host from '@antadesign/plot/host'
-        import { create_anta_host } from '@antadesign/plot/anta'
-        import { definePlotElement } from '@antadesign/plot/browser'
-        import { plotElementReady } from '@antadesign/plot/auto'
-        await plotElementReady
-        await assert.rejects(definePlotElement(), /browser custom-element registry/)
+        import { create_anta_host } from '@antadesign/plot'
+        import { definePlotElement, definePlotSurfaceElement } from '@antadesign/plot/browser'
+        await definePlotElement()
+        await definePlotSurfaceElement()
         const rows = [{x:1,y:2},{x:2,y:4},{x:3,y:3}]
         for (const kind of ['scatter','bar','rect','line','rule','area','custom']) {
             const args = kind === 'bar' ? {data:[{x:'a',y:2},{x:'b',y:4}]} :
@@ -74,14 +94,17 @@ try {
             assert.ok(adapter.capture_props(composed, controller.interactions.committed_viewport))
             adapter.disconnect()
         }
-        assert.deepEqual(host.resolve_canvas_size({}, {width:200.5,height:100.5}), {width:200,height:100})
+        assert.deepEqual(plot.resolve_canvas_size({}, {width:200.5,height:100.5}), {width:200,height:100})
         const controller = new plot.PlotController({series:[plot.scatter({data:rows})]})
         controller.compose({width:600,height:300,color_theme:'light',device_pixel_ratio:1})
         assert.equal(controller.interactions.handle_wheel({offsetX:200,offsetY:100,deltaY:-100,ctrlKey:true},controller.template.zoom_pan),true)
         assert.notEqual(controller.interactions.staged_viewport.x,null)
-        await assert.rejects(import('@antadesign/plot/core/controller'), {code:'ERR_PACKAGE_PATH_NOT_EXPORTED'})
+        for (const path of ['host', 'anta', 'core/controller']) {
+            await assert.rejects(import('@antadesign/plot/' + path), {code:'ERR_PACKAGE_PATH_NOT_EXPORTED'})
+        }
         const css = await readFile(new URL(import.meta.resolve('@antadesign/plot/plot.css')), 'utf8')
-        for (const selector of ['.plot-root','a-capture']) assert.ok(css.includes(selector),selector)
+        assert.ok(css.includes(':where(a-plot)'), 'standalone host layout')
+        assert.ok(!css.includes('a-plot-surface'), 'surface owns its layout')
     `
     await writeFile(resolve(sandbox, 'runtime.mjs'), runtime)
     execFileSync(process.execPath, ['runtime.mjs'], { cwd: sandbox, stdio: 'inherit', env: { ...process.env, NODE_PATH: '' } })
@@ -130,7 +153,7 @@ try {
     const core_consumer = resolve(sandbox, 'core-consumer.ts')
     await writeFile(core_consumer, `
         import { scatter, PlotController, type PlotArgs } from '@antadesign/plot'
-        import { prepare_canvas_context } from '@antadesign/plot/host'
+        import { prepare_canvas_context } from '@antadesign/plot'
         const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
         const controller = new PlotController(args)
     `)
@@ -140,17 +163,43 @@ try {
         skipLibCheck: false, types: [],
         lib: ['lib.es2022.d.ts', 'lib.dom.d.ts', 'lib.dom.iterable.d.ts'],
     })
-    assert.equal(ts.getPreEmitDiagnostics(core_program).length, 0, 'Core declarations must pass full checking')
+    const core_diagnostics = ts.getPreEmitDiagnostics(core_program)
+    assert.equal(core_diagnostics.length, 0, ts.formatDiagnosticsWithColorAndContext(core_diagnostics, {
+        getCanonicalFileName: name => name, getCurrentDirectory: () => sandbox, getNewLine: () => '\n',
+    }))
     const consumer = `
         import { scatter, PlotController, type PlotArgs, type CustomRendererFn } from '@antadesign/plot'
-        import { resolve_canvas_size, prepare_canvas_context, render_tooltip_body } from '@antadesign/plot/host'
-        import { create_anta_host, type AntaHostAdapter } from '@antadesign/plot/anta'
+        import { resolve_canvas_size, prepare_canvas_context, render_tooltip_body } from '@antadesign/plot'
+        import { create_anta_host, type AntaHostAdapter } from '@antadesign/plot'
         import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
-        import { plotElementReady } from '@antadesign/plot/auto'
+        import type { CaptureProps } from '@antadesign/anta'
+        import { PlotSurface, type PlotSurfaceProps } from '@antadesign/plot/components'
+        import { Plot, type PlotProps } from '@antadesign/plot/components'
+        import { createElement } from 'react'
+        const reactProps: PlotProps = {
+            plotArgs: { series: [scatter({ data: [{x:1,y:2}], tooltip: () => createElement('strong', null, 'point') })] },
+            onError(failure) { const phase: string = failure.phase },
+        }
+        createElement(Plot<React.ReactNode>, reactProps)
+        const surface: PlotSurfaceProps = { canvasOwner: 'worker', onCanvasTransfer(event) {
+            const canvas: OffscreenCanvas = event.detail.canvas
+        } }
+        PlotSurface(surface)
+        import { Plot as AntaPlot, type PlotProps as AntaPlotProps } from '@antadesign/plot/components'
+        const antaProps: AntaPlotProps = { plotArgs: { series: [scatter({data: [{x:1,y:2}], tooltip: true})] } }
+        AntaPlot(antaProps)
+        AntaPlot({ plotArgs: reactProps.plotArgs })
+        import { plotElementReady as legacyReady } from '@antadesign/plot/auto'
+        import '@antadesign/plot/elements/a-plot'
+        import '@antadesign/plot/elements/a-plot-surface'
+        import { plotElementReady } from '@antadesign/plot/elements'
+        import { plotSurfaceElementReady } from '@antadesign/plot/elements'
         const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
         const controller = new PlotController(args)
         const adapter: AntaHostAdapter<string> = create_anta_host({controller,on_measure(){},on_context(){},
             on_viewport(){},on_viewport_report(){},on_hover(){},on_pointer_change(){}})
+        const composed = controller.compose({width:600,height:300,color_theme:'light',device_pixel_ratio:1})
+        const capture: CaptureProps = adapter.capture_props(composed, controller.interactions.committed_viewport)
         adapter.disconnect()
         // @ts-expect-error Tooltip content must match the declared host content type.
         const invalid: PlotArgs<string> = {series:[scatter<number>({data:[],tooltip:()=> 1})]}

@@ -1,0 +1,40 @@
+---
+interface Props {
+  example: 'comparison' | 'markers'
+}
+const { example } = Astro.props
+---
+
+<a-plot
+  data-line-example={example}
+  aria-label={example === 'comparison' ? 'Solid measurements and dashed forecast lines' : 'Line with diamond marks and outlines'}
+></a-plot>
+
+<script>
+  import '@antadesign/plot/elements/a-plot'
+  import type { APlotElement } from '@antadesign/plot/browser'
+  import { lineExamples } from './plot-line-examples'
+
+  const mounted = new WeakSet<APlotElement>()
+
+  function mountExamples() {
+    for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-line-example]')) {
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = plot.dataset.lineExample as keyof typeof lineExamples
+      plot.plotArgs = lineExamples[example]()
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  a-plot {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 260px;
+  }
+</style>

@@ -1,14 +1,14 @@
+import type { PlotTooltipRenderer } from './index'
 import { resize_canvas } from '../core/render/canvas'
 import { clear_highlights, update_highlight_canvas } from '../core/render/highlight'
 import { get_canvas_context } from './browser_view'
 import type { ATooltipElement } from '@antadesign/anta/elements/a-tooltip'
-import type { ComposedPlot } from '../core/types'
 import type { NearestPoint } from '../core/interactions/hit'
 import { render_tooltip_bodies, TOOLTIP_DIVIDER_STYLE } from '../core/presentation/tooltip'
 import type { PlotController } from '../core/controller'
 
 type HoverSnapshot = {
-    plot: ComposedPlot<Node>
+    plot: object
     hits: NearestPoint[]
     dpr: number
 }
@@ -16,9 +16,10 @@ type HoverSnapshot = {
 const rendered_hover = new WeakMap<HTMLCanvasElement, HoverSnapshot>()
 
 // Clear visible feedback and invalidate its snapshot when a gesture, update, or leave takes ownership.
-export function clear_hover(canvas: HTMLCanvasElement, tooltip: ATooltipElement): void {
+export function clear_hover<T>(canvas: HTMLCanvasElement, tooltip: ATooltipElement, renderer?: PlotTooltipRenderer<T>): void {
     rendered_hover.delete(canvas)
-    tooltip.replaceChildren()
+    if (renderer) renderer([], tooltip)
+    else tooltip.replaceChildren()
     tooltip.hide()
     const ctx = get_canvas_context(canvas)
     if (ctx === null) {
@@ -29,10 +30,12 @@ export function clear_hover(canvas: HTMLCanvasElement, tooltip: ATooltipElement)
 }
 
 /** Paint core highlight geometry and mount host-specific tooltip Nodes without parsing HTML. */
-export function render_hover(
-    controller: PlotController<Node>,
+export function render_hover<T>(
+    controller: PlotController<T>,
     canvas: HTMLCanvasElement,
     tooltip: ATooltipElement,
+    dpr: number,
+    renderer?: PlotTooltipRenderer<T>,
 ): void {
     const plot = controller.composed_plot
 
@@ -40,7 +43,6 @@ export function render_hover(
         return
     }
 
-    const dpr = canvas.ownerDocument.defaultView?.devicePixelRatio ?? 1
     const hits = controller.interactions.hovered
     const previous = rendered_hover.get(canvas)
 
@@ -49,15 +51,18 @@ export function render_hover(
         return
     }
 
-    canvas.style.width = `${plot.layout.width}px`
-    canvas.style.height = `${plot.layout.height}px`
-
     const ctx = get_canvas_context(canvas)
 
     if (ctx !== null) {
         update_highlight_canvas(ctx, plot, dpr, () => controller.interactions.resolve_highlights(hits))
     } else {
         resize_canvas(canvas, plot.layout.width, plot.layout.height, dpr)
+    }
+
+    if (renderer) {
+        renderer(controller.interactions.resolve_tooltips(hits), tooltip)
+        rendered_hover.set(canvas, { plot, hits, dpr })
+        return
     }
 
     const doc = tooltip.ownerDocument

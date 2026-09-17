@@ -1,0 +1,41 @@
+---
+import type { detailExamples } from './plot-detail-examples'
+interface Props { example: keyof typeof detailExamples; label: string }
+const { example, label } = Astro.props
+---
+
+<a-plot
+  data-detail-example={example}
+  aria-label={label}
+  style={example.startsWith('grid') ? 'height: 160px' : example === 'margins'
+    ? 'background: color-mix(in srgb, var(--text-1, #111827) 18%, var(--bg-1, #ffffff))' : undefined}
+></a-plot>
+
+<script>
+  import '@antadesign/plot/elements/a-plot'
+  import type { APlotElement } from '@antadesign/plot/browser'
+  import { detailExamples } from './plot-detail-examples'
+
+  const mounted = new WeakSet<APlotElement>()
+
+  function mountExamples() {
+    for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-detail-example]')) {
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = plot.dataset.detailExample as keyof typeof detailExamples
+      plot.plotArgs = detailExamples[example]()
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  a-plot {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 260px;
+  }
+</style>

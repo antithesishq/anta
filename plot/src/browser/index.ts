@@ -1,3 +1,6 @@
+import { create_plot_surface_element } from './plot_surface'
+export type { APlotSurfaceElement, PlotSurfacePresentation, PlotSurfaceCanvases, PlotSurfaceEventMap } from './plot_surface'
+import type { ResolvedTooltip } from '../core/interactions/tooltip'
 import { create_plot_element } from './plot_element'
 import type { PlotArgs } from '../core/types'
 import { new_scatter } from '../core/series/scatter/factory'
@@ -25,44 +28,56 @@ export type RuleArgs = Parameters<typeof rule>[0]
 export type AreaArgs = Parameters<typeof area>[0]
 export type CustomArgs = Parameters<typeof custom>[0]
 
-/** Internal host input: all plot behavior is configured through the complete argument object. */
-export interface APlotElement extends HTMLElement {
-    plotArgs: PlotArgs<Node> | undefined
+/** Renderer owns the target's children and receives an empty list when hover clears. */
+export type PlotTooltipRenderer<Content = Node> =
+    (tooltips: ResolvedTooltip<Content>[], target: HTMLElement) => void
+
+/** Browser host configured through properties; custom tooltip content requires a renderer. */
+export interface APlotElement<Content = Node> extends HTMLElement {
+    plotArgs: PlotArgs<Content> | undefined
+    tooltipRenderer: PlotTooltipRenderer<Content> | undefined
 }
 
-const implementations = new WeakSet<CustomElementConstructor>()
-
-/** Register Plot and its internal Anta elements. Safe to import without a DOM; call in the browser. */
+/** Register Plot and its internal Anta elements. No-op without a registry; existing definitions are preserved. */
 export async function definePlotElement(): Promise<void> {
     if (typeof customElements === 'undefined') {
-        throw new Error('plot: definePlotElement requires a browser custom-element registry')
+        return
     }
     if (already_registered()) return
-    const [box, capture, button, icon, tooltip] = await Promise.all([
-        import('@antadesign/anta/elements/a-box'),
-        import('@antadesign/anta/elements/a-capture'),
-        import('@antadesign/anta/elements/a-button'),
-        import('@antadesign/anta/elements/a-icon'),
+    await definePlotSurfaceElement()
+    const [tooltip] = await Promise.all([
         import('@antadesign/anta/elements/a-tooltip'),
     ])
     if (already_registered()) return // Another caller may have registered while imports loaded.
-    box.register_a_box()
-    capture.register_a_capture()
-    button.register_a_button()
-    icon.register_a_icon()
     tooltip.register_a_tooltip()
     const element = create_plot_element()
     customElements.define('a-plot', element)
-    implementations.add(element)
 }
 
 export type { PlotArgs, Viewport, ViewportChange } from '../core/types'
 
 function already_registered(): boolean {
-    const existing = customElements.get('a-plot')
-    if (existing === undefined) return false
-    if (!implementations.has(existing)) {
-        throw new Error('plot: another implementation already registered <a-plot>')
+    return customElements.get('a-plot') !== undefined
+}
+
+/** Register the shared surface without registering the standalone plot or its tooltip. */
+export async function definePlotSurfaceElement(): Promise<void> {
+    if (typeof customElements === 'undefined') {
+        return
     }
-    return true
+    const registered = () => customElements.get('a-plot-surface') !== undefined
+    if (registered()) return
+    const [box, capture, button, icon] = await Promise.all([
+        import('@antadesign/anta/elements/a-box'),
+        import('@antadesign/anta/elements/a-capture'),
+        import('@antadesign/anta/elements/a-button'),
+        import('@antadesign/anta/elements/a-icon'),
+    ])
+    if (registered()) return
+    box.register_a_box()
+    capture.register_a_capture()
+    button.register_a_button()
+    icon.register_a_icon()
+    const element = create_plot_surface_element()
+    customElements.define('a-plot-surface', element)
 }

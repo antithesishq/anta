@@ -1,0 +1,85 @@
+---
+interface Props {
+  example: 'highlights' | 'tooltips' | 'selection' | 'zoom' | 'zoomFree' | 'zoomX' | 'viewport'
+}
+const { example } = Astro.props
+const initial = example === 'selection'
+  ? 'Select a point to inspect its data.'
+  : example === 'zoomFree'
+    ? 'Scroll to zoom, or drag to pan.'
+    : 'Hold Ctrl and scroll to zoom, or Ctrl-drag to pan.'
+---
+
+<div class="plot-interaction" data-plot-interaction={example}>
+  <a-plot aria-label={{ highlights: 'Hover highlight comparison', tooltips: 'Default and custom tooltips',
+    selection: 'Select a sample', zoom: 'Zoom with Ctrl', zoomFree: 'Zoom without a modifier',
+    zoomX: 'Horizontal zoom only', viewport: 'Programmatically controlled viewport' }[example]}></a-plot>
+  {example === 'viewport' && (
+    <div class="viewport-controls">
+      <a-button data-window="early">Focus 20–45</a-button>
+      <a-button data-window="late">Focus 55–80</a-button>
+      <a-button data-window="full">Full extent</a-button>
+    </div>
+  )}
+  <output aria-live="polite" hidden={example === 'highlights' || example === 'tooltips'}>{initial}</output>
+</div>
+
+<script>
+  import '@antadesign/plot/elements/a-plot'
+  import type { APlotElement } from '@antadesign/plot/browser'
+  import '@antadesign/anta/elements/a-button'
+  import { interactionExamples } from './plot-interaction-examples'
+
+  const mounted = new WeakSet<APlotElement>()
+
+  function mountExamples() {
+    for (const wrapper of document.querySelectorAll<HTMLElement>('[data-plot-interaction]')) {
+      const plot = wrapper.querySelector<APlotElement>('a-plot')!
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = wrapper.dataset.plotInteraction as keyof typeof interactionExamples
+      plot.plotArgs = interactionExamples[example](wrapper.querySelector<HTMLOutputElement>('output')!)
+      if (example === 'viewport') {
+        let key = 0
+        wrapper.querySelectorAll<HTMLElement>('[data-window]').forEach(button => {
+          button.addEventListener('click', () => {
+            const windows = { early: [20, 45], late: [55, 80], full: null }
+            const x = windows[button.dataset.window as keyof typeof windows]
+            const args = plot.plotArgs
+            if (!args) return
+            plot.plotArgs = { ...args, viewport: { x, y: null, key: ++key } }
+          })
+        })
+      }
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  .plot-interaction {
+    width: 100%;
+    min-width: 0;
+  }
+
+  a-plot {
+    display: block;
+    width: 100%;
+    height: 260px;
+  }
+
+  .viewport-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  output:not([hidden]) {
+    display: block;
+    margin-top: 12px;
+    font-size: 13px;
+  }
+</style>

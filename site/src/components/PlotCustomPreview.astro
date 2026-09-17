@@ -1,0 +1,41 @@
+---
+interface Props {
+  example: 'ellipses' | 'chords' | 'ridgelines' | 'violins'
+}
+const { example } = Astro.props
+---
+
+<a-plot
+  data-custom-example={example}
+  aria-label={{ ellipses: 'Point clusters with confidence ellipses', chords: 'Weighted connections between five groups',
+    ridgelines: 'Overlapping weekly density curves', violins: 'Mirrored densities with median and quartiles' }[example]}
+></a-plot>
+
+<script>
+  import '@antadesign/plot/elements/a-plot'
+  import type { APlotElement } from '@antadesign/plot/browser'
+  import { customExamples } from './plot-custom-examples'
+
+  const mounted = new WeakSet<APlotElement>()
+
+  function mountExamples() {
+    for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-custom-example]')) {
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = plot.dataset.customExample as keyof typeof customExamples
+      plot.plotArgs = customExamples[example]()
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  a-plot {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 260px;
+  }
+</style>

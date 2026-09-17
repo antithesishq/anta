@@ -61,6 +61,12 @@ project's preview or production environment, according to the target branch.
 
 ## Shared conventions
 
+- Pin registry dependencies and dev dependencies to exact stable versions. Keep
+  `workspace:*` for local packages and peer ranges for consumer compatibility.
+- TypeScript uses exact npm aliases: `@typescript/native` supplies TypeScript 7
+  and `tsc`; `typescript` supplies the TypeScript 6 compatibility API required
+  by TypeDoc and compiler-API scripts. Update both when upgrading the toolchain.
+
 - Use `color-mix(in oklch, <color> <percent>%, transparent)` to adjust color alpha or interpolate colors. Do not use `rgba()`, hex alpha, or parent `opacity` for a one-property alpha change.
 - Follow `WRITING.md` for docs prose, source comments, and TSDoc.
 - When extracting from Figma, read the full variable list directly from its collection; do not infer tokens from one node.

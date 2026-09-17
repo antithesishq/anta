@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import changelog from '../../../CHANGELOG.md?raw'
 import type { APIRoute } from 'astro'
 import { renderDocumentation } from '../../lib/llms/render-documentation.mjs'
 import tokens from '../../../src/tokens.css?raw'
@@ -15,11 +15,11 @@ import {
 
 type NavigationLink = readonly [title: string, path: string]
 
-const CHANGELOG = readFileSync(new URL('../../../CHANGELOG.md', import.meta.url), 'utf8').trim()
+const CHANGELOG = changelog.trim()
 
 const rawMdx = {
-  ...(import.meta.glob('./*.mdx', { eager: true, as: 'raw' }) as Record<string, string>),
-  ...(import.meta.glob('./accessibility/*.mdx', { eager: true, as: 'raw' }) as Record<string, string>),
+  ...(import.meta.glob('./*.mdx', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>),
+  ...(import.meta.glob('./accessibility/*.mdx', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>),
 }
 
 const demoModules = import.meta.glob('./*.demo.ts', {

@@ -53,7 +53,7 @@ await declarations(resolve(output, 'types'))
 
 const result = await build({
     absWorkingDir: root,
-    entryPoints: Object.fromEntries(['index', 'host', 'anta', 'browser', 'auto'].map(name => [name, `src/entries/${name}.ts`])),
+    entryPoints: Object.fromEntries(['index', 'browser', 'auto', 'elements', 'elements/a-plot', 'elements/a-plot-surface', 'components'].map(name => [name, `src/entries/${name}.ts`])),
     outdir: output,
     bundle: true,
     splitting: true,
@@ -63,13 +63,13 @@ const result = await build({
     minifyWhitespace: true,
     legalComments: 'external',
     tsconfig: config_path,
-    external: ['@antadesign/anta', '@antadesign/anta/*', 'react', 'react/*', 'react-dom', 'react-dom/*'],
+    external: ['@antadesign/anta', '@antadesign/anta/*', 'react', 'react/*'],
     chunkNames: 'chunks/[name]-[hash]',
     metafile: true,
     logLevel: 'warning',
 })
 
-// The browser and auto entries have the same stylesheet closure; ship one public stylesheet.
+// Browser entries share the plot layout stylesheet; ship one public stylesheet.
 const browser_css = result.metafile.outputs['dist/browser.js'].cssBundle
 const auto_css = result.metafile.outputs['dist/auto.js'].cssBundle
 if (!browser_css || !auto_css) throw new Error('Missing browser styles')

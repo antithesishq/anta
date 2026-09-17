@@ -3,12 +3,13 @@
 Follow the root AGENTS.md. This package owns plotting code, not the notebook adapter.
 
 - `src/core/` contains series factories, composition, rendering, interactions, and presentation.
-- `src/integrations/` connects host events to the core controllers.
-- `src/browser/` implements the optional light-DOM `<a-plot>` host. Preserve its established behavior during packaging; React/Preact wrappers are deferred.
+- `src/integrations/` connects host events to the core controllers. `PlotHost` shares controller lifecycle, composition, drawing, and presentation between JSX Plot and standalone a-plot; keep browser scheduling and renderer commit notifications in their respective hosts.
+- `src/browser/` implements the optional light-DOM `<a-plot>` host. Preserve its established behavior during packaging.
+- `src/components/` contains the Anta JSX `Plot` and `PlotSurface` wrappers, exposed through `/components`. They must not register elements or access browser DOM. Plot owns controller and OffscreenCanvas drawing lifecycle on the configured renderer’s thread. Use Anta’s configured hooks, and mutate controllers only after commit. Browser verification covers React 19 and Preact, including cleanup and discarded renders.
 - `src/entries/` defines the supported package exports. Keep internal imports private.
 - `scripts/build.mjs` emits JS, declarations, and CSS. Anta stays external to avoid duplicate component implementations.
 - `scripts/verify-package.mjs` checks the built package from an isolated consumer directory.
 
-Anta is a `workspace:*` dependency, matching stickers. React is a peer. Never add Star imports, notebook demos, notebook type shims, or notebook build aliases here.
+Anta uses `workspace:*` because Plot requires the configured hooks in the workspace package. Publish Anta with those hooks before publishing Plot; pnpm rewrites the workspace dependency to that exact version. React is a peer. Never add Star imports, notebook demos, notebook type shims, or notebook build aliases here.
 
 Build Anta before plot. Run plot's build, typecheck, and check:package scripts after changes. Read ../RELEASING.md before publishing; use pnpm so workspace dependencies are rewritten. Keep plot release notes in this package, not the root Anta changelog.

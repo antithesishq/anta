@@ -2,9 +2,12 @@
 
 This is the documentation site for `@antadesign/anta`, deployed at anta.design. It is **not** part of the published npm package — anything that ships to consumers lives in the repo root (`src/`, `dist/`).
 
-Stack: Astro 5 static output, Preact islands (`@astrojs/preact`, with `compat: true` so `react` aliases to `preact/compat`), MDX for component pages, astro-expressive-code for syntax-highlighted code blocks, Monaco editor for the interactive playground.
+Stack: Astro 7 static output, Preact islands (`@astrojs/preact`, with `compat: true` so `react` aliases to `preact/compat`), MDX for component pages, astro-expressive-code for syntax-highlighted code blocks, Monaco editor for the interactive playground.
 
 The docs site consumes Anta via the workspace symlink (`"@antadesign/anta": "workspace:*"`), so Anta must be built first (`pnpm run build` at the repo root) before `site/` resolves `dist/` artifacts.
+
+Astro dev uses `--ignore-lock` so agent sessions keep the server in the root
+dev process tree. The root launcher owns PID tracking and shutdown.
 
 ## Site topology
 
@@ -134,9 +137,9 @@ Monaco lives in `dependencies` as `monaco-editor` and is built into its own cach
 
 ```ts
 import * as monaco from 'monaco-editor'                                         // namespace
-import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker&inline'
-import TsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker&inline'
-import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker&inline'
+import EditorWorker from 'monaco-editor/editor/editor.worker?worker&inline'
+import TsWorker from 'monaco-editor/languages/features/typescript/ts.worker?worker&inline'
+import CssWorker from 'monaco-editor/languages/features/css/css.worker?worker&inline'
 ```
 
 `Playground.tsx` keeps the small `@monaco-editor/react` bridge in the app bundle

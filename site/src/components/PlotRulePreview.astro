@@ -1,0 +1,40 @@
+---
+interface Props {
+  example: 'thresholds' | 'events'
+}
+const { example } = Astro.props
+---
+
+<a-plot
+  data-rule-example={example}
+  aria-label={example === 'thresholds' ? 'Horizontal target and upper limit rules' : 'Vertical event rules along a signal'}
+></a-plot>
+
+<script>
+  import '@antadesign/plot/elements/a-plot'
+  import type { APlotElement } from '@antadesign/plot/browser'
+  import { ruleExamples } from './plot-rule-examples'
+
+  const mounted = new WeakSet<APlotElement>()
+
+  function mountExamples() {
+    for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-rule-example]')) {
+      if (mounted.has(plot) || !plot.isConnected) continue
+      const example = plot.dataset.ruleExample as keyof typeof ruleExamples
+      plot.plotArgs = ruleExamples[example]()
+      mounted.add(plot)
+    }
+  }
+
+  document.addEventListener('astro:page-load', mountExamples)
+  void mountExamples()
+</script>
+
+<style>
+  a-plot {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 260px;
+  }
+</style>

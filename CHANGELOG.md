@@ -3,6 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- Export `useRef` and `useLayoutEffect` from the JSX runtime, with React defaults
+  and overrides through `configure()` for other renderers.
+
 ## 0.3.29 — September 15, 2026
 
 ### Added

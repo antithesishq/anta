@@ -10,6 +10,6 @@ Follow the root AGENTS.md. This package owns plotting code, not the notebook ada
 - `scripts/build.mjs` emits JS, declarations, and CSS. Anta stays external to avoid duplicate component implementations.
 - `scripts/verify-package.mjs` checks the built package from an isolated consumer directory.
 
-Anta uses `workspace:*` because Plot requires the configured hooks in the workspace package. Publish Anta with those hooks before publishing Plot; pnpm rewrites the workspace dependency to that exact version. React is a peer. Never add Star imports, notebook demos, notebook type shims, or notebook build aliases here.
+Anta is a peer dependency requiring `^0.3.30` for the configured runtime hooks. Keep `workspace:*` only in devDependencies for local builds; do not add a separate runtime dependency on Anta. React is also a peer. Never add Star imports, notebook demos, notebook type shims, or notebook build aliases here.
 
 Build Anta before plot. Run plot's build, typecheck, and check:package scripts after changes. Read ../RELEASING.md before publishing; use pnpm so workspace dependencies are rewritten. Keep plot release notes in this package, not the root Anta changelog.

@@ -4,10 +4,12 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { after, before, test } from 'node:test'
 import { build } from 'esbuild'
+import { readPageCatalog } from '../site/lib/content/catalog.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium } = requireSite('playwright')
-const pages = await Promise.all(['box', 'capture'].map(name => readFile(new URL(`../site/src/pages/${name}.mdx`, import.meta.url), 'utf8')))
+const catalog = await readPageCatalog()
+const pages = await Promise.all(['box', 'capture'].map(name => readFile(catalog.find(page => page.path === `/${name}/`).source, 'utf8')))
 let browser, assets
 
 test('Box and Capture previews have adjacent folded code with no detached recipes', () => {

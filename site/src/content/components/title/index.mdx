@@ -1,0 +1,190 @@
+---
+title: Title
+nav:
+  icon: case-sensitive
+  group: content
+  order: 10
+---
+import { Title, Icon } from '@antadesign/anta'
+import Playground from '../../../components/PlaygroundEmbed.astro'
+import Preview from '../../../components/Preview.astro'
+import PropsTable from '../../../components/PropsTable.astro'
+import Disclosure from '../../../components/Disclosure.astro'
+import titleDemoCode from './title.demo.ts'
+
+# Title
+
+A margin-free heading with six `level`s. `level` sets the type scale and the
+`aria-level` exposed to assistive technology. `priority` runs from `primary`
+through `quaternary` (`--text-1` through `--text-4`); `tone` accepts `neutral`
+(the default), a named tone, or a literal CSS color.
+
+Use a raw `<h1>`–`<h6>` for document-outline or SEO semantics. Anta's reset
+gives those headings the same type scale and document margins. Use `<Title>` in
+component layouts when you need tone, priority, or parent-controlled spacing.
+
+> **`<Title>` has no margins.** Space it with the parent’s `gap` or padding. For
+> a one-off, add `marginBlock` to the title itself.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  component="Title"
+  layout="side"
+  initialCode={titleDemoCode}
+  initialCss={`.preview { align-items: center; justify-content: center; min-height: 100%; }`}
+/>
+
+</Disclosure>
+
+## Levels
+
+The parent supplies the `16px` gap between these titles.
+
+<div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--bg-pane-brand)', padding: '24px 32px', borderRadius: '8px', border: '1px solid var(--border-4-brand)' }}>
+  <Title level={1} tone="brand">Level 1: Workspace settings</Title>
+  <Title level={2} tone="brand">Level 2: Recent activity</Title>
+  <Title level={3} tone="brand">Level 3: Security alerts</Title>
+  <Title level={4} tone="brand">Level 4: Sign-in policy</Title>
+  <Title level={5} tone="brand">Level 5: Session timeout</Title>
+  <Title level={6} tone="brand">Level 6: Updated five minutes ago</Title>
+</div>
+
+## Inline content
+
+Pass icons and inline elements as children. Icons are optically aligned with
+the title text.
+
+<Preview>
+  <Title level={3}>
+    <Icon shape="book-open" /> Saved items <span style={{ color: 'var(--text-1-brand)' }}>(3)</span>
+  </Title>
+</Preview>
+
+```tsx folded
+<Title level={3}>
+  <Icon shape="book-open" /> Saved items{' '}
+  <span style={{ color: 'var(--text-1-brand)' }}>(3)</span>
+</Title>
+```
+
+Use a span for a small inline accent. Don't nest `<Text>` or `<a-text>` inside a
+title: they are block containers, while heading content should remain inline.
+
+## Level reference
+
+| level | font-size | line-height |
+|------:|----------:|------------:|
+| 1     | 28px      | 32px        |
+| 2     | 24px      | 28px        |
+| 3     | 20px      | 24px        |
+| 4     | 17px      | 20px        |
+| 5     | 15px      | 20px        |
+| 6     | 13px      | 16px        |
+
+## Tone × priority
+
+The four priorities are shown across every named tone at `level={3}`. Omit
+`tone` for the neutral scale. The grid scrolls horizontally on narrow screens.
+
+<div className="title-tone-grid">
+  <div className="title-tone-grid-inner">
+    <Title level={3}>Neutral primary</Title>
+    <Title level={3} priority="secondary">Secondary</Title>
+    <Title level={3} priority="tertiary">Tertiary</Title>
+    <Title level={3} priority="quaternary">Quaternary</Title>
+
+    <Title level={3} tone="brand">Brand primary</Title>
+    <Title level={3} tone="brand" priority="secondary">Secondary</Title>
+    <Title level={3} tone="brand" priority="tertiary">Tertiary</Title>
+    <Title level={3} tone="brand" priority="quaternary">Quaternary</Title>
+
+    <Title level={3} tone="success">Success primary</Title>
+    <Title level={3} tone="success" priority="secondary">Secondary</Title>
+    <Title level={3} tone="success" priority="tertiary">Tertiary</Title>
+    <Title level={3} tone="success" priority="quaternary">Quaternary</Title>
+
+    <Title level={3} tone="critical">Critical primary</Title>
+    <Title level={3} tone="critical" priority="secondary">Secondary</Title>
+    <Title level={3} tone="critical" priority="tertiary">Tertiary</Title>
+    <Title level={3} tone="critical" priority="quaternary">Quaternary</Title>
+
+    <Title level={3} tone="warning">Warning primary</Title>
+    <Title level={3} tone="warning" priority="secondary">Secondary</Title>
+    <Title level={3} tone="warning" priority="tertiary">Tertiary</Title>
+    <Title level={3} tone="warning" priority="quaternary">Quaternary</Title>
+
+    <Title level={3} tone="info">Info primary</Title>
+    <Title level={3} tone="info" priority="secondary">Secondary</Title>
+    <Title level={3} tone="info" priority="tertiary">Tertiary</Title>
+    <Title level={3} tone="info" priority="quaternary">Quaternary</Title>
+  </div>
+</div>
+
+## Accessibility
+
+`<Title>` renders an `<a-title>` tag with `role="heading"` and
+`aria-level={level}`. It is not a real `<h*>`. Use a raw heading when the HTML
+document outline or SEO needs heading elements; the reset applies the same type
+scale.
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Title" />
+
+</Disclosure>
+
+<Disclosure title="Web Component">
+
+Use the web component directly when you are not using React or Preact and a native control does not fit.
+
+Set the heading role and level when writing `<a-title>` directly.
+
+<Preview>
+  <a-title level="2" tone="brand" role="heading" aria-level="2">Release notes</a-title>
+</Preview>
+
+```html
+<a-title level="2" tone="brand" role="heading" aria-level="2">
+  Release notes
+</a-title>
+```
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+`priority` selects a neutral text level. Named `tone`s use the matching global
+text tokens. A literal `tone` is stored in `--title-tone-source` and resolved
+into the four priority levels.
+
+```tsx folded
+<Title priority="secondary">Supporting heading</Title>
+<Title tone="#0d9488">Custom-tone heading</Title>
+```
+
+`<a-title>` is light DOM, so local type treatment is ordinary CSS. The class is
+only for this example.
+
+<Preview>
+  <Title className="release-heading" level={3}>Release notes</Title>
+  <style is:inline>{`
+    a-title.release-heading {
+      font-size: 18px;
+      line-height: 24px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+  `}</style>
+</Preview>
+
+```css folded
+a-title.release-heading {
+  font-size: 18px;
+  line-height: 24px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+```
+
+</Disclosure>

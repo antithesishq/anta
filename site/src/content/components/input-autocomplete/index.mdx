@@ -1,0 +1,133 @@
+---
+title: "Input with autocomplete (combobox)"
+nav:
+  label: "InputAutocomplete"
+  icon: search-slash
+  group: inputs
+  order: 20
+---
+import Playground from '../../../components/PlaygroundEmbed.astro'
+import Preview from '../../../components/Preview.astro'
+import PropsTable from '../../../components/PropsTable.astro'
+import Disclosure from '../../../components/Disclosure.astro'
+import { InputAutocompleteBasicDemo } from '../../../components/InputAutocompleteDemos'
+import inputAutocompleteDemoCode from './input-autocomplete.demo.ts'
+
+# Input with autocomplete (combobox)
+
+`InputAutocomplete` is a text field with a suggestion list. Its value remains a
+free-form string: text that is not in the list stays in the field, and selecting
+a suggestion fills the field. Use [Select](/select/) with `filter` when the
+value must be one of the options.
+
+InputAutocomplete uses an [Input](/input/) for the field and a [Menu](/menu/)
+for suggestions. **`onValueChange`** reports field text. `onSelect` runs only
+after someone chooses a suggestion. Use `value` to control it, or `defaultValue`
+for uncontrolled use.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+<Playground
+  component="InputAutocomplete"
+  layout="side"
+  panelHeight={420}
+  initialCode={inputAutocompleteDemoCode}
+  initialCss={`html, body { height: 100%; }
+.preview { min-height: 100%; justify-content: flex-start; align-items: center; padding-top: 24px; }`}
+/>
+
+</Disclosure>
+
+## Free text is the point
+
+<Preview>
+  <InputAutocompleteBasicDemo client:load />
+</Preview>
+
+The value is always the text in the field. That's what separates this from a
+[Select](/select/): a Select constrains the value to one of its options, so a Select
+with `filter` already covers "search a fixed list". `InputAutocomplete` is for when
+the list only *suggests* and the user may commit something you didn't list.
+
+The keyboard follows that intent. No suggestion is highlighted as you type, so
+<kbd>Enter</kbd> commits the typed text and closes the list. <kbd>↓</kbd> highlights
+the first suggestion (then <kbd>↑</kbd>/<kbd>↓</kbd> move through them), and
+<kbd>Enter</kbd> on a highlighted row picks it. <kbd>Esc</kbd> or an outside click
+closes the list; clicking the field to place the caret keeps it open.
+
+The focused field is associated directly with the suggestion popup and its
+active option through ARIA element reflection. These relationships do not
+require generated popup or option IDs, so separate application roots cannot
+collide. Explicit ARIA relationships authored on a raw Anta Input take
+precedence.
+
+## Filtering
+
+`filter` decides how suggestions match the text:
+
+- **`true`** (default): built-in case-insensitive substring match on each option's
+  `value` / `label` / `hint`.
+- **a function** `(option, query) => boolean`: a custom matcher, called for each option.
+- **`false`**: show `suggestions` as-is, doing no local filtering. Use this when you
+  fetch or filter results yourself (async / remote) and feed the current set through
+  `suggestions`.
+
+Suggestions are bare strings or `SelectOption`s, the same option shape
+[Select](/select/) uses: `value`, `label`, `hint`, `icon`, `tone`, `disabled`.
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="InputAutocomplete" />
+
+</Disclosure>
+
+<Disclosure title="Web Component">
+
+`InputAutocomplete` combines an input with a Menu. Reproducing its filtering,
+selection, focus, and popup coordination without the React or Preact wrapper is
+a substantial amount of code.
+
+### Native HTML input with autocomplete
+
+For browser-native suggestions, pair a native input with a `<datalist>`. It
+keeps free-form entry and lets the browser filter and fill matching options,
+while `data-anta` supplies the field appearance.
+
+The browser renders the suggestions popup. Use `InputAutocomplete` for custom
+option content, popup styling, or consistent behavior across browsers.
+
+<Preview>
+  <input data-anta type="text" list="people" placeholder="Search people" />
+  <datalist id="people">
+    <option value="Maya Chen" />
+    <option value="Noah Williams" />
+    <option value="Olivia Martinez" />
+    <option value="Liam Johnson" />
+  </datalist>
+</Preview>
+
+```html
+<input data-anta type="text" list="people" placeholder="Search people">
+
+<datalist id="people">
+  <option value="Maya Chen">
+  <option value="Noah Williams">
+  <option value="Olivia Martinez">
+  <option value="Liam Johnson">
+</datalist>
+```
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+**The field** is styled through Input's props (`size`, `status`, `tone`, `round`,
+`leading` / `trailing`) and its `::part`s; set its width with `style` / `className`
+(forwarded to the field). **The suggestion popover** takes Menu's `::part(menu)`.
+
+```tsx folded
+// Give the field a width; tint it with a custom tone.
+<InputAutocomplete tone="info" style={{ width: '260px' }} suggestions={frameworks} />
+```
+
+</Disclosure>

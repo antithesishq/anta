@@ -1,0 +1,121 @@
+diff --git a/dist/core/build/internal.js b/dist/core/build/internal.js
+index 6c859726aa928fbd53839428b9e24a47cfb3f67b..72b98925f26a41358a5dc4ddbd5703fe2955cd47 100644
+--- a/dist/core/build/internal.js
++++ b/dist/core/build/internal.js
+@@ -11,7 +11,9 @@ function createBuildInternals() {
+     pagesByKeys: /* @__PURE__ */ new Map(),
+     pagesByViteID: /* @__PURE__ */ new Map(),
+     pagesByClientOnly: /* @__PURE__ */ new Map(),
++    contentBoundariesByClientAsset: /* @__PURE__ */ new Map(),
+     pagesByScriptId: /* @__PURE__ */ new Map(),
++    pagesByScriptCssId: /* @__PURE__ */ new Map(),
+     pagesByHydratedComponent: /* @__PURE__ */ new Map(),
+     propagatedStylesMap: /* @__PURE__ */ new Map(),
+     discoveredHydratedComponents: /* @__PURE__ */ new Map(),
+diff --git a/dist/core/build/plugins/plugin-analyzer.js b/dist/core/build/plugins/plugin-analyzer.js
+index 232aeb894df1ad2554b517fbf2e5b54d81246b9a..c6acab5e8e2b3f0e677f1ae5eb49da0a48b59cf0 100644
+--- a/dist/core/build/plugins/plugin-analyzer.js
++++ b/dist/core/build/plugins/plugin-analyzer.js
+@@ -1,4 +1,5 @@
+-import { getTopLevelPageModuleInfos } from "../graph.js";
++import { getParentModuleInfos, getTopLevelPageModuleInfos, moduleIsTopLevelPage } from "../graph.js";
++import { isPropagatedAssetBoundary } from "../../head-propagation/boundary.js";
+ import {
+   getPageDataByViteID,
+   trackClientOnlyPageDatas,
+@@ -52,7 +53,7 @@ function pluginAnalyzer(internals) {
+               clientOnlys.push(resolvedId.id);
+             }
+           }
+-          for (const pageInfo of getTopLevelPageModuleInfos(id, this)) {
++          for (const pageInfo of getAssetPageInfos(id, clientOnlys, this, internals)) {
+             const newPageData = getPageDataByViteID(internals, pageInfo.id);
+             if (!newPageData) continue;
+             trackClientOnlyPageDatas(internals, newPageData, clientOnlys);
+@@ -70,11 +71,41 @@ function pluginAnalyzer(internals) {
+             if (!newPageData) continue;
+             trackScriptPageDatas(internals, newPageData, scriptIds);
+           }
++          for (const pageInfo of getAssetPageInfos(id, scriptIds, this, internals)) {
++            const pageData = getPageDataByViteID(internals, pageInfo.id);
++            if (!pageData) continue;
++            for (const scriptId of scriptIds) {
++              let pages = internals.pagesByScriptCssId.get(scriptId);
++              if (!pages) {
++                pages = /* @__PURE__ */ new Set();
++                internals.pagesByScriptCssId.set(scriptId, pages);
++              }
++              pages.add(pageData);
++            }
++          }
+         }
+       }
+     }
+   };
+ }
++function getAssetPageInfos(id, assets, ctx, internals) {
++  const pages = [];
++  for (const info of getParentModuleInfos(id, ctx, isPropagatedAssetBoundary)) {
++    if (isPropagatedAssetBoundary(info.id)) {
++      for (const asset of assets) {
++        let boundaries = internals.contentBoundariesByClientAsset.get(asset);
++        if (!boundaries) {
++          boundaries = /* @__PURE__ */ new Set();
++          internals.contentBoundariesByClientAsset.set(asset, boundaries);
++        }
++        boundaries.add(info.id);
++      }
++    } else if (moduleIsTopLevelPage(info)) {
++      pages.push(info);
++    }
++  }
++  return pages;
++}
+ export {
+   pluginAnalyzer
+ };
+diff --git a/dist/core/build/plugins/plugin-css.js b/dist/core/build/plugins/plugin-css.js
+index 3c2252ed481646e1e57298efc5c0a49b122e5b08..1bee4de0f1e9ab7c65f99bda2680e6554dfedbe5 100644
+--- a/dist/core/build/plugins/plugin-css.js
++++ b/dist/core/build/plugins/plugin-css.js
+@@ -122,6 +122,14 @@ function rollupPluginAstroBuildCSS(options) {
+         if (this.environment?.name === ASTRO_VITE_ENVIRONMENT_NAMES.client) {
+           for (const id of Object.keys(chunk.modules)) {
+             if (!isCSSRequest(id)) continue;
++            for (const info of getParentModuleInfos(id, this)) {
++              for (const boundary of internals.contentBoundariesByClientAsset.get(info.id) ?? []) {
++                for (const cssId of meta.importedCss) {
++                  const styles = moduleIdToPropagatedCss[boundary] ??= /* @__PURE__ */ new Set();
++                  styles.add(cssId);
++                }
++              }
++            }
+             for (const pageData of getParentClientOnlys(id, this, internals)) {
+               for (const importedCssImport of meta.importedCss) {
+                 const cssToInfoRecord = pagesToCss[pageData.moduleSpecifier] ??= {};
+@@ -170,7 +178,7 @@ function rollupPluginAstroBuildCSS(options) {
+                       );
+                     }
+                   }
+-                  const pageDatas = internals.pagesByScriptId.get(pageInfo.id);
++                  const pageDatas = internals.pagesByScriptCssId.get(pageInfo.id);
+                   if (pageDatas) {
+                     for (const pageData of pageDatas) {
+                       appendCSSToPage(
+@@ -237,7 +245,7 @@ function rollupPluginAstroBuildCSS(options) {
+                 appendCSSToPage(pageData, meta, pagesToCss, depth, order, this.environment?.name);
+               }
+             } else if (this.environment?.name === ASTRO_VITE_ENVIRONMENT_NAMES.client) {
+-              const pageDatas = internals.pagesByScriptId.get(pageInfo.id);
++              const pageDatas = internals.pagesByScriptCssId.get(pageInfo.id);
+               if (pageDatas) {
+                 for (const pageData of pageDatas) {
+                   appendCSSToPage(pageData, meta, pagesToCss, -1, order, this.environment?.name);
+@@ -374,6 +382,7 @@ function shouldDeleteCSSChunk(allModules, internals) {
+   }
+   if (componentPaths.size === 0) return false;
+   for (const componentPath of componentPaths) {
++    if (internals.contentBoundariesByClientAsset.get(componentPath)?.size) return false;
+     const pagesUsingClientOnly = internals.pagesByClientOnly.get(componentPath);
+     if (pagesUsingClientOnly) {
+       for (const pageData of internals.pagesByKeys.values()) {

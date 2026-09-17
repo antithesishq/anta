@@ -4,10 +4,27 @@ import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
+import { readPageCatalog } from '../site/lib/content/catalog.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium } = requireSite('playwright')
 const dist = new URL('../site/dist/', import.meta.url)
+
+test('collection reads keep island and script styles on the pages that use them', async () => {
+  const catalog = await readPageCatalog()
+  for (const entry of catalog) {
+    const html = await readFile(new URL(`.${entry.path}index.html`, dist), 'utf8')
+    const styles = [...html.matchAll(/<link\b[^>]*href="([^"]+\.css)"[^>]*>/g)].map(match => match[1])
+    const wheelStyles = styles.filter(path => path.includes('/WheelCapturePreview.'))
+    assert.equal(wheelStyles.length, entry.path === '/capture/' ? 1 : 0,
+      `${entry.path} must only load WheelCapturePreview CSS when rendering that demo`)
+    // Plot's processed script and the browser-only Box/Capture demos own this
+    // shared element chunk. Reading their metadata must not load it elsewhere.
+    const elementStyles = styles.filter(path => path.includes('/a-tooltip.'))
+    assert.equal(elementStyles.length, ['/box/', '/capture/', '/plot/'].includes(entry.path) ? 1 : 0,
+      `${entry.path} must not inherit another collection entry's script CSS`)
+  }
+})
 
 async function productionPage(t) {
   const browser = await chromium.launch({

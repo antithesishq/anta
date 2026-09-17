@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { test } from 'node:test'
+import { readPageCatalog } from '../site/lib/content/catalog.mjs'
+
+const catalog = await readPageCatalog()
 import { isBaseProp } from '../site/lib/api-props.mjs'
 import { parseMdx } from '../site/lib/llms/parse-mdx.mjs'
 import { renderPropsTable } from '../site/lib/llms/props-from-api.mjs'
@@ -30,7 +33,7 @@ test('every PropsTable renders, including labels and reordered attributes', () =
 
 test('Capture and Box secondary references have tables in Markdown', async () => {
   for (const [page, count] of [['capture', 8], ['box', 5]]) {
-    const source = await readFile(new URL(`../site/src/pages/${page}.mdx`, import.meta.url), 'utf8')
+    const source = await readFile(catalog.find(entry => entry.path === `/${page}/`).source, 'utf8')
     const markdown = parseMdx(source, { renderPropsTable })
     assert.equal(markdown.match(/^\| (?:Prop|Field|Option) \| Type \| Default \| Description \|$/gm)?.length, count)
     for (const match of source.matchAll(/<Disclosure title="((?:Capture|Box)[^"]+)"/g)) {

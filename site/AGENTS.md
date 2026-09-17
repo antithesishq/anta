@@ -41,7 +41,9 @@ search, table alignment, ClientRouter navigation, and the compiled Playground.
 ## Site topology
 
 - `src/layouts/DocsLayout.astro` is the sidebar and main-content shell; it imports `@antadesign/anta/elements` in a client-side script.
-- `src/pages/` holds static `.astro` pages and MDX component documentation.
+- `src/pages/` holds standalone `.astro` and MDX pages, endpoints, and the collection route `[...path].astro`.
+- `src/content/components/{name}/index.mdx` holds component docs and sibling demo sources. `src/content/packages/{package}/` holds each package’s documentation collection.
+- `src/content.config.mjs` defines collections. `lib/content/` owns their shared schema, normalized catalog, and standalone-page manifest.
 - `src/components/` holds Preact islands. Use `client:load` or `client:visible`; `Playground.tsx` is the shared interactive component-demo surface, mounted by the prebuilt `PlaygroundEmbed.astro` runtime so it is not a Vite island. Custom islands are for demos it cannot express.
 - `src/styles/base.css` owns the minimal site reset and typography.
 
@@ -59,9 +61,10 @@ MDX from retaining the client-only component's CSS in both page and island build
 
 ## CSS
 
+- Astro 7.3.3 needs the versioned [collection CSS patch](../patches/README.md) to keep client-only and processed-script styles attached to their content entries. Preserve it when installing dependencies. Before removing it or upgrading Astro, run the production asset tests and compare per-page stylesheet ownership. Incremental prerendering remains disabled until its dependency invalidation is checked with the patch.
 - **All component styles stay co-located** (a `.astro` scoped `<style>` or a `.module.css`). `astro.config.mjs` sets `build.inlineStylesheets: 'never'` so scoped styles are emitted into *linked* bundles, never inlined into the page `<head>` — Astro's per-page inline path can land present-but-inert in production for a component used inside MDX wrapping a hydrated island. Per-route CSS code-splitting stays on (default), so heavy island CSS (Monaco/Playground) loads only where it's used.
 - For a one-off style that must stay inline and untouched by Astro's pipeline, use **`<style is:inline>`** — it's rendered verbatim (no scoping, bundling, or hoisting).
-- **In MDX docs pages, a styling example's live CSS goes in a `<style is:inline>` placed *inside* its `<Preview>` (as a child, after the element), targeting a demo class on that preview's element; the folded recipe under the preview is that same CSS.** Putting the `<style>` inside the preview means the applied rule is literally in the preview's DOM, right next to the element it styles — a reader can inspect the preview and find exactly the rule the recipe shows — and it's never a far-away or page-wide stylesheet. Don't hide the applied CSS behind a `style=""` attribute either: an attribute can't express what these examples need (`::part`, `::before`, `:hover`, `:state`, descendant selectors) — those are only legal in a stylesheet. Use a demo class (e.g. `.hide-chevron`, `.code-like`) so each example is self-identifying and examples don't collide, and tell the reader (once, near the first example) that the class is just for the demo and they'd swap their own selector. `expander.mdx`'s "Styling the chevron & header" section is the reference pattern.
+- **In MDX docs pages, a styling example's live CSS goes in a `<style is:inline>` placed *inside* its `<Preview>` (as a child, after the element), targeting a demo class on that preview's element; the folded recipe under the preview is that same CSS.** Putting the `<style>` inside the preview means the applied rule is literally in the preview's DOM, right next to the element it styles — a reader can inspect the preview and find exactly the rule the recipe shows — and it's never a far-away or page-wide stylesheet. Don't hide the applied CSS behind a `style=""` attribute either: an attribute can't express what these examples need (`::part`, `::before`, `:hover`, `:state`, descendant selectors) — those are only legal in a stylesheet. Use a demo class (e.g. `.hide-chevron`, `.code-like`) so each example is self-identifying and examples don't collide, and tell the reader (once, near the first example) that the class is just for the demo and they'd swap their own selector. `src/content/components/expander/index.mdx`'s "Styling the chevron & header" section is the reference pattern.
 - **`pnpm --filter anta-site lint:css` runs Stylelint** (config: `site/stylelint.config.mjs`) over `src/**/*.{css,astro}`, including the `<style>` blocks inside `.astro` files (`postcss-html` custom syntax). It's a CI step. The config is tuned for *correctness*, not house style — most stylistic rules are off; the point is to catch CSS that the browser would silently drop. **Watch for `*/` inside a CSS comment** — e.g. writing `data-*/aria-*` ends the comment early and spills the rest into the stylesheet as invalid CSS, which (when bundled with other components) silently drops their rules in production. Stylelint now flags this.
 
 ## ClientRouter (view transitions)
@@ -190,13 +193,33 @@ We only register workers for languages the playground actually uses. Adding JSON
 
 ## Adding a component docs page
 
-Create `site/src/pages/{name}.mdx` with `layout: ../layouts/DocsLayout.astro` (component pages are served at the site root, `/{name}/`, not under `/components/`; add the slug to `site/lib/component-slugs.ts`, the sidebar nav in `DocsLayout.astro`, and `componentGroups` in `site/lib/llms/index-content.mjs`). For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop `<Playground component="…" layout="side" initialCode={…} />` near the top. It is mounted by the shared prebuilt runtime, so it does not take a `client:*` directive.
+Create `site/src/content/components/{name}/index.mdx`. Its collection entry generates the existing root URL, `/{name}/`. Add `title` and `nav` frontmatter; do not set `layout`, because the collection route owns it:
+
+```yaml
+---
+title: Button
+nav:
+  icon: pointer
+  group: controls
+  order: 10
+---
+```
+
+Groups are `content`, `controls`, `inputs`, `feedback`, and `layout`. `nav.label` is optional when the sidebar needs a shorter title. The catalog generates navigation, breadcrumbs, component classification, LLM indexes, and packaged Markdown exports from this metadata.
+
+For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop `<Playground component="…" layout="side" initialCode={…} />` near the top. It is mounted by the shared prebuilt runtime, so it does not take a `client:*` directive.
 
 **Always use the shared `<Playground>` for the interactive demo — never hand-roll a bespoke per-component playground island.** The shared one gives a uniform editor + auto props form (from `api.json`) + isolated preview iframe across every page, and is slated for extraction into its own package; a one-off island fragments that and drifts. Write the source as a `Demo` function and return its JSX (`function Demo() { return (…) }`). The bundler renders that function, and Monaco's TypeScript service then parses its JSX correctly. Keep `initialCode` in a sibling `{name}.demo.ts` (`export default \`…\``) so Astro's MDX pipeline doesn't mangle the template literal's indentation. Reserve custom islands for demos the playground genuinely can't express (e.g. a self-animating `AnimatedProgress`).
 
 **Demos use Anta's own components wherever one exists — down to the incidental controls.** Any control the design system ships — `Checkbox`, `Input`, `Button`, `RadioGroup`, `Select`, `Tabs`, `Tag`, `Tooltip`, … — is what a demo reaches for, whether it's the component under test or just a knob beside it (a "simulate loading" toggle, a filter field, a segmented switcher). This holds in every demo surface: Playground `initialCode`, a hydrated island (`src/components/*.tsx`), and inline `.mdx` examples. The point is that every example dogfoods the library and looks/behaves like real usage; a raw `<input>` / `<button>` / `<select>` next to an Anta component reads as an oversight. Drop to a raw HTML control **only** when there's genuinely no Anta equivalent yet (e.g. `<input type="range">` — there's no slider component). The `Playground` island itself is exempt — it's editor/props-form infrastructure kept standalone for extraction, not a component demo.
 
-**The `componentGroups` edit is the one that gets missed.** That list is the only thing `/llms.txt` and `/llms-full.txt` read, so a page absent from it still builds, still ships, and still shows in the sidebar — it is simply invisible to every model that fetches the index. Box and Avatar both drifted that way. `scripts/check-llms-index.mjs` runs inside `pnpm run docs` and fails the build on a miss; it checks only for omissions, so keep the groups in the same shape and order as the sidebar by hand.
+Package docs use separate `plotDocs`, `tableDocs`, and `stickersDocs` collections. Put the package landing page in `src/content/packages/{package}/index.mdx`; `getting-started.mdx` or `getting-started/index.mdx` creates `/{package}/getting-started/`. Package navigation derives its group from the collection. Subpages default to the package landing page as their parent; set `parent` to an entry ID for deeper breadcrumbs. Keep each demo beside its page, preferably in its own directory.
+
+Use `nav: false` to omit a page from navigation and `export: false` to omit it from Markdown exports. These flags are independent. Optional `path` overrides the generated URL. The shared schema rejects unknown metadata and the catalog rejects duplicate URLs, sources, export paths, and missing or cyclic parents.
+
+Standalone guides stay in `src/pages/`. Register their navigation and export metadata in `lib/content/standalone.mjs`; MDX titles come from their frontmatter. `scripts/check-llms-index.mjs` runs during preparation, validates the catalog, and checks that standalone MDX pages are registered. Collection entries are discovered automatically.
+
+Astro consumers call `getAstroPageCatalog()` to use Content Layer data. Node generators call `readPageCatalog()` to read the same source files through the shared schema and normalization, without requiring an Astro build. Keep route and export rules in `lib/content/`, rather than adding consumer-specific page lists.
 
 The preview iframe loads Anta's built `bundle.js` + `bundle.css` through `site/scripts/build-iframe-runtime.mjs`. The iframe re-bundles that same package entry with its own Preact instance because custom elements and renderer state are scoped to its document. `DocsLayout.astro` also imports `bundle.css` render-blocking and registers elements from `bundle`, so the shell and every playground share Anta's shipped runtime and styles. New components enter both automatically through `src/index.ts` and `src/elements/index.ts`; no site-side stylesheet aggregator is needed.
 

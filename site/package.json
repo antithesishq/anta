@@ -51,7 +51,9 @@
     "parse5": "8.0.1",
     "preact": "10.29.8",
     "sharp": "0.35.4",
-    "shiki": "4.4.3"
+    "shiki": "4.4.3",
+    "yaml": "2.9.1",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/chroma-js": "3.1.2",

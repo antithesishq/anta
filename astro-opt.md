@@ -7,6 +7,76 @@ The original investigation was recorded on `plot` without implementing the
 proposals. Follow-up implementation began September 17 on `perf/astro-build`,
 based on `db48d4c`. PR #169 was still open when the new branch was created.
 
+## Content Layer catalog migration
+
+Implemented September 17 on `perf/astro-build`.
+
+- Moved 31 component documents into `src/content/components/` and the Plot,
+  Table, and Stickers landing pages into separate package collections. Their
+  demo sources remain beside their MDX. Standalone guides remain in `src/pages/`.
+- Added shared Zod schemas and a normalized catalog. Sidebar groups and icons,
+  short labels, breadcrumbs, component classification, LLM indexes, and npm
+  Markdown exports now consume the same metadata.
+- Removed the hardcoded component-slug set, sidebar entries, export groups, and
+  consumer-specific source-path rules. Adding a collection entry needs no edits
+  to those consumers.
+- Added validation for duplicate URLs, sources, identities, and export paths,
+  plus missing or cyclic parents. Navigation and export exclusions are separate.
+- Verified a temporary Plot subpage in the running dev server: adding it creates
+  its URL, navigation, and parent breadcrumb; editing its title refreshes the
+  page and shared sidebar without restarting. The fixture was removed afterward.
+
+The catalog migration consolidates metadata. It has no measured build-speed
+claim; the build gains from native Markdown are recorded separately below.
+
+### Output and validation
+
+All 34 migrated documents retain their URLs. Across all 44 documentation pages,
+headings and IDs, links, text, tables, sidebar labels, page titles, and breadcrumb
+JSON-LD match the baseline. All 31 emitted CSS files are byte-identical, and each
+page links the same stylesheet set. Stylesheet order changes on 33 pages.
+
+HTML differences are generated island IDs, two Radio label/hint ID pairs and
+their matching ARIA references, and placement of Astro's hydration helpers.
+The helpers have unchanged contents and counts. Rebuilding the Playground also
+updates its asset hash because generated API source links reference the current
+commit; its runtime code is unchanged.
+
+`llms.txt`, the search index, and the sitemap are byte-identical. `llms-full.txt`
+adds Radio's previously omitted demo: its filename is `radio-group.demo.ts`,
+which the old route-name lookup missed. The package generator retains all 44
+Markdown exports and their contents; an unrelated pre-existing Tabs description
+drift produced by regeneration was kept out of this change. Scoped package-docs
+generation still works.
+
+Validation covers 219 root regression tests, including 29 catalog tests, and six
+production checks for CSS ownership, ClientRouter navigation, Playground editing,
+Capture interaction, table rendering, and search. Production and package builds,
+type checks, linting, and frozen-lockfile installation pass. The browser comparison
+covers 25 desktop/mobile, light/dark views, including expanded Plot disclosures:
+21 PNGs are byte-identical. Three Plot captures differ by 22–34 pixels at sidebar
+icon edges (less than 0.0001%); one Stickers capture differs below the comparison
+threshold. Icon markup, layout, and content are unchanged. All views have zero
+browser errors and missing assets.
+
+### Astro CSS ownership patch
+
+Astro 7.3.3 associates client-only island and processed-script CSS with every
+page reachable through the collection manifest. A metadata-only collection read
+therefore added about 212 KB of unrelated, uncompressed CSS to most pages.
+
+The versioned `patches/astro@7.3.3.patch` keeps those style dependencies attached
+to content-entry boundaries and uses Astro's existing per-entry stylesheet
+propagation. It preserves script execution and keeps client CSS assets needed by
+content entries, including styles shared with server-rendered components.
+An isolated four-route fixture verifies metadata-only and plain pages, styled
+content, a shared hydrated component, and a relative CSS image URL in Chrome.
+The final site has no additional stylesheets or CSS-rule changes.
+
+Keep the patch until an Astro upgrade passes the same ownership checks. See
+[patch maintenance](patches/README.md). Incremental prerendering remains disabled;
+client-only dependency invalidation needs separate validation before enabling it.
+
 ## Native Markdown migration results
 
 Implemented September 17 on `perf/astro-build`, after the broader review below.
@@ -233,18 +303,23 @@ ready. No infrastructure was changed during this review.
 
 ### Use the Content Layer to remove duplicated page metadata
 
-Page metadata currently lives in the sidebar inside `DocsLayout.astro`,
-`component-slugs.ts`, `componentGroups`, `documentationLinks`, `packageLinks`,
-and path-specific glob handling in `llms-full.txt.ts`. The 46-line
-`check-llms-index.mjs` catches some drift, but does not remove the duplication.
+Implemented September 17 on `perf/astro-build`. Component docs now belong to
+`components`; package docs belong to `plotDocs`, `tableDocs`, and `stickersDocs`.
+Each uses a `glob()` loader. Standalone guides remain ordinary pages, with their
+navigation and export metadata in a small manifest.
 
-Introduce a schema-validated catalog containing title, canonical path, kind,
-navigation group/order, and inclusion in exported documentation. Derive the
-sidebar, breadcrumb classification, and LLM indexes from it. Start with a shared
-data file consumed by an Astro `file()` collection and the standalone npm docs
-generator. That avoids making package publishing depend on Astro virtual
-modules. Then consider moving MDX bodies into a `glob()` collection with one
-catch-all route, preserving all current URLs.
+Frontmatter is the source for collection titles, navigation icons, labels,
+groups, and ordering. The shared catalog derives URLs, breadcrumbs, component
+classification, LLM indexes, and packaged Markdown exports. It replaces the
+sidebar lists, `component-slugs.ts`, manually maintained export groups, and
+path-specific source lookup. The schema and catalog reject invalid metadata,
+duplicate routes and exports, and missing or cyclic parents.
+
+One catch-all route renders collection entries with their existing URLs and
+layout. Package subpages derive their URL and default parent from their
+collection. Astro consumers read Content Layer data; the standalone npm-docs
+generator reads the same frontmatter through shared parsing and normalization,
+without requiring an Astro build.
 
 Astro's [Content Layer](https://docs.astro.build/en/guides/content-collections/)
 provides loaders, schema validation, and collection queries. The primary benefit
@@ -538,7 +613,7 @@ defaults to `node_modules/.astro`. See the
 [7.2 release notes](https://astro.build/blog/astro-720/) and
 [incremental-build documentation](https://docs.astro.build/en/reference/experimental-flags/incremental-build/).
 
-The current site has no `getStaticPaths()` routes with cache keys. Simply
+The collection route now uses `getStaticPaths()`, but has no cache keys. Simply
 enabling the flag would not make its static pages eligible. Page rendering
 takes only about 1.4 seconds, so avoid reorganizing the route structure solely
 for this feature. Reconsider if route counts or rendering costs grow.
@@ -562,8 +637,9 @@ exclusions when providing custom options. See the
 ### Features that do not address this build
 
 Server-rendered route caching and session changes concern request-time work,
-not this static site's build. Content-collection improvements are not an
-immediate opportunity because the site does not define content collections.
+not this static site's build. At the time of the original review, the site had no content collections.
+The subsequent catalog migration now provides collection routes; incremental
+prerendering remains a separate evaluation.
 The [7.1](https://astro.build/blog/astro-710/) and
 [7.3](https://astro.build/blog/astro-730/) release posts did not identify a more
 promising configuration change for the current build than the items above.

@@ -4,7 +4,7 @@ Three packages publish from this repository: `@antadesign/anta` at the root, `@a
 
 Anta publishes to the default `latest` dist-tag, which is where `0.3.1` through `0.3.27` went. Stickers and plot carry `publishConfig.tag: "dev"`, so they publish to `dev` and leave `latest` alone. A package whose first release goes to `dev` has no `latest` tag at all, so `npm install @antadesign/<name>` fails until one exists; install those with `@dev`, or add the tag with `npm dist-tag add @antadesign/<name>@<version> latest`.
 
-Publish anta first, then the companion packages being released. Stickers and plot depend on anta through `workspace:*`; pnpm writes anta's exact current version into the packed dependency, so that version must already exist on npm and include every subpath the companion package imports.
+Publish anta first, then the companion packages being released. Stickers uses a `workspace:*` runtime dependency, which pnpm rewrites to Anta's exact current version. Plot requires Anta `^0.3.30` as a peer dependency and uses `workspace:*` only for local development. Publish a compatible Anta release with the configured runtime hooks before publishing Plot.
 
 ```sh
 # 1. Publish anta from the repository root

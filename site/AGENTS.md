@@ -9,6 +9,41 @@ The docs site consumes Anta via the workspace symlink (`"@antadesign/anta": "wor
 Astro dev uses `--ignore-lock` so agent sessions keep the server in the root
 dev process tree. The root launcher owns PID tracking and shutdown.
 
+## Local servers
+
+Choose the server from the task without asking the user to choose process flags.
+Run these commands from the repository root:
+
+| Task | Command | Lifetime |
+| --- | --- | --- |
+| Edit source with live updates | `pnpm run dev` | Root launcher owns the dev process tree. |
+| Inspect the production build or leave a preview for the user | `pnpm --filter anta-site preview` | Astro manages a background server, normally on port 4323. |
+| Run a temporary browser check whose runner owns cleanup | `pnpm --filter anta-site preview:isolated --port <free-port>` | Foreground process owned by the runner. |
+
+Before a production preview, ensure workspace packages are built and run
+`pnpm --filter anta-site build` if the output is missing or inputs have changed.
+Preview serves existing output; it does not rebuild or watch source files.
+Reuse a verified current build instead of rebuilding for every browser check.
+
+Use `preview:status` to find an existing managed preview, `preview:logs` to
+diagnose it, and `preview:stop` to stop it, all with `pnpm --filter anta-site`.
+The default preview command explicitly requests background mode so its lifetime
+does not depend on which agent or terminal launches it. Starting it again reuses
+the existing server. Check its reported URL and an HTTP response before sharing
+the link; the actual port can differ from the requested port.
+
+Reuse an existing server when it serves the needed output. Leave a preview
+running when the user needs it. For a temporary check, stop the server you
+started when finished, including after failures. Do not stop another agent's or
+the user's server, or use `--force` to replace it for an unrelated check.
+
+Use `preview:isolated` only when the caller tracks the child process and
+terminates its process tree in cleanup. These instances bypass Astro's lock and
+are not managed by `preview:status`, `preview:logs`, or `preview:stop`. Choose a
+free port for concurrent checks. Do not combine `--ignore-lock` with
+`--background` or `--force`. Prefer the managed preview when no test runner owns
+cleanup. Use the root `pnpm run stop` command to stop development servers.
+
 ## Build preparation
 
 `integrations/site-build.mjs` makes `astro build` produce the complete static

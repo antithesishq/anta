@@ -21,7 +21,11 @@
     "dev:server": "astro dev --ignore-lock --port ${ANTA_DEV_PORT:-4321}",
     "build": "astro build",
     "sitemap:root": "node scripts/copy-sitemap-index.mjs",
-    "preview": "astro preview",
+    "preview": "astro preview --background --port 4323",
+    "preview:status": "astro preview status",
+    "preview:logs": "astro preview logs",
+    "preview:stop": "astro preview stop",
+    "preview:isolated": "astro preview --ignore-lock",
     "test:search-production": "node --test ../tests/search-production.mjs",
     "test:production": "node --test ../tests/search-production.mjs ../tests/docs-build-production.mjs",
     "lint:css": "stylelint \"src/**/*.{css,astro}\""

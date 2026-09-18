@@ -2918,6 +2918,106 @@ leaves the content type to the host.
 
 </Disclosure>
 
+#### Composing tooltips across series
+
+Set `tooltip` on the root plot config to compose one tooltip from all hovered series. The callback receives one slot per declared series, in declaration order. Each populated slot contains `{ series, data }`: `series` is the original factory arguments, and `data` contains the hovered point’s `x`, `y`, and optional `row` and `label`. A series with no hit leaves `undefined`. Destructure the array to match your series order. If you need identifiers, include them in your data rows.
+
+Use `hit.series.color` to read the original color option, including a color defined outside the data. Factory arguments are retained by reference, not copied or resolved; treat them as read-only. Color accessors remain functions, and theme colors remain light/dark pairs. Manually constructed series without factory arguments have `hit.series === undefined`.
+
+The root callback receives hits even when a series has no tooltip configured. Series with `hoverable: false` retain an empty slot. Per-series tooltip callbacks are not called while a root callback is configured. Returning `null` or `undefined` hides the tooltip without falling back; removing the root callback restores the existing stacked behavior. The callback is not called when there are no hits.
+
+Hover the overlapping rectangles to compare baseline and current bounds under one window title. The tooltip matches hits by position, places the values side by side, and calculates the change for each bound. Outside the overlap, missing values appear as “—”.
+
+<PlotInteractionExample>
+
+<Preview minHeight={308}>
+  <PlotInteractionPreview example="composedTooltips" />
+</Preview>
+
+```ts folded
+import { rect, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+
+const plot = document.createElement('a-plot') as APlotElement
+const data = [
+  { x: 8, x2: 38, y: 15, y2: 48, name: 'Window A' },
+  { x: 55, x2: 86, y: 48, y2: 82, name: 'Window B' },
+]
+
+plot.plotArgs = {
+  series: [
+    rect({
+      data, tooltip: true,
+      color: { light: 'rgba(13, 148, 136, 0.45)', dark: 'rgba(94, 234, 212, 0.45)' },
+      stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
+    }),
+    rect({
+      data: data.map(row => ({
+        ...row, x: row.x + 12, x2: row.x2 + 8, y: row.y + 12, y2: row.y2 + 10,
+      })),
+      color: { light: 'rgba(124, 58, 237, 0.45)', dark: 'rgba(196, 181, 253, 0.45)' },
+      stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 2 },
+      tooltip: ({ row }) => {
+        const content = document.createElement('div')
+        const title = document.createElement('strong')
+        title.textContent = String(row.name)
+        const value = document.createElement('div')
+        value.textContent = `Bounds: x ${row.x}–${row.x2}, y ${row.y}–${row.y2}`
+        content.append(title, value)
+        return content
+      },
+    }),
+  ],
+  tooltip: ([baseline_hit, current_hit]) => {
+    const baseline = baseline_hit?.data.row
+    const current = current_hit?.data.row
+    const content = document.createElement('div')
+    const title = document.createElement('strong')
+    title.textContent = String((current ?? baseline)?.name ?? 'Window comparison')
+    const table = document.createElement('table')
+    const header = table.createTHead().insertRow()
+    for (const label of ['Bound', 'Baseline', 'Current', 'Change']) {
+      const cell = document.createElement('th')
+      cell.scope = 'col'
+      cell.textContent = label
+      header.append(cell)
+    }
+    const body = table.createTBody()
+    for (const [field, label] of [['x', 'X start'], ['x2', 'X end'], ['y', 'Y start'], ['y2', 'Y end']]) {
+      const before = baseline?.[field]
+      const after = current?.[field]
+      const delta = typeof before === 'number' && typeof after === 'number' ? after - before : undefined
+      const row = body.insertRow()
+      const heading = document.createElement('th')
+      heading.scope = 'row'
+      heading.textContent = label
+      row.append(heading)
+      for (const value of [before ?? '—', after ?? '—', delta === undefined ? '—' : `${delta > 0 ? '+' : ''}${delta}`]) {
+        row.insertCell().textContent = String(value)
+      }
+    }
+    content.append(title, table)
+    return content
+  },
+  height: 260,
+  margin: { top: 8, right: 12, bottom: 24, left: 32 },
+  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  grid: false, border: false, zoom_pan: false,
+}
+
+// Remove the root callback for stacked per-series tooltips:
+// plot.plotArgs = { ...plot.plotArgs, tooltip: undefined }
+// Suppress tooltips without falling back:
+// plot.plotArgs = { ...plot.plotArgs, tooltip: () => undefined }
+document.body.append(plot)
+```
+
+</PlotInteractionExample>
+
+The callback type is `PlotTooltipFn<TooltipContent>`, receiving `PlotTooltipHit[]`. As with series callbacks, return a DOM `Node` for the standalone browser host or a `ReactNode` for React.
+
 ### Selection
 
 Select a point to display its source data in the preview’s text readout. `on_select` receives the selected point and its original row, so you can update a detail panel or application state.

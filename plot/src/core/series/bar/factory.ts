@@ -177,6 +177,7 @@ function new_stacked_bar<TooltipContent>(args: BarArgs<TooltipContent>, band_arg
  * @param args - the caller's bar args
  */
 function apply_bar_options<TooltipContent>(series: BarSeries<TooltipContent>, args: BarArgs<TooltipContent>): void {
+    series.original_args = args
     if (args.border_radius !== undefined) {
         series.border_radius = validate_non_negative(args.border_radius, 'plot.bar: border_radius')
     }

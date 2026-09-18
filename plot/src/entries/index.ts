@@ -10,7 +10,7 @@ export { PlotInteractionController, type PanInput, type PanUpdate } from '../cor
 export type { NearestPoint } from '../core/interactions/hit'
 export type { ResolvedTooltip } from '../core/interactions/tooltip'
 export type {
-    Domain, Viewport, SideMargins, Margin, Stroke,
+    Domain, Viewport, SideMargins, Margin, Stroke, SeriesArgs,
     ScatterSeries, RectSeries, BarSeries, BarPixelSpan, LineSeries,
     RuleSeries, AreaSeries, AreaPixelRuns, CustomSeries, Series,
     ComposedScatter, ComposedRect, ComposedBar, ComposedLine, ComposedRule,
@@ -25,7 +25,7 @@ export type {
     CustomHitTestFn, HighlightSpec, SideMode, AxisScale, AxisContext,
     ColorTheme, ColorArg, TitleArg, StrokeArg, MarkShape,
     RectAlign, FieldArg, PointData, TooltipData, TooltipFn,
-    TooltipArg, SelectFn, AxisViewport, ViewportChange, ViewportChangeFn,
+    TooltipArg, PlotTooltipHit, PlotTooltipFn, SelectFn, AxisViewport, ViewportChange, ViewportChangeFn,
     RowTypedArgs, OptionalRowTypedArgs,
 } from '../core/types'
 export { resolve_canvas_size, type Dimensions } from '../core/compose/layout'

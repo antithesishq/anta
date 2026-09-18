@@ -85,6 +85,7 @@ function resolve_custom_column(
  * @param args - the custom series args
  */
 function apply_custom_options<TooltipContent>(series: CustomSeries<TooltipContent>, args: CustomArgs<TooltipContent>): void {
+    series.original_args = args
     apply_custom_color(series, args)
 
     if (args.axis_range !== undefined) {
@@ -114,10 +115,6 @@ function apply_custom_hover<TooltipContent>(series: CustomSeries<TooltipContent>
 
     if (args.hit_test !== undefined && args.data === undefined) {
         throw new Error('plot.custom: hit_test is set but no data was passed. A hit test returns the index of a point, and the hovered x / y / row are read back from the series at that index, so a series with no rows can never report a hit. Pass data.')
-    }
-
-    if (args.hit_test !== undefined && !wants_hover) {
-        throw new Error('plot.custom: hit_test is set but neither tooltip nor on_select is. A custom series has no hover highlight, so a hit test with nothing to fire runs on every pointer move and shows nothing. Add tooltip or on_select, or drop hit_test.')
     }
 
     if (hoverable !== undefined) {

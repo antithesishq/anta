@@ -30,6 +30,7 @@ export function new_line<TooltipContent = unknown>(args: LineArgs<TooltipContent
     const resolved = resolve_xy_columns(args.data, x_arg, y_arg, 'plot.line', args.x === undefined, args.y === undefined)
     const series: LineSeries<TooltipContent> = {
         kind: 'line',
+        original_args: args,
         x: resolved.x,
         y: resolved.y,
     }

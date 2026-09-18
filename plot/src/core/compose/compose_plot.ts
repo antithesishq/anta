@@ -46,6 +46,7 @@ export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<To
 
     return {
         layout,
+        tooltip: template.tooltip,
         inner: inner_rect(layout),
         x_scale,
         y_scale,

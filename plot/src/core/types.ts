@@ -6,6 +6,18 @@
  * Tooltip content is host-supplied so this surface has no framework dependency.
  */
 import type { ScaleBand, ScaleLinear, ScaleLogarithmic, ScaleTime } from "d3-scale"
+import type { ScatterArgs } from "./series/scatter/factory"
+import type { LineArgs } from "./series/line/factory"
+import type { BarArgs } from "./series/bar/factory"
+import type { AreaArgs } from "./series/area/factory"
+import type { RectArgs } from "./series/rect/factory"
+import type { RuleArgs } from "./series/rule/factory"
+import type { CustomArgs } from "./series/custom/factory"
+
+export type SeriesArgs<Content = unknown> = Readonly<
+    ScatterArgs<Content> | LineArgs<Content> | BarArgs<Content> | AreaArgs<Content>
+    | RectArgs<Content> | RuleArgs<Content> | CustomArgs<Content>
+>
 
 export type Domain = [number, number]
 export type Viewport = { x: Domain | null; y: Domain | null }
@@ -24,6 +36,8 @@ export type Margin = number | SideMargins
 type SeriesTypes = 'scatter' | 'rect' | 'bar' | 'line' | 'rule' | 'area' | 'custom'
 
 type BaseSeries<TooltipContent = unknown> = {
+    /** Original factory input, retained by reference. Absent on manually constructed series. */
+    original_args?: SeriesArgs<TooltipContent>
     kind: SeriesTypes
     x: Float64Array
     y: Float64Array
@@ -269,6 +283,7 @@ export type RequestedViewportWindow = { x?: Domain | null; y?: Domain | null }
 export type ViewportRequest = { window: RequestedViewportWindow; key: string | number | undefined }
 
 export type PlotTemplate<TooltipContent = unknown> = {
+    tooltip?: PlotTooltipFn<TooltipContent>
     series: Series<TooltipContent>[]
     x: AxisTemplate
     y: AxisTemplate
@@ -290,6 +305,8 @@ export type PlotTemplate<TooltipContent = unknown> = {
 
 // args to plot(): the series plus optional axis / size / style. new_plot_template resolves it into a PlotTemplate.
 export type PlotArgs<TooltipContent = unknown> = {
+    /** Compose all hovered hits, topmost first. Omit to stack per-series tooltips. */
+    tooltip?: PlotTooltipFn<TooltipContent>
     series: Series<TooltipContent>[]
     axis?: { x?: AxisArgs; y?: AxisArgs }
     title?: TitleArg
@@ -317,6 +334,7 @@ export type Layout = {
 }
 
 export type ComposedPlot<TooltipContent = unknown> = {
+    tooltip?: PlotTooltipFn<TooltipContent>
     layout: Layout
     inner: Rect
     x_scale: Scale
@@ -472,6 +490,14 @@ export type PointData = {
 }
 
 export type TooltipData<Row = Record<string, unknown>> = Omit<PointData, 'row'> & { row: Row }
+
+export type PlotTooltipHit<Content = unknown> = {
+    series: SeriesArgs<Content> | undefined
+    data: PointData
+} | undefined
+
+/** One slot per declared series; missing hits are undefined. Nullish results suppress the tooltip. */
+export type PlotTooltipFn<Content = unknown> = (hits: PlotTooltipHit<Content>[]) => Content | null | undefined
 
 export type TooltipFn<Row = Record<string, unknown>, TooltipContent = unknown> = (data: TooltipData<Row>) => TooltipContent
 

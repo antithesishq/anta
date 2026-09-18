@@ -30,6 +30,7 @@ export function new_scatter<TooltipContent = unknown>(args: ScatterArgs<TooltipC
     const resolved = resolve_xy_columns(args.data, x_arg, y_arg, 'plot.scatter', args.x === undefined, args.y === undefined)
     const series: ScatterSeries<TooltipContent> = {
         kind: 'scatter',
+        original_args: args,
         x: resolved.x,
         y: resolved.y,
         ...resolve_color(args.data, args.color),

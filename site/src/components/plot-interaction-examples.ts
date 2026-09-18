@@ -148,4 +148,42 @@ export function viewport(output: HTMLOutputElement): PlotArgs<Node> {
   return { ...zoomX(output), viewport: { x: [20, 45], y: null, key: 0 } }
 }
 
-export const interactionExamples = { highlights, tooltips, selection, zoom, zoomFree, zoomX, viewport }
+export function composedTooltips(): PlotArgs<Node> {
+  const args = tooltips()
+  return {
+    ...args,
+    tooltip: ([baseline_hit, current_hit]) => {
+      const baseline = baseline_hit?.data.row
+      const current = current_hit?.data.row
+      const content = document.createElement('div')
+      const title = document.createElement('strong')
+      title.textContent = String((current ?? baseline)?.name ?? 'Window comparison')
+      const table = document.createElement('table')
+      const header = table.createTHead().insertRow()
+      for (const label of ['Bound', 'Baseline', 'Current', 'Change']) {
+        const cell = document.createElement('th')
+        cell.scope = 'col'
+        cell.textContent = label
+        header.append(cell)
+      }
+      const body = table.createTBody()
+      for (const [field, label] of [['x', 'X start'], ['x2', 'X end'], ['y', 'Y start'], ['y2', 'Y end']]) {
+        const before = baseline?.[field]
+        const after = current?.[field]
+        const delta = typeof before === 'number' && typeof after === 'number' ? after - before : undefined
+        const row = body.insertRow()
+        const heading = document.createElement('th')
+        heading.scope = 'row'
+        heading.textContent = label
+        row.append(heading)
+        for (const value of [before ?? '—', after ?? '—', delta === undefined ? '—' : `${delta > 0 ? '+' : ''}${delta}`]) {
+          row.insertCell().textContent = String(value)
+        }
+      }
+      content.append(title, table)
+      return content
+    },
+  }
+}
+
+export const interactionExamples = { highlights, tooltips, composedTooltips, selection, zoom, zoomFree, zoomX, viewport }

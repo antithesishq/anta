@@ -60,6 +60,7 @@ export function new_rect<TooltipContent = unknown>(args: RectArgs<TooltipContent
 
     const series: RectSeries<TooltipContent> = {
         kind: 'rect',
+        original_args: args,
         x: resolved.x1,
         y: resolved.y1,
         ...resolve_color(args.data, args.color),

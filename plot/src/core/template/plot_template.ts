@@ -29,6 +29,7 @@ export function new_plot_template<TooltipContent = unknown>(args: PlotArgs<Toolt
 
     return {
         series: resolved_series,
+        tooltip: args.tooltip,
         x: x_resolved.axis_template,
         y: y_resolved.axis_template,
         title: resolve_label(title.text),

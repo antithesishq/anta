@@ -37,6 +37,7 @@ export function new_area<TooltipContent = unknown>(args: AreaArgs<TooltipContent
     const stroke = resolve_stroke(args.stroke, 'plot.area')
     const series: AreaSeries<TooltipContent> = {
         kind: 'area',
+        original_args: args,
         x: resolved.x,
         y: resolved.y,
     }

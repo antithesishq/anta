@@ -122,6 +122,7 @@ function resolve_bare_rule(value: RuleValueArg | undefined, side: 'x' | 'y'): Re
  * @param args - the rule series args
  */
 function apply_rule_options<TooltipContent>(series: RuleSeries<TooltipContent>, args: RuleArgs<TooltipContent>): void {
+    series.original_args = args
     apply_rule_color(series, args)
 
     if (args.width !== undefined) {

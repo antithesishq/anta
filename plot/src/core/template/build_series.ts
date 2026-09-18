@@ -1,4 +1,5 @@
 import type { Series, ThemeColor } from "../types"
+import { carry_factory_args } from "../series/factory_args"
 
 // This file remaps band indices (if applicabble), drops rows with unknown categories, and strips
 // internal *_categories and *_axis_kind fields.
@@ -206,5 +207,5 @@ function assemble_output_series(series_item: Series, remapped: RemappedBuffers):
     if (remapped.labels !== undefined) {
         output.labels = remapped.labels
     }
-    return output
+    return carry_factory_args(series_item, output)
 }

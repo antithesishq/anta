@@ -36,8 +36,6 @@ export type Margin = number | SideMargins
 type SeriesTypes = 'scatter' | 'rect' | 'bar' | 'line' | 'rule' | 'area' | 'custom'
 
 type BaseSeries<TooltipContent = unknown> = {
-    /** Original factory input, retained by reference. Absent on manually constructed series. */
-    original_args?: SeriesArgs<TooltipContent>
     kind: SeriesTypes
     x: Float64Array
     y: Float64Array

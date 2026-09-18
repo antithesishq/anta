@@ -1,4 +1,5 @@
 import { resolve_column, validate_field_present, type ColumnMode } from "../../template/column"
+import { retain_factory_args } from "../factory_args"
 import { resolve_color } from "../../template/color"
 import { validate_finite, validate_hoverable, validate_non_negative, validate_positive } from "../../template/validate"
 import type { ColorArg, FieldArg, RuleSeries, SelectFn, TooltipArg } from "../../types"
@@ -122,7 +123,7 @@ function resolve_bare_rule(value: RuleValueArg | undefined, side: 'x' | 'y'): Re
  * @param args - the rule series args
  */
 function apply_rule_options<TooltipContent>(series: RuleSeries<TooltipContent>, args: RuleArgs<TooltipContent>): void {
-    series.original_args = args
+    retain_factory_args(series, args)
     apply_rule_color(series, args)
 
     if (args.width !== undefined) {

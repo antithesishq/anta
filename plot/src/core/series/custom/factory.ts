@@ -1,4 +1,5 @@
 import { attach_resolved_columns, resolve_column, validate_field_present, type ResolvedColumn } from "../../template/column"
+import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
 import { resolve_color } from "../../template/color"
 import { validate_finite, validate_hoverable } from "../../template/validate"
@@ -85,7 +86,7 @@ function resolve_custom_column(
  * @param args - the custom series args
  */
 function apply_custom_options<TooltipContent>(series: CustomSeries<TooltipContent>, args: CustomArgs<TooltipContent>): void {
-    series.original_args = args
+    retain_factory_args(series, args)
     apply_custom_color(series, args)
 
     if (args.axis_range !== undefined) {

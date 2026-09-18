@@ -1,4 +1,5 @@
 import { attach_resolved_columns, resolve_xy_columns } from "../../template/column"
+import { retain_factory_args } from "../factory_args"
 import { resolve_color, resolve_stroke } from "../../template/color"
 import { validate_hoverable, validate_non_negative } from "../../template/validate"
 import type { ColorArg, FieldArg, MarkShape, ScatterSeries, SelectFn, StrokeArg, TooltipArg } from "../../types"
@@ -30,7 +31,6 @@ export function new_scatter<TooltipContent = unknown>(args: ScatterArgs<TooltipC
     const resolved = resolve_xy_columns(args.data, x_arg, y_arg, 'plot.scatter', args.x === undefined, args.y === undefined)
     const series: ScatterSeries<TooltipContent> = {
         kind: 'scatter',
-        original_args: args,
         x: resolved.x,
         y: resolved.y,
         ...resolve_color(args.data, args.color),
@@ -65,6 +65,7 @@ export function new_scatter<TooltipContent = unknown>(args: ScatterArgs<TooltipC
 
     series.rows = args.data // Keep the caller's original rows for tooltip and selection payloads.
     attach_resolved_columns(series, resolved, x_arg, y_arg)
+    retain_factory_args(series, args)
     return series
 }
 

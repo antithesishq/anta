@@ -1,4 +1,5 @@
 import { resolve_xy_columns, attach_resolved_columns, resolve_column, validate_field_present } from "../../template/column"
+import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
 import { validate_finite, validate_non_negative, validate_hoverable } from "../../template/validate"
 import { resolve_stroke } from "../../template/color"
@@ -37,7 +38,6 @@ export function new_area<TooltipContent = unknown>(args: AreaArgs<TooltipContent
     const stroke = resolve_stroke(args.stroke, 'plot.area')
     const series: AreaSeries<TooltipContent> = {
         kind: 'area',
-        original_args: args,
         x: resolved.x,
         y: resolved.y,
     }
@@ -86,6 +86,7 @@ export function new_area<TooltipContent = unknown>(args: AreaArgs<TooltipContent
 
     series.rows = args.data // caller's original for the tooltip
     attach_resolved_columns(series, resolved, x_arg, y_arg)
+    retain_factory_args(series, args)
     return series
 }
 

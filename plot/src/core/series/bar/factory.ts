@@ -1,4 +1,5 @@
 import { resolve_xy_columns, attach_resolved_columns, type ResolvedColumnMeta } from "../../template/column"
+import { retain_factory_args } from "../factory_args"
 import { compact_column, dedupe_bands, warn_dropped_bands } from "./duplicates"
 import { array_extent, xy_extent } from "../../template/extent"
 import { resolve_color } from "../../template/color"
@@ -177,7 +178,7 @@ function new_stacked_bar<TooltipContent>(args: BarArgs<TooltipContent>, band_arg
  * @param args - the caller's bar args
  */
 function apply_bar_options<TooltipContent>(series: BarSeries<TooltipContent>, args: BarArgs<TooltipContent>): void {
-    series.original_args = args
+    retain_factory_args(series, args)
     if (args.border_radius !== undefined) {
         series.border_radius = validate_non_negative(args.border_radius, 'plot.bar: border_radius')
     }

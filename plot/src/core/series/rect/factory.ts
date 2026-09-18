@@ -1,4 +1,5 @@
 import { attach_resolved_columns, resolve_column, validate_field_present, type ColumnMode, type ResolvedColumn } from "../../template/column"
+import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
 import { validate_finite, validate_non_negative, validate_hoverable, validate_hover_span } from "../../template/validate"
 import { resolve_color, resolve_stroke } from "../../template/color"
@@ -60,7 +61,6 @@ export function new_rect<TooltipContent = unknown>(args: RectArgs<TooltipContent
 
     const series: RectSeries<TooltipContent> = {
         kind: 'rect',
-        original_args: args,
         x: resolved.x1,
         y: resolved.y1,
         ...resolve_color(args.data, args.color),
@@ -130,6 +130,7 @@ export function new_rect<TooltipContent = unknown>(args: RectArgs<TooltipContent
 
     series.rows = args.data // caller's original for the tooltip
     attach_resolved_columns(series, resolved, x_fields.value, y_fields.value)
+    retain_factory_args(series, args)
     return series
 }
 

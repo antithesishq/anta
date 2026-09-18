@@ -1,5 +1,6 @@
 import type { ComposedPlot, PlotTooltipHit, PointData, TooltipData } from "../types"
 import { resolve_point_data, type NearestPoint } from "./hit"
+import { original_factory_args } from "../series/factory_args"
 
 export type ResolvedTooltip<TooltipContent = unknown> =
     | { kind: 'default'; lines: string[] }
@@ -13,7 +14,7 @@ export function resolve_tooltips<TooltipContent>(plot: ComposedPlot<TooltipConte
         for (const hit of hits) {
             const data = resolve_point_data(plot, hit)
             if (data !== undefined) {
-                hovered[hit.series_index] = { series: plot.series[hit.series_index].original_args, data }
+                hovered[hit.series_index] = { series: original_factory_args<TooltipContent>(plot.series[hit.series_index]), data }
                 has_hit = true
             }
         }

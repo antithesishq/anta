@@ -7,7 +7,7 @@ import { PlotHost } from '../integrations/plot_host'
 import { capture_pointer_input, capture_wheel_input } from '../integrations/anta_gestures'
 import { UPDATE_INTERVAL_MS } from '../core/interactions/viewport_schedule'
 import { prepare_canvas_context } from '../core/render/canvas'
-import { clear_highlights, update_highlight_canvas } from '../core/render/highlight'
+import { clear_highlights, update_hover_canvas } from '../core/render/highlight'
 import type { PlotSurfaceEventMap, PlotSurfacePresentation } from '../core/presentation/surface'
 import type { ResolvedTooltip } from '../core/interactions/tooltip'
 import type { PlotLifecycleError, PlotDrawHost } from '../core/controller'
@@ -125,11 +125,11 @@ export function Plot<Content = React.ReactNode>({
         const controller = host.controller
 
         if (binding.highlight) {
-            update_highlight_canvas(
+            update_hover_canvas(
                 binding.highlight,
                 controller?.composed_plot ?? null,
                 host.environment?.device_pixel_ratio ?? 1,
-                () => controller?.interactions.resolve_highlights() ?? [],
+                controller?.interactions.hovered ?? [],
             )
         }
 

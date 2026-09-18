@@ -22,7 +22,7 @@ export type {
     Layout, ComposedPlot, Scale, NumericalScale, ContinuousScale,
     BandScale, CanvasContext, Rect, PixelRect, RenderContext,
     CustomRenderContext, CustomRendererFn, HitContext, PixelResolver, ColorResolver,
-    CustomHitTestFn, HighlightSpec, SideMode, AxisScale, AxisContext,
+    CustomHitTestFn, CustomHighlightContext, CustomHighlightRendererFn, HighlightSpec, SideMode, AxisScale, AxisContext,
     ColorTheme, ColorArg, TitleArg, StrokeArg, MarkShape,
     RectAlign, FieldArg, PointData, TooltipData, TooltipFn,
     TooltipArg, PlotTooltipHit, PlotTooltipFn, SelectFn, AxisViewport, ViewportChange, ViewportChangeFn,

@@ -131,6 +131,7 @@ export type CustomSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> 
     kind: 'custom'
     renderer: CustomRendererFn<TooltipContent>
     hit_test?: CustomHitTestFn<TooltipContent>
+    render_highlight?: CustomHighlightRendererFn<TooltipContent>
     axis_range?: { x?: Domain; y?: Domain }
 }
 
@@ -396,6 +397,18 @@ export type CustomRenderContext = RenderContext & {
 }
 
 export type CustomRendererFn<TooltipContent = unknown> = (series: ComposedCustom<TooltipContent>, render_props: CustomRenderContext) => void
+
+export type CustomHighlightContext = CustomRenderContext & {
+    /** Resolve the standard theme-adjusted highlight color for a point. */
+    highlight_color_at: ColorResolver
+}
+
+/** Draw synchronously on the prepared overlay. The plot owns clearing and canvas state. */
+export type CustomHighlightRendererFn<TooltipContent = unknown> = (
+    series: ComposedCustom<TooltipContent>,
+    point_index: number,
+    context: CustomHighlightContext,
+) => void
 
 export type HitContext = {
     cursor: { x: number; y: number }

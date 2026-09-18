@@ -3,7 +3,7 @@ import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
 import { resolve_color } from "../../template/color"
 import { validate_finite, validate_hoverable } from "../../template/validate"
-import type { ColorArg, CustomHitTestFn, CustomRendererFn, CustomSeries, Domain, FieldArg, SelectFn, TooltipArg } from "../../types"
+import type { ColorArg, CustomHighlightRendererFn, CustomHitTestFn, CustomRendererFn, CustomSeries, Domain, FieldArg, SelectFn, TooltipArg } from "../../types"
 
 export type CustomAxisRangeArg = { x?: number[]; y?: number[] }
 
@@ -12,6 +12,8 @@ export type CustomArgs<TooltipContent = unknown> = {
     x?: FieldArg
     y?: FieldArg
     renderer: CustomRendererFn<TooltipContent>
+    render_highlight?: CustomHighlightRendererFn<TooltipContent>
+    highlight?: boolean
     hit_test?: CustomHitTestFn<TooltipContent>
     color?: ColorArg
     axis_range?: CustomAxisRangeArg
@@ -108,10 +110,16 @@ function apply_custom_options<TooltipContent>(series: CustomSeries<TooltipConten
  */
 function apply_custom_hover<TooltipContent>(series: CustomSeries<TooltipContent>, args: CustomArgs<TooltipContent>): void {
     const hoverable = validate_hoverable(args, 'plot.custom')
-    const wants_hover = args.tooltip !== undefined || args.on_select !== undefined
+    const wants_hover = args.tooltip !== undefined || args.on_select !== undefined || args.render_highlight !== undefined
+
+    if (args.render_highlight !== undefined && hoverable === false) {
+        throw new Error('plot.custom: render_highlight requires hoverable series.')
+    }
+    if (args.highlight !== undefined) series.highlight = args.highlight
+    if (args.render_highlight !== undefined) series.render_highlight = args.render_highlight
 
     if (wants_hover && args.hit_test === undefined) {
-        throw new Error('plot.custom: tooltip / on_select are set but hit_test is not. A custom series is only ever hovered through its own hit_test, so nothing would fire. Add hit_test, or drop them.')
+        throw new Error('plot.custom: tooltip / on_select / render_highlight are set but hit_test is not. Add hit_test, or drop them.')
     }
 
     if (args.hit_test !== undefined && args.data === undefined) {

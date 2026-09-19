@@ -7,6 +7,8 @@ changes are not listed.
 
 ### Added
 
+- MenuItem supports a trailing switch selection indicator for immediate
+  settings. Switch rows keep their menu open when selected.
 - Title supports single-line and multi-line truncation with an automatic
   full-text tooltip when the heading is clipped.
 

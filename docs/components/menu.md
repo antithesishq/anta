@@ -328,13 +328,13 @@ menus: mark one row for single-select, several for multi-select (pair with
 `data-menu-open` to keep the menu open as choices toggle). The tint tracks
 `tone`, so a toned row stays in its own color.
 
-For a real checkable row, add **`selectionIndicator`** (`'checkbox'` or `'radio'`).
-It renders a passive checkbox/radio at the leading edge (reusing the
-[Checkbox](./checkbox.md) / [Radio](./radio.md) element visuals),
-flips the row to `role="menuitemcheckbox"` / `"menuitemradio"`, and pairs
-`aria-checked` — the row stays the control, the indicator is decorative. This is
-what [Select](./select.md)'s `selection` modes render; use it directly for
-a checkable menu.
+For a checkable row, add `selectionIndicator`. The `checkbox` and `radio`
+variants render a passive leading mark. The `switch` variant renders a passive
+trailing switch for settings that take effect immediately. The
+row remains the control and carries `aria-checked`; the indicator adds no focus
+stop or nested role. A switch row keeps the menu open when selected.
+
+[Select](./select.md)'s selection modes use the checkbox and radio variants.
 
 ```tsx
 {/* Plain tint (no indicator) */}
@@ -343,6 +343,28 @@ a checkable menu.
 {/* Checkable rows — the row is the control; the mark is decorative */}
 <MenuItem selectionIndicator="radio" label="Relevance" selected />
 <MenuItem selectionIndicator="checkbox" label="Show archived" selected data-menu-open />
+```
+
+```tsx
+const [notifications, setNotifications] = useState(true)
+const [automaticUpdates, setAutomaticUpdates] = useState(false)
+
+<Button>Settings</Button>
+<Menu>
+  <MenuItem
+    selectionIndicator="switch"
+    label="Notifications"
+    selected={notifications}
+    onSelect={() => setNotifications((value) => !value)}
+  />
+  <MenuItem
+    selectionIndicator="switch"
+    label="Automatic updates"
+    hint="Install new versions automatically"
+    selected={automaticUpdates}
+    onSelect={() => setAutomaticUpdates((value) => !value)}
+  />
+</Menu>
 ```
 
 ## Badges, counters, and hints
@@ -411,11 +433,11 @@ navigating links.
 | `onMouseDown?` | (event) => void | — | Raw `mousedown` on the row. Mainly to `preventDefault()` so the row doesn't take focus on a mouse press — e.g. a combobox option keeping focus in its input field while the click still selects. |
 | `onSelect?` | (event, detail) => void | — | Activation handler — fires when *this* item is chosen (click / Enter / Space), unless it's `disabled`. It does **not** fire for a submenu parent (clicking that opens the flyout, which isn't a selection) nor for a selection bubbling up from a nested submenu. On a link item it fires alongside the navigation. Receives the event plus a `{ value, label }` detail. |
 | `role?` | string | — | ARIA role override. Defaults to the role implied by `selectionIndicator` (`menuitem` / `menuitemcheckbox` / `menuitemradio`); set it to reparent the row under a different container role — e.g. `option` inside a `listbox`. |
-| `selected?` | boolean | — | Mark the item as selected. On a plain row (no `selectionIndicator`) this is a persistent background tint, the same resting fill a pressed row shows — also the way to flag the current page on a link item. On a checkable row (`selectionIndicator` set) it instead drives the leading `checkbox` / `radio` indicator and the row's `aria-checked`. |
-| `selectionIndicator?` | 'checkbox' \| 'radio' \| 'check' | — | Turn the row into a checkable item, driven by `selected` (the row stays the control and carries `aria-checked`): - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>` (before `icon`); the tint is dropped (the box carries state). - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped. - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected row *and* the background tint (the canonical single-select look). Omit for a plain row (the default). |
+| `selected?` | boolean | — | Mark the item as selected. On a plain row (no `selectionIndicator`) this is a persistent background tint, the same resting fill a pressed row shows — also the way to flag the current page on a link item. On a checkable row (`selectionIndicator` set) it instead drives the indicator and the row's `aria-checked`. |
+| `selectionIndicator?` | 'checkbox' \| 'radio' \| 'check' \| 'switch' | — | Turn the row into a checkable item, driven by `selected` (the row stays the control and carries `aria-checked`): - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>` (before `icon`); the tint is dropped (the box carries state). - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped. - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected row *and* the background tint (the canonical single-select look). - `'switch'` → `role="menuitemcheckbox"`, a trailing passive `<a-switch>`; selecting the row keeps its menu open. Omit for a plain row (the default). |
 | `submenu?` | boolean | — | Marks this item as a submenu parent: adds the trailing chevron and `aria-haspopup="menu"`. Nest the flyout as a `<Menu>` child. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone — colors the label, icon, and hover/selected tint (and the `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose hue + chroma are kept while the lightness is pinned to match the brand text. `critical` is the destructive action; `neutral` (the default) is the standard gray. |
-| `toneScope?` | 'all' \| 'selected' | 'all' | Apply `tone` to every row state, or only while the row is selected. In `selected` scope, an unselected row and its checkbox/radio indicator stay neutral. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone — colors the label, icon, hover/selected tint, and selection indicator. A named tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose hue + chroma are kept while the lightness is pinned to match the brand text. `critical` is the destructive action; `neutral` (the default) is the standard gray. |
+| `toneScope?` | 'all' \| 'selected' | 'all' | Apply `tone` to every row state, or only while the row is selected. In `selected` scope, an unselected row and its indicator stay neutral. |
 | `value?` | string \| number | — | An opaque value identifying this item, handed back in `onSelect`'s detail so a shared handler can tell which row was chosen without a per-item closure. |
 
 ## Keyboard
@@ -489,12 +511,12 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 | `ping?` | string | — | Space-separated URLs the browser pings on navigation. |
 | `rel?` | string | — | Anchor rel. |
 | `role?` | string | — | ARIA role override. Defaults to the role implied by `selectionIndicator` (`menuitem` / `menuitemcheckbox` / `menuitemradio`); set it to reparent the row under a different container role — e.g. `option` inside a `listbox`. |
-| `selected?` | boolean | — | Mark the item as selected. On a plain row (no `selectionIndicator`) this is a persistent background tint, the same resting fill a pressed row shows — also the way to flag the current page on a link item. On a checkable row (`selectionIndicator` set) it instead drives the leading `checkbox` / `radio` indicator and the row's `aria-checked`. |
-| `selectionIndicator?` | 'checkbox' \| 'radio' \| 'check' | — | Turn the row into a checkable item, driven by `selected` (the row stays the control and carries `aria-checked`): - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>` (before `icon`); the tint is dropped (the box carries state). - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped. - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected row *and* the background tint (the canonical single-select look). Omit for a plain row (the default). |
+| `selected?` | boolean | — | Mark the item as selected. On a plain row (no `selectionIndicator`) this is a persistent background tint, the same resting fill a pressed row shows — also the way to flag the current page on a link item. On a checkable row (`selectionIndicator` set) it instead drives the indicator and the row's `aria-checked`. |
+| `selectionIndicator?` | 'checkbox' \| 'radio' \| 'check' \| 'switch' | — | Turn the row into a checkable item, driven by `selected` (the row stays the control and carries `aria-checked`): - `'checkbox'` → `role="menuitemcheckbox"`, a leading passive `<a-checkbox>` (before `icon`); the tint is dropped (the box carries state). - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped. - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected row *and* the background tint (the canonical single-select look). - `'switch'` → `role="menuitemcheckbox"`, a trailing passive `<a-switch>`; selecting the row keeps its menu open. Omit for a plain row (the default). |
 | `submenu?` | boolean | — | Marks this item as a submenu parent: adds the trailing chevron and `aria-haspopup="menu"`. Nest the flyout as a `<Menu>` child. |
 | `target?` | string | — | Anchor target, e.g. `'_blank'`. |
-| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone — colors the label, icon, and hover/selected tint (and the `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose hue + chroma are kept while the lightness is pinned to match the brand text. `critical` is the destructive action; `neutral` (the default) is the standard gray. |
-| `toneScope?` | 'all' \| 'selected' | 'all' | Apply `tone` to every row state, or only while the row is selected. In `selected` scope, an unselected row and its checkbox/radio indicator stay neutral. |
+| `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Semantic tone — colors the label, icon, hover/selected tint, and selection indicator. A named tone, or any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose hue + chroma are kept while the lightness is pinned to match the brand text. `critical` is the destructive action; `neutral` (the default) is the standard gray. |
+| `toneScope?` | 'all' \| 'selected' | 'all' | Apply `tone` to every row state, or only while the row is selected. In `selected` scope, an unselected row and its indicator stay neutral. |
 | `value?` | string \| number | — | An opaque value identifying this item, handed back in `onSelect`'s detail so a shared handler can tell which row was chosen without a per-item closure. |
 
 ## Web Component

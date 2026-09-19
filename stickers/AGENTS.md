@@ -2,9 +2,9 @@
 
 A companion package to `@antadesign/anta`, published separately on npm so that
 core anta carries **no `lottie-web`** and no sticker code. Apps that don't use
-stickers never install the animation runtime; apps that do add one package
-(`@antadesign/stickers`), which pulls `@antadesign/anta` + `lottie-web`
-transitively.
+stickers never install the animation runtime; apps that do use the compatible
+`@antadesign/anta` already installed by the consumer and add
+`@antadesign/stickers`, which pulls `lottie-web` transitively.
 
 This package follows the shared root [`../AGENTS.md`](../AGENTS.md) conventions.
 Before changing sticker elements or JSX wrappers, also read
@@ -25,7 +25,11 @@ rules apply here too. Only package-specific notes live here.
 
 ## Coupling to anta
 
-The JSX runtime is anta's (`jsxImportSource: "@antadesign/anta"`), and `@antadesign/anta` is a **regular dependency** (`workspace:*` in-repo). `lottie-web` is this package's own dependency; `react` is a peer.
+The JSX runtime is anta's (`jsxImportSource: "@antadesign/anta"`).
+`@antadesign/anta` is a **peer dependency** (`>=0.3.31`) so stickers uses the
+compatible Anta version already installed by the consumer; the matching
+`workspace:*` dev dependency links the local package for builds. `lottie-web`
+is this package's own dependency; `react` is also a peer.
 
 ## Build & dev
 
@@ -41,10 +45,14 @@ pnpm run typecheck
 
 See [`../RELEASING.md`](../RELEASING.md) for the mandatory package order and commands. The two package-specific things to remember here:
 
-- **Publish `@antadesign/anta` first.** This package's `workspace:*` dependency on anta is rewritten to anta's exact current version at pack time, so that anta version must already be on npm (and carry the exports this package imports — `./anta_helpers`, `./general_types`).
-- **Use `pnpm publish`, not `npm publish`** — only pnpm rewrites the `workspace:*` protocol. Access + tag come from `publishConfig` (`{ access: "public", tag: "dev" }`), so no flags needed:
+- **Publish `@antadesign/anta` first.** Stickers requires a consumer-provided
+  Anta version satisfying its peer range, and that Anta release must already be
+  on npm with the exports stickers imports (`./anta_helpers`, `./general_types`).
+- **Use `pnpm publish`, not `npm publish`** — only pnpm rewrites the
+  `workspace:*` protocol. Access + tag come from `publishConfig`
+  (`{ access: "public", tag: "latest" }`), so no flags are needed:
 
 ```sh
-npm version prerelease --preid=dev   # bump first (immutable versions)
+npm version patch   # bump first (immutable versions)
 pnpm publish --no-git-checks
 ```

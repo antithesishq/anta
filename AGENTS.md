@@ -67,6 +67,12 @@ Cloudflare Pages must use the Node version in `.node-version`; a dashboard
 and an optional `node_version` when redeploying. That override applies to the
 project's preview or production environment, according to the target branch.
 
+## Git workflow
+
+Commit and push work on the current branch by default. Never commit or push task
+changes directly to `main`; when the current branch is `main`, create and switch
+to a descriptively named feature or fix branch before committing or pushing.
+
 ## Shared conventions
 
 - Pin registry dependencies and dev dependencies to exact stable versions. Keep

@@ -1,4 +1,4 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { HTMLElementBase, isModifiedNavigationKey } from '../anta_helpers'
 import { Temporal } from 'temporal-polyfill'
 import './a-calendar.css'
 
@@ -143,6 +143,10 @@ export class ACalendarElement extends HTMLElementBase {
 
   private onKeydown = (e: KeyboardEvent) => {
     if (this.hasAttribute('disabled')) return
+    // Shift+PageUp/PageDown deliberately moves by year; other modified navigation stays native.
+    const yearNavigation = e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey
+      && (e.key === 'PageUp' || e.key === 'PageDown')
+    if (isModifiedNavigationKey(e) && !yearNavigation) return
     const cells = this.#dayCells
     if (cells.length === 0) return
     const focused =

@@ -13,7 +13,7 @@ export const ANTA_SLUG: Record<string, string> = {
   choice: 'checkbox', slider: 'slider',
   datetime: 'input-date', tabs: 'tabs', menu: 'menu', tooltip: 'tooltip',
   dialog: 'dialog', toast: 'toaster', accordion: 'expander', table: 'table', tag: 'tag', avatar: 'avatar', card: 'card', progress: 'progress', steps: 'steps', nav: 'breadcrumbs',
-  icons: 'icon', typography: 'text', utilities: 'box',
+  icons: 'icon', typography: 'text', charts: 'plot', utilities: 'box',
 }
 
 export type Mark = 'yes' | 'partial' | 'no' | 'paid'
@@ -531,7 +531,7 @@ export const CATEGORIES: Category[] = [
   { id: 'nav', label: 'Breadcrumbs', members: 'Breadcrumb navigation' },
   { id: 'icons', label: 'Icons', members: 'Bundled icon set' },
   { id: 'typography', label: 'Typography', members: 'Text / title components' },
-  { id: 'charts', label: 'Charts', members: 'First-party data viz' },
+  { id: 'charts', label: 'Charts', members: 'First-party data viz', examples: { anta: 'Plot (@antadesign/plot)' } },
   // Utility and focus coverage verified against public APIs on September 5, 2026.
   {
     id: 'utilities', label: 'Utility containers', members: 'Boxes with observers',
@@ -566,7 +566,7 @@ export const COVERAGE: Record<string, Partial<Record<string, Mark>>> = {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'yes', choice: 'yes', slider: 'yes',
     datetime: 'yes', tabs: 'yes', menu: 'yes', tooltip: 'yes', dialog: 'yes', toast: 'yes',
     accordion: 'yes', table: 'partial', tag: 'yes', avatar: 'yes', card: 'yes', progress: 'yes', steps: 'yes',
-    nav: 'yes', icons: 'yes', typography: 'yes', utilities: 'yes', focus: 'partial',
+    nav: 'yes', icons: 'yes', typography: 'yes', charts: 'yes', utilities: 'yes', focus: 'partial',
   },
   webawesome: {
     button: 'yes', textinput: 'yes', select: 'yes', combobox: 'paid',

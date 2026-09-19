@@ -7,8 +7,14 @@ changes are not listed.
 
 ### Added
 
+- Added Plot as the separate `@antadesign/plot` package for interactive canvas
+  charts in React, Preact, and plain JavaScript.
 - Export `useRef` and `useLayoutEffect` from the JSX runtime, with React defaults
   and overrides through `configure()` for other renderers.
+
+### Changed
+
+- Updated and pinned runtime dependencies to exact versions.
 
 ## 0.3.29 — September 15, 2026
 

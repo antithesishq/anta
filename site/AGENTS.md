@@ -9,20 +9,112 @@ The docs site consumes Anta via the workspace symlink (`"@antadesign/anta": "wor
 Astro dev uses `--ignore-lock` so agent sessions keep the server in the root
 dev process tree. The root launcher owns PID tracking and shutdown.
 
+## Local servers
+
+Choose the server from the task without asking the user to choose process flags.
+Run these commands from the repository root:
+
+| Task | Command | Lifetime |
+| --- | --- | --- |
+| Edit source with live updates | `pnpm run dev` | Root launcher owns the dev process tree. |
+| Inspect the production build or leave a preview for the user | `pnpm --filter anta-site preview` | Astro manages a background server, normally on port 4323. |
+| Run a temporary browser check whose runner owns cleanup | `pnpm --filter anta-site preview:isolated --port <free-port>` | Foreground process owned by the runner. |
+
+Before a production preview, ensure workspace packages are built and run
+`pnpm --filter anta-site build` if the output is missing or inputs have changed.
+Preview serves existing output; it does not rebuild or watch source files.
+Reuse a verified current build instead of rebuilding for every browser check.
+
+Use `preview:status` to find an existing managed preview, `preview:logs` to
+diagnose it, and `preview:stop` to stop it, all with `pnpm --filter anta-site`.
+The default preview command explicitly requests background mode so its lifetime
+does not depend on which agent or terminal launches it. Starting it again reuses
+the existing server. Check its reported URL and an HTTP response before sharing
+the link; the actual port can differ from the requested port.
+
+Reuse an existing server when it serves the needed output. Leave a preview
+running when the user needs it. For a temporary check, stop the server you
+started when finished, including after failures. Do not stop another agent's or
+the user's server, or use `--force` to replace it for an unrelated check.
+
+Use `preview:isolated` only when the caller tracks the child process and
+terminates its process tree in cleanup. These instances bypass Astro's lock and
+are not managed by `preview:status`, `preview:logs`, or `preview:stop`. Choose a
+free port for concurrent checks. Do not combine `--ignore-lock` with
+`--background` or `--force`. Prefer the managed preview when no test runner owns
+cleanup. Use the root `pnpm run stop` command to stop development servers.
+
+## Build preparation
+
+`integrations/site-build.mjs` makes `astro build` produce the complete static
+site. It runs `scripts/prepare.mjs docs` in `astro:config:done`, before content
+sync can import generated files. API data and the iframe manifest finish before
+Playground bundling. Build, dev, and sync prepare their inputs; preview only
+serves existing output. Keep this integration after Sitemap: its
+`astro:build:done` hook indexes rendered HTML, bundles the Pages worker, and
+normalizes the sitemap using the hook's output directory.
+
+Preparation runs in a child process with `NODE_ENV` unset, matching default
+standalone commands without changing Astro's environment. This keeps dev and
+build from changing the preparation cache identity or Playground runtime mode.
+Keep `scripts/prepare.mjs` and standalone `docs:*` commands usable by package
+publishing and the root dev watcher. The preparation runner does not launch
+Astro. Do not add a second preparation step to site build or dev commands.
+
+Postprocessors export callable functions and run as CLIs only when invoked
+directly. Pass the resolved output directory when calling them from Astro;
+do not assume `cwd/dist`. Generated source and prepared public assets remain
+in this repository's site directories.
+
+API data, iframe assets, and Playground assets use content-checked cache stamps
+in ignored `site/.cache/build/`. The cache checks input and output contents,
+including generated manifests and asset directories. Missing or changed outputs
+rebuild automatically. Use `ANTA_BUILD_CACHE=0 pnpm --filter anta-site build` to
+force preparation, or remove `site/.cache/build/`. This is a local preparation
+cache, not Astro's experimental incremental prerendering.
+
+When a build task gains a new input outside its existing input trees, add it to
+`scripts/prepare.mjs`. Do not include a task's own outputs among its inputs.
+Package manifests, the lockfile, build scripts, and Node runtime participate in
+invalidation. Cache only tasks whose outputs are covered by the output check.
+
+Markdown and MDX use Astro's native Sätteri processor with MDX optimization.
+`lib/satteri-plugins.mjs` preserves heading links, Markdown table wrappers, and
+image/JSX paragraph handling. Native table alignment emits inline CSS, so table
+cells can use static serialization while overriding Anta's reset CSS.
+Keep the heading-ID plugin factory before the heading-link transform; its state
+must reset for each document. Authored JSX tables retain their own layout and
+must not receive Markdown table wrappers.
+Run `pnpm --filter anta-site test:production` after the production build to check
+search, table alignment, ClientRouter navigation, and the compiled Playground.
+
 ## Site topology
 
 - `src/layouts/DocsLayout.astro` is the sidebar and main-content shell; it imports `@antadesign/anta/elements` in a client-side script.
-- `src/pages/` holds static `.astro` pages and MDX component documentation.
+- `src/pages/` holds standalone `.astro` and MDX pages, endpoints, and the collection route `[...path].astro`.
+- `src/content/components/{name}/index.mdx` holds component docs and sibling demo sources. `src/content/packages/{package}/` holds each package’s documentation collection.
+- `src/content.config.mjs` defines collections. `lib/content/` owns their shared schema, normalized catalog, and standalone-page manifest.
 - `src/components/` holds Preact islands. Use `client:load` or `client:visible`; `Playground.tsx` is the shared interactive component-demo surface, mounted by the prebuilt `PlaygroundEmbed.astro` runtime so it is not a Vite island. Custom islands are for demos it cannot express.
 - `src/styles/base.css` owns the minimal site reset and typography.
 
-Astro renders static output. The site uses MDX and astro-expressive-code, with GFM, math, directive, definition-list, and attributes Remark plugins; slug, autolink-headings, and MathJax Rehype plugins. Preact compat aliases `react` to `preact/compat`, so anta's JSX runtime works without `configure()`.
+Astro renders static output. Sätteri handles Markdown/MDX and GFM; astro-expressive-code handles code blocks. Optional math and directive syntax are disabled. Keep interactive behavior in imported JSX components or the existing external Playground demo source; MDX composes the prose and previews. Preact compat aliases `react` to `preact/compat`, so anta's JSX runtime works without `configure()`.
+
+Smart punctuation also processes raw text inside MDX JSX. Use inline code for
+code identifiers, or a quoted JSX expression such as `{'--text-1'}` when a live
+preview must preserve its existing font. The package/LLM Markdown converter
+supports plain unescaped string literals; it does not evaluate JavaScript.
+
+For custom client-only demos, let an `.astro` wrapper own the `Preview` layout
+and hydration directive, as in `WheelCaptureDemo.astro`. MDX imports the wrapper;
+the TSX component owns interaction and its CSS module. This also prevents native
+MDX from retaining the client-only component's CSS in both page and island builds.
 
 ## CSS
 
+- Astro 7.3.3 needs the versioned [collection CSS patch](../patches/README.md) to keep client-only and processed-script styles attached to their content entries. Preserve it when installing dependencies. Before removing it or upgrading Astro, run the production asset tests and compare per-page stylesheet ownership. Incremental prerendering remains disabled until its dependency invalidation is checked with the patch.
 - **All component styles stay co-located** (a `.astro` scoped `<style>` or a `.module.css`). `astro.config.mjs` sets `build.inlineStylesheets: 'never'` so scoped styles are emitted into *linked* bundles, never inlined into the page `<head>` — Astro's per-page inline path can land present-but-inert in production for a component used inside MDX wrapping a hydrated island. Per-route CSS code-splitting stays on (default), so heavy island CSS (Monaco/Playground) loads only where it's used.
 - For a one-off style that must stay inline and untouched by Astro's pipeline, use **`<style is:inline>`** — it's rendered verbatim (no scoping, bundling, or hoisting).
-- **In MDX docs pages, a styling example's live CSS goes in a `<style is:inline>` placed *inside* its `<Preview>` (as a child, after the element), targeting a demo class on that preview's element; the folded recipe under the preview is that same CSS.** Putting the `<style>` inside the preview means the applied rule is literally in the preview's DOM, right next to the element it styles — a reader can inspect the preview and find exactly the rule the recipe shows — and it's never a far-away or page-wide stylesheet. Don't hide the applied CSS behind a `style=""` attribute either: an attribute can't express what these examples need (`::part`, `::before`, `:hover`, `:state`, descendant selectors) — those are only legal in a stylesheet. Use a demo class (e.g. `.hide-chevron`, `.code-like`) so each example is self-identifying and examples don't collide, and tell the reader (once, near the first example) that the class is just for the demo and they'd swap their own selector. `expander.mdx`'s "Styling the chevron & header" section is the reference pattern.
+- **In MDX docs pages, a styling example's live CSS goes in a `<style is:inline>` placed *inside* its `<Preview>` (as a child, after the element), targeting a demo class on that preview's element; the folded recipe under the preview is that same CSS.** Putting the `<style>` inside the preview means the applied rule is literally in the preview's DOM, right next to the element it styles — a reader can inspect the preview and find exactly the rule the recipe shows — and it's never a far-away or page-wide stylesheet. Don't hide the applied CSS behind a `style=""` attribute either: an attribute can't express what these examples need (`::part`, `::before`, `:hover`, `:state`, descendant selectors) — those are only legal in a stylesheet. Use a demo class (e.g. `.hide-chevron`, `.code-like`) so each example is self-identifying and examples don't collide, and tell the reader (once, near the first example) that the class is just for the demo and they'd swap their own selector. `src/content/components/expander/index.mdx`'s "Styling the chevron & header" section is the reference pattern.
 - **`pnpm --filter anta-site lint:css` runs Stylelint** (config: `site/stylelint.config.mjs`) over `src/**/*.{css,astro}`, including the `<style>` blocks inside `.astro` files (`postcss-html` custom syntax). It's a CI step. The config is tuned for *correctness*, not house style — most stylistic rules are off; the point is to catch CSS that the browser would silently drop. **Watch for `*/` inside a CSS comment** — e.g. writing `data-*/aria-*` ends the comment early and spills the rest into the stylesheet as invalid CSS, which (when bundled with other components) silently drops their rules in production. Stylelint now flags this.
 
 ## ClientRouter (view transitions)
@@ -44,7 +136,8 @@ Astro renders static output. The site uses MDX and astro-expressive-code, with G
 
 ## Search
 
-`pnpm run build` runs `scripts/build-search-index.mjs` after Astro writes `dist/`.
+The site integration runs `scripts/build-search-index.mjs` after Astro writes its
+configured output directory (`dist/` by default).
 The script parses rendered `<main class="content">` elements, adds stable `data-search-id`
 attributes and anchors to searchable blocks, then writes `dist/search-index.json`. Keep the
 browser configuration in `lib/search/config.json` compatible with the build script: FlexSearch
@@ -151,13 +244,33 @@ We only register workers for languages the playground actually uses. Adding JSON
 
 ## Adding a component docs page
 
-Create `site/src/pages/{name}.mdx` with `layout: ../layouts/DocsLayout.astro` (component pages are served at the site root, `/{name}/`, not under `/components/`; add the slug to `site/lib/component-slugs.ts`, the sidebar nav in `DocsLayout.astro`, and `componentGroups` in `site/lib/llms/index-content.mjs`). For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop `<Playground component="…" layout="side" initialCode={…} />` near the top. It is mounted by the shared prebuilt runtime, so it does not take a `client:*` directive.
+Create `site/src/content/components/{name}/index.mdx`. Its collection entry generates the existing root URL, `/{name}/`. Add `title` and `nav` frontmatter; do not set `layout`, because the collection route owns it:
+
+```yaml
+---
+title: Button
+nav:
+  icon: pointer
+  group: controls
+  order: 10
+---
+```
+
+Groups are `content`, `controls`, `inputs`, `feedback`, and `layout`. `nav.label` is optional when the sidebar needs a shorter title. The catalog generates navigation, breadcrumbs, component classification, LLM indexes, and packaged Markdown exports from this metadata.
+
+For an interactive demo, import `PlaygroundEmbed.astro` as `Playground` and drop `<Playground component="…" layout="side" initialCode={…} />` near the top. It is mounted by the shared prebuilt runtime, so it does not take a `client:*` directive.
 
 **Always use the shared `<Playground>` for the interactive demo — never hand-roll a bespoke per-component playground island.** The shared one gives a uniform editor + auto props form (from `api.json`) + isolated preview iframe across every page, and is slated for extraction into its own package; a one-off island fragments that and drifts. Write the source as a `Demo` function and return its JSX (`function Demo() { return (…) }`). The bundler renders that function, and Monaco's TypeScript service then parses its JSX correctly. Keep `initialCode` in a sibling `{name}.demo.ts` (`export default \`…\``) so Astro's MDX pipeline doesn't mangle the template literal's indentation. Reserve custom islands for demos the playground genuinely can't express (e.g. a self-animating `AnimatedProgress`).
 
 **Demos use Anta's own components wherever one exists — down to the incidental controls.** Any control the design system ships — `Checkbox`, `Input`, `Button`, `RadioGroup`, `Select`, `Tabs`, `Tag`, `Tooltip`, … — is what a demo reaches for, whether it's the component under test or just a knob beside it (a "simulate loading" toggle, a filter field, a segmented switcher). This holds in every demo surface: Playground `initialCode`, a hydrated island (`src/components/*.tsx`), and inline `.mdx` examples. The point is that every example dogfoods the library and looks/behaves like real usage; a raw `<input>` / `<button>` / `<select>` next to an Anta component reads as an oversight. Drop to a raw HTML control **only** when there's genuinely no Anta equivalent yet (e.g. `<input type="range">` — there's no slider component). The `Playground` island itself is exempt — it's editor/props-form infrastructure kept standalone for extraction, not a component demo.
 
-**The `componentGroups` edit is the one that gets missed.** That list is the only thing `/llms.txt` and `/llms-full.txt` read, so a page absent from it still builds, still ships, and still shows in the sidebar — it is simply invisible to every model that fetches the index. Box and Avatar both drifted that way. `scripts/check-llms-index.mjs` runs inside `pnpm run docs` and fails the build on a miss; it checks only for omissions, so keep the groups in the same shape and order as the sidebar by hand.
+Package docs use separate `plotDocs`, `tableDocs`, and `stickersDocs` collections. Put the package landing page in `src/content/packages/{package}/index.mdx`; `getting-started.mdx` or `getting-started/index.mdx` creates `/{package}/getting-started/`. Package navigation derives its group from the collection. Subpages default to the package landing page as their parent; set `parent` to an entry ID for deeper breadcrumbs. Keep each demo beside its page, preferably in its own directory.
+
+Use `nav: false` to omit a page from navigation and `export: false` to omit it from Markdown exports. These flags are independent. Optional `path` overrides the generated URL. The shared schema rejects unknown metadata and the catalog rejects duplicate URLs, sources, export paths, and missing or cyclic parents.
+
+Standalone guides stay in `src/pages/`. Register their navigation and export metadata in `lib/content/standalone.mjs`; MDX titles come from their frontmatter. `scripts/check-llms-index.mjs` runs during preparation, validates the catalog, and checks that standalone MDX pages are registered. Collection entries are discovered automatically.
+
+Astro consumers call `getAstroPageCatalog()` to use Content Layer data. Node generators call `readPageCatalog()` to read the same source files through the shared schema and normalization, without requiring an Astro build. Keep route and export rules in `lib/content/`, rather than adding consumer-specific page lists.
 
 The preview iframe loads Anta's built `bundle.js` + `bundle.css` through `site/scripts/build-iframe-runtime.mjs`. The iframe re-bundles that same package entry with its own Preact instance because custom elements and renderer state are scoped to its document. `DocsLayout.astro` also imports `bundle.css` render-blocking and registers elements from `bundle`, so the shell and every playground share Anta's shipped runtime and styles. New components enter both automatically through `src/index.ts` and `src/elements/index.ts`; no site-side stylesheet aggregator is needed.
 
@@ -166,9 +279,15 @@ pnpm run dev                 # ← run from the REPO ROOT (see below); the dev c
 cd site && pnpm run build    # static build (site only)
 ```
 
-**Run the dev server with `pnpm run dev` from the repo root, not `cd site && pnpm run dev`.** The root command runs the site's `astro dev` *and* a `nodemon` watcher that rebuilds anta's `dist` on `src` changes, so package edits propagate to the running site; the site-only command does not rebuild anta. (See "Common commands" in the root [`AGENTS.md`](../AGENTS.md).)
+**Run the dev server with `pnpm run dev` from the repo root, not `cd site && pnpm run dev`.** The root command runs the site's `astro dev` *and* the root source watcher that rebuilds anta's `dist` on `src` changes, so package edits propagate to the running site; the site-only command does not rebuild anta. (See "Common commands" in the root [`AGENTS.md`](../AGENTS.md).)
 
-The site's own `pnpm run dev` (which the root command invokes under the hood) chains through `docs:api` (typedoc → `src/api.json`), `docs:pages` (regenerate changelog partials), `docs:wasm` (copy esbuild.wasm), `docs:iframe-runtime` (rebuild iframe runtime), and `docs:playground-runtime` (rebuild the editor runtime) before starting Astro.
+The root dev command builds the packages before starting Astro through
+`dev:server`. Astro's integration then prepares the site before Vite starts.
+Preparation generates API data and changelog partials, checks the LLM index,
+copies themes and esbuild.wasm, and builds the iframe and Playground runtimes.
+Unchanged cached tasks reuse their verified outputs. After startup, the root
+watcher still calls standalone preparation commands when package or Playground
+sources change.
 
 ## Docs prose style
 

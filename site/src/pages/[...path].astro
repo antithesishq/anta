@@ -1,0 +1,26 @@
+---
+import { getEntry, render } from 'astro:content'
+import DocsLayout from '../layouts/DocsLayout.astro'
+import { getAstroPageCatalog } from '../../lib/content/astro-catalog.mjs'
+
+export async function getStaticPaths() {
+  const catalog = await getAstroPageCatalog()
+  return catalog.filter(page => page.kind !== 'page').map(page => ({
+    params: { path: page.path.slice(1, -1) },
+    props: { collection: page.collection, id: page.id },
+  }))
+}
+
+const { collection, id } = Astro.props
+const entry = await getEntry(collection, id)
+if (!entry) throw new Error(`Missing documentation entry: ${collection}:${id}`)
+const { Content } = await render(entry)
+---
+
+<DocsLayout
+  title={entry.data.title}
+  tocMaxLevel={entry.data.tocMaxLevel}
+  hideToc={entry.data.hideToc}
+>
+  <Content />
+</DocsLayout>

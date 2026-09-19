@@ -1,0 +1,287 @@
+---
+title: Tooltip
+nav:
+  icon: chat
+  group: content
+  order: 40
+---
+import PropsTable from '../../../components/PropsTable.astro'
+import Disclosure from '../../../components/Disclosure.astro'
+import Preview from '../../../components/Preview.astro'
+import Playground from '../../../components/PlaygroundEmbed.astro'
+import { Tooltip, Button, Icon } from '@antadesign/anta'
+import tooltipDemoCode from './tooltip.demo.ts'
+
+# Tooltip
+
+A small floating bubble that describes the element it's placed inside. Render
+`<Tooltip>` as a child of the element it annotates — it doesn't affect that
+element's layout, and its content can be anything.
+
+It shows on hover (after a short `delay`) and on keyboard focus, and dismisses
+on mouse leave, blur, <kbd>Esc</kbd>, or when the anchor scrolls away. On touch
+devices — where there's no hover and a tap shouldn't surface it — it opens on
+**press-and-hold** and lingers briefly after you lift, so it stays readable. By
+default the bubble is **pinned** under the anchor; pass `follow` to make it
+**track the cursor** (fading out as the cursor moves away), or `interactive` to
+make it hoverable and clickable (for content like links).
+
+When the anchor implements **`getAnchorRect(): DOMRect`**, the bubble positions
+against that rect instead of the anchor's full box. Anta's `Input` reports its
+field box, so a tooltip on an `<Input>` points at the field, not the surrounding
+label or hint.
+
+<Disclosure title="Playground" anchor={false} brand>
+
+A single tooltip on a button — tweak its props (or edit the code) and hover the
+button. The props panel is generated from the `Tooltip` API and edits the
+`<Tooltip>` element, not the `<Button>` it's attached to.
+
+<Playground
+  component="Tooltip"
+  layout="side"
+  initialCode={tooltipDemoCode}
+  initialCss={`.container {
+  min-height: 220px;
+  display: grid;
+
+  /* Where to park the trigger — test how the tooltip flips / clamps near an
+     edge. Comment out the active line and uncomment one below.
+     1st value = vertical (start=top, center=middle, end=bottom);
+     2nd value = horizontal (start=left, center=middle, end=right). */
+  place-items: center;
+  /* place-items: start start; */
+  /* place-items: start center; */
+  /* place-items: start end; */
+  /* place-items: center start; */
+  /* place-items: center end; */
+  /* place-items: end start; */
+  /* place-items: end center; */
+  /* place-items: end end; */
+}`}
+/>
+
+</Disclosure>
+
+## Examples
+
+<Preview>
+  <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+    <span style={{ cursor: 'help', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+      <span>Status</span>
+      <Icon shape="info" size={16} style={{ opacity: 0.4 }} />
+      <Tooltip placement="top">Last checked 2 minutes ago</Tooltip>
+    </span>
+    <Button priority="tertiary" underline="dashed" label="Focus me with the keyboard">
+      <Tooltip delay={50}>Shows on focus, dismiss with Esc</Tooltip>
+    </Button>
+    <Button label="Follow the cursor">
+      <Tooltip follow>Tracks the pointer, fades as you leave</Tooltip>
+    </Button>
+    <Button label="Interact">
+      <Tooltip interactive placement="top">
+        See the <a href="https://anta.design/">full guide</a> for details
+      </Tooltip>
+    </Button>
+  </div>
+</Preview>
+
+```tsx folded
+// Place <Tooltip> inside the element it describes; hover or focus the anchor.
+// Pinned under the anchor by default — prefer the top side here (auto-flips
+// down when there's no room).
+<span style={{ cursor: 'help' }}>
+  Status
+  <Tooltip placement="top">Last checked 2 minutes ago</Tooltip>
+</span>
+
+// A near-instant tooltip on a keyboard-focusable button. Never use delay={0} — use ~50.
+<Button priority="tertiary" underline="dashed" label="Focus me with the keyboard">
+  <Tooltip delay={50}>Shows on focus, dismiss with Esc</Tooltip>
+</Button>
+
+// `follow` tracks the cursor and fades by distance as you move away.
+<Button label="Follow the cursor">
+  <Tooltip follow>Tracks the pointer, fades as you leave</Tooltip>
+</Button>
+
+// Rich content — render anything.
+<Button icon="info">
+  <Tooltip placement="top">
+    <strong>Heads up</strong> — this action can't be undone
+  </Tooltip>
+</Button>
+
+// Interactive: the bubble becomes hoverable + clickable, so its content
+// (links, buttons) works. Always pinned — a bubble that follows the cursor
+// can't be entered, so `interactive` ignores `follow`. Move from the anchor
+// into the bubble to click; press Esc to dismiss.
+<Button label="Interact">
+  <Tooltip interactive placement="top">
+    See the <a href="/guide">full guide</a> for details
+  </Tooltip>
+</Button>
+```
+
+The underlying `<a-tooltip>` works in plain HTML too, as a child of any element:
+
+```html
+<button>
+  Publish
+  <a-tooltip>Makes the draft public</a-tooltip>
+</button>
+```
+
+### Adjacent and nested tooltips
+
+Only one tooltip shows at a time. Moving between **adjacent** anchors with
+`follow` tooltips hands off cleanly — the outgoing bubble cross-fades out as the
+next fades in (no blink). If either tooltip does not have `follow`, the next
+tooltip waits for its configured delay. With `follow` tooltips (used below to
+show it), the outgoing bubble also keeps
+trailing the cursor and fades by distance from its anchor (transparent by ~100px
+away), so a near hop reads as a smooth cross-fade and a far one is already gone.
+With **nested** anchors, the inner (descendant) tooltip wins while you're over
+it, and the outer takes back over when you leave. Hover the examples to feel it.
+
+<Preview>
+  <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', gap: '12px' }}>
+      <Button label="First"><Tooltip follow>First tooltip</Tooltip></Button>
+      <Button label="Second"><Tooltip follow>Second tooltip</Tooltip></Button>
+    </div>
+    <div tabIndex={0} style={{ padding: '20px', border: '1px dashed var(--border-4)', borderRadius: '6px', cursor: 'help' }}>
+      <span>Outer box</span>
+      <Tooltip follow>Outer tooltip</Tooltip>
+      <div style={{ marginTop: '12px' }}>
+        <Button label="Inner button"><Tooltip follow>Inner tooltip</Tooltip></Button>
+      </div>
+    </div>
+  </div>
+</Preview>
+
+```tsx folded
+// Adjacent — moving from one to the next cross-fades, no blink. `follow` adds
+// the cursor-trailing + distance fade so the hand-off is most visible.
+<Button label="First"><Tooltip follow>First tooltip</Tooltip></Button>
+<Button label="Second"><Tooltip follow>Second tooltip</Tooltip></Button>
+
+// Nested — wrap stray text in a <span> so the tooltip stays a direct child of
+// the box (its anchor). The inner tooltip wins while you're over the inner button.
+<div tabIndex={0}>
+  <span>Outer box</span>
+  <Tooltip follow>Outer tooltip</Tooltip>
+  <Button label="Inner button"><Tooltip follow>Inner tooltip</Tooltip></Button>
+</div>
+```
+
+### Show only when truncated
+
+Pass **`truncatedOnly`** and the tooltip appears only when its target's text is
+actually ellipsized — a label that fits gets no tooltip. The check is a UI-thread
+layout read, re-measured on each hover (so resizing the container flips it live). By
+default it measures the nearest Anta ellipsizing label (`a-tab-label` /
+`a-button-label`) inside the anchor, then the anchor itself; point it elsewhere with
+**`truncatedSelector`**. Hover both — only the clipped one reveals its full text:
+
+<Preview>
+  <div style={{ display: 'flex', gap: '28px', alignItems: 'flex-start' }}>
+    <span style={{ display: 'inline-block', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'help' }}>
+      A long label that gets truncated
+      <Tooltip truncatedOnly>A long label that gets truncated</Tooltip>
+    </span>
+    <span style={{ display: 'inline-block', cursor: 'help' }}>
+      Short label
+      <Tooltip truncatedOnly>Short label</Tooltip>
+    </span>
+  </div>
+</Preview>
+
+```tsx folded
+{/* Only the clipped span shows a tooltip. The anchor IS the clipping box here,
+    so no selector is needed; inside a tab or <Button> the default finds the label. */}
+<span style={{ maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+  A long label that gets truncated
+  <Tooltip truncatedOnly>A long label that gets truncated</Tooltip>
+</span>
+```
+
+### Empty tooltips
+
+A tooltip with nothing to show — no element children and no non-whitespace text —
+doesn't open, so `<Tooltip>{maybeEmpty}</Tooltip>` never flashes a blank bubble. This
+is automatic (no prop) and re-checked on each hover, so a tooltip whose content
+arrives later works normally; a bubble whose content is cleared while it's open
+closes itself. Content that's a single icon or image (an element, no text) still
+shows.
+
+<Disclosure title="Component props" open>
+
+<PropsTable component="Tooltip" />
+
+</Disclosure>
+
+<Disclosure title="Web Component">
+
+Use the web component directly when you are not using React or Preact and a native control does not fit.
+
+Place `<a-tooltip>` inside the element it describes.
+
+<Preview>
+  <a-button role="button" tabindex="0" priority="secondary">
+    <a-button-label>Publish</a-button-label>
+    <a-tooltip>Make the draft public</a-tooltip>
+  </a-button>
+</Preview>
+
+```html
+<a-button role="button" tabindex="0" priority="secondary">
+  <a-button-label>Publish</a-button-label>
+  <a-tooltip>Make the draft public</a-tooltip>
+</a-button>
+```
+
+</Disclosure>
+
+<Disclosure title="Styling">
+
+The bubble lives in shadow DOM and is exposed as a single **part** — style the box
+(background, frost, shadow, radius, padding, a border) with `::part(bubble)`. Its
+*content* is slotted light DOM with a **normalized text baseline** (Anta body
+typography), so it ignores the anchor's styling; to restyle the text, put a class on
+the content you pass to `<Tooltip>` and target that (a rule on the content wins over
+the baseline). Both together — hover the button to see it; the classes are just for
+the demo:
+
+<Preview>
+  <Button label="Hover me">
+    <Tooltip className="fancy" placement="top">
+      <span class="tip-rich">Custom-styled bubble</span>
+    </Tooltip>
+  </Button>
+  <style is:inline>{`
+    a-tooltip.fancy::part(bubble) {
+      background: #1a161d;
+      border-radius: 10px;
+      padding: 8px 12px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+      backdrop-filter: none;
+    }
+    .tip-rich { color: #fff; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+  `}</style>
+</Preview>
+
+```css folded
+/* the bubble box — a shadow part */
+a-tooltip.fancy::part(bubble) {
+  background: #1a161d;
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  backdrop-filter: none;            /* opt out of the frost */
+}
+/* the slotted content — a class on what you pass to <Tooltip> */
+.tip-rich { color: #fff; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+```
+
+</Disclosure>

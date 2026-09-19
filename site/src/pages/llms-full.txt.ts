@@ -1,80 +1,34 @@
 import changelog from '../../../CHANGELOG.md?raw'
 import type { APIRoute } from 'astro'
-import { renderDocumentation } from '../../lib/llms/render-documentation.mjs'
+import { getAstroPageCatalog } from '../../lib/content/astro-catalog.mjs'
+import { getExportGroups } from '../../lib/content/catalog.mjs'
+import { createLlmsIndex } from '../../lib/llms/index-content.mjs'
+import { renderCatalogPage } from '../../lib/llms/render-page.mjs'
 import tokens from '../../../src/tokens.css?raw'
 import theme from '../../../src/theme-antune.css?raw'
 import stickers from '../../../stickers/src/generated/index.ts?raw'
 import specimen from '../components/HtmlSpecimen.astro?raw'
-import {
-  componentGroups,
-  documentationLinks,
-  llmsIndex,
-  overview,
-  packageLinks,
-} from '../../lib/llms/index-content.mjs'
 
-type NavigationLink = readonly [title: string, path: string]
+export const GET: APIRoute = async () => {
+  const catalog = await getAstroPageCatalog()
+  const groups = getExportGroups(catalog)
+  const renderPages = (pages: typeof catalog) => Promise.all(pages.map(page => renderCatalogPage(page, {
+    sources: { tokens, theme, stickers, specimen }, changelog,
+  })))
+  const [documentation, components, packages] = await Promise.all([
+    renderPages(groups.documentation),
+    renderPages(groups.components.flat()),
+    renderPages(groups.packages),
+  ])
+  const body = [
+    createLlmsIndex(catalog).trim(),
+    '---\n\n## Documentation details',
+    documentation.join('\n\n---\n\n'),
+    '---\n\n## Component details',
+    components.join('\n\n---\n\n'),
+    '---\n\n## Package details',
+    packages.join('\n\n---\n\n'),
+  ].join('\n\n') + '\n'
 
-const CHANGELOG = changelog.trim()
-
-const rawMdx = {
-  ...(import.meta.glob('./*.mdx', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>),
-  ...(import.meta.glob('./accessibility/*.mdx', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>),
+  return new Response(body, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
 }
-
-const demoModules = import.meta.glob('./*.demo.ts', {
-  eager: true,
-}) as Record<string, { default: string }>
-
-function modulePath(path: string) {
-  return path === '/accessibility/'
-    ? './accessibility/index.mdx'
-    : `.${path.slice(0, -1)}.mdx`
-}
-
-function extractDemoCode(slug: string): string | null {
-  const mod = demoModules[`./${slug}.demo.ts`]
-  if (!mod?.default) return null
-  return mod.default.replace(/^\s*export\s+default\s+`/, '').replace(/`\s*$/, '').trim()
-}
-
-function renderMdx(raw: string, title: string, slug?: string) {
-  let body = renderDocumentation(raw, { tokens, theme, stickers, specimen })
-  body = body.replace(/^# .+$/m, `# ${title}`)
-  const demo = slug ? extractDemoCode(slug) : null
-  if (demo) body += `\n\n### Example\n\n\`\`\`tsx\n${demo}\n\`\`\``
-  return body
-}
-
-function documentationBody([title, path]: NavigationLink) {
-  if (path === '/') return overview
-  if (path === '/changelog/') return CHANGELOG
-
-  const raw = rawMdx[modulePath(path)]
-  return raw ? renderMdx(raw, title) : `# ${title}\n\nRead the documentation at https://anta.design${path}`
-}
-
-function componentBody([title, path]: NavigationLink) {
-  const raw = rawMdx[modulePath(path)]
-  if (!raw) return `# ${title}\n\nRead the documentation at https://anta.design${path}`
-
-  const slug = path.slice(1, -1)
-  return renderMdx(raw, title, slug)
-}
-
-const documentationSections = documentationLinks.map(documentationBody)
-const componentSections = componentGroups.flat().map(componentBody)
-const packageSections = packageLinks.map(componentBody)
-
-const fullBody = [
-  llmsIndex.trim(),
-  '---\n\n## Documentation details',
-  documentationSections.join('\n\n---\n\n'),
-  '---\n\n## Component details',
-  componentSections.join('\n\n---\n\n'),
-  '---\n\n## Package details',
-  packageSections.join('\n\n---\n\n'),
-].join('\n\n') + '\n'
-
-export const GET: APIRoute = () =>
-  new Response(fullBody, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })

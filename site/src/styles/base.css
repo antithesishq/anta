@@ -827,8 +827,8 @@ code[data-copied]::after {
   }
 }
 
-/* Wraps every <table> in MDX/markdown content (injected by the
-   site/lib/rehype-table-wrap.mjs plugin). When the inner table is
+/* Wraps Markdown tables (injected by the wrapTables transform in
+   site/lib/satteri-plugins.mjs). When the inner table is
    wider than `.content`'s max-width, the wrap scrolls horizontally
    *inside* the column instead of the whole page picking up a
    horizontal scrollbar. The table itself keeps default `display:
@@ -857,7 +857,7 @@ code[data-copied]::after {
 .content table {
   width: 100%;
   /* `auto` inline margins so an un-wrapped table (raw `<table>` JSX, which
-     `rehype-table-wrap` doesn't wrap) still centers in the 960 measure like
+     the Markdown transform doesn't wrap) still centers in the 960 measure like
      the prose — without it the table left-aligns while paragraphs center. */
   margin: 0 auto 24px;
 }

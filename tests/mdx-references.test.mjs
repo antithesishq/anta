@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
 import { test } from 'node:test'
+import { fileURLToPath } from 'node:url'
 import { parseMdx } from '../site/lib/llms/parse-mdx.mjs'
 import { renderDocumentation } from '../site/lib/llms/render-documentation.mjs'
-import { documentationLinks, componentGroups, packageLinks } from '../site/lib/llms/index-content.mjs'
+import { readPageCatalog } from '../site/lib/content/catalog.mjs'
 import { SYSTEMS, COVERAGE_SYSTEMS, CATEGORIES } from '../site/src/components/comparison-data.ts'
 import { TEXT_LINES } from '../site/src/components/color-reference.ts'
 import { SYSTEM_COLORS } from '../site/src/components/system-colors.ts'
@@ -17,7 +18,13 @@ const sources = Object.fromEntries(await Promise.all(Object.entries({
   stickers: '../stickers/src/generated/index.ts',
   specimen: '../site/src/components/HtmlSpecimen.astro',
 }).map(async ([key, path]) => [key, await read(path)])))
-const renderPage = async (page) => renderDocumentation(await read(`../site/src/pages/${page}.mdx`), sources)
+const catalog = await readPageCatalog()
+const pageFor = slug => {
+  const page = catalog.find(page => page.path === `/${slug}/`)
+  assert.ok(page, `Page catalog includes ${slug}`)
+  return page
+}
+const renderPage = async slug => renderDocumentation(await readFile(pageFor(slug).source, 'utf8'), sources)
 
 test('reference expansion preserves code and skips previews', () => {
   const calls = []
@@ -41,6 +48,33 @@ test('reference expansion preserves code and skips previews', () => {
   assert.match(result, /September 2026/)
   assert.match(result, /`<Reference \/> \{DATE\}`/)
   assert.match(result, /```astro\n<Reference \/> \{DATE\}\n```/)
+})
+
+test('plain JSX string literals become text without evaluating dynamic expressions or escapes', () => {
+  assert.equal(parseMdx('<td>{\'--text-1\'}</td> <td>{ "--border-color" }</td>'), '--text-1 --border-color')
+  assert.equal(parseMdx('<span>{"<a-icon> {name}"}</span>'), '<a-icon> {name}')
+  const preserved = [
+    String.raw`{'escaped\'quote'}`,
+    String.raw`{"line\nbreak"}`,
+    String.raw`{"\u002d\u002dtext-1"}`,
+    '{"--text-" + level}',
+    '{(() => { "--text-1" })()}',
+    '{ /[{}]/.test(value) ? "--text-1" : "--text-2" }',
+  ]
+  for (const expression of preserved) assert.equal(parseMdx(expression), expression)
+})
+
+test('JSX string conversion leaves inline and fenced examples unchanged', () => {
+  const inline = '`<td>{\'--text-1\'}</td>`'
+  const fenced = '```tsx\n<td>{\'--text-1\'}</td>\n```'
+  assert.equal(parseMdx(`${inline}\n\n${fenced}\n\n<td>{'--text-1'}</td>`), `${inline}\n\n${fenced}\n\n--text-1`)
+})
+
+test('literal token expressions keep exported Table documentation unchanged', async () => {
+  const source = await readFile(pageFor('table').source, 'utf8')
+  const original = source.replace(/<td>\{'(--[a-z0-9-]+)'\}<\/td>/g, '<td>$1</td>')
+  assert.notEqual(source, original)
+  assert.equal(renderDocumentation(source, sources), renderDocumentation(original, sources))
 })
 
 test('comparison includes every system, coverage category, example, and measured version', async () => {
@@ -82,7 +116,7 @@ test('colors retain guidance and every role declaration from both palettes', asy
 })
 
 test('accessibility retains system colors and explains browser-dependent contrast', async () => {
-  const markdown = await renderPage('accessibility/index')
+  const markdown = await renderPage('accessibility')
   for (const row of SYSTEM_COLORS) {
     for (const color of row.colors) assert.ok(markdown.includes(`\`${color}\``))
     assert.ok(markdown.includes(row.use.replaceAll('<', '&lt;').replaceAll('>', '&gt;')))
@@ -114,16 +148,15 @@ test('theming inputs and normalization specimen have static references', async (
   assert.doesNotMatch(normalization, /<style>/)
 })
 
-test('every MDX page is indexed and has a packaged Markdown file', async () => {
-  const routes = [...documentationLinks, ...componentGroups.flat(), ...packageLinks]
-  const indexed = new Set(routes.map(([, path]) => path === '/accessibility/' ? 'accessibility/index.mdx' : `${path.slice(1, -1)}.mdx`))
-  const pages = await readdir(new URL('../site/src/pages/', import.meta.url), { recursive: true })
-  assert.deepEqual(pages.filter(path => path.endsWith('.mdx') && !indexed.has(path)), [])
-  for (const [, path] of routes) {
-    const prefix = componentGroups.flat().some(([, route]) => route === path) ? 'components/'
-      : packageLinks.some(([, route]) => route === path) ? 'packages/' : ''
-    const slug = path === '/' ? 'overview' : path === '/install/' ? 'install-config' : path.slice(1, -1)
-    assert.match(await read(`../docs/${prefix}${slug}.md`), /^# /m, path)
+test('every standalone MDX page is cataloged and exported pages have packaged Markdown', async () => {
+  const pagesRoot = new URL('../site/src/pages/', import.meta.url)
+  const indexedSources = new Set(catalog.map(page => page.source))
+  const pages = await readdir(pagesRoot, { recursive: true })
+  for (const path of pages.filter(path => path.endsWith('.mdx'))) {
+    assert.ok(indexedSources.has(fileURLToPath(new URL(path, pagesRoot))), path)
+  }
+  for (const page of catalog.filter(page => page.includeInExports)) {
+    assert.match(await read(`../docs/${page.exportPath}`), /^# /m, page.path)
   }
 })
 

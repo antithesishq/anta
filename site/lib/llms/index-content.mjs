@@ -1,67 +1,8 @@
+import { getExportGroups } from '../content/catalog.mjs'
+
 export const SITE = 'https://anta.design'
 
 export const llmsGuidance = "Anta is designed for a clean DOM. Prefer the props and attributes exposed by each component over custom `className` or `style` definitions. Learn about Anta components from the documentation links and use them whenever they meet the need. For example, use `<Title>` instead of `<h1>` through `<h6>`, `<Text>` instead of a styled `<div>` or `<p>`, and `<Tooltip>` instead of an element's `title` attribute. Refer to each component's documentation page to learn about configuration, customization, and styling."
-
-export const documentationLinks = [
-  ['Overview', '/'],
-  ['Comparison', '/comparison/'],
-  ['Install and configure', '/install/'],
-  ['Normalization', '/normalization/'],
-  ['Colors', '/colors/'],
-  ['Theming', '/theming/'],
-  ['Accessibility', '/accessibility/'],
-  ['Credits', '/credits/'],
-  ['Changelog', '/changelog/'],
-]
-
-// Mirrors the DocsLayout sidebar groups, in the same order. Keep the two in
-// step: this list is the only thing /llms.txt and /llms-full.txt read, so a
-// page missing here is invisible to every model that fetches them.
-export const componentGroups = [
-  [
-    ['Title', '/title/'],
-    ['Text', '/text/'],
-    ['Tag', '/tag/'],
-    ['Tooltip', '/tooltip/'],
-    ['Icon', '/icon/'],
-    ['Avatar', '/avatar/'],
-    ['Loader', '/loader/'],
-    ['Progress', '/progress/'],
-  ],
-  [
-    ['Button', '/button/'],
-    ['Breadcrumbs', '/breadcrumbs/'],
-    ['Checkbox', '/checkbox/'],
-    ['Radio', '/radio/'],
-    ['Switch', '/switch/'],
-    ['Slider', '/slider/'],
-    ['Tabs', '/tabs/'],
-    ['Steps', '/steps/'],
-  ],
-  [
-    ['Input', '/input/'],
-    ['InputAutocomplete', '/input-autocomplete/'],
-    ['InputDate', '/input-date/'],
-    ['InputTime', '/input-time/'],
-    ['Select', '/select/'],
-    ['SelectFaceted', '/select-faceted/'],
-  ],
-  [
-    ['Banner', '/banner/'],
-    ['Card', '/card/'],
-    ['Dialog', '/dialog/'],
-    ['Toaster', '/toaster/'],
-    ['Expander', '/expander/'],
-    ['Menu', '/menu/'],
-  ],
-  [
-    ['Box', '/box/'],
-    ['Capture', '/capture/'],
-    ['Panel', '/panel/'],
-  ],
-]
-
-export const packageLinks = [['Plot', '/plot/'], ['Table', '/table/'], ['Stickers', '/stickers/']]
 
 export const overview = `# Overview
 
@@ -78,7 +19,14 @@ function renderLinks(links) {
   return links.map(([title, path]) => `- [${title}](${SITE}${path})`).join('\n')
 }
 
-export const llmsIndex = `# Anta
+export function createLlmsIndex(catalog) {
+  const groups = getExportGroups(catalog)
+  const links = pages => pages.map(page => [page.label, page.path])
+  const documentationLinks = links(groups.documentation)
+  const componentGroups = groups.components.map(links)
+  const packageLinks = links(groups.packages)
+
+  return `# Anta
 
 > Anta is an opinionated design system for building product interfaces. It provides
 > design tokens, declarative web components, and typed JSX wrappers. Use the same
@@ -99,3 +47,4 @@ ${componentGroups.map(renderLinks).join('\n\n')}
 
 ${renderLinks(packageLinks)}
 `
+}

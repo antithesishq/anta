@@ -36,6 +36,10 @@ pnpm test           # Run root regression tests (requires Chromium or installed 
 
 Use `pnpm run dev` for any development work, including docs-site work. It rebuilds anta and stickers before the site, so package-source edits propagate to the running site. Do not start `site`'s dev server directly for package work.
 
+For production previews and browser checks, follow the command selection and
+server ownership rules in [site/AGENTS.md](site/AGENTS.md#local-servers). Agents
+choose the appropriate command without asking the user about process flags.
+
 The docs site consumes the built workspace `dist/` output. Esbuild runs without bundling, so a new component's CSS must be explicitly included by the package build; see `src/AGENTS.md`.
 
 ## Verification
@@ -46,6 +50,10 @@ includes Capture, Slider, and disclosure-navigation browser tests and Markdown
 conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runner's installed Chrome.
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
+
+CI's `pnpm install --frozen-lockfile` runs the workspace `prepare` scripts to
+build Anta, stickers, and Plot. Do not repeat those builds in the same job or
+disable install scripts without providing an explicit replacement build stage.
 
 For scoped package-documentation changes, run
 `node scripts/generate-package-docs.mjs --only <generated-path...>` with paths

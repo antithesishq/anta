@@ -3,11 +3,532 @@
 Recorded September 16, 2026, while updating PR #169 on branch `plot`.
 The baseline is commit `a69849e`, with Astro pinned to `7.3.3`.
 
-These optimizations are deferred to a separate branch. This document records
-the investigation and proposed follow-up work. The temporary performance
-experiment was removed, and the normal production build passed afterward.
+The original investigation was recorded on `plot` without implementing the
+proposals. Follow-up implementation began September 17 on `perf/astro-build`,
+based on `db48d4c`. PR #169 was still open when the new branch was created.
 
-## Current build and measurements
+## Astro integration migration
+
+Implemented September 17 on `perf/astro-build`.
+
+`site/integrations/site-build.mjs` now runs preparation in
+`astro:config:done`, before content synchronization imports generated data.
+It prepares build, dev, and sync; preview serves existing output. Preparation
+stays in a child process with `NODE_ENV` unset so Astro's command mode does not
+change cache identities or Playground bundles. The standalone `docs:*` entry
+points and root package watcher still use the same cached preparation tasks.
+
+The integration runs after Sitemap. Its `astro:build:done` hook calls the search
+indexer, Worker bundler, and sitemap normalizer with Astro's output directory,
+and waits for all writers before reporting a failure. Those scripts also retain
+their standalone CLI behavior. The site build command is now `astro build`;
+the site and root dev commands no longer repeat preparation before Astro starts.
+
+Validation:
+
+- A direct `astro build` recovers missing API data, generated manifests,
+  changelog partials, iframe/Playground bundles, themes, and esbuild.wasm.
+- A warm build reuses all three preparation caches. A custom output directory
+  containing spaces produces the same 550 files byte-for-byte as the default
+  directory, including the search index, Worker, and sitemap.
+- `astro sync` prepares generated inputs and rebuilds a deleted Playground
+  manifest while reusing the API and iframe caches. `astro preview` serves the
+  built site without preparation or generated-file writes.
+- The root publishing preparation still generates all 44 Markdown exports.
+  Root dev startup prepares once through the integration and retains its
+  package and Playground source watchers.
+- All 233 regression tests, including 14 new lifecycle/postprocessor tests,
+  and six production checks pass. Linting and root type checking pass.
+
+Compared with the previous coordinator, 520 of 550 output files are
+byte-identical. All 52 HTML files match after replacing the Playground asset
+filenames. All 31 CSS files, the search index, Worker, routes configuration,
+sitemap, and LLM exports are byte-identical. The renamed JavaScript bundles
+only update embedded build-command metadata and TypeDoc source-commit links.
+No browser behavior or stylesheet change is introduced.
+
+This is an orchestration simplification with no additional build-speed claim.
+Astro's reported total now includes preparation and postprocessing that ran
+outside the Astro command previously. Generated source and prepared public
+assets remain repository-local; configurable output directories are supported.
+The current static Pages output is verified. A future Cloudflare adapter
+migration must recheck hook order against its packaging step.
+
+## Content Layer catalog migration
+
+Implemented September 17 on `perf/astro-build`.
+
+- Moved 31 component documents into `src/content/components/` and the Plot,
+  Table, and Stickers landing pages into separate package collections. Their
+  demo sources remain beside their MDX. Standalone guides remain in `src/pages/`.
+- Added shared Zod schemas and a normalized catalog. Sidebar groups and icons,
+  short labels, breadcrumbs, component classification, LLM indexes, and npm
+  Markdown exports now consume the same metadata.
+- Removed the hardcoded component-slug set, sidebar entries, export groups, and
+  consumer-specific source-path rules. Adding a collection entry needs no edits
+  to those consumers.
+- Added validation for duplicate URLs, sources, identities, and export paths,
+  plus missing or cyclic parents. Navigation and export exclusions are separate.
+- Verified a temporary Plot subpage in the running dev server: adding it creates
+  its URL, navigation, and parent breadcrumb; editing its title refreshes the
+  page and shared sidebar without restarting. The fixture was removed afterward.
+
+The catalog migration consolidates metadata. It has no measured build-speed
+claim; the build gains from native Markdown are recorded separately below.
+
+### Output and validation
+
+All 34 migrated documents retain their URLs. Across all 44 documentation pages,
+headings and IDs, links, text, tables, sidebar labels, page titles, and breadcrumb
+JSON-LD match the baseline. All 31 emitted CSS files are byte-identical, and each
+page links the same stylesheet set. Stylesheet order changes on 33 pages.
+
+HTML differences are generated island IDs, two Radio label/hint ID pairs and
+their matching ARIA references, and placement of Astro's hydration helpers.
+The helpers have unchanged contents and counts. Rebuilding the Playground also
+updates its asset hash because generated API source links reference the current
+commit; its runtime code is unchanged.
+
+`llms.txt`, the search index, and the sitemap are byte-identical. `llms-full.txt`
+adds Radio's previously omitted demo: its filename is `radio-group.demo.ts`,
+which the old route-name lookup missed. The package generator retains all 44
+Markdown exports and their contents; an unrelated pre-existing Tabs description
+drift produced by regeneration was kept out of this change. Scoped package-docs
+generation still works.
+
+Validation covers 219 root regression tests, including 29 catalog tests, and six
+production checks for CSS ownership, ClientRouter navigation, Playground editing,
+Capture interaction, table rendering, and search. Production and package builds,
+type checks, linting, and frozen-lockfile installation pass. The browser comparison
+covers 25 desktop/mobile, light/dark views, including expanded Plot disclosures:
+21 PNGs are byte-identical. Three Plot captures differ by 22–34 pixels at sidebar
+icon edges (less than 0.0001%); one Stickers capture differs below the comparison
+threshold. Icon markup, layout, and content are unchanged. All views have zero
+browser errors and missing assets.
+
+### Astro CSS ownership patch
+
+Astro 7.3.3 associates client-only island and processed-script CSS with every
+page reachable through the collection manifest. A metadata-only collection read
+therefore added about 212 KB of unrelated, uncompressed CSS to most pages.
+
+The versioned `patches/astro@7.3.3.patch` keeps those style dependencies attached
+to content-entry boundaries and uses Astro's existing per-entry stylesheet
+propagation. It preserves script execution and keeps client CSS assets needed by
+content entries, including styles shared with server-rendered components.
+An isolated four-route fixture verifies metadata-only and plain pages, styled
+content, a shared hydrated component, and a relative CSS image URL in Chrome.
+The final site has no additional stylesheets or CSS-rule changes.
+
+Keep the patch until an Astro upgrade passes the same ownership checks. See
+[patch maintenance](patches/README.md). Incremental prerendering remains disabled;
+client-only dependency invalidation needs separate validation before enabling it.
+
+## Native Markdown migration results
+
+Implemented September 17 on `perf/astro-build`, after the broader review below.
+The site now uses `@astrojs/markdown-satteri@0.4.1` with Astro `7.3.3`.
+
+### Implementation and control
+
+- Replaced the explicit unified processor with Sätteri and enabled full MDX
+  static optimization, including table cells.
+- Consolidated the local transforms in `site/lib/satteri-plugins.mjs`: standalone
+  image unwrapping, JSX paragraph unwrapping, heading links, and Markdown table
+  wrappers. These remain ordinary JavaScript visitors with control over the
+  generated Markdown/HTML trees.
+- Generate Astro's heading IDs before creating heading links. Pass the factory
+  so duplicate-heading state resets for each document.
+- Removed nine direct unified dependencies and added one direct native
+  dependency that was already installed transitively. The lockfile removes 37
+  package records without unrelated version upgrades. Some unified packages
+  remain transitive dependencies, including in the highlighting stack.
+- Kept interactive examples in their existing imported JSX components and
+  external Playground demo source. Preserved the generic JSX paragraph transform
+  because 164 elements across 26 pages rely on it. No broad demo rewrite was
+  necessary.
+- Made nine live Table token labels explicit JSX strings so smart punctuation
+  cannot change their `--` prefix. The Markdown exporter now handles plain
+  quoted string expressions without evaluating JavaScript. Escaped/dynamic
+  expressions are not interpreted; fenced and inline examples stay unchanged.
+
+### Measured build improvement
+
+Isolated Astro production builds, with one warmup per pipeline followed by
+three measured runs per pipeline in alternating order:
+
+| Pipeline | Runs | Median |
+| --- | --- | --- |
+| unified | 14.445 s, 14.528 s, 14.598 s | 14.528 s |
+| Sätteri | 10.712 s, 11.016 s, 10.491 s | 10.712 s |
+
+The Astro build stage is 26.3% faster, saving 3.816 seconds per build in this
+local comparison. Both pipelines used the same source and installed dependencies;
+the baseline configuration restored the processor and transforms from `c4ee8f1`. Browser
+tests and dev servers were stopped for these runs. Measurements include the
+Astro CLI process, compilation, rendering, and sitemap integration, but exclude
+package preparation and the separate search-index/worker postprocessing.
+
+Environment: Node `24.10.0`, pnpm `10.11.1`, local macOS. These are not Cloudflare
+build measurements. Preliminary whole-site timings taken alongside browser
+captures are excluded because competing work made them unsuitable for comparison.
+
+### HTML, CSS, and visible differences
+
+The output inventory covers all 52 HTML files, including 44 documentation pages
+with a `main.content` region. Heading IDs/text, content-link targets/text, class counts,
+authored inline style blocks, and table row counts remain unchanged.
+
+- Markdown table alignment is still inline CSS. Serialization changes from
+  `text-align:right` to `text-align: right`; computed styles and appearance match.
+  Native output also contains different insignificant table whitespace.
+- Authored JSX tables remain unwrapped. Markdown tables retain one `.table-wrap`.
+  Heading anchors retain `header-anchor muted` and the existing URLs.
+- Contrast ratios now render correctly in `/accessibility/`, `/input/`, and
+  `/changelog/dev/`. The former directive plugin consumed nine `:1` fragments and
+  inserted broken block structure. Removing that syntax restores the complete
+  ratios and removes the unwanted wrappers/empty paragraphs. These are intentional
+  visible corrections, not identical screenshots. Accessibility becomes 96 px
+  shorter at the tested desktop width and 52 px shorter on mobile.
+- The nine Table token labels now show literal `--` instead of the em dash
+  produced by the old pipeline. Font styling is unchanged; the corrected glyph
+  widths slightly change automatic table-column sizing.
+- CSS rule contents are unchanged. The initial native build emitted an additional
+  848-byte stylesheet on `/capture/`, identical to its existing
+  `WheelCapturePreview` stylesheet. The Astro demo wrapper described below removes
+  that duplicate through the normal component compiler.
+- `/llms.txt`, `/llms-full.txt`, and generated `docs/packages/table.md` are
+  byte-for-byte unchanged from the baseline. Search indexing reflects the
+  repaired prose: 9,615 blocks become 9,612.
+
+### Validation
+
+The final visual pass compared Title, Table, Button, Expander, Accessibility,
+Text, Avatar, Changelog, Input, and the development changelog at desktop/mobile
+widths in light/dark modes. It also compared expanded Button reference/styling,
+Expander styling, and Input styling sections.
+
+Thirty of 43 full-page screenshot pairs were pixel-identical, including expanded
+Button and Expander sections. The remaining 13 pairs show only the intentional
+corrections above: Accessibility (four), Table (four), the development changelog
+(four), and expanded Input styling (one). Table differences affect 0.09–0.35% of
+pixels. No missing assets or browser errors were reported. Playground interaction
+is covered separately by the production tests.
+
+- Root regression suite: 190 tests passed, including eight native processor
+  tests and three additional Markdown-export regressions.
+- Four production browser tests passed. Coverage checks table layout, literal token labels, inline
+  JSX children, contrast ratios, ClientRouter navigation, Playground editing and
+  recompilation, search highlighting, folded content, and code copying.
+- Root build, custom lint, site CSS lint, and frozen-lockfile installation passed.
+- The root dev launcher served Title, Table, and Expander successfully with no
+  browser errors. It was stopped after the check. The separate remote AI Worker
+  still requires a Cloudflare API token; that existing integration was not
+  changed or exercised against the live service.
+
+Local comparison artifacts and timing logs are in
+`/tmp/anta-markdown-validation/`. No deployment was performed.
+
+### Follow-up: client-only demo boundary
+
+`WheelCaptureDemo.astro` now owns the preview layout and `client:only="preact"`
+directive. The MDX page imports that wrapper; `WheelCapturePreview.tsx` and its
+CSS module remain unchanged. The native MDX processor no longer directly
+references the browser-only component, so its stylesheet appears only once.
+Capture links 14 distinct stylesheets instead of 15, removing the duplicate
+848-byte asset and request without adding stylesheet-deduplication logic.
+
+All four before/after Capture screenshots (desktop/mobile, light/dark) are
+pixel-identical. Five production browser tests and five preview regression tests
+pass, including wheel-demo mounting, keyboard scrolling, reset, and a check for
+duplicate linked stylesheets. The production build and site CSS lint pass.
+Both LLM endpoints and generated `docs/components/capture.md` are byte-identical
+to their previous output. The local dev server remains available for inspection.
+
+## Broader Astro and Cloudflare review
+
+Historical September 17 review, recorded before the native Markdown migration
+above. These recommendations broaden the initial performance-only decision table.
+The remaining Content Layer, Cloudflare, and integration migrations are still
+proposals; no deployment architecture changed in this work.
+
+### Adopt Astro 7's native Markdown processor
+
+Sätteri is a practical next migration. Inspection of our installed
+`astro-expressive-code@0.44.2` found an existing Sätteri integration, including
+insertion of its highlighting plugin into the processor. Expressive Code does
+not require us to keep unified.
+
+A read-only parser audit of 44 Markdown/MDX files under `site/src`, including
+generated changelog Markdown, found 64 tables and 519 code blocks, but no math
+or definition-list nodes. A separate syntax scan found no attribute-extension
+usage. The nine directive nodes were all `:1` fragments in contrast ratios,
+rather than authored directive components. Preserve complete contrast ratios
+in a regression test when removing that parser extension.
+
+Replace GFM and heading-ID plugins with native capabilities. Remove unused
+syntax extensions after output checks. Port table wrapping, heading-link
+wrapping, and the image/JSX paragraph transforms that remain necessary. Keep
+heading IDs stable for incoming links, and preserve our code themes, folding,
+copy controls, MDX styles, table alignment, and live previews. The separate
+npm/LLM Markdown renderer remains necessary.
+
+The native processor has built-in Markdown features and its own plugin API.
+Its plugin guide even includes an image-unwrapping transform similar to ours.
+See [Astro 7 Markdown](https://astro.build/blog/astro-7/) and
+[Sätteri plugins](https://satteri.bruits.org/docs/plugins/).
+
+### Consolidate the Cloudflare runtime
+
+Current architecture:
+
+```text
+Pages static site
+  /api/search-answer -> custom Pages Worker -> SEARCH_CHAT service binding
+    -> separate chat Worker -> AI_SEARCH
+
+Local development
+  Astro -> Vite proxy on a second port -> wrangler dev chat Worker
+```
+
+Proposed architecture:
+
+```text
+Workers with Static Assets + Astro Cloudflare adapter
+  documentation and assets -> prerendered files
+  /api/search-answer -> Astro API route -> AI_SEARCH
+
+Local development
+  root package watcher + Astro's integrated Cloudflare runtime
+```
+
+The current Astro Cloudflare adapter targets Workers, not Pages. Its dev and
+preview environments support `workerd` and direct Cloudflare bindings. This is
+a Pages-to-Workers migration, not an adapter that can be added to the current
+Pages deployment unchanged. See the
+[adapter documentation](https://docs.astro.build/en/guides/integrations-guide/cloudflare/).
+
+Keep documentation prerendered and make only the API route dynamic. Astro can
+combine static routes and request-time endpoints. See
+[on-demand rendering](https://docs.astro.build/en/guides/on-demand-rendering/).
+
+The following code becomes removable after the new runtime is verified:
+
+- `site/lib/search/worker.ts`, the Pages forwarding wrapper.
+- `site/scripts/build-search-worker.mjs` and its preparation task.
+- `site/public/_routes.json` and the `SEARCH_CHAT` service binding.
+- `site/wrangler.chat.jsonc`, if chat no longer needs independent deployment.
+- The Vite API proxy and its origin-rewriting workaround.
+- The separate `dev:search` process, port plumbing, and second environment type.
+
+Move the request handler out of the chat Worker's default `fetch` wrapper and
+call it from an Astro API endpoint with the direct AI Search binding. Keep the
+request limits, source verification, cancellation, timeout, sanitization, and
+streaming protocol. Those are application behavior, not routing boilerplate.
+The [AI Search binding](https://developers.cloudflare.com/ai-search/api/search/workers-binding/)
+supports the existing chat call from a Worker.
+
+Use an endpoint for the streamed response. Astro Actions' RPC results are
+serialized values. The installed Astro 7 runtime explicitly rejects returning
+a `Response` from an action and directs callers to server endpoints. Actions
+would be useful for a future ordinary feedback form, but do not replace this
+SSE stream. See [Actions](https://docs.astro.build/en/guides/actions/).
+
+Migration acceptance checks must cover custom domains, prerendered/static
+delivery, redirects, `_headers`, search postprocessing output paths, and preview
+bindings. Pages' preview environment behavior does not transfer automatically
+to Workers. Rework the Pages-specific deploy/cleanup workflows only after
+replacement preview builds work. See
+[Cloudflare's migration guide](https://developers.cloudflare.com/workers/static-assets/migration-guides/migrate-from-pages/).
+
+The inspected adapter was `@astrojs/cloudflare@14.3.2`. It can add session KV and
+Images bindings by default. Choose those settings explicitly: disable sessions
+until needed, and select build-time image processing for the current static
+image workload. Assess `prerenderEnvironment: 'node'` if build-only dependencies
+need Node APIs. Retain a preview deployment until the production cutover is
+ready. No infrastructure was changed during this review.
+
+### Use the Content Layer to remove duplicated page metadata
+
+Implemented September 17 on `perf/astro-build`. Component docs now belong to
+`components`; package docs belong to `plotDocs`, `tableDocs`, and `stickersDocs`.
+Each uses a `glob()` loader. Standalone guides remain ordinary pages, with their
+navigation and export metadata in a small manifest.
+
+Frontmatter is the source for collection titles, navigation icons, labels,
+groups, and ordering. The shared catalog derives URLs, breadcrumbs, component
+classification, LLM indexes, and packaged Markdown exports. It replaces the
+sidebar lists, `component-slugs.ts`, manually maintained export groups, and
+path-specific source lookup. The schema and catalog reject invalid metadata,
+duplicate routes and exports, and missing or cyclic parents.
+
+One catch-all route renders collection entries with their existing URLs and
+layout. Package subpages derive their URL and default parent from their
+collection. Astro consumers read Content Layer data; the standalone npm-docs
+generator reads the same frontmatter through shared parsing and normalization,
+without requiring an Astro build.
+
+Astro's [Content Layer](https://docs.astro.build/en/guides/content-collections/)
+provides loaders, schema validation, and collection queries. The primary benefit
+here is one source of metadata. It does not replace our rendered-block search
+index or custom MDX-to-Markdown conversion.
+
+Keyed collection routes would also provide a natural place to evaluate Astro
+7.2 incremental builds later. Include generated API/reference inputs in cache
+invalidation, and preserve the cache across CI builds before expecting reuse.
+
+### Make the remaining site tooling an Astro integration
+
+Implemented in `site/integrations/site-build.mjs` on `perf/astro-build`.
+A direct `astro build` now prepares generated imports before content sync and
+finishes search indexing, worker bundling, and sitemap normalization afterward.
+Postprocessors use the hook's output directory. Standalone preparation commands
+remain available for publishing and the root watcher; package compilation stays
+under the root launcher and watcher.
+
+Search indexing depends on rendered HTML and belongs after rendering. Preserve
+its block IDs, ignored UI content, folded-section anchors, and deterministic
+ordering. Test hook ordering against the Cloudflare adapter's output packaging.
+The [Integration API](https://docs.astro.build/en/reference/integrations-reference/)
+provides the hooks. This API predates Astro 5, but is relevant to reducing our
+custom orchestration.
+
+### Adopt smaller framework features
+
+| Change | Concrete opportunity |
+| --- | --- |
+| Astro 5 typed environment variables | Declare the optional public PostHog token with `astro:env`. Omit analytics when unset instead of shipping the browser-side missing-token diagnostic. Cloudflare service bindings stay in generated Worker types. |
+| Astro 5.10 responsive images | Convert the actual Table preview PNG to an Astro asset with intrinsic dimensions and responsive variants. Leave consumer code examples unchanged. |
+| Official RSS helper | Replace hand-written XML escaping, CDATA handling, and item serialization in `changelog.rss.ts` with `@astrojs/rss`. Keep our changelog parser and stable release links. This integration predates Astro 5. |
+| Standard sitemap output | Point robots and search-engine submissions to the existing generated sitemap index and remove `copy-sitemap-index.mjs`, preserving the old sitemap URL with a redirect if needed. |
+| Astro 6 Fonts API | Plan a site font-loading migration for preload and fallback management. Preserve the portable packages' CSS contract, theme switching, variable-font axes, and iframe fonts. This improves loading more than it deletes code. |
+
+References: [typed environment variables](https://docs.astro.build/en/reference/modules/astro-env/),
+[responsive images](https://astro.build/blog/astro-5100/),
+[RSS](https://docs.astro.build/en/recipes/rss/),
+[sitemap](https://docs.astro.build/en/guides/integrations-guide/sitemap/), and
+[fonts](https://docs.astro.build/en/guides/fonts/).
+
+Native SVG components are useful for Astro-only artwork, but the current logo
+is also passed into Preact JSX. Server islands, sessions, live collections, and
+route caching become useful when there is personalized or request-time content
+to serve. They would not remove the current browser search or editor logic.
+Keep the prebuilt Playground boundary: the site guidance documents why ordinary
+hydrated islands caused a large Monaco module graph during development.
+
+### Recommended implementation order
+
+1. Migrate Markdown to Sätteri, with output comparisons and browser regressions.
+2. Consolidate the page catalog with the Content Layer and adopt the small
+   environment-variable, RSS, sitemap, and responsive-image improvements.
+3. Move site preparation into an Astro integration, retaining publishing entry
+   points and the verified cache behavior.
+4. Build and verify a Workers preview with the Cloudflare adapter, then migrate
+   production and remove the Pages/chat deployment plumbing.
+5. Evaluate font loading and collection-route incremental builds against the
+   resulting architecture.
+
+## Initial build optimizations (before native Markdown)
+
+- Enabled MDX optimization while retaining unified and the existing plugins.
+  Excluded `th` and `td`: static serialization emits `align` attributes instead
+  of the inline alignment styles needed to override Anta's reset CSS.
+- Added content-checked caches for API documentation, iframe assets, and
+  Playground assets. Source changes, dependency changes, deleted or modified
+  outputs, and Node runtime changes invalidate them. Failed builds cannot leave
+  a reusable stamp. The cache is local to `site/.cache/build/`.
+- Replaced the site's chain of `pnpm run` preparation commands with one Node
+  coordinator. Independent preparation tasks run concurrently. The Playground
+  waits for API data and the iframe manifest. Postprocessing waits for Astro.
+- Removed CI's duplicate package builds. Workspace `prepare` scripts still
+  build all three packages during installation, including on a clean output
+  tree. Publishing lifecycle scripts remain unchanged.
+- Added cache invalidation tests and a production browser regression covering
+  Markdown table alignment and editing a Playground after ClientRouter navigation.
+
+Force preparation with `ANTA_BUILD_CACHE=0 pnpm --filter anta-site build`.
+Deleting the cache directory also forces preparation. These changes do not
+enable Astro's experimental incremental builds or configure remote cache storage.
+
+## Astro 5 through 7 feature decisions
+
+Astro `7.3.3` remained the registry's latest stable version on September 17.
+The following were the initial performance-only decisions. The broader review
+above revises their priority when maintenance and framework adoption are goals.
+
+| Feature | Decision |
+| --- | --- |
+| Astro 5 Content Layer | Defer. The site uses file-based MDX routes, not collections. Converting routes is a separate content-model change. |
+| Server islands, Actions, and sessions available in Astro 5 | No migration in this pass. Static documentation and the separate search Worker do not need an Astro server runtime. |
+| Astro 5 typed environment variables | No change in this pass. Validating optional analytics inputs would be separate configuration work, not a build-speed improvement. |
+| Astro 5.1 remote image caching and 5.10 responsive images | Revisit for image-heavy pages. Current build time is dominated by compilation, and most image examples demonstrate consumer markup. |
+| Astro 5.7 SVG components | Available for future Astro-only artwork. Shared Preact icons and logos also serve interactive components. |
+| Astro 6 Fonts API | Defer. Font faces belong to the portable, switchable Anta themes. A site-only font migration must preserve theme changes and iframe font behavior. |
+| Astro 6 CSP and improved Cloudflare runtime support | Separate work. CSP needs an audit of inline examples, Monaco workers, and preview iframes. Moving the static site to the Cloudflare adapter would change deployment architecture. |
+| Astro 7 Rust compiler, Rolldown, and queued rendering | Already enabled by the framework defaults. |
+| Astro 7 Sätteri Markdown/MDX processor | Defer until custom plugin behavior can be ported and verified. Keep unified for now. |
+| Astro 7.2 incremental prerendering | Defer. No eligible keyed routes, and rendering is a small portion of the build. |
+| Astro 7.3 performance and development fixes | Already included in the pinned version. Keep the root-owned foreground dev process. |
+| MDX `optimize` | Adopted with table-cell exclusions. This option predates Astro 5 but remained disabled in this site. |
+
+Sources: [Astro 5](https://astro.build/blog/astro-5/),
+[5.1](https://astro.build/blog/astro-510/),
+[5.7](https://astro.build/blog/astro-570/),
+[5.10](https://astro.build/blog/astro-5100/),
+[Astro 6](https://astro.build/blog/astro-6/),
+[Astro 7](https://astro.build/blog/astro-7/),
+[7.2](https://astro.build/blog/astro-720/),
+[7.3](https://astro.build/blog/astro-730/), and
+[MDX optimization](https://docs.astro.build/en/guides/integrations-guide/mdx/#optimize).
+
+The original measurements and remaining proposals follow.
+
+## September 17 validation and timings
+
+Three paired local runs alternated the original site scripts and Astro config
+from `db48d4c` with the optimized versions. Both used the same built production
+packages, installed dependencies, Node `24.10.0`, and pnpm `10.11.1`. Each timing
+covers `pnpm --filter anta-site build`, including preparation and postprocessing.
+The new preparation cache was warmed before the paired runs.
+
+| Run | Original build | Optimized build |
+| --- | ---: | ---: |
+| 1 | 24.45 s | 16.18 s |
+| 2 | 24.07 s | 16.19 s |
+| 3 | 23.87 s | 15.83 s |
+| Median | 24.07 s | 16.18 s |
+
+The median improved by 7.89 seconds, about 33%. This includes preparation-cache
+reuse and MDX optimization. It does not measure the additional CI savings from
+removing duplicate package builds. It is not a Cloudflare measurement, and the
+local Node version differs from the deployment's `.node-version` pin.
+
+The final configuration took 19.81 seconds with `ANTA_BUILD_CACHE=0`, forcing
+all three cached preparation tasks to rebuild. Astro's own caches and installed
+dependencies were still present. This was a single run, not a paired cold-cache
+benchmark.
+
+Validation completed during implementation:
+
+- Removed package outputs, generated site manifests/API data, and preparation
+  cache records, then ran a frozen install and production build successfully.
+  Installation built Anta, stickers, and Plot once each through `prepare`.
+- Passed all 179 root tests, including seven new cache tests covering source and
+  lockfile changes, file additions/deletions, missing or modified outputs,
+  failed builds, forced rebuilds, malformed records, and edits during a build.
+- Passed package linting, all package type checks, Plot package verification,
+  site CSS linting, and search-worker type checking.
+- Passed three production browser tests covering search rendering and copy
+  buttons, search navigation, aligned Markdown tables, ClientRouter navigation,
+  and editing Monaco to recompile the preview.
+- Compared 44 rendered main-content trees. Table alignment was the actionable
+  MDX regression and was fixed. Generated asset URLs, renderer IDs, and some
+  syntax-highlighting token boundaries can vary between builds.
+- Started the root dev launcher, served `/button/` successfully, and stopped
+  the process tree. The AI search Worker could not start its remote proxy
+  without `CLOUDFLARE_API_TOKEN`. Production search tests use mocked responses.
+
+## September 16 baseline measurements
 
 The site build runs documentation generation, asset preparation, playground
 bundling, Astro, search generation, and sitemap processing in sequence. See
@@ -56,14 +577,15 @@ also records recent rendering and large-module-graph performance fixes. Keep
 the pinned version current through normal dependency updates and regression
 checks before adding configuration intended for older releases.
 
-## Proposed changes, in priority order
+## Original proposals and remaining work
 
 ### Build packages and generate documentation once
 
-Installation runs the root `prepare` script, which builds Anta and generates API
-documentation. CI then explicitly builds Anta again. The final site build runs
-API documentation generation a third time. Sticker and Plot builds also repeat
-between installation lifecycle scripts and explicit CI steps.
+Implemented through the coordinator, API cache, and CI cleanup described above.
+At baseline, installation ran the root `prepare` script to build Anta and
+generate API documentation. CI explicitly built Anta again. The final site build
+ran API documentation generation a third time. Sticker and Plot builds also
+repeated between installation lifecycle scripts and explicit CI steps.
 
 Give the build pipeline one owner for each output. Separate reusable package,
 documentation, and site stages so downstream steps consume outputs already
@@ -82,9 +604,13 @@ measurement alone does not include repeated package builds.
 
 ### Cache playground bundles when their inputs are unchanged
 
+Implemented with local content-checked stamps. Remote cache storage remains
+unconfigured.
+
 [The playground build script](site/scripts/build-playground-runtime.mjs)
-rebuilds Monaco, Shiki, the compiler runtime, and application code on every run.
-Hashed output filenames support browser caching but do not skip compilation.
+previously rebuilt Monaco, Shiki, the compiler runtime, and application code on
+every run. Hashed output filenames supported browser caching but did not skip
+compilation.
 
 Add a cache keyed by the lockfile, relevant source files, bundler configuration,
 and runtime/tool versions. Restore all required outputs on a hit and invalidate
@@ -96,6 +622,8 @@ whose playground inputs have not changed. Theme and asset changes must still
 invalidate any outputs that embed them.
 
 ### Reduce command startup overhead and parallelize independent preparation
+
+Implemented by `site/scripts/prepare.mjs`.
 
 Several preparation commands take about half a second each, including their
 `pnpm run` startup overhead. A single preparation driver could reduce repeated
@@ -133,7 +661,7 @@ defaults to `node_modules/.astro`. See the
 [7.2 release notes](https://astro.build/blog/astro-720/) and
 [incremental-build documentation](https://docs.astro.build/en/reference/experimental-flags/incremental-build/).
 
-The current site has no `getStaticPaths()` routes with cache keys. Simply
+The collection route now uses `getStaticPaths()`, but has no cache keys. Simply
 enabling the flag would not make its static pages eligible. Page rendering
 takes only about 1.4 seconds, so avoid reorganizing the route structure solely
 for this feature. Reconsider if route counts or rendering costs grow.
@@ -157,16 +685,17 @@ exclusions when providing custom options. See the
 ### Features that do not address this build
 
 Server-rendered route caching and session changes concern request-time work,
-not this static site's build. Content-collection improvements are not an
-immediate opportunity because the site does not define content collections.
+not this static site's build. At the time of the original review, the site had no content collections.
+The subsequent catalog migration now provides collection routes; incremental
+prerendering remains a separate evaluation.
 The [7.1](https://astro.build/blog/astro-710/) and
 [7.3](https://astro.build/blog/astro-730/) release posts did not identify a more
 promising configuration change for the current build than the items above.
 
 ## Follow-up verification
 
-Implement the orchestration cleanup first, on a separate branch. Record cold
-and warm end-to-end timings, then repeat paired baseline and candidate runs
+For further changes, record cold and warm end-to-end timings, then repeat
+paired baseline and candidate runs
 under the same Node, pnpm, dependencies, and machine conditions. Report medians
 and variation, and distinguish local measurements from CI and Cloudflare.
 

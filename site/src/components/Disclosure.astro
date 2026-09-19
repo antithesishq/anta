@@ -54,7 +54,7 @@ const Heading = `h${level}` as const
   <summary class="summary">
     <a-icon shape="chevron-right" class="chevron"></a-icon>
     {/* A real heading carries the id so the TOC picks it up; the inner
-        anchor mirrors rehype-autolink-headings' `behavior: 'wrap'` output
+        anchor matches the Markdown heading-link transform
         (classes `header-anchor muted`) so the section deep-links and
         hover-underlines like every other `##` heading. With `anchor={false}`
         the title is a plain label instead — no heading, no id, no anchor — so

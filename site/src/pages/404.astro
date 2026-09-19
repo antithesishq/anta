@@ -1,0 +1,60 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro'
+---
+
+<DocsLayout title="Page not found" hideToc>
+  <section class="not-found" data-no-search aria-labelledby="not-found-title">
+    <header class="not-found-header">
+      <h1 id="not-found-title">Sorry, we couldn't find the page</h1>
+      <p class="requested-url">URL: <code data-requested-url>{Astro.url.pathname}</code></p>
+    </header>
+
+    <img
+      class="anteater-image"
+      src="/debug-anteater.webp"
+      width="1920"
+      height="983"
+      alt="A puzzled anteater following a broken debugging trail"
+    />
+  </section>
+</DocsLayout>
+
+<script>
+  const showRequestedUrl = () => {
+    const target = document.querySelector('[data-requested-url]')
+    if (target) target.textContent = `${location.pathname}${location.search}${location.hash}`
+  }
+
+  showRequestedUrl()
+  document.addEventListener('astro:page-load', showRequestedUrl)
+</script>
+
+<style>
+  .not-found {
+    display: grid;
+    gap: 32px;
+  }
+
+  .not-found-header {
+    display: grid;
+    gap: 8px;
+  }
+
+  .not-found-header h1 {
+    margin: 0;
+  }
+
+  .requested-url {
+    margin: 0;
+    color: var(--text-2);
+    overflow-wrap: anywhere;
+  }
+
+  .anteater-image {
+    display: block;
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    justify-self: center;
+  }
+</style>

@@ -101,6 +101,12 @@ export function finiteNumber(value: string | number | null, fallback: number): n
   return Number.isFinite(number) ? number : fallback
 }
 
+/** Normalize the JSX `truncate` shorthand to a positive CSS line count. */
+export function lineClamp(truncate: boolean | number | undefined): number | undefined {
+  const lines = typeof truncate === 'number' ? truncate : truncate ? 1 : undefined
+  return lines != null && lines >= 1 ? lines : undefined
+}
+
 // macOS labels the "isolate" accelerator ⌥ (Option); every other platform, Alt.
 // `altKey` fires for both at runtime — only the hint wording differs.
 export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '')

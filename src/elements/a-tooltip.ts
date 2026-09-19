@@ -59,8 +59,8 @@ const TRUNCATING_PARTS = 'a-tab-label, a-button-label, a-step-hint'
 function reportsTruncation(el: Element): el is HTMLElement & { isTruncated: boolean } {
   return typeof (el as HTMLElement & { isTruncated?: unknown }).isTruncated === 'boolean'
 }
-/** Internal marker emitted by JSX `<Text truncate>`. Its tooltip reads the
- * anchor's rendered text instead of duplicating React children. */
+/** Internal marker emitted by JSX text-bearing components with truncation. Its
+ * tooltip reads the anchor's rendered text instead of duplicating children. */
 const AUTOMATIC_TEXT_TOOLTIP = 'data-anta-text-tooltip'
 /**
  * How long (ms) a touch-opened tooltip lingers after the finger lifts, so it
@@ -473,7 +473,7 @@ export class ATooltipElement extends HTMLElementBase {
     return this.hasAttribute('truncated-only')
   }
 
-  /** JSX `<Text truncate>` emits an empty marked tooltip. It takes its content
+  /** JSX truncation wrappers emit an empty marked tooltip. It takes its content
    * from the anchor, while a consumer-provided sibling tooltip takes precedence
    * even when that sibling is empty. */
   get #isAutomaticTextTooltip(): boolean {

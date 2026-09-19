@@ -388,6 +388,10 @@ export interface ATitleAttributes extends BaseAttributes {
    *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
    *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Truncate to N lines with a trailing ellipsis. The attribute value carries
+   *  the line count; set the same count on `--line-clamp` when using the styled
+   *  tag directly. */
+  truncate?: boolean | string | number
   /** ARIA role — the JSX wrapper sets this to `'heading'`. */
   role?: string
   /** ARIA heading level — the JSX wrapper sets this to match `level`. */

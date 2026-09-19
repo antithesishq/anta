@@ -71,6 +71,30 @@ the title text.
 Use a span for a small inline accent. Don't nest `<Text>` or `<a-text>` inside a
 title: they are block containers, while heading content should remain inline.
 
+## Truncation
+
+Pass `truncate` for a single-line ellipsis or a positive number to clamp to that
+many lines. When the title is clipped, JSX `Title` shows its full text in a
+tooltip. A nested `<Tooltip>` overrides that automatic tooltip.
+
+<Preview>
+  <Title truncate style={{ maxWidth: '320px' }}>
+    A long workspace heading that stays on one line in a compact layout
+  </Title>
+</Preview>
+
+```tsx folded
+<Title truncate style={{ maxWidth: '320px' }}>
+  A long workspace heading that stays on one line in a compact layout
+</Title>
+```
+
+Use a number for multi-line titles.
+
+```tsx
+<Title truncate={2}>A long heading clamped after its second line</Title>
+```
+
 ## Level reference
 
 | level | font-size | line-height |

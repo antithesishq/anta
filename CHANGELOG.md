@@ -5,6 +5,11 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- Title supports single-line and multi-line truncation with an automatic
+  full-text tooltip when the heading is clipped.
+
 ### Fixed
 
 - Antune preserves Tabs tone colors in the primary track and secondary selected

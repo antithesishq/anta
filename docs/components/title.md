@@ -38,6 +38,24 @@ the title text.
 Use a span for a small inline accent. Don't nest `<Text>` or `<a-text>` inside a
 title: they are block containers, while heading content should remain inline.
 
+## Truncation
+
+Pass `truncate` for a single-line ellipsis or a positive number to clamp to that
+many lines. When the title is clipped, JSX `Title` shows its full text in a
+tooltip. A nested `<Tooltip>` overrides that automatic tooltip.
+
+```tsx
+<Title truncate style={{ maxWidth: '320px' }}>
+  A long workspace heading that stays on one line in a compact layout
+</Title>
+```
+
+Use a number for multi-line titles.
+
+```tsx
+<Title truncate={2}>A long heading clamped after its second line</Title>
+```
+
 ## Level reference
 
 | level | font-size | line-height |
@@ -100,6 +118,7 @@ scale.
 | `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 2 | Heading level, 1-6. Drives font-size, line-height, and vertical rhythm. Also surfaced to assistive tech via `aria-level` (h1 is typically reserved for the page title). |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | primary | Visual priority. Maps to text-1..text-4 (`primary` = text-1). |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is kept while lightness/chroma are pinned per priority in oklch. |
+| `truncate?` | boolean \| number | — | Truncate with a trailing ellipsis. `true` (or `1`) clamps to a single line; any integer ≥ 2 clamps to that many lines; `0` or a negative value means no truncation. A clipped JSX `Title` shows its text content in a tooltip by default. Nest a `<Tooltip>` to provide your own tooltip instead. |
 
 ## Web Component
 

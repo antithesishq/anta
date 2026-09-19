@@ -1,5 +1,6 @@
 import type { BaseProps } from "../general_types"
-import { neutralToneAttr, toneStyle } from "../anta_helpers"
+import { lineClamp, neutralToneAttr, toneStyle } from "../anta_helpers"
+import { Tooltip } from "./Tooltip"
 
 export interface TitleProps extends BaseProps {
   /** Heading level, 1-6. Drives font-size, line-height, and vertical
@@ -16,10 +17,16 @@ export interface TitleProps extends BaseProps {
    *  kept while lightness/chroma are pinned per priority in oklch.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Truncate with a trailing ellipsis. `true` (or `1`) clamps to a
+   *  single line; any integer ≥ 2 clamps to that many lines; `0` or a
+   *  negative value means no truncation. A clipped JSX `Title` shows its
+   *  text content in a tooltip by default. Nest a `<Tooltip>` to provide
+   *  your own tooltip instead. */
+  truncate?: boolean | number
 }
 
 /**
- * Block-level heading with level 1-6, priority, and tone.
+ * Block-level heading with level 1-6, priority, tone, and optional truncation.
  *
  * Renders an `<a-title>` styled tag (no JS, no shadow DOM) with
  * `role="heading"` and `aria-level={level}` set by this wrapper for
@@ -60,20 +67,30 @@ export interface TitleProps extends BaseProps {
  * </Title>
  * ```
  */
-export const Title = ({ level = 2, priority, tone, className, style, children, ...rest }: TitleProps) => {
+export const Title = ({ level = 2, priority, tone, truncate, className, style, children, ...rest }: TitleProps) => {
+  const lineCount = lineClamp(truncate)
   const toneAttr = neutralToneAttr(tone)
+  const computedStyle = toneStyle(
+    toneAttr,
+    "--title-tone-source",
+    lineCount != null ? { ...style, ['--line-clamp' as string]: lineCount } : style,
+  )
   return (
     <a-title
       level={String(level)}
       priority={priority}
       tone={toneAttr}
+      truncate={lineCount != null ? String(lineCount) : undefined}
       role="heading"
       aria-level={level}
       class={className}
-      style={toneStyle(toneAttr, "--title-tone-source", style)}
+      style={computedStyle}
       {...rest}
     >
       {children}
+      {lineCount != null && (
+        <Tooltip truncatedOnly data-anta-text-tooltip="" />
+      )}
     </a-title>
   )
 }

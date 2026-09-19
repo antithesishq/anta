@@ -176,21 +176,6 @@
     pointer-events: none;
   }
 
-  /* A switch indicator sits at the trailing edge. The row owns activation and
-     checkable semantics, so the switch contributes only its track visual. */
-  a-menu-item > a-switch[data-menu-item-switch] {
-    flex: none;
-    margin-inline-start: auto;
-    /* The standalone switch reserves a second grid column for its label, with a
-       column gap between that label and the track. This indicator has no label,
-       so remove the otherwise-visible empty gap from its inline size. */
-    --switch-gap: 0;
-    pointer-events: none;
-  }
-  a-menu-item > kbd + a-switch[data-menu-item-switch] {
-    margin-inline-start: 0;
-  }
-
   /* The standalone checkbox / radio offsets its box (::before) + glyph (::after) with a
      margin-block-start to sit on a label's first-line center (see a-checkbox.css /
      a-radio.css). In a menu the mark is label-less and the row centers it, so that

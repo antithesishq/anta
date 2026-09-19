@@ -82,19 +82,19 @@ export interface MenuItemCommonProps extends BaseProps {
   /** Mark the item as selected. On a plain row (no `selectionIndicator`) this is
    *  a persistent background tint, the same resting fill a pressed row shows —
    *  also the way to flag the current page on a link item. On a checkable row
-   *  (`selectionIndicator` set) it instead drives the indicator and the row's
-   *  `aria-checked`. */
+   *  (`selectionIndicator` set) it instead drives the leading `checkbox` / `radio`
+   *  indicator and the row's `aria-checked`. */
   selected?: boolean
-  /** Semantic tone — colors the label, icon, hover/selected tint, and selection
-   *  indicator. A named tone, or any literal CSS color (`'#ff1493'`,
-   *  `'rebeccapurple'`) for a one-off custom tone whose
+  /** Semantic tone — colors the label, icon, and hover/selected tint (and the
+   *  `checkbox`/`radio` indicator, which adopts it). A named tone, or any literal
+   *  CSS color (`'#ff1493'`, `'rebeccapurple'`) for a one-off custom tone whose
    *  hue + chroma are kept while the lightness is pinned to match the brand text.
    *  `critical` is the destructive action; `neutral` (the default) is the standard
    *  gray.
    *  @defaultValue neutral */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
   /** Apply `tone` to every row state, or only while the row is selected. In
-   *  `selected` scope, an unselected row and its indicator stay
+   *  `selected` scope, an unselected row and its checkbox/radio indicator stay
    *  neutral.
    *  @defaultValue 'all' */
   toneScope?: ToneScope
@@ -156,10 +156,8 @@ export type MenuItemActionMode = {
    *  - `'radio'` → `role="menuitemradio"`, a leading passive `<a-radio>`; tint dropped.
    *  - `'check'` → `role="menuitemradio"`, a trailing check glyph on the selected
    *    row *and* the background tint (the canonical single-select look).
-   *  - `'switch'` → `role="menuitemcheckbox"`, a trailing passive `<a-switch>`;
-   *    selecting the row keeps its menu open.
    *  Omit for a plain row (the default). */
-  selectionIndicator?: 'checkbox' | 'radio' | 'check' | 'switch'
+  selectionIndicator?: 'checkbox' | 'radio' | 'check'
   /** Only meaningful with `selectionIndicator="checkbox"`: render the box in the
    *  mixed state (`aria-checked="mixed"`) — e.g. a "Select all" row when some but
    *  not all of its options are selected. */
@@ -235,12 +233,9 @@ export const MenuItem = ({
   // style instead keeps the tint and adds a trailing check glyph. So `selected=""`
   // (the tint) is emitted for plain rows *and* the `check` style.
   const checkable =
-    selectionIndicator === 'checkbox' ||
-    selectionIndicator === 'radio' ||
-    selectionIndicator === 'check' ||
-    selectionIndicator === 'switch'
+    selectionIndicator === 'checkbox' || selectionIndicator === 'radio' || selectionIndicator === 'check'
   const role =
-    selectionIndicator === 'checkbox' || selectionIndicator === 'switch'
+    selectionIndicator === 'checkbox'
       ? 'menuitemcheckbox'
       : selectionIndicator === 'radio' || selectionIndicator === 'check'
         ? 'menuitemradio'
@@ -258,11 +253,8 @@ export const MenuItem = ({
   // A named tone travels as the attribute; a custom color also needs its
   // `--{component}-tone-source` var set inline (the typed `attr()` path only
   // resolves on newer engines) — for the host and, so it adopts the row's tone,
-  // the selection indicator.
+  // the checkbox/radio indicator.
   const toneAttr = neutralToneAttr(effectiveTone)
-  const switchBehavior = selectionIndicator === 'switch'
-    ? { 'data-menu-open': '' as const }
-    : {}
 
   // `rest` overrides the derived attribute; use the winning value to hide the
   // visual shortcut from assistive technology.
@@ -342,7 +334,6 @@ export const MenuItem = ({
       onmenuselect={onSelect ? (e: any) => onSelect(e, { value, label }) : undefined}
       class={className}
       {...rest}
-      {...switchBehavior}
     >
       {/* Passive selection indicator at the leading edge — the row is the actual
           control (role + aria-checked), so the mark is decorative. A custom
@@ -391,22 +382,6 @@ export const MenuItem = ({
           without relying on that (see a-menu-item.css). */}
       {children}
       {kbdNode}
-      {selectionIndicator === 'switch' && indicator == null && (
-        <a-switch
-          data-menu-item-switch=""
-          aria-hidden="true"
-          tabIndex={-1}
-          state={selected ? 'checked' : 'unchecked'}
-          disabled={disabled ? '' : undefined}
-          size="small"
-          tone={toneAttr}
-          style={toneStyle(
-            effectiveTone,
-            '--switch-tone-source',
-            toneStyle(effectiveTone, '--switch-off-tone-source'),
-          )}
-        />
-      )}
       {(() => {
         // A submenu shows the chevron by default; `iconTrailing` overrides it. The
         // `check` selection style reserves a trailing slot on *every* row — a check

@@ -15,7 +15,6 @@ import menuDemoCode from './menu.demo.ts'
 import MenuNestedDemo from '../../../components/MenuNestedDemo'
 import MenuCopyDemo from '../../../components/MenuCopyDemo'
 import MenuContainmentDemo from '../../../components/MenuContainmentDemo'
-import MenuSwitchDemo from '../../../components/MenuSwitchDemo'
 import { Menu, MenuItem, MenuSeparator, MenuGroup, Button, Input, Tag } from '@antadesign/anta'
 
 # Menu
@@ -588,13 +587,13 @@ menus: mark one row for single-select, several for multi-select (pair with
 `data-menu-open` to keep the menu open as choices toggle). The tint tracks
 `tone`, so a toned row stays in its own color.
 
-For a checkable row, add `selectionIndicator`. The `checkbox` and `radio`
-variants render a passive leading mark. The `switch` variant renders a passive
-trailing switch for settings that take effect immediately. The
-row remains the control and carries `aria-checked`; the indicator adds no focus
-stop or nested role. A switch row keeps the menu open when selected.
-
-[Select](/select/)'s selection modes use the checkbox and radio variants.
+For a real checkable row, add **`selectionIndicator`** (`'checkbox'` or `'radio'`).
+It renders a passive checkbox/radio at the leading edge (reusing the
+[Checkbox](/checkbox/) / [Radio](/radio/) element visuals),
+flips the row to `role="menuitemcheckbox"` / `"menuitemradio"`, and pairs
+`aria-checked` — the row stays the control, the indicator is decorative. This is
+what [Select](/select/)'s `selection` modes render; use it directly for
+a checkable menu.
 
 </Col>
 <Col>
@@ -622,32 +621,6 @@ stop or nested role. A switch row keeps the menu open when selected.
 {/* Checkable rows — the row is the control; the mark is decorative */}
 <MenuItem selectionIndicator="radio" label="Relevance" selected />
 <MenuItem selectionIndicator="checkbox" label="Show archived" selected data-menu-open />
-```
-
-<Preview>
-  <MenuSwitchDemo client:visible />
-</Preview>
-
-```tsx folded
-const [notifications, setNotifications] = useState(true)
-const [automaticUpdates, setAutomaticUpdates] = useState(false)
-
-<Button>Settings</Button>
-<Menu>
-  <MenuItem
-    selectionIndicator="switch"
-    label="Notifications"
-    selected={notifications}
-    onSelect={() => setNotifications((value) => !value)}
-  />
-  <MenuItem
-    selectionIndicator="switch"
-    label="Automatic updates"
-    hint="Install new versions automatically"
-    selected={automaticUpdates}
-    onSelect={() => setAutomaticUpdates((value) => !value)}
-  />
-</Menu>
 ```
 
 </Col>

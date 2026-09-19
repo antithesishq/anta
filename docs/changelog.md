@@ -14,6 +14,8 @@ changes are not listed.
 
 - Button loading stripes loop seamlessly while their rounded clipping stays
   local to the animated overlay.
+- Copy confirmation labels stay visible when a control is near the top edge of
+  the viewport.
 - Antune preserves Tabs tone colors in the primary track and secondary selected
   fill, including selected per-tab tones.
 - Panel uses `overflow: auto` in normal and maximized states, so scrollbars

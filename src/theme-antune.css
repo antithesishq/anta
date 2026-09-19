@@ -689,7 +689,10 @@ a-tag[tone="neutral"][priority="tertiary"] {
   --tag-border: color-mix(in oklch, var(--tag-edge) 25%, transparent);
 }
 
-a-tabs {
+/* Keep the neutral reference fills off toned strips and selected per-tab tones. */
+a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]):not(
+  :has(> a-tab[tone]:state(selected):not([tone=""], [tone="neutral"]))
+) {
   --tabs-track-bg: light-dark(
     oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.06),
     color-mix(in oklch, #e4d1ef 7%, transparent)

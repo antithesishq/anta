@@ -2,7 +2,7 @@
 
 `Panel` is a container that can maximize to the browser viewport without moving
 or remounting its children. It fills its parent's width and height and uses
-`overflow: scroll` by default.
+`overflow: auto` to show scrollbars only when content overflows.
 
 Give the parent a defined height for Panel to fill vertically. With an
 auto-height parent, percentage height follows normal CSS sizing and the Panel
@@ -138,20 +138,19 @@ Anta buttons can send `panelmaximizerequest`, `panelrestorerequest`, or
 ## Styling
 
 Panel defaults to `display: block`, `width: 100%`, `height: 100%`,
-`box-sizing: border-box`, and `overflow: scroll`. Padding and borders stay inside
+`box-sizing: border-box`, and `overflow: auto`. Padding and borders stay inside
 its assigned size. It does not set `flex-grow`.
 
 Override these through ordinary CSS. Use `height: auto` for content-driven
-height or `overflow: auto` for scrollbars only when content overflows.
-With `overflow: scroll`, scrollbar visibility and reserved space follow the
-browser and operating system's scrollbar settings.
+height or `overflow: scroll` to request scrollbars even when content fits.
+Scrollbar appearance follows the browser and operating system's settings.
 
 Set the background on Panel. Its maximized surface inherits that background,
 so inner content can keep its natural height. Style light-DOM children, such as
 [Box](./box.md) or [Capture](./capture.md), for content layout shared between both states.
 Use `:state(maximized)` for viewport styling and `::part(content)` for the
 maximized scrolling surface. In normal mode, the content slot uses `display: contents`.
-The maximized surface also uses `overflow: scroll`; override
+The maximized surface also uses `overflow: auto`; override
 `::part(content)` to change its overflow separately from the normal Panel.
 
 Enter a note, then select **Maximize panel** and **Restore panel**. The input

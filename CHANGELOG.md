@@ -3,6 +3,15 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Antune preserves Tabs tone colors in the primary track and secondary selected
+  fill, including selected per-tab tones.
+- Panel uses `overflow: auto` in normal and maximized states, so scrollbars
+  appear only when content overflows.
+
 ## 0.3.30 — September 17, 2026
 
 ### Added

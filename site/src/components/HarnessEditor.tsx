@@ -1,6 +1,7 @@
 import { type JSX } from 'preact'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import * as Anta from '@antadesign/anta'
+import { isModifiedNavigationKey } from '@antadesign/anta/anta_helpers'
 import styles from './Harness.module.css'
 
 const { Button } = Anta
@@ -86,6 +87,7 @@ export default function HarnessEditor({ source, isDark, onChange, onThemeChange,
     updateWidth(resizeStartRef.current.width + event.clientX - resizeStartRef.current.pointerX)
   }
   const resizeWithKeyboard = (event: JSX.TargetedKeyboardEvent<HTMLDivElement>) => {
+    if (isModifiedNavigationKey(event)) return
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
     event.preventDefault()
     updateWidth(width + (event.key === 'ArrowLeft' ? -20 : 20))

@@ -18,6 +18,10 @@ changes are not listed.
   local to the animated overlay.
 - Copy confirmation labels stay visible when a control is near the top edge of
   the viewport.
+- Keyboard navigation leaves modified arrows, Home/End, and PageUp/PageDown
+  available to browser, system, and text-editing shortcuts. Menus also preserve
+  modified Tab shortcuts. Shift+Tab traversal and Calendar's Shift+PageUp/PageDown
+  year navigation remain available.
 - Antune preserves Tabs tone colors in the primary track and secondary selected
   fill, including selected per-tab tones.
 - Panel uses `overflow: auto` in normal and maximized states, so scrollbars

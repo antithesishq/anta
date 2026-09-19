@@ -6,6 +6,7 @@
 - Ksenia Toloknova — lead designer
 - Leonid Kniazev — contributing designer
 - Vehbi Karaagac — engineer
+- Fernando Oliveros — engineer, leading the [Plot package](./packages/plot.md)
 
 ## Icons
 
@@ -16,3 +17,5 @@ Anta's icon set is built on the shoulders of several excellent open-source icon 
 - Blueprint by Palantir — additional product-UI glyphs covering domains the previous two don't (Apache License 2.0).
 
 Full license texts and per-icon attribution are reproduced verbatim in the package's NOTICES.md.
+
+The Antithesis theme uses Hugeicons. These icons are licensed only for use by Antithesis.

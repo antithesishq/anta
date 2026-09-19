@@ -1,5 +1,6 @@
 import { useId, useState } from 'preact/hooks'
 import { Capture, Button, Checkbox, Select, Slider, Tag, Text } from '@antadesign/anta'
+import { isModifiedNavigationKey } from '@antadesign/anta/anta_helpers'
 import type { CaptureWheelActivation, CaptureWheelInput, SelectOption } from '@antadesign/anta'
 import styles from './WheelCapturePreview.module.css'
 import { useElements } from './useElements'
@@ -72,6 +73,7 @@ export function WheelCapturePreview() {
       />
 
       <div onKeyDown={event => {
+        if (isModifiedNavigationKey(event)) return
         if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
         event.preventDefault()
         move(event.key === 'ArrowDown' ? ROW_HEIGHT : -ROW_HEIGHT)

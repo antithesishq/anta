@@ -1,4 +1,4 @@
-import { HTMLElementBase } from "../anta_helpers";
+import { HTMLElementBase, isModifiedNavigationKey } from "../anta_helpers";
 import { ATabElement } from "./a-tab";
 import "./a-tabs.css";
 
@@ -280,7 +280,7 @@ export class ATabsElement extends HTMLElementBase {
   };
 
   private onKeyDown = (e: KeyboardEvent) => {
-    if (this.#isDisabled) return;
+    if (this.#isDisabled || isModifiedNavigationKey(e)) return;
     const enabled = this.#tabs.filter((t) => !t.hasAttribute("disabled"));
     if (enabled.length === 0) return;
     const focused = (e.target as HTMLElement | null)?.closest("a-tab") as ATabElement | null;

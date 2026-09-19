@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Component keyboard navigation preserves modified browser, system, and
+  text-editing shortcuts.
 - Panel shows scrollbars only when content overflows, in both normal and
   maximized states.
 - Antune preserves tone colors in the Tabs primary track and secondary selected

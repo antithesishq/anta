@@ -359,7 +359,7 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 | `value` | string | — | This tab's identity — pairs it with the `<TabPanel value="…">` of the same value, and the value reported by `onStateChange` / `onChange`. Unique per strip. |
 | `children?` | ReactNode | — | Tab content when you need more than a string — used if `label` is omitted. |
 | `className?` | string | — | CSS class on the option's rendered row. |
-| `disabled?` | boolean | — | Disable just this tab — skipped by keyboard nav and dropped from the tab order (a disabled-but-selected tab stays reachable, per the ARIA pattern). |
+| `disabled?` | boolean | — | Prevent user activation of this tab. A disabled tab can still indicate the current selection. |
 | `icon?` | IconShape | — | Leading icon shape, rendered before the label. |
 | `iconTrailing?` | IconShape | — | Trailing icon shape, rendered after the label. |
 | `label?` | ReactNode | — | Visible label. The string shorthand for the tab's content; for richer content pass `children` instead (`label` wins when both are set). |

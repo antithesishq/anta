@@ -107,6 +107,14 @@ export function lineClamp(truncate: boolean | number | undefined): number | unde
   return lines != null && lines >= 1 ? lines : undefined
 }
 
+const NAVIGATION_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Tab'])
+
+/** Leave modified navigation to the browser, OS, or text field. Shift+Tab remains focus navigation. */
+export function isModifiedNavigationKey(event: Pick<KeyboardEvent, 'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>): boolean {
+  return NAVIGATION_KEYS.has(event.key)
+    && (event.altKey || event.ctrlKey || event.metaKey || (event.shiftKey && event.key !== 'Tab'))
+}
+
 // macOS labels the "isolate" accelerator ⌥ (Option); every other platform, Alt.
 // `altKey` fires for both at runtime — only the hint wording differs.
 export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '')

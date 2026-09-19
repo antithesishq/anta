@@ -1,4 +1,4 @@
-import { finiteNumber, HTMLElementBase } from '../anta_helpers'
+import { finiteNumber, HTMLElementBase, isModifiedNavigationKey } from '../anta_helpers'
 import './a-slider.css'
 
 const precisionOf = (value: number) => {
@@ -477,7 +477,7 @@ export class ASliderElement extends HTMLElementBase {
   }
 
   #handleKeydown(event: KeyboardEvent) {
-    if (event.target !== this || this.#isDisabled) return
+    if (event.target !== this || this.#isDisabled || isModifiedNavigationKey(event)) return
     delete this.#control.dataset.pointerFocus
 
     const page = Math.max(this.#step, (this.#max - this.#min) / 10)

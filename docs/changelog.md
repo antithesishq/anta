@@ -3,10 +3,12 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.31 — September 18, 2026
 
 ### Added
 
+- MenuItem supports a trailing switch selection indicator for immediate
+  settings. Switch rows keep their menu open when selected.
 - Title supports single-line and multi-line truncation with an automatic
   full-text tooltip when the heading is clipped.
 

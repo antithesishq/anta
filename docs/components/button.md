@@ -22,8 +22,10 @@ visual emphasis.
 
 ## Tone
 
-Choose a semantic tone for the action. The default is `neutral`. You can also
-pass any CSS color for a one-off tone.
+Six named tones: `neutral` (default), `brand`, `critical`, `info`, `success`,
+and `warning`. Omitting `tone`, or passing an empty string, resolves to
+`neutral`. A custom tone is also possible: pass any literal CSS color and the
+button will adapt to it.
 
 ```tsx
 <Button label="Save" />
@@ -32,7 +34,20 @@ pass any CSS color for a one-off tone.
 <Button tone="info" label="Preview" />
 <Button tone="success" label="Approve" />
 <Button tone="warning" label="Archive" />
-<Button tone="#e0457b" label="Custom tone" />
+```
+
+### Custom tone
+
+Pass any CSS color to `tone`. Custom tones work with every priority and adapt to
+the current color mode.
+
+```tsx
+<Button priority="primary" tone="#ff1493" label="Pinkify" />
+<Button priority="secondary" tone="oklch(0.655 0.261 356.9)" label="Pinkify" />
+<Button priority="tertiary" tone="hsl(328 100% 54%)" label="Pinkify" />
+<Button priority="primary" tone="mediumaquamarine" label="Mintify" />
+<Button priority="secondary" tone="rgb(102 205 170)" label="Mintify" />
+<Button priority="tertiary" tone="lch(75.7% 39.2 167.8)" label="Mintify" />
 ```
 
 ## Size
@@ -118,8 +133,12 @@ or pressed state.
 
 ## ButtonCopy
 
-`ButtonCopy` copies text and shows temporary success or failure feedback. Omit
-the label for an icon-only copy button.
+`ButtonCopy` is a `Button` preset for copy-to-clipboard. Its copy glyph changes
+to a check on success or an x on failure, then returns to its resting state.
+`onCopied(ok)` reports the result. Omit the label for an icon-only copy button.
+
+The preset composes a regular `Button` with `<a-copy>`. Use `<a-copy>` directly
+when you need the same behavior in another control.
 
 ```tsx
 <ButtonCopy copy="npm i @antadesign/anta" label="Copy install command" />
@@ -128,8 +147,10 @@ the label for an icon-only copy button.
 
 ### Icon placement
 
-Set `iconPlacement` to `leading`, `trailing`, or `none`. Use `copiedLabel` to
-change the success message.
+Set `iconPlacement` to `leading`, `trailing`, or `none`. With `none`, the button
+does not change. Successful pointer activation shows a confirmation beside the
+pointer; keyboard activation shows it at the button's inline start. Use
+`copiedLabel` to change the message.
 
 ```tsx
 <ButtonCopy copy={value} label="Leading" />
@@ -139,8 +160,9 @@ change the success message.
 
 ### Copy a DOM node
 
-Use `copyNode` to copy a rendered region as rich text and plain text. Bare
+Use `copyNode` to copy a rendered region as `text/html` and plain text. Bare
 `copyNode` finds the nearest `data-copy-source`; a string selects an ancestor.
+The copy control itself is omitted from the copied content.
 
 ```tsx
 <div data-copy-source>
@@ -151,8 +173,8 @@ Use `copyNode` to copy a rendered region as rich text and plain text. Bare
 
 ### Copy the page URL
 
-Use `copyUrl` for the current URL. `copyWithUrl` adds the current URL to copied
-text.
+Use `copyUrl` to copy `location.href`. `copyWithUrl` prefixes copied text with
+`// URL: <current page URL>`.
 
 ```tsx
 <ButtonCopy copyUrl label="Copy link" />
@@ -161,8 +183,10 @@ text.
 
 ### Copy dynamic text
 
-For text generated on demand, update the controlled `copy` value in
-`onCopyRequest`.
+`copy` is controlled. For text generated on demand, initialize it to `''` and
+update it in `onCopyRequest`. The callback fires on pointerdown or Enter/Space
+keydown, before activation writes the current `copy` value. Its return value is
+ignored.
 
 ```tsx
 const [report, setReport] = useState('')
@@ -173,6 +197,19 @@ const [report, setReport] = useState('')
   onCopyRequest={() => setReport(generateReport())}
 />
 ```
+
+#### Why `copy` is controlled
+
+Anta supports applications whose JSX renderer runs in a worker. The DOM copy
+control and Clipboard API remain on the browser's UI thread, and a callback
+cannot cross that boundary as a callable reference.
+
+`onCopyRequest` asks the application to calculate the text. The resulting state
+update sends a serializable `copy` string to the DOM control, which writes it
+during the user activation required by the Clipboard API. A `lazyCopy` callback
+would only hide this state update in a main-thread wrapper and would not work
+across renderers. Separate `copy`, `copyNode`, and `copyUrl` inputs also keep the
+clipboard format explicit.
 
 ### Props
 
@@ -240,10 +277,19 @@ export const LinkButton = ({ label, ...props }) => (
 )
 ```
 
-## Forms and custom events
+## Special events
 
-Use `type="submit"` or `type="reset"` with a form. The `form` prop associates a
-button with a form elsewhere on the page.
+Beyond a plain click, a button can submit or reset a native form and dispatch a
+named custom event.
+
+### Form submission
+
+For non-link buttons, `type="submit"` and `type="reset"` integrate with native
+forms. The `form` prop associates a button with a form elsewhere on the page.
+Submitting calls `form.requestSubmit()`, so the form's validation and `submit`
+event still run. It also dispatches `submitdetailed` on the form with
+`{ formData, submitter: { tag, attrs } }` in `detail`, which can identify the
+trigger in analytics or multi-button forms.
 
 ```tsx
 <form id="signup">
@@ -253,7 +299,11 @@ button with a form elsewhere on the page.
 <Button type="submit" form="signup" label="Submit from outside" />
 ```
 
-Set `data-custom-event` to dispatch a bubbling custom event on activation.
+### Custom click events
+
+Set `data-custom-event="<name>"` to dispatch a bubbling `CustomEvent("<name>")`
+on click. This is useful for declarative actions or analytics that should not
+take ownership of `onClick`.
 
 ```tsx
 <Button label="Save" data-custom-event="save-clicked" />

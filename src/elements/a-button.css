@@ -380,9 +380,12 @@
       &::before {
         content: "";
         position: absolute;
-        inset: 0;
+        top: 0;
+        bottom: 0;
+        left: calc(0px - var(--button-loading-x-period));
+        width: calc(100% + var(--button-loading-x-period));
         pointer-events: none;
-        clip-path: inset(0 round var(--_radius));
+        clip-path: inset(0 0 0 var(--button-loading-x-period) round var(--_radius));
         background: repeating-linear-gradient(
           var(--button-loading-angle),
           transparent 0,
@@ -393,10 +396,9 @@
               var(--button-loading-stripe-gap) + var(--button-loading-stripe)
             )
         );
-        background-position-x: calc(0px - var(--button-loading-x-period));
         opacity: var(--button-loading-opacity);
         filter: blur(var(--button-loading-blur));
-        will-change: background-position;
+        will-change: transform, clip-path;
         animation: btn-loading-slide var(--button-loading-duration) linear
           infinite;
 
@@ -609,6 +611,7 @@
 
 @keyframes btn-loading-slide {
   to {
-    background-position-x: 0;
+    transform: translateX(var(--button-loading-x-period));
+    clip-path: inset(0 var(--button-loading-x-period) 0 0 round var(--_radius));
   }
 }

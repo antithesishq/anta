@@ -12,6 +12,8 @@ changes are not listed.
 
 ### Fixed
 
+- Button loading stripes loop seamlessly while their rounded clipping stays
+  local to the animated overlay.
 - Antune preserves Tabs tone colors in the primary track and secondary selected
   fill, including selected per-tab tones.
 - Panel uses `overflow: auto` in normal and maximized states, so scrollbars

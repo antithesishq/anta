@@ -1,3 +1,12 @@
+## Unreleased
+
+- Panel shows scrollbars only when content overflows, in both normal and
+  maximized states.
+- Antune preserves tone colors in the Tabs primary track and secondary selected
+  fill, including selected per-tab tones.
+
+See [Dev releases](/changelog/dev/) for the complete history.
+
 ## 0.2.0 — June 9, 2026
 
 This stable release combines the final prereleases. See [Dev releases](/changelog/dev/)

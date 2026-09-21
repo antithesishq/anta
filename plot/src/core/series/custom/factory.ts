@@ -117,6 +117,9 @@ function apply_custom_hover<TooltipContent>(series: CustomSeries<TooltipContent>
     if (args.highlight_renderer !== undefined && hoverable === false) {
         throw new Error('plot.custom: highlight_renderer requires hoverable series.')
     }
+    if (args.highlight_renderer !== undefined && args.highlight === false) {
+        throw new Error('plot.custom: highlight_renderer cannot run when highlight is false. Remove highlight_renderer or enable highlighting.')
+    }
     if (args.highlight !== undefined) series.highlight = args.highlight
     if (args.highlight_renderer !== undefined) series.highlight_renderer = args.highlight_renderer
 

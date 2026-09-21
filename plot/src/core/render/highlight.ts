@@ -61,7 +61,10 @@ export function update_hover_canvas<Content>(ctx: CanvasContext, plot: ComposedP
             }
         } catch (error) {
             clear_highlights(ctx)
-            console.warn('plot.custom: highlight_renderer threw, skipping highlight.', error)
+            const message = series.highlight_renderer
+                ? 'plot.custom: highlight_renderer threw, skipping highlight.'
+                : 'plot.custom: renderer threw during highlight repaint, skipping highlight.'
+            console.warn(message, error)
         } finally {
             ctx.restore()
         }

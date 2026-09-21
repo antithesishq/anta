@@ -5,6 +5,7 @@ import { clamp_domain, LINEAR_SPACE, LOG_SPACE } from "../template/domain"
 import { series_type } from "../registry"
 import { linear_tick_count, X_TICK_PX_TARGET, Y_TICK_PX_TARGET } from "../render/axes"
 import { inner_rect, resolve_layout } from "./layout"
+import { carry_factory_args } from "../series/factory_args"
 
 /**
  * Turns a PlotTemplate into a renderable Plot
@@ -46,6 +47,7 @@ export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<To
 
     return {
         layout,
+        tooltip: template.tooltip,
         inner: inner_rect(layout),
         x_scale,
         y_scale,
@@ -80,9 +82,9 @@ function compose_series<TooltipContent>(series: Series<TooltipContent>, color_th
     const compose_layout = series_type<TooltipContent>(series.kind).compose_layout
 
     if (compose_layout === undefined) {
-        return composed
+        return carry_factory_args(series, composed)
     }
-    return compose_layout(composed, x_scale, y_scale)
+    return carry_factory_args(series, compose_layout(composed, x_scale, y_scale))
 }
 
 /**

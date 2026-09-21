@@ -2,11 +2,8 @@
 
 Three packages publish from this repository: `@antadesign/anta` at the root, `@antadesign/stickers` in `stickers/`, and `@antadesign/plot` in `plot/`. Version strings are immutable, so always bump before publishing.
 
-Anta publishes to the default `latest` dist-tag, which is where `0.3.1` through
-`0.3.27` went. Stickers also publishes stable releases to `latest`. Plot carries
-`publishConfig.tag: "dev"`, so it publishes to `dev` and leaves `latest` alone;
-install it with `@dev`, or add the tag with
-`npm dist-tag add @antadesign/<name>@<version> latest` when it becomes stable.
+Anta, Stickers, and Plot publish to the `latest` dist-tag. Anta uses the default
+tag; Stickers and Plot set `publishConfig.tag: "latest"` explicitly.
 
 Publish anta first, then the companion packages being released. Stickers uses
 the consumer's Anta installation through its `>=0.3.31` peer range and uses

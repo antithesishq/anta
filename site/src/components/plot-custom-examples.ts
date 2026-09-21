@@ -1,4 +1,4 @@
-import { custom, scatter, type PlotArgs } from '@antadesign/plot'
+import { custom, scatter, type PlotArgs, type CustomRendererFn, type CustomHitTestFn, type CustomHighlightRendererFn } from '@antadesign/plot'
 
 export function ellipses(): PlotArgs<Node> {
   const groups = [
@@ -115,6 +115,37 @@ export function chords(): PlotArgs<Node> {
         return index < 0 ? null : index
       },
       tooltip: ({ row }) => document.createTextNode('Group ' + row?.name + ': ' + row?.total + ' connections'),
+      highlight_renderer: (series, i, { ctx, inner, color_at, highlight_color_at }) => {
+        const rows = series.rows as typeof groups
+        const group = rows[i]
+        const cx = (inner.left + inner.right) / 2
+        const cy = (inner.top + inner.bottom) / 2
+        const radius = Math.min(inner.right - inner.left, inner.bottom - inner.top) / 2 - 32
+        const point = (a: number) => [cx + radius * Math.cos(a), cy + radius * Math.sin(a)]
+        // Match the main renderer: ribbons take the lower-index group's color.
+        ctx.fillStyle = color_at(i)
+        ctx.globalAlpha = 0.45
+        for (let j = i + 1; j < rows.length; j++) {
+          const source = group.segments[j]
+          const target = rows[j].segments[i]
+          const [sx, sy] = point(source.start)
+          const [tx, ty] = point(target.start)
+          ctx.beginPath()
+          ctx.moveTo(sx, sy)
+          ctx.arc(cx, cy, radius, source.start, source.end)
+          ctx.quadraticCurveTo(cx, cy, tx, ty)
+          ctx.arc(cx, cy, radius, target.start, target.end)
+          ctx.quadraticCurveTo(cx, cy, sx, sy)
+          ctx.closePath()
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1
+        ctx.strokeStyle = highlight_color_at(i)
+        ctx.lineWidth = 13
+        ctx.beginPath()
+        ctx.arc(cx, cy, radius + 7, group.start, group.end)
+        ctx.stroke()
+      },
       renderer: (_, { ctx, inner, color_at }) => {
         const cx = (inner.left + inner.right) / 2
         const cy = (inner.top + inner.bottom) / 2
@@ -236,11 +267,12 @@ export function ridgelines(): PlotArgs<Node> {
         return null
       },
       tooltip: ({ row }) => document.createTextNode(row?.group + ' · 80 samples · mean ' + Number(row?.mean).toFixed(1)),
-      renderer: (_, { ctx, x_scale, resolve_y, color_at, inner }) => {
+      renderer: (series, { ctx, x_scale, resolve_y, color_at, inner }) => {
         const step = (inner.bottom - inner.top) / data.length
         ctx.save()
         // Paint from the top row down, so foreground ridges cover the preceding tails.
-        data.forEach((row, i) => {
+        const rows = series.rows as typeof data
+        rows.forEach((row, i) => {
           const center = resolve_y(i)
           if (center === undefined) return
           const baseline = center + step * 0.45
@@ -254,7 +286,7 @@ export function ridgelines(): PlotArgs<Node> {
           })
           ctx.lineTo(Number(x_scale(100)), baseline)
           ctx.closePath()
-          ctx.globalAlpha = [1, 0.7, 0.85, 0.65, 0.8, 0.7][i]
+          ctx.globalAlpha = [1, 0.7, 0.85, 0.65, 0.8, 0.7][data.indexOf(row)]
           ctx.fill()
           ctx.globalAlpha = 1
           ctx.stroke()
@@ -285,9 +317,9 @@ export function violins(): PlotArgs<Node> {
       data,
       x: 'group',
       color: (_, i) => [
-        { light: '#0d9488', dark: '#5eead4' },
-        { light: '#7c3aed', dark: '#c4b5fd' },
-        { light: '#c2410c', dark: '#fdba74' },
+        { light: 'color-mix(in oklch, #0d9488 60%, transparent)', dark: 'color-mix(in oklch, #5eead4 60%, transparent)' },
+        { light: 'color-mix(in oklch, #7c3aed 60%, transparent)', dark: 'color-mix(in oklch, #c4b5fd 60%, transparent)' },
+        { light: 'color-mix(in oklch, #c2410c 60%, transparent)', dark: 'color-mix(in oklch, #fdba74 60%, transparent)' },
       ][i],
       hit_test: (_, { cursor, y_scale, resolve_x, inner }) => {
         const width = Math.min(34, (inner.right - inner.left) / 9)
@@ -305,10 +337,11 @@ export function violins(): PlotArgs<Node> {
       tooltip: ({ row }) => document.createTextNode('Group ' + row?.group
         + ' · median ' + Number(row?.median).toFixed(1)
         + ' · middle 50%: ' + Number(row?.q1).toFixed(1) + '–' + Number(row?.q3).toFixed(1)),
-      renderer: (_, { ctx, y_scale, resolve_x, color_at, inner }) => {
+      renderer: (series, { ctx, y_scale, resolve_x, color_at, inner }) => {
         const width = Math.min(34, (inner.right - inner.left) / 9)
         ctx.save()
-        data.forEach((row, i) => {
+        const rows = series.rows as typeof data
+        rows.forEach((row, i) => {
           const x = resolve_x(i)
           if (x === undefined) return
           ctx.fillStyle = color_at(i)
@@ -349,4 +382,53 @@ export function violins(): PlotArgs<Node> {
   }
 }
 
-export const customExamples = { ellipses, chords, ridgelines, violins }
+export function highlights(): PlotArgs<Node> {
+  const renderer: CustomRendererFn<Node> = (series, { ctx, resolve_x, resolve_y, color_at }) => {
+    for (let i = 0; i < series.x.length; i++) {
+      const x = resolve_x(i), y = resolve_y(i)
+      if (x === undefined || y === undefined) continue
+      ctx.fillStyle = color_at(i)
+      ctx.beginPath()
+      ctx.arc(x, y, 16, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+  const hit_test: CustomHitTestFn<Node> = (series, { cursor, resolve_x, resolve_y }) => {
+    for (let i = series.x.length - 1; i >= 0; i--) {
+      const x = resolve_x(i), y = resolve_y(i)
+      if (x !== undefined && y !== undefined && Math.hypot(cursor.x - x, cursor.y - y) <= 16) return i
+    }
+    return null
+  }
+  const highlight_renderer: CustomHighlightRendererFn<Node> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
+    const x = resolve_x(i), y = resolve_y(i)
+    if (x === undefined || y === undefined) return
+    ctx.strokeStyle = highlight_color_at(i)
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.arc(x, y, 22, 0, Math.PI * 2)
+    ctx.stroke()
+  }
+  return {
+    height: 260,
+    axis: { x: { min: 0, max: 100 }, y: { min: 0, max: 100 } },
+    margin: { top: 12, right: 12, bottom: 28, left: 32 },
+    grid: false, zoom_pan: false,
+    series: [
+      custom<Node>({
+        data: [{ x: 20, y: 35 }, { x: 20, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
+        color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
+      }),
+      custom<Node>({
+        data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
+        color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
+      }),
+      custom<Node>({
+        data: [{ x: 80, y: 35 }, { x: 80, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
+        color: '#94a3b8', highlight: false, tooltip: true,
+      }),
+    ],
+  }
+}
+
+export const customExamples = { ellipses, chords, ridgelines, violins, highlights }

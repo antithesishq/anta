@@ -1,6 +1,6 @@
 import type { PlotTooltipRenderer } from './index'
 import { resize_canvas } from '../core/render/canvas'
-import { clear_highlights, update_highlight_canvas } from '../core/render/highlight'
+import { clear_highlights, update_hover_canvas } from '../core/render/highlight'
 import { get_canvas_context } from './browser_view'
 import type { ATooltipElement } from '@antadesign/anta/elements/a-tooltip'
 import type { NearestPoint } from '../core/interactions/hit'
@@ -54,7 +54,7 @@ export function render_hover<T>(
     const ctx = get_canvas_context(canvas)
 
     if (ctx !== null) {
-        update_highlight_canvas(ctx, plot, dpr, () => controller.interactions.resolve_highlights(hits))
+        update_hover_canvas(ctx, plot, dpr, hits)
     } else {
         resize_canvas(canvas, plot.layout.width, plot.layout.height, dpr)
     }

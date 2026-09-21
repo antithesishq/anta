@@ -19,6 +19,8 @@ export const DEFAULT_SERIES_COLOR = '#000'
 type ColorBearingSeries = {
     color?: ThemeColor
     colors?: (ThemeColor | null)[]
+    highlight_color?: ThemeColor
+    highlight_colors?: (ThemeColor | null)[]
     stroke?: Stroke
 }
 
@@ -69,6 +71,8 @@ type ColorFields = {
 type ResolvedColorFields = {
     color?: string
     colors?: (string | null)[]
+    highlight_color?: string
+    highlight_colors?: (string | null)[]
     stroke?: { color: string; width?: number }
 }
 
@@ -106,6 +110,19 @@ export function resolve_color(
     return result
 }
 
+/** Resolve an explicit hover color without adopting the data rows' normal `color` fields. */
+export function resolve_highlight_colors(
+    data: Record<string, unknown>[] | undefined,
+    arg: ColorArg | undefined,
+): { highlight_color?: ThemeColor; highlight_colors?: (ThemeColor | null)[] } {
+    if (arg === undefined) return {}
+    if (typeof arg !== 'function') return { highlight_color: arg }
+    if (data === undefined) {
+        throw new Error('plot: highlight_color is an accessor but no data was passed. Pass data, or use a color string or {light, dark}.')
+    }
+    return { highlight_colors: data.map((row, i) => resolve_color_arg(arg, row, i) ?? null) }
+}
+
 /**
  * Normalize the stroke arg into { color, width? }, or undefined when unset. Shared by the mark / rect
  * series factories. Width is validated non-negative; an unset width auto-scales to the mark at paint time.
@@ -141,6 +158,8 @@ export function resolve_series_colors<S extends ColorBearingSeries>(series: S, t
     const base = {
         color: series.color === undefined ? undefined : resolve_theme_color(series.color, theme),
         colors: resolve_colors_for_theme(series.colors, theme),
+        highlight_color: series.highlight_color === undefined ? undefined : resolve_theme_color(series.highlight_color, theme),
+        highlight_colors: resolve_colors_for_theme(series.highlight_colors, theme),
     }
 
     const stroke = series_stroke(series)
@@ -175,11 +194,11 @@ export function color_resolver(colors: (string | null)[] | undefined, fallback: 
  */
 export function series_have_theme_color_pair(series: ColorBearingSeries[]): boolean {
     for (const s of series) {
-        if (is_light_dark_color_pair(s.color)) {
+        if (is_light_dark_color_pair(s.color) || is_light_dark_color_pair(s.highlight_color)) {
             return true
         }
 
-        if (s.colors?.some(is_light_dark_color_pair)) {
+        if (s.colors?.some(is_light_dark_color_pair) || s.highlight_colors?.some(is_light_dark_color_pair)) {
             return true
         }
 

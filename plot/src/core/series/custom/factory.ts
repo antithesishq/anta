@@ -1,8 +1,9 @@
 import { attach_resolved_columns, resolve_column, validate_field_present, type ResolvedColumn } from "../../template/column"
+import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
-import { resolve_color } from "../../template/color"
+import { resolve_color, resolve_highlight_colors } from "../../template/color"
 import { validate_finite, validate_hoverable } from "../../template/validate"
-import type { ColorArg, CustomHitTestFn, CustomRendererFn, CustomSeries, Domain, FieldArg, SelectFn, TooltipArg } from "../../types"
+import type { ColorArg, CustomHighlightRendererFn, CustomHitTestFn, CustomRendererFn, CustomSeries, Domain, FieldArg, SelectFn, TooltipArg } from "../../types"
 
 export type CustomAxisRangeArg = { x?: number[]; y?: number[] }
 
@@ -11,8 +12,11 @@ export type CustomArgs<TooltipContent = unknown> = {
     x?: FieldArg
     y?: FieldArg
     renderer: CustomRendererFn<TooltipContent>
+    highlight_renderer?: CustomHighlightRendererFn<TooltipContent>
+    highlight?: boolean
     hit_test?: CustomHitTestFn<TooltipContent>
     color?: ColorArg
+    highlight_color?: ColorArg
     axis_range?: CustomAxisRangeArg
     tooltip?: TooltipArg<Record<string, unknown> | undefined, TooltipContent>
     on_select?: SelectFn<Record<string, unknown> | undefined>
@@ -85,7 +89,9 @@ function resolve_custom_column(
  * @param args - the custom series args
  */
 function apply_custom_options<TooltipContent>(series: CustomSeries<TooltipContent>, args: CustomArgs<TooltipContent>): void {
+    retain_factory_args(series, args)
     apply_custom_color(series, args)
+    Object.assign(series, resolve_highlight_colors(args.data, args.highlight_color))
 
     if (args.axis_range !== undefined) {
         series.axis_range = validate_axis_range(args.axis_range)
@@ -106,18 +112,23 @@ function apply_custom_options<TooltipContent>(series: CustomSeries<TooltipConten
  */
 function apply_custom_hover<TooltipContent>(series: CustomSeries<TooltipContent>, args: CustomArgs<TooltipContent>): void {
     const hoverable = validate_hoverable(args, 'plot.custom')
-    const wants_hover = args.tooltip !== undefined || args.on_select !== undefined
+    const wants_hover = args.tooltip !== undefined || args.on_select !== undefined || args.highlight_renderer !== undefined
+
+    if (args.highlight_renderer !== undefined && hoverable === false) {
+        throw new Error('plot.custom: highlight_renderer requires hoverable series.')
+    }
+    if (args.highlight_renderer !== undefined && args.highlight === false) {
+        throw new Error('plot.custom: highlight_renderer cannot run when highlight is false. Remove highlight_renderer or enable highlighting.')
+    }
+    if (args.highlight !== undefined) series.highlight = args.highlight
+    if (args.highlight_renderer !== undefined) series.highlight_renderer = args.highlight_renderer
 
     if (wants_hover && args.hit_test === undefined) {
-        throw new Error('plot.custom: tooltip / on_select are set but hit_test is not. A custom series is only ever hovered through its own hit_test, so nothing would fire. Add hit_test, or drop them.')
+        throw new Error('plot.custom: tooltip / on_select / highlight_renderer are set but hit_test is not. Add hit_test, or drop them.')
     }
 
     if (args.hit_test !== undefined && args.data === undefined) {
         throw new Error('plot.custom: hit_test is set but no data was passed. A hit test returns the index of a point, and the hovered x / y / row are read back from the series at that index, so a series with no rows can never report a hit. Pass data.')
-    }
-
-    if (args.hit_test !== undefined && !wants_hover) {
-        throw new Error('plot.custom: hit_test is set but neither tooltip nor on_select is. A custom series has no hover highlight, so a hit test with nothing to fire runs on every pointer move and shows nothing. Add tooltip or on_select, or drop hit_test.')
     }
 
     if (hoverable !== undefined) {

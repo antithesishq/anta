@@ -28,6 +28,7 @@ before(async () => {
     alias: {
       '@antadesign/anta': resolve('src/index.ts'),
       '@antadesign/anta/jsx-runtime': resolve('src/jsx-runtime.ts'),
+      '@antadesign/anta/anta_helpers': resolve('src/anta_helpers.ts'),
       react: requireSite.resolve('preact/compat'),
     },
     plugins: [{
@@ -96,6 +97,32 @@ test('full-text matches and failures never trigger AI', async t => {
   await page.getByText('Search is unavailable. Try another query or reload the page.').waitFor()
   await page.waitForTimeout(750)
   assert.equal(requests.length, 0)
+})
+
+test('search leaves modified arrows with the input and still navigates with plain arrows', async t => {
+  const { page, input } = await setup(t)
+  await page.evaluate(() => {
+    window.runFullText = async () => ['button', 'tag'].map(id => ({
+      id, route: `/${id}/`, anchor: id, title: id, heading: id, text: id, kind: 'h1', level: 1,
+    }))
+  })
+  await input.fill('components')
+  await page.locator('#docs-search-results a').first().waitFor()
+  const selected = page.locator('#docs-search-results a[data-selected="true"]')
+  const initial = await selected.getAttribute('href')
+  for (const modifier of ['altKey', 'ctrlKey', 'metaKey', 'shiftKey']) {
+    for (const key of ['ArrowUp', 'ArrowDown']) {
+      const canceled = await input.evaluate((input, { key, modifier }) => {
+        const event = new KeyboardEvent('keydown', { key, [modifier]: true, bubbles: true, composed: true, cancelable: true })
+        input.dispatchEvent(event)
+        return event.defaultPrevented
+      }, { key, modifier })
+      assert.equal(canceled, false, `${modifier}+${key}`)
+      assert.equal(await selected.getAttribute('href'), initial)
+    }
+  }
+  await input.press('ArrowDown')
+  assert.notEqual(await selected.getAttribute('href'), initial)
 })
 
 test('debounces typing, keeps previous matches, and shows activity only in the input', async t => {

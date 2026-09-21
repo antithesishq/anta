@@ -3,6 +3,7 @@ import {
   SYNC_POPUP_ARIA,
   anchorRect,
   isPopupAriaReceiver,
+  isModifiedNavigationKey,
   setMenuPresence,
   type PopupAriaReceiver,
 } from '../anta_helpers'
@@ -1544,6 +1545,7 @@ export class AMenuElement extends HTMLElementBase {
    *  (synthesizes a click → routed through onSurfaceClick). Combobox Enter (focus
    *  in the filter field) is handled here via handleComboKey / handleKeyUp. */
   handleKey(e: KeyboardEvent) {
+    if (isModifiedNavigationKey(e)) return
     const active = this.doc.activeElement as HTMLElement | null
 
     // Escape always closes the topmost menu, wherever focus is inside it.
@@ -1751,6 +1753,7 @@ export class AMenuElement extends HTMLElementBase {
       // in the wrapper, so no wrapper synthesizes a click on the live node — which
       // breaks under worker-thread DOM.
       const onKey = (e: KeyboardEvent) => {
+        if (isModifiedNavigationKey(e)) return
         if (this._shown) return // open-only; while open the surface owns the keys
         if (anchor.hasAttribute('disabled') || anchor.hasAttribute('loading')) return
         const arrow = e.key === 'ArrowDown' || e.key === 'ArrowUp'

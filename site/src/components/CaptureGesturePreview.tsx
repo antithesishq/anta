@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import { Button, Capture, Checkbox, Tag, Text } from '@antadesign/anta'
+import { isModifiedNavigationKey } from '@antadesign/anta/anta_helpers'
 import type { CapturePanInput, CapturePointerInput } from '@antadesign/anta'
 import { useElements } from './useElements'
 
@@ -71,6 +72,7 @@ export function CapturePanPreview() {
         <Checkbox size="small" label="Inertia" checked={inertia} onStateChange={(_, { next }) => setInertia(next === true)} />
       </div>
       <div onKeyDown={event => {
+        if (isModifiedNavigationKey(event)) return
         if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
         event.preventDefault()
         move(event.key === 'ArrowDown' ? ROW_HEIGHT : -ROW_HEIGHT)

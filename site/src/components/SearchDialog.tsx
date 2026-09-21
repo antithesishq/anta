@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { debounce } from 'es-toolkit/function'
 import { Button, Dialog, Icon, Input, Loader, Text, Title } from '@antadesign/anta'
+import { isModifiedNavigationKey } from '@antadesign/anta/anta_helpers'
 import { loadSearchIndex, searchDocumentation, type SearchResult } from '../../lib/search/client'
 import { AI_ANSWER_TIMEOUT_MS, AI_QUERY_MAX_LENGTH, requestSearchAnswer, type SearchAnswer } from '../../lib/search/answer'
 import styles from './SearchDialog.module.css'
@@ -276,6 +277,7 @@ export default function SearchDialog() {
             value={query}
             onInput={(event) => setQuery((event.target as { value: string }).value)}
             onKeyDown={(event) => {
+              if (isModifiedNavigationKey(event)) return
               if ((event.target as Element).closest('a-button')) return
               if (event.key === 'ArrowDown') {
                 event.preventDefault()

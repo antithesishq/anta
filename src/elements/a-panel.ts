@@ -17,7 +17,7 @@ const SHADOW_STYLE = `
     padding: 0;
     border: 0;
     box-sizing: border-box;
-    overflow: scroll;
+    overflow: auto;
     overscroll-behavior: contain;
     color: inherit;
     background: inherit;

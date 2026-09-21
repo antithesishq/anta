@@ -1,5 +1,5 @@
 import type { BaseProps } from "../general_types"
-import { neutralToneAttr, toneStyle } from "../anta_helpers"
+import { lineClamp, neutralToneAttr, toneStyle } from "../anta_helpers"
 import { Tooltip } from "./Tooltip"
 
 /** Truncation / expansion axis. `expandable` only takes effect with `truncate`;
@@ -70,10 +70,7 @@ export type TextProps = BaseProps & {
  * ```
  */
 export const Text = ({ priority, tone, size, inline, truncate, expandable, collapsible, className, style, children, ...rest }: TextProps) => {
-  // 0 / a negative value means "no truncation" — never clamp to zero lines
-  // (which would hide all the text). `true` → 1, any integer ≥ 1 → that count.
-  const n = typeof truncate === 'number' ? truncate : truncate ? 1 : null
-  const lineCount = n != null && n >= 1 ? n : null
+  const lineCount = lineClamp(truncate)
   const toneAttr = neutralToneAttr(tone)
   // A custom (non-named) tone writes --text-tone-source inline for the element's
   // oklch derivation; the line-clamp count rides along in the same style object.

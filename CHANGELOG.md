@@ -3,12 +3,42 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.31 — September 18, 2026
+
+### Added
+
+- MenuItem supports a trailing switch selection indicator for immediate
+  settings. Switch rows keep their menu open when selected.
+- Title supports single-line and multi-line truncation with an automatic
+  full-text tooltip when the heading is clipped.
+
+### Fixed
+
+- Button loading stripes loop seamlessly while their rounded clipping stays
+  local to the animated overlay.
+- Copy confirmation labels stay visible when a control is near the top edge of
+  the viewport.
+- Keyboard navigation leaves modified arrows, Home/End, and PageUp/PageDown
+  available to browser, system, and text-editing shortcuts. Menus also preserve
+  modified Tab shortcuts. Shift+Tab traversal and Calendar's Shift+PageUp/PageDown
+  year navigation remain available.
+- Antune preserves Tabs tone colors in the primary track and secondary selected
+  fill, including selected per-tab tones.
+- Panel uses `overflow: auto` in normal and maximized states, so scrollbars
+  appear only when content overflows.
+
 ## 0.3.30 — September 17, 2026
 
 ### Added
 
+- Added Plot as the separate `@antadesign/plot` package for interactive canvas
+  charts in React, Preact, and plain JavaScript.
 - Export `useRef` and `useLayoutEffect` from the JSX runtime, with React defaults
   and overrides through `configure()` for other renderers.
+
+### Changed
+
+- Updated and pinned runtime dependencies to exact versions.
 
 ## 0.3.29 — September 15, 2026
 

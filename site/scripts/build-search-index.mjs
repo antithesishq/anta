@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto'
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { resolve, relative, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { parse, serialize } from 'parse5'
 import { Document } from 'flexsearch'
 import searchConfig from '../lib/search/config.json' with { type: 'json' }
 
-const outDir = resolve(process.cwd(), 'dist')
 const inlineNames = new Set([
   'a', 'a-tag', 'abbr', 'acronym', 'b', 'bdi', 'bdo', 'big', 'br', 'cite', 'code',
   'data', 'del', 'dfn', 'em', 'i', 'ins', 'kbd', 'label', 'mark', 'q', 'ruby',
@@ -73,7 +73,7 @@ function normalizedText(nodes) {
   return nodes.map(textContent).join('').replace(/\s+/g, ' ').trim()
 }
 
-function routeFor(file) {
+function routeFor(file, outDir) {
   const relativeFile = relative(outDir, file)
   if (relativeFile === 'index.html') return '/'
   if (relativeFile.endsWith(`${sep}index.html`)) {
@@ -136,78 +136,89 @@ function nearestHeading(block, headings) {
   }
 }
 
-// Read the rendered routes in one explicit order, then retain their document
-// order below. This makes FlexSearch's serialized postings deterministic too.
-const files = await htmlFiles(outDir)
-files.sort((first, second) => compareRoutes(routeFor(first), routeFor(second)))
-const documents = []
+export async function buildSearchIndex({
+  outDir = resolve(process.cwd(), 'dist'),
+  publicDir = resolve(process.cwd(), 'public'),
+} = {}) {
+  outDir = outDir instanceof URL ? fileURLToPath(outDir) : resolve(outDir)
+  publicDir = publicDir instanceof URL ? fileURLToPath(publicDir) : resolve(publicDir)
 
-for (const file of files) {
-  const route = routeFor(file)
-  if (route === '/404/' || route === '/500/') continue
+  // Read the rendered routes in one explicit order, then retain their document
+  // order below. This makes FlexSearch's serialized postings deterministic too.
+  const files = await htmlFiles(outDir)
+  files.sort((first, second) => compareRoutes(routeFor(first, outDir), routeFor(second, outDir)))
+  const documents = []
 
-  const source = await readFile(file, 'utf8')
-  const document = parse(source)
-  const main = findMain(document)
-  if (!main) continue
+  for (const file of files) {
+    const route = routeFor(file, outDir)
+    if (route === '/404/' || route === '/500/') continue
 
-  const blocks = collectBlocks(main)
-  const headings = blocks.filter((block) => /^h[1-6]$/.test(block.node.nodeName))
-  const title = headings.find((heading) => heading.node.nodeName === 'h1')?.text
-    ?? blocks[0]?.text
-    ?? ''
-  const pageKey = hash(route)
+    const source = await readFile(file, 'utf8')
+    const document = parse(source)
+    const main = findMain(document)
+    if (!main) continue
 
-  blocks.forEach((block, index) => {
-    block.__searchOrder = index
-  })
+    const blocks = collectBlocks(main)
+    const headings = blocks.filter((block) => /^h[1-6]$/.test(block.node.nodeName))
+    const title = headings.find((heading) => heading.node.nodeName === 'h1')?.text
+      ?? blocks[0]?.text
+      ?? ''
+    const pageKey = hash(route)
 
-  for (const [index, block] of blocks.entries()) {
-    const { node, text } = block
-    const id = `${pageKey}-${index + 1}`
-    const anchor = attr(node, 'id') || `search-${id}`
-    const heading = /^h[1-6]$/.test(node.nodeName) ? block : nearestHeading(block, headings)
-
-    setAttr(node, 'data-search-id', id)
-    setAttr(node, 'id', anchor)
-    documents.push({
-      id,
-      route,
-      anchor,
-      title,
-      heading: (heading ?? block).text,
-      text,
-      kind: node.nodeName,
-      level: /^h[1-6]$/.test(node.nodeName) ? Number(node.nodeName[1]) : 0,
-      // Query each heading level globally or within one route. A combined tag
-      // keeps both constraints together before FlexSearch limits the matches.
-      searchRank: /^h[1-6]$/.test(node.nodeName) ? node.nodeName : 'block',
-      routeRank: `${route}:${/^h[1-6]$/.test(node.nodeName) ? node.nodeName : 'block'}`,
+    blocks.forEach((block, index) => {
+      block.__searchOrder = index
     })
+
+    for (const [index, block] of blocks.entries()) {
+      const { node, text } = block
+      const id = `${pageKey}-${index + 1}`
+      const anchor = attr(node, 'id') || `search-${id}`
+      const heading = /^h[1-6]$/.test(node.nodeName) ? block : nearestHeading(block, headings)
+
+      setAttr(node, 'data-search-id', id)
+      setAttr(node, 'id', anchor)
+      documents.push({
+        id,
+        route,
+        anchor,
+        title,
+        heading: (heading ?? block).text,
+        text,
+        kind: node.nodeName,
+        level: /^h[1-6]$/.test(node.nodeName) ? Number(node.nodeName[1]) : 0,
+        // Query each heading level globally or within one route. A combined tag
+        // keeps both constraints together before FlexSearch limits the matches.
+        searchRank: /^h[1-6]$/.test(node.nodeName) ? node.nodeName : 'block',
+        routeRank: `${route}:${/^h[1-6]$/.test(node.nodeName) ? node.nodeName : 'block'}`,
+      })
+    }
+
+    await writeFile(file, serialize(document))
   }
 
-  await writeFile(file, serialize(document))
+  const index = new Document(searchConfig)
+  for (const document of documents) index.add(document)
+
+  const chunks = {}
+  await index.export((key, data) => {
+    chunks[key] = data
+  })
+
+  const payload = {
+    version: searchConfig.version,
+    checksum: hash(JSON.stringify({ documents: documents.length, chunks })),
+    documents: documents.length,
+    chunks,
+  }
+
+  const serialized = `${JSON.stringify(payload)}\n`
+  await Promise.all([
+    writeFile(resolve(outDir, 'search-index.json'), serialized),
+    writeFile(resolve(publicDir, 'search-index.json'), serialized),
+  ])
+  const indexStat = await stat(resolve(outDir, 'search-index.json'))
+  console.log(`Indexed ${documents.length} blocks from ${files.length} pages (${Math.ceil(indexStat.size / 1024)} kB)`)
+  return { documents: documents.length, pages: files.length, bytes: indexStat.size }
 }
 
-const index = new Document(searchConfig)
-for (const document of documents) index.add(document)
-
-const chunks = {}
-await index.export((key, data) => {
-  chunks[key] = data
-})
-
-const payload = {
-  version: searchConfig.version,
-  checksum: hash(JSON.stringify({ documents: documents.length, chunks })),
-  documents: documents.length,
-  chunks,
-}
-
-const serialized = `${JSON.stringify(payload)}\n`
-await Promise.all([
-  writeFile(resolve(outDir, 'search-index.json'), serialized),
-  writeFile(resolve(process.cwd(), 'public/search-index.json'), serialized),
-])
-const indexStat = await stat(resolve(outDir, 'search-index.json'))
-console.log(`Indexed ${documents.length} blocks from ${files.length} pages (${Math.ceil(indexStat.size / 1024)} kB)`)
+if (import.meta.main) await buildSearchIndex()

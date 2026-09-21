@@ -6,3 +6,6 @@ packages:
 onlyBuiltDependencies:
   - "esbuild"
   - "sharp"
+
+patchedDependencies:
+  astro@7.3.3: patches/astro@7.3.3.patch

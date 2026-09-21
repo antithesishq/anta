@@ -1,4 +1,4 @@
-import { HTMLElementBase } from "../anta_helpers";
+import { HTMLElementBase, isModifiedNavigationKey } from "../anta_helpers";
 import { ARadioElement } from "./a-radio";
 import "./a-radio-group.css";
 
@@ -240,7 +240,7 @@ export class ARadioGroupElement extends HTMLElementBase {
   };
 
   private onKeyDown = (e: KeyboardEvent) => {
-    if (this.#isDisabled) return;
+    if (this.#isDisabled || isModifiedNavigationKey(e)) return;
     const enabled = this.#radios.filter((r) => !r.hasAttribute("disabled"));
     if (enabled.length === 0) return;
     const focused = (e.target as HTMLElement | null)?.closest(

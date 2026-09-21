@@ -1,32 +1,31 @@
 # Button
 
-An action control. The `Button` JSX wrapper renders an `<a-button>` web
-component (or `<a role="button">` when `href` is set). Tone, priority,
-size, and state are all plain attributes, so the styling is identical
-whether you use the wrapper or author the element by hand.
+A button starts an action. Use its priority, tone, and size to match the action's
+importance and context.
 
 ## Priority
 
-A button's priority helps control how much attention it draws:
+Use one primary button for the main action in a group. Lower priorities reduce
+visual emphasis.
 
 ```tsx
-<Button tone="brand" priority="primary"    label="Publish" />
-<Button tone="brand" priority="secondary"  label="Move" />
-<Button tone="brand" priority="tertiary"   label="Cancel" />
+<Button tone="brand" priority="primary" label="Publish" />
+<Button tone="brand" priority="secondary" label="Move" />
+<Button tone="brand" priority="tertiary" label="Cancel" />
 <Button tone="brand" priority="quaternary" label="Remind" />
 ```
 
-- `primary` — Saturated fill. Main call to action.
-- `secondary` — Lighter background. Default priority.
-- `tertiary` — Background-less at rest, fills on hover.
-- `quaternary` — Text only, no background.
+- `primary`: main call to action
+- `secondary`: supporting action and the default
+- `tertiary`: low-emphasis action with a hover background
+- `quaternary`: text-only action
 
 ## Tone
 
-Six named tones — `neutral` (default), `brand`, `critical`, `info`,
-`success`, `warning`. Omitting `tone` — or passing an empty string —
-resolves to `neutral`. In addition, a custom `tone` is possible: pass any
-literal CSS color and the button will adapt to it.
+Six named tones: `neutral` (default), `brand`, `critical`, `info`, `success`,
+and `warning`. Omitting `tone`, or passing an empty string, resolves to
+`neutral`. A custom tone is also possible: pass any literal CSS color and the
+button will adapt to it.
 
 ```tsx
 <Button label="Save" />
@@ -37,102 +36,56 @@ literal CSS color and the button will adapt to it.
 <Button tone="warning" label="Archive" />
 ```
 
+### Custom tone
+
+Pass any CSS color to `tone`. Custom tones work with every priority and adapt to
+the current color mode.
+
 ```tsx
-<Button priority="primary"   tone="#ff1493"                  label="Pinkify" />
+<Button priority="primary" tone="#ff1493" label="Pinkify" />
 <Button priority="secondary" tone="oklch(0.655 0.261 356.9)" label="Pinkify" />
-<Button priority="tertiary"  tone="hsl(328 100% 54%)"        label="Pinkify" />
-<Button priority="primary"   tone="mediumaquamarine"         label="Mintify" />
-<Button priority="secondary" tone="rgb(102 205 170)"         label="Mintify" />
-<Button priority="tertiary"  tone="lch(75.7% 39.2 167.8)"    label="Mintify" />
+<Button priority="tertiary" tone="hsl(328 100% 54%)" label="Pinkify" />
+<Button priority="primary" tone="mediumaquamarine" label="Mintify" />
+<Button priority="secondary" tone="rgb(102 205 170)" label="Mintify" />
+<Button priority="tertiary" tone="lch(75.7% 39.2 167.8)" label="Mintify" />
 ```
-
-For custom tones, **primary** keeps the source's hue and chroma but pins
-its *lightness* near the Brand primary's, so any input — too light or too
-dark — still lands at a Brand-like fill (hover / active step the lightness,
-and the label keeps the standard primary text color). **Secondary**,
-**tertiary**, and **quaternary** take only its *hue* — lightness, chroma,
-and alpha come from the brand-tone curve (via `oklch()` relative color), so
-pale or low-chroma inputs (`tone="#cccccc"`, `tone="white"`) still produce a
-legible button. The full priority × state matrix — rest, hover, active,
-secondary alpha overlay, tertiary fill — is derived automatically, and
-re-tunes between light and dark.
-
-If you need pixel-precise color, set `--button-fg` or `--button-bg`
-yourself — inline via `style`, or from your own class or selector. The
-resolver lives in `@layer anta`, so any un-layered rule of yours wins
-regardless of specificity (and inline beats everything). The same override
-also pins hover and active to that color — it overrides the per-state rules
-too, so there's no state change; to keep distinct states, set the per-state
-variables instead — `--button-bg-{priority}-hover`,
-`--button-bg-{priority}-active`, and the `--button-fg-*` equivalents.
 
 ## Size
 
+Buttons come in `small`, `medium`, and `large`. `medium` is the default.
+
 ```tsx
-<Button tone="brand" size="small"  label="Small" />
-<Button tone="brand" size="medium" label="Medium" /> // default
-<Button tone="brand" size="large"  label="Large" />
+<Button tone="brand" size="small" label="Small" />
+<Button tone="brand" size="medium" label="Medium" />
+<Button tone="brand" size="large" label="Large" />
 ```
 
-Three sizes (`medium` is default). The **type scale** (font / line-height) and
-the **icon** track the size, matching Anta's text scale and the same-size
-`Input`; the hit area grows or shrinks to match.
-
-Height comes from the label's `line-height` plus a uniform 3.5px vertical padding
-and a 1px `padding-bottom` that optically centers Anta's font (its glyphs sit a
-touch low in the line-box) — netting `line-height + 8`, so it lands at
-24 / 28 / 32px without any per-size padding tuning.
-
-| size | height | font / line | icon | text-edge `padding-x` | icon-edge `padding-x` |
-|---|---|---|---|---|---|
-| `small` | 24px | 13 / 16 | 14px | 7px | 5px |
-| `medium` (default) | 28px | 15 / 20 | 16px | 9px | 7px |
-| `large` | 32px | 17 / 24 | 18px | 13px | 11px |
-
-The **icon-edge** padding is the text-edge value minus 2px — an icon at
-an edge needs less breathing room than a glyph — so only the side a
-(leading or trailing) icon occupies is trimmed; the text side keeps the
-full padding. The gap between an icon and the label is `0.5ch` at every
-size.
-
-Need a different font size? Style the `<a-button-label>` directly — set
-its `font-size` and `line-height` (the label's `line-height` drives the
-button's height, so the box follows your value), and (if the text then sits a
-little high) drop the 1px `padding-bottom` that optically centers Anta's font.
-
-By default a button packs its content to the start, so when buttons share
-a width — a vertical menu, equal grid cells — their labels line up on a
-common left edge, which usually reads best in a list.
-
-To center the label inside a wider button instead, set
-`justify-content: center` on it (the tones grid above does exactly this).
-
 ### Paddingless
+
+Use `paddingless` with a quaternary button when an action should sit flush with
+surrounding text.
 
 ```tsx
 If you're familiar with the basics, click
 <Button tone="critical" priority="quaternary" paddingless label="here" />
-to skip ahead to the live demo.
+to skip the live demo.
 ```
-
-Only valid on `priority="quaternary"`. Zeros the outer padding so the
-button sits flush with surrounding prose — useful when you want a
-button to read as an inline link inside a sentence.
 
 ## Round
 
-`round` fully rounds the corners — a pill for text buttons, a perfect circle for
-icon-only ones. The radius (`999px`) is clamped to half the button's height, so it
-adapts to every `size` with no configuration. Pass a **number** (px) or a CSS length
-string for a custom radius instead of a full pill.
+Set `round` for a pill or circular icon button. Pass a number or CSS length for
+a custom corner radius.
 
 ```tsx
 <Button round tone="brand" label="Pill" />
-<Button round tone="brand" icon="heart" aria-label="Like" /> // circle
-<Button round={10} tone="brand" label="Custom 10px" />       // custom radius
+<Button round tone="brand" icon="heart" aria-label="Like" />
+<Button round={10} tone="brand" label="Custom 10px" />
 ```
 
 ## Icons
+
+Use `icon` for a leading icon and `iconTrailing` for a trailing icon. See
+[Icon](./icon.md) for available shapes.
 
 ```tsx
 <Button tone="brand" priority="primary" icon="check" label="Confirm" />
@@ -140,161 +93,100 @@ string for a custom radius instead of a full pill.
 <Button tone="brand" priority="tertiary" icon="filter" iconTrailing="chevron-down" label="Filter" />
 ```
 
-The wrapper renders content in this order inside the button: `icon` →
-`label` → `children` → `iconTrailing`. Icon shape names come from the
-`IconShape` union — see the [Icon](./icon.md) page for the full
-set. `children` (if any) lands between `label` and `iconTrailing`.
-
 ### Icon-only
 
+Omit the label for an icon-only button. Pass a clear `aria-label` when the icon
+name does not describe the action well.
+
 ```tsx
-<Button tone="neutral"  icon="dots-vertical" size="small" />
-<Button tone="critical" icon="trash" />
-<Button tone="brand"    icon="check"          size="large" />
+<Button icon="dots-vertical" size="small" aria-label="More options" />
+<Button tone="critical" icon="trash" aria-label="Delete" />
+<Button round tone="brand" icon="check" size="large" aria-label="Confirm" />
 ```
-
-Pass `icon` alone — no `label`, no `iconTrailing`, no `children` — and
-the button collapses to a square. A min-size is pinned to a square
-matching the labeled-button height (24px / 28px / 32px for small /
-medium / large) so icon-only and labeled buttons line up, and a tight
-flex parent can't clip the icon.
-
-Icon-only buttons get an accessible name automatically — the wrapper
-sets `aria-label={icon}` so `<Button icon="trash" />` ships with the
-name "trash". Pass your own `aria-label` to override.
 
 ### Children
 
+Use children for inline content such as keyboard hints, badges, or counters.
+Text and number children receive the same label styling as the `label` prop.
+
 ```tsx
 <Button tone="brand" label="Save" icon="check" aria-keyshortcuts="Meta+s">
-  <kbd aria-hidden="true" style={{ font: 'inherit', fontVariationSettings: 'inherit', opacity: 0.7 }}>⌘S</kbd>
+  <kbd aria-hidden="true">⌘S</kbd>
 </Button>
 ```
 
-Children render after the label and before the trailing icon, so you
-can mix custom inline content — keyboard hints, badges, counters —
-with the prop-driven API.
-
-Children also work without `label` — pass them as the only content.
-
-Text and number children are auto-wrapped in `<a-button-label>` (so the
-truncation rule applies and they don't trip the icon-only detector);
-element children — a `<span>`, a `<Tooltip>`, … — pass through
-unwrapped. Children with no visible content render nothing: empty or
-whitespace-only strings, `NaN`, `null` / `undefined`, and booleans are
-dropped (a valid `0` still renders).
-
 ## Underline
 
-```tsx
-<Button tone="brand" priority="tertiary" underline="solid"  label="Solid" />
-<Button tone="brand" priority="tertiary" underline="dashed" label="Dashed" />
-<Button tone="brand" priority="tertiary" underline="dotted" label="Dotted" />
-<Button tone="brand" priority="quaternary" underline="solid" underlineOnHover label="Hover only" />
-```
-
-When the button has a [link mode](#link-mode), or you simply want an
-underline stylistically, it supports three styles — `solid`, `dashed`,
-`dotted` (only valid on `priority="tertiary"` / `"quaternary"`). Set
-`underlineOnHover` to keep that underline hidden until pointer hover.
+Tertiary and quaternary buttons support solid, dashed, and dotted underlines.
+Use `underlineOnHover` to show the underline only on hover.
 
 ## States
+
+`loading` and `disabled` prevent activation. `selected` communicates a toggled
+or pressed state.
 
 ```tsx
 <Button tone="brand" loading label="Submitting" />
 <Button tone="brand" disabled label="Locked" />
 <Button tone="brand" selected label="Toggled on" />
-<Button tone="brand" loading disabled label="Critical" />
 ```
-
-- **`loading`** — diagonal stripe overlay slides across the button.
-  Stripe color follows `currentColor`, so it tracks the tone. Blocks
-  clicks via `pointer-events: none`, and (like `disabled`) removes the
-  button from the tab order so Enter/Space can't fire it mid-flight.
-- **`disabled`** — locks the colors to the disabled palette, sets
-  `pointer-events: none`, and removes the button from the tab order.
-  Beats inline `--button-bg` overrides.
-- **`selected`** — toggled-on / pressed visual; shares the active
-  state's look. Useful for filter chips and icon toggles.
 
 ## ButtonCopy
 
-`ButtonCopy` is a copy button — a `Button` preset for copy-to-clipboard. It
-composes a plain `<Button>` with a slotted `<a-copy>` element that writes to the
-clipboard when the button is activated. A button with a copy glyph changes the
-glyph to a check and retones to `success` for ~2s (✕ / `critical` on failure).
-Set `copy` for a literal string, or drop the `label` for an icon-only copy
-button.
+`ButtonCopy` is a `Button` preset for copy-to-clipboard. Its copy glyph changes
+to a check on success or an x on failure, then returns to its resting state.
+`onCopied(ok)` reports the result. Omit the label for an icon-only copy button.
+
+The preset composes a regular `Button` with `<a-copy>`. Use `<a-copy>` directly
+when you need the same behavior in another control.
 
 ```tsx
 <ButtonCopy copy="npm i @antadesign/anta" label="Copy install command" />
-<ButtonCopy copy="https://anta.design" priority="tertiary" /> // icon-only
-
-<ButtonCopy
-  copy="npm i @antadesign/anta"
-  label="Copy install command"
-  iconPlacement="none"
-  copiedLabel="Copied to clipboard"
-/>
+<ButtonCopy copy="https://anta.design" priority="tertiary" />
 ```
-
-The write lives in the standalone `<a-copy>` element, so the button stays a plain
-button. `ButtonCopy` slots it in for you; to build the same by hand, drop an
-`<a-copy copy=…>` into a `<Button>` or `<a-button>`. `onCopied(ok)` fires after
-each attempt. Override the resting glyph with `icon`; the check / ✕ swap in only
-during the feedback window.
-
-With `iconPlacement="none"`, the button stays unchanged. A successful pointer
-copy shows `✓ Copied` beside the pointer. A keyboard copy shows it at the
-button's inline start. Use `copiedLabel` to change the text.
 
 ### Icon placement
 
-`iconPlacement` sets where the copy glyph sits: `leading` (the default) or
-`trailing`. Pass `none` to omit the glyph. A successful copy then shows the
-confirmation label without changing the button. Set `copiedLabel` to change the
-label text.
+Set `iconPlacement` to `leading`, `trailing`, or `none`. With `none`, the button
+does not change. Successful pointer activation shows a confirmation beside the
+pointer; keyboard activation shows it at the button's inline start. Use
+`copiedLabel` to change the message.
 
 ```tsx
-<ButtonCopy copy={value} label="Leading" />                              // default
+<ButtonCopy copy={value} label="Leading" />
 <ButtonCopy copy={value} label="Trailing" iconPlacement="trailing" />
 <ButtonCopy copy={value} label="No icon" iconPlacement="none" />
 ```
 
 ### Copy a DOM node
 
-Pass `copyNode` to copy a rendered region as rich text (`text/html`) plus plain
-text, instead of a string. Bare `copyNode` copies the nearest ancestor marked
-`data-copy-source`; a string is a CSS selector for an ancestor region. The copy
-button itself is stripped from what's copied.
+Use `copyNode` to copy a rendered region as `text/html` and plain text. Bare
+`copyNode` finds the nearest `data-copy-source`; a string selects an ancestor.
+The copy control itself is omitted from the copied content.
 
 ```tsx
 <div data-copy-source>
   <Text>The quick brown fox jumps over the lazy dog.</Text>
-  <ButtonCopy copyNode label="Copy card" size="small" priority="tertiary" />
+  <ButtonCopy copyNode label="Copy card" />
 </div>
 ```
 
-Copying rich text lets a paste target keep formatting (bold, links, list
-structure) while a plain-text target still gets clean text. Paste the copied
-card into a rich editor and a plain one to see both.
-
 ### Copy the page URL
 
-`copyUrl` copies the current page URL (`location.href`) — no `copy` value needed.
-`copyWithUrl` prefixes a `copy` string with `// URL: <href>`, so a copied snippet
-carries a link back to where it came from.
+Use `copyUrl` to copy `location.href`. `copyWithUrl` prefixes copied text with
+`// URL: <current page URL>`.
 
 ```tsx
 <ButtonCopy copyUrl label="Copy link" />
-<ButtonCopy copy={snippet} copyWithUrl label="Copy snippet" />  {/* snippet + source URL */}
+<ButtonCopy copy={snippet} copyWithUrl label="Copy snippet" />
 ```
 
 ### Copy dynamic text
 
-`copy` is a controlled string. Start it at `''`, then set the new text in
-`onCopyRequest`. The next render updates `copy`, and activation writes that value.
-`onCopyRequest` does not return text. It does not add a polling loop.
+`copy` is controlled. For text generated on demand, initialize it to `''` and
+update it in `onCopyRequest`. The callback fires on pointerdown or Enter/Space
+keydown, before activation writes the current `copy` value. Its return value is
+ignored.
 
 ```tsx
 const [report, setReport] = useState('')
@@ -306,24 +198,18 @@ const [report, setReport] = useState('')
 />
 ```
 
-`onCopyRequest` fires on pointerdown or Enter/Space keydown, before the click or
-menu selection that writes to the clipboard.
-
 #### Why `copy` is controlled
 
-In a usual React or Preact app, an `onClick` handler can calculate a string and
-call the Clipboard API itself. `ButtonCopy` also supports applications rendered
-from a worker. The DOM copy control and Clipboard API are on the browser UI
-thread, but the application's JSX code can be elsewhere. A function cannot cross
-that boundary as a callable reference.
+Anta supports applications whose JSX renderer runs in a worker. The DOM copy
+control and Clipboard API remain on the browser's UI thread, and a callback
+cannot cross that boundary as a callable reference.
 
-The request tells the application to calculate the text. Its state update makes
-the renderer send the string as the `copy` attribute. The control then writes that
-attribute during activation, when the browser permits clipboard access. A
-`lazyCopy: () => string` prop could only hide this same state update inside the
-wrapper. A generic return value would also need a defined clipboard format and
-serialization; Anta supports text (`copy`), a DOM region (`copyNode`), and the
-current URL (`copyUrl`).
+`onCopyRequest` asks the application to calculate the text. The resulting state
+update sends a serializable `copy` string to the DOM control, which writes it
+during the user activation required by the Clipboard API. A `lazyCopy` callback
+would only hide this state update in a main-thread wrapper and would not work
+across renderers. Separate `copy`, `copyNode`, and `copyUrl` inputs also keep the
+clipboard format explicit.
 
 ### Props
 
@@ -363,105 +249,64 @@ current URL (`copyUrl`).
 
 ## Link mode
 
-```tsx
-<Button tone="brand" href="/docs" target="_blank" label="Read the docs" />
-```
-
-Setting `href` switches the rendered tag from `<a-button>` to
-`<a role="button" data-anta>`. Styling is identical — both selectors share
-the same CSS rules. `<Button>` adds the `data-anta` marker for you.
-
-**`href` is optional**, so a conditional URL needs no branching. Pass
-`href={maybeUrl}` (a `string | undefined`): a definite string links out, an
-absent / `undefined` href renders a plain `<a-button>`. Pair it with `disabled`
-for a link that's live when the URL exists and inert otherwise — no two-render
-split or conditional spread:
+Set `href` to render a link with button styling. An absent or `undefined` URL
+keeps the regular button, which makes conditional links straightforward.
 
 ```tsx
-// Links out when there's a URL; a plain, disabled button when there isn't.
-<Button href={reportUrl} disabled={!reportUrl} iconTrailing="external-link" label="View report" />
+<Button href="/docs" target="_blank" label="Read the docs" />
+<Button
+  href={reportUrl}
+  disabled={!reportUrl}
+  iconTrailing="external-link"
+  label="View report"
+/>
 ```
 
 ### Routing libraries
 
-Anta's CSS targets `a-button, a[role="button"][data-anta]` — an anchor (`<a>`)
-with `role="button"`, the `data-anta` opt-in marker, and the right attributes
-gets the styling. That means anta doesn't need an `as` / `asChild` /
-`component` prop or per-framework integrations. Compose your own thin wrapper
-around your library's `Link` component — which renders an `<a>`, so adding
-`role="button"` and `data-anta` matches the selector.
-
-The `data-anta` marker is required because `role="button"` is a *generic* ARIA
-role that other widgets emit too — gating on the marker keeps anta from
-restyling anchors it doesn't own (a third-party menu, an embedded editor's
-toolbar, etc.).
+For client-side routing, wrap your router's link and add `role="button"` and
+`data-anta` to its anchor output.
 
 ```tsx
-// LinkButton.tsx — anta-styled link for client-side routing
-import { Link, type LinkProps } from 'react-router-dom'
-import type { IconShape } from '@antadesign/anta'
+import { Link } from 'react-router-dom'
 
-type LinkButtonProps = LinkProps & {
-  tone?: 'neutral' | 'brand' | 'critical' | 'info' | 'success' | 'warning'
-  priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
-  size?: 'small' | 'medium' | 'large'
-  icon?: IconShape
-  iconTrailing?: IconShape
-  label?: string
-}
-
-export const LinkButton = ({
-  tone, priority, size, icon, iconTrailing, label, children, ...rest
-}: LinkButtonProps) => (
-  <Link role="button" data-anta tone={tone} priority={priority} size={size} {...rest}>
-    {icon && <a-icon shape={icon} aria-hidden="true" />}
-    {label != null && <a-button-label>{label}</a-button-label>}
-    {children}
-    {iconTrailing && <a-icon shape={iconTrailing} aria-hidden="true" />}
+export const LinkButton = ({ label, ...props }) => (
+  <Link role="button" data-anta {...props}>
+    <a-button-label>{label}</a-button-label>
   </Link>
 )
 ```
 
-Usage:
-
-```tsx
-<LinkButton to="/dashboard" tone="brand" label="Dashboard" />
-<LinkButton to="/docs" priority="tertiary" iconTrailing="external-link" label="Docs" />
-```
-
-This approach would work for Next.js `<Link>`, TanStack Router, or any
-other routing library.
-
 ## Special events
 
-Beyond a plain click, a `Button` can drive a native form or emit your own
-event:
+Beyond a plain click, a button can submit or reset a native form and dispatch a
+named custom event.
 
 ### Form submission
 
-For non-anchor buttons, `type="submit"` and `type="reset"` integrate
-with native forms. `type="submit"` calls `form.requestSubmit()` and also
-dispatches a `submitdetailed` event on the form with
-`{ formData, submitter: { tag, attrs } }` in `detail` — handy for
-analytics or multi-button forms.
+For non-link buttons, `type="submit"` and `type="reset"` integrate with native
+forms. The `form` prop associates a button with a form elsewhere on the page.
+Submitting calls `form.requestSubmit()`, so the form's validation and `submit`
+event still run. It also dispatches `submitdetailed` on the form with
+`{ formData, submitter: { tag, attrs } }` in `detail`, which can identify the
+trigger in analytics or multi-button forms.
 
 ```tsx
 <form id="signup">
   <Button tone="brand" type="submit" label="Sign up" />
-  <Button tone="brand" priority="tertiary" type="reset" label="Clear" />
+  <Button priority="tertiary" type="reset" label="Clear" />
 </form>
-{/* Associate with a form by id when the button is outside */}
-<Button tone="neutral" type="submit" form="signup" label="Submit from outside" />
+<Button type="submit" form="signup" label="Submit from outside" />
 ```
 
 ### Custom click events
 
-`data-custom-event="<name>"` makes the button dispatch a bubbling
-`CustomEvent("<name>")` on click. Use it to instrument analytics
-without taking ownership of `onClick`.
+Set `data-custom-event="<name>"` to dispatch a bubbling `CustomEvent("<name>")`
+on click. This is useful for declarative actions or analytics that should not
+take ownership of `onClick`.
 
 ```tsx
-<Button tone="brand" label="Save" data-custom-event="save-clicked" />
+<Button label="Save" data-custom-event="save-clicked" />
 ```
 
 ## Component props
@@ -494,9 +339,7 @@ without taking ownership of `onClick`.
 
 ## Web Component
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
-
-Set `role="button"` and `tabindex="0"` when authoring `<a-button>` directly.
+When using `<a-button>` directly, add its button role and keyboard tab stop.
 
 ```html
 <a-button role="button" tabindex="0" priority="primary">
@@ -505,124 +348,27 @@ Set `role="button"` and `tabindex="0"` when authoring `<a-button>` directly.
 </a-button>
 ```
 
-### Native HTML button
-
-The styling attaches to three element shapes, so you can adopt the button look on
-markup you already own instead of routing through `<Button>`. `data-anta` is the
-opt-in marker — it stops Anta restyling a `role="button"` element it does not own
-(a third-party menu, an embedded editor's toolbar):
-
-| Element | For |
-| --- | --- |
-| `<a-button>` | the component's own tag, always styled — what `<Button>` renders |
-| `<a role="button" data-anta>` | a link — what `<Button href>` renders (see [Link mode](#link-mode)) |
-| `<button data-anta>` | a native form control — keeps native form submission, `disabled`, and Enter / Space activation |
-
-`tone` / `priority` / `size` are plain attributes on the element (the `<Button>`
-wrapper sets them for you). A native `<button>` also carries its own default
-`type="submit"`, so inside a `<form>` it submits without extra wiring:
+Use `<button data-anta>` when you need native button and form behavior.
 
 ```html
-<!-- A real <button>: submits forms and toggles `disabled` natively. -->
 <button data-anta tone="brand" priority="primary">Save changes</button>
-<button data-anta priority="secondary">Cancel</button>
-<button data-anta tone="critical" priority="tertiary">Delete</button>
+<button data-anta disabled>Unavailable</button>
 ```
 
 ## Styling
 
-Reach for the props first: **`tone`** sets the color (any CSS color for a custom
-tone — it derives the whole tone × priority × state curve in oklch), **`priority`**
-the emphasis, **`size`** the dimensions. The focus ring is the global
-[`--focus-ring`](../colors.md#focus-ring).
-
-```tsx
-<Button tone="#e0457b" priority="primary" label="Custom" />
-```
-
-For anything beyond the props, `<a-button>` is light-DOM — restyle it with plain
-CSS (an un-layered rule beats `@layer anta` without `!important`). Set
-`background-color` / `color` **per state**, plus full type control (size,
-line-height, letter-spacing, `font-feature-settings`), padding, radius, even a
-frosted `backdrop-filter` — no need to touch a single token. **`light-dark()`** works
-too (Anta sets `color-scheme` from its theme toggle), so colors adapt to dark mode
-with no `.dark` selector. The classes below are just for the demos:
+Use `tone`, `priority`, `size`, and `round` before adding custom CSS. For a
+distinct treatment, target a class on the button and cover its interaction
+states.
 
 ```css
-/* First — inverted pill: a theme-flipping gradient (near-black in light,
-   near-white in dark) via light-dark() in the gradient stops. Anta sets
-   color-scheme from its .dark toggle, so it adapts with no .dark selector. */
 a-button.checkout {
-  background: linear-gradient(140deg, light-dark(#26262b, #fff), light-dark(#000, #dcdce0));
-  color: light-dark(#fff, #0b0b0c);
-  font-size: 20px;
-  line-height: 1.2em;
-  padding: 12px 26px;
-  border-radius: 999px;
-}
-a-button.checkout:hover  { background: linear-gradient(140deg, light-dark(#3a3a42, #fff), light-dark(#161618, #cacace)); }
-a-button.checkout:active { background: linear-gradient(140deg, light-dark(#000, #ececf0), light-dark(#1a1a1c, #fff)); }
-a-button.checkout a-button-label {            /* customized label */
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-weight: 600;
-}
-
-/* Second — liquid glass: frost + translucent tint + a diagonal specular sheen,
-   a top/bottom bevel, and a soft lift. Sits on a colorful backdrop so it reads. */
-a-button.glass {
   color: #fff;
-  background-color: rgba(255, 255, 255, 0.12);
-  background-image: linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.06) 45%, transparent 65%);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: #673de6;
   border-radius: 999px;
-  backdrop-filter: blur(8px) saturate(1.8) brightness(1.06);
-  box-shadow:
-    inset 0 1px 1px rgba(255,255,255,0.65),    /* top bevel */
-    inset 0 -2px 3px rgba(255,255,255,0.18),
-    0 8px 24px rgba(0,0,0,0.22);               /* lift */
-  font-size: 20px; line-height: 1.2em; padding: 12px 26px;
+  padding-inline: 20px;
 }
-a-button.glass:hover  { background-color: rgba(255, 255, 255, 0.22); }
-a-button.glass:active { background-color: rgba(255, 255, 255, 0.08); }
-a-button.glass a-button-label {               /* beautified label — gradient text */
-  font-weight: 600;
-  background: linear-gradient(180deg, #fff, #cfe0ff);
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
-}
+
+a-button.checkout:hover { background: #5931c4; }
+a-button.checkout:active { background: #48269f; }
 ```
-
-```tsx
-<Button className="custom" tone="brand" loading label="Saving changes" />
-
-<style>{`
-  /* Keep loading's blocked interaction; replace only its stripe overlay. */
-  a-button.custom[loading]::before {
-    inset: -200%;
-    border-radius: 100%;
-    background: conic-gradient(
-      from 0deg,
-      color-mix(in oklch, currentColor 0%, transparent),
-      color-mix(in oklch, currentColor 10%, transparent)
-    );
-    opacity: 1;
-    filter: none;
-    animation: button-loader-field-spin 1s linear infinite;
-    animation-delay: -9999s;
-  }
-
-  @keyframes button-loader-field-spin {
-    to { transform: rotate(1turn); }
-  }
-`}</style>
-```
-
-**Loader field.** `loading` still blocks pointer and keyboard activation. This
-only replaces its default stripe overlay with the Loader’s conic field, scaled
-beyond the button so it can rotate behind the label without exposing an edge.
-
-Don't reach for the resolved `--button-fg` / `--button-bg`: they're recomputed per
-state, so setting one only catches a single state — restyle per state as above, or
-use `tone` for a full custom-color curve.

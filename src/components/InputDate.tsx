@@ -5,6 +5,7 @@
 // that opens from the field itself (click or ArrowDown), anchored to it like
 // Select. There is no `a-inputdate` element; the wrapper is the coordinator.
 import { useMemo, useState } from '../jsx-runtime'
+import { isModifiedNavigationKey } from '../anta_helpers'
 import { Temporal } from 'temporal-polyfill'
 import type { BaseProps } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
@@ -295,6 +296,7 @@ export const InputDate = ({
         }}
         onChange={(e: any) => resolve(e.currentTarget.value)}
         onKeyDown={(e: any) => {
+          if (isModifiedNavigationKey(e)) return
           // Either arrow is the "enter the grid" gesture (the calendar can open
           // above the field, so ArrowUp reaches toward it as naturally as
           // ArrowDown). <a-menu> opens itself on both (its anchor keydown, since

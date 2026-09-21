@@ -2,7 +2,7 @@
  * `<a-toc>` — site-local "On this page" table of contents.
  *
  * Scans the current page's `<main>` for headings (`h1`–`h6` that carry an
- * `id`, which `rehype-slug` adds to every heading) and renders a nested,
+ * `id`, which Astro's Markdown processor adds to every heading) and renders a nested,
  * indented `<nav>` of links entirely in shadow DOM. Clicking a link
  * smooth-scrolls to the section (native fragment navigation + the page's
  * `scroll-behavior: smooth` / `scroll-padding-top`) and reports its id to
@@ -46,7 +46,7 @@ export class ATocElement extends HTMLElement {
 
   connectedCallback() {
     // Build on the next frame, not requestIdleCallback: the headings (and their
-    // rehype-slug ids) are already in the server-rendered HTML by the time this
+    // generated ids) are already in the server-rendered HTML by the time this
     // upgrades, so waiting for idle only left the reserved-width rail blank for
     // a beat after load. rAF runs after the current layout pass and before
     // paint, so the TOC fills in right away; scroll positions self-correct on

@@ -4,20 +4,22 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { after, before, test } from 'node:test'
 import { build } from 'esbuild'
+import { readPageCatalog } from '../site/lib/content/catalog.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium } = requireSite('playwright')
-const pages = await Promise.all(['box', 'capture'].map(name => readFile(new URL(`../site/src/pages/${name}.mdx`, import.meta.url), 'utf8')))
+const catalog = await readPageCatalog()
+const pages = await Promise.all(['box', 'capture'].map(name => readFile(catalog.find(page => page.path === `/${name}/`).source, 'utf8')))
 let browser, assets
 
 test('Box and Capture previews have adjacent folded code with no detached recipes', () => {
   for (const source of pages) {
-    for (const preview of source.matchAll(/<Preview\b[\s\S]*?<\/Preview>/g)) {
+    for (const preview of source.matchAll(/<Preview\b[\s\S]*?<\/Preview>|<WheelCaptureDemo\s*\/>/g)) {
       assert.match(source.slice(preview.index + preview[0].length), /^\s*```\w+ folded\b/)
     }
     for (const block of source.matchAll(/^```\w+[^\n]*\n[\s\S]*?^```/gm)) {
       assert.match(block[0], /^```\w+ folded\b/)
-      assert.match(source.slice(0, block.index).trimEnd(), /(?:<\/Preview>|```)$/)
+      assert.match(source.slice(0, block.index).trimEnd(), /(?:<\/Preview>|<WheelCaptureDemo\s*\/>|```)$/)
     }
   }
 })

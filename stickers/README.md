@@ -4,17 +4,23 @@ Part of the **Anta** design system, this sticker pack is the companion to [`@ant
 
 Square illustrated stickers, two flavors per name: a lightweight static SVG (`Sticker{Name}`) and a Lottie-driven animated version (`Sticker{Name}Animated`). Each one is its own named export, so your bundler ships only the stickers you actually use.
 
-Kept as a separate package so that core anta carries **no `lottie-web`** — apps that don't use stickers never install the animation runtime. Installing this package pulls `@antadesign/anta` (for the JSX runtime and shared helpers) and `lottie-web` transitively.
+Kept as a separate package so that core anta carries **no `lottie-web`** — apps
+that don't use stickers never install the animation runtime. Stickers uses the
+compatible `@antadesign/anta` already installed by your app and pulls
+`lottie-web` transitively.
 
 📖 **Full documentation, the complete sticker gallery, and live demos: [anta.design/components/sticker](https://anta.design/components/sticker/)**
 
 ## Installation
 
 ```sh
-npm install @antadesign/stickers   # pulls @antadesign/anta + lottie-web
+npm install @antadesign/anta @antadesign/stickers
 ```
 
-`react` is a peer dependency (or alias `react` → `preact/compat`). As with anta, **pin an exact version** rather than a floating tag.
+`@antadesign/anta` and `react` are peer dependencies (or alias `react` →
+`preact/compat`). Stickers accepts Anta `>=0.3.31`, so it uses the compatible
+version already selected by your app. As with Anta, **pin exact installed
+versions** rather than floating tags.
 
 ## Usage
 

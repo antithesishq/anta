@@ -1,3 +1,34 @@
+function replaceStringExpressions(source, replace) {
+  let output = ''
+  let offset = 0
+  for (let start = source.indexOf('{'); start !== -1; start = source.indexOf('{', offset)) {
+    let depth = 1
+    let quote = ''
+    let end = start + 1
+    for (; end < source.length && depth; end++) {
+      const char = source[end]
+      if (quote) {
+        if (char === '\\') end++
+        else if (char === quote) quote = ''
+      } else if (char === '"' || char === "'" || char === '`') {
+        quote = char
+      } else if (char === '/') {
+        // Regex literals and comments need a JavaScript parser. Keep the
+        // remaining source untouched rather than guessing their boundaries.
+        return output + source.slice(offset)
+      } else if (char === '{') depth++
+      else if (char === '}') depth--
+    }
+    if (depth) break
+    const expression = source.slice(start + 1, end - 1).trim()
+    const literal = expression.match(/^(?:"([^"\\\r\n]*)"|'([^'\\\r\n]*)')$/)
+    output += source.slice(offset, start)
+    output += literal ? replace(literal[1] ?? literal[2]) : source.slice(start, end)
+    offset = end
+  }
+  return output + source.slice(offset)
+}
+
 /** Transforms raw MDX documentation into regular Markdown. */
 export function parseMdx(raw, { renderPropsTable, renderComponent, expressions = {} } = {}) {
   let source = raw
@@ -57,6 +88,11 @@ export function parseMdx(raw, { renderPropsTable, renderComponent, expressions =
   source = source.replace(/\{([A-Za-z_$][A-Za-z0-9_$.]*)\}/g, (match, name) => {
     if (!Object.hasOwn(expressions, name)) return match
     tables.push(String(expressions[name]))
+    return `\x00TABLE${tables.length - 1}\x00`
+  })
+  // Preserve plain JSX text literals without evaluating expressions or escapes.
+  source = replaceStringExpressions(source, (value) => {
+    tables.push(value)
     return `\x00TABLE${tables.length - 1}\x00`
   })
   source = source.replace(/^<\/?(?:Columns|Col)(?:\s[^>]*)?>[ \t]*\n?/gm, '')

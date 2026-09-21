@@ -11,7 +11,8 @@ import { ClientRouter } from 'astro:transitions'
 import { Breadcrumbs, Button, Icon } from '@antadesign/anta'
 import { h } from 'preact'
 import PostHog from '../components/posthog.astro'
-import { COMPONENT_SLUGS } from '../../lib/component-slugs'
+import { getAstroPageCatalog } from '../../lib/content/astro-catalog.mjs'
+import { getNavigationGroups } from '../../lib/content/catalog.mjs'
 import SidebarSearch from '../components/SidebarSearch'
 import ThemeSwitcher from '../components/ThemeSwitcher.tsx'
 import SearchDialog from '../components/SearchDialog.tsx'
@@ -33,15 +34,17 @@ const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
 const tocMaxLevel = Astro.props.tocMaxLevel ?? Astro.props.frontmatter?.tocMaxLevel
 const hideToc = Astro.props.hideToc ?? Astro.props.frontmatter?.hideToc ?? false
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
-const shortLabels: Record<string, string> = {
-  '/input-autocomplete': 'InputAutocomplete',
-  '/input-date': 'InputDate',
-  '/input-time': 'InputTime',
-  '/select-faceted': 'SelectFaceted',
-  '/switch': 'Switch',
-  '/changelog/dev': 'Changelog',
+const catalog = await getAstroPageCatalog()
+const navigationGroups = getNavigationGroups(catalog)
+const currentPage = catalog.find((page) => (page.path.replace(/\/+$/, '') || '/') === path)
+const breadcrumbLabel = title ? currentPage?.breadcrumbLabel ?? title : ''
+const parentPages = []
+for (let parentKey = currentPage?.parentKey; parentKey;) {
+  const parent = catalog.find((page) => page.key === parentKey)
+  if (!parent) break
+  parentPages.unshift(parent)
+  parentKey = parent.parentKey
 }
-const breadcrumbLabel = shortLabels[path] ?? title
 const isCurrent = (href: string) => {
   const h = href.replace(/\/+$/, '') || '/'
   return h === path
@@ -65,8 +68,8 @@ const description = "Opinionated design system: global CSS tokens, framework-agn
 const shouldLoadPostHog = import.meta.env.PROD
 
 // JSON-LD structured data. Every page declares the WebSite; component
-// pages add a breadcrumb trail so search results show the site hierarchy.
-const isComponentPage = COMPONENT_SLUGS.includes(Astro.url.pathname.replace(/^\/|\/$/g, ''))
+// and package pages add a breadcrumb trail for the site hierarchy.
+const hasStructuredBreadcrumbs = currentPage?.kind === 'component' || currentPage?.kind === 'package'
 const jsonLd: object[] = [
   {
     '@context': 'https://schema.org',
@@ -86,13 +89,16 @@ const jsonLd: object[] = [
     runtimePlatform: ['React', 'Preact'],
   },
 ]
-if (isComponentPage && title) {
+if (hasStructuredBreadcrumbs && title) {
   jsonLd.push({
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Anta', item: new URL('/', Astro.site).href },
-      { '@type': 'ListItem', position: 2, name: title, item: pageUrl },
+      ...parentPages.map((page, index) => ({
+        '@type': 'ListItem', position: index + 2, name: page.title, item: new URL(page.path, Astro.site).href,
+      })),
+      { '@type': 'ListItem', position: parentPages.length + 2, name: title, item: pageUrl },
     ],
   })
 }
@@ -225,6 +231,7 @@ if (isComponentPage && title) {
                 current: !title,
                 tone: title ? 'brand' : 'neutral',
               },
+              ...parentPages.map((page) => ({ label: page.breadcrumbLabel, href: page.path, tone: 'brand' as const })),
               ...(breadcrumbLabel ? [{ label: breadcrumbLabel, current: true, tone: 'neutral' as const }] : []),
             ]}
           />
@@ -280,72 +287,21 @@ if (isComponentPage && title) {
           sidebar scroll and the ThemeSwitcher island survive navigation. The
           stale aria-current is re-pointed on astro:page-load below. */}
       <aside class="sidebar" transition:persist="sidebar">
-        <menu>
-          <li><a href="/" aria-current={isCurrent('/') ? 'page' : undefined}><Icon shape="info" size={18} /> Overview</a></li>
-          <li><a href="/comparison/" aria-current={isCurrent('/comparison/') ? 'page' : undefined}><Icon shape="table-2" size={18} /> Comparison</a></li>
-        </menu>
-        <menu>
-          <li><a href="/install/" aria-current={isCurrent('/install/') ? 'page' : undefined}><Icon shape="download" size={18} /> Install and configure</a></li>
-          <li><a href="/normalization/" aria-current={isCurrent('/normalization/') ? 'page' : undefined}><Icon shape="book-a" size={18} /> Normalization</a></li>
-          <li><a href="/changelog/" aria-current={isCurrent('/changelog/') ? 'page' : undefined}><Icon shape="scroll-text" size={18} /> Changelog</a></li>
-        </menu>
-        <menu>
-          <li class="theming-nav-item">
-            <a href="/theming/" aria-current={isCurrent('/theming/') ? 'page' : undefined}><Icon shape="theme" size={18} /> Theming</a>
-            <div class="theming-switcher"><ThemeSwitcher client:load /></div>
-          </li>
-          <li><a href="/colors/" aria-current={isCurrent('/colors/') ? 'page' : undefined}><Icon shape="swatch-book" size={18} /> Colors</a></li>
-          <li><a href="/accessibility/" aria-current={isCurrent('/accessibility/') ? 'page' : undefined}><Icon shape="hat-glasses" size={18} /> Accessibility</a></li>
-          <li><a href="/credits/" aria-current={isCurrent('/credits/') ? 'page' : undefined}><Icon shape="heart-handshake" size={18} /> Credits</a></li>
-        </menu>
-        <h4>Components</h4>
-        <menu>
-          <li><a href="/title/" aria-current={isCurrent('/title/') ? 'page' : undefined}><Icon shape="case-sensitive" size={18} /> Title</a></li>
-          <li><a href="/text/" aria-current={isCurrent('/text/') ? 'page' : undefined}><Icon shape="text-initial" size={18} /> Text</a></li>
-          <li><a href="/tag/" aria-current={isCurrent('/tag/') ? 'page' : undefined}><Icon shape="tag" size={18} /> Tag</a></li>
-          <li><a href="/tooltip/" aria-current={isCurrent('/tooltip/') ? 'page' : undefined}><Icon shape="chat" size={18} /> Tooltip</a></li>
-          <li><a href="/icon/" aria-current={isCurrent('/icon/') ? 'page' : undefined}><Icon shape="bug" size={18} /> Icon</a></li>
-          <li><a href="/avatar/" aria-current={isCurrent('/avatar/') ? 'page' : undefined}><Icon shape="circle-user" size={18} /> Avatar</a></li>
-          <li><a href="/loader/" aria-current={isCurrent('/loader/') ? 'page' : undefined}><Icon shape="loader-docs" size={18} /> Loader</a></li>
-          <li><a href="/progress/" aria-current={isCurrent('/progress/') ? 'page' : undefined}><Icon shape="hourglass" size={18} /> Progress</a></li>
-        </menu>
-        <menu>
-          <li><a href="/button/" aria-current={isCurrent('/button/') ? 'page' : undefined}><Icon shape="pointer" size={18} /> Button</a></li>
-          <li><a href="/breadcrumbs/" aria-current={isCurrent('/breadcrumbs/') ? 'page' : undefined}><Icon shape="chevrons-right" size={18} /> Breadcrumbs</a></li>
-          <li><a href="/checkbox/" aria-current={isCurrent('/checkbox/') ? 'page' : undefined}><Icon shape="square-check-big" size={18} /> Checkbox</a></li>
-          <li><a href="/radio/" aria-current={isCurrent('/radio/') ? 'page' : undefined}><Icon shape="circle-dot" size={18} /> Radio</a></li>
-          <li><a href="/switch/" aria-current={isCurrent('/switch/') ? 'page' : undefined}><Icon shape="toggle-right" size={18} /> Switch</a></li>
-          <li><a href="/slider/" aria-current={isCurrent('/slider/') ? 'page' : undefined}><Icon shape="settings-2" size={18} /> Slider</a></li>
-          <li><a href="/tabs/" aria-current={isCurrent('/tabs/') ? 'page' : undefined}><Icon shape="tabs" size={18} /> Tabs</a></li>
-          <li><a href="/steps/" aria-current={isCurrent('/steps/') ? 'page' : undefined}><Icon shape="footprints" size={18} /> Steps</a></li>
-        </menu>
-        <menu>
-          <li><a href="/input/" aria-current={isCurrent('/input/') ? 'page' : undefined}><Icon shape="text-cursor-input" size={18} /> Input</a></li>
-          <li><a href="/input-autocomplete/" aria-current={isCurrent('/input-autocomplete/') ? 'page' : undefined}><Icon shape="search-slash" size={18} /> InputAutocomplete</a></li>
-          <li><a href="/input-date/" aria-current={isCurrent('/input-date/') ? 'page' : undefined}><Icon shape="calendar-days" size={18} /> InputDate</a></li>
-          <li><a href="/input-time/" aria-current={isCurrent('/input-time/') ? 'page' : undefined}><Icon shape="clock" size={18} /> InputTime</a></li>
-          <li><a href="/select/" aria-current={isCurrent('/select/') ? 'page' : undefined}><Icon shape="square-chevron-down" size={18} /> Select</a></li>
-          <li><a href="/select-faceted/" aria-current={isCurrent('/select-faceted/') ? 'page' : undefined}><Icon shape="filter" size={18} /> SelectFaceted</a></li>
-        </menu>
-        <menu>
-          <li><a href="/banner/" aria-current={isCurrent('/banner/') ? 'page' : undefined}><Icon shape="banner" size={18} /> Banner</a></li>
-          <li><a href="/card/" aria-current={isCurrent('/card/') ? 'page' : undefined}><Icon shape="card" size={18} /> Card</a></li>
-          <li><a href="/dialog/" aria-current={isCurrent('/dialog/') ? 'page' : undefined}><Icon shape="dialog" size={18} /> Dialog</a></li>
-          <li><a href="/toaster/" aria-current={isCurrent('/toaster/') ? 'page' : undefined}><Icon shape="toaster" size={18} /> Toaster</a></li>
-          <li><a href="/expander/" aria-current={isCurrent('/expander/') ? 'page' : undefined}><Icon shape="square-chevron-right" size={18} /> Expander</a></li>
-          <li><a href="/menu/" aria-current={isCurrent('/menu/') ? 'page' : undefined}><Icon shape="square-menu" size={18} /> Menu</a></li>
-        </menu>
-        <menu>
-          <li><a href="/box/" aria-current={isCurrent('/box/') ? 'page' : undefined}><Icon shape="square-dashed" size={18} /> Box</a></li>
-          <li><a href="/capture/" aria-current={isCurrent('/capture/') ? 'page' : undefined}><Icon shape="vector-square" size={18} /> Capture</a></li>
-          <li><a href="/panel/" aria-current={isCurrent('/panel/') ? 'page' : undefined}><Icon shape="inspection-panel" size={18} /> Panel</a></li>
-        </menu>
-        <h4>Packages</h4>
-        <menu>
-          <li><a href="/plot/" aria-current={isCurrent('/plot/') ? 'page' : undefined}><Icon shape="chart-spline" size={18} /> Plot</a></li>
-          <li><a href="/table/" aria-current={isCurrent('/table/') ? 'page' : undefined}><Icon shape="table-2" size={18} /> Table</a></li>
-          <li><a href="/stickers/" aria-current={isCurrent('/stickers/') ? 'page' : undefined}><Icon shape="sticker" size={18} /> Stickers</a></li>
-        </menu>
+        {navigationGroups.map((group) => (
+          <>
+            {group.title && <h4>{group.title}</h4>}
+            <menu>
+              {group.pages.map((page) => (
+                <li class={page.path === '/theming/' ? 'theming-nav-item' : undefined}>
+                  <a href={page.path} aria-current={isCurrent(page.path) ? 'page' : undefined}><Icon shape={page.nav.icon} size={18} />{' '}{page.label}</a>
+                  {page.path === '/theming/' && (
+                    <div class="theming-switcher"><ThemeSwitcher client:load /></div>
+                  )}
+                </li>
+              ))}
+            </menu>
+          </>
+        ))}
       </aside>
       <div transition:persist="search-dialog"><SearchDialog client:load /></div>
       <main id="main-content" class="content">
@@ -705,11 +661,11 @@ if (isComponentPage && title) {
   .sidebar menu li.theming-nav-item {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 0.5ch;
     min-width: 0;
   }
   .sidebar menu li.theming-nav-item > a {
-    flex: 1;
+    flex: 0 0 auto;
     min-width: 0;
   }
   .theming-switcher {

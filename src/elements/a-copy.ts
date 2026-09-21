@@ -163,13 +163,22 @@ const COPY_FEEDBACK_TEMPLATE = typeof document === "undefined" ? undefined : (()
       line-height: 16px;
       font-weight: 500;
       white-space: nowrap;
-      transform: translate(var(--_feedback-x), calc(-100% - 10px));
+      --_feedback-y-from: calc(-100% - 10px);
+      --_feedback-y-to: calc(-100% - 1.5em);
+      transform: translate(var(--_feedback-x), var(--_feedback-y-from));
+    }
+    .feedback[data-placement="below"] {
+      --_feedback-y-from: 10px;
+      --_feedback-y-to: 1.5em;
+    }
+    .feedback[data-measure-end] {
+      transform: translate(var(--_feedback-x), var(--_feedback-y-to));
     }
     .feedback:not(:popover-open) { display: none; }
     .feedback[data-show] { animation: a-copy-feedback-rise ${FEEDBACK_MS}ms ease-out forwards; }
     @keyframes a-copy-feedback-rise {
-      from { opacity: 1; transform: translate(var(--_feedback-x), calc(-100% - 10px)); }
-      to { opacity: 0; transform: translate(var(--_feedback-x), calc(-100% - 1.5em)); }
+      from { opacity: 1; transform: translate(var(--_feedback-x), var(--_feedback-y-from)); }
+      to { opacity: 0; transform: translate(var(--_feedback-x), var(--_feedback-y-to)); }
     }
   `;
   const feedback = document.createElement("div");
@@ -227,22 +236,33 @@ export class ACopyElement extends HTMLElementBase {
     if (!feedback || !label) return;
 
     label.textContent = this.getAttribute("copied-label") ?? "Copied";
+    let belowTop: number;
     if (origin) {
       feedback.style.left = `${origin.x}px`;
       feedback.style.top = `${origin.y}px`;
       feedback.style.setProperty("--_feedback-x", "8px");
+      belowTop = origin.y;
     } else {
       const rect = host.getBoundingClientRect();
       const rtl = this.view.getComputedStyle(host).direction === "rtl";
       feedback.style.left = `${rtl ? rect.right - 12 : rect.left + 12}px`;
       feedback.style.top = `${rect.top}px`;
       feedback.style.setProperty("--_feedback-x", rtl ? "-100%" : "0");
+      belowTop = rect.bottom;
     }
 
     clearTimeout(this.#feedbackTimer);
     feedback.removeAttribute("data-show");
+    feedback.removeAttribute("data-placement");
     if (feedback.matches(":popover-open")) feedback.hidePopover();
     feedback.showPopover();
+    feedback.setAttribute("data-measure-end", "");
+    const crossesTopEdge = feedback.getBoundingClientRect().top < 0;
+    feedback.removeAttribute("data-measure-end");
+    if (crossesTopEdge) {
+      feedback.setAttribute("data-placement", "below");
+      feedback.style.top = `${belowTop}px`;
+    }
     void feedback.offsetWidth;
     feedback.setAttribute("data-show", "");
     this.#feedbackTimer = setTimeout(() => {

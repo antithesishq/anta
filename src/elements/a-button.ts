@@ -82,8 +82,11 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   prose-link rule in `<Text>`.
  * - **Loading** paints a blurred diagonal stripe overlay; the x-period is
  *   the diagonal period projected onto x so the slide loops seamlessly
- *   (overshooting left by one period), and a large negative
- *   `animation-delay` desyncs instances so a row doesn't pulse in lockstep.
+ *   (overshooting left by one period). The overlay translates by exactly that
+ *   period while its clip insets trade sides, keeping the rounded clipping
+ *   window fixed without clipping the button host. A large negative
+ *   `animation-delay` starts concurrently created instances at the same advanced
+ *   phase so their waves stay in sync.
  * - **Disabled** sets `background-color`/`color` directly (not the vars) so
  *   an inline `--button-bg` override can't keep a disabled button alive, and
  *   skips transitions — a color-mode toggle would flash the tone hue

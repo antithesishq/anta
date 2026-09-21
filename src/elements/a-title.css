@@ -20,6 +20,14 @@
     transform: translateY(-0.05em);
   }
 
+  a-title[truncate] {
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--line-clamp, 1);
+    overflow: hidden;
+  }
+
   a-title[level="1"] { font-size: 28px; line-height: 32px; }
   a-title[level="2"] { font-size: 24px; line-height: 28px; }
   a-title[level="3"] { font-size: 20px; line-height: 24px; }

@@ -1,4 +1,4 @@
-import { HTMLElementBase } from '../anta_helpers'
+import { HTMLElementBase, isModifiedNavigationKey } from '../anta_helpers'
 import { applyShadowAria, ariaAttributeProperty, type ShadowAriaAttribute } from './shadow-aria'
 import './a-input-time.css'
 
@@ -588,6 +588,7 @@ export class AInputTimeElement extends HTMLElementBase {
   }
 
   #onKeyDown = (e: KeyboardEvent) => {
+    if (isModifiedNavigationKey(e)) return
     const seg = this.#segFromTarget(e.target)
     if (!seg) return
     const { el } = seg

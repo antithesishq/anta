@@ -1,8 +1,8 @@
 /**
  * Rebuild the workspace after package-source changes while `pnpm run dev` is
  * running. This intentionally does not run on startup: the root dev command
- * completes its first build and docs generation before starting Astro, so
- * Vite never reads a partially-written generated docs file.
+ * completes package builds before starting Astro, whose site integration
+ * finishes docs preparation before Vite reads generated imports.
  */
 import { spawn } from 'node:child_process'
 import { statSync, watch } from 'node:fs'

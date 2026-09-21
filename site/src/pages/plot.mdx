@@ -2403,7 +2403,7 @@ plot.plotArgs = {
       return index < 0 ? null : index
     },
     tooltip: ({ row }) => document.createTextNode('Group ' + row?.name + ': ' + row?.total + ' connections'),
-    render_highlight: (series, i, { ctx, inner, color_at, highlight_color_at }) => {
+    highlight_renderer: (series, i, { ctx, inner, color_at, highlight_color_at }) => {
       const rows = series.rows as typeof groups
       const group = rows[i]
       const cx = (inner.left + inner.right) / 2
@@ -2730,9 +2730,9 @@ document.body.append(plot)
 
 Hover the points at x = 20 for the default single-point repaint, x = 50 for an explicit halo, and x = 80 for tooltips with highlighting disabled. Only the hovered point is repainted. Translucent fills strengthen when drawn again; an identical opaque fill may look unchanged.
 
-Without `render_highlight`, Anta calls `renderer` on the overlay with a single-point series view. The aligned `x`, `y`, `rows`, `colors`, `highlight_colors`, and `labels` arrays contain only that point at index 0; scales and bounds are unchanged. Render from the supplied series, not captured full-data arrays, to use this fallback. Set `highlight_color` to override the fallback's color without changing its geometry.
+Without `highlight_renderer`, Anta calls `renderer` on the overlay with a single-point series view. The aligned `x`, `y`, `rows`, `colors`, `highlight_colors`, and `labels` arrays contain only that point at index 0; scales and bounds are unchanged. Render from the supplied series, not captured full-data arrays, to use this fallback. Set `highlight_color` to override the fallback's color without changing its geometry.
 
-For connected geometry or a different highlight, supply `render_highlight(series, point_index, context)`. It receives the full composed series, the original hovered index, and the normal render helpers plus `highlight_color_at(index)`. Anta handles DPR, clearing, clipping, and canvas-state isolation. Set `highlight: false` to disable either path. Both paths require data and hit testing.
+For connected geometry or a different highlight, supply `highlight_renderer(series, point_index, context)`. It receives the full composed series, the original hovered index, and the normal render helpers plus `highlight_color_at(index)`. Anta handles DPR, clearing, clipping, and canvas-state isolation. Set `highlight: false` to disable either path. Both paths require data and hit testing.
 
 <Preview minHeight={308}>
   <PlotCustomPreview example="highlights" />
@@ -2762,7 +2762,7 @@ function highlights() {
     }
     return null
   }
-  const render_highlight: CustomHighlightRendererFn<Node> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
+  const highlight_renderer: CustomHighlightRendererFn<Node> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
     const x = resolve_x(i), y = resolve_y(i)
     if (x === undefined || y === undefined) return
     ctx.strokeStyle = highlight_color_at(i)
@@ -2782,7 +2782,7 @@ function highlights() {
         color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
       }),
       custom<Node>({
-        data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, render_highlight,
+        data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
         color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
       }),
       custom<Node>({
@@ -2806,7 +2806,7 @@ document.body.append(plot)
 | `x?` | [`FieldArg`](#data-fields) | Unclaimed | Horizontal field or accessor; omitted axes do not contribute data bounds. |
 | `y?` | [`FieldArg`](#data-fields) | Unclaimed | Vertical field or accessor; omitted axes do not contribute data bounds. |
 | [`renderer`](#custom-rendering) | `CustomRendererFn` | Required | Draw the series using its data and the supplied canvas context and pixel resolvers. |
-| `render_highlight?` | `CustomHighlightRendererFn` | Single-point repaint | Draw on the hover overlay using the full series, hovered index, and highlight context. Requires data and hit testing. |
+| `highlight_renderer?` | `CustomHighlightRendererFn` | Single-point repaint | Draw on the hover overlay using the full series, hovered index, and highlight context. Requires data and hit testing. |
 | `highlight?` | `boolean` | `true` | Enable the custom callback or default single-point repaint. |
 | `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 | [`hit_test?`](#custom-hit-testing) | `CustomHitTestFn` | None | Return a row index for a hit, or `null`. Required for custom tooltips and selection. |
@@ -2878,7 +2878,7 @@ Bars A and B use the default highlight. Bar C uses an opaque orange `highlight_c
 
 Set `highlight_color` to a CSS color, a `{ light, dark }` pair, or a per-row accessor. Stacked bars also accept a color array with one entry per segment. Anta uses the resolved color without shading or changing its opacity. Translucent highlights blend over the original mark. Omit the property to keep the default highlight.
 
-For custom series, this property changes the fallback renderer's `color`, `colors`, and `color_at`. An explicit `render_highlight` keeps control of its canvas colors and helpers. A fallback renderer must use the supplied colors to reflect the override; a hard-coded canvas fill will stay unchanged.
+For custom series, this property changes the fallback renderer's `color`, `colors`, and `color_at`. An explicit `highlight_renderer` keeps control of its canvas colors and helpers. A fallback renderer must use the supplied colors to reflect the override; a hard-coded canvas fill will stay unchanged.
 
 Hover feedback is temporary. For custom geometry, supply a [hit-testing callback](#custom-hit-testing).
 

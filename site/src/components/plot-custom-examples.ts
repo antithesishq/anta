@@ -115,7 +115,7 @@ export function chords(): PlotArgs<Node> {
         return index < 0 ? null : index
       },
       tooltip: ({ row }) => document.createTextNode('Group ' + row?.name + ': ' + row?.total + ' connections'),
-      render_highlight: (series, i, { ctx, inner, color_at, highlight_color_at }) => {
+      highlight_renderer: (series, i, { ctx, inner, color_at, highlight_color_at }) => {
         const rows = series.rows as typeof groups
         const group = rows[i]
         const cx = (inner.left + inner.right) / 2
@@ -400,7 +400,7 @@ export function highlights(): PlotArgs<Node> {
     }
     return null
   }
-  const render_highlight: CustomHighlightRendererFn<Node> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
+  const highlight_renderer: CustomHighlightRendererFn<Node> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
     const x = resolve_x(i), y = resolve_y(i)
     if (x === undefined || y === undefined) return
     ctx.strokeStyle = highlight_color_at(i)
@@ -420,7 +420,7 @@ export function highlights(): PlotArgs<Node> {
         color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
       }),
       custom<Node>({
-        data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, render_highlight,
+        data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
         color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
       }),
       custom<Node>({

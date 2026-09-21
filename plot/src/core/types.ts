@@ -133,7 +133,7 @@ export type CustomSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> 
     kind: 'custom'
     renderer: CustomRendererFn<TooltipContent>
     hit_test?: CustomHitTestFn<TooltipContent>
-    render_highlight?: CustomHighlightRendererFn<TooltipContent>
+    highlight_renderer?: CustomHighlightRendererFn<TooltipContent>
     axis_range?: { x?: Domain; y?: Domain }
 }
 

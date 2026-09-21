@@ -34,9 +34,9 @@ export function update_hover_canvas<Content>(ctx: CanvasContext, plot: ComposedP
             ctx.clip()
             const render = { ctx, inner, x_scale, y_scale, x_categories, y_categories, color: series.color ?? DEFAULT_SERIES_COLOR }
             const i = hit.point_index
-            if (series.render_highlight) {
+            if (series.highlight_renderer) {
                 const color_at = color_resolver(series.colors, render.color)
-                series.render_highlight(series, i, {
+                series.highlight_renderer(series, i, {
                     ...render, ...custom_resolvers(series, x_scale, y_scale), color_at,
                     highlight_color_at: index => resolve_highlight_color(color_at(index), plot.chrome_theme),
                 })
@@ -61,7 +61,7 @@ export function update_hover_canvas<Content>(ctx: CanvasContext, plot: ComposedP
             }
         } catch (error) {
             clear_highlights(ctx)
-            console.warn('plot.custom: render_highlight threw, skipping highlight.', error)
+            console.warn('plot.custom: highlight_renderer threw, skipping highlight.', error)
         } finally {
             ctx.restore()
         }

@@ -12,7 +12,7 @@ export type CustomArgs<TooltipContent = unknown> = {
     x?: FieldArg
     y?: FieldArg
     renderer: CustomRendererFn<TooltipContent>
-    render_highlight?: CustomHighlightRendererFn<TooltipContent>
+    highlight_renderer?: CustomHighlightRendererFn<TooltipContent>
     highlight?: boolean
     hit_test?: CustomHitTestFn<TooltipContent>
     color?: ColorArg
@@ -112,16 +112,16 @@ function apply_custom_options<TooltipContent>(series: CustomSeries<TooltipConten
  */
 function apply_custom_hover<TooltipContent>(series: CustomSeries<TooltipContent>, args: CustomArgs<TooltipContent>): void {
     const hoverable = validate_hoverable(args, 'plot.custom')
-    const wants_hover = args.tooltip !== undefined || args.on_select !== undefined || args.render_highlight !== undefined
+    const wants_hover = args.tooltip !== undefined || args.on_select !== undefined || args.highlight_renderer !== undefined
 
-    if (args.render_highlight !== undefined && hoverable === false) {
-        throw new Error('plot.custom: render_highlight requires hoverable series.')
+    if (args.highlight_renderer !== undefined && hoverable === false) {
+        throw new Error('plot.custom: highlight_renderer requires hoverable series.')
     }
     if (args.highlight !== undefined) series.highlight = args.highlight
-    if (args.render_highlight !== undefined) series.render_highlight = args.render_highlight
+    if (args.highlight_renderer !== undefined) series.highlight_renderer = args.highlight_renderer
 
     if (wants_hover && args.hit_test === undefined) {
-        throw new Error('plot.custom: tooltip / on_select / render_highlight are set but hit_test is not. Add hit_test, or drop them.')
+        throw new Error('plot.custom: tooltip / on_select / highlight_renderer are set but hit_test is not. Add hit_test, or drop them.')
     }
 
     if (args.hit_test !== undefined && args.data === undefined) {

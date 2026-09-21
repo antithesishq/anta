@@ -404,9 +404,9 @@ With a worker renderer and a DOM bridge that transfers the surface's canvases,
 
 For plain JavaScript or TypeScript, import `@antadesign/plot/elements/a-plot`, then use `<a-plot>` and assign its `plotArgs` property.
 
-For custom host integrations, `/components` also exports `PlotSurface`.
-Register it with `@antadesign/plot/elements/a-plot-surface`; your host manages
-controllers, drawing, and tooltip content.
+Plot owns the rendering lifecycle, including its internal surface, controllers,
+highlight overlay, and cleanup. Customize marks through `renderer` and
+`highlight_renderer`, and tooltips through the series or root tooltip callbacks.
 
 </Disclosure>
 

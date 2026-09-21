@@ -5,9 +5,7 @@ export { new_line as line, type LineArgs } from '../core/series/line/factory'
 export { new_rule as rule, type RuleArgs } from '../core/series/rule/factory'
 export { new_area as area, type AreaArgs } from '../core/series/area/factory'
 export { new_custom as custom, type CustomArgs } from '../core/series/custom/factory'
-export { PlotController, type PlotEnvironment, type PlotDrawHost, type PlotLifecycleError } from '../core/controller'
-export { PlotInteractionController, type PanInput, type PanUpdate } from '../core/interaction_controller'
-export type { NearestPoint } from '../core/interactions/hit'
+export type { PlotLifecycleError } from '../core/controller'
 export type { ResolvedTooltip } from '../core/interactions/tooltip'
 export type {
     Domain, Viewport, SideMargins, Margin, Stroke, SeriesArgs,
@@ -28,15 +26,3 @@ export type {
     TooltipArg, PlotTooltipHit, PlotTooltipFn, SelectFn, AxisViewport, ViewportChange, ViewportChangeFn,
     RowTypedArgs, OptionalRowTypedArgs,
 } from '../core/types'
-export { resolve_canvas_size, type Dimensions } from '../core/compose/layout'
-export { prepare_canvas_context } from '../core/render/canvas'
-export { clear_highlights, update_highlight_canvas } from '../core/render/highlight'
-export { plot_color_filter, plot_wrapper_size } from '../core/presentation/plot'
-export { reset_zoom_presentation } from '../core/presentation/reset_zoom'
-export {
-    render_tooltip_body, TOOLTIP_DIVIDER_STYLE, TOOLTIP_OPTIONS, tooltip_wrapper_style,
-} from '../core/presentation/tooltip'
-export { create_anta_host, type AntaHost, type AntaHostAdapter } from '../integrations/anta_host'
-export type {
-    PlotSurfacePresentation, PlotSurfaceMouseInput, PlotSurfaceCanvases, PlotSurfaceEventMap,
-} from '../core/presentation/surface'

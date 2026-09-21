@@ -69,22 +69,6 @@ export function update_hover_canvas<Content>(ctx: CanvasContext, plot: ComposedP
     }
 }
 
-/** Refresh a highlight surface, resolving geometry after clearing so failed resolution leaves no stale image. */
-export function update_highlight_canvas(
-    ctx: CanvasContext,
-    plot: Pick<ComposedPlot, 'layout' | 'inner' | 'chrome_theme'> | null,
-    dpr: number,
-    resolve_specs: () => HighlightSpec[],
-): void {
-    if (plot === null) {
-        clear_highlights(ctx)
-        return
-    }
-    prepare_canvas_context(ctx, plot.layout.width, plot.layout.height, dpr)
-    clear_highlights(ctx)
-    draw_highlights(ctx, resolve_specs(), plot.inner, plot.chrome_theme)
-}
-
 /** Clear the entire backing store independently of the current DPR transform. */
 export function clear_highlights(ctx: CanvasContext): void {
     ctx.save()

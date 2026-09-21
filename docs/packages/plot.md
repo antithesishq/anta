@@ -364,9 +364,9 @@ With a worker renderer and a DOM bridge that transfers the surface's canvases,
 
 For plain JavaScript or TypeScript, import `@antadesign/plot/elements/a-plot`, then use `<a-plot>` and assign its `plotArgs` property.
 
-For custom host integrations, `/components` also exports `PlotSurface`.
-Register it with `@antadesign/plot/elements/a-plot-surface`; your host manages
-controllers, drawing, and tooltip content.
+Plot owns the rendering lifecycle, including its internal surface, controllers,
+highlight overlay, and cleanup. Customize marks through `renderer` and
+`highlight_renderer`, and tooltips through the series or root tooltip callbacks.
 
 ## Plot arguments
 
@@ -683,6 +683,7 @@ Scatter arguments
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { scatter } from '@antadesign/plot'
@@ -810,6 +811,7 @@ Line arguments
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { line } from '@antadesign/plot'
@@ -1025,6 +1027,7 @@ Bar arguments
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { bar } from '@antadesign/plot'
@@ -1460,6 +1463,7 @@ Area arguments
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { area } from '@antadesign/plot'
@@ -1720,6 +1724,7 @@ Rect arguments
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { rect } from '@antadesign/plot'
@@ -1908,6 +1913,7 @@ Rule arguments
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { rule } from '@antadesign/plot'
@@ -2079,6 +2085,37 @@ plot.plotArgs = {
       return index < 0 ? null : index
     },
     tooltip: ({ row }) => document.createTextNode('Group ' + row?.name + ': ' + row?.total + ' connections'),
+    highlight_renderer: (series, i, { ctx, inner, color_at, highlight_color_at }) => {
+      const rows = series.rows as typeof groups
+      const group = rows[i]
+      const cx = (inner.left + inner.right) / 2
+      const cy = (inner.top + inner.bottom) / 2
+      const radius = Math.min(inner.right - inner.left, inner.bottom - inner.top) / 2 - 32
+      const point = (a: number) => [cx + radius * Math.cos(a), cy + radius * Math.sin(a)]
+      // Match the main renderer: ribbons take the lower-index group's color.
+      ctx.fillStyle = color_at(i)
+      ctx.globalAlpha = 0.45
+      for (let j = i + 1; j < rows.length; j++) {
+        const source = group.segments[j]
+        const target = rows[j].segments[i]
+        const [sx, sy] = point(source.start)
+        const [tx, ty] = point(target.start)
+        ctx.beginPath()
+        ctx.moveTo(sx, sy)
+        ctx.arc(cx, cy, radius, source.start, source.end)
+        ctx.quadraticCurveTo(cx, cy, tx, ty)
+        ctx.arc(cx, cy, radius, target.start, target.end)
+        ctx.quadraticCurveTo(cx, cy, sx, sy)
+        ctx.closePath()
+        ctx.fill()
+      }
+      ctx.globalAlpha = 1
+      ctx.strokeStyle = highlight_color_at(i)
+      ctx.lineWidth = 13
+      ctx.beginPath()
+      ctx.arc(cx, cy, radius + 7, group.start, group.end)
+      ctx.stroke()
+    },
     renderer: (_, { ctx, inner, color_at }) => {
       const cx = (inner.left + inner.right) / 2
       const cy = (inner.top + inner.bottom) / 2
@@ -2195,11 +2232,12 @@ plot.plotArgs = {
       return null
     },
     tooltip: ({ row }) => document.createTextNode(row?.group + ' · 80 samples · mean ' + Number(row?.mean).toFixed(1)),
-    renderer: (_, { ctx, x_scale, resolve_y, color_at, inner }) => {
+    renderer: (series, { ctx, x_scale, resolve_y, color_at, inner }) => {
       const step = (inner.bottom - inner.top) / data.length
       ctx.save()
       // Paint from the top row down, so foreground ridges cover the preceding tails.
-      data.forEach((row, i) => {
+      const rows = series.rows as typeof data
+      rows.forEach((row, i) => {
         const center = resolve_y(i)
         if (center === undefined) return
         const baseline = center + step * 0.45
@@ -2213,7 +2251,7 @@ plot.plotArgs = {
         })
         ctx.lineTo(Number(x_scale(100)), baseline)
         ctx.closePath()
-        ctx.globalAlpha = [1, 0.7, 0.85, 0.65, 0.8, 0.7][i]
+        ctx.globalAlpha = [1, 0.7, 0.85, 0.65, 0.8, 0.7][data.indexOf(row)]
         ctx.fill()
         ctx.globalAlpha = 1
         ctx.stroke()
@@ -2282,9 +2320,9 @@ plot.plotArgs = {
     data,
     x: 'group',
     color: (_, i) => [
-      { light: '#0d9488', dark: '#5eead4' },
-      { light: '#7c3aed', dark: '#c4b5fd' },
-      { light: '#c2410c', dark: '#fdba74' },
+      { light: 'color-mix(in oklch, #0d9488 60%, transparent)', dark: 'color-mix(in oklch, #5eead4 60%, transparent)' },
+      { light: 'color-mix(in oklch, #7c3aed 60%, transparent)', dark: 'color-mix(in oklch, #c4b5fd 60%, transparent)' },
+      { light: 'color-mix(in oklch, #c2410c 60%, transparent)', dark: 'color-mix(in oklch, #fdba74 60%, transparent)' },
     ][i],
     hit_test: (_, { cursor, y_scale, resolve_x, inner }) => {
       const width = Math.min(34, (inner.right - inner.left) / 9)
@@ -2302,10 +2340,11 @@ plot.plotArgs = {
     tooltip: ({ row }) => document.createTextNode('Group ' + row?.group
       + ' · median ' + Number(row?.median).toFixed(1)
       + ' · middle 50%: ' + Number(row?.q1).toFixed(1) + '–' + Number(row?.q3).toFixed(1)),
-    renderer: (_, { ctx, y_scale, resolve_x, color_at, inner }) => {
+    renderer: (series, { ctx, y_scale, resolve_x, color_at, inner }) => {
       const width = Math.min(34, (inner.right - inner.left) / 9)
       ctx.save()
-      data.forEach((row, i) => {
+      const rows = series.rows as typeof data
+      rows.forEach((row, i) => {
         const x = resolve_x(i)
         if (x === undefined) return
         ctx.fillStyle = color_at(i)
@@ -2348,6 +2387,73 @@ plot.plotArgs = {
 document.body.append(plot)
 ```
 
+##### Custom hover highlights
+
+Hover the points at x = 20 for the default single-point repaint, x = 50 for an explicit halo, and x = 80 for tooltips with highlighting disabled. Only the hovered point is repainted. Translucent fills strengthen when drawn again; an identical opaque fill may look unchanged.
+
+Without `highlight_renderer`, Anta calls `renderer` on the overlay with a single-point series view. The aligned `x`, `y`, `rows`, `colors`, `highlight_colors`, and `labels` arrays contain only that point at index 0; scales and bounds are unchanged. Render from the supplied series, not captured full-data arrays, to use this fallback. Set `highlight_color` to override the fallback's color without changing its geometry.
+
+For connected geometry or a different highlight, supply `highlight_renderer(series, point_index, context)`. It receives the full composed series, the original hovered index, and the normal render helpers plus `highlight_color_at(index)`. Anta handles DPR, clearing, clipping, and canvas-state isolation. Set `highlight: false` to disable either path. Both paths require data and hit testing.
+
+```ts
+import { custom, type CustomRendererFn, type CustomHitTestFn, type CustomHighlightRendererFn } from '@antadesign/plot'
+import type { APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+
+const plot = document.createElement('a-plot') as APlotElement
+function highlights() {
+  const renderer: CustomRendererFn<Node> = (series, { ctx, resolve_x, resolve_y, color_at }) => {
+    for (let i = 0; i < series.x.length; i++) {
+      const x = resolve_x(i), y = resolve_y(i)
+      if (x === undefined || y === undefined) continue
+      ctx.fillStyle = color_at(i)
+      ctx.beginPath()
+      ctx.arc(x, y, 16, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+  const hit_test: CustomHitTestFn<Node> = (series, { cursor, resolve_x, resolve_y }) => {
+    for (let i = series.x.length - 1; i >= 0; i--) {
+      const x = resolve_x(i), y = resolve_y(i)
+      if (x !== undefined && y !== undefined && Math.hypot(cursor.x - x, cursor.y - y) <= 16) return i
+    }
+    return null
+  }
+  const highlight_renderer: CustomHighlightRendererFn<Node> = (series, i, { ctx, resolve_x, resolve_y, highlight_color_at }) => {
+    const x = resolve_x(i), y = resolve_y(i)
+    if (x === undefined || y === undefined) return
+    ctx.strokeStyle = highlight_color_at(i)
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.arc(x, y, 22, 0, Math.PI * 2)
+    ctx.stroke()
+  }
+  return {
+    height: 260,
+    axis: { x: { min: 0, max: 100 }, y: { min: 0, max: 100 } },
+    margin: { top: 12, right: 12, bottom: 28, left: 32 },
+    grid: false, zoom_pan: false,
+    series: [
+      custom<Node>({
+        data: [{ x: 20, y: 35 }, { x: 20, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
+        color: 'color-mix(in oklch, teal 40%, transparent)', tooltip: true,
+      }),
+      custom<Node>({
+        data: [{ x: 50, y: 35 }, { x: 50, y: 65 }], x: 'x', y: 'y', renderer, hit_test, highlight_renderer,
+        color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true,
+      }),
+      custom<Node>({
+        data: [{ x: 80, y: 35 }, { x: 80, y: 65 }], x: 'x', y: 'y', renderer, hit_test,
+        color: '#94a3b8', highlight: false, tooltip: true,
+      }),
+    ],
+  }
+}
+
+plot.plotArgs = highlights()
+document.body.append(plot)
+```
+
 Custom arguments
 
 | Field | Type | Default | Description |
@@ -2356,6 +2462,9 @@ Custom arguments
 | `x?` | [`FieldArg`](#data-fields) | Unclaimed | Horizontal field or accessor; omitted axes do not contribute data bounds. |
 | `y?` | [`FieldArg`](#data-fields) | Unclaimed | Vertical field or accessor; omitted axes do not contribute data bounds. |
 | [`renderer`](#custom-rendering) | `CustomRendererFn` | Required | Draw the series using its data and the supplied canvas context and pixel resolvers. |
+| `highlight_renderer?` | `CustomHighlightRendererFn` | Single-point repaint | Draw on the hover overlay using the full series, hovered index, and highlight context. Requires data and hit testing. |
+| `highlight?` | `boolean` | `true` | Enable the custom callback or default single-point repaint. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 | [`hit_test?`](#custom-hit-testing) | `CustomHitTestFn` | None | Return a row index for a hit, or `null`. Required for custom tooltips and selection. |
 | `color?` | [`ColorArg`](#series-colors) | Black | Color made available to the renderer, including optional per-row colors. |
 | `axis_range?` | `{ x?: number[]; y?: number[] }` | Data extent | Explicit `[low, high]` bounds for either axis. |
@@ -2421,7 +2530,11 @@ to declare bounds when they cannot be inferred from the data.
 
 ### Hover highlights
 
-Hover bars A through D to see their color intensify. Bar E sets `highlight: false`, so its appearance stays unchanged. Bar F uses `hoverable: false`, so it does not participate in hit testing.
+Bars A and B use the default highlight. Bar C uses an opaque orange `highlight_color`, and D uses a translucent magenta override. Bar E sets `highlight: false`, so its appearance stays unchanged. Bar F uses `hoverable: false`, so it does not participate in hit testing.
+
+Set `highlight_color` to a CSS color, a `{ light, dark }` pair, or a per-row accessor. Stacked bars also accept a color array with one entry per segment. Anta uses the resolved color without shading or changing its opacity. Translucent highlights blend over the original mark. Omit the property to keep the default highlight.
+
+For custom series, this property changes the fallback renderer's `color`, `colors`, and `color_at`. An explicit `highlight_renderer` keeps control of its canvas colors and helpers. A fallback renderer must use the supplied colors to reflect the override; a hard-coded canvas fill will stay unchanged.
 
 Hover feedback is temporary. For custom geometry, supply a [hit-testing callback](#custom-hit-testing).
 
@@ -2440,8 +2553,15 @@ const data = [
 plot.plotArgs = {
   series: [
     bar<Node>({
-      data: data.slice(0, 4), inset: 7, border_radius: 4,
+      data: data.slice(0, 2), inset: 7, border_radius: 4,
       color: { light: 'rgba(13, 148, 136, 0.35)', dark: 'rgba(94, 234, 212, 0.35)' },
+    }),
+    bar<Node>({
+      data: data.slice(2, 4), inset: 7, border_radius: 4,
+      color: { light: '#0d9488', dark: '#5eead4' },
+      highlight_color: row => row.x === 'C'
+        ? { light: '#f97316', dark: '#fdba74' }
+        : 'color-mix(in oklch, magenta 50%, transparent)',
     }),
     bar<Node>({
       data: data.slice(4, 5), inset: 7, border_radius: 4,
@@ -2556,6 +2676,98 @@ Omit `tooltip` to show no tooltip for that series.
 With the React component, `TooltipContent` is a `ReactNode`, including strings
 and JSX. With the standalone browser host, return a DOM `Node`. The core
 leaves the content type to the host.
+
+#### Composing tooltips across series
+
+Set `tooltip` on the root plot config to compose one tooltip from all hovered series. The callback receives one slot per declared series, in declaration order. Each populated slot contains `{ series, data }`: `series` is the original factory arguments, and `data` contains the hovered point’s `x`, `y`, and optional `row` and `label`. A series with no hit leaves `undefined`. Destructure the array to match your series order. If you need identifiers, include them in your data rows.
+
+Use `hit.series.color` to read the original color option, including a color defined outside the data. Factory arguments are retained by reference, not copied or resolved; treat them as read-only. Color accessors remain functions, and theme colors remain light/dark pairs. Manually constructed series without factory arguments have `hit.series === undefined`.
+
+The root callback receives hits even when a series has no tooltip configured. Series with `hoverable: false` retain an empty slot. Per-series tooltip callbacks are not called while a root callback is configured. Returning `null` or `undefined` hides the tooltip without falling back; removing the root callback restores the existing stacked behavior. The callback is not called when there are no hits.
+
+Hover the overlapping rectangles to compare baseline and current bounds under one window title. The tooltip matches hits by position, places the values side by side, and calculates the change for each bound. Outside the overlap, missing values appear as “—”.
+
+```ts
+import { rect, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+
+const plot = document.createElement('a-plot') as APlotElement
+const data = [
+  { x: 8, x2: 38, y: 15, y2: 48, name: 'Window A' },
+  { x: 55, x2: 86, y: 48, y2: 82, name: 'Window B' },
+]
+
+plot.plotArgs = {
+  series: [
+    rect({
+      data, tooltip: true,
+      color: { light: 'rgba(13, 148, 136, 0.45)', dark: 'rgba(94, 234, 212, 0.45)' },
+      stroke: { color: { light: '#0d9488', dark: '#5eead4' }, width: 2 },
+    }),
+    rect({
+      data: data.map(row => ({
+        ...row, x: row.x + 12, x2: row.x2 + 8, y: row.y + 12, y2: row.y2 + 10,
+      })),
+      color: { light: 'rgba(124, 58, 237, 0.45)', dark: 'rgba(196, 181, 253, 0.45)' },
+      stroke: { color: { light: '#7c3aed', dark: '#c4b5fd' }, width: 2 },
+      tooltip: ({ row }) => {
+        const content = document.createElement('div')
+        const title = document.createElement('strong')
+        title.textContent = String(row.name)
+        const value = document.createElement('div')
+        value.textContent = `Bounds: x ${row.x}–${row.x2}, y ${row.y}–${row.y2}`
+        content.append(title, value)
+        return content
+      },
+    }),
+  ],
+  tooltip: ([baseline_hit, current_hit]) => {
+    const baseline = baseline_hit?.data.row
+    const current = current_hit?.data.row
+    const content = document.createElement('div')
+    const title = document.createElement('strong')
+    title.textContent = String((current ?? baseline)?.name ?? 'Window comparison')
+    const table = document.createElement('table')
+    const header = table.createTHead().insertRow()
+    for (const label of ['Bound', 'Baseline', 'Current', 'Change']) {
+      const cell = document.createElement('th')
+      cell.scope = 'col'
+      cell.textContent = label
+      header.append(cell)
+    }
+    const body = table.createTBody()
+    for (const [field, label] of [['x', 'X start'], ['x2', 'X end'], ['y', 'Y start'], ['y2', 'Y end']]) {
+      const before = baseline?.[field]
+      const after = current?.[field]
+      const delta = typeof before === 'number' && typeof after === 'number' ? after - before : undefined
+      const row = body.insertRow()
+      const heading = document.createElement('th')
+      heading.scope = 'row'
+      heading.textContent = label
+      row.append(heading)
+      for (const value of [before ?? '—', after ?? '—', delta === undefined ? '—' : `${delta > 0 ? '+' : ''}${delta}`]) {
+        row.insertCell().textContent = String(value)
+      }
+    }
+    content.append(title, table)
+    return content
+  },
+  height: 260,
+  margin: { top: 8, right: 12, bottom: 24, left: 32 },
+  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  grid: false, border: false, zoom_pan: false,
+}
+
+// Remove the root callback for stacked per-series tooltips:
+// plot.plotArgs = { ...plot.plotArgs, tooltip: undefined }
+// Suppress tooltips without falling back:
+// plot.plotArgs = { ...plot.plotArgs, tooltip: () => undefined }
+document.body.append(plot)
+```
+
+The callback type is `PlotTooltipFn<TooltipContent>`, receiving `PlotTooltipHit[]`. As with series callbacks, return a DOM `Node` for the standalone browser host or a `ReactNode` for React.
 
 ### Selection
 

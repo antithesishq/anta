@@ -6,8 +6,7 @@ import { series_value_span, bar_axes, type BarAxes } from "./layout"
 /**
  * The hover-select halo for a bar: the bar's rectangle bounds in canvas pixels, in the bar's color. Reuses
  * bar_rect so the bounds match the drawn bar exactly (orientation, log / linear baseline, negative bars).
- * Hovering a stacked segment halos the whole stack, rebuilt segment by segment in each segment's own color, so
- * the halo is the same bar rather than one block over it. The tooltip still names the segment under the cursor.
+ * Stacked bars highlight the whole stack, resolving each segment's highlight color independently.
  * @param series - the composed bar series
  * @param point_index - the hovered bar's row index
  * @param x_scale - x scale
@@ -42,7 +41,10 @@ export function bar_highlight_spec(series: ComposedBar, point_index: number, x_s
 function mark_spec(series: ComposedBar, i: number, rect: BarRect): HighlightSpec {
     const color = series.colors?.[i] ?? series.color ?? DEFAULT_SERIES_COLOR
     const border_radius = bar_corner_radius_css(segment_border_radius(series, i), rect)
-    return { shape: 'rect', x: rect.left, y: rect.top, width: rect.width, height: rect.height, color, border_radius }
+    const highlight_color = series.highlight_colors?.[i] ?? series.highlight_color
+    return { shape: 'rect', x: rect.left, y: rect.top, width: rect.width, height: rect.height, color, border_radius,
+        ...(highlight_color === undefined ? {} : { highlight_color }),
+    }
 }
 
 /**

@@ -41,6 +41,8 @@ type BaseSeries<TooltipContent = unknown> = {
     y: Float64Array
     color?: ThemeColor
     colors?: (ThemeColor | null)[]
+    highlight_color?: ThemeColor
+    highlight_colors?: (ThemeColor | null)[]
     tooltip?: TooltipArg<any, TooltipContent>
     on_select?: SelectFn<any>
     hoverable?: boolean
@@ -148,6 +150,8 @@ export type Series<TooltipContent = unknown> =
 type ResolvedColorFields = {
     color?: string
     colors?: (string | null)[]
+    highlight_color?: string
+    highlight_colors?: (string | null)[]
     stroke?: { color: string; width?: number }
 }
 
@@ -426,8 +430,8 @@ export type ColorResolver = (i: number) => string
 export type CustomHitTestFn<TooltipContent = unknown> = (series: ComposedCustom<TooltipContent>, hit: HitContext) => number | null
 
 export type HighlightSpec =
-    | { shape: 'mark'; mark: MarkShape; cx: number; cy: number; r: number; color: string }
-    | { shape: 'rect'; x: number; y: number; width: number; height: number; color: string; border_radius?: string }
+    | { shape: 'mark'; mark: MarkShape; cx: number; cy: number; r: number; color: string; highlight_color?: string }
+    | { shape: 'rect'; x: number; y: number; width: number; height: number; color: string; highlight_color?: string; border_radius?: string }
 
 // per-side domain padding mode, set by series padding_mode hooks and consumed by core/template/domain.ts:
 //   default         5% symmetric additive pad so .nice() has room to round

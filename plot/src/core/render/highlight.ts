@@ -41,11 +41,18 @@ export function update_hover_canvas<Content>(ctx: CanvasContext, plot: ComposedP
                     highlight_color_at: index => resolve_highlight_color(color_at(index), plot.chrome_theme),
                 })
             } else {
+                const highlight_color = series.highlight_colors?.[i] ?? series.highlight_color
                 const point_series = {
                     ...series,
                     x: series.x.slice(i, i + 1), y: series.y.slice(i, i + 1),
                     rows: series.rows?.slice(i, i + 1), colors: series.colors?.slice(i, i + 1),
                     labels: series.labels?.slice(i, i + 1),
+                    highlight_colors: series.highlight_colors?.slice(i, i + 1),
+                }
+                if (highlight_color !== undefined) {
+                    point_series.color = highlight_color
+                    point_series.colors = [highlight_color]
+                    render.color = highlight_color
                 }
                 series.renderer(point_series, {
                     ...render, ...custom_resolvers(point_series, x_scale, y_scale),
@@ -103,7 +110,7 @@ export function draw_highlights(
         ctx.clip()
 
         for (const spec of specs) {
-            ctx.fillStyle = resolve_highlight_color(spec.color, theme)
+            ctx.fillStyle = spec.highlight_color ?? resolve_highlight_color(spec.color, theme)
             if (spec.shape === 'mark') {
                 draw_mark(ctx, spec.mark, spec.cx, spec.cy, spec.r, undefined)
             } else {

@@ -1,6 +1,6 @@
 import { attach_resolved_columns, resolve_xy_columns } from "../../template/column"
 import { retain_factory_args } from "../factory_args"
-import { resolve_color, resolve_stroke } from "../../template/color"
+import { resolve_color, resolve_stroke, resolve_highlight_colors } from "../../template/color"
 import { validate_hoverable, validate_non_negative } from "../../template/validate"
 import type { ColorArg, FieldArg, MarkShape, ScatterSeries, SelectFn, StrokeArg, TooltipArg } from "../../types"
 
@@ -11,6 +11,7 @@ export type ScatterArgs<TooltipContent = unknown> = {
     x?: FieldArg
     y?: FieldArg
     color?: ColorArg
+    highlight_color?: ColorArg
     size?: ScatterSizeArg
     mark?: MarkShape
     stroke?: StrokeArg
@@ -34,6 +35,7 @@ export function new_scatter<TooltipContent = unknown>(args: ScatterArgs<TooltipC
         x: resolved.x,
         y: resolved.y,
         ...resolve_color(args.data, args.color),
+        ...resolve_highlight_colors(args.data, args.highlight_color),
         ...resolve_size(args.data, args.size),
     }
 

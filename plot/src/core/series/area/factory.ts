@@ -2,8 +2,8 @@ import { resolve_xy_columns, attach_resolved_columns, resolve_column, validate_f
 import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
 import { validate_finite, validate_non_negative, validate_hoverable } from "../../template/validate"
-import { resolve_stroke } from "../../template/color"
-import type { AreaSeries, AxisContext, FieldArg, SelectFn, StrokeArg, ThemeColor, TooltipArg } from "../../types"
+import { resolve_stroke, resolve_highlight_colors } from "../../template/color"
+import type { ColorArg, AreaSeries, AxisContext, FieldArg, SelectFn, StrokeArg, ThemeColor, TooltipArg } from "../../types"
 
 export type AreaBoundArg = FieldArg | number
 
@@ -14,6 +14,7 @@ export type AreaArgs<TooltipContent = unknown> = {
     y?: FieldArg
     y2?: AreaBoundArg
     color?: ThemeColor
+    highlight_color?: ColorArg
     stroke?: StrokeArg
     dash?: number[]
     tooltip?: TooltipArg<Record<string, unknown>, TooltipContent>
@@ -38,6 +39,7 @@ export function new_area<TooltipContent = unknown>(args: AreaArgs<TooltipContent
     const stroke = resolve_stroke(args.stroke, 'plot.area')
     const series: AreaSeries<TooltipContent> = {
         kind: 'area',
+        ...resolve_highlight_colors(args.data, args.highlight_color),
         x: resolved.x,
         y: resolved.y,
     }

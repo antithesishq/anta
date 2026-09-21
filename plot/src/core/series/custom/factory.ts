@@ -1,7 +1,7 @@
 import { attach_resolved_columns, resolve_column, validate_field_present, type ResolvedColumn } from "../../template/column"
 import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
-import { resolve_color } from "../../template/color"
+import { resolve_color, resolve_highlight_colors } from "../../template/color"
 import { validate_finite, validate_hoverable } from "../../template/validate"
 import type { ColorArg, CustomHighlightRendererFn, CustomHitTestFn, CustomRendererFn, CustomSeries, Domain, FieldArg, SelectFn, TooltipArg } from "../../types"
 
@@ -16,6 +16,7 @@ export type CustomArgs<TooltipContent = unknown> = {
     highlight?: boolean
     hit_test?: CustomHitTestFn<TooltipContent>
     color?: ColorArg
+    highlight_color?: ColorArg
     axis_range?: CustomAxisRangeArg
     tooltip?: TooltipArg<Record<string, unknown> | undefined, TooltipContent>
     on_select?: SelectFn<Record<string, unknown> | undefined>
@@ -90,6 +91,7 @@ function resolve_custom_column(
 function apply_custom_options<TooltipContent>(series: CustomSeries<TooltipContent>, args: CustomArgs<TooltipContent>): void {
     retain_factory_args(series, args)
     apply_custom_color(series, args)
+    Object.assign(series, resolve_highlight_colors(args.data, args.highlight_color))
 
     if (args.axis_range !== undefined) {
         series.axis_range = validate_axis_range(args.axis_range)

@@ -2,10 +2,10 @@ import { resolve_xy_columns, attach_resolved_columns, type ResolvedColumnMeta } 
 import { retain_factory_args } from "../factory_args"
 import { compact_column, dedupe_bands, warn_dropped_bands } from "./duplicates"
 import { array_extent, xy_extent } from "../../template/extent"
-import { resolve_color } from "../../template/color"
+import { resolve_color, resolve_highlight_colors } from "../../template/color"
 import { validate_hoverable, validate_hover_span, validate_non_negative } from "../../template/validate"
 import type { AxisContext, BarSeries, ColorArg, FieldArg, SelectFn, SideMode, ThemeColor, TooltipArg } from "../../types"
-import { expand_stack, resolve_stack_colors } from "./stack"
+import { expand_stack, resolve_stack_colors, resolve_stack_highlight_colors } from "./stack"
 
 export type BarSideArg = FieldArg | string[]
 export type BarColorArg = ColorArg | ThemeColor[]
@@ -15,6 +15,7 @@ export type BarArgs<TooltipContent = unknown> = {
     x?: BarSideArg
     y?: BarSideArg
     color?: BarColorArg
+    highlight_color?: BarColorArg
     border_radius?: number
     inset?: number
     min_size?: number
@@ -59,6 +60,10 @@ export function new_bar<TooltipContent = unknown>(args: BarArgs<TooltipContent>)
  */
 function new_plain_bar<TooltipContent>(args: BarArgs<TooltipContent>, x_arg: FieldArg, y_arg: FieldArg): BarSeries<TooltipContent> {
     const color = args.color
+    const highlight_color = args.highlight_color
+    if (Array.isArray(highlight_color)) {
+        throw new Error("plot.bar: highlight_color arrays require a stacked series, with one color per segment.")
+    }
 
     if (Array.isArray(color)) {
         throw new Error(`plot.bar: color is an array, which pairs one color to each stacked segment, but this series isn't stacked. Pass a single color or an accessor, or stack it with y: ['first', 'second'].`)
@@ -87,6 +92,7 @@ function new_plain_bar<TooltipContent>(args: BarArgs<TooltipContent>, x_arg: Fie
         x: drawn.x,
         y: drawn.y,
         ...resolve_color(drawn.data, color),
+        ...resolve_highlight_colors(drawn.data, highlight_color),
     }
 
     apply_bar_options(series, args)
@@ -150,6 +156,7 @@ function new_stacked_bar<TooltipContent>(args: BarArgs<TooltipContent>, band_arg
         is_tip: expanded.is_tip,
         labels: expanded.labels,
         ...resolve_stack_colors(expanded.rows, value_fields.length, args.color, value_side, 'plot.bar'),
+        ...resolve_stack_highlight_colors(expanded.rows, value_fields.length, args.highlight_color),
     }
 
     apply_bar_options(series, args)

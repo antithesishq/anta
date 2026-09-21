@@ -1,14 +1,15 @@
 import { attach_resolved_columns, resolve_xy_columns } from "../../template/column"
 import { retain_factory_args } from "../factory_args"
-import { resolve_stroke } from "../../template/color"
+import { resolve_stroke, resolve_highlight_colors } from "../../template/color"
 import { validate_hoverable, validate_non_negative, validate_positive } from "../../template/validate"
-import type { FieldArg, LineSeries, MarkShape, SelectFn, StrokeArg, ThemeColor, TooltipArg } from "../../types"
+import type { ColorArg, FieldArg, LineSeries, MarkShape, SelectFn, StrokeArg, ThemeColor, TooltipArg } from "../../types"
 
 export type LineArgs<TooltipContent = unknown> = {
     data: Record<string, unknown>[]
     x?: FieldArg
     y?: FieldArg
     color?: ThemeColor
+    highlight_color?: ColorArg
     width?: number
     dash?: number[]
     mark?: MarkShape
@@ -31,6 +32,7 @@ export function new_line<TooltipContent = unknown>(args: LineArgs<TooltipContent
     const resolved = resolve_xy_columns(args.data, x_arg, y_arg, 'plot.line', args.x === undefined, args.y === undefined)
     const series: LineSeries<TooltipContent> = {
         kind: 'line',
+        ...resolve_highlight_colors(args.data, args.highlight_color),
         x: resolved.x,
         y: resolved.y,
     }

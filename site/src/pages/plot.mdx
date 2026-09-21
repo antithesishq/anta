@@ -789,6 +789,7 @@ document.body.append(plot)
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { scatter } from '@antadesign/plot'
@@ -938,6 +939,7 @@ document.body.append(plot)
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { line } from '@antadesign/plot'
@@ -1193,6 +1195,7 @@ document.body.append(plot)
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { bar } from '@antadesign/plot'
@@ -1701,6 +1704,7 @@ document.body.append(plot)
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { area } from '@antadesign/plot'
@@ -1999,6 +2003,7 @@ document.body.append(plot)
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { rect } from '@antadesign/plot'
@@ -2209,6 +2214,7 @@ document.body.append(plot)
 | [`on_select?`](#selection-callbacks) | `SelectFn` | None | Callback receiving the selected point and its source row. |
 | `hoverable?` | `boolean` | `true` | Allow the series to participate in hit testing. |
 | `highlight?` | `boolean` | `true` | Draw hover feedback for a hit point. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 
 ```ts
 import { rule } from '@antadesign/plot'
@@ -2724,7 +2730,7 @@ document.body.append(plot)
 
 Hover the points at x = 20 for the default single-point repaint, x = 50 for an explicit halo, and x = 80 for tooltips with highlighting disabled. Only the hovered point is repainted. Translucent fills strengthen when drawn again; an identical opaque fill may look unchanged.
 
-Without `render_highlight`, Anta calls `renderer` on the overlay with a single-point series view. The aligned `x`, `y`, `rows`, `colors`, and `labels` arrays contain only that point at index 0; scales and bounds are unchanged. Render from the supplied series, not captured full-data arrays, to use this fallback.
+Without `render_highlight`, Anta calls `renderer` on the overlay with a single-point series view. The aligned `x`, `y`, `rows`, `colors`, `highlight_colors`, and `labels` arrays contain only that point at index 0; scales and bounds are unchanged. Render from the supplied series, not captured full-data arrays, to use this fallback. Set `highlight_color` to override the fallback's color without changing its geometry.
 
 For connected geometry or a different highlight, supply `render_highlight(series, point_index, context)`. It receives the full composed series, the original hovered index, and the normal render helpers plus `highlight_color_at(index)`. Anta handles DPR, clearing, clipping, and canvas-state isolation. Set `highlight: false` to disable either path. Both paths require data and hit testing.
 
@@ -2802,6 +2808,7 @@ document.body.append(plot)
 | [`renderer`](#custom-rendering) | `CustomRendererFn` | Required | Draw the series using its data and the supplied canvas context and pixel resolvers. |
 | `render_highlight?` | `CustomHighlightRendererFn` | Single-point repaint | Draw on the hover overlay using the full series, hovered index, and highlight context. Requires data and hit testing. |
 | `highlight?` | `boolean` | `true` | Enable the custom callback or default single-point repaint. |
+| `highlight_color?` | `ColorArg` | Automatic | Exact hover color, including opacity. For custom series, affects only the fallback renderer. Stacked bars also accept a `ThemeColor[]` palette. |
 | [`hit_test?`](#custom-hit-testing) | `CustomHitTestFn` | None | Return a row index for a hit, or `null`. Required for custom tooltips and selection. |
 | `color?` | [`ColorArg`](#series-colors) | Black | Color made available to the renderer, including optional per-row colors. |
 | `axis_range?` | `{ x?: number[]; y?: number[] }` | Data extent | Explicit `[low, high]` bounds for either axis. |
@@ -2867,7 +2874,11 @@ to declare bounds when they cannot be inferred from the data.
 
 ### Hover highlights
 
-Hover bars A through D to see their color intensify. Bar E sets `highlight: false`, so its appearance stays unchanged. Bar F uses `hoverable: false`, so it does not participate in hit testing.
+Bars A and B use the default highlight. Bar C uses an opaque orange `highlight_color`, and D uses a translucent magenta override. Bar E sets `highlight: false`, so its appearance stays unchanged. Bar F uses `hoverable: false`, so it does not participate in hit testing.
+
+Set `highlight_color` to a CSS color, a `{ light, dark }` pair, or a per-row accessor. Stacked bars also accept a color array with one entry per segment. Anta uses the resolved color without shading or changing its opacity. Translucent highlights blend over the original mark. Omit the property to keep the default highlight.
+
+For custom series, this property changes the fallback renderer's `color`, `colors`, and `color_at`. An explicit `render_highlight` keeps control of its canvas colors and helpers. A fallback renderer must use the supplied colors to reflect the override; a hard-coded canvas fill will stay unchanged.
 
 Hover feedback is temporary. For custom geometry, supply a [hit-testing callback](#custom-hit-testing).
 
@@ -2892,8 +2903,15 @@ const data = [
 plot.plotArgs = {
   series: [
     bar<Node>({
-      data: data.slice(0, 4), inset: 7, border_radius: 4,
+      data: data.slice(0, 2), inset: 7, border_radius: 4,
       color: { light: 'rgba(13, 148, 136, 0.35)', dark: 'rgba(94, 234, 212, 0.35)' },
+    }),
+    bar<Node>({
+      data: data.slice(2, 4), inset: 7, border_radius: 4,
+      color: { light: '#0d9488', dark: '#5eead4' },
+      highlight_color: row => row.x === 'C'
+        ? { light: '#f97316', dark: '#fdba74' }
+        : 'color-mix(in oklch, magenta 50%, transparent)',
     }),
     bar<Node>({
       data: data.slice(4, 5), inset: 7, border_radius: 4,

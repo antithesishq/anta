@@ -2,7 +2,7 @@ import { attach_resolved_columns, resolve_column, validate_field_present, type C
 import { retain_factory_args } from "../factory_args"
 import { array_extent } from "../../template/extent"
 import { validate_finite, validate_non_negative, validate_hoverable, validate_hover_span } from "../../template/validate"
-import { resolve_color, resolve_stroke } from "../../template/color"
+import { resolve_color, resolve_stroke, resolve_highlight_colors } from "../../template/color"
 import type { ColorArg, FieldArg, RectAlign, RectSeries, SelectFn, StrokeArg, TooltipArg } from "../../types"
 
 export type RectSizeArg = number | { width?: number; height?: number }
@@ -23,6 +23,7 @@ export type RectArgs<TooltipContent = unknown> = {
     min_size?: number
     offset?: RectOffsetArg
     color?: ColorArg
+    highlight_color?: ColorArg
     stroke?: StrokeArg
     tooltip?: TooltipArg<Record<string, unknown>, TooltipContent>
     on_select?: SelectFn<Record<string, unknown>>
@@ -64,6 +65,7 @@ export function new_rect<TooltipContent = unknown>(args: RectArgs<TooltipContent
         x: resolved.x1,
         y: resolved.y1,
         ...resolve_color(args.data, args.color),
+        ...resolve_highlight_colors(args.data, args.highlight_color),
     }
 
     if (span !== undefined) {

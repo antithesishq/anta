@@ -10,8 +10,15 @@ export function highlights(): PlotArgs<Node> {
   return {
     series: [
       bar<Node>({
-        data: data.slice(0, 4), inset: 7, border_radius: 4,
+        data: data.slice(0, 2), inset: 7, border_radius: 4,
         color: { light: 'rgba(13, 148, 136, 0.35)', dark: 'rgba(94, 234, 212, 0.35)' },
+      }),
+      bar<Node>({
+        data: data.slice(2, 4), inset: 7, border_radius: 4,
+        color: { light: '#0d9488', dark: '#5eead4' },
+        highlight_color: row => row.x === 'C'
+          ? { light: '#f97316', dark: '#fdba74' }
+          : 'color-mix(in oklch, magenta 50%, transparent)',
       }),
       bar<Node>({
         data: data.slice(4, 5), inset: 7, border_radius: 4,

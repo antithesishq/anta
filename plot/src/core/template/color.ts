@@ -5,14 +5,14 @@
 // renderer fallback chain: colors[i], color, DEFAULT_SERIES_COLOR.
 
 import { validate_non_negative } from "./validate"
-import type { ColorArg, ColorTheme, Stroke, StrokeArg, ThemeColor } from "../types"
+import type { AxisTemplate, ColorArg, ColorTheme, FontConfig, Stroke, StrokeArg, ThemeColor } from "../types"
 
 const DEFAULT_BACKGROUND = '#fff'
 export const DEFAULT_SERIES_COLOR = '#000'
 
 /**
  * Whether the plot's canvas gets the dark-mode CSS invert: an explicit theme_invert wins, otherwise the
- * plot inverts unless its series or background already carry theme-specific ({ light, dark }) colors.
+ * plot inverts unless its series, background, or rendered text use theme-specific ({ light, dark }) colors.
  * @param template - the plot template
  * @returns true when the canvas is CSS-inverted in dark mode
  */
@@ -28,11 +28,32 @@ type ColorTemplate = {
     series: ColorBearingSeries[]
     background?: boolean | ThemeColor
     theme_invert?: boolean
+    font?: FontConfig
+    title?: string
+    title_font?: FontConfig
+    x?: Pick<AxisTemplate, 'rendered' | 'axis'>
+    y?: Pick<AxisTemplate, 'rendered' | 'axis'>
 }
 
 export function should_invert_color(template: ColorTemplate): boolean {
-    const themes_own_colors = series_have_theme_color_pair(template.series) || background_is_theme_color_pair(template.background)
+    const themes_own_colors = series_have_theme_color_pair(template.series) ||
+        background_is_theme_color_pair(template.background) || rendered_text_has_theme_color_pair(template)
     return template.theme_invert ?? !themes_own_colors
+}
+
+// Only effective colors on visible text opt out of automatic inversion.
+function rendered_text_has_theme_color_pair(template: ColorTemplate): boolean {
+    const root_color = template.font?.color
+    if (template.title && is_light_dark_color_pair(template.title_font?.color ?? root_color)) return true
+
+    for (const side of [template.x, template.y]) {
+        if (!side?.rendered) continue
+        const axis = side.axis
+        if (axis === undefined) continue
+        if (is_light_dark_color_pair(axis.tick_label_font?.color ?? root_color)) return true
+        if (axis.label && is_light_dark_color_pair(axis.label_font?.color ?? root_color)) return true
+    }
+    return false
 }
 
 /**

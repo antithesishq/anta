@@ -9,13 +9,15 @@ await build({
             export { validate_font, resolve_font } from './src/core/template/font'
             export { new_plot_template } from './src/core/template/plot_template'
             export { compose_plot } from './src/core/compose/compose_plot'
+            export { should_invert_color } from './src/core/template/color'
+            export { apply_canvas_font } from './src/core/render/font'
         `,
         resolveDir: fileURLToPath(new URL('..', import.meta.url)),
     },
     bundle: true, platform: 'node', format: 'esm',
     outfile: fileURLToPath(new URL('../.build/font-test.mjs', import.meta.url)),
 })
-const { validate_font, resolve_font, new_plot_template, compose_plot } = await import('../.build/font-test.mjs')
+const { validate_font, resolve_font, new_plot_template, compose_plot, should_invert_color, apply_canvas_font } = await import('../.build/font-test.mjs')
 const defaults = { family: 'monospace', size: 10, color: { light: '#111', dark: '#eee' } }
 
 test('font overrides resolve field by field, including false and zero', () => {
@@ -87,4 +89,33 @@ test('font configuration survives template normalization and composition', () =>
     assert.deepEqual(plot.y_axis.tick_label_font, { family: 'Ticks' })
     assert.equal(plot.y_axis.label_font, undefined)
     assert.deepEqual(new_plot_template({ series: [], title: 'Plain' }).font, {})
+})
+
+
+test('effective themed font colors disable automatic inversion only for rendered text', () => {
+    const pair = { light: '#123', dark: '#def' }
+    const axis = { rendered: true, axis: { label: 'Axis' } }
+    const base = { series: [], x: axis }
+    assert.equal(should_invert_color({ ...base, font: { color: pair } }), false)
+    assert.equal(should_invert_color({ series: [], title: 'Title', title_font: { color: pair } }), false)
+    for (const role of ['label_font', 'tick_label_font']) {
+        assert.equal(should_invert_color({ ...base, x: { ...axis, axis: { label: 'Axis', [role]: { color: pair } } } }), false)
+    }
+    assert.equal(should_invert_color({ series: [], font: { color: pair } }), true)
+    assert.equal(should_invert_color({ series: [], title_font: { color: pair } }), true)
+    assert.equal(should_invert_color({ series: [], x: { rendered: false, axis: { tick_label_font: { color: pair } } } }), true)
+    assert.equal(should_invert_color({ series: [], x: { rendered: true, axis: { label_font: { color: pair } } } }), true)
+    assert.equal(should_invert_color({ ...base, font: { color: pair }, x: { ...axis, axis: {
+        label: 'Axis', label_font: { color: '#123' }, tick_label_font: { color: '#456' },
+    } } }), true, 'overridden theme pairs do not disable inversion')
+    assert.equal(should_invert_color({ ...base, font: { color: pair }, theme_invert: true }), true)
+    assert.equal(should_invert_color({ ...base, theme_invert: false }), false)
+})
+
+test('canvas font application tolerates contexts without optional text features', () => {
+    const ctx = { font: '', fillStyle: '' }
+    apply_canvas_font(ctx, resolve_font({ size: 16, italic: true, condensed: true }, {}, defaults, 'light'))
+    assert.equal(ctx.font, 'italic 400 condensed 16px monospace, sans-serif')
+    assert.equal(ctx.fillStyle, '#111')
+    assert.deepEqual(Object.keys(ctx), ['font', 'fillStyle'])
 })

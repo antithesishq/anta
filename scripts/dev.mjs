@@ -2,10 +2,11 @@ import { existsSync, readFileSync, unlinkSync } from 'node:fs'
 import { spawn, spawnSync } from 'node:child_process'
 
 const args = process.argv.slice(2)
-const parallel = args.length === 1 && (args[0] === '-new' || args[0] === '--parallel')
+const parallel = args.includes('-new') || args.includes('--parallel')
+const wrangler = !args.includes('--no-wrangler')
 
-if (args.length && !parallel) {
-  console.error('Usage: pnpm run dev [-new]')
+if (args.some(arg => !['-new', '--parallel', '--no-wrangler', '--'].includes(arg))) {
+  console.error('Usage: pnpm run dev [--parallel] [--no-wrangler]')
   process.exit(1)
 }
 
@@ -35,7 +36,7 @@ if (!parallel) {
 }
 
 const child = spawn('pnpm', ['run', 'dev:run'], {
-  env: { ...process.env, ANTA_DEV_PID_FILE: pidfile, ANTA_DEV_PORT: port, ANTA_SEARCH_DEV_PORT: parallel ? '8789' : '8788' },
+  env: { ...process.env, ANTA_DEV_PID_FILE: pidfile, ANTA_DEV_PORT: port, ANTA_SEARCH_DEV_PORT: parallel ? '8789' : '8788', ANTA_DEV_WRANGLER: wrangler ? '1' : '0' },
   stdio: 'inherit',
 })
 

@@ -516,7 +516,7 @@ document.body.append(plot)
 | [`series`](#series) | `Series[]` | Required | What to draw, in paint order. Build each one with a factory. |
 | [`axis?`](#axes) | `{ x?: AxisArgs, y?: AxisArgs }` | Inferred from data | Per-axis scale, label, ticks, and domain. |
 | [`title?`](#title) | `string \| { text, font? }` | None | Plot title. |
-| [`font?`](#font-configuration) | `FontArg` | Role defaults | Shared font configuration. |
+| [`font?`](#font) | `FontArg` | Role defaults | Shared font configuration. |
 | `width?` | `number` | Container width | Canvas width in pixels. Overrides the wrapper's CSS width. |
 | `height?` | `number` | Parent height for `Plot`; `300` for `<a-plot>` | Canvas height in pixels. Overrides the host's CSS height. |
 | [`margin?`](#margins) | `number \| { top?, right?, bottom?, left? }` | `60` per side; `2` without axes or title | Space reserved around the plot area for axes and title. |
@@ -3527,7 +3527,7 @@ Each `AxisViewport` contains:
 
 ## Configuration details
 
-### Font configuration
+### Font
 
 `font` on the plot supplies shared text settings. `title.font`,
 `axis.x.label.font`, `axis.y.label.font`, and each axis's `tick_label.font`
@@ -3550,9 +3550,140 @@ Font assets are supplied by the application.
 `FontCaps` accepts `normal`, `small-caps`, `all-small-caps`, `petite-caps`,
 `all-petite-caps`, `unicase`, and `titling-caps`.
 
-This API is being introduced incrementally. Local `font.size` and `font.color`
-currently affect canvas text. Applying the remaining settings and plot-level
-inheritance to canvas text is pending.
+Canvas drawing and text measurement use the same resolved font settings.
+Titles default to 14px sans-serif, axis names to 12px sans-serif, and tick
+labels to 10px monospace. The default weight is 400. Root settings override
+these role defaults; local settings override the root field by field.
+
+Host CSS font inheritance and font-loading does not re-render the plot.
+Pass `family` explicitly and make fonts available before drawing.
+
+
+<PlotDetailGrid>
+<div class="plot-detail-card">
+
+Different fonts by role
+
+<Preview minHeight={308}>
+  <PlotDetailPreview example="fontRoles" label="Different fonts by role" />
+</Preview>
+
+The title combines bold weight, condensed width, and tighter letters. The axes switch to italic serif and spaced monospace, with colors that adapt to the theme.
+
+```ts folded
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot'
+import type { APlotElement } from '@antadesign/plot/browser'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function fontRoles(): PlotArgs<Node> {
+  return {
+    ...base(),
+    margin: { top: 48, right: 20, bottom: 58, left: 72 },
+    font: { family: '"TT Interphases Pro Variable", sans-serif', size: 13, weight: 450,
+      color: { light: '#713fff', dark: '#c4b5fd' } },
+    title: { text: '22px · bold · condensed',
+      font: { size: 22, weight: 750, condensed: true, letter_spacing: -0.35 } },
+    axis: {
+      x: { min: 0, max: 100,
+        label: { text: 'Serif · italic · 16px', font: { family: 'Georgia, serif', size: 16, italic: true,
+          color: { light: '#c2410c', dark: '#fdba74' } } } },
+      y: { min: 0, max: 100,
+        label: { text: 'Mono · +1px letters', font: { family: 'monospace', size: 12, letter_spacing: 1 } } },
+    },
+  }
+}
+
+await Promise.all([
+  document.fonts.load('750 22px "TT Interphases Pro Variable"'),
+  document.fonts.load('italic 600 20px "TT Interphases Pro Variable"'),
+])
+const plot = document.querySelector<APlotElement>('a-plot')!
+plot.plotArgs = fontRoles()
+```
+
+</div>
+
+<div class="plot-detail-card">
+
+Shared settings and local overrides
+
+<Preview minHeight={308}>
+  <PlotDetailPreview example="fontOverrides" label="Shared settings and local overrides" />
+</Preview>
+
+The title inherits italic small caps and expanded spacing. The horizontal label resets caps, italic, and both spacing values; the vertical label selects `small-caps` explicitly. Tick labels use compact monospace overrides.
+
+```ts folded
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot'
+import type { APlotElement } from '@antadesign/plot/browser'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function fontOverrides(): PlotArgs<Node> {
+  return {
+    ...base(),
+    margin: { top: 48, right: 20, bottom: 58, left: 72 },
+    font: { family: '"TT Interphases Pro Variable", sans-serif', size: 14, weight: 600,
+      italic: true, caps: true, letter_spacing: 1, word_spacing: 4,
+      color: { light: '#0f766e', dark: '#5eead4' } },
+    title: { text: 'Small caps · +4px words', font: { size: 20 } },
+    axis: {
+      x: { min: 0, max: 100,
+        label: { text: 'Normal caps · zero spacing', font: { caps: false, italic: false,
+          letter_spacing: 0, word_spacing: 0, color: { light: '#c2410c', dark: '#fdba74' } } },
+        tick_label: { font: { family: 'monospace', size: 10, weight: 400, italic: false,
+          caps: false, letter_spacing: 0, word_spacing: 0 } } },
+      y: { min: 0, max: 100,
+        label: { text: 'Italic · small caps', font: { caps: 'small-caps', letter_spacing: 0.5, word_spacing: 0 } },
+        tick_label: { font: { family: 'monospace', size: 10, weight: 400, italic: false,
+          caps: false, letter_spacing: 0, word_spacing: 0 } } },
+    },
+  }
+}
+
+await Promise.all([
+  document.fonts.load('750 22px "TT Interphases Pro Variable"'),
+  document.fonts.load('italic 600 20px "TT Interphases Pro Variable"'),
+])
+const plot = document.querySelector<APlotElement>('a-plot')!
+plot.plotArgs = fontOverrides()
+```
+
+</div>
+</PlotDetailGrid>
 
 <Disclosure title="Title" level={3}>
 

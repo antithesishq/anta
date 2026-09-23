@@ -22,6 +22,46 @@ export function title(): PlotArgs<Node> {
     title: { text: 'Plot title', font: { size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } } }
 }
 
+export function fontRoles(): PlotArgs<Node> {
+  return {
+    ...base(),
+    margin: { top: 48, right: 20, bottom: 58, left: 72 },
+    font: { family: '"TT Interphases Pro Variable", sans-serif', size: 13, weight: 450,
+      color: { light: '#713fff', dark: '#c4b5fd' } },
+    title: { text: '22px · bold · condensed',
+      font: { size: 22, weight: 750, condensed: true, letter_spacing: -0.35 } },
+    axis: {
+      x: { min: 0, max: 100,
+        label: { text: 'Serif · italic · 16px', font: { family: 'Georgia, serif', size: 16, italic: true,
+          color: { light: '#c2410c', dark: '#fdba74' } } } },
+      y: { min: 0, max: 100,
+        label: { text: 'Mono · +1px letters', font: { family: 'monospace', size: 12, letter_spacing: 1 } } },
+    },
+  }
+}
+
+export function fontOverrides(): PlotArgs<Node> {
+  return {
+    ...base(),
+    margin: { top: 48, right: 20, bottom: 58, left: 72 },
+    font: { family: '"TT Interphases Pro Variable", sans-serif', size: 14, weight: 600,
+      italic: true, caps: true, letter_spacing: 1, word_spacing: 4,
+      color: { light: '#0f766e', dark: '#5eead4' } },
+    title: { text: 'Small caps · +4px words', font: { size: 20 } },
+    axis: {
+      x: { min: 0, max: 100,
+        label: { text: 'Normal caps · zero spacing', font: { caps: false, italic: false,
+          letter_spacing: 0, word_spacing: 0, color: { light: '#c2410c', dark: '#fdba74' } } },
+        tick_label: { font: { family: 'monospace', size: 10, weight: 400, italic: false,
+          caps: false, letter_spacing: 0, word_spacing: 0 } } },
+      y: { min: 0, max: 100,
+        label: { text: 'Italic · small caps', font: { caps: 'small-caps', letter_spacing: 0.5, word_spacing: 0 } },
+        tick_label: { font: { family: 'monospace', size: 10, weight: 400, italic: false,
+          caps: false, letter_spacing: 0, word_spacing: 0 } } },
+    },
+  }
+}
+
 export function margins(): PlotArgs<Node> {
   return { ...base(), margin: { top: 40, right: 40, bottom: 64, left: 88 },
     background: { light: 'white', dark: '#202124' } }
@@ -135,5 +175,5 @@ export function strokes(): PlotArgs<Node> {
   })) }
 }
 
-export const detailExamples = { title, margins, grid, gridX, gridY, gridNone, themeColors, scales, timeCategory, axisLabels, axisLabelsOpposite,
+export const detailExamples = { title, fontRoles, fontOverrides, margins, grid, gridX, gridY, gridNone, themeColors, scales, timeCategory, axisLabels, axisLabelsOpposite,
   tickLabels, seriesColors, markShapes, strokes }

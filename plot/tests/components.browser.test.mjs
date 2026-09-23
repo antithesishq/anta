@@ -352,3 +352,99 @@ test('rejected arguments retain wrapper dimensions and valid updates can remove 
     assert.deepEqual(await page.locator('[data-plot]').evaluate(el => [el.style.width, el.style.height]),
         ['100%', '100%'])
 })
+
+for (const offscreen of [false, true]) {
+    test(`font drawing and measurement share full canvas state (${offscreen ? 'offscreen' : 'DOM'})`, async t => {
+        const page = await pageFor(t)
+        const result = await page.evaluate(offscreen => {
+            const { draw, new_plot_template, compose_plot } = window.fontRendering
+            const canvas = offscreen ? new OffscreenCanvas(600, 300) : document.createElement('canvas')
+            canvas.width = 600
+            canvas.height = 300
+            const ctx = canvas.getContext('2d')
+            const keys = ['font', 'fillStyle', 'fontKerning', 'fontStretch', 'letterSpacing', 'wordSpacing', 'fontVariantCaps', 'textRendering']
+            const snapshot = () => Object.fromEntries(keys.map(key => [key, ctx[key]]))
+            ctx.font = '9px serif'
+            ctx.letterSpacing = '1px'
+            ctx.wordSpacing = '2px'
+            const before = snapshot()
+            const drawn = [], measured = []
+            const fillText = ctx.fillText.bind(ctx), measureText = ctx.measureText.bind(ctx)
+            ctx.fillText = (text, x, y) => { drawn.push({ text, x, y, width: measureText(text).width, ...snapshot() }); fillText(text, x, y) }
+            ctx.measureText = text => { measured.push({ text, width: measureText(text).width, ...snapshot() }); return measureText(text) }
+            const args = {
+                series: [], title: { text: 'Title', font: { size: 22, italic: false, letter_spacing: 0 } },
+                font: { family: 'serif', size: 16, weight: 600, italic: true, condensed: true,
+                    caps: true, letter_spacing: 3, word_spacing: 5, color: { light: '#123456', dark: '#abcdef' } },
+                axis: {
+                    x: { categories: ['First label', 'Second label', 'Third label'],
+                        label: { text: 'X name', font: { size: 18 } },
+                        tick_label: { font: { family: 'monospace', word_spacing: 0 } } },
+                    y: { min: 0, max: 100, label: { text: 'Y name', position: 'top', font: { condensed: false, caps: false } } },
+                },
+                grid: true,
+            }
+            const plot = compose_plot(new_plot_template(args), 600, 300, 'dark')
+            draw(ctx, plot)
+            const after = snapshot()
+            // Chromium can return empty spacing strings after save/reapply while keeping the correct
+            // spacing metrics. Compare actual widths for spacing, and the other font properties directly.
+            const measuredKeys = keys.filter(key => key !== 'letterSpacing' && key !== 'wordSpacing')
+            const textStateMismatches = measured.flatMap(m => drawn.filter(d => d.text === m.text).flatMap(d =>
+                [...measuredKeys, 'width'].filter(key => d[key] !== m[key]).map(key => ({ text: m.text, key, measured: m[key], drawn: d[key] }))))
+            // Repeated frames must not accumulate text spacing or transforms.
+            drawn.length = 0
+            draw(ctx, plot)
+            const title = drawn.find(d => d.text === 'Title')
+            const xTick = drawn.find(d => d.text === 'First label')
+            const xLabel = drawn.find(d => d.text === 'X name')
+            const yLabel = drawn.find(d => d.text === 'Y name')
+            const secondFrameState = snapshot()
+            const errorsRestore = []
+            for (const failedText of ['Title', 'First label', 'Y name']) {
+                ctx.fillText = (text, x, y) => {
+                    if (text === failedText) throw new Error('intentional paint failure')
+                    fillText(text, x, y)
+                }
+                let caught = false
+                try { draw(ctx, plot) } catch { caught = true }
+                errorsRestore.push(caught && JSON.stringify(snapshot()) === JSON.stringify(before))
+            }
+            ctx.fillText = fillText
+            ctx.measureText = () => { throw new Error('intentional measurement failure') }
+            let measureCaught = false
+            try { draw(ctx, plot) } catch { measureCaught = true }
+            const measurementRestored = measureCaught && JSON.stringify(snapshot()) === JSON.stringify(before)
+            ctx.measureText = measureText
+            const defaults = compose_plot(new_plot_template({ series: [], title: 'Default',
+                axis: { x: { categories: ['Tick'], label: 'Axis' } } }), 600, 300, 'light')
+            const defaultFonts = {}
+            ctx.fillText = text => { defaultFonts[text] = ctx.font }
+            draw(ctx, defaults)
+            return { before, after, secondFrameState, errorsRestore, measurementRestored, textStateMismatches,
+                title, xTick, xLabel, yLabel, defaultFonts, innerBottom: plot.inner.bottom }
+        }, offscreen)
+        assert.deepEqual(result.after, result.before)
+        assert.deepEqual(result.secondFrameState, result.before)
+        assert.deepEqual(result.errorsRestore, [true, true, true])
+        assert.equal(result.measurementRestored, true)
+        assert.deepEqual(result.textStateMismatches, [])
+        assert.match(result.title.font, /22px serif/)
+        assert.doesNotMatch(result.title.font, /italic/)
+        assert.equal(result.title.letterSpacing, '0px')
+        assert.equal(result.title.wordSpacing, '5px')
+        assert.equal(result.title.fillStyle, '#abcdef')
+        assert.ok(result.xTick.width > 0, 'the test browser must have working fonts')
+        assert.match(result.xTick.font, /italic.*600.*16px monospace/)
+        assert.equal(result.xTick.fontStretch, 'condensed')
+        assert.equal(result.xTick.fontVariantCaps, 'all-small-caps')
+        assert.equal(result.xTick.letterSpacing, '3px')
+        assert.equal(result.xTick.wordSpacing, '0px')
+        assert.equal(result.yLabel.fontStretch, 'normal')
+        assert.equal(result.yLabel.fontVariantCaps, 'normal')
+        assert.equal(result.xLabel.y, (result.innerBottom + 7 + 16 + 300) / 2)
+        assert.match(result.defaultFonts.Tick, /10px monospace/)
+        assert.match(result.defaultFonts.Axis, /12px sans-serif/)
+        assert.match(result.defaultFonts.Default, /14px sans-serif/)
+    })
+}

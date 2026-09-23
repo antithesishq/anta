@@ -119,3 +119,10 @@ window.renderAntaPlot = (height = 220, renderer = 'react', customTooltip = false
         ? h(AntaPlot, { plotArgs, className: 'anta-plot' })
         : <StrictMode><Context.Provider value="provided"><AntaPlot plotArgs={plotArgs} className="anta-plot" /></Context.Provider></StrictMode>)
 }
+
+
+// Direct core access stays in the test fixture, outside the public package API.
+import { draw } from '../src/core/render/canvas'
+import { new_plot_template } from '../src/core/template/plot_template'
+import { compose_plot } from '../src/core/compose/compose_plot'
+window.fontRendering = { draw, new_plot_template, compose_plot }

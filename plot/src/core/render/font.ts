@@ -1,11 +1,11 @@
 import type { CanvasContext, ResolvedFontConfig } from "../types"
 
 /** Apply the same font state for drawing and measurement, including optional canvas text features. */
-export function apply_canvas_font(ctx: CanvasContext, font: ResolvedFontConfig): void {
+export function apply_canvas_font(ctx: CanvasContext, font: ResolvedFontConfig, fallback: 'sans-serif' | 'monospace' = 'sans-serif'): void {
     const style = font.italic ? 'italic' : 'normal'
     const stretch = font.condensed ? 'condensed' : 'normal'
     ctx.fillStyle = font.color
-    ctx.font = `${style} ${font.weight} ${stretch} ${font.size}px ${font.family}, sans-serif`
+    ctx.font = `${style} ${font.weight} ${stretch} ${font.size}px ${font.family}, ${fallback}`
 
     if ('fontKerning' in ctx) ctx.fontKerning = 'normal'
     if ('fontStretch' in ctx) ctx.fontStretch = stretch

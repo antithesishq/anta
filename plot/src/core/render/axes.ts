@@ -130,7 +130,7 @@ function label_skip(ctx: CanvasContext, side: 'x' | 'y', spacing: number, labels
     let max_width = 0
 
     try {
-        apply_canvas_font(ctx, tick_font)
+        apply_canvas_font(ctx, tick_font, 'monospace')
 
         for (const label of labels) {
             const width = ctx.measureText(label).width
@@ -399,7 +399,7 @@ export function draw_axes(ctx: CanvasContext, chrome: AxisChrome): void {
             ctx.save()
             try {
                 ctx.strokeStyle = tick_mark_color(x_axis, theme, chrome_color)
-                apply_canvas_font(ctx, chrome.x_tick_font)
+                apply_canvas_font(ctx, chrome.x_tick_font, 'monospace')
                 const draw_x_mark = x_axis.tick_mark !== false
 
                 if (x_axis.scale === 'category') {
@@ -416,7 +416,7 @@ export function draw_axes(ctx: CanvasContext, chrome: AxisChrome): void {
             ctx.save()
             try {
                 ctx.strokeStyle = tick_mark_color(y_axis, theme, chrome_color)
-                apply_canvas_font(ctx, chrome.y_tick_font)
+                apply_canvas_font(ctx, chrome.y_tick_font, 'monospace')
                 const draw_y_mark = y_axis.tick_mark !== false
 
                 if (y_axis.scale === 'category') {

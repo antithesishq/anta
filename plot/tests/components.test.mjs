@@ -111,3 +111,32 @@ for (const dimension of ['width', 'height']) {
         host.disconnect()
     })
 }
+
+test('host captures the first inherited family and ignores later font-only context changes', () => {
+    const host = new PlotHost({
+        commit_mode: 'throttled', resolve_hover: input => input,
+        schedule() {}, hover() {}, clear_hover() {}, pointer() {}, viewport() {},
+        error: failure => { throw failure.error },
+    })
+    host.measurement = { width: 600, height: 300 }
+    host.environment = { color_theme: 'light', device_pixel_ratio: 1 }
+    host.update({ series: [], title: 'Title' })
+    host.render()
+    assert.equal(host.controller.composed_plot.inherited_font_family, undefined)
+    const context = { mode: 'light', devicePixelRatio: 1, font: { family: 'serif' } }
+    assert.equal(host.update_context(context), true)
+    host.render()
+    const first = host.controller.composed_plot
+    assert.equal(first.inherited_font_family, 'serif')
+    assert.equal(host.update_context({ ...context, font: { family: 'monospace' } }), false)
+    host.render()
+    assert.equal(host.controller.composed_plot, first)
+    assert.equal(host.update_context({ ...context, mode: 'dark', devicePixelRatio: 2, font: { family: 'cursive' } }), true)
+    host.render()
+    assert.equal(host.controller.composed_plot.inherited_font_family, 'serif')
+    assert.notEqual(host.controller.composed_plot, first)
+    host.update({ series: [], title: 'Title', font: 'fantasy' })
+    host.render()
+    assert.deepEqual(host.controller.composed_plot.font, { family: 'fantasy' })
+    assert.equal(host.controller.composed_plot.inherited_font_family, 'serif')
+})

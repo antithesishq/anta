@@ -45,7 +45,7 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
     try {
         const { layout, inner, x_scale, y_scale } = plot
         const tick_defaults = { family: 'monospace', size: 10, color: '#777' }
-        const label_defaults = { size: 12, color: '#777' }
+        const label_defaults = { family: plot.inherited_font_family, size: 12, color: '#777' }
         const x_tick_font = resolve_font(plot.x_axis?.tick_label_font, plot.font, tick_defaults, plot.chrome_theme)
         const y_tick_font = resolve_font(plot.y_axis?.tick_label_font, plot.font, tick_defaults, plot.chrome_theme)
         const x_label_font = resolve_font(plot.x_axis?.label_font, plot.font, label_defaults, plot.chrome_theme)
@@ -83,7 +83,7 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
         }
 
         if (plot.title) {
-            const title_font = resolve_font(plot.title_font, plot.font, { size: TITLE_SIZE, color: TITLE_COLOR }, plot.chrome_theme)
+            const title_font = resolve_font(plot.title_font, plot.font, { family: plot.inherited_font_family, size: TITLE_SIZE, color: TITLE_COLOR }, plot.chrome_theme)
             draw_title(ctx, layout, inner, plot.title, title_font)
         }
         draw_axes(ctx, chrome)

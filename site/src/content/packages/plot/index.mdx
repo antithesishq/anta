@@ -3551,12 +3551,14 @@ Font assets are supplied by the application.
 `all-petite-caps`, `unicase`, and `titling-caps`.
 
 Canvas drawing and text measurement use the same resolved font settings.
-Titles default to 14px sans-serif, axis names to 12px sans-serif, and tick
-labels to 10px monospace. The default weight is 400. Root settings override
+Titles default to 14px and axis names to 12px, using the initially inherited
+CSS font family with a sans-serif fallback. Tick labels default to 10px monospace. The default weight is 400. Root settings override
 these role defaults; local settings override the root field by field.
 
-Host CSS font inheritance and font-loading does not re-render the plot.
-Pass `family` explicitly and make fonts available before drawing.
+Plots capture the inherited CSS font family once when they mount. Explicit
+plot-level and local families take precedence. Later CSS font changes and
+font-loading completion do not trigger a redraw. Make fonts available before
+drawing; replacing `plotArgs` applies explicit font configuration changes.
 
 
 <PlotDetailGrid>

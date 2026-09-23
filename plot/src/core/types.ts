@@ -392,6 +392,7 @@ export type ComposedPlot<TooltipContent = unknown> = {
     title?: string
     title_font?: FontConfig
     font: FontConfig
+    inherited_font_family?: string
     series: ComposedSeries<TooltipContent>[]
     border?: boolean
     grid?: GridSpec

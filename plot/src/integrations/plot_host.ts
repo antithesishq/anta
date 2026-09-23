@@ -1,3 +1,4 @@
+import type { BoxContext } from '@antadesign/anta/box-types'
 import { PlotController, type PlotDrawHost, type PlotEnvironment, type PlotLifecycleError } from '../core/controller'
 import { resolve_canvas_size, type Dimensions } from '../core/compose/layout'
 import { create_interaction_coordinator } from '../core/interactions/coordinator'
@@ -45,6 +46,21 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
             on_pointer_change: options.pointer,
             on_pan_end: options.schedule,
         })
+    }
+
+    /** Capture the inherited family once; later font changes do not invalidate the plot. */
+    update_context(context: Pick<BoxContext, 'mode' | 'devicePixelRatio' | 'font'>): boolean {
+        const previous = this.environment
+        const inherited_font_family = previous?.inherited_font_family ?? context.font.family
+        if (previous?.color_theme === context.mode && previous.device_pixel_ratio === context.devicePixelRatio
+            && previous.inherited_font_family === inherited_font_family) return false
+
+        this.environment = {
+            color_theme: context.mode,
+            device_pixel_ratio: context.devicePixelRatio,
+            inherited_font_family,
+        }
+        return true
     }
 
     update(args: PlotArgs<Content>): boolean {

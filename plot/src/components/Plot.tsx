@@ -154,14 +154,8 @@ export function Plot<Content = React.ReactNode>({
     const onContextChange = (event: PlotSurfaceEventMap['contextchange']) => {
         if (host === null) return
 
-        const { mode, devicePixelRatio } = event.detail.current
-        const previous = host.environment
         retained.current.context_received = true
-
-        if (previous?.color_theme === mode && previous.device_pixel_ratio === devicePixelRatio) return
-
-        host.environment = { color_theme: mode, device_pixel_ratio: devicePixelRatio }
-        notify(value => value + 1)
+        if (host.update_context(event.detail.current)) notify(value => value + 1)
     }
 
     const onCanvasTransfer = (event: PlotSurfaceEventMap['canvastransfer']) => {

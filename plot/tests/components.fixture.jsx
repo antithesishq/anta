@@ -126,3 +126,39 @@ import { draw } from '../src/core/render/canvas'
 import { new_plot_template } from '../src/core/template/plot_template'
 import { compose_plot } from '../src/core/compose/compose_plot'
 window.fontRendering = { draw, new_plot_template, compose_plot }
+
+window.renderFontInheritance = async renderer => {
+    window.unmountPlot()
+    container.style.fontFamily = 'serif'
+    const createElement = renderer === 'preact' ? h : React.createElement
+    configure(createElement, renderer === 'preact' ? Fragment : React.Fragment, {
+        useRef: renderer === 'preact' ? preactUseRef : React.useRef,
+        useLayoutEffect: renderer === 'preact' ? preactUseLayoutEffect : React.useLayoutEffect,
+        useState: renderer === 'preact' ? preactUseState : React.useState,
+        useSyncExternalStore: renderer === 'preact' ? preactUseSyncExternalStore : React.useSyncExternalStore,
+    })
+    window.fontPaints = []
+    for (const prototype of [CanvasRenderingContext2D.prototype, OffscreenCanvasRenderingContext2D.prototype]) {
+        const original = prototype.fillText
+        prototype.fillText = function (text, ...args) {
+            fontPaints.push({ text, font: this.font })
+            return original.call(this, text, ...args)
+        }
+    }
+    const initialArgs = {
+        series: [scatter({ data: [{ x: 0, y: 0 }, { x: 1, y: 1 }] })],
+        title: 'Inherited title', axis: { x: { label: 'Inherited axis' } },
+    }
+    if (renderer === 'standalone') {
+        await import('../dist/elements/a-plot.js')
+        const plot = document.createElement('a-plot')
+        container.replaceChildren(plot)
+        window.setFontArgs = args => { plot.plotArgs = { ...initialArgs, ...args } }
+    } else {
+        root = renderer === 'preact'
+            ? { render: vnode => renderPreact(vnode, container), unmount: () => renderPreact(null, container) }
+            : createRoot(container)
+        window.setFontArgs = args => root.render(createElement(Plot, { plotArgs: { ...initialArgs, ...args } }))
+    }
+    window.setFontArgs({})
+}

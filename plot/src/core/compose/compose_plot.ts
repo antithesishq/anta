@@ -16,7 +16,7 @@ import { carry_factory_args } from "../series/factory_args"
  * @param viewport - optional per-axis zoom/pan viewport; null on an axis uses the full domain
  * @returns the ComposedPlot with layout, scales, and color theme resolved series
  */
-export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<TooltipContent>, width: number, height: number, color_theme: ColorTheme, viewport?: Viewport): ComposedPlot<TooltipContent> {
+export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<TooltipContent>, width: number, height: number, color_theme: ColorTheme, viewport?: Viewport, inherited_font_family?: string): ComposedPlot<TooltipContent> {
     const layout = resolve_layout(
         width,
         height,
@@ -61,6 +61,7 @@ export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<To
         title: template.title,
         title_font: template.title_font,
         font: template.font,
+        inherited_font_family,
         border: template.border,
         grid: template.grid,
         background: resolve_plot_background(template.background, color_theme),

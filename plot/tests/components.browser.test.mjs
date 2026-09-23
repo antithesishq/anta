@@ -448,3 +448,44 @@ for (const offscreen of [false, true]) {
         assert.match(result.defaultFonts.Default, /14px sans-serif/)
     })
 }
+
+for (const renderer of ['react', 'preact', 'standalone']) {
+    test(`initial font inheritance stays fixed until explicit configuration changes (${renderer})`, async t => {
+        const page = await pageFor(t)
+        await page.evaluate(renderer => renderFontInheritance(renderer), renderer)
+        await page.waitForFunction(() => fontPaints.some(p => p.text === 'Inherited title'))
+        const initial = await page.evaluate(() => ({
+            title: fontPaints.find(p => p.text === 'Inherited title').font,
+            axis: fontPaints.find(p => p.text === 'Inherited axis').font,
+            tick: fontPaints.find(p => p.text === '0').font,
+        }))
+        assert.match(initial.title, /14px serif/)
+        assert.match(initial.axis, /12px serif/)
+        assert.match(initial.tick, /10px monospace/)
+
+        const changed = await page.evaluate(async () => {
+            // Let initial measurements settle before observing new draws.
+            await new Promise(resolve => setTimeout(resolve, 100))
+            fontPaints.length = 0
+            document.querySelector('#app').style.fontFamily = 'cursive'
+            document.fonts.dispatchEvent(new Event('loadingdone'))
+            await new Promise(resolve => setTimeout(resolve, 100))
+            return fontPaints
+        })
+        assert.deepEqual(changed, [], 'CSS font changes and font loading do not repaint the plot')
+
+        await page.evaluate(() => setFontArgs({ font: 'monospace',
+            title: { text: 'Explicit title', font: 'sans-serif' } }))
+        await page.waitForFunction(() => fontPaints.some(p => p.text === 'Explicit title'))
+        const explicit = await page.evaluate(() => ({
+            title: fontPaints.find(p => p.text === 'Explicit title').font,
+            axis: fontPaints.find(p => p.text === 'Inherited axis').font,
+        }))
+        assert.match(explicit.title, /14px sans-serif/)
+        assert.match(explicit.axis, /12px monospace/)
+
+        await page.evaluate(() => { fontPaints.length = 0; setFontArgs({}) })
+        await page.waitForFunction(() => fontPaints.some(p => p.text === 'Inherited title'))
+        assert.match(await page.evaluate(() => fontPaints.find(p => p.text === 'Inherited title').font), /14px serif/)
+    })
+}

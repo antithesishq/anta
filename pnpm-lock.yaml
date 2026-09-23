@@ -66,8 +66,8 @@ importers:
         specifier: 4.0.2
         version: 4.0.2
       d3-time:
-        specifier: 2.1.1
-        version: 2.1.1
+        specifier: 3.1.0
+        version: 3.1.0
       es-toolkit:
         specifier: 1.52.0
         version: 1.52.0
@@ -1957,6 +1957,10 @@ packages:
 
   d3-time@2.1.1:
     resolution: {integrity: sha512-/eIQe/eR4kCQwq7yxi7z4c6qEXf2IYGcjoWB5OOQy4Tq9Uv39/947qlDcN2TLkiTzQWzvnsuYPB9TrWaNfipKQ==}
+
+  d3-time@3.1.0:
+    resolution: {integrity: sha512-VqKjzBLejbSMT4IgbmVgDjpkYrNWUYJnbCGo874u7MMKIWsILRX+OpX/gTk8MqjpT1A/c6HY2dCA77ZN0lkQ2Q==}
+    engines: {node: '>=12'}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -5120,7 +5124,7 @@ snapshots:
       d3-array: 2.12.1
       d3-format: 2.0.0
       d3-interpolate: 2.0.1
-      d3-time: 2.1.1
+      d3-time: 3.1.0
       d3-time-format: 3.0.0
 
   d3-time-format@3.0.0:
@@ -5128,6 +5132,10 @@ snapshots:
       d3-time: 2.1.1
 
   d3-time@2.1.1:
+    dependencies:
+      d3-array: 2.12.1
+
+  d3-time@3.1.0:
     dependencies:
       d3-array: 2.12.1
 

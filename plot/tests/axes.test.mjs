@@ -73,3 +73,11 @@ test('custom formatting overrides SI labels', () => {
     const labels = ticks(scaleLinear().domain([0, 10_000]), { tick_label_format: value => `value=${value}` })
     assert.equal(labels.at(-1).label, 'value=10000')
 })
+
+test('zero retains decimal precision on fractional axes', () => {
+    for (const [domain, zero] of [[[-1, 1], '0.0'], [[0, 1], '0.0'], [[0, 0.001], '0.0000']]) {
+        const labels = ticks(scaleLinear().domain(domain), {}).map(tick => tick.label)
+        assert.ok(labels.includes(zero), `${domain}: ${labels}`)
+        assert.equal(labels.includes('0'), false)
+    }
+})

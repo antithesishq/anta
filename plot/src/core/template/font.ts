@@ -8,6 +8,11 @@ type FontRoleDefaults = {
     color: ThemeColor
 }
 
+const font_caps = new Set<string>([
+    'normal', 'small-caps', 'all-small-caps', 'petite-caps',
+    'all-petite-caps', 'unicase', 'titling-caps',
+])
+
 // Normalize the string shorthand into a family-only font config.
 function normalize_font(font: FontArg | undefined): FontConfig {
     if (font === undefined) {
@@ -16,9 +21,13 @@ function normalize_font(font: FontArg | undefined): FontConfig {
     return typeof font === 'string' ? { family: font } : font
 }
 
-// Validate the numeric fields of a font config and return its normalized object form.
+// Validate font fields and return the normalized object form.
 export function validate_font(font: FontArg | undefined, label: string): FontConfig {
     const config = normalize_font(font)
+
+    if (config.caps !== undefined && typeof config.caps !== 'boolean' && !font_caps.has(config.caps)) {
+        throw new Error(`${label}.caps must be a boolean or one of: ${[...font_caps].join(', ')}; got ${config.caps}`)
+    }
 
     if (config.size !== undefined) {
         validate_positive(config.size, `${label}.size`)

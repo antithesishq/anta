@@ -261,7 +261,7 @@ function continuous_tick_entries(side: 'x' | 'y', scale: ContinuousScale, inner:
 
         if (custom_format !== undefined) {
             label = custom_format(Number(tick), i)
-        } else if (!is_time && Number(tick) === 0) {
+        } else if (!is_time && specifier === '~s' && Number(tick) === 0) {
             label = '0'
         } else {
             label = format(tick)

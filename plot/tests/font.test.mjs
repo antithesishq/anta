@@ -10,6 +10,7 @@ await build({
             export { new_plot_template } from './src/core/template/plot_template'
             export { compose_plot } from './src/core/compose/compose_plot'
             export { should_invert_color } from './src/core/template/color'
+            export { PlotController } from './src/core/controller'
             export { apply_canvas_font } from './src/core/render/font'
         `,
         resolveDir: fileURLToPath(new URL('..', import.meta.url)),
@@ -17,7 +18,7 @@ await build({
     bundle: true, platform: 'node', format: 'esm',
     outfile: fileURLToPath(new URL('../.build/font-test.mjs', import.meta.url)),
 })
-const { validate_font, resolve_font, new_plot_template, compose_plot, should_invert_color, apply_canvas_font } = await import('../.build/font-test.mjs')
+const { validate_font, resolve_font, new_plot_template, compose_plot, should_invert_color, apply_canvas_font, PlotController } = await import('../.build/font-test.mjs')
 const defaults = { family: 'monospace', size: 10, color: { light: '#111', dark: '#eee' } }
 
 test('font overrides resolve field by field, including false and zero', () => {
@@ -48,6 +49,12 @@ const locations = [
     ]),
 ]
 for (const [location, args] of locations) {
+    test(`rejects invalid caps at ${location}`, () => {
+        for (const caps of ['smallcaps', '', 1, null]) {
+            assert.throws(() => new_plot_template({ series: [], ...args({ caps }) }),
+                error => error.message.startsWith(`plot: ${location}.caps must be`))
+        }
+    })
     test(`validates numeric font fields at ${location}`, () => {
         for (const [field, values] of Object.entries({
             size: [0, -1, NaN, Infinity, -Infinity],
@@ -118,4 +125,34 @@ test('canvas font application tolerates contexts without optional text features'
     assert.equal(ctx.font, 'italic 400 condensed 16px monospace, sans-serif')
     assert.equal(ctx.fillStyle, '#111')
     assert.deepEqual(Object.keys(ctx), ['font', 'fillStyle'])
+})
+
+test('family strings pass through unchanged and supported caps are accepted', () => {
+    for (const family of ['16px Inter', '', 'Arial,', 'Arial', 'Comic Sans MS', 'Unknown Font', 'system-ui',
+        '"Antithesis mono", monospace', "'16px Inter', serif", '"A,B", Arial',
+        '游ゴシック', String.raw`\31 6px\ Inter, serif`, 'Arial /* fallback */, sans-serif']) {
+        assert.equal(validate_font(family, 'font').family, family)
+    }
+    for (const caps of [true, false, 'normal', 'small-caps', 'all-small-caps',
+        'petite-caps', 'all-petite-caps', 'unicase', 'titling-caps']) {
+        assert.equal(validate_font({ caps }, 'font').caps, caps)
+    }
+})
+
+test('invalid caps report template errors through the lifecycle callback', () => {
+    for (const font of [{ caps: 'smallcaps' }, { caps: 1 }]) {
+        const errors = []
+        assert.throws(() => new PlotController({ series: [], font }, failure => errors.push(failure)))
+        assert.equal(errors.length, 1)
+        assert.equal(errors[0].phase, 'template')
+        assert.ok(errors[0].error instanceof Error)
+        assert.match(errors[0].error.message, /plot: font\.caps must be/)
+
+        const controller = new PlotController({ series: [], font: 'Arial' }, failure => errors.push(failure))
+        const template = controller.template
+        controller.update_plot_args({ series: [], font })
+        assert.equal(errors.length, 2)
+        assert.equal(errors[1].phase, 'template')
+        assert.equal(controller.template, template, 'invalid updates retain the previous template')
+    }
 })

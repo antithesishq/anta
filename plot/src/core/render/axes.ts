@@ -1,9 +1,10 @@
 import type { Axis, BandScale, CanvasContext, ColorTheme, ContinuousScale, GridSpec, Layout, Rect, ResolvedFontConfig, Scale } from "../types"
 import { apply_canvas_font } from "./font"
+import { timeDay, utcDay, type TimeInterval, type CountableTimeInterval } from "d3-time"
 
 type ContinuousTickScale = {
     (value: number | Date): number
-    ticks(count: number): (number | Date)[]
+    ticks(count: number | TimeInterval): (number | Date)[]
     tickFormat(count: number, specifier?: string): (value: number | Date) => string
     domain(): (number | Date)[]
 }
@@ -31,7 +32,7 @@ function x_tick_label_bottom(inner: Rect, tick_font: ResolvedFontConfig): number
 const DAY_MS = 86_400_000
 const DAY_TICKS_MAX_MS = 20 * DAY_MS
 const MONTH_TICKS_MAX_MS = 180 * DAY_MS
-const SI_THRESHOLD = 100_000
+const SI_THRESHOLD = 10_000
 
 /**
  * Linear tick count for a pixel span, floored at 2 so narrow axes still show both endpoints.
@@ -66,6 +67,45 @@ function time_tick_count(domain: (number | Date)[], side: 'x' | 'y', inner: Rect
     }
     const max_day_ticks = Math.floor(span_ms / DAY_MS)
     return Math.max(2, Math.min(target, max_day_ticks))
+}
+
+/**
+ * D3 implements day.every(2) as odd dates within each month, so a 31st is followed immediately by the
+ * next month's 1st. Replace that selected interval with one whose parity is counted from a fixed epoch.
+ * The replacement is chosen once for the whole domain, so any number of month boundaries stays on one cadence.
+ * @param scale - the time scale
+ * @param ticks - D3's automatically selected ticks
+ * @param utc - whether calendar boundaries are UTC rather than local time
+ * @returns the original ticks, or ticks from a stable every-other-day interval
+ */
+function stabilize_two_day_ticks(scale: ContinuousTickScale, ticks: (number | Date)[], utc: boolean): (number | Date)[] {
+    const day: CountableTimeInterval = utc ? utcDay : timeDay
+    const resetting_interval = day.every(2)
+
+    if (resetting_interval === null) {
+        return ticks
+    }
+    const resetting_ticks = scale.ticks(resetting_interval)
+
+    if (!same_tick_values(ticks, resetting_ticks)) {
+        return ticks
+    }
+    const anchor = day.floor(new Date(0))
+    const stable_interval = day.filter(date => day.count(anchor, date) % 2 === 0)
+    return scale.ticks(stable_interval)
+}
+
+function same_tick_values(left: (number | Date)[], right: (number | Date)[]): boolean {
+    if (left.length !== right.length) {
+        return false
+    }
+
+    for (let i = 0; i < left.length; i++) {
+        if (Number(left[i]) !== Number(right[i])) {
+            return false
+        }
+    }
+    return true
 }
 
 /**
@@ -205,7 +245,10 @@ function continuous_tick_entries(side: 'x' | 'y', scale: ContinuousScale, inner:
     const domain = tick_scale.domain()
     const is_time = domain[0] instanceof Date
     const count = is_time ? time_tick_count(domain, side, inner) : axis_tick_count(side, inner)
-    const ticks = tick_scale.ticks(count)
+    const automatic_ticks = tick_scale.ticks(count)
+    const ticks = is_time
+        ? stabilize_two_day_ticks(tick_scale, automatic_ticks, axis?.scale === 'utc')
+        : automatic_ticks
 
     if (ticks.length === 0) {
         return []

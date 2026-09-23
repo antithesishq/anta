@@ -375,14 +375,15 @@ Install the package to use plots in React, Preact, or plain JavaScript.
 npm install @antadesign/plot   # or pnpm / bun
 ```
 
-Import `Plot` from `/components` and series factories from `@antadesign/plot`.
-React 19 is a peer dependency. For Preact, use `preact/compat` aliases.
+Import `Plot` and series factories from `@antadesign/plot`. These root component
+imports require version `0.1.3` or later. Anta `^0.3.30` and React `^19.0.0` are
+peer dependencies. For Preact, use `preact/compat` aliases.
 
 ```tsx
-import { Plot } from '@antadesign/plot/components'
-import { line } from '@antadesign/plot'
+import { Plot, line } from '@antadesign/plot'
 import '@antadesign/plot/elements/a-plot-surface'
 import '@antadesign/anta/elements/a-tooltip'
+import '@antadesign/anta/theme-antune.css'
 
 const plotArgs = {
   height: 300,
@@ -395,8 +396,9 @@ function Example() {
 ```
 
 `Plot` is a function component that uses Anta's configured JSX factory and hooks.
-It needs no DOM registration. Import the surface and tooltip registration modules
-once in your browser entry; their elements install their styles automatically.
+Importing it does not register browser elements. Import the surface and tooltip
+registration modules once in your browser entry; their elements install their
+base styles automatically. Load your application's Anta theme separately.
 `Plot` handles canvas setup, drawing, interactions, and cleanup.
 
 By default, `Plot` fills its parent. Give the parent a height or set `plotArgs.height`,
@@ -406,8 +408,9 @@ With a worker renderer and a DOM bridge that transfers the surface's canvases,
 
 For plain JavaScript or TypeScript, import `@antadesign/plot/elements/a-plot`, then use `<a-plot>` and assign its `plotArgs` property.
 
-Plot owns the rendering lifecycle, including its internal surface, controllers,
-highlight overlay, and cleanup. Customize marks through `renderer` and
+`Plot` owns canvas rendering, interactions, and cleanup. The package also exports
+`PlotSurface` as a low-level JSX wrapper, but controllers and drawing lifecycle
+helpers remain internal. Customize marks through `renderer` and
 `highlight_renderer`, and tooltips through the series or root tooltip callbacks.
 
 </Disclosure>

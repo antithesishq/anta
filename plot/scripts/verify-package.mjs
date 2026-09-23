@@ -32,7 +32,7 @@ function inputs(entry, visited = new Set()) {
     return result
 }
 for (const input of inputs('dist/index.js')) {
-    assert.doesNotMatch(input, /(?:@antadesign|(?:^|\/)react(?:\/|$)|preact|notebook_demo|shell\/)/)
+    assert.doesNotMatch(input, /(?:^react-dom(?:\/|$)|preact|notebook_demo|shell\/|src\/browser\/)/)
 }
 for (const input of Object.keys(metadata.inputs)) {
     assert.doesNotMatch(input, /(?:^|\/)lodash(?:\/|$)|notebook_demo|(?:^|\/)shell\/|(?:^|\/)deps\/preact/)
@@ -43,7 +43,8 @@ inputs('dist/browser.js') // Browser dependencies may retain the declared React 
 assert.equal(manifest.exports['./react'], undefined)
 assert.equal(manifest.peerDependencies['react-dom'], undefined)
 assert.equal(manifest.peerDependencies.react, '^19.0.0')
-for (const input of inputs('dist/components.js')) assert.doesNotMatch(input, /^react-dom(?:\/|$)/)
+assert.equal(manifest.exports['./components'], undefined)
+assert.equal(metadata.outputs['dist/components.js'], undefined)
 for (const input of inputs('dist/elements/a-plot-surface.js')) {
     assert.doesNotMatch(input, /browser\/plot_element|browser\/tooltip|anta\/elements\/a-tooltip/)
 }
@@ -91,12 +92,12 @@ try {
     const runtime = `
         import assert from 'node:assert/strict'
         import { readFile } from 'node:fs/promises'
-        import * as plot from '@antadesign/plot'
+        import * as plot from './public.mjs'
         import * as internal from './internal.mjs'
         import * as browser from '@antadesign/plot/browser'
         await browser.definePlotElement()
         assert.equal(browser.definePlotSurfaceElement, undefined)
-        assert.deepEqual(Object.keys(plot).sort(), ['area','bar','custom','line','rect','rule','scatter'])
+        assert.deepEqual(Object.keys(plot).sort(), ['Plot','PlotSurface','area','bar','custom','line','rect','rule','scatter'])
         const rows = [{x:1,y:2},{x:2,y:4},{x:3,y:3}]
         // Both custom highlight paths remain supported by the internal renderer.
         const highlightContext = new Proxy({canvas:{width:600,height:300}}, {
@@ -134,7 +135,7 @@ try {
         controller.compose({width:600,height:300,color_theme:'light',device_pixel_ratio:1})
         assert.equal(controller.interactions.handle_wheel({offsetX:200,offsetY:100,deltaY:-100,ctrlKey:true},controller.template.zoom_pan),true)
         assert.notEqual(controller.interactions.staged_viewport.x,null)
-        for (const path of ['host', 'anta', 'core/controller']) {
+        for (const path of ['components', 'host', 'anta', 'core/controller']) {
             await assert.rejects(import('@antadesign/plot/' + path), {code:'ERR_PACKAGE_PATH_NOT_EXPORTED'})
         }
         const css = await readFile(new URL(import.meta.resolve('@antadesign/plot/plot.css')), 'utf8')
@@ -142,9 +143,8 @@ try {
         assert.ok(!css.includes('a-plot-surface'), 'surface owns its layout')
     `
     await writeFile(resolve(sandbox, 'runtime.mjs'), runtime)
-    execFileSync(process.execPath, ['runtime.mjs'], { cwd: sandbox, stdio: 'inherit', env: { ...process.env, NODE_PATH: '' } })
 
-    // Copy only the declaration dependency closure; do not symlink the workspace node_modules tree.
+    // Copy the public runtime and declaration dependencies; do not symlink the workspace node_modules tree.
     async function writable_directories(directory) {
         await chmod(directory, 0o755)
         for (const item of await readdir(directory, { withFileTypes: true })) {
@@ -184,10 +184,25 @@ try {
             await copy_dependency(dependency, child_resolver)
         }
     }
-    for (const name of ['@types/d3-scale', '@antadesign/anta', '@types/react']) await copy_dependency(name)
+    for (const name of ['@types/d3-scale', '@antadesign/anta', '@types/react', 'react']) await copy_dependency(name)
+    // Components use Anta's bundler-facing entry, including for server rendering.
+    await writeFile(resolve(sandbox, 'public-entry.mjs'), "export * from '@antadesign/plot'")
+    await build({
+        absWorkingDir: sandbox,
+        entryPoints: { public: 'public-entry.mjs' },
+        outdir: sandbox, bundle: true, splitting: true, platform: 'node', format: 'esm',
+        outExtension: { '.js': '.mjs' }, loader: { '.css': 'empty' }, external: ['react'],
+    })
+    execFileSync(process.execPath, ['runtime.mjs'], { cwd: sandbox, stdio: 'inherit', env: { ...process.env, NODE_PATH: '' } })
+
     const core_consumer = resolve(sandbox, 'core-consumer.ts')
     await writeFile(core_consumer, `
-        import { scatter, type PlotArgs, type PlotLifecycleError } from '@antadesign/plot'
+        import { Plot, PlotSurface, scatter, type PlotArgs, type PlotProps, type PlotSurfaceProps, type PlotLifecycleError } from '@antadesign/plot'
+        import type { ReactNode } from 'react'
+        const props: PlotProps<ReactNode> = {plotArgs:{series:[]}}
+        const surfaceProps: PlotSurfaceProps = {canvasOwner:'worker'}
+        Plot(props)
+        PlotSurface(surfaceProps)
         // @ts-expect-error Rendering lifecycle ownership is internal.
         import { PlotController } from '@antadesign/plot'
         // @ts-expect-error Canvas lifecycle helpers are internal.
@@ -196,21 +211,30 @@ try {
         const onError = (failure: PlotLifecycleError) => failure.phase
     `)
     const core_program = ts.createProgram([core_consumer], {
-        target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.NodeNext,
-        moduleResolution: ts.ModuleResolutionKind.NodeNext, strict: true, noEmit: true,
-        skipLibCheck: false, types: [],
+        target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext,
+        moduleResolution: ts.ModuleResolutionKind.Bundler, strict: true, noEmit: true,
+        skipLibCheck: false, types: [], noUncheckedSideEffectImports: false,
         lib: ['lib.es2022.d.ts', 'lib.dom.d.ts', 'lib.dom.iterable.d.ts'],
     })
     const core_diagnostics = ts.getPreEmitDiagnostics(core_program)
     assert.equal(core_diagnostics.length, 0, ts.formatDiagnosticsWithColorAndContext(core_diagnostics, {
         getCanonicalFileName: name => name, getCurrentDirectory: () => sandbox, getNewLine: () => '\n',
     }))
+    // Notebook uses legacy Node resolution with skipLibCheck and no package paths overrides.
+    const legacy_program = ts.createProgram([core_consumer], {
+        target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS,
+        moduleResolution: ts.ModuleResolutionKind.Node10, strict: true, noEmit: true,
+        skipLibCheck: true, types: [], ignoreDeprecations: '6.0',
+        lib: ['lib.es2022.d.ts', 'lib.dom.d.ts', 'lib.dom.iterable.d.ts'],
+    })
+    const legacy_diagnostics = ts.getPreEmitDiagnostics(legacy_program)
+    assert.equal(legacy_diagnostics.length, 0, ts.formatDiagnosticsWithColorAndContext(legacy_diagnostics, {
+        getCanonicalFileName: name => name, getCurrentDirectory: () => sandbox, getNewLine: () => '\n',
+    }))
     const consumer = `
         import { scatter, custom, type PlotArgs, type CustomRendererFn, type CustomHighlightRendererFn } from '@antadesign/plot'
         import { definePlotElement, type APlotElement } from '@antadesign/plot/browser'
-        // @ts-expect-error Applications use Plot, not its internal surface.
-        import { PlotSurface } from '@antadesign/plot/components'
-        import { Plot, type PlotProps } from '@antadesign/plot/components'
+        import { PlotSurface, Plot, type PlotProps } from '@antadesign/plot'
         import { createElement } from 'react'
         const reactProps: PlotProps = {
             plotArgs: { series: [scatter({ data: [{x:1,y:2}], tooltip: () => createElement('strong', null, 'point') })] },
@@ -220,7 +244,7 @@ try {
         const renderer: CustomRendererFn = (series, context) => { context.color_at(0) }
         const highlight_renderer: CustomHighlightRendererFn = (series, index, context) => { context.color_at(index) }
         custom({data:[{x:1,y:2}], renderer, highlight_renderer, hit_test:() => 0})
-        import { Plot as AntaPlot, type PlotProps as AntaPlotProps } from '@antadesign/plot/components'
+        import { Plot as AntaPlot, type PlotProps as AntaPlotProps } from '@antadesign/plot'
         const antaProps: AntaPlotProps = { plotArgs: { series: [scatter({data: [{x:1,y:2}], tooltip: true})] } }
         AntaPlot(antaProps)
         AntaPlot({ plotArgs: reactProps.plotArgs })
@@ -250,7 +274,7 @@ try {
             getCanonicalFileName: name => name, getCurrentDirectory: () => sandbox, getNewLine: () => '\n',
         }))
     }
-    console.log('PASS: isolated ESM exports, seven factories, internal composition and interactions, SSR imports, CSS, private lifecycle API and Bundler/NodeNext consumer types')
+    console.log('PASS: isolated ESM exports, seven factories, internal composition and interactions, SSR imports, CSS, private lifecycle API and legacy Node/Bundler/NodeNext consumer types')
 } finally {
     await rm(sandbox, { recursive: true, force: true })
 }

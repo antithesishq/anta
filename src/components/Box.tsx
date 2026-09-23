@@ -52,6 +52,9 @@ export interface BoxProps extends BaseProps {
    * overflow adds content observation; hidden edges and scroll add scroll reads.
    * Without handlers or `fade`, omission stays idle. */
   observe?: BoxObservation | readonly BoxObservation[]
+  /** Keeps measurement events and CSS clipping states current outside the
+   * viewport. Has no effect unless `observe` or `fade` selects measurement. */
+  observeOffscreen?: boolean
   /** Minimum interval between measurements, in milliseconds. The initial
    * measurement runs immediately; a trailing read updates CSS states and
    * delivers the latest event. Descendant rects are read only for emitted
@@ -116,6 +119,7 @@ export const Box = ({
   padding,
   margin,
   observe,
+  observeOffscreen,
   throttle,
   fade,
   fadeSize,
@@ -140,6 +144,7 @@ export const Box = ({
       padding={padding != null ? '' : undefined}
       margin={margin != null ? '' : undefined}
       observe={observeAttr(observe, onMeasureChange, onContextChange)}
+      observe-offscreen={observeOffscreen ? '' : undefined}
       throttle={throttle}
       fade={fade ? '' : undefined}
       fade-size={fade && fadeSize != null ? cssLength(fadeSize) : undefined}

@@ -391,6 +391,8 @@ function rounded(value: number): number {
  * measurement fields or presets, including `context` and `all`. `fade` keeps
  * clipping states current without selecting event fields. A box with neither
  * runs no observers at all, including the shared visibility observer.
+ * `observe-offscreen` opts out of the pause: measurement keeps running while
+ * the box is off screen, and the box skips the visibility observer entirely.
  * The `measurement` / `context` / `isTruncated` getters still read on demand.
  *
  * Attributes rather than "is a listener attached" on purpose. A listener tally
@@ -401,7 +403,7 @@ function rounded(value: number): number {
  * props, so this is invisible to anyone using `Box`.
  */
 export class ABoxElement extends HTMLElementBase {
-  static observedAttributes = ['fade', 'observe', 'throttle']
+  static observedAttributes = ['fade', 'observe', 'observe-offscreen', 'throttle']
 
   #internals = this.attachInternals?.()
   #store?: BoxWindowStore
@@ -456,7 +458,7 @@ export class ABoxElement extends HTMLElementBase {
     if (previous === current) return
     if (name === 'fade' && current === null) this.#clearFadeMask()
     if (!this.#store) return
-    if (name === 'fade' || name === 'observe') this.#sync()
+    if (name === 'fade' || name === 'observe' || name === 'observe-offscreen') this.#sync()
     if (name === 'throttle') this.#configureThrottle()
     if (name === 'observe' || name === 'throttle') this.#queueMeasurement()
   }
@@ -506,13 +508,19 @@ export class ABoxElement extends HTMLElementBase {
     this.#watchContent = this.hasAttribute('fade') || content
     this.#watchScroll = this.hasAttribute('fade') || scroll
     const wantsMeasurement = this.hasAttribute('fade') || fields.size > 0
+    // Opt-in: keep measuring off screen. Such a box has no use for the
+    // visibility observer, so it leaves it rather than paying for entries it
+    // ignores. `#visible` may go stale meanwhile; if the attribute is removed,
+    // re-observing delivers a fresh initial entry that corrects it.
+    const offscreen = this.hasAttribute('observe-offscreen')
 
-    const measure = this.isConnected && wantsMeasurement && (this.#visible ?? this.hasAttribute('fade'))
+    const measure = this.isConnected && wantsMeasurement
+      && (offscreen || (this.#visible ?? this.hasAttribute('fade')))
     if (measure) this.#startMeasuring()
     else this.#stopMeasuring()
     if (this.#measuring) this.#syncMeasurementSources()
 
-    if (this.isConnected && wantsMeasurement) this.#store?.observeVisibility(this)
+    if (this.isConnected && wantsMeasurement && !offscreen) this.#store?.observeVisibility(this)
     else this.#store?.unobserveVisibility(this)
 
     if (this.isConnected && wantsContext) this.#startReportingContext()

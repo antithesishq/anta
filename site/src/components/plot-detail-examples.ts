@@ -19,7 +19,7 @@ function base(): PlotArgs<Node> {
 
 export function title(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 24, bottom: 48, left: 76 },
-    title: { text: 'Plot title', size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } }
+    title: { text: 'Plot title', font: { size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } } }
 }
 
 export function margins(): PlotArgs<Node> {
@@ -84,24 +84,24 @@ export function timeCategory(): PlotArgs<Node> {
 
 export function axisLabels(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: { text: 'Time', position: 'right', size: 18, color: { light: '#713fff', dark: '#c4b5fd' } } },
-    y: { min: 0, max: 100, label: { text: 'Value', position: 'top', size: 12, color: { light: '#c2410c', dark: '#fdba74' } } },
+    x: { min: 0, max: 100, label: { text: 'Time', position: 'right', font: { size: 18, color: { light: '#713fff', dark: '#c4b5fd' } } } },
+    y: { min: 0, max: 100, label: { text: 'Value', position: 'top', font: { size: 12, color: { light: '#c2410c', dark: '#fdba74' } } } },
   } }
 }
 
 export function axisLabelsOpposite(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: { text: 'Time', position: 'left', size: 12,
-      color: { light: '#c2410c', dark: '#fdba74' } } },
-    y: { min: 0, max: 100, label: { text: 'Value', position: 'bottom', size: 20,
-      color: { light: '#713fff', dark: '#c4b5fd' } } },
+    x: { min: 0, max: 100, label: { text: 'Time', position: 'left', font: { size: 12,
+      color: { light: '#c2410c', dark: '#fdba74' } } } },
+    y: { min: 0, max: 100, label: { text: 'Value', position: 'bottom', font: { size: 20,
+      color: { light: '#713fff', dark: '#c4b5fd' } } } },
   } }
 }
 
 export function tickLabels(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: 'Elapsed time', tick_label: { format: value => value + ' s', size: 10, color: { light: '#713fff', dark: '#c4b5fd' } } },
-    y: { min: 0, max: 100, label: 'Utilization', tick_label: { format: value => value + '%', size: 15, color: { light: '#c2410c', dark: '#fdba74' } } },
+    x: { min: 0, max: 100, label: 'Elapsed time', tick_label: { format: value => value + ' s', font: { size: 10, color: { light: '#713fff', dark: '#c4b5fd' } } } },
+    y: { min: 0, max: 100, label: 'Utilization', tick_label: { format: value => value + '%', font: { size: 15, color: { light: '#c2410c', dark: '#fdba74' } } } },
   } }
 }
 

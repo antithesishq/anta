@@ -70,8 +70,8 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
         }
 
         if (plot.title) {
-            const title_color = resolve_text_color(plot.title_color, plot.chrome_theme, TITLE_COLOR)
-            draw_title(ctx, layout, inner, plot.title, plot.title_size ?? TITLE_SIZE, title_color)
+            const title_color = resolve_text_color(plot.title_font?.color, plot.chrome_theme, TITLE_COLOR)
+            draw_title(ctx, layout, inner, plot.title, plot.title_font?.size ?? TITLE_SIZE, title_color)
         }
         draw_axes(ctx, chrome)
 

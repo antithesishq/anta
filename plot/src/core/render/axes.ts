@@ -29,7 +29,7 @@ function sans(size: number): string {
 }
 
 function tick_label_size_of(axis: Axis | undefined): number {
-    return axis?.tick_label_size ?? TICK_LABEL_SIZE
+    return axis?.tick_label_font?.size ?? TICK_LABEL_SIZE
 }
 
 function tick_label_font_of(axis: Axis | undefined): string {
@@ -348,7 +348,7 @@ export function draw_axes(ctx: CanvasContext, chrome: AxisChrome): void {
 
     if (x_axis !== undefined) {
         ctx.strokeStyle = tick_mark_color(x_axis, theme, chrome_color)
-        ctx.fillStyle = resolve_text_color(x_axis.tick_label_color, theme, TICK_LABEL_COLOR)
+        ctx.fillStyle = resolve_text_color(x_axis.tick_label_font?.color, theme, TICK_LABEL_COLOR)
         ctx.font = tick_label_font_of(x_axis)
         const draw_x_mark = x_axis.tick_mark !== false
 
@@ -361,7 +361,7 @@ export function draw_axes(ctx: CanvasContext, chrome: AxisChrome): void {
 
     if (y_axis !== undefined) {
         ctx.strokeStyle = tick_mark_color(y_axis, theme, chrome_color)
-        ctx.fillStyle = resolve_text_color(y_axis.tick_label_color, theme, TICK_LABEL_COLOR)
+        ctx.fillStyle = resolve_text_color(y_axis.tick_label_font?.color, theme, TICK_LABEL_COLOR)
         ctx.font = tick_label_font_of(y_axis)
         const draw_y_mark = y_axis.tick_mark !== false
 
@@ -610,8 +610,8 @@ function draw_axis_labels(ctx: CanvasContext, layout: Layout, inner: Rect, x_axi
 }
 
 function set_axis_label_style(ctx: CanvasContext, axis: Axis, theme: ColorTheme): void {
-    ctx.fillStyle = resolve_text_color(axis.label_color, theme, AXIS_LABEL_COLOR)
-    ctx.font = sans(axis.label_size ?? AXIS_LABEL_SIZE)
+    ctx.fillStyle = resolve_text_color(axis.label_font?.color, theme, AXIS_LABEL_COLOR)
+    ctx.font = sans(axis.label_font?.size ?? AXIS_LABEL_SIZE)
 }
 
 /**
@@ -624,7 +624,7 @@ function set_axis_label_style(ctx: CanvasContext, axis: Axis, theme: ColorTheme)
  */
 function x_axis_label_center_y(layout: Layout, inner: Rect, axis: Axis): number {
     const ticks_bottom = x_tick_label_bottom(inner, axis)
-    const label_size = axis.label_size ?? AXIS_LABEL_SIZE
+    const label_size = axis.label_font?.size ?? AXIS_LABEL_SIZE
 
     if (ticks_bottom + label_size > layout.height) {
         return layout.height - layout.margin_bottom / 2

@@ -1,4 +1,5 @@
-import type { AxisTemplate, Domain, Margin, PlotArgs, PlotTemplate, RequestedViewportWindow, Series, ThemeColor, TitleArg, ViewportRequest, ZoomPan } from "../types"
+import { validate_font } from "./font"
+import type { AxisTemplate, Domain, FontConfig, Margin, PlotArgs, PlotTemplate, RequestedViewportWindow, Series, TitleArg, ViewportRequest, ZoomPan } from "../types"
 import { build_resolved_axes } from "./axis"
 import { build_resolved_series } from "./build_series"
 import { validate_non_negative, validate_positive } from "./validate"
@@ -33,8 +34,8 @@ export function new_plot_template<TooltipContent = unknown>(args: PlotArgs<Toolt
         x: x_resolved.axis_template,
         y: y_resolved.axis_template,
         title: resolve_label(title.text),
-        title_size: title.size,
-        title_color: title.color,
+        title_font: title.font,
+        font: validate_font(args.font, 'plot: font'),
         margin: args.margin,
         width: args.width,
         height: args.height,
@@ -211,13 +212,13 @@ export function resolve_label(explicit: string | undefined, fallback?: string): 
 }
 
 /**
- * Split a title arg into its parts: a bare string is just text, an object carries text plus size / color.
+ * Split a title arg into its parts: a bare string is just text, an object carries text plus a font override.
  * @param title - the title arg, or undefined
- * @returns the text, size, and color (any of which may be undefined)
+ * @returns the text and normalized font override
  */
-function normalize_title(title: TitleArg | undefined): { text: string | undefined; size: number | undefined; color: ThemeColor | undefined } {
+function normalize_title(title: TitleArg | undefined): { text: string | undefined; font: FontConfig | undefined } {
     if (title === undefined || typeof title === 'string') {
-        return { text: title, size: undefined, color: undefined }
+        return { text: title, font: undefined }
     }
-    return { text: title.text, size: title.size, color: title.color }
+    return { text: title.text, font: title.font === undefined ? undefined : validate_font(title.font, 'plot: title.font') }
 }

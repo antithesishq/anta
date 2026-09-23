@@ -18,7 +18,10 @@ function normalize_font(font: FontArg | undefined): FontConfig {
     if (font === undefined) {
         return {}
     }
-    return typeof font === 'string' ? { family: font } : font
+    const config = typeof font === 'string' ? { family: font } : font
+    // An empty family would invalidate the entire canvas font shorthand, including its size.
+    if (config.family?.trim() === '') return { ...config, family: undefined }
+    return config
 }
 
 // Validate font fields and return the normalized object form.

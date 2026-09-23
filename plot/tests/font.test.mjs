@@ -128,7 +128,7 @@ test('canvas font application tolerates contexts without optional text features'
 })
 
 test('family strings pass through unchanged and supported caps are accepted', () => {
-    for (const family of ['16px Inter', '', 'Arial,', 'Arial', 'Comic Sans MS', 'Unknown Font', 'system-ui',
+    for (const family of ['16px Inter', 'Arial,', 'Arial', 'Comic Sans MS', 'Unknown Font', 'system-ui',
         '"Antithesis mono", monospace', "'16px Inter', serif", '"A,B", Arial',
         '游ゴシック', String.raw`\31 6px\ Inter, serif`, 'Arial /* fallback */, sans-serif']) {
         assert.equal(validate_font(family, 'font').family, family)
@@ -154,5 +154,20 @@ test('invalid caps report template errors through the lifecycle callback', () =>
         assert.equal(errors.length, 2)
         assert.equal(errors[1].phase, 'template')
         assert.equal(controller.template, template, 'invalid updates retain the previous template')
+    }
+})
+
+test('empty families inherit without discarding other font fields', () => {
+    for (const family of ['', '   ', '\t\n']) {
+        const config = Object.freeze({ family, size: 24, weight: 600 })
+        const root = validate_font(config, 'font')
+        const inherited = resolve_font(undefined, root, { family: 'serif', size: 14, color: '#000' }, 'light')
+        assert.equal(inherited.family, 'serif')
+        assert.equal(inherited.size, 24)
+        assert.equal(inherited.weight, 600)
+        assert.equal(config.family, family)
+        const local = validate_font(family, 'title.font')
+        assert.equal(resolve_font(local, { family: 'Arial', size: 16 }, defaults, 'light').family, 'Arial')
+        assert.equal(resolve_font(undefined, local, {size:14, color:'#000'}, 'light').family, 'sans-serif')
     }
 })

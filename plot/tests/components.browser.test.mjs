@@ -487,5 +487,13 @@ for (const renderer of ['react', 'preact', 'standalone']) {
         await page.evaluate(() => { fontPaints.length = 0; setFontArgs({}) })
         await page.waitForFunction(() => fontPaints.some(p => p.text === 'Inherited title'))
         assert.match(await page.evaluate(() => fontPaints.find(p => p.text === 'Inherited title').font), /14px serif/)
+
+        for (const font of ['', { family: '', size: 24 }, { family: '   ', size: 24 }]) {
+            await page.evaluate(font => { fontPaints.length = 0; setFontArgs({ font }) }, font)
+            await page.waitForFunction(() => fontPaints.some(p => p.text === 'Inherited title'))
+            const titleFont = await page.evaluate(() => fontPaints.find(p => p.text === 'Inherited title').font)
+            assert.match(titleFont, typeof font === 'string' ? /14px serif/ : /24px serif/)
+        }
+
     })
 }

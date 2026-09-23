@@ -26,3 +26,5 @@ export type {
     TooltipArg, PlotTooltipHit, PlotTooltipFn, SelectFn, AxisViewport, ViewportChange, ViewportChangeFn,
     RowTypedArgs, OptionalRowTypedArgs,
 } from '../core/types'
+export { Plot, type PlotProps } from '../components/Plot'
+export { PlotSurface, type PlotSurfaceProps, type PlotSurfaceAttributes } from '../components/PlotSurface'

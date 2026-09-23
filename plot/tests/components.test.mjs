@@ -3,7 +3,7 @@ import test from 'node:test'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import { Plot, PlotHost } from './components.bundle.mjs'
-import { scatter } from '../dist/index.js'
+import { scatter } from './components.bundle.mjs'
 
 test('Plot server rendering leaves configuration and lifecycle to the browser', () => {
     let calls = 0

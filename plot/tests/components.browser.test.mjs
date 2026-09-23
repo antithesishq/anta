@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
 import React from 'react'
 import { Plot } from './components.bundle.mjs'
-import { scatter } from '../dist/index.js'
+import { scatter } from './components.bundle.mjs'
 
 const directory = dirname(fileURLToPath(import.meta.url))
 const requirePlot = createRequire(new URL('../package.json', import.meta.url))

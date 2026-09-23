@@ -5,9 +5,9 @@ Follow the root AGENTS.md. This package owns plotting code, not the notebook ada
 - `src/core/` contains series factories, composition, rendering, interactions, and presentation.
 - `src/integrations/` connects host events to the core controllers. `PlotHost` shares controller lifecycle, composition, drawing, and presentation between JSX Plot and standalone a-plot; keep browser scheduling and renderer commit notifications in their respective hosts.
 - `src/browser/` implements the optional light-DOM `<a-plot>` host. Preserve its established behavior during packaging.
-- `src/components/` contains the public Anta JSX `Plot` and its internal `PlotSurface` wrapper. Only `Plot` is exposed through `/components`. They must not register elements or access browser DOM. Plot owns controller and OffscreenCanvas drawing lifecycle on the configured renderer’s thread. Use Anta’s configured hooks, and mutate controllers only after commit. Browser verification covers React 19 and Preact, including cleanup and discarded renders.
+- `src/components/` contains the public Anta JSX `Plot` and low-level `PlotSurface` wrapper. Both are exported from the package root. They must not register elements or access browser DOM. Plot owns controller and OffscreenCanvas drawing lifecycle on the configured renderer’s thread. Use Anta’s configured hooks, and mutate controllers only after commit. Browser verification covers React 19 and Preact, including cleanup and discarded renders.
 - `src/entries/` defines the supported package exports. Keep internal imports private.
-- Rendering lifecycle ownership is internal. Do not export controllers, canvas drawing helpers, host adapters, or the surface component. Consumer extensions use series renderers, highlight renderers, and tooltip callbacks. The surface registration entry remains available as a dependency of `Plot`, not as a custom-host API.
+- Rendering lifecycle ownership is internal. Do not export controllers, canvas drawing helpers, or host adapters. Consumer extensions use series renderers, highlight renderers, and tooltip callbacks. The surface registration entry remains available for both components.
 - `scripts/build.mjs` emits JS, declarations, and CSS. Anta stays external to avoid duplicate component implementations.
 - `scripts/verify-package.mjs` checks the built package from an isolated consumer directory.
 

@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/plot",
-  "version": "0.1.0",
+  "version": "0.1.3-dev.1",
   "type": "module",
   "files": [
     "dist"
@@ -22,10 +22,6 @@
     "./elements": {
       "types": "./dist/types/entries/elements.d.ts",
       "import": "./dist/elements.js"
-    },
-    "./components": {
-      "types": "./dist/types/entries/components.d.ts",
-      "import": "./dist/components.js"
     },
     "./elements/a-plot": {
       "types": "./dist/types/entries/elements/a-plot.d.ts",

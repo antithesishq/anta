@@ -15,7 +15,7 @@ const PEOPLE = [
   'Karl Ober', 'Liz Moreau',
 ]
 
-const FACETS: SelectFacet[] = [
+const BASE_FACETS: SelectFacet[] = [
   // Long list → filterable multi-select.
   { key: 'assignee', label: 'Assignee', kind: 'multiple', icon: 'circle-dot', filter: true, options: PEOPLE },
   // Same list under a different facet — "alice" here never collides with an assignee "alice".
@@ -142,6 +142,10 @@ export function SelectFacetedBasicDemo() {
                   }}
                 />
               )
+            if (facet.key === 'recency') {
+              const recency = value.recency as Recency
+              return <Tag key={facet.key} label="Recency" value={recencySummary(recency)} />
+            }
             // Custom (duration) → an Input editing its `min`.
             return (
               <Input
@@ -198,6 +202,8 @@ const PRESETS = [
 const PRESET_LABELS: Record<string, string> = {
   today: 'Today', yesterday: 'Yesterday', last14: 'Last 14 days', last30: 'Last 30 days',
 }
+const recencySummary = (v: Recency) =>
+  'preset' in v ? PRESET_LABELS[v.preset] : v.from && v.to ? `${v.from} → ${v.to}` : 'Custom range'
 
 // Local ISO YYYY-MM-DD (what InputDate speaks).
 const isoDay = (d: Date) =>
@@ -228,8 +234,7 @@ const RECENCY_FACETS: SelectFacet[] = [
     kind: 'custom',
     icon: 'calendar',
     // The row chip: the preset's label, or the picked range.
-    summary: (v: any) =>
-      'preset' in v ? PRESET_LABELS[v.preset] : v.from && v.to ? `${v.from} → ${v.to}` : 'Custom range',
+    summary: (v: any) => recencySummary(v as Recency),
     // Presets plus — when "Custom range" is picked — two InputDate fields, all in
     // the flyout. Each InputDate opens its own calendar in its own menu, which now
     // stacks on top of this flyout (the flyout stays open) rather than fighting it.
@@ -271,6 +276,8 @@ const RECENCY_FACETS: SelectFacet[] = [
     },
   },
 ]
+
+const FACETS: SelectFacet[] = [...BASE_FACETS, ...RECENCY_FACETS]
 
 export function SelectFacetedRecencyDemo() {
   useElements()
@@ -444,4 +451,3 @@ export function SelectFacetedRecencyMenuDemo() {
     </div>
   )
 }
-

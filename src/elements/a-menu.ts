@@ -273,6 +273,7 @@ export class AMenuElement extends HTMLElementBase {
   // Submenu hover-intent timers.
   private openTimer?: ReturnType<typeof setTimeout>
   private closeTimer?: ReturnType<typeof setTimeout>
+  #holdHoverClose = false
 
   // Typeahead state (root navigation).
   private typeBuffer = ''
@@ -471,7 +472,10 @@ export class AMenuElement extends HTMLElementBase {
     // to tap-to-open, which stays open until dismissed.
     this.surface.addEventListener('pointerenter', (e) => {
       if (e.pointerType !== 'mouse') return
-      if (this.isSubmenu) this.cancelCloseTimer()
+      if (this.isSubmenu) {
+        this.#holdHoverClose = false
+        this.cancelCloseTimer()
+      }
     })
     this.surface.addEventListener('pointerleave', (e) => {
       if (e.pointerType !== 'mouse') return
@@ -1147,6 +1151,7 @@ export class AMenuElement extends HTMLElementBase {
   _doShow(coord?: [number, number], instant = false) {
     if (this.surface.isConnected && !this._shown) this.surface.showPopover()
     this._shown = true
+    this.#holdHoverClose = false
     this._dismissNotified = false
     this.reflectOpen(true)
     this.hideAnchorTooltip()
@@ -1170,9 +1175,24 @@ export class AMenuElement extends HTMLElementBase {
 
   /** Shadow-only hide. */
   _doHide() {
+    // A nested popup can disappear beneath a stationary pointer outside its
+    // ancestor flyout. The resulting pointerleave belongs to the disappearing
+    // popup, so hold the flyout until the pointer re-enters it or its trigger.
+    if (this._shown) {
+      for (
+        let ancestor = this.parentElement?.closest('a-menu') as AMenuElement | null;
+        ancestor;
+        ancestor = ancestor.parentElement?.closest('a-menu') as AMenuElement | null
+      ) {
+        if (!ancestor.isSubmenu || !ancestor._shown || ancestor.surface.matches(':hover')) continue
+        ancestor.#holdHoverClose = true
+        ancestor.cancelCloseTimer()
+      }
+    }
     this.#stopAnchorTracking()
     if (this.surface.isConnected && this._shown) this.surface.hidePopover()
     this._shown = false
+    this.#holdHoverClose = false
     this.reflectOpen(false)
     this.cancelOpenTimer()
     this.cancelCloseTimer()
@@ -1700,7 +1720,11 @@ export class AMenuElement extends HTMLElementBase {
       if (this.#isHover) {
         // Mouse-only hover-intent (see the surface listeners above): touch/pen
         // taps emit synthetic pointerenter/leave that would open-then-close.
-        onEnter = (e) => { if (e.pointerType === 'mouse') this.scheduleOpen() }
+        onEnter = (e) => {
+          if (e.pointerType !== 'mouse') return
+          this.#holdHoverClose = false
+          this.scheduleOpen()
+        }
         onLeave = (e) => { if (e.pointerType === 'mouse') this.scheduleClose() }
         anchor.addEventListener('pointerenter', onEnter)
         anchor.addEventListener('pointerleave', onLeave)
@@ -1801,6 +1825,7 @@ export class AMenuElement extends HTMLElementBase {
   private scheduleClose() {
     this.cancelOpenTimer()
     if (!this._shown) return
+    if (this.#holdHoverClose) return
     // Keyboard focus has moved into this submenu (a `:focus-visible` element
     // inside it) — the user is navigating by keyboard now, so a mouse hover-away
     // must not yank the flyout out from under them. The explicit close paths
@@ -1812,8 +1837,10 @@ export class AMenuElement extends HTMLElementBase {
     // mid-interaction with it, so a mouse hover-away must not collapse this
     // flyout and take that popup with it. It closes on the explicit paths once
     // its descendants are gone.
-    if (openStack.some((m) => m !== this && (this.contains(m) || (m.triggerAnchor != null && this.contains(m.triggerAnchor)))))
+    if (openStack.some((m) => m !== this && (this.contains(m) || (m.triggerAnchor != null && this.contains(m.triggerAnchor))))) {
+      this.cancelCloseTimer()
       return
+    }
     this.cancelCloseTimer()
     this.closeTimer = setTimeout(() => {
       this.closeTimer = undefined

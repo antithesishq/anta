@@ -57,8 +57,8 @@ is limited. `offset` sets the gap in pixels between the trigger and the menu:
 </Disclosure>
 
 Open **Recency** in the first demo, select **Custom range**, then pick **From**
-and **To**. Each field closes its own calendar after a pick while the Recency
-editor stays open for the second date.
+and **To** from the fields side by side. Each field closes its own calendar after
+a pick while the Recency editor stays open for the second date.
 
 Open **Metadata** to choose key–value tags such as
 **env production** or **region us-east**. Its `renderOption` callback reads
@@ -360,7 +360,7 @@ A custom facet stores a `Date` directly. Unlike the value of a `single` or
 #### A recency filter: presets plus a range
 
 This editor combines a `RadioGroup` of presets with a **Custom range** option
-that reveals two `InputDate` fields. Its value is either `{ preset }` or
+that reveals two `InputDate` fields side by side. Its value is either `{ preset }` or
 `{ from, to }`. The `resolveRange` helper converts either shape into the date
 range used to filter the result set. Each InputDate calendar opens above the
 facet menu without closing it.
@@ -396,7 +396,7 @@ const recency: SelectFacetCustom<Recency> = {
     const mode = value == null ? '' : 'preset' in value ? value.preset : 'custom'
     const range = value && 'from' in value ? value : { from: '', to: '' }
     return (
-      <div style={{ display: 'grid', gap: 8 }}>
+      <div style={{ display: 'grid', gap: 8, minWidth: 360 }}>
         <RadioGroup
           size="small"
           options={PRESETS}                       // Today / Yesterday / Last 14 / Last 30 / Custom range
@@ -406,12 +406,12 @@ const recency: SelectFacetCustom<Recency> = {
           onStateChange={(_e, { next }) => onChange(next === 'custom' ? range : { preset: next })}
         />
         {mode === 'custom' && (
-          <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
             <InputDate size="small" label="From" value={range.from}
               onValueChange={(from) => onChange({ from, to: range.to })} />
             <InputDate size="small" label="To" value={range.to} min={range.from || undefined}
               onValueChange={(to) => onChange({ from: range.from, to })} />
-          </>
+          </div>
         )}
       </div>
     )

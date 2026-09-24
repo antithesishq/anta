@@ -7,6 +7,8 @@ changes are not listed.
 
 ### Fixed
 
+- Menu keeps a facet submenu open when a nested date picker closes under the
+  pointer outside the submenu. Hover dismissal resumes after the pointer returns.
 - Dialog wraps long unbroken header text and clips header content that still
   overflows its bounds.
 

@@ -95,7 +95,7 @@ function Demo() {
             const mode = value == null ? '' : 'preset' in value ? value.preset : 'custom'
             const range = value && 'from' in value ? value : { from: '', to: '' }
             return (
-              <div data-menu-open style={{ display: 'grid', gap: '8px', padding: '8px', minWidth: '190px' }}>
+              <div data-menu-open style={{ display: 'grid', gap: '8px', padding: '8px', minWidth: '360px' }}>
                 <RadioGroup
                   size="small"
                   options={[
@@ -109,7 +109,7 @@ function Demo() {
                   onStateChange={(_e, { next }) => onChange(next === 'custom' ? range : { preset: next })}
                 />
                 {mode === 'custom' && (
-                  <div style={{ display: 'grid', gap: '6px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
                     <InputDate size="small" label="From" value={range.from}
                       onValueChange={(from) => onChange({ from, to: range.to })} />
                     <InputDate size="small" label="To" value={range.to} min={range.from || undefined}

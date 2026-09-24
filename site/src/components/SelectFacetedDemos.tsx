@@ -235,15 +235,14 @@ const RECENCY_FACETS: SelectFacet[] = [
     icon: 'calendar',
     // The row chip: the preset's label, or the picked range.
     summary: (v: any) => recencySummary(v as Recency),
-    // Presets plus — when "Custom range" is picked — two InputDate fields, all in
-    // the flyout. Each InputDate opens its own calendar in its own menu, which now
-    // stacks on top of this flyout (the flyout stays open) rather than fighting it.
+    // "Custom range" shows two InputDate fields in the flyout. Their calendars
+    // extend beyond it, so picking a day also exercises nested-menu hover.
     render: ({ value, onChange }: any) => {
       const v = value as Recency | undefined
       const mode = v == null ? '' : 'preset' in v ? v.preset : 'custom'
       const range = v && 'from' in v ? v : { from: '', to: '' }
       return (
-        <div data-menu-open style={{ padding: '8px', minWidth: '190px', display: 'grid', gap: '8px' }}>
+        <div data-menu-open style={{ padding: '8px', minWidth: '360px', display: 'grid', gap: '8px' }}>
           <RadioGroup
             size="small"
             options={PRESETS}
@@ -255,7 +254,7 @@ const RECENCY_FACETS: SelectFacet[] = [
             }
           />
           {mode === 'custom' && (
-            <div style={{ display: 'grid', gap: '6px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
               <InputDate
                 size="small"
                 label="From"

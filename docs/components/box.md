@@ -91,7 +91,7 @@ const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
 ## Measurements
 
 By default, `onMeasureChange` reports one frame after observation starts, then when
-the border-box `width` or `height` changes. `changed` contains measurement fields
+the border-box `width` or `height` changes. `changed` contains fields
 changed since the last event; `current` is the full snapshot. Reporting pauses
 off screen and resumes with a fresh snapshot when Box returns.
 
@@ -152,9 +152,10 @@ each match's `width` and `height`. The Box has `position: relative` by default,
 so positioned descendants can use it as their containing block.
 
 The selector does not start observation or add event triggers. Box reads the
-rects when an existing `observe` selection reports a change. Rects appear in
-`current.rects`, not `changed`, so Box does not compare them. For a fresh read
-at any time, use `box.measurement.rects`.
+rects when an existing `observe` selection reports a change. `current.rects`
+always contains the latest array; `changed.rects` appears only when that array
+differs from the previous report. For a fresh read at any time, use
+`box.measurement.rects`.
 
 ```tsx
 <Box includeRectsFor=".marker" onMeasureChange={(_, { current }) => {
@@ -307,7 +308,7 @@ const canvasRef = useRef<HTMLCanvasElement>(null)
 | `margin?` | number \| string | — | Outer spacing, matching CSS `margin`. Numbers are pixels; strings accept CSS shorthand, `auto`, negative lengths, and custom properties. Omission adds no style. |
 | `observe?` | 'width' \| 'height' \| 'size' \| 'context' \| 'overflow' \| 'edges' \| 'scroll' \| 'all' \| readonly BoxObservation[] | — | One selection or an array of selections, in any order. `'size'` watches width and height; `'context'` watches rendering context; `'overflow'` watches content dimensions and clipping. `'edges'` reports which edges hide content; `'scroll'` reports offsets, potentially every frame; `'all'` selects everything. Selections are independent: use `['size', 'edges']` to combine them. A measurement handler implies `'size'` when no measurement is selected; a context handler adds `'context'`. Size skips content and scroll observers; overflow adds content observation; hidden edges and scroll add scroll reads. Without handlers or `fade`, omission stays idle. |
 | `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail` contains the changed fields and a full current snapshot. |
-| `onMeasureChange?` | (event, detail) => void | — | Fired when a selected measurement field changes. `detail.changed` contains changed measurement fields; `detail.current` includes matching rects. |
+| `onMeasureChange?` | (event, detail) => void | — | Fired when a selected measurement field changes. `detail.changed` contains fields changed since the previous event; `detail.current` includes the full snapshot with matching rects. Rect changes alone do not trigger an event. |
 | `padding?` | number \| string | — | Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept CSS shorthand, percentages, and custom properties. Omission adds no style. |
 | `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a `number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit for square corners. |
 | `throttle?` | number | 0 | Minimum interval between measurement events, in milliseconds. The first report has no added delay; a trailing report delivers the latest values. Active observers and CSS clipping states are not throttled. |

@@ -62,7 +62,8 @@ export interface BoxProps extends BaseProps {
    * @defaultValue 24 */
   fadeSize?: number | string
   /** Fired when a selected measurement field changes. `detail.changed` contains
-   * changed measurement fields; `detail.current` includes matching rects. */
+   * fields changed since the previous event; `detail.current` includes the full
+   * snapshot with matching rects. Rect changes alone do not trigger an event. */
   onMeasureChange?: (
     event: CustomEvent<BoxMeasurementChange>,
     detail: BoxMeasurementChange,

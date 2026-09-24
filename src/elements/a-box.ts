@@ -308,25 +308,26 @@ function deviceSnapshot(navigator: Navigator): DeviceSnapshot {
   }
 }
 
-/** Field equality, one level deep. `font` is rebuilt on
+/** Field equality includes nested descendant rectangles. `font` is rebuilt on
  * every read, so an identity check would report it changed on every focus move. */
 function equal(a: unknown, b: unknown): boolean {
   if (a === b) return true
   if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
+  if (Array.isArray(a) !== Array.isArray(b)) return false
   const left = a as Record<string, unknown>
   const right = b as Record<string, unknown>
   const keys = Object.keys(left)
-  return keys.length === Object.keys(right).length && keys.every((key) => left[key] === right[key])
+  return keys.length === Object.keys(right).length && keys.every((key) => equal(left[key], right[key]))
 }
 
 function same<T extends object>(a: T | undefined, b: T): boolean {
   return a !== undefined && Object.keys(b).every((key) => equal(a[key as keyof T], b[key as keyof T]))
 }
 
-function changed<T extends object>(previous: T | undefined, current: T, exclude?: keyof T): Partial<T> {
+function changed<T extends object>(previous: T | undefined, current: T): Partial<T> {
+  if (!previous) return { ...current }
   return Object.fromEntries(
-    Object.entries(current).filter(([key, value]) =>
-      key !== exclude && (!previous || !equal(previous[key as keyof T], value))),
+    Object.entries(current).filter(([key, value]) => !equal(previous[key as keyof T], value)),
   ) as Partial<T>
 }
 
@@ -811,7 +812,7 @@ export class ABoxElement extends HTMLElementBase {
     this.#initialMeasurement = false
     this.#reportedMeasurement = current
     const detail: BoxMeasurementChange = {
-      changed: changed(initial ? undefined : previous, current, 'rects'),
+      changed: changed(initial ? undefined : previous, current),
       current,
     }
     this.dispatchEvent(new this.view.CustomEvent('measurechange', { detail }))

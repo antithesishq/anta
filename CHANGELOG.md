@@ -7,7 +7,10 @@ changes are not listed.
 
 ### Added
 
-- Box can include descendant rects in its existing measurement reports with `includeRectsFor`, including positions relative to the Box, width, and height.
+- Box can include descendant rects in its existing measurement reports with
+  `includeRectsFor`, including positions relative to the Box, width, and height.
+  Changed rects appear in `detail.changed.rects` when another observed field
+  triggers a report.
 
 ### Fixed
 

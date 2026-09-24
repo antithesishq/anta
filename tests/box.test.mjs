@@ -159,16 +159,20 @@ test('includeRectsFor adds relative descendant bounds to existing measurement re
   await page.evaluate(() => { box.style.height = '120px' })
   await page.waitForFunction(() => events.length === 3)
   assert.deepEqual(await page.evaluate(() => ({ left: events[2].current.rects[0].left,
-    changedHasRects: 'rects' in events[2].changed })), { left: 32, changedHasRects: false })
+    changedLeft: events[2].changed.rects[0].left })), { left: 32, changedLeft: 32 })
   await page.evaluate(async () => { box.querySelectorAll('.target')[1].remove(); await frames() })
   assert.equal(await page.evaluate(() => events.length), 3)
   await page.evaluate(() => { box.style.height = '130px' })
   await page.waitForFunction(() => events.length === 4)
   assert.equal(await page.evaluate(() => events[3].current.rects.length), 1)
+  assert.equal(await page.evaluate(() => events[3].changed.rects.length), 1)
+  await page.evaluate(() => { box.style.height = '140px' })
+  await page.waitForFunction(() => events.length === 5)
+  assert.equal(await page.evaluate(() => 'rects' in events[4].changed), false)
   await page.evaluate(() => box.removeAttribute('include-rects-for'))
   assert.deepEqual(await page.evaluate(() => box.measurement.rects), [])
   await page.evaluate(async () => frames())
-  assert.equal(await page.evaluate(() => events.length), 4)
+  assert.equal(await page.evaluate(() => events.length), 5)
 })
 
 test('includeRectsFor alone leaves Box idle while the getter stays current', async t => {
@@ -214,7 +218,7 @@ test('Ignored observation reads do not query matching descendant rects', async t
   await page.waitForFunction(() => events.length === 2)
   assert.deepEqual(await page.evaluate(() => ({ reads: targetRectReads,
     rects: events[1].current.rects.length, changedHasRects: 'rects' in events[1].changed })),
-  { reads: 1, rects: 1, changedHasRects: false })
+  { reads: 1, rects: 1, changedHasRects: true })
 })
 
 test('Scroll observation includes updated descendant rects on each Box scroll report', async t => {
@@ -228,7 +232,7 @@ test('Scroll observation includes updated descendant rects on each Box scroll re
   await page.waitForFunction(() => events.length === 2)
   assert.deepEqual(await page.evaluate(() => ({ top: events[1].current.rects[0].top,
     scrollTop: events[1].current.scrollTop, changedHasRects: 'rects' in events[1].changed })),
-  { top: -40, scrollTop: 40, changedHasRects: false })
+  { top: -40, scrollTop: 40, changedHasRects: true })
   await page.evaluate(() => { box.scrollTop = 80 })
   await page.waitForFunction(() => events.length === 3)
   assert.equal(await page.evaluate(() => events[2].current.rects[0].top), -80)

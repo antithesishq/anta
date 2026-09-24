@@ -183,8 +183,4 @@ export interface BoxChange<T> {
 }
 
 export type BoxContextChange = BoxChange<BoxContext>
-/** Rects are supplementary snapshot data and never appear in `changed`. */
-export interface BoxMeasurementChange {
-  changed: Partial<Omit<BoxMeasurement, 'rects'>>
-  current: BoxMeasurement
-}
+export type BoxMeasurementChange = BoxChange<BoxMeasurement>

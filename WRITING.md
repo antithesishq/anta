@@ -68,8 +68,8 @@ what to do next. State the fact, its consequence, and stop.
   table in prose.
 - In release notes, link mentions of changed components and new props to the
   relevant section of the component page. Link descriptive text around a prop
-  name rather than the code literal. Use absolute `https://anta.design/` links
-  so the release notes work on the site and in published Markdown.
+  name rather than the code literal. Use site-relative paths such as
+  `/box/#measurements`.
 - Describe the result before implementation details. Include browser constraints,
   accessibility behavior, defaults, and migration steps only when they change a
   reader's decision.

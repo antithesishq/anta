@@ -7,17 +7,17 @@ changes are not listed.
 
 ### Added
 
-- [Box measurements](https://anta.design/box/#measurements) can include
+- [Box measurements](/box/#measurements) can include
   descendant rects with `includeRectsFor`, including positions relative to the
   Box, width, and height. Changed rects appear in `detail.changed.rects` when
   another observed field triggers a report.
 
 ### Fixed
 
-- [Menu submenus](https://anta.design/menu/#submenus) stay open when a nested
+- [Menu submenus](/menu/#submenus) stay open when a nested
   date picker closes under the pointer outside the submenu. Hover dismissal
   resumes after the pointer returns.
-- [Dialog headers](https://anta.design/dialog/#zones) wrap long unbroken text
+- [Dialog headers](/dialog/#zones) wrap long unbroken text
   and clip content that still overflows their bounds.
 
 ## 0.3.31 — September 18, 2026

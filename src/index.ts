@@ -72,6 +72,7 @@ export type {
   BoxMeasurement,
   BoxMeasurementChange,
   BoxObservation,
+  BoxRect,
   BoxMode,
   BoxOS,
   BoxBrowser,

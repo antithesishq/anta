@@ -5,6 +5,10 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- Box can include descendant rects in its existing measurement reports with `includeRectsFor`, including positions relative to the Box, width, and height.
+
 ### Fixed
 
 - Menu keeps a facet submenu open when a nested date picker closes under the

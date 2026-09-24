@@ -345,6 +345,8 @@ export interface ABoxAttributes extends BaseAttributes {
    *  typed `attr()` read it from `--box-gap` in the host's inline style
    *  instead, which is what the JSX wrapper always sets. */
   gap?: boolean | '' | number | string
+  /** Adds matching descendant rects to each measurement snapshot. */
+  'include-rects-for'?: string
   /** CSS padding shorthand (`padding="8px 16px"`). Without typed `attr()`
    * support, set `--box-padding` as well. The JSX wrapper supplies it. */
   padding?: boolean | '' | number | string

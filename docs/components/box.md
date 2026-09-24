@@ -145,6 +145,25 @@ CSS states remain current.
 `Tooltip truncatedOnly` reads Box's clipping on demand. It works without
 `observe` or `onMeasureChange` and does not enable continuous observation.
 
+Pass `includeRectsFor` to add matching descendants to each measurement snapshot.
+`current.rects` contains their border boxes in document order, with `top`,
+`left`, `right`, and `bottom` measured from the Box's top-left border edge, plus
+each match's `width` and `height`. The Box has `position: relative` by default,
+so positioned descendants can use it as their containing block.
+
+The selector does not start observation or add event triggers. Box reads the
+rects when an existing `observe` selection reports a change. `changed.rects`
+contains the new array if it differs from the previous report. For a fresh read
+at any time, use `box.measurement.rects`.
+
+```tsx
+<Box includeRectsFor=".marker" onMeasureChange={(_, { current }) => {
+  console.log(current.rects)
+}}>
+  <span className="marker">Measured content</span>
+</Box>
+```
+
 This readout observes `['size', 'overflow', 'edges', 'scroll']` with `throttle={100}`.
 Resize or scroll the Box to update it.
 
@@ -284,6 +303,7 @@ const canvasRef = useRef<HTMLCanvasElement>(null)
 | `fade?` | boolean | — | Fades out every edge that currently hides clipped content, and drops the fade from an edge once the reader scrolls to it. |
 | `fadeSize?` | number \| string | 24 | Depth of the `fade` gradient. A `number` is pixels; a string is any CSS length. |
 | `gap?` | number \| string | — | Gap between children, matching the CSS `gap` property. A `number` is pixels; a string is any CSS length or two-value gap (`'1rem'`, `'8px 16px'`). Applies while the Box is a flex or grid container. |
+| `includeRectsFor?` | string | — | CSS selector for descendants whose border boxes are included in `measurement.rects` when Box measures. Coordinates are relative to this Box's top-left border edge; matches are in document order. |
 | `margin?` | number \| string | — | Outer spacing, matching CSS `margin`. Numbers are pixels; strings accept CSS shorthand, `auto`, negative lengths, and custom properties. Omission adds no style. |
 | `observe?` | 'width' \| 'height' \| 'size' \| 'context' \| 'overflow' \| 'edges' \| 'scroll' \| 'all' \| readonly BoxObservation[] | — | One selection or an array of selections, in any order. `'size'` watches width and height; `'context'` watches rendering context; `'overflow'` watches content dimensions and clipping. `'edges'` reports which edges hide content; `'scroll'` reports offsets, potentially every frame; `'all'` selects everything. Selections are independent: use `['size', 'edges']` to combine them. A measurement handler implies `'size'` when no measurement is selected; a context handler adds `'context'`. Size skips content and scroll observers; overflow adds content observation; hidden edges and scroll add scroll reads. Without handlers or `fade`, omission stays idle. |
 | `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail` contains the changed fields and a full current snapshot. |
@@ -307,6 +327,7 @@ const canvasRef = useRef<HTMLCanvasElement>(null)
 | `hiddenStartY` | boolean | — |  |
 | `overflowX` | boolean | — | Content exceeds the padding box on this axis, regardless of CSS overflow. |
 | `overflowY` | boolean | — |  |
+| `rects` | BoxRect[] | — | Matches for `includeRectsFor`, in document order. Empty when omitted. |
 | `scrollableX` | boolean | — | The exceeded content can be scrolled by the reader on this axis. |
 | `scrollableY` | boolean | — |  |
 | `scrollHeight` | number | — |  |
@@ -314,6 +335,19 @@ const canvasRef = useRef<HTMLCanvasElement>(null)
 | `scrollTop` | number | — |  |
 | `scrollWidth` | number | — | Full scrollable-content dimensions, matching `scrollWidth` / `scrollHeight`. |
 | `width` | number | — | Border-box width and height in CSS pixels. |
+
+### BoxRect
+
+Coordinates and dimensions of a matched descendant's border box.
+
+| Field | Type | Default | Description |
+|------|------|---------|-------------|
+| `bottom` | number | — |  |
+| `height` | number | — |  |
+| `left` | number | — |  |
+| `right` | number | — |  |
+| `top` | number | — |  |
+| `width` | number | — |  |
 
 ### BoxContext
 
@@ -392,7 +426,9 @@ have no effect; unknown tokens are ignored. A bare `observe` means `"all"`.
 ```
 
 Import `@antadesign/anta/elements/a-box` to register the element. Listen for
-`measurechange` and `contextchange` with `addEventListener`.
+`measurechange` and `contextchange` with `addEventListener`. Set
+`include-rects-for=".marker"` to add matching descendant rects to each
+measurement without changing the observation triggers.
 `box.measurement`, `box.context`, and `box.isTruncated` read values synchronously.
 
 ## Styling

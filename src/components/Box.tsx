@@ -28,6 +28,10 @@ export interface BoxProps extends BaseProps {
    * pixels; a string is any CSS length or two-value gap (`'1rem'`,
    * `'8px 16px'`). Applies while the Box is a flex or grid container. */
   gap?: number | string
+  /** CSS selector for descendants whose border boxes are included in
+   * `measurement.rects` when Box measures. Coordinates are relative to this
+   * Box's top-left border edge; matches are in document order. */
+  includeRectsFor?: string
   /** Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept
    * CSS shorthand, percentages, and custom properties. Omission adds no style. */
   padding?: number | string
@@ -103,6 +107,7 @@ export const Box = ({
   display,
   round,
   gap,
+  includeRectsFor,
   padding,
   margin,
   observe,
@@ -126,6 +131,7 @@ export const Box = ({
       display={display === 'block' ? undefined : display}
       round={roundAttr(round)}
       gap={gap != null ? '' : undefined}
+      include-rects-for={includeRectsFor}
       padding={padding != null ? '' : undefined}
       margin={margin != null ? '' : undefined}
       observe={observeAttr(observe, onMeasureChange, onContextChange)}

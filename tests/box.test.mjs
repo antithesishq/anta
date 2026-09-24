@@ -137,6 +137,83 @@ test('Box defaults to border-box dimensions while scroll states and snapshots st
   await page.waitForFunction(() => events.at(-1).current.width === 250)
 })
 
+test('includeRectsFor adds relative descendant bounds to existing measurement reports', async t => {
+  const page = await pageFor(t, { observe: 'size' })
+  await page.evaluate(() => {
+    box.style.border = '4px solid black'
+    box.innerHTML = '<div class="target" style="position:absolute;left:18px;top:12px;width:40px;height:30px"></div>'
+      + '<div class="target" style="position:absolute;left:70px;top:50px;width:25px;height:20px"></div>'
+    box.setAttribute('include-rects-for', '.target')
+  })
+  await page.waitForFunction(() => events.length === 2)
+  assert.deepEqual(await page.evaluate(() => ({ position: getComputedStyle(box).position,
+    rects: events[1].current.rects })), {
+    position: 'relative',
+    rects: [
+      { top: 16, right: 62, bottom: 46, left: 22, width: 40, height: 30 },
+      { top: 54, right: 99, bottom: 74, left: 74, width: 25, height: 20 },
+    ],
+  })
+  await page.evaluate(async () => { box.querySelector('.target').style.left = '28px'; await frames() })
+  assert.equal(await page.evaluate(() => events.length), 2)
+  await page.evaluate(() => { box.style.height = '120px' })
+  await page.waitForFunction(() => events.length === 3)
+  assert.equal(await page.evaluate(() => events[2].changed.rects[0].left), 32)
+  await page.evaluate(async () => { box.querySelectorAll('.target')[1].remove(); await frames() })
+  assert.equal(await page.evaluate(() => events.length), 3)
+  await page.evaluate(() => { box.style.height = '130px' })
+  await page.waitForFunction(() => events.length === 4)
+  assert.equal(await page.evaluate(() => events[3].current.rects.length), 1)
+  await page.evaluate(() => box.removeAttribute('include-rects-for'))
+  assert.deepEqual(await page.evaluate(() => box.measurement.rects), [])
+  await page.evaluate(async () => frames())
+  assert.equal(await page.evaluate(() => events.length), 4)
+})
+
+test('includeRectsFor alone leaves Box idle while the getter stays current', async t => {
+  const page = await pageFor(t, {})
+  await page.evaluate(() => {
+    box.innerHTML = '<div class="target" style="width:30px;height:20px"></div>'
+    box.setAttribute('include-rects-for', '.target')
+  })
+  assert.deepEqual(await page.evaluate(async () => {
+    box.querySelector('.target').style.width = '45px'
+    await frames()
+    return { events: events.length, rects: box.measurement.rects }
+  }), { events: 0, rects: [{ top: 0, right: 45, bottom: 20, left: 0, width: 45, height: 20 }] })
+})
+
+test('JSX includeRectsFor adds rects without changing observation', async t => {
+  const page = await pageFor(t, {})
+  await page.evaluate(() => {
+    box.remove()
+    window.details = []
+    renderBox({ includeRectsFor: 'div', observe: 'width', onMeasureChange: (_, detail) => details.push(detail) })
+    window.box = document.querySelector('a-box')
+  })
+  await page.waitForFunction(() => details.length === 1)
+  assert.deepEqual(await page.evaluate(() => ({ observe: box.getAttribute('observe'),
+    includeRectsFor: box.getAttribute('include-rects-for'), matches: details[0].current.rects.length })),
+  { observe: 'width', includeRectsFor: 'div', matches: 1 })
+})
+
+test('Scroll observation includes updated descendant rects on each Box scroll report', async t => {
+  const page = await pageFor(t, { observe: 'scroll', 'include-rects-for': '.target' })
+  await page.evaluate(async () => {
+    box.innerHTML = '<div class="target" style="height:600px">Content</div>'
+    await frames()
+  })
+  assert.equal(await page.evaluate(() => events.length), 1)
+  await page.evaluate(() => { box.scrollTop = 40 })
+  await page.waitForFunction(() => events.length === 2)
+  assert.deepEqual(await page.evaluate(() => ({ top: events[1].current.rects[0].top,
+    scrollTop: events[1].current.scrollTop, changedTop: events[1].changed.rects[0].top })),
+  { top: -40, scrollTop: 40, changedTop: -40 })
+  await page.evaluate(() => { box.scrollTop = 80 })
+  await page.waitForFunction(() => events.length === 3)
+  assert.equal(await page.evaluate(() => events[2].current.rects[0].top), -80)
+})
+
 test('Observe selects edge changes, all measurements, or disables observation', async t => {
   const page = await pageFor(t, { observe: 'edges' })
   await page.evaluate(() => { box.scrollTop = 20 })

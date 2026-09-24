@@ -257,6 +257,25 @@ CSS states remain current.
 `Tooltip truncatedOnly` reads Box's clipping on demand. It works without
 `observe` or `onMeasureChange` and does not enable continuous observation.
 
+Pass `includeRectsFor` to add matching descendants to each measurement snapshot.
+`current.rects` contains their border boxes in document order, with `top`,
+`left`, `right`, and `bottom` measured from the Box's top-left border edge, plus
+each match's `width` and `height`. The Box has `position: relative` by default,
+so positioned descendants can use it as their containing block.
+
+The selector does not start observation or add event triggers. Box reads the
+rects when an existing `observe` selection reports a change. `changed.rects`
+contains the new array if it differs from the previous report. For a fresh read
+at any time, use `box.measurement.rects`.
+
+```tsx
+<Box includeRectsFor=".marker" onMeasureChange={(_, { current }) => {
+  console.log(current.rects)
+}}>
+  <span className="marker">Measured content</span>
+</Box>
+```
+
 This readout observes `['size', 'overflow', 'edges', 'scroll']` with `throttle={100}`.
 Resize or scroll the Box to update it.
 
@@ -440,6 +459,14 @@ const canvasRef = useRef<HTMLCanvasElement>(null)
 
 </Disclosure>
 
+<Disclosure title="BoxRect" level={3}>
+
+Coordinates and dimensions of a matched descendant's border box.
+
+<PropsTable component="BoxRect" label="Field" />
+
+</Disclosure>
+
 <Disclosure title="BoxContext" level={3}>
 
 <PropsTable component="BoxContext" label="Field" />
@@ -490,7 +517,9 @@ have no effect; unknown tokens are ignored. A bare `observe` means `"all"`.
 ```
 
 Import `@antadesign/anta/elements/a-box` to register the element. Listen for
-`measurechange` and `contextchange` with `addEventListener`.
+`measurechange` and `contextchange` with `addEventListener`. Set
+`include-rects-for=".marker"` to add matching descendant rects to each
+measurement without changing the observation triggers.
 `box.measurement`, `box.context`, and `box.isTruncated` read values synchronously.
 
 </Disclosure>

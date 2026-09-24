@@ -308,15 +308,16 @@ function deviceSnapshot(navigator: Navigator): DeviceSnapshot {
   }
 }
 
-/** Field equality, one level deep. `font` is rebuilt on every read, so an
- * identity check would report it changed on every focus move. */
+/** Field equality includes nested descendant rectangles. `font` is rebuilt on
+ * every read, so an identity check would report it changed on every focus move. */
 function equal(a: unknown, b: unknown): boolean {
   if (a === b) return true
   if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
+  if (Array.isArray(a) !== Array.isArray(b)) return false
   const left = a as Record<string, unknown>
   const right = b as Record<string, unknown>
   const keys = Object.keys(left)
-  return keys.length === Object.keys(right).length && keys.every((key) => left[key] === right[key])
+  return keys.length === Object.keys(right).length && keys.every((key) => equal(left[key], right[key]))
 }
 
 function same<T extends object>(a: T | undefined, b: T): boolean {
@@ -687,6 +688,25 @@ export class ABoxElement extends HTMLElementBase {
 
   #readMeasurement(): BoxMeasurement {
     const rect = this.getBoundingClientRect()
+    let rects: BoxMeasurement['rects'] = []
+    const selector = this.getAttribute('include-rects-for')
+    if (selector) {
+      try {
+        rects = Array.from(this.querySelectorAll(selector), element => {
+          const target = element.getBoundingClientRect()
+          return {
+            top: rounded(target.top - rect.top),
+            right: rounded(target.right - rect.left),
+            bottom: rounded(target.bottom - rect.top),
+            left: rounded(target.left - rect.left),
+            width: rounded(target.width),
+            height: rounded(target.height),
+          }
+        })
+      } catch (error) {
+        if (!(error instanceof this.view.DOMException) || error.name !== 'SyntaxError') throw error
+      }
+    }
     const clientWidth = this.clientWidth
     const clientHeight = this.clientHeight
     const scrollWidth = this.scrollWidth
@@ -715,6 +735,7 @@ export class ABoxElement extends HTMLElementBase {
     return {
       width: rounded(rect.width),
       height: rounded(rect.height),
+      rects,
       clientWidth,
       clientHeight,
       scrollWidth,
@@ -762,7 +783,7 @@ export class ABoxElement extends HTMLElementBase {
     const previous = this.#reportedMeasurement
     if (!previous || this.#initialMeasurement) return true
     for (const field of this.#measurementFields) {
-      if (previous[field] !== current[field]) return true
+      if (!equal(previous[field], current[field])) return true
     }
     return false
   }

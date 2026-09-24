@@ -86,7 +86,13 @@ function isEditableTarget(target: EventTarget | null) {
 
 export default function SearchDialog() {
   const [open, setOpen] = useState(false)
-  const [inputBounds, setInputBounds] = useState<{ left: number; width: number }>()
+  const [inputBounds, setInputBounds] = useState<{
+    left: number
+    width: number
+    targetLeft: number
+    targetWidth: number
+  }>()
+  const [inputExpanded, setInputExpanded] = useState(false)
   const [query, setQuery] = useState('')
   const [route, setRoute] = useState('')
   const [search, setSearch] = useState<SearchState>()
@@ -143,11 +149,16 @@ export default function SearchDialog() {
       const input = document.querySelector('[data-sidebar-search-input]')
       if (!input) return
       const { left, width } = input.getBoundingClientRect()
-      setInputBounds({ left, width })
+      const viewportWidth = document.documentElement.clientWidth
+      const resultsWidth = Math.min(960, viewportWidth - 40)
+      const targetWidth = width < resultsWidth ? resultsWidth : width
+      const targetLeft = width < resultsWidth ? (viewportWidth - resultsWidth) / 2 : left
+      setInputBounds({ left, width, targetLeft, targetWidth })
     }
     const showSearch = () => {
       setRoute(window.location.pathname)
       syncInputBounds()
+      setInputExpanded(false)
       const input = document.querySelector<HTMLElement & { value?: string }>('[data-sidebar-search-input]')
       if (input) setQuery(input.value ?? input.getAttribute('value') ?? '')
       setOpen(true)
@@ -169,6 +180,18 @@ export default function SearchDialog() {
       window.removeEventListener('resize', syncInputBounds)
     }
   }, [])
+
+  useEffect(() => {
+    if (!open) return
+    let secondFrame = 0
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => setInputExpanded(true))
+    })
+    return () => {
+      cancelAnimationFrame(firstFrame)
+      cancelAnimationFrame(secondFrame)
+    }
+  }, [open, inputBounds])
 
   useEffect(() => {
     if (!open) return
@@ -260,9 +283,11 @@ export default function SearchDialog() {
       style={inputBounds ? {
         '--search-left': `${inputBounds.left}px`,
         '--search-width': `${inputBounds.width}px`,
+        '--search-target-left': `${inputBounds.targetLeft}px`,
+        '--search-target-width': `${inputBounds.targetWidth}px`,
       } : undefined}
       header={
-        <div className={styles.header}>
+        <div className={styles.header} data-expanded={inputExpanded ? 'true' : undefined}>
           <span className={styles.srOnly}>Search documentation</span>
           <Input
             id="docs-search-input"

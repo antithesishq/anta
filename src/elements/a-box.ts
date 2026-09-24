@@ -308,26 +308,25 @@ function deviceSnapshot(navigator: Navigator): DeviceSnapshot {
   }
 }
 
-/** Field equality includes nested descendant rectangles. `font` is rebuilt on
+/** Field equality, one level deep. `font` is rebuilt on
  * every read, so an identity check would report it changed on every focus move. */
 function equal(a: unknown, b: unknown): boolean {
   if (a === b) return true
   if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
-  if (Array.isArray(a) !== Array.isArray(b)) return false
   const left = a as Record<string, unknown>
   const right = b as Record<string, unknown>
   const keys = Object.keys(left)
-  return keys.length === Object.keys(right).length && keys.every((key) => equal(left[key], right[key]))
+  return keys.length === Object.keys(right).length && keys.every((key) => left[key] === right[key])
 }
 
 function same<T extends object>(a: T | undefined, b: T): boolean {
   return a !== undefined && Object.keys(b).every((key) => equal(a[key as keyof T], b[key as keyof T]))
 }
 
-function changed<T extends object>(previous: T | undefined, current: T): Partial<T> {
-  if (!previous) return { ...current }
+function changed<T extends object>(previous: T | undefined, current: T, exclude?: keyof T): Partial<T> {
   return Object.fromEntries(
-    Object.entries(current).filter(([key, value]) => !equal(previous[key as keyof T], value)),
+    Object.entries(current).filter(([key, value]) =>
+      key !== exclude && (!previous || !equal(previous[key as keyof T], value))),
   ) as Partial<T>
 }
 
@@ -482,7 +481,7 @@ export class ABoxElement extends HTMLElementBase {
 
   /** Allows a nested `Tooltip truncatedOnly` to use Box's clipping decision. */
   get isTruncated(): boolean {
-    const measurement = this.#readMeasurement()
+    const measurement = this.#readMeasurement(false)
     return measurement.clippedX || measurement.clippedY
   }
 
@@ -560,7 +559,7 @@ export class ABoxElement extends HTMLElementBase {
     // The states drive the `fade` mask, so they have to be right on the first
     // frame. The matching event waits a frame, so a listener attached mid-render
     // is never called back synchronously from inside its own `addEventListener`.
-    this.#measurement = this.#readMeasurement()
+    this.#measurement = this.#readMeasurement(false)
     this.#setMeasurementStates(this.#measurement)
     this.#syncChildObservation()
     this.#initialMeasurement = true
@@ -686,19 +685,19 @@ export class ABoxElement extends HTMLElementBase {
     })
   }
 
-  #readMeasurement(): BoxMeasurement {
-    const rect = this.getBoundingClientRect()
+  #readRects(rect?: DOMRect): BoxMeasurement['rects'] {
     let rects: BoxMeasurement['rects'] = []
     const selector = this.getAttribute('include-rects-for')
     if (selector) {
       try {
+        const boxRect = rect ?? this.getBoundingClientRect()
         rects = Array.from(this.querySelectorAll(selector), element => {
           const target = element.getBoundingClientRect()
           return {
-            top: rounded(target.top - rect.top),
-            right: rounded(target.right - rect.left),
-            bottom: rounded(target.bottom - rect.top),
-            left: rounded(target.left - rect.left),
+            top: rounded(target.top - boxRect.top),
+            right: rounded(target.right - boxRect.left),
+            bottom: rounded(target.bottom - boxRect.top),
+            left: rounded(target.left - boxRect.left),
             width: rounded(target.width),
             height: rounded(target.height),
           }
@@ -707,6 +706,11 @@ export class ABoxElement extends HTMLElementBase {
         if (!(error instanceof this.view.DOMException) || error.name !== 'SyntaxError') throw error
       }
     }
+    return rects
+  }
+
+  #readMeasurement(includeRects = true): BoxMeasurement {
+    const rect = this.getBoundingClientRect()
     const clientWidth = this.clientWidth
     const clientHeight = this.clientHeight
     const scrollWidth = this.scrollWidth
@@ -735,7 +739,7 @@ export class ABoxElement extends HTMLElementBase {
     return {
       width: rounded(rect.width),
       height: rounded(rect.height),
-      rects,
+      rects: includeRects ? this.#readRects(rect) : [],
       clientWidth,
       clientHeight,
       scrollWidth,
@@ -783,13 +787,13 @@ export class ABoxElement extends HTMLElementBase {
     const previous = this.#reportedMeasurement
     if (!previous || this.#initialMeasurement) return true
     for (const field of this.#measurementFields) {
-      if (!equal(previous[field], current[field])) return true
+      if (previous[field] !== current[field]) return true
     }
     return false
   }
 
   #reportMeasurement() {
-    const current = this.#readMeasurement()
+    const current = this.#readMeasurement(false)
     this.#measurement = current
     this.#setMeasurementStates(current)
     this.#syncChildObservation()
@@ -799,14 +803,15 @@ export class ABoxElement extends HTMLElementBase {
   }
 
   #emitMeasurement = () => {
-    const current = this.#measurement
-    if (!this.#measuring || !current || !this.#hasMeasurementChange(current)) return
+    const pending = this.#measurement
+    if (!this.#measuring || !pending || !this.#hasMeasurementChange(pending)) return
+    const current = { ...pending, rects: this.#readRects() }
     const initial = this.#initialMeasurement
     const previous = this.#reportedMeasurement
     this.#initialMeasurement = false
     this.#reportedMeasurement = current
     const detail: BoxMeasurementChange = {
-      changed: initial ? { ...current } : changed(previous, current),
+      changed: changed(initial ? undefined : previous, current, 'rects'),
       current,
     }
     this.dispatchEvent(new this.view.CustomEvent('measurechange', { detail }))

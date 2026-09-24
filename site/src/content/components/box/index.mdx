@@ -203,9 +203,9 @@ const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
 ## Measurements
 
 By default, `onMeasureChange` reports one frame after observation starts, then when
-the border-box `width` or `height` changes. `changed` contains all fields changed
-since the last event; `current` is the full snapshot. Reporting pauses off screen
-and resumes with a fresh snapshot when Box returns.
+the border-box `width` or `height` changes. `changed` contains measurement fields
+changed since the last event; `current` is the full snapshot. Reporting pauses
+off screen and resumes with a fresh snapshot when Box returns.
 
 `observe` accepts one of the eight selections below, or a typed array combining
 them. `observe={['size', 'edges']}` and `observe={['edges', 'size']}` select the
@@ -264,8 +264,8 @@ each match's `width` and `height`. The Box has `position: relative` by default,
 so positioned descendants can use it as their containing block.
 
 The selector does not start observation or add event triggers. Box reads the
-rects when an existing `observe` selection reports a change. `changed.rects`
-contains the new array if it differs from the previous report. For a fresh read
+rects when an existing `observe` selection reports a change. Rects appear in
+`current.rects`, not `changed`, so Box does not compare them. For a fresh read
 at any time, use `box.measurement.rects`.
 
 ```tsx

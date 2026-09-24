@@ -3,6 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Dialog wraps long unbroken header text and clips header content that still
+  overflows its bounds.
+
 ## 0.3.31 — September 18, 2026
 
 ### Added

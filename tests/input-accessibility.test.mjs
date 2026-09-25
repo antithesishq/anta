@@ -718,19 +718,24 @@ test('closing a nested date popup outside its facet flyout keeps the flyout open
   await editor.locator('a-input').nth(1).click()
   const calendar = editor.locator('a-input').nth(1).locator('xpath=following-sibling::a-menu[1]')
   await page.waitForFunction(() => [...document.querySelectorAll('a-input + a-menu')].some(menu => menu.isOpen && menu.querySelector('a-calendar')))
-  const outsideDate = await editor.evaluate(menu => {
+  const outside = await editor.evaluate(menu => {
     const bounds = menu.shadowRoot.querySelector('[popover]').getBoundingClientRect()
     const dateMenu = menu.querySelectorAll('a-input + a-menu')[1]
     const day = [...dateMenu.querySelectorAll('a-button[data-date]:not([disabled])')].find(button => {
       const r = button.getBoundingClientRect()
       const x = r.left + r.width / 2
       const y = r.top + r.height / 2
-      return x > bounds.right && x < innerWidth && y > 0 && y < innerHeight
+      const outside = x < bounds.left || x > bounds.right || y < bounds.top || y > bounds.bottom
+      return outside && x > 0 && x < innerWidth && y > 0 && y < innerHeight
     })
-    return day?.getAttribute('data-date')
+    return {
+      date: day?.getAttribute('data-date'),
+      editorBounds: bounds.toJSON(),
+      calendarBounds: dateMenu.shadowRoot.querySelector('[popover]').getBoundingClientRect().toJSON(),
+    }
   })
-  assert.ok(outsideDate, 'the date picker must extend beyond the facet flyout')
-  await calendar.locator(`a-button[data-date="${outsideDate}"]`).click()
+  assert.ok(outside.date, `the date picker must extend beyond the facet flyout: ${JSON.stringify(outside)}`)
+  await calendar.locator(`a-button[data-date="${outside.date}"]`).click()
   await page.waitForTimeout(250)
   assert.equal(await calendar.evaluate(menu => menu.isOpen), false)
   assert.equal(await editor.evaluate(menu => menu.isOpen), true)

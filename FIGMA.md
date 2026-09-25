@@ -4,88 +4,100 @@ Notes for any agent (or human) reading or syncing tokens, components, and styles
 
 ## Source of truth
 
-- File: **Anta 0.2** — `cIvfEHHCYgJb5RYuMqBMbN`
-- URL: https://www.figma.com/design/cIvfEHHCYgJb5RYuMqBMbN/Anta-0.2
-- Variable collection: **"Dynamic colors"** (multi-mode: `Light`, `Dark`)
-  - Tokens are organized into groups by category prefix: `background/`, `text/`, `border/`, etc.
-  - Most variables are aliases that resolve to primitives in a remote `Primitive tokens` collection.
+- File: **Anta 0.4 — New Brand** — `8Uav3wDSj9mpgtRZsT5JY4`
+- URL: https://www.figma.com/design/8Uav3wDSj9mpgtRZsT5JY4/Anta-0.4---New-Brand
+- Colors overview page: node `8392:6039` (`colors`) — swatch frames for every role, tone, and theme.
+- Variable collection: **"Dynamic colors"** (modes `Light` = `1:0`, `Dark` = `38:0`)
+  - Role tokens live under `base/`: `base/background/`, `base/text/`, `base/border/`. The collection also holds `base/icon/*` and many `component/*` groups (button, checkbox, tag, …); those have no global counterpart in code (see "Component-token-first" in `CLAUDE.md`).
+  - Most variables are aliases into the single-mode `Primitive tokens` collection (`neutral/*` for light neutrals, `burgundy/*` for dark neutrals, plus per-hue scales for the tones).
 
 ## Rules when extracting tokens
 
-### 1. Read the full variable list from the collection — never infer from node usage
+### 1. Read the full variable list from the collection — never read values off nodes
 
-`get_variable_defs` only returns variables actually referenced by the queried node. If a token isn't placed on any visible component or example, it won't appear in those results. **This is how token gaps creep in** (e.g. missing `text-5`, `*-info` tones, `border-3..5` tones if their components aren't on the page).
+Use the **cloud Figma MCP connector** (`plugin:figma:figma`, tool `use_figma`) to enumerate every variable in the collection via the Plugin API. Two node-based shortcuts give wrong answers:
 
-The correct approach: use `use_figma` (the Plugin API) to enumerate **every** variable in the target collection, then resolve each alias chain to its concrete primitive. Working snippet for the Anta 0.2 file:
+- `get_variable_defs` only returns variables actually referenced by the queried node, so tokens that aren't placed on it silently go missing (this is how `text-5`, `*-info` tones, and `border-3..5` tones once dropped out).
+- Values read off the swatch frames on the colors page drifted from the collection: in September 2026 four dark neutrals (`text-3`, `text-4`, `border-1`, `border-5`) came back with stale values that only the collection dump caught.
+
+The desktop Figma MCP (`Figma`, local app) can't run Plugin API code and only sees the file open in the active tab, so it's a fallback for screenshots and metadata, not for token values. If `plugin:figma:figma` shows `needs_auth`, sign in via `/mcp` in the session (or in the app's Connectors settings).
+
+Working snippet for this file:
 
 ```js
 const collections = await figma.variables.getLocalVariableCollectionsAsync();
 const dyn = collections.find(c => c.name === 'Dynamic colors');
+const LIGHT = dyn.modes.find(m => m.name === 'Light').modeId;
+const DARK = dyn.modes.find(m => m.name === 'Dark').modeId;
 
-const variableCache = new Map();
-const getVar = async (id) => {
-  if (variableCache.has(id)) return variableCache.get(id);
-  const v = await figma.variables.getVariableByIdAsync(id);
-  variableCache.set(id, v);
-  return v;
-};
-
-// Aliases cross collection boundaries; primitives are single-mode.
-// When recursing into an aliased target, take its first/only mode value.
-const resolveValue = async (value, depth = 0) => {
-  if (!value || depth > 6) return null;
-  if (value.type === 'VARIABLE_ALIAS') {
-    const target = await getVar(value.id);
-    if (!target) return null;
-    const modeKeys = Object.keys(target.valuesByMode);
-    if (modeKeys.length === 0) return null;
-    return resolveValue(target.valuesByMode[modeKeys[0]], depth + 1);
+// Aliases cross collection boundaries; primitives are single-mode, so take the
+// target's first/only mode. Tinted text 3–5 are stored as { color: alias, opacity: 0..100 }
+// rather than as a plain alias — multiply the opacity into the alpha.
+const resolve = async (val, depth = 0) => {
+  if (!val || depth > 8) return null;
+  if (val.type === 'VARIABLE_ALIAS') {
+    const t = await figma.variables.getVariableByIdAsync(val.id);
+    if (!t) return null;
+    return resolve(t.valuesByMode[Object.keys(t.valuesByMode)[0]], depth + 1);
   }
-  return value; // RGBA {r, g, b, a} in 0..1
+  if (val.color) {
+    const c = await resolve(val.color, depth + 1);
+    return c && { ...c, a: (c.a ?? 1) * (val.opacity / 100) };
+  }
+  return val; // RGBA {r, g, b, a} in 0..1
+};
+const hex = (c) => {
+  const h = x => Math.round(x * 255).toString(16).padStart(2, '0');
+  return '#' + h(c.r) + h(c.g) + h(c.b) + ((c.a ?? 1) < 0.999 ? h(c.a) : '');
 };
 
-const lightModeId = dyn.modes.find(m => m.name === 'Light').modeId;
-const darkModeId = dyn.modes.find(m => m.name === 'Dark').modeId;
+// Transparent helpers and the mode-invariant white have no token in code.
+const SKIP = new Set(['bg-none', 'bg-1 alpha', 'text-white-stetic']);
 
 const out = [];
-for (const vid of dyn.variableIds) {
-  const v = await getVar(vid);
-  if (v.resolvedType !== 'COLOR') continue;
-  const light = await resolveValue(v.valuesByMode[lightModeId]);
-  const dark = await resolveValue(v.valuesByMode[darkModeId]);
-  out.push({ name: v.name, light, dark });
+for (const id of dyn.variableIds) {
+  const v = await figma.variables.getVariableByIdAsync(id);
+  const name = v.name.split('/').pop();
+  if (v.resolvedType !== 'COLOR' || !/^base\/(background|text|border)\//.test(v.name) || SKIP.has(name)) continue;
+  const light = await resolve(v.valuesByMode[LIGHT]);
+  const dark = await resolve(v.valuesByMode[DARK]);
+  out.push(`${name}=${hex(light)}|${hex(dark)}`);
 }
-return out;
+return out.join(' ');
 ```
+
+Diff the result against `src/theme-antithesis.css` rather than hand-copying: the set should match one-to-one (85 tokens as of September 2026).
 
 ### 2. Mode IDs are local to a collection
 
-A "Light" / "Dark" pair on the dynamic collection has its own mode IDs (e.g. `1:0` / `38:0`). When an alias points to a primitive in another collection (e.g. `Primitive tokens`), that target uses **different** mode IDs (often a single `Value` mode like `11:1`). **Don't reuse the calling collection's mode IDs across collection boundaries** — match by mode position (or just take the only mode if the target is single-mode, which is the case for our primitives).
+A "Light" / "Dark" pair on the dynamic collection has its own mode IDs (`1:0` / `38:0`). When an alias points into `Primitive tokens`, that target has **different** mode IDs (a single `Value` mode, `11:1`). **Don't reuse the calling collection's mode IDs across collection boundaries** — take the target's only mode.
 
 ### 3. Color format mapping
 
 - Plugin API values are RGBA in `0..1` range — convert to hex with `Math.round(channel * 255)`.
-- An alpha channel below ~1.0 should be encoded as a trailing two-hex-digit suffix (e.g. `#ada0ee99`) — the Anta library uses `0xcc` (0.80), `0x99` (0.60), `0x66` (0.40), `0xb2` (0.70), `0x80` (0.50) for the level-3/4/5 tone fades.
+- An alpha below 1.0 becomes a trailing two-hex-digit suffix (e.g. `#912a0dcc`). The tinted text fades use `0xcc` (0.80), `0x99` (0.60), `0x66` (0.40), `0xb2` (0.70), `0x80` (0.50). Keep `b2` for 0.70 even though a straight `Math.round(0.7 * 255)` gives `b3`.
 
 ### 4. Naming convention in code
 
-- Strip the category folder from the Figma name: `text/text-2-brand` → `--text-2-brand`, `border/border-3-info` → `--border-3-info`.
-- **Backgrounds are an exception**: the Figma library still names them `bg-base`/`bg-section`/`bg-pane`/`bg-block`/`bg-spot`, but in code they ship as a numeric elevation scale `--bg-1 … --bg-5` (`bg-section`→`--bg-1`, `bg-base`→`--bg-2`, `bg-pane`→`--bg-3`, `bg-block`→`--bg-4`, `bg-spot`→`--bg-5`; tinted `bg-base-info`→`--bg-2-info`, etc.). Map the Figma name to its number when extracting.
-- Light values go on `:root`, dark values go on `.dark` (matching Anta's existing `.dark` ancestor convention — see `src/elements/a-progress.css`).
+- Strip the `base/<category>/` folder from the Figma name: `base/text/text-2-brand` → `--text-2-brand`, `base/background/bg-3-info` → `--bg-3-info`.
+- Backgrounds are already numbered in Figma (`bg-1 … bg-5`), matching code. (The older Anta 0.2 library named them `bg-section`/`bg-base`/`bg-pane`/`bg-block`/`bg-spot`; code kept the numeric scale.)
+- Skip `bg-none`, `bg-1 alpha` (transparent helpers) and `text-white-stetic` — they have no token in code.
+- Light values go on `:root, .light`; dark values go on `.dark` (Anta's `.dark` ancestor convention), in `src/theme-antithesis.css`.
 
 ### 5. Token naming categories present
 
-Confirmed via the dump on 2026-05-01:
+Confirmed via the collection dump on 2026-09-25:
 
-- **Backgrounds** (Figma names; code numbers them `--bg-1…5` — see §4): `bg-section`(→1), `bg-base`(→2), `bg-pane`(→3), `bg-block`(→4), `bg-spot`(→5) — each (except `bg-section`/`--bg-1`) has tones `-brand`, `-warning`, `-critical`, `-info`, `-success`. `bg-section`/`--bg-1` is neutral-only.
-- **Texts**: `text-1` through `text-5`, plus `text-white`. Each numbered token has tones `-brand`, `-success`, `-warning`, `-critical`, `-info`. `text-white` is mode-invariant.
-- **Borders**: `border-1` through `border-5`. Each has tones `-brand`, `-warning`, `-critical`, `-info`, `-success`.
-- Tone naming: `-critical` (not `-error`), `-warning` (not `-allert`). Component variant labels in Figma use `tone=error` / `tone=allert`, which **map to** `-critical` / `-warning` in the variable names.
+- **Backgrounds**: `bg-1` … `bg-5`. `bg-2` … `bg-5` have tones `-brand`, `-warning`, `-critical`, `-info`, `-success`; `bg-1` is neutral-only.
+- **Texts**: `text-1` … `text-5`, each with the five tones.
+- **Borders**: `border-1` … `border-5`, each with the five tones.
+- Tone naming: `-critical` (not `-error`), `-warning` (not `-allert`). Component variant labels in Figma may use `tone=error` / `tone=allert`, which **map to** `-critical` / `-warning`.
 
 ## Where token values land in code
 
-- `src/tokens.css` — exported as `@antadesign/anta/tokens.css`.
-- Each token is declared **twice**: hex first as a fallback, oklch second so capable browsers (Chrome 111+, Safari 15.4+, Firefox 113+) get perceptually-uniform values.
+- `src/theme-antithesis.css` (exported as `@antadesign/anta/theme-antithesis.css`) — the Antithesis role scale from this file, as hex literals on `:root, .light` and `.dark`. It overrides the seed-derived scale in `tokens.css`.
+- `src/tokens.css` — the default scale, derived from the `--anta-seed-*` tone seeds with oklch relative color. Figma values do not go here.
+- Component tone curves derive from the seeds, so the Antithesis seeds (`--anta-seed-brand`, `--anta-seed-neutral`) set component colors; the role literals don't reach them.
 
 ## Component conventions
 

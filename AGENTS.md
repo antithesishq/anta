@@ -36,6 +36,10 @@ pnpm test           # Run root regression tests (requires Chromium or installed 
 
 Use `pnpm run dev` for any development work, including docs-site work. It rebuilds anta and stickers before the site, so package-source edits propagate to the running site. Do not start `site`'s dev server directly for package work.
 
+`pnpm run dev` runs package builds, watchers, and the Astro site without Wrangler.
+Use `pnpm run dev --wrangler` to enable the local Cloudflare search/chat worker
+needed for AI search. The flag also works with `--parallel` (or `-new`).
+
 For production previews and browser checks, follow the command selection and
 server ownership rules in [site/AGENTS.md](site/AGENTS.md#local-servers). Agents
 choose the appropriate command without asking the user about process flags.

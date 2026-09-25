@@ -1,4 +1,5 @@
-import type { Axis, AxisArgs, AxisContext, AxisScale, AxisTemplate, CategoryAxisTemplate, Domain, LabelPosition, LinearAxisTemplate, LogarithmicAxisTemplate, PlotArgs, Series, ThemeColor, TimeAxisTemplate } from "../types"
+import { validate_font } from "./font"
+import type { Axis, AxisArgs, AxisContext, AxisScale, AxisTemplate, CategoryAxisTemplate, Domain, FontConfig, LabelPosition, LinearAxisTemplate, LogarithmicAxisTemplate, PlotArgs, Series, TimeAxisTemplate } from "../types"
 import { compute_domains, needs_auto } from "./domain"
 import { resolve_label } from "./plot_template"
 import { validate_finite, validate_non_negative, validate_optional } from "./validate"
@@ -78,21 +79,20 @@ function validate_and_build_axes_context(series: Series[], axis: PlotArgs['axis'
  * @param input - the caller's axis args
  * @returns the normalized flat axis
  */
-function normalize_axis(input: AxisArgs): Axis {
+function normalize_axis(input: AxisArgs, side: 'x' | 'y'): Axis {
     const { label, tick_label, ...rest } = input
-    const label_parts = normalize_axis_label(label)
+    const label_parts = normalize_axis_label(label, side)
 
     return {
         ...rest,
         ...label_parts,
         tick_label_format: tick_label?.format,
-        tick_label_size: tick_label?.size,
-        tick_label_color: tick_label?.color,
+        tick_label_font: tick_label?.font === undefined ? undefined : validate_font(tick_label.font, `plot: axis.${side}.tick_label.font`),
     }
 }
 
-// Split the label arg: a bare string is just text; an object carries text plus size / color / position.
-function normalize_axis_label(label: AxisArgs['label']): { label?: string; label_size?: number; label_color?: ThemeColor; label_position?: LabelPosition } {
+// Split the label arg: a bare string is just text; an object carries text plus font / position.
+function normalize_axis_label(label: AxisArgs['label'], side: 'x' | 'y'): { label?: string; label_font?: FontConfig; label_position?: LabelPosition } {
     if (label === undefined) {
         return {}
     }
@@ -100,7 +100,11 @@ function normalize_axis_label(label: AxisArgs['label']): { label?: string; label
     if (typeof label === 'string') {
         return { label }
     }
-    return { label: label.text, label_size: label.size, label_color: label.color, label_position: label.position }
+    return {
+        label: label.text,
+        label_font: label.font === undefined ? undefined : validate_font(label.font, `plot: axis.${side}.label.font`),
+        label_position: label.position,
+    }
 }
 
 /**
@@ -112,7 +116,7 @@ function normalize_axis_label(label: AxisArgs['label']): { label?: string; label
  * @returns the resolved axis context (padding seeded to 'default', overridden later)
  */
 function build_axis_side(series: Series[], input: AxisArgs, side: 'x' | 'y'): AxisContext {
-    const args = normalize_axis(input)
+    const args = normalize_axis(input, side)
     validate_label_position(args, side)
 
     // category declared by `scale: 'category'` or by a `categories` pin

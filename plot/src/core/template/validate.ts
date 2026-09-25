@@ -111,3 +111,16 @@ export function validate_optional(
 ): number | undefined {
     return value === undefined ? undefined : validate(value, label)
 }
+
+/**
+ * Validate that a numeric CSS font weight is finite and within [1, 1000].
+ * @param value - the font weight to check
+ * @param label - fully-qualified label for the error
+ * @returns the validated value
+ */
+export function validate_font_weight(value: number, label: string): number {
+    if (!Number.isFinite(value) || value < 1 || value > 1000) {
+        throw new Error(`${label} must be a finite number between 1 and 1000; got ${value}`)
+    }
+    return value
+}

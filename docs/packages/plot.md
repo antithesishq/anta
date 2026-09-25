@@ -396,7 +396,7 @@ function presentation(): PlotArgs<Node> {
   return {
     series: [scatter<Node>({ data: examplePoints, size: 3,
       color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    title: { text: 'Plot title', size: 16, color: { light: '#374151', dark: '#e5e7eb' } },
+    title: { text: 'Plot title', font: { size: 16, color: { light: '#374151', dark: '#e5e7eb' } } },
     height: 260,
     margin: { top: 38, right: 16, bottom: 42, left: 52 },
     background: { light: '#f3f4f6', dark: '#202124' },
@@ -451,7 +451,8 @@ document.body.append(plot)
 |---|---|---|---|
 | [`series`](#series) | `Series[]` | Required | What to draw, in paint order. Build each one with a factory. |
 | [`axis?`](#axes) | `{ x?: AxisArgs, y?: AxisArgs }` | Inferred from data | Per-axis scale, label, ticks, and domain. |
-| [`title?`](#title) | `string \| { text, size?, color? }` | None | Plot title. |
+| [`title?`](#title) | `string \| { text, font? }` | None | Plot title. |
+| [`font?`](#font) | `FontArg` | Role defaults | Shared font configuration. |
 | `width?` | `number` | Container width | Canvas width in pixels. Overrides the wrapper's CSS width. |
 | `height?` | `number` | Parent height for `Plot`; `300` for `<a-plot>` | Canvas height in pixels. Overrides the host's CSS height. |
 | [`margin?`](#margins) | `number \| { top?, right?, bottom?, left? }` | `60` per side; `2` without axes or title | Space reserved around the plot area for axes and title. |
@@ -3095,6 +3096,147 @@ Each `AxisViewport` contains:
 
 ## Configuration details
 
+### Font
+
+`font` on the plot supplies shared text settings. `title.font`,
+`axis.x.label.font`, `axis.y.label.font`, and each axis's `tick_label.font`
+accept local overrides. A string is shorthand for `{ family: string }`.
+Fields resolve individually from local settings, plot settings, and role defaults.
+Font assets are supplied by the application.
+
+| Field | Type | Constraint |
+| --- | --- | --- |
+| `family?` | `string` | CSS font family or family list. |
+| `size?` | `number` | Positive finite CSS pixels. |
+| `weight?` | `number` | Finite CSS weight from 1 to 1000. |
+| `color?` | [`ThemeColor`](#theme-colors) | Color string or light/dark pair. |
+| `italic?` | `boolean` | Select italic text. |
+| `condensed?` | `boolean` | Select condensed text. |
+| `letter_spacing?` | `number` | Finite CSS pixels; negative values are allowed. |
+| `word_spacing?` | `number` | Finite CSS pixels; negative values are allowed. |
+| `caps?` | `boolean \| FontCaps` | `true` means `all-small-caps`; `false` means `normal`. |
+
+`FontCaps` accepts `normal`, `small-caps`, `all-small-caps`, `petite-caps`,
+`all-petite-caps`, `unicase`, and `titling-caps`.
+
+Canvas drawing and text measurement use the same resolved font settings.
+Titles default to 14px and axis names to 12px, using the initially inherited
+CSS font family with a sans-serif fallback. Tick labels default to 10px monospace. The default weight is 400. Root settings override
+these role defaults; local settings override the root field by field.
+
+Plots capture the inherited CSS font family once when they mount. Explicit
+plot-level and local families take precedence. Later CSS font changes and
+font-loading completion do not trigger a redraw. Make fonts available before
+drawing; replacing `plotArgs` applies explicit font configuration changes.
+
+Different fonts by role
+
+The title combines bold weight, condensed width, and tighter letters. The axes switch to italic serif and spaced monospace, with colors that adapt to the theme.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot'
+import type { APlotElement } from '@antadesign/plot/browser'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function fontRoles(): PlotArgs<Node> {
+  return {
+    ...base(),
+    margin: { top: 48, right: 20, bottom: 58, left: 72 },
+    font: { family: '"TT Interphases Pro Variable", sans-serif', size: 13, weight: 450,
+      color: { light: '#713fff', dark: '#c4b5fd' } },
+    title: { text: '22px · bold · condensed',
+      font: { size: 22, weight: 750, condensed: true, letter_spacing: -0.35 } },
+    axis: {
+      x: { min: 0, max: 100,
+        label: { text: 'Serif · italic · 16px', font: { family: 'Georgia, serif', size: 16, italic: true,
+          color: { light: '#c2410c', dark: '#fdba74' } } } },
+      y: { min: 0, max: 100,
+        label: { text: 'Mono · +1px letters', font: { family: 'monospace', size: 12, letter_spacing: 1 } } },
+    },
+  }
+}
+
+await Promise.all([
+  document.fonts.load('750 22px "TT Interphases Pro Variable"'),
+  document.fonts.load('italic 600 20px "TT Interphases Pro Variable"'),
+])
+const plot = document.querySelector<APlotElement>('a-plot')!
+plot.plotArgs = fontRoles()
+```
+
+Shared settings and local overrides
+
+The title inherits italic small caps and expanded spacing. The horizontal label resets caps, italic, and both spacing values; the vertical label selects `small-caps` explicitly. Tick labels use compact monospace overrides.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot'
+import type { APlotElement } from '@antadesign/plot/browser'
+
+function base(): PlotArgs<Node> {
+  return {
+    series: [scatter<Node>({ data: [
+      { x: 12, y: 18 }, { x: 30, y: 42 }, { x: 48, y: 35 },
+      { x: 58, y: 64 }, { x: 76, y: 58 }, { x: 88, y: 82 },
+    ], size: 3, color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
+    height: 260,
+    margin: { top: 20, right: 24, bottom: 48, left: 76 },
+    axis: { x: { min: 0, max: 100, label: 'Time' }, y: { min: 0, max: 100, label: 'Value' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#9ca3af', dark: '#d1d5db' },
+    border: true,
+    grid: false,
+    zoom_pan: false,
+  }
+}
+
+function fontOverrides(): PlotArgs<Node> {
+  return {
+    ...base(),
+    margin: { top: 48, right: 20, bottom: 58, left: 72 },
+    font: { family: '"TT Interphases Pro Variable", sans-serif', size: 14, weight: 600,
+      italic: true, caps: true, letter_spacing: 1, word_spacing: 4,
+      color: { light: '#0f766e', dark: '#5eead4' } },
+    title: { text: 'Small caps · +4px words', font: { size: 20 } },
+    axis: {
+      x: { min: 0, max: 100,
+        label: { text: 'Normal caps · zero spacing', font: { caps: false, italic: false,
+          letter_spacing: 0, word_spacing: 0, color: { light: '#c2410c', dark: '#fdba74' } } },
+        tick_label: { font: { family: 'monospace', size: 10, weight: 400, italic: false,
+          caps: false, letter_spacing: 0, word_spacing: 0 } } },
+      y: { min: 0, max: 100,
+        label: { text: 'Italic · small caps', font: { caps: 'small-caps', letter_spacing: 0.5, word_spacing: 0 } },
+        tick_label: { font: { family: 'monospace', size: 10, weight: 400, italic: false,
+          caps: false, letter_spacing: 0, word_spacing: 0 } } },
+    },
+  }
+}
+
+await Promise.all([
+  document.fonts.load('750 22px "TT Interphases Pro Variable"'),
+  document.fonts.load('italic 600 20px "TT Interphases Pro Variable"'),
+])
+const plot = document.querySelector<APlotElement>('a-plot')!
+plot.plotArgs = fontOverrides()
+```
+
 ### Title
 
 Set the title text, size, and purple theme colors.
@@ -3123,7 +3265,7 @@ function base(): PlotArgs<Node> {
 
 function title(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 24, bottom: 48, left: 76 },
-    title: { text: 'Plot title', size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } }
+    title: { text: 'Plot title', font: { size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } } }
 }
 
 const plot = document.createElement('a-plot') as APlotElement
@@ -3136,8 +3278,7 @@ document.body.append(plot)
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `text` | `string` | Required | Plot title text. |
-| `size?` | `number` | `14` | Font size in pixels. |
-| `color?` | [`ThemeColor`](#theme-colors) | Theme default | Title color. |
+| `font?` | `FontArg` | Role default | Text styling; replaces the former `size` and `color` fields. |
 
 ### Margins
 
@@ -3550,8 +3691,8 @@ function base(): PlotArgs<Node> {
 
 function axisLabels(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: { text: 'Time', position: 'right', size: 18, color: { light: '#713fff', dark: '#c4b5fd' } } },
-    y: { min: 0, max: 100, label: { text: 'Value', position: 'top', size: 12, color: { light: '#c2410c', dark: '#fdba74' } } },
+    x: { min: 0, max: 100, label: { text: 'Time', position: 'right', font: { size: 18, color: { light: '#713fff', dark: '#c4b5fd' } } } },
+    y: { min: 0, max: 100, label: { text: 'Value', position: 'top', font: { size: 12, color: { light: '#c2410c', dark: '#fdba74' } } } },
   } }
 }
 
@@ -3586,10 +3727,10 @@ function base(): PlotArgs<Node> {
 
 function axisLabelsOpposite(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: { text: 'Time', position: 'left', size: 12,
-      color: { light: '#c2410c', dark: '#fdba74' } } },
-    y: { min: 0, max: 100, label: { text: 'Value', position: 'bottom', size: 20,
-      color: { light: '#713fff', dark: '#c4b5fd' } } },
+    x: { min: 0, max: 100, label: { text: 'Time', position: 'left', font: { size: 12,
+      color: { light: '#c2410c', dark: '#fdba74' } } } },
+    y: { min: 0, max: 100, label: { text: 'Value', position: 'bottom', font: { size: 20,
+      color: { light: '#713fff', dark: '#c4b5fd' } } } },
   } }
 }
 
@@ -3603,8 +3744,7 @@ document.body.append(plot)
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `text` | `string` | Required | Axis label text. |
-| `size?` | `number` | `12` | Font size in pixels. |
-| `color?` | [`ThemeColor`](#theme-colors) | Theme default | Label color. |
+| `font?` | `FontArg` | Role default | Text styling; replaces the former `size` and `color` fields. |
 | `position?` | `'center' \| 'left' \| 'right' \| 'top' \| 'bottom'` | `'center'` | Use `left` or `right` on x; `top` or `bottom` on y. |
 
 ### Tick labels
@@ -3635,8 +3775,8 @@ function base(): PlotArgs<Node> {
 
 function tickLabels(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: 'Elapsed time', tick_label: { format: value => value + ' s', size: 10, color: { light: '#713fff', dark: '#c4b5fd' } } },
-    y: { min: 0, max: 100, label: 'Utilization', tick_label: { format: value => value + '%', size: 15, color: { light: '#c2410c', dark: '#fdba74' } } },
+    x: { min: 0, max: 100, label: 'Elapsed time', tick_label: { format: value => value + ' s', font: { size: 10, color: { light: '#713fff', dark: '#c4b5fd' } } } },
+    y: { min: 0, max: 100, label: 'Utilization', tick_label: { format: value => value + '%', font: { size: 15, color: { light: '#c2410c', dark: '#fdba74' } } } },
   } }
 }
 
@@ -3650,8 +3790,7 @@ Use `TickLabelArg` at `axis.x.tick_label` or `axis.y.tick_label`:
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `format?` | `(value: number \| string, index: number) => string` | Scale-dependent | Format each tick value. Return `''` for an empty label. |
-| `size?` | `number` | `10` | Font size in pixels. |
-| `color?` | [`ThemeColor`](#theme-colors) | Theme default | Tick label color. |
+| `font?` | `FontArg` | Role default | Text styling; replaces the former `size` and `color` fields. |
 
 ### Series colors
 
@@ -3977,8 +4116,8 @@ grid lines, and the plot border. Use `background` for the plot fill and each
 series’ `color` for its marks. These colors accept `{ light, dark }` pairs.
 Plain color strings remain subject to the plot’s `theme_invert` setting.
 
-Set text colors separately with `title.color`, `axis.x.label.color`,
-`axis.y.label.color`, `axis.x.tick_label.color`, and `axis.y.tick_label.color`.
+Set text colors separately with `title.font.color`, `axis.x.label.font.color`,
+`axis.y.label.font.color`, `axis.x.tick_label.font.color`, and `axis.y.tick_label.font.color`.
 
 With the JSX `Plot` component, return content supported by your renderer from a
 series’ [`tooltip`](#tooltips) callback and style it like other markup. Anta’s

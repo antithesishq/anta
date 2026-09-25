@@ -62,6 +62,258 @@
   --anta-seed-neutral: #65605b;
 }
 
+/* Role scale — literals from the Figma library "Anta 0.4 — New Brand"
+   ("Dynamic colors" collection; see FIGMA.md). They replace the scale that
+   tokens.css derives from the seeds above, so every --bg-*, --text-* and
+   --border-* role matches the design file exactly. The seeds stay: component
+   tone curves still derive from them. */
+:root,
+.light {
+  /* Backgrounds — light, neutral */
+  --bg-1: #ffffff;
+  --bg-2: #fdfaf8;
+  --bg-3: #faf7f5;
+  --bg-4: #f3f0ee;
+  --bg-5: #eeeae7;
+
+  /* Backgrounds — light, Brand (no --bg-1-{tone}; bg-1 is neutral-only) */
+  --bg-2-brand: #fff6f5;
+  --bg-3-brand: #fff2f0;
+  --bg-4-brand: #ffedeb;
+  --bg-5-brand: #ffe5e0;
+
+  /* Backgrounds — light, Success */
+  --bg-2-success: #f7fcf9;
+  --bg-3-success: #ecf9f0;
+  --bg-4-success: #e2f5e8;
+  --bg-5-success: #d9f2e0;
+
+  /* Backgrounds — light, Critical */
+  --bg-2-critical: #fefbfb;
+  --bg-3-critical: #fdf2f4;
+  --bg-4-critical: #fcebee;
+  --bg-5-critical: #fae5e9;
+
+  /* Backgrounds — light, Warning */
+  --bg-2-warning: #fefbf6;
+  --bg-3-warning: #fcf4e8;
+  --bg-4-warning: #fbeeda;
+  --bg-5-warning: #f9e7cd;
+
+  /* Backgrounds — light, Info */
+  --bg-2-info: #fbfcfe;
+  --bg-3-info: #f2f7fd;
+  --bg-4-info: #e9f3fb;
+  --bg-5-info: #e1eefa;
+
+  /* Text — light, neutral */
+  --text-1: #080707;
+  --text-2: #312d2b;
+  --text-3: #665f5b;
+  --text-4: #89817c;
+  --text-5: #a39994;
+
+  /* Text — light, Brand */
+  --text-1-brand: #701600;
+  --text-2-brand: #912a0d;
+  --text-3-brand: #912a0dcc;
+  --text-4-brand: #912a0d99;
+  --text-5-brand: #912a0d66;
+
+  /* Text — light, Success */
+  --text-1-success: #004415;
+  --text-2-success: #1f5c31;
+  --text-3-success: #1f5c31cc;
+  --text-4-success: #1f5c3199;
+  --text-5-success: #1f5c3166;
+
+  /* Text — light, Critical */
+  --text-1-critical: #8d0017;
+  --text-2-critical: #a01c32;
+  --text-3-critical: #a01c32cc;
+  --text-4-critical: #a01c3299;
+  --text-5-critical: #a01c3266;
+
+  /* Text — light, Warning */
+  --text-1-warning: #7f410b;
+  --text-2-warning: #995200;
+  --text-3-warning: #995200cc;
+  --text-4-warning: #99520099;
+  --text-5-warning: #99520066;
+
+  /* Text — light, Info */
+  --text-1-info: #00396b;
+  --text-2-info: #175082;
+  --text-3-info: #175082cc;
+  --text-4-info: #175082b2;
+  --text-5-info: #17508280;
+
+  /* Borders — light, neutral */
+  --border-1: #99908b;
+  --border-2: #c2b8b2;
+  --border-3: #d8cfca;
+  --border-4: #e4ddd8;
+  --border-5: #eeeae7;
+
+  /* Borders — light, Brand */
+  --border-1-brand: #ee6d53;
+  --border-2-brand: #fea192;
+  --border-3-brand: #ffc1b8;
+  --border-4-brand: #ffd3cc;
+  --border-5-brand: #ffe5e0;
+
+  /* Borders — light, Success */
+  --border-1-success: #44c169;
+  --border-2-success: #88d7a0;
+  --border-3-success: #b3e5c2;
+  --border-4-success: #c6ecd1;
+  --border-5-success: #d9f2e0;
+
+  /* Borders — light, Critical */
+  --border-1-critical: #e56c80;
+  --border-2-critical: #efa4b0;
+  --border-3-critical: #f4c2cb;
+  --border-4-critical: #f7d4da;
+  --border-5-critical: #fae5e9;
+
+  /* Borders — light, Warning */
+  --border-1-warning: #d88118;
+  --border-2-warning: #edb25a;
+  --border-3-warning: #f3cc91;
+  --border-4-warning: #f6dbb1;
+  --border-5-warning: #f9e7cd;
+
+  /* Borders — light, Info */
+  --border-1-info: #56a1e1;
+  --border-2-info: #93c5ec;
+  --border-3-info: #bad6f3;
+  --border-4-info: #cfe3f7;
+  --border-5-info: #e1eefa;
+}
+
+.dark {
+  /* Backgrounds — dark, neutral */
+  --bg-1: #0b0409;
+  --bg-2: #13070f;
+  --bg-3: #170812;
+  --bg-4: #1e0b18;
+  --bg-5: #250e1e;
+
+  /* Backgrounds — dark, Brand */
+  --bg-2-brand: #160803;
+  --bg-3-brand: #1f0c04;
+  --bg-4-brand: #290e05;
+  --bg-5-brand: #321106;
+
+  /* Backgrounds — dark, Success */
+  --bg-2-success: #041008;
+  --bg-3-success: #05140a;
+  --bg-4-success: #061b0e;
+  --bg-5-success: #081f0f;
+
+  /* Backgrounds — dark, Critical */
+  --bg-2-critical: #190408;
+  --bg-3-critical: #1f0509;
+  --bg-4-critical: #2c070d;
+  --bg-5-critical: #330910;
+
+  /* Backgrounds — dark, Warning */
+  --bg-2-warning: #120a03;
+  --bg-3-warning: #160d04;
+  --bg-4-warning: #201305;
+  --bg-5-warning: #241506;
+
+  /* Backgrounds — dark, Info */
+  --bg-2-info: #040d18;
+  --bg-3-info: #04111f;
+  --bg-4-info: #051727;
+  --bg-5-info: #071b2c;
+
+  /* Text — dark, neutral */
+  --text-1: #eeeae7;
+  --text-2: #c0b7bd;
+  --text-3: #a398a0;
+  --text-4: #7c6e78;
+  --text-5: #695d65;
+
+  /* Text — dark, Brand */
+  --text-1-brand: #ffb3a7;
+  --text-2-brand: #f88d7d;
+  --text-3-brand: #f88d7dcc;
+  --text-4-brand: #f88d7d99;
+  --text-5-brand: #f88d7d66;
+
+  /* Text — dark, Success */
+  --text-1-success: #9ddeb1;
+  --text-2-success: #74cd8e;
+  --text-3-success: #74cd8ecc;
+  --text-4-success: #74cd8e99;
+  --text-5-success: #74cd8e66;
+
+  /* Text — dark, Critical */
+  --text-1-critical: #ffabb9;
+  --text-2-critical: #e78e9d;
+  --text-3-critical: #e78e9dcc;
+  --text-4-critical: #e78e9d99;
+  --text-5-critical: #e78e9d66;
+
+  /* Text — dark, Warning */
+  --text-1-warning: #f0bf75;
+  --text-2-warning: #e1a452;
+  --text-3-warning: #e1a452cc;
+  --text-4-warning: #e1a45299;
+  --text-5-warning: #e1a45266;
+
+  /* Text — dark, Info */
+  --text-1-info: #99d0ff;
+  --text-2-info: #7db6e8;
+  --text-3-info: #7db6e8cc;
+  --text-4-info: #7db6e899;
+  --text-5-info: #7db6e866;
+
+  /* Borders — dark, neutral */
+  --border-1: #695d65;
+  --border-2: #4a4248;
+  --border-3: #3a3338;
+  --border-4: #242023;
+  --border-5: #191618;
+
+  /* Borders — dark, Brand */
+  --border-1-brand: #d03711;
+  --border-2-brand: #912a0d;
+  --border-3-brand: #6d240d;
+  --border-4-brand: #3e1609;
+  --border-5-brand: #321106;
+
+  /* Borders — dark, Success */
+  --border-1-success: #2a7e43;
+  --border-2-success: #1f5c31;
+  --border-3-success: #174525;
+  --border-4-success: #0d2b16;
+  --border-5-success: #081f0f;
+
+  /* Borders — dark, Critical */
+  --border-1-critical: #c92c46;
+  --border-2-critical: #a01c32;
+  --border-3-critical: #761928;
+  --border-4-critical: #471019;
+  --border-5-critical: #330910;
+
+  /* Borders — dark, Warning */
+  --border-1-warning: #995200;
+  --border-2-warning: #6a3b0c;
+  --border-3-warning: #4f2d0d;
+  --border-4-warning: #311d0a;
+  --border-5-warning: #241506;
+
+  /* Borders — dark, Info */
+  --border-1-info: #1f6eb2;
+  --border-2-info: #175082;
+  --border-3-info: #133e62;
+  --border-4-info: #0d273e;
+  --border-5-info: #071b2c;
+}
+
 @layer anta.theme {
   :is(address, cite, em, i, var, dt) {
     font-variation-settings: "slnt" 11;

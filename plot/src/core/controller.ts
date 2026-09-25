@@ -15,6 +15,7 @@ export type PlotEnvironment = {
     height: number
     device_pixel_ratio: number
     color_theme: ColorTheme
+    inherited_font_family?: string
 }
 
 export type PlotDrawHost = {
@@ -110,7 +111,7 @@ export class PlotController<TooltipContent = unknown> {
                 throw new Error("plot: device pixel ratio must be positive and finite")
             }
             if (recompose) {
-                composed_plot = compose_plot(this.#template, environment.width, environment.height, environment.color_theme, viewport)
+                composed_plot = compose_plot(this.#template, environment.width, environment.height, environment.color_theme, viewport, environment.inherited_font_family)
             }
         } catch (error) {
             this.#on_error({ phase: 'compose', error })
@@ -133,8 +134,9 @@ export class PlotController<TooltipContent = unknown> {
         const template_changed = this.#last_composition_template !== this.#template
         const dimensions_changed = previous?.width !== environment.width || previous.height !== environment.height
         const theme_changed = previous?.color_theme !== environment.color_theme
+        const font_changed = previous?.inherited_font_family !== environment.inherited_font_family
         const viewport_changed = viewport_moved(this.#last_composition_viewport, viewport)
-        return template_changed || dimensions_changed || theme_changed || viewport_changed
+        return template_changed || dimensions_changed || theme_changed || font_changed || viewport_changed
     }
 
     /** Attach or replace a surface; an already composed plot needs a fresh draw. */

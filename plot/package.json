@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/plot",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "files": [
     "dist"
@@ -48,14 +48,18 @@
     "check:package": "node scripts/verify-package.mjs",
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
+    "test:font": "node --test tests/font.test.mjs",
     "test:registration": "node --test tests/registration.test.mjs",
     "test:components": "node --test tests/components.test.mjs",
-    "test:browser": "node --test tests/components.browser.test.mjs"
+    "test:browser": "node --test tests/components.browser.test.mjs",
+    "test:axes": "node --test tests/axes.test.mjs"
   },
   "dependencies": {
     "@types/d3-scale": "4.0.9",
+    "@types/d3-time": "3.0.4",
     "chroma-js": "3.2.0",
     "d3-scale": "4.0.2",
+    "d3-time": "3.1.0",
     "es-toolkit": "1.52.0"
   },
   "peerDependencies": {

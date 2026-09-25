@@ -197,7 +197,7 @@ try {
 
     const core_consumer = resolve(sandbox, 'core-consumer.ts')
     await writeFile(core_consumer, `
-        import { Plot, PlotSurface, scatter, type PlotArgs, type PlotProps, type PlotSurfaceProps, type PlotLifecycleError } from '@antadesign/plot'
+        import { Plot, PlotSurface, scatter, type PlotArgs, type PlotProps, type PlotSurfaceProps, type PlotLifecycleError, type FontArg, type FontConfig, type FontCaps } from '@antadesign/plot'
         import type { ReactNode } from 'react'
         const props: PlotProps<ReactNode> = {plotArgs:{series:[]}}
         const surfaceProps: PlotSurfaceProps = {canvasOwner:'worker'}
@@ -208,6 +208,18 @@ try {
         // @ts-expect-error Canvas lifecycle helpers are internal.
         import { update_hover_canvas } from '@antadesign/plot'
         const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
+        const caps: FontCaps = 'small-caps'
+        const font: FontConfig = { size: 12, weight: 450, caps, letter_spacing: -0.5 }
+        const family: FontArg = 'Example, sans-serif'
+        const typography: PlotArgs = { series: [], font: family,
+            title: { text: 'Title', font },
+            axis: { x: { label: { text: 'X', font }, tick_label: { font: family } } } }
+        // @ts-expect-error Title size is now nested under font.
+        const oldTitle: PlotArgs = { series: [], title: { text: 'Title', size: 12 } }
+        // @ts-expect-error Label color is now nested under font.
+        const oldLabel: PlotArgs = { series: [], axis: { x: { label: { text: 'X', color: 'red' } } } }
+        // @ts-expect-error Tick size is now nested under font.
+        const oldTicks: PlotArgs = { series: [], axis: { y: { tick_label: { size: 10 } } } }
         const onError = (failure: PlotLifecycleError) => failure.phase
     `)
     const core_program = ts.createProgram([core_consumer], {

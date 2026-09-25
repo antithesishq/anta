@@ -180,20 +180,61 @@ export type AxisKind = 'numeric' | 'categorical'
 export type ColorPair = { light: string; dark: string }
 export type ThemeColor = string | ColorPair
 
+/** CSS font-variant-caps values supported by plot text. */
+export type FontCaps =
+    | 'normal'
+    | 'small-caps'
+    | 'all-small-caps'
+    | 'petite-caps'
+    | 'all-petite-caps'
+    | 'unicase'
+    | 'titling-caps'
+
+/** Partial text styling. Local fields override plot-level fields individually. */
+export type FontConfig = {
+    family?: string
+    /** Positive font size in CSS pixels. */
+    size?: number
+    /** Numeric CSS weight from 1 to 1000, including fractional values. */
+    weight?: number
+    color?: ThemeColor
+    italic?: boolean
+    condensed?: boolean
+    /** Finite spacing in CSS pixels; negative values are allowed. */
+    letter_spacing?: number
+    /** Finite spacing in CSS pixels; negative values are allowed. */
+    word_spacing?: number
+    /** true selects all-small-caps; false selects normal. */
+    caps?: boolean | FontCaps
+}
+
+/** A family shorthand or a partial font configuration. Font assets belong to the host. */
+export type FontArg = string | FontConfig
+
+export type ResolvedFontConfig = {
+    family: string
+    size: number
+    weight: number
+    color: string
+    italic: boolean
+    condensed: boolean
+    letter_spacing: number
+    word_spacing: number
+    caps: FontCaps
+}
+
 export type LabelPosition = 'center' | 'top' | 'bottom' | 'left' | 'right'
 export type TickFormat = (value: number | string, index: number) => string
 
 export type LabelArg = string | {
     text: string
-    size?: number
-    color?: ThemeColor
+    font?: FontArg
     position?: LabelPosition
 }
 
 export type TickLabelArg = {
     format?: TickFormat
-    size?: number
-    color?: ThemeColor
+    font?: FontArg
 }
 
 export type AxisArgs = {
@@ -217,8 +258,7 @@ export type AxisArgs = {
 export type Axis = {
     scale?: AxisScale
     label?: string
-    label_size?: number
-    label_color?: ThemeColor
+    label_font?: FontConfig
     label_position?: LabelPosition
     min?: number
     max?: number
@@ -232,8 +272,7 @@ export type Axis = {
     line?: boolean
     hidden?: boolean
     tick_label_format?: TickFormat
-    tick_label_size?: number
-    tick_label_color?: ThemeColor
+    tick_label_font?: FontConfig
     tick_mark?: boolean
 }
 
@@ -291,8 +330,8 @@ export type PlotTemplate<TooltipContent = unknown> = {
     x: AxisTemplate
     y: AxisTemplate
     title?: string
-    title_size?: number
-    title_color?: ThemeColor
+    title_font?: FontConfig
+    font: FontConfig
     margin?: Margin
     width?: number
     height?: number
@@ -313,6 +352,7 @@ export type PlotArgs<TooltipContent = unknown> = {
     series: Series<TooltipContent>[]
     axis?: { x?: AxisArgs; y?: AxisArgs }
     title?: TitleArg
+    font?: FontArg
     width?: number
     height?: number
     margin?: Margin
@@ -350,8 +390,9 @@ export type ComposedPlot<TooltipContent = unknown> = {
     x_categories?: string[]
     y_categories?: string[]
     title?: string
-    title_size?: number
-    title_color?: ThemeColor
+    title_font?: FontConfig
+    font: FontConfig
+    inherited_font_family?: string
     series: ComposedSeries<TooltipContent>[]
     border?: boolean
     grid?: GridSpec
@@ -484,7 +525,7 @@ export interface SeriesType<TooltipContent = unknown, S extends Series<TooltipCo
 export type ColorTheme = 'light' | 'dark'
 
 export type ColorArg = ThemeColor | ((row: Record<string, unknown>, index: number) => ThemeColor)
-export type TitleArg = string | { text: string; size?: number; color?: ThemeColor }
+export type TitleArg = string | { text: string; font?: FontArg }
 
 export type StrokeArg = ThemeColor | Stroke
 

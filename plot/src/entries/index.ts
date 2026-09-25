@@ -13,7 +13,7 @@ export type {
     RuleSeries, AreaSeries, AreaPixelRuns, CustomSeries, Series,
     ComposedScatter, ComposedRect, ComposedBar, ComposedLine, ComposedRule,
     ComposedArea, ComposedCustom, ComposedSeries, AxisKind, ColorPair,
-    ThemeColor, LabelPosition, TickFormat, LabelArg, TickLabelArg,
+    ThemeColor, FontArg, FontConfig, FontCaps, LabelPosition, TickFormat, LabelArg, TickLabelArg,
     AxisArgs, Axis, AxisTemplateKind, LinearAxisTemplate, LogarithmicAxisTemplate,
     TimeAxisTemplate, CategoryAxisTemplate, AxisTemplate, GridSpec, ZoomPanArg,
     ZoomPan, RequestedViewportWindow, ViewportRequest, PlotTemplate, PlotArgs,

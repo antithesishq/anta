@@ -73,7 +73,7 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             })
             this.#view.root.addEventListener('contextchange', event => {
                 this.#context = (event as CustomEvent<BoxContextChange>).detail.current
-                this.#schedule()
+                if (this.#host.update_context(this.#context)) this.#schedule()
             })
             this.#view.root.addEventListener('resetrequest', this.#interaction_coordinator.reset)
             this.#view.capture.addEventListener('dblclick', this.#interaction_coordinator.handle_double_click)
@@ -195,6 +195,7 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             if (this.isConnected) {
                 this.#measurement = this.#view.root.measurement
                 this.#context = this.#view.root.context
+                this.#host.update_context(this.#context)
             }
             this.#controller?.invalidate_draw()
             this.#schedule()
@@ -227,9 +228,6 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
         #render(): void {
             if (this.#measurement === null || this.#context === null) return
             this.#host.measurement = this.#measurement
-            this.#host.environment = {
-                color_theme: this.#context.mode, device_pixel_ratio: this.#context.devicePixelRatio,
-            }
             const presentation = this.#host.render()
             if (presentation === null || this.#controller === null) return
             this.#view.root.present(presentation)

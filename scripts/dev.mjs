@@ -3,10 +3,10 @@ import { spawn, spawnSync } from 'node:child_process'
 
 const args = process.argv.slice(2)
 const parallel = args.includes('-new') || args.includes('--parallel')
-const wrangler = !args.includes('--no-wrangler')
+const wrangler = args.includes('--wrangler')
 
-if (args.some(arg => !['-new', '--parallel', '--no-wrangler', '--'].includes(arg))) {
-  console.error('Usage: pnpm run dev [--parallel] [--no-wrangler]')
+if (args.some(arg => !['-new', '--parallel', '--wrangler', '--'].includes(arg))) {
+  console.error('Usage: pnpm run dev [--parallel] [--wrangler]')
   process.exit(1)
 }
 

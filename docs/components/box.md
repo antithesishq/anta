@@ -142,7 +142,8 @@ Set `throttle` to a minimum interval in milliseconds. The first report has no
 added delay; subsequent reports include a trailing update with the latest values.
 Omit it or pass `0` for frame-based reporting. Negative or non-finite values use
 `0`. The interval applies to `onMeasureChange`; context events are not throttled.
-Throttling limits event delivery; it does not reduce observer reads.
+Throttling limits event delivery and descendant rect reads; it does not reduce
+the Box reads that keep CSS states current.
 `edges`, `scroll`, and `fade` continue measuring during scrolling so their
 CSS states remain current.
 
@@ -159,6 +160,10 @@ rects when an existing `observe` selection reports a change. `current.rects`
 always contains the latest array; `changed.rects` appears only when that array
 differs from the previous report. For a fresh read at any time, use
 `box.measurement.rects`.
+
+With `observe="scroll"` and no throttle, Box can query, measure, and compare
+every matching descendant on each reported frame. Keep the selector focused or
+set `throttle` when many descendants match. Fade states still update each frame.
 
 ```tsx
 <Box includeRectsFor=".marker" onMeasureChange={(_, { current }) => {
@@ -315,14 +320,14 @@ const canvasRef = useRef<HTMLCanvasElement>(null)
 | `fade?` | boolean | — | Fades out every edge that currently hides clipped content, and drops the fade from an edge once the reader scrolls to it. |
 | `fadeSize?` | number \| string | 24 | Depth of the `fade` gradient. A `number` is pixels; a string is any CSS length. |
 | `gap?` | number \| string | — | Gap between children, matching the CSS `gap` property. A `number` is pixels; a string is any CSS length or two-value gap (`'1rem'`, `'8px 16px'`). Applies while the Box is a flex or grid container. |
-| `includeRectsFor?` | string | — | CSS selector for descendants whose border boxes are included in `measurement.rects` when Box measures. Coordinates are relative to this Box's top-left border edge; matches are in document order. |
+| `includeRectsFor?` | string | — | CSS selector for descendants whose border boxes are included in `measurement.rects` when Box measures. Coordinates are relative to this Box's top-left border edge; matches are in document order. Box reads and compares matching rects for each measurement event. With `observe="scroll"`, use `throttle` when the selector matches many descendants; fade states still update on each frame. |
 | `margin?` | number \| string | — | Outer spacing, matching CSS `margin`. Numbers are pixels; strings accept CSS shorthand, `auto`, negative lengths, and custom properties. Omission adds no style. |
 | `observe?` | 'width' \| 'height' \| 'size' \| 'context' \| 'overflow' \| 'edges' \| 'scroll' \| 'all' \| readonly BoxObservation[] | — | One selection or an array of selections, in any order. `'size'` watches width and height; `'context'` watches rendering context; `'overflow'` watches content dimensions and clipping. `'edges'` reports which edges hide content; `'scroll'` reports offsets, potentially every frame; `'all'` selects everything. Selections are independent: use `['size', 'edges']` to combine them. A measurement handler implies `'size'` when no measurement is selected; a context handler adds `'context'`. Size skips content and scroll observers; overflow adds content observation; hidden edges and scroll add scroll reads. Without handlers or `fade`, omission stays idle. |
 | `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail` contains the changed fields and a full current snapshot. |
 | `onMeasureChange?` | (event, detail) => void | — | Fired when a selected measurement field changes. `detail.changed` contains fields changed since the previous event; `detail.current` includes the full snapshot with matching rects. Rect changes alone do not trigger an event. |
 | `padding?` | number \| string | — | Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept CSS shorthand, percentages, and custom properties. Omission adds no style. |
 | `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a `number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit for square corners. |
-| `throttle?` | number | 0 | Minimum interval between measurement events, in milliseconds. The first report has no added delay; a trailing report delivers the latest values. Active observers and CSS clipping states are not throttled. |
+| `throttle?` | number | 0 | Minimum interval between measurement events, in milliseconds. The first report has no added delay; a trailing report delivers the latest values. Descendant rects are read for emitted events. Active observers and CSS clipping states are not throttled. |
 
 ### BoxMeasurement
 

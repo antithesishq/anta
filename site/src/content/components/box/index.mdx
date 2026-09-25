@@ -254,7 +254,8 @@ Set `throttle` to a minimum interval in milliseconds. The first report has no
 added delay; subsequent reports include a trailing update with the latest values.
 Omit it or pass `0` for frame-based reporting. Negative or non-finite values use
 `0`. The interval applies to `onMeasureChange`; context events are not throttled.
-Throttling limits event delivery; it does not reduce observer reads.
+Throttling limits event delivery and descendant rect reads; it does not reduce
+the Box reads that keep CSS states current.
 `edges`, `scroll`, and `fade` continue measuring during scrolling so their
 CSS states remain current.
 
@@ -271,6 +272,10 @@ rects when an existing `observe` selection reports a change. `current.rects`
 always contains the latest array; `changed.rects` appears only when that array
 differs from the previous report. For a fresh read at any time, use
 `box.measurement.rects`.
+
+With `observe="scroll"` and no throttle, Box can query, measure, and compare
+every matching descendant on each reported frame. Keep the selector focused or
+set `throttle` when many descendants match. Fade states still update each frame.
 
 ```tsx
 <Box includeRectsFor=".marker" onMeasureChange={(_, { current }) => {

@@ -345,7 +345,9 @@ export interface ABoxAttributes extends BaseAttributes {
    *  typed `attr()` read it from `--box-gap` in the host's inline style
    *  instead, which is what the JSX wrapper always sets. */
   gap?: boolean | '' | number | string
-  /** Adds matching descendant rects to each measurement snapshot. */
+  /** Adds matching descendant rects to each measurement snapshot. With
+   * `observe="scroll"`, use `throttle` when many descendants match: rects are
+   * read for each emitted event, while fade states still update each frame. */
   'include-rects-for'?: string
   /** CSS padding shorthand (`padding="8px 16px"`). Without typed `attr()`
    * support, set `--box-padding` as well. The JSX wrapper supplies it. */

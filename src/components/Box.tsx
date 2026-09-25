@@ -30,7 +30,10 @@ export interface BoxProps extends BaseProps {
   gap?: number | string
   /** CSS selector for descendants whose border boxes are included in
    * `measurement.rects` when Box measures. Coordinates are relative to this
-   * Box's top-left border edge; matches are in document order. */
+   * Box's top-left border edge; matches are in document order. Box reads and
+   * compares matching rects for each measurement event. With `observe="scroll"`,
+   * use `throttle` when the selector matches many descendants; fade states still
+   * update on each frame. */
   includeRectsFor?: string
   /** Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept
    * CSS shorthand, percentages, and custom properties. Omission adds no style. */
@@ -51,7 +54,8 @@ export interface BoxProps extends BaseProps {
   observe?: BoxObservation | readonly BoxObservation[]
   /** Minimum interval between measurement events, in milliseconds. The first
    * report has no added delay; a trailing report delivers the latest values.
-   * Active observers and CSS clipping states are not throttled.
+   * Descendant rects are read for emitted events. Active observers and CSS
+   * clipping states are not throttled.
    * @defaultValue 0 */
   throttle?: number
   /** Fades out every edge that currently hides clipped content, and drops the

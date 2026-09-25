@@ -274,6 +274,26 @@ test('Throttling delivers the latest trailing snapshot without delaying CSS stat
   assert.equal(await page.evaluate(() => events.length), 2)
 })
 
+test('Throttling limits descendant rect reads without delaying fade states', async t => {
+  const page = await pageFor(t, { observe: 'scroll', fade: '', throttle: '250', 'include-rects-for': 'div' })
+  await page.evaluate(async () => {
+    const target = box.querySelector('div')
+    window.targetRectReads = 0
+    const read = target.getBoundingClientRect.bind(target)
+    target.getBoundingClientRect = () => { targetRectReads++; return read() }
+    for (let i = 1; i <= 5; i++) {
+      box.scrollTop = i * 10
+      await frames(1)
+    }
+  })
+  assert.deepEqual(await page.evaluate(() => ({ events: events.length, reads: targetRectReads,
+    faded: box.matches(':state(hidden-start-y)') })), { events: 1, reads: 0, faded: true })
+  await page.waitForFunction(() => events.length === 2)
+  assert.deepEqual(await page.evaluate(() => ({ reads: targetRectReads,
+    scrollTop: events[1].current.scrollTop, rectTop: events[1].current.rects[0].top })),
+  { reads: 1, scrollTop: 50, rectTop: -50 })
+})
+
 test('A throttled change that returns to the reported value emits no duplicate', async t => {
   const page = await pageFor(t, { observe: 'size', throttle: '250' })
   await page.evaluate(async () => {

@@ -207,7 +207,8 @@ const SHADOW_STYLE = `
     transform: rotate(90deg);
   }
   :host([indicator-placement="end"]) button[aria-expanded="true"] .indicator { transform: rotate(270deg); }
-  :host([indicator-placement="end"]) .indicator.has-custom { transform: none; }
+  :host([indicator-placement="end"]) .indicator.has-custom,
+  :host([indicator-placement="end"]) .indicator.has-pair { transform: none; }
   :host([indicator-placement="end"][indicator="plus"]) .indicator { transform: none; }
   :host([indicator-placement="end"]) button[aria-expanded="true"] .indicator.has-custom { transform: rotate(180deg); }
   :host([indicator-placement="end"]) button[aria-expanded="true"] .indicator.has-pair,
@@ -304,8 +305,9 @@ export class AExpanderElement extends HTMLElementBase {
     indicatorSlot.append(glyph)
     indicatorSlot.addEventListener('slotchange', () => {
       const assigned = indicatorSlot.assignedElements()
-      indicator.classList.toggle('has-custom', assigned.length > 0)
-      indicator.classList.toggle('has-pair', assigned.some(el => el.hasAttribute('data-when')))
+      const hasPair = assigned.some(el => el.hasAttribute('data-when'))
+      indicator.classList.toggle('has-custom', assigned.length > 0 && !hasPair)
+      indicator.classList.toggle('has-pair', hasPair)
     })
     indicator.append(indicatorSlot)
     this.summary.append(titleSlot, indicator)

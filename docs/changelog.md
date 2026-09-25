@@ -23,6 +23,8 @@ changes are not listed.
 
 ### Fixed
 
+- [Expander indicators](/expander/#indicator) leave the mark empty for
+  unrecognized strings and numbers instead of displaying them as text.
 - [Menu submenus](/menu/#submenus) stay open when a nested
   date picker closes under the pointer outside the submenu. Hover dismissal
   resumes after the pointer returns.

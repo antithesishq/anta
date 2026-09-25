@@ -30,6 +30,11 @@ before(async () => {
             indicator={{ closed: <Icon shape="plus" />, open: <Icon shape="minus" /> }}>Body</Expander>
           <Expander title="Triangle" id="triangle" indicator="triangle">Body</Expander>
           <Expander title="Plus" id="plus" indicator="plus">Body</Expander>
+          <Expander title="Typo" id="typo" indicator="chevrom">Body</Expander>
+          <Expander title="Zero" id="zero" indicator={0}>Body</Expander>
+          <Expander title="Empty" id="empty" indicator="">Body</Expander>
+          <Expander title="False" id="false" indicator={false}>Body</Expander>
+          <Expander title="Custom" id="custom" indicator={<Icon shape="chevron-down" />}>Body</Expander>
         </>, document.body)
       `,
       resolveDir: process.cwd(),
@@ -155,6 +160,7 @@ test('end indicator toggles the summary while the actions column stays independe
 
 test('paired custom indicators switch inside an inert decorative slot', async t => {
   const page = await pageFor(t)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   const pair = page.locator('#pair')
   const states = () => pair.evaluate(host => {
     const indicator = host.shadowRoot.querySelector('[part="indicator"]')
@@ -162,13 +168,38 @@ test('paired custom indicators switch inside an inert decorative slot', async t 
     return {
       hidden: indicator.getAttribute('aria-hidden'),
       inert: indicator.inert,
+      customClass: indicator.classList.contains('has-custom'),
+      pairClass: indicator.classList.contains('has-pair'),
+      transform: getComputedStyle(indicator).transform,
       visible: nodes.map(node => getComputedStyle(node).display !== 'none'),
     }
   })
-  assert.deepEqual(await states(), { hidden: 'true', inert: true, visible: [true, false] })
+  assert.deepEqual(await states(), {
+    hidden: 'true', inert: true, customClass: false, pairClass: true, transform: 'none', visible: [true, false],
+  })
   assert.match(await page.locator('#pair button[part="summary"]').ariaSnapshot(), /button "Pair"/)
   await pair.evaluate(host => host.shadowRoot.querySelector('button').click())
-  assert.deepEqual(await states(), { hidden: 'true', inert: true, visible: [false, true] })
+  assert.deepEqual(await states(), {
+    hidden: 'true', inert: true, customClass: false, pairClass: true, transform: 'none', visible: [false, true],
+  })
+})
+
+test('unrecognized primitive indicators suppress the built-in mark without rendering text', async t => {
+  const page = await pageFor(t)
+  for (const id of ['typo', 'zero', 'empty', 'false']) {
+    const state = await page.locator(`#${id}`).evaluate(host => {
+      const slot = host.shadowRoot.querySelector('slot[name="indicator"]')
+      return {
+        preset: host.getAttribute('indicator'),
+        assigned: slot.assignedElements().length,
+        text: slot.assignedElements()[0]?.textContent,
+      }
+    })
+    assert.deepEqual(state, { preset: null, assigned: 1, text: '' })
+  }
+  assert.equal(await page.locator('#custom').evaluate(host =>
+    host.shadowRoot.querySelector('slot[name="indicator"]').assignedElements()[0]?.querySelector('a-icon') != null
+  ), true)
 })
 
 test('built-in triangle and plus use the shared indicator dimensions', async t => {

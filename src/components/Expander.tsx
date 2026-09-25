@@ -40,7 +40,8 @@ export interface ExpanderProps extends Omit<BaseProps, "title"> {
    *  indicator, actions sit between the title and indicator. */
   actions?: React.ReactNode;
   /** Built-in disclosure mark, a decorative node, or separate closed/open
-   *  visuals. Custom nodes are passive; use `actions` for controls.
+   *  visuals. Other primitive values leave the indicator empty. Custom nodes
+   *  are passive; use `actions` for controls.
    *  @defaultValue 'chevron' */
   indicator?: "chevron" | "triangle" | "plus" | React.ReactNode | {
     closed: React.ReactNode;
@@ -130,9 +131,8 @@ export const Expander = ({
     "closed" in indicator && "open" in indicator
       ? indicator
       : undefined;
-  const customIndicator = indicator != null && !presetIndicator && !pairedIndicator
-    ? indicator as React.ReactNode
-    : undefined;
+  const useCustomSlot = indicator != null && !presetIndicator && !pairedIndicator;
+  const customIndicator = typeof indicator === "object" ? indicator as React.ReactNode : null;
 
   // A non-named tone is a literal CSS color: feed it to the element's
   // oklch derivation via an inline custom property (the CSS attr() form
@@ -197,7 +197,7 @@ export const Expander = ({
         <span slot="indicator" data-when="closed" aria-hidden="true" inert>{pairedIndicator.closed}</span>
         <span slot="indicator" data-when="open" aria-hidden="true" inert>{pairedIndicator.open}</span>
       </>}
-      {customIndicator != null && <span slot="indicator" aria-hidden="true" inert>{customIndicator}</span>}
+      {useCustomSlot && <span slot="indicator" aria-hidden="true" inert>{customIndicator}</span>}
       <a-expander-details>{children}</a-expander-details>
     </a-expander>
   );

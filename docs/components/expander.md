@@ -104,7 +104,8 @@ when closed and up when open.
 
 Choose `indicator="triangle"` for a filled arrow or `indicator="plus"` for a
 plus that becomes a minus. The default is `chevron`. The built-in motion follows
-the reduced-motion preference.
+the reduced-motion preference. An unrecognized string or number leaves the
+indicator empty; omit `indicator` to keep the default chevron.
 
 ```tsx
 <Expander title="Download report" indicatorPlacement="end"
@@ -348,7 +349,7 @@ function Accordion() {
 | `actions?` | ReactNode | — | Header actions rendered outside the toggle trigger. With an end indicator, actions sit between the title and indicator. |
 | `defaultOpen?` | boolean | — | Initial open state for the uncontrolled case. |
 | `disabled?` | boolean | — | Disables the header: not clickable or focusable, hover affordance off, text dimmed. The open state freezes as-is — disabling an open expander keeps it open. `actions` stay live; disable them separately if needed. |
-| `indicator?` | ReactNode | 'chevron' | Built-in disclosure mark, a decorative node, or separate closed/open visuals. Custom nodes are passive; use `actions` for controls. |
+| `indicator?` | ReactNode | 'chevron' | Built-in disclosure mark, a decorative node, or separate closed/open visuals. Other primitive values leave the indicator empty. Custom nodes are passive; use `actions` for controls. |
 | `indicatorPlacement?` | 'start' \| 'end' | 'start' | Place the disclosure mark before the title or after the actions. |
 | `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 5 | Heading type scale applied to a string `title` (mirrors `<Title>`'s levels). Visual only — for outline semantics, pass a `<Title>` as the title. |
 | `onStateChange?` | (event, detail) => void | — | Fired before the open state changes. `event` is the cancelable `statechange` — call `event.preventDefault()` to veto an *uncontrolled* toggle (e.g. confirm before closing). `detail.next` is the requested open state, `detail.prev` the current one (booleans). In controlled mode, apply `detail.next` to `open` to accept, or do nothing to reject. |

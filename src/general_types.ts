@@ -345,6 +345,10 @@ export interface ABoxAttributes extends BaseAttributes {
    *  typed `attr()` read it from `--box-gap` in the host's inline style
    *  instead, which is what the JSX wrapper always sets. */
   gap?: boolean | '' | number | string
+  /** Adds matching descendant rects to each measurement snapshot. With
+   * `observe="scroll"`, use `throttle` when many descendants match: rects are
+   * read for each emitted event, and CSS state updates follow the interval. */
+  'include-rects-for'?: string
   /** CSS padding shorthand (`padding="8px 16px"`). Without typed `attr()`
    * support, set `--box-padding` as well. The JSX wrapper supplies it. */
   padding?: boolean | '' | number | string
@@ -359,8 +363,12 @@ export interface ABoxAttributes extends BaseAttributes {
    * attribute means `all`. Omission runs no observers unless `fade` is set;
    * a native event listener alone does not enable observation. */
   observe?: string
-  /** Minimum interval between measurement events in milliseconds. Omit or
-   * pass `0` for frame-based reporting. Invalid or negative values use `0`. */
+  /** Keeps measurement observation active outside the viewport when `observe`
+   * or `fade` selects measurement. */
+  'observe-offscreen'?: boolean | ''
+  /** Minimum interval between measurement reads, CSS state updates, and
+   * events in milliseconds. The initial read is immediate. Omit or pass `0`
+   * for frame-based updates. Invalid or negative values use `0`. */
   throttle?: number | string
   /** Depth of that mask, as a length value (`fade-size="2rem"`). Engines
    *  without typed `attr()` read it from `--box-fade-size` in the host's
@@ -433,6 +441,11 @@ export interface ATagAttributes extends BaseAttributes {
  * use `Expander` from `@antadesign/anta`.
  */
 export interface AExpanderAttributes extends BaseAttributes {
+  /** Built-in disclosure mark. Custom visuals use `slot="indicator"`.
+   *  Defaults to `chevron`. */
+  indicator?: 'chevron' | 'triangle' | 'plus'
+  /** Logical side for the disclosure mark. Defaults to `start`. */
+  'indicator-placement'?: 'start' | 'end'
   /** Controlled open state (`'open'` / `'closed'`). Present → controlled: the
    *  attribute is the source of truth, clicks only dispatch the cancelable
    *  `statechange` event, and the consumer answers by updating it. Absent →
@@ -444,10 +457,9 @@ export interface AExpanderAttributes extends BaseAttributes {
   /** Surface emphasis. `secondary` (default) is a subtle fill; `primary`
    *  is a stronger raised fill; `tertiary` is transparent. */
   priority?: 'primary' | 'secondary' | 'tertiary'
-  /** Outdent the chevron into the left gutter so the title + body sit
-   *  flush with surrounding content (the docs-header layout). Tertiary
-   *  only — a no-op on the filled priorities, where the container edge
-   *  has to bound the chevron. Presence-based. */
+  /** Align the title and body with surrounding content on a tertiary
+   *  expander. The start indicator hangs in the gutter; an end indicator
+   *  stays inside its edge. Presence-based. */
   outdent?: boolean | ''
   /** Disables the header: not clickable or focusable, hover affordance
    *  off, text dimmed. The open state freezes as-is. Presence-based. */

@@ -28,15 +28,26 @@
     --expander-bg-hover-lift: 0.01;
     --expander-bg-hover: oklch(from var(--expander-bg) calc(l + var(--expander-bg-hover-lift)) c h);
 
-    /* The single gutter that the title inset, the body inset, AND the chevron
-       position all derive from (see a-expander.ts). The chevron sits absolutely
-       in this gutter with its right edge 2px before the gutter, so there's a 2px
-       gap between the chevron and the title (it never pushes the title), and one
-       value keeps title + body aligned at every `level`. `outdent` just sets it
-       to 0 (title/body flush, chevron auto-hangs in the negative gutter).
-       24px = 6px edge + 16px chevron + 2px gap. (The docs site's foldable
-       code-block header mirrors this spacing.) */
+    /* The title and body share this inset. At the default start placement it
+       also positions the chevron: 24px = 6px edge + 16px mark + 2px gap.
+       End placement uses 12px. Tertiary outdent sets it to 0. */
     --expander-gutter: 24px;
+    --_expander-indicator-size: 16px;
+    --_expander-indicator-edge: 6px;
+    --_expander-indicator-gap: 2px;
+    --_expander-indicator-stroke: 2px;
+    --_expander-indicator-track: calc(var(--_expander-indicator-edge) + var(--_expander-indicator-size) + var(--_expander-indicator-gap));
+    --_expander-indicator-start: calc(var(--expander-gutter) - var(--_expander-indicator-size) - var(--_expander-indicator-gap));
+    --_expander-indicator-mask: var(--_expander-chevron);
+    --_expander-skeleton-indicator-start: var(--_expander-indicator-start);
+    --_expander-skeleton-indicator-end: auto;
+    --_expander-skeleton-indicator-top: 50%;
+    --_expander-skeleton-indicator-transform: translateY(-50%);
+    --_expander-header-padding-block: 6px;
+    --_expander-header-padding-end: 4px;
+    --_expander-actions-gap: 2px;
+    --_expander-actions-start: 8px;
+    --_expander-actions-end: 4px;
 
     display: block;
     width: 100%;
@@ -52,6 +63,21 @@
     /* Smooth the closed-state hover/active surface change. */
     transition: background-color 100ms ease;
   }
+  a-expander[indicator-placement="end"] {
+    --expander-gutter: 12px;
+    --_expander-skeleton-indicator-start: auto;
+    --_expander-skeleton-indicator-end: var(--_expander-indicator-edge);
+    --_expander-skeleton-indicator-top: 8px;
+    --_expander-skeleton-indicator-transform: rotate(90deg);
+    --_expander-actions-end: var(--_expander-actions-gap);
+  }
+  a-expander[indicator="triangle"] {
+    --_expander-indicator-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 2.5 12 8l-7 5.5z'/%3E%3C/svg%3E");
+  }
+  a-expander[indicator="plus"] {
+    --_expander-indicator-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M7 2h2v12H7zM2 7h12v2H2z'/%3E%3C/svg%3E");
+  }
+  a-expander:not(:defined):has(> [slot="indicator"]) { --_expander-skeleton-indicator-display: none; }
 
   /* `round` → the corners take HALF the folded (header) height, so folded reads
      as a perfect pill and — crucially — an *expanded* box keeps that exact corner
@@ -107,20 +133,52 @@
      and after upgrade. `:defined` drops this and the shadow `<button>` owns it. */
   a-expander:not(:defined) a-expander-summary {
     position: relative;
-    padding: 6px 4px 6px var(--expander-gutter);
+    padding: var(--_expander-header-padding-block) var(--_expander-header-padding-end) var(--_expander-header-padding-block) var(--expander-gutter);
   }
   a-expander:not(:defined) a-expander-summary::before {
     content: "";
+    display: var(--_expander-skeleton-indicator-display, block);
     position: absolute;
-    left: calc(var(--expander-gutter) - 16px - 2px);
-    top: 50%;
-    width: 16px;
-    height: 16px;
-    transform: translateY(-50%);
+    inset-inline-start: var(--_expander-skeleton-indicator-start);
+    inset-inline-end: var(--_expander-skeleton-indicator-end);
+    top: var(--_expander-skeleton-indicator-top);
+    width: var(--_expander-indicator-size);
+    height: var(--_expander-indicator-size);
+    transform: var(--_expander-skeleton-indicator-transform);
     background-color: currentColor;
-    -webkit-mask: var(--_expander-chevron) center / contain no-repeat;
-            mask: var(--_expander-chevron) center / contain no-repeat;
+    -webkit-mask: var(--_expander-indicator-mask) center / contain no-repeat;
+            mask: var(--_expander-indicator-mask) center / contain no-repeat;
     opacity: 0.6;
+    pointer-events: none;
+  }
+
+  a-expander:not(:defined)[indicator-placement="end"] a-expander-summary {
+    position: static;
+    grid-column: 1;
+    padding-inline-start: var(--expander-gutter);
+    padding-inline-end: var(--_expander-header-padding-end);
+  }
+  a-expander:not(:defined) > [slot="indicator"] {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    inset-inline-start: var(--_expander-indicator-start);
+    top: 8px;
+    width: var(--_expander-indicator-size);
+    height: var(--_expander-indicator-size);
+    pointer-events: none;
+  }
+  a-expander:not(:defined)[indicator-placement="end"] > [slot="indicator"] {
+    inset-inline-start: auto;
+    inset-inline-end: var(--_expander-indicator-edge);
+  }
+  a-expander:not(:defined) > [slot="indicator"][data-when="open"] { display: none; }
+  a-expander:not(:defined):is([state="open"], [default-state="open"]) > [slot="indicator"][data-when="open"] { display: grid; }
+  a-expander:not(:defined):is([state="open"], [default-state="open"]) > [slot="indicator"][data-when="closed"] { display: none; }
+  a-expander:not(:defined):is([state="open"], [default-state="open"]) > [slot="indicator"]:not([data-when]) { transform: rotate(90deg); }
+  a-expander:not(:defined)[indicator-placement="end"]:is([state="open"], [default-state="open"]) > [slot="indicator"]:not([data-when]) { transform: rotate(180deg); }
+  a-expander:not(:defined)[indicator-placement="end"] {
+    grid-template-columns: minmax(0, 1fr) auto var(--_expander-indicator-track);
   }
 
   /* Reproduce the shadow `.header` row pre-upgrade. Without a shadow the
@@ -132,6 +190,7 @@
      with zero reflow. `:defined` drops this and the shadow header owns it. */
   a-expander:not(:defined) {
     display: grid;
+    position: relative;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
   }
@@ -140,10 +199,10 @@
     grid-column: 2;
     display: flex; /* overrides the base `display: contents` above */
     align-items: center;
-    gap: 2px;
+    gap: var(--_expander-actions-gap);
     flex-shrink: 0;
-    margin-inline-start: 8px;
-    margin-inline-end: 4px;
+    margin-inline-start: var(--_expander-actions-start);
+    margin-inline-end: var(--_expander-actions-end);
   }
   a-expander:not(:defined) a-expander-details { grid-column: 1 / -1; }
 
@@ -204,6 +263,9 @@
        scrolls vertically. The gutter/padding around the content give a focus ring
        room inside the clip (see the outdent rule below). */
     overflow: auto;
+  }
+  a-expander[indicator-placement="end"] a-expander-details {
+    padding-inline-start: var(--expander-gutter);
   }
 
   /* Outdent zeroes the left gutter, so a flush-left control sits hard against the
@@ -539,13 +601,19 @@
     :is(a-expander, details[data-anta])[priority="tertiary"] {
       border-color: Canvas;
     }
-    a-expander::part(summary)::before,
+    a-expander::part(indicator) {
+      forced-color-adjust: none;
+      color: CanvasText;
+    }
+    a-expander[disabled]::part(indicator) {
+      color: GrayText;
+    }
     a-expander:not(:defined) a-expander-summary::before,
     details[data-anta] > summary::before {
       forced-color-adjust: none;
       background-color: CanvasText;
     }
-    a-expander[disabled]::part(summary)::before {
+    a-expander:not(:defined)[disabled] a-expander-summary::before {
       background-color: GrayText;
     }
   }

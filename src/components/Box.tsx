@@ -28,6 +28,13 @@ export interface BoxProps extends BaseProps {
    * pixels; a string is any CSS length or two-value gap (`'1rem'`,
    * `'8px 16px'`). Applies while the Box is a flex or grid container. */
   gap?: number | string
+  /** CSS selector for descendants whose border boxes are included in
+   * `measurement.rects` when Box measures. Coordinates are relative to this
+   * Box's top-left border edge; matches are in document order. Box reads and
+   * compares matching rects for each measurement event. With `observe="scroll"`,
+   * use `throttle` when the selector matches many descendants; it also delays
+   * CSS state updates after the initial read. */
+  includeRectsFor?: string
   /** Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept
    * CSS shorthand, percentages, and custom properties. Omission adds no style. */
   padding?: number | string
@@ -45,9 +52,13 @@ export interface BoxProps extends BaseProps {
    * overflow adds content observation; hidden edges and scroll add scroll reads.
    * Without handlers or `fade`, omission stays idle. */
   observe?: BoxObservation | readonly BoxObservation[]
-  /** Minimum interval between measurement events, in milliseconds. The first
-   * report has no added delay; a trailing report delivers the latest values.
-   * Active observers and CSS clipping states are not throttled.
+  /** Keeps measurement events and CSS clipping states current outside the
+   * viewport. Has no effect unless `observe` or `fade` selects measurement. */
+  observeOffscreen?: boolean
+  /** Minimum interval between measurements, in milliseconds. The initial
+   * measurement runs immediately; a trailing read updates CSS states and
+   * delivers the latest event. Descendant rects are read only for emitted
+   * events. The `measurement` getter always reads fresh values.
    * @defaultValue 0 */
   throttle?: number
   /** Fades out every edge that currently hides clipped content, and drops the
@@ -57,8 +68,9 @@ export interface BoxProps extends BaseProps {
    * length.
    * @defaultValue 24 */
   fadeSize?: number | string
-  /** Fired when a selected measurement field changes. `detail` contains all
-   * fields changed since the last event and a full current snapshot. */
+  /** Fired when a selected measurement field changes. `detail.changed` contains
+   * fields changed since the previous event; `detail.current` includes the full
+   * snapshot with matching rects. Rect changes alone do not trigger an event. */
   onMeasureChange?: (
     event: CustomEvent<BoxMeasurementChange>,
     detail: BoxMeasurementChange,
@@ -103,9 +115,11 @@ export const Box = ({
   display,
   round,
   gap,
+  includeRectsFor,
   padding,
   margin,
   observe,
+  observeOffscreen,
   throttle,
   fade,
   fadeSize,
@@ -126,9 +140,11 @@ export const Box = ({
       display={display === 'block' ? undefined : display}
       round={roundAttr(round)}
       gap={gap != null ? '' : undefined}
+      include-rects-for={includeRectsFor}
       padding={padding != null ? '' : undefined}
       margin={margin != null ? '' : undefined}
       observe={observeAttr(observe, onMeasureChange, onContextChange)}
+      observe-offscreen={observeOffscreen ? '' : undefined}
       throttle={throttle}
       fade={fade ? '' : undefined}
       fade-size={fade && fadeSize != null ? cssLength(fadeSize) : undefined}

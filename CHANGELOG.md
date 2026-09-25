@@ -3,6 +3,40 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## 0.3.32 — September 25, 2026
+
+### Added
+
+- [Expander indicators](/expander/#indicator) can sit after header actions and
+  use built-in chevron, triangle, or plus visuals. Custom indicators can rotate
+  as one node or switch between closed and open nodes.
+- [Box measurements](/box/#measurements) can include
+  descendant rects with `includeRectsFor`, including positions relative to the
+  Box, width, and height. Changed rects appear in `detail.changed.rects` when
+  another observed field triggers a report.
+- [Box measurements](/box/#measurements) can stay active outside the viewport
+  with `observeOffscreen` when a virtualized layout needs updates there.
+
+### Changed
+
+- [Box layout](/box/#display) now uses `position: relative` by default, so
+  absolutely positioned descendants use the Box as their containing block. Set
+  `position: static` on the Box if they should use another positioned ancestor.
+- [Box measurements](/box/#measurements) now apply `throttle` to measurement
+  reads and CSS states as well as events. The edge mask eases between states;
+  larger intervals delay the fade response during scrolling.
+
+### Fixed
+
+- [Expander indicators](/expander/#indicator) leave the mark empty for
+  unrecognized strings and numbers instead of displaying them as text.
+- [Menu submenus](/menu/#submenus) stay open when a nested
+  date picker closes under the pointer outside the submenu. Hover dismissal
+  resumes after the pointer returns. Closing a nested popup away from the
+  pointer leaves hover dismissal available.
+- [Dialog headers](/dialog/#zones) wrap long unbroken text
+  and clip content that still overflows their bounds.
+
 ## 0.3.31 — September 18, 2026
 
 ### Added

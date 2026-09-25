@@ -2,12 +2,15 @@
  * Demo source for the SelectFaceted playground. Kept in a sibling .ts file so
  * Astro's MDX pipeline doesn't mangle the template literal's indentation.
  */
-export default `import { SelectFaceted, Input, Tag } from '@antadesign/anta'
+export default `import { SelectFaceted, Input, InputDate, RadioGroup, Tag } from '@antadesign/anta'
 
 const people = [
   'Alice Nguyen', 'Bob Carter', 'Carol Diaz', 'Dave Feld', 'Erin Shah',
   'Frank Lopez', 'Grace Kim', 'Heidi Braun', 'Ivan Petrov', 'Judy Chen',
 ]
+const presetLabels = {
+  today: 'Today', yesterday: 'Yesterday', last14: 'Last 14 days', last30: 'Last 30 days',
+}
 
 function Demo() {
   return (
@@ -81,6 +84,41 @@ function Demo() {
               <span>seconds</span>
             </div>
           ),
+        },
+        {
+          key: 'recency',
+          label: 'Recency',
+          kind: 'custom',
+          icon: 'calendar',
+          summary: (v) => 'preset' in v ? presetLabels[v.preset] : v.from && v.to ? v.from + ' → ' + v.to : 'Custom range',
+          render: ({ value, onChange }) => {
+            const mode = value == null ? '' : 'preset' in value ? value.preset : 'custom'
+            const range = value && 'from' in value ? value : { from: '', to: '' }
+            return (
+              <div data-menu-open style={{ display: 'grid', gap: '8px', padding: '8px', minWidth: '360px' }}>
+                <RadioGroup
+                  size="small"
+                  options={[
+                    { value: 'today', label: 'Today' },
+                    { value: 'yesterday', label: 'Yesterday' },
+                    { value: 'last14', label: 'Last 14 days' },
+                    { value: 'last30', label: 'Last 30 days' },
+                    { value: 'custom', label: 'Custom range' },
+                  ]}
+                  value={mode}
+                  onStateChange={(_e, { next }) => onChange(next === 'custom' ? range : { preset: next })}
+                />
+                {mode === 'custom' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
+                    <InputDate size="small" label="From" value={range.from}
+                      onValueChange={(from) => onChange({ from, to: range.to })} />
+                    <InputDate size="small" label="To" value={range.to} min={range.from || undefined}
+                      onValueChange={(to) => onChange({ from: range.from, to })} />
+                  </div>
+                )}
+              </div>
+            )
+          },
         },
       ]}
       searchable

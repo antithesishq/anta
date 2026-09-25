@@ -48,7 +48,7 @@ is limited. `offset` sets the gap in pixels between the trigger and the menu:
 <Playground
   component="SelectFaceted"
   layout="side"
-  panelHeight={440}
+  panelHeight={760}
   initialCode={selectFacetedDemoCode}
   initialCss={`html, body { height: 100%; }
 .preview { min-height: 100%; justify-content: flex-start; align-items: flex-start; padding: 24px; }`}
@@ -56,7 +56,11 @@ is limited. `offset` sets the gap in pixels between the trigger and the menu:
 
 </Disclosure>
 
-Open **Metadata** in the first demo to choose key–value tags such as
+Open **Recency** in the first demo, select **Custom range**, then pick **From**
+and **To** from the fields side by side. Each field closes its own calendar after
+a pick while the Recency editor stays open for the second date.
+
+Open **Metadata** to choose key–value tags such as
 **env production** or **region us-east**. Its `renderOption` callback reads
 custom option fields and renders a `Tag` with `label` and `value`. Search
 for **production** to see the same tag in global results.
@@ -72,6 +76,11 @@ for **production** to see the same tag in global results.
 </Preview>
 
 ```tsx folded
+const recencySummary = (v) =>
+  'preset' in v
+    ? { today: 'Today', yesterday: 'Yesterday', last14: 'Last 14 days', last30: 'Last 30 days' }[v.preset]
+    : v.from && v.to ? `${v.from} → ${v.to}` : 'Custom range'
+
 const FACETS = [
   { key: 'assignee', label: 'Assignee', kind: 'multiple', filter: true, options: people },
   { key: 'owner',    label: 'Owner',    kind: 'single',   filter: true, options: people },
@@ -94,6 +103,7 @@ const FACETS = [
   },
   { key: 'title',    label: 'Title contains', kind: 'text' },
   { key: 'duration', label: 'Min duration', kind: 'custom', summary: (v) => `≥ ${v.min}s`, render: /* … */ },
+  { key: 'recency',  label: 'Recency', kind: 'custom', summary: recencySummary, render: /* radio presets and two InputDate fields */ },
 ]
 
 const isSet = (v) => !(v == null || v === '' || (Array.isArray(v) && v.length === 0))
@@ -121,8 +131,7 @@ function Demo() {
 
       {active.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-          {/* Show one editable control for each active facet. Its label becomes
-              the control's `leading` prefix. */}
+          {/* Show an editable control or summary for each active facet. */}
           {active.map((facet) => {
             // Options facets → an editable Select (single shows the trailing check;
             // both are filterable + have a clearable footer).
@@ -144,7 +153,12 @@ function Demo() {
                 />
               )
 
-            // Free-form text / custom → an editable Input.
+            if (facet.key === 'recency') {
+              const recency = value.recency
+              return <Tag key={facet.key} label="Recency" value={recencySummary(recency)} />
+            }
+
+            // Free-form text / duration → an editable Input.
             const val = facet.kind === 'text' ? value[facet.key] : value[facet.key]?.min
             const write = (raw) =>
               setFacet(facet.key, facet.kind === 'text' ? raw || undefined : raw ? { min: raw } : undefined)
@@ -182,9 +196,9 @@ function Demo() {
 }
 ```
 
-The trigger opens the facet menu. The example renders one editable
-[Select](/select/) below it for each active facet. Each Select receives the
-facet label through `leading`, which displays it as a prefix.
+The trigger opens the facet menu. The example shows active values beside it.
+Option facets use an editable [Select](/select/) with the facet label in its
+`leading` prefix. Recency uses a summary tag and is edited in the facet menu.
 
 ### Custom option content
 
@@ -346,7 +360,7 @@ A custom facet stores a `Date` directly. Unlike the value of a `single` or
 #### A recency filter: presets plus a range
 
 This editor combines a `RadioGroup` of presets with a **Custom range** option
-that reveals two `InputDate` fields. Its value is either `{ preset }` or
+that reveals two `InputDate` fields side by side. Its value is either `{ preset }` or
 `{ from, to }`. The `resolveRange` helper converts either shape into the date
 range used to filter the result set. Each InputDate calendar opens above the
 facet menu without closing it.
@@ -382,7 +396,7 @@ const recency: SelectFacetCustom<Recency> = {
     const mode = value == null ? '' : 'preset' in value ? value.preset : 'custom'
     const range = value && 'from' in value ? value : { from: '', to: '' }
     return (
-      <div style={{ display: 'grid', gap: 8 }}>
+      <div style={{ display: 'grid', gap: 8, minWidth: 360 }}>
         <RadioGroup
           size="small"
           options={PRESETS}                       // Today / Yesterday / Last 14 / Last 30 / Custom range
@@ -392,12 +406,12 @@ const recency: SelectFacetCustom<Recency> = {
           onStateChange={(_e, { next }) => onChange(next === 'custom' ? range : { preset: next })}
         />
         {mode === 'custom' && (
-          <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
             <InputDate size="small" label="From" value={range.from}
               onValueChange={(from) => onChange({ from, to: range.to })} />
             <InputDate size="small" label="To" value={range.to} min={range.from || undefined}
               onValueChange={(to) => onChange({ from: range.from, to })} />
-          </>
+          </div>
         )}
       </div>
     )

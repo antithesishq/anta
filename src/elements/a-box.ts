@@ -1,5 +1,5 @@
 import { HTMLElementBase } from '../anta_helpers'
-import { throttle } from 'es-toolkit'
+import { isEqual, throttle } from 'es-toolkit'
 import { boxObservation } from '../box-observation'
 import type {
   BoxContext,
@@ -28,6 +28,7 @@ type DeviceSnapshot = Pick<
 >
 
 const stores = new WeakMap<Window, BoxWindowStore>()
+const FADE_TRANSITION_MS = 140
 
 /** A class attribute holding `dark` or `light`, matched against a mutation's
  * recorded previous value (a string, so `classList` is not available). */
@@ -308,25 +309,14 @@ function deviceSnapshot(navigator: Navigator): DeviceSnapshot {
   }
 }
 
-/** Field equality, one level deep. `font` is rebuilt on every read, so an
- * identity check would report it changed on every focus move. */
-function equal(a: unknown, b: unknown): boolean {
-  if (a === b) return true
-  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
-  const left = a as Record<string, unknown>
-  const right = b as Record<string, unknown>
-  const keys = Object.keys(left)
-  return keys.length === Object.keys(right).length && keys.every((key) => left[key] === right[key])
-}
-
 function same<T extends object>(a: T | undefined, b: T): boolean {
-  return a !== undefined && Object.keys(b).every((key) => equal(a[key as keyof T], b[key as keyof T]))
+  return a !== undefined && Object.keys(b).every((key) => isEqual(a[key as keyof T], b[key as keyof T]))
 }
 
 function changed<T extends object>(previous: T | undefined, current: T): Partial<T> {
   if (!previous) return { ...current }
   return Object.fromEntries(
-    Object.entries(current).filter(([key, value]) => !equal(previous[key as keyof T], value)),
+    Object.entries(current).filter(([key, value]) => !isEqual(previous[key as keyof T], value)),
   ) as Partial<T>
 }
 
@@ -401,6 +391,8 @@ function rounded(value: number): number {
  * measurement fields or presets, including `context` and `all`. `fade` keeps
  * clipping states current without selecting event fields. A box with neither
  * runs no observers at all, including the shared visibility observer.
+ * `observe-offscreen` opts out of the pause: measurement keeps running while
+ * the box is off screen, and the box skips the visibility observer entirely.
  * The `measurement` / `context` / `isTruncated` getters still read on demand.
  *
  * Attributes rather than "is a listener attached" on purpose. A listener tally
@@ -411,7 +403,7 @@ function rounded(value: number): number {
  * props, so this is invisible to anyone using `Box`.
  */
 export class ABoxElement extends HTMLElementBase {
-  static observedAttributes = ['fade', 'observe', 'throttle']
+  static observedAttributes = ['fade', 'observe', 'observe-offscreen', 'throttle']
 
   #internals = this.attachInternals?.()
   #store?: BoxWindowStore
@@ -424,9 +416,10 @@ export class ABoxElement extends HTMLElementBase {
   #measurementFields = new Set<keyof BoxMeasurement>()
   #watchContent = false
   #watchScroll = false
-  // Filtering and throttling compare against the last event, not the last read.
+  // Filtering compares against the last event, not the last read.
   #reportedMeasurement?: BoxMeasurement
   #throttledReport?: ReturnType<typeof throttle<() => void>>
+  #fadeMaskTimer?: number
   #context?: BoxContext
   #measuring = false
   #clips = false
@@ -448,6 +441,7 @@ export class ABoxElement extends HTMLElementBase {
   }
 
   disconnectedCallback() {
+    this.#clearFadeMask()
     this.#stopMeasuring()
     this.#stopReportingContext()
     this.#store?.unobserveVisibility(this)
@@ -462,8 +456,9 @@ export class ABoxElement extends HTMLElementBase {
      and the later connect would see the flags already set and skip it. */
   attributeChangedCallback(name: string, previous: string | null, current: string | null) {
     if (previous === current) return
+    if (name === 'fade' && current === null) this.#clearFadeMask()
     if (!this.#store) return
-    if (name === 'fade' || name === 'observe') this.#sync()
+    if (name === 'fade' || name === 'observe' || name === 'observe-offscreen') this.#sync()
     if (name === 'throttle') this.#configureThrottle()
     if (name === 'observe' || name === 'throttle') this.#queueMeasurement()
   }
@@ -481,7 +476,7 @@ export class ABoxElement extends HTMLElementBase {
 
   /** Allows a nested `Tooltip truncatedOnly` to use Box's clipping decision. */
   get isTruncated(): boolean {
-    const measurement = this.#readMeasurement()
+    const measurement = this.#readMeasurement(false)
     return measurement.clippedX || measurement.clippedY
   }
 
@@ -513,13 +508,19 @@ export class ABoxElement extends HTMLElementBase {
     this.#watchContent = this.hasAttribute('fade') || content
     this.#watchScroll = this.hasAttribute('fade') || scroll
     const wantsMeasurement = this.hasAttribute('fade') || fields.size > 0
+    // Opt-in: keep measuring off screen. Such a box has no use for the
+    // visibility observer, so it leaves it rather than paying for entries it
+    // ignores. `#visible` may go stale meanwhile; if the attribute is removed,
+    // re-observing delivers a fresh initial entry that corrects it.
+    const offscreen = this.hasAttribute('observe-offscreen')
 
-    const measure = this.isConnected && wantsMeasurement && (this.#visible ?? this.hasAttribute('fade'))
+    const measure = this.isConnected && wantsMeasurement
+      && (offscreen || (this.#visible ?? this.hasAttribute('fade')))
     if (measure) this.#startMeasuring()
     else this.#stopMeasuring()
     if (this.#measuring) this.#syncMeasurementSources()
 
-    if (this.isConnected && wantsMeasurement) this.#store?.observeVisibility(this)
+    if (this.isConnected && wantsMeasurement && !offscreen) this.#store?.observeVisibility(this)
     else this.#store?.unobserveVisibility(this)
 
     if (this.isConnected && wantsContext) this.#startReportingContext()
@@ -559,7 +560,7 @@ export class ABoxElement extends HTMLElementBase {
     // The states drive the `fade` mask, so they have to be right on the first
     // frame. The matching event waits a frame, so a listener attached mid-render
     // is never called back synchronously from inside its own `addEventListener`.
-    this.#measurement = this.#readMeasurement()
+    this.#measurement = this.#readMeasurement(false)
     this.#setMeasurementStates(this.#measurement)
     this.#syncChildObservation()
     this.#initialMeasurement = true
@@ -669,7 +670,8 @@ export class ABoxElement extends HTMLElementBase {
     this.#frame = this.view.requestAnimationFrame(() => {
       this.#frame = undefined
       if (!this.#measuring) return
-      this.#reportMeasurement()
+      if (this.#throttledReport) this.#throttledReport()
+      else this.#reportMeasurement()
     })
   }
 
@@ -685,7 +687,31 @@ export class ABoxElement extends HTMLElementBase {
     })
   }
 
-  #readMeasurement(): BoxMeasurement {
+  #readRects(rect?: DOMRect): BoxMeasurement['rects'] {
+    let rects: BoxMeasurement['rects'] = []
+    const selector = this.getAttribute('include-rects-for')
+    if (selector) {
+      try {
+        const boxRect = rect ?? this.getBoundingClientRect()
+        rects = Array.from(this.querySelectorAll(selector), element => {
+          const target = element.getBoundingClientRect()
+          return {
+            top: rounded(target.top - boxRect.top),
+            right: rounded(target.right - boxRect.left),
+            bottom: rounded(target.bottom - boxRect.top),
+            left: rounded(target.left - boxRect.left),
+            width: rounded(target.width),
+            height: rounded(target.height),
+          }
+        })
+      } catch (error) {
+        if (!(error instanceof this.view.DOMException) || error.name !== 'SyntaxError') throw error
+      }
+    }
+    return rects
+  }
+
+  #readMeasurement(includeRects = true): BoxMeasurement {
     const rect = this.getBoundingClientRect()
     const clientWidth = this.clientWidth
     const clientHeight = this.clientHeight
@@ -715,6 +741,7 @@ export class ABoxElement extends HTMLElementBase {
     return {
       width: rounded(rect.width),
       height: rounded(rect.height),
+      rects: includeRects ? this.#readRects(rect) : [],
       clientWidth,
       clientHeight,
       scrollWidth,
@@ -753,7 +780,7 @@ export class ABoxElement extends HTMLElementBase {
     this.#throttledReport = undefined
     const interval = Number(this.getAttribute('throttle'))
     if (this.#measuring && Number.isFinite(interval) && interval > 0) {
-      this.#throttledReport = throttle(this.#emitMeasurement, Math.min(interval, 2_147_483_647))
+      this.#throttledReport = throttle(() => this.#reportMeasurement(), Math.min(interval, 2_147_483_647))
     }
   }
 
@@ -768,25 +795,19 @@ export class ABoxElement extends HTMLElementBase {
   }
 
   #reportMeasurement() {
-    const current = this.#readMeasurement()
+    const current = this.#readMeasurement(false)
     this.#measurement = current
     this.#setMeasurementStates(current)
     this.#syncChildObservation()
     if (!this.#hasMeasurementChange(current)) return
-    if (this.#throttledReport) this.#throttledReport()
-    else this.#emitMeasurement()
-  }
-
-  #emitMeasurement = () => {
-    const current = this.#measurement
-    if (!this.#measuring || !current || !this.#hasMeasurementChange(current)) return
+    const snapshot = { ...current, rects: this.#readRects() }
     const initial = this.#initialMeasurement
     const previous = this.#reportedMeasurement
     this.#initialMeasurement = false
-    this.#reportedMeasurement = current
+    this.#reportedMeasurement = snapshot
     const detail: BoxMeasurementChange = {
-      changed: initial ? { ...current } : changed(previous, current),
-      current,
+      changed: changed(initial ? undefined : previous, snapshot),
+      current: snapshot,
     }
     this.dispatchEvent(new this.view.CustomEvent('measurechange', { detail }))
   }
@@ -819,6 +840,35 @@ export class ABoxElement extends HTMLElementBase {
     this.#setState('hidden-end-x', measurement.hiddenEndX)
     this.#setState('hidden-start-y', measurement.hiddenStartY)
     this.#setState('hidden-end-y', measurement.hiddenEndY)
+    this.#syncFadeMask(measurement)
+  }
+
+  #syncFadeMask(measurement: BoxMeasurement) {
+    const hidden = measurement.hiddenStartX || measurement.hiddenEndX
+      || measurement.hiddenStartY || measurement.hiddenEndY
+    if (hidden && this.hasAttribute('fade')) {
+      if (this.#fadeMaskTimer !== undefined) this.view.clearTimeout(this.#fadeMaskTimer)
+      this.#fadeMaskTimer = undefined
+      this.#setState('fade-mask-active', true)
+      return
+    }
+    if (!this.hasAttribute('fade')) {
+      this.#clearFadeMask()
+      return
+    }
+    if (!this.#internals?.states?.has('fade-mask-active') || this.#fadeMaskTimer !== undefined) return
+    if (this.view.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.#clearFadeMask()
+      return
+    }
+    // Keep the mask until its final gradient has eased back to full opacity.
+    this.#fadeMaskTimer = this.view.setTimeout(() => this.#clearFadeMask(), FADE_TRANSITION_MS)
+  }
+
+  #clearFadeMask() {
+    if (this.#fadeMaskTimer !== undefined) this.view.clearTimeout(this.#fadeMaskTimer)
+    this.#fadeMaskTimer = undefined
+    this.#setState('fade-mask-active', false)
   }
 
   #setState(name: string, active: boolean) {

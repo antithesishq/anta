@@ -137,6 +137,107 @@ test('Box defaults to border-box dimensions while scroll states and snapshots st
   await page.waitForFunction(() => events.at(-1).current.width === 250)
 })
 
+test('includeRectsFor adds relative descendant bounds to existing measurement reports', async t => {
+  const page = await pageFor(t, { observe: 'size' })
+  await page.evaluate(() => {
+    box.style.border = '4px solid black'
+    box.innerHTML = '<div class="target" style="position:absolute;left:18px;top:12px;width:40px;height:30px"></div>'
+      + '<div class="target" style="position:absolute;left:70px;top:50px;width:25px;height:20px"></div>'
+    box.setAttribute('include-rects-for', '.target')
+  })
+  await page.waitForFunction(() => events.length === 2)
+  assert.deepEqual(await page.evaluate(() => ({ position: getComputedStyle(box).position,
+    rects: events[1].current.rects })), {
+    position: 'relative',
+    rects: [
+      { top: 16, right: 62, bottom: 46, left: 22, width: 40, height: 30 },
+      { top: 54, right: 99, bottom: 74, left: 74, width: 25, height: 20 },
+    ],
+  })
+  await page.evaluate(async () => { box.querySelector('.target').style.left = '28px'; await frames() })
+  assert.equal(await page.evaluate(() => events.length), 2)
+  await page.evaluate(() => { box.style.height = '120px' })
+  await page.waitForFunction(() => events.length === 3)
+  assert.deepEqual(await page.evaluate(() => ({ left: events[2].current.rects[0].left,
+    changedLeft: events[2].changed.rects[0].left })), { left: 32, changedLeft: 32 })
+  await page.evaluate(async () => { box.querySelectorAll('.target')[1].remove(); await frames() })
+  assert.equal(await page.evaluate(() => events.length), 3)
+  await page.evaluate(() => { box.style.height = '130px' })
+  await page.waitForFunction(() => events.length === 4)
+  assert.equal(await page.evaluate(() => events[3].current.rects.length), 1)
+  assert.equal(await page.evaluate(() => events[3].changed.rects.length), 1)
+  await page.evaluate(() => { box.style.height = '140px' })
+  await page.waitForFunction(() => events.length === 5)
+  assert.equal(await page.evaluate(() => 'rects' in events[4].changed), false)
+  await page.evaluate(() => box.removeAttribute('include-rects-for'))
+  assert.deepEqual(await page.evaluate(() => box.measurement.rects), [])
+  await page.evaluate(async () => frames())
+  assert.equal(await page.evaluate(() => events.length), 5)
+})
+
+test('includeRectsFor alone leaves Box idle while the getter stays current', async t => {
+  const page = await pageFor(t, {})
+  await page.evaluate(() => {
+    box.innerHTML = '<div class="target" style="width:30px;height:20px"></div>'
+    box.setAttribute('include-rects-for', '.target')
+  })
+  assert.deepEqual(await page.evaluate(async () => {
+    box.querySelector('.target').style.width = '45px'
+    await frames()
+    return { events: events.length, rects: box.measurement.rects }
+  }), { events: 0, rects: [{ top: 0, right: 45, bottom: 20, left: 0, width: 45, height: 20 }] })
+})
+
+test('JSX includeRectsFor adds rects without changing observation', async t => {
+  const page = await pageFor(t, {})
+  await page.evaluate(() => {
+    box.remove()
+    window.details = []
+    renderBox({ includeRectsFor: 'div', observe: 'width', onMeasureChange: (_, detail) => details.push(detail) })
+    window.box = document.querySelector('a-box')
+  })
+  await page.waitForFunction(() => details.length === 1)
+  assert.deepEqual(await page.evaluate(() => ({ observe: box.getAttribute('observe'),
+    includeRectsFor: box.getAttribute('include-rects-for'), matches: details[0].current.rects.length })),
+  { observe: 'width', includeRectsFor: 'div', matches: 1 })
+})
+
+test('Ignored observation reads do not query matching descendant rects', async t => {
+  const page = await pageFor(t, { observe: 'width', 'include-rects-for': '.target' })
+  await page.evaluate(() => {
+    box.innerHTML = '<div class="target" style="width:30px;height:20px"></div>'
+    const target = box.querySelector('.target')
+    window.targetRectReads = 0
+    const read = target.getBoundingClientRect.bind(target)
+    target.getBoundingClientRect = () => { targetRectReads++; return read() }
+  })
+  await page.evaluate(async () => { box.style.height = '120px'; await frames() })
+  assert.deepEqual(await page.evaluate(() => ({ events: events.length, reads: targetRectReads })),
+    { events: 1, reads: 0 })
+  await page.evaluate(() => { box.style.width = '240px' })
+  await page.waitForFunction(() => events.length === 2)
+  assert.deepEqual(await page.evaluate(() => ({ reads: targetRectReads,
+    rects: events[1].current.rects.length, changedHasRects: 'rects' in events[1].changed })),
+  { reads: 1, rects: 1, changedHasRects: true })
+})
+
+test('Scroll observation includes updated descendant rects on each Box scroll report', async t => {
+  const page = await pageFor(t, { observe: 'scroll', 'include-rects-for': '.target' })
+  await page.evaluate(async () => {
+    box.innerHTML = '<div class="target" style="height:600px">Content</div>'
+    await frames()
+  })
+  assert.equal(await page.evaluate(() => events.length), 1)
+  await page.evaluate(() => { box.scrollTop = 40 })
+  await page.waitForFunction(() => events.length === 2)
+  assert.deepEqual(await page.evaluate(() => ({ top: events[1].current.rects[0].top,
+    scrollTop: events[1].current.scrollTop, changedHasRects: 'rects' in events[1].changed })),
+  { top: -40, scrollTop: 40, changedHasRects: true })
+  await page.evaluate(() => { box.scrollTop = 80 })
+  await page.waitForFunction(() => events.length === 3)
+  assert.equal(await page.evaluate(() => events[2].current.rects[0].top), -80)
+})
+
 test('Observe selects edge changes, all measurements, or disables observation', async t => {
   const page = await pageFor(t, { observe: 'edges' })
   await page.evaluate(() => { box.scrollTop = 20 })
@@ -153,7 +254,7 @@ test('Observe selects edge changes, all measurements, or disables observation', 
   assert.equal(await page.evaluate(() => events.length), 4)
 })
 
-test('Throttling delivers the latest trailing snapshot without delaying CSS states', async t => {
+test('Throttling delivers the latest trailing snapshot and CSS states together', async t => {
   const page = await pageFor(t, { observe: 'all', fade: '', throttle: '250' })
   await page.evaluate(async () => {
     for (let i = 1; i <= 6; i++) {
@@ -163,14 +264,41 @@ test('Throttling delivers the latest trailing snapshot without delaying CSS stat
     }
   })
   assert.deepEqual(await page.evaluate(() => ({ count: events.length, hidden: box.matches(':state(hidden-start-y)') })),
-    { count: 1, hidden: true })
+    { count: 1, hidden: false })
   await page.waitForFunction(() => events.length === 2)
-  const event = await page.evaluate(() => ({ last: events[1], interval: events[1].time - events[0].time }))
+  const event = await page.evaluate(() => ({ last: events[1], interval: events[1].time - events[0].time,
+    hidden: box.matches(':state(hidden-start-y)') }))
   assert.equal(event.last.current.width, 206)
   assert.equal(event.last.changed.scrollTop, 60)
+  assert.equal(event.hidden, true)
   assert.ok(event.interval >= 240, `Unexpected interval: ${event.interval}`)
   await page.waitForTimeout(300)
   assert.equal(await page.evaluate(() => events.length), 2)
+})
+
+test('Throttling limits Box reads, descendant rect reads, and fade updates', async t => {
+  const page = await pageFor(t, { observe: 'scroll', fade: '', throttle: '250', 'include-rects-for': 'div' })
+  await page.evaluate(async () => {
+    const target = box.querySelector('div')
+    window.targetRectReads = 0
+    window.boxRectReads = 0
+    const read = target.getBoundingClientRect.bind(target)
+    const readBox = box.getBoundingClientRect.bind(box)
+    target.getBoundingClientRect = () => { targetRectReads++; return read() }
+    box.getBoundingClientRect = () => { boxRectReads++; return readBox() }
+    for (let i = 1; i <= 5; i++) {
+      box.scrollTop = i * 10
+      await frames(1)
+    }
+  })
+  assert.deepEqual(await page.evaluate(() => ({ events: events.length, boxReads: boxRectReads,
+    rectReads: targetRectReads, faded: box.matches(':state(hidden-start-y)') })),
+  { events: 1, boxReads: 0, rectReads: 0, faded: false })
+  await page.waitForFunction(() => events.length === 2)
+  assert.deepEqual(await page.evaluate(() => ({ boxReads: boxRectReads, rectReads: targetRectReads,
+    faded: box.matches(':state(hidden-start-y)'), scrollTop: events[1].current.scrollTop,
+    rectTop: events[1].current.rects[0].top })),
+  { boxReads: 2, rectReads: 1, faded: true, scrollTop: 50, rectTop: -50 })
 })
 
 test('A throttled change that returns to the reported value emits no duplicate', async t => {
@@ -183,6 +311,21 @@ test('A throttled change that returns to the reported value emits no duplicate',
   })
   await page.waitForTimeout(350)
   assert.equal(await page.evaluate(() => events.length), 1)
+})
+
+test('Throttled rects and scroll offset come from the same final snapshot', async t => {
+  const page = await pageFor(t, { observe: 'width', throttle: '250', 'include-rects-for': 'div' })
+  await page.evaluate(async () => {
+    box.style.width = '240px'
+    await frames()
+    box.scrollTop = 40
+  })
+  await page.waitForFunction(() => events.length === 2)
+  assert.deepEqual(await page.evaluate(() => ({
+    width: events[1].current.width,
+    scrollTop: events[1].current.scrollTop,
+    top: events[1].current.rects[0].top,
+  })), { width: 240, scrollTop: 40, top: -40 })
 })
 
 test('Pending reports are cancelled on disconnect, observation stop, and viewport exit', async t => {
@@ -207,6 +350,28 @@ test('Pending reports are cancelled on disconnect, observation stop, and viewpor
     assert.equal(await page.evaluate(() => events[1].current.width), 240)
     await page.close()
   }
+})
+
+test('observe-offscreen keeps measurements active and can return to viewport pausing', async t => {
+  const page = await pageFor(t, { observe: 'size', 'observe-offscreen': '' })
+  await page.evaluate(async () => {
+    box.style.marginTop = '2000px'
+    await frames(4)
+    box.style.width = '240px'
+  })
+  await page.waitForFunction(() => events.length === 2)
+  assert.equal(await page.evaluate(() => events[1].current.width), 240)
+
+  await page.evaluate(async () => {
+    box.removeAttribute('observe-offscreen')
+    await frames(4)
+    box.style.width = '260px'
+  })
+  await page.waitForTimeout(100)
+  assert.equal(await page.evaluate(() => events.length), 2)
+  await page.evaluate(() => { box.style.marginTop = '0' })
+  await page.waitForFunction(() => events.length === 3)
+  assert.equal(await page.evaluate(() => events[2].current.width), 260)
 })
 
 test('Changing throttle preserves a pending change and invalid intervals stay frame-based', async t => {
@@ -257,18 +422,18 @@ test('Truncation tooltips read unobserved Boxes on demand', async t => {
   }), { idleReads: 0, shown: true, hidden: true, truncated: false, idleAfterRead: true, events: 0 })
 })
 
-test('JSX Box serializes field selection and throttle and unwraps measurement events', async t => {
+test('JSX Box serializes observation options and unwraps measurement events', async t => {
   const page = await pageFor(t, {})
   await page.evaluate(() => {
     box.remove()
     window.details = []
-    renderBox({ observe: 'scroll', throttle: 100,
+    renderBox({ observe: 'scroll', observeOffscreen: true, throttle: 100,
       onMeasureChange: (_, detail) => details.push(detail) })
     window.box = document.querySelector('a-box')
   })
   await page.waitForFunction(() => details.length === 1)
-  assert.deepEqual(await page.evaluate(() => ['observe', 'throttle'].map(name => box.getAttribute(name))),
-    ['scroll', '100'])
+  assert.deepEqual(await page.evaluate(() => ['observe', 'observe-offscreen', 'throttle'].map(name => box.getAttribute(name))),
+    ['scroll', '', '100'])
   await page.evaluate(() => { box.scrollTop = 40 })
   await page.waitForFunction(() => details.length === 2)
   assert.equal(await page.evaluate(() => details[1].changed.scrollTop), 40)
@@ -364,6 +529,45 @@ test('Fade alone updates CSS states without selecting measurement events', async
   await page.waitForFunction(() => events.length === 1)
   await page.evaluate(() => { box.scrollTop = 60 })
   await page.waitForFunction(() => events.length === 2)
+})
+
+test('Fade mask appears for hidden content and leaves after the edge clears', async t => {
+  const page = await pageFor(t, {})
+  const result = await page.evaluate(async () => {
+    box.remove()
+    window.box = document.createElement('a-box')
+    box.setAttribute('fade', '')
+    box.innerHTML = '<div style="height:50px">Content</div>'
+    document.querySelector('#mount').append(box)
+    await frames()
+    const rest = { active: box.matches(':state(fade-mask-active)'), mask: getComputedStyle(box).maskImage }
+    const transitions = []
+    box.addEventListener('transitionrun', event => transitions.push(event.propertyName))
+
+    box.firstElementChild.style.height = '600px'
+    await new Promise(resolve => {
+      const check = () => box.matches(':state(hidden-end-y)') ? resolve() : requestAnimationFrame(check)
+      check()
+    })
+    const hidden = { active: box.matches(':state(fade-mask-active)'), mask: getComputedStyle(box).maskImage }
+    await frames()
+
+    box.firstElementChild.style.height = '50px'
+    await new Promise(resolve => {
+      const check = () => !box.matches(':state(hidden-end-y)') ? resolve() : requestAnimationFrame(check)
+      check()
+    })
+    const exiting = box.matches(':state(fade-mask-active)')
+    await new Promise(resolve => setTimeout(resolve, 180))
+    const cleared = { active: box.matches(':state(fade-mask-active)'), mask: getComputedStyle(box).maskImage }
+    return { rest, hidden, exiting, cleared, transitions }
+  })
+  assert.deepEqual(result.rest, { active: false, mask: 'none' })
+  assert.equal(result.hidden.active, true)
+  assert.notEqual(result.hidden.mask, 'none')
+  assert.ok(result.transitions.includes('--box-fade-end-y-strength'))
+  assert.equal(result.exiting, true)
+  assert.deepEqual(result.cleared, { active: false, mask: 'none' })
 })
 
 test('Typed JSX observation arrays accept any order and duplicates', async t => {

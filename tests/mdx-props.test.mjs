@@ -32,7 +32,7 @@ test('every PropsTable renders, including labels and reordered attributes', () =
 })
 
 test('Capture and Box secondary references have tables in Markdown', async () => {
-  for (const [page, count] of [['capture', 8], ['box', 5]]) {
+  for (const [page, count] of [['capture', 8], ['box', 6]]) {
     const source = await readFile(catalog.find(entry => entry.path === `/${page}/`).source, 'utf8')
     const markdown = parseMdx(source, { renderPropsTable })
     assert.equal(markdown.match(/^\| (?:Prop|Field|Option) \| Type \| Default \| Description \|$/gm)?.length, count)

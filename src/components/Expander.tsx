@@ -32,16 +32,24 @@ export interface ExpanderProps extends Omit<BaseProps, "title"> {
    *  bare disclosure).
    *  @defaultValue 'secondary' */
   priority?: "primary" | "secondary" | "tertiary";
-  /** Outdent the chevron into the left gutter so the title and body sit
-   *  flush with surrounding content (the docs-header layout). Only takes
-   *  effect with `priority="tertiary"` — on the filled priorities the
-   *  container edge has to bound the chevron, so it's a no-op there. */
+  /** Align the title and body with surrounding content on a tertiary
+   *  expander. With the default start indicator, the mark hangs in the
+   *  gutter; an end indicator stays inside its edge. */
   outdent?: boolean;
-  /** Header actions (e.g. buttons, tags) rendered at the end of the
-   *  header row, OUTSIDE the toggle trigger — clicking them never
-   *  toggles, they're separately focusable, and screen readers see them
-   *  as separate controls. */
+  /** Header actions rendered outside the toggle trigger. With an end
+   *  indicator, actions sit between the title and indicator. */
   actions?: React.ReactNode;
+  /** Built-in disclosure mark, a decorative node, or separate closed/open
+   *  visuals. Other primitive values leave the indicator empty. Custom nodes
+   *  are passive; use `actions` for controls.
+   *  @defaultValue 'chevron' */
+  indicator?: "chevron" | "triangle" | "plus" | React.ReactNode | {
+    closed: React.ReactNode;
+    open: React.ReactNode;
+  };
+  /** Place the disclosure mark before the title or after the actions.
+   *  @defaultValue 'start' */
+  indicatorPlacement?: "start" | "end";
   /** Disables the header: not clickable or focusable, hover affordance
    *  off, text dimmed. The open state freezes as-is — disabling an open
    *  expander keeps it open. `actions` stay live; disable them
@@ -100,6 +108,8 @@ export const Expander = ({
   priority,
   outdent,
   actions,
+  indicator,
+  indicatorPlacement,
   disabled,
   round,
   open,
@@ -111,6 +121,18 @@ export const Expander = ({
   ...rest
 }: ExpanderProps) => {
   const controlled = open !== undefined;
+  const presetIndicator: "chevron" | "triangle" | "plus" | undefined =
+    typeof indicator === "string" &&
+    (indicator === "chevron" || indicator === "triangle" || indicator === "plus")
+      ? indicator
+      : undefined;
+  const pairedIndicator =
+    indicator != null && typeof indicator === "object" &&
+    "closed" in indicator && "open" in indicator
+      ? indicator
+      : undefined;
+  const useCustomSlot = indicator != null && !presetIndicator && !pairedIndicator;
+  const customIndicator = typeof indicator === "object" ? indicator as React.ReactNode : null;
 
   // A non-named tone is a literal CSS color: feed it to the element's
   // oklch derivation via an inline custom property (the CSS attr() form
@@ -144,6 +166,8 @@ export const Expander = ({
       outdent={outdent ? "" : undefined}
       round={roundAttr(round)}
       disabled={disabled ? "" : undefined}
+      indicator={presetIndicator}
+      indicator-placement={indicatorPlacement && indicatorPlacement !== "start" ? indicatorPlacement : undefined}
       // All-lowercase `onstatechange` is the one event-prop spelling both
       // renderers bind to our `statechange` event: React 19 keeps the case of
       // whatever follows `on` (so `onStateChange` would listen for "StateChange"),
@@ -169,6 +193,11 @@ export const Expander = ({
     >
       {titleNode}
       {actions != null && <span slot="actions">{actions}</span>}
+      {pairedIndicator && <>
+        <span slot="indicator" data-when="closed" aria-hidden="true" inert>{pairedIndicator.closed}</span>
+        <span slot="indicator" data-when="open" aria-hidden="true" inert>{pairedIndicator.open}</span>
+      </>}
+      {useCustomSlot && <span slot="indicator" aria-hidden="true" inert>{customIndicator}</span>}
       <a-expander-details>{children}</a-expander-details>
     </a-expander>
   );

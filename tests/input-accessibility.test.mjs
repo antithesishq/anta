@@ -71,6 +71,34 @@ before(async () => {
             ],
           }),
         ), main)
+        window.mountHoverRange = () => {
+          const mount = document.createElement('div')
+          mount.style.cssText = 'position:fixed;left:160px;top:80px'
+          document.body.append(mount)
+          render(h(SelectFaceted, {
+            label: 'Range filter',
+            defaultValue: { recency: { preset: 'last14' } },
+            facets: [{
+              key: 'recency', label: 'Recency', kind: 'custom',
+              summary: value => 'preset' in value ? value.preset : 'Custom range',
+              render: ({ value, onChange }) => {
+                const mode = value == null ? '' : 'preset' in value ? value.preset : 'custom'
+                const range = value && 'from' in value ? value : { from: '', to: '' }
+                return h('div', { 'data-menu-open': '', style: { minWidth: '360px', padding: '8px' } },
+                  h(RadioGroup, {
+                    options: [{ value: 'last14', label: 'Last 14 days' }, { value: 'custom', label: 'Custom range' }],
+                    value: mode,
+                    onStateChange: (_event, { next }) => onChange(next === 'custom' ? range : { preset: next }),
+                  }),
+                  mode === 'custom' && h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' } },
+                    h(InputDate, { label: 'From', value: range.from, onValueChange: from => onChange({ from, to: range.to }) }),
+                    h(InputDate, { label: 'To', value: range.to, min: range.from || undefined, onValueChange: to => onChange({ from: range.from, to }) }),
+                  ),
+                )
+              },
+            }],
+          }), mount)
+        }
         for (let i = 0; i < 2; i++) {
           const root = document.createElement('div')
           document.body.append(root)
@@ -669,6 +697,87 @@ test('nested menu outside clicks close only the branch above the clicked parent'
     navigation: { parentOpen: true, childOpen: false, monthChanged: true },
     outsideAll: [false, false],
   })
+})
+
+test('closing a nested date popup outside its facet flyout keeps the flyout open', async t => {
+  const page = await pageFor(t)
+  page.setDefaultTimeout(5000)
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.evaluate(() => window.mountHoverRange())
+  const trigger = page.locator('a-button').filter({ hasText: 'Range filter' })
+  await trigger.scrollIntoViewIfNeeded()
+  await page.waitForTimeout(100)
+  await trigger.click()
+  const root = trigger.locator('xpath=following-sibling::a-menu[1]')
+  const facet = root.locator('a-menu-item[submenu]')
+  await page.waitForFunction(() => document.querySelector('a-menu[aria-label="Recency editor"]')?.listening)
+  await facet.click()
+  const editor = facet.locator('a-menu[aria-label="Recency editor"]')
+  await page.waitForFunction(() => document.querySelector('a-menu[aria-label="Recency editor"]')?.isOpen)
+  await editor.locator('a-radio[value="custom"]').click()
+  await editor.locator('a-input').nth(1).click()
+  const calendar = editor.locator('a-input').nth(1).locator('xpath=following-sibling::a-menu[1]')
+  await page.waitForFunction(() => [...document.querySelectorAll('a-input + a-menu')].some(menu => menu.isOpen && menu.querySelector('a-calendar')))
+  const outside = await editor.evaluate(menu => {
+    const bounds = menu.shadowRoot.querySelector('[popover]').getBoundingClientRect()
+    const dateMenu = menu.querySelectorAll('a-input + a-menu')[1]
+    const day = [...dateMenu.querySelectorAll('a-button[data-date]:not([disabled])')].find(button => {
+      const r = button.getBoundingClientRect()
+      const x = r.left + r.width / 2
+      const y = r.top + r.height / 2
+      const outside = x < bounds.left || x > bounds.right || y < bounds.top || y > bounds.bottom
+      return outside && x > 0 && x < innerWidth && y > 0 && y < innerHeight
+    })
+    return {
+      date: day?.getAttribute('data-date'),
+      editorBounds: bounds.toJSON(),
+      calendarBounds: dateMenu.shadowRoot.querySelector('[popover]').getBoundingClientRect().toJSON(),
+    }
+  })
+  assert.ok(outside.date, `the date picker must extend beyond the facet flyout: ${JSON.stringify(outside)}`)
+  await calendar.locator(`a-button[data-date="${outside.date}"]`).click()
+  await page.waitForTimeout(250)
+  assert.equal(await calendar.evaluate(menu => menu.isOpen), false)
+  assert.equal(await editor.evaluate(menu => menu.isOpen), true)
+  assert.equal(await root.evaluate(menu => menu.isOpen), true)
+
+  const bounds = await editor.evaluate(menu => menu.shadowRoot.querySelector('[popover]').getBoundingClientRect().toJSON())
+  await page.mouse.move(bounds.left + 20, bounds.top + 20)
+  await page.mouse.move(10, 10)
+  await page.waitForTimeout(250)
+  assert.equal(await editor.evaluate(menu => menu.isOpen), false)
+  assert.equal(await root.evaluate(menu => menu.isOpen), true)
+})
+
+test('closing a nested popup away from the mouse leaves hover dismissal available', async t => {
+  const page = await pageFor(t)
+  page.setDefaultTimeout(5000)
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.evaluate(() => window.mountHoverRange())
+  const trigger = page.locator('a-button').filter({ hasText: 'Range filter' })
+  await trigger.scrollIntoViewIfNeeded()
+  await trigger.click()
+  const root = trigger.locator('xpath=following-sibling::a-menu[1]')
+  const facet = root.locator('a-menu-item[submenu]')
+  await page.waitForFunction(() => document.querySelector('a-menu[aria-label="Recency editor"]')?.listening)
+  await facet.click()
+  const editor = facet.locator('a-menu[aria-label="Recency editor"]')
+  await editor.locator('a-radio[value="custom"]').click()
+  await editor.locator('a-input').nth(1).click()
+  const calendar = editor.locator('a-input').nth(1).locator('xpath=following-sibling::a-menu[1]')
+  await page.waitForFunction(() => [...document.querySelectorAll('a-input + a-menu')].some(menu => menu.isOpen && menu.querySelector('a-calendar')))
+
+  await page.mouse.move(10, 10)
+  await page.keyboard.press('Escape')
+  await page.waitForFunction(() => [...document.querySelectorAll('a-input + a-menu')].every(menu => !menu.isOpen))
+  assert.equal(await editor.evaluate(menu => menu.isOpen), true)
+  await editor.evaluate(menu => {
+    document.activeElement?.blur()
+    menu.surface.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }))
+  })
+  await page.waitForFunction(() => !document.querySelector('a-menu[aria-label="Recency editor"]')?.isOpen)
+  assert.equal(await root.evaluate(menu => menu.isOpen), true)
+  assert.equal(await calendar.evaluate(menu => menu.isOpen), false)
 })
 
 test('Calendars in separate renderer roots use direct names without duplicate IDs', async t => {

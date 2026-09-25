@@ -10,6 +10,10 @@ pixels; strings accept CSS lengths. `padding` and `margin` also accept CSS
 shorthand, such as `padding="8px 16px"` or `margin="0 auto"`. Omission adds no
 spacing styles. A bare `round` fully rounds the corners.
 
+Box uses `position: relative` by default. Absolutely positioned descendants
+use it as their containing block. Set `position: static` on the Box if they
+should use another positioned ancestor.
+
 ```tsx
 <Box round={8} padding={10}><span /></Box>
 <Box display="flex" round={8} gap={6} padding={10}><span /></Box>
@@ -148,8 +152,7 @@ CSS states remain current.
 Pass `includeRectsFor` to add matching descendants to each measurement snapshot.
 `current.rects` contains their border boxes in document order, with `top`,
 `left`, `right`, and `bottom` measured from the Box's top-left border edge, plus
-each match's `width` and `height`. The Box has `position: relative` by default,
-so positioned descendants can use it as their containing block.
+each match's `width` and `height`.
 
 The selector does not start observation or add event triggers. Box reads the
 rects when an existing `observe` selection reports a change. `current.rects`

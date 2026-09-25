@@ -15,6 +15,12 @@ changes are not listed.
   Box, width, and height. Changed rects appear in `detail.changed.rects` when
   another observed field triggers a report.
 
+### Changed
+
+- [Box layout](/box/#display) now uses `position: relative` by default, so
+  absolutely positioned descendants use the Box as their containing block. Set
+  `position: static` on the Box if they should use another positioned ancestor.
+
 ### Fixed
 
 - [Menu submenus](/menu/#submenus) stay open when a nested

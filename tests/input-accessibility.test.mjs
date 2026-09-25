@@ -744,6 +744,37 @@ test('closing a nested date popup outside its facet flyout keeps the flyout open
   assert.equal(await root.evaluate(menu => menu.isOpen), true)
 })
 
+test('closing a nested popup away from the mouse leaves hover dismissal available', async t => {
+  const page = await pageFor(t)
+  page.setDefaultTimeout(5000)
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.evaluate(() => window.mountHoverRange())
+  const trigger = page.locator('a-button').filter({ hasText: 'Range filter' })
+  await trigger.scrollIntoViewIfNeeded()
+  await trigger.click()
+  const root = trigger.locator('xpath=following-sibling::a-menu[1]')
+  const facet = root.locator('a-menu-item[submenu]')
+  await page.waitForFunction(() => document.querySelector('a-menu[aria-label="Recency editor"]')?.listening)
+  await facet.click()
+  const editor = facet.locator('a-menu[aria-label="Recency editor"]')
+  await editor.locator('a-radio[value="custom"]').click()
+  await editor.locator('a-input').nth(1).click()
+  const calendar = editor.locator('a-input').nth(1).locator('xpath=following-sibling::a-menu[1]')
+  await page.waitForFunction(() => [...document.querySelectorAll('a-input + a-menu')].some(menu => menu.isOpen && menu.querySelector('a-calendar')))
+
+  await page.mouse.move(10, 10)
+  await page.keyboard.press('Escape')
+  await page.waitForFunction(() => [...document.querySelectorAll('a-input + a-menu')].every(menu => !menu.isOpen))
+  assert.equal(await editor.evaluate(menu => menu.isOpen), true)
+  await editor.evaluate(menu => {
+    document.activeElement?.blur()
+    menu.surface.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }))
+  })
+  await page.waitForFunction(() => !document.querySelector('a-menu[aria-label="Recency editor"]')?.isOpen)
+  assert.equal(await root.evaluate(menu => menu.isOpen), true)
+  assert.equal(await calendar.evaluate(menu => menu.isOpen), false)
+})
+
 test('Calendars in separate renderer roots use direct names without duplicate IDs', async t => {
   const page = await pageFor(t)
   const result = await page.locator('a-calendar').evaluateAll(calendars => ({

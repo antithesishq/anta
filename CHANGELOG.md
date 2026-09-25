@@ -30,7 +30,8 @@ changes are not listed.
   unrecognized strings and numbers instead of displaying them as text.
 - [Menu submenus](/menu/#submenus) stay open when a nested
   date picker closes under the pointer outside the submenu. Hover dismissal
-  resumes after the pointer returns.
+  resumes after the pointer returns. Closing a nested popup away from the
+  pointer leaves hover dismissal available.
 - [Dialog headers](/dialog/#zones) wrap long unbroken text
   and clip content that still overflows their bounds.
 

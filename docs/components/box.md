@@ -48,8 +48,10 @@ edges hide content while scrolling. `fade` enables both automatically.
 
 ### Fading a clipped edge
 
-`fade` masks edges with hidden content and removes the mask as scrolling reveals
-them. `fadeSize` sets its depth. It measures on connection, even off screen.
+`fade` masks edges with hidden content and eases the mask as scrolling reveals
+them. The mask is removed after the last edge fades out, preserving shadows and
+focus rings at rest. `fadeSize` sets its depth. It measures on connection, even
+off screen.
 
 ```tsx
 const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
@@ -68,8 +70,9 @@ const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
 .fade-demo a-tag { flex: 0 0 auto; }
 ```
 
-The mask clips to the padding box. It preserves the Box border, shadows, and
-focus ring when no edge is hidden.
+The fade affects the padding box. The mask remains through its exit transition,
+then disappears so shadows and focus rings are visible at rest. The easing is
+disabled when reduced motion is requested.
 
 To style hidden edges without `fade`, use `observe="edges"` and the
 `hidden-start-x`, `hidden-end-x`, `hidden-start-y`, or `hidden-end-y` CSS states.
@@ -138,14 +141,12 @@ When no measurement is selected, `onMeasureChange` adds `size`;
 Passing both handlers observes size and context without enabling scroll events.
 Without handlers or `fade`, omitting `observe` keeps Box idle.
 
-Set `throttle` to a minimum interval in milliseconds. The first report has no
-added delay; subsequent reports include a trailing update with the latest values.
-Omit it or pass `0` for frame-based reporting. Negative or non-finite values use
-`0`. The interval applies to `onMeasureChange`; context events are not throttled.
-Throttling limits event delivery and descendant rect reads; it does not reduce
-the Box reads that keep CSS states current.
-`edges`, `scroll`, and `fade` continue measuring during scrolling so their
-CSS states remain current.
+Set `throttle` to a minimum interval in milliseconds. The initial measurement
+is immediate; later activity gets a trailing read with the latest values. Omit
+it or pass `0` for frame-based updates. Negative or non-finite values use `0`.
+The interval limits measurement reads, CSS state updates, and
+`onMeasureChange` events; context events are not throttled. The
+`box.measurement` getter still reads fresh values on demand.
 
 `Tooltip truncatedOnly` reads Box's clipping on demand. It works without
 `observe` or `onMeasureChange` and does not enable continuous observation.
@@ -163,19 +164,12 @@ differs from the previous report. For a fresh read at any time, use
 
 With `observe="scroll"` and no throttle, Box can query, measure, and compare
 every matching descendant on each reported frame. Keep the selector focused or
-set `throttle` when many descendants match. Fade states still update each frame.
+set `throttle` when many descendants match. A larger interval also delays the
+fade as the reader reaches an edge.
 
-```tsx
-<Box includeRectsFor=".marker" onMeasureChange={(_, { current }) => {
-  console.log(current.rects)
-}}>
-  <span className="marker">Measured content</span>
-</Box>
-```
-
-This readout observes `['size', 'overflow', 'edges', 'scroll']` with `throttle={100}`.
-It includes the first content row in `rects`. Resize or scroll the Box to update
-the values.
+This readout observes `['size', 'overflow', 'edges', 'scroll']` with `throttle={100}`
+and `fade`. It includes the first content row in `rects`. Resize or scroll the
+Box to update the values and edge mask.
 
 ```tsx title="measurechange"
 const [measurement, setMeasurement] = useState<BoxMeasurement | null>(null)
@@ -184,6 +178,7 @@ const [measurement, setMeasurement] = useState<BoxMeasurement | null>(null)
   round={8}
   className="measure-probe-box"
   observe={['size', 'overflow', 'edges', 'scroll']}
+  fade
   includeRectsFor=".measure-probe-target"
   throttle={100}
   onMeasureChange={(_, { current }) => setMeasurement(current)}
@@ -320,14 +315,14 @@ const canvasRef = useRef<HTMLCanvasElement>(null)
 | `fade?` | boolean | — | Fades out every edge that currently hides clipped content, and drops the fade from an edge once the reader scrolls to it. |
 | `fadeSize?` | number \| string | 24 | Depth of the `fade` gradient. A `number` is pixels; a string is any CSS length. |
 | `gap?` | number \| string | — | Gap between children, matching the CSS `gap` property. A `number` is pixels; a string is any CSS length or two-value gap (`'1rem'`, `'8px 16px'`). Applies while the Box is a flex or grid container. |
-| `includeRectsFor?` | string | — | CSS selector for descendants whose border boxes are included in `measurement.rects` when Box measures. Coordinates are relative to this Box's top-left border edge; matches are in document order. Box reads and compares matching rects for each measurement event. With `observe="scroll"`, use `throttle` when the selector matches many descendants; fade states still update on each frame. |
+| `includeRectsFor?` | string | — | CSS selector for descendants whose border boxes are included in `measurement.rects` when Box measures. Coordinates are relative to this Box's top-left border edge; matches are in document order. Box reads and compares matching rects for each measurement event. With `observe="scroll"`, use `throttle` when the selector matches many descendants; it also delays CSS state updates after the initial read. |
 | `margin?` | number \| string | — | Outer spacing, matching CSS `margin`. Numbers are pixels; strings accept CSS shorthand, `auto`, negative lengths, and custom properties. Omission adds no style. |
 | `observe?` | 'width' \| 'height' \| 'size' \| 'context' \| 'overflow' \| 'edges' \| 'scroll' \| 'all' \| readonly BoxObservation[] | — | One selection or an array of selections, in any order. `'size'` watches width and height; `'context'` watches rendering context; `'overflow'` watches content dimensions and clipping. `'edges'` reports which edges hide content; `'scroll'` reports offsets, potentially every frame; `'all'` selects everything. Selections are independent: use `['size', 'edges']` to combine them. A measurement handler implies `'size'` when no measurement is selected; a context handler adds `'context'`. Size skips content and scroll observers; overflow adds content observation; hidden edges and scroll add scroll reads. Without handlers or `fade`, omission stays idle. |
 | `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail` contains the changed fields and a full current snapshot. |
 | `onMeasureChange?` | (event, detail) => void | — | Fired when a selected measurement field changes. `detail.changed` contains fields changed since the previous event; `detail.current` includes the full snapshot with matching rects. Rect changes alone do not trigger an event. |
 | `padding?` | number \| string | — | Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept CSS shorthand, percentages, and custom properties. Omission adds no style. |
 | `round?` | boolean \| number \| string | — | Fully-round corners (`border-radius: 999px`, clamped to the box). Pass a `number` (px) or a CSS length string (`'1rem'`) for a custom radius. Omit for square corners. |
-| `throttle?` | number | 0 | Minimum interval between measurement events, in milliseconds. The first report has no added delay; a trailing report delivers the latest values. Descendant rects are read for emitted events. Active observers and CSS clipping states are not throttled. |
+| `throttle?` | number | 0 | Minimum interval between measurements, in milliseconds. The initial measurement runs immediately; a trailing read updates CSS states and delivers the latest event. Descendant rects are read only for emitted events. The `measurement` getter always reads fresh values. |
 
 ### BoxMeasurement
 
@@ -432,7 +427,8 @@ Use `<a-box>` without JSX. Events are non-bubbling `CustomEvent`s with the same
 observation. Combine the eight selections with spaces, such as
 `observe="size edges"` or `observe="size scroll"`, in any order. Repeated tokens
 have no effect; unknown tokens are ignored. A bare `observe` means `"all"`.
-`throttle="100"` limits measurement events to a 100 ms interval.
+`throttle="100"` limits measurement reads, CSS state updates, and measurement
+events to a 100 ms interval.
 
 ```html title="a-box"
 <a-box display="grid" gap="8px" round="12px" observe="all"

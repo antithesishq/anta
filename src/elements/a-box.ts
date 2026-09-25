@@ -28,6 +28,7 @@ type DeviceSnapshot = Pick<
 >
 
 const stores = new WeakMap<Window, BoxWindowStore>()
+const FADE_TRANSITION_MS = 140
 
 /** A class attribute holding `dark` or `light`, matched against a mutation's
  * recorded previous value (a string, so `classList` is not available). */
@@ -413,9 +414,10 @@ export class ABoxElement extends HTMLElementBase {
   #measurementFields = new Set<keyof BoxMeasurement>()
   #watchContent = false
   #watchScroll = false
-  // Filtering and throttling compare against the last event, not the last read.
+  // Filtering compares against the last event, not the last read.
   #reportedMeasurement?: BoxMeasurement
   #throttledReport?: ReturnType<typeof throttle<() => void>>
+  #fadeMaskTimer?: number
   #context?: BoxContext
   #measuring = false
   #clips = false
@@ -437,6 +439,7 @@ export class ABoxElement extends HTMLElementBase {
   }
 
   disconnectedCallback() {
+    this.#clearFadeMask()
     this.#stopMeasuring()
     this.#stopReportingContext()
     this.#store?.unobserveVisibility(this)
@@ -451,6 +454,7 @@ export class ABoxElement extends HTMLElementBase {
      and the later connect would see the flags already set and skip it. */
   attributeChangedCallback(name: string, previous: string | null, current: string | null) {
     if (previous === current) return
+    if (name === 'fade' && current === null) this.#clearFadeMask()
     if (!this.#store) return
     if (name === 'fade' || name === 'observe') this.#sync()
     if (name === 'throttle') this.#configureThrottle()
@@ -658,7 +662,8 @@ export class ABoxElement extends HTMLElementBase {
     this.#frame = this.view.requestAnimationFrame(() => {
       this.#frame = undefined
       if (!this.#measuring) return
-      this.#reportMeasurement()
+      if (this.#throttledReport) this.#throttledReport()
+      else this.#reportMeasurement()
     })
   }
 
@@ -767,7 +772,7 @@ export class ABoxElement extends HTMLElementBase {
     this.#throttledReport = undefined
     const interval = Number(this.getAttribute('throttle'))
     if (this.#measuring && Number.isFinite(interval) && interval > 0) {
-      this.#throttledReport = throttle(() => this.#emitMeasurement(true), Math.min(interval, 2_147_483_647))
+      this.#throttledReport = throttle(() => this.#reportMeasurement(), Math.min(interval, 2_147_483_647))
     }
   }
 
@@ -787,28 +792,14 @@ export class ABoxElement extends HTMLElementBase {
     this.#setMeasurementStates(current)
     this.#syncChildObservation()
     if (!this.#hasMeasurementChange(current)) return
-    if (this.#throttledReport) this.#throttledReport()
-    else this.#emitMeasurement()
-  }
-
-  #emitMeasurement = (refresh = false) => {
-    const pending = this.#measurement
-    if (!this.#measuring || !pending || !this.#hasMeasurementChange(pending)) return
-    const snapshot = refresh ? this.#readMeasurement(false) : pending
-    if (refresh) {
-      this.#measurement = snapshot
-      this.#setMeasurementStates(snapshot)
-      this.#syncChildObservation()
-    }
-    if (!this.#hasMeasurementChange(snapshot)) return
-    const current = { ...snapshot, rects: this.#readRects() }
+    const snapshot = { ...current, rects: this.#readRects() }
     const initial = this.#initialMeasurement
     const previous = this.#reportedMeasurement
     this.#initialMeasurement = false
-    this.#reportedMeasurement = current
+    this.#reportedMeasurement = snapshot
     const detail: BoxMeasurementChange = {
-      changed: changed(initial ? undefined : previous, current),
-      current,
+      changed: changed(initial ? undefined : previous, snapshot),
+      current: snapshot,
     }
     this.dispatchEvent(new this.view.CustomEvent('measurechange', { detail }))
   }
@@ -841,6 +832,35 @@ export class ABoxElement extends HTMLElementBase {
     this.#setState('hidden-end-x', measurement.hiddenEndX)
     this.#setState('hidden-start-y', measurement.hiddenStartY)
     this.#setState('hidden-end-y', measurement.hiddenEndY)
+    this.#syncFadeMask(measurement)
+  }
+
+  #syncFadeMask(measurement: BoxMeasurement) {
+    const hidden = measurement.hiddenStartX || measurement.hiddenEndX
+      || measurement.hiddenStartY || measurement.hiddenEndY
+    if (hidden && this.hasAttribute('fade')) {
+      if (this.#fadeMaskTimer !== undefined) this.view.clearTimeout(this.#fadeMaskTimer)
+      this.#fadeMaskTimer = undefined
+      this.#setState('fade-mask-active', true)
+      return
+    }
+    if (!this.hasAttribute('fade')) {
+      this.#clearFadeMask()
+      return
+    }
+    if (!this.#internals?.states?.has('fade-mask-active') || this.#fadeMaskTimer !== undefined) return
+    if (this.view.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.#clearFadeMask()
+      return
+    }
+    // Keep the mask until its final gradient has eased back to full opacity.
+    this.#fadeMaskTimer = this.view.setTimeout(() => this.#clearFadeMask(), FADE_TRANSITION_MS)
+  }
+
+  #clearFadeMask() {
+    if (this.#fadeMaskTimer !== undefined) this.view.clearTimeout(this.#fadeMaskTimer)
+    this.#fadeMaskTimer = undefined
+    this.#setState('fade-mask-active', false)
   }
 
   #setState(name: string, active: boolean) {

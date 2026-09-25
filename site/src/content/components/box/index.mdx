@@ -116,8 +116,10 @@ edges hide content while scrolling. `fade` enables both automatically.
 
 ### Fading a clipped edge
 
-`fade` masks edges with hidden content and removes the mask as scrolling reveals
-them. `fadeSize` sets its depth. It measures on connection, even off screen.
+`fade` masks edges with hidden content and eases the mask as scrolling reveals
+them. The mask is removed after the last edge fades out, preserving shadows and
+focus rings at rest. `fadeSize` sets its depth. It measures on connection, even
+off screen.
 
 <Preview align="stretch" gap="16px" justify="flex-start">
   <Box fade fadeSize={32} round display="flex" gap={6} className="fade-demo" style={{ width: '190px', overflowX: 'auto' }}>
@@ -156,8 +158,9 @@ const TAGS = ['frontend', 'design-system', 'a11y', 'performance']
 .fade-demo a-tag { flex: 0 0 auto; }
 ```
 
-The mask clips to the padding box. It preserves the Box border, shadows, and
-focus ring when no edge is hidden.
+The fade affects the padding box. The mask remains through its exit transition,
+then disappears so shadows and focus rings are visible at rest. The easing is
+disabled when reduced motion is requested.
 
 To style hidden edges without `fade`, use `observe="edges"` and the
 `hidden-start-x`, `hidden-end-x`, `hidden-start-y`, or `hidden-end-y` CSS states.
@@ -250,14 +253,12 @@ When no measurement is selected, `onMeasureChange` adds `size`;
 Passing both handlers observes size and context without enabling scroll events.
 Without handlers or `fade`, omitting `observe` keeps Box idle.
 
-Set `throttle` to a minimum interval in milliseconds. The first report has no
-added delay; subsequent reports include a trailing update with the latest values.
-Omit it or pass `0` for frame-based reporting. Negative or non-finite values use
-`0`. The interval applies to `onMeasureChange`; context events are not throttled.
-Throttling limits event delivery and descendant rect reads; it does not reduce
-the Box reads that keep CSS states current.
-`edges`, `scroll`, and `fade` continue measuring during scrolling so their
-CSS states remain current.
+Set `throttle` to a minimum interval in milliseconds. The initial measurement
+is immediate; later activity gets a trailing read with the latest values. Omit
+it or pass `0` for frame-based updates. Negative or non-finite values use `0`.
+The interval limits measurement reads, CSS state updates, and
+`onMeasureChange` events; context events are not throttled. The
+`box.measurement` getter still reads fresh values on demand.
 
 `Tooltip truncatedOnly` reads Box's clipping on demand. It works without
 `observe` or `onMeasureChange` and does not enable continuous observation.
@@ -275,19 +276,12 @@ differs from the previous report. For a fresh read at any time, use
 
 With `observe="scroll"` and no throttle, Box can query, measure, and compare
 every matching descendant on each reported frame. Keep the selector focused or
-set `throttle` when many descendants match. Fade states still update each frame.
+set `throttle` when many descendants match. A larger interval also delays the
+fade as the reader reaches an edge.
 
-```tsx
-<Box includeRectsFor=".marker" onMeasureChange={(_, { current }) => {
-  console.log(current.rects)
-}}>
-  <span className="marker">Measured content</span>
-</Box>
-```
-
-This readout observes `['size', 'overflow', 'edges', 'scroll']` with `throttle={100}`.
-It includes the first content row in `rects`. Resize or scroll the Box to update
-the values.
+This readout observes `['size', 'overflow', 'edges', 'scroll']` with `throttle={100}`
+and `fade`. It includes the first content row in `rects`. Resize or scroll the
+Box to update the values and edge mask.
 
 <Preview align="stretch">
   <BoxMeasurementProbe client:only="preact" />
@@ -317,6 +311,7 @@ const [measurement, setMeasurement] = useState<BoxMeasurement | null>(null)
   round={8}
   className="measure-probe-box"
   observe={['size', 'overflow', 'edges', 'scroll']}
+  fade
   includeRectsFor=".measure-probe-target"
   throttle={100}
   onMeasureChange={(_, { current }) => setMeasurement(current)}
@@ -517,7 +512,8 @@ Use `<a-box>` without JSX. Events are non-bubbling `CustomEvent`s with the same
 observation. Combine the eight selections with spaces, such as
 `observe="size edges"` or `observe="size scroll"`, in any order. Repeated tokens
 have no effect; unknown tokens are ignored. A bare `observe` means `"all"`.
-`throttle="100"` limits measurement events to a 100 ms interval.
+`throttle="100"` limits measurement reads, CSS state updates, and measurement
+events to a 100 ms interval.
 
 <Preview align="stretch">
   <a-box display="grid" gap="8px" round="12px" observe="all"

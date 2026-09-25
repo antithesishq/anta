@@ -36,6 +36,7 @@ export function BoxMeasurementProbe() {
         round={8}
         className="measure-probe-box"
         observe={['size', 'overflow', 'edges', 'scroll']}
+        fade
         includeRectsFor=".measure-probe-target"
         throttle={100}
         onMeasureChange={(_, { current }) => setMeasurement(current)}

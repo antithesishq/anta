@@ -32,8 +32,8 @@ export interface BoxProps extends BaseProps {
    * `measurement.rects` when Box measures. Coordinates are relative to this
    * Box's top-left border edge; matches are in document order. Box reads and
    * compares matching rects for each measurement event. With `observe="scroll"`,
-   * use `throttle` when the selector matches many descendants; fade states still
-   * update on each frame. */
+   * use `throttle` when the selector matches many descendants; it also delays
+   * CSS state updates after the initial read. */
   includeRectsFor?: string
   /** Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept
    * CSS shorthand, percentages, and custom properties. Omission adds no style. */
@@ -52,10 +52,10 @@ export interface BoxProps extends BaseProps {
    * overflow adds content observation; hidden edges and scroll add scroll reads.
    * Without handlers or `fade`, omission stays idle. */
   observe?: BoxObservation | readonly BoxObservation[]
-  /** Minimum interval between measurement events, in milliseconds. The first
-   * report has no added delay; a trailing report delivers the latest values.
-   * Descendant rects are read for emitted events. Active observers and CSS
-   * clipping states are not throttled.
+  /** Minimum interval between measurements, in milliseconds. The initial
+   * measurement runs immediately; a trailing read updates CSS states and
+   * delivers the latest event. Descendant rects are read only for emitted
+   * events. The `measurement` getter always reads fresh values.
    * @defaultValue 0 */
   throttle?: number
   /** Fades out every edge that currently hides clipped content, and drops the

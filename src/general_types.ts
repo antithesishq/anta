@@ -347,7 +347,7 @@ export interface ABoxAttributes extends BaseAttributes {
   gap?: boolean | '' | number | string
   /** Adds matching descendant rects to each measurement snapshot. With
    * `observe="scroll"`, use `throttle` when many descendants match: rects are
-   * read for each emitted event, while fade states still update each frame. */
+   * read for each emitted event, and CSS state updates follow the interval. */
   'include-rects-for'?: string
   /** CSS padding shorthand (`padding="8px 16px"`). Without typed `attr()`
    * support, set `--box-padding` as well. The JSX wrapper supplies it. */
@@ -363,8 +363,9 @@ export interface ABoxAttributes extends BaseAttributes {
    * attribute means `all`. Omission runs no observers unless `fade` is set;
    * a native event listener alone does not enable observation. */
   observe?: string
-  /** Minimum interval between measurement events in milliseconds. Omit or
-   * pass `0` for frame-based reporting. Invalid or negative values use `0`. */
+  /** Minimum interval between measurement reads, CSS state updates, and
+   * events in milliseconds. The initial read is immediate. Omit or pass `0`
+   * for frame-based updates. Invalid or negative values use `0`. */
   throttle?: number | string
   /** Depth of that mask, as a length value (`fade-size="2rem"`). Engines
    *  without typed `attr()` read it from `--box-fade-size` in the host's

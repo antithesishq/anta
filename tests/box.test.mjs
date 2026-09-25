@@ -254,7 +254,7 @@ test('Observe selects edge changes, all measurements, or disables observation', 
   assert.equal(await page.evaluate(() => events.length), 4)
 })
 
-test('Throttling delivers the latest trailing snapshot without delaying CSS states', async t => {
+test('Throttling delivers the latest trailing snapshot and CSS states together', async t => {
   const page = await pageFor(t, { observe: 'all', fade: '', throttle: '250' })
   await page.evaluate(async () => {
     for (let i = 1; i <= 6; i++) {
@@ -264,34 +264,41 @@ test('Throttling delivers the latest trailing snapshot without delaying CSS stat
     }
   })
   assert.deepEqual(await page.evaluate(() => ({ count: events.length, hidden: box.matches(':state(hidden-start-y)') })),
-    { count: 1, hidden: true })
+    { count: 1, hidden: false })
   await page.waitForFunction(() => events.length === 2)
-  const event = await page.evaluate(() => ({ last: events[1], interval: events[1].time - events[0].time }))
+  const event = await page.evaluate(() => ({ last: events[1], interval: events[1].time - events[0].time,
+    hidden: box.matches(':state(hidden-start-y)') }))
   assert.equal(event.last.current.width, 206)
   assert.equal(event.last.changed.scrollTop, 60)
+  assert.equal(event.hidden, true)
   assert.ok(event.interval >= 240, `Unexpected interval: ${event.interval}`)
   await page.waitForTimeout(300)
   assert.equal(await page.evaluate(() => events.length), 2)
 })
 
-test('Throttling limits descendant rect reads without delaying fade states', async t => {
+test('Throttling limits Box reads, descendant rect reads, and fade updates', async t => {
   const page = await pageFor(t, { observe: 'scroll', fade: '', throttle: '250', 'include-rects-for': 'div' })
   await page.evaluate(async () => {
     const target = box.querySelector('div')
     window.targetRectReads = 0
+    window.boxRectReads = 0
     const read = target.getBoundingClientRect.bind(target)
+    const readBox = box.getBoundingClientRect.bind(box)
     target.getBoundingClientRect = () => { targetRectReads++; return read() }
+    box.getBoundingClientRect = () => { boxRectReads++; return readBox() }
     for (let i = 1; i <= 5; i++) {
       box.scrollTop = i * 10
       await frames(1)
     }
   })
-  assert.deepEqual(await page.evaluate(() => ({ events: events.length, reads: targetRectReads,
-    faded: box.matches(':state(hidden-start-y)') })), { events: 1, reads: 0, faded: true })
+  assert.deepEqual(await page.evaluate(() => ({ events: events.length, boxReads: boxRectReads,
+    rectReads: targetRectReads, faded: box.matches(':state(hidden-start-y)') })),
+  { events: 1, boxReads: 0, rectReads: 0, faded: false })
   await page.waitForFunction(() => events.length === 2)
-  assert.deepEqual(await page.evaluate(() => ({ reads: targetRectReads,
-    scrollTop: events[1].current.scrollTop, rectTop: events[1].current.rects[0].top })),
-  { reads: 1, scrollTop: 50, rectTop: -50 })
+  assert.deepEqual(await page.evaluate(() => ({ boxReads: boxRectReads, rectReads: targetRectReads,
+    faded: box.matches(':state(hidden-start-y)'), scrollTop: events[1].current.scrollTop,
+    rectTop: events[1].current.rects[0].top })),
+  { boxReads: 2, rectReads: 1, faded: true, scrollTop: 50, rectTop: -50 })
 })
 
 test('A throttled change that returns to the reported value emits no duplicate', async t => {
@@ -500,6 +507,45 @@ test('Fade alone updates CSS states without selecting measurement events', async
   await page.waitForFunction(() => events.length === 1)
   await page.evaluate(() => { box.scrollTop = 60 })
   await page.waitForFunction(() => events.length === 2)
+})
+
+test('Fade mask appears for hidden content and leaves after the edge clears', async t => {
+  const page = await pageFor(t, {})
+  const result = await page.evaluate(async () => {
+    box.remove()
+    window.box = document.createElement('a-box')
+    box.setAttribute('fade', '')
+    box.innerHTML = '<div style="height:50px">Content</div>'
+    document.querySelector('#mount').append(box)
+    await frames()
+    const rest = { active: box.matches(':state(fade-mask-active)'), mask: getComputedStyle(box).maskImage }
+    const transitions = []
+    box.addEventListener('transitionrun', event => transitions.push(event.propertyName))
+
+    box.firstElementChild.style.height = '600px'
+    await new Promise(resolve => {
+      const check = () => box.matches(':state(hidden-end-y)') ? resolve() : requestAnimationFrame(check)
+      check()
+    })
+    const hidden = { active: box.matches(':state(fade-mask-active)'), mask: getComputedStyle(box).maskImage }
+    await frames()
+
+    box.firstElementChild.style.height = '50px'
+    await new Promise(resolve => {
+      const check = () => !box.matches(':state(hidden-end-y)') ? resolve() : requestAnimationFrame(check)
+      check()
+    })
+    const exiting = box.matches(':state(fade-mask-active)')
+    await new Promise(resolve => setTimeout(resolve, 180))
+    const cleared = { active: box.matches(':state(fade-mask-active)'), mask: getComputedStyle(box).maskImage }
+    return { rest, hidden, exiting, cleared, transitions }
+  })
+  assert.deepEqual(result.rest, { active: false, mask: 'none' })
+  assert.equal(result.hidden.active, true)
+  assert.notEqual(result.hidden.mask, 'none')
+  assert.ok(result.transitions.includes('--box-fade-end-y-strength'))
+  assert.equal(result.exiting, true)
+  assert.deepEqual(result.cleared, { active: false, mask: 'none' })
 })
 
 test('Typed JSX observation arrays accept any order and duplicates', async t => {

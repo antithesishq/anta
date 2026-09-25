@@ -20,6 +20,9 @@ changes are not listed.
 - [Box layout](/box/#display) now uses `position: relative` by default, so
   absolutely positioned descendants use the Box as their containing block. Set
   `position: static` on the Box if they should use another positioned ancestor.
+- [Box measurements](/box/#measurements) now apply `throttle` to measurement
+  reads and CSS states as well as events. The edge mask eases between states;
+  larger intervals delay the fade response during scrolling.
 
 ### Fixed
 

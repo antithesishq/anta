@@ -457,7 +457,7 @@ for (const renderer of ['react', 'preact', 'standalone']) {
         const initial = await page.evaluate(() => ({
             title: fontPaints.find(p => p.text === 'Inherited title').font,
             axis: fontPaints.find(p => p.text === 'Inherited axis').font,
-            tick: fontPaints.find(p => p.text === '0').font,
+            tick: fontPaints.find(p => /^0(?:\.0+)?$/.test(p.text)).font,
         }))
         assert.match(initial.title, /14px serif/)
         assert.match(initial.axis, /12px serif/)

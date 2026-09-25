@@ -363,6 +363,9 @@ export interface ABoxAttributes extends BaseAttributes {
    * attribute means `all`. Omission runs no observers unless `fade` is set;
    * a native event listener alone does not enable observation. */
   observe?: string
+  /** Keeps measurement observation active outside the viewport when `observe`
+   * or `fade` selects measurement. */
+  'observe-offscreen'?: boolean | ''
   /** Minimum interval between measurement reads, CSS state updates, and
    * events in milliseconds. The initial read is immediate. Omit or pass `0`
    * for frame-based updates. Invalid or negative values use `0`. */

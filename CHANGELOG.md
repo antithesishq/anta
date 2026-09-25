@@ -14,6 +14,8 @@ changes are not listed.
   descendant rects with `includeRectsFor`, including positions relative to the
   Box, width, and height. Changed rects appear in `detail.changed.rects` when
   another observed field triggers a report.
+- [Box measurements](/box/#measurements) can stay active outside the viewport
+  with `observeOffscreen` when a virtualized layout needs updates there.
 
 ### Changed
 

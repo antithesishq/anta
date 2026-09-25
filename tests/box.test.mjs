@@ -352,6 +352,28 @@ test('Pending reports are cancelled on disconnect, observation stop, and viewpor
   }
 })
 
+test('observe-offscreen keeps measurements active and can return to viewport pausing', async t => {
+  const page = await pageFor(t, { observe: 'size', 'observe-offscreen': '' })
+  await page.evaluate(async () => {
+    box.style.marginTop = '2000px'
+    await frames(4)
+    box.style.width = '240px'
+  })
+  await page.waitForFunction(() => events.length === 2)
+  assert.equal(await page.evaluate(() => events[1].current.width), 240)
+
+  await page.evaluate(async () => {
+    box.removeAttribute('observe-offscreen')
+    await frames(4)
+    box.style.width = '260px'
+  })
+  await page.waitForTimeout(100)
+  assert.equal(await page.evaluate(() => events.length), 2)
+  await page.evaluate(() => { box.style.marginTop = '0' })
+  await page.waitForFunction(() => events.length === 3)
+  assert.equal(await page.evaluate(() => events[2].current.width), 260)
+})
+
 test('Changing throttle preserves a pending change and invalid intervals stay frame-based', async t => {
   const page = await pageFor(t, { observe: 'size', throttle: '1000' })
   await page.evaluate(async () => {
@@ -400,18 +422,18 @@ test('Truncation tooltips read unobserved Boxes on demand', async t => {
   }), { idleReads: 0, shown: true, hidden: true, truncated: false, idleAfterRead: true, events: 0 })
 })
 
-test('JSX Box serializes field selection and throttle and unwraps measurement events', async t => {
+test('JSX Box serializes observation options and unwraps measurement events', async t => {
   const page = await pageFor(t, {})
   await page.evaluate(() => {
     box.remove()
     window.details = []
-    renderBox({ observe: 'scroll', throttle: 100,
+    renderBox({ observe: 'scroll', observeOffscreen: true, throttle: 100,
       onMeasureChange: (_, detail) => details.push(detail) })
     window.box = document.querySelector('a-box')
   })
   await page.waitForFunction(() => details.length === 1)
-  assert.deepEqual(await page.evaluate(() => ['observe', 'throttle'].map(name => box.getAttribute(name))),
-    ['scroll', '100'])
+  assert.deepEqual(await page.evaluate(() => ['observe', 'observe-offscreen', 'throttle'].map(name => box.getAttribute(name))),
+    ['scroll', '', '100'])
   await page.evaluate(() => { box.scrollTop = 40 })
   await page.waitForFunction(() => details.length === 2)
   assert.equal(await page.evaluate(() => details[1].changed.scrollTop), 40)

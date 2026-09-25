@@ -214,6 +214,11 @@ the border-box `width` or `height` changes. `changed` contains fields
 changed since the last event; `current` is the full snapshot. Reporting pauses
 off screen and resumes with a fresh snapshot when Box returns.
 
+Pass `observeOffscreen` when a virtualized layout needs measurement events or
+clipping states while the Box is outside the viewport. It keeps the selected
+observers active. Use `throttle` to limit reads when offscreen content changes
+often.
+
 `observe` accepts one of the eight selections below, or a typed array combining
 them. `observe={['size', 'edges']}` and `observe={['edges', 'size']}` select the
 same triggers. Repeated selections have no effect. Changing the selected
@@ -514,6 +519,8 @@ observation. Combine the eight selections with spaces, such as
 have no effect; unknown tokens are ignored. A bare `observe` means `"all"`.
 `throttle="100"` limits measurement reads, CSS state updates, and measurement
 events to a 100 ms interval.
+Add `observe-offscreen` to keep measurement observation active outside the
+viewport.
 
 <Preview align="stretch">
   <a-box display="grid" gap="8px" round="12px" observe="all"

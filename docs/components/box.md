@@ -102,6 +102,11 @@ the border-box `width` or `height` changes. `changed` contains fields
 changed since the last event; `current` is the full snapshot. Reporting pauses
 off screen and resumes with a fresh snapshot when Box returns.
 
+Pass `observeOffscreen` when a virtualized layout needs measurement events or
+clipping states while the Box is outside the viewport. It keeps the selected
+observers active. Use `throttle` to limit reads when offscreen content changes
+often.
+
 `observe` accepts one of the eight selections below, or a typed array combining
 them. `observe={['size', 'edges']}` and `observe={['edges', 'size']}` select the
 same triggers. Repeated selections have no effect. Changing the selected
@@ -318,6 +323,7 @@ const canvasRef = useRef<HTMLCanvasElement>(null)
 | `includeRectsFor?` | string | — | CSS selector for descendants whose border boxes are included in `measurement.rects` when Box measures. Coordinates are relative to this Box's top-left border edge; matches are in document order. Box reads and compares matching rects for each measurement event. With `observe="scroll"`, use `throttle` when the selector matches many descendants; it also delays CSS state updates after the initial read. |
 | `margin?` | number \| string | — | Outer spacing, matching CSS `margin`. Numbers are pixels; strings accept CSS shorthand, `auto`, negative lengths, and custom properties. Omission adds no style. |
 | `observe?` | 'width' \| 'height' \| 'size' \| 'context' \| 'overflow' \| 'edges' \| 'scroll' \| 'all' \| readonly BoxObservation[] | — | One selection or an array of selections, in any order. `'size'` watches width and height; `'context'` watches rendering context; `'overflow'` watches content dimensions and clipping. `'edges'` reports which edges hide content; `'scroll'` reports offsets, potentially every frame; `'all'` selects everything. Selections are independent: use `['size', 'edges']` to combine them. A measurement handler implies `'size'` when no measurement is selected; a context handler adds `'context'`. Size skips content and scroll observers; overflow adds content observation; hidden edges and scroll add scroll reads. Without handlers or `fade`, omission stays idle. |
+| `observeOffscreen?` | boolean | — | Keeps measurement events and CSS clipping states current outside the viewport. Has no effect unless `observe` or `fade` selects measurement. |
 | `onContextChange?` | (event, detail) => void | — | Fired after Box's browser and local rendering context changes. `detail` contains the changed fields and a full current snapshot. |
 | `onMeasureChange?` | (event, detail) => void | — | Fired when a selected measurement field changes. `detail.changed` contains fields changed since the previous event; `detail.current` includes the full snapshot with matching rects. Rect changes alone do not trigger an event. |
 | `padding?` | number \| string | — | Inner spacing, matching CSS `padding`. Numbers are pixels; strings accept CSS shorthand, percentages, and custom properties. Omission adds no style. |
@@ -429,6 +435,8 @@ observation. Combine the eight selections with spaces, such as
 have no effect; unknown tokens are ignored. A bare `observe` means `"all"`.
 `throttle="100"` limits measurement reads, CSS state updates, and measurement
 events to a 100 ms interval.
+Add `observe-offscreen` to keep measurement observation active outside the
+viewport.
 
 ```html title="a-box"
 <a-box display="grid" gap="8px" round="12px" observe="all"

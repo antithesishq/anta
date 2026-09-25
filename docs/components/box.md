@@ -169,7 +169,8 @@ differs from the previous report. For a fresh read at any time, use
 ```
 
 This readout observes `['size', 'overflow', 'edges', 'scroll']` with `throttle={100}`.
-Resize or scroll the Box to update it.
+It includes the first content row in `rects`. Resize or scroll the Box to update
+the values.
 
 ```tsx title="measurechange"
 const [measurement, setMeasurement] = useState<BoxMeasurement | null>(null)
@@ -178,19 +179,24 @@ const [measurement, setMeasurement] = useState<BoxMeasurement | null>(null)
   round={8}
   className="measure-probe-box"
   observe={['size', 'overflow', 'edges', 'scroll']}
+  includeRectsFor=".measure-probe-target"
   throttle={100}
   onMeasureChange={(_, { current }) => setMeasurement(current)}
 >
   <Text size="small" priority="tertiary">Resize or scroll this Box.</Text>
-  <div className="measure-probe-wide">wide content, so both axes overflow</div>
+  <div className="measure-probe-wide measure-probe-target">wide content, so both axes overflow</div>
   <div className="measure-probe-wide">and a second line, so the vertical axis does too</div>
   <div className="measure-probe-wide">and a third</div>
 </Box>
 
 <div className="measure-probe-readout">
-  {Object.entries(measurement ?? {}).map(([field, value]) => (
-    <Tag key={field} size="small" label={field} value={String(value)} />
-  ))}
+  {Object.entries(measurement ?? {}).map(([field, value]) => field === 'rects' && Array.isArray(value)
+    ? <div key={field} className="measure-probe-rects">
+        <Tag size="small" label="rects" value={`${value.length} match${value.length === 1 ? '' : 'es'}`} />
+        <pre><code>{JSON.stringify(value, null, 2)}</code></pre>
+      </div>
+    : <Tag key={field} size="small" label={field} value={String(value)} />
+  )}
 </div>
 ```
 
@@ -207,6 +213,8 @@ const [measurement, setMeasurement] = useState<BoxMeasurement | null>(null)
 }
 .measure-probe-wide { inline-size: 520px; padding-block: 6px; }
 .measure-probe-readout { display: flex; flex-wrap: wrap; gap: 6px; }
+.measure-probe-rects { flex-basis: 100%; min-width: 0; }
+.measure-probe-rects pre { margin: 4px 0 0; padding: 8px; border: 1px solid var(--border-4); border-radius: 4px; background: var(--bg-2); white-space: pre-wrap; overflow-wrap: anywhere; }
 ```
 
 See the [measurement fields](#boxmeasurement). Overflow fields map to kebab-case

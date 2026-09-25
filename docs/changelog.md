@@ -23,6 +23,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Box measurement events](/box/#measurements) read current values when a
+  throttled report is sent, so fields and descendant rects describe the same
+  layout.
 - [Expander indicators](/expander/#indicator) leave the mark empty for
   unrecognized strings and numbers instead of displaying them as text.
 - [Menu submenus](/menu/#submenus) stay open when a nested

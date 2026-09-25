@@ -286,6 +286,21 @@ test('A throttled change that returns to the reported value emits no duplicate',
   assert.equal(await page.evaluate(() => events.length), 1)
 })
 
+test('Throttled rects and scroll offset come from the same final snapshot', async t => {
+  const page = await pageFor(t, { observe: 'width', throttle: '250', 'include-rects-for': 'div' })
+  await page.evaluate(async () => {
+    box.style.width = '240px'
+    await frames()
+    box.scrollTop = 40
+  })
+  await page.waitForFunction(() => events.length === 2)
+  assert.deepEqual(await page.evaluate(() => ({
+    width: events[1].current.width,
+    scrollTop: events[1].current.scrollTop,
+    top: events[1].current.rects[0].top,
+  })), { width: 240, scrollTop: 40, top: -40 })
+})
+
 test('Pending reports are cancelled on disconnect, observation stop, and viewport exit', async t => {
   for (const stop of ['disconnect', 'observe', 'viewport']) {
     const page = await pageFor(t, { observe: 'size', throttle: '250' })

@@ -6,6 +6,7 @@ import { useElements } from './useElements'
 /** Every `BoxMeasurement` field, in the order the type declares them. */
 const FIELDS: (keyof BoxMeasurement)[] = [
   'width', 'height',
+  'rects',
   'clientWidth', 'clientHeight',
   'scrollWidth', 'scrollHeight',
   'overflowX', 'overflowY',
@@ -35,13 +36,14 @@ export function BoxMeasurementProbe() {
         round={8}
         className="measure-probe-box"
         observe={['size', 'overflow', 'edges', 'scroll']}
+        includeRectsFor=".measure-probe-target"
         throttle={100}
         onMeasureChange={(_, { current }) => setMeasurement(current)}
       >
         <Text size="small" priority="tertiary">
           Drag the bottom-right corner to resize this Box, or scroll inside it.
         </Text>
-        <div className="measure-probe-wide">wide content, so both axes overflow</div>
+        <div className="measure-probe-wide measure-probe-target">wide content, so both axes overflow</div>
         <div className="measure-probe-wide">and a second line, so the vertical axis does too</div>
         <div className="measure-probe-wide">and a third</div>
       </Box>
@@ -49,6 +51,15 @@ export function BoxMeasurementProbe() {
       <div className="measure-probe-readout">
         {FIELDS.map((field) => {
           const value = measurement?.[field]
+          if (field === 'rects') {
+            const rects = measurement?.rects
+            return (
+              <div key={field} className="measure-probe-rects">
+                <Tag size="small" label="rects" value={rects ? `${rects.length} match${rects.length === 1 ? '' : 'es'}` : '…'} />
+                <pre><code>{rects ? JSON.stringify(rects, null, 2) : '…'}</code></pre>
+              </div>
+            )
+          }
           return (
             <Tag
               key={field}

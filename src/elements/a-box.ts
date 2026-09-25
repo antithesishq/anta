@@ -1,5 +1,5 @@
 import { HTMLElementBase } from '../anta_helpers'
-import { throttle } from 'es-toolkit'
+import { isEqual, throttle } from 'es-toolkit'
 import { boxObservation } from '../box-observation'
 import type {
   BoxContext,
@@ -308,26 +308,14 @@ function deviceSnapshot(navigator: Navigator): DeviceSnapshot {
   }
 }
 
-/** Field equality includes nested descendant rectangles. `font` is rebuilt on
- * every read, so an identity check would report it changed on every focus move. */
-function equal(a: unknown, b: unknown): boolean {
-  if (a === b) return true
-  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
-  if (Array.isArray(a) !== Array.isArray(b)) return false
-  const left = a as Record<string, unknown>
-  const right = b as Record<string, unknown>
-  const keys = Object.keys(left)
-  return keys.length === Object.keys(right).length && keys.every((key) => equal(left[key], right[key]))
-}
-
 function same<T extends object>(a: T | undefined, b: T): boolean {
-  return a !== undefined && Object.keys(b).every((key) => equal(a[key as keyof T], b[key as keyof T]))
+  return a !== undefined && Object.keys(b).every((key) => isEqual(a[key as keyof T], b[key as keyof T]))
 }
 
 function changed<T extends object>(previous: T | undefined, current: T): Partial<T> {
   if (!previous) return { ...current }
   return Object.fromEntries(
-    Object.entries(current).filter(([key, value]) => !equal(previous[key as keyof T], value)),
+    Object.entries(current).filter(([key, value]) => !isEqual(previous[key as keyof T], value)),
   ) as Partial<T>
 }
 
@@ -779,7 +767,7 @@ export class ABoxElement extends HTMLElementBase {
     this.#throttledReport = undefined
     const interval = Number(this.getAttribute('throttle'))
     if (this.#measuring && Number.isFinite(interval) && interval > 0) {
-      this.#throttledReport = throttle(this.#emitMeasurement, Math.min(interval, 2_147_483_647))
+      this.#throttledReport = throttle(() => this.#emitMeasurement(true), Math.min(interval, 2_147_483_647))
     }
   }
 
@@ -803,10 +791,17 @@ export class ABoxElement extends HTMLElementBase {
     else this.#emitMeasurement()
   }
 
-  #emitMeasurement = () => {
+  #emitMeasurement = (refresh = false) => {
     const pending = this.#measurement
     if (!this.#measuring || !pending || !this.#hasMeasurementChange(pending)) return
-    const current = { ...pending, rects: this.#readRects() }
+    const snapshot = refresh ? this.#readMeasurement(false) : pending
+    if (refresh) {
+      this.#measurement = snapshot
+      this.#setMeasurementStates(snapshot)
+      this.#syncChildObservation()
+    }
+    if (!this.#hasMeasurementChange(snapshot)) return
+    const current = { ...snapshot, rects: this.#readRects() }
     const initial = this.#initialMeasurement
     const previous = this.#reportedMeasurement
     this.#initialMeasurement = false

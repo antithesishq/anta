@@ -7,6 +7,9 @@ changes are not listed.
 
 ### Added
 
+- [Expander indicators](/expander/#indicator) can sit after header actions and
+  use built-in chevron, triangle, or plus visuals. Custom indicators can rotate
+  as one node or switch between closed and open nodes.
 - [Box measurements](/box/#measurements) can include
   descendant rects with `includeRectsFor`, including positions relative to the
   Box, width, and height. Changed rects appear in `detail.changed.rects` when

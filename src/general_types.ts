@@ -435,6 +435,11 @@ export interface ATagAttributes extends BaseAttributes {
  * use `Expander` from `@antadesign/anta`.
  */
 export interface AExpanderAttributes extends BaseAttributes {
+  /** Built-in disclosure mark. Custom visuals use `slot="indicator"`.
+   *  Defaults to `chevron`. */
+  indicator?: 'chevron' | 'triangle' | 'plus'
+  /** Logical side for the disclosure mark. Defaults to `start`. */
+  'indicator-placement'?: 'start' | 'end'
   /** Controlled open state (`'open'` / `'closed'`). Present → controlled: the
    *  attribute is the source of truth, clicks only dispatch the cancelable
    *  `statechange` event, and the consumer answers by updating it. Absent →
@@ -446,10 +451,9 @@ export interface AExpanderAttributes extends BaseAttributes {
   /** Surface emphasis. `secondary` (default) is a subtle fill; `primary`
    *  is a stronger raised fill; `tertiary` is transparent. */
   priority?: 'primary' | 'secondary' | 'tertiary'
-  /** Outdent the chevron into the left gutter so the title + body sit
-   *  flush with surrounding content (the docs-header layout). Tertiary
-   *  only — a no-op on the filled priorities, where the container edge
-   *  has to bound the chevron. Presence-based. */
+  /** Align the title and body with surrounding content on a tertiary
+   *  expander. The start indicator hangs in the gutter; an end indicator
+   *  stays inside its edge. Presence-based. */
   outdent?: boolean | ''
   /** Disables the header: not clickable or focusable, hover affordance
    *  off, text dimmed. The open state freezes as-is. Presence-based. */

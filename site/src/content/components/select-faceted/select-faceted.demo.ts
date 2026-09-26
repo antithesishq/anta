@@ -2,7 +2,7 @@
  * Demo source for the SelectFaceted playground. Kept in a sibling .ts file so
  * Astro's MDX pipeline doesn't mangle the template literal's indentation.
  */
-export default `import { SelectFaceted, Select, Input, InputDate, RadioGroup, Tag } from '@antadesign/anta'
+export default `import { SelectFaceted, Select, Input, InputDate, MenuItem, Tag } from '@antadesign/anta'
 
 const people = [
   'Alice Nguyen', 'Bob Carter', 'Carol Diaz', 'Dave Feld', 'Erin Shah',
@@ -110,21 +110,20 @@ function Demo() {
             const mode = value == null ? '' : 'preset' in value ? value.preset : 'custom'
             const range = value && 'from' in value ? value : { from: '', to: '' }
             return (
-              <div data-menu-open style={{ display: 'grid', gap: '8px', padding: '8px', minWidth: '360px' }}>
-                <RadioGroup
-                  size="small"
-                  options={[
-                    { value: 'today', label: 'Today' },
-                    { value: 'yesterday', label: 'Yesterday' },
-                    { value: 'last14', label: 'Last 14 days' },
-                    { value: 'last30', label: 'Last 30 days' },
-                    { value: 'custom', label: 'Custom range' },
-                  ]}
-                  value={mode}
-                  onStateChange={(_e, { next }) => onChange(next === 'custom' ? range : { preset: next })}
-                />
+              <div style={{ minWidth: '360px' }}>
+                {[
+                  { value: 'today', label: 'Today' },
+                  { value: 'yesterday', label: 'Yesterday' },
+                  { value: 'last14', label: 'Last 14 days' },
+                  { value: 'last30', label: 'Last 30 days' },
+                  { value: 'custom', label: 'Custom range' },
+                ].map((preset) => (
+                  <MenuItem key={preset.value} label={preset.label}
+                    selectionIndicator="radio" selected={mode === preset.value} data-menu-open
+                    onSelect={() => onChange(preset.value === 'custom' ? range : { preset: preset.value })} />
+                ))}
                 {mode === 'custom' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', padding: '8px' }}>
                     <InputDate size="small" label="From" clearable value={range.from}
                       onValueChange={(from) => onChange({ from, to: range.to })} />
                     <InputDate size="small" label="To" clearable value={range.to} min={range.from || undefined}

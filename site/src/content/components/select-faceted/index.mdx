@@ -361,11 +361,11 @@ A custom facet stores a `Date` directly. Unlike the value of a `single` or
 
 #### A recency filter: presets plus a range
 
-This editor combines a `RadioGroup` of presets with a **Custom range** option
-that reveals two `InputDate` fields side by side. Its value is either `{ preset }` or
-`{ from, to }`. The `resolveRange` helper converts either shape into the date
-range used to filter the result set. Each InputDate calendar opens above the
-facet menu without closing it.
+This editor uses `MenuItem` rows with radio indicators for the presets.
+Selecting **Custom range** reveals two `InputDate` fields side by side. The facet
+value is either `{ preset }` or `{ from, to }`. The `resolveRange` helper
+converts either shape into the date range used to filter the result set. Each
+`InputDate` calendar opens above the facet menu without closing it.
 
 <Preview background="var(--bg-base)">
   <SelectFacetedRecencyDemo client:load />
@@ -398,17 +398,14 @@ const recency: SelectFacetCustom<Recency> = {
     const mode = value == null ? '' : 'preset' in value ? value.preset : 'custom'
     const range = value && 'from' in value ? value : { from: '', to: '' }
     return (
-      <div style={{ display: 'grid', gap: 8, minWidth: 360 }}>
-        <RadioGroup
-          size="small"
-          options={PRESETS}                       // Today / Yesterday / Last 14 / Last 30 / Custom range
-          value={mode}
-          // Controlled group: apply the pick in onStateChange (onValueChange fires
-          // only after `value` changes, so it can't drive a controlled RadioGroup).
-          onStateChange={(_e, { next }) => onChange(next === 'custom' ? range : { preset: next })}
-        />
+      <div style={{ minWidth: 360 }}>
+        {PRESETS.map((preset) => (
+          <MenuItem key={preset.value} label={preset.label}
+            selectionIndicator="radio" selected={mode === preset.value} data-menu-open
+            onSelect={() => onChange(preset.value === 'custom' ? range : { preset: preset.value })} />
+        ))}
         {mode === 'custom' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, padding: 8 }}>
             <InputDate size="small" label="From" clearable value={range.from}
               onValueChange={(from) => onChange({ from, to: range.to })} />
             <InputDate size="small" label="To" clearable value={range.to} min={range.from || undefined}

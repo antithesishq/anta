@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { SelectFaceted, Select, Input, Button, RadioGroup, InputDate, Calendar, MenuItem, Tag } from '@antadesign/anta'
+import { SelectFaceted, Select, Input, Button, InputDate, Calendar, MenuItem, Tag } from '@antadesign/anta'
 import type { SelectFacet } from '@antadesign/anta'
 
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
@@ -259,19 +259,19 @@ const RECENCY_FACETS: SelectFacet[] = [
       const mode = v == null ? '' : 'preset' in v ? v.preset : 'custom'
       const range = v && 'from' in v ? v : { from: '', to: '' }
       return (
-        <div data-menu-open style={{ padding: '8px', minWidth: '360px', display: 'grid', gap: '8px' }}>
-          <RadioGroup
-            size="small"
-            options={PRESETS}
-            value={mode}
-            // Controlled: apply the pick in onStateChange (onValueChange fires only
-            // after `value` changes, so it can't drive a controlled group).
-            onStateChange={(_e: any, { next }: any) =>
-              onChange(next === 'custom' ? (v && 'from' in v ? v : { from: '', to: '' }) : { preset: next })
-            }
-          />
+        <div style={{ minWidth: '360px' }}>
+          {PRESETS.map((p) => (
+            <MenuItem
+              key={p.value}
+              label={p.label}
+              selectionIndicator="radio"
+              selected={mode === p.value}
+              data-menu-open=""
+              onSelect={() => onChange(p.value === 'custom' ? range : { preset: p.value })}
+            />
+          ))}
           {mode === 'custom' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', padding: '8px' }}>
               <InputDate
                 size="small"
                 label="From"

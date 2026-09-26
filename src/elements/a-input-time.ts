@@ -200,8 +200,7 @@ const SHADOW_STYLE = `
     flex-shrink: 0;
     visibility: hidden;
   }
-  :host(:state(filled)) slot[name="clear"] { visibility: visible; }
-  :host(:disabled) slot[name="clear"] { display: none; }
+  :host(:state(filled):not(:disabled)) slot[name="clear"] { visibility: visible; }
 
   .hint {
     display: none;

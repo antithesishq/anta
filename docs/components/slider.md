@@ -1,6 +1,7 @@
 # Slider
 
-**`Slider`** selects one numeric value from a range. Its label sits above the
+**`Slider`** selects one number or an interval between two numbers. Pass a number
+for one thumb or a two-number tuple for two thumbs. Its label sits above the
 rail, and the value appears at the right side of the label row by default. Use
 `value` with `onValueChange` to control it, or `defaultValue` for uncontrolled use.
 
@@ -21,6 +22,54 @@ Arrow keys change by `step`. Home and End set the minimum and maximum. PageUp an
 ```tsx
 <Slider label="Relative drag" defaultValue={35} />
 <Slider label="Jump on press" defaultValue={35} trackClick="jump" />
+```
+
+## Range values
+
+Pass two numbers to `value` or `defaultValue` to show two thumbs. Drag either
+thumb across the other to move past it. The thumb you grabbed keeps moving, and
+the value stays ordered from low to high. For example, dragging the thumb at 20
+past 70 to 85 changes `[20, 70]` to `[70, 85]`. Both thumbs can share a value.
+Each thumb has its own keyboard focus. Their tab order stays fixed when they
+cross.
+
+`onValueChange` receives a number for a single-value slider and an ordered
+`[number, number]` tuple for a range slider. `onValueCommit` uses the same shape.
+
+```tsx title="Controlled range"
+import { useState } from 'preact/hooks'
+import { Slider } from '@antadesign/anta'
+
+function SliderRangeDemo() {
+  const [value, setValue] = useState<[number, number]>([20, 70])
+  const [lastChange, setLastChange] = useState<[number, number] | null>(null)
+
+  return (
+    <>
+      <Slider
+        label="Selected interval"
+        value={value}
+        onValueChange={(_, { value: next }) => {
+          setValue(next)
+          setLastChange(next)
+        }}
+      />
+      <p className="range-demo-output"><code>onValueChange</code>: <code>{lastChange ? JSON.stringify(lastChange) : '—'}</code></p>
+    </>
+  )
+}
+```
+
+## Inverted fill
+
+Set `inverted` to fill the other part of the rail. For one thumb, the fill runs
+from the value to the maximum. For two thumbs, the fill covers the rail outside
+the selected interval. The minimum and maximum stay at their usual rail ends;
+thumb movement and keyboard controls stay the same.
+
+```tsx
+<Slider label="Inverted single value" defaultValue={40} inverted />
+<Slider label="Inverted range" defaultValue={[20, 70]} inverted />
 ```
 
 ## Value placement
@@ -66,13 +115,14 @@ Arrow keys change by `step`. Home and End set the minimum and maximum. PageUp an
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `defaultValue?` | number | 0 | Initial uncontrolled value. |
+| `defaultValue?` | number \| SliderRangeValue | 0 | Initial uncontrolled value. |
 | `disabled?` | boolean | — | Disables pointer and keyboard interaction. |
+| `inverted?` | boolean | — | Fill the rail outside the selected value or range. |
 | `label?` | ReactNode | — | Visible field label, shown above the rail. A string supplies the slider's accessible name; give a rich label an explicit `aria-label`. |
 | `markers?` | SliderMarker[] | — | Compact text labels positioned below the rail. They do not add dots or ticks to the rail. |
 | `max?` | number | 100 | Highest permitted value. |
 | `min?` | number | 0 | Lowest permitted value. |
-| `name?` | string | — | Form field name. The current numeric value submits under this name. |
+| `name?` | string | — | Form field name. A range submits two values under this name. |
 | `onValueChange?` | (event, attrs) => void | — | Fires on every keyboard or pointer value change. |
 | `onValueCommit?` | (event, attrs) => void | — | Fires after a drag ends and after each keyboard value change. |
 | `round?` | boolean \| number \| string | — | Fully round the rail and thumb. Pass a number (px) or CSS length string for a shared custom radius. |
@@ -84,7 +134,7 @@ Arrow keys change by `step`. Home and End set the minimum and maximum. PageUp an
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the filled rail. Pass a named tone or a literal CSS color for a one-off custom tone. The unfilled rail stays neutral. |
 | `trackClick?` | 'drag-only' \| 'jump' | 'drag-only' | Controls what happens when the rail is pressed. `drag-only` starts dragging from the current value. `jump` first moves to the pressed position. |
 | `trackSize?` | number \| string | 2 | Thickness of both rail segments. Numbers use pixels; strings are CSS lengths. Keep it no larger than the thumb diameter. |
-| `value?` | number | — | Controlled value. Update it from `onValueChange`. |
+| `value?` | number \| SliderRangeValue | — | Controlled value. A pair of numbers selects a range. Update it from `onValueChange`. |
 | `valueDisplay?` | 'end' \| 'inline' \| 'thumb' \| 'none' | 'end' | Where the live value appears. `end` puts it at the right edge of the label row. `inline` renders `Label: value`. `thumb` keeps it above the thumb. |
 | `valuePrefix?` | string | — | Text inserted before the live numeric value, such as `$`. |
 | `valueSuffix?` | string | — | Text inserted after the live numeric value, such as `%` or `°C`. |
@@ -92,6 +142,12 @@ Arrow keys change by `step`. Home and End set the minimum and maximum. PageUp an
 ## Web Component
 
 Use `<a-slider>` when you are not using React or Preact. Add its `role` and accessible name yourself, then register it from `@antadesign/anta/elements`.
+
+For a range, separate the two numbers with a space in `value` or `defaultvalue`.
+Use `role="group"` and give the range an accessible name. Each thumb receives
+its own slider role and keyboard focus. The element's `value` property and
+change events expose a two-number array. If you set `name`, form submission
+includes both values in low-to-high order. Read them with `FormData.getAll(name)`.
 
 ```html
 <a-slider
@@ -106,6 +162,12 @@ Use `<a-slider>` when you are not using React or Preact. Add its `role` and acce
   value-suffix="%"
 >
   <span slot="label">Volume</span>
+</a-slider>
+```
+
+```html
+<a-slider role="group" aria-label="Selected interval" name="interval" defaultvalue="20 70" inverted>
+  <span slot="label">Selected interval</span>
 </a-slider>
 ```
 
@@ -139,4 +201,76 @@ as `Slider`. In raw HTML, `round` needs a CSS length such as `"4px"`; JSX
   border-color: #e5484d;
   border-radius: 4px;
 }
+```
+
+### Editable value beside the label
+
+Compose `Input` and `Slider` as separate controls. The grid puts the label and
+small input on one row and the slider underneath. Pass `valueDisplay="none"` so the
+slider does not repeat its value. Keep the input's text as a draft; when the
+field loses focus or you press Enter, commit a number within the slider's range.
+Dragging or using the slider's keyboard controls updates both values.
+
+```tsx title="Slider with an editable value"
+import { useState } from 'preact/hooks'
+import { Input, Slider } from '@antadesign/anta'
+
+function SliderEditableValueDemo() {
+  const [value, setValue] = useState(55)
+  const [draft, setDraft] = useState('55')
+
+  const commit = () => {
+    const number = Number(draft)
+    const next = draft.trim() && Number.isFinite(number)
+      ? Math.max(0, Math.min(100, Math.round(number)))
+      : value
+    setValue(next)
+    setDraft(String(next))
+  }
+
+  return (
+    <div className="editable-slider">
+      <span className="editable-slider-label">Volume</span>
+      <Input
+        aria-label="Volume value"
+        size="small"
+        inputMode="numeric"
+        trailing="%"
+        value={draft}
+        onInput={(event) => setDraft(event.currentTarget.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') commit()
+        }}
+      />
+      <Slider
+        aria-label="Volume"
+        value={value}
+        valueDisplay="none"
+        valueSuffix="%"
+        onValueChange={(_, { value: next }) => {
+          setValue(next)
+          setDraft(String(next))
+        }}
+      />
+    </div>
+  )
+}
+```
+
+```css title="Editable Slider layout"
+.editable-slider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 0 12px;
+  width: min(100%, 360px);
+  margin-inline: auto;
+}
+.editable-slider-label {
+  color: var(--text-3);
+  font-size: 15px;
+  font-weight: 500;
+}
+.editable-slider > a-slider { grid-column: 1 / -1; }
 ```

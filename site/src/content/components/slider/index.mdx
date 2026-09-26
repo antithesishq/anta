@@ -1,6 +1,6 @@
 ---
 title: Slider
-description: A single-value range control with relative rail dragging.
+description: Select one number or an interval with relative rail dragging.
 nav:
   icon: settings-2
   group: controls
@@ -13,11 +13,14 @@ import Columns from '../../../components/Columns.astro'
 import Col from '../../../components/Col.astro'
 import Playground from '../../../components/PlaygroundEmbed.astro'
 import sliderDemoCode from './slider.demo.ts'
+import SliderEditableValueDemo from '../../../components/SliderEditableValueDemo'
+import SliderRangeDemo from '../../../components/SliderRangeDemo.astro'
 import { Slider } from '@antadesign/anta'
 
 # Slider
 
-**`Slider`** selects one numeric value from a range. Its label sits above the
+**`Slider`** selects one number or an interval between two numbers. Pass a number
+for one thumb or a two-number tuple for two thumbs. Its label sits above the
 rail, and the value appears at the right side of the label row by default. Use
 `value` with `onValueChange` to control it, or `defaultValue` for uncontrolled use.
 
@@ -62,6 +65,79 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
 ```tsx folded
 <Slider label="Relative drag" defaultValue={35} />
 <Slider label="Jump on press" defaultValue={35} trackClick="jump" />
+```
+
+</Col>
+</Columns>
+
+## Range values
+
+<Columns reverse>
+<Col>
+
+Pass two numbers to `value` or `defaultValue` to show two thumbs. Drag either
+thumb across the other to move past it. The thumb you grabbed keeps moving, and
+the value stays ordered from low to high. For example, dragging the thumb at 20
+past 70 to 85 changes `[20, 70]` to `[70, 85]`. Both thumbs can share a value.
+Each thumb has its own keyboard focus. Their tab order stays fixed when they
+cross.
+
+`onValueChange` receives a number for a single-value slider and an ordered
+`[number, number]` tuple for a range slider. `onValueCommit` uses the same shape.
+
+</Col>
+<Col>
+
+<SliderRangeDemo />
+
+```tsx folded title="Controlled range"
+import { useState } from 'preact/hooks'
+import { Slider } from '@antadesign/anta'
+
+function SliderRangeDemo() {
+  const [value, setValue] = useState<[number, number]>([20, 70])
+  const [lastChange, setLastChange] = useState<[number, number] | null>(null)
+
+  return (
+    <>
+      <Slider
+        label="Selected interval"
+        value={value}
+        onValueChange={(_, { value: next }) => {
+          setValue(next)
+          setLastChange(next)
+        }}
+      />
+      <p className="range-demo-output"><code>onValueChange</code>: <code>{lastChange ? JSON.stringify(lastChange) : '—'}</code></p>
+    </>
+  )
+}
+```
+
+</Col>
+</Columns>
+
+## Inverted fill
+
+<Columns reverse>
+<Col>
+
+Set `inverted` to fill the other part of the rail. For one thumb, the fill runs
+from the value to the maximum. For two thumbs, the fill covers the rail outside
+the selected interval. The minimum and maximum stay at their usual rail ends;
+thumb movement and keyboard controls stay the same.
+
+</Col>
+<Col>
+
+<Preview background="var(--bg-2)" gap="24px" style={{ flexDirection: 'column', alignItems: 'stretch', width: 'min(100%, 560px)' }}>
+  <Slider label="Inverted single value" defaultValue={40} inverted />
+  <Slider label="Inverted range" defaultValue={[20, 70]} inverted />
+</Preview>
+
+```tsx folded
+<Slider label="Inverted single value" defaultValue={40} inverted />
+<Slider label="Inverted range" defaultValue={[20, 70]} inverted />
 ```
 
 </Col>
@@ -171,6 +247,12 @@ Arrow keys change by `step`. <kbd>Home</kbd> and <kbd>End</kbd> set the minimum 
 
 Use `<a-slider>` when you are not using React or Preact. Add its `role` and accessible name yourself, then register it from `@antadesign/anta/elements`.
 
+For a range, separate the two numbers with a space in `value` or `defaultvalue`.
+Use `role="group"` and give the range an accessible name. Each thumb receives
+its own slider role and keyboard focus. The element's `value` property and
+change events expose a two-number array. If you set `name`, form submission
+includes both values in low-to-high order. Read them with `FormData.getAll(name)`.
+
 <Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
   <a-slider
     role="slider"
@@ -200,6 +282,18 @@ Use `<a-slider>` when you are not using React or Preact. Add its `role` and acce
   value-suffix="%"
 >
   <span slot="label">Volume</span>
+</a-slider>
+```
+
+<Preview background="var(--bg-2)" style={{ width: 'min(100%, 560px)' }}>
+  <a-slider role="group" aria-label="Selected interval" name="interval" defaultvalue="20 70" inverted>
+    <span slot="label">Selected interval</span>
+  </a-slider>
+</Preview>
+
+```html
+<a-slider role="group" aria-label="Selected interval" name="interval" defaultvalue="20 70" inverted>
+  <span slot="label">Selected interval</span>
 </a-slider>
 ```
 
@@ -306,3 +400,95 @@ as `Slider`. In raw HTML, `round` needs a CSS length such as `"4px"`; JSX
 
 </Col>
 </Columns>
+
+### Editable value beside the label
+
+Compose `Input` and `Slider` as separate controls. The grid puts the label and
+small input on one row and the slider underneath. Pass `valueDisplay="none"` so the
+slider does not repeat its value. Keep the input's text as a draft; when the
+field loses focus or you press Enter, commit a number within the slider's range.
+Dragging or using the slider's keyboard controls updates both values.
+
+<Preview direction="column" align="stretch" background="var(--bg-2)">
+  <SliderEditableValueDemo client:load />
+  <style is:inline>{`
+    .editable-slider {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 72px;
+      align-items: center;
+      gap: 0 12px;
+      width: min(100%, 360px);
+      margin-inline: auto;
+    }
+    .editable-slider-label {
+      color: var(--text-3);
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .editable-slider > a-slider { grid-column: 1 / -1; }
+  `}</style>
+</Preview>
+
+```tsx folded title="Slider with an editable value"
+import { useState } from 'preact/hooks'
+import { Input, Slider } from '@antadesign/anta'
+
+function SliderEditableValueDemo() {
+  const [value, setValue] = useState(55)
+  const [draft, setDraft] = useState('55')
+
+  const commit = () => {
+    const number = Number(draft)
+    const next = draft.trim() && Number.isFinite(number)
+      ? Math.max(0, Math.min(100, Math.round(number)))
+      : value
+    setValue(next)
+    setDraft(String(next))
+  }
+
+  return (
+    <div className="editable-slider">
+      <span className="editable-slider-label">Volume</span>
+      <Input
+        aria-label="Volume value"
+        size="small"
+        inputMode="numeric"
+        trailing="%"
+        value={draft}
+        onInput={(event) => setDraft(event.currentTarget.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') commit()
+        }}
+      />
+      <Slider
+        aria-label="Volume"
+        value={value}
+        valueDisplay="none"
+        valueSuffix="%"
+        onValueChange={(_, { value: next }) => {
+          setValue(next)
+          setDraft(String(next))
+        }}
+      />
+    </div>
+  )
+}
+```
+
+```css folded title="Editable Slider layout"
+.editable-slider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 0 12px;
+  width: min(100%, 360px);
+  margin-inline: auto;
+}
+.editable-slider-label {
+  color: var(--text-3);
+  font-size: 15px;
+  font-weight: 500;
+}
+.editable-slider > a-slider { grid-column: 1 / -1; }
+```

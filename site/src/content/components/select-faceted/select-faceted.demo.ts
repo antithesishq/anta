@@ -2,7 +2,8 @@
  * Demo source for the SelectFaceted playground. Kept in a sibling .ts file so
  * Astro's MDX pipeline doesn't mangle the template literal's indentation.
  */
-export default `import { SelectFaceted, Input, InputDate, RadioGroup, Tag } from '@antadesign/anta'
+export default `import { useState } from 'preact/hooks'
+import { SelectFaceted, Select, Input, InputDate, MenuItem, Tag } from '@antadesign/anta'
 
 const people = [
   'Alice Nguyen', 'Bob Carter', 'Carol Diaz', 'Dave Feld', 'Erin Shah',
@@ -10,6 +11,41 @@ const people = [
 ]
 const presetLabels = {
   today: 'Today', yesterday: 'Yesterday', last14: 'Last 14 days', last30: 'Last 30 days',
+}
+const comparisons = [
+  { value: 'gt', label: '>', hint: 'More than' },
+  { value: 'gte', label: '≥', hint: 'At least' },
+  { value: 'eq', label: '=', hint: 'Exactly' },
+  { value: 'lte', label: '≤', hint: 'At most' },
+  { value: 'lt', label: '<', hint: 'Less than' },
+]
+const sign = (comparison) => comparisons.find((option) => option.value === comparison)?.label ?? '≥'
+
+function DurationEditor({ value, onChange }) {
+  const [draftComparison, setDraftComparison] = useState(value?.comparison ?? 'gte')
+  const comparison = value?.comparison ?? draftComparison
+  return (
+    <div data-menu-open style={{ display: 'flex', gap: '6px', alignItems: 'center', padding: '4px' }}>
+      <Select
+        size="small" aria-label="Duration comparison" options={comparisons}
+        value={comparison}
+        onValueChange={(next) => {
+          setDraftComparison(next)
+          if (value?.min.trim()) onChange({ min: value.min, comparison: next })
+        }}
+        style={{ width: '72px' }}
+      />
+      <Input
+        size="small" value={value?.min ?? ''} placeholder="0" inputMode="decimal"
+        style={{ width: '72px' }}
+        onInput={(e) => {
+          const min = e.currentTarget.value
+          onChange(min.trim() ? { min, comparison } : undefined)
+        }}
+      />
+      <span>seconds</span>
+    </div>
+  )
 }
 
 function Demo() {
@@ -70,20 +106,8 @@ function Demo() {
           label: 'Min duration',
           kind: 'custom',
           icon: 'calendar',
-          summary: (v) => '≥ ' + v.min + 's',
-          render: ({ value, onChange }) => (
-            <div data-menu-open style={{ display: 'flex', gap: '6px', alignItems: 'center', padding: '4px' }}>
-              <span>≥</span>
-              <Input
-                size="small"
-                value={value?.min ?? ''}
-                placeholder="0"
-                style={{ width: '72px' }}
-                onInput={(e) => onChange(e.currentTarget.value ? { min: e.currentTarget.value } : undefined)}
-              />
-              <span>seconds</span>
-            </div>
-          ),
+          summary: (v) => sign(v.comparison) + ' ' + v.min + 's',
+          render: ({ value, onChange }) => <DurationEditor value={value} onChange={onChange} />,
         },
         {
           key: 'recency',
@@ -95,24 +119,23 @@ function Demo() {
             const mode = value == null ? '' : 'preset' in value ? value.preset : 'custom'
             const range = value && 'from' in value ? value : { from: '', to: '' }
             return (
-              <div data-menu-open style={{ display: 'grid', gap: '8px', padding: '8px', minWidth: '360px' }}>
-                <RadioGroup
-                  size="small"
-                  options={[
-                    { value: 'today', label: 'Today' },
-                    { value: 'yesterday', label: 'Yesterday' },
-                    { value: 'last14', label: 'Last 14 days' },
-                    { value: 'last30', label: 'Last 30 days' },
-                    { value: 'custom', label: 'Custom range' },
-                  ]}
-                  value={mode}
-                  onStateChange={(_e, { next }) => onChange(next === 'custom' ? range : { preset: next })}
-                />
+              <div style={{ minWidth: '360px' }}>
+                {[
+                  { value: 'today', label: 'Today' },
+                  { value: 'yesterday', label: 'Yesterday' },
+                  { value: 'last14', label: 'Last 14 days' },
+                  { value: 'last30', label: 'Last 30 days' },
+                  { value: 'custom', label: 'Custom range' },
+                ].map((preset) => (
+                  <MenuItem key={preset.value} label={preset.label}
+                    selectionIndicator="radio" selected={mode === preset.value} data-menu-open
+                    onSelect={() => onChange(preset.value === 'custom' ? range : { preset: preset.value })} />
+                ))}
                 {mode === 'custom' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
-                    <InputDate size="small" label="From" value={range.from}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', padding: '8px' }}>
+                    <InputDate size="small" label="From" clearable value={range.from}
                       onValueChange={(from) => onChange({ from, to: range.to })} />
-                    <InputDate size="small" label="To" value={range.to} min={range.from || undefined}
+                    <InputDate size="small" label="To" clearable value={range.to} min={range.from || undefined}
                       onValueChange={(to) => onChange({ from: range.from, to })} />
                   </div>
                 )}

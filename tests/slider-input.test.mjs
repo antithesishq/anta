@@ -169,3 +169,156 @@ test('Slider touch drags still move and commit once', async t => {
   assert.equal(result.dragging, false)
   assert.equal(result.commits, 1)
 })
+
+test('Slider parses a space-separated range and exposes a sorted array value', async t => {
+  const { page } = await pageFor(t)
+  const result = await page.evaluate(() => {
+    slider.removeAttribute('role')
+    slider.removeAttribute('tabindex')
+    slider.defaultValue = [70, 20]
+    const initial = { value: slider.value, attribute: slider.getAttribute('defaultvalue') }
+    slider.value = [85, 15]
+    return { initial, controlled: { value: slider.value, attribute: slider.getAttribute('value') } }
+  })
+  assert.deepEqual(result, {
+    initial: { value: [20, 70], attribute: '70 20' },
+    controlled: { value: [15, 85], attribute: '85 15' },
+  })
+})
+
+test('Inverted fill covers the complement of single and range values', async t => {
+  const { page } = await pageFor(t)
+  const layouts = await page.evaluate(() => {
+    const firstFill = slider.shadowRoot.querySelector('[part="fill"]')
+    const secondFill = slider.shadowRoot.querySelector('[part~="fill-end"]')
+    const thumbs = [...slider.shadowRoot.querySelectorAll('[part~="thumb"]')]
+    const rect = element => {
+      const box = element.getBoundingClientRect()
+      return { left: box.left, right: box.right, center: (box.left + box.right) / 2 }
+    }
+    const measure = () => ({ first: rect(firstFill), second: rect(secondFill), thumbs: thumbs.map(rect), secondHidden: secondFill.hidden })
+    slider.value = 40
+    const single = measure()
+    slider.setAttribute('inverted', '')
+    const singleInverted = measure()
+    slider.value = [20, 70]
+    slider.removeAttribute('inverted')
+    const range = measure()
+    slider.setAttribute('inverted', '')
+    const rangeInverted = measure()
+    slider.value = [0, 100]
+    const fullInvertedHidden = firstFill.hidden && secondFill.hidden
+    slider.removeAttribute('inverted')
+    const fullNormal = measure()
+    slider.value = [50, 50]
+    slider.setAttribute('value-display', 'thumb')
+    const coincidentBubbles = [...slider.shadowRoot.querySelectorAll('[part~="thumb-value"]')]
+      .filter(element => getComputedStyle(element).display !== 'none').length
+    return { single, singleInverted, range, rangeInverted, fullInvertedHidden, fullNormal, coincidentBubbles }
+  })
+  const close = (a, b) => assert.ok(Math.abs(a - b) < 1, `${a} should align with ${b}`)
+  close(layouts.single.first.right, layouts.single.thumbs[0].center)
+  close(layouts.singleInverted.first.left, layouts.singleInverted.thumbs[0].center)
+  close(layouts.range.first.left, layouts.range.thumbs[0].center)
+  close(layouts.range.first.right, layouts.range.thumbs[1].center)
+  assert.equal(layouts.range.secondHidden, true)
+  close(layouts.rangeInverted.first.right, layouts.rangeInverted.thumbs[0].center)
+  close(layouts.rangeInverted.second.left, layouts.rangeInverted.thumbs[1].center)
+  assert.equal(layouts.rangeInverted.secondHidden, false)
+  assert.equal(layouts.fullInvertedHidden, true)
+  assert.ok(layouts.fullNormal.first.left < layouts.fullNormal.thumbs[0].center)
+  assert.ok(layouts.fullNormal.first.right > layouts.fullNormal.thumbs[1].center)
+  assert.equal(layouts.coincidentBubbles, 1)
+})
+
+test('Range thumb crosses the other thumb while a controlled owner echoes changes', async t => {
+  const { page } = await pageFor(t)
+  await page.evaluate(() => {
+    slider.removeAttribute('role')
+    slider.removeAttribute('tabindex')
+    slider.value = [20, 70]
+    slider.addEventListener('input', () => { slider.value = slider.value })
+  })
+  const firstThumb = page.locator('a-slider [part~="thumb-1"]')
+  const start = await firstThumb.boundingBox()
+  const rail = await page.locator('a-slider .rail-area').boundingBox()
+  const y = start.y + start.height / 2
+  const firstX = start.x + start.width / 2
+  await page.mouse.move(firstX, y)
+  await page.mouse.down()
+  await page.mouse.move(rail.x + rail.width * 0.9, y, { steps: 12 })
+  const afterCrossing = await page.evaluate(() => ({
+    value: slider.value,
+    focusedThumb: slider.shadowRoot.activeElement?.getAttribute('part'),
+  }))
+  assert.equal(afterCrossing.value[0], 70)
+  assert.ok(afterCrossing.value[1] >= 88)
+  assert.match(afterCrossing.focusedThumb, /thumb-1/)
+
+  await page.mouse.move(rail.x + rail.width * 0.1, y, { steps: 12 })
+  await page.mouse.up()
+  const final = await page.evaluate(() => ({ value: slider.value, changes: log.filter(e => e.type === 'change') }))
+  assert.ok(final.value[0] <= 12)
+  assert.equal(final.value[1], 70)
+  assert.equal(final.changes.length, 1)
+  assert.deepEqual(final.changes[0].value, final.value)
+})
+
+test('Range thumbs have separate keyboard focus and keep DOM order while crossing', async t => {
+  const { page } = await pageFor(t)
+  await page.evaluate(() => {
+    slider.removeAttribute('role')
+    slider.removeAttribute('tabindex')
+    slider.setAttribute('aria-label', 'Price')
+    slider.value = [20, 70]
+  })
+  const before = await page.evaluate(() => [...slider.shadowRoot.querySelectorAll('[part~="thumb"]')].map(thumb => ({
+    part: thumb.getAttribute('part'), role: thumb.getAttribute('role'), tabIndex: thumb.tabIndex,
+    now: thumb.getAttribute('aria-valuenow'), label: thumb.getAttribute('aria-label'),
+  })))
+  assert.equal(before.length, 2)
+  assert.deepEqual(before.map(thumb => thumb.now), ['20', '70'])
+  assert.ok(before.every(thumb => thumb.role === 'slider' && thumb.tabIndex === 0))
+  assert.ok(before.every(thumb => thumb.label?.includes('Price')))
+  assert.equal(await page.getByRole('slider').count(), 2)
+
+  await page.locator('a-slider [part~="thumb-1"]').focus()
+  await page.keyboard.press('End')
+  const after = await page.evaluate(() => ({
+    value: slider.value,
+    focused: slider.shadowRoot.activeElement?.getAttribute('part'),
+    order: [...slider.shadowRoot.querySelectorAll('[part~="thumb"]')].map(thumb => thumb.getAttribute('part')),
+  }))
+  assert.deepEqual(after.value, [70, 100])
+  assert.match(after.focused, /thumb-1/)
+  assert.deepEqual(after.order, before.map(thumb => thumb.part))
+})
+
+test('Range slider submits both values and resets to its default range', async t => {
+  const { page } = await pageFor(t)
+  const result = await page.evaluate(() => {
+    slider.removeAttribute('role')
+    slider.removeAttribute('tabindex')
+    const form = document.createElement('form')
+    slider.before(form)
+    form.append(slider)
+    slider.setAttribute('name', 'price')
+    slider.defaultValue = [20, 70]
+    slider.value = [35, 85]
+    const submitted = new FormData(form).getAll('price')
+    slider.removeAttribute('value')
+    slider.value = [40, 90]
+    form.reset()
+    const reset = slider.value
+    const resetSubmission = new FormData(form).getAll('price')
+    slider.setAttribute('disabled', '')
+    const disabledSubmission = new FormData(form).getAll('price')
+    return { submitted, reset, resetSubmission, disabledSubmission }
+  })
+  assert.deepEqual(result, {
+    submitted: ['35', '85'],
+    reset: [20, 70],
+    resetSubmission: ['20', '70'],
+    disabledSubmission: [],
+  })
+})

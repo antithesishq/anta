@@ -1051,7 +1051,14 @@ export class AMenuElement extends HTMLElementBase {
       if (parent) {
         const pidx = openStack.indexOf(parent)
         if (pidx !== -1) {
-          for (let i = openStack.length - 1; i > pidx; i--) openStack[i]._doHide()
+          for (let i = openStack.length - 1; i > pidx; i--) {
+            const menu = openStack[i]
+            // Replacing a submenu also displaces any controlled popup inside it.
+            // Notify its owner before hiding it, as the other stack trims do.
+            // Reopening this same submenu is not a dismissal of that submenu.
+            if (menu !== this && menu.isOpen && !menu._dismissNotified) menu.emitChange('closed')
+            menu._doHide()
+          }
           openStack.length = pidx + 1
         }
       }
@@ -1469,6 +1476,13 @@ export class AMenuElement extends HTMLElementBase {
    *   - nothing → keep open (plain custom content doesn't dismiss).
    */
   private onSurfaceClick = (e: MouseEvent) => {
+    // A nested menu handles its own activation. Link items may let the click
+    // bubble past their surface; the containing menu must not handle it again.
+    for (const node of e.composedPath()) {
+      if (node === this.surface) break
+      if (node instanceof AMenuElement && node !== this) return
+    }
+
     // Contain the click so activating an item doesn't also register as a click on
     // whatever the menu is nested in (a clickable row / card). Scoped to genuine
     // `<a-menu-item>` / `[data-menu-close]` activations: their `onSelect` rides the
@@ -1551,13 +1565,19 @@ export class AMenuElement extends HTMLElementBase {
       if (node.matches('a[data-anta-menu-item]')) return this.closeSystem(e)
 
       // Custom content opts into closing with `data-menu-close`.
-      if (node.hasAttribute('data-menu-close')) return this.closeSystem(e)
+      if (node.hasAttribute('data-menu-close')) return this.closeSystem(e, true)
     }
     // No marker in the path → plain content, stay open.
   }
 
-  /** Close the whole open menu system from the root down. */
-  private closeSystem(e?: Event) {
+  /** Close this popup inside persistent content, or the menu system otherwise. */
+  private closeSystem(e?: Event, explicit = false) {
+    // A select opened inside persistent custom content is a separate choice:
+    // dismiss its popup without dismissing the facet editor and root menu.
+    if (!explicit && this.closest('[data-menu-open]')) {
+      this.requestClose(e)
+      return
+    }
     const root = openStack[0] ?? this
     root.requestClose(e)
   }
@@ -1784,6 +1804,10 @@ export class AMenuElement extends HTMLElementBase {
       return
     } else {
       const onClick = (e: MouseEvent) => {
+        // A button in the input's clear slot is its own action. Its click
+        // bubbles through the field anchor after clearing; opening the popup
+        // here makes the next field click close it instead of opening it.
+        if (anchor.matches('a-input') && e.composedPath().some((node) => node instanceof Element && node.getAttribute('slot') === 'clear')) return
         // detail === 0 ⇒ a keyboard-synthesized click (a button / <a-button>
         // turning Enter/Space into one) ⇒ open + focus the first item. Fields with
         // no such click go through onKey below.

@@ -775,9 +775,9 @@ export interface AInputAttributes extends BaseAttributes {
 /** Attributes for the `<a-slider>` custom element. For the typed JSX wrapper,
  * display formatting, and marker layout use `Slider` from `@antadesign/anta`. */
 export interface ASliderAttributes extends BaseAttributes {
-  /** Controlled numeric value. */
+  /** Controlled value. Range attributes use two space-separated numbers. */
   value?: number | string
-  /** Initial uncontrolled value and form-reset baseline. */
+  /** Initial uncontrolled value and form-reset baseline. Range attributes use two space-separated numbers. */
   defaultvalue?: number | string
   /** Lowest permitted value. Defaults to 0. */
   min?: number | string
@@ -805,6 +805,8 @@ export interface ASliderAttributes extends BaseAttributes {
   round?: boolean | number | string
   /** `jump` moves to a pressed rail position. Omit for relative dragging. */
   'track-click'?: 'jump'
+  /** Fill the rail outside the selected value or range. Presence-based. */
+  inverted?: boolean | ''
   /** `inline`, `thumb`, or `none`; omit for a value at the label row's end. */
   'value-display'?: 'inline' | 'thumb' | 'none'
   /** Text inserted before the live numeric value. */

@@ -155,8 +155,9 @@ const SUPPORTS_FIELD_SIZING =
 //    hint, and pre-upgrade skeleton. Variation settings explicitly inherit the
 //    active theme's axis pin because Safari does not reliably carry it into form
 //    controls on its own.
-//  • slots — leading/trailing/clear are display:none until they hold content,
-//    so an empty slot reserves no box or phantom gap. The host stylesheet derives
+//  • slots — leading/trailing are display:none until they hold content. A slotted
+//    clear button reserves its space even while invisible, so showing the button
+//    does not add width. The host stylesheet derives
 //    named-slot presence with `:has(> [slot])` and styles the matching part.
 //    Adornments are muted (--input-adornment) and inherit currentColor; a slotted
 //    <a-button> keeps its own color. Slotted TEXT gets the field's type scale
@@ -296,10 +297,13 @@ const SHADOW_STYLE = `
   :host(:disabled) slot[name="leading"],
   :host(:disabled) slot[name="trailing"] { opacity: 0.5; pointer-events: none; }
 
-  slot[name="clear"] { display: none; flex-shrink: 0; }
-  :host(:state(filled)) slot[name="clear"] { display: flex; align-items: center; }
-  :host(:disabled) slot[name="clear"],
-  :host([readonly]) slot[name="clear"] { display: none; }
+  slot[name="clear"] {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    visibility: hidden;
+  }
+  :host(:state(filled):not(:disabled):not([readonly])) slot[name="clear"] { visibility: visible; }
 
   :host([multiline]:state(filled)) slot[name="clear"] {
     align-self: flex-start;

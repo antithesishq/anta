@@ -3,6 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Button ignores missing and non-form `form` references instead of throwing
+  during submit or reset activation.
+
 ## 0.3.31 — September 18, 2026
 
 ### Added

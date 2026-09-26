@@ -168,7 +168,8 @@ export class AButtonElement extends HTMLElementBase {
 function findForm(el: HTMLElement): HTMLFormElement | null {
   const formId = el.getAttribute("form");
   if (formId) {
-    return el.ownerDocument.getElementById(formId) as HTMLFormElement | null;
+    const candidate = el.ownerDocument.getElementById(formId);
+    return candidate?.localName === "form" ? candidate as HTMLFormElement : null;
   }
   return el.closest("form");
 }

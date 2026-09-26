@@ -24,6 +24,20 @@
   box-shadow: none;
 }
 
+.caseNavigation {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--bg-1);
+  box-shadow: 0 4px 14px color-mix(in oklch, var(--text-1) 12%, transparent);
+}
+
 .editor {
   position: relative;
   display: flex;
@@ -163,4 +177,9 @@
   }
 
   .stage { padding: 64px 16px 24px; }
+
+  .caseNavigation {
+    right: 16px;
+    bottom: 16px;
+  }
 }

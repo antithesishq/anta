@@ -144,7 +144,7 @@ as `Slider`. In raw HTML, `round` needs a CSS length such as `"4px"`; JSX
 ### Editable value beside the label
 
 Compose `Input` and `Slider` as separate controls. The grid puts the label and
-input on one row and the slider underneath. Pass `valueDisplay="none"` so the
+small input on one row and the slider underneath. Pass `valueDisplay="none"` so the
 slider does not repeat its value. Keep the input's text as a draft; when the
 field loses focus or you press Enter, commit a number within the slider's range.
 Dragging or using the slider's keyboard controls updates both values.
@@ -153,7 +153,7 @@ Dragging or using the slider's keyboard controls updates both values.
 import { useState } from 'preact/hooks'
 import { Input, Slider } from '@antadesign/anta'
 
-function Demo() {
+function SliderEditableValueDemo() {
   const [value, setValue] = useState(55)
   const [draft, setDraft] = useState('55')
 
@@ -171,6 +171,7 @@ function Demo() {
       <span className="editable-slider-label">Volume</span>
       <Input
         aria-label="Volume value"
+        size="small"
         inputMode="numeric"
         trailing="%"
         value={draft}
@@ -200,8 +201,9 @@ function Demo() {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 72px;
   align-items: center;
-  gap: 8px 12px;
+  gap: 0 12px;
   width: min(100%, 360px);
+  margin-inline: auto;
 }
 .editable-slider-label {
   color: var(--text-3);

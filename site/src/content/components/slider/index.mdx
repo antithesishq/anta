@@ -12,7 +12,8 @@ import PropsTable from '../../../components/PropsTable.astro'
 import Columns from '../../../components/Columns.astro'
 import Col from '../../../components/Col.astro'
 import Playground from '../../../components/PlaygroundEmbed.astro'
-import sliderDemoCode, { editableCode as sliderEditableDemoCode } from './slider.demo.ts'
+import sliderDemoCode from './slider.demo.ts'
+import SliderEditableValueDemo from '../../../components/SliderEditableValueDemo'
 import { Slider } from '@antadesign/anta'
 
 # Slider
@@ -310,37 +311,36 @@ as `Slider`. In raw HTML, `round` needs a CSS length such as `"4px"`; JSX
 ### Editable value beside the label
 
 Compose `Input` and `Slider` as separate controls. The grid puts the label and
-input on one row and the slider underneath. Pass `valueDisplay="none"` so the
+small input on one row and the slider underneath. Pass `valueDisplay="none"` so the
 slider does not repeat its value. Keep the input's text as a draft; when the
 field loses focus or you press Enter, commit a number within the slider's range.
 Dragging or using the slider's keyboard controls updates both values.
 
-<Playground
-  component="Slider"
-  layout="side"
-  panelHeight={360}
-  initialCode={sliderEditableDemoCode}
-  initialCss={`.preview { min-height: 100%; align-items: center; justify-content: center; }
-.editable-slider {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 72px;
-  align-items: center;
-  gap: 8px 12px;
-  width: min(100%, 360px);
-}
-.editable-slider-label {
-  color: var(--text-3);
-  font-size: 15px;
-  font-weight: 500;
-}
-.editable-slider > a-slider { grid-column: 1 / -1; }`}
-/>
+<Preview direction="column" align="stretch" background="var(--bg-2)">
+  <SliderEditableValueDemo client:load />
+  <style is:inline>{`
+    .editable-slider {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 72px;
+      align-items: center;
+      gap: 0 12px;
+      width: min(100%, 360px);
+      margin-inline: auto;
+    }
+    .editable-slider-label {
+      color: var(--text-3);
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .editable-slider > a-slider { grid-column: 1 / -1; }
+  `}</style>
+</Preview>
 
 ```tsx folded title="Slider with an editable value"
 import { useState } from 'preact/hooks'
 import { Input, Slider } from '@antadesign/anta'
 
-function Demo() {
+function SliderEditableValueDemo() {
   const [value, setValue] = useState(55)
   const [draft, setDraft] = useState('55')
 
@@ -358,6 +358,7 @@ function Demo() {
       <span className="editable-slider-label">Volume</span>
       <Input
         aria-label="Volume value"
+        size="small"
         inputMode="numeric"
         trailing="%"
         value={draft}
@@ -387,8 +388,9 @@ function Demo() {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 72px;
   align-items: center;
-  gap: 8px 12px;
+  gap: 0 12px;
   width: min(100%, 360px);
+  margin-inline: auto;
 }
 .editable-slider-label {
   color: var(--text-3);

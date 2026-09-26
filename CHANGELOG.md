@@ -5,6 +5,12 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- [Slider](/slider/) accepts a two-value range with crossing thumbs and an
+  `inverted` track fill. Range values use two space-separated numbers in the
+  web component attribute and a sorted number pair in JavaScript and callbacks.
+
 ### Fixed
 
 - Clearable [Input](/input/), [InputDate](/input-date/), and

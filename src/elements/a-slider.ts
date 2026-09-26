@@ -6,8 +6,26 @@ const precisionOf = (value: number) => {
   return Math.max(0, (exponent?.[1]?.length ?? 0) - Number(exponent?.[2] ?? 0))
 }
 
+type SliderValue = number | [number, number]
+
+const parseSliderValue = (source: string | null, fallback: number): SliderValue => {
+  if (source === null || !source.trim()) return fallback
+  const parts = source.trim().split(/\s+/)
+  if (parts.length !== 1 && parts.length !== 2) return fallback
+  const numbers = parts.map(Number)
+  if (!numbers.every(Number.isFinite)) return fallback
+  return numbers.length === 2 ? [numbers[0], numbers[1]] : numbers[0]
+}
+
+const serializeSliderValue = (value: SliderValue) => Array.isArray(value) ? value.join(' ') : String(value)
+
+const sameSliderValue = (left: SliderValue, right: SliderValue) =>
+  Array.isArray(left) && Array.isArray(right)
+    ? left[0] === right[0] && left[1] === right[1]
+    : !Array.isArray(left) && !Array.isArray(right) && left === right
+
 /**
- * `<a-slider>` is a form-associated single-value slider. Its rail uses relative
+ * `<a-slider>` is a form-associated single-value or range slider. Its rail uses relative
  * dragging by default: pressing any point captures the pointer, while only the
  * subsequent horizontal movement changes the value. Set `track-click="jump"`
  * for the conventional position-based track click.
@@ -16,14 +34,16 @@ export class ASliderElement extends HTMLElementBase {
   static formAssociated = true
   static observedAttributes = [
     'value', 'defaultvalue', 'min', 'max', 'step', 'disabled', 'track-click',
-    'value-display', 'value-prefix', 'value-suffix',
+    'value-display', 'value-prefix', 'value-suffix', 'inverted', 'name', 'aria-label', 'aria-labelledby',
   ]
 
   private internals?: ElementInternals
   #control: HTMLDivElement
   #railArea: HTMLDivElement
   #fill: HTMLDivElement
+  #fillEnd: HTMLDivElement
   #thumb: HTMLDivElement
+  #thumbEnd: HTMLDivElement
   #header: HTMLDivElement
   #label: HTMLSlotElement
   #inlineValue: HTMLSpanElement
@@ -33,29 +53,35 @@ export class ASliderElement extends HTMLElementBase {
   #endValuePrefix: HTMLSpanElement
   #endValueSuffix: HTMLSpanElement
   #thumbValue: HTMLSpanElement
+  #thumbValueEnd: HTMLSpanElement
   #thumbValuePrefix: HTMLSpanElement
   #thumbValueSuffix: HTMLSpanElement
+  #thumbValueEndPrefix: HTMLSpanElement
+  #thumbValueEndSuffix: HTMLSpanElement
   #markers: HTMLSlotElement
   #extras: HTMLSlotElement
-  #value = 0
+  #value: SliderValue = 0
+  #physicalValues: [number, number] = [0, 0]
+  #orderReversed = false
+  #lastActiveThumb = 0
   #seeded = false
   #dirty = false
-  #drag?: { pointerId: number; startX: number; startValue: number }
+  #drag?: { pointerId: number; startX: number; startValue: number; startPublicValue: SliderValue; thumb: number }
 
-  get value(): number {
-    return this.#value
+  get value(): SliderValue {
+    return Array.isArray(this.#value) ? [...this.#value] as [number, number] : this.#value
   }
 
-  set value(value: number | string) {
-    this.setAttribute('value', String(value))
+  set value(value: SliderValue | string) {
+    this.setAttribute('value', Array.isArray(value) ? value.join(' ') : String(value))
   }
 
-  get defaultValue(): number {
-    return finiteNumber(this.getAttribute('defaultvalue'), this.#min)
+  get defaultValue(): SliderValue {
+    return parseSliderValue(this.getAttribute('defaultvalue'), this.#min)
   }
 
-  set defaultValue(value: number | string) {
-    this.setAttribute('defaultvalue', String(value))
+  set defaultValue(value: SliderValue | string) {
+    this.setAttribute('defaultvalue', Array.isArray(value) ? value.join(' ') : String(value))
   }
 
   constructor() {
@@ -120,7 +146,7 @@ export class ASliderElement extends HTMLElementBase {
       }
       :host([track-click="jump"]) .control { cursor: pointer; }
       .control[data-dragging] { cursor: grabbing; }
-      .control[data-dragging] .thumb { background: var(--slider-thumb-active); }
+      .control[data-dragging] .thumb[data-active] { background: var(--slider-thumb-active); }
       :host(:focus-visible) .control:not([data-pointer-focus]) {
         outline: 1px solid var(--focus-ring);
         outline-offset: 0;
@@ -144,9 +170,9 @@ export class ASliderElement extends HTMLElementBase {
         background: var(--slider-track);
       }
       .fill {
-        inset-inline-start: calc(var(--slider-track-inset) - var(--anta-slider-thumb-size) / 2);
+        inset-inline-start: calc(var(--_fill-start, 0%) + var(--_fill-start-edge, 0px));
         inset-inline-end: auto;
-        inline-size: calc(var(--_percent, 0%) + var(--anta-slider-thumb-size) / 2 - var(--slider-track-inset));
+        inline-size: calc(var(--_fill-end, 0%) - var(--_fill-start, 0%) + var(--_fill-end-edge, 0px) - var(--_fill-start-edge, 0px));
         background: var(--slider-fill);
       }
       .thumb {
@@ -161,6 +187,12 @@ export class ASliderElement extends HTMLElementBase {
         background: var(--slider-thumb);
         transition: background-color 75ms ease-out, border-color 75ms ease-out;
         transform: translate(-50%, -50%);
+      }
+      .thumb[data-last-active] { z-index: 1; }
+      .thumb:focus-visible {
+        outline: 1px solid var(--focus-ring);
+        outline-offset: 2px;
+        z-index: 2;
       }
       .thumb-value {
         display: none;
@@ -183,6 +215,7 @@ export class ASliderElement extends HTMLElementBase {
         ));
       }
       :host([value-display="thumb"]) .thumb-value { display: block; }
+      :host([value-display="thumb"]) .thumb-value[hidden] { display: none !important; }
       slot[name="markers"] {
         display: block;
         position: relative;
@@ -211,6 +244,7 @@ export class ASliderElement extends HTMLElementBase {
         .fill { background: Highlight; }
         .thumb { background: Canvas; border-color: CanvasText; }
         :host(:focus-visible) .control { outline: 2px solid Highlight; }
+        .thumb:focus-visible { outline: 2px solid Highlight; }
       }
       @media (prefers-reduced-motion: reduce) {
         .rail,
@@ -258,9 +292,15 @@ export class ASliderElement extends HTMLElementBase {
     this.#fill = document.createElement('div')
     this.#fill.className = 'fill'
     this.#fill.part.add('fill')
+    this.#fillEnd = document.createElement('div')
+    this.#fillEnd.className = 'fill'
+    this.#fillEnd.part.add('fill', 'fill-end')
     this.#thumb = document.createElement('div')
     this.#thumb.className = 'thumb'
-    this.#thumb.part.add('thumb')
+    this.#thumb.part.add('thumb', 'thumb-1')
+    this.#thumbEnd = document.createElement('div')
+    this.#thumbEnd.className = 'thumb'
+    this.#thumbEnd.part.add('thumb', 'thumb-2')
     this.#thumbValue = document.createElement('span')
     this.#thumbValue.className = 'thumb-value'
     this.#thumbValue.part.add('thumb-value')
@@ -269,7 +309,15 @@ export class ASliderElement extends HTMLElementBase {
     this.#thumbValueSuffix = document.createElement('span')
     this.#thumbValueSuffix.className = 'value-affix'
     this.#thumbValue.append(this.#thumbValuePrefix, this.#thumbValueSuffix)
-    this.#railArea.append(rail, this.#fill, this.#thumb, this.#thumbValue)
+    this.#thumbValueEnd = document.createElement('span')
+    this.#thumbValueEnd.className = 'thumb-value'
+    this.#thumbValueEnd.part.add('thumb-value', 'thumb-value-2')
+    this.#thumbValueEndPrefix = document.createElement('span')
+    this.#thumbValueEndPrefix.className = 'value-affix'
+    this.#thumbValueEndSuffix = document.createElement('span')
+    this.#thumbValueEndSuffix.className = 'value-affix'
+    this.#thumbValueEnd.append(this.#thumbValueEndPrefix, this.#thumbValueEndSuffix)
+    this.#railArea.append(rail, this.#fill, this.#fillEnd, this.#thumb, this.#thumbEnd, this.#thumbValue, this.#thumbValueEnd)
     this.#control.append(this.#railArea)
 
     this.#markers = document.createElement('slot')
@@ -279,7 +327,17 @@ export class ASliderElement extends HTMLElementBase {
     this.#extras.part.add('extras')
 
     for (const slot of [this.#label, this.#markers, this.#extras]) {
-      slot.addEventListener('slotchange', () => this.#syncSlotVisibility())
+      slot.addEventListener('slotchange', () => {
+        this.#syncSlotVisibility()
+        if (slot === this.#label) this.#paintAccessibility()
+      })
+    }
+    for (const [index, thumb] of [this.#thumb, this.#thumbEnd].entries()) {
+      thumb.addEventListener('focus', () => {
+        if (!Array.isArray(this.#value)) return
+        this.#lastActiveThumb = index
+        this.#paint()
+      })
     }
     this.#control.addEventListener('pointerdown', (event) => this.#beginDrag(event))
     this.#control.addEventListener('pointermove', (event) => this.#moveDrag(event))
@@ -294,7 +352,7 @@ export class ASliderElement extends HTMLElementBase {
 
   connectedCallback() {
     if (!this.#seeded) {
-      this.#value = this.#initialValue()
+      this.#applyValue(this.#initialValue())
       this.#seeded = true
     }
     this.#paint()
@@ -306,15 +364,15 @@ export class ASliderElement extends HTMLElementBase {
 
     if (name === 'value') {
       if (this.hasAttribute('value')) {
-        this.#value = this.#normalize(finiteNumber(this.getAttribute('value'), this.#min))
+        this.#applyValue(parseSliderValue(this.getAttribute('value'), this.#min))
         this.#dirty = false
       } else if (!this.#dirty) {
-        this.#value = this.#initialValue()
+        this.#applyValue(this.#initialValue())
       }
     } else if (name === 'defaultvalue' && !this.hasAttribute('value') && !this.#dirty) {
-      this.#value = this.#initialValue()
+      this.#applyValue(this.#initialValue())
     } else if (name === 'min' || name === 'max' || name === 'step') {
-      this.#value = this.#normalize(this.#value)
+      this.#applyValue(this.#value)
     }
 
     this.#paint()
@@ -323,15 +381,15 @@ export class ASliderElement extends HTMLElementBase {
 
   formResetCallback() {
     const previous = this.#value
-    this.#value = this.#normalize(finiteNumber(this.getAttribute('defaultvalue'), this.#min))
+    this.#applyValue(parseSliderValue(this.getAttribute('defaultvalue'), this.#min))
     this.#dirty = false
     this.#paint()
-    if (this.#value !== previous) this.#emitInputAndChange()
+    if (!sameSliderValue(this.#value, previous)) this.#emitInputAndChange()
   }
 
   formStateRestoreCallback(state: string | File | FormData | null) {
     if (typeof state !== 'string') return
-    this.#value = this.#normalize(finiteNumber(state, this.#min))
+    this.#applyValue(parseSliderValue(state, this.#min))
     this.#dirty = true
     this.#paint()
   }
@@ -359,7 +417,7 @@ export class ASliderElement extends HTMLElementBase {
 
   #initialValue() {
     const source = this.getAttribute('value') ?? this.getAttribute('defaultvalue')
-    return this.#normalize(finiteNumber(source, this.#min))
+    return parseSliderValue(source, this.#min)
   }
 
   #normalize(value: number) {
@@ -371,41 +429,156 @@ export class ASliderElement extends HTMLElementBase {
     return Number(Math.min(max, Math.max(min, stepped)).toFixed(precision))
   }
 
-  #percent(value = this.#value) {
+  #normalizeValue(value: SliderValue): SliderValue {
+    if (!Array.isArray(value)) return this.#normalize(value)
+    const low = this.#normalize(value[0])
+    const high = this.#normalize(value[1])
+    return low <= high ? [low, high] : [high, low]
+  }
+
+  #applyValue(value: SliderValue) {
+    const next = this.#normalizeValue(value)
+    const wasRange = Array.isArray(this.#value)
+    this.#value = next
+    if (Array.isArray(next)) {
+      if (!wasRange) this.#orderReversed = false
+      this.#physicalValues = this.#orderReversed ? [next[1], next[0]] : [next[0], next[1]]
+    } else {
+      this.#physicalValues = [next, next]
+      this.#orderReversed = false
+    }
+  }
+
+  #percent(value: number) {
     const range = this.#max - this.#min
     return range > 0 ? ((value - this.#min) / range) * 100 : 0
   }
 
   #paint() {
-    const percent = `${this.#percent()}%`
-    this.#railArea.style.setProperty('--_percent', percent)
-    const value = this.#displayValue()
-    const displayedValue = String(this.#value)
-    const prefix = this.getAttribute('value-prefix') ?? ''
-    const suffix = this.getAttribute('value-suffix') ?? ''
-    for (const [element, prefixElement, suffixElement] of [
-      [this.#inlineValue, this.#inlineValuePrefix, this.#inlineValueSuffix],
-      [this.#endValue, this.#endValuePrefix, this.#endValueSuffix],
-      [this.#thumbValue, this.#thumbValuePrefix, this.#thumbValueSuffix],
-    ]) {
-      element.textContent = displayedValue
-      prefixElement.textContent = prefix
-      suffixElement.textContent = suffix
-      element.prepend(prefixElement)
-      element.append(suffixElement)
+    const currentValue = this.#value
+    const range = Array.isArray(currentValue)
+    const low = range ? currentValue[0] : this.#min
+    const high = range ? currentValue[1] : currentValue as number
+    const lowPercent = `${this.#percent(low)}%`
+    const highPercent = `${this.#percent(high)}%`
+    const [first, second]: [number, number] = range ? this.#physicalValues : [high, high]
+    this.#thumb.style.setProperty('--_percent', `${this.#percent(first)}%`)
+    this.#thumbEnd.style.setProperty('--_percent', `${this.#percent(second)}%`)
+    this.#thumb.toggleAttribute('data-last-active', this.#lastActiveThumb === 0)
+    this.#thumbEnd.toggleAttribute('data-last-active', this.#lastActiveThumb === 1)
+    this.#thumbValue.style.setProperty('--_percent', `${this.#percent(first)}%`)
+    this.#thumbValueEnd.style.setProperty('--_percent', `${this.#percent(second)}%`)
+    this.#thumbEnd.hidden = !range
+    const coincident = range && first === second
+    this.#thumbValue.hidden = coincident && this.#lastActiveThumb !== 0
+    this.#thumbValueEnd.hidden = !range || coincident && this.#lastActiveThumb !== 1
+
+    const edgeStart = 'calc(var(--slider-track-inset) - var(--anta-slider-thumb-size) / 2)'
+    const edgeEnd = 'calc(var(--anta-slider-thumb-size) / 2 - var(--slider-track-inset))'
+    const setFill = (fill: HTMLDivElement, start: string, end: string, startEdge = '0px', endEdge = '0px') => {
+      fill.style.setProperty('--_fill-start', start)
+      fill.style.setProperty('--_fill-end', end)
+      fill.style.setProperty('--_fill-start-edge', startEdge)
+      fill.style.setProperty('--_fill-end-edge', endEdge)
+    }
+    if (this.hasAttribute('inverted')) {
+      this.#fill.hidden = range ? low === this.#min : high === this.#max
+      setFill(this.#fill, range ? '0%' : highPercent, range ? lowPercent : '100%', range ? edgeStart : high === this.#min ? edgeStart : '0px', range ? '0px' : edgeEnd)
+      this.#fillEnd.hidden = !range || high === this.#max
+      if (range) setFill(this.#fillEnd, highPercent, '100%', '0px', edgeEnd)
+    } else {
+      this.#fill.hidden = range ? low === high : high === this.#min
+      setFill(this.#fill, range ? lowPercent : '0%', highPercent, range && low !== this.#min ? '0px' : edgeStart, range && high === this.#max ? edgeEnd : '0px')
+      this.#fillEnd.hidden = true
     }
 
-    const internals = this.internals
-    if (!internals) return
-    internals.ariaValueMin = String(this.#min)
-    internals.ariaValueMax = String(this.#max)
-    internals.ariaValueNow = String(this.#value)
-    internals.ariaValueText = value
-    internals.setFormValue(this.#isDisabled ? null : String(this.#value), String(this.#value))
+    this.#renderValue(this.#inlineValue, this.#inlineValuePrefix, this.#inlineValueSuffix, range ? low : high, range ? high : undefined)
+    this.#renderValue(this.#endValue, this.#endValuePrefix, this.#endValueSuffix, range ? low : high, range ? high : undefined)
+    this.#renderValue(this.#thumbValue, this.#thumbValuePrefix, this.#thumbValueSuffix, first)
+    if (range) this.#renderValue(this.#thumbValueEnd, this.#thumbValueEndPrefix, this.#thumbValueEndSuffix, second)
+    this.#paintAccessibility()
+    this.#paintFormValue()
   }
 
-  #displayValue() {
-    return `${this.getAttribute('value-prefix') ?? ''}${this.#value}${this.getAttribute('value-suffix') ?? ''}`
+  #renderValue(element: HTMLElement, prefixElement: HTMLElement, suffixElement: HTMLElement, first: number, second?: number) {
+    const prefix = this.getAttribute('value-prefix') ?? ''
+    const suffix = this.getAttribute('value-suffix') ?? ''
+    element.textContent = String(first)
+    prefixElement.textContent = prefix
+    suffixElement.textContent = suffix
+    element.prepend(prefixElement)
+    element.append(suffixElement)
+    if (second === undefined) return
+    const secondPrefix = prefixElement.cloneNode(true)
+    const secondSuffix = suffixElement.cloneNode(true)
+    element.append('–', secondPrefix, String(second), secondSuffix)
+  }
+
+  #formatValue(value: number) {
+    const prefix = this.getAttribute('value-prefix') ?? ''
+    const suffix = this.getAttribute('value-suffix') ?? ''
+    return `${prefix}${value}${suffix}`
+  }
+
+  #paintAccessibility() {
+    const range = Array.isArray(this.#value)
+    const slottedLabel = this.#label.assignedNodes({ flatten: true }).map((node) => node.textContent ?? '').join('').trim()
+    const root = this.getRootNode() as Document | ShadowRoot
+    const referencedLabel = (this.getAttribute('aria-labelledby') ?? '').split(/\s+/)
+      .map((id) => root.getElementById(id)?.textContent?.trim() ?? '').filter(Boolean).join(' ')
+    const base = (this.getAttribute('aria-label') ?? referencedLabel ?? slottedLabel).trim() || slottedLabel
+    const internals = this.internals
+    if (internals) {
+      internals.role = range ? 'group' : 'slider'
+      internals.ariaLabel = !this.hasAttribute('aria-label') && !this.hasAttribute('aria-labelledby') ? slottedLabel || null : null
+      internals.ariaValueMin = range ? null : String(this.#min)
+      internals.ariaValueMax = range ? null : String(this.#max)
+      internals.ariaValueNow = range ? null : String(this.#value)
+      internals.ariaValueText = range ? null : this.#formatValue(this.#value as number)
+    }
+
+    for (const [index, thumb] of [this.#thumb, this.#thumbEnd].entries()) {
+      if (!range) {
+        thumb.removeAttribute('role')
+        thumb.tabIndex = -1
+        thumb.removeAttribute('aria-label')
+        thumb.removeAttribute('aria-valuemin')
+        thumb.removeAttribute('aria-valuemax')
+        thumb.removeAttribute('aria-valuenow')
+        thumb.removeAttribute('aria-valuetext')
+        thumb.removeAttribute('aria-disabled')
+        continue
+      }
+      const endpoint = (index === 0) !== this.#orderReversed ? 'minimum' : 'maximum'
+      const value = this.#physicalValues[index]
+      thumb.role = 'slider'
+      thumb.tabIndex = this.#isDisabled ? -1 : 0
+      thumb.ariaLabel = base ? `${base} ${endpoint}` : `${endpoint[0].toUpperCase()}${endpoint.slice(1)} value`
+      thumb.ariaValueMin = String(this.#min)
+      thumb.ariaValueMax = String(this.#max)
+      thumb.ariaValueNow = String(value)
+      thumb.ariaValueText = this.#formatValue(value)
+      thumb.ariaDisabled = this.#isDisabled ? 'true' : null
+    }
+  }
+
+  #paintFormValue() {
+    const internals = this.internals
+    if (!internals) return
+    const state = serializeSliderValue(this.#value)
+    if (this.#isDisabled) {
+      internals.setFormValue(null, state)
+    } else if (Array.isArray(this.#value)) {
+      const formValue = new FormData()
+      const name = this.getAttribute('name')
+      if (name) {
+        formValue.append(name, String(this.#value[0]))
+        formValue.append(name, String(this.#value[1]))
+      }
+      internals.setFormValue(formValue, state)
+    } else {
+      internals.setFormValue(state, state)
+    }
   }
 
   #syncSlotVisibility() {
@@ -415,12 +588,27 @@ export class ASliderElement extends HTMLElementBase {
     this.#extras.hidden = !assigned(this.#extras)
   }
 
-  #setValue(value: number) {
+  #setValue(value: number, thumb = 0) {
     const next = this.#normalize(value)
-    if (next === this.#value) return false
-    this.#value = next
+    if (Array.isArray(this.#value)) {
+      const previous = this.#value
+      this.#physicalValues[thumb] = next
+      if (this.#physicalValues[0] !== this.#physicalValues[1]) {
+        this.#orderReversed = this.#physicalValues[0] > this.#physicalValues[1]
+      }
+      this.#value = this.#orderReversed
+        ? [this.#physicalValues[1], this.#physicalValues[0]]
+        : [this.#physicalValues[0], this.#physicalValues[1]]
+      this.#lastActiveThumb = thumb
+      this.#paint()
+      if (sameSliderValue(previous, this.#value)) return false
+    } else {
+      if (next === this.#value) return false
+      this.#value = next
+      this.#physicalValues = [next, next]
+      this.#paint()
+    }
     this.#dirty = true
-    this.#paint()
     this.dispatchEvent(new Event('input', { bubbles: true, composed: true }))
     return true
   }
@@ -432,8 +620,16 @@ export class ASliderElement extends HTMLElementBase {
 
   #valueAt(clientX: number) {
     const rect = this.#railArea.getBoundingClientRect()
-    if (rect.width <= 0) return this.#value
+    if (rect.width <= 0) return Array.isArray(this.#value) ? this.#physicalValues[this.#lastActiveThumb] : this.#value
     return this.#min + ((clientX - rect.left) / rect.width) * (this.#max - this.#min)
+  }
+
+  #thumbAt(clientX: number) {
+    if (!Array.isArray(this.#value)) return 0
+    const candidate = this.#valueAt(clientX)
+    const firstDistance = Math.abs(candidate - this.#physicalValues[0])
+    const secondDistance = Math.abs(candidate - this.#physicalValues[1])
+    return firstDistance === secondDistance ? this.#lastActiveThumb : firstDistance < secondDistance ? 0 : 1
   }
 
   #beginDrag(event: PointerEvent) {
@@ -441,13 +637,22 @@ export class ASliderElement extends HTMLElementBase {
     const rect = this.#railArea.getBoundingClientRect()
     if (rect.width <= 0) return
 
-    this.#drag = { pointerId: event.pointerId, startX: event.clientX, startValue: this.#value }
+    const thumb = event.composedPath()[0] === this.#thumb ? 0
+      : event.composedPath()[0] === this.#thumbEnd ? 1
+      : this.#thumbAt(event.clientX)
+    const startValue = Array.isArray(this.#value) ? this.#physicalValues[thumb] : this.#value
+    this.#drag = { pointerId: event.pointerId, startX: event.clientX, startValue, startPublicValue: this.value, thumb }
     this.#control.setPointerCapture(event.pointerId)
     this.#control.dataset.dragging = ''
     this.#control.dataset.pointerFocus = ''
-    this.focus({ preventScroll: true })
+    this.#lastActiveThumb = thumb
+    this.#thumb.toggleAttribute('data-last-active', thumb === 0)
+    this.#thumbEnd.toggleAttribute('data-last-active', thumb === 1)
+    const focusTarget = Array.isArray(this.#value) ? [this.#thumb, this.#thumbEnd][thumb] : this
+    focusTarget.focus({ preventScroll: true })
+    ;[this.#thumb, this.#thumbEnd][thumb].dataset.active = ''
 
-    if (this.getAttribute('track-click') === 'jump') this.#setValue(this.#valueAt(event.clientX))
+    if (this.getAttribute('track-click') === 'jump') this.#setValue(this.#valueAt(event.clientX), thumb)
     event.preventDefault()
   }
 
@@ -463,7 +668,7 @@ export class ASliderElement extends HTMLElementBase {
     const next = this.getAttribute('track-click') === 'jump'
       ? this.#valueAt(event.clientX)
       : drag.startValue + ((event.clientX - drag.startX) / this.#railArea.getBoundingClientRect().width) * (this.#max - this.#min)
-    this.#setValue(next)
+    this.#setValue(next, drag.thumb)
     event.preventDefault()
   }
 
@@ -472,30 +677,35 @@ export class ASliderElement extends HTMLElementBase {
     if (!drag || drag.pointerId !== event.pointerId) return
     this.#drag = undefined
     delete this.#control.dataset.dragging
+    delete [this.#thumb, this.#thumbEnd][drag.thumb].dataset.active
     if (this.#control.hasPointerCapture(event.pointerId)) this.#control.releasePointerCapture(event.pointerId)
-    if (this.#value !== drag.startValue) this.dispatchEvent(new Event('change', { bubbles: true, composed: true }))
+    if (!sameSliderValue(this.#value, drag.startPublicValue)) this.dispatchEvent(new Event('change', { bubbles: true, composed: true }))
   }
 
   #handleKeydown(event: KeyboardEvent) {
-    if (event.target !== this || this.#isDisabled || isModifiedNavigationKey(event)) return
+    const source = event.composedPath()[0]
+    const range = Array.isArray(this.#value)
+    const thumb = source === this.#thumb ? 0 : source === this.#thumbEnd ? 1 : undefined
+    if ((range ? thumb === undefined : source !== this) || this.#isDisabled || isModifiedNavigationKey(event)) return
     delete this.#control.dataset.pointerFocus
 
     const page = Math.max(this.#step, (this.#max - this.#min) / 10)
+    const current = range ? this.#physicalValues[thumb ?? 0] : this.#value as number
     let next: number | undefined
     switch (event.key) {
       case 'ArrowRight':
-      case 'ArrowUp': next = this.#value + this.#step; break
+      case 'ArrowUp': next = current + this.#step; break
       case 'ArrowLeft':
-      case 'ArrowDown': next = this.#value - this.#step; break
-      case 'PageUp': next = this.#value + page; break
-      case 'PageDown': next = this.#value - page; break
+      case 'ArrowDown': next = current - this.#step; break
+      case 'PageUp': next = current + page; break
+      case 'PageDown': next = current - page; break
       case 'Home': next = this.#min; break
       case 'End': next = this.#max; break
       default: return
     }
 
     event.preventDefault()
-    if (this.#setValue(next)) this.dispatchEvent(new Event('change', { bubbles: true, composed: true }))
+    if (this.#setValue(next, range ? thumb ?? 0 : 0)) this.dispatchEvent(new Event('change', { bubbles: true, composed: true }))
   }
 }
 

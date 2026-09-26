@@ -10,9 +10,11 @@ changes are not listed.
 - Clearable [Input](/input/), [InputDate](/input-date/), and
   [InputTime](/input-time/) fields reserve the clear button's space while empty,
   so showing it does not add width.
-- [Menus](/menu/) keep a faceted filter open when an embedded single-select
-  menu closes after a choice.
+- [Menus](/menu/) opened inside `data-menu-open` content now close after a choice
+  without closing the surrounding menu.
 - Clearing an [InputDate](/input-date/) field no longer toggles its calendar.
+- Switching [Menu](/menu/) submenus closes nested controlled popups cleanly, so
+  an [InputDate](/input-date/) calendar can reopen after its facet is revisited.
 
 ## 0.3.32 — September 25, 2026
 

@@ -25,6 +25,40 @@ const DURATION_COMPARISONS = [
 const durationSign = (comparison?: string) =>
   DURATION_COMPARISONS.find((option) => option.value === comparison)?.label ?? '≥'
 
+type DurationValue = { min: string; comparison: string }
+
+function DurationEditor({ value, onChange }: { value?: DurationValue; onChange: (next: DurationValue | undefined) => void }) {
+  const [draftComparison, setDraftComparison] = useState(value?.comparison ?? 'gte')
+  const comparison = value?.comparison ?? draftComparison
+  return (
+    <div data-menu-open style={{ display: 'flex', gap: '6px', alignItems: 'center', padding: '4px' }}>
+      <Select
+        size="small"
+        aria-label="Duration comparison"
+        options={DURATION_COMPARISONS}
+        value={comparison}
+        onValueChange={(next: string) => {
+          setDraftComparison(next)
+          if (value?.min.trim()) onChange({ min: value.min, comparison: next })
+        }}
+        style={{ width: '72px' }}
+      />
+      <Input
+        size="small"
+        value={value?.min ?? ''}
+        placeholder="0"
+        inputMode="decimal"
+        style={{ width: '72px' }}
+        onInput={(e: any) => {
+          const min = e.currentTarget.value
+          onChange(min.trim() ? { min, comparison } : undefined)
+        }}
+      />
+      <span>seconds</span>
+    </div>
+  )
+}
+
 const BASE_FACETS: SelectFacet[] = [
   // Long list → filterable multi-select.
   { key: 'assignee', label: 'Assignee', kind: 'multiple', icon: 'circle-dot', filter: true, options: PEOPLE },
@@ -76,27 +110,8 @@ const BASE_FACETS: SelectFacet[] = [
     label: 'Min duration',
     kind: 'custom',
     icon: 'calendar',
-    summary: (v: any) => `${durationSign(v.comparison)} ${v.min || '…'}s`,
-    render: ({ value, onChange }: any) => (
-      <div data-menu-open style={{ display: 'flex', gap: '6px', alignItems: 'center', padding: '4px' }}>
-        <Select
-          size="small"
-          aria-label="Duration comparison"
-          options={DURATION_COMPARISONS}
-          value={value?.comparison ?? 'gte'}
-          onValueChange={(comparison: string) => onChange({ min: value?.min ?? '', comparison })}
-          style={{ width: '72px' }}
-        />
-        <Input
-          size="small"
-          value={value?.min ?? ''}
-          placeholder="0"
-          style={{ width: '72px' }}
-          onInput={(e: any) => onChange(e.currentTarget.value ? { min: e.currentTarget.value, comparison: value?.comparison ?? 'gte' } : undefined)}
-        />
-        <span>seconds</span>
-      </div>
-    ),
+    summary: (v: any) => `${durationSign(v.comparison)} ${v.min}s`,
+    render: ({ value, onChange }: any) => <DurationEditor value={value} onChange={onChange} />,
   },
 ]
 
@@ -175,7 +190,7 @@ export function SelectFacetedBasicDemo() {
                 onFocus={() => setFocusedKey(facet.key)}
                 onBlur={() => setFocusedKey(null)}
                 onInput={(e: any) =>
-                  setFacet(facet.key, e.currentTarget.value ? { min: e.currentTarget.value, comparison: (value[facet.key] as any)?.comparison ?? 'gte' } : undefined)
+                  setFacet(facet.key, e.currentTarget.value.trim() ? { min: e.currentTarget.value, comparison: (value[facet.key] as any)?.comparison ?? 'gte' } : undefined)
                 }
                 onClearInput={() => {
                   setFocusedKey(null)

@@ -2,7 +2,8 @@
  * Demo source for the SelectFaceted playground. Kept in a sibling .ts file so
  * Astro's MDX pipeline doesn't mangle the template literal's indentation.
  */
-export default `import { SelectFaceted, Select, Input, InputDate, MenuItem, Tag } from '@antadesign/anta'
+export default `import { useState } from 'preact/hooks'
+import { SelectFaceted, Select, Input, InputDate, MenuItem, Tag } from '@antadesign/anta'
 
 const people = [
   'Alice Nguyen', 'Bob Carter', 'Carol Diaz', 'Dave Feld', 'Erin Shah',
@@ -19,6 +20,33 @@ const comparisons = [
   { value: 'lt', label: '<', hint: 'Less than' },
 ]
 const sign = (comparison) => comparisons.find((option) => option.value === comparison)?.label ?? '≥'
+
+function DurationEditor({ value, onChange }) {
+  const [draftComparison, setDraftComparison] = useState(value?.comparison ?? 'gte')
+  const comparison = value?.comparison ?? draftComparison
+  return (
+    <div data-menu-open style={{ display: 'flex', gap: '6px', alignItems: 'center', padding: '4px' }}>
+      <Select
+        size="small" aria-label="Duration comparison" options={comparisons}
+        value={comparison}
+        onValueChange={(next) => {
+          setDraftComparison(next)
+          if (value?.min.trim()) onChange({ min: value.min, comparison: next })
+        }}
+        style={{ width: '72px' }}
+      />
+      <Input
+        size="small" value={value?.min ?? ''} placeholder="0" inputMode="decimal"
+        style={{ width: '72px' }}
+        onInput={(e) => {
+          const min = e.currentTarget.value
+          onChange(min.trim() ? { min, comparison } : undefined)
+        }}
+      />
+      <span>seconds</span>
+    </div>
+  )
+}
 
 function Demo() {
   return (
@@ -78,27 +106,8 @@ function Demo() {
           label: 'Min duration',
           kind: 'custom',
           icon: 'calendar',
-          summary: (v) => sign(v.comparison) + ' ' + (v.min || '…') + 's',
-          render: ({ value, onChange }) => (
-            <div data-menu-open style={{ display: 'flex', gap: '6px', alignItems: 'center', padding: '4px' }}>
-              <Select
-                size="small" aria-label="Duration comparison" options={comparisons}
-                value={value?.comparison ?? 'gte'}
-                onValueChange={(comparison) => onChange({ min: value?.min ?? '', comparison })}
-                style={{ width: '72px' }}
-              />
-              <Input
-                size="small"
-                value={value?.min ?? ''}
-                placeholder="0"
-                style={{ width: '72px' }}
-                onInput={(e) => onChange(e.currentTarget.value
-                  ? { min: e.currentTarget.value, comparison: value?.comparison ?? 'gte' }
-                  : undefined)}
-              />
-              <span>seconds</span>
-            </div>
-          ),
+          summary: (v) => sign(v.comparison) + ' ' + v.min + 's',
+          render: ({ value, onChange }) => <DurationEditor value={value} onChange={onChange} />,
         },
         {
           key: 'recency',

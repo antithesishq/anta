@@ -59,7 +59,8 @@ is limited. `offset` sets the gap in pixels between the trigger and the menu:
 Open **Recency** in the first demo, select **Custom range**, then pick **From**
 and **To** from the fields side by side. Each field closes its own calendar after
 a pick while the Recency editor stays open for the second date. Both fields have
-a clear button. Open **Min duration** to choose a comparison from its dropdown.
+a clear button. Open **Min duration** to choose a comparison, then enter seconds.
+The comparison alone does not apply the facet or add a result chip.
 
 Open **Metadata** to choose key–value tags such as
 **env production** or **region us-east**. Its `renderOption` callback reads
@@ -104,7 +105,7 @@ const FACETS = [
     ),
   },
   { key: 'title',    label: 'Title contains', kind: 'text' },
-  { key: 'duration', label: 'Min duration', kind: 'custom', summary: (v) => `${sign(v.comparison)} ${v.min}s`, render: /* Select comparison and Input value */ },
+  { key: 'duration', label: 'Min duration', kind: 'custom', summary: (v) => `${sign(v.comparison)} ${v.min}s`, render: /* DurationEditor with draft comparison and Input value */ },
   { key: 'recency',  label: 'Recency', kind: 'custom', summary: recencySummary, render: /* radio presets and two InputDate fields */ },
 ]
 

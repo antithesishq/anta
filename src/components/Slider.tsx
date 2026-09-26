@@ -8,9 +8,13 @@ export interface SliderMarker {
   label: React.ReactNode
 }
 
+/** Two endpoints of a range slider. */
+export type SliderRangeValue = [number, number]
+export type SliderValue = number | SliderRangeValue
+
 /** Snapshot passed to `onValueChange` and `onValueCommit`. */
-export interface SliderChangeAttrs {
-  value: number
+export interface SliderChangeAttrs<T extends SliderValue = number> {
+  value: T
   min: number
   max: number
   step: number
@@ -21,11 +25,11 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   /** Visible field label, shown above the rail. A string supplies the slider's
    * accessible name; give a rich label an explicit `aria-label`. */
   label?: React.ReactNode
-  /** Controlled value. Update it from `onValueChange`. */
-  value?: number
+  /** Controlled value. A pair of numbers selects a range. Update it from `onValueChange`. */
+  value?: number | SliderRangeValue
   /** Initial uncontrolled value.
    * @defaultValue 0 */
-  defaultValue?: number
+  defaultValue?: number | SliderRangeValue
   /** Lowest permitted value.
    * @defaultValue 0 */
   min?: number
@@ -35,7 +39,7 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
   /** Smallest keyboard and drag increment.
    * @defaultValue 1 */
   step?: number
-  /** Form field name. The current numeric value submits under this name. */
+  /** Form field name. A range submits two values under this name. */
   name?: string
   /** Disables pointer and keyboard interaction. */
   disabled?: boolean
@@ -80,10 +84,22 @@ export interface SliderProps extends BaseProps, DOMEventHandlers {
    * from the current value. `jump` first moves to the pressed position.
    * @defaultValue 'drag-only' */
   trackClick?: 'drag-only' | 'jump'
+  /** Fill the rail outside the selected value or range. */
+  inverted?: boolean
   /** Fires on every keyboard or pointer value change. */
-  onValueChange?: (event: any, attrs: SliderChangeAttrs) => void
+  onValueChange?: (event: any, attrs: SliderChangeAttrs<SliderValue>) => void
   /** Fires after a drag ends and after each keyboard value change. */
-  onValueCommit?: (event: any, attrs: SliderChangeAttrs) => void
+  onValueCommit?: (event: any, attrs: SliderChangeAttrs<SliderValue>) => void
+}
+
+type TypedSliderProps<T extends SliderValue> = Omit<
+  SliderProps,
+  'value' | 'defaultValue' | 'onValueChange' | 'onValueCommit'
+> & {
+  value?: T
+  defaultValue?: T
+  onValueChange?: (event: any, attrs: SliderChangeAttrs<T>) => void
+  onValueCommit?: (event: any, attrs: SliderChangeAttrs<T>) => void
 }
 
 const number = (value: number | undefined, fallback: number) => Number.isFinite(value) ? value! : fallback
@@ -94,10 +110,10 @@ const bounds = (min: number | undefined, max: number | undefined) => {
   return { min: low, max: Math.max(low, number(max, 100)) }
 }
 
-const attrsOf = (event: any): SliderChangeAttrs => {
+const attrsOf = <T extends SliderValue>(event: any): SliderChangeAttrs<T> => {
   const element = event?.target ?? {}
   return {
-    value: Number(element.value ?? 0),
+    value: element.value as T,
     min: Number(element.getAttribute?.('min') ?? 0),
     max: Number(element.getAttribute?.('max') ?? 100),
     step: Number(element.getAttribute?.('step') ?? 1),
@@ -106,11 +122,11 @@ const attrsOf = (event: any): SliderChangeAttrs => {
 }
 
 /**
- * Slider selects one numeric value from a range. Pressing anywhere on its rail
+ * Slider selects one numeric value or a pair of range endpoints. Pressing anywhere on its rail
  * starts a relative drag by default, so the thumb never jumps to the press point.
  * Requires `@antadesign/anta/elements` on the client.
  */
-export const Slider = ({
+export const Slider = <T extends SliderValue = number>({
   label,
   value,
   defaultValue,
@@ -131,6 +147,7 @@ export const Slider = ({
   valueSuffix,
   markers,
   trackClick = 'drag-only',
+  inverted,
   onInput,
   onChange,
   onValueChange,
@@ -140,7 +157,7 @@ export const Slider = ({
   children,
   tabIndex,
   ...rest
-}: SliderProps) => {
+}: TypedSliderProps<T>) => {
   const trackSizeValue = cssLength(trackSize)
   const thumbSizeValue = cssLength(thumbSize)
   const computedStyle = lengthStyle(
@@ -162,6 +179,9 @@ export const Slider = ({
   const ariaLabel =
     (typeof explicitAriaLabel === 'string' ? explicitAriaLabel : undefined) ??
     (typeof label === 'string' || typeof label === 'number' ? String(label) : undefined)
+  const range = Array.isArray(value) || Array.isArray(defaultValue)
+  const serializeValue = (input: T | undefined): string | number | undefined =>
+    Array.isArray(input) ? `${input[0]} ${input[1]}` : typeof input === 'number' ? input : undefined
   const resolvedValueDisplay = valueDisplay === 'inline' && label == null ? 'end' : valueDisplay
   const markerPosition = (marker: SliderMarker) => {
     if (marker.value <= min) return '0%'
@@ -179,14 +199,14 @@ export const Slider = ({
 
   const handleInput = onInput || onValueChange
     ? (event: any) => {
-        const attrs = attrsOf(event)
+        const attrs = attrsOf<T>(event)
         onInput?.(event)
         onValueChange?.(event, attrs)
       }
     : undefined
   const handleChange = onChange || onValueCommit
     ? (event: any) => {
-        const attrs = attrsOf(event)
+        const attrs = attrsOf<T>(event)
         onChange?.(event)
         onValueCommit?.(event, attrs)
       }
@@ -194,8 +214,8 @@ export const Slider = ({
 
   return (
     <a-slider
-      value={value}
-      defaultvalue={defaultValue}
+      value={serializeValue(value)}
+      defaultvalue={serializeValue(defaultValue)}
       min={min}
       max={max}
       step={step}
@@ -209,12 +229,13 @@ export const Slider = ({
       thumb-fill={thumbFill ? '' : undefined}
       round={roundAttr(round)}
       track-click={trackClick === 'jump' ? 'jump' : undefined}
+      inverted={inverted ? '' : undefined}
       value-display={resolvedValueDisplay === 'end' ? undefined : resolvedValueDisplay}
       value-prefix={valuePrefix}
       value-suffix={valueSuffix}
-      role="slider"
+      role={range ? 'group' : 'slider'}
       aria-label={ariaLabel}
-      tabIndex={disabled ? -1 : (tabIndex ?? 0)}
+      tabIndex={disabled || range ? -1 : (tabIndex ?? 0)}
       oninput={handleInput}
       onchange={handleChange}
       class={className}

@@ -3,6 +3,25 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- [Slider](/slider/) accepts a two-value range with crossing thumbs and an
+  `inverted` track fill. Range values use two space-separated numbers in the
+  web component attribute and a sorted number pair in JavaScript and callbacks.
+
+### Fixed
+
+- Clearable [Input](/input/), [InputDate](/input-date/), and
+  [InputTime](/input-time/) fields reserve the clear button's space while empty,
+  so showing it does not add width.
+- [Menus](/menu/) opened inside `data-menu-open` content now close after a choice
+  without closing the surrounding menu.
+- Clearing an [InputDate](/input-date/) field no longer toggles its calendar.
+- Switching [Menu](/menu/) submenus closes nested controlled popups cleanly, so
+  an [InputDate](/input-date/) calendar can reopen after its facet is revisited.
+
 ## 0.3.32 — September 25, 2026
 
 ### Added

@@ -377,6 +377,8 @@ test('dialog menus expose body items without a search field and clear empty menu
     document.body.append(menu)
   })
   const popup = page.locator('#preset-dialog')
+  // An initially controlled menu applies `state="open"` on the next frame.
+  await page.waitForFunction(() => document.getElementById('preset-dialog')?.isOpen)
   const snapshot = await popup.ariaSnapshot()
   assert.match(snapshot, /dialog "Recency presets"/)
   assert.match(snapshot, /menu "Options":\n\s+- menuitem "Today"/)

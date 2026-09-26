@@ -322,3 +322,49 @@ test('Range slider submits both values and resets to its default range', async t
     disabledSubmission: [],
   })
 })
+
+test('Range slider without a default resets to two bounds and keeps range events', async t => {
+  const { page } = await pageFor(t)
+  const result = await page.evaluate(() => {
+    slider.removeAttribute('role')
+    slider.removeAttribute('tabindex')
+    const form = document.createElement('form')
+    slider.before(form)
+    form.append(slider)
+    slider.setAttribute('name', 'price')
+    slider.setAttribute('min', '10')
+    slider.setAttribute('max', '90')
+    slider.removeAttribute('defaultvalue')
+    slider.value = [20, 80]
+    const defaultValue = slider.defaultValue
+    const hasDefaultAttribute = slider.hasAttribute('defaultvalue')
+    form.reset()
+    const thumbs = [...slider.shadowRoot.querySelectorAll('[part~="thumb"]')]
+    const reset = {
+      value: slider.value,
+      role: slider.internals.role,
+      secondThumbVisible: !thumbs[1].hidden,
+      thumbRoles: thumbs.map(thumb => thumb.getAttribute('role')),
+      submitted: new FormData(form).getAll('price'),
+      events: log,
+    }
+    slider.removeAttribute('value')
+    return { defaultValue, hasDefaultAttribute, reset, afterRemovingValue: slider.value }
+  })
+  assert.deepEqual(result, {
+    defaultValue: [10, 90],
+    hasDefaultAttribute: false,
+    reset: {
+      value: [10, 90],
+      role: 'group',
+      secondThumbVisible: true,
+      thumbRoles: ['slider', 'slider'],
+      submitted: ['10', '90'],
+      events: [
+        { type: 'input', value: [10, 90] },
+        { type: 'change', value: [10, 90] },
+      ],
+    },
+    afterRemovingValue: [10, 90],
+  })
+})

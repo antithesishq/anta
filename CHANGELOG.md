@@ -13,6 +13,8 @@ changes are not listed.
 
 ### Fixed
 
+- [Slider](/slider/) keeps both thumbs and tuple callbacks after a form reset
+  when a range has no `defaultValue`.
 - Clearable [Input](/input/), [InputDate](/input-date/), and
   [InputTime](/input-time/) fields reserve the clear button's space while empty,
   so showing it does not add width.

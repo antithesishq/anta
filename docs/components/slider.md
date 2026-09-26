@@ -35,6 +35,7 @@ cross.
 
 `onValueChange` receives a number for a single-value slider and an ordered
 `[number, number]` tuple for a range slider. `onValueCommit` uses the same shape.
+Without `defaultValue`, a form reset selects the full `[min, max]` range.
 
 ```tsx title="Controlled range"
 import { useState } from 'preact/hooks'

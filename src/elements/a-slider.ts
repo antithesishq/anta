@@ -8,7 +8,7 @@ const precisionOf = (value: number) => {
 
 type SliderValue = number | [number, number]
 
-const parseSliderValue = (source: string | null, fallback: number): SliderValue => {
+const parseSliderValue = (source: string | null, fallback: SliderValue): SliderValue => {
   if (source === null || !source.trim()) return fallback
   const parts = source.trim().split(/\s+/)
   if (parts.length !== 1 && parts.length !== 2) return fallback
@@ -77,7 +77,7 @@ export class ASliderElement extends HTMLElementBase {
   }
 
   get defaultValue(): SliderValue {
-    return parseSliderValue(this.getAttribute('defaultvalue'), this.#min)
+    return parseSliderValue(this.getAttribute('defaultvalue'), this.#fallbackValue())
   }
 
   set defaultValue(value: SliderValue | string) {
@@ -364,7 +364,7 @@ export class ASliderElement extends HTMLElementBase {
 
     if (name === 'value') {
       if (this.hasAttribute('value')) {
-        this.#applyValue(parseSliderValue(this.getAttribute('value'), this.#min))
+        this.#applyValue(parseSliderValue(this.getAttribute('value'), this.#fallbackValue()))
         this.#dirty = false
       } else if (!this.#dirty) {
         this.#applyValue(this.#initialValue())
@@ -381,7 +381,7 @@ export class ASliderElement extends HTMLElementBase {
 
   formResetCallback() {
     const previous = this.#value
-    this.#applyValue(parseSliderValue(this.getAttribute('defaultvalue'), this.#min))
+    this.#applyValue(this.defaultValue)
     this.#dirty = false
     this.#paint()
     if (!sameSliderValue(this.#value, previous)) this.#emitInputAndChange()
@@ -389,7 +389,7 @@ export class ASliderElement extends HTMLElementBase {
 
   formStateRestoreCallback(state: string | File | FormData | null) {
     if (typeof state !== 'string') return
-    this.#applyValue(parseSliderValue(state, this.#min))
+    this.#applyValue(parseSliderValue(state, this.#fallbackValue()))
     this.#dirty = true
     this.#paint()
   }
@@ -415,9 +415,15 @@ export class ASliderElement extends HTMLElementBase {
     return this.hasAttribute('disabled') || this.matches(':disabled')
   }
 
+  #fallbackValue(): SliderValue {
+    const range = Array.isArray(this.#value) ||
+      Array.isArray(parseSliderValue(this.getAttribute('value'), this.#min))
+    return range ? [this.#min, this.#max] : this.#min
+  }
+
   #initialValue() {
     const source = this.getAttribute('value') ?? this.getAttribute('defaultvalue')
-    return parseSliderValue(source, this.#min)
+    return parseSliderValue(source, this.#fallbackValue())
   }
 
   #normalize(value: number) {

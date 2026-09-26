@@ -58,7 +58,8 @@ is limited. `offset` sets the gap in pixels between the trigger and the menu:
 
 Open **Recency** in the first demo, select **Custom range**, then pick **From**
 and **To** from the fields side by side. Each field closes its own calendar after
-a pick while the Recency editor stays open for the second date.
+a pick while the Recency editor stays open for the second date. Both fields have
+a clear button. Open **Min duration** to choose a comparison from its dropdown.
 
 Open **Metadata** to choose key–value tags such as
 **env production** or **region us-east**. Its `renderOption` callback reads
@@ -80,6 +81,7 @@ const recencySummary = (v) =>
   'preset' in v
     ? { today: 'Today', yesterday: 'Yesterday', last14: 'Last 14 days', last30: 'Last 30 days' }[v.preset]
     : v.from && v.to ? `${v.from} → ${v.to}` : 'Custom range'
+const sign = (comparison) => ({ gt: '>', gte: '≥', eq: '=', lte: '≤', lt: '<' })[comparison] ?? '≥'
 
 const FACETS = [
   { key: 'assignee', label: 'Assignee', kind: 'multiple', filter: true, options: people },
@@ -102,7 +104,7 @@ const FACETS = [
     ),
   },
   { key: 'title',    label: 'Title contains', kind: 'text' },
-  { key: 'duration', label: 'Min duration', kind: 'custom', summary: (v) => `≥ ${v.min}s`, render: /* … */ },
+  { key: 'duration', label: 'Min duration', kind: 'custom', summary: (v) => `${sign(v.comparison)} ${v.min}s`, render: /* Select comparison and Input value */ },
   { key: 'recency',  label: 'Recency', kind: 'custom', summary: recencySummary, render: /* radio presets and two InputDate fields */ },
 ]
 
@@ -407,9 +409,9 @@ const recency: SelectFacetCustom<Recency> = {
         />
         {mode === 'custom' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-            <InputDate size="small" label="From" value={range.from}
+            <InputDate size="small" label="From" clearable value={range.from}
               onValueChange={(from) => onChange({ from, to: range.to })} />
-            <InputDate size="small" label="To" value={range.to} min={range.from || undefined}
+            <InputDate size="small" label="To" clearable value={range.to} min={range.from || undefined}
               onValueChange={(to) => onChange({ from: range.from, to })} />
           </div>
         )}

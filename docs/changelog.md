@@ -3,6 +3,14 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- [Menus](/menu/) keep a faceted filter open when an embedded single-select
+  menu closes after a choice.
+- Clearing an [InputDate](/input-date/) field no longer toggles its calendar.
+
 ## 0.3.32 — September 25, 2026
 
 ### Added

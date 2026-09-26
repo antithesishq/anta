@@ -717,9 +717,12 @@ export interface AInputAttributes extends BaseAttributes {
    *  wrapper) the glyph. Only `critical` carries validity weight (`aria-invalid`
    *  + `:state(invalid)`); the others are advisory. Omit for the neutral field. */
   status?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical'
-  /** Custom accent color (any literal CSS color) — tints the resting + hover
-   *  border via an oklch derivation. `status` overrides it for validation. */
+  /** Custom accent color (any literal CSS color) — tints the border when shown
+   *  via an oklch derivation. `status` overrides it for validation. */
   tone?: string
+  /** Field emphasis. Secondary removes the fill; tertiary also hides the
+   *  resting border. Status borders remain visible. */
+  priority?: 'primary' | 'secondary' | 'tertiary'
   /** Disabled state. Presence-based. */
   disabled?: boolean | ''
   /** Read-only state. Presence-based. */

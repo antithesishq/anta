@@ -46,10 +46,15 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    *  success → `circle-check`, info → `info`, brand → `circle-small-solid`); pass a
    *  shape to override, or `false` to drop it. `neutral` has no default glyph. */
   statusIcon?: IconShape | (string & {}) | false
-  /** Custom accent color — any literal CSS color tints the resting + hover
-   *  border (focus ring stays the global `--focus-ring`). For consistency with the
+  /** Custom accent color — any literal CSS color tints the border when shown
+   *  (focus ring stays the global `--focus-ring`). For consistency with the
    *  other controls' custom-tone knob; a `status` still overrides for validation. */
   tone?: string
+  /** Field emphasis. `primary` has a fill and border, `secondary` keeps the
+   *  border without a fill, and `tertiary` reveals its border on hover or focus.
+   *  Status borders remain visible at rest.
+   *  @defaultValue primary */
+  priority?: 'primary' | 'secondary' | 'tertiary'
   /** Size variant. small=24px, medium=28px, large=32px tall; the type scale and
    *  icon track the size (small 13/16 + 14px icon · medium 15/20 + 16px ·
    *  large 17/22 + 18px).
@@ -241,6 +246,7 @@ export const Input = ({
   status,
   statusIcon,
   tone,
+  priority,
   size,
   round,
   value,
@@ -297,6 +303,7 @@ export const Input = ({
 
   return (
     <a-input
+      priority={priority && priority !== 'primary' ? priority : undefined}
       size={size && size !== 'medium' ? size : undefined}
       round={roundAttr(round)}
       value={value}

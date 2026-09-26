@@ -75,7 +75,8 @@
     line-height: 28px;
     padding-inline: 7px;
     border-radius: 4px;
-    box-shadow: inset 0 0 0 0.5px var(--input-border);
+    background: var(--input-bg);
+    box-shadow: inset 0 0 0 var(--input-border-width) var(--input-border);
     color: var(--input-placeholder);
     font-family: var(--sans-serif);
     font-size: 15px;
@@ -122,6 +123,7 @@
   a-input {
     --input-bg: var(--bg-1);
     --input-border: var(--border-2);
+    --input-border-width: 0.5px;
 
     --input-text: var(--text-1);
     --input-label: var(--text-3);
@@ -138,6 +140,19 @@
     /* `display` is owned by the shadow `:host` (a grid) so consumer CSS can
        re-template it; we only set the box width here. */
     width: 100%;
+  }
+
+  a-input[priority="secondary"],
+  a-input[priority="tertiary"] {
+    --input-bg: transparent;
+  }
+  a-input[priority="tertiary"] {
+    --input-border-width: 0px;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    a-input:not(:defined):not(:disabled):hover::after {
+      box-shadow: inset 0 0 0 1px var(--input-border);
+    }
   }
 
   /* Named slots are light-DOM state, so the host derives their visibility and
@@ -215,6 +230,7 @@
   a-input[status="info"]     { --input-status-source: var(--anta-seed-info);     --input-bg: var(--bg-2-info);     --input-hint: var(--text-2-info); }
   a-input[status="brand"]    { --input-status-source: var(--anta-seed-brand);    --input-bg: var(--bg-2-brand);    --input-hint: var(--text-2-brand); }
   a-input[status]:not([status="neutral"]) {
+    --input-border-width: 1px;
     --input-border: light-dark(
       oklch(from var(--input-status-source) 0.58 c h),
       oklch(from var(--input-status-source) 0.52 c h)

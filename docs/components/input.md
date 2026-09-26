@@ -24,6 +24,21 @@ Anta's text scale, so a field lines up with same-size `Text` / `Button`.
 | `medium` | 28px | 15 / 20 | 16px |
 | `large` | 32px | 17 / 22 | 18px |
 
+## Priority
+
+`priority` changes the field surface without changing its size or behavior.
+`primary` (the default) has a fill and border. `secondary` keeps the border
+without a fill. `tertiary` shows its border on hover or focus, so use it where
+the label or surrounding content makes the field easy to find. All three show
+the same focus ring. A non-neutral `status` keeps its tinted fill and border
+visible at rest.
+
+```tsx
+<Input label="Primary" placeholder="Filled field" autoComplete="off" />
+<Input priority="secondary" label="Secondary" placeholder="Outlined field" autoComplete="off" />
+<Input priority="tertiary" label="Tertiary" placeholder="Field on hover or focus" autoComplete="off" />
+```
+
 ## Label and hint
 
 ```tsx
@@ -470,6 +485,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 | `onValueChange?` | (event, attrs) => void | — | Unified value-change handler — the easy path for state. Fires on `input` *and* `change` (and on clear), with the native `event` plus a convenience `attrs` snapshot (`value`, `name`, `empty`, `valid`, `validationMessage`) so you can do `setForm(s => ({ ...s, [attrs.name]: attrs.value }))` without digging into the event. Use `event.type` to tell a live edit (`input`) from a commit (`change`); read `id` / `type` / `className` off `event.target`. |
 | `pattern?` | string | — | Validation pattern (single-line). |
 | `placeholder?` | string | — | Placeholder shown when empty. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | primary | Field emphasis. `primary` has a fill and border, `secondary` keeps the border without a fill, and `tertiary` reveals its border on hover or focus. Status borders remain visible at rest. |
 | `readOnly?` | boolean | — | Make the field read-only. |
 | `required?` | boolean | — | Mark the field required (drives native validity). |
 | `role?` | string | — | ARIA `role` for the field — e.g. `combobox` when the input drives a suggestion `listbox` (see `InputAutocomplete`). The custom element delegates it, together with standard `aria-*` props, to the focused native shadow control. Left unset by default. |
@@ -480,7 +496,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 | `status?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' | — | Validation / feedback tone — colors the border + `hint` and prefixes a glyph. Only `critical` marks the field invalid (`aria-invalid`, blocks form submission, `:state(invalid)`); `success` / `warning` / `info` / `brand` are advisory and stay valid. Omit (or `neutral`) for a plain field. |
 | `statusIcon?` | (string & {}) \| false \| IconShape | — | Glyph shown before the `hint` when `status` is set. Each status has a default (critical → `warning-diamond`, warning → `warning-triangle`, success → `circle-check`, info → `info`, brand → `circle-small-solid`); pass a shape to override, or `false` to drop it. `neutral` has no default glyph. |
 | `step?` | number \| string | — |  |
-| `tone?` | string | — | Custom accent color — any literal CSS color tints the resting + hover border (focus ring stays the global `--focus-ring`). For consistency with the other controls' custom-tone knob; a `status` still overrides for validation. |
+| `tone?` | string | — | Custom accent color — any literal CSS color tints the border when shown (focus ring stays the global `--focus-ring`). For consistency with the other controls' custom-tone knob; a `status` still overrides for validation. |
 | `trailing?` | ReactNode | — | Content pinned to the end of the field (e.g. icons, buttons), after the clear button when `clearable`. |
 | `truncate?` | boolean | true | Ellipsize an overflowing single-line value. Read-only inputs already do this; pass `false` when an editable field should show the full value. |
 | `type?` | 'text' \| 'search' \| 'email' \| 'password' \| 'tel' \| 'url' \| 'number' | text | Single-line input type. Ignored when `multiline`. `search` is a **wrapper-only** shorthand: it defaults a leading search icon and a clear button (both overridable — pass your own `leading`, or `clearable={false}`) and sets `inputmode="search"`, but the DOM input stays `type="text"`. The native `search` type never reaches the element, so the browser's own clear/search affordances never appear — Anta owns that chrome. |
@@ -534,9 +550,10 @@ their `size` attribute, so Anta does not reuse it. `round` and a custom-color
 
 ## Styling
 
-Reach for the props first: **`status`** sets a validation tone (border + message),
-**`tone`** a custom accent color for the border (any CSS color), **`size`** the
-dimensions. The focus ring is the global [`--focus-ring`](../colors.md#focus-ring).
+Reach for the props first: **`priority`** sets the field surface,
+**`status`** a validation tone (border + message), **`tone`** a custom accent
+color for the border (any CSS color), and **`size`** the dimensions. The focus
+ring is the global [`--focus-ring`](../colors.md#focus-ring).
 
 ```tsx
 <Input tone="#e0457b" label="Custom accent" autoComplete="off" />
@@ -555,11 +572,12 @@ a-input::part(input) { font-variant-numeric: tabular-nums; }
 a-input::part(label) { text-transform: uppercase; }
 ```
 
-The border is drawn as an **inset `box-shadow`**, not a real `border`, so its width
-(`0.5px` → `1px` when a `status` is set) and placement never change the box size —
-the field height stays locked to the matching Button. Drop the leading `inset` to
-draw the border as an outset ring instead. You can also re-point an `--input-*`
-color token on one instance (`style={{ '--input-border': 'var(--border-1)' }}`)
+The border is drawn as an **inset `box-shadow`**, so its width (`0.5px` at rest,
+`0` on a tertiary field, and `1px` on hover, focus, or non-neutral status)
+never changes the box size. The field height stays aligned with `Button`.
+Drop the leading `inset` to draw the border as an outset ring instead. You can
+also re-point an `--input-*` color token on one instance
+(`style={{ '--input-border': 'var(--border-1)' }}`)
 or a wrapping selector; the resolver lives in `@layer anta`, so any un-layered rule
 of yours wins.
 

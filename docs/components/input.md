@@ -34,6 +34,8 @@ content makes the field easy to find. All three show the same focus ring.
 On an enabled field, a non-neutral `status` keeps its tinted fill and border
 visible at rest.
 
+
+
 ```tsx
 <Input label="Primary" placeholder="Filled field" autoComplete="off" />
 <Input priority="secondary" label="Secondary" placeholder="Outlined field" autoComplete="off" />

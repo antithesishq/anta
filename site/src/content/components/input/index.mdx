@@ -16,11 +16,12 @@ import InputPasswordDemo from '../../../components/InputPasswordDemo'
 import InputValidationDemo from '../../../components/InputValidationDemo'
 import { Input, Icon, Button, Tooltip } from '@antadesign/anta'
 
-{/* Inputs sit on bg-1, so lift every preview panel on this page to bg-2 so the
-    white field reads against the panel. Page-scoped; !important beats Preview's
-    scoped default (--bg-canvas). */}
+{/* Inputs sit on bg-1, so lift preview panels to bg-2. The priority preview uses
+    bg-4 to show the difference between a filled and transparent field.
+    Page-scoped; !important beats Preview's scoped default (--bg-canvas). */}
 <style is:inline>{`
   .preview { background: var(--bg-2) !important; }
+  .priority-preview .preview { background: var(--bg-4) !important; }
 `}</style>
 
 # Input
@@ -92,11 +93,13 @@ content makes the field easy to find. All three show the same focus ring.
 On an enabled field, a non-neutral `status` keeps its tinted fill and border
 visible at rest.
 
-<Preview>
-  <Input label="Primary" placeholder="Filled field" autoComplete="off" />
-  <Input priority="secondary" label="Secondary" placeholder="Outlined field" autoComplete="off" />
-  <Input priority="tertiary" label="Tertiary" placeholder="Field on hover or focus" autoComplete="off" />
-</Preview>
+<div class="priority-preview">
+  <Preview>
+    <Input label="Primary" placeholder="Filled field" autoComplete="off" />
+    <Input priority="secondary" label="Secondary" placeholder="Outlined field" autoComplete="off" />
+    <Input priority="tertiary" label="Tertiary" placeholder="Field on hover or focus" autoComplete="off" />
+  </Preview>
+</div>
 
 ```tsx folded
 <Input label="Primary" placeholder="Filled field" autoComplete="off" />

@@ -17,12 +17,15 @@ before(async () => {
         import { Input } from './src/components/Input'
         import './src/elements/a-input'
         import './src/tokens.css'
+        import './src/theme-antune.css'
         configure(h)
         render(h('main', {},
           h(Input, { label: 'Primary' }),
           h(Input, { label: 'Secondary', priority: 'secondary' }),
           h(Input, { label: 'Tertiary', priority: 'tertiary' }),
           h(Input, { label: 'Invalid tertiary', priority: 'tertiary', status: 'critical' }),
+          h(Input, { label: 'Disabled secondary', priority: 'secondary', disabled: true }),
+          h(Input, { label: 'Disabled tertiary', priority: 'tertiary', disabled: true }),
         ), document.body)
       `,
       resolveDir: process.cwd(),
@@ -63,15 +66,18 @@ test('Input priorities preserve focus and status borders', async (t) => {
     getComputedStyle(host.shadowRoot.querySelector('.field')).getPropertyValue('--_bc').trim()
   ))
 
-  assert.deepEqual(await widths(), ['0.5px', '0.5px', '0.5px', '1px'])
+  assert.deepEqual(await widths(), ['0.5px', '0.5px', '0.5px', '1px', '0.5px', '0.5px'])
   const bg = await backgrounds()
   assert.notEqual(bg[0], bg[1])
   assert.equal(bg[1], 'rgba(0, 0, 0, 0)')
   assert.equal(bg[2], bg[1])
   assert.notEqual(bg[3], bg[1])
+  assert.equal(bg[4], bg[1])
+  assert.equal(bg[5], bg[1])
   assert.equal((await borders())[2], 'transparent')
+  assert.equal((await borders())[5], 'transparent')
 
-  const tertiary = page.locator('a-input[priority="tertiary"]:not([status])')
+  const tertiary = page.locator('a-input[priority="tertiary"]:not([status]):not([disabled])')
   await tertiary.hover()
   assert.equal((await widths())[2], '1px')
   assert.equal((await borders())[2], (await borders())[1])

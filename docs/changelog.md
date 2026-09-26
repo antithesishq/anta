@@ -7,6 +7,9 @@ changes are not listed.
 
 ### Fixed
 
+- Clearable [Input](/input/), [InputDate](/input-date/), and
+  [InputTime](/input-time/) fields reserve the clear button's space while empty,
+  so showing it does not add width.
 - [Menus](/menu/) keep a faceted filter open when an embedded single-select
   menu closes after a choice.
 - Clearing an [InputDate](/input-date/) field no longer toggles its calendar.

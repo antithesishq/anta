@@ -720,8 +720,8 @@ export interface AInputAttributes extends BaseAttributes {
   /** Custom accent color (any literal CSS color) — tints the border when shown
    *  via an oklch derivation. `status` overrides it for validation. */
   tone?: string
-  /** Field emphasis. Secondary removes the fill; tertiary also hides the
-   *  resting border. Status borders remain visible. */
+  /** Field emphasis. Secondary removes the fill; tertiary also makes the
+   *  resting border transparent. Status borders remain visible. */
   priority?: 'primary' | 'secondary' | 'tertiary'
   /** Disabled state. Presence-based. */
   disabled?: boolean | ''

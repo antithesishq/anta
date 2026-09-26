@@ -59,33 +59,42 @@ test('Input priorities preserve focus and status borders', async (t) => {
   const backgrounds = () => page.locator('a-input').evaluateAll(hosts => hosts.map(host =>
     getComputedStyle(host.shadowRoot.querySelector('.field')).backgroundColor
   ))
+  const borders = () => page.locator('a-input').evaluateAll(hosts => hosts.map(host =>
+    getComputedStyle(host.shadowRoot.querySelector('.field')).getPropertyValue('--_bc').trim()
+  ))
 
-  assert.deepEqual(await widths(), ['0.5px', '0.5px', '0px', '1px'])
+  assert.deepEqual(await widths(), ['0.5px', '0.5px', '0.5px', '1px'])
   const bg = await backgrounds()
   assert.notEqual(bg[0], bg[1])
   assert.equal(bg[1], 'rgba(0, 0, 0, 0)')
   assert.equal(bg[2], bg[1])
   assert.notEqual(bg[3], bg[1])
+  assert.equal((await borders())[2], 'transparent')
 
   const tertiary = page.locator('a-input[priority="tertiary"]:not([status])')
   await tertiary.hover()
   assert.equal((await widths())[2], '1px')
+  assert.equal((await borders())[2], (await borders())[1])
+  assert.equal((await backgrounds())[2], (await backgrounds())[1])
   await page.mouse.move(0, 0)
-  assert.equal((await widths())[2], '0px')
+  assert.equal((await borders())[2], 'transparent')
 
   await tertiary.locator('input').focus()
   assert.equal((await widths())[2], '1px')
+  assert.equal((await borders())[2], (await borders())[1])
+  assert.equal((await backgrounds())[2], (await backgrounds())[1])
   assert.equal(await tertiary.locator('.field').evaluate(field => getComputedStyle(field).outlineStyle), 'solid')
 })
 
-test('tertiary pre-upgrade field has no resting border', async (t) => {
+test('tertiary pre-upgrade field has a transparent resting border', async (t) => {
   const context = await browser.newContext()
   t.after(() => context.close())
   const page = await context.newPage()
   await page.setContent('<a-input priority="tertiary" placeholder="Search"></a-input>')
   await page.addStyleTag({ content: css })
   const field = page.locator('a-input')
-  assert.equal(await field.evaluate(host => getComputedStyle(host, '::after').boxShadow.includes('0px 0px 0px 0px')), true)
+  assert.equal(await field.evaluate(host => getComputedStyle(host).getPropertyValue('--input-rest-border').trim()), 'transparent')
+  assert.match(await field.evaluate(host => getComputedStyle(host, '::after').boxShadow), /0px 0px 0px 0\.5px/)
   await field.hover()
   assert.equal(await field.evaluate(host => getComputedStyle(host, '::after').boxShadow.includes('0px 0px 0px 1px')), true)
 })

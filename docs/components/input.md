@@ -27,10 +27,11 @@ Anta's text scale, so a field lines up with same-size `Text` / `Button`.
 ## Priority
 
 `priority` changes the field surface without changing its size or behavior.
-`primary` (the default) has a fill and border. `secondary` keeps the border
-without a fill. `tertiary` shows its border on hover or focus, so use it where
-the label or surrounding content makes the field easy to find. All three show
-the same focus ring. A non-neutral `status` keeps its tinted fill and border
+`primary` (the default) has a fill and border. `secondary` has a transparent
+background and visible border. `tertiary` keeps both transparent at rest, then
+uses secondary's border on hover or focus. Use it where the label or surrounding
+content makes the field easy to find. All three show the same focus ring.
+On an enabled field, a non-neutral `status` keeps its tinted fill and border
 visible at rest.
 
 ```tsx
@@ -485,7 +486,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 | `onValueChange?` | (event, attrs) => void | — | Unified value-change handler — the easy path for state. Fires on `input` *and* `change` (and on clear), with the native `event` plus a convenience `attrs` snapshot (`value`, `name`, `empty`, `valid`, `validationMessage`) so you can do `setForm(s => ({ ...s, [attrs.name]: attrs.value }))` without digging into the event. Use `event.type` to tell a live edit (`input`) from a commit (`change`); read `id` / `type` / `className` off `event.target`. |
 | `pattern?` | string | — | Validation pattern (single-line). |
 | `placeholder?` | string | — | Placeholder shown when empty. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | primary | Field emphasis. `primary` has a fill and border, `secondary` keeps the border without a fill, and `tertiary` reveals its border on hover or focus. Status borders remain visible at rest. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | primary | Field emphasis. `primary` has a fill and border, `secondary` keeps the border without a fill, and `tertiary` makes the border transparent until hover or focus. Status borders remain visible at rest. |
 | `readOnly?` | boolean | — | Make the field read-only. |
 | `required?` | boolean | — | Mark the field required (drives native validity). |
 | `role?` | string | — | ARIA `role` for the field — e.g. `combobox` when the input drives a suggestion `listbox` (see `InputAutocomplete`). The custom element delegates it, together with standard `aria-*` props, to the focused native shadow control. Left unset by default. |
@@ -573,7 +574,8 @@ a-input::part(label) { text-transform: uppercase; }
 ```
 
 The border is drawn as an **inset `box-shadow`**, so its width (`0.5px` at rest,
-`0` on a tertiary field, and `1px` on hover, focus, or non-neutral status)
+including tertiary's transparent border, and `1px` on hover, focus, or
+non-neutral status)
 never changes the box size. The field height stays aligned with `Button`.
 Drop the leading `inset` to draw the border as an outset ring instead. You can
 also re-point an `--input-*` color token on one instance

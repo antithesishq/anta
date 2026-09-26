@@ -76,7 +76,7 @@
     padding-inline: 7px;
     border-radius: 4px;
     background: var(--input-bg);
-    box-shadow: inset 0 0 0 var(--input-border-width) var(--input-border);
+    box-shadow: inset 0 0 0 var(--input-border-width) var(--input-rest-border);
     color: var(--input-placeholder);
     font-family: var(--sans-serif);
     font-size: 15px;
@@ -123,6 +123,7 @@
   a-input {
     --input-bg: var(--bg-1);
     --input-border: var(--border-2);
+    --input-rest-border: var(--input-border);
     --input-border-width: 0.5px;
 
     --input-text: var(--text-1);
@@ -147,7 +148,7 @@
     --input-bg: transparent;
   }
   a-input[priority="tertiary"] {
-    --input-border-width: 0px;
+    --input-rest-border: transparent;
   }
   @media (hover: hover) and (pointer: fine) {
     a-input:not(:defined):not(:disabled):hover::after {
@@ -197,8 +198,8 @@
     }
   }
 
-  /* Custom tone — a literal CSS color tints the resting border (hover thickens
-     it; the focus ring stays the global `--focus-ring`). Gated off when a `status`
+  /* Custom tone — a literal CSS color tints the border when visible; the focus
+     ring stays the global `--focus-ring`. Gated off when a `status`
      is set (`:not([status])`) so validation always owns the border: the status
      rules below derive from their own `--input-status-source`, and dropping tone
      from the cascade here keeps a custom hue out of a validation border. FIRST-PASS
@@ -221,9 +222,8 @@
   /* Status — the border derives in oklch from the matching tone's seed through
      `--input-status-source`, its own channel (a custom `tone`'s inline
      `--input-tone-source` never reaches it); the bg tint + message color are the
-     tone's role tokens, so both themes come for free. The 1px width bump and the
-     glyph are handled in the shadow off the same `[status]` host attribute (hover
-     just thickens the edge, it doesn't recolor); only `critical` drives validity. */
+     tone's role tokens, so both themes come for free. Status keeps the border
+     visible at rest, including on tertiary; only `critical` drives validity. */
   a-input[status="critical"] { --input-status-source: var(--anta-seed-critical); --input-bg: var(--bg-2-critical); --input-hint: var(--text-2-critical); }
   a-input[status="warning"]  { --input-status-source: var(--anta-seed-warning);  --input-bg: var(--bg-2-warning);  --input-hint: var(--text-2-warning); }
   a-input[status="success"]  { --input-status-source: var(--anta-seed-success);  --input-bg: var(--bg-2-success);  --input-hint: var(--text-2-success); }
@@ -231,6 +231,7 @@
   a-input[status="brand"]    { --input-status-source: var(--anta-seed-brand);    --input-bg: var(--bg-2-brand);    --input-hint: var(--text-2-brand); }
   a-input[status]:not([status="neutral"]) {
     --input-border-width: 1px;
+    --input-rest-border: var(--input-border);
     --input-border: light-dark(
       oklch(from var(--input-status-source) 0.58 c h),
       oklch(from var(--input-status-source) 0.52 c h)
@@ -250,6 +251,11 @@
     --input-bg: light-dark(#44374b12, #e4d1ef0d);
     --input-border: light-dark(#44374b26, #e4d1ef1f);
     --input-hint: var(--text-5);
+  }
+
+  a-input[priority="secondary"]:disabled,
+  a-input[priority="tertiary"]:disabled {
+    --input-bg: transparent;
   }
 
   /* Icon size tracks the field size — small 14 / medium 16 (the a-icon default)

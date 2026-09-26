@@ -51,7 +51,8 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
    *  other controls' custom-tone knob; a `status` still overrides for validation. */
   tone?: string
   /** Field emphasis. `primary` has a fill and border, `secondary` keeps the
-   *  border without a fill, and `tertiary` reveals its border on hover or focus.
+   *  border without a fill, and `tertiary` makes the border transparent until
+   *  hover or focus.
    *  Status borders remain visible at rest.
    *  @defaultValue primary */
   priority?: 'primary' | 'secondary' | 'tertiary'

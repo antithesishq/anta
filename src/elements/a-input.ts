@@ -134,9 +134,9 @@ const SUPPORTS_FIELD_SIZING =
 //    medium 15/20 · large 17/22); label, control, and hint all read them.
 //  • .field — min-height (24/28/32) matches the same-size Button. The border is a
 //    box-shadow (inset), not a real border, so priority and status width changes
-//    (0/0.5px→1px, with status colors from a-input.css) never reflow.
-//    Forced-colors supplies a real system border because
-//    it suppresses shadows. The focus ring shows only when the *control* is
+//    (0.5px→1px, with status colors from a-input.css) never reflow.
+//    Forced-colors supplies a real system border because it suppresses shadows.
+//    The focus ring shows only when the *control* is
 //    focused (:has), not when a slotted button holds focus.
 //  • input / textarea — only the control carries the horizontal text inset; edge
 //    slots + clear sit flush. appearance:none and the ::-webkit/::-ms resets strip
@@ -193,7 +193,7 @@ const SHADOW_STYLE = `
   }
 
   .field {
-    --_bc: var(--input-border);
+    --_bc: var(--input-rest-border);
     --_bw: var(--input-border-width);
     --_pad-block: 4px;
 
@@ -214,11 +214,12 @@ const SHADOW_STYLE = `
   :host([round]) .field { border-radius: var(--input-round, 999px); }
 
   @media (hover: hover) and (pointer: fine) {
-    :host(:not(:disabled)) .field:hover { --_bw: 1px; }
+    :host(:not(:disabled)) .field:hover { --_bw: 1px; --_bc: var(--input-border); }
   }
   :host(:not([readonly])) .field:has(input:focus, textarea:focus, button:focus-visible),
   :host([readonly]:state(kb-focus)) .field {
     --_bw: 1px;
+    --_bc: var(--input-border);
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
   }

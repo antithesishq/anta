@@ -85,10 +85,11 @@ Anta's text scale, so a field lines up with same-size `Text` / `Button`.
 ## Priority
 
 `priority` changes the field surface without changing its size or behavior.
-`primary` (the default) has a fill and border. `secondary` keeps the border
-without a fill. `tertiary` shows its border on hover or focus, so use it where
-the label or surrounding content makes the field easy to find. All three show
-the same focus ring. A non-neutral `status` keeps its tinted fill and border
+`primary` (the default) has a fill and border. `secondary` has a transparent
+background and visible border. `tertiary` keeps both transparent at rest, then
+uses secondary's border on hover or focus. Use it where the label or surrounding
+content makes the field easy to find. All three show the same focus ring.
+On an enabled field, a non-neutral `status` keeps its tinted fill and border
 visible at rest.
 
 <Preview>
@@ -826,7 +827,8 @@ a-input::part(label) { text-transform: uppercase; }
 ```
 
 The border is drawn as an **inset `box-shadow`**, so its width (`0.5px` at rest,
-`0` on a tertiary field, and `1px` on hover, focus, or non-neutral status)
+including tertiary's transparent border, and `1px` on hover, focus, or
+non-neutral status)
 never changes the box size. The field height stays aligned with `Button`.
 Drop the leading `inset` to draw the border as an outset ring instead. You can
 also re-point an `--input-*` color token on one instance

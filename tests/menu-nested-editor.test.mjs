@@ -33,6 +33,8 @@ before(async () => {
               ),
               h(Button, { label: 'Done', 'data-menu-close': '' }),
             ),
+          }, {
+            key: 'other', label: 'Other', kind: 'single', options: ['One'],
           }],
         }), document.body)
       `,
@@ -141,4 +143,40 @@ test('clearing a date field leaves its already open calendar open', async t => {
   assert.equal(await calendar.evaluate(menu => menu.isOpen), true)
   assert.equal(await editor.evaluate(menu => menu.isOpen), true)
   assert.equal(await root.evaluate(menu => menu.isOpen), true)
+})
+
+test('switching facet submenus resets a cleared date calendar before reopening it', async t => {
+  const context = await browser.newContext({ viewport: { width: 1200, height: 800 } })
+  t.after(() => context.close())
+  const page = await context.newPage()
+  await page.addStyleTag({ content: css })
+  await page.addScriptTag({ content: script })
+
+  await page.getByText('Filter', { exact: true }).click()
+  const root = page.locator('a-menu').first()
+  const duration = root.locator('a-menu-item[submenu]').filter({ hasText: 'Min duration' })
+  const other = root.locator('a-menu-item[submenu]').filter({ hasText: 'Other' })
+  const editor = duration.locator('a-menu').first()
+  await editor.evaluate(menu => menu.open())
+  const field = editor.locator('a-input').first()
+  const calendar = field.locator('xpath=following-sibling::a-menu[1]')
+
+  await field.locator('input').click()
+  await field.locator('a-button[aria-label="Clear"]').click()
+  assert.equal(await field.evaluate(input => input.value), '')
+  assert.equal(await calendar.evaluate(menu => menu.isOpen), true)
+
+  await other.hover()
+  await page.waitForFunction(() => {
+    const item = [...document.querySelectorAll('a-menu-item[submenu]')].find(node => node.textContent.includes('Other'))
+    return item?.querySelector(':scope > a-menu')?.isOpen
+  })
+  assert.equal(await editor.evaluate(menu => menu.isOpen), false)
+  assert.deepEqual(await calendar.evaluate(menu => ({ state: menu.getAttribute('state'), shown: menu.isOpen })), {
+    state: 'closed', shown: false,
+  })
+
+  await editor.evaluate(menu => menu.open())
+  await field.locator('input').click()
+  assert.equal(await calendar.evaluate(menu => menu.isOpen), true)
 })

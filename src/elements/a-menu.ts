@@ -1051,7 +1051,14 @@ export class AMenuElement extends HTMLElementBase {
       if (parent) {
         const pidx = openStack.indexOf(parent)
         if (pidx !== -1) {
-          for (let i = openStack.length - 1; i > pidx; i--) openStack[i]._doHide()
+          for (let i = openStack.length - 1; i > pidx; i--) {
+            const menu = openStack[i]
+            // Replacing a submenu also displaces any controlled popup inside it.
+            // Notify its owner before hiding it, as the other stack trims do.
+            // Reopening this same submenu is not a dismissal of that submenu.
+            if (menu !== this && menu.isOpen && !menu._dismissNotified) menu.emitChange('closed')
+            menu._doHide()
+          }
           openStack.length = pidx + 1
         }
       }

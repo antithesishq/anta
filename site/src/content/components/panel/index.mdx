@@ -124,8 +124,9 @@ through its controls. Restoring releases the trap and returns focus to the
 previous external control, when available.
 
 Provide a keyboard-accessible **Restore** control: Escape and outside clicks
-do not restore the panel. Panel adds no dialog role, background inertness, or
-scroll lock. Use [Dialog](/dialog/) for modal interactions.
+do not restore the panel. Panel adds no dialog role or background inertness.
+Maximizing Panel does not lock page scrolling; the page's viewport scrollbar
+may remain visible and usable. Use [Dialog](/dialog/) for modal interactions.
 
 Panel fills the browser viewport, without invoking the Fullscreen API.
 Browsers without Popover API support keep it in normal layout.

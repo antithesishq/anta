@@ -3,6 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Added
+
+- [Input priority](/input/#priority) adds secondary fields without a fill and
+  tertiary fields that reveal their border on hover or focus.
+
 ## 0.3.32 — September 25, 2026
 
 ### Added

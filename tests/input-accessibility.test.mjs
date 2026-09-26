@@ -377,6 +377,8 @@ test('dialog menus expose body items without a search field and clear empty menu
     document.body.append(menu)
   })
   const popup = page.locator('#preset-dialog')
+  // An initially controlled menu applies `state="open"` on the next frame.
+  await page.waitForFunction(() => document.getElementById('preset-dialog')?.isOpen)
   const snapshot = await popup.ariaSnapshot()
   assert.match(snapshot, /dialog "Recency presets"/)
   assert.match(snapshot, /menu "Options":\n\s+- menuitem "Today"/)
@@ -546,7 +548,7 @@ test('button-backed Select and editable InputDate retain their popup interaction
   const selectHost = page.locator('a-button[aria-label="Team"]')
   await selectHost.focus()
   await page.keyboard.press('Enter')
-  await page.waitForTimeout(20)
+  await page.waitForFunction(() => document.querySelector('a-button[aria-label="Team"]')?.getAttribute('aria-expanded') === 'true')
   assert.equal(await selectHost.getAttribute('aria-expanded'), 'true')
   assert.deepEqual(
     await selectHost.evaluate(button => ({
@@ -558,8 +560,10 @@ test('button-backed Select and editable InputDate retain their popup interaction
   )
 
   await page.keyboard.press('Escape')
+  await page.waitForFunction(() => document.querySelector('a-button[aria-label="Team"]')?.getAttribute('aria-expanded') === 'false')
   const dateHost = page.locator('a-input').filter({ has: page.locator('input[aria-label="Due date"]') })
   await dateHost.locator('input').click()
+  await dateHost.locator('input[aria-expanded="true"]').waitFor()
   assert.equal(await dateHost.locator('input').getAttribute('aria-expanded'), 'true')
   assert.equal(await dateHost.locator('input').evaluate(input => input.ariaControlsElements?.[0]?.getAttribute('role')), 'dialog')
 })

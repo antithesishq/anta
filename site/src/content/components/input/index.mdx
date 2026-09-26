@@ -16,11 +16,12 @@ import InputPasswordDemo from '../../../components/InputPasswordDemo'
 import InputValidationDemo from '../../../components/InputValidationDemo'
 import { Input, Icon, Button, Tooltip } from '@antadesign/anta'
 
-{/* Inputs sit on bg-1, so lift every preview panel on this page to bg-2 so the
-    white field reads against the panel. Page-scoped; !important beats Preview's
-    scoped default (--bg-canvas). */}
+{/* Inputs sit on bg-1, so lift preview panels to bg-2. The priority preview uses
+    bg-4 to show the difference between a filled and transparent field.
+    Page-scoped; !important beats Preview's scoped default (--bg-canvas). */}
 <style is:inline>{`
   .preview { background: var(--bg-2) !important; }
+  .priority-preview .preview { background: var(--bg-4) !important; }
 `}</style>
 
 # Input
@@ -81,6 +82,30 @@ Anta's text scale, so a field lines up with same-size `Text` / `Button`.
 
 </Col>
 </Columns>
+
+## Priority
+
+`priority` changes the field surface without changing its size or behavior.
+`primary` (the default) has a fill and border. `secondary` has a transparent
+background and visible border. `tertiary` keeps both transparent at rest, then
+uses secondary's border on hover or focus. Use it where the label or surrounding
+content makes the field easy to find. All three show the same focus ring.
+On an enabled field, a non-neutral `status` keeps its tinted fill and border
+visible at rest.
+
+<div class="priority-preview">
+  <Preview>
+    <Input label="Primary" placeholder="Filled field" autoComplete="off" />
+    <Input priority="secondary" label="Secondary" placeholder="Outlined field" autoComplete="off" />
+    <Input priority="tertiary" label="Tertiary" placeholder="Field on hover or focus" autoComplete="off" />
+  </Preview>
+</div>
+
+```tsx folded
+<Input label="Primary" placeholder="Filled field" autoComplete="off" />
+<Input priority="secondary" label="Secondary" placeholder="Outlined field" autoComplete="off" />
+<Input priority="tertiary" label="Tertiary" placeholder="Field on hover or focus" autoComplete="off" />
+```
 
 ## Label and hint
 
@@ -782,9 +807,10 @@ their `size` attribute, so Anta does not reuse it. `round` and a custom-color
 
 <Disclosure title="Styling">
 
-Reach for the props first: **`status`** sets a validation tone (border + message),
-**`tone`** a custom accent color for the border (any CSS color), **`size`** the
-dimensions. The focus ring is the global [`--focus-ring`](/colors/#focus-ring).
+Reach for the props first: **`priority`** sets the field surface,
+**`status`** a validation tone (border + message), **`tone`** a custom accent
+color for the border (any CSS color), and **`size`** the dimensions. The focus
+ring is the global [`--focus-ring`](/colors/#focus-ring).
 
 ```tsx folded
 <Input tone="#e0457b" label="Custom accent" autoComplete="off" />
@@ -803,11 +829,13 @@ a-input::part(input) { font-variant-numeric: tabular-nums; }
 a-input::part(label) { text-transform: uppercase; }
 ```
 
-The border is drawn as an **inset `box-shadow`**, not a real `border`, so its width
-(`0.5px` → `1px` when a `status` is set) and placement never change the box size —
-the field height stays locked to the matching Button. Drop the leading `inset` to
-draw the border as an outset ring instead. You can also re-point an `--input-*`
-color token on one instance (`style={{ '--input-border': 'var(--border-1)' }}`)
+The border is drawn as an **inset `box-shadow`**, so its width (`0.5px` at rest,
+including tertiary's transparent border, and `1px` on hover, focus, or
+non-neutral status)
+never changes the box size. The field height stays aligned with `Button`.
+Drop the leading `inset` to draw the border as an outset ring instead. You can
+also re-point an `--input-*` color token on one instance
+(`style={{ '--input-border': 'var(--border-1)' }}`)
 or a wrapping selector; the resolver lives in `@layer anta`, so any un-layered rule
 of yours wins.
 

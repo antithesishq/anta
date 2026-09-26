@@ -31,4 +31,5 @@ site/public/search-index.json
 site/public/iframe/
 .hegel/
 tests/.test-output/
+tests/pbt/.runs/
 site/public/playground/

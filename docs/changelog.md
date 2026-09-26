@@ -7,12 +7,16 @@ changes are not listed.
 
 ### Added
 
+- [Input priority](/input/#priority) adds secondary fields without a fill and
+  tertiary fields that reveal their border on hover or focus.
 - [Slider](/slider/) accepts a two-value range with crossing thumbs and an
   `inverted` track fill. Range values use two space-separated numbers in the
   web component attribute and a sorted number pair in JavaScript and callbacks.
 
 ### Fixed
 
+- [Slider](/slider/) keeps both thumbs and tuple callbacks after a form reset
+  when a range has no `defaultValue`.
 - Clearable [Input](/input/), [InputDate](/input-date/), and
   [InputTime](/input-time/) fields reserve the clear button's space while empty,
   so showing it does not add width.

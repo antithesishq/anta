@@ -140,3 +140,73 @@ as `Slider`. In raw HTML, `round` needs a CSS length such as `"4px"`; JSX
   border-radius: 4px;
 }
 ```
+
+### Editable value beside the label
+
+Compose `Input` and `Slider` as separate controls. The grid puts the label and
+input on one row and the slider underneath. Pass `valueDisplay="none"` so the
+slider does not repeat its value. Keep the input's text as a draft; when the
+field loses focus or you press Enter, commit a number within the slider's range.
+Dragging or using the slider's keyboard controls updates both values.
+
+```tsx title="Slider with an editable value"
+import { useState } from 'preact/hooks'
+import { Input, Slider } from '@antadesign/anta'
+
+function Demo() {
+  const [value, setValue] = useState(55)
+  const [draft, setDraft] = useState('55')
+
+  const commit = () => {
+    const number = Number(draft)
+    const next = draft.trim() && Number.isFinite(number)
+      ? Math.max(0, Math.min(100, Math.round(number)))
+      : value
+    setValue(next)
+    setDraft(String(next))
+  }
+
+  return (
+    <div className="editable-slider">
+      <span className="editable-slider-label">Volume</span>
+      <Input
+        aria-label="Volume value"
+        inputMode="numeric"
+        trailing="%"
+        value={draft}
+        onInput={(event) => setDraft(event.currentTarget.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') commit()
+        }}
+      />
+      <Slider
+        aria-label="Volume"
+        value={value}
+        valueDisplay="none"
+        valueSuffix="%"
+        onValueChange={(_, { value: next }) => {
+          setValue(next)
+          setDraft(String(next))
+        }}
+      />
+    </div>
+  )
+}
+```
+
+```css title="Editable Slider layout"
+.editable-slider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 8px 12px;
+  width: min(100%, 360px);
+}
+.editable-slider-label {
+  color: var(--text-3);
+  font-size: 15px;
+  font-weight: 500;
+}
+.editable-slider > a-slider { grid-column: 1 / -1; }
+```

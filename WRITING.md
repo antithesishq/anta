@@ -174,8 +174,12 @@ review marker.
 
 Do not add or preserve a human author marker when generating or changing
 documentation with an agent. Run `pnpm docs-fix` to inspect and remove stale
-markers after changing previously reviewed text. The command shows its proposed
-removals and asks before editing; `pnpm docs-fix --check` never edits files.
+markers that already existed at the branch point with `main` when their
+documentation has changed. The command shows its proposed removals and asks
+before editing; `pnpm docs-fix --check` never edits files. The `/docs-fix` PR
+comment runs the same removal in a bot commit. With the default comparison,
+neither command removes author markers first added on the current branch;
+remove those manually if they have not been reviewed.
 Human review and author attribution happen after the final text is ready.
 The human runs `pnpm docs-review <source-file> <declaration>` for TSDoc or
 `pnpm docs-review <page.mdx>` for a page. The command proposes the name from
@@ -187,7 +191,9 @@ CI compares each PR with its base commit. New author markers and edits that
 retain an existing author require the `review-docs` PR label; without it, the
 `docs-review` job fails. With the label, that job lists every affected
 TSDoc comment and authored page in the Actions summary and annotates its source
-line. The label asks the reviewer to inspect those sections before approval.
+line. The job shows the full TSDoc text and the paths of authored pages. It does
+not edit files or verify that a human read them. The label asks the reviewer to
+inspect those sections and the PR diff before approval.
 
 - **Pages (`.mdx`):** State the purpose in one or two sentences, show the common
   case, then cover interactions and constraints a reader can act on. Component

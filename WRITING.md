@@ -162,6 +162,21 @@ what to do next. State the fact, its consequence, and stop.
 
 ## Rules by surface
 
+### Human review markers
+
+An MDX page has `author: Name` in its frontmatter only after a human has
+reviewed the whole page. A standalone Astro page passes `author="Name"` to
+`DocsLayout` after the same review. A TSDoc comment has `@author Name` only
+after a human has reviewed that whole comment, including its examples and
+tags. Without the marker, the documentation site and TypeDoc reference show a
+review warning.
+
+Do not add or preserve a human author marker when generating or changing
+documentation with an agent. Run `pnpm docs-fix` to inspect and remove stale
+markers after changing previously reviewed text. The command shows its proposed
+removals and asks before editing; `pnpm docs-fix --check` never edits files.
+Human review and author attribution happen after the final text is ready.
+
 - **Pages (`.mdx`):** State the purpose in one or two sentences, show the common
   case, then cover interactions and constraints a reader can act on. Component
   pages use `PropsTable` for types and defaults and a `## Styling` disclosure

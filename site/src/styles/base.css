@@ -167,6 +167,27 @@ details:not([data-anta])[open] > summary:not(.summary)::before {
   text-underline-offset: 3px;
 }
 
+/* An absent author marks the whole page as awaiting human review. */
+.content[data-doc-review="pending"] > h1:first-of-type,
+.content [data-doc-review-heading="pending"] {
+  color: var(--text-1-warning);
+}
+.doc-review-marker {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: 0.35em;
+  color: var(--text-1-warning);
+  cursor: help;
+  vertical-align: baseline;
+}
+.doc-review-marker:focus-visible {
+  outline: 2px solid var(--text-1-warning);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 /* Same-page links (in-page anchors, `href="#…"`) get a dotted underline so a
    soft cross-reference reads apart from a solid-underlined link that navigates
    away. Header anchors set their own styling above. */

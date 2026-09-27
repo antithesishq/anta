@@ -2,27 +2,28 @@ import { Comment, Converter, ReflectionKind } from 'typedoc'
 
 const hasAuthor = (reflection) => reflection?.comment?.blockTags.some((tag) => tag.tag === '@author') ?? false
 
-function isReviewed(reflection) {
-  if (hasAuthor(reflection)) return true
-  // TypeDoc attaches a function's TSDoc to its signature, while the page title
-  // belongs to the enclosing declaration reflection.
-  if (reflection.signatures?.length) return reflection.signatures.every(hasAuthor)
-  // @param text comes from the signature's TSDoc, not a separate comment.
-  if (reflection.kindOf(ReflectionKind.Parameter | ReflectionKind.TypeParameter)) {
-    return hasAuthor(reflection.parent)
-  }
-  return false
+function hasText(comment) {
+  if (!comment) return false
+  const text = (parts) => parts?.some((part) => part.text?.trim()) ?? false
+  return text(comment.summary) || comment.blockTags.some((tag) =>
+    tag.tag !== '@author' && tag.tag !== '@privateRemarks' && text(tag.content))
 }
 
-// The HTML reference has a visible state even when a declaration has no TSDoc.
+// TypeDoc puts function comments on signatures and @param text on parameters.
+// Their enclosing declaration gets one marker for that whole TSDoc comment.
+// Bare declarations and generated parameter reflections get no marker.
 // This plugin is used only for the reference site; api.json stays source-faithful.
 export function load(app) {
   app.converter.on(Converter.EVENT_RESOLVE_END, ({ project }) => {
     for (const reflection of Object.values(project.reflections)) {
-      const comment = reflection.comment ??= new Comment()
-      if (!isReviewed(reflection)) {
-        comment.modifierTags.add('@unreviewed')
-      }
+      if (reflection.kindOf(ReflectionKind.SomeSignature | ReflectionKind.Parameter | ReflectionKind.TypeParameter)) continue
+      const documentedSignatures = reflection.signatures?.filter((signature) =>
+        hasText(signature.comment) || signature.parameters?.some((parameter) => hasText(parameter.comment))) ?? []
+      const hasDocumentation = hasText(reflection.comment) || documentedSignatures.length > 0
+      if (!hasDocumentation) continue
+      const reviewed = hasAuthor(reflection) ||
+        (documentedSignatures.length > 0 && documentedSignatures.every(hasAuthor))
+      if (!reviewed) (reflection.comment ??= new Comment()).modifierTags.add('@unreviewed')
     }
   })
 }

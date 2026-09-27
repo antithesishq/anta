@@ -168,8 +168,9 @@ An MDX page has `author: Name` in its frontmatter only after a human has
 reviewed the whole page. A standalone Astro page passes `author="Name"` to
 `DocsLayout` after the same review. A TSDoc comment has `@author Name` only
 after a human has reviewed that whole comment, including its examples and
-tags. Without the marker, the documentation site and TypeDoc reference show a
-review warning.
+tags. Without the marker, the documentation site shows a page warning. TypeDoc
+shows a warning on documented declarations; declarations without TSDoc have no
+review marker.
 
 Do not add or preserve a human author marker when generating or changing
 documentation with an agent. Run `pnpm docs-fix` to inspect and remove stale

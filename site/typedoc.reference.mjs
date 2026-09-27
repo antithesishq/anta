@@ -14,6 +14,7 @@ export default {
   tsconfig: path('../src/tsconfig.json'),
   out: path('public/reference/'),
   sort: ['source-order'],
+  readme: 'none',
   plugin: [path('lib/union-source-order.mjs'), path('lib/doc-review-status.mjs')],
   modifierTags: [...OptionDefaults.modifierTags, '@unreviewed'],
   validation: { notExported: false },

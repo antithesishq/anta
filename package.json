@@ -62,6 +62,7 @@
     "audit:contrast": "node scripts/audit-contrast.mjs",
     "dev": "node scripts/dev.mjs",
     "docs-fix": "node scripts/docs-fix.mjs",
+    "docs-review": "node scripts/docs-review.mjs",
     "dev:run": "echo $$ > \"$ANTA_DEV_PID_FILE\"; trap 'rm -f \"$ANTA_DEV_PID_FILE\"' EXIT; pnpm run build:dev && pnpm --filter @antadesign/stickers run build:dev && pnpm --filter @antadesign/plot run build:dev && (node scripts/dev-watch.mjs & pnpm --filter anta-site run dev:server & (if [ \"$ANTA_DEV_WRANGLER\" = \"1\" ]; then pnpm --filter anta-site run dev:search; fi) & wait)",
     "stop": "node scripts/dev-stop.mjs",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",

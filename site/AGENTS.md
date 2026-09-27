@@ -249,6 +249,8 @@ absent until a human has reviewed the complete page; the layout then shows a
 warning-tone ✦ beside the title. `WRITING.md` defines the matching TSDoc
 `@author` convention and the safe `pnpm docs-fix` command. Never add an author
 field on behalf of a human reviewer.
+After a human reviews a page, `pnpm docs-review <page.mdx>` adds its author
+field with interactive confirmation.
 
 Create `site/src/content/components/{name}/index.mdx`. Its collection entry generates the existing root URL, `/{name}/`. Add `title` and `nav` frontmatter; do not set `layout`, because the collection route owns it:
 

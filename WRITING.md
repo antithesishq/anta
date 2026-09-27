@@ -177,6 +177,12 @@ documentation with an agent. Run `pnpm docs-fix` to inspect and remove stale
 markers after changing previously reviewed text. The command shows its proposed
 removals and asks before editing; `pnpm docs-fix --check` never edits files.
 Human review and author attribution happen after the final text is ready.
+The human runs `pnpm docs-review <source-file> <declaration>` for TSDoc or
+`pnpm docs-review <page.mdx>` for a page. The command proposes the name from
+`git config user.name`, shows the review unit, and requires an interactive
+`REVIEWED` confirmation before adding the marker. Use `--author <name>` when
+the Git name is not the desired public attribution. Agents may inspect with
+`--dry-run` but must not confirm review on a human's behalf.
 
 - **Pages (`.mdx`):** State the purpose in one or two sentences, show the common
   case, then cover interactions and constraints a reader can act on. Component

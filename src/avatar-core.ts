@@ -53,6 +53,8 @@ export const rngFromSeed = (seed: string): (() => number) => mulberry32(hashSeed
  *
  * @param max - Maximum number of words to use, starting with the first.
  * Defaults to 3.
+ *
+ * @author Vlad Korobov
  */
 export function getInitials(name: string | undefined | null, max = 3): string {
   if (!name) return ''

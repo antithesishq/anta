@@ -18,10 +18,17 @@ const { example, label } = Astro.props
 
   const mounted = new WeakSet<APlotElement>()
 
-  function mountExamples() {
+  async function mountExamples() {
     for (const plot of document.querySelectorAll<APlotElement>('a-plot[data-detail-example]')) {
       if (mounted.has(plot) || !plot.isConnected) continue
       const example = plot.dataset.detailExample as keyof typeof detailExamples
+      if (example === 'fontRoles' || example === 'fontOverrides') {
+        await Promise.all([
+          document.fonts.load('750 22px "TT Interphases Pro Variable"'),
+          document.fonts.load('italic 600 20px "TT Interphases Pro Variable"'),
+        ]).catch(() => undefined)
+        if (mounted.has(plot) || !plot.isConnected) continue
+      }
       plot.plotArgs = detailExamples[example]()
       mounted.add(plot)
     }

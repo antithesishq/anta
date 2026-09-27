@@ -6,6 +6,18 @@
  * Tooltip content is host-supplied so this surface has no framework dependency.
  */
 import type { ScaleBand, ScaleLinear, ScaleLogarithmic, ScaleTime } from "d3-scale"
+import type { ScatterArgs } from "./series/scatter/factory"
+import type { LineArgs } from "./series/line/factory"
+import type { BarArgs } from "./series/bar/factory"
+import type { AreaArgs } from "./series/area/factory"
+import type { RectArgs } from "./series/rect/factory"
+import type { RuleArgs } from "./series/rule/factory"
+import type { CustomArgs } from "./series/custom/factory"
+
+export type SeriesArgs<Content = unknown> = Readonly<
+    ScatterArgs<Content> | LineArgs<Content> | BarArgs<Content> | AreaArgs<Content>
+    | RectArgs<Content> | RuleArgs<Content> | CustomArgs<Content>
+>
 
 export type Domain = [number, number]
 export type Viewport = { x: Domain | null; y: Domain | null }
@@ -29,6 +41,8 @@ type BaseSeries<TooltipContent = unknown> = {
     y: Float64Array
     color?: ThemeColor
     colors?: (ThemeColor | null)[]
+    highlight_color?: ThemeColor
+    highlight_colors?: (ThemeColor | null)[]
     tooltip?: TooltipArg<any, TooltipContent>
     on_select?: SelectFn<any>
     hoverable?: boolean
@@ -119,6 +133,7 @@ export type CustomSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> 
     kind: 'custom'
     renderer: CustomRendererFn<TooltipContent>
     hit_test?: CustomHitTestFn<TooltipContent>
+    highlight_renderer?: CustomHighlightRendererFn<TooltipContent>
     axis_range?: { x?: Domain; y?: Domain }
 }
 
@@ -135,6 +150,8 @@ export type Series<TooltipContent = unknown> =
 type ResolvedColorFields = {
     color?: string
     colors?: (string | null)[]
+    highlight_color?: string
+    highlight_colors?: (string | null)[]
     stroke?: { color: string; width?: number }
 }
 
@@ -163,20 +180,61 @@ export type AxisKind = 'numeric' | 'categorical'
 export type ColorPair = { light: string; dark: string }
 export type ThemeColor = string | ColorPair
 
+/** CSS font-variant-caps values supported by plot text. */
+export type FontCaps =
+    | 'normal'
+    | 'small-caps'
+    | 'all-small-caps'
+    | 'petite-caps'
+    | 'all-petite-caps'
+    | 'unicase'
+    | 'titling-caps'
+
+/** Partial text styling. Local fields override plot-level fields individually. */
+export type FontConfig = {
+    family?: string
+    /** Positive font size in CSS pixels. */
+    size?: number
+    /** Numeric CSS weight from 1 to 1000, including fractional values. */
+    weight?: number
+    color?: ThemeColor
+    italic?: boolean
+    condensed?: boolean
+    /** Finite spacing in CSS pixels; negative values are allowed. */
+    letter_spacing?: number
+    /** Finite spacing in CSS pixels; negative values are allowed. */
+    word_spacing?: number
+    /** true selects all-small-caps; false selects normal. */
+    caps?: boolean | FontCaps
+}
+
+/** A family shorthand or a partial font configuration. Font assets belong to the host. */
+export type FontArg = string | FontConfig
+
+export type ResolvedFontConfig = {
+    family: string
+    size: number
+    weight: number
+    color: string
+    italic: boolean
+    condensed: boolean
+    letter_spacing: number
+    word_spacing: number
+    caps: FontCaps
+}
+
 export type LabelPosition = 'center' | 'top' | 'bottom' | 'left' | 'right'
 export type TickFormat = (value: number | string, index: number) => string
 
 export type LabelArg = string | {
     text: string
-    size?: number
-    color?: ThemeColor
+    font?: FontArg
     position?: LabelPosition
 }
 
 export type TickLabelArg = {
     format?: TickFormat
-    size?: number
-    color?: ThemeColor
+    font?: FontArg
 }
 
 export type AxisArgs = {
@@ -200,8 +258,7 @@ export type AxisArgs = {
 export type Axis = {
     scale?: AxisScale
     label?: string
-    label_size?: number
-    label_color?: ThemeColor
+    label_font?: FontConfig
     label_position?: LabelPosition
     min?: number
     max?: number
@@ -215,8 +272,7 @@ export type Axis = {
     line?: boolean
     hidden?: boolean
     tick_label_format?: TickFormat
-    tick_label_size?: number
-    tick_label_color?: ThemeColor
+    tick_label_font?: FontConfig
     tick_mark?: boolean
 }
 
@@ -269,12 +325,13 @@ export type RequestedViewportWindow = { x?: Domain | null; y?: Domain | null }
 export type ViewportRequest = { window: RequestedViewportWindow; key: string | number | undefined }
 
 export type PlotTemplate<TooltipContent = unknown> = {
+    tooltip?: PlotTooltipFn<TooltipContent>
     series: Series<TooltipContent>[]
     x: AxisTemplate
     y: AxisTemplate
     title?: string
-    title_size?: number
-    title_color?: ThemeColor
+    title_font?: FontConfig
+    font: FontConfig
     margin?: Margin
     width?: number
     height?: number
@@ -290,9 +347,12 @@ export type PlotTemplate<TooltipContent = unknown> = {
 
 // args to plot(): the series plus optional axis / size / style. new_plot_template resolves it into a PlotTemplate.
 export type PlotArgs<TooltipContent = unknown> = {
+    /** Compose all hovered hits, topmost first. Omit to stack per-series tooltips. */
+    tooltip?: PlotTooltipFn<TooltipContent>
     series: Series<TooltipContent>[]
     axis?: { x?: AxisArgs; y?: AxisArgs }
     title?: TitleArg
+    font?: FontArg
     width?: number
     height?: number
     margin?: Margin
@@ -317,6 +377,7 @@ export type Layout = {
 }
 
 export type ComposedPlot<TooltipContent = unknown> = {
+    tooltip?: PlotTooltipFn<TooltipContent>
     layout: Layout
     inner: Rect
     x_scale: Scale
@@ -329,8 +390,9 @@ export type ComposedPlot<TooltipContent = unknown> = {
     x_categories?: string[]
     y_categories?: string[]
     title?: string
-    title_size?: number
-    title_color?: ThemeColor
+    title_font?: FontConfig
+    font: FontConfig
+    inherited_font_family?: string
     series: ComposedSeries<TooltipContent>[]
     border?: boolean
     grid?: GridSpec
@@ -381,6 +443,18 @@ export type CustomRenderContext = RenderContext & {
 
 export type CustomRendererFn<TooltipContent = unknown> = (series: ComposedCustom<TooltipContent>, render_props: CustomRenderContext) => void
 
+export type CustomHighlightContext = CustomRenderContext & {
+    /** Resolve the standard theme-adjusted highlight color for a point. */
+    highlight_color_at: ColorResolver
+}
+
+/** Draw synchronously on the prepared overlay. The plot owns clearing and canvas state. */
+export type CustomHighlightRendererFn<TooltipContent = unknown> = (
+    series: ComposedCustom<TooltipContent>,
+    point_index: number,
+    context: CustomHighlightContext,
+) => void
+
 export type HitContext = {
     cursor: { x: number; y: number }
     inner: Rect
@@ -397,8 +471,8 @@ export type ColorResolver = (i: number) => string
 export type CustomHitTestFn<TooltipContent = unknown> = (series: ComposedCustom<TooltipContent>, hit: HitContext) => number | null
 
 export type HighlightSpec =
-    | { shape: 'mark'; mark: MarkShape; cx: number; cy: number; r: number; color: string }
-    | { shape: 'rect'; x: number; y: number; width: number; height: number; color: string; border_radius?: string }
+    | { shape: 'mark'; mark: MarkShape; cx: number; cy: number; r: number; color: string; highlight_color?: string }
+    | { shape: 'rect'; x: number; y: number; width: number; height: number; color: string; highlight_color?: string; border_radius?: string }
 
 // per-side domain padding mode, set by series padding_mode hooks and consumed by core/template/domain.ts:
 //   default         5% symmetric additive pad so .nice() has room to round
@@ -451,7 +525,7 @@ export interface SeriesType<TooltipContent = unknown, S extends Series<TooltipCo
 export type ColorTheme = 'light' | 'dark'
 
 export type ColorArg = ThemeColor | ((row: Record<string, unknown>, index: number) => ThemeColor)
-export type TitleArg = string | { text: string; size?: number; color?: ThemeColor }
+export type TitleArg = string | { text: string; font?: FontArg }
 
 export type StrokeArg = ThemeColor | Stroke
 
@@ -472,6 +546,14 @@ export type PointData = {
 }
 
 export type TooltipData<Row = Record<string, unknown>> = Omit<PointData, 'row'> & { row: Row }
+
+export type PlotTooltipHit<Content = unknown> = {
+    series: SeriesArgs<Content> | undefined
+    data: PointData
+} | undefined
+
+/** One slot per declared series; missing hits are undefined. Nullish results suppress the tooltip. */
+export type PlotTooltipFn<Content = unknown> = (hits: PlotTooltipHit<Content>[]) => Content | null | undefined
 
 export type TooltipFn<Row = Record<string, unknown>, TooltipContent = unknown> = (data: TooltipData<Row>) => TooltipContent
 

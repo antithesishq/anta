@@ -159,6 +159,20 @@ export function resolve_stack_colors(
     return result
 }
 
+/** Resolve explicit hover colors with the same segment indexing as normal stacked colors. */
+export function resolve_stack_highlight_colors(
+    rows: Record<string, unknown>[],
+    segment_count: number,
+    arg: StackColorArg | undefined,
+): { highlight_color?: ThemeColor; highlight_colors?: (ThemeColor | null)[] } {
+    if (arg === undefined) return {}
+    if (Array.isArray(arg) && arg.length !== segment_count) {
+        throw new Error('plot.bar: highlight_color needs one entry per stacked segment, in the same order.')
+    }
+    if (is_theme_color(arg)) return { highlight_color: arg }
+    return { highlight_colors: rows.map((row, mark) => segment_color(arg, row, mark % segment_count) ?? null) }
+}
+
 // One segment's color from the series-level arg: positional for an array, otherwise the shared accessor /
 // uniform path with the segment index standing in for the row index.
 function segment_color(

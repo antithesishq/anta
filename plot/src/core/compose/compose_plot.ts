@@ -5,6 +5,7 @@ import { clamp_domain, LINEAR_SPACE, LOG_SPACE } from "../template/domain"
 import { series_type } from "../registry"
 import { linear_tick_count, X_TICK_PX_TARGET, Y_TICK_PX_TARGET } from "../render/axes"
 import { inner_rect, resolve_layout } from "./layout"
+import { carry_factory_args } from "../series/factory_args"
 
 /**
  * Turns a PlotTemplate into a renderable Plot
@@ -15,7 +16,7 @@ import { inner_rect, resolve_layout } from "./layout"
  * @param viewport - optional per-axis zoom/pan viewport; null on an axis uses the full domain
  * @returns the ComposedPlot with layout, scales, and color theme resolved series
  */
-export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<TooltipContent>, width: number, height: number, color_theme: ColorTheme, viewport?: Viewport): ComposedPlot<TooltipContent> {
+export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<TooltipContent>, width: number, height: number, color_theme: ColorTheme, viewport?: Viewport, inherited_font_family?: string): ComposedPlot<TooltipContent> {
     const layout = resolve_layout(
         width,
         height,
@@ -46,6 +47,7 @@ export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<To
 
     return {
         layout,
+        tooltip: template.tooltip,
         inner: inner_rect(layout),
         x_scale,
         y_scale,
@@ -57,8 +59,9 @@ export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<To
         x_categories: template.x.kind === 'category' ? template.x.categories : undefined,
         y_categories: template.y.kind === 'category' ? template.y.categories : undefined,
         title: template.title,
-        title_size: template.title_size,
-        title_color: template.title_color,
+        title_font: template.title_font,
+        font: template.font,
+        inherited_font_family,
         border: template.border,
         grid: template.grid,
         background: resolve_plot_background(template.background, color_theme),
@@ -80,9 +83,9 @@ function compose_series<TooltipContent>(series: Series<TooltipContent>, color_th
     const compose_layout = series_type<TooltipContent>(series.kind).compose_layout
 
     if (compose_layout === undefined) {
-        return composed
+        return carry_factory_args(series, composed)
     }
-    return compose_layout(composed, x_scale, y_scale)
+    return carry_factory_args(series, compose_layout(composed, x_scale, y_scale))
 }
 
 /**

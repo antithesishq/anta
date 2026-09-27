@@ -1,9 +1,11 @@
 ---
 interface Props {
-  example: 'highlights' | 'tooltips' | 'selection' | 'zoom' | 'zoomFree' | 'zoomX' | 'viewport'
+  example: 'highlights' | 'tooltips' | 'composedTooltips' | 'selection' | 'zoom' | 'zoomFree' | 'zoomX' | 'viewport'
 }
 const { example } = Astro.props
-const initial = example === 'selection'
+const initial = example === 'composedTooltips'
+  ? 'Hover the overlap to compare baseline and current bounds in one tooltip.'
+  : example === 'selection'
   ? 'Select a point to inspect its data.'
   : example === 'zoomFree'
     ? 'Scroll to zoom, or drag to pan.'
@@ -12,6 +14,7 @@ const initial = example === 'selection'
 
 <div class="plot-interaction" data-plot-interaction={example}>
   <a-plot aria-label={{ highlights: 'Hover highlight comparison', tooltips: 'Default and custom tooltips',
+    composedTooltips: 'Composed tooltip across overlapping series',
     selection: 'Select a sample', zoom: 'Zoom with Ctrl', zoomFree: 'Zoom without a modifier',
     zoomX: 'Horizontal zoom only', viewport: 'Programmatically controlled viewport' }[example]}></a-plot>
   {example === 'viewport' && (

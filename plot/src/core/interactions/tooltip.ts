@@ -1,5 +1,6 @@
-import type { ComposedPlot, PointData, TooltipData } from "../types"
+import type { ComposedPlot, PlotTooltipHit, PointData, TooltipData } from "../types"
 import { resolve_point_data, type NearestPoint } from "./hit"
+import { original_factory_args } from "../series/factory_args"
 
 export type ResolvedTooltip<TooltipContent = unknown> =
     | { kind: 'default'; lines: string[] }
@@ -7,6 +8,25 @@ export type ResolvedTooltip<TooltipContent = unknown> =
 
 /** Resolve opted-in tooltips in hit order, leaving host content opaque. */
 export function resolve_tooltips<TooltipContent>(plot: ComposedPlot<TooltipContent>, hits: NearestPoint[]): ResolvedTooltip<TooltipContent>[] {
+    if (plot.tooltip !== undefined) {
+        const hovered: PlotTooltipHit<TooltipContent>[] = new Array(plot.series.length).fill(undefined)
+        let has_hit = false
+        for (const hit of hits) {
+            const data = resolve_point_data(plot, hit)
+            if (data !== undefined) {
+                hovered[hit.series_index] = { series: original_factory_args<TooltipContent>(plot.series[hit.series_index]), data }
+                has_hit = true
+            }
+        }
+        if (!has_hit) return []
+        try {
+            const content = plot.tooltip(hovered)
+            return content == null ? [] : [{ kind: 'custom', content }]
+        } catch (error) {
+            console.warn('plot: tooltip callback threw, hiding tooltip.', error)
+            return []
+        }
+    }
     const resolved: ResolvedTooltip<TooltipContent>[] = []
 
     for (const hit of hits) {

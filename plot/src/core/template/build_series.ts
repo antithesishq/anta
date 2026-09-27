@@ -1,4 +1,5 @@
 import type { Series, ThemeColor } from "../types"
+import { carry_factory_args } from "../series/factory_args"
 
 // This file remaps band indices (if applicabble), drops rows with unknown categories, and strips
 // internal *_categories and *_axis_kind fields.
@@ -54,6 +55,7 @@ type RemappedBuffers = {
     x2?: Float64Array
     y2?: Float64Array
     colors?: (ThemeColor | null)[]
+    highlight_colors?: (ThemeColor | null)[]
     sizes?: (number | null)[]
     rows?: Record<string, unknown>[]
     labels?: string[]
@@ -75,6 +77,8 @@ function remap_rows(
     const buffer_x = new Float64Array(length)
     const buffer_y = new Float64Array(length)
     const input_colors = series_item.colors
+    const input_highlight_colors = series_item.highlight_colors
+    const buffer_highlight_colors = input_highlight_colors !== undefined ? new Array<ThemeColor | null>(length) : undefined
     const buffer_colors = input_colors !== undefined ? new Array<ThemeColor | null>(length) : undefined
     const input_sizes = series_item.kind === 'scatter' ? series_item.sizes : undefined
     const buffer_sizes = input_sizes !== undefined ? new Array<number | null>(length) : undefined
@@ -104,6 +108,9 @@ function remap_rows(
 
         if (buffer_colors !== undefined) {
             buffer_colors[write_index] = input_colors![row_index]
+        }
+        if (buffer_highlight_colors !== undefined) {
+            buffer_highlight_colors[write_index] = input_highlight_colors![row_index]
         }
 
         if (buffer_sizes !== undefined) {
@@ -136,6 +143,9 @@ function remap_rows(
 
     if (buffer_colors !== undefined) {
         result.colors = full ? buffer_colors : buffer_colors.slice(0, write_index)
+    }
+    if (buffer_highlight_colors !== undefined) {
+        result.highlight_colors = full ? buffer_highlight_colors : buffer_highlight_colors.slice(0, write_index)
     }
 
     if (buffer_sizes !== undefined) {
@@ -182,6 +192,11 @@ function assemble_output_series(series_item: Series, remapped: RemappedBuffers):
     } else {
         delete output.colors
     }
+    if (remapped.highlight_colors !== undefined) {
+        output.highlight_colors = remapped.highlight_colors
+    } else {
+        delete output.highlight_colors
+    }
 
     if (output.kind === 'scatter') {
         if (remapped.sizes !== undefined) {
@@ -206,5 +221,5 @@ function assemble_output_series(series_item: Series, remapped: RemappedBuffers):
     if (remapped.labels !== undefined) {
         output.labels = remapped.labels
     }
-    return output
+    return carry_factory_args(series_item, output)
 }

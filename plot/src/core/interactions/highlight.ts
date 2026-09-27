@@ -77,7 +77,10 @@ export function resolve_highlights<TooltipContent>(plot: ComposedPlot<TooltipCon
         const specs = Array.isArray(spec) ? spec : [spec]
 
         if (specs.length > 0) {
-            return specs
+            // Bar specs resolve their own colors: a stack includes marks other than the hovered one.
+            if (series.kind === 'bar') return specs
+            const highlight_color = series.highlight_colors?.[hit.point_index] ?? series.highlight_color
+            return highlight_color === undefined ? specs : specs.map(spec => ({ ...spec, highlight_color }))
         }
     }
     return []

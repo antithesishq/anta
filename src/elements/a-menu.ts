@@ -68,10 +68,26 @@ const openStack: AMenuElement[] = []
 let docBound = false
 let boundDoc: Document | null = null
 let boundView: (Window & typeof globalThis) | null = null
+// A click can remove hovered popup content before _doHide runs, making
+// :hover false even though the mouse is still inside the popup's bounds.
+let mouseX: number | null = null
+let mouseY = 0
+
+function trackMouse(e: PointerEvent) {
+  mouseX = e.pointerType === 'mouse' ? e.clientX : null
+  if (mouseX !== null) mouseY = e.clientY
+}
+
+function mouseInside(rect: DOMRect): boolean {
+  return mouseX !== null && mouseX >= rect.left && mouseX < rect.right
+    && mouseY >= rect.top && mouseY < rect.bottom
+}
 
 function bindDocListeners(doc: Document, view: Window & typeof globalThis) {
   if (docBound) return
   doc.addEventListener('pointerdown', onDocPointerDown, true)
+  doc.addEventListener('pointermove', trackMouse, { capture: true, passive: true })
+  doc.addEventListener('pointerleave', clearMouse)
   doc.addEventListener('keydown', onDocKeyDown, true)
   doc.addEventListener('keyup', onDocKeyUp, true)
   doc.addEventListener('contextmenu', onDocContextMenu, true)
@@ -84,6 +100,8 @@ function bindDocListeners(doc: Document, view: Window & typeof globalThis) {
 function unbindDocListeners() {
   if (!docBound) return
   boundDoc?.removeEventListener('pointerdown', onDocPointerDown, true)
+  boundDoc?.removeEventListener('pointermove', trackMouse, true)
+  boundDoc?.removeEventListener('pointerleave', clearMouse)
   boundDoc?.removeEventListener('keydown', onDocKeyDown, true)
   boundDoc?.removeEventListener('keyup', onDocKeyUp, true)
   boundDoc?.removeEventListener('contextmenu', onDocContextMenu, true)
@@ -91,6 +109,11 @@ function unbindDocListeners() {
   boundDoc = null
   boundView = null
   docBound = false
+  mouseX = null
+}
+
+function clearMouse() {
+  mouseX = null
 }
 
 /** Find the deepest open menu whose surface or anchor contains the event.
@@ -147,7 +170,8 @@ setMenuPresence({
   contains: nodeHitsMenus,
 })
 
-function onDocPointerDown(e: Event) {
+function onDocPointerDown(e: PointerEvent) {
+  trackMouse(e)
   if (!openStack.length) return
   const index = menuIndexForEvent(e, (e as MouseEvent).button === 0)
   // The first menu above the hit owns the branch to dismiss. A miss closes
@@ -273,6 +297,7 @@ export class AMenuElement extends HTMLElementBase {
   // Submenu hover-intent timers.
   private openTimer?: ReturnType<typeof setTimeout>
   private closeTimer?: ReturnType<typeof setTimeout>
+  #holdHoverClose = false
 
   // Typeahead state (root navigation).
   private typeBuffer = ''
@@ -471,7 +496,10 @@ export class AMenuElement extends HTMLElementBase {
     // to tap-to-open, which stays open until dismissed.
     this.surface.addEventListener('pointerenter', (e) => {
       if (e.pointerType !== 'mouse') return
-      if (this.isSubmenu) this.cancelCloseTimer()
+      if (this.isSubmenu) {
+        this.#holdHoverClose = false
+        this.cancelCloseTimer()
+      }
     })
     this.surface.addEventListener('pointerleave', (e) => {
       if (e.pointerType !== 'mouse') return
@@ -1023,7 +1051,14 @@ export class AMenuElement extends HTMLElementBase {
       if (parent) {
         const pidx = openStack.indexOf(parent)
         if (pidx !== -1) {
-          for (let i = openStack.length - 1; i > pidx; i--) openStack[i]._doHide()
+          for (let i = openStack.length - 1; i > pidx; i--) {
+            const menu = openStack[i]
+            // Replacing a submenu also displaces any controlled popup inside it.
+            // Notify its owner before hiding it, as the other stack trims do.
+            // Reopening this same submenu is not a dismissal of that submenu.
+            if (menu !== this && menu.isOpen && !menu._dismissNotified) menu.emitChange('closed')
+            menu._doHide()
+          }
           openStack.length = pidx + 1
         }
       }
@@ -1147,6 +1182,7 @@ export class AMenuElement extends HTMLElementBase {
   _doShow(coord?: [number, number], instant = false) {
     if (this.surface.isConnected && !this._shown) this.surface.showPopover()
     this._shown = true
+    this.#holdHoverClose = false
     this._dismissNotified = false
     this.reflectOpen(true)
     this.hideAnchorTooltip()
@@ -1170,9 +1206,25 @@ export class AMenuElement extends HTMLElementBase {
 
   /** Shadow-only hide. */
   _doHide() {
+    // A nested popup can disappear beneath a stationary pointer outside its
+    // ancestor flyout. The resulting pointerleave belongs to the disappearing
+    // popup, so hold the flyout until the pointer re-enters it or its trigger.
+    const parent = this.parentElement?.closest('a-menu') as AMenuElement | null
+    if (this._shown && parent && mouseX !== null && mouseInside(this.surface.getBoundingClientRect())) {
+      for (
+        let ancestor: AMenuElement | null = parent;
+        ancestor;
+        ancestor = ancestor.parentElement?.closest('a-menu') as AMenuElement | null
+      ) {
+        if (!ancestor.isSubmenu || !ancestor.#isHover || !ancestor._shown || ancestor.surface.matches(':hover')) continue
+        ancestor.#holdHoverClose = true
+        ancestor.cancelCloseTimer()
+      }
+    }
     this.#stopAnchorTracking()
     if (this.surface.isConnected && this._shown) this.surface.hidePopover()
     this._shown = false
+    this.#holdHoverClose = false
     this.reflectOpen(false)
     this.cancelOpenTimer()
     this.cancelCloseTimer()
@@ -1424,6 +1476,13 @@ export class AMenuElement extends HTMLElementBase {
    *   - nothing → keep open (plain custom content doesn't dismiss).
    */
   private onSurfaceClick = (e: MouseEvent) => {
+    // A nested menu handles its own activation. Link items may let the click
+    // bubble past their surface; the containing menu must not handle it again.
+    for (const node of e.composedPath()) {
+      if (node === this.surface) break
+      if (node instanceof AMenuElement && node !== this) return
+    }
+
     // Contain the click so activating an item doesn't also register as a click on
     // whatever the menu is nested in (a clickable row / card). Scoped to genuine
     // `<a-menu-item>` / `[data-menu-close]` activations: their `onSelect` rides the
@@ -1506,13 +1565,19 @@ export class AMenuElement extends HTMLElementBase {
       if (node.matches('a[data-anta-menu-item]')) return this.closeSystem(e)
 
       // Custom content opts into closing with `data-menu-close`.
-      if (node.hasAttribute('data-menu-close')) return this.closeSystem(e)
+      if (node.hasAttribute('data-menu-close')) return this.closeSystem(e, true)
     }
     // No marker in the path → plain content, stay open.
   }
 
-  /** Close the whole open menu system from the root down. */
-  private closeSystem(e?: Event) {
+  /** Close this popup inside persistent content, or the menu system otherwise. */
+  private closeSystem(e?: Event, explicit = false) {
+    // A select opened inside persistent custom content is a separate choice:
+    // dismiss its popup without dismissing the facet editor and root menu.
+    if (!explicit && this.closest('[data-menu-open]')) {
+      this.requestClose(e)
+      return
+    }
     const root = openStack[0] ?? this
     root.requestClose(e)
   }
@@ -1700,7 +1765,11 @@ export class AMenuElement extends HTMLElementBase {
       if (this.#isHover) {
         // Mouse-only hover-intent (see the surface listeners above): touch/pen
         // taps emit synthetic pointerenter/leave that would open-then-close.
-        onEnter = (e) => { if (e.pointerType === 'mouse') this.scheduleOpen() }
+        onEnter = (e) => {
+          if (e.pointerType !== 'mouse') return
+          this.#holdHoverClose = false
+          this.scheduleOpen()
+        }
         onLeave = (e) => { if (e.pointerType === 'mouse') this.scheduleClose() }
         anchor.addEventListener('pointerenter', onEnter)
         anchor.addEventListener('pointerleave', onLeave)
@@ -1735,6 +1804,10 @@ export class AMenuElement extends HTMLElementBase {
       return
     } else {
       const onClick = (e: MouseEvent) => {
+        // A button in the input's clear slot is its own action. Its click
+        // bubbles through the field anchor after clearing; opening the popup
+        // here makes the next field click close it instead of opening it.
+        if (anchor.matches('a-input') && e.composedPath().some((node) => node instanceof Element && node.getAttribute('slot') === 'clear')) return
         // detail === 0 ⇒ a keyboard-synthesized click (a button / <a-button>
         // turning Enter/Space into one) ⇒ open + focus the first item. Fields with
         // no such click go through onKey below.
@@ -1801,6 +1874,7 @@ export class AMenuElement extends HTMLElementBase {
   private scheduleClose() {
     this.cancelOpenTimer()
     if (!this._shown) return
+    if (this.#holdHoverClose) return
     // Keyboard focus has moved into this submenu (a `:focus-visible` element
     // inside it) — the user is navigating by keyboard now, so a mouse hover-away
     // must not yank the flyout out from under them. The explicit close paths
@@ -1812,8 +1886,10 @@ export class AMenuElement extends HTMLElementBase {
     // mid-interaction with it, so a mouse hover-away must not collapse this
     // flyout and take that popup with it. It closes on the explicit paths once
     // its descendants are gone.
-    if (openStack.some((m) => m !== this && (this.contains(m) || (m.triggerAnchor != null && this.contains(m.triggerAnchor)))))
+    if (openStack.some((m) => m !== this && (this.contains(m) || (m.triggerAnchor != null && this.contains(m.triggerAnchor))))) {
+      this.cancelCloseTimer()
       return
+    }
     this.cancelCloseTimer()
     this.closeTimer = setTimeout(() => {
       this.closeTimer = undefined

@@ -1,5 +1,6 @@
 import { resolve_column, validate_field_present, type ColumnMode } from "../../template/column"
-import { resolve_color } from "../../template/color"
+import { retain_factory_args } from "../factory_args"
+import { resolve_color, resolve_highlight_colors } from "../../template/color"
 import { validate_finite, validate_hoverable, validate_non_negative, validate_positive } from "../../template/validate"
 import type { ColorArg, FieldArg, RuleSeries, SelectFn, TooltipArg } from "../../types"
 
@@ -10,6 +11,7 @@ export type RuleArgs<TooltipContent = unknown> = {
     x?: RuleValueArg
     y?: RuleValueArg
     color?: ColorArg
+    highlight_color?: ColorArg
     width?: number
     dash?: number[]
     tooltip?: TooltipArg<Record<string, unknown> | undefined, TooltipContent>
@@ -122,7 +124,9 @@ function resolve_bare_rule(value: RuleValueArg | undefined, side: 'x' | 'y'): Re
  * @param args - the rule series args
  */
 function apply_rule_options<TooltipContent>(series: RuleSeries<TooltipContent>, args: RuleArgs<TooltipContent>): void {
+    retain_factory_args(series, args)
     apply_rule_color(series, args)
+    Object.assign(series, resolve_highlight_colors(args.data, args.highlight_color))
 
     if (args.width !== undefined) {
         series.width = validate_positive(args.width, 'plot.rule: width')

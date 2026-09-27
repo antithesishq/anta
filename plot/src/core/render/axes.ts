@@ -1,20 +1,17 @@
-import type { Axis, BandScale, CanvasContext, ColorTheme, ContinuousScale, GridSpec, Layout, Rect, Scale } from "../types"
-import { resolve_text_color } from "../template/color"
+import type { Axis, BandScale, CanvasContext, ColorTheme, ContinuousScale, GridSpec, Layout, Rect, ResolvedFontConfig, Scale } from "../types"
+import { apply_canvas_font } from "./font"
+import { timeDay, utcDay, type TimeInterval, type CountableTimeInterval } from "d3-time"
 
 type ContinuousTickScale = {
     (value: number | Date): number
-    ticks(count: number): (number | Date)[]
+    ticks(count: number | TimeInterval): (number | Date)[]
     tickFormat(count: number, specifier?: string): (value: number | Date) => string
     domain(): (number | Date)[]
 }
 
 const AXIS_STROKE = '#777'
 const TICK_LENGTH = 4
-const TICK_LABEL_SIZE = 10 // default tick-label font size (px)
-const TICK_LABEL_COLOR = '#777'
 const TICK_LABEL_PADDING = 3
-const AXIS_LABEL_SIZE = 12 // default axis-name font size (px)
-const AXIS_LABEL_COLOR = TICK_LABEL_COLOR // axis names share the tick-label gray
 const AXIS_LABEL_END_GAP = 10
 const AXIS_LABEL_CANVAS_PAD = 2
 const AXIS_LABEL_EDGE_PAD = 9
@@ -24,30 +21,18 @@ const GRID_COLOR = { light: '#e0e0e0', dark: '#777' }
 // min gap between adjacent tick labels before they're decimated
 const LABEL_GAP = 8
 
-function sans(size: number): string {
-    return `${size}px sans-serif`
-}
-
-function tick_label_size_of(axis: Axis | undefined): number {
-    return axis?.tick_label_size ?? TICK_LABEL_SIZE
-}
-
-function tick_label_font_of(axis: Axis | undefined): string {
-    return sans(tick_label_size_of(axis))
-}
-
 function x_tick_label_top(inner: Rect): number {
     return inner.bottom + TICK_LENGTH + TICK_LABEL_PADDING
 }
 
-function x_tick_label_bottom(inner: Rect, axis: Axis | undefined): number {
-    return x_tick_label_top(inner) + tick_label_size_of(axis)
+function x_tick_label_bottom(inner: Rect, tick_font: ResolvedFontConfig): number {
+    return x_tick_label_top(inner) + tick_font.size
 }
 
 const DAY_MS = 86_400_000
 const DAY_TICKS_MAX_MS = 20 * DAY_MS
 const MONTH_TICKS_MAX_MS = 180 * DAY_MS
-const SI_THRESHOLD = 100_000
+const SI_THRESHOLD = 10_000
 
 /**
  * Linear tick count for a pixel span, floored at 2 so narrow axes still show both endpoints.
@@ -85,6 +70,45 @@ function time_tick_count(domain: (number | Date)[], side: 'x' | 'y', inner: Rect
 }
 
 /**
+ * D3 implements day.every(2) as odd dates within each month, so a 31st is followed immediately by the
+ * next month's 1st. Replace that selected interval with one whose parity is counted from a fixed epoch.
+ * The replacement is chosen once for the whole domain, so any number of month boundaries stays on one cadence.
+ * @param scale - the time scale
+ * @param ticks - D3's automatically selected ticks
+ * @param utc - whether calendar boundaries are UTC rather than local time
+ * @returns the original ticks, or ticks from a stable every-other-day interval
+ */
+function stabilize_two_day_ticks(scale: ContinuousTickScale, ticks: (number | Date)[], utc: boolean): (number | Date)[] {
+    const day: CountableTimeInterval = utc ? utcDay : timeDay
+    const resetting_interval = day.every(2)
+
+    if (resetting_interval === null) {
+        return ticks
+    }
+    const resetting_ticks = scale.ticks(resetting_interval)
+
+    if (!same_tick_values(ticks, resetting_ticks)) {
+        return ticks
+    }
+    const anchor = day.floor(new Date(0))
+    const stable_interval = day.filter(date => day.count(anchor, date) % 2 === 0)
+    return scale.ticks(stable_interval)
+}
+
+function same_tick_values(left: (number | Date)[], right: (number | Date)[]): boolean {
+    if (left.length !== right.length) {
+        return false
+    }
+
+    for (let i = 0; i < left.length; i++) {
+        if (Number(left[i]) !== Number(right[i])) {
+            return false
+        }
+    }
+    return true
+}
+
+/**
  * Keep every Nth label so they don't collide, returning N. The tighter the pixel spacing between items,
  * the larger N. x measures the widest label against the tick-label font; y uses a fixed line height.
  * @param ctx - canvas context, for measuring x label widths
@@ -93,27 +117,31 @@ function time_tick_count(domain: (number | Date)[], side: 'x' | 'y', inner: Rect
  * @param labels - candidate labels (measured for x; ignored for y)
  * @returns the step between kept labels
  */
-function label_skip(ctx: CanvasContext, side: 'x' | 'y', spacing: number, labels: string[], tick_size: number, tick_font: string): number {
+function label_skip(ctx: CanvasContext, side: 'x' | 'y', spacing: number, labels: string[], tick_font: ResolvedFontConfig): number {
     if (spacing <= 0) {
         return 1
     }
 
     if (side === 'y') {
-        return Math.max(1, Math.ceil((tick_size + LABEL_GAP) / spacing))
+        return Math.max(1, Math.ceil((tick_font.size + LABEL_GAP) / spacing))
     }
-    // measure x label widths against the tick-label font, restoring whatever the caller had set
-    const prev_font = ctx.font
-    ctx.font = tick_font
+    // Measure and paint with the same full font state. save/restore also prevents one role leaking into another.
+    ctx.save()
     let max_width = 0
 
-    for (const label of labels) {
-        const width = ctx.measureText(label).width
+    try {
+        apply_canvas_font(ctx, tick_font, 'monospace')
 
-        if (width > max_width) {
-            max_width = width
+        for (const label of labels) {
+            const width = ctx.measureText(label).width
+
+            if (width > max_width) {
+                max_width = width
+            }
         }
+    } finally {
+        ctx.restore()
     }
-    ctx.font = prev_font
     return Math.max(1, Math.ceil((max_width + LABEL_GAP) / spacing))
 }
 
@@ -125,8 +153,8 @@ function label_skip(ctx: CanvasContext, side: 'x' | 'y', spacing: number, labels
  * @param labels - the category labels in axis order
  * @returns the number of bands to step between drawn labels
  */
-function categorical_skip(ctx: CanvasContext, side: 'x' | 'y', scale: BandScale, labels: string[], tick_size: number, tick_font: string): number {
-    return label_skip(ctx, side, scale.step(), labels, tick_size, tick_font)
+function categorical_skip(ctx: CanvasContext, side: 'x' | 'y', scale: BandScale, labels: string[], tick_font: ResolvedFontConfig): number {
+    return label_skip(ctx, side, scale.step(), labels, tick_font)
 }
 
 /**
@@ -176,12 +204,12 @@ function numeric_specifier(ticks: (number | Date)[]): string | undefined {
  * @param entries - all candidate ticks (pixel position + label), evenly spaced
  * @returns the number of ticks to step between kept labels
  */
-function continuous_skip(ctx: CanvasContext, side: 'x' | 'y', entries: { pos: number; label: string }[], tick_size: number, tick_font: string): number {
+function continuous_skip(ctx: CanvasContext, side: 'x' | 'y', entries: { pos: number; label: string }[], tick_font: ResolvedFontConfig): number {
     if (entries.length < 2) {
         return 1
     }
     const spacing = Math.abs(entries[1].pos - entries[0].pos)
-    return label_skip(ctx, side, spacing, entries.map(entry => entry.label), tick_size, tick_font)
+    return label_skip(ctx, side, spacing, entries.map(entry => entry.label), tick_font)
 }
 
 type ContinuousTicks = { pos: number; label: string }[]
@@ -195,6 +223,10 @@ export type AxisChrome = {
     y_scale: Scale
     theme: ColorTheme
     chrome_color: string | undefined
+    x_tick_font: ResolvedFontConfig
+    y_tick_font: ResolvedFontConfig
+    x_label_font: ResolvedFontConfig
+    y_label_font: ResolvedFontConfig
     x_ticks: ContinuousTicks | undefined
     y_ticks: ContinuousTicks | undefined
 }
@@ -208,12 +240,15 @@ export type AxisChrome = {
  * @param inner - inner plot rect
  * @returns the kept ticks as pixel position + label
  */
-function continuous_tick_layout(ctx: CanvasContext, side: 'x' | 'y', scale: ContinuousScale, inner: Rect, axis: Axis | undefined): { pos: number; label: string }[] {
+function continuous_tick_entries(side: 'x' | 'y', scale: ContinuousScale, inner: Rect, axis: Axis | undefined): ContinuousTicks {
     const tick_scale = scale as ContinuousTickScale
     const domain = tick_scale.domain()
     const is_time = domain[0] instanceof Date
     const count = is_time ? time_tick_count(domain, side, inner) : axis_tick_count(side, inner)
-    const ticks = tick_scale.ticks(count)
+    const automatic_ticks = tick_scale.ticks(count)
+    const ticks = is_time
+        ? stabilize_two_day_ticks(tick_scale, automatic_ticks, axis?.scale === 'utc')
+        : automatic_ticks
 
     if (ticks.length === 0) {
         return []
@@ -222,11 +257,24 @@ function continuous_tick_layout(ctx: CanvasContext, side: 'x' | 'y', scale: Cont
     const format = tick_scale.tickFormat(count, specifier)
     const custom_format = axis?.tick_label_format
     const entries = ticks.map((tick, i) => {
-        const label = custom_format !== undefined ? custom_format(Number(tick), i) : format(tick)
+        let label: string
+
+        if (custom_format !== undefined) {
+            label = custom_format(Number(tick), i)
+        } else if (!is_time && specifier === '~s' && Number(tick) === 0) {
+            label = '0'
+        } else {
+            label = format(tick)
+        }
 
         return { pos: tick_scale(tick), label }
     })
-    const auto_stride = continuous_skip(ctx, side, entries, tick_label_size_of(axis), tick_label_font_of(axis))
+    return entries
+}
+
+function continuous_tick_layout(ctx: CanvasContext, side: 'x' | 'y', scale: ContinuousScale, inner: Rect, axis: Axis | undefined, font: ResolvedFontConfig): ContinuousTicks {
+    const entries = continuous_tick_entries(side, scale, inner, axis)
+    const auto_stride = continuous_skip(ctx, side, entries, font)
     const indices = decimated_indices(entries.length, auto_stride)
     return indices.map(i => entries[i])
 }
@@ -241,11 +289,11 @@ function continuous_tick_layout(ctx: CanvasContext, side: 'x' | 'y', scale: Cont
  * @param axis - the side's axis spec, carrying an optional tick_label_format override
  * @returns the tick layout, or undefined for a band scale
  */
-export function continuous_axis_layout(ctx: CanvasContext, side: 'x' | 'y', scale: Scale, inner: Rect, axis: Axis | undefined): ContinuousTicks | undefined {
+export function continuous_axis_layout(ctx: CanvasContext, side: 'x' | 'y', scale: Scale, inner: Rect, axis: Axis | undefined, font: ResolvedFontConfig): ContinuousTicks | undefined {
     if ('bandwidth' in scale) {
         return undefined
     }
-    return continuous_tick_layout(ctx, side, scale, inner, axis)
+    return continuous_tick_layout(ctx, side, scale, inner, axis, font)
 }
 
 /**
@@ -280,7 +328,7 @@ function category_display_labels(axis: Axis | undefined): string[] {
  * @param edge_aligned - place lines at the delimiters between bands rather than centers
  * @returns tick pixel positions along the side
  */
-function categorical_tick_positions(ctx: CanvasContext, side: 'x' | 'y', scale: BandScale, axis: Axis | undefined, labels: string[], edge_aligned: boolean): number[] {
+function categorical_tick_positions(ctx: CanvasContext, side: 'x' | 'y', scale: BandScale, labels: string[], edge_aligned: boolean, font: ResolvedFontConfig): number[] {
     const positions: number[] = []
     const half = scale.bandwidth() / 2
     const domain = scale.domain()
@@ -301,7 +349,7 @@ function categorical_tick_positions(ctx: CanvasContext, side: 'x' | 'y', scale: 
         }
         return positions
     }
-    const indices = categorical_tick_indices(ctx, side, scale, axis, labels)
+    const indices = categorical_tick_indices(ctx, side, scale, labels, font)
 
     for (const i of indices) {
         if (i < centers.length) {
@@ -311,8 +359,8 @@ function categorical_tick_positions(ctx: CanvasContext, side: 'x' | 'y', scale: 
     return positions
 }
 
-function categorical_tick_indices(ctx: CanvasContext, side: 'x' | 'y', scale: BandScale, axis: Axis | undefined, labels: string[]): number[] {
-    const stride = categorical_skip(ctx, side, scale, labels, tick_label_size_of(axis), tick_label_font_of(axis))
+function categorical_tick_indices(ctx: CanvasContext, side: 'x' | 'y', scale: BandScale, labels: string[], font: ResolvedFontConfig): number[] {
+    const stride = categorical_skip(ctx, side, scale, labels, font)
     return decimated_indices(labels.length, stride)
 }
 
@@ -339,42 +387,53 @@ export function draw_axes(ctx: CanvasContext, chrome: AxisChrome): void {
     }
 
     ctx.save()
-    ctx.strokeStyle = chrome_color ?? AXIS_STROKE
-    ctx.lineWidth = 1
+    try {
+        ctx.strokeStyle = chrome_color ?? AXIS_STROKE
+        ctx.lineWidth = 1
 
-    const draw_x_line = x_axis !== undefined && x_axis.line !== false
-    const draw_y_line = y_axis !== undefined && y_axis.line !== false
-    draw_axis_lines(ctx, inner, draw_x_line, draw_y_line)
+        const draw_x_line = x_axis !== undefined && x_axis.line !== false
+        const draw_y_line = y_axis !== undefined && y_axis.line !== false
+        draw_axis_lines(ctx, inner, draw_x_line, draw_y_line)
 
-    if (x_axis !== undefined) {
-        ctx.strokeStyle = tick_mark_color(x_axis, theme, chrome_color)
-        ctx.fillStyle = resolve_text_color(x_axis.tick_label_color, theme, TICK_LABEL_COLOR)
-        ctx.font = tick_label_font_of(x_axis)
-        const draw_x_mark = x_axis.tick_mark !== false
+        if (x_axis !== undefined) {
+            ctx.save()
+            try {
+                ctx.strokeStyle = tick_mark_color(x_axis, theme, chrome_color)
+                apply_canvas_font(ctx, chrome.x_tick_font, 'monospace')
+                const draw_x_mark = x_axis.tick_mark !== false
 
-        if (x_axis.scale === 'category') {
-            draw_ticks_categorical(ctx, 'x', x_axis, x_scale as BandScale, inner, draw_x_mark)
-        } else {
-            draw_ticks_continuous(ctx, 'x', inner, x_ticks ?? [], draw_x_mark)
+                if (x_axis.scale === 'category') {
+                    draw_ticks_categorical(ctx, 'x', x_axis, x_scale as BandScale, inner, draw_x_mark, chrome.x_tick_font)
+                } else {
+                    draw_ticks_continuous(ctx, 'x', inner, x_ticks ?? [], draw_x_mark)
+                }
+            } finally {
+                ctx.restore()
+            }
         }
-    }
 
-    if (y_axis !== undefined) {
-        ctx.strokeStyle = tick_mark_color(y_axis, theme, chrome_color)
-        ctx.fillStyle = resolve_text_color(y_axis.tick_label_color, theme, TICK_LABEL_COLOR)
-        ctx.font = tick_label_font_of(y_axis)
-        const draw_y_mark = y_axis.tick_mark !== false
+        if (y_axis !== undefined) {
+            ctx.save()
+            try {
+                ctx.strokeStyle = tick_mark_color(y_axis, theme, chrome_color)
+                apply_canvas_font(ctx, chrome.y_tick_font, 'monospace')
+                const draw_y_mark = y_axis.tick_mark !== false
 
-        if (y_axis.scale === 'category') {
-            draw_ticks_categorical(ctx, 'y', y_axis, y_scale as BandScale, inner, draw_y_mark)
-        } else {
-            draw_ticks_continuous(ctx, 'y', inner, y_ticks ?? [], draw_y_mark)
+                if (y_axis.scale === 'category') {
+                    draw_ticks_categorical(ctx, 'y', y_axis, y_scale as BandScale, inner, draw_y_mark, chrome.y_tick_font)
+                } else {
+                    draw_ticks_continuous(ctx, 'y', inner, y_ticks ?? [], draw_y_mark)
+                }
+            } finally {
+                ctx.restore()
+            }
         }
+
+        draw_axis_labels(ctx, layout, inner, x_axis, y_axis, chrome)
+
+    } finally {
+        ctx.restore()
     }
-
-    draw_axis_labels(ctx, layout, inner, x_axis, y_axis, theme)
-
-    ctx.restore()
 }
 
 /**
@@ -400,37 +459,40 @@ function tick_mark_color(axis: Axis, theme: ColorTheme, chrome_color: string | u
 export function draw_grid(ctx: CanvasContext, chrome: AxisChrome, sides: { x: boolean; y: boolean }): void {
     const { inner, x_scale, y_scale, x_axis, y_axis, theme, chrome_color, x_ticks, y_ticks } = chrome
     ctx.save()
-    ctx.strokeStyle = chrome_color ?? GRID_COLOR[theme]
-    ctx.lineWidth = 1
+    try {
+        ctx.strokeStyle = chrome_color ?? GRID_COLOR[theme]
+        ctx.lineWidth = 1
 
-    // vertical lines at x ticks
-    if (sides.x) {
-        const x_edge_aligned = x_axis?.grid_align === 'edge'
-        const x_positions = grid_positions(ctx, 'x', x_scale, x_axis, x_ticks, x_edge_aligned)
+        // vertical lines at x ticks
+        if (sides.x) {
+            const x_edge_aligned = x_axis?.grid_align === 'edge'
+            const x_positions = grid_positions(ctx, 'x', x_scale, x_axis, x_ticks, x_edge_aligned, chrome.x_tick_font)
 
-        for (const pos of x_positions) {
-            const x = grid_line_pos(pos, x_edge_aligned)
-            ctx.beginPath()
-            ctx.moveTo(x, inner.top)
-            ctx.lineTo(x, inner.bottom)
-            ctx.stroke()
+            for (const pos of x_positions) {
+                const x = grid_line_pos(pos, x_edge_aligned)
+                ctx.beginPath()
+                ctx.moveTo(x, inner.top)
+                ctx.lineTo(x, inner.bottom)
+                ctx.stroke()
+            }
         }
-    }
 
-    // horizontal lines at y ticks
-    if (sides.y) {
-        const y_edge_aligned = y_axis?.grid_align === 'edge'
-        const y_positions = grid_positions(ctx, 'y', y_scale, y_axis, y_ticks, y_edge_aligned)
+        // horizontal lines at y ticks
+        if (sides.y) {
+            const y_edge_aligned = y_axis?.grid_align === 'edge'
+            const y_positions = grid_positions(ctx, 'y', y_scale, y_axis, y_ticks, y_edge_aligned, chrome.y_tick_font)
 
-        for (const pos of y_positions) {
-            const y = grid_line_pos(pos, y_edge_aligned)
-            ctx.beginPath()
-            ctx.moveTo(inner.left, y)
-            ctx.lineTo(inner.right, y)
-            ctx.stroke()
+            for (const pos of y_positions) {
+                const y = grid_line_pos(pos, y_edge_aligned)
+                ctx.beginPath()
+                ctx.moveTo(inner.left, y)
+                ctx.lineTo(inner.right, y)
+                ctx.stroke()
+            }
         }
+    } finally {
+        ctx.restore()
     }
-    ctx.restore()
 }
 
 export function resolve_grid(grid: GridSpec | undefined): { x: boolean; y: boolean } {
@@ -450,11 +512,11 @@ export function resolve_grid(grid: GridSpec | undefined): { x: boolean; y: boole
  * @param edge_aligned - band scale only: lines at band delimiters rather than centers
  * @returns grid-line pixel positions along the side
  */
-function grid_positions(ctx: CanvasContext, side: 'x' | 'y', scale: Scale, axis: Axis | undefined, ticks: ContinuousTicks | undefined, edge_aligned: boolean): number[] {
+function grid_positions(ctx: CanvasContext, side: 'x' | 'y', scale: Scale, axis: Axis | undefined, ticks: ContinuousTicks | undefined, edge_aligned: boolean, font: ResolvedFontConfig): number[] {
     if (ticks !== undefined) {
         return ticks.map(entry => entry.pos)
     }
-    return categorical_tick_positions(ctx, side, scale as BandScale, axis, category_display_labels(axis), edge_aligned)
+    return categorical_tick_positions(ctx, side, scale as BandScale, category_display_labels(axis), edge_aligned, font)
 }
 
 /**
@@ -551,11 +613,12 @@ function draw_ticks_categorical(
     scale: BandScale,
     inner: Rect,
     draw_mark: boolean,
+    font: ResolvedFontConfig,
 ): void {
     const is_x = side === 'x'
     const labels = category_display_labels(axis)
     const half = scale.bandwidth() / 2
-    const indices = categorical_tick_indices(ctx, side, scale, axis, labels)
+    const indices = categorical_tick_indices(ctx, side, scale, labels, font)
     ctx.textAlign = is_x ? 'center' : 'right'
     ctx.textBaseline = is_x ? 'top' : 'middle'
 
@@ -595,23 +658,28 @@ function draw_ticks_categorical(
  * @param x_axis - x axis spec, or undefined
  * @param y_axis - y axis spec, or undefined
  */
-function draw_axis_labels(ctx: CanvasContext, layout: Layout, inner: Rect, x_axis: Axis | undefined, y_axis: Axis | undefined, theme: ColorTheme): void {
+function draw_axis_labels(ctx: CanvasContext, layout: Layout, inner: Rect, x_axis: Axis | undefined, y_axis: Axis | undefined, chrome: AxisChrome): void {
     if (!x_axis?.label && !y_axis?.label) {
         return
     }
 
     if (x_axis?.label) {
-        draw_x_axis_label(ctx, layout, inner, x_axis, theme)
+        ctx.save()
+        try {
+            draw_x_axis_label(ctx, layout, inner, x_axis, chrome.x_tick_font, chrome.x_label_font)
+        } finally {
+            ctx.restore()
+        }
     }
 
     if (y_axis?.label) {
-        draw_y_axis_label(ctx, layout, inner, y_axis, theme)
+        ctx.save()
+        try {
+            draw_y_axis_label(ctx, layout, inner, y_axis, chrome.y_label_font)
+        } finally {
+            ctx.restore()
+        }
     }
-}
-
-function set_axis_label_style(ctx: CanvasContext, axis: Axis, theme: ColorTheme): void {
-    ctx.fillStyle = resolve_text_color(axis.label_color, theme, AXIS_LABEL_COLOR)
-    ctx.font = sans(axis.label_size ?? AXIS_LABEL_SIZE)
 }
 
 /**
@@ -622,9 +690,9 @@ function set_axis_label_style(ctx: CanvasContext, axis: Axis, theme: ColorTheme)
  * @param axis - x axis spec
  * @returns the y to draw the name at, with textBaseline 'middle'
  */
-function x_axis_label_center_y(layout: Layout, inner: Rect, axis: Axis): number {
-    const ticks_bottom = x_tick_label_bottom(inner, axis)
-    const label_size = axis.label_size ?? AXIS_LABEL_SIZE
+function x_axis_label_center_y(layout: Layout, inner: Rect, tick_font: ResolvedFontConfig, label_font: ResolvedFontConfig): number {
+    const ticks_bottom = x_tick_label_bottom(inner, tick_font)
+    const label_size = label_font.size
 
     if (ticks_bottom + label_size > layout.height) {
         return layout.height - layout.margin_bottom / 2
@@ -640,15 +708,15 @@ function x_axis_label_center_y(layout: Layout, inner: Rect, axis: Axis): number 
  * @param inner - inner plot rect
  * @param axis - x axis spec (label already confirmed present by the caller)
  */
-function draw_x_axis_label(ctx: CanvasContext, layout: Layout, inner: Rect, axis: Axis, theme: ColorTheme): void {
+function draw_x_axis_label(ctx: CanvasContext, layout: Layout, inner: Rect, axis: Axis, tick_font: ResolvedFontConfig, label_font: ResolvedFontConfig): void {
     const label = axis.label
 
     if (label === undefined) {
         return
     }
-    set_axis_label_style(ctx, axis, theme)
+    apply_canvas_font(ctx, label_font)
     const position = axis.label_position ?? 'center'
-    const center_y = x_axis_label_center_y(layout, inner, axis)
+    const center_y = x_axis_label_center_y(layout, inner, tick_font, label_font)
     ctx.textBaseline = 'middle'
 
     if (position === 'left') {
@@ -673,23 +741,26 @@ function draw_x_axis_label(ctx: CanvasContext, layout: Layout, inner: Rect, axis
  * @param inner - inner plot rect
  * @param axis - y axis spec (label already confirmed present by the caller)
  */
-function draw_y_axis_label(ctx: CanvasContext, layout: Layout, inner: Rect, axis: Axis, theme: ColorTheme): void {
+function draw_y_axis_label(ctx: CanvasContext, layout: Layout, inner: Rect, axis: Axis, font: ResolvedFontConfig): void {
     const label = axis.label
 
     if (label === undefined) {
         return
     }
-    set_axis_label_style(ctx, axis, theme)
+    apply_canvas_font(ctx, font)
     const position = axis.label_position ?? 'center'
 
     if (position === 'center') {
         ctx.save()
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.translate(layout.margin_left / 2, (inner.top + inner.bottom) / 2)
-        ctx.rotate(-Math.PI / 2)
-        ctx.fillText(label, 0, 0)
-        ctx.restore()
+        try {
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'middle'
+            ctx.translate(layout.margin_left / 2, (inner.top + inner.bottom) / 2)
+            ctx.rotate(-Math.PI / 2)
+            ctx.fillText(label, 0, 0)
+        } finally {
+            ctx.restore()
+        }
         return
     }
     const text_width = ctx.measureText(label).width

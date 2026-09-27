@@ -19,7 +19,47 @@ function base(): PlotArgs<Node> {
 
 export function title(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 24, bottom: 48, left: 76 },
-    title: { text: 'Plot title', size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } }
+    title: { text: 'Plot title', font: { size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } } }
+}
+
+export function fontRoles(): PlotArgs<Node> {
+  return {
+    ...base(),
+    margin: { top: 48, right: 20, bottom: 58, left: 72 },
+    font: { family: '"TT Interphases Pro Variable", sans-serif', size: 13, weight: 450,
+      color: { light: '#713fff', dark: '#c4b5fd' } },
+    title: { text: '22px · bold · condensed',
+      font: { size: 22, weight: 750, condensed: true, letter_spacing: -0.35 } },
+    axis: {
+      x: { min: 0, max: 100,
+        label: { text: 'Serif · italic · 16px', font: { family: 'Georgia, serif', size: 16, italic: true,
+          color: { light: '#c2410c', dark: '#fdba74' } } } },
+      y: { min: 0, max: 100,
+        label: { text: 'Mono · +1px letters', font: { family: 'monospace', size: 12, letter_spacing: 1 } } },
+    },
+  }
+}
+
+export function fontOverrides(): PlotArgs<Node> {
+  return {
+    ...base(),
+    margin: { top: 48, right: 20, bottom: 58, left: 72 },
+    font: { family: '"TT Interphases Pro Variable", sans-serif', size: 14, weight: 600,
+      italic: true, caps: true, letter_spacing: 1, word_spacing: 4,
+      color: { light: '#0f766e', dark: '#5eead4' } },
+    title: { text: 'Small caps · +4px words', font: { size: 20 } },
+    axis: {
+      x: { min: 0, max: 100,
+        label: { text: 'Normal caps · zero spacing', font: { caps: false, italic: false,
+          letter_spacing: 0, word_spacing: 0, color: { light: '#c2410c', dark: '#fdba74' } } },
+        tick_label: { font: { family: 'monospace', size: 10, weight: 400, italic: false,
+          caps: false, letter_spacing: 0, word_spacing: 0 } } },
+      y: { min: 0, max: 100,
+        label: { text: 'Italic · small caps', font: { caps: 'small-caps', letter_spacing: 0.5, word_spacing: 0 } },
+        tick_label: { font: { family: 'monospace', size: 10, weight: 400, italic: false,
+          caps: false, letter_spacing: 0, word_spacing: 0 } } },
+    },
+  }
 }
 
 export function margins(): PlotArgs<Node> {
@@ -84,24 +124,24 @@ export function timeCategory(): PlotArgs<Node> {
 
 export function axisLabels(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: { text: 'Time', position: 'right', size: 18, color: { light: '#713fff', dark: '#c4b5fd' } } },
-    y: { min: 0, max: 100, label: { text: 'Value', position: 'top', size: 12, color: { light: '#c2410c', dark: '#fdba74' } } },
+    x: { min: 0, max: 100, label: { text: 'Time', position: 'right', font: { size: 18, color: { light: '#713fff', dark: '#c4b5fd' } } } },
+    y: { min: 0, max: 100, label: { text: 'Value', position: 'top', font: { size: 12, color: { light: '#c2410c', dark: '#fdba74' } } } },
   } }
 }
 
 export function axisLabelsOpposite(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: { text: 'Time', position: 'left', size: 12,
-      color: { light: '#c2410c', dark: '#fdba74' } } },
-    y: { min: 0, max: 100, label: { text: 'Value', position: 'bottom', size: 20,
-      color: { light: '#713fff', dark: '#c4b5fd' } } },
+    x: { min: 0, max: 100, label: { text: 'Time', position: 'left', font: { size: 12,
+      color: { light: '#c2410c', dark: '#fdba74' } } } },
+    y: { min: 0, max: 100, label: { text: 'Value', position: 'bottom', font: { size: 20,
+      color: { light: '#713fff', dark: '#c4b5fd' } } } },
   } }
 }
 
 export function tickLabels(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 28, bottom: 62, left: 94 }, axis: {
-    x: { min: 0, max: 100, label: 'Elapsed time', tick_label: { format: value => value + ' s', size: 10, color: { light: '#713fff', dark: '#c4b5fd' } } },
-    y: { min: 0, max: 100, label: 'Utilization', tick_label: { format: value => value + '%', size: 15, color: { light: '#c2410c', dark: '#fdba74' } } },
+    x: { min: 0, max: 100, label: 'Elapsed time', tick_label: { format: value => value + ' s', font: { size: 10, color: { light: '#713fff', dark: '#c4b5fd' } } } },
+    y: { min: 0, max: 100, label: 'Utilization', tick_label: { format: value => value + '%', font: { size: 15, color: { light: '#c2410c', dark: '#fdba74' } } } },
   } }
 }
 
@@ -135,5 +175,5 @@ export function strokes(): PlotArgs<Node> {
   })) }
 }
 
-export const detailExamples = { title, margins, grid, gridX, gridY, gridNone, themeColors, scales, timeCategory, axisLabels, axisLabelsOpposite,
+export const detailExamples = { title, fontRoles, fontOverrides, margins, grid, gridX, gridY, gridNone, themeColors, scales, timeCategory, axisLabels, axisLabelsOpposite,
   tickLabels, seriesColors, markShapes, strokes }

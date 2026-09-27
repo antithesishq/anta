@@ -128,11 +128,23 @@ export interface BoxContext {
   backgroundColor: string
 }
 
-/** Current box dimensions and its content-overflow state. */
+/** A descendant's border box, in CSS pixels from the Box's top-left border edge. */
+export interface BoxRect {
+  top: number
+  right: number
+  bottom: number
+  left: number
+  width: number
+  height: number
+}
+
+/** Current box dimensions, matching descendant rects, and content-overflow state. */
 export interface BoxMeasurement {
   /** Border-box width and height in CSS pixels. */
   width: number
   height: number
+  /** Matches for `includeRectsFor`, in document order. Empty when omitted. */
+  rects: BoxRect[]
   /** Padding-box dimensions, matching the browser's `clientWidth` / `clientHeight`. */
   clientWidth: number
   clientHeight: number

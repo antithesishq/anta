@@ -5,10 +5,62 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- [Input priority](/input/#priority) adds secondary fields without a fill and
+  tertiary fields that reveal their border on hover or focus.
+- [Slider](/slider/) accepts a two-value range with crossing thumbs and an
+  `inverted` track fill. Range values use two space-separated numbers in the
+  web component attribute and a sorted number pair in JavaScript and callbacks.
+
 ### Fixed
 
-- Button ignores missing and non-form `form` references instead of throwing
+- [Button](/button/) ignores non-form `form` references instead of throwing
   during submit or reset activation.
+- [Slider](/slider/) keeps both thumbs and tuple callbacks after a form reset
+  when a range has no `defaultValue`.
+- Clearable [Input](/input/), [InputDate](/input-date/), and
+  [InputTime](/input-time/) fields reserve the clear button's space while empty,
+  so showing it does not add width.
+- [Menus](/menu/) opened inside `data-menu-open` content now close after a choice
+  without closing the surrounding menu.
+- Clearing an [InputDate](/input-date/) field no longer toggles its calendar.
+- Switching [Menu](/menu/) submenus closes nested controlled popups cleanly, so
+  an [InputDate](/input-date/) calendar can reopen after its facet is revisited.
+
+## 0.3.32 — September 25, 2026
+
+### Added
+
+- [Expander indicators](/expander/#indicator) can sit after header actions and
+  use built-in chevron, triangle, or plus visuals. Custom indicators can rotate
+  as one node or switch between closed and open nodes.
+- [Box measurements](/box/#measurements) can include
+  descendant rects with `includeRectsFor`, including positions relative to the
+  Box, width, and height. Changed rects appear in `detail.changed.rects` when
+  another observed field triggers a report.
+- [Box measurements](/box/#measurements) can stay active outside the viewport
+  with `observeOffscreen` when a virtualized layout needs updates there.
+
+### Changed
+
+- [Box layout](/box/#display) now uses `position: relative` by default, so
+  absolutely positioned descendants use the Box as their containing block. Set
+  `position: static` on the Box if they should use another positioned ancestor.
+- [Box measurements](/box/#measurements) now apply `throttle` to measurement
+  reads and CSS states as well as events. The edge mask eases between states;
+  larger intervals delay the fade response during scrolling.
+
+### Fixed
+
+- [Expander indicators](/expander/#indicator) leave the mark empty for
+  unrecognized strings and numbers instead of displaying them as text.
+- [Menu submenus](/menu/#submenus) stay open when a nested
+  date picker closes under the pointer outside the submenu. Hover dismissal
+  resumes after the pointer returns. Closing a nested popup away from the
+  pointer leaves hover dismissal available.
+- [Dialog headers](/dialog/#zones) wrap long unbroken text
+  and clip content that still overflows their bounds.
 
 ## 0.3.31 — September 18, 2026
 

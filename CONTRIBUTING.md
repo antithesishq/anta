@@ -17,7 +17,7 @@ Every member of the [project's GitHub organization](https://github.com/antithesi
    - Why it changed (the *why* — link the slack thread, design discussion, ticket, or your own reasoning)
    - A short test plan (how to verify it locally and what to look for)
 4. **Wait for review.** Every PR needs **Vlad Korobov ([@terpimost](https://github.com/terpimost))** to review and approve before merging — please do not self-merge or merge another teammate's PR without Vlad's explicit approval. The `CODEOWNERS` file enforces this requirement automatically.
-5. **CI must pass.** Required check is `build`; if it fails, fix the issue rather than bypassing.
+5. **CI must pass.** Required checks are `build` and `docs-review`; if either fails, fix the issue rather than bypassing it. The `review-docs` label is required when a PR adds or changes authored documentation.
 6. After merge, delete the branch (the GitHub UI offers this on the merged PR page).
 
 ### What goes in `CHANGELOG.md`

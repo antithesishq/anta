@@ -59,6 +59,14 @@ const api = () => cached('api', [
   '--plugin', './lib/union-source-order.mjs',
 ]))
 
+const reference = () => cached('reference', [
+  'src', 'site/typedoc.reference.mjs', 'site/lib/union-source-order.mjs',
+  'site/lib/doc-review-status.mjs', 'site/src/styles/typedoc-reference.css',
+  'site/src/scripts/typedoc-reference.js',
+], ['site/public/reference/index.html'], () => cli('typedoc', [
+  '--options', 'typedoc.reference.mjs',
+]))
+
 const iframe = () => cached('iframe', [
   'dist', 'site/scripts/build-iframe-runtime.mjs',
 ], ['site/src/generated/iframe-assets.ts', 'site/public/iframe'],
@@ -74,7 +82,7 @@ const playground = () => cached('playground', [
 async function docs() {
   // The app embeds both API data and the iframe manifest. Finish those first.
   await together([
-    api(), iframe(), script('gen-pages.mjs'), script('check-llms-index.mjs'),
+    api(), reference(), iframe(), script('gen-pages.mjs'), script('check-llms-index.mjs'),
     script('copy-esbuild-wasm.mjs'), script('copy-themes.mjs'),
   ])
   await playground()
@@ -84,6 +92,7 @@ await mkdir(join(site, 'src/generated'), { recursive: true })
 
 switch (mode) {
   case 'api': await api(); break
+  case 'reference': await reference(); break
   case 'iframe': await iframe(); break
   case 'playground': await playground(); break
   case 'docs': await docs(); break

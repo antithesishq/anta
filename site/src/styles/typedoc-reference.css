@@ -1,0 +1,68 @@
+:root {
+  --doc-review-warning: #7f410b;
+  --doc-review-warning-bg: #fefbf6;
+  --doc-review-warning-border: #d4a16d;
+}
+
+html[data-theme="dark"] {
+  --doc-review-warning: #f0bf75;
+  --doc-review-warning-bg: #312113;
+  --doc-review-warning-border: #8e643c;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="os"] {
+    --doc-review-warning: #f0bf75;
+    --doc-review-warning-bg: #312113;
+    --doc-review-warning-border: #8e643c;
+  }
+}
+
+.tsd-page-title:has(.doc-review-marker) h1 {
+  color: var(--doc-review-warning);
+}
+
+.doc-review-marker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4em;
+  margin-inline-start: 0.3em;
+  padding: 0.1em 0.3em;
+  border: 1px solid var(--doc-review-warning-border);
+  border-radius: 0.35em;
+  color: var(--doc-review-warning);
+  background: var(--doc-review-warning-bg);
+  font: inherit;
+  cursor: help;
+  vertical-align: middle;
+}
+
+.doc-review-marker:focus-visible {
+  outline: 2px solid var(--doc-review-warning);
+  outline-offset: 2px;
+}
+
+.doc-review-marker:is(:hover, :focus-visible)::after {
+  position: absolute;
+  z-index: 20;
+  inset-block-end: calc(100% + 6px);
+  inset-inline-start: 50%;
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: 6px 9px;
+  border-radius: 5px;
+  color: #fff;
+  background: #29232d;
+  content: attr(data-review-tooltip);
+  font: 12px/1.4 system-ui, sans-serif;
+  white-space: normal;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 9px color-mix(in oklch, #000 18%, transparent);
+}
+
+.anta-docs-link {
+  margin-inline-end: 1em;
+  white-space: nowrap;
+}

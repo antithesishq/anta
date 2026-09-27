@@ -167,10 +167,12 @@ export class AButtonElement extends HTMLElementBase {
 
 function findForm(el: HTMLElement): HTMLFormElement | null {
   const formId = el.getAttribute("form");
-  if (formId) {
-    return el.ownerDocument.getElementById(formId) as HTMLFormElement | null;
-  }
-  return el.closest("form");
+  const candidate = formId === null
+    ? el.closest("form")
+    : el.ownerDocument.getElementById(formId);
+  return candidate?.namespaceURI === "http://www.w3.org/1999/xhtml" && candidate.localName === "form"
+    ? candidate as HTMLFormElement
+    : null;
 }
 
 function handleClick(e: MouseEvent) {

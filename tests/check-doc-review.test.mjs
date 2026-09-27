@@ -44,7 +44,10 @@ test('CI requires review-docs for new or changed authored documentation and repo
       assert.match(error.stdout, /docs-fix does not remove it/)
       return true
     })
-    assert.match(check(unreviewed, '--review-docs'), /2 new or changed authored documentation section/)
+    const labeledOutput = check(unreviewed, '--review-docs')
+    assert.match(labeledOutput, /2 new or changed authored documentation section/)
+    assert.match(labeledOutput, /Current TSDoc:\n\/\*\*[\s\S]*Reviewed explanation/)
+    assert.match(labeledOutput, /Review the complete page in the PR diff/)
     const report = await readFile(summary, 'utf8')
     assert.match(report, /Current TSDoc:[\s\S]*Reviewed explanation/)
     assert.match(report, /Remove newly added or changed author markers manually/)
@@ -55,6 +58,8 @@ test('CI requires review-docs for new or changed authored documentation and repo
     assert.throws(() => check(authored), (error) => {
       assert.equal(error.status, 1)
       assert.match(error.stdout, /Authored TSDoc changed \(Alice\)/)
+      assert.match(error.stdout, /Previous TSDoc:[\s\S]*Reviewed explanation/)
+      assert.match(error.stdout, /Current TSDoc:[\s\S]*Edited after review/)
       assert.match(error.stdout, /Run pnpm docs-fix --check, then pnpm docs-fix locally or comment \/docs-fix/)
       assert.doesNotMatch(error.stdout, /Authored page changed/)
       return true

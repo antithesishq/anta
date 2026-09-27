@@ -126,6 +126,9 @@ if (findings.length === 0) {
   summary.push('| Location | Section | Author | Change |', '| --- | --- | --- | --- |')
   for (const finding of findings) {
     console.log(`${finding.path}:${finding.line} ${finding.name}: ${finding.reason} (${finding.author})`)
+    if (finding.previous) console.log(`Previous TSDoc:\n${finding.previous}`)
+    if (finding.current) console.log(`Current TSDoc:\n${finding.current}`)
+    else console.log('Review the complete page in the PR diff.')
     if (!reviewed) console.log(`  ${resolution(finding)}`)
     const title = reviewed ? 'Review authored documentation' : 'review-docs label required'
     const command = reviewed ? 'notice' : 'error'

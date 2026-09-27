@@ -191,8 +191,9 @@ CI compares each PR with its base commit. New author markers and edits that
 retain an existing author require the `review-docs` PR label; without it, the
 `docs-review` job fails. With the label, that job lists every affected
 TSDoc comment and authored page in the Actions summary and annotates its source
-line. The job shows the full TSDoc text and the paths of authored pages. It does
-not edit files or verify that a human read them. The label asks the reviewer to
+line. The job log and summary show the full TSDoc text; for authored pages they
+point to the PR diff for review. The job does not edit files or verify that a
+human read them. The label asks the reviewer to
 inspect those sections and the PR diff before approval.
 
 - **Pages (`.mdx`):** State the purpose in one or two sentences, show the common

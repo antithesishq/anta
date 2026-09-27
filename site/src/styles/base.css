@@ -530,23 +530,13 @@ hr, .expressive-code { margin: 0 0 1.5em; }
 :is(.content, [data-docs-markdown]) .expressive-code .frame[data-folded] { grid-template-rows: var(--fold-header-h) 0fr; }
 :is(.content, [data-docs-markdown]) .expressive-code .frame[data-folded] > pre { border: 0; }
 /* These frames carry a header bar at the top, so the copy button moves up into
-   it (top-right corner) rather than floating over the code, and stays visible
-   without hover. Higher specificity than the hover-reveal rule below, so it
-   wins. It's hidden entirely while folded (next line) — nothing to copy when
-   the body is collapsed. */
+   it (top-right corner) rather than floating over the code. The reveal rule
+   below controls its visibility. */
 :is(.content, [data-docs-markdown]) .expressive-code .frame.has-title .copy,
 :is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal .copy,
 :is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable] .copy {
   inset-block-start: 0;
   inset-inline-end: 0;
-  /* Slightly dimmed at rest, full on hover. */
-  opacity: 0.8;
-  transition: opacity 120ms ease-out;
-}
-:is(.content, [data-docs-markdown]) .expressive-code .frame.has-title .copy:hover,
-:is(.content, [data-docs-markdown]) .expressive-code .frame.is-terminal .copy:hover,
-:is(.content, [data-docs-markdown]) .expressive-code .frame[data-foldable] .copy:hover {
-  opacity: 1;
 }
 /* The button is a square that fills the full header height (the icon stays 16px,
    centered) — a bigger, header-tall hit target than the plain-block 24px. */
@@ -593,12 +583,11 @@ hr, .expressive-code { margin: 0 0 1.5em; }
 /* EC fades the copy *button* in on frame hover; move that reveal to the
    whole `.copy` tab so the frosted chip isn't shown empty at rest. */
 @media (hover: hover) {
-  :is(.content, [data-docs-markdown]) .expressive-code .frame .copy {
+  :is(.content, [data-docs-markdown]) .expressive-code .frame:not(.has-title):not(.is-terminal):not([data-foldable]) .copy {
     opacity: 0;
     transition: opacity 150ms ease-out;
   }
-  :is(.content, [data-docs-markdown]) .expressive-code .frame:hover .copy,
-  :is(.content, [data-docs-markdown]) .expressive-code .frame:focus-within .copy {
+  :is(.content, [data-docs-markdown]) .expressive-code .frame:not(.has-title):not(.is-terminal):not([data-foldable]):is(:hover, :focus-within) .copy {
     opacity: 1;
   }
   :is(.content, [data-docs-markdown]) .expressive-code .copy button {
@@ -606,9 +595,19 @@ hr, .expressive-code { margin: 0 0 1.5em; }
   }
 }
 
+/* A framed block has a focusable header, so keyboard focus can reveal the
+   hidden copy button before Tab reaches it. Delay visibility:hidden until the
+   fade-out finishes; reveal visibility immediately when hovered or focused. */
 :is(.content, [data-docs-markdown]) .expressive-code .frame:is(.has-title, .is-terminal, [data-foldable]) .copy {
-  visibility: visible;
+  opacity: 0;
+  visibility: hidden;
   transition: opacity 150ms ease-out, visibility 0s;
+  transition-delay: 0s, 150ms;
+}
+:is(.content, [data-docs-markdown]) .expressive-code .frame:is(.has-title, .is-terminal, [data-foldable]):is(:hover, :focus-within) .copy {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
 }
 :is(.content, [data-docs-markdown]) .expressive-code .frame:is(.has-title, .is-terminal, [data-foldable])[data-folded] .copy {
   opacity: 0;

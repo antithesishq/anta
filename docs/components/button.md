@@ -24,8 +24,7 @@ visual emphasis.
 
 Six named tones: `neutral` (default), `brand`, `critical`, `info`, `success`,
 and `warning`. Omitting `tone`, or passing an empty string, resolves to
-`neutral`. A custom tone is also possible: pass any literal CSS color and the
-button will adapt to it.
+`neutral`.
 
 ```tsx
 <Button label="Save" />
@@ -36,7 +35,7 @@ button will adapt to it.
 <Button tone="warning" label="Archive" />
 ```
 
-### Custom tone
+## Custom tone
 
 Pass any CSS color to `tone`. Custom tones work with every priority and adapt to
 the current color mode.
@@ -348,11 +347,15 @@ When using `<a-button>` directly, add its button role and keyboard tab stop.
 </a-button>
 ```
 
-Use `<button data-anta>` when you need native button and form behavior.
+### Native HTML button
+
+Add `data-anta` to a native `<button>` to use Anta's button styles with native
+keyboard and form behavior. Set `type="button"` for actions that should not
+submit a surrounding form. Use `type="submit"` or `type="reset"` for form actions.
 
 ```html
-<button data-anta tone="brand" priority="primary">Save changes</button>
-<button data-anta disabled>Unavailable</button>
+<button type="button" data-anta tone="brand" priority="primary">Save changes</button>
+<button type="button" data-anta disabled>Unavailable</button>
 ```
 
 ## Styling

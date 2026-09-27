@@ -40,10 +40,14 @@ test('CI requires review-docs for new or changed authored documentation and repo
       assert.equal(error.status, 1)
       assert.match(error.stdout, /New TSDoc author \(Alice\)/)
       assert.match(error.stdout, /New page author \(Alice\)/)
+      assert.match(error.stdout, /Remove this new @author tag manually/)
+      assert.match(error.stdout, /docs-fix does not remove it/)
       return true
     })
     assert.match(check(unreviewed, '--review-docs'), /2 new or changed authored documentation section/)
-    assert.match(await readFile(summary, 'utf8'), /Current TSDoc:[\s\S]*Reviewed explanation/)
+    const report = await readFile(summary, 'utf8')
+    assert.match(report, /Current TSDoc:[\s\S]*Reviewed explanation/)
+    assert.match(report, /Remove newly added or changed author markers manually/)
 
     await writeFile(source, '/**\n * Edited after review.\n * @author Alice\n */\nexport function example() {}\n')
     git('add', '.')
@@ -51,6 +55,7 @@ test('CI requires review-docs for new or changed authored documentation and repo
     assert.throws(() => check(authored), (error) => {
       assert.equal(error.status, 1)
       assert.match(error.stdout, /Authored TSDoc changed \(Alice\)/)
+      assert.match(error.stdout, /Run pnpm docs-fix --check, then pnpm docs-fix locally or comment \/docs-fix/)
       assert.doesNotMatch(error.stdout, /Authored page changed/)
       return true
     })
@@ -59,6 +64,16 @@ test('CI requires review-docs for new or changed authored documentation and repo
     git('add', '.')
     git('commit', '-qm', 'Remove stale author')
     assert.match(check(authored), /No new or changed authored documentation found/)
+
+    await writeFile(source, '/**\n * Edited after review.\n * @author Bob\n */\nexport function example() {}\n')
+    git('add', '.')
+    git('commit', '-qm', 'Change author')
+    assert.throws(() => check(authored), (error) => {
+      assert.equal(error.status, 1)
+      assert.match(error.stdout, /TSDoc author changed \(Bob\)/)
+      assert.match(error.stdout, /Remove this changed @author tag manually/)
+      return true
+    })
   } finally {
     await rm(repo, { recursive: true, force: true })
   }

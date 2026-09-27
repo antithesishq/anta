@@ -86,8 +86,9 @@ for (let index = 0; index < entries.length && entries[index];) {
     const oldPage = mdxPage(previous)
     const newPage = mdxPage(current)
     if (newPage?.author && (newPage.author !== oldPage?.author || newPage.text !== oldPage.text)) {
+      const kind = !oldPage?.author ? 'new' : newPage.author !== oldPage.author ? 'changed-author' : 'stale'
       findings.push({ path, line: newPage.line, name: 'Entire page', author: newPage.author,
-        reason: oldPage?.author ? 'Authored page changed' : 'New page author' })
+        kind, reason: kind === 'new' ? 'New page author' : kind === 'changed-author' ? 'Page author changed' : 'Authored page changed' })
     }
   } else if (/^src\/.*\.tsx?$/.test(path)) {
     const oldDocs = tsDocs(previous, previousPath)
@@ -98,8 +99,9 @@ for (let index = 0; index < entries.length && entries[index];) {
         if (!doc.author) continue
         const earlier = old[position]
         if (doc.author === earlier?.author && doc.text === earlier.text) continue
+        const kind = !earlier?.author ? 'new' : doc.author !== earlier.author ? 'changed-author' : 'stale'
         findings.push({ path, line: doc.line, name: doc.name, author: doc.author,
-          reason: earlier?.author ? 'Authored TSDoc changed' : 'New TSDoc author',
+          kind, reason: kind === 'new' ? 'New TSDoc author' : kind === 'changed-author' ? 'TSDoc author changed' : 'Authored TSDoc changed',
           previous: earlier?.original, current: doc.original })
       }
     }
@@ -108,6 +110,13 @@ for (let index = 0; index < entries.length && entries[index];) {
 
 const escapeCommand = (value) => String(value).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A')
 const escapeMarkdown = (value) => String(value).replaceAll('|', '\\|').replaceAll('`', '\\`')
+function resolution(finding) {
+  if (finding.kind === 'stale') {
+    return 'Run pnpm docs-fix --check, then pnpm docs-fix locally or comment /docs-fix on the PR to remove this stale author. A human can instead review the final text and apply review-docs.'
+  }
+  const marker = finding.path.endsWith('.mdx') ? 'author field' : '@author tag'
+  return `Remove this ${finding.kind === 'new' ? 'new' : 'changed'} ${marker} manually if the final text was not human-reviewed; docs-fix does not remove it. Otherwise ask a human to review the final text and apply review-docs.`
+}
 const summary = ['## Documentation author review', '']
 if (findings.length === 0) {
   console.log('No new or changed authored documentation found.')
@@ -117,9 +126,11 @@ if (findings.length === 0) {
   summary.push('| Location | Section | Author | Change |', '| --- | --- | --- | --- |')
   for (const finding of findings) {
     console.log(`${finding.path}:${finding.line} ${finding.name}: ${finding.reason} (${finding.author})`)
+    if (!reviewed) console.log(`  ${resolution(finding)}`)
     const title = reviewed ? 'Review authored documentation' : 'review-docs label required'
     const command = reviewed ? 'notice' : 'error'
-    console.log(`::${command} file=${escapeCommand(finding.path)},line=${finding.line},title=${title}::${escapeCommand(`${finding.name}: ${finding.reason} (${finding.author})`)}`)
+    const message = `${finding.name}: ${finding.reason} (${finding.author}).${reviewed ? '' : ` ${resolution(finding)}`}`
+    console.log(`::${command} file=${escapeCommand(finding.path)},line=${finding.line},title=${title}::${escapeCommand(message)}`)
     summary.push(`| ${escapeMarkdown(`${finding.path}:${finding.line}`)} | ${escapeMarkdown(finding.name)} | ${escapeMarkdown(finding.author)} | ${finding.reason} |`)
   }
   summary.push('')
@@ -129,9 +140,19 @@ if (findings.length === 0) {
     if (finding.previous) summary.push('Previous TSDoc:', '', '```ts', finding.previous, '```', '')
     summary.push('Current TSDoc:', '', '```ts', finding.current, '```', '', '</details>', '')
   }
-  summary.push(reviewed
-    ? 'The `review-docs` label is present. Review every section above before approving the PR.'
-    : 'Add the `review-docs` label after human review, or remove the author markers from these changed sections.', '')
+  if (reviewed) {
+    summary.push('The `review-docs` label is present. Review every section above before approving the PR.', '')
+  } else {
+    summary.push('### How to resolve', '')
+    summary.push('- If a human reviewed the final text, ask them to apply the `review-docs` label and inspect these sections in the PR diff.')
+    if (findings.some((finding) => finding.kind === 'stale')) {
+      summary.push('- For an existing author kept after documentation changed, run `pnpm docs-fix --check`, then `pnpm docs-fix` locally or comment `/docs-fix` on the PR to remove it.')
+    }
+    if (findings.some((finding) => finding.kind !== 'stale')) {
+      summary.push('- Remove newly added or changed author markers manually if they were not human-reviewed. `docs-fix` does not remove these markers.')
+    }
+    summary.push('')
+  }
 }
 if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY, `${summary.join('\n')}\n`)
 if (findings.length > 0 && !reviewed) process.exitCode = 1

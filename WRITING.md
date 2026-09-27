@@ -185,7 +185,7 @@ the Git name is not the desired public attribution. Agents may inspect with
 `--dry-run` but must not confirm review on a human's behalf.
 CI compares each PR with its base commit. New author markers and edits that
 retain an existing author require the `review-docs` PR label; without it, the
-documentation check fails. With the label, the check lists every affected
+`docs-review` job fails. With the label, that job lists every affected
 TSDoc comment and authored page in the Actions summary and annotates its source
 line. The label asks the reviewer to inspect those sections before approval.
 

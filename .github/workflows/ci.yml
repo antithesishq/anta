@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  docs-review:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -21,7 +22,6 @@ jobs:
       - name: Install dependencies and build workspace
         run: pnpm install --frozen-lockfile
       - name: Check documentation authors
-        if: github.event_name == 'pull_request'
         env:
           DOCS_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_REVIEWED: ${{ contains(github.event.pull_request.labels.*.name, 'review-docs') }}
@@ -31,6 +31,19 @@ jobs:
           else
             node scripts/check-doc-review.mjs --base "$DOCS_BASE_SHA"
           fi
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      # Workspace prepare scripts build Anta, stickers, and Plot on install.
+      - name: Install dependencies and build workspace
+        run: pnpm install --frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run typecheck
       - name: Run tests

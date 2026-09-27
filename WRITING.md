@@ -183,6 +183,11 @@ The human runs `pnpm docs-review <source-file> <declaration>` for TSDoc or
 `REVIEWED` confirmation before adding the marker. Use `--author <name>` when
 the Git name is not the desired public attribution. Agents may inspect with
 `--dry-run` but must not confirm review on a human's behalf.
+CI compares each PR with its base commit. New author markers and edits that
+retain an existing author require the `review-docs` PR label; without it, the
+documentation check fails. With the label, the check lists every affected
+TSDoc comment and authored page in the Actions summary and annotates its source
+line. The label asks the reviewer to inspect those sections before approval.
 
 - **Pages (`.mdx`):** State the purpose in one or two sentences, show the common
   case, then cover interactions and constraints a reader can act on. Component

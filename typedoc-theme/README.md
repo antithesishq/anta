@@ -12,12 +12,12 @@ export default {
 }
 ```
 
-The package copies its stylesheet and small theme bridge into TypeDoc's output. The bridge maps TypeDoc's light/dark setting to Anta's `.dark` tokens and styles the existing native search controls. It does not replace TypeDoc's search engine.
+The package copies its stylesheet and small theme bridge into TypeDoc's output. The bridge maps TypeDoc's light/dark setting to Anta's `.dark` tokens, moves TypeDoc's visibility checkboxes into a toolbar dropdown, and presents its theme setting as the docs site's two-state toolbar button. TypeDoc still owns filtering, theme persistence, and search.
 
 ## Package layout
 
 - `src/index.mjs` registers the theme on TypeDoc's default HTML renderer and copies the built assets into each reference output.
 - `src/theme.css` adapts TypeDoc's layout to Anta's base colors and native controls. The build bundles Anta's base CSS; consumers do not need an Anta runtime dependency.
-- `src/client.js` connects TypeDoc's theme setting to Anta's color tokens and adds the docs site's search shortcut.
+- `src/client.js` connects TypeDoc's controls to the toolbar and adds the docs site's search shortcut.
 
 Run `pnpm --filter @antadesign/typedoc-theme build` after editing the package. The Anta docs site's existing `/reference/` output uses this package for evaluation.

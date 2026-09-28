@@ -19,7 +19,7 @@
   --color-icon-text: var(--text-3-brand);
   --color-comment-tag-text: var(--text-2);
   --color-comment-tag: var(--bg-3);
-  --color-link: var(--text-2-brand);
+  --color-link: var(--link-color);
   --color-focus-outline: var(--focus-ring);
 }
 
@@ -38,11 +38,11 @@ body {
 }
 
 a {
-  color: var(--text-2-brand);
+  color: var(--link-color);
 }
 
 a:hover {
-  color: var(--text-1-brand);
+  color: var(--link-color-hover);
 }
 
 .container {
@@ -71,13 +71,14 @@ footer {
 }
 
 .tsd-toolbar-contents {
-  gap: 12px;
+  gap: 8px;
   height: 43px;
   padding-inline: 20px 12px;
 }
 
 .tsd-toolbar-contents > .title {
-  flex: 0 0 240px;
+  order: 1;
+  flex: 0 1 240px;
   min-width: 0;
   margin: 0;
   overflow: hidden;
@@ -89,20 +90,24 @@ footer {
 }
 
 #tsd-toolbar-links {
-  order: 3;
+  order: 5;
   flex: 0 0 auto;
   gap: 12px;
-  margin: 0 0 0 auto;
+  margin: 0;
   font-size: 13px;
 }
 
+#tsd-toolbar-links:empty {
+  display: none;
+}
+
 .tsd-page-toolbar #tsd-toolbar-links a {
-  color: var(--text-2-brand);
+  color: var(--link-color);
   text-decoration: none;
 }
 
 .tsd-page-toolbar #tsd-toolbar-links a:hover {
-  color: var(--text-1-brand);
+  color: var(--link-color-hover);
   text-decoration: underline dotted;
 }
 
@@ -151,7 +156,126 @@ footer {
 }
 
 #tsd-toolbar-menu-trigger {
+  order: 6;
+}
+
+.anta-visibility-menu {
+  position: relative;
+  order: 3;
+  flex: 0 0 auto;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.anta-visibility-menu > summary,
+.anta-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  font: inherit;
+  list-style: none;
+}
+
+.anta-visibility-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.anta-visibility-menu > summary:hover,
+.anta-visibility-menu[open] > summary,
+.anta-theme-toggle:hover {
+  background: var(--bg-4-brand);
+  color: var(--text-1);
+}
+
+.anta-visibility-menu > summary:focus-visible,
+.anta-theme-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.anta-visibility-menu[open] > summary a-icon[shape="chevron-down"] {
+  transform: rotate(180deg);
+}
+
+.anta-visibility-panel {
+  position: absolute;
+  z-index: 30;
+  inset-block-start: calc(100% + 8px);
+  inset-inline-end: 0;
+  width: 220px;
+  padding: 12px;
+  border: 1px solid var(--border-4);
+  border-radius: 8px;
+  background: var(--bg-2);
+  box-shadow: 0 8px 24px color-mix(in oklch, #000 16%, transparent);
+}
+
+.anta-visibility-panel .settings-label {
+  margin: 0 0 8px;
+  color: var(--text-4);
+  font-size: 11px;
+  font-weight: 585;
+  letter-spacing: 0.06em;
+}
+
+.anta-visibility-panel #tsd-filter-options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.anta-visibility-panel .tsd-filter-item {
+  margin: 0;
+}
+
+.anta-visibility-panel .tsd-filter-input {
+  gap: 8px;
+  width: 100%;
+  padding: 6px;
+  border-radius: 5px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.anta-visibility-panel .tsd-filter-input:hover {
+  background: var(--bg-3);
+}
+
+.anta-visibility-panel .tsd-filter-input svg {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.anta-theme-toggle {
   order: 4;
+  flex: 0 0 30px;
+  width: 30px;
+  padding: 0;
+}
+
+.anta-theme-toggle a-icon[shape="sun"] {
+  display: none;
+}
+
+.dark .anta-theme-toggle a-icon[shape="sun"] {
+  display: inline-block;
+}
+
+.dark .anta-theme-toggle a-icon[shape="moon"] {
+  display: none;
+}
+
+.anta-native-theme {
+  display: none;
 }
 
 .col-content {
@@ -300,7 +424,7 @@ dt.tsd-member-summary {
 }
 
 .site-menu .tsd-navigation > a {
-  color: var(--text-2-brand);
+  color: var(--text-2);
   font-weight: 585;
 }
 
@@ -486,7 +610,17 @@ dt.tsd-member-summary {
 
   .tsd-toolbar-contents > .title {
     flex-basis: auto;
-    max-width: 38vw;
+    max-width: 40vw;
+  }
+
+  .anta-visibility-menu .anta-control-label,
+  .anta-visibility-menu > summary a-icon[shape="chevron-down"] {
+    display: none;
+  }
+
+  .anta-visibility-menu > summary {
+    width: 30px;
+    padding: 0;
   }
 
   #tsd-search-trigger {

@@ -16,6 +16,7 @@ if (toolbar) {
   const link = document.createElement('a')
   link.href = '/'
   link.className = 'anta-docs-link'
+  link.setAttribute('aria-label', 'Back to Anta docs')
   link.textContent = '← Anta docs'
   toolbar.prepend(link)
 }

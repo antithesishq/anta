@@ -51,6 +51,18 @@ html[data-theme="dark"] {
 }
 
 .anta-docs-link {
-  margin-inline-end: 1em;
   white-space: nowrap;
+}
+
+@media (max-width: 799px) {
+  .anta-docs-link {
+    width: 20px;
+    overflow: hidden;
+    font-size: 0;
+  }
+
+  .anta-docs-link::before {
+    content: "←";
+    font-size: 14px;
+  }
 }

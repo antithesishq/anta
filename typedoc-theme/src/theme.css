@@ -446,10 +446,6 @@ dt.tsd-member-summary {
   padding: 0;
 }
 
-.site-menu #tsd-nav-container {
-  padding-inline-start: 12px;
-}
-
 .site-menu .tsd-navigation ul.tsd-nested-navigation {
   padding-inline-start: 28px;
 }

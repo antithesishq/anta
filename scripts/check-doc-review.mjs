@@ -48,8 +48,11 @@ function tsDocs(content, path) {
       const match = authorLine.exec(original)
       const author = match?.[1].trim()
       const text = match ? original.slice(0, match.index) + original.slice(match.index + match[0].length) : original
+      const containingType = ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)
       const entries = docs.get(key) ?? []
-      entries.push({ author, text, original, line: lineAt(content, doc.getStart(source)), name: name ?? key })
+      entries.push({ author, text, scopeText: containingType ? node.getText(source) : undefined,
+        reviewText: containingType ? `${original}\n${node.getText(source)}` : original,
+        line: lineAt(content, doc.getStart(source)), name: name ?? key })
       docs.set(key, entries)
     }
     ts.forEachChild(node, (child) => visit(child, next))
@@ -98,11 +101,11 @@ for (let index = 0; index < entries.length && entries[index];) {
       for (const [position, doc] of docs.entries()) {
         if (!doc.author) continue
         const earlier = old[position]
-        if (doc.author === earlier?.author && doc.text === earlier.text) continue
+        if (doc.author === earlier?.author && doc.text === earlier.text && doc.scopeText === earlier.scopeText) continue
         const kind = !earlier?.author ? 'new' : doc.author !== earlier.author ? 'changed-author' : 'stale'
         findings.push({ path, line: doc.line, name: doc.name, author: doc.author,
           kind, reason: kind === 'new' ? 'New TSDoc author' : kind === 'changed-author' ? 'TSDoc author changed' : 'Authored TSDoc changed',
-          previous: earlier?.original, current: doc.original })
+          previous: earlier?.reviewText, current: doc.reviewText })
       }
     }
   }

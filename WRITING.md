@@ -172,6 +172,14 @@ tags. Without the marker, the documentation site shows a page warning. TypeDoc
 shows a warning on documented declarations; declarations without TSDoc have no
 review marker.
 
+For an interface or type alias, one `@author` on the type covers the fields
+declared inside it. Review the full declaration, including every field comment,
+before adding that marker. It does not cover inherited fields or comments on
+other declarations. `pnpm docs-review <source-file> <type-name>` shows the whole
+declaration and can add a top-level comment when the type has none. Editing a
+field later makes the parent marker stale; `pnpm docs-fix` removes it unless a
+human reviews the updated declaration again.
+
 Do not add or preserve a human author marker when generating or changing
 documentation with an agent. Run `pnpm docs-fix` to inspect and remove stale
 markers that already existed at the branch point with `main` when their

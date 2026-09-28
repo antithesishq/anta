@@ -30,6 +30,19 @@ test('docs-fix removes only stale author markers', async () => {
       ' */',
       'export function codeOnly() { return 1 }',
       '',
+      '/** Reviewed props.',
+      ' * @author Alice',
+      ' */',
+      'export interface ExampleProps {',
+      '  /** Original field. */ value?: string',
+      '}',
+      '/**',
+      ' * @author Alice',
+      ' */',
+      'export interface MarkerOnlyProps {',
+      '  /** Original marker-only field. */ value?: string',
+      '}',
+      '',
     ].join('\n'))
     await writeFile(page, '---\ntitle: Example\nauthor: Alice\n---\n# Example\nOriginal documentation.\n')
     git('add', '.')
@@ -37,11 +50,13 @@ test('docs-fix removes only stale author markers', async () => {
 
     await writeFile(source, (await readFile(source, 'utf8'))
       .replace('Reviewed function.', 'Updated function documentation.')
-      .replace('codeOnly() { return 1 }', 'codeOnly() { return 2 }'))
+      .replace('codeOnly() { return 1 }', 'codeOnly() { return 2 }')
+      .replace('Original field.', 'Updated field.')
+      .replace('Original marker-only field.', 'Updated marker-only field.'))
     await writeFile(page, (await readFile(page, 'utf8')).replace('Original documentation.', 'Updated documentation.'))
 
     assert.throws(() => fix('--check'), (error) => {
-      assert.match(error.stdout.toString(), /Stale author markers \(2\)/)
+      assert.match(error.stdout.toString(), /Stale author markers \(4\)/)
       return error.status === 1
     })
     assert.match(await readFile(source, 'utf8'), /@author Alice/)
@@ -51,6 +66,7 @@ test('docs-fix removes only stale author markers', async () => {
     const finalSource = await readFile(source, 'utf8')
     const finalPage = await readFile(page, 'utf8')
     assert.doesNotMatch(finalSource, /@author Alice/)
+    assert.match(finalSource, /}\nexport interface MarkerOnlyProps/)
     assert.doesNotMatch(finalPage, /author: Alice/)
     assert.match(finalSource, /@author Bob/)
     assert.match(finalSource, /Updated function documentation/)

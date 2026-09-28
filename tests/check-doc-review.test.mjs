@@ -83,3 +83,41 @@ test('CI requires review-docs for new or changed authored documentation and repo
     await rm(repo, { recursive: true, force: true })
   }
 })
+
+test('CI treats reviewed interface fields as part of the parent review', async () => {
+  const repo = await mkdtemp(join(tmpdir(), 'anta-props-review-check-'))
+  const source = join(repo, 'src/example.ts')
+  const git = (...args) => execFileSync('git', args, { cwd: repo, encoding: 'utf8' }).trim()
+  const check = (base, ...args) => execFileSync(process.execPath,
+    [checker, '--repo', repo, '--base', base, ...args], { cwd: repo, encoding: 'utf8' })
+
+  try {
+    await mkdir(join(repo, 'src'), { recursive: true })
+    git('init', '-q')
+    git('config', 'user.name', 'Fixture')
+    git('config', 'user.email', 'fixture@example.test')
+    await writeFile(source, [
+      '/** Reviewed props.\n * @author Alice\n */',
+      'export interface TitleProps {',
+      '  /** Heading level. */ level?: number',
+      '}',
+      '',
+    ].join('\n'))
+    git('add', '.')
+    git('commit', '-qm', 'Review props')
+    const base = git('rev-parse', 'HEAD')
+
+    await writeFile(source, (await readFile(source, 'utf8')).replace('Heading level.', 'Heading level from 1 to 6.'))
+    git('add', '.')
+    git('commit', '-qm', 'Edit field documentation')
+    assert.throws(() => check(base), (error) => {
+      assert.equal(error.status, 1)
+      assert.match(error.stdout, /TitleProps: Authored TSDoc changed \(Alice\)/)
+      assert.match(error.stdout, /Current TSDoc:[\s\S]*Heading level from 1 to 6/)
+      return true
+    })
+    assert.match(check(base, '--review-docs'), /TitleProps: Authored TSDoc changed \(Alice\)/)
+  } finally {
+    await rm(repo, { recursive: true, force: true })
+  }
+})

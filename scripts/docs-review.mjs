@@ -26,21 +26,28 @@ function declarationName(node, source) {
   return node.name?.getText?.(source)
 }
 
-function findComment(content, path, name) {
+function findDeclaration(content, path, name) {
   const kind = path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   const source = ts.createSourceFile(path, content, ts.ScriptTarget.Latest, true, kind)
   const matches = []
   function visit(node) {
-    if (declarationName(node, source) === name) {
-      for (const doc of node.jsDoc ?? []) matches.push({ start: doc.getStart(source), end: doc.end })
+    if (declarationName(node, source) === name &&
+      ((node.jsDoc?.length ?? 0) > 0 || ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node))) {
+      matches.push(node)
     }
     ts.forEachChild(node, visit)
   }
   visit(source)
-  if (matches.length !== 1) {
-    throw new Error(`Expected one TSDoc comment for ${name} in ${path}; found ${matches.length}.`)
+  if (matches.length !== 1) throw new Error(`Expected one declaration for ${name} in ${path}; found ${matches.length}.`)
+  const node = matches[0]
+  const docs = node.jsDoc ?? []
+  const containingType = ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)
+  if (docs.length !== 1 && !(containingType && docs.length === 0)) {
+    throw new Error(`Expected one TSDoc comment for ${name} in ${path}; found ${docs.length}.`)
   }
-  return matches[0]
+  const doc = docs[0]
+  return { comment: doc && { start: doc.getStart(source), end: doc.end },
+    declaration: node.getText(source), start: node.getStart(source), containingType }
 }
 
 function validateAuthor(author) {
@@ -67,6 +74,14 @@ export function addTsDocAuthor(content, comment, author) {
     replacement = `/**${newline}${indent} * ${inline[1]}${newline}${indent} *${newline}${indent} * @author ${author}${newline}${indent} */`
   }
   return content.slice(0, comment.start) + replacement + content.slice(comment.end)
+}
+
+export function addTypeAuthor(content, start, author) {
+  validateAuthor(author)
+  const lineStart = content.lastIndexOf('\n', start - 1) + 1
+  const indent = /^[ \t]*/.exec(content.slice(lineStart, start))?.[0] ?? ''
+  const newline = content.includes('\r\n') ? '\r\n' : '\n'
+  return `${content.slice(0, start)}/**${newline}${indent} * @author ${author}${newline}${indent} */${newline}${indent}${content.slice(start)}`
 }
 
 export function addMdxAuthor(content, author) {
@@ -128,11 +143,20 @@ async function main() {
     if (url) console.log(`Preview: ${url}`)
   } else if (/^src\/.*\.tsx?$/.test(displayPath)) {
     if (!symbol) throw new Error('Give the TSDoc declaration name, such as getInitials.')
-    const comment = findComment(content, displayPath, symbol)
-    console.log(`TSDoc for ${symbol} in ${displayPath}:\n`)
-    console.log(content.slice(comment.start, comment.end))
-    updated = addTsDocAuthor(content, comment, author)
-    scope = 'entire TSDoc comment'
+    const target = findDeclaration(content, displayPath, symbol)
+    if (target.containingType) {
+      console.log(`Review the entire ${symbol} declaration, including every field comment, in ${displayPath}:\n`)
+      if (target.comment) console.log(content.slice(target.comment.start, target.comment.end))
+      console.log(target.declaration)
+      scope = 'entire type declaration and its field comments'
+    } else {
+      console.log(`TSDoc for ${symbol} in ${displayPath}:\n`)
+      console.log(content.slice(target.comment.start, target.comment.end))
+      scope = 'entire TSDoc comment'
+    }
+    updated = target.comment
+      ? addTsDocAuthor(content, target.comment, author)
+      : addTypeAuthor(content, target.start, author)
   } else throw new Error('Choose a source .ts/.tsx file or a docs .mdx page.')
 
   console.log(`\nProposed marker: ${displayPath.endsWith('.mdx') ? `author: ${JSON.stringify(author)}` : `@author ${author}`}`)

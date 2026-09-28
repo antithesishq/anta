@@ -71,10 +71,13 @@ function tsDocs(raw, path) {
       const match = authorLine.exec(content)
       const author = match?.[1].trim()
       const cleaned = match ? content.slice(0, match.index) + content.slice(match.index + match[0].length) : content
+      const containingType = ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)
+      const onlyAuthor = match && /^\/\*\*\s*\*\/$/.test(cleaned)
+      const trailingNewline = raw.slice(doc.end).match(/^\r?\n/)?.[0].length ?? 0
       docs.set(key, {
-        author, text: cleaned,
-        start: match ? doc.getStart(source) + match.index : undefined,
-        end: match ? doc.getStart(source) + match.index + match[0].length : undefined,
+        author, text: cleaned, scopeText: containingType ? node.getText(source) : undefined,
+        start: match ? (onlyAuthor ? doc.getStart(source) : doc.getStart(source) + match.index) : undefined,
+        end: match ? (onlyAuthor ? doc.end + trailingNewline : doc.getStart(source) + match.index + match[0].length) : undefined,
       })
     }
     ts.forEachChild(node, (child) => visit(child, next))
@@ -115,7 +118,8 @@ for (const { path, previousPath } of changed) {
     const after = tsDocs(current, path)
     for (const [key, oldDoc] of before) {
       const newDoc = after.get(key)
-      if (oldDoc.author && newDoc?.author === oldDoc.author && oldDoc.text !== newDoc.text) {
+      if (oldDoc.author && newDoc?.author === oldDoc.author &&
+        (oldDoc.text !== newDoc.text || oldDoc.scopeText !== newDoc.scopeText)) {
         fixes.push({ path, label: key, start: newDoc.start, end: newDoc.end, line: current.slice(newDoc.start, newDoc.end).trim(), lineNumber: lineAt(current, newDoc.start) })
       }
     }

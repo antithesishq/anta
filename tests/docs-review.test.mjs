@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
-import { addMdxAuthor, addTsDocAuthor } from '../scripts/docs-review.mjs'
+import { addMdxAuthor, addTsDocAuthor, addTypeAuthor } from '../scripts/docs-review.mjs'
 
 const reviewer = fileURLToPath(new URL('../scripts/docs-review.mjs', import.meta.url))
 
@@ -23,6 +23,9 @@ test('docs-review inserts source markers while preserving documentation text', (
   const page = '---\ntitle: Example\n---\n# Example\nBody.\n'
   assert.equal(addMdxAuthor(page, 'Vlad Korobov'), '---\nauthor: "Vlad Korobov"\ntitle: Example\n---\n# Example\nBody.\n')
   assert.throws(() => addMdxAuthor(addMdxAuthor(page, 'Vlad Korobov'), 'Other'), /already has an author/)
+
+  const props = 'export interface TitleProps {\n  /** Heading level. */ level?: number\n}\n'
+  assert.equal(addTypeAuthor(props, 0, 'Vlad Korobov'), '/**\n * @author Vlad Korobov\n */\n' + props)
 })
 
 test('docs-review suggests git user.name and refuses noninteractive confirmation', async () => {
@@ -36,8 +39,15 @@ test('docs-review suggests git user.name and refuses noninteractive confirmation
     await writeFile(path, source)
     const preview = execFileSync(process.execPath, [reviewer, '--repo', repo, 'src/example.ts', 'example', '--dry-run'], { encoding: 'utf8' })
     assert.match(preview, /Proposed marker: @author Fixture Reviewer/)
-    assert.throws(() => execFileSync(process.execPath, [reviewer, '--repo', repo, 'src/example.ts', 'example'], { stdio: 'pipe' }), /Confirmation requires a terminal/)
-    assert.equal(await readFile(path, 'utf8'), source)
+    await writeFile(path, '/** Title summary. */\nexport const Title = () => null\n')
+    const functionPreview = execFileSync(process.execPath, [reviewer, '--repo', repo, 'src/example.ts', 'Title', '--dry-run'], { encoding: 'utf8' })
+    assert.match(functionPreview, /Title summary/)
+    await writeFile(path, 'export interface TitleProps {\n  /** Heading level. */ level?: number\n}\n')
+    const typePreview = execFileSync(process.execPath, [reviewer, '--repo', repo, 'src/example.ts', 'TitleProps', '--dry-run'], { encoding: 'utf8' })
+    assert.match(typePreview, /Review the entire TitleProps declaration, including every field comment/)
+    assert.match(typePreview, /Heading level/)
+    assert.throws(() => execFileSync(process.execPath, [reviewer, '--repo', repo, 'src/example.ts', 'TitleProps'], { stdio: 'pipe' }), /Confirmation requires a terminal/)
+    assert.match(await readFile(path, 'utf8'), /^export interface TitleProps/)
   } finally {
     await rm(repo, { recursive: true, force: true })
   }

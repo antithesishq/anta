@@ -316,6 +316,18 @@ footer {
   background: var(--bg-3);
 }
 
+/* TypeDoc's syntax stylesheet gives inline code the block-code background. */
+:not(pre) > code {
+  background: light-dark(
+    color-mix(in oklch, currentColor 6%, transparent),
+    color-mix(in oklch, currentColor 10%, transparent)
+  );
+}
+
+code.tsd-tag {
+  margin-inline-end: 0.5ch;
+}
+
 .tsd-comment p,
 .tsd-description p {
   line-height: 1.55;

@@ -167,11 +167,6 @@ details:not([data-anta])[open] > summary:not(.summary)::before {
   text-underline-offset: 3px;
 }
 
-/* An absent author marks the whole page as awaiting human review. */
-.content[data-doc-review="pending"] > h1:first-of-type,
-.content [data-doc-review-heading="pending"] {
-  color: var(--text-1-warning);
-}
 .doc-review-marker {
   display: inline-flex;
   position: relative;

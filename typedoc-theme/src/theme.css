@@ -487,6 +487,15 @@ dt.tsd-member-summary {
   opacity: 1;
 }
 
+#tsd-search-results {
+  margin: 0;
+  padding: 0;
+}
+
+#tsd-search-results:not(:empty) {
+  margin-block-start: 16px;
+}
+
 #tsd-search-results > li,
 #tsd-search-results > li:nth-child(even) {
   background: transparent;

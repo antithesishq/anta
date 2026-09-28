@@ -3,7 +3,23 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { DefaultTheme, JSX } from 'typedoc'
 
-class AntaTheme extends DefaultTheme {}
+class AntaTheme extends DefaultTheme {
+  constructor(renderer) {
+    super(renderer)
+    // TypeDoc gives every kind the same letter color; use its outline token.
+    for (const [name, icon] of Object.entries(this.icons)) {
+      this.icons[name] = function () {
+        const svg = icon.call(this)
+        const outline = svg.children?.find((child) => child.tag === 'rect')
+        const letter = svg.children?.find((child) => child.tag === 'text')
+        if (outline?.props?.stroke && letter?.props?.fill === 'var(--color-icon-text)') {
+          letter.props.fill = outline.props.stroke
+        }
+        return svg
+      }
+    }
+  }
+}
 
 const asset = (name) => fileURLToPath(new URL(name, import.meta.url))
 

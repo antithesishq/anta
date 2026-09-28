@@ -306,7 +306,7 @@ if (hasStructuredBreadcrumbs && title) {
         ))}
         <h4>API reference</h4>
         <menu>
-          <li><a href="/reference/" data-astro-reload><Icon shape="braces" size={18} />{' '}Full TypeScript API</a></li>
+          <li><a href="/reference/" data-astro-reload><Icon shape="braces" size={18} />{' '}Anta TypeScript</a></li>
         </menu>
       </aside>
       <div transition:persist="search-dialog"><SearchDialog client:load /></div>
@@ -346,7 +346,6 @@ if (hasStructuredBreadcrumbs && title) {
         const heading = main?.querySelector('h1')
         const marker = main?.querySelector('.doc-review-marker')
         if (heading && marker) {
-          heading.dataset.docReviewHeading = 'pending'
           heading.append(marker)
         }
       })

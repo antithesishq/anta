@@ -1,25 +1,15 @@
 :root {
   --doc-review-warning: #7f410b;
-  --doc-review-warning-bg: #fefbf6;
-  --doc-review-warning-border: #d4a16d;
 }
 
 html[data-theme="dark"] {
   --doc-review-warning: #f0bf75;
-  --doc-review-warning-bg: #312113;
-  --doc-review-warning-border: #8e643c;
 }
 
 @media (prefers-color-scheme: dark) {
   html[data-theme="os"] {
     --doc-review-warning: #f0bf75;
-    --doc-review-warning-bg: #312113;
-    --doc-review-warning-border: #8e643c;
   }
-}
-
-.tsd-page-title:has(.doc-review-marker) h1 {
-  color: var(--doc-review-warning);
 }
 
 .doc-review-marker {
@@ -27,16 +17,10 @@ html[data-theme="dark"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.4em;
-  margin-inline-start: 0.3em;
-  padding: 0.1em 0.3em;
-  border: 1px solid var(--doc-review-warning-border);
-  border-radius: 0.35em;
+  margin-inline-start: 0.35em;
   color: var(--doc-review-warning);
-  background: var(--doc-review-warning-bg);
-  font: inherit;
   cursor: help;
-  vertical-align: middle;
+  vertical-align: baseline;
 }
 
 .doc-review-marker:focus-visible {
@@ -63,6 +47,18 @@ html[data-theme="dark"] {
 }
 
 .anta-docs-link {
-  margin-inline-end: 1em;
   white-space: nowrap;
+}
+
+@media (max-width: 769px) {
+  .anta-docs-link {
+    width: 20px;
+    overflow: hidden;
+    font-size: 0;
+  }
+
+  .anta-docs-link::before {
+    content: "←";
+    font-size: 14px;
+  }
 }

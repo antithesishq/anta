@@ -35,6 +35,7 @@
     "@antadesign/anta": "workspace:*",
     "@antadesign/plot": "workspace:*",
     "@antadesign/stickers": "workspace:*",
+    "@antadesign/typedoc-theme": "workspace:*",
     "@astrojs/markdown-satteri": "0.4.1",
     "@astrojs/mdx": "8.0.1",
     "@astrojs/preact": "6.0.5",

@@ -9,6 +9,7 @@ node-compile-cache/
 .playwright-mcp/
 /dist/
 stickers/dist/
+typedoc-theme/dist/
 site/dist/
 site/.astro/
 site/.cache/

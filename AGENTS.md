@@ -2,11 +2,12 @@
 
 Anta is a portable UI component library, published as `@antadesign/anta`. It works in React, Preact through `preact/compat`, and custom JSX runtimes through `configure()`.
 
-This pnpm workspace contains three publishable packages and one private site:
+This pnpm workspace contains four publishable packages and one private site:
 
 - `@antadesign/anta` — the root package; its source is in `src/`.
 - `@antadesign/stickers` — a separate sticker package in `stickers/`, keeping `lottie-web` out of anta's dependency graph.
 - `@antadesign/plot` — the separate canvas plot package in `plot/`.
+- `@antadesign/typedoc-theme` — the separate TypeDoc theme package in `typedoc-theme/`.
 - `site/` — the documentation site; it is not published to npm.
 
 ## Task routing
@@ -17,6 +18,7 @@ Read the closest guidance before changing a scoped area:
 - `site/AGENTS.md` — Astro site, interactive playground, client-router, and documentation-page conventions.
 - `stickers/AGENTS.md` — sticker package layout, generation, and publishing details. Read `src/AGENTS.md` as well before changing its elements or wrappers.
 - `plot/AGENTS.md` — plot entry points, build, and package verification.
+- `typedoc-theme/README.md` — TypeDoc theme setup and package behavior.
 - `RELEASING.md` — mandatory publish order and package-manager commands.
 - `FIGMA.md`, `WRITING.md`, and `DESIGN.md` — Figma extraction, prose, and design guidance respectively.
 

@@ -12,10 +12,6 @@ html[data-theme="dark"] {
   }
 }
 
-.tsd-page-title:has(.doc-review-marker) h1 {
-  color: var(--doc-review-warning);
-}
-
 .doc-review-marker {
   position: relative;
   display: inline-flex;

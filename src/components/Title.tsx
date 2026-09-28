@@ -21,7 +21,9 @@ export interface TitleProps extends BaseProps {
    *  single line; any integer ≥ 2 clamps to that many lines; `0` or a
    *  negative value means no truncation. A clipped JSX `Title` shows its
    *  text content in a tooltip by default. Nest a `<Tooltip>` to provide
-   *  your own tooltip instead. */
+   *  your own tooltip instead.
+   * @author Vlad Korobov
+   */
   truncate?: boolean | number
 }
 

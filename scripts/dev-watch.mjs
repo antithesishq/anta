@@ -12,6 +12,7 @@ const workspaceTasks = [
   ['run', 'build:dev'],
   ['--filter', '@antadesign/stickers', 'run', 'build:dev'],
   ['--filter', '@antadesign/plot', 'run', 'build:dev'],
+  ['--filter', '@antadesign/typedoc-theme', 'run', 'build:dev'],
   ['--filter', 'anta-site', 'run', 'docs'],
 ]
 
@@ -72,7 +73,7 @@ function schedule(kind) {
   }, 150)
 }
 
-for (const path of ['src', 'stickers/src', 'plot/src']) {
+for (const path of ['src', 'stickers/src', 'plot/src', 'typedoc-theme/src']) {
   watch(path, { recursive: true }, () => schedule('workspace'))
 }
 

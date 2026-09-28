@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      # Workspace prepare scripts build Anta, stickers, and Plot on install.
+      # Workspace prepare scripts build Anta, stickers, Plot, and the TypeDoc theme on install.
       - name: Install dependencies and build workspace
         run: pnpm install --frozen-lockfile
       - name: Check documentation authors
@@ -41,7 +41,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      # Workspace prepare scripts build Anta, stickers, and Plot on install.
+      # Workspace prepare scripts build Anta, stickers, Plot, and the TypeDoc theme on install.
       - name: Install dependencies and build workspace
         run: pnpm install --frozen-lockfile
       - run: pnpm run lint
@@ -56,6 +56,8 @@ jobs:
         run: pnpm --filter @antadesign/plot run typecheck
       - name: Verify plot package
         run: pnpm --filter @antadesign/plot run check:package
+      - name: Verify TypeDoc theme package
+        run: pnpm --filter @antadesign/typedoc-theme exec npm pack --dry-run
       - name: Lint site CSS
         run: pnpm --filter anta-site run lint:css
       - name: Typecheck search worker

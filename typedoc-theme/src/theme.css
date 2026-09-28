@@ -197,11 +197,41 @@ footer {
   line-height: 1.55;
 }
 
+dt.tsd-member-summary {
+  font-style: normal;
+  font-weight: 400;
+}
+
+.tsd-member-summary-name {
+  gap: 0.5ch;
+}
+
+.tsd-accordion-summary {
+  gap: 0.5ch;
+}
+
+/* Keep TypeDoc's disclosure behavior, using Anta's chevron-down silhouette. */
+.tsd-accordion-summary > svg:first-child {
+  --_chevron-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: var(--_chevron-icon) center / contain no-repeat;
+  mask: var(--_chevron-icon) center / contain no-repeat;
+}
+
+.tsd-accordion-summary > svg:first-child use {
+  display: none;
+}
+
 .tsd-navigation a,
 .tsd-page-navigation a,
 .tsd-navigation summary > span {
   border-radius: 4px;
   color: var(--text-3);
+  gap: 0.5ch;
   font-size: 14px;
   font-weight: 400;
   letter-spacing: 0.03ch;
@@ -255,14 +285,41 @@ footer {
   text-transform: uppercase;
 }
 
+.tsd-accordion-summary > :is(h2, h3) {
+  margin: 0;
+  padding: 0;
+}
+
 .page-menu .tsd-accordion-summary,
 .site-menu .tsd-accordion-summary {
   color: var(--text-3);
 }
 
+.page-menu .tsd-navigation.settings {
+  margin-bottom: 24px;
+}
+
 .site-menu .tsd-navigation > a {
   color: var(--text-2-brand);
   font-weight: 585;
+}
+
+.site-menu .tsd-navigation ul,
+.page-menu .tsd-page-navigation ul {
+  margin: 0;
+  padding: 0;
+}
+
+.site-menu #tsd-nav-container {
+  padding-inline-start: 12px;
+}
+
+.site-menu .tsd-navigation ul.tsd-nested-navigation {
+  padding-inline-start: 28px;
+}
+
+.page-menu .tsd-page-navigation-section > div {
+  margin-inline-start: 20px;
 }
 
 /* Keep the built-in TypeDoc search index and keyboard behavior. */
@@ -341,7 +398,7 @@ footer {
 @media (min-width: 800px) {
   .container-main {
     display: grid;
-    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-columns: 320px minmax(0, 1fr);
     grid-template-areas: "sidebar content";
     align-items: start;
     gap: 0;
@@ -351,7 +408,7 @@ footer {
     grid-area: sidebar;
     position: sticky;
     top: 44px;
-    width: 280px;
+    width: 320px;
     height: calc(100dvh - 44px);
     max-height: none;
     margin: 0;
@@ -379,7 +436,7 @@ footer {
 
 @media (min-width: 1200px) {
   .container-main {
-    grid-template-columns: 280px minmax(0, 1fr) 260px;
+    grid-template-columns: 320px minmax(0, 1fr) 300px;
     grid-template-areas: "sidebar content toc";
   }
 
@@ -403,7 +460,7 @@ footer {
 
   .page-menu {
     grid-area: toc;
-    padding: 20px 12px 32px 4px;
+    padding: 32px 12px 32px 4px;
   }
 }
 

@@ -1,0 +1,84 @@
+name: Fix documentation author markers
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  fix:
+    if: github.event.issue.pull_request && github.event.comment.body == '/docs-fix'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check commenter and PR
+        id: request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          permission=$(gh api "repos/$REPO/collaborators/$COMMENTER/permission" --jq .permission)
+          case "$permission" in admin|maintain|write) ;; *) echo "Write access required"; exit 1 ;; esac
+          head_repo=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq .head.repo.full_name)
+          if [ "$head_repo" != "$REPO" ]; then
+            echo "The /docs-fix bot only pushes to branches in this repository."
+            exit 1
+          fi
+          head_ref=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq .head.ref)
+          head_sha=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq .head.sha)
+          echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+      # The fixer comes from the default branch, never from PR content.
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install trusted fixer dependencies
+        run: pnpm install --frozen-lockfile
+      - uses: actions/checkout@v6
+        with:
+          path: pr
+          ref: ${{ steps.request.outputs.head_sha }}
+          fetch-depth: 0
+      - name: Remove stale markers
+        env:
+          PR_DIR: ${{ github.workspace }}/pr
+        run: node scripts/docs-fix.mjs --repo "$PR_DIR" --yes
+      - name: Push marker changes
+        id: push
+        working-directory: pr
+        env:
+          HEAD_REF: ${{ steps.request.outputs.head_ref }}
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- src site/src/content site/src/pages
+          git commit -m "Remove stale documentation author markers"
+          git push origin "HEAD:refs/heads/$HEAD_REF"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Report result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          CHANGED: ${{ steps.push.outputs.changed }}
+          HEAD_REF: ${{ steps.request.outputs.head_ref }}
+        run: |
+          if [ "$CHANGED" = true ]; then
+            gh pr comment "$PR_NUMBER" --body "Removed stale documentation author markers in a bot commit. Review the commit diff before merging."
+            # GITHUB_TOKEN pushes do not start push or pull_request workflows.
+            gh workflow run ci.yml --ref "$HEAD_REF"
+          else
+            gh pr comment "$PR_NUMBER" --body "No stale documentation author markers were found."
+          fi

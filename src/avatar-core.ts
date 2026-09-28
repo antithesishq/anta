@@ -48,8 +48,13 @@ export const rngFromSeed = (seed: string): (() => number) => mulberry32(hashSeed
 // ---------------------------------------------------------------------------
 
 /**
- * Up to `max` letters for the initials fallback: the first letter of each of the
- * first `max` whitespace-separated words, uppercased. `"Vlad Korobov"` → `"VK"`.
+ * Get the first letter of each of the first whitespace-separated words,
+ * uppercased. `"Vlad Korobov"` → `"VK"`.
+ *
+ * @param max - Maximum number of words to use, starting with the first.
+ * Defaults to 3.
+ *
+ * @author Vlad Korobov
  */
 export function getInitials(name: string | undefined | null, max = 3): string {
   if (!name) return ''

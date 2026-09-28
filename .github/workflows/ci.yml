@@ -2,8 +2,36 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
 
 jobs:
+  docs-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      # Workspace prepare scripts build Anta, stickers, Plot, and the TypeDoc theme on install.
+      - name: Install dependencies and build workspace
+        run: pnpm install --frozen-lockfile
+      - name: Check documentation authors
+        env:
+          DOCS_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DOCS_REVIEWED: ${{ contains(github.event.pull_request.labels.*.name, 'review-docs') }}
+        run: |
+          if [ "$DOCS_REVIEWED" = true ]; then
+            node scripts/check-doc-review.mjs --base "$DOCS_BASE_SHA" --review-docs
+          else
+            node scripts/check-doc-review.mjs --base "$DOCS_BASE_SHA"
+          fi
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -13,7 +41,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      # Workspace prepare scripts build Anta, stickers, and Plot on install.
+      # Workspace prepare scripts build Anta, stickers, Plot, and the TypeDoc theme on install.
       - name: Install dependencies and build workspace
         run: pnpm install --frozen-lockfile
       - run: pnpm run lint
@@ -28,6 +56,8 @@ jobs:
         run: pnpm --filter @antadesign/plot run typecheck
       - name: Verify plot package
         run: pnpm --filter @antadesign/plot run check:package
+      - name: Verify TypeDoc theme package
+        run: pnpm --filter @antadesign/typedoc-theme exec npm pack --dry-run
       - name: Lint site CSS
         run: pnpm --filter anta-site run lint:css
       - name: Typecheck search worker

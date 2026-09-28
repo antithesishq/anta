@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "docs:api": "node scripts/prepare.mjs api",
+    "docs:reference": "node scripts/prepare.mjs reference",
     "docs:pages": "node scripts/gen-pages.mjs",
     "docs:llms-check": "node scripts/check-llms-index.mjs",
     "docs:wasm": "node scripts/copy-esbuild-wasm.mjs",
@@ -34,6 +35,7 @@
     "@antadesign/anta": "workspace:*",
     "@antadesign/plot": "workspace:*",
     "@antadesign/stickers": "workspace:*",
+    "@antadesign/typedoc-theme": "workspace:*",
     "@astrojs/markdown-satteri": "0.4.1",
     "@astrojs/mdx": "8.0.1",
     "@astrojs/preact": "6.0.5",

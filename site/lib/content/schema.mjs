@@ -14,6 +14,7 @@ const navigation = z.object({
 
 export const pageSchema = z.object({
   title: z.string().min(1),
+  author: z.string().min(1).optional(),
   description: z.string().optional(),
   nav: z.union([z.literal(false), navigation]),
   parent: entryId.optional(),

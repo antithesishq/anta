@@ -3,7 +3,7 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.33 — September 28, 2026
 
 ### Added
 
@@ -15,6 +15,8 @@ changes are not listed.
 
 ### Fixed
 
+- [Button](/button/) ignores non-form `form` references instead of throwing
+  during submit or reset activation.
 - [Slider](/slider/) keeps both thumbs and tuple callbacks after a form reset
   when a range has no `defaultValue`.
 - Clearable [Input](/input/), [InputDate](/input-date/), and

@@ -35,6 +35,20 @@ const visibility = document.querySelector('.tsd-filter-visibility')
 const themeSelect = document.querySelector('#tsd-theme')
 const nativeTheme = themeSelect?.closest('.tsd-theme-toggle')
 const settings = document.querySelector('.tsd-navigation.settings')
+const pageNavigation = document.querySelector('.page-menu > details.tsd-page-navigation')
+
+if (pageNavigation) {
+  const heading = pageNavigation.querySelector(':scope > summary > h3')
+  const contents = pageNavigation.querySelector(':scope > .tsd-accordion-details')
+  if (heading && contents) {
+    const navigation = document.createElement('nav')
+    navigation.className = 'tsd-page-navigation'
+    heading.id = 'tsd-page-navigation-heading'
+    navigation.setAttribute('aria-labelledby', heading.id)
+    navigation.append(heading, contents)
+    pageNavigation.replaceWith(navigation)
+  }
+}
 
 if (toolbar && visibility && themeSelect && nativeTheme && settings) {
   const menu = document.createElement('details')

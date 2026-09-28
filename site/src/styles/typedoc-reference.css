@@ -54,7 +54,7 @@ html[data-theme="dark"] {
   white-space: nowrap;
 }
 
-@media (max-width: 799px) {
+@media (max-width: 769px) {
   .anta-docs-link {
     width: 20px;
     overflow: hidden;

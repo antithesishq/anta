@@ -38,9 +38,9 @@ test('CI requires review-docs for new or changed authored documentation and repo
 
     assert.throws(() => check(unreviewed), (error) => {
       assert.equal(error.status, 1)
-      assert.match(error.stdout, /New TSDoc author \(Alice\)/)
+      assert.match(error.stdout, /example: New TSDoc author marker without the GitHub `review-docs` label\./)
+      assert.match(error.stdout, /Add `review-docs` to this PR, or remove the `@author` tag from the TypeScript source if the final text was not human-reviewed\./)
       assert.match(error.stdout, /New page author \(Alice\)/)
-      assert.match(error.stdout, /Remove this new @author tag manually/)
       assert.match(error.stdout, /docs-fix does not remove it/)
       return true
     })

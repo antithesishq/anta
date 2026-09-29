@@ -52,6 +52,7 @@
     "test:registration": "node --test tests/registration.test.mjs",
     "test:components": "node --test tests/components.test.mjs",
     "test:browser": "node --test tests/components.browser.test.mjs",
+    "test:viewport-size": "node tests/viewport-size.test.mjs",
     "test:axes": "node --test tests/axes.test.mjs"
   },
   "dependencies": {

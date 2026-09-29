@@ -1,5 +1,8 @@
+import { UNIT_ZOOM, type ViewportZoom } from '../interactions/viewport_zoom'
+import { viewport_change } from '../interactions/viewport'
+import { resolve_scatter_sizes } from '../series/scatter/size'
 import { scaleBand, scaleLinear, scaleLog, scaleTime, scaleUtc } from "d3-scale"
-import type { AxisTemplate, ColorTheme, ComposedPlot, ComposedSeries, Domain, PlotTemplate, Scale, Series, Viewport } from "../types"
+import type { AxisTemplate, ColorTheme, ComposedPlot, ComposedSeries, Domain, PlotTemplate, Scale, Series, Viewport, ViewportChange } from "../types"
 import { resolve_plot_background, resolve_series_colors, resolve_theme_color, should_invert_color } from "../template/color"
 import { clamp_domain, LINEAR_SPACE, LOG_SPACE } from "../template/domain"
 import { series_type } from "../registry"
@@ -14,9 +17,11 @@ import { carry_factory_args } from "../series/factory_args"
  * @param height - canvas height in CSS pixels
  * @param color_theme - the current browser color scheme
  * @param viewport - optional per-axis zoom/pan viewport; null on an axis uses the full domain
+ * @param inherited_font_family - font family captured by the host
+ * @param zoom - committed gesture magnification, independent of data extents
  * @returns the ComposedPlot with layout, scales, and color theme resolved series
  */
-export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<TooltipContent>, width: number, height: number, color_theme: ColorTheme, viewport?: Viewport, inherited_font_family?: string): ComposedPlot<TooltipContent> {
+export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<TooltipContent>, width: number, height: number, color_theme: ColorTheme, viewport?: Viewport, inherited_font_family?: string, zoom: ViewportZoom = UNIT_ZOOM): ComposedPlot<TooltipContent> {
     const layout = resolve_layout(
         width,
         height,
@@ -42,6 +47,8 @@ export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<To
     const x_scale = x_override === null ? x_base_scale : build_scale(apply_viewport(template.x, x_override), x_range, x_tick_count)
     const y_scale = y_override === null ? y_base_scale : build_scale(apply_viewport(template.y, y_override), y_range, y_tick_count)
 
+    const size_viewport = viewport_change({ x: x_override, y: y_override }, { x_full_domain, y_full_domain }, zoom)
+
     const chrome_theme = should_invert_color(template) ? 'light' : color_theme
     const chrome_color = template.chrome_color === undefined ? undefined : resolve_theme_color(template.chrome_color, chrome_theme)
 
@@ -53,7 +60,7 @@ export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<To
         y_scale,
         x_full_domain,
         y_full_domain,
-        series: template.series.map(s => compose_series(s, color_theme, x_scale, y_scale)),
+        series: template.series.map(s => compose_series(s, color_theme, x_scale, y_scale, size_viewport)),
         x_axis: template.x.rendered ? template.x.axis : undefined,
         y_axis: template.y.rendered ? template.y.axis : undefined,
         x_categories: template.x.kind === 'category' ? template.x.categories : undefined,
@@ -76,10 +83,12 @@ export function compose_plot<TooltipContent = unknown>(template: PlotTemplate<To
  * @param color_theme - the browser color scheme to resolve colors against
  * @param x_scale - x scale
  * @param y_scale - y scale
+ * @param viewport - committed windows and magnification supplied to size accessors
  * @returns the composed series
  */
-function compose_series<TooltipContent>(series: Series<TooltipContent>, color_theme: ColorTheme, x_scale: Scale, y_scale: Scale): ComposedSeries<TooltipContent> {
-    const composed = resolve_series_colors(series, color_theme)
+function compose_series<TooltipContent>(series: Series<TooltipContent>, color_theme: ColorTheme, x_scale: Scale, y_scale: Scale, viewport: ViewportChange): ComposedSeries<TooltipContent> {
+    const colors = resolve_series_colors(series, color_theme)
+    const composed = colors.kind === 'scatter' ? resolve_scatter_sizes(colors, viewport) : colors
     const compose_layout = series_type<TooltipContent>(series.kind).compose_layout
 
     if (compose_layout === undefined) {

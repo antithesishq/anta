@@ -1,3 +1,4 @@
+import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import { new_plot_template } from "./template/plot_template"
 import { compose_plot } from "./compose/compose_plot"
 import { draw as draw_plot } from "./render/canvas"
@@ -37,6 +38,7 @@ export class PlotController<TooltipContent = unknown> {
     #draw_dirty = false
     #has_current_composition = false
     #environment: PlotEnvironment | null = null
+    #last_composition_zoom: ViewportZoom = UNIT_ZOOM
     #last_composition_template: PlotTemplate<TooltipContent> | null = null
     #last_composition_viewport: Viewport = { x: null, y: null }
 
@@ -111,13 +113,14 @@ export class PlotController<TooltipContent = unknown> {
                 throw new Error("plot: device pixel ratio must be positive and finite")
             }
             if (recompose) {
-                composed_plot = compose_plot(this.#template, environment.width, environment.height, environment.color_theme, viewport, environment.inherited_font_family)
+                composed_plot = compose_plot(this.#template, environment.width, environment.height, environment.color_theme, viewport, environment.inherited_font_family, this.interactions.committed_zoom)
             }
         } catch (error) {
             this.#on_error({ phase: 'compose', error })
             return this.#composed_plot
         }
         this.#environment = { ...environment }
+        this.#last_composition_zoom = this.interactions.committed_zoom
         this.#last_composition_template = this.#template
         this.#last_composition_viewport = { x: viewport.x === null ? null : [...viewport.x], y: viewport.y === null ? null : [...viewport.y] }
         this.#composed_plot = composed_plot
@@ -136,7 +139,9 @@ export class PlotController<TooltipContent = unknown> {
         const theme_changed = previous?.color_theme !== environment.color_theme
         const font_changed = previous?.inherited_font_family !== environment.inherited_font_family
         const viewport_changed = viewport_moved(this.#last_composition_viewport, viewport)
-        return template_changed || dimensions_changed || theme_changed || font_changed || viewport_changed
+        const zoom = this.interactions.committed_zoom
+        const zoom_changed = zoom.x !== this.#last_composition_zoom.x || zoom.y !== this.#last_composition_zoom.y
+        return zoom_changed || template_changed || dimensions_changed || theme_changed || font_changed || viewport_changed
     }
 
     /** Attach or replace a surface; an already composed plot needs a fresh draw. */

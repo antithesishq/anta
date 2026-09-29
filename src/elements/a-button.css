@@ -72,6 +72,8 @@
     --_lh: 20px;
     --_pb: 1px;
     --_radius: 4px;
+    --_button-size: 28px;
+    --_icon-padding: 5px;
     /* Round text padding to whole CSS pixels at the 13/15/17px type scale.
        Themes can retune it without changing icon-only or paddingless buttons. */
     --_padding-x-text: round(0.7em, 1px);
@@ -203,7 +205,7 @@
        them; it holds the height for content that carries no line-box — an
        icon + counter Tag, or icon + icon — which would otherwise collapse to
        just its children + padding. Paddingless quaternary opts out below. */
-    min-height: 28px;
+    min-height: var(--_button-size);
 
     & > a-button-label {
       display: inline-block;
@@ -282,7 +284,8 @@
       --_fs: 13px;
       --_lh: 16px;
       --_pb: 0.5px;
-      min-height: 24px;
+      --_button-size: 24px;
+      --_icon-padding: 3px;
       /* Icon tracks the button size (medium is the a-icon default, 16px). An
          explicit `<Icon size>` (inline `--icon-size`) still wins. */
       & a-icon { --icon-size: 14px; }
@@ -291,7 +294,8 @@
       --_fs: 17px;
       --_lh: 24px;
       --_pb: 1.5px;
-      min-height: 32px;
+      --_button-size: 32px;
+      --_icon-padding: 7px;
       & a-icon { --icon-size: 18px; }
     }
 
@@ -342,6 +346,7 @@
       /* Inline link-style button: no box, so it must sit on the text baseline
          at its natural height rather than the size floor. */
       min-height: 0;
+      min-width: 0;
     }
 
     /* Icon-only: exactly one leading icon and no other content. The child
@@ -350,21 +355,11 @@
        with just an icon still reads as icon-only and gets the square/circular
        box, not text-button padding. */
     &:has(> a-icon):not(:has(> a-icon ~ a-icon)):not(:has(> :not(a-icon):not(a-tooltip):not(a-copy))) {
-      --button-padding-y: 5px;
-      --button-padding-x: 5px;
-      min-width: 28px;
+      --button-padding-x: var(--_icon-padding);
+      --button-padding-y: var(--_icon-padding);
+      min-width: var(--_button-size);
 
       justify-content: center;
-      &[size="small"] {
-        --button-padding-y: 3px;
-        --button-padding-x: 3px;
-        min-width: 24px;
-      }
-      &[size="large"] {
-        --button-padding-y: 7px;
-        --button-padding-x: 7px;
-        min-width: 32px;
-      }
     }
 
     &:is(:has(> a-icon:first-child), :has(> a-tooltip:first-child + a-icon)):is(:has(> a-icon ~ a-icon), :has(> :not(a-icon):not(a-tooltip):not(a-copy))) {

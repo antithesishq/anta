@@ -9,7 +9,8 @@ changes are not listed.
 
 - Paddingless [Buttons](/button/#paddingless) no longer support `selected`.
   TypeScript rejects the combination, and the CSS ignores the selected attribute
-  if it is added directly to the element.
+  if it is added directly to the element. Their corner radius is capped at 3px,
+  including when `round` requests a larger radius.
 
 ## 0.3.33 — September 28, 2026
 

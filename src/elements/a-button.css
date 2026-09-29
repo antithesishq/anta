@@ -72,6 +72,7 @@
     --_lh: 20px;
     --_pb: 1px;
     --_radius: 4px;
+    --_paint-radius: var(--_radius);
     --button-padding-x: 9px;
     --button-padding-y: calc((8px - var(--_pb)) / 2);
 
@@ -175,7 +176,7 @@
 
     color: var(--button-fg);
     background-color: var(--button-bg);
-    border-radius: var(--_radius);
+    border-radius: var(--_paint-radius);
     text-decoration: none;
 
     box-shadow: inset 0 0 1px color-mix(in oklch, currentColor, transparent 90%);
@@ -338,6 +339,7 @@
     &[priority="quaternary"][paddingless] {
       --button-padding-x: 0;
       --button-padding-y: 0;
+      --_paint-radius: min(var(--_radius), 3px);
       /* Inline link-style button: no box, so it must sit on the text baseline
          at its natural height rather than the size floor. */
       min-height: 0;
@@ -385,7 +387,7 @@
         left: calc(0px - var(--button-loading-x-period));
         width: calc(100% + var(--button-loading-x-period));
         pointer-events: none;
-        clip-path: inset(0 0 0 var(--button-loading-x-period) round var(--_radius));
+        clip-path: inset(0 0 0 var(--button-loading-x-period) round var(--_paint-radius));
         background: repeating-linear-gradient(
           var(--button-loading-angle),
           transparent 0,
@@ -612,6 +614,6 @@
 @keyframes btn-loading-slide {
   to {
     transform: translateX(var(--button-loading-x-period));
-    clip-path: inset(0 var(--button-loading-x-period) 0 0 round var(--_radius));
+    clip-path: inset(0 var(--button-loading-x-period) 0 0 round var(--_paint-radius));
   }
 }

@@ -72,7 +72,10 @@
     --_lh: 20px;
     --_pb: 1px;
     --_radius: 4px;
-    --button-padding-x: 9px;
+    /* Round text padding to whole CSS pixels at the 13/15/17px type scale.
+       Themes can retune it without changing icon-only or paddingless buttons. */
+    --_padding-x-text: round(calc(0.8em - 2px), 1px);
+    --button-padding-x: var(--_padding-x-text);
     --button-padding-y: calc((8px - var(--_pb)) / 2);
 
     --button-timing-in: 75ms ease-in;
@@ -245,7 +248,7 @@
     }
 
     &:active,
-    &[selected]:where(:not([paddingless])) {
+    &[selected] {
       transition:
         color var(--button-timing-active),
         background-color var(--button-timing-active);
@@ -276,7 +279,6 @@
     }
 
     &[size="small"] {
-      --button-padding-x: 7px;
       --_fs: 13px;
       --_lh: 16px;
       --_pb: 0.5px;
@@ -286,7 +288,6 @@
       & a-icon { --icon-size: 14px; }
     }
     &[size="large"] {
-      --button-padding-x: 13px;
       --_fs: 17px;
       --_lh: 24px;
       --_pb: 1.5px;
@@ -309,7 +310,7 @@
         text-decoration-color: color-mix(in oklch, currentColor 75%, transparent);
         text-decoration-thickness: 1px;
         text-underline-offset: 3px;
-        &[selected]:where(:not([paddingless])) {
+        &[selected] {
           text-decoration-color: var(--button-fg);
           text-decoration-thickness: 1px;
         }
@@ -323,7 +324,7 @@
       }
       &[underline][underline-on-hover] {
         text-decoration-color: transparent;
-        &[selected]:where(:not([paddingless])) {
+        &[selected] {
           text-decoration-color: transparent;
         }
 
@@ -349,27 +350,15 @@
       }
     }
 
-    /* Icon-only: exactly one leading icon and no other content. The child
-       guards ignore `a-tooltip` (a wrapper, not content) and `a-copy` (a
-       zero-box behavior child `ButtonCopy` always slots in) so a `<ButtonCopy>`
-       with just an icon still reads as icon-only and gets the square/circular
-       box, not text-button padding. */
+    /* Icon-only: default icons are 14 / 16 / 18px. Half an em minus 1.5px on
+       each side makes their boxes 24 / 28 / 32px. Equal padding keeps custom
+       icon sizes square too. Ignore tooltip and copy helpers when matching. */
     &:has(> a-icon):not(:has(> a-icon ~ a-icon)):not(:has(> :not(a-icon):not(a-tooltip):not(a-copy))) {
-      --button-padding-y: 5px;
-      --button-padding-x: 5px;
-      min-width: 28px;
+      --button-padding-y: calc(0.5em - 1.5px);
+      --button-padding-x: var(--button-padding-y);
+      min-height: 0;
 
       justify-content: center;
-      &[size="small"] {
-        --button-padding-y: 3px;
-        --button-padding-x: 3px;
-        min-width: 24px;
-      }
-      &[size="large"] {
-        --button-padding-y: 7px;
-        --button-padding-x: 7px;
-        min-width: 32px;
-      }
     }
 
     &:is(:has(> a-icon:first-child), :has(> a-tooltip:first-child + a-icon)):is(:has(> a-icon ~ a-icon), :has(> :not(a-icon):not(a-tooltip):not(a-copy))) {
@@ -428,7 +417,7 @@
       --button-fg: var(--button-fg-secondary-hover);
       --button-bg: var(--button-bg-secondary-active);
     }
-    &[selected]:where(:not([paddingless])) {
+    &[selected] {
       --button-fg: var(--button-fg-secondary-hover);
       --button-bg: var(--button-bg-secondary-hover);
     }
@@ -445,7 +434,7 @@
       &:active {
         --button-bg: var(--button-bg-primary-active);
       }
-      &[selected]:where(:not([paddingless])) {
+      &[selected] {
         --button-bg: var(--button-bg-primary-hover);
       }
     }
@@ -464,7 +453,7 @@
         --button-fg: var(--button-fg-tertiary-hover);
         --button-bg: var(--button-bg-tertiary-active);
       }
-      &[selected]:where(:not([paddingless])) {
+      &[selected] {
         --button-fg: var(--button-fg-tertiary-hover);
         --button-bg: var(--button-bg-tertiary-hover);
       }
@@ -486,13 +475,18 @@
       &:active {
         --button-fg: var(--button-fg-quaternary-rest);
       }
-      &[selected]:where(:not([paddingless])) {
+      &[selected] {
         --button-fg: var(--button-fg-quaternary-hover);
       }
     }
 
-    &[selected]:where(:not([paddingless])) {
-      box-shadow: inset 0 0 0 0.5px currentColor;
+    /* 1px at half strength instead of a 0.5px line: a hairline one device
+       pixel wide antialiases unevenly on curves and fractional edges. */
+    &[selected] {
+      box-shadow: inset 0 0 0 1px color-mix(in oklch, currentColor 50%, transparent);
+      &[priority="quaternary"][paddingless] {
+        box-shadow: 0 0 0 1px color-mix(in oklch, currentColor 50%, transparent);
+      }
     }
 
     &[disabled] {
@@ -548,7 +542,7 @@
        it the Canvas background in forced colors, which paints a light rectangle
        over a filled primary or selected button. System colors still follow the
        user's palette; this only keeps the label transparent and inheriting. */
-    a-button:is([priority="primary"], [selected]:where(:not([paddingless]))) {
+    a-button:is([priority="primary"], [selected]) {
       forced-color-adjust: none;
     }
     :is(
@@ -592,7 +586,7 @@
       a[role="button"][data-anta],
       button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])
-    )[selected]:where(:not([paddingless])) {
+    )[selected] {
       --anta-forced-foreground: HighlightText;
 
       color: HighlightText;

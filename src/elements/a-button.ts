@@ -73,10 +73,11 @@ function installDocumentHandlers(doc: Document | undefined) {
  * - **Layout gotchas:** `flex-shrink: 0` (shrinking + `overflow: hidden`
  *   would clip the label silently); the label uses a 17px line box + 1px
  *   bottom padding for optical vertical centering at an unchanged 18px box.
- * - **Icon-only** is purely structural — `:has(> a-icon:only-child)` gives
- *   square padding + a min-size pin (and centers when the host is sized
- *   bigger). A non-only edge icon trims ~2px off its side's padding
- *   (optical), `max(0px, …)` keeping paddingless at 0.
+ * - **Icon-only** is purely structural: one direct icon, with optional
+ *   tooltip or copy helpers, gets equal font-relative padding on both axes
+ *   and no size floor. The default icons produce 24/28/32px square boxes.
+ *   A non-only edge icon trims 2px off its side's padding; `max(0px, …)`
+ *   keeps paddingless at 0.
  * - **Underline** renders only on tertiary/quaternary: 0.5px hairline at 75%
  *   alpha at rest, 1px at full alpha on hover/`[selected]`, mirroring the
  *   prose-link rule in `<Text>`.

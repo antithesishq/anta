@@ -413,6 +413,7 @@ test('Menu cycles rendered Tab stops through shadow controls and skips unavailab
     `
     document.body.append(menu)
   })
+  await page.waitForFunction(() => document.getElementById('mixed-menu')?.isOpen)
   const ids = await page.locator('#time-field input').evaluateAll(inputs => inputs.map((input, i) => {
     input.id = `time-segment-${i}`
     return input.id

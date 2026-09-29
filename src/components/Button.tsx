@@ -50,9 +50,8 @@ export type BaseButtonProps = {
 
 /** Content axis — slots render in this order inside the button:
  *  `icon` → `label` → `children` → `iconTrailing`. Pass `icon` alone
- *  for an icon-only button (the CSS detects this structurally via
- *  `:has(> a-icon:only-child)` and gives the host square padding +
- *  min-size pin). */
+ *  for an icon-only button (the CSS detects a lone icon, allowing tooltip
+ *  and copy helpers, and gives the host equal padding on both axes). */
 export type ContentMode = {
   /** Label text. Renders between the leading icon and `children`. */
   label?: string

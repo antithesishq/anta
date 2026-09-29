@@ -72,8 +72,6 @@
     --_lh: 20px;
     --_pb: 1px;
     --_radius: 4px;
-    --_button-size: 28px;
-    --_icon-padding: 5px;
     /* Round text padding to whole CSS pixels at the 13/15/17px type scale.
        Themes can retune it without changing icon-only or paddingless buttons. */
     --_padding-x-text: round(0.7em, 1px);
@@ -205,7 +203,7 @@
        them; it holds the height for content that carries no line-box — an
        icon + counter Tag, or icon + icon — which would otherwise collapse to
        just its children + padding. Paddingless quaternary opts out below. */
-    min-height: var(--_button-size);
+    min-height: 28px;
 
     & > a-button-label {
       display: inline-block;
@@ -284,8 +282,7 @@
       --_fs: 13px;
       --_lh: 16px;
       --_pb: 0.5px;
-      --_button-size: 24px;
-      --_icon-padding: 3px;
+      min-height: 24px;
       /* Icon tracks the button size (medium is the a-icon default, 16px). An
          explicit `<Icon size>` (inline `--icon-size`) still wins. */
       & a-icon { --icon-size: 14px; }
@@ -294,8 +291,7 @@
       --_fs: 17px;
       --_lh: 24px;
       --_pb: 1.5px;
-      --_button-size: 32px;
-      --_icon-padding: 7px;
+      min-height: 32px;
       & a-icon { --icon-size: 18px; }
     }
 
@@ -346,18 +342,15 @@
       /* Inline link-style button: no box, so it must sit on the text baseline
          at its natural height rather than the size floor. */
       min-height: 0;
-      min-width: 0;
     }
 
-    /* Icon-only: exactly one leading icon and no other content. The child
-       guards ignore `a-tooltip` (a wrapper, not content) and `a-copy` (a
-       zero-box behavior child `ButtonCopy` always slots in) so a `<ButtonCopy>`
-       with just an icon still reads as icon-only and gets the square/circular
-       box, not text-button padding. */
+    /* Icon-only: default icons are 14 / 16 / 18px. Half an em minus 1.5px on
+       each side makes their boxes 24 / 28 / 32px. Equal padding keeps custom
+       icon sizes square too. Ignore tooltip and copy helpers when matching. */
     &:has(> a-icon):not(:has(> a-icon ~ a-icon)):not(:has(> :not(a-icon):not(a-tooltip):not(a-copy))) {
-      --button-padding-x: var(--_icon-padding);
-      --button-padding-y: var(--_icon-padding);
-      min-width: var(--_button-size);
+      --button-padding-x: calc(0.5em - 1.5px);
+      --button-padding-y: var(--button-padding-x);
+      min-height: 0;
 
       justify-content: center;
     }

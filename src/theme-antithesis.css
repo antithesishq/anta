@@ -380,23 +380,29 @@
     --bg-secondary-disabled: light-dark(#faf7f5, #1e1b1d);
     --fg-disabled: light-dark(#b3a9a3, #695d65);
 
-    /* Two-tone focus ring: a 1px white halo at 70% (box-shadow) under a 2px tinted
-       outline offset by the same 1px. Light mode uses the ring hue at full
-       strength (#b24393, 5.1:1 on white) so it clears the 3:1 focus contrast.
-       The outline pulses wider on focus and settles, like the Material 3
-       focus ring. */
+    /* Focus ring: a 2px outline in the ring hue, #b24393 in light mode
+       (5.1:1 on white) and #e17cc2 in dark (7.6:1 on the page), which pulses
+       wider on focus and settles, like the Material 3 focus ring. Primary
+       buttons add a 1px halo between the fill and the ring, white in light
+       mode and black in dark, so the ring separates from the filled button. */
     &:focus-visible {
-      outline: 2px solid light-dark(#b24393, color-mix(in oklch, #c86fad 50%, transparent));
-      outline-offset: 1px;
-      box-shadow: 0 0 0 1px color-mix(in oklch, #ffffff 70%, transparent);
+      outline: 2px solid light-dark(#b24393, #e17cc2);
+      outline-offset: 0;
       animation: button-focus-ring 600ms cubic-bezier(0.2, 0, 0, 1);
 
       @media (prefers-reduced-motion: reduce) {
         animation: none;
       }
     }
-    &[selected]:focus-visible {
-      box-shadow: inset 0 0 0 0.5px currentColor, 0 0 0 1px color-mix(in oklch, #ffffff 70%, transparent);
+    &[priority="primary"]:focus-visible {
+      --_focus-halo: 0 0 0 1px light-dark(color-mix(in oklch, #ffffff 70%, transparent), color-mix(in oklch, #000000 70%, transparent));
+
+      outline-offset: 1px;
+      box-shadow: var(--_focus-halo);
+
+      &[selected] {
+        box-shadow: inset 0 0 0 0.5px currentColor, var(--_focus-halo);
+      }
     }
   }
 
@@ -424,12 +430,6 @@
     }
     &[disabled] {
       box-shadow: inset 0 0 2px -1px light-dark(#56504d, #cbc5c9);
-    }
-    &:focus-visible {
-      box-shadow: inset 0 0 2px -1px currentColor, 0 0 0 1px color-mix(in oklch, #ffffff 70%, transparent);
-    }
-    &[selected]:focus-visible {
-      box-shadow: inset 0 0 0 0.5px currentColor, 0 0 0 1px color-mix(in oklch, #ffffff 70%, transparent);
     }
   }
 
@@ -542,13 +542,21 @@
     --button-fg-quaternary-hover: light-dark(#a01c32, #ffabb9);
   }
 
-  /* Custom tones: light mode keeps the base formula; dark lifts the primary
-     fill to L 0.80 / 0.84 / 0.87 so the black label stays readable. */
+  /* Custom tones: light mode keeps the base formula. In dark mode the primary
+     fill lifts to L 0.80 / 0.84 / 0.87 so the black label stays readable, and
+     secondary / tertiary / quaternary labels lighten on hover like the named
+     tones do. */
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"]))[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
     --button-bg-primary-rest: light-dark(oklch(from var(--_src) 0.51 0.17 h), oklch(from var(--_src) 0.8 0.1 h));
     --button-bg-primary-hover: light-dark(oklch(from var(--_src) 0.46 0.17 h), oklch(from var(--_src) 0.84 0.095 h));
     --button-bg-primary-active: light-dark(oklch(from var(--_src) 0.41 0.17 h), oklch(from var(--_src) 0.87 0.075 h));
+    --button-fg-secondary-rest: light-dark(oklch(from var(--_src) 0.46 0.17 h), oklch(from var(--_src) 0.835 0.1 h));
+    --button-fg-secondary-hover: light-dark(oklch(from var(--_src) 0.4 0.17 h), oklch(from var(--_src) 0.865 0.07 h));
+    --button-fg-tertiary-rest: light-dark(oklch(from var(--_src) 0.46 0.17 h), oklch(from var(--_src) 0.8 0.11 h));
+    --button-fg-tertiary-hover: light-dark(oklch(from var(--_src) 0.4 0.17 h), oklch(from var(--_src) 0.83 0.09 h));
+    --button-fg-quaternary-rest: light-dark(oklch(from var(--_src) 0.46 0.17 h / 0.85), oklch(from var(--_src) 0.76 0.115 h));
+    --button-fg-quaternary-hover: light-dark(oklch(from var(--_src) 0.38 0.17 h), oklch(from var(--_src) 0.835 0.09 h));
   }
 
   a-input:not([round])::part(field),

@@ -1048,11 +1048,7 @@ export interface AMenuGroupAttributes extends BaseAttributes {
   'aria-label'?: string
 }
 
-/**
- * Attributes for the `<a-button>` custom element. For the typed JSX
- * wrapper use `Button` from `@antadesign/anta`.
- */
-export interface AButtonAttributes extends BaseAttributes {
+interface AButtonCommonAttributes extends BaseAttributes {
   /** Visual emphasis. */
   priority?: 'primary' | 'secondary' | 'tertiary' | 'quaternary'
   /** Semantic tone, or any literal CSS color for a one-off custom tone. */
@@ -1070,9 +1066,6 @@ export interface AButtonAttributes extends BaseAttributes {
   'underline-on-hover'?: boolean | ''
   /** Size variant. small=22px, medium=26px, large=30px. */
   size?: 'small' | 'medium' | 'large'
-  /** Drop outer padding to zero. Only takes effect on `priority="quaternary"`.
-   *  Presence-based: `''` (or any value) turns it on; omit to turn off. */
-  paddingless?: boolean | ''
   /** Loading state. Presence-based (`''` on, omit off). */
   loading?: boolean | ''
   /** Disabled state. Presence-based (`''` on, omit off). */
@@ -1091,6 +1084,23 @@ export interface AButtonAttributes extends BaseAttributes {
   'aria-disabled'?: 'true' | 'false' | boolean
   'aria-busy'?: 'true' | 'false' | boolean
 }
+
+/**
+ * Attributes for the `<a-button>` custom element. For the typed JSX
+ * wrapper use `Button` from `@antadesign/anta`.
+ */
+export type AButtonAttributes = AButtonCommonAttributes & (
+  | {
+      paddingless?: false
+    }
+  | {
+      /** Drop outer padding to zero. Only takes effect on `priority="quaternary"`.
+       *  Presence-based: `''` (or any value) turns it on; omit to turn off.
+       *  Cannot be selected. */
+      paddingless: true | ''
+      selected?: false
+    }
+)
 
 /** `<a-copy>` — the copy-to-clipboard behavior, slotted inside an activatable
  *  control (`<a-button>`, `<a-menu-item>`, native `button`/`[role]`). It owns

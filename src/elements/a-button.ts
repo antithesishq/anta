@@ -52,8 +52,8 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   covers named and custom tones alike; secondary also carries a 1px
  *   hairline box-shadow in the current fg tone at 50% alpha, which the
  *   other priorities cancel in their own blocks. `[selected]` adds a 1px
- *   inset ring in `currentColor`, declared after the priority blocks so it
- *   survives their `box-shadow: none` cancels.
+ *   inset ring in `currentColor` except on paddingless buttons, where the
+ *   selected state is unsupported.
  * - **Dark mode** re-tunes with heavier alphas (30/40% vs 10/15%) and flips
  *   neutral's anchor to a lilac — mixing dark gray into a dark bg yields no
  *   contrast.
@@ -78,8 +78,8 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   bigger). A non-only edge icon trims ~2px off its side's padding
  *   (optical), `max(0px, …)` keeping paddingless at 0.
  * - **Underline** renders only on tertiary/quaternary: 0.5px hairline at 75%
- *   alpha at rest, 1px at full alpha on hover/`[selected]`, mirroring the
- *   prose-link rule in `<Text>`.
+ *   alpha at rest, 1px at full alpha on hover/`[selected]` (except paddingless),
+ *   mirroring the prose-link rule in `<Text>`.
  * - **Loading** paints a blurred diagonal stripe overlay; the x-period is
  *   the diagonal period projected onto x so the slide loops seamlessly
  *   (overshooting left by one period). The overlay translates by exactly that

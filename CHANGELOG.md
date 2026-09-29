@@ -5,10 +5,11 @@ changes are not listed.
 
 ## Unreleased
 
-### Fixed
+### Changed
 
-- Selected paddingless [Buttons](/button/#paddingless) use an underline instead
-  of an inset ring that crosses their text or underline.
+- Paddingless [Buttons](/button/#paddingless) no longer support `selected`.
+  TypeScript rejects the combination, and the CSS ignores the selected attribute
+  if it is added directly to the element.
 
 ## 0.3.33 — September 28, 2026
 

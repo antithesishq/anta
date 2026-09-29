@@ -138,9 +138,16 @@ export type PriorityMode =
     }
   | UnderlineMode & {
       priority: 'quaternary'
-      /** Drops outer padding to zero. */
-      paddingless?: boolean
-    }
+    } & (
+      | {
+          paddingless?: false
+        }
+      | {
+          /** Drops outer padding to zero. Cannot be selected. */
+          paddingless: true
+          selected?: false
+        }
+    )
 
 export type ButtonProps = BaseButtonProps & PriorityMode & ContentMode & SubmitMode & BaseProps
 
@@ -204,6 +211,10 @@ export const Button = ({
   const isIconOnly =
     icon != null && label == null && children == null && iconTrailing == null
 
+  const selectionAttrs = paddingless
+    ? { paddingless: '' as const, selected: undefined }
+    : { paddingless: undefined, selected: selected ? '' as const : undefined }
+
   const sharedAttrs = {
     // `<a-button>` is a custom element with no implicit ARIA role, so AT would
     // announce it as a generic clickable — and `aria-pressed` below is only
@@ -222,11 +233,10 @@ export const Button = ({
     // renders consistently across React / Preact. The CSS matches these by
     // presence (`[disabled]`, not `[disabled="true"]`), so any present form
     // works. (ARIA attributes below stay string-valued — ARIA needs "true".)
-    paddingless: paddingless ? '' : undefined,
+    ...selectionAttrs,
     round: roundAttr(round),
     loading: loading ? '' : undefined,
     disabled: disabled ? '' : undefined,
-    selected: selected ? '' : undefined,
     // Disabled AND loading both leave the keyboard tab order — a loading
     // button blocks the mouse (pointer-events), so it must block Enter/Space
     // activation too, else the loading guard would be mouse-only.

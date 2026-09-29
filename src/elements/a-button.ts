@@ -52,8 +52,9 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   covers named and custom tones alike; secondary also carries a 1px
  *   hairline box-shadow in the current fg tone at 50% alpha, which the
  *   other priorities cancel in their own blocks. `[selected]` adds a 1px
- *   inset ring in `currentColor`, declared after the priority blocks so it
- *   survives their `box-shadow: none` cancels.
+ *   inset ring at 50% `currentColor`, declared after the priority blocks so it
+ *   survives their `box-shadow: none` cancels. Paddingless uses an outside ring
+ *   so the selection mark stays clear of the label.
  * - **Dark mode** re-tunes with heavier alphas (30/40% vs 10/15%) and flips
  *   neutral's anchor to a lilac — mixing dark gray into a dark bg yields no
  *   contrast.

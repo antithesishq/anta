@@ -424,6 +424,13 @@
     }
   }
 
+  /* The theme clears quaternary shadows, so restore the selected ring outside
+     paddingless buttons where an inset ring would cross the label. */
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[priority="quaternary"][paddingless][selected] {
+    box-shadow: 0 0 0 1px color-mix(in oklch, currentColor 50%, transparent);
+  }
+
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])):is(:not([tone]), [tone=""], [tone="neutral"]) {
     --button-bg-primary-rest: light-dark(#665f5b, #c0b7bd);

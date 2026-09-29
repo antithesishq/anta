@@ -339,9 +339,15 @@
     &[priority="quaternary"][paddingless] {
       --button-padding-x: 0;
       --button-padding-y: 0;
+      border-radius: min(var(--_radius), 3px);
       /* Inline link-style button: no box, so it must sit on the text baseline
          at its natural height rather than the size floor. */
       min-height: 0;
+
+      &[loading]::before {
+        clip-path: inset(0 0 0 var(--button-loading-x-period) round min(var(--_radius), 3px));
+        animation-name: btn-loading-slide-paddingless;
+      }
     }
 
     /* Icon-only: default icons are 14 / 16 / 18px. Half an em minus 1.5px on
@@ -478,6 +484,9 @@
        pixel wide antialiases unevenly on curves and fractional edges. */
     &[selected] {
       box-shadow: inset 0 0 0 1px color-mix(in oklch, currentColor 50%, transparent);
+      &[priority="quaternary"][paddingless] {
+        box-shadow: 0 0 0 1px color-mix(in oklch, currentColor 50%, transparent);
+      }
     }
 
     &[disabled] {
@@ -604,5 +613,12 @@
   to {
     transform: translateX(var(--button-loading-x-period));
     clip-path: inset(0 var(--button-loading-x-period) 0 0 round var(--_radius));
+  }
+}
+
+@keyframes btn-loading-slide-paddingless {
+  to {
+    transform: translateX(var(--button-loading-x-period));
+    clip-path: inset(0 var(--button-loading-x-period) 0 0 round min(var(--_radius), 3px));
   }
 }

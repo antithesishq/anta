@@ -705,11 +705,9 @@ a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]):not(
 
 /* ===== input ===== */
 /* `tone` on Input is custom-only (named tones live on `status`), so `:not([tone])`
-   lets any custom-tone field fall through to the element's border derivation while
-   the neutral base still out-specifies the element base. `status` rules below are
-   unaffected. */
+   lets any custom-tone field fall through to the element's border derivation.
+   The field fill stays with the element's priority rules. */
 a-input:not([tone]) {
-  --input-bg: var(--bg-1);
   --input-border: light-dark(var(--border-2), #49424c);
   --input-hint: var(--text-3);
 }
@@ -747,6 +745,10 @@ a-input[status]:disabled {
   --input-bg: light-dark(#44374b12, #e4d1ef0d);
   --input-border: light-dark(#44374b26, #e4d1ef1f);
   --input-hint: var(--text-5);
+}
+a-input[priority="secondary"]:disabled,
+a-input[priority="tertiary"]:disabled {
+  --input-bg: transparent;
 }
 /* ===== input-time ===== */
 a-input-time {

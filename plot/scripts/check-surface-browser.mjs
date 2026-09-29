@@ -1,5 +1,5 @@
 // Run in a browser served by the Anta dev server; see README's surface verification command.
-import { definePlotElement, definePlotSurfaceElement, scatter } from '../src/entries/browser.ts'
+import { definePlotElement, definePlotSurfaceElement, scatter } from '../src/browser/index.ts'
 
 export async function checkSurface() {
     const passed = []

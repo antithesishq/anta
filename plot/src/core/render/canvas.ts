@@ -1,7 +1,10 @@
-import type { CanvasContext, ComposedPlot, Layout, Rect, RenderContext } from "../types"
+import type { CanvasContext, ComposedPlot, Layout, Rect, RenderContext, ResolvedFontConfig } from "../types"
 import { draw_axes, draw_grid, resolve_grid, continuous_axis_layout, type AxisChrome } from "./axes"
 import { series_type } from "../registry"
-import { DEFAULT_SERIES_COLOR, resolve_text_color } from "../template/color"
+import { DEFAULT_SERIES_COLOR } from "../template/color"
+
+import { resolve_font } from "../template/font"
+import { apply_canvas_font } from "./font"
 
 // Paint function: (context, plot) to pixels, on a CanvasRenderingContext2D or
 // OffscreenCanvasRenderingContext2D so the same code runs in a Worker. No preact, no DOM
@@ -41,6 +44,12 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
     ctx.save()
     try {
         const { layout, inner, x_scale, y_scale } = plot
+        const tick_defaults = { family: 'monospace', size: 10, color: '#777' }
+        const label_defaults = { family: plot.inherited_font_family, size: 12, color: '#777' }
+        const x_tick_font = resolve_font(plot.x_axis?.tick_label_font, plot.font, tick_defaults, plot.chrome_theme)
+        const y_tick_font = resolve_font(plot.y_axis?.tick_label_font, plot.font, tick_defaults, plot.chrome_theme)
+        const x_label_font = resolve_font(plot.x_axis?.label_font, plot.font, label_defaults, plot.chrome_theme)
+        const y_label_font = resolve_font(plot.y_axis?.label_font, plot.font, label_defaults, plot.chrome_theme)
 
         ctx.clearRect(0, 0, layout.width, layout.height)
 
@@ -58,8 +67,12 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
             y_scale,
             theme: plot.chrome_theme,
             chrome_color: plot.chrome_color,
-            x_ticks: continuous_axis_layout(ctx, 'x', x_scale, inner, plot.x_axis),
-            y_ticks: continuous_axis_layout(ctx, 'y', y_scale, inner, plot.y_axis),
+            x_tick_font,
+            y_tick_font,
+            x_label_font,
+            y_label_font,
+            x_ticks: continuous_axis_layout(ctx, 'x', x_scale, inner, plot.x_axis, x_tick_font),
+            y_ticks: continuous_axis_layout(ctx, 'y', y_scale, inner, plot.y_axis, y_tick_font),
         }
 
         // grid sits above the background, below axes and series
@@ -70,8 +83,8 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
         }
 
         if (plot.title) {
-            const title_color = resolve_text_color(plot.title_color, plot.chrome_theme, TITLE_COLOR)
-            draw_title(ctx, layout, inner, plot.title, plot.title_size ?? TITLE_SIZE, title_color)
+            const title_font = resolve_font(plot.title_font, plot.font, { family: plot.inherited_font_family, size: TITLE_SIZE, color: TITLE_COLOR }, plot.chrome_theme)
+            draw_title(ctx, layout, inner, plot.title, title_font)
         }
         draw_axes(ctx, chrome)
 
@@ -86,11 +99,11 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
                 y_categories: plot.y_categories,
             }
             ctx.save()
-            ctx.beginPath()
-            ctx.rect(inner.left, inner.top, inner.right - inner.left, inner.bottom - inner.top)
-            ctx.clip()
-
             try {
+                ctx.beginPath()
+                ctx.rect(inner.left, inner.top, inner.right - inner.left, inner.bottom - inner.top)
+                ctx.clip()
+
                 series_type<TooltipContent>(series.kind).paint(series, render)
             } finally {
                 ctx.restore()
@@ -113,9 +126,12 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
  */
 function draw_background(ctx: CanvasContext, inner: Rect, color: string): void {
     ctx.save()
-    ctx.fillStyle = color
-    ctx.fillRect(inner.left, inner.top, inner.right - inner.left, inner.bottom - inner.top)
-    ctx.restore()
+    try {
+        ctx.fillStyle = color
+        ctx.fillRect(inner.left, inner.top, inner.right - inner.left, inner.bottom - inner.top)
+    } finally {
+        ctx.restore()
+    }
 }
 
 /**
@@ -126,15 +142,18 @@ function draw_background(ctx: CanvasContext, inner: Rect, color: string): void {
  */
 function draw_border(ctx: CanvasContext, inner: Rect, layout: Layout, color: string): void {
     ctx.save()
-    ctx.strokeStyle = color
-    ctx.lineWidth = 1
-    // round then +0.5 so the frame lands crisp on a device pixel
-    const left = Math.max(Math.round(inner.left) + 0.5, 0.5)
-    const top = Math.max(Math.round(inner.top) + 0.5, 0.5)
-    const right = Math.min(Math.round(inner.right) + 0.5, layout.width - 0.5)
-    const bottom = Math.min(Math.round(inner.bottom) + 0.5, layout.height - 0.5)
-    ctx.strokeRect(left, top, right - left, bottom - top)
-    ctx.restore()
+    try {
+        ctx.strokeStyle = color
+        ctx.lineWidth = 1
+        // round then +0.5 so the frame lands crisp on a device pixel
+        const left = Math.max(Math.round(inner.left) + 0.5, 0.5)
+        const top = Math.max(Math.round(inner.top) + 0.5, 0.5)
+        const right = Math.min(Math.round(inner.right) + 0.5, layout.width - 0.5)
+        const bottom = Math.min(Math.round(inner.bottom) + 0.5, layout.height - 0.5)
+        ctx.strokeRect(left, top, right - left, bottom - top)
+    } finally {
+        ctx.restore()
+    }
 }
 
 /**
@@ -144,12 +163,14 @@ function draw_border(ctx: CanvasContext, inner: Rect, layout: Layout, color: str
  * @param inner - inner plot rect
  * @param title - title text
  */
-function draw_title(ctx: CanvasContext, layout: Layout, inner: Rect, title: string, size: number, color: string): void {
+function draw_title(ctx: CanvasContext, layout: Layout, inner: Rect, title: string, font: ResolvedFontConfig): void {
     ctx.save()
-    ctx.fillStyle = color
-    ctx.font = `${size}px sans-serif`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(title, (inner.left + inner.right) / 2, layout.margin_top / 2)
-    ctx.restore()
+    try {
+        apply_canvas_font(ctx, font)
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(title, (inner.left + inner.right) / 2, layout.margin_top / 2)
+    } finally {
+        ctx.restore()
+    }
 }

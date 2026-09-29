@@ -9,7 +9,7 @@ export function presentation(): PlotArgs<Node> {
   return {
     series: [scatter<Node>({ data: examplePoints, size: 3,
       color: { light: '#9ca3af', dark: '#6b7280' }, hoverable: false })],
-    title: { text: 'Plot title', size: 16, color: { light: '#374151', dark: '#e5e7eb' } },
+    title: { text: 'Plot title', font: { size: 16, color: { light: '#374151', dark: '#e5e7eb' } } },
     height: 260,
     margin: { top: 38, right: 16, bottom: 42, left: 52 },
     background: { light: '#f3f4f6', dark: '#202124' },

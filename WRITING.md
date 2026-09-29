@@ -66,6 +66,10 @@ what to do next. State the fact, its consequence, and stop.
 - Keep facts in their home. Explain an API's contract in its component docs;
   keep the changelog to the consumer decision that changed. Do not repeat a prop
   table in prose.
+- In release notes, link mentions of changed components and new props to the
+  relevant section of the component page. Link descriptive text around a prop
+  name rather than the code literal. Use site-relative paths such as
+  `/box/#measurements`.
 - Describe the result before implementation details. Include browser constraints,
   accessibility behavior, defaults, and migration steps only when they change a
   reader's decision.
@@ -157,6 +161,48 @@ what to do next. State the fact, its consequence, and stop.
   changes the example's use.
 
 ## Rules by surface
+
+### Human review markers
+
+An MDX page has `author: Name` in its frontmatter only after a human has
+reviewed the whole page. A standalone Astro page passes `author="Name"` to
+`DocsLayout` after the same review. A TSDoc comment has `@author Name` only
+after a human has reviewed that whole comment, including its examples and
+tags. Without the marker, the documentation site shows a page warning. TypeDoc
+shows a warning on documented declarations; declarations without TSDoc have no
+review marker.
+
+For an interface or type alias, one `@author` on the type covers the fields
+declared inside it. Review the full declaration, including every field comment,
+before adding that marker. It does not cover inherited fields or comments on
+other declarations. `pnpm docs-review <source-file> <type-name>` shows the whole
+declaration and can add a top-level comment when the type has none. Editing a
+field later makes the parent marker stale; `pnpm docs-fix` removes it unless a
+human reviews the updated declaration again.
+
+Do not add or preserve a human author marker when generating or changing
+documentation with an agent. Run `pnpm docs-fix` to inspect and remove stale
+markers that already existed at the branch point with `main` when their
+documentation has changed. The command shows its proposed removals and asks
+before editing; `pnpm docs-fix --check` never edits files. The `/docs-fix` PR
+comment runs the same removal in a bot commit. With the default comparison,
+neither command removes author markers first added on the current branch;
+remove those manually if they have not been reviewed.
+Human review and author attribution happen after the final text is ready.
+The human runs `pnpm docs-review <source-file> <declaration>` for TSDoc or
+`pnpm docs-review <page.mdx>` for a page. The command proposes the name from
+`git config user.name`, shows the review unit, and requires an interactive
+`REVIEWED` confirmation before adding the marker. Use `--author <name>` when
+the Git name is not the desired public attribution. Agents may inspect with
+`--dry-run` but must not confirm review on a human's behalf.
+CI compares each PR with its base commit. New author markers and edits that
+retain an existing author require the `review-docs` PR label; without it, the
+`docs-review` job fails. With the label, that job lists every affected
+TSDoc comment and authored page in the Actions summary and annotates its source
+line. The job log and summary show the full TSDoc text; for authored pages they
+point to the PR diff for review. The job does not edit files or verify that a
+human read them. The label asks the reviewer to
+inspect those sections and the PR diff before approval.
 
 - **Pages (`.mdx`):** State the purpose in one or two sentences, show the common
   case, then cover interactions and constraints a reader can act on. Component

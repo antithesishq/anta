@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { SelectFaceted, Select, Input, Button, RadioGroup, InputDate, Calendar, MenuItem, Tag } from '@antadesign/anta'
+import { SelectFaceted, Select, Input, Button, InputDate, Calendar, MenuItem, Tag } from '@antadesign/anta'
 import type { SelectFacet } from '@antadesign/anta'
 
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
@@ -15,7 +15,51 @@ const PEOPLE = [
   'Karl Ober', 'Liz Moreau',
 ]
 
-const FACETS: SelectFacet[] = [
+const DURATION_COMPARISONS = [
+  { value: 'gt', label: '>', hint: 'More than' },
+  { value: 'gte', label: '≥', hint: 'At least' },
+  { value: 'eq', label: '=', hint: 'Exactly' },
+  { value: 'lte', label: '≤', hint: 'At most' },
+  { value: 'lt', label: '<', hint: 'Less than' },
+]
+const durationSign = (comparison?: string) =>
+  DURATION_COMPARISONS.find((option) => option.value === comparison)?.label ?? '≥'
+
+type DurationValue = { min: string; comparison: string }
+
+function DurationEditor({ value, onChange }: { value?: DurationValue; onChange: (next: DurationValue | undefined) => void }) {
+  const [draftComparison, setDraftComparison] = useState(value?.comparison ?? 'gte')
+  const comparison = value?.comparison ?? draftComparison
+  return (
+    <div data-menu-open style={{ display: 'flex', gap: '6px', alignItems: 'center', padding: '4px' }}>
+      <Select
+        size="small"
+        aria-label="Duration comparison"
+        options={DURATION_COMPARISONS}
+        value={comparison}
+        onValueChange={(next: string) => {
+          setDraftComparison(next)
+          if (value?.min.trim()) onChange({ min: value.min, comparison: next })
+        }}
+        style={{ width: '72px' }}
+      />
+      <Input
+        size="small"
+        value={value?.min ?? ''}
+        placeholder="0"
+        inputMode="decimal"
+        style={{ width: '72px' }}
+        onInput={(e: any) => {
+          const min = e.currentTarget.value
+          onChange(min.trim() ? { min, comparison } : undefined)
+        }}
+      />
+      <span>seconds</span>
+    </div>
+  )
+}
+
+const BASE_FACETS: SelectFacet[] = [
   // Long list → filterable multi-select.
   { key: 'assignee', label: 'Assignee', kind: 'multiple', icon: 'circle-dot', filter: true, options: PEOPLE },
   // Same list under a different facet — "alice" here never collides with an assignee "alice".
@@ -66,20 +110,8 @@ const FACETS: SelectFacet[] = [
     label: 'Min duration',
     kind: 'custom',
     icon: 'calendar',
-    summary: (v: any) => `≥ ${v.min}s`,
-    render: ({ value, onChange }: any) => (
-      <div data-menu-open style={{ display: 'flex', gap: '6px', alignItems: 'center', padding: '4px' }}>
-        <span>≥</span>
-        <Input
-          size="small"
-          value={value?.min ?? ''}
-          placeholder="0"
-          style={{ width: '72px' }}
-          onInput={(e: any) => onChange(e.currentTarget.value ? { min: e.currentTarget.value } : undefined)}
-        />
-        <span>seconds</span>
-      </div>
-    ),
+    summary: (v: any) => `${durationSign(v.comparison)} ${v.min}s`,
+    render: ({ value, onChange }: any) => <DurationEditor value={value} onChange={onChange} />,
   },
 ]
 
@@ -142,19 +174,23 @@ export function SelectFacetedBasicDemo() {
                   }}
                 />
               )
+            if (facet.key === 'recency') {
+              const recency = value.recency as Recency
+              return <Tag key={facet.key} label="Recency" value={recencySummary(recency)} />
+            }
             // Custom (duration) → an Input editing its `min`.
             return (
               <Input
                 key={facet.key}
                 value={((value[facet.key] as any)?.min ?? '') as string}
-                leading={`${facet.label}:`}
+                leading={`${facet.label} ${durationSign((value[facet.key] as any)?.comparison)}:`}
                 clearable
                 dimActions
                 className="sf-chip"
                 onFocus={() => setFocusedKey(facet.key)}
                 onBlur={() => setFocusedKey(null)}
                 onInput={(e: any) =>
-                  setFacet(facet.key, e.currentTarget.value ? { min: e.currentTarget.value } : undefined)
+                  setFacet(facet.key, e.currentTarget.value.trim() ? { min: e.currentTarget.value, comparison: (value[facet.key] as any)?.comparison ?? 'gte' } : undefined)
                 }
                 onClearInput={() => {
                   setFocusedKey(null)
@@ -198,6 +234,8 @@ const PRESETS = [
 const PRESET_LABELS: Record<string, string> = {
   today: 'Today', yesterday: 'Yesterday', last14: 'Last 14 days', last30: 'Last 30 days',
 }
+const recencySummary = (v: Recency) =>
+  'preset' in v ? PRESET_LABELS[v.preset] : v.from && v.to ? `${v.from} → ${v.to}` : 'Custom range'
 
 // Local ISO YYYY-MM-DD (what InputDate speaks).
 const isoDay = (d: Date) =>
@@ -228,38 +266,38 @@ const RECENCY_FACETS: SelectFacet[] = [
     kind: 'custom',
     icon: 'calendar',
     // The row chip: the preset's label, or the picked range.
-    summary: (v: any) =>
-      'preset' in v ? PRESET_LABELS[v.preset] : v.from && v.to ? `${v.from} → ${v.to}` : 'Custom range',
-    // Presets plus — when "Custom range" is picked — two InputDate fields, all in
-    // the flyout. Each InputDate opens its own calendar in its own menu, which now
-    // stacks on top of this flyout (the flyout stays open) rather than fighting it.
+    summary: (v: any) => recencySummary(v as Recency),
+    // "Custom range" shows two InputDate fields in the flyout. Their calendars
+    // extend beyond it, so picking a day also exercises nested-menu hover.
     render: ({ value, onChange }: any) => {
       const v = value as Recency | undefined
       const mode = v == null ? '' : 'preset' in v ? v.preset : 'custom'
       const range = v && 'from' in v ? v : { from: '', to: '' }
       return (
-        <div data-menu-open style={{ padding: '8px', minWidth: '190px', display: 'grid', gap: '8px' }}>
-          <RadioGroup
-            size="small"
-            options={PRESETS}
-            value={mode}
-            // Controlled: apply the pick in onStateChange (onValueChange fires only
-            // after `value` changes, so it can't drive a controlled group).
-            onStateChange={(_e: any, { next }: any) =>
-              onChange(next === 'custom' ? (v && 'from' in v ? v : { from: '', to: '' }) : { preset: next })
-            }
-          />
+        <div style={{ minWidth: '360px' }}>
+          {PRESETS.map((p) => (
+            <MenuItem
+              key={p.value}
+              label={p.label}
+              selectionIndicator="radio"
+              selected={mode === p.value}
+              data-menu-open=""
+              onSelect={() => onChange(p.value === 'custom' ? range : { preset: p.value })}
+            />
+          ))}
           {mode === 'custom' && (
-            <div style={{ display: 'grid', gap: '6px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', padding: '8px' }}>
               <InputDate
                 size="small"
                 label="From"
+                clearable
                 value={range.from}
                 onValueChange={(from: string) => onChange({ from, to: range.to })}
               />
               <InputDate
                 size="small"
                 label="To"
+                clearable
                 value={range.to}
                 min={range.from || undefined}
                 onValueChange={(to: string) => onChange({ from: range.from, to })}
@@ -271,6 +309,8 @@ const RECENCY_FACETS: SelectFacet[] = [
     },
   },
 ]
+
+const FACETS: SelectFacet[] = [...BASE_FACETS, ...RECENCY_FACETS]
 
 export function SelectFacetedRecencyDemo() {
   useElements()
@@ -444,4 +484,3 @@ export function SelectFacetedRecencyMenuDemo() {
     </div>
   )
 }
-

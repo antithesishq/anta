@@ -2,200 +2,27 @@ import { HTMLElementBase, parseOpenState } from '../anta_helpers'
 import './a-expander.css'
 
 /**
- * `<a-expander>` — a collapsible disclosure, built from our own shadow
- * DOM (no native `<details>`/`<summary>`).
+ * `<a-expander>` is a disclosure with one shadow `<button>` summary and an
+ * animated content region. The title slot and decorative indicator live inside
+ * the button. The actions slot is its sibling, so actions have their own focus
+ * stops and do not toggle the region.
  *
- * Light-DOM composition (what the wrapper emits / a vanilla consumer
- * authors) uses two styled sub-elements:
+ * With `indicator-placement="end"`, the button uses the header's subgrid:
+ * title, actions, and indicator occupy separate tracks. The actions slot paints
+ * over the button in its track and receives pointer input there. The indicator
+ * remains inside the button and is inert, so its track still activates the
+ * summary. At the default start placement, the original 24px gutter, title
+ * inset, and body alignment are preserved.
  *
- *   <a-expander>
- *     <a-expander-summary slot="title">Title</a-expander-summary>
- *     <a-expander-details>…body…</a-expander-details>
- *   </a-expander>
+ * A single custom indicator node rotates with state. Two assigned nodes marked
+ * `data-when="closed"` and `data-when="open"` switch visibility instead. The
+ * indicator subtree is inert and hidden from assistive technology; only the
+ * summary button carries `aria-expanded`. The open state also appears as
+ * `:state(open)` for consumer CSS.
  *
- * Shadow structure — every node carries a stable label (a part name or
- * a class, both shadow-scoped: invisible to consumer selectors, pure
- * documentation + styling hooks):
- *
- *   <div class="header">       flex row: the trigger + header actions
- *     <button part="summary">  the summary; chevron is its ::before; the
- *       <slot name="title">    title is projected here — INSIDE the button, so
- *                              a control here bubbles to the toggle. A click
- *                              that hits an enabled interactive control (any Anta
- *                              control or a native one) or a
- *                              `[data-expander-ignore]` node in the title does
- *                              NOT toggle (see INTERACTIVE_SELECTOR): e.g. a
- *                              `<ButtonCopy>` next to the title text copies
- *                              without opening/closing the section. A *disabled*
- *                              control is inert, so its click toggles normally.
- *     <slot name="actions">    header actions — SIBLINGS of the button,
- *                              never inside it: clicks on them don't
- *                              toggle (no propagation path through the
- *                              button) and AT sees separate controls.
- *                              A flex row that never shrinks or wraps —
- *                              under width pressure the title ellipsizes
- *                              first, actions keep their intrinsic size.
- *                              display:none while empty (toggled by a
- *                              slotchange listener — CSS can't express
- *                              "slot has assigned nodes"), so an
- *                              actionless header reserves no space.
- *                              Visible in both folded and open states —
- *                              the header represents the section either
- *                              way (the MUI / GitHub convention).
- *   <div class="region">       the grid that animates height
- *     <slot part="content">    the body — this slot IS the grid item the
- *                              fr-track sizes (styled display:block) and
- *                              clips while animating; it projects the body
- *                              directly, no wrapper div
- *
- * ## Open state — the `state` contract (see STATEFUL-COMPONENTS.md)
- *
- * - **Uncontrolled** (no `state` attribute): the element owns its state.
- *   Clicking the summary toggles it; `default-state="open"` seeds the
- *   initial state (read once at connect). This is the hand-authored mode.
- * - **Controlled** (`state="open"`/`"closed"` present): the attribute is the
- *   single source of truth. Clicks do NOT self-toggle; they only dispatch the
- *   cancelable `statechange` event and the consumer answers by updating
- *   `state`. A consumer can reject by simply not updating. If you set `state`,
- *   you own it; absence keeps meaning "uncontrolled".
- *
- * Either way the element fires **`statechange`** — `cancelable`, *before* it
- * applies anything — with `detail: { next, prev }` in the `'open'|'closed'`
- * vocabulary. Uncontrolled, a handler can veto the transition synchronously
- * with `preventDefault()` (the element gates its own apply on the dispatch
- * result); controlled, `preventDefault()` is moot (the element never
- * self-applies) and not-updating-`state` is the reject.
- *
- * The internal open state lives in the shadow: `aria-expanded` on the
- * button (BOTH the a11y signal and the CSS state hook — no extra class)
- * plus `inert` on the collapsed region so hidden content leaves the tab
- * order and the a11y tree. Nothing on the host is ever mutated from JS
- * (declarative-DOM rule: the host may be reconciled off the UI thread).
- * `aria-controls` is intentionally omitted: optional in the WAI-ARIA
- * disclosure pattern, poorly supported, and would force a generated id.
- *
- * The open state is also mirrored to a custom state via `ElementInternals`
- * (`:state(open)`) purely as a *styling hook* for consumers — e.g. rotating a
- * chevron placed in `actions`, or matching an open header to a design. This is
- * declarative-DOM-safe: a custom state is element-internal, not a host
- * attribute, so it never mutates the host DOM. Guarded for engines without
- * `attachInternals` (it just doesn't expose the hook there).
- *
- * ## Shadow style notes (the sheet itself ships comment-free)
- *
- * - **Summary**: a real `<button>` (free focus + Enter/Space), reset to
- *   inherit the host's box/text so it reads as a plain header row. The
- *   button imposes NO typography of its own — it keeps `font: inherit`, so
- *   a custom title node (projected through the wrapper's `display:contents`
- *   span) inherits nothing from us and keeps its own type. The heading type
- *   scale (default + per-`[level]` rules, weight, letter-spacing) lives on
- *   `a-expander-summary` in `a-expander.css` — the CSS-only element the
- *   wrapper wraps a *string* title in — so it applies to string titles only,
- *   and styles the pre-upgrade skeleton in step. Keep that scale in sync with
- *   the `a-title.css` type scale (both are CSS-only, so there is no shared
- *   constant to import). Deliberately NOT exposed as `--expander-summary-*`
- *   tokens: `level` covers the supported variation, the weight never varies,
- *   and `::part(summary)` is the escape hatch for bespoke restyling —
- *   component tokens are reserved for values external CSS must re-point
- *   (tone, surface, dark mode).
- * - **Chevron**: the button's `::before` — a mask painting with
- *   `currentColor` (the inherited, possibly toned `--expander-text`); dimmed at
- *   rest, full on hover/open, rotated 90° when open (the rotate composes with
- *   the vertical-centering `translateY(-50%)`). It's positioned ABSOLUTELY
- *   inside the gutter (`left: var(--expander-gutter) - 16px - 2px`, so its right
- *   edge sits 2px before the gutter — a 2px gap before the title), out of flow,
- *   so it never pushes the title — the title's inset is purely `--expander-gutter`
- *   (the same var the body uses). With `outdent` the gutter is 0, so the
- *   chevron auto-hangs at -18px in the negative gutter and the title sits flush
- *   with the surrounding content. (The 1px transparent border stays — it keeps
- *   tertiary content aligned with the filled priorities — so a -1px correction
- *   on the header + region cancels its content-box inset; see the SHADOW_STYLE
- *   outdent rule.)
- *   The chevron can't be hidden via an attribute (a foldable region needs a
- *   visible affordance) — restyle or remove it through ::part(summary)::before.
- * - **Hover/press affordance**: the button's `:hover`/`:active` set its
- *   own `color` (to `--expander-text-hover` / `--expander-text`); the
- *   slotted title and the `currentColor` chevron both follow by plain
- *   property inheritance across the slot boundary. Deliberately NOT
- *   `button:hover ::slotted(…)`: Chromium fails to invalidate slotted
- *   styles when an ancestor's hover state changes across a gradual pointer
- *   exit, leaving the hover look stuck (reproduced in Chrome 149;
- *   single-jump exits invalidate fine). Property inheritance propagates
- *   reliably where selector invalidation doesn't. Driving `color` (rather
- *   than a private var the title reads) is also what lets a consumer's
- *   `::part(summary):hover { color }` reach the title — the outer `::part`
- *   rule overrides this inner one and inheritance carries it through. The
- *   tradeoff: a custom title node with no explicit `color` now inherits the
- *   hover recolor too (set `color` on it to opt out). The tertiary surface
- *   adds the docs-header dotted underline via `--_summary-underline`, the
- *   one bit still scoped to `a-expander-summary` (text-decoration doesn't
- *   inherit usefully here). Press eases title + (closed) chevron back to the
- *   at-rest look as soft feedback; the underline intentionally stays (no
- *   flicker). The `:active` rule mirrors its `:hover` counterpart's
- *   specificity and follows it in source order, so it wins while pressed.
- * - **Collapse animation**: grid `0fr ↔ 1fr` on `.region` (`ANIM_MS`),
- *   keyed off the button's `aria-expanded`; the `[part="content"]` grid
- *   item clips (`overflow: clip`) while animating. The grid item is the
- *   `<slot>` itself, promoted to `display: block` so it generates a box and
- *   acts as the fr-sized grid track — a `display: contents` slot (the UA
- *   default) has no box and wouldn't size the track, which is why the slot
- *   carries `display: block` rather than projecting through a wrapper. Once open and
- *   idle the clip is dropped (delayed by `ANIM_MS` via a discrete
- *   `overflow` transition) so focus rings / nested popovers aren't cut
- *   off. Known degradation: without `transition-behavior:
- *   allow-discrete` (Firefox < 129, Safari < 18) the un-clip applies
- *   instantly on open, so expanding content paints outside the still-
- *   animating region for `ANIM_MS` — accepted, it's a one-frame-class
- *   cosmetic on a progressive-enhancement property.
- *   The region's single column is `minmax(0, 1fr)`, not the implicit `auto`:
- *   `auto` grows to the content's max-content, so wide body content would
- *   balloon the box and overflow; capping at the host width lets
- *   `a-expander-details` (overflow-x: auto) be the scrollport instead.
- *
- * - **Disabled** (`disabled`, presence-based): the shadow button gets the
- *   native `disabled` — unfocusable, unclickable, no hover affordance
- *   (the hover/press rules are gated on `:enabled`). The open state
- *   freezes as-is (matching Radix / native form controls — disabling
- *   doesn't force-close). Host CSS dims the text; header actions stay
- *   live (they're outside the button) unless the consumer disables them.
- * - **Outdent**: `outdent` (tertiary only) hangs the chevron in the left
- *   gutter and drops the body's chevron-alignment indent (see
- *   a-expander.css) so the title + content line up flush with the
- *   surrounding column, like the docs section headers.
- * - **Open-state selectors** cross from the button to `.region` via
- *   `.header:has(button[aria-expanded="true"]) + .region` — the button
- *   sits inside the header flex row, so plain sibling combinators can't
- *   reach the region anymore.
- *
- * ## Host CSS notes (`a-expander.css` — also ships comment-free)
- *
- * - The external file styles the HOST box and declares the theme tokens
- *   that cascade — via `color` + custom properties — into the shadow
- *   tree. Named tones use Anta's theme-aware semantic tokens, so no
- *   `.dark` rules are needed (same as `<a-tag>`).
- * - The host carries no padding — the header `<button>` (full width + height)
- *   owns the content inset via `--expander-gutter`, the single value the title
- *   inset, the body inset, AND the chevron position all derive from (24px
- *   default; the chevron sits absolutely in it). So the title's left rhythm is
- *   constant for every `level`, the body always lines up under it, and the hit
- *   area is the whole header. The border is present on every priority
- *   (transparent on tertiary) so switching priority never shifts layout.
- *   `secondary` is the default surface; `primary` re-points to the stronger
- *   card pair; `tertiary` goes transparent. `outdent` (tertiary only) sets
- *   `--expander-gutter: 0` so title + body go flush with surrounding content
- *   and the chevron auto-hangs in the negative gutter; the transparent border
- *   stays (a -1px shadow correction cancels its 1px content-box inset).
- * - `<a-expander-summary>` / `<a-expander-details>` are CSS-only styled
- *   light-DOM tags (like `<a-tag-label>`). The summary inherits the
- *   shadow button's typography and only lays out + ellipsizes; the
- *   details own only layout (the indent) — no typography, so content
- *   keeps its own.
- * - Custom (non-named) `tone` keeps the source hue and pins lightness/
- *   chroma per token via `oklch(from …)`, re-tuned for dark mode — the
- *   `<a-tag>` / `<a-button>` mechanism. The JSX wrapper feeds the color
- *   in via inline `--expander-tone-source`; the typed
- *   `attr(tone type(<color>))` fallback covers raw-HTML authors on
- *   engines that support it.
+ * Uncontrolled mode reads `default-state` once and updates its own state.
+ * Controlled mode reads `state` and only dispatches a cancelable `statechange`
+ * request. The element changes shadow internals, never host attributes.
  */
 
 const ANIM_MS = 200
@@ -247,15 +74,25 @@ const SHADOW_STYLE = `
     align-items: stretch;
   }
 
+  :host([indicator-placement="end"]) .header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto var(--_expander-indicator-track);
+  }
+
   slot[name="actions"] { display: none; }
   .header.has-actions slot[name="actions"] {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--_expander-actions-gap);
     flex-shrink: 0;
-    margin-inline-start: 8px;
+    margin-inline-start: var(--_expander-actions-start);
     /* Inset from the right edge (the host has no padding of its own). */
-    margin-inline-end: 4px;
+    margin-inline-end: var(--_expander-actions-end);
+  }
+  :host([indicator-placement="end"]) .header.has-actions slot[name="actions"] {
+    grid-column: 2;
+    grid-row: 1;
+    z-index: 1;
   }
 
   button {
@@ -264,14 +101,11 @@ const SHADOW_STYLE = `
     background: none;
     border: none;
     margin: 0;
-    /* The button is the full-bleed header: it spans the host's width (flex: 1)
-       and height (.header stretch). The title is inset by --expander-gutter
-       (the chevron lives absolutely inside that gutter, below — it never pushes
-       the title), so the title + the body share one inset value; 6px block
-       gives the header a touch more height. Restyle it edge-to-edge via
-       ::part(summary). */
+    /* The default button fills the header beside its actions. The title and
+       body share --expander-gutter, and the indicator hangs inside that gutter.
+       End placement switches to the header's subgrid. */
     position: relative;
-    padding: 6px 4px 6px var(--expander-gutter);
+    padding: var(--_expander-header-padding-block) var(--_expander-header-padding-end) var(--_expander-header-padding-block) var(--expander-gutter);
     flex: 1;
     min-width: 0;
     font: inherit;
@@ -288,48 +122,107 @@ const SHADOW_STYLE = `
     outline: none;
   }
 
+  :host([indicator-placement="end"]) button {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: subgrid;
+    padding: var(--_expander-header-padding-block) 0;
+  }
+  :host([indicator-placement="end"]) slot[name="title"] {
+    grid-column: 1;
+    display: block;
+    min-width: 0;
+    margin-inline-start: var(--expander-gutter);
+  }
+
   button:focus-visible {
     outline: 1px solid var(--focus-ring);
     outline-offset: 0px;
   }
 
-  /* The chevron sits absolutely INSIDE the gutter — out of flow, so it never
-     pushes the title. Its right edge lands 2px before the gutter (left = gutter
-     - 16px - 2px), leaving a 2px gap before the title; at the default 24px
-     gutter the chevron box is [6px, 22px], and on outdent (gutter 0) it
-     auto-hangs at -18px in the negative gutter. One var drives the title inset,
-     the body inset, and the chevron position. */
-  button::before {
-    content: '';
+  .indicator {
     position: absolute;
-    left: calc(var(--expander-gutter) - 16px - 2px);
+    inset-inline-start: var(--_expander-indicator-start);
     top: 50%;
-    width: 16px;
-    height: 16px;
+    width: var(--_expander-indicator-size);
+    height: var(--_expander-indicator-size);
+    pointer-events: none;
+    opacity: 0.6;
+    transform: translateY(-50%);
+    transition: transform 150ms ease, opacity 150ms ease;
+  }
+  .indicator slot { display: grid; place-items: center; width: 100%; height: 100%; }
+  .indicator slot::slotted(*) { pointer-events: none; }
+  .indicator .glyph {
+    display: block;
+    width: var(--_expander-indicator-size);
+    height: var(--_expander-indicator-size);
     background-color: currentColor;
-    -webkit-mask-image: var(--_expander-chevron);
-            mask-image: var(--_expander-chevron);
+    -webkit-mask-image: var(--_expander-indicator-mask);
+            mask-image: var(--_expander-indicator-mask);
     -webkit-mask-size: contain;
             mask-size: contain;
     -webkit-mask-repeat: no-repeat;
             mask-repeat: no-repeat;
     -webkit-mask-position: center;
             mask-position: center;
-    opacity: 0.6;
-    /* translateY centers it; the open state adds rotate (same transform so the
-       transition animates only the rotation). */
-    transform: translateY(-50%);
-    transition: transform 150ms ease, opacity 150ms ease, background-color 150ms ease;
   }
-  button:enabled:hover::before { opacity: 1; }
-  button[aria-expanded="true"]::before { transform: translateY(-50%) rotate(90deg); opacity: 1; }
+  :host([indicator="plus"]) .indicator .glyph { position: relative; background: none; mask: none; -webkit-mask: none; }
+  :host([indicator="plus"]) .indicator .glyph::before,
+  :host([indicator="plus"]) .indicator .glyph::after {
+    content: '';
+    position: absolute;
+    background: currentColor;
+    border-radius: calc(var(--_expander-indicator-stroke) / 2);
+  }
+  :host([indicator="plus"]) .indicator .glyph::before {
+    width: calc(var(--_expander-indicator-size) - 2 * var(--_expander-indicator-stroke));
+    height: var(--_expander-indicator-stroke);
+    left: var(--_expander-indicator-stroke);
+    top: calc((var(--_expander-indicator-size) - var(--_expander-indicator-stroke)) / 2);
+  }
+  :host([indicator="plus"]) .indicator .glyph::after {
+    width: var(--_expander-indicator-stroke);
+    height: calc(var(--_expander-indicator-size) - 2 * var(--_expander-indicator-stroke));
+    left: calc((var(--_expander-indicator-size) - var(--_expander-indicator-stroke)) / 2);
+    top: var(--_expander-indicator-stroke);
+    transition: transform 150ms ease;
+  }
+  button:enabled:hover .indicator { opacity: 1; }
+  button[aria-expanded="true"] .indicator { transform: translateY(-50%) rotate(90deg); opacity: 1; }
+  :host([indicator="plus"]) button[aria-expanded="true"] .indicator,
+  button[aria-expanded="true"] .indicator.has-pair { transform: translateY(-50%); }
+  :host([indicator="plus"]) button[aria-expanded="true"] .glyph::after { transform: scaleY(0); }
+  button[aria-expanded="false"] slot[name="indicator"]::slotted([data-when="open"]),
+  button[aria-expanded="true"] slot[name="indicator"]::slotted([data-when="closed"]) { display: none; }
+
+  :host([indicator-placement="end"]) .indicator {
+    position: static;
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+    margin-inline-end: var(--_expander-indicator-edge);
+    transform: rotate(90deg);
+  }
+  :host([indicator-placement="end"]) button[aria-expanded="true"] .indicator { transform: rotate(270deg); }
+  :host([indicator-placement="end"]) .indicator.has-custom,
+  :host([indicator-placement="end"]) .indicator.has-pair { transform: none; }
+  :host([indicator-placement="end"][indicator="plus"]) .indicator { transform: none; }
+  :host([indicator-placement="end"]) button[aria-expanded="true"] .indicator.has-custom { transform: rotate(180deg); }
+  :host([indicator-placement="end"]) button[aria-expanded="true"] .indicator.has-pair,
+  :host([indicator-placement="end"][indicator="plus"]) button[aria-expanded="true"] .indicator { transform: none; }
 
   button:enabled:hover { color: var(--expander-text-hover); }
   :host([priority="tertiary"]) button:enabled:hover { --_summary-underline: underline; }
   button:enabled:active { color: var(--expander-text); }
   button:disabled { cursor: default; }
-  button:enabled:not([aria-expanded="true"]):active::before {
+  button:enabled:not([aria-expanded="true"]):active .indicator {
     opacity: 0.6;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .indicator, :host([indicator="plus"]) .indicator .glyph::after { transition: none; }
   }
 
   .region {
@@ -339,11 +232,8 @@ const SHADOW_STYLE = `
   }
   .header:has(button[aria-expanded="true"]) + .region { grid-template-rows: 1fr; }
 
-  /* Outdent flush correction: the host keeps its 1px (transparent) border for
-     cross-priority box stability, which insets the content-box by 1px. Pull the
-     header + region back by that 1px so the title and body land exactly on the
-     surrounding content (the chevron, absolutely positioned inside the header,
-     rides along). Logical start so it follows RTL. */
+  /* The transparent tertiary border still insets the content by 1px. Pull the
+     header and region back so outdent lands flush with surrounding content. */
   :host([priority="tertiary"][outdent]) .header,
   :host([priority="tertiary"][outdent]) .region {
     margin-inline-start: -1px;
@@ -381,8 +271,7 @@ export class AExpanderElement extends HTMLElementBase {
   // including custom header content. Guarded for engines without ResizeObserver.
   private roundObserver?: ResizeObserver
   // ElementInternals exposes the open/closed state as a custom state
-  // (`:state(open)`) for consumer styling — e.g. rotating a chevron that lives
-  // in `actions`, or matching an open header to a design. It's NOT a host
+  // (`:state(open)`) for consumer styling, including the indicator. It's NOT a host
   // attribute (declarative-DOM safe: no host mutation, no reconciliation
   // churn), just element-internal state the browser exposes for CSS matching.
   // Guarded for engines without attachInternals / CustomStateSet (no-op there).
@@ -399,14 +288,29 @@ export class AExpanderElement extends HTMLElementBase {
     this.summary = document.createElement('button')
     this.summary.type = 'button'
     this.summary.setAttribute('aria-expanded', 'false')
-    // Expose the header button as a shadow part so consumers can style it —
-    // including states CSS variables can't reach (e.g. ::part(summary):hover,
-    // :focus-visible, ::part(summary)::before for the chevron).
+    // The summary and indicator have separate parts for consumer styling.
     this.summary.setAttribute('part', 'summary')
     const titleSlot = document.createElement('slot')
     titleSlot.name = 'title'
     this.titleSlot = titleSlot
-    this.summary.append(titleSlot)
+    const indicator = document.createElement('span')
+    indicator.className = 'indicator'
+    indicator.setAttribute('part', 'indicator')
+    indicator.setAttribute('aria-hidden', 'true')
+    indicator.inert = true
+    const indicatorSlot = document.createElement('slot')
+    indicatorSlot.name = 'indicator'
+    const glyph = document.createElement('span')
+    glyph.className = 'glyph'
+    indicatorSlot.append(glyph)
+    indicatorSlot.addEventListener('slotchange', () => {
+      const assigned = indicatorSlot.assignedElements()
+      const hasPair = assigned.some(el => el.hasAttribute('data-when'))
+      indicator.classList.toggle('has-custom', assigned.length > 0 && !hasPair)
+      indicator.classList.toggle('has-pair', hasPair)
+    })
+    indicator.append(indicatorSlot)
+    this.summary.append(titleSlot, indicator)
     this.summary.addEventListener('click', this.onSummaryClick)
 
     const header = document.createElement('div')

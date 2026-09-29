@@ -7,7 +7,7 @@ import { PlotHost } from '../integrations/plot_host'
 import { capture_pointer_input, capture_wheel_input } from '../integrations/anta_gestures'
 import { UPDATE_INTERVAL_MS } from '../core/interactions/viewport_schedule'
 import { prepare_canvas_context } from '../core/render/canvas'
-import { clear_highlights, update_highlight_canvas } from '../core/render/highlight'
+import { clear_highlights, update_hover_canvas } from '../core/render/highlight'
 import type { PlotSurfaceEventMap, PlotSurfacePresentation } from '../core/presentation/surface'
 import type { ResolvedTooltip } from '../core/interactions/tooltip'
 import type { PlotLifecycleError, PlotDrawHost } from '../core/controller'
@@ -21,8 +21,8 @@ export interface PlotProps<Content = React.ReactNode> extends Omit<BaseProps, 'c
     /** Receives configuration, composition, and drawing failures. */
     onError?: (failure: PlotLifecycleError) => void
 
-    /** Optional content validation at a renderer boundary. */
-    validateTooltipContent?: (content: Content) => React.ReactNode | undefined
+    /** Converts custom tooltip content into renderable nodes. Defaults to using the content directly. */
+    resolveTooltipContent?: (content: Content) => React.ReactNode | undefined
 }
 
 type PlotView<Content> = {
@@ -50,7 +50,7 @@ type PlotBinding<Content> = {
 export function Plot<Content = React.ReactNode>({
     plotArgs,
     onError,
-    validateTooltipContent,
+    resolveTooltipContent,
     className,
     style,
     ...rest
@@ -125,11 +125,11 @@ export function Plot<Content = React.ReactNode>({
         const controller = host.controller
 
         if (binding.highlight) {
-            update_highlight_canvas(
+            update_hover_canvas(
                 binding.highlight,
                 controller?.composed_plot ?? null,
                 host.environment?.device_pixel_ratio ?? 1,
-                () => controller?.interactions.resolve_highlights() ?? [],
+                controller?.interactions.hovered ?? [],
             )
         }
 
@@ -154,14 +154,8 @@ export function Plot<Content = React.ReactNode>({
     const onContextChange = (event: PlotSurfaceEventMap['contextchange']) => {
         if (host === null) return
 
-        const { mode, devicePixelRatio } = event.detail.current
-        const previous = host.environment
         retained.current.context_received = true
-
-        if (previous?.color_theme === mode && previous.device_pixel_ratio === devicePixelRatio) return
-
-        host.environment = { color_theme: mode, device_pixel_ratio: devicePixelRatio }
-        notify(value => value + 1)
+        if (host.update_context(event.detail.current)) notify(value => value + 1)
     }
 
     const onCanvasTransfer = (event: PlotSurfaceEventMap['canvastransfer']) => {
@@ -190,8 +184,8 @@ export function Plot<Content = React.ReactNode>({
     }
 
     const tooltip = render_tooltip_body(view?.tooltips ?? [], {
-        custom: (content: Content): React.ReactNode | undefined => validateTooltipContent
-            ? validateTooltipContent(content)
+        custom: (content: Content): React.ReactNode | undefined => resolveTooltipContent
+            ? resolveTooltipContent(content)
             : content == null || typeof content === 'boolean'
                 ? undefined
                 : content as React.ReactNode,

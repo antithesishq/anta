@@ -1,6 +1,7 @@
 packages:
   - "stickers"
   - "plot"
+  - "typedoc-theme"
   - "site"
 
 onlyBuiltDependencies:

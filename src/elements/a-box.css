@@ -1,12 +1,37 @@
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
 
+@property --box-fade-start-x-strength {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --box-fade-end-x-strength {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --box-fade-start-y-strength {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --box-fade-end-y-strength {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
 @layer anta.components {
   /* `a-box` intentionally has no shadow root: it is the consumer's actual CSS
      box, while its element class only observes the browser state around it. */
   a-box {
     display: block;
     min-width: 0;
+    position: relative;
   }
 
   a-box[display="inline-block"] { display: inline-block; }
@@ -54,37 +79,34 @@
     }
   }
 
-  /* `fade` masks each edge that currently hides content, leaving the border
-     crisp. The element owns the per-edge states, so the fade follows scroll
-     position with no JS in the consumer.
-
-     The two axis gradients are inverted: they are opaque where content should
-     disappear. They union into one "erase" layer, which `exclude` subtracts
-     from a border-box rectangle. Because the axis layers clip to the padding
-     box, they erase nothing in the border ring, so the border stays fully
-     painted. Fading straight across the border box instead would fade the
-     border with it.
-
-     `mask-origin` matters as much as `mask-clip` here: it sets what the
-     gradients' `100%` measures against. Left at the `border-box` default, the
-     last stop of a fade lands under a thick border and gets clipped away, so
-     the content ends on a hard edge instead of finishing its fade. */
+  /* The two axis gradients erase only the padding box. Their registered
+     strengths transition as hidden edges appear or disappear. The mask stays
+     through the last edge's exit transition, then is removed so shadows and
+     focus rings outside the border box are never clipped at rest. */
   a-box[fade] {
     --box-fade-size: 24px;
-    --box-fade-x: linear-gradient(transparent, transparent);
-    --box-fade-y: linear-gradient(transparent, transparent);
-    --box-fade-to-start: to left;
-    --box-fade-to-end: to right;
+    --box-fade-left-strength: var(--box-fade-start-x-strength);
+    --box-fade-right-strength: var(--box-fade-end-x-strength);
+    transition:
+      --box-fade-start-x-strength 140ms ease-out,
+      --box-fade-end-x-strength 140ms ease-out,
+      --box-fade-start-y-strength 140ms ease-out,
+      --box-fade-end-y-strength 140ms ease-out;
   }
 
-  /* The mask is applied only while an edge actually hides something. A mask
-     clips to the border box, so an always-on one would swallow an outset
-     box-shadow or a focus ring on a box that is hiding nothing at all. */
-  a-box[fade]:is(
-    :state(hidden-start-x), :state(hidden-end-x),
-    :state(hidden-start-y), :state(hidden-end-y)
-  ) {
-    mask-image: linear-gradient(black, black), var(--box-fade-x), var(--box-fade-y);
+  a-box[fade]:state(fade-mask-active) {
+    mask-image:
+      linear-gradient(black, black),
+      linear-gradient(to right,
+        rgb(0 0 0 / var(--box-fade-left-strength)),
+        transparent var(--box-fade-size),
+        transparent calc(100% - var(--box-fade-size)),
+        rgb(0 0 0 / var(--box-fade-right-strength))),
+      linear-gradient(to bottom,
+        rgb(0 0 0 / var(--box-fade-start-y-strength)),
+        transparent var(--box-fade-size),
+        transparent calc(100% - var(--box-fade-size)),
+        rgb(0 0 0 / var(--box-fade-end-y-strength)));
     mask-clip: border-box, padding-box, padding-box;
     mask-origin: border-box, padding-box, padding-box;
     mask-composite: exclude, add, add;
@@ -101,52 +123,30 @@
     }
   }
 
-  /* The `hidden-*-x` states are logical: `start` is the inline-start edge, which
-     is the right edge in a right-to-left box. Gradients take physical directions
-     only, so `:dir()` resolves the two logical edges. The both-edges rule below
-     is symmetric and needs no flip.
-
-     No `-webkit-` mask fallbacks here on purpose: unprefixed `mask-*` landed in
-     Safari 15.4 and Chrome 120, while `:state()` needs Safari 17.4 / Chrome 125,
-     so no engine can reach these rules without the standard properties. */
+  /* The hidden x-edge states are logical, while the gradient runs left to
+     right. Swap their strengths for right-to-left content. */
   a-box[fade]:dir(rtl) {
-    --box-fade-to-start: to right;
-    --box-fade-to-end: to left;
+    --box-fade-left-strength: var(--box-fade-end-x-strength);
+    --box-fade-right-strength: var(--box-fade-start-x-strength);
   }
 
   a-box[fade]:state(hidden-end-x) {
-    --box-fade-x: linear-gradient(var(--box-fade-to-end), transparent calc(100% - var(--box-fade-size)), black);
+    --box-fade-end-x-strength: 1;
   }
 
   a-box[fade]:state(hidden-start-x) {
-    --box-fade-x: linear-gradient(var(--box-fade-to-start), transparent calc(100% - var(--box-fade-size)), black);
-  }
-
-  a-box[fade]:state(hidden-start-x):state(hidden-end-x) {
-    --box-fade-x: linear-gradient(
-      to right,
-      black,
-      transparent var(--box-fade-size),
-      transparent calc(100% - var(--box-fade-size)),
-      black
-    );
+    --box-fade-start-x-strength: 1;
   }
 
   a-box[fade]:state(hidden-end-y) {
-    --box-fade-y: linear-gradient(to bottom, transparent calc(100% - var(--box-fade-size)), black);
+    --box-fade-end-y-strength: 1;
   }
 
   a-box[fade]:state(hidden-start-y) {
-    --box-fade-y: linear-gradient(to top, transparent calc(100% - var(--box-fade-size)), black);
+    --box-fade-start-y-strength: 1;
   }
 
-  a-box[fade]:state(hidden-start-y):state(hidden-end-y) {
-    --box-fade-y: linear-gradient(
-      to bottom,
-      black,
-      transparent var(--box-fade-size),
-      transparent calc(100% - var(--box-fade-size)),
-      black
-    );
+  @media (prefers-reduced-motion: reduce) {
+    a-box[fade] { transition: none; }
   }
 }

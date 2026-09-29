@@ -257,6 +257,8 @@ const SHADOW_STYLE = `
     display: none;
     flex: 0 0 auto;
     padding: var(--dialog-header-padding, 18px 20px 8px);
+    overflow: clip;
+    overflow-wrap: anywhere;
     font-size: 17px;
     font-weight: 560;
     line-height: 24px;

@@ -21,16 +21,18 @@ import antaPackage from '../../../package.json'
 
 interface Props {
   title?: string
+  author?: string
   /** Cap the "On this page" TOC at this heading level (2 = h2 only). Omit for
    *  all levels. Set via an `.astro` page prop or MDX frontmatter. */
   tocMaxLevel?: number
   /** Drop the right "On this page" rail so the content spans the full width.
    *  For pages that manage their own wide layout (e.g. the theming lab). */
   hideToc?: boolean
-  frontmatter?: { title?: string; tocMaxLevel?: number; hideToc?: boolean }
+  frontmatter?: { title?: string; author?: string; tocMaxLevel?: number; hideToc?: boolean }
 }
 
 const title = Astro.props.title ?? Astro.props.frontmatter?.title ?? ''
+const author = Astro.props.author ?? Astro.props.frontmatter?.author
 const tocMaxLevel = Astro.props.tocMaxLevel ?? Astro.props.frontmatter?.tocMaxLevel
 const hideToc = Astro.props.hideToc ?? Astro.props.frontmatter?.hideToc ?? false
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
@@ -302,9 +304,13 @@ if (hasStructuredBreadcrumbs && title) {
             </menu>
           </>
         ))}
+        <h4>API reference</h4>
+        <menu>
+          <li><a href="/reference/" data-astro-reload><Icon shape="braces" size={18} />{' '}Anta TypeScript</a></li>
+        </menu>
       </aside>
       <div transition:persist="search-dialog"><SearchDialog client:load /></div>
-      <main id="main-content" class="content">
+      <main id="main-content" class="content" data-doc-review={!author ? 'pending' : undefined}>
         {/* Mobile-only: opens the "On this page" TOC as a right-side
             slide-out (the .toc-rail is hidden on mobile otherwise).
             Absolutely positioned in the content's top-right corner. */}
@@ -318,6 +324,12 @@ if (hasStructuredBreadcrumbs && title) {
             data-toc-pending
           />
         )}
+        {!author && (
+          <span class="doc-review-marker" tabindex="0" aria-label="Documentation has not yet been reviewed by a human" data-no-search>
+            ✦
+            <a-tooltip follow placement="top">Documentation has not yet been reviewed by a human.</a-tooltip>
+          </span>
+        )}
         <slot />
       </main>
       {!hideToc && (
@@ -327,6 +339,17 @@ if (hasStructuredBreadcrumbs && title) {
       )}
     </div>
     <div class="backdrop" aria-hidden="true"></div>
+
+    <script>
+      document.addEventListener('astro:page-load', () => {
+        const main = document.querySelector('#main-content[data-doc-review="pending"]')
+        const heading = main?.querySelector('h1')
+        const marker = main?.querySelector('.doc-review-marker')
+        if (heading && marker) {
+          heading.append(marker)
+        }
+      })
+    </script>
 
     <script>
       import type { TransitionBeforeSwapEvent } from 'astro:transitions/client'
@@ -683,7 +706,7 @@ if (hasStructuredBreadcrumbs && title) {
     display: flex;
     align-items: center;
     gap: 0.75ch;
-    padding: 4px 0;
+    padding: 2px 0 4px;
     /* Match the compact corner treatment of Anta menu rows. It also gives
        the shared focus outline a rounded shape without changing the sidebar's
        text alignment. */
@@ -754,7 +777,7 @@ if (hasStructuredBreadcrumbs && title) {
   .toc-rail {
     width: 214px;
     flex-shrink: 0;
-    padding: 32px 16px 32px 4px;
+    padding: 32px 12px 32px 4px;
     position: sticky;
     top: 44px;
     height: calc(100vh - 44px);

@@ -198,6 +198,55 @@ it's a no-op there. Use it where the expander sits in a content column
 with room to its left (a prose measure); in a full-width / edge-to-edge
 container the chevron would overhang the edge.
 
+## Indicator
+
+`indicatorPlacement="end"` puts the disclosure mark after the header actions.
+The mark stays inside the summary button, so selecting it toggles the section.
+Actions remain separate controls. The default `start` placement keeps the
+right-pointing chevron that turns down when open. At the end, it points down
+when closed and up when open.
+
+Choose `indicator="triangle"` for a filled arrow or `indicator="plus"` for a
+plus that becomes a minus. The default is `chevron`. The built-in motion follows
+the reduced-motion preference. An unrecognized string or number leaves the
+indicator empty; omit `indicator` to keep the default chevron.
+
+<Preview direction="column" gap="8px">
+  <a-expander indicator-placement="end">
+    <a-expander-summary slot="title">Download report</a-expander-summary>
+    <Button slot="actions" size="small" label="Download" />
+    <a-expander-details><Text>The indicator and title toggle this section. Download is a separate action.</Text></a-expander-details>
+  </a-expander>
+  <a-expander indicator="plus" indicator-placement="end">
+    <a-expander-summary slot="title">Plus and minus</a-expander-summary>
+    <a-expander-details><Text>The vertical stroke folds away when open.</Text></a-expander-details>
+  </a-expander>
+</Preview>
+
+```tsx
+<Expander title="Download report" indicatorPlacement="end"
+  actions={<Button size="small" label="Download" />}>
+  …
+</Expander>
+<Expander title="Plus and minus" indicator="plus" indicatorPlacement="end">…</Expander>
+```
+
+Pass a decorative node as `indicator` to replace the built-in mark. One node
+rotates with the section. To switch between two visuals, pass `closed` and
+`open` nodes. Neither form adds a focus stop or an accessible name: the title
+names the summary button, and its `aria-expanded` reports the state. Put
+interactive controls in `actions`.
+
+```tsx
+<Expander title="Custom mark" indicatorPlacement="end"
+  indicator={<Icon shape="chevron-down" />}>…</Expander>
+<Expander title="Two marks" indicatorPlacement="end"
+  indicator={{ closed: <Icon shape="plus" />, open: <Icon shape="minus" /> }}>…</Expander>
+```
+
+On a tertiary end-placement expander, `outdent` still aligns the title and body
+with surrounding content. The indicator stays inside the end edge.
+
 ## Title and level
 
 `title` takes a string or any node. For a string, `level` (1–6) applies
@@ -306,10 +355,10 @@ toggle:
 
 ## Actions
 
-Pass `actions` to render extra controls — buttons, tags — at the end of
-the header row. They sit **outside** the toggle trigger, as its flex
-siblings: clicking them never toggles the expander, they're separately
-focusable, and screen readers announce them as their own controls.
+Pass `actions` to render extra controls — buttons, tags — after the title.
+They sit **outside** the toggle trigger as its header siblings. Clicking them
+never toggles the expander; they're separately focusable and announced as
+their own controls.
 (Don't put interactive elements *inside* a custom `title` instead —
 nesting controls in a button is an accessibility anti-pattern.)
 
@@ -494,7 +543,8 @@ function Accordion() {
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-Slots hold the title and actions. The details element contains the collapsible body.
+Slots hold the title, actions, and an optional custom indicator. The details
+element contains the collapsible body.
 
 <Preview align="stretch">
   <a-expander default-state="open">
@@ -511,6 +561,29 @@ Slots hold the title and actions. The details element contains the collapsible b
     <a-button-label>Share</a-button-label>
   </a-button>
   <a-expander-details>Everything without a slot attribute is the body.</a-expander-details>
+</a-expander>
+```
+
+Use the `indicator` and `indicator-placement` attributes for built-in marks.
+For custom artwork, assign one element to `slot="indicator"`. Assign two
+elements with `data-when="closed"` and `data-when="open"` when the artwork
+changes between states. Indicator content is decorative and cannot receive focus
+or pointer events.
+
+```html
+<a-expander indicator="triangle" indicator-placement="end">…</a-expander>
+
+<a-expander indicator-placement="end">
+  <a-expander-summary slot="title">Custom mark</a-expander-summary>
+  <a-icon slot="indicator" shape="chevron-down" aria-hidden="true" inert></a-icon>
+  <a-expander-details>Content</a-expander-details>
+</a-expander>
+
+<a-expander indicator-placement="end">
+  <a-expander-summary slot="title">Two marks</a-expander-summary>
+  <a-icon slot="indicator" data-when="closed" shape="plus" aria-hidden="true" inert></a-icon>
+  <a-icon slot="indicator" data-when="open" shape="minus" aria-hidden="true" inert></a-icon>
+  <a-expander-details>Content</a-expander-details>
 </a-expander>
 ```
 
@@ -545,18 +618,18 @@ Reach for the props first: **`tone`** sets the color (any CSS color for a custom
 tone — it derives the surface in oklch), **`priority`** the fill, **`level`** the
 heading. Two knobs are worth keeping: **`--expander-tone-source`** (the color a
 custom `tone` derives from — set it to drive the palette from your own variable) and
-**`--expander-gutter`** (the shared left inset that re-insets header + body + chevron
-in lockstep; `outdent` sets it to `0`).
+**`--expander-gutter`** (the shared title and body inset; it also positions the
+start indicator). It is 24px at the start, 12px at the end, and `0` with tertiary
+`outdent`.
 
 ```tsx folded
 <Expander tone="#e0457b" title="Custom" />
 ```
 
 For everything else, `<a-expander>` exposes shadow **parts** — `::part(summary)` (the
-header button), `::part(content)` (the body), `::part(actions)` (the actions row) — and
-the light-DOM `<a-expander-summary>` / `<a-expander-details>` children, which you style
-directly. The header hover / active / focus states and the chevron all live on
-`::part(summary)`.
+header button), `::part(indicator)` (the decorative mark), `::part(content)` (the
+body), and `::part(actions)` (the actions row) — and the light-DOM
+`<a-expander-summary>` / `<a-expander-details>` children, which you style directly.
 
 Each example keeps its CSS in a `<style>` **inside** its own preview, targeting a demo
 class on that preview's expander (e.g. `.hide-chevron`) — so the rule you read is
@@ -564,47 +637,35 @@ literally in the preview's DOM, next to the element it styles, never a page-wide
 stylesheet. The folded recipe under each preview is that same CSS; in your app, swap the
 demo class for your own selector.
 
-**Hide the chevron.** There's deliberately no prop for it: a region that folds needs a
-visible affordance. For a genuine one-off, the chevron is the summary's `::before`, so
-remove it — then pull `--expander-gutter` in (it drives the title *and* body inset
-together) to tighten the now-empty gutter, and drop your own marker into the title:
+**Hide the indicator.** A disclosure needs a visible affordance. If the title
+provides one, hide the indicator part and tighten the unused gutter:
 
 <Preview direction="column" gap="8px">
   <Expander class="hide-chevron" title="No built-in chevron ⏷" defaultOpen>
     <Text>The built-in chevron is gone; a glyph in the title carries the affordance instead.</Text>
   </Expander>
   <style is:inline>{`
-    a-expander.hide-chevron::part(summary)::before { display: none; }
+    a-expander.hide-chevron::part(indicator) { display: none; }
     a-expander.hide-chevron { --expander-gutter: 12px; }  /* default is 24px */
   `}</style>
 </Preview>
 
 ```css folded
-a-expander.hide-chevron::part(summary)::before { display: none; }  /* remove the built-in chevron */
+a-expander.hide-chevron::part(indicator) { display: none; }
 a-expander.hide-chevron { --expander-gutter: 12px; }               /* tighten the inset (default 24px) */
 ```
 
-**Swap the chevron glyph.** It's a CSS mask, so point `mask-image` at your own SVG; it
-keeps its gutter position and the open-state rotation:
+**Change the indicator.** Use the built-in `triangle` or `plus` preset, or
+provide a custom node through `indicator` / `slot="indicator"`:
 
 <Preview direction="column" gap="8px">
-  <Expander class="swap-chevron" title="Triangle chevron" priority="tertiary">
-    <Text>The chevron is a CSS mask — swap in any SVG.</Text>
+  <Expander title="Triangle indicator" indicator="triangle" priority="tertiary">
+    <Text>The triangle follows the open state.</Text>
   </Expander>
-  <style is:inline>{`
-    a-expander.swap-chevron::part(summary)::before {
-      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5l11 7-11 7z'/%3E%3C/svg%3E");
-      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5l11 7-11 7z'/%3E%3C/svg%3E");
-    }
-  `}</style>
 </Preview>
 
-```css folded
-/* the chevron is the summary's ::before with a mask-image; swap the glyph for a
-   solid triangle — it keeps its position and the open-state rotate */
-a-expander.swap-chevron::part(summary)::before {
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5l11 7-11 7z'/%3E%3C/svg%3E");
-}
+```tsx folded
+<Expander title="Triangle indicator" indicator="triangle" priority="tertiary">…</Expander>
 ```
 
 **Tint the whole header** on hover / press by styling the summary part (the header
@@ -742,44 +803,25 @@ export function SaveButton() {
 `}</style>
 ```
 
-*A chevron as a status indicator* — drop the built-in toggle chevron and put a
-**non-interactive** chevron in `actions` instead. The whole header still toggles; the
-indicator only reflects state, rotating via `:state(open)`. With the `<Expander>` JSX
-wrapper, pass `actions={<Icon shape="chevron-down" />}` (the preview below uses the
-equivalent element composition because these docs render statically):
+*Style the indicator by state* with `:state(open)` and `::part(indicator)`. The
+example changes its color without changing the built-in glyph or motion:
 
 <Preview direction="column" gap="8px">
-  <a-expander class="indicator" default-state="open">
+  <a-expander class="indicator" indicator-placement="end" default-state="open">
     <a-expander-summary slot="title">Build log</a-expander-summary>
-    <Icon slot="actions" shape="chevron-down" />
-    <a-expander-details><Text>The header is the trigger; the actions chevron is an indicator only.</Text></a-expander-details>
+    <a-expander-details><Text>The indicator belongs to the summary button.</Text></a-expander-details>
   </a-expander>
   <style is:inline>{`
-    a-expander.indicator { --expander-gutter: 12px; }
-    a-expander.indicator::part(summary)::before { display: none; }
-    a-expander.indicator [slot="actions"] { pointer-events: none; color: var(--text-4); margin-inline-end: 6px; transition: transform 150ms ease; }
-    a-expander.indicator:state(open) [slot="actions"] { transform: rotate(180deg); }
+    a-expander.indicator::part(indicator) { color: var(--text-4); }
+    a-expander.indicator:state(open)::part(indicator) { color: var(--text-1); }
   `}</style>
 </Preview>
 
 ```tsx folded
-{/* renders an <a-expander> whose only header control is a non-interactive
-    chevron in the actions slot; the whole header toggles, the chevron flips */}
-<Expander actions={<Icon shape="chevron-down" />} className="indicator" defaultOpen>
-  Build log
-</Expander>
-
-{/* the JSX wrapper boxes the icon in a layout-neutral span, so target the
-    [slot="actions"] element */}
+<Expander title="Build log" indicatorPlacement="end" className="indicator" defaultOpen>…</Expander>
 <style>{`
-  a-expander.indicator { --expander-gutter: 12px; }                /* one var: title + body inset */
-  a-expander.indicator::part(summary)::before { display: none; }   /* drop the built-in chevron */
-  a-expander.indicator [slot="actions"] {
-    pointer-events: none;
-    margin-inline-end: 6px;                                        /* a little more right inset */
-    transition: transform 150ms ease;
-  }
-  a-expander.indicator:state(open) [slot="actions"] { transform: rotate(180deg); }  /* points down → up */
+  a-expander.indicator::part(indicator) { color: var(--text-4); }
+  a-expander.indicator:state(open)::part(indicator) { color: var(--text-1); }
 `}</style>
 ```
 

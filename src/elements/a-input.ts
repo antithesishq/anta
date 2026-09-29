@@ -133,10 +133,10 @@ const SUPPORTS_FIELD_SIZING =
 //    single indicator. --_fs/--_lh are the size-driven type scale (small 13/16 ·
 //    medium 15/20 · large 17/22); label, control, and hint all read them.
 //  • .field — min-height (24/28/32) matches the same-size Button. The border is a
-//    box-shadow (inset), not a real border, so the rest→status width bump
-//    (0.5px→1px, thickened for emphasis; color from a-input.css per-status
-//    tokens) never reflows. Forced-colors supplies a real system border because
-//    it suppresses shadows. The focus ring shows only when the *control* is
+//    box-shadow (inset), not a real border, so priority and status width changes
+//    (0.5px→1px, with status colors from a-input.css) never reflow.
+//    Forced-colors supplies a real system border because it suppresses shadows.
+//    The focus ring shows only when the *control* is
 //    focused (:has), not when a slotted button holds focus.
 //  • input / textarea — only the control carries the horizontal text inset; edge
 //    slots + clear sit flush. appearance:none and the ::-webkit/::-ms resets strip
@@ -155,8 +155,9 @@ const SUPPORTS_FIELD_SIZING =
 //    hint, and pre-upgrade skeleton. Variation settings explicitly inherit the
 //    active theme's axis pin because Safari does not reliably carry it into form
 //    controls on its own.
-//  • slots — leading/trailing/clear are display:none until they hold content,
-//    so an empty slot reserves no box or phantom gap. The host stylesheet derives
+//  • slots — leading/trailing are display:none until they hold content. A slotted
+//    clear button reserves its space even while invisible, so showing the button
+//    does not add width. The host stylesheet derives
 //    named-slot presence with `:has(> [slot])` and styles the matching part.
 //    Adornments are muted (--input-adornment) and inherit currentColor; a slotted
 //    <a-button> keeps its own color. Slotted TEXT gets the field's type scale
@@ -193,8 +194,8 @@ const SHADOW_STYLE = `
   }
 
   .field {
-    --_bc: var(--input-border);
-    --_bw: 0.5px;
+    --_bc: var(--input-rest-border);
+    --_bw: var(--input-border-width);
     --_pad-block: 4px;
 
     display: flex;
@@ -207,7 +208,6 @@ const SHADOW_STYLE = `
     transition: box-shadow 120ms ease;
   }
   :host([multiline]) .field { align-items: stretch; }
-  :host([status]:not([status="neutral"])) .field { --_bw: 1px; }
   :host([size="small"]) { --_fs: 13px; --_lh: 16px; }
   :host([size="large"]) { --_fs: 17px; --_lh: 22px; }
   :host([size="small"]) .field { min-height: 24px; }
@@ -215,11 +215,12 @@ const SHADOW_STYLE = `
   :host([round]) .field { border-radius: var(--input-round, 999px); }
 
   @media (hover: hover) and (pointer: fine) {
-    :host(:not(:disabled)) .field:hover { --_bw: 1px; }
+    :host(:not(:disabled)) .field:hover { --_bw: 1px; --_bc: var(--input-border); }
   }
   :host(:not([readonly])) .field:has(input:focus, textarea:focus, button:focus-visible),
   :host([readonly]:state(kb-focus)) .field {
     --_bw: 1px;
+    --_bc: var(--input-border);
     outline: 1px solid var(--focus-ring);
     outline-offset: 1px;
   }
@@ -296,10 +297,13 @@ const SHADOW_STYLE = `
   :host(:disabled) slot[name="leading"],
   :host(:disabled) slot[name="trailing"] { opacity: 0.5; pointer-events: none; }
 
-  slot[name="clear"] { display: none; flex-shrink: 0; }
-  :host(:state(filled)) slot[name="clear"] { display: flex; align-items: center; }
-  :host(:disabled) slot[name="clear"],
-  :host([readonly]) slot[name="clear"] { display: none; }
+  slot[name="clear"] {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    visibility: hidden;
+  }
+  :host(:state(filled):not(:disabled):not([readonly])) slot[name="clear"] { visibility: visible; }
 
   :host([multiline]:state(filled)) slot[name="clear"] {
     align-self: flex-start;

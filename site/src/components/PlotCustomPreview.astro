@@ -1,13 +1,13 @@
 ---
 interface Props {
-  example: 'ellipses' | 'chords' | 'ridgelines' | 'violins'
+  example: 'ellipses' | 'chords' | 'ridgelines' | 'violins' | 'highlights'
 }
 const { example } = Astro.props
 ---
 
 <a-plot
   data-custom-example={example}
-  aria-label={{ ellipses: 'Point clusters with confidence ellipses', chords: 'Weighted connections between five groups',
+  aria-label={{ highlights: 'Custom highlights: repaint, halo, and disabled', ellipses: 'Point clusters with confidence ellipses', chords: 'Weighted connections between five groups',
     ridgelines: 'Overlapping weekly density curves', violins: 'Mirrored densities with median and quartiles' }[example]}
 ></a-plot>
 

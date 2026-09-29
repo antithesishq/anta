@@ -380,11 +380,11 @@
     --bg-secondary-disabled: light-dark(#faf7f5, #1e1b1d);
     --fg-disabled: light-dark(#b3a9a3, #695d65);
 
-    /* Focus ring: a 2px outline in the ring hue, #b24393 in light mode
-       (5.1:1 on white) and #e17cc2 in dark (7.6:1 on the page), which pulses
-       wider on focus and settles, like the Material 3 focus ring. Primary
-       buttons add a 1px halo between the fill and the ring, white in light
-       mode and black in dark, so the ring separates from the filled button. */
+    /* Focus ring: a 2px outline flush against the button, #b24393 in light
+       mode (5.1:1 on white) and #e17cc2 in dark (7.6:1 on the page). It
+       pulses to 3px on focus and settles. Primary buttons add a 1px inset
+       halo along the fill edge, white in light mode and black in dark, so
+       the ring stays distinct from the fill. */
     &:focus-visible {
       outline: 2px solid light-dark(#b24393, #e17cc2);
       outline-offset: 0;
@@ -395,14 +395,7 @@
       }
     }
     &[priority="primary"]:focus-visible {
-      --_focus-halo: 0 0 0 1px light-dark(color-mix(in oklch, #ffffff 70%, transparent), color-mix(in oklch, #000000 70%, transparent));
-
-      outline-offset: 1px;
-      box-shadow: var(--_focus-halo);
-
-      &[selected] {
-        box-shadow: inset 0 0 0 0.5px currentColor, var(--_focus-halo);
-      }
+      box-shadow: inset 0 0 0 1px light-dark(color-mix(in oklch, #ffffff 70%, transparent), color-mix(in oklch, #000000 70%, transparent));
     }
   }
 
@@ -426,7 +419,7 @@
       --button-fg: var(--button-fg-secondary-hover);
     }
     &[selected] {
-      box-shadow: inset 0 0 0 0.5px currentColor;
+      box-shadow: inset 0 0 0 1px color-mix(in oklch, currentColor 50%, transparent);
     }
     &[disabled] {
       box-shadow: inset 0 0 2px -1px light-dark(#56504d, #cbc5c9);
@@ -580,7 +573,7 @@
   from {
     outline-width: 0;
   }
-  25% {
-    outline-width: 5px;
+  30% {
+    outline-width: 3px;
   }
 }

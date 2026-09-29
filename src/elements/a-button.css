@@ -74,7 +74,7 @@
     --_radius: 4px;
     /* Round text padding to whole CSS pixels at the 13/15/17px type scale.
        Themes can retune it without changing icon-only or paddingless buttons. */
-    --_padding-x-text: round(0.7em, 1px);
+    --_padding-x-text: round(calc(0.8em - 2px), 1px);
     --button-padding-x: var(--_padding-x-text);
     --button-padding-y: calc((8px - var(--_pb)) / 2);
 

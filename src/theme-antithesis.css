@@ -370,9 +370,7 @@
      critical keeps its red fill and white label and darkens in both modes. */
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])) {
-    --_padding-x-small: 10px;
-    --_padding-x-medium: 12px;
-    --_padding-x-large: 14px;
+    --_padding-x-text: round(0.8em, 1px);
 
     --button-fg-primary-rest: light-dark(#ffffff, #000000);
     --bg-primary-disabled: light-dark(#eeeae7, #272225);

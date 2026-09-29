@@ -72,12 +72,10 @@
     --_lh: 20px;
     --_pb: 1px;
     --_radius: 4px;
-    /* Text-button inline padding per size. Themes retune these; icon-only and
-       paddingless buttons set --button-padding-x directly and ignore them. */
-    --_padding-x-small: 7px;
-    --_padding-x-medium: 9px;
-    --_padding-x-large: 13px;
-    --button-padding-x: var(--_padding-x-medium);
+    /* Round text padding to whole CSS pixels at the 13/15/17px type scale.
+       Themes can retune it without changing icon-only or paddingless buttons. */
+    --_padding-x-text: round(0.7em, 1px);
+    --button-padding-x: var(--_padding-x-text);
     --button-padding-y: calc((8px - var(--_pb)) / 2);
 
     --button-timing-in: 75ms ease-in;
@@ -281,7 +279,6 @@
     }
 
     &[size="small"] {
-      --button-padding-x: var(--_padding-x-small);
       --_fs: 13px;
       --_lh: 16px;
       --_pb: 0.5px;
@@ -291,7 +288,6 @@
       & a-icon { --icon-size: 14px; }
     }
     &[size="large"] {
-      --button-padding-x: var(--_padding-x-large);
       --_fs: 17px;
       --_lh: 24px;
       --_pb: 1.5px;

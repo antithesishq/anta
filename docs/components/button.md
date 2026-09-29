@@ -62,8 +62,7 @@ Buttons come in `small`, `medium`, and `large`. `medium` is the default.
 ### Paddingless
 
 Use `paddingless` with a quaternary button when an action should sit flush with
-surrounding text. A selected paddingless button uses a persistent underline,
-including with `underlineOnHover`, instead of an inset ring that would cross its text.
+surrounding text.
 
 ```tsx
 If you're familiar with the basics, click

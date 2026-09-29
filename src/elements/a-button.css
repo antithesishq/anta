@@ -348,8 +348,8 @@
        each side makes their boxes 24 / 28 / 32px. Equal padding keeps custom
        icon sizes square too. Ignore tooltip and copy helpers when matching. */
     &:has(> a-icon):not(:has(> a-icon ~ a-icon)):not(:has(> :not(a-icon):not(a-tooltip):not(a-copy))) {
-      --button-padding-x: calc(0.5em - 1.5px);
-      --button-padding-y: var(--button-padding-x);
+      --button-padding-y: calc(0.5em - 1.5px);
+      --button-padding-x: var(--button-padding-y);
       min-height: 0;
 
       justify-content: center;

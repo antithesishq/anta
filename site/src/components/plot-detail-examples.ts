@@ -33,10 +33,10 @@ export function viewportSizes(): PlotArgs<Node> {
       scatter<Node>({ data: rows(labels[0]), size: 4,
         color: { light: '#64748b', dark: '#cbd5e1' }, tooltip: true }),
       scatter<Node>({ data: rows(labels[1]),
-        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom.x ** 0.25),
+        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
         color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true }),
       scatter<Node>({ data: rows(labels[2]),
-        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom.x ** 0.5),
+        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.5),
         color: { light: '#c2410c', dark: '#fdba74' }, tooltip: true }),
     ],
   }

@@ -56,7 +56,7 @@ function same_window(before: Domain | null, after: Domain | null): boolean {
  */
 export function viewport_change(viewport: Viewport, domains: { x_full_domain: Domain | null; y_full_domain: Domain | null }, zoom: ViewportZoom = UNIT_ZOOM): ViewportChange {
     return {
-        zoom: { ...zoom },
+        zoom_factor: { ...zoom },
         x: axis_viewport(viewport.x, domains.x_full_domain),
         y: axis_viewport(viewport.y, domains.y_full_domain),
     }

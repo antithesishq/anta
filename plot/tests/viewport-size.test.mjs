@@ -29,7 +29,7 @@ function wheel(c, factor, axes = both, commit = true) {
     if (commit) c.interactions.commit_viewport()
 }
 const data = [{ x: 50, y: 50, weight: 2 }]
-const grow = (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom.x ** .25)
+const grow = (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** .25)
 
 test('combines row data with actual viewport zoom, independently of axis domains', () => {
     for (const [min, max, scale] of [[0, 1, 'linear'], [-1e9, 1e9, 'linear'], [1, 1e8, 'log'],
@@ -38,8 +38,8 @@ test('combines row data with actual viewport zoom, independently of axis domains
         close(render(c).series[0].sizes[0], 2)
         wheel(c, 16, { x: true, y: false })
         close(render(c).series[0].sizes[0], 4)
-        close(c.interactions.viewport_change().zoom.x, 16)
-        close(c.interactions.viewport_change().zoom.y, 1)
+        close(c.interactions.viewport_change().zoom_factor.x, 16)
+        close(c.interactions.viewport_change().zoom_factor.y, 1)
     }
 })
 
@@ -59,7 +59,7 @@ test('accessor gets the composed windows and full domains, and runs again on pan
     c.interactions.commit_viewport()
     const plot = render(c)
     assert.notDeepEqual(views.at(-1).x.window, before.x.window)
-    assert.deepEqual(views.at(-1).zoom, before.zoom)
+    assert.deepEqual(views.at(-1).zoom_factor, before.zoom_factor)
     assert.deepEqual(views.at(-1), c.interactions.viewport_change())
     assert.equal(plot.series[0].sizes[0], 20)
 })
@@ -68,7 +68,7 @@ test('category filtering preserves original indices and row size precedence', ()
     const calls = []
     const rows = [{ x: 'drop', y: 0 }, { x: 'a', y: 50, size: 9 }, { x: 'b', y: 100 }]
     const series = scatter({ data: rows, size: (row, index, viewport) => {
-        calls.push({ row, index, viewport }); return index + viewport.zoom.y
+        calls.push({ row, index, viewport }); return index + viewport.zoom_factor.y
     } })
     assert.equal(calls.length, 0)
     const c = controller(series, { axis: { x: { categories: ['a', 'b'] }, y: { min: 0, max: 100 } } })
@@ -112,7 +112,7 @@ test('legacy accessors and fixed sizes remain valid; hover/hit/highlight reuse c
     assert.deepEqual(render(legacy).series[0].sizes, [2])
     let calls = 0
     const c = controller(scatter({ data, size: (row, i, viewport) => {
-        calls++; return Math.min(40, 10 * viewport.zoom.x)
+        calls++; return Math.min(40, 10 * viewport.zoom_factor.x)
     } }))
     wheel(c, 4)
     const p = render(c), series = p.series[0], arcs = []
@@ -132,7 +132,7 @@ test('legacy accessors and fixed sizes remain valid; hover/hit/highlight reuse c
 test('bad accessor results fail composition atomically and recover on a later viewport', () => {
     for (const bad of [-1, NaN, Infinity, {}, undefined]) {
         const failures = []
-        const c = controller(scatter({ data, size: (row, i, viewport) => viewport.zoom.x > 1 ? bad : 4 }), {}, f => failures.push(f))
+        const c = controller(scatter({ data, size: (row, i, viewport) => viewport.zoom_factor.x > 1 ? bad : 4 }), {}, f => failures.push(f))
         const valid = render(c)
         wheel(c, 2)
         assert.equal(render(c), valid)
@@ -147,8 +147,8 @@ test('bad accessor results fail composition atomically and recover on a later vi
 test('zoom limits and round trips do not accumulate fictitious magnification', () => {
     const c = controller(scatter({ data, size: grow }))
     wheel(c, 1e12, { x: true, y: false })
-    close(c.interactions.viewport_change().zoom.x, 10000)
-    close(c.interactions.viewport_change().zoom.y, 1)
+    close(c.interactions.viewport_change().zoom_factor.x, 10000)
+    close(c.interactions.viewport_change().zoom_factor.y, 1)
     c.interactions.reset_viewport(both)
     for (const factor of [1.1, 1.3, 1.7, 3, 7, 12]) {
         wheel(c, factor); render(c)
@@ -166,7 +166,7 @@ test('unsupported size descriptors fail explicitly instead of silently using the
 test('throwing accessors retain the last composition and numeric row overrides skip evaluation', () => {
     const failures = []
     const c = controller(scatter({ data, size: (row, index, viewport) => {
-        if (viewport.zoom.x > 1) throw new Error('accessor failed')
+        if (viewport.zoom_factor.x > 1) throw new Error('accessor failed')
         return 4
     } }), {}, failure => failures.push(failure))
     const previous = render(c)

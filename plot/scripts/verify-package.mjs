@@ -210,7 +210,7 @@ try {
         const args: PlotArgs<string> = {series:[scatter<string>({data:[{x:1,y:2}],tooltip:()=> 'text'})]}
         const viewportSized = scatter({
             data: [{ x: 1, y: 2, weight: 3 }],
-            size: (row, index, viewport) => Math.min(12, Number(row.weight) * viewport.zoom.x ** 0.25),
+            size: (row, index, viewport) => Math.min(12, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
         })
         const legacySized = scatter({ data: [], size: (row, index) => index + 2 })
         // @ts-expect-error Accessors return numeric pixel sizes, not descriptors.

@@ -572,7 +572,7 @@ export type AxisViewport = { window: number[]; full: number[] }
 
 export type ViewportChange = {
     /** Gesture magnification, initially 1 per axis; independent of data extents. */
-    zoom: ViewportZoom
+    zoom_factor: ViewportZoom
     x: AxisViewport | null
     y: AxisViewport | null
 }

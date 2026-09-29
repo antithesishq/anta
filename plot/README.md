@@ -112,16 +112,16 @@ A numeric `size` stays fixed in CSS pixels. A size accessor receives
 scatter({
   data,
   size: (row, index, viewport) =>
-    Math.min(12, Number(row.weight) * viewport.zoom.x ** 0.25),
+    Math.min(12, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
 })
 ```
 
 `viewport` has the same shape as the `on_viewport_change` payload:
 
 - `x` and `y` contain `{ window: [min, max], full: [min, max] }`, or `null` for a categorical axis.
-- `zoom` contains `{ x, y }` gesture magnification, initially 1 per axis.
+- `zoom_factor` contains `{ x, y }` gesture magnification, initially 1 per axis.
 
-Use `viewport.zoom.x`, `viewport.zoom.y`, or `Math.max(viewport.zoom.x, viewport.zoom.y)`
+Use `viewport.zoom_factor.x`, `viewport.zoom_factor.y`, or `Math.max(viewport.zoom_factor.x, viewport.zoom_factor.y)`
 for zoom-relative sizing. Magnification follows accepted gestures, including zoom
 limits and logarithmic axes. Panning, resizing, and data-domain updates preserve
 it. Reset and new keyed viewport requests establish factor 1 on their affected

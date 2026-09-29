@@ -3513,7 +3513,7 @@ to continuous axes.
 |---|---|---|
 | `x` | `AxisViewport \| null` | Current horizontal viewport, or `null` for a categorical axis. |
 | `y` | `AxisViewport \| null` | Current vertical viewport, or `null` for a categorical axis. |
-| `zoom` | `{ x: number; y: number }` | Per-axis gesture magnification, initially 1; preserved during pan, resize, and data-domain changes. |
+| `zoom_factor` | `{ x: number; y: number }` | Per-axis gesture magnification, initially 1; preserved during pan, resize, and data-domain changes. |
 
 Each `AxisViewport` contains:
 
@@ -3564,10 +3564,10 @@ export function viewportSizes(): PlotArgs<Node> {
       scatter<Node>({ data: rows(labels[0]), size: 4,
         color: { light: '#64748b', dark: '#cbd5e1' }, tooltip: true }),
       scatter<Node>({ data: rows(labels[1]),
-        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom.x ** 0.25),
+        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
         color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true }),
       scatter<Node>({ data: rows(labels[2]),
-        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom.x ** 0.5),
+        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.5),
         color: { light: '#c2410c', dark: '#fdba74' }, tooltip: true }),
     ],
   }
@@ -3579,11 +3579,11 @@ document.body.append(plot)
 ```
 
 `viewport` has the same shape as [Viewport changes](#viewport-changes): `x` and `y`
-contain visible and full domains (`null` for a categorical axis), and `zoom.x` and
-`zoom.y` contain gesture magnification. Each starts at 1. Panning, resizing, and
+contain visible and full domains (`null` for a categorical axis), and `zoom_factor.x` and
+`zoom_factor.y` contain gesture magnification. Each starts at 1. Panning, resizing, and
 data-domain changes preserve magnification. Reset and new keyed viewport requests
 establish factor 1 on their affected axes. Zooming out beyond a requested initial
-window can yield factors below 1. Use `Math.max(viewport.zoom.x, viewport.zoom.y)`
+window can yield factors below 1. Use `Math.max(viewport.zoom_factor.x, viewport.zoom_factor.y)`
 to follow the more magnified axis.
 
 Size accessors run during composition, including zoom and pan, rather than when

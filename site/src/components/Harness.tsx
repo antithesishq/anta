@@ -2,7 +2,8 @@ import { Component, Fragment, h, type ComponentChildren, type ComponentType } fr
 import { useEffect, useState } from 'preact/hooks'
 import * as Anta from '@antadesign/anta'
 import HarnessEditor from './HarnessEditor'
-import { caseCount, components, decode } from '../../../tests/pbt'
+import { caseCount, decode } from '../../../tests/pbt/axes'
+import button from '../../../tests/pbt/components/button'
 import styles from './Harness.module.css'
 
 const { Button } = Anta
@@ -16,19 +17,17 @@ export default function App() {
 
 function selectedCase() {
   const query = new URLSearchParams(location.search)
-  const model = query.get('model') as keyof typeof components | null
-  const component = model ? components[model] : undefined
-  if (!component) return null
+  if (query.get('model') !== 'Button') return null
   const requestedCase = Number(query.get('case') || 0)
-  const caseId = Number.isInteger(requestedCase) && requestedCase >= 0 && requestedCase < caseCount(component)
+  const caseId = Number.isInteger(requestedCase) && requestedCase >= 0 && requestedCase < caseCount(button)
     ? requestedCase
     : 0
-  return { model, component, caseId }
+  return { caseId }
 }
 
 function sourceFromLocation() {
   const selected = selectedCase()
-  return selected ? selected.component.source(decode(selected.component, selected.caseId)) : initialSource
+  return selected ? button.source(decode(button, selected.caseId)) : initialSource
 }
 
 type CompiledApp = ComponentType<Record<string, never>>
@@ -155,7 +154,7 @@ export default function Harness() {
       className={`${styles.stage} ${styles.preview}`}
       aria-busy={compileStatus === 'compiling'}
       data-compile-status={compileStatus}
-      data-model={current?.model}
+      data-model={current ? 'Button' : undefined}
       data-case={current?.caseId}
     >
       {compileError
@@ -188,7 +187,7 @@ export default function Harness() {
       <Button
         label="Next"
         size="small"
-        disabled={navigation.caseId + navigation.step >= caseCount(navigation.component)}
+        disabled={navigation.caseId + navigation.step >= caseCount(button)}
         onClick={() => moveCase(1)}
       />
     </nav>}

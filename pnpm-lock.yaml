@@ -26,9 +26,6 @@ importers:
         specifier: 1.0.5
         version: 1.0.5
     devDependencies:
-      '@antithesishq/bombadil':
-        specifier: 0.7.5
-        version: 0.7.5
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
@@ -241,10 +238,6 @@ importers:
         version: '@typescript/typescript6@6.0.2'
 
 packages:
-
-  '@antithesishq/bombadil@0.7.5':
-    resolution: {integrity: sha512-CoY4GkJnBhqcWpW3TTnSFFmFa3e0JJYRV7fdzYIrSf+2jdxt+CXbjZDj14Fv90AqPRVWFRdbvp/lSzAbVweNDg==}
-    hasBin: true
 
   '@astrojs/compiler-binding-android-arm64@0.4.1':
     resolution: {integrity: sha512-Wtx2DZORuNTLASLLZ8hlrjFaJe1LUloatcCn9EPq7knBhRpjMGXeJANIJMeBZG4igvz7x+3nyAJM2iwCSW9xog==}
@@ -3577,8 +3570,6 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
-
-  '@antithesishq/bombadil@0.7.5': {}
 
   '@astrojs/compiler-binding-android-arm64@0.4.1':
     optional: true

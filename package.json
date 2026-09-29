@@ -73,11 +73,9 @@
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
     "prepack": "pnpm run build:docs",
-    "test:fuzz_dom_tree": "bombadil browser test http://localhost:4321/test/ tests/pbt/dom-tree.bombadil.spec.ts",
-    "test:fuzz_component": "node tests/pbt/run.mjs"
+    "test:fuzz_component": "node tests/pbt/run.ts"
   },
   "devDependencies": {
-    "@antithesishq/bombadil": "0.7.5",
     "@types/react": "19.3.0",
     "@typescript/native": "npm:typescript@7.0.2",
     "axe-core": "4.13.0",

@@ -1,20 +1,17 @@
-export const axis = (id: string, values: readonly unknown[]) => ({
-  id,
-  choices: values.map(value => ({ id: String(value), props: { [id]: value } })),
-})
+type Component = { fixture: Record<string, unknown>; axes: Record<string, readonly unknown[]> }
 
-export function caseCount(component: { axes: { choices: unknown[] }[] }) {
-  return component.axes.reduce((total, item) => total * item.choices.length, 1)
+export function caseCount(component: Component) {
+  return Object.values(component.axes).reduce((total, values) => total * values.length, 1)
 }
 
-export function decode(component: { fixture: Record<string, unknown>; axes: { choices: { props: Record<string, unknown> }[] }[] }, caseId: number) {
+export function decode(component: Component, caseId: number) {
   let remainder = caseId
   const props = { ...component.fixture }
-  for (let index = component.axes.length - 1; index >= 0; index--) {
-    const item = component.axes[index]
-    const choice = item.choices[remainder % item.choices.length]
-    remainder = Math.floor(remainder / item.choices.length)
-    Object.assign(props, choice.props)
+  const axes = Object.entries(component.axes)
+  for (let index = axes.length - 1; index >= 0; index--) {
+    const [name, values] = axes[index]
+    props[name] = values[remainder % values.length]
+    remainder = Math.floor(remainder / values.length)
   }
   return props
 }

@@ -60,6 +60,7 @@
 .light {
   --anta-seed-brand: #cc4636;
   --anta-seed-neutral: #65605b;
+  --anta-seed-critical: #c92c46;
 }
 
 /* Role scale — literals from the Figma library "Anta 0.4 — New Brand"
@@ -362,6 +363,194 @@
     --_radius: 999px;
   }
 
+  /* Button: wider inline padding for the round shape, and a literal color
+     curve per named tone: primary fills, secondary / tertiary / quaternary
+     labels and tints, at rest / hover / active. In dark mode primary fills
+     turn light under a black label and lighten further on hover / active;
+     critical keeps its red fill and white label and darkens in both modes. */
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])) {
+    --_padding-x-small: 10px;
+    --_padding-x-medium: 12px;
+    --_padding-x-large: 14px;
+
+    --button-fg-primary-rest: light-dark(#ffffff, #000000);
+    --bg-primary-disabled: light-dark(#eeeae7, #272225);
+    --fg-disabled-primary: light-dark(#b3a9a3, #7c6e78);
+    --bg-secondary-disabled: light-dark(#faf7f5, #1e1b1d);
+    --fg-disabled: light-dark(#b3a9a3, #695d65);
+
+    /* Two-tone focus ring: a 1px white halo at 70% (box-shadow) under a 2px tinted
+       outline offset by the same 1px. Light mode uses the ring hue at full
+       strength (#b24393, 5.1:1 on white) so it clears the 3:1 focus contrast.
+       The outline pulses wider on focus and settles, like the Material 3
+       focus ring. */
+    &:focus-visible {
+      outline: 2px solid light-dark(#b24393, color-mix(in oklch, #c86fad 50%, transparent));
+      outline-offset: 1px;
+      box-shadow: 0 0 0 1px color-mix(in oklch, #ffffff 70%, transparent);
+      animation: button-focus-ring 600ms cubic-bezier(0.2, 0, 0, 1);
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+      }
+    }
+    &[selected]:focus-visible {
+      box-shadow: inset 0 0 0 0.5px currentColor, 0 0 0 1px color-mix(in oklch, #ffffff 70%, transparent);
+    }
+  }
+
+  /* Secondary: the rest label is the token as-is (the base sheet darkens it
+     in light mode), and the rim is an inner shadow in the label color. The
+     theme layer outranks the base state rules, so hover / active / selected
+     are restated here. */
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])):not([priority="primary"], [priority="tertiary"], [priority="quaternary"]) {
+    --button-fg: var(--button-fg-secondary-rest);
+
+    box-shadow: inset 0 0 2px -1px currentColor;
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        --button-fg: var(--button-fg-secondary-hover);
+      }
+    }
+    &:active,
+    &[selected] {
+      --button-fg: var(--button-fg-secondary-hover);
+    }
+    &[selected] {
+      box-shadow: inset 0 0 0 0.5px currentColor;
+    }
+    &[disabled] {
+      box-shadow: inset 0 0 2px -1px light-dark(#56504d, #cbc5c9);
+    }
+    &:focus-visible {
+      box-shadow: inset 0 0 2px -1px currentColor, 0 0 0 1px color-mix(in oklch, #ffffff 70%, transparent);
+    }
+    &[selected]:focus-visible {
+      box-shadow: inset 0 0 0 0.5px currentColor, 0 0 0 1px color-mix(in oklch, #ffffff 70%, transparent);
+    }
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"])):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --button-bg-primary-rest: light-dark(#665f5b, #c0b7bd);
+    --button-bg-primary-hover: light-dark(#56504d, #cbc5c9);
+    --button-bg-primary-active: light-dark(#494441, #d5cfd3);
+    --button-fg-secondary-rest: light-dark(#56504d, #cbc5c9);
+    --button-fg-secondary-hover: light-dark(#494441, #d5cfd3);
+    --button-bg-secondary-rest: light-dark(#8b6b590d, #a398a01a);
+    --button-bg-secondary-hover: light-dark(#79716d1a, #a398a026);
+    --button-bg-secondary-active: light-dark(#79716d26, #a398a033);
+    --button-fg-tertiary-rest: light-dark(#665f5b, #b1a8ae);
+    --button-fg-tertiary-hover: light-dark(#56504d, #c0b7bd);
+    --button-bg-tertiary-hover: light-dark(#79716d0d, #a398a01a);
+    --button-bg-tertiary-active: light-dark(#79716d1a, #a398a040);
+    --button-fg-quaternary-rest: light-dark(#665f5b, #b1a8ae);
+    --button-fg-quaternary-hover: light-dark(#494441, #cbc5c9);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone="brand"] {
+    --button-bg-primary-rest: light-dark(#d03711, #fea192);
+    --button-bg-primary-hover: light-dark(#af2e0e, #ffb3a7);
+    --button-bg-primary-active: light-dark(#912a0d, #ffc1b8);
+    --button-fg-secondary-rest: light-dark(#d03711, #ffb3a7);
+    --button-fg-secondary-hover: light-dark(#af2e0e, #ffc1b8);
+    --button-bg-secondary-rest: light-dark(#e945201a, #e9452040);
+    --button-bg-secondary-hover: light-dark(#e9452026, #e945204d);
+    --button-bg-secondary-active: light-dark(#e9452033, #e9452059);
+    --button-fg-tertiary-rest: light-dark(#d03711, #fea192);
+    --button-fg-tertiary-hover: light-dark(#af2e0e, #ffb3a7);
+    --button-bg-tertiary-hover: light-dark(#e945201a, #e9452033);
+    --button-bg-tertiary-active: light-dark(#e9452026, #e945204d);
+    --button-fg-quaternary-rest: light-dark(#d03711, #f88d7d);
+    --button-fg-quaternary-hover: light-dark(#912a0d, #ffb3a7);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone="info"] {
+    --button-bg-primary-rest: light-dark(#1f6eb2, #93c5ec);
+    --button-bg-primary-hover: light-dark(#1a5b93, #a6cdef);
+    --button-bg-primary-active: light-dark(#175082, #bad6f3);
+    --button-fg-secondary-rest: light-dark(#1f6eb2, #99d0ff);
+    --button-fg-secondary-hover: light-dark(#1a5b93, #bad6f3);
+    --button-bg-secondary-rest: light-dark(#2686d91a, #2686d940);
+    --button-bg-secondary-hover: light-dark(#2686d926, #2686d94d);
+    --button-bg-secondary-active: light-dark(#2686d933, #2686d959);
+    --button-fg-tertiary-rest: light-dark(#1f6eb2, #93c5ec);
+    --button-fg-tertiary-hover: light-dark(#1a5b93, #a6cdef);
+    --button-bg-tertiary-hover: light-dark(#2686d91a, #2686d933);
+    --button-bg-tertiary-active: light-dark(#2686d926, #2686d94d);
+    --button-fg-quaternary-rest: light-dark(#1f6eb2, #7db6e8);
+    --button-fg-quaternary-hover: light-dark(#175082, #a6cdef);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone="success"] {
+    --button-bg-primary-rest: light-dark(#2a7e43, #88d7a0);
+    --button-bg-primary-hover: light-dark(#226737, #9ddeb1);
+    --button-bg-primary-active: light-dark(#1f5c31, #b3e5c2);
+    --button-fg-secondary-rest: light-dark(#2a7e43, #68ff95);
+    --button-fg-secondary-hover: light-dark(#226737, #b3e5c2);
+    --button-bg-secondary-rest: light-dark(#3295501a, #32955040);
+    --button-bg-secondary-hover: light-dark(#32955026, #3295504d);
+    --button-bg-secondary-active: light-dark(#32955033, #32955059);
+    --button-fg-tertiary-rest: light-dark(#2a7e43, #88d7a0);
+    --button-fg-tertiary-hover: light-dark(#226737, #9ddeb1);
+    --button-bg-tertiary-hover: light-dark(#3295501a, #32955033);
+    --button-bg-tertiary-active: light-dark(#32955026, #3295504d);
+    --button-fg-quaternary-rest: light-dark(#2a7e43, #74cd8e);
+    --button-fg-quaternary-hover: light-dark(#1f5c31, #9ddeb1);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone="warning"] {
+    --button-bg-primary-rest: light-dark(#c37416, #edb25a);
+    --button-bg-primary-hover: light-dark(#ae6613, #ffbd59);
+    --button-bg-primary-active: light-dark(#995200, #ffca7a);
+    --button-fg-secondary-rest: light-dark(#995200, #ffbd59);
+    --button-fg-secondary-hover: light-dark(#7f410b, #f3cc91);
+    --button-bg-secondary-rest: light-dark(#ae66131a, #ae66134d);
+    --button-bg-secondary-hover: light-dark(#ae661326, #ae66134d);
+    --button-bg-secondary-active: light-dark(#ae661333, #ae661359);
+    --button-fg-tertiary-rest: light-dark(#995200, #edb25a);
+    --button-fg-tertiary-hover: light-dark(#7f410b, #f0bf75);
+    --button-bg-tertiary-hover: light-dark(#ae66131a, #ae661333);
+    --button-bg-tertiary-active: light-dark(#ae661333, #ae66134d);
+    --button-fg-quaternary-rest: light-dark(#995200, #e1a452);
+    --button-fg-quaternary-hover: light-dark(#6a3b0c, #f0bf75);
+  }
+
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone="critical"] {
+    --button-fg-primary-rest: #ffffff;
+    --button-bg-primary-rest: #c92c46;
+    --button-bg-primary-hover: #b02038;
+    --button-bg-primary-active: #a01c32;
+    --button-fg-secondary-rest: light-dark(#c92c46, #ffabb9);
+    --button-fg-secondary-hover: light-dark(#b02038, #f4c2cb);
+    --button-bg-secondary-rest: light-dark(#de455e1a, #de455e40);
+    --button-bg-secondary-hover: light-dark(#de455e26, #de455e4d);
+    --button-bg-secondary-active: light-dark(#de455e33, #de455e59);
+    --button-fg-tertiary-rest: light-dark(#c92c46, #ff9cad);
+    --button-fg-tertiary-hover: light-dark(#b02038, #ffabb9);
+    --button-bg-tertiary-hover: light-dark(#de455e1a, #ff355733);
+    --button-bg-tertiary-active: light-dark(#de455e33, #ff35574d);
+    --button-fg-quaternary-rest: light-dark(#c92c46, #e78e9d);
+    --button-fg-quaternary-hover: light-dark(#a01c32, #ffabb9);
+  }
+
+  /* Custom tones: light mode keeps the base formula; dark lifts the primary
+     fill to L 0.80 / 0.84 / 0.87 so the black label stays readable. */
+  :is(a-button, a[role="button"][data-anta], button[data-anta],
+      input[data-anta]:is([type="reset"], [type="submit"]))[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --button-bg-primary-rest: light-dark(oklch(from var(--_src) 0.51 0.17 h), oklch(from var(--_src) 0.8 0.1 h));
+    --button-bg-primary-hover: light-dark(oklch(from var(--_src) 0.46 0.17 h), oklch(from var(--_src) 0.84 0.095 h));
+    --button-bg-primary-active: light-dark(oklch(from var(--_src) 0.41 0.17 h), oklch(from var(--_src) 0.87 0.075 h));
+  }
+
   a-input:not([round])::part(field),
   a-input:not([round]):not(:defined)::after {
     border-radius: 0;
@@ -376,5 +565,14 @@
 
   a-tag {
     border-radius: 1px;
+  }
+}
+
+@keyframes button-focus-ring {
+  from {
+    outline-width: 0;
+  }
+  25% {
+    outline-width: 5px;
   }
 }

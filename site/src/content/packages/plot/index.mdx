@@ -3582,7 +3582,8 @@ document.body.append(plot)
 contain visible and full domains (`null` for a categorical axis), and `zoom.x` and
 `zoom.y` contain gesture magnification. Each starts at 1. Panning, resizing, and
 data-domain changes preserve magnification. Reset and new keyed viewport requests
-establish factor 1 on their affected axes. Use `Math.max(viewport.zoom.x, viewport.zoom.y)`
+establish factor 1 on their affected axes. Zooming out beyond a requested initial
+window can yield factors below 1. Use `Math.max(viewport.zoom.x, viewport.zoom.y)`
 to follow the more magnified axis.
 
 Size accessors run during composition, including zoom and pan, rather than when

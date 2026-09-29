@@ -156,3 +156,25 @@ test('zoom limits and round trips do not accumulate fictitious magnification', (
         assert.equal(c.interactions.is_zoomed(both), false)
     }
 })
+
+test('unsupported size descriptors fail explicitly instead of silently using the default', () => {
+    for (const size of [null, {}, { base: 2, max: 12 }, 'large', true]) {
+        assert.throws(() => scatter({ data, size }), /size must be a number or a size accessor/)
+    }
+})
+
+test('throwing accessors retain the last composition and numeric row overrides skip evaluation', () => {
+    const failures = []
+    const c = controller(scatter({ data, size: (row, index, viewport) => {
+        if (viewport.zoom.x > 1) throw new Error('accessor failed')
+        return 4
+    } }), {}, failure => failures.push(failure))
+    const previous = render(c)
+    wheel(c, 2)
+    assert.equal(render(c), previous)
+    assert.equal(failures.at(-1).phase, 'compose')
+    assert.equal(failures.at(-1).error.message, 'accessor failed')
+    const fixed = controller(scatter({ data: [{ x: 50, y: 50, size: 0 }], size: () => { throw new Error('must not run') } }))
+    wheel(fixed, 4)
+    assert.deepEqual(render(fixed).series[0].sizes, [0])
+})

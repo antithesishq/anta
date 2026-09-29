@@ -82,6 +82,9 @@ function resolve_size(
     data: Record<string, unknown>[],
     arg: ScatterSizeArg | undefined,
 ): Pick<ScatterSeries, 'size' | 'sizes' | 'size_accessor'> {
+    if (arg !== undefined && typeof arg !== 'number' && typeof arg !== 'function') {
+        throw new Error('plot.scatter: size must be a number or a size accessor')
+    }
     const accessor = typeof arg === 'function' ? arg : undefined
     const uniform = typeof arg === 'number' ? arg : undefined
 

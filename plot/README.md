@@ -141,6 +141,5 @@ report a composition error and retain the last successful plot. Numeric row
 `size` fields retain precedence over the accessor. No application state updates,
 `on_viewport_change` handler, or series reconstruction are needed.
 
-This alternative extends the existing scatter size accessor only. Rectangle
-sizes, line widths, font sizes, and other numeric declarations retain their
-existing APIs; there is no `ZoomSize` object.
+Viewport-aware sizing is supported by the scatter size accessor. Rectangle
+sizes, line widths, font sizes, and other size declarations accept numbers.

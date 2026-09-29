@@ -1098,7 +1098,7 @@ export type AButtonAttributes = AButtonCommonAttributes & (
        *  Presence-based: `''` (or any value) turns it on; omit to turn off.
        *  Cannot be selected. */
       paddingless: true | ''
-      selected?: false
+      selected?: never
     }
 )
 

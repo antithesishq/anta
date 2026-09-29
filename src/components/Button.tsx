@@ -145,7 +145,7 @@ export type PriorityMode =
       | {
           /** Drops outer padding to zero. Cannot be selected. */
           paddingless: true
-          selected?: false
+          selected?: never
         }
     )
 

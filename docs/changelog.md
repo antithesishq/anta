@@ -3,6 +3,13 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- Selected paddingless [Buttons](/button/#paddingless) use an underline instead
+  of an inset ring that crosses their text or underline.
+
 ## 0.3.33 — September 28, 2026
 
 ### Added

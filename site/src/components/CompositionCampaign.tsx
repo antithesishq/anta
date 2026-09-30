@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'preact/hooks'
+import { Button } from '@antadesign/anta'
+import { useEffect, useRef, useState } from 'preact/hooks'
+import styles from './CompositionCampaign.module.css'
 
 type Draw = {
   pick<T>(values: T[]): T
@@ -208,6 +210,8 @@ async function waitForHarness() {
  */
 export default function CompositionCampaign() {
   const [state, setState] = useState<CampaignState>(initialState)
+  const [requestedCase, setRequestedCase] = useState(0)
+  const sources = useRef(new Map<number, string>())
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search)
@@ -216,7 +220,6 @@ export default function CompositionCampaign() {
     const maxDepth = positiveInteger(query.get('maxDepth'), 8)
     const maxChildren = positiveInteger(query.get('maxChildren'), 3)
     const nodeBudget = positiveInteger(query.get('nodeBudget'), 48)
-    const dwellMillis = positiveInteger(query.get('dwellMillis'), 15_000)
     const seed = optionalInteger(query.get('seed'))
     let cancelled = false
 
@@ -227,10 +230,9 @@ export default function CompositionCampaign() {
         import('@hegeldev/hegel'),
         import('@hegeldev/hegel/generators'),
       ])
-      let caseId = 0
-
-      while (!cancelled) {
-        setState({ caseId, error: null, status: 'generating' })
+      let source = sources.current.get(requestedCase)
+      if (!source) {
+        setState({ caseId: requestedCase, error: null, status: 'generating' })
         let tree: ReturnType<typeof generateComposition> | null = null
         test((tc) => {
           tree = generateComposition({
@@ -240,23 +242,23 @@ export default function CompositionCampaign() {
           }, { maxDepth, maxChildren, nodeBudget })
         }, {
           database: Database.disabled,
-          ...(seed == null ? {} : { seed: seed + caseId }),
+          ...(seed == null ? {} : { seed: seed + requestedCase }),
           testCases: 1,
         })
         if (cancelled || !tree) return
-
-        setState({ caseId, error: null, status: 'mounting' })
-        const result = await (await waitForHarness()).setSource(renderComposition(tree))
-        if (cancelled) return
-        if (result.status === 'error') {
-          setState({ caseId, error: result.error ?? 'The harness could not render the generated TSX.', status: 'error' })
-          return
-        }
-
-        setState({ caseId, error: null, status: 'ready' })
-        caseId += 1
-        await new Promise((resolve) => window.setTimeout(resolve, dwellMillis))
+        source = renderComposition(tree)
+        sources.current.set(requestedCase, source)
       }
+
+      setState({ caseId: requestedCase, error: null, status: 'mounting' })
+      const result = await (await waitForHarness()).setSource(source)
+      if (cancelled) return
+      if (result.status === 'error') {
+        setState({ caseId: requestedCase, error: result.error ?? 'The harness could not render the generated TSX.', status: 'error' })
+        return
+      }
+
+      setState({ caseId: requestedCase, error: null, status: 'ready' })
     }
 
     void run().catch((error) => {
@@ -267,13 +269,33 @@ export default function CompositionCampaign() {
       })
     })
     return () => { cancelled = true }
-  }, [])
+  }, [requestedCase])
 
   if (new URLSearchParams(window.location.search).get('compose') !== '1') return null
-  return <output
-    hidden
-    data-composition-case={state.caseId}
-    data-composition-error={state.error ?? undefined}
-    data-composition-status={state.status}
-  />
+  const changingCase = state.status === 'booting' || state.status === 'generating' || state.status === 'mounting'
+  return <>
+    <output
+      hidden
+      data-composition-case={state.caseId}
+      data-composition-error={state.error ?? undefined}
+      data-composition-status={state.status}
+    />
+    <nav className={styles.controls} aria-label="Generated composition cases">
+      <Button
+        disabled={requestedCase === 0 || changingCase}
+        icon="chevron-left"
+        label="Previous"
+        priority="secondary"
+        onClick={() => setRequestedCase((caseId) => Math.max(0, caseId - 1))}
+      />
+      <span className={styles.caseNumber} aria-live="polite">Case {requestedCase + 1}</span>
+      <Button
+        disabled={changingCase}
+        iconTrailing="chevron-right"
+        label="Next"
+        priority="secondary"
+        onClick={() => setRequestedCase((caseId) => caseId + 1)}
+      />
+    </nav>
+  </>
 }

@@ -1,0 +1,23 @@
+.controls {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  background: var(--bg-1);
+  box-shadow: 0 8px 24px color-mix(in oklch, var(--shadow-color, black) 18%, transparent);
+  transform: translateX(-50%);
+}
+
+.caseNumber {
+  min-width: 7ch;
+  color: var(--text-2);
+  font-size: 13px;
+  text-align: center;
+  white-space: nowrap;
+}

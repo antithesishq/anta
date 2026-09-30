@@ -75,7 +75,6 @@ const componentManifest: ComponentDefinition[] = [
   { name: 'Steps', children: 'panels', props: '' },
   { name: 'Dialog', children: 'any', props: 'header="Generated dialog"' },
   { name: 'Card', children: 'any', props: 'header="Generated card"' },
-  { name: 'Banner', children: 'any', props: 'tone="info" message="Generated notice"' },
   { name: 'Toaster', children: 'none', props: 'label="Generated notifications"' },
 ]
 

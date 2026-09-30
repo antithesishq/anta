@@ -104,10 +104,6 @@ function count(draw: Draw, maximum: number) {
   return pick(draw, Array.from({ length: maximum }, (_, index) => index + 1))
 }
 
-function countBetween(draw: Draw, minimum: number, maximum: number) {
-  return pick(draw, Array.from({ length: maximum - minimum + 1 }, (_, index) => minimum + index))
-}
-
 function generateComposition(draw: Draw, {
   maxDepth = 8,
   maxChildren = 3,
@@ -133,7 +129,7 @@ function generateComposition(draw: Draw, {
       if (component.children === 'menu') children = nodes(depth + 1, maxChildren, menuChildNames)
       if (component.children === 'menuGroup') children = nodes(depth + 1, maxChildren, menuGroupChildNames)
       if (component.children === 'panels') {
-        panels = Array.from({ length: countBetween(draw, 2, 10) }, (_, index) => ({
+        panels = Array.from({ length: count(draw, Math.min(maxChildren, 10)) }, (_, index) => ({
           children: nodes(depth + 1, maxChildren),
           label: `Panel ${index + 1}`,
           value: `panel-${index + 1}`,

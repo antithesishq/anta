@@ -76,7 +76,7 @@
     "prepublishOnly": "pnpm run build",
     "prepack": "pnpm run build:docs",
     "test:harness": "node scripts/test-harness.mjs",
-    "test:composition": "bombadil browser test --time-limit=5m --output-path=tests/.test-output/composition --output-path-overwrite 'http://localhost:4321/test/?compose=1&testing=true' tests/composition.bombadil.spec.ts"
+    "test:composition": "bombadil browser test --time-limit=5m --output-path=tests/.test-output/composition --output-path-overwrite 'http://localhost:4321/test/?fuzz_tree=true&testing=true' tests/composition.bombadil.spec.ts"
   },
   "devDependencies": {
     "@antithesishq/bombadil": "0.7.5",

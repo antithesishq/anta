@@ -213,7 +213,7 @@ export default function CompositionCampaign() {
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search)
-    if (query.get('compose') !== '1') return
+    if (query.get('fuzz_tree') !== 'true') return
 
     const maxDepth = positiveInteger(query.get('maxDepth'), 8)
     const maxChildren = positiveInteger(query.get('maxChildren'), 3)
@@ -269,7 +269,7 @@ export default function CompositionCampaign() {
     return () => { cancelled = true }
   }, [requestedCase])
 
-  if (new URLSearchParams(window.location.search).get('compose') !== '1') return null
+  if (new URLSearchParams(window.location.search).get('fuzz_tree') !== 'true') return null
   const changingCase = state.status === 'booting' || state.status === 'generating' || state.status === 'mounting'
   return <>
     <output

@@ -7,7 +7,7 @@ type Draw = {
 }
 
 type ComponentDefinition = {
-  children: 'any' | 'none' | 'text'
+  children: 'any' | 'menu' | 'menuGroup' | 'none' | 'text'
   name: string
   props: string
 }
@@ -46,11 +46,11 @@ const componentManifest: ComponentDefinition[] = [
   { name: 'Tooltip', children: 'any', props: '' },
   { name: 'Checkbox', children: 'none', props: 'label="Enabled" defaultChecked' },
   { name: 'Switch', children: 'none', props: 'label="Allow updates" defaultChecked' },
-  { name: 'Menu', children: 'any', props: '' },
+  { name: 'Menu', children: 'menu', props: '' },
   { name: 'MenuItem', children: 'none', props: 'label="Generated action"' },
   { name: 'MenuItemCopy', children: 'none', props: 'copy="Anta composition fixture" label="Copy value"' },
   { name: 'MenuSeparator', children: 'none', props: '' },
-  { name: 'MenuGroup', children: 'any', props: 'label="Generated group"' },
+  { name: 'MenuGroup', children: 'menuGroup', props: 'label="Generated group"' },
   { name: 'Expander', children: 'any', props: 'title="More options" defaultOpen' },
   { name: 'Input', children: 'none', props: 'label="Name" defaultValue="Anta"' },
   { name: 'Slider', children: 'none', props: 'label="Volume" min={0} max={10} step={1} defaultValue={5}' },
@@ -71,9 +71,19 @@ const componentManifest: ComponentDefinition[] = [
 ]
 
 const componentsByName = new Map(componentManifest.map((component) => [component.name, component]))
-const terminalNames = componentManifest
-  .filter((component) => component.children !== 'any')
+const menuChildNames = ['MenuItem', 'MenuItemCopy', 'MenuSeparator', 'MenuGroup']
+const menuGroupChildNames = ['MenuItem', 'MenuItemCopy']
+const menuOnlyNames = new Set([...menuChildNames])
+const generalNames = componentManifest
+  .filter((component) => !menuOnlyNames.has(component.name))
   .map((component) => component.name)
+
+function terminalNames(names: string[]) {
+  return names.filter((name) => {
+    const component = componentsByName.get(name)
+    return component?.children === 'none' || component?.children === 'text'
+  })
+}
 
 function pick<T>(draw: Draw, values: T[]) {
   const value = draw.pick(values)
@@ -95,24 +105,27 @@ function generateComposition(draw: Draw, {
   }
 
   let remaining = nodeBudget
-  function nodes(depth: number, maximum: number) {
+  function nodes(depth: number, maximum: number, names = generalNames) {
     const result: CompositionNode[] = []
     const requested = count(draw, maximum)
-    while (result.length < requested && remaining > 0) result.push(node(depth))
+    while (result.length < requested && remaining > 0) result.push(node(depth, names))
     return result
   }
 
-  function node(depth: number): CompositionNode {
+  function node(depth: number, names: string[]): CompositionNode {
     remaining -= 1
     const choices = depth >= maxDepth || remaining <= 0
-      ? terminalNames
-      : componentManifest.map((component) => component.name)
+      ? terminalNames(names)
+      : names
     const name = pick(draw, choices)
     const component = componentsByName.get(name)
     if (!component) throw new TypeError(`Unknown component ${name}.`)
-    const children = component.children === 'any' && depth < maxDepth && remaining > 0
-      ? nodes(depth + 1, maxChildren)
-      : []
+    let children: CompositionNode[] = []
+    if (depth < maxDepth && remaining > 0) {
+      if (component.children === 'any') children = nodes(depth + 1, maxChildren)
+      if (component.children === 'menu') children = nodes(depth + 1, maxChildren, menuChildNames)
+      if (component.children === 'menuGroup') children = nodes(depth + 1, maxChildren, menuGroupChildNames)
+    }
     return { name, children }
   }
 

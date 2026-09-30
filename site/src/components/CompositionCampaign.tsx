@@ -7,7 +7,7 @@ type Draw = {
 }
 
 type ComponentDefinition = {
-  children: 'any' | 'none'
+  children: 'any' | 'none' | 'text'
   name: string
   props: string
 }
@@ -34,29 +34,29 @@ const stepOptions = "[{ value: 'first', label: 'First', state: 'completed' }, { 
 
 const componentManifest: ComponentDefinition[] = [
   { name: 'Avatar', children: 'none', props: 'seed="tree-avatar" name="Tree user"' },
-  { name: 'Progress', children: 'any', props: 'value={42} label="Importing" hint="2 of 5"' },
+  { name: 'Progress', children: 'none', props: 'value={42} label="Importing" hint="2 of 5"' },
   { name: 'Loader', children: 'none', props: 'label="Loading"' },
   { name: 'Text', children: 'any', props: 'size="small"' },
   { name: 'Title', children: 'any', props: 'level={3}' },
   { name: 'Tag', children: 'any', props: 'tone="info" label="Status"' },
   { name: 'Icon', children: 'none', props: 'shape="check" label="Complete"' },
-  { name: 'Button', children: 'any', props: 'priority="secondary"' },
-  { name: 'ButtonCopy', children: 'any', props: 'copy="Anta composition fixture" label="Copy"' },
+  { name: 'Button', children: 'text', props: 'priority="secondary"' },
+  { name: 'ButtonCopy', children: 'text', props: 'copy="Anta composition fixture" label="Copy"' },
   { name: 'Breadcrumbs', children: 'none', props: "items={[{ label: 'Workspace' }, { label: 'Project' }]}" },
   { name: 'Tooltip', children: 'any', props: '' },
-  { name: 'Checkbox', children: 'any', props: 'label="Enabled" defaultChecked' },
-  { name: 'Switch', children: 'any', props: 'label="Allow updates" defaultChecked' },
+  { name: 'Checkbox', children: 'none', props: 'label="Enabled" defaultChecked' },
+  { name: 'Switch', children: 'none', props: 'label="Allow updates" defaultChecked' },
   { name: 'Menu', children: 'any', props: '' },
-  { name: 'MenuItem', children: 'any', props: 'label="Generated action"' },
-  { name: 'MenuItemCopy', children: 'any', props: 'copy="Anta composition fixture" label="Copy value"' },
-  { name: 'MenuSeparator', children: 'any', props: '' },
+  { name: 'MenuItem', children: 'none', props: 'label="Generated action"' },
+  { name: 'MenuItemCopy', children: 'none', props: 'copy="Anta composition fixture" label="Copy value"' },
+  { name: 'MenuSeparator', children: 'none', props: '' },
   { name: 'MenuGroup', children: 'any', props: 'label="Generated group"' },
   { name: 'Expander', children: 'any', props: 'title="More options" defaultOpen' },
-  { name: 'Input', children: 'any', props: 'label="Name" defaultValue="Anta"' },
-  { name: 'Slider', children: 'any', props: 'label="Volume" min={0} max={10} step={1} defaultValue={5}' },
+  { name: 'Input', children: 'none', props: 'label="Name" defaultValue="Anta"' },
+  { name: 'Slider', children: 'none', props: 'label="Volume" min={0} max={10} step={1} defaultValue={5}' },
   { name: 'Calendar', children: 'none', props: 'defaultValue="2026-06-15" locale="en-US"' },
   { name: 'InputDate', children: 'none', props: 'label="Review date" defaultValue="2026-06-15" min="2026-06-01" max="2026-06-30" locale="en-US"' },
-  { name: 'InputTime', children: 'any', props: 'label="Review time" defaultValue="09:30"' },
+  { name: 'InputTime', children: 'none', props: 'label="Review time" defaultValue="09:30"' },
   { name: 'InputAutocomplete', children: 'none', props: "label=\"Project\" suggestions={['Anta', 'Bombadil', 'Hegel']} defaultValue=\"Anta\"" },
   { name: 'RadioGroup', children: 'none', props: `label="Density" defaultValue="first" options={${fixedOptions}}` },
   { name: 'Select', children: 'none', props: `label="Environment" defaultValue="first" options={${fixedOptions}}` },
@@ -71,8 +71,8 @@ const componentManifest: ComponentDefinition[] = [
 ]
 
 const componentsByName = new Map(componentManifest.map((component) => [component.name, component]))
-const leafNames = componentManifest
-  .filter((component) => component.children === 'none')
+const terminalNames = componentManifest
+  .filter((component) => component.children !== 'any')
   .map((component) => component.name)
 
 function pick<T>(draw: Draw, values: T[]) {
@@ -105,7 +105,7 @@ function generateComposition(draw: Draw, {
   function node(depth: number): CompositionNode {
     remaining -= 1
     const choices = depth >= maxDepth || remaining <= 0
-      ? leafNames
+      ? terminalNames
       : componentManifest.map((component) => component.name)
     const name = pick(draw, choices)
     const component = componentsByName.get(name)
@@ -136,11 +136,9 @@ function renderNode(node: CompositionNode, path: string): string {
   const attributes = [treePath(path), component.props].filter(Boolean).join(' ')
   const children = renderChildren(node.children, path)
 
+  if (component.children === 'none') return `<${node.name} ${attributes} />`
+
   switch (node.name) {
-    case 'Avatar': case 'Loader': case 'Icon': case 'Breadcrumbs': case 'Calendar':
-    case 'InputDate': case 'InputAutocomplete': case 'RadioGroup': case 'Select':
-    case 'SelectFaceted': case 'Toaster':
-      return `<${node.name} ${attributes} />`
     case 'Menu':
       return `<div ${treePath(`${path}-wrapper`)}>
   <Button ${treePath(`${path}-trigger`)}>Open menu</Button>

@@ -107,7 +107,7 @@ function count(draw: Draw, maximum: number) {
 
 function generateComposition(draw: Draw, {
   maxDepth = 8,
-  maxChildren = 3,
+  maxChildren = maximumChildrenPerParent,
 } = {}): CompositionTree {
   for (const [name, value] of Object.entries({ maxDepth, maxChildren })) {
     if (!Number.isInteger(value) || value < 1) throw new RangeError(`${name} must be a positive integer.`)
@@ -251,7 +251,7 @@ export default function CompositionCampaign() {
     if (query.get('fuzz_tree') !== 'true') return
 
     const maxDepth = positiveInteger(query.get('maxDepth'), 8)
-    const maxChildren = positiveInteger(query.get('maxChildren'), 3)
+    const maxChildren = positiveInteger(query.get('maxChildren'), maximumChildrenPerParent)
     const seed = optionalInteger(query.get('seed'))
     let cancelled = false
 

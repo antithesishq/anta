@@ -7,14 +7,21 @@ type Draw = {
 }
 
 type ComponentDefinition = {
-  children: 'any' | 'menu' | 'menuGroup' | 'none' | 'text' | 'tooltip'
+  children: 'any' | 'menu' | 'menuGroup' | 'none' | 'panels' | 'text' | 'tooltip'
   name: string
   props: string | string[]
+}
+
+type CompositionPanel = {
+  children: CompositionNode[]
+  label: string
+  value: string
 }
 
 type CompositionNode = {
   children: CompositionNode[]
   name: string
+  panels: CompositionPanel[]
   props: string
 }
 
@@ -24,7 +31,6 @@ type CompositionTree = {
   settings: {
     maxChildren: number
     maxDepth: number
-    nodeBudget: number
   }
 }
 
@@ -36,16 +42,13 @@ const facetedProps = [
   `label="People" searchable searchPlaceholder="Find people…" facets={[{ key: 'assignee', label: 'Assignee', kind: 'multiple', filter: true, options: ${peopleOptions} }, { key: 'owner', label: 'Owner', kind: 'single', filter: true, options: ${peopleOptions} }]}`,
   `label="Issues" facets={[{ key: 'state', label: 'State', kind: 'multiple', selectAll: false, options: ${statusOptions} }, { key: 'type', label: 'Type', kind: 'single', options: ['Bug', 'Feature', 'Task'] }]} defaultValue={{ state: ['open'] }}`,
 ]
-const tabOptions = "[{ value: 'first', label: 'First' }, { value: 'second', label: 'Second' }]"
-const stepOptions = "[{ value: 'first', label: 'First', state: 'completed' }, { value: 'second', label: 'Second', state: 'incomplete' }]"
-
 const componentManifest: ComponentDefinition[] = [
   { name: 'Avatar', children: 'none', props: 'seed="tree-avatar" name="Tree user"' },
   { name: 'Progress', children: 'none', props: 'value={42} label="Importing" hint="2 of 5"' },
   { name: 'Loader', children: 'none', props: 'label="Loading"' },
   { name: 'Text', children: 'text', props: 'size="small"' },
   { name: 'Title', children: 'text', props: 'level={3}' },
-  { name: 'Tag', children: 'any', props: 'tone="info" label="Status"' },
+  { name: 'Tag', children: 'none', props: 'tone="info" label="Status"' },
   { name: 'Icon', children: 'none', props: 'shape="check" label="Complete"' },
   { name: 'Button', children: 'text', props: 'priority="secondary"' },
   { name: 'ButtonCopy', children: 'text', props: 'copy="Anta composition fixture" label="Copy"' },
@@ -68,9 +71,8 @@ const componentManifest: ComponentDefinition[] = [
   { name: 'RadioGroup', children: 'none', props: `label="Density" defaultValue="first" options={${fixedOptions}}` },
   { name: 'Select', children: 'none', props: `label="Environment" defaultValue="first" options={${fixedOptions}}` },
   { name: 'SelectFaceted', children: 'none', props: facetedProps },
-  { name: 'Tabs', children: 'any', props: `label="Generated tabs" defaultValue="first" options={${tabOptions}}` },
-  { name: 'Steps', children: 'any', props: `defaultValue="first" options={${stepOptions}}` },
-  { name: 'TabPanel', children: 'any', props: 'value="first"' },
+  { name: 'Tabs', children: 'panels', props: 'label="Generated tabs"' },
+  { name: 'Steps', children: 'panels', props: '' },
   { name: 'Dialog', children: 'any', props: 'header="Generated dialog"' },
   { name: 'Card', children: 'any', props: 'header="Generated card"' },
   { name: 'Banner', children: 'any', props: 'tone="info" message="Generated notice"' },
@@ -102,43 +104,47 @@ function count(draw: Draw, maximum: number) {
   return pick(draw, Array.from({ length: maximum }, (_, index) => index + 1))
 }
 
+function countBetween(draw: Draw, minimum: number, maximum: number) {
+  return pick(draw, Array.from({ length: maximum - minimum + 1 }, (_, index) => minimum + index))
+}
+
 function generateComposition(draw: Draw, {
   maxDepth = 8,
   maxChildren = 3,
-  nodeBudget = 48,
 } = {}): CompositionTree {
-  for (const [name, value] of Object.entries({ maxDepth, maxChildren, nodeBudget })) {
+  for (const [name, value] of Object.entries({ maxDepth, maxChildren })) {
     if (!Number.isInteger(value) || value < 1) throw new RangeError(`${name} must be a positive integer.`)
   }
 
-  let remaining = nodeBudget
   function nodes(depth: number, maximum: number, names = generalNames) {
-    const result: CompositionNode[] = []
-    const requested = count(draw, maximum)
-    while (result.length < requested && remaining > 0) result.push(node(depth, names))
-    return result
+    return Array.from({ length: count(draw, maximum) }, () => node(depth, names))
   }
 
   function node(depth: number, names: string[]): CompositionNode {
-    remaining -= 1
-    const choices = depth >= maxDepth || remaining <= 0
-      ? terminalNames(names)
-      : names
+    const choices = depth >= maxDepth ? terminalNames(names) : names
     const name = pick(draw, choices)
     const component = componentsByName.get(name)
     if (!component) throw new TypeError(`Unknown component ${name}.`)
     const props = Array.isArray(component.props) ? pick(draw, component.props) : component.props
     let children: CompositionNode[] = []
-    if (depth < maxDepth && remaining > 0) {
+    let panels: CompositionPanel[] = []
+    if (depth < maxDepth) {
       if (component.children === 'any') children = nodes(depth + 1, maxChildren)
       if (component.children === 'menu') children = nodes(depth + 1, maxChildren, menuChildNames)
       if (component.children === 'menuGroup') children = nodes(depth + 1, maxChildren, menuGroupChildNames)
+      if (component.children === 'panels') {
+        panels = Array.from({ length: countBetween(draw, 2, 10) }, (_, index) => ({
+          children: nodes(depth + 1, maxChildren),
+          label: `Panel ${index + 1}`,
+          value: `panel-${index + 1}`,
+        }))
+      }
     }
-    return { name, props, children }
+    return { name, props, children, panels }
   }
 
   const roots = nodes(1, maxChildren)
-  return { kind: 'screen', roots, settings: { maxDepth, maxChildren, nodeBudget } }
+  return { kind: 'screen', roots, settings: { maxDepth, maxChildren } }
 }
 
 function treePath(path: string) {
@@ -169,11 +175,16 @@ function renderNode(node: CompositionNode, path: string): string {
   <Button ${treePath(`${path}-trigger`)}>Open menu</Button>
   <Menu ${attributes}>${children}</Menu>
 </div>`
-    case 'Tabs': case 'Steps':
-      return `<${node.name} ${attributes}>
-  <TabPanel value="first">${children}</TabPanel>
-  <TabPanel value="second"><Text>Second panel</Text></TabPanel>
+    case 'Tabs': case 'Steps': {
+      const options = node.panels.map((panel, index) => {
+        const state = node.name === 'Steps' ? `, state: '${index === 0 ? 'completed' : 'incomplete'}'` : ''
+        return `{ value: '${panel.value}', label: '${panel.label}'${state} }`
+      }).join(', ')
+      const panelAttributes = [attributes, `defaultValue="${node.panels[0]?.value}"`, `options={[${options}]}`].join(' ')
+      return `<${node.name} ${panelAttributes}>
+${node.panels.map((panel, index) => `  <TabPanel value="${panel.value}">${renderChildren(panel.children, `${path}-panel-${index}`)}</TabPanel>`).join('\n')}
 </${node.name}>`
+    }
     case 'Dialog':
       return `<div ${treePath(`${path}-wrapper`)}>
   <Button ${treePath(`${path}-trigger`)} data-dialog-open="${path}">Open dialog</Button>
@@ -185,10 +196,11 @@ function renderNode(node: CompositionNode, path: string): string {
 }
 
 function renderComposition(tree: CompositionTree) {
-  const used = new Set(['Button', 'TabPanel', 'Text'])
+  const used = new Set(['Button', 'TabPanel'])
   const visit = (node: CompositionNode) => {
     used.add(node.name)
     node.children.forEach(visit)
+    node.panels.forEach((panel) => panel.children.forEach(visit))
   }
   tree.roots.forEach(visit)
   return `import { ${[...used].sort().join(', ')} } from '@antadesign/anta'
@@ -242,7 +254,6 @@ export default function CompositionCampaign() {
 
     const maxDepth = positiveInteger(query.get('maxDepth'), 8)
     const maxChildren = positiveInteger(query.get('maxChildren'), 3)
-    const nodeBudget = positiveInteger(query.get('nodeBudget'), 48)
     const seed = optionalInteger(query.get('seed'))
     let cancelled = false
 
@@ -262,7 +273,7 @@ export default function CompositionCampaign() {
             pick(values) {
               return tc.draw(generators.sampledFrom(values))
             },
-          }, { maxDepth, maxChildren, nodeBudget })
+          }, { maxDepth, maxChildren })
         }, {
           database: Database.disabled,
           ...(seed == null ? {} : { seed: seed + requestedCase }),

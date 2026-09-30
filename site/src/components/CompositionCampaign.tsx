@@ -7,7 +7,7 @@ type Draw = {
 }
 
 type ComponentDefinition = {
-  children: 'any' | 'menu' | 'menuGroup' | 'none' | 'panels' | 'text' | 'tooltip'
+  children: 'any' | 'menu' | 'none' | 'panels' | 'text'
   name: string
   props: string | string[]
 }
@@ -43,24 +43,14 @@ const facetedProps = [
   `label="Issues" facets={[{ key: 'state', label: 'State', kind: 'multiple', selectAll: false, options: ${statusOptions} }, { key: 'type', label: 'Type', kind: 'single', options: ['Bug', 'Feature', 'Task'] }]} defaultValue={{ state: ['open'] }}`,
 ]
 const componentManifest: ComponentDefinition[] = [
-  { name: 'Avatar', children: 'none', props: 'seed="tree-avatar" name="Tree user"' },
-  { name: 'Progress', children: 'none', props: 'value={42} label="Importing" hint="2 of 5"' },
-  { name: 'Loader', children: 'none', props: 'label="Loading"' },
-  { name: 'Text', children: 'text', props: 'size="small"' },
-  { name: 'Title', children: 'text', props: 'level={3}' },
-  { name: 'Tag', children: 'none', props: 'tone="info" label="Status"' },
-  { name: 'Icon', children: 'none', props: 'shape="check" label="Complete"' },
   { name: 'Button', children: 'text', props: 'priority="secondary"' },
   { name: 'ButtonCopy', children: 'text', props: 'copy="Anta composition fixture" label="Copy"' },
   { name: 'Breadcrumbs', children: 'none', props: "items={[{ label: 'Workspace' }, { label: 'Project' }]}" },
-  { name: 'Tooltip', children: 'tooltip', props: 'interactive' },
   { name: 'Checkbox', children: 'none', props: 'label="Enabled" defaultChecked' },
   { name: 'Switch', children: 'none', props: 'label="Allow updates" defaultChecked' },
   { name: 'Menu', children: 'menu', props: '' },
   { name: 'MenuItem', children: 'none', props: 'label="Generated action"' },
   { name: 'MenuItemCopy', children: 'none', props: 'copy="Anta composition fixture" label="Copy value"' },
-  { name: 'MenuSeparator', children: 'none', props: '' },
-  { name: 'MenuGroup', children: 'menuGroup', props: 'label="Generated group"' },
   { name: 'Expander', children: 'any', props: 'title="More options" defaultOpen' },
   { name: 'Input', children: 'none', props: 'label="Name" defaultValue="Anta"' },
   { name: 'Slider', children: 'none', props: 'label="Volume" min={0} max={10} step={1} defaultValue={5}' },
@@ -74,13 +64,10 @@ const componentManifest: ComponentDefinition[] = [
   { name: 'Tabs', children: 'panels', props: 'label="Generated tabs"' },
   { name: 'Steps', children: 'panels', props: '' },
   { name: 'Dialog', children: 'any', props: 'header="Generated dialog"' },
-  { name: 'Card', children: 'any', props: 'header="Generated card"' },
-  { name: 'Toaster', children: 'none', props: 'label="Generated notifications"' },
 ]
 
 const componentsByName = new Map(componentManifest.map((component) => [component.name, component]))
-const menuChildNames = ['MenuItem', 'MenuItemCopy', 'MenuSeparator', 'MenuGroup']
-const menuGroupChildNames = ['MenuItem', 'MenuItemCopy']
+const menuChildNames = ['MenuItem', 'MenuItemCopy']
 const menuOnlyNames = new Set([...menuChildNames])
 const maximumChildrenPerParent = 5
 const generalNames = componentManifest
@@ -90,7 +77,7 @@ const generalNames = componentManifest
 function terminalNames(names: string[]) {
   return names.filter((name) => {
     const component = componentsByName.get(name)
-    return component?.children === 'none' || component?.children === 'text' || component?.children === 'tooltip'
+    return component?.children === 'none' || component?.children === 'text'
   })
 }
 
@@ -128,7 +115,6 @@ function generateComposition(draw: Draw, {
     if (depth < maxDepth) {
       if (component.children === 'any') children = nodes(depth + 1, childrenPerParent)
       if (component.children === 'menu') children = nodes(depth + 1, childrenPerParent, menuChildNames)
-      if (component.children === 'menuGroup') children = nodes(depth + 1, childrenPerParent, menuGroupChildNames)
       if (component.children === 'panels') {
         panels = Array.from({ length: count(draw, childrenPerParent) }, (_, index) => ({
           children: nodes(depth + 1, childrenPerParent),
@@ -163,10 +149,6 @@ function renderNode(node: CompositionNode, path: string): string {
   if (component.children === 'none') return `<${node.name} ${attributes} />`
 
   switch (node.name) {
-    case 'Tooltip':
-      return `<Button ${treePath(`${path}-anchor`)} label="Tooltip trigger" priority="secondary">
-  <Tooltip ${attributes}>Open the <a ${treePath(`${path}-action`)} href="#${path}-details">generated details</a></Tooltip>
-</Button>`
     case 'Menu':
       return `<div ${treePath(`${path}-wrapper`)}>
   <Button ${treePath(`${path}-trigger`)}>Open menu</Button>

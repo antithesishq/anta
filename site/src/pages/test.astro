@@ -2,6 +2,7 @@
 import antaStylesheet from '@antadesign/anta/bundle.css?url'
 import '../styles/base.css'
 import Harness from '../components/Harness'
+import CompositionCampaign from '../components/CompositionCampaign'
 ---
 
 <!doctype html>
@@ -15,6 +16,7 @@ import Harness from '../components/Harness'
   </head>
   <body>
     <Harness client:only="preact" />
+    <CompositionCampaign client:only="preact" />
     <script>import '@antadesign/anta/elements'</script>
   </body>
 </html>

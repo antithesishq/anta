@@ -62,6 +62,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@hegeldev/hegel": "0.4.7",
     "@types/chroma-js": "3.1.2",
     "@types/mark.js": "8.11.12",
     "pixelmatch": "7.2.0",

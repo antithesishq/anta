@@ -1,5 +1,5 @@
 import { Component, Fragment, h, type ComponentChildren, type ComponentType } from 'preact'
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useRef, useState } from 'preact/hooks'
 import * as Anta from '@antadesign/anta'
 import HarnessEditor from './HarnessEditor'
 import styles from './Harness.module.css'
@@ -12,6 +12,17 @@ export default function App() {
 }
 `
 type CompiledApp = ComponentType<Record<string, never>>
+type HarnessCompileResult = { status: 'ready' | 'error', error?: string }
+type HarnessState = HarnessCompileResult | { status: 'compiling' }
+type HarnessController = {
+  setSource(source: string): Promise<HarnessCompileResult>
+}
+
+declare global {
+  interface Window {
+    antaHarness?: HarnessController
+  }
+}
 
 let esbuildPromise: Promise<typeof import('esbuild-wasm')> | null = null
 
@@ -58,11 +69,19 @@ async function compileTSX(source: string): Promise<CompiledApp> {
   return App as CompiledApp
 }
 
-class RenderBoundary extends Component<{ children: ComponentChildren }, { error: Error | null }> {
+class RenderBoundary extends Component<{ children: ComponentChildren, onError(error: Error): void }, { error: Error | null }> {
   state = { error: null }
 
   static getDerivedStateFromError(error: Error) {
     return { error }
+  }
+
+  componentDidCatch(error: Error) {
+    this.props.onError(error)
+  }
+
+  componentDidUpdate(_previousProps: Readonly<{ children: ComponentChildren, onError(error: Error): void }>, previousState: Readonly<{ error: Error | null }>) {
+    if (this.state.error && this.state.error !== previousState.error) this.props.onError(this.state.error)
   }
 
   render() {
@@ -73,18 +92,27 @@ class RenderBoundary extends Component<{ children: ComponentChildren }, { error:
 }
 
 export default function Harness() {
+  const testing = new URLSearchParams(window.location.search).get('testing') === 'true'
   const [source, setSource] = useState(initialSource)
   const [isDark, setIsDark] = useState(false)
   const [compiled, setCompiled] = useState<CompiledApp | null>(null)
   const [compiledSource, setCompiledSource] = useState('')
   const [compileError, setCompileError] = useState<string | null>(null)
+  const [renderError, setRenderError] = useState<string | null>(null)
   const [compiling, setCompiling] = useState(true)
-  const [editorOpen, setEditorOpen] = useState(() => window.matchMedia('(min-width: 721px)').matches)
+  const [editorOpen, setEditorOpen] = useState(() => !testing && window.matchMedia('(min-width: 721px)').matches)
+  const pendingSources = useRef(new Map<number, {
+    source: string
+    resolve: (result: HarnessCompileResult) => void
+  }>())
+  const nextRequestId = useRef(0)
+  const latestState = useRef<HarnessState>({ status: 'compiling' })
 
   useEffect(() => {
     let cancelled = false
     setCompiling(true)
     setCompileError(null)
+    setRenderError(null)
     const timer = window.setTimeout(() => compileTSX(source).then((App) => {
       if (cancelled) return
       setCompiled(() => App)
@@ -107,10 +135,49 @@ export default function Harness() {
     return () => document.documentElement.classList.remove('dark')
   }, [isDark])
 
-  const compileStatus = compiling || compiledSource !== source
-    ? compileError ? 'error' : 'compiling'
-    : 'ready'
+  const harnessState: HarnessState = compileError || renderError
+    ? { status: 'error', error: compileError ?? renderError ?? undefined }
+    : compiling || compiledSource !== source
+      ? { status: 'compiling' }
+      : { status: 'ready' }
+  latestState.current = harnessState
+  const compileStatus = harnessState.status
   const App = compiled
+
+  useEffect(() => {
+    const bridge = {
+      setSource(nextSource: string) {
+        return new Promise<HarnessCompileResult>((resolve) => {
+          const id = nextRequestId.current++
+          pendingSources.current.set(id, { source: nextSource, resolve })
+          setSource(nextSource)
+        })
+      },
+    }
+    window.antaHarness = bridge
+    return () => {
+      if (window.antaHarness === bridge) delete window.antaHarness
+      for (const { resolve } of pendingSources.current.values()) resolve({ status: 'error', error: 'Harness unmounted.' })
+      pendingSources.current.clear()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (compileStatus === 'compiling') return
+    for (const [id, pending] of pendingSources.current) {
+      if (pending.source !== source) continue
+      pendingSources.current.delete(id)
+      const settle = () => {
+        const current = latestState.current
+        if (current.status === 'compiling') {
+          requestAnimationFrame(settle)
+          return
+        }
+        pending.resolve(current)
+      }
+      requestAnimationFrame(() => requestAnimationFrame(settle))
+    }
+  }, [compileStatus, source])
 
   return <main className={styles.harness}>
     <section
@@ -121,17 +188,17 @@ export default function Harness() {
       {compileError
         ? <pre className={styles.compileError}>{compileError}</pre>
         : App
-          ? <RenderBoundary key={compiledSource}><App /></RenderBoundary>
+          ? <RenderBoundary key={compiledSource} onError={(error) => setRenderError(String(error))}><App /></RenderBoundary>
           : <div className={styles.compileStatus}>Compiling…</div>}
     </section>
-    {editorOpen && <HarnessEditor
+    {!testing && editorOpen && <HarnessEditor
       source={source}
       isDark={isDark}
       onChange={setSource}
       onThemeChange={() => setIsDark((value) => !value)}
       onClose={() => setEditorOpen(false)}
     />}
-    {!editorOpen && <Button
+    {!testing && !editorOpen && <Button
       className={styles.showEditorButton}
       icon="braces"
       priority="tertiary"

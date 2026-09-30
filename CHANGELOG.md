@@ -3,6 +3,14 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Changed
+
+- Selected paddingless [Buttons](/button/#paddingless) draw their 1px selection
+  ring outside the label. Their corner radius is capped at 3px, including when
+  `round` requests a larger radius.
+
 ## 0.3.33 — September 28, 2026
 
 ### Added

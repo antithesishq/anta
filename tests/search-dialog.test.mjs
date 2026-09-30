@@ -59,11 +59,12 @@ function reply(route, { answer, sources = [] }) {
   })
 }
 
-async function setup(t, respond = async route => reply(route, { answer: 'Use the documented theme tokens.' })) {
+async function setup(t, respond = async route => reply(route, { answer: 'Use the documented theme tokens.' }), mockClock = false) {
   const context = await browser.newContext()
   t.after(() => context.close())
   const page = await context.newPage()
   page.setDefaultTimeout(5_000)
+  if (mockClock) await page.clock.install()
   const requests = []
   await page.route('https://anta.test/', route => route.fulfill({ contentType: 'text/html', body: '<html><body></body></html>' }))
   await page.route('**/api/search-answer/', async route => {
@@ -126,18 +127,20 @@ test('search leaves modified arrows with the input and still navigates with plai
 })
 
 test('debounces typing, keeps previous matches, and shows activity only in the input', async t => {
-  const { page, input, requests } = await setup(t)
+  const { page, input, requests } = await setup(t, undefined, true)
   await page.evaluate(() => {
     window.searchCalls = []
     const search = window.runFullText
     window.runFullText = query => { window.searchCalls.push(query); return search(query) }
   })
+  await page.clock.pauseAt(new Date())
   await input.fill('bu')
-  await page.waitForTimeout(80)
+  await page.clock.runFor(80)
   await input.fill('butt')
-  await page.waitForTimeout(80)
+  await page.clock.runFor(80)
   await input.fill('button')
   assert.deepEqual(await page.evaluate(() => window.searchCalls), [])
+  await page.clock.resume()
   await page.locator('#docs-search-input [slot="leading"] a-loader').waitFor()
   assert.equal(await page.locator('#docs-search-results a-loader').count(), 0)
   await page.locator('#docs-search-results a').waitFor()

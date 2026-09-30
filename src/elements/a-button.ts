@@ -52,8 +52,9 @@ function installDocumentHandlers(doc: Document | undefined) {
  *   covers named and custom tones alike; secondary also carries a 1px
  *   hairline box-shadow in the current fg tone at 50% alpha, which the
  *   other priorities cancel in their own blocks. `[selected]` adds a 1px
- *   inset ring in `currentColor`, declared after the priority blocks so it
- *   survives their `box-shadow: none` cancels.
+ *   inset ring at 50% `currentColor`, declared after the priority blocks so it
+ *   survives their `box-shadow: none` cancels. Paddingless uses an outside ring
+ *   so the selection mark stays clear of the label.
  * - **Dark mode** re-tunes with heavier alphas (30/40% vs 10/15%) and flips
  *   neutral's anchor to a lilac — mixing dark gray into a dark bg yields no
  *   contrast.
@@ -73,10 +74,11 @@ function installDocumentHandlers(doc: Document | undefined) {
  * - **Layout gotchas:** `flex-shrink: 0` (shrinking + `overflow: hidden`
  *   would clip the label silently); the label uses a 17px line box + 1px
  *   bottom padding for optical vertical centering at an unchanged 18px box.
- * - **Icon-only** is purely structural — `:has(> a-icon:only-child)` gives
- *   square padding + a min-size pin (and centers when the host is sized
- *   bigger). A non-only edge icon trims ~2px off its side's padding
- *   (optical), `max(0px, …)` keeping paddingless at 0.
+ * - **Icon-only** is purely structural: one direct icon, with optional
+ *   tooltip or copy helpers, gets equal font-relative padding on both axes
+ *   and no size floor. The default icons produce 24/28/32px square boxes.
+ *   A non-only edge icon trims 2px off its side's padding; `max(0px, …)`
+ *   keeps paddingless at 0.
  * - **Underline** renders only on tertiary/quaternary: 0.5px hairline at 75%
  *   alpha at rest, 1px at full alpha on hover/`[selected]`, mirroring the
  *   prose-link rule in `<Text>`.

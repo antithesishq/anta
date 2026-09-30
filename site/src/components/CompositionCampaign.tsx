@@ -7,14 +7,15 @@ type Draw = {
 }
 
 type ComponentDefinition = {
-  children: 'any' | 'menu' | 'menuGroup' | 'none' | 'text'
+  children: 'any' | 'menu' | 'menuGroup' | 'none' | 'text' | 'tooltip'
   name: string
-  props: string
+  props: string | string[]
 }
 
 type CompositionNode = {
   children: CompositionNode[]
   name: string
+  props: string
 }
 
 type CompositionTree = {
@@ -28,7 +29,13 @@ type CompositionTree = {
 }
 
 const fixedOptions = "[{ value: 'first', label: 'First' }, { value: 'second', label: 'Second' }]"
-const fixedFacets = "[{ key: 'status', label: 'Status', kind: 'multiple', options: [{ value: 'open', label: 'Open' }, { value: 'closed', label: 'Closed' }] }]"
+const peopleOptions = "[{ value: 'alice', label: 'Alice Nguyen' }, { value: 'marcus', label: 'Marcus Chen' }, { value: 'priya', label: 'Priya Shah' }]"
+const statusOptions = "[{ value: 'open', label: 'Open' }, { value: 'closed', label: 'Closed' }, { value: 'blocked', label: 'Blocked', disabled: true }]"
+const facetedProps = [
+  `label="Filters" facets={[{ key: 'status', label: 'Status', kind: 'single', options: ${statusOptions} }, { key: 'priority', label: 'Priority', kind: 'multiple', options: ['High', 'Medium', 'Low'] }, { key: 'title', label: 'Title contains', kind: 'text', placeholder: 'Search titles' }]} defaultValue={{ status: 'open', priority: ['High'] }}`,
+  `label="People" searchable searchPlaceholder="Find people…" facets={[{ key: 'assignee', label: 'Assignee', kind: 'multiple', filter: true, options: ${peopleOptions} }, { key: 'owner', label: 'Owner', kind: 'single', filter: true, options: ${peopleOptions} }]}`,
+  `label="Issues" facets={[{ key: 'state', label: 'State', kind: 'multiple', selectAll: false, options: ${statusOptions} }, { key: 'type', label: 'Type', kind: 'single', options: ['Bug', 'Feature', 'Task'] }]} defaultValue={{ state: ['open'] }}`,
+]
 const tabOptions = "[{ value: 'first', label: 'First' }, { value: 'second', label: 'Second' }]"
 const stepOptions = "[{ value: 'first', label: 'First', state: 'completed' }, { value: 'second', label: 'Second', state: 'incomplete' }]"
 
@@ -43,7 +50,7 @@ const componentManifest: ComponentDefinition[] = [
   { name: 'Button', children: 'text', props: 'priority="secondary"' },
   { name: 'ButtonCopy', children: 'text', props: 'copy="Anta composition fixture" label="Copy"' },
   { name: 'Breadcrumbs', children: 'none', props: "items={[{ label: 'Workspace' }, { label: 'Project' }]}" },
-  { name: 'Tooltip', children: 'any', props: 'interactive' },
+  { name: 'Tooltip', children: 'tooltip', props: 'interactive' },
   { name: 'Checkbox', children: 'none', props: 'label="Enabled" defaultChecked' },
   { name: 'Switch', children: 'none', props: 'label="Allow updates" defaultChecked' },
   { name: 'Menu', children: 'menu', props: '' },
@@ -60,7 +67,7 @@ const componentManifest: ComponentDefinition[] = [
   { name: 'InputAutocomplete', children: 'none', props: "label=\"Project\" suggestions={['Anta', 'Bombadil', 'Hegel']} defaultValue=\"Anta\"" },
   { name: 'RadioGroup', children: 'none', props: `label="Density" defaultValue="first" options={${fixedOptions}}` },
   { name: 'Select', children: 'none', props: `label="Environment" defaultValue="first" options={${fixedOptions}}` },
-  { name: 'SelectFaceted', children: 'none', props: `label="Filters" facets={${fixedFacets}}` },
+  { name: 'SelectFaceted', children: 'none', props: facetedProps },
   { name: 'Tabs', children: 'any', props: `label="Generated tabs" defaultValue="first" options={${tabOptions}}` },
   { name: 'Steps', children: 'any', props: `defaultValue="first" options={${stepOptions}}` },
   { name: 'TabPanel', children: 'any', props: 'value="first"' },
@@ -81,7 +88,7 @@ const generalNames = componentManifest
 function terminalNames(names: string[]) {
   return names.filter((name) => {
     const component = componentsByName.get(name)
-    return component?.children === 'none' || component?.children === 'text'
+    return component?.children === 'none' || component?.children === 'text' || component?.children === 'tooltip'
   })
 }
 
@@ -120,13 +127,14 @@ function generateComposition(draw: Draw, {
     const name = pick(draw, choices)
     const component = componentsByName.get(name)
     if (!component) throw new TypeError(`Unknown component ${name}.`)
+    const props = Array.isArray(component.props) ? pick(draw, component.props) : component.props
     let children: CompositionNode[] = []
     if (depth < maxDepth && remaining > 0) {
       if (component.children === 'any') children = nodes(depth + 1, maxChildren)
       if (component.children === 'menu') children = nodes(depth + 1, maxChildren, menuChildNames)
       if (component.children === 'menuGroup') children = nodes(depth + 1, maxChildren, menuGroupChildNames)
     }
-    return { name, children }
+    return { name, props, children }
   }
 
   const roots = nodes(1, maxChildren)
@@ -146,7 +154,7 @@ function renderChildren(children: CompositionNode[], path: string) {
 function renderNode(node: CompositionNode, path: string): string {
   const component = componentsByName.get(node.name)
   if (!component) throw new TypeError(`Unknown component ${node.name}.`)
-  const attributes = [treePath(path), component.props].filter(Boolean).join(' ')
+  const attributes = [treePath(path), node.props].filter(Boolean).join(' ')
   const children = renderChildren(node.children, path)
 
   if (component.children === 'none') return `<${node.name} ${attributes} />`
@@ -154,7 +162,7 @@ function renderNode(node: CompositionNode, path: string): string {
   switch (node.name) {
     case 'Tooltip':
       return `<Button ${treePath(`${path}-anchor`)} label="Tooltip trigger" priority="secondary">
-  <Tooltip ${attributes}>${children}</Tooltip>
+  <Tooltip ${attributes}>Open the <a ${treePath(`${path}-action`)} href="#${path}-details">generated details</a></Tooltip>
 </Button>`
     case 'Menu':
       return `<div ${treePath(`${path}-wrapper`)}>

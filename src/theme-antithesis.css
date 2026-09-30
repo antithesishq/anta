@@ -320,9 +320,11 @@
    selected Radio point at it, as their Figma tokens alias
    component/button/primary/bg-*. --fill-fg is the mark or label on the fill
    (base/icon/icon-1-invert for the Checkbox and Radio marks); critical keeps
-   a white one in both modes. --focus-ring and --focus-halo are component/focus and
-   component/border-halo-focus. These live in this theme only; the base
-   components keep their own tone curves. */
+   a white one in both modes. --control-* is the unselected Checkbox box and
+   Radio ring: a background and a rest / hover / active border, neutral and
+   per tinted tone, plus the disabled fill. --focus-ring and --focus-halo are
+   component/focus and component/border-halo-focus. These live in this theme
+   only; the base components keep their own tone curves. */
 :root,
 .light {
   --fill-neutral: #665f5b;
@@ -348,6 +350,32 @@
   --fill-fg: #ffffff;
   --fill-fg-critical: #ffffff;
   --fill-fg-disabled: #b3a9a3;
+
+  --control-bg: #ffffff;
+  --control-border: #d8cfca;
+  --control-border-hover: #c2b8b2;
+  --control-border-active: #a39994;
+  --control-bg-brand: #fff6f5;
+  --control-border-brand: #fea192;
+  --control-border-brand-hover: #f07866;
+  --control-border-brand-active: #ee6d53;
+  --control-bg-info: #fbfcfe;
+  --control-border-info: #93c5ec;
+  --control-border-info-hover: #69ace5;
+  --control-border-info-active: #56a1e1;
+  --control-bg-success: #f7fcf9;
+  --control-border-success: #88d7a0;
+  --control-border-success-hover: #5bc87b;
+  --control-border-success-active: #44c169;
+  --control-bg-warning: #fefbf6;
+  --control-border-warning: #edb25a;
+  --control-border-warning-hover: #e09127;
+  --control-border-warning-active: #d88118;
+  --control-bg-critical: #fefbfb;
+  --control-border-critical: #efa4b0;
+  --control-border-critical-hover: #e87f91;
+  --control-border-critical-active: #e56c80;
+  --control-disabled: color-mix(in oklch, #79716d 10%, transparent);
 
   /* #b24393 is 5.1:1 on white. */
   --focus-ring: #b24393;
@@ -378,6 +406,32 @@
   --fill-fg: #000000;
   --fill-fg-critical: #ffffff;
   --fill-fg-disabled: #7c6e78;
+
+  --control-bg: #080707;
+  --control-border: #4a4248;
+  --control-border-hover: #695d65;
+  --control-border-active: #7c6e78;
+  --control-bg-brand: #160803;
+  --control-border-brand: #912a0d;
+  --control-border-brand-hover: #d03711;
+  --control-border-brand-active: #e94520;
+  --control-bg-info: #040d18;
+  --control-border-info: #175082;
+  --control-border-info-hover: #1f6eb2;
+  --control-border-info-active: #2686d9;
+  --control-bg-success: #041008;
+  --control-border-success: #1f5c31;
+  --control-border-success-hover: #2a7e43;
+  --control-border-success-active: #329550;
+  --control-bg-warning: #120a03;
+  --control-border-warning: #6a3b0c;
+  --control-border-warning-hover: #995200;
+  --control-border-warning-active: #ae6613;
+  --control-bg-critical: #190408;
+  --control-border-critical: #a01c32;
+  --control-border-critical-hover: #c92c46;
+  --control-border-critical-active: #de455e;
+  --control-disabled: color-mix(in oklch, #a398a0 12%, transparent);
 
   /* #e17cc2 is 7.6:1 on the dark page. */
   --focus-ring: #e17cc2;
@@ -649,7 +703,7 @@
   :is(a-checkbox, input[data-anta][type="checkbox"]) {
     --checkbox-icon: var(--fill-fg);
     --checkbox-icon-disabled: var(--fill-fg-disabled);
-    --checkbox-bg-disabled: light-dark(color-mix(in oklch, #79716d 10%, transparent), color-mix(in oklch, #a398a0 12%, transparent));
+    --checkbox-bg-disabled: var(--control-disabled);
     --checkbox-border-disabled: var(--checkbox-bg-disabled);
   }
 
@@ -679,11 +733,11 @@
   /* Neutral empty box: no tone, neutral, or any tone scoped to the checked
      state. */
   :is(a-checkbox, input[data-anta][type="checkbox"]):is(:not([tone]), [tone=""], [tone="neutral"], [tone-scope="selected"]) {
-    --checkbox-bg: light-dark(#ffffff, #080707);
-    --checkbox-border-neutral: light-dark(#d8cfca, #4a4248);
+    --checkbox-bg: var(--control-bg);
+    --checkbox-border-neutral: var(--control-border);
     --checkbox-border: var(--checkbox-border-neutral);
-    --checkbox-border-hover: light-dark(#c2b8b2, #695d65);
-    --checkbox-border-active: light-dark(#a39994, #7c6e78);
+    --checkbox-border-hover: var(--control-border-hover);
+    --checkbox-border-active: var(--control-border-active);
   }
 
   :is(a-checkbox, input[data-anta][type="checkbox"]):is(:not([tone]), [tone=""], [tone="neutral"]) {
@@ -698,10 +752,10 @@
     --checkbox-bg-selected-active: var(--fill-brand-active);
 
     &:not([tone-scope="selected"]) {
-      --checkbox-bg: light-dark(#fff6f5, #160803);
-      --checkbox-border: light-dark(#fea192, #912a0d);
-      --checkbox-border-hover: light-dark(#f07866, #d03711);
-      --checkbox-border-active: light-dark(#ee6d53, #e94520);
+      --checkbox-bg: var(--control-bg-brand);
+      --checkbox-border: var(--control-border-brand);
+      --checkbox-border-hover: var(--control-border-brand-hover);
+      --checkbox-border-active: var(--control-border-brand-active);
     }
   }
 
@@ -711,10 +765,10 @@
     --checkbox-bg-selected-active: var(--fill-info-active);
 
     &:not([tone-scope="selected"]) {
-      --checkbox-bg: light-dark(#fbfcfe, #040d18);
-      --checkbox-border: light-dark(#93c5ec, #175082);
-      --checkbox-border-hover: light-dark(#69ace5, #1f6eb2);
-      --checkbox-border-active: light-dark(#56a1e1, #2686d9);
+      --checkbox-bg: var(--control-bg-info);
+      --checkbox-border: var(--control-border-info);
+      --checkbox-border-hover: var(--control-border-info-hover);
+      --checkbox-border-active: var(--control-border-info-active);
     }
   }
 
@@ -724,10 +778,10 @@
     --checkbox-bg-selected-active: var(--fill-success-active);
 
     &:not([tone-scope="selected"]) {
-      --checkbox-bg: light-dark(#f7fcf9, #041008);
-      --checkbox-border: light-dark(#88d7a0, #1f5c31);
-      --checkbox-border-hover: light-dark(#5bc87b, #2a7e43);
-      --checkbox-border-active: light-dark(#44c169, #329550);
+      --checkbox-bg: var(--control-bg-success);
+      --checkbox-border: var(--control-border-success);
+      --checkbox-border-hover: var(--control-border-success-hover);
+      --checkbox-border-active: var(--control-border-success-active);
     }
   }
 
@@ -737,10 +791,10 @@
     --checkbox-bg-selected-active: var(--fill-warning-active);
 
     &:not([tone-scope="selected"]) {
-      --checkbox-bg: light-dark(#fefbf6, #120a03);
-      --checkbox-border: light-dark(#edb25a, #6a3b0c);
-      --checkbox-border-hover: light-dark(#e09127, #995200);
-      --checkbox-border-active: light-dark(#d88118, #ae6613);
+      --checkbox-bg: var(--control-bg-warning);
+      --checkbox-border: var(--control-border-warning);
+      --checkbox-border-hover: var(--control-border-warning-hover);
+      --checkbox-border-active: var(--control-border-warning-active);
     }
   }
 
@@ -751,10 +805,10 @@
     --checkbox-bg-selected-active: var(--fill-critical-active);
 
     &:not([tone-scope="selected"]) {
-      --checkbox-bg: light-dark(#fefbfb, #190408);
-      --checkbox-border: light-dark(#efa4b0, #a01c32);
-      --checkbox-border-hover: light-dark(#e87f91, #c92c46);
-      --checkbox-border-active: light-dark(#e56c80, #de455e);
+      --checkbox-bg: var(--control-bg-critical);
+      --checkbox-border: var(--control-border-critical);
+      --checkbox-border-hover: var(--control-border-critical-hover);
+      --checkbox-border-active: var(--control-border-critical-active);
     }
   }
 
@@ -856,21 +910,21 @@
   }
 
   /* Radio: the Checkbox colors on a round control. The selected fill and dot
-     match the checked Checkbox, the empty ring matches the empty box, and a
-     named tone in the `all` scope tints the ring with the same literals. A
+     match the checked Checkbox, and the empty ring reads the same --control-*
+     tokens as the empty box, tinted per named tone in the `all` scope. A
      group tone reaches radios without their own tone, as in the base sheet. */
   :is(a-radio, input[data-anta][type="radio"]) {
-    --radio-bg: light-dark(#ffffff, #080707);
-    --radio-border-neutral: light-dark(#d8cfca, #4a4248);
+    --radio-bg: var(--control-bg);
+    --radio-border-neutral: var(--control-border);
     --radio-border: var(--radio-border-neutral);
-    --radio-border-hover: light-dark(#c2b8b2, #695d65);
-    --radio-border-active: light-dark(#a39994, #7c6e78);
+    --radio-border-hover: var(--control-border-hover);
+    --radio-border-active: var(--control-border-active);
     --radio-bg-selected: var(--fill-neutral);
     --radio-bg-selected-hover: var(--fill-neutral-hover);
     --radio-bg-selected-active: var(--fill-neutral-active);
     --radio-dot: var(--fill-fg);
     --radio-dot-disabled: var(--fill-fg-disabled);
-    --radio-bg-disabled: light-dark(color-mix(in oklch, #79716d 10%, transparent), color-mix(in oklch, #a398a0 12%, transparent));
+    --radio-bg-disabled: var(--control-disabled);
     --radio-border-disabled: var(--radio-bg-disabled);
   }
 
@@ -878,40 +932,40 @@
     --radio-bg-selected: var(--fill-brand);
     --radio-bg-selected-hover: var(--fill-brand-hover);
     --radio-bg-selected-active: var(--fill-brand-active);
-    --_radio-tint-bg: light-dark(#fff6f5, #160803);
-    --_radio-tint-border: light-dark(#fea192, #912a0d);
-    --_radio-tint-border-hover: light-dark(#f07866, #d03711);
-    --_radio-tint-border-active: light-dark(#ee6d53, #e94520);
+    --_radio-tint-bg: var(--control-bg-brand);
+    --_radio-tint-border: var(--control-border-brand);
+    --_radio-tint-border-hover: var(--control-border-brand-hover);
+    --_radio-tint-border-active: var(--control-border-brand-active);
   }
 
   :is(a-radio[tone="info"], a-radio-group[tone="info"] a-radio:not([tone]), input[data-anta][type="radio"][tone="info"]) {
     --radio-bg-selected: var(--fill-info);
     --radio-bg-selected-hover: var(--fill-info-hover);
     --radio-bg-selected-active: var(--fill-info-active);
-    --_radio-tint-bg: light-dark(#fbfcfe, #040d18);
-    --_radio-tint-border: light-dark(#93c5ec, #175082);
-    --_radio-tint-border-hover: light-dark(#69ace5, #1f6eb2);
-    --_radio-tint-border-active: light-dark(#56a1e1, #2686d9);
+    --_radio-tint-bg: var(--control-bg-info);
+    --_radio-tint-border: var(--control-border-info);
+    --_radio-tint-border-hover: var(--control-border-info-hover);
+    --_radio-tint-border-active: var(--control-border-info-active);
   }
 
   :is(a-radio[tone="success"], a-radio-group[tone="success"] a-radio:not([tone]), input[data-anta][type="radio"][tone="success"]) {
     --radio-bg-selected: var(--fill-success);
     --radio-bg-selected-hover: var(--fill-success-hover);
     --radio-bg-selected-active: var(--fill-success-active);
-    --_radio-tint-bg: light-dark(#f7fcf9, #041008);
-    --_radio-tint-border: light-dark(#88d7a0, #1f5c31);
-    --_radio-tint-border-hover: light-dark(#5bc87b, #2a7e43);
-    --_radio-tint-border-active: light-dark(#44c169, #329550);
+    --_radio-tint-bg: var(--control-bg-success);
+    --_radio-tint-border: var(--control-border-success);
+    --_radio-tint-border-hover: var(--control-border-success-hover);
+    --_radio-tint-border-active: var(--control-border-success-active);
   }
 
   :is(a-radio[tone="warning"], a-radio-group[tone="warning"] a-radio:not([tone]), input[data-anta][type="radio"][tone="warning"]) {
     --radio-bg-selected: var(--fill-warning);
     --radio-bg-selected-hover: var(--fill-warning-hover);
     --radio-bg-selected-active: var(--fill-warning-active);
-    --_radio-tint-bg: light-dark(#fefbf6, #120a03);
-    --_radio-tint-border: light-dark(#edb25a, #6a3b0c);
-    --_radio-tint-border-hover: light-dark(#e09127, #995200);
-    --_radio-tint-border-active: light-dark(#d88118, #ae6613);
+    --_radio-tint-bg: var(--control-bg-warning);
+    --_radio-tint-border: var(--control-border-warning);
+    --_radio-tint-border-hover: var(--control-border-warning-hover);
+    --_radio-tint-border-active: var(--control-border-warning-active);
   }
 
   :is(a-radio[tone="critical"], a-radio-group[tone="critical"] a-radio:not([tone]), input[data-anta][type="radio"][tone="critical"]) {
@@ -919,10 +973,10 @@
     --radio-bg-selected: var(--fill-critical);
     --radio-bg-selected-hover: var(--fill-critical-hover);
     --radio-bg-selected-active: var(--fill-critical-active);
-    --_radio-tint-bg: light-dark(#fefbfb, #190408);
-    --_radio-tint-border: light-dark(#efa4b0, #a01c32);
-    --_radio-tint-border-hover: light-dark(#e87f91, #c92c46);
-    --_radio-tint-border-active: light-dark(#e56c80, #de455e);
+    --_radio-tint-bg: var(--control-bg-critical);
+    --_radio-tint-border: var(--control-border-critical);
+    --_radio-tint-border-hover: var(--control-border-critical-hover);
+    --_radio-tint-border-active: var(--control-border-critical-active);
   }
 
   /* Tinted ring: the base sheet's `all`-scope conditions. */

@@ -83,6 +83,7 @@ const componentsByName = new Map(componentManifest.map((component) => [component
 const menuChildNames = ['MenuItem', 'MenuItemCopy', 'MenuSeparator', 'MenuGroup']
 const menuGroupChildNames = ['MenuItem', 'MenuItemCopy']
 const menuOnlyNames = new Set([...menuChildNames])
+const maximumChildrenPerParent = 5
 const generalNames = componentManifest
   .filter((component) => !menuOnlyNames.has(component.name))
   .map((component) => component.name)
@@ -111,6 +112,7 @@ function generateComposition(draw: Draw, {
   for (const [name, value] of Object.entries({ maxDepth, maxChildren })) {
     if (!Number.isInteger(value) || value < 1) throw new RangeError(`${name} must be a positive integer.`)
   }
+  const childrenPerParent = Math.min(maxChildren, maximumChildrenPerParent)
 
   function nodes(depth: number, maximum: number, names = generalNames) {
     return Array.from({ length: count(draw, maximum) }, () => node(depth, names))
@@ -125,12 +127,12 @@ function generateComposition(draw: Draw, {
     let children: CompositionNode[] = []
     let panels: CompositionPanel[] = []
     if (depth < maxDepth) {
-      if (component.children === 'any') children = nodes(depth + 1, maxChildren)
-      if (component.children === 'menu') children = nodes(depth + 1, maxChildren, menuChildNames)
-      if (component.children === 'menuGroup') children = nodes(depth + 1, maxChildren, menuGroupChildNames)
+      if (component.children === 'any') children = nodes(depth + 1, childrenPerParent)
+      if (component.children === 'menu') children = nodes(depth + 1, childrenPerParent, menuChildNames)
+      if (component.children === 'menuGroup') children = nodes(depth + 1, childrenPerParent, menuGroupChildNames)
       if (component.children === 'panels') {
-        panels = Array.from({ length: count(draw, Math.min(maxChildren, 10)) }, (_, index) => ({
-          children: nodes(depth + 1, maxChildren),
+        panels = Array.from({ length: count(draw, childrenPerParent) }, (_, index) => ({
+          children: nodes(depth + 1, childrenPerParent),
           label: `Panel ${index + 1}`,
           value: `panel-${index + 1}`,
         }))
@@ -139,8 +141,8 @@ function generateComposition(draw: Draw, {
     return { name, props, children, panels }
   }
 
-  const roots = nodes(1, maxChildren)
-  return { kind: 'screen', roots, settings: { maxDepth, maxChildren } }
+  const roots = nodes(1, childrenPerParent)
+  return { kind: 'screen', roots, settings: { maxDepth, maxChildren: childrenPerParent } }
 }
 
 function treePath(path: string) {

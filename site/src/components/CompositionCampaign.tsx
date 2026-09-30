@@ -7,7 +7,7 @@ type Draw = {
 }
 
 type ComponentDefinition = {
-  children: 'any' | 'menu' | 'menuGroup' | 'none' | 'text' | 'tooltip'
+  children: 'any' | 'menu' | 'menuGroup' | 'none' | 'text'
   name: string
   props: string
 }
@@ -43,7 +43,7 @@ const componentManifest: ComponentDefinition[] = [
   { name: 'Button', children: 'text', props: 'priority="secondary"' },
   { name: 'ButtonCopy', children: 'text', props: 'copy="Anta composition fixture" label="Copy"' },
   { name: 'Breadcrumbs', children: 'none', props: "items={[{ label: 'Workspace' }, { label: 'Project' }]}" },
-  { name: 'Tooltip', children: 'tooltip', props: 'interactive delay={50} placement="top"' },
+  { name: 'Tooltip', children: 'any', props: 'interactive' },
   { name: 'Checkbox', children: 'none', props: 'label="Enabled" defaultChecked' },
   { name: 'Switch', children: 'none', props: 'label="Allow updates" defaultChecked' },
   { name: 'Menu', children: 'menu', props: '' },
@@ -81,7 +81,7 @@ const generalNames = componentManifest
 function terminalNames(names: string[]) {
   return names.filter((name) => {
     const component = componentsByName.get(name)
-    return component?.children === 'none' || component?.children === 'text' || component?.children === 'tooltip'
+    return component?.children === 'none' || component?.children === 'text'
   })
 }
 
@@ -154,7 +154,7 @@ function renderNode(node: CompositionNode, path: string): string {
   switch (node.name) {
     case 'Tooltip':
       return `<Button ${treePath(`${path}-anchor`)} label="Tooltip trigger" priority="secondary">
-  <Tooltip ${attributes}>Open the <a ${treePath(`${path}-action`)} href="#${path}-details">generated details</a></Tooltip>
+  <Tooltip ${attributes}>${children}</Tooltip>
 </Button>`
     case 'Menu':
       return `<div ${treePath(`${path}-wrapper`)}>

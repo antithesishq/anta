@@ -64,13 +64,12 @@ export class ATabPanelElement extends HTMLElementBase {
     this.sync();
   }
 
-  /** Locate the sibling <a-tabs> (the strip and panels are flat siblings under one
-   *  parent — `Tabs` renders no wrapper) and subscribe to its `change`. */
+  /** Locate the nearest preceding <a-tabs> (the strip and panels are flat siblings
+   *  under one parent) and subscribe to its `change`. */
   private bindTabs() {
-    const tabs =
-      (this.parentElement?.querySelector(":scope > a-tabs") as
-        | (Element & { value?: string | null })
-        | null) ?? null;
+    let sibling = this.previousElementSibling;
+    while (sibling && sibling.localName !== "a-tabs") sibling = sibling.previousElementSibling;
+    const tabs = sibling as (Element & { value?: string | null }) | null;
     if (tabs === this.tabs) return;
     this.tabs?.removeEventListener("change", this.onTabsChange);
     this.tabs = tabs;

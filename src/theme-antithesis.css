@@ -195,8 +195,8 @@
 .dark {
   /* Backgrounds — dark, neutral */
   --bg-1: #0b0409;
-  --bg-2: #13070f;
-  --bg-3: #170812;
+  --bg-2: #170812;
+  --bg-3: #1a0915;
   --bg-4: #1e0b18;
   --bg-5: #250e1e;
 
@@ -235,7 +235,7 @@
   --text-2: #c0b7bd;
   --text-3: #a398a0;
   --text-4: #7c6e78;
-  --text-5: #695d65;
+  --text-5: #6b5b66;
 
   /* Text — dark, Brand */
   --text-1-brand: #ffb3a7;
@@ -273,10 +273,10 @@
   --text-5-info: #7db6e866;
 
   /* Borders — dark, neutral */
-  --border-1: #695d65;
+  --border-1: #6b5b66;
   --border-2: #4a4248;
-  --border-3: #3a3338;
-  --border-4: #242023;
+  --border-3: #3d3338;
+  --border-4: #272023;
   --border-5: #191618;
 
   /* Borders — dark, Brand */
@@ -438,9 +438,9 @@
     --button-bg-primary-active: light-dark(#494441, #d5cfd3);
     --button-fg-secondary-rest: light-dark(#56504d, #cbc5c9);
     --button-fg-secondary-hover: light-dark(#494441, #d5cfd3);
-    --button-bg-secondary-rest: light-dark(#8b6b590d, #a398a01a);
-    --button-bg-secondary-hover: light-dark(#79716d1a, #a398a026);
-    --button-bg-secondary-active: light-dark(#79716d26, #a398a033);
+    --button-bg-secondary-rest: light-dark(#8b6b591a, #a398a02b);
+    --button-bg-secondary-hover: light-dark(#79716d26, #a398a040);
+    --button-bg-secondary-active: light-dark(#79716d33, #a398a04d);
     --button-fg-tertiary-rest: light-dark(#665f5b, #b1a8ae);
     --button-fg-tertiary-hover: light-dark(#56504d, #c0b7bd);
     --button-bg-tertiary-hover: light-dark(#79716d0d, #a398a01a);

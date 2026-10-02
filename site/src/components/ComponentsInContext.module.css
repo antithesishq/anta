@@ -1,0 +1,86 @@
+/* Temporary review mock styles; remove with ComponentsInContext.tsx. */
+.container {
+  background: var(--bg-2);
+  color: var(--text-1);
+  padding: 40px 48px 48px;
+  display: grid;
+  gap: 24px;
+}
+
+.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.top > div { display: grid; gap: 4px; }
+.meta { text-align: right; }
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(320px, 0.95fr);
+  grid-template-areas:
+    "runs runs form"
+    "chart middle form"
+    "chart middle notify";
+  gap: 24px;
+  align-items: start;
+}
+
+.card {
+  background: var(--bg-1);
+  border: 1px solid var(--border-4);
+  border-radius: 2px;
+  padding: 20px 24px;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.runs { grid-area: runs; }
+.form { grid-area: form; }
+.chart { grid-area: chart; }
+.middle { grid-area: middle; display: grid; gap: 24px; }
+.notify { grid-area: notify; }
+
+.cardHead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.cardHead > div:first-child { display: grid; gap: 2px; }
+.cardFoot { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+/* Square filter button, as in the Figma composition (the theme rounds buttons to a pill). */
+.square { --_radius: 0; border-radius: 0; }
+
+.tableWrap { overflow-x: auto; border: 1px solid var(--border-4); }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { text-align: left; font-weight: 400; font-size: 13px; color: var(--text-3); background: var(--bg-3); padding: 8px 12px; border-bottom: 1px solid var(--border-4); }
+.table td { padding: 8px 12px; border-top: 1px solid var(--border-5); vertical-align: middle; }
+.table tbody tr:first-child td { border-top: 0; }
+.table .selected td { background: color-mix(in oklch, var(--bg-5) 60%, transparent); }
+.check { width: 36px; }
+.open { width: 44px; border-left: 1px solid var(--border-5); text-align: center; }
+.num { font-variant-numeric: tabular-nums; }
+.runName { color: var(--text-1); }
+
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.big { font-family: var(--serif); font-size: 32px; line-height: 1; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--text-3); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.legend i { width: 10px; height: 10px; display: inline-block; }
+.c1 { background: #6c1f6f; }
+.c2 { background: #f88d7d; }
+.c3 { background: #ffd3cc; }
+
+.plot { display: grid; grid-template-columns: 24px 1fr; gap: 8px; height: 240px; }
+.axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; color: var(--text-4); padding-bottom: 22px; }
+.bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  background-image: linear-gradient(var(--border-5) 1px, transparent 1px);
+  background-size: 100% calc((100% - 22px) / 4);
+}
+.barCol { display: grid; grid-template-rows: 1fr 22px; justify-items: center; align-items: end; }
+.stack { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; border-bottom: 1px solid var(--border-3); }
+
+@media (max-width: 1100px) {
+  .grid { grid-template-columns: 1fr; grid-template-areas: "runs" "form" "chart" "middle" "notify"; }
+  .container { padding: 24px 16px; }
+}

@@ -51,15 +51,34 @@ test('Tabs uses one tab stop and TabPanel forwards common props', async t => {
   await page.goto(origin)
   await page.waitForSelector('a-tabpanel[data-panel="account"]')
 
-  assert.deepEqual(await page.locator('a-tab').evaluateAll(tabs => tabs.map(tab => tab.tabIndex)), [0, -1, -1])
+  assert.deepEqual(await page.locator('#basic-tabs a-tab').evaluateAll(tabs => tabs.map(tab => tab.tabIndex)), [0, -1, -1])
   assert.equal(await page.locator('a-tabpanel[data-panel="account"]').evaluate(panel => panel.tabIndex), 0)
 
   await page.locator('a-tab[value="account"]').focus()
   await page.keyboard.press('ArrowRight')
   await page.waitForFunction(() => document.querySelector('a-tab[value="security"]')?.tabIndex === 0)
 
-  assert.deepEqual(await page.locator('a-tab').evaluateAll(tabs => tabs.map(tab => tab.tabIndex)), [-1, 0, -1])
+  assert.deepEqual(await page.locator('#basic-tabs a-tab').evaluateAll(tabs => tabs.map(tab => tab.tabIndex)), [-1, 0, -1])
   assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('value')), 'security')
+})
+
+test('TabPanel follows its own strip across sibling and nested Tabs and Steps', async t => {
+  const context = await browser.newContext()
+  t.after(() => context.close())
+  const page = await context.newPage()
+  await page.goto(origin)
+
+  const active = async selector => page.locator(selector).evaluateAll(panels =>
+    panels.filter(panel => panel.matches(':state(active)')).map(panel => panel.textContent))
+
+  assert.deepEqual(await active('#sibling-tabs a-tabpanel'), ['First panel', 'Second panel'])
+  assert.deepEqual(await active('#nested-tabs a-tabpanel'), ['Inner panel', 'Outer panel'])
+  assert.deepEqual(await active('#nested-steps a-tabpanel'), ['Inner step panel', 'Stage panel'])
+
+  await page.locator('#sibling-tabs a-tabs').nth(1).locator('a-tab[value="later"]').click()
+  assert.deepEqual(await active('#sibling-tabs a-tabpanel'), ['First panel', 'Later panel'])
+  await page.locator('#nested-tabs a-tabs').first().locator('a-tab[value="other"]').click()
+  assert.deepEqual(await active('#nested-tabs a-tabpanel'), ['Inner panel', 'Other panel'])
 })
 
 test('Antune preserves primary and secondary fills for strip and selected per-tab tones', async t => {
@@ -72,7 +91,7 @@ test('Antune preserves primary and secondary fills for strip and selected per-ta
   await page.addStyleTag({ content: 'a-tab { transition: none; }' })
   const theme = await page.addStyleTag({ content: await readFile('src/theme-antune.css', 'utf8') })
   const results = await page.evaluate(theme => {
-    const tabs = document.querySelector('a-tabs')
+    const tabs = document.querySelector('#basic-tabs a-tabs')
     tabs.setAttribute('noslide', '')
     const selected = tabs.querySelector('a-tab:state(selected)')
     const results = []

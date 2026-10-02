@@ -30,18 +30,20 @@ const dyn = collections.find(c => c.name === 'Dynamic colors');
 const LIGHT = dyn.modes.find(m => m.name === 'Light').modeId;
 const DARK = dyn.modes.find(m => m.name === 'Dark').modeId;
 
-// Aliases cross collection boundaries; primitives are single-mode, so take the
-// target's first/only mode. Tinted text 3–5 are stored as { color: alias, opacity: 0..100 }
+// An alias into `Primitive tokens` (single-mode) takes the target's only mode.
+// An alias inside `Dynamic colors` (e.g. component/checkbox/* → component/button/*)
+// keeps the calling mode. Tinted text 3–5 are stored as { color: alias, opacity: 0..100 }
 // rather than as a plain alias — multiply the opacity into the alpha.
-const resolve = async (val, depth = 0) => {
-  if (!val || depth > 8) return null;
+const resolve = async (val, mode, depth = 0) => {
+  if (!val || depth > 10) return null;
   if (val.type === 'VARIABLE_ALIAS') {
     const t = await figma.variables.getVariableByIdAsync(val.id);
     if (!t) return null;
-    return resolve(t.valuesByMode[Object.keys(t.valuesByMode)[0]], depth + 1);
+    const m = t.variableCollectionId === dyn.id ? mode : Object.keys(t.valuesByMode)[0];
+    return resolve(t.valuesByMode[m], mode, depth + 1);
   }
   if (val.color) {
-    const c = await resolve(val.color, depth + 1);
+    const c = await resolve(val.color, mode, depth + 1);
     return c && { ...c, a: (c.a ?? 1) * (val.opacity / 100) };
   }
   return val; // RGBA {r, g, b, a} in 0..1
@@ -59,8 +61,8 @@ for (const id of dyn.variableIds) {
   const v = await figma.variables.getVariableByIdAsync(id);
   const name = v.name.split('/').pop();
   if (v.resolvedType !== 'COLOR' || !/^base\/(background|text|border)\//.test(v.name) || SKIP.has(name)) continue;
-  const light = await resolve(v.valuesByMode[LIGHT]);
-  const dark = await resolve(v.valuesByMode[DARK]);
+  const light = await resolve(v.valuesByMode[LIGHT], LIGHT);
+  const dark = await resolve(v.valuesByMode[DARK], DARK);
   out.push(`${name}=${hex(light)}|${hex(dark)}`);
 }
 return out.join(' ');
@@ -70,7 +72,7 @@ Diff the result against `src/theme-antithesis.css` rather than hand-copying: the
 
 ### 2. Mode IDs are local to a collection
 
-A "Light" / "Dark" pair on the dynamic collection has its own mode IDs (`1:0` / `38:0`). When an alias points into `Primitive tokens`, that target has **different** mode IDs (a single `Value` mode, `11:1`). **Don't reuse the calling collection's mode IDs across collection boundaries** — take the target's only mode.
+A "Light" / "Dark" pair on the dynamic collection has its own mode IDs (`1:0` / `38:0`). When an alias points into `Primitive tokens`, that target has **different** mode IDs (a single `Value` mode, `11:1`). **Don't reuse the calling collection's mode IDs across collection boundaries** — take the target's only mode. Within `Dynamic colors` the reverse holds: `component/*` variables alias other `component/*` variables, and those must resolve in the calling mode, or every dark value comes back light.
 
 ### 3. Color format mapping
 

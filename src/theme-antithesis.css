@@ -321,13 +321,9 @@
   --fill-warning: #edb25a;
   --fill-warning-hover: #ffbd59;
   --fill-warning-active: #ffca7a;
-  --fill-critical: #c92c46;
-  --fill-critical-hover: #b02038;
-  --fill-critical-active: #a01c32;
   --fill-disabled: #272225;
 
   --fill-fg: #000000;
-  --fill-fg-critical: #ffffff;
   --fill-fg-disabled: #7c6e78;
 
   /* #e17cc2 is 7.6:1 on the dark page. */

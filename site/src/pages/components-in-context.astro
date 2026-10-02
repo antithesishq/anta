@@ -1,0 +1,115 @@
+---
+// Temporary review page: the "Components in context" composition under two
+// variants of the Antithesis neutrals. A = the Figma values the theme ships
+// (grey secondary-button fills and dark borders); B = the same roles tinted
+// toward the page hue. Unlisted and noindex. Remove it, together with
+// ComponentsInContext.tsx and its CSS module, once the team picks a variant.
+import '@antadesign/anta/bundle.css'
+import '@antadesign/anta/theme-antithesis.css'
+import ComponentsInContext from '../components/ComponentsInContext.tsx'
+
+const neutralButton = ':is(a-button, a[role="button"][data-anta], button[data-anta]):is(:not([tone]), [tone=""], [tone="neutral"])'
+const fills = {
+  a: { rest: 'light-dark(#8b6b591a, #a398a02b)', hover: 'light-dark(#79716d26, #a398a040)', active: 'light-dark(#79716d33, #a398a04d)' },
+  b: { rest: 'light-dark(#9069531a, #b58da72b)', hover: 'light-dark(#90695326, #b58da740)', active: 'light-dark(#90695333, #b58da74d)' },
+}
+const borders = {
+  a: ['#6b5b66', '#4a4248', '#3d3338', '#272023', '#191618'],
+  b: ['#725769', '#543d4c', '#442e3d', '#2f1b28', '#22101c'],
+}
+// Unlayered, so these beat the theme's `@layer anta.theme` button rule; the
+// `.variant-x.dark` pair outranks the theme's `.dark` role block.
+const variantCss = (['a', 'b'] as const)
+  .map((v) => `
+    .variant-${v} ${neutralButton} {
+      --button-bg-secondary-rest: ${fills[v].rest};
+      --button-bg-secondary-hover: ${fills[v].hover};
+      --button-bg-secondary-active: ${fills[v].active};
+    }
+    .variant-${v}.dark { ${borders[v].map((c, i) => `--border-${i + 1}: ${c};`).join(' ')} }`)
+  .join('\n')
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Components in Context A/B</title>
+    <Fragment set:html={`<style>${variantCss}</style>`} />
+    <style is:global>
+      body { margin: 0; background: #1b1b1b; color: #eee; font-family: var(--sans-serif); font-size: 14px; }
+      * { box-sizing: border-box; }
+      .bar { position: sticky; top: env(safe-area-inset-top, 0); z-index: 20; display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; padding: 10px 24px; background: #1b1b1b; border-bottom: 1px solid #333; }
+      .bar h1 { font-family: var(--sans-serif); font-size: 15px; margin: 0 12px 0 0; font-weight: 600; color: #eee; }
+      .seg { display: inline-flex; background: #2b2b2b; border-radius: 8px; padding: 2px; }
+      .seg button { border: 0; background: none; font: inherit; color: #aaa; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+      .seg button[aria-pressed="true"] { background: #4a4a4a; color: #fff; }
+      .hint { color: #888; font-size: 13px; }
+      .variant-label { padding: 14px 24px 6px; font-weight: 600; color: #ccc; }
+      .variant-label small { color: #888; font-weight: 400; margin-left: 8px; }
+      body[data-show="a"] [data-variant="b"], body[data-show="b"] [data-variant="a"] { display: none; }
+      body[data-theme="light"] .only-dark, body[data-theme="dark"] .only-light { display: none; }
+    </style>
+  </head>
+  <body data-show="a" data-theme="dark">
+    <div class="bar">
+      <h1>Components in context</h1>
+      <div class="seg" data-group="show">
+        <button data-value="a" aria-pressed="true">A · Figma</button>
+        <button data-value="b" aria-pressed="false">B · Tinted</button>
+        <button data-value="both" aria-pressed="false">Both</button>
+      </div>
+      <div class="seg" data-group="theme">
+        <button data-value="dark" aria-pressed="true">Dark</button>
+        <button data-value="light" aria-pressed="false">Light</button>
+      </div>
+      <span class="hint">Temporary review page. Hold <b>Space</b> to flip between A and B.</span>
+    </div>
+
+    {(['dark', 'light'] as const).map((mode) =>
+      (['a', 'b'] as const).map((v) => (
+        <div data-variant={v} class={`only-${mode}`}>
+          <div class="variant-label">
+            {v === 'a' ? 'A · Figma' : 'B · Tinted'}
+            <small>{mode} · {v === 'a' ? 'grey secondary-button fills, grey dark borders' : 'fills and dark borders tinted toward the page hue'}</small>
+          </div>
+          <div class={`variant-${v} ${mode}`}>
+            <ComponentsInContext client:load />
+          </div>
+        </div>
+      )),
+    )}
+
+    <script>
+      import '@antadesign/anta/elements'
+      const body = document.body
+      function set(group: string, value: string) {
+        document.querySelectorAll(`.seg[data-group="${group}"] button`).forEach((b) =>
+          b.setAttribute('aria-pressed', String((b as HTMLElement).dataset.value === value)),
+        )
+        body.dataset[group] = value
+      }
+      document.querySelectorAll<HTMLElement>('.seg').forEach((seg) =>
+        seg.addEventListener('click', (e) => {
+          const b = (e.target as HTMLElement).closest('button')
+          if (b) set(seg.dataset.group!, b.dataset.value!)
+        }),
+      )
+      let held: string | null = null
+      addEventListener('keydown', (e) => {
+        if (e.code !== 'Space' || held || body.dataset.show === 'both') return
+        const t = e.target as HTMLElement
+        if (t.closest('input, textarea, select, [contenteditable], a-input, a-select')) return
+        e.preventDefault()
+        held = body.dataset.show!
+        set('show', held === 'a' ? 'b' : 'a')
+      })
+      addEventListener('keyup', (e) => {
+        if (e.code !== 'Space' || !held) return
+        set('show', held)
+        held = null
+      })
+    </script>
+  </body>
+</html>

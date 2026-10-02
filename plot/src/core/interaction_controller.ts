@@ -2,7 +2,8 @@ import { cursor_position, find_hits, resolve_point_data, same_hits, selectable_h
 import { compatible_viewport, viewport_change, viewport_moved, type ViewportAxes } from "./interactions/viewport"
 import { resolve_tooltips, type ResolvedTooltip } from "./interactions/tooltip"
 import { resolve_highlights } from "./interactions/highlight"
-import { clamp_viewport, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
+import { clamp_viewport, magnify_zoom, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
+import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import type { ComposedPlot, HighlightSpec, PointData, TooltipData, Viewport, ViewportChange, ViewportRequest, ZoomPan } from "./types"
 
 export type PanInput = {
@@ -22,6 +23,8 @@ export class PlotInteractionController<TooltipContent = unknown> {
     #hovered: NearestPoint[] = []
     #staged_viewport: Viewport
     #committed_viewport: Viewport
+    #staged_zoom: ViewportZoom = UNIT_ZOOM
+    #committed_zoom: ViewportZoom = UNIT_ZOOM
     #adopted_viewport_key: string | null = null
     #pan_snapshot: PanSnapshot | null = null
     #zoomed_this_visit = false
@@ -41,6 +44,10 @@ export class PlotInteractionController<TooltipContent = unknown> {
         return this.#committed_viewport
     }
 
+    get committed_zoom(): ViewportZoom {
+        return this.#committed_zoom
+    }
+
     /** Stage gesture input immediately; the host decides when to commit a render. */
     stage_viewport(next: Viewport): void {
         this.#staged_viewport = next
@@ -48,6 +55,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     commit_viewport(): Viewport {
         this.#committed_viewport = this.#staged_viewport
+        this.#committed_zoom = this.#staged_zoom
         return this.#committed_viewport
     }
 
@@ -59,6 +67,12 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** Reconcile retained windows and stop changed axes from using an obsolete drag coordinate system. */
     update_axes(previous: ViewportAxes, next: ViewportAxes): void {
+        const retained_zoom = (zoom: ViewportZoom): ViewportZoom => ({
+            x: previous.x.kind === next.x.kind ? zoom.x : 1,
+            y: previous.y.kind === next.y.kind ? zoom.y : 1,
+        })
+        this.#staged_zoom = retained_zoom(this.#staged_zoom)
+        this.#committed_zoom = retained_zoom(this.#committed_zoom)
         this.#staged_viewport = compatible_viewport(this.#staged_viewport, next)
         this.#committed_viewport = compatible_viewport(this.#committed_viewport, next)
         if (this.#pan_snapshot === null) {
@@ -88,9 +102,16 @@ export class PlotInteractionController<TooltipContent = unknown> {
             x: request.window.x === undefined ? current.x : request.window.x,
             y: request.window.y === undefined ? current.y : request.window.y,
         })
-        if (!viewport_moved(current, effective)) {
+        // An explicit requested window establishes a new zoom-1 view on its supplied axes.
+        const zoom = this.#staged_zoom
+        const next_zoom = {
+            x: request.window.x === undefined ? zoom.x : 1,
+            y: request.window.y === undefined ? zoom.y : 1,
+        }
+        if (!viewport_moved(current, effective) && next_zoom.x === zoom.x && next_zoom.y === zoom.y) {
             return false
         }
+        this.#staged_zoom = next_zoom
         this.settle_viewport(effective)
         return true
     }
@@ -118,21 +139,25 @@ export class PlotInteractionController<TooltipContent = unknown> {
         const current = this.#staged_viewport
         const full: Viewport = { x: axes.x ? null : current.x, y: axes.y ? null : current.y }
 
-        if (!viewport_moved(current, full)) {
+        const zoom = this.#staged_zoom
+        const next_zoom = { x: axes.x ? 1 : zoom.x, y: axes.y ? 1 : zoom.y }
+        if (!viewport_moved(current, full) && next_zoom.x === zoom.x && next_zoom.y === zoom.y) {
             return false
         }
+        this.#staged_zoom = next_zoom
         this.settle_viewport(full)
         return true
     }
 
     is_zoomed(axes: { x: boolean; y: boolean }): boolean {
-        return (axes.x && this.#committed_viewport.x !== null) || (axes.y && this.#committed_viewport.y !== null)
+        return (axes.x && (this.#committed_viewport.x !== null || this.#committed_zoom.x !== 1))
+            || (axes.y && (this.#committed_viewport.y !== null || this.#committed_zoom.y !== 1))
     }
 
     /** Resolve the staged window against the latest plot's full, unpinned domains. */
     viewport_change(): ViewportChange | null {
         const plot = this.#get_composed_plot()
-        return plot === null ? null : viewport_change(this.#staged_viewport, plot)
+        return plot === null ? null : viewport_change(this.#staged_viewport, plot, this.#staged_zoom)
     }
 
     get pan_in_progress(): boolean {
@@ -277,12 +302,14 @@ export class PlotInteractionController<TooltipContent = unknown> {
             return false
         }
         const before = this.#staged_viewport
-        const zoomed = zoom_viewport(zoomable_views(plot, axes), before, cursor_position(plot, event), event.deltaY)
+        const views = zoomable_views(plot, axes)
+        const zoomed = zoom_viewport(views, before, cursor_position(plot, event), event.deltaY)
 
         if (!viewport_moved(before, zoomed)) {
             return false
         }
         this.#zoomed_this_visit = true
+        this.#staged_zoom = magnify_zoom(views, before, zoomed, this.#staged_zoom)
         this.stage_viewport(zoomed)
         return true
     }

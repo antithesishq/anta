@@ -430,7 +430,9 @@ export class ADialogElement extends HTMLElementBase {
 
     // The close button (an <a-button data-custom-event="closerequest"> slotted at
     // `close`) fires CLOSE_TRIGGER on activation; turn it into a close request.
-    this.addEventListener(CLOSE_TRIGGER, () => this.requestClose())
+    this.addEventListener(CLOSE_TRIGGER, (event) => {
+      if ((event.target as Element).closest('a-dialog') === this) this.requestClose()
+    })
   }
 
   connectedCallback() {

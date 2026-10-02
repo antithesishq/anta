@@ -57,6 +57,12 @@ conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runne
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
 
+The Button property harness runs separately from `pnpm test`. Start or reuse a
+site preview as described in [site/AGENTS.md](site/AGENTS.md#local-servers), then
+run `ANTA_HARNESS_ORIGIN=<preview-url> pnpm test:fuzz_component`. To check one
+case, add `ANTA_HARNESS_SHARD=22905 ANTA_HARNESS_CASES=1` (replace `22905` with
+the case ID). Failures and screenshots go to `tests/pbt/.runs/`.
+
 CI's `pnpm install --frozen-lockfile` runs the workspace `prepare` scripts to
 build Anta, stickers, and Plot. Do not repeat those builds in the same job or
 disable install scripts without providing an explicit replacement build stage.

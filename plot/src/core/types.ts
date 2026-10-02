@@ -6,7 +6,9 @@
  * Tooltip content is host-supplied so this surface has no framework dependency.
  */
 import type { ScaleBand, ScaleLinear, ScaleLogarithmic, ScaleTime } from "d3-scale"
-import type { ScatterArgs } from "./series/scatter/factory"
+import type { ViewportZoom } from "./interactions/viewport_zoom"
+export type { ViewportZoom } from "./interactions/viewport_zoom"
+import type { ScatterSizeArg, ScatterArgs } from "./series/scatter/factory"
 import type { LineArgs } from "./series/line/factory"
 import type { BarArgs } from "./series/bar/factory"
 import type { AreaArgs } from "./series/area/factory"
@@ -61,6 +63,10 @@ export type Stroke = { color: ThemeColor; width?: number }
 
 export type ScatterSeries<TooltipContent = unknown> = BaseSeries<TooltipContent> & {
     kind: 'scatter'
+    /** Retained until composition, when the viewport is available. */
+    size_accessor?: Exclude<ScatterSizeArg, number>
+    /** Original row indices, retained when category filtering removes rows. */
+    size_indices?: Uint32Array
     size?: number
     sizes?: (number | null)[]
     mark?: MarkShape
@@ -565,6 +571,8 @@ export type SelectFn<Row = Record<string, unknown>> = (data: TooltipData<Row>) =
 export type AxisViewport = { window: number[]; full: number[] }
 
 export type ViewportChange = {
+    /** Gesture magnification, initially 1 per axis; independent of data extents. */
+    zoom_factor: ViewportZoom
     x: AxisViewport | null
     y: AxisViewport | null
 }

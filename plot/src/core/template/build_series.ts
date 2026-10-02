@@ -57,6 +57,7 @@ type RemappedBuffers = {
     colors?: (ThemeColor | null)[]
     highlight_colors?: (ThemeColor | null)[]
     sizes?: (number | null)[]
+    size_indices?: Uint32Array
     rows?: Record<string, unknown>[]
     labels?: string[]
 }
@@ -82,6 +83,10 @@ function remap_rows(
     const buffer_colors = input_colors !== undefined ? new Array<ThemeColor | null>(length) : undefined
     const input_sizes = series_item.kind === 'scatter' ? series_item.sizes : undefined
     const buffer_sizes = input_sizes !== undefined ? new Array<number | null>(length) : undefined
+
+    const input_size_indices = series_item.kind === 'scatter' ? series_item.size_indices : undefined
+    const buffer_size_indices = series_item.kind === 'scatter' && series_item.size_accessor !== undefined
+        ? new Uint32Array(length) : undefined
 
     const input_x2 = 'x2' in series_item ? series_item.x2 : undefined
     const input_y2 = 'y2' in series_item ? series_item.y2 : undefined
@@ -117,6 +122,10 @@ function remap_rows(
             buffer_sizes[write_index] = input_sizes![row_index]
         }
 
+        if (buffer_size_indices !== undefined) {
+            buffer_size_indices[write_index] = input_size_indices?.[row_index] ?? row_index
+        }
+
         if (buffer_x2 !== undefined) {
             buffer_x2[write_index] = input_x2![row_index]
         }
@@ -150,6 +159,10 @@ function remap_rows(
 
     if (buffer_sizes !== undefined) {
         result.sizes = full ? buffer_sizes : buffer_sizes.slice(0, write_index)
+    }
+
+    if (buffer_size_indices !== undefined) {
+        result.size_indices = full ? buffer_size_indices : buffer_size_indices.slice(0, write_index)
     }
 
     if (buffer_x2 !== undefined) {
@@ -199,6 +212,7 @@ function assemble_output_series(series_item: Series, remapped: RemappedBuffers):
     }
 
     if (output.kind === 'scatter') {
+        output.size_indices = remapped.size_indices
         if (remapped.sizes !== undefined) {
             output.sizes = remapped.sizes
         } else {

@@ -1,3 +1,4 @@
+export type { ViewportZoom } from '../core/interactions/viewport_zoom'
 export { new_scatter as scatter, type ScatterArgs } from '../core/series/scatter/factory'
 export { new_bar as bar, type BarArgs } from '../core/series/bar/factory'
 export { new_rect as rect, type RectArgs } from '../core/series/rect/factory'

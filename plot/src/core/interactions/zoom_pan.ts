@@ -1,4 +1,4 @@
-import type { AxisTemplate, Domain, Scale, Viewport, ZoomPan } from "../types"
+import type { AxisTemplate, Domain, Scale, Viewport, ViewportZoom, ZoomPan } from "../types"
 import { clamp_domain, LINEAR_SPACE, LOG_SPACE, type AxisSpace } from "../template/domain"
 
 // Zoom + pan math for the plot's viewport override.
@@ -103,6 +103,26 @@ export function zoomable_views(views: AxisViews, axes: { x: boolean; y: boolean 
         x_full_domain: axes.x ? views.x_full_domain : null,
         y_full_domain: axes.y ? views.y_full_domain : null,
     }
+}
+
+/** Accumulate only the magnification actually applied by this gesture, including axis limits. */
+export function magnify_zoom(views: AxisViews, before: Viewport, after: Viewport, zoom: ViewportZoom): ViewportZoom {
+    const magnify = (axis: 'x' | 'y'): number => {
+        const full = views[`${axis}_full_domain`]
+        if (full === null) return zoom[axis]
+        const space = axis_space(views[`${axis}_scale`])
+        const old_window = before[axis] ?? full
+        const new_window = after[axis] ?? full
+        const old_span = space.to(old_window[1]) - space.to(old_window[0])
+        const new_span = space.to(new_window[1]) - space.to(new_window[0])
+        const factor = old_span / new_span
+        // Degenerate scales cannot provide meaningful magnification.
+        if (!Number.isFinite(factor) || factor <= 0) return zoom[axis]
+        const magnified = Math.max(Number.MIN_VALUE, Math.min(Number.MAX_VALUE, zoom[axis] * factor))
+        // A zoom-in/out round trip must not retain a reset control for floating-point noise.
+        return Math.abs(magnified - 1) < 1e-12 ? 1 : magnified
+    }
+    return { x: magnify('x'), y: magnify('y') }
 }
 
 /**

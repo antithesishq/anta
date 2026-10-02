@@ -1,3 +1,4 @@
+export type { ViewportZoom } from '../core/interactions/viewport_zoom'
 import '../browser/plot.css'
 export { scatter, bar, rect, line, rule, area, custom, definePlotElement } from '../browser/index'
 export type {

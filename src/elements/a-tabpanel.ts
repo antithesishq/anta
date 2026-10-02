@@ -18,8 +18,10 @@ import "./a-tabpanel.css";
 // `hide-mode` are static, JSX-set — and never toggles it.
 //
 // Coordination is by DOM scope: the panel and its <a-tabs> are flat siblings under
-// one parent (`this.parentElement`) — `Tabs` renders them with no wrapper element —
-// matched by `value`, and re-syncs on the tablist's `change` (which fires for both
+// one parent (`this.parentElement`) — `Tabs` renders them with no wrapper element.
+// The nearest preceding strip owns the panel; an inert end marker closes each
+// nested Tabs group so its strip cannot claim a later outer panel. The panel
+// matches by `value` and re-syncs on the tablist's `change` (which fires for both
 // controlled and uncontrolled transitions). For split layouts (strip and panels in
 // different regions, so no shared parent) there's no scope — drive selection with a
 // controlled `value` and render the content yourself. Not SSR-visible: the active
@@ -64,13 +66,20 @@ export class ATabPanelElement extends HTMLElementBase {
     this.sync();
   }
 
-  /** Locate the sibling <a-tabs> (the strip and panels are flat siblings under one
-   *  parent — `Tabs` renders no wrapper) and subscribe to its `change`. */
+  /** Locate the nearest preceding <a-tabs> outside nested Tabs groups and subscribe
+   *  to its `change`. */
   private bindTabs() {
-    const tabs =
-      (this.parentElement?.querySelector(":scope > a-tabs") as
-        | (Element & { value?: string | null })
-        | null) ?? null;
+    let sibling = this.previousElementSibling;
+    let nested = 0;
+    while (sibling) {
+      if (sibling.localName === "template" && sibling.hasAttribute("data-anta-tabs-end")) nested++;
+      else if (sibling.localName === "a-tabs") {
+        if (nested === 0) break;
+        nested--;
+      }
+      sibling = sibling.previousElementSibling;
+    }
+    const tabs = sibling as (Element & { value?: string | null }) | null;
     if (tabs === this.tabs) return;
     this.tabs?.removeEventListener("change", this.onTabsChange);
     this.tabs = tabs;

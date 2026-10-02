@@ -307,12 +307,15 @@ export const Tabs = ({
   // root. Arranging the strip relative to its panels is the consumer's job: a horizontal
   // strip stacks above the panels in normal flow; for a vertical strip beside them, wrap
   // `<Tabs>` in your own flex container (see the docs). Panels find the strip as a sibling
-  // (`a-tabpanel` → `:scope > a-tabs`), so keep them under one parent — or drive a
+  // (`a-tabpanel` → preceding sibling), so keep them under one parent — or drive a
   // controlled `value` when you split them into separate regions.
+  // The inert end marker lets a panel skip a nested Tabs group when searching
+  // backward for its own strip.
   return (
     <>
       {strip}
       {children}
+      <template data-anta-tabs-end="" />
     </>
   )
 }

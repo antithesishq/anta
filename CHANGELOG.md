@@ -11,6 +11,11 @@ changes are not listed.
   ring outside the label. Their corner radius is capped at 3px, including when
   `round` requests a larger radius.
 
+### Fixed
+
+- [Tab panels](/tabs/#panels) follow their own strip when multiple `Tabs` share a
+  parent, including when another `Tabs` appears before an outer panel.
+
 ## 0.3.33 — September 28, 2026
 
 ### Added

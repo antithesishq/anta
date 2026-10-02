@@ -2,9 +2,10 @@ import { attach_resolved_columns, resolve_xy_columns } from "../../template/colu
 import { retain_factory_args } from "../factory_args"
 import { resolve_color, resolve_stroke, resolve_highlight_colors } from "../../template/color"
 import { validate_hoverable, validate_non_negative } from "../../template/validate"
-import type { ColorArg, FieldArg, MarkShape, ScatterSeries, SelectFn, StrokeArg, TooltipArg } from "../../types"
+import type { ColorArg, FieldArg, MarkShape, ScatterSeries, SelectFn, StrokeArg, TooltipArg, ViewportChange } from "../../types"
 
-export type ScatterSizeArg = number | ((row: Record<string, unknown>, index: number) => number)
+/** Numeric diameters or a pure accessor evaluated with the viewport at composition time. */
+export type ScatterSizeArg = number | ((row: Record<string, unknown>, index: number, viewport: ViewportChange) => number)
 
 export type ScatterArgs<TooltipContent = unknown> = {
     data: Record<string, unknown>[]
@@ -72,7 +73,7 @@ export function new_scatter<TooltipContent = unknown>(args: ScatterArgs<TooltipC
 }
 
 /**
- * Per-dot size resolution.
+ * Validate fixed sizes and retain accessors for composition, when the viewport is available.
  * @param data - the data rows
  * @param arg - uniform number, per-dot accessor, or undefined
  * @returns the size and/or per-row sizes to attach to the series
@@ -80,7 +81,10 @@ export function new_scatter<TooltipContent = unknown>(args: ScatterArgs<TooltipC
 function resolve_size(
     data: Record<string, unknown>[],
     arg: ScatterSizeArg | undefined,
-): Pick<ScatterSeries, 'size' | 'sizes'> {
+): Pick<ScatterSeries, 'size' | 'sizes' | 'size_accessor'> {
+    if (arg !== undefined && typeof arg !== 'number' && typeof arg !== 'function') {
+        throw new Error('plot.scatter: size must be a number or a size accessor')
+    }
     const accessor = typeof arg === 'function' ? arg : undefined
     const uniform = typeof arg === 'number' ? arg : undefined
 
@@ -88,9 +92,13 @@ function resolve_size(
         validate_non_negative(uniform, 'plot.scatter: size arg')
     }
     const has_per_item = data.some(r => typeof r.size === 'number')
-    const result: Pick<ScatterSeries, 'size' | 'sizes'> = {}
+    const result: Pick<ScatterSeries, 'size' | 'sizes' | 'size_accessor'> = {}
 
-    if (has_per_item || accessor !== undefined) {
+    if (accessor !== undefined) {
+        result.size_accessor = accessor
+    }
+
+    if (has_per_item) {
         const sizes = new Array<number | null>(data.length)
 
         for (let i = 0; i < data.length; i++) {
@@ -99,8 +107,6 @@ function resolve_size(
 
             if (typeof row.size === 'number') {
                 resolved = validate_non_negative(row.size, `plot.scatter: row ${i} field 'size'`)
-            } else if (accessor !== undefined) {
-                resolved = validate_non_negative(accessor(row, i), `plot.scatter: size accessor at row ${i}`)
             } else if (uniform !== undefined) {
                 resolved = uniform
             }

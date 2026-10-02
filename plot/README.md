@@ -102,3 +102,44 @@ installed automatically; load your application's Anta theme separately.
 For compatibility, `/auto` registers both elements, and `/plot.css` supplies the
 standalone layout stylesheet.
 A separate `/plot.css` import is not needed for the examples above.
+
+## Size scatter marks with the viewport
+
+A numeric `size` stays fixed in CSS pixels. A size accessor receives
+`(row, index, viewport)` and returns a non-negative finite diameter:
+
+```ts
+scatter({
+  data,
+  size: (row, index, viewport) =>
+    Math.min(12, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
+})
+```
+
+`viewport` has the same shape as the `on_viewport_change` payload:
+
+- `x` and `y` contain `{ window: [min, max], full: [min, max] }`, or `null` for a categorical axis.
+- `zoom_factor` contains `{ x, y }` gesture magnification, initially 1 per axis.
+
+Use `viewport.zoom_factor.x`, `viewport.zoom_factor.y`, or `Math.max(viewport.zoom_factor.x, viewport.zoom_factor.y)`
+for zoom-relative sizing. Magnification follows accepted gestures, including zoom
+limits and logarithmic axes. Panning, resizing, and data-domain updates preserve
+it. Reset and new keyed viewport requests establish factor 1 on their affected
+axes. Zooming out beyond a requested initial view can yield factors below 1.
+The window and full domains remain available for other viewport-dependent logic.
+
+Accessors run during composition, after the viewport and scales are known, rather
+than during series construction. They run again for zoom, pan, and other changes
+that require composition. Existing one- and two-argument accessors remain valid,
+but their execution and validation now happen at composition time. Keep them pure
+and inexpensive: each retained row without a numeric `size` override is evaluated.
+The index remains the original input-row index after category filtering.
+
+Drawing, hit testing, and highlights share the resolved numeric sizes; hover and
+redrawing an unchanged composition do not rerun the accessor. Invalid results
+report a composition error and retain the last successful plot. Numeric row
+`size` fields retain precedence over the accessor. No application state updates,
+`on_viewport_change` handler, or series reconstruction are needed.
+
+Viewport-aware sizing is supported by the scatter size accessor. Rectangle
+sizes, line widths, font sizes, and other size declarations accept numbers.

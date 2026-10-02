@@ -17,6 +17,31 @@ function base(): PlotArgs<Node> {
   }
 }
 
+export function viewportSizes(): PlotArgs<Node> {
+  const labels = ['Fixed 4px', 'Data + gradual zoom', 'Data + faster zoom']
+  const positions = [0, 10, 25, 40, 45, 48, 49, 49.5, 49.75, 50, 50.25, 50.5, 51, 52, 55, 60, 75, 90, 100]
+  const rows = (label: string) => positions.map((x, i) => ({ x, y: label, weight: i % 2 ? 4 : 2 }))
+  return {
+    height: 260,
+    margin: { top: 24, right: 20, bottom: 48, left: 160 },
+    axis: { x: { min: 0, max: 100, label: 'Zoom near 50' }, y: { categories: labels, label: '' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#64748b', dark: '#cbd5e1' },
+    grid: false,
+    zoom_pan: { x: true, y: false, modifier: true },
+    series: [
+      scatter<Node>({ data: rows(labels[0]), size: 4,
+        color: { light: '#64748b', dark: '#cbd5e1' }, tooltip: true }),
+      scatter<Node>({ data: rows(labels[1]),
+        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
+        color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true }),
+      scatter<Node>({ data: rows(labels[2]),
+        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.5),
+        color: { light: '#c2410c', dark: '#fdba74' }, tooltip: true }),
+    ],
+  }
+}
+
 export function title(): PlotArgs<Node> {
   return { ...base(), margin: { top: 44, right: 24, bottom: 48, left: 76 },
     title: { text: 'Plot title', font: { size: 20, color: { light: '#713fff', dark: '#c4b5fd' } } } }
@@ -175,5 +200,5 @@ export function strokes(): PlotArgs<Node> {
   })) }
 }
 
-export const detailExamples = { title, fontRoles, fontOverrides, margins, grid, gridX, gridY, gridNone, themeColors, scales, timeCategory, axisLabels, axisLabelsOpposite,
+export const detailExamples = { viewportSizes, title, fontRoles, fontOverrides, margins, grid, gridX, gridY, gridNone, themeColors, scales, timeCategory, axisLabels, axisLabelsOpposite,
   tickLabels, seriesColors, markShapes, strokes }

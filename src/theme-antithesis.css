@@ -1,8 +1,6 @@
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
 
-/* Antithesis. Import after tokens.css and element CSS, as the only theme. */
-
 @font-face {
   font-family: "TT Interphases Pro Variable";
   src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
@@ -63,128 +61,106 @@
   --anta-seed-critical: #c92c46;
 }
 
-/* Role scale — literals from the Figma library "Anta 0.4 — New Brand"
-   ("Dynamic colors" collection; see FIGMA.md). They replace the scale that
-   tokens.css derives from the seeds above, so every --bg-*, --text-* and
-   --border-* role matches the design file exactly. The seeds stay: component
-   tone curves still derive from them. */
+/* Role colors come from Figma's "Anta 0.4 — New Brand" collection. */
 :root,
 .light {
-  /* Backgrounds — light, neutral */
   --bg-1: #ffffff;
   --bg-2: #fdfaf8;
   --bg-3: #faf7f5;
   --bg-4: #f3f0ee;
   --bg-5: #eeeae7;
 
-  /* Backgrounds — light, Brand (no --bg-1-{tone}; bg-1 is neutral-only) */
   --bg-2-brand: #fff6f5;
   --bg-3-brand: #fff2f0;
   --bg-4-brand: #ffedeb;
   --bg-5-brand: #ffe5e0;
 
-  /* Backgrounds — light, Success */
   --bg-2-success: #f7fcf9;
   --bg-3-success: #ecf9f0;
   --bg-4-success: #e2f5e8;
   --bg-5-success: #d9f2e0;
 
-  /* Backgrounds — light, Critical */
   --bg-2-critical: #fefbfb;
   --bg-3-critical: #fdf2f4;
   --bg-4-critical: #fcebee;
   --bg-5-critical: #fae5e9;
 
-  /* Backgrounds — light, Warning */
   --bg-2-warning: #fefbf6;
   --bg-3-warning: #fcf4e8;
   --bg-4-warning: #fbeeda;
   --bg-5-warning: #f9e7cd;
 
-  /* Backgrounds — light, Info */
   --bg-2-info: #fbfcfe;
   --bg-3-info: #f2f7fd;
   --bg-4-info: #e9f3fb;
   --bg-5-info: #e1eefa;
 
-  /* Text — light, neutral */
   --text-1: #080707;
   --text-2: #312d2b;
   --text-3: #665f5b;
   --text-4: #89817c;
   --text-5: #a39994;
 
-  /* Text — light, Brand */
   --text-1-brand: #701600;
   --text-2-brand: #912a0d;
   --text-3-brand: #912a0dcc;
   --text-4-brand: #912a0d99;
   --text-5-brand: #912a0d66;
 
-  /* Text — light, Success */
   --text-1-success: #004415;
   --text-2-success: #1f5c31;
   --text-3-success: #1f5c31cc;
   --text-4-success: #1f5c3199;
   --text-5-success: #1f5c3166;
 
-  /* Text — light, Critical */
   --text-1-critical: #8d0017;
   --text-2-critical: #a01c32;
   --text-3-critical: #a01c32cc;
   --text-4-critical: #a01c3299;
   --text-5-critical: #a01c3266;
 
-  /* Text — light, Warning */
   --text-1-warning: #7f410b;
   --text-2-warning: #995200;
   --text-3-warning: #995200cc;
   --text-4-warning: #99520099;
   --text-5-warning: #99520066;
 
-  /* Text — light, Info */
   --text-1-info: #00396b;
   --text-2-info: #175082;
   --text-3-info: #175082cc;
   --text-4-info: #175082b2;
   --text-5-info: #17508280;
 
-  /* Borders — light, neutral */
   --border-1: #99908b;
   --border-2: #c2b8b2;
   --border-3: #d8cfca;
   --border-4: #e4ddd8;
   --border-5: #eeeae7;
 
-  /* Borders — light, Brand */
   --border-1-brand: #ee6d53;
   --border-2-brand: #fea192;
   --border-3-brand: #ffc1b8;
   --border-4-brand: #ffd3cc;
   --border-5-brand: #ffe5e0;
 
-  /* Borders — light, Success */
   --border-1-success: #44c169;
   --border-2-success: #88d7a0;
   --border-3-success: #b3e5c2;
   --border-4-success: #c6ecd1;
   --border-5-success: #d9f2e0;
 
-  /* Borders — light, Critical */
   --border-1-critical: #e56c80;
   --border-2-critical: #efa4b0;
   --border-3-critical: #f4c2cb;
   --border-4-critical: #f7d4da;
   --border-5-critical: #fae5e9;
 
-  /* Borders — light, Warning */
   --border-1-warning: #d88118;
   --border-2-warning: #edb25a;
   --border-3-warning: #f3cc91;
   --border-4-warning: #f6dbb1;
   --border-5-warning: #f9e7cd;
 
-  /* Borders — light, Info */
   --border-1-info: #56a1e1;
   --border-2-info: #93c5ec;
   --border-3-info: #bad6f3;
@@ -193,121 +169,103 @@
 }
 
 .dark {
-  /* Backgrounds — dark, neutral */
   --bg-1: #0b0409;
   --bg-2: #13070f;
   --bg-3: #170812;
   --bg-4: #1e0b18;
   --bg-5: #250e1e;
 
-  /* Backgrounds — dark, Brand */
   --bg-2-brand: #160803;
   --bg-3-brand: #1f0c04;
   --bg-4-brand: #290e05;
   --bg-5-brand: #321106;
 
-  /* Backgrounds — dark, Success */
   --bg-2-success: #041008;
   --bg-3-success: #05140a;
   --bg-4-success: #061b0e;
   --bg-5-success: #081f0f;
 
-  /* Backgrounds — dark, Critical */
   --bg-2-critical: #190408;
   --bg-3-critical: #1f0509;
   --bg-4-critical: #2c070d;
   --bg-5-critical: #330910;
 
-  /* Backgrounds — dark, Warning */
   --bg-2-warning: #120a03;
   --bg-3-warning: #160d04;
   --bg-4-warning: #201305;
   --bg-5-warning: #241506;
 
-  /* Backgrounds — dark, Info */
   --bg-2-info: #040d18;
   --bg-3-info: #04111f;
   --bg-4-info: #051727;
   --bg-5-info: #071b2c;
 
-  /* Text — dark, neutral */
   --text-1: #eeeae7;
   --text-2: #c0b7bd;
   --text-3: #a398a0;
   --text-4: #7c6e78;
   --text-5: #695d65;
 
-  /* Text — dark, Brand */
   --text-1-brand: #ffb3a7;
   --text-2-brand: #f88d7d;
   --text-3-brand: #f88d7dcc;
   --text-4-brand: #f88d7d99;
   --text-5-brand: #f88d7d66;
 
-  /* Text — dark, Success */
   --text-1-success: #9ddeb1;
   --text-2-success: #74cd8e;
   --text-3-success: #74cd8ecc;
   --text-4-success: #74cd8e99;
   --text-5-success: #74cd8e66;
 
-  /* Text — dark, Critical */
   --text-1-critical: #ffabb9;
   --text-2-critical: #e78e9d;
   --text-3-critical: #e78e9dcc;
   --text-4-critical: #e78e9d99;
   --text-5-critical: #e78e9d66;
 
-  /* Text — dark, Warning */
   --text-1-warning: #f0bf75;
   --text-2-warning: #e1a452;
   --text-3-warning: #e1a452cc;
   --text-4-warning: #e1a45299;
   --text-5-warning: #e1a45266;
 
-  /* Text — dark, Info */
   --text-1-info: #99d0ff;
   --text-2-info: #7db6e8;
   --text-3-info: #7db6e8cc;
   --text-4-info: #7db6e899;
   --text-5-info: #7db6e866;
 
-  /* Borders — dark, neutral */
   --border-1: #695d65;
   --border-2: #4a4248;
   --border-3: #3a3338;
   --border-4: #242023;
   --border-5: #191618;
 
-  /* Borders — dark, Brand */
   --border-1-brand: #d03711;
   --border-2-brand: #912a0d;
   --border-3-brand: #6d240d;
   --border-4-brand: #3e1609;
   --border-5-brand: #321106;
 
-  /* Borders — dark, Success */
   --border-1-success: #2a7e43;
   --border-2-success: #1f5c31;
   --border-3-success: #174525;
   --border-4-success: #0d2b16;
   --border-5-success: #081f0f;
 
-  /* Borders — dark, Critical */
   --border-1-critical: #c92c46;
   --border-2-critical: #a01c32;
   --border-3-critical: #761928;
   --border-4-critical: #471019;
   --border-5-critical: #330910;
 
-  /* Borders — dark, Warning */
   --border-1-warning: #995200;
   --border-2-warning: #6a3b0c;
   --border-3-warning: #4f2d0d;
   --border-4-warning: #311d0a;
   --border-5-warning: #241506;
 
-  /* Borders — dark, Info */
   --border-1-info: #1f6eb2;
   --border-2-info: #175082;
   --border-3-info: #133e62;
@@ -315,14 +273,7 @@
   --border-5-info: #071b2c;
 }
 
-/* Shared fills and focus. One solid fill per tone serves every control that
-   fills on selection: the primary Button, the checked Checkbox and the
-   selected Radio point at it, as their Figma tokens alias
-   component/button/primary/bg-*. --fill-fg is the mark or label on the fill
-   (base/icon/icon-1-invert for the Checkbox and Radio marks); critical keeps
-   a white one in both modes. --focus-ring and --focus-halo are component/focus and
-   component/border-halo-focus. These live in this theme only; the base
-   components keep their own tone curves. */
+/* Figma aliases selected-control fills to primary Button fills. */
 :root,
 .light {
   --fill-neutral: #665f5b;
@@ -427,12 +378,6 @@
     font-family: var(--serif);
   }
 
-  /* Focus ring: a 2px --focus-ring outline flush against the control. On
-     focus it pulses to 4px at 60% strength, then settles. A control with a
-     solid fill adds the 1px --focus-halo inset along the fill edge in its
-     own rules, so the ring stays distinct from the fill. Checkbox, Radio and
-     Switch draw the ring on their box (::before); in a radio group focused
-     through aria-activedescendant, it follows the selected radio. */
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"], [type="checkbox"], [type="radio"]),
       a-tab, a-menu-item, a[data-anta-menu-item],
@@ -448,9 +393,7 @@
     }
   }
 
-  /* The tab strip clips its overflow and has no padding, so a tab draws the
-     ring inward. --focus-ring-inset: 1 turns the ring and its pulse inside
-     the element's edge. */
+  /* The tab strip clips an outward ring. */
   a-tab {
     --focus-ring-inset: 1;
   }
@@ -460,11 +403,6 @@
     --_radius: 999px;
   }
 
-  /* Button: wider inline padding for the round shape, and a literal color
-     curve per named tone: primary fills, secondary / tertiary / quaternary
-     labels and tints, at rest / hover / active. In dark mode primary fills
-     turn light under a black label and lighten further on hover / active;
-     critical keeps its red fill and white label and darkens in both modes. */
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])) {
     --_padding-x-text: round(0.8em, 1px);
@@ -475,16 +413,12 @@
     --bg-secondary-disabled: light-dark(#faf7f5, #1e1b1d);
     --fg-disabled: light-dark(#b3a9a3, #695d65);
 
-    /* Primary fill: the focus halo along its edge. */
     &[priority="primary"]:focus-visible {
       box-shadow: inset 0 0 0 1px var(--focus-halo);
     }
   }
 
-  /* Secondary: the rest label is the token as-is (the base sheet darkens it
-     in light mode), and the rim is an inner shadow in the label color. The
-     theme layer outranks the base state rules, so hover / active / selected
-     are restated here. */
+  /* The theme layer outranks the base state rules, so restate each state. */
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])):not([priority="primary"], [priority="tertiary"], [priority="quaternary"]) {
     --button-fg: var(--button-fg-secondary-rest);
@@ -624,10 +558,7 @@
     --button-fg-quaternary-hover: light-dark(#a01c32, #ffabb9);
   }
 
-  /* Custom tones: light mode keeps the base formula. In dark mode the primary
-     fill lifts to L 0.80 / 0.84 / 0.87 so the black label stays readable, and
-     secondary / tertiary / quaternary labels lighten on hover like the named
-     tones do. */
+  /* Lift custom dark fills under the black label. */
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"]))[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
     --button-bg-primary-rest: light-dark(oklch(from var(--_src) 0.51 0.17 h), oklch(from var(--_src) 0.8 0.1 h));
@@ -641,11 +572,6 @@
     --button-fg-quaternary-hover: light-dark(oklch(from var(--_src) 0.38 0.17 h), oklch(from var(--_src) 0.835 0.09 h));
   }
 
-  /* Checkbox: a 1px corner, a 1.6px check / minus stroke at every size, and
-     a literal color curve per named tone. Checked fills match the primary
-     Button fill. In dark mode they turn light under a black mark; critical
-     keeps its red fill and white mark in both modes. The default `all` scope
-     also tints the empty box. */
   :is(a-checkbox, input[data-anta][type="checkbox"]) {
     --checkbox-icon: var(--fill-fg);
     --checkbox-icon-disabled: var(--fill-fg-disabled);
@@ -676,8 +602,6 @@
     }
   }
 
-  /* Neutral empty box: no tone, neutral, or any tone scoped to the checked
-     state. */
   :is(a-checkbox, input[data-anta][type="checkbox"]):is(:not([tone]), [tone=""], [tone="neutral"], [tone-scope="selected"]) {
     --checkbox-bg: light-dark(#ffffff, #080707);
     --checkbox-border-neutral: light-dark(#d8cfca, #4a4248);
@@ -758,9 +682,7 @@
     }
   }
 
-  /* Custom tones: light mode keeps the base formula. In dark mode the checked
-     fill lifts to L 0.80 / 0.84 / 0.87 under the black mark, like the primary
-     Button fill. The tinted empty box still derives from the base fill. */
+  /* Lift custom dark fills under the black mark. */
   :is(a-checkbox, input[data-anta][type="checkbox"])[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
     --checkbox-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.5 c h), oklch(from var(--checkbox-tone-source) 0.8 0.1 h));
     --checkbox-bg-selected-hover: light-dark(oklch(from var(--checkbox-tone-source) 0.45 c h), oklch(from var(--checkbox-tone-source) 0.84 0.095 h));
@@ -768,52 +690,28 @@
     --_checkbox-off-bg-selected: light-dark(oklch(from var(--checkbox-tone-source) 0.5 c h), oklch(from var(--checkbox-tone-source) 0.45 c h));
   }
 
-  /* The check / minus draws in left to right: a second mask layer, as large
-     as the mark, slides in from where the check stroke starts (16% of the
-     mark's width) over 300ms. The transition runs only under :hover or
-     :focus-visible, so a pointer or keyboard toggle draws the mark while page
-     load, upgrade and scripted changes show it at once. Unchecking clears it
-     at once. Without mask-composite the extra layer
-     would paint a solid square, so the effect sits behind @supports. */
-  @supports ((mask-composite: intersect) or (-webkit-mask-composite: source-in)) {
-    a-checkbox::after {
-      -webkit-mask-image: var(--checkbox-mask-check), linear-gradient(#000 0 0);
-      mask-image: var(--checkbox-mask-check), linear-gradient(#000 0 0);
-      -webkit-mask-size: var(--checkbox-mask-size);
-      mask-size: var(--checkbox-mask-size);
-      -webkit-mask-position: center, calc(50% - var(--checkbox-mask-size) * 0.84) center;
-      mask-position: center, calc(50% - var(--checkbox-mask-size) * 0.84) center;
-      -webkit-mask-composite: source-in;
-      mask-composite: intersect;
-    }
-    a-checkbox:state(indeterminate)::after {
-      -webkit-mask-image: var(--checkbox-mask-indeterminate), linear-gradient(#000 0 0);
-      mask-image: var(--checkbox-mask-indeterminate), linear-gradient(#000 0 0);
-    }
-    a-checkbox:is(:state(checked), :state(indeterminate))::after {
-      -webkit-mask-position: center, center;
-      mask-position: center, center;
-    }
-    @media (prefers-reduced-motion: no-preference) {
-      a-checkbox:is(:hover, :focus-visible):is(:state(checked), :state(indeterminate))::after {
-        transition:
-          -webkit-mask-position 300ms cubic-bezier(0.45, 0.05, 0.55, 0.95),
-          mask-position 300ms cubic-bezier(0.45, 0.05, 0.55, 0.95);
-      }
+  /* Reveal the check / minus from left to right over 300ms on hover or
+     keyboard focus. Other state changes show the mark at once; unchecking
+     clears it at once. */
+  a-checkbox::after {
+    clip-path: inset(0 100% 0 0);
+  }
+  a-checkbox:is(:state(checked), :state(indeterminate))::after {
+    clip-path: inset(0);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    a-checkbox:is(:hover, :focus-visible):is(:state(checked), :state(indeterminate))::after {
+      transition: clip-path 300ms cubic-bezier(0.45, 0.05, 0.55, 0.95);
     }
   }
 
-  /* Checked fill: the focus halo along its edge. The box drops its border
-     (it matches the fill) so the halo sits on the outer edge. */
   a-checkbox:is(:state(checked), :state(indeterminate)):focus-visible::before,
   input[data-anta][type="checkbox"]:is(:checked, :indeterminate):focus-visible {
     border-width: 0;
     box-shadow: inset 0 0 0 1px var(--focus-halo);
   }
 
-  /* Native checkbox: the same box and colors. Its mark is a background image,
-     so each mark color is a separate SVG; it keeps the medium 1.6px stroke at
-     every size. */
+  /* Native checkbox marks use background images, so their colors need separate SVGs. */
   label:has(> input[data-anta][type="checkbox"]) {
     color: var(--text-1);
   }
@@ -855,10 +753,6 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
   }
 
-  /* Radio: the Checkbox colors on a round control. The selected fill and dot
-     match the checked Checkbox, the empty ring matches the empty box, and a
-     named tone in the `all` scope tints the ring with the same literals. A
-     group tone reaches radios without their own tone, as in the base sheet. */
   :is(a-radio, input[data-anta][type="radio"]) {
     --radio-bg: light-dark(#ffffff, #080707);
     --radio-border-neutral: light-dark(#d8cfca, #4a4248);
@@ -925,7 +819,7 @@
     --_radio-tint-border-active: light-dark(#e56c80, #de455e);
   }
 
-  /* Tinted ring: the base sheet's `all`-scope conditions. */
+  /* Apply tint only when the radio's scope includes its unselected state. */
   a-radio[tone]:not([tone=""], [tone="neutral"], [tone-scope="selected"]),
   a-radio-group[tone]:not([tone=""], [tone="neutral"], [tone-scope="selected"]) a-radio:not([tone], [tone-scope="selected"]),
   a-radio-group[tone]:not([tone=""], [tone="neutral"])[tone-scope="selected"] a-radio[tone-scope="all"]:not([tone]),
@@ -936,9 +830,7 @@
     --radio-border-active: var(--_radio-tint-border-active);
   }
 
-  /* Custom tones: as on the Checkbox, the dark selected fill lifts under the
-     black dot. The tinted ring keeps the base formula, derived from the
-     unlifted fill. */
+  /* Keep custom tint borders based on the unlifted fill. */
   :is(a-radio[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
       a-radio-group[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) a-radio:not([tone]),
       input[data-anta][type="radio"][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"])) {
@@ -952,8 +844,7 @@
     --_radio-tint-border-active: light-dark(var(--_radio-border-base), oklch(from var(--_radio-border-base) calc(l + 0.17) c h));
   }
 
-  /* Native radio: the base sheet paints its disabled state with literals, so
-     restate it with the disabled tokens. */
+  /* Override the base native radio's literal disabled colors. */
   input[data-anta][type="radio"]:disabled {
     border-color: var(--radio-border-disabled);
     background-color: var(--radio-bg-disabled);
@@ -963,9 +854,6 @@
     background: radial-gradient(circle, var(--radio-dot-disabled) 0 var(--radio-dot-core), var(--radio-bg-disabled) var(--radio-dot-edge));
   }
 
-  /* Radio and Switch: a selected radio and a checked switch are solid
-     fills, so the focus halo runs along the fill edge. The box drops its
-     border (fill-colored or transparent) so the halo sits on the outer edge. */
   a-radio:state(selected):focus-visible::before,
   a-radio-group:focus-visible a-radio:state(selected)::before,
   input[data-anta][type="radio"]:checked:focus-visible,
@@ -991,9 +879,6 @@
   }
 }
 
-/* The focus ring grows to 4px at 60% strength, then settles to the rule's
-   2px at full color. An inward ring (--focus-ring-inset: 1) moves its offset
-   with the width so it grows inside the edge. */
 @keyframes focus-ring-pulse {
   from {
     outline-width: 0;

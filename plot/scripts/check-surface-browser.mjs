@@ -34,7 +34,7 @@ export async function checkSurface() {
     surface.addEventListener('measurechange', () => measures++)
     surface.addEventListener('contextchange', () => contexts++)
     surface.addEventListener('wheelinput', () => wheels++)
-    surface.addEventListener('resetrequest', () => resets++)
+    surface.addEventListener('zoomrequest', event => { if (event.detail.action === 'reset') resets++ })
 
     host.append(surface)
     await wait()
@@ -64,11 +64,7 @@ export async function checkSurface() {
         height: 400,
         inner: { left: 40, top: 20, right: 620, bottom: 380 },
         filter: 'invert(1)',
-        reset: {
-            visible: true,
-            position: { position: 'absolute', left: '48px', top: '28px' },
-            button: { style: { padding: '5px' } },
-        },
+        menu: { enabled: true, zoom_in: true, zoom_out: true, reset: true },
     }
     surface.present(presentation)
     check(
@@ -77,14 +73,16 @@ export async function checkSurface() {
     )
     check(surface.capture.style.filter === '' && surface.canvas.style.filter === 'invert(1)', 'filter only on canvases')
 
-    const reset = surface.querySelector('.plot-reset')
-    check(reset.style.left === '48px' && reset.style.top === '28px', 'reset at plottable top left')
-    check(getComputedStyle(reset).zIndex === '3', 'reset stays above Capture')
-    surface.present({ ...presentation, reset: { ...presentation.reset, visible: false } })
-    check(getComputedStyle(reset).display === 'none', 'hidden reset is removed from layout')
+    const reset = surface.querySelector('[data-zoom-action=reset]')
+    check(!reset.hasAttribute('disabled'), 'reset enabled for zoomed presentation')
+    surface.present({ ...presentation, menu: { ...presentation.menu, reset: false } })
+    check(reset.hasAttribute('disabled'), 'full-view reset stays visible but disabled')
     surface.present(presentation)
+    surface.capture.dispatchEvent(new MouseEvent('contextmenu', {
+        bubbles: true, cancelable: true, clientX: 100, clientY: 100,
+    }))
     reset.click()
-    check(resets === 1, 'reset request forwarded')
+    check(resets === 1, 'reset menu request forwarded')
 
     surface.configureCapture({
         wheel_capture: 'both',
@@ -248,12 +246,13 @@ export async function checkSurface() {
     const zoom = new WheelEvent('wheel', { ...point, deltaY: -150, cancelable: true })
     capture.dispatchEvent(zoom)
     await wait()
-    const resetControl = plot.querySelector('.plot-reset')
-    check(zoom.defaultPrevented && !resetControl.hidden, 'standalone zoom reveals reset')
+    const resetControl = plot.querySelector('[data-zoom-action=reset]')
+    check(zoom.defaultPrevented && !resetControl.hasAttribute('disabled'), 'standalone zoom enables reset')
 
+    capture.dispatchEvent(new MouseEvent('contextmenu', { ...point, cancelable: true }))
     resetControl.click()
     await wait()
-    check(resetControl.hidden, 'standalone reset restores viewport')
+    check(resetControl.hasAttribute('disabled'), 'standalone reset restores viewport')
 
     return passed
 }

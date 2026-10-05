@@ -72,8 +72,7 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
                 this.#context = (event as CustomEvent<BoxContextChange>).detail.current
                 if (this.#host.update_context(this.#context)) this.#schedule()
             })
-            this.#view.root.addEventListener('resetrequest', this.#interaction_coordinator.reset)
-            this.#view.root.addEventListener('plotdoubleclick', this.#interaction_coordinator.handle_double_click)
+            this.#view.root.addEventListener('zoomrequest', event => this.#interaction_coordinator.handle_menu((event as CustomEvent).detail))
             this.#view.root.addEventListener('wheelinput', event => {
                 const detail = (event as CustomEvent<CaptureWheelInput>).detail
                 this.#wheel(detail)

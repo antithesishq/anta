@@ -2,7 +2,7 @@ import { cursor_position, find_hits, resolve_point_data, same_hits, selectable_h
 import { compatible_viewport, viewport_change, viewport_moved, type ViewportAxes } from "./interactions/viewport"
 import { resolve_tooltips, type ResolvedTooltip } from "./interactions/tooltip"
 import { resolve_highlights } from "./interactions/highlight"
-import { rectangle_zoom_viewport, type RectangleZoomSnapshot, axis_zoom_frame, axis_zoom_viewport, type AxisZoomSnapshot, clamp_viewport, magnify_zoom, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
+import { zoom_viewport_by_factor, rectangle_zoom_viewport, type RectangleZoomSnapshot, axis_zoom_frame, axis_zoom_viewport, type AxisZoomSnapshot, clamp_viewport, magnify_zoom, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
 import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import type { ComposedPlot, HighlightSpec, PointData, TooltipData, Viewport, ViewportChange, ViewportRequest, ZoomPan } from "./types"
 import { target_axes, type InteractionTarget, type WheelInput } from './interactions/target'
@@ -390,6 +390,36 @@ export class PlotInteractionController<TooltipContent = unknown> {
         this.#zoomed_targets.add(target)
         this.#staged_zoom = magnify_zoom(views, before, zoomed, this.#staged_zoom)
         this.stage_viewport(zoomed)
+        return true
+    }
+
+    menu_state(zoom_pan: ZoomPan) {
+        const plot = this.#get_composed_plot()
+        const enabled = this.#pan_enabled(zoom_pan)
+        const claim = !enabled || plot === null ? 'none'
+            : wheel_claim(zoomable_views(plot, zoom_pan), this.#committed_viewport)
+        return {
+            enabled,
+            zoom_in: claim === 'up' || claim === 'both',
+            zoom_out: claim === 'down' || claim === 'both',
+            reset: enabled && this.is_zoomed(zoom_pan),
+        }
+    }
+
+    zoom_from_menu(input: PointerOffset & { action: 'in' | 'out' }, zoom_pan: ZoomPan): boolean {
+        const plot = this.#get_composed_plot()
+        if (plot === null || !this.#pan_enabled(zoom_pan) || this.drag_in_progress) return false
+        const before = this.#staged_viewport
+        const views = zoomable_views(plot, zoom_pan)
+        const cursor = cursor_position(plot, input)
+        cursor.x = Math.max(plot.inner.left, Math.min(plot.inner.right, cursor.x))
+        cursor.y = Math.max(plot.inner.top, Math.min(plot.inner.bottom, cursor.y))
+        const factor = input.action === 'in' ? 1 / zoom_pan.menu_zoom_step : zoom_pan.menu_zoom_step
+        const zoomed = zoom_viewport_by_factor(views, before, cursor, factor)
+        if (!viewport_moved(before, zoomed)) return false
+        this.#staged_zoom = magnify_zoom(views, before, zoomed, this.#staged_zoom)
+        this.stage_viewport(zoomed)
+        this.on_mouse_leave()
         return true
     }
 

@@ -89,6 +89,15 @@ export function create_viewport_schedule<T>(host: ViewportHost<T>) {
             pending_report()
             return { changed: true, visit_changed: previous_visit !== interactions.zoomed_this_visit }
         },
+        zoom_from_menu(input: { offsetX: number; offsetY: number; action: 'in' | 'out' }, zoom_pan: ZoomPan): boolean {
+            const interactions = host.interactions()
+            if (interactions === null || !interactions.zoom_from_menu(input, zoom_pan)) return false
+            cancel()
+            publish()
+            pending_report()
+            pending_report.flush()
+            return true
+        },
         cancel,
         adopt,
         // Reconcile a host's render snapshot after composition, then apply any new request.

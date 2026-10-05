@@ -4,7 +4,7 @@ import type { Rect } from '../core/types'
 import type { ABoxElement } from '@antadesign/anta/elements/a-box'
 import type { BoxContext, BoxMeasurement } from '@antadesign/anta/box-types'
 import { drag_rectangle, type CaptureConfiguration } from '../core/interactions/zoom_pan'
-import { RESET_ZOOM_BUTTON } from '../core/presentation/reset_zoom'
+import type { AMenuElement } from '@antadesign/anta/elements/a-menu'
 import { tooltip_wrapper_style } from '../core/presentation/tooltip'
 import { configure_capture, prepare_canvas, size_host } from './surface_support'
 import type {
@@ -59,11 +59,6 @@ a-plot-surface > .plot-highlight {
     pointer-events: none;
 }
 
-a-plot-surface > .plot-reset {
-    z-index: 3;
-    cursor: pointer;
-}
-
 a-plot-surface [hidden] {
     display: none !important;
 }
@@ -104,7 +99,11 @@ export function create_plot_surface_element(): CustomElementConstructor {
         #regions: InteractionRegions | null = null
         readonly #rectangle: HTMLElement
         #rectangleStart: { x: number; y: number; width: number; height: number } | null = null
-        readonly #reset: HTMLElement
+        readonly #menuAnchor: HTMLElement
+        readonly #menu: AMenuElement
+        readonly #menuItems: Record<'in' | 'out' | 'reset', HTMLElement>
+        #menuState: PlotSurfacePresentation['menu'] | null = null
+        #menuInput: PlotSurfaceMouseInput | null = null
         #ownership: 'unclaimed' | 'main' | 'worker' = 'unclaimed'
         #listeners: AbortController | null = null
         #inputListeners: AbortController | null = null
@@ -135,20 +134,25 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 capture.className = `plot-axis-capture plot-axis-${axis}`
                 capture.style.display = 'none'
             }
-            this.#reset = doc.createElement('a-button')
-            this.#reset.className = 'plot-reset'
-            this.#reset.setAttribute('type', 'button')
-            this.#reset.setAttribute('role', 'button')
-            this.#reset.setAttribute('priority', RESET_ZOOM_BUTTON.priority)
-            this.#reset.setAttribute('size', RESET_ZOOM_BUTTON.size)
-            this.#reset.tabIndex = 0
-            const label = doc.createElement('a-button-label')
-            label.textContent = RESET_ZOOM_BUTTON.label
-            const icon = doc.createElement('a-icon')
-            icon.setAttribute('shape', RESET_ZOOM_BUTTON.iconTrailing)
-            icon.setAttribute('aria-hidden', 'true')
-            this.#reset.append(label, icon)
-            this.#reset.hidden = true
+            this.#menuAnchor = doc.createElement('span')
+            this.#menuAnchor.tabIndex = -1
+            this.#menuAnchor.style.cssText = 'position:absolute;pointer-events:none'
+            this.#menuAnchor.setAttribute('aria-label', 'Plot zoom menu')
+            this.#menu = doc.createElement('a-menu') as AMenuElement
+            this.#menu.setAttribute('context', '')
+            this.#menu.setAttribute('coord', '')
+            this.#menu.setAttribute('aria-label', 'Plot zoom')
+            this.#menuItems = Object.fromEntries(
+                (['in', 'out', 'reset'] as const).map(action => {
+                    const item = doc.createElement('a-menu-item')
+                    item.dataset.zoomAction = action
+                    const label = doc.createElement('a-menu-item-label')
+                    label.textContent = { in: 'Zoom In', out: 'Zoom Out', reset: 'Reset Zoom' }[action]
+                    item.append(label)
+                    this.#menu.append(item)
+                    return [action, item]
+                }),
+            ) as Record<'in' | 'out' | 'reset', HTMLElement>
         }
 
         attributeChangedCallback(name: string, previous: string | null, value: string | null): void {
@@ -166,7 +170,8 @@ export function create_plot_surface_element(): CustomElementConstructor {
                         this.#clearRectangle()
                         this.#regions = null
                         for (const capture of Object.values(this.#axisCapture)) capture.style.display = 'none'
-                        this.#reset.hidden = true
+                        this.#menuState = null
+                        this.#menu.close()
                     } else {
                         this.present(JSON.parse(value))
                     }
@@ -194,9 +199,14 @@ export function create_plot_surface_element(): CustomElementConstructor {
                     this.dispatchEvent(new CustomEvent(name, { detail: (event as CustomEvent).detail }))
                 }, { signal })
             }
-            this.#reset.addEventListener('click', () => {
-                this.dispatchEvent(new CustomEvent('resetrequest'))
-            }, { signal })
+            for (const action of ['in', 'out', 'reset'] as const) {
+                const item = this.#menuItems[action]
+                item.addEventListener('click', () => {
+                    if (item.hasAttribute('disabled') || this.#menuInput === null) return
+                    this.#emit('zoomrequest', { ...this.#menuInput, action })
+                    this.#menu.close()
+                }, { signal })
+            }
             // Every Capture reports offsets relative to the inner plot before crossing threads.
             for (const capture of [this.capture, this.#axisCapture.x, this.#axisCapture.y]) {
                 capture.addEventListener('wheelinput', event => {
@@ -214,7 +224,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
             }
             if (this.#box.parentNode !== this) {
                 this.append(this.#styles, this.#box, this.canvas, this.highlight, this.capture,
-                    this.#axisCapture.x, this.#axisCapture.y, this.#reset)
+                    this.#axisCapture.x, this.#axisCapture.y, this.#menuAnchor, this.#menu)
             }
 
             this.#listenForMouseInput()
@@ -222,6 +232,8 @@ export function create_plot_surface_element(): CustomElementConstructor {
         }
 
         disconnectedCallback(): void {
+            this.#menu.close()
+            this.#menuInput = null
             this.#clearRectangle()
             this.#connection++
             this.#inputListeners?.abort()
@@ -308,7 +320,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
             if (scope === null) return
 
             const normalized = (event: MouseEvent): PlotSurfaceMouseInput | null => {
-                if (event.target instanceof Node && this.#reset.contains(event.target)) return null
+                if (event.composedPath().includes(this.#menu)) return null
                 if (this.capture.style.display === 'none') return null
 
                 const rect = this.capture.getBoundingClientRect()
@@ -333,8 +345,16 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 if (input !== null) this.#emit('plotclick', input)
             }, { signal })
 
-            scope.addEventListener('dblclick', event => {
-                if (normalized(event) !== null) this.#emit('plotdoubleclick', undefined)
+            scope.addEventListener('contextmenu', event => {
+                const input = normalized(event)
+                if (input === null || !this.#menuState?.enabled || this.#rectangleStart !== null) return
+                event.preventDefault()
+                this.#menuInput = input
+                const bounds = this.getBoundingClientRect()
+                this.#menuAnchor.style.left = `${event.clientX - bounds.left}px`
+                this.#menuAnchor.style.top = `${event.clientY - bounds.top}px`
+                this.#emit('plotleave', undefined)
+                this.#menu.open({ coord: [event.clientX, event.clientY], originEvent: event })
             }, { signal })
         }
 
@@ -350,7 +370,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
             configure_capture(this.capture, configuration)
         }
 
-        present({ width, height, inner, regions, axis_capture, filter, reset }: PlotSurfacePresentation): void {
+        present({ width, height, inner, regions, axis_capture, filter, menu }: PlotSurfacePresentation): void {
             this.capture.style.display = ''
             this.#regions = regions ?? { plot: inner, x: null, y: null }
             for (const canvas of [this.canvas, this.highlight]) {
@@ -376,8 +396,11 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 Object.assign(capture.style, tooltip_wrapper_style(visible))
                 configure_capture(capture, configuration)
             }
-            Object.assign(this.#reset.style, reset.position, reset.button.style)
-            this.#reset.hidden = !reset.visible
+            this.#menuState = menu
+            this.#menuItems.in.toggleAttribute('disabled', !menu.zoom_in)
+            this.#menuItems.out.toggleAttribute('disabled', !menu.zoom_out)
+            this.#menuItems.reset.toggleAttribute('disabled', !menu.reset)
+            if (!menu.enabled) this.#menu.close()
         }
 
         prepareCanvas(width: number, height: number, dpr: number): CanvasRenderingContext2D {

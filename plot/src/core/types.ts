@@ -322,9 +322,15 @@ export type CategoryAxisTemplate = BaseAxisTemplate & {
 export type AxisTemplate = LinearAxisTemplate | LogarithmicAxisTemplate | CategoryAxisTemplate | TimeAxisTemplate
 
 export type GridSpec = boolean | { x?: boolean; y?: boolean }
-export type ZoomPanArg = boolean | { x?: boolean; y?: boolean }
+export type ZoomPanArg = boolean | {
+    x?: boolean
+    y?: boolean
+    /** Multiplicative menu zoom increment. Must be finite and greater than 1. Wheel/drag sensitivity is unchanged.
+     * @defaultValue 2 */
+    menu_zoom_step?: number
+}
 
-export type ZoomPan = { enabled: boolean; x: boolean; y: boolean }
+export type ZoomPan = { enabled: boolean; x: boolean; y: boolean; menu_zoom_step: number }
 
 export type RequestedViewportWindow = { x?: Domain | null; y?: Domain | null }
 

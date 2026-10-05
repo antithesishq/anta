@@ -268,7 +268,11 @@ function clamp_axis_window(scale: Scale, full_domain: Domain | null, window: Dom
  * @returns the new viewport
  */
 export function zoom_viewport(views: AxisViews, override: Viewport, cursor: { x: number; y: number }, delta_y: number): Viewport {
-    const factor = zoom_factor(delta_y)
+    return zoom_viewport_by_factor(views, override, cursor, zoom_factor(delta_y))
+}
+
+/** Apply one proportional zoom step, with independent axis limits. */
+export function zoom_viewport_by_factor(views: AxisViews, override: Viewport, cursor: { x: number; y: number }, factor: number): Viewport {
     return {
         x: zoom_axis(views.x_scale, views.x_full_domain, override.x, cursor.x, factor),
         y: zoom_axis(views.y_scale, views.y_full_domain, override.y, cursor.y, factor),

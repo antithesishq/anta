@@ -143,3 +143,22 @@ report a composition error and retain the last successful plot. Numeric row
 
 Viewport-aware sizing is supported by the scatter size accessor. Rectangle
 sizes, line widths, font sizes, and other size declarations accept numbers.
+
+## Interaction configuration migration
+
+Zoom and pan use fixed gestures. Remove `zoom_pan.modifier` from existing configs.
+Plain drag pans; Ctrl-drag inside the plot draws a zoom rectangle. Over an axis,
+plain drag pans that axis, Ctrl-drag zooms it, and scrolling zooms only that axis.
+Scrolling inside the plot zooms both enabled axes. Horizontal input is ignored.
+
+Right-click for Zoom In, Zoom Out, and Reset Zoom. This replaces the reset button
+and double-click reset. Unavailable actions remain visible and disabled.
+`zoom_pan` still accepts a boolean or an object with optional `x` and `y` flags.
+The object also accepts `menu_zoom_step`, a finite number greater than 1, default
+`2`. Zoom In divides spans by this value; Zoom Out multiplies them. It affects
+only menu zoom. Wheel and drag sensitivity are unchanged.
+
+Low-level `PlotSurface` consumers now supply `presentation.menu` action states
+and handle `onZoomRequest` (`in`, `out`, or `reset`, plus context-click offsets).
+The old `presentation.reset`, `onResetRequest`, and `onPlotDoubleClick` are removed.
+The public `Plot` and standalone `a-plot` hosts handle these details internally.

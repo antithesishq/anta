@@ -4,7 +4,6 @@ import { resolve_canvas_size, type Dimensions } from '../core/compose/layout'
 import { create_interaction_coordinator } from '../core/interactions/coordinator'
 import { capture_attributes, resolve_capture_configuration, zoom_pan_enabled } from '../core/interactions/zoom_pan'
 import { plot_color_filter } from '../core/presentation/plot'
-import { reset_zoom_presentation } from '../core/presentation/reset_zoom'
 import type { PlotSurfacePresentation, PlotSurfaceMouseInput } from '../core/presentation/surface'
 import { target_axes, type InteractionTarget } from '../core/interactions/target'
 import type { PlotArgs, ViewportChange } from '../core/types'
@@ -135,7 +134,7 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
             regions: controller.interaction_regions,
             axis_capture: { x: this.capture('x-axis'), y: this.capture('y-axis') },
             filter: plot_color_filter(controller.template, environment.color_theme),
-            reset: reset_zoom_presentation(controller, plot.inner, environment.color_theme),
+            menu: controller.interactions.menu_state(controller.template.zoom_pan),
         }
     }
 

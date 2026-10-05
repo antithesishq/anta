@@ -461,12 +461,13 @@ document.body.append(plot)
 | [`chrome_color?`](#theme-colors) | `string \| { light, dark }` | Theme defaults | Color for axis lines, tick marks, grid lines, and the plot border. Text colors are configured separately. |
 | [`background?`](#theme-colors) | `boolean \| string \| { light, dark }` | White | Plot fill. `false` paints none; `true` and an absent value use `#fff`. |
 | [`theme_invert?`](#theme-colors) | `boolean` | Automatic | Forces dark-mode inversion on or off. Absent means invert unless a series color or the background is a `{ light, dark }` pair. |
-| [`zoom_pan?`](#zoom-and-pan) | `boolean \| { x?, y? }` | Both continuous axes | Scroll to zoom and drag to pan. Scroll or drag on an axis to affect only that axis. Set both axes to `false` to disable zoom and pan. |
+| [`zoom_pan?`](#zoom-and-pan) | `boolean \| { x?, y?, menu_zoom_step? }` | Both continuous axes | Scroll to zoom and drag to pan. Scroll or drag on an axis to affect only that axis. Set both axes to `false` to disable zoom and pan. |
 | [`viewport?`](#viewport) | `{ x?, y?, key? }` | Full domain | Requested starting window per axis. Applied at mount and on each `key` change, clamped to the full domain. |
 | [`on_viewport_change?`](#viewport-changes) | `(change: ViewportChange) => void` | None | Fires with each axis's current window and full extent after a gesture or reset. |
 
-A zoomed plot shows a **Reset zoom** button in the plot area; it
-disappears once the view is back to its full extent.
+Right-click the plot for **Zoom In**, **Zoom Out**, and **Reset Zoom**.
+Unavailable actions stay visible and disabled. Reset restores the full viewport;
+double-clicking does not reset.
 
 ### Axes
 
@@ -2854,6 +2855,8 @@ Zoom and pan in the plot
 
 Scroll to zoom around the pointer, or drag to pan. Wheel zoom activates after the pointer settles over the plot. Horizontal scrolling does not change the viewport. Hold Ctrl and drag inside the plot to draw a zoom rectangle. Releasing fits the viewport to the rectangle, subject to each enabled axis's limits.
 
+Right-click for **Zoom In**, **Zoom Out**, and **Reset Zoom**. Menu zoom anchors at the context-click position and applies the same factor to both enabled axes, with independent limits. Set `zoom_pan: { menu_zoom_step: 1.5 }` to change that factor from its default of `2`. Zoom In divides each span by the factor; Zoom Out multiplies it. The value must be finite and greater than 1. It affects only menu actions; wheel and drag sensitivity stay fixed.
+
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'
 import '@antadesign/plot/elements/a-plot'
@@ -3104,7 +3107,7 @@ without storing zoom in application state.
 
 Scroll near **50**. The first series stays at 4px. The other series
 alternate between 2px and 4px based on their data, then grow with horizontal zoom,
-at different rates, up to 16px. Drag to pan; **Reset zoom** restores
+at different rates, up to 16px. Drag to pan; **Reset Zoom** in the context menu restores
 the starting sizes.
 
 ```ts

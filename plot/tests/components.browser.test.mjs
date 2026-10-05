@@ -226,11 +226,12 @@ test('wheel ownership, reset, and keyed viewport updates retain shared controlle
     await center(page, 'pointermove')
     await page.waitForTimeout(180) // unmodified wheel capture waits for the pointer to settle
     assert.equal(await center(page, 'wheel', { deltaY: -120 }), true)
-    await page.waitForFunction(() => !document.querySelector('.plot-reset').hidden && stats.reports.length > 0)
-    await page.locator('.plot-reset').click()
-    await page.waitForFunction(() => document.querySelector('.plot-reset').hidden)
+    await page.waitForFunction(() => !document.querySelector('[data-zoom-action=reset]').hasAttribute('disabled') && stats.reports.length > 0)
+    await center(page, 'contextmenu')
+    await page.locator('[data-zoom-action=reset]').click()
+    await page.waitForFunction(() => document.querySelector('[data-zoom-action=reset]').hasAttribute('disabled'))
     await page.evaluate(() => renderPlot({ args: { viewport: { key: 'request', x: [2, 8] } } }))
-    await page.waitForFunction(() => !document.querySelector('.plot-reset').hidden)
+    await page.waitForFunction(() => !document.querySelector('[data-zoom-action=reset]').hasAttribute('disabled'))
     assert.deepEqual(await page.evaluate(() => stats.errors), [])
     // Empty area outside the plot must not acquire wheel ownership.
     assert.equal(await page.evaluate(() => {

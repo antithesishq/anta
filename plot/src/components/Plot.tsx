@@ -223,8 +223,7 @@ export function Plot<Content = React.ReactNode>({
                     onPlotMove={event => host.interactions.move(event.detail)}
                     onPlotLeave={host.interactions.leave}
                     onPlotClick={event => host.interactions.handle_click(event.detail)}
-                    onPlotDoubleClick={host.interactions.handle_double_click}
-                    onResetRequest={host.interactions.reset}
+                    onZoomRequest={event => host.interactions.handle_menu(event.detail)}
                     onCanvasTransfer={onCanvasTransfer}
                     onSurfaceError={event => reportError({
                         phase: 'draw',

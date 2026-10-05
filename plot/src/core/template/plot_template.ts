@@ -59,16 +59,20 @@ export function new_plot_template<TooltipContent = unknown>(args: PlotArgs<Toolt
  */
 function resolve_zoom_pan(zoom_pan: PlotArgs['zoom_pan']): ZoomPan {
     if (zoom_pan === undefined || zoom_pan === true) {
-        return { enabled: true, x: true, y: true }
+        return { enabled: true, x: true, y: true, menu_zoom_step: 2 }
     }
 
     if (zoom_pan === false) {
-        return { enabled: false, x: false, y: false }
+        return { enabled: false, x: false, y: false, menu_zoom_step: 2 }
     }
     const x = zoom_pan.x ?? true
     const y = zoom_pan.y ?? true
 
-    return { enabled: x || y, x, y }
+    const menu_zoom_step = zoom_pan.menu_zoom_step === undefined ? 2 : zoom_pan.menu_zoom_step
+    if (!Number.isFinite(menu_zoom_step) || menu_zoom_step <= 1) {
+        throw new Error('zoom_pan.menu_zoom_step must be finite and greater than 1')
+    }
+    return { enabled: x || y, x, y, menu_zoom_step }
 }
 
 const KEEP = 'keep' as const // this side was omitted: leave that axis wherever it is

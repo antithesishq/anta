@@ -56,7 +56,6 @@ export type AntaHostAdapter<T> = {
     on_mouse_move: MouseHandler
     on_mouse_leave(): void
     on_click: MouseHandler
-    on_double_click(): void
     reset(): void
     viewport_for_render(snapshot: Viewport): Viewport
     reconcile_viewport(snapshot: Viewport): Viewport
@@ -126,7 +125,6 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
         on_mouse_move: coordinator.move,
         on_mouse_leave: coordinator.leave,
         on_click: coordinator.handle_click,
-        on_double_click: coordinator.handle_double_click,
         reset: coordinator.reset,
         viewport_for_render(snapshot: Viewport): Viewport {
             return compatible_viewport(snapshot, controller.template)
@@ -162,7 +160,6 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
                 onMouseMove: coordinator.move,
                 onMouseLeave: coordinator.leave,
                 onClick: coordinator.handle_click,
-                ondblclick: coordinator.handle_double_click,
                 onWheelInput: on_wheel_input,
                 onPointerInput: on_pointer_input,
             }

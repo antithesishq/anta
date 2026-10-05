@@ -51,12 +51,13 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
         clear_hover,
         adopt_viewport: viewport.adopt,
         reconcile_rendered_viewport: viewport.reconcile_rendered_viewport,
-        // A double-click resets only when at least one configured axis can zoom.
-        handle_double_click(): void {
+        handle_menu(input: PointerOffset & { action: 'in' | 'out' | 'reset' }): void {
             const controller = host.controller()
-            if (controller !== null && zoom_pan_enabled(controller.template)) {
-                reset()
-            }
+            if (controller === null || !zoom_pan_enabled(controller.template)) return
+            if (input.action === 'reset') reset()
+            else viewport.zoom_from_menu({ ...input, action: input.action }, controller.template.zoom_pan)
+            clear_hover()
+            host.on_pointer_change()
         },
         handle_click(input: PointerOffset & { ctrlKey: boolean }): PointData | undefined {
             const controller = host.controller()

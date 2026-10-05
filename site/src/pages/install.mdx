@@ -196,52 +196,54 @@ and your installed Anta version. Web documentation may describe a newer release.
 
 ## Registering elements
 
-JSX wrappers render `<a-*>` tags. Load element definitions in the browser's UI
-thread before rendering or hydrating those tags. The full JavaScript bundle
-already registers every element. With granular usage, select individual entries
-or load the elements barrel:
-
-```ts
-import '@antadesign/anta/elements'  // auto-registers all elements
-```
-
-Per-element entries load their browser behavior and styles. CSS-only entries
-load styles without registering a class:
-
-```ts
-import '@antadesign/anta/elements/a-tooltip'  // only <a-tooltip> + its CSS
-import '@antadesign/anta/elements/a-button'   // only <a-button> + its CSS
-import '@antadesign/anta/elements/a-title'    // only Title CSS
-import '@antadesign/anta/elements/a-tag'      // only Tag CSS
-```
-
-Registration is idempotent and guarded when `customElements` is unavailable.
-CSS imports still need a bundler that handles stylesheets.
-
-Use a static import in your app entry, outside components and hooks:
+JSX wrappers render `<a-*>` tags. Load their browser definitions and styles in
+the UI thread before rendering or hydrating those tags. For full bundle usage,
+import both entries at the top of your browser app entry, outside components
+and hooks:
 
 ```ts
 // src/main.tsx (or wherever your root render lives)
-import '@antadesign/anta/elements'
+import '@antadesign/anta/bundle.css'
+import '@antadesign/anta/bundle'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 createRoot(document.getElementById('root')!).render(<App />)
 ```
 
-Module initialisation registers the classes before the first render, avoiding a
-flash of un-upgraded elements.
+The JavaScript bundle registers all browser elements. With granular usage, load
+shared tokens, the optional reset, and the entries your app uses:
 
-> **Why not `useEffect(() => import('@antadesign/anta/elements'), [])`?**
-> `useEffect` runs after paint and the import resolves later. The browser can
-> paint unregistered elements first. `useLayoutEffect` is still asynchronous and
-> warns during SSR hydration.
+```ts
+import '@antadesign/anta/tokens.css'
+import '@antadesign/anta/reset.css'
+import '@antadesign/anta/elements/a-tooltip'  // <a-tooltip> behavior and CSS
+import '@antadesign/anta/elements/a-button'   // <a-button> behavior and CSS
+import '@antadesign/anta/elements/a-title'    // Title CSS only
+import '@antadesign/anta/elements/a-tag'      // Tag CSS only
+```
+
+To load all browser elements and layout styles, replace the individual element
+imports with `import '@antadesign/anta/elements'`. Keep the shared tokens and
+optional reset. Registration is idempotent and guarded when `customElements`
+is unavailable. CSS imports need a bundler that handles stylesheets.
+
+Static imports register classes before the app's first client render or
+hydration. Server-rendered HTML can paint before the browser loads JavaScript;
+load its CSS with the initial document, as in the Next.js setup below.
+
+> Loading elements in `useEffect` can delay registration until after paint. The
+> dynamic import resolves later, so unregistered elements can appear first.
+> Moving the dynamic import into `useLayoutEffect` still leaves the import
+> asynchronous. Use a static import at the top of the UI entry.
 
 Choose the entry point for your runtime:
 
-- **Plain HTML or static sites:** a `<script type="module">` in the document head.
-- **Astro or Next.js:** a client-only script. In Astro, use
-  `<script>import '@antadesign/anta/elements'</script>`; in Next.js, import it
-  from a `'use client'` file.
+- **Plain HTML or static sites:** a module entry processed by a bundler that
+  handles CSS imports; see [Raw web components](#raw-web-components-no-jsx).
+- **Astro:** import the runtime in an Astro-processed `<script>` and the CSS in
+  your layout. For full bundle usage, use `bundle` and `bundle.css`.
+- **Next.js:** import the runtime from a `'use client'` file and the CSS from
+  your root layout; see [Next.js](#nextjs).
 - **Worker-rendered UI:** code that runs on the UI thread and initializes the
   DOM. A Worker has no `HTMLElement`.
 
@@ -266,26 +268,104 @@ import '@antadesign/anta/elements/a-title'
 
 Rendering a JSX wrapper does not register its browser element. Raw `<a-*>`
 markup uses the same browser entries and can omit the JSX wrappers.
+For a custom JSX runtime, call `configure()` in the process or thread that
+renders the wrappers; see [Framework setup](#framework-setup).
 
 ## Framework setup
 
 ### React
 
-Works out of the box.
+React needs no `configure()` call. Load the JavaScript and CSS entries for your
+chosen import strategy before rendering.
+
+### Next.js
+
+For the full bundle setup, import its stylesheet in the App Router root layout:
+
+```tsx
+// app/layout.tsx
+import '@antadesign/anta/bundle.css'
+import type { ReactNode } from 'react'
+
+export default function Layout({ children }: { children: ReactNode }) {
+  return <html lang="en"><body>{children}</body></html>
+}
+```
+
+Import the runtime and JSX wrappers in a Client Component:
+
+```tsx
+// app/page.tsx
+'use client'
+
+import { useState } from 'react'
+import { Button, Title } from '@antadesign/anta/bundle'
+
+export default function Page() {
+  const [count, setCount] = useState(0)
+  return <>
+    <Title>Anta in Next.js</Title>
+    <Button label={`Count: ${count}`} onClick={() => setCount(value => value + 1)} />
+  </>
+}
+```
+
+Next.js prerenders Client Components on the server for the initial page load.
+`'use client'` marks the client/server module boundary; it does not disable
+server rendering. Anta guards element registration when browser APIs are absent
+and registers the elements when the client module runs before hydration.
+
+For granular usage, replace the layout's bundle stylesheet with shared tokens
+and the optional reset:
+
+```ts
+// app/layout.tsx imports
+import '@antadesign/anta/tokens.css'
+import '@antadesign/anta/reset.css'
+```
+
+Keep the same page component and replace its imports with:
+
+```ts
+// app/page.tsx
+'use client'
+
+import { useState } from 'react'
+import '@antadesign/anta/elements/a-button'
+import '@antadesign/anta/elements/a-title'
+import { Button, Title } from '@antadesign/anta'
+```
+
+Both setups work with Next.js's default Turbopack bundler.
 
 ### Preact with compat
 
-If your bundler aliases `react` to `preact/compat`, Anta works without setup.
+If your bundler aliases `react` to `preact/compat`, Anta needs no `configure()`
+call. Load the entries for your chosen import strategy. The Vite Preact preset
+provides these runtime aliases.
 
 ### Preact without compat
 
-Call `configure()` before rendering any anta components:
+If `react` is not aliased to `preact/compat`, pass Preact's JSX factory and hooks
+to `configure()` before rendering Anta components. For full bundle usage:
 
 ```ts
-import { configure } from '@antadesign/anta'
+import '@antadesign/anta/bundle.css'
+import { configure } from '@antadesign/anta/bundle'
 import { h, Fragment } from 'preact'
-configure(h, Fragment)
+import { useState, useId, useMemo, useRef, useLayoutEffect } from 'preact/hooks'
+import { useSyncExternalStore } from 'preact/compat'
+
+configure(h, Fragment, {
+  useState, useId, useMemo, useRef, useLayoutEffect, useSyncExternalStore,
+})
 ```
+
+Import JSX wrappers from `@antadesign/anta/bundle` with this setup. For granular
+usage, import both `configure` and the wrappers from `@antadesign/anta` and load
+the UI entries separately. The root package and the prebuilt bundle each have
+their own renderer configuration, so use `configure` from the same entry as
+your wrappers. The explicit `preact/compat` hook import does not require an alias.
 
 ### TypeScript: typing raw `<a-*>` tags in JSX
 
@@ -334,31 +414,40 @@ upgrades; there is no per-tag list to maintain.
 
 ### Raw web components (no JSX)
 
-Elements also work in plain HTML. Registration loads their CSS; resolve the bare
-specifier with a bundler or import map.
+Elements also work in plain HTML without JSX wrappers. This example requires a
+bundler that processes module scripts and CSS imports:
 
 ```html
 <script type="module">
-  import '@antadesign/anta/elements'
+  import '@antadesign/anta/tokens.css'
+  import '@antadesign/anta/reset.css'
+  import '@antadesign/anta/elements/a-progress'
 </script>
 
 <a-progress value="42" max="100" tone="info"></a-progress>
 ```
 
+An import map resolves module names but does not process the plain CSS imports
+in Anta's element entries. When serving native modules without a bundler, use
+a separately prepared JavaScript entry and linked stylesheets.
+
 ## Dark mode
 
-For a page-wide dark mode, add `dark` to `html`. The `body` `--bg-2` background
-then paints the browser canvas, and the root controls scrollbar colors:
+For a page-wide dark mode, add `dark` to `html`. Shared tokens switch the palette
+and root color scheme, including scrollbar colors. The reset, included in
+`bundle.css` or loaded separately as `reset.css`, paints `body` with `--bg-2`:
 
 ```html
 <html class="dark">
   <body>
-    <Progress value={50} />
+    <a-progress value="50"></a-progress>
   </body>
 </html>
 ```
 
 Use `dark` or `light` on another ancestor to scope its color scheme and palette.
+If you omit the reset, set your app's background and text color in your own CSS,
+for example with `--bg-2` and `--text-2`.
 
 ## Fonts
 
@@ -396,8 +485,9 @@ variable files:
 
 Place this application stylesheet after `theme-antune.css` or
 `theme-antithesis.css`, not before it. When all stylesheets are in the document
-head, the override applies before the first paint. Anta's semantic italics
-(`em`, `i`, `var`, and `dt`) select the Italic face.
+head, the override applies before the first paint. Anta's reset styles semantic
+italics (`em`, `i`, `var`, and `dt`) to select the Italic face. If you omit the
+reset, your application or the browser's default rules provide those styles.
 
 ### Variable slant
 

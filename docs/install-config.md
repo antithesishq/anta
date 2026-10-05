@@ -447,19 +447,32 @@ for example with `--bg-2` and `--text-2`.
 
 ## Fonts
 
-`tokens.css` defines system stacks in `--sans-serif`, `--serif`, and
-`--monospace`, and sets `1rem` to 15px. The optional themes keep those stacks
+Anta works with system fonts without any font downloads. `tokens.css`, also
+included in `bundle.css`, defines system stacks in `--sans-serif`, `--serif`,
+and `--monospace`, and sets `1rem` to 15px. The optional themes keep those stacks
 and do not register font faces or request font files. Components and theme rules
 choose which stack to use.
 
 Use fonts from Google Fonts or host font files in your application. Manage font
-loading in a separate stylesheet such as `fonts.css`, and import it after the
-Anta styles and optional theme. See [Font examples](./theming.md#fonts-in-a-theme)
-for Google Fonts and the separate reference font setup used by anta.design.
+loading in a separate application stylesheet such as `fonts.css`, and import it
+after the Anta styles and optional theme:
 
-Register application-owned fonts and redefine the variables in CSS loaded after
-the Anta styles and optional theme. This example uses separate Roman and Italic
-variable files in an application-owned `fonts.css`:
+```ts
+import '@antadesign/anta/bundle.css'
+import '@antadesign/anta/theme-antune.css' // Optional
+import './fonts.css'
+```
+
+With granular usage, load `fonts.css` after `tokens.css`, your element styles,
+and the optional theme. Anta.design also loads its reference fonts through a
+separate stylesheet. That setup is an example, and is not imported by the
+package. See [Font examples](./theming.md#fonts-in-a-theme) for that setup and
+Google Fonts examples.
+
+Register your fonts and override only the stacks you want to change. Keep
+fallback families after each custom font name. This `fonts.css` example uses
+separate Roman and Italic variable files and keeps the default serif and
+monospace stacks:
 
 ```css
 @font-face {
@@ -479,17 +492,18 @@ variable files in an application-owned `fonts.css`:
 }
 
 :root {
-  --sans-serif: "App Sans", sans-serif;
-  --serif: Georgia, serif;
-  --monospace: ui-monospace, monospace;
+  --sans-serif: "App Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 ```
 
-Place this application stylesheet after `theme-antune.css` or
-`theme-antithesis.css`, not before it. When all stylesheets are in the document
-head, the override applies before the first paint. Anta's reset styles semantic
-italics (`em`, `i`, `var`, and `dt`) to select the Italic face. If you omit the
-reset, your application or the browser's default rules provide those styles.
+[Font display](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@font-face/font-display)
+with `swap` shows fallback text while the custom font loads, then switches to
+that font when it is ready. If the font fails to load, the browser keeps using a
+fallback family. The variables remain valid in either case.
+
+Anta's reset styles semantic italics (`em`, `i`, `var`, and `dt`) to select the
+Italic face. If you omit the reset, your application or the browser's default
+rules provide those styles.
 
 ### Variable slant
 
@@ -503,6 +517,7 @@ through `font-style: oblique` instead of setting `slnt` on italic elements:
   font-style: oblique 0deg 12deg;
   font-weight: 100 900;
   font-stretch: 75% 100%;
+  font-display: swap;
 }
 
 :root {

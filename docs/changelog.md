@@ -23,6 +23,8 @@ changes are not listed.
 
 ### Fixed
 
+- [Avatar](/avatar/) images and generated pictures keep their size, rounding,
+  and badge layout under `style-src 'self'` without allowing inline styles.
 - Individual element stylesheets resolve through `@antadesign/anta/elements/*.css`,
   including imports with a bundler's `?raw` query.
 - [Tab panels](/tabs/#panels) follow their own strip when multiple `Tabs` share a

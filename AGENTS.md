@@ -79,6 +79,39 @@ Cloudflare Pages must use the Node version in `.node-version`; a dashboard
 and an optional `node_version` when redeploying. That override applies to the
 project's preview or production environment, according to the target branch.
 
+### Periodic consumer validation
+
+Occasionally validate Anta in fresh consumer apps, especially after changes to
+exports, bundles, JSX runtime integration, or installation guidance. This checks
+that the packaged docs lead new consumers to the working full bundle default.
+
+1. Use current, verified package build output and packaged docs; rebuild or
+   refresh stale artifacts first. Run
+   `npm pack --ignore-scripts --pack-destination <temporary-directory>` to pack
+   those artifacts without repeating build and documentation lifecycle scripts.
+   Install the resulting `.tgz` in isolated apps with `npm install <tarball-path>`.
+   Use the tarball as the Anta dependency, without publishing, workspace links,
+   or Anta source aliases.
+2. Ask separate subagents to create a minimal Next.js App Router app and a
+   minimal Preact app, each with Title, Tag, and a Button that updates a count.
+   Give each agent its own temporary directory and a fresh context without the
+   preceding implementation discussion. Have them use the installed
+   `docs/index.md`, `docs/install-config.md`, and component docs as their Anta
+   guidance. Let them choose imports independently; do not prescribe the bundle
+   imports. Record the initial choice and reasoning before implementation.
+3. Pin direct framework dependencies to exact stable versions compatible with
+   Anta's peer requirements. Normal runtime aliases such as `react` to
+   `preact/compat` are allowed. Keep app changes inside the assigned directories.
+4. Run production builds and browser checks for styles, Button registration,
+   pointer and keyboard interaction, and browser errors. Check Next.js server
+   rendering and hydration. Title and Tag should be styled without registered
+   custom element classes. Each agent owns and cleans up its servers and browsers.
+5. Record framework versions, dependency provenance, initial and final imports,
+   commands, screenshots, and any confusion or workarounds. Report whether both
+   agents selected the full bundle from the docs and whether their initial
+   approach worked. Preserve failures before troubleshooting so corrections do
+   not hide a package or documentation problem.
+
 ## Git workflow
 
 Commit and push work on the current branch by default. Never commit or push task

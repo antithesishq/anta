@@ -16,7 +16,7 @@ Two tiers per component:
 - **`src/elements/`** — Web components (custom elements). Attribute-driven, shadow DOM for rendering, plain CSS for token definitions. Files: `a-{name}.ts`, `a-{name}.css`. The external CSS file defines CSS variable tokens on the host, and the shadow DOM style references those variables. No visible attributes are set from JS on the host element — only shadow-internal styles are modified (e.g. setting `--_percent` on an internal element).
 - **`src/components/`** — JSX wrappers. State management and typed component APIs. When a composed wrapper needs structure-specific styling, use plain CSS that targets explicit `a-*` structural tags; do not introduce global class selectors. Forward `style` and extra props via spread to the underlying web component.
 
-The tiers are decoupled — JSX wrappers emit `<a-*>` tags but never import element definitions. Binding is by tag name at runtime.
+The tiers are decoupled — JSX wrappers emit `<a-*>` tags but never import element definitions or CSS. Binding is by tag name at runtime. Load styles and browser behavior in the UI thread through element entries.
 
 ### Key files
 
@@ -72,10 +72,13 @@ The `exports` map handles all subpath imports. Explicit entries exist for `.`, `
 
 Keep the `./elements/*.css` export mapped directly to `./dist/elements/*.css`.
 The more general `./elements/*` entry appends `.js`, so it cannot expose CSS.
-CSS-only tags such as Title and Tag have `.ts` entries that import only their
-stylesheet and never register a custom element. The barrel continues to import
-their CSS directly. Routing the barrel through CSS-only JS entries changes
-Astro's stylesheet ownership in the production site build.
+CSS-only tags and composed layouts have `.ts` entries that import only their
+stylesheet and never register a custom element. This includes Title, Tag,
+Breadcrumbs, Steps, InputDate, Select, and SelectFaceted. These entries do not
+load the nested elements used by a composed wrapper. The barrel imports their
+CSS directly, preserving the full bundle's stylesheet order. Routing the barrel
+through CSS-only JS entries changes Astro's stylesheet ownership in the
+production site build. Keep existing `components/*.css` paths compatible.
 
 `react` is a **peer dependency** — consumers provide it (or alias it to `preact/compat`).
 
@@ -148,7 +151,7 @@ The same rule applies anywhere we lighten/darken/desaturate a color: prefer `col
 - **CSS variables for shadow internals** — Use `--_` prefix for shadow-internal-only variables set from JS (e.g. `--_percent`).
 - **Dark mode** — Use `.dark` ancestor class in the external CSS.
 - **Default variant in union types** — Include default value explicitly in the type union (e.g. `tone?: 'neutral' | 'info'`).
-- **Plain CSS everywhere.** Web-component host styling lives in `src/elements/a-{name}.css`. Composed JSX wrappers may import a co-located plain CSS file that targets only explicit `a-*` structural tags; never introduce global class selectors. Shadow-internal classes remain private implementation details. Every shipped stylesheet starts by reserving `@layer base, anta, components, utilities;` and `@layer anta.reset, anta.components, anta.theme;` before its first layer block, so a granular stylesheet loaded before `tokens.css` cannot establish the wrong cascade order. Place shipped styles in the named child layers `anta.reset`, `anta.components`, or optional `anta.theme`. Never use direct `@layer anta`, whose implicit sublayer outranks the named layers.
+- **Plain CSS everywhere.** Web-component host styling lives in `src/elements/a-{name}.css`. Composed layout styles target only explicit `a-*` structural tags; never introduce global class selectors. Load them through CSS-only `src/elements/a-{name}.ts` entries and direct CSS imports in the elements barrel. JSX wrappers must not import CSS, so server and worker consumers can import the complete JSX API without loading styles. Existing composed styles remain in `src/components/` to preserve published CSS paths. Shadow-internal classes remain private implementation details. Every shipped stylesheet starts by reserving `@layer base, anta, components, utilities;` and `@layer anta.reset, anta.components, anta.theme;` before its first layer block, so a granular stylesheet loaded before `tokens.css` cannot establish the wrong cascade order. Place shipped styles in the named child layers `anta.reset`, `anta.components`, or optional `anta.theme`. Never use direct `@layer anta`, whose implicit sublayer outranks the named layers.
 - Put every top-level selector in a comma-separated selector list on its own line. Alternatives intentionally grouped inside a functional selector such as `:is(...)` may remain inline.
 - Follow every `font: inherit` with `font-variation-settings: inherit`. The shorthand resets inherited variable-font axes; Safari then falls back to the font file's internal axis defaults, including a non-zero `slnt` in the reference sans.
 - **No comments inside shadow-`<style>` strings.** A shadow `<style>` string (the `SHADOW_STYLE` template literal in `a-{name}.ts`) is injected verbatim into every element instance's shadow root at runtime — `build:js` doesn't minify, and esbuild won't touch CSS *inside a string literal* even when it does — so any comment there ships **and** is re-injected per instance. Keep those strings comment-free; put the rationale in a TS comment directly above the string (or in the class docstring). **External `.css` files are exempt** — `build:css` runs esbuild with `--minify`, which strips all comments before `dist` (verified: `dist/elements/*.css` has zero comments), so source-level comments in external CSS files are fine and encouraged for clarity. (`tokens.css` / `reset.css` consumers read directly as theming reference, so their comments are intentional too.)
@@ -166,7 +169,7 @@ The same rule applies anywhere we lighten/darken/desaturate a color: prefer `col
 1. Create `src/elements/a-{name}.ts` — web component class + `register_a_{name}()` function. At the **top** `import './a-{name}.css'` (so the CSS travels with the element on a granular import), and at the **bottom** call `register_a_{name}()` so the element **self-registers when the module is imported** (the granular entry point `@antadesign/anta/elements/a-{name}`).
 2. Create `src/elements/a-{name}.css` — plain CSS using tag selector, attribute selectors for variants
 3. Add to `src/elements/index.ts` — add an `export { AXxxElement, register_a_{name} } from './a-{name}'` line. Re-exporting evaluates the module, which self-registers + loads its CSS, so the barrel registers the whole set. For a CSS-only tag, create a `.ts` entry containing only its CSS import and include its stylesheet directly in the barrel.
-4. Create `src/components/{Name}.tsx` — JSX wrapper. When composed layout needs styling, render explicit structural `a-*` tags and import a co-located plain CSS file that targets only those tags.
+4. Create `src/components/{Name}.tsx` — JSX wrapper. When composed layout needs styling, render explicit structural `a-*` tags and load their plain CSS through a CSS-only element entry and a direct import in the elements barrel. Never import CSS from the wrapper.
 5. Add to `src/index.ts` — re-export the component
 6. Define `A{Name}Attributes` in `src/general_types.ts` (extending `BaseAttributes`), then add `a-{name}` to `JSX.IntrinsicElements` in `src/jsx-runtime.ts`
 7. Run `pnpm run build` to verify the automatically discovered JS and CSS outputs.

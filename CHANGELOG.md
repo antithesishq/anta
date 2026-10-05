@@ -12,6 +12,11 @@ changes are not listed.
 
 ### Changed
 
+- JSX wrapper imports no longer load CSS. For granular usage, load composed
+  layout styles in the UI thread through `elements/a-breadcrumbs`,
+  `elements/a-steps`, `elements/a-input-date`, `elements/a-select`, or
+  `elements/a-select-faceted`, alongside their nested browser elements.
+  Full bundle usage is unchanged.
 - Selected paddingless [Buttons](/button/#paddingless) draw their 1px selection
   ring outside the label. Their corner radius is capped at 3px, including when
   `round` requests a larger radius.

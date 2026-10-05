@@ -9,7 +9,8 @@
  * To reduce bundle size, import only the element(s) you use:
  *   import '@antadesign/anta/elements/a-tooltip'   // registers a-tooltip + its CSS, nothing else
  * That granular path pulls in only that element's code and CSS, nothing else.
- * Title and Tag entries import only CSS and do not register custom elements.
+ * Entries for structural tags and composed layouts import only CSS and do not
+ * register custom elements. Load their nested browser elements separately.
  *
  * Must only be imported client-side — registration is guarded against missing
  * `customElements` (SSR), but there's no reason to load it server-side.
@@ -49,3 +50,7 @@ export { AToastElement, register_a_toast } from './a-toast'
 
 import './a-title.css'
 import './a-tag.css'
+import '../components/Breadcrumbs.css'
+import '../components/InputDate.css'
+import '../components/select-parts.css'
+import '../components/Steps.css'

@@ -60,9 +60,38 @@ its browser class when needed. Title and Tag load only CSS; they have no custom
 element class to register. Element entries do not import global tokens or the reset.
 
 JSX wrappers produce `<a-*>` tags and attributes. They do not register browser
-elements or load those elements' CSS. Composed wrappers such as Steps and Select
-also import their own layout CSS. Load element entries in the browser's UI thread;
+elements or import CSS. Load element entries in the browser's UI thread;
 see [Registering elements](#registering-elements) for server and worker rendering.
+
+Composed components have CSS-only entries for their layout styles:
+
+| JSX wrapper | UI-side style entry |
+|---|---|
+| `Breadcrumbs` | `@antadesign/anta/elements/a-breadcrumbs` |
+| `Steps` | `@antadesign/anta/elements/a-steps` |
+| `InputDate` | `@antadesign/anta/elements/a-input-date` |
+| `Select` | `@antadesign/anta/elements/a-select` |
+| `SelectFaceted` | `@antadesign/anta/elements/a-select-faceted` |
+
+These entries load layout CSS without registering a class or loading nested
+elements. Import the browser elements used by the composition too. For example,
+`Steps` uses Tabs and Tooltip, and may render icons, loaders, or panels depending
+on its props:
+
+```ts
+// Browser UI entry, alongside shared tokens and the optional reset.
+import '@antadesign/anta/elements/a-steps'
+import '@antadesign/anta/elements/a-tabs'
+import '@antadesign/anta/elements/a-tab'
+import '@antadesign/anta/elements/a-tabpanel'
+import '@antadesign/anta/elements/a-tooltip'
+import '@antadesign/anta/elements/a-icon'
+import '@antadesign/anta/elements/a-loader'
+```
+
+Import `Steps` from `@antadesign/anta` where you render JSX, including in a worker
+or on the server. Select and SelectFaceted share one stylesheet, which bundlers
+include once when both style entries are imported.
 
 To load all elements through the separate entries, replace the per-element imports
 with `import '@antadesign/anta/elements'`. Keep the tokens and optional reset.
@@ -95,9 +124,9 @@ seed-derived default palette.
 | `@antadesign/anta/bundle.css` | Global tokens, reset, element, and composed wrapper styles in one minified stylesheet. |
 | `@antadesign/anta/tokens.css` | Shared color roles, fonts, dark-mode support, and layer order for granular usage. |
 | `@antadesign/anta/reset.css` | Optional reset and typography defaults in `@layer anta.reset`. |
-| `@antadesign/anta/elements/a-*` | One element's behavior and CSS, or CSS alone for Title and Tag. |
-| `@antadesign/anta/elements` | All browser element definitions and their CSS through separate modules. |
-| `@antadesign/anta` | Typed JSX wrappers for React, Preact, and configured runtimes. |
+| `@antadesign/anta/elements/a-*` | One element's behavior and CSS, or CSS alone for structural tags and composed layouts. |
+| `@antadesign/anta/elements` | All browser element definitions, element styles, and composed layout styles through separate modules. |
+| `@antadesign/anta` | Typed JSX wrappers for React, Preact, and configured runtimes, without CSS or element registration. |
 | `@antadesign/anta/elements/*.css` | Individual stylesheets without element registration. |
 | `@antadesign/anta/theme-antune.css` | Optional Antune theme. |
 | `@antadesign/anta/theme-antithesis.css` | Optional Antithesis theme. |

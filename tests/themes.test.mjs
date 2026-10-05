@@ -25,6 +25,7 @@ before(async () => {
         import './src/elements/a-switch'
         import './src/elements/a-tab.css'
         import './src/elements/a-tag'
+        import './src/elements/a-select'
         configure(h)
         render(<>
           <Button id="button">Button</Button>

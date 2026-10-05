@@ -76,7 +76,8 @@
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
     "prepack": "pnpm run build:docs",
-    "test:fuzz_component": "node tests/pbt/run.ts"
+    "test:fuzz_component": "node tests/pbt/run.ts",
+    "test:consumers": "node tests/consumers/run.mjs"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

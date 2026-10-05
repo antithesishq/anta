@@ -81,6 +81,13 @@ project's preview or production environment, according to the target branch.
 
 ### Periodic consumer validation
 
+Run the saved Next.js and Preact production fixtures with `pnpm test:consumers`.
+These tests install a local npm tarball and cover full bundle and granular usage.
+They run only on request; they are excluded from `pnpm test` and regular CI.
+See [Consumer validation](tests/consumers/README.md) for filters, saved reports,
+and the manual GitHub Actions workflow. Reuse these fixtures for package
+regressions without asking agents to recreate apps.
+
 Occasionally validate Anta in fresh consumer apps, especially after changes to
 exports, bundles, JSX runtime integration, or installation guidance. This checks
 that the packaged docs lead new consumers to the working full bundle default.

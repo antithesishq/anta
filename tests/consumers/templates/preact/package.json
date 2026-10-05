@@ -1,0 +1,17 @@
+{
+  "name": "anta-preact-consumer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "preact": "11.0.0",
+    "react": "19.3.0"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "2.10.6",
+    "vite": "8.3.2"
+  }
+}

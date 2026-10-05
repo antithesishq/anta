@@ -1,0 +1,2 @@
+main { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 32px; }
+section { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; width: 640px; max-width: 100%; }

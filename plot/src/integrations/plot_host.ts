@@ -149,6 +149,7 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
             controller === null ? 'none' : controller.interactions.wheel_claim(
                 controller.composed_plot, controller.interactions.committed_viewport, axes, target,
             ),
+            controller?.interactions.zoomed_this_visit ?? false,
         )
     }
 

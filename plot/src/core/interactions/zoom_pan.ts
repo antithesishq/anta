@@ -43,11 +43,13 @@ export function capture_attributes(settings: CaptureConfiguration) {
 export function resolve_capture_configuration(
     enabled: boolean,
     wheel_claim: WheelClaim,
+    zoomed_this_visit = false,
 ): CaptureConfiguration {
     return {
         wheel_capture: enabled ? wheel_claim : null,
         wheel_modifier: 'none',
-        wheel_activation: 'settled',
+        // After zooming, moving between axis and plot captures must not restart dwell.
+        wheel_activation: zoomed_this_visit ? 'hover' : 'settled',
         wheel_delay: 150,
         wheel_tolerance: 5,
         wheel_reset_on_move: false,

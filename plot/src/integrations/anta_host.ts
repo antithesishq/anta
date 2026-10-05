@@ -93,6 +93,7 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
         return resolve_capture_configuration(
             zoom_pan_enabled(controller.template),
             interactions.wheel_claim(plot, viewport, zoom_pan),
+            interactions.zoomed_this_visit,
         )
     }
 

@@ -25,7 +25,6 @@ map; they do not use workspace links or aliases to Anta source.
 ```sh
 pnpm test:consumers --framework preact
 pnpm test:consumers --framework nextjs --mode granular
-pnpm test:consumers --framework nextjs --mode granular --next-compiler webpack
 pnpm test:consumers --skip-build --keep-apps
 ```
 
@@ -33,7 +32,6 @@ pnpm test:consumers --skip-build --keep-apps
 | --- | --- |
 | `--framework all\|nextjs\|preact` | Select a framework; default `all`. |
 | `--mode all\|full\|granular` | Select the import strategy; default `all`. |
-| `--next-compiler turbopack\|webpack` | Select Next.js's compiler; default `turbopack`. |
 | `--skip-build` | Reuse verified current package output and packaged docs. Use after workspace installation has already built them. |
 | `--keep-apps` | Keep temporary apps, installed dependencies, and the tarball for troubleshooting. |
 
@@ -42,6 +40,7 @@ are removed unless `--keep-apps` is set. Reports remain in the ignored directory
 `tests/consumers/.runs/<timestamp>/`: build and install logs, emitted CSS,
 dependency graphs where supported, screenshots, browser observations, Next.js
 server HTML, and a summary with versions, commit, and tarball SHA-256.
+Next.js builds always use Turbopack through `next build --turbopack`.
 
 ## Cases and assertions
 
@@ -58,8 +57,7 @@ registration, pointer/Enter/Space activation, and browser errors. Granular cases
 exclude the full bundle and unrelated styles. Composed cases check layout and
 popups; shared Select CSS must appear once. Next.js checks server markup and
 styles with JavaScript disabled, then checks hydrated interactions. Vite records
-Anta's dependency graph; Next.js records it when Webpack is selected. Both
-compilers check emitted CSS.
+Anta's dependency graph. Both frameworks check emitted CSS.
 
 The fixtures preserve the consumer validation performed during the granular CSS
 export and JSX/UI separation changes. See [Original consumer validation](baseline.md)
@@ -81,8 +79,8 @@ the fixtures.
 
 The **Consumer validation** workflow has only a `workflow_dispatch` trigger.
 After it reaches the default branch, open **Actions**, select **Consumer
-validation**, and select **Run workflow**. Choose framework, import strategy,
-and Next.js compiler. Logs and reports are uploaded as an artifact, including
+validation**, and select **Run workflow**. Choose framework and import strategy.
+Logs and reports are uploaded as an artifact, including
 on failure. The workflow reuses package builds from workspace installation.
 
 There is no push, pull request, or scheduled trigger.

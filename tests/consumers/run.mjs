@@ -13,14 +13,13 @@ import { checkBrowser } from './browser.mjs';
 const here = dirname(fileURLToPath(import.meta.url)), root = resolve(here, '../..');
 const { values: options } = parseArgs({ options: {
   framework: { type: 'string', default: 'all' }, mode: { type: 'string', default: 'all' },
-  'next-compiler': { type: 'string', default: 'turbopack' },
   'skip-build': { type: 'boolean', default: false }, 'keep-apps': { type: 'boolean', default: false }, help: { type: 'boolean', default: false },
 } });
 if (options.help) {
-  console.log('Usage: pnpm test:consumers [--framework all|nextjs|preact] [--mode all|full|granular]\n       [--next-compiler turbopack|webpack] [--skip-build] [--keep-apps]\n\nManual production consumer checks. Reports: tests/consumers/.runs/');
+  console.log('Usage: pnpm test:consumers [--framework all|nextjs|preact] [--mode all|full|granular]\n       [--skip-build] [--keep-apps]\n\nManual production consumer checks. Next.js uses Turbopack. Reports: tests/consumers/.runs/');
   process.exit(0);
 }
-for (const [key, allowed] of Object.entries({ framework: ['all', 'nextjs', 'preact'], mode: ['all', 'full', 'granular'], 'next-compiler': ['turbopack', 'webpack'] })) {
+for (const [key, allowed] of Object.entries({ framework: ['all', 'nextjs', 'preact'], mode: ['all', 'full', 'granular'] })) {
   assert.ok(allowed.includes(options[key]), `${key} must be ${allowed.join(', ')}`);
 }
 const cases = [
@@ -104,8 +103,6 @@ async function checkCss(app, item, reports) {
       const componentCss = graph.filter(id => /\/dist\/components\/.*\.css(?:\?|$)/.test(id));
       assert.equal(componentCss.length, item.composed ? 4 : 0, 'Only explicitly requested composed styles');
     }
-  } else if (options['next-compiler'] === 'webpack') {
-    await cp(join(app, 'consumer-graphs'), join(reports, 'dependency-graphs'), { recursive: true });
   }
 }
 async function cleanup() {
@@ -145,8 +142,7 @@ try {
       assert.equal(installed.version, summary.packageVersion);
       result.dependencies = JSON.parse(await readFile(join(app, 'package.json'), 'utf8')).dependencies;
       await run('npm', ['ls', '@antadesign/anta', '--json'], app, join(reports, 'dependency-provenance.json'));
-      const env = { ANTA_NEXT_COMPILER: options['next-compiler'] };
-      await run('npm', ['run', 'build', ...(item.framework === 'nextjs' ? ['--', `--${options['next-compiler']}`] : [])], app, join(reports, 'build.log'), env);
+      await run('npm', ['run', 'build'], app, join(reports, 'build.log'));
       await checkCss(app, item, reports);
       const port = await freePort(), origin = `http://127.0.0.1:${port}`;
       const args = item.framework === 'nextjs'

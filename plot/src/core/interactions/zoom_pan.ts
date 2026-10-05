@@ -42,20 +42,19 @@ export function capture_attributes(settings: CaptureConfiguration) {
 /** Resolve interaction policy once; hosts translate it into Capture props or attributes. */
 export function resolve_capture_configuration(
     enabled: boolean,
-    modifier: boolean,
     wheel_claim: WheelClaim,
 ): CaptureConfiguration {
     return {
-        wheel_capture: enabled ? (modifier ? 'both' : wheel_claim) : null,
-        wheel_modifier: modifier ? 'ctrl' : 'none',
-        wheel_activation: modifier ? 'hover' : 'settled',
+        wheel_capture: enabled ? wheel_claim : null,
+        wheel_modifier: 'none',
+        wheel_activation: 'settled',
         wheel_delay: 150,
         wheel_tolerance: 5,
         wheel_reset_on_move: false,
         pointer_capture: enabled ? 'mouse' : null,
         pointer_buttons: [0],
         pointer_threshold: 3,
-        pointer_modifier: modifier ? 'ctrl' : 'any',
+        pointer_modifier: 'any',
     }
 }
 

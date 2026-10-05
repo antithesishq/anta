@@ -91,7 +91,7 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
     const capture_configuration = (plot: ComposedPlot<T> | null, viewport: Viewport) => {
         const zoom_pan = controller.template.zoom_pan
         return resolve_capture_configuration(
-            zoom_pan_enabled(controller.template), zoom_pan.modifier,
+            zoom_pan_enabled(controller.template),
             interactions.wheel_claim(plot, viewport, zoom_pan),
         )
     }

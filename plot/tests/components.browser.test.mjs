@@ -178,7 +178,7 @@ test('StrictMode: overlap, default/explicit sizing, pin removal, theme, DPR and 
 
     await page.evaluate(() => document.documentElement.classList.add('dark'))
     await page.waitForFunction(() => document.querySelector('canvas').style.filter.includes('invert'))
-    assert.equal(await page.locator('a-capture').evaluate(el => el.style.filter), '')
+    assert.equal(await page.locator('.plot-capture').evaluate(el => el.style.filter), '')
 
     const cdp = await page.context().newCDPSession(page)
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1000, height: 800, deviceScaleFactor: 2, mobile: false })
@@ -223,7 +223,9 @@ test('React-owned tooltips retain context, clear in margins, and unmount with th
 test('wheel ownership, reset, and keyed viewport updates retain shared controller behavior', async t => {
     const page = await pageFor(t)
 
-    assert.equal(await center(page, 'wheel', { ctrlKey: true, deltaY: -120 }), true)
+    await center(page, 'pointermove')
+    await page.waitForTimeout(180) // unmodified wheel capture waits for the pointer to settle
+    assert.equal(await center(page, 'wheel', { deltaY: -120 }), true)
     await page.waitForFunction(() => !document.querySelector('.plot-reset').hidden && stats.reports.length > 0)
     await page.locator('.plot-reset').click()
     await page.waitForFunction(() => document.querySelector('.plot-reset').hidden)
@@ -232,7 +234,7 @@ test('wheel ownership, reset, and keyed viewport updates retain shared controlle
     assert.deepEqual(await page.evaluate(() => stats.errors), [])
     // Empty area outside the plot must not acquire wheel ownership.
     assert.equal(await page.evaluate(() => {
-        const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, ctrlKey: true, deltaY: -120 })
+        const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -120 })
         document.body.dispatchEvent(event)
         return event.defaultPrevented
     }), false)
@@ -308,7 +310,7 @@ for (const renderer of ['react', 'preact']) {
         await page.waitForFunction(() => document.querySelector('.anta-plot canvas'))
         await page.waitForFunction(() => document.querySelector('canvas')?.height === 220)
         await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.listening)
-        const capture = await page.locator('a-capture').boundingBox()
+        const capture = await page.locator('.plot-capture').boundingBox()
         await page.mouse.move(capture.x + capture.width / 2, capture.y + capture.height / 2)
         const tooltip = page.locator('.anta-plot > a-tooltip')
         await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.textContent.includes('point'))

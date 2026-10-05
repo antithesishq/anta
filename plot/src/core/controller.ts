@@ -61,6 +61,10 @@ export class PlotController<TooltipContent = unknown> {
         })
     }
 
+    get interaction_regions(): InteractionRegions | null {
+        return this.#interaction_regions
+    }
+
     /** Resolve input against the geometry and tick labels of the last successful draw. */
     interaction_target(input: PointerOffset): InteractionTarget {
         return interaction_target(this.#interaction_regions, input)

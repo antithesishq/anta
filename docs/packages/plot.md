@@ -126,7 +126,7 @@ function overviewExample(): PlotArgs<Node> {
 
   const grid = false
 
-  const zoom_pan = { x: true, y: true, modifier: false }
+  const zoom_pan = { x: true, y: true }
 
   // Replace the object to apply a change; Plot does not observe in-place mutation.
   const plotArgs: PlotArgs<Node> = { ...options, series, axis, margin, grid, zoom_pan }
@@ -461,7 +461,7 @@ document.body.append(plot)
 | [`chrome_color?`](#theme-colors) | `string \| { light, dark }` | Theme defaults | Color for axis lines, tick marks, grid lines, and the plot border. Text colors are configured separately. |
 | [`background?`](#theme-colors) | `boolean \| string \| { light, dark }` | White | Plot fill. `false` paints none; `true` and an absent value use `#fff`. |
 | [`theme_invert?`](#theme-colors) | `boolean` | Automatic | Forces dark-mode inversion on or off. Absent means invert unless a series color or the background is a `{ light, dark }` pair. |
-| [`zoom_pan?`](#zoom-and-pan) | `boolean \| { x?, y?, modifier? }` | Both axes, Ctrl required | Require Ctrl for zoom and pan by default. Set `modifier: false` to allow gestures without Ctrl. Set both axes to `false` to disable zoom and pan. |
+| [`zoom_pan?`](#zoom-and-pan) | `boolean \| { x?, y? }` | Both continuous axes | Scroll to zoom and drag to pan. Scroll or drag on an axis to affect only that axis. Set both axes to `false` to disable zoom and pan. |
 | [`viewport?`](#viewport) | `{ x?, y?, key? }` | Full domain | Requested starting window per axis. Applied at mount and on each `key` change, clamped to the full domain. |
 | [`on_viewport_change?`](#viewport-changes) | `(change: ViewportChange) => void` | None | Fires with each axis's current window and full extent after a gesture or reset. |
 
@@ -680,7 +680,7 @@ Scatter arguments
 | `x?` | [`FieldArg`](#data-fields) | `'x'` | Horizontal field name or accessor. |
 | `y?` | [`FieldArg`](#data-fields) | `'y'` | Vertical field name or accessor. |
 | `color?` | [`ColorArg`](#series-colors) | Black | Series color; theme pairs provide separate light and dark colors. |
-| `size?` | `number \| ((row, index) => number)` | `5` | Mark diameter in pixels, or a per-row accessor. A row’s `size` takes precedence. |
+| `size?` | `number \| ((row, index, viewport) => number)` | `5` | [Mark diameter](#size) in pixels, or a per-row accessor. A row’s `size` takes precedence. |
 | [`mark?`](#mark-shapes) | `MarkShape` | `'circle'` | Mark shape: circle, square, diamond, or triangle. |
 | [`stroke?`](#strokes) | `StrokeArg` | None | Outline color and optional width. |
 | [`tooltip?`](#tooltips) | `TooltipArg` | None | Use `true` for the default tooltip, or a callback for custom content. |
@@ -2850,54 +2850,9 @@ the same fields with an optional `row`.
 
 Zoom continuous axes with the scroll wheel and pan by dragging. The reset control restores the full extent after the view changes. Categorical axes do not zoom. See [Zoom and pan options](#zoom-and-pan-options).
 
-Zoom with a modifier
+Zoom and pan in the plot
 
-Hold Ctrl and scroll to zoom around the pointer, or hold Ctrl and drag to pan. The modifier leaves ordinary scrolling available for navigating the page.
-
-```ts
-import { line, type APlotElement } from '@antadesign/plot/browser'
-import '@antadesign/plot/elements/a-plot'
-
-const plot = document.createElement('a-plot') as APlotElement
-const output = document.createElement('output')
-output.setAttribute('aria-live', 'polite')
-output.style.display = 'block'
-output.textContent = 'Hold Ctrl and scroll to zoom, or Ctrl-drag to pan.'
-
-const data = Array.from({ length: 201 }, (_, i) => ({
-  x: i / 2,
-  y: 45 + 18 * Math.sin(i / 18) + 9 * Math.cos(i / 5) + 4 * Math.sin(i * 1.3),
-}))
-
-plot.plotArgs = {
-  series: [
-    line<Node>({
-      data, width: 2,
-      color: { light: '#6366f1', dark: '#a5b4fc' },
-      tooltip: true,
-    }),
-  ],
-  height: 260,
-  margin: { top: 8, right: 12, bottom: 24, left: 32 },
-  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
-  background: { light: '#ffffff', dark: '#151b28' },
-  chrome_color: { light: '#e2e8f0', dark: '#334155' },
-  grid: false,
-  border: false,
-  zoom_pan: { x: true, y: true, modifier: true },
-  on_viewport_change: ({ x, y }) => {
-    const format = (axis: { window: number[] } | null) => axis
-      ? axis.window.map(value => value.toFixed(1)).join('–') : 'full extent'
-    output.textContent = 'Visible x: ' + format(x) + ' · y: ' + format(y)
-  },
-}
-
-document.body.append(plot, output)
-```
-
-Zoom without a modifier
-
-Scroll over the plot to zoom, or drag to pan. Set `modifier: false` when the plot should own these gestures without requiring Ctrl.
+Scroll to zoom around the pointer, or drag to pan. Wheel zoom activates after the pointer settles over the plot. Horizontal scrolling does not change the viewport. Ctrl-drag is reserved for zoom gestures.
 
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'
@@ -2929,7 +2884,7 @@ plot.plotArgs = {
   chrome_color: { light: '#e2e8f0', dark: '#334155' },
   grid: false,
   border: false,
-  zoom_pan: { x: true, y: true, modifier: false },
+  zoom_pan: { x: true, y: true },
   on_viewport_change: ({ x, y }) => {
     const format = (axis: { window: number[] } | null) => axis
       ? axis.window.map(value => value.toFixed(1)).join('–') : 'full extent'
@@ -2940,9 +2895,9 @@ plot.plotArgs = {
 document.body.append(plot, output)
 ```
 
-Zoom on one axis
+Navigate an axis
 
-Hold Ctrl and scroll or drag. Only the horizontal window changes; the vertical range stays fixed. Set `x: false, y: true` for vertical-only navigation.
+Scroll over an axis to zoom only that axis around the pointer, or drag on the axis to pan it. Neither gesture requires a modifier. The other axis keeps its viewport.
 
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'
@@ -2952,7 +2907,7 @@ const plot = document.createElement('a-plot') as APlotElement
 const output = document.createElement('output')
 output.setAttribute('aria-live', 'polite')
 output.style.display = 'block'
-output.textContent = 'Hold Ctrl and scroll to zoom, or Ctrl-drag to pan.'
+output.textContent = 'Scroll to zoom, or drag to pan.'
 
 const data = Array.from({ length: 201 }, (_, i) => ({
   x: i / 2,
@@ -2974,7 +2929,52 @@ plot.plotArgs = {
   chrome_color: { light: '#e2e8f0', dark: '#334155' },
   grid: false,
   border: false,
-  zoom_pan: { x: true, y: false, modifier: true },
+  zoom_pan: { x: true, y: true },
+  on_viewport_change: ({ x, y }) => {
+    const format = (axis: { window: number[] } | null) => axis
+      ? axis.window.map(value => value.toFixed(1)).join('–') : 'full extent'
+    output.textContent = 'Visible x: ' + format(x) + ' · y: ' + format(y)
+  },
+}
+
+document.body.append(plot, output)
+```
+
+Zoom on one axis
+
+Scroll to zoom or drag to pan. Only the horizontal window changes; the vertical range stays fixed. Set `x: false, y: true` for vertical-only navigation.
+
+```ts
+import { line, type APlotElement } from '@antadesign/plot/browser'
+import '@antadesign/plot/elements/a-plot'
+
+const plot = document.createElement('a-plot') as APlotElement
+const output = document.createElement('output')
+output.setAttribute('aria-live', 'polite')
+output.style.display = 'block'
+output.textContent = 'Scroll to zoom, or drag to pan.'
+
+const data = Array.from({ length: 201 }, (_, i) => ({
+  x: i / 2,
+  y: 45 + 18 * Math.sin(i / 18) + 9 * Math.cos(i / 5) + 4 * Math.sin(i * 1.3),
+}))
+
+plot.plotArgs = {
+  series: [
+    line<Node>({
+      data, width: 2,
+      color: { light: '#6366f1', dark: '#a5b4fc' },
+      tooltip: true,
+    }),
+  ],
+  height: 260,
+  margin: { top: 8, right: 12, bottom: 24, left: 32 },
+  axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
+  background: { light: '#ffffff', dark: '#151b28' },
+  chrome_color: { light: '#e2e8f0', dark: '#334155' },
+  grid: false,
+  border: false,
+  zoom_pan: { x: true, y: false },
   on_viewport_change: ({ x, y }) => {
     const format = (axis: { window: number[] } | null) => axis
       ? axis.window.map(value => value.toFixed(1)).join('–') : 'full extent'
@@ -2993,13 +2993,12 @@ document.body.append(plot, output)
 |---|---|---|---|
 | `x?` | `boolean` | `true` | Enable horizontal zoom and pan on a continuous axis. |
 | `y?` | `boolean` | `true` | Enable vertical zoom and pan on a continuous axis. |
-| `modifier?` | `boolean` | `true` | Require Ctrl for gestures. Set `false` to allow gestures without a modifier. |
 
 Setting both axes to `false` disables zoom and pan. Categorical axes do not zoom.
 
 ### Controlling the viewport
 
-Use the buttons to focus on a range or restore the full extent. You can still zoom and pan horizontally with Ctrl after a button sets the view.
+Use the buttons to focus on a range or restore the full extent. You can still zoom and pan horizontally after a button sets the view.
 
 Set `viewport` to control the visible range. Increment its `key` to apply a new request after the user zooms or pans. See [Viewport](#viewport) for initialization and reset behavior.
 
@@ -3014,7 +3013,7 @@ const plot = document.createElement('a-plot') as APlotElement
 const output = document.createElement('output')
 output.setAttribute('aria-live', 'polite')
 output.style.display = 'block'
-output.textContent = 'Hold Ctrl and scroll to zoom, or Ctrl-drag to pan.'
+output.textContent = 'Scroll to zoom, or drag to pan.'
 
 const data = Array.from({ length: 201 }, (_, i) => ({
   x: i / 2,
@@ -3036,7 +3035,7 @@ plot.plotArgs = {
   chrome_color: { light: '#e2e8f0', dark: '#334155' },
   grid: false,
   border: false,
-  zoom_pan: { x: true, y: false, modifier: true },
+  zoom_pan: { x: true, y: false },
   viewport: { x: [20, 45], y: null, key: 0 },
   on_viewport_change: ({ x, y }) => {
     const format = (axis: { window: number[] } | null) => axis
@@ -3086,6 +3085,7 @@ to continuous axes.
 |---|---|---|
 | `x` | `AxisViewport \| null` | Current horizontal viewport, or `null` for a categorical axis. |
 | `y` | `AxisViewport \| null` | Current vertical viewport, or `null` for a categorical axis. |
+| `zoom_factor` | `{ x: number; y: number }` | Per-axis gesture magnification, initially 1; preserved during pan, resize, and data-domain changes. |
 
 Each `AxisViewport` contains:
 
@@ -3095,6 +3095,68 @@ Each `AxisViewport` contains:
 | `full` | `number[]` | Full unzoomed `[min, max]`. |
 
 ## Configuration details
+
+### Size
+
+Scatter `size` accepts a fixed pixel diameter or a pure accessor returning a number.
+The accessor receives `(row, index, viewport)`, so you can combine data and viewport
+without storing zoom in application state.
+
+Scroll near **50**. The first series stays at 4px. The other series
+alternate between 2px and 4px based on their data, then grow with horizontal zoom,
+at different rates, up to 16px. Drag to pan; **Reset zoom** restores
+the starting sizes.
+
+```ts
+import { scatter, type PlotArgs } from '@antadesign/plot'
+import '@antadesign/plot/elements/a-plot'
+import type { APlotElement } from '@antadesign/plot/browser'
+
+export function viewportSizes(): PlotArgs<Node> {
+  const labels = ['Fixed 4px', 'Data + gradual zoom', 'Data + faster zoom']
+  const positions = [0, 10, 25, 40, 45, 48, 49, 49.5, 49.75, 50, 50.25, 50.5, 51, 52, 55, 60, 75, 90, 100]
+  const rows = (label: string) => positions.map((x, i) => ({ x, y: label, weight: i % 2 ? 4 : 2 }))
+  return {
+    height: 260,
+    margin: { top: 24, right: 20, bottom: 48, left: 160 },
+    axis: { x: { min: 0, max: 100, label: 'Zoom near 50' }, y: { categories: labels, label: '' } },
+    background: { light: '#ffffff', dark: '#202124' },
+    chrome_color: { light: '#64748b', dark: '#cbd5e1' },
+    grid: false,
+    zoom_pan: { x: true, y: false },
+    series: [
+      scatter<Node>({ data: rows(labels[0]), size: 4,
+        color: { light: '#64748b', dark: '#cbd5e1' }, tooltip: true }),
+      scatter<Node>({ data: rows(labels[1]),
+        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.25),
+        color: { light: '#7c3aed', dark: '#c4b5fd' }, tooltip: true }),
+      scatter<Node>({ data: rows(labels[2]),
+        size: (row, index, viewport) => Math.min(16, Number(row.weight) * viewport.zoom_factor.x ** 0.5),
+        color: { light: '#c2410c', dark: '#fdba74' }, tooltip: true }),
+    ],
+  }
+}
+
+const plot = document.createElement('a-plot') as APlotElement
+plot.plotArgs = viewportSizes()
+document.body.append(plot)
+```
+
+`viewport` has the same shape as [Viewport changes](#viewport-changes): `x` and `y`
+contain visible and full domains (`null` for a categorical axis), and `zoom_factor.x` and
+`zoom_factor.y` contain gesture magnification. Each starts at 1. Panning, resizing, and
+data-domain changes preserve magnification. Reset and new keyed viewport requests
+establish factor 1 on their affected axes. Zooming out beyond a requested initial
+window can yield factors below 1. Use `Math.max(viewport.zoom_factor.x, viewport.zoom_factor.y)`
+to follow the more magnified axis.
+
+Size accessors run during composition, including zoom and pan, rather than when
+the series is constructed. Keep them pure and inexpensive. Existing accessors
+that only read the row or index remain valid. Returned sizes must be finite and
+non-negative; invalid results report a composition error and retain the previous
+plot. Numeric row `size` fields take precedence, and the index stays tied to the
+original input row after category filtering. Drawing, hit testing, and highlights
+reuse the composed sizes. Other series' size options and font sizes remain numeric.
 
 ### Font
 

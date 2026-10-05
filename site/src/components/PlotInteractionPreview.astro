@@ -8,14 +8,14 @@ const initial = example === 'composedTooltips'
   : example === 'selection'
   ? 'Select a point to inspect its data.'
   : example === 'zoomFree'
-    ? 'Scroll to zoom, or drag to pan.'
-    : 'Hold Ctrl and scroll to zoom, or Ctrl-drag to pan.'
+    ? 'Scroll or drag over an axis to navigate that axis.'
+    : 'Scroll to zoom, or drag to pan.'
 ---
 
 <div class="plot-interaction" data-plot-interaction={example}>
   <a-plot aria-label={{ highlights: 'Hover highlight comparison', tooltips: 'Default and custom tooltips',
     composedTooltips: 'Composed tooltip across overlapping series',
-    selection: 'Select a sample', zoom: 'Zoom with Ctrl', zoomFree: 'Zoom without a modifier',
+    selection: 'Select a sample', zoom: 'Zoom and pan in the plot', zoomFree: 'Navigate an axis',
     zoomX: 'Horizontal zoom only', viewport: 'Programmatically controlled viewport' }[example]}></a-plot>
   {example === 'viewport' && (
     <div class="viewport-controls">

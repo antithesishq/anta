@@ -322,9 +322,9 @@ export type CategoryAxisTemplate = BaseAxisTemplate & {
 export type AxisTemplate = LinearAxisTemplate | LogarithmicAxisTemplate | CategoryAxisTemplate | TimeAxisTemplate
 
 export type GridSpec = boolean | { x?: boolean; y?: boolean }
-export type ZoomPanArg = boolean | { modifier?: boolean; x?: boolean; y?: boolean }
+export type ZoomPanArg = boolean | { x?: boolean; y?: boolean }
 
-export type ZoomPan = { enabled: boolean; modifier: boolean; x: boolean; y: boolean }
+export type ZoomPan = { enabled: boolean; x: boolean; y: boolean }
 
 export type RequestedViewportWindow = { x?: Domain | null; y?: Domain | null }
 

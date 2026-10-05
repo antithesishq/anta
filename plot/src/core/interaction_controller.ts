@@ -5,8 +5,7 @@ import { resolve_highlights } from "./interactions/highlight"
 import { clamp_viewport, magnify_zoom, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
 import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import type { ComposedPlot, HighlightSpec, PointData, TooltipData, Viewport, ViewportChange, ViewportRequest, ZoomPan } from "./types"
-
-import type { InteractionTarget, WheelInput } from './interactions/target'
+import { target_axes, type InteractionTarget, type WheelInput } from './interactions/target'
 
 export type PanInput = PointerOffset & {
     ctrlKey: boolean
@@ -31,8 +30,8 @@ export class PlotInteractionController<TooltipContent = unknown> {
     #committed_zoom: ViewportZoom = UNIT_ZOOM
     #adopted_viewport_key: string | null = null
     #pan_snapshot: PanSnapshot | null = null
-    #zoomed_this_visit = false
-    #pan_modifier_ready = false
+    #zoomed_targets = new Set<InteractionTarget>()
+    #zoom_modifier_ready = false
 
     constructor(get_composed_plot: () => ComposedPlot<TooltipContent> | null, initial_viewport: Viewport = { x: null, y: null }) {
         this.#get_composed_plot = get_composed_plot
@@ -171,9 +170,12 @@ export class PlotInteractionController<TooltipContent = unknown> {
     /** Apply a normalized drag phase; hosts render and schedule the resulting changes. */
     handle_pan(input: PanInput, zoom_pan: ZoomPan): PanUpdate {
         const result: PanUpdate = { started: false, changed: false, ended: false }
+        const axes = target_axes(input.target, zoom_pan)
         if (input.phase === 'start') {
-            if (input.pointer !== null && this.begin_pan(input.pointer, zoom_pan)) {
-                this.#pan_modifier_ready = false
+            // Ctrl-drag is reserved for rectangle/axis zoom, never plain panning.
+            if (!zoom_pan.enabled || input.ctrlKey || !this.#pan_enabled({ ...zoom_pan, ...axes })) return result
+            if (input.pointer !== null && this.begin_pan(input.pointer, axes)) {
+                this.#zoom_modifier_ready = false
                 this.on_mouse_leave()
                 result.started = true
             }
@@ -183,42 +185,43 @@ export class PlotInteractionController<TooltipContent = unknown> {
             return result
         }
         if (input.phase !== 'cancel' && input.pointer !== null) {
-            result.changed = this.advance_pan(input.pointer, zoom_pan)
+            result.changed = this.advance_pan(input.pointer, axes)
         }
         if (input.phase === 'end' || input.phase === 'cancel') {
             this.end_pan()
-            this.update_pointer_modifier(input.phase === 'end', zoom_pan)
+            this.update_pointer_modifier(input.ctrlKey, zoom_pan)
             result.ended = true
         }
         return result
     }
 
     /** Ignore hover during a drag; otherwise update hits and modifier readiness together. */
-    handle_hover(event: PointerOffset & { ctrlKey: boolean }, zoom_pan: ZoomPan): boolean {
+    handle_hover(event: PointerOffset & { ctrlKey: boolean; target: InteractionTarget }, zoom_pan: ZoomPan): boolean {
         if (this.pan_in_progress) {
             return false
         }
         const previous = this.#hovered
         const modifier_changed = this.update_pointer_modifier(event.ctrlKey, zoom_pan)
-        this.on_mouse_move(event)
+        if (event.target === 'plot') this.on_mouse_move(event)
+        else this.on_mouse_leave()
         return modifier_changed || previous !== this.#hovered
     }
 
     /** An accepted zoom clears stale hover; rejected or unchanged input preserves it. */
     handle_wheel(event: WheelInput, zoom_pan: ZoomPan): boolean {
-        if (!zoom_pan.enabled || (zoom_pan.modifier && !event.ctrlKey)) {
+        if (!zoom_pan.enabled || event.deltaY === 0) {
             return false
         }
-        if (!this.on_scroll(event, zoom_pan)) {
+        if (!this.on_scroll(event, target_axes(event.target, zoom_pan), event.target)) {
             return false
         }
         this.on_mouse_leave()
         return true
     }
 
-    /** Ctrl belongs to zoom when modifier gating is configured, not to selection. */
+    /** Ctrl is reserved for zoom gestures; ordinary clicks still select. */
     handle_click(event: PointerOffset & { ctrlKey: boolean }, zoom_pan: ZoomPan): PointData | undefined {
-        if (zoom_pan.modifier && event.ctrlKey) {
+        if (zoom_pan.enabled && event.ctrlKey) {
             return
         }
         return this.on_click(event)
@@ -232,11 +235,11 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** Track modifier readiness independently of the host's rendered hover snapshot. */
     update_pointer_modifier(ctrl_key: boolean, zoom_pan: ZoomPan): boolean {
-        const ready = this.#pan_enabled(zoom_pan) && zoom_pan.modifier && ctrl_key
-        if (ready === this.#pan_modifier_ready) {
+        const ready = this.#pan_enabled(zoom_pan) && ctrl_key
+        if (ready === this.#zoom_modifier_ready) {
             return false
         }
-        this.#pan_modifier_ready = ready
+        this.#zoom_modifier_ready = ready
         return true
     }
 
@@ -245,8 +248,8 @@ export class PlotInteractionController<TooltipContent = unknown> {
         if (this.pan_in_progress) {
             return 'grabbing'
         }
-        if (this.#pan_enabled(zoom_pan) && this.#pan_modifier_ready) {
-            return 'all-scroll'
+        if (this.#pan_enabled(zoom_pan) && this.#zoom_modifier_ready) {
+            return 'crosshair'
         }
         return this.has_selectable_hover ? 'pointer' : undefined
     }
@@ -291,15 +294,15 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     end_pan(): void {
         this.#pan_snapshot = null
-        this.#pan_modifier_ready = false
+        this.#zoom_modifier_ready = false
     }
 
     get zoomed_this_visit(): boolean {
-        return this.#zoomed_this_visit
+        return this.#zoomed_targets.size > 0
     }
 
     /** Stage an accepted wheel event, with offsets relative to the inner overlay. */
-    on_scroll(event: PointerOffset & { deltaY: number }, axes: { x: boolean; y: boolean }): boolean {
+    on_scroll(event: PointerOffset & { deltaY: number }, axes: { x: boolean; y: boolean }, target: InteractionTarget = 'plot'): boolean {
         const plot = this.#get_composed_plot()
 
         if (plot === null) {
@@ -312,7 +315,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         if (!viewport_moved(before, zoomed)) {
             return false
         }
-        this.#zoomed_this_visit = true
+        this.#zoomed_targets.add(target)
         this.#staged_zoom = magnify_zoom(views, before, zoomed, this.#staged_zoom)
         this.stage_viewport(zoomed)
         return true
@@ -320,8 +323,8 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** Leaving the overlay releases the wheel ownership acquired during this visit. */
     release_zoom(): void {
-        this.#pan_modifier_ready = false
-        this.#zoomed_this_visit = false
+        this.#zoom_modifier_ready = false
+        this.#zoomed_targets.clear()
     }
 
     /** Use this render's plot and committed window, not a previous composition or staged gesture. */
@@ -329,11 +332,12 @@ export class PlotInteractionController<TooltipContent = unknown> {
         plot: Pick<ComposedPlot<TooltipContent>, 'x_scale' | 'y_scale' | 'x_full_domain' | 'y_full_domain'> | null,
         rendered: Viewport,
         axes: { x: boolean; y: boolean },
+        target: InteractionTarget = 'plot',
     ): WheelClaim {
         if (plot === null) {
             return 'none'
         }
-        return published_claim(wheel_claim(zoomable_views(plot, axes), rendered), this.#zoomed_this_visit)
+        return published_claim(wheel_claim(zoomable_views(plot, axes), rendered), this.#zoomed_targets.has(target))
     }
 
     /** Resolve tooltip data/content from the latest composition and the host's rendered hover snapshot. */

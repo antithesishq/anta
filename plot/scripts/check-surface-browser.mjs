@@ -243,7 +243,9 @@ export async function checkSurface() {
     await wait()
     check(tooltip.contains(custom), 'input over custom tooltip child retains hover')
 
-    const zoom = new WheelEvent('wheel', { ...point, ctrlKey: true, deltaY: -150, cancelable: true })
+    capture.dispatchEvent(new PointerEvent('pointermove', { ...point, pointerType: 'mouse' }))
+    await new Promise(resolve => setTimeout(resolve, 180))
+    const zoom = new WheelEvent('wheel', { ...point, deltaY: -150, cancelable: true })
     capture.dispatchEvent(zoom)
     await wait()
     const resetControl = plot.querySelector('.plot-reset')

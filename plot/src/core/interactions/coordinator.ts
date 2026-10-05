@@ -60,7 +60,8 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
         },
         handle_click(input: PointerOffset & { ctrlKey: boolean }): PointData | undefined {
             const controller = host.controller()
-            return controller?.interactions.handle_click(input, controller.template.zoom_pan)
+            if (controller?.interaction_target(input) !== 'plot') return
+            return controller.interactions.handle_click(input, controller.template.zoom_pan)
         },
         // Discard pending work and release transient input state without reporting or rendering on teardown.
         disconnect(): void {
@@ -98,9 +99,7 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
                 return
             }
             clear_hover()
-            if (update.visit_changed) {
-                host.on_pointer_change()
-            }
+            host.on_pointer_change()
         },
         leave(): void {
             hover.leave()

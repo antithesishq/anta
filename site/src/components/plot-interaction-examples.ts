@@ -134,7 +134,7 @@ export function zoom(output: HTMLOutputElement): PlotArgs<Node> {
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: false,
     border: false,
-    zoom_pan: { x: true, y: true, modifier: true },
+    zoom_pan: { x: true, y: true },
     on_viewport_change: ({ x, y }) => {
       const format = (axis: { window: number[] } | null) => axis
         ? axis.window.map(value => value.toFixed(1)).join('–') : 'full extent'
@@ -144,11 +144,11 @@ export function zoom(output: HTMLOutputElement): PlotArgs<Node> {
 }
 
 export function zoomFree(output: HTMLOutputElement): PlotArgs<Node> {
-  return { ...zoom(output), zoom_pan: { x: true, y: true, modifier: false } }
+  return { ...zoom(output), zoom_pan: { x: true, y: true } }
 }
 
 export function zoomX(output: HTMLOutputElement): PlotArgs<Node> {
-  return { ...zoom(output), zoom_pan: { x: true, y: false, modifier: true } }
+  return { ...zoom(output), zoom_pan: { x: true, y: false } }
 }
 
 export function viewport(output: HTMLOutputElement): PlotArgs<Node> {

@@ -22,7 +22,7 @@ export function create_hover_schedule<T, Input>(host: HoverHost<T, Input>) {
         if (pointer === null) {
             return
         }
-        const changed = controller.interactions.handle_hover(pointer, controller.template.zoom_pan)
+        const changed = controller.interactions.handle_hover({ ...pointer, target: controller.interaction_target(pointer) }, controller.template.zoom_pan)
         host.on_update(changed)
     }, UPDATE_INTERVAL_MS)
 

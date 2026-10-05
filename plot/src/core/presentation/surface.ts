@@ -1,5 +1,7 @@
 import type { BoxContextChange, BoxMeasurementChange } from '@antadesign/anta/box-types'
 import type { CapturePointerInput, CaptureWheelInput } from '@antadesign/anta/capture-types'
+import type { InteractionRegions } from '../interactions/target'
+import type { CaptureConfiguration } from '../interactions/zoom_pan'
 import type { Rect } from '../types'
 import type { reset_zoom_presentation } from './reset_zoom'
 
@@ -7,6 +9,8 @@ export type PlotSurfacePresentation = {
     width: number
     height: number
     inner: Rect
+    regions?: InteractionRegions | null
+    axis_capture?: { x: CaptureConfiguration; y: CaptureConfiguration }
     filter?: string
     reset: ReturnType<typeof reset_zoom_presentation>
 }

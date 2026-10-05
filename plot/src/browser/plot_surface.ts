@@ -1,3 +1,6 @@
+import type { CapturePointerInput, CaptureWheelInput, CaptureInputGeometry } from '@antadesign/anta/capture-types'
+import { interaction_target, type InteractionRegions } from '../core/interactions/target'
+import type { Rect } from '../core/types'
 import type { ABoxElement } from '@antadesign/anta/elements/a-box'
 import type { BoxContext, BoxMeasurement } from '@antadesign/anta/box-types'
 import type { CaptureConfiguration } from '../core/interactions/zoom_pan'
@@ -89,6 +92,8 @@ export function create_plot_surface_element(): CustomElementConstructor {
         readonly canvas: HTMLCanvasElement
         readonly highlight: HTMLCanvasElement
         readonly capture: HTMLElement
+        readonly #axisCapture: { x: HTMLElement; y: HTMLElement }
+        #regions: InteractionRegions | null = null
         readonly #reset: HTMLElement
         #ownership: 'unclaimed' | 'main' | 'worker' = 'unclaimed'
         #listeners: AbortController | null = null
@@ -110,6 +115,11 @@ export function create_plot_surface_element(): CustomElementConstructor {
             this.capture = doc.createElement('a-capture')
             this.capture.className = 'plot-capture'
             this.capture.style.display = 'none'
+            this.#axisCapture = { x: doc.createElement('a-capture'), y: doc.createElement('a-capture') }
+            for (const [axis, capture] of Object.entries(this.#axisCapture)) {
+                capture.className = `plot-axis-capture plot-axis-${axis}`
+                capture.style.display = 'none'
+            }
             this.#reset = doc.createElement('a-button')
             this.#reset.className = 'plot-reset'
             this.#reset.setAttribute('type', 'button')
@@ -138,6 +148,8 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 try {
                     if (value === null) {
                         this.capture.style.display = 'none'
+                        this.#regions = null
+                        for (const capture of Object.values(this.#axisCapture)) capture.style.display = 'none'
                         this.#reset.hidden = true
                     } else {
                         this.present(JSON.parse(value))
@@ -169,14 +181,23 @@ export function create_plot_surface_element(): CustomElementConstructor {
             this.#reset.addEventListener('click', () => {
                 this.dispatchEvent(new CustomEvent('resetrequest'))
             }, { signal })
-            // Capture's custom events do not bubble. Forward their detail without delaying wheel handling.
-            for (const name of ['wheelinput', 'pointerinput']) {
-                this.capture.addEventListener(name, event => {
-                    this.dispatchEvent(new CustomEvent(name, { detail: (event as CustomEvent).detail }))
+            // Every Capture reports offsets relative to the inner plot before crossing threads.
+            for (const capture of [this.capture, this.#axisCapture.x, this.#axisCapture.y]) {
+                capture.addEventListener('wheelinput', event => {
+                    const detail = (event as CustomEvent<CaptureWheelInput>).detail
+                    this.#emit('wheelinput', { ...detail, ...this.#inputGeometry(capture, detail) })
+                }, { signal })
+                capture.addEventListener('pointerinput', event => {
+                    const detail = (event as CustomEvent<CapturePointerInput>).detail
+                    this.#emit('pointerinput', {
+                        ...detail, ...this.#inputGeometry(capture, detail),
+                        start: { ...detail.start, ...this.#inputGeometry(capture, detail.start) },
+                    })
                 }, { signal })
             }
             if (this.#box.parentNode !== this) {
-                this.append(this.#styles, this.#box, this.canvas, this.highlight, this.capture, this.#reset)
+                this.append(this.#styles, this.#box, this.canvas, this.highlight, this.capture,
+                    this.#axisCapture.x, this.#axisCapture.y, this.#reset)
             }
 
             this.#listenForMouseInput()
@@ -218,6 +239,18 @@ export function create_plot_surface_element(): CustomElementConstructor {
             })
         }
 
+        #inputGeometry(capture: HTMLElement, input: CaptureInputGeometry): CaptureInputGeometry {
+            if (capture === this.capture) return input
+            const region = capture.getBoundingClientRect()
+            const inner = this.capture.getBoundingClientRect()
+            const localX = input.localX + region.left - inner.left
+            const localY = input.localY + region.top - inner.top
+            return {
+                ...input, localX, localY, boxWidth: inner.width, boxHeight: inner.height,
+                inside: localX >= 0 && localX <= inner.width && localY >= 0 && localY <= inner.height,
+            }
+        }
+
         #listenForMouseInput(): void {
             this.#inputListeners?.abort()
             this.#inputListeners = new AbortController()
@@ -232,8 +265,8 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 const rect = this.capture.getBoundingClientRect()
                 const offsetX = event.clientX - rect.left
                 const offsetY = event.clientY - rect.top
-                if (rect.width <= 0 || rect.height <= 0 || offsetX < 0 || offsetY < 0
-                    || offsetX > rect.width || offsetY > rect.height) return null
+                if (rect.width <= 0 || rect.height <= 0
+                    || interaction_target(this.#regions, { offsetX, offsetY }) === null) return null
 
                 return { offsetX, offsetY, ctrlKey: event.ctrlKey }
             }
@@ -259,20 +292,41 @@ export function create_plot_surface_element(): CustomElementConstructor {
         get measurement(): BoxMeasurement { return this.#box.measurement }
         get context(): BoxContext { return this.#box.context }
         get cursor(): string { return this.capture.style.cursor }
-        set cursor(value: string) { this.capture.style.cursor = value }
+        set cursor(value: string) {
+            this.capture.style.cursor = value
+            for (const capture of Object.values(this.#axisCapture)) capture.style.cursor = value
+        }
         setSize(dimensions: { width?: number; height?: number }): void { size_host(this, dimensions) }
         configureCapture(configuration: CaptureConfiguration): void {
             configure_capture(this.capture, configuration)
         }
 
-        present({ width, height, inner, filter, reset }: PlotSurfacePresentation): void {
+        present({ width, height, inner, regions, axis_capture, filter, reset }: PlotSurfacePresentation): void {
             this.capture.style.display = ''
+            this.#regions = regions ?? { plot: inner, x: null, y: null }
             for (const canvas of [this.canvas, this.highlight]) {
                 canvas.style.width = `${width}px`
                 canvas.style.height = `${height}px`
                 canvas.style.filter = filter ?? ''
             }
             Object.assign(this.capture.style, tooltip_wrapper_style(inner))
+            for (const axis of ['x', 'y'] as const) {
+                const capture = this.#axisCapture[axis]
+                const bounds = this.#regions[axis]
+                const configuration = axis_capture?.[axis]
+                if (bounds === null || configuration === undefined) {
+                    capture.style.display = 'none'
+                    continue
+                }
+                // Canvas labels outside the surface are clipped; their input regions are too.
+                const visible: Rect = {
+                    left: Math.max(0, bounds.left), right: Math.min(width, bounds.right),
+                    top: Math.max(0, bounds.top), bottom: Math.min(height, bounds.bottom),
+                }
+                capture.style.display = visible.right > visible.left && visible.bottom > visible.top ? '' : 'none'
+                Object.assign(capture.style, tooltip_wrapper_style(visible))
+                configure_capture(capture, configuration)
+            }
             Object.assign(this.#reset.style, reset.position, reset.button.style)
             this.#reset.hidden = !reset.visible
         }

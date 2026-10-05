@@ -6,6 +6,7 @@ import { capture_attributes, resolve_capture_configuration, zoom_pan_enabled } f
 import { plot_color_filter } from '../core/presentation/plot'
 import { reset_zoom_presentation } from '../core/presentation/reset_zoom'
 import type { PlotSurfacePresentation, PlotSurfaceMouseInput } from '../core/presentation/surface'
+import { target_axes, type InteractionTarget } from '../core/interactions/target'
 import type { PlotArgs, ViewportChange } from '../core/types'
 
 export type PlotHostOptions<Input> = {
@@ -131,18 +132,22 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
         controller.flush_draw()
         return {
             width: plot.layout.width, height: plot.layout.height, inner: plot.inner,
+            regions: controller.interaction_regions,
+            axis_capture: { x: this.capture('x-axis'), y: this.capture('y-axis') },
             filter: plot_color_filter(controller.template, environment.color_theme),
             reset: reset_zoom_presentation(controller, plot.inner, environment.color_theme),
         }
     }
 
-    capture() {
+    capture(target: InteractionTarget = 'plot') {
         const controller = this.controller
-        const axes = controller?.template.zoom_pan
+        const axes = controller === null ? { x: false, y: false } : target_axes(target, controller.template.zoom_pan)
         return resolve_capture_configuration(
-            controller !== null && zoom_pan_enabled(controller.template), axes?.modifier ?? true,
-            controller === null || axes === undefined ? 'none' : controller.interactions.wheel_claim(
-                controller.composed_plot, controller.interactions.committed_viewport, axes,
+            controller !== null && zoom_pan_enabled({
+                ...controller.template, zoom_pan: { ...controller.template.zoom_pan, ...axes },
+            }),
+            controller === null ? 'none' : controller.interactions.wheel_claim(
+                controller.composed_plot, controller.interactions.committed_viewport, axes, target,
             ),
         )
     }

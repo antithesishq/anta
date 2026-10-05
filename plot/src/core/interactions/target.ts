@@ -39,3 +39,11 @@ export function interaction_target(regions: InteractionRegions | null, input: Po
     if (contains(regions.y)) return 'y-axis'
     return null
 }
+
+/** Restrict a gesture to its starting region and the caller's enabled axes. */
+export function target_axes(target: InteractionTarget, axes: { x: boolean; y: boolean }): { x: boolean; y: boolean } {
+    return {
+        x: axes.x && (target === 'plot' || target === 'x-axis'),
+        y: axes.y && (target === 'plot' || target === 'y-axis'),
+    }
+}

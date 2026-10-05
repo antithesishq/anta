@@ -1,5 +1,6 @@
 import type { CanvasContext, ComposedPlot, Layout, Rect, RenderContext, ResolvedFontConfig } from "../types"
 import { draw_axes, draw_grid, resolve_grid, continuous_axis_layout, type AxisChrome } from "./axes"
+import { interaction_regions, type InteractionRegions } from '../interactions/target'
 import { series_type } from "../registry"
 import { DEFAULT_SERIES_COLOR } from "../template/color"
 
@@ -40,7 +41,7 @@ export function prepare_canvas_context(ctx: CanvasContext, width: number, height
  * @param ctx - canvas context
  * @param plot - the ComposedPlot to render
  */
-export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: ComposedPlot<TooltipContent>): void {
+export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: ComposedPlot<TooltipContent>): InteractionRegions {
     ctx.save()
     try {
         const { layout, inner, x_scale, y_scale } = plot
@@ -86,7 +87,7 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
             const title_font = resolve_font(plot.title_font, plot.font, { family: plot.inherited_font_family, size: TITLE_SIZE, color: TITLE_COLOR }, plot.chrome_theme)
             draw_title(ctx, layout, inner, plot.title, title_font)
         }
-        draw_axes(ctx, chrome)
+        const extents = draw_axes(ctx, chrome)
 
         for (let series of plot.series) {
             const render: RenderContext = {
@@ -113,6 +114,7 @@ export function draw<TooltipContent = unknown>(ctx: CanvasContext, plot: Compose
         if (plot.border !== false) {
             draw_border(ctx, inner, layout, plot.chrome_color ?? BORDER_COLOR)
         }
+        return interaction_regions(inner, extents)
     } finally {
         ctx.restore()
     }

@@ -1,6 +1,7 @@
 import type { PlotController } from '../controller'
 import type { PanInput } from '../interaction_controller'
 import type { PointData, Viewport, ViewportChange } from '../types'
+import type { InteractionTarget, WheelInput } from './target'
 import type { PointerOffset } from './hit'
 import { create_hover_schedule } from './hover_schedule'
 import { create_viewport_schedule } from './viewport_schedule'
@@ -20,6 +21,7 @@ type InteractionHost<T, Input> = {
 
 /** Own interaction schedulers and their connections; hosts supply input conversion and visible feedback. */
 export function create_interaction_coordinator<T, Input>(host: InteractionHost<T, Input>) {
+    let drag_target: InteractionTarget = null
     const viewport = create_viewport_schedule({
         interactions: () => host.controller()?.interactions ?? null,
         commit_mode: host.commit_mode,
@@ -62,16 +64,19 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
         },
         // Discard pending work and release transient input state without reporting or rendering on teardown.
         disconnect(): void {
+            drag_target = null
             viewport.cancel()
             host.controller()?.interactions.end_pan()
             hover.leave()
         },
-        handle_pan(input: PanInput): void {
+        handle_pan(input: Omit<PanInput, 'target'>): void {
             const controller = host.controller()
             if (controller === null) {
                 return
             }
-            const update = viewport.handle_pan(input, controller.template.zoom_pan)
+            if (input.phase === 'start') drag_target = controller.interaction_target(input)
+            const update = viewport.handle_pan({ ...input, target: drag_target }, controller.template.zoom_pan)
+            if (input.phase === 'end' || input.phase === 'cancel') drag_target = null
             if (update.started) {
                 clear_hover()
                 host.on_pointer_change()
@@ -81,12 +86,14 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
                 host.on_pan_end?.()
             }
         },
-        handle_wheel(input: PointerOffset & { deltaY: number; ctrlKey: boolean }): void {
+        handle_wheel(input: Omit<WheelInput, 'target'>): void {
             const controller = host.controller()
             if (controller === null || !zoom_pan_enabled(controller.template)) {
                 return
             }
-            const update = viewport.handle_wheel(input, controller.template.zoom_pan)
+            const update = viewport.handle_wheel({
+                ...input, target: controller.interaction_target(input),
+            }, controller.template.zoom_pan)
             if (!update.changed) {
                 return
             }

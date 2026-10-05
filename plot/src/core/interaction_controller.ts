@@ -6,7 +6,11 @@ import { clamp_viewport, magnify_zoom, pan_frame, pan_viewport, published_claim,
 import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import type { ComposedPlot, HighlightSpec, PointData, TooltipData, Viewport, ViewportChange, ViewportRequest, ZoomPan } from "./types"
 
-export type PanInput = {
+import type { InteractionTarget, WheelInput } from './interactions/target'
+
+export type PanInput = PointerOffset & {
+    ctrlKey: boolean
+    target: InteractionTarget
     phase: 'start' | 'move' | 'end' | 'cancel'
     pointer: { x: number; y: number } | null
 }
@@ -201,7 +205,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
     }
 
     /** An accepted zoom clears stale hover; rejected or unchanged input preserves it. */
-    handle_wheel(event: PointerOffset & { deltaY: number; ctrlKey: boolean }, zoom_pan: ZoomPan): boolean {
+    handle_wheel(event: WheelInput, zoom_pan: ZoomPan): boolean {
         if (!zoom_pan.enabled || (zoom_pan.modifier && !event.ctrlKey)) {
             return false
         }

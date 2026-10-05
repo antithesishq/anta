@@ -1,5 +1,5 @@
 import { debounce, throttle } from 'es-toolkit/function'
-import type { PointerOffset } from './hit'
+import type { WheelInput } from './target'
 import type { PanInput, PanUpdate, PlotInteractionController } from '../interaction_controller'
 import type { Viewport, ViewportChange, ViewportRequest, ZoomPan } from '../types'
 import { compatible_viewport, viewport_moved, type ViewportAxes } from './viewport'
@@ -74,7 +74,7 @@ export function create_viewport_schedule<T>(host: ViewportHost<T>) {
         },
         // Report successful zooms after settling, and tell the host when wheel ownership changes.
         handle_wheel(
-            input: PointerOffset & { deltaY: number; ctrlKey: boolean },
+            input: WheelInput,
             zoom_pan: ZoomPan,
         ): { changed: boolean; visit_changed: boolean } {
             const interactions = host.interactions()

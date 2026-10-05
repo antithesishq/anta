@@ -1,3 +1,5 @@
+import { interaction_target, type InteractionRegions, type InteractionTarget } from './interactions/target'
+import type { PointerOffset } from './interactions/hit'
 import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import { new_plot_template } from "./template/plot_template"
 import { compose_plot } from "./compose/compose_plot"
@@ -36,6 +38,7 @@ export class PlotController<TooltipContent = unknown> {
     readonly #on_error: (failure: PlotLifecycleError) => void
     #draw_host: PlotDrawHost | null = null
     #draw_dirty = false
+    #interaction_regions: InteractionRegions | null = null
     #has_current_composition = false
     #environment: PlotEnvironment | null = null
     #last_composition_zoom: ViewportZoom = UNIT_ZOOM
@@ -56,6 +59,11 @@ export class PlotController<TooltipContent = unknown> {
             x: this.#template.viewport?.window.x ?? null,
             y: this.#template.viewport?.window.y ?? null,
         })
+    }
+
+    /** Resolve input against the geometry and tick labels of the last successful draw. */
+    interaction_target(input: PointerOffset): InteractionTarget {
+        return interaction_target(this.#interaction_regions, input)
     }
 
     get plot_args(): PlotArgs<TooltipContent> {
@@ -126,6 +134,7 @@ export class PlotController<TooltipContent = unknown> {
         this.#composed_plot = composed_plot
         this.#has_current_composition = true
         if (recompose || dpr_changed) {
+            this.#interaction_regions = null
             this.invalidate_draw()
         }
         return composed_plot
@@ -182,7 +191,7 @@ export class PlotController<TooltipContent = unknown> {
             return
         }
         try {
-            draw_plot(ctx, this.#composed_plot)
+            this.#interaction_regions = draw_plot(ctx, this.#composed_plot)
         } catch (error) {
             this.#on_error({ phase: 'draw', error })
         }

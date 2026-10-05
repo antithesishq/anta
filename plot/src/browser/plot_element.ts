@@ -245,7 +245,7 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
 
         // Translate Capture start, move, end, and cancel phases into pan updates.
         #pointer(detail: CapturePointerInput): void {
-            this.#interaction_coordinator.handle_pan(capture_pointer_input(detail))
+            this.#interaction_coordinator.handle_drag(capture_pointer_input(detail))
         }
 
     }

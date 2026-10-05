@@ -82,7 +82,7 @@ test('both hosts deliver identical targets, offsets, modifiers and wheel deltas'
         render(controller)
         const log = []
         logs.push(log)
-        controller.interactions.handle_pan = input => {
+        controller.interactions.handle_drag = input => {
             log.push(input)
             return { started: false, changed: false, ended: false }
         }
@@ -92,7 +92,7 @@ test('both hosts deliver identical targets, offsets, modifiers and wheel deltas'
     for (const phase of ['start', 'move', 'cancel']) {
         const detail = { phase, start, localX: 20, localY: 100,
             pointerEvent: phase === 'cancel' ? null : { clientX: 370, clientY: 400, ctrlKey: false } }
-        browser.interactions.handle_pan(capture_pointer_input(detail))
+        browser.interactions.handle_drag(capture_pointer_input(detail))
         worker.on_pointer_input({ detail })
     }
     const detail = { localX: 200, localY: 220, wheelEvent: { deltaX: 12, deltaY: -30, ctrlKey: true } }

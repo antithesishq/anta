@@ -76,6 +76,55 @@ export type PanSnapshot = {
     pointer_origin: { x: number; y: number }
 }
 
+/** Fixed coordinate system for a Ctrl-drag on one continuous axis. */
+export type AxisZoomSnapshot = {
+    axis: 'x' | 'y'
+    domain: Domain
+    space: AxisSpace
+    anchor: number
+    pointer_origin: number
+    pixel_span: number
+}
+
+/** Capture the starting window and anchor before a drag changes the rendered scales. */
+export function axis_zoom_frame(
+    views: AxisViews, override: Viewport, axis: 'x' | 'y',
+    cursor: { x: number; y: number }, pointer: { x: number; y: number }, axis_length: number,
+): AxisZoomSnapshot | null {
+    const full = views[`${axis}_full_domain`]
+    const scale = views[`${axis}_scale`]
+    const range = scale_range(scale)
+    if (full === null || range === undefined || !(axis_length > 0)) return null
+    const space = axis_space(scale)
+    const domain = to_space(override[axis] ?? full, space)!
+    if (!(domain[1] > domain[0])) return null
+    return {
+        axis, domain, space,
+        anchor: anchor_in_space(domain, range, cursor[axis]),
+        pointer_origin: pointer[axis],
+        pixel_span: Math.sign(range[1] - range[0]) * axis_length,
+    }
+}
+
+/** A quarter-axis drag toward increasing values halves the starting window. */
+export function axis_zoom_viewport(
+    snapshot: AxisZoomSnapshot, views: AxisViews, override: Viewport,
+    pointer: { x: number; y: number },
+): Viewport {
+    const { axis, domain, space } = snapshot
+    const full = to_space(views[`${axis}_full_domain`], space)
+    if (full === null) return override
+    const full_span = full[1] - full[0]
+    const span = domain[1] - domain[0]
+    if (!(full_span > 0)) return override
+    const exponent = -4 * (pointer[axis] - snapshot.pointer_origin) / snapshot.pixel_span
+    // Bound the exponent before exponentiation, including for a release far outside the plot.
+    const factor = 2 ** Math.max(Math.log2(full_span / MAX_ZOOM / span),
+        Math.min(Math.log2(full_span / span), exponent))
+    const window = zoom_domain(domain, full, snapshot.anchor, factor)
+    return { ...override, [axis]: from_space(window, space) }
+}
+
 /** Enable gestures only when at least one selected axis is continuous. */
 export function zoom_pan_enabled(template: {
     x: Pick<AxisTemplate, 'kind'>

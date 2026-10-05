@@ -219,7 +219,7 @@ export function Plot<Content = React.ReactNode>({
                     onMeasureChange={event => retained.current.measure?.(event)}
                     onContextChange={onContextChange}
                     onWheelInput={event => host.interactions.handle_wheel(capture_wheel_input(event.detail))}
-                    onPointerInput={event => host.interactions.handle_pan(capture_pointer_input(event.detail))}
+                    onPointerInput={event => host.interactions.handle_drag(capture_pointer_input(event.detail))}
                     onPlotMove={event => host.interactions.move(event.detail)}
                     onPlotLeave={host.interactions.leave}
                     onPlotClick={event => host.interactions.handle_click(event.detail)}

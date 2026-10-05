@@ -45,7 +45,7 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
             on_hover_update: options.hover,
             on_hover_clear: options.clear_hover,
             on_pointer_change: options.pointer,
-            on_pan_end: options.schedule,
+            on_drag_end: options.schedule,
         })
     }
 

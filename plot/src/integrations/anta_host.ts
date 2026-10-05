@@ -109,7 +109,7 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
     }, UPDATE_INTERVAL_MS, { edges: ['trailing'] })
 
     const on_pointer_input = (event: CustomEvent<CapturePointerInput>): void => {
-        coordinator.handle_pan(capture_pointer_input(event.detail))
+        coordinator.handle_drag(capture_pointer_input(event.detail))
     }
     const on_wheel_input = (event: CustomEvent<CaptureWheelInput>): void => {
         coordinator.handle_wheel(capture_wheel_input(event.detail))

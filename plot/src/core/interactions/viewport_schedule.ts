@@ -1,6 +1,6 @@
 import { debounce, throttle } from 'es-toolkit/function'
 import type { WheelInput } from './target'
-import type { PanInput, PanUpdate, PlotInteractionController } from '../interaction_controller'
+import type { DragInput, DragUpdate, PlotInteractionController } from '../interaction_controller'
 import type { Viewport, ViewportChange, ViewportRequest, ZoomPan } from '../types'
 import { compatible_viewport, viewport_moved, type ViewportAxes } from './viewport'
 
@@ -56,12 +56,12 @@ export function create_viewport_schedule<T>(host: ViewportHost<T>) {
 
     return {
         // Only accepted movement schedules work; release flushes the final commit before its report.
-        handle_pan(input: PanInput, zoom_pan: ZoomPan): PanUpdate {
+        handle_drag(input: DragInput, zoom_pan: ZoomPan): DragUpdate {
             const interactions = host.interactions()
             if (interactions === null) {
                 return { started: false, changed: false, ended: false }
             }
-            const update = interactions.handle_pan(input, zoom_pan)
+            const update = interactions.handle_drag(input, zoom_pan)
             if (update.changed) {
                 commit(interactions.staged_viewport)
                 pending_report()

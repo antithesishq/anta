@@ -15,7 +15,7 @@ type HoverHost<T, Input> = {
 export function create_hover_schedule<T, Input>(host: HoverHost<T, Input>) {
     const move = throttle((input: Input) => {
         const controller = host.controller()
-        if (controller === null || controller.interactions.pan_in_progress) {
+        if (controller === null || controller.interactions.drag_in_progress) {
             return
         }
         const pointer = host.resolve(input)

@@ -1,5 +1,5 @@
 import type { PlotController } from '../controller'
-import type { PanInput } from '../interaction_controller'
+import type { DragInput } from '../interaction_controller'
 import type { PointData, Viewport, ViewportChange } from '../types'
 import type { InteractionTarget, WheelInput } from './target'
 import type { PointerOffset } from './hit'
@@ -16,7 +16,7 @@ type InteractionHost<T, Input> = {
     on_hover_update(changed: boolean): void
     on_hover_clear(): void
     on_pointer_change(): void
-    on_pan_end?(): void
+    on_drag_end?(): void
 }
 
 /** Own interaction schedulers and their connections; hosts supply input conversion and visible feedback. */
@@ -67,16 +67,16 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
         disconnect(): void {
             drag_target = null
             viewport.cancel()
-            host.controller()?.interactions.end_pan()
+            host.controller()?.interactions.end_drag()
             hover.leave()
         },
-        handle_pan(input: Omit<PanInput, 'target'>): void {
+        handle_drag(input: Omit<DragInput, 'target'>): void {
             const controller = host.controller()
             if (controller === null) {
                 return
             }
             if (input.phase === 'start') drag_target = controller.interaction_target(input)
-            const update = viewport.handle_pan({ ...input, target: drag_target }, controller.template.zoom_pan)
+            const update = viewport.handle_drag({ ...input, target: drag_target }, controller.template.zoom_pan)
             if (input.phase === 'end' || input.phase === 'cancel') drag_target = null
             if (update.started) {
                 clear_hover()
@@ -84,7 +84,7 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
             }
             if (update.ended) {
                 host.on_pointer_change()
-                host.on_pan_end?.()
+                host.on_drag_end?.()
             }
         },
         handle_wheel(input: Omit<WheelInput, 'target'>): void {

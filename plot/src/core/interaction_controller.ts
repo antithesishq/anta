@@ -2,19 +2,19 @@ import { cursor_position, find_hits, resolve_point_data, same_hits, selectable_h
 import { compatible_viewport, viewport_change, viewport_moved, type ViewportAxes } from "./interactions/viewport"
 import { resolve_tooltips, type ResolvedTooltip } from "./interactions/tooltip"
 import { resolve_highlights } from "./interactions/highlight"
-import { clamp_viewport, magnify_zoom, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
+import { axis_zoom_frame, axis_zoom_viewport, type AxisZoomSnapshot, clamp_viewport, magnify_zoom, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
 import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import type { ComposedPlot, HighlightSpec, PointData, TooltipData, Viewport, ViewportChange, ViewportRequest, ZoomPan } from "./types"
 import { target_axes, type InteractionTarget, type WheelInput } from './interactions/target'
 
-export type PanInput = PointerOffset & {
+export type DragInput = PointerOffset & {
     ctrlKey: boolean
     target: InteractionTarget
     phase: 'start' | 'move' | 'end' | 'cancel'
     pointer: { x: number; y: number } | null
 }
 
-export type PanUpdate = {
+export type DragUpdate = {
     started: boolean
     changed: boolean
     ended: boolean
@@ -30,8 +30,9 @@ export class PlotInteractionController<TooltipContent = unknown> {
     #committed_zoom: ViewportZoom = UNIT_ZOOM
     #adopted_viewport_key: string | null = null
     #pan_snapshot: PanSnapshot | null = null
+    #axis_zoom_snapshot: AxisZoomSnapshot | null = null
     #zoomed_targets = new Set<InteractionTarget>()
-    #zoom_modifier_ready = false
+    #zoom_modifier_target: InteractionTarget = null
 
     constructor(get_composed_plot: () => ComposedPlot<TooltipContent> | null, initial_viewport: Viewport = { x: null, y: null }) {
         this.#get_composed_plot = get_composed_plot
@@ -78,6 +79,10 @@ export class PlotInteractionController<TooltipContent = unknown> {
         this.#committed_zoom = retained_zoom(this.#committed_zoom)
         this.#staged_viewport = compatible_viewport(this.#staged_viewport, next)
         this.#committed_viewport = compatible_viewport(this.#committed_viewport, next)
+        const zoom_axis = this.#axis_zoom_snapshot?.axis
+        if (zoom_axis !== undefined && previous[zoom_axis].kind !== next[zoom_axis].kind) {
+            this.#axis_zoom_snapshot = null
+        }
         if (this.#pan_snapshot === null) {
             return
         }
@@ -92,7 +97,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
     /** Apply an argument request once per key, preserving omitted axes and deferring during a drag. */
     adopt_viewport_request(request: ViewportRequest | undefined): boolean {
         const plot = this.#get_composed_plot()
-        if (request === undefined || plot === null || this.pan_in_progress) {
+        if (request === undefined || plot === null || this.drag_in_progress) {
             return false
         }
         const key = request.key === undefined ? 'mount only' : `key ${request.key}`
@@ -139,6 +144,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
     }
 
     reset_viewport(axes: { x: boolean; y: boolean }): boolean {
+        this.end_drag()
         const current = this.#staged_viewport
         const full: Viewport = { x: axes.x ? null : current.x, y: axes.y ? null : current.y }
 
@@ -163,33 +169,48 @@ export class PlotInteractionController<TooltipContent = unknown> {
         return plot === null ? null : viewport_change(this.#staged_viewport, plot, this.#staged_zoom)
     }
 
-    get pan_in_progress(): boolean {
-        return this.#pan_snapshot !== null
+    get drag_in_progress(): boolean {
+        return this.#pan_snapshot !== null || this.#axis_zoom_snapshot !== null
     }
 
     /** Apply a normalized drag phase; hosts render and schedule the resulting changes. */
-    handle_pan(input: PanInput, zoom_pan: ZoomPan): PanUpdate {
-        const result: PanUpdate = { started: false, changed: false, ended: false }
+    handle_drag(input: DragInput, zoom_pan: ZoomPan): DragUpdate {
+        const result: DragUpdate = { started: false, changed: false, ended: false }
         const axes = target_axes(input.target, zoom_pan)
         if (input.phase === 'start') {
-            // Ctrl-drag is reserved for rectangle/axis zoom, never plain panning.
-            if (!zoom_pan.enabled || input.ctrlKey || !this.#pan_enabled({ ...zoom_pan, ...axes })) return result
-            if (input.pointer !== null && this.begin_pan(input.pointer, axes)) {
-                this.#zoom_modifier_ready = false
+            this.end_drag()
+            if (!zoom_pan.enabled || !this.#pan_enabled({ ...zoom_pan, ...axes }) || input.pointer === null) return result
+            let started = false
+            if (input.ctrlKey) {
+                const plot = this.#get_composed_plot()
+                const axis = input.target === 'x-axis' ? 'x' : input.target === 'y-axis' ? 'y' : null
+                if (plot !== null && axis !== null) {
+                    this.#axis_zoom_snapshot = axis_zoom_frame(zoomable_views(plot, axes),
+                        this.#staged_viewport, axis, cursor_position(plot, input), input.pointer,
+                        axis === 'x' ? plot.inner.right - plot.inner.left : plot.inner.bottom - plot.inner.top)
+                    started = this.#axis_zoom_snapshot !== null
+                }
+            } else {
+                started = this.begin_pan(input.pointer, axes)
+            }
+            if (started) {
+                this.#zoom_modifier_target = null
                 this.on_mouse_leave()
                 result.started = true
             }
             return result
         }
-        if (!this.pan_in_progress) {
+        if (!this.drag_in_progress) {
             return result
         }
         if (input.phase !== 'cancel' && input.pointer !== null) {
-            result.changed = this.advance_pan(input.pointer, axes)
+            result.changed = this.#axis_zoom_snapshot !== null
+                ? this.advance_axis_zoom(input.pointer, axes)
+                : this.advance_pan(input.pointer, axes)
         }
         if (input.phase === 'end' || input.phase === 'cancel') {
-            this.end_pan()
-            this.update_pointer_modifier(input.ctrlKey, zoom_pan)
+            this.end_drag()
+            this.update_pointer_modifier(input.ctrlKey, zoom_pan, input.target)
             result.ended = true
         }
         return result
@@ -197,11 +218,11 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** Ignore hover during a drag; otherwise update hits and modifier readiness together. */
     handle_hover(event: PointerOffset & { ctrlKey: boolean; target: InteractionTarget }, zoom_pan: ZoomPan): boolean {
-        if (this.pan_in_progress) {
+        if (this.drag_in_progress) {
             return false
         }
         const previous = this.#hovered
-        const modifier_changed = this.update_pointer_modifier(event.ctrlKey, zoom_pan)
+        const modifier_changed = this.update_pointer_modifier(event.ctrlKey, zoom_pan, event.target)
         if (event.target === 'plot') this.on_mouse_move(event)
         else this.on_mouse_leave()
         return modifier_changed || previous !== this.#hovered
@@ -209,7 +230,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** An accepted zoom clears stale hover; rejected or unchanged input preserves it. */
     handle_wheel(event: WheelInput, zoom_pan: ZoomPan): boolean {
-        if (!zoom_pan.enabled || event.deltaY === 0) {
+        if (this.drag_in_progress || !zoom_pan.enabled || event.deltaY === 0) {
             return false
         }
         if (!this.on_scroll(event, target_axes(event.target, zoom_pan), event.target)) {
@@ -234,21 +255,28 @@ export class PlotInteractionController<TooltipContent = unknown> {
     }
 
     /** Track modifier readiness independently of the host's rendered hover snapshot. */
-    update_pointer_modifier(ctrl_key: boolean, zoom_pan: ZoomPan): boolean {
-        const ready = this.#pan_enabled(zoom_pan) && ctrl_key
-        if (ready === this.#zoom_modifier_ready) {
+    update_pointer_modifier(ctrl_key: boolean, zoom_pan: ZoomPan, target: InteractionTarget = 'plot'): boolean {
+        const axes = target_axes(target, zoom_pan)
+        const ready_target = ctrl_key && this.#pan_enabled({ ...zoom_pan, ...axes }) ? target : null
+        if (ready_target === this.#zoom_modifier_target) {
             return false
         }
-        this.#zoom_modifier_ready = ready
+        this.#zoom_modifier_target = ready_target
         return true
     }
 
     /** Resolve cursor precedence from shared interaction state. */
     cursor_style(zoom_pan: ZoomPan): string | undefined {
-        if (this.pan_in_progress) {
+        if (this.#axis_zoom_snapshot !== null) {
+            return this.#axis_zoom_snapshot.axis === 'x' ? 'ew-resize' : 'ns-resize'
+        }
+        if (this.drag_in_progress) {
             return 'grabbing'
         }
-        if (this.#pan_enabled(zoom_pan) && this.#zoom_modifier_ready) {
+        const target = this.#zoom_modifier_target
+        if (target !== null && this.#pan_enabled({ ...zoom_pan, ...target_axes(target, zoom_pan) })) {
+            if (target === 'x-axis') return 'ew-resize'
+            if (target === 'y-axis') return 'ns-resize'
             return 'crosshair'
         }
         return this.has_selectable_hover ? 'pointer' : undefined
@@ -292,9 +320,24 @@ export class PlotInteractionController<TooltipContent = unknown> {
         return true
     }
 
-    end_pan(): void {
+    /** Stage axis zoom through the same commit/report path as panning and wheel zoom. */
+    private advance_axis_zoom(pointer: { x: number; y: number }, axes: { x: boolean; y: boolean }): boolean {
+        const snapshot = this.#axis_zoom_snapshot
+        const plot = this.#get_composed_plot()
+        if (snapshot === null || plot === null) return false
+        const views = zoomable_views(plot, axes)
+        const before = this.#staged_viewport
+        const zoomed = axis_zoom_viewport(snapshot, views, before, pointer)
+        if (!viewport_moved(before, zoomed)) return false
+        this.#staged_zoom = magnify_zoom(views, before, zoomed, this.#staged_zoom)
+        this.stage_viewport(zoomed)
+        return true
+    }
+
+    end_drag(): void {
+        this.#axis_zoom_snapshot = null
         this.#pan_snapshot = null
-        this.#zoom_modifier_ready = false
+        this.#zoom_modifier_target = null
     }
 
     get zoomed_this_visit(): boolean {
@@ -323,7 +366,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** Leaving the overlay releases the wheel ownership acquired during this visit. */
     release_zoom(): void {
-        this.#zoom_modifier_ready = false
+        this.#zoom_modifier_target = null
         this.#zoomed_targets.clear()
     }
 

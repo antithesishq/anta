@@ -110,7 +110,8 @@ import '@antadesign/anta/theme-antune.css'
 ```
 
 Use `theme-antithesis.css` for Antithesis, or omit both themes to keep the
-seed-derived default palette.
+seed-derived default palette. These theme files do not load fonts. Choose fonts
+separately; see [Fonts](#fonts).
 
 ### What you import (and why)
 
@@ -446,15 +447,19 @@ for example with `--bg-2` and `--text-2`.
 
 ## Fonts
 
-Without an optional theme, `tokens.css` defines system stacks in `--sans-serif`,
-`--serif`, and `--monospace`. Reference themes register hosted fonts and replace
-some of those same variables. Components and theme rules decide which stack to
-use. Theme-free components do not force font-specific stylistic sets or
-variable-font axes. `tokens.css` also sets `1rem` to 15px.
+`tokens.css` defines system stacks in `--sans-serif`, `--serif`, and
+`--monospace`, and sets `1rem` to 15px. The optional themes keep those stacks
+and do not register font faces or request font files. Components and theme rules
+choose which stack to use.
+
+Use fonts from Google Fonts or host font files in your application. Manage font
+loading in a separate stylesheet such as `fonts.css`, and import it after the
+Anta styles and optional theme. See [Font examples](./theming.md#fonts-in-a-theme)
+for Google Fonts and the separate reference font setup used by anta.design.
 
 Register application-owned fonts and redefine the variables in CSS loaded after
 the Anta styles and optional theme. This example uses separate Roman and Italic
-variable files:
+variable files in an application-owned `fonts.css`:
 
 ```css
 @font-face {
@@ -462,6 +467,7 @@ variable files:
   src: url("/fonts/app-sans-roman.woff2") format("woff2");
   font-style: normal;
   font-weight: 100 900;
+  font-display: swap;
 }
 
 @font-face {
@@ -469,6 +475,7 @@ variable files:
   src: url("/fonts/app-sans-italic.woff2") format("woff2");
   font-style: italic;
   font-weight: 100 900;
+  font-display: swap;
 }
 
 :root {

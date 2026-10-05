@@ -108,6 +108,13 @@ When naming components, props, CSS variables, internal class names, or suggestin
 
 See [`FIGMA.md`](../FIGMA.md) for rules when extracting tokens, components, or styles from the Anta Figma library. Key rule: **always read the full variable list directly from the collection** — don't infer the token set from `get_variable_defs` on a sample node, because tokens that aren't placed on the queried node won't appear, and you'll silently miss values.
 
+## Fonts
+
+Published themes must not load fonts or select hosted font families. Keep their
+font stacks application-owned and font-specific features/variation axes out of
+package CSS. The docs site's reference font setup lives separately in
+`site/src/styles/fonts-antune.css` and `fonts-antithesis.css`.
+
 ## Color manipulation
 
 **To tune the alpha of any color (variable, `currentColor`, hex, etc.), always use `color-mix(in oklch, <color> <percent>%, transparent)`**. Mixing in `oklch` keeps the perceived hue/lightness stable, while the percent maps directly to the desired alpha (e.g. `50%` → 0.5 alpha). This is the standard pattern in Anta — do not reach for `rgba(...)`, hex-with-alpha (`#rrggbbaa`), or `opacity` on the parent when only the alpha of one color needs to change.

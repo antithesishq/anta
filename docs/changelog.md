@@ -12,6 +12,9 @@ changes are not listed.
 
 ### Changed
 
+- [Reference themes](/theming/#fonts-in-a-theme) no longer load hosted fonts or
+  replace the system font stacks. Load your chosen fonts in an application-owned
+  stylesheet; font-specific features and variation axes are also application-owned.
 - JSX wrapper imports no longer load CSS. For granular usage, load composed
   layout styles in the UI thread through `elements/a-breadcrumbs`,
   `elements/a-steps`, `elements/a-input-date`, `elements/a-select`, or

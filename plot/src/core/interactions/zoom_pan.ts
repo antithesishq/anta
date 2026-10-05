@@ -1,4 +1,4 @@
-import type { AxisTemplate, Domain, Scale, Viewport, ViewportZoom, ZoomPan } from "../types"
+import type { AxisTemplate, Domain, Rect, Scale, Viewport, ViewportZoom, ZoomPan } from "../types"
 import { clamp_domain, LINEAR_SPACE, LOG_SPACE, type AxisSpace } from "../template/domain"
 
 // Zoom + pan math for the plot's viewport override.
@@ -123,6 +123,51 @@ export function axis_zoom_viewport(
         Math.min(Math.log2(full_span / span), exponent))
     const window = zoom_domain(domain, full, snapshot.anchor, factor)
     return { ...override, [axis]: from_space(window, space) }
+}
+
+export type RectangleZoomSnapshot = {
+    views: AxisViews
+    viewport: Viewport
+    inner: Rect
+    cursor: { x: number; y: number }
+    pointer: { x: number; y: number }
+}
+
+/** Normalize and clip Capture's rectangle, including drags that end outside the plot. */
+export function drag_rectangle(inner: Rect, start: { x: number; y: number }, end: { x: number; y: number }): Rect {
+    const x = (value: number) => Math.max(inner.left, Math.min(inner.right, value))
+    const y = (value: number) => Math.max(inner.top, Math.min(inner.bottom, value))
+    return {
+        left: x(Math.min(start.x, end.x)), right: x(Math.max(start.x, end.x)),
+        top: y(Math.min(start.y, end.y)), bottom: y(Math.max(start.y, end.y)),
+    }
+}
+
+/** Fit the released rectangle using the scales captured before the gesture. */
+export function rectangle_zoom_viewport(
+    snapshot: RectangleZoomSnapshot, views: AxisViews, override: Viewport,
+    pointer: { x: number; y: number },
+): Viewport {
+    const rect = drag_rectangle(snapshot.inner, snapshot.cursor, {
+        x: snapshot.cursor.x + pointer.x - snapshot.pointer.x,
+        y: snapshot.cursor.y + pointer.y - snapshot.pointer.y,
+    })
+    if (rect.right <= rect.left || rect.bottom <= rect.top) return override
+    const fit = (axis: 'x' | 'y'): Domain | null => {
+        const full = views[`${axis}_full_domain`]
+        const initial_full = snapshot.views[`${axis}_full_domain`]
+        const scale = snapshot.views[`${axis}_scale`]
+        const range = scale_range(scale)
+        if (full === null || initial_full === null || range === undefined) return override[axis]
+        const space = axis_space(scale)
+        const window = to_space(snapshot.viewport[axis] ?? initial_full, space)!
+        const a = anchor_in_space(window, range, axis === 'x' ? rect.left : rect.top)
+        const b = anchor_in_space(window, range, axis === 'x' ? rect.right : rect.bottom)
+        const selected: Domain = [Math.min(a, b), Math.max(a, b)]
+        if (!(selected[1] > selected[0])) return override[axis]
+        return from_space(zoom_domain(selected, to_space(full, space)!, (a + b) / 2, 1), space)
+    }
+    return { x: fit('x'), y: fit('y') }
 }
 
 /** Enable gestures only when at least one selected axis is continuous. */

@@ -2,7 +2,7 @@ import { cursor_position, find_hits, resolve_point_data, same_hits, selectable_h
 import { compatible_viewport, viewport_change, viewport_moved, type ViewportAxes } from "./interactions/viewport"
 import { resolve_tooltips, type ResolvedTooltip } from "./interactions/tooltip"
 import { resolve_highlights } from "./interactions/highlight"
-import { axis_zoom_frame, axis_zoom_viewport, type AxisZoomSnapshot, clamp_viewport, magnify_zoom, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
+import { rectangle_zoom_viewport, type RectangleZoomSnapshot, axis_zoom_frame, axis_zoom_viewport, type AxisZoomSnapshot, clamp_viewport, magnify_zoom, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
 import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import type { ComposedPlot, HighlightSpec, PointData, TooltipData, Viewport, ViewportChange, ViewportRequest, ZoomPan } from "./types"
 import { target_axes, type InteractionTarget, type WheelInput } from './interactions/target'
@@ -31,6 +31,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
     #adopted_viewport_key: string | null = null
     #pan_snapshot: PanSnapshot | null = null
     #axis_zoom_snapshot: AxisZoomSnapshot | null = null
+    #rectangle_snapshot: RectangleZoomSnapshot | null = null
     #zoomed_targets = new Set<InteractionTarget>()
     #zoom_modifier_target: InteractionTarget = null
 
@@ -79,6 +80,9 @@ export class PlotInteractionController<TooltipContent = unknown> {
         this.#committed_zoom = retained_zoom(this.#committed_zoom)
         this.#staged_viewport = compatible_viewport(this.#staged_viewport, next)
         this.#committed_viewport = compatible_viewport(this.#committed_viewport, next)
+        if (previous.x.kind !== next.x.kind || previous.y.kind !== next.y.kind) {
+            this.#rectangle_snapshot = null
+        }
         const zoom_axis = this.#axis_zoom_snapshot?.axis
         if (zoom_axis !== undefined && previous[zoom_axis].kind !== next[zoom_axis].kind) {
             this.#axis_zoom_snapshot = null
@@ -170,7 +174,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
     }
 
     get drag_in_progress(): boolean {
-        return this.#pan_snapshot !== null || this.#axis_zoom_snapshot !== null
+        return this.#pan_snapshot !== null || this.#axis_zoom_snapshot !== null || this.#rectangle_snapshot !== null
     }
 
     /** Apply a normalized drag phase; hosts render and schedule the resulting changes. */
@@ -189,6 +193,12 @@ export class PlotInteractionController<TooltipContent = unknown> {
                         this.#staged_viewport, axis, cursor_position(plot, input), input.pointer,
                         axis === 'x' ? plot.inner.right - plot.inner.left : plot.inner.bottom - plot.inner.top)
                     started = this.#axis_zoom_snapshot !== null
+                } else if (plot !== null && input.target === 'plot') {
+                    this.#rectangle_snapshot = {
+                        views: zoomable_views(plot, axes), viewport: this.#staged_viewport,
+                        inner: plot.inner, cursor: cursor_position(plot, input), pointer: input.pointer,
+                    }
+                    started = true
                 }
             } else {
                 started = this.begin_pan(input.pointer, axes)
@@ -204,9 +214,13 @@ export class PlotInteractionController<TooltipContent = unknown> {
             return result
         }
         if (input.phase !== 'cancel' && input.pointer !== null) {
-            result.changed = this.#axis_zoom_snapshot !== null
-                ? this.advance_axis_zoom(input.pointer, axes)
-                : this.advance_pan(input.pointer, axes)
+            if (this.#rectangle_snapshot !== null) {
+                if (input.phase === 'end') result.changed = this.finish_rectangle_zoom(input.pointer, axes)
+            } else {
+                result.changed = this.#axis_zoom_snapshot !== null
+                    ? this.advance_axis_zoom(input.pointer, axes)
+                    : this.advance_pan(input.pointer, axes)
+            }
         }
         if (input.phase === 'end' || input.phase === 'cancel') {
             this.end_drag()
@@ -267,6 +281,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** Resolve cursor precedence from shared interaction state. */
     cursor_style(zoom_pan: ZoomPan): string | undefined {
+        if (this.#rectangle_snapshot !== null) return 'crosshair'
         if (this.#axis_zoom_snapshot !== null) {
             return this.#axis_zoom_snapshot.axis === 'x' ? 'ew-resize' : 'ns-resize'
         }
@@ -334,7 +349,21 @@ export class PlotInteractionController<TooltipContent = unknown> {
         return true
     }
 
+    private finish_rectangle_zoom(pointer: { x: number; y: number }, axes: { x: boolean; y: boolean }): boolean {
+        const snapshot = this.#rectangle_snapshot
+        const plot = this.#get_composed_plot()
+        if (snapshot === null || plot === null) return false
+        const views = zoomable_views(plot, axes)
+        const before = this.#staged_viewport
+        const zoomed = rectangle_zoom_viewport(snapshot, views, before, pointer)
+        if (!viewport_moved(before, zoomed)) return false
+        this.#staged_zoom = magnify_zoom(views, before, zoomed, this.#staged_zoom)
+        this.stage_viewport(zoomed)
+        return true
+    }
+
     end_drag(): void {
+        this.#rectangle_snapshot = null
         this.#axis_zoom_snapshot = null
         this.#pan_snapshot = null
         this.#zoom_modifier_target = null

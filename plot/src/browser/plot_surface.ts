@@ -3,7 +3,7 @@ import { interaction_target, type InteractionRegions } from '../core/interaction
 import type { Rect } from '../core/types'
 import type { ABoxElement } from '@antadesign/anta/elements/a-box'
 import type { BoxContext, BoxMeasurement } from '@antadesign/anta/box-types'
-import type { CaptureConfiguration } from '../core/interactions/zoom_pan'
+import { drag_rectangle, type CaptureConfiguration } from '../core/interactions/zoom_pan'
 import { RESET_ZOOM_BUTTON } from '../core/presentation/reset_zoom'
 import { tooltip_wrapper_style } from '../core/presentation/tooltip'
 import { configure_capture, prepare_canvas, size_host } from './surface_support'
@@ -45,6 +45,14 @@ a-plot-surface > a-capture {
 
 a-plot-surface > a-capture[pointer-capture] {
     user-select: none;
+}
+
+a-plot-surface .plot-zoom-rectangle {
+    position: absolute;
+    pointer-events: none;
+    box-sizing: border-box;
+    border: 1px solid var(--border-3-brand);
+    background: color-mix(in oklch, var(--text-1-brand) 12%, transparent);
 }
 
 a-plot-surface > .plot-highlight {
@@ -94,6 +102,8 @@ export function create_plot_surface_element(): CustomElementConstructor {
         readonly capture: HTMLElement
         readonly #axisCapture: { x: HTMLElement; y: HTMLElement }
         #regions: InteractionRegions | null = null
+        readonly #rectangle: HTMLElement
+        #rectangleStart: { x: number; y: number; width: number; height: number } | null = null
         readonly #reset: HTMLElement
         #ownership: 'unclaimed' | 'main' | 'worker' = 'unclaimed'
         #listeners: AbortController | null = null
@@ -115,6 +125,11 @@ export function create_plot_surface_element(): CustomElementConstructor {
             this.capture = doc.createElement('a-capture')
             this.capture.className = 'plot-capture'
             this.capture.style.display = 'none'
+            this.#rectangle = doc.createElement('div')
+            this.#rectangle.className = 'plot-zoom-rectangle'
+            this.#rectangle.hidden = true
+            this.#rectangle.setAttribute('aria-hidden', 'true')
+            this.capture.append(this.#rectangle)
             this.#axisCapture = { x: doc.createElement('a-capture'), y: doc.createElement('a-capture') }
             for (const [axis, capture] of Object.entries(this.#axisCapture)) {
                 capture.className = `plot-axis-capture plot-axis-${axis}`
@@ -148,6 +163,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 try {
                     if (value === null) {
                         this.capture.style.display = 'none'
+                        this.#clearRectangle()
                         this.#regions = null
                         for (const capture of Object.values(this.#axisCapture)) capture.style.display = 'none'
                         this.#reset.hidden = true
@@ -189,6 +205,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 }, { signal })
                 capture.addEventListener('pointerinput', event => {
                     const detail = (event as CustomEvent<CapturePointerInput>).detail
+                    if (capture === this.capture) this.#drawRectangle(detail)
                     this.#emit('pointerinput', {
                         ...detail, ...this.#inputGeometry(capture, detail),
                         start: { ...detail.start, ...this.#inputGeometry(capture, detail.start) },
@@ -205,11 +222,43 @@ export function create_plot_surface_element(): CustomElementConstructor {
         }
 
         disconnectedCallback(): void {
+            this.#clearRectangle()
             this.#connection++
             this.#inputListeners?.abort()
             this.#inputListeners = null
             this.#listeners?.abort()
             this.#listeners = null
+        }
+
+        #clearRectangle(): void {
+            this.#rectangleStart = null
+            this.#rectangle.hidden = true
+        }
+
+        // Draw from Capture input on the browser thread, even when the plot lives in a worker.
+        #drawRectangle(input: CapturePointerInput): void {
+            if (input.phase === 'end' || input.phase === 'cancel') {
+                this.#clearRectangle()
+                return
+            }
+            if (input.phase === 'start') {
+                this.#clearRectangle()
+                if (!input.start.pointerEvent.ctrlKey) return
+                this.#rectangleStart = {
+                    x: input.start.localX, y: input.start.localY,
+                    width: input.start.boxWidth, height: input.start.boxHeight,
+                }
+            }
+            const start = this.#rectangleStart
+            if (start === null) return
+            const rect = drag_rectangle({ left: 0, top: 0, right: start.width, bottom: start.height }, start, {
+                x: start.x + input.movementX, y: start.y + input.movementY,
+            })
+            Object.assign(this.#rectangle.style, {
+                left: `${rect.left}px`, top: `${rect.top}px`,
+                width: `${rect.right - rect.left}px`, height: `${rect.bottom - rect.top}px`,
+            })
+            this.#rectangle.hidden = false
         }
 
         #emit<K extends keyof PlotSurfaceEventMap>(name: K, detail: PlotSurfaceEventMap[K]['detail']): void {

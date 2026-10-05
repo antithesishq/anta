@@ -2852,7 +2852,7 @@ Zoom continuous axes with the scroll wheel and pan by dragging. The reset contro
 
 Zoom and pan in the plot
 
-Scroll to zoom around the pointer, or drag to pan. Wheel zoom activates after the pointer settles over the plot. Horizontal scrolling does not change the viewport. Ctrl-drag is reserved for zoom gestures.
+Scroll to zoom around the pointer, or drag to pan. Wheel zoom activates after the pointer settles over the plot. Horizontal scrolling does not change the viewport. Hold Ctrl and drag inside the plot to draw a zoom rectangle. Releasing fits the viewport to the rectangle, subject to each enabled axis's limits.
 
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'
@@ -2862,7 +2862,7 @@ const plot = document.createElement('a-plot') as APlotElement
 const output = document.createElement('output')
 output.setAttribute('aria-live', 'polite')
 output.style.display = 'block'
-output.textContent = 'Scroll to zoom, or drag to pan.'
+output.textContent = 'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.'
 
 const data = Array.from({ length: 201 }, (_, i) => ({
   x: i / 2,
@@ -2907,7 +2907,7 @@ const plot = document.createElement('a-plot') as APlotElement
 const output = document.createElement('output')
 output.setAttribute('aria-live', 'polite')
 output.style.display = 'block'
-output.textContent = 'Scroll to zoom, or drag to pan.'
+output.textContent = 'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.'
 
 const data = Array.from({ length: 201 }, (_, i) => ({
   x: i / 2,
@@ -2952,7 +2952,7 @@ const plot = document.createElement('a-plot') as APlotElement
 const output = document.createElement('output')
 output.setAttribute('aria-live', 'polite')
 output.style.display = 'block'
-output.textContent = 'Scroll to zoom, or drag to pan.'
+output.textContent = 'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.'
 
 const data = Array.from({ length: 201 }, (_, i) => ({
   x: i / 2,
@@ -3013,7 +3013,7 @@ const plot = document.createElement('a-plot') as APlotElement
 const output = document.createElement('output')
 output.setAttribute('aria-live', 'polite')
 output.style.display = 'block'
-output.textContent = 'Scroll to zoom, or drag to pan.'
+output.textContent = 'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle.'
 
 const data = Array.from({ length: 201 }, (_, i) => ({
   x: i / 2,

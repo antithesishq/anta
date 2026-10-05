@@ -23,6 +23,7 @@
       "types": "./dist/elements/index.d.ts",
       "default": "./dist/elements/index.js"
     },
+    "./elements/*.css": "./dist/elements/*.css",
     "./elements/*": {
       "types": "./dist/elements/*.d.ts",
       "default": "./dist/elements/*.js"

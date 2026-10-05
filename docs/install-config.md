@@ -9,22 +9,10 @@ npm install @antadesign/anta   # or pnpm / bun
 Pin an exact version in `package.json` (`"@antadesign/anta": "0.3.16"`) instead
 of a floating tag such as `"latest"`.
 
-### Usage
-
-```tsx
-import '@antadesign/anta/tokens.css'  // CSS custom properties
-import '@antadesign/anta/reset.css'   // reset and typography defaults
-import '@antadesign/anta/elements'    // registers <a-*> elements
-import '@antadesign/anta/theme-antune.css' // optional Antune theme
-import { Progress } from '@antadesign/anta'
-
-<Progress value={42} label="Uploaded" hint="3 of 7" />
-```
-
 ### Full bundle
 
-For a single minified Anta runtime and stylesheet, use the bundle pair instead
-of the separate tokens, reset, elements, and JSX imports:
+Use the full bundle as the default setup. Import the JavaScript entry and its
+stylesheet in your browser app entry:
 
 ```tsx
 import '@antadesign/anta/bundle.css'
@@ -33,31 +21,85 @@ import { Progress } from '@antadesign/anta/bundle'
 <Progress value={42} label="Uploaded" hint="3 of 7" />
 ```
 
-`bundle` registers every custom element and re-exports the JSX API. Its React
-peer dependency and Preact configuration are the same as the regular JSX entry.
+`bundle` registers every custom element and exports the JSX wrappers.
+`bundle.css` contains global tokens, the reset, element styles, and composed
+wrapper styles. The JavaScript bundle does not import this stylesheet, so keep
+both imports. Its React peer dependency and Preact configuration are the same
+as the regular JSX entry.
+
+Use this pair together. Adding granular element imports also loads their CSS,
+duplicating rules already in `bundle.css`.
+
+### Granular usage (advanced)
+
+Use granular imports to choose which browser elements and styles your app loads,
+or to render JSX on a server or in a worker. Load shared tokens once, optionally
+include the reset, and import the element entries you use:
+
+```tsx
+import '@antadesign/anta/tokens.css'
+import '@antadesign/anta/reset.css'
+import '@antadesign/anta/elements/a-progress'
+import '@antadesign/anta/elements/a-title'
+import '@antadesign/anta/elements/a-tag'
+import { Progress, Title, Tag } from '@antadesign/anta'
+
+<>
+  <Title>Uploads</Title>
+  <Progress value={42} label="Uploaded" hint="3 of 7" />
+  <Tag>In progress</Tag>
+</>
+```
+
+Each element entry imports its own CSS for your bundler to include and registers
+its browser class when needed. Title and Tag load only CSS; they have no custom
+element class to register. Element entries do not import global tokens or the reset.
+
+JSX wrappers produce `<a-*>` tags and attributes. They do not register browser
+elements or load those elements' CSS. Composed wrappers such as Steps and Select
+also import their own layout CSS. Load element entries in the browser's UI thread;
+see [Registering elements](#registering-elements) for server and worker rendering.
+
+To load all elements through the separate entries, replace the per-element imports
+with `import '@antadesign/anta/elements'`. Keep the tokens and optional reset.
+
+Individual stylesheets are also exported for direct CSS imports. With a bundler
+that supports `?raw`, you can read a stylesheet as text:
+
+```ts
+import titleCss from '@antadesign/anta/elements/a-title.css?raw'
+```
+
+This returns CSS text; it does not apply styles or register an element.
+
+### Optional theme
+
+Add one optional theme after either the full bundle CSS or the granular styles:
+
+```ts
+import '@antadesign/anta/theme-antune.css'
+```
+
+Use `theme-antithesis.css` for Antithesis, or omit both themes to keep the
+seed-derived default palette.
 
 ### What you import (and why)
 
-Tokens, elements, and the JSX layer render a styled component. The reset is
-recommended; the reference theme is optional.
+| Import | Provides |
+|---|---|
+| `@antadesign/anta/bundle` | All browser element definitions and the JSX API in one minified ESM runtime. |
+| `@antadesign/anta/bundle.css` | Global tokens, reset, element, and composed wrapper styles in one minified stylesheet. |
+| `@antadesign/anta/tokens.css` | Shared color roles, fonts, dark-mode support, and layer order for granular usage. |
+| `@antadesign/anta/reset.css` | Optional reset and typography defaults in `@layer anta.reset`. |
+| `@antadesign/anta/elements/a-*` | One element's behavior and CSS, or CSS alone for Title and Tag. |
+| `@antadesign/anta/elements` | All browser element definitions and their CSS through separate modules. |
+| `@antadesign/anta` | Typed JSX wrappers for React, Preact, and configured runtimes. |
+| `@antadesign/anta/elements/*.css` | Individual stylesheets without element registration. |
+| `@antadesign/anta/theme-antune.css` | Optional Antune theme. |
+| `@antadesign/anta/theme-antithesis.css` | Optional Antithesis theme. |
 
-| Import | Provides | Skip if… |
-|---|---|---|
-| `@antadesign/anta/tokens.css` | Six seed tokens, derived role scales (`--bg-1…5`, `--text-1…5`, `--border-1…5`), `.dark` and its `color-scheme`, the 15px root size, and layer order. Override a seed to reskin its tone. | You provide those variables. |
-| `@antadesign/anta/reset.css` | A small reset plus Anta's focus, heading, list, and link typography in `@layer anta.reset`. | You use another reset and typography. |
-| `@antadesign/anta/elements` | Registers every `<a-*>` element and its CSS. Per-element entries register one; see [Registering elements](#registering-elements). | You render only on the server or register elements individually. |
-| `@antadesign/anta` | Typed React/Preact wrappers such as `Progress`, `Text`, and `Icon`. | You write `<a-*>` elements directly. |
-| `@antadesign/anta/bundle.css` | One minified stylesheet containing tokens, reset, element, and JSX-wrapper styles. | You want granular CSS imports. |
-| `@antadesign/anta/bundle` | One minified ESM runtime that registers every `<a-*>` element and re-exports the JSX API. | You want granular JS imports. |
-| `@antadesign/anta/theme-antune.css` *(optional)* | Antune, the hand-tuned reference palette. Import last to replace the seed-derived default. | You want the seed-derived or your own palette. |
-| `@antadesign/anta/theme-antithesis.css` *(optional)* | Antithesis: warm color seeds, pill buttons, square text fields, and `1px` tag corners. Import as the only theme. | You want Antune, the seed-derived palette, or your own theme. |
-
-Load `tokens.css` before element CSS. Elements read its variables; without it,
-they render unstyled.
-
-To use the optional reference palette, import `theme-antune.css` after the element
-registration import. It ships in `@antadesign/anta`; omit it to keep the
-seed-derived default palette or provide your own theme.
+With granular usage, include `tokens.css` before element styles unless your app
+provides those variables. Elements depend on them for their default appearance.
 
 ### Cascade layers
 
@@ -121,23 +163,27 @@ and your installed Anta version. Web documentation may describe a newer release.
 
 ## Registering elements
 
-JSX wrappers render `<a-*>` tags. Register their classes before those tags reach
-the DOM. Registration needs `HTMLElement`, so the import is a no-op in Node.js
-and Worker threads.
+JSX wrappers render `<a-*>` tags. Load element definitions in the browser's UI
+thread before rendering or hydrating those tags. The full JavaScript bundle
+already registers every element. With granular usage, select individual entries
+or load the elements barrel:
 
 ```ts
 import '@antadesign/anta/elements'  // auto-registers all elements
 ```
 
-`/elements` registers everything. Per-element entries register one element and
-load only its CSS:
+Per-element entries load their browser behavior and styles. CSS-only entries
+load styles without registering a class:
 
 ```ts
 import '@antadesign/anta/elements/a-tooltip'  // only <a-tooltip> + its CSS
 import '@antadesign/anta/elements/a-button'   // only <a-button> + its CSS
+import '@antadesign/anta/elements/a-title'    // only Title CSS
+import '@antadesign/anta/elements/a-tag'      // only Tag CSS
 ```
 
-Both are idempotent, side-effect imports and safe during SSR.
+Registration is idempotent and guarded when `customElements` is unavailable.
+CSS imports still need a bundler that handles stylesheets.
 
 Use a static import in your app entry, outside components and hooks:
 
@@ -165,6 +211,28 @@ Choose the entry point for your runtime:
   from a `'use client'` file.
 - **Worker-rendered UI:** code that runs on the UI thread and initializes the
   DOM. A Worker has no `HTMLElement`.
+
+### Server and worker rendering
+
+Import JSX wrappers in the code that renders your UI:
+
+```tsx
+// Server or worker
+import { Button, Title } from '@antadesign/anta'
+```
+
+Load the matching browser definitions and styles in a separate UI entry:
+
+```ts
+// Browser UI thread
+import '@antadesign/anta/tokens.css'
+import '@antadesign/anta/reset.css'
+import '@antadesign/anta/elements/a-button'
+import '@antadesign/anta/elements/a-title'
+```
+
+Rendering a JSX wrapper does not register its browser element. Raw `<a-*>`
+markup uses the same browser entries and can omit the JSX wrappers.
 
 ## Framework setup
 

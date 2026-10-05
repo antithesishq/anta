@@ -5,6 +5,11 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- [Title](/title/) and [Tag](/tag/) have granular `elements/a-title` and
+  `elements/a-tag` entries that load their CSS without registering custom elements.
+
 ### Changed
 
 - Selected paddingless [Buttons](/button/#paddingless) draw their 1px selection
@@ -13,6 +18,8 @@ changes are not listed.
 
 ### Fixed
 
+- Individual element stylesheets resolve through `@antadesign/anta/elements/*.css`,
+  including imports with a bundler's `?raw` query.
 - [Tab panels](/tabs/#panels) follow their own strip when multiple `Tabs` share a
   parent, including when another `Tabs` appears before an outer panel.
 

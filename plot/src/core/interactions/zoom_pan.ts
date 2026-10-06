@@ -76,7 +76,7 @@ export type PanSnapshot = {
     pointer_origin: { x: number; y: number }
 }
 
-/** Fixed coordinate system for a Ctrl-drag on one continuous axis. */
+/** Fixed coordinate system for a drag on one continuous axis. */
 export type AxisZoomSnapshot = {
     axis: 'x' | 'y'
     domain: Domain

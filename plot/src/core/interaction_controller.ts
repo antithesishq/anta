@@ -33,7 +33,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
     #axis_zoom_snapshot: AxisZoomSnapshot | null = null
     #rectangle_snapshot: RectangleZoomSnapshot | null = null
     #zoomed_targets = new Set<InteractionTarget>()
-    #zoom_modifier_target: InteractionTarget = null
+    #zoom_hover_target: InteractionTarget = null
 
     constructor(get_composed_plot: () => ComposedPlot<TooltipContent> | null, initial_viewport: Viewport = { x: null, y: null }) {
         this.#get_composed_plot = get_composed_plot
@@ -185,26 +185,24 @@ export class PlotInteractionController<TooltipContent = unknown> {
             this.end_drag()
             if (!zoom_pan.enabled || !this.#pan_enabled({ ...zoom_pan, ...axes }) || input.pointer === null) return result
             let started = false
-            if (input.ctrlKey) {
-                const plot = this.#get_composed_plot()
-                const axis = input.target === 'x-axis' ? 'x' : input.target === 'y-axis' ? 'y' : null
-                if (plot !== null && axis !== null) {
-                    this.#axis_zoom_snapshot = axis_zoom_frame(zoomable_views(plot, axes),
-                        this.#staged_viewport, axis, cursor_position(plot, input), input.pointer,
-                        axis === 'x' ? plot.inner.right - plot.inner.left : plot.inner.bottom - plot.inner.top)
-                    started = this.#axis_zoom_snapshot !== null
-                } else if (plot !== null && input.target === 'plot') {
-                    this.#rectangle_snapshot = {
-                        views: zoomable_views(plot, axes), viewport: this.#staged_viewport,
-                        inner: plot.inner, cursor: cursor_position(plot, input), pointer: input.pointer,
-                    }
-                    started = true
+            const plot = this.#get_composed_plot()
+            const axis = input.target === 'x-axis' ? 'x' : input.target === 'y-axis' ? 'y' : null
+            if (plot !== null && axis !== null) {
+                this.#axis_zoom_snapshot = axis_zoom_frame(zoomable_views(plot, axes),
+                    this.#staged_viewport, axis, cursor_position(plot, input), input.pointer,
+                    axis === 'x' ? plot.inner.right - plot.inner.left : plot.inner.bottom - plot.inner.top)
+                started = this.#axis_zoom_snapshot !== null
+            } else if (plot !== null && input.target === 'plot' && input.ctrlKey) {
+                this.#rectangle_snapshot = {
+                    views: zoomable_views(plot, axes), viewport: this.#staged_viewport,
+                    inner: plot.inner, cursor: cursor_position(plot, input), pointer: input.pointer,
                 }
-            } else {
+                started = true
+            } else if (input.target === 'plot') {
                 started = this.begin_pan(input.pointer, axes)
             }
             if (started) {
-                this.#zoom_modifier_target = null
+                this.#zoom_hover_target = null
                 this.on_mouse_leave()
                 result.started = true
             }
@@ -224,7 +222,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         }
         if (input.phase === 'end' || input.phase === 'cancel') {
             this.end_drag()
-            this.update_pointer_modifier(input.ctrlKey, zoom_pan, input.target)
+            this.update_zoom_hover(input.ctrlKey, zoom_pan, input.target)
             result.ended = true
         }
         return result
@@ -236,7 +234,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
             return false
         }
         const previous = this.#hovered
-        const modifier_changed = this.update_pointer_modifier(event.ctrlKey, zoom_pan, event.target)
+        const modifier_changed = this.update_zoom_hover(event.ctrlKey, zoom_pan, event.target)
         if (event.target === 'plot') this.on_mouse_move(event)
         else this.on_mouse_leave()
         return modifier_changed || previous !== this.#hovered
@@ -268,14 +266,15 @@ export class PlotInteractionController<TooltipContent = unknown> {
         this.release_zoom()
     }
 
-    /** Track modifier readiness independently of the host's rendered hover snapshot. */
-    update_pointer_modifier(ctrl_key: boolean, zoom_pan: ZoomPan, target: InteractionTarget = 'plot'): boolean {
+    /** Track zoom readiness independently of the host's rendered hover snapshot. */
+    update_zoom_hover(ctrl_key: boolean, zoom_pan: ZoomPan, target: InteractionTarget = 'plot'): boolean {
         const axes = target_axes(target, zoom_pan)
-        const ready_target = ctrl_key && this.#pan_enabled({ ...zoom_pan, ...axes }) ? target : null
-        if (ready_target === this.#zoom_modifier_target) {
+        const ready = target === 'x-axis' || target === 'y-axis' || ctrl_key
+        const ready_target = ready && this.#pan_enabled({ ...zoom_pan, ...axes }) ? target : null
+        if (ready_target === this.#zoom_hover_target) {
             return false
         }
-        this.#zoom_modifier_target = ready_target
+        this.#zoom_hover_target = ready_target
         return true
     }
 
@@ -288,7 +287,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         if (this.drag_in_progress) {
             return 'grabbing'
         }
-        const target = this.#zoom_modifier_target
+        const target = this.#zoom_hover_target
         if (target !== null && this.#pan_enabled({ ...zoom_pan, ...target_axes(target, zoom_pan) })) {
             if (target === 'x-axis') return 'ew-resize'
             if (target === 'y-axis') return 'ns-resize'
@@ -366,7 +365,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         this.#rectangle_snapshot = null
         this.#axis_zoom_snapshot = null
         this.#pan_snapshot = null
-        this.#zoom_modifier_target = null
+        this.#zoom_hover_target = null
     }
 
     get zoomed_this_visit(): boolean {
@@ -425,7 +424,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** Leaving the overlay releases the wheel ownership acquired during this visit. */
     release_zoom(): void {
-        this.#zoom_modifier_target = null
+        this.#zoom_hover_target = null
         this.#zoomed_targets.clear()
     }
 

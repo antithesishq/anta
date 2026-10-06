@@ -148,7 +148,9 @@ sizes, line widths, font sizes, and other size declarations accept numbers.
 
 Zoom and pan use fixed gestures. Remove `zoom_pan.modifier` from existing configs.
 Plain drag pans; Ctrl-drag inside the plot draws a zoom rectangle. Over an axis,
-plain drag pans that axis, Ctrl-drag zooms it, and scrolling zooms only that axis.
+plain drag zooms around the starting value, and scrolling zooms around the pointer.
+Enabled continuous axes show directional arrows on hover. Pan by dragging inside
+the plot; axis drags always zoom, with or without Ctrl.
 Scrolling inside the plot zooms both enabled axes. Horizontal input is ignored.
 
 Right-click for Zoom In, Zoom Out, and Reset Zoom. This replaces the reset button

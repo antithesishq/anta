@@ -3,7 +3,7 @@ import { cursor_position, find_hits, resolve_point_data, same_hits, selectable_h
 import { compatible_viewport, viewport_change, viewport_moved, type ViewportAxes } from "./interactions/viewport"
 import { resolve_tooltips, type ResolvedTooltip } from "./interactions/tooltip"
 import { resolve_highlights } from "./interactions/highlight"
-import { zoom_viewport_by_factor, rectangle_zoom_viewport, type RectangleZoomSnapshot, axis_zoom_frame, axis_zoom_viewport, type AxisZoomSnapshot, clamp_viewport, magnify_zoom, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
+import { zoom_viewport_by_factor, rectangle_zoom_viewport, type RectangleZoomSnapshot, axis_zoom_frame, axis_zoom_viewport, type AxisZoomSnapshot, clamp_viewport, magnify_zoom, pan_has_room, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
 import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
 import type { ComposedPlot, HighlightSpec, PointData, TooltipData, Viewport, ViewportChange, ViewportRequest, ZoomPan } from "./types"
 import { target_axes, type InteractionTarget, type WheelInput } from './interactions/target'
@@ -286,8 +286,11 @@ export class PlotInteractionController<TooltipContent = unknown> {
         if (this.#axis_zoom_snapshot !== null) {
             return this.#axis_zoom_snapshot.axis === 'x' ? 'ew-resize' : 'ns-resize'
         }
-        if (this.drag_in_progress) {
-            return 'grabbing'
+        if (this.#pan_snapshot !== null) {
+            const plot = this.#get_composed_plot()
+            const can_pan = zoom_pan.enabled && plot !== null
+                && pan_has_room(this.#pan_snapshot, zoomable_views(plot, zoom_pan))
+            return can_pan ? 'grabbing' : 'default'
         }
         const target = this.#zoom_hover_target
         if (target !== null && this.#pan_enabled({ ...zoom_pan, ...target_axes(target, zoom_pan) })) {

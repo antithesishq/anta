@@ -335,6 +335,17 @@ export function pan_frame(views: AxisViews, override: Viewport, pointer_origin: 
     }
 }
 
+/** A pan can move when a captured window is narrower than its enabled full domain. */
+export function pan_has_room(snapshot: PanSnapshot, views: AxisViews): boolean {
+    return (['x', 'y'] as const).some(axis => {
+        const frame = snapshot[`${axis}_axis_frame`]
+        const full = views[`${axis}_full_domain`]
+        if (frame === null || full === null) return false
+        const span = frame.domain[1] - frame.domain[0]
+        return span < frame.space.to(full[1]) - frame.space.to(full[0])
+    })
+}
+
 /**
  * The viewport after a pan move. Shift each axis's snapshot window by the pointer delta since pan start.
  * @param snapshot - the pan frame from pan_frame

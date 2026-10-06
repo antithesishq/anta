@@ -3249,10 +3249,10 @@ Scroll to zoom around the pointer, or drag to pan. Plain wheel zoom activates af
 
 Right-click for **Zoom In**, **Zoom Out**, and **Reset Zoom**. Menu zoom anchors at the context-click position and applies the same factor to both enabled axes, with independent limits. Set `zoom_pan: { menu_zoom_step: 1.5 }` to change that factor from its default of `2`. Zoom In divides each span by the factor; Zoom Out multiplies it. The value must be finite and greater than 1. It affects only menu actions; wheel and drag sensitivity stay fixed.
 
-<PlotInteractionExample>
+<PlotInteractionExample wide>
 
-<Preview minHeight={308}>
-  <PlotInteractionPreview example="zoom" />
+<Preview minHeight={468}>
+  <PlotInteractionPreview example="zoom" height={420} />
 </Preview>
 
 ```ts folded
@@ -3278,7 +3278,7 @@ plot.plotArgs = {
       tooltip: true,
     }),
   ],
-  height: 260,
+  height: 420,
   margin: { top: 8, right: 12, bottom: 24, left: 32 },
   axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
   background: { light: '#ffffff', dark: '#151b28' },

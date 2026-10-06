@@ -2882,7 +2882,7 @@ plot.plotArgs = {
       tooltip: true,
     }),
   ],
-  height: 260,
+  height: 420,
   margin: { top: 8, right: 12, bottom: 24, left: 32 },
   axis: { x: { min: 0, max: 100, label: '' }, y: { min: 0, max: 100, label: '' } },
   background: { light: '#ffffff', dark: '#151b28' },

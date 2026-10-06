@@ -42,7 +42,6 @@ type HostCaptureProps = HostCaptureSettings & {
     onMouseMove: MouseHandler
     onMouseLeave(): void
     onClick: MouseHandler
-    ondblclick(): void
     onWheelInput: WheelHandler
     onPointerInput: PointerHandler
 }
@@ -65,7 +64,9 @@ export type AntaHostAdapter<T> = {
     disconnect(): void
 }
 
-/** Accept Anta events directly, retaining the worker host's measurement and interaction cadence. */
+/** Legacy internal adapter for custom hosts. Hosts own their Capture regions and reset/menu UI.
+ * New hosts use PlotHost and PlotSurface, which provide the complete interaction surface.
+ */
 export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
     const controller = host.controller
     const interactions = controller.interactions
@@ -92,7 +93,6 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
         return resolve_capture_configuration(
             zoom_pan_enabled(controller.template),
             interactions.wheel_claim(plot, viewport, zoom_pan),
-            interactions.zoomed_this_visit,
         )
     }
 

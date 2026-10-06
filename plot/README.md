@@ -164,3 +164,26 @@ Low-level `PlotSurface` consumers now supply `presentation.menu` action states
 and handle `onZoomRequest` (`in`, `out`, or `reset`, plus context-click offsets).
 The old `presentation.reset`, `onResetRequest`, and `onPlotDoubleClick` are removed.
 The public `Plot` and standalone `a-plot` hosts handle these details internally.
+
+Keyboard users can focus the plot zoom controls and press Shift+F10 or the
+Context Menu key. Keyboard menu zoom anchors at the plot center, and Escape
+returns focus to the controls. Ctrl-primary click is reserved for rectangle
+zoom on macOS; use a secondary click to open the pointer menu. Plain wheel and
+Ctrl-wheel/pinch zoom the plot; horizontal and Shift-wheel input are left to the
+browser. A rectangle only needs nonzero extent on enabled continuous axes.
+
+PlotSurface uses one Capture spanning the interior and visible axis strips.
+Its `capture_policy` presentation supplies wheel availability per region.
+After pointer settling, the extra corner in that bounding rectangle consumes
+vertical scroll without zooming or scrolling the page. Horizontal/Shift-wheel input remains with the
+browser. Pointer and wheel events retain offsets relative to the plot interior.
+
+Plain wheel input, including the corner, waits for pointer settling. Ctrl-wheel
+and pinch over interactive plot regions activate immediately. Shift-wheel is
+ignored by Capture without stopping propagation to application wheel listeners.
+
+For low-level PlotSurface consumers, `presentation.capture_policy` owns input
+configuration while supplied. `configureCapture(config)` stores a fallback that
+applies when no presentation policy is supplied; surface capture attributes also
+apply only in that fallback mode. Use `present()` to update a region policy.
+Public plot hosts configure their input through presentation alone.

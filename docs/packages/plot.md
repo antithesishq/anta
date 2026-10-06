@@ -467,7 +467,9 @@ document.body.append(plot)
 
 Right-click the plot for **Zoom In**, **Zoom Out**, and **Reset Zoom**.
 Unavailable actions stay visible and disabled. Reset restores the full viewport;
-double-clicking does not reset.
+double-clicking does not reset. Focus the plot zoom controls and press Shift+F10
+or the Context Menu key to open the menu from the keyboard. Ctrl-primary click
+is reserved for rectangle zoom on macOS too; use a secondary click for the menu.
 
 ### Axes
 
@@ -2849,11 +2851,11 @@ the same fields with an optional `row`.
 
 ### Zoom and pan
 
-Zoom continuous axes with the scroll wheel and pan by dragging. The reset control restores the full extent after the view changes. Categorical axes do not zoom. See [Zoom and pan options](#zoom-and-pan-options).
+Zoom continuous axes with the scroll wheel and pan by dragging. Reset Zoom in the context menu restores the full extent after the view changes. Categorical axes do not zoom. See [Zoom and pan options](#zoom-and-pan-options).
 
 Zoom and pan in the plot
 
-Scroll to zoom around the pointer, or drag to pan. Wheel zoom activates after the pointer settles over the plot. Horizontal scrolling does not change the viewport. Hold Ctrl and drag inside the plot to draw a zoom rectangle. Releasing fits the viewport to the rectangle, subject to each enabled axis's limits.
+Scroll to zoom around the pointer, or drag to pan. Plain wheel zoom activates after the pointer settles over the plot; Ctrl-wheel and pinch activate immediately. Horizontal scrolling does not change the viewport. Hold Ctrl and drag inside the plot to draw a zoom rectangle. Releasing fits the viewport to the rectangle, subject to each enabled axis's limits.
 
 Right-click for **Zoom In**, **Zoom Out**, and **Reset Zoom**. Menu zoom anchors at the context-click position and applies the same factor to both enabled axes, with independent limits. Set `zoom_pan: { menu_zoom_step: 1.5 }` to change that factor from its default of `2`. Zoom In divides each span by the factor; Zoom Out multiplies it. The value must be finite and greater than 1. It affects only menu actions; wheel and drag sensitivity stay fixed.
 
@@ -2996,6 +2998,7 @@ document.body.append(plot, output)
 |---|---|---|---|
 | `x?` | `boolean` | `true` | Enable horizontal zoom and pan on a continuous axis. |
 | `y?` | `boolean` | `true` | Enable vertical zoom and pan on a continuous axis. |
+| `menu_zoom_step?` | `number` | `2` | Multiplicative menu zoom factor. Must be finite and greater than 1; does not affect wheel or drag sensitivity. |
 
 Setting both axes to `false` disables zoom and pan. Categorical axes do not zoom.
 
@@ -4186,5 +4189,4 @@ Set text colors separately with `title.font.color`, `axis.x.label.font.color`,
 
 With the JSX `Plot` component, return content supported by your renderer from a
 series’ [`tooltip`](#tooltips) callback and style it like other markup. Anta’s
-`Tooltip` renders that content in the component tree. The reset control is an Anta `Button` and
-follows the application’s theme.
+`Tooltip` renders that content in the component tree. The zoom context menu uses Anta `Menu` and follows the application’s theme.

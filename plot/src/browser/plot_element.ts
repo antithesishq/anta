@@ -212,14 +212,9 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
             const presentation = this.#host.render()
             if (presentation === null || this.#controller === null) return
             this.#view.root.present(presentation)
-            this.#configure_capture()
             render_hover(this.#controller, this.#view.highlight, this.#view.tooltip,
                 this.#context.devicePixelRatio, this.#hover_renderer)
             this.#update_cursor()
-        }
-
-        #configure_capture(): void {
-            if (this.#controller !== null) this.#view.root.configureCapture(this.#host.capture())
         }
 
         #update_cursor(): void {
@@ -228,7 +223,6 @@ export function create_plot_element<T = Node>(): CustomElementConstructor {
 
         #on_mouse_leave(): void {
             this.#interaction_coordinator.leave()
-            this.#configure_capture()
             this.#schedule()
         }
 

@@ -81,13 +81,13 @@ export function create_viewport_schedule<T>(host: ViewportHost<T>) {
             if (interactions === null) {
                 return { changed: false, visit_changed: false }
             }
-            const previous_visit = interactions.zoomed_this_visit
+            const previous_visit = interactions.has_zoomed_target(input.target)
             if (!interactions.handle_wheel(input, zoom_pan)) {
                 return { changed: false, visit_changed: false }
             }
             commit(interactions.staged_viewport)
             pending_report()
-            return { changed: true, visit_changed: previous_visit !== interactions.zoomed_this_visit }
+            return { changed: true, visit_changed: previous_visit !== interactions.has_zoomed_target(input.target) }
         },
         zoom_from_menu(input: { offsetX: number; offsetY: number; action: 'in' | 'out' }, zoom_pan: ZoomPan): boolean {
             const interactions = host.interactions()

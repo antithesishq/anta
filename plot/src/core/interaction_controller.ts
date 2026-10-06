@@ -1,3 +1,4 @@
+import { clamp } from 'es-toolkit/math'
 import { cursor_position, find_hits, resolve_point_data, same_hits, selectable_hit, type NearestPoint, type PointerOffset } from "./interactions/hit"
 import { compatible_viewport, viewport_change, viewport_moved, type ViewportAxes } from "./interactions/viewport"
 import { resolve_tooltips, type ResolvedTooltip } from "./interactions/tooltip"
@@ -10,6 +11,7 @@ import { target_axes, type InteractionTarget, type WheelInput } from './interact
 export type DragInput = PointerOffset & {
     ctrlKey: boolean
     target: InteractionTarget
+    release_target?: InteractionTarget
     phase: 'start' | 'move' | 'end' | 'cancel'
     pointer: { x: number; y: number } | null
 }
@@ -222,7 +224,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         }
         if (input.phase === 'end' || input.phase === 'cancel') {
             this.end_drag()
-            this.update_zoom_hover(input.ctrlKey, zoom_pan, input.target)
+            this.update_zoom_hover(input.ctrlKey, zoom_pan, input.phase === 'cancel' ? null : input.release_target === undefined ? input.target : input.release_target)
             result.ended = true
         }
         return result
@@ -254,7 +256,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** Ctrl is reserved for zoom gestures; ordinary clicks still select. */
     handle_click(event: PointerOffset & { ctrlKey: boolean }, zoom_pan: ZoomPan): PointData | undefined {
-        if (zoom_pan.enabled && event.ctrlKey) {
+        if (this.#pan_enabled(zoom_pan) && event.ctrlKey) {
             return
         }
         return this.on_click(event)
@@ -368,8 +370,8 @@ export class PlotInteractionController<TooltipContent = unknown> {
         this.#zoom_hover_target = null
     }
 
-    get zoomed_this_visit(): boolean {
-        return this.#zoomed_targets.size > 0
+    has_zoomed_target(target: InteractionTarget): boolean {
+        return this.#zoomed_targets.has(target)
     }
 
     /** Stage an accepted wheel event, with offsets relative to the inner overlay. */
@@ -411,14 +413,13 @@ export class PlotInteractionController<TooltipContent = unknown> {
         const before = this.#staged_viewport
         const views = zoomable_views(plot, zoom_pan)
         const cursor = cursor_position(plot, input)
-        cursor.x = Math.max(plot.inner.left, Math.min(plot.inner.right, cursor.x))
-        cursor.y = Math.max(plot.inner.top, Math.min(plot.inner.bottom, cursor.y))
+        cursor.x = clamp(cursor.x, plot.inner.left, plot.inner.right)
+        cursor.y = clamp(cursor.y, plot.inner.top, plot.inner.bottom)
         const factor = input.action === 'in' ? 1 / zoom_pan.menu_zoom_step : zoom_pan.menu_zoom_step
         const zoomed = zoom_viewport_by_factor(views, before, cursor, factor)
         if (!viewport_moved(before, zoomed)) return false
         this.#staged_zoom = magnify_zoom(views, before, zoomed, this.#staged_zoom)
         this.stage_viewport(zoomed)
-        this.on_mouse_leave()
         return true
     }
 

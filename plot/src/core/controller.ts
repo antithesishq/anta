@@ -138,7 +138,9 @@ export class PlotController<TooltipContent = unknown> {
         this.#composed_plot = composed_plot
         this.#has_current_composition = true
         if (recompose || dpr_changed) {
-            this.#interaction_regions = null
+            // Keep the interior navigable even if canvas preparation or a custom renderer fails.
+            // Measured axis strips are published only after a successful draw.
+            this.#interaction_regions = composed_plot === null ? null : { plot: composed_plot.inner, x: null, y: null }
             this.invalidate_draw()
         }
         return composed_plot

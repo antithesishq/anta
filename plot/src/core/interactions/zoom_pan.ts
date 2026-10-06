@@ -1,3 +1,4 @@
+import { clamp } from 'es-toolkit/math'
 import type { AxisTemplate, Domain, Rect, Scale, Viewport, ViewportZoom, ZoomPan } from "../types"
 import { clamp_domain, LINEAR_SPACE, LOG_SPACE, type AxisSpace } from "../template/domain"
 
@@ -12,7 +13,7 @@ export type WheelClaim = 'both' | 'up' | 'down' | 'none'
 
 export type CaptureConfiguration = {
     wheel_capture: WheelClaim | null
-    wheel_modifier: 'ctrl' | 'none'
+    wheel_modifier: 'ctrl' | 'none' | 'any'
     wheel_activation: 'hover' | 'settled'
     wheel_delay: number
     wheel_tolerance: number
@@ -43,13 +44,11 @@ export function capture_attributes(settings: CaptureConfiguration) {
 export function resolve_capture_configuration(
     enabled: boolean,
     wheel_claim: WheelClaim,
-    zoomed_this_visit = false,
 ): CaptureConfiguration {
     return {
         wheel_capture: enabled ? wheel_claim : null,
-        wheel_modifier: 'none',
-        // After zooming, moving between axis and plot captures must not restart dwell.
-        wheel_activation: zoomed_this_visit ? 'hover' : 'settled',
+        wheel_modifier: 'any',
+        wheel_activation: 'settled',
         wheel_delay: 150,
         wheel_tolerance: 5,
         wheel_reset_on_move: false,
@@ -135,8 +134,8 @@ export type RectangleZoomSnapshot = {
 
 /** Normalize and clip Capture's rectangle, including drags that end outside the plot. */
 export function drag_rectangle(inner: Rect, start: { x: number; y: number }, end: { x: number; y: number }): Rect {
-    const x = (value: number) => Math.max(inner.left, Math.min(inner.right, value))
-    const y = (value: number) => Math.max(inner.top, Math.min(inner.bottom, value))
+    const x = (value: number) => clamp(value, inner.left, inner.right)
+    const y = (value: number) => clamp(value, inner.top, inner.bottom)
     return {
         left: x(Math.min(start.x, end.x)), right: x(Math.max(start.x, end.x)),
         top: y(Math.min(start.y, end.y)), bottom: y(Math.max(start.y, end.y)),
@@ -152,7 +151,9 @@ export function rectangle_zoom_viewport(
         x: snapshot.cursor.x + pointer.x - snapshot.pointer.x,
         y: snapshot.cursor.y + pointer.y - snapshot.pointer.y,
     })
-    if (rect.right <= rect.left || rect.bottom <= rect.top) return override
+    const can_zoom = (axis: 'x' | 'y') => views[`${axis}_full_domain`] !== null
+        && snapshot.views[`${axis}_full_domain`] !== null
+    if ((can_zoom('x') && rect.right <= rect.left) || (can_zoom('y') && rect.bottom <= rect.top)) return override
     const fit = (axis: 'x' | 'y'): Domain | null => {
         const full = views[`${axis}_full_domain`]
         const initial_full = snapshot.views[`${axis}_full_domain`]

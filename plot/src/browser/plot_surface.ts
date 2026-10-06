@@ -78,6 +78,7 @@ export interface APlotSurfaceElement extends HTMLElement {
     readonly context: BoxContext
     setSize(dimensions: { width?: number; height?: number }): void
     present(presentation: PlotSurfacePresentation): void
+    /** Set fallback configuration. Presentation capture_policy takes precedence while supplied. */
     configureCapture(configuration: CaptureConfiguration): void
     cursor: string
     prepareCanvas(width: number, height: number, dpr: number): CanvasRenderingContext2D
@@ -95,7 +96,12 @@ export function create_plot_surface_element(): CustomElementConstructor {
         readonly canvas: HTMLCanvasElement
         readonly highlight: HTMLCanvasElement
         readonly capture: HTMLElement
-        readonly #axisCapture: { x: HTMLElement; y: HTMLElement }
+        #captureBounds: Rect = { left: 0, top: 0, right: 0, bottom: 0 }
+        #capturePolicy: PlotSurfacePresentation['capture_policy']
+        #fallbackConfiguration: CaptureConfiguration | null = null
+        #keyboardMenu = false
+        #shiftWheelClaim: string | null = null
+        #captureTarget: 'plot' | 'x-axis' | 'y-axis' | null = 'plot'
         #regions: InteractionRegions | null = null
         readonly #rectangle: HTMLElement
         #rectangleStart: { x: number; y: number; width: number; height: number } | null = null
@@ -104,6 +110,8 @@ export function create_plot_surface_element(): CustomElementConstructor {
         readonly #menuItems: Record<'in' | 'out' | 'reset', HTMLElement>
         #menuState: PlotSurfacePresentation['menu'] | null = null
         #menuInput: PlotSurfaceMouseInput | null = null
+        #pointerInside = false
+        #dragActive = false
         #ownership: 'unclaimed' | 'main' | 'worker' = 'unclaimed'
         #listeners: AbortController | null = null
         #inputListeners: AbortController | null = null
@@ -129,15 +137,11 @@ export function create_plot_surface_element(): CustomElementConstructor {
             this.#rectangle.hidden = true
             this.#rectangle.setAttribute('aria-hidden', 'true')
             this.capture.append(this.#rectangle)
-            this.#axisCapture = { x: doc.createElement('a-capture'), y: doc.createElement('a-capture') }
-            for (const [axis, capture] of Object.entries(this.#axisCapture)) {
-                capture.className = `plot-axis-capture plot-axis-${axis}`
-                capture.style.display = 'none'
-            }
             this.#menuAnchor = doc.createElement('span')
-            this.#menuAnchor.tabIndex = -1
-            this.#menuAnchor.style.cssText = 'position:absolute;pointer-events:none'
-            this.#menuAnchor.setAttribute('aria-label', 'Plot zoom menu')
+            this.#menuAnchor.tabIndex = 0
+            this.#menuAnchor.style.cssText = 'position:absolute;inset:0;pointer-events:none'
+            this.#menuAnchor.setAttribute('role', 'group')
+            this.#menuAnchor.setAttribute('aria-label', 'Plot zoom controls. Press Shift+F10 to open the zoom menu.')
             this.#menu = doc.createElement('a-menu') as AMenuElement
             this.#menu.setAttribute('context', '')
             this.#menu.setAttribute('coord', '')
@@ -146,6 +150,8 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 (['in', 'out', 'reset'] as const).map(action => {
                     const item = doc.createElement('a-menu-item')
                     item.dataset.zoomAction = action
+                    item.setAttribute('role', 'menuitem')
+                    item.tabIndex = 0
                     const label = doc.createElement('a-menu-item-label')
                     label.textContent = { in: 'Zoom In', out: 'Zoom Out', reset: 'Reset Zoom' }[action]
                     item.append(label)
@@ -159,6 +165,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
             if (previous === value) return
 
             if (CAPTURE_ATTRIBUTES.includes(name)) {
+                if (this.#capturePolicy !== undefined) return
                 if (value === null) this.capture.removeAttribute(name)
                 else this.capture.setAttribute(name, value)
             } else if (name === 'cursor') {
@@ -169,7 +176,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
                         this.capture.style.display = 'none'
                         this.#clearRectangle()
                         this.#regions = null
-                        for (const capture of Object.values(this.#axisCapture)) capture.style.display = 'none'
+                        this.#capturePolicy = undefined
                         this.#menuState = null
                         this.#menu.close()
                     } else {
@@ -205,26 +212,86 @@ export function create_plot_surface_element(): CustomElementConstructor {
                     if (item.hasAttribute('disabled') || this.#menuInput === null) return
                     this.#emit('zoomrequest', { ...this.#menuInput, action })
                     this.#menu.close()
+                    if (this.#keyboardMenu) this.#menuAnchor.focus()
+                    this.#keyboardMenu = false
                 }, { signal })
             }
-            // Every Capture reports offsets relative to the inner plot before crossing threads.
-            for (const capture of [this.capture, this.#axisCapture.x, this.#axisCapture.y]) {
-                capture.addEventListener('wheelinput', event => {
-                    const detail = (event as CustomEvent<CaptureWheelInput>).detail
-                    this.#emit('wheelinput', { ...detail, ...this.#inputGeometry(capture, detail) })
-                }, { signal })
-                capture.addEventListener('pointerinput', event => {
-                    const detail = (event as CustomEvent<CapturePointerInput>).detail
-                    if (capture === this.capture) this.#drawRectangle(detail)
-                    this.#emit('pointerinput', {
-                        ...detail, ...this.#inputGeometry(capture, detail),
-                        start: { ...detail.start, ...this.#inputGeometry(capture, detail.start) },
-                    })
-                }, { signal })
+            this.#menuAnchor.addEventListener('keydown', event => {
+                if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return
+                if (!this.#menuState?.enabled || this.#dragActive) return
+                event.preventDefault()
+                event.stopPropagation()
+                const rect = this.capture.getBoundingClientRect()
+                const inner = this.#regions?.plot ?? this.#captureBounds
+                const x = (inner.right - inner.left) / 2
+                const y = (inner.bottom - inner.top) / 2
+                this.#keyboardMenu = true
+                this.#menuInput = { offsetX: x, offsetY: y, ctrlKey: false }
+                this.#leavePlot()
+                this.#menu.open({ coord: [rect.left + inner.left - this.#captureBounds.left + x, rect.top + inner.top - this.#captureBounds.top + y],
+                    viaKeyboard: true, originEvent: event })
+            }, { signal })
+            // Choose the region policy before Capture claims the native event.
+            const route = (event: MouseEvent) => {
+                if (this.#shiftWheelClaim !== null) {
+                    this.capture.setAttribute('wheel-capture', this.#shiftWheelClaim)
+                    this.#shiftWheelClaim = null
+                }
+                const rect = this.capture.getBoundingClientRect()
+                const inner = this.#regions?.plot ?? this.#captureBounds
+                const input = {
+                    offsetX: event.clientX - rect.left - (inner.left - this.#captureBounds.left),
+                    offsetY: event.clientY - rect.top - (inner.top - this.#captureBounds.top),
+                }
+                this.#captureTarget = interaction_target(this.#regions, input)
+                this.#applyCapturePolicy()
             }
+            this.capture.addEventListener('pointerdown', route, { capture: true, signal })
+            this.capture.addEventListener('mousemove', route, { capture: true, signal })
+            this.capture.addEventListener('wheel', event => {
+                route(event)
+                const claim = this.capture.getAttribute('wheel-capture')
+                if (event.shiftKey && !event.ctrlKey) {
+                    // Ignore this sample inside Capture without hiding it from ancestor listeners.
+                    if (claim !== null) {
+                        this.#shiftWheelClaim = claim
+                        this.capture.setAttribute('wheel-capture', 'none')
+                        // Restore on the next native input, not a microtask between event listeners.
+                    }
+                    return
+                }
+                // Pinch is deliberate zoom input and must not zoom the page during the dwell delay.
+                // The corner keeps settled activation even for Ctrl-wheel.
+                if (this.#capturePolicy !== undefined && claim !== null) {
+                    const activation = event.ctrlKey && this.#captureTarget !== null ? 'hover' : 'settled'
+                    if (this.capture.getAttribute('wheel-activation') !== activation) {
+                        this.capture.setAttribute('wheel-activation', activation)
+                    }
+                }
+            }, { capture: true, passive: false, signal })
+            this.capture.addEventListener('wheelinput', event => {
+                this.#pointerInside = true
+                const detail = (event as CustomEvent<CaptureWheelInput>).detail
+                this.#emit('wheelinput', { ...detail, ...this.#inputGeometry(detail) })
+            }, { signal })
+            this.capture.addEventListener('pointerinput', event => {
+                const detail = (event as CustomEvent<CapturePointerInput>).detail
+                this.#dragActive = detail.phase === 'start' || detail.phase === 'move'
+                if (detail.phase === 'start') this.#pointerInside = true
+                const normalized = {
+                    ...detail, ...this.#inputGeometry(detail),
+                    start: { ...detail.start, ...this.#inputGeometry(detail.start) },
+                }
+                this.#drawRectangle(normalized)
+                this.#emit('pointerinput', normalized)
+                if (!this.#dragActive) {
+                    this.#captureTarget = interaction_target(this.#regions, { offsetX: normalized.localX, offsetY: normalized.localY })
+                    this.#applyCapturePolicy()
+                }
+            }, { signal })
             if (this.#box.parentNode !== this) {
                 this.append(this.#styles, this.#box, this.canvas, this.highlight, this.capture,
-                    this.#axisCapture.x, this.#axisCapture.y, this.#menuAnchor, this.#menu)
+                    this.#menuAnchor, this.#menu)
             }
 
             this.#listenForMouseInput()
@@ -232,6 +299,8 @@ export function create_plot_surface_element(): CustomElementConstructor {
         }
 
         disconnectedCallback(): void {
+            this.#pointerInside = false
+            this.#dragActive = false
             this.#menu.close()
             this.#menuInput = null
             this.#clearRectangle()
@@ -255,7 +324,9 @@ export function create_plot_surface_element(): CustomElementConstructor {
             }
             if (input.phase === 'start') {
                 this.#clearRectangle()
-                if (!input.start.pointerEvent.ctrlKey) return
+                if (!input.start.pointerEvent.ctrlKey || interaction_target(this.#regions, {
+                    offsetX: input.start.localX, offsetY: input.start.localY,
+                }) !== 'plot') return
                 this.#rectangleStart = {
                     x: input.start.localX, y: input.start.localY,
                     width: input.start.boxWidth, height: input.start.boxHeight,
@@ -267,7 +338,8 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 x: start.x + input.movementX, y: start.y + input.movementY,
             })
             Object.assign(this.#rectangle.style, {
-                left: `${rect.left}px`, top: `${rect.top}px`,
+                left: `${rect.left + (this.#regions?.plot.left ?? 0) - this.#captureBounds.left}px`,
+                top: `${rect.top + (this.#regions?.plot.top ?? 0) - this.#captureBounds.top}px`,
                 width: `${rect.right - rect.left}px`, height: `${rect.bottom - rect.top}px`,
             })
             this.#rectangle.hidden = false
@@ -300,16 +372,41 @@ export function create_plot_surface_element(): CustomElementConstructor {
             })
         }
 
-        #inputGeometry(capture: HTMLElement, input: CaptureInputGeometry): CaptureInputGeometry {
-            if (capture === this.capture) return input
-            const region = capture.getBoundingClientRect()
-            const inner = this.capture.getBoundingClientRect()
-            const localX = input.localX + region.left - inner.left
-            const localY = input.localY + region.top - inner.top
-            return {
-                ...input, localX, localY, boxWidth: inner.width, boxHeight: inner.height,
-                inside: localX >= 0 && localX <= inner.width && localY >= 0 && localY <= inner.height,
+        #applyCapturePolicy(): void {
+            const policy = this.#capturePolicy
+            if (policy === undefined) {
+                if (this.#fallbackConfiguration !== null) configure_capture(this.capture, this.#fallbackConfiguration)
+                return
             }
+            const target = this.#captureTarget
+            const config = target === 'x-axis' ? policy.x : target === 'y-axis' ? policy.y : policy.plot
+            // Keep pointer capture stable throughout a drag as the pointer crosses regions.
+            if (this.#dragActive) return
+            configure_capture(this.capture, {
+                ...policy.plot,
+                // Keep one pointer session and one dwell clock across the whole surface.
+                // Core hit routing rejects drags on disabled axes and in the corner.
+                wheel_capture: policy.plot.wheel_capture === null ? null
+                    : target === null ? 'both' : config.wheel_capture ?? 'none',
+            })
+        }
+
+        #inputGeometry(input: CaptureInputGeometry): CaptureInputGeometry {
+            const inner = this.#regions?.plot ?? this.#captureBounds
+            const localX = input.localX - (inner.left - this.#captureBounds.left)
+            const localY = input.localY - (inner.top - this.#captureBounds.top)
+            const width = inner.right - inner.left
+            const height = inner.bottom - inner.top
+            return {
+                ...input, localX, localY, boxWidth: width, boxHeight: height,
+                inside: localX >= 0 && localX <= width && localY >= 0 && localY <= height,
+            }
+        }
+
+        #leavePlot(): void {
+            if (!this.#pointerInside) return
+            this.#pointerInside = false
+            this.#emit('plotleave', undefined)
         }
 
         #listenForMouseInput(): void {
@@ -324,21 +421,26 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 if (this.capture.style.display === 'none') return null
 
                 const rect = this.capture.getBoundingClientRect()
-                const offsetX = event.clientX - rect.left
-                const offsetY = event.clientY - rect.top
+                const inner = this.#regions?.plot ?? this.#captureBounds
+                const offsetX = event.clientX - rect.left - (inner.left - this.#captureBounds.left)
+                const offsetY = event.clientY - rect.top - (inner.top - this.#captureBounds.top)
                 if (rect.width <= 0 || rect.height <= 0
-                    || interaction_target(this.#regions, { offsetX, offsetY }) === null) return null
+                    || event.clientX < rect.left || event.clientX > rect.right
+                    || event.clientY < rect.top || event.clientY > rect.bottom) return null
 
                 return { offsetX, offsetY, ctrlKey: event.ctrlKey }
             }
 
             scope.addEventListener('mousemove', event => {
                 const input = normalized(event)
-                if (input === null) this.#emit('plotleave', undefined)
-                else this.#emit('plotmove', input)
+                if (input === null) this.#leavePlot()
+                else {
+                    this.#pointerInside = true
+                    this.#emit('plotmove', input)
+                }
             }, { signal })
 
-            scope.addEventListener('mouseleave', () => this.#emit('plotleave', undefined), { signal })
+            scope.addEventListener('mouseleave', () => this.#leavePlot(), { signal })
 
             scope.addEventListener('click', event => {
                 const input = normalized(event)
@@ -346,14 +448,17 @@ export function create_plot_surface_element(): CustomElementConstructor {
             }, { signal })
 
             scope.addEventListener('contextmenu', event => {
+                // Ctrl-primary press belongs to rectangle zoom, including macOS secondary-click synthesis.
+                if (this.#dragActive || (this.#menuState?.enabled && event.ctrlKey && event.button === 0)) {
+                    event.preventDefault()
+                    return
+                }
                 const input = normalized(event)
-                if (input === null || !this.#menuState?.enabled || this.#rectangleStart !== null) return
+                if (input === null || !this.#menuState?.enabled || interaction_target(this.#regions, input) === null) return
                 event.preventDefault()
+                this.#keyboardMenu = false
                 this.#menuInput = input
-                const bounds = this.getBoundingClientRect()
-                this.#menuAnchor.style.left = `${event.clientX - bounds.left}px`
-                this.#menuAnchor.style.top = `${event.clientY - bounds.top}px`
-                this.#emit('plotleave', undefined)
+                this.#leavePlot()
                 this.#menu.open({ coord: [event.clientX, event.clientY], originEvent: event })
             }, { signal })
         }
@@ -363,14 +468,15 @@ export function create_plot_surface_element(): CustomElementConstructor {
         get cursor(): string { return this.capture.style.cursor }
         set cursor(value: string) {
             this.capture.style.cursor = value
-            for (const capture of Object.values(this.#axisCapture)) capture.style.cursor = value
         }
         setSize(dimensions: { width?: number; height?: number }): void { size_host(this, dimensions) }
         configureCapture(configuration: CaptureConfiguration): void {
-            configure_capture(this.capture, configuration)
+            this.#shiftWheelClaim = null
+            this.#fallbackConfiguration = configuration
+            this.#applyCapturePolicy()
         }
 
-        present({ width, height, inner, regions, axis_capture, filter, menu }: PlotSurfacePresentation): void {
+        present({ width, height, inner, regions, capture_policy, filter, menu }: PlotSurfacePresentation): void {
             this.capture.style.display = ''
             this.#regions = regions ?? { plot: inner, x: null, y: null }
             for (const canvas of [this.canvas, this.highlight]) {
@@ -378,28 +484,25 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 canvas.style.height = `${height}px`
                 canvas.style.filter = filter ?? ''
             }
-            Object.assign(this.capture.style, tooltip_wrapper_style(inner))
-            for (const axis of ['x', 'y'] as const) {
-                const capture = this.#axisCapture[axis]
-                const bounds = this.#regions[axis]
-                const configuration = axis_capture?.[axis]
-                if (bounds === null || configuration === undefined) {
-                    capture.style.display = 'none'
-                    continue
-                }
-                // Canvas labels outside the surface are clipped; their input regions are too.
-                const visible: Rect = {
-                    left: Math.max(0, bounds.left), right: Math.min(width, bounds.right),
-                    top: Math.max(0, bounds.top), bottom: Math.min(height, bounds.bottom),
-                }
-                capture.style.display = visible.right > visible.left && visible.bottom > visible.top ? '' : 'none'
-                Object.assign(capture.style, tooltip_wrapper_style(visible))
-                configure_capture(capture, configuration)
+            const bounds = [inner, this.#regions.x, this.#regions.y].filter((r): r is Rect => r !== null)
+            this.#captureBounds = {
+                left: Math.max(0, Math.min(...bounds.map(r => r.left))),
+                top: Math.max(0, Math.min(...bounds.map(r => r.top))),
+                right: Math.min(width, Math.max(...bounds.map(r => r.right))),
+                bottom: Math.min(height, Math.max(...bounds.map(r => r.bottom))),
             }
+            Object.assign(this.capture.style, tooltip_wrapper_style(this.#captureBounds))
+            this.#shiftWheelClaim = null
+            this.#capturePolicy = capture_policy
+            this.#applyCapturePolicy()
             this.#menuState = menu
+            this.#menuAnchor.tabIndex = menu.enabled ? 0 : -1
             this.#menuItems.in.toggleAttribute('disabled', !menu.zoom_in)
             this.#menuItems.out.toggleAttribute('disabled', !menu.zoom_out)
             this.#menuItems.reset.toggleAttribute('disabled', !menu.reset)
+            for (const item of Object.values(this.#menuItems)) {
+                item.setAttribute('aria-disabled', String(item.hasAttribute('disabled')))
+            }
             if (!menu.enabled) this.#menu.close()
         }
 

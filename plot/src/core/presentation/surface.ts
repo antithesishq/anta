@@ -10,7 +10,7 @@ export type PlotSurfacePresentation = {
     height: number
     inner: Rect
     regions?: InteractionRegions | null
-    axis_capture?: { x: CaptureConfiguration; y: CaptureConfiguration }
+    capture_policy?: { plot: CaptureConfiguration; x: CaptureConfiguration; y: CaptureConfiguration }
     filter?: string
     menu: ReturnType<PlotInteractionController['menu_state']>
 }

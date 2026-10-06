@@ -97,13 +97,14 @@ async function pageFor(t, hydrate = false) {
 
 async function center(page, type = 'mousemove', options = {}, selector = 'a-capture') {
     return page.evaluate(({ type, options, selector }) => {
-        const capture = document.querySelector('a-capture')
-        const rect = capture.getBoundingClientRect()
+        const surface = document.querySelector('a-plot-surface')
+        const rect = surface.getBoundingClientRect()
+        const { inner } = JSON.parse(surface.getAttribute('presentation'))
         const eventOptions = {
             bubbles: true,
             cancelable: true,
-            clientX: rect.left + rect.width / 2,
-            clientY: rect.top + rect.height / 2,
+            clientX: rect.left + (inner.left + inner.right) / 2,
+            clientY: rect.top + (inner.top + inner.bottom) / 2,
             ...options,
         }
         const event = type === 'wheel' ? new WheelEvent(type, eventOptions) : new MouseEvent(type, eventOptions)

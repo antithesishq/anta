@@ -33,9 +33,9 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
         resolve: host.resolve_hover,
         on_update: host.on_hover_update,
     })
-    const clear_hover = () => {
+    const clear_hover = (notify = true) => {
         hover.clear()
-        host.on_hover_clear()
+        if (notify) host.on_hover_clear()
     }
 
     const reset = (): void => {
@@ -77,7 +77,7 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
                 return
             }
             if (input.phase === 'start') drag_target = controller.interaction_target(input)
-            const update = viewport.handle_drag({ ...input, target: drag_target }, controller.template.zoom_pan)
+            const update = viewport.handle_drag({ ...input, target: drag_target, release_target: controller.interaction_target(input) }, controller.template.zoom_pan)
             if (input.phase === 'end' || input.phase === 'cancel') drag_target = null
             if (update.started) {
                 clear_hover()
@@ -93,14 +93,15 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
             if (controller === null || !zoom_pan_enabled(controller.template)) {
                 return
             }
+            const had_hover = controller.interactions.hovered.length > 0
             const update = viewport.handle_wheel({
                 ...input, target: controller.interaction_target(input),
             }, controller.template.zoom_pan)
             if (!update.changed) {
                 return
             }
-            clear_hover()
-            host.on_pointer_change()
+            clear_hover(had_hover)
+            if (update.visit_changed) host.on_pointer_change()
         },
         leave(): void {
             hover.leave()

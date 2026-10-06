@@ -144,6 +144,9 @@ export async function checkSurface() {
     check(surface.querySelector('style') === styles && surface.querySelectorAll('style').length === 1,
         'reconnect retains one structural stylesheet')
     rejects(() => surface.transferCanvases(), 'reconnect retains worker ownership')
+    surface.capture.dispatchEvent(new MouseEvent('contextmenu', {
+        bubbles: true, cancelable: true, clientX: 100, clientY: 100,
+    }))
     reset.click()
     check(resets === 2, 'reconnect installs exactly one reset listener')
 
@@ -223,7 +226,8 @@ export async function checkSurface() {
     await wait()
 
     const capture = plot.querySelector('a-capture')
-    const bounds = capture.getBoundingClientRect()
+    // This fixture uses equal default margins, so the canvas center is the interior center.
+    const bounds = plot.querySelector('canvas').getBoundingClientRect()
     const point = {
         clientX: bounds.left + bounds.width / 2,
         clientY: bounds.top + bounds.height / 2,

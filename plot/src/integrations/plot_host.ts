@@ -132,7 +132,7 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
         return {
             width: plot.layout.width, height: plot.layout.height, inner: plot.inner,
             regions: controller.interaction_regions,
-            axis_capture: { x: this.capture('x-axis'), y: this.capture('y-axis') },
+            capture_policy: { plot: this.capture(), x: this.capture('x-axis'), y: this.capture('y-axis') },
             filter: plot_color_filter(controller.template, environment.color_theme),
             menu: controller.interactions.menu_state(controller.template.zoom_pan),
         }
@@ -148,7 +148,6 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
             controller === null ? 'none' : controller.interactions.wheel_claim(
                 controller.composed_plot, controller.interactions.committed_viewport, axes, target,
             ),
-            controller?.interactions.zoomed_this_visit ?? false,
         )
     }
 

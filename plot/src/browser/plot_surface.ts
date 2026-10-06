@@ -104,7 +104,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
         #captureTarget: 'plot' | 'x-axis' | 'y-axis' | null = 'plot'
         #regions: InteractionRegions | null = null
         readonly #rectangle: HTMLElement
-        #rectangleStart: { x: number; y: number; width: number; height: number } | null = null
+        #rectangleStart: { x: number; y: number; width: number; height: number; zoomX: boolean; zoomY: boolean } | null = null
         readonly #menuAnchor: HTMLElement
         readonly #menu: AMenuElement
         readonly #menuItems: Record<'in' | 'out' | 'reset', HTMLElement>
@@ -327,9 +327,14 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 if (!input.start.pointerEvent.ctrlKey || interaction_target(this.#regions, {
                     offsetX: input.start.localX, offsetY: input.start.localY,
                 }) !== 'plot') return
+                // Axis policies include both configuration and whether the axis is continuous.
+                const zoomX = this.#capturePolicy === undefined || this.#capturePolicy.x.pointer_capture !== null
+                const zoomY = this.#capturePolicy === undefined || this.#capturePolicy.y.pointer_capture !== null
+                if (!zoomX && !zoomY) return
                 this.#rectangleStart = {
                     x: input.start.localX, y: input.start.localY,
                     width: input.start.boxWidth, height: input.start.boxHeight,
+                    zoomX, zoomY,
                 }
             }
             const start = this.#rectangleStart
@@ -337,6 +342,9 @@ export function create_plot_surface_element(): CustomElementConstructor {
             const rect = drag_rectangle({ left: 0, top: 0, right: start.width, bottom: start.height }, start, {
                 x: start.x + input.movementX, y: start.y + input.movementY,
             })
+            // The preview covers the viewport that release will select, including unchanged axes.
+            if (!start.zoomX) { rect.left = 0; rect.right = start.width }
+            if (!start.zoomY) { rect.top = 0; rect.bottom = start.height }
             Object.assign(this.#rectangle.style, {
                 left: `${rect.left + (this.#regions?.plot.left ?? 0) - this.#captureBounds.left}px`,
                 top: `${rect.top + (this.#regions?.plot.top ?? 0) - this.#captureBounds.top}px`,

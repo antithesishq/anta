@@ -75,8 +75,7 @@
     "prepare": "pnpm run build",
     "prepublishOnly": "pnpm run build",
     "prepack": "pnpm run build:docs",
-    "test:fuzz_component": "node tests/pbt/run.ts",
-    "test:fixture": "node scripts/test-fixture.mjs"
+    "test:fuzz_component": "node tests/pbt/run.ts"
   },
   "devDependencies": {
     "@antithesishq/bombadil": "0.7.5",

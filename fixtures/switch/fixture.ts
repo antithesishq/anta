@@ -1,7 +1,7 @@
-import { Button, Switch } from '@antadesign/anta'
-import { useState } from 'preact/hooks'
+const switchFixture = `import { Button, Switch } from '@antadesign/anta'
+import { useState } from 'react'
 
-export default function SwitchFixture() {
+export default function App() {
   const [checked, setChecked] = useState(false)
   const [disabled, setDisabled] = useState(false)
   const [mounted, setMounted] = useState(true)
@@ -12,8 +12,12 @@ export default function SwitchFixture() {
       data-expected-checked={String(checked)}
       data-expected-disabled={String(disabled)}
       data-expected-mounted={String(mounted)}
+      style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}
     >
-      <form data-fixture-form>
+      <form
+        data-fixture-form
+        style={{ minHeight: '72px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px', background: 'var(--bg-1)' }}
+      >
         {mounted ? (
           <Switch
             data-fixture-target
@@ -30,13 +34,13 @@ export default function SwitchFixture() {
         )}
       </form>
 
-      <output aria-live="polite" data-fixture-state>
+      <output aria-live="polite" data-fixture-state style={{ color: 'var(--text-2)', fontSize: '14px' }}>
         {mounted
-          ? `${checked ? 'On' : 'Off'}, ${disabled ? 'locked' : 'editable'}`
-          : `Removed, parent value is ${checked ? 'on' : 'off'}`}
+          ? (checked ? 'On' : 'Off') + ', ' + (disabled ? 'locked' : 'editable')
+          : 'Removed, parent value is ' + (checked ? 'on' : 'off')}
       </output>
 
-      <div aria-label="Fixture controls" data-fixture-controls>
+      <div aria-label="Fixture controls" data-fixture-controls style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
         <Button
           priority="secondary"
           data-fixture-control="checked"
@@ -64,3 +68,6 @@ export default function SwitchFixture() {
     </main>
   )
 }
+`
+
+export default switchFixture

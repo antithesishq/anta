@@ -8,6 +8,10 @@ import styles from './Harness.module.css'
 
 const { Button } = Anta
 const themeStorageKey = 'anta-harness-theme'
+const fixtureSources = import.meta.glob('../../../fixtures/*/fixture.ts', {
+  eager: true,
+  import: 'default',
+}) as Record<string, string>
 const initialSource = `import { Button } from '@antadesign/anta'
 
 export default function App() {
@@ -26,8 +30,22 @@ function selectedCase() {
 }
 
 function sourceFromLocation() {
+  const fixture = new URLSearchParams(location.search).get('fixture')
+  if (fixture) {
+    const fixturePath = /^[a-z][a-z0-9-]*$/.test(fixture)
+      ? `../../../fixtures/${fixture}/fixture.ts`
+      : ''
+    return fixtureSources[fixturePath] ?? `export default function App() {
+  return <pre>Unknown fixture: {${JSON.stringify(fixture)}}</pre>
+}
+`
+  }
   const selected = selectedCase()
   return selected ? button.source(decode(button, selected.caseId)) : initialSource
+}
+
+function bombadilMode() {
+  return new URLSearchParams(location.search).get('bombadil') === 'true'
 }
 
 type CompiledApp = ComponentType<Record<string, never>>
@@ -92,13 +110,14 @@ class RenderBoundary extends Component<{ children: ComponentChildren }, { error:
 }
 
 export default function Harness() {
+  const isBombadil = bombadilMode()
   const [source, setSource] = useState(sourceFromLocation)
   const [isDark, setIsDark] = useState(false)
   const [compiled, setCompiled] = useState<CompiledApp | null>(null)
   const [compiledSource, setCompiledSource] = useState('')
   const [compileError, setCompileError] = useState<string | null>(null)
   const [compiling, setCompiling] = useState(true)
-  const [editorOpen, setEditorOpen] = useState(() => window.matchMedia('(min-width: 721px)').matches)
+  const [editorOpen, setEditorOpen] = useState(() => !isBombadil && window.matchMedia('(min-width: 721px)').matches)
 
   useEffect(() => {
     let cancelled = false
@@ -163,14 +182,14 @@ export default function Harness() {
           ? <RenderBoundary key={compiledSource}><App /></RenderBoundary>
           : <div className={styles.compileStatus}>Compiling…</div>}
     </section>
-    {editorOpen && <HarnessEditor
+    {!isBombadil && editorOpen && <HarnessEditor
       source={source}
       isDark={isDark}
       onChange={setSource}
       onThemeChange={() => setIsDark((value) => !value)}
       onClose={() => setEditorOpen(false)}
     />}
-    {!editorOpen && <Button
+    {!isBombadil && !editorOpen && <Button
       className={styles.showEditorButton}
       icon="braces"
       priority="tertiary"

@@ -4,6 +4,17 @@ import { actions, extract, registerCustomAction } from '@antithesishq/bombadil/b
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks } from '@antithesishq/bombadil/browser/defaults/actions'
 
+const waitForSwitchFixture = registerCustomAction(
+  'waitForSwitchFixture',
+  async (document, window) => {
+    const deadline = Date.now() + 5_000
+    while (!document.querySelector('[data-fixture="switch"]')) {
+      if (Date.now() >= deadline) throw new Error('Switch fixture did not compile within five seconds.')
+      await new Promise((resolve) => window.setTimeout(resolve, 25))
+    }
+  },
+)
+
 const focusAndPressSpace = registerCustomAction(
   'switchFocusAndPressSpace',
   async (document, window) => {
@@ -52,6 +63,10 @@ const fixture = extract((state) => {
 
 export const switchKeyboardActions = actions(() => (
   fixture.current?.canFocusAndPressSpace ? [focusAndPressSpace()] : []
+))
+
+export const switchReadyActions = actions(() => (
+  fixture.current === null ? [waitForSwitchFixture()] : []
 ))
 
 export const switchMountMatchesParent = always(() => {

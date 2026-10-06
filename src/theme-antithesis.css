@@ -476,7 +476,7 @@
 
   --fill-1-disabled: color-mix(in oklch, #a398a0 50%, transparent);
 
-  --fill-disabled: color-mix(in oklch, #a398a0 12%, transparent);
+  --fill-disabled: color-mix(in oklch, #a398a0 10%, transparent);
 
   --stroke-1: #533c4b;
   --stroke-1-hover: #6b5b66;

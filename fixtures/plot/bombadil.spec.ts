@@ -150,7 +150,7 @@ const plotMountActions = actions(() => (
 
 export const plotActions = weighted([
   [100, plotGestureActions],
-  [1, plotMountActions],
+  [10, plotMountActions],
 ])
 
 export const plotReadyActions = actions(() => (

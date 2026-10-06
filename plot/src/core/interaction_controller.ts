@@ -378,7 +378,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
     }
 
     /** Stage an accepted wheel event, with offsets relative to the inner overlay. */
-    on_scroll(event: PointerOffset & { deltaY: number }, axes: { x: boolean; y: boolean }, target: InteractionTarget = 'plot'): boolean {
+    on_scroll(event: PointerOffset & { deltaY: number; ctrlKey?: boolean }, axes: { x: boolean; y: boolean }, target: InteractionTarget = 'plot'): boolean {
         const plot = this.#get_composed_plot()
 
         if (plot === null) {
@@ -386,7 +386,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         }
         const before = this.#staged_viewport
         const views = zoomable_views(plot, axes)
-        const zoomed = zoom_viewport(views, before, cursor_position(plot, event), event.deltaY)
+        const zoomed = zoom_viewport(views, before, cursor_position(plot, event), event.deltaY, event.ctrlKey)
 
         if (!viewport_moved(before, zoomed)) {
             return false

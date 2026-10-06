@@ -5,7 +5,8 @@ import { clamp_domain, LINEAR_SPACE, LOG_SPACE, type AxisSpace } from "../templa
 // Zoom + pan math for the plot's viewport override.
 // Continuous axes carry a numeric full_domain and zoom/pan; a categorical axis passes it as null and holds.
 
-const ZOOM_SPEED = 0.0015 // zoom-factor sensitivity
+const ZOOM_SPEED = 0.0015 // ordinary wheel sensitivity
+const PINCH_ZOOM_SPEED = ZOOM_SPEED * 3 // browsers encode pinch as Ctrl-wheel
 const MAX_ZOOM = 10000 // tightest zoom: the narrowest window is the full domain over this
 const ZOOM_LIMIT_SLACK = 1e-6 // relative tolerance for floating point round-off tolerance, so the tightest zoom doesn't read as room left
 
@@ -266,10 +267,11 @@ function clamp_axis_window(scale: Scale, full_domain: Domain | null, window: Dom
  * @param override - the current viewport (null on an axis = full view)
  * @param cursor - the cursor position in plot pixels
  * @param delta_y - the wheel event's deltaY
+ * @param ctrl_key - Ctrl-wheel/pinch uses higher sensitivity
  * @returns the new viewport
  */
-export function zoom_viewport(views: AxisViews, override: Viewport, cursor: { x: number; y: number }, delta_y: number): Viewport {
-    return zoom_viewport_by_factor(views, override, cursor, zoom_factor(delta_y))
+export function zoom_viewport(views: AxisViews, override: Viewport, cursor: { x: number; y: number }, delta_y: number, ctrl_key = false): Viewport {
+    return zoom_viewport_by_factor(views, override, cursor, zoom_factor(delta_y, ctrl_key))
 }
 
 /** Apply one proportional zoom step, with independent axis limits. */
@@ -366,8 +368,8 @@ export function pan_viewport(snapshot: PanSnapshot, views: AxisViews, override: 
  * @param delta_y - the wheel event's deltaY
  * @returns the multiplicative zoom factor
  */
-function zoom_factor(delta_y: number): number {
-    return Math.exp(delta_y * ZOOM_SPEED)
+function zoom_factor(delta_y: number, ctrl_key: boolean): number {
+    return Math.exp(delta_y * (ctrl_key ? PINCH_ZOOM_SPEED : ZOOM_SPEED))
 }
 
 /**

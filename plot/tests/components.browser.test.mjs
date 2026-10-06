@@ -312,8 +312,12 @@ for (const renderer of ['react', 'preact']) {
         await page.waitForFunction(() => document.querySelector('.anta-plot canvas'))
         await page.waitForFunction(() => document.querySelector('canvas')?.height === 220)
         await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.listening)
-        const capture = await page.locator('.plot-capture').boundingBox()
-        await page.mouse.move(capture.x + capture.width / 2, capture.y + capture.height / 2)
+        const point = await page.locator('a-plot-surface').evaluate(surface => {
+            const rect = surface.getBoundingClientRect()
+            const { inner } = JSON.parse(surface.getAttribute('presentation'))
+            return { x: rect.left + (inner.left + inner.right) / 2, y: rect.top + (inner.top + inner.bottom) / 2 }
+        })
+        await page.mouse.move(point.x, point.y)
         const tooltip = page.locator('.anta-plot > a-tooltip')
         await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.textContent.includes('point'))
         assert.equal(await tooltip.locator('hr').count(), 1)
@@ -330,7 +334,7 @@ for (const renderer of ['react', 'preact']) {
         // Entering a margin clears renderer-owned content without moving its DOM nodes.
         await page.mouse.move(1, 1)
         await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.textContent === '')
-        await page.mouse.move(capture.x + capture.width / 2, capture.y + capture.height / 2)
+        await page.mouse.move(point.x, point.y)
         await page.waitForFunction(() => document.querySelector('.anta-plot > a-tooltip')?.textContent.includes('point'))
         await page.evaluate(() => unmountPlot())
         assert.equal(await page.locator('a-tooltip').count(), 0)
@@ -499,5 +503,24 @@ for (const renderer of ['react', 'preact', 'standalone']) {
             assert.match(titleFont, typeof font === 'string' ? /14px serif/ : /24px serif/)
         }
 
+    })
+}
+
+for (const renderer of ['react', 'preact']) {
+    test(`pinch preserves settled plain-wheel capture without duplicate delivery (${renderer})`, async t => {
+        const page = await pageFor(t)
+        await page.evaluate(renderer => { unmountPlot(); renderAntaPlot(220, renderer) }, renderer)
+        await page.waitForFunction(() => document.querySelector('canvas')?.height === 220)
+        await page.evaluate(() => {
+            window.wheelDeliveries = 0
+            document.querySelector('a-plot-surface').addEventListener('wheelinput', () => window.wheelDeliveries++)
+        })
+        await center(page, 'pointermove')
+        await page.waitForTimeout(180)
+        for (const ctrlKey of [false, true, false, false]) {
+            assert.equal(await center(page, 'wheel', { deltaY: -10, ctrlKey }), true)
+        }
+        assert.equal(await page.evaluate(() => window.wheelDeliveries), 4)
+        assert.equal(await page.locator('a-capture').getAttribute('wheel-activation'), 'settled')
     })
 }

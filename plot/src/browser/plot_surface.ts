@@ -273,13 +273,9 @@ export function create_plot_surface_element(): CustomElementConstructor {
                     }
                     return
                 }
-                // Pinch is deliberate zoom input and must not zoom the page during the dwell delay.
-                // The corner keeps settled activation unless a menu action activated this visit.
-                if (this.#capturePolicy !== undefined && claim !== null) {
-                    const activation = this.#menuWheelActive || (event.ctrlKey && this.#captureTarget !== null) ? 'hover' : 'settled'
-                    if (this.capture.getAttribute('wheel-activation') !== activation) {
-                        this.capture.setAttribute('wheel-activation', activation)
-                    }
+                // Handle pinch immediately without changing Capture's activation or losing its dwell.
+                if (this.#capturePolicy !== undefined && event.ctrlKey && this.#captureTarget !== null) {
+                    this.#capturePinch(event, claim)
                 }
             }, { capture: true, passive: false, signal })
             this.capture.addEventListener('wheelinput', event => {
@@ -391,6 +387,43 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 } catch (error) {
                     this.#reportError(error)
                 }
+            })
+        }
+
+        #capturePinch(event: WheelEvent, claim: string | null): void {
+            if (claim === null || event.defaultPrevented || !event.cancelable || !this.#insideCapture(event)) return
+            // Read units before deltas, matching Capture's Firefox compatibility handling.
+            const deltaMode = event.deltaMode
+            const { deltaX, deltaY, deltaZ } = event
+            if (deltaY === 0 || Math.abs(deltaX) > Math.abs(deltaY)
+                || !claim.split(' ').includes(deltaY < 0 ? 'up' : 'down')) return
+            for (const node of event.composedPath()) {
+                if (node instanceof this.ownerDocument.defaultView!.Element && (node.hasAttribute('data-capture-ignore')
+                    || node.matches('textarea, select, input[type="number"], input[type="range"], a-menu'))) return
+                if (node === this.capture) break
+            }
+            event.preventDefault()
+            if (!event.defaultPrevented) return
+            // Capture ignores an already claimed event, avoiding duplicate delivery.
+            event.stopPropagation()
+            const rect = this.capture.getBoundingClientRect()
+            this.#pointerInside = true
+            this.#emit('wheelinput', {
+                ...this.#inputGeometry({
+                    localX: event.clientX - rect.left, localY: event.clientY - rect.top,
+                    boxWidth: rect.width, boxHeight: rect.height, inside: true,
+                    focusWithin: this.capture.matches(':focus-within'),
+                }),
+                activationReason: 'immediate',
+                wheelEvent: {
+                    type: event.type, timeStamp: event.timeStamp, isTrusted: event.isTrusted,
+                    cancelable: event.cancelable, defaultPrevented: event.defaultPrevented,
+                    altKey: event.altKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey,
+                    button: event.button, buttons: event.buttons,
+                    clientX: event.clientX, clientY: event.clientY, pageX: event.pageX, pageY: event.pageY,
+                    screenX: event.screenX, screenY: event.screenY, offsetX: event.offsetX, offsetY: event.offsetY,
+                    deltaMode, deltaX, deltaY, deltaZ,
+                },
             })
         }
 

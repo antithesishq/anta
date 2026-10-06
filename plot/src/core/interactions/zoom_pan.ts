@@ -409,7 +409,9 @@ export function pan_viewport(snapshot: PanSnapshot, views: AxisViews, override: 
  * @returns the multiplicative zoom factor
  */
 function zoom_factor(delta_y: number, ctrl_key: boolean): number {
-    return Math.exp(delta_y * (ctrl_key ? PINCH_ZOOM_SPEED : ZOOM_SPEED))
+    const exponent = delta_y * (ctrl_key ? PINCH_ZOOM_SPEED : ZOOM_SPEED)
+    // Keep small pinch samples responsive without letting a Ctrl+wheel notch make a large jump.
+    return Math.exp(ctrl_key ? clamp(exponent, -Math.log(1.2), Math.log(1.2)) : exponent)
 }
 
 /**

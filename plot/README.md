@@ -162,7 +162,7 @@ Enabled continuous axes show directional arrows on hover. Pan by dragging inside
 the plot; axis drags always zoom, with or without Ctrl.
 Scrolling inside the plot zooms both enabled axes. Horizontal input is ignored.
 
-Right-click for Zoom In, Zoom Out, and Reset Zoom. This replaces the reset button
+Right-click for Reset Zoom, Zoom Out, and Zoom In. This replaces the reset button
 and double-click reset. Unavailable actions remain visible and disabled.
 `zoom_pan` still accepts a boolean or an object with optional `x` and `y` flags.
 The object also accepts `menu_zoom_step`, a finite number greater than 1, default
@@ -190,6 +190,11 @@ browser. Pointer and wheel events retain offsets relative to the plot interior.
 Selecting a zoom menu action while the pointer is over the capture area makes
 wheel zoom immediately available until the pointer leaves that area. This avoids
 repeating the dwell delay when the menu closes, including during zoom animation.
+
+Ctrl-wheel and pinch share the same browser signal. Small samples use 3× wheel
+sensitivity; each Ctrl-wheel sample is capped at a 1.2× change in either direction
+so physical mouse-wheel notches stay manageable. Pinching preserves any existing
+plain-wheel dwell state.
 
 Plain wheel input on a new visit, including the corner, waits for pointer settling. Ctrl-wheel
 and pinch over interactive plot regions activate immediately. Shift-wheel is

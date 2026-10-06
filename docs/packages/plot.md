@@ -465,7 +465,7 @@ document.body.append(plot)
 | [`viewport?`](#viewport) | `{ x?, y?, key? }` | Full domain | Requested starting window per axis. Applied at mount and on each `key` change, clamped to the full domain. |
 | [`on_viewport_change?`](#viewport-changes) | `(change: ViewportChange) => void` | None | Fires with each axis's current window and full extent after a gesture or reset. |
 
-Right-click the plot for **Zoom In**, **Zoom Out**, and **Reset Zoom**.
+Right-click the plot for **Reset Zoom**, **Zoom Out**, and **Zoom In**.
 Unavailable actions stay visible and disabled. Reset restores the full viewport;
 double-clicking does not reset. Focus the plot zoom controls and press Shift+F10
 or the Context Menu key to open the menu from the keyboard. Ctrl-primary click
@@ -2857,7 +2857,9 @@ Zoom and pan in the plot
 
 Scroll to zoom around the pointer, or drag to pan. Plain wheel zoom activates after the pointer settles over the plot; Ctrl-wheel and pinch activate immediately. Horizontal scrolling does not change the viewport. Hold Ctrl and drag inside the plot to draw a zoom rectangle. Releasing fits the viewport to the rectangle, subject to each enabled axis's limits.
 
-Right-click for **Zoom In**, **Zoom Out**, and **Reset Zoom**. Menu zoom anchors at the context-click position and applies the same factor to both enabled axes, with independent limits. Set `zoom_pan: { menu_zoom_step: 1.5 }` to change that factor from its default of `2`. Zoom In divides each span by the factor; Zoom Out multiplies it. The value must be finite and greater than 1. It affects only menu actions; wheel and drag sensitivity stay fixed.
+Ctrl-wheel and pinch share the same browser signal. Small samples use higher sensitivity, while each sample is capped at a 1.2× change to keep physical mouse-wheel notches manageable. Switching between pinch and ordinary scrolling preserves the existing pointer dwell.
+
+Right-click for **Reset Zoom**, **Zoom Out**, and **Zoom In**. Menu zoom anchors at the context-click position and applies the same factor to both enabled axes, with independent limits. Set `zoom_pan: { menu_zoom_step: 1.5 }` to change that factor from its default of `2`. Zoom In divides each span by the factor; Zoom Out multiplies it. The value must be finite and greater than 1. It affects only menu actions; wheel and drag sensitivity stay fixed.
 
 ```ts
 import { line, type APlotElement } from '@antadesign/plot/browser'

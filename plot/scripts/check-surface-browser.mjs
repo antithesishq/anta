@@ -255,7 +255,7 @@ export async function checkSurface() {
 
     capture.dispatchEvent(new MouseEvent('contextmenu', { ...point, cancelable: true }))
     resetControl.click()
-    await wait()
+    await new Promise(resolve => setTimeout(resolve, 500)) // Reset animates for up to 400 ms.
     check(resetControl.hasAttribute('disabled'), 'standalone reset restores viewport')
 
     return passed

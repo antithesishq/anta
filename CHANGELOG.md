@@ -5,8 +5,18 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- [Title typeface](/title/#typeface): `font` sets a title in `serif` or
+  `sans-serif` and overrides the theme's level default.
+
 ### Changed
 
+- In the Antithesis theme, serif headings use Stringer Light. Headings at every
+  level get the theme's letter spacing: -0.045px at level 3 and -0.1px at the
+  other levels.
+- A string `header` on a [Card](/card/) renders a sans-serif title at every
+  size. In the Antithesis theme, large cards previously set it in serif.
 - Selected paddingless [Buttons](/button/#paddingless) draw their 1px selection
   ring outside the label. Their corner radius is capped at 3px, including when
   `round` requests a larger radius.

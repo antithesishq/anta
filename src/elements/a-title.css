@@ -35,6 +35,10 @@
   a-title[level="5"] { font-size: 15px; line-height: 20px; }
   a-title[level="6"] { font-size: 13px; line-height: 16px; }
 
+  a-title[font="serif"] {
+    font-family: var(--serif);
+  }
+
   a-title[priority="secondary"]  { color: var(--text-2); }
   a-title[priority="tertiary"]   { color: var(--text-3); }
   a-title[priority="quaternary"] { color: var(--text-4); }

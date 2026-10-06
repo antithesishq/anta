@@ -1,4 +1,4 @@
-import { actions, extract, registerCustomAction } from '@antithesishq/bombadil/browser'
+import { actions, extract, registerCustomAction, weighted } from '@antithesishq/bombadil/browser'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks } from '@antithesishq/bombadil/browser/defaults/actions'
@@ -106,21 +106,30 @@ const resetPlotWithDoubleClick = registerCustomAction(
   },
 )
 
+const togglePlotMount = registerCustomAction(
+  'plotToggleMount',
+  async (document) => {
+    document.querySelector<HTMLElement>('[data-plot-mount-toggle]')?.click()
+  },
+)
+
 const fixture = extract((state) => {
   const ready = state.document.querySelector('[data-fixture="plot"]') !== null
+  const mounted = state.document.querySelector('[data-plot-target]') !== null
   const capture = state.document.querySelector<HTMLElement>('[data-plot-target] .plot-capture')
-  if (!capture) return { canPoint: false, canWheel: false, ready }
+  if (!capture) return { canPoint: false, canWheel: false, mounted, ready }
 
   const bounds = capture.getBoundingClientRect()
   const canPoint = capture.style.display !== 'none' && bounds.width > 0 && bounds.height > 0
   return {
     canPoint,
     canWheel: canPoint && capture.hasAttribute('wheel-capture'),
+    mounted,
     ready,
   }
 })
 
-export const plotGestureActions = actions(() => {
+const plotGestureActions = actions(() => {
   const current = fixture.current
   if (!current.canPoint) return []
 
@@ -132,6 +141,17 @@ export const plotGestureActions = actions(() => {
     ...(current.canWheel ? [zoomPlotIn(), zoomPlotOut()] : []),
   ]
 })
+
+const plotMountActions = actions(() => (
+  fixture.current.ready && (!fixture.current.mounted || fixture.current.canPoint)
+    ? [togglePlotMount()]
+    : []
+))
+
+export const plotActions = weighted([
+  [100, plotGestureActions],
+  [1, plotMountActions],
+])
 
 export const plotReadyActions = actions(() => (
   fixture.current.ready ? [] : [waitForPlotFixture()]

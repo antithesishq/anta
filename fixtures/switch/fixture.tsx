@@ -42,7 +42,7 @@ export default function SwitchFixture() {
           data-fixture-control="checked"
           onClick={() => setChecked((value) => !value)}
         >
-          {checked ? 'Turn off from parent' : 'Turn on from parent'}
+          Controlled update
         </Button>
 
         <Button
@@ -50,7 +50,7 @@ export default function SwitchFixture() {
           data-fixture-control="disabled"
           onClick={() => setDisabled((value) => !value)}
         >
-          {disabled ? 'Unlock setting' : 'Lock setting'}
+          {disabled ? 'Enable' : 'Disable'}
         </Button>
 
         <Button
@@ -58,10 +58,9 @@ export default function SwitchFixture() {
           data-fixture-control="mounted"
           onClick={() => setMounted((value) => !value)}
         >
-          {mounted ? 'Remove setting' : 'Restore setting'}
+          {mounted ? 'Unmount' : 'Mount'}
         </Button>
       </div>
     </main>
   )
 }
-

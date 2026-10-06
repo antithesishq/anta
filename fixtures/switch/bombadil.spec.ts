@@ -1,8 +1,30 @@
 import { always } from '@antithesishq/bombadil'
-import { extract } from '@antithesishq/bombadil/browser'
+import { actions, extract, registerCustomAction } from '@antithesishq/bombadil/browser'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks } from '@antithesishq/bombadil/browser/defaults/actions'
+
+const focusAndPressSpace = registerCustomAction(
+  'switchFocusAndPressSpace',
+  async (document, window) => {
+    const target = document.querySelector<HTMLElement>('[data-fixture-target]')
+    if (!target || target.matches(':disabled')) return
+
+    target.focus()
+    target.dispatchEvent(new window.KeyboardEvent('keydown', {
+      key: ' ',
+      code: 'Space',
+      bubbles: true,
+      cancelable: true,
+    }))
+    target.dispatchEvent(new window.KeyboardEvent('keyup', {
+      key: ' ',
+      code: 'Space',
+      bubbles: true,
+      cancelable: true,
+    }))
+  },
+)
 
 const fixture = extract((state) => {
   const root = state.document.querySelector<HTMLElement>('[data-fixture="switch"]')
@@ -20,12 +42,17 @@ const fixture = extract((state) => {
     actualDisabled: target?.hasAttribute('disabled') ?? null,
     actualMounted: target !== null,
     actualTabIndex: target?.tabIndex ?? null,
+    canFocusAndPressSpace: target !== null && !target.matches(':disabled'),
     expectedChecked,
     expectedDisabled,
     expectedMounted,
     formValues: new state.window.FormData(form).getAll('automatic-updates').map(String),
   }
 })
+
+export const switchKeyboardActions = actions(() => (
+  fixture.current?.canFocusAndPressSpace ? [focusAndPressSpace()] : []
+))
 
 export const switchMountMatchesParent = always(() => {
   const current = fixture.current

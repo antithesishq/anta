@@ -30,11 +30,14 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
     #last_attempted_args: PlotArgs<Content> | undefined
     #last_update_succeeded = false
     #invalid_size_reported = false
+    #reduced_motion = true
+    #rendered_dimensions: Dimensions | null = null
 
     constructor(private readonly options: PlotHostOptions<Input>) {
         this.interactions = create_interaction_coordinator({
             controller: () => this.controller,
             commit_mode: options.commit_mode,
+            reduced_motion: () => this.#reduced_motion,
             resolve_hover: options.resolve_hover,
             on_viewport_commit: () => {
                 options.viewport_commit?.()
@@ -49,7 +52,8 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
     }
 
     /** Capture the inherited family once; later font changes do not invalidate the plot. */
-    update_context(context: Pick<BoxContext, 'mode' | 'devicePixelRatio' | 'font'>): boolean {
+    update_context(context: Pick<BoxContext, 'mode' | 'devicePixelRatio' | 'font'> & Partial<Pick<BoxContext, 'reducedMotion'>>): boolean {
+        this.#reduced_motion = context.reducedMotion ?? true
         const previous = this.environment
         const inherited_font_family = previous?.inherited_font_family ?? context.font.family
         if (previous?.color_theme === context.mode && previous.device_pixel_ratio === context.devicePixelRatio
@@ -66,6 +70,8 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
     update(args: PlotArgs<Content>): boolean {
         // Environment updates cannot repair invalid arguments; retry only when their reference changes.
         if (args === this.#last_attempted_args) return this.#last_update_succeeded
+
+        this.interactions.stop_animation()
 
         this.#last_attempted_args = args
         this.#last_update_succeeded = false
@@ -101,6 +107,10 @@ export class PlotHost<Content, Input = PlotSurfaceMouseInput> {
         if (controller === null || this.environment === null) return null
         const dimensions = resolve_canvas_size(controller.template, this.measurement)
         if (dimensions === null) return null
+        if (this.#rendered_dimensions?.width !== dimensions.width || this.#rendered_dimensions.height !== dimensions.height) {
+            this.interactions.stop_animation(true)
+            this.#rendered_dimensions = dimensions
+        }
         if (dimensions.width <= 0 || dimensions.height <= 0) {
             if (!this.#invalid_size_reported) {
                 this.#invalid_size_reported = true

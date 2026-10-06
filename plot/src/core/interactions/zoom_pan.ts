@@ -172,6 +172,46 @@ export function rectangle_zoom_viewport(
     return { x: fit('x'), y: fit('y') }
 }
 
+/** Scale rectangle/reset timing from 200–400 ms using the larger axis change. */
+export function zoom_transition_duration(views: AxisViews, start: Viewport, end: Viewport): number {
+    const distance = (axis: 'x' | 'y'): number => {
+        const full = views[`${axis}_full_domain`]
+        if (full === null) return 0
+        const space = axis_space(views[`${axis}_scale`])
+        const a = to_space(start[axis] ?? full, space)!
+        const b = to_space(end[axis] ?? full, space)!
+        const a_span = a[1] - a[0], b_span = b[1] - b[0]
+        if (!(a_span > 0) || !(b_span > 0)) return 0
+        // Four doublings reach the cap; center travel adds distance in viewport widths.
+        const scale = Math.abs(Math.log2(a_span) - Math.log2(b_span)) / 4
+        const shift = Math.abs((a[0] / 2 + a[1] / 2) - (b[0] / 2 + b[1] / 2)) / Math.max(a_span, b_span)
+        const amount = scale + shift
+        return Number.isFinite(amount) ? amount : 1
+    }
+    return 200 + 200 * Math.min(1, Math.max(distance('x'), distance('y')))
+}
+
+/** Interpolate zoom in each axis's scale space, preserving pinned axes. */
+export function zoom_transition(views: AxisViews, start: Viewport, end: Viewport) {
+    const interpolate = (axis: 'x' | 'y', progress: number): Domain | null => {
+        const full = views[`${axis}_full_domain`]
+        if (full === null || start[axis] === end[axis]) return start[axis]
+        const space = axis_space(views[`${axis}_scale`])
+        const a = to_space(start[axis] ?? full, space)!
+        const b = to_space(end[axis] ?? full, space)!
+        return from_space([
+            a[0] + (b[0] - a[0]) * progress,
+            a[1] + (b[1] - a[1]) * progress,
+        ], space)
+    }
+    return (progress: number): Viewport => {
+        if (progress <= 0) return start
+        if (progress >= 1) return end
+        const eased = 1 - (1 - progress) ** 3
+        return { x: interpolate('x', eased), y: interpolate('y', eased) }
+    }
+}
+
 /** Enable gestures only when at least one selected axis is continuous. */
 export function zoom_pan_enabled(template: {
     x: Pick<AxisTemplate, 'kind'>

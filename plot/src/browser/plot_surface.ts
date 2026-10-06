@@ -102,6 +102,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
         #keyboardMenu = false
         #shiftWheelClaim: string | null = null
         #captureTarget: 'plot' | 'x-axis' | 'y-axis' | null = 'plot'
+        #menuWheelActive = false
         #regions: InteractionRegions | null = null
         readonly #rectangle: HTMLElement
         #rectangleStart: { x: number; y: number; width: number; height: number; zoomX: boolean; zoomY: boolean } | null = null
@@ -147,7 +148,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
             this.#menu.setAttribute('coord', '')
             this.#menu.setAttribute('aria-label', 'Plot zoom')
             this.#menuItems = Object.fromEntries(
-                (['in', 'out', 'reset'] as const).map(action => {
+                (['reset', 'out', 'in'] as const).map(action => {
                     const item = doc.createElement('a-menu-item')
                     item.dataset.zoomAction = action
                     item.setAttribute('role', 'menuitem')
@@ -208,14 +209,26 @@ export function create_plot_surface_element(): CustomElementConstructor {
             }
             for (const action of ['in', 'out', 'reset'] as const) {
                 const item = this.#menuItems[action]
-                item.addEventListener('click', () => {
+                item.addEventListener('click', event => {
                     if (item.hasAttribute('disabled') || this.#menuInput === null) return
+                    // Menu input is deliberate plot interaction; closing it must not require a new dwell.
+                    this.#menuWheelActive = this.#insideCapture(event)
+                    this.#applyCapturePolicy()
                     this.#emit('zoomrequest', { ...this.#menuInput, action })
                     this.#menu.close()
                     if (this.#keyboardMenu) this.#menuAnchor.focus()
                     this.#keyboardMenu = false
                 }, { signal })
             }
+            // Menu items live outside Capture. Track actual coordinates across both surfaces,
+            // including captured drags, and release this visit as soon as the pointer leaves.
+            this.ownerDocument.addEventListener('pointermove', event => {
+                if (this.#menuWheelActive && !this.#insideCapture(event)) this.#releaseMenuWheel()
+            }, { signal })
+            this.ownerDocument.addEventListener('pointerout', event => {
+                if (event.relatedTarget === null && !this.#insideCapture(event)) this.#releaseMenuWheel()
+            }, { signal })
+            this.ownerDocument.defaultView?.addEventListener('blur', () => this.#releaseMenuWheel(), { signal })
             this.#menuAnchor.addEventListener('keydown', event => {
                 if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return
                 if (!this.#menuState?.enabled || this.#dragActive) return
@@ -261,9 +274,9 @@ export function create_plot_surface_element(): CustomElementConstructor {
                     return
                 }
                 // Pinch is deliberate zoom input and must not zoom the page during the dwell delay.
-                // The corner keeps settled activation even for Ctrl-wheel.
+                // The corner keeps settled activation unless a menu action activated this visit.
                 if (this.#capturePolicy !== undefined && claim !== null) {
-                    const activation = event.ctrlKey && this.#captureTarget !== null ? 'hover' : 'settled'
+                    const activation = this.#menuWheelActive || (event.ctrlKey && this.#captureTarget !== null) ? 'hover' : 'settled'
                     if (this.capture.getAttribute('wheel-activation') !== activation) {
                         this.capture.setAttribute('wheel-activation', activation)
                     }
@@ -299,6 +312,7 @@ export function create_plot_surface_element(): CustomElementConstructor {
         }
 
         disconnectedCallback(): void {
+            this.#menuWheelActive = false
             this.#pointerInside = false
             this.#dragActive = false
             this.#menu.close()
@@ -380,6 +394,19 @@ export function create_plot_surface_element(): CustomElementConstructor {
             })
         }
 
+        #insideCapture(event: { clientX: number; clientY: number }): boolean {
+            const rect = this.capture.getBoundingClientRect()
+            return rect.width > 0 && rect.height > 0
+                && event.clientX >= rect.left && event.clientX <= rect.right
+                && event.clientY >= rect.top && event.clientY <= rect.bottom
+        }
+
+        #releaseMenuWheel(): void {
+            if (!this.#menuWheelActive) return
+            this.#menuWheelActive = false
+            this.#applyCapturePolicy()
+        }
+
         #applyCapturePolicy(): void {
             const policy = this.#capturePolicy
             if (policy === undefined) {
@@ -392,10 +419,12 @@ export function create_plot_surface_element(): CustomElementConstructor {
             if (this.#dragActive) return
             configure_capture(this.capture, {
                 ...policy.plot,
+                wheel_activation: this.#menuWheelActive ? 'hover' : policy.plot.wheel_activation,
                 // Keep one pointer session and one dwell clock across the whole surface.
                 // Core hit routing rejects drags on disabled axes and in the corner.
                 wheel_capture: policy.plot.wheel_capture === null ? null
-                    : target === null ? 'both' : config.wheel_capture ?? 'none',
+                    : target === null ? 'both' : config.wheel_capture === null ? 'none'
+                    : this.#menuWheelActive ? 'both' : config.wheel_capture,
             })
         }
 

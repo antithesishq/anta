@@ -147,6 +147,15 @@ sizes, line widths, font sizes, and other size declarations accept numbers.
 ## Interaction configuration migration
 
 Zoom and pan use fixed gestures. Remove `zoom_pan.modifier` from existing configs.
+Rectangle zoom and Reset Zoom animate over 200–400 ms with an ease-out, based on
+the zoom ratio and center movement of the axis that changes most. Menu Zoom In
+and Zoom Out keep a fixed 200 ms duration.
+Disabled axes stay fixed, and logarithmic axes interpolate in log space. Reduced
+motion skips the animation. A new gesture interrupts at the current frame;
+`on_viewport_change` reports completion or gesture interruption, not every frame.
+New plot arguments supersede the animation without reporting the old transition,
+and resizing stops it at the current frame.
+
 Plain drag pans; Ctrl-drag inside the plot draws a zoom rectangle. Over an axis,
 plain drag zooms around the starting value, and scrolling zooms around the pointer.
 Enabled continuous axes show directional arrows on hover. Pan by dragging inside
@@ -178,7 +187,11 @@ After pointer settling, the extra corner in that bounding rectangle consumes
 vertical scroll without zooming or scrolling the page. Horizontal/Shift-wheel input remains with the
 browser. Pointer and wheel events retain offsets relative to the plot interior.
 
-Plain wheel input, including the corner, waits for pointer settling. Ctrl-wheel
+Selecting a zoom menu action while the pointer is over the capture area makes
+wheel zoom immediately available until the pointer leaves that area. This avoids
+repeating the dwell delay when the menu closes, including during zoom animation.
+
+Plain wheel input on a new visit, including the corner, waits for pointer settling. Ctrl-wheel
 and pinch over interactive plot regions activate immediately. Shift-wheel is
 ignored by Capture without stopping propagation to application wheel listeners.
 

@@ -10,6 +10,7 @@ import { zoom_pan_enabled } from './zoom_pan'
 type InteractionHost<T, Input> = {
     controller(): PlotController<T> | null
     commit_mode: 'immediate' | 'throttled'
+    reduced_motion?(): boolean
     resolve_hover(input: Input): (PointerOffset & { ctrlKey: boolean }) | null
     on_viewport_commit(viewport: Viewport): void
     on_viewport_report(change: ViewportChange): void
@@ -27,6 +28,7 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
         commit_mode: host.commit_mode,
         on_commit: host.on_viewport_commit,
         on_report: host.on_viewport_report,
+        reduced_motion: host.reduced_motion,
     })
     const hover = create_hover_schedule({
         controller: host.controller,
@@ -49,6 +51,7 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
         reset,
         move: hover.move,
         clear_hover,
+        stop_animation: viewport.stop_animation,
         adopt_viewport: viewport.adopt,
         reconcile_rendered_viewport: viewport.reconcile_rendered_viewport,
         handle_menu(input: PointerOffset & { action: 'in' | 'out' | 'reset' }): void {
@@ -62,6 +65,7 @@ export function create_interaction_coordinator<T, Input>(host: InteractionHost<T
         handle_click(input: PointerOffset & { ctrlKey: boolean }): PointData | undefined {
             const controller = host.controller()
             if (controller?.interaction_target(input) !== 'plot') return
+            viewport.stop_animation(true)
             return controller.interactions.handle_click(input, controller.template.zoom_pan)
         },
         // Discard pending work and release transient input state without reporting or rendering on teardown.

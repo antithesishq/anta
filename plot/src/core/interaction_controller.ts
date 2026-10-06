@@ -5,6 +5,7 @@ import { resolve_tooltips, type ResolvedTooltip } from "./interactions/tooltip"
 import { resolve_highlights } from "./interactions/highlight"
 import { zoom_viewport_by_factor, rectangle_zoom_viewport, type RectangleZoomSnapshot, axis_zoom_frame, axis_zoom_viewport, type AxisZoomSnapshot, clamp_viewport, magnify_zoom, pan_has_room, pan_frame, pan_viewport, published_claim, wheel_claim, zoom_viewport, zoomable_views, type PanSnapshot, type WheelClaim } from "./interactions/zoom_pan"
 import { UNIT_ZOOM, type ViewportZoom } from './interactions/viewport_zoom'
+import { zoom_transition, zoom_transition_duration } from './interactions/zoom_pan'
 import type { ComposedPlot, HighlightSpec, PointData, TooltipData, Viewport, ViewportChange, ViewportRequest, ZoomPan } from "./types"
 import { target_axes, type InteractionTarget, type WheelInput } from './interactions/target'
 
@@ -34,6 +35,8 @@ export class PlotInteractionController<TooltipContent = unknown> {
     #pan_snapshot: PanSnapshot | null = null
     #axis_zoom_snapshot: AxisZoomSnapshot | null = null
     #rectangle_snapshot: RectangleZoomSnapshot | null = null
+    #zoom_animation: ((progress: number) => void) | null = null
+    #zoom_animation_duration = 200
     #zoomed_targets = new Set<InteractionTarget>()
     #zoom_hover_target: InteractionTarget = null
 
@@ -74,6 +77,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** Reconcile retained windows and stop changed axes from using an obsolete drag coordinate system. */
     update_axes(previous: ViewportAxes, next: ViewportAxes): void {
+        this.stop_zoom_animation()
         const retained_zoom = (zoom: ViewportZoom): ViewportZoom => ({
             x: previous.x.kind === next.x.kind ? zoom.x : 1,
             y: previous.y.kind === next.y.kind ? zoom.y : 1,
@@ -149,7 +153,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         return changed
     }
 
-    reset_viewport(axes: { x: boolean; y: boolean }): boolean {
+    reset_viewport(axes: { x: boolean; y: boolean }, animate = false): boolean {
         this.end_drag()
         const current = this.#staged_viewport
         const full: Viewport = { x: axes.x ? null : current.x, y: axes.y ? null : current.y }
@@ -158,6 +162,10 @@ export class PlotInteractionController<TooltipContent = unknown> {
         const next_zoom = { x: axes.x ? 1 : zoom.x, y: axes.y ? 1 : zoom.y }
         if (!viewport_moved(current, full) && next_zoom.x === zoom.x && next_zoom.y === zoom.y) {
             return false
+        }
+        const plot = this.#get_composed_plot()
+        if (animate && plot !== null) {
+            return this.stage_zoom(zoomable_views(plot, axes), current, full, true, next_zoom)
         }
         this.#staged_zoom = next_zoom
         this.settle_viewport(full)
@@ -180,7 +188,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
     }
 
     /** Apply a normalized drag phase; hosts render and schedule the resulting changes. */
-    handle_drag(input: DragInput, zoom_pan: ZoomPan): DragUpdate {
+    handle_drag(input: DragInput, zoom_pan: ZoomPan, animate_rectangle = false): DragUpdate {
         const result: DragUpdate = { started: false, changed: false, ended: false }
         const axes = target_axes(input.target, zoom_pan)
         if (input.phase === 'start') {
@@ -215,7 +223,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         }
         if (input.phase !== 'cancel' && input.pointer !== null) {
             if (this.#rectangle_snapshot !== null) {
-                if (input.phase === 'end') result.changed = this.finish_rectangle_zoom(input.pointer, axes)
+                if (input.phase === 'end') result.changed = this.finish_rectangle_zoom(input.pointer, axes, animate_rectangle)
             } else {
                 result.changed = this.#axis_zoom_snapshot !== null
                     ? this.advance_axis_zoom(input.pointer, axes)
@@ -232,7 +240,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
 
     /** Ignore hover during a drag; otherwise update hits and modifier readiness together. */
     handle_hover(event: PointerOffset & { ctrlKey: boolean; target: InteractionTarget }, zoom_pan: ZoomPan): boolean {
-        if (this.drag_in_progress) {
+        if (this.drag_in_progress || this.zoom_animation_active) {
             return false
         }
         const previous = this.#hovered
@@ -353,17 +361,63 @@ export class PlotInteractionController<TooltipContent = unknown> {
         return true
     }
 
-    private finish_rectangle_zoom(pointer: { x: number; y: number }, axes: { x: boolean; y: boolean }): boolean {
+    private finish_rectangle_zoom(pointer: { x: number; y: number }, axes: { x: boolean; y: boolean }, animate: boolean): boolean {
         const snapshot = this.#rectangle_snapshot
         const plot = this.#get_composed_plot()
         if (snapshot === null || plot === null) return false
         const views = zoomable_views(plot, axes)
         const before = this.#staged_viewport
         const zoomed = rectangle_zoom_viewport(snapshot, views, before, pointer)
-        if (!viewport_moved(before, zoomed)) return false
+        return this.stage_zoom(views, before, zoomed, animate)
+    }
+
+    /** Rectangle and menu zoom share interpolation and magnification bookkeeping. */
+    private stage_zoom(views: ReturnType<typeof zoomable_views>, before: Viewport, zoomed: Viewport, animate: boolean, reset_zoom?: ViewportZoom, duration?: number): boolean {
+        if (!viewport_moved(before, zoomed) && reset_zoom === undefined) return false
+        if (animate) {
+            this.#zoom_animation_duration = duration ?? zoom_transition_duration(views, before, zoomed)
+            const frame = zoom_transition(views, before, zoomed)
+            const zoom = this.#staged_zoom
+            this.#zoom_animation = progress => {
+                const next = frame(progress)
+                // Reset also restores magnification after data changes or an explicit viewport request.
+                // Its final zoom must be exactly 1, independent of the current domain-span ratio.
+                const eased = 1 - (1 - progress) ** 3
+                this.#staged_zoom = reset_zoom === undefined ? magnify_zoom(views, before, next, zoom)
+                    : progress >= 1 ? reset_zoom : {
+                        x: zoom.x === reset_zoom.x ? zoom.x
+                            : Math.exp(Math.log(zoom.x) * (1 - eased) + Math.log(reset_zoom.x) * eased),
+                        y: zoom.y === reset_zoom.y ? zoom.y
+                            : Math.exp(Math.log(zoom.y) * (1 - eased) + Math.log(reset_zoom.y) * eased),
+                    }
+                this.stage_viewport(next)
+            }
+            return true
+        }
         this.#staged_zoom = magnify_zoom(views, before, zoomed, this.#staged_zoom)
         this.stage_viewport(zoomed)
         return true
+    }
+
+    get zoom_animation_active(): boolean {
+        return this.#zoom_animation !== null
+    }
+
+    get zoom_animation_duration(): number {
+        return this.#zoom_animation_duration
+    }
+
+    advance_zoom_animation(progress: number): void {
+        this.#zoom_animation?.(progress)
+        if (progress >= 1) this.#zoom_animation = null
+    }
+
+    /** Keep the last committed frame when new input or plot arguments supersede a transition. */
+    stop_zoom_animation(): void {
+        if (this.#zoom_animation === null) return
+        this.#zoom_animation = null
+        this.#staged_viewport = this.#committed_viewport
+        this.#staged_zoom = this.#committed_zoom
     }
 
     end_drag(): void {
@@ -410,7 +464,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         }
     }
 
-    zoom_from_menu(input: PointerOffset & { action: 'in' | 'out' }, zoom_pan: ZoomPan): boolean {
+    zoom_from_menu(input: PointerOffset & { action: 'in' | 'out' }, zoom_pan: ZoomPan, animate = false): boolean {
         const plot = this.#get_composed_plot()
         if (plot === null || !this.#pan_enabled(zoom_pan) || this.drag_in_progress) return false
         const before = this.#staged_viewport
@@ -420,10 +474,7 @@ export class PlotInteractionController<TooltipContent = unknown> {
         cursor.y = clamp(cursor.y, plot.inner.top, plot.inner.bottom)
         const factor = input.action === 'in' ? 1 / zoom_pan.menu_zoom_step : zoom_pan.menu_zoom_step
         const zoomed = zoom_viewport_by_factor(views, before, cursor, factor)
-        if (!viewport_moved(before, zoomed)) return false
-        this.#staged_zoom = magnify_zoom(views, before, zoomed, this.#staged_zoom)
-        this.stage_viewport(zoomed)
-        return true
+        return this.stage_zoom(views, before, zoomed, animate, undefined, 200)
     }
 
     /** Leaving the overlay releases the wheel ownership acquired during this visit. */

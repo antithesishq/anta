@@ -11,19 +11,21 @@ pnpm run dev
 Open a fixture in the TSX editor:
 
 ```text
-http://localhost:4321/test/?fixture=switch
+http://localhost:4321/test/?fixture=plot
 ```
+
+Replace `plot` with `switch` to open the Switch fixture.
 
 Hide the editor for Bombadil:
 
 ```text
-http://localhost:4321/test/?fixture=switch&bombadil=true
+http://localhost:4321/test/?fixture=plot&bombadil=true
 ```
 
 Run its five-minute Bombadil campaign:
 
 ```sh
-pnpm test:fixture switch
+pnpm test:fixture plot
 ```
 
 Set `BOMBADIL_HEADLESS=true` for a headless run, `BOMBADIL_TIME_LIMIT` to change the five-minute limit, `BOMBADIL_OUTPUT_PATH` to change the results directory, or `ANTA_FIXTURE_ORIGIN` when the site uses another origin.

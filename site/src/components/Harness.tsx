@@ -1,6 +1,7 @@
 import { Component, Fragment, h, type ComponentChildren, type ComponentType } from 'preact'
 import { useEffect, useState } from 'preact/hooks'
 import * as Anta from '@antadesign/anta'
+import * as AntaPlot from '@antadesign/plot'
 import HarnessEditor from './HarnessEditor'
 import { caseCount, decode } from '../../../tests/pbt/axes'
 import button from '../../../tests/pbt/components/button'
@@ -75,9 +76,12 @@ async function compileTSX(source: string): Promise<CompiledApp> {
   const esbuild = await getEsbuild()
   const executable = source
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antadesign\/anta['"]\s*;?/g, '')
+    .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antadesign\/plot['"]\s*;?/g, '')
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]react['"]\s*;?/g, '')
     .replace(/export\s+default\s+function\s+App/, 'function App')
-  if (/^\s*import\s/m.test(executable)) throw new Error('Only @antadesign/anta and react imports are supported.')
+  if (/^\s*import\s/m.test(executable)) {
+    throw new Error('Only @antadesign/anta, @antadesign/plot, and react imports are supported.')
+  }
   const result = await esbuild.transform(executable, {
     loader: 'tsx',
     sourcefile: 'generated.tsx',
@@ -87,7 +91,8 @@ async function compileTSX(source: string): Promise<CompiledApp> {
     jsxFactory: 'h',
     jsxFragment: 'Fragment',
   })
-  const entries = Object.entries(Anta).filter(([name]) => name !== 'default' && /^[A-Za-z_$][\w$]*$/.test(name))
+  const entries = Object.entries({ ...Anta, ...AntaPlot })
+    .filter(([name]) => name !== 'default' && /^[A-Za-z_$][\w$]*$/.test(name))
   const names = ['h', 'Fragment', 'useEffect', 'useState', ...entries.map(([name]) => name)]
   const values = [h, Fragment, useEffect, useState, ...entries.map(([, value]) => value)]
   const App = new Function(...names, `"use strict";${result.code}\nreturn App`)(...values)

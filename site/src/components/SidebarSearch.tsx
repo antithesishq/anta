@@ -27,7 +27,6 @@ export default function SidebarSearch() {
     <Input
       button
       size="medium"
-      tone="var(--anta-seed-brand)"
       dimActions
       clearable
       leading={<Icon shape="search" />}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks'
 import { Select } from '@antadesign/anta'
 
 /**
- * Sidebar palette switcher. Switching a theme swaps the href of the stable
+ * Topbar palette switcher, next to the light/dark toggle. Switching a theme swaps the href of the stable
  * palette <link> that DocsLayout.astro renders on every page (persisted across
  * ClientRouter swaps). The choice lives in localStorage under `anta-palette`;
  * DocsLayout's inline head script applies it before paint on cold loads, so

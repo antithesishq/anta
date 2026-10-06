@@ -8,8 +8,7 @@ import '../styles/base.css'
 // script), registered on `<a-icon>` per the "Adding your own icons" guide.
 import '../icons/docs-icons.css'
 import { ClientRouter } from 'astro:transitions'
-import { Breadcrumbs, Button, Icon } from '@antadesign/anta'
-import { h } from 'preact'
+import { Button, Icon } from '@antadesign/anta'
 import PostHog from '../components/posthog.astro'
 import { getAstroPageCatalog } from '../../lib/content/astro-catalog.mjs'
 import { getNavigationGroups } from '../../lib/content/catalog.mjs'
@@ -39,7 +38,6 @@ const path = Astro.url.pathname.replace(/\/+$/, '') || '/'
 const catalog = await getAstroPageCatalog()
 const navigationGroups = getNavigationGroups(catalog)
 const currentPage = catalog.find((page) => (page.path.replace(/\/+$/, '') || '/') === path)
-const breadcrumbLabel = title ? currentPage?.breadcrumbLabel ?? title : ''
 const parentPages = []
 for (let parentKey = currentPage?.parentKey; parentKey;) {
   const parent = catalog.find((page) => page.key === parentKey)
@@ -219,86 +217,76 @@ if (hasStructuredBreadcrumbs && title) {
     {/* The router fetches the destination before it can swap the document.
         This small bar makes that wait visible without delaying the swap. */}
     <div class="navigation-progress" aria-hidden="true"></div>
-    <header class="topbar" style={{ '--topbar-sidebar-balance': hideToc ? '214px' : '0px' }}>
-      <div class="topbar-start">
-        <div class="topbar-breadcrumbs">
-          <Breadcrumbs
-            className="header-breadcrumbs"
-            size="small"
-            aria-label="Site breadcrumb"
-            items={[
-              {
-                label: [h(Icon, { shape: 'menu', size: 16, className: 'mobile-menu-icon', 'aria-hidden': true }), h(AntaLogo, { size: 16, compact: true }), 'Anta'],
-                href: '/',
-                current: !title,
-                tone: title ? 'brand' : 'neutral',
-              },
-              ...parentPages.map((page) => ({ label: page.breadcrumbLabel, href: page.path, tone: 'brand' as const })),
-              ...(breadcrumbLabel ? [{ label: breadcrumbLabel, current: true, tone: 'neutral' as const }] : []),
-            ]}
-          />
-        </div>
-      </div>
-      <div class="topbar-center">
-        <div class="topbar-search">
-          <SidebarSearch client:load />
-        </div>
-      </div>
-      <div class="topbar-tools">
-        <div class="package-links">
-          <Button
-            size="small"
-            priority="quaternary"
-            icon="cube"
-            tone="brand"
-            underline="solid"
-            underlineOnHover
-            href="https://www.npmjs.com/package/@antadesign/anta?activeTab=versions"
-            target="_blank"
-            rel="noopener"
-            aria-label={npmVersion ? `npm package ${npmVersion}` : 'npm package'}
-          >
-            <span class="package-link-label">{npmVersion ? `npm ${npmVersion}` : 'npm'}</span>
-            <a-tooltip follow>{npmVersion ? `npm package ${npmVersion}` : 'npm package'}</a-tooltip>
-          </Button>
-          <Button
-            size="small"
-            priority="quaternary"
-            icon="github-logo"
-            tone="brand"
-            underline="solid"
-            underlineOnHover
-            href="https://github.com/antithesishq/anta"
-            target="_blank"
-            rel="noopener"
-            aria-label="GitHub repository"
-          >
-            <span class="package-link-label">GitHub</span>
-            <a-tooltip follow>GitHub repository</a-tooltip>
-          </Button>
-        </div>
-        <Button class="theme-toggle" priority="quaternary" tone="neutral" size="small" aria-label="Switch to dark theme">
-          <Icon shape="sun" size={16} />
-          <Icon shape="moon" size={16} />
-          <a-tooltip follow>Switch to dark theme</a-tooltip>
-        </Button>
-      </div>
-    </header>
+    {/* Grid shell: the sidebar spans the full height on the left, and the
+        topbar sits only above the content and TOC. The header stays first in
+        source order so keyboard focus reaches search before the nav. */}
     <div class="layout">
+      <header class="topbar" style={{ '--topbar-toc-width': hideToc ? '0px' : '214px' }}>
+        {/* Mobile-only: opens the nav sidebar as a slide-out. */}
+        <Button class="menu-toggle" priority="quaternary" tone="neutral" size="small" icon="menu" aria-label="Open navigation" />
+        <div class="topbar-center">
+          <div class="topbar-search">
+            <SidebarSearch client:load />
+          </div>
+        </div>
+        <div class="topbar-tools">
+          <div class="package-links">
+            <Button
+              size="small"
+              priority="quaternary"
+              icon="cube"
+              tone="brand"
+              underline="solid"
+              underlineOnHover
+              href="https://www.npmjs.com/package/@antadesign/anta?activeTab=versions"
+              target="_blank"
+              rel="noopener"
+              aria-label={npmVersion ? `npm package ${npmVersion}` : 'npm package'}
+            >
+              <span class="package-link-label">{npmVersion ? `npm ${npmVersion}` : 'npm'}</span>
+              <a-tooltip follow>{npmVersion ? `npm package ${npmVersion}` : 'npm package'}</a-tooltip>
+            </Button>
+            <Button
+              size="small"
+              priority="quaternary"
+              icon="github-logo"
+              tone="brand"
+              underline="solid"
+              underlineOnHover
+              href="https://github.com/antithesishq/anta"
+              target="_blank"
+              rel="noopener"
+              aria-label="GitHub repository"
+            >
+              <span class="package-link-label">GitHub</span>
+              <a-tooltip follow>GitHub repository</a-tooltip>
+            </Button>
+          </div>
+          {/* Persisted so the hydrated palette select survives navigation
+              instead of re-mounting on every page. */}
+          <div class="theme-switcher" transition:persist="theme-switcher"><ThemeSwitcher client:load /></div>
+          <Button class="theme-toggle" priority="quaternary" tone="neutral" size="small" aria-label="Switch to dark theme">
+            <Icon shape="sun" size={16} />
+            <Icon shape="moon" size={16} />
+            <a-tooltip follow>Switch to dark theme</a-tooltip>
+          </Button>
+        </div>
+      </header>
       {/* Persisted: ClientRouter moves this exact node into each new page, so
-          sidebar scroll and the ThemeSwitcher island survive navigation. The
-          stale aria-current is re-pointed on astro:page-load below. */}
+          sidebar scroll survives navigation. The stale aria-current is
+          re-pointed on astro:page-load below. */}
       <aside class="sidebar" transition:persist="sidebar">
+        <a class="sidebar-brand" href="/" aria-current={path === '/' ? 'page' : undefined}>
+          <AntaLogo size={18} compact />
+          Anta
+        </a>
         {navigationGroups.map((group) => (
           <>
             {group.title && <h4>{group.title}</h4>}
             <menu>
               {group.pages.map((page) => (
-                <li class={page.path === '/theming/' ? 'theming-nav-item' : undefined}>
+                <li>
                   <a href={page.path} aria-current={isCurrent(page.path) ? 'page' : undefined}><Icon shape={page.nav.icon} size={18} />{' '}{page.label}</a>
-                  {page.path === '/theming/' && (
-                    <div class="theming-switcher"><ThemeSwitcher client:load /></div>
-                  )}
                 </li>
               ))}
             </menu>
@@ -309,7 +297,6 @@ if (hasStructuredBreadcrumbs && title) {
           <li><a href="/reference/" data-astro-reload><Icon shape="braces" size={18} />{' '}Anta TypeScript</a></li>
         </menu>
       </aside>
-      <div transition:persist="search-dialog"><SearchDialog client:load /></div>
       <main id="main-content" class="content" data-doc-review={!author ? 'pending' : undefined}>
         {/* Mobile-only: opens the "On this page" TOC as a right-side
             slide-out (the .toc-rail is hidden on mobile otherwise).
@@ -338,6 +325,7 @@ if (hasStructuredBreadcrumbs && title) {
         </aside>
       )}
     </div>
+    <div transition:persist="search-dialog"><SearchDialog client:load /></div>
     <div class="backdrop" aria-hidden="true"></div>
 
     <script>
@@ -401,17 +389,6 @@ if (hasStructuredBreadcrumbs && title) {
       }
 
       const mobileNavigation = matchMedia('(max-width: 800px)')
-      const isMobileBreadcrumb = (target: EventTarget | null) =>
-        mobileNavigation.matches
-        && target instanceof Element
-        && Boolean(target.closest('.header-breadcrumbs :is(a-button, a[data-anta])'))
-
-      // Capture before ClientRouter handles the breadcrumb's link.
-      document.addEventListener('click', (e) => {
-        if (!isMobileBreadcrumb(e.target)) return
-        e.preventDefault()
-        setMenu(true)
-      }, true)
       mobileNavigation.addEventListener('change', () => setMenu(false))
 
       // Show immediate acknowledgement while ClientRouter prepares the next
@@ -432,6 +409,8 @@ if (hasStructuredBreadcrumbs && title) {
           e.preventDefault()
         } else if (target.closest('[data-search-trigger]')) {
           document.dispatchEvent(new Event('anta-search-open'))
+        } else if (target.closest('.menu-toggle')) {
+          setMenu(document.body.dataset.menuOpen !== 'true')
         } else if (target.closest('.toc-toggle')) {
           setToc(document.body.dataset.tocOpen !== 'true')
         } else if (target.closest('.backdrop')) {
@@ -631,7 +610,12 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   .layout {
-    display: flex;
+    display: grid;
+    grid-template-areas:
+      "nav top  top"
+      "nav main toc";
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr;
     min-height: 100vh;
     /* Clip horizontal overflow so the off-canvas slide-out panels (the nav
        sidebar ≤800px and the TOC rail ≤1024px, both fixed + translated past
@@ -651,13 +635,47 @@ if (hasStructuredBreadcrumbs && title) {
 
   .sidebar {
     width: 214px;
-    flex-shrink: 0;
-    /* border-right: 1px solid var(--border-5); */
-    padding: 20px 16px 48px 20px;
+    background: var(--bg-canvas);
+    border-right: 1px solid var(--border-5);
+    padding: 0 16px 48px 20px;
+    grid-area: nav;
+    align-self: start;
     position: sticky;
-    top: 44px;
-    height: calc(100vh - 44px);
+    top: 0;
+    height: 100vh;
     overflow-y: auto;
+    /* Keep the nav scrollable but hide the bar until the pointer or focus is
+       inside it. The thin gutter stays reserved, so revealing it doesn't
+       shift the links. */
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .sidebar:hover,
+  .sidebar:focus-within {
+    scrollbar-color: var(--border-4) transparent;
+  }
+
+  /* Brand row, the height of the topbar so the logo lines up with it. Sticky
+     so it stays put while the nav scrolls under it. */
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75ch;
+    height: 44px;
+    margin-block-end: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg-canvas);
+    color: var(--text-1);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .sidebar-brand:focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 2px;
   }
 
   .package-links {
@@ -673,7 +691,8 @@ if (hasStructuredBreadcrumbs && title) {
     line-height: 16px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--text-2-brand);
+    /* Muted and neutral: group headings aren't links. */
+    color: var(--text-4);
     margin: 24px 0 8px;
   }
 
@@ -681,42 +700,34 @@ if (hasStructuredBreadcrumbs && title) {
     margin-block-start: 12px;
   }
 
-  .sidebar menu li.theming-nav-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5ch;
-    min-width: 0;
-  }
-  .sidebar menu li.theming-nav-item > a {
-    flex: 0 0 auto;
-    min-width: 0;
-  }
-  .theming-switcher {
-    flex: 1;
-    min-width: 0;
-  }
-  .theming-switcher :global(.theming-select > a-button) {
-    background: transparent;
-  }
-
   /* Anta's global stylesheet already strips list-style, padding, and
      margin from `<menu>` and its items, so the sidebar only has to
      style its links. */
+  /* Rows mirror Anta's menu items: a hover tint, and the current page held
+     at the menu's selected tint. The negative inline margin keeps the label
+     aligned with the brand row and group headings while the tint extends
+     past it. */
   .sidebar menu li a {
+    --nav-item-hover-bg: light-dark(
+      color-mix(in oklch, var(--text-1) 5%, transparent),
+      color-mix(in oklch, var(--text-1) 10%, transparent)
+    );
+    --nav-item-selected-bg: light-dark(
+      color-mix(in oklch, var(--text-1) 8%, transparent),
+      color-mix(in oklch, var(--text-1) 14%, transparent)
+    );
     display: flex;
     align-items: center;
     gap: 0.75ch;
-    padding: 2px 0 4px;
-    /* Match the compact corner treatment of Anta menu rows. It also gives
-       the shared focus outline a rounded shape without changing the sidebar's
-       text alignment. */
+    margin-inline: -8px;
+    padding: 4px 8px;
     border-radius: var(--radius-sm, 4px);
     color: var(--text-3);
     font-size: 14px;
     font-weight: 400;
     letter-spacing: 0.03ch;
     text-decoration: none;
-    transition: color 160ms ease-out;
+    transition: color 160ms ease-out, background-color 280ms ease-out;
   }
   .sidebar menu li a > a-icon {
     color: var(--text-4-brand);
@@ -731,14 +742,14 @@ if (hasStructuredBreadcrumbs && title) {
   .sidebar menu li a:hover,
   .sidebar menu li a[aria-current="page"] {
     color: var(--text-1);
-    text-decoration: none;
   }
-  /* Sidebar navigation uses the same dotted underline as the in-page TOC. */
   .sidebar menu li a:hover {
-    text-decoration: underline dotted;
-    text-decoration-color: color-mix(in srgb, currentColor 75%, transparent);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
+    background: var(--nav-item-hover-bg);
+    transition: color 160ms ease-out, background-color 60ms ease-in-out;
+  }
+  /* The current page holds its tint on hover, like a selected menu row. */
+  .sidebar menu li a[aria-current="page"] {
+    background: var(--nav-item-selected-bg);
   }
   .sidebar menu li a:hover > a-icon,
   .sidebar menu li a[aria-current="page"] > a-icon {
@@ -755,7 +766,7 @@ if (hasStructuredBreadcrumbs && title) {
      `container-type: inline-size` makes this the query container for
      `.columns`' column/stack switch. */
   .content {
-    flex: 1;
+    grid-area: main;
     min-width: 0;
     padding: 32px;
     container-type: inline-size;
@@ -776,8 +787,9 @@ if (hasStructuredBreadcrumbs && title) {
      slide-out (≤1024px) it widens to 240px. */
   .toc-rail {
     width: 214px;
-    flex-shrink: 0;
     padding: 32px 12px 32px 4px;
+    grid-area: toc;
+    align-self: start;
     position: sticky;
     top: 44px;
     height: calc(100vh - 44px);
@@ -789,15 +801,19 @@ if (hasStructuredBreadcrumbs && title) {
     align-items: center;
     gap: 12px;
     height: 44px;
-    padding-inline: 12px;
+    /* Start the search at the prose column's left edge: the 960px column is
+       centered in the content track (topbar width minus the TOC rail), with
+       the content's 32px padding as the floor. */
+    padding-inline: max(32px, calc((100% - 960px - var(--topbar-toc-width)) / 2)) 12px;
+    grid-area: top;
     position: sticky;
     top: 0;
     z-index: 10;
-    background: var(--bg-3-brand);
-    border-bottom: 1px solid var(--border-4-brand);
+    /* Same surface as the page, so only the border separates them. */
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border-5);
   }
 
-  .topbar-start,
   .topbar-center,
   .topbar-tools {
     display: flex;
@@ -805,37 +821,9 @@ if (hasStructuredBreadcrumbs && title) {
     min-width: 0;
   }
 
-  .topbar-start {
-    flex: 0 0 auto;
-    /* Follow the centered 960px prose column after it stops growing.
-       The percentage excludes header padding; subtract the 12px search gap. */
-    width: max(222px, calc((100% - 960px + var(--topbar-sidebar-balance)) / 2 - 12px));
-    min-width: 222px;
-    gap: 8px;
-  }
-
-  .topbar-breadcrumbs {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 222px;
-  }
-
-  .topbar :global(.header-breadcrumbs) {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .topbar :global(.header-breadcrumbs > [aria-current="page"]) {
-    flex: 0 1 auto;
-    min-width: 0;
-  }
-
-  .topbar :global(.mobile-menu-icon) {
+  /* Mobile-only nav trigger; the docked sidebar needs none. */
+  .menu-toggle {
     display: none;
-  }
-
-  .topbar :global(.header-breadcrumbs a-breadcrumb-separator) {
-    width: 8px;
   }
 
   .topbar-center {
@@ -868,6 +856,17 @@ if (hasStructuredBreadcrumbs && title) {
   .topbar-search :global(a-input:state(filled))::part(trailing),
   .topbar-search :global(a-input:focus-within)::part(trailing) {
     display: none;
+  }
+
+  /* Fixed width that fits the longest label ("Antithesis"), so picking a
+     palette never shifts the topbar. */
+  .theme-switcher :global(.theming-select) {
+    width: 100px;
+  }
+  .theme-switcher :global(.theming-select > a-button) {
+    width: 100%;
+    justify-content: space-between;
+    background: transparent;
   }
 
   /* Show the destination theme: moon in light mode, sun in dark mode. */
@@ -954,21 +953,25 @@ if (hasStructuredBreadcrumbs && title) {
   }
 
   @media (max-width: 800px) {
-    .topbar :global(.mobile-menu-icon) {
-      display: inline-block;
+    /* The sidebar becomes a fixed slide-out, so the topbar and content take
+       the whole width. */
+    .layout {
+      grid-template-areas:
+        "top"
+        "main";
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .topbar {
+      padding-inline: 8px 12px;
+    }
+
+    .menu-toggle {
+      display: inline-flex;
     }
 
     .topbar-search :global(a-input)::part(trailing) {
       display: none;
-    }
-
-    .topbar :global(.header-breadcrumbs > :not(:first-child)) {
-      display: none;
-    }
-
-    .topbar-start {
-      width: auto;
-      min-width: 0;
     }
 
     .content {
@@ -981,7 +984,6 @@ if (hasStructuredBreadcrumbs && title) {
       position: fixed;
       top: 0;
       left: 0;
-      background: var(--bg-pane);
       /* Wider as a slide-out than docked (214px) — matches the TOC slide-out. */
       width: min(240px, 80vw);
       height: 100dvh;

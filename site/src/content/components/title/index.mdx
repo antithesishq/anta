@@ -41,14 +41,14 @@ component layouts when you need tone, priority, or parent-controlled spacing.
 
 The parent supplies the `16px` gap between these titles.
 
-<div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--bg-pane-brand)', padding: '24px 32px', borderRadius: '8px', border: '1px solid var(--border-4-brand)' }}>
-  <Title level={1} tone="brand">Level 1: Workspace settings</Title>
-  <Title level={2} tone="brand">Level 2: Recent activity</Title>
-  <Title level={3} tone="brand">Level 3: Security alerts</Title>
-  <Title level={4} tone="brand">Level 4: Sign-in policy</Title>
-  <Title level={5} tone="brand">Level 5: Session timeout</Title>
-  <Title level={6} tone="brand">Level 6: Updated five minutes ago</Title>
-</div>
+<Preview direction="column" align="stretch" gap="16px">
+  <Title level={1}>Level 1: Workspace settings</Title>
+  <Title level={2}>Level 2: Recent activity</Title>
+  <Title level={3}>Level 3: Security alerts</Title>
+  <Title level={4}>Level 4: Sign-in policy</Title>
+  <Title level={5}>Level 5: Session timeout</Title>
+  <Title level={6}>Level 6: Updated five minutes ago</Title>
+</Preview>
 
 ## Typeface
 
@@ -130,7 +130,7 @@ Use a number for multi-line titles.
 | 1     | 28px      | 32px        |
 | 2     | 24px      | 28px        |
 | 3     | 20px      | 24px        |
-| 4     | 17px      | 20px        |
+| 4     | 17px      | 22px        |
 | 5     | 15px      | 20px        |
 | 6     | 13px      | 16px        |
 

@@ -16,13 +16,6 @@ component layouts when you need tone, priority, or parent-controlled spacing.
 
 The parent supplies the `16px` gap between these titles.
 
-  Level 1: Workspace settings
-  Level 2: Recent activity
-  Level 3: Security alerts
-  Level 4: Sign-in policy
-  Level 5: Session timeout
-  Level 6: Updated five minutes ago
-
 ## Typeface
 
 Choose the typeface by what the heading names. Serif names the page and its
@@ -84,7 +77,7 @@ Use a number for multi-line titles.
 | 1     | 28px      | 32px        |
 | 2     | 24px      | 28px        |
 | 3     | 20px      | 24px        |
-| 4     | 17px      | 20px        |
+| 4     | 17px      | 22px        |
 | 5     | 15px      | 20px        |
 | 6     | 13px      | 16px        |
 

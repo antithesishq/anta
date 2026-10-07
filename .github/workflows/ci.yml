@@ -46,6 +46,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run typecheck
+      - name: Install WebKit for Safari regression tests
+        run: pnpm --filter anta-site exec playwright install --with-deps webkit
       - name: Run tests
         run: pnpm test
         env:

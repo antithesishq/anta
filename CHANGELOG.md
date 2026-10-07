@@ -18,6 +18,11 @@ changes are not listed.
 - A string `header` on a [Card](/card/) renders a sans-serif title at every
   size. In the Antithesis theme, large cards previously set it in serif.
 
+### Fixed
+
+- [InputTime](/input-time/) reserves space for the locale's longest AM/PM label
+  without native field autosizing. Switching between AM and PM keeps its width.
+
 ## 0.3.34 — October 5, 2026
 
 ### Added

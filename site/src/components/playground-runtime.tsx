@@ -5,7 +5,12 @@ type PlaygroundProps = Parameters<typeof Playground>[0]
 
 function mountPlaygrounds() {
   for (const host of document.querySelectorAll<HTMLElement>('[data-anta-playground]')) {
-    if (host.dataset.antaPlaygroundMounted) continue
+    if (host.hasAttribute('data-anta-playground-mounted')) continue
+    // Native textarea autosizing can crash WebKit while a disclosure is closed.
+    // Wait for every enclosing disclosure before creating the editor and form.
+    let disclosure = host.closest('details')
+    while (disclosure?.open) disclosure = disclosure.parentElement?.closest('details') ?? null
+    if (disclosure) continue
 
     const serializedProps = host.dataset.antaPlayground
     if (!serializedProps) continue
@@ -26,6 +31,9 @@ function mountPlaygrounds() {
 // for every navigation so this one runtime mounts fresh Playground hosts after
 // each page swap as well as on the first document.
 document.addEventListener('astro:page-load', mountPlaygrounds)
+document.addEventListener('toggle', (event) => {
+  if (event.target instanceof HTMLDetailsElement && event.target.open) mountPlaygrounds()
+}, true)
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', mountPlaygrounds, { once: true })

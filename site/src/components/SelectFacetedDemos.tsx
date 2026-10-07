@@ -136,7 +136,7 @@ export function SelectFacetedBasicDemo() {
     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '12px', alignItems: 'center', width: '100%' }}>
       <SelectFaceted facets={FACETS} value={value} onValueChange={setValue} searchable />
       {active.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '8px', alignItems: 'center', maxWidth: '100%' }}>
           {active.map((facet) => {
             // Options facets → an editable Select; the key rides the leading slot.
             if (facet.kind === 'single' || facet.kind === 'multiple')

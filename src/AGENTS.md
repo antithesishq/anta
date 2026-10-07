@@ -54,6 +54,10 @@ Uses `jsx: "react-jsx"` with `jsxImportSource: "@antadesign/anta"` (automatic tr
 
 ### CI
 
+Input sizing regressions run in Chromium and WebKit. Install WebKit with
+`pnpm --filter anta-site exec playwright install webkit` before the first root
+test run.
+
 `.github/workflows/ci.yml` runs on pull requests to main:
 
 1. `pnpm run build` — build anta.

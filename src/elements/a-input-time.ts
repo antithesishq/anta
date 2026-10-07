@@ -73,8 +73,8 @@ interface Seg {
 }
 
 // Shadow styles are injected verbatim per instance, so they stay comment-free.
-// Content sizing lets locale-specific day-period glyphs determine the period
-// input width. The layout mirrors a-input's label, field, and hint chrome.
+// Locale-aware input sizes reserve space for both day-period labels.
+// The layout mirrors a-input's label, field, and hint chrome.
 const SHADOW_STYLE = `
   :host {
     display: grid;
@@ -169,7 +169,6 @@ const SHADOW_STYLE = `
     font-variant-numeric: tabular-nums;
   }
   .seg--period {
-    field-sizing: content;
     width: auto;
     color: var(--input-time-period-color);
   }

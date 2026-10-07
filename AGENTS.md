@@ -33,7 +33,7 @@ pnpm run dev        # Long-running package watcher and docs-site dev server
 pnpm run build      # Build anta JS, CSS, and declarations
 pnpm run lint       # Enforce custom-element / React 19 safety rules
 pnpm run typecheck  # Type check anta without emitting
-pnpm test           # Run root regression tests (requires Chromium or installed Chrome)
+pnpm test           # Run root regression tests (requires Chromium or installed Chrome, plus WebKit)
 ```
 
 Use `pnpm run dev` for any development work, including docs-site work. It rebuilds anta and stickers before the site, so package-source edits propagate to the running site. Do not start `site`'s dev server directly for package work.

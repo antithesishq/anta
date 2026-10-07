@@ -8,7 +8,6 @@ import { Icon } from './Icon'
 import { Menu } from './Menu'
 import { MenuItem } from './MenuItem'
 import { MenuItemCopy, type MenuItemCopyProps } from './MenuItemCopy'
-import './Breadcrumbs.css'
 
 /** The text separators built into `<Breadcrumbs>`. Pass an `IconShape` for a
  *  graphic separator instead. */

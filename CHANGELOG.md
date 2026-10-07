@@ -3,10 +3,23 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
-## Unreleased
+## 0.3.34 — October 5, 2026
+
+### Added
+
+- [Title](/title/) and [Tag](/tag/) have granular `elements/a-title` and
+  `elements/a-tag` entries that load their CSS without registering custom elements.
 
 ### Changed
 
+- [Reference themes](/theming/#fonts-in-a-theme) no longer load hosted fonts or
+  replace the system font stacks. Load your chosen fonts in an application-owned
+  stylesheet; font-specific features and variation axes are also application-owned.
+- JSX wrapper imports no longer load CSS. For granular usage, load composed
+  layout styles in the UI thread through `elements/a-breadcrumbs`,
+  `elements/a-steps`, `elements/a-input-date`, `elements/a-select`, or
+  `elements/a-select-faceted`, alongside their nested browser elements.
+  Full bundle usage is unchanged.
 - The Antithesis theme adds an interactive color layer: `--fill-*`, `--stroke-*`
   and `--label-*`, named by step, tone and state. [Buttons](/button/),
   [Checkboxes](/checkbox/), [Radios](/radio/) and [Inputs](/input/) read their
@@ -19,6 +32,10 @@ changes are not listed.
 
 ### Fixed
 
+- [Avatar](/avatar/) images and generated pictures keep their size, rounding,
+  and badge layout under `style-src 'self'` without allowing inline styles.
+- Individual element stylesheets resolve through `@antadesign/anta/elements/*.css`,
+  including imports with a bundler's `?raw` query.
 - [Tab panels](/tabs/#panels) follow their own strip when multiple `Tabs` share a
   parent, including when another `Tabs` appears before an outer panel.
 

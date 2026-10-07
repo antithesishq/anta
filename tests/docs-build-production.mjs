@@ -75,6 +75,26 @@ test('native MDX preserves table alignment and the compiled playground after nav
   await page.frameLocator('iframe').first().getByRole('button', {
     name: 'Updated production preview', exact: true,
   }).waitFor()
+  const theme = page.locator('.theming-select')
+  for (const palette of ['antithesis', 'none', 'antithesis']) {
+    await theme.locator('a-button').click()
+    await theme.getByRole('menuitemradio', {
+      name: palette === 'none' ? 'None' : 'Antithesis', exact: true,
+    }).click()
+    const fontsHref = palette === 'none' ? '/themes/default.css' : `/themes/fonts-${palette}.css`
+    await page.waitForFunction(href => document.getElementById('palette-fonts-link').getAttribute('href') === href, fontsHref)
+    await page.waitForFunction(href => document.querySelector('iframe')?.contentDocument
+      ?.getElementById('palette-fonts-link')?.getAttribute('href')?.endsWith(href), fontsHref)
+  }
+  await page.evaluate(() => {
+    const link = document.createElement('a')
+    link.href = '/title/'
+    document.body.append(link)
+    link.click()
+  })
+  await page.waitForURL('https://anta.test/title/')
+  assert.equal(await page.locator('#palette-fonts-link').getAttribute('href'), '/themes/fonts-antithesis.css')
+  assert.equal(await page.locator('#palette-fonts-link').count(), 1)
   assert.deepEqual(errors, [])
 })
 

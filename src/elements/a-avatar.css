@@ -30,9 +30,39 @@
     );
 
     display: inline-block;
+    position: relative;
     inline-size: var(--avatar-size);
     block-size: var(--avatar-size);
     vertical-align: middle;
+  }
+
+  /* External part styles keep the picture and badge working under style-src 'self'. */
+  a-avatar::part(frame) {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    border-radius: var(--avatar-radius);
+    background: var(--avatar-placeholder-bg);
+    mask-image: var(--avatar-badge-mask);
+  }
+
+  a-avatar::part(image) {
+    object-fit: cover;
+  }
+
+  a-avatar::part(badge) {
+    display: none;
+    position: absolute;
+    right: var(--avatar-badge-inset);
+    bottom: var(--avatar-badge-inset);
+    inline-size: var(--avatar-badge-size);
+    block-size: var(--avatar-badge-size);
+    border-radius: 50%;
+    background: var(--avatar-badge-color);
+  }
+
+  a-avatar[badge]:not([badge=""], [badge="none"])::part(badge) {
+    display: block;
   }
 
   /* `round` — a fully circular frame. Bare `round` is a circle (50%); a length

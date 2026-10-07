@@ -1,66 +1,6 @@
 @layer base, anta, components, utilities;
 @layer anta.reset, anta.components, anta.theme;
 
-@font-face {
-  font-family: "TT Interphases Pro Variable";
-  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
-  font-feature-settings: "ss02", "ss05", "tnum";
-  /* Safari otherwise uses the font file's non-zero internal slant default. */
-  font-variation-settings: "slnt" 0;
-  font-display: swap;
-}
-@font-face {
-  font-family: "TT Interphases Pro Variable";
-  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
-  font-feature-settings: "ss02", "ss05", "tnum";
-  font-variation-settings: "slnt" 11;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Stringer";
-  src: url("https://assets.anta.design/fonts/Stringer-Light-Web.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Stringer";
-  src: url("https://assets.anta.design/fonts/Stringer-Regular-Web.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Antithesis Mono";
-  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Upright.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Antithesis Mono";
-  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Italic.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 400 700;
-  font-display: swap;
-}
-
-:root,
-.light {
-  --sans-serif: "TT Interphases Pro Variable", sans-serif;
-  --serif: "Stringer", serif;
-  --monospace: "Antithesis Mono", ui-monospace, monospace;
-  /* Safari leaves this font at its non-zero internal slant default unless the
-     axis is pinned on rendered content; the @font-face descriptor is not enough. */
-  font-variation-settings: "slnt" 0;
-}
-
 :root,
 .light {
   --anta-seed-brand: #cc4636;
@@ -558,14 +498,6 @@
 }
 
 @layer anta.theme {
-  :is(address, cite, em, i, var, dt) {
-    font-variation-settings: "slnt" 11;
-    font-synthesis: none;
-  }
-
-  dfn {
-    font-variation-settings: "slnt" 0;
-  }
 
   a-button,
   a[role="button"][data-anta],
@@ -587,12 +519,10 @@
   }
 
   a-tag {
-    font-feature-settings: 'tnum' 1, 'ss05' 1, 'lnum', 'ss01', 'ss04', 'case', 'calt';
     letter-spacing: 0.02ch;
   }
 
   a-tag[allcaps] {
-    font-feature-settings: 'tnum' 1, 'ss05' 1, 'ss01', 'case', 'calt';
     letter-spacing: 0.08ch;
   }
 
@@ -603,7 +533,7 @@
   a-title[font="serif"] {
     font-family: var(--serif);
     font-weight: 300;
-    /* macOS subpixel smoothing thickens Stringer Light's thin strokes. */
+    /* macOS subpixel smoothing thickens a light serif's thin strokes. */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

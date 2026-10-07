@@ -24,6 +24,8 @@ site/public/esbuild.wasm
 site/public/iframe-anta-runtime.js
 site/public/themes/antune.css
 site/public/themes/antithesis.css
+site/public/themes/fonts-antune.css
+site/public/themes/fonts-antithesis.css
 site/public/themes/anta.css
 site/public/search-index.json
 .DS_Store

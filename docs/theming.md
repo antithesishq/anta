@@ -14,7 +14,8 @@ import '@antadesign/anta/theme-antune.css' // Choose one theme included in the p
 
 ## Fonts in a theme
 
-Without a reference theme, `tokens.css` defines three system font stacks:
+Anta's themes do not load fonts. `tokens.css` defines three system font stacks,
+which the optional themes preserve:
 
 ```css
 :root, .light {
@@ -27,14 +28,14 @@ Without a reference theme, `tokens.css` defines three system font stacks:
 ```
 
 Components and theme rules choose which variable to use. For example, body text
-can use `--sans-serif` while a particular title style uses `--serif`. Without a
-theme, Anta does not force font-specific stylistic sets or variable-font axes.
+can use `--sans-serif` while a particular title style uses `--serif`. Package
+styles do not force font-specific stylistic sets or variable-font axes.
 
-You can register your fonts and redefine the stacks in a custom theme stylesheet
-such as `theme.css`:
+Host your font files in your application and register them in a separate
+stylesheet such as `fonts.css`. Load it after Anta's styles and optional theme:
 
 ```css
-/* theme.css */
+/* fonts.css */
 @font-face {
   font-family: "App Sans";
   src: url("/fonts/app-sans.woff2") format("woff2");
@@ -50,13 +51,12 @@ such as `theme.css`:
 }
 ```
 
-The **Antune** and **Antithesis** themes included with Anta use custom fonts that
-require separate licenses. If your application does not have those licenses,
-redefine all three font variables as shown above.
+Alternatively, use the [Google Fonts CSS API](https://developers.google.com/fonts/docs/css2)
+to load your chosen families. This example includes regular and italic styles:
 
 ```css
-/* theme.css */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@400;600&display=swap");
+/* fonts.css: place @import before other rules. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400;1,600&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&display=swap");
 
 :root {
   --sans-serif: "Inter", sans-serif;
@@ -65,8 +65,17 @@ redefine all three font variables as shown above.
 }
 ```
 
-After you redefine these three variables, the theme fonts are not used or
-downloaded (exactly what we want in this case).
+Choose the styles and weights your app uses. Loading Google Fonts makes requests
+to Google's servers; self-host font files when you need all assets on your own
+origin.
+
+The anta.design website loads its reference fonts through separate
+[Antune font CSS](https://anta.design/themes/fonts-antune.css) and
+[Antithesis font CSS](https://anta.design/themes/fonts-antithesis.css). These
+site stylesheets show the website's font-face declarations, font stacks, and
+font-specific axis settings. They are examples of application font setup and
+are not imported by the published themes. Use your own font stylesheet and
+font sources in your application.
 
 <a id="color-seeds"></a>
 

@@ -288,8 +288,10 @@ shipped Steps stylesheet. The [Tabs Web Component](./tabs.md#web-component) insi
 owns selection and panel behavior; markers, states, and tones stay in your markup.
 
 ```js
-import '@antadesign/anta/elements'
-import '@antadesign/anta/components/Steps.css'
+import '@antadesign/anta/elements/a-steps'
+import '@antadesign/anta/elements/a-tabs'
+import '@antadesign/anta/elements/a-tab'
+import '@antadesign/anta/elements/a-tabpanel'
 ```
 
 ```html

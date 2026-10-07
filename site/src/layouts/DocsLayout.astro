@@ -197,6 +197,12 @@ if (hasStructuredBreadcrumbs && title) {
       href="/themes/antune.css"
       data-astro-transition-persist="palette"
     />
+    <link
+      rel="stylesheet"
+      id="palette-fonts-link"
+      href="/themes/fonts-antune.css"
+      data-astro-transition-persist="palette-fonts"
+    />
     <script is:inline>
       // Apply the stored palette before paint: rewriting the href during head
       // parse keeps the stylesheet render-blocking, so a cold load never
@@ -210,6 +216,8 @@ if (hasStructuredBreadcrumbs && title) {
           antithesis: '/themes/antithesis.css',
         }
         document.getElementById('palette-link').href = Object.hasOwn(hrefs, palette) ? hrefs[palette] : hrefs.antune
+        document.getElementById('palette-fonts-link').href = palette === 'none'
+          ? hrefs.none : `/themes/fonts-${palette === 'antithesis' ? 'antithesis' : 'antune'}.css`
         if (stored === 'anta') localStorage.setItem('anta-palette', 'antune')
       } catch (e) {}
     </script>

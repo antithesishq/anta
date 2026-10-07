@@ -25,6 +25,7 @@ before(async () => {
         import './src/elements/a-switch'
         import './src/elements/a-tab.css'
         import './src/elements/a-tag'
+        import './src/elements/a-select'
         configure(h)
         render(<>
           <Button id="button">Button</Button>
@@ -74,6 +75,7 @@ before(async () => {
   assets = new Map(result.outputFiles.map(file => [file.path.endsWith('.css') ? '/fixture.css' : '/fixture.js', file.text]))
   for (const theme of ['antune', 'antithesis']) {
     assets.set(`/${theme}.css`, await readFile(new URL(`../src/theme-${theme}.css`, import.meta.url), 'utf8'))
+    assets.set(`/fonts-${theme}.css`, await readFile(new URL(`../site/src/styles/fonts-${theme}.css`, import.meta.url), 'utf8'))
   }
   assets.set('/none.css', '')
   browser = await chromium.launch({ channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined })
@@ -92,7 +94,7 @@ test('font-specific features and variation axes stay out of core styles', async 
   const files = await sourceFiles(new URL('../src/', import.meta.url))
   const violations = []
   for (const file of files) {
-    if (!/\.(?:css|ts|tsx)$/.test(file.pathname) || /\/theme-(?:antune|antithesis)\.css$/.test(file.pathname)) continue
+    if (!/\.(?:css|ts|tsx)$/.test(file.pathname)) continue
     const source = await readFile(file, 'utf8')
     const settings = [...source.matchAll(/font-(?:feature|variation)-settings\s*:\s*([^;]+)/g)]
     if (settings.some(([, value]) => value.trim() !== 'inherit')) violations.push(file.pathname)
@@ -100,9 +102,9 @@ test('font-specific features and variation axes stay out of core styles', async 
   assert.deepEqual(violations, [])
 })
 
-test('reference font descriptors expose supported TT Interphases axes', async () => {
+test('site reference font descriptors expose supported TT Interphases axes', async () => {
   for (const theme of ['antune', 'antithesis']) {
-    const source = await readFile(new URL(`../src/theme-${theme}.css`, import.meta.url), 'utf8')
+    const source = await readFile(new URL(`../site/src/styles/fonts-${theme}.css`, import.meta.url), 'utf8')
     const faces = [...source.matchAll(/@font-face \{[\s\S]*?\}/g)]
       .map(([face]) => face)
       .filter(face => face.includes('font-family: "TT Interphases Pro Variable"'))
@@ -120,9 +122,14 @@ test('reference font descriptors expose supported TT Interphases axes', async ()
   }
 })
 
-test('theme-free typography stays neutral while reference themes restore their font treatment', async t => {
+test('themes preserve system fonts without requests; site fonts require a separate stylesheet', async t => {
   const page = await browser.newPage()
   t.after(() => page.close())
+  const fontRequests = []
+  page.on('request', request => {
+    if (request.resourceType() === 'font') fontRequests.push(request.url())
+  })
+  await page.route('https://assets.anta.design/**', route => route.abort())
   await page.route('http://themes.test/**', route => {
     const path = new URL(route.request().url()).pathname
     return route.fulfill({
@@ -142,6 +149,7 @@ test('theme-free typography stays neutral while reference themes restore their f
         style: style.fontStyle,
         stretch: style.fontStretch,
         numeric: style.fontVariantNumeric,
+        family: style.fontFamily,
       }
     }
     return {
@@ -177,18 +185,44 @@ test('theme-free typography stays neutral while reference themes restore their f
     link.href = '/antune.css'
   }))
   const withTheme = await typography()
-  assert.equal(withTheme.root.variations, '"slnt" 0')
-  assert.equal(withTheme.italic.variations, '"slnt" 11')
-  assert.equal(withTheme.defined.variations, '"slnt" 0')
-  assert.equal(withTheme.nestedDefined.variations, '"slnt" 0')
+  for (const value of Object.values(withTheme).filter(value => typeof value === 'object')) {
+    assert.equal(value.features, 'normal')
+    assert.equal(value.variations, 'normal')
+  }
+  assert.equal(withTheme.root.family, withoutTheme.root.family)
   assert.equal(withTheme.defined.style, 'normal')
   assert.equal(withTheme.nestedDefined.style, 'normal')
   assert.equal(withTheme.button.stretch, '88%')
   assert.equal(withTheme.tab.stretch, '88%')
   assert.equal(withTheme.inputAdornmentStretch, '88%')
-  for (const feature of ['"ss01"', '"ss04"', '"ss05"']) {
-    assert.match(withTheme.tag.features, new RegExp(feature))
+  for (const theme of ['antithesis', 'antune']) {
+    const source = assets.get(`/${theme}.css`)
+    assert.equal(/@font-face|@import|url\(\s*["']?https?:|--(?:sans-serif|serif|monospace)\s*:/.test(source), false, `${theme} must not load fonts or change font stacks`)
+    await page.evaluate(theme => new Promise(resolve => {
+      const link = document.getElementById('theme')
+      link.onload = resolve
+      link.href = `/${theme}.css`
+    }), theme)
+    const themed = await typography()
+    assert.equal(themed.root.family, withoutTheme.root.family)
+    assert.equal(themed.root.variations, 'normal')
+    assert.equal(themed.tag.features, 'normal')
   }
+  assert.deepEqual(fontRequests, [])
+
+  await page.evaluate(() => new Promise(resolve => {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.onload = resolve
+    link.href = '/fonts-antune.css'
+    document.head.append(link)
+  }))
+  const withFonts = await typography()
+  assert.equal(withFonts.root.variations, '"slnt" 0')
+  assert.equal(withFonts.italic.variations, '"slnt" 11')
+  assert.equal(withFonts.defined.variations, '"slnt" 0')
+  assert.equal(withFonts.nestedDefined.variations, '"slnt" 0')
+  for (const feature of ['"ss01"', '"ss04"', '"ss05"']) assert.match(withFonts.tag.features, new RegExp(feature))
 })
 
 test('tone scope changes resting chrome without changing the tone identity', async t => {

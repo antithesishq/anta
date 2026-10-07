@@ -73,6 +73,17 @@ const FACETS = [
 
 const isSet = (v) => !(v == null || v === '' || (Array.isArray(v) && v.length === 0))
 
+function FacetTextInput({ leading, ...props }) {
+  return (
+    <span className="sf-text-chip">
+      <span className="sf-text-chip-mirror" aria-hidden="true">
+        <span>{leading}</span><span>{props.value || '\u00a0'}</span>
+      </span>
+      <Input {...props} leading={leading} />
+    </span>
+  )
+}
+
 function Demo() {
   const [value, setValue] = useState({ assignee: ['Alice Nguyen'], status: 'open', title: 'crash' })
   const setFacet = (key, v) =>
@@ -128,7 +139,7 @@ function Demo() {
             const write = (raw) =>
               setFacet(facet.key, facet.kind === 'text' ? raw || undefined : raw ? { min: raw } : undefined)
             return (
-              <Input
+              <FacetTextInput
                 key={facet.key}
                 value={val ?? ''}
                 leading={`${facet.label}:`}
@@ -138,8 +149,6 @@ function Demo() {
                 onBlur={() => setFocusedKey(null)}
                 onInput={(e) => write(e.currentTarget.value)}
                 onClearInput={() => { setFocusedKey(null); setFacet(facet.key, undefined) }}
-                // Size the chip to its value, capped at a max-width.
-                style={{ width: 'fit-content', maxWidth: '240px' }}
               />
             )
           })}
@@ -159,6 +168,24 @@ function Demo() {
     </div>
   )
 }
+```
+
+The editable chips use an invisible text mirror to size their wrapper. The mirror
+is hidden from assistive technology. The input fills the wrapper, which caps at
+240px and reserves space for the clear button. These classes belong to the demo:
+
+```css
+.sf-chip { width: fit-content; max-width: 240px; }
+.sf-text-chip { position: relative; display: inline-grid; max-width: 240px; min-width: 0; }
+.sf-text-chip > a-input { position: absolute; inset: 0; width: 100%; min-width: 0; }
+.sf-text-chip-mirror {
+  display: flex; align-items: center; gap: 5px; height: 28px;
+  padding-inline: 7px 35px; overflow: hidden; visibility: hidden;
+  white-space: pre; font-family: var(--sans-serif); font-size: 15px;
+  font-weight: 400; font-style: normal; font-stretch: normal; line-height: 20px;
+}
+.sf-text-chip-mirror > :first-child { font-stretch: var(--_input-adornment-font-stretch, normal); }
+.sf-text-chip-mirror > :last-child { min-width: 1ch; }
 ```
 
 The trigger opens the facet menu. The example shows active values beside it.

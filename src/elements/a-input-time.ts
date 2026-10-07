@@ -169,7 +169,6 @@ const SHADOW_STYLE = `
     font-variant-numeric: tabular-nums;
   }
   .seg--period {
-    field-sizing: content;
     width: auto;
     color: var(--input-time-period-color);
   }

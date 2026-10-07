@@ -206,14 +206,12 @@ Firefox. So Anta keeps the native field.
 <Input multiline rows={3} label="Notes (fixed 3 rows)" placeholder="…" autoComplete="off" />
 ```
 
-`multiline` renders a `<textarea>` under the same API. With **no `rows`** it
-**autogrows** with its content via CSS `field-sizing: content` — capped by
-`maxRows` if you set one (omit for unbounded growth), then it scrolls. Pass a
-fixed **`rows`** count for a constant-height box instead.
+`multiline` renders a `<textarea>` under the same API. Without `rows`, its
+height grows and shrinks with the content, capped by `maxRows` if set. Content
+past the cap scrolls. Pass `rows` for a constant-height box.
 
-Autogrow uses CSS `field-sizing` where supported (Chromium, Safari ≥ 26.2) and a
-built-in JS resize everywhere else (Firefox, older Safari), so it grows in every
-browser.
+Height updates when the value or available width changes and when a hidden
+field is shown. The component measures the content height in every browser.
 
 ## Controlled and uncontrolled
 
@@ -475,7 +473,7 @@ wraps to fewer columns as it narrows. Resize the preview to see it reflow.
 | `maxRows?` | number | — | Cap the autogrow height (in rows) of a `multiline` field with no `rows`. Omit for unbounded growth. |
 | `min?` | number \| string | — | Min / max / step — for `type="number"`. |
 | `minLength?` | number | — | Min input length. |
-| `multiline?` | boolean | — | Render a `<textarea>` instead of an `<input>`. Without `rows` it grows with its content from one line (capped by `maxRows` if set). Autogrow uses CSS `field-sizing` where supported (Chrome/Edge, Safari ≥ 26.2) and falls back to a built-in JS resize elsewhere (Firefox, older Safari), so it grows in every browser. |
+| `multiline?` | boolean | — | Render a `<textarea>` instead of an `<input>`. Without `rows` it grows with its content from one line (capped by `maxRows` if set). Height updates when the value or available width changes and when a hidden field is shown. |
 | `name?` | string | — | Form field name — submitted with the form via ElementInternals. |
 | `onBlur?` | (e) => void | — | Fires when the field loses focus. |
 | `onChange?` | (e) => void | — | Fires on **commit** (blur / Enter) — the platform `change` semantics, **not** React's per-keystroke `onChange`. This is a web component, so `onChange` keeps the native meaning; reach for `onInput` (every keystroke) or `onValueChange` (both) for live updates. Read `e.target.value`. |

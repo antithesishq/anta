@@ -46,6 +46,41 @@ async function productionPage(t, engine = chromium) {
 }
 
 for (const engine of [chromium, webkit]) {
+  test(`${engine.name()}: facet text chips fit edits, cap their width, and preserve focus when empty`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/select-faceted/')
+    const chip = page.locator('.sf-text-chip').first()
+    const input = chip.locator('input')
+    await input.waitFor()
+    assert.equal(await input.inputValue(), 'crash')
+    const initialWidth = await chip.evaluate(el => el.getBoundingClientRect().width)
+    await input.fill('A long title filter with enough text to reach the width limit')
+    await page.waitForFunction(() => Math.abs(document.querySelector('.sf-text-chip').getBoundingClientRect().width - 240) < 1)
+    assert.equal(await input.evaluate(el => el.getRootNode().activeElement === el), true)
+    await input.fill('x')
+    await page.waitForFunction(initial => document.querySelector('.sf-text-chip').getBoundingClientRect().width < initial, initialWidth)
+    await input.fill('')
+    assert.equal(await input.count(), 1)
+    assert.equal(await input.evaluate(el => el.getRootNode().activeElement === el), true)
+    await input.fill('Restored')
+    await chip.evaluate(el => {
+      const island = el.closest('astro-island')
+      const details = document.createElement('details')
+      const summary = document.createElement('summary')
+      summary.textContent = 'Chip'
+      details.append(summary)
+      island.before(details)
+      details.append(island)
+      el.getBoundingClientRect()
+      details.open = true
+    })
+    assert.equal(await input.inputValue(), 'Restored')
+    await input.fill('')
+    await input.blur()
+    await chip.waitFor({ state: 'detached' })
+    assert.deepEqual(errors, [])
+  })
+
   test(`${engine.name()}: collapsed Playground loads safely and preserves edits after reopening`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/input/')

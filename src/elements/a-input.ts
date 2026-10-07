@@ -111,15 +111,6 @@ const CLEAR_TRIGGER = 'clearrequest'
 const CLEAR_CLICK_EVENT = 'clearclick'
 const CLEAR_INPUT_EVENT = 'clearinput'
 
-// `field-sizing: content` drives textarea autogrow declaratively where it's
-// supported (Chrome/Edge, Safari ≥ 26.2). Detected once at module load. Where
-// it's absent (Firefox, older Safari) the element falls back to a JS autogrow on
-// every value change (see `syncAutoHeight`), so a multiline field still grows
-// from one line instead of staying a single row. The CSS `max-height` cap
-// applies in both paths, so `maxrows` is honored regardless.
-const SUPPORTS_FIELD_SIZING =
-  typeof CSS !== 'undefined' && !!CSS.supports?.('field-sizing', 'content')
-
 // Shadow styles, injected verbatim into every <a-input> shadow root, so this
 // string is kept COMMENT-FREE (it ships + re-injects per instance — see the
 // "no comments inside shadow-<style> strings" rule in AGENTS.md).
@@ -330,7 +321,7 @@ export class AInputElement extends HTMLElementBase {
   static formAssociated = true
   static observedAttributes = [
     ...FORWARDED, ...SHADOW_ARIA_ATTRIBUTES,
-    'value', 'defaultvalue', 'multiline', 'button', 'rows', 'maxrows', 'status', 'disabled',
+    'value', 'defaultvalue', 'multiline', 'button', 'rows', 'maxrows', 'status', 'disabled', 'size',
   ]
 
   private internals?: ElementInternals
@@ -339,6 +330,10 @@ export class AInputElement extends HTMLElementBase {
   private hintSlot: HTMLSlotElement
   private leadingSlot: HTMLSlotElement
   private control?: Control
+  #autoHeightObserver?: ResizeObserver
+  #autoHeightFrame?: number
+  #autoHeightWidth = -1
+  #autoHeightDetails: HTMLDetailsElement[] = []
   // The intended value, captured even before the control exists (a framework
   // may set the `value` property before the element connects), so the initial
   // value isn't lost when the control is built.
@@ -467,6 +462,12 @@ export class AInputElement extends HTMLElementBase {
     }
     if (!this.control) this.buildControl()
     this.ready = true
+    this.#observeAutoHeight()
+    this.syncAutoHeight()
+  }
+
+  disconnectedCallback() {
+    this.#stopAutoHeight()
   }
 
   [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
@@ -505,6 +506,7 @@ export class AInputElement extends HTMLElementBase {
     }
     if (name === 'status') { this.syncStatus(); this.updateValidity(); return }
     if (name === 'disabled') { this.syncDisabled(); return }
+    if (name === 'size') { this.syncAutoHeight(); return }
     // Controlled value: apply only when the attribute is PRESENT. Removing it
     // (controlled → uncontrolled) keeps the current text, like a native input —
     // the old `value ?? ''` wiped the field to empty on attribute removal.
@@ -517,6 +519,7 @@ export class AInputElement extends HTMLElementBase {
       this.forward(name, value)
       this.syncButtonPresentation()
       this.updateValidity()
+      this.syncAutoHeight()
     }
   }
 
@@ -590,6 +593,7 @@ export class AInputElement extends HTMLElementBase {
 
   /** (Re)build the shadow control from the current attributes. */
   private buildControl(initial?: string) {
+    this.#stopAutoHeight()
     // Preserve focus + caret across an input<->textarea rebuild (e.g. toggling
     // `multiline` mid-edit) so the user isn't kicked out of the field.
     const prev = this.control
@@ -641,45 +645,88 @@ export class AInputElement extends HTMLElementBase {
     this.syncFormValue(value)
     this.updateValidity()
     this.updateFilled()
-    this.syncAutoHeight() // size to the initial value (JS-fallback browsers)
+    this.syncAutoHeight()
   }
 
-  /** Autogrow (no `rows`) via `field-sizing: content` — or the JS fallback where
-   *  that's unsupported — capped by `maxrows`; a fixed `rows` count switches it
-   *  off for a constant-height box. */
+  /** Fixed rows use the native row count; autogrow is measured and capped by CSS. */
   private configureTextarea(ta: HTMLTextAreaElement) {
     const rows = this.getAttribute('rows')
     const maxrows = this.getAttribute('maxrows')
     if (rows != null) {
       ta.rows = Math.max(1, parseInt(rows, 10) || 1)
-      ta.style.setProperty('field-sizing', 'fixed')
       ta.style.removeProperty('--_maxrows')
-      ta.style.removeProperty('height') // drop any height the JS fallback set
+      ta.style.removeProperty('height')
     } else {
       ta.rows = 1
-      // Native autogrow where supported; the JS fallback (syncAutoHeight) grows
-      // it on every value change everywhere else. The cap lives in CSS
-      // (max-height off --_lh + --_pad-block) and applies in both paths; JS only
-      // feeds it the row count, which CSS can't read from the attribute.
-      if (SUPPORTS_FIELD_SIZING) ta.style.setProperty('field-sizing', 'content')
-      else ta.style.removeProperty('field-sizing')
       if (maxrows != null) ta.style.setProperty('--_maxrows', String(parseInt(maxrows, 10) || 1))
       else ta.style.removeProperty('--_maxrows')
-      this.syncAutoHeight()
+    }
+    this.#observeAutoHeight()
+    this.syncAutoHeight()
+  }
+
+  #observeAutoHeight() {
+    this.#stopAutoHeight()
+    const ta = this.control
+    if (!this.isConnected || !(ta instanceof HTMLTextAreaElement) || this.hasAttribute('rows')) return
+    this.#autoHeightObserver = new this.view.ResizeObserver(entries => {
+      const width = entries[0].contentRect.width
+      // Height writes produce observer notifications too. Only wrapping-width
+      // changes need another measurement, including a hidden field's reveal.
+      if (width === this.#autoHeightWidth) return
+      this.#autoHeightWidth = width
+      this.#queueAutoHeight()
+    })
+    this.#autoHeightObserver.observe(ta)
+    this.doc.fonts?.addEventListener('loadingdone', this.#queueAutoHeight)
+    // Collapsed details can retain the textarea's width, so a resize observer
+    // alone can miss reopening. Follow ancestors across slots and shadow roots.
+    let ancestor: Element | null = this
+    while (ancestor) {
+      if (ancestor instanceof this.view.HTMLDetailsElement) {
+        this.#autoHeightDetails.push(ancestor)
+        ancestor.addEventListener('toggle', this.#queueAutoHeight)
+      }
+      const root = ancestor.getRootNode()
+      ancestor = ancestor.assignedSlot ?? ancestor.parentElement ??
+        (root instanceof this.view.ShadowRoot ? root.host : null)
     }
   }
 
-  /** Autogrow fallback for browsers without `field-sizing: content` (Firefox,
-   *  Safari < 26.2). Grows the shadow textarea to fit its content; the CSS
-   *  `max-height` cap (when `maxrows` is set) still clamps it and scrolls past.
-   *  A no-op where `field-sizing` is supported, or when the field isn't
-   *  autogrowing (fixed `rows`, or not a textarea) — those size via CSS. */
-  private syncAutoHeight = () => {
-    if (SUPPORTS_FIELD_SIZING) return
+  #stopAutoHeight() {
+    this.#autoHeightObserver?.disconnect()
+    this.#autoHeightObserver = undefined
+    this.#autoHeightWidth = -1
+    this.doc.fonts?.removeEventListener('loadingdone', this.#queueAutoHeight)
+    for (const details of this.#autoHeightDetails) details.removeEventListener('toggle', this.#queueAutoHeight)
+    this.#autoHeightDetails = []
+    if (this.#autoHeightFrame != null) this.view.cancelAnimationFrame(this.#autoHeightFrame)
+    this.#autoHeightFrame = undefined
+  }
+
+  #queueAutoHeight = () => {
+    if (this.#autoHeightFrame != null) return
+    this.#autoHeightFrame = this.view.requestAnimationFrame(() => {
+      this.#autoHeightFrame = undefined
+      this.syncAutoHeight(false)
+    })
+  }
+
+  // Native content sizing crashed WebKit during layout of collapsed playgrounds.
+  // Keep the native textarea fixed-sized and measure only while it has layout.
+  private syncAutoHeight = (queueWhenHidden = true) => {
     const ta = this.control
-    if (!(ta instanceof HTMLTextAreaElement) || this.getAttribute('rows') != null) return
+    if (!this.isConnected || !(ta instanceof HTMLTextAreaElement) || this.hasAttribute('rows')) return
+    if ((ta.checkVisibility && !ta.checkVisibility({ contentVisibilityAuto: true })) || !ta.clientWidth) {
+      // A hide/value/show sequence can finish before ResizeObserver sees the
+      // hidden width. Retry once next frame; a later reveal is observed normally.
+      if (queueWhenHidden) this.#queueAutoHeight()
+      return
+    }
     ta.style.height = 'auto'
-    ta.style.height = `${ta.scrollHeight}px`
+    const style = this.view.getComputedStyle(ta)
+    const border = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth)
+    ta.style.height = `${ta.scrollHeight + border}px`
   }
 
   private forward(name: string, value: string | null) {

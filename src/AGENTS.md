@@ -54,6 +54,12 @@ Uses `jsx: "react-jsx"` with `jsxImportSource: "@antadesign/anta"` (automatic tr
 
 ### CI
 
+Input autosizing regressions run in Chromium and WebKit. Install WebKit with
+`pnpm --filter anta-site exec playwright install webkit` before the first root
+test run. Keep multiline Input on measured height: native `field-sizing: content`
+triggered WebKit crashes during layout in collapsed playgrounds. Cover hidden
+containers, width changes, and reopening disclosures when changing sizing.
+
 `.github/workflows/ci.yml` runs on pull requests to main:
 
 1. `pnpm run build` — build anta.

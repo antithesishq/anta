@@ -40,7 +40,9 @@ others show 24-hour with none. It's derived from `Intl` (the resolved `hourCycle
 and the section **order**, the **separator**, and the **AM/PM text** all come from
 the locale too — Japanese renders the period first (`午後2:05`), Finnish separates
 with a dot (`14.05`), and 24-hour locales drop the AM/PM section entirely. Set
-`hour12` to force one clock regardless of locale.
+`hour12` to force one clock regardless of locale. The AM/PM section reserves
+space for the longer locale label, so its width stays the same when the period
+changes.
 
 ```tsx
 <InputTime label="US English" locale="en-US" defaultValue="14:05" />   {/* 12-hour: 02 : 05 PM */}

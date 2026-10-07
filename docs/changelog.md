@@ -3,6 +3,16 @@
 This page tracks changes that ship in `@antadesign/anta`. Documentation-only
 changes are not listed.
 
+## Unreleased
+
+### Fixed
+
+- [Multiline Input](/input/#multiline) measures its content height to avoid
+  Safari crashes involving native field autosizing. It resizes when its width
+  changes or a hidden field is shown.
+- [InputTime](/input-time/) reserves space for the locale's longest AM/PM label
+  without native field autosizing. Switching between AM and PM keeps its width.
+
 ## 0.3.34 — October 5, 2026
 
 ### Added

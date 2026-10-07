@@ -283,14 +283,17 @@ string and set it from `onCopyRequest`. `onCopied` receives the result.
 
 <Disclosure title="Web Component">
 
-`Breadcrumbs` deliberately adds no custom-element behavior: it assembles Anta
-Buttons, an optional Menu, and two light-DOM layout tags. When you are not using
-JSX, import the Breadcrumbs stylesheet and the primitives, then compose the same
-structure yourself. Keep an overflow Menu immediately after its More Button.
+`Breadcrumbs` assembles Anta Buttons, an optional Menu, and two light-DOM layout
+tags. Load its CSS-only entry and the browser primitives in the UI thread. When
+you are not using JSX, compose the same structure yourself. Keep an overflow Menu
+immediately after its More Button.
 
 ```ts
-import '@antadesign/anta/components/Breadcrumbs.css'
-import '@antadesign/anta/elements'
+import '@antadesign/anta/elements/a-breadcrumbs'
+import '@antadesign/anta/elements/a-button'
+import '@antadesign/anta/elements/a-icon'
+import '@antadesign/anta/elements/a-menu'
+import '@antadesign/anta/elements/a-menu-item'
 ```
 
 <Preview>

@@ -14,7 +14,6 @@ import { MenuItem } from './MenuItem'
 import { MenuGroup } from './MenuGroup'
 import { MenuSeparator } from './MenuSeparator'
 import { Tooltip } from './Tooltip'
-import './select-parts.css'
 
 
 /** The type an option `value` may take: `string`, `number`, or `boolean`. Selection

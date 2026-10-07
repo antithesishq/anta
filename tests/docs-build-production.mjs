@@ -7,7 +7,7 @@ import { test } from 'node:test'
 import { readPageCatalog } from '../site/lib/content/catalog.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
-const { chromium } = requireSite('playwright')
+const { chromium, webkit } = requireSite('playwright')
 const dist = new URL('../site/dist/', import.meta.url)
 
 test('collection reads keep island and script styles on the pages that use them', async () => {
@@ -26,9 +26,10 @@ test('collection reads keep island and script styles on the pages that use them'
   }
 })
 
-async function productionPage(t) {
-  const browser = await chromium.launch({
-    headless: true, channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined,
+async function productionPage(t, engine = chromium) {
+  const browser = await engine.launch({
+    headless: true,
+    ...(engine === chromium ? { channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined } : {}),
   })
   t.after(() => browser.close())
   const page = await browser.newPage()
@@ -42,6 +43,87 @@ async function productionPage(t) {
     await route.fulfill({ path: fileURLToPath(file) })
   })
   return { page, errors }
+}
+
+for (const engine of [chromium, webkit]) {
+  test(`${engine.name()}: facet text chips keep a bounded width, truncate long values, and preserve focus when empty`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/select-faceted/')
+    const chip = page.locator('a-input.sf-chip').first()
+    const input = chip.locator('input')
+    await input.waitFor()
+    assert.equal(await input.inputValue(), 'crash')
+    const initialWidth = await chip.evaluate(el => el.getBoundingClientRect().width)
+    await input.fill('A long title filter with enough text to reach the width limit')
+    assert.ok(Math.abs(initialWidth - 240) < 1)
+    assert.equal(await chip.evaluate(el => el.getBoundingClientRect().width), initialWidth)
+    await input.blur()
+    assert.equal(await input.evaluate(el => getComputedStyle(el).textOverflow), 'ellipsis')
+    assert.ok(await input.evaluate(el => el.scrollWidth > el.clientWidth))
+    await input.focus()
+    assert.equal(await input.evaluate(el => el.getRootNode().activeElement === el), true)
+    await input.fill('x')
+    assert.equal(await chip.evaluate(el => el.getBoundingClientRect().width), initialWidth)
+    await input.fill('')
+    assert.equal(await input.count(), 1)
+    assert.equal(await input.evaluate(el => el.getRootNode().activeElement === el), true)
+    await input.fill('Restored')
+    assert.equal(await input.inputValue(), 'Restored')
+    await input.fill('')
+    await input.blur()
+    await chip.waitFor({ state: 'detached' })
+    assert.deepEqual(errors, [])
+  })
+
+  test(`${engine.name()}: collapsed Playground loads safely and preserves edits after reopening`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/input/')
+    const host = page.locator('[data-anta-playground]').first()
+    assert.equal(await host.locator(':scope > *').count(), 0)
+    assert.equal(await host.getAttribute('data-anta-playground-mounted'), null)
+
+    const summary = page.locator('summary').filter({ hasText: 'Playground' }).first()
+    await summary.click()
+    await host.locator('iframe').waitFor()
+    await host.getByRole('tab', { name: 'Code', exact: true }).click()
+    await host.locator('.monaco-editor .view-lines').first().click()
+    await page.keyboard.press('ControlOrMeta+A')
+    await page.keyboard.insertText(
+      'import { Input } from "@antadesign/anta"\n' +
+      'function Demo() { return <Input label="Preserved edit" /> }',
+    )
+    const previewInput = page.frameLocator('iframe').first().getByRole('textbox', {
+      name: 'Preserved edit', exact: true,
+    })
+    await previewInput.waitFor()
+    await summary.click()
+    await page.waitForFunction(() => !document.querySelector('[data-anta-playground]')?.closest('details')?.open)
+    await summary.click()
+    await previewInput.waitFor()
+
+    await page.evaluate(() => {
+      window.playgroundNavigationSentinel = true
+      document.querySelector('a[href="/button/"]').click()
+    })
+    await page.waitForURL('https://anta.test/button/')
+    assert.equal(await page.evaluate(() => window.playgroundNavigationSentinel), true)
+    assert.equal(await page.locator('[data-anta-playground] > *').count(), 0)
+    await page.evaluate(async () => {
+      const host = document.querySelector('[data-anta-playground]')
+      const nested = document.createElement('details')
+      nested.innerHTML = '<summary>Nested playground</summary>'
+      host.before(nested)
+      nested.append(host)
+      const toggled = new Promise(resolve => nested.addEventListener('toggle', resolve, { once: true }))
+      nested.open = true
+      await toggled
+    })
+    assert.equal(await page.locator('[data-anta-playground] > *').count(), 0,
+      'Opening an inner disclosure must not mount inside a closed outer disclosure')
+    await page.locator('summary').filter({ hasText: 'Playground' }).first().click()
+    await page.frameLocator('iframe').first().getByRole('button').first().waitFor()
+    assert.deepEqual(errors, [])
+  })
 }
 
 test('native MDX preserves table alignment and the compiled playground after navigation', async t => {
@@ -75,6 +157,26 @@ test('native MDX preserves table alignment and the compiled playground after nav
   await page.frameLocator('iframe').first().getByRole('button', {
     name: 'Updated production preview', exact: true,
   }).waitFor()
+  const theme = page.locator('.theming-select')
+  for (const palette of ['antithesis', 'none', 'antithesis']) {
+    await theme.locator('a-button').click()
+    await theme.getByRole('menuitemradio', {
+      name: palette === 'none' ? 'None' : 'Antithesis', exact: true,
+    }).click()
+    const fontsHref = palette === 'none' ? '/themes/default.css' : `/themes/fonts-${palette}.css`
+    await page.waitForFunction(href => document.getElementById('palette-fonts-link').getAttribute('href') === href, fontsHref)
+    await page.waitForFunction(href => document.querySelector('iframe')?.contentDocument
+      ?.getElementById('palette-fonts-link')?.getAttribute('href')?.endsWith(href), fontsHref)
+  }
+  await page.evaluate(() => {
+    const link = document.createElement('a')
+    link.href = '/title/'
+    document.body.append(link)
+    link.click()
+  })
+  await page.waitForURL('https://anta.test/title/')
+  assert.equal(await page.locator('#palette-fonts-link').getAttribute('href'), '/themes/fonts-antithesis.css')
+  assert.equal(await page.locator('#palette-fonts-link').count(), 1)
   assert.deepEqual(errors, [])
 })
 

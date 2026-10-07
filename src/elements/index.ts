@@ -1,7 +1,7 @@
 /**
  * Barrel: registers ALL Anta custom elements (the convenience path).
  *
- * Each `a-{name}` module self-registers and imports its own CSS when loaded,
+ * Each element with browser behavior self-registers and imports its own CSS when loaded,
  * so re-exporting them here (which evaluates each module) registers the whole
  * set + injects every element's CSS. Importing this barrel for side effects —
  * `import '@antadesign/anta/elements'` — gives you everything.
@@ -9,6 +9,8 @@
  * To reduce bundle size, import only the element(s) you use:
  *   import '@antadesign/anta/elements/a-tooltip'   // registers a-tooltip + its CSS, nothing else
  * That granular path pulls in only that element's code and CSS, nothing else.
+ * Entries for structural tags and composed layouts import only CSS and do not
+ * register custom elements. Load their nested browser elements separately.
  *
  * Must only be imported client-side — registration is guarded against missing
  * `customElements` (SSR), but there's no reason to load it server-side.
@@ -46,7 +48,9 @@ export { ABannerElement, register_a_banner } from './a-banner'
 export { AToasterElement, register_a_toaster } from './a-toaster'
 export { AToastElement, register_a_toast } from './a-toast'
 
-// `a-title` and `a-tag` are CSS-only styled tags (no JS / no element module), so
-// their styles can't ride along on a module import — load them here directly.
 import './a-title.css'
 import './a-tag.css'
+import '../components/Breadcrumbs.css'
+import '../components/InputDate.css'
+import '../components/select-parts.css'
+import '../components/Steps.css'

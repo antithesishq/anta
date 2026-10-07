@@ -11,6 +11,7 @@ import ThemeCanvas from '../components/ThemeCanvas'
     <title>Theme preview</title>
     <link rel="stylesheet" href={antaStylesheet} />
     <link id="preview-theme" rel="stylesheet" href="/themes/antune.css" />
+    <link id="preview-fonts" rel="stylesheet" href="/themes/fonts-antune.css" />
     <script is:inline>
       if (window.parent !== window) {
         try { document.documentElement.classList.toggle('dark', parent.document.documentElement.classList.contains('dark')) } catch {}
@@ -39,6 +40,9 @@ import ThemeCanvas from '../components/ThemeCanvas'
     if (!href) return
     const link = document.querySelector<HTMLLinkElement>('#preview-theme')!
     if (link.getAttribute('href') !== href) link.href = href
+    const fonts = document.querySelector<HTMLLinkElement>('#preview-fonts')!
+    const fontsHref = event.data.theme === 'none' ? themes.none : `/themes/fonts-${event.data.theme}.css`
+    if (fonts.getAttribute('href') !== fontsHref) fonts.href = fontsHref
     document.documentElement.classList.toggle('dark', event.data.dark === true)
   })
   parent.postMessage({ type: 'anta-theme-preview-ready' }, location.origin)

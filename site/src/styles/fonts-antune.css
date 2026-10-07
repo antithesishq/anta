@@ -1,0 +1,64 @@
+@layer base, anta, components, utilities;
+@layer anta.reset, anta.components, anta.theme;
+
+/* Reference font setup for anta.design. Applications choose and host their own fonts. */
+@font-face {
+  font-family: "TT Interphases Pro Variable";
+  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-feature-settings: "ss02", "ss05", "tnum";
+  /* Safari otherwise uses the font file's non-zero internal slant default. */
+  font-variation-settings: "slnt" 0;
+  font-display: swap;
+}
+@font-face {
+  font-family: "TT Interphases Pro Variable";
+  src: url("https://assets.anta.design/fonts/TT_Interphases_Pro_Variable.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-feature-settings: "ss02", "ss05", "tnum";
+  font-variation-settings: "slnt" 11;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Antithesis Mono";
+  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Upright.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Antithesis Mono";
+  src: url("https://assets.anta.design/fonts/Antithesis_mono_VF_Italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+:root,
+.light {
+  --sans-serif: "TT Interphases Pro Variable", sans-serif;
+  --monospace: "Antithesis Mono", ui-monospace, monospace;
+  /* Safari leaves this font at its non-zero internal slant default unless the
+     axis is pinned on rendered content; the @font-face descriptor is not enough. */
+  font-variation-settings: "slnt" 0;
+}
+
+@layer anta.theme {
+  :is(address, cite, em, i, var, dt) {
+    font-variation-settings: "slnt" 11;
+    font-synthesis: none;
+  }
+  dfn {
+    font-variation-settings: "slnt" 0;
+  }
+  a-tag {
+    font-feature-settings: 'tnum' 1, 'ss05' 1, 'lnum', 'ss01', 'ss04', 'case', 'calt';
+  }
+  a-tag[allcaps] {
+    font-feature-settings: 'tnum' 1, 'ss05' 1, 'ss01', 'case', 'calt';
+  }
+}

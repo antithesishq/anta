@@ -127,7 +127,7 @@ if (hasStructuredBreadcrumbs && title) {
     <link rel="canonical" href={pageUrl} />
     <link rel="sitemap" href="/sitemap.xml" />
     <link rel="alternate" type="application/rss+xml" title="Anta changelog" href="/changelog.rss" />
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    {jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
     <link rel="icon" type="image/svg+xml" href="/anta-favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href={antaStylesheet} />
@@ -197,6 +197,12 @@ if (hasStructuredBreadcrumbs && title) {
       href="/themes/antune.css"
       data-astro-transition-persist="palette"
     />
+    <link
+      rel="stylesheet"
+      id="palette-fonts-link"
+      href="/themes/fonts-antune.css"
+      data-astro-transition-persist="palette-fonts"
+    />
     <script is:inline>
       // Apply the stored palette before paint: rewriting the href during head
       // parse keeps the stylesheet render-blocking, so a cold load never
@@ -210,6 +216,8 @@ if (hasStructuredBreadcrumbs && title) {
           antithesis: '/themes/antithesis.css',
         }
         document.getElementById('palette-link').href = Object.hasOwn(hrefs, palette) ? hrefs[palette] : hrefs.antune
+        document.getElementById('palette-fonts-link').href = palette === 'none'
+          ? hrefs.none : `/themes/fonts-${palette === 'antithesis' ? 'antithesis' : 'antune'}.css`
         if (stored === 'anta') localStorage.setItem('anta-palette', 'antune')
       } catch (e) {}
     </script>

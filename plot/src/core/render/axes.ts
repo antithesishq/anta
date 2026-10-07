@@ -1,4 +1,5 @@
 import type { Axis, BandScale, CanvasContext, ColorTheme, ContinuousScale, GridSpec, Layout, Rect, ResolvedFontConfig, Scale } from "../types"
+import type { AxisHitExtents } from '../interactions/target'
 import { apply_canvas_font } from "./font"
 import { timeDay, utcDay, type TimeInterval, type CountableTimeInterval } from "d3-time"
 
@@ -379,11 +380,12 @@ function decimated_indices(count: number, stride: number): number[] {
  * @param ctx - canvas context
  * @param chrome - the resolved per-frame chrome inputs
  */
-export function draw_axes(ctx: CanvasContext, chrome: AxisChrome): void {
+export function draw_axes(ctx: CanvasContext, chrome: AxisChrome): AxisHitExtents {
     const { layout, inner, x_axis, y_axis, x_scale, y_scale, theme, chrome_color, x_ticks, y_ticks } = chrome
 
+    const extents: AxisHitExtents = { x: null, y: null }
     if (x_axis === undefined && y_axis === undefined) {
-        return
+        return extents
     }
 
     ctx.save()
@@ -403,9 +405,9 @@ export function draw_axes(ctx: CanvasContext, chrome: AxisChrome): void {
                 const draw_x_mark = x_axis.tick_mark !== false
 
                 if (x_axis.scale === 'category') {
-                    draw_ticks_categorical(ctx, 'x', x_axis, x_scale as BandScale, inner, draw_x_mark, chrome.x_tick_font)
+                    extents.x = draw_ticks_categorical(ctx, 'x', x_axis, x_scale as BandScale, inner, draw_x_mark, chrome.x_tick_font)
                 } else {
-                    draw_ticks_continuous(ctx, 'x', inner, x_ticks ?? [], draw_x_mark)
+                    extents.x = draw_ticks_continuous(ctx, 'x', inner, x_ticks ?? [], draw_x_mark, chrome.x_tick_font)
                 }
             } finally {
                 ctx.restore()
@@ -420,9 +422,9 @@ export function draw_axes(ctx: CanvasContext, chrome: AxisChrome): void {
                 const draw_y_mark = y_axis.tick_mark !== false
 
                 if (y_axis.scale === 'category') {
-                    draw_ticks_categorical(ctx, 'y', y_axis, y_scale as BandScale, inner, draw_y_mark, chrome.y_tick_font)
+                    extents.y = draw_ticks_categorical(ctx, 'y', y_axis, y_scale as BandScale, inner, draw_y_mark, chrome.y_tick_font)
                 } else {
-                    draw_ticks_continuous(ctx, 'y', inner, y_ticks ?? [], draw_y_mark)
+                    extents.y = draw_ticks_continuous(ctx, 'y', inner, y_ticks ?? [], draw_y_mark, chrome.y_tick_font)
                 }
             } finally {
                 ctx.restore()
@@ -430,6 +432,7 @@ export function draw_axes(ctx: CanvasContext, chrome: AxisChrome): void {
         }
 
         draw_axis_labels(ctx, layout, inner, x_axis, y_axis, chrome)
+        return extents
 
     } finally {
         ctx.restore()
@@ -570,13 +573,15 @@ function draw_axis_lines(ctx: CanvasContext, inner: Rect, draw_x: boolean, draw_
  * @param scale - the continuous scale
  * @param inner - inner plot rect
  */
-function draw_ticks_continuous(ctx: CanvasContext, side: 'x' | 'y', inner: Rect, ticks: ContinuousTicks, draw_mark: boolean): void {
+function draw_ticks_continuous(ctx: CanvasContext, side: 'x' | 'y', inner: Rect, ticks: ContinuousTicks, draw_mark: boolean, font: ResolvedFontConfig): number {
+    let extent = 0
     const is_x = side === 'x'
     ctx.textAlign = is_x ? 'center' : 'right'
     ctx.textBaseline = is_x ? 'top' : 'middle'
 
     for (const entry of ticks) {
         const pos = Math.round(entry.pos) + 0.5
+        extent = Math.max(extent, tick_label_extent(ctx, side, entry.label, font))
 
         if (is_x) {
             if (draw_mark) {
@@ -596,6 +601,7 @@ function draw_ticks_continuous(ctx: CanvasContext, side: 'x' | 'y', inner: Rect,
             ctx.fillText(entry.label, inner.left - TICK_LENGTH - TICK_LABEL_PADDING, pos)
         }
     }
+    return extent
 }
 
 /**
@@ -614,7 +620,8 @@ function draw_ticks_categorical(
     inner: Rect,
     draw_mark: boolean,
     font: ResolvedFontConfig,
-): void {
+): number {
+    let extent = 0
     const is_x = side === 'x'
     const labels = category_display_labels(axis)
     const half = scale.bandwidth() / 2
@@ -629,6 +636,7 @@ function draw_ticks_categorical(
             continue
         }
         const pos = Math.round(band_start + half) + 0.5
+        extent = Math.max(extent, tick_label_extent(ctx, side, labels[i], font))
 
         if (is_x) {
             if (draw_mark) {
@@ -648,6 +656,7 @@ function draw_ticks_categorical(
             ctx.fillText(labels[i], inner.left - TICK_LENGTH - TICK_LABEL_PADDING, pos)
         }
     }
+    return extent
 }
 
 /**
@@ -774,4 +783,13 @@ function draw_y_axis_label(ctx: CanvasContext, layout: Layout, inner: Rect, axis
     }
     ctx.textBaseline = 'top'
     ctx.fillText(label, right_edge, inner.bottom + AXIS_LABEL_EDGE_PAD)
+}
+
+/** Measure only painted tick labels with the same font, alignment, and baseline. */
+function tick_label_extent(ctx: CanvasContext, side: 'x' | 'y', label: string, font: ResolvedFontConfig): number {
+    const metrics = ctx.measureText(label)
+    const reach = side === 'x'
+        ? metrics.actualBoundingBoxDescent ?? font.size
+        : metrics.actualBoundingBoxLeft ?? metrics.width
+    return TICK_LENGTH + TICK_LABEL_PADDING + Math.max(0, reach)
 }

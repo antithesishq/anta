@@ -42,7 +42,6 @@ type HostCaptureProps = HostCaptureSettings & {
     onMouseMove: MouseHandler
     onMouseLeave(): void
     onClick: MouseHandler
-    ondblclick(): void
     onWheelInput: WheelHandler
     onPointerInput: PointerHandler
 }
@@ -56,7 +55,6 @@ export type AntaHostAdapter<T> = {
     on_mouse_move: MouseHandler
     on_mouse_leave(): void
     on_click: MouseHandler
-    on_double_click(): void
     reset(): void
     viewport_for_render(snapshot: Viewport): Viewport
     reconcile_viewport(snapshot: Viewport): Viewport
@@ -66,7 +64,9 @@ export type AntaHostAdapter<T> = {
     disconnect(): void
 }
 
-/** Accept Anta events directly, retaining the worker host's measurement and interaction cadence. */
+/** Legacy internal adapter for custom hosts. Hosts own their Capture regions and reset/menu UI.
+ * New hosts use PlotHost and PlotSurface, which provide the complete interaction surface.
+ */
 export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
     const controller = host.controller
     const interactions = controller.interactions
@@ -91,7 +91,7 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
     const capture_configuration = (plot: ComposedPlot<T> | null, viewport: Viewport) => {
         const zoom_pan = controller.template.zoom_pan
         return resolve_capture_configuration(
-            zoom_pan_enabled(controller.template), zoom_pan.modifier,
+            zoom_pan_enabled(controller.template),
             interactions.wheel_claim(plot, viewport, zoom_pan),
         )
     }
@@ -108,7 +108,7 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
     }, UPDATE_INTERVAL_MS, { edges: ['trailing'] })
 
     const on_pointer_input = (event: CustomEvent<CapturePointerInput>): void => {
-        coordinator.handle_pan(capture_pointer_input(event.detail))
+        coordinator.handle_drag(capture_pointer_input(event.detail))
     }
     const on_wheel_input = (event: CustomEvent<CaptureWheelInput>): void => {
         coordinator.handle_wheel(capture_wheel_input(event.detail))
@@ -125,7 +125,6 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
         on_mouse_move: coordinator.move,
         on_mouse_leave: coordinator.leave,
         on_click: coordinator.handle_click,
-        on_double_click: coordinator.handle_double_click,
         reset: coordinator.reset,
         viewport_for_render(snapshot: Viewport): Viewport {
             return compatible_viewport(snapshot, controller.template)
@@ -161,7 +160,6 @@ export function create_anta_host<T>(host: AntaHost<T>): AntaHostAdapter<T> {
                 onMouseMove: coordinator.move,
                 onMouseLeave: coordinator.leave,
                 onClick: coordinator.handle_click,
-                ondblclick: coordinator.handle_double_click,
                 onWheelInput: on_wheel_input,
                 onPointerInput: on_pointer_input,
             }

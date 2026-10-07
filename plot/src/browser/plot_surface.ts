@@ -1,7 +1,10 @@
+import type { CapturePointerInput, CaptureWheelInput, CaptureInputGeometry } from '@antadesign/anta/capture-types'
+import { interaction_target, type InteractionRegions } from '../core/interactions/target'
+import type { Rect } from '../core/types'
 import type { ABoxElement } from '@antadesign/anta/elements/a-box'
 import type { BoxContext, BoxMeasurement } from '@antadesign/anta/box-types'
-import type { CaptureConfiguration } from '../core/interactions/zoom_pan'
-import { RESET_ZOOM_BUTTON } from '../core/presentation/reset_zoom'
+import { drag_rectangle, type CaptureConfiguration } from '../core/interactions/zoom_pan'
+import type { AMenuElement } from '@antadesign/anta/elements/a-menu'
 import { tooltip_wrapper_style } from '../core/presentation/tooltip'
 import { configure_capture, prepare_canvas, size_host } from './surface_support'
 import type {
@@ -44,13 +47,16 @@ a-plot-surface > a-capture[pointer-capture] {
     user-select: none;
 }
 
-a-plot-surface > .plot-highlight {
+a-plot-surface .plot-zoom-rectangle {
+    position: absolute;
     pointer-events: none;
+    box-sizing: border-box;
+    border: 1px solid var(--border-3-brand);
+    background: color-mix(in oklch, var(--text-1-brand) 12%, transparent);
 }
 
-a-plot-surface > .plot-reset {
-    z-index: 3;
-    cursor: pointer;
+a-plot-surface > .plot-highlight {
+    pointer-events: none;
 }
 
 a-plot-surface [hidden] {
@@ -72,6 +78,7 @@ export interface APlotSurfaceElement extends HTMLElement {
     readonly context: BoxContext
     setSize(dimensions: { width?: number; height?: number }): void
     present(presentation: PlotSurfacePresentation): void
+    /** Set fallback configuration. Presentation capture_policy takes precedence while supplied. */
     configureCapture(configuration: CaptureConfiguration): void
     cursor: string
     prepareCanvas(width: number, height: number, dpr: number): CanvasRenderingContext2D
@@ -89,7 +96,23 @@ export function create_plot_surface_element(): CustomElementConstructor {
         readonly canvas: HTMLCanvasElement
         readonly highlight: HTMLCanvasElement
         readonly capture: HTMLElement
-        readonly #reset: HTMLElement
+        #captureBounds: Rect = { left: 0, top: 0, right: 0, bottom: 0 }
+        #capturePolicy: PlotSurfacePresentation['capture_policy']
+        #fallbackConfiguration: CaptureConfiguration | null = null
+        #keyboardMenu = false
+        #shiftWheelClaim: string | null = null
+        #captureTarget: 'plot' | 'x-axis' | 'y-axis' | null = 'plot'
+        #menuWheelActive = false
+        #regions: InteractionRegions | null = null
+        readonly #rectangle: HTMLElement
+        #rectangleStart: { x: number; y: number; width: number; height: number; zoomX: boolean; zoomY: boolean } | null = null
+        readonly #menuAnchor: HTMLElement
+        readonly #menu: AMenuElement
+        readonly #menuItems: Record<'in' | 'out' | 'reset', HTMLElement>
+        #menuState: PlotSurfacePresentation['menu'] | null = null
+        #menuInput: PlotSurfaceMouseInput | null = null
+        #pointerInside = false
+        #dragActive = false
         #ownership: 'unclaimed' | 'main' | 'worker' = 'unclaimed'
         #listeners: AbortController | null = null
         #inputListeners: AbortController | null = null
@@ -110,26 +133,40 @@ export function create_plot_surface_element(): CustomElementConstructor {
             this.capture = doc.createElement('a-capture')
             this.capture.className = 'plot-capture'
             this.capture.style.display = 'none'
-            this.#reset = doc.createElement('a-button')
-            this.#reset.className = 'plot-reset'
-            this.#reset.setAttribute('type', 'button')
-            this.#reset.setAttribute('role', 'button')
-            this.#reset.setAttribute('priority', RESET_ZOOM_BUTTON.priority)
-            this.#reset.setAttribute('size', RESET_ZOOM_BUTTON.size)
-            this.#reset.tabIndex = 0
-            const label = doc.createElement('a-button-label')
-            label.textContent = RESET_ZOOM_BUTTON.label
-            const icon = doc.createElement('a-icon')
-            icon.setAttribute('shape', RESET_ZOOM_BUTTON.iconTrailing)
-            icon.setAttribute('aria-hidden', 'true')
-            this.#reset.append(label, icon)
-            this.#reset.hidden = true
+            this.#rectangle = doc.createElement('div')
+            this.#rectangle.className = 'plot-zoom-rectangle'
+            this.#rectangle.hidden = true
+            this.#rectangle.setAttribute('aria-hidden', 'true')
+            this.capture.append(this.#rectangle)
+            this.#menuAnchor = doc.createElement('span')
+            this.#menuAnchor.tabIndex = 0
+            this.#menuAnchor.style.cssText = 'position:absolute;inset:0;pointer-events:none'
+            this.#menuAnchor.setAttribute('role', 'group')
+            this.#menuAnchor.setAttribute('aria-label', 'Plot zoom controls. Press Shift+F10 to open the zoom menu.')
+            this.#menu = doc.createElement('a-menu') as AMenuElement
+            this.#menu.setAttribute('context', '')
+            this.#menu.setAttribute('coord', '')
+            this.#menu.setAttribute('aria-label', 'Plot zoom')
+            this.#menuItems = Object.fromEntries(
+                (['reset', 'out', 'in'] as const).map(action => {
+                    const item = doc.createElement('a-menu-item')
+                    item.dataset.zoomAction = action
+                    item.setAttribute('role', 'menuitem')
+                    item.tabIndex = 0
+                    const label = doc.createElement('a-menu-item-label')
+                    label.textContent = { in: 'Zoom In', out: 'Zoom Out', reset: 'Reset Zoom' }[action]
+                    item.append(label)
+                    this.#menu.append(item)
+                    return [action, item]
+                }),
+            ) as Record<'in' | 'out' | 'reset', HTMLElement>
         }
 
         attributeChangedCallback(name: string, previous: string | null, value: string | null): void {
             if (previous === value) return
 
             if (CAPTURE_ATTRIBUTES.includes(name)) {
+                if (this.#capturePolicy !== undefined) return
                 if (value === null) this.capture.removeAttribute(name)
                 else this.capture.setAttribute(name, value)
             } else if (name === 'cursor') {
@@ -138,7 +175,11 @@ export function create_plot_surface_element(): CustomElementConstructor {
                 try {
                     if (value === null) {
                         this.capture.style.display = 'none'
-                        this.#reset.hidden = true
+                        this.#clearRectangle()
+                        this.#regions = null
+                        this.#capturePolicy = undefined
+                        this.#menuState = null
+                        this.#menu.close()
                     } else {
                         this.present(JSON.parse(value))
                     }
@@ -166,17 +207,100 @@ export function create_plot_surface_element(): CustomElementConstructor {
                     this.dispatchEvent(new CustomEvent(name, { detail: (event as CustomEvent).detail }))
                 }, { signal })
             }
-            this.#reset.addEventListener('click', () => {
-                this.dispatchEvent(new CustomEvent('resetrequest'))
-            }, { signal })
-            // Capture's custom events do not bubble. Forward their detail without delaying wheel handling.
-            for (const name of ['wheelinput', 'pointerinput']) {
-                this.capture.addEventListener(name, event => {
-                    this.dispatchEvent(new CustomEvent(name, { detail: (event as CustomEvent).detail }))
+            for (const action of ['in', 'out', 'reset'] as const) {
+                const item = this.#menuItems[action]
+                item.addEventListener('click', event => {
+                    if (item.hasAttribute('disabled') || this.#menuInput === null) return
+                    // Menu input is deliberate plot interaction; closing it must not require a new dwell.
+                    this.#menuWheelActive = this.#insideCapture(event)
+                    this.#applyCapturePolicy()
+                    this.#emit('zoomrequest', { ...this.#menuInput, action })
+                    this.#menu.close()
+                    if (this.#keyboardMenu) this.#menuAnchor.focus()
+                    this.#keyboardMenu = false
                 }, { signal })
             }
+            // Menu items live outside Capture. Track actual coordinates across both surfaces,
+            // including captured drags, and release this visit as soon as the pointer leaves.
+            this.ownerDocument.addEventListener('pointermove', event => {
+                if (this.#menuWheelActive && !this.#insideCapture(event)) this.#releaseMenuWheel()
+            }, { signal })
+            this.ownerDocument.addEventListener('pointerout', event => {
+                if (event.relatedTarget === null && !this.#insideCapture(event)) this.#releaseMenuWheel()
+            }, { signal })
+            this.ownerDocument.defaultView?.addEventListener('blur', () => this.#releaseMenuWheel(), { signal })
+            this.#menuAnchor.addEventListener('keydown', event => {
+                if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return
+                if (!this.#menuState?.enabled || this.#dragActive) return
+                event.preventDefault()
+                event.stopPropagation()
+                const rect = this.capture.getBoundingClientRect()
+                const inner = this.#regions?.plot ?? this.#captureBounds
+                const x = (inner.right - inner.left) / 2
+                const y = (inner.bottom - inner.top) / 2
+                this.#keyboardMenu = true
+                this.#menuInput = { offsetX: x, offsetY: y, ctrlKey: false }
+                this.#leavePlot()
+                this.#menu.open({ coord: [rect.left + inner.left - this.#captureBounds.left + x, rect.top + inner.top - this.#captureBounds.top + y],
+                    viaKeyboard: true, originEvent: event })
+            }, { signal })
+            // Choose the region policy before Capture claims the native event.
+            const route = (event: MouseEvent) => {
+                if (this.#shiftWheelClaim !== null) {
+                    this.capture.setAttribute('wheel-capture', this.#shiftWheelClaim)
+                    this.#shiftWheelClaim = null
+                }
+                const rect = this.capture.getBoundingClientRect()
+                const inner = this.#regions?.plot ?? this.#captureBounds
+                const input = {
+                    offsetX: event.clientX - rect.left - (inner.left - this.#captureBounds.left),
+                    offsetY: event.clientY - rect.top - (inner.top - this.#captureBounds.top),
+                }
+                this.#captureTarget = interaction_target(this.#regions, input)
+                this.#applyCapturePolicy()
+            }
+            this.capture.addEventListener('pointerdown', route, { capture: true, signal })
+            this.capture.addEventListener('mousemove', route, { capture: true, signal })
+            this.capture.addEventListener('wheel', event => {
+                route(event)
+                const claim = this.capture.getAttribute('wheel-capture')
+                if (event.shiftKey && !event.ctrlKey) {
+                    // Ignore this sample inside Capture without hiding it from ancestor listeners.
+                    if (claim !== null) {
+                        this.#shiftWheelClaim = claim
+                        this.capture.setAttribute('wheel-capture', 'none')
+                        // Restore on the next native input, not a microtask between event listeners.
+                    }
+                    return
+                }
+                // Handle pinch immediately without changing Capture's activation or losing its dwell.
+                if (this.#capturePolicy !== undefined && event.ctrlKey && this.#captureTarget !== null) {
+                    this.#capturePinch(event, claim)
+                }
+            }, { capture: true, passive: false, signal })
+            this.capture.addEventListener('wheelinput', event => {
+                this.#pointerInside = true
+                const detail = (event as CustomEvent<CaptureWheelInput>).detail
+                this.#emit('wheelinput', { ...detail, ...this.#inputGeometry(detail) })
+            }, { signal })
+            this.capture.addEventListener('pointerinput', event => {
+                const detail = (event as CustomEvent<CapturePointerInput>).detail
+                this.#dragActive = detail.phase === 'start' || detail.phase === 'move'
+                if (detail.phase === 'start') this.#pointerInside = true
+                const normalized = {
+                    ...detail, ...this.#inputGeometry(detail),
+                    start: { ...detail.start, ...this.#inputGeometry(detail.start) },
+                }
+                this.#drawRectangle(normalized)
+                this.#emit('pointerinput', normalized)
+                if (!this.#dragActive) {
+                    this.#captureTarget = interaction_target(this.#regions, { offsetX: normalized.localX, offsetY: normalized.localY })
+                    this.#applyCapturePolicy()
+                }
+            }, { signal })
             if (this.#box.parentNode !== this) {
-                this.append(this.#styles, this.#box, this.canvas, this.highlight, this.capture, this.#reset)
+                this.append(this.#styles, this.#box, this.canvas, this.highlight, this.capture,
+                    this.#menuAnchor, this.#menu)
             }
 
             this.#listenForMouseInput()
@@ -184,11 +308,59 @@ export function create_plot_surface_element(): CustomElementConstructor {
         }
 
         disconnectedCallback(): void {
+            this.#menuWheelActive = false
+            this.#pointerInside = false
+            this.#dragActive = false
+            this.#menu.close()
+            this.#menuInput = null
+            this.#clearRectangle()
             this.#connection++
             this.#inputListeners?.abort()
             this.#inputListeners = null
             this.#listeners?.abort()
             this.#listeners = null
+        }
+
+        #clearRectangle(): void {
+            this.#rectangleStart = null
+            this.#rectangle.hidden = true
+        }
+
+        // Draw from Capture input on the browser thread, even when the plot lives in a worker.
+        #drawRectangle(input: CapturePointerInput): void {
+            if (input.phase === 'end' || input.phase === 'cancel') {
+                this.#clearRectangle()
+                return
+            }
+            if (input.phase === 'start') {
+                this.#clearRectangle()
+                if (!input.start.pointerEvent.ctrlKey || interaction_target(this.#regions, {
+                    offsetX: input.start.localX, offsetY: input.start.localY,
+                }) !== 'plot') return
+                // Axis policies include both configuration and whether the axis is continuous.
+                const zoomX = this.#capturePolicy === undefined || this.#capturePolicy.x.pointer_capture !== null
+                const zoomY = this.#capturePolicy === undefined || this.#capturePolicy.y.pointer_capture !== null
+                if (!zoomX && !zoomY) return
+                this.#rectangleStart = {
+                    x: input.start.localX, y: input.start.localY,
+                    width: input.start.boxWidth, height: input.start.boxHeight,
+                    zoomX, zoomY,
+                }
+            }
+            const start = this.#rectangleStart
+            if (start === null) return
+            const rect = drag_rectangle({ left: 0, top: 0, right: start.width, bottom: start.height }, start, {
+                x: start.x + input.movementX, y: start.y + input.movementY,
+            })
+            // The preview covers the viewport that release will select, including unchanged axes.
+            if (!start.zoomX) { rect.left = 0; rect.right = start.width }
+            if (!start.zoomY) { rect.top = 0; rect.bottom = start.height }
+            Object.assign(this.#rectangle.style, {
+                left: `${rect.left + (this.#regions?.plot.left ?? 0) - this.#captureBounds.left}px`,
+                top: `${rect.top + (this.#regions?.plot.top ?? 0) - this.#captureBounds.top}px`,
+                width: `${rect.right - rect.left}px`, height: `${rect.bottom - rect.top}px`,
+            })
+            this.#rectangle.hidden = false
         }
 
         #emit<K extends keyof PlotSurfaceEventMap>(name: K, detail: PlotSurfaceEventMap[K]['detail']): void {
@@ -218,6 +390,95 @@ export function create_plot_surface_element(): CustomElementConstructor {
             })
         }
 
+        #capturePinch(event: WheelEvent, claim: string | null): void {
+            if (claim === null || event.defaultPrevented || !event.cancelable || !this.#insideCapture(event)) return
+            // Read units before deltas, matching Capture's Firefox compatibility handling.
+            const deltaMode = event.deltaMode
+            const { deltaX, deltaY, deltaZ } = event
+            if (deltaY === 0 || Math.abs(deltaX) > Math.abs(deltaY)
+                || !claim.split(' ').includes(deltaY < 0 ? 'up' : 'down')) return
+            for (const node of event.composedPath()) {
+                if (node instanceof this.ownerDocument.defaultView!.Element && (node.hasAttribute('data-capture-ignore')
+                    || node.matches('textarea, select, input[type="number"], input[type="range"], a-menu'))) return
+                if (node === this.capture) break
+            }
+            event.preventDefault()
+            if (!event.defaultPrevented) return
+            // Capture ignores an already claimed event, avoiding duplicate delivery.
+            event.stopPropagation()
+            const rect = this.capture.getBoundingClientRect()
+            this.#pointerInside = true
+            this.#emit('wheelinput', {
+                ...this.#inputGeometry({
+                    localX: event.clientX - rect.left, localY: event.clientY - rect.top,
+                    boxWidth: rect.width, boxHeight: rect.height, inside: true,
+                    focusWithin: this.capture.matches(':focus-within'),
+                }),
+                activationReason: 'immediate',
+                wheelEvent: {
+                    type: event.type, timeStamp: event.timeStamp, isTrusted: event.isTrusted,
+                    cancelable: event.cancelable, defaultPrevented: event.defaultPrevented,
+                    altKey: event.altKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey,
+                    button: event.button, buttons: event.buttons,
+                    clientX: event.clientX, clientY: event.clientY, pageX: event.pageX, pageY: event.pageY,
+                    screenX: event.screenX, screenY: event.screenY, offsetX: event.offsetX, offsetY: event.offsetY,
+                    deltaMode, deltaX, deltaY, deltaZ,
+                },
+            })
+        }
+
+        #insideCapture(event: { clientX: number; clientY: number }): boolean {
+            const rect = this.capture.getBoundingClientRect()
+            return rect.width > 0 && rect.height > 0
+                && event.clientX >= rect.left && event.clientX <= rect.right
+                && event.clientY >= rect.top && event.clientY <= rect.bottom
+        }
+
+        #releaseMenuWheel(): void {
+            if (!this.#menuWheelActive) return
+            this.#menuWheelActive = false
+            this.#applyCapturePolicy()
+        }
+
+        #applyCapturePolicy(): void {
+            const policy = this.#capturePolicy
+            if (policy === undefined) {
+                if (this.#fallbackConfiguration !== null) configure_capture(this.capture, this.#fallbackConfiguration)
+                return
+            }
+            const target = this.#captureTarget
+            const config = target === 'x-axis' ? policy.x : target === 'y-axis' ? policy.y : policy.plot
+            // Keep pointer capture stable throughout a drag as the pointer crosses regions.
+            if (this.#dragActive) return
+            configure_capture(this.capture, {
+                ...policy.plot,
+                wheel_activation: this.#menuWheelActive ? 'hover' : policy.plot.wheel_activation,
+                // Keep one pointer session and one dwell clock across the whole surface.
+                // Core hit routing rejects drags on disabled axes and in the corner.
+                wheel_capture: policy.plot.wheel_capture === null ? null
+                    : target === null ? 'both' : config.wheel_capture === null ? 'none'
+                    : this.#menuWheelActive ? 'both' : config.wheel_capture,
+            })
+        }
+
+        #inputGeometry(input: CaptureInputGeometry): CaptureInputGeometry {
+            const inner = this.#regions?.plot ?? this.#captureBounds
+            const localX = input.localX - (inner.left - this.#captureBounds.left)
+            const localY = input.localY - (inner.top - this.#captureBounds.top)
+            const width = inner.right - inner.left
+            const height = inner.bottom - inner.top
+            return {
+                ...input, localX, localY, boxWidth: width, boxHeight: height,
+                inside: localX >= 0 && localX <= width && localY >= 0 && localY <= height,
+            }
+        }
+
+        #leavePlot(): void {
+            if (!this.#pointerInside) return
+            this.#pointerInside = false
+            this.#emit('plotleave', undefined)
+        }
+
         #listenForMouseInput(): void {
             this.#inputListeners?.abort()
             this.#inputListeners = new AbortController()
@@ -226,55 +487,93 @@ export function create_plot_surface_element(): CustomElementConstructor {
             if (scope === null) return
 
             const normalized = (event: MouseEvent): PlotSurfaceMouseInput | null => {
-                if (event.target instanceof Node && this.#reset.contains(event.target)) return null
+                if (event.composedPath().includes(this.#menu)) return null
                 if (this.capture.style.display === 'none') return null
 
                 const rect = this.capture.getBoundingClientRect()
-                const offsetX = event.clientX - rect.left
-                const offsetY = event.clientY - rect.top
-                if (rect.width <= 0 || rect.height <= 0 || offsetX < 0 || offsetY < 0
-                    || offsetX > rect.width || offsetY > rect.height) return null
+                const inner = this.#regions?.plot ?? this.#captureBounds
+                const offsetX = event.clientX - rect.left - (inner.left - this.#captureBounds.left)
+                const offsetY = event.clientY - rect.top - (inner.top - this.#captureBounds.top)
+                if (rect.width <= 0 || rect.height <= 0
+                    || event.clientX < rect.left || event.clientX > rect.right
+                    || event.clientY < rect.top || event.clientY > rect.bottom) return null
 
                 return { offsetX, offsetY, ctrlKey: event.ctrlKey }
             }
 
             scope.addEventListener('mousemove', event => {
                 const input = normalized(event)
-                if (input === null) this.#emit('plotleave', undefined)
-                else this.#emit('plotmove', input)
+                if (input === null) this.#leavePlot()
+                else {
+                    this.#pointerInside = true
+                    this.#emit('plotmove', input)
+                }
             }, { signal })
 
-            scope.addEventListener('mouseleave', () => this.#emit('plotleave', undefined), { signal })
+            scope.addEventListener('mouseleave', () => this.#leavePlot(), { signal })
 
             scope.addEventListener('click', event => {
                 const input = normalized(event)
                 if (input !== null) this.#emit('plotclick', input)
             }, { signal })
 
-            scope.addEventListener('dblclick', event => {
-                if (normalized(event) !== null) this.#emit('plotdoubleclick', undefined)
+            scope.addEventListener('contextmenu', event => {
+                // Ctrl-primary press belongs to rectangle zoom, including macOS secondary-click synthesis.
+                if (this.#dragActive || (this.#menuState?.enabled && event.ctrlKey && event.button === 0)) {
+                    event.preventDefault()
+                    return
+                }
+                const input = normalized(event)
+                if (input === null || !this.#menuState?.enabled || interaction_target(this.#regions, input) === null) return
+                event.preventDefault()
+                this.#keyboardMenu = false
+                this.#menuInput = input
+                this.#leavePlot()
+                this.#menu.open({ coord: [event.clientX, event.clientY], originEvent: event })
             }, { signal })
         }
 
         get measurement(): BoxMeasurement { return this.#box.measurement }
         get context(): BoxContext { return this.#box.context }
         get cursor(): string { return this.capture.style.cursor }
-        set cursor(value: string) { this.capture.style.cursor = value }
+        set cursor(value: string) {
+            this.capture.style.cursor = value
+        }
         setSize(dimensions: { width?: number; height?: number }): void { size_host(this, dimensions) }
         configureCapture(configuration: CaptureConfiguration): void {
-            configure_capture(this.capture, configuration)
+            this.#shiftWheelClaim = null
+            this.#fallbackConfiguration = configuration
+            this.#applyCapturePolicy()
         }
 
-        present({ width, height, inner, filter, reset }: PlotSurfacePresentation): void {
+        present({ width, height, inner, regions, capture_policy, filter, menu }: PlotSurfacePresentation): void {
             this.capture.style.display = ''
+            this.#regions = regions ?? { plot: inner, x: null, y: null }
             for (const canvas of [this.canvas, this.highlight]) {
                 canvas.style.width = `${width}px`
                 canvas.style.height = `${height}px`
                 canvas.style.filter = filter ?? ''
             }
-            Object.assign(this.capture.style, tooltip_wrapper_style(inner))
-            Object.assign(this.#reset.style, reset.position, reset.button.style)
-            this.#reset.hidden = !reset.visible
+            const bounds = [inner, this.#regions.x, this.#regions.y].filter((r): r is Rect => r !== null)
+            this.#captureBounds = {
+                left: Math.max(0, Math.min(...bounds.map(r => r.left))),
+                top: Math.max(0, Math.min(...bounds.map(r => r.top))),
+                right: Math.min(width, Math.max(...bounds.map(r => r.right))),
+                bottom: Math.min(height, Math.max(...bounds.map(r => r.bottom))),
+            }
+            Object.assign(this.capture.style, tooltip_wrapper_style(this.#captureBounds))
+            this.#shiftWheelClaim = null
+            this.#capturePolicy = capture_policy
+            this.#applyCapturePolicy()
+            this.#menuState = menu
+            this.#menuAnchor.tabIndex = menu.enabled ? 0 : -1
+            this.#menuItems.in.toggleAttribute('disabled', !menu.zoom_in)
+            this.#menuItems.out.toggleAttribute('disabled', !menu.zoom_out)
+            this.#menuItems.reset.toggleAttribute('disabled', !menu.reset)
+            for (const item of Object.values(this.#menuItems)) {
+                item.setAttribute('aria-disabled', String(item.hasAttribute('disabled')))
+            }
+            if (!menu.enabled) this.#menu.close()
         }
 
         prepareCanvas(width: number, height: number, dpr: number): CanvasRenderingContext2D {

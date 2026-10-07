@@ -35,8 +35,7 @@ export interface PlotSurfaceProps extends BaseProps, CaptureAttributes {
     onPlotMove?: (event: PlotSurfaceEventMap['plotmove']) => void
     onPlotLeave?: (event: PlotSurfaceEventMap['plotleave']) => void
     onPlotClick?: (event: PlotSurfaceEventMap['plotclick']) => void
-    onPlotDoubleClick?: (event: PlotSurfaceEventMap['plotdoubleclick']) => void
-    onResetRequest?: (event: PlotSurfaceEventMap['resetrequest']) => void
+    onZoomRequest?: (event: PlotSurfaceEventMap['zoomrequest']) => void
     onCanvasTransfer?: (event: PlotSurfaceEventMap['canvastransfer']) => void
     onSurfaceError?: (event: PlotSurfaceEventMap['surfaceerror']) => void
 }
@@ -45,8 +44,8 @@ export interface PlotSurfaceProps extends BaseProps, CaptureAttributes {
 export const PlotSurface = ({
     presentation, canvasOwner, inputScope, cursor, className, children,
     onMeasureChange, onContextChange, onWheelInput, onPointerInput,
-    onPlotMove, onPlotLeave, onPlotClick, onPlotDoubleClick,
-    onResetRequest, onCanvasTransfer, onSurfaceError, ...rest
+    onPlotMove, onPlotLeave, onPlotClick,
+    onZoomRequest, onCanvasTransfer, onSurfaceError, ...rest
 }: PlotSurfaceProps) => (
     <a-plot-surface
         {...rest}
@@ -62,8 +61,7 @@ export const PlotSurface = ({
         onplotmove={onPlotMove}
         onplotleave={onPlotLeave}
         onplotclick={onPlotClick}
-        onplotdoubleclick={onPlotDoubleClick}
-        onresetrequest={onResetRequest}
+        onzoomrequest={onZoomRequest}
         oncanvastransfer={onCanvasTransfer}
         onsurfaceerror={onSurfaceError}
     >

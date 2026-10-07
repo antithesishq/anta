@@ -99,7 +99,7 @@ function overviewExample(): PlotArgs<Node> {
 
   const grid = false
 
-  const zoom_pan = { x: true, y: true, modifier: false }
+  const zoom_pan = { x: true, y: true }
 
   // Replace the object to apply a change; Plot does not observe in-place mutation.
   const plotArgs: PlotArgs<Node> = { ...options, series, axis, margin, grid, zoom_pan }
@@ -298,7 +298,7 @@ function lineExample(): PlotArgs<Node> {
     background: { light: '#ffffff', dark: '#141820' },
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: false,
-    zoom_pan: { x: true, y: true, modifier: true },
+    zoom_pan: { x: true, y: true },
   }
 
   return plotArgs
@@ -346,7 +346,7 @@ function barExample(): PlotArgs<Node> {
     background: { light: '#ffffff', dark: '#141820' },
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: false,
-    zoom_pan: { x: true, y: true, modifier: true },
+    zoom_pan: { x: true, y: true },
   }
 
   return plotArgs
@@ -391,7 +391,7 @@ function stackedExample(): PlotArgs<Node> {
     background: { light: '#ffffff', dark: '#141820' },
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: false,
-    zoom_pan: { x: true, y: true, modifier: true },
+    zoom_pan: { x: true, y: true },
   }
 
   return plotArgs
@@ -468,7 +468,7 @@ function rectExample(): PlotArgs<Node> {
     background: { light: '#ffffff', dark: '#141820' },
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: false,
-    zoom_pan: { x: true, y: true, modifier: true },
+    zoom_pan: { x: true, y: true },
   }
 
   return plotArgs
@@ -525,7 +525,7 @@ function ruleExample(): PlotArgs<Node> {
     background: { light: '#ffffff', dark: '#141820' },
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: false,
-    zoom_pan: { x: true, y: true, modifier: true },
+    zoom_pan: { x: true, y: true },
   }
 
   return plotArgs
@@ -613,7 +613,7 @@ function customExample(): PlotArgs<Node> {
     background: { light: '#ffffff', dark: '#141820' },
     chrome_color: { light: '#e2e8f0', dark: '#334155' },
     grid: false,
-    zoom_pan: { x: true, y: true, modifier: true },
+    zoom_pan: { x: true, y: true },
   }
 
   return plotArgs

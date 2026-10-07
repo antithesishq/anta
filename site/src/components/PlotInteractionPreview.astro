@@ -1,21 +1,22 @@
 ---
 interface Props {
+  height?: number
   example: 'highlights' | 'tooltips' | 'composedTooltips' | 'selection' | 'zoom' | 'zoomFree' | 'zoomX' | 'viewport'
 }
-const { example } = Astro.props
+const { example, height } = Astro.props
 const initial = example === 'composedTooltips'
   ? 'Hover the overlap to compare baseline and current bounds in one tooltip.'
   : example === 'selection'
   ? 'Select a point to inspect its data.'
   : example === 'zoomFree'
-    ? 'Scroll to zoom, or drag to pan.'
-    : 'Hold Ctrl and scroll to zoom, or Ctrl-drag to pan.'
+    ? 'Scroll or drag on an axis to zoom it; drag inside the plot to pan.'
+    : 'Scroll to zoom, drag to pan, or Ctrl-drag to zoom to a rectangle. Right-click for zoom and reset.'
 ---
 
-<div class="plot-interaction" data-plot-interaction={example}>
-  <a-plot aria-label={{ highlights: 'Hover highlight comparison', tooltips: 'Default and custom tooltips',
+<div class="plot-interaction" data-plot-interaction={example} data-plot-height={height}>
+  <a-plot style={height === undefined ? undefined : { height: `${height}px` }} aria-label={{ highlights: 'Hover highlight comparison', tooltips: 'Default and custom tooltips',
     composedTooltips: 'Composed tooltip across overlapping series',
-    selection: 'Select a sample', zoom: 'Zoom with Ctrl', zoomFree: 'Zoom without a modifier',
+    selection: 'Select a sample', zoom: 'Zoom and pan in the plot', zoomFree: 'Navigate an axis',
     zoomX: 'Horizontal zoom only', viewport: 'Programmatically controlled viewport' }[example]}></a-plot>
   {example === 'viewport' && (
     <div class="viewport-controls">
@@ -40,7 +41,9 @@ const initial = example === 'composedTooltips'
       const plot = wrapper.querySelector<APlotElement>('a-plot')!
       if (mounted.has(plot) || !plot.isConnected) continue
       const example = wrapper.dataset.plotInteraction as keyof typeof interactionExamples
-      plot.plotArgs = interactionExamples[example](wrapper.querySelector<HTMLOutputElement>('output')!)
+      const args = interactionExamples[example](wrapper.querySelector<HTMLOutputElement>('output')!)
+      plot.plotArgs = wrapper.dataset.plotHeight === undefined
+        ? args : { ...args, height: Number(wrapper.dataset.plotHeight) }
       if (example === 'viewport') {
         let key = 0
         wrapper.querySelectorAll<HTMLElement>('[data-window]').forEach(button => {

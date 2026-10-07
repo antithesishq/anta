@@ -7,6 +7,12 @@ changes are not listed.
 
 ### Changed
 
+- The Antithesis theme adds an interactive color layer: `--fill-*`, `--stroke-*`
+  and `--label-*`, named by step, tone and state. [Buttons](/button/),
+  [Checkboxes](/checkbox/), [Radios](/radio/) and [Inputs](/input/) read their
+  colors from it. It replaces the theme's `--fill-{tone}` and `--control-*`
+  variables. Inputs in this theme draw a 1px border and a 2px focus ring inside
+  the field.
 - Selected paddingless [Buttons](/button/#paddingless) draw their 1px selection
   ring outside the label. Their corner radius is capped at 3px, including when
   `round` requests a larger radius.

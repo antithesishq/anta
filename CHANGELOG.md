@@ -12,6 +12,12 @@ changes are not listed.
 
 ### Changed
 
+- The Antithesis theme adds an interactive color layer: `--fill-*`, `--stroke-*`
+  and `--label-*`, named by step, tone and state. [Buttons](/button/),
+  [Checkboxes](/checkbox/), [Radios](/radio/) and [Inputs](/input/) read their
+  colors from it. It replaces the theme's `--fill-{tone}` and `--control-*`
+  variables. Inputs in this theme draw a 1px border and a 2px focus ring inside
+  the field.
 - In the Antithesis theme, serif headings use Stringer Light. Headings at every
   level get the theme's letter spacing: -0.045px at level 3 and -0.1px at the
   other levels.

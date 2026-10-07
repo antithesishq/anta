@@ -221,8 +221,8 @@ const SHADOW_STYLE = `
   :host([readonly]:state(kb-focus)) .field {
     --_bw: 1px;
     --_bc: var(--input-border);
-    outline: 1px solid var(--focus-ring);
-    outline-offset: 1px;
+    outline: var(--_input-focus-width, 1px) solid var(--focus-ring);
+    outline-offset: var(--_input-focus-offset, 1px);
   }
   @media (forced-colors: active) { .field { border: 1px solid ButtonBorder; } }
 

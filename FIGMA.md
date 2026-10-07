@@ -78,6 +78,7 @@ A "Light" / "Dark" pair on the dynamic collection has its own mode IDs (`1:0` / 
 
 - Plugin API values are RGBA in `0..1` range — convert to hex with `Math.round(channel * 255)`.
 - An alpha below 1.0 becomes a trailing two-hex-digit suffix (e.g. `#912a0dcc`). The tinted text fades use `0xcc` (0.80), `0x99` (0.60), `0x66` (0.40), `0xb2` (0.70), `0x80` (0.50). Keep `b2` for 0.70 even though a straight `Math.round(0.7 * 255)` gives `b3`.
+- A value stored as an alias with opacity (`{ color: alias, opacity }`) becomes `color-mix(in oklch, <base> <opacity>%, transparent)` in the interactive layer. When the alias points at another token of the same collection, keep the reference: `color-mix(in oklch, var(--label-2) 90%, transparent)`.
 
 ### 4. Naming convention in code
 
@@ -100,6 +101,7 @@ Confirmed via the collection dump on 2026-09-25:
 - `src/theme-antithesis.css` (exported as `@antadesign/anta/theme-antithesis.css`) — the Antithesis role scale from this file, as hex literals on `:root, .light` and `.dark`. It overrides the seed-derived scale in `tokens.css`.
 - `src/tokens.css` — the default scale, derived from the `--anta-seed-*` tone seeds with oklch relative color. Figma values do not go here.
 - Component tone curves derive from the seeds, so the Antithesis seeds (`--anta-seed-brand`, `--anta-seed-neutral`) set component colors; the role literals don't reach them.
+- The interactive layer (`interactive/fill/*`, `interactive/stroke/*`, `interactive/label/*` in Figma) lands in `src/theme-antithesis.css` as `--fill-*`, `--stroke-*` and `--label-*`. The Figma name drops the group prefix (`fill/2-brand-hover` → `--fill-2-brand-hover`); the variable's WEB code syntax already holds the CSS name. Buttons, checkbox, radio and input read their colors from this layer, and the matching `component/*` variables in Figma alias it.
 
 ## Component conventions
 

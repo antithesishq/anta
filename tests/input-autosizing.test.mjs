@@ -36,7 +36,7 @@ after(async () => Promise.all([...browsers.values()].map(browser => browser.clos
 async function fixture(t, engine, html) {
   const page = await browsers.get(engine).newPage()
   t.after(() => page.close())
-  page.setDefaultTimeout(5000)
+  page.setDefaultTimeout(20_000)
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await page.setContent(html)

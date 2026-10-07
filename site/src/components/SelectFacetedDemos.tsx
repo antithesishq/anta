@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks'
 import { SelectFaceted, Select, Input, Button, InputDate, Calendar, MenuItem, Tag } from '@antadesign/anta'
-import type { InputProps, SelectFacet } from '@antadesign/anta'
+import type { SelectFacet } from '@antadesign/anta'
 
 /** Registers the custom elements client-side (see TabsDemo for the pattern). */
 function useElements() {
@@ -117,17 +117,6 @@ const BASE_FACETS: SelectFacet[] = [
 
 const isSet = (v: unknown) => !(v == null || v === '' || (Array.isArray(v) && v.length === 0))
 
-function FacetTextInput({ leading, ...props }: InputProps & { leading: string }) {
-  return (
-    <span className="sf-text-chip">
-      <span className="sf-text-chip-mirror" aria-hidden="true">
-        <span>{leading}</span><span>{props.value || '\u00a0'}</span>
-      </span>
-      <Input {...props} leading={leading} />
-    </span>
-  )
-}
-
 export function SelectFacetedBasicDemo() {
   useElements()
   const [value, setValue] = useState<Record<string, unknown>>({ assignee: ['Alice Nguyen'], status: 'open', title: 'crash' })
@@ -147,7 +136,7 @@ export function SelectFacetedBasicDemo() {
     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '12px', alignItems: 'center', width: '100%' }}>
       <SelectFaceted facets={FACETS} value={value} onValueChange={setValue} searchable />
       {active.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '8px', alignItems: 'center', maxWidth: '100%' }}>
           {active.map((facet) => {
             // Options facets → an editable Select; the key rides the leading slot.
             if (facet.kind === 'single' || facet.kind === 'multiple')
@@ -169,12 +158,13 @@ export function SelectFacetedBasicDemo() {
             // Free-form text → an editable Input; clearing it drops the filter.
             if (facet.kind === 'text')
               return (
-                <FacetTextInput
+                <Input
                   key={facet.key}
                   value={(value[facet.key] as string) ?? ''}
                   leading={`${facet.label}:`}
                   clearable
                   dimActions
+                  className="sf-chip"
                   onFocus={() => setFocusedKey(facet.key)}
                   onBlur={() => setFocusedKey(null)}
                   onInput={(e: any) => setFacet(facet.key, e.currentTarget.value || undefined)}
@@ -190,12 +180,13 @@ export function SelectFacetedBasicDemo() {
             }
             // Custom (duration) → an Input editing its `min`.
             return (
-              <FacetTextInput
+              <Input
                 key={facet.key}
                 value={((value[facet.key] as any)?.min ?? '') as string}
                 leading={`${facet.label} ${durationSign((value[facet.key] as any)?.comparison)}:`}
                 clearable
                 dimActions
+                className="sf-chip"
                 onFocus={() => setFocusedKey(facet.key)}
                 onBlur={() => setFocusedKey(null)}
                 onInput={(e: any) =>

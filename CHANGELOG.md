@@ -7,9 +7,6 @@ changes are not listed.
 
 ### Fixed
 
-- [Multiline Input](/input/#multiline) measures its content height to avoid
-  Safari crashes involving native field autosizing. It resizes when its width
-  changes or a hidden field is shown.
 - [InputTime](/input-time/) reserves space for the locale's longest AM/PM label
   without native field autosizing. Switching between AM and PM keeps its width.
 

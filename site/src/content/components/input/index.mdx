@@ -353,12 +353,14 @@ Firefox. So Anta keeps the native field.
 </Col>
 <Col>
 
-`multiline` renders a `<textarea>` under the same API. Without `rows`, its
-height grows and shrinks with the content, capped by `maxRows` if set. Content
-past the cap scrolls. Pass `rows` for a constant-height box.
+`multiline` renders a `<textarea>` under the same API. With **no `rows`** it
+**autogrows** with its content via CSS `field-sizing: content` — capped by
+`maxRows` if you set one (omit for unbounded growth), then it scrolls. Pass a
+fixed **`rows`** count for a constant-height box instead.
 
-Height updates when the value or available width changes and when a hidden
-field is shown. The component measures the content height in every browser.
+Autogrow uses CSS `field-sizing` where supported (Chromium, Safari ≥ 26.2) and a
+built-in JS resize everywhere else (Firefox, older Safari), so it grows in every
+browser.
 
 </Col>
 </Columns>

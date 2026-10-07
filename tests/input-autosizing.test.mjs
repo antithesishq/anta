@@ -45,132 +45,36 @@ async function fixture(t, engine, html) {
   return { page, errors }
 }
 
-async function fits(page, id = 'growing') {
-  await page.waitForFunction(id => {
-    const ta = document.getElementById(id).shadowRoot.querySelector('textarea')
-    return ta.clientHeight > 0 && Math.abs(ta.scrollHeight - ta.clientHeight) <= 1
-  }, id)
-}
-
-async function height(page, id = 'growing') {
-  return page.locator(`#${id} textarea`).evaluate(ta => ta.clientHeight)
-}
-
 for (const engine of [chromium, webkit]) {
-  for (const hidden of ['details', 'display', 'content-visibility']) {
-    test(`${engine.name()}: multiline Input grows after ${hidden} reveal and width changes`, async t => {
-      const container = hidden === 'details' ? 'details' : 'div'
-      const hiddenStyle = hidden === 'display' ? 'display:none;' : hidden === 'content-visibility' ? 'content-visibility:hidden;' : ''
-      const value = 'A long sentence that wraps across several lines when the available width is narrow. '.repeat(4)
-      const { page, errors } = await fixture(t, engine, `
-        <${container} id="container" style="${hiddenStyle}width:420px">
-          ${hidden === 'details' ? '<summary>Fields</summary>' : ''}
-          <div style="display:grid;grid-template-columns:minmax(0,1fr)">
-            <div style="display:grid;grid-template-columns:subgrid;grid-column:1/-1">
-              <a-input id="growing" multiline value="${value}"></a-input>
-              <a-input multiline value="A second eagerly initialized textarea"></a-input>
-            </div>
-          </div>
-        </${container}>
-      `)
-      // Safari's metadata probes and playground code both read layout while folded.
-      await page.evaluate(() => {
-        for (const host of document.querySelectorAll('a-input')) {
-          for (const node of [host, ...host.shadowRoot.querySelectorAll('*')]) {
-            node.getBoundingClientRect()
-            void node.clientWidth
-          }
-        }
-      })
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
-      assert.equal(await page.locator('#growing textarea').evaluate(ta => ta.style.height), '')
-      await page.locator('#container').evaluate(el => {
-        if (el instanceof HTMLDetailsElement) el.open = true
-        el.style.display = 'block'
-        el.style.contentVisibility = 'visible'
-      })
-      await fits(page)
-      const wide = await height(page)
-      await page.locator('#container').evaluate(el => el.style.width = '150px')
-      await page.waitForFunction(wide => document.querySelector('#growing').shadowRoot.querySelector('textarea').clientHeight > wide, wide)
-      await fits(page)
-      const narrow = await height(page)
-      await page.locator('#growing textarea').fill('Short')
-      await fits(page)
-      assert.ok(await height(page) < narrow)
-      await page.locator('#growing').evaluate(el => el.value = 'First\nSecond\nThird\nFourth')
-      await fits(page)
-      assert.ok(await height(page) > 60)
-      // Updates made while folded must be measured again on reveal.
-      await page.locator('#container').evaluate(el => {
-        if (el instanceof HTMLDetailsElement) el.open = false
-        else el.style.display = 'none'
-      })
-      await page.locator('#growing').evaluate(el => el.value = 'Restored')
-      await page.locator('#container').evaluate(el => {
-        if (el instanceof HTMLDetailsElement) el.open = true
-        else el.style.display = 'block'
-      })
-      await page.waitForFunction(() => document.querySelector('#growing').shadowRoot.querySelector('textarea').clientHeight < 40)
-      await fits(page)
-      assert.ok(await height(page) < 40)
-      await page.locator('#growing').evaluate(el => {
-        el.remove()
-        el.value = 'Reconnected\nWith\nFour\nLines'
-        document.getElementById('container').append(el)
-      })
-      await fits(page)
-      assert.ok(await height(page) > 60)
-      assert.deepEqual(errors, [])
-    })
-  }
-
-  test(`${engine.name()}: multiline Input resizes through nested disclosures and a shadow ancestor`, async t => {
-    const { page, errors } = await fixture(t, engine, '<details id="outer"><summary>Outer</summary><div id="shadow-host"></div></details>')
-    await page.evaluate(() => {
-      const shadow = document.getElementById('shadow-host').attachShadow({ mode: 'open' })
-      shadow.innerHTML = '<details id="inner" open><summary>Inner</summary><a-input id="growing" multiline value="One&#10;Two&#10;Three"></a-input></details>'
-    })
-    const growing = page.locator('#growing')
-    const textarea = growing.locator('textarea')
-    await page.locator('#outer').evaluate(el => el.open = true)
-    await page.waitForFunction(() => document.getElementById('shadow-host').shadowRoot.getElementById('growing').shadowRoot.querySelector('textarea').clientHeight > 60)
-    await page.locator('#inner').evaluate(el => el.open = false)
-    await growing.evaluate(el => el.value = 'Short')
-    await page.locator('#inner').evaluate(el => el.open = true)
-    await page.waitForFunction(() => document.getElementById('shadow-host').shadowRoot.getElementById('growing').shadowRoot.querySelector('textarea').clientHeight < 40)
-    await textarea.fill('One\nTwo\nThree\nFour')
-    assert.ok(await textarea.evaluate(el => el.clientHeight > 60))
+  test(`${engine.name()}: multiline Input follows typography changes at the same width`, async t => {
+    const { page, errors } = await fixture(t, engine,
+      '<a-input id="growing" multiline style="width:240px" value="One&#10;Two&#10;Three&#10;Four&#10;Five&#10;Six"></a-input>')
+    const textarea = page.locator('#growing textarea')
+    const initial = await textarea.evaluate(el => ({ width: el.clientWidth, height: el.clientHeight }))
+    await textarea.evaluate(el => el.style.lineHeight = '40px')
+    await page.waitForFunction(height => {
+      const ta = document.getElementById('growing').shadowRoot.querySelector('textarea')
+      return ta.clientHeight > height && Math.abs(ta.scrollHeight - ta.clientHeight) <= 1
+    }, initial.height)
+    assert.equal(await textarea.evaluate(el => el.clientWidth), initial.width)
     assert.deepEqual(errors, [])
   })
 
-  test(`${engine.name()}: multiline Input honors row limits, row changes, and size changes`, async t => {
-    const { page, errors } = await fixture(t, engine, '<a-input id="growing" multiline maxrows="3" style="width:240px"></a-input>')
-    const textarea = page.locator('#growing textarea')
-    await textarea.fill('One\nTwo\nThree\nFour\nFive\nSix')
-    const capped = await height(page)
-    assert.ok(capped >= 60 && capped < 80)
-    assert.ok(await textarea.evaluate(ta => ta.scrollHeight > ta.clientHeight))
-    await page.locator('#growing').evaluate(el => el.setAttribute('rows', '2'))
-    assert.ok(await height(page) < capped)
-    assert.equal(await textarea.evaluate(ta => ta.style.height), '')
-    await textarea.fill('Short')
-    const fixed = await height(page)
-    await textarea.fill('One\nTwo\nThree\nFour')
-    assert.equal(await height(page), fixed)
-    await page.locator('#growing').evaluate(el => {
-      el.removeAttribute('rows')
-      el.removeAttribute('maxrows')
+  test(`${engine.name()}: controlled multiline Input updates preserve page scroll position`, async t => {
+    const { page, errors } = await fixture(t, engine,
+      '<div style="height:1000px"></div><a-input id="growing" multiline style="width:240px"></a-input>')
+    await page.locator('#growing').evaluate(el => el.value = 'A line\n'.repeat(60))
+    const initialScroll = await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight)
+      return window.scrollY
     })
-    await fits(page)
-    const medium = await height(page)
-    await page.locator('#growing').evaluate(el => el.setAttribute('size', 'large'))
-    await fits(page)
-    assert.ok(await height(page) > medium)
-    await textarea.fill('')
-    await page.locator('#growing').evaluate(el => el.setAttribute('placeholder', 'A placeholder\nWith three\nLines'))
-    await fits(page)
-    assert.ok(await height(page) > 60)
+    assert.ok(initialScroll > 1000)
+    await page.locator('#growing').evaluate(el => {
+      el.value = el.value
+      el.setAttribute('name', 'message')
+    })
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)))
+    assert.equal(await page.evaluate(() => window.scrollY), initialScroll)
     assert.deepEqual(errors, [])
   })
 

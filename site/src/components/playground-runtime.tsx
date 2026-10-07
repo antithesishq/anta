@@ -5,7 +5,7 @@ type PlaygroundProps = Parameters<typeof Playground>[0]
 
 function mountPlaygrounds() {
   for (const host of document.querySelectorAll<HTMLElement>('[data-anta-playground]')) {
-    if (host.dataset.antaPlaygroundMounted) continue
+    if (host.hasAttribute('data-anta-playground-mounted')) continue
     // Native textarea autosizing can crash WebKit while a disclosure is closed.
     // Wait for every enclosing disclosure before creating the editor and form.
     let disclosure = host.closest('details')

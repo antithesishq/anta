@@ -66,8 +66,10 @@ export interface InputProps extends BaseProps, DOMEventHandlers {
   /** Initial value for the uncontrolled case. */
   defaultValue?: string
   /** Render a `<textarea>` instead of an `<input>`. Without `rows` it grows
-   *  with its content from one line (capped by `maxRows` if set). Height updates
-   *  when the value or available width changes and when a hidden field is shown. */
+   *  with its content from one line (capped by `maxRows` if set). Autogrow uses
+   *  CSS `field-sizing` where supported (Chrome/Edge, Safari ≥ 26.2) and falls
+   *  back to a built-in JS resize elsewhere (Firefox, older Safari), so it grows
+   *  in every browser. */
   multiline?: boolean
   /** Fixed visible row count — a constant-height `<textarea>` (implies
    *  `multiline`). */

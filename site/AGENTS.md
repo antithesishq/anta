@@ -87,6 +87,8 @@ must reset for each document. Authored JSX tables retain their own layout and
 must not receive Markdown table wrappers.
 Run `pnpm --filter anta-site test:production` after the production build to check
 search, table alignment, ClientRouter navigation, and the compiled Playground.
+The Playground regressions also use WebKit; install it with
+`pnpm --filter anta-site exec playwright install webkit` before the first run.
 
 ## Site topology
 
@@ -218,6 +220,7 @@ Supporting code:
   The root dev watcher also rebuilds it after changes to its source or
   `site/lib/sandbox/`; wait for the runtime rebuild before refreshing a local
   Playground page.
+- Mount Playground hosts only after all enclosing disclosures are open. Creating native autosizing textareas inside a closed Playground crashes Safari/WebKit during layout. Keep a mounted Playground alive when folded again so reopening preserves edits.
 
 ### Props annotations
 

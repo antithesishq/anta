@@ -7,7 +7,7 @@ import { test } from 'node:test'
 import { readPageCatalog } from '../site/lib/content/catalog.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
-const { chromium } = requireSite('playwright')
+const { chromium, webkit } = requireSite('playwright')
 const dist = new URL('../site/dist/', import.meta.url)
 
 test('collection reads keep island and script styles on the pages that use them', async () => {
@@ -26,9 +26,10 @@ test('collection reads keep island and script styles on the pages that use them'
   }
 })
 
-async function productionPage(t) {
-  const browser = await chromium.launch({
-    headless: true, channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined,
+async function productionPage(t, engine = chromium) {
+  const browser = await engine.launch({
+    headless: true,
+    ...(engine === chromium ? { channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined } : {}),
   })
   t.after(() => browser.close())
   const page = await browser.newPage()
@@ -42,6 +43,58 @@ async function productionPage(t) {
     await route.fulfill({ path: fileURLToPath(file) })
   })
   return { page, errors }
+}
+
+for (const engine of [chromium, webkit]) {
+  test(`${engine.name()}: collapsed Playground loads safely and preserves edits after reopening`, async t => {
+    const { page, errors } = await productionPage(t, engine)
+    await page.goto('https://anta.test/input/')
+    const host = page.locator('[data-anta-playground]').first()
+    assert.equal(await host.locator(':scope > *').count(), 0)
+    assert.equal(await host.getAttribute('data-anta-playground-mounted'), null)
+
+    const summary = page.locator('summary').filter({ hasText: 'Playground' }).first()
+    await summary.click()
+    await host.locator('iframe').waitFor()
+    await host.getByRole('tab', { name: 'Code', exact: true }).click()
+    await host.locator('.monaco-editor .view-lines').first().click()
+    await page.keyboard.press('ControlOrMeta+A')
+    await page.keyboard.insertText(
+      'import { Input } from "@antadesign/anta"\n' +
+      'function Demo() { return <Input label="Preserved edit" /> }',
+    )
+    const previewInput = page.frameLocator('iframe').first().getByRole('textbox', {
+      name: 'Preserved edit', exact: true,
+    })
+    await previewInput.waitFor()
+    await summary.click()
+    await page.waitForFunction(() => !document.querySelector('[data-anta-playground]')?.closest('details')?.open)
+    await summary.click()
+    await previewInput.waitFor()
+
+    await page.evaluate(() => {
+      window.playgroundNavigationSentinel = true
+      document.querySelector('a[href="/button/"]').click()
+    })
+    await page.waitForURL('https://anta.test/button/')
+    assert.equal(await page.evaluate(() => window.playgroundNavigationSentinel), true)
+    assert.equal(await page.locator('[data-anta-playground] > *').count(), 0)
+    await page.evaluate(async () => {
+      const host = document.querySelector('[data-anta-playground]')
+      const nested = document.createElement('details')
+      nested.innerHTML = '<summary>Nested playground</summary>'
+      host.before(nested)
+      nested.append(host)
+      const toggled = new Promise(resolve => nested.addEventListener('toggle', resolve, { once: true }))
+      nested.open = true
+      await toggled
+    })
+    assert.equal(await page.locator('[data-anta-playground] > *').count(), 0,
+      'Opening an inner disclosure must not mount inside a closed outer disclosure')
+    await page.locator('summary').filter({ hasText: 'Playground' }).first().click()
+    await page.frameLocator('iframe').first().getByRole('button').first().waitFor()
+    assert.deepEqual(errors, [])
+  })
 }
 
 test('native MDX preserves table alignment and the compiled playground after navigation', async t => {

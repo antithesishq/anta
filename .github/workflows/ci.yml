@@ -64,6 +64,8 @@ jobs:
         run: pnpm --filter anta-site run typecheck:worker
       - name: Build site
         run: pnpm --filter anta-site build
+      - name: Install WebKit for Safari regression tests
+        run: pnpm --filter anta-site exec playwright install --with-deps webkit
       - name: Test production site
         run: pnpm --filter anta-site test:production
         env:

@@ -104,15 +104,20 @@ const fixture = extract((state) => {
     if (!capture) return { canPoint: false, canWheel: false, fingerprint: null, point: null }
 
     const bounds = capture.getBoundingClientRect()
-    const canPoint = capture.style.display !== 'none' && bounds.width > 0 && bounds.height > 0
+    const point = {
+      x: [Math.max(0, bounds.left + 1), Math.min(state.window.innerWidth - 1, bounds.right - 1)] as [number, number],
+      y: [Math.max(0, bounds.top + 1), Math.min(state.window.innerHeight - 1, bounds.bottom - 1)] as [number, number],
+    }
+    const canPoint = capture.style.display !== 'none'
+      && bounds.width > 0
+      && bounds.height > 0
+      && point.x[0] <= point.x[1]
+      && point.y[0] <= point.y[1]
     return {
       canPoint,
       canWheel: canPoint && capture.hasAttribute('wheel-capture'),
       fingerprint: canPoint ? getFingerprint(capture) : null,
-      point: canPoint ? {
-        x: [bounds.left + 1, bounds.right - 1] as [number, number],
-        y: [bounds.top + 1, bounds.bottom - 1] as [number, number],
-      } : null,
+      point: canPoint ? point : null,
     }
   })
 

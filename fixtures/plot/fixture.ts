@@ -18,21 +18,12 @@ function createDataset(revision, plotIndex) {
   const count = 3 + Math.floor(random() * 8)
   return {
     color: colors[Math.floor(random() * colors.length)],
-    rows: [
-      { id: 'plot-' + plotIndex + '-center-' + revision, x: 5, y: 5 },
-      ...Array.from({ length: count - 1 }, (_, pointIndex) => ({
-        id: 'plot-' + plotIndex + '-point-' + revision + '-' + pointIndex,
-        x: Number((random() * 10).toFixed(2)),
-        y: Number((random() * 10).toFixed(2)),
-      })),
-    ],
-  }
-}
-
-function createDatasetSet(revision) {
-  return {
-    plots: Array.from({ length: PLOT_COUNT }, (_, plotIndex) => createDataset(revision, plotIndex)),
     revision,
+    rows: Array.from({ length: count }, (_, pointIndex) => ({
+      id: 'plot-' + plotIndex + '-point-' + revision + '-' + pointIndex,
+      x: Number((random() * 10).toFixed(2)),
+      y: Number((random() * 10).toFixed(2)),
+    })),
   }
 }
 
@@ -42,8 +33,8 @@ function createWindow(random) {
   return [Number(start.toFixed(2)), Number(end.toFixed(2))]
 }
 
-function createViewport(key) {
-  const random = createRandom(key * 2 + 1)
+function createViewport(key, plotIndex) {
+  const random = createRandom(key * PLOT_COUNT + plotIndex)
   return {
     x: random() < 0.15 ? null : createWindow(random),
     y: random() < 0.15 ? null : createWindow(random),
@@ -51,85 +42,73 @@ function createViewport(key) {
   }
 }
 
-export default function App() {
-  const [dataset, setDataset] = useState(() => createDatasetSet(0))
+function PlotFixture({ plotIndex }) {
+  const [dataset, setDataset] = useState(() => createDataset(0, plotIndex))
   const [height, setHeight] = useState(240)
   const [viewport, setViewport] = useState({ x: null, y: null, key: 0 })
-  const [mounted, setMounted] = useState(true)
   const [selected, setSelected] = useState('None')
   const [viewportReport, setViewportReport] = useState('No gesture report')
   const [errors, setErrors] = useState([])
 
   const formatWindow = (range) => range ? range.map((value) => value.toFixed(2)).join('–') : 'full'
-  const pointCount = dataset.plots.reduce((total, plot) => total + plot.rows.length, 0)
-  const sharedPlotArgs = {
-    height,
-    margin: { top: 24, right: 24, bottom: 48, left: 48 },
-    axis: {
-      x: { min: 0, max: 10, label: 'Horizontal' },
-      y: { min: 0, max: 10, label: 'Vertical' },
-    },
-    grid: true,
-    border: true,
-    zoom_pan: { x: true, y: true, modifier: true },
-    viewport: {
-      x: viewport.x,
-      y: viewport.y,
-      key: viewport.key,
-    },
-  }
 
   return (
-    <main
-      data-fixture="plot"
-      style={{ display: 'grid', width: 'min(100%, 1200px)', gap: '20px' }}
+    <section
+      data-plot-instance={plotIndex}
+      style={{ display: 'grid', alignContent: 'start', gap: '8px', minWidth: 0 }}
     >
-      {mounted ? (
-        <div data-plot-grid style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '16px' }}>
-          {dataset.plots.map((plot, plotIndex) => (
-            <div data-plot-instance={plotIndex} key={plotIndex} style={{ minHeight: height + 'px' }}>
-              <Plot
-                data-plot-target
-                data-plot-index={plotIndex}
-                plotArgs={{
-                  ...sharedPlotArgs,
-                  series: [scatter({
-                    data: plot.rows,
-                    size: 18,
-                    color: plot.color,
-                    tooltip: ({ row }) => <span data-plot-tooltip>{row.id}</span>,
-                    on_select: ({ row }) => setSelected('Plot ' + (plotIndex + 1) + ': ' + row.id),
-                  })],
-                  on_viewport_change: ({ x, y, zoom_factor }) => {
-                    const format = (axis) => axis ? axis.window.map((value) => value.toFixed(2)).join('–') : 'categorical'
-                    setViewportReport('Plot ' + (plotIndex + 1) + ': x ' + format(x) + ', y ' + format(y) + ', zoom ' + zoom_factor.x.toFixed(2) + '×' + zoom_factor.y.toFixed(2))
-                  },
-                }}
-                onError={({ phase, error }) => setErrors((current) => [
-                  ...current,
-                  'Plot ' + (plotIndex + 1) + ' ' + phase + ': ' + String(error),
-                ])}
-              />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p data-fixture-empty>The plots are unmounted.</p>
-      )}
+      <strong>Plot {plotIndex + 1}</strong>
+      <div style={{ minHeight: height + 'px' }}>
+        <Plot
+          data-plot-target
+          data-plot-index={plotIndex}
+          plotArgs={{
+            height,
+            margin: { top: 24, right: 24, bottom: 48, left: 48 },
+            axis: {
+              x: { min: 0, max: 10, label: 'Horizontal' },
+              y: { min: 0, max: 10, label: 'Vertical' },
+            },
+            grid: true,
+            border: true,
+            zoom_pan: { x: true, y: true, modifier: true },
+            viewport: {
+              x: viewport.x,
+              y: viewport.y,
+              key: viewport.key,
+            },
+            series: [scatter({
+              data: dataset.rows,
+              size: 18,
+              color: dataset.color,
+              tooltip: ({ row }) => <span data-plot-tooltip>{row.id}</span>,
+              on_select: ({ row }) => setSelected(row.id),
+            })],
+            on_viewport_change: ({ x, y, zoom_factor }) => {
+              const format = (axis) => axis ? axis.window.map((value) => value.toFixed(2)).join('–') : 'categorical'
+              setViewportReport('x ' + format(x) + ', y ' + format(y) + ', zoom ' + zoom_factor.x.toFixed(2) + '×' + zoom_factor.y.toFixed(2))
+            },
+          }}
+          onError={({ phase, error }) => setErrors((current) => [
+            ...current,
+            phase + ': ' + String(error),
+          ])}
+        />
+      </div>
 
-      <output aria-live="polite" data-fixture-state style={{ display: 'grid', gap: '4px', color: 'var(--text-2)', fontSize: '14px' }}>
-        <span>Dataset {dataset.revision}: {pointCount} points across {PLOT_COUNT} plots, {height}px each</span>
+      <output aria-live="polite" data-fixture-state style={{ display: 'grid', gap: '2px', color: 'var(--text-2)', fontSize: '12px' }}>
+        <span>Dataset {dataset.revision}: {dataset.rows.length} points, {height}px</span>
         <span>Selected: {selected}</span>
-        <span>Requested viewport: x {formatWindow(viewport.x)}, y {formatWindow(viewport.y)}</span>
-        <span>Last gesture report: {viewportReport}</span>
+        <span>Viewport: x {formatWindow(viewport.x)}, y {formatWindow(viewport.y)}</span>
+        <span>Gesture: {viewportReport}</span>
         <span>Errors: {errors.length}</span>
       </output>
 
       {errors.length > 0 && <pre data-plot-errors>{errors.join('\\n')}</pre>}
 
-      <div aria-label="Fixture controls" data-fixture-controls style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+      <div aria-label={'Plot ' + (plotIndex + 1) + ' controls'} data-fixture-controls style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
         <Button priority="secondary" onClick={() => {
-          setDataset((current) => createDatasetSet(current.revision + 1))
+          setDataset((current) => createDataset(current.revision + 1, plotIndex))
           setSelected('None')
         }}>
           Update data
@@ -139,10 +118,31 @@ export default function App() {
           Resize
         </Button>
 
-        <Button priority="secondary" onClick={() => setViewport((current) => createViewport(current.key + 1))}>
+        <Button priority="secondary" onClick={() => setViewport((current) => createViewport(current.key + 1, plotIndex))}>
           Update viewport
         </Button>
       </div>
+    </section>
+  )
+}
+
+export default function App() {
+  const [mounted, setMounted] = useState(true)
+
+  return (
+    <main
+      data-fixture="plot"
+      style={{ display: 'grid', width: 'min(100%, 1200px)', gap: '20px' }}
+    >
+      {mounted ? (
+        <div data-plot-grid style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '16px' }}>
+          {Array.from({ length: PLOT_COUNT }, (_, plotIndex) => (
+            <PlotFixture key={plotIndex} plotIndex={plotIndex} />
+          ))}
+        </div>
+      ) : (
+        <p data-fixture-empty>The plots are unmounted.</p>
+      )}
 
       <button data-plot-mount-toggle hidden type="button" onClick={() => setMounted((current) => !current)}>
         Toggle mount

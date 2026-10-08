@@ -27,8 +27,13 @@
       color-mix(in oklch, #44374b 10%, transparent),
       color-mix(in oklch, #e4d1ef 10%, transparent)
     );
+    --switch-track-disabled-border: var(--switch-track-disabled);
+    --switch-track-on-disabled-border: transparent;
     --switch-thumb: light-dark(var(--bg-1), #ece9ec);
     --switch-thumb-off: var(--switch-track-off-stroke);
+    --switch-thumb-off-disabled: var(--switch-thumb-off);
+    --switch-thumb-shadow: 0 1px 2px color-mix(in oklch, #44374b 25%, transparent);
+    --switch-thumb-shadow-disabled: 0 1px 2px color-mix(in oklch, #44374b 12.5%, transparent);
 
     --switch-tone-source: var(--anta-seed-neutral);
     --switch-off-tone-source: var(--anta-seed-neutral);
@@ -44,6 +49,8 @@
       oklch(from var(--switch-tone-source) 0.42 c h),
       oklch(from var(--switch-tone-source) 0.58 c h)
     );
+    --switch-track-on-disabled: color-mix(in oklch, var(--switch-track-on) 50%, transparent);
+    --switch-thumb-on-disabled: color-mix(in oklch, var(--switch-thumb) 50%, transparent);
 
     --switch-label-color: var(--text-2);
     --switch-label-color-disabled: var(--text-4);
@@ -139,7 +146,7 @@
         margin-block-start: calc((var(--switch-label-lh) - var(--switch-thumb-size)) / 2);
         transform: translateX(var(--switch-thumb-travel));
         background: var(--switch-thumb);
-        box-shadow: 0 1px 2px color-mix(in oklch, #44374b 25%, transparent);
+        box-shadow: var(--switch-thumb-shadow);
       }
     }
 
@@ -165,21 +172,22 @@
       color: var(--switch-label-color-disabled);
       &::before {
         background: var(--switch-track-disabled);
-        border-color: var(--switch-track-disabled);
+        border-color: var(--switch-track-disabled-border);
         transition: none;
       }
       &::after {
+        background: var(--switch-thumb-off-disabled);
         box-shadow: none;
         transition: none;
       }
       &:state(checked) {
         &::before {
-          background: color-mix(in oklch, var(--switch-track-on) 50%, transparent);
-          border-color: transparent;
+          background: var(--switch-track-on-disabled);
+          border-color: var(--switch-track-on-disabled-border);
         }
         &::after {
-          background: color-mix(in oklch, var(--switch-thumb) 50%, transparent);
-          box-shadow: 0 1px 2px color-mix(in oklch, #44374b 12.5%, transparent);
+          background: var(--switch-thumb-on-disabled);
+          box-shadow: var(--switch-thumb-shadow-disabled);
         }
       }
       a-switch-hint { color: var(--switch-label-color-disabled); }

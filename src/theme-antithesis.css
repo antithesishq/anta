@@ -1028,6 +1028,19 @@
     --_input-focus-offset: -1px;
   }
 
+  /* The field ring pulses in like the other focus rings. The rule targets the
+     field part from the document, so it resolves the document's keyframes.
+     The host matches `:focus` only when its shadow control holds focus, not
+     when a slotted button does, which matches the shadow ring condition. */
+  a-input:not([readonly]):focus::part(field),
+  a-input[readonly]:state(kb-focus)::part(field) {
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
   a-input:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
     --input-border: var(--stroke-1-hover);
     --input-border-width: 1px;

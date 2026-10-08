@@ -7,7 +7,13 @@ const waitForPlotFixture = registerCustomAction(
   'waitForPlotFixture',
   async (document, window) => {
     const deadline = Date.now() + 5_000
-    while (!document.querySelector('[data-fixture="plot"]')) {
+    while (true) {
+      const captures = Array.from(document.querySelectorAll<HTMLElement>('[data-plot-target] .plot-capture'))
+      const plotsReady = captures.length === 10 && captures.every((capture) => {
+        const bounds = capture.getBoundingClientRect()
+        return capture.style.display !== 'none' && bounds.width > 0 && bounds.height > 0
+      })
+      if (document.querySelector('[data-fixture="plot"]') && plotsReady) return
       if (Date.now() >= deadline) throw new Error('Plot fixture did not compile within five seconds.')
       await new Promise((resolve) => window.setTimeout(resolve, 25))
     }
@@ -16,8 +22,8 @@ const waitForPlotFixture = registerCustomAction(
 
 const hoverPlotCenter = registerCustomAction(
   'plotHoverCenter',
-  async (document, window) => {
-    const target = document.querySelector<HTMLElement>('[data-plot-target]')
+  async (document, window, plotIndex: number) => {
+    const target = document.querySelectorAll<HTMLElement>('[data-plot-target]')[plotIndex]
     const capture = target?.querySelector<HTMLElement>('.plot-capture')
     if (!target || !capture) return
 
@@ -32,8 +38,8 @@ const hoverPlotCenter = registerCustomAction(
 
 const selectPlotCenter = registerCustomAction(
   'plotSelectCenter',
-  async (document, window) => {
-    const target = document.querySelector<HTMLElement>('[data-plot-target]')
+  async (document, window, plotIndex: number) => {
+    const target = document.querySelectorAll<HTMLElement>('[data-plot-target]')[plotIndex]
     const capture = target?.querySelector<HTMLElement>('.plot-capture')
     if (!target || !capture) return
 
@@ -48,16 +54,17 @@ const selectPlotCenter = registerCustomAction(
 
 const leavePlot = registerCustomAction(
   'plotLeave',
-  async (document, window) => {
-    const target = document.querySelector<HTMLElement>('[data-plot-target]')
+  async (document, window, plotIndex: number) => {
+    const target = document.querySelectorAll<HTMLElement>('[data-plot-target]')[plotIndex]
     target?.dispatchEvent(new window.MouseEvent('mouseleave'))
   },
 )
 
 const zoomPlotIn = registerCustomAction(
   'plotZoomIn',
-  async (document, window) => {
-    const capture = document.querySelector<HTMLElement>('[data-plot-target] .plot-capture')
+  async (document, window, plotIndex: number) => {
+    const target = document.querySelectorAll<HTMLElement>('[data-plot-target]')[plotIndex]
+    const capture = target?.querySelector<HTMLElement>('.plot-capture')
     if (!capture?.hasAttribute('wheel-capture')) return
 
     const bounds = capture.getBoundingClientRect()
@@ -74,8 +81,9 @@ const zoomPlotIn = registerCustomAction(
 
 const zoomPlotOut = registerCustomAction(
   'plotZoomOut',
-  async (document, window) => {
-    const capture = document.querySelector<HTMLElement>('[data-plot-target] .plot-capture')
+  async (document, window, plotIndex: number) => {
+    const target = document.querySelectorAll<HTMLElement>('[data-plot-target]')[plotIndex]
+    const capture = target?.querySelector<HTMLElement>('.plot-capture')
     if (!capture?.hasAttribute('wheel-capture')) return
 
     const bounds = capture.getBoundingClientRect()
@@ -92,8 +100,8 @@ const zoomPlotOut = registerCustomAction(
 
 const resetPlotWithDoubleClick = registerCustomAction(
   'plotDoubleClickReset',
-  async (document, window) => {
-    const target = document.querySelector<HTMLElement>('[data-plot-target]')
+  async (document, window, plotIndex: number) => {
+    const target = document.querySelectorAll<HTMLElement>('[data-plot-target]')[plotIndex]
     const capture = target?.querySelector<HTMLElement>('.plot-capture')
     if (!target || !capture) return
 
@@ -108,49 +116,73 @@ const resetPlotWithDoubleClick = registerCustomAction(
 
 const togglePlotMount = registerCustomAction(
   'plotToggleMount',
-  async (document) => {
+  async (document, window) => {
+    const wasMounted = document.querySelector('[data-plot-target]') !== null
     document.querySelector<HTMLElement>('[data-plot-mount-toggle]')?.click()
+    if (wasMounted) return
+
+    const deadline = Date.now() + 5_000
+    while (true) {
+      const captures = Array.from(document.querySelectorAll<HTMLElement>('[data-plot-target] .plot-capture'))
+      const plotsReady = captures.length === 10 && captures.every((capture) => {
+        const bounds = capture.getBoundingClientRect()
+        return capture.style.display !== 'none' && bounds.width > 0 && bounds.height > 0
+      })
+      if (plotsReady) return
+      if (Date.now() >= deadline) throw new Error('Plot fixture did not remount within five seconds.')
+      await new Promise((resolve) => window.setTimeout(resolve, 25))
+    }
   },
 )
 
 const fixture = extract((state) => {
   const ready = state.document.querySelector('[data-fixture="plot"]') !== null
-  const mounted = state.document.querySelector('[data-plot-target]') !== null
-  const capture = state.document.querySelector<HTMLElement>('[data-plot-target] .plot-capture')
-  if (!capture) return { canPoint: false, canWheel: false, mounted, ready }
+  const plots = Array.from(state.document.querySelectorAll<HTMLElement>('[data-plot-target]'), (target) => {
+    const capture = target.querySelector<HTMLElement>('.plot-capture')
+    if (!capture) return { canPoint: false, canWheel: false }
 
-  const bounds = capture.getBoundingClientRect()
-  const canPoint = capture.style.display !== 'none' && bounds.width > 0 && bounds.height > 0
+    const bounds = capture.getBoundingClientRect()
+    const canPoint = capture.style.display !== 'none' && bounds.width > 0 && bounds.height > 0
+    return {
+      canPoint,
+      canWheel: canPoint && capture.hasAttribute('wheel-capture'),
+    }
+  })
+
   return {
-    canPoint,
-    canWheel: canPoint && capture.hasAttribute('wheel-capture'),
-    mounted,
+    mounted: plots.length > 0,
+    plots,
     ready,
   }
 })
 
 const plotGestureActions = actions(() => {
   const current = fixture.current
-  if (!current.canPoint) return []
-
-  return [
-    hoverPlotCenter(),
-    selectPlotCenter(),
-    leavePlot(),
-    resetPlotWithDoubleClick(),
-    ...(current.canWheel ? [zoomPlotIn(), zoomPlotOut()] : []),
-  ]
+  return current.plots.flatMap((plot, plotIndex) => (
+    plot.canPoint
+      ? [
+          hoverPlotCenter(plotIndex),
+          selectPlotCenter(plotIndex),
+          leavePlot(plotIndex),
+          resetPlotWithDoubleClick(plotIndex),
+          ...(plot.canWheel ? [zoomPlotIn(plotIndex), zoomPlotOut(plotIndex)] : []),
+        ]
+      : []
+  ))
 })
 
 const plotMountActions = actions(() => (
-  fixture.current.ready && (!fixture.current.mounted || fixture.current.canPoint)
+  fixture.current.ready && (
+    !fixture.current.mounted
+    || fixture.current.plots.length === 10 && fixture.current.plots.every((plot) => plot.canPoint)
+  )
     ? [togglePlotMount()]
     : []
 ))
 
 export const plotActions = weighted([
   [100, plotGestureActions],
-  [10, plotMountActions],
+  [1, plotMountActions],
 ])
 
 export const plotReadyActions = actions(() => (

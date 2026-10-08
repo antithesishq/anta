@@ -7,6 +7,8 @@ changes are not listed.
 
 ### Fixed
 
+- [Calendar](/calendar/) keeps controlled property updates in sync with its
+  value attribute and form value, so selecting a previous date works again.
 - [InputTime](/input-time/) reserves space for the locale's longest AM/PM label
   without native field autosizing. Switching between AM and PM keeps its width.
 

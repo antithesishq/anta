@@ -1,23 +1,23 @@
 // Shared Anta event translation for both worker and browser hosts; no runtime Anta or DOM dependency.
-import type { PanInput } from "../core/interaction_controller"
+import type { DragInput } from "../core/interaction_controller"
+import type { WheelInput } from "../core/interactions/target"
 import type { WheelClaim } from "../core/interactions/zoom_pan"
 import type { CaptureInputDirections, CapturePointerInput, CaptureWheelInput } from "@antadesign/anta/capture-types"
 
 /** Convert Capture's drag coordinates to the shared controller input. */
-export function capture_pointer_input(detail: CapturePointerInput): PanInput {
+export function capture_pointer_input(detail: CapturePointerInput): Omit<DragInput, 'target'> {
+    const geometry = detail.phase === 'start' ? detail.start : detail
     const pointer = detail.phase === 'start' ? detail.start.pointerEvent : detail.pointerEvent
     return {
         phase: detail.phase,
+        offsetX: geometry.localX,
+        offsetY: geometry.localY,
+        ctrlKey: (pointer ?? detail.start.pointerEvent).ctrlKey,
         pointer: pointer === null ? null : { x: pointer.clientX, y: pointer.clientY },
     }
 }
 
-export type PlotWheelInput = {
-    offsetX: number
-    offsetY: number
-    deltaY: number
-    ctrlKey: boolean
-}
+export type PlotWheelInput = Omit<WheelInput, 'target'>
 
 /** Keep Capture enabled at bounds so its settled-pointer state survives direction changes. */
 export function capture_wheel_directions(claim: WheelClaim): CaptureInputDirections {
@@ -34,6 +34,7 @@ export function capture_wheel_input(detail: CaptureWheelInput): PlotWheelInput {
     return {
         offsetX: detail.localX,
         offsetY: detail.localY,
+        deltaX: detail.wheelEvent.deltaX,
         deltaY: detail.wheelEvent.deltaY,
         ctrlKey: detail.wheelEvent.ctrlKey,
     }

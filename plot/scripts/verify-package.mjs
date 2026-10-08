@@ -133,7 +133,7 @@ try {
         assert.deepEqual(internal.resolve_canvas_size({}, {width:200.5,height:100.5}), {width:200,height:100})
         const controller = new internal.PlotController({series:[plot.scatter({data:rows})]})
         controller.compose({width:600,height:300,color_theme:'light',device_pixel_ratio:1})
-        assert.equal(controller.interactions.handle_wheel({offsetX:200,offsetY:100,deltaY:-100,ctrlKey:true},controller.template.zoom_pan),true)
+        assert.equal(controller.interactions.handle_wheel({offsetX:200,offsetY:100,deltaX:0,deltaY:-100,ctrlKey:false,target:'plot'},controller.template.zoom_pan),true)
         assert.notEqual(controller.interactions.staged_viewport.x,null)
         for (const path of ['components', 'host', 'anta', 'core/controller']) {
             await assert.rejects(import('@antadesign/plot/' + path), {code:'ERR_PACKAGE_PATH_NOT_EXPORTED'})

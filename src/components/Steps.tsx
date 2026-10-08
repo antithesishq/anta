@@ -6,7 +6,6 @@ import { Icon } from "./Icon"
 import { Loader } from "./Loader"
 import type { TabOption, TabsProps } from "./Tabs"
 import { Tabs } from "./Tabs"
-import "./Steps.css"
 
 /** Named Anta tone used by Steps. */
 export type StepTone =

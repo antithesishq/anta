@@ -51,24 +51,28 @@ export function new_plot_template<TooltipContent = unknown>(args: PlotArgs<Toolt
 }
 
 /**
- * Resolve the zoom/pan config into its enabled + modifier + per-axis flags. `true` and an absent arg both mean
- * the Ctrl-gated default on both axes; an object tunes the modifier and opts axes out. `enabled` mirrors
+ * Resolve the zoom/pan config into its enabled + per-axis flags. `true` and an absent arg both enable
+ * both axes with fixed gestures; an object opts axes out. `enabled` mirrors
  * "some axis may move", so opting both out is the same as `zoom_pan: false`.
  * @param zoom_pan - the caller's zoom_pan arg
  * @returns the resolved config
  */
 function resolve_zoom_pan(zoom_pan: PlotArgs['zoom_pan']): ZoomPan {
     if (zoom_pan === undefined || zoom_pan === true) {
-        return { enabled: true, modifier: true, x: true, y: true }
+        return { enabled: true, x: true, y: true, menu_zoom_step: 2 }
     }
 
     if (zoom_pan === false) {
-        return { enabled: false, modifier: true, x: false, y: false }
+        return { enabled: false, x: false, y: false, menu_zoom_step: 2 }
     }
     const x = zoom_pan.x ?? true
     const y = zoom_pan.y ?? true
 
-    return { enabled: x || y, modifier: zoom_pan.modifier ?? true, x, y }
+    const menu_zoom_step = zoom_pan.menu_zoom_step === undefined ? 2 : zoom_pan.menu_zoom_step
+    if (!Number.isFinite(menu_zoom_step) || menu_zoom_step <= 1) {
+        throw new Error('zoom_pan.menu_zoom_step must be finite and greater than 1')
+    }
+    return { enabled: x || y, x, y, menu_zoom_step }
 }
 
 const KEEP = 'keep' as const // this side was omitted: leave that axis wherever it is

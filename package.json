@@ -1,6 +1,6 @@
 {
   "name": "@antadesign/anta",
-  "version": "0.3.33",
+  "version": "0.3.34",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,6 +23,7 @@
       "types": "./dist/elements/index.d.ts",
       "default": "./dist/elements/index.js"
     },
+    "./elements/*.css": "./dist/elements/*.css",
     "./elements/*": {
       "types": "./dist/elements/*.d.ts",
       "default": "./dist/elements/*.js"
@@ -76,7 +77,8 @@
     "prepublishOnly": "pnpm run build",
     "prepack": "pnpm run build:docs",
     "test:fuzz_component": "node tests/pbt/run.ts",
-    "test:fixture": "node scripts/test-fixture.mjs"
+    "test:fixture": "node scripts/test-fixture.mjs",
+    "test:consumers": "node tests/consumers/run.mjs"
   },
   "devDependencies": {
     "@antithesishq/bombadil": "0.7.5",

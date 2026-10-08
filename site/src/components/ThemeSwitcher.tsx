@@ -26,6 +26,9 @@ const notify = () => window.dispatchEvent(new Event('anta-palette-change'))
 function applyPalette(v: string) {
   const link = document.getElementById(LINK_ID) as HTMLLinkElement | null
   const href = THEME_HREF[v] ?? THEME_HREF.antune
+  const fonts = document.getElementById('palette-fonts-link') as HTMLLinkElement | null
+  if (fonts) fonts.href = v === 'none'
+    ? THEME_HREF.none : `/themes/fonts-${v === 'antithesis' ? 'antithesis' : 'antune'}.css`
   if (!link || link.getAttribute('href') === href) {
     notify()
     return

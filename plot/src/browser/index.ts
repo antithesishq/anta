@@ -67,17 +67,17 @@ export async function definePlotSurfaceElement(): Promise<void> {
     }
     const registered = () => customElements.get('a-plot-surface') !== undefined
     if (registered()) return
-    const [box, capture, button, icon] = await Promise.all([
+    const [box, capture, menu, menu_item] = await Promise.all([
         import('@antadesign/anta/elements/a-box'),
         import('@antadesign/anta/elements/a-capture'),
-        import('@antadesign/anta/elements/a-button'),
-        import('@antadesign/anta/elements/a-icon'),
+        import('@antadesign/anta/elements/a-menu'),
+        import('@antadesign/anta/elements/a-menu-item'),
     ])
     if (registered()) return
     box.register_a_box()
     capture.register_a_capture()
-    button.register_a_button()
-    icon.register_a_icon()
+    menu.register_a_menu()
+    menu_item.register_a_menu_item()
     const element = create_plot_surface_element()
     customElements.define('a-plot-surface', element)
 }

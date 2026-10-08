@@ -28,7 +28,7 @@ export function viewportSizes(): PlotArgs<Node> {
     background: { light: '#ffffff', dark: '#202124' },
     chrome_color: { light: '#64748b', dark: '#cbd5e1' },
     grid: false,
-    zoom_pan: { x: true, y: false, modifier: true },
+    zoom_pan: { x: true, y: false },
     series: [
       scatter<Node>({ data: rows(labels[0]), size: 4,
         color: { light: '#64748b', dark: '#cbd5e1' }, tooltip: true }),

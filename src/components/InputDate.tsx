@@ -25,7 +25,6 @@ import { Calendar } from './Calendar'
 import { Button } from './Button'
 import { Icon } from './Icon'
 import { InputTime } from './InputTime'
-import './InputDate.css'
 
 /** Snapshot passed as the 2nd argument to `onValueChange` — the new ISO value
  *  (`''` when cleared) plus the field name (mirrors `Input` / `Calendar`). */

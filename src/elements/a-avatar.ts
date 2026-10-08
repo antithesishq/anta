@@ -33,18 +33,13 @@ export class AAvatarElement extends HTMLElementBase {
     super()
     const shadow = this.attachShadow({ mode: 'open' })
 
-    const style = document.createElement('style')
-    style.textContent = SHADOW_STYLE
-
     this.#badge = document.createElement('span')
     this.#badge.className = 'badge'
     this.#badge.setAttribute('part', 'badge')
-    this.#badge.style.display = 'none'
-
-    shadow.append(style, this.#badge)
+    shadow.append(this.#badge)
   }
 
-  /** Swap in the picture, keeping it between the style and the indicator. */
+  /** Swap in the picture, keeping it before the indicator. */
   #setPicture(node: Element) {
     if (this.#picture) this.#picture.replaceWith(node)
     else this.#badge.before(node)
@@ -72,11 +67,6 @@ export class AAvatarElement extends HTMLElementBase {
   }
 
   #render() {
-    // The badge's color comes from the host CSS (its tone); the element only
-    // decides whether it shows.
-    const badge = this.getAttribute('badge')
-    this.#badge.style.display = badge && badge !== 'none' ? '' : 'none'
-
     const name = this.getAttribute('name') ?? undefined
     const src = this.getAttribute('src')
 
@@ -103,32 +93,6 @@ export class AAvatarElement extends HTMLElementBase {
     }
   }
 }
-
-// Shadow styles, injected verbatim into every <a-avatar> shadow root — kept
-// COMMENT-FREE (it ships and re-injects per instance; see AGENTS.md). The host
-// box, tokens, size variants, dark mode, and the pre-upgrade skeleton live in
-// the external a-avatar.css; this only lays out the shadow-internal nodes.
-const SHADOW_STYLE = `
-  :host { display: inline-block; position: relative; vertical-align: middle; }
-  svg, img {
-    display: block;
-    inline-size: 100%;
-    block-size: 100%;
-    border-radius: var(--avatar-radius);
-    background: var(--avatar-placeholder-bg);
-    mask-image: var(--avatar-badge-mask);
-  }
-  img { object-fit: cover; }
-  .badge {
-    position: absolute;
-    right: var(--avatar-badge-inset);
-    bottom: var(--avatar-badge-inset);
-    inline-size: var(--avatar-badge-size);
-    block-size: var(--avatar-badge-size);
-    border-radius: 50%;
-    background: var(--avatar-badge-color);
-  }
-`
 
 export function register_a_avatar() {
   if (typeof customElements === 'undefined') return

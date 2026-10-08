@@ -87,6 +87,8 @@ must reset for each document. Authored JSX tables retain their own layout and
 must not receive Markdown table wrappers.
 Run `pnpm --filter anta-site test:production` after the production build to check
 search, table alignment, ClientRouter navigation, and the compiled Playground.
+The Playground regressions also use WebKit; install it with
+`pnpm --filter anta-site exec playwright install webkit` before the first run.
 
 ## Site topology
 
@@ -130,6 +132,11 @@ MDX from retaining the client-only component's CSS in both page and island build
 - **`<html>` attributes are replaced wholesale on swap.** The runtime `.dark` class is re-stamped onto `e.newDocument` in an `astro:before-swap` hook in `DocsLayout.astro` — any future runtime root attribute needs the same treatment.
 - **Never `document.write`.** It only works during a full page parse; under the router it silently no-ops (this was the original palette-loading bug). Pre-paint work belongs in an `is:inline` head script that mutates elements already parsed above it.
 - **Theme switching**: one stable `<link id="palette-link">` defaults to `/themes/antune.css` and persists across navigation. **None** selects the empty `/themes/default.css` stub. `scripts/copy-themes.mjs` copies the package themes to `public/themes/`. Add a new theme to that script, `ThemeSwitcher.tsx`, and the layout's inline palette map. The switcher reads the live link on mount so it also works when storage is blocked. Playground iframes mirror changes to this link.
+- Reference font loading lives in `src/styles/fonts-antune.css` and
+  `fonts-antithesis.css`, separately from the published themes. The persisted
+  `palette-fonts-link` selects the matching site font stylesheet, or the empty
+  default for **None**. Keep it synchronized in the head script, ThemeSwitcher,
+  and Playground iframe. Package themes must not import these site files.
 - **Islands and page state die with the page they're on.** `transition:persist` only carries an element to pages whose HTML also renders a matching persist id — it cannot preserve a page-exclusive island across leave-and-return. State that must survive navigation goes to storage (see `ThemingLab.tsx`, sessionStorage key `anta-theming-lab`).
 - **Restoring stored state into an SSR'd island happens in a mount effect, never in the `useState` initializer.** Preact skips attribute patching during hydration, so initializer-restored state silently desyncs from the server-rendered DOM (stale `hidden`/`value` attributes). A post-mount `setState` is a normal update and patches everything (see `ThemingLab.tsx`).
 - **Swapped-in subtrees upgrade custom elements parent-first.** Anta group elements (`a-tabs`, `a-radio-group`) defer their first child sync a microtask for exactly this reason (see `childrenReady` in `src/elements/a-tabs.ts`). A new element class that reads or writes its custom-element *children* at connect time must do the same, or swapped-in pages render it dead while full loads look fine.
@@ -213,6 +220,7 @@ Supporting code:
   The root dev watcher also rebuilds it after changes to its source or
   `site/lib/sandbox/`; wait for the runtime rebuild before refreshing a local
   Playground page.
+- Mount Playground hosts only after all enclosing disclosures are open. Creating native autosizing textareas inside a closed Playground crashes Safari/WebKit during layout. Keep a mounted Playground alive when folded again so reopening preserves edits.
 
 ### Props annotations
 

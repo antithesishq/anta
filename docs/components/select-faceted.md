@@ -95,7 +95,7 @@ function Demo() {
       <SelectFaceted facets={FACETS} value={value} onValueChange={setValue} searchable />
 
       {active.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center', maxWidth: '100%' }}>
           {/* Show an editable control or summary for each active facet. */}
           {active.map((facet) => {
             // Options facets → an editable Select (single shows the trailing check;
@@ -113,8 +113,7 @@ function Demo() {
                   leading={`${facet.label}:`}
                   filter={facet.filter}
                   clearable
-                  // Chip sizes to its value and caps at a max-width (ellipsizing past it).
-                  style={{ width: 'fit-content', maxWidth: '240px' }}
+                  className="sf-chip"
                 />
               )
 
@@ -134,12 +133,11 @@ function Demo() {
                 leading={`${facet.label}:`}
                 clearable
                 dimActions
+                className="sf-chip"
                 onFocus={() => setFocusedKey(facet.key)}
                 onBlur={() => setFocusedKey(null)}
                 onInput={(e) => write(e.currentTarget.value)}
                 onClearInput={() => { setFocusedKey(null); setFacet(facet.key, undefined) }}
-                // Size the chip to its value, capped at a max-width.
-                style={{ width: 'fit-content', maxWidth: '240px' }}
               />
             )
           })}
@@ -159,6 +157,13 @@ function Demo() {
     </div>
   )
 }
+```
+
+The demo gives editable chips a consistent width, capped by their container.
+Input truncates long values with an ellipsis when the field is unfocused.
+
+```css
+.sf-chip { width: 240px; max-width: 100%; }
 ```
 
 The trigger opens the facet menu. The example shows active values beside it.

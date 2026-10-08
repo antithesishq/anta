@@ -19,7 +19,6 @@ import { MenuSeparator } from './MenuSeparator'
 import { Tag } from './Tag'
 import { Input } from './Input'
 import { Tooltip } from './Tooltip'
-import './select-parts.css'
 
 // ---- Facet config -------------------------------------------------------
 

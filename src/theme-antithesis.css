@@ -287,6 +287,19 @@
   --fill-3-critical-hover: color-mix(in oklch, #de455e 10%, transparent);
   --fill-3-critical-active: color-mix(in oklch, #de455e 15%, transparent);
 
+  --fill-4-hover: #efeae6;
+  --fill-4-active: #f9f7f6;
+  --fill-4-brand-hover: color-mix(in oklch, #912a0d 8%, transparent);
+  --fill-4-brand-active: color-mix(in oklch, #912a0d 5%, transparent);
+  --fill-4-info-hover: color-mix(in oklch, #175082 8%, transparent);
+  --fill-4-info-active: color-mix(in oklch, #175082 5%, transparent);
+  --fill-4-warning-hover: color-mix(in oklch, #995200 8%, transparent);
+  --fill-4-warning-active: color-mix(in oklch, #995200 5%, transparent);
+  --fill-4-success-hover: color-mix(in oklch, #1f5c31 8%, transparent);
+  --fill-4-success-active: color-mix(in oklch, #1f5c31 5%, transparent);
+  --fill-4-critical-hover: color-mix(in oklch, #a01c32 8%, transparent);
+  --fill-4-critical-active: color-mix(in oklch, #a01c32 5%, transparent);
+
   --fill-1-disabled: color-mix(in oklch, #79716d 50%, transparent);
 
   --fill-disabled: color-mix(in oklch, #79716d 10%, transparent);
@@ -420,6 +433,19 @@
   --fill-3-critical: color-mix(in oklch, #de455e 10%, transparent);
   --fill-3-critical-hover: color-mix(in oklch, #de455e 15%, transparent);
   --fill-3-critical-active: color-mix(in oklch, #de455e 20%, transparent);
+
+  --fill-4-hover: #2a1824;
+  --fill-4-active: #1c1219;
+  --fill-4-brand-hover: color-mix(in oklch, #f88d7d 10%, transparent);
+  --fill-4-brand-active: color-mix(in oklch, #f88d7d 5%, transparent);
+  --fill-4-info-hover: color-mix(in oklch, #7db6e8 10%, transparent);
+  --fill-4-info-active: color-mix(in oklch, #7db6e8 5%, transparent);
+  --fill-4-warning-hover: color-mix(in oklch, #e1a452 10%, transparent);
+  --fill-4-warning-active: color-mix(in oklch, #e1a452 5%, transparent);
+  --fill-4-success-hover: color-mix(in oklch, #74cd8e 10%, transparent);
+  --fill-4-success-active: color-mix(in oklch, #74cd8e 5%, transparent);
+  --fill-4-critical-hover: color-mix(in oklch, #e78e9d 10%, transparent);
+  --fill-4-critical-active: color-mix(in oklch, #e78e9d 5%, transparent);
 
   --fill-1-disabled: color-mix(in oklch, #a398a0 50%, transparent);
 
@@ -1053,6 +1079,58 @@
       [type="submit"], [type="image"], [type="hidden"]),
       textarea[data-anta], select[data-anta]):not([round]) {
     --native-field-round: 0px;
+  }
+
+  /* Menus use the row interaction fills from the Figma menu palette. */
+  a-menu:not([round]) {
+    --menu-radius: 0;
+  }
+
+  a-menu:not([round]) :is(a-menu-item, a[data-anta-menu-item]) {
+    border-radius: 0;
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item]):is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --menu-item-color: var(--text-1);
+    --menu-item-hover-bg: var(--fill-4-hover);
+    --menu-item-selected-bg: var(--fill-4-active);
+    --menu-item-active-bg: var(--fill-4-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="brand"] {
+    --menu-item-hover-bg: var(--fill-4-brand-hover);
+    --menu-item-selected-bg: var(--fill-4-brand-active);
+    --menu-item-active-bg: var(--fill-4-brand-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="info"] {
+    --menu-item-hover-bg: var(--fill-4-info-hover);
+    --menu-item-selected-bg: var(--fill-4-info-active);
+    --menu-item-active-bg: var(--fill-4-info-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="success"] {
+    --menu-item-hover-bg: var(--fill-4-success-hover);
+    --menu-item-selected-bg: var(--fill-4-success-active);
+    --menu-item-active-bg: var(--fill-4-success-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="warning"] {
+    --menu-item-hover-bg: var(--fill-4-warning-hover);
+    --menu-item-selected-bg: var(--fill-4-warning-active);
+    --menu-item-active-bg: var(--fill-4-warning-active);
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item])[tone="critical"] {
+    --menu-item-hover-bg: var(--fill-4-critical-hover);
+    --menu-item-selected-bg: var(--fill-4-critical-active);
+    --menu-item-active-bg: var(--fill-4-critical-active);
+  }
+
+  :is(a-menu-item[disabled], a[data-anta-menu-item][aria-disabled="true"]) {
+    --menu-item-color: var(--text-4);
+    --menu-item-icon-color: var(--text-4);
+    --menu-item-hint-color: var(--text-4);
   }
 
   a-tag {

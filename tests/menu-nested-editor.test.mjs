@@ -65,6 +65,12 @@ before(async () => {
 
 after(async () => browser?.close())
 
+// Menus attach trigger listeners a frame after their anchor becomes visible.
+const triggerReady = menu => menu.evaluate(element => new Promise(resolve => {
+  const tick = () => element.listening ? resolve() : requestAnimationFrame(tick)
+  tick()
+}))
+
 test('a nested select or link choice closes only its popup inside a persistent facet editor', async t => {
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 } })
   t.after(() => context.close())
@@ -78,12 +84,12 @@ test('a nested select or link choice closes only its popup inside a persistent f
   await editor.evaluate(menu => menu.open())
   assert.equal(await editor.evaluate(menu => menu.isOpen), true)
 
-  await editor.locator('a-button[aria-label="More"]').click()
+  await editor.locator('button[aria-label="More"]').click()
   const selectMenu = editor.locator('a-menu').filter({ has: page.getByText('10 minutes', { exact: true }) })
   assert.equal(await selectMenu.evaluate(menu => menu.isOpen), true)
   await selectMenu.getByText('10 minutes', { exact: true }).click()
   assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('a-menu')].slice(0, 3).map(menu => menu.isOpen)), [true, true, false])
-  assert.equal(await editor.locator('a-button[aria-label="More"] a-button-label').textContent(), '10 minutes')
+  assert.equal(await editor.locator('button[aria-label="More"]').textContent(), '10 minutes')
 
   await editor.getByText('Links', { exact: true }).click()
   const linkMenu = editor.locator('a-menu').filter({ has: page.getByText('Guide', { exact: true }) })
@@ -109,9 +115,10 @@ test('clearing a date field does not toggle its menu; the next field click opens
   const root = page.locator('a-menu').first()
   const editor = page.locator('a-menu[aria-label="Min duration editor"]')
   await editor.evaluate(menu => menu.open())
-  const field = editor.locator('a-input').first()
+  const field = editor.locator('a-input:not([button])').first()
   const calendar = field.locator('xpath=following-sibling::a-menu[1]')
 
+  await triggerReady(calendar)
   await field.locator('a-button[aria-label="Clear"]').click()
   assert.equal(await field.evaluate(input => input.value), '')
   assert.equal(await calendar.evaluate(menu => menu.isOpen), false)
@@ -133,9 +140,10 @@ test('clearing a date field leaves its already open calendar open', async t => {
   const root = page.locator('a-menu').first()
   const editor = page.locator('a-menu[aria-label="Min duration editor"]')
   await editor.evaluate(menu => menu.open())
-  const field = editor.locator('a-input').first()
+  const field = editor.locator('a-input:not([button])').first()
   const calendar = field.locator('xpath=following-sibling::a-menu[1]')
 
+  await triggerReady(calendar)
   await field.locator('input').click()
   assert.equal(await calendar.evaluate(menu => menu.isOpen), true)
   await field.locator('a-button[aria-label="Clear"]').click()
@@ -158,9 +166,10 @@ test('switching facet submenus resets a cleared date calendar before reopening i
   const other = root.locator('a-menu-item[submenu]').filter({ hasText: 'Other' })
   const editor = duration.locator('a-menu').first()
   await editor.evaluate(menu => menu.open())
-  const field = editor.locator('a-input').first()
+  const field = editor.locator('a-input:not([button])').first()
   const calendar = field.locator('xpath=following-sibling::a-menu[1]')
 
+  await triggerReady(calendar)
   await field.locator('input').click()
   await field.locator('a-button[aria-label="Clear"]').click()
   assert.equal(await field.evaluate(input => input.value), '')
@@ -177,6 +186,7 @@ test('switching facet submenus resets a cleared date calendar before reopening i
   })
 
   await editor.evaluate(menu => menu.open())
+  await triggerReady(calendar)
   await field.locator('input').click()
   assert.equal(await calendar.evaluate(menu => menu.isOpen), true)
 })

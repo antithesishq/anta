@@ -75,13 +75,13 @@ export async function checkBrowser({ origin, artifacts, framework, mode, compose
     if (composed) {
       report.layouts = await page.evaluate(() => {
         const style = selector => { const css = getComputedStyle(document.querySelector(selector)); return { display: css.display, gap: css.gap }; };
-        return { breadcrumbs: style('a-breadcrumbs'), select: style('a-select-field') };
+        return { breadcrumbs: style('a-breadcrumbs'), select: style('a-select-chevron') };
       });
       assert.equal(report.layouts.breadcrumbs.display, 'flex');
-      assert.deepEqual(report.layouts.select, { display: 'grid', gap: '4px' });
+      assert.equal(report.layouts.select.display, 'inline-flex');
       await page.locator('#select').getByRole('button').click();
       await page.locator('#select a-menu').waitFor({ state: 'visible' });
-      assert.equal(await page.locator('#select a-button').getAttribute('aria-expanded'), 'true');
+      assert.equal(await page.locator('#select a-input').getAttribute('aria-expanded'), 'true');
       await page.keyboard.press('Escape');
       await page.locator('#date > a-input').click();
       await page.locator('#date a-calendar').waitFor({ state: 'visible' });

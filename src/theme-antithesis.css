@@ -1021,10 +1021,11 @@
 
   /* Fields share the interactive stroke: stroke-1 at rest, stroke-1-hover on
      hover and focus. Status and custom-tone fields keep their own border. The
-     focus ring is 2px inside the field edge. */
+     2px focus ring straddles the field edge, 1px inside and 1px outside, so
+     focus grows the field outline by 1px without changing its layout size. */
   a-input {
     --_input-focus-width: 2px;
-    --_input-focus-offset: -2px;
+    --_input-focus-offset: -1px;
   }
 
   a-input:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {

@@ -560,6 +560,12 @@
     --focus-ring-inset: 1;
   }
 
+  /* Like a primary button, a 1px halo inside the 2px inset ring separates it from a
+     selected primary tab's fill. */
+  a-tabs:not([priority="secondary"], [priority="tertiary"]) a-tab:state(selected):focus-visible {
+    box-shadow: inset 0 0 0 3px var(--focus-halo);
+  }
+
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])):not([round]) {
     --_radius: 999px;

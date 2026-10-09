@@ -1260,8 +1260,8 @@ export interface ATabAttributes extends BaseAttributes {
   selected?: boolean | ''
   /** Disabled state. Presence-based (`''` on, omit off). */
   disabled?: boolean | ''
-  /** Fully-round this tab's box (`--tab-radius: 999px`). `<a-tabs round>` sets it
-   *  strip-wide instead. Presence-based (`''` on, omit off) — no custom value. */
+  /** Fully-round this tab's box (`--tab-radius: 999px`) outside an `<a-tabs>` strip,
+   *  where tabs are already fully round. Presence-based (`''` on, omit off) — no custom value. */
   round?: boolean | ''
   /** ARIA — `role="tab"` is set by the consumer (`Tabs` on each tab, or a hand-author),
    *  and `aria-controls` points at the paired panel. `aria-selected` is published by
@@ -1292,10 +1292,10 @@ export interface ATabsAttributes extends BaseAttributes {
   state?: string
   /** Uncontrolled initial selected value — read once on connect. */
   'default-state'?: string
-  /** Visual priority. `primary` (default) is the raised pill on a recessed track; `secondary`
-   *  keeps that sizing but drops the track (selected = subtle active background fill, no
-   *  border); `tertiary` is a bottom-underline under the selected tab only (no track, no rest
-   *  line). `tone` tints secondary + tertiary; primary stays neutral. */
+  /** Visual priority. `primary` (default) and `secondary` sit on a recessed track: the
+   *  selected `primary` tab is filled like a primary button, the selected `secondary` tab is
+   *  a raised white (black in dark mode) surface with a ring. `tertiary` underlines the
+   *  selected tab only (no track). Tabs at rest look like quaternary buttons. */
   priority?: 'primary' | 'secondary' | 'tertiary'
   /** Tone applied to the selected indicator/label, or any literal CSS color for a
    *  one-off custom tone (derived in oklch). `'neutral'` is the default. */
@@ -1316,9 +1316,9 @@ export interface ATabsAttributes extends BaseAttributes {
   noslide?: boolean | ''
   /** Disable the whole strip. Presence-based (`''` on, omit off). */
   disabled?: boolean | ''
-  /** Fully-round tabs + sliding indicator (via `--tab-radius: 999px`) and the primary
-   *  track well. A length value (`round="10px"`) applies to the top-level track well
-   *  only (pills + indicator stay full). Presence-based for the boolean form. */
+  /** Tabs, the sliding indicator, and the track are fully round by default. A length
+   *  value (`round="10px"`) sets a custom radius on the track only (tabs + indicator stay
+   *  full). Presence-based for the boolean form. */
   round?: boolean | number | string
   /** Fires whenever the active tab changes. `detail` carries `{ next, prev }` (values;
    *  `null` = none). Cancelable: a synchronous `preventDefault()` vetoes the pick in

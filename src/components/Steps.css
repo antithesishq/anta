@@ -60,6 +60,39 @@
     justify-content: space-between;
   }
 
+  /* Hints stay at the muted text-3 step of their tone. */
+  a-tabs[data-steps],
+  a-tabs[data-steps] > a-tab[tone="neutral"] {
+    --steps-hint-color: var(--text-3);
+  }
+  a-tabs[data-steps][tone="brand"],
+  a-tabs[data-steps] > a-tab[tone="brand"] {
+    --steps-hint-color: var(--text-3-brand);
+  }
+  a-tabs[data-steps][tone="info"],
+  a-tabs[data-steps] > a-tab[tone="info"] {
+    --steps-hint-color: var(--text-3-info);
+  }
+  a-tabs[data-steps][tone="success"],
+  a-tabs[data-steps] > a-tab[tone="success"] {
+    --steps-hint-color: var(--text-3-success);
+  }
+  a-tabs[data-steps][tone="warning"],
+  a-tabs[data-steps] > a-tab[tone="warning"] {
+    --steps-hint-color: var(--text-3-warning);
+  }
+  a-tabs[data-steps][tone="critical"],
+  a-tabs[data-steps] > a-tab[tone="critical"] {
+    --steps-hint-color: var(--text-3-critical);
+  }
+  a-tabs[data-steps][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
+  a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --steps-hint-color: light-dark(
+      oklch(from var(--tabs-tone-source) 0.45 0.13 h / 0.8),
+      oklch(from var(--tabs-tone-source) 0.76 0.11 h / 0.8)
+    );
+  }
+
   a-tabs[data-steps] > a-tab[tone="brand"] {
     --steps-marker-active-border: var(--border-1-brand);
   }
@@ -189,6 +222,11 @@
 
     box-shadow: none;
   }
+  /* A selected primary tab would take the primary pill's on-fill label; a step
+     keeps the selected-label color instead. */
+  a-steps > a-tabs[data-steps] > a-tab:state(selected):not([disabled]) {
+    --tab-fg: var(--tab-selected-text);
+  }
 
   a-steps > a-tabs[data-steps][priority="tertiary"] > a-tab::after {
     border: 0;
@@ -217,7 +255,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--tab-rest-tone, var(--text-3));
+    color: var(--steps-hint-color);
     font-size: calc(1em - 2px);
     font-weight: 400;
     line-height: var(--steps-hint-leading);
@@ -244,16 +282,16 @@
     --icon-size: var(--steps-icon-size);
   }
 
-  /* A per-step state tone recomputes the secondary fill from that step's
-     source. The fill appears only when the error step is selected. */
-  a-tabs[data-steps] > a-tab[tone] {
-    --tab-secondary-bg: light-dark(
+  /* The selected secondary marker gets a faint fill from its own step's source. */
+  a-tabs[data-steps] > a-tab {
+    --steps-secondary-marker-bg: light-dark(
       oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.03),
       oklch(from var(--tabs-tone-source) 0.8 0.008 h / 0.08)
     );
   }
+  a-tabs[data-steps][tone]:not([tone=""], [tone="neutral"]) > a-tab:not([tone="neutral"]),
   a-tabs[data-steps] > a-tab[tone]:not([tone=""], [tone="neutral"]) {
-    --tab-secondary-bg: light-dark(
+    --steps-secondary-marker-bg: light-dark(
       oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.03),
       oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.08)
     );
@@ -286,7 +324,7 @@
   a-tabs[data-steps][priority="secondary"]
     a-tab:state(selected):not([disabled]) a-step-marker {
     color: var(--tab-selected-text);
-    background-color: var(--tab-secondary-bg);
+    background-color: var(--steps-secondary-marker-bg);
     border-color: var(--steps-marker-active-border);
   }
 
@@ -348,7 +386,9 @@
     background: var(--steps-complete-connector-color);
   }
 
-  a-tabs[data-steps] a-tab[disabled] {
+  /* The structural parent outranks Tabs' disabled selected-tab colors. */
+  a-steps > a-tabs[data-steps] a-tab[disabled],
+  a-steps > a-tabs[data-steps] a-tab[disabled]:state(selected) {
     --tab-fg: var(--text-5);
 
     opacity: 1;

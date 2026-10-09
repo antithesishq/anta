@@ -12,7 +12,7 @@ import Disclosure from '../../../components/Disclosure.astro'
 import Columns from '../../../components/Columns.astro'
 import Col from '../../../components/Col.astro'
 import tabsDemoCode from './tabs.demo.ts'
-import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, RoomyTabs, SquareTabs, TertiaryGlow, PillTabs, NoSlide } from '../../../components/TabsDemo'
+import { Basic, Priorities, TonesColumn, PerTabTone, Sizes, VerticalStrip, IconsContent, Overflow, ScrollTabs, WrapTabs, EqualWidth, RoomyTabs, SquareTabs, TertiaryGlow, NoSlide } from '../../../components/TabsDemo'
 
 # Tabs
 
@@ -67,9 +67,12 @@ a-tabs[priority="tertiary"] ~ a-tabpanel {
 
 `priority` sets the selected-tab indicator:
 
-- **`primary`** (default): a pill on a track.
-- **`secondary`**: a filled tab, no track.
-- **`tertiary`**: an underline.
+- **`primary`** (default): a filled pill on a track, like a primary Button.
+- **`secondary`**: a white pill with a ring on a track (black in dark mode).
+- **`tertiary`**: an underline, no track.
+
+Tabs at rest look like quaternary Buttons. Tabs, the indicator, and the track are fully
+round.
 
 </Col>
 </Columns>
@@ -580,25 +583,25 @@ The demo classes (`.square-tabs`, `.glow-tabs`, …) are hooks. Replace them wit
 
 **Roomier track.** The strip hugs its tabs by default (0 padding), so it's exactly a
 same-size button tall. For a gap around the selected pill (the classic "well" look), add
-`padding` and bump `border-radius` by the same amount, so the outer corner stays concentric
-with the tabs' 4px. The strip grows 2×the padding taller.
+`padding`. The fully round track stays concentric with the tabs, and the strip grows
+2×the padding taller.
 
 <Preview background="var(--bg-base)">
   <RoomyTabs client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
-    a-tabs.roomy-1 { padding: 1px; border-radius: 5px; }
-    a-tabs.roomy-3 { padding: 3px; border-radius: 7px; }
+    a-tabs.roomy-1 { padding: 1px; }
+    a-tabs.roomy-3 { padding: 3px; }
   `}</style>
 </Preview>
 
 ```css folded
-a-tabs.roomy-1 { padding: 1px; border-radius: 5px; }   /* 4 + 1 */
-a-tabs.roomy-3 { padding: 3px; border-radius: 7px; }   /* 4 + 3 */
+a-tabs.roomy-1 { padding: 1px; }
+a-tabs.roomy-3 { padding: 3px; }
 ```
 
 **Squarer primary.** Square corners, heavier labels, and a roomier `4px` track with no
-border or ring on the strip (`box-shadow: none` drops the default track ring) — just a 1px
-square ring on the raised pill. The track is `<a-tabs>`, the sliding pill its `::before`:
+border or ring on the strip (`box-shadow: none` drops the default track ring), plus a 1px
+square ring on the selected pill. The track is `<a-tabs>`, the sliding pill its `::before`:
 
 <Preview background="var(--bg-base)">
   <SquareTabs client:visible={{ rootMargin: '200px' }} />
@@ -709,18 +712,6 @@ where anchor positioning isn't supported.
 
 ```tsx folded
 <Tabs noslide defaultValue="a">…</Tabs>
-```
-
-**Fully-rounded pill.** The built-in **`round`** prop rounds the track, every tab, **and**
-the sliding pill to `999px` in one flag, no CSS needed (it drives `--tab-radius`, which feeds
-the tabs, the moving indicator, and the primary track well):
-
-<Preview background="var(--bg-base)">
-  <PillTabs client:visible={{ rootMargin: '200px' }} />
-</Preview>
-
-```tsx folded
-<Tabs round defaultValue="a" label="Sections">…</Tabs>   {/* pill track + tabs + indicator */}
 ```
 
 </Disclosure>

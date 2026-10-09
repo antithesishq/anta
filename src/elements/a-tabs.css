@@ -17,45 +17,43 @@
        box-shadows (no layout), so a strip is exactly its tabs' height at every priority — and
        the meridiem toggle is exactly a same-size input — with no per-priority fudge. */
     --tab-height: 28px;
-    --tab-radius: 4px;
+    /* Tabs, the sliding indicator, and the track are fully round by default. */
+    --tab-radius: 999px;
     --tabs-gap: 3px;
     --tab-timing: 150ms ease-out;
 
-    /* Tone (neutral default). Named tones re-point --tabs-tone-source; everything toned
-       derives from it — the selected label (--tab-selected-text), and for non-neutral
-       tones the track tint (--tabs-track-bg), track border (--tabs-track-border), and the
-       selected ring (--tab-selected-border, which defaults to the track border), so a toned
-       strip's well/border/fill/ring carry the tone across all priorities. Only the selected
-       fill (--tab-selected-bg = --bg-1) + neutral selected label stay tone-free. */
+    /* Tone (neutral default). Named tones re-point --tabs-tone-source and switch the
+       chroma steps below to their saturated values; the tab colors (next block) and the
+       track tint derive from those. */
     --tabs-tone-source: var(--anta-seed-neutral);
-    --tab-fg-rest: var(--text-3);
-    --tab-selected-text: var(--text-1);
-    /* Tertiary's hover label uses a softer --text-2 step (toned variants set per tone below). */
-    --tab-text-2: var(--text-2);
+    --_tab-fill-l: 0.5;
+    --_tab-fill-c: 0.02;
+    --_tab-fill-c-dark: 0.015;
+    --_tab-label-c: 0.008;
+    --_tab-label-c-dark: 0.015;
 
-    /* Primary track (recessed well) — a faint independent tint (6% light / 7% dark neutral;
-       toned + dark values below), a touch stronger than the secondary fill in light. The
-       raised pill is --bg-1 (theme-aware), like the docs segmented control. */
+    /* Track (recessed well) behind primary and secondary tabs — a faint independent tint
+       (6% light / 7% dark neutral; toned values below). */
     --tabs-track-bg: light-dark(
       oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.06),
       oklch(from var(--tabs-tone-source) 0.8 0.008 h / 0.07)
     );
     --tabs-track-border: var(--border-4);
-    /* A 0.5px inset ring (no blur) for the primary/secondary treatment. Inset because the
-       strip has no padding — an outset ring would be clipped / overlap the track edge. The
-       track edge rides --tabs-track-border (--border-4, faint); the selected tab (pill +
-       secondary) rides its own --tab-selected-border (--border-2, a couple steps stronger).
-       Each is an independent knob — recolor the selected outline without touching the track. */
+    /* A 0.5px inset ring (no blur). Inset because the strip has no padding — an outset ring
+       would be clipped / overlap the track edge. The track edge rides --tabs-track-border
+       (--border-4, faint); the selected secondary tab rides its own --tab-selected-border
+       (--border-2, a couple steps stronger). */
     --tabs-track-shadow: inset 0 0 0px 0.5px var(--tabs-track-border);
-    --tab-selected-bg: var(--bg-1);
     --tab-selected-border: var(--border-2);
     --tab-selected-shadow: inset 0 0 0px 0.5px var(--tab-selected-border);
 
-    /* Secondary's selected fill — the same track tint at a lower alpha. */
-    --tab-secondary-bg: light-dark(
-      oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.03),
-      oklch(from var(--tabs-tone-source) 0.8 0.008 h / 0.08)
-    );
+    /* The sliding indicator lives on the strip, so it can't read a selected tab's own
+       tone. It paints the strip's colors; the per-tab tone rules below re-point it when a
+       toned tab is selected. */
+    --_tabs-indicator-src: var(--tabs-tone-source);
+    --tab-indicator-bg: var(--tab-primary-bg);
+    --tab-indicator-border: var(--tab-selected-border);
+    --tab-indicator-line: var(--tab-selected-text);
 
     display: flex;
     flex-direction: row;
@@ -87,6 +85,38 @@
     scroll-behavior: smooth;
   }
 
+  /* ── Tab colors ──────────────────────────────────────────────────────────────
+     Tabs reuse Button's formulas: a selected primary tab is a primary button, a
+     selected secondary tab is a raised surface with a secondary-button label, a
+     selected tertiary tab takes the secondary-button label, and a tab at rest is a
+     quaternary button. Untoned tabs inherit the strip's values; a tab with its own
+     `tone` recomputes them from its source and chroma. Themes may replace these with
+     the same literals they give Button. */
+  a-tabs,
+  a-tab[tone] {
+    --tab-primary-bg: light-dark(
+      oklch(from var(--tabs-tone-source) var(--_tab-fill-l) var(--_tab-fill-c) h),
+      oklch(from var(--tabs-tone-source) 0.4 var(--_tab-fill-c-dark) h)
+    );
+    --tab-primary-fg: #ffffff;
+    --tab-secondary-bg: light-dark(#ffffff, #000000);
+    --tab-selected-text: light-dark(
+      oklch(from var(--tabs-tone-source) 0.46 var(--_tab-label-c) h),
+      oklch(from var(--tabs-tone-source) 0.86 var(--_tab-label-c-dark) h)
+    );
+    --tab-fg-rest: light-dark(
+      oklch(from var(--tabs-tone-source) 0.46 var(--_tab-label-c) h / 0.85),
+      oklch(from var(--tabs-tone-source) 0.86 var(--_tab-label-c-dark) h / 0.85)
+    );
+    --tab-fg-hover: light-dark(
+      oklch(from var(--tabs-tone-source) 0.38 var(--_tab-label-c) h),
+      oklch(from var(--tabs-tone-source) 0.9 var(--_tab-label-c-dark) h)
+    );
+    --tab-fg-disabled: light-dark(#afa9b1, #635b65);
+    --tab-primary-bg-disabled: light-dark(#ece9ec, #272329);
+    --tab-primary-fg-disabled: light-dark(#afa9b1, #776e77);
+  }
+
   /* ── Sizes ───────────────────────────────────────────────────────────────── */
   a-tabs[size="small"] {
     --_fs: 13px;
@@ -107,88 +137,83 @@
   a-tabs[size="small"] a-tab :is(a-icon, a-loader) { --icon-size: 14px; }
   a-tabs[size="large"] a-tab :is(a-icon, a-loader) { --icon-size: 18px; }
 
-  /* ── Tones — re-point the source + the label colors: --tab-selected-text is the
-     tone's --text-1-<tone>, --tab-rest-tone its muted --text-3-<tone> (both theme-aware,
-     like neutral's --text-1 / --text-3). Primary's non-selected labels use the rest
-     tone; secondary/tertiary keep neutral rest. ──────────────────────────────────── */
-  /* Each selector matches the strip OR a single tab (per-tab `tone` override). On a tab the
-     track tint is unused; the label vars + --tabs-track-border (the ring color) feed that
-     tab's label/icons and its noslide indicator. */
+  /* ── Tones — re-point the source and the border roles. Each selector matches the strip
+     OR a single tab (per-tab `tone` override); on a tab the track values are unused. ── */
   a-tabs[tone="brand"], a-tab[tone="brand"] {
     --tabs-tone-source: var(--anta-seed-brand);
-    --tab-selected-text: var(--text-1-brand); --tab-text-2: var(--text-2-brand);
-    --tab-rest-tone: var(--text-3-brand);
     --tabs-track-border: var(--border-4-brand); --tab-selected-border: var(--border-2-brand);
   }
   a-tabs[tone="info"], a-tab[tone="info"] {
     --tabs-tone-source: var(--anta-seed-info);
-    --tab-selected-text: var(--text-1-info); --tab-text-2: var(--text-2-info);
-    --tab-rest-tone: var(--text-3-info);
     --tabs-track-border: var(--border-4-info); --tab-selected-border: var(--border-2-info);
   }
   a-tabs[tone="success"], a-tab[tone="success"] {
     --tabs-tone-source: var(--anta-seed-success);
-    --tab-selected-text: var(--text-1-success); --tab-text-2: var(--text-2-success);
-    --tab-rest-tone: var(--text-3-success);
     --tabs-track-border: var(--border-4-success); --tab-selected-border: var(--border-2-success);
   }
   a-tabs[tone="warning"], a-tab[tone="warning"] {
     --tabs-tone-source: var(--anta-seed-warning);
-    --tab-selected-text: var(--text-1-warning); --tab-text-2: var(--text-2-warning);
-    --tab-rest-tone: var(--text-3-warning);
     --tabs-track-border: var(--border-4-warning); --tab-selected-border: var(--border-2-warning);
   }
   a-tabs[tone="critical"], a-tab[tone="critical"] {
     --tabs-tone-source: var(--anta-seed-critical);
-    --tab-selected-text: var(--text-1-critical); --tab-text-2: var(--text-2-critical);
-    --tab-rest-tone: var(--text-3-critical);
     --tabs-track-border: var(--border-4-critical); --tab-selected-border: var(--border-2-critical);
   }
-  /* An explicit neutral option must not inherit a selected sibling's tone from
-     the strip. This is especially important for composed controls like Steps. */
+  /* An explicit neutral option must not inherit the strip's tone. This is especially
+     important for composed controls like Steps. */
   a-tab[tone="neutral"] {
     --tabs-tone-source: var(--anta-seed-neutral);
-    --tab-selected-text: var(--text-1); --tab-text-2: var(--text-2);
-    --tab-rest-tone: var(--text-3);
+    --_tab-fill-l: 0.5;
+    --_tab-fill-c: 0.02;
+    --_tab-fill-c-dark: 0.015;
+    --_tab-label-c: 0.008;
+    --_tab-label-c-dark: 0.015;
     --tabs-track-border: var(--border-4); --tab-selected-border: var(--border-2);
   }
 
+  /* Colored tones — Button's saturated chroma steps, and a toned track tint. */
   a-tabs[tone]:not([tone=""], [tone="neutral"]),
   a-tab[tone]:not([tone=""], [tone="neutral"]) {
+    --_tab-fill-l: 0.51;
+    --_tab-fill-c: 0.17;
+    --_tab-fill-c-dark: 0.16;
+    --_tab-label-c: 0.17;
+    --_tab-label-c-dark: 0.13;
     --tabs-track-bg: light-dark(
       oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.06),
       oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.07)
-    );
-    --tab-secondary-bg: light-dark(
-      oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.03),
-      oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.08)
     );
   }
 
-  /* ── Per-tab tone on the SELECTED tab drives the shared sliding indicator (::before),
-     which can't read a descendant's color: mirror the selected tab's NAMED tone onto the
-     strip via :has(), pointing --tabs-tone-source at it + setting the label and the SELECTED
-     ring color (--tab-selected-border — the track ring stays the strip's own, so only the
-     active tab's ring tones). A custom literal per-tab tone can't be enumerated, so its
-     label + noslide indicator tone but the slider keeps the strip tone. */
-  a-tabs:has(> a-tab[tone="brand"]:state(selected))    { --tabs-tone-source: var(--anta-seed-brand); --tab-selected-text: var(--text-1-brand);    --tab-selected-border: var(--border-2-brand); }
-  a-tabs:has(> a-tab[tone="info"]:state(selected))     { --tabs-tone-source: var(--anta-seed-info); --tab-selected-text: var(--text-1-info);     --tab-selected-border: var(--border-2-info); }
-  a-tabs:has(> a-tab[tone="success"]:state(selected))  { --tabs-tone-source: var(--anta-seed-success); --tab-selected-text: var(--text-1-success);  --tab-selected-border: var(--border-2-success); }
-  a-tabs:has(> a-tab[tone="warning"]:state(selected))  { --tabs-tone-source: var(--anta-seed-warning); --tab-selected-text: var(--text-1-warning);  --tab-selected-border: var(--border-2-warning); }
-  a-tabs:has(> a-tab[tone="critical"]:state(selected)) { --tabs-tone-source: var(--anta-seed-critical); --tab-selected-text: var(--text-1-critical); --tab-selected-border: var(--border-2-critical); }
-  a-tabs:has(> a-tab[tone]:state(selected):not([tone=""], [tone="neutral"])) {
-    --tabs-track-bg: light-dark(
-      oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.06),
-      oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.07)
+  /* ── A selected tab's NAMED tone drives the shared sliding indicator (::before), which
+     can't read a descendant's color: point the indicator copies at that tone. Sibling tabs
+     keep the strip's colors. A custom literal per-tab tone can't be enumerated, so its
+     label + noslide paint tone but the slider keeps the strip tone. */
+  a-tabs:has(> a-tab[tone="brand"]:state(selected))    { --_tabs-indicator-src: var(--anta-seed-brand);    --tab-indicator-border: var(--border-2-brand); }
+  a-tabs:has(> a-tab[tone="info"]:state(selected))     { --_tabs-indicator-src: var(--anta-seed-info);     --tab-indicator-border: var(--border-2-info); }
+  a-tabs:has(> a-tab[tone="success"]:state(selected))  { --_tabs-indicator-src: var(--anta-seed-success);  --tab-indicator-border: var(--border-2-success); }
+  a-tabs:has(> a-tab[tone="warning"]:state(selected))  { --_tabs-indicator-src: var(--anta-seed-warning);  --tab-indicator-border: var(--border-2-warning); }
+  a-tabs:has(> a-tab[tone="critical"]:state(selected)) { --_tabs-indicator-src: var(--anta-seed-critical); --tab-indicator-border: var(--border-2-critical); }
+  a-tabs:has(
+      > a-tab:is(
+          [tone="brand"],
+          [tone="info"],
+          [tone="success"],
+          [tone="warning"],
+          [tone="critical"]
+        ):state(selected)
+    ) {
+    --tab-indicator-bg: light-dark(
+      oklch(from var(--_tabs-indicator-src) 0.51 0.17 h),
+      oklch(from var(--_tabs-indicator-src) 0.4 0.16 h)
     );
-    /* Declared on the strip so non-toned sibling tabs inherit the tone too. */
-    --tab-secondary-bg: light-dark(
-      oklch(from var(--tabs-tone-source) 0.55 0.14 h / 0.03),
-      oklch(from var(--tabs-tone-source) 0.8 0.12 h / 0.08)
+    --tab-indicator-line: light-dark(
+      oklch(from var(--_tabs-indicator-src) 0.46 0.17 h),
+      oklch(from var(--_tabs-indicator-src) 0.86 0.13 h)
     );
   }
   /* Custom literal-color tone (anything not a named tone): derive the source from the
-     attribute via typed attr(), and the selected label by oklch (no --text-1-<tone>). */
+     attribute via typed attr(), and the borders from its hue (no --border-*-<tone>). */
   a-tabs[tone]:not(
       [tone=""],
       [tone="neutral"],
@@ -207,14 +232,9 @@
       [tone="warning"],
       [tone="critical"]
     ) {
-    /* No --*-<tone> tokens to lean on, so derive each from the literal color's HUE at the
-       fixed L/C the named tone tokens use at that step (measured average across the five
-       named tones in oklch) — so a custom color gets the same treatment a named tone would.
-       text-3 (rest) = text-2 at 0.8 alpha, matching the named token scale (--text-3 = --text-2 @ 0.8α). */
+    /* The borders sit at the fixed L/C the named tone tokens use at that step (measured
+       average across the five named tones in oklch). */
     --tabs-tone-source: #635b65;
-    --tab-selected-text: light-dark(oklch(from var(--tabs-tone-source) 0.38 0.13 h), oklch(from var(--tabs-tone-source) 0.83 0.1 h));
-    --tab-text-2: light-dark(oklch(from var(--tabs-tone-source) 0.45 0.13 h), oklch(from var(--tabs-tone-source) 0.76 0.11 h));
-    --tab-rest-tone: light-dark(oklch(from var(--tabs-tone-source) 0.45 0.13 h / 0.8), oklch(from var(--tabs-tone-source) 0.76 0.11 h / 0.8));
     --tabs-track-border: light-dark(oklch(from var(--tabs-tone-source) 0.9 0.045 h), oklch(from var(--tabs-tone-source) 0.26 0.055 h));
     --tab-selected-border: light-dark(oklch(from var(--tabs-tone-source) 0.8 0.09 h), oklch(from var(--tabs-tone-source) 0.4 0.11 h));
     @supports (color: attr(probe type(<color>), red)) {
@@ -248,72 +268,42 @@
     max-width: none;
   }
   @media (hover: hover) and (pointer: fine) {
-    /* Instant recolor (no `color` transition; see a-tab.css) to the selected-label strength
-       (--text-1 neutral, the tone otherwise). Secondary / tertiary override this below. */
+    /* Instant recolor (no `color` transition; see a-tab.css), like a quaternary button. */
     a-tabs a-tab:hover {
-      --tab-fg: var(--tab-selected-text);
+      --tab-fg: var(--tab-fg-hover);
     }
   }
 
-  /* ── Primary (default): recessed track + filled selected pill ────────────── */
-  a-tabs:not([priority="secondary"], [priority="tertiary"]) {
+  /* ── Track: primary and secondary tabs sit in a recessed well ─────────────── */
+  a-tabs:not([priority="tertiary"]) {
     background: var(--tabs-track-bg);
-    /* The track ring — a 0.5px inset shadow matching the selected tab's (--tab-selected-shadow
-       defaults to the same color). Inset, so it takes no layout size: with zero strip
-       padding the strip is exactly its tabs' height (= a same-size button / input). */
+    /* Inset, so it takes no layout size: with zero strip padding the strip is exactly its
+       tabs' height (= a same-size button / input). */
     box-shadow: var(--tabs-track-shadow);
-    /* Matches the tabs' --tab-radius (4px) at the default 0 padding. For a track gap, a
-       consumer raises `padding` and bumps this by the same amount to stay concentric. */
-    border-radius: 4px;
+    border-radius: var(--tabs-round, 999px);
   }
 
-  /* `round` → fully-round tabs. `--tab-radius` feeds both each tab's box AND the
-     shared sliding indicator (see the anchor block below), so one token rounds
-     them together — the tabs stay full pills. A custom value applies only to the
-     TOP-LEVEL element (the primary track well) via `--tabs-round`; the pills +
-     indicator keep their 999px full-round. (Tertiary is an underline — a radius
-     is meaningless there — so the track rule excludes it.) */
+  /* `round` with a length (`round="12px"`) sets a custom radius on the TOP-LEVEL element
+     (the track well) via `--tabs-round`; the tabs + indicator stay fully round. A bare
+     `round` keeps the default. (Tertiary is an underline, so the track rule excludes it.) */
   a-tabs[round] {
-    --tab-radius: 999px;
     --tabs-round: 999px;
     @supports (border-radius: attr(probe type(<length>), 1px)) {
       --tabs-round: attr(round type(<length>), 999px);
     }
   }
-  a-tabs[round]:not([priority="secondary"], [priority="tertiary"]) {
-    border-radius: var(--tabs-round, 999px);
-  }
+
+  /* ── Primary (default): the selected tab is a filled primary-button pill ──── */
   a-tabs:not([priority="secondary"], [priority="tertiary"]) a-tab:state(selected) {
-    /* Selected label = --tab-selected-text: neutral dark for the neutral tone (the docs
-       segmented-control look), the tone color when toned. The pill FILL stays neutral. */
-    --tab-fg: var(--tab-selected-text);
-    --tab-bg: var(--tab-selected-bg);
-
-    box-shadow: var(--tab-selected-shadow);
-  }
-  /* Toned strips (or a single toned tab) tint their non-selected labels with the muted
-     --tab-rest-tone; hover / selected use the fuller --tab-selected-text (the shared hover
-     rule above already resolves to it, so only the rest color needs setting here). */
-  a-tabs[tone]:not([tone=""], [tone="neutral"]),
-  a-tab[tone]:not([tone=""], [tone="neutral"]) {
-    --tab-fg-rest: var(--tab-rest-tone);
+    --tab-fg: var(--tab-primary-fg);
+    --tab-bg: var(--tab-primary-bg);
   }
 
-  /* ── Secondary: primary's sizing (padding from the base rule) but no visible track; the
-     selected tab gets the track-color fill plus a ring one border-step darker. ────────── */
-  @media (hover: hover) and (pointer: fine) {
-    a-tabs[priority="secondary"] a-tab:hover {
-      /* Hover only shifts the text color — no background fill (only the selected tab
-         gets the track-color fill). */
-      --tab-fg: var(--tab-selected-text);
-    }
-  }
+  /* ── Secondary: the selected tab is a raised surface with a ring ─────────── */
   a-tabs[priority="secondary"] a-tab:state(selected) {
     --tab-fg: var(--tab-selected-text);
-    /* Faint active fill (3% light / 6% dark); the tone shows on the label + ring. */
     --tab-bg: var(--tab-secondary-bg);
 
-    /* Same inset ring as the primary pill. */
     box-shadow: var(--tab-selected-shadow);
   }
 
@@ -323,10 +313,9 @@
      border — so it overlays the tab edge without affecting layout. --tab-underline-color is
      transparent at rest and the --tab-selected-text accent when selected; one ::after rule
      (sized by --tab-underline-size) serves rest, active, both orientations, and the slide-mode
-     revert below. The SELECTED label uses the high-contrast --tab-selected-text (text-1 tone);
-     hover is the softer --tab-text-2 step. Tertiary keeps the base 3px gap and no strip padding
-     (like primary/secondary now), so its tabs are the same box height and its labels line up 1:1
-     across priorities; the underline sits at the tab's bottom edge. */
+     revert below. Tertiary keeps the base 3px gap and no strip padding (like primary/secondary),
+     so its tabs are the same box height and its labels line up 1:1 across priorities; the
+     underline sits at the tab's bottom edge. */
   a-tabs[priority="tertiary"] a-tab {
     --tab-underline-size: 1px;
     --tab-underline-color: transparent;
@@ -354,15 +343,31 @@
     border-bottom: 0;
     border-inline-end: var(--tab-underline-size) solid var(--tab-underline-color);
   }
-  @media (hover: hover) and (pointer: fine) {
-    a-tabs[priority="tertiary"] a-tab:hover {
-      --tab-fg: var(--tab-text-2);
-    }
-  }
   a-tabs[priority="tertiary"] a-tab:state(selected) {
     --tab-fg: var(--tab-selected-text);
     --tab-underline-size: 1px;
     --tab-underline-color: var(--tab-selected-text);
+  }
+
+  /* ── Disabled — Button's disabled colors. Placed after the selected rules so a
+     disabled selected tab keeps them. ─────────────────────────────────────────── */
+  a-tabs a-tab[disabled] {
+    --tab-fg: var(--tab-fg-disabled);
+    --tab-underline-color: transparent;
+  }
+  a-tabs a-tab[disabled]:state(selected) {
+    --tab-fg: var(--tab-fg-disabled);
+    --tab-selected-border: var(--border-4);
+    --tab-underline-color: var(--tab-fg-disabled);
+  }
+  a-tabs:not([priority="secondary"], [priority="tertiary"]) a-tab[disabled]:state(selected) {
+    --tab-fg: var(--tab-primary-fg-disabled);
+    --tab-bg: var(--tab-primary-bg-disabled);
+  }
+  a-tabs:has(> a-tab[disabled]:state(selected)) {
+    --tab-indicator-bg: var(--tab-primary-bg-disabled);
+    --tab-indicator-border: var(--border-4);
+    --tab-indicator-line: var(--tab-fg-disabled);
   }
 
   /* ── Vertical orientation ────────────────────────────────────────────────── */
@@ -431,7 +436,8 @@
         top var(--tab-timing),
         right var(--tab-timing),
         bottom var(--tab-timing),
-        left var(--tab-timing);
+        left var(--tab-timing),
+        background-color var(--tab-timing);
     }
     /* A full-width strip changes the anchored far edge during a container resize.
        The element holds this internal state through each resize burst, so only a
@@ -457,17 +463,16 @@
       box-shadow: none;
     }
 
-    /* Primary: the raised pill. */
+    /* Primary: the filled pill. */
     a-tabs:not([noslide], [priority="secondary"], [priority="tertiary"])::before {
-      background: var(--tab-selected-bg);
+      background-color: var(--tab-indicator-bg);
       border-radius: var(--tab-radius);
-      box-shadow: var(--tab-selected-shadow);
     }
-    /* Secondary: the faint active fill + the same inset ring as the primary pill. */
+    /* Secondary: the raised surface + its inset ring. */
     a-tabs:not([noslide])[priority="secondary"]::before {
-      background: var(--tab-secondary-bg);
+      background-color: var(--tab-secondary-bg);
       border-radius: var(--tab-radius);
-      box-shadow: var(--tab-selected-shadow);
+      box-shadow: inset 0 0 0px 0.5px var(--tab-indicator-border);
     }
     /* Tertiary: the slider is the same full-cover box as primary/secondary (it inherits the
        anchor edges above), but its only paint is a 1px bottom border — so it reads as a
@@ -481,21 +486,21 @@
     }
     a-tabs:not([noslide])[priority="tertiary"]::before {
       z-index: 2;
-      border-bottom: 1px solid var(--tab-selected-text);
+      border-bottom: 1px solid var(--tab-indicator-line);
     }
     /* Vertical tertiary: the border moves to the inline-end edge — a 1px vertical bar. */
     a-tabs[orientation="vertical"]:not([noslide])[priority="tertiary"]::before {
       border-bottom: 0;
-      border-inline-end: 1px solid var(--tab-selected-text);
+      border-inline-end: 1px solid var(--tab-indicator-line);
     }
   }
 
-  /* Forced colors do not retain the primary track's inset-shadow hierarchy.
-     Rebuild it with real system-color structure: the primary track has an
-     outer edge and its active tab uses the same inverted pair as a primary
-     Button; secondary keeps only an active-tab edge. */
+  /* Forced colors do not retain the track's inset-shadow hierarchy. Rebuild it with
+     real system-color structure: the track has an outer edge, the active primary tab
+     uses the same inverted pair as a primary Button, and the active secondary tab
+     gets its own edge. */
   @media (forced-colors: active) {
-    a-tabs:not([priority="secondary"], [priority="tertiary"]) {
+    a-tabs:not([priority="tertiary"]) {
       background-color: Canvas;
       border: 1px solid CanvasText;
       box-shadow: none;

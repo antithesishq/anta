@@ -635,18 +635,77 @@ a-tag[tone="neutral"][priority="tertiary"] {
   --tag-border: color-mix(in oklch, var(--tag-edge) 25%, transparent);
 }
 
-/* Keep the neutral reference fills off toned strips and selected per-tab tones. */
-a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]):not(
-  :has(> a-tab[tone]:state(selected):not([tone=""], [tone="neutral"]))
-) {
+/* Keep the neutral reference track off toned strips. */
+a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]) {
   --tabs-track-bg: light-dark(
     oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.06),
     color-mix(in oklch, #e4d1ef 7%, transparent)
   );
-  --tab-secondary-bg: light-dark(
-    oklch(from var(--tabs-tone-source) 0.55 0.008 h / 0.03),
-    color-mix(in oklch, #e4d1ef 8%, transparent)
-  );
+}
+
+/* Tab colors match Button's literals per tone (see tokens in a-tabs.css). */
+a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]),
+a-tab[tone="neutral"] {
+  --tab-primary-bg: light-dark(#635b65, #534c57);
+  --tab-selected-text: light-dark(#534c57, #c1b9c1);
+  --tab-fg-rest: light-dark(#635b65, #afa9b1);
+  --tab-fg-hover: light-dark(#49424c, #cac4ca);
+}
+a-tabs[tone="brand"],
+a-tab[tone="brand"] {
+  --tab-primary-bg: light-dark(#5f4bc3, #503cb4);
+  --tab-selected-text: light-dark(#5f4bc3, #c5baff);
+  --tab-fg-rest: light-dark(#5f4bc3, #ada0ee);
+  --tab-fg-hover: light-dark(#483493, #c7bef4);
+}
+a-tabs[tone="info"],
+a-tab[tone="info"] {
+  --tab-primary-bg: light-dark(#1f6eb2, #1a5b93);
+  --tab-selected-text: light-dark(#1f6eb2, #9ed2ff);
+  --tab-fg-rest: light-dark(#1f6eb2, #7db6e8);
+  --tab-fg-hover: light-dark(#175082, #a6cdef);
+}
+a-tabs[tone="success"],
+a-tab[tone="success"] {
+  --tab-primary-bg: light-dark(#2a7e43, #226737);
+  --tab-selected-text: light-dark(#2a7e43, #8ceca9);
+  --tab-fg-rest: light-dark(#2a7e43, #74cd8e);
+  --tab-fg-hover: light-dark(#1f5c31, #9ddeb1);
+}
+a-tabs[tone="warning"],
+a-tab[tone="warning"] {
+  --tab-primary-bg: light-dark(#c37416, #7f410b);
+  --tab-selected-text: light-dark(#c37416, #f7c06e);
+  --tab-fg-rest: light-dark(#c37416, #e1a452);
+  --tab-fg-hover: light-dark(#995200, #f0bf75);
+}
+a-tabs[tone="critical"],
+a-tab[tone="critical"] {
+  --tab-primary-bg: light-dark(#c9302c, #b02120);
+  --tab-selected-text: light-dark(#c9302c, #ffabac);
+  --tab-fg-rest: light-dark(#c9302c, #e78e90);
+  --tab-fg-hover: light-dark(#a01c1c, #ffabac);
+}
+/* The sliding indicator follows a selected tab's named tone. */
+a-tabs:has(> a-tab[tone="brand"]:state(selected)) {
+  --tab-indicator-bg: light-dark(#5f4bc3, #503cb4);
+  --tab-indicator-line: light-dark(#5f4bc3, #c5baff);
+}
+a-tabs:has(> a-tab[tone="info"]:state(selected)) {
+  --tab-indicator-bg: light-dark(#1f6eb2, #1a5b93);
+  --tab-indicator-line: light-dark(#1f6eb2, #9ed2ff);
+}
+a-tabs:has(> a-tab[tone="success"]:state(selected)) {
+  --tab-indicator-bg: light-dark(#2a7e43, #226737);
+  --tab-indicator-line: light-dark(#2a7e43, #8ceca9);
+}
+a-tabs:has(> a-tab[tone="warning"]:state(selected)) {
+  --tab-indicator-bg: light-dark(#c37416, #7f410b);
+  --tab-indicator-line: light-dark(#c37416, #f7c06e);
+}
+a-tabs:has(> a-tab[tone="critical"]:state(selected)) {
+  --tab-indicator-bg: light-dark(#c9302c, #b02120);
+  --tab-indicator-line: light-dark(#c9302c, #ffabac);
 }
 
 /* ===== input ===== */

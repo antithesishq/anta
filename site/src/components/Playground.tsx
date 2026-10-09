@@ -1123,7 +1123,7 @@ function FieldControl({
       return (
         <Tabs
           className={s.segTabs}
-          priority="primary"
+          priority="secondary"
           size="small"
           label={control.name}
           value={active}

@@ -9,7 +9,8 @@
     --_fs: 15px;
     --_lh: 20px;
     --_pb: 1px;
-    --tab-padding-x: 9px;
+    /* Fully round, like pill buttons: Button's pill inset of 0.8em (10/12/14px). */
+    --tab-padding-x: round(0.8em, 1px);
     /* Tab box height — prescribed on the same 24/28/32 scale as Button's `min-height`, so a
        tab lines up with a same-size button / input. a-tab.css applies it as `min-height` and
        flex-centers the label (whose leading stays shorter than the box, so min-height wins).
@@ -125,14 +126,12 @@
     --_fs: 13px;
     --_lh: 16px;
     --_pb: 0.5px;
-    --tab-padding-x: 7px;
     --tab-height: 24px;
   }
   a-tabs[size="large"] {
     --_fs: 17px;
     --_lh: 24px;
     --_pb: 1.5px;
-    --tab-padding-x: 13px;
     --tab-height: 32px;
   }
   /* Icons and loaders track the tab size (medium = the 16px default). */

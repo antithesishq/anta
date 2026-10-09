@@ -480,8 +480,14 @@
 
 /* Short enum pickers use Anta <Tabs> (primary, small). Longer lists, including
    tone, use Anta <Select> so their labels never crowd the panel. */
+/* Segmented controls sit beside text fields, so they share the fields' corner
+   radius: 4px by default, nearly square in the Antithesis theme. */
 .segTabs {
+  --tabs-round: 4px;
   max-width: 100%;
+}
+:global(html:has(#palette-link[href$="/antithesis.css"])) .segTabs {
+  --tabs-round: 1px;
 }
 .selectControl {
   width: 100%;

@@ -140,6 +140,9 @@
      underline are never part of the Steps presentation. The structural parent
      makes these resets more specific than Tabs' own priority styles. */
   a-steps > a-tabs[data-steps] {
+    /* Steps keep their own tab inset; the connector math above reads the same value. */
+    --tab-padding-x: var(--steps-tab-padding-x);
+
     background: transparent;
     border-radius: 0;
     box-shadow: none;

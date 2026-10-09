@@ -124,8 +124,8 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
    *  per-tab paint automatically — `noslide` is the explicit opt-out.) */
   noslide?: boolean
   /** Tabs, the sliding indicator, and the track are fully round by default. A
-   *  `number` (px) or CSS length string sets a custom radius on the track only;
-   *  the tabs and indicator stay fully round. */
+   *  `number` (px) or CSS length string sets a custom radius on all three; `0`
+   *  squares them. */
   round?: boolean | number | string
   /** Disable the whole strip. */
   disabled?: boolean

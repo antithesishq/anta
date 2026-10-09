@@ -17,8 +17,9 @@
        box-shadows (no layout), so a strip is exactly its tabs' height at every priority — and
        the meridiem toggle is exactly a same-size input — with no per-priority fudge. */
     --tab-height: 28px;
-    /* Tabs, the sliding indicator, and the track are fully round by default. */
-    --tab-radius: 999px;
+    /* Tabs, the sliding indicator, and the track are fully round by default. A `round`
+       length (--tabs-round, below) sets all three. */
+    --tab-radius: var(--tabs-round, 999px);
     --tabs-gap: 3px;
     --tab-timing: 150ms ease-out;
 
@@ -291,14 +292,18 @@
     border-radius: var(--tabs-round, calc(var(--tab-height) / 2));
   }
 
-  /* `round` with a length (`round="12px"`) sets a custom radius on the TOP-LEVEL element
-     (the track well) via `--tabs-round`; the tabs + indicator stay fully round. A bare
-     `round` has no length, so attr() fails and the default radius applies. (Tertiary is
-     an underline, so the track rules exclude it.) */
+  /* `round` with a length (`round="12px"`, or `0` for square corners) sets `--tabs-round`,
+     the radius of the track, the tabs, and the sliding indicator. A bare `round` has no
+     length, so attr() fails and the default radius applies. (Tertiary is an underline, so
+     the track rules exclude it.) */
   @supports (border-radius: attr(probe type(<length>), 1px)) {
     a-tabs[round] {
       --tabs-round: attr(round type(<length>));
     }
+  }
+  /* The Tabs wrapper also marks each tab `round`; in a strip they follow its radius. */
+  a-tabs a-tab[round] {
+    --tab-radius: inherit;
   }
 
   /* ── Primary (default): the selected tab is a filled primary-button pill ──── */

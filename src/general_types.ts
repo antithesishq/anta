@@ -1317,8 +1317,8 @@ export interface ATabsAttributes extends BaseAttributes {
   /** Disable the whole strip. Presence-based (`''` on, omit off). */
   disabled?: boolean | ''
   /** Tabs, the sliding indicator, and the track are fully round by default. A length
-   *  value (`round="10px"`) sets a custom radius on the track only (tabs + indicator stay
-   *  full). Presence-based for the boolean form. */
+   *  value (`round="10px"`, or `round="0"` for square corners) sets a custom radius on all
+   *  three. Presence-based for the boolean form. */
   round?: boolean | number | string
   /** Fires whenever the active tab changes. `detail` carries `{ next, prev }` (values;
    *  `null` = none). Cancelable: a synchronous `preventDefault()` vetoes the pick in

@@ -194,7 +194,7 @@ export const Card = ({
           // titleLevel). The header section's padding is the header→body gap; the
           // element zeroes the slotted title's own margins so it doesn't double it.
           // Pass a node (a `<Title level={n}>`, an `<h2>`) for a different level.
-          <Title slot="header" level={titleLevel} tone={toneAttr}>
+          <Title slot="header" level={titleLevel} tone={toneAttr} font="sans-serif">
             {header}
           </Title>
         ) : (

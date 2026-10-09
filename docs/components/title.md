@@ -16,12 +16,36 @@ component layouts when you need tone, priority, or parent-controlled spacing.
 
 The parent supplies the `16px` gap between these titles.
 
-  Level 1: Workspace settings
-  Level 2: Recent activity
-  Level 3: Security alerts
-  Level 4: Sign-in policy
-  Level 5: Session timeout
-  Level 6: Updated five minutes ago
+## Typeface
+
+Choose the typeface by what the heading names. Serif names the page and its
+parts: the page title, sections, subsections, and the title of a full dialog.
+Sans serif names objects on the page: cards, panels, and widgets that repeat in
+a list or grid, large numbers and metrics, and the title of a small contextual
+dialog. Monospace names technical identifiers, such as run IDs, hashes, file
+paths, and function names.
+
+Omit `font` to let the theme choose by level. The Antithesis theme sets levels
+1–3 in serif and levels 4–6 in sans serif; other themes use sans serif
+throughout. Pass `font` to override the level default. The size and line height
+stay the same.
+
+```tsx
+<Title level={2}>Recent runs</Title>
+<Title level={2} font="sans-serif">Run 4821: 12 failures</Title>
+<Title level={2} font="monospace">checkout-service/run_4821</Title>
+```
+
+Each typeface covers all six levels.
+
+```tsx
+<Title level={1} font="serif">Serif 1</Title>
+<Title level={1} font="sans-serif">Sans serif 1</Title>
+<Title level={1} font="monospace">Monospace 1</Title>
+```
+
+A string `header` on a [Card](./card.md) renders a sans-serif title at every card
+size.
 
 ## Inline content
 
@@ -63,7 +87,7 @@ Use a number for multi-line titles.
 | 1     | 28px      | 32px        |
 | 2     | 24px      | 28px        |
 | 3     | 20px      | 24px        |
-| 4     | 17px      | 20px        |
+| 4     | 17px      | 22px        |
 | 5     | 15px      | 20px        |
 | 6     | 13px      | 16px        |
 
@@ -115,6 +139,7 @@ scale.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
+| `font?` | 'serif' \| 'sans-serif' \| 'monospace' | — | Typeface. Serif names the page and its parts; sans serif names objects on the page, such as cards, panels, and metrics; monospace names technical identifiers, such as run IDs, hashes, and file paths. Omit it to let the theme choose by level: the Antithesis theme sets levels 1–3 in serif and 4–6 in sans serif, and other themes use sans serif throughout. |
 | `level?` | 1 \| 2 \| 3 \| 4 \| 5 \| 6 | 2 | Heading level, 1-6. Drives font-size, line-height, and vertical rhythm. Also surfaced to assistive tech via `aria-level` (h1 is typically reserved for the page title). |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | primary | Visual priority. Maps to text-1..text-4 (`primary` = text-1). |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | neutral | Color tint. `neutral` (the default) is the untinted `--text-{N}` scale; a named tone applies the matching `--text-{N}-{tone}` palette. Any literal CSS color (`'#ff1493'`, `'rebeccapurple'`) is a one-off custom tone — its hue is kept while lightness/chroma are pinned per priority in oklch. |

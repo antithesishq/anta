@@ -396,6 +396,8 @@ export interface ATitleAttributes extends BaseAttributes {
    *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
    *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Typeface. Omit it to let the theme choose by level. */
+  font?: 'serif' | 'sans-serif' | 'monospace'
   /** Truncate to N lines with a trailing ellipsis. The attribute value carries
    *  the line count; set the same count on `--line-clamp` when using the styled
    *  tag directly. */

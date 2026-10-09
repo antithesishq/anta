@@ -76,7 +76,7 @@ export class ACalendarElement extends HTMLElementBase {
 
   attributeChangedCallback(name: string, _old: string | null, value: string | null) {
     if (name === 'value') {
-      this.applyFormValue(value)
+      this.applyFormValue(this.currentIso())
       return
     }
     if (name === 'data-focus') {
@@ -218,6 +218,10 @@ export class ACalendarElement extends HTMLElementBase {
     return this.currentIso() ?? ''
   }
   set value(v: string) {
+    if (this.#controlled) {
+      this.setAttribute('value', v ?? '')
+      return
+    }
     this.selectedIso = v || null
     this.applyFormValue(v || null)
   }

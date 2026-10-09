@@ -1,10 +1,12 @@
-import type { AxisTemplate, Domain, Scale, Viewport, ViewportZoom, ZoomPan } from "../types"
+import { clamp } from 'es-toolkit/math'
+import type { AxisTemplate, Domain, Rect, Scale, Viewport, ViewportZoom, ZoomPan } from "../types"
 import { clamp_domain, LINEAR_SPACE, LOG_SPACE, type AxisSpace } from "../template/domain"
 
 // Zoom + pan math for the plot's viewport override.
 // Continuous axes carry a numeric full_domain and zoom/pan; a categorical axis passes it as null and holds.
 
-const ZOOM_SPEED = 0.0015 // zoom-factor sensitivity
+const ZOOM_SPEED = 0.0015 // ordinary wheel sensitivity
+const PINCH_ZOOM_SPEED = ZOOM_SPEED * 3 // browsers encode pinch as Ctrl-wheel
 const MAX_ZOOM = 10000 // tightest zoom: the narrowest window is the full domain over this
 const ZOOM_LIMIT_SLACK = 1e-6 // relative tolerance for floating point round-off tolerance, so the tightest zoom doesn't read as room left
 
@@ -12,7 +14,7 @@ export type WheelClaim = 'both' | 'up' | 'down' | 'none'
 
 export type CaptureConfiguration = {
     wheel_capture: WheelClaim | null
-    wheel_modifier: 'ctrl' | 'none'
+    wheel_modifier: 'ctrl' | 'none' | 'any'
     wheel_activation: 'hover' | 'settled'
     wheel_delay: number
     wheel_tolerance: number
@@ -42,20 +44,19 @@ export function capture_attributes(settings: CaptureConfiguration) {
 /** Resolve interaction policy once; hosts translate it into Capture props or attributes. */
 export function resolve_capture_configuration(
     enabled: boolean,
-    modifier: boolean,
     wheel_claim: WheelClaim,
 ): CaptureConfiguration {
     return {
-        wheel_capture: enabled ? (modifier ? 'both' : wheel_claim) : null,
-        wheel_modifier: modifier ? 'ctrl' : 'none',
-        wheel_activation: modifier ? 'hover' : 'settled',
+        wheel_capture: enabled ? wheel_claim : null,
+        wheel_modifier: 'any',
+        wheel_activation: 'settled',
         wheel_delay: 150,
         wheel_tolerance: 5,
         wheel_reset_on_move: false,
         pointer_capture: enabled ? 'mouse' : null,
         pointer_buttons: [0],
         pointer_threshold: 3,
-        pointer_modifier: modifier ? 'ctrl' : 'any',
+        pointer_modifier: 'any',
     }
 }
 
@@ -73,6 +74,142 @@ export type PanSnapshot = {
     x_axis_frame: PanAxisFrame | null
     y_axis_frame: PanAxisFrame | null
     pointer_origin: { x: number; y: number }
+}
+
+/** Fixed coordinate system for a drag on one continuous axis. */
+export type AxisZoomSnapshot = {
+    axis: 'x' | 'y'
+    domain: Domain
+    space: AxisSpace
+    anchor: number
+    pointer_origin: number
+    pixel_span: number
+}
+
+/** Capture the starting window and anchor before a drag changes the rendered scales. */
+export function axis_zoom_frame(
+    views: AxisViews, override: Viewport, axis: 'x' | 'y',
+    cursor: { x: number; y: number }, pointer: { x: number; y: number }, axis_length: number,
+): AxisZoomSnapshot | null {
+    const full = views[`${axis}_full_domain`]
+    const scale = views[`${axis}_scale`]
+    const range = scale_range(scale)
+    if (full === null || range === undefined || !(axis_length > 0)) return null
+    const space = axis_space(scale)
+    const domain = to_space(override[axis] ?? full, space)!
+    if (!(domain[1] > domain[0])) return null
+    return {
+        axis, domain, space,
+        anchor: anchor_in_space(domain, range, cursor[axis]),
+        pointer_origin: pointer[axis],
+        pixel_span: Math.sign(range[1] - range[0]) * axis_length,
+    }
+}
+
+/** A quarter-axis drag toward increasing values halves the starting window. */
+export function axis_zoom_viewport(
+    snapshot: AxisZoomSnapshot, views: AxisViews, override: Viewport,
+    pointer: { x: number; y: number },
+): Viewport {
+    const { axis, domain, space } = snapshot
+    const full = to_space(views[`${axis}_full_domain`], space)
+    if (full === null) return override
+    const full_span = full[1] - full[0]
+    const span = domain[1] - domain[0]
+    if (!(full_span > 0)) return override
+    const exponent = -4 * (pointer[axis] - snapshot.pointer_origin) / snapshot.pixel_span
+    // Bound the exponent before exponentiation, including for a release far outside the plot.
+    const factor = 2 ** Math.max(Math.log2(full_span / MAX_ZOOM / span),
+        Math.min(Math.log2(full_span / span), exponent))
+    const window = zoom_domain(domain, full, snapshot.anchor, factor)
+    return { ...override, [axis]: from_space(window, space) }
+}
+
+export type RectangleZoomSnapshot = {
+    views: AxisViews
+    viewport: Viewport
+    inner: Rect
+    cursor: { x: number; y: number }
+    pointer: { x: number; y: number }
+}
+
+/** Normalize and clip Capture's rectangle, including drags that end outside the plot. */
+export function drag_rectangle(inner: Rect, start: { x: number; y: number }, end: { x: number; y: number }): Rect {
+    const x = (value: number) => clamp(value, inner.left, inner.right)
+    const y = (value: number) => clamp(value, inner.top, inner.bottom)
+    return {
+        left: x(Math.min(start.x, end.x)), right: x(Math.max(start.x, end.x)),
+        top: y(Math.min(start.y, end.y)), bottom: y(Math.max(start.y, end.y)),
+    }
+}
+
+/** Fit the released rectangle using the scales captured before the gesture. */
+export function rectangle_zoom_viewport(
+    snapshot: RectangleZoomSnapshot, views: AxisViews, override: Viewport,
+    pointer: { x: number; y: number },
+): Viewport {
+    const rect = drag_rectangle(snapshot.inner, snapshot.cursor, {
+        x: snapshot.cursor.x + pointer.x - snapshot.pointer.x,
+        y: snapshot.cursor.y + pointer.y - snapshot.pointer.y,
+    })
+    const can_zoom = (axis: 'x' | 'y') => views[`${axis}_full_domain`] !== null
+        && snapshot.views[`${axis}_full_domain`] !== null
+    if ((can_zoom('x') && rect.right <= rect.left) || (can_zoom('y') && rect.bottom <= rect.top)) return override
+    const fit = (axis: 'x' | 'y'): Domain | null => {
+        const full = views[`${axis}_full_domain`]
+        const initial_full = snapshot.views[`${axis}_full_domain`]
+        const scale = snapshot.views[`${axis}_scale`]
+        const range = scale_range(scale)
+        if (full === null || initial_full === null || range === undefined) return override[axis]
+        const space = axis_space(scale)
+        const window = to_space(snapshot.viewport[axis] ?? initial_full, space)!
+        const a = anchor_in_space(window, range, axis === 'x' ? rect.left : rect.top)
+        const b = anchor_in_space(window, range, axis === 'x' ? rect.right : rect.bottom)
+        const selected: Domain = [Math.min(a, b), Math.max(a, b)]
+        if (!(selected[1] > selected[0])) return override[axis]
+        return from_space(zoom_domain(selected, to_space(full, space)!, (a + b) / 2, 1), space)
+    }
+    return { x: fit('x'), y: fit('y') }
+}
+
+/** Scale rectangle/reset timing from 200–400 ms using the larger axis change. */
+export function zoom_transition_duration(views: AxisViews, start: Viewport, end: Viewport): number {
+    const distance = (axis: 'x' | 'y'): number => {
+        const full = views[`${axis}_full_domain`]
+        if (full === null) return 0
+        const space = axis_space(views[`${axis}_scale`])
+        const a = to_space(start[axis] ?? full, space)!
+        const b = to_space(end[axis] ?? full, space)!
+        const a_span = a[1] - a[0], b_span = b[1] - b[0]
+        if (!(a_span > 0) || !(b_span > 0)) return 0
+        // Four doublings reach the cap; center travel adds distance in viewport widths.
+        const scale = Math.abs(Math.log2(a_span) - Math.log2(b_span)) / 4
+        const shift = Math.abs((a[0] / 2 + a[1] / 2) - (b[0] / 2 + b[1] / 2)) / Math.max(a_span, b_span)
+        const amount = scale + shift
+        return Number.isFinite(amount) ? amount : 1
+    }
+    return 200 + 200 * Math.min(1, Math.max(distance('x'), distance('y')))
+}
+
+/** Interpolate zoom in each axis's scale space, preserving pinned axes. */
+export function zoom_transition(views: AxisViews, start: Viewport, end: Viewport) {
+    const interpolate = (axis: 'x' | 'y', progress: number): Domain | null => {
+        const full = views[`${axis}_full_domain`]
+        if (full === null || start[axis] === end[axis]) return start[axis]
+        const space = axis_space(views[`${axis}_scale`])
+        const a = to_space(start[axis] ?? full, space)!
+        const b = to_space(end[axis] ?? full, space)!
+        return from_space([
+            a[0] + (b[0] - a[0]) * progress,
+            a[1] + (b[1] - a[1]) * progress,
+        ], space)
+    }
+    return (progress: number): Viewport => {
+        if (progress <= 0) return start
+        if (progress >= 1) return end
+        const eased = 1 - (1 - progress) ** 3
+        return { x: interpolate('x', eased), y: interpolate('y', eased) }
+    }
 }
 
 /** Enable gestures only when at least one selected axis is continuous. */
@@ -170,10 +307,15 @@ function clamp_axis_window(scale: Scale, full_domain: Domain | null, window: Dom
  * @param override - the current viewport (null on an axis = full view)
  * @param cursor - the cursor position in plot pixels
  * @param delta_y - the wheel event's deltaY
+ * @param ctrl_key - Ctrl-wheel/pinch uses higher sensitivity
  * @returns the new viewport
  */
-export function zoom_viewport(views: AxisViews, override: Viewport, cursor: { x: number; y: number }, delta_y: number): Viewport {
-    const factor = zoom_factor(delta_y)
+export function zoom_viewport(views: AxisViews, override: Viewport, cursor: { x: number; y: number }, delta_y: number, ctrl_key = false): Viewport {
+    return zoom_viewport_by_factor(views, override, cursor, zoom_factor(delta_y, ctrl_key))
+}
+
+/** Apply one proportional zoom step, with independent axis limits. */
+export function zoom_viewport_by_factor(views: AxisViews, override: Viewport, cursor: { x: number; y: number }, factor: number): Viewport {
     return {
         x: zoom_axis(views.x_scale, views.x_full_domain, override.x, cursor.x, factor),
         y: zoom_axis(views.y_scale, views.y_full_domain, override.y, cursor.y, factor),
@@ -235,6 +377,17 @@ export function pan_frame(views: AxisViews, override: Viewport, pointer_origin: 
     }
 }
 
+/** A pan can move when a captured window is narrower than its enabled full domain. */
+export function pan_has_room(snapshot: PanSnapshot, views: AxisViews): boolean {
+    return (['x', 'y'] as const).some(axis => {
+        const frame = snapshot[`${axis}_axis_frame`]
+        const full = views[`${axis}_full_domain`]
+        if (frame === null || full === null) return false
+        const span = frame.domain[1] - frame.domain[0]
+        return span < frame.space.to(full[1]) - frame.space.to(full[0])
+    })
+}
+
 /**
  * The viewport after a pan move. Shift each axis's snapshot window by the pointer delta since pan start.
  * @param snapshot - the pan frame from pan_frame
@@ -255,8 +408,10 @@ export function pan_viewport(snapshot: PanSnapshot, views: AxisViews, override: 
  * @param delta_y - the wheel event's deltaY
  * @returns the multiplicative zoom factor
  */
-function zoom_factor(delta_y: number): number {
-    return Math.exp(delta_y * ZOOM_SPEED)
+function zoom_factor(delta_y: number, ctrl_key: boolean): number {
+    const exponent = delta_y * (ctrl_key ? PINCH_ZOOM_SPEED : ZOOM_SPEED)
+    // Keep small pinch samples responsive without letting a Ctrl+wheel notch make a large jump.
+    return Math.exp(ctrl_key ? clamp(exponent, -Math.log(1.2), Math.log(1.2)) : exponent)
 }
 
 /**

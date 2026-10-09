@@ -143,3 +143,65 @@ report a composition error and retain the last successful plot. Numeric row
 
 Viewport-aware sizing is supported by the scatter size accessor. Rectangle
 sizes, line widths, font sizes, and other size declarations accept numbers.
+
+## Interaction configuration migration
+
+Zoom and pan use fixed gestures. Remove `zoom_pan.modifier` from existing configs.
+Rectangle zoom and Reset Zoom animate over 200–400 ms with an ease-out, based on
+the zoom ratio and center movement of the axis that changes most. Menu Zoom In
+and Zoom Out keep a fixed 200 ms duration.
+Disabled axes stay fixed, and logarithmic axes interpolate in log space. Reduced
+motion skips the animation. A new gesture interrupts at the current frame;
+`on_viewport_change` reports completion or gesture interruption, not every frame.
+New plot arguments supersede the animation without reporting the old transition,
+and resizing stops it at the current frame.
+
+Plain drag pans; Ctrl-drag inside the plot draws a zoom rectangle. Over an axis,
+plain drag zooms around the starting value, and scrolling zooms around the pointer.
+Enabled continuous axes show directional arrows on hover. Pan by dragging inside
+the plot; axis drags always zoom, with or without Ctrl.
+Scrolling inside the plot zooms both enabled axes. Horizontal input is ignored.
+
+Right-click for Reset Zoom, Zoom Out, and Zoom In. This replaces the reset button
+and double-click reset. Unavailable actions remain visible and disabled.
+`zoom_pan` still accepts a boolean or an object with optional `x` and `y` flags.
+The object also accepts `menu_zoom_step`, a finite number greater than 1, default
+`2`. Zoom In divides spans by this value; Zoom Out multiplies them. It affects
+only menu zoom. Wheel and drag sensitivity are unchanged.
+
+Low-level `PlotSurface` consumers now supply `presentation.menu` action states
+and handle `onZoomRequest` (`in`, `out`, or `reset`, plus context-click offsets).
+The old `presentation.reset`, `onResetRequest`, and `onPlotDoubleClick` are removed.
+The public `Plot` and standalone `a-plot` hosts handle these details internally.
+
+Keyboard users can focus the plot zoom controls and press Shift+F10 or the
+Context Menu key. Keyboard menu zoom anchors at the plot center, and Escape
+returns focus to the controls. Ctrl-primary click is reserved for rectangle
+zoom on macOS; use a secondary click to open the pointer menu. Plain wheel and
+Ctrl-wheel/pinch zoom the plot; horizontal and Shift-wheel input are left to the
+browser. A rectangle only needs nonzero extent on enabled continuous axes.
+
+PlotSurface uses one Capture spanning the interior and visible axis strips.
+Its `capture_policy` presentation supplies wheel availability per region.
+After pointer settling, the extra corner in that bounding rectangle consumes
+vertical scroll without zooming or scrolling the page. Horizontal/Shift-wheel input remains with the
+browser. Pointer and wheel events retain offsets relative to the plot interior.
+
+Selecting a zoom menu action while the pointer is over the capture area makes
+wheel zoom immediately available until the pointer leaves that area. This avoids
+repeating the dwell delay when the menu closes, including during zoom animation.
+
+Ctrl-wheel and pinch share the same browser signal. Small samples use 3× wheel
+sensitivity; each Ctrl-wheel sample is capped at a 1.2× change in either direction
+so physical mouse-wheel notches stay manageable. Pinching preserves any existing
+plain-wheel dwell state.
+
+Plain wheel input on a new visit, including the corner, waits for pointer settling. Ctrl-wheel
+and pinch over interactive plot regions activate immediately. Shift-wheel is
+ignored by Capture without stopping propagation to application wheel listeners.
+
+For low-level PlotSurface consumers, `presentation.capture_policy` owns input
+configuration while supplied. `configureCapture(config)` stores a fallback that
+applies when no presentation policy is supplied; surface capture attributes also
+apply only in that fallback mode. Use `present()` to update a region policy.
+Public plot hosts configure their input through presentation alone.

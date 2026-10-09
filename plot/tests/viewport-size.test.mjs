@@ -55,7 +55,7 @@ test('accessor gets the composed windows and full domains, and runs again on pan
     const before = views.at(-1)
     c.interactions.begin_pan({ x: 300, y: 150 }, both)
     c.interactions.advance_pan({ x: 0, y: 150 }, both)
-    c.interactions.end_pan()
+    c.interactions.end_drag()
     c.interactions.commit_viewport()
     const plot = render(c)
     assert.notDeepEqual(views.at(-1).x.window, before.x.window)

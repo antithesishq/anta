@@ -752,20 +752,20 @@
   a-checkbox {
     --checkbox-label-color: var(--text-1);
     --checkbox-hint-color: var(--text-4);
-    --checkbox-mask-size: 12px;
-    --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
-    --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    --checkbox-mask-size: 14px;
+    --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
 
     &[size="small"] {
-      --checkbox-mask-size: 10px;
-      --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.84' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
-      --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.84' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+      --checkbox-mask-size: 12px;
+      --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+      --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
     }
     &[size="large"] {
       --checkbox-gap: 10px;
-      --checkbox-mask-size: 14px;
-      --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.74' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
-      --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.74' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+      --checkbox-mask-size: 16px;
+      --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+      --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
     }
     &:not([round])::before {
       border-radius: 1px;
@@ -894,33 +894,42 @@
   input[data-anta][type="checkbox"]:not([round]) {
     --checkbox-round: 1px;
   }
+  input[data-anta][type="checkbox"] {
+    --checkbox-mask-size: 14px;
+  }
+  input[data-anta][type="checkbox"][size="small"] {
+    --checkbox-mask-size: 12px;
+  }
+  input[data-anta][type="checkbox"][size="large"] {
+    --checkbox-mask-size: 16px;
+  }
   input[data-anta][type="checkbox"]:disabled {
     border-color: var(--checkbox-border-disabled);
     background-color: var(--checkbox-bg-disabled);
   }
   input[data-anta][type="checkbox"]:checked {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
   }
   input[data-anta][type="checkbox"]:indeterminate {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
   }
   .dark input[data-anta][type="checkbox"]:not([tone="critical"]):checked {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
   }
   .dark input[data-anta][type="checkbox"]:not([tone="critical"]):indeterminate {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
   }
   input[data-anta][type="checkbox"]:disabled:checked {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a3' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a3' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
   }
   input[data-anta][type="checkbox"]:disabled:indeterminate {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a3' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a3' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
   }
   .dark input[data-anta][type="checkbox"]:disabled:checked {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
   }
   .dark input[data-anta][type="checkbox"]:disabled:indeterminate {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.2' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c6e78' stroke-width='3.26' stroke-linecap='square'%3E%3Cpath d='M21 12H3'/%3E%3C/svg%3E");
   }
 
   :is(a-radio, input[data-anta][type="radio"]) {
@@ -1024,6 +1033,106 @@
     background: radial-gradient(circle, var(--radio-dot-disabled) 0 var(--radio-dot-core), var(--radio-bg-disabled) var(--radio-dot-edge));
   }
 
+  /* Switches share the interactive layer: stroke-1 outlines the unchecked
+     track and fills its thumb, fill-1 fills the checked track. Disabled
+     switches drop their tone. */
+  a-switch {
+    --switch-thumb: var(--label-on-fill);
+    --switch-thumb-shadow: 0 1px 2px color-mix(in oklch, #000000 25%, transparent);
+    --switch-track-disabled: var(--fill-disabled);
+    --switch-track-disabled-border: var(--stroke-disabled);
+    --switch-track-on-disabled: var(--fill-disabled);
+    --switch-track-on-disabled-border: var(--stroke-disabled);
+    --switch-thumb-off-disabled: var(--label-on-fill-disabled);
+    --switch-thumb-on-disabled: var(--label-on-fill-disabled);
+    --switch-thumb-shadow-disabled: none;
+  }
+
+  a-switch:is(:not([tone]), [tone=""], [tone="neutral"], [tone-scope="selected"]) {
+    --switch-track-off-stroke-neutral: var(--stroke-1);
+    --switch-track-off-stroke-hover: var(--stroke-1-hover);
+    --switch-track-off-stroke-active: var(--stroke-1-active);
+  }
+
+  a-switch:is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --switch-track-on: var(--fill-1);
+    --switch-track-on-hover: var(--fill-1-hover);
+    --switch-track-on-active: var(--fill-1-active);
+  }
+
+  a-switch[tone="brand"] {
+    --switch-track-on: var(--fill-1-brand);
+    --switch-track-on-hover: var(--fill-1-brand-hover);
+    --switch-track-on-active: var(--fill-1-brand-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-brand);
+      --switch-track-off-stroke-hover: var(--stroke-1-brand-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-brand-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="info"] {
+    --switch-track-on: var(--fill-1-info);
+    --switch-track-on-hover: var(--fill-1-info-hover);
+    --switch-track-on-active: var(--fill-1-info-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-info);
+      --switch-track-off-stroke-hover: var(--stroke-1-info-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-info-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="success"] {
+    --switch-track-on: var(--fill-1-success);
+    --switch-track-on-hover: var(--fill-1-success-hover);
+    --switch-track-on-active: var(--fill-1-success-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-success);
+      --switch-track-off-stroke-hover: var(--stroke-1-success-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-success-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="warning"] {
+    --switch-track-on: var(--fill-1-warning);
+    --switch-track-on-hover: var(--fill-1-warning-hover);
+    --switch-track-on-active: var(--fill-1-warning-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-warning);
+      --switch-track-off-stroke-hover: var(--stroke-1-warning-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-warning-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="critical"] {
+    --switch-thumb: var(--label-on-fill-critical);
+    --switch-track-on: var(--fill-1-critical);
+    --switch-track-on-hover: var(--fill-1-critical-hover);
+    --switch-track-on-active: var(--fill-1-critical-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-critical);
+      --switch-track-off-stroke-hover: var(--stroke-1-critical-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-critical-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  /* Lift custom dark fills under the black thumb. */
+  a-switch[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --switch-track-on: light-dark(oklch(from var(--switch-tone-source) 0.5 c h), oklch(from var(--switch-tone-source) 0.8 0.1 h));
+    --switch-track-on-hover: light-dark(oklch(from var(--switch-tone-source) 0.45 c h), oklch(from var(--switch-tone-source) 0.84 0.095 h));
+    --switch-track-on-active: light-dark(oklch(from var(--switch-tone-source) 0.4 c h), oklch(from var(--switch-tone-source) 0.87 0.075 h));
+  }
+
   a-radio:state(selected):focus-visible::before,
   a-radio-group:focus-visible a-radio:state(selected)::before,
   input[data-anta][type="radio"]:checked:focus-visible,
@@ -1039,10 +1148,24 @@
 
   /* Fields share the interactive stroke: stroke-1 at rest, stroke-1-hover on
      hover and focus. Status and custom-tone fields keep their own border. The
-     focus ring is 2px inside the field edge. */
+     2px focus ring straddles the field edge, 1px inside and 1px outside, so
+     focus grows the field outline by 1px without changing its layout size. */
   a-input {
     --_input-focus-width: 2px;
-    --_input-focus-offset: -2px;
+    --_input-focus-offset: -1px;
+  }
+
+  /* The field ring pulses in like the other focus rings. The rule targets the
+     field part from the document, so it resolves the document's keyframes.
+     The host matches `:focus` only when its shadow control holds focus, not
+     when a slotted button does, which matches the shadow ring condition. */
+  a-input:not([readonly]):focus::part(field),
+  a-input[readonly]:state(kb-focus)::part(field) {
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 
   a-input:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {
@@ -1074,7 +1197,7 @@
   }
 
   a-tag {
-    border-radius: 1px;
+    border-radius: 3px;
   }
 }
 

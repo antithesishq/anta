@@ -21,8 +21,7 @@ export default function App() {
       data-last-transition={lastTransition ? String(lastTransition.prev) + '>' + String(lastTransition.next) : undefined}
       style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}
     >
-      <form
-        data-fixture-form
+      <div
         style={{ minHeight: '72px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px', background: 'var(--bg-1)' }}
       >
         {mounted ? (
@@ -30,8 +29,6 @@ export default function App() {
             data-fixture-target
             defaultChecked="indeterminate"
             disabled={disabled}
-            name="notification-scope"
-            value="all"
             label="Select all notifications"
             hint={disabled ? 'Notification selection is unavailable.' : 'Include every notification in this selection.'}
             onStateChange={(_event, transition) => {
@@ -45,7 +42,7 @@ export default function App() {
         ) : (
           <p data-fixture-empty>The notification selection is unavailable.</p>
         )}
-      </form>
+      </div>
 
       <output aria-live="polite" data-fixture-state style={{ color: 'var(--text-2)', fontSize: '14px' }}>
         {mounted

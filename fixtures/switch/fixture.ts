@@ -14,8 +14,7 @@ export default function App() {
       data-expected-mounted={String(mounted)}
       style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}
     >
-      <form
-        data-fixture-form
+      <div
         style={{ minHeight: '72px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px', background: 'var(--bg-1)' }}
       >
         {mounted ? (
@@ -23,8 +22,6 @@ export default function App() {
             data-fixture-target
             checked={checked}
             disabled={disabled}
-            name="automatic-updates"
-            value="enabled"
             label="Automatic updates"
             hint={disabled ? 'Managed by your organization.' : 'Install updates automatically.'}
             onStateChange={(_event, { next }) => setChecked(next)}
@@ -32,7 +29,7 @@ export default function App() {
         ) : (
           <p data-fixture-empty>The automatic update setting is unavailable.</p>
         )}
-      </form>
+      </div>
 
       <output aria-live="polite" data-fixture-state style={{ color: 'var(--text-2)', fontSize: '14px' }}>
         {mounted

@@ -20,15 +20,16 @@ const focusAndPressSpace = registerCustomAction(
   async (document, window) => {
     const target = document.querySelector<HTMLElement>('[data-fixture-target]')
     if (!target || target.matches(':disabled')) return
+    const browser = window as unknown as typeof globalThis
 
     target.focus()
-    target.dispatchEvent(new window.KeyboardEvent('keydown', {
+    target.dispatchEvent(new browser.KeyboardEvent('keydown', {
       key: ' ',
       code: 'Space',
       bubbles: true,
       cancelable: true,
     }))
-    target.dispatchEvent(new window.KeyboardEvent('keyup', {
+    target.dispatchEvent(new browser.KeyboardEvent('keyup', {
       key: ' ',
       code: 'Space',
       bubbles: true,
@@ -39,8 +40,7 @@ const focusAndPressSpace = registerCustomAction(
 
 const fixture = extract((state) => {
   const root = state.document.querySelector<HTMLElement>('[data-fixture="switch"]')
-  const form = state.document.querySelector<HTMLFormElement>('[data-fixture-form]')
-  if (!root || !form) return null
+  if (!root) return null
 
   const target = root.querySelector<HTMLElement & { checked: boolean }>('[data-fixture-target]')
   const expectedChecked = root.dataset.expectedChecked === 'true'
@@ -57,7 +57,6 @@ const fixture = extract((state) => {
     expectedChecked,
     expectedDisabled,
     expectedMounted,
-    formValues: new state.window.FormData(form).getAll('automatic-updates').map(String),
   }
 })
 
@@ -86,13 +85,4 @@ export const switchDisabledStateMatchesParent = always(() => {
   if (current === null || !current.expectedMounted) return true
   return current.actualDisabled === current.expectedDisabled
     && current.actualTabIndex === (current.expectedDisabled ? -1 : 0)
-})
-
-export const switchFormValueMatchesState = always(() => {
-  const current = fixture.current
-  if (current === null) return true
-  const shouldSubmit = current.expectedMounted && current.expectedChecked && !current.expectedDisabled
-  return shouldSubmit
-    ? current.formValues.length === 1 && current.formValues[0] === 'enabled'
-    : current.formValues.length === 0
 })

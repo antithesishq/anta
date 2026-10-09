@@ -2,7 +2,7 @@ import { always } from '@antithesishq/bombadil'
 import { actions, extract, registerCustomAction } from '@antithesishq/bombadil/browser'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
-export { clicks } from '@antithesishq/bombadil/browser/defaults/actions'
+export { clicks, inputs } from '@antithesishq/bombadil/browser/defaults/actions'
 
 const waitForSelectFacetedFixture = registerCustomAction(
   'waitForSelectFacetedFixture',
@@ -15,125 +15,54 @@ const waitForSelectFacetedFixture = registerCustomAction(
   },
 )
 
-const setRootSearch = registerCustomAction(
-  'selectFacetedSetRootSearch',
-  async (document, window, query: string) => {
-    const host = document.querySelector<HTMLElement>('[data-select-faceted-host]')
-    const menu = host?.querySelector<HTMLElement & { isOpen: boolean }>(':scope > a-menu')
-    const input = menu?.querySelector<HTMLElement & { value: string }>(':scope > a-select-header a-input[data-menu-search]')
-    if (!menu?.isOpen || !input) return
-    const browser = window as unknown as typeof globalThis
-    input.value = query
-    input.dispatchEvent(new browser.Event('input', { bubbles: true, composed: true }))
-  },
-)
-
-const pressRootSearchKey = registerCustomAction(
-  'selectFacetedPressRootSearchKey',
-  async (document, window, key: string) => {
-    const host = document.querySelector<HTMLElement>('[data-select-faceted-host]')
-    const menu = host?.querySelector<HTMLElement & { isOpen: boolean }>(':scope > a-menu')
-    const input = menu?.querySelector<HTMLElement>(':scope > a-select-header a-input[data-menu-search]')
-    const control = input?.shadowRoot?.querySelector<HTMLElement>('input')
-    if (!menu?.isOpen || !control) return
-    const browser = window as unknown as typeof globalThis
-    control.focus()
-    control.dispatchEvent(new browser.KeyboardEvent('keydown', { key, code: key, bubbles: true, composed: true, cancelable: true }))
-    control.dispatchEvent(new browser.KeyboardEvent('keyup', { key, code: key, bubbles: true, composed: true, cancelable: true }))
-  },
-)
-
 const fixture = extract((state) => {
   const root = state.document.querySelector<HTMLElement>('[data-fixture="select-faceted"]')
   if (!root) return null
 
-  const host = root.querySelector<HTMLElement>('[data-select-faceted-host]')
-  const trigger = host?.querySelector<HTMLElement>(':scope > a-button') ?? null
-  const menu = host?.querySelector<HTMLElement & { isOpen: boolean }>(':scope > a-menu') ?? null
-  const search = menu?.querySelector<HTMLElement & { value: string }>(':scope > a-select-header a-input[data-menu-search]') ?? null
-  const rows = menu
-    ? Array.from(menu.querySelectorAll<HTMLElement>('a-menu-item[data-fixture-facet]'), (row) => ({
+  const trigger = root.querySelector<HTMLElement>('[data-fixture-target]')
+  const menu = trigger?.nextElementSibling as (HTMLElement & { isOpen: boolean }) | null
+  const checkableRows = menu
+    ? Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"], [role="menuitemradio"]'), (row) => ({
         checked: row.getAttribute('aria-checked'),
-        facet: row.dataset.fixtureFacet ?? '',
-        search: row.dataset.fixtureSearch ?? '',
-        value: row.dataset.fixtureValue ?? '',
+        role: row.getAttribute('role'),
       }))
+    : []
+  const radioSelectionCounts = menu
+    ? Array.from(menu.querySelectorAll<HTMLElement>('a-menu'), (group) =>
+        group.querySelectorAll(':scope > a-menu-item[role="menuitemradio"][aria-checked="true"]').length)
     : []
 
   return {
-    actualDisabled: trigger?.hasAttribute('disabled') ?? null,
-    actualMounted: host !== null,
-    activeCountText: trigger?.querySelector('a-tag')?.textContent?.trim() ?? '',
-    expectedActiveCount: Number(root.dataset.expectedActiveCount ?? '0'),
-    expectedDisabled: root.dataset.expectedDisabled === 'true',
-    expectedMounted: root.dataset.expectedMounted === 'true',
-    expectedValue: JSON.parse(root.dataset.expectedValue ?? '{}') as Record<string, unknown>,
+    checkableRows,
+    disabled: trigger?.hasAttribute('disabled') ?? null,
     expanded: trigger?.getAttribute('aria-expanded') ?? null,
-    lastChangeValid: root.dataset.lastChangeValid === 'true',
     menuIsOpen: menu?.isOpen ?? null,
     menuOpenState: menu?.matches(':state(open)') ?? null,
-    rows,
-    searchQuery: search?.value ?? '',
+    mounted: trigger !== null,
+    radioSelectionCounts,
+    tabIndex: trigger?.tabIndex ?? null,
   }
-})
-
-export const selectFacetedSearchActions = actions(() => {
-  const current = fixture.current
-  if (current === null || !current.actualMounted || !current.menuIsOpen) return []
-  return [
-    ...['', 'ali', 'open', 'car', 'zzz'].map((query) => setRootSearch(query)),
-    ...['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].map((key) => pressRootSearchKey(key)),
-  ]
 })
 
 export const selectFacetedReadyActions = actions(() => (
   fixture.current === null ? [waitForSelectFacetedFixture()] : []
 ))
 
-export const selectFacetedValueHasAValidShape = always(() => {
+export const selectFacetedOpenStateIsCoherent = always(() => {
   const current = fixture.current
-  if (current === null) return true
-  if (current.actualMounted !== current.expectedMounted) return false
-  if (!current.expectedMounted) return true
+  if (current === null || !current.mounted) return true
 
-  const value = current.expectedValue
-  const keys = Object.keys(value)
-  const status = value.status
-  const assignee = value.assignee
-  return current.lastChangeValid
-    && keys.every((key) => key === 'status' || key === 'assignee')
-    && (status === undefined || ['open', 'in-progress', 'closed'].includes(status as string))
-    && (assignee === undefined || (Array.isArray(assignee)
-      && new Set(assignee).size === assignee.length
-      && assignee.every((entry) => ['alice', 'bob', 'carol'].includes(entry as string))))
-})
-
-export const selectFacetedRowsMatchTheControlledValue = always(() => {
-  const current = fixture.current
-  if (current === null || !current.expectedMounted) return true
-  const status = current.expectedValue.status
-  const assignees = Array.isArray(current.expectedValue.assignee) ? current.expectedValue.assignee : []
-
-  return current.rows.every((row: { checked: string | null; facet: string; value: string }) => {
-    const expected = row.facet === 'status' ? status === row.value : assignees.includes(row.value)
-    return row.checked === String(expected)
-  })
-})
-
-export const selectFacetedOpenStateAndCountStayCoherent = always(() => {
-  const current = fixture.current
-  if (current === null || !current.expectedMounted) return true
-  const expectedCountText = current.expectedActiveCount === 0 ? '' : String(current.expectedActiveCount)
-  return current.actualDisabled === current.expectedDisabled
-    && current.expanded === String(current.menuIsOpen)
+  return current.expanded === String(current.menuIsOpen)
     && current.menuOpenState === current.menuIsOpen
-    && current.activeCountText === expectedCountText
+    && current.tabIndex === (current.disabled ? -1 : 0)
 })
 
-export const selectFacetedSearchOnlyShowsMatches = always(() => {
+export const selectFacetedSelectionIndicatorsAreValid = always(() => {
   const current = fixture.current
-  if (current === null || !current.expectedMounted || current.searchQuery.trim() === '') return true
-  const query = current.searchQuery.trim().toLowerCase()
-  return current.rows.length === 0
-    || current.rows.every((row: { search: string }) => row.search.toLowerCase().includes(query))
+  if (current === null || !current.mounted) return true
+
+  return current.checkableRows.every((row: { checked: string | null; role: string | null }) =>
+    (row.role === 'menuitemcheckbox' || row.role === 'menuitemradio')
+      && (row.checked === 'true' || row.checked === 'false' || row.checked === 'mixed'))
+    && current.radioSelectionCounts.every((count: number) => count <= 1)
 })

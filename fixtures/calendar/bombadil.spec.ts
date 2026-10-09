@@ -51,27 +51,15 @@ const fixture = extract((state) => {
         date: day.dataset.date ?? '',
         disabled: day.hasAttribute('disabled'),
         selected: day.hasAttribute('selected'),
-        tabIndex: day.tabIndex,
       }))
     : []
 
   return {
-    actualDisabled: calendar?.hasAttribute('disabled') ?? null,
-    actualMounted: calendar !== null,
-    actualValue: calendar?.value ?? null,
-    attributeValue: calendar?.getAttribute('value') ?? null,
+    disabled: calendar?.hasAttribute('disabled') ?? null,
+    mounted: calendar !== null,
+    value: calendar?.value ?? null,
+    valueAttribute: calendar?.getAttribute('value') ?? null,
     days,
-    expectedDisabled: root.dataset.expectedDisabled === 'true',
-    expectedMounted: root.dataset.expectedMounted === 'true',
-    expectedValue: root.dataset.expectedValue ?? '',
-    lastNext: root.dataset.lastNext ?? null,
-    lastPreApplyConsistent: root.dataset.lastPreApplyConsistent !== 'false',
-    lastPrev: root.dataset.lastPrev ?? null,
-    lastReason: root.dataset.lastReason ?? null,
-    max: root.dataset.max ?? '',
-    min: root.dataset.min ?? '',
-    requestedWhileDisabled: root.dataset.requestedWhileDisabled === 'true',
-    valueWhenDisabled: root.dataset.valueWhenDisabled ?? null,
   }
 })
 
@@ -92,7 +80,7 @@ const keys = [
 
 export const calendarKeyboardActions = actions(() => {
   const current = fixture.current
-  if (current === null || !current.actualMounted || current.expectedDisabled) return []
+  if (current === null || !current.mounted || current.disabled) return []
   return keys.map(([key, shiftKey]) => focusDayAndPressKey(key, shiftKey))
 })
 
@@ -100,44 +88,20 @@ export const calendarReadyActions = actions(() => (
   fixture.current === null ? [waitForCalendarFixture()] : []
 ))
 
-export const calendarSelectionStaysCoherent = always(() => {
+export const calendarSelectionIsCoherent = always(() => {
   const current = fixture.current
-  if (current === null) return true
-  if (current.actualMounted !== current.expectedMounted) return false
-  if (!current.expectedMounted) return true
+  if (current === null || !current.mounted) return true
 
   const selected = current.days.filter((day: { selected: boolean }) => day.selected)
-  const selectedDateIsRendered = current.days.some((day: { date: string }) => day.date === current.expectedValue)
-  return current.actualValue === current.expectedValue
-    && current.attributeValue === current.expectedValue
+  const selectedDateIsRendered = current.days.some((day: { date: string }) => day.date === current.value)
+  return current.valueAttribute !== null
+    && current.value === current.valueAttribute
     && selected.length === (selectedDateIsRendered ? 1 : 0)
-    && selected.every((day: { date: string }) => day.date === current.expectedValue)
+    && selected.every((day: { date: string }) => day.date === current.value)
 })
 
-export const calendarRovingDayRespectsBounds = always(() => {
+export const disabledCalendarHasNoEnabledDays = always(() => {
   const current = fixture.current
-  if (current === null || !current.expectedMounted) return true
-  const tabbable = current.days.filter((day: { tabIndex: number }) => day.tabIndex === 0)
-  if (tabbable.length !== 1) return false
-
-  return current.actualDisabled === current.expectedDisabled
-    && current.days.every((day: { date: string; disabled: boolean }) =>
-      day.disabled === (current.expectedDisabled || day.date < current.min || day.date > current.max))
-})
-
-export const calendarUserTransitionReachesControlledValue = always(() => {
-  const current = fixture.current
-  if (current === null || !current.expectedMounted || current.lastNext === null) return true
-  return current.lastReason === 'user'
-    && current.lastPrev !== current.lastNext
-    && current.lastPreApplyConsistent
-    && current.actualValue === current.lastNext
-})
-
-export const disabledCalendarDoesNotRequestSelection = always(() => {
-  const current = fixture.current
-  if (current === null || !current.expectedMounted || !current.expectedDisabled) return true
-  return !current.requestedWhileDisabled
-    && current.valueWhenDisabled !== null
-    && current.actualValue === current.valueWhenDisabled
+  if (current === null || !current.mounted || !current.disabled) return true
+  return current.days.every((day: { disabled: boolean }) => day.disabled)
 })

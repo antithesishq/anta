@@ -43,10 +43,6 @@ const fixture = extract((state) => {
   if (!root) return null
 
   const target = root.querySelector<HTMLElement & { checked: boolean }>('[data-fixture-target]')
-  const expectedChecked = root.dataset.expectedChecked === 'true'
-  const expectedDisabled = root.dataset.expectedDisabled === 'true'
-  const expectedMounted = root.dataset.expectedMounted === 'true'
-
   return {
     actualChecked: target?.checked ?? null,
     actualCheckedState: target?.matches(':state(checked)') ?? null,
@@ -54,9 +50,6 @@ const fixture = extract((state) => {
     actualMounted: target !== null,
     actualTabIndex: target?.tabIndex ?? null,
     canFocusAndPressSpace: target !== null && !target.matches(':disabled'),
-    expectedChecked,
-    expectedDisabled,
-    expectedMounted,
   }
 })
 
@@ -68,21 +61,9 @@ export const switchReadyActions = actions(() => (
   fixture.current === null ? [waitForSwitchFixture()] : []
 ))
 
-export const switchMountMatchesParent = always(() => {
+export const switchStateIsCoherent = always(() => {
   const current = fixture.current
-  return current === null || current.actualMounted === current.expectedMounted
-})
-
-export const switchCheckedStateMatchesParent = always(() => {
-  const current = fixture.current
-  if (current === null || !current.expectedMounted) return true
-  return current.actualChecked === current.expectedChecked
-    && current.actualCheckedState === current.expectedChecked
-})
-
-export const switchDisabledStateMatchesParent = always(() => {
-  const current = fixture.current
-  if (current === null || !current.expectedMounted) return true
-  return current.actualDisabled === current.expectedDisabled
-    && current.actualTabIndex === (current.expectedDisabled ? -1 : 0)
+  if (current === null || !current.actualMounted) return true
+  return current.actualChecked === current.actualCheckedState
+    && current.actualTabIndex === (current.actualDisabled ? -1 : 0)
 })

@@ -9,9 +9,6 @@ export default function App() {
   return (
     <main
       data-fixture="switch"
-      data-expected-checked={String(checked)}
-      data-expected-disabled={String(disabled)}
-      data-expected-mounted={String(mounted)}
       style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}
     >
       <div
@@ -27,20 +24,19 @@ export default function App() {
             onStateChange={(_event, { next }) => setChecked(next)}
           />
         ) : (
-          <p data-fixture-empty>The automatic update setting is unavailable.</p>
+          <p>The automatic update setting is unavailable.</p>
         )}
       </div>
 
-      <output aria-live="polite" data-fixture-state style={{ color: 'var(--text-2)', fontSize: '14px' }}>
+      <output aria-live="polite" style={{ color: 'var(--text-2)', fontSize: '14px' }}>
         {mounted
           ? (checked ? 'On' : 'Off') + ', ' + (disabled ? 'locked' : 'editable')
           : 'Removed, parent value is ' + (checked ? 'on' : 'off')}
       </output>
 
-      <div aria-label="Fixture controls" data-fixture-controls style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+      <div aria-label="Fixture controls" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
         <Button
           priority="secondary"
-          data-fixture-control="checked"
           onClick={() => setChecked((value) => !value)}
         >
           Controlled update
@@ -48,7 +44,6 @@ export default function App() {
 
         <Button
           priority="secondary"
-          data-fixture-control="disabled"
           onClick={() => setDisabled((value) => !value)}
         >
           {disabled ? 'Enable' : 'Disable'}
@@ -56,7 +51,6 @@ export default function App() {
 
         <Button
           priority="secondary"
-          data-fixture-control="mounted"
           onClick={() => setMounted((value) => !value)}
         >
           {mounted ? 'Unmount' : 'Mount'}

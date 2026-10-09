@@ -96,7 +96,7 @@ function PlotFixture({ plotIndex }) {
         />
       </div>
 
-      <output aria-live="polite" data-fixture-state style={{ display: 'grid', gap: '2px', color: 'var(--text-2)', fontSize: '12px' }}>
+      <output aria-live="polite" style={{ display: 'grid', gap: '2px', color: 'var(--text-2)', fontSize: '12px' }}>
         <span>Dataset {dataset.revision}: {dataset.rows.length} points, {height}px</span>
         <span>Selected: {selected}</span>
         <span>Viewport: x {formatWindow(viewport.x)}, y {formatWindow(viewport.y)}</span>
@@ -106,7 +106,7 @@ function PlotFixture({ plotIndex }) {
 
       {errors.length > 0 && <pre data-plot-errors>{errors.join('\\n')}</pre>}
 
-      <div aria-label={'Plot ' + (plotIndex + 1) + ' controls'} data-fixture-controls style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+      <div aria-label={'Plot ' + (plotIndex + 1) + ' controls'} style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
         <Button priority="secondary" onClick={() => {
           setDataset((current) => createDataset(current.revision + 1, plotIndex))
           setSelected('None')
@@ -141,7 +141,7 @@ export default function App() {
           ))}
         </div>
       ) : (
-        <p data-fixture-empty>The plots are unmounted.</p>
+        <p>The plots are unmounted.</p>
       )}
 
       <button data-plot-mount-toggle hidden type="button" onClick={() => setMounted((current) => !current)}>

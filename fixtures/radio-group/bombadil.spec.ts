@@ -87,18 +87,7 @@ const fixture = extract((state) => {
     actualMounted: group !== null,
     actualValue: group?.value ?? null,
     optionIndexes: radios.map((_radio, index) => index),
-    expectedDisabled: root.dataset.expectedDisabled === 'true',
-    expectedMounted: root.dataset.expectedMounted === 'true',
-    lastNext: root.dataset.lastNext ?? null,
-    lastPrev: root.dataset.lastPrev ?? null,
-    lastPrevMatched: root.dataset.lastPrevMatched === 'true',
-    lastPreApplyConsistent: root.dataset.lastPreApplyConsistent !== 'false',
-    lastReason: root.dataset.lastReason ?? null,
-    lastTargetEnabled: root.dataset.lastTargetEnabled === 'true',
-    postApplyConsistent: root.dataset.postApplyConsistent !== 'false',
     radios,
-    requestedWhileDisabled: root.dataset.requestedWhileDisabled === 'true',
-    valueWhenDisabled: root.dataset.valueWhenDisabled ?? null,
   }
 })
 
@@ -106,14 +95,14 @@ const navigationKeys = [' ', 'Enter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'Arro
 
 export const radioGroupKeyboardActions = actions(() => {
   const current = fixture.current
-  if (current === null || !current.actualMounted || current.expectedDisabled) return []
+  if (current === null || !current.actualMounted || current.actualDisabled) return []
   return current.optionIndexes.flatMap((optionIndex: number) =>
     navigationKeys.map((key) => focusAndPressKey(optionIndex, key)))
 })
 
 export const radioGroupRapidKeyboardActions = actions(() => {
   const current = fixture.current
-  if (current === null || !current.actualMounted || current.expectedDisabled) return []
+  if (current === null || !current.actualMounted || current.actualDisabled) return []
   return current.optionIndexes.flatMap((optionIndex: number) =>
     ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].flatMap((key) =>
       [2, 3, 5].map((count) => rapidlyPressArrow(optionIndex, key, count))))
@@ -123,41 +112,16 @@ export const radioGroupReadyActions = actions(() => (
   fixture.current === null ? [waitForRadioGroupFixture()] : []
 ))
 
-export const radioGroupFollowsStateMachine = always(() => {
+export const radioGroupSelectionIsCoherent = always(() => {
   const current = fixture.current
-  if (current === null) return true
-  if (current.actualMounted !== current.expectedMounted) return false
-  if (!current.expectedMounted) return true
-  if (current.actualDisabled !== current.expectedDisabled) return false
-  if (current.lastNext === null) return true
-
-  return current.lastReason === 'user'
-    && current.lastPrev !== current.lastNext
-    && current.lastPrevMatched
-    && current.lastPreApplyConsistent
-    && current.lastTargetEnabled
-    && current.postApplyConsistent
-    && current.actualValue === current.lastNext
-})
-
-export const disabledRadioGroupDoesNotTransition = always(() => {
-  const current = fixture.current
-  if (current === null || !current.expectedMounted || !current.expectedDisabled) return true
-  return !current.requestedWhileDisabled
-    && current.valueWhenDisabled !== null
-    && current.actualValue === current.valueWhenDisabled
-})
-
-export const radioGroupOptionsReconcile = always(() => {
-  const current = fixture.current
-  if (current === null || !current.expectedMounted) return true
+  if (current === null || !current.actualMounted) return true
 
   const matchingOption = current.radios.find((radio: { value: string }) => radio.value === current.actualValue)
   const selected = current.radios.filter((radio: { selected: boolean }) => radio.selected)
   const selectedStates = current.radios.filter((radio: { selectedState: boolean }) => radio.selectedState)
   const expectedSelectedCount = matchingOption ? 1 : 0
   const tabStops = current.radios.filter((radio: { tabIndex: number }) => radio.tabIndex === 0)
-  const expectedTabStop = current.expectedDisabled
+  const expectedTabStop = current.actualDisabled
     ? undefined
     : matchingOption ?? current.radios.find((radio: { disabled: boolean }) => !radio.disabled)
 

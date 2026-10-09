@@ -39,14 +39,14 @@
       oklch(from var(--tabs-tone-source) 0.8 0.008 h / 0.07)
     );
     --tabs-track-border: var(--border-4);
-    /* Inset rings (no blur): 1px on the track, 0.5px on the selected secondary tab. Inset
+    /* 1px inset rings (no blur) on the track and the selected secondary tab. Inset
        because the strip has no padding — an outset ring would be clipped / overlap the track
        edge. The track edge rides --tabs-track-border (--border-4, faint); the selected
        secondary tab rides its own --tab-selected-border (--border-2, a couple steps
        stronger). */
     --tabs-track-shadow: inset 0 0 0px 1px var(--tabs-track-border);
     --tab-selected-border: var(--border-2);
-    --tab-selected-shadow: inset 0 0 0px 0.5px var(--tab-selected-border);
+    --tab-selected-shadow: inset 0 0 0px 1px var(--tab-selected-border);
 
     /* The sliding indicator lives on the strip, so it can't read a selected tab's own
        tone. It paints the strip's colors; the per-tab tone rules below re-point it when a
@@ -368,7 +368,7 @@
     --tab-underline-color: var(--tab-fg-disabled);
   }
   a-tabs[priority="secondary"] a-tab[disabled]:state(selected) {
-    box-shadow: inset 0 0 0px 0.5px var(--tab-selected-border-disabled);
+    box-shadow: inset 0 0 0px 1px var(--tab-selected-border-disabled);
   }
   a-tabs:not([priority="secondary"], [priority="tertiary"]) a-tab[disabled]:state(selected) {
     --tab-fg: var(--tab-primary-fg-disabled);
@@ -492,7 +492,7 @@
     a-tabs:not([noslide])[priority="secondary"]::before {
       background-color: var(--tab-secondary-bg);
       border-radius: var(--tab-radius);
-      box-shadow: inset 0 0 0px 0.5px var(--tab-indicator-border);
+      box-shadow: inset 0 0 0px 1px var(--tab-indicator-border);
     }
     /* Tertiary: the slider is the same full-cover box as primary/secondary (it inherits the
        anchor edges above), but its only paint is a 1px bottom border — so it reads as a

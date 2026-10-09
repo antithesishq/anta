@@ -747,6 +747,8 @@
 
   a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]),
   a-tab[tone="neutral"] {
+    /* One step lighter than --border-4 in dark mode, so the track edge stays visible. */
+    --tabs-track-border: light-dark(var(--border-4), #321f2b);
     --tab-primary-bg: var(--fill-1);
     --tab-primary-fg: var(--label-on-fill);
     --tab-selected-border: var(--stroke-1);

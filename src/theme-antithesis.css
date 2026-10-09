@@ -1015,6 +1015,106 @@
     background: radial-gradient(circle, var(--radio-dot-disabled) 0 var(--radio-dot-core), var(--radio-bg-disabled) var(--radio-dot-edge));
   }
 
+  /* Switches share the interactive layer: stroke-1 outlines the unchecked
+     track and fills its thumb, fill-1 fills the checked track. Disabled
+     switches drop their tone. */
+  a-switch {
+    --switch-thumb: var(--label-on-fill);
+    --switch-thumb-shadow: 0 1px 2px color-mix(in oklch, #000000 25%, transparent);
+    --switch-track-disabled: var(--fill-disabled);
+    --switch-track-disabled-border: var(--stroke-disabled);
+    --switch-track-on-disabled: var(--fill-disabled);
+    --switch-track-on-disabled-border: var(--stroke-disabled);
+    --switch-thumb-off-disabled: var(--label-on-fill-disabled);
+    --switch-thumb-on-disabled: var(--label-on-fill-disabled);
+    --switch-thumb-shadow-disabled: none;
+  }
+
+  a-switch:is(:not([tone]), [tone=""], [tone="neutral"], [tone-scope="selected"]) {
+    --switch-track-off-stroke-neutral: var(--stroke-1);
+    --switch-track-off-stroke-hover: var(--stroke-1-hover);
+    --switch-track-off-stroke-active: var(--stroke-1-active);
+  }
+
+  a-switch:is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --switch-track-on: var(--fill-1);
+    --switch-track-on-hover: var(--fill-1-hover);
+    --switch-track-on-active: var(--fill-1-active);
+  }
+
+  a-switch[tone="brand"] {
+    --switch-track-on: var(--fill-1-brand);
+    --switch-track-on-hover: var(--fill-1-brand-hover);
+    --switch-track-on-active: var(--fill-1-brand-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-brand);
+      --switch-track-off-stroke-hover: var(--stroke-1-brand-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-brand-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="info"] {
+    --switch-track-on: var(--fill-1-info);
+    --switch-track-on-hover: var(--fill-1-info-hover);
+    --switch-track-on-active: var(--fill-1-info-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-info);
+      --switch-track-off-stroke-hover: var(--stroke-1-info-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-info-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="success"] {
+    --switch-track-on: var(--fill-1-success);
+    --switch-track-on-hover: var(--fill-1-success-hover);
+    --switch-track-on-active: var(--fill-1-success-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-success);
+      --switch-track-off-stroke-hover: var(--stroke-1-success-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-success-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="warning"] {
+    --switch-track-on: var(--fill-1-warning);
+    --switch-track-on-hover: var(--fill-1-warning-hover);
+    --switch-track-on-active: var(--fill-1-warning-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-warning);
+      --switch-track-off-stroke-hover: var(--stroke-1-warning-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-warning-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  a-switch[tone="critical"] {
+    --switch-thumb: var(--label-on-fill-critical);
+    --switch-track-on: var(--fill-1-critical);
+    --switch-track-on-hover: var(--fill-1-critical-hover);
+    --switch-track-on-active: var(--fill-1-critical-active);
+
+    &:not([tone-scope="selected"]) {
+      --switch-track-off-stroke: var(--stroke-1-critical);
+      --switch-track-off-stroke-hover: var(--stroke-1-critical-hover);
+      --switch-track-off-stroke-active: var(--stroke-1-critical-active);
+      --switch-thumb-off: var(--switch-track-off-stroke);
+    }
+  }
+
+  /* Lift custom dark fills under the black thumb. */
+  a-switch[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --switch-track-on: light-dark(oklch(from var(--switch-tone-source) 0.5 c h), oklch(from var(--switch-tone-source) 0.8 0.1 h));
+    --switch-track-on-hover: light-dark(oklch(from var(--switch-tone-source) 0.45 c h), oklch(from var(--switch-tone-source) 0.84 0.095 h));
+    --switch-track-on-active: light-dark(oklch(from var(--switch-tone-source) 0.4 c h), oklch(from var(--switch-tone-source) 0.87 0.075 h));
+  }
+
   a-radio:state(selected):focus-visible::before,
   a-radio-group:focus-visible a-radio:state(selected)::before,
   input[data-anta][type="radio"]:checked:focus-visible,

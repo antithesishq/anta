@@ -40,14 +40,12 @@ const focusAndPressSpace = registerCustomAction(
 
 const fixture = extract((state) => {
   const root = state.document.querySelector<HTMLElement>('[data-fixture="checkbox"]')
-  const form = state.document.querySelector<HTMLFormElement>('[data-fixture-form]')
-  if (!root || !form) return null
+  if (!root) return null
 
   const target = root.querySelector<HTMLElement & { checked: boolean; indeterminate: boolean }>('[data-fixture-target]')
   const expectedChecked = root.dataset.expectedChecked
   const expectedDisabled = root.dataset.expectedDisabled === 'true'
   const expectedMounted = root.dataset.expectedMounted === 'true'
-  const expectedValue = root.dataset.expectedValue ?? ''
 
   return {
     actualChecked: target?.checked ?? null,
@@ -58,13 +56,11 @@ const fixture = extract((state) => {
     actualMounted: target !== null,
     actualStateAttribute: target?.getAttribute('state') ?? null,
     actualTabIndex: target?.tabIndex ?? null,
-    actualValue: target?.getAttribute('value') ?? null,
     canFocusAndPressSpace: target !== null && !target.matches(':disabled'),
     expectedChecked,
     expectedDisabled,
     expectedMounted,
-    expectedValue,
-    formValues: new (state.window as unknown as typeof globalThis).FormData(form).getAll('notification-scope').map(String),
+    lastTransition: root.dataset.lastTransition ?? null,
   }
 })
 
@@ -76,14 +72,11 @@ export const checkboxReadyActions = actions(() => (
   fixture.current === null ? [waitForCheckboxFixture()] : []
 ))
 
-export const checkboxMountMatchesParent = always(() => {
+export const checkboxFollowsStateMachine = always(() => {
   const current = fixture.current
-  return current === null || current.actualMounted === current.expectedMounted
-})
-
-export const checkboxStateMatchesParent = always(() => {
-  const current = fixture.current
-  if (current === null || !current.expectedMounted) return true
+  if (current === null) return true
+  if (current.actualMounted !== current.expectedMounted) return false
+  if (!current.expectedMounted) return true
 
   const expectedIsChecked = current.expectedChecked === 'true'
   const expectedIsIndeterminate = current.expectedChecked === 'indeterminate'
@@ -93,34 +86,25 @@ export const checkboxStateMatchesParent = always(() => {
       ? 'indeterminate'
       : 'unchecked'
 
-  return current.actualChecked === expectedIsChecked
+  const stateMatches = current.actualChecked === expectedIsChecked
     && current.actualIndeterminate === expectedIsIndeterminate
     && current.actualCheckedState === expectedIsChecked
     && current.actualIndeterminateState === expectedIsIndeterminate
     && current.actualStateAttribute === expectedState
     && !(current.actualChecked && current.actualIndeterminate)
     && !(current.actualCheckedState && current.actualIndeterminateState)
-})
-
-export const checkboxDisabledStateMatchesParent = always(() => {
-  const current = fixture.current
-  if (current === null || !current.expectedMounted) return true
-  return current.actualDisabled === current.expectedDisabled
+    && current.actualDisabled === current.expectedDisabled
     && current.actualTabIndex === (current.expectedDisabled ? -1 : 0)
-})
+  if (!stateMatches) return false
+  if (current.lastTransition === null) return true
 
-export const checkboxFormValueMatchesState = always(() => {
-  const current = fixture.current
-  if (current === null) return true
-
-  const shouldSubmit = current.expectedMounted
-    && current.expectedChecked === 'true'
-    && !current.expectedDisabled
-
-  if (!current.expectedMounted) return current.formValues.length === 0
-  if (current.actualValue !== current.expectedValue) return false
-
-  return shouldSubmit
-    ? current.formValues.length === 1 && current.formValues[0] === current.expectedValue
-    : current.formValues.length === 0
+  const [prev, next] = current.lastTransition.split('>')
+  const expectedNext = prev === 'true'
+    ? 'false'
+    : prev === 'false' || prev === 'indeterminate'
+      ? 'true'
+      : null
+  return expectedNext !== null
+    && next === expectedNext
+    && current.expectedChecked === next
 })

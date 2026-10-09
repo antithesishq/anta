@@ -10,7 +10,7 @@ export default function App() {
   const [checked, setChecked] = useState<CheckboxState>(false)
   const [disabled, setDisabled] = useState(false)
   const [mounted, setMounted] = useState(true)
-  const [value, setValue] = useState('all')
+  const [lastTransition, setLastTransition] = useState<{ prev: CheckboxState, next: CheckboxState } | null>(null)
 
   return (
     <main
@@ -18,7 +18,7 @@ export default function App() {
       data-expected-checked={String(checked)}
       data-expected-disabled={String(disabled)}
       data-expected-mounted={String(mounted)}
-      data-expected-value={value}
+      data-last-transition={lastTransition ? String(lastTransition.prev) + '>' + String(lastTransition.next) : undefined}
       style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}
     >
       <form
@@ -31,10 +31,13 @@ export default function App() {
             checked={checked}
             disabled={disabled}
             name="notification-scope"
-            value={value}
+            value="all"
             label="Select all notifications"
             hint={disabled ? 'Notification selection is unavailable.' : 'Include every notification in this selection.'}
-            onStateChange={(_event, { next }) => setChecked(next)}
+            onStateChange={(_event, transition) => {
+              setLastTransition(transition)
+              setChecked(transition.next)
+            }}
           />
         ) : (
           <p data-fixture-empty>The notification selection is unavailable.</p>
@@ -43,15 +46,18 @@ export default function App() {
 
       <output aria-live="polite" data-fixture-state style={{ color: 'var(--text-2)', fontSize: '14px' }}>
         {mounted
-          ? String(checked) + ', ' + (disabled ? 'disabled' : 'enabled') + ', value ' + value
-          : 'Unmounted, parent state is ' + String(checked) + ', value ' + value}
+          ? String(checked) + ', ' + (disabled ? 'disabled' : 'enabled')
+          : 'Unmounted, parent state is ' + String(checked)}
       </output>
 
       <div aria-label="Fixture controls" data-fixture-controls style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
         <Button
           priority="secondary"
           data-fixture-control="checked"
-          onClick={() => setChecked(nextCheckboxState)}
+          onClick={() => {
+            setLastTransition(null)
+            setChecked(nextCheckboxState)
+          }}
         >
           Controlled update
         </Button>
@@ -62,14 +68,6 @@ export default function App() {
           onClick={() => setDisabled((current) => !current)}
         >
           {disabled ? 'Enable' : 'Disable'}
-        </Button>
-
-        <Button
-          priority="secondary"
-          data-fixture-control="value"
-          onClick={() => setValue((current) => current === 'all' ? 'mentions' : 'all')}
-        >
-          Change form value
         </Button>
 
         <Button

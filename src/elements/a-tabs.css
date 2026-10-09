@@ -425,6 +425,14 @@
     a-tabs:not([noslide]) a-tab:state(selected) {
       anchor-name: --tabs-active;
     }
+    /* A primary label flips between dark and on-fill colors, so it eases with the sliding
+       pill. An instant flip would flash on-fill text over the bare track. */
+    a-tabs:not([noslide], [priority="secondary"], [priority="tertiary"]) a-tab {
+      transition:
+        color var(--tab-timing),
+        background-color var(--tab-timing),
+        box-shadow var(--tab-timing);
+    }
 
     a-tabs:not([noslide])::before {
       content: "";
@@ -454,7 +462,8 @@
       display: none;
     }
     @media (prefers-reduced-motion: reduce) {
-      a-tabs:not([noslide])::before {
+      a-tabs:not([noslide])::before,
+      a-tabs:not([noslide], [priority="secondary"], [priority="tertiary"]) a-tab {
         transition: none;
       }
     }

@@ -301,26 +301,17 @@ Label = --text-2 at this alpha (80 → --text-3). Raise for small-text contrast.
 
 ### Tabs
 
-The strip’s primary/secondary/tertiary differ structurally (filled track vs subtle vs underline). Labels and rings are the role scale: selected/hover = --text-1, rest = --text-2 at the rest α (80 → --text-3), tertiary hover = --text-2, track ring = --border-4, selected ring = --border-2, selected pill = --bg-1. Only the recessed track tint, secondary fill, and the rest α are the Tabs’ own — the knobs below.
+Tab colors reuse Button’s formulas: the selected primary tab is a primary-button fill, the selected secondary tab is a white (black in dark) surface with a secondary-button label, and tabs at rest are quaternary-button labels. Track ring = --border-4, selected ring = --border-2. Only the recessed track tint behind primary and secondary strips is the Tabs’ own — the knobs below.
 
-#### Track & fill
+#### Track
 
-The recessed track tint (primary) and the selected secondary fill — a faint overlay of the source hue.
+The recessed track tint behind primary and secondary strips — a faint overlay of the source hue.
 
 | Input | Toned light | Toned dark | Neutral light | Neutral dark | Range | Step | Meaning |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | fill L | 0.55 | 0.8 | 0.55 | 0.8 | 0–1 | 0.005 |  |
 | fill C | 0.14 | 0.12 | 0.008 | 0.008 | 0–0.4 | 0.005 |  |
 | track α | 0.06 | 0.07 | 0.06 | 0.07 | 0–1 | 0.005 |  |
-| fill α | 0.03 | 0.08 | 0.03 | 0.08 | 0–1 | 0.005 |  |
-
-#### Rest label
-
-Non-selected label = --text-2 at this alpha (80 → --text-3). Selected/hover use full --text-1.
-
-| Input | Toned light | Toned dark | Neutral light | Neutral dark | Range | Step | Meaning |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| rest α % | 80 | 80 | 80 | 80 | 0–100 | 1 |  |
 
 ### Checkboxes
 

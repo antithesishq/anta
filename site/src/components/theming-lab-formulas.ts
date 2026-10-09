@@ -264,26 +264,19 @@ ${sel}[priority="primary"] { --tag-text: #fff; }`,
     id: 'tabs',
     title: 'Tabs',
     blurb:
-      'The strip’s primary/secondary/tertiary differ structurally (filled track vs subtle vs underline). Labels and rings are the role scale: selected/hover = --text-1, rest = --text-2 at the rest α (80 → --text-3), tertiary hover = --text-2, track ring = --border-4, selected ring = --border-2, selected pill = --bg-1. Only the recessed track tint, secondary fill, and the rest α are the Tabs’ own — the knobs below.',
+      'Tab colors reuse Button’s formulas: the selected primary tab is a primary-button fill, the selected secondary tab is a white (black in dark) surface with a secondary-button label, and tabs at rest are quaternary-button labels. Track ring = --border-4, selected ring = --border-2. Only the recessed track tint behind primary and secondary strips is the Tabs’ own — the knobs below.',
     vars: [
       { key: 'trackL', label: 'fill L', light: 0.55, dark: 0.8, ...v3() },
       { key: 'trackC', label: 'fill C', light: 0.14, dark: 0.12, ...v3(0, 0.4) },
       { key: 'trackA', label: 'track α', light: 0.06, dark: 0.07, ...v3() },
-      { key: 'secA', label: 'fill α', light: 0.03, dark: 0.08, ...v3() },
-      { key: 'restA', label: 'rest α %', light: 80, dark: 80, ...pct },
     ],
     groups: [
-      { label: 'Track & fill', keys: ['trackL', 'trackC', 'trackA', 'secA'], note: 'The recessed track tint (primary) and the selected secondary fill — a faint overlay of the source hue.' },
-      { label: 'Rest label', keys: ['restA'], note: 'Non-selected label = --text-2 at this alpha (80 → --text-3). Selected/hover use full --text-1.' },
+      { label: 'Track', keys: ['trackL', 'trackC', 'trackA'], note: 'The recessed track tint behind primary and secondary strips — a faint overlay of the source hue.' },
     ],
     css: (sel, seed, v) => `${sel} {
-  --tab-selected-text: var(--text-1);
-  --tab-text-2: var(--text-2);
-  --tab-rest-tone: color-mix(in oklch, var(--text-2) ${v.restA}%, transparent);
   --tabs-track-border: var(--border-4);
   --tab-selected-border: var(--border-2);
   --tabs-track-bg: oklch(from ${seed} ${v.trackL} ${v.trackC} h / ${v.trackA});
-  --tab-secondary-bg: oklch(from ${seed} ${v.trackL} ${v.trackC} h / ${v.secA});
 }`,
   },
 

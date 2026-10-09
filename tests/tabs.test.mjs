@@ -81,47 +81,69 @@ test('TabPanel follows its own strip across sibling and nested Tabs and Steps', 
   assert.deepEqual(await active('#nested-tabs a-tabpanel'), ['Inner panel', 'Other panel'])
 })
 
-test('Antune preserves primary and secondary fills for strip and selected per-tab tones', async t => {
+test('Selected tabs take Button fills and the track takes the strip tone in every theme', async t => {
   const context = await browser.newContext()
   t.after(() => context.close())
   const page = await context.newPage()
   await page.goto(origin)
   await page.waitForSelector('a-tabpanel[data-panel="account"]')
   await page.addStyleTag({ content: await readFile('src/tokens.css', 'utf8') })
-  await page.addStyleTag({ content: 'a-tab { transition: none; }' })
-  const theme = await page.addStyleTag({ content: await readFile('src/theme-antune.css', 'utf8') })
-  const results = await page.evaluate(theme => {
+  await page.addStyleTag({ content: await readFile('src/elements/a-button.css', 'utf8') })
+  await page.addStyleTag({ content: 'a-tab, a-button { transition: none; }' })
+  const antune = await page.addStyleTag({ content: await readFile('src/theme-antune.css', 'utf8') })
+  const antithesis = await page.addStyleTag({ content: await readFile('src/theme-antithesis.css', 'utf8') })
+  const results = await page.evaluate(([antune, antithesis]) => {
     const tabs = document.querySelector('#basic-tabs a-tabs')
     tabs.setAttribute('noslide', '')
     const selected = tabs.querySelector('a-tab:state(selected)')
+    const button = document.createElement('a-button')
+    button.setAttribute('priority', 'primary')
+    button.textContent = 'Button'
+    document.body.append(button)
+    const fill = element => getComputedStyle(element).backgroundColor
     const results = []
-    for (const scheme of ['light', 'dark']) {
-      document.documentElement.style.colorScheme = scheme
-      for (const priority of ['primary', 'secondary']) {
-        tabs.setAttribute('priority', priority)
-        for (const perTab of [false, true]) {
-          for (const tone of ['brand', 'info', 'success', 'warning', 'critical', '#e0457b']) {
-            tabs.removeAttribute('tone')
-            selected.removeAttribute('tone')
-            const target = perTab ? selected : tabs
-            target.setAttribute('tone', tone)
-            const background = () => getComputedStyle(priority === 'primary' ? tabs : selected).backgroundColor
-            theme.sheet.disabled = true
-            const base = background()
-            target.setAttribute('tone', 'neutral')
-            const neutral = background()
-            target.setAttribute('tone', tone)
-            theme.sheet.disabled = false
-            results.push({ scheme, priority, perTab, tone, base, neutral, themed: background() })
+    for (const themed of ['none', 'antune', 'antithesis']) {
+      antune.sheet.disabled = themed !== 'antune'
+      antithesis.sheet.disabled = themed !== 'antithesis'
+      for (const scheme of ['light', 'dark']) {
+        document.documentElement.style.colorScheme = scheme
+        for (const priority of ['primary', 'secondary']) {
+          tabs.setAttribute('priority', priority)
+          for (const perTab of [false, true]) {
+            for (const tone of ['brand', 'info', 'success', 'warning', 'critical', '#e0457b']) {
+              tabs.removeAttribute('tone')
+              selected.removeAttribute('tone')
+              const target = perTab ? selected : tabs
+              target.setAttribute('tone', 'neutral')
+              const neutralTrack = fill(tabs)
+              target.setAttribute('tone', tone)
+              button.setAttribute('tone', tone)
+              results.push({
+                themed, scheme, priority, perTab, tone,
+                selected: fill(selected),
+                button: fill(button),
+                track: fill(tabs),
+                neutralTrack,
+              })
+            }
           }
         }
       }
     }
     return results
-  }, theme)
-  for (const { base, neutral, themed, ...variant } of results) {
+  }, [antune, antithesis])
+  for (const { selected, button, track, neutralTrack, ...variant } of results) {
     const description = JSON.stringify(variant)
-    assert.notEqual(base, neutral, `Tone should tint the fill: ${description}`)
-    assert.equal(themed, base, `Antune should preserve the tone fill: ${description}`)
+    if (variant.priority === 'primary') {
+      assert.equal(selected, button, `A selected primary tab should match the primary Button fill: ${description}`)
+    } else {
+      const surface = variant.scheme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)'
+      assert.equal(selected, surface, `A selected secondary tab should be a plain surface: ${description}`)
+    }
+    if (variant.perTab) {
+      assert.equal(track, neutralTrack, `A per-tab tone should leave the track alone: ${description}`)
+    } else {
+      assert.notEqual(track, neutralTrack, `The strip tone should tint the track: ${description}`)
+    }
   }
 })

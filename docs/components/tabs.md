@@ -19,9 +19,12 @@ individual `<a-tab>`.
 
 `priority` sets the selected-tab indicator:
 
-- **`primary`** (default): a pill on a track.
-- **`secondary`**: a filled tab, no track.
-- **`tertiary`**: an underline.
+- **`primary`** (default): a filled pill on a track, like a primary Button.
+- **`secondary`**: a white pill with a ring on a track (black in dark mode).
+- **`tertiary`**: an underline, no track.
+
+Tabs at rest look like quaternary Buttons. Tabs, the indicator, and the track are fully
+round.
 
 ## Tone
 
@@ -346,8 +349,8 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 | `onValueChange?` | (event, attrs) => void | — | Like `onChange`, but with a `{ value }` snapshot as the 2nd argument. |
 | `options?` | TabOption[] | — | The tabs, as a data array (the strip's single source). Each entry is a `TabOption` (`value`, `label` or `children`, `icon`, `iconTrailing`, `tone`, `disabled`, `round`, `className`, `style`). `className` and `style` land on that option's individual `<a-tab>`, not on the strip. |
 | `orientation?` | 'horizontal' \| 'vertical' | 'horizontal' | Layout + arrow-key axis. Horizontal ellipsizes labels when tabs overflow (scroll is opt-in via CSS); vertical stacks them. |
-| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'primary' | Visual priority. `primary` is the raised pill on a recessed track (the segmented-control look); `secondary` keeps that sizing but drops the track, marking the selected tab with a subtle active background fill; `tertiary` is a bottom-underline indicator under the selected tab (no track, no rest line). `tone` colors `secondary` + `tertiary`; `primary` stays neutral. |
-| `round?` | boolean \| number \| string | — | Fully-round the tabs and the sliding indicator (and the primary track well). Applies strip-wide; a single tab's `round` rounds just that tab. A `number` (px) or CSS length string sets a custom radius on the top-level track well only — the tab pills + indicator stay fully round. |
+| `priority?` | 'primary' \| 'secondary' \| 'tertiary' | 'primary' | Visual priority. `primary` and `secondary` sit on a recessed track: a selected `primary` tab is filled like a primary Button, and a selected `secondary` tab is a raised white (black in dark mode) surface with a ring. `tertiary` underlines the selected tab, with no track. Tabs at rest look like quaternary Buttons. |
+| `round?` | boolean \| number \| string | — | Tabs, the sliding indicator, and the track are fully round by default. A `number` (px) or CSS length string sets a custom radius on all three; `0` squares them. |
 | `size?` | 'small' \| 'medium' \| 'large' | 'medium' | Size — small 24px · medium 28px · large 32px tall, matching Button's scale (the tab's label leading runs a touch tighter, offset by 1px more block padding per side). |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Tone applied to the selected indicator/label, or any literal CSS color for a one-off custom tone (derived in oklch). Named tones track light/dark. |
 | `value?` | string | — | Controlled active value — the tab `value` to mark selected (and, when a `<TabPanel value="…">` shares it, the panel to reveal). When set, you own selection: the strip renders exactly what this says, and a user pick only *requests* a change via `onStateChange` — apply it by updating this prop. Leave undefined (and use `defaultValue`) for uncontrolled. |
@@ -363,7 +366,7 @@ so those suit an uncontrolled strip reacting to its own pick. **`onFocus`** /
 | `icon?` | IconShape | — | Leading icon shape, rendered before the label. |
 | `iconTrailing?` | IconShape | — | Trailing icon shape, rendered after the label. |
 | `label?` | ReactNode | — | Visible label. The string shorthand for the tab's content; for richer content pass `children` instead (`label` wins when both are set). |
-| `round?` | boolean | — | Fully-round just this tab's box. `<Tabs round>` rounds the whole strip (tabs + sliding indicator) instead. |
+| `round?` | boolean | — | Fully-round this tab's box when it is used outside a `Tabs` strip. Tabs in a strip are fully round by default. |
 | `style?` | CSSProperties | — | Inline styles on the option's rendered row. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | inherits the strip's `tone | Per-tab tone override, same vocabulary as `<Tabs tone>` — colors this one tab's label + icons (all priorities/modes, named or custom color) and, when it's the active tab, its indicator. For a **custom literal color** the sliding indicator can't adopt it (the shared moving element can't read a descendant's color), so a custom tone colors the label everywhere and the indicator only in `noslide`; the six **named** tones color both in every mode. Overrides the strip's `tone` for this tab. |
 | `tooltip?` | ReactNode | — | Tooltip for this tab — a string or any node — shown **only when one of the tab's ellipsizing label parts is truncated** (tabs ellipsize when the strip overflows), so clipped content reveals its full text on hover while a tab that fits shows nothing. Rendered as a `truncatedOnly` `<Tooltip>` anchored to the tab. For an always-visible tooltip or other custom trigger content, use `children` with your own `<Tooltip>` instead. |
@@ -423,17 +426,17 @@ The demo classes (`.square-tabs`, `.glow-tabs`, …) are hooks. Replace them wit
 
 **Roomier track.** The strip hugs its tabs by default (0 padding), so it's exactly a
 same-size button tall. For a gap around the selected pill (the classic "well" look), add
-`padding` and bump `border-radius` by the same amount, so the outer corner stays concentric
-with the tabs' 4px. The strip grows 2×the padding taller.
+`padding`. The fully round track stays concentric with the tabs, and the strip grows
+2×the padding taller.
 
 ```css
-a-tabs.roomy-1 { padding: 1px; border-radius: 5px; }   /* 4 + 1 */
-a-tabs.roomy-3 { padding: 3px; border-radius: 7px; }   /* 4 + 3 */
+a-tabs.roomy-1 { padding: 1px; }
+a-tabs.roomy-3 { padding: 3px; }
 ```
 
 **Squarer primary.** Square corners, heavier labels, and a roomier `4px` track with no
-border or ring on the strip (`box-shadow: none` drops the default track ring) — just a 1px
-square ring on the raised pill. The track is `<a-tabs>`, the sliding pill its `::before`:
+border or ring on the strip (`box-shadow: none` drops the default track ring), plus a 1px
+square ring on the selected pill. The track is `<a-tabs>`, the sliding pill its `::before`:
 
 ```css
 a-tabs.square-tabs         { border-radius: 0; padding: 4px; box-shadow: none; }  /* no track border / ring */
@@ -501,12 +504,4 @@ where anchor positioning isn't supported.
 
 ```tsx
 <Tabs noslide defaultValue="a">…</Tabs>
-```
-
-**Fully-rounded pill.** The built-in **`round`** prop rounds the track, every tab, **and**
-the sliding pill to `999px` in one flag, no CSS needed (it drives `--tab-radius`, which feeds
-the tabs, the moving indicator, and the primary track well):
-
-```tsx
-<Tabs round defaultValue="a" label="Sections">…</Tabs>   {/* pill track + tabs + indicator */}
 ```

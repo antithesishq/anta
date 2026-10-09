@@ -243,8 +243,7 @@ export function WrapTabs() {
   )
 }
 
-/** Styling: a roomier primary track via plain CSS — `padding` + a matching `border-radius`
- *  (kept concentric). Two gaps shown: 1px and 3px. */
+/** Styling: a roomier primary track via plain CSS `padding`. Two gaps shown: 1px and 3px. */
 export function RoomyTabs() {
   useElements()
   return (
@@ -267,14 +266,6 @@ export function SquareTabs() {
 export function TertiaryGlow() {
   useElements()
   return <Tabs className="glow-tabs" priority="tertiary" defaultValue="a" label="Sections" options={triad} />
-}
-
-/** A fully-rounded "pill" primary strip via the built-in `round` attribute (track, tabs,
- *  and the sliding pill all go to 999px in one flag); `.pill-tabs a-tab` adds extra block
- *  padding for a taller capsule. */
-export function PillTabs() {
-  useElements()
-  return <Tabs className="pill-tabs" round defaultValue="a" label="Sections" options={triad} />
 }
 
 /** Styling: noslide — the highlight snaps between tabs instead of sliding. */

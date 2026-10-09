@@ -560,6 +560,12 @@
     --focus-ring-inset: 1;
   }
 
+  /* Like a primary button, a 1px halo inside the 2px inset ring separates it from a
+     selected primary tab's fill. */
+  a-tabs:not([priority="secondary"], [priority="tertiary"]) a-tab:state(selected):focus-visible {
+    box-shadow: inset 0 0 0 3px var(--focus-halo);
+  }
+
   :is(a-button, a[role="button"][data-anta], button[data-anta],
       input[data-anta]:is([type="reset"], [type="submit"])):not([round]) {
     --_radius: 999px;
@@ -732,6 +738,121 @@
     --button-fg-tertiary-hover: light-dark(oklch(from var(--_src) 0.4 0.17 h), oklch(from var(--_src) 0.83 0.09 h));
     --button-fg-quaternary-rest: light-dark(oklch(from var(--_src) 0.46 0.17 h / 0.85), oklch(from var(--_src) 0.76 0.115 h));
     --button-fg-quaternary-hover: light-dark(oklch(from var(--_src) 0.38 0.17 h), oklch(from var(--_src) 0.835 0.09 h));
+  }
+
+  /* Tabs take Button's interactive palette: a selected primary tab is a primary
+     button, secondary and tertiary use its secondary label, and rest tabs are
+     quaternary. */
+  a-tabs,
+  a-tab[tone] {
+    --tab-fg-disabled: var(--label-disabled);
+    --tab-primary-bg-disabled: var(--fill-disabled);
+    --tab-primary-fg-disabled: var(--label-on-fill-disabled);
+    --tab-selected-border-disabled: var(--stroke-disabled);
+  }
+
+  a-tabs:is(:not([tone]), [tone=""], [tone="neutral"]),
+  a-tab[tone="neutral"] {
+    /* One step lighter than --border-4 in dark mode, so the track edge stays visible. */
+    --tabs-track-border: light-dark(var(--border-4), #321f2b);
+    --tab-primary-bg: var(--fill-1);
+    --tab-primary-fg: var(--label-on-fill);
+    --tab-selected-border: var(--stroke-1);
+    --tab-selected-text: var(--label-1);
+    --tab-fg-rest: light-dark(var(--label-2), color-mix(in oklch, var(--label-2) 90%, transparent));
+    --tab-fg-hover: var(--label-2-active);
+  }
+
+  a-tabs[tone="brand"],
+  a-tab[tone="brand"] {
+    --tab-primary-bg: var(--fill-1-brand);
+    --tab-primary-fg: var(--label-on-fill);
+    --tab-selected-border: var(--stroke-1-brand);
+    --tab-selected-text: var(--label-1-brand);
+    --tab-fg-rest: light-dark(var(--label-2-brand), color-mix(in oklch, var(--label-2-brand) 90%, transparent));
+    --tab-fg-hover: var(--label-2-brand-active);
+  }
+
+  a-tabs[tone="info"],
+  a-tab[tone="info"] {
+    --tab-primary-bg: var(--fill-1-info);
+    --tab-primary-fg: var(--label-on-fill);
+    --tab-selected-border: var(--stroke-1-info);
+    --tab-selected-text: var(--label-1-info);
+    --tab-fg-rest: light-dark(var(--label-2-info), color-mix(in oklch, var(--label-2-info) 90%, transparent));
+    --tab-fg-hover: var(--label-2-info-active);
+  }
+
+  a-tabs[tone="success"],
+  a-tab[tone="success"] {
+    --tab-primary-bg: var(--fill-1-success);
+    --tab-primary-fg: var(--label-on-fill);
+    --tab-selected-border: var(--stroke-1-success);
+    --tab-selected-text: var(--label-1-success);
+    --tab-fg-rest: light-dark(var(--label-2-success), color-mix(in oklch, var(--label-2-success) 90%, transparent));
+    --tab-fg-hover: var(--label-2-success-active);
+  }
+
+  a-tabs[tone="warning"],
+  a-tab[tone="warning"] {
+    --tab-primary-bg: var(--fill-1-warning);
+    --tab-primary-fg: var(--label-on-fill);
+    --tab-selected-border: var(--stroke-1-warning);
+    --tab-selected-text: var(--label-1-warning);
+    --tab-fg-rest: light-dark(var(--label-2-warning), color-mix(in oklch, var(--label-2-warning) 90%, transparent));
+    --tab-fg-hover: var(--label-2-warning-active);
+  }
+
+  a-tabs[tone="critical"],
+  a-tab[tone="critical"] {
+    --tab-primary-bg: var(--fill-1-critical);
+    --tab-primary-fg: var(--label-on-fill-critical);
+    --tab-selected-border: var(--stroke-1-critical);
+    --tab-selected-text: var(--label-1-critical);
+    --tab-fg-rest: light-dark(var(--label-2-critical), color-mix(in oklch, var(--label-2-critical) 90%, transparent));
+    --tab-fg-hover: var(--label-2-critical-active);
+  }
+
+  /* Custom tones follow Button's lifted dark fill under the black label. */
+  a-tabs[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]),
+  a-tab[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --tab-primary-bg: light-dark(oklch(from var(--tabs-tone-source) 0.51 0.17 h), oklch(from var(--tabs-tone-source) 0.8 0.1 h));
+    --tab-primary-fg: var(--label-on-fill);
+    --tab-selected-text: light-dark(oklch(from var(--tabs-tone-source) 0.46 0.17 h), oklch(from var(--tabs-tone-source) 0.835 0.1 h));
+    --tab-fg-rest: light-dark(oklch(from var(--tabs-tone-source) 0.46 0.17 h / 0.85), oklch(from var(--tabs-tone-source) 0.76 0.115 h));
+    --tab-fg-hover: light-dark(oklch(from var(--tabs-tone-source) 0.38 0.17 h), oklch(from var(--tabs-tone-source) 0.835 0.09 h));
+  }
+
+  /* The sliding indicator follows a selected tab's named tone. */
+
+  a-tabs:has(> a-tab[tone="brand"]:state(selected):not([disabled])) {
+    --tab-indicator-bg: var(--fill-1-brand);
+    --tab-indicator-border: var(--stroke-1-brand);
+    --tab-indicator-line: var(--label-1-brand);
+  }
+
+  a-tabs:has(> a-tab[tone="info"]:state(selected):not([disabled])) {
+    --tab-indicator-bg: var(--fill-1-info);
+    --tab-indicator-border: var(--stroke-1-info);
+    --tab-indicator-line: var(--label-1-info);
+  }
+
+  a-tabs:has(> a-tab[tone="success"]:state(selected):not([disabled])) {
+    --tab-indicator-bg: var(--fill-1-success);
+    --tab-indicator-border: var(--stroke-1-success);
+    --tab-indicator-line: var(--label-1-success);
+  }
+
+  a-tabs:has(> a-tab[tone="warning"]:state(selected):not([disabled])) {
+    --tab-indicator-bg: var(--fill-1-warning);
+    --tab-indicator-border: var(--stroke-1-warning);
+    --tab-indicator-line: var(--label-1-warning);
+  }
+
+  a-tabs:has(> a-tab[tone="critical"]:state(selected):not([disabled])) {
+    --tab-indicator-bg: var(--fill-1-critical);
+    --tab-indicator-border: var(--stroke-1-critical);
+    --tab-indicator-line: var(--label-1-critical);
   }
 
   :is(a-checkbox, input[data-anta][type="checkbox"]) {

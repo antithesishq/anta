@@ -25,8 +25,7 @@
     background-color: var(--tab-bg, transparent);
     border: none;
     border-radius: var(--tab-radius);
-    /* `round` on a lone tab rounds just this tab's box; `<Tabs round>` sets it
-       strip-wide (incl. the sliding indicator) via a-tabs.css. */
+    /* Tabs in a strip are fully round by default (a-tabs.css); `round` rounds a lone tab. */
     &[round] { --tab-radius: 999px; }
     /* Inset zero-spread transparent baseline so the selected tab's ring (--tab-selected-shadow,
        inset) animates in (spread 0→0.5px, transparent→color) instead of popping from `none`.
@@ -104,9 +103,9 @@
     outline-offset: -1px;
   }
 
+  /* Disabled colors come from a-tabs.css (Button's disabled palette). */
   a-tab[disabled] {
     pointer-events: none;
     cursor: not-allowed;
-    opacity: 0.45;
   }
 }

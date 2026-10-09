@@ -37,8 +37,8 @@ export interface TabOption extends OptionPresentationProps {
   icon?: IconShape
   /** Trailing icon shape, rendered after the label. */
   iconTrailing?: IconShape
-  /** Fully-round just this tab's box. `<Tabs round>` rounds the whole strip
-   *  (tabs + sliding indicator) instead. */
+  /** Fully-round this tab's box when it is used outside a `Tabs` strip. Tabs in a
+   *  strip are fully round by default. */
   round?: boolean
   /** Per-tab tone override, same vocabulary as `<Tabs tone>` — colors this one tab's
    *  label + icons (all priorities/modes, named or custom color) and, when it's the
@@ -97,11 +97,10 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
   onBlur?: (event: FocusEvent) => void
   /** Accessible name for the tablist (`aria-label`). */
   label?: string
-  /** Visual priority. `primary` is the raised pill on a recessed track (the
-   *  segmented-control look); `secondary` keeps that sizing but drops the track, marking
-   *  the selected tab with a subtle active background fill; `tertiary` is a bottom-underline
-   *  indicator under the selected tab (no track, no rest line). `tone` colors `secondary` +
-   *  `tertiary`; `primary` stays neutral.
+  /** Visual priority. `primary` and `secondary` sit on a recessed track: a selected
+   *  `primary` tab is filled like a primary Button, and a selected `secondary` tab is a
+   *  raised white (black in dark mode) surface with a ring. `tertiary` underlines the
+   *  selected tab, with no track. Tabs at rest look like quaternary Buttons.
    *  @defaultValue 'primary' */
   priority?: "primary" | "secondary" | "tertiary"
   /** Tone applied to the selected indicator/label, or any literal CSS color for a
@@ -124,10 +123,9 @@ export interface TabsProps extends Omit<BaseProps, "onChange"> {
    *  per tab so it snaps with no movement. (Browsers without anchor positioning get that
    *  per-tab paint automatically — `noslide` is the explicit opt-out.) */
   noslide?: boolean
-  /** Fully-round the tabs and the sliding indicator (and the primary track
-   *  well). Applies strip-wide; a single tab's `round` rounds just that tab. A
-   *  `number` (px) or CSS length string sets a custom radius on the top-level
-   *  track well only — the tab pills + indicator stay fully round. */
+  /** Tabs, the sliding indicator, and the track are fully round by default. A
+   *  `number` (px) or CSS length string sets a custom radius on all three; `0`
+   *  squares them. */
   round?: boolean | number | string
   /** Disable the whole strip. */
   disabled?: boolean

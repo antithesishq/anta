@@ -1,5 +1,6 @@
 import { always } from '@antithesishq/bombadil'
 import { actions, extract, registerCustomAction } from '@antithesishq/bombadil/browser'
+import { fixtureResourceProperties } from '../resource-properties.ts'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks, inputs } from '@antithesishq/bombadil/browser/defaults/actions'
@@ -78,3 +79,13 @@ export const selectFacetedSelectionIndicatorsAreValid = always(() => {
       && (row.checked === 'true' || row.checked === 'false' || row.checked === 'mixed'))
     && target.radioSelectionCounts.every((count) => count <= 1))
 })
+
+const selectFacetedResources = fixtureResourceProperties({
+  mountedCount: 5,
+  mountedSelector: '[data-fixture="select-faceted"] [data-fixture-target]',
+})
+
+export const selectFacetedHasNoDomNodeLeak = selectFacetedResources.noDomNodeLeak
+export const selectFacetedHasNoEventListenerLeak = selectFacetedResources.noEventListenerLeak
+export const selectFacetedHasNoHeapGrowth = selectFacetedResources.noHeapGrowth
+export const selectFacetedHasNoLayoutObjectLeak = selectFacetedResources.noLayoutObjectLeak

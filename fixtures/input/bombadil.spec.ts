@@ -1,5 +1,6 @@
 import { always } from '@antithesishq/bombadil'
 import { actions, extract, registerCustomAction } from '@antithesishq/bombadil/browser'
+import { fixtureResourceProperties } from '../resource-properties.ts'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks, inputs } from '@antithesishq/bombadil/browser/defaults/actions'
@@ -63,3 +64,13 @@ export const inputStateIsCoherent = always(() => {
     && target.controlDisabled === target.hostDisabled
     && target.controlReadOnly === target.hostReadOnly)
 })
+
+const inputResources = fixtureResourceProperties({
+  mountedCount: 5,
+  mountedSelector: '[data-fixture="input"] [data-fixture-target]',
+})
+
+export const inputHasNoDomNodeLeak = inputResources.noDomNodeLeak
+export const inputHasNoEventListenerLeak = inputResources.noEventListenerLeak
+export const inputHasNoHeapGrowth = inputResources.noHeapGrowth
+export const inputHasNoLayoutObjectLeak = inputResources.noLayoutObjectLeak

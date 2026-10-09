@@ -1,5 +1,6 @@
 import { always } from '@antithesishq/bombadil'
 import { actions, extract, registerCustomAction } from '@antithesishq/bombadil/browser'
+import { fixtureResourceProperties } from '../resource-properties.ts'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks } from '@antithesishq/bombadil/browser/defaults/actions'
@@ -83,3 +84,13 @@ export const checkboxStateIsCoherent = always(() => {
     && !(target.checkedState && target.indeterminateState)
     && target.tabIndex === (target.disabled ? -1 : 0))
 })
+
+const checkboxResources = fixtureResourceProperties({
+  mountedCount: 5,
+  mountedSelector: '[data-fixture="checkbox"] [data-fixture-target]',
+})
+
+export const checkboxHasNoDomNodeLeak = checkboxResources.noDomNodeLeak
+export const checkboxHasNoEventListenerLeak = checkboxResources.noEventListenerLeak
+export const checkboxHasNoHeapGrowth = checkboxResources.noHeapGrowth
+export const checkboxHasNoLayoutObjectLeak = checkboxResources.noLayoutObjectLeak

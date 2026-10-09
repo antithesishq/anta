@@ -1,5 +1,6 @@
 import { always } from '@antithesishq/bombadil'
 import { actions, extract, registerCustomAction } from '@antithesishq/bombadil/browser'
+import { fixtureResourceProperties } from '../resource-properties.ts'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks } from '@antithesishq/bombadil/browser/defaults/actions'
@@ -69,3 +70,13 @@ export const switchStateIsCoherent = always(() => {
     target.checked === target.checkedState
       && target.tabIndex === (target.disabled ? -1 : 0))
 })
+
+const switchResources = fixtureResourceProperties({
+  mountedCount: 5,
+  mountedSelector: '[data-fixture="switch"] [data-fixture-target]',
+})
+
+export const switchHasNoDomNodeLeak = switchResources.noDomNodeLeak
+export const switchHasNoEventListenerLeak = switchResources.noEventListenerLeak
+export const switchHasNoHeapGrowth = switchResources.noHeapGrowth
+export const switchHasNoLayoutObjectLeak = switchResources.noLayoutObjectLeak

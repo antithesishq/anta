@@ -1,5 +1,6 @@
 import { always } from '@antithesishq/bombadil'
 import { actions, extract, registerCustomAction } from '@antithesishq/bombadil/browser'
+import { fixtureResourceProperties } from '../resource-properties.ts'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks } from '@antithesishq/bombadil/browser/defaults/actions'
@@ -141,3 +142,13 @@ export const radioGroupSelectionIsCoherent = always(() => {
       && tabStops.every((radio) => radio.value === expectedTabStop?.value)
   })
 })
+
+const radioGroupResources = fixtureResourceProperties({
+  mountedCount: 5,
+  mountedSelector: '[data-fixture="radio-group"] [data-fixture-target]',
+})
+
+export const radioGroupHasNoDomNodeLeak = radioGroupResources.noDomNodeLeak
+export const radioGroupHasNoEventListenerLeak = radioGroupResources.noEventListenerLeak
+export const radioGroupHasNoHeapGrowth = radioGroupResources.noHeapGrowth
+export const radioGroupHasNoLayoutObjectLeak = radioGroupResources.noLayoutObjectLeak

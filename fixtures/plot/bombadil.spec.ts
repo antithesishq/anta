@@ -1,4 +1,5 @@
 import { actions, extract, getFingerprint, registerCustomAction, weighted } from '@antithesishq/bombadil/browser'
+import { fixtureResourceProperties } from '../resource-properties.ts'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks } from '@antithesishq/bombadil/browser/defaults/actions'
@@ -165,3 +166,19 @@ export const plotActions = weighted([
 export const plotReadyActions = actions(() => (
   fixture.current.ready ? [] : [waitForPlotFixture()]
 ))
+
+const plotResources = fixtureResourceProperties({
+  mountedCount: PLOT_COUNT,
+  mountedSelector: '[data-plot-target]',
+  limits: {
+    domNodes: 500,
+    eventListeners: 500,
+    heapBytes: 64 * 1024 * 1024,
+    layoutObjects: 500,
+  },
+})
+
+export const plotHasNoDomNodeLeak = plotResources.noDomNodeLeak
+export const plotHasNoEventListenerLeak = plotResources.noEventListenerLeak
+export const plotHasNoHeapGrowth = plotResources.noHeapGrowth
+export const plotHasNoLayoutObjectLeak = plotResources.noLayoutObjectLeak

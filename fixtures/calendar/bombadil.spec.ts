@@ -1,5 +1,6 @@
 import { always } from '@antithesishq/bombadil'
 import { actions, extract, registerCustomAction } from '@antithesishq/bombadil/browser'
+import { fixtureResourceProperties } from '../resource-properties.ts'
 
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks } from '@antithesishq/bombadil/browser/defaults/actions'
@@ -114,3 +115,13 @@ export const disabledCalendarHasNoEnabledDays = always(() => {
   return current.calendars.every((calendar: { days: Array<{ disabled: boolean }>; disabled: boolean }) =>
     !calendar.disabled || calendar.days.every((day) => day.disabled))
 })
+
+const calendarResources = fixtureResourceProperties({
+  mountedCount: 5,
+  mountedSelector: '[data-fixture="calendar"] [data-fixture-target]',
+})
+
+export const calendarHasNoDomNodeLeak = calendarResources.noDomNodeLeak
+export const calendarHasNoEventListenerLeak = calendarResources.noEventListenerLeak
+export const calendarHasNoHeapGrowth = calendarResources.noHeapGrowth
+export const calendarHasNoLayoutObjectLeak = calendarResources.noLayoutObjectLeak

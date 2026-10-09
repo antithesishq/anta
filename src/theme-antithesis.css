@@ -1030,10 +1030,24 @@
 
   /* Fields share the interactive stroke: stroke-1 at rest, stroke-1-hover on
      hover and focus. Status and custom-tone fields keep their own border. The
-     focus ring is 2px inside the field edge. */
+     2px focus ring straddles the field edge, 1px inside and 1px outside, so
+     focus grows the field outline by 1px without changing its layout size. */
   a-input {
     --_input-focus-width: 2px;
-    --_input-focus-offset: -2px;
+    --_input-focus-offset: -1px;
+  }
+
+  /* The field ring pulses in like the other focus rings. The rule targets the
+     field part from the document, so it resolves the document's keyframes.
+     The host matches `:focus` only when its shadow control holds focus, not
+     when a slotted button does, which matches the shadow ring condition. */
+  a-input:not([readonly]):focus::part(field),
+  a-input[readonly]:state(kb-focus)::part(field) {
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 
   a-input:not([status]:not([status="neutral"]), [tone]:not([tone=""]), :disabled) {

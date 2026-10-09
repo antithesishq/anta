@@ -253,7 +253,7 @@ const SHADOW_STYLE = `
     padding-block: var(--_pad-block);
     overflow-y: auto;
   }
-  button { text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
+  button { align-self: stretch; text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
   button.placeholder { color: var(--input-placeholder); }
   :host([maxrows]:not([rows])) textarea {
     max-height: calc(var(--_lh) * var(--_maxrows) + var(--_pad-block) * 2);
@@ -353,6 +353,11 @@ export class AInputElement extends HTMLElementBase {
   // applied to the native shadow control. The values live off-DOM so the host
   // does not become a second control in the accessibility tree.
   private delegatedAria = new Map<ShadowAriaAttribute, string>()
+  // `slotchange` misses text edits inside an assigned label or hint node.
+  #textObserver = new MutationObserver(() => {
+    this.applyLabelAria()
+    this.applyDescriptionAria()
+  })
   private consumingAria = new Set<string>()
   private ariaApplyQueued = false
   // Direct element relationships supplied by an adjacent a-menu. These avoid
@@ -466,7 +471,12 @@ export class AInputElement extends HTMLElementBase {
       this.value = v
     }
     if (!this.control) this.buildControl()
+    this.#textObserver.observe(this, { subtree: true, childList: true, characterData: true })
     this.ready = true
+  }
+
+  disconnectedCallback() {
+    this.#textObserver.disconnect()
   }
 
   [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
@@ -706,6 +716,7 @@ export class AInputElement extends HTMLElementBase {
     const value = button.value
     button.textContent = value || this.getAttribute('placeholder') || ''
     button.classList.toggle('placeholder', !value)
+    this.applyDescriptionAria()
   }
 
   private syncFormValue(value: string) {
@@ -775,7 +786,11 @@ export class AInputElement extends HTMLElementBase {
     const c = this.control
     if (!c) return
     if (this.delegatedAria.has('aria-description') || this.delegatedAria.has('aria-describedby')) return
-    const text = this.hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
+    const hint = this.hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
+    // The label names a button-backed field, which hides its text, so the
+    // description carries the current value ahead of the hint.
+    const value = c instanceof HTMLButtonElement ? c.value : ''
+    const text = [value, hint].filter(Boolean).join(' ')
     if (text) c.setAttribute('aria-description', text)
     else c.removeAttribute('aria-description')
   }

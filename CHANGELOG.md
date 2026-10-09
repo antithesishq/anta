@@ -5,7 +5,22 @@ changes are not listed.
 
 ## Unreleased
 
+### Changed
+
+- Antithesis menus use square corners and the new `fill-4` interaction colors
+  for neutral and named tones, matching the Figma menu palette. Neutral menu
+  labels use the primary text color for stronger contrast.
+
+- [Select](/select/) uses a button-backed [Input](/input/) for its default
+  field again, so it follows Input styling and themes. The `a-select-field`,
+  `a-select-label`, `a-select-hint`, and `a-select-leading` tags are gone.
+  Style the field through Input's `::part`s.
+
 ### Fixed
+
+- A button-backed [Input](/input/) includes its value in its accessible
+  description, and every Input updates its accessible name and description
+  when label or hint text changes.
 
 - [InputTime](/input-time/) reserves space for the locale's longest AM/PM label
   without native field autosizing. Switching between AM and PM keeps its width.

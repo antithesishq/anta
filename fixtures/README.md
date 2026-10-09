@@ -14,7 +14,7 @@ Open a fixture in the TSX editor:
 http://localhost:4321/test/?fixture=plot
 ```
 
-Replace `plot` with `switch` to open the Switch fixture.
+Replace `plot` with `switch` or `checkbox` to open those fixtures.
 
 Hide the editor for Bombadil:
 

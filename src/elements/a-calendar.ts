@@ -76,7 +76,7 @@ export class ACalendarElement extends HTMLElementBase {
 
   attributeChangedCallback(name: string, _old: string | null, value: string | null) {
     if (name === 'value') {
-      this.applyFormValue(value)
+      this.applyFormValue(this.currentIso())
       return
     }
     if (name === 'data-focus') {
@@ -218,8 +218,10 @@ export class ACalendarElement extends HTMLElementBase {
     return this.currentIso() ?? ''
   }
   set value(v: string) {
-    this.selectedIso = v || null
-    this.applyFormValue(v || null)
+    // React and Preact assign known custom-element properties instead of
+    // attributes. Reflect every public property write so an initially
+    // controlled Calendar enters the same mode as authored value="..." HTML.
+    this.setAttribute('value', v ?? '')
   }
   /** Form field name — mirrors the `name` attribute, like native `<input>.name`. */
   get name(): string {

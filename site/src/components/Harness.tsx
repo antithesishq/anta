@@ -1,6 +1,7 @@
 import { Component, Fragment, h, type ComponentChildren, type ComponentType } from 'preact'
 import { useEffect, useState } from 'preact/hooks'
 import * as Anta from '@antadesign/anta'
+import * as AntaPlot from '@antadesign/plot'
 import HarnessEditor from './HarnessEditor'
 import { caseCount, decode } from '../../../tests/pbt/axes'
 import button from '../../../tests/pbt/components/button'
@@ -8,6 +9,10 @@ import styles from './Harness.module.css'
 
 const { Button } = Anta
 const themeStorageKey = 'anta-harness-theme'
+const fixtureSources = import.meta.glob('../../../fixtures/*/fixture.ts', {
+  eager: true,
+  import: 'default',
+}) as Record<string, string>
 const initialSource = `import { Button } from '@antadesign/anta'
 
 export default function App() {
@@ -26,8 +31,22 @@ function selectedCase() {
 }
 
 function sourceFromLocation() {
+  const fixture = new URLSearchParams(location.search).get('fixture')
+  if (fixture) {
+    const fixturePath = /^[a-z][a-z0-9-]*$/.test(fixture)
+      ? `../../../fixtures/${fixture}/fixture.ts`
+      : ''
+    return fixtureSources[fixturePath] ?? `export default function App() {
+  return <pre>Unknown fixture: {${JSON.stringify(fixture)}}</pre>
+}
+`
+  }
   const selected = selectedCase()
   return selected ? button.source(decode(button, selected.caseId)) : initialSource
+}
+
+function bombadilMode() {
+  return new URLSearchParams(location.search).get('bombadil') === 'true'
 }
 
 type CompiledApp = ComponentType<Record<string, never>>
@@ -57,9 +76,12 @@ async function compileTSX(source: string): Promise<CompiledApp> {
   const esbuild = await getEsbuild()
   const executable = source
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antadesign\/anta['"]\s*;?/g, '')
+    .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antadesign\/plot['"]\s*;?/g, '')
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]react['"]\s*;?/g, '')
     .replace(/export\s+default\s+function\s+App/, 'function App')
-  if (/^\s*import\s/m.test(executable)) throw new Error('Only @antadesign/anta and react imports are supported.')
+  if (/^\s*import\s/m.test(executable)) {
+    throw new Error('Only @antadesign/anta, @antadesign/plot, and react imports are supported.')
+  }
   const result = await esbuild.transform(executable, {
     loader: 'tsx',
     sourcefile: 'generated.tsx',
@@ -69,7 +91,8 @@ async function compileTSX(source: string): Promise<CompiledApp> {
     jsxFactory: 'h',
     jsxFragment: 'Fragment',
   })
-  const entries = Object.entries(Anta).filter(([name]) => name !== 'default' && /^[A-Za-z_$][\w$]*$/.test(name))
+  const entries = Object.entries({ ...Anta, ...AntaPlot })
+    .filter(([name]) => name !== 'default' && /^[A-Za-z_$][\w$]*$/.test(name))
   const names = ['h', 'Fragment', 'useEffect', 'useState', ...entries.map(([name]) => name)]
   const values = [h, Fragment, useEffect, useState, ...entries.map(([, value]) => value)]
   const App = new Function(...names, `"use strict";${result.code}\nreturn App`)(...values)
@@ -92,13 +115,14 @@ class RenderBoundary extends Component<{ children: ComponentChildren }, { error:
 }
 
 export default function Harness() {
+  const isBombadil = bombadilMode()
   const [source, setSource] = useState(sourceFromLocation)
   const [isDark, setIsDark] = useState(false)
   const [compiled, setCompiled] = useState<CompiledApp | null>(null)
   const [compiledSource, setCompiledSource] = useState('')
   const [compileError, setCompileError] = useState<string | null>(null)
   const [compiling, setCompiling] = useState(true)
-  const [editorOpen, setEditorOpen] = useState(() => window.matchMedia('(min-width: 721px)').matches)
+  const [editorOpen, setEditorOpen] = useState(() => !isBombadil && window.matchMedia('(min-width: 721px)').matches)
 
   useEffect(() => {
     let cancelled = false
@@ -163,14 +187,14 @@ export default function Harness() {
           ? <RenderBoundary key={compiledSource}><App /></RenderBoundary>
           : <div className={styles.compileStatus}>Compiling…</div>}
     </section>
-    {editorOpen && <HarnessEditor
+    {!isBombadil && editorOpen && <HarnessEditor
       source={source}
       isDark={isDark}
       onChange={setSource}
       onThemeChange={() => setIsDark((value) => !value)}
       onClose={() => setEditorOpen(false)}
     />}
-    {!editorOpen && <Button
+    {!isBombadil && !editorOpen && <Button
       className={styles.showEditorButton}
       icon="braces"
       priority="tertiary"

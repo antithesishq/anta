@@ -43,11 +43,16 @@ const fixture = extract((state) => {
   if (!root) return null
 
   const target = root.querySelector<HTMLElement & { checked: boolean; indeterminate: boolean }>('[data-fixture-target]')
-  const expectedChecked = root.dataset.expectedChecked
   const expectedDisabled = root.dataset.expectedDisabled === 'true'
   const expectedMounted = root.dataset.expectedMounted === 'true'
+  const actualState = target === null
+    ? null
+    : target.indeterminate
+      ? 'indeterminate'
+      : String(target.checked)
 
   return {
+    actualState,
     actualChecked: target?.checked ?? null,
     actualCheckedState: target?.matches(':state(checked)') ?? null,
     actualDisabled: target?.matches(':disabled') ?? null,
@@ -57,10 +62,11 @@ const fixture = extract((state) => {
     actualStateAttribute: target?.getAttribute('state') ?? null,
     actualTabIndex: target?.tabIndex ?? null,
     canFocusAndPressSpace: target !== null && !target.matches(':disabled'),
-    expectedChecked,
     expectedDisabled,
     expectedMounted,
     lastTransition: root.dataset.lastTransition ?? null,
+    requestedWhileDisabled: root.dataset.requestedWhileDisabled === 'true',
+    stateWhenDisabled: root.dataset.stateWhenDisabled ?? null,
   }
 })
 
@@ -77,25 +83,20 @@ export const checkboxFollowsStateMachine = always(() => {
   if (current === null) return true
   if (current.actualMounted !== current.expectedMounted) return false
   if (!current.expectedMounted) return true
+  if (current.actualStateAttribute !== null) return false
 
-  const expectedIsChecked = current.expectedChecked === 'true'
-  const expectedIsIndeterminate = current.expectedChecked === 'indeterminate'
-  const expectedState = expectedIsChecked
-    ? 'checked'
-    : expectedIsIndeterminate
-      ? 'indeterminate'
-      : 'unchecked'
+  const expectedIsChecked = current.actualState === 'true'
+  const expectedIsIndeterminate = current.actualState === 'indeterminate'
 
-  const stateMatches = current.actualChecked === expectedIsChecked
+  const stateIsCoherent = current.actualChecked === expectedIsChecked
     && current.actualIndeterminate === expectedIsIndeterminate
     && current.actualCheckedState === expectedIsChecked
     && current.actualIndeterminateState === expectedIsIndeterminate
-    && current.actualStateAttribute === expectedState
     && !(current.actualChecked && current.actualIndeterminate)
     && !(current.actualCheckedState && current.actualIndeterminateState)
     && current.actualDisabled === current.expectedDisabled
     && current.actualTabIndex === (current.expectedDisabled ? -1 : 0)
-  if (!stateMatches) return false
+  if (!stateIsCoherent) return false
   if (current.lastTransition === null) return true
 
   const [prev, next] = current.lastTransition.split('>')
@@ -106,5 +107,13 @@ export const checkboxFollowsStateMachine = always(() => {
       : null
   return expectedNext !== null
     && next === expectedNext
-    && current.expectedChecked === next
+    && current.actualState === next
+})
+
+export const disabledCheckboxDoesNotTransition = always(() => {
+  const current = fixture.current
+  if (current === null || !current.expectedMounted || !current.expectedDisabled) return true
+  return !current.requestedWhileDisabled
+    && current.stateWhenDisabled !== null
+    && current.actualState === current.stateWhenDisabled
 })

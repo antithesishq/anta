@@ -3,25 +3,25 @@ import { useState } from 'react'
 
 type CheckboxState = false | true | 'indeterminate'
 
-export default function App() {
+const FIXTURE_COUNT = 5
+
+function CheckboxFixture({ fixtureIndex }) {
   const [disabled, setDisabled] = useState(false)
   const [mounted, setMounted] = useState(true)
   const [currentState, setCurrentState] = useState<CheckboxState>('indeterminate')
 
   return (
-    <main
-      data-fixture="checkbox"
-      style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}
-    >
+    <section style={{ display: 'grid', alignContent: 'start', gap: '12px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px' }}>
+      <strong>Checkbox {fixtureIndex + 1}</strong>
       <div
-        style={{ minHeight: '72px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px', background: 'var(--bg-1)' }}
+        style={{ minHeight: '72px', padding: '16px', background: 'var(--bg-1)' }}
       >
         {mounted ? (
           <Checkbox
             data-fixture-target
             defaultChecked="indeterminate"
             disabled={disabled}
-            label="Select all notifications"
+            label={'Select all notifications ' + (fixtureIndex + 1)}
             hint={disabled ? 'Notification selection is unavailable.' : 'Include every notification in this selection.'}
             onValueChange={(_event, value) => {
               setCurrentState(value.indeterminate ? 'indeterminate' : value.checked)
@@ -57,6 +57,19 @@ export default function App() {
           {mounted ? 'Unmount' : 'Mount'}
         </Button>
       </div>
+    </section>
+  )
+}
+
+export default function App() {
+  return (
+    <main
+      data-fixture="checkbox"
+      style={{ display: 'grid', width: 'min(100%, 1200px)', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}
+    >
+      {Array.from({ length: FIXTURE_COUNT }, (_, fixtureIndex) => (
+        <CheckboxFixture key={fixtureIndex} fixtureIndex={fixtureIndex} />
+      ))}
     </main>
   )
 }

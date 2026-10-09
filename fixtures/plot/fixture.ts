@@ -2,7 +2,7 @@ const plotFixture = `import { Button } from '@antadesign/anta'
 import { Plot, scatter } from '@antadesign/plot'
 import { useState } from 'react'
 
-const PLOT_COUNT = 10
+const PLOT_COUNT = 5
 const colors = ['#4f46e5', '#0d9488', '#dc2626', '#ca8a04', '#9333ea']
 
 function createRandom(seed) {

@@ -1,7 +1,9 @@
 const radioGroupFixture = `import { Button, RadioGroup } from '@antadesign/anta'
 import { useState } from 'react'
 
-export default function App() {
+const FIXTURE_COUNT = 5
+
+function RadioGroupFixture({ fixtureIndex }) {
   const [disabled, setDisabled] = useState(false)
   const [mounted, setMounted] = useState(true)
   const [removedValue, setRemovedValue] = useState<string | null>(null)
@@ -18,17 +20,15 @@ export default function App() {
     .map((option) => ({ ...option, disabled: option.disabled || option.value === disabledValue }))
 
   return (
-    <main
-      data-fixture="radio-group"
-      style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}
-    >
-      <div style={{ minHeight: '180px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px', background: 'var(--bg-1)' }}>
+    <section style={{ display: 'grid', alignContent: 'start', gap: '12px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px' }}>
+      <strong>Radio group {fixtureIndex + 1}</strong>
+      <div style={{ minHeight: '180px', padding: '16px', background: 'var(--bg-1)' }}>
         {mounted ? (
           <RadioGroup
             data-fixture-target
             defaultValue="email"
             disabled={disabled}
-            label="Preferred contact method"
+            label={'Preferred contact method ' + (fixtureIndex + 1)}
             hint="Choose one way to receive account alerts."
             options={options}
             onValueChange={(_event, value) => setCurrentValue(value.value)}
@@ -77,6 +77,19 @@ export default function App() {
           {mounted ? 'Unmount' : 'Mount'}
         </Button>
       </div>
+    </section>
+  )
+}
+
+export default function App() {
+  return (
+    <main
+      data-fixture="radio-group"
+      style={{ display: 'grid', width: 'min(100%, 1200px)', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}
+    >
+      {Array.from({ length: FIXTURE_COUNT }, (_, fixtureIndex) => (
+        <RadioGroupFixture key={fixtureIndex} fixtureIndex={fixtureIndex} />
+      ))}
     </main>
   )
 }

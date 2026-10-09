@@ -8,7 +8,7 @@ const waitForCalendarFixture = registerCustomAction(
   'waitForCalendarFixture',
   async (document, window) => {
     const deadline = Date.now() + 5_000
-    while (!document.querySelector('[data-fixture="calendar"]')) {
+    while (document.querySelectorAll('[data-fixture="calendar"] [data-fixture-target] a-calendar').length !== 5) {
       if (Date.now() >= deadline) throw new Error('Calendar fixture did not compile within five seconds.')
       await new Promise((resolve) => window.setTimeout(resolve, 25))
     }
@@ -17,8 +17,8 @@ const waitForCalendarFixture = registerCustomAction(
 
 const focusDayAndPressKey = registerCustomAction(
   'calendarFocusDayAndPressKey',
-  async (document, window, key: string, shiftKey: boolean) => {
-    const calendar = document.querySelector<HTMLElement>('[data-fixture-target] a-calendar')
+  async (document, window, calendarIndex: number, key: string, shiftKey: boolean) => {
+    const calendar = document.querySelectorAll<HTMLElement>('[data-fixture-target] a-calendar')[calendarIndex]
     const day = calendar?.querySelector<HTMLElement>('[data-part="day-cell"][tabindex="0"]')
     if (!calendar || !day || calendar.hasAttribute('disabled') || day.hasAttribute('disabled')) return
     const browser = window as unknown as typeof globalThis
@@ -45,21 +45,22 @@ const fixture = extract((state) => {
   const root = state.document.querySelector<HTMLElement>('[data-fixture="calendar"]')
   if (!root) return null
 
-  const calendar = root.querySelector<HTMLElement & { value: string }>('[data-fixture-target] a-calendar')
-  const days = calendar
-    ? Array.from(calendar.querySelectorAll<HTMLElement>('[data-part="day-cell"]'), (day) => ({
+  const calendars = Array.from(root.querySelectorAll<HTMLElement & { value: string }>('[data-fixture-target] a-calendar'), (calendar) => {
+    const days = Array.from(calendar.querySelectorAll<HTMLElement>('[data-part="day-cell"]'), (day) => ({
         date: day.dataset.date ?? '',
         disabled: day.hasAttribute('disabled'),
         selected: day.hasAttribute('selected'),
       }))
-    : []
+    return {
+      days,
+      disabled: calendar.hasAttribute('disabled'),
+      value: calendar.value,
+      valueAttribute: calendar.getAttribute('value'),
+    }
+  })
 
   return {
-    disabled: calendar?.hasAttribute('disabled') ?? null,
-    mounted: calendar !== null,
-    value: calendar?.value ?? null,
-    valueAttribute: calendar?.getAttribute('value') ?? null,
-    days,
+    calendars,
   }
 })
 
@@ -80,8 +81,9 @@ const keys = [
 
 export const calendarKeyboardActions = actions(() => {
   const current = fixture.current
-  if (current === null || !current.mounted || current.disabled) return []
-  return keys.map(([key, shiftKey]) => focusDayAndPressKey(key, shiftKey))
+  if (current === null) return []
+  return current.calendars.flatMap((calendar: { disabled: boolean }, calendarIndex: number) =>
+    calendar.disabled ? [] : keys.map(([key, shiftKey]) => focusDayAndPressKey(calendarIndex, key, shiftKey)))
 })
 
 export const calendarReadyActions = actions(() => (
@@ -90,18 +92,25 @@ export const calendarReadyActions = actions(() => (
 
 export const calendarSelectionIsCoherent = always(() => {
   const current = fixture.current
-  if (current === null || !current.mounted) return true
+  if (current === null) return true
 
-  const selected = current.days.filter((day: { selected: boolean }) => day.selected)
-  const selectedDateIsRendered = current.days.some((day: { date: string }) => day.date === current.value)
-  return current.valueAttribute !== null
-    && current.value === current.valueAttribute
-    && selected.length === (selectedDateIsRendered ? 1 : 0)
-    && selected.every((day: { date: string }) => day.date === current.value)
+  return current.calendars.every((calendar: {
+    days: Array<{ date: string; selected: boolean }>
+    value: string
+    valueAttribute: string | null
+  }) => {
+    const selected = calendar.days.filter((day) => day.selected)
+    const selectedDateIsRendered = calendar.days.some((day) => day.date === calendar.value)
+    return calendar.valueAttribute !== null
+      && calendar.value === calendar.valueAttribute
+      && selected.length === (selectedDateIsRendered ? 1 : 0)
+      && selected.every((day) => day.date === calendar.value)
+  })
 })
 
 export const disabledCalendarHasNoEnabledDays = always(() => {
   const current = fixture.current
-  if (current === null || !current.mounted || !current.disabled) return true
-  return current.days.every((day: { disabled: boolean }) => day.disabled)
+  if (current === null) return true
+  return current.calendars.every((calendar: { days: Array<{ disabled: boolean }>; disabled: boolean }) =>
+    !calendar.disabled || calendar.days.every((day) => day.disabled))
 })

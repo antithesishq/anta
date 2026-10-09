@@ -3,7 +3,9 @@ import { useState } from 'react'
 
 const VALUES = ['Anta', '', 'Hegel checks this field', 'Another controlled value']
 
-export default function App() {
+const FIXTURE_COUNT = 5
+
+function InputFixture({ fixtureIndex }) {
   const [value, setValue] = useState('Anta')
   const [disabled, setDisabled] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
@@ -14,12 +16,13 @@ export default function App() {
   const nextValue = () => VALUES[(VALUES.indexOf(value) + 1) % VALUES.length]
 
   return (
-    <main data-fixture="input" style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}>
-      <div style={{ minHeight: '128px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px', background: 'var(--bg-1)' }}>
+    <section style={{ display: 'grid', alignContent: 'start', gap: '12px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px' }}>
+      <strong>Input {fixtureIndex + 1}</strong>
+      <div style={{ minHeight: '128px', padding: '16px', background: 'var(--bg-1)' }}>
         {mounted ? (
           <Input
             data-fixture-target
-            label="Project note"
+            label={'Project note ' + (fixtureIndex + 1)}
             hint={locked ? 'Editing is unavailable.' : 'This value is controlled by the fixture.'}
             value={value}
             disabled={disabled}
@@ -66,6 +69,19 @@ export default function App() {
           {mounted ? 'Unmount' : 'Mount'}
         </Button>
       </div>
+    </section>
+  )
+}
+
+export default function App() {
+  return (
+    <main
+      data-fixture="input"
+      style={{ display: 'grid', width: 'min(100%, 1200px)', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}
+    >
+      {Array.from({ length: FIXTURE_COUNT }, (_, fixtureIndex) => (
+        <InputFixture key={fixtureIndex} fixtureIndex={fixtureIndex} />
+      ))}
     </main>
   )
 }

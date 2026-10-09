@@ -13,7 +13,9 @@ const PRESETS: Filters[] = [
   {},
 ]
 
-export default function App() {
+const FIXTURE_COUNT = 5
+
+function SelectFacetedFixture({ fixtureIndex }) {
   const [value, setValue] = useState<Filters>(PRESETS[0])
   const [disabled, setDisabled] = useState(false)
   const [bobDisabled, setBobDisabled] = useState(false)
@@ -44,13 +46,14 @@ export default function App() {
   ]
 
   return (
-    <main data-fixture="select-faceted" style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}>
-      <div style={{ minHeight: '240px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px', background: 'var(--bg-1)' }}>
+    <section style={{ display: 'grid', alignContent: 'start', gap: '12px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px' }}>
+      <strong>Faceted select {fixtureIndex + 1}</strong>
+      <div style={{ minHeight: '240px', padding: '16px', background: 'var(--bg-1)' }}>
         {mounted ? (
           <div>
             <SelectFaceted
               data-fixture-target
-              label="Filter projects"
+              label={'Filter projects ' + (fixtureIndex + 1)}
               searchable
               disabled={disabled}
               facets={facets}
@@ -90,6 +93,19 @@ export default function App() {
           {mounted ? 'Unmount' : 'Mount'}
         </Button>
       </div>
+    </section>
+  )
+}
+
+export default function App() {
+  return (
+    <main
+      data-fixture="select-faceted"
+      style={{ display: 'grid', width: 'min(100%, 1200px)', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}
+    >
+      {Array.from({ length: FIXTURE_COUNT }, (_, fixtureIndex) => (
+        <SelectFacetedFixture key={fixtureIndex} fixtureIndex={fixtureIndex} />
+      ))}
     </main>
   )
 }

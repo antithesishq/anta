@@ -3,7 +3,9 @@ import { useState } from 'react'
 
 const DATES = ['2026-06-10', '2026-06-15', '2026-06-20', '2026-07-04']
 
-export default function App() {
+const FIXTURE_COUNT = 5
+
+function CalendarFixture({ fixtureIndex }) {
   const [value, setValue] = useState('2026-06-15')
   const [disabled, setDisabled] = useState(false)
   const [narrowRange, setNarrowRange] = useState(false)
@@ -13,8 +15,9 @@ export default function App() {
   const max = narrowRange ? '2026-06-20' : '2026-08-31'
 
   return (
-    <main data-fixture="calendar" style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}>
-      <div style={{ minHeight: '390px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px', background: 'var(--bg-1)' }}>
+    <section style={{ display: 'grid', alignContent: 'start', gap: '12px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px' }}>
+      <strong>Calendar {fixtureIndex + 1}</strong>
+      <div style={{ minHeight: '390px', padding: '16px', background: 'var(--bg-1)' }}>
         {mounted ? (
           <Calendar
             data-fixture-target
@@ -23,7 +26,7 @@ export default function App() {
             max={max}
             disabled={disabled}
             locale="en-US"
-            aria-label="Release date"
+            aria-label={'Release date ' + (fixtureIndex + 1)}
             onStateChange={(_event, transition) => {
               if (transition.reason === 'user' && transition.next) setValue(transition.next)
             }}
@@ -67,6 +70,19 @@ export default function App() {
           {mounted ? 'Unmount' : 'Mount'}
         </Button>
       </div>
+    </section>
+  )
+}
+
+export default function App() {
+  return (
+    <main
+      data-fixture="calendar"
+      style={{ display: 'grid', width: 'min(100%, 1200px)', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '16px' }}
+    >
+      {Array.from({ length: FIXTURE_COUNT }, (_, fixtureIndex) => (
+        <CalendarFixture key={fixtureIndex} fixtureIndex={fixtureIndex} />
+      ))}
     </main>
   )
 }

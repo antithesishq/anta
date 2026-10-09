@@ -8,7 +8,7 @@ const waitForSelectFacetedFixture = registerCustomAction(
   'waitForSelectFacetedFixture',
   async (document, window) => {
     const deadline = Date.now() + 5_000
-    while (!document.querySelector('[data-fixture="select-faceted"]')) {
+    while (document.querySelectorAll('[data-fixture="select-faceted"] [data-fixture-target]').length !== 5) {
       if (Date.now() >= deadline) throw new Error('SelectFaceted fixture did not compile within five seconds.')
       await new Promise((resolve) => window.setTimeout(resolve, 25))
     }
@@ -19,28 +19,31 @@ const fixture = extract((state) => {
   const root = state.document.querySelector<HTMLElement>('[data-fixture="select-faceted"]')
   if (!root) return null
 
-  const trigger = root.querySelector<HTMLElement>('[data-fixture-target]')
-  const menu = trigger?.nextElementSibling as (HTMLElement & { isOpen: boolean }) | null
-  const checkableRows = menu
-    ? Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"], [role="menuitemradio"]'), (row) => ({
+  const targets = Array.from(root.querySelectorAll<HTMLElement>('[data-fixture-target]'), (trigger) => {
+    const menu = trigger.nextElementSibling as (HTMLElement & { isOpen: boolean }) | null
+    const checkableRows = menu
+      ? Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"], [role="menuitemradio"]'), (row) => ({
         checked: row.getAttribute('aria-checked'),
         role: row.getAttribute('role'),
       }))
-    : []
-  const radioSelectionCounts = menu
-    ? Array.from(menu.querySelectorAll<HTMLElement>('a-menu'), (group) =>
+      : []
+    const radioSelectionCounts = menu
+      ? Array.from(menu.querySelectorAll<HTMLElement>('a-menu'), (group) =>
         group.querySelectorAll(':scope > a-menu-item[role="menuitemradio"][aria-checked="true"]').length)
-    : []
+      : []
+    return {
+      checkableRows,
+      disabled: trigger.hasAttribute('disabled'),
+      expanded: trigger.getAttribute('aria-expanded'),
+      menuIsOpen: menu?.isOpen ?? null,
+      menuOpenState: menu?.matches(':state(open)') ?? null,
+      radioSelectionCounts,
+      tabIndex: trigger.tabIndex,
+    }
+  })
 
   return {
-    checkableRows,
-    disabled: trigger?.hasAttribute('disabled') ?? null,
-    expanded: trigger?.getAttribute('aria-expanded') ?? null,
-    menuIsOpen: menu?.isOpen ?? null,
-    menuOpenState: menu?.matches(':state(open)') ?? null,
-    mounted: trigger !== null,
-    radioSelectionCounts,
-    tabIndex: trigger?.tabIndex ?? null,
+    targets,
   }
 })
 
@@ -50,19 +53,28 @@ export const selectFacetedReadyActions = actions(() => (
 
 export const selectFacetedOpenStateIsCoherent = always(() => {
   const current = fixture.current
-  if (current === null || !current.mounted) return true
+  if (current === null) return true
 
-  return current.expanded === String(current.menuIsOpen)
-    && current.menuOpenState === current.menuIsOpen
-    && current.tabIndex === (current.disabled ? -1 : 0)
+  return current.targets.every((target: {
+    disabled: boolean
+    expanded: string | null
+    menuIsOpen: boolean | null
+    menuOpenState: boolean | null
+    tabIndex: number
+  }) => target.expanded === String(target.menuIsOpen)
+    && target.menuOpenState === target.menuIsOpen
+    && target.tabIndex === (target.disabled ? -1 : 0))
 })
 
 export const selectFacetedSelectionIndicatorsAreValid = always(() => {
   const current = fixture.current
-  if (current === null || !current.mounted) return true
+  if (current === null) return true
 
-  return current.checkableRows.every((row: { checked: string | null; role: string | null }) =>
+  return current.targets.every((target: {
+    checkableRows: Array<{ checked: string | null; role: string | null }>
+    radioSelectionCounts: number[]
+  }) => target.checkableRows.every((row) =>
     (row.role === 'menuitemcheckbox' || row.role === 'menuitemradio')
       && (row.checked === 'true' || row.checked === 'false' || row.checked === 'mixed'))
-    && current.radioSelectionCounts.every((count: number) => count <= 1)
+    && target.radioSelectionCounts.every((count) => count <= 1))
 })

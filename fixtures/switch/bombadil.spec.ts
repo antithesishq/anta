@@ -8,7 +8,7 @@ const waitForSwitchFixture = registerCustomAction(
   'waitForSwitchFixture',
   async (document, window) => {
     const deadline = Date.now() + 5_000
-    while (!document.querySelector('[data-fixture="switch"]')) {
+    while (document.querySelectorAll('[data-fixture="switch"] [data-fixture-target]').length !== 5) {
       if (Date.now() >= deadline) throw new Error('Switch fixture did not compile within five seconds.')
       await new Promise((resolve) => window.setTimeout(resolve, 25))
     }
@@ -17,8 +17,8 @@ const waitForSwitchFixture = registerCustomAction(
 
 const focusAndPressSpace = registerCustomAction(
   'switchFocusAndPressSpace',
-  async (document, window) => {
-    const target = document.querySelector<HTMLElement>('[data-fixture-target]')
+  async (document, window, targetIndex: number) => {
+    const target = document.querySelectorAll<HTMLElement>('[data-fixture-target]')[targetIndex]
     if (!target || target.matches(':disabled')) return
     const browser = window as unknown as typeof globalThis
 
@@ -42,19 +42,20 @@ const fixture = extract((state) => {
   const root = state.document.querySelector<HTMLElement>('[data-fixture="switch"]')
   if (!root) return null
 
-  const target = root.querySelector<HTMLElement & { checked: boolean }>('[data-fixture-target]')
+  const targets = Array.from(root.querySelectorAll<HTMLElement & { checked: boolean }>('[data-fixture-target]'), (target) => ({
+    checked: target.checked,
+    checkedState: target.matches(':state(checked)'),
+    disabled: target.hasAttribute('disabled'),
+    tabIndex: target.tabIndex,
+  }))
   return {
-    actualChecked: target?.checked ?? null,
-    actualCheckedState: target?.matches(':state(checked)') ?? null,
-    actualDisabled: target?.hasAttribute('disabled') ?? null,
-    actualMounted: target !== null,
-    actualTabIndex: target?.tabIndex ?? null,
-    canFocusAndPressSpace: target !== null && !target.matches(':disabled'),
+    targets,
   }
 })
 
 export const switchKeyboardActions = actions(() => (
-  fixture.current?.canFocusAndPressSpace ? [focusAndPressSpace()] : []
+  fixture.current?.targets.flatMap((target: { disabled: boolean }, targetIndex: number) =>
+    target.disabled ? [] : [focusAndPressSpace(targetIndex)]) ?? []
 ))
 
 export const switchReadyActions = actions(() => (
@@ -63,7 +64,8 @@ export const switchReadyActions = actions(() => (
 
 export const switchStateIsCoherent = always(() => {
   const current = fixture.current
-  if (current === null || !current.actualMounted) return true
-  return current.actualChecked === current.actualCheckedState
-    && current.actualTabIndex === (current.actualDisabled ? -1 : 0)
+  if (current === null) return true
+  return current.targets.every((target: { checked: boolean; checkedState: boolean; disabled: boolean; tabIndex: number }) =>
+    target.checked === target.checkedState
+      && target.tabIndex === (target.disabled ? -1 : 0))
 })

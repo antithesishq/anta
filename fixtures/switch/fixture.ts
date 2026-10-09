@@ -1,25 +1,25 @@
 const switchFixture = `import { Button, Switch } from '@antadesign/anta'
 import { useState } from 'react'
 
-export default function App() {
+const FIXTURE_COUNT = 5
+
+function SwitchFixture({ fixtureIndex }) {
   const [checked, setChecked] = useState(false)
   const [disabled, setDisabled] = useState(false)
   const [mounted, setMounted] = useState(true)
 
   return (
-    <main
-      data-fixture="switch"
-      style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}
-    >
+    <section style={{ display: 'grid', alignContent: 'start', gap: '12px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px' }}>
+      <strong>Switch {fixtureIndex + 1}</strong>
       <div
-        style={{ minHeight: '72px', padding: '20px', border: '1px solid var(--border-2)', borderRadius: '12px', background: 'var(--bg-1)' }}
+        style={{ minHeight: '72px', padding: '16px', background: 'var(--bg-1)' }}
       >
         {mounted ? (
           <Switch
             data-fixture-target
             checked={checked}
             disabled={disabled}
-            label="Automatic updates"
+            label={'Automatic updates ' + (fixtureIndex + 1)}
             hint={disabled ? 'Managed by your organization.' : 'Install updates automatically.'}
             onStateChange={(_event, { next }) => setChecked(next)}
           />
@@ -56,6 +56,19 @@ export default function App() {
           {mounted ? 'Unmount' : 'Mount'}
         </Button>
       </div>
+    </section>
+  )
+}
+
+export default function App() {
+  return (
+    <main
+      data-fixture="switch"
+      style={{ display: 'grid', width: 'min(100%, 1200px)', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}
+    >
+      {Array.from({ length: FIXTURE_COUNT }, (_, fixtureIndex) => (
+        <SwitchFixture key={fixtureIndex} fixtureIndex={fixtureIndex} />
+      ))}
     </main>
   )
 }

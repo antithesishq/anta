@@ -3,7 +3,7 @@ import { actions, extract, getFingerprint, registerCustomAction, weighted } from
 export * from '@antithesishq/bombadil/browser/defaults/properties'
 export { clicks } from '@antithesishq/bombadil/browser/defaults/actions'
 
-const PLOT_COUNT = 10
+const PLOT_COUNT = 5
 const interactionPoints = [
   [0.15, 0.2],
   [0.5, 0.2],
@@ -159,7 +159,7 @@ const plotMountActions = actions(() => (
 
 export const plotActions = weighted([
   [100, plotGestureActions],
-  [1, plotMountActions],
+  [10, plotMountActions],
 ])
 
 export const plotReadyActions = actions(() => (

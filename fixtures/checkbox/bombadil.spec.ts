@@ -8,7 +8,7 @@ const waitForCheckboxFixture = registerCustomAction(
   'waitForCheckboxFixture',
   async (document, window) => {
     const deadline = Date.now() + 5_000
-    while (!document.querySelector('[data-fixture="checkbox"]')) {
+    while (document.querySelectorAll('[data-fixture="checkbox"] [data-fixture-target]').length !== 5) {
       if (Date.now() >= deadline) throw new Error('Checkbox fixture did not compile within five seconds.')
       await new Promise((resolve) => window.setTimeout(resolve, 25))
     }
@@ -17,8 +17,8 @@ const waitForCheckboxFixture = registerCustomAction(
 
 const focusAndPressSpace = registerCustomAction(
   'checkboxFocusAndPressSpace',
-  async (document, window) => {
-    const target = document.querySelector<HTMLElement>('[data-fixture-target]')
+  async (document, window, targetIndex: number) => {
+    const target = document.querySelectorAll<HTMLElement>('[data-fixture-target]')[targetIndex]
     if (!target || target.matches(':disabled')) return
     const browser = window as unknown as typeof globalThis
 
@@ -42,23 +42,23 @@ const fixture = extract((state) => {
   const root = state.document.querySelector<HTMLElement>('[data-fixture="checkbox"]')
   if (!root) return null
 
-  const target = root.querySelector<HTMLElement & { checked: boolean; indeterminate: boolean }>('[data-fixture-target]')
-
+  const targets = Array.from(root.querySelectorAll<HTMLElement & { checked: boolean; indeterminate: boolean }>('[data-fixture-target]'), (target) => ({
+    checked: target.checked,
+    checkedState: target.matches(':state(checked)'),
+    disabled: target.matches(':disabled'),
+    indeterminate: target.indeterminate,
+    indeterminateState: target.matches(':state(indeterminate)'),
+    stateAttribute: target.getAttribute('state'),
+    tabIndex: target.tabIndex,
+  }))
   return {
-    actualChecked: target?.checked ?? null,
-    actualCheckedState: target?.matches(':state(checked)') ?? null,
-    actualDisabled: target?.matches(':disabled') ?? null,
-    actualIndeterminate: target?.indeterminate ?? null,
-    actualIndeterminateState: target?.matches(':state(indeterminate)') ?? null,
-    actualMounted: target !== null,
-    actualStateAttribute: target?.getAttribute('state') ?? null,
-    actualTabIndex: target?.tabIndex ?? null,
-    canFocusAndPressSpace: target !== null && !target.matches(':disabled'),
+    targets,
   }
 })
 
 export const checkboxKeyboardActions = actions(() => (
-  fixture.current?.canFocusAndPressSpace ? [focusAndPressSpace()] : []
+  fixture.current?.targets.flatMap((target: { disabled: boolean }, targetIndex: number) =>
+    target.disabled ? [] : [focusAndPressSpace(targetIndex)]) ?? []
 ))
 
 export const checkboxReadyActions = actions(() => (
@@ -67,12 +67,19 @@ export const checkboxReadyActions = actions(() => (
 
 export const checkboxStateIsCoherent = always(() => {
   const current = fixture.current
-  if (current === null || !current.actualMounted) return true
-  if (current.actualStateAttribute !== null) return false
-
-  return current.actualChecked === current.actualCheckedState
-    && current.actualIndeterminate === current.actualIndeterminateState
-    && !(current.actualChecked && current.actualIndeterminate)
-    && !(current.actualCheckedState && current.actualIndeterminateState)
-    && current.actualTabIndex === (current.actualDisabled ? -1 : 0)
+  if (current === null) return true
+  return current.targets.every((target: {
+    checked: boolean
+    checkedState: boolean
+    disabled: boolean
+    indeterminate: boolean
+    indeterminateState: boolean
+    stateAttribute: string | null
+    tabIndex: number
+  }) => target.stateAttribute === null
+    && target.checked === target.checkedState
+    && target.indeterminate === target.indeterminateState
+    && !(target.checked && target.indeterminate)
+    && !(target.checkedState && target.indeterminateState)
+    && target.tabIndex === (target.disabled ? -1 : 0))
 })

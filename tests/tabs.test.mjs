@@ -81,7 +81,7 @@ test('TabPanel follows its own strip across sibling and nested Tabs and Steps', 
   assert.deepEqual(await active('#nested-tabs a-tabpanel'), ['Inner panel', 'Other panel'])
 })
 
-test('Selected tabs take Button fills and the track takes the strip tone, with and without Antune', async t => {
+test('Selected tabs take Button fills and the track takes the strip tone in every theme', async t => {
   const context = await browser.newContext()
   t.after(() => context.close())
   const page = await context.newPage()
@@ -90,8 +90,9 @@ test('Selected tabs take Button fills and the track takes the strip tone, with a
   await page.addStyleTag({ content: await readFile('src/tokens.css', 'utf8') })
   await page.addStyleTag({ content: await readFile('src/elements/a-button.css', 'utf8') })
   await page.addStyleTag({ content: 'a-tab, a-button { transition: none; }' })
-  const theme = await page.addStyleTag({ content: await readFile('src/theme-antune.css', 'utf8') })
-  const results = await page.evaluate(theme => {
+  const antune = await page.addStyleTag({ content: await readFile('src/theme-antune.css', 'utf8') })
+  const antithesis = await page.addStyleTag({ content: await readFile('src/theme-antithesis.css', 'utf8') })
+  const results = await page.evaluate(([antune, antithesis]) => {
     const tabs = document.querySelector('#basic-tabs a-tabs')
     tabs.setAttribute('noslide', '')
     const selected = tabs.querySelector('a-tab:state(selected)')
@@ -101,8 +102,9 @@ test('Selected tabs take Button fills and the track takes the strip tone, with a
     document.body.append(button)
     const fill = element => getComputedStyle(element).backgroundColor
     const results = []
-    for (const themed of [false, true]) {
-      theme.sheet.disabled = !themed
+    for (const themed of ['none', 'antune', 'antithesis']) {
+      antune.sheet.disabled = themed !== 'antune'
+      antithesis.sheet.disabled = themed !== 'antithesis'
       for (const scheme of ['light', 'dark']) {
         document.documentElement.style.colorScheme = scheme
         for (const priority of ['primary', 'secondary']) {
@@ -129,7 +131,7 @@ test('Selected tabs take Button fills and the track takes the strip tone, with a
       }
     }
     return results
-  }, theme)
+  }, [antune, antithesis])
   for (const { selected, button, track, neutralTrack, ...variant } of results) {
     const description = JSON.stringify(variant)
     if (variant.priority === 'primary') {

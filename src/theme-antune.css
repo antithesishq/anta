@@ -687,23 +687,23 @@ a-tab[tone="critical"] {
   --tab-fg-hover: light-dark(#a01c1c, #ffabac);
 }
 /* The sliding indicator follows a selected tab's named tone. */
-a-tabs:has(> a-tab[tone="brand"]:state(selected)) {
+a-tabs:has(> a-tab[tone="brand"]:state(selected):not([disabled])) {
   --tab-indicator-bg: light-dark(#5f4bc3, #503cb4);
   --tab-indicator-line: light-dark(#5f4bc3, #c5baff);
 }
-a-tabs:has(> a-tab[tone="info"]:state(selected)) {
+a-tabs:has(> a-tab[tone="info"]:state(selected):not([disabled])) {
   --tab-indicator-bg: light-dark(#1f6eb2, #1a5b93);
   --tab-indicator-line: light-dark(#1f6eb2, #9ed2ff);
 }
-a-tabs:has(> a-tab[tone="success"]:state(selected)) {
+a-tabs:has(> a-tab[tone="success"]:state(selected):not([disabled])) {
   --tab-indicator-bg: light-dark(#2a7e43, #226737);
   --tab-indicator-line: light-dark(#2a7e43, #8ceca9);
 }
-a-tabs:has(> a-tab[tone="warning"]:state(selected)) {
+a-tabs:has(> a-tab[tone="warning"]:state(selected):not([disabled])) {
   --tab-indicator-bg: light-dark(#c37416, #7f410b);
   --tab-indicator-line: light-dark(#c37416, #f7c06e);
 }
-a-tabs:has(> a-tab[tone="critical"]:state(selected)) {
+a-tabs:has(> a-tab[tone="critical"]:state(selected):not([disabled])) {
   --tab-indicator-bg: light-dark(#c9302c, #b02120);
   --tab-indicator-line: light-dark(#c9302c, #ffabac);
 }

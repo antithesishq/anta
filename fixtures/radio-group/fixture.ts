@@ -6,24 +6,44 @@ type Transition = {
   next: string | null
   reason: string
   prevMatched: boolean
+  preApplyConsistent: boolean
   targetWasEnabled: boolean
+}
+
+function selectionMatches(group: HTMLElement & { value: string | null }, value: string | null) {
+  const radios = Array.from(group.querySelectorAll<HTMLElement & { selected: boolean }>('a-radio'))
+  const matchingOptionExists = value !== null && radios.some((radio) => radio.getAttribute('value') === value)
+  const selected = radios.filter((radio) => radio.selected)
+  const selectedStates = radios.filter((radio) => radio.matches(':state(selected)'))
+  const expectedCount = matchingOptionExists ? 1 : 0
+
+  return group.value === value
+    && selected.length === expectedCount
+    && selectedStates.length === expectedCount
+    && selected.every((radio) => radio.getAttribute('value') === value)
+    && selectedStates.every((radio) => radio.getAttribute('value') === value)
 }
 
 export default function App() {
   const [disabled, setDisabled] = useState(false)
   const [mounted, setMounted] = useState(true)
-  const [includeEmail, setIncludeEmail] = useState(true)
+  const [removedValue, setRemovedValue] = useState<string | null>(null)
+  const [disabledValue, setDisabledValue] = useState<string | null>(null)
   const [currentValue, setCurrentValue] = useState<string | null>('email')
+  const [observedValue] = useState(() => ({ current: 'email' as string | null }))
   const [valueWhenDisabled, setValueWhenDisabled] = useState<string | null>(null)
   const [requestedWhileDisabled, setRequestedWhileDisabled] = useState(false)
   const [lastTransition, setLastTransition] = useState<Transition | null>(null)
+  const [postApplyConsistent, setPostApplyConsistent] = useState<boolean | null>(null)
 
   const options = [
-    ...(includeEmail ? [{ value: 'email', label: 'Email' }] : []),
+    { value: 'email', label: 'Email' },
     { value: 'sms', label: 'SMS', disabled: true },
     { value: 'push', label: 'Push notification' },
     { value: 'phone', label: 'Phone call' },
   ]
+    .filter((option) => option.value !== removedValue)
+    .map((option) => ({ ...option, disabled: option.disabled || option.value === disabledValue }))
 
   return (
     <main
@@ -34,7 +54,11 @@ export default function App() {
       data-last-next={lastTransition?.next ?? undefined}
       data-last-reason={lastTransition?.reason}
       data-last-prev-matched={lastTransition ? String(lastTransition.prevMatched) : undefined}
+      data-last-pre-apply-consistent={lastTransition ? String(lastTransition.preApplyConsistent) : undefined}
       data-last-target-enabled={lastTransition ? String(lastTransition.targetWasEnabled) : undefined}
+      data-post-apply-consistent={postApplyConsistent === null ? undefined : String(postApplyConsistent)}
+      data-removed-value={removedValue ?? undefined}
+      data-disabled-option-value={disabledValue ?? undefined}
       data-requested-while-disabled={String(requestedWhileDisabled)}
       data-value-when-disabled={valueWhenDisabled ?? undefined}
       style={{ display: 'grid', maxWidth: '640px', gap: '24px' }}
@@ -48,17 +72,24 @@ export default function App() {
             label="Preferred contact method"
             hint="Choose one way to receive account alerts."
             options={options}
-            onStateChange={(_event, transition) => {
+            onStateChange={(event, transition) => {
               if (disabled) setRequestedWhileDisabled(true)
               if (transition.reason === 'user') {
+                const group = event.currentTarget as HTMLElement & { value: string | null }
                 setLastTransition({
                   ...transition,
-                  prevMatched: transition.prev === currentValue,
+                  prevMatched: transition.prev === observedValue.current,
+                  preApplyConsistent: selectionMatches(group, transition.prev),
                   targetWasEnabled: options.some((option) => option.value === transition.next && !option.disabled),
                 })
               }
             }}
-            onValueChange={(_event, value) => setCurrentValue(value.value)}
+            onValueChange={(event, value) => {
+              const group = event.currentTarget as HTMLElement & { value: string | null }
+              setPostApplyConsistent(selectionMatches(group, value.value))
+              observedValue.current = value.value
+              setCurrentValue(value.value)
+            }}
           />
         ) : (
           <p data-fixture-empty>The contact method selection is unavailable.</p>
@@ -90,10 +121,18 @@ export default function App() {
 
         <Button
           priority="secondary"
-          data-fixture-control="email"
-          onClick={() => setIncludeEmail((current) => !current)}
+          data-fixture-control="options"
+          onClick={() => setRemovedValue((current) => current === null ? currentValue : null)}
         >
-          {includeEmail ? 'Remove Email' : 'Add Email'}
+          {removedValue === null ? 'Remove selected option' : 'Restore ' + removedValue}
+        </Button>
+
+        <Button
+          priority="secondary"
+          data-fixture-control="option-disabled"
+          onClick={() => setDisabledValue((current) => current === null ? currentValue : null)}
+        >
+          {disabledValue === null ? 'Disable selected option' : 'Enable ' + disabledValue}
         </Button>
 
         <Button
@@ -102,8 +141,10 @@ export default function App() {
           onClick={() => {
             const nextMounted = !mounted
             setLastTransition(null)
+            setPostApplyConsistent(null)
             setRequestedWhileDisabled(false)
             if (nextMounted) {
+              observedValue.current = 'email'
               setCurrentValue('email')
               if (disabled) setValueWhenDisabled('email')
             }

@@ -20,7 +20,7 @@ const focusAndPressKey = registerCustomAction(
   async (document, window, optionIndex: number, key: string) => {
     const group = document.querySelector<HTMLElement>('[data-fixture-target]')
     const radio = group?.querySelectorAll<HTMLElement>('a-radio')[optionIndex]
-    if (!group || !radio || group.matches(':disabled') || radio.hasAttribute('disabled')) return
+    if (!group || !radio || group.hasAttribute('disabled')) return
     const browser = window as unknown as typeof globalThis
 
     radio.focus()
@@ -39,6 +39,34 @@ const focusAndPressKey = registerCustomAction(
   },
 )
 
+const rapidlyPressArrow = registerCustomAction(
+  'radioGroupRapidlyPressArrow',
+  async (document, window, optionIndex: number, key: string, count: number) => {
+    const group = document.querySelector<HTMLElement>('[data-fixture-target]')
+    let radio = group?.querySelectorAll<HTMLElement>('a-radio')[optionIndex]
+    if (!group || !radio || group.hasAttribute('disabled')) return
+    const browser = window as unknown as typeof globalThis
+
+    radio.focus()
+    for (let index = 0; index < count; index += 1) {
+      const focused = document.activeElement?.closest?.('a-radio') as HTMLElement | null
+      if (focused && group.contains(focused)) radio = focused
+      radio.dispatchEvent(new browser.KeyboardEvent('keydown', {
+        key,
+        code: key,
+        bubbles: true,
+        cancelable: true,
+      }))
+      radio.dispatchEvent(new browser.KeyboardEvent('keyup', {
+        key,
+        code: key,
+        bubbles: true,
+        cancelable: true,
+      }))
+    }
+  },
+)
+
 const fixture = extract((state) => {
   const root = state.document.querySelector<HTMLElement>('[data-fixture="radio-group"]')
   if (!root) return null
@@ -49,6 +77,7 @@ const fixture = extract((state) => {
         disabled: radio.hasAttribute('disabled'),
         selected: radio.selected,
         selectedState: radio.matches(':state(selected)'),
+        tabIndex: radio.tabIndex,
         value: radio.getAttribute('value') ?? '',
       }))
     : []
@@ -57,14 +86,16 @@ const fixture = extract((state) => {
     actualDisabled: group?.hasAttribute('disabled') ?? null,
     actualMounted: group !== null,
     actualValue: group?.value ?? null,
-    enabledOptionIndexes: radios.flatMap((radio, index) => radio.disabled ? [] : [index]),
+    optionIndexes: radios.map((_radio, index) => index),
     expectedDisabled: root.dataset.expectedDisabled === 'true',
     expectedMounted: root.dataset.expectedMounted === 'true',
     lastNext: root.dataset.lastNext ?? null,
     lastPrev: root.dataset.lastPrev ?? null,
     lastPrevMatched: root.dataset.lastPrevMatched === 'true',
+    lastPreApplyConsistent: root.dataset.lastPreApplyConsistent !== 'false',
     lastReason: root.dataset.lastReason ?? null,
     lastTargetEnabled: root.dataset.lastTargetEnabled === 'true',
+    postApplyConsistent: root.dataset.postApplyConsistent !== 'false',
     radios,
     requestedWhileDisabled: root.dataset.requestedWhileDisabled === 'true',
     valueWhenDisabled: root.dataset.valueWhenDisabled ?? null,
@@ -76,8 +107,16 @@ const navigationKeys = [' ', 'Enter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'Arro
 export const radioGroupKeyboardActions = actions(() => {
   const current = fixture.current
   if (current === null || !current.actualMounted || current.expectedDisabled) return []
-  return current.enabledOptionIndexes.flatMap((optionIndex: number) =>
+  return current.optionIndexes.flatMap((optionIndex: number) =>
     navigationKeys.map((key) => focusAndPressKey(optionIndex, key)))
+})
+
+export const radioGroupRapidKeyboardActions = actions(() => {
+  const current = fixture.current
+  if (current === null || !current.actualMounted || current.expectedDisabled) return []
+  return current.optionIndexes.flatMap((optionIndex: number) =>
+    ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].flatMap((key) =>
+      [2, 3, 5].map((count) => rapidlyPressArrow(optionIndex, key, count))))
 })
 
 export const radioGroupReadyActions = actions(() => (
@@ -95,7 +134,9 @@ export const radioGroupFollowsStateMachine = always(() => {
   return current.lastReason === 'user'
     && current.lastPrev !== current.lastNext
     && current.lastPrevMatched
+    && current.lastPreApplyConsistent
     && current.lastTargetEnabled
+    && current.postApplyConsistent
     && current.actualValue === current.lastNext
 })
 
@@ -111,13 +152,19 @@ export const radioGroupOptionsReconcile = always(() => {
   const current = fixture.current
   if (current === null || !current.expectedMounted) return true
 
-  const matchingOptionExists = current.radios.some((radio: { value: string }) => radio.value === current.actualValue)
+  const matchingOption = current.radios.find((radio: { value: string }) => radio.value === current.actualValue)
   const selected = current.radios.filter((radio: { selected: boolean }) => radio.selected)
   const selectedStates = current.radios.filter((radio: { selectedState: boolean }) => radio.selectedState)
-  const expectedSelectedCount = matchingOptionExists ? 1 : 0
+  const expectedSelectedCount = matchingOption ? 1 : 0
+  const tabStops = current.radios.filter((radio: { tabIndex: number }) => radio.tabIndex === 0)
+  const expectedTabStop = current.expectedDisabled
+    ? undefined
+    : matchingOption ?? current.radios.find((radio: { disabled: boolean }) => !radio.disabled)
 
   return selected.length === expectedSelectedCount
     && selectedStates.length === expectedSelectedCount
     && selected.every((radio: { value: string }) => radio.value === current.actualValue)
     && selectedStates.every((radio: { value: string }) => radio.value === current.actualValue)
+    && tabStops.length === (expectedTabStop ? 1 : 0)
+    && tabStops.every((radio: { value: string }) => radio.value === expectedTabStop?.value)
 })

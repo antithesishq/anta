@@ -60,6 +60,9 @@
   /* Safari leaves this font at its non-zero internal slant default unless the
      axis is pinned on rendered content; the @font-face descriptor is not enough. */
   font-variation-settings: "slnt" 0;
+  /* macOS subpixel smoothing thickens thin strokes, most visibly in Stringer Light. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer anta.theme {

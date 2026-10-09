@@ -39,6 +39,10 @@
     font-family: var(--serif);
   }
 
+  a-title[font="monospace"] {
+    font-family: var(--monospace);
+  }
+
   a-title[priority="secondary"]  { color: var(--text-2); }
   a-title[priority="tertiary"]   { color: var(--text-3); }
   a-title[priority="quaternary"] { color: var(--text-4); }

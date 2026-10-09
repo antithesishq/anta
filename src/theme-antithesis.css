@@ -533,19 +533,11 @@
   a-title[font="serif"] {
     font-family: var(--serif);
     font-weight: 300;
-    /* macOS subpixel smoothing thickens a light serif's thin strokes. */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 
-  :is(h1, h2, h4, h5, h6),
-  a-title:not([level="3"]) {
+  :is(h1, h2, h3, h4, h5, h6),
+  a-title {
     letter-spacing: -0.1px;
-  }
-
-  h3,
-  a-title[level="3"] {
-    letter-spacing: -0.045px;
   }
 
   :is(a-button, a[role="button"][data-anta], button[data-anta],

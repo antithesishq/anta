@@ -7,16 +7,13 @@ changes are not listed.
 
 ### Added
 
-- [Title typeface](/title/#typeface): `font` sets a title in `serif` or
-  `sans-serif` and overrides the theme's level default.
+- [Title typeface](/title/#typeface): `font` sets a title in `serif`,
+  `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Changed
 
-- In the Antithesis theme, serif headings use weight 300 with grayscale font
-  smoothing; load a light cut of your serif font. Headings at every level get
-  the theme's letter spacing: -0.045px at level 3 and -0.1px at the other levels.
-- A string `header` on a [Card](/card/) renders a sans-serif title at every
-  size. In the Antithesis theme, large cards previously set it in serif.
+- In the Antithesis theme, serif headings use weight 300. Load a light cut of
+  your serif font.
 
 ### Fixed
 

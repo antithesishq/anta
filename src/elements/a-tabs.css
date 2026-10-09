@@ -285,13 +285,19 @@
     border-radius: var(--tabs-round, 999px);
   }
 
+  /* A vertical track is about as wide as it is tall, so 999px would turn it into a circle
+     that clips the tabs. Round only its ends, at half a tab's height. */
+  a-tabs[orientation="vertical"]:not([priority="tertiary"]) {
+    border-radius: var(--tabs-round, calc(var(--tab-height) / 2));
+  }
+
   /* `round` with a length (`round="12px"`) sets a custom radius on the TOP-LEVEL element
      (the track well) via `--tabs-round`; the tabs + indicator stay fully round. A bare
-     `round` keeps the default. (Tertiary is an underline, so the track rule excludes it.) */
-  a-tabs[round] {
-    --tabs-round: 999px;
-    @supports (border-radius: attr(probe type(<length>), 1px)) {
-      --tabs-round: attr(round type(<length>), 999px);
+     `round` has no length, so attr() fails and the default radius applies. (Tertiary is
+     an underline, so the track rules exclude it.) */
+  @supports (border-radius: attr(probe type(<length>), 1px)) {
+    a-tabs[round] {
+      --tabs-round: attr(round type(<length>));
     }
   }
 

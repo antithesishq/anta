@@ -17,6 +17,8 @@ changes are not listed.
 
 ### Fixed
 
+- Neutral [Tags](/tag/) in the Antune theme keep their solid primary fill
+  and transparent tertiary fill when tone is omitted or set to `neutral`.
 - [InputTime](/input-time/) reserves space for the locale's longest AM/PM label
   without native field autosizing. Switching between AM and PM keeps its width.
 

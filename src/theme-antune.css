@@ -602,7 +602,7 @@ a-tag[tone="neutral"] {
   --tag-tint: light-dark(#44374b, #e4d1ef);
   --tag-bg-solid: light-dark(#776e77, #635b65);
   --tag-edge: var(--tag-tint);
-  --tag-bg: light-dark(color-mix(in oklch, var(--tag-tint) 7%, transparent), color-mix(in oklch, var(--tag-tint) 12%, transparent));
+  --tag-bg-secondary: light-dark(color-mix(in oklch, var(--tag-tint) 7%, transparent), color-mix(in oklch, var(--tag-tint) 12%, transparent));
   --tag-border: color-mix(in oklch, var(--tag-tint) 15%, transparent);
 }
 a-tag[tone="brand"] {

@@ -262,6 +262,10 @@ value through `ElementInternals` and emits `statechange` / `change` on selection
 and `navigate` when keyboard navigation leaves the displayed month. It is
 framework-agnostic and does not track a current month, `min`, or `max`.
 
+JSX passes controlled selection through `state` and seeds uncontrolled selection
+with `default-state`. The element's `value` property is read-only. Raw HTML can
+still use the `value` and `defaultvalue` attributes.
+
 The JSX wrapper renders the controls above the grid as siblings of
 `<a-calendar>`. The previous/next arrows are `<Button>`s. The month/year picker
 is a `<Button>` that opens a `<Menu>` of year `MenuItem`s, each with a month

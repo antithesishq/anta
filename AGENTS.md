@@ -54,8 +54,15 @@ CI runs build, custom linting, anta and sticker type checks, root regression tes
 the stickers build, site CSS linting, and a production site build. `pnpm test`
 includes Capture, Slider, and disclosure-navigation browser tests and Markdown
 conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runner's installed Chrome.
+CI sets `ANTA_TEST_WEBKIT=0` to exclude WebKit engines and their setup from
+browser suites. Local test commands include WebKit by default.
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
+
+Keep new component-specific browser matrices separate from `pnpm test`. Give them
+a dedicated command and gate their CI step on relevant component, shared runtime,
+dependency, test, and workflow changes. Manual CI runs should include them.
+Calendar and InputDate use `pnpm test:calendar`.
 
 The Button property harness runs separately from `pnpm test`. Start or reuse a
 site preview as described in [site/AGENTS.md](site/AGENTS.md#local-servers), then

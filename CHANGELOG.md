@@ -5,10 +5,26 @@ changes are not listed.
 
 ## Unreleased
 
+### Added
+
+- [Title typeface](/title/#typeface): `font` sets a title in `serif`,
+  `sans-serif`, or `monospace` and overrides the theme's level default.
+
+### Changed
+
+- In the Antithesis theme, serif headings use weight 300. Load a light cut of
+  your serif font.
+
 ### Fixed
 
 - Neutral [Tags](/tag/) in the Antune theme keep their solid primary fill
   and transparent tertiary fill when tone is omitted or set to `neutral`.
+- [Calendar](/input-date/#calendar) keeps controlled selection and form values
+  in sync in React and Preact, including selecting a previous date again.
+  Its element accepts selection through `state` and exposes `value` as read-only.
+- [Input](/input/) uses JS multiline autosizing in WebKit to avoid native sizing
+  crashes in collapsed disclosures. Fallback measurements preserve page and
+  textarea scroll positions.
 - [InputTime](/input-time/) reserves space for the locale's longest AM/PM label
   without native field autosizing. Switching between AM and PM keeps its width.
 

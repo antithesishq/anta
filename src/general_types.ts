@@ -396,6 +396,8 @@ export interface ATitleAttributes extends BaseAttributes {
    *  tone applies the matching `--text-{N}-{tone}` palette; any literal CSS color
    *  is a custom tone (hue kept, lightness/chroma pinned per priority in oklch). */
   tone?: 'neutral' | 'brand' | 'info' | 'success' | 'warning' | 'critical' | (string & {})
+  /** Typeface. Omit it to let the theme choose by level. */
+  font?: 'serif' | 'sans-serif' | 'monospace'
   /** Truncate to N lines with a trailing ellipsis. The attribute value carries
    *  the line count; set the same count on `--line-clamp` when using the styled
    *  tag directly. */
@@ -890,8 +892,8 @@ export interface AInputTimeAttributes extends BaseAttributes {
  * wrapper. It does **not** build or mutate its own contents: whoever renders into
  * it (the `Calendar` JSX wrapper, or a vanilla consumer using the exported
  * `buildMonth` engine) fills it with day cells and *re-renders on its events* —
- * the `<a-radio-group>` model. Controlled by the presence of `value` (a pick only
- * *requests* a change); uncontrolled with `defaultvalue` (a pick self-applies).
+ * the `<a-radio-group>` model. Controlled by the presence of `state` (a pick only
+ * requests a change); uncontrolled with `default-state` (a pick self-applies).
  * For the typed, batteries-included wrapper use `Calendar` from `@antadesign/anta`.
  *
  * `:state(filled)` is the styling hook for "has a selection".
@@ -899,8 +901,12 @@ export interface AInputTimeAttributes extends BaseAttributes {
 export interface ACalendarAttributes extends BaseAttributes {
   /** Controlled selected date — ISO `YYYY-MM-DD`. Present → controlled (a pick
    *  only requests a change). Mirrored to the owning form via `ElementInternals`. */
-  value?: string
+  state?: string
   /** Uncontrolled initial date / reset baseline — ISO `YYYY-MM-DD`. */
+  'default-state'?: string
+  /** Legacy controlled attribute for raw HTML. Use `state` in JSX. */
+  value?: string
+  /** Legacy uncontrolled initial date / reset baseline for raw HTML. */
   defaultvalue?: string
   /** Form field name — the selected ISO date submits under this key. */
   name?: string
@@ -910,15 +916,15 @@ export interface ACalendarAttributes extends BaseAttributes {
    *  day cell whose `data-date` matches `<iso>` (set by the renderer after a
    *  month-changing keyboard move). */
   'data-focus'?: string
-  /** Cancelable, bubbling `statechange` fired BEFORE a pick applies. `detail` is
+  /** Cancelable `statechange` fired BEFORE a pick applies. `detail` is
    *  `{ next, prev, reason }` — ISO strings (or `null`); `reason` ∈
    *  `'user' | 'reset' | 'restore'`. `preventDefault()` vetoes a `'user'` pick in
    *  uncontrolled mode. */
   onstatechange?: (
     e: CustomEvent<{ next: string | null; prev: string | null; reason: 'user' | 'reset' | 'restore' }>,
   ) => void
-  /** Native `change`, fired AFTER a selection applies (uncontrolled) and on
-   *  reset/restore. */
+  /** Native `change`, fired AFTER a selection applies, including controlled
+   *  attribute updates and accepted reset/restore. */
   onchange?: (e: Event) => void
   /** Keyboard navigation request — the element handles arrow / Home / End /
    *  PageUp / PageDown, focuses the target cell when it's rendered, and emits this

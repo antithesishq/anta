@@ -41,9 +41,9 @@
     /* The glyph (::after mark): its size and the check / minus mask images, exposed
        so a consumer can resize or swap the mark. The keyboard focus ring uses the
        global --focus-ring token (no per-checkbox focus token). */
-    --checkbox-mask-size: 12px;
-    --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
-    --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E");
+    --checkbox-mask-size: 13px;
+    --checkbox-mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+    --checkbox-mask-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E");
 
     --checkbox-label-color: var(--text-2);
     --checkbox-label-color-disabled: var(--text-4);
@@ -190,7 +190,7 @@
       --checkbox-label-lh: 16px;
       --checkbox-hint-fs: 12px;
       --checkbox-hint-lh: 14px;
-      --checkbox-mask-size: 10px;
+      --checkbox-mask-size: 11px;
       &::before,
       &::after { inline-size: 14px; block-size: 14px; }
     }
@@ -200,18 +200,11 @@
       --checkbox-label-lh: 22px;
       --checkbox-hint-fs: 15px;
       --checkbox-hint-lh: 19px;
-      --checkbox-mask-size: 14px;
+      --checkbox-mask-size: 15px;
       &::before,
       &::after { inline-size: 18px; block-size: 18px; }
     }
   }
-
-  /* Dark: the check / minus glyph reads a touch thin on the solid fill, so nudge the
-     mask up 1px across sizes (12 / 10 / 14 → 13 / 11 / 15) via the token (so a
-     consumer's --checkbox-mask-size override still wins). */
-  .dark a-checkbox { --checkbox-mask-size: 13px; }
-  .dark a-checkbox[size="small"] { --checkbox-mask-size: 11px; }
-  .dark a-checkbox[size="large"] { --checkbox-mask-size: 15px; }
 
   /* Label column — light-DOM styled tags. Both `display: block` so they stack in
      column 2; `min-width: 0` lets a consumer ellipsis either line. */
@@ -303,7 +296,7 @@
   }
   input[data-anta][type="checkbox"] {
     --checkbox-box-size: 16px;
-    --checkbox-mask-size: 12px;
+    --checkbox-mask-size: 13px;
     --checkbox-round: 4px;
     --checkbox-bg: var(--bg-1);
     --checkbox-border-neutral: var(--border-3);
@@ -346,11 +339,11 @@
   }
   input[data-anta][type="checkbox"][size="small"] {
     --checkbox-box-size: 14px;
-    --checkbox-mask-size: 10px;
+    --checkbox-mask-size: 11px;
   }
   input[data-anta][type="checkbox"][size="large"] {
     --checkbox-box-size: 18px;
-    --checkbox-mask-size: 14px;
+    --checkbox-mask-size: 15px;
   }
   input[data-anta][type="checkbox"][round] {
     --checkbox-round: 999px;
@@ -426,10 +419,10 @@
     border-color: var(--checkbox-bg-selected);
   }
   input[data-anta][type="checkbox"]:checked {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f6f4f6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f6f4f6' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
   }
   input[data-anta][type="checkbox"]:indeterminate {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f6f4f6' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f6f4f6' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E");
   }
   input[data-anta][type="checkbox"]:focus-visible {
     outline: 1px solid var(--focus-ring);

@@ -115,10 +115,9 @@ export const Calendar = ({
   const maxD = parseISODate(max)
   const today = Temporal.Now.plainDateISO()
 
-  // Uncontrolled selection lives here so the wrapper can render the `selected`
-  // Button; controlled selection comes from `value`.
+  // Keep the selection mirror when controlled state is removed.
   const [internalSelected, setInternalSelected] = useState<Temporal.PlainDate | null>(() =>
-    parseISODate(defaultValue),
+    parseISODate(value ?? defaultValue),
   )
   const selected = controlled ? parseISODate(value) : internalSelected
 
@@ -140,6 +139,7 @@ export const Calendar = ({
   if (value !== lastSyncedValue) {
     setLastSyncedValue(value)
     const d = parseISODate(value)
+    if (controlled) setInternalSelected(d)
     if (d) {
       effectiveCursor = clampDate(d, minD, maxD)
       setCursor(effectiveCursor)
@@ -335,10 +335,8 @@ export const Calendar = ({
         role="group"
         aria-label={ariaLabel ?? month.heading}
         name={name}
-        // Controlled → drive the element's `value` (and it only *requests* picks);
-        // uncontrolled → seed `defaultvalue` and let the element own selection.
-        value={controlled ? value : undefined}
-        defaultvalue={!controlled ? defaultValue : undefined}
+        state={controlled ? value : undefined}
+        default-state={!controlled ? defaultValue : undefined}
         disabled={disabled ? "" : undefined}
         data-focus={focusReq ? `${focusReq.iso}#${focusReq.n}` : undefined}
         onstatechange={onElementStateChange}

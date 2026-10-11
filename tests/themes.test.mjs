@@ -314,7 +314,7 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
         }),
       }
     })
-    assert.deepEqual(values.radii, ['999px', '999px', '6px', '0px', '8px', '1px', '999px', '0px', '0px'])
+    assert.deepEqual(values.radii, ['999px', '999px', '6px', '0px', '8px', '3px', '999px', '0px', '0px'])
     assert.deepEqual(values.seeds, [['#cc4636', '#65605b'], ['#cc4636', '#65605b']])
   }
   for (const theme of ['antune', 'none', 'antithesis']) {
@@ -324,6 +324,6 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
       link.href = `/${theme}.css`
     }), theme)
     assert.equal(await page.locator('#button').evaluate(el => getComputedStyle(el).borderTopLeftRadius), theme === 'antithesis' ? '999px' : '4px')
-    assert.equal(await page.locator('#tag').evaluate(el => getComputedStyle(el).borderTopLeftRadius), theme === 'antithesis' ? '1px' : '22px')
+    assert.equal(await page.locator('#tag').evaluate(el => getComputedStyle(el).borderTopLeftRadius), theme === 'antithesis' ? '3px' : '22px')
   }
 })

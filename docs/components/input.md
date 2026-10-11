@@ -211,12 +211,6 @@ Firefox. So Anta keeps the native field.
 `maxRows` if you set one (omit for unbounded growth), then it scrolls. Pass a
 fixed **`rows`** count for a constant-height box instead.
 
-Autogrow uses CSS `field-sizing` in supported engines except WebKit. Safari and
-other WebKit browsers use a built-in JS resize on value updates, as do browsers
-without native support. The field holds its height during measurement to keep
-the page's scroll position stable. In the JS path, width, typography, and
-visibility changes are remeasured on the next value update.
-
 ## Controlled and uncontrolled
 
 ```tsx

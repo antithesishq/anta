@@ -111,9 +111,9 @@ const CLEAR_TRIGGER = 'clearrequest'
 const CLEAR_CLICK_EVENT = 'clearclick'
 const CLEAR_INPUT_EVENT = 'clearinput'
 
-// WebKit advertises `field-sizing` support but can crash while sizing textareas
-// in collapsed disclosures. Chromium also includes AppleWebKit in its UA; iOS
-// browser tokens such as CriOS and FxiOS still use WebKit and stay on JS sizing.
+// Use JS autosizing in WebKit to avoid crashes inside closed <details>, even
+// when CSS.supports returns true. Desktop Chrome also includes AppleWebKit in
+// its user agent; Chrome and Firefox on iOS use WebKit.
 const USER_AGENT = typeof navigator !== 'undefined' ? navigator.userAgent : ''
 const IS_WEBKIT = /AppleWebKit\//.test(USER_AGENT) && !/Chrom(?:e|ium)\//.test(USER_AGENT)
 const USE_NATIVE_FIELD_SIZING =

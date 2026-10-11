@@ -17,8 +17,9 @@ changes are not listed.
 
 ### Fixed
 
-- [Calendar](/calendar/) keeps controlled property updates in sync with its
-  value attribute and form value, so selecting a previous date works again.
+- [Calendar](/input-date/#calendar) keeps controlled selection and form values
+  in sync in React and Preact, including selecting a previous date again.
+  Its element accepts selection through `state` and exposes `value` as read-only.
 - [Input](/input/) uses JS multiline autosizing in WebKit to avoid native sizing
   crashes in collapsed disclosures. Fallback measurements preserve page and
   textarea scroll positions.

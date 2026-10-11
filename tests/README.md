@@ -5,8 +5,8 @@ CI uses the runner's installed Chrome with `CAPTURE_TEST_BROWSER_CHANNEL=chrome`
 
 ## Temporary CI exclusions
 
-CI sets `ANTA_TEST_WEBKIT=0` to exclude WebKit engines from the autosizing and
-production suites. It also excludes the search debounce case through
+CI sets `ANTA_TEST_WEBKIT=0` to exclude WebKit engines from the autosizing,
+Calendar, and production suites. It also excludes the search debounce case through
 `NODE_OPTIONS=--test-skip-pattern` because that case fails during clock setup.
 Other search checks and Chromium cases still run. Local commands include WebKit
 and the debounce case by default.

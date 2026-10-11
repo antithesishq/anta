@@ -17,6 +17,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Input](/input/) uses JS multiline autosizing in WebKit to avoid native sizing
+  crashes in collapsed disclosures. Fallback measurements preserve page and
+  textarea scroll positions.
 - [InputTime](/input-time/) reserves space for the locale's longest AM/PM label
   without native field autosizing. Switching between AM and PM keeps its width.
 

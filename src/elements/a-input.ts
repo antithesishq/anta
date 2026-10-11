@@ -111,14 +111,13 @@ const CLEAR_TRIGGER = 'clearrequest'
 const CLEAR_CLICK_EVENT = 'clearclick'
 const CLEAR_INPUT_EVENT = 'clearinput'
 
-// `field-sizing: content` drives textarea autogrow declaratively where it's
-// supported (Chrome/Edge, Safari ≥ 26.2). Detected once at module load. Where
-// it's absent (Firefox, older Safari) the element falls back to a JS autogrow on
-// every value change (see `syncAutoHeight`), so a multiline field still grows
-// from one line instead of staying a single row. The CSS `max-height` cap
-// applies in both paths, so `maxrows` is honored regardless.
-const SUPPORTS_FIELD_SIZING =
-  typeof CSS !== 'undefined' && !!CSS.supports?.('field-sizing', 'content')
+// WebKit advertises `field-sizing` support but can crash while sizing textareas
+// in collapsed disclosures. Chromium also includes AppleWebKit in its UA; iOS
+// browser tokens such as CriOS and FxiOS still use WebKit and stay on JS sizing.
+const USER_AGENT = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+const IS_WEBKIT = /AppleWebKit\//.test(USER_AGENT) && !/Chrom(?:e|ium)\//.test(USER_AGENT)
+const USE_NATIVE_FIELD_SIZING =
+  !IS_WEBKIT && typeof CSS !== 'undefined' && !!CSS.supports?.('field-sizing', 'content')
 
 // Shadow styles, injected verbatim into every <a-input> shadow root, so this
 // string is kept COMMENT-FREE (it ships + re-injects per instance — see the
@@ -644,8 +643,8 @@ export class AInputElement extends HTMLElementBase {
     this.syncAutoHeight() // size to the initial value (JS-fallback browsers)
   }
 
-  /** Autogrow (no `rows`) via `field-sizing: content` — or the JS fallback where
-   *  that's unsupported — capped by `maxrows`; a fixed `rows` count switches it
+  /** Autogrow (no `rows`) via `field-sizing: content` or the JS fallback,
+   *  capped by `maxrows`; a fixed `rows` count switches it
    *  off for a constant-height box. */
   private configureTextarea(ta: HTMLTextAreaElement) {
     const rows = this.getAttribute('rows')
@@ -657,29 +656,35 @@ export class AInputElement extends HTMLElementBase {
       ta.style.removeProperty('height') // drop any height the JS fallback set
     } else {
       ta.rows = 1
-      // Native autogrow where supported; the JS fallback (syncAutoHeight) grows
+      // Native autogrow outside WebKit; the JS fallback (syncAutoHeight) grows
       // it on every value change everywhere else. The cap lives in CSS
       // (max-height off --_lh + --_pad-block) and applies in both paths; JS only
       // feeds it the row count, which CSS can't read from the attribute.
-      if (SUPPORTS_FIELD_SIZING) ta.style.setProperty('field-sizing', 'content')
-      else ta.style.removeProperty('field-sizing')
+      ta.style.setProperty('field-sizing', USE_NATIVE_FIELD_SIZING ? 'content' : 'fixed')
       if (maxrows != null) ta.style.setProperty('--_maxrows', String(parseInt(maxrows, 10) || 1))
       else ta.style.removeProperty('--_maxrows')
       this.syncAutoHeight()
     }
   }
 
-  /** Autogrow fallback for browsers without `field-sizing: content` (Firefox,
-   *  Safari < 26.2). Grows the shadow textarea to fit its content; the CSS
+  /** Autogrow fallback for WebKit and browsers without `field-sizing: content`.
+   *  Grows the shadow textarea to fit its content; the CSS
    *  `max-height` cap (when `maxrows` is set) still clamps it and scrolls past.
-   *  A no-op where `field-sizing` is supported, or when the field isn't
+   *  A no-op on the native sizing path, or when the field isn't
    *  autogrowing (fixed `rows`, or not a textarea) — those size via CSS. */
   private syncAutoHeight = () => {
-    if (SUPPORTS_FIELD_SIZING) return
+    if (USE_NATIVE_FIELD_SIZING) return
     const ta = this.control
     if (!(ta instanceof HTMLTextAreaElement) || this.getAttribute('rows') != null) return
-    ta.style.height = 'auto'
+    const minHeight = this.field.style.minHeight
+    const scrollTop = ta.scrollTop
+    // Hold the field while measuring. A definite textarea height prevents flex
+    // stretching it back to the old height when its content shrinks.
+    this.field.style.minHeight = getComputedStyle(this.field).height
+    ta.style.height = '0px'
     ta.style.height = `${ta.scrollHeight}px`
+    this.field.style.minHeight = minHeight
+    ta.scrollTop = scrollTop
   }
 
   private forward(name: string, value: string | null) {

@@ -7,8 +7,9 @@ freeze presentation details or test browser behavior outside Anta.
 
 Reviewed October 11, 2026: PRs #203–#217, with #202 as context for consumer checks.
 Source baseline: `origin/main` at `9beec434`. Open PR changes were reviewed through
-their diffs, descriptions, and CI logs. This is a proposal; tests and workflows
-have not been changed.
+their diffs, descriptions, and CI logs. CI now excludes the WebKit Playground
+case and the search debounce case through exact-name filters. Both remain
+available locally. The other deletion and nightly recommendations remain proposals.
 
 ## CI timeouts
 
@@ -54,10 +55,11 @@ test deadline and [ci.yml](../.github/workflows/ci.yml) has no job or step deadl
 A page timeout does not bound every awaited operation or browser cleanup. Moving
 this test to nightly unchanged would carry the same six-hour failure with it.
 
-Proposed first change: exclude this WebKit production case from regular PR CI,
-retain the Chromium case, and keep WebKit available through an explicit manual
-command. Add a process or step deadline before restoring automated WebKit runs.
-Preserve the Safari crash regression because it covers a real failure.
+CI now excludes this WebKit production case and retains the Chromium case. The
+WebKit case remains available through an explicit manual command documented in
+[Regression tests](README.md#temporary-ci-exclusions). Add a process or step
+deadline before restoring it to automated runs. Preserve the Safari crash
+regression because it covers a real failure.
 
 ### Search debounce fails in the harness
 
@@ -72,11 +74,11 @@ during setup, then calls `page.clock.pauseAt(new Date())` after asynchronous
 setup. It passes host time to an already advancing browser clock. The observed
 failure occurs before the debounce assertions.
 
-Rewrite the clock setup to use one deterministic time before application timers
-start, and advance it explicitly. Keep debounce, cancellation, and stale-result
-coverage. If temporarily excluded, exclude this case by name and record the
-reason. Moving the entire search suite or repeatedly rerunning CI would also
-move or repeat the harness error.
+CI now excludes this case by name. The remaining search cases still run. Before
+restoring the excluded case, rewrite the clock setup to use one deterministic
+time before application timers start, and advance it explicitly. Keep debounce,
+cancellation, and stale-result coverage. Moving the entire search suite or
+repeatedly rerunning CI would also move or repeat the harness error.
 
 ## Delete candidates
 
@@ -141,13 +143,12 @@ should have deterministic PR coverage.
 | [#216](https://github.com/antithesishq/anta/pull/216) | Expands existing Tabs color checks; reports a search flake and repeatedly reaches the WebKit stall. | Keep Tabs behavior checks; matrix later; fix or temporarily exclude the failing search case. |
 | [#217](https://github.com/antithesishq/anta/pull/217) | Adds six cases to the existing autosizing suite; latest CI fails on the same search clock error. | Focused sizing regression on PRs; full engine/identity matrix later. |
 
-## Proposed implementation order
+## Remaining work
 
-1. Stop automatically running the stalled WebKit production case. Add short CI
-   step/job deadlines and cancel superseded runs on the same PR. These changes
-   address hours of delay before any broad test deletion.
-2. Repair or temporarily exclude the single failing search debounce case. Delete
-   the native CSSOM probe and selected presentation/source-shape assertions.
+1. Add short CI step/job deadlines and cancel superseded runs on the same PR.
+   The stalled WebKit production case is already excluded by name.
+2. Repair the excluded search debounce case before restoring it. Delete the
+   native CSSOM probe and selected presentation/source-shape assertions.
 3. Define explicit fast and extended test commands, then move extended browser
    coverage to bounded nightly jobs. Save logs and failure artifacts even when a
    campaign times out. Retain targeted commands for component changes.

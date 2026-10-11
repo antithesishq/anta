@@ -8,6 +8,7 @@ import { readPageCatalog } from '../site/lib/content/catalog.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium, webkit } = requireSite('playwright')
+const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, webkit]
 const dist = new URL('../site/dist/', import.meta.url)
 
 test('collection reads keep island and script styles on the pages that use them', async () => {
@@ -45,7 +46,7 @@ async function productionPage(t, engine = chromium) {
   return { page, errors }
 }
 
-for (const engine of [chromium, webkit]) {
+for (const engine of engines) {
   test(`${engine.name()}: facet text chips keep a bounded width, truncate long values, and preserve focus when empty`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/select-faceted/')

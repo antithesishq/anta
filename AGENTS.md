@@ -54,6 +54,8 @@ CI runs build, custom linting, anta and sticker type checks, root regression tes
 the stickers build, site CSS linting, and a production site build. `pnpm test`
 includes Capture, Slider, and disclosure-navigation browser tests and Markdown
 conversion tests. CI sets `CAPTURE_TEST_BROWSER_CHANNEL=chrome` to use the runner's installed Chrome.
+CI sets `ANTA_TEST_WEBKIT=0` to exclude WebKit engines and their setup from
+browser suites. Local test commands include WebKit by default.
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
 

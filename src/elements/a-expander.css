@@ -241,7 +241,7 @@
   a-expander[level="1"] a-expander-summary { font-size: 28px; line-height: 32px; }
   a-expander[level="2"] a-expander-summary { font-size: 24px; line-height: 28px; }
   a-expander[level="3"] a-expander-summary { font-size: 20px; line-height: 24px; }
-  a-expander[level="4"] a-expander-summary { font-size: 17px; line-height: 20px; }
+  a-expander[level="4"] a-expander-summary { font-size: 17px; line-height: 22px; }
   a-expander[level="6"] a-expander-summary { font-size: 13px; line-height: 16px; }
   a-expander-details {
     display: block;

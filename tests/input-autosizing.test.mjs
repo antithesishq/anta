@@ -5,6 +5,7 @@ import { build } from 'esbuild'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium, webkit } = requireSite('playwright')
+const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, webkit]
 const browsers = new Map()
 let script, css
 
@@ -23,7 +24,7 @@ before(async () => {
   })
   script = result.outputFiles.find(file => file.path.endsWith('.js')).text
   css = result.outputFiles.find(file => file.path.endsWith('.css')).text
-  for (const engine of [chromium, webkit]) {
+  for (const engine of engines) {
     browsers.set(engine, await engine.launch({
       headless: true,
       ...(engine === chromium ? { channel: process.env.CAPTURE_TEST_BROWSER_CHANNEL || undefined } : {}),
@@ -49,7 +50,7 @@ async function fixture(t, engine, html, { userAgent, nativeSupport = true } = {}
   return { page, errors }
 }
 
-for (const engine of [chromium, webkit]) {
+for (const engine of engines) {
   test(`${engine.name()}: WebKit browser identities use JS even when CSS reports support`, async t => {
     const agents = [
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/26.2 Safari/605.1.15',

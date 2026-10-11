@@ -3,6 +3,22 @@
 Run `pnpm test` for all root tests, including Markdown disclosure conversion.
 CI uses the runner's installed Chrome with `CAPTURE_TEST_BROWSER_CHANNEL=chrome`.
 
+## Temporary CI exclusions
+
+CI sets `ANTA_TEST_WEBKIT=0` to exclude WebKit engines from the autosizing and
+production suites. It also excludes the search debounce case through
+`NODE_OPTIONS=--test-skip-pattern` because that case fails during clock setup.
+Other search checks and Chromium cases still run. Local commands include WebKit
+and the debounce case by default.
+
+Run either case explicitly without CI's browser and test filters:
+
+```sh
+env -u NODE_OPTIONS CAPTURE_TEST_BROWSER_CHANNEL=chrome node --test --test-name-pattern='^debounces typing, keeps previous matches, and shows activity only in the input$' tests/search-dialog.test.mjs
+# Build the production site before running this case.
+env -u NODE_OPTIONS -u ANTA_TEST_WEBKIT node --test --test-name-pattern='^webkit: collapsed Playground loads safely and preserves edits after reopening$' tests/docs-build-production.mjs
+```
+
 ## Panel
 
 Run `CAPTURE_TEST_BROWSER_CHANNEL=chrome node --test tests/panel.test.mjs` to

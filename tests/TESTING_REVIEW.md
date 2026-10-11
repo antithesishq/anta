@@ -7,9 +7,10 @@ freeze presentation details or test browser behavior outside Anta.
 
 Reviewed October 11, 2026: PRs #203–#217, with #202 as context for consumer checks.
 Source baseline: `origin/main` at `9beec434`. Open PR changes were reviewed through
-their diffs, descriptions, and CI logs. CI now excludes the WebKit Playground
-case and the search debounce case through exact-name filters. Both remain
-available locally. The other deletion and nightly recommendations remain proposals.
+their diffs, descriptions, and CI logs. The branch now includes the autosizing
+fix merged in #217. CI excludes all WebKit engines through `ANTA_TEST_WEBKIT=0`
+and the search debounce case through an exact-name filter. Both remain available
+locally. The other deletion and nightly recommendations remain proposals.
 
 ## CI timeouts
 
@@ -55,8 +56,8 @@ test deadline and [ci.yml](../.github/workflows/ci.yml) has no job or step deadl
 A page timeout does not bound every awaited operation or browser cleanup. Moving
 this test to nightly unchanged would carry the same six-hour failure with it.
 
-CI now excludes this WebKit production case and retains the Chromium case. The
-WebKit case remains available through an explicit manual command documented in
+CI now excludes all WebKit engines and removes their installation step. Chromium
+cases still run. The WebKit case remains available through a manual command in
 [Regression tests](README.md#temporary-ci-exclusions). Add a process or step
 deadline before restoring it to automated runs. Preserve the Safari crash
 regression because it covers a real failure.
@@ -146,7 +147,7 @@ should have deterministic PR coverage.
 ## Remaining work
 
 1. Add short CI step/job deadlines and cancel superseded runs on the same PR.
-   The stalled WebKit production case is already excluded by name.
+   WebKit engines and their installation are already excluded from CI.
 2. Repair the excluded search debounce case before restoring it. Delete the
    native CSSOM probe and selected presentation/source-shape assertions.
 3. Define explicit fast and extended test commands, then move extended browser

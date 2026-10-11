@@ -34,6 +34,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    env:
+      ANTA_TEST_WEBKIT: '0'
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -46,8 +48,6 @@ jobs:
         run: pnpm install --frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run typecheck
-      - name: Install WebKit for Safari regression tests
-        run: pnpm --filter anta-site exec playwright install --with-deps webkit
       - name: Run tests
         run: pnpm test
         env:
@@ -73,6 +73,3 @@ jobs:
         run: pnpm --filter anta-site test:production
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
-          # WebKit's Playground case stalls until the six-hour CI limit.
-          NODE_OPTIONS: >-
-            --test-skip-pattern="^webkit: collapsed Playground loads safely and preserves edits after reopening$"

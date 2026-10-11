@@ -21,8 +21,8 @@ import { SelectOptionsDemo, SelectControlledDemo, SelectBasicDemo, SelectModesDe
 field shows the selected value. Click the field to open the menu. The menu
 closes when a user clicks outside it or presses <kbd>Esc</kbd>.
 
-Select uses an [Anta Button](/button/) for its field and a [Menu](/menu/) for its
-dropdown. Pass `options` as an array of strings or objects. Use `value` with
+Select uses an [Input](/input/) field with a native button inside it and a
+[Menu](/menu/) for its dropdown. Pass `options` as an array of strings or objects. Use `value` with
 **`onValueChange`** to control the selection, or use `defaultValue` for an
 uncontrolled Select.
 
@@ -328,16 +328,15 @@ section marks the leaf everywhere it occurs (selection is value-keyed).
 </Col>
 <Col>
 
-The trigger is an [Anta Button](/button/) styled as a field.
+The trigger shares [Input](/input/) styling and uses a native button as its focus target.
 **`size`** (`small` · `medium` · `large`) sets the height and type scale.
 **`status`** paints a validation tone on the border, `hint`, and chevron, and
 prefixes a glyph (`info` / `success` / `warning` / `critical`); **`statusIcon`**
 overrides that glyph (any shape, or `false` to drop it), as on Input. The message
 rides in `hint`.
 
-`status` is a validation *state* over the same palette as `tone`: it also carries
-the glyph and, for `critical`, validity. See the
-[Input status note](/input/#status). The field also takes `label`,
+`status` provides visual feedback and marks `critical` as invalid for assistive
+technology. Select does not submit a form value or block form submission. The field also takes `label`,
 `placeholder`, `round`, and `disabled`, and fills its container; set a width via
 `style` / `className` (both forwarded to the field).
 
@@ -347,7 +346,7 @@ the glyph and, for `critical`, validity. See the
 ## Customization
 
 Select has no `<a-select>` element. The React and Preact wrapper coordinates an
-Anta Button and a Menu. You can use the wrapper, render custom option content with
+Input field and a Menu. You can use the wrapper, render custom option content with
 `renderOption`, replace its selection mark with `renderIndicator`, or build the
 same interaction from the raw elements.
 
@@ -361,13 +360,13 @@ uses the same values as `Menu` and still flips or clamps when space is limited.
 
 ### Build it from elements
 
-The wrapper renders a `<Button>` immediately followed by a `<Menu>`, with a label
-and hint inside an `<a-select-field>` layout wrapper. It updates the field
+The wrapper renders an `<Input button>` immediately followed by a `<Menu>`.
+Input owns the field styling, label, and hint. Select updates the field
 and each option's `selected` state from the value, and reports a pick through
 `onValueChange`. Menu handles positioning, dismissal, and keyboard navigation.
 
 The following example shows the equivalent markup without React or Preact. Place
-the Menu directly after the Button so it can use that Button as its trigger.
+the Menu directly after the Input so it can use that field as its trigger.
 
 <Preview>
   <SelectBasicDemo client:visible={{ rootMargin: '200px' }} />
@@ -376,10 +375,10 @@ the Menu directly after the Button so it can use that Button as its trigger.
 ```html folded
 <!-- `.select` scopes this example's CSS. Use an application selector instead. -->
 <div class="select" style="width: 240px">
-  <a-button role="button" tabindex="0" aria-label="Field" aria-haspopup="menu" aria-expanded="false">
-    <a-button-label>stream</a-button-label>
-    <a-icon shape="chevron-down" aria-hidden="true" style="transition: transform 150ms ease"></a-icon>
-  </a-button>
+  <a-input button value="stream" aria-haspopup="menu" aria-expanded="false">
+    <span slot="label">Field</span>
+    <a-icon slot="trailing" shape="chevron-down" aria-hidden="true" style="transition: transform 150ms ease"></a-icon>
+  </a-input>
   <a-menu role="menu">
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="false" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
     <a-menu-item role="menuitemradio" tabindex="0" aria-checked="true" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
@@ -389,7 +388,7 @@ the Menu directly after the Button so it can use that Button as its trigger.
 <script type="module">
   import '@antadesign/anta/elements'
   const root = document.querySelector('.select')
-  const field = root.querySelector('a-button')
+  const field = root.querySelector('a-input')
   const menu = root.querySelector('a-menu')
   const chevron = field.querySelector('a-icon')
   // Flip the chevron with the menu's open state (as <Select> does).
@@ -399,7 +398,7 @@ the Menu directly after the Button so it can use that Button as its trigger.
     chevron.style.transform = open ? 'rotate(180deg)' : ''
   })
   // On pick: mark the row selected + reflect its label into the field.
-  menu.addEventListener('click', (e) => {
+  menu.addEventListener('menuselect', (e) => {
     const item = e.target.closest('a-menu-item')
     if (!item) return
     menu.querySelectorAll('a-menu-item').forEach((el) => {
@@ -407,13 +406,13 @@ the Menu directly after the Button so it can use that Button as its trigger.
       el.toggleAttribute('selected', selected)
       el.setAttribute('aria-checked', String(selected))
     })
-    field.querySelector('a-button-label').textContent = item.querySelector('a-menu-item-label').textContent
-  })
+    field.value = item.querySelector('a-menu-item-label').textContent
+  }, true)
 </script>
 ```
 
 The React and Preact `Select` wrapper performs those updates for you.
-Because the Menu directly follows the Anta Button, it associates the focused
+Because the Menu directly follows the Input, it associates the focused
 field with the popup through a direct ARIA element reference. No popup ID is
 required. If a custom composition supplies its own `aria-controls`, Anta keeps
 that authored relationship.
@@ -934,17 +933,16 @@ inline `SelectGroup`, and a flyout `SelectSubmenu` (whose items are themselves
 
 Use the web component directly when you are not using React or Preact and a native control does not fit.
 
-`Select` uses a layout wrapper. Compose an `<a-button>` trigger with an
-`<a-menu>` of options. The menu owns opening and dismissal; the short controller
+Compose an `<a-input button>` trigger with an `<a-menu>` of options. The menu owns opening and dismissal; the short controller
 reflects a picked option into the field and selected row.
 
 <Preview align="stretch">
   <WebComponentComposition kind="select">
     <div style={{ display: 'grid', gap: '4px', width: '280px' }}>
-      <a-button role="button" tabindex="0" aria-label="Output" aria-haspopup="menu" aria-expanded="false">
-        <a-button-label>stream</a-button-label>
-        <a-icon shape="chevron-down" aria-hidden="true"></a-icon>
-      </a-button>
+      <a-input button value="stream" aria-haspopup="menu" aria-expanded="false">
+        <span slot="label">Output</span>
+        <a-icon slot="trailing" shape="chevron-down" aria-hidden="true"></a-icon>
+      </a-input>
       <a-menu role="menu">
         <a-menu-item role="menuitem" tabindex="0" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
         <a-menu-item role="menuitem" tabindex="0" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
@@ -955,10 +953,10 @@ reflects a picked option into the field and selected row.
 
 ```html
 <div data-anta-composition="select" style="display: grid; gap: 4px; width: 280px">
-  <a-button role="button" tabindex="0" aria-label="Output" aria-haspopup="menu" aria-expanded="false">
-    <a-button-label>stream</a-button-label>
-    <a-icon shape="chevron-down" aria-hidden="true"></a-icon>
-  </a-button>
+  <a-input button value="stream" aria-haspopup="menu" aria-expanded="false">
+    <span slot="label">Output</span>
+    <a-icon slot="trailing" shape="chevron-down" aria-hidden="true"></a-icon>
+  </a-input>
   <a-menu role="menu">
     <a-menu-item role="menuitem" tabindex="0" value="output_text"><a-menu-item-label>output_text</a-menu-item-label></a-menu-item>
     <a-menu-item role="menuitem" tabindex="0" value="stream" selected><a-menu-item-label>stream</a-menu-item-label></a-menu-item>
@@ -968,21 +966,21 @@ reflects a picked option into the field and selected row.
   import '@antadesign/anta/elements'
 
   const root = document.querySelector('[data-anta-composition="select"]')
-  const field = root.querySelector('a-button')
+  const field = root.querySelector('a-input')
   const menu = root.querySelector('a-menu')
   menu.addEventListener('statechange', (event) => {
     field.setAttribute('aria-expanded', String(event.detail.next === 'open'))
   })
 
-  menu.addEventListener('click', (event) => {
+  menu.addEventListener('menuselect', (event) => {
     const item = event.target instanceof Element ? event.target.closest('a-menu-item') : null
     if (!item || item.closest('a-menu') !== menu) return
     menu.querySelectorAll(':scope > a-menu-item').forEach((option) => {
       const selected = option === item
       option.toggleAttribute('selected', selected)
     })
-    field.querySelector('a-button-label').textContent = item.querySelector('a-menu-item-label').textContent.trim()
-  })
+    field.value = item.querySelector('a-menu-item-label').textContent.trim()
+  }, true)
 </script>
 ```
 
@@ -1037,7 +1035,7 @@ corners.
 
 <Disclosure title="Styling">
 
-Select composes an [Anta Button](/button/) and a [Menu](/menu/). Reach for props first, then plain CSS or `::part` for
+Select composes an [Input](/input/) and a [Menu](/menu/). Reach for props first, then plain CSS or `::part` for
 the rest. Don't override an element's internal `--*` output tokens.
 
 **Selection color** routes through `tone`: set it per option or on the Select as a
@@ -1045,8 +1043,8 @@ default, then use `toneScope="selected"` for chosen rows only. It takes a named 
 its hue, with lightness pinned to the brand text).
 
 **The field** takes `size`, `status`, and `round`. Set its width with `style` /
-`className`, forwarded to the `<a-select-field>` wrapper. Style the trigger through
-`a-select-field > a-button` and its `a-button-label`. The trigger uses
+`className`, forwarded to `<a-input>`. Style the field through `::part(field)`
+and its selected text through `::part(input)`. The trigger uses
 `:focus-visible` for its focus ring and ellipsizes long values. **The popover**
 takes Menu's `::part(menu)`.
 
@@ -1064,21 +1062,21 @@ until you reach for it. Hide the chevron by targeting `a-select-chevron`.
   <SelectGhostDemo client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     /* '.ghost-select' is this demo's wrapper; swap your own selector. */
-    .ghost-select a-select-field > a-button:not(:hover):not(:focus-visible) {
+    .ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
       box-shadow: none;
     }
-    .ghost-select a-select-field > a-button > a-button-label { text-align: center; }
+    .ghost-select a-input::part(input) { text-align: center; }
     .ghost-select a-select-chevron { display: none; }
   `}</style>
 </Preview>
 
 ```css folded
 /* Drop the resting border-shadow; the standard hover / focus shadow still shows. */
-.ghost-select a-select-field > a-button:not(:hover):not(:focus-visible) {
+.ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
   box-shadow: none;
 }
 /* Center the chosen label in the field. */
-.ghost-select a-select-field > a-button > a-button-label { text-align: center; }
+.ghost-select a-input::part(input) { text-align: center; }
 /* Hide the chevron. */
 .ghost-select a-select-chevron { display: none; }
 ```

@@ -252,7 +252,7 @@ const SHADOW_STYLE = `
     padding-block: var(--_pad-block);
     overflow-y: auto;
   }
-  button { text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
+  button { align-self: stretch; text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
   button.placeholder { color: var(--input-placeholder); }
   :host([maxrows]:not([rows])) textarea {
     max-height: calc(var(--_lh) * var(--_maxrows) + var(--_pad-block) * 2);
@@ -360,6 +360,10 @@ export class AInputElement extends HTMLElementBase {
   private popupAriaSource?: Element
   private popupControls: Element | null = null
   private popupActiveDescendant: Element | null = null
+  #textObserver = new MutationObserver(() => {
+    this.applyLabelAria()
+    this.applyDescriptionAria()
+  })
 
   constructor() {
     super()
@@ -466,6 +470,13 @@ export class AInputElement extends HTMLElementBase {
     }
     if (!this.control) this.buildControl()
     this.ready = true
+    this.#textObserver.observe(this, { childList: true, characterData: true, subtree: true })
+    this.applyLabelAria()
+    this.applyDescriptionAria()
+  }
+
+  disconnectedCallback() {
+    this.#textObserver.disconnect()
   }
 
   [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
@@ -711,6 +722,7 @@ export class AInputElement extends HTMLElementBase {
     const value = button.value
     button.textContent = value || this.getAttribute('placeholder') || ''
     button.classList.toggle('placeholder', !value)
+    this.applyDescriptionAria()
   }
 
   private syncFormValue(value: string) {
@@ -780,7 +792,9 @@ export class AInputElement extends HTMLElementBase {
     const c = this.control
     if (!c) return
     if (this.delegatedAria.has('aria-description') || this.delegatedAria.has('aria-describedby')) return
-    const text = this.hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
+    const hint = this.hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
+    const value = c instanceof HTMLButtonElement ? c.textContent?.trim() : ''
+    const text = [value, hint].filter(Boolean).join(' ')
     if (text) c.setAttribute('aria-description', text)
     else c.removeAttribute('aria-description')
   }
@@ -806,6 +820,10 @@ export class AInputElement extends HTMLElementBase {
   private updateValidity() {
     const c = this.control
     if (!this.internals || !c) return
+    if (c instanceof HTMLButtonElement) {
+      this.internals.setValidity({})
+      return
+    }
     // Reflect the inner control's native constraints — valueMissing (from
     // `required`), typeMismatch (e.g. `type="email"`), patternMismatch,
     // tooShort/tooLong, … — onto the host so the surrounding <form> sees them.
@@ -872,6 +890,7 @@ export class AInputElement extends HTMLElementBase {
 
   // --- Form-associated callbacks ---
   formResetCallback() {
+    if (this.control instanceof HTMLButtonElement) return
     this.value = this.getAttribute('defaultvalue') ?? ''
     // The setter updates form value / validity / filled but fires no events, so a
     // controlled consumer would never learn the field reset and would re-render

@@ -48,7 +48,7 @@ const composedStyles = {
   'a-breadcrumbs': ['Breadcrumbs.css', /a-breadcrumbs/],
   'a-steps': ['Steps.css', /a-steps/],
   'a-input-date': ['InputDate.css', /a-input-date-time-container/],
-  'a-select': ['select-parts.css', /a-select-field/],
+  'a-select': ['select-parts.css', /a-select-chevron/],
   'a-select-faceted': ['select-parts.css', /a-select-faceted-summary/],
 }
 

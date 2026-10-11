@@ -87,12 +87,12 @@ async function checkCss(app, item, reports) {
   const files = (await filesIn(directory)).filter(path => path.endsWith('.css'));
   assert.ok(files.length, 'Production build emits CSS');
   const css = (await Promise.all(files.map(path => readFile(path, 'utf8')))).join('\n');
-  const layouts = Object.fromEntries(['a-breadcrumbs', 'a-input-date-time-container', 'a-select-field', 'a-steps'].map(selector => [selector, css.includes(selector)]));
+  const layouts = Object.fromEntries(['a-breadcrumbs', 'a-input-date-time-container', 'a-select-chevron', 'a-steps'].map(selector => [selector, css.includes(selector)]));
   for (const [selector, present] of Object.entries(layouts)) {
     const expected = item.mode === 'full' || item.composed || (item.framework === 'nextjs' && selector === 'a-steps');
     assert.equal(present, !!expected, `${selector} CSS in ${item.name}`);
   }
-  if (layouts['a-select-field']) assert.equal([...css.matchAll(/a-select-field\s*\{/g)].length, 1, 'Shared Select styles are emitted once');
+  if (layouts['a-select-chevron']) assert.equal([...css.matchAll(/a-select-chevron\s*\{/g)].length, 1, 'Shared Select styles are emitted once');
   await writeFile(join(reports, 'css.json'), JSON.stringify({ files: files.map(path => path.slice(app.length + 1)), layouts, bytes: Buffer.byteLength(css) }, null, 2));
   await writeFile(join(reports, 'emitted.css'), css);
   if (item.framework === 'preact') {

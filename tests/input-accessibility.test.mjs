@@ -242,12 +242,12 @@ test('Input compositions put popup semantics on their focused controls', async t
     const hosts = [...document.querySelectorAll('a-input')]
     const autocomplete = hosts.find(host => host.shadowRoot.querySelector('input')?.getAttribute('aria-label') === 'Framework')
     const date = hosts.find(host => host.shadowRoot.querySelector('input')?.getAttribute('aria-label') === 'Due date')
-    const select = document.querySelector('a-button[aria-label="Team"]')
-    const filteredSelect = document.querySelector('a-button[aria-label="Repository"]')
+    const select = hosts.find(host => host.shadowRoot.querySelector('button')?.getAttribute('aria-label') === 'Team')
+    const filteredSelect = hosts.find(host => host.shadowRoot.querySelector('button')?.getAttribute('aria-label') === 'Repository')
     const autoControl = autocomplete.shadowRoot.querySelector('input')
     const dateControl = date.shadowRoot.querySelector('input')
-    const selectControl = select
-    const filteredSelectControl = filteredSelect
+    const selectControl = select.shadowRoot.querySelector('button')
+    const filteredSelectControl = filteredSelect.shadowRoot.querySelector('button')
     return {
       autocomplete: {
         hostRole: autocomplete.hasAttribute('role'),
@@ -264,14 +264,14 @@ test('Input compositions put popup semantics on their focused controls', async t
       select: {
         hostRole: select.hasAttribute('role'),
         tag: selectControl.localName,
-        role: selectControl.getAttribute('role'),
+        role: selectControl.getAttribute('role') ?? selectControl.localName,
         popup: selectControl.getAttribute('aria-haspopup'),
-        controlsRole: selectControl.internals.ariaControlsElements?.[0]?.getAttribute('role'),
+        controlsRole: selectControl.ariaControlsElements?.[0]?.getAttribute('role'),
       },
       filteredSelect: {
         popup: filteredSelectControl.getAttribute('aria-haspopup'),
-        controlsRole: filteredSelectControl.internals.ariaControlsElements?.[0]?.getAttribute('role'),
-        bodyRole: filteredSelectControl.internals.ariaControlsElements?.[0]?.shadowRoot
+        controlsRole: filteredSelectControl.ariaControlsElements?.[0]?.getAttribute('role'),
+        bodyRole: filteredSelectControl.ariaControlsElements?.[0]?.shadowRoot
           .querySelector('[part="scroll"]')?.getAttribute('role'),
       },
     }
@@ -280,7 +280,7 @@ test('Input compositions put popup semantics on their focused controls', async t
   assert.deepEqual(result, {
     autocomplete: { hostRole: false, role: 'combobox', popup: 'listbox', controlsRole: 'listbox' },
     date: { hostRole: false, role: 'combobox', popup: 'dialog', controlsRole: 'dialog' },
-    select: { hostRole: true, tag: 'a-button', role: 'button', popup: 'menu', controlsRole: 'menu' },
+    select: { hostRole: false, tag: 'button', role: 'button', popup: 'menu', controlsRole: 'menu' },
     filteredSelect: { popup: 'dialog', controlsRole: 'dialog', bodyRole: 'menu' },
   })
 })
@@ -295,7 +295,7 @@ test('popup relationships stay instance-local across separate renderer roots wit
     ]
     return {
       relations: labels.map(label => {
-        const host = [...document.querySelectorAll('a-input, a-select-field > a-button')].find(candidate =>
+        const host = [...document.querySelectorAll('a-input')].find(candidate =>
           (candidate.control ?? candidate).getAttribute('aria-label') === label,
         )
         const control = host?.control ?? host
@@ -328,7 +328,7 @@ test('popup relationships stay instance-local across separate renderer roots wit
 
 test('filtered Select exposes its textbox and option menu as dialog siblings', async t => {
   const page = await pageFor(t)
-  const selectHost = page.locator('a-button[aria-label="Repository"]')
+  const selectHost = page.getByRole('button', { name: 'Repository', exact: true })
   await selectHost.focus()
   await page.keyboard.press('Enter')
   await page.waitForTimeout(20)
@@ -546,22 +546,21 @@ test('faceted custom options preserve selection, disabled rows, and search', asy
 
 test('button-backed Select and editable InputDate retain their popup interactions', async t => {
   const page = await pageFor(t)
-  const selectHost = page.locator('a-button[aria-label="Team"]')
+  const selectHost = page.getByRole('button', { name: 'Team', exact: true })
   await selectHost.focus()
   await page.keyboard.press('Enter')
-  await page.waitForFunction(() => document.querySelector('a-button[aria-label="Team"]')?.getAttribute('aria-expanded') === 'true')
   assert.equal(await selectHost.getAttribute('aria-expanded'), 'true')
   assert.deepEqual(
     await selectHost.evaluate(button => ({
-      count: button.internals.ariaControlsElements?.length ?? 0,
-      role: button.internals.ariaControlsElements?.[0]?.getAttribute('role') ?? null,
-      open: button.internals.ariaControlsElements?.[0]?.isOpen ?? false,
+      count: button.ariaControlsElements?.length ?? 0,
+      role: button.ariaControlsElements?.[0]?.getAttribute('role') ?? null,
+      open: button.ariaControlsElements?.[0]?.isOpen ?? false,
     })),
     { count: 1, role: 'menu', open: true },
   )
 
   await page.keyboard.press('Escape')
-  await page.waitForFunction(() => document.querySelector('a-button[aria-label="Team"]')?.getAttribute('aria-expanded') === 'false')
+  assert.equal(await selectHost.getAttribute('aria-expanded'), 'false')
   const dateHost = page.locator('a-input').filter({ has: page.locator('input[aria-label="Due date"]') })
   await dateHost.locator('input').click()
   await dateHost.locator('input[aria-expanded="true"]').waitFor()
@@ -836,7 +835,7 @@ test('Checkbox, Switch, and Radio expose their light-DOM hints as descriptions',
 test('Select buttons open once with arrows, Enter, and Space and retain focus-visible styling', async t => {
   const page = await pageFor(t)
   for (const name of ['Team', 'Repository', 'Departments']) {
-    const trigger = name === 'Departments' ? page.locator('a-select-field').filter({ has: page.locator('a-select-label', { hasText: name }) }).locator(':scope > a-button') : page.getByRole('button', { name, exact: true })
+    const trigger = page.getByRole('button', { name, exact: true })
     for (const key of ['ArrowDown', 'ArrowUp', 'Enter', 'Space']) {
       await trigger.focus()
       await page.keyboard.press(key)
@@ -849,13 +848,16 @@ test('Select buttons open once with arrows, Enter, and Space and retain focus-vi
   await page.mouse.click(1200, 700)
   await trigger.click()
   assert.equal(await trigger.evaluate(el => el.matches(':focus-visible')), false)
-  assert.equal(await trigger.evaluate(el => getComputedStyle(el).outlineStyle), 'none')
+  assert.equal(await trigger.evaluate(el => getComputedStyle(el.closest('[part="field"]')).outlineStyle), 'none')
   await page.keyboard.press('Escape')
   await trigger.focus()
   assert.equal(await trigger.evaluate(el => el.matches(':focus-visible')), true)
-  assert.equal(await trigger.evaluate(el => getComputedStyle(el).outlineStyle), 'solid')
+  assert.equal(await trigger.evaluate(el => getComputedStyle(el.closest('[part="field"]')).outlineStyle), 'solid')
   const disabled = page.getByRole('button', { name: 'Disabled select' })
-  assert.equal(await disabled.getAttribute('tabindex'), '-1')
+  assert.equal(await disabled.isDisabled(), true)
+  const edge = await disabled.evaluate(el => el.closest('[part="field"]').getBoundingClientRect().toJSON())
+  await page.mouse.click(edge.x + 1, edge.y + 1)
+  assert.equal(await disabled.getAttribute('aria-expanded'), 'false')
   await disabled.dispatchEvent('keydown', { key: 'ArrowDown' })
   assert.equal(await disabled.getAttribute('aria-expanded'), 'false')
 })
@@ -873,25 +875,91 @@ test('Select exposes its selection after choosing a value', async t => {
   }
 })
 
-test('Select preserves rich labels, hints, and long-value ellipsis on Anta Button', async t => {
+test('Select preserves rich labels, hints, and long-value ellipsis on Input', async t => {
   const page = await pageFor(t)
-  const trigger = page.locator('a-select-field').filter({ has: page.locator('a-select-label', { hasText: 'Departments' }) }).locator(':scope > a-button')
-  assert.equal(await trigger.evaluate(el => el.localName), 'a-button')
+  const trigger = page.getByRole('button', { name: 'Departments', exact: true })
+  assert.equal(await trigger.evaluate(el => el.localName), 'button')
   const cdp = await page.context().newCDPSession(page)
   const { nodes } = await cdp.send('Accessibility.getFullAXTree')
   const node = nodes.find(node => node.role?.value === 'button' && node.name?.value === 'Departments')
   assert.equal(node?.description?.value, 'Engineering department with a very long name Choose departments')
   await trigger.evaluate(el => {
-    el.setAttribute('aria-label', 'Override departments')
-    el.parentElement.querySelector('a-select-hint').textContent = 'Updated hint'
+    const host = el.getRootNode().host
+    host.querySelector('[slot="label"] strong').firstChild.data = 'Updated departments'
+    host.querySelector('[slot="hint"] em').firstChild.data = 'Updated hint'
   })
   const updated = (await cdp.send('Accessibility.getFullAXTree')).nodes.find(node =>
-    node.role?.value === 'button' && node.name?.value === 'Override departments')
+    node.role?.value === 'button' && node.name?.value === 'Updated departments')
   assert.equal(updated?.description?.value, 'Engineering department with a very long name Updated hint')
 
-  const label = trigger.locator('a-button-label')
-  assert.deepEqual(await label.evaluate(el => ({
+  const updatedTrigger = page.getByRole('button', { name: 'Updated departments', exact: true })
+  assert.deepEqual(await updatedTrigger.evaluate(el => ({
     overflow: getComputedStyle(el).textOverflow,
     clipped: el.scrollWidth > el.clientWidth,
   })), { overflow: 'ellipsis', clipped: true })
+  await updatedTrigger.evaluate(el => {
+    const host = el.getRootNode().host
+    const parent = host.parentNode
+    const next = host.nextSibling
+    host.remove()
+    host.querySelector('[slot="label"] strong').firstChild.data = 'Reconnected departments'
+    parent.insertBefore(host, next)
+  })
+  const reconnected = page.getByRole('button', { name: 'Reconnected departments', exact: true })
+  await reconnected.evaluate(el => {
+    const host = el.getRootNode().host
+    host.setAttribute('aria-label', 'Override departments')
+    host.setAttribute('aria-description', 'Custom description')
+  })
+  const overridden = (await cdp.send('Accessibility.getFullAXTree')).nodes.find(node =>
+    node.role?.value === 'button' && node.name?.value === 'Override departments')
+  assert.equal(overridden?.description?.value, 'Custom description')
+})
+
+test('Select labels focus the trigger, hints leave it closed, and the full field opens it', async t => {
+  const page = await pageFor(t)
+  const host = page.locator('a-input[button]').filter({ has: page.getByRole('button', { name: 'Departments', exact: true }) })
+  const trigger = host.getByRole('button')
+  await host.locator('[slot="label"]').click()
+  assert.equal(await trigger.evaluate(el => el === el.getRootNode().activeElement), true)
+  assert.equal(await trigger.getAttribute('aria-expanded'), 'false')
+  await host.locator('[slot="hint"]').click()
+  assert.equal(await trigger.getAttribute('aria-expanded'), 'false')
+  const field = host.locator('[part="field"]')
+  await field.click({ position: { x: 10, y: 1 } })
+  assert.equal(await trigger.getAttribute('aria-expanded'), 'true')
+  await page.keyboard.press('Escape')
+  await host.locator('a-select-chevron').click()
+  assert.equal(await trigger.getAttribute('aria-expanded'), 'true')
+})
+
+test('Select triggers preserve their display on form reset and never block or submit the form', async t => {
+  const page = await pageFor(t)
+  const result = await page.evaluate(() => {
+    const host = [...document.querySelectorAll('a-input[button]')].find(host => host.value.startsWith('Engineering'))
+    const form = document.createElement('form')
+    document.body.append(form)
+    form.append(host)
+    host.setAttribute('name', 'department')
+    host.setAttribute('required', '')
+    host.setAttribute('status', 'critical')
+    const control = host.shadowRoot.querySelector('button')
+    const before = control.textContent
+    let changes = 0
+    host.addEventListener('input', () => changes++)
+    host.addEventListener('change', () => changes++)
+    form.reset()
+    const result = {
+      valid: form.checkValidity(),
+      formData: [...new FormData(form)],
+      preserved: control.textContent === before,
+      invalid: control.getAttribute('aria-invalid'),
+      changes,
+    }
+    const editable = document.createElement('a-input')
+    editable.setAttribute('status', 'critical')
+    form.append(editable)
+    return { ...result, editableBlocks: !form.checkValidity() }
+  })
+  assert.deepEqual(result, { valid: true, formData: [], preserved: true, invalid: 'true', changes: 0, editableBlocks: true })
 })

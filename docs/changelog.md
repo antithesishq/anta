@@ -17,6 +17,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Select](/select/) shares Input field styling across sizes and themes while
+  retaining native button activation and selected-value announcements.
+
 - Neutral [Tags](/tag/) in the Antune theme keep their solid primary fill
   and transparent tertiary fill when tone is omitted or set to `neutral`.
 - [Calendar](/input-date/#calendar) keeps controlled selection and form values

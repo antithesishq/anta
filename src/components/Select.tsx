@@ -1,13 +1,12 @@
 // Hooks come from the jsx-runtime indirection configured through `configure()`,
 // as in RadioGroup. Select keeps its selection and open state, then renders an
-// Button trigger followed by a Menu of options. There is no `a-select` element.
+// Input-styled trigger followed by a Menu of options. There is no `a-select` element.
 import { useState } from '../jsx-runtime'
 import { ISOLATE_HINT, ISOLATE_HINT_DELAY, optionPresentationAttrs } from '../anta_helpers'
 import { normalizeOpt, matchQueryRegex, matchesQuery, highlight } from './select-options'
 import type { BaseProps, OptionPresentationProps, ToneScope } from '../general_types'
 import type { IconShape } from '../elements/a-icon.shapes'
 import { Input } from './Input'
-import { Button } from './Button'
 import { Icon } from './Icon'
 import { Menu, type MenuProps } from './Menu'
 import { MenuItem } from './MenuItem'
@@ -432,7 +431,7 @@ export function optionsWithSelection<V extends OptionValue = string>(
 
 /**
  * `<Select>` lets people choose one or more options from a dropdown. It uses a
- * `<Button>` as its trigger and a `<Menu>` for its options. `selection` sets behavior:
+ * `<Input button>` as its trigger and a `<Menu>` for its options. `selection` sets behavior:
  * `'single'` (default; `value` is a string, menu closes on pick) or `'multiple'`
  * (checkboxes, `value` is a string array, menu stays open while toggling, the
  * field shows an "N selected" count). For single-select, `indicator` picks the
@@ -768,27 +767,34 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     return out
   }
 
-  const content = (
+  return (
     <>
       {renderTrigger ? (
         renderTrigger({ open, value: currentRaw, selected: selectedOptions, disabled: !!disabled, icon })
       ) : (
-      <Button
+      <Input
+        button
+        label={label}
+        hint={hint}
+        value={display}
+        placeholder={placeholder}
+        leading={leading ?? (icon ? <Icon shape={icon} /> : undefined)}
         disabled={disabled}
         size={size}
+        status={status}
+        statusIcon={statusIcon}
         round={round}
-        aria-label={typeof label === 'string' || typeof label === 'number' ? String(label) : undefined}
-        aria-invalid={status === 'critical' ? 'true' : undefined}
+        className={className}
+        style={style}
         aria-haspopup={filtering ? 'dialog' : 'menu'}
         aria-expanded={open ? 'true' : 'false'}
+        trailing={
+          <a-select-chevron open={open ? '' : undefined} aria-hidden="true" style={statusColor ? { color: statusColor } : undefined}>
+            <Icon shape="chevron-down" />
+          </a-select-chevron>
+        }
         {...rest}
-      >
-        {(leading ?? icon) && <a-select-leading aria-hidden="true">{leading ?? <Icon shape={icon!} />}</a-select-leading>}
-        <a-button-label data-placeholder={!display ? '' : undefined}>{display || placeholder}</a-button-label>
-        <a-select-chevron open={open ? '' : undefined} aria-hidden="true" style={statusColor ? { color: statusColor } : undefined}>
-          <Icon shape="chevron-down" />
-        </a-select-chevron>
-      </Button>
+      />
       )}
       {/* Anchors to the trigger (its previous sibling); opens on click. Single-select
           closes on pick; multi-select rows carry `data-menu-open` so toggling keeps
@@ -861,17 +867,5 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         )}
       </Menu>
     </>
-  )
-  if (renderTrigger) return content
-  const statusGlyph: Partial<Record<NonNullable<typeof status>, IconShape>> = {
-    brand: 'circle-small-solid', info: 'info', success: 'circle-check', warning: 'warning-triangle', critical: 'warning-diamond',
-  }
-  const glyph = statusIcon === undefined ? (status ? statusGlyph[status] : undefined) : statusIcon
-  return (
-    <a-select-field size={size} status={status} disabled={disabled ? '' : undefined} class={className} style={style}>
-      {label != null && <a-select-label>{label}</a-select-label>}
-      {content}
-      {hint != null && <a-select-hint>{glyph && <Icon shape={glyph as IconShape} aria-hidden="true" />}{hint}</a-select-hint>}
-    </a-select-field>
   )
 }

@@ -1,7 +1,14 @@
 # Regression tests
 
-Run `pnpm test` for all root tests, including Markdown disclosure conversion.
+Run `pnpm test` for general root regressions, including Markdown disclosure conversion.
 CI uses the runner's installed Chrome with `CAPTURE_TEST_BROWSER_CHANNEL=chrome`.
+
+## Calendar and InputDate
+
+Run `CAPTURE_TEST_BROWSER_CHANNEL=chrome pnpm test:calendar` for the React/Preact
+selection and form-value checks in Chromium and WebKit. This matrix is separate
+from `pnpm test`. CI runs it when Calendar, InputDate, their dependencies, the test,
+or CI configuration changes, and on manual CI runs. Unrelated PRs skip it.
 
 ## Temporary CI exclusions
 

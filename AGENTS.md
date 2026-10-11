@@ -59,6 +59,11 @@ browser suites. Local test commands include WebKit by default.
 Run the checks relevant to the area you changed; run the complete set before
 handing off a broad change.
 
+Keep new component-specific browser matrices separate from `pnpm test`. Give them
+a dedicated command and gate their CI step on relevant component, shared runtime,
+dependency, test, and workflow changes. Manual CI runs should include them.
+Calendar and InputDate use `pnpm test:calendar`.
+
 The Button property harness runs separately from `pnpm test`. Start or reuse a
 site preview as described in [site/AGENTS.md](site/AGENTS.md#local-servers), then
 run `ANTA_HARNESS_ORIGIN=<preview-url> pnpm test:fuzz_component`. To check one

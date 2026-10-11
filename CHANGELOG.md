@@ -17,6 +17,8 @@ changes are not listed.
 
 ### Fixed
 
+- Neutral [Tags](/tag/) in the Antune theme keep their solid primary fill
+  and transparent tertiary fill when tone is omitted or set to `neutral`.
 - [Calendar](/input-date/#calendar) keeps controlled selection and form values
   in sync in React and Preact, including selecting a previous date again.
   Its element accepts selection through `state` and exposes `value` as read-only.

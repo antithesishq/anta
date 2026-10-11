@@ -68,6 +68,7 @@
     "stop": "node scripts/dev-stop.mjs",
     "typecheck": "tsc --noEmit -p src/tsconfig.json",
     "test": "node --test tests/*.test.mjs",
+    "test:calendar": "node --test tests/calendar-controlled.mjs",
     "test:capture-input": "node --test tests/capture-input.test.mjs",
     "lint": "node scripts/lint-getters.mjs && node scripts/lint-css-layers.mjs",
     "verify": "pnpm run lint && pnpm run typecheck && pnpm --filter anta-site run docs:api",

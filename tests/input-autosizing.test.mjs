@@ -33,25 +33,90 @@ before(async () => {
 
 after(async () => Promise.all([...browsers.values()].map(browser => browser.close())))
 
-async function fixture(t, engine, html) {
-  const page = await browsers.get(engine).newPage()
+async function fixture(t, engine, html, { userAgent, nativeSupport = true } = {}) {
+  const page = await browsers.get(engine).newPage(userAgent ? { userAgent } : {})
   t.after(() => page.close())
   page.setDefaultTimeout(20_000)
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await page.setContent(html)
   await page.addStyleTag({ content: css })
+  if (!nativeSupport) await page.evaluate(() => {
+    const supports = CSS.supports.bind(CSS)
+    CSS.supports = (...args) => args[0] === 'field-sizing' ? false : supports(...args)
+  })
   await page.addScriptTag({ content: script })
   return { page, errors }
 }
 
 for (const engine of [chromium, webkit]) {
-  test(`${engine.name()}: multiline Input follows typography changes at the same width`, async t => {
+  test(`${engine.name()}: WebKit browser identities use JS even when CSS reports support`, async t => {
+    const agents = [
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/26.2 Safari/605.1.15',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 26_2 like Mac OS X) AppleWebKit/605.1.15 CriOS/143.0.0.0 Mobile/15E148 Safari/604.1',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 26_2 like Mac OS X) AppleWebKit/605.1.15 FxiOS/145.0 Mobile/15E148 Safari/605.1.15',
+    ]
+    for (const userAgent of agents) {
+      const { page, errors } = await fixture(t, engine,
+        '<a-input id="growing" multiline value="One&#10;Two&#10;Three"></a-input>', { userAgent })
+      assert.equal(await page.evaluate(() => CSS.supports('field-sizing', 'content')), true)
+      const sizing = await page.locator('#growing textarea').evaluate(el => ({
+        fieldSizing: el.style.getPropertyValue('field-sizing'), height: el.clientHeight, scroll: el.scrollHeight,
+      }))
+      assert.equal(sizing.fieldSizing, 'fixed')
+      assert.equal(sizing.height, sizing.scroll)
+      assert.deepEqual(errors, [])
+    }
+  })
+
+  test(`${engine.name()}: missing native support falls back and honors rows and maxrows`, async t => {
+    const { page, errors } = await fixture(t, engine,
+      '<a-input id="growing" multiline style="width:240px"></a-input>', { nativeSupport: false })
+    const height = () => page.locator('#growing textarea').evaluate(el => el.clientHeight)
+    assert.equal(await height(), 28)
+    await page.locator('#growing').evaluate(el => el.value = 'One\nTwo\nThree\nFour\nFive\nSix')
+    assert.equal(await height(), 128)
+    await page.locator('#growing').evaluate(el => el.value = 'One\nTwo')
+    assert.equal(await height(), 48)
+    await page.locator('#growing').evaluate(el => { el.setAttribute('maxrows', '3'); el.value = 'Line\n'.repeat(20) })
+    assert.equal(await height(), 68)
+    await page.locator('#growing').evaluate(el => el.setAttribute('rows', '2'))
+    assert.equal(await height(), 48)
+    await page.locator('#growing').evaluate(el => el.value = '')
+    assert.equal(await height(), 48)
+    assert.deepEqual(errors, [])
+  })
+
+  test(`${engine.name()}: JS measurements preserve page and capped textarea scroll while typing`, async t => {
+    const { page, errors } = await fixture(t, engine,
+      '<div style="height:1000px"></div><a-input id="growing" multiline style="width:240px"></a-input>',
+      { nativeSupport: false })
+    await page.locator('#growing').evaluate(el => el.value = 'Line\n'.repeat(60))
+    const beforePage = await page.evaluate(() => { window.scrollTo(0, document.body.scrollHeight); return window.scrollY })
+    await page.locator('#growing').evaluate(el => el.value += 'x')
+    assert.equal(await page.evaluate(() => window.scrollY), beforePage)
+    await page.locator('#growing').evaluate(el => el.setAttribute('maxrows', '3'))
+    const beforeTyping = await page.locator('#growing textarea').evaluate(el => {
+      el.focus()
+      el.setSelectionRange(16, 16)
+      el.scrollTop = 50
+      return { page: window.scrollY, textarea: el.scrollTop }
+    })
+    await page.locator('#growing textarea').press('x')
+    const afterTyping = await page.locator('#growing textarea').evaluate(el => ({ page: window.scrollY, textarea: el.scrollTop }))
+    assert.deepEqual(afterTyping, beforeTyping)
+    assert.deepEqual(errors, [])
+  })
+
+  test(`${engine.name()}: typography changes resize natively or after a fallback value refresh`, async t => {
     const { page, errors } = await fixture(t, engine,
       '<a-input id="growing" multiline style="width:240px" value="One&#10;Two&#10;Three&#10;Four&#10;Five&#10;Six"></a-input>')
     const textarea = page.locator('#growing textarea')
+    assert.equal(await textarea.evaluate(el => el.style.getPropertyValue('field-sizing')),
+      engine === chromium ? 'content' : 'fixed')
     const initial = await textarea.evaluate(el => ({ width: el.clientWidth, height: el.clientHeight }))
     await textarea.evaluate(el => el.style.lineHeight = '40px')
+    if (engine === webkit) await page.locator('#growing').evaluate(el => el.value = el.value)
     await page.waitForFunction(height => {
       const ta = document.getElementById('growing').shadowRoot.querySelector('textarea')
       return ta.clientHeight > height && Math.abs(ta.scrollHeight - ta.clientHeight) <= 1

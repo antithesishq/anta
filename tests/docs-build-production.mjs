@@ -50,7 +50,7 @@ for (const engine of engines) {
   test(`${engine.name()}: facet text chips keep a bounded width, truncate long values, and preserve focus when empty`, async t => {
     const { page, errors } = await productionPage(t, engine)
     await page.goto('https://anta.test/select-faceted/')
-    const chip = page.locator('a-input.sf-chip').first()
+    const chip = page.locator('a-input.sf-chip').filter({ has: page.getByRole('textbox') }).first()
     const input = chip.locator('input')
     await input.waitFor()
     assert.equal(await input.inputValue(), 'crash')
@@ -158,9 +158,9 @@ test('native MDX preserves table alignment and the compiled playground after nav
   await page.frameLocator('iframe').first().getByRole('button', {
     name: 'Updated production preview', exact: true,
   }).waitFor()
-  const theme = page.locator('.theming-select')
+  const theme = page.locator('.theming-switcher')
   for (const palette of ['antithesis', 'none', 'antithesis']) {
-    await theme.locator('a-button').click()
+    await theme.getByRole('button').click()
     await theme.getByRole('menuitemradio', {
       name: palette === 'none' ? 'None' : 'Antithesis', exact: true,
     }).click()

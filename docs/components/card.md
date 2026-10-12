@@ -105,9 +105,9 @@ match:
 
 ## Round
 
-`round` softens the corners. A `number` (px) or CSS length sets a custom radius —
-the usual choice for a card (`round="0"` squares them); bare `round` goes fully
-round (`999px`, clamped to the box). Omit it for the default (`--card-radius`, 8px).
+Omit `round` to use the theme's corner radius. Pass a `number` (px) or CSS length
+to set a fixed radius; `round={0}` makes the corners square. Bare `round` makes
+the card fully round, clamped to its box.
 
 ```tsx
 <Card round={16} header="Custom radius">…</Card>

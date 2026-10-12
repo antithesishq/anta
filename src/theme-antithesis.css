@@ -570,6 +570,8 @@
       input[data-anta]:is([type="reset"], [type="submit"], [type="checkbox"], [type="radio"]),
       a-tab, a-menu-item, a[data-anta-menu-item],
       details[data-anta] > summary):focus-visible,
+  a-expander::part(summary):focus-visible,
+  a-card::part(container):focus-visible,
   :is(a-checkbox, a-radio, a-switch):focus-visible::before,
   a-radio-group:focus-visible a-radio:state(selected)::before {
     outline: 2px solid var(--focus-ring);
@@ -584,6 +586,19 @@
   /* The tab strip clips an outward ring. */
   a-tab {
     --focus-ring-inset: 1;
+  }
+
+  /* The card clips its own box, so its ring sits inside and replaces the
+     component's inset shadow ring. */
+  a-card::part(container) {
+    --focus-ring-inset: 1;
+  }
+  a-card::part(container):focus-visible {
+    box-shadow: none;
+  }
+
+  a-expander:not([round])::part(summary) {
+    border-radius: 1px;
   }
 
   :is(a-button, a[role="button"][data-anta], button[data-anta],
@@ -1310,6 +1325,22 @@
 
   a-tag {
     border-radius: 3px;
+  }
+
+  a-card:not([round]) {
+    --card-radius: 1px;
+  }
+
+  a-expander:not([round]) {
+    border-radius: 1px;
+  }
+
+  details[data-anta]:not([round]) {
+    --native-expander-round: 1px;
+  }
+
+  a-dialog:not([round]) {
+    --dialog-radius: 1px;
   }
 
   /* A submenu inside a `round` menu keeps the inherited round radius. */

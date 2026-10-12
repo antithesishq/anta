@@ -11,7 +11,7 @@
       color-mix(in oklch, var(--bg-1) 90%, transparent),
       color-mix(in oklch, var(--bg-1) 78%, transparent)
     );
-    --menu-radius: var(--radius-md, 8px);
+    --menu-radius: 2px;
     --menu-border: 1px solid var(--border-3);
     --menu-shadow:
       0 2px 6px color-mix(in oklch, var(--text-1) 8%, transparent),
@@ -35,6 +35,11 @@
     @supports (border-radius: attr(probe type(<length>), 1px)) {
       --menu-radius: attr(round type(<length>), 20px);
     }
+  }
+
+  /* A submenu takes its root menu's `round` radius, like its items do. */
+  a-menu[round] a-menu:not([round]) {
+    --menu-radius: inherit;
   }
 
   /* Dark mode adds an inset ring to the shadow list. `light-dark()` carries

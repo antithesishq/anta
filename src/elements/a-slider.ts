@@ -185,11 +185,12 @@ export class ASliderElement extends HTMLElementBase {
         border: var(--anta-slider-thumb-border-width) solid var(--slider-thumb-border);
         border-radius: var(--slider-thumb-radius);
         background: var(--slider-thumb);
+        outline: none;
         transition: background-color 75ms ease-out, border-color 75ms ease-out;
         transform: translate(-50%, -50%);
       }
       .thumb[data-last-active] { z-index: 1; }
-      .thumb:focus-visible {
+      .control:not([data-pointer-focus]) .thumb:focus-visible {
         outline: 1px solid var(--focus-ring);
         outline-offset: 2px;
         z-index: 2;
@@ -345,7 +346,7 @@ export class ASliderElement extends HTMLElementBase {
     this.#control.addEventListener('pointercancel', (event) => this.#finishDrag(event))
     this.#control.addEventListener('lostpointercapture', (event) => this.#finishDrag(event))
     this.addEventListener('keydown', (event) => this.#handleKeydown(event))
-    this.addEventListener('blur', () => delete this.#control.dataset.pointerFocus)
+    this.addEventListener('blur', () => this.#setPointerFocus(false))
 
     shadow.append(style, this.#header, this.#control, this.#markers, this.#extras)
   }
@@ -638,6 +639,14 @@ export class ASliderElement extends HTMLElementBase {
     return firstDistance === secondDistance ? this.#lastActiveThumb : firstDistance < secondDistance ? 0 : 1
   }
 
+  // Pointer-driven focus can still match :focus-visible. Themes read the state
+  // to keep the keyboard ring off until the next key press.
+  #setPointerFocus(active: boolean) {
+    this.#control.toggleAttribute('data-pointer-focus', active)
+    if (active) this.internals?.states?.add('pointer-focus')
+    else this.internals?.states?.delete('pointer-focus')
+  }
+
   #beginDrag(event: PointerEvent) {
     if (this.#isDisabled || event.button !== 0) return
     const rect = this.#railArea.getBoundingClientRect()
@@ -650,7 +659,7 @@ export class ASliderElement extends HTMLElementBase {
     this.#drag = { pointerId: event.pointerId, startX: event.clientX, startValue, startPublicValue: this.value, thumb }
     this.#control.setPointerCapture(event.pointerId)
     this.#control.dataset.dragging = ''
-    this.#control.dataset.pointerFocus = ''
+    this.#setPointerFocus(true)
     this.#lastActiveThumb = thumb
     this.#thumb.toggleAttribute('data-last-active', thumb === 0)
     this.#thumbEnd.toggleAttribute('data-last-active', thumb === 1)
@@ -693,7 +702,7 @@ export class ASliderElement extends HTMLElementBase {
     const range = Array.isArray(this.#value)
     const thumb = source === this.#thumb ? 0 : source === this.#thumbEnd ? 1 : undefined
     if ((range ? thumb === undefined : source !== this) || this.#isDisabled || isModifiedNavigationKey(event)) return
-    delete this.#control.dataset.pointerFocus
+    this.#setPointerFocus(false)
 
     const page = Math.max(this.#step, (this.#max - this.#min) / 10)
     const current = range ? this.#physicalValues[thumb ?? 0] : this.#value as number

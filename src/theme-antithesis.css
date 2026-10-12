@@ -1139,12 +1139,13 @@
 
   /* Like Checkbox and Radio, keyboard focus puts the 2px ring on the thumb
      itself with a 1px halo inside it. The stroke or fill moves inside the
-     halo, so the thumb keeps its size. */
+     halo, so the thumb keeps its size. Focus taken by a pointer drag shows no
+     ring until the next key press. */
   a-slider:focus-visible::part(control) {
     outline: none;
   }
-  a-slider:focus-visible::part(thumb),
-  a-slider::part(thumb):focus-visible {
+  a-slider:focus-visible:not(:state(pointer-focus))::part(thumb),
+  a-slider:not(:state(pointer-focus))::part(thumb):focus-visible {
     outline: 2px solid var(--focus-ring);
     outline-offset: 0;
     border: 1px solid var(--focus-halo);

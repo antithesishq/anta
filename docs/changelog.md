@@ -25,6 +25,8 @@ changes are not listed.
 
 ### Fixed
 
+- [InputDate](/input-date/) labels and hints no longer toggle its calendar.
+  [Menu](/menu/) field anchors ignore clicks outside their field part.
 - [Input](/input/) button fields and [Select](/select/) describe the selected value
   only when a separate label supplies the accessible name. Empty fields keep
   placeholders out of the value description.

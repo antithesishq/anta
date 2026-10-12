@@ -71,6 +71,11 @@ before(async () => {
             ],
           }),
         ), main)
+        window.mountClickDate = () => {
+          const mount = document.createElement('div')
+          document.body.prepend(mount)
+          render(h(InputDate, { id: 'click-date', label: 'Appointment', hint: 'Choose a date', clearable: true, defaultValue: '2026-09-30' }), mount)
+        }
         window.mountDescriptionFields = () => {
           const mount = document.createElement('div')
           document.body.prepend(mount)
@@ -562,6 +567,7 @@ test('button-backed Select and editable InputDate retain their popup interaction
   const page = await pageFor(t)
   const selectHost = page.getByRole('button', { name: 'Team', exact: true })
   await selectHost.focus()
+  await page.waitForFunction(() => document.querySelector('a-input[button] + a-menu')?.listening)
   await page.keyboard.press('Enter')
   await selectHost.and(page.locator('[aria-expanded="true"]')).waitFor()
   assert.deepEqual(
@@ -1029,17 +1035,69 @@ test('Select labels focus the trigger, hints leave it closed, and the full field
   const page = await pageFor(t)
   const host = page.locator('a-input[button]').filter({ has: page.getByRole('button', { name: 'Departments', exact: true }) })
   const trigger = host.getByRole('button')
+  await host.evaluate(el => {
+    const extra = document.createElement('span')
+    extra.dataset.extra = ''
+    extra.textContent = 'Extra details'
+    el.append(extra)
+    window.selectClickRequests = []
+    el.nextElementSibling.addEventListener('statechange', event => {
+      if (event.target === el.nextElementSibling) window.selectClickRequests.push(event.detail.next)
+    })
+  })
   await host.locator('[slot="label"]').click()
   assert.equal(await trigger.evaluate(el => el === el.getRootNode().activeElement), true)
   assert.equal(await trigger.getAttribute('aria-expanded'), 'false')
   await host.locator('[slot="hint"]').click()
   assert.equal(await trigger.getAttribute('aria-expanded'), 'false')
+  await host.locator('[data-extra]').click()
+  assert.deepEqual(await page.evaluate(() => window.selectClickRequests), [])
   const field = host.locator('[part="field"]')
   await field.click({ position: { x: 10, y: 1 } })
   await trigger.and(page.locator('[aria-expanded="true"]')).waitFor()
   await page.keyboard.press('Escape')
   await trigger.and(page.locator('[aria-expanded="false"]')).waitFor()
   await host.locator('a-select-chevron').click()
+  await trigger.and(page.locator('[aria-expanded="true"]')).waitFor()
+})
+
+test('InputDate labels, hints, and extras leave the calendar closed while its field opens it', async t => {
+  const page = await pageFor(t)
+  await page.evaluate(() => window.mountClickDate())
+  const host = page.locator('#click-date')
+  const trigger = host.getByRole('combobox', { name: 'Appointment', exact: true })
+  await page.waitForFunction(() => document.querySelector('#click-date + a-menu')?.listening)
+  await host.evaluate(el => {
+    const extra = document.createElement('span')
+    extra.dataset.extra = ''
+    extra.textContent = 'Date details'
+    el.append(extra)
+    window.dateClickRequests = []
+    el.nextElementSibling.addEventListener('statechange', event => {
+      if (event.target === el.nextElementSibling) window.dateClickRequests.push(event.detail.next)
+    })
+  })
+  for (const selector of ['[slot="label"]', '[slot="hint"]', '[data-extra]']) {
+    await host.locator(selector).click()
+    assert.deepEqual(await page.evaluate(() => window.dateClickRequests), [], selector)
+    assert.equal(await trigger.getAttribute('aria-expanded'), 'false', selector)
+    if (selector === '[slot="label"]') {
+      assert.equal(await trigger.evaluate(el => el === el.getRootNode().activeElement), true)
+    }
+  }
+  await host.getByRole('button', { name: 'Clear', exact: true }).click()
+  assert.equal(await host.evaluate(el => el.value), '')
+  assert.deepEqual(await page.evaluate(() => window.dateClickRequests), [])
+
+  const field = host.locator('[part="field"]')
+  for (const target of [field, host.locator('[slot="leading"] a-icon'), trigger]) {
+    await target.click({ position: { x: 10, y: 1 } })
+    await trigger.and(page.locator('[aria-expanded="true"]')).waitFor()
+    await page.keyboard.press('Escape')
+    await trigger.and(page.locator('[aria-expanded="false"]')).waitFor()
+  }
+  await trigger.focus()
+  await page.keyboard.press('ArrowDown')
   await trigger.and(page.locator('[aria-expanded="true"]')).waitFor()
 })
 

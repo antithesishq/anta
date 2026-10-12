@@ -7,6 +7,9 @@ changes are not listed.
 
 ### Breaking
 
+- [Browser support](/install-config/#browser-support) now requires Chrome/Edge
+  135+ and Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints
+  use live ARIA element references without a copied-text fallback.
 - [Select's default field](/select/#migrate-field-styles) now uses `a-input[button]`.
   `className` and `style` apply to that host. Replace field selectors targeting
   `a-select-field > a-button` with your Select class and `::part(field)`, and

@@ -3,6 +3,7 @@ import { after, before, test } from 'node:test'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { build } from 'esbuild'
+import { fieldByLabel, inputByLabel } from './helpers/input-locator.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium } = requireSite('playwright')
@@ -78,12 +79,12 @@ test('a nested select or link choice closes only its popup inside a persistent f
   await editor.evaluate(menu => menu.open())
   assert.equal(await editor.evaluate(menu => menu.isOpen), true)
 
-  await editor.getByRole('button', { name: 'More', exact: true }).click()
+  await inputByLabel(page, 'More').click()
   const selectMenu = editor.locator('a-menu').filter({ has: page.getByText('10 minutes', { exact: true }) })
   assert.equal(await selectMenu.evaluate(menu => menu.isOpen), true)
   await selectMenu.getByText('10 minutes', { exact: true }).click()
   assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('a-menu')].slice(0, 3).map(menu => menu.isOpen)), [true, true, false])
-  assert.equal(await editor.getByRole('button', { name: 'More', exact: true }).textContent(), '10 minutes')
+  assert.equal(await inputByLabel(page, 'More').textContent(), '10 minutes')
 
   await editor.getByText('Links', { exact: true }).click()
   const linkMenu = editor.locator('a-menu').filter({ has: page.getByText('Guide', { exact: true }) })
@@ -109,7 +110,7 @@ test('clearing a date field does not toggle its menu; the next field click opens
   const root = page.locator('a-menu').first()
   const editor = page.locator('a-menu[aria-label="Min duration editor"]')
   await editor.evaluate(menu => menu.open())
-  const field = editor.locator('a-input').filter({ has: page.locator('input[aria-label="From"]') })
+  const field = fieldByLabel(page, 'From')
   const calendar = field.locator('xpath=following-sibling::a-menu[1]')
 
   await field.locator('a-button[aria-label="Clear"]').click()
@@ -133,7 +134,7 @@ test('clearing a date field leaves its already open calendar open', async t => {
   const root = page.locator('a-menu').first()
   const editor = page.locator('a-menu[aria-label="Min duration editor"]')
   await editor.evaluate(menu => menu.open())
-  const field = editor.locator('a-input').filter({ has: page.locator('input[aria-label="From"]') })
+  const field = fieldByLabel(page, 'From')
   const calendar = field.locator('xpath=following-sibling::a-menu[1]')
 
   await field.locator('input').click()
@@ -158,7 +159,7 @@ test('switching facet submenus resets a cleared date calendar before reopening i
   const other = root.locator('a-menu-item[submenu]').filter({ hasText: 'Other' })
   const editor = duration.locator('a-menu').first()
   await editor.evaluate(menu => menu.open())
-  const field = editor.locator('a-input').filter({ has: page.locator('input[aria-label="From"]') })
+  const field = fieldByLabel(page, 'From')
   const calendar = field.locator('xpath=following-sibling::a-menu[1]')
 
   await field.locator('input').click()

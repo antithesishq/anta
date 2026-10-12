@@ -5,6 +5,7 @@ import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 import { readPageCatalog } from '../site/lib/content/catalog.mjs'
+import { inputByLabel } from './helpers/input-locator.mjs'
 
 const requireSite = createRequire(new URL('../site/package.json', import.meta.url))
 const { chromium, webkit } = requireSite('playwright')
@@ -93,9 +94,7 @@ for (const engine of engines) {
       'import { Input } from "@antadesign/anta"\n' +
       'function Demo() { return <Input label="Preserved edit" /> }',
     )
-    const previewInput = page.frameLocator('iframe').first().getByRole('textbox', {
-      name: 'Preserved edit', exact: true,
-    })
+    const previewInput = inputByLabel(page.frameLocator('iframe').first(), 'Preserved edit')
     await previewInput.waitFor()
     await summary.click()
     await page.waitForFunction(() => !document.querySelector('[data-anta-playground]')?.closest('details')?.open)

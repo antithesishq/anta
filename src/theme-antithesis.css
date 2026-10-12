@@ -1137,6 +1137,24 @@
     --anta-slider-thumb-border-width: 2px;
   }
 
+  /* Slider focus rings match the other controls: 2px with the pulse. Only the
+     width and animation are set here; the component still decides when the
+     ring's outline style is visible. */
+  a-slider:focus-visible::part(control),
+  a-slider::part(thumb):focus-visible,
+  input[data-anta][type="range"]:focus-visible {
+    outline-width: 2px;
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+  a-slider::part(control),
+  input[data-anta][type="range"] {
+    border-radius: 1px;
+  }
+
   /* Slider rails and thumb strokes share the checked-control fills in dark
      mode. Light mode keeps the base role-token colors. */
   a-slider:is(:not([tone]), [tone=""], [tone="neutral"]) {

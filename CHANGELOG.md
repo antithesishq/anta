@@ -13,13 +13,13 @@ changes are not listed.
 - [Select's default field](/select/#migrate-field-styles) now uses `a-input[button]`.
   `className` and `style` apply to that host. For custom field CSS, pass
   `className="my-select"` and replace `a-select-field > a-button` with
-  `.my-select::part(field)`. Target the selected text with `.my-select::part(button-label)`
+  `.my-select::part(field)`. Target the selected text with `.my-select::part(input-label)`
   instead of `a-button-label`. Existing raw `a-select-field`
   compositions retain their CSS, JSX types, and label and hint behavior.
 
 ### Added
 
-- [Input button fields](/input/#styling) expose `::part(button-label)` for their
+- [Input button fields](/input/#styling) expose `::part(input-label)` for their
   value or placeholder text. [Select](/select/#migrate-field-styles) uses the same part.
 - [Select's `dimActions` prop](/select/) controls its trigger adornments. They
   dim at rest and brighten on hover or focus; pass `false` to keep them fully visible.

@@ -24,13 +24,13 @@ import './a-input.css'
  *     <span slot="hint">We never share it.</span>
  *   </a-input>
  *
- * Shadow structure — every node carries a `part` so consumers can reach it
- * without piercing the boundary blindly:
+ * Public shadow styling parts:
  *
  *   <slot class="label" part="label" name="label">         ← display:none until a label is slotted
  *   <div class="field" part="field">                        ← the bordered box; :focus-within ring
  *     <slot name="leading" part="leading">
  *     <input|textarea|button part="input">                  ← created in JS per field mode
+ *       <span part="input-label">                           ← button-mode value or placeholder
  *     <slot name="trailing" part="trailing">
  *   <slot class="hint" part="hint" name="hint">           ← message; the JSX wrapper may slot a status <Icon> here too when [status]
  *
@@ -252,7 +252,7 @@ const SHADOW_STYLE = `
     padding-block: var(--_pad-block);
     overflow-y: auto;
   }
-  button { text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
+  button { align-self: stretch; text-align: start; white-space: nowrap; overflow: hidden; cursor: pointer; }
   button.placeholder { color: var(--input-placeholder); }
   :host([maxrows]:not([rows])) textarea {
     max-height: calc(var(--_lh) * var(--_maxrows) + var(--_pad-block) * 2);
@@ -338,6 +338,7 @@ export class AInputElement extends HTMLElementBase {
   private hintSlot: HTMLSlotElement
   private leadingSlot: HTMLSlotElement
   private control?: Control
+  #buttonText?: HTMLSpanElement
   // The intended value, captured even before the control exists (a framework
   // may set the `value` property before the element connects), so the initial
   // value isn't lost when the control is built.
@@ -360,6 +361,8 @@ export class AInputElement extends HTMLElementBase {
   private popupAriaSource?: Element
   private popupControls: Element | null = null
   private popupActiveDescendant: Element | null = null
+  #labelObserver?: MutationObserver
+  #labelHasText = false
 
   constructor() {
     super()
@@ -387,8 +390,7 @@ export class AInputElement extends HTMLElementBase {
     // Clicking the (light-DOM) label focuses the (shadow) control — the native
     // <label for> association can't cross the boundary, so we wire it here.
     this.labelSlot.addEventListener('click', () => this.control?.focus())
-    // Mirror the label's text into the control's aria-label unless an explicit
-    // delegated name already exists.
+    // Link the native control to the consumer's label elements.
     this.labelSlot.addEventListener('slotchange', this.onLabelSlotChange)
 
     this.field = document.createElement('div')
@@ -429,10 +431,7 @@ export class AInputElement extends HTMLElementBase {
     this.hintSlot.className = 'hint'
     this.hintSlot.setAttribute('part', 'hint')
     this.hintSlot.name = 'hint'
-    // Mirror the hint/error text into the control's aria-description (unless the
-    // host already carries one) — IDREFs can't cross the shadow boundary, so the
-    // string-valued aria-description is how the message reaches the focused
-    // control. Same approach as the label → aria-label mirror above.
+    // Element references let the browser derive descriptions from live hint text.
     this.hintSlot.addEventListener('slotchange', this.onHintSlotChange)
     // Default (unnamed) slot for projecting extra children. It sits *between*
     // the field and the hint, so a plain child renders directly under the field
@@ -466,6 +465,12 @@ export class AInputElement extends HTMLElementBase {
     }
     if (!this.control) this.buildControl()
     this.ready = true
+    this.applyLabelAria()
+    this.applyDescriptionAria()
+  }
+
+  disconnectedCallback() {
+    this.#labelObserver?.disconnect()
   }
 
   [SYNC_POPUP_ARIA](relations: PopupAriaRelations) {
@@ -570,7 +575,10 @@ export class AInputElement extends HTMLElementBase {
     const control = this.control
     if (!control) return
     applyShadowAria(this, control, name, this.delegatedAria.get(name) ?? null)
-    if (name === 'aria-label' || name === 'aria-labelledby') this.applyLabelAria()
+    if (name === 'aria-label' || name === 'aria-labelledby') {
+      this.applyLabelAria()
+      this.applyDescriptionAria()
+    }
     if (name === 'aria-description' || name === 'aria-describedby') this.applyDescriptionAria()
     if (name === 'aria-invalid' && !this.delegatedAria.has(name)) this.syncStatus()
     if (name === 'aria-controls' || name === 'aria-activedescendant') this.applyPopupAria()
@@ -584,6 +592,7 @@ export class AInputElement extends HTMLElementBase {
       const control = this.control
       if (!control) return
       for (const [name, value] of this.delegatedAria) applyShadowAria(this, control, name, value)
+      this.applyDescriptionAria()
     })
   }
 
@@ -602,7 +611,13 @@ export class AInputElement extends HTMLElementBase {
     const multiline = this.hasAttribute('multiline') || this.hasAttribute('rows')
     const button = !multiline && this.hasAttribute('button')
     const next = document.createElement(button ? 'button' : multiline ? 'textarea' : 'input') as Control
-    if (next instanceof HTMLButtonElement) next.type = 'button'
+    this.#buttonText = undefined
+    if (next instanceof HTMLButtonElement) {
+      next.type = 'button'
+      this.#buttonText = document.createElement('span')
+      this.#buttonText.setAttribute('part', 'input-label')
+      next.append(this.#buttonText)
+    }
     next.setAttribute('part', 'input')
     if (this.control) this.control.replaceWith(next)
     else this.leadingSlot.after(next)
@@ -709,8 +724,9 @@ export class AInputElement extends HTMLElementBase {
     const button = this.control
     if (!(button instanceof HTMLButtonElement)) return
     const value = button.value
-    button.textContent = value || this.getAttribute('placeholder') || ''
+    if (this.#buttonText) this.#buttonText.textContent = value || this.getAttribute('placeholder') || ''
     button.classList.toggle('placeholder', !value)
+    this.applyDescriptionAria()
   }
 
   private syncFormValue(value: string) {
@@ -761,15 +777,31 @@ export class AInputElement extends HTMLElementBase {
 
   private onLabelSlotChange = () => {
     this.applyLabelAria()
+    this.applyDescriptionAria()
   }
 
   private applyLabelAria() {
     const c = this.control
     if (!c) return
-    if (this.delegatedAria.has('aria-label') || this.delegatedAria.has('aria-labelledby')) return
-    const text = this.labelSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
-    if (text) c.setAttribute('aria-label', text)
-    else c.removeAttribute('aria-label')
+    this.#labelObserver?.disconnect()
+    if (this.delegatedAria.has('aria-labelledby')) return
+    if (this.delegatedAria.has('aria-label')) {
+      c.ariaLabelledByElements = []
+      return
+    }
+    const labels = this.labelSlot.assignedElements()
+    c.ariaLabelledByElements = labels
+    this.#labelHasText = labels.some(label => !!label.textContent?.trim())
+    if (!(c instanceof HTMLButtonElement) || !this.isConnected || !labels.length) return
+    // An empty label lets the button's content become its name. Only this
+    // transition changes whether its value belongs in the description.
+    this.#labelObserver ??= new this.view.MutationObserver(() => {
+      const hasText = this.labelSlot.assignedElements().some(label => !!label.textContent?.trim())
+      if (hasText === this.#labelHasText) return
+      this.#labelHasText = hasText
+      this.applyDescriptionAria()
+    })
+    for (const label of labels) this.#labelObserver.observe(label, { childList: true, characterData: true, subtree: true })
   }
 
   private onHintSlotChange = () => {
@@ -779,23 +811,25 @@ export class AInputElement extends HTMLElementBase {
   private applyDescriptionAria() {
     const c = this.control
     if (!c) return
-    if (this.delegatedAria.has('aria-description') || this.delegatedAria.has('aria-describedby')) return
-    const text = this.hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
-    if (text) c.setAttribute('aria-description', text)
-    else c.removeAttribute('aria-description')
+    if (this.delegatedAria.has('aria-describedby')) return
+    if (this.delegatedAria.has('aria-description')) {
+      c.ariaDescribedByElements = []
+      return
+    }
+    const named = c.getAttribute('aria-label')?.trim() ||
+      (this.delegatedAria.has('aria-labelledby') ? c.ariaLabelledByElements?.length :
+        !this.delegatedAria.has('aria-label') && this.#labelHasText)
+    const value = c instanceof HTMLButtonElement && named && c.value.trim() ? this.#buttonText : null
+    c.ariaDescribedByElements = [...(value ? [value] : []), ...this.hintSlot.assignedElements()]
   }
 
   private applyPopupAria() {
     const control = this.control
     if (!control) return
-    try {
-      if (!this.delegatedAria.has('aria-controls') && 'ariaControlsElements' in control)
-        control.ariaControlsElements = this.popupControls ? [this.popupControls] : null
-      if (!this.delegatedAria.has('aria-activedescendant') && 'ariaActiveDescendantElement' in control)
-        control.ariaActiveDescendantElement = this.popupActiveDescendant
-    } catch {
-      // Direct ARIA element reflection is unavailable in older engines.
-    }
+    if (!this.delegatedAria.has('aria-controls'))
+      control.ariaControlsElements = this.popupControls ? [this.popupControls] : null
+    if (!this.delegatedAria.has('aria-activedescendant'))
+      control.ariaActiveDescendantElement = this.popupActiveDescendant
   }
 
   private updateFilled() {
@@ -806,6 +840,10 @@ export class AInputElement extends HTMLElementBase {
   private updateValidity() {
     const c = this.control
     if (!this.internals || !c) return
+    if (c instanceof HTMLButtonElement) {
+      this.internals.setValidity({})
+      return
+    }
     // Reflect the inner control's native constraints — valueMissing (from
     // `required`), typeMismatch (e.g. `type="email"`), patternMismatch,
     // tooShort/tooLong, … — onto the host so the surrounding <form> sees them.
@@ -872,6 +910,7 @@ export class AInputElement extends HTMLElementBase {
 
   // --- Form-associated callbacks ---
   formResetCallback() {
+    if (this.control instanceof HTMLButtonElement) return
     this.value = this.getAttribute('defaultvalue') ?? ''
     // The setter updates form value / validity / filled but fires no events, so a
     // controlled consumer would never learn the field reset and would re-render

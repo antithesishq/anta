@@ -14,11 +14,12 @@ before(async () => {
     stdin: {
       contents: `import { h, render } from 'preact'
         import { configure } from './src/jsx-runtime'
-        import { Button, Checkbox, Input, MenuItem, Select, Switch, Tag } from './src/index'
+        import { Button, Checkbox, Input, Menu, MenuItem, Select, Switch, Tag } from './src/index'
         import './src/tokens.css'
         import './src/reset.css'
         import './src/elements/a-button'
         import './src/elements/a-input'
+        import './src/elements/a-menu'
         import './src/elements/a-checkbox'
         import './src/elements/a-radio'
         import './src/elements/a-radio-group'
@@ -55,6 +56,15 @@ before(async () => {
           </a-radio-group>
           <MenuItem id="menu-unselected" tone="info" toneScope="selected" label="Unselected" />
           <MenuItem id="menu-selected" tone="info" toneScope="selected" selected label="Selected" />
+          <Button>Rounded menu</Button>
+          <Menu id="custom-menu" round={12}>
+            <MenuItem id="rounded-menu-row" label="Rounded row" />
+            <MenuItem label="Square submenu"><Menu><MenuItem id="square-submenu-row" label="Square row" /></Menu></MenuItem>
+          </Menu>
+          <Button>Square menu</Button>
+          <Menu>
+            <MenuItem label="Rounded submenu"><Menu round><MenuItem id="round-submenu-row" label="Rounded row" /></Menu></MenuItem>
+          </Menu>
           <Select tone="brand" toneScope="selected" defaultValue="a" options={[
             { value: 'a', label: 'Selected option' },
             { value: 'b', label: 'Unselected option' },
@@ -304,10 +314,11 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
     const values = await page.evaluate(() => {
       const radius = id => {
         const el = document.getElementById(id)
-        return getComputedStyle(el.shadowRoot?.querySelector('[part="field"]') ?? el).borderTopLeftRadius
+        return getComputedStyle(el.shadowRoot?.querySelector('[part="field"], [part="menu"]') ?? el).borderTopLeftRadius
       }
       return {
         radii: ['button', 'link', 'custom-button', 'input', 'custom-input', 'tag', 'native-button', 'native-input', 'native-textarea'].map(radius),
+        menuRadii: ['custom-menu', 'rounded-menu-row', 'square-submenu-row', 'round-submenu-row'].map(radius),
         seeds: ['button', 'scoped-button'].map(id => {
           const style = getComputedStyle(document.getElementById(id))
           return ['--anta-seed-brand', '--anta-seed-neutral'].map(key => style.getPropertyValue(key).trim())
@@ -315,6 +326,7 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
       }
     })
     assert.deepEqual(values.radii, ['999px', '999px', '6px', '0px', '8px', '3px', '999px', '0px', '0px'])
+    assert.deepEqual(values.menuRadii, ['12px', '999px', '0px', '999px'])
     assert.deepEqual(values.seeds, [['#cc4636', '#65605b'], ['#cc4636', '#65605b']])
   }
   for (const theme of ['antune', 'none', 'antithesis']) {
@@ -325,5 +337,6 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
     }), theme)
     assert.equal(await page.locator('#button').evaluate(el => getComputedStyle(el).borderTopLeftRadius), theme === 'antithesis' ? '999px' : '4px')
     assert.equal(await page.locator('#tag').evaluate(el => getComputedStyle(el).borderTopLeftRadius), theme === 'antithesis' ? '3px' : '22px')
+    assert.equal(await page.locator('#custom-menu').evaluate(el => getComputedStyle(el.shadowRoot.querySelector('[part="menu"]')).borderTopLeftRadius), '12px')
   }
 })

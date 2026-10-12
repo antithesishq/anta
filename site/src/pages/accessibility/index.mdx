@@ -48,6 +48,20 @@ When `Text` is `truncated` *without* `expandable`, the hidden portion is also hi
 
 ## ARIA lives in JSX wrappers, not in web components
 
-Anta's web components (`<a-progress>`, `<a-text>`, `<a-icon>`, …) are **pure declarative DOM**. They never set ARIA attributes from JS — no `setAttribute` from constructors or `attributeChangedCallback`. ARIA wiring (`role`, `aria-label`, `aria-valuenow`, etc.) is layered on by the JSX wrappers (`Progress`, `Icon`, `Text`) as ordinary attribute pass-through. If you write the elements by hand instead of via the wrappers, you're responsible for the ARIA bits — the elements stay DOM-clean either way.
+JSX wrappers author accessibility intent through `role`, `aria-*` declarations,
+labels, and hints. Raw-element consumers provide the same declarations and
+slotted content. Web components keep consumer-owned light DOM declarative.
 
-This means consumers in other reactive engines (Worker-driven UIs, plain HTML, hand-rolled JSX) get web components that don't fight their state model, while React/Preact users get accessible defaults out of the box from the wrappers.
+When focus lands on a native control inside shadow DOM, the web component
+delegates host ARIA to that control. It connects slotted labels and hints through
+the browser's [label references](https://developer.mozilla.org/en-US/docs/Web/API/Element/ariaLabelledByElements)
+and [description references](https://developer.mozilla.org/en-US/docs/Web/API/Element/ariaDescribedByElements).
+The browser derives the accessible name and description from the referenced
+elements' current content. Editing that text does not require copying it into
+`aria-label` or `aria-description`; replacing an element requires updating the
+reference. Explicit consumer-authored ARIA takes precedence.
+
+This DOM wiring belongs in the web component, which owns the native shadow
+control. JSX wrappers do not need DOM refs, so the same composition works with
+React, Preact, and worker-driven renderers. The component still updates states
+such as `aria-expanded`; element references derive names and descriptions.

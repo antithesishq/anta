@@ -20,16 +20,22 @@ changes are not listed.
 
 ### Added
 
+- [Select's `dimActions` prop](/select/) controls its trigger adornments. They
+  dim at rest and brighten on hover or focus; pass `false` to keep them fully visible.
 - [Title typeface](/title/#typeface): `font` sets a title in `serif`,
   `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Changed
 
+- Antithesis [menus](/menu/) use square corners and row-specific hover and
+  selected fills. Neutral labels use `text-1`; disabled labels, icons, and hints
+  use `text-4`. Explicit `round` values retain rounded menus.
 - In the Antithesis theme, serif headings use weight 300. Load a light cut of
   your serif font.
 
 ### Fixed
 
+- [Menu](/menu/) applies custom `round` values to its container in every theme.
 - [InputDate](/input-date/) labels and hints no longer toggle its calendar.
   [Menu](/menu/) field anchors ignore clicks outside their field part.
 - [Input](/input/) button fields and [Select](/select/) describe the selected value

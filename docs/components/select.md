@@ -14,6 +14,10 @@ If you omit `label`, provide `aria-label` or `aria-labelledby` that identifies
 the field. The trigger's `leading` content and chevron are hidden from assistive
 technologies. Include any meaningful prefix in the accessible name.
 
+The default trigger's leading content and chevron dim to 60% opacity at rest
+and brighten on hover or focus. Set `dimActions={false}` to keep them fully
+visible. Custom triggers control their own adornments.
+
 ## Options
 
 ```tsx
@@ -644,6 +648,7 @@ scannable list instead of hiding matches behind flyouts.
 | `clearable?` | boolean | — | Add a "Clear" row pinned in the menu **footer** that empties the selection (single → none, multiple → `[]`). Shown only while something is selected, so it never scrolls away in a long or filtered list. |
 | `clearLabel?` | string | Clear | Label for the `clearable` footer row. |
 | `defaultValue?` | V \| V[] | — | Initial selected option value for uncontrolled use. |
+| `dimActions?` | boolean | true | Dim the default trigger's leading content and chevron at rest. They brighten on hover or focus. Ignored by `renderTrigger`. |
 | `disabled?` | boolean | — | Disable the whole select. |
 | `filter?` | boolean \| (option, query) => boolean | — | Add a search field at the top of the menu that filters the options as you type. `true` uses the built-in matcher — a case-insensitive substring of the option's **value / label / hint**. Pass a **function** `(option, query) => boolean` for custom matching (called per option; return `true` to keep it). |
 | `hint?` | string | — | Helper text under the field. |

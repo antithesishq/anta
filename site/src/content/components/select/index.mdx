@@ -31,6 +31,10 @@ If you omit `label`, provide `aria-label` or `aria-labelledby` that identifies
 the field. The trigger's `leading` content and chevron are hidden from assistive
 technologies. Include any meaningful prefix in the accessible name.
 
+The default trigger's leading content and chevron dim to 60% opacity at rest
+and brighten on hover or focus. Set `dimActions={false}` to keep them fully
+visible. Custom triggers control their own adornments.
+
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground

@@ -201,6 +201,10 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  technologies. Include any meaningful prefix in `label` or `aria-label`.
    *  Ignored by `renderTrigger`. */
   leading?: React.ReactNode
+  /** Dim the default trigger's leading content and chevron at rest. They brighten
+   *  on hover or focus. Ignored by `renderTrigger`.
+   *  @defaultValue true */
+  dimActions?: boolean
   /** Visible field label and accessible name for the default trigger. If omitted,
    *  provide `aria-label` or `aria-labelledby` that identifies the field.
    *  `leading` content is hidden from assistive technologies and does not label
@@ -474,6 +478,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     placeholder,
     icon,
     leading,
+    dimActions = true,
     label,
     hint,
     size,
@@ -781,6 +786,7 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
       ) : (
       <Input
         button
+        dimActions={dimActions}
         label={label}
         hint={hint}
         value={display}

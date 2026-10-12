@@ -87,6 +87,10 @@ thumb movement and keyboard controls stay the same.
 
 `size` follows the input height scale: 24px, 28px, and 32px. `trackSize` sets the thickness of both rail segments without changing the control height; numbers use pixels and strings accept CSS lengths. `thumbSize` controls the thumb diameter, and `thumbFill` fills it with its resolved border color. `tone` colors the filled rail. `thumbTone` separately colors the thumb stroke. The unfilled rail stays neutral. `round` shapes both the rail and thumb. Pass `true` for fully round corners or a number or CSS length for a shared custom radius.
 
+In the Antithesis theme, an omitted `thumbTone` follows the filled rail's color.
+Other themes keep the thumb neutral. Pass `thumbTone="neutral"` to keep a neutral
+thumb in every theme. The native range uses the same rule for `thumb-tone`.
+
 ```tsx
 <Slider size="small" tone="info" label="Small" defaultValue={32} />
 <Slider tone="brand" thumbTone="success" trackSize={4} thumbSize={20} thumbFill label="Medium, filled thumb" defaultValue={52} />
@@ -131,7 +135,7 @@ thumb movement and keyboard controls stay the same.
 | `step?` | number | 1 | Smallest keyboard and drag increment. |
 | `thumbFill?` | boolean | false | Fill the thumb with its resolved border color. This follows `thumbTone` and interactive states. |
 | `thumbSize?` | number \| string | 16 | Diameter of the thumb. Numbers use pixels; strings are CSS lengths. Keep it at least as large as `trackSize`. |
-| `thumbTone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the thumb stroke. Pass a named tone or a literal CSS color for a one-off custom tone. Omit it to keep the thumb neutral. |
+| `thumbTone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' (the Antithesis theme follows `tone`) | Color of the thumb stroke. Pass a named tone or a literal CSS color for a one-off custom tone. An explicit `neutral` keeps the thumb neutral in every theme. |
 | `tone?` | 'neutral' \| 'brand' \| 'info' \| 'success' \| 'warning' \| 'critical' \| (string & {}) | 'neutral' | Color of the filled rail. Pass a named tone or a literal CSS color for a one-off custom tone. The unfilled rail stays neutral. |
 | `trackClick?` | 'drag-only' \| 'jump' | 'drag-only' | Controls what happens when the rail is pressed. `drag-only` starts dragging from the current value. `jump` first moves to the pressed position. |
 | `trackSize?` | number \| string | 2 | Thickness of both rail segments. Numbers use pixels; strings are CSS lengths. Keep it no larger than the thumb diameter. |

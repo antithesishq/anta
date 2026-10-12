@@ -28,6 +28,9 @@ changes are not listed.
 
 ### Changed
 
+- Antithesis [Sliders](/slider/#size-tones-and-radius) use the filled rail's color
+  for the thumb when `thumbTone` is omitted. Pass `thumbTone="neutral"` to keep
+  a neutral thumb.
 - Antithesis [menus](/menu/) use 2px container corners and row-specific hover and
   selected fills. Neutral labels use `text-1`; disabled labels, icons, and hints
   use `text-4`. Explicit `round` values retain rounded menus.

@@ -14,7 +14,7 @@ before(async () => {
     stdin: {
       contents: `import { h, render } from 'preact'
         import { configure } from './src/jsx-runtime'
-        import { Button, Checkbox, Input, Menu, MenuItem, Select, Switch, Tag } from './src/index'
+        import { Button, Checkbox, Input, Menu, MenuItem, Select, Slider, Switch, Tag } from './src/index'
         import './src/tokens.css'
         import './src/reset.css'
         import './src/elements/a-button'
@@ -27,6 +27,7 @@ before(async () => {
         import './src/elements/a-tab.css'
         import './src/elements/a-tag'
         import './src/elements/a-select'
+        import './src/elements/a-slider'
         configure(h)
         render(<>
           <Button id="button">Button</Button>
@@ -38,6 +39,11 @@ before(async () => {
           <Input id="input" value="Text" />
           <Input id="custom-input" round={8} value="Custom" />
           <Tag id="tag">Tag</Tag>
+          <Slider id="slider-default" label="Neutral slider" defaultValue={50} />
+          <Slider id="slider-brand" label="Brand slider" tone="brand" defaultValue={50} />
+          <Slider id="slider-neutral" label="Neutral thumb" tone="brand" thumbTone="neutral" defaultValue={50} />
+          <input data-anta id="native-range-brand" type="range" tone="brand" aria-label="Brand range" />
+          <input data-anta id="native-range-neutral" type="range" tone="brand" thumb-tone="neutral" aria-label="Neutral range thumb" />
           <Checkbox id="checkbox-all" tone="brand" defaultChecked>All</Checkbox>
           <Checkbox id="checkbox-selected" tone="brand" toneScope="selected">Selected only</Checkbox>
           <Checkbox id="checkbox-selected-on" tone="brand" toneScope="selected" defaultChecked>Selected only on</Checkbox>
@@ -314,6 +320,51 @@ test('tone scope changes resting chrome without changing the tone identity', asy
   const selectTones = await page.locator('a-menu-item[role="menuitemradio"]').evaluateAll(items =>
     items.map(item => item.getAttribute('tone')))
   assert.deepEqual(selectTones, ['brand', null])
+})
+
+test('Antithesis sliders follow the rail tone while preserving explicit neutral thumbs', async t => {
+  const page = await browser.newPage()
+  t.after(() => page.close())
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.route('http://themes.test/**', route => {
+    const path = new URL(route.request().url()).pathname
+    return route.fulfill({
+      contentType: path.endsWith('.css') ? 'text/css' : path.endsWith('.js') ? 'text/javascript' : 'text/html',
+      body: assets.get(path) ?? '<!doctype html><link rel="stylesheet" href="/fixture.css"><link rel="stylesheet" href="/antithesis.css"><script type="module" src="/fixture.js"></script>',
+    })
+  })
+  await page.goto('http://themes.test/')
+  await page.waitForFunction(() => document.querySelector('#slider-brand')?.shadowRoot)
+  assert.equal(await page.locator('#slider-neutral').getAttribute('thumb-tone'), 'neutral')
+
+  for (const dark of [false, true]) {
+    await page.evaluate(dark => document.documentElement.classList.toggle('dark', dark), dark)
+    const colors = await page.evaluate(() => {
+      const slider = id => {
+        const root = document.getElementById(id).shadowRoot
+        return {
+          fill: getComputedStyle(root.querySelector('[part="fill"]')).backgroundColor,
+          thumb: getComputedStyle(root.querySelector('[part~="thumb"]')).borderTopColor,
+        }
+      }
+      const native = id => {
+        const el = document.getElementById(id)
+        el.style.color = 'var(--anta-native-range-fill)'
+        const fill = getComputedStyle(el).color
+        el.style.color = 'var(--anta-native-range-thumb-border)'
+        return { fill, thumb: getComputedStyle(el).color }
+      }
+      return {
+        default: slider('slider-default'), brand: slider('slider-brand'), neutral: slider('slider-neutral'),
+        nativeBrand: native('native-range-brand'), nativeNeutral: native('native-range-neutral'),
+      }
+    })
+    assert.equal(colors.brand.thumb, colors.brand.fill)
+    assert.equal(colors.neutral.thumb, colors.default.thumb)
+    assert.notEqual(colors.neutral.thumb, colors.neutral.fill)
+    assert.deepEqual(colors.nativeBrand, colors.brand)
+    assert.deepEqual(colors.nativeNeutral, colors.neutral)
+  }
 })
 
 test('Antithesis shapes and seeds follow the theme, preserving explicit rounding', async t => {

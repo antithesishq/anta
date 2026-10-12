@@ -99,6 +99,23 @@ before(async () => {
             h(Select, { id: 'description-select', options: ['Design', 'Engineering'], defaultValue: 'Design', hint: 'Pick a team' }),
             h(Select, { options: ['One'], placeholder: 'Pick an option' }),
             h(Select, { label: 'Named empty team', options: ['One'], placeholder: 'Pick an option', hint: 'Pick a team' }),
+            h(Select, {
+              id: 'prefixed-select',
+              'aria-label': 'Status',
+              leading: h('strong', {}, 'Status:'),
+              options: ['Open', 'Closed'],
+              defaultValue: 'Open',
+              placeholder: 'Choose status',
+              filter: true,
+              clearable: true,
+              clearLabel: 'Clear status',
+            }),
+            h(Select, {
+              label: 'Priority',
+              leading: h('em', {}, 'Priority:'),
+              options: ['High', 'Low'],
+              defaultValue: 'High',
+            }),
           ), mount)
         }
         window.mountHoverRange = () => {
@@ -959,6 +976,33 @@ test('Input buttons and Select describe hints without repeating their name or pl
   const selected = (await cdp.send('Accessibility.getFullAXTree')).nodes.find(node =>
     node.role?.value === 'button' && node.name?.value === 'Engineering')
   assert.equal(selected?.description?.value, 'Pick a team')
+})
+
+test('Select hides trigger adornments while preserving its name, selection, and Clear action', async t => {
+  const page = await pageFor(t)
+  await page.evaluate(() => window.mountDescriptionFields())
+  const cdp = await page.context().newCDPSession(page)
+  const { nodes } = await cdp.send('Accessibility.getFullAXTree')
+  for (const [name, value] of [['Status', 'Open'], ['Priority', 'High']]) {
+    const button = nodes.find(node => !node.ignored && node.role?.value === 'button' && node.name?.value === name)
+    assert.ok(button, name)
+    assert.equal(button.description?.value, value)
+    assert.equal(nodes.some(node => !node.ignored && node.name?.value === name + ':'), false)
+  }
+
+  const host = page.locator('#prefixed-select')
+  const trigger = host.locator('[part="input"]')
+  await host.locator('[slot="leading"] strong').click()
+  await trigger.and(page.locator('[aria-expanded="true"]')).waitFor()
+  const popup = page.locator('#prefixed-select + a-menu')
+  const opened = (await cdp.send('Accessibility.getFullAXTree')).nodes
+  assert.ok(opened.some(node => !node.ignored && node.role?.value === 'button' && node.name?.value === 'Clear status'))
+  await popup.getByRole('button', { name: 'Clear status', exact: true }).click()
+  const cleared = (await cdp.send('Accessibility.getFullAXTree')).nodes.find(node =>
+    !node.ignored && node.role?.value === 'button' && node.name?.value === 'Status')
+  assert.ok(cleared)
+  assert.equal(cleared.description?.value, undefined)
+  assert.equal(await trigger.textContent(), 'Choose status')
 })
 
 test('Input button descriptions follow added and removed labels and explicit ARIA overrides', async t => {

@@ -15,6 +15,8 @@ changes are not listed.
   `a-select-field > a-button` with your Select class and `::part(field)`, and
   `a-button-label` selectors with `::part(input)`. Existing raw `a-select-field`
   compositions retain their CSS, JSX types, and label and hint behavior.
+  Use `label` or `aria-label` to name the field. Leading content and the chevron
+  remain hidden from assistive technologies.
 
 ### Added
 

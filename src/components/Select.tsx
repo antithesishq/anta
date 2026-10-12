@@ -197,9 +197,14 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
   icon?: IconShape
   /** Content before the default trigger's value, such as a key prefix
    *  before the value. It replaces the icon derived from `icon`. Include an
-   *  `<Icon>` in this content when both are needed. Ignored by `renderTrigger`. */
+   *  `<Icon>` in this content when both are needed. Hidden from assistive
+   *  technologies. Include any meaningful prefix in `label` or `aria-label`.
+   *  Ignored by `renderTrigger`. */
   leading?: React.ReactNode
-  /** Field label, above the trigger. */
+  /** Visible field label and accessible name for the default trigger. If omitted,
+   *  provide `aria-label` or `aria-labelledby` that identifies the field.
+   *  `leading` content is hidden from assistive technologies and does not label
+   *  the trigger. */
   label?: string
   /** Helper text under the field. */
   hint?: string
@@ -767,6 +772,8 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
     return out
   }
 
+  const triggerLeading = leading ?? (icon ? <Icon shape={icon} /> : undefined)
+
   return (
     <>
       {renderTrigger ? (
@@ -778,7 +785,9 @@ export const Select = <V extends OptionValue = string>(props: SelectProps<V>) =>
         hint={hint}
         value={display}
         placeholder={placeholder}
-        leading={leading ?? (icon ? <Icon shape={icon} /> : undefined)}
+        leading={triggerLeading != null ? (
+          <span aria-hidden="true" style={{ display: 'contents' }}>{triggerLeading}</span>
+        ) : undefined}
         disabled={disabled}
         size={size}
         status={status}

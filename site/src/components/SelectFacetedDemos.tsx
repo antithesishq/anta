@@ -150,6 +150,7 @@ export function SelectFacetedBasicDemo() {
                   value={value[facet.key] as any}
                   onValueChange={(v: any) => setFacet(facet.key, v)}
                   leading={`${facet.label}:`}
+                  aria-label={facet.label}
                   filter={facet.filter}
                   clearable
                   className="sf-chip"

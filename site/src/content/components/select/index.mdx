@@ -26,6 +26,11 @@ Select uses an [Input](/input/) field with a native button inside it and a
 **`onValueChange`** to control the selection, or use `defaultValue` for an
 uncontrolled Select.
 
+Use `label` to give the default trigger a visible label and accessible name.
+If you omit `label`, provide `aria-label` or `aria-labelledby` that identifies
+the field. The trigger's `leading` content and chevron are hidden from assistive
+technologies. Include any meaningful prefix in the accessible name.
+
 <Disclosure title="Playground" anchor={false} brand>
 
 <Playground

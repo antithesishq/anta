@@ -539,6 +539,9 @@ values.
 
 ## Styling
 
+In the Antithesis theme, menus and their rows have square corners. Pass `round`
+to round a menu and its rows. Each submenu follows its own `round` setting.
+
 The popover surface lives in shadow DOM and is exposed as a **part** — style its
 chrome (background, frost, border, radius, shadow, padding, min-width) with
 `::part(menu)`. Menu items are light DOM, so style them (and their

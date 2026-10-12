@@ -557,11 +557,15 @@ ring is the global [`--focus-ring`](../colors.md#focus-ring).
 ```
 
 For everything else, `<a-input>` is shadow-DOM — style its **parts** with plain
-CSS: `::part(field | input | label | leading | trailing | clear | hint)`, plus the
+CSS: `::part(field | input | input-label | label | leading | trailing | clear | hint)`, plus the
 `:state(filled)` / `:state(invalid)` state hooks and `:focus-within::part(field)`
 for the focused state. The clear button is a real `<a-button>` in the `clear` slot,
 so style it directly. `light-dark()` works too (Anta sets `color-scheme` from its
 theme toggle).
+
+In button fields, `::part(input)` targets the native button, and
+`::part(input-label)` targets its value or placeholder text. `::part(label)`
+targets the separate visible field label.
 
 ```css
 a-input::part(field) { border-radius: 999px; }

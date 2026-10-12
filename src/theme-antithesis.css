@@ -1137,11 +1137,26 @@
     --anta-slider-thumb-border-width: 2px;
   }
 
-  /* Slider focus rings match the other controls: 2px with the pulse. Only the
-     width and animation are set here; the component still decides when the
-     ring's outline style is visible. */
-  a-slider:focus-visible::part(control),
-  a-slider::part(thumb):focus-visible,
+  /* Slider focus matches Checkbox and Radio: the 2px pulsing ring sits on the
+     thumb with a 1px halo inside it. The stroke or fill moves inside the halo,
+     so the thumb keeps its size. The ring stays off after a pointer drag until
+     the next key press. Native ranges keep the ring around the control, since
+     their thumb is clipped for the fill. */
+  a-slider:focus-visible::part(control) {
+    outline: none;
+  }
+  a-slider:focus-visible:not(:state(pointer-focus))::part(thumb),
+  a-slider:not(:state(pointer-focus))::part(thumb):focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 0;
+    border: 1px solid var(--focus-halo);
+    box-shadow: inset 0 0 0 var(--anta-slider-thumb-border-width) var(--slider-thumb-border);
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
   input[data-anta][type="range"]:focus-visible {
     outline-width: 2px;
     animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
@@ -1150,7 +1165,6 @@
       animation: none;
     }
   }
-  a-slider::part(control),
   input[data-anta][type="range"] {
     border-radius: 1px;
   }

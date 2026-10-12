@@ -1133,6 +1133,154 @@
     box-shadow: inset 0 0 0 1px var(--focus-halo);
   }
 
+  :is(a-slider, input[data-anta][type="range"]):not([thumb-fill]) {
+    --anta-slider-thumb-border-width: 2.5px;
+  }
+
+  /* Like Checkbox and Radio, keyboard focus puts the 2px ring on the thumb
+     itself with a 1px halo inside it. The stroke or fill moves inside the
+     halo, so the thumb keeps its size. */
+  a-slider:focus-visible::part(control) {
+    outline: none;
+  }
+  a-slider:focus-visible::part(thumb),
+  a-slider::part(thumb):focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 0;
+    border: 1px solid var(--focus-halo);
+    box-shadow: inset 0 0 0 var(--anta-slider-thumb-border-width) var(--slider-thumb-border);
+    animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  /* Slider rails and thumb strokes share the checked-control fills in dark
+     mode. Light mode keeps the base role-token colors. */
+  a-slider:is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2) 50%, var(--border-1)), var(--fill-1));
+    --slider-fill-hover: light-dark(var(--border-1), var(--fill-1-hover));
+  }
+  a-slider[tone="brand"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand)), var(--fill-1-brand));
+    --slider-fill-hover: light-dark(var(--border-1-brand), var(--fill-1-brand-hover));
+  }
+  a-slider[tone="info"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info)), var(--fill-1-info));
+    --slider-fill-hover: light-dark(var(--border-1-info), var(--fill-1-info-hover));
+  }
+  a-slider[tone="success"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success)), var(--fill-1-success));
+    --slider-fill-hover: light-dark(var(--border-1-success), var(--fill-1-success-hover));
+  }
+  a-slider[tone="warning"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning)), var(--fill-1-warning));
+    --slider-fill-hover: light-dark(var(--border-1-warning), var(--fill-1-warning-hover));
+  }
+  a-slider[tone="critical"] {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical)), var(--fill-1-critical));
+    --slider-fill-hover: light-dark(var(--border-1-critical), var(--fill-1-critical-hover));
+  }
+  a-slider[tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --slider-interactive-rest: light-dark(color-mix(in oklch, var(--slider-tone-source) 65%, var(--border-2)), oklch(from var(--slider-tone-source) 0.8 0.1 h));
+    --slider-fill-hover: light-dark(color-mix(in oklch, var(--slider-tone-source) 80%, var(--border-1)), oklch(from var(--slider-tone-source) 0.84 0.095 h));
+  }
+  /* Without its own tone, the thumb matches the filled rail. */
+  a-slider:is(:not([thumb-tone]), [thumb-tone=""]) {
+    --slider-thumb-interactive-rest: var(--slider-interactive-rest);
+    --slider-thumb-border-active: var(--slider-fill-hover);
+  }
+  a-slider[thumb-tone="neutral"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2) 50%, var(--border-1)), var(--fill-1));
+    --slider-thumb-border-active: light-dark(var(--border-1), var(--fill-1-hover));
+  }
+  a-slider[thumb-tone="brand"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand)), var(--fill-1-brand));
+    --slider-thumb-border-active: light-dark(var(--border-1-brand), var(--fill-1-brand-hover));
+  }
+  a-slider[thumb-tone="info"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info)), var(--fill-1-info));
+    --slider-thumb-border-active: light-dark(var(--border-1-info), var(--fill-1-info-hover));
+  }
+  a-slider[thumb-tone="success"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success)), var(--fill-1-success));
+    --slider-thumb-border-active: light-dark(var(--border-1-success), var(--fill-1-success-hover));
+  }
+  a-slider[thumb-tone="warning"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning)), var(--fill-1-warning));
+    --slider-thumb-border-active: light-dark(var(--border-1-warning), var(--fill-1-warning-hover));
+  }
+  a-slider[thumb-tone="critical"] {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical)), var(--fill-1-critical));
+    --slider-thumb-border-active: light-dark(var(--border-1-critical), var(--fill-1-critical-hover));
+  }
+  a-slider[thumb-tone]:not([thumb-tone=""], [thumb-tone="neutral"], [thumb-tone="brand"], [thumb-tone="info"], [thumb-tone="success"], [thumb-tone="warning"], [thumb-tone="critical"]) {
+    --slider-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--slider-thumb-tone-source) 65%, var(--border-2)), oklch(from var(--slider-thumb-tone-source) 0.8 0.1 h));
+    --slider-thumb-border-active: light-dark(color-mix(in oklch, var(--slider-thumb-tone-source) 80%, var(--border-1)), oklch(from var(--slider-thumb-tone-source) 0.84 0.095 h));
+  }
+  input[data-anta][type="range"]:is(:not([tone]), [tone=""], [tone="neutral"]) {
+    --anta-native-range-interactive-rest: light-dark(color-mix(in oklch, var(--border-2) 50%, var(--border-1)), var(--fill-1));
+    --anta-native-range-fill-hover: light-dark(var(--border-1), var(--fill-1-hover));
+  }
+  input[data-anta][type="range"][tone="brand"] {
+    --anta-native-range-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand)), var(--fill-1-brand));
+    --anta-native-range-fill-hover: light-dark(var(--border-1-brand), var(--fill-1-brand-hover));
+  }
+  input[data-anta][type="range"][tone="info"] {
+    --anta-native-range-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info)), var(--fill-1-info));
+    --anta-native-range-fill-hover: light-dark(var(--border-1-info), var(--fill-1-info-hover));
+  }
+  input[data-anta][type="range"][tone="success"] {
+    --anta-native-range-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success)), var(--fill-1-success));
+    --anta-native-range-fill-hover: light-dark(var(--border-1-success), var(--fill-1-success-hover));
+  }
+  input[data-anta][type="range"][tone="warning"] {
+    --anta-native-range-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning)), var(--fill-1-warning));
+    --anta-native-range-fill-hover: light-dark(var(--border-1-warning), var(--fill-1-warning-hover));
+  }
+  input[data-anta][type="range"][tone="critical"] {
+    --anta-native-range-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical)), var(--fill-1-critical));
+    --anta-native-range-fill-hover: light-dark(var(--border-1-critical), var(--fill-1-critical-hover));
+  }
+  input[data-anta][type="range"][tone]:not([tone=""], [tone="neutral"], [tone="brand"], [tone="info"], [tone="success"], [tone="warning"], [tone="critical"]) {
+    --anta-native-range-interactive-rest: light-dark(color-mix(in oklch, var(--anta-native-range-tone-source) 65%, var(--border-2)), oklch(from var(--anta-native-range-tone-source) 0.8 0.1 h));
+    --anta-native-range-fill-hover: light-dark(color-mix(in oklch, var(--anta-native-range-tone-source) 80%, var(--border-1)), oklch(from var(--anta-native-range-tone-source) 0.84 0.095 h));
+  }
+  /* Without its own tone, the thumb matches the filled rail. */
+  input[data-anta][type="range"]:is(:not([thumb-tone]), [thumb-tone=""]) {
+    --anta-native-range-thumb-interactive-rest: var(--anta-native-range-interactive-rest);
+    --anta-native-range-thumb-border-active: var(--anta-native-range-fill-hover);
+  }
+  input[data-anta][type="range"][thumb-tone="neutral"] {
+    --anta-native-range-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2) 50%, var(--border-1)), var(--fill-1));
+    --anta-native-range-thumb-border-active: light-dark(var(--border-1), var(--fill-1-hover));
+  }
+  input[data-anta][type="range"][thumb-tone="brand"] {
+    --anta-native-range-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-brand) 50%, var(--border-1-brand)), var(--fill-1-brand));
+    --anta-native-range-thumb-border-active: light-dark(var(--border-1-brand), var(--fill-1-brand-hover));
+  }
+  input[data-anta][type="range"][thumb-tone="info"] {
+    --anta-native-range-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-info) 50%, var(--border-1-info)), var(--fill-1-info));
+    --anta-native-range-thumb-border-active: light-dark(var(--border-1-info), var(--fill-1-info-hover));
+  }
+  input[data-anta][type="range"][thumb-tone="success"] {
+    --anta-native-range-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-success) 50%, var(--border-1-success)), var(--fill-1-success));
+    --anta-native-range-thumb-border-active: light-dark(var(--border-1-success), var(--fill-1-success-hover));
+  }
+  input[data-anta][type="range"][thumb-tone="warning"] {
+    --anta-native-range-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-warning) 50%, var(--border-1-warning)), var(--fill-1-warning));
+    --anta-native-range-thumb-border-active: light-dark(var(--border-1-warning), var(--fill-1-warning-hover));
+  }
+  input[data-anta][type="range"][thumb-tone="critical"] {
+    --anta-native-range-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--border-2-critical) 50%, var(--border-1-critical)), var(--fill-1-critical));
+    --anta-native-range-thumb-border-active: light-dark(var(--border-1-critical), var(--fill-1-critical-hover));
+  }
+  input[data-anta][type="range"][thumb-tone]:not([thumb-tone=""], [thumb-tone="neutral"], [thumb-tone="brand"], [thumb-tone="info"], [thumb-tone="success"], [thumb-tone="warning"], [thumb-tone="critical"]) {
+    --anta-native-range-thumb-interactive-rest: light-dark(color-mix(in oklch, var(--anta-native-range-thumb-tone-source) 65%, var(--border-2)), oklch(from var(--anta-native-range-thumb-tone-source) 0.8 0.1 h));
+    --anta-native-range-thumb-border-active: light-dark(color-mix(in oklch, var(--anta-native-range-thumb-tone-source) 80%, var(--border-1)), oklch(from var(--anta-native-range-thumb-tone-source) 0.84 0.095 h));
+  }
+
   a-input:not([round])::part(field),
   a-input:not([round]):not(:defined)::after {
     border-radius: 0;

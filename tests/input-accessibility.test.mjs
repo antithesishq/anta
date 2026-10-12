@@ -345,7 +345,7 @@ test('filtered Select exposes its textbox and option menu as dialog siblings', a
   const selectHost = page.getByRole('button', { name: 'Repository', exact: true })
   await selectHost.focus()
   await page.keyboard.press('Enter')
-  await page.waitForTimeout(20)
+  await selectHost.and(page.locator('[aria-expanded="true"]')).waitFor()
 
   const popup = page.locator('a-menu[role="dialog"][aria-label="Repository options"]')
   assert.equal(await popup.evaluate(menu => menu.isOpen), true)
@@ -563,7 +563,7 @@ test('button-backed Select and editable InputDate retain their popup interaction
   const selectHost = page.getByRole('button', { name: 'Team', exact: true })
   await selectHost.focus()
   await page.keyboard.press('Enter')
-  assert.equal(await selectHost.getAttribute('aria-expanded'), 'true')
+  await selectHost.and(page.locator('[aria-expanded="true"]')).waitFor()
   assert.deepEqual(
     await selectHost.evaluate(button => ({
       count: button.ariaControlsElements?.length ?? 0,
@@ -574,7 +574,7 @@ test('button-backed Select and editable InputDate retain their popup interaction
   )
 
   await page.keyboard.press('Escape')
-  assert.equal(await selectHost.getAttribute('aria-expanded'), 'false')
+  await selectHost.and(page.locator('[aria-expanded="false"]')).waitFor()
   const dateHost = page.locator('a-input').filter({ has: page.locator('input[aria-label="Due date"]') })
   await dateHost.locator('input').click()
   await dateHost.locator('input[aria-expanded="true"]').waitFor()
@@ -853,17 +853,19 @@ test('Select buttons open once with arrows, Enter, and Space and retain focus-vi
     for (const key of ['ArrowDown', 'ArrowUp', 'Enter', 'Space']) {
       await trigger.focus()
       await page.keyboard.press(key)
-      assert.equal(await trigger.getAttribute('aria-expanded'), 'true', `${name}: ${key}`)
+      await trigger.and(page.locator('[aria-expanded="true"]')).waitFor()
       await page.keyboard.press('Escape')
-      assert.equal(await trigger.getAttribute('aria-expanded'), 'false', `${name}: Escape`)
+      await trigger.and(page.locator('[aria-expanded="false"]')).waitFor()
     }
   }
   const trigger = page.getByRole('button', { name: 'Team', exact: true })
   await page.mouse.click(1200, 700)
   await trigger.click()
+  await trigger.and(page.locator('[aria-expanded="true"]')).waitFor()
   assert.equal(await trigger.evaluate(el => el.matches(':focus-visible')), false)
   assert.equal(await trigger.evaluate(el => getComputedStyle(el.closest('[part="field"]')).outlineStyle), 'none')
   await page.keyboard.press('Escape')
+  await trigger.and(page.locator('[aria-expanded="false"]')).waitFor()
   await trigger.focus()
   assert.equal(await trigger.evaluate(el => el.matches(':focus-visible')), true)
   assert.equal(await trigger.evaluate(el => getComputedStyle(el.closest('[part="field"]')).outlineStyle), 'solid')
@@ -1034,10 +1036,11 @@ test('Select labels focus the trigger, hints leave it closed, and the full field
   assert.equal(await trigger.getAttribute('aria-expanded'), 'false')
   const field = host.locator('[part="field"]')
   await field.click({ position: { x: 10, y: 1 } })
-  assert.equal(await trigger.getAttribute('aria-expanded'), 'true')
+  await trigger.and(page.locator('[aria-expanded="true"]')).waitFor()
   await page.keyboard.press('Escape')
+  await trigger.and(page.locator('[aria-expanded="false"]')).waitFor()
   await host.locator('a-select-chevron').click()
-  assert.equal(await trigger.getAttribute('aria-expanded'), 'true')
+  await trigger.and(page.locator('[aria-expanded="true"]')).waitFor()
 })
 
 test('Select opens inside an ancestor Input label or hint and consumer shadow slot', async t => {
@@ -1067,9 +1070,9 @@ test('Select opens inside an ancestor Input label or hint and consumer shadow sl
       await trigger.scrollIntoViewIfNeeded()
       await page.waitForFunction(() => document.querySelector('a-input[button] + a-menu')?.listening)
       await trigger.click()
-      assert.equal(await trigger.getAttribute('aria-expanded'), 'true', `${kind}: ${slotName}`)
+      await trigger.and(page.locator('[aria-expanded="true"]')).waitFor()
       await page.keyboard.press('Escape')
-      assert.equal(await trigger.getAttribute('aria-expanded'), 'false', `${kind}: ${slotName} Escape`)
+      await trigger.and(page.locator('[aria-expanded="false"]')).waitFor()
     }
   }
 })

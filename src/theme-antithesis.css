@@ -1191,6 +1191,15 @@
   a-tag {
     border-radius: 3px;
   }
+
+  /* A submenu inside a `round` menu keeps the inherited round radius. */
+  a-menu:not([round], a-menu[round] a-menu) {
+    --menu-radius: 2px;
+  }
+
+  :is(a-menu-item, a[data-anta-menu-item]):not(a-menu[round] *) {
+    border-radius: 2px;
+  }
 }
 
 @keyframes focus-ring-pulse {

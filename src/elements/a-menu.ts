@@ -386,7 +386,7 @@ export class AMenuElement extends HTMLElementBase {
         background: var(--menu-bg, Canvas);
         color: var(--text-2, CanvasText);
         border: var(--menu-border, 1px solid);
-        border-radius: var(--menu-radius, 2px);
+        border-radius: var(--menu-radius, 8px);
         box-shadow: var(--menu-shadow, 0 8px 24px rgba(0,0,0,0.2));
         -webkit-backdrop-filter: var(--menu-backdrop-filter, blur(20px));
         backdrop-filter: var(--menu-backdrop-filter, blur(20px));

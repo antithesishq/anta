@@ -48,7 +48,7 @@
     min-height: 28px;
     padding-block: var(--menu-item-padding-y);
     padding-inline: var(--menu-item-padding-x);
-    border-radius: var(--radius-sm, 4px);
+    border-radius: var(--menu-item-radius, var(--radius-sm, 4px));
     color: var(--menu-item-color);
     background: transparent;
     /* Resting / hover-exit easing (the slower, ease-out direction). */
@@ -62,14 +62,6 @@
     cursor: pointer;
     user-select: none;
     outline: none;
-  }
-
-  /* Items go fully round when their menu is `round` (the container itself only
-     softens to 20px — see a-menu.css). Driven off the ancestor attribute so a
-     consumer sets `round` once on the menu. */
-  a-menu[round] a-menu-item,
-  a-menu[round] a[data-anta-menu-item] {
-    border-radius: 999px;
   }
 
   a-menu-item:hover,

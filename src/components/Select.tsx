@@ -207,8 +207,8 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
   dimActions?: boolean
   /** Visible field label and accessible name for the default trigger. If omitted,
    *  provide `aria-label` or `aria-labelledby` that identifies the field.
-   *  `leading` content is hidden from assistive technologies and does not label
-   *  the trigger. */
+   *  Leading content and the chevron are hidden from assistive technologies and
+   *  do not label the trigger. */
   label?: string
   /** Helper text under the field. */
   hint?: string

@@ -11,12 +11,11 @@ changes are not listed.
   135+ and Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints
   use live ARIA element references without a copied-text fallback.
 - [Select's default field](/select/#migrate-field-styles) now uses `a-input[button]`.
-  `className` and `style` apply to that host. Replace field selectors targeting
-  `a-select-field > a-button` with your Select class and `::part(field)`, and
-  `a-button-label` selectors with `::part(input)`. Existing raw `a-select-field`
+  `className` and `style` apply to that host. For custom field CSS, pass
+  `className="my-select"` and replace `a-select-field > a-button` with
+  `.my-select::part(field)`. Target the selected text with `.my-select::part(input)`
+  instead of `a-button-label`. Existing raw `a-select-field`
   compositions retain their CSS, JSX types, and label and hint behavior.
-  Use `label` or `aria-label` to name the field. Leading content and the chevron
-  remain hidden from assistive technologies.
 
 ### Added
 

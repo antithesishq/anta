@@ -1060,8 +1060,22 @@ takes Menu's `::part(menu)`.
 ### Migrate field styles
 
 The default Select field now renders `<a-input button>` and uses Input's label,
-hint, and leading slots. This changes the wrapper's DOM structure. With
-`className="my-select"`, update field selectors as follows:
+hint, and leading slots. This changes the wrapper's DOM structure. Pass a class
+name through `className` to target your Select in CSS. The class is applied to
+`<a-input>`, and `::part(field)` selects the visible field inside its shadow DOM.
+For example, this Select uses `.my-select::part(field)` to round its field:
+
+```tsx folded
+<Select className="my-select" label="Team" options={['Design', 'Engineering']} />
+```
+
+```css folded
+.my-select::part(field) {
+  border-radius: 6px;
+}
+```
+
+With `className="my-select"`, update existing selectors as follows:
 
 | Previous selector | Input field selector |
 | --- | --- |

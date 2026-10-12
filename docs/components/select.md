@@ -654,7 +654,7 @@ scannable list instead of hiding matches behind flyouts.
 | `hint?` | string | — | Helper text under the field. |
 | `icon?` | IconShape | — | Leading icon shown at the left of the field. With a custom `renderTrigger`, it's passed through as `state.icon` instead — the consumer places it. |
 | `indicator?` | 'none' \| 'check' \| 'radio' | none | The per-row mark for **single**-select: `'none'` (a tint-only highlight), `'check'` (a trailing checkmark on the selected row, keeping the tint — the canonical Select look), or `'radio'` (a leading radio on every row). Multi-select always uses checkboxes. |
-| `label?` | string | — | Visible field label and accessible name for the default trigger. If omitted, provide `aria-label` or `aria-labelledby` that identifies the field. `leading` content is hidden from assistive technologies and does not label the trigger. |
+| `label?` | string | — | Visible field label and accessible name for the default trigger. If omitted, provide `aria-label` or `aria-labelledby` that identifies the field. Leading content and the chevron are hidden from assistive technologies and do not label the trigger. |
 | `leading?` | ReactNode | — | Content before the default trigger's value, such as a key prefix before the value. It replaces the icon derived from `icon`. Include an `<Icon>` in this content when both are needed. Hidden from assistive technologies. Include any meaningful prefix in `label` or `aria-label`. Ignored by `renderTrigger`. |
 | `offset?` | number | 4 | Gap in pixels between the trigger and the options menu. |
 | `onValueChange?` | (value, attrs) => void | — | Fires after the selection changes, with the new value and a `{ value, option }` snapshot. Select has no discrete element state, so there is no cancelable `onStateChange` (see the Input event-model note). |
@@ -860,8 +860,22 @@ takes Menu's `::part(menu)`.
 ### Migrate field styles
 
 The default Select field now renders `<a-input button>` and uses Input's label,
-hint, and leading slots. This changes the wrapper's DOM structure. With
-`className="my-select"`, update field selectors as follows:
+hint, and leading slots. This changes the wrapper's DOM structure. Pass a class
+name through `className` to target your Select in CSS. The class is applied to
+`<a-input>`, and `::part(field)` selects the visible field inside its shadow DOM.
+For example, this Select uses `.my-select::part(field)` to round its field:
+
+```tsx
+<Select className="my-select" label="Team" options={['Design', 'Engineering']} />
+```
+
+```css
+.my-select::part(field) {
+  border-radius: 6px;
+}
+```
+
+With `className="my-select"`, update existing selectors as follows:
 
 | Previous selector | Input field selector |
 | --- | --- |

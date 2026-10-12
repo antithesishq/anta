@@ -18,9 +18,7 @@ changes are not listed.
 ### Fixed
 
 - [Slider](/slider/) range thumbs no longer show a focus ring after a pointer
-  drag; the ring returns on the next key press. The element exposes
-  `:state(pointer-focus)` while a pointer drag owns focus, so themes can hide
-  their own focus styles in the same case.
+  drag; the ring returns on the next key press.
 - Neutral [Tags](/tag/) in the Antune theme keep their solid primary fill
   and transparent tertiary fill when tone is omitted or set to `neutral`.
 - [Calendar](/input-date/#calendar) keeps controlled selection and form values

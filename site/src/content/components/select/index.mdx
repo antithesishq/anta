@@ -1048,6 +1048,25 @@ and its selected text through `::part(input)`. The trigger uses
 `:focus-visible` for its focus ring and ellipsizes long values. **The popover**
 takes Menu's `::part(menu)`.
 
+### Migrate field styles
+
+The default Select field now renders `<a-input button>` and uses Input's label,
+hint, and leading slots. This changes the wrapper's DOM structure. With
+`className="my-select"`, update field selectors as follows:
+
+| Previous selector | Input field selector |
+| --- | --- |
+| `.my-select > a-button` | `.my-select::part(field)` |
+| `.my-select > a-button > a-button-label` | `.my-select::part(input)` |
+| `.my-select > a-select-label` | `.my-select::part(label)` |
+| `.my-select > a-select-hint` | `.my-select::part(hint)` |
+| `.my-select a-select-leading` | `.my-select::part(leading)` |
+
+Existing raw compositions using `a-select-field`, `a-select-label`,
+`a-select-hint`, and `a-select-leading` retain their CSS, JSX types, and Button
+label and hint behavior. New raw compositions can use `<a-input button>` as
+shown above.
+
 ```tsx folded
 // Tone the selection; give the trigger a width.
 <Select tone="brand" toneScope="selected" style={{ width: '220px' }} options={OPTIONS} />

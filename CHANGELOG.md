@@ -5,6 +5,14 @@ changes are not listed.
 
 ## Unreleased
 
+### Breaking
+
+- [Select's default field](/select/#migrate-field-styles) now uses `a-input[button]`.
+  `className` and `style` apply to that host. Replace field selectors targeting
+  `a-select-field > a-button` with your Select class and `::part(field)`, and
+  `a-button-label` selectors with `::part(input)`. Existing raw `a-select-field`
+  compositions retain their CSS, JSX types, and label and hint behavior.
+
 ### Added
 
 - [Title typeface](/title/#typeface): `font` sets a title in `serif`,
@@ -16,9 +24,6 @@ changes are not listed.
   your serif font.
 
 ### Fixed
-
-- [Select](/select/) shares Input field styling across sizes and themes while
-  retaining native button activation and selected-value announcements.
 
 - Neutral [Tags](/tag/) in the Antune theme keep their solid primary fill
   and transparent tertiary fill when tone is omitted or set to `neutral`.

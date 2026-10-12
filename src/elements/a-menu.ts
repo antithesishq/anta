@@ -1805,12 +1805,14 @@ export class AMenuElement extends HTMLElementBase {
     } else {
       const onClick = (e: MouseEvent) => {
         if (anchor.matches(':disabled, [disabled], [loading]')) return
+        const path = e.composedPath()
+        const anchorPath = path.slice(0, path.indexOf(anchor))
         // A button in the input's clear slot is its own action. Its click
         // bubbles through the field anchor after clearing; opening the popup
         // here makes the next field click close it instead of opening it.
-        if (anchor.matches('a-input') && e.composedPath().some((node) => node instanceof Element && node.getAttribute('slot') === 'clear')) return
+        if (anchor.matches('a-input') && anchorPath.some((node) => node instanceof Element && node.getAttribute('slot') === 'clear')) return
         // A field label focuses its button; labels and hints do not toggle the popup.
-        if (anchor.matches('a-input[button]') && e.composedPath().some((node) => node instanceof Element && ['label', 'hint'].includes(node.getAttribute('slot') ?? (node instanceof HTMLSlotElement ? node.name : '')))) return
+        if (anchor.matches('a-input[button]') && anchorPath.some((node) => node instanceof Element && ['label', 'hint'].includes(node.getAttribute('slot') ?? (node instanceof HTMLSlotElement ? node.name : '')))) return
         // detail === 0 ⇒ a keyboard-synthesized click (a button / <a-button>
         // turning Enter/Space into one) ⇒ open + focus the first item. Fields with
         // no such click go through onKey below.

@@ -25,6 +25,9 @@ changes are not listed.
 
 ### Fixed
 
+- [Input](/input/) button fields and [Select](/select/) describe the selected value
+  only when a separate label supplies the accessible name. Empty fields keep
+  placeholders out of the value description.
 - Neutral [Tags](/tag/) in the Antune theme keep their solid primary fill
   and transparent tertiary fill when tone is omitted or set to `neutral`.
 - [Calendar](/input-date/#calendar) keeps controlled selection and form values

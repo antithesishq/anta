@@ -581,7 +581,10 @@ export class AInputElement extends HTMLElementBase {
     const control = this.control
     if (!control) return
     applyShadowAria(this, control, name, this.delegatedAria.get(name) ?? null)
-    if (name === 'aria-label' || name === 'aria-labelledby') this.applyLabelAria()
+    if (name === 'aria-label' || name === 'aria-labelledby') {
+      this.applyLabelAria()
+      this.applyDescriptionAria()
+    }
     if (name === 'aria-description' || name === 'aria-describedby') this.applyDescriptionAria()
     if (name === 'aria-invalid' && !this.delegatedAria.has(name)) this.syncStatus()
     if (name === 'aria-controls' || name === 'aria-activedescendant') this.applyPopupAria()
@@ -595,6 +598,7 @@ export class AInputElement extends HTMLElementBase {
       const control = this.control
       if (!control) return
       for (const [name, value] of this.delegatedAria) applyShadowAria(this, control, name, value)
+      this.applyDescriptionAria()
     })
   }
 
@@ -773,6 +777,7 @@ export class AInputElement extends HTMLElementBase {
 
   private onLabelSlotChange = () => {
     this.applyLabelAria()
+    this.applyDescriptionAria()
   }
 
   private applyLabelAria() {
@@ -793,7 +798,9 @@ export class AInputElement extends HTMLElementBase {
     if (!c) return
     if (this.delegatedAria.has('aria-description') || this.delegatedAria.has('aria-describedby')) return
     const hint = this.hintSlot.assignedNodes().map((n) => n.textContent ?? '').join(' ').trim()
-    const value = c instanceof HTMLButtonElement ? c.textContent?.trim() : ''
+    // An unlabeled button already uses its content as its accessible name.
+    const named = c.getAttribute('aria-label')?.trim() || c.ariaLabelledByElements?.length
+    const value = c instanceof HTMLButtonElement && named ? c.value.trim() : ''
     const text = [value, hint].filter(Boolean).join(' ')
     if (text) c.setAttribute('aria-description', text)
     else c.removeAttribute('aria-description')

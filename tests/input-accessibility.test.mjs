@@ -14,7 +14,7 @@ before(async () => {
       contents: `
         import { h, render } from 'preact'
         import { configure } from './src/jsx-runtime'
-        import { Calendar, Checkbox, InputAutocomplete, InputDate, InputTime, RadioGroup, Select, SelectFaceted, Switch } from './src/index'
+        import { Calendar, Checkbox, Input, InputAutocomplete, InputDate, InputTime, RadioGroup, Select, SelectFaceted, Switch } from './src/index'
         import './src/elements/index'
         import './src/tokens.css'
         configure(h)
@@ -71,6 +71,20 @@ before(async () => {
             ],
           }),
         ), main)
+        window.mountDescriptionFields = () => {
+          const mount = document.createElement('div')
+          document.body.prepend(mount)
+          render(h('div', {},
+            h(Input, { button: true, value: '10 minutes' }),
+            h(Input, { id: 'description-input', button: true, value: '15 minutes', hint: 'Notify later' }),
+            h(Input, { button: true, label: 'Reminder delay', value: '20 minutes', hint: 'Notify later' }),
+            h(Input, { button: true, placeholder: 'Choose duration', hint: 'Notify later' }),
+            h(Input, { button: true, label: 'Empty delay', placeholder: 'Choose duration', hint: 'Notify later' }),
+            h(Select, { id: 'description-select', options: ['Design', 'Engineering'], defaultValue: 'Design', hint: 'Pick a team' }),
+            h(Select, { options: ['One'], placeholder: 'Pick an option' }),
+            h(Select, { label: 'Named empty team', options: ['One'], placeholder: 'Pick an option', hint: 'Pick a team' }),
+          ), mount)
+        }
         window.mountHoverRange = () => {
           const mount = document.createElement('div')
           mount.style.cssText = 'position:fixed;left:160px;top:80px'
@@ -860,6 +874,99 @@ test('Select buttons open once with arrows, Enter, and Space and retain focus-vi
   assert.equal(await disabled.getAttribute('aria-expanded'), 'false')
   await disabled.dispatchEvent('keydown', { key: 'ArrowDown' })
   assert.equal(await disabled.getAttribute('aria-expanded'), 'false')
+})
+
+test('Input buttons and Select describe hints without repeating their name or placeholder', async t => {
+  const page = await pageFor(t)
+  await page.evaluate(() => window.mountDescriptionFields())
+  const cdp = await page.context().newCDPSession(page)
+  const { nodes } = await cdp.send('Accessibility.getFullAXTree')
+  for (const [name, description] of [
+    ['10 minutes', undefined],
+    ['15 minutes', 'Notify later'],
+    ['Reminder delay', '20 minutes Notify later'],
+    ['Choose duration', 'Notify later'],
+    ['Empty delay', 'Notify later'],
+    ['Design', 'Pick a team'],
+    ['Pick an option', undefined],
+    ['Named empty team', 'Pick a team'],
+  ]) {
+    const node = nodes.find(node => node.role?.value === 'button' && node.name?.value === name)
+    assert.ok(node, name)
+    assert.equal(node.description?.value, description, name)
+  }
+
+  await page.getByRole('button', { name: 'Design', exact: true }).click()
+  await page.locator('#description-select + a-menu').getByRole('menuitemradio', { name: 'Engineering', exact: true }).click()
+  const selected = (await cdp.send('Accessibility.getFullAXTree')).nodes.find(node =>
+    node.role?.value === 'button' && node.name?.value === 'Engineering')
+  assert.equal(selected?.description?.value, 'Pick a team')
+})
+
+test('Input button descriptions follow added and removed labels and explicit ARIA overrides', async t => {
+  const page = await pageFor(t)
+  await page.evaluate(() => window.mountDescriptionFields())
+  const host = page.locator('#description-input')
+  const cdp = await page.context().newCDPSession(page)
+  async function check(name, description) {
+    const { nodes } = await cdp.send('Accessibility.getFullAXTree')
+    const node = nodes.find(node => node.role?.value === 'button' && node.name?.value === name)
+    assert.ok(node, name)
+    assert.equal(node.description?.value, description, name)
+  }
+
+  await check('15 minutes', 'Notify later')
+  await host.evaluate(el => {
+    const label = document.createElement('span')
+    label.slot = 'label'
+    label.innerHTML = '<strong>Duration</strong>'
+    el.append(label)
+  })
+  await check('Duration', '15 minutes Notify later')
+  await host.locator('[slot="label"] strong').evaluate(el => { el.textContent = '' })
+  await check('15 minutes', 'Notify later')
+  await host.locator('[slot="label"]').evaluate(el => el.remove())
+
+  await host.evaluate(el => { el.ariaLabel = 'Reminder duration' })
+  await check('Reminder duration', '15 minutes Notify later')
+  await host.evaluate(el => { el.ariaLabel = null })
+  await check('15 minutes', 'Notify later')
+  await host.evaluate(el => el.setAttribute('aria-label', '  '))
+  await check('15 minutes', 'Notify later')
+  await host.evaluate(el => el.removeAttribute('aria-label'))
+
+  await host.evaluate(el => {
+    el.setAttribute('aria-labelledby', 'description-label')
+    const label = document.createElement('span')
+    label.id = 'description-label'
+    label.textContent = 'External duration'
+    document.body.append(label)
+  })
+  await check('External duration', '15 minutes Notify later')
+  await host.evaluate(el => el.setAttribute('aria-labelledby', 'missing-label'))
+  await check('15 minutes', 'Notify later')
+  await host.evaluate(el => el.removeAttribute('aria-labelledby'))
+
+  await host.evaluate(el => {
+    el.setAttribute('aria-description', 'Custom instructions')
+    el.setAttribute('aria-label', 'Custom duration')
+    el.value = ''
+    el.setAttribute('placeholder', 'Choose a delay')
+  })
+  await check('Custom duration', 'Custom instructions')
+  await host.evaluate(el => el.removeAttribute('aria-description'))
+  await check('Custom duration', 'Notify later')
+  await host.evaluate(el => {
+    const hint = document.createElement('span')
+    hint.id = 'description-hint'
+    hint.textContent = 'External instructions'
+    document.body.append(hint)
+    el.setAttribute('aria-describedby', hint.id)
+    el.value = '25 minutes'
+  })
+  await check('Custom duration', 'External instructions')
+  await host.evaluate(el => el.removeAttribute('aria-describedby'))
+  await check('Custom duration', '25 minutes Notify later')
 })
 
 test('Select exposes its selection after choosing a value', async t => {

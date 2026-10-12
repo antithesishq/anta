@@ -1053,7 +1053,8 @@ its hue, with lightness pinned to the brand text).
 
 **The field** takes `size`, `status`, and `round`. Set its width with `style` /
 `className`, forwarded to `<a-input>`. Style the field through `::part(field)`
-and its selected text through `::part(input)`. The trigger uses
+and its selected text through `::part(button-label)`. `::part(input)` targets
+the native button for alignment and other control styles. The trigger uses
 `:focus-visible` for its focus ring and ellipsizes long values. **The popover**
 takes Menu's `::part(menu)`.
 
@@ -1063,7 +1064,7 @@ The default Select field now renders `<a-input button>` and uses Input's label,
 hint, and leading slots. This changes the wrapper's DOM structure. Pass a class
 name through `className` to target your Select in CSS. The class is applied to
 `<a-input>`, and `::part(field)` selects the visible field inside its shadow DOM.
-For example, this Select uses `.my-select::part(field)` to round its field:
+For example, this Select rounds its field and gives the selected text more weight:
 
 ```tsx folded
 <Select className="my-select" label="Team" options={['Design', 'Engineering']} />
@@ -1073,6 +1074,9 @@ For example, this Select uses `.my-select::part(field)` to round its field:
 .my-select::part(field) {
   border-radius: 6px;
 }
+.my-select::part(button-label) {
+  font-weight: 600;
+}
 ```
 
 With `className="my-select"`, update existing selectors as follows:
@@ -1080,7 +1084,7 @@ With `className="my-select"`, update existing selectors as follows:
 | Previous selector | Input field selector |
 | --- | --- |
 | `.my-select > a-button` | `.my-select::part(field)` |
-| `.my-select > a-button > a-button-label` | `.my-select::part(input)` |
+| `.my-select > a-button > a-button-label` | `.my-select::part(button-label)` |
 | `.my-select > a-select-label` | `.my-select::part(label)` |
 | `.my-select > a-select-hint` | `.my-select::part(hint)` |
 | `.my-select a-select-leading` | `.my-select::part(leading)` |

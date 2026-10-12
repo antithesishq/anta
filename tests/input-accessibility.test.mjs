@@ -1092,6 +1092,13 @@ test('Select preserves rich labels, hints, and long-value ellipsis on Input', as
   const page = await pageFor(t)
   const trigger = inputByLabel(page, 'Departments')
   assert.equal(await trigger.evaluate(el => el.localName), 'button')
+  assert.equal(await trigger.locator('[part="button-label"]').textContent(), 'Engineering department with a very long name')
+  await page.addStyleTag({ content: 'a-input::part(button-label) { font-weight: 700; }' })
+  assert.deepEqual(await trigger.evaluate(el => ({
+    controlWeight: getComputedStyle(el).fontWeight,
+    textWeight: getComputedStyle(el.querySelector('[part="button-label"]')).fontWeight,
+    descriptionUsesText: el.ariaDescribedByElements[0] === el.querySelector('[part="button-label"]'),
+  })), { controlWeight: '400', textWeight: '700', descriptionUsesText: true })
   const cdp = await page.context().newCDPSession(page)
   const { nodes } = await cdp.send('Accessibility.getFullAXTree')
   const node = nodes.find(node => node.role?.value === 'button' && node.name?.value === 'Departments')

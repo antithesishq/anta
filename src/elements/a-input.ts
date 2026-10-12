@@ -30,6 +30,7 @@ import './a-input.css'
  *   <div class="field" part="field">                        ← the bordered box; :focus-within ring
  *     <slot name="leading" part="leading">
  *     <input|textarea|button part="input">                  ← created in JS per field mode
+ *       <span part="button-label">                          ← button-mode value or placeholder
  *     <slot name="trailing" part="trailing">
  *   <slot class="hint" part="hint" name="hint">           ← message; the JSX wrapper may slot a status <Icon> here too when [status]
  *
@@ -614,6 +615,7 @@ export class AInputElement extends HTMLElementBase {
     if (next instanceof HTMLButtonElement) {
       next.type = 'button'
       this.#buttonText = document.createElement('span')
+      this.#buttonText.setAttribute('part', 'button-label')
       next.append(this.#buttonText)
     }
     next.setAttribute('part', 'input')

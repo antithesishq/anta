@@ -59,11 +59,14 @@ before(async () => {
           <Button>Rounded menu</Button>
           <Menu id="custom-menu" round={12}>
             <MenuItem id="rounded-menu-row" label="Rounded row" />
+            <MenuItem id="rounded-menu-link" href="/" label="Rounded link" />
             <MenuItem label="Inherited submenu"><Menu id="inherited-submenu"><MenuItem id="inherited-submenu-row" label="Inherited row" /></Menu></MenuItem>
+            <MenuItem label="Inset submenu"><Menu id="inset-submenu" inset={6}><MenuItem id="inset-submenu-row" label="Inset row" /></Menu></MenuItem>
             <MenuItem label="Custom submenu"><Menu id="custom-submenu" round={6}>
               <MenuItem label="Deep submenu"><Menu id="deep-submenu"><MenuItem id="deep-submenu-row" label="Deep row" /></Menu></MenuItem>
             </Menu></MenuItem>
             <MenuItem label="Default round submenu"><Menu id="default-round-submenu" round><MenuItem label="Default round row" /></Menu></MenuItem>
+            <MenuItem label="Zero radius submenu"><Menu id="zero-radius-submenu" round={0}><MenuItem id="zero-radius-submenu-row" label="Zero radius row" /></Menu></MenuItem>
           </Menu>
           <Button>Default menu</Button>
           <Menu id="default-menu">
@@ -342,7 +345,7 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
       }
     })
     assert.deepEqual(values.radii, ['999px', '999px', '6px', '0px', '8px', '3px', '999px', '0px', '0px'])
-    assert.deepEqual(values.menuRadii, ['12px', '999px', '999px', '999px'])
+    assert.deepEqual(values.menuRadii, ['12px', '8px', '8px', '16px'])
     assert.deepEqual(values.seeds, [['#cc4636', '#65605b'], ['#cc4636', '#65605b']])
   }
   for (const theme of ['antune', 'none', 'antithesis']) {
@@ -386,8 +389,8 @@ test('menu item radii follow container radius minus inset and submenus inherit e
         return {
           containers: ['default-menu', 'default-submenu', 'small-inset-menu', 'large-inset-menu'].map(radius),
           items: ['default-menu-row', 'default-menu-link', 'default-submenu-row', 'small-inset-row', 'small-inset-link', 'large-inset-row'].map(radius),
-          rounded: ['custom-menu', 'inherited-submenu', 'custom-submenu', 'deep-submenu', 'default-round-submenu'].map(radius),
-          roundedItems: ['rounded-menu-row', 'inherited-submenu-row', 'deep-submenu-row', 'round-submenu-row'].map(radius),
+          rounded: ['custom-menu', 'inherited-submenu', 'inset-submenu', 'custom-submenu', 'deep-submenu', 'default-round-submenu', 'zero-radius-submenu'].map(radius),
+          roundedItems: ['rounded-menu-row', 'rounded-menu-link', 'inherited-submenu-row', 'inset-submenu-row', 'deep-submenu-row', 'round-submenu-row', 'zero-radius-submenu-row'].map(radius),
         }
       })
       const antithesis = theme === 'antithesis'
@@ -396,8 +399,8 @@ test('menu item radii follow container radius minus inset and submenus inherit e
       assert.deepEqual(values.items, antithesis
         ? ['0px', '0px', '0px', '1px', '1px', '0px']
         : ['4px', '4px', '4px', '7px', '7px', '0px'], context)
-      assert.deepEqual(values.rounded, ['12px', '12px', '6px', '6px', '20px'], context)
-      assert.deepEqual(values.roundedItems, Array(4).fill('999px'), context)
+      assert.deepEqual(values.rounded, ['12px', '12px', '12px', '6px', '6px', '20px', '0px'], context)
+      assert.deepEqual(values.roundedItems, ['8px', '8px', '8px', '6px', '2px', '16px', '0px'], context)
     }
   }
 })

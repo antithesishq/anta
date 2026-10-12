@@ -959,9 +959,10 @@ export interface AMenuAttributes extends BaseAttributes {
    *  default; this opts out, making the submenu click-only. Presence-based
    *  (`''` on, omit off). */
   nohover?: boolean | ''
-  /** Round: container softens to a 20px radius and its items go fully round. A
-   *  length value (`round="12px"`) tunes the container radius only (items stay
-   *  pills). Presence-based for the boolean form. */
+  /** Round the container to a 20px radius, or use a length such as `round="12px"`
+   *  for a custom radius. Items use the container radius minus the menu's inset,
+   *  clamped to zero. Submenus inherit the radius unless they set their own
+   *  `round` value. Presence-based for the boolean form. */
   round?: boolean | number | string
   /** Gap in pixels between the trigger and the menu. Defaults to 4. */
   offset?: number | string

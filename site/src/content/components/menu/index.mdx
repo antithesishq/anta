@@ -806,11 +806,15 @@ values.
 
 <Disclosure title="Styling">
 
-By default, menu item corners follow the theme's container radius minus `inset`,
-clamped to zero. The default 8px container radius and 4px inset give items a 4px radius.
+Menu item corners follow the container radius minus `inset`, clamped to zero.
+The default 8px container radius and 4px inset give items a 4px radius.
 The Antithesis theme uses a 2px container radius, so its items have square corners
-with the default inset. Pass `round` to round a menu and make its items full pills.
-Nested submenus inherit that radius unless they set their own `round` value.
+with the default inset. Pass `round` for a 20px container radius and 16px item
+radius, or pass a number or CSS length for a custom container radius.
+Nested submenus inherit the container radius unless they set their own `round`
+value. Each submenu subtracts its own `inset` to determine its item radius.
+Use `round` and `inset` to keep these radii connected. A direct CSS override of
+`::part(menu)` or a menu item's `border-radius` controls that surface independently.
 
 The popover surface lives in shadow DOM and is exposed as a **part** — style its
 chrome (background, frost, border, radius, shadow, padding, min-width) with

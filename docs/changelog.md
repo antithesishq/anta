@@ -28,7 +28,7 @@ changes are not listed.
 
 ### Changed
 
-- Antithesis [menus](/menu/) use square corners and row-specific hover and
+- Antithesis [menus](/menu/) use 2px container corners and row-specific hover and
   selected fills. Neutral labels use `text-1`; disabled labels, icons, and hints
   use `text-4`. Explicit `round` values retain rounded menus.
 - In the Antithesis theme, serif headings use weight 300. Load a light cut of

@@ -488,7 +488,7 @@ or do nothing to reject. (Submenus are always uncontrolled, regardless of `open`
 | `open?` | boolean | — | Controlled open state. Omit for the default **uncontrolled** menu (it opens/closes itself via its triggers). Pass a boolean to **control** it: the menu's visibility follows `open`, and user dismiss (Esc, outside-click, select) fires `onStateChange` *without* self-closing — you update `open` in response. Submenus are always uncontrolled regardless of this. See STATEFUL-COMPONENTS.md. |
 | `placement?` | 'bottom-start' \| 'bottom-end' \| 'top-start' \| 'top-end' \| 'bottom' \| 'top' \| 'right-start' \| 'right-end' \| 'left-start' \| 'left-end' \| 'right' \| 'left' | bottom-start | Preferred placement relative to the trigger. `bottom` / `top` place the menu below / above; `right` / `left` place it beside (like a submenu flyout). The cross-axis suffix (`-start` / `-end`) aligns the near / far edges, and no suffix centers on the trigger. The menu flips to the opposite side when the preferred one lacks room, and clamps to the viewport. |
 | `role?` | string | menu | ARIA role of the menu surface. |
-| `round?` | boolean \| number \| string | — | Round the menu: the container softens to a 20px radius and its items go fully round. A `number` (px) or CSS length string tunes the container radius only — items stay full pills. |
+| `round?` | boolean \| number \| string | — | Round the menu container to a 20px radius. A `number` (px) or CSS length string sets a custom container radius. Items use the container radius minus `inset`, clamped to zero. Nested submenus inherit the container radius unless they set their own `round` value. |
 | `stopPropagation?` | boolean \| string \| string[] | — | Contain events so they don't bubble out of the menu to ancestor handlers (e.g. a clickable row the menu sits in). Selecting an item is always contained; this extends it to whole event types. `true` contains `click`; pass an event name or list (`"click pointerdown"`) to contain those. |
 
 ## MenuItem props
@@ -539,8 +539,15 @@ values.
 
 ## Styling
 
-In the Antithesis theme, menus and their rows have square corners. Pass `round`
-to round a menu and its rows. Each submenu follows its own `round` setting.
+Menu item corners follow the container radius minus `inset`, clamped to zero.
+The default 8px container radius and 4px inset give items a 4px radius.
+The Antithesis theme uses a 2px container radius, so its items have square corners
+with the default inset. Pass `round` for a 20px container radius and 16px item
+radius, or pass a number or CSS length for a custom container radius.
+Nested submenus inherit the container radius unless they set their own `round`
+value. Each submenu subtracts its own `inset` to determine its item radius.
+Use `round` and `inset` to keep these radii connected. A direct CSS override of
+`::part(menu)` or a menu item's `border-radius` controls that surface independently.
 
 The popover surface lives in shadow DOM and is exposed as a **part** — style its
 chrome (background, frost, border, radius, shadow, padding, min-width) with

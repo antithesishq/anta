@@ -1218,20 +1218,9 @@
     border-radius: 3px;
   }
 
-  a-menu {
-    --menu-item-radius: 0px;
-  }
-
-  a-menu:not([round]) {
-    --menu-radius: 0;
-  }
-
-  a-menu[round] {
-    --menu-item-radius: 999px;
-  }
-
-  a-menu :is(a-menu-item, a[data-anta-menu-item]) {
-    border-radius: var(--menu-item-radius);
+  /* A submenu inside a `round` menu keeps the inherited round radius. */
+  a-menu:not([round], a-menu[round] a-menu) {
+    --menu-radius: 2px;
   }
 
   :is(a-menu-item, a[data-anta-menu-item]):is(:not([tone]), [tone=""], [tone="neutral"]) {

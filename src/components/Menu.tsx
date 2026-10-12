@@ -43,9 +43,10 @@ export interface MenuProps extends BaseProps {
    *  in response. Submenus are always uncontrolled regardless of this. See
    *  STATEFUL-COMPONENTS.md. */
   open?: boolean
-  /** Round the menu: the container softens to a 20px radius and its items go
-   *  fully round. A `number` (px) or CSS length string tunes the container radius
-   *  only — items stay full pills. */
+  /** Round the menu container to a 20px radius. A `number` (px) or CSS length
+   *  string sets a custom container radius. Items use the container radius minus
+   *  `inset`, clamped to zero. Nested submenus inherit the container radius unless
+   *  they set their own `round` value. */
   round?: boolean | number | string
   /** Contain events so they don't bubble out of the menu to ancestor handlers
    *  (e.g. a clickable row the menu sits in). Selecting an item is always

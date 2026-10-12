@@ -176,6 +176,10 @@ thumb movement and keyboard controls stay the same.
 
 `size` follows the input height scale: 24px, 28px, and 32px. `trackSize` sets the thickness of both rail segments without changing the control height; numbers use pixels and strings accept CSS lengths. `thumbSize` controls the thumb diameter, and `thumbFill` fills it with its resolved border color. `tone` colors the filled rail. `thumbTone` separately colors the thumb stroke. The unfilled rail stays neutral. `round` shapes both the rail and thumb. Pass `true` for fully round corners or a number or CSS length for a shared custom radius.
 
+In the Antithesis theme, an omitted `thumbTone` follows the filled rail's color.
+Other themes keep the thumb neutral. Pass `thumbTone="neutral"` to keep a neutral
+thumb in every theme. The native range uses the same rule for `thumb-tone`.
+
 </Col>
 <Col>
 

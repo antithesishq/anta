@@ -11,12 +11,15 @@
       color-mix(in oklch, var(--bg-1) 90%, transparent),
       color-mix(in oklch, var(--bg-1) 78%, transparent)
     );
+    /* An explicit submenu `round` value starts fresh instead of inheriting. */
+    --menu-round: initial;
     --menu-radius: var(--radius-md, 8px);
     --menu-border: 1px solid var(--border-3);
     --menu-shadow:
       0 2px 6px color-mix(in oklch, var(--text-1) 8%, transparent),
       0 8px 24px color-mix(in oklch, var(--text-1) 10%, transparent);
     --menu-padding: 4px;
+    --menu-item-radius: max(0px, calc(var(--menu-radius) - var(--menu-padding)));
     --menu-min-width: 88px;
     --menu-backdrop-filter: blur(20px);
     --menu-width-duration: 160ms;
@@ -31,13 +34,13 @@
      a-menu-item.css. A custom value (`round="12px"`, or the wrapper's `round={12}`)
      tunes the CONTAINER radius only — items stay full pills. */
   a-menu[round] {
-    --menu-radius: 20px;
+    --menu-radius: var(--menu-round, 20px);
     @supports (border-radius: attr(probe type(<length>), 1px)) {
-      --menu-radius: attr(round type(<length>), 20px);
+      --menu-radius: var(--menu-round, attr(round type(<length>), 20px));
     }
   }
 
-  /* A submenu takes its root menu's `round` radius, like its items do. */
+  /* A submenu without `round` inherits its parent menu's radius. */
   a-menu[round] a-menu:not([round]) {
     --menu-radius: inherit;
   }

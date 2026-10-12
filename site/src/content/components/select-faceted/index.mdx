@@ -146,6 +146,7 @@ function Demo() {
                   value={value[facet.key]}
                   onValueChange={(v) => setFacet(facet.key, v)}
                   leading={`${facet.label}:`}
+                  aria-label={facet.label}
                   filter={facet.filter}
                   clearable
                   className="sf-chip"
@@ -203,7 +204,8 @@ Input truncates long values with an ellipsis when the field is unfocused.
 
 The trigger opens the facet menu. The example shows active values beside it.
 Option facets use an editable [Select](/select/) with the facet label in its
-`leading` prefix. Recency uses a summary tag and is edited in the facet menu.
+`leading` prefix and `aria-label` as its accessible name. Recency uses a summary
+tag and is edited in the facet menu.
 
 ### Custom option content
 

@@ -45,7 +45,8 @@ export interface MenuProps extends BaseProps {
   open?: boolean
   /** Round the menu: the container softens to a 20px radius and its items go
    *  fully round. A `number` (px) or CSS length string tunes the container radius
-   *  only — items stay full pills. Nested submenus take the same radius. */
+   *  only — items stay full pills. Nested submenus take the same radius unless
+   *  they set their own `round` value. */
   round?: boolean | number | string
   /** Contain events so they don't bubble out of the menu to ancestor handlers
    *  (e.g. a clickable row the menu sits in). Selecting an item is always

@@ -14,11 +14,12 @@ before(async () => {
     stdin: {
       contents: `import { h, render } from 'preact'
         import { configure } from './src/jsx-runtime'
-        import { Button, Checkbox, Input, MenuItem, Select, Switch, Tag } from './src/index'
+        import { Button, Checkbox, Input, Menu, MenuItem, Select, Switch, Tag } from './src/index'
         import './src/tokens.css'
         import './src/reset.css'
         import './src/elements/a-button'
         import './src/elements/a-input'
+        import './src/elements/a-menu'
         import './src/elements/a-checkbox'
         import './src/elements/a-radio'
         import './src/elements/a-radio-group'
@@ -55,6 +56,31 @@ before(async () => {
           </a-radio-group>
           <MenuItem id="menu-unselected" tone="info" toneScope="selected" label="Unselected" />
           <MenuItem id="menu-selected" tone="info" toneScope="selected" selected label="Selected" />
+          <Button>Rounded menu</Button>
+          <Menu id="custom-menu" round={12}>
+            <MenuItem id="rounded-menu-row" label="Rounded row" />
+            <MenuItem label="Inherited submenu"><Menu id="inherited-submenu"><MenuItem id="inherited-submenu-row" label="Inherited row" /></Menu></MenuItem>
+            <MenuItem label="Custom submenu"><Menu id="custom-submenu" round={6}>
+              <MenuItem label="Deep submenu"><Menu id="deep-submenu"><MenuItem id="deep-submenu-row" label="Deep row" /></Menu></MenuItem>
+            </Menu></MenuItem>
+            <MenuItem label="Default round submenu"><Menu id="default-round-submenu" round><MenuItem label="Default round row" /></Menu></MenuItem>
+          </Menu>
+          <Button>Default menu</Button>
+          <Menu id="default-menu">
+            <MenuItem id="default-menu-row" label="Default row" />
+            <MenuItem id="default-menu-link" href="/" label="Default link" />
+            <MenuItem label="Default submenu"><Menu id="default-submenu"><MenuItem id="default-submenu-row" label="Default submenu row" /></Menu></MenuItem>
+            <MenuItem label="Rounded submenu"><Menu round><MenuItem id="round-submenu-row" label="Rounded row" /></Menu></MenuItem>
+          </Menu>
+          <Button>Small inset menu</Button>
+          <Menu id="small-inset-menu" inset={1}>
+            <MenuItem id="small-inset-row" label="Small inset row" />
+            <MenuItem id="small-inset-link" href="/" label="Small inset link" />
+          </Menu>
+          <Button>Large inset menu</Button>
+          <Menu id="large-inset-menu" inset={12}>
+            <MenuItem id="large-inset-row" label="Large inset row" />
+          </Menu>
           <Select tone="brand" toneScope="selected" defaultValue="a" options={[
             { value: 'a', label: 'Selected option' },
             { value: 'b', label: 'Unselected option' },
@@ -304,10 +330,11 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
     const values = await page.evaluate(() => {
       const radius = id => {
         const el = document.getElementById(id)
-        return getComputedStyle(el.shadowRoot?.querySelector('[part="field"]') ?? el).borderTopLeftRadius
+        return getComputedStyle(el.shadowRoot?.querySelector('[part="field"], [part="menu"]') ?? el).borderTopLeftRadius
       }
       return {
         radii: ['button', 'link', 'custom-button', 'input', 'custom-input', 'tag', 'native-button', 'native-input', 'native-textarea'].map(radius),
+        menuRadii: ['custom-menu', 'rounded-menu-row', 'inherited-submenu-row', 'round-submenu-row'].map(radius),
         seeds: ['button', 'scoped-button'].map(id => {
           const style = getComputedStyle(document.getElementById(id))
           return ['--anta-seed-brand', '--anta-seed-neutral'].map(key => style.getPropertyValue(key).trim())
@@ -315,6 +342,7 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
       }
     })
     assert.deepEqual(values.radii, ['999px', '999px', '6px', '0px', '8px', '3px', '999px', '0px', '0px'])
+    assert.deepEqual(values.menuRadii, ['12px', '999px', '999px', '999px'])
     assert.deepEqual(values.seeds, [['#cc4636', '#65605b'], ['#cc4636', '#65605b']])
   }
   for (const theme of ['antune', 'none', 'antithesis']) {
@@ -325,5 +353,51 @@ test('Antithesis shapes and seeds follow the theme, preserving explicit rounding
     }), theme)
     assert.equal(await page.locator('#button').evaluate(el => getComputedStyle(el).borderTopLeftRadius), theme === 'antithesis' ? '999px' : '4px')
     assert.equal(await page.locator('#tag').evaluate(el => getComputedStyle(el).borderTopLeftRadius), theme === 'antithesis' ? '3px' : '22px')
+    assert.equal(await page.locator('#custom-menu').evaluate(el => getComputedStyle(el.shadowRoot.querySelector('[part="menu"]')).borderTopLeftRadius), '12px')
+  }
+})
+
+test('menu item radii follow container radius minus inset and submenus inherit explicit rounding', async t => {
+  const page = await browser.newPage()
+  t.after(() => page.close())
+  await page.route('http://themes.test/**', route => {
+    const path = new URL(route.request().url()).pathname
+    return route.fulfill({
+      contentType: path.endsWith('.css') ? 'text/css' : path.endsWith('.js') ? 'text/javascript' : 'text/html',
+      body: assets.get(path) ?? '<!doctype html><link rel="stylesheet" href="/fixture.css"><link id="theme" rel="stylesheet" href="/none.css"><script type="module" src="/fixture.js"></script>',
+    })
+  })
+  await page.goto('http://themes.test/')
+  await page.waitForFunction(() => document.querySelector('#default-menu')?.shadowRoot)
+  for (const theme of ['none', 'antune', 'antithesis']) {
+    await page.evaluate(theme => new Promise(resolve => {
+      const link = document.getElementById('theme')
+      if (link.getAttribute('href') === `/${theme}.css`) return resolve()
+      link.onload = resolve
+      link.href = `/${theme}.css`
+    }), theme)
+    for (const dark of [false, true]) {
+      await page.evaluate(dark => document.documentElement.classList.toggle('dark', dark), dark)
+      const values = await page.evaluate(() => {
+        const radius = id => {
+          const el = document.getElementById(id)
+          return getComputedStyle(el.shadowRoot?.querySelector('[part="menu"]') ?? el).borderTopLeftRadius
+        }
+        return {
+          containers: ['default-menu', 'default-submenu', 'small-inset-menu', 'large-inset-menu'].map(radius),
+          items: ['default-menu-row', 'default-menu-link', 'default-submenu-row', 'small-inset-row', 'small-inset-link', 'large-inset-row'].map(radius),
+          rounded: ['custom-menu', 'inherited-submenu', 'custom-submenu', 'deep-submenu', 'default-round-submenu'].map(radius),
+          roundedItems: ['rounded-menu-row', 'inherited-submenu-row', 'deep-submenu-row', 'round-submenu-row'].map(radius),
+        }
+      })
+      const antithesis = theme === 'antithesis'
+      const context = `${theme}, dark=${dark}`
+      assert.deepEqual(values.containers, Array(4).fill(antithesis ? '2px' : '8px'), context)
+      assert.deepEqual(values.items, antithesis
+        ? ['0px', '0px', '0px', '1px', '1px', '0px']
+        : ['4px', '4px', '4px', '7px', '7px', '0px'], context)
+      assert.deepEqual(values.rounded, ['12px', '12px', '6px', '6px', '20px'], context)
+      assert.deepEqual(values.roundedItems, Array(4).fill('999px'), context)
+    }
   }
 })

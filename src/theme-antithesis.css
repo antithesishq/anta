@@ -1134,7 +1134,7 @@
   }
 
   :is(a-slider, input[data-anta][type="range"]):not([thumb-fill]) {
-    --anta-slider-thumb-border-width: 2.5px;
+    --anta-slider-thumb-border-width: 2px;
   }
 
   /* Like Checkbox and Radio, keyboard focus puts the 2px ring on the thumb

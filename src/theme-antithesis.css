@@ -1343,26 +1343,6 @@
     --dialog-radius: 1px;
   }
 
-  /* The close button keeps its tertiary priority but takes the quaternary look:
-     no fill, only the glyph color changes on hover. */
-  a-dialog > a-button[slot="close"][priority="tertiary"],
-  a-dialog > [slot="close"] > a-button[priority="tertiary"] {
-    --button-timing-in: 0s;
-    --button-timing-active: 0s;
-    --button-timing-out: 0s;
-    --button-fg: var(--button-fg-quaternary-rest);
-    --button-bg: transparent;
-
-    @media (hover: hover) and (pointer: fine) {
-      &:hover {
-        --button-fg: var(--button-fg-quaternary-hover);
-      }
-    }
-    &:active {
-      --button-fg: var(--button-fg-quaternary-rest);
-    }
-  }
-
   /* A submenu inside a `round` menu keeps the inherited round radius. */
   a-menu:not([round], a-menu[round] a-menu) {
     --menu-radius: 2px;

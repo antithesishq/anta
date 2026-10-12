@@ -5,18 +5,43 @@ changes are not listed.
 
 ## Unreleased
 
+### Breaking
+
+- [Browser support](/install-config/#browser-support) now requires Chrome/Edge
+  135+ and Firefox 136+. Safari/iOS Safari remains 17.4+. Input labels and hints
+  use live ARIA element references without a copied-text fallback.
+- [Select's default field](/select/#migrate-field-styles) now uses `a-input[button]`.
+  `className` and `style` apply to that host. For custom field CSS, pass
+  `className="my-select"` and replace `a-select-field > a-button` with
+  `.my-select::part(field)`. Target the selected text with `.my-select::part(input-label)`
+  instead of `a-button-label`. Existing raw `a-select-field`
+  compositions retain their CSS, JSX types, and label and hint behavior.
+
 ### Added
 
+- [Input button fields](/input/#styling) expose `::part(input-label)` for their
+  value or placeholder text. [Select](/select/#migrate-field-styles) uses the same part.
+- [Select's `dimActions` prop](/select/) controls its trigger adornments. They
+  dim at rest and brighten on hover or focus; pass `false` to keep them fully visible.
 - [Title typeface](/title/#typeface): `font` sets a title in `serif`,
   `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Changed
 
+- Antithesis [menus](/menu/) use 2px container corners and row-specific hover and
+  selected fills. Neutral labels use `text-1`; disabled labels, icons, and hints
+  use `text-4`. Explicit `round` values retain rounded menus.
 - In the Antithesis theme, serif headings use weight 300. Load a light cut of
   your serif font.
 
 ### Fixed
 
+- [Menu](/menu/) applies custom `round` values to its container in every theme.
+- [InputDate](/input-date/) labels and hints no longer toggle its calendar.
+  [Menu](/menu/) field anchors ignore clicks outside their field part.
+- [Input](/input/) button fields and [Select](/select/) describe the selected value
+  only when a separate label supplies the accessible name. Empty fields keep
+  placeholders out of the value description.
 - Neutral [Tags](/tag/) in the Antune theme keep their solid primary fill
   and transparent tertiary fill when tone is omitted or set to `neutral`.
 - [Calendar](/input-date/#calendar) keeps controlled selection and form values

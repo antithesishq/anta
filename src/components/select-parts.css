@@ -52,7 +52,8 @@
   @media (hover: hover) and (pointer: fine) {
     a-select-field > a-button:hover:not([disabled]) { box-shadow: inset 0 0 0 1px var(--select-border); }
   }
-  a-select-leading, a-select-chevron { flex: none; color: var(--text-3); }
+  a-select-leading,
+  a-select-chevron { flex: none; color: var(--text-3); }
   a-select-leading { display: inline-flex; align-items: center; }
   a-select-field[size="small"] a-icon { --icon-size: 14px; }
   a-select-field[size="large"] a-icon { --icon-size: 18px; }

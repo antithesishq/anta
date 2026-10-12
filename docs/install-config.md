@@ -530,15 +530,19 @@ the range your font declares to avoid combining `slnt` with a synthetic oblique.
 
 ## Browser support
 
-Anta targets evergreen browsers and ships **no baseline polyfills**. Its floor is [custom-element states](https://developer.mozilla.org/en-US/docs/Web/API/CustomStateSet), used throughout the components for their internal CSS state, alongside the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API):
+Anta requires [ARIA element references](https://developer.mozilla.org/en-US/docs/Web/API/Element/ariaLabelledByElements),
+[custom-element states](https://developer.mozilla.org/en-US/docs/Web/API/CustomStateSet),
+and the [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API).
+It ships no baseline polyfills or copied-text fallback for ARIA references.
 
 | Browser | Minimum version |
 | --- | --- |
-| Chrome / Edge | 125 (May 2024) |
-| Safari | 17.4 (Mar 2024) |
-| Firefox | 126 (May 2024) |
+| Chrome / Edge, including Android Chrome and WebView | 135 |
+| Safari / iOS Safari | 17.4 |
+| Firefox, including Android Firefox | 136 |
 
-This is [Baseline 2024](https://web.dev/baseline). Anta also relies on relative
+ARIA element references are [Baseline 2025](https://developer.mozilla.org/en-US/docs/Web/API/Element/ariaLabelledByElements#browser_compatibility).
+Anta also relies on relative
 OKLCH, `:has()`, `dvh`, cascade layers, and constructable shadow DOM. Older
 browsers can fail hard, including `:state()` being unrecognized or
 `showPopover()` throwing. Gate Anta on your own support matrix when you support

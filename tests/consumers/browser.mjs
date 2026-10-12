@@ -79,9 +79,10 @@ export async function checkBrowser({ origin, artifacts, framework, mode, compose
       });
       assert.equal(report.layouts.breadcrumbs.display, 'flex');
       assert.equal(report.layouts.select.display, 'grid');
-      await page.locator('#select').getByRole('button').click();
+      const selectTrigger = page.locator('#select').getByRole('button');
+      await selectTrigger.click();
       await page.locator('#select a-menu').waitFor({ state: 'visible' });
-      assert.equal(await page.locator('#select').getByRole('button').getAttribute('aria-expanded'), 'true');
+      await selectTrigger.and(page.locator('[aria-expanded="true"]')).waitFor();
       await page.keyboard.press('Escape');
       await page.locator('#date > a-input').click();
       await page.locator('#date a-calendar').waitFor({ state: 'visible' });

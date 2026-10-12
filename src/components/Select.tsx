@@ -267,15 +267,15 @@ export interface SelectCommonProps<V extends OptionValue = string> extends Omit<
    *  A, B, C` (labels comma-joined) in place of the bare `3 selected`. Applies
    *  to the multi-count case only: `All` stays `All`, a single pick stays its
    *  own label, and an empty selection stays the `placeholder`. The list flows
-   *  into the Button label, so it ellipsizes at the field's width when long
+   *  into the default trigger's value, so it ellipsizes at the field's width when long
    *  (`3 selected: Engineering, Des… `). `renderSummary` overrides this. */
   verbose?: boolean
   /** `multiple` only: build the trigger's selection summary text yourself,
    *  replacing the built-in "`All` / one label / `N selected`" logic. Receives
    *  the resolved selected options (`selected.length` is the count) and runs only
    *  while something is selected — an empty selection still shows the
-   *  `placeholder`. Return a **string**: it flows into the default trigger's
-   *  Button label, so a long summary ellipsizes at the field's width just
+   *  `placeholder`. Return a **string**: it becomes the default trigger's
+   *  value, so a long summary ellipsizes at the field's width just
    *  like a long value (`Engineering, Design, … `). Return `undefined` to fall
    *  back to the default for that case (e.g. customize only the count, keeping
    *  the single-label case built-in). For rich content (chips, multiple nodes)

@@ -625,7 +625,7 @@ empty selection still shows the `placeholder` — and takes the resolved `select
 options (`selected.length` is the count). Return `undefined` for any case you'd rather
 leave to the default, as above for the single-label case.
 
-Return a **string**: it flows into the same Button label the default uses, so a
+Return a **string**: it becomes the default trigger's value, so a
 long summary **ellipsizes at the field's width** the way a long value does
 (`Engineering, Design, … `). For rich content — chips, several nodes — reach for
 `renderTrigger` below, which replaces the whole field.
@@ -1077,16 +1077,16 @@ shown above.
 <Select tone="brand" toneScope="selected" style={{ width: '220px' }} options={OPTIONS} />
 ```
 
-**Borderless trigger.** The field's border is an inset `box-shadow`, so you can drop
-it *at rest* and let the standard hover / focus shadow return on its own; no need to
-re-declare it. Pair that with hiding the chevron for a field that reads as plain text
-until you reach for it. Hide the chevron by targeting `a-select-chevron`.
+**Borderless trigger.** Hide the field's inset `box-shadow` while it is not hovered.
+The standard hover border and `:focus-visible` keyboard focus outline remain
+available. Hide the chevron by targeting `a-select-chevron` to make the field
+read as plain text at rest.
 
 <Preview>
   <SelectGhostDemo client:visible={{ rootMargin: '200px' }} />
   <style is:inline>{`
     /* '.ghost-select' is this demo's wrapper; swap your own selector. */
-    .ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
+    .ghost-select a-input:not(:hover)::part(field) {
       box-shadow: none;
     }
     .ghost-select a-input::part(input) { text-align: center; }
@@ -1095,8 +1095,8 @@ until you reach for it. Hide the chevron by targeting `a-select-chevron`.
 </Preview>
 
 ```css folded
-/* Drop the resting border-shadow; the standard hover / focus shadow still shows. */
-.ghost-select a-input:not(:hover):not(:focus-within)::part(field) {
+/* Hide the border off hover; keep the standard keyboard focus outline. */
+.ghost-select a-input:not(:hover)::part(field) {
   box-shadow: none;
 }
 /* Center the chosen label in the field. */

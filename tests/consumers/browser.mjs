@@ -74,11 +74,12 @@ export async function checkBrowser({ origin, artifacts, framework, mode, compose
     }
     if (composed) {
       report.layouts = await page.evaluate(() => {
-        const style = selector => { const css = getComputedStyle(document.querySelector(selector)); return { display: css.display, gap: css.gap }; };
+        const style = selector => { const css = getComputedStyle(document.querySelector(selector)); return { display: css.display, gap: css.gap, rowGap: css.rowGap }; };
         return { breadcrumbs: style('a-breadcrumbs'), select: style('#select a-input') };
       });
       assert.equal(report.layouts.breadcrumbs.display, 'flex');
-      assert.deepEqual(report.layouts.select, { display: 'grid', gap: '4px' });
+      assert.equal(report.layouts.select.display, 'grid');
+      assert.equal(report.layouts.select.rowGap, '4px');
       await page.locator('#select').getByRole('button').click();
       await page.locator('#select a-menu').waitFor({ state: 'visible' });
       assert.equal(await page.locator('#select').getByRole('button').getAttribute('aria-expanded'), 'true');

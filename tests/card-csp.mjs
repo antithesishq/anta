@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { after, before, test } from 'node:test'
 import { createServer } from 'node:http'
-import { createRequire } from 'node:module'
+import { createRequire, Module } from 'node:module'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { build } from 'esbuild'
@@ -13,7 +13,13 @@ const engines = process.env.ANTA_TEST_WEBKIT === '0' ? [chromium] : [chromium, f
 const source = process.env.ANTA_CARD_PACKAGE_ROOT ? resolve(process.env.ANTA_CARD_PACKAGE_ROOT, 'dist') : resolve('src')
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; object-src 'none'"
 const browsers = new Map()
-let server, origin
+let server, origin, renderServer
+
+const nodeFactory = `const node = props => React.createElement(Card, {
+  header: 'Heading', footer: props.href != null ? 'Footer' : [React.createElement('button', {key: 1}, 'First'), React.createElement('button', {key: 2}, 'Second')],
+  ...props,
+}, 'children' in props ? props.children : React.createElement('div', null, 'Body'))`
+const serverProps = { href: '#server', role: 'article', 'data-owner': 'app' }
 
 before(async () => {
   const assets = new Map()
@@ -30,6 +36,16 @@ before(async () => {
     for (const file of result.outputFiles) assets.set(`/${mode}.${file.path.endsWith('.css') ? 'css' : 'js'}`, file.text)
     assert.ok(assets.has(`/${mode}.css`), `${mode} must load its paired stylesheet`)
   }
+  const serverResult = await build({
+    stdin: { contents: `import React from 'react'; import {Card} from '${source}/components/Card'; import {renderToString} from 'react-dom/server'; ${nodeFactory}; export const render = props => renderToString(node(props));`, resolveDir: process.cwd() },
+    bundle: true, write: false, platform: 'node', format: 'cjs', target: 'es2022',
+    jsx: 'automatic', jsxImportSource: '@antadesign/anta',
+    nodePaths: [resolve('node_modules')],
+    alias: { '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime'), 'react-dom/server': requirePlot.resolve('react-dom/server'), react: resolve('node_modules/react') },
+  })
+  const compiled = new Module(resolve('tests/card-server.cjs'))
+  compiled._compile(serverResult.outputFiles[0].text, compiled.id)
+  renderServer = compiled.exports.render
   for (const framework of ['React', 'Preact']) {
     const react = framework === 'React'
     const result = await build({
@@ -38,14 +54,14 @@ before(async () => {
           import React from 'react'
           import { Card } from '${source}/components/Card'
           import '${source}/elements/a-title.css'
-          ${react ? "import { createRoot } from 'react-dom/client'" : "import { render } from 'preact'"}
-          ${react ? "const root = createRoot(document.querySelector('#mount'))" : ''}
+          ${react ? "import { createRoot, hydrateRoot } from 'react-dom/client'" : "import { render, hydrate } from 'preact'"}
+          ${nodeFactory}
+          ${react ? 'let root' : ''}
           window.renderCard = props => {
-            const node = React.createElement(Card, {
-              header: 'Heading', footer: [React.createElement('button', {key: 1}, 'First'), React.createElement('button', {key: 2}, 'Second')],
-              ...props,
-            }, React.createElement('div', null, 'Body'))
-            ${react ? 'root.render(node)' : "render(node, document.querySelector('#mount'))"}
+            ${react ? "root ??= createRoot(document.querySelector('#mount')); root.render(node(props))" : "render(node(props), document.querySelector('#mount'))"}
+          }
+          window.hydrateCard = props => {
+            ${react ? "root = hydrateRoot(document.querySelector('#mount'), node(props))" : "hydrate(node(props), document.querySelector('#mount'))"}
           }
         `, resolveDir: process.cwd(),
       },
@@ -55,11 +71,12 @@ before(async () => {
       nodePaths: [resolve('node_modules'), resolve('site/node_modules')],
       alias: {
         '@antadesign/anta/jsx-runtime': resolve(source, 'jsx-runtime'),
-        ...(react ? { 'react-dom/client': requirePlot.resolve('react-dom/client') } : { react: requireSite.resolve('preact/compat') }),
+        ...(react ? { 'react-dom/client': requirePlot.resolve('react-dom/client'), react: resolve('node_modules/react') } : { react: requireSite.resolve('preact/compat') }),
       },
     })
     for (const file of result.outputFiles) assets.set(`/${framework}.${file.path.endsWith('.css') ? 'css' : 'js'}`, file.text)
   }
+  assert.doesNotMatch(renderServer({ header: false, subtitle: false, icon: false, media: false, footer: false, children: false }), /<a-card-(header|title|body|icon|media|footer)>/)
   assets.set('/fixture.css', await readFile(new URL('./card-csp.fixture.css', import.meta.url), 'utf8'))
   assets.set('/boot.js', `window.cspViolations=[]; document.addEventListener('securitypolicyviolation', e=>window.cspViolations.push(e.effectiveDirective));`)
   server = createServer((req, res) => {
@@ -67,7 +84,7 @@ before(async () => {
     res.setHeader('Content-Type', req.url.endsWith('.js') ? 'text/javascript' : req.url.endsWith('.css') ? 'text/css' : 'text/html')
     const url = new URL(req.url, 'http://localhost')
     const mode = url.searchParams.get('mode') || 'granular'
-    res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><main id="mount"></main><div id="following">Following content</div>`)
+    res.end(assets.get(req.url) ?? `<!doctype html><link rel="stylesheet" href="/${mode}.css"><link rel="stylesheet" href="/fixture.css"><script src="/boot.js"></script><link rel="stylesheet" href="/React.css"><main id="mount">${url.searchParams.has('ssr') ? renderServer(serverProps) : ''}</main><div id="following">Following content</div>`)
   })
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   origin = `http://127.0.0.1:${server.address().port}`
@@ -82,22 +99,23 @@ after(async () => {
   if (server) await new Promise(resolve => server.close(resolve))
 })
 
-async function pageFor(t, engine, mode = 'granular') {
-  const page = await browsers.get(engine).newPage({ reducedMotion: 'reduce' })
+async function pageFor(t, engine, mode = 'granular', ssr = false, javaScriptEnabled = true) {
+  const page = await browsers.get(engine).newPage({ reducedMotion: 'reduce', javaScriptEnabled })
+  page.setDefaultTimeout(10000)
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
-  const response = await page.goto(`${origin}/?mode=${mode}`)
+  const response = await page.goto(`${origin}/?mode=${mode}${ssr ? '&ssr=1' : ''}`)
   assert.equal(response.headers()['content-security-policy'], policy)
   t.after(async () => {
     try {
       assert.deepEqual(errors, [])
-      assert.deepEqual(await page.evaluate(() => window.cspViolations), [])
+      assert.deepEqual(await page.evaluate(() => window.cspViolations ?? []), [])
     } finally { await page.close() }
   })
   return page
 }
 const register = (page, mode = 'granular') => page.evaluate(mode => import(`/${mode}.js`), mode)
-const markup = '<div slot="media"></div><div slot="icon"></div><h2 slot="header">Heading</h2><span slot="header">Subtitle</span><div>Body</div><a-card-footer slot="footer"><button>First</button><button>Second</button></a-card-footer>'
+const markup = '<a-card-media><div>Media</div></a-card-media><a-card-content><a-card-header><a-card-icon><div>Icon</div></a-card-icon><a-card-title><h2>Heading</h2><span>Subtitle</span></a-card-title></a-card-header><a-card-body><div>Body</div><div>Second body</div></a-card-body><a-card-footer><button>First</button><button>Second</button></a-card-footer></a-card-content>'
 
 async function mount(page, content = markup, attrs = {}) {
   await page.evaluate(({content, attrs}) => {
@@ -115,8 +133,7 @@ async function geometry(page) {
     }
     return {
       host: rect(card), following: rect(document.querySelector('#following')),
-      content: [...card.children].map(node => {
-        if (node.slot === 'icon' || node.slot === 'media') return rect(node)
+      content: [...card.querySelectorAll('a-card-media > *, a-card-icon > *, a-card-title > *, a-card-body > *, a-card-footer > *')].map(node => {
         const range = document.createRange()
         range.selectNodeContents(node)
         return rect(range)
@@ -132,132 +149,122 @@ function sameGeometry(before, after) {
 }
 
 for (const engine of engines) {
-  test(`${engine.name()}: Card CSS preserves visible slot geometry before upgrade`, async t => {
+  test(`${engine.name()}: CSS-only Card SSR renders and navigates with JavaScript disabled`, async t => {
+    const page = await pageFor(t, engine, 'granular', true, false)
+    assert.equal(await page.locator('a-card').evaluate(n => getComputedStyle(n).opacity), '1')
+    assert.equal(await page.locator('a-card-body').count(), 1)
+    await page.locator('a-card > a').click()
+    await page.waitForURL(url => url.hash === '#server')
+  })
+  test(`${engine.name()}: Card geometry does not depend on registration in any media position or size`, async t => {
     for (const position of ['top', 'bottom', 'left', 'right']) {
       for (const size of ['small', 'medium', 'large']) {
         const page = await pageFor(t, engine)
         await mount(page, markup, { 'media-position': position, size })
-        assert.equal(await page.locator('a-card').evaluate(n => getComputedStyle(n).opacity), '1')
+        assert.equal(await page.locator('a-card').evaluate(n => getComputedStyle(n).flexDirection), { top: 'column', bottom: 'column-reverse', left: 'row', right: 'row-reverse' }[position])
         const before = await geometry(page)
         await register(page)
         sameGeometry(before, await geometry(page))
-        assert.equal(await page.locator('a-card').evaluate(n => n.shadowRoot.querySelectorAll('style').length), 0)
+        assert.equal(await page.locator('a-card').evaluate(n => n.shadowRoot), null)
+        assert.equal(await page.evaluate(() => customElements.get('a-card') == null), true)
       }
     }
   })
-  test(`${engine.name()}: Card fallback covers missing sections and constrained heights`, async t => {
-    for (const variant of ['one-header', 'no-icon', 'icon-only', 'body-only', 'header-only', 'footer-only', 'tall-footer', 'narrow', 'tall', 'rtl', 'nested']) {
-      const page = await pageFor(t, engine)
-      await mount(page)
-      await page.locator('a-card').evaluate((card, variant) => {
-        if (variant === 'one-header') card.querySelector('span').remove()
-        if (variant === 'no-icon') card.querySelector('[slot="icon"]').remove()
-        if (variant === 'icon-only') card.querySelectorAll('[slot="header"]').forEach(n => n.remove())
-        if (['body-only', 'header-only', 'footer-only'].includes(variant)) [...card.children].forEach(n => {
-          if (variant === 'body-only' && n.slot || variant === 'header-only' && n.slot !== 'header' || variant === 'footer-only' && n.slot !== 'footer') n.remove()
-        })
-        if (variant === 'tall' || variant === 'narrow') card.className = variant
-        if (variant === 'tall-footer') { [...card.children].forEach(n => { if(n.slot !== 'footer') n.remove() }); card.className = 'tall' }
-        if (variant === 'nested') card.querySelector(':scope > :not([slot])').innerHTML = '<a-card><div>Nested body</div></a-card>'
-        if (variant === 'rtl') card.dir = 'rtl'
-      }, variant)
-      const before = await geometry(page)
-      await register(page)
-      sameGeometry(before, await geometry(page))
-    }
-  })
-  test(`${engine.name()}: native Card pointer and keyboard navigation stop while loading`, async t => {
-    const page = await pageFor(t, engine)
-    await mount(page, '<h2 slot="header">Read more</h2><div>Content</div>', { href: '#pointer' })
-    await register(page)
-    const link = page.locator('a-card').locator('[part="container"]')
-    await link.click()
-    await page.waitForURL(url => url.hash === '#pointer')
-    await page.locator('a-card').evaluate(n => n.setAttribute('href', '#keyboard'))
-    await page.keyboard.press(engine === webkit ? 'Alt+Tab' : 'Tab')
-    await link.focus()
-    await page.keyboard.press('Enter')
-    await page.waitForURL(url => url.hash === '#keyboard')
-    await page.locator('a-card').evaluate(n => { n.setAttribute('href', '#blocked'); n.setAttribute('loading', '') })
-    const bounds = await page.locator('a-card').boundingBox()
-    await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
-    assert.equal(new URL(page.url()).hash, '#keyboard')
-    await page.locator('a-card').evaluate(n => n.removeAttribute('loading'))
-    await link.click()
-    await page.waitForURL(url => url.hash === '#blocked')
-  })
-  test(`${engine.name()}: unsupported flat compositions keep the hidden fallback without node rewrites`, async t => {
-    const page = await pageFor(t, engine)
-    await mount(page, '<div>First body</div><div>Second body</div>')
-    assert.equal(await page.locator('a-card').evaluate(n => getComputedStyle(n).opacity), '0')
-    const html = await page.locator('a-card').evaluate(n => n.outerHTML)
-    await register(page)
-    assert.equal(await page.locator('a-card').evaluate(n => n.outerHTML), html)
-    assert.equal(await page.locator('a-card').evaluate(n => getComputedStyle(n).opacity), '1')
-    assert.equal(await page.locator('a-card').evaluate(n => getComputedStyle(n.shadowRoot.querySelector('[part="body"]')).display), 'block')
-  })
   for (const mode of ['granular', 'bundle']) {
-    test(`${engine.name()}: ${mode} Card styles, overrides, animation, and owned link work under CSP`, async t => {
+    test(`${engine.name()}: ${mode} Card regions, overrides, loading, and nested state work under CSP`, async t => {
       const page = await pageFor(t, engine, mode)
-      await mount(page, markup.replace('<a-card-footer slot="footer"><button>First</button><button>Second</button></a-card-footer>', '<span slot="footer">Footer</span>'), { href: '/destination', target: '_blank', rel: 'noopener', ping: '/ping', 'aria-label': 'Explicit name', role: 'article', selected: '' })
-      const html = await page.locator('a-card').evaluate(n => n.outerHTML)
-      await page.locator('a-card').evaluate(n => {
+      await mount(page, markup, { selected: '', class: 'override tall' })
+      await page.locator('a-card-body').evaluate(n => n.innerHTML += '<a-card><a-card-content><a-card-body>Nested text</a-card-body></a-card-content></a-card>')
+      assert.match(await page.locator('#mount > a-card').evaluate(n => getComputedStyle(n).boxShadow), /2px inset/)
+      const html = await page.locator('#mount > a-card').evaluate(n => n.outerHTML)
+      await page.locator('#mount > a-card').evaluate(n => {
         window.ownerMutations = []
         new MutationObserver(records => window.ownerMutations.push(...records.map(r => r.type))).observe(n, { attributes: true, childList: true, subtree: true, characterData: true })
       })
       await register(page, mode)
-      assert.equal(await page.locator('a-card').evaluate(n => n.outerHTML), html)
+      assert.equal(await page.locator('#mount > a-card').evaluate(n => n.outerHTML), html)
       assert.deepEqual(await page.evaluate(() => window.ownerMutations), [])
-      const link = page.locator('a-card').locator('[part="container"]')
-      assert.equal(await link.getAttribute('aria-label'), 'Explicit name')
-      assert.equal(await link.getAttribute('target'), '_blank')
-      assert.equal(await link.getAttribute('rel'), 'noopener')
-      assert.equal(await link.getAttribute('ping'), '/ping')
-      assert.match(await page.locator('body').ariaSnapshot(), /link "Explicit name"/)
-      await page.keyboard.press(engine === webkit ? 'Alt+Tab' : 'Tab')
-      assert.equal(await link.evaluate(n => n.matches(':focus-visible')), true)
-      assert.notEqual(await link.evaluate(n => getComputedStyle(n).boxShadow), 'none')
-      if (engine === chromium) {
-        await page.emulateMedia({ forcedColors: 'active' })
-        assert.equal(await link.evaluate(n => getComputedStyle(n).outlineStyle), 'solid')
-        await page.emulateMedia({ forcedColors: 'none' })
-      }
-      await page.locator('a-card').evaluate(n => n.setAttribute('loading', ''))
-      assert.equal(await link.getAttribute('href'), null)
-      assert.equal(await link.getAttribute('aria-busy'), 'true')
-      assert.equal(await link.evaluate(n => getComputedStyle(n).pointerEvents), 'none')
+      await page.locator('a-card-title').evaluate(n => n.innerHTML = '<div><a-title level="4">Grouped heading</a-title></div>')
+      assert.equal(await page.locator('a-card-title a-title').evaluate(n => getComputedStyle(n).marginTop), '0px')
+      assert.equal(await page.locator('#mount > a-card a-card-header').evaluate(n => getComputedStyle(n).paddingBottom), '8px')
+      assert.equal(await page.locator('#mount > a-card > a-card-content > a-card-body').evaluate(n => getComputedStyle(n).overflow), 'auto')
+      assert.equal(await page.locator('a-card-body a-card').evaluate(n => getComputedStyle(n).getPropertyValue('--card-selection-shadow').trim()), 'inset 0 0 0 0 transparent')
+      await page.locator('#mount > a-card').evaluate(n => n.setAttribute('loading', ''))
       await page.emulateMedia({ reducedMotion: 'no-preference' })
-      assert.equal(await page.locator('a-card').evaluate(n => n.shadowRoot.querySelector('[part="content"]').getAnimations().length), 1)
+      assert.equal(await page.locator('#mount > a-card > a-card-content').evaluate(n => n.getAnimations().length), 1)
+      assert.equal(await page.locator('a-card-body a-card-content').evaluate(n => n.getAnimations().length), 0)
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      assert.equal(await page.locator('a-card').evaluate(n => n.shadowRoot.querySelector('[part="content"]').getAnimations().length), 0)
-      await page.locator('a-card').evaluate(n => { n.removeAttribute('loading'); n.removeAttribute('href'); n.className = 'override tall' })
-      assert.equal(await link.getAttribute('aria-busy'), null)
-      assert.equal(await link.getAttribute('aria-label'), null)
-      assert.equal(await page.locator('a-card').evaluate(n => getComputedStyle(n.shadowRoot.querySelector('[part="header"]')).paddingBottom), '8px')
-      assert.equal(await page.locator('a-card').evaluate(n => getComputedStyle(n.shadowRoot.querySelector('[part="body"]')).overflow), 'auto')
+      assert.equal(await page.locator('#mount > a-card > a-card-content').evaluate(n => n.getAnimations().length), 0)
     })
   }
   for (const framework of ['React', 'Preact']) {
-    test(`${engine.name()}: ${framework} Card footer layout uses external CSS and renderer-owned attributes`, async t => {
-      const page = await pageFor(t, engine)
-      await page.addStyleTag({ url: `${origin}/${framework}.css` })
-      await page.evaluate(framework => import(`/${framework}.js`), framework)
-      await page.evaluate(() => window.renderCard({ href: '/first', 'aria-label': 'First name', role: 'article', 'data-owner': 'app' }))
-      await page.waitForSelector('a-card', { state: 'attached' })
-      assert.equal(await page.locator('a-card-footer').getAttribute('style'), null)
+    test(`${engine.name()}: ${framework} hydrates Card without layout or ownership changes`, async t => {
+      const page = await pageFor(t, engine, 'granular', true)
       const before = await geometry(page)
       const html = await page.locator('a-card').evaluate(n => n.outerHTML)
-      await register(page)
+      await page.evaluate(framework => import(`/${framework}.js`), framework)
+      await page.evaluate(props => window.hydrateCard(props), serverProps)
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)))
       sameGeometry(before, await geometry(page))
       assert.equal(await page.locator('a-card').evaluate(n => n.outerHTML), html)
-      assert.equal(await page.locator('a-card-footer').evaluate(n => getComputedStyle(n).display), 'contents')
-      await page.evaluate(() => window.renderCard({ href: '/second', 'aria-label': 'Second name', role: 'article', 'data-owner': 'app', loading: true }))
+      await page.evaluate(() => window.renderCard({ href: '#next', 'aria-label': 'Next name', loading: true, 'data-owner': 'app' }))
       await page.waitForFunction(() => document.querySelector('a-card').hasAttribute('loading'))
       const state = await page.locator('a-card').evaluate(n => ({
-        href: n.getAttribute('href'), role: n.getAttribute('role'), label: n.getAttribute('aria-label'), owner: n.dataset.owner,
-        linkHref: n.shadowRoot.querySelector('a').getAttribute('href'), busy: n.shadowRoot.querySelector('a').getAttribute('aria-busy'),
+        label: n.getAttribute('aria-label'), owner: n.dataset.owner,
+        linkHref: n.querySelector('a').getAttribute('href'), linkLabel: n.querySelector('a').getAttribute('aria-label'), busy: n.querySelector('a').getAttribute('aria-busy'),
       }))
-      assert.deepEqual(state, { href: '/second', role: 'article', label: 'Second name', owner: 'app', linkHref: null, busy: 'true' })
+      assert.deepEqual(state, { label: null, owner: 'app', linkHref: null, linkLabel: 'Next name', busy: 'true' })
+      await page.evaluate(() => window.renderCard({ href: '#next', header: 'Updated header', 'data-owner': 'app' }))
+      await page.waitForFunction(() => document.querySelector('a-card > a').getAttribute('href') === '#next')
+      assert.equal(await page.locator('a-card > a').getAttribute('aria-label'), 'Updated header')
+      await page.keyboard.press(engine === webkit ? 'Alt+Tab' : 'Tab')
+      await page.locator('a-card > a').focus()
+      assert.equal(await page.locator('a-card > a').evaluate(n => n.matches(':focus-visible')), true)
+      assert.notEqual(await page.locator('a-card > a').evaluate(n => getComputedStyle(n).boxShadow), 'none')
+      if (engine === chromium) {
+        await page.emulateMedia({ forcedColors: 'active' })
+        assert.equal(await page.locator('a-card > a').evaluate(n => getComputedStyle(n).outlineStyle), 'solid')
+        await page.emulateMedia({ forcedColors: 'none' })
+      }
+      await page.keyboard.press('Enter')
+      await page.waitForURL(url => url.hash === '#next')
+      await page.evaluate(() => window.renderCard({ href: '#pointer', target: '_blank', rel: 'noopener', ping: '/ping' }))
+      await page.waitForFunction(() => document.querySelector('a-card > a').getAttribute('href') === '#pointer')
+      const anchor = page.locator('a-card > a')
+      assert.equal(await anchor.getAttribute('target'), '_blank')
+      assert.equal(await anchor.getAttribute('rel'), 'noopener')
+      assert.equal(await anchor.getAttribute('ping'), '/ping')
+      await page.evaluate(() => window.renderCard({ href: '#pointer' }))
+      await page.waitForFunction(() => document.querySelector('a-card > a').target === '')
+      assert.equal(await anchor.evaluate(n => n.rel), '')
+      assert.equal(await anchor.evaluate(n => n.ping), '')
+      await anchor.click()
+      await page.waitForURL(url => url.hash === '#pointer')
+      await page.evaluate(() => window.renderCard({ footer: null, header: null, children: 'Raw string', 'aria-busy': 'false', loading: true }))
+      await page.waitForFunction(() => !document.querySelector('a-card > a'))
+      assert.equal(await page.locator('a-card').getAttribute('aria-busy'), 'false')
+      assert.equal(await page.locator('a-card-header').count(), 0)
+      assert.equal(await page.locator('a-card-body').innerText(), 'Raw string')
+      assert.equal(await page.locator('a-card').evaluate(n => n.shadowRoot), null)
+    })
+    test(`${engine.name()}: ${framework} Card ARIA references remain live on the native link`, async t => {
+      const page = await pageFor(t, engine)
+      await page.evaluate(framework => import(`/${framework}.js`), framework)
+      await page.evaluate(() => {
+        const label = document.createElement('h2')
+        label.id = 'external-label'
+        label.textContent = 'External title'
+        document.body.append(label)
+        window.renderCard({ href: '#named', 'aria-labelledby': label.id, 'aria-describedby': 'following', 'aria-current': 'page' })
+      })
+      await page.waitForSelector('a-card > a')
+      assert.equal(await page.locator('a-card').getAttribute('aria-labelledby'), null)
+      assert.match(await page.locator('body').ariaSnapshot(), /link "External title"/)
+      await page.locator('#external-label').evaluate(n => n.textContent = 'Changed title')
+      assert.match(await page.locator('body').ariaSnapshot(), /link "Changed title"/)
+      await page.evaluate(() => window.renderCard({ href: '#named', 'aria-label': 'Explicit title' }))
+      await page.waitForFunction(() => !document.querySelector('a-card > a').hasAttribute('aria-labelledby'))
+      assert.match(await page.locator('body').ariaSnapshot(), /link "Explicit title"/)
     })
   }
 }

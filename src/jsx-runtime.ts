@@ -205,6 +205,12 @@ export interface AntaIntrinsicElements {
   'a-card': ACardAttributes
   'a-card-icon-chip': BaseAttributes
   'a-card-footer': BaseAttributes
+  'a-card-media': BaseAttributes
+  'a-card-content': BaseAttributes
+  'a-card-header': BaseAttributes
+  'a-card-icon': BaseAttributes
+  'a-card-title': BaseAttributes
+  'a-card-body': BaseAttributes
   'a-input-date-time-container': BaseAttributes
   'a-banner': ABannerAttributes
   'a-banner-message': BaseAttributes

@@ -571,7 +571,7 @@
       a-tab, a-menu-item, a[data-anta-menu-item],
       details[data-anta] > summary):focus-visible,
   a-expander::part(summary):focus-visible,
-  a-card::part(container):focus-visible,
+  a-card > a:focus-visible,
   :is(a-checkbox, a-radio, a-switch):focus-visible::before,
   a-radio-group:focus-visible a-radio:state(selected)::before {
     outline: 2px solid var(--focus-ring);
@@ -590,10 +590,10 @@
 
   /* The card clips its own box, so its ring sits inside and replaces the
      component's inset shadow ring. */
-  a-card::part(container) {
+  a-card > a {
     --focus-ring-inset: 1;
   }
-  a-card::part(container):focus-visible {
+  a-card > a:focus-visible {
     box-shadow: none;
   }
 

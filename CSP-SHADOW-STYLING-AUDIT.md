@@ -234,8 +234,10 @@ public APIs, and shipped CSS have not changed.
 Card should render under strict CSP, avoid an invisible first paint, and preserve
 application ownership of the host and its light-DOM children.
 
-The initial recommendation is to retain Card's shadow structure and move every
-static style into `a-card.css`. All eight visual regions already have parts:
+The selected approach is to retain Card's shadow structure, move every static
+style into `a-card.css`, and validate a visible pre-upgrade layout. The user
+confirmed this scope on October 13, 2026. Full light-DOM restructuring is outside
+this first refactor. All eight visual regions already have parts:
 `container`, `media`, `content`, `header`, `icon`, `title`, `body`, and `footer`.
 No additional parts or runtime styling state are needed for that migration.
 
@@ -247,7 +249,7 @@ defines the external styling mechanism.
 
 | Approach | Initial render | Compatibility and ownership |
 | --- | --- | --- |
-| External CSS, existing shadow structure, visible CSS fallback | Can paint content before registration. Matching complex slot composition still needs proof. The native link exists only after upgrade. | Preserves slots, parts, and raw HTML. The element continues to mutate only its owned shadow nodes. Recommended first investigation. |
+| External CSS, existing shadow structure, visible CSS fallback | Can paint content before registration. Matching complex slot composition still needs proof. The native link exists only after upgrade. | Preserves slots, parts, and raw HTML. The element continues to mutate only its owned shadow nodes. Selected approach. |
 | Declarative light-DOM structure emitted by the wrapper or raw author | Layout and a native link can exist in the initial HTML. | Requires explicit section and anchor markup. Existing raw slot composition and part overrides need a migration design. The element must never insert, move, or rewrite renderer-owned nodes. |
 | Declarative shadow DOM | Parsed HTML can contain the final shadow structure before element registration. | Requires an SSR and hydration design, plus constructor changes to reuse the parsed structure. Client rendering needs a separate path. Broader than Card's stylesheet migration. |
 
@@ -378,8 +380,8 @@ define Anta's routing contract.
    Measure child rectangles and the following sibling before/after registration,
    including delayed and failed JS. Remove full-host hiding and its entrance
    fade only once the supported composition matches. If the flat markup cannot
-   express the grouping, document the failing case and select a declarative
-   structural design before implementing that larger change.
+   express the grouping, document the failing case and revisit scope with the
+   user before implementing a larger structural change.
 5. **Resolve semantics separately.** Review the stale-name and ID-reference
    findings with the ownership contract. Make any naming/routing change a
    separate reviewable commit with browser accessibility and renderer-update

@@ -1325,6 +1325,22 @@
     border-radius: 3px;
   }
 
+  /* Dark primary tags take the solid control fill, matching primary buttons
+     and checked checkboxes. */
+  a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"], [tone="brand"],
+      [tone="info"], [tone="success"], [tone="warning"]) {
+    --tag-text: light-dark(#fff, var(--label-on-fill));
+  }
+  a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"]) { --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1)); }
+  a-tag[priority="primary"][tone="brand"] { --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1-brand)); }
+  a-tag[priority="primary"][tone="info"] { --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1-info)); }
+  a-tag[priority="primary"][tone="success"] { --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1-success)); }
+  a-tag[priority="primary"][tone="warning"] { --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1-warning)); }
+  a-tag[priority="primary"][tone="critical"] {
+    --tag-bg: light-dark(var(--tag-bg-solid), var(--fill-1-critical));
+    --tag-text: light-dark(#fff, var(--label-on-fill-critical));
+  }
+
   a-card:not([round]) {
     --card-radius: 1px;
   }

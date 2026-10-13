@@ -7,6 +7,10 @@ changes are not listed.
 
 ### Breaking
 
+- [Expandable raw Text](/text/#expand-raw-html) requires an `a-text-content`
+  region and an `a-button` control. JSX props remain unchanged; granular
+  expandable usage also imports the Button element entry.
+
 - [Card markup](/card/#migrate-from-shadow-parts) uses light-DOM `a-card-*`
   regions. JSX props remain available; raw slot markup and `::part()` overrides
   need migration. `ACardElement` and `register_a_card` are removed.
@@ -31,6 +35,10 @@ changes are not listed.
   `sans-serif`, or `monospace` and overrides the theme's level default.
 
 ### Changed
+
+- [Text](/text/) renders and truncates in light DOM with external CSS.
+  Expansion works in JSX and raw HTML without rewriting authored markup or
+  attributes. One-way expansion hides its control instead of removing it.
 
 - [Card](/card/) renders its final layout and native link directly in HTML. Its
   styling uses external CSS and no shadow stylesheet.

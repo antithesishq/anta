@@ -280,18 +280,17 @@ export interface ATextAttributes extends BaseAttributes {
   inline?: boolean | ''
   /** Truncate to N lines with a trailing ellipsis. The attribute value
    *  carries the line count (e.g. `"1"`, `"3"`); the count is also
-   *  available via the `--line-clamp` CSS custom property set inline. */
+   *  available via `--line-clamp`. Multi-line JSX values set it inline;
+   *  raw authors set it in an allowed stylesheet. */
   truncate?: boolean | string | number
-  /** Marks the host as expandable when paired with `truncate`. Adds
-   *  the fade-out mask and the expand/collapse chevron button; the element
-   *  owns the click/keyboard expansion logic. Without `collapsible`,
-   *  expanding is one-way (the control is removed once expanded). */
+  /** Enables expansion with `truncate`. Supply an `a-text-content` region and
+   *  a direct `a-button` control with `role="button"` and `tabindex="0"`. The
+   *  elements own expansion and accessibility defaults off-DOM. Without
+   *  `collapsible`, expansion is one-way and the control becomes hidden. */
   expandable?: boolean | ''
   /** Paired with `expandable`: the chevron becomes a two-way "Show more" /
    *  "Show less" toggle that stays visible while expanded. Omit for one-way. */
   collapsible?: boolean | ''
-  /** ARIA disclosure state, mirrors the JSX wrapper's `expanded` flag. */
-  'aria-expanded'?: boolean | 'true' | 'false'
 }
 
 /** Panel presentation state. Normal panels remain visible in their parent layout. */

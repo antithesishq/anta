@@ -583,6 +583,6 @@ policy. A nonce on a `<style>` element does not authorize HTML `style`
 attributes. See [CSP rules for stylesheet elements](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-elem).
 
 Anta does not yet support strict CSP across every component. Card's own styling
-is entirely external; components such as Input, Menu, and Text still inject
+is entirely external; components such as Input and Menu still inject
 shadow `<style>` elements. Loading a theme does not unblock those styles, and
 nested components retain their own CSP requirements.

@@ -19,42 +19,41 @@ element must not rewrite application-owned light DOM or host attributes.
 Completed work on this branch:
 
 - [x] [Avatar](src/elements/a-avatar.ts): external part styling; retains shadow DOM.
+- [x] [Text](src/elements/a-text.ts): light-DOM content and Button control;
+  automatic measurement and expansion, external CSS, and off-DOM state/ARIA.
 - [x] [Card](src/components/Card.tsx): CSS-only light DOM, declarative regions,
   and a native anchor for link mode. No element class or injected stylesheet.
 
 The following is the proposed order. Each item includes research, implementation,
 and verification before moving to the next component.
 
-1. [ ] [Text](src/elements/a-text.ts): typography, truncation, overflow
-   measurement, and expand control. Resolves a remaining shadow-style dependency
-   in Cards with string bodies.
-2. [ ] [Progress](src/elements/a-progress.ts): indicator, content layout, and
+1. [ ] [Progress](src/elements/a-progress.ts): indicator, content layout, and
    loading animation.
-3. [ ] [Banner](src/elements/a-banner.ts): content and action layout, empty
+2. [ ] [Banner](src/elements/a-banner.ts): content and action layout, empty
    regions, and dismissal behavior.
-4. [ ] [Expander](src/elements/a-expander.ts): header, content, indicators, and
+3. [ ] [Expander](src/elements/a-expander.ts): header, content, indicators, and
    collapse animation. Boolean `round` now uses a CSS radius; the measured-radius
    issue described in the historical audit is resolved. Static shadow styles
    remain.
-5. [ ] [Panel](src/elements/a-panel.ts): content, placeholder, maximized state,
+4. [ ] [Panel](src/elements/a-panel.ts): content, placeholder, maximized state,
    and backdrop.
-6. [ ] [Tooltip](src/elements/a-tooltip.ts): popover structure, positioning,
+5. [ ] [Tooltip](src/elements/a-tooltip.ts): popover structure, positioning,
    proximity opacity, and transitions. Shared by several composed components.
-7. [ ] [Input](src/elements/a-input.ts): input, textarea, and button modes;
+6. [ ] [Input](src/elements/a-input.ts): input, textarea, and button modes;
    native controls, adornments, focus, labels, and hints.
-8. [ ] [InputTime](src/elements/a-input-time.ts): segments, separators,
+7. [ ] [InputTime](src/elements/a-input-time.ts): segments, separators,
    adornments, and native-field semantics.
-9. [ ] [Menu](src/elements/a-menu.ts): popover surface, header/footer,
+8. [ ] [Menu](src/elements/a-menu.ts): popover surface, header/footer,
    scrolling, keyboard navigation, and focus ownership. Verify with Input.
-10. [ ] [Dialog](src/elements/a-dialog.ts): modal structure, optional regions,
+9. [ ] [Dialog](src/elements/a-dialog.ts): modal structure, optional regions,
     backdrop, focus management, and close behavior.
-11. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
+10. [ ] [Slider](src/elements/a-slider.ts): rail, thumbs, scalar/range values,
     markers, affixes, dragging, and focus states.
-12. [ ] [Toast](src/elements/a-toast.ts): content, entry/exit animations, and
+11. [ ] [Toast](src/elements/a-toast.ts): content, entry/exit animations, and
     countdown pause, restart, and dismissal.
-13. [ ] [Toaster](src/elements/a-toaster.ts): placement regions and pointer
+12. [ ] [Toaster](src/elements/a-toaster.ts): placement regions and pointer
     handling. Verify together with Toast.
-14. [ ] [Copy feedback](src/elements/a-copy.ts): feedback popover, placement,
+13. [ ] [Copy feedback](src/elements/a-copy.ts): feedback popover, placement,
     measuring/showing states, and animation.
 
 After their underlying elements are migrated, verify these compositions:

@@ -48,7 +48,8 @@ so truncation works inside flex and grid containers.
 JSX `Text` adds a `truncatedOnly` tooltip containing its text content. It
 opens only when the text clips. Nest a `<Tooltip>` to replace that tooltip;
 an empty nested tooltip suppresses it. `expandable` text has no automatic
-tooltip because its own control reveals the content.
+tooltip because its own control reveals the content. Tooltip still has its own
+shadow styling and CSP requirements; see [Content Security Policy](../install-config.md#content-security-policy).
 
 ```tsx
 {/* Single line */}
@@ -79,17 +80,18 @@ thread when you compose custom truncation behavior.
 Pair `expandable` with `truncate` to let the reader reveal the full text.
 The fade and chevron appear only when the clamped content overflows; text
 that fits gets neither. Single-line truncation fades on the right edge,
-multi-line over the last line. The chevron is a real `<button>` carrying
-`aria-expanded`: click it, or focus it and press Enter, to drop the clamp.
+multi-line over the last line. The chevron is a light-DOM `a-button` with
+button semantics and an accessible expanded state: click it, or focus it and
+press Enter or Space, to drop the clamp.
 `expandable` takes effect only with `truncate`.
 
-Expanding is one-way by default, so the control is removed once the text
+Expanding is one-way by default, so the control is hidden once the text
 is revealed. Add `collapsible` for a two-way toggle: the chevron stays
 visible while expanded (rotated up) and flips its label between "Show
 more" and "Show less". `collapsible` takes effect only with `expandable`.
 
 ```tsx
-{/* One-way: the chevron is removed once expanded */}
+{/* One-way: the chevron is hidden once expanded */}
 <Text truncate expandable>{longSentence}</Text>
 <Text truncate={3} expandable>{longSentence}</Text>
 
@@ -102,7 +104,7 @@ more" and "Show less". `collapsible` takes effect only with `expandable`.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `collapsible?` | boolean | — | Let the reader collapse back after expanding: the chevron becomes a "Show more" / "Show less" toggle that stays visible while expanded. Only takes effect together with `expandable`. |
-| `expandable?` | boolean | — | Show a fade hint and chevron over the truncated text and let the user expand it by clicking the chevron region or pressing Enter while the chevron has keyboard focus. Only takes effect together with `truncate`. On its own, expanding is **one-way** — the control is removed once expanded; add `collapsible` for a two-way toggle. |
+| `expandable?` | boolean | — | Show a fade hint and chevron over the truncated text and let the user expand it by clicking the chevron region or pressing Enter while the chevron has keyboard focus. Only takes effect together with `truncate`. On its own, expanding is **one-way** — the control is hidden once expanded; add `collapsible` for a two-way toggle. |
 | `inline?` | boolean | — | Render as inline-block instead of the default block element. |
 | `priority?` | 'primary' \| 'secondary' \| 'tertiary' \| 'quaternary' | secondary | Visual priority. Maps to text-1..text-4 (`primary` = text-1, the strongest). The default is `secondary` (text-2) — body text reads a step softer than the strongest foreground; pass `primary` for emphasis. |
 | `size?` | 'small' \| 'medium' \| 'large' | medium | Type scale. `small` = 13/16, `medium` = 15/20, `large` = 17/24. |
@@ -111,14 +113,56 @@ more" and "Show less". `collapsible` takes effect only with `expandable`.
 
 ## Web Component
 
-Use the web component directly when you are not using React or Preact and a native control does not fit.
-
 Use `<a-text>` directly for a block that carries the text priority and tone.
 
 ```html
 <a-text priority="secondary">
   Read the <a href="/colors/">color guidance</a>.
 </a-text>
+```
+
+### Expand raw HTML
+
+Expandable raw Text needs an `a-text-content` region and a direct `a-button`
+control. Both elements work without JSX or application-written toggle handlers.
+Import their entries alongside your shared tokens and styles:
+
+```ts
+import '@antadesign/anta/elements/a-text'
+import '@antadesign/anta/elements/a-button'
+```
+
+```html
+<a-text truncate="1" expandable collapsible>
+  <a-text-content>A long description that needs more than one line.</a-text-content>
+  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+</a-text>
+```
+
+The Text element owns overflow and expansion state through `ElementInternals`.
+The Button element publishes its own accessible label and expanded state through
+`ElementInternals` too. Neither rewrites your attributes or children. Explicit
+ARIA on the button overrides those defaults; keep any explicit `aria-expanded`
+value synchronized yourself. The control stays in the DOM and becomes hidden
+after one-way expansion.
+
+Existing flat expandable raw markup needs these two children. Ordinary raw Text
+and the JSX props remain unchanged. Plain Text has no extra content wrapper;
+expandable Text has no shadow root or injected stylesheet.
+
+For multi-line raw Text, set `--line-clamp` in an allowed stylesheet. JSX sets
+counts greater than one through an inline custom property, which needs separate
+handling under `style-src-attr 'none'` (see [Content Security Policy](../install-config.md#content-security-policy)):
+
+```html
+<a-text class="summary" truncate="3" expandable collapsible>
+  <a-text-content>A longer description to show across three lines.</a-text-content>
+  <a-button role="button" tabindex="0" priority="quaternary" paddingless></a-button>
+</a-text>
+```
+
+```css
+a-text.summary { --line-clamp: 3; }
 ```
 
 ## Styling
@@ -135,7 +179,7 @@ oklch from **`--text-tone-source`** — the same one-off knob as `Button` / `Tag
 <Text tone="#0d9488">Custom-tone body copy</Text>
 ```
 
-`<a-text>` is light-DOM, so one-offs are plain CSS on the element or its prose
+`<a-text>` uses light DOM, so one-offs are plain CSS on the element or its prose
 links. The `.fancy` class names the demo example:
 
 ```css

@@ -48,6 +48,7 @@ jobs:
           if [ -z "$TEST_BASE_SHA" ]; then
             echo 'calendar=true' >> "$GITHUB_OUTPUT"
             echo 'card=true' >> "$GITHUB_OUTPUT"
+            echo 'text=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
@@ -81,6 +82,19 @@ jobs:
           else
             echo 'card=false' >> "$GITHUB_OUTPUT"
           fi
+          changed=$(git diff --name-only "$TEST_BASE_SHA"...HEAD -- \
+            'src/elements/a-text.*' 'src/elements/a-button.*' 'src/elements/a-tooltip.*' \
+            src/components/{Text,Tooltip}.tsx \
+            src/{jsx-runtime,anta_helpers,general_types,index,bundle}.ts \
+            src/elements/{index,key-activation}.ts \
+            src/{tokens,reset,theme-antune,theme-antithesis}.css \
+            'tests/text-csp*' scripts/build-bundle.mjs .github/workflows/ci.yml \
+            package.json pnpm-lock.yaml pnpm-workspace.yaml {site,plot}/package.json)
+          if [ -n "$changed" ]; then
+            echo 'text=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'text=false' >> "$GITHUB_OUTPUT"
+          fi
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -106,6 +120,11 @@ jobs:
       - name: Test Card CSP and initial layout
         if: steps.component-tests.outputs.card == 'true'
         run: pnpm test:card
+        env:
+          CAPTURE_TEST_BROWSER_CHANNEL: chrome
+      - name: Test Text CSP, expansion, and initial layout
+        if: steps.component-tests.outputs.text == 'true'
+        run: pnpm test:text
         env:
           CAPTURE_TEST_BROWSER_CHANNEL: chrome
       - name: Typecheck stickers

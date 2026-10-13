@@ -141,6 +141,7 @@ export interface AntaIntrinsicElements {
   'a-progress-text': BaseAttributes
   'a-progress-hint': BaseAttributes
   'a-text': ATextAttributes
+  'a-text-content': BaseAttributes
   'a-box': ABoxAttributes
   'a-capture': ACaptureAttributes
   'a-panel': APanelAttributes

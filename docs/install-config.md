@@ -167,34 +167,6 @@ Token custom properties stay unlayered so they apply everywhere.
 > `@layer base { … }`; `reset.css` already applies the same universal reset in
 > `@layer anta.reset`.
 
-### Content Security Policy
-
-Anta's tokens, component stylesheets, and optional themes work when your Content
-Security Policy (CSP) allows their stylesheet URLs through `style-src-elem` or
-its `style-src` fallback. External CSS and named theme values do not require
-inline style attributes.
-
-Some JSX props produce inline CSS custom properties, including custom `tone`
-colors, explicit `round` lengths, and numeric sizing. The `style` prop also
-produces inline styles. Server rendering serializes these values into HTML
-`style` attributes, which `style-src-attr 'none'` blocks. Put these
-customizations in classes and an allowed stylesheet when inline attributes are
-forbidden. Client-side assignments to individual CSS properties can behave
-differently; do not rely on hydration to repair blocked server-rendered styles.
-See [CSP rules for style attributes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).
-
-Server-rendered `<style>` blocks also need CSP permission. They follow
-`style-src-elem`, falling back to `style-src` and then `default-src`.
-`'self'` allows same-origin stylesheet files, but does not authorize inline
-`<style>` blocks. Use a matching nonce or hash for those blocks under a strict
-policy. A nonce on a `<style>` element does not authorize HTML `style`
-attributes. See [CSP rules for stylesheet elements](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-elem).
-
-Anta does not yet support strict CSP across every component. Card's own styling
-is entirely external; components such as Input, Menu, and Text still inject
-shadow `<style>` elements. Loading a theme does not unblock those styles, and
-nested components retain their own CSP requirements.
-
 ## AI setup
 
 Anta includes version-matched Markdown documentation in its npm package.
@@ -580,3 +552,31 @@ Two features progressively enhance with fallbacks: `checkVisibility()` falls
 back to `getClientRects()`, and typed CSS `attr()` supports raw
 `<a-icon size>` in Chrome 133+ and Safari 18.2+. Elsewhere use `<Icon size>`
 or `--icon-size`.
+
+## Content Security Policy
+
+Anta's tokens, component stylesheets, and optional themes work when your Content
+Security Policy (CSP) allows their stylesheet URLs through `style-src-elem` or
+its `style-src` fallback. External CSS and named theme values do not require
+inline style attributes.
+
+Some JSX props produce inline CSS custom properties, including custom `tone`
+colors, explicit `round` lengths, and numeric sizing. The `style` prop also
+produces inline styles. Server rendering serializes these values into HTML
+`style` attributes, which `style-src-attr 'none'` blocks. Put these
+customizations in classes and an allowed stylesheet when inline attributes are
+forbidden. Client-side assignments to individual CSS properties can behave
+differently; do not rely on hydration to repair blocked server-rendered styles.
+See [CSP rules for style attributes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-attr).
+
+Server-rendered `<style>` blocks also need CSP permission. They follow
+`style-src-elem`, falling back to `style-src` and then `default-src`.
+`'self'` allows same-origin stylesheet files, but does not authorize inline
+`<style>` blocks. Use a matching nonce or hash for those blocks under a strict
+policy. A nonce on a `<style>` element does not authorize HTML `style`
+attributes. See [CSP rules for stylesheet elements](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src-elem).
+
+Anta does not yet support strict CSP across every component. Card's own styling
+is entirely external; components such as Input, Menu, and Text still inject
+shadow `<style>` elements. Loading a theme does not unblock those styles, and
+nested components retain their own CSP requirements.

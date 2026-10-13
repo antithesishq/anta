@@ -37,7 +37,7 @@
   /* Reserve space for the absolute collapse control only while expanded. */
   a-text[truncate][expandable]:state(expanded)[collapsible] {
     box-sizing: border-box;
-    padding-block-end: 1.75em;
+    padding-block-end: 16px;
   }
 
   /* Expansion needs a separate clamp region so the control remains outside
@@ -83,10 +83,9 @@
     display: none;
     position: absolute;
     z-index: 1;
-    inset-inline-start: auto;
-    inset-inline-end: 0;
+    inset-inline: 0;
     bottom: 0;
-    width: 1.5em;
+    width: auto;
     height: 1.5em;
     opacity: 0;
     transition: opacity 150ms ease-out, color 150ms ease-out;
@@ -111,6 +110,13 @@
   a-text[truncate][expandable] > a-button::after { content: none; }
   a-text[truncate][expandable]:state(overflowing):not(:state(expanded)) > a-button,
   a-text[truncate][expandable]:state(expanded)[collapsible] > a-button { display: block; }
+  a-text[truncate="1"][expandable]:not(:state(expanded)) > a-button {
+    inset-inline-start: auto;
+    top: 0;
+    width: 3em;
+    height: auto;
+  }
+  a-text[truncate][expandable]:state(expanded)[collapsible] > a-button { height: 16px; }
   a-text[truncate][expandable]:is(:hover, :focus-within) > a-button,
   a-text[truncate][expandable]:state(expanded) > a-button { opacity: 1; }
   a-text[truncate][expandable]:state(expanded) > a-button::before { transform: rotate(225deg); }

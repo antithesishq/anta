@@ -241,42 +241,50 @@ for (const engine of engines) {
       assert.equal(await page.locator('a-text').evaluate(n => n.shadowRoot), null)
     })
   }
-  test(`${engine.name()}: Text controls leave collapsed and expanded content links clickable`, async t => {
+  test(`${engine.name()}: Text control hit areas match truncation and preserve expanded links`, async t => {
     const page = await pageFor(t, engine)
     await register(page)
     for (const direction of ['ltr', 'rtl']) {
-      await mount(page, raw(3).replace('<a-text ', `<a-text dir="${direction}" `).replace(longText,
-        `First line<br>Second line<br><a href="#collapsed-link">Visible link</a><br>${longText} <a href="#last-link">Guide</a>`))
-      const root = page.locator('#mount > a-text')
-      const control = root.locator(':scope > a-button')
-      await control.waitFor({ state: 'visible' })
-      assert.ok(await control.evaluate(n => n.getBoundingClientRect().width < n.parentElement.getBoundingClientRect().width / 4))
-      const assertControlClear = async () => assert.ok(await root.evaluate(n => {
-        const content = n.querySelector(':scope > a-text-content').getBoundingClientRect()
-        const button = n.querySelector(':scope > a-button').getBoundingClientRect()
-        const root = n.getBoundingClientRect()
-        const controlArea = n.matches(':state(expanded)')
-          ? content.bottom <= button.top + 0.5 && button.bottom <= root.bottom + 0.5
-          : Math.abs(content.height - root.height) <= 0.5
-        return Math.abs(content.width - root.width) <= 0.5
-          && controlArea
-      }), `${direction}: expanded control must occupy padding without narrowing text`)
-      await assertControlClear()
-      await root.locator('a[href="#collapsed-link"]').click()
-      await page.waitForURL(url => url.hash === '#collapsed-link')
-      assert.equal(await expanded(page), false)
-      await control.click()
-      assert.equal(await expanded(page), true)
-      await assertControlClear()
-      await root.locator('a[href="#last-link"]').click()
-      await page.waitForURL(url => url.hash === '#last-link')
-      assert.equal(await expanded(page), true)
-      await root.locator('a[href="#collapsed-link"]').focus()
-      await page.keyboard.press('Enter')
-      await page.waitForURL(url => url.hash === '#collapsed-link')
-      assert.equal(await expanded(page), true)
-      await control.click()
-      assert.equal(await expanded(page), false)
+      for (const lines of [1, 3]) {
+        await mount(page, raw(lines).replace('<a-text ', `<a-text dir="${direction}" `).replace(longText,
+          `<a href="#collapsed-link">Visible link</a><br>Second line<br>Third line<br>${longText} <a href="#last-link">Guide</a>`))
+        const root = page.locator('#mount > a-text')
+        const control = root.locator(':scope > a-button')
+        await control.waitFor({ state: 'visible' })
+        assert.ok(await control.evaluate((n, lines) => {
+          const button = n.getBoundingClientRect(), root = n.parentElement.getBoundingClientRect()
+          return lines === 1
+            ? Math.abs(button.width - 3 * parseFloat(getComputedStyle(n).fontSize)) <= 0.5
+            : Math.abs(button.width - root.width) <= 0.5
+        }, lines))
+        const assertControlClear = async () => assert.ok(await root.evaluate(n => {
+          const content = n.querySelector(':scope > a-text-content').getBoundingClientRect()
+          const button = n.querySelector(':scope > a-button').getBoundingClientRect()
+          const root = n.getBoundingClientRect()
+          const controlArea = n.matches(':state(expanded)')
+            ? content.bottom <= button.top + 0.5 && button.bottom <= root.bottom + 0.5
+              && Math.abs(button.height - 16) <= 0.5 && Math.abs(button.width - root.width) <= 0.5
+            : Math.abs(content.height - root.height) <= 0.5
+          return Math.abs(content.width - root.width) <= 0.5
+            && controlArea
+        }), `${direction}: expanded control must occupy padding without narrowing text`)
+        await assertControlClear()
+        await root.locator('a[href="#collapsed-link"]').click()
+        await page.waitForURL(url => url.hash === '#collapsed-link')
+        assert.equal(await expanded(page), false)
+        await control.click()
+        assert.equal(await expanded(page), true)
+        await assertControlClear()
+        await root.locator('a[href="#last-link"]').click()
+        await page.waitForURL(url => url.hash === '#last-link')
+        assert.equal(await expanded(page), true)
+        await root.locator('a[href="#collapsed-link"]').focus()
+        await page.keyboard.press('Enter')
+        await page.waitForURL(url => url.hash === '#collapsed-link')
+        assert.equal(await expanded(page), true)
+        await control.click()
+        assert.equal(await expanded(page), false)
+      }
     }
   })
   test(`${engine.name()}: Text handles a late Button upgrade and clears defaults when its control moves`, async t => {

@@ -223,7 +223,7 @@
 /* Interactive layer: colors shared by controls and menu rows.
    A name reads family-step-tone-state, e.g. --fill-2-brand-hover.
    - fill: 1 is solid (primary button, checked control), 2 strong translucent
-     (secondary button), 3 light translucent (tertiary button hover), 4 menu rows.
+     (secondary button), 3 light translucent (tertiary button hover, menu rows).
    - stroke: 1 outlines fields and selection controls, 2 is a light outline.
    - label: text and icons; 1 sits on fill-2, 2 has no fill, on-fill sits on
      fill-1.
@@ -287,18 +287,6 @@
   --fill-3-critical-hover: color-mix(in oklch, #de455e 10%, transparent);
   --fill-3-critical-active: color-mix(in oklch, #de455e 15%, transparent);
 
-  --fill-4-hover: #efeae6;
-  --fill-4-active: #f9f7f6;
-  --fill-4-brand-hover: color-mix(in oklch, #912a0d 8%, transparent);
-  --fill-4-brand-active: color-mix(in oklch, #912a0d 5%, transparent);
-  --fill-4-info-hover: color-mix(in oklch, #175082 8%, transparent);
-  --fill-4-info-active: color-mix(in oklch, #175082 5%, transparent);
-  --fill-4-warning-hover: color-mix(in oklch, #995200 8%, transparent);
-  --fill-4-warning-active: color-mix(in oklch, #995200 5%, transparent);
-  --fill-4-success-hover: color-mix(in oklch, #1f5c31 8%, transparent);
-  --fill-4-success-active: color-mix(in oklch, #1f5c31 5%, transparent);
-  --fill-4-critical-hover: color-mix(in oklch, #a01c32 8%, transparent);
-  --fill-4-critical-active: color-mix(in oklch, #a01c32 5%, transparent);
 
   --fill-1-disabled: color-mix(in oklch, #79716d 50%, transparent);
 
@@ -434,18 +422,6 @@
   --fill-3-critical-hover: color-mix(in oklch, #de455e 15%, transparent);
   --fill-3-critical-active: color-mix(in oklch, #de455e 20%, transparent);
 
-  --fill-4-hover: #2a1824;
-  --fill-4-active: #1c1219;
-  --fill-4-brand-hover: color-mix(in oklch, #f88d7d 10%, transparent);
-  --fill-4-brand-active: color-mix(in oklch, #f88d7d 5%, transparent);
-  --fill-4-info-hover: color-mix(in oklch, #7db6e8 10%, transparent);
-  --fill-4-info-active: color-mix(in oklch, #7db6e8 5%, transparent);
-  --fill-4-warning-hover: color-mix(in oklch, #e1a452 10%, transparent);
-  --fill-4-warning-active: color-mix(in oklch, #e1a452 5%, transparent);
-  --fill-4-success-hover: color-mix(in oklch, #74cd8e 10%, transparent);
-  --fill-4-success-active: color-mix(in oklch, #74cd8e 5%, transparent);
-  --fill-4-critical-hover: color-mix(in oklch, #e78e9d 10%, transparent);
-  --fill-4-critical-active: color-mix(in oklch, #e78e9d 5%, transparent);
 
   --fill-1-disabled: color-mix(in oklch, #a398a0 50%, transparent);
 
@@ -1291,6 +1267,8 @@
      when a slotted button does, which matches the shadow ring condition. */
   a-input:not([readonly]):focus::part(field),
   a-input[readonly]:state(kb-focus)::part(field) {
+    --focus-ring-pulse-width: 3px;
+
     animation: focus-ring-pulse 600ms cubic-bezier(0.2, 0, 0, 1);
 
     @media (prefers-reduced-motion: reduce) {
@@ -1305,6 +1283,26 @@
     &:not([priority="tertiary"]) {
       --input-rest-border: var(--stroke-1);
     }
+  }
+
+  /* Status fields take the brightest tone stroke; dark brand is muted to
+     sit with the other tones. The hint keeps the border's hue and chroma at
+     a lightness that holds 4.5:1 on the field's surroundings. */
+  a-input[status="brand"]:not(:disabled) {
+    --input-border: light-dark(
+      var(--stroke-1-brand-active),
+      oklch(from var(--stroke-1-brand-active) 0.6 calc(c * 0.75) h)
+    );
+  }
+  a-input[status="info"]:not(:disabled) { --input-border: var(--stroke-1-info-active); }
+  a-input[status="success"]:not(:disabled) { --input-border: var(--stroke-1-success-active); }
+  a-input[status="warning"]:not(:disabled) { --input-border: var(--stroke-1-warning-active); }
+  a-input[status="critical"]:not(:disabled) { --input-border: light-dark(#ff4a68, var(--stroke-1-critical-active)); }
+  a-input[status]:not([status="neutral"], :disabled) {
+    --input-hint: light-dark(
+      oklch(from var(--input-border) 0.53 c h),
+      oklch(from var(--input-border) 0.72 c h)
+    );
   }
 
   a-input:disabled {
@@ -1330,6 +1328,32 @@
     border-radius: 3px;
   }
 
+  /* Primary tags take the solid control fill, matching primary buttons and
+     checked checkboxes. Light warning steps to the active fill to hold 4.5:1
+     under white text. */
+  a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"], [tone="brand"],
+      [tone="info"], [tone="success"], [tone="warning"]) {
+    --tag-text: var(--label-on-fill);
+  }
+  a-tag[priority="primary"]:is(:not([tone]), [tone=""], [tone="neutral"]) { --tag-bg: var(--fill-1); }
+  a-tag[priority="primary"][tone="brand"] { --tag-bg: var(--fill-1-brand); }
+  a-tag[priority="primary"][tone="info"] { --tag-bg: var(--fill-1-info); }
+  a-tag[priority="primary"][tone="success"] { --tag-bg: var(--fill-1-success); }
+  a-tag[priority="primary"][tone="warning"] { --tag-bg: light-dark(var(--fill-1-warning-active), var(--fill-1-warning)); }
+  a-tag[priority="primary"][tone="critical"] {
+    --tag-bg: var(--fill-1-critical);
+    --tag-text: var(--label-on-fill-critical);
+  }
+
+  /* Light secondary and tertiary text steps to text-2; the 80% text-3 tones
+     fell below 4.5:1 on the tinted fills. */
+  a-tag:is(:not([tone]), [tone=""], [tone="neutral"]):not([priority="primary"]) { --tag-text: light-dark(var(--text-2), var(--text-3)); }
+  a-tag[tone="brand"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-brand), var(--text-3-brand)); }
+  a-tag[tone="info"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-info), var(--text-3-info)); }
+  a-tag[tone="success"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-success), var(--text-3-success)); }
+  a-tag[tone="warning"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-warning), var(--text-3-warning)); }
+  a-tag[tone="critical"]:not([priority="primary"]) { --tag-text: light-dark(var(--text-2-critical), var(--text-3-critical)); }
+
   a-card:not([round]) {
     --card-radius: 1px;
   }
@@ -1353,39 +1377,39 @@
 
   :is(a-menu-item, a[data-anta-menu-item]):is(:not([tone]), [tone=""], [tone="neutral"]) {
     --menu-item-color: var(--text-1);
-    --menu-item-hover-bg: var(--fill-4-hover);
-    --menu-item-selected-bg: var(--fill-4-active);
-    --menu-item-active-bg: var(--fill-4-active);
+    --menu-item-hover-bg: var(--fill-3-hover);
+    --menu-item-selected-bg: var(--fill-3-active);
+    --menu-item-active-bg: var(--fill-3-active);
   }
 
   :is(a-menu-item, a[data-anta-menu-item])[tone="brand"] {
-    --menu-item-hover-bg: var(--fill-4-brand-hover);
-    --menu-item-selected-bg: var(--fill-4-brand-active);
-    --menu-item-active-bg: var(--fill-4-brand-active);
+    --menu-item-hover-bg: var(--fill-3-brand-hover);
+    --menu-item-selected-bg: var(--fill-3-brand-active);
+    --menu-item-active-bg: var(--fill-3-brand-active);
   }
 
   :is(a-menu-item, a[data-anta-menu-item])[tone="info"] {
-    --menu-item-hover-bg: var(--fill-4-info-hover);
-    --menu-item-selected-bg: var(--fill-4-info-active);
-    --menu-item-active-bg: var(--fill-4-info-active);
+    --menu-item-hover-bg: var(--fill-3-info-hover);
+    --menu-item-selected-bg: var(--fill-3-info-active);
+    --menu-item-active-bg: var(--fill-3-info-active);
   }
 
   :is(a-menu-item, a[data-anta-menu-item])[tone="success"] {
-    --menu-item-hover-bg: var(--fill-4-success-hover);
-    --menu-item-selected-bg: var(--fill-4-success-active);
-    --menu-item-active-bg: var(--fill-4-success-active);
+    --menu-item-hover-bg: var(--fill-3-success-hover);
+    --menu-item-selected-bg: var(--fill-3-success-active);
+    --menu-item-active-bg: var(--fill-3-success-active);
   }
 
   :is(a-menu-item, a[data-anta-menu-item])[tone="warning"] {
-    --menu-item-hover-bg: var(--fill-4-warning-hover);
-    --menu-item-selected-bg: var(--fill-4-warning-active);
-    --menu-item-active-bg: var(--fill-4-warning-active);
+    --menu-item-hover-bg: var(--fill-3-warning-hover);
+    --menu-item-selected-bg: var(--fill-3-warning-active);
+    --menu-item-active-bg: var(--fill-3-warning-active);
   }
 
   :is(a-menu-item, a[data-anta-menu-item])[tone="critical"] {
-    --menu-item-hover-bg: var(--fill-4-critical-hover);
-    --menu-item-selected-bg: var(--fill-4-critical-active);
-    --menu-item-active-bg: var(--fill-4-critical-active);
+    --menu-item-hover-bg: var(--fill-3-critical-hover);
+    --menu-item-selected-bg: var(--fill-3-critical-active);
+    --menu-item-active-bg: var(--fill-3-critical-active);
   }
 
   :is(a-menu-item[disabled], a[data-anta-menu-item][aria-disabled="true"]) {
@@ -1402,8 +1426,8 @@
     outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
   }
   30% {
-    outline-width: 4px;
-    outline-offset: calc(-4px * var(--focus-ring-inset, 0));
+    outline-width: var(--focus-ring-pulse-width, 4px);
+    outline-offset: calc(-1 * var(--focus-ring-pulse-width, 4px) * var(--focus-ring-inset, 0));
     outline-color: color-mix(in oklch, var(--focus-ring) 60%, transparent);
   }
 }

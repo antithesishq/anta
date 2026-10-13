@@ -251,11 +251,20 @@ for (const engine of engines) {
       const control = root.locator(':scope > a-button')
       await control.waitFor({ state: 'visible' })
       assert.ok(await control.evaluate(n => n.getBoundingClientRect().width < n.parentElement.getBoundingClientRect().width / 4))
+      const assertControlClear = async () => assert.ok(await root.evaluate(n => {
+        const content = n.querySelector(':scope > a-text-content').getBoundingClientRect()
+        const button = n.querySelector(':scope > a-button').getBoundingClientRect()
+        return getComputedStyle(n).direction === 'rtl'
+          ? button.right <= content.left + 0.5
+          : content.right <= button.left + 0.5
+      }), `${direction}: control must stay outside the text column`)
+      await assertControlClear()
       await root.locator('a[href="#collapsed-link"]').click()
       await page.waitForURL(url => url.hash === '#collapsed-link')
       assert.equal(await expanded(page), false)
       await control.click()
       assert.equal(await expanded(page), true)
+      await assertControlClear()
       await root.locator('a[href="#last-link"]').click()
       await page.waitForURL(url => url.hash === '#last-link')
       assert.equal(await expanded(page), true)

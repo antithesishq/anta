@@ -59,8 +59,8 @@ changes are not listed.
 ### Fixed
 
 - [Text expansion controls](/text/#truncation-and-expansion) leave content links
-  clickable. The collapsed control has a narrow hit area; the collapse control
-  occupies its own space after the revealed text.
+  clickable. Expandable Text reserves an end gutter for the control in both
+  collapsed and expanded states, including before JavaScript initializes.
 
 - [Menu](/menu/) applies custom `round` values to its container in every theme.
 - [InputDate](/input-date/) labels and hints no longer toggle its calendar.

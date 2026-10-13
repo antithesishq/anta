@@ -34,6 +34,13 @@
   a-text-content { display: contents; }
   a-text > a-text-content + a-button { display: none; }
 
+  /* Reserve the control gutter before registration so expansion never covers
+     content links or changes the available line width. */
+  a-text[truncate][expandable] {
+    box-sizing: border-box;
+    padding-inline-end: 1.75em;
+  }
+
   /* Expansion needs a separate clamp region so the control remains outside
      clipped content. Ordinary Text has no structural wrapper. */
   a-text[truncate]:not([expandable]),
@@ -45,7 +52,7 @@
   }
   a-text[inline][truncate]:not([expandable]) { display: -webkit-inline-box; }
   a-text[truncate][expandable]:state(expanded) > a-text-content {
-    display: contents;
+    display: block;
     -webkit-line-clamp: unset;
     overflow: visible;
   }
@@ -103,17 +110,8 @@
     transition: transform 150ms ease-out;
   }
   a-text[truncate][expandable] > a-button::after { content: none; }
-  a-text[truncate][expandable]:state(overflowing):not(:state(expanded)) > a-button { display: block; }
-  /* Once revealed, the control occupies its own inline space after the text.
-     It wraps onto another line when needed, leaving content links clickable. */
-  a-text[truncate][expandable]:state(expanded)[collapsible] > a-button {
-    display: inline-block;
-    position: relative;
-    inset: auto;
-    height: 1em;
-    margin-inline-start: 0.25em;
-    vertical-align: baseline;
-  }
+  a-text[truncate][expandable]:state(overflowing):not(:state(expanded)) > a-button,
+  a-text[truncate][expandable]:state(expanded)[collapsible] > a-button { display: block; }
   a-text[truncate="1"][expandable]:not(:state(expanded)) > a-button {
     inset-inline-start: auto;
     top: 0;

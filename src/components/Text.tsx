@@ -8,11 +8,11 @@ import { Tooltip } from "./Tooltip"
 export type ExpandMode =
   | { expandable?: never; collapsible?: never }
   | {
-      /** Show a fade hint and chevron over the truncated text and let the user
-       *  expand it by clicking the chevron region or pressing Enter while the
-       *  chevron has keyboard focus. Only takes effect together with `truncate`.
-       *  On its own, expanding is **one-way** — the control is hidden once
-       *  expanded; add `collapsible` for a two-way toggle. */
+      /** Show a fade hint when text overflows and reserve end padding for an
+       *  expansion control. Select the control or press Enter or Space while it
+       *  has focus to reveal the text. Only takes effect with `truncate`.
+       *  Expansion is one-way by default: the control is hidden once expanded.
+       *  Add `collapsible` for a two-way toggle. */
       expandable: boolean
       /** Let the reader collapse back after expanding: the chevron becomes a
        *  "Show more" / "Show less" toggle that stays visible while expanded.
